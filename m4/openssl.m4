@@ -29,8 +29,11 @@ AC_DEFUN(tinc_OPENSSL,
     [AC_MSG_ERROR("OpenSSL libraries not found.")]
   )
 
-  AC_CHECK_LIB(dl, dlopen,
-    [LIBS="$LIBS -ldl"],
-    [AC_MSG_ERROR("OpenSSL depends on libdl.")]
+  AC_CHECK_FUNC(dlopen,
+    [],
+    AC_CHECK_LIB(dl, dlopen,
+      [LIBS="$LIBS -ldl"],
+      [AC_MSG_ERROR("OpenSSL depends on libdl.")]
+    )
   )
 ])
