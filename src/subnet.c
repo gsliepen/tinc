@@ -284,7 +284,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet)
 			exit(0);
 	}
 
-	return netstr;
+	return true;
 }
 
 /* Subnet lookup routines */
