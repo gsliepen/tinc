@@ -234,9 +234,11 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 			if(inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8 || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
 				logger(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
 					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
-			} else
-				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
-					n->late[(inpkt->seqno / 8) % sizeof(n->late)] |= 1 << i % 8;
+				return;
+			}
+		} else {
+			for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
+				n->late[(inpkt->seqno / 8) % sizeof(n->late)] |= 1 << i % 8;
 		}
 	}
 	
