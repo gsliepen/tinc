@@ -28,194 +28,206 @@
 
 static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *result) {
 	splay_node_t left = {0}, right = {0};
-	splay_node_t *leftbottom = &left, *rightbottom = &right, *child;
-	splay_node_t *node = tree->root;
+	splay_node_t *leftbottom = &left, *rightbottom = &right, *child, *grandchild;
+	splay_node_t *root = tree->root;
 	int c;
 
-	while((c = tree->compare(data, node->data))) {
-		if(c < 0) {
-			child = node->left;
+	if(!root) {
+		if(result)
+			*result = 0;
+		return NULL;
+	}
 
-			if(child) {
-				c = tree->compare(data, child->data);
+	while((c = tree->compare(data, root->data))) {
+		if(c < 0 && (child = root->left)) {
+			c = tree->compare(data, child->data);
+
+			if(c < 0 && (grandchild = child->left)) {
+				rightbottom->left = child;
+				child->parent = rightbottom;
+				rightbottom = child;
 				
-				if(c < 0) {
-					rightbottom->left = child;
-					child->parent = rightbottom;
-					rightbottom = child;
+				if((root->left = child->right))
+					child->right->parent = root;
+				
+				child->right = root;
+				root->parent = child;
 
-					node->left = child->right;
-					child->right = node;
-					node->parent = child;
-					node = child->left;
-					child->left = NULL;
-				} else if (c > 0) {
-					if(!child->right)
-						break;
+				child->left = NULL;
+				grandchild->parent = NULL;
 
-					leftbottom->right = child;
-					child->parent = leftbottom;
-					leftbottom = child;
+				root = grandchild;
+			} else if (c > 0 && (grandchild = child->right)) {
+				leftbottom->right = child;
+				child->parent = leftbottom;
+				leftbottom = child;
 
-					rightbottom->left = node;
-					node->parent = rightbottom;
-					rightbottom = node;
+				child->right = NULL;
+				grandchild->parent = NULL;
 
-					node->left = NULL;
-					node = child->right;
-					child->right = NULL;
-				} else {
-					rightbottom->left = node;
-					node->parent = rightbottom;
-					rightbottom = node;
+				rightbottom->left = root;
+				root->parent = rightbottom;
+				rightbottom = root;
 
-					node->left = NULL;
-					child->parent = NULL;
-					node = child;
-					break;
-				}
+				root->left = NULL;
+
+				root = grandchild;
 			} else {
+				rightbottom->left = root;
+				root->parent = rightbottom;
+				rightbottom = root;
+				
+				root->left = NULL;
+				child->parent = NULL;
+
+				root = child;
+				break;
+			}
+		} else if(c > 0 && (child = root->right)) {
+			c = tree->compare(data, child->data);
+
+			if(c > 0 && (grandchild = child->right)) {
+				leftbottom->right = child;
+				child->parent = leftbottom;
+				leftbottom = child;
+				
+				if((root->right = child->left))
+					child->left->parent = root;
+				
+				child->left = root;
+				root->parent = child;
+
+				child->right = NULL;
+				grandchild->parent = NULL;
+
+				root = grandchild;
+			} else if (c < 0 && (grandchild = child->left)) {
+				rightbottom->left = child;
+				child->parent = rightbottom;
+				rightbottom = child;
+
+				child->left = NULL;
+				grandchild->parent = NULL;
+
+				leftbottom->right = root;
+				root->parent = leftbottom;
+				leftbottom = root;
+
+				root->right = NULL;
+
+				root = grandchild;
+			} else {
+				leftbottom->right = root;
+				root->parent = leftbottom;
+				leftbottom = root;
+
+				root->right = NULL;
+				child->parent = NULL;
+
+				root = child;
 				break;
 			}
 		} else {
-			child = node->right;
-
-			if(child) {
-				c = tree->compare(data, child->data);
-				
-				if(c > 0) {
-					leftbottom->right = child;
-					child->parent = leftbottom;
-					leftbottom = child;
-
-					node->right = child->left;
-					child->left = node;
-					node->parent = child;
-					node = child->right;
-					child->right = NULL;
-				} else if (c < 0) {
-					if(!child->left)
-						break;
-
-					rightbottom->left = child;
-					child->parent = rightbottom;
-					rightbottom = child;
-
-					leftbottom->right = node;
-					node->parent = leftbottom;
-					leftbottom = node;
-
-					node->right = NULL;
-					node = child->left;
-					child->left = NULL;
-				} else {
-					leftbottom->right = node;
-					node->parent = leftbottom;
-					leftbottom = node;
-
-					node->right = NULL;
-					child->parent = NULL;
-					node = child;
-					break;
-				}
-			} else {
-				break;
-			}
+			break;
 		}
 	}
-
-	tree->root = node;
 
 	/* Merge trees */
 
 	if(left.right) {
-		if(node->left) {
-			leftbottom->right = node->left;
-			node->left->parent = leftbottom;
+		if(root->left) {
+			leftbottom->right = root->left;
+			root->left->parent = leftbottom;
 		}
-		node->left = left.right;
-		left.right->parent = node;
+		root->left = left.right;
+		left.right->parent = root;
 	}
 
 	if(right.left) {
-		if(node->right) {
-			rightbottom->left = node->right;
-			node->right->parent = rightbottom;
+		if(root->right) {
+			rightbottom->left = root->right;
+			root->right->parent = rightbottom;
 		}
-		node->right = right.left;
-		right.left->parent = node;
+		root->right = right.left;
+		right.left->parent = root;
 	}
 
+	/* Return result */
+
+	tree->root = root;
 	if(result)
 		*result = c;
 
-	return node;
+	return tree->root;
 }
-				
-		
+			
 static void splay_bottom_up(splay_tree_t *tree, splay_node_t *node) {
-	splay_node_t *parent, *grandparent;
+	splay_node_t *parent, *grandparent, *greatgrandparent;
 
-	while(node->parent) {
-		parent = node->parent;
-		grandparent = node->parent->parent;
-
-		if(!grandparent) { /* zig */
+	while((parent = node->parent)) {
+		if(!(grandparent = parent->parent)) { /* zig */
 			if(node == parent->left) {
-				parent->left = node->right;
+				if((parent->left = node->right))				
+					parent->left->parent = parent;
 				node->right = parent;
 			} else {
-				parent->right = node->left;
+				if((parent->right = node->left))
+					parent->right->parent = parent;
 				node->left = parent;
 			}
 
 			parent->parent = node;
 			node->parent = NULL;
 		} else {
-			if(node == grandparent->left->left) { /* left zig-zig */
-				grandparent->left = parent->right;
+			greatgrandparent = grandparent->parent;
+
+			if(node == parent->left && parent == grandparent->left) { /* left zig-zig */
+				if((grandparent->left = parent->right))
+					grandparent->left->parent = grandparent;
 				parent->right = grandparent;
 				grandparent->parent = parent;
 
-				parent->left = node->right;
+				if((parent->left = node->right))
+					parent->left->parent = parent;
 				node->right = parent;
 				parent->parent = node;
-
-			} else if(node == grandparent->right->right) { /* right zig-zig */
-				grandparent->right = parent->left;
+			} else if(node == parent->right && parent == grandparent->right) { /* right zig-zig */
+				if((grandparent->right = parent->left))
+					grandparent->right->parent = grandparent;
 				parent->left = grandparent;
 				grandparent->parent = parent;
 
-				parent->right = node->left;
+				if((parent->right = node->left))
+					parent->right->parent = parent;
+				node->left = parent;
+				parent->parent = node;
+			} else if(node == parent->right && parent == grandparent->left) { /* left-right zig-zag */
+				if((parent->right = node->left))
+					parent->right->parent = parent;
 				node->left = parent;
 				parent->parent = node;
 
-			} else if(node == grandparent->left->right) { /* left-right zig-zag */
-				parent->right = node->left;
-				node->left = parent;
-				parent->parent = node;
-
-				grandparent->left = node->right;
+				if((grandparent->left = node->right))
+					grandparent->left->parent = grandparent;
 				node->right = grandparent;
 				grandparent->parent = node;
-
 			} else { /* right-left zig-zag */
-				parent->left = node->right;
+				if((parent->left = node->right))
+					parent->left->parent = parent;
 				node->right = parent;
 				parent->parent = node;
 
-				grandparent->right = node->left;
+				if((grandparent->right = node->left))
+					grandparent->right->parent = grandparent;
 				node->left = grandparent;
 				grandparent->parent = node;
 			}
 
-			node->parent = grandparent->parent;
-
-			if(node->parent) {
-				if(grandparent == node->parent->left)
-					node->parent->left = node;
+			if((node->parent = greatgrandparent)) {
+				if(grandparent == greatgrandparent->left)
+					greatgrandparent->left = node;
 				else
-					node->parent->right = node;
+					greatgrandparent->right = node;
 			}
 		}
 	}
@@ -311,26 +323,20 @@ splay_node_t *splay_search_closest_node_nosplay(const splay_tree_t *tree, const 
 		if(c < 0) {
 			if(node->left)
 				node = node->left;
-			else {
-				if(result)
-					*result = -1;
+			else
 				break;
-			}
 		} else if(c > 0) {
 			if(node->right)
 				node = node->right;
-			else {
-				if(result)
-					*result = 1;
+			else 
 				break;
-			}
 		} else {
-			if(result)
-				*result = 0;
 			break;
 		}
 	}
 
+	if(result)
+		*result = c;
 	return node;
 }
 
@@ -506,9 +512,11 @@ void splay_unlink_node(splay_tree_t *tree, splay_node_t *node) {
 			node->prev->right = node->right;
 			node->right->parent = node->prev;
 		}
-	} else {
+	} else if(node->right) {
 		node->right->parent = NULL;
 		tree->root = node->right;
+	} else {
+		tree->root = NULL;
 	}
 }
 
