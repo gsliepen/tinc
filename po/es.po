@@ -1,0 +1,742 @@
+# Spanish messages for tinc
+# Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+# Ivo Timmermans <itimmermans@bigfoot.com>, 1999, 2000.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc 1.0pre2\n"
+"POT-Creation-Date: 2000-07-02 12:47+0100\n"
+"PO-Revision-Date: 2000-07-02 12:49+01:00\n"
+"Last-Translator: Enrique Zanardi <ezanardi@id-agora.com>\n"
+"Language-Team: Spanish <debian-l10n-spanish@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/conf.c:158
+#, c-format
+msgid "%s: %d: Invalid variable name `%s'.\n"
+msgstr "%s: %d: Nombre de variable `%s' no válido.\n"
+
+#: src/conf.c:165
+#, c-format
+msgid "%s: %d: No value given for `%s'.\n"
+msgstr "%s: %d: No se ha definido un valor para `%s'.\n"
+
+#: src/conf.c:173
+#, c-format
+msgid "%s: %d: Invalid value `%s' for variable `%s'.\n"
+msgstr "%s: %d: Valor `%s' para la variable `%s' no válido.\n"
+
+#: src/conf.c:194
+#, c-format
+msgid "Could not open %s: %s\n"
+msgstr "No pude abrir %s: %s\n"
+
+#: src/encr.c:112 src/net.c:333
+#, c-format
+msgid "Could not open %s: %m"
+msgstr "No pude abrir %s: %m"
+
+#: src/encr.c:119
+#, c-format
+msgid "Illegal passphrase in %s; size would be %d"
+msgstr "Frase de paso ilegal en %s; el tamaño debe ser %d"
+
+#: src/encr.c:153
+#, c-format
+msgid "Generating %d bits keys."
+msgstr "Generando claves de %d bits."
+
+#: src/encr.c:157
+#, c-format
+msgid "Opening /dev/urandom failed: %m"
+msgstr "Fallo abriendo /dev/urandom : %m"
+
+#: src/encr.c:222
+#, c-format
+msgid "Encryption key set to %s"
+msgstr "Clave de cifrado definida como %s"
+
+#: src/genauth.c:48
+#, c-format
+msgid "Usage: %s bits\n"
+msgstr "Uso: %s bits\n"
+
+#: src/genauth.c:57
+#, c-format
+msgid "Illegal number: %s\n"
+msgstr "Número ilegal: %s\n"
+
+#: src/genauth.c:62
+#, c-format
+msgid "Generating %d bits number"
+msgstr "Generando número de %d bits"
+
+#: src/genauth.c:67
+msgid "Opening /dev/urandom"
+msgstr "Abriendo /dev/urandom"
+
+#: src/genauth.c:80
+msgid "File was empty!\n"
+msgstr "¡El fichero estaba vacío!\n"
+
+#: src/genauth.c:88
+msgid ""
+": done.\n"
+"The following line should be ENTIRELY copied into a passphrase file:\n"
+msgstr ""
+": hecho.\n"
+"La siguiente línea debe ser copiada ENTERA a un fichero de frase de paso:\n"
+
+#: src/genauth.c:100
+msgid ": done.\n"
+msgstr ": hecho.\n"
+
+#: src/net.c:106
+#, c-format
+msgid "Sent %d bytes to %lx"
+msgstr "Enviados %d bytes a %lx"
+
+#: src/net.c:110
+#, c-format
+msgid "Error sending data: %m"
+msgstr "Error enviando datos: %m"
+
+#: src/net.c:130
+#, c-format
+msgid "Can't write to tap device: %m"
+msgstr "No puedo escribir en el dispositivo tap: %m"
+
+#: src/net.c:149
+#, c-format
+msgid "packet to queue: %d"
+msgstr "paquete a poner en cola: %d"
+
+#: src/net.c:236
+msgid "queue flushed"
+msgstr "cola vaciada"
+
+#: src/net.c:251
+msgid "Flushing send queue for "
+msgstr "Vaciando la cola de envíos para "
+
+#: src/net.c:259
+msgid "Flushing receive queue for "
+msgstr "Vaciando la cola de recepción para "
+
+#: src/net.c:277
+msgid "trying to look up "
+msgstr "intentando buscar "
+
+#: src/net.c:284
+msgid "There is no remote host I can send this packet to."
+msgstr "No hay máquina remota a la que pueda enviar este paquete."
+
+#: src/net.c:354
+#, c-format
+msgid "Creating metasocket failed: %m"
+msgstr "Fallo al crear el metasocket: %m"
+
+#: src/net.c:360 src/net.c:409
+#, c-format
+msgid "setsockopt: %m"
+msgstr "setsockopt(): %m"
+
+#: src/net.c:367 src/net.c:416 src/net.c:468
+#, c-format
+msgid "fcntl: %m"
+msgstr "fcntl(): %m"
+
+#: src/net.c:378
+#, c-format
+msgid "Can't bind to port %hd/tcp: %m"
+msgstr "Ha fallado la llamada a bind() con el puerto %hd/tcp: %m"
+
+#: src/net.c:384
+#, c-format
+msgid "listen: %m"
+msgstr "listen(): %m"
+
+#: src/net.c:403 src/net.c:451
+#, c-format
+msgid "Creating socket failed: %m"
+msgstr "Error al crear el `socket': %m"
+
+#: src/net.c:427
+#, c-format
+msgid "Can't bind to port %hd/udp: %m"
+msgstr "Ha fallado la llamada a bind() con el puerto %hd/udp: %m"
+
+#: src/net.c:474
+#, c-format
+msgid "Connected to %s:%hd"
+msgstr "Conectado a %s:%hd"
+
+#: src/net.c:495
+msgid "Could not set up a meta connection."
+msgstr "No he podido configurar una meta conexión."
+
+#: src/net.c:519
+msgid "No value for my VPN IP given"
+msgstr "No se ha definido un valor para mi VPN IP"
+
+#: src/net.c:533
+msgid "Unable to set up a listening socket"
+msgstr "No puedo configurar un `socket' a la escucha"
+
+#: src/net.c:539
+msgid "Unable to set up an incoming vpn data socket"
+msgstr "No puedo configurar un `socket' para recibir datos de la vpn"
+
+#: src/net.c:546
+#, c-format
+msgid "Ready: listening on port %d."
+msgstr "Listo: escuchando en el puerto %d."
+
+#: src/net.c:569
+#, c-format
+msgid "Still failed to connect to other. Will retry in %d seconds."
+msgstr "Siguo sin poder conectar con el otro. Lo reintentaré en %d segundos."
+
+#: src/net.c:602
+msgid "Try to re-establish outgoing connection in 5 minutes."
+msgstr "Intento reestablecer la conexión saliente en 5 minutos."
+
+#: src/net.c:640
+msgid "Terminating."
+msgstr "Terminando."
+
+#: src/net.c:654
+msgid "Opening UDP socket to "
+msgstr "Abriendo `socket' UDP a "
+
+#: src/net.c:659
+#, c-format
+msgid "Creating data socket failed: %m"
+msgstr "Error al crear `socket' de datos: %m"
+
+#: src/net.c:669
+msgid "Connecting to "
+msgstr "Conectando a "
+
+#: src/net.c:677 src/net.c:761 src/net.c:954
+#, c-format
+msgid "This is a bug: %s:%d: %d:%m"
+msgstr "Esto es un `bug': %s:%d: %d:%m"
+
+#: src/net.c:701
+#, c-format
+msgid "Error: getpeername: %m"
+msgstr "Error: getpeername(): %m"
+
+#: src/net.c:713
+#, c-format
+msgid "Connection from %s:%d"
+msgstr "Conexión desde %s:%d"
+
+#: src/net.c:766
+#, c-format
+msgid "Incoming data socket error: %s"
+msgstr "Error en el `socket' de recepción de datos: %s"
+
+#: src/net.c:774
+#, c-format
+msgid "Receiving data failed: %m"
+msgstr "Error recibiendo datos: %m"
+
+#: src/net.c:787
+msgid "packet from "
+msgstr "paquete desde "
+
+#: src/net.c:791
+msgid "Got packet from unknown source "
+msgstr "He recibido un paquete desde un origen desconocido "
+
+#: src/net.c:825
+#, c-format
+msgid "Closing connection with %s."
+msgstr "Cerrando conexión con %s."
+
+#: src/net.c:841
+msgid "Try to re-establish outgoing connection in 5 seconds."
+msgstr "Intento re-establecer la conexión saliente en 5 segundos."
+
+#: src/net.c:893
+#, c-format
+msgid "%s ("
+msgstr "%s ("
+
+#: src/net.c:924
+#, c-format
+msgid "Accepting a new connection failed: %m"
+msgstr "Error al aceptar una nueva conexión: %m"
+
+#: src/net.c:932
+msgid "Closed attempted connection."
+msgstr "Se ha cerrado la conexión que se intentaba realizar."
+
+#: src/net.c:959
+#, c-format
+msgid "Metadata socket error: %s"
+msgstr "Error en el `socket' de metadatos: %s"
+
+#: src/net.c:965
+msgid "Metadata read buffer overflow."
+msgstr "Desbordamiento del búfer de lectura de metadatos"
+
+#: src/net.c:973
+#, c-format
+msgid "Metadata socket read error: %m"
+msgstr "Error de lectura del `socket' de metadatos: %m"
+
+#: src/net.c:1000
+#, c-format
+msgid "Unknown request: %s"
+msgstr "Petición desconocida: %s"
+
+#: src/net.c:1005
+#, c-format
+msgid "Got request: %s"
+msgstr "He recibido una petición: %s"
+
+#: src/net.c:1009
+msgid "Error while processing request from "
+msgstr "Error al procesar la petición de "
+
+#: src/net.c:1015
+msgid "Bogus data received."
+msgstr "Se han recibido datos sin sentido."
+
+#: src/net.c:1059
+#, c-format
+msgid "Outgoing data socket error: %s"
+msgstr "Error en el `socket' de datos salientes: %s"
+
+#: src/net.c:1094
+#, c-format
+msgid "Error while reading from tapdevice: %m"
+msgstr "Error leyendo del dispositivo tap: %m"
+
+#: src/net.c:1104
+#, c-format
+msgid "Non-IP ethernet frame %04x from "
+msgstr "Trama ethernet no-IP %04x de "
+
+#: src/net.c:1112
+msgid "Dropping short packet"
+msgstr "Descartando paquete corto"
+
+#: src/net.c:1120
+#, c-format
+msgid "An IP packet (%04x) for "
+msgstr "Un paquete IP (%04x) para "
+
+#: src/net.c:1158
+#, c-format
+msgid "Error while waiting for input: %m"
+msgstr "Error esperando entrada: %m"
+
+#: src/netutl.c:219
+#, c-format
+msgid "Error looking up `%s': %s\n"
+msgstr "Error buscando `%s': %s\n"
+
+#: src/netutl.c:243
+msgid "Connection list:"
+msgstr "Lista de conexiones:"
+
+#: src/protocol.c:54
+#, c-format
+msgid "Send ACK to %s"
+msgstr "Envio ACK a %s"
+
+#: src/protocol.c:60
+#, c-format
+msgid "send failed: %d:%d: %m"
+msgstr "Error enviando: %d:%d: %m"
+
+#: src/protocol.c:64 src/protocol.c:480
+#, c-format
+msgid "Connection with %s activated."
+msgstr "Activada la conexión con %s."
+
+#: src/protocol.c:73
+msgid "Send TERMREQ to "
+msgstr "Envío TERMREQ a "
+
+#: src/protocol.c:81 src/protocol.c:99 src/protocol.c:117 src/protocol.c:134
+#: src/protocol.c:148 src/protocol.c:166 src/protocol.c:184 src/protocol.c:212
+#: src/protocol.c:233 src/protocol.c:251 src/protocol.c:265 src/protocol.c:292
+#: src/protocol.c:322 src/protocol.c:656 src/protocol.c:754
+#, c-format
+msgid "send failed: %s:%d: %m"
+msgstr "Error enviando: %s:%d: %m"
+
+#: src/protocol.c:92
+msgid "Send TIMEOUT to "
+msgstr "Envío TIMEOUT a "
+
+#: src/protocol.c:110
+msgid "Sending delete host "
+msgstr "Enviando borra `host' "
+
+#: src/protocol.c:128
+msgid "pinging "
+msgstr "pinging "
+
+#: src/protocol.c:159
+msgid "Sending add host to "
+msgstr "Enviando añade `host' a "
+
+#: src/protocol.c:177
+msgid "Sending KEY_CHANGED to "
+msgstr "Enviando KEY_CHANGED to "
+
+#: src/protocol.c:205
+msgid "Send BASIC_INFO to "
+msgstr "Enviando BASIC_INFO a "
+
+#: src/protocol.c:226
+#, c-format
+msgid "Send PASSPHRASE %s to "
+msgstr "Enviando PASSPHRASE %s a "
+
+#: src/protocol.c:244
+#, c-format
+msgid "Send PUBLIC_KEY %s to "
+msgstr "Enviando PUBLIC_KEY %s a "
+
+#: src/protocol.c:279
+msgid "Attempting to send key request to "
+msgstr "Intentando enviar petición de clave a "
+
+#: src/protocol.c:285
+msgid "Sending out request for public key to "
+msgstr "Enviando petición de clave pública a "
+
+#: src/protocol.c:309
+msgid "Attempting to send key answer to "
+msgstr "Intentando enviar respuesta de la clave a "
+
+#: src/protocol.c:315
+msgid "Sending public key to "
+msgstr "Enviando clave pública a "
+
+#: src/protocol.c:370
+#, c-format
+msgid "got bad BASIC_INFO request: %s"
+msgstr "recibí una petición BASIC_INFO incorrecta: %s"
+
+#: src/protocol.c:376
+#, c-format
+msgid "Peer uses incompatible protocol version %d."
+msgstr ""
+"La máquina remota usa una versión incompatible del protocolo (versión %d)."
+
+#: src/protocol.c:382
+#, c-format
+msgid "got BASIC_INFO(%hd,"
+msgstr "recibí BASIC_INFO(%hd,"
+
+#: src/protocol.c:385
+#, c-format
+msgid "Peer uses protocol version %d"
+msgstr "La máquina remota usa la versión %d del protocolo"
+
+#: src/protocol.c:411
+#, c-format
+msgid "got bad PASSPHRASE request: %s"
+msgstr "recibí una petición PASSPHRASE incorrecta: %s"
+
+#: src/protocol.c:417
+msgid "got PASSPHRASE"
+msgstr "recibí PASSPHRASE"
+
+#: src/protocol.c:434
+#, c-format
+msgid "got bad PUBLIC_KEY request: %s"
+msgstr "recibí una petición PUBLIC_KEY incorrecta: %s"
+
+#: src/protocol.c:439
+#, c-format
+msgid "got PUBLIC_KEY %s"
+msgstr "recibí PUBLIC_KEY %s"
+
+#. intruder!
+#: src/protocol.c:444
+msgid "Intruder: passphrase does not match."
+msgstr "Intruso: la frase de paso no concuerda."
+
+#: src/protocol.c:449
+msgid "Passphrase OK"
+msgstr "Frase de paso OK"
+
+#: src/protocol.c:477
+msgid "got ACK"
+msgstr "recibí ACK"
+
+#: src/protocol.c:517
+#, c-format
+msgid "got bad DEL_HOST request: %s"
+msgstr "recibí una petición DEL_HOST incorrecta: %s"
+
+#: src/protocol.c:522
+msgid "got DEL_HOST for "
+msgstr "recibí DEL_HOST para "
+
+#: src/protocol.c:527
+msgid "Somebody wanted to delete "
+msgstr "Alguien quería borrar "
+
+#: src/protocol.c:545
+msgid "responding to ping from "
+msgstr "respondiendo al `ping' de "
+
+#: src/protocol.c:559
+msgid "ok, got pong from "
+msgstr "ok, recibí `pong' de "
+
+#: src/protocol.c:577
+#, c-format
+msgid "got bad ADD_HOST request: %s"
+msgstr "recibí una petición ADD_HOST incorrecta: %s"
+
+#: src/protocol.c:582
+msgid "Add host request from "
+msgstr "Añado petición de `host' de "
+
+#: src/protocol.c:584
+msgid "got ADD_HOST("
+msgstr "recibí ADD_HOST("
+
+#: src/protocol.c:596
+msgid "Invalid add_host request from "
+msgstr "Petición add_host no válida de "
+
+#: src/protocol.c:625
+#, c-format
+msgid "got bad request: %s"
+msgstr "recibí una petición incorrecta: %s"
+
+#: src/protocol.c:630
+msgid "got REQ_KEY from "
+msgstr "recibí REQ_KEY de "
+
+#: src/protocol.c:643
+msgid "Attempting to forward key request to "
+msgstr "Intentando redirigir petición de clave a "
+
+#: src/protocol.c:649
+msgid "Forwarding request for public key to "
+msgstr "Reenviando petición de clave pública a "
+
+#: src/protocol.c:709 src/protocol.c:769
+#, c-format
+msgid "got bad ANS_KEY request: %s"
+msgstr "recibí una petición ANS_KEY incorrecta: %s"
+
+#: src/protocol.c:714
+msgid "got ANS_KEY from "
+msgstr "recibí ANS_KEY de "
+
+#: src/protocol.c:720
+msgid "Yeah! key arrived. Now do something with it."
+msgstr "¡Sí! ha llegado una clave. Ahora a hacer algo con ella."
+
+#: src/protocol.c:725
+msgid "Receiving key from "
+msgstr "Recibiendo clave de "
+
+#: src/protocol.c:741
+msgid "Attempting to forward key to "
+msgstr "Intentando redirigir la clave a "
+
+#: src/protocol.c:747
+msgid "Forwarding public key to "
+msgstr "Redirigiendo clave pública a "
+
+#: src/protocol.c:774
+msgid "got KEY_CHANGED from "
+msgstr "recibí KEY_CHANGED de "
+
+#: src/protocol.c:781
+msgid "Got changed key from "
+msgstr "Recibí clave modificada de "
+
+#: src/protocol.c:790
+msgid "Forwarding key invalidation request"
+msgstr "Redirigiendo petición de invalidación de clave"
+
+#: src/tincd.c:95
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Pruebe `%s --help' para más información.\n"
+
+#: src/tincd.c:98
+#, c-format
+msgid ""
+"Usage: %s [option]...\n"
+"\n"
+msgstr ""
+"Modo de empleo: %s [opción]...\n"
+"\n"
+
+#: src/tincd.c:99
+msgid ""
+"  -c, --config=FILE     Read configuration options from FILE.\n"
+"  -D, --no-detach       Don't fork and detach.\n"
+"  -d                    Increase debug level.\n"
+"  -k, --kill            Attempt to kill a running tincd and exit.\n"
+"  -n, --net=NETNAME     Connect to net NETNAME.\n"
+"  -t, --timeout=TIMEOUT Seconds to wait before giving a timeout.\n"
+msgstr ""
+"  -c, --config=FICHERO  Lee opciones de configuración del FICHERO.\n"
+"  -D, --no-detach       No hagas fork() y liberes la terminal.\n"
+"  -d                    Aumenta el nivel de depuración.\n"
+"  -k, --kill            Intenta eliminar un tincd en ejecución y termina.\n"
+"  -n, --net=NOMBREDERED Conecta a la red NOMBREDERED.\n"
+"  -t, --timeout=TIEMPO  Segundos a esperar antes de cancelar una "
+"trasmisión.\n"
+
+#: src/tincd.c:105
+msgid ""
+"      --help            Display this help and exit.\n"
+"      --version         Output version information and exit.\n"
+"\n"
+msgstr ""
+"      --help            Muestra esta ayuda y termina.\n"
+"      --version         Muestra información de la versión y termina.\n"
+"\n"
+
+#: src/tincd.c:107
+msgid "Report bugs to tinc@nl.linux.org.\n"
+msgstr "Comunicar `bugs' a tinc@nl.linux.org.\n"
+
+#: src/tincd.c:145
+#, c-format
+msgid "Invalid timeout value `%s'.\n"
+msgstr "Valor de `timeout' no válido `%s'.\n"
+
+#: src/tincd.c:159
+#, c-format
+msgid "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting."
+msgstr ""
+"Memoria agotada (la última es %s:%d) (no pude asignar %d bytes); terminando."
+
+#: src/tincd.c:214
+#, c-format
+msgid "tincd %s (%s %s) starting, debug level %d."
+msgstr "tincd %s (%s %s) comenzando, nivel de depuración %d."
+
+#: src/tincd.c:217
+#, c-format
+msgid "tincd %s starting, debug level %d."
+msgstr "tincd %s comenzando, nivel de depuración %d."
+
+#: src/tincd.c:232
+#, c-format
+msgid "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d."
+msgstr ""
+"Total de bytes escritos: tap %d, socket %d; bytes leidos: tap %d, socket %d."
+
+#: src/tincd.c:250
+#, c-format
+msgid "A tincd is already running for net `%s' with pid %d.\n"
+msgstr ""
+"Un tincd está actualmente en ejecución para la red `%s' con el pid %d.\n"
+
+#: src/tincd.c:253
+#, c-format
+msgid "A tincd is already running with pid %d.\n"
+msgstr "Un tincd está actualmente en ejecución con el pid %d.\n"
+
+#: src/tincd.c:274
+#, c-format
+msgid "No other tincd is running for net `%s'.\n"
+msgstr "No hay ningún otro tincd en ejecución para la red `%s'.\n"
+
+#: src/tincd.c:276
+msgid "No other tincd is running.\n"
+msgstr "No hay ningún otro tincd en ejecución.\n"
+
+#: src/tincd.c:283
+msgid "Removing stale lock file.\n"
+msgstr "Borrando fichero de bloqueo en desuso.\n"
+
+#: src/tincd.c:339
+#, c-format
+msgid "%s version %s\n"
+msgstr "%s versión %s\n"
+
+#: src/tincd.c:340
+msgid ""
+"Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
+"see the AUTHORS file for a complete list.\n"
+"\n"
+"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+"and you are welcome to redistribute it under certain conditions;\n"
+"see the file COPYING for details.\n"
+"\n"
+msgstr ""
+"Copyright (C) 1998,1999,2000 Ivo Timmermans y otros,\n"
+"vea el fichero AUTHORS para una lista completa.\n"
+"\n"
+"tinc viene SIN NINGUNA GARANTÍA.  Esto es software libre,\n"
+"y puede ser redistribuido bajo ciertas condiciones;\n"
+"vea el fichero COPYING para los detalles.\n"
+
+#: src/tincd.c:345
+msgid ""
+"This product includes software developed by Eric Young (eay@mincom.oz.au)\n"
+msgstr ""
+"Este producto incluye software desarrollado por Eric Young "
+"(eay@mincom.oz.au)\n"
+
+#: src/tincd.c:355
+msgid "You must be root to run this program. sorry.\n"
+msgstr ""
+"Usted debe ser el superusuario para ejecutar este programa. Lo siento.\n"
+
+#: src/tincd.c:390
+msgid "Got TERM signal"
+msgstr "Recibí la señal TERM"
+
+#: src/tincd.c:398
+msgid "Got QUIT signal"
+msgstr "Recibí la señal QUIT"
+
+#: src/tincd.c:405
+msgid "Got another SEGV signal: not restarting"
+msgstr "Recibí otra señal SEGV: no reinicio"
+
+#: src/tincd.c:413
+#, c-format
+msgid "Got SEGV signal after %s line %d. Trying to re-execute."
+msgstr "Recibí la señal SEGV después de %s línea %d. Intento reiniciar."
+
+#: src/tincd.c:416
+msgid "Got SEGV signal; trying to re-execute."
+msgstr "Recibí la señal SEGV; intento reiniciar."
+
+#: src/tincd.c:429
+msgid "Got HUP signal"
+msgstr "Recibí la señal HUP"
+
+#: src/tincd.c:439
+msgid "Got INT signal"
+msgstr "Recibí la señal INT"
+
+#: src/tincd.c:453
+msgid "Forcing new key generation"
+msgstr "Forzando generación de una nueva clave"
+
+#: src/tincd.c:461
+#, c-format
+msgid "Got unexpected signal (%d) after %s line %d."
+msgstr "Recibí una señal inesperada (%d) después de %s línea %d."
+
+#: src/tincd.c:464
+#, c-format
+msgid "Got unexpected signal (%d)."
+msgstr "Recibí una señal inesperada (%d)."
