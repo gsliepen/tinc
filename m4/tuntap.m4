@@ -29,9 +29,9 @@ AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
 ])
 
 if test $tinc_cv_linux_if_tun_h != none; then
-  AC_DEFINE(HAVE_TUNTAP)
+  AC_DEFINE(HAVE_TUNTAP, 1, [Universal tun/tap driver present])
   if test $tinc_cv_linux_if_tun_h != default; then
-   AC_DEFINE_UNQUOTED(LINUX_IF_TUN_H, $tinc_cv_linux_if_tun_h)
+   AC_DEFINE_UNQUOTED(LINUX_IF_TUN_H, $tinc_cv_linux_if_tun_h, [Location of if_tun.h])
   fi
 fi
 AC_SUBST(LINUX_IF_TUN_H)

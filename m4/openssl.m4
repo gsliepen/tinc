@@ -19,31 +19,31 @@ AC_DEFUN(tinc_OPENSSL,
 
   AC_CHECK_HEADERS(openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h,
     [],
-    [AC_MSG_ERROR("OpenSSL header files not found."); break]
+    [AC_MSG_ERROR([OpenSSL header files not found.]); break]
   )
 
   CPPFLAGS="$tinc_ac_save_CPPFLAGS"
 
   AC_CHECK_LIB(crypto, SHA1_version,
     [LIBS="$LIBS -lcrypto"],
-    [AC_MSG_ERROR("OpenSSL libraries not found.")]
+    [AC_MSG_ERROR([OpenSSL libraries not found.])]
   )
 
   AC_CHECK_FUNCS(RAND_pseudo_bytes)
 
   AC_CHECK_FUNC(OpenSSL_add_all_algorithms,
     [],
-    AC_CHECK_FUNC(SSLeay_add_all_algorithms,
-      [AC_DEFINE(HAVE_SSLEAY_ADD_ALL_ALGORITHMS)],
-      [AC_MSG_ERROR("Missing required OpenSSL functionality!")]
-    )
+    [AC_CHECK_FUNC(SSLeay_add_all_algorithms,
+      [AC_DEFINE(HAVE_SSLEAY_ADD_ALL_ALGORITHMS, 1, [Defined if this function should be used instead of OpenSLL_add_all_algorithms])],
+      [AC_MSG_ERROR([Missing required OpenSSL functionality!])]
+    )]
   )
 
   AC_CHECK_FUNC(dlopen,
     [],
-    AC_CHECK_LIB(dl, dlopen,
+    [AC_CHECK_LIB(dl, dlopen,
       [LIBS="$LIBS -ldl"],
-      [AC_MSG_ERROR("OpenSSL depends on libdl.")]
-    )
+      [AC_MSG_ERROR([OpenSSL depends on libdl.])]
+    )]
   )
 ])
