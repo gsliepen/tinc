@@ -1,6 +1,6 @@
 /*
     cipher.c -- wrapper functions for encryption algorithms
-    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -88,19 +88,8 @@ int cipher_init(int which)
   void *dlhandle;
   char *error;
 
-  if((dlhandle = dlopen(PKGLIBDIR "libblowfish.so.0", RTLD_LAZY)) == NULL)
-    {
-      syslog(LOG_ERR, "%s: %m", PKGLIBDIR "libblowfish.so.0");
-      return -1;
-    }
-
-  blowfish_cfb64_encrypt = dlsym(dlhandle, "BF_cfb64_encrypt");
-  if((error = dlerror()) != NULL)
-    {
-      syslog(LOG_ERR, "%s", error);
-      return -1;
-    }
-  blowfish_set_key = dlsym(dlhandle, "BF_set_key");
+  blowfish_cfb64_encrypt = BF_cfb64_encrypt;
+  blowfish_set_key = BF_set_key;
 
   return 0;
 }

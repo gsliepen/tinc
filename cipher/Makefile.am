@@ -1,7 +1,5 @@
 ## Process this file with automake to get Makefile.in
 
-SUBDIRS = blowfish
-
 noinst_LTLIBRARIES = libcipher.la
 
 INCLUDES = -I. -I$(top_builddir) -I$(top_srcdir)/src
