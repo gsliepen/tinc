@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.33 2000/12/05 08:56:44 zarq Exp $
+    $Id: conf.c,v 1.9.4.34 2000/12/06 13:33:48 zarq Exp $
 */
 
 #include "config.h"
@@ -63,10 +63,13 @@ static internal_config_t hazahaza[] = {
   { "Interface",    config_interface,      TYPE_NAME },
   { "InterfaceIP",  config_interfaceip,    TYPE_IP },
   { "KeyExpire",    config_keyexpire,      TYPE_INT },
+  { "MyVirtualIP",  config_dummy,          TYPE_IP },
+  { "MyOwnVPNIP",   config_dummy,          TYPE_IP },
   { "Name",         config_name,       TYPE_NAME },
   { "PingTimeout",  config_pingtimeout,    TYPE_INT },
   { "PrivateKey",   config_privatekey,     TYPE_NAME },
   { "TapDevice",    config_tapdevice,      TYPE_NAME },
+  { "VpnMask",      config_dummy,          TYPE_IP },
 /* Host configuration file keywords */
   { "Address",      config_address,        TYPE_NAME },
   { "IndirectData", config_indirectdata,   TYPE_BOOL },

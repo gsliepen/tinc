@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.17 2000/11/29 14:24:40 zarq Exp $
+    $Id: conf.h,v 1.6.4.18 2000/12/06 13:33:49 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -33,6 +33,7 @@ typedef struct ip_mask_t {
 } ip_mask_t;
 
 typedef enum which_t {
+  config_dummy = 0,
   config_name = 1,
   config_connectto,
   config_pingtimeout,
