@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.27 2000/05/29 23:40:05 guus Exp $
+    $Id: protocol.c,v 1.28 2000/05/30 21:36:16 zarq Exp $
 */
 
 #include "config.h"
@@ -570,7 +570,8 @@ int add_host_h(conn_list_t *cl)
   unsigned short port;
   conn_list_t *ncn, *fw;
 cp
-  if(!cl->status.active) return -1;
+  if(!cl->status.active)
+    return -1;
   if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx", &real_ip, &vpn_ip, &vpn_mask, &port) != 4)
     {
        syslog(LOG_ERR, _("got bad ADD_HOST request: %s"), cl->buffer);
@@ -588,7 +589,12 @@ cp
   */
   if((fw = lookup_conn(vpn_ip)))
     {
-      notify_others(fw, cl, send_add_host);
+      if(fw->nexthop == cl)
+	notify_others(fw, cl, send_add_host);
+      else
+	if(debug_lvl > 1)
+	  syslog(LOG_DEBUG, _("Invalid add_host request from " IP_ADDR_S),
+			      IP_ADDR_V(cl->vpn_ip));
       return 0;
     }
 
