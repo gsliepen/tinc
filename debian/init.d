@@ -1,30 +1,21 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.3 2000/05/13 00:54:27 zarq Exp $
+# $Id: init.d,v 1.4 2000/05/15 09:41:34 guus Exp $
 #
 
 my $DAEMON="/usr/sbin/tincd";
 my $NAME="tinc";
 my $DESC="tinc daemons";
-my $NETS="test2";
 my $TCONF="/etc/tinc";
-my $EXTRA="-d";
+my $EXTRA="";
+
+# $NETS is a space seperated list of all tinc networks.
+my $NETS="";
+
+if ("$NETS" eq "") { print "No tinc networks configured."; exit 0; }
 
 if (! -f $DAEMON) { exit 0; }
-
-# Check the daemon
-if ( ! -x $DAEMON ) {
-    print "**tinc: daemon $DAEMON does not exist or is not executable!\n";
-    exit 1;
-}
-
-# Check the configuration directory
-if ( ! -d $TCONF ) {
-    print "**tinc: configuration directory ($TCONF) not found!\n";
-    exit 1;
-}
-
 
 ##############################################################################
 # vpn_load ()		Loads VPN configuration
