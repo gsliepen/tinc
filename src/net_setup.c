@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.5 2002/02/26 23:26:41 guus Exp $
+    $Id: net_setup.c,v 1.1.2.6 2002/03/01 12:25:58 guus Exp $
 */
 
 #include "config.h"
@@ -326,6 +326,8 @@ cp
   else
     routing_mode = RMODE_ROUTER;
 
+  get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
+
   if(get_config_int(lookup_config(myself->connection->config_tree, "MaxTimeout"), &maxtimeout))
     {
       if(maxtimeout <= 0)
@@ -482,7 +484,7 @@ cp
       if((sock = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
         continue;
 
-      tcp_socket[++tcp_sockets] = sock;
+      tcp_socket[tcp_sockets++] = sock;
       if(debug_lvl >= DEBUG_CONNECTIONS)
         {
 	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
@@ -509,7 +511,7 @@ cp
       if((sock = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
         continue;
 
-      udp_socket[++udp_sockets] = sock;
+      udp_socket[udp_sockets++] = sock;
       if(debug_lvl >= DEBUG_CONNECTIONS)
         {
 	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
