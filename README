@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.0pre7. Installation
+This is the README file for tinc version 1.0pre8. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2002 by:
@@ -43,6 +43,11 @@ Changes to configuration file format since 1.0pre5
 Some configuration variables have different names now. Most notably "TapDevice"
 should be changed into "Device", and "Device" should be changed into
 "BindToDevice".
+
+Compatibility
+-------------
+
+Version 1.0pre8 is not compatible with older versions of tinc.
 
 
 Requirements

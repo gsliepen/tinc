@@ -1,3 +1,17 @@
+version 1.0pre8              Sep 16 2002
+
+* More fixes for subnets with prefixlength undivisible by 8.
+
+* Added support for NetBSD and MacOS/X.
+
+* Switched from undirected graphs to directed graphs to avoid certain race
+  conditions and improve scalability.
+
+* Generalized broadcasting and forwarding of protocol messages.
+
+* Cleanup of source code.
+
+
 version 1.0pre7              Apr  7 2002
 
 * Don't do blocking read()s when getting a signal.
