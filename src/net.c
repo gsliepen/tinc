@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.198 2003/08/22 15:04:26 guus Exp $
+    $Id: net.c,v 1.35.4.199 2003/08/28 15:27:11 guus Exp $
 */
 
 #include "system.h"
@@ -186,6 +186,17 @@ void terminate_connection(connection_t *c, bool report)
 		/* Run MST and SSSP algorithms */
 
 		graph();
+
+		/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
+
+		if(report && !c->node->status.reachable) {
+			edge_t *e;
+			e = lookup_edge(c->node, myself);
+			if(e) {
+				send_del_edge(broadcast, e);
+				edge_del(e);
+			}
+		}
 	}
 
 	/* Check if this was our outgoing connection */

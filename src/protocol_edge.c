@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.20 2003/07/24 12:08:16 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.21 2003/08/28 15:27:12 guus Exp $
 */
 
 #include "system.h"
@@ -249,6 +249,16 @@ bool del_edge_h(connection_t *c)
 	/* Run MST before or after we tell the rest? */
 
 	graph();
+
+	/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
+
+	if(!to->status.reachable) {
+		e = lookup_edge(to, myself);
+		if(e) {
+			send_del_edge(broadcast, e);
+			edge_del(e);
+		}
+	}
 
 	return true;
 }
