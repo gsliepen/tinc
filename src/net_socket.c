@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.10 2002/03/18 22:47:20 guus Exp $
+    $Id: net_socket.c,v 1.1.2.11 2002/03/27 14:02:36 guus Exp $
 */
 
 #include "config.h"
@@ -286,7 +286,6 @@ begin:
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_ERR, _("Could not set up a meta connection to %s"), c->name);
           c->status.remove = 1;
-	  do_prune = 1;
 	  retry_outgoing(c->outgoing);
 	  return;
         }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.167 2002/03/24 16:28:27 guus Exp $
+    $Id: net.c,v 1.35.4.168 2002/03/27 14:02:36 guus Exp $
 */
 
 #include "config.h"
@@ -68,39 +68,11 @@
 
 #include "system.h"
 
-int do_prune = 0;
 int do_purge = 0;
 int sighup = 0;
 int sigalrm = 0;
 
 time_t now = 0;
-
-/*
-  put all file descriptors in an fd_set array
-*/
-void build_fdset(fd_set *fs)
-{
-  avl_node_t *node;
-  connection_t *c;
-  int i;
-cp
-  FD_ZERO(fs);
-
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      c = (connection_t *)node->data;
-      FD_SET(c->socket, fs);
-    }
-
-  for(i = 0; i < listen_sockets; i++)
-    {
-      FD_SET(listen_socket[i].tcp, fs);
-      FD_SET(listen_socket[i].udp, fs);
-    }
-
-  FD_SET(device_fd, fs);
-cp
-}
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -162,6 +134,42 @@ cp
 }
 
 /*
+  put all file descriptors in an fd_set array
+  While we're at it, purge stuff that needs to be removed.
+*/
+void build_fdset(fd_set *fs)
+{
+  avl_node_t *node, *next;
+  connection_t *c;
+  int i;
+cp
+  FD_ZERO(fs);
+
+  for(node = connection_tree->head; node; node = next)
+    {
+      next = node->next;
+      c = (connection_t *)node->data;
+
+      if(c->status.remove)
+        connection_del(c);
+      else
+        FD_SET(c->socket, fs);
+    }
+
+  if(!connection_tree->head)
+    purge();
+
+  for(i = 0; i < listen_sockets; i++)
+    {
+      FD_SET(listen_socket[i].tcp, fs);
+      FD_SET(listen_socket[i].udp, fs);
+    }
+
+  FD_SET(device_fd, fs);
+cp
+}
+
+/*
   Terminate a connection:
   - Close the socket
   - Remove associated edge and tell other connections about it if report = 1
@@ -181,6 +189,10 @@ cp
            c->name, c->hostname);
 
   c->status.remove = 1;
+  c->status.active = 0;
+
+  if(c->node)
+    c->node->connection = NULL;
 
   if(c->socket)
     close(c->socket);
@@ -211,13 +223,6 @@ cp
       retry_outgoing(c->outgoing);
       c->outgoing = NULL;
     }
-
-  /* Deactivate */
-
-  c->status.active = 0;
-  if(c->node)
-    c->node->connection = NULL;
-  do_prune = 1;
 cp
 }
 
@@ -285,14 +290,6 @@ cp
         route_outgoing(&packet);
     }
 
-  for(i = 0; i < listen_sockets; i++)
-    {
-      if(FD_ISSET(listen_socket[i].udp, f))
-	handle_incoming_vpn_data(listen_socket[i].udp);
-      if(FD_ISSET(listen_socket[i].tcp, f))
-	handle_new_meta_connection(listen_socket[i].tcp);
-    }
-
   for(node = connection_tree->head; node; node = node->next)
     {
       c = (connection_t *)node->data;
@@ -320,29 +317,18 @@ cp
           if(receive_meta(c) < 0)
             {
               terminate_connection(c, c->status.active);
-              return;
+              continue;
             }
         }
     }
-cp
-}
 
-void prune_connections(void)
-{
-  connection_t *c;
-  avl_node_t *node, *next;
-cp
-  for(node = connection_tree->head; node; node = next)
+  for(i = 0; i < listen_sockets; i++)
     {
-      next = node->next;
-      c = (connection_t *)node->data;
-
-      if(c->status.remove)
-        connection_del(c);
+      if(FD_ISSET(listen_socket[i].udp, f))
+	handle_incoming_vpn_data(listen_socket[i].udp);
+      if(FD_ISSET(listen_socket[i].tcp, f))
+	handle_new_meta_connection(listen_socket[i].tcp);
     }
-
-  if(!connection_tree->head)
-    purge();
 cp
 }
 
@@ -355,7 +341,6 @@ void main_loop(void)
   struct timeval tv;
   int r;
   time_t last_ping_check;
-  int t;
   event_t *event;
 cp
   last_ping_check = now;
@@ -369,12 +354,6 @@ cp
       tv.tv_sec = 1 + (rand() & 7); /* Approx. 5 seconds, randomized to prevent global synchronisation effects */
       tv.tv_usec = 0;
 
-      if(do_prune)
-        {
-          prune_connections();
-          do_prune = 0;
-        }
-
       build_fdset(&fset);
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
@@ -382,13 +361,13 @@ cp
           if(errno != EINTR && errno != EAGAIN)
             {
               syslog(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
+              cp_trace();
 	      dump_connections();
               return;
             }
         }
 
-      if(r > 0)
-        check_network_activity(&fset);
+      check_network_activity(&fset);
 
       if(do_purge)
         {
