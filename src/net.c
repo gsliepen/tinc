@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.56 2000/10/30 00:22:53 guus Exp $
+    $Id: net.c,v 1.35.4.57 2000/11/02 22:05:35 zarq Exp $
 */
 
 #include "config.h"
@@ -457,20 +457,23 @@ cp
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
-      syslog(LOG_ERR, _("setsockopt: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "setsockopt");
       return -1;
     }
 
   if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)))
     {
-      syslog(LOG_ERR, _("setsockopt: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "setsockopt");
       return -1;
     }
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, _("fcntl: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fcntl");
       return -1;
     }
 
@@ -500,7 +503,8 @@ cp
 
   if(listen(nfd, 3))
     {
-      syslog(LOG_ERR, _("listen: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "listen");
       return -1;
     }
 cp
@@ -525,14 +529,16 @@ cp
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
-      syslog(LOG_ERR, _("setsockopt: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "setsockopt");
       return -1;
     }
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, _("fcntl: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fcntl");
       return -1;
     }
 
@@ -860,7 +866,6 @@ cp
 
   if(!fork())
     {
-
       execl(scriptname, NULL);
 
       if(errno != ENOENT)
@@ -996,7 +1001,8 @@ cp
 
   if(getpeername(sfd, &ci, &len) < 0)
     {
-      syslog(LOG_ERR, _("Error: getpeername: %m"));
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "getpeername");
       return NULL;
     }
 
