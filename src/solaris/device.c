@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.10 2002/09/09 22:33:31 guus Exp $
+    $Id: device.c,v 1.1.2.11 2002/09/10 21:29:42 guus Exp $
 */
 
 
@@ -65,14 +65,17 @@ int setup_device(void)
 	int ppa;
 	char *ptr;
 
-	cp if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+	cp();
+
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		device = DEFAULT_DEVICE;
 
-	cp if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
+	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
 		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
-	cp ppa = 0;
+
+	ppa = 0;
 
 	ptr = device;
 	while(*ptr && !isdigit((int) *ptr))
@@ -128,18 +131,24 @@ int setup_device(void)
 	mymac.net.mac.address.x[5] = 0x00;
 
 	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
-	cp return 0;
+
+	return 0;
 }
 
 void close_device(void)
 {
-	cp close(device_fd);
+	cp();
+
+	close(device_fd);
 }
 
 int read_packet(vpn_packet_t *packet)
 {
 	int lenin;
-	cp if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
+
+	cp();
+
+	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
 		syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
@@ -160,11 +169,13 @@ int read_packet(vpn_packet_t *packet)
 	}
 
 	return 0;
-cp}
+}
 
 int write_packet(vpn_packet_t *packet)
 {
-	cp if(debug_lvl >= DEBUG_TRAFFIC)
+	cp();
+
+	if(debug_lvl >= DEBUG_TRAFFIC)
 		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
@@ -175,12 +186,15 @@ int write_packet(vpn_packet_t *packet)
 	}
 
 	device_total_out += packet->len;
-	cp return 0;
+
+	return 0;
 }
 
 void dump_device_stats(void)
 {
-	cp syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	cp();
+
+	syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
 	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
 	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
-cp}
+}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.3 2002/09/09 22:33:31 guus Exp $
+    $Id: device.c,v 1.1.2.4 2002/09/10 21:29:42 guus Exp $
 */
 
 #include "config.h"
@@ -62,7 +62,10 @@ int setup_device(void)
 {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
-	cp if(!get_config_string
+
+	cp();
+
+	if(!get_config_string
 		  (lookup_config(config_tree, "Interface"), &interface))
 		interface = "eth0";
 
@@ -70,7 +73,8 @@ int setup_device(void)
 		device = interface;
 
 	device_info = _("raw socket");
-	cp if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
+
+	if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
 		syslog(LOG_ERR, _("Could not open %s: %s"), device_info,
 			   strerror(errno));
 		return -1;
@@ -94,9 +98,9 @@ int setup_device(void)
 		syslog(LOG_ERR, _("Could not bind to %s: %s"), device, strerror(errno));
 		return -1;
 	}
-	cp
-		/* Set default MAC address for ethertap devices */
-		mymac.type = SUBNET_MAC;
+
+	/* Set default MAC address for ethertap devices */
+	mymac.type = SUBNET_MAC;
 	mymac.net.mac.address.x[0] = 0xfe;
 	mymac.net.mac.address.x[1] = 0xfd;
 	mymac.net.mac.address.x[2] = 0x00;
@@ -105,12 +109,15 @@ int setup_device(void)
 	mymac.net.mac.address.x[5] = 0x00;
 
 	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
-	cp return 0;
+
+	return 0;
 }
 
 void close_device(void)
 {
-	cp close(device_fd);
+	cp();
+
+	close(device_fd);
 }
 
 /*
@@ -120,7 +127,10 @@ void close_device(void)
 int read_packet(vpn_packet_t *packet)
 {
 	int lenin;
-	cp if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
+
+	cp();
+
+	if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
 		syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
@@ -136,11 +146,13 @@ int read_packet(vpn_packet_t *packet)
 	}
 
 	return 0;
-cp}
+}
 
 int write_packet(vpn_packet_t *packet)
 {
-	cp if(debug_lvl >= DEBUG_TRAFFIC)
+	cp();
+
+	if(debug_lvl >= DEBUG_TRAFFIC)
 		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
@@ -151,12 +163,15 @@ int write_packet(vpn_packet_t *packet)
 	}
 
 	device_total_out += packet->len;
-	cp return 0;
+
+	return 0;
 }
 
 void dump_device_stats(void)
 {
-	cp syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	cp();
+
+	syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
 	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
 	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
-cp}
+}
