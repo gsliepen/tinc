@@ -1,0 +1,623 @@
+2000-02-07  Guus Sliepen    <guus@sliepen.warande.net>
+
+	* Version 0.3.3
+
+        * src/net.c: fixed add_mac_addresses to work with the latest
+          kernels. Requires properly set up MAC address of the tap
+          device and some changes to config file.
+
+1999-10-20  Ivo Timmermans  <zarq@iname.com>
+
+        * src/net.c (add_queue), src/net.h: removed `prev' element
+
+1999-09-17  Ivo Timmermans  <zarq@iname.com>
+
+	* configure.in: define __USE_BSD, used in lib/xmalloc.c
+
+1999-08-23  Ivo Timmermans  <zarq@iname.com>
+
+	* src/tincd.c (detach): initialize xalloc_fail_func
+
+	* src/protocol.c (key_changed_h): use key_changed_t
+
+1999-08-20  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.3
+	
+	* cipher/Makefile.am src/Makefile.am: remove the -ansi -Wall
+	compiler flags
+
+1999-08-19  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c: made some messages more userfriendly
+	(xsend, xrecv): the right amount of bytes
+	(handle_tap_input): check for short IP packets
+
+	* cipher/cipher.c (do_encrypt): calculate out->len the readable
+	way; added two bytes to in->len in calculation
+
+1999-08-15  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.26
+	
+	* src/net.c (send_packet): open an udp socket if necessary
+	(setup_vpn_connection): set status.dataopen to 1
+	(write_n): new function, called from xrecv
+
+	* src/protocol.c (add_host_h): don't open a data connection yet
+
+	* src/net.h: new status flag `dataopen'
+
+	* src/net.c, src/protocol.c, src/tincd.c: revisited syslog
+	messages
+
+	* src/net.c (flush_queue): largely copied from prune_conn_list in
+	netutl.c
+	
+1999-08-13  Ivo Timmermans  <zarq@iname.com>
+
+	* src/protocol.c (ans_key_h): test if the key's for us with an
+	exact match
+
+1999-08-12  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (send_packet): add two more bytes to the queue
+	(send_broadcast_ping): remember time
+	(main_loop): test for timeout even when select didn't timeout
+
+	* src/netutl.h (dump_conn_list): added proto for dump_conn_list
+
+	* src/tincd.c (make_names): use CONFDIR as base directory, from a
+	patch by James
+	(sigusr2_handler): new function, call regenerate_keys
+	(setup_signals): install sigusr2_handler
+
+	* src/net.c (xrecv): write two more bytes to the tap device
+
+	* src/Makefile.am: define CONFDIR
+
+	* src/netutl.c (lookup_conn): check for exact match first
+
+1999-08-08  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (send_packet): do not check for our own idea of an
+	expired key, we would have known about this anyway, via the
+	KEY_CHANGED request.
+
+	* Version 0.2.25
+
+	* Did some rechecking on the debuglevels
+
+	* src/protocol.c (notify_one): call getsockopt
+	(ack_h): check if another request follows me
+	(add_host_h): idem
+
+	* src/netutl.c (prune_conn_list): rewritten
+
+	* src/protocol.c (del_host_h): return 0 when deleting someone that
+	we do not know of, as this is not fatal.
+
+	* src/net.c (close_network_connections): moved the send_termreq
+	over to where it belongs
+
+	* src/netutl.c (dump_conn_list): new function, called from
+	sigusr1_handler
+
+	* src/tincd.c (sigusr1_handler): new function
+
+1999-08-07  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.24
+
+	* doc/tincd.conf.5: added documentation for the KeyExpire value
+
+	* src/tincd.c (sigsegv_handler): act nicely on a second segv
+
+	* src/encr.c (recalculate_encryption_keys): new function, called
+	from regenerate_keys
+
+	* src/protocol.c (set_keys): alloc strlen(ek) instead of k->len
+	bytes for encryption key
+
+	* src/protocol.h: added prototype for send_key_changed2
+
+	* src/protocol.c (send_key_changed): new function
+	(key_changed_h): new function
+	(send_key_changed2): new function
+
+	* src/protocol.h: new request type: KEY_CHANGED
+
+	* src/tincd.c (sigsegv_handler): ignore any following SIGSEGV's
+
+	* cipher/cipher.h: add prototype for cipher_init
+
+	* src/net.c (send_packet): check for expiring keys
+	(handle_incoming_vpn_data): idem
+
+	* src/protocol.c (send_key_answer): use `my_key_expiry'
+
+	* src/encr.c (generate_private_key): adjust my_key_expiry
+	(regenerate_keys): new function
+
+	* src/conf.c: add configure option `KeyExpire'
+
+	* src/encr.c: add key expiration times
+
+1999-08-05  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.23
+	
+	* I don't know what I did, but at least everything seems to work
+	ok now :) Have a look at the diff to know what's changed.
+
+1999-08-03  Ivo Timmermans  <zarq@iname.com>
+
+	* src/protocol.c (public_key_h): moved the `Connection activated'
+	message over to send_ack
+
+	* src/net.c (send_packet): add 4 bytes less to the sendqueue
+	(twice)
+
+1999-08-02  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (add_mac_addresses): switched 30 and 26 in indices, as
+	Hans suggested
+
+	* src/netutl.c (prune_conn_list): changed, partly from a patch
+	from Hans
+
+	* src/tincd.c (detach): added debug level in startup message
+
+1999-06-18  Ivo Timmermans  <zarq@iname.com>
+
+	* doc/Makefile.am: removed design* from build process
+
+	* configure.in: added __USE_BSD define for libc5 systems
+
+1999-05-09  Ivo Timmermans  <zarq@iname.com>
+
+	* doc/tinc.texi: merged with design.texi
+
+1999-05-08  Ivo Timmermans  <zarq@iname.com>
+
+	* doc/Makefile.am: included tinc.texi
+
+1999-05-05  Ivo Timmermans  <zarq@iname.com>
+
+	* cipher/cipher.c, cipher/cipher.h, src/encr.c: replaced all
+	occurrences of `cypher' by `cipher'
+
+1999-04-16  Ivo Timmermans  <zarq@iname.com>
+
+	* AUTHORS: added acknowledgements for Martin Schulze and Eric
+	Young
+
+	* TODO: updated a little
+
+1999-04-11  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.22
+
+	* src/encr.c (free_key): return if key == NULL
+
+	* src/protocol.c (send_del_host): new function
+	(del_host_h): new function
+	(termreq_h): call notify_others(..., send_del_host)
+	(add_host_h): update call to notify_others
+
+	* src/netutl.c (free_conn_element): call free_key twice
+
+	* src/encr.c (free_key): new function, updated encr.h
+
+	* src/netutl.c (free_conn_element): free the send/recv queues
+	(destroy_queue): new function, called by free_conn_element
+	(destroy_conn_list): use free_conn_element
+
+	* src/protocol.h: new request DEL_HOST, new typedef del_host_t
+
+	* placed some random comments
+
+	* src/net.c (strtoip): moved to netutl.c; updated net.h and
+	netutl.h
+
+	* src/protocol.c (notify_one): new function
+
+1999-04-10  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (hostlookup): moved to netutl.c; updated netutl.h
+
+	* src/protocol.c (public_key_h): removed half of the whole
+	function, mainly because we handle keys differently now
+	(notify_others): don't test for `myself'
+	(public_key_h): call notify_others
+	(notify_others): test for the source
+	(public_key_h): updated accordingly
+	(add_host_h): extended
+
+	* src/net.h: removed field `nr' from conn_list_t
+
+	* Version 0.2.21
+
+	* src/net.c (flush_queue): meddled with some pointers, thanks to
+	Fruit for helping me out on this one
+
+1999-04-09  Ivo Timmermans  <zarq@iname.com>
+
+	* src/netutl.c (lookup_conn): removed `const' keyword
+
+	* src/net.h: merged sq_element_t and rq_element_t into
+	queue_element_t and send_queue_t and recv_queue_t into
+	packet_queue_t; updated conn_list_t
+
+	* src/net.c: moved lookup_conn, free_conn_list, prune_conn_list,
+	new_conn_list, destroy_list to netutl.c, updated net.h and
+	netutl.h
+	(flush_queue): written as a generalized version of flush_*_queue
+	(add_queue): generalized
+	(add_recv_queue): removed
+
+	* src/Makefile.am: added netutl.c and netutl.h
+
+	* src/netutl.h: new file
+
+	* src/netutl.c: new file
+
+	* src/net.c (add_recv_queue): written.. but we need something
+	better
+
+	* src/protocol.c (send_key_request): test for fw == NULL
+
+1999-04-08  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (xsend): send `from' field
+
+	* src/net.h: added field `from' to struct real_packet_t
+
+	* src/protocol.h: increased protocol version, protocol 3 or lower
+	is not supported anymore.
+
+	* src/net.c (handle_incoming_vpn_data): test for valid key before
+	decrypting; updated protocol.h
+
+	* src/protocol.c: include utils.h
+	(set_keys): new function
+	(ans_key_h): flush queue when key arrived
+	(send_key_request): removed parameter `cl'
+
+	* lib/Makefile.am: updated to include utils.c/h
+
+	* lib/utils.c: new file
+
+	* lib/utils.h: new file
+
+	* src/encr.c (powerize): rewritten, changed name to
+	make_shared_key, updated src/encr.h
+
+	* src/protocol.c (send_passphrase): don't print out that ugly
+	passphrase
+	(req_key_h): send key to tmp->from instead of tmp->to :)
+	(calculate_h, calc_res_h, almost_key_h): removed, we now have a
+	better way of dealing with keys anyway
+
+	* src/net.c (new_conn_list): initialize p->nexthop to p
+
+	* src/protocol.c (req_key_h): written
+	(send_key_answer): new function
+	(ans_key_h): written
+
+	* src/net.h: added field waitingforkey to status_bits_t
+	added field nexthop to conn_list_t
+
+1999-04-07  Ivo Timmermans  <zarq@iname.com>
+
+	* src/protocol.c (send_key_request): new function
+
+	* src/protocol.h: added REQ_KEY, ANS_KEY, key_req_t
+
+	* src/net.h: add `validkey' to struct status_bits_t
+
+	* Version 0.2.20 (intermediate)
+	
+	* src/net.c (handle_incoming_vpn_data): update call to do_decrypt
+
+	* cipher/cipher.c (do_encrypt): add parameter `key', call
+	cipher_set_key
+	(do_decrypt): idem
+
+	* src/net.c (handle_tap_input): moved de_encrypt call to xsend
+
+	* src/protocol.c: added req_key_h and ans_key_h
+
+	* src/net.c (add_queue): removed `to'
+	(send_packet): changed call to add_queue accordingly
+
+	* src/net.h: removed field `to' from sq_element_t
+
+	* src/net.c (flush_queue): new function
+	(send_packet): call flush_queue before attempting to send
+
+	* src/net.h: included public and shared keys in struct conn_list_t
+
+1999-04-06  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (add_queue): written
+
+	* src/net.h: added new field sq to conn_list_t, declared struct
+	send_queue_t and sq_element_t
+
+	* src/key.c: new file
+
+	* src/key.h: new file
+
+1999-04-03  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.19
+	
+	* cipher/Makefile.am: don't make and install a libcipher.so
+
+	* Version 0.2.18
+	
+	* src/encr.c (security_init): call cypher_init
+
+	* cipher/cipher.c (cypher_init): written, sets values to
+	dynamically loaded functions
+
+	* configure.in: added libtool support, various Makefile.am were
+	also updated
+
+	* src/genauth.c: removed the encrypting part
+
+	* src/net.c (handle_incoming_vpn_data): updated call to
+	do_bf_decrypt to do_encrypt
+	(handle_tap_input): same with the call to do_bf_encrypt
+
+	* cipher/cipher.c (low_bf_crypt_key): written
+	(do_encrypt, do_decrypt): written (hardcoded to blowfish)
+
+	* src/encr.c (low_bf_crypt_key, do_bf_encrypt, do_bf_decrypt):
+	romeved
+
+	* configure.in: added support for libtool, Makefiles in the dir
+	`cipher' added 
+
+	* Makefile.am: include this new dir, libbf removed
+
+	* new dir `cipher', moved libbf into it, renamed to blowfish
+
+1999-04-02  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (check_network_activity): handle an error on outgoing
+	data connection
+
+1999-04-01  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.17
+	
+	* src/net.c (destroy_conn_list): written
+	(close_network_connections): call destroy_conn_list()
+
+	* configure.in: added some more tests.
+
+	* src/tincd.c (sigsegv_handler): re-execute with g_argv
+
+	* Version 0.2.16
+
+	* doc/Makefile.maint: replaced man_MANS with dyn_MANS
+
+	* doc/Makefile.am: it didn't install tincd.conf.5
+
+	* doc/tincd.conf.5: written
+
+	* doc/tincd.conf.sample: rewritten to reflect these changes in
+	syntax
+
+	* src/conf.c (readconfig): rewritten. config file now accepts and
+	tolerates spaces, and any integer base for integer variables, and
+	better error reporting. parsing is now case insensitive. = signs
+	may be omitted.
+
+1999-03-31  Ivo Timmermans  <zarq@iname.com>
+
+	* doc/Makefile.am (EXTRA_DIST): included tincd.conf.sample
+
+1999-03-29  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.15
+
+	* src/tincd.c (sighup_handler): close and re-open all network
+	connections
+	(sigsegv_handler): ignoring it for now
+
+	* src/conf.h (get_config_val): added declaration
+
+	* src/net.c (get_timeout): removed, moved code to
+	setup_network_connections
+
+	* src/tincd.c (parse_options): Call add_config_val() instead of
+	storing it in `timeout'
+
+1999-02-10  Ivo Timmermans  <zarq@iname.com>
+
+	* Version 0.2.14
+
+	* src/net.c (get_timeout): added
+	(main_loop): call get_timeout
+
+	* src/conf.c, src/conf.h: PingTimeout config option added
+
+	* src/conf.c, src/conf.h: timeout declared
+
+	* src/tincd.c (long_options, usage, parse_options): Added -t option
+	
+1999-01-25  Ivo Timmermans  <zarq@iname.com>
+
+	* src/encr.c (low_bf_crypt): obsolete, removed
+
+	* src/net.c (terminate_connection): special case for ping timeouts
+	(check_dead_connections): set timeout flag
+
+	* src/protocol.c (send_timeout, timeout_h): written
+
+1999-01-24  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (free_conn_element): written; updated prune_conn_list
+	to use it
+	(new_conn_list): written
+	(create_new_connection): uses new_conn_list, updated call from
+	handle_new_meta_connection
+
+	* src/net.h: added hostname field to conn_list_t, updated several
+	functions to use and initialize it
+
+1999-01-23  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (prune_conn_list): simplified
+
+	* configure.in: increased version number to 0.2.14
+
+	* Version 0.2.13
+
+	* src/net.c (delete_conn_from_list): removed
+	(prune_conn_list): written
+	(setup_outgoing_connection, create_new_connection,
+	handle_new_meta_connection): status.remove = 0	
+	(main_loop): inserted call to prune_conn_list
+	(check_network_activity, check_dead_connections,
+	send_broadcast_ping, terminate_connection): added test for
+	status.remove
+	(terminate_connection): set status.remove to 1 instead of just
+	deleting an entry
+
+	* src/net.h: added field `remove' to struct status_bits_t
+
+	* configure.in: increased version number to 0.2.13
+
+	* Version 0.2.12
+
+	* src/net.c (create_new_connection): removed the `initiating
+	authentication sequence.' part of the message
+	(delete_conn_from_list): rewritten
+	(check_dead_connections): all those SEGV's came from here, when a
+	free'd p was referenced in the next step of the for loop
+
+1999-01-22  Ivo Timmermans  <zarq@iname.com>
+
+	* src/net.c (terminate_connection): remove calls to shutdown()
+
+	* configure.in: increased version number to 0.2.12
+
+	* Version 0.2.11
+	
+	* src/net.c (setup_myself): myself->status.active=1 when
+	successfully set up, so that the appropriate sockets may be closed
+	(close_network_connections): updated to use that information
+	default value for myself is NULL
+	(close_network_connections): test if myself != NULL before
+	referencing it
+
+	* src/conf.c (add_config_val): new values now get added in front
+	of the list
+
+	* src/conf.h: removed value for privatekeyfile
+
+	* src/protocol.c (send_public_key): used sizeof(public_key_t) for
+	dynamic allocation
+
+1999-01-20  Ivo Timmermans  <zarq@iname.com>
+
+	* TODO: written; updated Makefile.am to include TODO in
+	distribution
+
+	* doc/tincd.x: written
+
+	* src/tincd.c (usage): some text beautifying
+
+1999-01-19  Ivo Timmermans  <zarq@iname.com>
+
+	* doc/Makefile.am: updated to use help2man
+
+	* configure.in: added test for perl which is in m4/perl.m4
+
+	* m4/perl.m4, doc/GNUmakefile, doc/Makefile.maint,
+	doc/Makefile.summ, doc/help2man: included from fileutils 4.0
+
+1999-01-18  Ivo Timmermans  <zarq@iname.com>
+
+	* src/tincd.c (main): updated to point to COPYING and AUTHORS when
+	requesting version info
+
+	* src/protocol.c (send_public_key): updated to use new
+	public_key_t struct
+
+	* src/encr.c (calculate_shared_key): renamed to set_shared_key,
+	changed prototype accordingly in src/encr.h
+	(set_shared_key): dynamic allocation of tmp
+	removed definitions for his_public_key and our_shared_key
+	include stdlib.h
+	(get_public_key): removed, obsolete due to my_public_key_base36,
+	also removed prototype from src/encr.h
+
+	* src/encr.h: changed prototype for powerize
+
+	* src/encr.c (powerize): rewritten, args changed
+
+	* src/protocol.c (send_calculate): written
+
+	* src/protocol.h: added declarations for struct calculate_t and
+	struct public_key_t
+
+	* src/encr.h: add declaration for my_public_key_base36
+
+	* src/encr.c (calculate_public_key): also store my public key in
+	the variable my_public_key_base36, for later use in protocol.c
+
+	* src/net.h: added field `nr' to struct conn_list_t
+	added some comments
+
+	* src/protocol.c (public_key_h): starts calculation of a shared
+	key instead of immediately activating connection
+
+	* src/net.c (strtoip): fixed ip->ip assignment
+
+	* src/conf.c: #include net.h
+	(add_config_val): removed superfluous xmalloc
+
+	* src/net.h: added prototype tor strtoip
+
+	* src/conf.c (strtoip): rewritten to accept textual hostnames
+	replaced all calls to charpos() with strchr()
+	removed charpos()
+	(strtoip): moved to net.c
+
+	* configure.in: increased version number to 0.2.11
+
+	* Version 0.2.10
+
+	* src/tincd.c: Did some function re-ordering and commenting
+
+	* src/encr.c (low_bf_crypt_key): copied from low_bf_crypt, this
+	function also requires an encrypting key to be given
+	(encrypt_passphrase): Updated to use low_bf_crypt_key
+	(verify_passphrase): Updated to use low_bf_crypt_key
+
+1999-01-14  Ivo Timmermans  <zarq@iname.com>
+
+	* src/encr.c (verify_passphrase): written
+	(encrypt_passphrase): written
+
+	* src/protocol.c (send_passphrase): calls encrypt_passphrase
+
+	* src/encr.c (read_passphrase): rewritten
+	(security_init): updated to call read_passphrase
+
+	* src/tincd.c (make_names): created new variable confbase
+
+1999-01-13  Ivo Timmermans  <zarq@iname.com>
+
+	* NEWS: added mention of 0.2.10
+
+	* configure.in: increased version to 0.2.10
+
+	* restarted this ChangeLog thingy.
+
+	

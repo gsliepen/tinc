@@ -1,0 +1,33 @@
+This is the README file for tinc version 0.3.
+Installation instructions may be found in the INSTALL file.
+
+tinc is Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com> and
+others. For a complete list of authors see the AUTHORS file.
+This product includes software developed by Eric Young (eay@mincom.oz.au)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version. See the file COPYING for more details.
+
+This version of tinc relies on the GNU Multi-Precision Library
+(gmp). This library is available from your nearest GNU mirror. Please
+install this first even before trying to run configure. If you don't
+do this, configure will (hopefully) mention it to you.
+
+This version of tinc supports multiple virtual networks at once. To
+use this feature, you may supply a netname via the -n or --net
+options. The standard locations for the config files will then be
+/etc/tinc/<net>/.
+
+In this version, MAC addresses are stripped off before encoding and
+sending a packet. When the packet reaches its destination, the MAC
+addresses are rebuilt again. They then have the form
+FE:FD:aa:bb:cc:dd. aa, bb, cc and dd are taken from the destination
+and source IP address.
+
+tincd regenerates its encryption key pairs. It does this on the first
+activity after the keys have expired. This period is adjustable in the
+configuration file, and the default time is 3600 seconds (one
+hour). If you send a USR2 signal to the daemon, it'll regenerate
+immediately.

@@ -1,0 +1,10 @@
+Main tinc authors:
+Guus Sliepen <guus@sliepen.warande.net>
+Ivo Timmermans <zarq@iname.com>
+Robert van der Meulen <emphyrio@null.net>
+
+These files are from other sources:
+ * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from
+ the syslog 1.3 sources.
+ * The files cipher/blowfish/ and cipher/idea/ are from the SSLeay
+ package by Eric Young.

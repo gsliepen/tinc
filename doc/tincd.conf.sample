@@ -1,0 +1,40 @@
+# Sample tinc configuration file
+
+# This is a comment.
+# Lines can have a maximum of 80 characters.
+# Spaces and tabs are eliminated.
+# The = sign isn't strictly necessary any longer, though you may want
+# to leave it in as it improves readability :)
+# Variable names are treated case insensitive.
+
+# The internet host to connect with
+# comment these out to make yourself a listen-only connection
+# You may use an IP address or its FQDN.
+ConnectTo = 1.2.3.4
+
+# Connect to which port of the `ConnectTo' host
+
+# It is advised that you only connect to ports that are < 1024,
+# because some malicious (non-root) user may run a fake tincd on ports
+# above 1024.
+# The default port is 655, the port that has been assigned to tinc
+# by the IANA. If you want tincd to listen on any other port than 655,
+# you can use ListenPort for the `server', and ConnectPort for the
+# `client'.
+
+# You may use the prefixes 0x or 0 to denote a hexadecimal or octal
+# number respectively.
+ConnectPort = 0x300
+
+# Listen on which port
+ListenPort = 200
+
+# My own VPN IP
+# You may use the /nn notation to indicate the number of bits used for
+# the mask, /8 is equivalent to the netmask 255.0.0.0 (the first 8
+# bits are set to 1).
+MyOwnVPNIP = 10.x.x.x/8
+
+# Which local file?
+# Default is /dev/tap0
+TapDevice = /dev/tap1

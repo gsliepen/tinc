@@ -1,0 +1,157 @@
+.TH TINC 5 "March 1999" "tinc version 0.2.16" "FSF"
+.SH NAME
+tincd.conf \- tinc daemon configuration
+.SH "DESCRIPTION"
+The files in the \fI/etc/tinc\fR directory contain runtime and
+security information for the \fBtinc\fR(8) daemon.
+.PP
+.SH "NETWORKS"
+It is perfectly ok for you to run more than one tinc daemon. However,
+in its default form, you will soon notice that you can't use two
+different configuration files without the \fI-c\fR option.
+
+We have thought of another way of dealing with this: network
+names. This means that you call \fBtincd\fR with the \fI-n\fR argument,
+which will assign a name to this daemon.
+
+The effect of this is that the daemon will set its configuration
+``root'' to \fI/etc/tinc/\fBnn\fI/\fR, where \fBnn\fR is your argument
+to the \fI-n\fR option. You'll notice that it appears in syslog as
+``tincd.\fBnn\fR''.
+
+However, it is not strictly necessary that you call tinc with the -n
+option. In this case, the network name would just be empty, and it
+will be used as such. tinc now looks for files in \fI/etc/tinc/\fR,
+instead of \fI/etc/tinc/\fBnn\fI/\fR; the configuration file should be
+\fI/etc/tinc/tincd.conf\fR, and the passphrases are now expected to be
+in \fI/etc/tinc/passphrases/\fR.
+
+But it is highly recommended that you use this feature of tinc,
+because it will be so much clearer whom your daemon talks to. Hence,
+we will assume that you use it.
+.PP
+.SH "PASSPHRASES"
+You should use the \fBgenauth\fR(8) program to generate passphrases.
+with, it accepts a single parameter, which is the number of bits the
+passphrase should be. Its output should be stored in
+\fI/etc/tinc/\fBnn\fI/passphrases/local\fR \-\- where \fBnn\fR stands
+for the network (See under \fBNETWORKS\fR) above.
+
+Please see the manpage for \fBgenauth\fR to learn more about setting
+up an authentication scheme.
+.PP
+.SH "CONFIGURATION"
+The actual configuration of the daemon is done in the file
+\fI/etc/tinc/\fBnn\fI/tincd.conf\fR.
+
+This file consists of comments (lines started with a \fB#\fR) or
+assignments in the form of
+.PP
+.Vb 1
+\&    \fIVariable \fB= \fIValue\fR.
+.Ve
+.PP
+The variable names are case insensitive, and any spaces, tabs,
+newlines and carriage returns are ignored. \fINote\fR: it is not
+required that you put in the \fB=\fR sign, but doing so improves
+readability. If you leave it out, remember to replace it with at least
+one space character.
+.PP
+.SH "VARIABLES"
+.PP
+Here are all valid variables, listed in alphabetical order:
+.TP
+\fBAllowConnect = \fB(\fIyes\fB|\fIno\fB)\fR
+If set to \fIyes\fR, anyone may try to connect to you. If you set this
+to no, no incoming connections will be accepted. This does not affect
+the outgoing connections.
+.TP
+\fBConnectPort = \fIport\fR
+Connect to the upstream host (given with the \fBConnectTo\fR
+directive) on port \fIport\fR. \fIport\fR may be given in decimal
+(default), octal (when preceded by a single zero) or hexadecimal
+(prefixed with \fB0x\fR). \fIport\fR is the port number for both the
+UDP and the TCP (meta) connections.
+.TP
+\fBConnectTo = \fB(\fIIP address\fB|\fIhostname\fB)\fR
+Specifies which host to connect to on startup. If the
+\fBConnectPort\fR variable is omitted, then tinc will try to connect
+to port 655.
+
+If you don't specify a host with \fBConnectTo\fR, tinc won't connect
+at all, and will instead just listen for incoming connections. Only
+the initiator of a tinc VPN should need this.
+.TP
+\fBKeyExpire = \fIs\fR
+The secret (and public) key expires after \fIs\fR seconds. The default
+is 3600 seconds, or one hour.
+
+If you make it shorter, a lot of time and bandwidth is spent
+negotiating over the new keys. If you make it longer, you make
+yourself more vulnerable to crackers, because they have more data to
+work with. The best value depends on the speed of the link, and the
+amount of data that goes over it.
+.TP
+\fBListenPort = \fIport\fR
+Listen on local port \fIport\fR. The computer connecting to this
+daemon should use this number as the argument for his
+\fBConnectPort\fR. Again, the default is 655.
+.TP
+\fBMyOwnVPNIP = \fInetwork address\fR[\fB/\fImaskbits\fR]
+The \fInetwork address\fR is the number that the daemon will propagate
+to other daemons on the network when it is identifying itself. Hence
+this will be the file name of the passphrase file that the other end
+expects to find the passphrase in.
+
+\fImaskbits\fR is the number of bits set to 1 in the netmask part.
+.TP
+\fBMyVirtualIP = \fInetwork address\fR[\fB/\fImaskbits\fR]
+This is an alias for \fBMyOwnVPNIP\fR.
+.TP
+\fBPassphrases = \fIdirectory\fR
+The directory where tinc will look for passphrases when someone tries
+to cennect. Please see the manpage for \fBgenauth\fR(8) for more
+information about passphrases as used by tinc.
+.TP
+\fBPingTimeout = \fInumber\fR
+The number of seconds of inactivity that tinc will wait before sending
+a probe to the other end. If that other end doesn't answer within that
+same amount of seconds, the connection is terminated, and the others
+will be notified of this.
+.TP
+\fBTapDevice = \fIdevice\fR
+The ethertap device to use. Note that you can only use one device per
+daemon. The info pages of the tinc package contain more information
+about configuring an ethertap device for linux.
+.PP
+.SH "FILES"
+.TP
+\fI/etc/tinc/\fR
+The top directory for configuration files.
+.TP
+\fI/etc/tinc/\fBnn\fI/tincd.conf\fR
+The default name of the configuration file for net
+\fBnn\fR.
+.TP
+\fI/etc/tinc/\fBnn\fI/passphrases/\fR
+Passphrases are kept in this directory. (See the section
+\fBPASSPHRASES\fR above).
+.PP
+.SH "SEE ALSO"
+\fBtincd\fR(8), \fBgenauth\fR(8)
+.PP
+The full documentation for
+.B tinc
+is maintained as a Texinfo manual.  If the
+.B info
+and
+.B tinc
+programs are properly installed at your site, the command
+.IP
+.B info tinc
+.PP
+should give you access to the complete manual.
+.PP
+tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions;
+see the file COPYING for details.

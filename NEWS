@@ -1,0 +1,115 @@
+version 0.3.4                Feb 19 2000
+ * The fix that was in 0.3.3 appeared to be wrong. Fixed now.
+
+version 0.3.3                Feb  9 2000
+ * Fixed bug that made tinc stop working with latest kernels (Guus
+   Sliepen)
+ * Updated the manual
+
+version 0.3.2                Nov 12 1999
+ * no more `Invalid filedescriptor' when working with multiple
+   connections
+ * forward unknown packets to uplink
+
+version 0.3.1                Oct 20 1999
+ * fixed a bug where tinc would exit without a trace
+
+version 0.3                  Aug 20 1999
+ * pings now work immediately
+ * all packet sizes get transmitted correctly
+
+version 0.2.26               Aug 15 1999
+ * fixed some remaining bugs
+ * --sysconfdir works with configure
+ * last version before 0.3
+
+version 0.2.25               Aug  8 1999
+ * improved stability, going towards 0.3 now.
+
+version 0.2.24               Aug  7 1999
+ * added key aging, there's a new config variable, KeyExpire.
+ * updated man and info pages
+
+version 0.2.23               Aug  5 1999
+ * all known bugs fixed, this is a candidate for 0.3
+
+version 0.2.22               Apr 11 1999
+ * multiconnection thing is now working nearly perfect :)
+
+version 0.2.21               Apr 10 1999
+ * You shouldn't notice a thing, but a lot has changed wrt key
+management - except that it refuses to talk to versions < 0.2.20
+
+version 0.2.20
+
+version 0.2.19               Apr  3 1999
+ * don't install a libcipher.so
+
+version 0.2.18               Apr  3 1999
+ * blowfish library dynamically loaded upon execution
+ * included Eric Young's IDEA library
+
+version 0.2.17               Apr  1 1999
+ * tincd now re-executes itself in case of a segmentation fault.
+
+version 0.2.16               Apr  1 1999
+ * wrote tincd.conf(5) man page, which still needs a lot of work.
+ * config file now accepts and tolerates spaces, and any integer base
+for integer variables, and better error reporting. See
+doc/tincd.conf.sample for an example.
+
+version 0.2.15               Mar 29 1999
+ * fixed bugs
+
+version 0.2.14               Feb 10 1999
+ * added --timeout flag and PingTimeout configuration
+ * did some first syslog cleanup work
+
+version 0.2.13               Jan 23 1999
+ * bugfixes
+
+version 0.2.12               Jan 23 1999
+ * fixed nauseating bug so that it would crash whenever a connection
+got lost
+
+version 0.2.11               Jan 22 1999
+ * framework for multiple connections has been done
+ * simple manpage for tincd
+
+version 0.2.10               Jan 18 1999
+ * passphrase support added
+
+version 0.2.9                Jan 13 1999
+ * bugs fixed.
+
+version 0.2.8                Jan 11 1999
+ * a reworked protocol version
+ * a ping/pong system
+ * more reliable networking code
+ * automatic reconnection
+ * still does not work with more than one connection :)
+ * strips MAC addresses before sending, so there's less overhead, and
+less redundancy
+
+version 0.2.7                Jan  3 1999
+ * several updates to make extending more easy.
+
+version 0.2.6                Dec 20 1998
+ * Point-to-Point connections have been established, including
+blowfish encryption and a secret key-exchange.
+
+version 0.2.5                Dec 16 1998
+ * Project renamed to tinc, in honour of TINC.
+
+version 0.2.4                Dec 16 1998
+ * now it really does ;)
+
+version 0.2.3                Nov 24 1998
+ * it sort of works now
+
+version 0.2.2                Nov 20 1998
+ * uses GNU gmp.
+
+version 0.2.1                Nov 14 1998
+
+ * Bare version.
