@@ -4,13 +4,13 @@
 #
 # chkconfig: 	2345 46 54
 #
-# version:	1.0.4
-# author:	Lubomir Bulej <pallas@kadan.cz>
-#               Modified for RPM by Mads Kiilerich <mads@kiilerich.com>
+# version:	1.0.8
+# authors:	Lubomir Bulej <pallas@kadan.cz>
+#               Mads Kiilerich <mads@kiilerich.com>
 #
-# description:	this script takes care of starting and setting up of VPNs \
-#		provided by tincd daemon. It parses the configuration files \
-#		in all VPN directories and sets up the interfaces and routing
+# description:	This script parses tinc configuration files for networks given \
+#		in /etc/tinc/nets.boot and for each of the networks it sets up \
+#		the interface and static routes and starts the tinc daemon.
 #
 # processname:	tincd
 
@@ -31,24 +31,84 @@ TCONF=/etc/tinc
 TPIDS=/var/run
 #DEBUG=-dddd
 
+NETSFILE=$TCONF/nets.boot
+
 # Check the daemon
 if [ ! -x $TINCD ]; then
-    echo "**tinc: daemon $TINCD does not exist or is not executable!"
+    echo "**tinc: $TINCD does not exist or is not executable!" >&2
     exit
 fi
 
 # Check if ip-route is installed
 if [ ! -f /sbin/ip ]; then
-    echo "**tinc: ip-route utilities not installed!"
+    echo "**tinc: ip-route utilities not installed!" >&2
+    exit
+fi
+
+# Check the kernel
+if ! ip addr &> /dev/null; then
+    echo "**tinc: kernel not configured for use with ip-route!" >&2
     exit
 fi
 
 # Check the configuration directory
 if [ ! -d $TCONF ]; then
-    echo "**tinc: configuration directory ($TCONF) not found!"
+    echo "**tinc: configuration directory ($TCONF) not found!" >&2
     exit
 fi
-		 
+
+# Check nets.boot
+if [ ! -f $NETSFILE ]; then
+    echo "**tinc: file with list of VPNs to start ($NETSFILE) not found!" >&2
+    exit
+fi
+
+# Load names of networks to be started
+NETS="$(sed -e 's/#.*//; s/[[:space:]]//g; /^$/ d' $NETSFILE)"
+
+
+##############################################################################
+# prefix_to_mask	Converts prefix length to netmask
+#			eg. 17 -> 255.255.128.0
+# $1 ... prefix
+
+prefix_to_mask () {
+    _MSK=""; _len="$1"
+    for _dot in "." "." "." " "; do
+	if [ ${_len} -ge 8 ]; then 
+           _fld=8
+	else           
+           _fld="${_len}"
+	fi
+	
+	_MSK="${_MSK}$((255 & (255 << (8 - _fld))))${_dot}"
+	_len=$((_len - _fld))
+    done
+    
+    echo ${_MSK}
+}
+
+
+##############################################################################
+# mask_to_prefix	Converts netmask to prefix length
+# 			eg. 255.255.192.0 -> 18		
+# $1 ... netmask
+
+mask_to_prefix () {
+    _LEN=0; _msk="$1"
+    for _tmp in 1 2 3 4; do
+        _fld=${_msk%%.*}
+	_msk=${_msk#*.}
+	
+	while [ ${_fld} -ne 0 ]; do
+	    _fld=$(((_fld << 1) & 255))
+	    _LEN=$((_LEN + 1))
+	done
+    done
+    
+    echo ${_LEN}
+}
+
 
 ##############################################################################
 # vpn_load ()		Loads VPN configuration
@@ -57,56 +117,76 @@ fi
 
 vpn_load () {
     CFG="$TCONF/$1/tinc.conf"
-    [ -f $CFG ] || { echo "**tinc: $CFG does not exist!" >&2; return 1; }
+    [ -f $CFG ] || { MSG="$CFG does not exist!"; return 1 }
     
     # load TINCD config
-    DEV=`grep -i -e '^[[:space:]]*TapDevice' $CFG | sed 's/[[:space:]]//g; s/^.*=//g'`
-    VPN=`grep -i -e '^[[:space:]]*(MyOwnVPNIP|MyVirtualIP)' -E $CFG | head -1 | sed 's/[[:space:]]//g; s/^.*=//g'`
+    DEV="$(grep -i -e '^[[:space:]]*TapDevice' $CFG | sed 's/[[:space:]]//g; s/^.*=//g')"
+    VPN="$(grep -i -e '^[[:space:]]*(MyOwnVPNIP|MyVirtualIP)' -E $CFG | sed 's/[[:space:]]//g; s/^.*=//g')"
+    IFM="$(grep -i -e '^[[:space:]]*VPNMask' $CFG | sed 's/[[:space:]]//g; s/^.*=//g')"
     
-    # discourage empty and multiple entries
+    # TapDevice syntax validation
     [ -z "$DEV" ] && \
-	{ echo "**tinc: TapDevice required!" >&2; return 2; }
-    echo $DEV | grep -q '^/dev/tap' ||
-	{ echo "**tinc: TapDevice should be in form /dev/tapX" >&2; return 2; }
-    [ `echo $DEV | wc -l` -gt 1 ] && \
-	{ echo "**tinc: multiple TapDevice entries not allowed!" >&2; return 3; }
+	{ MSG="TapDevice required!"; return 1 }
+    [ $(echo $DEV | wc -l) -gt 1 ] && \
+	{ MSG="multiple TapDevice entries not allowed!"; return 1 }
+    echo $DEV | grep -q -x -E '/dev/tap[[:digit:]]+' ||
+	{ MSG="TapDevice should be in form /dev/tapX!"; return 1 }
+
+    # MyOwnVPNIP/MyVirtualIP syntax validation	
     [ -z "$VPN" ] && \
-	{ echo "**tinc: MyOwnVPNIP/MyVirtualIP required!" >&2; return 2; }
-    [ `echo $VPN | wc -l` -gt 1 ] && \
-	{ echo "**tinc: multiple MyOwnVPNIP/MyVirtualIP entries not allowed!" >&2; return 3; }
-    echo $VPN | grep -q -x  \
-	'\([[:digit:]]\{1,3\}\.\)\{3\}[[:digit:]]\{1,3\}/[[:digit:]]\{1,2\}' || \
-	{ echo "**tinc: badly formed MyOwnVPNIP/MyVirtualIP address $VPN!"; return 3; }
+	{ MSG="MyOwnVPNIP/MyVirtualIP required!"; return 1 }
+    [ $(echo $VPN | wc -l) -gt 1 ] && \
+	{ MSG="multiple MyOwnVPNIP/MyVirtualIP entries not allowed!"; return 1 }
+    echo $VPN | grep -q -x -E \
+	'([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}/[[:digit:]]{1,2}' || \
+	{ MSG="badly formed MyOwnVPNIP/MyVirtualIP address $VPN!"; return 1 }
+
+    # VPNMask syntax validation	
+    [ $(echo $IFM | wc -l) -gt 1 ] && \
+	{ MSG="multiple VPNMask entries not allowed!"; return 1 }
+	
+	                                                                                    
+    # device & IP address extraction
+    TAP=${DEV##*/}
+    NUM=${TAP#tap}
+    ADR=${VPN%%/*}
+			                                                                                    
+    # netmask is calculated from MyVirtualIP netmask prefix length, except when
+    # VPNMask is specified, in which case it is used instead of default prefix
+
+    # VPNMask not specified
+    if [ -z "$IFM" ]; then
+	LEN=${VPN##*/}
+	MSK=$(prefix_to_mask $LEN)
+	
+    # VPNMask is prefix length, convert it to netmask for MSK
+    elif echo $IFM | grep -q -x -E '[[:digit:]]{1,2}'; then
+	VPN="$ADR/$IFM"
+	MSK=$(prefix_to_mask $IFM)
+	
+    # VPNMask is netmask, convert it to prefix length for VPN
+    elif echo $IFM | grep -q -x -E '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'; then
+	VPN="$ADR/$(mask_to_prefix $IFM)"
+	MSK="$IFM"
+	
+    else
+	MSG="badly formed interface netmask (VPNMask=$IFM)!"
+	return 1
+    fi	
     
-    # network device
-    TAP=`echo $DEV | cut -d"/" -f3`
-    NUM=`echo $TAP | sed 's/tap//'`
-
-    # IP address, netmask length
-    ADR=`echo $VPN | cut -d"/" -f1`
-    LEN=`echo $VPN | cut -d"/" -f2`
-
-    # Expand bitlength to netmask    
-    MSK=""; len=$LEN
-    for cnt in 1 1 1 0; do
-	if [ $len -ge 8 ]; then
-	    msk=8
-	else
-	    msk=$len
-	fi
-	    
-	MSK="$MSK$((255 & (255 << (8 - msk))))"
-	[ $cnt -ne 0 ] && MSK="$MSK."
-	len=$((len-msk))
-    done
 
     # Network & broadcast addresses
-    BRD=`ipcalc --broadcast $ADR $MSK | cut -d"=" -f2`
-    NET=`ipcalc --network $ADR $MSK | cut -d"=" -f2`
-        
+    BRD=$(ipcalc --broadcast $ADR $MSK | cut -d"=" -f2)
+    NET=$(ipcalc --network $ADR $MSK | cut -d"=" -f2)
+
     # MAC address
-    MAC=`printf "fe:fd:%0.2x:%0.2x:%0.2x:%0.2x" $(echo $ADR | sed 's/\./ /g')`
-    # echo "TAP $TAP NUM $NUM ADR $ADR LEN $LEN MSK $MSK BRD $BRD NET $NET MAC $MAC" >&2
+    MAC=$(printf "fe:fd:%0.2x:%0.2x:%0.2x:%0.2x" $(echo $ADR | { IFS=. ; read a b c d; echo $a $b $c $d }))
+    
+    # debugging 
+    # echo >&2
+    # echo "VPN $VPN TAP $TAP NUM $NUM MAC $MAC IFM $IFM" >&2
+    # echo "ADR $ADR MSK $MSK NET $NET BRD $BRD" >&2
+    
     return 0
 }
 
@@ -117,8 +197,8 @@ vpn_load () {
 # $1 ... VPN to start
 
 vpn_start () {    
-
-    vpn_load $1 || { echo "**tinc: could not vpn_load $1" >&2; return 1; }
+    MSG=""; ERR=""
+    vpn_load $1 || return 1
             
     # create device file
     if [ ! -c $DEV ]; then
@@ -127,24 +207,24 @@ vpn_start () {
     fi
     
     # load device module
-    { insmod ethertap --name="ethertap$NUM" unit="$NUM" 2>&1 || \
-	{ echo "**tinc: cannot insmod ethertap$NUM" >&2; return 2; }
-    } | grep -v '^Us'
+    ERR="$(insmod ethertap -o "ethertap$NUM" unit="$NUM" 2>&1 1> /dev/null)" ||
+        { MSG="could not insmod ethertap as unit $NUM!"; return 2 }
     
     # configure the interface
-    ip link set $TAP address $MAC
-    ip link set $TAP up
-    ip addr flush dev $TAP 2>&1 | grep -v -x '^Nothing to flush.'
-    ip addr add $VPN brd $BRD dev $TAP
+    ERR="$(ip link set $TAP address $MAC 2>&1)" ||
+    	{ MSG="could not set address for device $TAP!"; return 3 }
+	
+    ERR="$(ip link set $TAP up 2>&1)" ||
+    	{ MSG="could not bring up device $TAP!"; return 3 }
+	
+    ERR="$(ip addr add $VPN brd $BRD dev $TAP 2>&1)" ||
+    	{ MSG="could not set IP address for device $TAP!"; return 3 }
     
     # start tincd
     $TINCD --net="$1" $DEBUG || \
-	{ echo "**tinc: could not start $TINCD" >&2; return 3; }
+	{ MSG="could not start daemon for network $1"; return 3 }
 
-    # default interface route
-    # ip route add $NET/$LEN dev $TAP
-
-    # setup routes
+    # setup custom static routes
     /etc/sysconfig/network-scripts/ifup-routes $TAP
 
     return 0
@@ -157,11 +237,8 @@ vpn_start () {
 # $1 ... VPN to stop
 
 vpn_stop () {
-
+    MSG=""; ERR=""
     vpn_load $1 || return 1
-    
-    # flush the routing table
-    # ip route flush dev $TAP &> /dev/null
     
     # kill the tincd daemon
     PID="$TPIDS/tinc.$1.pid"
@@ -173,14 +250,16 @@ vpn_stop () {
 	    dly=0
 	    while [ $dly -le 5 ]; do
 		[ -f $PID ] || break
-	        sleep 1; dly=$((dly+1))
+	        sleep 1; dly=$((dly + 1))
 	    done
 	fi
 	
+	# remove stale PID file
 	[ -f $PID ] && rm -f $PID
     fi
     
     # bring the interface down
+    ip addr flush dev $TAP &> /dev/null
     ip link set $TAP down &> /dev/null
     
     # remove ethertap module
@@ -190,21 +269,44 @@ vpn_stop () {
 } # vpn_stop
 
 
+# Check if there is anything to start
+if [ ! -z "$1" -a "$1" != "status" -a -z "$NETS" ]; then
+    echo "**tinc: no networks found in $NETSFILE!" >&2
+    exit
+fi
+
+
 # See how we were called.
 case "$1" in
     start)
-	for vpn in `ls -1 $TCONF`; do
-            echo -n "Bringing up VPN $vpn: "
-	    vpn_start $vpn && action "" /bin/true
+	for vpn in $NETS; do
+            echo -n "Bringing up TINC network $vpn: "
+	    vpn_start $vpn && \
+		success "startup of network $vpn" || \
+		failure "startup of network $vpn"
+	    echo
+	    
+	    if [ ! -z "$MSG" ]; then
+	    	[ ! -z "$ERR" ] && echo "$ERR" >&2
+		echo "**tinc: $MSG" >&2
+	    fi
 	done
 	
         touch /var/lock/subsys/tinc
         ;;
 	
     stop)
-	for vpn in `ls -1 $TCONF`; do
-  	    echo -n "Shutting down VPN $vpn: "
-	    vpn_stop $vpn && action "" /bin/true
+	for vpn in $NETS; do
+  	    echo -n "Shutting down TINC network $vpn: "
+	    vpn_stop $vpn && \
+		success "shutdown of network $vpn" || \
+		failure "shutdown of network $vpn"
+	    echo
+	    
+	    if [ ! -z "$MSG" ]; then
+	    	[ ! -z "$ERR" ] && echo "$ERR" >&2
+		echo "**tinc: $MSG" >&2
+	    fi
 	done
 	
 	rm -f /var/lock/subsys/tinc
@@ -212,15 +314,12 @@ case "$1" in
 	
     status)
 	echo -n "Configured VPNs: "
-	for vpn in `ls -1 $TCONF`; do
+	for vpn in $NETS; do
 	    PID="$TPIDS/tinc.$vpn.pid"
-	    echo -n "$vpn:"
-	    if [ -f $PID -a `ps ax | grep "^ *$(cat $PID)" | wc -l` -eq 1 ] 
-	    then
-		echo -n "OK "
-	    else
-		echo -n "DEAD "
-	    fi
+	    
+	    [ -f $PID ] && PID="$(cat $PID)" || PID="-dead-"
+	    ps ax | grep "^[[:space:]]*$PID" && STS="OK" || STS="DEAD"
+	    echo -n "$vpn:$STS "
 	done
 	echo	         
 	;;	
