@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.29 2000/11/30 22:32:14 zarq Exp $
+    $Id: conf.c,v 1.9.4.30 2000/12/01 12:36:36 zarq Exp $
 */
 
 #include "config.h"
@@ -137,8 +137,13 @@ cp
   Read exactly one line and strip the trailing newline if any.  If the
   file was on EOF, return NULL. Otherwise, return all the data in a
   dynamically allocated buffer.
+  
+  If line is non-NULL, it will be used as an initial buffer, to avoid
+  unnecessary mallocing each time this function is called.  If buf is
+  given, and buf needs to be expanded, the var pointed to by buflen
+  will be increased.
 */
-char *readline(FILE *fp)
+char *readline(FILE *fp, char *buf, size_t *buflen)
 {
   char *newline = NULL;
   char *p;
@@ -153,10 +158,19 @@ char *readline(FILE *fp)
 
   if(feof(fp))
     return NULL;
-  
-  size = 100;
+
+  if((buf != NULL) && (buflen != NULL))
+    {
+      size = *buflen;
+      line = buf;
+    }
+  else
+    {
+      size = 100;
+      line = xmalloc(size);
+    }
+
   maxlen = size;
-  line = xmalloc(size);
   idx = line;
   *idx = 0;
   for(;;)
@@ -191,6 +205,8 @@ char *readline(FILE *fp)
 	}
     }
 
+  if((buf != NULL) && (buflen != NULL))
+    *buf = size;
   return line;
 }
 
@@ -206,13 +222,18 @@ int read_config_file(config_t **base, const char *fname)
   char *p, *q;
   int i, lineno = 0;
   config_t *cfg;
+  size_t bufsize;
+  
 cp
   if((fp = fopen (fname, "r")) == NULL)
     return -1;
 
+  bufsize = 100;
+  line = xmalloc(bufsize);
+  
   for(;;)
     {
-      if((line = readline(fp)) == NULL)
+      if((line = readline(fp, line, &bufsize)) == NULL)
 	{
 	  err = -1;
 	  break;
@@ -261,7 +282,6 @@ cp
       cfg->which = hazahaza[i].which;
       if(!config)
 	config = cfg;
-      free(line);
     }
 
   free(line);
@@ -337,7 +357,6 @@ int isadir(const char* f)
 int is_safe_path(const char *file)
 {
   char *p;
-  char *fn = xstrdup(file);
   struct stat s;
 
   p = strrchr(file, '/');
@@ -415,7 +434,7 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
       fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
 	      what, filename);
       fflush(stdout);  /* Don't wait for a newline */
-      if((fn = readline(stdin)) == NULL)
+      if((fn = readline(stdin, NULL, NULL)) == NULL)
 	{
 	  fprintf(stderr, _("Error while reading stdin: %m\n"));
 	  return NULL;
