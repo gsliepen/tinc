@@ -1,0 +1,131 @@
+.TH TINCD 8 "June 2000" "tinc version 1.0pre3" "FSF"
+.SH NAME
+tinc \- tinc VPN daemon
+.SH SYNOPSIS
+.B tincd
+[\fIoption\fR]...
+.SH DESCRIPTION
+.PP
+
+This is the daemon of tinc, a secure virtual private
+network (VPN) project. When started, tincd will read
+it's configuration file to determine what virtual subnet
+it has to serve and to what other tinc daemons it should connect.
+It will connect to the ethertap device and set up a socket for incomming
+connections.
+If that succeeds, it will detach from the controlling terminal and
+continue in the background, accepting and setting up connections to other
+tinc daemons that are part of the virtual private network.
+
+.SH OPTIONS
+.TP
+\fB\-c\fR, \fB\-\-config\fR=\fIFILE\fR
+Read configuration options from FILE.
+.TP
+\fB\-D\fR, \fB\-\-no\-detach\fR
+Don't fork and detach.
+.TP
+\fB\-d\fR
+Increase debug level.
+.TP
+\fB\-k\fR, \fB\-\-kill\fR
+Attempt to kill a running tincd and exit.
+.TP
+\fB\-n\fR, \fB\-\-net\fR=\fINETNAME\fR
+Connect to net NETNAME.
+.TP
+\fB\-t\fR, \fB\-\-timeout\fR=\fITIMEOUT\fR
+Seconds to wait before giving a timeout.
+.TP
+\fB\-\-help\fR
+Display this help and exit.
+.TP
+\fB\-\-version\fR
+Output version information and exit.
+.PP
+.SH "SIGNALS"
+.TP
+\fBHUP\fR
+Closes all connections, rereads the configuration file and restarts the daemon.
+.TP
+\fBINT\fR
+Closes all connections and quits.
+.TP
+\fBUSR1\fR
+Dumps the connection list to syslog.
+.TP
+\fBUSR2\fR
+Invalidates the current cryptographic key and generates a new one.
+.TP
+\fBALRM\fR
+Forces tincd to try to connect to an uplink immediately. Usually tincd attempts
+to do this itself, but increases the time it waits between the attempts each time
+it failed, and if tincd didn't succeed to connect to an uplink the first time after
+it started, it defaults to the maximum time of 15 minutes.
+.PP
+.SH "DEBUG LEVELS"
+The tinc daemon can send a lot of messages to the syslog. The more \fB\-d\fR options are
+given to tincd, the more messages it will log. Each level inherits all messages of the
+previous level:
+.TP
+\fIno debug options\fR
+This will log a message indicating tincd has started along with a version number.
+It will also any serious error.
+.TP
+\fB\-d\fR
+This will log all connections that are made with other tinc daemons.
+.TP
+\fB\-d \-d\fR
+This will log all requests that are exchanged with other tinc daemons. These include
+authentication, key exchange and connection list updates.
+.TP
+\fB\-d \-d \-d\fR
+This will log a copy of everything received on the meta socket.
+.TP
+\fB\-d \-d \-d \-d\fR
+This will log all packets that are sent over the virtual private network.
+.PP
+.SH "FILES"
+.TP
+\fI/etc/tinc/<NETNAME>/tinc.conf\fR
+The configuration file for tincd.
+.TP
+\fI/etc/tinc/<NETNAME>/passphrases/*\fR
+The directory containing the secret passphrases
+used to authenticate other tinc daemons.
+.PP
+.SH "BUGS"
+Maintaining a connection list on each tinc daemon that can connect and disconnect at any
+moment, and making sure that all connections satisfy the tree property isn't easy. Although
+we have done a lot to make sure tinc is sturdy and foolproof, it might happen that
+some connection lists get corrupted.
+.PP
+If you find any bugs, report them to tinc@nl.linux.org.
+.PP
+.SH "TODO"
+A lot. If something you would like to see is not implemented, just ask; we most certainly will.
+.PP 
+.SH "SEE ALSO"
+\fBtinc.conf\fR(5), \fBgenauth\fR(8)
+.TP
+\fBhttp://tinc.nl.linux.org/\fR
+.TP
+\fBhttp://www.cabal.org/\fR
+.PP
+The full documentation for
+.B tinc
+is maintained as a Texinfo manual.  If the
+.B info
+and
+.B tinc
+programs are properly installed at your site, the command
+.IP
+.B info tinc
+.PP
+should give you access to the complete manual.
+.PP
+tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions;
+see the file COPYING for details.
+.PP
+This product includes software developed by Eric Young (eay@mincom.oz.au)

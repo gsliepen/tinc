@@ -11,7 +11,7 @@ This is the protocol documentation for tinc, a Virtual Private Network daemon.
    that the entire resulting derived work is distributed under
    the terms of a permission notice identical to this one.
 
-   $Id: PROTOCOL,v 1.1.2.1 2000/06/30 22:38:58 guus Exp $
+   $Id: PROTOCOL,v 1.1.2.2 2000/07/01 14:32:24 guus Exp $
 
 
 1. Protocols used in tinc
@@ -29,7 +29,7 @@ The protocols for those interfaces will not be described in this document.
 2. Packet protocol
 ------------------
 
-This is described in net.h.
+See net.h for now.
 
 3. Meta protocol
 ----------------
@@ -58,34 +58,34 @@ may be sent. The following diagram shows how authentication is done:
 
 Client				Server
 ----------------------------------------------------------------
-Connects to server
-				Accepts connection
-                                Sends BASIC_INFO
-Verifies BASIC_INFO
+Connects to server:
+				Accepts connection.
+                                Sends BASIC_INFO:
+Verifies BASIC_INFO.
 If server is already in
 connection list, abort.
-Else sends his own BASIC_INFO
-				Verifies BASIC_INFO
+Else sends his own BASIC_INFO:
+				Verifies BASIC_INFO.
                                 If client is alread in
                                 connection list, remove
                                 old entry.
-                                Sends PASSPHRASE
+                                Sends PASSPHRASE:
 Receives and stores PASSPHRASE.
-Sends his own PASSPHRASE
+Sends his own PASSPHRASE:
 				Receives and stores PASSPHRASE.
-                                Sends PUBLIC_KEY
+                                Sends PUBLIC_KEY:
 Verifies PUBLIC key and stored
 PASSPHRASE. If wrong, abort.
-Else sends his own PUBLIC_KEY
+Else sends his own PUBLIC_KEY:
 				Verifies PUBLIC key and stored
                                 PASSPHRASE. If wrong, abort.
                                 Else activates connection and
                                 sends ACK and ADD_HOSTs for all
-                                known hosts
+                                known hosts.
 Receives ACK and activates
 connection.
 Sends ADD_HOSTs for all known
-hosts
+hosts.
 ----------------------------------------------------------------
 
 The client must never make a connection to a server that is already in it's
