@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.2 2000/11/20 19:41:10 guus Exp $
+    $Id: connection.c,v 1.1.2.3 2000/11/20 22:13:03 guus Exp $
 */
 
 #include "config.h"
@@ -138,10 +138,14 @@ cp
 
 connection_t *lookup_id(char *name)
 {
-  connection_t cl;
+  connection_t cl, *p;
 cp
   cl.name = name;
-  return rbl_search(connection_tree, &cl);
+  p = rbl_search(connection_tree, &cl);
+  if(p && p->status.active)
+    return p;
+  else
+    return NULL;
 cp
 }
 

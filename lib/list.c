@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.2 2000/11/16 22:13:08 zarq Exp $
+    $Id: list.c,v 1.1.2.3 2000/11/20 22:13:00 guus Exp $
 */
 
 #include "config.h"
@@ -143,6 +143,7 @@ void list_append(list_t *list, void *data)
   n = xmalloc_and_zero(sizeof(list_node_t));
   n->data = data;
   n->prev = list->tail;
-  list->tail->next = n;
+  if(list->tail)
+    list->tail->next = n;
   list->tail = n;
 }

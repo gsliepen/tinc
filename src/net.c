@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.78 2000/11/20 19:41:10 guus Exp $
+    $Id: net.c,v 1.35.4.79 2000/11/20 22:13:03 guus Exp $
 */
 
 #include "config.h"
@@ -1113,7 +1113,7 @@ cp
 void terminate_connection(connection_t *cl)
 {
   connection_t *p;
-  subnet_t *s;
+  subnet_t *subnet;
   rbl_t *rbl;
 
 cp
@@ -1155,7 +1155,11 @@ cp
 
   /* Remove the associated subnets */
 
-  rbl_delete_rbltree(cl->subnet_tree);
+  RBL_FOREACH(cl->subnet_tree, rbl)
+    {
+      subnet = (subnet_t *)rbl->data;
+      subnet_del(subnet);
+    }
 
   /* Check if this was our outgoing connection */
     

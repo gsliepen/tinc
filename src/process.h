@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.2 2000/11/16 22:12:23 zarq Exp $
+    $Id: process.h,v 1.1.2.3 2000/11/20 22:13:13 guus Exp $
 */
 
 #ifndef __TINC_PROCESS_H__
@@ -29,6 +29,7 @@
 extern list_t *child_pids;
 
 extern RETSIGTYPE parent_exit(int a);
+extern void init_processes(void);
 extern void setup_signals(void);
 extern int execute_script(const char *);
 extern void check_children(void);

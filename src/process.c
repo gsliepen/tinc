@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.5 2000/11/20 19:12:13 guus Exp $
+    $Id: process.c,v 1.1.2.6 2000/11/20 22:13:12 guus Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,7 @@
 #include "system.h"
 
 /* A list containing all our children */
-list_t *child_pids;
+list_t *child_pids = NULL;
 
 /* If zero, don't detach from the terminal. */
 int do_detach = 1;
@@ -54,6 +54,13 @@ static pid_t ppid;
 extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
+
+void init_processes(void)
+{
+cp
+  child_pids = list_new();
+cp
+}
 
 void memory_full(int size)
 {
@@ -67,6 +74,7 @@ void memory_full(int size)
 */
 void cleanup_and_exit(int c)
 {
+cp
   close_network_connections();
 
   if(debug_lvl > DEBUG_NOTHING)
@@ -84,7 +92,7 @@ void cleanup_and_exit(int c)
 int write_pidfile(void)
 {
   int pid;
-
+cp
   if((pid = check_pid(pidfilename)))
     {
       if(netname)
@@ -98,7 +106,7 @@ int write_pidfile(void)
   /* if it's locked, write-protected, or whatever */
   if(!write_pid(pidfilename))
     return 1;
-
+cp
   return 0;
 }
 
@@ -108,7 +116,7 @@ int write_pidfile(void)
 int kill_other(void)
 {
   int pid;
-
+cp
   if(!(pid = read_pid(pidfilename)))
     {
       if(netname)
@@ -123,7 +131,7 @@ int kill_other(void)
   if(kill(pid, SIGTERM) && errno == ESRCH)
     fprintf(stderr, _("Removing stale lock file.\n"));
   remove_pid(pidfilename);
-
+cp
   return 0;
 }
 
@@ -134,7 +142,7 @@ int detach(void)
 {
   int fd;
   pid_t pid;
-
+cp
   setup_signals();
 
   if(write_pidfile())
@@ -152,7 +160,7 @@ int detach(void)
     syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
 
   xalloc_fail_func = memory_full;
-
+cp
   return 0;
 }
 
@@ -166,7 +174,7 @@ void _execute_script(const char *name)
   int error = 0;
   char *scriptname;
   char *s;
-
+cp
   if(netname)
     {
       asprintf(&s, "NETNAME=%s", netname);
@@ -237,20 +245,22 @@ void _execute_script(const char *name)
 int execute_script(const char *name)
 {
   pid_t pid;
-
+cp
   if((pid = fork()) < 0)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "fork");
       return -1;
     }
-
+cp
   if(pid)
     {
-      list_append(child_pids, (void*)(int)pid);
+      syslog(LOG_DEBUG, "%p, %d (%p)", child_pids, pid, &pid);
+      list_append(child_pids, &pid);
+cp
       return 0;
     }
-
+cp
   /* Child here */
   _execute_script(name);
 }
@@ -264,7 +274,7 @@ int check_child(void *data)
 {
   pid_t pid;
   int status;
-
+cp
   pid = (pid_t) data;
   pid = waitpid(pid, &status, WNOHANG);
   if(WIFEXITED(status))
@@ -282,7 +292,7 @@ int check_child(void *data)
 	}
       return -1;
     }
-
+cp
   /* Child is still running */
   return 0;
 }

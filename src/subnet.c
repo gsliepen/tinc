@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.13 2000/11/20 19:41:13 guus Exp $
+    $Id: subnet.c,v 1.1.2.14 2000/11/20 22:13:13 guus Exp $
 */
 
 #include "config.h"
@@ -130,6 +130,7 @@ cp
 void subnet_add(connection_t *cl, subnet_t *subnet)
 {
 cp
+  subnet->owner = cl;
   rbl_insert(subnet_tree, subnet);
   rbl_insert(cl->subnet_tree, subnet);
 cp
