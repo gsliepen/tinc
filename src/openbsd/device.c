@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.5 2002/02/18 16:25:19 guus Exp $
+    $Id: device.c,v 1.1.2.6 2002/03/24 16:50:58 guus Exp $
 */
 
 #include "config.h"
@@ -114,8 +114,8 @@ cp
 
   memcpy(packet->data, mymac.net.mac.address.x, 6);
   memcpy(packet->data + 6, mymac.net.mac.address.x, 6);
-  packet->data[12] = 0x08;
-  packet->data[13] = 0x00;
+  packet->data[12] = (ntohl(type) >> 8) & 0xFF;
+  packet->data[13] = ntohl(type) & 0xFF;
 
   packet->len = lenin + 10;
 
@@ -132,12 +132,14 @@ cp
 
 int write_packet(vpn_packet_t *packet)
 {
-  u_int32_t type = htonl(AF_INET);
+  u_int32_t type;
   struct iovec vector[2];
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
            packet->len, device_info);
+
+  type = htonl((packet->data[12] << 8) + packet->data[13]);
 
   vector[0].iov_base = &type;
   vector[0].iov_len = sizeof(type);
