@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.33 2002/03/19 00:08:23 guus Exp $
+    $Id: netutl.c,v 1.12.4.34 2002/04/05 09:11:38 guus Exp $
 */
 
 #include "config.h"
@@ -191,7 +191,7 @@ cp
       return result;
 
   if(m)
-    return (a[i] & (0x100 - (m << 1))) - (b[i] & (0x100 - (m << 1)));
+    return (a[i] & (0x100 - (1 << (8 - m)))) - (b[i] & (0x100 - (1 << (8 - m))));
 
   return 0;
 }
@@ -204,7 +204,7 @@ cp
   masklen %= 8;
   
   if(masklen)
-    a[i++] &= (0x100 - (masklen << 1));
+    a[i++] &= (0x100 - (1 << masklen));
   
   for(; i < len; i++)
     a[i] = 0;
@@ -219,7 +219,7 @@ cp
 
   if(m)
     {
-      a[i] = b[i] & (0x100 - (m << 1));
+      a[i] = b[i] & (0x100 - (1 << m));
       i++;
     }
 
@@ -235,7 +235,7 @@ cp
   masklen %= 8;
   
   if(masklen)
-    if(a[i++] & ~(0x100 - (masklen << 1)))
+    if(a[i++] & (char)~(0x100 - (1 << masklen)))
       return -1;
   
   for(; i < len; i++)
