@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.c,v 1.2 2002/04/13 10:28:56 zarq Exp $
+    $Id: logging.c,v 1.3 2002/04/13 10:43:10 zarq Exp $
 */
 
 #include "config.h"
@@ -79,8 +79,25 @@ void log_default(int level, int priority, char *fmt, va_list ap)
 
 void log_syslog(int level, int priority, char *fmt, va_list ap)
 {
-  int priorities[] = { LOG_DEBUG, LOG_INFO, LOG_NOTICE, LOG_ERR, LOG_CRIT };
+  const int priorities[] = { LOG_DEBUG, LOG_INFO, LOG_NOTICE, LOG_ERR, LOG_CRIT };
 
   if(debug_lvl >= level)
     vsyslog(priorities[priority], fmt, ap);
+}
+
+void syslog(int priority, char *fmt, ...)
+{
+  /* Mapping syslog prio -> tinc prio */
+  const int priorities[] = { TLOG_CRIT, TLOG_CRIT, TLOG_CRIT, TLOG_ERR,
+			       TLOG_NOTICE, TLOG_NOTICE, TLOG_INFO, TLOG_DEBUG };
+  avl_node_t *avlnode;
+  va_list args;
+
+  va_start(args, fmt);
+  for(avlnode = log_hooks_tree->head; avlnode; avlnode = avlnode->next)
+    {
+      assert(avlnode->data);
+      ((log_function_t*)(avlnode->data))(0, priorities[priority], fmt, args);
+    }
+  va_end(args);
 }
