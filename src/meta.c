@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.14 2001/01/07 17:08:57 guus Exp $
+    $Id: meta.c,v 1.1.2.15 2001/02/25 11:09:29 guus Exp $
 */
 
 #include "config.h"
@@ -117,17 +117,19 @@ cp
 
   if(lenin<=0)
     {
-      if(errno==EINTR)
-        return 0;      
-      if(errno==0)
+      if(lenin==0)
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
                 cl->name, cl->hostname);
         }
       else
-        syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
-               cl->name, cl->hostname);
+        if(errno==EINTR)
+          return 0;      
+        else
+          syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
+                 cl->name, cl->hostname);
+
       return -1;
     }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.78 2001/02/06 10:42:27 guus Exp $
+    $Id: protocol.c,v 1.28.4.79 2001/02/25 11:09:29 guus Exp $
 */
 
 #include "config.h"
@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #include <utils.h>
 #include <xalloc.h>
@@ -1324,9 +1325,17 @@ int tcppacket_h(connection_t *cl)
   while(todo)
     {
       x = read(cl->meta_socket, p, todo);
-      if(x<0)
+
+      if(x<=0)
         {
-          syslog(LOG_ERR, _("Error during reception of PACKET from %s (%s): %m"), cl->name, cl->hostname);
+          if(x==0)
+            syslog(LOG_NOTICE, _("Connection closed by %s (%s)"), cl->name, cl->hostname);
+          else
+            if(errno==EINTR)
+              continue;
+            else
+              syslog(LOG_ERR, _("Error during reception of PACKET from %s (%s): %m"), cl->name, cl->hostname);
+
           return -1;
         }
       
