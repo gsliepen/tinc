@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.117 2001/10/31 20:37:54 guus Exp $
+    $Id: protocol.c,v 1.28.4.118 2001/11/03 21:22:02 guus Exp $
 */
 
 #include "config.h"
@@ -246,14 +246,12 @@ cp
 
 int send_metakey(connection_t *c)
 {
-  char *buffer;
+  char buffer[MAX_STRING_SIZE];
   int len, x;
 cp
   len = RSA_size(c->rsa_key);
 
   /* Allocate buffers for the meta key */
-
-  buffer = xmalloc(len*2+1);
 
   if(!c->outkey)
     c->outkey = xmalloc(len);
@@ -290,11 +288,10 @@ cp
      This is allowed, because we encrypt a totally random string
      with a length equal to that of the modulus of the RSA key.
   */
-  
+
   if(RSA_public_encrypt(len, c->outkey, buffer, c->rsa_key, RSA_NO_PADDING) != len)
     {
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
-      free(buffer);
       return -1;
     }
 cp
@@ -306,7 +303,6 @@ cp
   /* Send the meta key */
 
   x = send_request(c, "%d %s", METAKEY, buffer);
-  free(buffer);
 
   /* Further outgoing requests are encrypted with the key we just generated */
 
@@ -329,7 +325,7 @@ cp
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name, c->hostname);
        return -1;
     }
-
+cp
   len = RSA_size(myself->connection->rsa_key);
 
   /* Check if the length of the meta key is all right */
@@ -341,7 +337,7 @@ cp
     }
 
   /* Allocate buffers for the meta key */
-
+cp
   if(!c->inkey)
     c->inkey = xmalloc(len);
 
@@ -349,11 +345,11 @@ cp
     c->inctx = xmalloc(sizeof(*c->inctx));
 
   /* Convert the challenge from hexadecimal back to binary */
-
+cp
   hex2bin(buffer,buffer,len);
 
   /* Decrypt the meta key */
-  
+cp  
   if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
     {
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
@@ -368,7 +364,7 @@ cp
     }
 
   /* All incoming requests will now be encrypted. */
-
+cp
   EVP_DecryptInit(c->inctx, EVP_bf_cfb(),
                   c->inkey + len - EVP_bf_cfb()->key_len,
                   c->inkey + len - EVP_bf_cfb()->key_len - EVP_bf_cfb()->iv_len);
@@ -382,7 +378,7 @@ cp
 
 int send_challenge(connection_t *c)
 {
-  char *buffer;
+  char buffer[MAX_STRING_SIZE];
   int len, x;
 cp
   /* CHECKME: what is most reasonable value for len? */
@@ -391,12 +387,8 @@ cp
 
   /* Allocate buffers for the challenge */
 
-  buffer = xmalloc(len*2+1);
-
-  if(c->hischallenge)
-    free(c->hischallenge);
-    
-  c->hischallenge = xmalloc(len);
+  if(!c->hischallenge)
+    c->hischallenge = xmalloc(len);
 cp
   /* Copy random data to the buffer */
 
@@ -412,7 +404,6 @@ cp
   /* Send the challenge */
 
   x = send_request(c, "%d %s", CHALLENGE, buffer);
-  free(buffer);
 cp
   return x;
 }
@@ -672,11 +663,11 @@ cp
     {
       other = (connection_t *)node->data;
 
-      if(other == c)
-        continue;
-      
-      send_add_node(other, c->node);
-      send_add_edge(other, c->edge);
+      if(other->status.active && other != c)
+        {
+          send_add_node(other, c->node);
+          send_add_edge(other, c->edge);
+        }
     }
 
   /* Run MST and SSSP algorithms */
@@ -736,11 +727,21 @@ cp
 
   /* Check if the owner of the new subnet is in the connection list */
 
-  if(!(owner = lookup_node(name)))
+  owner = lookup_node(name);
+
+  if(!node)
     {
       syslog(LOG_ERR, _("Got ADD_SUBNET from %s (%s) for %s which is not in our connection list"),
-             name, c->name, c->hostname);
+             c->name, c->hostname, name);
       return -1;
+    }
+
+  /* Check if we already know this subnet */
+  
+  if(lookup_subnet(owner, s))
+    {
+      free_subnet(s);
+      return 0;
     }
 
   /* If everything is correct, add the subnet to the list of the owner */
@@ -793,14 +794,6 @@ cp
       return -1;
     }
 
-  /* Check if subnet string is valid */
-
-  if(!(s = str2net(subnetstr)))
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid subnet string"));
-      return -1;
-    }
-
   /* Check if the owner of the new subnet is in the connection list */
 
   if(!(owner = lookup_node(name)))
@@ -810,10 +803,20 @@ cp
       return -1;
     }
 
+  /* Check if subnet string is valid */
+
+  if(!(s = str2net(subnetstr)))
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid subnet string"));
+      return -1;
+    }
+
   /* If everything is correct, delete the subnet from the list of the owner */
 
   find = lookup_subnet(owner, s);
   
+  free_subnet(s);
+
   if(!find)
     {
       syslog(LOG_ERR, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
@@ -821,7 +824,7 @@ cp
       return -1;
     }
   
-  subnet_del(owner, s);
+  subnet_del(owner, find);
 
   /* Tell the rest */
   
@@ -1307,7 +1310,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       other = (connection_t *)node->data;
-      if(other != c && other->status.active)
+      if(other->status.active && other != c)
         send_request(other, "%d %s", KEY_CHANGED, n->name);
     }
 cp
