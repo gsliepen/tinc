@@ -117,7 +117,7 @@ cp
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
   add_mac_addresses(&vp);
 
-  if((lenin = write_n(tap_fd, &vp, vp.len + 2)) < 0)
+  if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
     syslog(LOG_ERR, "Can't write to tap device: %m");
   else
     total_tap_out += lenin;
