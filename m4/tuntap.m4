@@ -10,11 +10,14 @@ AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
    if test $if_tun_h = no; then
     tinc_cv_linux_if_tun_h=none
   else
-    AC_DEFINE(HAVE_TUNTAP)
-    AC_DEFINE_UNQUOTED(LINUX_IF_TUN_H, "$if_tun_h")
-    AC_SUBST(LINUX_IF_TUN_H)
     tinc_cv_linux_if_tun_h=$if_tun_h
   fi
-  AC_SUBST(HAVE_TUNTAP)
 ])
+
+if test $tinc_cv_linux_if_tun_h != none; then
+  AC_DEFINE(HAVE_TUNTAP)
+  AC_DEFINE_UNQUOTED(LINUX_IF_TUN_H, "$tinc_cv_linux_if_tun_h")
+  AC_SUBST(LINUX_IF_TUN_H)
+fi
+AC_SUBST(HAVE_TUNTAP)
 ])
