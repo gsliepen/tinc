@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.24 2000/08/08 17:07:47 guus Exp $
+    $Id: net.c,v 1.35.4.25 2000/08/09 09:34:21 guus Exp $
 */
 
 #include "config.h"
@@ -184,7 +184,7 @@ cp
         }
       else
 	{
-          /* Can we add to queue? */
+          add_queue(&(cl->sq), rp, rp->len + 2);
 	  if(!cl->status.waitingforkey)
 	    send_key_request(rp->from);
 	}
@@ -473,6 +473,12 @@ cp
       return -1;
     }
 
+  if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)))
+    {
+      syslog(LOG_ERR, _("setsockopt: %m"));
+      return -1;
+    }
+
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
@@ -579,13 +585,13 @@ cp
     }
 
   flags = fcntl(cl->meta_socket, F_GETFL);
-/*  if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
+  if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
              cl->real_hostname, cl->port);
       return -1;
     }
-*/
+
   if(debug_lvl > 0)
     syslog(LOG_INFO, _("Connected to %s port %hd"),
          cl->real_hostname, cl->port);
