@@ -17,17 +17,19 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.13 2000/10/15 00:59:34 guus Exp $
+    $Id: conf.h,v 1.6.4.14 2000/10/24 15:46:16 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
 
+#include "net.h"
+
 #define MAXTIMEOUT 900  /* Maximum timeout value for retries. Should this be a configuration option? */
 
 typedef struct ip_mask_t {
-  unsigned long ip;
-  unsigned long mask;
+  ipv4_t address;
+  ipv4_t mask;
 } ip_mask_t;
 
 typedef enum which_t {
@@ -86,7 +88,6 @@ enum {
 extern config_t *config;
 extern int debug_lvl;
 extern int timeout;
-extern int upstreamindex;
 extern int sighup;
 extern char *confbase;
 extern char *netname;
@@ -94,7 +95,6 @@ extern char *netname;
 extern config_t *add_config_val(config_t **, int, char *);
 extern int read_config_file(config_t **, const char *);
 extern const config_t *get_config_val(config_t *, which_t type);
-extern const config_t *get_next_config_val(config_t *, which_t type, int);
 extern void clear_config();
 extern int read_server_config(void);
 

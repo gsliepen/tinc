@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.7 2000/10/20 15:34:34 guus Exp $
+    $Id: connlist.c,v 1.1.2.8 2000/10/24 15:46:16 guus Exp $
 */
 
 #include <syslog.h>
@@ -196,11 +196,23 @@ void dump_conn_list(void)
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
+  syslog(LOG_DEBUG, _("%s at %s port %hd flags %d sockets %d, %d status %04x"),
+	 myself->name, myself->hostname, myself->port, myself->flags,
+	 myself->socket, myself->meta_socket, myself->status);
+
+  for(s = myself->subnets; s != NULL; s = s->next)
+    {
+      netstr = net2str(s);
+      syslog(LOG_DEBUG, ": %s", netstr);
+      free(netstr);
+    }
+
   for(p = conn_list; p != NULL; p = p->next)
     {
       syslog(LOG_DEBUG, _("%s at %s port %hd flags %d sockets %d, %d status %04x"),
 	     p->name, p->hostname, p->port, p->flags,
 	     p->socket, p->meta_socket, p->status);
+
       for(s = p->subnets; s != NULL; s = s->next)
         {
           netstr = net2str(s);

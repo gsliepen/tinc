@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.44 2000/10/22 13:37:15 zarq Exp $
+    $Id: net.c,v 1.35.4.45 2000/10/24 15:46:16 guus Exp $
 */
 
 #include "config.h"
@@ -62,7 +62,7 @@ int total_tap_out = 0;
 int total_socket_in = 0;
 int total_socket_out = 0;
 
-int upstreamindex = 0;
+config_t *upstreamcfg;
 static int seconds_till_retry;
 
 char *unknown = NULL;
@@ -127,19 +127,16 @@ int xrecv(vpn_packet_t *inpkt)
   vpn_packet_t outpkt;
   int outlen, outpad;
 cp
-  if(debug_lvl > DEBUG_TRAFFIC)
-    syslog(LOG_ERR, _("Receiving packet of %d bytes"),
-           inpkt->len);
-
   outpkt.len = inpkt->len;
   EVP_DecryptInit(myself->cipher_pktctx, myself->cipher_pkttype, myself->cipher_pktkey, NULL);
   EVP_DecryptUpdate(myself->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
-  /* FIXME: grok DecryptFinal  
   EVP_DecryptFinal(myself->cipher_pktctx, outpkt.data + outlen, &outpad);
-   */
+  outlen += outpad;
    
+  /* FIXME sometime
   add_mac_addresses(&outpkt);
-
+  */
+  
   if(write(tap_fd, outpkt.data, outpkt.len) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
@@ -438,7 +435,7 @@ cp
   a.sin_port = htons(port);
   
   if((cfg = get_config_val(config, interfaceip)))
-    a.sin_addr.s_addr = htonl(cfg->data.ip->ip);
+    a.sin_addr.s_addr = htonl(cfg->data.ip->address);
   else
     a.sin_addr.s_addr = htonl(INADDR_ANY);
 
@@ -620,11 +617,13 @@ cp
 }
 
 /*
-  set up the local sockets (listen only)
+  Configure conn_list_t myself and set up the local sockets (listen only)
 */
 int setup_myself(void)
 {
   config_t const *cfg;
+  subnet_t *net;
+  int i;
 cp
   myself = new_conn_list();
 
@@ -693,6 +692,18 @@ cp
     if(cfg->data.val == stupid_true)
       myself->flags |= TCPONLY;
 
+/* Read in all the subnets specified in the host configuration file */
+
+  for(cfg = myself->config; cfg = get_config_val(cfg, subnet); cfg = cfg->next)
+    {
+      net = new_subnet();
+      net->type = SUBNET_IPV4;
+      net->net.ipv4.address = cfg->data.ip->address;
+      net->net.ipv4.mask = cfg->data.ip->mask;
+      
+      subnet_add(myself, net);
+    }
+    
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening socket!"));
@@ -718,24 +729,25 @@ sigalrm_handler(int a)
 {
   config_t const *cfg;
 cp
-  cfg = get_next_config_val(config, connectto, upstreamindex++);
+  cfg = get_config_val(upstreamcfg, connectto);
 
-  if(!upstreamindex && !cfg)
+  if(!cfg && upstreamcfg == myself->config)
     /* No upstream IP given, we're listen only. */
     return;
 
   while(cfg)
     {
+      upstreamcfg = cfg->next;
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         {
           signal(SIGALRM, SIG_IGN);
           return;
         }
-      cfg = get_next_config_val(config, connectto, upstreamindex++); /* Or else we try the next ConnectTo line */
+      cfg = get_config_val(upstreamcfg, connectto); /* Or else we try the next ConnectTo line */
     }
 
   signal(SIGALRM, sigalrm_handler);
-  upstreamindex = 0;
+  upstreamcfg = myself->config;
   seconds_till_retry += 5;
   if(seconds_till_retry > MAXTIMEOUT)    /* Don't wait more than MAXTIMEOUT seconds. */
     seconds_till_retry = MAXTIMEOUT;
@@ -781,19 +793,20 @@ cp
 
   free(scriptname);
 
-  if((cfg = get_next_config_val(config, connectto, upstreamindex++)) == NULL)
+  if(!(cfg = get_config_val(myself->config, connectto)))
     /* No upstream IP given, we're listen only. */
     return 0;
 
   while(cfg)
     {
+      upstreamcfg = cfg->next;
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         return 0;
-      cfg = get_next_config_val(config, connectto, upstreamindex++); /* Or else we try the next ConnectTo line */
+      cfg = get_config_val(upstreamcfg, connectto); /* Or else we try the next ConnectTo line */
     }
     
   signal(SIGALRM, sigalrm_handler);
-  upstreamindex = 0;
+  upstreamcfg = myself->config;
   seconds_till_retry = MAXTIMEOUT;
   syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
   alarm(seconds_till_retry);
@@ -968,6 +981,8 @@ int handle_incoming_vpn_data()
   vpn_packet_t pkt;
   int lenin;
   int x, l = sizeof(x);
+  struct sockaddr from;
+  socklen_t fromlen = sizeof(from);
 cp
   if(getsockopt(myself->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
@@ -981,12 +996,18 @@ cp
       return -1;
     }
 
-  if(recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, NULL, NULL) <= 0)
+  if(recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, &from, &fromlen) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return -1;
     }
-
+/*
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    {
+      syslog(LOG_DEBUG, _("Received packet of %d bytes from %d.%d.%d.%d"), pkt.len,
+             from.sa_addr[0], from.sa_addr[1], from.sa_addr[2], from.sa_addr[3]);
+    } 
+*/
 cp
   return xrecv(&pkt);
 }
@@ -1181,11 +1202,8 @@ cp
 void handle_tap_input(void)
 {
   vpn_packet_t vp;
-  ip_t from, to;
-  int ether_type, lenin;
+  int lenin;
 cp  
-  memset(&vp, 0, sizeof(vp));
-
   if(taptype = 1)
     {
       if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
@@ -1207,25 +1225,19 @@ cp
 
   total_tap_in += lenin;
 
-  ether_type = ntohs(*((unsigned short*)(&vp.data[12])));
-  if(ether_type != 0x0800)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_INFO, _("Non-IP ethernet frame %04x from %02x:%02x:%02x:%02x:%02x:%02x"), ether_type, MAC_ADDR_V(vp.data[6]));
-      return;
-    }
-  
   if(lenin < 32)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_INFO, _("Dropping short packet from %02x:%02x:%02x:%02x:%02x:%02x"), MAC_ADDR_V(vp.data[6]));
+	syslog(LOG_WARNING, _("Received short packet from tap device"));
       return;
     }
 
-  from = ntohl(*((unsigned long*)(&vp.data[26])));
-  to = ntohl(*((unsigned long*)(&vp.data[30])));
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    {
+      syslog(LOG_DEBUG, _("Read packet of length %d from tap device"), vp.len);
+    }
 
-  send_packet(to, &vp);
+//  route_packet(&vp);
 cp
 }
 

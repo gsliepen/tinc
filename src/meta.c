@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.5 2000/10/21 11:52:06 guus Exp $
+    $Id: meta.c,v 1.1.2.6 2000/10/24 15:46:16 guus Exp $
 */
 
 #include "config.h"
@@ -43,13 +43,14 @@ cp
            cl->name, cl->hostname, buffer);
 
   buffer[length-1]='\n';
-  
+/*  
   if(cl->status.encryptout)
     {
       EVP_EncryptUpdate(cl->cipher_outctx, outbuf, &outlen, buffer, length);
       bufp = outbuf;
     }
   else
+*/
     bufp = buffer;
 
   if(write(cl->meta_socket, bufp, length) < 0)
@@ -92,10 +93,11 @@ cp
              cl->name, cl->hostname, strerror(x));
       return -1;
     }
-
+/*
   if(cl->status.decryptin)
     bufp = inbuf;
   else
+*/
     bufp = cl->buffer + cl->buflen;
 
   lenin = read(cl->meta_socket, bufp, MAXBUFSIZE - cl->buflen);
@@ -115,12 +117,12 @@ cp
                cl->name, cl->hostname);
       return -1;
     }
-
+/*
   if(cl->status.decryptin)
     {
       EVP_DecryptUpdate(cl->cipher_inctx, cl->buffer + cl->buflen, NULL, inbuf, lenin);
     }
-    
+*/
   oldlen = cl->buflen;
   cl->buflen += lenin;
 
@@ -140,7 +142,7 @@ cp
 
       if(cl->reqlen)
         {
-          if(debug_lvl >= DEBUG_PROTOCOL)
+          if(debug_lvl >= DEBUG_META)
             syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
 	           cl->name, cl->hostname, cl->buffer);
 

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.16 2000/10/22 13:47:41 zarq Exp $
+    $Id: conf.c,v 1.9.4.17 2000/10/24 15:46:15 guus Exp $
 */
 
 
@@ -69,7 +69,7 @@ static internal_config_t hazahaza[] = {
   { "Address",      address,        TYPE_NAME },
   { "Port",         port,           TYPE_INT },
   { "PublicKey",    publickey,      TYPE_NAME },
-  { "Subnet",       subnet,         TYPE_NAME },
+  { "Subnet",       subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
   { "RestrictHosts", restricthosts, TYPE_BOOL },
   { "RestrictSubnets", restrictsubnets, TYPE_BOOL },
   { "RestrictAddress", restrictaddress, TYPE_BOOL },
@@ -234,21 +234,6 @@ cp
     if(p->which == type)
       break;
 cp
-  return p;
-}
-
-/*
-  Support for multiple config lines.
-  Index is used to get a specific value, 0 being the first, 1 the second etc.
-*/
-const config_t *get_next_config_val(config_t *p, which_t type, int index)
-{
-cp  
-  for(; p != NULL; p = p->next)
-    if(p->which == type)
-      if(--index < 0)
-        break;
-cp  
   return p;
 }
 

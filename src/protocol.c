@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.44 2000/10/21 11:52:07 guus Exp $
+    $Id: protocol.c,v 1.28.4.45 2000/10/24 15:46:17 guus Exp $
 */
 
 #include "config.h"
@@ -469,7 +469,6 @@ cp
   notify_others(cl, NULL, send_add_host);
   notify_one(cl);
 */
-  upstreamindex = 0;
 
 cp
   if(cl->status.outgoing)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.4 2000/10/15 00:59:37 guus Exp $
+    $Id: subnet.c,v 1.1.2.5 2000/10/24 15:46:18 guus Exp $
 */
 
 #include "config.h"
@@ -45,13 +45,48 @@ cp
 
 void subnet_add(conn_list_t *cl, subnet_t *subnet)
 {
+  subnet_t *p = NULL;
+  subnet_t *q = NULL;
 cp
-  /* FIXME: do sorting on netmask size if necessary */
+  subnet->owner = cl;
 
-  subnet->next = cl->subnets->next;
-  subnet->prev = NULL;
-  subnet->next->prev = subnet;
-  cl->subnets = subnet;
+  /* Sort on size of subnet mask (IPv4 only at the moment!)
+  
+     Three cases: cl->subnets = NULL -> just add this subnet
+                  insert before first -> add it in front of list
+                  rest: insert after another subnet
+   */
+
+  if(cl->subnets)
+    {
+      p = q = cl->subnets;
+
+      for(; p; p = p->next)
+        {
+          if(subnet->net.ipv4.mask >= p->net.ipv4.mask)
+            break;
+
+          q = p;
+        }
+     }
+     
+  if(!cl->subnets || p == cl->subnets)	/* First two cases */
+    {
+      /* Insert in front */
+      subnet->next = cl->subnets;
+      subnet->prev = NULL;
+      cl->subnets = subnet;
+    }
+  else					/* Third case */
+    {
+      /* Insert after q */
+      subnet->next = q->next;
+      subnet->prev = q;
+      q->next = subnet;
+    }
+
+  if(subnet->next)
+    subnet->next->prev = subnet;
 cp
 }
 
@@ -59,15 +94,13 @@ void subnet_del(subnet_t *subnet)
 {
 cp
   if(subnet->prev)
-    {
-      subnet->prev->next = subnet->next;
-    }
+    subnet->prev->next = subnet->next;
   else
-    {
-      subnet->owner->subnets = subnet->next;
-    }
+    subnet->owner->subnets = subnet->next;
 
-  subnet->next->prev = subnet->prev;
+  if(subnet->next)
+    subnet->next->prev = subnet->prev;
+
   free_subnet(subnet);
 cp
 }
@@ -100,7 +133,7 @@ cp
           }
         break;
       case SUBNET_IPV4:
-        if(sscanf(subnetstr, "%d,%lx:%lx", &subnet->type, &subnet->net.ipv4.address, &subnet->net.ipv4.mask) != 3)
+        if(sscanf(subnetstr, "%d,%lx/%lx", &subnet->type, &subnet->net.ipv4.address, &subnet->net.ipv4.mask) != 3)
           {
             free_subnet(subnet);
             return NULL;
@@ -152,8 +185,10 @@ cp
                    subnet->net.mac.address.x[3],
                    subnet->net.mac.address.x[4],
                    subnet->net.mac.address.x[5]);
+        break;
       case SUBNET_IPV4:
-        asprintf(&netstr, "%d,%lx:%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
+        asprintf(&netstr, "%d,%lx/%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
+        break;
       case SUBNET_IPV6:
         asprintf(&netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
                    subnet->net.ipv6.address.x[0],
@@ -172,6 +207,7 @@ cp
                    subnet->net.ipv6.mask.x[5],
                    subnet->net.ipv6.mask.x[6],
                    subnet->net.ipv6.mask.x[7]);
+        break;
       default:
         netstr = NULL;
     }
