@@ -1,6 +1,6 @@
 .TH TINCD 8 "June 2000" "tinc version 1.0pre3" "FSF"
 .SH NAME
-tinc \- tinc VPN daemon
+tincd \- tinc VPN daemon
 .SH SYNOPSIS
 .B tincd
 [\fIoption\fR]...
@@ -12,7 +12,7 @@ network (VPN) project. When started, tincd will read
 it's configuration file to determine what virtual subnets
 it has to serve and to what other tinc daemons it should connect.
 It will connect to the ethertap or tun/tap device and set up a socket
-for incomming connections.
+for incoming connections.
 If that succeeds, it will detach from the controlling terminal and
 continue in the background, accepting and setting up connections to other
 tinc daemons that are part of the virtual private network.
@@ -35,7 +35,7 @@ Attempt to kill a running tincd and exit.
 \fB\-n\fR, \fB\-\-net\fR=\fINETNAME\fR
 Connect to net NETNAME.
 .TP
-\fB\-K\fR, \fB\-\-generate-key\fR[=\fIBITS]\fR
+\fB\-K\fR, \fB\-\-generate-keys\fR[=\fIBITS]\fR
 Generate public/private RSA keypair and exit. If BITS is omitted,
 the default length will be 1024 bits.
 .TP

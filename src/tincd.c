@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.22 2000/10/30 00:22:54 guus Exp $
+    $Id: tincd.c,v 1.10.4.23 2000/10/30 10:19:06 guus Exp $
 */
 
 #include "config.h"
@@ -90,7 +90,7 @@ static struct option const long_options[] =
   { "help", no_argument, &show_help, 1 },
   { "version", no_argument, &show_version, 1 },
   { "no-detach", no_argument, &do_detach, 0 },
-  { "keygen", optional_argument, NULL, 'K'},
+  { "generate-keys", optional_argument, NULL, 'K'},
   { NULL, 0, NULL, 0 }
 };
 

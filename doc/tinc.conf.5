@@ -1,6 +1,6 @@
 .TH TINC 5 "May 2000" "tinc version 1.0" "FSF"
 .SH NAME
-tincd.conf \- tinc daemon configuration
+tinc.conf \- tinc daemon configuration
 .SH "DESCRIPTION"
 The files in the \fI/etc/tinc\fR directory contain runtime and
 security information for the \fBtinc\fR(8) daemon.
@@ -23,7 +23,7 @@ However, it is not strictly necessary that you call tinc with the -n
 option. In this case, the network name would just be empty, and it
 will be used as such. tinc now looks for files in \fI/etc/tinc/\fR,
 instead of \fI/etc/tinc/\fBnn\fI/\fR; the configuration file should be
-\fI/etc/tinc/tincd.conf\fR, and the passphrases are now expected to be
+\fI/etc/tinc/tinc.conf\fR, and the passphrases are now expected to be
 in \fI/etc/tinc/passphrases/\fR.
 
 But it is highly recommended that you use this feature of tinc,
@@ -36,8 +36,9 @@ it will be part of. The name will be used by other tinc daemons for
 identification. The name has to be declared in the
 \fI/etc/tinc/\fBnn\fI/tinc.conf\fR file.
 
-To make things easy, choose something that will give unique names to
-your tinc daemon(s): hostnames, owner surnames, location.
+To make things easy, choose something that will give unique and easy
+to rememebr names to your tinc daemon(s).
+You could try things like hostnames, owner surnames or location names.
 .PP
 .SH "PUBLIC/PRIVATE KEYS"
 You should use \fBtincd --generate-keys\fR to generate public/private
@@ -50,7 +51,7 @@ for the name of the tinc daemon (See \fBNAMES\fR).
 .PP
 .SH "SERVER CONFIGURATION"
 The server configuration of the daemon is done in the file
-\fI/etc/tinc/\fBnn\fI/tincd.conf\fR.
+\fI/etc/tinc/\fBnn\fI/tinc.conf\fR.
 
 This file consists of comments (lines started with a \fB#\fR) or
 assignments in the form of
@@ -86,18 +87,6 @@ a lookup if your DNS server is not responding.
 
 This does not affect resolving hostnames to IP addresses from the
 host configuration files.
-.TP
-\fBInterface\fR = <\fIdevice\fR> (optional)
-If you have more than one network interface in your computer, tinc will by
-default listen on all of them for incoming connections. It is possible to
-bind tinc to a single interface like eth0 or ppp0 with this variable.
-.TP
-\fBInterfaceIP\fR = <\fIlocal address\fR> (optional)
-If your computer has more than one IP address on a single interface (for example
-if you are running virtual hosts), tinc will by default listen on all of them for
-incoming connections. It is possible to bind tinc to a single IP address with
-this variable. It is still possible to listen on several interfaces at the same
-time though, if they share the same IP address.
 .TP
 \fBKeyExpire\fR = <\fIseconds\fR> (3600)
 This option controls the time the encryption keys used to encrypt the data
