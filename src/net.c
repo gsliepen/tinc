@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.69 2000/11/08 00:10:49 guus Exp $
+    $Id: net.c,v 1.35.4.70 2000/11/08 17:56:34 guus Exp $
 */
 
 #include "config.h"
@@ -485,6 +485,7 @@ cp
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "setsockopt");
       return -1;
@@ -492,6 +493,7 @@ cp
 
   if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "setsockopt");
       return -1;
@@ -500,6 +502,7 @@ cp
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "fcntl");
       return -1;
@@ -509,6 +512,7 @@ cp
     {
       if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, cfg->data.ptr, strlen(cfg->data.ptr)))
         {
+          close(nfd);
           syslog(LOG_ERR, _("Unable to bind listen socket to interface %s: %m"), cfg->data.ptr);
           return -1;
         }
@@ -525,12 +529,14 @@ cp
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("Can't bind to port %hd/tcp: %m"), port);
       return -1;
     }
 
   if(listen(nfd, 3))
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "listen");
       return -1;
@@ -551,12 +557,14 @@ int setup_vpn_in_socket(int port)
 cp
   if((nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
+      close(nfd);
       syslog(LOG_ERR, _("Creating socket failed: %m"));
       return -1;
     }
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "setsockopt");
       return -1;
@@ -565,6 +573,7 @@ cp
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "fcntl");
       return -1;
@@ -577,6 +586,7 @@ cp
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), port);
       return -1;
     }
@@ -615,6 +625,7 @@ cp
 
   if(connect(cl->meta_socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
+      close(cl->meta_socket);
       syslog(LOG_ERR, _("%s port %hd: %m"), cl->hostname, cl->port);
       return -1;
     }
@@ -622,6 +633,7 @@ cp
   flags = fcntl(cl->meta_socket, F_GETFL);
   if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
+      close(cl->meta_socket);
       syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
              cl->hostname, cl->port);
       return -1;
@@ -964,6 +976,7 @@ cp
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "setsockopt");
       return -1;
@@ -972,6 +985,7 @@ cp
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
+      close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "fcntl");
       return -1;
@@ -984,6 +998,7 @@ cp
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
+      close(nfd);
       syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), myself->port);
       return -1;
     }
@@ -994,6 +1009,7 @@ cp
 
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
+      close(nfd);
       syslog(LOG_ERR, _("Connecting to %s port %d failed: %m"),
 	     cl->hostname, cl->port);
       return -1;
@@ -1002,6 +1018,7 @@ cp
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
+      close(nfd);
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, nfd,
              cl->name, cl->hostname);
       return -1;
