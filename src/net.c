@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.62 2000/11/04 14:16:46 zarq Exp $
+    $Id: net.c,v 1.35.4.63 2000/11/04 14:52:40 guus Exp $
 */
 
 #include "config.h"
@@ -88,8 +88,6 @@ int execute_script(const char* name)
   pid_t pid;
   char *s;
 
-  asprintf(&scriptname, "%s/%s", confbase, name);
-
   if((pid = fork()) < 0)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
@@ -99,12 +97,12 @@ int execute_script(const char* name)
 
   if(pid)
     {
-      free(scriptname);
       return 0;
     }
 
   /* Child here */
 
+  asprintf(&scriptname, "%s/%s", confbase, name);
   asprintf(&s, "IFNAME=%s", interface_name);
   putenv(s);
   execl(scriptname, NULL);
