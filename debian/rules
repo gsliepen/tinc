@@ -43,7 +43,8 @@ install: build
 
 	$(MAKE) install DESTDIR=`pwd`/debian/tmp
 	mkdir -p `pwd`/debian/tmp/etc/tinc
-	cp -a doc/sample-config `pwd`/debian/tmp/etc/tinc/example
+	cp -a doc/sample-config.tar.gz `pwd`/debian/tmp/etc/tinc/example
+	cd `pwd`/debian/tmp/etc/tinc/example && tar xzf sample-config.tar.gz && rm sample-config.tar.gz
 	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
 
 
