@@ -962,8 +962,8 @@ cp
         {
           if(cl->buffer[i] == '\n')
             {
-              cl->buffer[i] = 0;  /* turn end-of-line into end-of-string */
               p = i + 1;
+              cl->buffer[p] = 0;  /* add end-of-string so we can use sscanf */
               break;
             }
         }
