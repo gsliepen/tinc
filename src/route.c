@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.35 2002/03/15 15:40:40 guus Exp $
+    $Id: route.c,v 1.1.2.36 2002/03/15 15:50:14 guus Exp $
 */
 
 #include "config.h"
@@ -399,7 +399,7 @@ cp
               n = route_ipv4(packet);
               break;
             case 0x86DD:
-              if(packet->data[20] == IPPROTO_ICMPV6 && packet->data[54] = ND_NEIGHBOR_SOLICIT)
+              if(packet->data[20] == IPPROTO_ICMPV6 && packet->data[54] == ND_NEIGHBOR_SOLICIT)
 	        {
 	          route_neighborsol(packet);
 		  return;
