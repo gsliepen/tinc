@@ -32,23 +32,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#define REG_CONTROL_NET      "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
-
-#define USERMODEDEVICEDIR "\\\\.\\"
-#define USERDEVICEDIR "\\??\\"
-#define TAPSUFFIX     ".tap"
-
-#define TAP_CONTROL_CODE(request,method) CTL_CODE(FILE_DEVICE_PHYSICAL_NETCARD | 8000, request, method, FILE_ANY_ACCESS)
-
-#define TAP_IOCTL_GET_LASTMAC           TAP_CONTROL_CODE(0, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_MAC               TAP_CONTROL_CODE(1, METHOD_BUFFERED)
-#define TAP_IOCTL_SET_STATISTICS        TAP_CONTROL_CODE(2, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_VERSION           TAP_CONTROL_CODE(3, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_MTU               TAP_CONTROL_CODE(4, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_INFO              TAP_CONTROL_CODE(5, METHOD_BUFFERED)
-#define TAP_IOCTL_CONFIG_POINT_TO_POINT TAP_CONTROL_CODE(6, METHOD_BUFFERED)
-#define TAP_IOCTL_SET_MEDIA_STATUS      TAP_CONTROL_CODE(7, METHOD_BUFFERED)
-
+#include "mingw/common.h"
 
 int device_fd = 0;
 HANDLE device_handle = INVALID_HANDLE_VALUE;
@@ -159,7 +143,7 @@ bool setup_device(void)
 
 	/* Open registry and look for network adapters */
 
-	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, REG_CONTROL_NET, 0, KEY_READ, &key)) {
+	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, NETWORK_CONNECTIONS_KEY, 0, KEY_READ, &key)) {
 		logger(LOG_ERR, _("Unable to read registry: %s"), winerror(GetLastError()));
 		return false;
 	}
@@ -171,7 +155,7 @@ bool setup_device(void)
 
 		/* Find out more about this adapter */
 
-		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", REG_CONTROL_NET, adapterid);
+		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
                 if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
 			continue;
