@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.h,v 1.1.2.8 2003/07/12 17:41:45 guus Exp $
+    $Id: device.h,v 1.1.2.9 2003/07/15 16:38:18 guus Exp $
 */
 
 #ifndef __TINC_DEVICE_H__
@@ -25,7 +25,13 @@
 
 extern int device_fd;
 extern char *device;
+
+#ifdef HAVE_CYGWIN
+extern char *iface;
+#define interface iface
+#else
 extern char *interface;
+#endif
 
 extern int setup_device(void);
 extern void close_device(void);
