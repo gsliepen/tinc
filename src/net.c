@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.177 2002/09/04 16:26:44 guus Exp $
+    $Id: net.c,v 1.35.4.178 2002/09/06 21:22:35 guus Exp $
 */
 
 #include "config.h"
@@ -248,6 +248,12 @@ cp
             }
           else
             {
+              if(c->status.remove)
+                {
+                  syslog(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."), c->name, c->hostname, c->status);
+                  connection_del(c);
+                  continue;
+                }
               if(debug_lvl >= DEBUG_CONNECTIONS)
                 syslog(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
                        c->name, c->hostname);
