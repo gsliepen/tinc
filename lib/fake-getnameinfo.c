@@ -10,9 +10,12 @@
  */
 
 #include "config.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <system.h>
 
-RCSID("$Id: fake-getnameinfo.c,v 1.1.2.1 2002/06/09 15:26:10 zarq Exp $");
+/* RCSID("$Id: fake-getnameinfo.c,v 1.1.2.2 2002/06/09 15:50:11 zarq Exp $"); */
 
 #ifndef HAVE_GETNAMEINFO
 

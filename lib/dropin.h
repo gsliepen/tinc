@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.1.2.6 2002/02/10 21:57:51 guus Exp $
+    $Id: dropin.h,v 1.1.2.7 2002/06/09 15:50:11 zarq Exp $
 */
 
 #ifndef __DROPIN_H__
@@ -33,6 +33,13 @@ extern char* get_current_dir_name(void);
 
 #ifndef HAVE_ASPRINTF
 extern int asprintf(char **, const char *, ...);
+#endif
+
+#ifndef HAVE_GETNAMEINFO
+#include <sys/types.h>
+#include <sys/socket.h>
+extern int getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
+                size_t hostlen, char *serv, size_t servlen, int flags);
 #endif
 
 #endif /* __DROPIN_H__ */

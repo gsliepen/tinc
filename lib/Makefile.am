@@ -1,5 +1,5 @@
 ## Process this file with automake to produce Makefile.in
-# $Id: Makefile.am,v 1.2.4.7 2001/02/11 11:50:09 guus Exp $
+# $Id: Makefile.am,v 1.2.4.8 2002/06/09 15:50:11 zarq Exp $
 
 noinst_LIBRARIES = libvpn.a
 
@@ -12,4 +12,4 @@ libvpn_a_DEPENDENCIES = $(libvpn_a_LIBADD)
 
 noinst_HEADERS = xalloc.h pidfile.h utils.h getopt.h list.h avl_tree.h dropin.h
 
-EXTRA_DIST = README
+EXTRA_DIST = README fake-getnameinfo.c
