@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.29 2003/08/28 21:05:10 guus Exp $
+    $Id: graph.c,v 1.1.2.30 2003/10/10 16:23:30 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -188,12 +188,13 @@ void sssp_bfs(void)
 
 				/* Situation:
 
-				    /
-				   /
-				   ------(n)-----(e->to)
-				   \
-				    \
+				           /
+				          /
+				   ----->(n)---e-->(e->to)
+				          \
+				           \
 
+				   Where e is an edge, (n) and (e->to) are nodes.
 				   n->address is set to the e->address of the edge left of n to n.
 				   We are currently examining the edge e right of n from n:
 
