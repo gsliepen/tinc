@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.19 2001/10/27 12:13:17 guus Exp $
+    $Id: route.c,v 1.1.2.20 2001/10/27 13:13:35 guus Exp $
 */
 
 #include "config.h"
@@ -46,6 +46,7 @@
 #include "subnet.h"
 #include "route.h"
 #include "protocol.h"
+#include "device.h"
 
 #include "system.h"
 
@@ -217,7 +218,7 @@ cp
   memcpy(arp->arp_sha, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* add fake source hard addr */
   arp->arp_op = htons(ARPOP_REPLY);
   
-  accept_packet(packet);
+  write_packet(packet);
 cp
 }
 
@@ -274,7 +275,7 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
     {
       case RMODE_ROUTER:
         memcpy(packet->data, mymac.net.mac.address.x, 6);	/* Override destination address to make the kernel accept it */
-        accept_packet(packet);
+        write_packet(packet);
         break;
       case RMODE_SWITCH:
         {
@@ -285,20 +286,20 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
           if(subnet)
             {
               if(subnet->owner == myself)
-                accept_packet(packet);
+                write_packet(packet);
               else
                 send_packet(subnet->owner, packet);
             }
           else
             {
               broadcast_packet(source, packet);
-              accept_packet(packet);
+              write_packet(packet);
             }
           }
         break;
       case RMODE_HUB:
         broadcast_packet(source, packet);			/* Spread it on */
-        accept_packet(packet);
+        write_packet(packet);
         break;
     }
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.137 2001/10/27 12:13:17 guus Exp $
+    $Id: net.c,v 1.35.4.138 2001/10/27 13:13:35 guus Exp $
 */
 
 #include "config.h"
@@ -72,7 +72,9 @@
 
 #include "system.h"
 
+int maxtimeout = 900;
 int seconds_till_retry = 5;
+
 int tcp_socket = -1;
 int udp_socket = -1;
 
@@ -161,7 +163,7 @@ cp
   to.sin_addr.s_addr = htonl(n->address);
   to.sin_port = htons(n->port);
 
-  if((sendto(socket, (char *) outpkt.salt, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
+  if((sendto(udp_socket, (char *) outpkt.salt, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              n->name, n->hostname);
@@ -1041,7 +1043,6 @@ try_outgoing_connections(int a)
   static config_t *cfg = NULL;
   static int retry = 0;
   char *name;
-  int maxtimeout = 900;
 cp
   if(!cfg)
     cfg = lookup_config(config_tree, "ConnectTo");
@@ -1122,6 +1123,7 @@ void main_loop(void)
   int r;
   time_t last_ping_check;
   int t;
+  vpn_packet_t packet;
 cp
   last_ping_check = time(NULL);
 
@@ -1190,7 +1192,12 @@ cp
 
           /* local tap data */
           if(FD_ISSET(device_fd, &fset))
-	    handle_tap_input();
+            {
+              if(read_packet(&packet))
+                route_outgoing(&packet);
+              else
+                return;
+            }
         }
     }
 cp

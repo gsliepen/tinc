@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
+    $Id: node.c,v 1.1.2.3 2001/10/27 13:13:35 guus Exp $
 */
 
 #include "config.h"
@@ -35,6 +35,8 @@
 
 avl_tree_t *node_tree;		/* Known nodes, sorted by name */
 avl_tree_t *node_udp_tree;	/* Known nodes, sorted by address and port */
+
+node_t *myself;
 
 int node_compare(node_t *a, node_t *b)
 {

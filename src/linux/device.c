@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
+    $Id: device.c,v 1.1.2.3 2001/10/27 13:13:35 guus Exp $
 */
 
 #include "config.h"
@@ -124,6 +124,12 @@ cp
   return 0;
 }
 
+void close_device(void)
+{
+cp
+  close(device_fd);
+}
+
 /*
   read, encrypt and send data that is
   available through the ethertap device
@@ -195,4 +201,13 @@ cp
   device_total_out += packet->len;
 cp
   return 0;
+}
+
+void dump_device_stats(void)
+{
+cp
+  syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device_fname);
+  syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+  syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+cp
 }

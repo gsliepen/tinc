@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.35 2001/10/27 12:13:17 guus Exp $
+    $Id: net.h,v 1.9.4.36 2001/10/27 13:13:35 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -90,6 +90,7 @@ typedef struct packet_queue_t {
   queue_element_t *tail;
 } packet_queue_t;
 
+extern int maxtimeout;
 extern int seconds_till_retry;
 
 extern char *request_name[256];

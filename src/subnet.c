@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.25 2001/10/27 12:13:17 guus Exp $
+    $Id: subnet.c,v 1.1.2.26 2001/10/27 13:13:35 guus Exp $
 */
 
 #include "config.h"
@@ -338,7 +338,7 @@ cp
   return p;
 }
 
-void dump_subnet_list(void)
+void dump_subnets(void)
 {
   char *netstr;
   subnet_t *subnet;

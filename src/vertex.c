@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.c,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
+    $Id: vertex.c,v 1.1.2.3 2001/10/27 13:13:35 guus Exp $
 */
 
 #include "config.h"
@@ -40,12 +40,6 @@
 #include "system.h"
 
 avl_tree_t *vertex_tree;        /* Tree with all known vertices (replaces active_tree) */
-avl_tree_t *connection_tree;    /* Tree with all meta connections with ourself */
-
-int connection_compare(connection_t *a, connection_t *b)
-{
-  return a->socket - b->socket;
-}
 
 int vertex_compare(vertex_t *a, vertex_t *b)
 {
