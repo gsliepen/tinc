@@ -111,7 +111,7 @@ cp
   return 0;
 }
 
-int xrecv(conn_list_t *cl, real_packet_t *packet)
+int xrecv(conn_list_t *cl, void *packet)
 {
   vpn_packet_t vp;
   int lenin;
