@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.68 2000/11/07 21:43:28 guus Exp $
+    $Id: net.c,v 1.35.4.69 2000/11/08 00:10:49 guus Exp $
 */
 
 #include "config.h"
@@ -25,7 +25,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/sockios.h>
+/* SunOS really wants sys/socket.h BEFORE net/if.h */
+#include <sys/socket.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -33,7 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/signal.h>
-#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <syslog.h>
@@ -106,10 +106,12 @@ int execute_script(const char *name)
       asprintf(&s, "NETNAME=%s", netname);
       putenv(s);	/* Don't free s! see man 3 putenv */
     }
+#ifdef HAVE_UNSETENV
   else
     {
       unsetenv("NETNAME");
     }
+#endif
 
   chdir(confbase);	/* This cannot fail since we already read config files from this directory. */
   

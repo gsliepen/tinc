@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.24 2000/11/03 22:31:55 zarq Exp $
+    $Id: tincd.c,v 1.10.4.25 2000/11/08 00:10:50 guus Exp $
 */
 
 #include "config.h"
@@ -35,6 +35,7 @@
 #include <openssl/rsa.h>
 #include <openssl/err.h>
 #include <string.h>
+#include <termios.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
