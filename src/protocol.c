@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.60 2000/11/15 01:06:11 zarq Exp $
+    $Id: protocol.c,v 1.28.4.61 2000/11/15 13:33:27 guus Exp $
 */
 
 #include "config.h"
@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include <utils.h>
 #include <xalloc.h>

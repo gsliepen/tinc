@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.10 2000/11/15 01:06:10 zarq Exp $
+    $Id: meta.c,v 1.1.2.11 2000/11/15 13:33:25 guus Exp $
 */
 
 #include "config.h"
@@ -26,9 +26,10 @@
 #include <errno.h>
 #include <syslog.h>
 #include <sys/signal.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
+/* This line must be below the rest for FreeBSD */
+#include <sys/socket.h>
 
 #ifdef HAVE_OPENSSL_EVP_H
 # include <openssl/evp.h>

@@ -17,17 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.72 2000/11/15 01:28:21 zarq Exp $
+    $Id: net.c,v 1.35.4.73 2000/11/15 13:33:26 guus Exp $
 */
 
 #include "config.h"
 
-#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-/* SunOS really wants sys/socket.h BEFORE net/if.h */
-#include <sys/socket.h>
-#include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -39,6 +35,11 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+/* SunOS really wants sys/socket.h BEFORE net/if.h,
+   and FreeBSD wants these lines below the rest. */
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <net/if.h>
 
 #ifdef HAVE_OPENSSL_RAND_H
 # include <openssl/rand.h>
@@ -1097,7 +1098,7 @@ conn_list_t *create_new_connection(int sfd)
 cp
   p = new_conn_list();
 
-  if(getpeername(sfd, &ci, &len) < 0)
+  if(getpeername(sfd, (struct sockaddr *) &ci, (socklen_t *) &len) < 0)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "getpeername");
