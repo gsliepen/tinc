@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.31 2002/09/10 09:40:25 guus Exp $
+    $Id: meta.c,v 1.1.2.32 2003/03/19 11:43:42 guus Exp $
 */
 
 #include "config.h"
@@ -44,6 +44,7 @@ int send_meta(connection_t *c, char *buffer, int length)
 	char *bufp;
 	int outlen;
 	char outbuf[MAXBUFSIZE];
+	int result;
 
 	cp();
 
@@ -58,12 +59,19 @@ int send_meta(connection_t *c, char *buffer, int length)
 	} else
 		bufp = buffer;
 
-	if(write(c->socket, bufp, length) < 0) {
-		syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
-			   c->hostname, strerror(errno));
-		return -1;
+	while(length) {
+		result = write(c->socket, bufp, length);
+		if(result <= 0) {
+			if(errno = EINTR)
+				continue;
+			syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
+				   c->hostname, strerror(errno));
+			return -1;
+		}
+		bufp += result;
+		length -= result;
 	}
-
+	
 	return 0;
 }
 
