@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.30 2000/11/16 22:12:23 zarq Exp $
+    $Id: tincd.c,v 1.10.4.31 2000/11/20 18:06:17 zarq Exp $
 */
 
 #include "config.h"
@@ -64,6 +64,7 @@
 #include "conf.h"
 #include "net.h"
 #include "netutl.h"
+#include "process.h"
 #include "protocol.h"
 #include "subnet.h"
 
