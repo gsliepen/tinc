@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.36 2000/11/28 23:12:57 zarq Exp $
+    $Id: tincd.c,v 1.10.4.37 2000/11/29 14:24:40 zarq Exp $
 */
 
 #include "config.h"
@@ -236,12 +236,12 @@ int keygen(int bits)
   else
     fprintf(stderr, _("Done.\n"));
 
-  if((f = ask_and_safe_open("rsa_key.pub")) == NULL)
+  if((f = ask_and_safe_open("rsa_key.pub", _("public RSA key"))) == NULL)
     return -1;
   PEM_write_RSAPublicKey(f, rsa_key);
   fclose(f);
   
-  if((f = ask_and_safe_open("rsa_key.priv")) == NULL)
+  if((f = ask_and_safe_open("rsa_key.priv", _("private RSA key"))) == NULL)
     return -1;
   PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
   fclose(f);

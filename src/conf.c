@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.23 2000/11/28 23:12:56 zarq Exp $
+    $Id: conf.c,v 1.9.4.24 2000/11/29 14:24:40 zarq Exp $
 */
 
 #include "config.h"
@@ -38,7 +38,6 @@
 #include "conf.h"
 #include "netutl.h" /* for strtoip */
 
-#include "config.h"
 #include "system.h"
 
 config_t *config = NULL;
@@ -128,6 +127,66 @@ cp
 cp
       return NULL;
     }
+}
+
+/*
+  Read exactly one line and strip the trailing newline if any.  If the
+  file was on EOF, return NULL. Otherwise, return all the data in a
+  dynamically allocated buffer.
+*/
+char *readline(FILE *fp)
+{
+  char *newline = NULL;
+  char *p;
+  char *line; /* The array that contains everything that has been read
+                 so far */
+  char *idx; /* Read into this pointer, which points to an offset
+                within line */
+  size_t size, newsize; /* The size of the current array pointed to by
+                           line */
+  size_t maxlen; /* Maximum number of characters that may be read with
+                    fgets.  This is newsize - oldsize. */
+
+  if(feof(fp))
+    return NULL;
+  
+  size = 100;
+  maxlen = size;
+  line = xmalloc(size);
+  idx = line;
+  for(;;)
+    {
+      errno = 0;
+      p = fgets(idx, maxlen, fp);
+      if(p == NULL)  /* EOF or error */
+	{
+	  if(feof(fp))
+	    break;
+
+	  /* otherwise: error; let the calling function print an error
+             message if applicable */
+	  free(line);
+	  return NULL;
+	}
+
+      newline = strchr(p, '\n');
+      if(newline == NULL)
+	/* We haven't yet read everything to the end of the line */
+	{
+	  newsize = size << 1;
+	  line = xrealloc(line, newsize);
+	  idx = &line[size - 1];
+	  maxlen = newsize - size + 1;
+	  size = newsize;
+	}
+      else
+	{
+	  *newline = '\0'; /* kill newline */
+	  break;  /* yay */
+	}
+    }
+
+  return line;
 }
 
 /*
@@ -258,28 +317,49 @@ cp
 
 #define is_safe_file(p) 1
 
-FILE *ask_and_safe_open(const char* filename)
+FILE *ask_and_safe_open(const char* filename, const char* what)
 {
   FILE *r;
   char *directory;
   char *fn;
   int len;
 
-  if(!isatty(0))
+  /* Check stdin and stdout */
+  if(!isatty(0) || !isatty(1))
     {
       /* Argh, they are running us from a script or something.  Write
          the files to the current directory and let them burn in hell
          for ever. */
-      directory = "."; /* get_current_directory */
+      fn = xstrdup(filename);
     }
   else
     {
-      directory = ".";
+      /* Ask for a file and/or directory name. */
+      fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
+	      what, filename);
+      fflush(stdout);  /* Don't wait for a newline */
+      if((fn = readline(stdin)) == NULL)
+	{
+	  fprintf(stderr, _("Error while reading stdin: %m\n"));
+	  return NULL;
+	}
+      if(strlen(fn) == 0)
+	/* User just pressed enter. */
+	fn = xstrdup(filename);
     }
 
-  len = strlen(filename) + strlen(directory) + 2; /* 1 for the / */
-  fn = xmalloc(len);
-  snprintf(fn, len, "%s/%s", directory, filename);
+  if((strchr(fn, '/') == NULL) || (fn[0] != '/'))
+    {
+      /* The directory is a relative path or a filename. */
+      char *p;
+      
+      directory = get_current_dir_name();
+      len = strlen(fn) + strlen(directory) + 2; /* 1 for the / */
+      p = xmalloc(len);
+      snprintf(p, len, "%s/%s", directory, fn);
+      free(fn);
+      fn = p;
+    }
 
   if(!is_safe_file(fn))
     {
@@ -291,11 +371,12 @@ FILE *ask_and_safe_open(const char* filename)
 
   if((r = fopen(fn, "w")) == NULL)
     {
-      fprintf(stderr, _("Error opening file `%s': %m"),
+      fprintf(stderr, _("Error opening file `%s': %m\n"),
 	      fn);
     }
 
   free(fn);
+  free(directory);
   
   return r;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.16 2000/11/04 22:57:30 guus Exp $
+    $Id: conf.h,v 1.6.4.17 2000/11/29 14:24:40 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -96,5 +96,6 @@ extern int read_config_file(config_t **, const char *);
 extern const config_t *get_config_val(config_t *, which_t type);
 extern void clear_config();
 extern int read_server_config(void);
+extern FILE *ask_and_safe_open(const char*, const char*);
 
 #endif /* __TINC_CONF_H__ */
