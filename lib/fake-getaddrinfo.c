@@ -11,6 +11,7 @@
 
 #include "config.h"
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
