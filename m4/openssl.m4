@@ -29,15 +29,7 @@ AC_DEFUN(tinc_OPENSSL,
     [AC_MSG_ERROR([OpenSSL libraries not found.])]
   )
 
-  AC_CHECK_FUNCS(RAND_pseudo_bytes)
-
-  AC_CHECK_FUNC(OpenSSL_add_all_algorithms,
-    [],
-    [AC_CHECK_FUNC(SSLeay_add_all_algorithms,
-      [AC_DEFINE(HAVE_SSLEAY_ADD_ALL_ALGORITHMS, 1, [Defined if this function should be used instead of OpenSLL_add_all_algorithms])],
-      [AC_MSG_ERROR([Missing required OpenSSL functionality!])]
-    )]
-  )
+  AC_CHECK_FUNCS([RAND_pseudo_bytes OPENSSL_add_all_algorithms_noconf OpenSSL_add_all_algorithms SSLeay_add_all_algorithms])
 
   AC_CHECK_FUNC(dlopen,
     [],

@@ -22,6 +22,7 @@
 #include <system.h>
 
 #include "fake-getnameinfo.h"
+#include "fake-getaddrinfo.h"
 
 #ifndef HAVE_GETNAMEINFO
 
