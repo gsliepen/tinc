@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.21 2000/08/07 16:27:28 guus Exp $
+    $Id: protocol.c,v 1.28.4.22 2000/08/08 08:48:50 guus Exp $
 */
 
 #include "config.h"
@@ -132,13 +132,13 @@ cp
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %d\n", PACKET, len);
 
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
+  if((write(cl->meta_socket, buffer, buflen)) != buflen)
     {
       syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
     }
 
-  if((write(cl->meta_socket, data, len)) < 0)
+  if((write(cl->meta_socket, data, len)) != len)
     {
       syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
@@ -696,7 +696,8 @@ cp
   /* Evil kludge comming up */
   while(len)
     {
-       result=read(cl->meta_socket,&rp+count,len);
+       syslog(LOG_DEBUG, _("Direct read count=%d len=%d rp=%p socket=%d"), count, len, ((char *)&rp)+count, cl->meta_socket);
+       result=read(cl->meta_socket,((char *)&rp)+count,len);
        if(result<0)
          {
            syslog(LOG_ERR, _("Error while receiving PACKET data from %s (%s): %m"),
