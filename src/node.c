@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.29 2003/12/20 19:47:52 guus Exp $
+    $Id: node.c,v 1.1.2.30 2003/12/20 21:25:17 guus Exp $
 */
 
 #include "system.h"
@@ -180,11 +180,11 @@ void dump_nodes(void)
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
+		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s probedmtu %d"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name : "-");
+			   n->via ? n->via->name : "-", n->probedmtu);
 	}
 
 	logger(LOG_DEBUG, _("End of nodes."));

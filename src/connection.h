@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.39 2003/12/20 19:47:52 guus Exp $
+    $Id: connection.h,v 1.1.2.40 2003/12/20 21:25:17 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -30,7 +30,7 @@
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
-#define OPTION_DONTFRAGMENT	0x0004
+#define OPTION_PMTU_DISCOVERY	0x0004
 
 typedef struct connection_status_t {
 	int pinged:1;				/* sent ping */

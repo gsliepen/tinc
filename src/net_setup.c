@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.49 2003/12/20 21:09:33 guus Exp $
+    $Id: net_setup.c,v 1.1.2.50 2003/12/20 21:25:17 guus Exp $
 */
 
 #include "system.h"
@@ -285,7 +285,7 @@ bool setup_myself(void)
 		myself->options |= OPTION_TCPONLY;
 
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice)
-		myself->options |= OPTION_DONTFRAGMENT;
+		myself->options |= OPTION_PMTU_DISCOVERY;
 
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
