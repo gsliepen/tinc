@@ -738,19 +738,21 @@ int ans_key_h(conn_list_t *cl)
   conn_list_t *fw, *gk;
   char *key;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-3) <= 0)
+  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp) - 3) <= 0)
     {
       syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
       return -1;
     }
 
+  syslog(LOG_DEBUG, "%08lx %08lx %d %hd", tmp.from, tmp.to, tmp.expiry, tmp.len); 
   key = xmalloc(tmp.len);
-
-  if(read(cl->meta_socket, key, tmp.len + 1) <= 0)
+  
+  if(read(cl->meta_socket, key, tmp.len + 2) <= 0)
     {
       syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
       return -1;
     }
+  syslog(LOG_DEBUG, "%s", key);
 
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got ANS_KEY from " IP_ADDR_S " for " IP_ADDR_S,
