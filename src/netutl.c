@@ -126,10 +126,10 @@ cp
 */
 conn_list_t *new_conn_list(void)
 {
-  conn_list_t *p = xmalloc(sizeof(conn_list_t));
+  conn_list_t *p = xmalloc(sizeof(*p));
 cp
   /* initialise all those stupid pointers at once */
-  memset(p, '\0', sizeof(conn_list_t));
+  memset(p, '\0', sizeof(*p));
   p->nexthop = p;
 cp
   return p;
@@ -213,7 +213,7 @@ cp
 	return NULL;
     }
 
-  ip = xmalloc(sizeof(ip_mask_t));
+  ip = xmalloc(sizeof(*ip));
   ip->ip = ntohl(*((ip_t*)(h->h_addr_list[0])));
 
   ip->mask = masker ? ~((1 << (32 - masker)) - 1) : 0;

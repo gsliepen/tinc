@@ -23,6 +23,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <utils.h>
 #include <xalloc.h>
@@ -41,7 +42,7 @@ cp
     syslog(LOG_DEBUG, "Send ACK to %s", cl->hostname);
 
   syslog(LOG_NOTICE, "Connection with %s activated.", cl->hostname);
-  if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %d:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -61,7 +62,7 @@ cp
     syslog(LOG_DEBUG, "Send TERMREQ(" IP_ADDR_S ") to " IP_ADDR_S, IP_ADDR_V(tmp.vpn_ip),
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -81,7 +82,7 @@ cp
     syslog(LOG_DEBUG, "Send TIMEOUT(" IP_ADDR_S ") to " IP_ADDR_S, IP_ADDR_V(tmp.vpn_ip),
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -101,7 +102,7 @@ cp
     syslog(LOG_DEBUG, "Sending delete host %lx to " IP_ADDR_S,
 	   tmp.vpn_ip, IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, (unsigned char*)&tmp, sizeof(del_host_t), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -117,7 +118,7 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "pinging " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -130,7 +131,7 @@ int send_pong(conn_list_t *cl)
 {
   unsigned char tmp = PONG;
 cp
-  if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -154,7 +155,7 @@ cp
 	   tmp.vpn_ip, tmp.vpn_mask, tmp.real_ip, tmp.portnr,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, (unsigned char*)&tmp, sizeof(add_host_t), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -174,7 +175,7 @@ cp
     syslog(LOG_DEBUG, "Sending KEY_CHANGED (%lx) to " IP_ADDR_S,
 	   tmp.from, IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, (unsigned char*)&tmp, sizeof(key_changed_t), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -209,7 +210,7 @@ cp
 	   tmp.protocol, tmp.portnr, IP_ADDR_V(tmp.vpn_ip), IP_ADDR_V(tmp.vpn_mask),
 	   IP_ADDR_V(cl->real_ip));
 
-  if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
+  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -229,7 +230,7 @@ cp
     syslog(LOG_DEBUG, "Send PASSPHRASE(%hd,...) to " IP_ADDR_S, tmp.len,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, &tmp, tmp.len+3, 0)) < 0)
+  if((write(cl->meta_socket, &tmp, tmp.len+3)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -242,7 +243,7 @@ int send_public_key(conn_list_t *cl)
 {
   public_key_t *tmp;
 cp
-  tmp = (public_key_t*)xmalloc(strlen(my_public_key_base36)+sizeof(public_key_t));
+  tmp = (public_key_t*)xmalloc(strlen(my_public_key_base36)+sizeof(*tmp));
   tmp->type = PUBLIC_KEY;
   tmp->len = strlen(my_public_key_base36);
   strcpy(&tmp->key, my_public_key_base36);
@@ -251,7 +252,7 @@ cp
     syslog(LOG_DEBUG, "Send PUBLIC_KEY(%hd,%s) to " IP_ADDR_S, tmp->len, &tmp->key,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((send(cl->meta_socket, tmp, tmp->len+sizeof(public_key_t), 0)) < 0)
+  if((write(cl->meta_socket, tmp, tmp->len+sizeof(*tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -264,12 +265,12 @@ int send_calculate(conn_list_t *cl, char *k)
 {
   calculate_t *tmp;
 cp
-  tmp = xmalloc(strlen(k)+sizeof(calculate_t));
+  tmp = xmalloc(strlen(k)+sizeof(*tmp));
   tmp->type = CALCULATE;
   tmp->len = strlen(k);
   strcpy(&tmp->key, k);
 
-  if(send(cl->meta_socket, tmp, tmp->len+4, 0) < 0)
+  if((write(cl->meta_socket, tmp, tmp->len+sizeof(*tmp))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -283,7 +284,7 @@ int send_key_request(ip_t to)
   key_req_t *tmp;
   conn_list_t *fw;
 cp
-  tmp = xmalloc(sizeof(key_req_t));
+  tmp = xmalloc(sizeof(*tmp));
   tmp->type = REQ_KEY;
   tmp->to = to;
   tmp->from = myself->vpn_ip;
@@ -300,7 +301,7 @@ cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Sending out request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-  if(send(fw->nexthop->meta_socket, tmp, sizeof(key_req_t), 0) < 0)
+  if(write(fw->nexthop->meta_socket, tmp, sizeof(*tmp)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -315,7 +316,7 @@ int send_key_answer(conn_list_t *cl, ip_t to)
   key_req_t *tmp;
   conn_list_t *fw;
 cp
-  tmp = xmalloc(sizeof(key_req_t)+strlen(my_public_key_base36));
+  tmp = xmalloc(sizeof(*tmp)+strlen(my_public_key_base36));
   tmp->type = ANS_KEY;
   tmp->to = to;
   tmp->from = myself->vpn_ip;
@@ -335,7 +336,7 @@ cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Sending public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-  if(send(fw->nexthop->meta_socket, tmp, sizeof(key_req_t)+tmp->len, 0) < 0)
+  if(write(fw->nexthop->meta_socket, tmp, sizeof(*tmp)+tmp->len) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -606,11 +607,11 @@ cp
     again, i'm cheating here. see the comment in ack_h.
     Naughty zarq! Now you see what cheating will get you... [GS]
   */
-  if(len > sizeof(add_host_t)) /* Another ADD_HOST follows */
+  if(len > sizeof(*tmp)) /* Another ADD_HOST follows */
     {
-      if(request_handlers[d[sizeof(add_host_t)]] == NULL)
-	syslog(LOG_ERR, "Unknown request %d.", d[sizeof(add_host_t)]);
-      if(request_handlers[d[sizeof(add_host_t)]](cl, d + sizeof(add_host_t), len - sizeof(add_host_t)) < 0)
+      if(request_handlers[d[sizeof(*tmp)]] == NULL)
+	syslog(LOG_ERR, "Unknown request %d.", d[sizeof(*tmp)]);
+      if(request_handlers[d[sizeof(*tmp)]](cl, d + sizeof(*tmp), len - sizeof(*tmp)) < 0)
 	return -1;
     }
 cp
@@ -644,7 +645,7 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "Forwarding request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-  if(send(fw->nexthop->meta_socket, tmp, sizeof(key_req_t), 0) < 0)
+  if(write(fw->nexthop->meta_socket, tmp, sizeof(*tmp)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -659,7 +660,7 @@ void set_keys(conn_list_t *cl, key_req_t *k)
 cp
   if(!cl->public_key)
     {
-      cl->public_key = xmalloc(sizeof(enc_key_t));
+      cl->public_key = xmalloc(sizeof(*cl->key));
       cl->public_key->key = NULL;
     }
   if(cl->public_key->key)
@@ -672,7 +673,7 @@ cp
   ek = make_shared_key(&(k->key));
   if(!cl->key)
     {
-      cl->key = xmalloc(sizeof(enc_key_t));
+      cl->key = xmalloc(sizeof(*cl->key));
       cl->key->key = NULL;
     }
   if(cl->key->key)
@@ -725,7 +726,7 @@ cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Forwarding public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-  if(send(fw->nexthop->meta_socket, tmp, sizeof(key_req_t)+tmp->len, 0) < 0)
+  if(write(fw->nexthop->meta_socket, tmp, sizeof(*tmp)+tmp->len) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;

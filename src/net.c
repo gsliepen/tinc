@@ -157,13 +157,13 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "packet to queue: %d", s);
 
-  e = xmalloc(sizeof(queue_element_t));
+  e = xmalloc(sizeof(*e));
   e->packet = xmalloc(s);
   memcpy(e->packet, packet, s);
 
   if(!*q)
     {
-      *q = xmalloc(sizeof(packet_queue_t));
+      *q = xmalloc(sizeof(**q));
       (*q)->head = (*q)->tail = NULL;
     }
 
@@ -914,7 +914,7 @@ int handle_new_meta_connection(conn_list_t *cl)
 {
   conn_list_t *ncn;
   struct sockaddr client;
-  int nfd, len = sizeof(struct sockaddr);
+  int nfd, len = sizeof(client);
 cp
   if((nfd = accept(cl->meta_socket, &client, &len)) < 0)
     {
@@ -957,7 +957,7 @@ cp
       return -1;
     }
 
-  if((lenin = recv(cl->meta_socket, &tmp, sizeof(tmp), 0)) <= 0)
+  if((lenin = read(cl->meta_socket, &tmp, sizeof(tmp))) <= 0)
     {
       syslog(LOG_ERR, "Receive failed: %m");
       return -1;

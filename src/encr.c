@@ -318,7 +318,7 @@ cp
 	continue;
       ek = make_shared_key(p->public_key->key);
       free_key(p->key);
-      p->key = xmalloc(sizeof(enc_key_t));
+      p->key = xmalloc(sizeof(*p->key));
       p->key->length = strlen(ek);
       p->key->expiry = p->public_key->expiry;
       p->key->key = xmalloc(strlen(ek) + 1);

@@ -71,7 +71,7 @@ add_config_val(config_t **cfg, int argtype, char *val)
   config_t *p;
   char *q;
 
-  p = (config_t*)xmalloc(sizeof(config_t));
+  p = (config_t*)xmalloc(sizeof(*p));
   p->data.val = 0;
   
   switch(argtype)
