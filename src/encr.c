@@ -300,15 +300,11 @@ void recalculate_encryption_keys(void)
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(!p->public_key || !p->public_key->key)
+	/* We haven't received a key from this host (yet). */
 	continue;
       ek = make_shared_key(p->public_key->key);
-      if(!p->key)
-	{
-	  p->key = xmalloc(sizeof(enc_key_t));
-	  p->key->key = NULL;
-	}
-      if(p->key->key)
-	free(p->key->key);
+      free_key(p->key);
+      p->key = xmalloc(sizeof(enc_key_t));
       p->key->length = strlen(ek);
       p->key->expiry = p->public_key->expiry;
       p->key->key = xmalloc(strlen(ek) + 1);
