@@ -17,31 +17,65 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.h,v 1.1.2.2 2000/11/16 22:13:09 zarq Exp $
+    $Id: list.h,v 1.1.2.3 2001/01/07 15:24:52 guus Exp $
 */
 
 #ifndef __TINC_LIST_H__
 #define __TINC_LIST_H__
 
-typedef struct list_callbacks_t {
-  int (*delete) (void *);
-} list_callbacks_t;
-
-typedef struct list_node_t {
-  void *data;
+typedef struct list_node_t
+{
   struct list_node_t *prev;
   struct list_node_t *next;
+
+  /* Payload */
+
+  void *data;
 } list_node_t;
 
-typedef struct list_t {
+typedef void (*list_action_t) (const void *);
+typedef void (*list_action_node_t) (const list_node_t *);
+
+typedef struct list_t
+{
   list_node_t *head;
   list_node_t *tail;
-  list_callbacks_t *callbacks;
+
+  /* Callbacks */
+
+  list_action_t delete;
 } list_t;
 
-extern list_t *list_new(void);
-extern void list_append(list_t *, void *);
-extern void list_forall_nodes(list_t *, int (*)(void *));
+/* (De)constructors */
 
+extern list_t *list_alloc(list_action_t);
+extern void list_free(list_t *);
+extern list_node_t *list_alloc_node(void);
+extern void list_free_node(list_t *, list_node_t *);
+
+/* Insertion and deletion */
+
+extern list_node_t *list_insert_head(list_t *, void *);
+extern list_node_t *list_insert_tail(list_t *, void *);
+
+extern void list_unlink_node(list_t *, list_node_t *);
+extern void list_delete_node(list_t *, list_node_t *);
+
+extern void list_delete_head(list_t *);
+extern void list_delete_tail(list_t *);
+
+/* Head/tail lookup */
+
+extern void *list_get_head(list_t *);
+extern void *list_get_tail(list_t *);
+
+/* Fast list deletion */
+
+extern void list_delete_list(list_t *);
+
+/* Traversing */
+
+extern void list_foreach(list_t *, list_action_t);
+extern void list_foreach_node(list_t *, list_action_node_t);
 
 #endif /* __TINC_LIST_H__ */
