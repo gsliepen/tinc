@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.37 2003/12/20 21:09:33 guus Exp $
+    $Id: net_socket.c,v 1.1.2.38 2003/12/22 11:04:16 guus Exp $
 */
 
 #include "system.h"
@@ -163,13 +163,9 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	{
 		bool choice;
 
-		if(sa->sa.sa_family == AF_INET && get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
+		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
 			option = IP_PMTUDISC_DO;
-			if(setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option))) {
-				closesocket(nfd);
-				logger(LOG_ERR, _("Can't set PMTU discovery mode: %s"), strerror(errno));
-				return -1;
-			}
+			setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option));
 		}
 	}
 #endif
@@ -178,13 +174,9 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	{
 		bool choice;
 
-		if(sa->sa.sa_family == AF_INET6 && get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
+		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
 			option = IPV6_PMTUDISC_DO;
-			if(setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option))) {
-				closesocket(nfd);
-				logger(LOG_ERR, _("Can't set PMTU discovery mode: %s"), strerror(errno));
-				return -1;
-			}
+			setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
 		}
 	}
 #endif

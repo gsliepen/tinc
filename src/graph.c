@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.33 2003/12/20 21:25:17 guus Exp $
+    $Id: graph.c,v 1.1.2.34 2003/12/22 11:04:16 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -231,9 +231,9 @@ void sssp_bfs(void)
 					avl_insert_node(node_udp_tree, node);
 
 					if(e->to->options & OPTION_PMTU_DISCOVERY) {
-						e->to->mtu = MTU;
 						e->to->mtuprobes = 0;
-						e->to->probedmtu = 0;
+						e->to->minmtu = 0;
+						e->to->maxmtu = MTU;
 						if(e->to->status.validkey)
 							send_mtu_probe(e->to);
 					}
@@ -269,6 +269,10 @@ void sssp_bfs(void)
 
 			n->status.validkey = false;
 			n->status.waitingforkey = false;
+
+			n->maxmtu = MTU;
+			n->minmtu = 0;
+			n->mtuprobes = 0;
 
 			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			asprintf(&envp[1], "DEVICE=%s", device ? : "");

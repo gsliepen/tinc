@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.73 2003/12/20 21:25:17 guus Exp $
+    $Id: route.c,v 1.1.2.74 2003/12/22 11:04:17 guus Exp $
 */
 
 #include "system.h"
@@ -276,6 +276,58 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	send_packet(source, packet);
 }
 
+/* RFC 791 */
+
+static __inline__ void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
+	struct ip ip;
+	vpn_packet_t fragment;
+	int len, maxlen, todo;
+	uint8_t *offset;
+	uint16_t ip_off, origf;
+	
+	cp();
+
+	memcpy(&ip, packet->data + ether_size, ip_size);
+	fragment.priority = packet->priority;
+
+	if(ip.ip_hl != ip_size / 4)
+		return;
+	
+	todo = ntohs(ip.ip_len) - ip_size;
+
+	if(ether_size + ip_size + todo != packet->len) {
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Length of packet (%d) doesn't match length in IPv4 header (%d)"), packet->len, ether_size + ip_size + todo);
+		return;
+	}
+
+	ifdebug(TRAFFIC) logger(LOG_INFO, _("Fragmenting packet of %d bytes to %s (%s)"), packet->len, dest->name, dest->hostname);
+
+	offset = packet->data + ether_size + ip_size;
+	maxlen = (dest->mtu - ether_size - ip_size) & ~0x7;
+	ip_off = ntohs(ip.ip_off);
+	origf = ip_off & ~IP_OFFMASK;
+	ip_off &= IP_OFFMASK;
+	
+	while(todo) {
+		len = todo > maxlen ? maxlen : todo;
+		memcpy(fragment.data + ether_size + ip_size, offset, len);
+		todo -= len;
+		offset += len;
+
+		ip.ip_len = htons(ip_size + len);
+		ip.ip_off = htons(ip_off | origf | (todo ? IP_MF : 0));
+		ip.ip_sum = 0;
+		ip.ip_sum = inet_checksum(&ip, ip_size, ~0);
+		memcpy(fragment.data, packet->data, ether_size);
+		memcpy(fragment.data + ether_size, &ip, ip_size);
+		fragment.len = ether_size + ip_size + len;
+
+		send_packet(dest, &fragment);
+
+		ip_off += len / 8;
+	}	
+}
+
 static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
@@ -304,15 +356,20 @@ static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 	if(!subnet->owner->status.reachable)
 		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
 
-	if(subnet->owner->options & OPTION_PMTU_DISCOVERY && packet->len > subnet->owner->mtu && subnet->owner != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, subnet->owner->mtu);
-		packet->len = subnet->owner->mtu;
-		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
-		return;
-	}
-
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
+
+	if(subnet->owner->options & OPTION_PMTU_DISCOVERY && packet->len > subnet->owner->mtu && subnet->owner != myself) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, subnet->owner->mtu);
+		if(packet->data[20] & 0x40) {
+			packet->len = subnet->owner->mtu;
+			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
+		} else {
+			fragment_ipv4_packet(subnet->owner, packet);
+		}
+
+		return;
+	}
 
 	send_packet(subnet->owner, packet);
 }

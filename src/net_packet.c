@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.46 2003/12/20 21:09:33 guus Exp $
+    $Id: net_packet.c,v 1.1.2.47 2003/12/22 11:04:16 guus Exp $
 */
 
 #include "system.h"
@@ -47,6 +47,10 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#ifdef WSAEMSGSIZE
+#define EMSGSIZE WSAEMSGSIZE
+#endif
+
 int keylifetime = 0;
 int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
@@ -64,20 +68,21 @@ void send_mtu_probe(node_t *n)
 	cp();
 
 	n->mtuprobes++;
+	n->mtuevent = NULL;
 
-	if(n->mtuprobes >= 10 && !n->probedmtu) {
+	if(n->mtuprobes >= 10 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
 		return;
 	}
 
 	for(i = 0; i < 3; i++) {
-		if(n->mtuprobes >= 30 || n->probedmtu >= n->mtu) {
-			n->mtu = n->probedmtu;
+		if(n->mtuprobes >= 30 || n->minmtu >= n->maxmtu) {
+			n->mtu = n->minmtu;
 			ifdebug(TRAFFIC) logger(LOG_INFO, _("Fixing MTU of %s (%s) to %d after %d probes"), n->name, n->hostname, n->mtu, n->mtuprobes);
 			return;
 		}
 
-		len = n->probedmtu + 1 + random() % (n->mtu - n->probedmtu);
+		len = n->minmtu + 1 + random() % (n->maxmtu - n->minmtu);
 		if(len < 64)
 			len = 64;
 		
@@ -104,8 +109,8 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet) {
 		packet->data[0] = 1;
 		send_packet(n, packet);
 	} else {
-		if(n->probedmtu < packet->len)
-			n->probedmtu = packet->len;
+		if(n->minmtu < packet->len)
+			n->minmtu = packet->len;
 	}
 }
 
@@ -386,6 +391,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
 		logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
 		if(errno == EMSGSIZE) {
+			if(n->maxmtu >= origlen)
+				n->maxmtu = origlen - 1;
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
 		}

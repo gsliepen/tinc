@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.30 2003/12/20 21:25:17 guus Exp $
+    $Id: node.c,v 1.1.2.31 2003/12/22 11:04:16 guus Exp $
 */
 
 #include "system.h"
@@ -81,6 +81,7 @@ node_t *new_node(void)
 	n->queue = list_alloc((list_action_t) free);
 	EVP_CIPHER_CTX_init(&n->packet_ctx);
 	n->mtu = MTU;
+	n->maxmtu = MTU;
 
 	return n;
 }
@@ -110,6 +111,9 @@ void free_node(node_t *n)
 	sockaddrfree(&n->address);
 
 	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
+
+	if(n->mtuevent)
+		event_del(n->mtuevent);
 	
 	free(n);
 }
@@ -180,11 +184,11 @@ void dump_nodes(void)
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s probedmtu %d"),
+		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name : "-", n->probedmtu);
+			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}
 
 	logger(LOG_DEBUG, _("End of nodes."));

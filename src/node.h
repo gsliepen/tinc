@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.30 2003/12/20 19:47:52 guus Exp $
+    $Id: node.h,v 1.1.2.31 2003/12/22 11:04:16 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -74,7 +74,8 @@ typedef struct node_t {
 	unsigned char late[16];			/* Bitfield marking late packets */
 
 	length_t mtu;				/* Maximum size of packets to send to this node */
-	length_t probedmtu;			/* Probed MTU */
+	length_t minmtu;			/* Probed minimum MTU */
+	length_t maxmtu;			/* Probed maximum MTU */
 	int mtuprobes;				/* Number of probes */
 	event_t *mtuevent;			/* Probe event */
 } node_t;

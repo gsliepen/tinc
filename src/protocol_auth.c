@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.33 2003/12/20 21:25:17 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.34 2003/12/22 11:04:16 guus Exp $
 */
 
 #include "system.h"
@@ -479,6 +479,8 @@ bool send_ack(connection_t *c)
 	if((get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) && choice) || myself->options & OPTION_PMTU_DISCOVERY)
 		c->options |= OPTION_PMTU_DISCOVERY;
 
+	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
+
 	return send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 }
 
@@ -519,7 +521,7 @@ bool ack_h(connection_t *c)
 {
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress, *dummy;
-	int weight;
+	int weight, mtu;
 	long int options;
 	node_t *n;
 
@@ -553,6 +555,12 @@ bool ack_h(connection_t *c)
 	n->connection = c;
 	c->node = n;
 	c->options |= options;
+
+	if(get_config_int(lookup_config(c->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
+		n->mtu = mtu;
+
+	if(get_config_int(lookup_config(myself->connection->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
+		n->mtu = mtu;
 
 	/* Activate this connection */
 
