@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.74 2003/07/21 13:18:44 guus Exp $
+    $Id: tincd.c,v 1.10.4.75 2003/07/22 12:58:34 guus Exp $
 */
 
 #include "system.h"
@@ -90,6 +90,7 @@ static struct option const long_options[] = {
 	{"bypass-security", no_argument, &bypass_security, 1},
 	{"mlock", no_argument, &do_mlock, 1},
 	{"logfile", optional_argument, NULL, 'F'},
+	{"pidfile", required_argument, NULL, 'P'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -107,7 +108,8 @@ static void usage(int status)
 				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
 				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
 				"  -L, --mlock                Lock tinc into main memory.\n"
-				"  -F, --logfile[=FILENAME]   Write log entries to a logfile.\n"
+				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
 				"      --help                 Display this help and exit.\n"
 				"      --version              Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@nl.linux.org.\n"));
@@ -121,14 +123,13 @@ static void parse_options(int argc, char **argv, char **envp)
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::F::", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
 
 			case 'c':				/* config file */
-				confbase = xmalloc(strlen(optarg) + 1);
-				strcpy(confbase, optarg);
+				confbase = xstrdup(optarg);
 				break;
 
 			case 'D':				/* no detach */
@@ -200,6 +201,10 @@ static void parse_options(int argc, char **argv, char **envp)
 				use_logfile = 1;
 				if(optarg)
 					logfilename = xstrdup(optarg);
+				break;
+
+			case 'P':				/* write PID to a file */
+				pidfilename = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -308,30 +313,25 @@ static int keygen(int bits)
 */
 static void make_names(void)
 {
-	if(netname) {
-		if(!pidfilename)
-			asprintf(&pidfilename, LOCALSTATEDIR "/run/tinc.%s.pid", netname);
-		if(!logfilename)
-			asprintf(&logfilename, LOCALSTATEDIR "/log/tinc.%s.log", netname);
+	if(netname)
+		asprintf(&identname, "tinc.%s", netname);
+	else
+		identname = xstrdup("tinc");
 
+	if(!pidfilename)
+		asprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+
+	if(!logfilename)
+		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+
+	if(netname) {
 		if(!confbase)
 			asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
 		else
 			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
-
-		if(!identname)
-			asprintf(&identname, "tinc.%s", netname);
 	} else {
-		if(!pidfilename)
-			pidfilename = LOCALSTATEDIR "/run/tinc.pid";
-		if(!logfilename)
-			logfilename = LOCALSTATEDIR "/log/tinc.log";
-
 		if(!confbase)
 			asprintf(&confbase, "%s/tinc", CONFDIR);
-
-		if(!identname)
-			identname = "tinc";
 	}
 }
 
