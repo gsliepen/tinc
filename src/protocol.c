@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.101 2001/07/20 13:54:19 guus Exp $
+    $Id: protocol.c,v 1.28.4.102 2001/07/20 20:25:10 guus Exp $
 */
 
 #include "config.h"
@@ -249,10 +249,6 @@ cp
       return 0;
     }
     
-  /* Now we can add the name to the id tree */
-  
-  id_add(cl);
-
   /* Also check if no other tinc daemon uses the same IP and port for UDP traffic */
   
   old = avl_search(active_tree, cl);
@@ -266,7 +262,6 @@ cp
   /* Activate this connection */
 
   cl->allow_request = ALL;
-  cl->status.active = 1;
   cl->nexthop = cl;
   cl->cipher_pkttype = EVP_bf_cbc();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
@@ -856,7 +851,6 @@ cp
 
   new->name = xstrdup(name);
   active_add(new);
-  id_add(new);
 
   /* Tell the rest about the new host */
 
@@ -870,7 +864,6 @@ cp
   /* Fill in rest of connection structure */
 
   new->nexthop = cl;
-  new->status.active = 1;
   new->cipher_pkttype = EVP_bf_cbc();
   new->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 cp
@@ -921,7 +914,7 @@ cp
       return 0;
     }
 
-  /* Check if the new host already exists in the connnection list */
+  /* Check if the deleted host already exists in the connnection list */
 
   if(!(old = lookup_id(name)))
     {
@@ -940,10 +933,9 @@ cp
 
   /* Ok, since EVERYTHING seems to check out all right, delete it */
 
-  old->status.active = 0;
   terminate_connection(old);
 
-  /* Tell the rest about the new host */
+  /* Tell the rest about the deleted host */
 
   for(node = connection_tree->head; node; node = node->next)
     {

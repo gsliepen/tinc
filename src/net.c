@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.122 2001/07/20 13:54:19 guus Exp $
+    $Id: net.c,v 1.35.4.123 2001/07/20 20:25:10 guus Exp $
 */
 
 #include "config.h"
@@ -885,10 +885,10 @@ cp
 
   keyexpires = time(NULL) + keylifetime;
 cp
-
-  /* Activate ourselves */
+  /* Done */
 
   myself->status.active = 1;
+  id_add(myself);
 
   syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
 cp
@@ -1001,30 +1001,24 @@ cp
 */
 void close_network_connections(void)
 {
-  avl_node_t *node;
+  avl_node_t *node, *next;
   connection_t *p;
 cp
-  for(node = connection_tree->head; node; node = node->next)
+  for(node = connection_tree->head; node; node = next)
     {
+      next = node->next;
       p = (connection_t *)node->data;
       p->status.outgoing = 0;
-      p->status.active = 0;
       terminate_connection(p);
     }
 
-  if(myself)
-    if(myself->status.active)
-      {
-	close(myself->meta_socket);
-        free_connection(myself);
-        myself = NULL;
-      }
+  terminate_connection(myself);
+
+  destroy_trees();
 
   execute_script("tinc-down");
 
   close(tap_fd);
-
-  destroy_connection_tree();
 cp
   return;
 }
@@ -1137,8 +1131,11 @@ cp
 }
 
 /*
-  terminate a connection and notify the other
-  end before closing the sockets
+  Terminate a connection:
+  - Close the sockets
+  - Remove associated hosts and subnets
+  - Deactivate the host
+  - Since it might still be referenced, put it on the prune list.
 */
 void terminate_connection(connection_t *cl)
 {
@@ -1148,25 +1145,26 @@ void terminate_connection(connection_t *cl)
 cp
   if(cl->status.remove)
     return;
-
-  if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
-           cl->name, cl->hostname);
-
-  cl->status.remove = 1;
+  else
+    cl->status.remove = 1;
 
   if(cl->socket)
     close(cl->socket);
-  if(cl->status.meta)
-    close(cl->meta_socket);
 
   if(cl->status.meta)
     {
+      if(debug_lvl >= DEBUG_CONNECTIONS)
+        syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
+               cl->name, cl->hostname);
+
+      close(cl->meta_socket);
+
       /* Find all connections that were lost because they were behind cl
          (the connection that was dropped). */
 
-        for(node = active_tree->head; node; node = node->next)
+        for(node = active_tree->head; node; node = next)
           {
+            next = node->next;
             p = (connection_t *)node->data;
             if(p->nexthop == cl && p != cl)
               terminate_connection(p);
@@ -1201,11 +1199,11 @@ cp
       alarm(seconds_till_retry);
       syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
     }
-
-  /* Deactivate */
-
-  cl->status.active = 0;
 cp
+  /* Schedule it for pruning */
+
+  prune_add(cl);
+  connection_del(cl);
 }
 
 /*
@@ -1376,7 +1374,7 @@ cp
       tv.tv_sec = timeout;
       tv.tv_usec = 0;
 
-      prune_connection_tree();
+      prune_flush();
       build_fdset(&fset);
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)

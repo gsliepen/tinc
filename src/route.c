@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.16 2001/07/20 13:54:19 guus Exp $
+    $Id: route.c,v 1.1.2.17 2001/07/20 20:25:10 guus Exp $
 */
 
 #include "config.h"
@@ -78,7 +78,7 @@ cp
       for(node = connection_tree->head; node; node = node->next)
         {
           p = (connection_t *)node->data;
-          if(p->status.active && p!= myself)
+          if(p->status.active)
             send_add_subnet(p, subnet);
         }
     }

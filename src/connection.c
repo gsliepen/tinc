@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.13 2001/07/15 18:07:31 guus Exp $
+    $Id: connection.c,v 1.1.2.14 2001/07/20 20:25:10 guus Exp $
 */
 
 #include "config.h"
@@ -41,9 +41,10 @@
 
 /* Root of the connection list */
 
-avl_tree_t *connection_tree;
-avl_tree_t *active_tree;
-avl_tree_t *id_tree;
+avl_tree_t *connection_tree;	/* Meta connections */
+avl_tree_t *active_tree;	/* Activated hosts, sorted by address and port */
+avl_tree_t *id_tree;		/* Activated hosts, sorted by name */
+avl_tree_t *prune_tree;		/* connection_t structures which have to be freed */
 
 /* Pointer to connection describing myself */
 
@@ -72,11 +73,22 @@ int id_compare(connection_t *a, connection_t *b)
   return strcmp(a->name, b->name);
 }
 
+int prune_compare(connection_t *a, connection_t *b)
+{
+  if(a < b)
+    return -1;
+  else if(a > b)
+    return 1;
+  else
+    return 0;
+}
+
 void init_connections(void)
 {
-  connection_tree = avl_alloc_tree((avl_compare_t)connection_compare, (avl_action_t)free_connection);
+  connection_tree = avl_alloc_tree((avl_compare_t)connection_compare, NULL);
   active_tree = avl_alloc_tree((avl_compare_t)active_compare, NULL);
   id_tree = avl_alloc_tree((avl_compare_t)id_compare, NULL);
+  prune_tree = avl_alloc_tree((avl_compare_t)prune_compare, (avl_action_t)free_connection);
 }
 
 /* Creation and deletion of connection elements */
@@ -113,36 +125,19 @@ cp
 }
 
 /*
-  remove all marked connections
+  Free all trees.
 */
-void prune_connection_tree(void)
-{
-  avl_node_t *node, *next;
-  connection_t *cl;
-cp
-  for(node = connection_tree->head; node; node = next)
-    {
-      next = node->next;
-      cl = (connection_t *)node->data;
-      if(cl->status.remove)
-        connection_del(cl);
-    }
-cp
-}
-
-/*
-  free all elements of connection
-*/
-void destroy_connection_tree(void)
+void destroy_trees(void)
 {
 cp
   avl_delete_tree(id_tree);
   avl_delete_tree(active_tree);
   avl_delete_tree(connection_tree);
+  avl_delete_tree(prune_tree);
 cp
 }
 
-/* Linked list management */
+/* Connection management */
 
 void connection_add(connection_t *cl)
 {
@@ -151,10 +146,34 @@ cp
 cp
 }
 
+void connection_del(connection_t *cl)
+{
+cp
+  active_del(cl);
+
+  if(cl->status.meta)
+    avl_delete(connection_tree, cl);
+cp
+}
+
 void active_add(connection_t *cl)
 {
 cp
   avl_insert(active_tree, cl);
+  avl_insert(id_tree, cl);
+  cl->status.active = 1;
+cp
+}
+
+void active_del(connection_t *cl)
+{
+cp
+  if(cl->status.active)
+  {
+    avl_delete(id_tree, cl);
+    avl_delete(active_tree, cl);
+    cl->status.active = 0;
+  }
 cp
 }
 
@@ -165,12 +184,22 @@ cp
 cp
 }
 
-void connection_del(connection_t *cl)
+void prune_add(connection_t *cl)
 {
 cp
-  avl_delete(id_tree, cl);
-  avl_delete(active_tree, cl);
-  avl_delete(connection_tree, cl);
+  avl_insert(prune_tree, cl);
+cp
+}
+
+void prune_flush(void)
+{
+  avl_node_t *node, *next;
+cp
+  for(node = prune_tree->head; node; node = next)
+    {
+      next = node->next;
+      avl_delete_node(prune_tree, node);
+    }
 cp
 }
 
@@ -192,7 +221,7 @@ connection_t *lookup_id(char *name)
 cp
   cl.name = name;
   p = avl_search(id_tree, &cl);
-  if(p && p->status.active)
+  if(p)
     return p;
   else
     return NULL;
@@ -207,11 +236,17 @@ void dump_connection_list(void)
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
-  syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
-         myself->name, myself->hostname, myself->port, myself->options,
-         myself->socket, myself->meta_socket, myself->status);
-
   for(node = connection_tree->head; node; node = node->next)
+    {
+      cl = (connection_t *)node->data;
+      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
+             cl->name, cl->hostname, cl->port, cl->options,
+             cl->socket, cl->meta_socket, cl->status);
+    }
+    
+  syslog(LOG_DEBUG, _("Known hosts:"));
+
+  for(node = id_tree->head; node; node = node->next)
     {
       cl = (connection_t *)node->data;
       syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
