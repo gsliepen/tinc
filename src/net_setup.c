@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.15 2002/04/23 07:49:38 guus Exp $
+    $Id: net_setup.c,v 1.1.2.16 2002/06/02 16:06:33 guus Exp $
 */
 
 #include "config.h"
@@ -107,13 +107,26 @@ cp
           free(fname);
           c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
           fclose(fp);
-          if(!c->rsa_key)
+	  if(c->rsa_key)
+	    return 0; /* Woohoo. */
+	  
+	  /* If it fails, try PEM_read_RSA_PUBKEY. */
+          if((fp = fopen(fname, "r")) == NULL)
             {
-              syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+              syslog(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
                      fname, strerror(errno));
+              free(fname);
               return -1;
             }
-          return 0;
+          free(fname);
+          c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+          fclose(fp);
+	  if(c->rsa_key)
+	    return 0;
+
+          syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+                 fname, strerror(errno));
+          return -1;
         }
       else
         {
@@ -135,11 +148,23 @@ cp
 
   if(c->rsa_key)
     return 0;
-  else
+
+  /* Try again with PEM_read_RSA_PUBKEY. */
+
+  asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+  if((fp = fopen(fname, "r")))
     {
-      syslog(LOG_ERR, _("No public key for %s specified!"), c->name);
-      return -1;
+      c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+      fclose(fp);
     }
+
+  free(fname);
+
+  if(c->rsa_key)
+    return 0;
+
+  syslog(LOG_ERR, _("No public key for %s specified!"), c->name);
+  return -1;
 }
 
 int read_rsa_private_key(void)
