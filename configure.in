@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.68 2003/07/18 13:42:35 guus Exp $
+dnl $Id: configure.in,v 1.13.2.69 2003/07/18 14:09:47 guus Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
@@ -143,10 +143,10 @@ AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, stru
    #include <netinet/ip_icmp.h>
    #endif
    #ifdef HAVE_NETINET_IP6_H
-   #include <netinet/ip.h>
+   #include <netinet/ip6.h>
    #endif
    #ifdef HAVE_NETINET_ICMP6_H
-   #include <netinet/icmp.h>
+   #include <netinet/icmp6.h>
    #endif
   ]
 )
