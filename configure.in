@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.9 2000/10/15 17:26:31 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.10 2000/10/16 11:35:10 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre3)
@@ -85,5 +85,5 @@ dnl Check for TUN/TAP support in the kernel
 tinc_TUNTAP
 
 AC_OUTPUT([Makefile src/Makefile
-doc/Makefile intl/Makefile lib/Makefile
+doc/Makefile doc/es/Makefile intl/Makefile lib/Makefile
 m4/Makefile po/Makefile.in redhat/Makefile debian/Makefile])
