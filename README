@@ -107,8 +107,9 @@ etcetera.
 Support for routing IPv6 packets has been added. Just add Subnet lines with
 IPv6 addresses (without using :: abbreviations) and use ifconfig or ip (from
 the iproute package) to give the virtual network interface corresponding IPv6
-addresses. Autoconfiguration will not work in router mode. Tunneling IPv6
-packets only works on Linux, FreeBSD and possibly OpenBSD.
+addresses. tinc does not provide autoconfiguration for IPv6 hosts, if you need
+it use radvd or zebra. Tunneling IPv6 packets only works on Linux, FreeBSD and
+possibly OpenBSD.
 
 It is also possible to make tunnels to other tinc daemons over IPv6 networks.
 In order to enable this feature the option "AddressFamily = any" or
