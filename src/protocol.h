@@ -61,6 +61,7 @@ enum {
 
 typedef struct add_host_t {
   unsigned char type;
+  char unused1;
   ip_t real_ip;
   ip_t vpn_ip;
   ip_t vpn_mask;
@@ -69,6 +70,7 @@ typedef struct add_host_t {
 
 typedef struct termreq_t {
   unsigned char type;
+  char unused1;
   ip_t vpn_ip;
 } termreq_t;
 
@@ -82,18 +84,21 @@ typedef struct basic_info_t {
 
 typedef struct calculate_t {
   unsigned char type;
+  char unused1;
   unsigned short len;
   char key;
 } calculate_t;
 
 typedef struct public_key_t {
   unsigned char type;
+  char unused1;
   unsigned short len;
   char key;
 } public_key_t;
 
 typedef struct key_req_t {
   unsigned char type;
+  char unused1;
   ip_t from;
   ip_t to;
   time_t expiry;
@@ -103,11 +108,13 @@ typedef struct key_req_t {
 
 typedef struct key_changed_t {
   unsigned char type;
+  char unused1;
   ip_t from;
 } key_changed_t;
 
 typedef struct del_host_t {
   unsigned char type;
+  char unused1;
   ip_t vpn_ip;
 } del_host_t;
 

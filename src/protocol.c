@@ -55,6 +55,7 @@ int send_termreq(conn_list_t *cl)
 {
   termreq_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = TERMREQ;
   tmp.vpn_ip = myself->vpn_ip;
 
@@ -75,6 +76,7 @@ int send_timeout(conn_list_t *cl)
 {
   termreq_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = PINGTIMEOUT;
   tmp.vpn_ip = myself->vpn_ip;
 
@@ -95,6 +97,7 @@ int send_del_host(conn_list_t *cl, conn_list_t *new_host)
 {
   del_host_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = DEL_HOST;
   tmp.vpn_ip = new_host->vpn_ip;
 
@@ -144,6 +147,7 @@ int send_add_host(conn_list_t *cl, conn_list_t *new_host)
 {
   add_host_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = ADD_HOST;
   tmp.real_ip = new_host->real_ip;
   tmp.vpn_ip = new_host->vpn_ip;
@@ -168,6 +172,7 @@ int send_key_changed(conn_list_t *cl, conn_list_t *src)
 {
   key_changed_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = KEY_CHANGED;
   tmp.from = src->vpn_ip;
 
@@ -198,6 +203,7 @@ int send_basic_info(conn_list_t *cl)
 {
   basic_info_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = BASIC_INFO;
   tmp.protocol = PROT_CURRENT;
 
@@ -223,6 +229,7 @@ int send_passphrase(conn_list_t *cl)
 {
   passphrase_t tmp;
 cp
+  memset(&tmp, 0, sizeof(tmp));
   tmp.type = PASSPHRASE;
   encrypt_passphrase(&tmp);
 
@@ -244,6 +251,7 @@ int send_public_key(conn_list_t *cl)
   public_key_t *tmp;
 cp
   tmp = (public_key_t*)xmalloc(strlen(my_public_key_base36)+sizeof(*tmp));
+  memset(tmp, 0, sizeof(*tmp));
   tmp->type = PUBLIC_KEY;
   tmp->len = strlen(my_public_key_base36);
   strcpy(&tmp->key, my_public_key_base36);
@@ -266,6 +274,7 @@ int send_calculate(conn_list_t *cl, char *k)
   calculate_t *tmp;
 cp
   tmp = xmalloc(strlen(k)+sizeof(*tmp));
+  memset(tmp, 0, sizeof(*tmp));
   tmp->type = CALCULATE;
   tmp->len = strlen(k);
   strcpy(&tmp->key, k);
@@ -285,6 +294,7 @@ int send_key_request(ip_t to)
   conn_list_t *fw;
 cp
   tmp = xmalloc(sizeof(*tmp));
+  memset(tmp, 0, sizeof(*tmp));
   tmp->type = REQ_KEY;
   tmp->to = to;
   tmp->from = myself->vpn_ip;
@@ -317,6 +327,7 @@ int send_key_answer(conn_list_t *cl, ip_t to)
   conn_list_t *fw;
 cp
   tmp = xmalloc(sizeof(*tmp)+strlen(my_public_key_base36));
+  memset(tmp, 0, sizeof(*tmp));
   tmp->type = ANS_KEY;
   tmp->to = to;
   tmp->from = myself->vpn_ip;
