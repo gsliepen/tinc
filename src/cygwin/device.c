@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.10 2003/07/22 20:55:20 guus Exp $
+    $Id: device.c,v 1.1.2.11 2003/07/28 21:54:03 guus Exp $
 */
 
 #include "system.h"
@@ -32,43 +32,23 @@
 #include "utils.h"
 #include "xalloc.h"
 
-/* Definitions from CIPE */
-
 #define NETCARD_REG_KEY_2000 "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 #define NETCARD_REG_KEY      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards"
 #define REG_SERVICE_KEY      "SYSTEM\\CurrentControlSet\\Services"
+#define REG_CONTROL_NET      "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 
 #define USERMODEDEVICEDIR "\\\\.\\"
 #define SYSDEVICEDIR  "\\Device\\"
 #define USERDEVICEDIR "\\??\\"
 #define TAPSUFFIX     ".tap"
 
-#define PRODUCT_STRING "DKW Heavy Industries VPN Adapter."
-#define CIPE_SERVICE_NAME "CIPE_Daemon"
-#define CIPE_DRIVER_NAME "CIPE"
+#define TAP_CONTROL_CODE(request,method) CTL_CODE(FILE_DEVICE_PHYSICAL_NETCARD | 8000, request, method, FILE_ANY_ACCESS)
 
-#define CIPE_NDIS_MAJOR_VERSION 4
-#define CIPE_NDIS_MINOR_VERSION 0
+#define TAP_IOCTL_GET_LASTMAC    TAP_CONTROL_CODE(0, METHOD_BUFFERED)
+#define TAP_IOCTL_GET_MAC        TAP_CONTROL_CODE(1, METHOD_BUFFERED)
+#define TAP_IOCTL_SET_STATISTICS TAP_CONTROL_CODE(2, METHOD_BUFFERED)
 
-#ifndef CIPE_DRIVER_MAJOR_VERSION
-#   define CIPE_DRIVER_MAJOR_VERSION 2
-#endif
-
-#ifndef CIPE_DRIVER_MINOR_VERSION
-#   define CIPE_DRIVER_MINOR_VERSION 1
-#endif
-
-#ifndef CIPE_MAC_ROOT_ADDRESS
-#   define CIPE_MAC_ROOT_ADDRESS "8:0:58:0:0:1"
-#endif
-
-#define CIPE_CONTROL_CODE(request,method) CTL_CODE (FILE_DEVICE_PHYSICAL_NETCARD | 8000, request, method, FILE_ANY_ACCESS)
-
-#define CIPE_IOCTL_GET_LASTMAC    CIPE_CONTROL_CODE (0, METHOD_BUFFERED)
-#define CIPE_IOCTL_GET_MAC        CIPE_CONTROL_CODE (1, METHOD_BUFFERED)
-#define CIPE_IOCTL_SET_STATISTICS CIPE_CONTROL_CODE (2, METHOD_BUFFERED)
-
-/* Windows 2000 */
+/* FIXME: This only works for Windows 2000 */
 #define OSTYPE 5
 
 int device_fd = -1;
@@ -86,79 +66,81 @@ int sp[2];
 
 bool setup_device(void)
 {
-	HKEY key, key2, adapterkey;
+	HKEY key, key2;
 	int i;
 
+	char regpath[1024];
 	char adapterid[1024];
-	char manufacturer[1024];
-	char productname[1024];
 	char adaptername[1024];
 	char tapname[1024];
 	char gelukt = 0;
 	long len;
 
-	FILETIME filetime;
 	bool found = false;
 
 	cp();
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
+	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
 	/* Open registry and look for network adapters */
 
-	if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, (OSTYPE > 4 ? NETCARD_REG_KEY_2000 : NETCARD_REG_KEY), 0, KEY_READ, &key)) {
+	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, REG_CONTROL_NET, 0, KEY_READ, &key)) {
 		logger(LOG_ERR, _("Unable to read registry"));
 		return false;
 	}
 
 	for (i = 0; ; i++) {
 		len = sizeof(adapterid);
-		if(RegEnumKeyEx (key, i, adapterid, &len, 0, 0, 0, &filetime))
+		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
 			break;
+
+		if(device) {
+			if(!strcmp(device, adapterid)) {
+				found = true;
+				break;
+			} else
+				continue;
+		}
 
 		/* Find out more about this adapter */
 
-                if(RegOpenKeyEx (key, adapterid, 0, KEY_READ, &adapterkey)) {
+		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", REG_CONTROL_NET, adapterid);
+
+                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2)) {
 			logger(LOG_ERR, _("Unable to read registry"));
 			return false;
 		}
 
-		len = sizeof(productname);
-		if(RegQueryValueEx(adapterkey, "ProductName", 0, 0, productname, &len))
-			goto skip;
+		len = sizeof(adaptername);
+		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
-		len = sizeof(manufacturer);
-		if(RegQueryValueEx(adapterkey, "Manufacturer", 0, 0, manufacturer, &len))
-			goto skip;
-
-		if(!strcmp(productname, "CIPE") && !strcmp(manufacturer, "DKWHeavyIndustries")) {
-			if(device && strcmp(adapterid, device))
+		if(iface) {
+			if(!strcmp(iface, adaptername)) {
+				found = true;
+				break;
+			} else
 				continue;
-			if(!device)
-				device = xstrdup(adapterid);
+		}
+
+		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
+		handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
+		if(handle != INVALID_HANDLE_VALUE) {
+			CloseHandle(handle);
 			found = true;
 			break;
 		}
-		
-skip:
-                RegCloseKey (adapterkey);
 	}
 
 	if(!found) {
-		logger(LOG_ERR, _("No CIPE adapters found!"));
+		logger(LOG_ERR, _("No Windows tap device found!"));
 		return false;
 	}
 
-	/* Get adapter name */
+	device = adapterid;
+	iface = adaptername;	
 
-	len = sizeof(adaptername);
-	RegQueryValueEx(adapterkey, (OSTYPE > 4 ? "NetCfgInstanceId" : "ServiceName"), 0, 0, adaptername, &len);
-
-	/* FIXME? cipsrvr checks if the device is in use at this point */
-
-	/* Try to open the corresponding tap device */
-
-	snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adaptername);
+	snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
 	
 	/* Now we are going to open this device twice: once for reading and once for writing.
 	   We do this because apparently it isn't possible to check for activity in the select() loop.
@@ -168,6 +150,30 @@ skip:
 		logger(LOG_DEBUG, _("System call `%s' failed: %s"), "socketpair", strerror(errno));
 		return false;
 	}
+
+	/* The parent opens the tap device for writing. */
+	
+	handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
+	
+	if(handle == INVALID_HANDLE_VALUE) {
+		logger(LOG_ERR, _("Could not open CIPE tap device for writing!"));
+		return false;
+	}
+
+	device_fd = sp[0];
+
+	/* Get MAC address from tap device */
+
+	if(DeviceIoControl(device_fd, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
+		logger(LOG_ERR, _("Could not get MAC address from Windows tap device!"));
+		return false;
+	}
+
+	if(routing_mode == RMODE_ROUTER) {
+		overwrite_mac = 1;
+	}
+
+	/* Now we start the child */
 
 	reader_pid = fork();
 
@@ -207,24 +213,6 @@ skip:
 		}
 	}
 
-	/* The parent opens the tap device for writing. */
-	
-	handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
-	
-	if(handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("Could not open CIPE tap device for writing!"));
-		return false;
-	}
-
-	device_fd = sp[0];
-
-	/* Get MAC address from tap device */
-
-	if(routing_mode == RMODE_ROUTER) {
-		DeviceIoControl (handle, CIPE_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0);
-		overwrite_mac = 1;
-	}
-
 	read(device_fd, &gelukt, 1);
 	if(gelukt != 1) {
 		logger(LOG_DEBUG, "Tap reader failed!");
@@ -234,9 +222,9 @@ skip:
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 		iface = device;
 
-	device_info = _("Cygwin CIPE device");
+	device_info = _("Windows tap device");
 
-	logger(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, _("%s (%s) is a %s"), device, iface, device_info);
 
 	return false;
 }
