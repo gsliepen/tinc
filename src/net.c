@@ -256,8 +256,9 @@ int send_packet(ip_t to, vpn_packet_t *packet)
         }
       for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
       if(!cl)
-        {
-          syslog(LOG_ERR, "zxnrbl");
+        { /* No open outgoing connection has been found. */
+	  if(debug_lvl > 2)
+	    syslog(LOG_NOTICE, "There is no remote host I can send this packet to.");
           return -1;
         }
     }
