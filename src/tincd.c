@@ -344,10 +344,7 @@ main(int argc, char **argv, char **envp)
   setup_signals();
 
   if(detach())
-    {
-      kill(ppid, SIGTERM);
-      exit(0);
-    }
+    exit(0);
 
   if(security_init())
     return 1;
@@ -463,6 +460,7 @@ setup_signals(void)
     signal(SIGINT, sigint_handler);
   signal(SIGUSR1, sigusr1_handler);
   signal(SIGUSR2, sigusr2_handler);
+  signal(SIGCHLD, SIG_IGN);
 }
 
 RETSIGTYPE parent_exit(int a)
