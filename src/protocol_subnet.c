@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.7 2002/09/09 19:40:09 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.8 2002/09/09 21:25:02 guus Exp $
 */
 
 #include "config.h"
@@ -43,185 +43,191 @@
 
 #include "system.h"
 
-int send_add_subnet(connection_t *c, subnet_t *subnet)
+int send_add_subnet(connection_t * c, subnet_t * subnet)
 {
-  int x;
-  char *netstr;
-  cp();
-  x = send_request(c, "%d %lx %s %s", ADD_SUBNET, random(),
-                      subnet->owner->name, netstr = net2str(subnet));
-  free(netstr);
-  cp();
-  return x;
+	int x;
+	char *netstr;
+
+	cp();
+
+	x = send_request(c, "%d %lx %s %s", ADD_SUBNET, random(),
+					 subnet->owner->name, netstr = net2str(subnet));
+
+	free(netstr);
+
+	return x;
 }
 
-int add_subnet_h(connection_t *c)
+int add_subnet_h(connection_t * c)
 {
-  char subnetstr[MAX_STRING_SIZE];
-  char name[MAX_STRING_SIZE];
-  node_t *owner;
-  subnet_t *s;
-  cp();
-  if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name, c->hostname);
-      return -1;
-    }
+	char subnetstr[MAX_STRING_SIZE];
+	char name[MAX_STRING_SIZE];
+	node_t *owner;
+	subnet_t *s;
 
-  /* Check if owner name is a valid */
+	cp();
 
-  if(check_id(name))
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name, c->hostname, _("invalid name"));
-      return -1;
-    }
+	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
+			   c->hostname);
+		return -1;
+	}
 
-  /* Check if subnet string is valid */
+	/* Check if owner name is a valid */
 
-  s = str2net(subnetstr);
+	if(check_id(name)) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
+			   c->hostname, _("invalid name"));
+		return -1;
+	}
 
-  if(!s)
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name, c->hostname, _("invalid subnet string"));
-      return -1;
-    }
+	/* Check if subnet string is valid */
 
-  if(seen_request(c->buffer))
-    return 0;
- 
-  /* Check if the owner of the new subnet is in the connection list */
+	s = str2net(subnetstr);
 
-  owner = lookup_node(name);
+	if(!s) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
+			   c->hostname, _("invalid subnet string"));
+		return -1;
+	}
 
-  if(!owner)
-    {
-      owner = new_node();
-      owner->name = xstrdup(name);
-      node_add(owner);
-    }
+	if(seen_request(c->buffer))
+		return 0;
 
-  /* Check if we already know this subnet */
-  
-  if(lookup_subnet(owner, s))
-    {
-      free_subnet(s);
-      return 0;
-    }
+	/* Check if the owner of the new subnet is in the connection list */
 
-  /* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
+	owner = lookup_node(name);
 
-  if(owner == myself)
-  {
-    if(debug_lvl >= DEBUG_PROTOCOL)
-      syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"), "ADD_SUBNET", c->name, c->hostname);
-    s->owner = myself;
-    send_del_subnet(c, s);
-    return 0;
-  }
+	if(!owner) {
+		owner = new_node();
+		owner->name = xstrdup(name);
+		node_add(owner);
+	}
 
-  /* If everything is correct, add the subnet to the list of the owner */
+	/* Check if we already know this subnet */
 
-  subnet_add(owner, s);
+	if(lookup_subnet(owner, s)) {
+		free_subnet(s);
+		return 0;
+	}
 
-  /* Tell the rest */
+	/* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
 
-  forward_request(c);
-  cp();
-  return 0;
+	if(owner == myself) {
+		if(debug_lvl >= DEBUG_PROTOCOL)
+			syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+				   "ADD_SUBNET", c->name, c->hostname);
+		s->owner = myself;
+		send_del_subnet(c, s);
+		return 0;
+	}
+
+	/* If everything is correct, add the subnet to the list of the owner */
+
+	subnet_add(owner, s);
+
+	/* Tell the rest */
+
+	forward_request(c);
+
+	return 0;
 }
 
-int send_del_subnet(connection_t *c, subnet_t *s)
+int send_del_subnet(connection_t * c, subnet_t * s)
 {
-  int x;
-  char *netstr;
-  cp();
-  netstr = net2str(s);
-  x = send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
-  free(netstr);
-  cp();
-  return x;
+	int x;
+	char *netstr;
+
+	cp();
+
+	netstr = net2str(s);
+
+	x = send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
+
+	free(netstr);
+
+	return x;
 }
 
-int del_subnet_h(connection_t *c)
+int del_subnet_h(connection_t * c)
 {
-  char subnetstr[MAX_STRING_SIZE];
-  char name[MAX_STRING_SIZE];
-  node_t *owner;
-  subnet_t *s, *find;
-  cp();
-  if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name, c->hostname);
-      return -1;
-    }
+	char subnetstr[MAX_STRING_SIZE];
+	char name[MAX_STRING_SIZE];
+	node_t *owner;
+	subnet_t *s, *find;
 
-  /* Check if owner name is a valid */
+	cp();
 
-  if(check_id(name))
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid name"));
-      return -1;
-    }
+	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,
+			   c->hostname);
+		return -1;
+	}
 
-  /* Check if the owner of the new subnet is in the connection list */
+	/* Check if owner name is a valid */
 
-  owner = lookup_node(name);    
+	if(check_id(name)) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
+			   c->hostname, _("invalid name"));
+		return -1;
+	}
 
-  if(!owner)
-    {
-      if(debug_lvl >= DEBUG_PROTOCOL)
-        syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
-             "DEL_SUBNET", c->name, c->hostname, name);
-      return 0;
-    }
+	/* Check if the owner of the new subnet is in the connection list */
 
-  /* Check if subnet string is valid */
+	owner = lookup_node(name);
 
-  s = str2net(subnetstr);
+	if(!owner) {
+		if(debug_lvl >= DEBUG_PROTOCOL)
+			syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
+				   "DEL_SUBNET", c->name, c->hostname, name);
+		return 0;
+	}
 
-  if(!s)
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid subnet string"));
-      return -1;
-    }
+	/* Check if subnet string is valid */
 
-  if(seen_request(c->buffer))
-    return 0;
+	s = str2net(subnetstr);
 
-  /* If everything is correct, delete the subnet from the list of the owner */
+	if(!s) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
+			   c->hostname, _("invalid subnet string"));
+		return -1;
+	}
 
-  s->owner = owner;
+	if(seen_request(c->buffer))
+		return 0;
 
-  find = lookup_subnet(owner, s);
-  
-  free_subnet(s);
+	/* If everything is correct, delete the subnet from the list of the owner */
 
-  if(!find)
-    {
-      if(debug_lvl >= DEBUG_PROTOCOL)
-        syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
-             "DEL_SUBNET", c->name, c->hostname, name);
-      return 0;
-    }
-  
-  /* If we are the owner of this subnet, retaliate with an ADD_SUBNET */
-  
-  if(owner == myself)
-  {
-    if(debug_lvl >= DEBUG_PROTOCOL)
-      syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"), "DEL_SUBNET", c->name, c->hostname);
-    send_add_subnet(c, find);
-    return 0;
-  }
+	s->owner = owner;
 
-  /* Tell the rest */
+	find = lookup_subnet(owner, s);
 
-  forward_request(c);
+	free_subnet(s);
 
-  /* Finally, delete it. */
+	if(!find) {
+		if(debug_lvl >= DEBUG_PROTOCOL)
+			syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
+				   "DEL_SUBNET", c->name, c->hostname, name);
+		return 0;
+	}
 
-  subnet_del(owner, find);
+	/* If we are the owner of this subnet, retaliate with an ADD_SUBNET */
 
-  cp();
-  return 0;
+	if(owner == myself) {
+		if(debug_lvl >= DEBUG_PROTOCOL)
+			syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+				   "DEL_SUBNET", c->name, c->hostname);
+		send_add_subnet(c, find);
+		return 0;
+	}
+
+	/* Tell the rest */
+
+	forward_request(c);
+
+	/* Finally, delete it. */
+
+	subnet_del(owner, find);
+
+	return 0;
 }

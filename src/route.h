@@ -17,17 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.h,v 1.1.2.8 2002/06/21 10:11:33 guus Exp $
+    $Id: route.h,v 1.1.2.9 2002/09/09 21:25:07 guus Exp $
 */
 
 #ifndef __TINC_ROUTE_H__
 #define __TINC_ROUTE_H__
 
-enum
-{
-  RMODE_HUB = 0,
-  RMODE_SWITCH,
-  RMODE_ROUTER,
+enum {
+	RMODE_HUB = 0,
+	RMODE_SWITCH,
+	RMODE_ROUTER,
 };
 
 extern int routing_mode;
@@ -38,4 +37,4 @@ extern void age_mac(void);
 extern void route_incoming(node_t *, vpn_packet_t *);
 extern void route_outgoing(vpn_packet_t *);
 
-#endif /* __TINC_ROUTE_H__ */
+#endif							/* __TINC_ROUTE_H__ */

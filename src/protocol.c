@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.135 2002/09/09 19:39:59 guus Exp $
+    $Id: protocol.c,v 1.28.4.136 2002/09/09 21:24:41 guus Exp $
 */
 
 #include "config.h"
@@ -45,221 +45,221 @@ avl_tree_t *past_request_tree;
 
 int check_id(char *id)
 {
-  int i;
+	int i;
 
-  for (i = 0; i < strlen(id); i++)
-    if(!isalnum(id[i]) && id[i] != '_')
-      return -1;
-  
-  return 0;
+	for(i = 0; i < strlen(id); i++)
+		if(!isalnum(id[i]) && id[i] != '_')
+			return -1;
+
+	return 0;
 }
 
 /* Generic request routines - takes care of logging and error
    detection as well */
 
-int send_request(connection_t *c, const char *format, ...)
+int send_request(connection_t * c, const char *format, ...)
 {
-  va_list args;
-  char buffer[MAXBUFSIZE];
-  int len, request;
+	va_list args;
+	char buffer[MAXBUFSIZE];
+	int len, request;
 
-  cp();
-  /* Use vsnprintf instead of vasprintf: faster, no memory
-     fragmentation, cleanup is automatic, and there is a limit on the
-     input buffer anyway */
+	cp();
 
-  va_start(args, format);
-  len = vsnprintf(buffer, MAXBUFSIZE, format, args);
-  va_end(args);
+	/* Use vsnprintf instead of vasprintf: faster, no memory
+	   fragmentation, cleanup is automatic, and there is a limit on the
+	   input buffer anyway */
 
-  if(len < 0 || len > MAXBUFSIZE-1)
-    {
-      syslog(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"), c->name, c->hostname);
-      return -1;
-    }
+	va_start(args, format);
+	len = vsnprintf(buffer, MAXBUFSIZE, format, args);
+	va_end(args);
 
-  if(debug_lvl >= DEBUG_PROTOCOL)
-    {
-      sscanf(buffer, "%d", &request);
-      if(debug_lvl >= DEBUG_META)
-        syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request], c->name, c->hostname, buffer);
-      else
-        syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], c->name, c->hostname);
-    }
-
-  buffer[len++] = '\n';
-  cp();
-  if(c == broadcast)
-    return broadcast_meta(NULL, buffer, len);
-  else
-    return send_meta(c, buffer, len);
-}
-
-int forward_request(connection_t *from)
-{
-  int request;
-  cp();
-  if(debug_lvl >= DEBUG_PROTOCOL)
-    {
-      sscanf(from->buffer, "%d", &request);
-      if(debug_lvl >= DEBUG_META)
-        syslog(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"), request_name[request], from->name, from->hostname, from->buffer);
-      else
-        syslog(LOG_DEBUG, _("Forwarding %s from %s (%s)"), request_name[request], from->name, from->hostname);
-    }
-
-  from->buffer[from->reqlen - 1] = '\n';
-  cp();
-  return broadcast_meta(from, from->buffer, from->reqlen);
-}
-
-int receive_request(connection_t *c)
-{
-  int request;
-  cp();
-  if(sscanf(c->buffer, "%d", &request) == 1)
-    {
-      if((request < 0) || (request >= LAST) || !request_handlers[request])
-        {
-          if(debug_lvl >= DEBUG_META)
-            syslog(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
-	           c->name, c->hostname, c->buffer);
-          else
-            syslog(LOG_ERR, _("Unknown request from %s (%s)"),
-                   c->name, c->hostname);
-                   
-          return -1;
-        }
-      else
-        {
-          if(debug_lvl >= DEBUG_PROTOCOL)
-            {
-              if(debug_lvl >= DEBUG_META)
-                syslog(LOG_DEBUG, _("Got %s from %s (%s): %s"),
-	               request_name[request], c->name, c->hostname, c->buffer);
-              else
-                syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
-		       request_name[request], c->name, c->hostname);
-            }
+	if(len < 0 || len > MAXBUFSIZE - 1) {
+		syslog(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
+			   c->name, c->hostname);
+		return -1;
 	}
 
-      if((c->allow_request != ALL) && (c->allow_request != request))
-        {
-          syslog(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name, c->hostname);
-          return -1;
-        }
+	if(debug_lvl >= DEBUG_PROTOCOL) {
+		sscanf(buffer, "%d", &request);
+		if(debug_lvl >= DEBUG_META)
+			syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"),
+				   request_name[request], c->name, c->hostname, buffer);
+		else
+			syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
+				   c->name, c->hostname);
+	}
 
-      if(request_handlers[request](c))
-	/* Something went wrong. Probably scriptkiddies. Terminate. */
-        {
-          syslog(LOG_ERR, _("Error while processing %s from %s (%s)"),
-		 request_name[request], c->name, c->hostname);
-          return -1;
-        }
-    }
-  else
-    {
-      syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
-	     c->name, c->hostname);
-      return -1;
-    }
-  cp();
-  return 0;
+	buffer[len++] = '\n';
+
+	if(c == broadcast)
+		return broadcast_meta(NULL, buffer, len);
+	else
+		return send_meta(c, buffer, len);
 }
 
-int past_request_compare(past_request_t *a, past_request_t *b)
+int forward_request(connection_t * from)
 {
-  cp();
-  return strcmp(a->request, b->request);
+	int request;
+	cp();
+
+	cp();
+
+	if(debug_lvl >= DEBUG_PROTOCOL) {
+		sscanf(from->buffer, "%d", &request);
+		if(debug_lvl >= DEBUG_META)
+			syslog(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
+				   request_name[request], from->name, from->hostname,
+				   from->buffer);
+		else
+			syslog(LOG_DEBUG, _("Forwarding %s from %s (%s)"),
+				   request_name[request], from->name, from->hostname);
+	}
+
+	from->buffer[from->reqlen - 1] = '\n';
+
+	return broadcast_meta(from, from->buffer, from->reqlen);
 }
 
-void free_past_request(past_request_t *r)
+int receive_request(connection_t * c)
 {
-  cp();
-  if(r->request)
-    free(r->request);
-  free(r);
-  cp();
+	int request;
+
+	cp();
+
+	if(sscanf(c->buffer, "%d", &request) == 1) {
+		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
+			if(debug_lvl >= DEBUG_META)
+				syslog(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
+					   c->name, c->hostname, c->buffer);
+			else
+				syslog(LOG_ERR, _("Unknown request from %s (%s)"),
+					   c->name, c->hostname);
+
+			return -1;
+		} else {
+			if(debug_lvl >= DEBUG_PROTOCOL) {
+				if(debug_lvl >= DEBUG_META)
+					syslog(LOG_DEBUG, _("Got %s from %s (%s): %s"),
+						   request_name[request], c->name, c->hostname,
+						   c->buffer);
+				else
+					syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
+						   request_name[request], c->name, c->hostname);
+			}
+		}
+
+		if((c->allow_request != ALL) && (c->allow_request != request)) {
+			syslog(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
+				   c->hostname);
+			return -1;
+		}
+
+		if(request_handlers[request] (c))
+			/* Something went wrong. Probably scriptkiddies. Terminate. */
+		{
+			syslog(LOG_ERR, _("Error while processing %s from %s (%s)"),
+				   request_name[request], c->name, c->hostname);
+			return -1;
+		}
+	} else {
+		syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
+			   c->name, c->hostname);
+		return -1;
+	}
+
+	return 0;
+}
+
+int past_request_compare(past_request_t * a, past_request_t * b)
+{
+	return strcmp(a->request, b->request);
+}
+
+void free_past_request(past_request_t * r)
+{
+	cp();
+
+	if(r->request)
+		free(r->request);
+
+	free(r);
 }
 
 void init_requests(void)
 {
-  cp();
-  past_request_tree = avl_alloc_tree((avl_compare_t)past_request_compare, (avl_action_t)free_past_request);
-  cp();
+	cp();
+
+	past_request_tree = avl_alloc_tree((avl_compare_t) past_request_compare, (avl_action_t) free_past_request);
 }
 
 void exit_requests(void)
 {
-  cp();
-  avl_delete_tree(past_request_tree);
-  cp();
+	cp();
+
+	avl_delete_tree(past_request_tree);
 }
 
 int seen_request(char *request)
 {
-  past_request_t p, *new;
-  cp();
-  p.request = request;
+	past_request_t p, *new;
 
-  if(avl_search(past_request_tree, &p))
-    {
-      if(debug_lvl >= DEBUG_SCARY_THINGS)
-        syslog(LOG_DEBUG, _("Already seen request"));
-      return 1;
-    }
-  else
-    {
-      new = (past_request_t *)xmalloc(sizeof(*new));
-      new->request = xstrdup(request);
-      new->firstseen = now;
-      avl_insert(past_request_tree, new);
-      return 0;
-    }
-  cp();
+	cp();
+
+	p.request = request;
+
+	if(avl_search(past_request_tree, &p)) {
+		if(debug_lvl >= DEBUG_SCARY_THINGS)
+			syslog(LOG_DEBUG, _("Already seen request"));
+		return 1;
+	} else {
+		new = (past_request_t *) xmalloc(sizeof(*new));
+		new->request = xstrdup(request);
+		new->firstseen = now;
+		avl_insert(past_request_tree, new);
+		return 0;
+	}
 }
 
 void age_past_requests(void)
 {
-  avl_node_t *node, *next;
-  past_request_t *p;
-  int left = 0, deleted = 0;
-  cp();
-  for(node = past_request_tree->head; node; node = next)
-    {
-      next = node->next;
-      p = (past_request_t *)node->data;
-      if(p->firstseen + pingtimeout < now)
-        avl_delete_node(past_request_tree, node), deleted++;
-      else
-        left++;
-    }
+	avl_node_t *node, *next;
+	past_request_t *p;
+	int left = 0, deleted = 0;
 
-  if(debug_lvl >= DEBUG_SCARY_THINGS && left + deleted)
-    syslog(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"), deleted, left);
-  cp();
+	cp();
+
+	for(node = past_request_tree->head; node; node = next) {
+		next = node->next;
+		p = (past_request_t *) node->data;
+
+		if(p->firstseen + pingtimeout < now)
+			avl_delete_node(past_request_tree, node), deleted++;
+		else
+			left++;
+	}
+
+	if(debug_lvl >= DEBUG_SCARY_THINGS && left + deleted)
+		syslog(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
+			   deleted, left);
 }
 
 /* Jumptable for the request handlers */
 
-int (*request_handlers[])(connection_t*) = {
-  id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
-  status_h, error_h, termreq_h,
-  ping_h, pong_h,
-  add_subnet_h, del_subnet_h,
-  add_edge_h, del_edge_h,
-  key_changed_h, req_key_h, ans_key_h,
-  tcppacket_h,
+int (*request_handlers[]) (connection_t *) = {
+		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
+		status_h, error_h, termreq_h,
+		ping_h, pong_h,
+		add_subnet_h, del_subnet_h,
+		add_edge_h, del_edge_h,
+		key_changed_h, req_key_h, ans_key_h, tcppacket_h,
 };
 
 /* Request names */
 
 char (*request_name[]) = {
-  "ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
-  "STATUS", "ERROR", "TERMREQ",
-  "PING", "PONG",
-  "ADD_SUBNET", "DEL_SUBNET",
-  "ADD_EDGE", "DEL_EDGE",
-  "KEY_CHANGED", "REQ_KEY", "ANS_KEY",
-  "PACKET",
+		"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
+		"STATUS", "ERROR", "TERMREQ",
+		"PING", "PONG",
+		"ADD_SUBNET", "DEL_SUBNET",
+		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
 };

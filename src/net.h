@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.52 2002/06/21 10:11:12 guus Exp $
+    $Id: net.h,v 1.9.4.53 2002/09/09 21:24:36 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -29,43 +29,40 @@
 #include <sys/time.h>
 
 #ifdef HAVE_INTTYPES_H
- #include <inttypes.h>
+#include <inttypes.h>
 #endif
 
 #include "config.h"
 
 #ifdef ENABLE_JUMBOGRAMS
- #define MTU 9014        /* 9000 bytes payload + 14 bytes ethernet header */
- #define MAXSIZE 9100    /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
- #define MAXBUFSIZE 9100 /* Must support TCP packets of length 9000. */
+#define MTU 9014				/* 9000 bytes payload + 14 bytes ethernet header */
+#define MAXSIZE 9100			/* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+#define MAXBUFSIZE 9100			/* Must support TCP packets of length 9000. */
 #else
- #define MTU 1514        /* 1500 bytes payload + 14 bytes ethernet header */
- #define MAXSIZE 1600    /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
- #define MAXBUFSIZE 2100 /* Quite large but needed for support of keys up to 8192 bits. */
+#define MTU 1514				/* 1500 bytes payload + 14 bytes ethernet header */
+#define MAXSIZE 1600			/* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+#define MAXBUFSIZE 2100			/* Quite large but needed for support of keys up to 8192 bits. */
 #endif
 
-#define MAXSOCKETS 128 /* Overkill... */
+#define MAXSOCKETS 128			/* Overkill... */
 
-#define MAXQUEUELENGTH 8 /* Maximum number of packats in a single queue */
+#define MAXQUEUELENGTH 8		/* Maximum number of packats in a single queue */
 
-typedef struct mac_t
-{
-  uint8_t x[6];
+typedef struct mac_t {
+	uint8_t x[6];
 } mac_t;
 
-typedef struct ipv4_t
-{
-  uint8_t x[4];
+typedef struct ipv4_t {
+	uint8_t x[4];
 } ipv4_t;
 
 typedef struct ip_mask_t {
-  ipv4_t address;
-  ipv4_t mask;
+	ipv4_t address;
+	ipv4_t mask;
 } ip_mask_t;
 
-typedef struct ipv6_t
-{
-  uint16_t x[8];
+typedef struct ipv6_t {
+	uint16_t x[8];
 } ipv6_t;
 
 typedef unsigned short port_t;
@@ -73,9 +70,9 @@ typedef unsigned short port_t;
 typedef short length_t;
 
 typedef union {
-  struct sockaddr sa;
-  struct sockaddr_in in;
-  struct sockaddr_in6 in6;
+	struct sockaddr sa;
+	struct sockaddr_in in;
+	struct sockaddr_in6 in6;
 } sockaddr_t;
 
 #ifdef SA_LEN
@@ -85,35 +82,35 @@ typedef union {
 #endif
 
 typedef struct vpn_packet_t {
-  length_t len;			/* the actual number of bytes in the `data' field */
-  int priority;                 /* priority or TOS */
-  uint32_t seqno;	        /* 32 bits sequence number (network byte order of course) */
-  uint8_t data[MAXSIZE];
+	length_t len;				/* the actual number of bytes in the `data' field */
+	int priority;				/* priority or TOS */
+	uint32_t seqno;				/* 32 bits sequence number (network byte order of course) */
+	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
 typedef struct queue_element_t {
-  void *packet;
-  struct queue_element_t *prev;
-  struct queue_element_t *next;
+	void *packet;
+	struct queue_element_t *prev;
+	struct queue_element_t *next;
 } queue_element_t;
 
 typedef struct packet_queue_t {
-  queue_element_t *head;
-  queue_element_t *tail;
+	queue_element_t *head;
+	queue_element_t *tail;
 } packet_queue_t;
 
 typedef struct outgoing_t {
-  char *name;
-  int timeout;
-  struct config_t *cfg;
-  struct addrinfo *ai;
-  struct addrinfo *aip;
+	char *name;
+	int timeout;
+	struct config_t *cfg;
+	struct addrinfo *ai;
+	struct addrinfo *aip;
 } outgoing_t;
 
 typedef struct listen_socket_t {
-  int tcp;
-  int udp;
-  sockaddr_t sa;
+	int tcp;
+	int udp;
+	sockaddr_t sa;
 } listen_socket_t;
 
 extern int maxtimeout;
@@ -123,7 +120,7 @@ extern int addressfamily;
 extern char *request_name[];
 extern char *status_text[];
 
-#include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
+#include "connection.h"			/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
@@ -154,4 +151,4 @@ extern void terminate_connection(connection_t *, int);
 extern void flush_queue(struct node_t *);
 extern int read_rsa_public_key(struct connection_t *);
 
-#endif /* __TINC_NET_H__ */
+#endif							/* __TINC_NET_H__ */

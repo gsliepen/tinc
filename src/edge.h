@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.10 2002/09/06 10:23:52 guus Exp $
+    $Id: edge.h,v 1.1.2.11 2002/09/09 21:24:31 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -30,18 +30,18 @@
 #include "connection.h"
 
 typedef struct edge_t {
-  struct node_t *from;
-  struct node_t *to;
-  sockaddr_t address;
+	struct node_t *from;
+	struct node_t *to;
+	sockaddr_t address;
 
-  long int options;                /* options turned on for this edge */
-  int weight;                      /* weight of this edge */
-  
-  struct connection_t *connection; /* connection associated with this edge, if available */
-  struct edge_t *reverse;          /* edge in the opposite direction, if available */
+	long int options;			/* options turned on for this edge */
+	int weight;					/* weight of this edge */
+
+	struct connection_t *connection;	/* connection associated with this edge, if available */
+	struct edge_t *reverse;		/* edge in the opposite direction, if available */
 } edge_t;
 
-extern avl_tree_t *edge_weight_tree; /* Tree with all known edges sorted on weight */
+extern avl_tree_t *edge_weight_tree;	/* Tree with all known edges sorted on weight */
 
 extern void init_edges(void);
 extern void exit_edges(void);
@@ -54,4 +54,4 @@ extern void edge_del(edge_t *);
 extern edge_t *lookup_edge(struct node_t *, struct node_t *);
 extern void dump_edges(void);
 
-#endif /* __TINC_EDGE_H__ */
+#endif							/* __TINC_EDGE_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.10 2002/09/09 19:40:12 guus Exp $
+    $Id: device.c,v 1.1.2.11 2002/09/09 21:25:23 guus Exp $
 */
 
 #include "config.h"
@@ -34,14 +34,14 @@
 #include <sys/ioctl.h>
 
 #ifdef HAVE_TUNTAP
- #ifdef LINUX_IF_TUN_H
-  #include LINUX_IF_TUN_H
- #else
-  #include <linux/if_tun.h>
- #endif
- #define DEFAULT_DEVICE "/dev/misc/net/tun"
+#ifdef LINUX_IF_TUN_H
+#include LINUX_IF_TUN_H
 #else
- #define DEFAULT_DEVICE "/dev/tap0"
+#include <linux/if_tun.h>
+#endif
+#define DEFAULT_DEVICE "/dev/misc/net/tun"
+#else
+#define DEFAULT_DEVICE "/dev/tap0"
 #endif
 
 #include <utils.h>
@@ -71,160 +71,137 @@ extern subnet_t mymac;
 */
 int setup_device(void)
 {
-  struct ifreq ifr;
+	struct ifreq ifr;
 
-cp
-  if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-    device = DEFAULT_DEVICE;
+	cp if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+		device = DEFAULT_DEVICE;
 
-  if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
 #ifdef HAVE_TUNTAP
-    interface = netname;
+		interface = netname;
 #else
-    interface = rindex(device, '/')?rindex(device, '/')+1:device;
+		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 #endif
-cp
-  device_fd = open(device, O_RDWR | O_NONBLOCK);
+	cp device_fd = open(device, O_RDWR | O_NONBLOCK);
 
-  if(device_fd < 0)
-    {
-      syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
-      return -1;
-    }
-cp
-  /* Set default MAC address for ethertap devices */
-
-  mymac.type = SUBNET_MAC;
-  mymac.net.mac.address.x[0] = 0xfe;
-  mymac.net.mac.address.x[1] = 0xfd;
-  mymac.net.mac.address.x[2] = 0x00;
-  mymac.net.mac.address.x[3] = 0x00;
-  mymac.net.mac.address.x[4] = 0x00;
-  mymac.net.mac.address.x[5] = 0x00;
+	if(device_fd < 0) {
+		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		return -1;
+	}
+	cp
+		/* Set default MAC address for ethertap devices */
+		mymac.type = SUBNET_MAC;
+	mymac.net.mac.address.x[0] = 0xfe;
+	mymac.net.mac.address.x[1] = 0xfd;
+	mymac.net.mac.address.x[2] = 0x00;
+	mymac.net.mac.address.x[3] = 0x00;
+	mymac.net.mac.address.x[4] = 0x00;
+	mymac.net.mac.address.x[5] = 0x00;
 
 #ifdef HAVE_TUNTAP
-  /* Ok now check if this is an old ethertap or a new tun/tap thingie */
+	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
-  memset(&ifr, 0, sizeof(ifr));
-cp
-  ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-  if (interface)
-    strncpy(ifr.ifr_name, interface, IFNAMSIZ);
-cp
-  if (!ioctl(device_fd, TUNSETIFF, (void *) &ifr))
-  {
-    device_info = _("Linux tun/tap device");
-    device_type = DEVICE_TYPE_TUNTAP;
-    strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-    interface = ifrname;
-  }
-  else
-    if (!ioctl(device_fd, (('T'<< 8) | 202), (void *) &ifr))
-    {
-      syslog(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
-      device_type = DEVICE_TYPE_TUNTAP;
-      device_info = _("Linux tun/tap device");
-      strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-      interface = ifrname;
-    }
-    else
+	memset(&ifr, 0, sizeof(ifr));
+	cp ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
+	if(interface)
+		strncpy(ifr.ifr_name, interface, IFNAMSIZ);
+	cp if(!ioctl(device_fd, TUNSETIFF, (void *) &ifr)) {
+		device_info = _("Linux tun/tap device");
+		device_type = DEVICE_TYPE_TUNTAP;
+		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
+		interface = ifrname;
+	} else if(!ioctl(device_fd, (('T' << 8) | 202), (void *) &ifr)) {
+		syslog(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
+		device_type = DEVICE_TYPE_TUNTAP;
+		device_info = _("Linux tun/tap device");
+		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
+		interface = ifrname;
+	} else
 #endif
-    {
-      device_info = _("Linux ethertap device");
-      device_type = DEVICE_TYPE_ETHERTAP;
-      interface = rindex(device, '/')?rindex(device, '/')+1:device;
-    }
+	{
+		device_info = _("Linux ethertap device");
+		device_type = DEVICE_TYPE_ETHERTAP;
+		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+	}
 
-  syslog(LOG_INFO, _("%s is a %s"), device, device_info);
-cp
-  return 0;
+	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
+	cp return 0;
 }
 
 void close_device(void)
 {
-cp
-  close(device_fd);
+	cp close(device_fd);
 }
 
 /*
   read, encrypt and send data that is
   available through the ethertap device
 */
-int read_packet(vpn_packet_t *packet)
+int read_packet(vpn_packet_t * packet)
 {
-  int lenin;
-cp
-  if(device_type == DEVICE_TYPE_TUNTAP)
-    {
-      lenin = read(device_fd, packet->data, MTU);
+	int lenin;
+	cp if(device_type == DEVICE_TYPE_TUNTAP) {
+		lenin = read(device_fd, packet->data, MTU);
 
-      if(lenin <= 0)
-        {
-          syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
-          return -1;
-        }
+		if(lenin <= 0) {
+			syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
+				   device_info, device, strerror(errno));
+			return -1;
+		}
 
-      packet->len = lenin;
-    }
-  else /* ethertap */
-    {
-      lenin = read(device_fd, packet->data - 2, MTU + 2);
+		packet->len = lenin;
+	} else {					/* ethertap */
 
-      if(lenin <= 0)
-        {
-          syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
-          return -1;
-        }
+		lenin = read(device_fd, packet->data - 2, MTU + 2);
 
-      packet->len = lenin - 2;
-    }
+		if(lenin <= 0) {
+			syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
+				   device_info, device, strerror(errno));
+			return -1;
+		}
 
-  device_total_in += packet->len;
+		packet->len = lenin - 2;
+	}
 
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    {
-      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len, device_info);
-    }
+	device_total_in += packet->len;
 
-  return 0;
-cp
-}
+	if(debug_lvl >= DEBUG_TRAFFIC) {
+		syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+			   device_info);
+	}
 
-int write_packet(vpn_packet_t *packet)
+	return 0;
+cp}
+
+int write_packet(vpn_packet_t * packet)
 {
-cp
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
-           packet->len, device_info);
+	cp if(debug_lvl >= DEBUG_TRAFFIC)
+		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+			   packet->len, device_info);
 
-  if(device_type == DEVICE_TYPE_TUNTAP)
-    {
-      if(write(device_fd, packet->data, packet->len) < 0)
-        {
-          syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
-          return -1;
-        }
-    }
-  else/* ethertap */
-    {
-      *(short int *)(packet->data - 2) = packet->len;
-      if(write(device_fd, packet->data - 2, packet->len + 2) < 0)
-        {
-          syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
-          return -1;
-        }
-    }
+	if(device_type == DEVICE_TYPE_TUNTAP) {
+		if(write(device_fd, packet->data, packet->len) < 0) {
+			syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				   strerror(errno));
+			return -1;
+		}
+	} else {					/* ethertap */
 
-  device_total_out += packet->len;
-cp
-  return 0;
+		*(short int *) (packet->data - 2) = packet->len;
+		if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
+			syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				   strerror(errno));
+			return -1;
+		}
+	}
+
+	device_total_out += packet->len;
+	cp return 0;
 }
 
 void dump_device_stats(void)
 {
-cp
-  syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-  syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-  syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
-cp
-}
+	cp syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+cp}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.5 2002/09/09 19:40:08 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.6 2002/09/09 21:25:02 guus Exp $
 */
 
 #include "config.h"
@@ -42,157 +42,169 @@
 
 /* Status and error notification routines */
 
-int send_status(connection_t *c, int statusno, char *statusstring)
+int send_status(connection_t * c, int statusno, char *statusstring)
 {
-  cp();
-  if(!statusstring)
-    statusstring = status_text[statusno];
-  cp();
-  return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
+	cp();
+
+	if(!statusstring)
+		statusstring = status_text[statusno];
+
+	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-int status_h(connection_t *c)
+int status_h(connection_t * c)
 {
-  int statusno;
-  char statusstring[MAX_STRING_SIZE];
-  cp();
-  if(sscanf(c->buffer, "%*d %d "MAX_STRING, &statusno, statusstring) != 2)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
-              c->name, c->hostname);
-       return -1;
-    }
+	int statusno;
+	char statusstring[MAX_STRING_SIZE];
 
-  if(debug_lvl >= DEBUG_STATUS)
-    {
-      syslog(LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
-             c->name, c->hostname, status_text[statusno], statusstring);
-    }
+	cp();
 
-  cp();
-  return 0;
+	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
+			   c->name, c->hostname);
+		return -1;
+	}
+
+	if(debug_lvl >= DEBUG_STATUS) {
+		syslog(LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
+			   c->name, c->hostname, status_text[statusno], statusstring);
+	}
+
+	return 0;
 }
 
-int send_error(connection_t *c, int err, char *errstring)
+int send_error(connection_t * c, int err, char *errstring)
 {
-  cp();
-  if(!errstring)
-    errstring = strerror(err);
-  return send_request(c, "%d %d %s", ERROR, err, errstring);
+	cp();
+
+	if(!errstring)
+		errstring = strerror(err);
+
+	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
 
-int error_h(connection_t *c)
+int error_h(connection_t * c)
 {
-  int err;
-  char errorstring[MAX_STRING_SIZE];
-  cp();
-  if(sscanf(c->buffer, "%*d %d "MAX_STRING, &err, errorstring) != 2)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
-              c->name, c->hostname);
-       return -1;
-    }
+	int err;
+	char errorstring[MAX_STRING_SIZE];
 
-  if(debug_lvl >= DEBUG_ERROR)
-    {
-      syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
-             c->name, c->hostname, strerror(err), errorstring);
-    }
+	cp();
 
-  terminate_connection(c, c->status.active);
-  cp();
-  return 0;
+	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
+			   c->name, c->hostname);
+		return -1;
+	}
+
+	if(debug_lvl >= DEBUG_ERROR) {
+		syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
+			   c->name, c->hostname, strerror(err), errorstring);
+	}
+
+	terminate_connection(c, c->status.active);
+
+	return 0;
 }
 
-int send_termreq(connection_t *c)
+int send_termreq(connection_t * c)
 {
-  cp();
-  return send_request(c, "%d", TERMREQ);
+	cp();
+
+	return send_request(c, "%d", TERMREQ);
 }
 
-int termreq_h(connection_t *c)
+int termreq_h(connection_t * c)
 {
-  cp();
-  terminate_connection(c, c->status.active);
-  cp();
-  return 0;
+	cp();
+
+	terminate_connection(c, c->status.active);
+
+	return 0;
 }
 
-int send_ping(connection_t *c)
+int send_ping(connection_t * c)
 {
-  cp();
-  c->status.pinged = 1;
-  c->last_ping_time = now;
-  cp();
-  return send_request(c, "%d", PING);
+	cp();
+
+	c->status.pinged = 1;
+	c->last_ping_time = now;
+
+	return send_request(c, "%d", PING);
 }
 
-int ping_h(connection_t *c)
+int ping_h(connection_t * c)
 {
-  cp();
-  return send_pong(c);
+	cp();
+
+	return send_pong(c);
 }
 
-int send_pong(connection_t *c)
+int send_pong(connection_t * c)
 {
-  cp();
-  return send_request(c, "%d", PONG);
+	cp();
+
+	return send_request(c, "%d", PONG);
 }
 
-int pong_h(connection_t *c)
+int pong_h(connection_t * c)
 {
-  cp();
-  c->status.pinged = 0;
+	cp();
 
-  /* Succesful connection, reset timeout if this is an outgoing connection. */
-  
-  if(c->outgoing)
-    c->outgoing->timeout = 0;
-  cp();
-  return 0;
+	c->status.pinged = 0;
+
+	/* Succesful connection, reset timeout if this is an outgoing connection. */
+
+	if(c->outgoing)
+		c->outgoing->timeout = 0;
+
+	return 0;
 }
 
 /* Sending and receiving packets via TCP */
 
-int send_tcppacket(connection_t *c, vpn_packet_t *packet)
+int send_tcppacket(connection_t * c, vpn_packet_t * packet)
 {
-  int x;
-  cp();
-  /* Evil hack. */
+	int x;
 
-  x = send_request(c, "%d %hd", PACKET, packet->len);
+	cp();
 
-  if(x)
-    return x;
-  cp();
-  return send_meta(c, packet->data, packet->len);
+	/* Evil hack. */
+
+	x = send_request(c, "%d %hd", PACKET, packet->len);
+
+	if(x)
+		return x;
+
+	return send_meta(c, packet->data, packet->len);
 }
 
-int tcppacket_h(connection_t *c)
+int tcppacket_h(connection_t * c)
 {
-  short int len;
-  cp();
-  if(sscanf(c->buffer, "%*d %hd", &len) != 1)
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name, c->hostname);
-      return -1;
-    }
+	short int len;
 
-  /* Set reqlen to len, this will tell receive_meta() that a tcppacket is coming. */
+	cp();
 
-  c->tcplen = len;
-  cp();
-  return 0;
+	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
+			   c->hostname);
+		return -1;
+	}
+
+	/* Set reqlen to len, this will tell receive_meta() that a tcppacket is coming. */
+
+	c->tcplen = len;
+
+	return 0;
 }
 
 /* Status strings */
 
 char (*status_text[]) = {
-  "Warning",
+	"Warning",
 };
 
 /* Error strings */
 
 char (*error_text[]) = {
-  "Error",
+	"Error",
 };

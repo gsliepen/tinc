@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.1.4.2 2002/06/21 10:11:12 guus Exp $
+    $Id: event.h,v 1.1.4.3 2002/09/09 21:24:34 guus Exp $
 */
 
 #ifndef __TINC_EVENT_H__
@@ -28,13 +28,13 @@
 
 avl_tree_t *event_tree;
 
-typedef void (*event_handler_t)(void *);
+typedef void (*event_handler_t) (void *);
 
 typedef struct {
-  time_t time;
-  int id;
-  event_handler_t handler;
-  void *data;
+	time_t time;
+	int id;
+	event_handler_t handler;
+	void *data;
 } event_t;
 
 extern void init_events(void);
@@ -45,4 +45,4 @@ extern void event_add(event_t *);
 extern void event_del(event_t *);
 extern event_t *get_expired_event(void);
 
-#endif /* __TINC_EVENT_H__ */
+#endif							/* __TINC_EVENT_H__ */

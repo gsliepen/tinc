@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.12 2002/07/10 11:27:06 guus Exp $
+    $Id: process.h,v 1.1.2.13 2002/09/09 21:24:41 guus Exp $
 */
 
 #ifndef __TINC_PROCESS_H__
@@ -33,4 +33,4 @@ extern int detach(void);
 extern int kill_other(int);
 extern void cleanup_and_exit(int);
 
-#endif /* __TINC_PROCESS_H__ */
+#endif							/* __TINC_PROCESS_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.45 2002/09/09 19:39:59 guus Exp $
+    $Id: process.c,v 1.1.2.46 2002/09/09 21:24:41 guus Exp $
 */
 
 #include "config.h"
@@ -66,9 +66,9 @@ extern int do_purge;
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
-  cp_trace();
-  exit(1);
+	syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
+	cp_trace();
+	exit(1);
 }
 
 /* Some functions the less gifted operating systems might lack... */
@@ -76,13 +76,13 @@ void memory_full(int size)
 #ifndef HAVE_FCLOSEALL
 int fcloseall(void)
 {
-  fflush(stdin);
-  fflush(stdout);
-  fflush(stderr);
-  fclose(stdin);
-  fclose(stdout);
-  fclose(stderr);
-  return 0;
+	fflush(stdin);
+	fflush(stdout);
+	fflush(stderr);
+	fclose(stdin);
+	fclose(stdout);
+	fclose(stderr);
+	return 0;
 }
 #endif
 
@@ -91,16 +91,17 @@ int fcloseall(void)
 */
 void cleanup_and_exit(int c)
 {
-  cp();
-  close_network_connections();
+	cp();
 
-  if(debug_lvl > DEBUG_NOTHING)
-    dump_device_stats();
+	close_network_connections();
 
-  syslog(LOG_NOTICE, _("Terminating"));
+	if(debug_lvl > DEBUG_NOTHING)
+		dump_device_stats();
 
-  closelog();
-  exit(c);
+	syslog(LOG_NOTICE, _("Terminating"));
+
+	closelog();
+	exit(c);
 }
 
 /*
@@ -108,25 +109,26 @@ void cleanup_and_exit(int c)
 */
 int write_pidfile(void)
 {
-  int pid;
-  cp();
-  pid = check_pid(pidfilename);
+	int pid;
 
-  if(pid)
-    {
-      if(netname)
-	fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
-		netname, pid);
-      else
-	fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
-      return 1;
-    }
+	cp();
 
-  /* if it's locked, write-protected, or whatever */
-  if(!write_pid(pidfilename))
-    return 1;
-  cp();
-  return 0;
+	pid = check_pid(pidfilename);
+
+	if(pid) {
+		if(netname)
+			fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
+					netname, pid);
+		else
+			fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
+		return 1;
+	}
+
+	/* if it's locked, write-protected, or whatever */
+	if(!write_pid(pidfilename))
+		return 1;
+
+	return 0;
 }
 
 /*
@@ -134,33 +136,36 @@ int write_pidfile(void)
 */
 int kill_other(int signal)
 {
-  int pid;
-  cp();
-  pid = read_pid(pidfilename);
+	int pid;
 
-  if(!pid)
-    {
-      if(netname)
-	fprintf(stderr, _("No other tincd is running for net `%s'.\n"), netname);
-      else
-	fprintf(stderr, _("No other tincd is running.\n"));
-      return 1;
-    }
+	cp();
 
-  errno = 0;    /* No error, sometimes errno is only changed on error */
-  /* ESRCH is returned when no process with that pid is found */
-  if(kill(pid, signal) && errno == ESRCH)
-    {
-      if(netname)
-        fprintf(stderr, _("The tincd for net `%s' is no longer running. "), netname);
-      else
-        fprintf(stderr, _("The tincd is no longer running. "));
+	pid = read_pid(pidfilename);
 
-      fprintf(stderr, _("Removing stale lock file.\n"));
-      remove_pid(pidfilename);
-    }
-  cp();
-  return 0;
+	if(!pid) {
+		if(netname)
+			fprintf(stderr, _("No other tincd is running for net `%s'.\n"),
+					netname);
+		else
+			fprintf(stderr, _("No other tincd is running.\n"));
+		return 1;
+	}
+
+	errno = 0;					/* No error, sometimes errno is only changed on error */
+
+	/* ESRCH is returned when no process with that pid is found */
+	if(kill(pid, signal) && errno == ESRCH) {
+		if(netname)
+			fprintf(stderr, _("The tincd for net `%s' is no longer running. "),
+					netname);
+		else
+			fprintf(stderr, _("The tincd is no longer running. "));
+
+		fprintf(stderr, _("Removing stale lock file.\n"));
+		remove_pid(pidfilename);
+	}
+
+	return 0;
 }
 
 /*
@@ -168,69 +173,73 @@ int kill_other(int signal)
 */
 int detach(void)
 {
-  cp();
-  setup_signals();
+	cp();
 
-  /* First check if we can open a fresh new pidfile */
-  
-  if(write_pidfile())
-    return -1;
+	setup_signals();
 
-  /* If we succeeded in doing that, detach */
+	/* First check if we can open a fresh new pidfile */
 
-  closelog();
+	if(write_pidfile())
+		return -1;
 
-  if(do_detach)
-    {
-      if(daemon(0, 0) < 0)
-	{
-	  fprintf(stderr, _("Couldn't detach from terminal: %s"), strerror(errno));
-	  return -1;
+	/* If we succeeded in doing that, detach */
+
+	closelog();
+
+	if(do_detach) {
+		if(daemon(0, 0) < 0) {
+			fprintf(stderr, _("Couldn't detach from terminal: %s"),
+					strerror(errno));
+			return -1;
+		}
+
+		/* Now UPDATE the pid in the pidfile, because we changed it... */
+
+		if(!write_pid(pidfilename))
+			return -1;
 	}
 
-      /* Now UPDATE the pid in the pidfile, because we changed it... */
-      
-      if(!write_pid(pidfilename))
-        return -1;
-    }
-  
-  openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
+	openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
-	   VERSION, __DATE__, __TIME__, debug_lvl);
-  else
-    syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
+	if(debug_lvl > DEBUG_NOTHING)
+		syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
+			   VERSION, __DATE__, __TIME__, debug_lvl);
+	else
+		syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
 
-  xalloc_fail_func = memory_full;
-  cp();
-  return 0;
+	xalloc_fail_func = memory_full;
+
+	return 0;
 }
 
 /*
   Execute the program name, with sane environment.  All output will be
   redirected to syslog.
 */
-void _execute_script(const char *scriptname, char **envp)  __attribute__ ((noreturn));
+void _execute_script(const char *scriptname, char **envp)
+	__attribute__ ((noreturn));
 void _execute_script(const char *scriptname, char **envp)
 {
-  char *s;
-  cp();
-  while(*envp)
-    putenv(*envp++);
-      
-  chdir("/");
-  
-  /* Close all file descriptors */
-  closelog();		/* <- this means we cannot use syslog() here anymore! */
-  fcloseall();
+	char *s;
 
-  execl(scriptname, NULL);
-  /* No return on success */
+	cp();
 
-  openlog("tinc", LOG_CONS | LOG_PID, LOG_DAEMON);
-  syslog(LOG_ERR, _("Could not execute `%s': %s"), scriptname, strerror(errno));
-  exit(errno);
+	while(*envp)
+		putenv(*envp++);
+
+	chdir("/");
+
+	/* Close all file descriptors */
+	closelog();					/* <- this means we cannot use syslog() here anymore! */
+	fcloseall();
+
+	execl(scriptname, NULL);
+	/* No return on success */
+
+	openlog("tinc", LOG_CONS | LOG_PID, LOG_DAEMON);
+	syslog(LOG_ERR, _("Could not execute `%s': %s"), scriptname,
+		   strerror(errno));
+	exit(errno);
 }
 
 /*
@@ -238,67 +247,62 @@ void _execute_script(const char *scriptname, char **envp)
 */
 int execute_script(const char *name, char **envp)
 {
-  pid_t pid;
-  int status;
-  struct stat s;
-  char *scriptname;
-  cp();
-  asprintf(&scriptname, "%s/%s", confbase, name);
+	pid_t pid;
+	int status;
+	struct stat s;
+	char *scriptname;
 
-  /* First check if there is a script */
+	cp();
 
-  if(stat(scriptname, &s))
-    return 0;
+	asprintf(&scriptname, "%s/%s", confbase, name);
 
-  pid = fork();
-  
-  if(pid < 0)
-    {
-      syslog(LOG_ERR, _("System call `%s' failed: %s"), "fork", strerror(errno));
-      return -1;
-    }
+	/* First check if there is a script */
 
-  if(pid)
-    {
-      if(debug_lvl >= DEBUG_STATUS)
-        syslog(LOG_INFO, _("Executing script %s"), name);
+	if(stat(scriptname, &s))
+		return 0;
 
-      free(scriptname);
+	pid = fork();
 
-      if(waitpid(pid, &status, 0) == pid)
-        {
-          if(WIFEXITED(status))		/* Child exited by itself */
-            {
-              if(WEXITSTATUS(status))
-                {
-                  syslog(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"), pid, name, WEXITSTATUS(status));
-                  return -1;
-                }
-              else
-                return 0;
-            }
-          else if(WIFSIGNALED(status))	/* Child was killed by a signal */
-	    {
-	      syslog(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"),
-		     pid, name, WTERMSIG(status), strsignal(WTERMSIG(status)));
-	      return -1;
-	    }
-          else				/* Something strange happened */
-            {
-	      syslog(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid, name);
-	      return -1;
-            }
-        }
-      else
-        {
-          syslog(LOG_ERR, _("System call `%s' failed: %s"), "waitpid", strerror(errno));
-          return -1;
-        }
-    }
-  cp();
-  /* Child here */
+	if(pid < 0) {
+		syslog(LOG_ERR, _("System call `%s' failed: %s"), "fork",
+			   strerror(errno));
+		return -1;
+	}
 
-  _execute_script(scriptname, envp);
+	if(pid) {
+		if(debug_lvl >= DEBUG_STATUS)
+			syslog(LOG_INFO, _("Executing script %s"), name);
+
+		free(scriptname);
+
+		if(waitpid(pid, &status, 0) == pid) {
+			if(WIFEXITED(status)) {	/* Child exited by itself */
+				if(WEXITSTATUS(status)) {
+					syslog(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
+						   pid, name, WEXITSTATUS(status));
+					return -1;
+				} else
+					return 0;
+			} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
+				syslog(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
+					   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
+				return -1;
+			} else {			/* Something strange happened */
+
+				syslog(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
+					   name);
+				return -1;
+			}
+		} else {
+			syslog(LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
+				   strerror(errno));
+			return -1;
+		}
+	}
+
+	/* Child here */
+
+	_execute_script(scriptname, envp);
 }
 
 
@@ -306,186 +310,171 @@ int execute_script(const char *name, char **envp)
   Signal handlers.
 */
 
-RETSIGTYPE
-sigterm_handler(int a)
+RETSIGTYPE sigterm_handler(int a)
 {
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got TERM signal"));
+	if(debug_lvl > DEBUG_NOTHING)
+		syslog(LOG_NOTICE, _("Got TERM signal"));
 
-  cleanup_and_exit(0);
+	cleanup_and_exit(0);
 }
 
-RETSIGTYPE
-sigquit_handler(int a)
+RETSIGTYPE sigquit_handler(int a)
 {
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got QUIT signal"));
-  cleanup_and_exit(0);
+	if(debug_lvl > DEBUG_NOTHING)
+		syslog(LOG_NOTICE, _("Got QUIT signal"));
+	cleanup_and_exit(0);
 }
 
-RETSIGTYPE
-fatal_signal_square(int a)
+RETSIGTYPE fatal_signal_square(int a)
 {
-  syslog(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a, strsignal(a));
-  cp_trace();
-  exit(1);
+	syslog(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
+		   strsignal(a));
+	cp_trace();
+	exit(1);
 }
 
-RETSIGTYPE
-fatal_signal_handler(int a)
+RETSIGTYPE fatal_signal_handler(int a)
 {
-  struct sigaction act;
-  syslog(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
-  cp_trace();
+	struct sigaction act;
+	syslog(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
+	cp_trace();
 
-  if(do_detach)
-    {
-      syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
+	if(do_detach) {
+		syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
 
-      act.sa_handler = fatal_signal_square;
-      act.sa_mask = emptysigset;
-      act.sa_flags = 0;
-      sigaction(SIGSEGV, &act, NULL);
+		act.sa_handler = fatal_signal_square;
+		act.sa_mask = emptysigset;
+		act.sa_flags = 0;
+		sigaction(SIGSEGV, &act, NULL);
 
-      close_network_connections();
-      sleep(5);
-      remove_pid(pidfilename);
-      execvp(g_argv[0], g_argv);
-    }
-  else
-    {
-      syslog(LOG_NOTICE, _("Not restarting."));
-      exit(1);
-    }
+		close_network_connections();
+		sleep(5);
+		remove_pid(pidfilename);
+		execvp(g_argv[0], g_argv);
+	} else {
+		syslog(LOG_NOTICE, _("Not restarting."));
+		exit(1);
+	}
 }
 
-RETSIGTYPE
-sighup_handler(int a)
+RETSIGTYPE sighup_handler(int a)
 {
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got HUP signal"));
-  sighup = 1;
+	if(debug_lvl > DEBUG_NOTHING)
+		syslog(LOG_NOTICE, _("Got HUP signal"));
+	sighup = 1;
 }
 
-RETSIGTYPE
-sigint_handler(int a)
+RETSIGTYPE sigint_handler(int a)
 {
-  if(saved_debug_lvl)
-    {
-      syslog(LOG_NOTICE, _("Reverting to old debug level (%d)"),
-	     saved_debug_lvl);
-      debug_lvl = saved_debug_lvl;
-      saved_debug_lvl = 0;
-    }
-  else
-    {
-      syslog(LOG_NOTICE, _("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
-	     debug_lvl);
-      saved_debug_lvl = debug_lvl;
-      debug_lvl = 5;
-    }
+	if(saved_debug_lvl) {
+		syslog(LOG_NOTICE, _("Reverting to old debug level (%d)"),
+			   saved_debug_lvl);
+		debug_lvl = saved_debug_lvl;
+		saved_debug_lvl = 0;
+	} else {
+		syslog(LOG_NOTICE,
+			   _
+			   ("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
+			   debug_lvl);
+		saved_debug_lvl = debug_lvl;
+		debug_lvl = 5;
+	}
 }
 
-RETSIGTYPE
-sigalrm_handler(int a)
+RETSIGTYPE sigalrm_handler(int a)
 {
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got ALRM signal"));
-  sigalrm = 1;
+	if(debug_lvl > DEBUG_NOTHING)
+		syslog(LOG_NOTICE, _("Got ALRM signal"));
+	sigalrm = 1;
 }
 
-RETSIGTYPE
-sigusr1_handler(int a)
+RETSIGTYPE sigusr1_handler(int a)
 {
-  dump_connections();
+	dump_connections();
 }
 
-RETSIGTYPE
-sigusr2_handler(int a)
+RETSIGTYPE sigusr2_handler(int a)
 {
-  dump_device_stats();
-  dump_nodes();
-  dump_edges();
-  dump_subnets();
+	dump_device_stats();
+	dump_nodes();
+	dump_edges();
+	dump_subnets();
 }
 
-RETSIGTYPE
-sigwinch_handler(int a)
+RETSIGTYPE sigwinch_handler(int a)
 {
-  extern int do_purge;
-  do_purge = 1;
+	extern int do_purge;
+	do_purge = 1;
 }
 
-RETSIGTYPE
-unexpected_signal_handler(int a)
+RETSIGTYPE unexpected_signal_handler(int a)
 {
-  syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
-  cp_trace();
+	syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+	cp_trace();
 }
 
-RETSIGTYPE
-ignore_signal_handler(int a)
+RETSIGTYPE ignore_signal_handler(int a)
 {
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-  {
-    syslog(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
-    cp_trace();
-  }
+	if(debug_lvl >= DEBUG_SCARY_THINGS) {
+		syslog(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
+		cp_trace();
+	}
 }
 
 struct {
-  int signal;
-  void (*handler)(int);
+	int signal;
+	void (*handler) (int);
 } sighandlers[] = {
-  { SIGHUP, sighup_handler },
-  { SIGTERM, sigterm_handler },
-  { SIGQUIT, sigquit_handler },
-  { SIGSEGV, fatal_signal_handler },
-  { SIGBUS, fatal_signal_handler },
-  { SIGILL, fatal_signal_handler },
-  { SIGPIPE, ignore_signal_handler },
-  { SIGINT, sigint_handler },
-  { SIGUSR1, sigusr1_handler },
-  { SIGUSR2, sigusr2_handler },
-  { SIGCHLD, ignore_signal_handler },
-  { SIGALRM, sigalrm_handler },
-  { SIGWINCH, sigwinch_handler },
-  { 0, NULL }
+	{
+	SIGHUP, sighup_handler}, {
+	SIGTERM, sigterm_handler}, {
+	SIGQUIT, sigquit_handler}, {
+	SIGSEGV, fatal_signal_handler}, {
+	SIGBUS, fatal_signal_handler}, {
+	SIGILL, fatal_signal_handler}, {
+	SIGPIPE, ignore_signal_handler}, {
+	SIGINT, sigint_handler}, {
+	SIGUSR1, sigusr1_handler}, {
+	SIGUSR2, sigusr2_handler}, {
+	SIGCHLD, ignore_signal_handler}, {
+	SIGALRM, sigalrm_handler}, {
+	SIGWINCH, sigwinch_handler}, {
+	0, NULL}
 };
 
-void
-setup_signals(void)
+void setup_signals(void)
 {
-  int i;
-  struct sigaction act;
+	int i;
+	struct sigaction act;
 
-  sigemptyset(&emptysigset);
-  act.sa_handler = NULL;
-  act.sa_mask = emptysigset;
-  act.sa_flags = 0;
+	sigemptyset(&emptysigset);
+	act.sa_handler = NULL;
+	act.sa_mask = emptysigset;
+	act.sa_flags = 0;
 
-  /* Set a default signal handler for every signal, errors will be
-     ignored. */
-  for(i = 0; i < NSIG; i++) 
-    {
-      if(!do_detach)
-        act.sa_handler = SIG_DFL;
-      else
-        act.sa_handler = unexpected_signal_handler;
-      sigaction(i, &act, NULL);
-    }
+	/* Set a default signal handler for every signal, errors will be
+	   ignored. */
+	for(i = 0; i < NSIG; i++) {
+		if(!do_detach)
+			act.sa_handler = SIG_DFL;
+		else
+			act.sa_handler = unexpected_signal_handler;
+		sigaction(i, &act, NULL);
+	}
 
-  /* If we didn't detach, allow coredumps */
-  if(!do_detach)
-    sighandlers[3].handler = SIG_DFL;
+	/* If we didn't detach, allow coredumps */
+	if(!do_detach)
+		sighandlers[3].handler = SIG_DFL;
 
-  /* Then, for each known signal that we want to catch, assign a
-     handler to the signal, with error checking this time. */
-  for(i = 0; sighandlers[i].signal; i++)
-    {
-      act.sa_handler = sighandlers[i].handler;
-      if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
-	fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %s\n"),
-		sighandlers[i].signal, strsignal(sighandlers[i].signal), strerror(errno));
-    }
+	/* Then, for each known signal that we want to catch, assign a
+	   handler to the signal, with error checking this time. */
+	for(i = 0; sighandlers[i].signal; i++) {
+		act.sa_handler = sighandlers[i].handler;
+		if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
+			fprintf(stderr,
+					_
+					("Installing signal handler for signal %d (%s) failed: %s\n"),
+					sighandlers[i].signal, strsignal(sighandlers[i].signal),
+					strerror(errno));
+	}
 }

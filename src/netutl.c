@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.42 2002/09/09 19:39:59 guus Exp $
+    $Id: netutl.c,v 1.12.4.43 2002/09/09 21:24:41 guus Exp $
 */
 
 #include "config.h"
@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_INTTYPES_H
- #include <inttypes.h>
+#include <inttypes.h>
 #endif
 #include <string.h>
 #include <signal.h>
@@ -54,211 +54,232 @@ int hostnames = 0;
 */
 struct addrinfo *str2addrinfo(char *address, char *service, int socktype)
 {
-  struct addrinfo hint, *ai;
-  int err;
-  cp();
-  memset(&hint, 0, sizeof(hint));
+	struct addrinfo hint, *ai;
+	int err;
 
-  hint.ai_family = addressfamily;
-  hint.ai_socktype = socktype;
+	cp();
 
-  err = getaddrinfo(address, service, &hint, &ai);
+	memset(&hint, 0, sizeof(hint));
 
-  if(err)
-    {
-      if(debug_lvl >= DEBUG_ERROR)
-        syslog(LOG_WARNING, _("Error looking up %s port %s: %s\n"), address, service, gai_strerror(err));
-      cp_trace();
-      return NULL;
-    }
+	hint.ai_family = addressfamily;
+	hint.ai_socktype = socktype;
 
-  cp();
-  return ai;
+	err = getaddrinfo(address, service, &hint, &ai);
+
+	if(err) {
+		if(debug_lvl >= DEBUG_ERROR)
+			syslog(LOG_WARNING, _("Error looking up %s port %s: %s\n"), address,
+				   service, gai_strerror(err));
+		cp_trace();
+		return NULL;
+	}
+
+	return ai;
 }
 
 sockaddr_t str2sockaddr(char *address, char *port)
 {
-  struct addrinfo hint, *ai;
-  sockaddr_t result;
-  int err;
-  cp();
-  memset(&hint, 0, sizeof(hint));
+	struct addrinfo hint, *ai;
+	sockaddr_t result;
+	int err;
 
-  hint.ai_family = AF_UNSPEC;
-  hint.ai_flags = AI_NUMERICHOST;
-  hint.ai_socktype = SOCK_STREAM;
+	cp();
 
-  err = getaddrinfo(address, port, &hint, &ai);
+	memset(&hint, 0, sizeof(hint));
 
-  if(err || !ai)
-    {
-      syslog(LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port, gai_strerror(err));
-      cp_trace();
-      raise(SIGFPE);
-      exit(0);
-    }
+	hint.ai_family = AF_UNSPEC;
+	hint.ai_flags = AI_NUMERICHOST;
+	hint.ai_socktype = SOCK_STREAM;
 
-  result = *(sockaddr_t *)ai->ai_addr;
-  freeaddrinfo(ai);
-  cp();
-  return result;
+	err = getaddrinfo(address, port, &hint, &ai);
+
+	if(err || !ai) {
+		syslog(LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port,
+			   gai_strerror(err));
+		cp_trace();
+		raise(SIGFPE);
+		exit(0);
+	}
+
+	result = *(sockaddr_t *) ai->ai_addr;
+	freeaddrinfo(ai);
+
+	return result;
 }
 
-void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
+void sockaddr2str(sockaddr_t * sa, char **addrstr, char **portstr)
 {
-  char address[NI_MAXHOST];
-  char port[NI_MAXSERV];
-  char *scopeid;
-  int err;
-  cp();
-  err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV);
+	char address[NI_MAXHOST];
+	char port[NI_MAXSERV];
+	char *scopeid;
+	int err;
 
-  if(err)
-    {
-      syslog(LOG_ERR, _("Error while translating addresses: %s"), gai_strerror(err));
-      cp_trace();
-      raise(SIGFPE);
-      exit(0);
-    }
+	cp();
 
-  scopeid = strchr(address, '%');
+	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
-  if(scopeid)
-    *scopeid = '\0';  /* Descope. */
+	if(err) {
+		syslog(LOG_ERR, _("Error while translating addresses: %s"),
+			   gai_strerror(err));
+		cp_trace();
+		raise(SIGFPE);
+		exit(0);
+	}
 
-  *addrstr = xstrdup(address);
-  *portstr = xstrdup(port);
-  cp();
+	scopeid = strchr(address, '%');
+
+	if(scopeid)
+		*scopeid = '\0';		/* Descope. */
+
+	*addrstr = xstrdup(address);
+	*portstr = xstrdup(port);
 }
 
-char *sockaddr2hostname(sockaddr_t *sa)
+char *sockaddr2hostname(sockaddr_t * sa)
 {
-  char *str;
-  char address[NI_MAXHOST] = "unknown";
-  char port[NI_MAXSERV] = "unknown";
-  int err;
-  cp();
-  err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), hostnames?0:(NI_NUMERICHOST|NI_NUMERICSERV));
-  if(err)
-    {
-      syslog(LOG_ERR, _("Error while looking up hostname: %s"), gai_strerror(err));
-    }
+	char *str;
+	char address[NI_MAXHOST] = "unknown";
+	char port[NI_MAXSERV] = "unknown";
+	int err;
 
-  asprintf(&str, _("%s port %s"), address, port);
-  cp();
-  return str;
+	cp();
+
+	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
+					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
+	if(err) {
+		syslog(LOG_ERR, _("Error while looking up hostname: %s"),
+			   gai_strerror(err));
+	}
+
+	asprintf(&str, _("%s port %s"), address, port);
+
+	return str;
 }
 
-int sockaddrcmp(sockaddr_t *a, sockaddr_t *b)
+int sockaddrcmp(sockaddr_t * a, sockaddr_t * b)
 {
-  int result;
-  cp();
-  result = a->sa.sa_family - b->sa.sa_family;
-  
-  if(result)
-    return result;
-  
-  switch(a->sa.sa_family)
-    {
-      case AF_UNSPEC:
-        return 0;
-      case AF_INET:
-	result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+	int result;
+
+	cp();
+
+	result = a->sa.sa_family - b->sa.sa_family;
+
 	if(result)
-	  return result;
-	return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof(a->in.sin_port));
-      case AF_INET6:
-	result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
-	if(result)
-	  return result;
-	return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
-      default:
-        syslog(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"), a->sa.sa_family);
-	cp_trace();
-        raise(SIGFPE);
-        exit(0);
-    }
-  cp();
+		return result;
+
+	switch (a->sa.sa_family) {
+		case AF_UNSPEC:
+			return 0;
+
+		case AF_INET:
+			result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+
+			if(result)
+				return result;
+
+			return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof(a->in.sin_port));
+
+		case AF_INET6:
+			result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+
+			if(result)
+				return result;
+
+			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
+
+		default:
+			syslog(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+				   a->sa.sa_family);
+			cp_trace();
+			raise(SIGFPE);
+			exit(0);
+	}
 }
 
-void sockaddrunmap(sockaddr_t *sa)
+void sockaddrunmap(sockaddr_t * sa)
 {
-  if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr))
-    {
-      sa->in.sin_addr.s_addr = ((uint32_t *)&sa->in6.sin6_addr)[3];
-      sa->in.sin_family = AF_INET;
-    }
+	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
+		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
+		sa->in.sin_family = AF_INET;
+	}
 }
 
 /* Subnet mask handling */
 
 int maskcmp(void *va, void *vb, int masklen, int len)
 {
-  int i, m, result;
-  char *a = va;
-  char *b = vb;
-  cp();
-  for(m = masklen, i = 0; m >= 8; m -= 8, i++)
-    {
-      result = a[i] - b[i];
-      if(result)
-        return result;
-    }
- 
-  if(m)
-    return (a[i] & (0x100 - (1 << (8 - m)))) - (b[i] & (0x100 - (1 << (8 - m))));
+	int i, m, result;
+	char *a = va;
+	char *b = vb;
 
-  return 0;
+	cp();
+
+	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
+		result = a[i] - b[i];
+		if(result)
+			return result;
+	}
+
+	if(m)
+		return (a[i] & (0x100 - (1 << (8 - m)))) -
+			(b[i] & (0x100 - (1 << (8 - m))));
+
+	return 0;
 }
 
 void mask(void *va, int masklen, int len)
 {
-  int i;
-  char *a = va;
-  cp();
-  i = masklen / 8;
-  masklen %= 8;
-  
-  if(masklen)
-    a[i++] &= (0x100 - (1 << masklen));
-  
-  for(; i < len; i++)
-    a[i] = 0;
+	int i;
+	char *a = va;
+
+	cp();
+
+	i = masklen / 8;
+	masklen %= 8;
+
+	if(masklen)
+		a[i++] &= (0x100 - (1 << masklen));
+
+	for(; i < len; i++)
+		a[i] = 0;
 }
 
 void maskcpy(void *va, void *vb, int masklen, int len)
 {
-  int i, m;
-  char *a = va;
-  char *b = vb;
-  cp();
-  for(m = masklen, i = 0; m >= 8; m -= 8, i++)
-    a[i] = b[i];
+	int i, m;
+	char *a = va;
+	char *b = vb;
 
-  if(m)
-    {
-      a[i] = b[i] & (0x100 - (1 << m));
-      i++;
-    }
+	cp();
 
-  for(; i < len; i++)
-    a[i] = 0;
+	for(m = masklen, i = 0; m >= 8; m -= 8, i++)
+		a[i] = b[i];
+
+	if(m) {
+		a[i] = b[i] & (0x100 - (1 << m));
+		i++;
+	}
+
+	for(; i < len; i++)
+		a[i] = 0;
 }
 
 int maskcheck(void *va, int masklen, int len)
 {
-  int i;
-  char *a = va;
-  cp();
-  i = masklen / 8;
-  masklen %= 8;
+	int i;
+	char *a = va;
 
-  if(masklen && a[i++] & (0xff >> masklen))
-    return -1;
+	cp();
 
-  for(; i < len; i++)
-    if(a[i] != 0)
-      return -2;
+	i = masklen / 8;
+	masklen %= 8;
 
-  return 0;
+	if(masklen && a[i++] & (0xff >> masklen))
+		return -1;
+
+	for(; i < len; i++)
+		if(a[i] != 0)
+			return -2;
+
+	return 0;
 }

@@ -17,14 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.19 2002/09/04 13:48:52 guus Exp $
+    $Id: node.h,v 1.1.2.20 2002/09/09 21:24:41 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
 
 #ifdef HAVE_INTTYPES_H
- #include <inttypes.h>
+#include <inttypes.h>
 #endif
 
 #include <avl_tree.h>
@@ -33,46 +33,46 @@
 #include "connection.h"
 
 typedef struct node_status_t {
-  int active:1;                    /* 1 if active.. */
-  int validkey:1;                  /* 1 if we currently have a valid key for him */
-  int waitingforkey:1;             /* 1 if we already sent out a request */
-  int visited:1;                   /* 1 if this node has been visited by one of the graph algorithms */
-  int reachable:1;                 /* 1 if this node is reachable in the graph */
-  int indirect:1;                  /* 1 if this node is not directly reachable by us */
-  int unused:26;
+	int active:1;				/* 1 if active.. */
+	int validkey:1;				/* 1 if we currently have a valid key for him */
+	int waitingforkey:1;		/* 1 if we already sent out a request */
+	int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
+	int reachable:1;			/* 1 if this node is reachable in the graph */
+	int indirect:1;				/* 1 if this node is not directly reachable by us */
+	int unused:26;
 } node_status_t;
 
 typedef struct node_t {
-  char *name;                      /* name of this node */
-  long int options;                /* options turned on for this node */
+	char *name;					/* name of this node */
+	long int options;			/* options turned on for this node */
 
-  sockaddr_t address;              /* his real (internet) ip to send UDP packets to */
-  char *hostname;                  /* the hostname of its real ip */
+	sockaddr_t address;			/* his real (internet) ip to send UDP packets to */
+	char *hostname;				/* the hostname of its real ip */
 
-  struct node_status_t status;
+	struct node_status_t status;
 
-  const EVP_CIPHER *cipher;        /* Cipher type for UDP packets */ 
-  char *key;                       /* Cipher key and iv */
-  int keylength;                   /* Cipher key and iv length*/
+	const EVP_CIPHER *cipher;	/* Cipher type for UDP packets */
+	char *key;					/* Cipher key and iv */
+	int keylength;				/* Cipher key and iv length */
 
-  const EVP_MD *digest;            /* Digest type for MAC */
-  int maclength;                   /* Length of MAC */
+	const EVP_MD *digest;		/* Digest type for MAC */
+	int maclength;				/* Length of MAC */
 
-  int compression;                 /* Compressionlevel, 0 = no compression */
+	int compression;			/* Compressionlevel, 0 = no compression */
 
-  list_t *queue;                   /* Queue for packets awaiting to be encrypted */
+	list_t *queue;				/* Queue for packets awaiting to be encrypted */
 
-  struct node_t *nexthop;          /* nearest node from us to him */
-  struct node_t *via;              /* next hop for UDP packets */
-  
-  avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this node */
+	struct node_t *nexthop;		/* nearest node from us to him */
+	struct node_t *via;			/* next hop for UDP packets */
 
-  avl_tree_t *edge_tree;           /* Edges with this node as one of the endpoints */
+	avl_tree_t *subnet_tree;	/* Pointer to a tree of subnets belonging to this node */
 
-  struct connection_t *connection; /* Connection associated with this node (if a direct connection exists) */
+	avl_tree_t *edge_tree;		/* Edges with this node as one of the endpoints */
 
-  uint32_t sent_seqno;         /* Sequence number last sent to this node */
-  uint32_t received_seqno;     /* Sequence number last received from this node */
+	struct connection_t *connection;	/* Connection associated with this node (if a direct connection exists) */
+
+	uint32_t sent_seqno;		/* Sequence number last sent to this node */
+	uint32_t received_seqno;	/* Sequence number last received from this node */
 } node_t;
 
 extern struct node_t *myself;
@@ -89,4 +89,4 @@ extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(sockaddr_t *);
 extern void dump_nodes(void);
 
-#endif /* __TINC_NODE_H__ */
+#endif							/* __TINC_NODE_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.4 2002/09/09 19:39:58 guus Exp $
+    $Id: event.c,v 1.1.4.5 2002/09/09 21:24:31 guus Exp $
 */
 
 #include "config.h"
@@ -38,73 +38,74 @@ extern time_t now;
 
 int id;
 
-int event_compare(event_t *a, event_t *b)
+int event_compare(event_t * a, event_t * b)
 {
-  if(a->time > b->time)
-    return 1;
-  if(a->time < b->time)
-    return -1;
-  return a->id - b->id; 
+	if(a->time > b->time)
+		return 1;
+
+	if(a->time < b->time)
+		return -1;
+
+	return a->id - b->id;
 }
 
 void init_events(void)
 {
-  cp();
-  event_tree = avl_alloc_tree((avl_compare_t)event_compare, NULL);
-  cp();
+	cp();
+
+	event_tree = avl_alloc_tree((avl_compare_t) event_compare, NULL);
 }
 
 void exit_events(void)
 {
-  cp();
-  avl_delete_tree(event_tree);
-  cp();
+	cp();
+
+	avl_delete_tree(event_tree);
 }
 
 event_t *new_event(void)
 {
-  event_t *event;
-  cp();
-  event = (event_t *)xmalloc_and_zero(sizeof(*event));
-  cp();
-  return event;
+	cp();
+
+	return (event_t *) xmalloc_and_zero(sizeof(event_t));
 }
 
-void free_event(event_t *event)
+void free_event(event_t * event)
 {
-  cp();
-  free(event);
-  cp();
+	cp();
+
+	free(event);
 }
 
-void event_add(event_t *event)
+void event_add(event_t * event)
 {
-  cp();
-  event->id = ++id;
-  avl_insert(event_tree, event);
-  cp();
+	cp();
+
+	event->id = ++id;
+	avl_insert(event_tree, event);
 }
 
-void event_del(event_t *event)
+void event_del(event_t * event)
 {
-  cp();
-  avl_delete(event_tree, event);
-  cp();
+	cp();
+
+	avl_delete(event_tree, event);
 }
 
 event_t *get_expired_event(void)
 {
-  event_t *event;
-  cp();
-  if(event_tree->head)
-  {
-    event = (event_t *)event_tree->head->data;
-    if(event->time < now)
-    {
-      avl_delete(event_tree, event);
-      return event;
-    }
-  }
-  cp();
-  return NULL;
+	event_t *event;
+
+	cp();
+
+	if(event_tree->head) {
+		event = (event_t *) event_tree->head->data;
+
+		if(event->time < now) {
+			avl_delete(event_tree, event);
+			return event;
+		}
+	}
+
+	return NULL;
 }

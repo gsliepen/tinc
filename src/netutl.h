@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.13 2002/06/21 10:11:13 guus Exp $
+    $Id: netutl.h,v 1.2.4.14 2002/09/09 21:24:41 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
@@ -42,4 +42,4 @@ extern void maskcpy(void *, void *, int, int);
 extern void mask(void *, int, int);
 extern int maskcheck(void *, int, int);
 
-#endif /* __TINC_NETUTL_H__ */
+#endif							/* __TINC_NETUTL_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.15 2002/09/09 19:39:59 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.16 2002/09/09 21:24:45 guus Exp $
 */
 
 #include "config.h"
@@ -53,533 +53,544 @@
 
 #include "system.h"
 
-int send_id(connection_t *c)
+int send_id(connection_t * c)
 {
-  cp();
-  return send_request(c, "%d %s %d", ID, myself->connection->name, myself->connection->protocol_version);
+	cp();
+
+	return send_request(c, "%d %s %d", ID, myself->connection->name,
+						myself->connection->protocol_version);
 }
 
-int id_h(connection_t *c)
+int id_h(connection_t * c)
 {
-  char name[MAX_STRING_SIZE];
-  int bla;
-  cp();
-  if(sscanf(c->buffer, "%*d "MAX_STRING" %d", name, &c->protocol_version) != 2)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name, c->hostname);
-       return -1;
-    }
+	char name[MAX_STRING_SIZE];
+	int bla;
 
-  /* Check if identity is a valid name */
+	cp();
 
-  if(check_id(name))
-    {
-      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ID", c->name, c->hostname, "invalid name");
-      return -1;
-    }
-
-  /* If we set c->name in advance, make sure we are connected to the right host */
-  
-  if(c->name)
-    {
-      if(strcmp(c->name, name))
-        {
-          syslog(LOG_ERR, _("Peer %s is %s instead of %s"), c->hostname, name, c->name);
-          return -1;
-        }
-    }
-  else
-    c->name = xstrdup(name);
-
-  /* Check if version matches */
-
-  if(c->protocol_version != myself->connection->protocol_version)
-    {
-      syslog(LOG_ERR, _("Peer %s (%s) uses incompatible version %d"),
-             c->name, c->hostname, c->protocol_version);
-      return -1;
-    }
-  
-  if(bypass_security)
-    {
-      if(!c->config_tree)
-        init_configuration(&c->config_tree);
-      c->allow_request = ACK;
-      return send_ack(c);
-    }
-
-  if(!c->config_tree)
-    {
-      init_configuration(&c->config_tree);
-
-      bla = read_connection_config(c);
-
-      if(bla)
-        {
-          syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname, c->name);
-          return -1;
-        }
-    }
-
-  if(read_rsa_public_key(c))
-    {
-      return -1;
-    }
-
-  /* Check some options */
-  
-  if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &bla) && bla) || myself->options & OPTION_INDIRECT)
-        c->options |= OPTION_INDIRECT;
-
-  if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &bla) && bla) || myself->options & OPTION_TCPONLY)
-        c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
-
-  c->allow_request = METAKEY;
-  cp();
-  return send_metakey(c);
-}
-
-int send_metakey(connection_t *c)
-{
-  char buffer[MAX_STRING_SIZE];
-  int len, x;
-  cp();
-  len = RSA_size(c->rsa_key);
-
-  /* Allocate buffers for the meta key */
-
-  if(!c->outkey)
-    c->outkey = xmalloc(len);
-    
-  if(!c->outctx)
-    c->outctx = xmalloc(sizeof(*c->outctx));
-  cp();
-  /* Copy random data to the buffer */
-
-  RAND_bytes(c->outkey, len);
-
-  /* The message we send must be smaller than the modulus of the RSA key.
-     By definition, for a key of k bits, the following formula holds:
-     
-       2^(k-1) <= modulus < 2^(k)
-     
-     Where ^ means "to the power of", not "xor".
-     This means that to be sure, we must choose our message < 2^(k-1).
-     This can be done by setting the most significant bit to zero.
-  */
-  
-  c->outkey[0] &= 0x7F;
-  
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    {
-      bin2hex(c->outkey, buffer, len);
-      buffer[len*2] = '\0';
-      syslog(LOG_DEBUG, _("Generated random meta key (unencrypted): %s"), buffer);
-    }
-
-  /* Encrypt the random data
-  
-     We do not use one of the PKCS padding schemes here.
-     This is allowed, because we encrypt a totally random string
-     with a length equal to that of the modulus of the RSA key.
-  */
-
-  if(RSA_public_encrypt(len, c->outkey, buffer, c->rsa_key, RSA_NO_PADDING) != len)
-    {
-      syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
-      return -1;
-    }
-  cp();
-  /* Convert the encrypted random data to a hexadecimal formatted string */
-
-  bin2hex(buffer, buffer, len);
-  buffer[len*2] = '\0';
-
-  /* Send the meta key */
-
-  x = send_request(c, "%d %d %d %d %d %s", METAKEY,
-                   c->outcipher?c->outcipher->nid:0, c->outdigest?c->outdigest->type:0,
-		   c->outmaclength, c->outcompression, buffer);
-
-  /* Further outgoing requests are encrypted with the key we just generated */
-
-  if(c->outcipher)
-    {
-      EVP_EncryptInit(c->outctx, c->outcipher,
-                      c->outkey + len - c->outcipher->key_len,
-                      c->outkey + len - c->outcipher->key_len - c->outcipher->iv_len);
-
-      c->status.encryptout = 1;
-    }
-  cp();
-  return x;
-}
-
-int metakey_h(connection_t *c)
-{
-  char buffer[MAX_STRING_SIZE];
-  int cipher, digest, maclength, compression;
-  int len;
-  cp();
-  if(sscanf(c->buffer, "%*d %d %d %d %d "MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name, c->hostname);
-       return -1;
-    }
-  cp();
-  len = RSA_size(myself->connection->rsa_key);
-
-  /* Check if the length of the meta key is all right */
-
-  if(strlen(buffer) != len*2)
-    {
-      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong keylength");
-      return -1;
-    }
-
-  /* Allocate buffers for the meta key */
-  cp();
-  if(!c->inkey)
-    c->inkey = xmalloc(len);
-
-  if(!c->inctx)
-    c->inctx = xmalloc(sizeof(*c->inctx));
-
-  /* Convert the challenge from hexadecimal back to binary */
-  cp();
-  hex2bin(buffer,buffer,len);
-
-  /* Decrypt the meta key */
-  cp();
-  if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
-    {
-      syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
-      return -1;
-    }
-
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    {
-      bin2hex(c->inkey, buffer, len);
-      buffer[len*2] = '\0';
-      syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"), buffer);
-    }
-
-  /* All incoming requests will now be encrypted. */
-  cp();
-  /* Check and lookup cipher and digest algorithms */
-
-  if(cipher)
-    {
-      c->incipher = EVP_get_cipherbynid(cipher);
-      if(!c->incipher)
-	{
-	  syslog(LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name, c->hostname);
-	  return -1;
+	if(sscanf(c->buffer, "%*d " MAX_STRING " %d", name, &c->protocol_version) != 2) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name,
+			   c->hostname);
+		return -1;
 	}
 
-      EVP_DecryptInit(c->inctx, c->incipher,
-                      c->inkey + len - c->incipher->key_len,
-                      c->inkey + len - c->incipher->key_len - c->incipher->iv_len);
+	/* Check if identity is a valid name */
 
-      c->status.decryptin = 1;
-    }
-  else
-    {
-      c->incipher = NULL;
-    }
-
-  c->inmaclength = maclength;
-
-  if(digest)
-    {
-      c->indigest = EVP_get_digestbynid(digest);
-      if(!c->indigest)
-	{
-	  syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name, c->hostname);
-	  return -1;
+	if(check_id(name)) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ID", c->name,
+			   c->hostname, "invalid name");
+		return -1;
 	}
-      
-      if(c->inmaclength > c->indigest->md_size || c->inmaclength < 0)
-	{
-	  syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name, c->hostname);
-	  return -1;
+
+	/* If we set c->name in advance, make sure we are connected to the right host */
+
+	if(c->name) {
+		if(strcmp(c->name, name)) {
+			syslog(LOG_ERR, _("Peer %s is %s instead of %s"), c->hostname, name,
+				   c->name);
+			return -1;
+		}
+	} else
+		c->name = xstrdup(name);
+
+	/* Check if version matches */
+
+	if(c->protocol_version != myself->connection->protocol_version) {
+		syslog(LOG_ERR, _("Peer %s (%s) uses incompatible version %d"),
+			   c->name, c->hostname, c->protocol_version);
+		return -1;
 	}
-    }
-  else
-    {
-      c->indigest = NULL;
-    }
 
-  c->incompression = compression;
+	if(bypass_security) {
+		if(!c->config_tree)
+			init_configuration(&c->config_tree);
+		c->allow_request = ACK;
+		return send_ack(c);
+	}
 
-  c->allow_request = CHALLENGE;
-  cp();
-  return send_challenge(c);
+	if(!c->config_tree) {
+		init_configuration(&c->config_tree);
+
+		bla = read_connection_config(c);
+
+		if(bla) {
+			syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname,
+				   c->name);
+			return -1;
+		}
+	}
+
+	if(read_rsa_public_key(c)) {
+		return -1;
+	}
+
+	/* Check some options */
+
+	if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &bla) && bla) || myself->options & OPTION_INDIRECT)
+		c->options |= OPTION_INDIRECT;
+
+	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &bla) && bla) || myself->options & OPTION_TCPONLY)
+		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
+
+	c->allow_request = METAKEY;
+
+	return send_metakey(c);
 }
 
-int send_challenge(connection_t *c)
+int send_metakey(connection_t * c)
 {
-  char buffer[MAX_STRING_SIZE];
-  int len, x;
-  cp();
-  /* CHECKME: what is most reasonable value for len? */
+	char buffer[MAX_STRING_SIZE];
+	int len, x;
 
-  len = RSA_size(c->rsa_key);
+	cp();
 
-  /* Allocate buffers for the challenge */
+	len = RSA_size(c->rsa_key);
 
-  if(!c->hischallenge)
-    c->hischallenge = xmalloc(len);
-  cp();
-  /* Copy random data to the buffer */
+	/* Allocate buffers for the meta key */
 
-  RAND_bytes(c->hischallenge, len);
+	if(!c->outkey)
+		c->outkey = xmalloc(len);
 
-  cp();
-  /* Convert to hex */
+	if(!c->outctx)
+		c->outctx = xmalloc(sizeof(*c->outctx));
+	cp();
+	/* Copy random data to the buffer */
 
-  bin2hex(c->hischallenge, buffer, len);
-  buffer[len*2] = '\0';
+	RAND_bytes(c->outkey, len);
 
-  cp();
-  /* Send the challenge */
+	/* The message we send must be smaller than the modulus of the RSA key.
+	   By definition, for a key of k bits, the following formula holds:
 
-  x = send_request(c, "%d %s", CHALLENGE, buffer);
-  cp();
-  return x;
+	   2^(k-1) <= modulus < 2^(k)
+
+	   Where ^ means "to the power of", not "xor".
+	   This means that to be sure, we must choose our message < 2^(k-1).
+	   This can be done by setting the most significant bit to zero.
+	 */
+
+	c->outkey[0] &= 0x7F;
+
+	if(debug_lvl >= DEBUG_SCARY_THINGS) {
+		bin2hex(c->outkey, buffer, len);
+		buffer[len * 2] = '\0';
+		syslog(LOG_DEBUG, _("Generated random meta key (unencrypted): %s"),
+			   buffer);
+	}
+
+	/* Encrypt the random data
+
+	   We do not use one of the PKCS padding schemes here.
+	   This is allowed, because we encrypt a totally random string
+	   with a length equal to that of the modulus of the RSA key.
+	 */
+
+	if(RSA_public_encrypt(len, c->outkey, buffer, c->rsa_key, RSA_NO_PADDING) != len) {
+		syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
+			   c->name, c->hostname);
+		return -1;
+	}
+
+	/* Convert the encrypted random data to a hexadecimal formatted string */
+
+	bin2hex(buffer, buffer, len);
+	buffer[len * 2] = '\0';
+
+	/* Send the meta key */
+
+	x = send_request(c, "%d %d %d %d %d %s", METAKEY,
+					 c->outcipher ? c->outcipher->nid : 0,
+					 c->outdigest ? c->outdigest->type : 0, c->outmaclength,
+					 c->outcompression, buffer);
+
+	/* Further outgoing requests are encrypted with the key we just generated */
+
+	if(c->outcipher) {
+		EVP_EncryptInit(c->outctx, c->outcipher,
+						c->outkey + len - c->outcipher->key_len,
+						c->outkey + len - c->outcipher->key_len -
+						c->outcipher->iv_len);
+
+		c->status.encryptout = 1;
+	}
+
+	return x;
 }
 
-int challenge_h(connection_t *c)
+int metakey_h(connection_t * c)
 {
-  char buffer[MAX_STRING_SIZE];
-  int len;
-  cp();
-  if(sscanf(c->buffer, "%*d "MAX_STRING, buffer) != 1)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name, c->hostname);
-       return -1;
-    }
+	char buffer[MAX_STRING_SIZE];
+	int cipher, digest, maclength, compression;
+	int len;
 
-  len = RSA_size(myself->connection->rsa_key);
+	cp();
 
-  /* Check if the length of the challenge is all right */
+	if(sscanf
+	   (c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength,
+		&compression, buffer) != 5) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name,
+			   c->hostname);
+		return -1;
+	}
 
-  if(strlen(buffer) != len*2)
-    {
-      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong challenge length");
-      return -1;
-    }
+	len = RSA_size(myself->connection->rsa_key);
 
-  /* Allocate buffers for the challenge */
+	/* Check if the length of the meta key is all right */
 
-  if(!c->mychallenge)
-    c->mychallenge = xmalloc(len);
+	if(strlen(buffer) != len * 2) {
+		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+			   c->hostname, "wrong keylength");
+		return -1;
+	}
 
-  /* Convert the challenge from hexadecimal back to binary */
+	/* Allocate buffers for the meta key */
 
-  hex2bin(buffer,c->mychallenge,len);
+	if(!c->inkey)
+		c->inkey = xmalloc(len);
 
-  c->allow_request = CHAL_REPLY;
+	if(!c->inctx)
+		c->inctx = xmalloc(sizeof(*c->inctx));
 
-  /* Rest is done by send_chal_reply() */
-  cp();
-  return send_chal_reply(c);
+	/* Convert the challenge from hexadecimal back to binary */
+
+	hex2bin(buffer, buffer, len);
+
+	/* Decrypt the meta key */
+
+	if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
+		syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
+			   c->name, c->hostname);
+		return -1;
+	}
+
+	if(debug_lvl >= DEBUG_SCARY_THINGS) {
+		bin2hex(c->inkey, buffer, len);
+		buffer[len * 2] = '\0';
+		syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"),
+			   buffer);
+	}
+
+	/* All incoming requests will now be encrypted. */
+
+	/* Check and lookup cipher and digest algorithms */
+
+	if(cipher) {
+		c->incipher = EVP_get_cipherbynid(cipher);
+
+		if(!c->incipher) {
+			syslog(LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name,
+				   c->hostname);
+			return -1;
+		}
+
+		EVP_DecryptInit(c->inctx, c->incipher,
+						c->inkey + len - c->incipher->key_len,
+						c->inkey + len - c->incipher->key_len -
+						c->incipher->iv_len);
+
+		c->status.decryptin = 1;
+	} else {
+		c->incipher = NULL;
+	}
+
+	c->inmaclength = maclength;
+
+	if(digest) {
+		c->indigest = EVP_get_digestbynid(digest);
+
+		if(!c->indigest) {
+			syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name,
+				   c->hostname);
+			return -1;
+		}
+
+		if(c->inmaclength > c->indigest->md_size || c->inmaclength < 0) {
+			syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name,
+				   c->hostname);
+			return -1;
+		}
+	} else {
+		c->indigest = NULL;
+	}
+
+	c->incompression = compression;
+
+	c->allow_request = CHALLENGE;
+
+	return send_challenge(c);
 }
 
-int send_chal_reply(connection_t *c)
+int send_challenge(connection_t * c)
 {
-  char hash[EVP_MAX_MD_SIZE*2+1];
-  EVP_MD_CTX ctx;
-  cp();
-  /* Calculate the hash from the challenge we received */
+	char buffer[MAX_STRING_SIZE];
+	int len, x;
 
-  EVP_DigestInit(&ctx, c->indigest);
-  EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key));
-  EVP_DigestFinal(&ctx, hash, NULL);
+	cp();
 
-  /* Convert the hash to a hexadecimal formatted string */
+	/* CHECKME: what is most reasonable value for len? */
 
-  bin2hex(hash,hash,c->indigest->md_size);
-  hash[c->indigest->md_size*2] = '\0';
+	len = RSA_size(c->rsa_key);
 
-  /* Send the reply */
+	/* Allocate buffers for the challenge */
 
-  cp();
-  return send_request(c, "%d %s", CHAL_REPLY, hash);
+	if(!c->hischallenge)
+		c->hischallenge = xmalloc(len);
+
+	/* Copy random data to the buffer */
+
+	RAND_bytes(c->hischallenge, len);
+
+	/* Convert to hex */
+
+	bin2hex(c->hischallenge, buffer, len);
+	buffer[len * 2] = '\0';
+
+	/* Send the challenge */
+
+	x = send_request(c, "%d %s", CHALLENGE, buffer);
+
+	return x;
 }
 
-int chal_reply_h(connection_t *c)
+int challenge_h(connection_t * c)
 {
-  char hishash[MAX_STRING_SIZE];
-  char myhash[EVP_MAX_MD_SIZE];
-  EVP_MD_CTX ctx;
-  cp();
-  if(sscanf(c->buffer, "%*d "MAX_STRING, hishash) != 1)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name, c->hostname);
-       return -1;
-    }
+	char buffer[MAX_STRING_SIZE];
+	int len;
 
-  /* Check if the length of the hash is all right */
+	cp();
 
-  if(strlen(hishash) != c->outdigest->md_size*2)
-    {
-      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, _("wrong challenge reply length"));
-      return -1;
-    }
+	if(sscanf(c->buffer, "%*d " MAX_STRING, buffer) != 1) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name,
+			   c->hostname);
+		return -1;
+	}
 
-  /* Convert the hash to binary format */
+	len = RSA_size(myself->connection->rsa_key);
 
-  hex2bin(hishash, hishash, c->outdigest->md_size);
+	/* Check if the length of the challenge is all right */
 
-  /* Calculate the hash from the challenge we sent */
+	if(strlen(buffer) != len * 2) {
+		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+			   c->hostname, "wrong challenge length");
+		return -1;
+	}
 
-  EVP_DigestInit(&ctx, c->outdigest);
-  EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key));
-  EVP_DigestFinal(&ctx, myhash, NULL);
+	/* Allocate buffers for the challenge */
 
-  /* Verify the incoming hash with the calculated hash */
+	if(!c->mychallenge)
+		c->mychallenge = xmalloc(len);
 
-  if(memcmp(hishash, myhash, c->outdigest->md_size))
-    {
-      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, _("wrong challenge reply"));
-      if(debug_lvl >= DEBUG_SCARY_THINGS)
-        {
-          bin2hex(myhash, hishash, SHA_DIGEST_LENGTH);
-          hishash[SHA_DIGEST_LENGTH*2] = '\0';
-          syslog(LOG_DEBUG, _("Expected challenge reply: %s"), hishash);
-        }
-      return -1;
-    }
+	/* Convert the challenge from hexadecimal back to binary */
 
-  /* Identity has now been positively verified.
-     Send an acknowledgement with the rest of the information needed.
-   */
+	hex2bin(buffer, c->mychallenge, len);
 
-  c->allow_request = ACK;
-  cp();
-  return send_ack(c);
+	c->allow_request = CHAL_REPLY;
+
+	/* Rest is done by send_chal_reply() */
+
+	return send_chal_reply(c);
 }
 
-int send_ack(connection_t *c)
+int send_chal_reply(connection_t * c)
 {
-  /* ACK message contains rest of the information the other end needs
-     to create node_t and edge_t structures. */
+	char hash[EVP_MAX_MD_SIZE * 2 + 1];
+	EVP_MD_CTX ctx;
 
-  int x;
-  struct timeval now;
-  cp();
-  /* Estimate weight */
-  
-  gettimeofday(&now, NULL);
-  c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
-  x = send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
-  cp();
-  return x;
+	cp();
+
+	/* Calculate the hash from the challenge we received */
+
+	EVP_DigestInit(&ctx, c->indigest);
+	EVP_DigestUpdate(&ctx, c->mychallenge,
+					 RSA_size(myself->connection->rsa_key));
+	EVP_DigestFinal(&ctx, hash, NULL);
+
+	/* Convert the hash to a hexadecimal formatted string */
+
+	bin2hex(hash, hash, c->indigest->md_size);
+	hash[c->indigest->md_size * 2] = '\0';
+
+	/* Send the reply */
+
+	return send_request(c, "%d %s", CHAL_REPLY, hash);
 }
 
-void send_everything(connection_t *c)
+int chal_reply_h(connection_t * c)
 {
-  avl_node_t *node, *node2;
-  node_t *n;
-  subnet_t *s;
-  edge_t *e;
+	char hishash[MAX_STRING_SIZE];
+	char myhash[EVP_MAX_MD_SIZE];
+	EVP_MD_CTX ctx;
 
-  /* Send all known subnets and edges */
-  
-  for(node = node_tree->head; node; node = node->next)
-    {
-      n = (node_t *)node->data;
+	cp();
 
-      for(node2 = n->subnet_tree->head; node2; node2 = node2->next)
-        {
-          s = (subnet_t *)node2->data;
-          send_add_subnet(c, s);
-        }
+	if(sscanf(c->buffer, "%*d " MAX_STRING, hishash) != 1) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name,
+			   c->hostname);
+		return -1;
+	}
 
-      for(node2 = n->edge_tree->head; node2; node2 = node2->next)
-        {
-          e = (edge_t *)node2->data;
-          send_add_edge(c, e);
-        }
-    }
+	/* Check if the length of the hash is all right */
+
+	if(strlen(hishash) != c->outdigest->md_size * 2) {
+		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+			   c->hostname, _("wrong challenge reply length"));
+		return -1;
+	}
+
+	/* Convert the hash to binary format */
+
+	hex2bin(hishash, hishash, c->outdigest->md_size);
+
+	/* Calculate the hash from the challenge we sent */
+
+	EVP_DigestInit(&ctx, c->outdigest);
+	EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key));
+	EVP_DigestFinal(&ctx, myhash, NULL);
+
+	/* Verify the incoming hash with the calculated hash */
+
+	if(memcmp(hishash, myhash, c->outdigest->md_size)) {
+		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+			   c->hostname, _("wrong challenge reply"));
+
+		if(debug_lvl >= DEBUG_SCARY_THINGS) {
+			bin2hex(myhash, hishash, SHA_DIGEST_LENGTH);
+			hishash[SHA_DIGEST_LENGTH * 2] = '\0';
+			syslog(LOG_DEBUG, _("Expected challenge reply: %s"), hishash);
+		}
+
+		return -1;
+	}
+
+	/* Identity has now been positively verified.
+	   Send an acknowledgement with the rest of the information needed.
+	 */
+
+	c->allow_request = ACK;
+
+	return send_ack(c);
 }
 
-int ack_h(connection_t *c)
+int send_ack(connection_t * c)
 {
-  char hisport[MAX_STRING_SIZE];
-  char *hisaddress, *dummy;
-  int weight;
-  long int options;
-  node_t *n;
-  cp();
-  if(sscanf(c->buffer, "%*d "MAX_STRING" %d %lx", hisport, &weight, &options) != 3)
-    {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
-       return -1;
-    }
+	/* ACK message contains rest of the information the other end needs
+	   to create node_t and edge_t structures. */
 
-  /* Check if we already have a node_t for him */
+	int x;
+	struct timeval now;
 
-  n = lookup_node(c->name);
-  
-  if(!n)
-    {
-      n = new_node();
-      n->name = xstrdup(c->name);
-      node_add(n);
-    }
-  else
-    {
-      if(n->connection)
-        {
-          /* Oh dear, we already have a connection to this node. */
-	  if(debug_lvl >= DEBUG_CONNECTIONS)
-            syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"), n->name, n->hostname);
-          terminate_connection(n->connection, 0);
-        }
-    }
-  
-  n->connection = c;
-  c->node = n;
-  c->options |= options;
+	cp();
 
-  /* Activate this connection */
+	/* Estimate weight */
 
-  c->allow_request = ALL;
-  c->status.active = 1;
+	gettimeofday(&now, NULL);
+	c->estimated_weight =
+		(now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec -
+												 c->start.tv_usec) / 1000;
+	x = send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight,
+					 c->options);
 
-  if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name, c->hostname);
+	return x;
+}
 
-  /* Send him everything we know */
+void send_everything(connection_t * c)
+{
+	avl_node_t *node, *node2;
+	node_t *n;
+	subnet_t *s;
+	edge_t *e;
 
-  send_everything(c);
+	/* Send all known subnets and edges */
 
-  /* Create an edge_t for this connection */
+	for(node = node_tree->head; node; node = node->next) {
+		n = (node_t *) node->data;
 
-  c->edge = new_edge();
-  cp();
-  c->edge->from = myself;
-  c->edge->to = n;
-  sockaddr2str(&c->address, &hisaddress, &dummy);
-  c->edge->address = str2sockaddr(hisaddress, hisport);
-  free(hisaddress);
-  free(dummy);
-  c->edge->weight = (weight + c->estimated_weight) / 2;
-  c->edge->connection = c;
-  c->edge->options = c->options;
-  cp();
-  edge_add(c->edge);
+		for(node2 = n->subnet_tree->head; node2; node2 = node2->next) {
+			s = (subnet_t *) node2->data;
+			send_add_subnet(c, s);
+		}
 
-  cp();
-  /* Notify everyone of the new edge */
+		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
+			e = (edge_t *) node2->data;
+			send_add_edge(c, e);
+		}
+	}
+}
 
-  send_add_edge(broadcast, c->edge);
+int ack_h(connection_t * c)
+{
+	char hisport[MAX_STRING_SIZE];
+	char *hisaddress, *dummy;
+	int weight;
+	long int options;
+	node_t *n;
 
-  /* Run MST and SSSP algorithms */
- 
-  graph();
-  cp();
-  return 0;
+	cp();
+
+	if(sscanf
+	   (c->buffer, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
+		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name,
+			   c->hostname);
+		return -1;
+	}
+
+	/* Check if we already have a node_t for him */
+
+	n = lookup_node(c->name);
+
+	if(!n) {
+		n = new_node();
+		n->name = xstrdup(c->name);
+		node_add(n);
+	} else {
+		if(n->connection) {
+			/* Oh dear, we already have a connection to this node. */
+			if(debug_lvl >= DEBUG_CONNECTIONS)
+				syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"),
+					   n->name, n->hostname);
+			terminate_connection(n->connection, 0);
+		}
+	}
+
+	n->connection = c;
+	c->node = n;
+	c->options |= options;
+
+	/* Activate this connection */
+
+	c->allow_request = ALL;
+	c->status.active = 1;
+
+	if(debug_lvl >= DEBUG_CONNECTIONS)
+		syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name,
+			   c->hostname);
+
+	/* Send him everything we know */
+
+	send_everything(c);
+
+	/* Create an edge_t for this connection */
+
+	c->edge = new_edge();
+	cp();
+	c->edge->from = myself;
+	c->edge->to = n;
+	sockaddr2str(&c->address, &hisaddress, &dummy);
+	c->edge->address = str2sockaddr(hisaddress, hisport);
+	free(hisaddress);
+	free(dummy);
+	c->edge->weight = (weight + c->estimated_weight) / 2;
+	c->edge->connection = c;
+	c->edge->options = c->options;
+
+	edge_add(c->edge);
+
+	/* Notify everyone of the new edge */
+
+	send_add_edge(broadcast, c->edge);
+
+	/* Run MST and SSSP algorithms */
+
+	graph();
+
+	return 0;
 }

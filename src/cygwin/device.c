@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.1 2002/07/11 12:57:06 guus Exp $
+    $Id: device.c,v 1.1.2.2 2002/09/09 21:25:18 guus Exp $
 */
 
 #include "config.h"
@@ -51,90 +51,78 @@ extern subnet_t mymac;
 
 int setup_device(void)
 {
-  struct ifreq ifr;
+	struct ifreq ifr;
 
-cp
-  if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-    device = DEFAULT_DEVICE;
+	cp if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+		device = DEFAULT_DEVICE;
 
-  if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
-    interface = rindex(device, '/')?rindex(device, '/')+1:device;
-cp
-  if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
-    {
-      syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
-      return -1;
-    }
-cp
-  /* Set default MAC address for ethertap devices */
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
+		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+	cp if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
+		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		return -1;
+	}
+	cp
+		/* Set default MAC address for ethertap devices */
+		mymac.type = SUBNET_MAC;
+	mymac.net.mac.address.x[0] = 0xfe;
+	mymac.net.mac.address.x[1] = 0xfd;
+	mymac.net.mac.address.x[2] = 0x00;
+	mymac.net.mac.address.x[3] = 0x00;
+	mymac.net.mac.address.x[4] = 0x00;
+	mymac.net.mac.address.x[5] = 0x00;
 
-  mymac.type = SUBNET_MAC;
-  mymac.net.mac.address.x[0] = 0xfe;
-  mymac.net.mac.address.x[1] = 0xfd;
-  mymac.net.mac.address.x[2] = 0x00;
-  mymac.net.mac.address.x[3] = 0x00;
-  mymac.net.mac.address.x[4] = 0x00;
-  mymac.net.mac.address.x[5] = 0x00;
+	device_info = _("Stub device for Cygwin environment");
 
-  device_info = _("Stub device for Cygwin environment");
-
-  syslog(LOG_INFO, _("%s is a %s"), device, device_info);
-cp
-  return 0;
+	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
+	cp return 0;
 }
 
 void close_device(void)
 {
-cp
-  close(device_fd);
+	cp close(device_fd);
 }
 
-int read_packet(vpn_packet_t *packet)
+int read_packet(vpn_packet_t * packet)
 {
-  int lenin;
-cp
-  if((lenin = read(device_fd, packet->data, MTU)) <= 0)
-    {
-      syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
-      return -1;
-    }
+	int lenin;
+	cp if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
+		syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+			   device, strerror(errno));
+		return -1;
+	}
 
-  packet->len = lenin;
+	packet->len = lenin;
 
-  device_total_in += packet->len;
+	device_total_in += packet->len;
 
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    {
-      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len, device_info);
-    }
+	if(debug_lvl >= DEBUG_TRAFFIC) {
+		syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+			   device_info);
+	}
 
-  return 0;
-cp
-}
+	return 0;
+cp}
 
-int write_packet(vpn_packet_t *packet)
+int write_packet(vpn_packet_t * packet)
 {
-cp
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
-           packet->len, device_info);
+	cp if(debug_lvl >= DEBUG_TRAFFIC)
+		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+			   packet->len, device_info);
 
-  if(write(device_fd, packet->data, packet->len) < 0)
-    {
-      syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
-      return -1;
-    }
+	if(write(device_fd, packet->data, packet->len) < 0) {
+		syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+			   strerror(errno));
+		return -1;
+	}
 
-  device_total_out += packet->len;
-cp
-  return 0;
+	device_total_out += packet->len;
+	cp return 0;
 }
 
 void dump_device_stats(void)
 {
-cp
-  syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-  syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-  syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
-cp
-}
+	cp syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+cp}

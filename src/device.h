@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.h,v 1.1.2.6 2002/06/21 10:11:12 guus Exp $
+    $Id: device.h,v 1.1.2.7 2002/09/09 21:24:31 guus Exp $
 */
 
 #ifndef __TINC_DEVICE_H__
@@ -33,4 +33,4 @@ extern int read_packet(vpn_packet_t *);
 extern int write_packet(vpn_packet_t *);
 extern void dump_device_stats(void);
 
-#endif /* __TINC_DEVICE_H__ */
+#endif							/* __TINC_DEVICE_H__ */

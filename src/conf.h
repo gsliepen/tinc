@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.33 2002/06/21 10:11:12 guus Exp $
+    $Id: conf.h,v 1.6.4.34 2002/09/09 21:24:31 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -32,10 +32,10 @@
 #include "subnet.h"
 
 typedef struct config_t {
-  char *variable;
-  char *value;
-  char *file;
-  int line;
+	char *variable;
+	char *value;
+	char *file;
+	int line;
 } config_t;
 
 extern avl_tree_t *config_tree;
@@ -59,12 +59,12 @@ extern int get_config_int(config_t *, int *);
 extern int get_config_port(config_t *, port_t *);
 extern int get_config_string(config_t *, char **);
 extern int get_config_address(config_t *, struct addrinfo **);
-struct subnet_t; /* Needed for next line. */
+struct subnet_t;				/* Needed for next line. */
 extern int get_config_subnet(config_t *, struct subnet_t **);
 
 extern int read_config_file(avl_tree_t *, const char *);
 extern int read_server_config(void);
-extern FILE *ask_and_safe_open(const char*, const char*, const char *);
+extern FILE *ask_and_safe_open(const char *, const char *, const char *);
 extern int is_safe_path(const char *);
 
-#endif /* __TINC_CONF_H__ */
+#endif							/* __TINC_CONF_H__ */
