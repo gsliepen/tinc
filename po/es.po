@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0pre3\n"
-"POT-Creation-Date: 2001-02-25 15:08+0100\n"
+"POT-Creation-Date: 2001-02-25 20:22+0100\n"
 "PO-Revision-Date: 2000-11-26 15:20+0000\n"
 "Last-Translator: Enrique Zanardi <ezanardi@id-agora.com>\n"
 "Language-Team: Spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -121,7 +121,7 @@ msgstr "Enviando paquete de %d bytes a %s (%s)"
 msgid "Sending meta data to %s (%s) failed: %m"
 msgstr "Error enviando paquete a %s (%s): %m"
 
-#: src/meta.c:100 src/net.c:1029
+#: src/meta.c:100 src/net.c:1037
 #, c-format
 msgid "This is a bug: %s:%d: %d:%m %s (%s)"
 msgstr "Esto es un `bug': %s:%d: %d:%m %s (%s)"
@@ -131,7 +131,7 @@ msgstr "Esto es un `bug': %s:%d: %d:%m %s (%s)"
 msgid "Metadata socket error for %s (%s): %s"
 msgstr "Error en el `socket' de datos salientes para %s (%s): %s"
 
-#: src/meta.c:123 src/protocol.c:1332
+#: src/meta.c:123 src/protocol.c:1277
 #, fuzzy, c-format
 msgid "Connection closed by %s (%s)"
 msgstr "Cerrando conexión con %s (%s)"
@@ -176,297 +176,298 @@ msgstr "No puedo escribir en el dispositivo tap: %m"
 msgid "Can't write to ethertap device: %m"
 msgstr "No puedo escribir en el dispositivo tap: %m"
 
-#: src/net.c:210
+#: src/net.c:211
 #, c-format
 msgid "Trying to look up %d.%d.%d.%d in connection list failed!"
 msgstr "¡Error intentando buscar %d.%d.%d.%d en la lista de conexiones!"
 
-#: src/net.c:223
+#: src/net.c:224
 #, c-format
 msgid "Packet with destination %d.%d.%d.%d is looping back to us!"
 msgstr ""
 
-#: src/net.c:233
+#: src/net.c:234
 #, fuzzy, c-format
 msgid "%s (%s) is not active, dropping packet"
 msgstr "%s (%s) no está listo, poniendo el paquete en cola"
 
-#: src/net.c:242
+#: src/net.c:243
 #, c-format
 msgid "No valid key known yet for %s (%s), queueing packet"
 msgstr ""
 "No conozco ninguna clave válida para %s (%s) aún, pongo el paquete en cola"
 
-#: src/net.c:265
+#: src/net.c:272
 #, fuzzy, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr "Vaciando la cola de envíos para %s (%s)"
 
-#: src/net.c:311
+#: src/net.c:319
 #, c-format
 msgid "Could not open %s: %m"
 msgstr "No pude abrir %s: %m"
 
-#: src/net.c:340
+#: src/net.c:348
 #, c-format
 msgid "%s is a new style tun/tap device"
 msgstr "%s es un dispositivo tun/tap del nuevo estilo"
 
-#: src/net.c:365
+#: src/net.c:373
 #, c-format
 msgid "Creating metasocket failed: %m"
 msgstr "Fallo al crear el metasocket: %m"
 
-#: src/net.c:372 src/net.c:380 src/net.c:389 src/net.c:423 src/net.c:451
-#: src/net.c:460 src/net.c:514 src/net.c:987 src/net.c:996 src/net.c:1054
+#: src/net.c:380 src/net.c:388 src/net.c:397 src/net.c:431 src/net.c:459
+#: src/net.c:468 src/net.c:522 src/net.c:995 src/net.c:1004 src/net.c:1062
+#: src/process.c:239 src/process.c:275
 #, c-format
 msgid "System call `%s' failed: %m"
 msgstr ""
 
-#: src/net.c:399
+#: src/net.c:407
 #, c-format
 msgid "Unable to bind listen socket to interface %s: %m"
 msgstr "No puedo enlazar (bind) el `socket' de escucha a la interfaz %s: %m"
 
-#: src/net.c:416
+#: src/net.c:424
 #, c-format
 msgid "Can't bind to port %hd/tcp: %m"
 msgstr "No puedo enlazar (bind) al puerto %hd/tcp: %m"
 
-#: src/net.c:444
+#: src/net.c:452
 #, c-format
 msgid "Creating socket failed: %m"
 msgstr "Error al crear el `socket': %m"
 
-#: src/net.c:473 src/net.c:1009
+#: src/net.c:481 src/net.c:1017
 #, c-format
 msgid "Can't bind to port %hd/udp: %m"
 msgstr "No puedo enlazar (bind) al puerto %hd/udp: %m"
 
-#: src/net.c:490
+#: src/net.c:498
 #, c-format
 msgid "Trying to connect to %s"
 msgstr "Intentando conectar con %s"
 
-#: src/net.c:500
+#: src/net.c:508
 #, c-format
 msgid "Creating socket for %s port %d failed: %m"
 msgstr "Error al crear el `socket' para %s puerto %d: %m"
 
-#: src/net.c:525
+#: src/net.c:533
 #, c-format
 msgid "%s port %hd: %m"
 msgstr "%s puerto %hd: %m"
 
-#: src/net.c:533
+#: src/net.c:541
 #, c-format
 msgid "fcntl for %s port %d: %m"
 msgstr "fcntl() para %s puerto %d: %m"
 
-#: src/net.c:539
+#: src/net.c:547
 #, c-format
 msgid "Connected to %s port %hd"
 msgstr "Conectado a %s puerto %hd"
 
-#: src/net.c:558
+#: src/net.c:566
 msgid "Invalid name for outgoing connection"
 msgstr "Nombre no válido para conexión saliente"
 
-#: src/net.c:567
+#: src/net.c:575
 #, c-format
 msgid "Error reading host configuration file for %s"
 msgstr "Error leyendo el fichero de configuración del `host' para %s"
 
-#: src/net.c:574
+#: src/net.c:582
 #, c-format
 msgid "No address specified for %s"
 msgstr "No se especificó dirección para %s"
 
-#: src/net.c:581
+#: src/net.c:589
 #, c-format
 msgid "Error looking up `%s': %m"
 msgstr "Error buscando `%s': %m"
 
-#: src/net.c:591
+#: src/net.c:599
 #, c-format
 msgid "Could not set up a meta connection to %s"
 msgstr "No he podido configurar una meta conexión a %s"
 
-#: src/net.c:636
+#: src/net.c:644
 #, fuzzy, c-format
 msgid "Error reading RSA public key file `%s': %m"
 msgstr "Error enviando paquete a %s (%s): %m"
 
-#: src/net.c:644
+#: src/net.c:652
 #, fuzzy, c-format
 msgid "Reading RSA public key file `%s' failed: %m"
 msgstr "Error recibiendo paquete: %m"
 
 #. Nothing worked.
-#: src/net.c:670
+#: src/net.c:678
 #, c-format
 msgid "No public key for %s specified!"
 msgstr ""
 
-#: src/net.c:693
+#: src/net.c:701
 #, fuzzy, c-format
 msgid "Error reading RSA private key file `%s': %m"
 msgstr "Error enviando paquete a %s (%s): %m"
 
-#: src/net.c:701
+#: src/net.c:709
 #, c-format
 msgid "Reading RSA private key file `%s' failed: %m"
 msgstr ""
 
-#: src/net.c:708
+#: src/net.c:716
 #, fuzzy
 msgid "No private key for tinc daemon specified!"
 msgstr "¡Se requiere un nombre para el demonio tinc!"
 
-#: src/net.c:732
+#: src/net.c:740
 msgid "Name for tinc daemon required!"
 msgstr "¡Se requiere un nombre para el demonio tinc!"
 
-#: src/net.c:740
+#: src/net.c:748
 msgid "Invalid name for myself!"
 msgstr "¡Nombre no válido para mí!"
 
-#: src/net.c:749
+#: src/net.c:757
 msgid "Cannot open host configuration file for myself!"
 msgstr "¡No puedo abrir el fichero de configuración de `host' para mí!"
 
-#: src/net.c:790
+#: src/net.c:798
 msgid "Network address and subnet mask do not match!"
 msgstr ""
 
-#: src/net.c:799
+#: src/net.c:807
 #, fuzzy
 msgid "Unable to set up a listening TCP socket!"
 msgstr "¡No puedo configurar un `socket' a la escucha!"
 
-#: src/net.c:805
+#: src/net.c:813
 #, fuzzy
 msgid "Unable to set up a listening UDP socket!"
 msgstr "¡No puedo configurar un `socket' a la escucha!"
 
-#: src/net.c:842
+#: src/net.c:850
 #, c-format
 msgid "Ready: listening on port %hd"
 msgstr "Listo: escuchando en el puerto %hd"
 
-#: src/net.c:874
+#: src/net.c:882
 #, c-format
 msgid "Still failed to connect to other, will retry in %d seconds"
 msgstr "Sigo sin poder conectar con el otro, lo reintentaré en %d segundos."
 
-#: src/net.c:925
+#: src/net.c:933
 #, c-format
 msgid "Trying to re-establish outgoing connection in %d seconds"
 msgstr "Intento re-establecer la conexión saliente en %d segundos"
 
-#: src/net.c:975
+#: src/net.c:983
 #, c-format
 msgid "Opening UDP socket to %s"
 msgstr "Abriendo `socket' UDP a %s"
 
-#: src/net.c:980
+#: src/net.c:988
 #, c-format
 msgid "Creating UDP socket failed: %m"
 msgstr "Error al crear el `socket' UDP: %m"
 
-#: src/net.c:1020
+#: src/net.c:1028
 #, c-format
 msgid "Connecting to %s port %d failed: %m"
 msgstr "Error al conectar a %s puerto %d: %m"
 
-#: src/net.c:1071
+#: src/net.c:1079
 #, c-format
 msgid "Connection from %s port %d"
 msgstr "Conexión desde %s puerto %d"
 
-#: src/net.c:1119
+#: src/net.c:1127
 #, c-format
 msgid "This is a bug: %s:%d: %d:%m"
 msgstr "Esto es un `bug': %s:%d: %d:%m"
 
-#: src/net.c:1125
+#: src/net.c:1133
 #, c-format
 msgid "Incoming data socket error: %s"
 msgstr "Error en el `socket' de recepción de datos: %s"
 
-#: src/net.c:1131
+#: src/net.c:1139
 #, c-format
 msgid "Receiving packet failed: %m"
 msgstr "Error recibiendo paquete: %m"
 
-#: src/net.c:1139
+#: src/net.c:1147
 #, c-format
 msgid "Received UDP packets on port %hd from unknown source %x:%hd"
 msgstr ""
 
-#: src/net.c:1145
+#: src/net.c:1153
 #, fuzzy, c-format
 msgid "Received packet of %d bytes from %s (%s)"
 msgstr "Enviando paquete de %d bytes a %s (%s)"
 
-#: src/net.c:1167
+#: src/net.c:1175
 #, c-format
 msgid "Closing connection with %s (%s)"
 msgstr "Cerrando conexión con %s (%s)"
 
-#: src/net.c:1217
+#: src/net.c:1225
 msgid "Trying to re-establish outgoing connection in 5 seconds"
 msgstr "Intento re-establecer la conexión saliente en 5 segundos."
 
-#: src/net.c:1252
+#: src/net.c:1260
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) no respondió al PING"
 
-#: src/net.c:1279
+#: src/net.c:1287
 #, c-format
 msgid "Accepting a new connection failed: %m"
 msgstr "Error al aceptar una nueva conexión: %m"
 
-#: src/net.c:1287
+#: src/net.c:1295
 msgid "Closed attempted connection"
 msgstr "Se ha cerrado la conexión que se intentaba realizar."
 
-#: src/net.c:1342
+#: src/net.c:1352
 #, fuzzy, c-format
 msgid "Error while reading from tun/tap device: %m"
 msgstr "Error leyendo del dispositivo tap: %m"
 
-#: src/net.c:1351
+#: src/net.c:1361
 #, fuzzy, c-format
 msgid "Error while reading from ethertap device: %m"
 msgstr "Error leyendo del dispositivo tap: %m"
 
-#: src/net.c:1362
+#: src/net.c:1372
 msgid "Received short packet from tap device"
 msgstr ""
 
-#: src/net.c:1368
+#: src/net.c:1378
 #, c-format
 msgid "Read packet of length %d from tap device"
 msgstr ""
 
-#: src/net.c:1400
+#: src/net.c:1410
 #, c-format
 msgid "Error while waiting for input: %m"
 msgstr "Error esperando entrada: %m"
 
-#: src/net.c:1407
+#: src/net.c:1417
 #, fuzzy
 msgid "Rereading configuration file and restarting in 5 seconds"
 msgstr "Recibí la señal HUP, voy a releer la configuración y reiniciaré."
 
-#: src/net.c:1414
+#: src/net.c:1424
 #, fuzzy
 msgid "Unable to reread configuration file, exiting"
 msgstr "Recibí la señal HUP, voy a releer la configuración y reiniciaré."
 
-#: src/net.c:1440
+#: src/net.c:1450
 #, fuzzy
 msgid "Regenerating symmetric key"
 msgstr "Generando claves de %d bits"
@@ -511,258 +512,243 @@ msgstr "Error al procesar %s desde %s (%s)"
 msgid "Bogus data received from %s (%s)"
 msgstr "Se han recibido datos sin sentido desde %s (%s)."
 
-#: src/protocol.c:205
+#: src/protocol.c:203
 #, c-format
 msgid "Got bad ID from %s"
 msgstr "Recibí una ID incorrecta desde %s"
 
-#: src/protocol.c:213
+#: src/protocol.c:211
 #, c-format
 msgid "Peer %s (%s) uses incompatible version %d"
 msgstr "La máquina remota %s (%s) usa una versión (%d) incompatible."
 
-#: src/protocol.c:222
+#: src/protocol.c:220
 #, c-format
 msgid "Peer %s uses invalid identity name"
 msgstr "La máquina remota %s usa un nombre de identidad no válido"
 
-#: src/protocol.c:234
+#: src/protocol.c:232
 #, c-format
 msgid "Peer %s had unknown identity (%s)"
 msgstr "La máquina remota %s tiene una identidad desconocida (%s)"
 
-#: src/protocol.c:248
+#: src/protocol.c:246
 #, c-format
 msgid "Uplink %s (%s) is already in our connection list"
 msgstr "El enlace %s (%s) ya está en nuestra lista de conexiones."
 
-#: src/protocol.c:301
-#, c-format
-msgid "Generated random challenge (unencrypted): %s"
-msgstr ""
-
-#: src/protocol.c:308 src/protocol.c:361
-#, fuzzy, c-format
-msgid "Error during encryption of challenge for %s (%s)"
-msgstr "Error leyendo el fichero de configuración del `host' para %s"
-
-#: src/protocol.c:334
+#: src/protocol.c:318
 #, c-format
 msgid "Got bad CHALLENGE from %s (%s)"
 msgstr "Recibí CHALLENGE incorrecta desde %s (%s)"
 
-#: src/protocol.c:344
+#: src/protocol.c:328
 #, c-format
 msgid "Intruder: wrong challenge length from %s (%s)"
 msgstr "Intruso: longitud de desafío incorrecta desde %s (%s)"
 
-#: src/protocol.c:369
-#, c-format
-msgid "Received random challenge (unencrypted): %s"
-msgstr ""
-
-#: src/protocol.c:383
+#: src/protocol.c:354
 #, c-format
 msgid "Trying to send CHAL_REPLY to %s (%s) without a valid CHALLENGE"
 msgstr "Intento enviar CHAL_REPLY a %s (%s) sin un CHALLENGE válido"
 
-#: src/protocol.c:414
+#: src/protocol.c:380
 #, c-format
 msgid "Got bad CHAL_REPLY from %s (%s)"
 msgstr "Recibí CHAL_REPLY incorrecta desde %s (%s)"
 
-#: src/protocol.c:422
+#: src/protocol.c:388
 #, c-format
 msgid "Intruder: wrong challenge reply length from %s (%s)"
 msgstr "Intruso: longitud de respuesta de desafío incorrecta desde %s (%s)"
 
-#: src/protocol.c:438
+#: src/protocol.c:404
 #, c-format
 msgid "Intruder: wrong challenge reply from %s (%s)"
 msgstr "Intruso: respuesta de desafío incorrecta desde %s (%s)"
 
-#: src/protocol.c:443
+#: src/protocol.c:409
 #, c-format
 msgid "Expected challenge reply: %s"
 msgstr ""
 
-#: src/protocol.c:487
+#: src/protocol.c:448
 #, c-format
 msgid "Generated random meta key (unencrypted): %s"
 msgstr ""
 
-#: src/protocol.c:494 src/protocol.c:556
+#: src/protocol.c:455 src/protocol.c:516
 #, fuzzy, c-format
 msgid "Error during encryption of meta key for %s (%s)"
 msgstr "Error enviando paquete a %s (%s): %m"
 
-#: src/protocol.c:526
+#: src/protocol.c:486
 #, fuzzy, c-format
 msgid "Got bad METAKEY from %s (%s)"
 msgstr "Recibí REQ_KEY incorrecta desde %s (%s)"
 
-#: src/protocol.c:536
+#: src/protocol.c:496
 #, fuzzy, c-format
 msgid "Intruder: wrong meta key length from %s (%s)"
 msgstr "Intruso: longitud de desafío incorrecta desde %s (%s)"
 
-#: src/protocol.c:564
+#: src/protocol.c:524
 #, c-format
 msgid "Received random meta key (unencrypted): %s"
 msgstr ""
 
-#: src/protocol.c:604
+#: src/protocol.c:553
 #, c-format
 msgid "Removing old entry for %s at %s in favour of new connection from %s"
 msgstr ""
 "Eliminando el registro viejo para %s en %s en favor de la nueva conexión "
 "desde %s"
 
-#: src/protocol.c:620
+#: src/protocol.c:568
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Activada la conexión con %s (%s)."
 
-#: src/protocol.c:705
+#: src/protocol.c:650
 #, c-format
 msgid "Got bad ADD_SUBNET from %s (%s)"
 msgstr "Recibí ADD_SUBNET incorrecta desde %s (%s)"
 
-#: src/protocol.c:713
+#: src/protocol.c:658
 #, c-format
 msgid "Got bad ADD_SUBNET from %s (%s): invalid identity name"
 msgstr ""
 "Recibí ADD_SUBNET incorrecta desde %s (%s): nombre de identidad no válido"
 
-#: src/protocol.c:721
+#: src/protocol.c:666
 #, c-format
 msgid "Got bad ADD_SUBNET from %s (%s): invalid subnet string"
 msgstr "Recibí ADD_SUBNET incorrecta desde %s (%s): cadena de subred no válida"
 
-#: src/protocol.c:729
+#: src/protocol.c:674
 #, c-format
 msgid "Warning: got ADD_SUBNET from %s (%s) for ourself, restarting"
 msgstr ""
 "Aviso: recibí ADD_SUBNET desde %s (%s) para nosotros mismos, reiniciando"
 
-#: src/protocol.c:739
+#: src/protocol.c:684
 #, c-format
 msgid "Got ADD_SUBNET for %s from %s (%s) which is not in our connection list"
 msgstr ""
 "Recibí ADD_SUBNET para %s desde %s (%s) que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:787
+#: src/protocol.c:732
 #, c-format
 msgid "Got bad DEL_SUBNET from %s (%s)"
 msgstr "Recibí DEL_SUBNET incorrecta desde %s (%s)"
 
-#: src/protocol.c:795
+#: src/protocol.c:740
 #, c-format
 msgid "Got bad DEL_SUBNET from %s (%s): invalid identity name"
 msgstr ""
 "Recibí DEL_SUBNET incorrecta desde %s (%s): nombre de identidad no válido"
 
-#: src/protocol.c:803
+#: src/protocol.c:748
 #, c-format
 msgid "Got bad DEL_SUBNET from %s (%s): invalid subnet string"
 msgstr "Recibí DEL_SUBNET incorrecta desde %s (%s): cadena de subred no válida"
 
-#: src/protocol.c:813
+#: src/protocol.c:758
 #, c-format
 msgid "Warning: got DEL_SUBNET from %s (%s) for ourself, restarting"
 msgstr ""
 "Aviso: recibí DEL_SUBNET desde %s (%s) para nosotros mismos, reiniciando"
 
-#: src/protocol.c:823
+#: src/protocol.c:768
 #, c-format
 msgid "Got DEL_SUBNET for %s from %s (%s) which is not in our connection list"
 msgstr ""
 "Recibí DEL_SUBNET para %s desde %s (%s) que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:864
+#: src/protocol.c:809
 #, c-format
 msgid "Got bad ADD_HOST from %s (%s)"
 msgstr "Recibí ADD_HOST incorrecta desde %s (%s)"
 
-#: src/protocol.c:872
+#: src/protocol.c:817
 #, c-format
 msgid "Got bad ADD_HOST from %s (%s): invalid identity name"
 msgstr ""
 "Recibí ADD_HOST incorrecta desde %s (%s): nombre de identidad no válido"
 
-#: src/protocol.c:881
+#: src/protocol.c:826
 #, c-format
 msgid "Warning: got ADD_HOST from %s (%s) for ourself, restarting"
 msgstr "Aviso: recibí ADD_HOST desde %s (%s) para nosotros mismos, reiniciando"
 
-#: src/protocol.c:898
+#: src/protocol.c:843
 #, c-format
 msgid "Got duplicate ADD_HOST for %s (%s) from %s (%s)"
 msgstr "Recibí un ADD_HOST duplicado desde %s (%s) para %s (%s)"
 
-#: src/protocol.c:906
+#: src/protocol.c:851
 #, fuzzy, c-format
 msgid "Removing old entry for %s (%s) in favour of new connection"
 msgstr ""
 "Eliminando el registro viejo para %s en %s en favor de la nueva conexión "
 "desde %s"
 
-#: src/protocol.c:957
+#: src/protocol.c:902
 #, c-format
 msgid "Got bad DEL_HOST from %s (%s)"
 msgstr "Recibí DEL_HOST incorrecta desde %s (%s)"
 
-#: src/protocol.c:966
+#: src/protocol.c:911
 #, c-format
 msgid "Got bad DEL_HOST from %s (%s): invalid identity name"
 msgstr ""
 "Recibí DEL_HOST incorrecta desde %s (%s): nombre de identidad no válido"
 
-#: src/protocol.c:974
+#: src/protocol.c:919
 #, c-format
 msgid "Warning: got DEL_HOST from %s (%s) for ourself, restarting"
 msgstr "Aviso: recibí DEL_HOST desde %s (%s) para nosotros mismos, reiniciando"
 
-#: src/protocol.c:984
+#: src/protocol.c:929
 #, c-format
 msgid "Got DEL_HOST from %s (%s) for %s which is not in our connection list"
 msgstr ""
 "Recibí DEL_HOST desde %s (%s) para %s que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:993
+#: src/protocol.c:938
 #, c-format
 msgid "Got DEL_HOST from %s (%s) for %s which doesn't match"
 msgstr "Recibí DEL_HOST desde %s (%s) para %s que no concuerda"
 
-#: src/protocol.c:1032
+#: src/protocol.c:977
 #, c-format
 msgid "Got bad STATUS from %s (%s)"
 msgstr "Recibí STATUS incorrecta desde %s (%s)"
 
-#: src/protocol.c:1039
+#: src/protocol.c:984
 #, c-format
 msgid "Status message from %s (%s): %s: %s"
 msgstr "Mensaje de status desde %s (%s): %s: %s"
 
-#: src/protocol.c:1062
+#: src/protocol.c:1007
 #, c-format
 msgid "Got bad ERROR from %s (%s)"
 msgstr "Recibí ERROR incorrecta desde %s (%s)"
 
-#: src/protocol.c:1069
+#: src/protocol.c:1014
 #, c-format
 msgid "Error message from %s (%s): %s: %s"
 msgstr "Mensaje de error desde %s (%s): %s: %s"
 
-#: src/protocol.c:1146
+#: src/protocol.c:1091
 #, c-format
 msgid "Got bad KEY_CHANGED from %s (%s)"
 msgstr "Recibí KEY_CHANGED incorrecto desde %s (%s)"
 
-#: src/protocol.c:1153
+#: src/protocol.c:1098
 #, c-format
 msgid ""
 "Got KEY_CHANGED from %s (%s) origin %s which does not exist in our "
@@ -771,12 +757,12 @@ msgstr ""
 "Recibí KEY_CHANGED desde %s (%s) origen %s que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:1182
+#: src/protocol.c:1127
 #, c-format
 msgid "Got bad REQ_KEY from %s (%s)"
 msgstr "Recibí REQ_KEY incorrecta desde %s (%s)"
 
-#: src/protocol.c:1189
+#: src/protocol.c:1134
 #, c-format
 msgid ""
 "Got REQ_KEY from %s (%s) origin %s which does not exist in our connection "
@@ -785,7 +771,7 @@ msgstr ""
 "Recibí REQ_KEY desde %s (%s) origen %s que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:1206
+#: src/protocol.c:1151
 #, c-format
 msgid ""
 "Got REQ_KEY from %s (%s) destination %s which does not exist in our "
@@ -794,12 +780,12 @@ msgstr ""
 "Recibí REQ_KEY desde %s (%s) destino %s que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:1242
+#: src/protocol.c:1187
 #, c-format
 msgid "Got bad ANS_KEY from %s (%s)"
 msgstr "Recibí ANS_KEY incorrecta desde %s (%s)"
 
-#: src/protocol.c:1249
+#: src/protocol.c:1194
 #, c-format
 msgid ""
 "Got ANS_KEY from %s (%s) origin %s which does not exist in our connection "
@@ -808,12 +794,12 @@ msgstr ""
 "Recibí ANS_KEY desde %s (%s) origen %s que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:1260
+#: src/protocol.c:1205
 #, fuzzy, c-format
 msgid "Got bad ANS_KEY from %s (%s) origin %s: invalid key length"
 msgstr "Recibí ANS_KEY incorrecta desde %s (%s) origen %s: clave no válida"
 
-#: src/protocol.c:1271
+#: src/protocol.c:1216
 #, c-format
 msgid ""
 "Got ANS_KEY from %s (%s) destination %s which does not exist in our "
@@ -822,12 +808,12 @@ msgstr ""
 "Recibí ANS_KEY desde %s (%s) destino %s que no está en nuestra lista de "
 "conexiones"
 
-#: src/protocol.c:1316
+#: src/protocol.c:1261
 #, fuzzy, c-format
 msgid "Got bad PACKET from %s (%s)"
 msgstr "Recibí REQ_KEY incorrecta desde %s (%s)"
 
-#: src/protocol.c:1337
+#: src/protocol.c:1282
 #, fuzzy, c-format
 msgid "Error during reception of PACKET from %s (%s): %m"
 msgstr "Error enviando paquete a %s (%s): %m"
@@ -972,10 +958,128 @@ msgstr "Error irrecuperable"
 msgid "Restarting in %d seconds!"
 msgstr "¡Reiniciando en %d segundos!"
 
-#: src/tincd.c:385
+#: src/process.c:338 src/tincd.c:385
 #, fuzzy
 msgid "Not restarting."
 msgstr "¡Aayyy! No reinicio."
+
+#: src/process.c:60
+#, fuzzy, c-format
+msgid "Memory exhausted (couldn't allocate %d bytes), exiting."
+msgstr ""
+"Memoria agotada (la última es %s:%d) (no pude asignar %d bytes), terminando."
+
+#: src/process.c:88
+#, c-format
+msgid "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"
+msgstr ""
+"Total de bytes escritos: tap %d, socket %d; bytes leidos: tap %d, socket %d."
+
+#: src/process.c:91
+msgid "Terminating"
+msgstr "Terminando"
+
+#: src/process.c:107
+#, c-format
+msgid "A tincd is already running for net `%s' with pid %d.\n"
+msgstr ""
+"Un tincd está actualmente en ejecución para la red `%s' con el pid %d.\n"
+
+#: src/process.c:110
+#, c-format
+msgid "A tincd is already running with pid %d.\n"
+msgstr "Un tincd está actualmente en ejecución con el pid %d.\n"
+
+#: src/process.c:131
+#, c-format
+msgid "No other tincd is running for net `%s'.\n"
+msgstr "No hay ningún otro tincd en ejecución para la red `%s'.\n"
+
+#: src/process.c:133
+msgid "No other tincd is running.\n"
+msgstr "No hay ningún otro tincd en ejecución.\n"
+
+#: src/process.c:140
+msgid "Removing stale lock file.\n"
+msgstr "Borrando fichero de bloqueo en desuso.\n"
+
+#: src/process.c:167
+#, c-format
+msgid "Couldn't detach from terminal: %m"
+msgstr ""
+
+#: src/process.c:180
+#, c-format
+msgid "tincd %s (%s %s) starting, debug level %d"
+msgstr "tincd %s (%s %s) comenzando, nivel de depuración %d."
+
+#: src/process.c:183
+#, c-format
+msgid "tincd %s starting"
+msgstr "tincd %s comenzando"
+
+#: src/process.c:247
+#, c-format
+msgid "Executing script %s"
+msgstr ""
+
+#: src/process.c:255
+#, c-format
+msgid "Process %d (%s) exited with non-zero status %d"
+msgstr ""
+
+#: src/process.c:263
+#, c-format
+msgid "Process %d (%s) was killed by signal %d (%s)"
+msgstr ""
+
+#: src/process.c:269
+#, c-format
+msgid "Process %d (%s) terminated abnormally"
+msgstr ""
+
+#: src/process.c:294
+msgid "Got TERM signal"
+msgstr "Recibí la señal TERM"
+
+#: src/process.c:303
+msgid "Got QUIT signal"
+msgstr "Recibí la señal QUIT"
+
+#: src/process.c:310
+msgid "Got another SEGV signal: not restarting"
+msgstr "Recibí otra señal SEGV: no reinicio"
+
+#: src/process.c:319
+msgid "Got SEGV signal"
+msgstr "Recibí la señal SEGV"
+
+#: src/process.c:324
+msgid "Trying to re-execute in 5 seconds..."
+msgstr "Intento re-ejecutar en 5 segundos."
+
+#: src/process.c:347
+#, fuzzy
+msgid "Got HUP signal"
+msgstr "Recibí la señal QUIT"
+
+#: src/process.c:355
+msgid "Got INT signal, exiting"
+msgstr "Recibí la señal INT, saliendo"
+
+#: src/process.c:374
+#, c-format
+msgid "Got unexpected signal %d (%s)"
+msgstr "Recibí una señal inesperada %d (%s)."
+
+#: src/process.c:419
+#, c-format
+msgid "Installing signal handler for signal %d (%s) failed: %m\n"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Error during encryption of challenge for %s (%s)"
+#~ msgstr "Error leyendo el fichero de configuración del `host' para %s"
 
 #~ msgid "Queue flushed"
 #~ msgstr "Cola vaciada"
@@ -1062,9 +1166,6 @@ msgstr "¡Aayyy! No reinicio."
 #~ msgid "Unable to set up an incoming vpn data socket!"
 #~ msgstr "¡No puedo configurar un `socket' para recibir datos de la vpn!"
 
-#~ msgid "Terminating"
-#~ msgstr "Terminando"
-
 #~ msgid "Error: getpeername: %m"
 #~ msgstr "Error: getpeername(): %m"
 
@@ -1100,58 +1201,5 @@ msgstr "¡Aayyy! No reinicio."
 #~ msgid "Invalid timeout value `%s'.\n"
 #~ msgstr "Valor de timeout `%s' no válido.\n"
 
-#~ msgid ""
-#~ "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting."
-#~ msgstr ""
-#~ "Memoria agotada (la última es %s:%d) (no pude asignar %d bytes), terminando."
-
-#~ msgid "tincd %s (%s %s) starting, debug level %d"
-#~ msgstr "tincd %s (%s %s) comenzando, nivel de depuración %d."
-
-#~ msgid "tincd %s starting"
-#~ msgstr "tincd %s comenzando"
-
-#~ msgid ""
-#~ "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"
-#~ msgstr ""
-#~ "Total de bytes escritos: tap %d, socket %d; bytes leidos: tap %d, socket %d."
-
-#~ msgid "A tincd is already running for net `%s' with pid %d.\n"
-#~ msgstr ""
-#~ "Un tincd está actualmente en ejecución para la red `%s' con el pid %d.\n"
-
-#~ msgid "A tincd is already running with pid %d.\n"
-#~ msgstr "Un tincd está actualmente en ejecución con el pid %d.\n"
-
-#~ msgid "No other tincd is running for net `%s'.\n"
-#~ msgstr "No hay ningún otro tincd en ejecución para la red `%s'.\n"
-
-#~ msgid "No other tincd is running.\n"
-#~ msgstr "No hay ningún otro tincd en ejecución.\n"
-
-#~ msgid "Removing stale lock file.\n"
-#~ msgstr "Borrando fichero de bloqueo en desuso.\n"
-
-#~ msgid "Got TERM signal"
-#~ msgstr "Recibí la señal TERM"
-
-#~ msgid "Got QUIT signal"
-#~ msgstr "Recibí la señal QUIT"
-
-#~ msgid "Got another SEGV signal: not restarting"
-#~ msgstr "Recibí otra señal SEGV: no reinicio"
-
-#~ msgid "Got SEGV signal"
-#~ msgstr "Recibí la señal SEGV"
-
-#~ msgid "Trying to re-execute in 5 seconds..."
-#~ msgstr "Intento re-ejecutar en 5 segundos."
-
-#~ msgid "Got INT signal, exiting"
-#~ msgstr "Recibí la señal INT, saliendo"
-
 #~ msgid "Got USR2 signal, forcing new key generation"
 #~ msgstr "Recibí la señal USR2, forzando generación de nueva clave"
-
-#~ msgid "Got unexpected signal %d (%s)"
-#~ msgstr "Recibí una señal inesperada %d (%s)."
