@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.29 2000/09/11 10:05:34 guus Exp $
+    $Id: protocol.c,v 1.28.4.30 2000/09/14 11:54:51 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,7 @@ cp
   if(debug_lvl >= DEBUG_META)
     syslog(LOG_DEBUG, _("Sending meta data to %s (%s): %s"), cl->id, cl->hostname, buffer);
 
-  if(cl->status.encryptout)
+  if(cl->status.encrypted)
     {
       /* FIXME: Do encryption */
     }
@@ -83,16 +83,22 @@ cp
 /* Connection protocol:
 
    Client               Server
-   send_id(*)
-                        send_challenge
-   send_chal_reply(*)                   
-                        send_id
-   send_challenge
-                        send_chal_reply
-   send_ack
-			send_ack
+   send_id(u)
+                        send_challenge(R)
+   send_chal_reply(BH)                   
+                        send_id(B)
+   send_challenge(BR)
+                        send_chal_reply(BH)
+   send_ack(B)
+			send_ack(B)
 
-   (*) Unencrypted.
+   (u) Unencrypted,
+   (R) RSA,
+   (H) SHA1,
+   (B) Blowfish.
+
+   Part of the challenge is directly used to set the blowfish key and the initial vector.
+   (Twee vliegen in één klap!)
 */      
 
 int send_id(conn_list_t *cl)
@@ -163,10 +169,6 @@ cp
         }
     }
 
-  /* Since we know the identity now, we can encrypt the meta channel */
-  
-  cl->status.encryptout = 1;
-
   /* Send a challenge to verify the identity */
 
   cl->allow_request = CHAL_REPLY;
@@ -186,13 +188,20 @@ cp
   /* Allocate buffers for the challenge and the hash */
   
   cl->chal_hash = xmalloc(SHA_DIGEST_LEN);
-  keylength = BN_num_bytes(cl->metakey.n);
+  keylength = BN_num_bytes(cl->rsakey.n);
   buffer = xmalloc(keylength*2);
 
   /* Copy random data and the public key to the buffer */
   
   RAND_bytes(buffer, keylength);
-  BN_bn2bin(cl->metakey.n, buffer+keylength);
+  BN_bn2bin(cl->rsakey.n, buffer+keylength);
+
+  /* If we don't have a blowfish key set yet, use the random data from the challenge to do so. */
+  
+  if(!cl->status.encrypted)
+    {
+      set_metakey(cl, buffer, keylength);
+    }
 
   /* Calculate the hash from that */
 
@@ -208,6 +217,7 @@ cp
   cl->allow_request = CHAL_REPLY;
   x = send_request(cl, "%d %s", CHALLENGE, buffer);
   free(buffer);
+  cl->status.encrypted = 1;
 cp
   return x;
 }
@@ -237,7 +247,7 @@ int send_chal_reply(conn_list_t *cl, char *challenge)
   char *hash;
   int x;
 cp
-  keylength = BN_num_bytes(myself->meyakey.n);
+  keylength = BN_num_bytes(myself->rsakey.n);
 
   /* Check if the length of the challenge is all right */
 
@@ -255,11 +265,20 @@ cp
   /* Copy the incoming random data and our public key to the buffer */
 
   hex2bin(challenge, buffer, keylength); 
-  BN_bn2bin(myself->metakey.n, buffer+keylength);
+  BN_bn2bin(myself->rsakey.n, buffer+keylength);
 
   /* Calculate the hash from that */
   
   SHA1(buffer, keylength*2, hash);
+
+  /* If we don't have a blowfish key set yet, use the random data from the challenge to do so. */
+  
+  if(!cl->status.encrypted)
+    {
+      set_metakey(cl, buffer, keylength);
+      cl->status.encrypted = 1;
+    }
+
   free(buffer);
 
   /* Convert the hash to a hexadecimal formatted string */

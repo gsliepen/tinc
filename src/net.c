@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.27 2000/09/06 11:49:03 guus Exp $
+    $Id: net.c,v 1.35.4.28 2000/09/14 11:54:50 guus Exp $
 */
 
 #include "config.h"
@@ -103,8 +103,7 @@ cp
   rp.len = htons(rp.len);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
-           ntohs(rp.len), cl->vpn_hostname, cl->real_hostname);
+    syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"), ntohs(rp.len), cl->id, cl->hostname);
 
   total_socket_out += ntohs(rp.len);
 
@@ -115,8 +114,7 @@ cp
 
   if((send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
-      syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
-             cl->vpn_hostname, cl->real_hostname);
+      syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"), cl->id, cl->hostname);
       return -1;
     }
 cp
@@ -132,66 +130,12 @@ cp
   add_mac_addresses(&vp);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
-           ((real_packet_t*)packet)->len, cl->vpn_hostname, cl->real_hostname);
+    syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"), ((real_packet_t*)packet)->len, cl->id, cl->hostname);
 
   if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
     total_tap_out += lenin;
-
-  cl->want_ping = 0;
-  cl->last_ping_time = time(NULL);
-cp
-  return 0;
-}
-
-int tcprecv(conn_list_t *cl, real_packet_t *rp)
-{
-  vpn_packet_t vp;
-  int lenin;
-  conn_list_t *f;
-cp
-  rp->data.len = ntohs(rp->data.len);
-  rp->len = ntohs(rp->len);
-  rp->from = ntohl(rp->from);
-
-  total_socket_in += rp->len;
-
-  if(rp->len >= 0)
-    {
-      f = lookup_conn(rp->from);
-      if(!f)
-	{
-	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
-		 cl->vpn_hostname, cl->real_hostname, IP_ADDR_V(rp->from));
-	  return -1;
-	}
-
-      if(f->status.validkey)
-        {
-          do_decrypt(rp, &vp, cl->key);
-          add_mac_addresses(&vp);
-
-          if(debug_lvl > 3)
-            syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
-                   rp->len, cl->vpn_hostname, cl->real_hostname);
-
-          if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
-            syslog(LOG_ERR, _("Can't write to tap device: %m"));
-          else
-            total_tap_out += lenin;
-        }
-      else
-	{
-          add_queue(&(cl->sq), rp, rp->len + 2);
-	  if(!cl->status.waitingforkey)
-	    send_key_request(rp->from);
-	}
-
-      if(my_key_expiry <= time(NULL))
-	regenerate_keys();
-    }
 
   cl->want_ping = 0;
   cl->last_ping_time = time(NULL);
@@ -307,16 +251,14 @@ cp
   if(cl->sq)
     {
       if(debug_lvl > 3)
-	syslog(LOG_DEBUG, _("Flushing send queue for %s (%s)"),
-	       cl->vpn_hostname, cl->real_hostname);
+	syslog(LOG_DEBUG, _("Flushing send queue for %s (%s)"), cl->id, cl->hostname);
       flush_queue(cl, &(cl->sq), xsend);
     }
 
   if(cl->rq)
     {
       if(debug_lvl > 3)
-	syslog(LOG_DEBUG, _("Flushing receive queue for %s (%s)"),
-	       cl->vpn_hostname, cl->real_hostname);
+	syslog(LOG_DEBUG, _("Flushing receive queue for %s (%s)"), cl->id, cl->hostname);
       flush_queue(cl, &(cl->rq), xrecv);
     }
 cp
@@ -336,22 +278,16 @@ cp
           syslog(LOG_NOTICE, _("Trying to look up %d.%d.%d.%d in connection list failed!"),
 	         IP_ADDR_V(to));
         }
-        
-      /* Is this really necessary? If we can't find "to", then neither should any uplink. (GS) */
-      
+
       return -1;
-        
-      for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
-      if(!cl)
-        { /* No open outgoing connection has been found. */
-	  if(debug_lvl > 3)
-	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to!"));
-          return -1;
-        }
-    }
+   }
     
   /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
   
+  /* The next few lines will be obsoleted, if we are going indirect, matching subnet_t
+     should point to only our uplink as the recepient
+  */
+
   if(myself->flags & EXPORTINDIRECTDATA)
     {
       for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
@@ -372,13 +308,11 @@ cp
   if(cl->flags & INDIRECTDATA)
     {
       if(debug_lvl > 3)
-        syslog(LOG_NOTICE, _("Indirect packet to %s via %s"),
-               cl->vpn_hostname, cl->real_hostname);
+        syslog(LOG_NOTICE, _("Indirect packet to %s via %s"), cl->id, cl->hostname);
       if((cl = lookup_conn(cl->real_ip)) == NULL)
         {
           if(debug_lvl > 3)
-              syslog(LOG_NOTICE, _("Indirect look up %d.%d.%d.%d in connection list failed!"),
-	             IP_ADDR_V(to));
+              syslog(LOG_NOTICE, _("Indirect look up %d.%d.%d.%d in connection list failed!"), IP_ADDR_V(to));
             
           /* Gateway tincd dead? Should we kill it? (GS) */
 
@@ -387,8 +321,7 @@ cp
       if(cl->flags & INDIRECTDATA)  /* This should not happen */
         {
           if(debug_lvl > 3)
-              syslog(LOG_NOTICE, _("Double indirection for %d.%d.%d.%d"),
-	             IP_ADDR_V(to));
+              syslog(LOG_NOTICE, _("Double indirection for %d.%d.%d.%d"), IP_ADDR_V(to));
           return -1;        
         }
     }            
@@ -399,14 +332,14 @@ cp
   if(!cl->status.dataopen)
     if(setup_vpn_connection(cl) < 0)
       {
-        syslog(LOG_ERR, _("Could not open UDP connection to %s (%s)"), cl->vpn_hostname, cl->real_hostname);
+        syslog(LOG_ERR, _("Could not open UDP connection to %s (%s)"), cl->id, cl->hostname);
         return -1;
       }
       
   if(!cl->status.validkey)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _("%s (%s) has no valid key, queueing packet"), cl->vpn_hostname, cl->real_hostname);
+	syslog(LOG_INFO, _("%s (%s) has no valid key, queueing packet"), cl->id, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
       if(!cl->status.waitingforkey)
 	send_key_request(cl->vpn_ip);			/* Keys should be sent to the host running the tincd */
@@ -416,7 +349,7 @@ cp
   if(!cl->status.active)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"), cl->vpn_hostname, cl->real_hostname);
+	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"), cl->id, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
       return 0; /* We don't want to mess up, do we? */
     }
@@ -573,7 +506,7 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
   config_t const *cfg;
 cp
   if(debug_lvl > 0)
-    syslog(LOG_INFO, _("Trying to connect to %s"), cl->real_hostname);
+    syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
 
   if((cfg = get_config_val(upstreamport)) == NULL)
     cl->port = 655;
@@ -584,7 +517,7 @@ cp
   if(cl->meta_socket == -1)
     {
       syslog(LOG_ERR, _("Creating socket for %s port %d failed: %m"),
-             cl->real_hostname, cl->port);
+             cl->hostname, cl->port);
       return -1;
     }
 
@@ -594,7 +527,7 @@ cp
 
   if(connect(cl->meta_socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      syslog(LOG_ERR, _("%s port %hd: %m"), cl->real_hostname, cl->port);
+      syslog(LOG_ERR, _("%s port %hd: %m"), cl->hostname, cl->port);
       return -1;
     }
 
@@ -602,13 +535,13 @@ cp
   if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
-             cl->real_hostname, cl->port);
+             cl->hostname, cl->port);
       return -1;
     }
 
   if(debug_lvl > 0)
     syslog(LOG_INFO, _("Connected to %s port %hd"),
-         cl->real_hostname, cl->port);
+         cl->hostname, cl->port);
 cp
   return 0;
 }
@@ -633,12 +566,12 @@ cp
 
   ncn = new_conn_list();
   ncn->real_ip = ntohl(*((ip_t*)(h->h_addr_list[0])));
-  ncn->real_hostname = hostlookup(htonl(ncn->real_ip));
+  ncn->hostname = hostlookup(htonl(ncn->real_ip));
   
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
       syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
-             ncn->real_hostname);
+             ncn->hostname);
       free_conn_element(ncn);
       return -1;
     }
@@ -668,7 +601,7 @@ cp
 
   myself->vpn_ip = cfg->data.ip->ip;
   myself->vpn_hostname = hostlookup(htonl(myself->vpn_ip));
-  myself->real_hostname = hostlookup(htonl(myself->vpn_ip));
+  myself->hostname = hostlookup(htonl(myself->vpn_ip));
   myself->vpn_mask = cfg->data.ip->mask;
   myself->flags = 0;
 
@@ -817,7 +750,7 @@ int setup_vpn_connection(conn_list_t *cl)
   struct sockaddr_in a;
 cp
   if(debug_lvl > 0)
-    syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->real_hostname);
+    syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->hostname);
 
   nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(nfd == -1)
@@ -833,15 +766,14 @@ cp
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
       syslog(LOG_ERR, _("Connecting to %s port %d failed: %m"),
-	     cl->real_hostname, cl->port);
+	     cl->hostname, cl->port);
       return -1;
     }
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, nfd,
-             cl->vpn_hostname, cl->real_hostname);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, nfd, cl->id, cl->hostname);
       return -1;
     }
 
@@ -870,7 +802,7 @@ cp
     }
 
   p->real_ip = ntohl(ci.sin_addr.s_addr);
-  p->real_hostname = hostlookup(ci.sin_addr.s_addr);
+  p->hostname = hostlookup(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
   p->buflen = 0;
@@ -879,7 +811,7 @@ cp
   
   if(debug_lvl > 0)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
-         p->real_hostname, htons(ci.sin_port));
+         p->hostname, htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
     {
@@ -927,14 +859,12 @@ int handle_incoming_vpn_data(conn_list_t *cl)
 cp
   if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->socket,
-             cl->vpn_hostname, cl->real_hostname);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->socket, cl->id, cl->hostname);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, _("Incoming data socket error for %s (%s): %s"),
-             cl->vpn_hostname, cl->real_hostname, strerror(x));
+      syslog(LOG_ERR, _("Incoming data socket error for %s (%s): %s"), cl->id, cl->hostname, strerror(x));
       return -1;
     }
 
@@ -942,7 +872,7 @@ cp
   lenin = recvfrom(cl->socket, &rp, MTU, 0, NULL, NULL);
   if(lenin <= 0)
     {
-      syslog(LOG_ERR, _("Receiving packet from %s (%s) failed: %m"), cl->vpn_hostname, cl->real_hostname);
+      syslog(LOG_ERR, _("Receiving packet from %s (%s) failed: %m"), cl->id, cl->hostname);
       return -1;
     }
   total_socket_in += lenin;
@@ -956,8 +886,7 @@ cp
       f = lookup_conn(rp.from);
       if(!f)
 	{
-	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
-		 cl->vpn_hostname, cl->real_hostname, IP_ADDR_V(rp.from));
+	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"), cl->id, cl->hostname, IP_ADDR_V(rp.from));
 	  return -1;
 	}
 
@@ -990,8 +919,7 @@ cp
     return;
 
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
-           cl->vpn_hostname, cl->real_hostname);
+    syslog(LOG_NOTICE, _("Closing connection with %s (%s)"), cl->id, cl->hostname);
 
   if(cl->status.timeout)
     send_timeout(cl);
@@ -1064,8 +992,7 @@ cp
               if(p->status.pinged && !p->status.got_pong)
                 {
                   if(debug_lvl > 1)
-  	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
-		           p->vpn_hostname, p->real_hostname);
+  	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"), cl->id, cl->hostname);
 	          p->status.timeout = 1;
 	          terminate_connection(p);
                 }
@@ -1125,18 +1052,16 @@ int handle_incoming_meta_data(conn_list_t *cl)
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->meta_socket,
-             cl->vpn_hostname, cl->real_hostname);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->meta_socket, cl->id, cl->hostname);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
-             cl->vpn_hostname, cl->real_hostname, strerror(x));
+      syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"), cl->id, cl->hostname, strerror(x));
       return -1;
     }
 
-  lenin = read(cl->meta_socket, cl->buffer, MAXBUFSIZE - cl->buflen);
+  lenin = read(cl->meta_socket, cl->buffer+cl->buflen, MAXBUFSIZE - cl->buflen);
 
   if(lenin<=0)
     {
@@ -1144,14 +1069,17 @@ cp
         return 0;      
       if(errno==0)
         {
-          if(debug_lvl>0)
-            syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
-                cl->vpn_hostname, cl->real_hostname);
+          if(debug_lvl>DEBUG_CONNECTIONS)
+            syslog(LOG_NOTICE, _("Connection closed by %s (%s)"), cl->id, cl->hostname);
         }
       else
-        syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
-               cl->vpn_hostname, cl->real_hostname);
+        syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"), cl->id, cl->hostname);
       return -1;
+    }
+
+  if(cl->status.encrypted)
+    {
+      /* FIXME: do decryption. */
     }
 
   oldlen = cl->buflen;
@@ -1159,77 +1087,59 @@ cp
 
   for(;;)
     {
-      if(cl->tcppacket)
+      cl->reqlen = 0;
+
+      for(i = oldlen; i < cl->buflen; i++)
         {
-          if(cl->buflen >= cl->tcppacket)
+          if(cl->buffer[i] == '\n')
             {
-              tcprecv(cl, (real_packet_t *)cl->buffer);
-              cl->buflen -= cl->tcppacket;
-              memmove(cl->buffer, cl->buffer + cl->tcppacket, cl->buflen);
-              oldlen = 0;
-              cl->tcppacket=0;
-            }
-          else
-            {
+              cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
+              cl->reqlen = i + 1;
               break;
             }
         }
-      else
+
+      if(cl->reqlen)
         {
-          cl->reqlen = 0;
-
-          for(i = oldlen; i < cl->buflen; i++)
+          if(debug_lvl > DEBUG_PROTOCOL)
+            syslog(LOG_DEBUG, _("Got request from %s (%s): %s"), cl->id, cl->hostname, cl->buffer);
+          if(sscanf(cl->buffer, "%d", &request) == 1)
             {
-              if(cl->buffer[i] == '\n')
+              if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
                 {
-                  cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
-                  cl->reqlen = i + 1;
-                  break;
-                }
-            }
-
-          if(cl->reqlen)
-            {
-              if(debug_lvl > 2)
-                syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
-                             cl->vpn_hostname, cl->real_hostname, cl->buffer);
-              if(sscanf(cl->buffer, "%d", &request) == 1)
-                {
-                  if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
-                    {
-                      syslog(LOG_ERR, _("Unknown request from %s (%s)"),
-                             cl->vpn_hostname, cl->real_hostname);
-                      return -1;
-                    }
-
-                  if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
-                    {
-                      syslog(LOG_ERR, _("Error while processing request from %s (%s)"),
-                             cl->vpn_hostname, cl->real_hostname);
-                      return -1;
-                    }
+                  syslog(LOG_ERR, _("Unknown request from %s (%s)"), cl->id, cl->hostname);
+                  return -1;
                 }
               else
                 {
-                  syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
-                             cl->vpn_hostname, cl->real_hostname);
+                  if(debug_lvl > DEBUG_PROTOCOL)
+                    syslog(LOG_DEBUG, _("Got %s from %s (%s)"), request_name[request], cl->id, cl->hostname);
+
+              if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
+                {
+                  syslog(LOG_ERR, _("Error while processing %s from %s (%s)"), request_name[request], cl->id, cl->hostname);
                   return -1;
                 }
-
-              cl->buflen -= cl->reqlen;
-              memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
-              oldlen = 0;
             }
           else
             {
-              break;
+              syslog(LOG_ERR, _("Bogus data received from %s (%s)"), cl->id, cl->hostname);
+              return -1;
             }
+
+          cl->buflen -= cl->reqlen;
+          memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
+          oldlen = 0;
+        }
+      else
+        {
+          break;
         }
     }
 
   if(cl->buflen >= MAXBUFSIZE)
     {
-      syslog(LOG_ERR, _("Metadata read buffer overflow!"));
+      syslog(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"), cl->id, cl->hostname);
       return -1;
     }
 
@@ -1263,8 +1173,7 @@ cp
 	      I've once got here when it said `No route to host'.
 	    */
 	    getsockopt(p->socket, SOL_SOCKET, SO_ERROR, &x, &l);
-	    syslog(LOG_ERR, _("Outgoing data socket error for %s (%s): %s"),
-                   p->vpn_hostname, p->real_hostname, strerror(x));
+	    syslog(LOG_ERR, _("Outgoing data socket error for %s (%s): %s"), cl->id, cl->hostname, strerror(x));
 	    terminate_connection(p);
 	    return;
 	  }  
@@ -1309,15 +1218,14 @@ cp
   if(ether_type != 0x0800)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _("Non-IP ethernet frame %04x from " MAC_ADDR_S),
-	       ether_type, MAC_ADDR_V(vp.data[6]));
+	syslog(LOG_INFO, _("Non-IP ethernet frame %04x from %02x:%02x:%02x:%02x:%02x:%02x"), ether_type, MAC_ADDR_V(vp.data[6]));
       return;
     }
   
   if(lenin < 32)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _("Dropping short packet"));
+	syslog(LOG_INFO, _("Dropping short packet from %02x:%02x:%02x:%02x:%02x:%02x"), MAC_ADDR_V(vp.data[6]));
       return;
     }
 
