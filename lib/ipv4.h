@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv4.h,v 1.1.2.4 2003/10/08 11:34:55 guus Exp $
+    $Id: ipv4.h,v 1.1.2.5 2003/12/22 11:05:23 guus Exp $
 */
 
 #ifndef __TINC_IPV4_H__
@@ -33,6 +33,10 @@
 
 #ifndef ICMP_DEST_UNREACH
 #define ICMP_DEST_UNREACH 3
+#endif
+
+#ifndef ICMP_FRAG_NEEDED
+#define ICMP_FRAG_NEEDED 4
 #endif
 
 #ifndef ICMP_NET_UNKNOWN

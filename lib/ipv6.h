@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv6.h,v 1.1.2.8 2003/11/08 15:09:03 guus Exp $
+    $Id: ipv6.h,v 1.1.2.9 2003/12/22 11:05:23 guus Exp $
 */
 
 #ifndef __TINC_IPV6_H__
@@ -96,12 +96,14 @@ struct icmp6_hdr {
 } __attribute__ ((__packed__));
 #define ICMP6_DST_UNREACH_NOROUTE 0
 #define ICMP6_DST_UNREACH 1
+#define ICMP6_PACKET_TOO_BIG 2
 #define ICMP6_DST_UNREACH_ADDR 3
 #define ND_NEIGHBOR_SOLICIT 135
 #define ND_NEIGHBOR_ADVERT 136
 #define icmp6_data32 icmp6_dataun.icmp6_un_data32
 #define icmp6_data16 icmp6_dataun.icmp6_un_data16
 #define icmp6_data8 icmp6_dataun.icmp6_un_data8
+#define icmp6_mtu icmp6_data32[0]
 #endif
 
 #ifndef HAVE_STRUCT_ND_NEIGHBOR_SOLICIT
