@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.4 2002/03/22 11:43:48 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.5 2002/03/22 12:41:54 guus Exp $
 */
 
 #include "config.h"
@@ -93,7 +93,7 @@ cp
   if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
             from_name, from_address, from_udpport,
 	    to_name, to_address, to_udpport,
-	    &options, &weight) != 10)
+	    &options, &weight) != 8)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name, c->hostname);
        return -1;
