@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.8 2002/03/12 13:42:23 guus Exp $
+    $Id: graph.c,v 1.1.2.9 2002/03/12 16:30:15 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -32,7 +32,9 @@
    favour Kruskal's, because we make an extra AVL tree of edges sorted on
    weights (metric). That tree only has to be updated when an edge is added or
    removed, and during the MST algorithm we just have go linearly through that
-   tree.
+   tree, adding safe edges until #edges = #nodes - 1. The implementation here
+   however is not so fast, because I tried to avoid having to make a forest and
+   merge trees.
 
    For the SSSP algorithm Dijkstra's seems to be a nice choice. Currently a
    simple breadth-first search is presented here.
@@ -60,17 +62,20 @@
 
 #include "system.h"
 
-/* Kruskal's minimum spanning tree algorithm.
-   Running time: O(E)
-   Edges are already sorted on weight.
+/* Implementation of Kruskal's algorithm.
+   Running time: O(EN)
+   Please note that sorting on weight is already done by add_edge().
 */
 
 void mst_kruskal(void)
 {
-  avl_node_t *node;
+  avl_node_t *node, *next;
   edge_t *e;
   node_t *n;
   connection_t *c;
+  int nodes = 0;
+  int safe_edges = 0;
+  int skipped;
 
   /* Clear MST status on connections */
 
@@ -85,12 +90,16 @@ void mst_kruskal(void)
   if(!edge_weight_tree->head)
     return;
 
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+    syslog(LOG_DEBUG, "Running Kruskal's algorithm:");
+
   /* Clear visited status on nodes */
 
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
       n->status.visited = 0;
+      nodes++;
     }
 
   /* Starting point */
@@ -99,18 +108,36 @@ void mst_kruskal(void)
 
   /* Add safe edges */
 
-  for(node = edge_weight_tree->head; node; node = node->next)
+  for(skipped = 0, node = edge_weight_tree->head; node; node = next)
     {
+      next = node->next;
       e = (edge_t *)node->data;
 
-      if(e->from.node->status.visited && e->to.node->status.visited)
-        continue;
+      if(e->from.node->status.visited == e->to.node->status.visited)
+        {
+          skipped = 1;
+          continue;
+        }
 
       e->from.node->status.visited = 1;
       e->to.node->status.visited = 1;
       if(e->connection)
         e->connection->status.mst = 1;
+
+      safe_edges++;
+
+      if(debug_lvl >= DEBUG_SCARY_THINGS)
+	syslog(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from.node->name, e->to.node->name, e->weight);
+
+      if(skipped)
+        {
+          next = edge_weight_tree->head;
+          continue;
+        }
     }
+
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+    syslog(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes, safe_edges);
 }
 
 /* Implementation of a simple breadth-first search algorithm.
