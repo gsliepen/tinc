@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.40 2003/08/08 22:11:54 guus Exp $
+    $Id: meta.c,v 1.1.2.41 2003/08/12 14:48:12 guus Exp $
 */
 
 #include "system.h"
@@ -27,14 +27,15 @@
 #include "avl_tree.h"
 #include "connection.h"
 #include "logger.h"
+#include "meta.h"
 #include "net.h"
 #include "protocol.h"
 #include "system.h"
 #include "utils.h"
 
-bool send_meta(connection_t *c, char *buffer, int length)
+bool send_meta(connection_t *c, const char *buffer, int length)
 {
-	char *bufp;
+	const char *bufp;
 	int outlen;
 	char outbuf[MAXBUFSIZE];
 	int result;
@@ -71,7 +72,7 @@ bool send_meta(connection_t *c, char *buffer, int length)
 	return true;
 }
 
-void broadcast_meta(connection_t *from, char *buffer, int length)
+void broadcast_meta(connection_t *from, const char *buffer, int length)
 {
 	avl_node_t *node;
 	connection_t *c;

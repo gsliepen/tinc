@@ -1,4 +1,5 @@
 #ifndef __TINC_LOGGER_H__
+#define __TINC_LOGGER_H__
 
 typedef enum debug_t {
 	DEBUG_NOTHING = 0,			/* Quiet mode, only show starting/stopping of the daemon */
