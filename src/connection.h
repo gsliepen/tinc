@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.13 2001/10/08 11:47:55 guus Exp $
+    $Id: connection.h,v 1.1.2.14 2001/10/10 08:49:47 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -43,6 +43,9 @@
 #include "net.h"
 #include "conf.h"
 
+#include "node.h"
+#include "vertex.h"
+
 typedef struct status_bits_t {
   int pinged:1;                    /* sent ping */
   int meta:1;                      /* meta connection exists */
@@ -63,66 +66,37 @@ typedef struct status_bits_t {
 #define OPTION_TCPONLY		0x0002
 
 typedef struct connection_t {
-  char *name;                      /* name of this connection */
   ipv4_t address;                  /* his real (internet) ip */
-  short unsigned int meta_port;    /* port number of meta connection */
+  short unsigned int port;         /* port number of meta connection */
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
-  short unsigned int port;         /* port number for UDP traffic */
-  long int options;                /* options turned on for this connection */
 
-  int socket;                      /* our udp vpn socket */
-  int meta_socket;                 /* our tcp meta socket */
+  int socket;                      /* socket used for this connection */
   status_bits_t status;            /* status info */
 
-  RSA *rsa_key;                    /* the public/private key */
-  EVP_CIPHER_CTX *cipher_inctx;    /* Context of encrypted meta data that will come from him to us */
-  EVP_CIPHER_CTX *cipher_outctx;   /* Context of encrypted meta data that will be sent from us to him */
-  char *cipher_inkey;              /* His symmetric meta key */
-  char *cipher_outkey;             /* Our symmetric meta key */
-  EVP_CIPHER *cipher_pkttype;      /* Cipher type for encrypted vpn packets */ 
-  char *cipher_pktkey;             /* Cipher key and iv */
-  int cipher_pktkeylength;         /* Cipher key and iv length*/
+  struct node_t *node;             /* node associated with the other end */
+  struct vertex_t *vertex;         /* vertex associated with this connection */
+
+  RSA *rsa_key;                    /* his public/private key */
+  EVP_CIPHER *incipher;            /* Cipher he will use to send data to us */
+  EVP_CIPHER *outcipher;           /* Cipher we will use to send data to him */
+  EVP_CIPHER_CTX *inctx;           /* Context of encrypted meta data that will come from him to us */
+  EVP_CIPHER_CTX *outctx;          /* Context of encrypted meta data that will be sent from us to him */
+  char *inkey;                     /* His symmetric meta key + iv */
+  char *outkey;                    /* Our symmetric meta key + iv */
+  int inkeylength;                 /* Length of his key + iv */
+  int outkeylength;                /* Length of our key + iv */
+  char *mychallenge;               /* challenge we received from him */
+  char *hischallenge;              /* challenge we sent to him */
 
   char *buffer;                    /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int tcplen;                      /* length of incoming TCPpacket */
   int allow_request;               /* defined if there's only one request possible */
 
-  time_t last_ping_time;           /* last time we saw some activity from the other end */  
-
-  list_t *queue;                   /* Queue for packets awaiting to be encrypted */
-
-  char *mychallenge;               /* challenge we received from him */
-  char *hischallenge;              /* challenge we sent to him */
-
-  struct connection_t *nexthop;    /* nearest meta-hop from us to him */
-  struct connection_t *prevhop;    /* nearest meta-hop from him to us */
-  struct connection_t *via;        /* next hop for UDP packets */
-  
-  avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this connection */
-
-  struct config_t *config;         /* Pointer to configuration tree belonging to this host */
+  time_t last_ping_time;           /* last time we saw some activity from the other end */
 } connection_t;
 
 extern avl_tree_t *connection_tree;
-extern avl_tree_t *active_tree;
-extern connection_t *myself;
-
-extern void init_connections(void);
-extern connection_t *new_connection(void);
-extern void free_connection(connection_t *);
-extern void id_add(connection_t *);
-extern void active_add(connection_t *);
-extern void active_del(connection_t *);
-extern void connection_add(connection_t *);
-extern void connection_del(connection_t *);
-extern void prune_add(connection_t *);
-extern void prune_flush(void);
-extern connection_t *lookup_id(char *);
-extern connection_t *lookup_active(ipv4_t, short unsigned int);
-extern void dump_connection_list(void);
-extern int read_host_config(connection_t *);
-extern void destroy_trees(void);
 
 #endif /* __TINC_CONNECTION_H__ */

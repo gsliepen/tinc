@@ -17,8 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.2 2001/10/09 19:37:10 guus Exp $
+    $Id: node.h,v 1.1.2.3 2001/10/10 08:49:47 guus Exp $
 */
+
+#ifndef __TINC_NODE_H__
+#define __TINC_NODE_H__
+
+#include <avl_tree.h>
 
 typedef struct node_t {
   char *name;                      /* name of this connection */
@@ -45,3 +50,8 @@ typedef struct node_t {
 
   struct config_t *config;         /* Pointer to configuration tree belonging to this node */
 } node_t;
+
+struct node_t *myself;
+extern avl_tree_t *node_tree;
+
+#endif /* __TINC_NODE_H__ */

@@ -17,28 +17,35 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.h,v 1.1.2.2 2001/10/09 19:37:10 guus Exp $
+    $Id: vertex.h,v 1.1.2.3 2001/10/10 08:49:47 guus Exp $
 */
 
+#ifndef __TINC_VERTEX_H__
+#define __TINC_VERTEX_H__
+
+#include <avl_tree.h>
+
+#include "node.h"
+#include "connection.h"
+
 typedef struct vertex_t {
-  struct halfconnection_t *from;
-  struct halfconnection_t *to;
+  struct halfconnection_t from;
+  struct halfconnection_t to;
+
   long int options;                /* options turned on for this connection */
+  int metric;                      /* weight of this vertex */
+  
+  struct connection_t *connection; /* connection associated with this vertex, if available */
 } vertex_t;
 
 typedef struct halfconnection_t {
-  struct node_t *node;
+  struct node_t *node;             /* node associated with this end of the connection */
 
   ipv4_t address;                  /* real (internet) ip on this end of the meta connection */
   short unsigned int port;         /* port number of this end of the meta connection */
   char *hostname;                  /* the hostname of real ip */
-  
-  /* Following bits only used when this is a connection with ourself. */
-  
-  RSA *rsa_key;                    /* RSA key used for authentication */
-  EVP_CIPHER *cipher;              /* Cipher type for meta protocol */ 
-  EVP_CIPHER_CTX *ctx;             /* Cipher state for meta protocol */
-  char *key;                       /* Cipher key + iv */
-  int keylength;                   /* Cipher keylength */
-  char *challenge;                 /* Challenge sent to this end */
 } halfconnection_t;
+
+extern avl_tree_t *vertex_tree;    /* Tree with all known vertices (replaces active_tree) */
+
+#endif /* __TINC_VERTEX_H__ */
