@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.32 2000/12/03 12:22:19 zarq Exp $
+    $Id: conf.c,v 1.9.4.33 2000/12/05 08:56:44 zarq Exp $
 */
 
 #include "config.h"
@@ -143,7 +143,7 @@ cp
   given, and buf needs to be expanded, the var pointed to by buflen
   will be increased.
 */
-char *readline(FILE *fp, char *buf, size_t *buflen)
+char *readline(FILE *fp, char **buf, size_t *buflen)
 {
   char *newline = NULL;
   char *p;
@@ -162,7 +162,7 @@ char *readline(FILE *fp, char *buf, size_t *buflen)
   if((buf != NULL) && (buflen != NULL))
     {
       size = *buflen;
-      line = buf;
+      line = *buf;
     }
   else
     {
@@ -206,7 +206,10 @@ char *readline(FILE *fp, char *buf, size_t *buflen)
     }
 
   if((buf != NULL) && (buflen != NULL))
-    *buf = size;
+    {
+      *buflen = size;
+      *buf = line;
+    }
   return line;
 }
 
@@ -216,7 +219,7 @@ char *readline(FILE *fp, char *buf, size_t *buflen)
 */
 int read_config_file(config_t **base, const char *fname)
 {
-  int err = -1;
+  int err = -2; /* Parse error */
   FILE *fp;
   char *buffer, *line;
   char *p, *q;
@@ -233,7 +236,8 @@ cp
   
   for(;;)
     {
-      if((line = readline(fp, buffer, &bufsize)) == NULL)
+      
+      if((line = readline(fp, &buffer, &bufsize)) == NULL)
 	{
 	  err = -1;
 	  break;
@@ -297,7 +301,7 @@ int read_server_config()
 cp
   asprintf(&fname, "%s/tinc.conf", confbase);
   x = read_config_file(&config, fname);
-  if(x != 0)
+  if(x == -1) /* System error */
     {
       fprintf(stderr, _("Failed to read `%s': %m\n"),
 	      fname);
