@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.9 2000/09/14 21:51:20 zarq Exp $
+    $Id: netutl.c,v 1.12.4.10 2000/09/15 12:58:40 zarq Exp $
 */
 
 #include "config.h"
@@ -95,7 +95,7 @@ cp
   if(p->hostname)
     free(p->hostname);
   free_key(p->public_key);
-  free_key(p->key);
+  free_key(p->datakey);
   free(p);
 cp
 }

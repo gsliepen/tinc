@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: encr.c,v 1.12.4.4 2000/08/18 11:17:09 guus Exp $
+    $Id: encr.c,v 1.12.4.5 2000/09/15 12:58:38 zarq Exp $
 */
 
 #include "config.h"
@@ -337,12 +337,12 @@ cp
 	/* We haven't received a key from this host (yet). */
 	continue;
       ek = make_shared_key(p->public_key->key);
-      free_key(p->key);
-      p->key = xmalloc(sizeof(*p->key));
-      p->key->length = strlen(ek);
-      p->key->expiry = p->public_key->expiry;
-      p->key->key = xmalloc(strlen(ek) + 1);
-      strcpy(p->key->key, ek);
+      free_key(p->datakey);
+      p->datakey = xmalloc(sizeof(*p->datakey));
+      p->datakey->length = strlen(ek);
+      p->datakey->expiry = p->public_key->expiry;
+      p->datakey->key = xmalloc(strlen(ek) + 1);
+      strcpy(p->datakey->key, ek);
     }
 cp
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.31 2000/09/14 21:51:21 zarq Exp $
+    $Id: protocol.c,v 1.28.4.32 2000/09/15 12:58:40 zarq Exp $
 */
 
 #include "config.h"
@@ -45,6 +45,21 @@
 #include "protocol.h"
 
 #include "system.h"
+
+int check_id(char *id)
+{
+  int i;
+
+  for (i = 0; i < strlen(id); i++)
+    {
+      if(!isalpha(id[i]) && id[i] != '_')
+	{
+	  return 0;
+	}
+    }
+
+  return 1;
+}
 
 /* Generic outgoing request routine - takes care of logging and error detection as well */
 
@@ -596,7 +611,8 @@ int status_h(conn_list_t *cl)
 cp
   if(sscanf(cl->buffer, "%*d %d %as", &statusno, &statusstring) != 2)
     {
-       syslog(LOG_ERR, _("Got bad STATUS from %s (%s)"), cl->id, cl->hostname);
+       syslog(LOG_ERR, _("Got bad STATUS from %s (%s)"),
+	      cl->name, cl->hostname);
        return -1;
     }
 
@@ -615,7 +631,7 @@ int send_error(conn_list_t *cl, int errno, char *errstring)
 {
 cp
   if(!errstring)
-    errstring = error_text[errno];
+    errstring = strerror(errno);
   return send_request(cl, "%d %d %s", ERROR, errno, errstring);
 }
 
@@ -634,7 +650,7 @@ cp
   if(debug_lvl > DEBUG_error)
     {
       syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
-	     cl->name, cl->hostname, error_text[errno], errorstring);
+	     cl->name, cl->hostname, strerror(errno), errorstring);
     }
 
   free(errorstring);
@@ -718,7 +734,8 @@ cp
 
   if(!(from = lookup_id(from_id)))
     {
-      syslog(LOG_ERR, _("Got KEY_CHANGED from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
+      syslog(LOG_ERR, _("Got KEY_CHANGED from %s (%s) origin %s which does not exist in our connection list"),
+	     cl->name, cl->hostname, from_id);
       free(from_id);
       return -1;
     }
@@ -736,7 +753,8 @@ cp
 int send_req_key(conn_list_t *from, conn_list_t *to)
 {
 cp
-  return send_request(to->nexthop, "%d %s %s", REQ_KEY, from->id, to->id);
+  return send_request(to->nexthop, "%d %s %s", REQ_KEY,
+		      from->name, to->name);
 }
 
 int req_key_h(conn_list_t *cl)
@@ -746,28 +764,31 @@ int req_key_h(conn_list_t *cl)
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &from_id, &to_id) != 2)
     {
-       syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"), cl->id, cl->hostname);
+       syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"),
+	      cl->name, cl->hostname);
        return -1;
     }  
 
   if(!(from = lookup_id(from_id)))
     {
-      syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
+      syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) origin %s which does not exist in our connection list"),
+	     cl->name, cl->hostname, from_id);
       free(from_id); free(to_id);
       return -1;
     }
 
   /* Check if this key request is for us */
 
-  if(!strcmp(id, myself->strcmp))
+  if(!strcmp(to_id, myself->name))
     {
-      send_ans_key(myself, from, myself->datakey);
+      send_ans_key(myself, from, myself->datakey->key);
     }
   else
     {
       if(!(to = lookup_id(to_id)))
         {
-          syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) destination %s which does not exist in our connection list"), cl->id, cl->hostname, to_id);
+          syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) destination %s which does not exist in our connection list"),
+		 cl->name, cl->hostname, to_id);
           free(from_id); free(to_id);
           return -1;
         }
@@ -782,7 +803,8 @@ cp
 int send_ans_key(conn_list_t *from, conn_list_t *to, char *datakey)
 {
 cp
-  return send_request(to->nexthop, "%d %s %s %s", ANS_KEY, from->id, to->id, datakey);
+  return send_request(to->nexthop, "%d %s %s %s", ANS_KEY,
+		      from->name, to->name, datakey);
 }
 
 int ans_key_h(conn_list_t *cl)
@@ -793,20 +815,22 @@ int ans_key_h(conn_list_t *cl)
 cp
   if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &datakey) != 3)
     {
-       syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"), cl->id, cl->hostname);
+       syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"),
+	      cl->name, cl->hostname);
        return -1;
     }  
 
   if(!(from = lookup_id(from_id)))
     {
-      syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
+      syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"),
+	     cl->name, cl->hostname, from_id);
       free(from_id); free(to_id); free(datakey);
       return -1;
     }
 
   /* Check if this key request is for us */
 
-  if(!strcmp(id, myself->strcmp))
+  if(!strcmp(to_id, myself->name))
     {
       /* It is for us, convert it to binary and set the key with it. */
       
@@ -814,7 +838,8 @@ cp
       
       if((keylength%2) || (keylength <= 0))
         {
-          syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"), cl->id, cl->hostname, from->id);
+          syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
+		 cl->name, cl->hostname, from->name);
           free(from_id); free(to_id); free(datakey);
           return -1;
         }
@@ -826,7 +851,8 @@ cp
     {
       if(!(to = lookup_id(to_id)))
         {
-          syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"), cl->id, cl->hostname, to_id);
+          syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"),
+		 cl->name, cl->hostname, to_id);
           free(from_id); free(to_id); free(datakey);
           return -1;
         }

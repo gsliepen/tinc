@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.29 2000/09/14 21:51:19 zarq Exp $
+    $Id: net.c,v 1.35.4.30 2000/09/15 12:58:39 zarq Exp $
 */
 
 #include "config.h"
@@ -93,11 +93,25 @@ cp
 cp
 }
 
+int str2opt(const char *str) {
+  int r;
+
+  r = 0;
+  return r;
+}
+
+char *opt2str(int opt) {
+  static char s[50];
+
+  snprintf(s, 49, "%d", opt);
+  return &s;
+}
+
 int xsend(conn_list_t *cl, void *packet)
 {
   real_packet_t rp;
 cp
-  do_encrypt((vpn_packet_t*)packet, &rp, cl->key);
+  do_encrypt((vpn_packet_t*)packet, &rp, cl->datakey);
   rp.from = htonl(myself->vpn_ip);
   rp.data.len = htons(rp.data.len);
   rp.len = htons(rp.len);
@@ -128,7 +142,7 @@ int xrecv(conn_list_t *cl, void *packet)
   vpn_packet_t vp;
   int lenin;
 cp
-  do_decrypt((real_packet_t*)packet, &vp, cl->key);
+  do_decrypt((real_packet_t*)packet, &vp, cl->datakey);
   add_mac_addresses(&vp);
 
   if(debug_lvl > 3)

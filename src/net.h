@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.11 2000/09/14 21:51:20 zarq Exp $
+    $Id: net.h,v 1.9.4.12 2000/09/15 12:58:40 zarq Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -133,13 +133,13 @@ typedef struct conn_list_t {
   int meta_socket;                 /* our tcp meta socket */
   int protocol_version;            /* used protocol */
   status_bits_t status;            /* status info */
-  option_bits_t options;           /* options turned on for this connection */
+  int options;           /* options turned on for this connection */
   passphrase_t *pp;                /* encoded passphrase */
   packet_queue_t *sq;              /* pending outgoing packets */
   packet_queue_t *rq;              /* pending incoming packets (they have no
 				      valid key to be decrypted with) */
   enc_key_t *public_key;           /* the other party's public key */
-  enc_key_t *key;                  /* encrypt with this key */
+  enc_key_t *datakey;              /* encrypt data packets with this key */
   char *buffer;       /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int reqlen;                      /* length of first request in buffer */
@@ -164,7 +164,10 @@ extern conn_list_t *conn_list;
 extern conn_list_t *myself;
 
 extern char *request_name[256];
+extern char *status_text[10];
 
+extern int str2opt(const char *);
+extern char *opt2str(int);
 extern int send_packet(ip_t, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
