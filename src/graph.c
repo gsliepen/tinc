@@ -17,17 +17,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.2 2001/10/28 22:42:49 guus Exp $
+    $Id: graph.c,v 1.1.2.3 2001/10/29 13:14:57 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
 
    1. A minimum spanning tree for broadcasts,
    2. A single-source shortest path tree for unicasts.
-   
+
    Actually, the first one alone would suffice but would make unicast packets
    take longer routes than necessary.
-   
+
    For the MST algorithm we can choose from Prim's or Kruskal's. I personally
    favour Kruskal's, because we make an extra AVL tree of edges sorted on
    weights (metric). That tree only has to be updated when an edge is added or
@@ -40,6 +40,7 @@
 
 #include <syslog.h>
 #include "config.h"
+#include <string.h>
 
 #include <avl_tree.h>
 
@@ -50,7 +51,7 @@
 #include "system.h"
 
 /* Implementation of Kruskal's algorithm.
-   Running time: O(E)
+   Running time: O(EN)
    Please note that sorting on weight is already done by add_edge().
 */
 
@@ -62,7 +63,8 @@ void mst_kruskal(void)
   connection_t *c;
   int nodes = 0;
   int safe_edges = 0;
-  
+  int skipped;
+
   syslog(LOG_DEBUG, _("Running Kruskal's algorithm:"));
 
   /* Clear visited status on nodes */
@@ -74,6 +76,10 @@ void mst_kruskal(void)
       nodes++;
     }
 
+  /* Starting point */
+  
+  ((edge_t *)edge_weight_tree->head->data)->from->status.visited = 1;
+
   /* Clear MST status on connections */
 
   for(node = connection_tree->head; node; node = node->next)
@@ -84,25 +90,32 @@ void mst_kruskal(void)
 
   /* Add safe edges */
 
-  for(node = edge_weight_tree->head; node; node = node->next)
+  while(safe_edges < nodes - 1)
+  for(skipped = 0, node = edge_weight_tree->head; node; node = node->next)
     {
 // Algorithm should work without this:
 //      if(safe_edges = nodes - 1)
 //        break;
 
       e = (edge_t *)node->data;
-      
-      if(e->from->status.visited && e->to->status.visited)
-        continue;
+
+      if(e->from->status.visited == e->to->status.visited)
+        {
+          skipped = 1;
+          continue;
+        }
 
       e->from->status.visited = 1;
       e->to->status.visited = 1;
       if(e->connection)
         e->connection->status.mst = 1;
 
-      safe_edges++;      
+      safe_edges++;
 
       syslog(LOG_DEBUG, _("Adding safe edge %s - %s weight %d"), e->from->name, e->to->name, e->weight);
+
+      if(skipped)
+        break;
     }
 
   syslog(LOG_DEBUG, _("Done."));
@@ -125,7 +138,7 @@ void sssp_bfs(void)
   int nodes = 0;
   int visited = 0;
   avl_tree_t *todo_tree;
-  
+
   syslog(LOG_DEBUG, _("Running BFS algorithm:"));
 
   todo_tree = avl_alloc_tree(NULL, NULL);
@@ -157,7 +170,7 @@ void sssp_bfs(void)
         {
           next = from->next;
           n = (node_t *)from->data;
-          
+
           for(to = n->edge_tree->head; to; to = to->next)
             {
               e = (edge_t *)to->data;
@@ -170,10 +183,13 @@ void sssp_bfs(void)
               if(!check->status.visited)
                 {
                   check->status.visited = 1;
-                  check->nexthop = (n->nexthop == myself)?n:n->nexthop;
+                  check->nexthop = (n->nexthop == myself) ? n : n->nexthop;
                   check->via = check; /* FIXME: only if !(e->options & INDIRECT), otherwise use n->via */
-                  avl_insert_before(todo_tree, todo_tree->head, to);
+                  node = avl_alloc_node();
+                  node->data = check;
+                  avl_insert_before(todo_tree, from, node);
                   visited++;
+                  syslog(LOG_DEBUG, _("Node %s nexthop %s via %s"), check->name, check->nexthop->name, check->via->name);
                 }
             }
 
@@ -182,6 +198,8 @@ void sssp_bfs(void)
     }
 
   syslog(LOG_DEBUG, _("Done."));
+
+  avl_free_tree(todo_tree);
 
   if(visited != nodes)
     {
