@@ -349,45 +349,17 @@ Unfortunately somebody still has to write the text.
 @section Libraries
 
 @cindex requirements
-Before you can configure or build tinc, you need to have two libraries
-installed on your system, GMP and OpenSSL.  If you try to configure tinc
-without having installed both, configure will give you an error message,
-and stop.
+Before you can configure or build tinc, you need to have the OpenSSL
+library installed on your system.  If you try to configure tinc without
+having installed it, configure will give you an error message, and stop.
 
 @menu
-* GMP::                         
 * OpenSSL::                     
 @end menu
 
 
 @c ==================================================================
-@node       GMP, OpenSSL, Libraries, Libraries
-@subsection GMP
-
-@cindex GMP
-tinc uses the GNU Multiple Precision (GMP) library to do some
-authentication-related calculations.  tinc cannot run without this
-library.  If you try to configure the tinc source code without this
-library installed, you will get an error message.
-
-Currently, versions 1.x, 2.x, 3.0 and 3.0.1 of this library are
-supported.  You may try to configure if you have another version
-installed, chances are big it works without a problem.
-
-You can use your operating system's package manager to install this if
-available.  Make sure you install the development AND runtime versions
-of this package.
-
-If you can't install GMP this way, you can get the source of this latest
-version of this library from
-@url{http://www.gnu.org/software/gmp/gmp.html}.  Instructions on how to
-configure, build and install this package are included within the
-package.  Please make sure you build development and runtime libraries
-(which is the default).
-
-
-@c ==================================================================
-@node       OpenSSL,  , GMP, Libraries
+@node       OpenSSL,  , Libraries, Libraries
 @subsection OpenSSL
 
 @cindex OpenSSL
@@ -396,10 +368,13 @@ by the OpenSSL library.  We recommend using version 0.9.5 or 0.9.6 of
 this library.  Other versions may also work, but we can guarantee
 nothing.
 
-Disclaimers from the subsection on GMP also apply here; if this library
-is not installed, you wil get an error when running configure.  Support
-for running tinc without having OpenSSL installed @emph{may} be added in
-the future.
+If this library is not installed, you wil get an error when configuring
+tinc for build.  Support for running tinc without having OpenSSL
+installed @emph{may} be added in the future.
+
+You can use your operating system's package manager to install this if
+available.  Make sure you install the development AND runtime versions
+of this package.
 
 If you have to install OpenSSL manually, you can get the source code
 from @url{http://www.openssl.org/}.  Instructions on how to configure,
