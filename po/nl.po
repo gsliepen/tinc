@@ -346,9 +346,8 @@ msgid "Network address and subnet mask do not match!"
 msgstr "Netwerk adres en subnet masker komen niet overeen!"
 
 #: src/net.c:849
-#, fuzzy
 msgid "Invalid routing mode!"
-msgstr "Ongelige naam voor uitgaande verbinding"
+msgstr "Ongelige routing modus!"
 
 #: src/net.c:861
 msgid "Unable to set up a listening TCP socket!"
@@ -540,7 +539,7 @@ msgstr "%s (%s) staat al in onze verbindingslijst"
 #: src/protocol.c:259
 #, c-format
 msgid "%s is listening on %s:%s, which is already in use by %s!"
-msgstr ""
+msgstr "%s luistert op %s:%s, wat al in gebruik is door %s!"
 
 #: src/protocol.c:289
 #, c-format
@@ -817,9 +816,9 @@ msgstr ""
 "starten"
 
 #: src/subnet.c:142
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate subnet %s for %s (%s), previous owner %s (%s)!"
-msgstr "Kreeg een tweede ADD_HOST voor %s (%s) van %s (%s)"
+msgstr "Duplicaat subnet %s voor %s (%s), vorige eigenaar %s (%s)!"
 
 #: src/subnet.c:266
 msgid "unknown subnet type"
@@ -1074,9 +1073,9 @@ msgid "Installing signal handler for signal %d (%s) failed: %m\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %m\n"
 
 #: src/route.c:67
-#, fuzzy, c-format
+#, c-format
 msgid "Learned new MAC address %hhx:%hhx:%hhx:%hhx:%hhx:%hhx"
-msgstr "Nieuw MAC adres %x:%x:%x:%x:%x:%x geleerd van %s (%s)"
+msgstr "Nieuw MAC adres %hhx:%hhx:%hhx:%hhx:%hhx:%hhx geleerd"
 
 #: src/route.c:117
 #, c-format
@@ -1100,6 +1099,3 @@ msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 #, c-format
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"
-
-#~ msgid "Trying to re-establish outgoing connection in 5 seconds"
-#~ msgstr "Poging tot herstellen van uitgaande verbinding over 5 seconden"
