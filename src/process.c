@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.2 2000/11/16 22:12:23 zarq Exp $
+    $Id: process.c,v 1.1.2.3 2000/11/17 00:56:49 guus Exp $
 */
 
 #include "config.h"
@@ -137,45 +137,11 @@ int detach(void)
 
   setup_signals();
 
-  if(do_detach)
-    {
-      ppid = getpid();
-
-      if((pid = fork()) < 0)
-	{
-	  perror("fork");
-	  return -1;
-	}
-      if(pid) /* parent process */
-	{
-	  signal(SIGTERM, parent_exit);
-	  sleep(600); /* wait 10 minutes */
-	  exit(1);
-	}
-    }
-  
   if(write_pidfile())
     return -1;
 
   if(do_detach)
-    {
-      if((fd = open("/dev/tty", O_RDWR)) >= 0)
-	{
-	  if(ioctl(fd, TIOCNOTTY, NULL))
-	    {
-	      perror("ioctl");
-	      return -1;
-	    }
-	  close(fd);
-	}
-
-      if(setsid() < 0)
-	return -1;
-
-      kill(ppid, SIGTERM);
-    }
-  
-  chdir("/"); /* avoid keeping a mointpoint busy */
+    daemon(FALSE, FALSE);
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
