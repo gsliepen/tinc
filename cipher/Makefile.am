@@ -12,4 +12,4 @@ libcipher_la_LDFLAGS =
 
 noinst_HEADERS = cipher.h
 
-CFLAGS += -DPKGLIBDIR="\"$(pkglibdir)/\""
+CFLAGS = @CFLAGS@ -DPKGLIBDIR="\"$(pkglibdir)/\""

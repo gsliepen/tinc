@@ -16,4 +16,4 @@ tincd_LDADD = $(top_builddir)/cipher/libcipher.la \
 
 genauth_LDADD = $(top_builddir)/lib/libvpn.a
 
-CFLAGS += -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"@sysconfdir@\"
+CFLAGS = @CFLAGS@ -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"@sysconfdir@\"
