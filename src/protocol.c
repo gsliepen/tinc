@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.50 2000/10/29 09:19:25 guus Exp $
+    $Id: protocol.c,v 1.28.4.51 2000/10/29 10:39:08 guus Exp $
 */
 
 #include "config.h"
@@ -38,6 +38,7 @@
 
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
 
 #include "conf.h"
 #include "net.h"
@@ -470,6 +471,7 @@ cp
   cl->allow_request = ALL;
   cl->status.active = 1;
   cl->nexthop = cl;
+  cl->cipher_pkttype = EVP_bf_cbc();
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
@@ -992,6 +994,7 @@ int req_key_h(conn_list_t *cl)
 {
   char *from_id, *to_id;
   conn_list_t *from, *to;
+  char pktkey[129];
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &from_id, &to_id) != 2)
     {
@@ -1012,7 +1015,9 @@ cp
 
   if(!strcmp(to_id, myself->name))
     {
-      send_ans_key(myself, from, myself->cipher_pktkey);
+      bin2hex(myself->cipher_pktkey, pktkey, 64);
+      pktkey[128] = 0;
+      send_ans_key(myself, from, pktkey);
     }
   else
     {
@@ -1059,46 +1064,42 @@ cp
       return -1;
     }
 
-  /* Check if this key request is for us */
+  /* Update origin's packet key */
 
-  if(!strcmp(to_id, myself->name))
+  keylength = strlen(pktkey);
+
+  if((keylength%2)!=0 || (keylength <= 0))
     {
-      /* It is for us, convert it to binary and set the key with it. */
-
-      keylength = strlen(pktkey);
-
-      if((keylength%2)!=0 || (keylength <= 0))
-        {
-          syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
-                 cl->name, cl->hostname, from->name);
-          free(from_id); free(to_id); free(pktkey);
-          return -1;
-        }
-
-      if(from->cipher_pktkey)
-        free(from->cipher_pktkey);
-
-      keylength /= 2;
-      hex2bin(pktkey, pktkey, keylength);
-      pktkey[keylength] = '\0';
-      from->cipher_pktkey = pktkey;
-
-      from->status.validkey = 1;
-      from->status.waitingforkey = 0;
+      syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
+             cl->name, cl->hostname, from->name);
+      free(from_id); free(to_id); free(pktkey);
+      return -1;
     }
-  else
+
+  if(from->cipher_pktkey)
+    free(from->cipher_pktkey);
+
+  keylength /= 2;
+  hex2bin(pktkey, pktkey, keylength);
+  pktkey[keylength] = '\0';
+  from->cipher_pktkey = pktkey;
+
+  from->status.validkey = 1;
+  from->status.waitingforkey = 0;
+    
+  if(strcmp(to_id, myself->name))
     {
       if(!(to = lookup_id(to_id)))
         {
           syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"),
                  cl->name, cl->hostname, to_id);
-          free(from_id); free(to_id); free(pktkey);
+          free(from_id); free(to_id);
           return -1;
         }
       send_ans_key(from, to, pktkey);
     }
 
-  free(from_id); free(to_id); free(pktkey);
+  free(from_id); free(to_id);
 cp
   return 0;
 }

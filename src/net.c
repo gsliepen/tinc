@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.53 2000/10/29 09:19:24 guus Exp $
+    $Id: net.c,v 1.35.4.54 2000/10/29 10:39:06 guus Exp $
 */
 
 #include "config.h"
@@ -39,6 +39,9 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
 #ifdef HAVE_TUNTAP
 #include LINUX_IF_TUN_H
@@ -66,6 +69,9 @@ int total_socket_out = 0;
 
 config_t *upstreamcfg;
 static int seconds_till_retry;
+
+int keylifetime = 0;
+int keyexpires = 0;
 
 char *unknown = NULL;
 
@@ -101,19 +107,20 @@ int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
+  EVP_CIPHER_CTX ctx;
 cp
   outpkt.len = inpkt->len;
-/*
-  EVP_EncryptInit(cl->cipher_pktctx, cl->cipher_pkttype, cl->cipher_pktkey, NULL);
-  EVP_EncryptUpdate(cl->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
-  EVP_EncryptFinal(cl->cipher_pktctx, outpkt.data + outlen, &outpad);
+  
+  EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey);
+  EVP_EncryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
+  EVP_EncryptFinal(&ctx, outpkt.data + outlen, &outpad);
   outlen += outpad + 2;
 
-  Do encryption when everything else is fixed...
-*/
+/* Bypass
   outlen = outpkt.len + 2;
   memcpy(&outpkt, inpkt, outlen);
-  
+*/  
+
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
            outlen, cl->name, cl->hostname);
@@ -136,18 +143,18 @@ int xrecv(vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
+  EVP_CIPHER_CTX ctx;
 cp
   outpkt.len = inpkt->len;
-/*
-  EVP_DecryptInit(myself->cipher_pktctx, myself->cipher_pkttype, myself->cipher_pktkey, NULL);
-  EVP_DecryptUpdate(myself->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
-  EVP_DecryptFinal(myself->cipher_pktctx, outpkt.data + outlen, &outpad);
+  EVP_DecryptInit(&ctx, myself->cipher_pkttype, myself->cipher_pktkey, NULL);
+  EVP_DecryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
+  EVP_DecryptFinal(&ctx, outpkt.data + outlen, &outpad);
   outlen += outpad;
 
-  Do decryption is everything else is fixed...
-*/
+/* Bypass
   outlen = outpkt.len+2;
   memcpy(&outpkt, inpkt, outlen);
+*/
      
   /* Fix mac address */
 
@@ -329,7 +336,7 @@ cp
       
   if(!cl->status.validkey)
     {
-/* Don't queue until everything else is fixed.
+/* FIXME: Don't queue until everything else is fixed.
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
 	       cl->name, cl->hostname);
@@ -342,7 +349,7 @@ cp
 
   if(!cl->status.active)
     {
-/* Don't queue until everything else is fixed.
+/* FIXME: Don't queue until everything else is fixed.
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"),
 	       cl->name, cl->hostname);
@@ -761,6 +768,22 @@ cp
       return -1;
     }
 
+  /* Generate packet encryption key */
+
+  myself->cipher_pkttype = EVP_bf_cbc();
+
+  myself->cipher_pktkey = (char *)xmalloc(64);
+  RAND_bytes(myself->cipher_pktkey, 64);
+
+  if(!(cfg = get_config_val(config, keyexpire)))
+    keylifetime = 3600;
+  else
+    keylifetime = cfg->data.val;
+    
+  keyexpires = time(NULL) + keylifetime;
+
+  /* Activate ourselves */
+  
   myself->status.active = 1;
 
   syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
@@ -1281,6 +1304,7 @@ void main_loop(void)
   struct timeval tv;
   int r;
   time_t last_ping_check;
+  int t;
 cp
   last_ping_check = time(NULL);
 
@@ -1322,11 +1346,26 @@ cp
           continue;
         }
 
-      if(last_ping_check + timeout < time(NULL))
-	/* Let's check if everybody is still alive */
+      t = time(NULL);
+
+      /* Let's check if everybody is still alive */
+
+      if(last_ping_check + timeout < t)
 	{
 	  check_dead_connections();
           last_ping_check = time(NULL);
+
+          /* Should we regenerate our key? */
+
+          if(keyexpires < t)
+            {
+              if(debug_lvl >= DEBUG_STATUS)
+                syslog(LOG_INFO, _("Regenerating symmetric key"));
+                
+              RAND_bytes(myself->cipher_pktkey, 64);
+              send_key_changed(myself, NULL);
+              keyexpires = time(NULL) + keylifetime;
+            }
 	}
 
       if(r > 0)
