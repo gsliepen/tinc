@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.3 2001/10/29 13:14:57 guus Exp $
+    $Id: graph.c,v 1.1.2.4 2001/10/30 12:59:12 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -32,7 +32,9 @@
    favour Kruskal's, because we make an extra AVL tree of edges sorted on
    weights (metric). That tree only has to be updated when an edge is added or
    removed, and during the MST algorithm we just have go linearly through that
-   tree, adding safe edges until #edges = #nodes - 1.
+   tree, adding safe edges until #edges = #nodes - 1. The implementation here
+   however is not so fast, because I tried to avoid having to make a forest and
+   merge trees.
 
    For the SSSP algorithm Dijkstra's seems to be a nice choice. Currently a
    simple breadth-first search is presented here.
@@ -65,8 +67,6 @@ void mst_kruskal(void)
   int safe_edges = 0;
   int skipped;
 
-  syslog(LOG_DEBUG, _("Running Kruskal's algorithm:"));
-
   /* Clear visited status on nodes */
 
   for(node = node_tree->head; node; node = node->next)
@@ -93,10 +93,6 @@ void mst_kruskal(void)
   while(safe_edges < nodes - 1)
   for(skipped = 0, node = edge_weight_tree->head; node; node = node->next)
     {
-// Algorithm should work without this:
-//      if(safe_edges = nodes - 1)
-//        break;
-
       e = (edge_t *)node->data;
 
       if(e->from->status.visited == e->to->status.visited)
@@ -112,17 +108,8 @@ void mst_kruskal(void)
 
       safe_edges++;
 
-      syslog(LOG_DEBUG, _("Adding safe edge %s - %s weight %d"), e->from->name, e->to->name, e->weight);
-
       if(skipped)
         break;
-    }
-
-  syslog(LOG_DEBUG, _("Done."));
-
-  if(safe_edges != nodes - 1)
-    {
-      syslog(LOG_ERR, _("Implementation of Kruskal's algorithm is screwed: %d nodes, found %d safe edges"), nodes, safe_edges);
     }
 }
 
@@ -135,11 +122,7 @@ void sssp_bfs(void)
   avl_node_t *node, *from, *next, *to;
   edge_t *e;
   node_t *n, *check;
-  int nodes = 0;
-  int visited = 0;
   avl_tree_t *todo_tree;
-
-  syslog(LOG_DEBUG, _("Running BFS algorithm:"));
 
   todo_tree = avl_alloc_tree(NULL, NULL);
 
@@ -149,7 +132,6 @@ void sssp_bfs(void)
     {
       n = (node_t *)node->data;
       n->status.visited = 0;
-      nodes++;
     }
 
   /* Begin with myself */
@@ -160,7 +142,6 @@ void sssp_bfs(void)
   node = avl_alloc_node();
   node->data = myself;
   avl_insert_top(todo_tree, node);
-  visited++;
 
   /* Loop while todo_tree is filled */
 
@@ -183,13 +164,11 @@ void sssp_bfs(void)
               if(!check->status.visited)
                 {
                   check->status.visited = 1;
-                  check->nexthop = (n->nexthop == myself) ? n : n->nexthop;
+                  check->nexthop = (n->nexthop == myself) ? check : n->nexthop;
                   check->via = check; /* FIXME: only if !(e->options & INDIRECT), otherwise use n->via */
                   node = avl_alloc_node();
                   node->data = check;
                   avl_insert_before(todo_tree, from, node);
-                  visited++;
-                  syslog(LOG_DEBUG, _("Node %s nexthop %s via %s"), check->name, check->nexthop->name, check->via->name);
                 }
             }
 
@@ -197,12 +176,5 @@ void sssp_bfs(void)
         }
     }
 
-  syslog(LOG_DEBUG, _("Done."));
-
   avl_free_tree(todo_tree);
-
-  if(visited != nodes)
-    {
-      syslog(LOG_ERR, _("Implementation of BFS algorithm is screwed: %d nodes, visited %d"), nodes, visited);
-    }
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.3 2001/10/28 22:42:49 guus Exp $
+    $Id: edge.c,v 1.1.2.4 2001/10/30 12:59:12 guus Exp $
 */
 
 #include "config.h"
@@ -111,7 +111,7 @@ cp
 avl_tree_t *new_edge_tree(void)
 {
 cp
-  edge_tree = avl_alloc_tree((avl_compare_t)edge_name_compare, NULL);
+  return avl_alloc_tree((avl_compare_t)edge_name_compare, NULL);
 cp
 }
 
@@ -195,8 +195,8 @@ cp
   for(node = edge_tree->head; node; node = node->next)
     {
       e = (edge_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s - %s options %ld"),
-             e->from->name, e->to->name, e->options);
+      syslog(LOG_DEBUG, _(" %s - %s options %ld weight %d"),
+             e->from->name, e->to->name, e->options, e->weight);
     }
     
   syslog(LOG_DEBUG, _("End of edges."));

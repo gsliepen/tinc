@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.27 2001/10/28 22:42:49 guus Exp $
+    $Id: subnet.c,v 1.1.2.28 2001/10/30 12:59:12 guus Exp $
 */
 
 #include "config.h"
@@ -44,14 +44,8 @@ avl_tree_t *subnet_tree;
 
 int subnet_compare_mac(subnet_t *a, subnet_t *b)
 {
-  int result;
 cp
-  result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
-  
-  if(result)
-    return result;
-
-  return strcmp(a->owner->name, b->owner->name);
+  return memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
 }
 
 int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
@@ -69,7 +63,7 @@ cp
   else if(a->net.ipv4.mask > b->net.ipv4.mask)
     return 1;
 
-  return strcmp(a->owner->name, b->owner->name);
+  return 0;
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
@@ -88,7 +82,7 @@ cp
   if(result)
     return result;
 
-  return strcmp(a->owner->name, b->owner->name);
+  return 0;
 }
 
 int subnet_compare(subnet_t *a, subnet_t *b)
@@ -158,7 +152,7 @@ cp
   free(subnet);
 }
 
-/* Linked list management */
+/* Adding and removing subnets */
 
 void subnet_add(node_t *n, subnet_t *subnet)
 {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.4 2001/10/28 22:42:49 guus Exp $
+    $Id: node.c,v 1.1.2.5 2001/10/30 12:59:12 guus Exp $
 */
 
 #include "config.h"
@@ -43,7 +43,7 @@ int node_compare(node_t *a, node_t *b)
   return strcmp(a->name, b->name);
 }
 
-int node_udp_compare(connection_t *a, connection_t *b)
+int node_udp_compare(node_t *a, node_t *b)
 {
   if(a->address < b->address)
     return -1;
@@ -142,9 +142,9 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld status %04x"),
+      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld status %04x nexthop %s via %s"),
              n->name, n->hostname, n->port, n->options,
-             n->status);
+             n->status, n->nexthop->name, n->via->name);
     }
     
   syslog(LOG_DEBUG, _("End of nodes."));

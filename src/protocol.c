@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.112 2001/10/28 22:42:49 guus Exp $
+    $Id: protocol.c,v 1.28.4.113 2001/10/30 12:59:12 guus Exp $
 */
 
 #include "config.h"
@@ -56,6 +56,7 @@
 #include "connection.h"
 #include "node.h"
 #include "edge.h"
+#include "graph.h"
 
 #include "system.h"
 
@@ -543,6 +544,8 @@ int ack_h(connection_t *c)
   int weight;
   node_t *n;
   subnet_t *s;
+  edge_t *e;
+  connection_t *other;
   avl_node_t *node, *node2;
 cp
   if(sscanf(c->buffer, "%*d %hd %d", &port, &weight) != 2)
@@ -559,6 +562,7 @@ cp
     {
       n = new_node();
       n->name = xstrdup(c->name);
+      n->address = c->address;
       n->hostname = xstrdup(c->hostname);
       n->port = port;
 
@@ -617,6 +621,8 @@ cp
 
   c->allow_request = ALL;
   c->status.active = 1;
+  c->node->cipher = EVP_bf_cbc();
+  c->node->keylength = c->node->cipher->key_len + c->node->cipher->iv_len;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name, c->hostname);
@@ -639,13 +645,6 @@ cp
       if(n == c->node || n == myself)
         continue;
 
-      /* Notify others of this connection */
-
-      if(n->connection)
-        send_add_node(n->connection, c->node);
-
-      /* Notify new connection of everything we know */
-
       send_add_node(c, n);
 
       for(node2 = c->node->subnet_tree->head; node2; node2 = node2->next)
@@ -654,6 +653,36 @@ cp
           send_add_subnet(c, s);
         }
     }
+
+  /* Send all known edges */
+
+  for(node = edge_tree->head; node; node = node->next)
+    {
+      e = (edge_t *)node->data;
+
+      if(e == c->edge)
+        continue;
+
+      send_add_edge(c, e);
+    }
+
+  /* Notify others of this connection */
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      other = (connection_t *)node->data;
+
+      if(other == c)
+        continue;
+      
+      send_add_node(other, c->node);
+      send_add_edge(other, c->edge);
+    }
+
+  /* Run MST and SSSP algorithms */
+  
+  mst_kruskal();
+  sssp_bfs();
 cp
   return 0;
 }
@@ -947,8 +976,8 @@ cp
 int send_add_edge(connection_t *c, edge_t *e)
 {
 cp
-  return send_request(c, "%d %s %s %lx", ADD_NODE,
-                      e->from->name, e->to->name, e->options);
+  return send_request(c, "%d %s %s %lx %d", ADD_NODE,
+                      e->from->name, e->to->name, e->options, e->weight);
 }
 
 int add_edge_h(connection_t *c)
@@ -959,9 +988,10 @@ int add_edge_h(connection_t *c)
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   long int options;
+  int weight;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx", from_name, to_name, &options) != 3)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx %d", from_name, to_name, &options, &weight) != 4)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name, c->hostname);
        return -1;
@@ -1013,6 +1043,7 @@ cp
       e->from = from;
       e->to = to;
       e->options = options;
+      e->weight = weight;
       edge_add(e);
     }
 
@@ -1025,6 +1056,10 @@ cp
         send_add_edge(other, e);
     }
 
+  /* Run MST before or after we tell the rest? */
+
+  mst_kruskal();
+  sssp_bfs();
 cp
   return 0;
 }
@@ -1111,6 +1146,11 @@ cp
   /* Delete the edge */
   
   edge_del(e);
+
+  /* Run MST before or after we tell the rest? */
+
+  mst_kruskal();
+  sssp_bfs();
 cp
   return 0;
 }

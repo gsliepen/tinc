@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.141 2001/10/28 10:16:18 guus Exp $
+    $Id: net.c,v 1.35.4.142 2001/10/30 12:59:12 guus Exp $
 */
 
 #include "config.h"
@@ -192,32 +192,17 @@ cp
       return;
     }
 
-  if(!n->status.active)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_INFO, _("%s (%s) is not active, dropping packet"),
-	       n->name, n->hostname);
-
-      return;
-    }
-/* FIXME
-  if(n->via == myself)
-    via = n->nexthop;
-  else
-    via = n->via;
-
-  if(via != n && debug_lvl >= DEBUG_TRAFFIC)
+  if(n->via != n && debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),
-           n->name, via->name, via->hostname);
+           n->name, n->via->name, n->via->hostname);
 
-  if((myself->options | via->options) & OPTION_TCPONLY)
+  if((myself->options | n->via->options) & OPTION_TCPONLY)
     {
-      if(send_tcppacket(via->connection, packet))
-        terminate_connection(via->connection, 1);
+      if(send_tcppacket(n->via->connection, packet))
+        terminate_connection(n->via->connection, 1);
     }
   else
-    send_udppacket(via, packet);
-*/
+    send_udppacket(n->via, packet);
 }
 
 /* Broadcast a packet to all active direct connections */
@@ -922,7 +907,7 @@ cp
 
   if(!n)
     {
-      syslog(LOG_WARNING, _("Received UDP packets on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+      syslog(LOG_WARNING, _("Received UDP packet on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return;
     }
 /*
@@ -1061,7 +1046,7 @@ cp
       get_config_string(cfg, &name);
       cfg = lookup_config_next(config_tree, cfg);  /* Next time skip to next ConnectTo line */
 
-      if(!setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
+      if(setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
         retry = 1;
 
     }
