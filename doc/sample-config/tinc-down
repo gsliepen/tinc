@@ -4,4 +4,4 @@
 # need to do anything; once tinc quits the tap device is already
 # removed by the kernel.
 
-ifconfig tap0 down
+ifconfig tap1 down

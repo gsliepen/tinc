@@ -6,9 +6,9 @@
 # but for the universal tun/tap device use $NETNAME.
 
 # Set hardware ethernet address (required!)
-ifconfig tap0 hw ether fe:fd:0:0:0:0
+ifconfig tap1 hw ether fe:fd:0:0:0:0
 
 # Give it the right ip and netmask. Remember, the subnet of the
 # tap device must be larger than that of the individual Subnets
 # as defined in the host configuration file!
-ifconfig tap0 192.168.1.1 netmask 255.255.0.0 -arp
+ifconfig tap1 192.168.1.1 netmask 255.255.0.0 -arp
