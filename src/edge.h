@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.3 2001/10/28 22:42:49 guus Exp $
+    $Id: edge.h,v 1.1.2.4 2001/11/16 12:13:34 zarq Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -33,8 +33,7 @@
 typedef struct halfconnection_t {
   struct node_t *node;             /* node associated with this end of the connection */
 
-  ipv4_t address;                  /* real (internet) ip on this end of the meta connection */
-  short unsigned int port;         /* port number of this end of the meta connection */
+  struct addrinfo *address;        /* real (internet) ip on this end of the meta connection */
   char *hostname;                  /* the hostname of real ip */
 } halfconnection_t;
 
