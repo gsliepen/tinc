@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.46 2001/10/27 15:19:13 guus Exp $
+    $Id: conf.c,v 1.9.4.47 2001/10/31 20:07:17 guus Exp $
 */
 
 #include "config.h"
@@ -174,7 +174,7 @@ cp
     }
 
   syslog(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
-         cfg->value, cfg->file, cfg->line);
+         cfg->variable, cfg->file, cfg->line);
 
   return 0;
 }
@@ -189,7 +189,7 @@ cp
     return 1;
     
   syslog(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
-         cfg->value, cfg->file, cfg->line);
+         cfg->variable, cfg->file, cfg->line);
   return 0;
 }
 
@@ -219,7 +219,7 @@ cp
     }
 
   syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
-         cfg->value, cfg->file, cfg->line);
+         cfg->variable, cfg->file, cfg->line);
   return 0;
 }
 
@@ -233,7 +233,7 @@ cp
     return 1;
     
   syslog(LOG_ERR, _("Port number expected for configuration variable %s in %s line %d"),
-         cfg->value, cfg->file, cfg->line);
+         cfg->variable, cfg->file, cfg->line);
   return 0;
 }
 
@@ -250,7 +250,7 @@ cp
   if(!ip)
     {
       syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
-             cfg->value, cfg->file, cfg->line);
+             cfg->variable, cfg->file, cfg->line);
       return 0;
     }
   
@@ -259,7 +259,7 @@ cp
   if((ip->address & ip->mask) != ip->address)
     {
       syslog(LOG_ERR, _("Network address and subnet mask for configuration variable %s in %s line %d"),
-             cfg->value, cfg->file, cfg->line);
+             cfg->variable, cfg->file, cfg->line);
       free(ip);
       return 0;
     }
