@@ -4,7 +4,10 @@
 
 DIE=0
 
-alias make=${MAKE:-`which gmake || which make`}
+if ${MAKE:-gmake} -q -C . autogen.sh 2> /dev/null
+then
+  alias make=${MAKE:-gmake}
+fi
 
 srcdir="`/bin/pwd`"
 

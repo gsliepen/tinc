@@ -17,7 +17,7 @@ ChangeLog:
 	cvs2cl -U cvsusers --fsf
 
 cvs-clean: maintainer-clean
-	for f in $(CVS_CREATED) `find -name Makefile.in` tinc-$(VERSION).tar.gz; do\
+	for f in $(CVS_CREATED) `find . -name Makefile.in` tinc-$(VERSION).tar.gz; do\
 	  rm -Rf "$$f"; \
 	done
 
