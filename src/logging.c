@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.c,v 1.1 2002/04/13 10:25:38 zarq Exp $
+    $Id: logging.c,v 1.2 2002/04/13 10:28:56 zarq Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,7 @@ int log_compare(const void *a, const void *b)
   return 0;
 }
 
-void log_message(int level, int priority, char *fmt, ...)
+void log(int level, int priority, char *fmt, ...)
 {
   avl_node_t *avlnode;
   va_list args;
