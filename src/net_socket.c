@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.33 2003/07/29 22:59:00 guus Exp $
+    $Id: net_socket.c,v 1.1.2.34 2003/10/06 14:41:45 guus Exp $
 */
 
 #include "system.h"
@@ -62,7 +62,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 	nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(nfd < 0) {
-		logger(LOG_ERR, _("Creating metasocket failed: %s"), strerror(errno));
+		ifdebug(STATUS) logger(LOG_ERR, _("Creating metasocket failed: %s"), strerror(errno));
 		return -1;
 	}
 
