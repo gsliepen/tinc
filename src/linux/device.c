@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.5 2002/02/10 21:57:54 guus Exp $
+    $Id: device.c,v 1.1.2.6 2002/02/11 12:33:01 guus Exp $
 */
 
 #include "config.h"
@@ -77,7 +77,11 @@ cp
     device = DEFAULT_DEVICE;
 
   if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
+#ifdef HAVE_TUNTAP
     interface = netname;
+#else
+    interface = rindex(device, '/')?rindex(device, '/')+1:device;
+#endif
 cp
   if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
     {
