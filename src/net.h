@@ -115,6 +115,8 @@ typedef struct conn_list_t {
   char buffer[MAXBUFSIZE+1];       /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int reqlen;                      /* length of first request in buffer */
+  time_t last_ping_time;           /* last time we saw some activity from the other end */  
+  int want_ping;                   /* 0 if there's no need to check for activity */
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
   struct conn_list_t *next;        /* after all, it's a list of connections */
 } conn_list_t;

@@ -51,8 +51,6 @@ int total_tap_out = 0;
 int total_socket_in = 0;
 int total_socket_out = 0;
 
-time_t last_ping_time = 0;
-
 /* The global list of existing connections */
 conn_list_t *conn_list = NULL;
 conn_list_t *myself = NULL;
@@ -107,6 +105,8 @@ cp
     }
 
   total_socket_out += r;
+
+  cl->want_ping = 1;
 cp
   return 0;
 }
@@ -123,6 +123,9 @@ cp
     syslog(LOG_ERR, "Can't write to tap device: %m");
   else
     total_tap_out += lenin;
+
+  cl->want_ping = 0;
+  cl->last_ping_time = time(NULL);
 cp
   return 0;
 }
@@ -546,7 +549,7 @@ int setup_network_connections(void)
   config_t const *cfg;
 cp
   if((cfg = get_config_val(pingtimeout)) == NULL)
-    timeout = 10;
+    timeout = 5;
   else
     timeout = cfg->data.val;
 
@@ -692,6 +695,8 @@ cp
   p->meta_socket = sfd;
   p->status.meta = 1;
   p->buflen = 0;
+  p->last_ping_time = time(NULL);
+  p->want_ping = 0;
   
   syslog(LOG_NOTICE, "Connection from %s:%d", p->hostname, htons(ci.sin_port));
 
@@ -826,52 +831,41 @@ cp
 }
 
 /*
-  send out a ping request to all active
-  connections
+  Check if the other end is active.
+  If we have sent packets, but didn't receive any,
+  then possibly the other end is dead. We send a
+  PING request over the meta connection. If the other
+  end does not reply in time, we consider them dead
+  and close the connection.
 */
-int send_broadcast_ping(void)
+int check_dead_connections(void)
 {
   conn_list_t *p;
+  time_t now;
 cp
+  now = time(NULL);
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(p->status.remove)
 	continue;
       if(p->status.active && p->status.meta)
 	{
-	  if(send_ping(p))
-	    terminate_connection(p);
-	  else
-	    {
-	      p->status.pinged = 1;
-	      p->status.got_pong = 0;
-	    }
-	}
-    }
-
-  last_ping_time = time(NULL);
-cp
-  return 0;
-}
-
-/*
-  end all connections that did not respond
-  to the ping probe in time
-*/
-int check_dead_connections(void)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    {
-      if(p->status.remove)
-	continue;
-      if(p->status.active && p->status.meta && p->status.pinged && !p->status.got_pong)
-	{
-	  syslog(LOG_INFO, "%s (" IP_ADDR_S ") didn't respond to ping",
-		 p->hostname, IP_ADDR_V(p->vpn_ip));
-	  p->status.timeout = 1;
-	  terminate_connection(p);
+          if(p->last_ping_time + timeout < now)
+            if(p->status.pinged && !p->status.got_pong)
+              {
+	        syslog(LOG_INFO, "%s (" IP_ADDR_S ") didn't respond to ping",
+		       p->hostname, IP_ADDR_V(p->vpn_ip));
+	        p->status.timeout = 1;
+	        terminate_connection(p);
+              }
+            else if(p->want_ping)
+              {
+                send_ping(p);
+                p->last_ping_time = now;
+                p->status.pinged = 1;
+                p->status.get_pong = 0;
+              }
+          }
 	}
     }
 cp
@@ -989,6 +983,9 @@ cp
           break;
         }
     }
+
+  cl->last_ping_time = time(NULL);
+  cl->want_ping = 0;
 cp  
   return 0;
 }
@@ -1100,8 +1097,9 @@ void main_loop(void)
   fd_set fset;
   struct timeval tv;
   int r;
+  time_t last_ping_check;
 cp
-  last_ping_time = time(NULL);
+  last_ping_check = time(NULL);
 
   for(;;)
     {
@@ -1119,11 +1117,11 @@ cp
           return;
         }
 
-      if(r == 0 || last_ping_time + timeout < time(NULL))
-	/* Timeout... hm... something might be wrong. */
+      if(last_ping_check + timeout < time(NULL))
+	/* Let's check if everybody is still alive */
 	{
 	  check_dead_connections();
-	  send_broadcast_ping();
+          last_ping_check = time(NULL);
 	  continue;
 	}
 
