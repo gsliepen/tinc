@@ -1,9 +1,5 @@
-Things left to do to make cabal superstable:
---------------------------------------------
- * Check for connection loops. Inter-daemon
-   connections should always satisfy the
-   tree property.
- * Redundancy: multiple ConnectTo lines, if
-   one fails others might be tried.
- * Allow connects to hosts that use
-   nodirectdata.
+TODO LIST
+
+1.0:
+
+* A nice, secure and stable release

@@ -4,7 +4,12 @@
 
 DIE=0
 
-srcdir="`pwd`"
+if ${MAKE:-gmake} -q -C . autogen.sh 2> /dev/null
+then
+  alias make=${MAKE:-gmake}
+fi
+
+srcdir="`/bin/pwd`"
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
   echo

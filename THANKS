@@ -1,4 +1,4 @@
-I would like to thank
+We would like to thank
 
  * Hans Bayle (for making some useful coding suggestions and fixing a
    bug or two)
@@ -14,7 +14,12 @@ I would like to thank
  * Cris van Pelt (small fixes)
  * Enrique Zanardi (for the Spanish translation)
  * Matias Carrasco (for the Spanish translation of the manual)
+ * Jamie Briggs (for finding a lot of socket leaks)
+ * Armijn Hemel (for being our very own PR manager)
+ * Jerome Etienne (for a thorough security analysis of tinc)
+ * Mark Glines (for his compression patch) 
 
 for their help, support and ideas.  Thank you guys!
 
-And especially Guus Sliepen, for starting this whole project...
+Ivo Timmermans
+Guus Sliepen

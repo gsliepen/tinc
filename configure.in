@@ -1,9 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.16 2000/10/19 20:39:04 zarq Exp $
+dnl $Id: configure.in,v 1.17 2002/04/09 15:28:45 zarq Exp $
 
 AC_INIT(src/tincd.c)
-AM_INIT_AUTOMAKE(tinc, 1.0pre3)
+AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
 AM_CONFIG_HEADER(config.h)
 
 dnl Include the macros from the m4/ directory
@@ -14,7 +14,7 @@ AM_ACLOCAL_INCLUDE(m4)
 # in the latter don't make it into the configure-time tests.
 AC_DEFINE([_GNU_SOURCE], [__USE_BSD])
 
-ALL_LINGUAS="es nl"
+ALL_LINGUAS="nl"
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -25,15 +25,45 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 jm_PERL
-AM_PROG_LIBTOOL
+
 
 AC_ISC_POSIX
+
+dnl Check and set OS
+
+AC_CANONICAL_HOST
+
+case $host_os in
+  *linux*)
+    AC_DEFINE(HAVE_LINUX)
+    [ rm -f src/device.c; ln -sf linux/device.c src/device.c ]
+  ;;
+  *freebsd*)
+    AC_DEFINE(HAVE_FREEBSD)
+    [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
+  ;;
+  *solaris*)
+    AC_DEFINE(HAVE_SOLARIS)
+    [ rm -f src/device.c; ln -sf solaris/device.c src/device.c ]
+  ;;
+  *openbsd*)
+    AC_DEFINE(HAVE_OPENBSD)
+    [ rm -f src/device.c; ln -sf openbsd/device.c src/device.c ]
+  ;;
+  *netbsd*)
+    AC_DEFINE(HAVE_NETBSD)
+    [ rm -f src/device.c; ln -sf netbsd/device.c src/device.c ]
+  ;;
+esac
+
+AC_CACHE_SAVE
 
 dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h sys/ioctl.h syslog.h unistd.h sys/time.h linux/if_tun.h)
+AC_CHECK_HEADERS([fcntl.h limits.h sys/ioctl.h syslog.h unistd.h \
+sys/time.h malloc.h strings.h sys/file.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -46,11 +76,13 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(ftime socket select strtol strerror)
+AC_CHECK_FUNCS([ftime socket select strtol strerror flock unsetenv \
+asprintf putenv strdup fcloseall daemon strsignal get_current_dir_name])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
 AM_GNU_GETTEXT
+
 
 dnl Support for SunOS
 
@@ -61,39 +93,33 @@ AC_CHECK_FUNC(gethostbyname, [], [
   AC_CHECK_LIB(nsl, gethostbyname)
 ])
 
+AC_CACHE_SAVE
 
-dnl From the autoconf manual
-AC_CHECK_FUNCS(syslog)
-if test $ac_cv_func_syslog = no; then
-  # syslog is not in the default libraries.  See if it's in some other.
-  for lib in bsd socket inet; do
-    AC_CHECK_LIB($lib, syslog, [AC_DEFINE(HAVE_SYSLOG)
-      LIBS="$LIBS $lib"; break])
-  done
-fi
-
-AC_CHECK_LIB(dl, dlopen, [
-  LIBS="$LIBS -ldl"
-])
-
-
-dnl Crypto stuff
-
-libcrypto=none
-AC_CHECK_LIB(crypto, SHA1_version, [
-  libcrypto=yes
-])
-
-if test $libcrypto = none; then
-  AC_MSG_ERROR(It seems like OpenSSL is not installed on this system.)
-else
-  LIBS="$LIBS -lcrypto"
-fi
-
-
-dnl Check for TUN/TAP support in the kernel
+dnl These are defined in files in m4/
 tinc_TUNTAP
+tinc_OPENSSL
+tinc_ZLIB
 
-AC_OUTPUT([Makefile src/Makefile
-doc/Makefile doc/es/Makefile intl/Makefile lib/Makefile
-m4/Makefile po/Makefile.in redhat/Makefile debian/Makefile])
+dnl Check if support for jumbograms is requested 
+AC_ARG_ENABLE(jumbograms,
+  [  --enable-jumbograms     enable support for jumbograms (packets up to 9000 bytes)],
+  [ AC_DEFINE(ENABLE_JUMBOGRAMS) ]
+)
+
+dnl Check if checkpoint tracing has to be enabled
+AC_ARG_ENABLE(tracing,
+  [  --enable-tracing        enable checkpoint tracing (debugging only)],
+  [ AC_DEFINE(ENABLE_TRACING) ]
+)
+
+AC_SUBST(INCLUDES)
+
+AC_OUTPUT(Makefile
+src/Makefile
+doc/Makefile
+doc/es/Makefile
+intl/Makefile
+lib/Makefile
+m4/Makefile
+po/Makefile.in
+)

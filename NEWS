@@ -1,6 +1,152 @@
+version 1.0pre7              Apr  7 2002
+
+* Don't do blocking read()s when getting a signal.
+
+* Remove RSA key checking code, since it sometimes thinks perfectly good RSA
+  keys are bad.
+
+* Fix handling of subnets when prefixlength isn't divisible by 8.
+
+
+version 1.0pre6              Mar 27 2002
+
+* Improvement of redundant links:
+
+  * Non-blocking connects.
+  
+  * Protocol broadcast messages can no longer go into an infinite loop.
+  
+  * Graph algorithm updated to look harder for direct connections.
+
+* Good support for routing IPv6 packets over the VPN. Works on Linux,
+  FreeBSD, possibly OpenBSD but not on Solaris.
+
+* Support for tunnels over IPv6 networks. Works on all supported
+  operating systems.
+
+* Optional compression of UDP connections using zlib.
+
+* Optionally let UDP connections inherit TOS field of tunneled packets.
+
+* Optionally start scripts when certain hosts become (un)reachable.
+
+
+version 1.0pre5              Feb  9 2002
+
+* Security enhancements:
+
+  * Added sequence number and optional message authentication code to
+    the packets.
+
+  * Configurable encryption cipher and digest algorithms.
+
+* More robust handling of dis- and reconnects.
+
+* Added a "switch" and a "hub" mode to allow bridging setups.
+
+* Preliminary support for routing of IPv6 packets.
+
+* Supports Linux, FreeBSD, OpenBSD and Solaris.
+
+
+It looks like this might be the last release before 1.0.
+
+
+version 1.0pre4              Jan 17 2001
+
+* Updated documentation; the documentation now reflects the
+  configuration as it is.
+
+* Some internal changes to make tinc scale better for large
+  networks, such as using AVL trees instead of linked lists for the
+  connection list.  
+
+* RSA keys can be stored in separate files if needed.  See the
+  documentation for more information.
+
+* tinc has now been reported to run on Linux PowerPC and FreeBSD x86.
+
+
+
+version 1.0pre3              Oct 31 2000
+
+* The protocol has been redesigned, and although some details are
+  still under discussion, this is secure.  Care has been taken to
+  resist most, if not all, attacks.
+  
+* Unfortunately this protocol is not compatible with earlier versions,
+  nor are earlier versions compatible with this version.  Because the
+  older protocol has huge security flaws, we feel that not
+  implementing backwards compatibility is justified.
+
+* Some data about the protocol:
+
+  * It uses public/private RSA keys for authentication (this is the
+    actual fix for the security hole).
+
+  * All cryptographic functions have been taken out of tinc, instead
+    it uses the OpenSSL library functions.
+
+  * Offers support for multiple subnets per tinc daemon.
+
+* New is also the support for the universal tun/tap device.  This
+  means better portability to FreeBSD and Solaris.
+
+* tinc is tested to compile on Solaris, Linux x86, Linux alpha.
+
+* tinc now uses the OpenSSL library for cryptographic operations.
+  More information on getting and installing OpenSSL is in the manual.
+  This also means that the GMP library is no longer required.
+
+* Further, thanks to Enrique Zanardi, we have Spanish messages; Matias
+  Carrasco provided us with a Spanish translation of the manual.
+
+
+What still needs to be done before 1.0:
+
+* Documentation.  Especially since the protocol has changed, and a lot
+  of configuration directives have been added.
+
+
+
+
 version 1.0pre2              May 31 2000
- * Internationalized, Dutch translation available
- * Many sanity checks on the meta protocol added
+
+* This version has been internationalized; and a Dutch translation has          
+  been included.                                                                
+                                                                                
+* Two configuration variables have been added:                                  
+  * VpnMask - the IP network mask for the entire VPN, not just our              
+    subnet (as given by MyVirtualIP).  The Redhat and Debian packages           
+    use this variable in their system startup scripts, but it is                
+    ignored by tinc.                                                            
+  * Hostnames - if set to `yes', look up the names of IP addresses              
+    trying to connect to us.  Default set to `no', to prevent lockups           
+    during lookups.                                                             
+                                                                                
+* The system startup scripts for Debian and Redhat use                          
+  /etc/tinc/nets.boot to find out which networks need to be started             
+  during system boot.                                                           
+                                                                                
+* Fixes to prevent denial of service attacks by sending random data             
+  after connecting (and even when the connection has been established),         
+  either random garbage or just nonsensical protocol fields.                    
+                                                                                
+* tinc will retry to connect upon startup, does not quit if it doesn't          
+  work the first time.                                                          
+                                                                                
+* Hosts that are disconnected implicitly if we lose a connection get            
+  deleted from the internal list, to prevent hogging eachother with             
+  add and delete requests when the connection is restored.                      
+                                                                                
+                                                                                
+What still needs to be done before 1.0:                                         
+                                                                                
+* Documentation.                                                                
+* Failover ConnectTo lines, try another one if the first doesn't work.          
+
+
+
 
 version 1.0pre1              May 12 2000
  * New meta-protocol
