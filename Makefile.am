@@ -17,7 +17,7 @@ ChangeLog:
 	cvs2cl -U cvsusers --fsf
 
 cvs-clean: maintainer-clean
-	for f in $(CVS_CREATED) `find -name Makefile.in` ; do\
+	for f in $(CVS_CREATED) `find -name Makefile.in` tinc-$(VERSION).tar.gz; do\
 	  rm -Rf "$$f"; \
 	done
 
@@ -27,8 +27,7 @@ deb:
 rpm: dist
 	cp $(distdir).tar.gz /usr/src/redhat/SOURCES/
 	cp redhat/tinc.spec /usr/src/redhat/SOURCES/
-	cd /usr/src/redhat/SOURCES/
-	rpm -bi tinc.spec
+	cd /usr/src/redhat/SOURCES/ && rpm -bb tinc.spec
 
 release:
 	rm -f ChangeLog
