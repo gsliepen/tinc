@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.1 2000/06/17 20:55:54 zarq Exp $
+    $Id: conf.h,v 1.6.4.2 2000/06/27 15:08:57 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -74,5 +74,6 @@ extern int timeout;
 extern config_t *add_config_val(config_t **, int, char *);
 extern int read_config_file(const char *);
 extern const config_t *get_config_val(which_t type);
+extern const config_t *get_next_config_val(which_t type, int);
 
 #endif /* __TINC_CONF_H__ */

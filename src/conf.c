@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.1 2000/06/17 20:55:54 zarq Exp $
+    $Id: conf.c,v 1.9.4.2 2000/06/27 15:08:57 guus Exp $
 */
 
 
@@ -216,6 +216,24 @@ get_config_val(which_t type)
     if(p->which == type)
       return p;
 
+  /* Not found */
+  return NULL;
+}
+
+/*
+  Support for multiple config lines.
+  Index is used to get a specific value, 0 being the first, 1 the second etc.
+*/
+const config_t *
+get_next_config_val(which_t type, int index)
+{
+  config_t *p;
+  
+  for(p = config; p != NULL; p = p->next)
+    if(p->which == type)
+      if(--index < 0)
+        return p;
+  
   /* Not found */
   return NULL;
 }

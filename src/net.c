@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.8 2000/06/26 20:30:20 guus Exp $
+    $Id: net.c,v 1.35.4.9 2000/06/27 15:08:58 guus Exp $
 */
 
 #include "config.h"
@@ -548,7 +548,8 @@ cp
   
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
-      syslog(LOG_ERR, _("Could not set up a meta connection!"));
+      syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
+             ncn->hostname);
       free_conn_element(ncn);
       return -1;
     }
@@ -587,7 +588,7 @@ cp
     myself->port = cfg->data.val;
 
   if(cfg = get_config_val(indirectdata))
-    if(cfg->data.val)
+    if(cfg->data.val == stupid_true)
       myself->flags |= EXPORTINDIRECTDATA;
 
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
@@ -614,23 +615,27 @@ RETSIGTYPE
 sigalrm_handler(int a)
 {
   config_t const *cfg;
+  int index = 1;
 cp
   cfg = get_config_val(upstreamip);
 
-  if(!setup_outgoing_connection(cfg->data.ip->ip))
+  while(cfg)
     {
-      signal(SIGALRM, SIG_IGN);
+      if(!setup_outgoing_connection(cfg->data.ip->ip))   /* function returns 0 when there are no problems */
+        {
+          signal(SIGALRM, SIG_IGN);
+          return;
+        }
+      cfg = get_next_config_val(upstreamip, index++); /* Or else we try the next ConnectTo line */
     }
-  else
-    {
-      signal(SIGALRM, sigalrm_handler);
-      seconds_till_retry += 5;
-      if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
-        seconds_till_retry = 300;
-      alarm(seconds_till_retry);
-      syslog(LOG_ERR, _("Still failed to connect to other, will retry in %d seconds"),
-	     seconds_till_retry);
-    }
+
+  signal(SIGALRM, sigalrm_handler);
+  seconds_till_retry += 5;
+  if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
+    seconds_till_retry = 300;
+  alarm(seconds_till_retry);
+  syslog(LOG_ERR, _("Still failed to connect to other, will retry in %d seconds"),
+	 seconds_till_retry);
 cp
 }
 
@@ -640,6 +645,7 @@ cp
 int setup_network_connections(void)
 {
   config_t const *cfg;
+  int index = 1;
 cp
   if((cfg = get_config_val(pingtimeout)) == NULL)
     timeout = 5;
@@ -656,13 +662,17 @@ cp
     /* No upstream IP given, we're listen only. */
     return 0;
 
-  if(setup_outgoing_connection(cfg->data.ip->ip))
+  while(cfg)
     {
-      signal(SIGALRM, sigalrm_handler);
-      seconds_till_retry = 300;
-      alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 minutes"));
+      if(!setup_outgoing_connection(cfg->data.ip->ip))   /* function returns 0 when there are no problems */
+        return 0;
+      cfg = get_next_config_val(upstreamip, index++); /* Or else we try the next ConnectTo line */
     }
+    
+  signal(SIGALRM, sigalrm_handler);
+  seconds_till_retry = 300;
+  alarm(seconds_till_retry);
+  syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 minutes"));
 cp
   return 0;
 }
