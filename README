@@ -1,7 +1,8 @@
 This is the README file for tinc version 1.0.
 Installation instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com> and
+tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans
+<itimmermans@bigfoot.com>, Guus Sliepen <guus@sliepen.warande.net> and
 others. For a complete list of authors see the AUTHORS file.
 This product includes software developed by Eric Young (eay@mincom.oz.au)
 
