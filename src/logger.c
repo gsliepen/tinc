@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.10 2003/08/17 09:04:00 guus Exp $
+    $Id: logger.c,v 1.1.2.11 2003/08/17 12:04:35 guus Exp $
 */
 
 #include "system.h"
@@ -51,7 +51,7 @@ void openlogger(const char *ident, logmode_t mode) {
 			break;
 		case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			loghandle = OpenEventLog(NULL, identname);
+			loghandle = RegisterEventSource(NULL, logident);
 			if(!loghandle)
 				logmode = LOGMODE_NULL;
 			break;
@@ -87,8 +87,9 @@ void logger(int priority, const char *format, ...) {
 #ifdef HAVE_MINGW
 			{
 				char message[4096];
+				char *messages[] = {message};
 				vsnprintf(message, sizeof(message), format, ap);
-				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, &message, NULL);
+				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
 			}
 #else
 #ifdef HAVE_SYSLOG_H
@@ -118,7 +119,7 @@ void closelogger(void) {
 			break;
 		case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			CloseEventLog(loghandle);
+			DeregisterEventSource(loghandle);
 			break;
 #else
 #ifdef HAVE_SYSLOG_H
