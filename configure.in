@@ -61,4 +61,4 @@ else
 fi
 
 AC_OUTPUT([Makefile src/Makefile cipher/Makefile cipher/blowfish/Makefile
-cipher/idea/Makefile doc/Makefile lib/Makefile m4/Makefile])
+cipher/idea/Makefile doc/Makefile lib/Makefile m4/Makefile redhat/Makefile])
