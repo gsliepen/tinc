@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.0pre5. Installation
+This is the README file for tinc version 1.0pre6. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2002 by:
@@ -27,7 +27,9 @@ uses strong authentication with RSA keys.
 On the 29th of December 2001, Jerome Etienne posted a security analysis of tinc
 1.0pre4. Due to a lack of sequence numbers and a message authentication code
 for each packet, an attacker could possibly disrupt certain network services or
-launch a denial of service attack by replaying intercepted packets.
+launch a denial of service attack by replaying intercepted packets. The current
+version adds sequence numbers and message authentication codes to prevent such
+attacks.
 
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
@@ -35,8 +37,8 @@ prove the security of any cryptographic product. If you wish to review
 tinc or give us feedback, you are stronly encouraged to do so.
 
 
-Changes to configuration file format
-------------------------------------
+Changes to configuration file format since 1.0pre5
+--------------------------------------------------
 
 Some configuration variables have different names now. Most notably "TapDevice"
 should be changed into "Device", and "Device" should be changed into
@@ -52,6 +54,11 @@ http://www.openssl.org/.  We recommend version 0.9.5 or better.  If
 this library is not installed on you system, configure will fail.  The
 manual in doc/tinc.texi contains more detailed information on how to
 install this library.
+
+Since 1.0pre6, the zlib library is used for optional compression. You need this
+library whether or not you plan to enable the compression. You can find it at
+http://www.gzip.org/zlib/. Because of a possible exploit in earlier versions we
+recommand that you download version 1.1.4 or later.
 
 In order to compile tinc, you will also need autoconf, automake, GNU make, m4
 and gettext.
@@ -88,7 +95,8 @@ Since pre5, tinc can operate in several routing modes. The default mode,
 "router", works exactly like the older version, and uses Subnet lines to
 determine the destination of packets. The other two modes, "switch" and "hub",
 allow the tinc daemons to work together like a single network switch or hub.
-This is useful for bridging networks.
+This is useful for bridging networks. The latter modes only work properly on
+Linux and FreeBSD.
 
 The algorithms used for encryption and generating message authentication codes
 can now be changed in the configuration files. All cipher and digest algorithms
@@ -96,7 +104,14 @@ supported by OpenSSL can be used. Useful ciphers are "blowfish" (default),
 "bf-ofb", "des", "des3", etcetera. Useful digests are "sha1" (default), "md5",
 etcetera.
 
-Preliminary support for routing IPv6 packets has been added. Just add Subnet
-lines with IPv6 addresses (without using :: abbreviations) and use ifconfig to
-give the virtual network interface corresponding IPv6 addresses.
-Autoconfiguration will not work in router mode.
+Support for routing IPv6 packets has been added. Just add Subnet lines with
+IPv6 addresses (without using :: abbreviations) and use ifconfig or ip (from
+the iproute package) to give the virtual network interface corresponding IPv6
+addresses. Autoconfiguration will not work in router mode. Tunneling IPv6
+packets only works on Linux, FreeBSD and possibly OpenBSD.
+
+It is also possible to make tunnels to other tinc daemons over IPv6 networks.
+In order to enable this feature the option "AddressFamily = any" or
+"AddressFamily = ipv6" must be added to the tinc.conf file. The host
+configuration files should contain IPv6 addresses for the "Address" variables,
+or hostnames which have an AAAA or A6 record.

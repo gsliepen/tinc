@@ -1,3 +1,26 @@
+version 1.0pre6              Mar 27 2002
+
+* Improvement of redundant links:
+
+  * Non-blocking connects.
+  
+  * Protocol broadcast messages can no longer go into an infinite loop.
+  
+  * Graph algorithm updated to look harder for direct connections.
+
+* Good support for routing IPv6 packets over the VPN. Works on Linux,
+  FreeBSD, possibly OpenBSD but not on Solaris.
+
+* Support for tunnels over IPv6 networks. Works on all supported
+  operating systems.
+
+* Optional compression of UDP connections using zlib.
+
+* Optionally let UDP connections inherit TOS field of tunneld packets.
+
+* Optionally start scripts when certain hosts become (un)reachable.
+
+
 version 1.0pre5              Feb  9 2002
 
 * Security enhancements:
