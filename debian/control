@@ -14,5 +14,6 @@ Description: Virtual Private Network daemon
  create an entire (moderately sized) VPN with only one daemon per
  participating computer.
  .
- You need to have two kernel modules installed, the manual will
+ You need to have two kernel modules installed, on a Debian system
+ they should already be there; if they are not, the manual will
  explain you how to do that.
