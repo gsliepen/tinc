@@ -104,7 +104,7 @@ bool install_service(void) {
 
 	service = CreateService(manager, identname, identname,
 			SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-			command, "NDIS", NULL, NULL, NULL, NULL);
+			command, NULL, NULL, NULL, NULL, NULL);
 	
 	if(!service) {
 		logger(LOG_ERR, _("Could not create %s service: %s"), identname, winerror(GetLastError()));
