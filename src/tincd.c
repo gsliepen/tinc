@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.83 2003/08/03 09:55:20 guus Exp $
+    $Id: tincd.c,v 1.10.4.84 2003/08/08 19:45:21 guus Exp $
 */
 
 #include "system.h"
@@ -339,10 +339,34 @@ static bool keygen(int bits)
 */
 static void make_names(void)
 {
+#ifdef HAVE_MINGW
+	HKEY key;
+	char installdir[1024] = "";
+	long len = sizeof(installdir);
+#endif
+
 	if(netname)
 		asprintf(&identname, "tinc.%s", netname);
 	else
 		identname = xstrdup("tinc");
+
+#ifdef HAVE_MINGW
+	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
+		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
+			if(!pidfilename)
+				asprintf(&logfilename, "%s/log/%s.log", identname);
+			if(!confbase) {
+				if(netname)
+					asprintf(&confbase, "%s/%s", installdir, netname);
+				else
+					asprintf(&confbase, "%s", installdir);
+			}
+		}
+		RegCloseKey(key);
+		if(*installdir)
+			return;
+	}
+#endif
 
 	if(!pidfilename)
 		asprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
@@ -352,12 +376,12 @@ static void make_names(void)
 
 	if(netname) {
 		if(!confbase)
-			asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
+			asprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
 			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
 	} else {
 		if(!confbase)
-			asprintf(&confbase, "%s/tinc", CONFDIR);
+			asprintf(&confbase, CONFDIR "/tinc");
 	}
 }
 
@@ -394,7 +418,7 @@ int main(int argc, char **argv)
 	if(kill_tincd)
 		return !kill_other(kill_tincd);
 
-	openlogger("tinc", LOGMODE_STDERR);
+	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
 	/* Lock all pages into memory if requested */
 
