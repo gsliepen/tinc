@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.30 2002/03/17 16:08:39 guus Exp $
+    $Id: netutl.c,v 1.12.4.31 2002/03/18 14:19:02 guus Exp $
 */
 
 #include "config.h"
@@ -42,6 +42,10 @@
 #include "netutl.h"
 
 #include "system.h"
+
+#ifndef s6_addr32
+#define s6_addr32 in6_u.u6_addr32
+#endif
 
 int hostnames = 0;
 
