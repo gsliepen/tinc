@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.13 2002/09/06 10:23:52 guus Exp $
+    $Id: edge.c,v 1.1.2.14 2002/09/06 12:19:16 guus Exp $
 */
 
 #include "config.h"
@@ -56,8 +56,13 @@ int edge_weight_compare(edge_t *a, edge_t *b)
 
   if(result)
     return result;
-  else
-    return edge_compare(a, b);
+
+  result = strcmp(a->from->name, b->from->name);
+
+  if(result)
+    return result;
+
+  return strcmp(a->to->name, b->to->name);
 }
 
 void init_edges(void)
