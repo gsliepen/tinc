@@ -7,7 +7,7 @@ Group: Networking
 URL: http://tinc.nl.linux.org/
 Source0: %{name}-%{version}.tar.gz
 Buildroot: /var/tmp/%{name}-%{version}-%{release}
-#Requires: 
+Requires: /usr/bin/texi2html /usr/bin/install /usr/bin/patch
 
 %description
 tinc is cool!
@@ -22,6 +22,7 @@ See http://tinc.nl.linux.org/
 #automake
 ./configure --prefix=/usr --sysconfdir=/etc
 make
+texi2html doc/tinc.texi
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -75,7 +76,7 @@ END
 
 %files
 
-%doc AUTHORS ChangeLog NEWS README THANKS TODO
+%doc AUTHORS ChangeLog NEWS README THANKS TODO *.html
 
 #%defattr(-,root,root)
 %config /etc/tinc
