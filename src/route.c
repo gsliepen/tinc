@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.20 2001/10/27 13:13:35 guus Exp $
+    $Id: route.c,v 1.1.2.21 2001/11/16 17:40:50 zarq Exp $
 */
 
 #include "config.h"
@@ -103,26 +103,10 @@ cp
     return NULL;
 }
 
-node_t *route_ipv4(vpn_packet_t *packet)
-{
-  ipv4_t dest;
-  subnet_t *subnet;
-cp
-#ifdef HAVE_SOLARIS
-  /* The other form gives bus errors on a SparcStation 20. */
-  dest = ((packet->data[30] * 0x100 + packet->data[31]) * 0x100 + packet->data[32]) * 0x100 + packet->data[33];
-#else
-  dest = ntohl(*((unsigned long*)(&packet->data[30])));
-#endif
-cp  
-  subnet = lookup_subnet_ipv4(&dest);
-cp
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
-          syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %d.%d.%d.%d"),
-                 packet->data[30], packet->data[31], packet->data[32], packet->data[33]);
         }
 
       return NULL;
@@ -131,20 +115,21 @@ cp
   return subnet->owner;  
 }
 
-node_t *route_ipv6(vpn_packet_t *packet)
+node_t *route_ip(vpn_packet_t *packet)
 {
-  ipv6_t dest;
+  struct addrinfo *dest;
   subnet_t *subnet;
 cp
-  memcpy(&dest, &packet->data[30], sizeof(ipv6_t));
+#warning FIXME
+  memcpy(&dest, &packet->data[30], 0);
 
-  subnet = lookup_subnet_ipv6(&dest);
+  subnet = lookup_subnet_ip(&dest);
 cp
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
-          syslog(LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address"));
+          syslog(LOG_WARNING, _("Cannot route packet: unknown IP destination address"));
         }
 
       return NULL;
@@ -158,7 +143,7 @@ void route_arp(vpn_packet_t *packet)
   struct ether_arp *arp;
   subnet_t *subnet;
   unsigned char ipbuf[4];
-  ipv4_t dest;
+  struct addrinfo *dest;
 cp
   /* First, snatch the source address from the ARP packet */
 
@@ -187,9 +172,9 @@ cp
     }
 
   /* Check if the IP address exists on the VPN */
-
+#warning FIXME
   dest = ntohl(*((unsigned long*)(arp->arp_tpa)));
-  subnet = lookup_subnet_ipv4(&dest);
+  subnet = lookup_subnet_ip(&dest);
 
   if(!subnet)
     {
