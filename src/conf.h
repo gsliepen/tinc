@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.24 2001/06/05 19:39:54 guus Exp $
+    $Id: conf.h,v 1.6.4.25 2001/07/24 20:13:42 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -63,7 +63,7 @@ typedef struct config_t {
   which_t which;
   int argtype;
   union data {
-    unsigned long val;
+    long val;
     char *ptr;
     ip_mask_t *ip;
     struct config_t *next;	/* For nested configs! */
