@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.14 2001/01/18 13:00:57 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.15 2001/05/19 15:50:51 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998-2001 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.14 2001/01/18 13:00:57 zarq Exp $
+$Id: tinc.texi,v 1.8.4.15 2001/05/19 15:50:51 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998-2001 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.14 2001/01/18 13:00:57 zarq Exp $
+$Id: tinc.texi,v 1.8.4.15 2001/05/19 15:50:51 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -182,6 +182,7 @@ tinc will run on them as well.  Without this driver, tinc will most
 likely compile and run, but it will not be able to send or receive data
 packets.
 
+The official release only truly supports Linux.
 For an up to date list of supported platforms, please check the list on
 our website:
 @uref{http://tinc.nl.linux.org/platforms.html}.
@@ -197,16 +198,15 @@ and arbitrary word length.  So in theory it should run on other
 processors that Linux runs on.  It has already been verified to run on
 alpha and sparc processors as well.
 
-tinc uses the ethertap device that is provided in the standard kernel
-since version 2.1.60, so anything above that (2.2.x, 2.3.x, and 2.4.0)
-kernel version is able to support tinc.
+tinc uses the ethertap device or the universal TUN/TAP driver. The former is provided in the standard kernel
+from version 2.1.60 up to 2.3.x, but has been replaced in favour of the TUN/TAP driver in kernel versions 2.4.0 and later.
 
 
 @c ==================================================================
 @subsection FreeBSD
 
 tinc on FreeBSD relies on the universial TUN/TAP driver for its data
-acquisition from the kernel.  Therefore, tinc suports the same platforms
+acquisition from the kernel.  Therefore, tinc works on the same platforms
 as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
 
 
@@ -214,7 +214,7 @@ as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
 @subsection Solaris
 
 tinc on Solaris relies on the universial TUN/TAP driver for its data
-acquisition from the kernel.  Therefore, tinc suports the same platforms
+acquisition from the kernel.  Therefore, tinc works on the same platforms
 as this driver.  These are: Solaris, 2.1.x.
 
 
@@ -248,13 +248,14 @@ support tinc.
 @node    Configuring the kernel, Libraries, Installing tinc - preparations, Installing tinc - preparations
 @section Configuring the kernel
 
-If you are running Linux, chances are good that your kernel already
-supports all the devices that tinc needs for proper operation.  For
-example, the standard kernel from Redhat Linux already has support for
-ethertap and netlink compiled in.  Debian users can use the modconf
-utility to select the modules.  If your Linux distribution supports this
-method of selecting devices, look out for something called `ethertap',
-and `netlink_dev'.  You need both these devices.
+If you are running Linux, chances are good that your kernel already supports
+all the devices that tinc needs for proper operation.  For example, the
+standard kernel from Redhat Linux already has support for ethertap and netlink
+compiled in.  Debian users can use the modconf utility to select the modules.
+If your Linux distribution supports this method of selecting devices, look out
+for something called `ethertap', and `netlink_dev' if it is using a kernel
+version prior to 2.4.0. In that case you will need both these devices.  If you
+are using kernel 2.4.0 or later, you need to select `tun'.
 
 If you can install these devices in a similar manner, you may skip this
 section.
@@ -270,69 +271,67 @@ section.
 @node       Configuration of the Linux kernel, Configuration of the FreeBSD kernel, Configuring the kernel, Configuring the kernel
 @subsection Configuring the Linux kernel
 
-Since this particular implementation only runs on 2.1 or higher Linux
-kernels, you should grab one (2.2 is current at this time).  A 2.0 port
-is not really possible, unless someone tells me someone ported the
-ethertap and netlink devices back to 2.0.
+First of all, a kernel version of 2.1.60 or higher is @emph{required}.
 
 If you are unfamiliar with the process of configuring and compiling a
 new kernel, you should read the
 @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html, Kernel
 HOWTO} first.  Do that now!
 
-Here are the options you have to turn on when configuring a new
-kernel.
+Here are the options you have to turn on when configuring a new kernel.
 
-For kernel 2.2.x:
-
-@example
-Code maturity level options
-[*] Prompt for development and/or incomplete code/drivers
-Networking options
-[*] Kernel/User netlink socket
-<*> Netlink device emulation
-Network device support
-<*> Ethertap network tap
-@end example
-
-Note that if you want to run more than one instance of tinc or other
-programs that use the ethertap, you have to compile the ethertap driver
-as a module.
-
-For kernel 2.3.x and 2.4.x:
+For kernels 2.1.60 up to 2.4.0:
 
 @example
 Code maturity level options
 [*] Prompt for development and/or incomplete code/drivers
 Networking options
 [*] Kernel/User netlink socket
-<*> Netlink device emulation
+<M> Netlink device emulation
 Network device support
-<*> Universal TUN/TAP device driver support
+<M> Ethertap network tap
 @end example
 
+If you want to run more than one instance of tinc or other programs that use
+the ethertap, you have to compile the ethertap driver as a module, otherwise
+you can also choose to compile it directly into the kernel.
 
-Any other options not mentioned here are not relevant to tinc.  If you
-decide to build any of these as dynamic kernel modules, it's a good idea
-to add these lines to @file{/etc/modules.conf}.
+If you decide to build any of these as dynamic kernel modules, it's a good idea
+to add these lines to @file{/etc/modules.conf}:
 
 @example
-alias tap0 ethertap
 alias char-major-36 netlink_dev
+alias tap0 ethertap
+options tap0 -o tap0 unit=0
+alias tap1 ethertap
+options tap1 -o tap1 unit=1
 @end example
 
-If you have a 2.4-pre kernel, you can choose both the TUN/TAP driver and
-the `Ethertap network tap' device.  This latter is marked obsolete,
-because the universal TUN/TAP driver is a newer implementation that is
-supposed to be used in favour of ethertap.  For tinc, it doesn't really
-matter which one you choose; based on the device file name, tinc will make
-the right choice about what protocol to use. However, chances are that
-although you can choose the obsolote ethertap driver, it will not function
-at all. The TUN/TAP driver is the safe choice.
+Add more alias/options lines if necessary.
 
-Finally, after having set up other options, build the kernel and boot
-it.  Unfortunately it's not possible to insert these modules in a
-running kernel.
+For kernels 2.4.0 and higher:
+
+@example
+Code maturity level options
+[*] Prompt for development and/or incomplete code/drivers
+Network device support
+<M> Universal TUN/TAP device driver support
+@end example
+
+It's not necessary to compile this driver as a module, even if you are going to
+run more than one instance of tinc.
+
+If you have an early 2.4 kernel, you can choose both the TUN/TAP driver and the
+`Ethertap network tap' device.  This latter is marked obsolete, and chances are
+that it won't even function correctly anymore.  Make sure you select the
+universal TUN/TAP driver.
+
+If you decide to build the TUN/TAP driver as a kernel module, add these lines
+to @file{/etc/modules.conf}:
+
+@example
+alias char-major-10-200 tun
+@end example
 
 
 @c ==================================================================
@@ -379,9 +378,7 @@ having installed it, configure will give you an error message, and stop.
 
 @cindex OpenSSL
 For all cryptography-related functions, tinc uses the functions provided
-by the OpenSSL library.  We recommend using version 0.9.5 or 0.9.6 of
-this library.  Other versions may also work, but we can guarantee
-nothing.
+by the OpenSSL library.
 
 If this library is not installed, you wil get an error when configuring
 tinc for build.  Support for running tinc without having OpenSSL
@@ -496,22 +493,8 @@ may read/write to this file.  You'd want this, because otherwise
 eavesdropping would become a bit too easy.  This does, however, imply
 that you'd have to run tincd as root.
 
-If you use the universal TUN/TAP driver, you have to create the
-following device files (unless they already exist):
-
-@example
-mknod -m 600 /dev/... c .. ..
-chown 0.0 /dev/...
-@end example
-
-If you want to have more devices, the device numbers will be .. .. ...
-
-If you use Linux, and you run the new 2.4 kernel using the devfs
-filesystem, then the tap device will be automatically generated as
-@file{/dev/netlink/tap0}.
-
-If you use Linux and have kernel 2.2.x, you have to make the ethertap
-devices:
+If you use Linux and have a kernel version prior to 2.4.0, you have to make the
+ethertap devices:
 
 @example
 mknod -m 600 /dev/tap0 c 36 16
@@ -519,6 +502,18 @@ chown 0.0 /dev/tap0
 @end example
 
 Any further ethertap devices have minor device number 16 through 31.
+
+If you use the universal TUN/TAP driver, you have to create the
+following device files (unless they already exist):
+
+@example
+mknod -m 600 /dev/tun c 10 200
+chown 0.0 /dev/tun
+@end example
+
+If you use Linux, and you run the new 2.4 kernel using the devfs filesystem,
+then the TUN/TAP device will probably be automatically generated as
+@file{/dev/net/tun}.
 
 
 @c ==================================================================
@@ -533,10 +528,6 @@ symbolic name.  For example:
 @example
 myvpn 10.0.0.0
 @end example
-
-This has nothing to do with the MyVPNIP configuration variable that will be
-discussed later, it is only to make the output of the route command more
-legible.
 
 @subsubheading @file{/etc/services}
 
@@ -555,7 +546,7 @@ tinc            655/udp    TINC
 @node    Interfaces,  , System files, Installing tinc - installation
 @section Interfaces
 
-Before you can start transmitting data over the tinc tunnel, you must
+Before you can start transmitting data over the tinc tunnel, tinc must
 set up the ethertap network devices.
 
 First, decide which IP addresses you want to have associated with these
@@ -563,35 +554,45 @@ devices, and what network mask they must have.  You also need these
 numbers when you are going to configure tinc itself.  @xref{Configuring
 tinc}.
 
-It doesn't matter much which part you do first, setting up the network
-devices or configure tinc.  But they both have to be done before you try
-to start a tincd.
+tinc will open an ethertap device or TUN/TAP device, which will also
+create a network interface called `tap0', `tap1' etc. if you are using
+the ethertap driver, or a network interface with the same name as NETNAME
+if you are using the universal TUN/TAP driver.
 
-The actual setup of the ethertap device is quite simple, just repeat
-after me:
+You can configure that device by putting ordinary ifconfig, route, and other commands
+to a script named @file{/etc/tinc/NETNAME/tinc-up}. When tinc starts, this script
+will be executed. When tinc exits, it will execute the script named
+@file{/etc/tinc/NETNAME/tinc-down}, but normally you don't need to create that script.
+
+An example @file{tinc-up} script when using the TUN/TAP driver:
 
 @example
-ifconfig tap@emph{n} hw ether fe:fd:00:00:00:00
+ifconfig $NETNAME hw ether fe:fd:00:00:00:00
+ifconfig $NETNAME @emph{xx}.@emph{xx}.@emph{xx}.@emph{xx} netmask @emph{mask}
+ifconfig $NETNAME -arp
 @end example
 
 @cindex MAC address
 @cindex hardware address
-@strong{Note:} Since version 1.0pre3, all interface addresses are set to
-this address, whereas previous versions required the MAC to match the
-actual IP address.
+The first line sets up the MAC address of the network interface.
+Due to the nature of how ethernet and tinc work, it has to be set to fe:fd:00:00:00:00.
+(tinc versions prior to 1.0pre3 required that the MAC address matched the IP address.)
+You can use the environment variable $NETNAME to get the name of the interface.
+If you are using the ethertap driver however, you need to replace it with tap@emph{n},
+corresponding to the device file name.
 
 @cindex ifconfig
-To activate the device, you have to assign an IP address to it.  To set
-an IP address @emph{IP} with network mask @emph{mask}, do the following:
-
-@example
-ifconfig tap@emph{n} @emph{xx}.@emph{xx}.@emph{xx}.@emph{xx} netmask @emph{mask}
-@end example
-
+The next line gives the interface an IP address and a netmask.
+The kernel will also automatically add a route to this interface, so normally you don't need
+to add route commands to the @file{tinc-up} script.
+The kernel will also bring the interface up after this command.
 @cindex netmask
 The netmask is the mask of the @emph{entire} VPN network, not just your
-own subnet.  It is the same netmask you will have to specify with the
-VpnMask configuration variable.
+own subnet.
+
+@cindex arp
+The last line tells the kernel not to use ARP on that interface.
+Again this has to do with how ethernet and tinc work. Don't forget to add this line.
 
 
 @c
@@ -735,22 +736,6 @@ impossible to crack a single key.
 Listen on local port port.  The computer connecting to this daemon should
 use this number as the argument for his ConnectPort.
 
-@item MyOwnVPNIP = <local address[/maskbits]> (required)
-The local address is the number that the daemon will propagate to
-other daemons on the network when it is identifying itself.  Hence this
-will be the file name of the passphrase file that the other end expects
-to find the passphrase in.
-
-The local address is the IP address of the tap device, not the real IP
-address of the host running tincd.  Due to changes in recent kernels, it
-is also necessary that you make the ethernet (also known as MAC) address
-equal to the IP address (see the example).
-
-maskbits is the number of bits set to 1 in the netmask part.
-
-@item MyVirtualIP = <local address[/maskbits]>
-This is an alias for MyOwnVPNIP.
-
 @item @strong{Name = <name>}
 This is a symbolic name for this connection.  It can be anything 
 
@@ -760,30 +745,17 @@ probe to the other end.  If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
-@item @strong{PrivateKey = <key>}
+@item PrivateKey = <key> (obsolete)
 This is the RSA private key for tinc. However, for safety reasons it is
 advised to store private keys of any kind in separate files. This prevents
 accidental eavesdropping if you are editting the configuration file.
 
-@item PrivateKeyFile = <path>
+@item @strong{PrivateKeyFile = <path>} (recommended)
 This is the full path name of the RSA private key file that was
 generated by ``tincd --generate-keys''.  It must be a full path, not a
 relative directory.
 
-@item PublicKey = <key>
-This is the full path name of the RSA public key file that was generated
-by ``tincd --generate-keys''.  It must be a full path, not a relative
-directory.  (NOTE: In version 1.0pre3, this variable was used to give
-the key inline.  This is no longer supported.)
-
-@item Subnet = <IP address/maskbits>
-This is the subnet range of all IP addresses that will be accepted by
-the host that defines it.  Please be careful that no two subnets
-overlap.  Every host @strong{must} have a different range of IP
-addresses that it can handle, otherwise you will see messages like
-`packet comes back to us'.
-
-@item TapDevice = <device> (/dev/tap0)
+@item @strong{TapDevice = <device>} (/dev/tap0)
 The ethertap device to use.  Note that you can only use one device per
 daemon.  The info pages of the tinc package contain more information
 about configuring an ethertap device for Linux.
@@ -794,11 +766,6 @@ connection instead of a UDP connection.  This is especially useful for those
 who want to run a tinc daemon from behind a masquerading firewall, or if
 UDP packet routing is disabled somehow.  This is experimental code,
 try this at your own risk.
-
-@item VpnMask = <mask> (optional)
-The mask that defines the scope of the entire VPN.  This option is not used
-by the tinc daemon itself, but can be used by startup scripts to configure
-the ethertap devices correctly.
 @end table
 
 
@@ -812,7 +779,7 @@ This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 
-@item IndirectData = <yes|no> (no)
+@item IndirectData = <yes|no> (no, experimental)
 This option specifies whether other tinc daemons besides the one you
 specified with ConnectTo can make a direct connection to you.  This is
 especially useful if you are behind a firewall and it is impossible to
@@ -825,15 +792,18 @@ port port.  port may be given in decimal (default), octal (when preceded
 by a single zero) o hexadecimal (prefixed with 0x).  port is the port
 number for both the UDP and the TCP (meta) connections.
 
-@item PublicKey = <key>
+@item PublicKey = <key> (obsolete)
 This is the RSA public key for this host.
 
-@item PublicKeyFile = <path>
+@item PublicKeyFile = <path> (obsolete)
 This is the full path name of the RSA public key file that was generated
 by ``tincd --generate-keys''.  It must be a full path, not a relative
 directory.
 
-Note that exactly @strong{one of the above two options} must be specified
+From version 1.0pre4 on tinc will store the public key directly into the
+host configuration file in PEM format, the above two options then are not
+necessary. Either the PEM format is used, or exactly
+@strong{one of the above two options} must be specified
 in each host configuration file, if you want to be able to establish a
 connection with that host.
 
@@ -849,12 +819,12 @@ example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
-@item TCPonly = <yes|no> (no)
+@item TCPonly = <yes|no> (no, experimental)
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
-firewall, or if UDP packet routing is disabled somehow.  @emph{This is
-experimental code, try this at your own risk. It may not work at all.}
+firewall, or if UDP packet routing is disabled somehow. This is
+experimental code, try this at your own risk. It may not work at all.
 @end table
 
 
@@ -883,7 +853,7 @@ location, the department, or the name of one of your boss' pets.  It can
 be anything, as long as all these names are unique across the entire
 VPN.
 
-@item PrivateKey
+@item PrivateKeyFile
 Fill in the full pathname to the file that contains the private RSA key.
 
 @item ConnectTo
@@ -898,12 +868,15 @@ until someone connects to it.
 Then you should create a file with the name you gave yourself in
 tinc.conf (the `Name' parameter), located in
 @file{/etc/tinc/vpn-name/hosts/}.  In this file, which we call the
-`@emph{host configuration file}', only one variable is required:
+`@emph{host configuration file}', the public key must be present
+and one variable is required:
 
 @table @samp
 @item Subnet
 The IP range that this host accepts as being `local'.  All packets with
 a destination address that is within this subnet will be sent to us.
+Actually it is not stricly required, but you need it to send packets to
+other tinc daemons.
 @end table
 
 
@@ -911,17 +884,14 @@ a destination address that is within this subnet will be sent to us.
 
 Now for all hosts that you want to create a direct connection to, -- you
 connect to them or they connect to you -- you get a copy of their host
-configuration file and their public RSA key.
+configuration file.
 
-For each host configuration file, you add two variables:
+If it is not already present, make sure you add this variable:
 
 @table @samp
 @item Address
 Enter the IP address or DNS hostname for this host.  This is only needed
 if you connect to this host.
-
-@item PublicKey
-Put the full pathname to this hosts public RSA key here.
 @end table
 
 When you did this, you should be ready to create your first connection.
@@ -935,7 +905,7 @@ there.  If you get an error, you can check @ref{Error messages}.
 
 
 @cindex example
-Imagine the following situation.  An A-based company wants to connect
+Imagine the following situation.  Branch A of our example `company' wants to connect
 three branch offices in B, C and D using the internet.  All four offices
 have a 24/7 connection to the internet.
 
@@ -959,142 +929,173 @@ In this example, it is assumed that eth0 is the interface that points to
 the inner (physical) LAN of the office, although this could also be the
 same as the interface that leads to the internet.  The configuration of
 the real interface is also shown as a comment, to give you an idea of
-how these example host is set up.
+how these example host is set up. All branches use the netname `company'
+for this particular VPN.
 
-@subsubheading For A
+@subsubheading For Branch A
 
-@emph{A} would be configured like this:
+@emph{BranchA} would be configured like this:
+
+In @file{/etc/tinc/company/tinc-up}:
 
 @example
-#ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
+# Real interface of internal network:
+# ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
+
 ifconfig tap0 hw ether fe:fd:00:00:00:00
 ifconfig tap0 10.1.54.1 netmask 255.0.0.0
+ifconfig tap0 -arp
 @end example
 
-and in /etc/tinc/tinc.conf:
+and in @file{/etc/tinc/company/tinc.conf}:
 
 @example
-Name = A
-PrivateKey = /etc/tinc/A.priv
-VpnMask = 255.0.0.0
+Name = BranchA
+PrivateKey = /etc/tinc/company/rsa_key.priv
+TapDevice = /dev/tap0
 @end example
 
-On all hosts, /etc/tinc/hosts/A contains:
+On all hosts, /etc/tinc/company/hosts/BranchA contains:
 
 @example
 Subnet = 10.1.0.0/16
 Address = 1.2.3.4
-PublicKey = /etc/tinc/hosts/A.pub
+
+-----BEGIN RSA PUBLIC KEY-----
+...
+-----END RSA PUBLIC KEY-----
 @end example
 
 
-@subsubheading For B
+@subsubheading For Branch B
+
+In @file{/etc/tinc/company/tinc-up}:
 
 @example
-#ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
+# Real interface of internal network:
+# ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
+
 ifconfig tap0 hw ether fe:fd:00:00:00:00
 ifconfig tap0 10.2.1.12 netmask 255.0.0.0
+ifconfig tap0 -arp
 @end example
 
-and in /etc/tinc/tinc.conf:
+and in @file{/etc/tinc/company/tinc.conf}:
 
 @example
-Name = B
-ConnectTo = A
-PrivateKey = /etc/tinc/B.priv
-VpnMask = 255.0.0.0
+Name = BranchB
+ConnectTo = BranchA
+PrivateKey = /etc/tinc/company/rsa_key.priv
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
 same as on the tap0 device.  Also, ConnectTo is given so that no-one can
 connect to this node.
 
-On all hosts, /etc/tinc/hosts/B:
+On all hosts, in @file{/etc/tinc/company/hosts/BranchB}:
 
 @example
 Subnet = 10.2.0.0/16
 Address = 2.3.4.5
-PublicKey = /etc/tinc/hosts/B.pub
+
+-----BEGIN RSA PUBLIC KEY-----
+...
+-----END RSA PUBLIC KEY-----
 @end example
 
 
-@subsubheading For C
+@subsubheading For Branch C
+
+In @file{/etc/tinc/company/tinc-up}:
 
 @example
-#ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
-ifconfig tap0 hw ether fe:fd:00:00:00:00
-ifconfig tap0 10.3.69.254 netmask 255.0.0.0
+# Real interface of internal network:
+# ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
+
+ifconfig tap1 hw ether fe:fd:00:00:00:00
+ifconfig tap1 10.3.69.254 netmask 255.0.0.0
+ifconfig tap1 -arp
 @end example
 
-and in /etc/tinc/A/tinc.conf:
+and in @file{/etc/tinc/company/tinc.conf}:
 
 @example
-Name = C
-ConnectTo = A
+Name = BranchC
+ConnectTo = BranchA
 TapDevice = /dev/tap1
-VpnMask = 255.0.0.0
 @end example
 
 C already has another daemon that runs on port 655, so they have to
-reserve another port for tinc.  It can connect to other tinc daemons on
-the regular port though, so no ConnectPort variable is needed.  They
-also use the netname to distinguish between the two.  tinc is started
-with `tincd -n A'.
+reserve another port for tinc. It knows the portnumber it has to listen on
+from it's own host configuration file.
 
-On all hosts, /etc/tinc/hosts/C:
+On all hosts, in @file{/etc/tinc/company/hosts/BranchC}:
 
 @example
+Address = 3.4.5.6
 Subnet = 10.3.0.0/16
 Port = 2000
-PublicKey = /etc/tinc/hosts/C.pub
+
+-----BEGIN RSA PUBLIC KEY-----
+...
+-----END RSA PUBLIC KEY-----
 @end example
 
 
-@subsubheading For D
+@subsubheading For Branch D
+
+In @file{/etc/tinc/company/tinc-up}:
 
 @example
-#ifconfig tap0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
+# Real interface of internal network:
+# ifconfig tap0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
+
 ifconfig tap0 hw ether fe:fd:0a:04:03:20
 ifconfig tap0 10.4.3.32 netmask 255.0.0.0
+ifconfig tap0 -arp
 @end example
 
-and in /etc/tinc/tinc.conf:
+and in @file{/etc/tinc/company/tinc.conf}:
 
 @example
-MyVirtualIP = 10.4.3.32/16
-ConnectTo = 3.4.5.6
-ConnectPort = 2000
-VpnMask=255.0.0.0
+Name = BranchD
+ConnectTo = BranchC
+PrivateKeyFile = /etc/tinc/company/rsa_key.priv
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
-port 2000.  Hence they need to put in a ConnectPort, but it doesn't need
-to have a different ListenPort.
+port 2000. It knows the port number from the host configuration file.
+
+On all hosts, in @file{/etc/tinc/company/hosts/BranchD}:
+
+@example
+Subnet = 10.4.0.0/16
+Address = 4.5.6.7
+
+-----BEGIN RSA PUBLIC KEY-----
+...
+-----END RSA PUBLIC KEY-----
+@end example
 
 @subsubheading Key files
 
-A, B, C and D all have generate a public key with tincd -K, the output is
-stored in /etc/tinc/hosts/X.pub (where X is A, B or D), except for C,
-who stored it in /etc/tinc/A/hosts/C.pub.
+A, B, C and D all have generated a public/private keypair with the following command:
 
-A stores a copy of B's public key in /etc/tinc/hosts/B.pub
+@example
+tincd -n company -K
+@end example
 
-A stores a copy of C's public key in /etc/tinc/hosts/C.pub
-
-B stores a copy of A's public key in /etc/tinc/hosts/A.pub
-
-C stores a copy of A's public key in /etc/tinc/A/hosts/A.pub
-
-C stores a copy of D's public key in /etc/tinc/A/hosts/D.pub
-
-D stores a copy of C's public key in /etc/tinc/hosts/C.pub
+The private key is stored in @file{/etc/tinc/company/rsa_key.priv},
+the public key is put into the host configuration file in the @file{/etc/tinc/company/hosts/} directory.
+During key generation, tinc automatically guesses the right filenames based on the -n option and
+the Name directive in the @file{tinc.conf} file (if it is available).
 
 @subsubheading Starting
 
-A has to start their tincd first.  Then come B and C, where C has to
-provide the option `-n A', because they have more than one tinc
-network.  Finally, D's tincd is started.
-
+After each branch has finished configuration and they have distributed
+the host configuration files amongst them, they can start their tinc daemons.
+They don't necessarily have to wait for the other branches to have started
+their daemons, tinc will try connecting until they are available.
 
 
 @c ==================================================================
@@ -1207,11 +1208,11 @@ only, so keep an eye on it!
 @table @strong
 @item Could not open /dev/tap0: No such device
 @table @bullet
-@item You forgot to insmod netlink_dev.o
+@item You forgot to insmod netlink_dev.o or ethertap.o
 @item You forgot to compile `Netlink device emulation' in the kernel
 @end table
 
-@item Can't write to tun/tap device: No such device
+@item Can't write to /dev/net/tun: No such device
 @table @bullet
 @item You forgot to insmod tun.o
 @item You forgot to compile `Universal TUN/TAP driver' in the kernel
