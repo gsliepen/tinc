@@ -738,7 +738,7 @@ int ans_key_h(conn_list_t *cl)
   conn_list_t *fw, *gk;
   char *key;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-2) <= 0)
+  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-3) <= 0)
     {
       syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
       return -1;
