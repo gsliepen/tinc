@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.38 2003/07/12 17:41:45 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.39 2003/07/21 19:58:58 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.38 2003/07/12 17:41:45 guus Exp $
+$Id: tinc.texi,v 1.8.4.39 2003/07/21 19:58:58 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.38 2003/07/12 17:41:45 guus Exp $
+$Id: tinc.texi,v 1.8.4.39 2003/07/21 19:58:58 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -177,8 +177,8 @@ available too.
 @section Supported platforms
 
 @cindex platforms
-tinc has been verified to work under Linux, FreeBSD, OpenBSD and Solaris, with
-various hardware architectures.  These are some of the platforms
+tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, MacOS/X (Darwin), Solaris, and Windows (in a Cygwin environment),
+with various hardware architectures.  These are some of the platforms
 that are supported by the universal tun/tap device driver or other virtual network device drivers.
 Without such a driver, tinc will most
 likely compile and run, but it will not be able to send or receive data
@@ -258,6 +258,15 @@ downloaded from @uref{http://chrisp.de/en/projects/tunnel.html}.
 
 IPv6 packets cannot be tunneled on Darwin.
 
+@c ==================================================================
+@subsection Cygwin (Windows)
+
+@cindex Cygwin
+@cindex Windows
+tinc on Windows, in a Cygwin environment, relies on the CIPE driver for its data
+acquisition from the kernel. This driver is not part of Windows but can be
+downloaded from @uref{http://cipe-win32.sourceforge.net/}.
+
 
 @c
 @c
@@ -317,6 +326,7 @@ you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html
 * Configuration of NetBSD kernels::
 * Configuration of Solaris kernels::
 * Configuration of Darwin (MacOS/X) kernels::
+* Configuration of Cygwin (Windows)::
 @end menu
 
 
@@ -433,7 +443,7 @@ Unfortunately somebody still has to write the text.
 
 
 @c ==================================================================
-@node       Configuration of Darwin (MacOS/X) kernels, , Configuration of Solaris kernels, Configuring the kernel
+@node       Configuration of Darwin (MacOS/X) kernels, Configuration of Cygwin (Windows), Configuration of Solaris kernels, Configuring the kernel
 @subsection Configuration of Darwin (MacOS/X) kernels
 
 Darwin does not come with a tunnel driver. You must download it at
@@ -447,6 +457,16 @@ kmodload tunnel
 
 Once loaded, the tunnel driver will automatically create @file{/dev/tun0}..@file{/dev/tun3}
 and the corresponding network interfaces.
+
+
+@c ==================================================================
+@node       Configuration of Cygwin (Windows), , Configuration of Darwin (MacOS/X) kernels, Configuring the kernel
+@subsection Configuration of Cygwin (Windows)
+
+If Cygwin hasn't already been installed, install it directly from
+@uref{http://www.cygwin.com/}. You will also need to install the
+CIPE driver, you can download it from @uref{http://cipe-win32.sourceforge.net}.
+Configure the CIPE network device in the same way as you would do from the tinc-up script.
 
 
 @c ==================================================================
