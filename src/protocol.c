@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.12 2000/06/27 20:55:12 guus Exp $
+    $Id: protocol.c,v 1.28.4.13 2000/06/28 11:38:00 guus Exp $
 */
 
 #include "config.h"
@@ -110,8 +110,8 @@ int send_del_host(conn_list_t *cl, conn_list_t *new_host)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending DEL_HOST for " IP_ADDR_S " to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(new_host->vpn_ip), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending DEL_HOST for " IP_ADDR_S " (%s) to " IP_ADDR_S " (%s)"),
+	   IP_ADDR_V(new_host->vpn_ip), new_host->hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", DEL_HOST, new_host->vpn_ip);
 
@@ -350,7 +350,7 @@ cp
 
   if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
     {
-      syslog(LOG_ERR, _("send failed: %s:%d: %m"), __FILE__, __LINE__);
+      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
     }
 cp
@@ -579,16 +579,16 @@ cp
        return -1;
     }  
 
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got DEL_HOST for " IP_ADDR_S " from " IP_ADDR_S " (%s)"),
-           IP_ADDR_V(vpn_ip), IP_ADDR_V(cl->vpn_ip), cl->hostname);
-
   if(!(fw = lookup_conn(vpn_ip)))
     {
       syslog(LOG_ERR, _("Got DEL_HOST for " IP_ADDR_S " from " IP_ADDR_S " (%s) which does not exist?"),
 	     IP_ADDR_V(vpn_ip), IP_ADDR_V(cl->vpn_ip), cl->hostname);
       return 0;
     }
+
+  if(debug_lvl > 1)
+    syslog(LOG_DEBUG, _("Got DEL_HOST for " IP_ADDR_S " (%s) from " IP_ADDR_S " (%s)"),
+           IP_ADDR_V(fw->vpn_ip), fw->hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
   notify_others(fw, cl, send_del_host);
 

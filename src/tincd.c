@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.1 2000/06/25 15:16:12 guus Exp $
+    $Id: tincd.c,v 1.10.4.2 2000/06/28 11:38:01 guus Exp $
 */
 
 #include "config.h"
@@ -352,7 +352,7 @@ main(int argc, char **argv, char **envp)
 
   if(geteuid())
     {
-      fprintf(stderr, _("You must be root to run this program. sorry.\n"));
+      fprintf(stderr, _("You must be root to run this program. Sorry.\n"));
       return 1;
     }
 
