@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.42 2003/08/16 12:40:00 guus Exp $
+    $Id: meta.c,v 1.1.2.43 2003/08/22 11:18:42 guus Exp $
 */
 
 #include "system.h"
@@ -89,8 +89,6 @@ void broadcast_meta(connection_t *from, const char *buffer, int length)
 
 bool receive_meta(connection_t *c)
 {
-	int x;
-	socklen_t l = sizeof(x);
 	int oldlen, i;
 	int lenin, reqlen;
 	bool decrypted = false;

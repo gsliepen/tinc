@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.38 2003/08/16 12:40:01 guus Exp $
+    $Id: net_packet.c,v 1.1.2.39 2003/08/22 11:18:42 guus Exp $
 */
 
 #include "system.h"
@@ -392,7 +392,6 @@ void flush_queue(node_t *n)
 void handle_incoming_vpn_data(int sock)
 {
 	vpn_packet_t pkt;
-	int x, l = sizeof(x);
 	char *hostname;
 	sockaddr_t from;
 	socklen_t fromlen = sizeof(from);

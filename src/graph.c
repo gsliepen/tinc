@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.27 2003/07/22 20:55:19 guus Exp $
+    $Id: graph.c,v 1.1.2.28 2003/08/22 11:18:42 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -220,7 +220,8 @@ void sssp_bfs(void)
 
 				if(sockaddrcmp(&e->to->address, &e->address)) {
 					node = avl_unlink(node_udp_tree, e->to);
-					e->to->address = e->address;
+					sockaddrfree(&e->to->address);
+					sockaddrcpy(&e->to->address, &e->address);
 
 					if(e->to->hostname)
 						free(e->to->hostname);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.25 2003/07/30 11:50:45 guus Exp $
+    $Id: edge.c,v 1.1.2.26 2003/08/22 11:18:42 guus Exp $
 */
 
 #include "system.h"
@@ -58,15 +58,14 @@ void init_edges(void)
 {
 	cp();
 
-	edge_weight_tree =
-		avl_alloc_tree((avl_compare_t) edge_weight_compare, NULL);
+	edge_weight_tree = avl_alloc_tree((avl_compare_t) edge_weight_compare, NULL);
 }
 
 avl_tree_t *new_edge_tree(void)
 {
 	cp();
 
-	return avl_alloc_tree((avl_compare_t) edge_compare, NULL);
+	return avl_alloc_tree((avl_compare_t) edge_compare, (avl_action_t) free_edge);
 }
 
 void free_edge_tree(avl_tree_t *edge_tree)
@@ -95,6 +94,8 @@ edge_t *new_edge(void)
 void free_edge(edge_t *e)
 {
 	cp();
+	
+	sockaddrfree(&e->address);
 
 	free(e);
 }
@@ -119,8 +120,8 @@ void edge_del(edge_t *e)
 	if(e->reverse)
 		e->reverse->reverse = NULL;
 
-	avl_delete(e->from->edge_tree, e);
 	avl_delete(edge_weight_tree, e);
+	avl_delete(e->from->edge_tree, e);
 }
 
 edge_t *lookup_edge(node_t *from, node_t *to)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.26 2003/07/30 11:50:45 guus Exp $
+    $Id: node.c,v 1.1.2.27 2003/08/22 11:18:42 guus Exp $
 */
 
 #include "system.h"
@@ -58,7 +58,7 @@ void init_nodes(void)
 {
 	cp();
 
-	node_tree = avl_alloc_tree((avl_compare_t) node_compare, NULL);
+	node_tree = avl_alloc_tree((avl_compare_t) node_compare, (avl_action_t) free_node);
 	node_udp_tree = avl_alloc_tree((avl_compare_t) node_udp_compare, NULL);
 }
 
@@ -66,8 +66,8 @@ void exit_nodes(void)
 {
 	cp();
 
-	avl_delete_tree(node_tree);
 	avl_delete_tree(node_udp_tree);
+	avl_delete_tree(node_tree);
 }
 
 node_t *new_node(void)
@@ -105,6 +105,8 @@ void free_node(node_t *n)
 
 	if(n->edge_tree)
 		free_edge_tree(n->edge_tree);
+
+	sockaddrfree(&n->address);
 
 	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
 	

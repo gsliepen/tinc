@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.52 2003/08/03 12:38:43 guus Exp $
+    $Id: netutl.c,v 1.12.4.53 2003/08/22 11:18:42 guus Exp $
 */
 
 #include "system.h"
@@ -70,11 +70,12 @@ sockaddr_t str2sockaddr(const char *address, const char *port)
 	err = getaddrinfo(address, port, &hint, &ai);
 
 	if(err || !ai) {
-		logger(LOG_ERR, _("Error looking up %s port %s: %s"), address, port,
-			   gai_strerror(err));
-		cp_trace();
-		raise(SIGFPE);
-		exit(0);
+		ifdebug(SCARY_THINGS)
+			logger(LOG_DEBUG, "Unknown type address %s port %s", address, port);
+		result.sa.sa_family = AF_UNKNOWN;
+		result.unknown.address = xstrdup(address);
+		result.unknown.port = xstrdup(port);
+		return result;
 	}
 
 	result = *(sockaddr_t *) ai->ai_addr;
@@ -91,6 +92,12 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
 	int err;
 
 	cp();
+
+	if(sa->sa.sa_family == AF_UNKNOWN) {
+		*addrstr = xstrdup(sa->unknown.address);
+		*portstr = xstrdup(sa->unknown.port);
+		return;
+	}
 
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
@@ -120,6 +127,11 @@ char *sockaddr2hostname(const sockaddr_t *sa)
 
 	cp();
 
+	if(sa->sa.sa_family == AF_UNKNOWN) {
+		asprintf(&str, _("%s port %s"), sa->unknown.address, sa->unknown.port);
+		return str;
+	}
+
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
@@ -147,6 +159,14 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
 		case AF_UNSPEC:
 			return 0;
 
+		case AF_UNKNOWN:
+			result = strcmp(a->unknown.address, b->unknown.address);
+
+			if(result)
+				return result;
+
+			return strcmp(a->unknown.port, b->unknown.port);
+
 		case AF_INET:
 			result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
 
@@ -172,6 +192,23 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
 	}
 }
 
+void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
+	if(b->sa.sa_family != AF_UNKNOWN) {
+		*a = *b;
+	} else {
+		a->unknown.family = AF_UNKNOWN;
+		a->unknown.address = xstrdup(b->unknown.address);
+		a->unknown.port = xstrdup(b->unknown.port);
+	}
+}
+
+void sockaddrfree(sockaddr_t *a) {
+	if(a->sa.sa_family == AF_UNKNOWN) {
+		free(a->unknown.address);
+		free(a->unknown.port);
+	}
+}
+	
 void sockaddrunmap(sockaddr_t *sa)
 {
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
