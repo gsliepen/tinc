@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv6.h,v 1.1.2.2 2003/07/07 11:50:52 guus Exp $
+    $Id: ipv6.h,v 1.1.2.3 2003/07/11 16:12:59 guus Exp $
 */
 
 #ifndef __TINC_IPV6_H__
@@ -58,6 +58,13 @@ struct sockaddr_in6 {
 	struct in6_addr sin6_addr;
 	uint32_t sin6_scope_id;
 };
+#endif
+
+#ifndef IN6_IS_ADDR_V4MAPPED
+#define IN6_IS_ADDR_V4MAPPED(a) \
+        ((((__const uint32_t *) (a))[0] == 0) \
+        && (((__const uint32_t *) (a))[1] == 0) \
+        && (((__const uint32_t *) (a))[2] == htonl (0xffff)))
 #endif
 
 #ifndef HAVE_NETINET_IP6_H

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.52 2003/07/06 23:16:28 guus Exp $
+    $Id: process.c,v 1.1.2.53 2003/07/11 16:13:00 guus Exp $
 */
 
 #include "config.h"
@@ -287,11 +287,14 @@ int execute_script(const char *name, char **envp)
 					   name);
 				return -1;
 			}
-		} else {
+		} else if (errno != EINTR) {
 			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
 				   strerror(errno));
 			return -1;
 		}
+
+		/* Why do we get EINTR? */
+		return 0;
 	}
 
 	/* Child here */

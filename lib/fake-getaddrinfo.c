@@ -13,8 +13,9 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 
@@ -97,12 +98,14 @@ int getaddrinfo(const char *hostname, const char *servname,
 			return EAI_MEMORY;
 	}
 	
+#ifdef HAVE_INET_ATON
 	if (inet_aton(hostname, &in)) {
 		if (NULL != (*res = malloc_ai(port, in.s_addr)))
 			return 0;
 		else
 			return EAI_MEMORY;
 	}
+#endif
 	
 	hp = gethostbyname(hostname);
 	if (hp && hp->h_name && hp->h_name[0] && hp->h_addr_list[0]) {

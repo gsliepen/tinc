@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.63 2003/07/06 23:16:28 guus Exp $
+    $Id: conf.c,v 1.9.4.64 2003/07/11 16:12:59 guus Exp $
 */
 
 #include "config.h"
@@ -427,16 +427,6 @@ int read_server_config()
 	free(fname);
 
 	return x;
-}
-
-static int isadir(const char *f)
-{
-	struct stat s;
-
-	if(stat(f, &s) < 0)
-		return 0;
-	else
-		return S_ISDIR(s.st_mode);
 }
 
 int is_safe_path(const char *file)
