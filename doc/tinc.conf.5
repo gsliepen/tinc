@@ -15,14 +15,14 @@ names. This means that you call \fBtincd\fR with the \fI-n\fR argument,
 which will assign a name to this daemon.
 
 The effect of this is that the daemon will set its configuration
-``root'' to \fI/etc/tinc/\fBnn\fI/\fR, where \fBnn\fR is your argument
+``root'' to \fI/etc/tinc/\fBnetname\fI/\fR, where \fBnetname\fR is your argument
 to the \fI-n\fR option. You'll notice that it appears in syslog as
-``tincd.\fBnn\fR''.
+``tincd.\fBnetname\fR''.
 
 However, it is not strictly necessary that you call tinc with the -n
 option. In this case, the network name would just be empty, and it
 will be used as such. tinc now looks for files in \fI/etc/tinc/\fR,
-instead of \fI/etc/tinc/\fBnn\fI/\fR; the configuration file should be
+instead of \fI/etc/tinc/\fBnetname\fI/\fR; the configuration file should be
 \fI/etc/tinc/tinc.conf\fR, and the passphrases are now expected to be
 in \fI/etc/tinc/passphrases/\fR.
 
@@ -34,7 +34,7 @@ we will assume that you use it.
 Each tinc daemon should have a name that is unique in the network which
 it will be part of. The name will be used by other tinc daemons for
 identification. The name has to be declared in the
-\fI/etc/tinc/\fBnn\fI/tinc.conf\fR file.
+\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR file.
 
 To make things easy, choose something that will give unique and easy
 to rememebr names to your tinc daemon(s).
@@ -42,16 +42,16 @@ You could try things like hostnames, owner surnames or location names.
 .PP
 .SH "PUBLIC/PRIVATE KEYS"
 You should use \fBtincd --generate-keys\fR to generate public/private
-keypairs. It will generate two keys. The line containing the private
-key should be completely copied to \fI/etc/tinc/\fBnn\fI/tinc.conf\fR
-\-\- where \fBnn\fR stands for the network (See under \fBNETWORKS\fR)
-above. The line containing the public key should be completely copied
-to \fI/etc/tinc/\fBnn\fI/hosts/\fBname\fR \-\- where \fBname\fR stands
-for the name of the tinc daemon (See \fBNAMES\fR).
+keypairs. It will generate two keys. The private
+key should be stored in a separate file \fI/etc/tinc/\fBnetname\fI/rsa_key.priv\fR
+\-\- where \fBnetname\fR stands for the network (See under \fBNETWORKS\fR)
+above. The public key should be stored in
+the host configuration file \fI/etc/tinc/\fBnetname\fI/hosts/\fBname\fR \-\- where \fBname\fR stands
+for the name of the local tinc daemon (See \fBNAMES\fR).
 .PP
 .SH "SERVER CONFIGURATION"
 The server configuration of the daemon is done in the file
-\fI/etc/tinc/\fBnn\fI/tinc.conf\fR.
+\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR.
 
 This file consists of comments (lines started with a \fB#\fR) or
 assignments in the form of
@@ -67,16 +67,16 @@ readability. If you leave it out, remember to replace it with at least
 one space character.
 .PP
 Here are all valid variables, listed in alphabetical order. The default
-value, required or optional is given between parentheses.
+value is given between parentheses.
 .TP
-\fBConnectTo\fR = <\fIname\fR> (optional)
+\fBConnectTo\fR = <\fIname\fR>
 Specifies which host to connect to on startup. Multiple \fBConnectTo\fR variables
 may be specified, if connecting to the first one fails then tinc will try
 the next one, and so on. The names should be known to this tinc daemon
 (i.e., there should be a host configuration file for the name on the ConnectTo
 line).
 
-If you don't specify a host with \fBConnectTo\fR, tinc won't connect at all,
+If you don't specify a host with \fBConnectTo\fR, tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 .TP
 \fBHostnames\fR = <\fIyes|no\fR> (no)
@@ -88,33 +88,47 @@ a lookup if your DNS server is not responding.
 This does not affect resolving hostnames to IP addresses from the
 host configuration files.
 .TP
+\fBInterface\fR = <\fIdevice\fR>
+If you have more than one network interface in your computer, tinc will
+by default listen on all of them for incoming connections.  It is
+possible to bind tinc to a single interface like eth0 or ppp0 with this
+variable.
+.TP
+\fBInterfaceIP\fR = <\fIlocal address\fR>
+If your computer has more than one IP address on a single interface (for
+example if you are running virtual hosts), tinc will by default listen
+on all of them for incoming connections.  It is possible to bind tinc to
+a single IP address with this variable.  It is still possible to listen
+on several interfaces at the same time though, if they share the same IP
+address.
+.TP
 \fBKeyExpire\fR = <\fIseconds\fR> (3600)
 This option controls the time the encryption keys used to encrypt the data
 are valid. It is common practice to change keys at regular intervals to
 make it even harder for crackers, even though it is thought to be nearly
 impossible to crack a single key.
 .TP
-\fBName\fR = <\fIname\fR> (required)
+\fBName\fR = <\fIname\fR> [required]
 This is the name which identifies this tinc daemon. It must be unique for
 the virtual private network this daemon will connect to.
 .TP
-\fBPingTimeout\fR = <\fIseconds\fR> (5)
+\fBPingTimeout\fR = <\fIseconds\fR> (60)
 The number of seconds of inactivity that tinc will wait before sending a
 probe to the other end. If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 .TP
-\fBPrivateKey\fR = <\fIkey\fR>
+\fBPrivateKey\fR = <\fIkey\fR> [obsolete]
 The private RSA key of this tinc daemon. It will allow this tinc daemon to
 authenticate itself to other daemons.
 .TP
-\fBPrivateKeyFile\fR = <\fIfilename\fR>
+\fBPrivateKeyFile\fR = <\fIfilename\fR> [recommended]
 The file in which the private RSA key of this tinc daemon resides.
 
 Note that there must be exactly one of \fBPrivateKey\fR or \fBPrivateKeyFile\fR
 specified in the configuration file.
 .TP
-\fBTapDevice\fR = <\fIdevice\fR> (/dev/tap0)
+\fBTapDevice\fR = <\fIdevice\fR> (/dev/tap0 or /dev/net/tun)
 The ethertap or tun/tap device to use. tinc will automatically detect what
 kind of tapdevice it is.
 Note that you can only use one device per
@@ -134,24 +148,34 @@ tinc daemon. Since host configuration files only contain public keys, no secrets
 are revealed by sending out this information.
 .PP
 .TP
-\fBAddress\fR = <\fIIP address\fR> (required)
+\fBAddress\fR = <\fIIP address\fR> [recommended]
 The real address or hostname of this tinc daemon.
+.TP
+\fBIndirectData\fR = <\fIyes\fR|\fIno\fR> (no) [experimental]
+This option specifies whether other tinc daemons besides the one you
+specified with ConnectTo can make a direct connection to you.  This is
+especially useful if you are behind a firewall and it is impossible to
+make a connection from the outside to your tinc daemon.  Otherwise, it
+is best to leave this option out or set it to no.
 .TP
 \fBPort\fR = <\fIport number\fR> (655)
 The port on which this tinc daemon is listening for incoming connections.
 .TP
-\fBPublicKey\fR = <\fIkey\fR>
+\fBPublicKey\fR = <\fIkey\fR> [obsolete]
 The public RSA key of this tinc daemon. It will be used to cryptographically
 verify it's identity and to set up a secure connection.
 .TP
-\fBPublicKeyFile\fR = <\fIfilename\fR>
+\fBPublicKeyFile\fR = <\fIfilename\fR> [obsolete]
 The file in which the public RSA key of this tinc daemon resides.
 
-Note that there must be exactly one of \fBPublicKey\fR or \fBPublicKeyFile\fR
-specified in each host configuration file, if you want to be able to establish
-a connection with that host.
+From version 1.0pre4 on tinc will store the public key directly into the
+host configuration file in PEM format, the above two options then are not
+necessary. Either the PEM format is used, or exactly
+one of the above two options must be specified
+in each host configuration file, if you want to be able to establish a
+connection with that host.
 .TP
-\fBSubnet\fR = <\fIaddress/masklength\fR> (optional)
+\fBSubnet\fR = <\fIaddress/masklength\fR>
 The subnet which this tinc daemon will serve. tinc tries to look up which other
 daemon it should send a packet to by searching the appropiate subnet. If the
 packet matches a subnet, it will be sent to the daemon who has this subnet in his
@@ -165,19 +189,27 @@ The subnets must be in a form like \fI192.168.1.0/24\fR, where 192.168.1.0 is th
 network address and 24 is the number of bits set in the netmask. Note that subnets
 like \fI192.168.1.1/24\fR are invalid! Read a networking howto/FAQ/guide if you
 don't understand this.
+.TP
+\fBTCPonly\fR = <\fIyes\fR|\fIno\fR> (no) [experimental]
+If this variable is set to yes, then the packets are tunnelled over a
+TCP connection instead of a UDP connection.  This is especially useful
+for those who want to run a tinc daemon from behind a masquerading
+firewall, or if UDP packet routing is disabled somehow. This is
+experimental code, try this at your own risk. It may not work at all.
+Setting this options also implicitly sets IndirectData.
 .SH "FILES"
 .TP
 \fI/etc/tinc/\fR
 The top directory for configuration files.
 .TP
-\fI/etc/tinc/\fBnn\fI/tinc.conf\fR
+\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR
 The default name of the server configuration file for net
-\fBnn\fR.
+\fBnetname\fR.
 .TP
-\fI/etc/tinc/\fBnn\fI/hosts/\fR
+\fI/etc/tinc/\fBnetname\fI/hosts/\fR
 Host configuration files are kept in this directory.
 .TP
-\fI/etc/tinc/\fBnn\fI/tinc-up\fR
+\fI/etc/tinc/\fBnetname\fI/tinc-up\fR
 If an executable file with this name exists, it will be executed
 right after the tinc daemon has connected to the tap device. It can
 be used to ifconfig the network interface.
@@ -185,7 +217,7 @@ be used to ifconfig the network interface.
 If the tapdevice is a tun/tap device, the evironment variable
 \fB$IFNAME\fR will be set to the name of the network interface.
 .TP
-\fI/etc/tinc/\fBnn\fI/tinc-down\fR
+\fI/etc/tinc/\fBnetname\fI/tinc-down\fR
 If an executable file with this name exists, it will be executed
 right before the tinc daemon is going to close it's connection to the
 tap device.

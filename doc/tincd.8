@@ -33,8 +33,8 @@ Increase debug level (see below).
 \fB\-k\fR, \fB\-\-kill\fR
 Attempt to kill a running tincd and exit.
 .TP
-\fB\-n\fR, \fB\-\-net\fR=\fINETNAME\fR
-Connect to net NETNAME.
+\fB\-n\fR, \fB\-\-net\fR=\fInetname\fR
+Connect to net `netname'.
 .TP
 \fB\-K\fR, \fB\-\-generate-keys\fR[=\fIBITS]\fR
 Generate public/private RSA keypair and exit. If BITS is omitted,
@@ -93,26 +93,26 @@ This will log all network traffic over the virtual private network.
 .PP
 .SH "FILES"
 .TP
-\fI/etc/tinc/<NETNAME>/tinc.conf\fR
+\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR
 The configuration file for tincd.
 .TP
-\fI/etc/tinc/<NETNAME>/tinc-up\fR
+\fI/etc/tinc/\fBnetname\fI/tinc-up\fR
 Script which is executed as soon as a tap device has been allocated.
 Purpose is to further configure that device.
 .TP
-\fI/etc/tinc/<NETNAME>/tinc-down\fR
+\fI/etc/tinc/\fBnetname\fI/tinc-down\fR
 Script which is executed when tinc quits.
 Purpose is to shut down the tap device.
 .TP
-\fI/etc/tinc/<NETNAME>/hosts/*\fR
+\fI/etc/tinc/\fBnetname\fI/hosts/*\fR
 The directory containing the host configuration files
 used to authenticate other tinc daemons.
+.TP
+\fI/var/run/tinc.\fBnetname\fI.pid\fR
+The PID of the currently running tincd is stored in this file.
 .PP
 .SH "BUGS"
-Maintaining a connection list on each tinc daemon that can connect and disconnect at any
-moment, and making sure that all connections satisfy the tree property isn't easy. Although
-we have done a lot to make sure tinc is sturdy and foolproof, it might happen that
-some connection lists get corrupted.
+The TCPonly and IndirectData options may not work correctly.
 .PP
 \fBThe cryptography in tinc is not well tested yet. Use it at your own risk!\fR
 .PP
