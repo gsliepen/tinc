@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.41 2003/07/24 12:08:15 guus Exp $
+    $Id: conf.h,v 1.6.4.42 2003/07/30 21:52:41 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -44,7 +44,7 @@ extern char *netname;
 
 extern void init_configuration(avl_tree_t **);
 extern void exit_configuration(avl_tree_t **);
-extern config_t *new_config(void) __attribute__ ((malloc));
+extern config_t *new_config(void) __attribute__ ((__malloc__));
 extern void free_config(config_t *);
 extern void config_add(avl_tree_t *, config_t *);
 extern config_t *lookup_config(const avl_tree_t *, char *);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.58 2003/07/28 22:06:09 guus Exp $
+    $Id: process.c,v 1.1.2.59 2003/07/30 21:52:41 guus Exp $
 */
 
 #include "system.h"
@@ -206,7 +206,7 @@ bool detach(void)
   Execute the program name, with sane environment.
 */
 static void _execute_script(const char *scriptname, char **envp)
-	__attribute__ ((noreturn));
+	__attribute__ ((__noreturn__));
 static void _execute_script(const char *scriptname, char **envp)
 {
 	int save_errno;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.16 2003/07/29 10:50:15 guus Exp $
+    $Id: edge.h,v 1.1.2.17 2003/07/30 21:52:41 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -44,9 +44,9 @@ extern avl_tree_t *edge_weight_tree;	/* Tree with all known edges sorted on weig
 
 extern void init_edges(void);
 extern void exit_edges(void);
-extern edge_t *new_edge(void) __attribute__ ((malloc));
+extern edge_t *new_edge(void) __attribute__ ((__malloc__));
 extern void free_edge(edge_t *);
-extern avl_tree_t *new_edge_tree(void) __attribute__ ((malloc));
+extern avl_tree_t *new_edge_tree(void) __attribute__ ((__malloc__));
 extern void free_edge_tree(avl_tree_t *);
 extern void edge_add(edge_t *);
 extern void edge_del(edge_t *);

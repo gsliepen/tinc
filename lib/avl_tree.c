@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.17 2003/07/24 12:08:14 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.18 2003/07/30 21:52:41 guus Exp $
 */
 
 #include "system.h"
@@ -52,7 +52,7 @@
 #endif
 
 #ifndef AVL_DEPTH
-static int lg(unsigned int u) __attribute__ ((const));
+static int lg(unsigned int u) __attribute__ ((__const__));
 
 static int lg(unsigned int u)
 {

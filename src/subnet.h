@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.23 2003/07/24 12:08:16 guus Exp $
+    $Id: subnet.h,v 1.1.2.24 2003/07/30 21:52:41 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -64,11 +64,11 @@ typedef struct subnet_t {
 	} net;
 } subnet_t;
 
-extern subnet_t *new_subnet(void) __attribute__ ((malloc));
+extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
 extern void free_subnet(subnet_t *);
 extern void init_subnets(void);
 extern void exit_subnets(void);
-extern avl_tree_t *new_subnet_tree(void) __attribute__ ((malloc));
+extern avl_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
 extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
