@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.40 2003/07/30 09:22:29 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.41 2003/08/02 21:55:12 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.40 2003/07/30 09:22:29 guus Exp $
+$Id: tinc.texi,v 1.8.4.41 2003/08/02 21:55:12 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.40 2003/07/30 09:22:29 guus Exp $
+$Id: tinc.texi,v 1.8.4.41 2003/08/02 21:55:12 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -272,7 +272,7 @@ downloaded from @uref{http://cipe-win32.sourceforge.net/}.
 
 @cindex MinGW
 @cindex Windows
-tinc on Windows, compiled using MinGW, relies on the CIPE driver for its data
+tinc on Windows (native), compiled using MinGW, relies on the CIPE driver for its data
 acquisition from the kernel. This driver is not part of Windows but can be
 downloaded from @uref{http://cipe-win32.sourceforge.net/}.
 
@@ -672,8 +672,11 @@ You will need to install the MinGW environment from @uref{http://www.mingw.org}.
 
 When tinc is compiled using MinGW it runs natively under Windows,
 it is not necessary to keep MinGW installed.
-However, when compiled using MinGW, tinc will not be able to start
-scripts or be able to receive signals.
+
+When running natively, tinc is not able to start scripts,
+nor is tinc able to receive signals.
+When detaching, tinc will install itself as a service,
+which will be restarted automatically after reboots.
 
 
 @c ==================================================================
@@ -1470,6 +1473,8 @@ logged.  Everything goes via syslog.
 @item -k, --kill[=SIGNAL]
 Attempt to kill a running tincd (optionally with the specified SIGNAL instead of SIGTERM) and exit.
 Use it in conjunction with the -n option to make sure you kill the right tinc daemon.
+Under native Windows the optional argument is ignored,
+the service will always be stopped and removed.
 
 @item -n, --net=NETNAME
 Connect to net NETNAME.  @xref{Multiple networks}.

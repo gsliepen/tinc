@@ -34,6 +34,8 @@ If that succeeds,
 it will detach from the controlling terminal and continue in the background,
 accepting and setting up connections to other tinc daemons
 that are part of the virtual private network.
+Under Windows (native) tinc will install itself as a service,
+which will be restarted automatically after reboots.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl c, -config Ns = Ns Ar DIR
@@ -52,6 +54,8 @@ Attempt to kill a running
 (optionally with the specified
 .Ar SIGNAL
 instead of SIGTERM) and exit.
+Under native Windows the optional argument is ignored,
+the service will always be stopped and removed.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
 .Ar NETNAME .
