@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.32 2001/06/05 16:13:41 guus Exp $
+dnl $Id: configure.in,v 1.13.2.33 2001/06/07 07:48:11 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -45,6 +45,8 @@ case $host_os in
   ;;
 esac
 
+AC_CACHE_SAVE
+
 dnl Checks for libraries.
 
 dnl Checks for header files.
@@ -80,6 +82,7 @@ AC_CHECK_FUNC(gethostbyname, [], [
   AC_CHECK_LIB(nsl, gethostbyname)
 ])
 
+AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 tinc_TUNTAP
