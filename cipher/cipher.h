@@ -20,7 +20,7 @@
 #ifndef __TINC_CIPHER_H__
 #define __TINC_CIPHER_H__
 
-#include "blowfish/blowfish.h"
+#include <openssl/blowfish.h>
 #include "net.h"
 
 enum {

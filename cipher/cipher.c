@@ -25,7 +25,7 @@
 
 #include <cipher.h>
 
-#include "blowfish/blowfish.h"
+#include <openssl/blowfish.h>
 
 #include "net.h"
 
