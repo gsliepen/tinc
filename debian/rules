@@ -12,6 +12,12 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
+#	# If the Makefile.in.in file in po/ already contains DESTDIR support, skip the patching.
+	cd `pwd`/po ; ( \
+	  if ! grep DESTDIR Makefile.in.in > /dev/null ; then \
+	    patch -Ns -p0 < `pwd`/../debian/po-Makefile.in.in.diff || true ;\
+	  fi ;\
+	)
 	./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
 	$(MAKE)
 
@@ -36,7 +42,6 @@ install: build
 	mkdir -p `pwd`/debian/tmp/etc/tinc/example
 	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/example/tinc.conf
 	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
-	rm -f `pwd`/debian/tmp/usr/lib/tinc/libblowfish.so
 
 
 # Build architecture-independent files here.
@@ -45,30 +50,20 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-#	dh_testversion
 	dh_testdir
 	dh_testroot
-#	dh_installdebconf	
 	dh_installdocs
 	dh_installexamples
-#	dh_installmenu
-#	dh_installemacsen
-#	dh_installpam
 	dh_installinit
-#	dh_installcron
 	dh_installmanpages
 	dh_installinfo
-#	dh_undocumented
 	dh_installchangelogs ChangeLog
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-#	# You may want to make some executables suid here.
-#	dh_suidregister
-#	dh_makeshlibs
 	dh_installdeb
-#	dh_perl
+	dh_perl
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums

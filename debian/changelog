@@ -1,10 +1,12 @@
-tinc (1.0pre3-0.1) unstable; urgency=low
+tinc (1.0pre3-0.2) unstable; urgency=low
 
   * New upstream version (1.0pre3) (Closes: #71274).
   * Better Depends and Build-Depends lines.
   * Dropped dependencies on libgmp, added libssl.
   * doc-base.tinc: New file.
   * Deleted the file shlibs, as there on longer is a libblowfish.
+  * Patch po/Makefile.in.in from po-Makefile.in.in.diff if necessary.
+  * Use dh_perl to get accurate perl dependencies.
 
  -- Ivo Timmermans <ivo@debian.org>  Thu,  2 Nov 2000 16:53:52 +0100
 
