@@ -1,5 +1,6 @@
-version 0.3.4                Feb 19 2000
+version 1.0                  Apr  x 2000
  * The fix that was in 0.3.3 appeared to be wrong. Fixed now.
+ * Documentation updates
 
 version 0.3.3                Feb  9 2000
  * Fixed bug that made tinc stop working with latest kernels (Guus
