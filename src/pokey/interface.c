@@ -16,6 +16,7 @@
 #include "node.h"
 #include "edge.h"
 #include "interface.h"
+#include "logging.h"
 
 #include <xalloc.h>
 
