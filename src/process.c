@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.37 2002/03/19 00:07:09 guus Exp $
+    $Id: process.c,v 1.1.2.38 2002/03/24 16:22:59 guus Exp $
 */
 
 #include "config.h"
@@ -30,6 +30,7 @@
 #include <syslog.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -260,7 +261,13 @@ int execute_script(const char *name)
 {
   pid_t pid;
   int status;
+  struct stat s;
 cp
+  /* First check if there is a script */
+
+  if(stat(name, &s))
+    return 0;
+
   if((pid = fork()) < 0)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "fork", strerror(errno));
