@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
+    $Id: event.c,v 1.1 2002/05/02 13:11:55 zarq Exp $
 */
 
 #include "config.h"
