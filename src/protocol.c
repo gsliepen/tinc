@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.113 2001/10/30 12:59:12 guus Exp $
+    $Id: protocol.c,v 1.28.4.114 2001/10/30 16:34:32 guus Exp $
 */
 
 #include "config.h"
@@ -606,7 +606,7 @@ cp
 
   */
 
-  /* Create a edge_t for this connection */
+  /* Create an edge_t for this connection */
 
   c->edge = new_edge();
   
@@ -874,6 +874,11 @@ cp
   if(n)
     {
       /* Check if it matches */
+
+      if(n->address != address || n->port != port)
+        syslog(LOG_DEBUG, _("Got %s from %s (%s) for %s which does not match existing entry"), "ADD_NODE", c->name, c->hostname, n->name);
+
+      return 0;
     }
   else
     {
@@ -907,11 +912,12 @@ cp
 int del_node_h(connection_t *c)
 {
   node_t *n;
+  edge_t *e;
   char name[MAX_STRING_SIZE];
   ipv4_t address;
   port_t port;
   connection_t *other;
-  avl_node_t *node;
+  avl_node_t *node, *next;
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %lx:%hd", name, &address, &port) != 3)
     {
@@ -951,8 +957,7 @@ cp
   
   if(address != n->address || port != n->port)
     {
-      syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which doesn't match"), "DEL_NODE", c->name, c->hostname, n->name);
-      return 0;
+      syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which does not match existing entry"), "DEL_NODE", c->name, c->hostname, n->name);
     }
 
   /* Tell the rest about the deleted node */
@@ -964,9 +969,21 @@ cp
         send_del_node(other, n);
     }
 
+  /* Delete all edges associated with the node */
+
+  for(node = n->edge_tree->head; node; node = next)
+    {
+      next = node->next;
+      e = (edge_t *)node->data;
+      edge_del(e);
+    }
+
   /* Delete the node */
   
   node_del(n);
+
+  mst_kruskal();
+  sssp_bfs();
 cp
   return 0;
 }
@@ -1029,13 +1046,19 @@ cp
       return -1;
     }
 
-  /* Check if node already exists */
+  /* Check if edge already exists */
   
   e = lookup_edge(from, to);
   
   if(e)
     {
-      /* Check if it matches */
+      if(e->weight != weight || e->options != options)
+        {
+          syslog(LOG_ERR, _("Got %s from %s (%s) which does not match existing entry"), "ADD_EDGE", c->name, c->hostname);
+          return -1;
+        }
+      
+      return 0;
     }
   else
     {
@@ -1067,8 +1090,8 @@ cp
 int send_del_edge(connection_t *c, edge_t *e)
 {
 cp
-  return send_request(c, "%d %s %s %lx", DEL_EDGE,
-                      e->from->name, e->to->name, e->options);
+  return send_request(c, "%d %s %s %lx %d", DEL_EDGE,
+                      e->from->name, e->to->name, e->options, e->weight);
 }
 
 int del_edge_h(connection_t *c)
@@ -1078,10 +1101,11 @@ int del_edge_h(connection_t *c)
   char to_name[MAX_STRING_SIZE];
   node_t *from, *to;
   long int options;
+  int weight;
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx", from_name, to_name, &options) != 3)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx %d", from_name, to_name, &options, &weight) != 4)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE",
              c->name, c->hostname);
@@ -1126,7 +1150,11 @@ cp
   
   if(e)
     {
-      /* Check if it matches */
+      if(e->weight != weight || e->options != options)
+        {
+          syslog(LOG_ERR, _("Got %s from %s (%s) which does not match existing entry"), "ADD_EDGE", c->name, c->hostname);
+          return -1;
+        }
     }
   else
     {

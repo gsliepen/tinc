@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.20 2001/10/28 22:42:49 guus Exp $
+    $Id: connection.h,v 1.1.2.21 2001/10/30 16:34:32 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -104,7 +104,7 @@ typedef struct connection_t {
 extern avl_tree_t *connection_tree;
 
 extern void init_connections(void);
-extern void exit_connection(void);
+extern void exit_connections(void);
 extern connection_t *new_connection(void);
 extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.23 2001/10/28 22:42:49 guus Exp $
+    $Id: connection.c,v 1.1.2.24 2001/10/30 16:34:32 guus Exp $
 */
 
 #include "config.h"
@@ -54,7 +54,7 @@ cp
 cp
 }
 
-void exit_connection(void)
+void exit_connections(void)
 {
 cp
   avl_delete_tree(connection_tree);

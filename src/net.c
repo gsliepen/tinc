@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.142 2001/10/30 12:59:12 guus Exp $
+    $Id: net.c,v 1.35.4.143 2001/10/30 16:34:32 guus Exp $
 */
 
 #include "config.h"
@@ -80,6 +80,8 @@ int udp_socket = -1;
 
 int keylifetime = 0;
 int keyexpires = 0;
+
+int do_prune = 0;
 
 /* VPN packet I/O */
 
@@ -363,7 +365,6 @@ int setup_outgoing_socket(connection_t *c)
 {
   int flags;
   struct sockaddr_in a;
-  int option;
 cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s (%s)"), c->name, c->hostname);
@@ -804,9 +805,13 @@ cp
       terminate_connection(c, 0);
     }
 
-//  terminate_connection(myself, 0);
+  terminate_connection(myself->connection, 0);
 
 //  destroy_trees();
+  exit_edges();
+  exit_subnets();
+  exit_nodes();
+  exit_connections();
 
   execute_script("tinc-down");
 
@@ -920,15 +925,59 @@ cp
 
 /*
   Terminate a connection:
-  - Close the sockets
-  - Remove associated hosts and subnets
+  - Close the socket
+  - Remove associated edge and tell other connections about it if report = 1
+  - Check if we need to retry making an outgoing connection
   - Deactivate the host
-  - Since it might still be referenced, put it on the prune list.
-  - If report == 1, then send DEL_HOST messages to the other tinc daemons.
 */
 void terminate_connection(connection_t *c, int report)
 {
-  /* Needs a serious rewrite. */
+  avl_node_t *node;
+  connection_t *other;
+cp
+  if(c->status.remove)
+    return;
+  
+  if(debug_lvl >= DEBUG_CONNECTIONS)
+    syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
+           c->name, c->hostname);
+
+  c->status.remove = 1;
+  
+  if(c->socket)
+    close(c->socket);
+
+  if(c->edge)
+    {
+      if(report)
+        {
+          for(node = connection_tree->head; node; node = node->next)
+            {
+              other = (connection_t *)node->data;
+              if(other->status.active && other != c)
+                send_del_edge(other, c->edge);
+            }
+        }
+
+      edge_del(c->edge);
+    }
+
+  /* Check if this was our outgoing connection */
+
+  if(c->status.outgoing)
+    {
+      c->status.outgoing = 0;
+      signal(SIGALRM, try_outgoing_connections);
+      alarm(seconds_till_retry);
+      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
+    }
+
+  /* Deactivate */
+
+  c->status.active = 0;
+  c->node->connection = NULL;
+  do_prune = 1;
+cp
 }
 
 /*
@@ -1104,6 +1153,22 @@ cp
 cp
 }
 
+void prune_connections(void)
+{
+  connection_t *c;
+  avl_node_t *node, *next;
+cp
+  for(node = connection_tree->head; node; node = next)
+    {
+      next = node->next;
+      c = (connection_t *)node->data;
+
+      if(c->status.remove)
+	connection_del(c);
+    }
+cp
+}
+
 /*
   this is where it all happens...
 */
@@ -1122,6 +1187,12 @@ cp
     {
       tv.tv_sec = timeout;
       tv.tv_usec = 0;
+
+      if(do_prune)
+        {
+          prune_connections();
+          do_prune = 0;
+        }
 
       build_fdset(&fset);
 
