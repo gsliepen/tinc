@@ -120,6 +120,14 @@ typedef int bool;
 #include <netinet/tcp.h>
 #endif
 
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif
+
+#ifdef HAVE_NETINET_IP6_H
+#include <netinet/ip6.h>
+#endif
+
 #ifdef HAVE_MINGW
 #include <windows.h>
 #include <winsock2.h>

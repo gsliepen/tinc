@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.62 2003/07/22 20:55:20 guus Exp $
+    $Id: route.c,v 1.1.2.63 2003/07/31 13:18:34 guus Exp $
 */
 
 #include "system.h"
@@ -30,9 +30,6 @@
 #endif
 #ifdef HAVE_NETINET_IP_ICMP_H
 #include <netinet/ip_icmp.h>
-#endif
-#ifdef HAVE_NETINET_IP6_H
-#include <netinet/ip6.h>
 #endif
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>

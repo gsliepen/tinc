@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.77 2003/07/31 11:17:39 guus Exp $
+dnl $Id: configure.in,v 1.13.2.78 2003/07/31 13:18:34 guus Exp $
 
 AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
@@ -88,21 +88,100 @@ fi
 dnl Checks for libraries.
 
 dnl Checks for header files.
+dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
+
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/param.h sys/time.h sys/socket.h sys/wait.h sys/mman.h netdb.h arpa/inet.h netinet/in_systm.h netinet/in.h])
-AC_CHECK_HEADERS([net/ethernet.h net/if.h net/if_arp.h netinet/if_ether.h netinet/ip.h netinet/tcp.h netinet/ip_icmp.h netinet/ip6.h netinet/icmp6.h],
+AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/param.h sys/time.h sys/socket.h sys/wait.h sys/mman.h netdb.h arpa/inet.h])
+AC_CHECK_HEADERS([net/if.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h],
   [], [],
   [#ifdef HAVE_SYS_TYPES_H
    #include <sys/types.h>
    #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
    #ifdef HAVE_SYS_SOCKET_H
    #include <sys/socket.h>
+   #endif
+  ]
+)
+AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
+  [], [],
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NET_IF_H
+   #include <net/if.h>
    #endif
    #ifdef HAVE_NETINET_IN_SYSTM_H
    #include <netinet/in_systm.h>
    #endif
    #ifdef HAVE_NETINET_IN_H
    #include <netinet/in.h>
+   #endif
+   #ifdef HAVE_NETINET_IN6_H
+   #include <netinet/in6.h>
+   #endif
+   #ifdef HAVE_NET_ETHERNET_H
+   #include <net/ethernet.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+  ]
+)
+AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
+  [], [],
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NET_IF_H
+   #include <net/if.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_SYSTM_H
+   #include <netinet/in_systm.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_H
+   #include <netinet/in.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_H
+   #include <netinet/ip.h>
+   #endif
+   #ifdef HAVE_NETINET_IN6_H
+   #include <netinet/in6.h>
+   #endif
+   #ifdef HAVE_NETINET_IP6_H
+   #include <netinet/ip6.h>
+   #endif
+   #ifdef HAVE_NET_ETHERNET_H
+   #include <net/ethernet.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+   #ifdef HAVE_NETINET_IF_ETHER_H
+   #include <netinet/if_ether.h>
    #endif
   ]
 )
@@ -121,17 +200,17 @@ AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, stru
   [#ifdef HAVE_SYS_TYPES_H
    #include <sys/types.h>
    #endif
-   #ifdef HAVE_SYS_SOCKET_H
-   #include <sys/socket.h>
-   #endif
    #ifdef HAVE_NETDB_H
    #include <netdb.h>
    #endif
-   #ifdef HAVE_NET_IF_ARP_H
-   #include <net/if_arp.h>
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
    #endif
-   #ifdef HAVE_NETINET_IF_ETHER_H
-   #include <netinet/if_ether.h>
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NET_IF_H
+   #include <net/if.h>
    #endif
    #ifdef HAVE_NETINET_IN_SYSTM_H
    #include <netinet/in_systm.h>
@@ -142,11 +221,26 @@ AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, stru
    #ifdef HAVE_NETINET_IP_H
    #include <netinet/ip.h>
    #endif
-   #ifdef HAVE_NETINET_IP_ICMP_H
-   #include <netinet/ip_icmp.h>
+   #ifdef HAVE_NETINET_TCP_H
+   #include <netinet/tcp.h>
+   #endif
+   #ifdef HAVE_NETINET_IN6_H
+   #include <netinet/in6.h>
    #endif
    #ifdef HAVE_NETINET_IP6_H
    #include <netinet/ip6.h>
+   #endif
+   #ifdef HAVE_NET_ETHERNET_H
+   #include <net/ethernet.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+   #ifdef HAVE_NETINET_IF_ETHER_H
+   #include <netinet/if_ether.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_ICMP_H
+   #include <netinet/ip_icmp.h>
    #endif
    #ifdef HAVE_NETINET_ICMP6_H
    #include <netinet/icmp6.h>
