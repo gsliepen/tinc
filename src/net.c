@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.22 2000/08/07 16:27:28 guus Exp $
+    $Id: net.c,v 1.35.4.23 2000/08/08 13:47:56 guus Exp $
 */
 
 #include "config.h"
@@ -129,18 +129,17 @@ int xrecv(conn_list_t *cl, void *packet)
   int lenin;
 cp
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
-cp
   add_mac_addresses(&vp);
-cp
+
   if(debug_lvl > 3)
     syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
            ((real_packet_t*)packet)->len, cl->vpn_hostname, cl->real_hostname);
-cp
+
   if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
     total_tap_out += lenin;
-cp
+
   cl->want_ping = 0;
   cl->last_ping_time = time(NULL);
 cp

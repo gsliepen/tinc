@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.22 2000/08/08 08:48:50 guus Exp $
+    $Id: protocol.c,v 1.28.4.23 2000/08/08 13:47:57 guus Exp $
 */
 
 #include "config.h"
@@ -126,7 +126,7 @@ cp
 int send_tcppacket(conn_list_t *cl, void *data, int len)
 {
 cp
-  if(debug_lvl > 1)
+  if(debug_lvl > 3)
     syslog(LOG_DEBUG, _("Sending PACKET to %s (%s)"),
 	   cl->vpn_hostname, cl->real_hostname);
 
@@ -140,7 +140,7 @@ cp
 
   if((write(cl->meta_socket, data, len)) != len)
     {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
+      syslog(LOG_ERR, _("Sending PACKET data failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
     }
   
@@ -686,17 +686,23 @@ cp
        return -1;
     }  
 
-  if(len>1600)
+  if(len > MTU)
     {
        syslog(LOG_ERR, _("Got too big PACKET from %s (%s)"),
               cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
 
+  if(debug_lvl > 3)
+    syslog(LOG_DEBUG, _("Got PACKET length %d from %s (%s)"), len,
+              cl->vpn_hostname, cl->real_hostname);
+
   /* Evil kludge comming up */
   while(len)
     {
-       syslog(LOG_DEBUG, _("Direct read count=%d len=%d rp=%p socket=%d"), count, len, ((char *)&rp)+count, cl->meta_socket);
+       if(debug_lvl > 3)
+         syslog(LOG_DEBUG, _("Direct read count=%d len=%d rp=%p socket=%d"), count, len, ((char *)&rp)+count, cl->meta_socket);
+
        result=read(cl->meta_socket,((char *)&rp)+count,len);
        if(result<0)
          {
@@ -707,10 +713,6 @@ cp
        count+=result;
        len-=result;
     }
-
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _("Got PACKET length %d from %s (%s)"), len,
-              cl->vpn_hostname, cl->real_hostname);
 
   total_socket_in += len;
 
@@ -732,7 +734,7 @@ cp
 	xrecv(f, &rp);
       else
 	{
-	  add_queue(&(f->rq), &rp, rp.len);
+/*	  add_queue(&(f->rq), &rp, rp.len);  We can't do this since rp is on the stack */
 	  if(!cl->status.waitingforkey)
 	    send_key_request(rp.from);
 	}
