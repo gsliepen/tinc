@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.91 2001/01/07 17:08:58 guus Exp $
+    $Id: net.c,v 1.35.4.92 2001/01/07 20:19:29 guus Exp $
 */
 
 #include "config.h"
@@ -112,7 +112,7 @@ int xsend(connection_t *cl, vpn_packet_t *inpkt)
 cp
   outpkt.len = inpkt->len;
   
-  /* Encrypt the packet */
+  /* Encrypt the packet. FIXME: we should use CBC, not CFB. */
   
   EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
   EVP_EncryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
@@ -163,28 +163,33 @@ cp
   outlen = outpkt.len+2;
   memcpy(&outpkt, inpkt, outlen);
 */
-     
+cp
+  return receive_packet(cl, &outpkt);
+}
+
+int receive_packet(connection_t *cl, vpn_packet_t *packet)
+{
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Writing packet of %d bytes to tap device"),
-           outpkt.len);
+           packet->len);
 
   /* Fix mac address */
 
-  memcpy(outpkt.data, mymac.net.mac.address.x, 6);
+  memcpy(packet->data, mymac.net.mac.address.x, 6);
 
   if(taptype == TAP_TYPE_TUNTAP)
     {
-      if(write(tap_fd, outpkt.data, outpkt.len) < 0)
+      if(write(tap_fd, packet->data, packet->len) < 0)
         syslog(LOG_ERR, _("Can't write to tun/tap device: %m"));
       else
-        total_tap_out += outpkt.len;
+        total_tap_out += packet->len;
     }
   else	/* ethertap */
     {
-      if(write(tap_fd, outpkt.data - 2, outpkt.len + 2) < 0)
+      if(write(tap_fd, packet->data - 2, packet->len + 2) < 0)
         syslog(LOG_ERR, _("Can't write to ethertap device: %m"));
       else
-        total_tap_out += outpkt.len + 2;
+        total_tap_out += packet->len + 2;
     }
 cp
   return 0;
@@ -231,10 +236,6 @@ cp
       return 0;
     }
 
-  /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
-
-  /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
-  
   if(!cl->status.validkey)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
@@ -248,9 +249,12 @@ cp
       return 0;
     }
 
-  /* can we send it? can we? can we? huh? */
+  /* Check if it has to go via UDP or TCP... */
 cp
-  return xsend(cl, packet);
+  if(cl->options & OPTION_TCPONLY)
+    return send_tcppacket(cl, packet);      
+  else
+    return xsend(cl, packet);
 }
 
 void flush_queue(connection_t *cl)
@@ -698,7 +702,7 @@ int setup_myself(void)
 cp
   myself = new_connection();
 
-  asprintf(&myself->hostname, "MYSELF"); /* FIXME? Do hostlookup on ourselves? */
+  asprintf(&myself->hostname, "MYSELF");
   myself->flags = 0;
   myself->protocol_version = PROT_CURRENT;
 
@@ -797,6 +801,19 @@ cp
     
   keyexpires = time(NULL) + keylifetime;
 cp
+  /* Check some options */
+  
+  if((cfg = get_config_val(config, config_indirectdata)))
+    {
+      if(cfg->data.val == stupid_true)
+        myself->options |= OPTION_INDIRECT;
+    }
+
+  if((cfg = get_config_val(config, config_tcponly)))
+    {
+      if(cfg->data.val == stupid_true)
+        myself->options |= OPTION_TCPONLY;
+    }
   /* Activate ourselves */
 
   myself->status.active = 1;

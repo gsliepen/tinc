@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.18 2001/01/07 17:09:06 guus Exp $
+    $Id: protocol.h,v 1.5.4.19 2001/01/07 20:19:35 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -42,6 +42,7 @@ enum {
   ADD_HOST, DEL_HOST,
   ADD_SUBNET, DEL_SUBNET,
   KEY_CHANGED, REQ_KEY, ANS_KEY,
+  PACKET,
   LAST                               /* Guardian for the highest request number */
 };
 
@@ -69,10 +70,10 @@ extern int send_del_subnet(connection_t*, subnet_t*);
 extern int send_key_changed(connection_t*, connection_t*);
 extern int send_req_key(connection_t*, connection_t*);
 extern int send_ans_key(connection_t*, connection_t*, char*);
+extern int send_tcppacket(connection_t *, vpn_packet_t *);
 
 /* Old functions */
 
-extern int send_tcppacket(connection_t *, void *, int);
 extern int notify_others(connection_t *, connection_t *, int (*function)(connection_t*, connection_t*));
 extern int receive_request(connection_t *);
 extern int check_id(char *);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.74 2001/01/07 17:09:02 guus Exp $
+    $Id: protocol.c,v 1.28.4.75 2001/01/07 20:19:31 guus Exp $
 */
 
 #include "config.h"
@@ -587,6 +587,7 @@ cp
 
 int ack_h(connection_t *cl)
 {
+  config_t const *cfg;
   connection_t *old, *p;
   subnet_t *subnet;
   avl_node_t *node, *node2;
@@ -620,6 +621,20 @@ cp
 cp
   if(!cl->status.outgoing)
     send_ack(cl);
+
+  /* Check some options */
+  
+  if((cfg = get_config_val(cl->config, config_indirectdata)))
+    {
+      if(cfg->data.val == stupid_true)
+        cl->options |= OPTION_INDIRECT;
+    }
+
+  if((cfg = get_config_val(cl->config, config_tcponly)))
+    {
+      if(cfg->data.val == stupid_true)
+        cl->options |= OPTION_TCPONLY;
+    }
 
   /* Send him our subnets */
   
@@ -662,9 +677,15 @@ int send_add_subnet(connection_t *cl, subnet_t *subnet)
 {
   int x;
   char *netstr;
+  char *owner;
 cp
+  if(cl->options & OPTION_INDIRECT)
+    owner = myself->name;
+  else
+    owner = subnet->owner->name;
+
   x = send_request(cl, "%d %s %s", ADD_SUBNET,
-                      subnet->owner->name, netstr = net2str(subnet));
+                      owner, netstr = net2str(subnet));
   free(netstr);
 cp
   return x;
@@ -739,9 +760,14 @@ int send_del_subnet(connection_t *cl, subnet_t *subnet)
 {
   int x;
   char *netstr;
+  char *owner;
 cp
-  netstr = net2str(subnet);
-  x = send_request(cl, "%d %s %s", DEL_SUBNET, subnet->owner->name, netstr);
+  if(cl->options & OPTION_INDIRECT)
+    owner = myself->name;
+  else
+    owner = subnet->owner->name;
+
+  x = send_request(cl, "%d %s %s", DEL_SUBNET, owner, netstr = net2str(subnet));
   free(netstr);
 cp
   return x;
@@ -819,7 +845,8 @@ cp
 int send_add_host(connection_t *cl, connection_t *other)
 {
 cp
-  return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
+  if(!(cl->options & OPTION_INDIRECT))
+    return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
                       other->name, other->address, other->port, other->options);
 }
 
@@ -910,7 +937,8 @@ cp
 int send_del_host(connection_t *cl, connection_t *other)
 {
 cp
-  return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
+  if(!(cl->options & OPTION_INDIRECT))
+    return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
                       other->name, other->address, other->port, other->options);
 }
 
@@ -1060,8 +1088,6 @@ cp
   return 0;
 }
 
-/* Keepalive routines - FIXME: needs a closer look */
-
 int send_ping(connection_t *cl)
 {
 cp
@@ -1102,7 +1128,8 @@ cp
     {
       p = (connection_t *)node->data;
       if(p != cl && p->status.meta && p->status.active)
-        send_request(p, "%d %s", KEY_CHANGED, from->name);
+        if(!(cl->options & OPTION_INDIRECT) || from == myself)
+          send_request(p, "%d %s", KEY_CHANGED, from->name);
     }
 cp
   return 0;
@@ -1265,6 +1292,51 @@ cp
   return 0;
 }
 
+int send_tcppacket(connection_t *cl, vpn_packet_t *packet)
+{
+  int x;
+  
+  x = send_request(cl->nexthop, "%d %hd", PACKET, packet->len);
+
+  if(x)
+    return x;
+  
+  return send_meta(cl->nexthop, packet->data, packet->len);  
+}
+
+int tcppacket_h(connection_t *cl)
+{
+  vpn_packet_t packet;
+  char *p;
+  int todo, x;
+  
+  if(sscanf(cl->buffer, "%*d %hd", packet.len) != 1)
+    {
+      syslog(LOG_ERR, _("Got bad PACKET from %s (%s)"), cl->name, cl->hostname);
+      return -1;
+    }
+
+  /* Evil hack. */
+
+  p = packet.data;
+  todo = packet.len;
+  
+  while(todo)
+    {
+      x = read(cl->meta_socket, p, todo);
+      if(x<0)
+        {
+          syslog(LOG_ERR, _("Error during reception of PACKET from %s (%s): %m"), cl->name, cl->hostname);
+          return -1;
+        }
+      
+      todo -= x;
+      p += x;
+    }
+
+  return receive_packet(cl, &packet);
+}
+
 /* Jumptable for the request handlers */
 
 int (*request_handlers[])(connection_t*) = {
@@ -1274,6 +1346,7 @@ int (*request_handlers[])(connection_t*) = {
   add_host_h, del_host_h,
   add_subnet_h, del_subnet_h,
   key_changed_h, req_key_h, ans_key_h,
+  tcppacket_h,
 };
 
 /* Request names */
@@ -1285,6 +1358,7 @@ char (*request_name[]) = {
   "ADD_HOST", "DEL_HOST",
   "ADD_SUBNET", "DEL_SUBNET",
   "KEY_CHANGED", "REQ_KEY", "ANS_KEY",
+  "PACKET",
 };
 
 /* Status strings */

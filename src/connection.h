@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.6 2001/01/07 17:08:57 guus Exp $
+    $Id: connection.h,v 1.1.2.7 2001/01/07 20:19:29 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -59,9 +59,8 @@ typedef struct status_bits_t {
   int unused:18;
 } status_bits_t;
 
-typedef struct option_bits_t {
-  int unused:32;
-} option_bits_t;
+#define OPTION_INDIRECT		0x0001
+#define OPTION_TCPONLY		0x0002
 
 typedef struct connection_t {
   char *name;                      /* name of this connection */
@@ -69,7 +68,7 @@ typedef struct connection_t {
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
   short unsigned int port;         /* port number for UDP traffic */
-  long unsigned int options;       /* options turned on for this connection */
+  long int options;                /* options turned on for this connection */
 
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
