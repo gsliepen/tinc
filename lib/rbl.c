@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.3 2000/11/18 23:21:00 guus Exp $
+    $Id: rbl.c,v 1.1.2.4 2000/11/18 23:22:44 guus Exp $
 */
 
 
@@ -189,6 +189,14 @@ rbl_t rbl_insert_rbl(rbltree_t *tree, rbl_t *rbl)
     }
   else
     tree->top = rbl;
+
+  /* Linked list fixup */
+  
+  if(!rbl->prev)
+    tree->head = rbl;
+    
+  if(!rbl->next)
+    tree->tail = rbl;
 
   /* Red-black part of insert */
   
