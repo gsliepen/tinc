@@ -306,7 +306,7 @@ cp
     {
       add_queue(&(cl->sq), packet, packet->len + 2);
       if(!cl->status.waitingforkey)
-	send_key_request(to);
+	send_key_request(cl->vpn_ip);			/* Keys should be sent to the host running the tincd */
       return 0;
     }
 
