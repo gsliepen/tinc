@@ -1,3 +1,22 @@
+version 1.0.3                Nov 11 2004
+
+* Show error message when failing to write a PID file.
+
+* Ignore spaces at end of lines in config files.
+
+* Fix handling of late packets.
+
+* Unify BSD tun/tap device handling. This allows IPv6 on tun devices and
+  anything on tap devices as long as the underlying OS supports it.
+
+* Handle IPv6 on Solaris tun devices.
+
+* Allow tinc to work properly under Windows XP SP2.
+
+* Allow VLAN tagged Ethernet frames in switch and hub mode.
+
+* Experimental PMTUDiscovery, TunnelServer and BlockingTCP options.
+
 version 1.0.2                Nov  8 2003
 
 * Fix address and hostname resolving under Windows.
