@@ -34,6 +34,13 @@ ListenPort = 200
 # bits are set to 1).
 MyOwnVPNIP = 10.x.x.x/8
 
+# VPN Netmask
+# You'll need this option if you use the Debian or Redhat init
+# scripts.  Put in here a netmask that covers your entire VPN network;
+# it is used to set routes from the init script, tinc itself ignores
+# it.
+VpnMask = 255.255.0.0
+
 # Which local file?
 # Default is /dev/tap0
 TapDevice = /dev/tap1
