@@ -17,11 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.1.2.12 2003/07/17 15:06:25 guus Exp $
+    $Id: dropin.h,v 1.1.2.13 2003/07/18 13:42:35 guus Exp $
 */
 
 #ifndef __DROPIN_H__
 #define __DROPIN_H__
+
+#include "fake-getaddrinfo.h"
+#include "fake-getnameinfo.h"
 
 #ifndef HAVE_DAEMON
 extern int daemon(int, int);

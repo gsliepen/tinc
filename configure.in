@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.67 2003/07/17 15:06:25 guus Exp $
+dnl $Id: configure.in,v 1.13.2.68 2003/07/18 13:42:35 guus Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
@@ -89,15 +89,20 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/param.h \
-  sys/time.h sys/socket.h sys/wait.h netdb.h arpa/inet.h netinet/in_systm.h])
-AC_CHECK_HEADERS([net/ethernet.h net/if.h net/if_arp.h netinet/if_ether.h netinet/ip.h \
-  netinet/tcp.h netinet/ip_icmp.h netinet/ip6.h netinet/icmp6.h],
+AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/param.h sys/time.h sys/socket.h sys/wait.h netdb.h arpa/inet.h netinet/in_systm.h netinet/in.h])
+AC_CHECK_HEADERS([net/ethernet.h net/if.h net/if_arp.h netinet/if_ether.h netinet/ip.h netinet/tcp.h netinet/ip_icmp.h netinet/ip6.h netinet/icmp6.h],
   [], [],
-  [#include <sys/types.h>
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
    #include <sys/socket.h>
+   #endif
    #ifdef HAVE_NETINET_IN_SYSTM_H
    #include <netinet/in_systm.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_H
+   #include <netinet/in.h>
    #endif
   ]
 )
@@ -109,11 +114,40 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-AC_CHECK_TYPES([socklen_t, struct addrinfo, struct in6_addr, struct sockaddr_in6], , ,
-  [#include <sys/types.h>
+AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
    #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NETDB_H
    #include <netdb.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+   #ifdef HAVE_NETINET_IF_ETHER_H
+   #include <netinet/if_ether.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_SYSTM_H
+   #include <netinet/in_systm.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_H
    #include <netinet/in.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_H
+   #include <netinet/ip.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_ICMP_H
+   #include <netinet/ip_icmp.h>
+   #endif
+   #ifdef HAVE_NETINET_IP6_H
+   #include <netinet/ip.h>
+   #endif
+   #ifdef HAVE_NETINET_ICMP6_H
+   #include <netinet/icmp.h>
+   #endif
   ]
 )
 
@@ -121,8 +155,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fcloseall flock ftime get_current_dir_name \
-putenv select strdup strerror strsignal strtol unsetenv mlockall vsyslog])
+AC_CHECK_FUNCS([asprintf daemon fcloseall flock ftime get_current_dir_name putenv select strdup strerror strsignal strtol unsetenv mlockall vsyslog])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 

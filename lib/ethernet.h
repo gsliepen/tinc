@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ethernet.h,v 1.1.2.2 2003/07/18 12:21:02 guus Exp $
+    $Id: ethernet.h,v 1.1.2.3 2003/07/18 13:42:35 guus Exp $
 */
 
 #ifndef __TINC_ETHERNET_H__
@@ -39,8 +39,7 @@
 #define ETHERTYPE_IP 0x0800
 #endif
 
-#ifndef HAVE_NET_IF_ARP_H
-
+#ifndef HAVE_STRUCT_ARPHDR
 struct arphdr {
 	unsigned short int ar_hrd;
 	unsigned short int ar_pro;
@@ -56,11 +55,9 @@ struct arphdr {
 #define ARPOP_InREQUEST 8 
 #define ARPOP_InREPLY 9 
 #define ARPOP_NAK 10 
-
 #endif
 
-#ifndef HAVE_NETINET_IF_ETHER_H
-
+#ifndef HAVE_STRUCT_ETHER_ARP
 struct  ether_arp {
 	struct  arphdr ea_hdr;
 	uint8_t arp_sha[ETH_ALEN];
@@ -73,7 +70,6 @@ struct  ether_arp {
 #define arp_hln ea_hdr.ar_hln
 #define arp_pln ea_hdr.ar_pln
 #define arp_op ea_hdr.ar_op
-
 #endif
 
 #endif /* __TINC_ETHERNET_H__ */

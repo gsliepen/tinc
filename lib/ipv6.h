@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv6.h,v 1.1.2.4 2003/07/17 15:06:25 guus Exp $
+    $Id: ipv6.h,v 1.1.2.5 2003/07/18 13:42:35 guus Exp $
 */
 
 #ifndef __TINC_IPV6_H__
@@ -60,7 +60,7 @@ struct sockaddr_in6 {
         && (((__const uint32_t *) (a))[2] == htonl (0xffff)))
 #endif
 
-#ifndef HAVE_NETINET_IP6_H
+#ifndef HAVE_STRUCT_IP6_HDR
 struct ip6_hdr {
 	union {
 		struct ip6_hdrctl {
@@ -80,7 +80,9 @@ struct ip6_hdr {
 #define ip6_nxt ip6_ctlun.ip6_un1.ip6_un1_nxt
 #define ip6_hlim ip6_ctlun.ip6_un1.ip6_un1_hlim
 #define ip6_hops ip6_ctlun.ip6_un1.ip6_un1_hlim
+#endif
 
+#ifndef HAVE_STRUCT_ICMP6_HDR
 struct icmp6_hdr {
 	uint8_t icmp6_type;
 	uint8_t icmp6_code;
@@ -96,14 +98,18 @@ struct icmp6_hdr {
 #define ICMP6_DST_UNREACH_ADDR 3
 #define ND_NEIGHBOR_SOLICIT 135
 #define ND_NEIGHBOR_ADVERT 136
+#endif
 
+#ifndef HAVE_STRUCT_ND_NEIGHBOR_SOLICIT
 struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
 	struct in6_addr nd_ns_target;
 };
 #define ND_OPT_SOURCE_LINKADDR 1
 #define ND_OPT_TARGET_LINKADDR 2
+#endif
 
+#ifndef HAVE_STRUCT_ND_OPT_HDR
 struct nd_opt_hdr {
 	uint8_t nd_opt_type;
 	uint8_t nd_opt_len;
