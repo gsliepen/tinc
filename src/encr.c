@@ -207,7 +207,7 @@ cp
   tmp = mpz_get_str(NULL, 16, our_shared_key);
   len = str_hex_to_bin(text_key, tmp);
 
-  cipher_set_key(&encryption_key, len, &text_key[0]);
+  cipher_set_key(&encryption_key, len, text_key);
   key_inited = 1;
   encryption_keylen = len;
 
@@ -228,16 +228,16 @@ void encrypt_passphrase(passphrase_t *pp)
   int len;
   BF_KEY bf_key;
 cp  
-  mpz_get_str(&tmp[0], 16, my_public_key);
+  mpz_get_str(tmp, 16, my_public_key);
   len = str_hex_to_bin(key, tmp);
 
-  cipher_set_key(&bf_key, len, &key[0]);
+  cipher_set_key(&bf_key, len, key);
 
   low_crypt_key(mypassphrase, pp->phrase, &bf_key, mypassphraselen, BF_ENCRYPT);
   pp->len = ((mypassphraselen - 1) | 7) + 5;
 
   if(key_inited)
-    cipher_set_key(&encryption_key, encryption_keylen, &text_key[0]);
+    cipher_set_key(&encryption_key, encryption_keylen, text_key);
 cp
 }
 
@@ -253,16 +253,16 @@ int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
   char *meuk;
 cp
   mpz_init_set_str(pk, his_pubkey, 36);
-  mpz_get_str(&tmp[0], 16, pk);
+  mpz_get_str(tmp, 16, pk);
   len = str_hex_to_bin(key, tmp);
   out = xmalloc(cl->pp->len+3);
 
-  cipher_set_key(&bf_key, len, &key[0]);
+  cipher_set_key(&bf_key, len, key);
   low_crypt_key(cl->pp->phrase, out, &bf_key, cl->pp->len, BF_DECRYPT);
   if(key_inited)
-    cipher_set_key(&encryption_key, encryption_keylen, &text_key[0]);
+    cipher_set_key(&encryption_key, encryption_keylen, text_key);
 
-  sprintf(&which[0], IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
+  sprintf(which, IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   if((len = read_passphrase(which, &meuk)) < 0)
     return -1;
 
