@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-08-24 13:45+0200\n"
-"PO-Revision-Date: 2002-08-24 14:20+0200\n"
+"POT-Creation-Date: 2002-09-04 18:33+0200\n"
+"PO-Revision-Date: 2002-09-04 18:33+0200\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
 "MIME-Version: 1.0\n"
@@ -122,16 +122,24 @@ msgstr ""
 "bescherming.\n"
 "Ik maak of overschrijf dit bestand niet.\n"
 
-#: src/connection.c:114
+#: src/connection.c:57
+msgid "everyone"
+msgstr "iedereen"
+
+#: src/connection.c:58
+msgid "BROADCAST"
+msgstr "BROADCAST"
+
+#: src/connection.c:121
 msgid "Connections:"
 msgstr "Verbindingen:"
 
-#: src/connection.c:119
+#: src/connection.c:126
 #, c-format
 msgid " %s at %s options %lx socket %d status %04x"
 msgstr " %s op %s opties %lx socket %d status %04x"
 
-#: src/connection.c:123
+#: src/connection.c:130
 msgid "End of connections."
 msgstr "Einde van verbindingen."
 
@@ -165,58 +173,58 @@ msgstr "Verbinding beëindigd door %s (%s)"
 msgid "Metadata socket read error for %s (%s): %s"
 msgstr "Fout op metadata socket voor %s (%s) tijdens lezen: %s"
 
-#: src/meta.c:202
+#: src/meta.c:203
 #, c-format
 msgid "Metadata read buffer overflow for %s (%s)"
 msgstr "Metadata leesbuffer overloop voor %s (%s)"
 
-#: src/net.c:97
+#: src/net.c:96
 msgid "Purging unreachable nodes"
 msgstr "Verwijderen onbereikbare nodes"
 
-#: src/net.c:107
+#: src/net.c:106
 #, c-format
 msgid "Purging node %s (%s)"
 msgstr "Verwijdering node %s (%s)"
 
-#: src/net.c:198
+#: src/net.c:181
 #, c-format
 msgid "Closing connection with %s (%s)"
 msgstr "Beëindigen verbinding met %s (%s)"
 
-#: src/net.c:263
+#: src/net.c:239
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) antwoordde niet op ping"
 
-#: src/net.c:276
+#: src/net.c:252
 #, c-format
 msgid "Timeout from %s (%s) during authentication"
 msgstr "Timeout van %s (%s) tijdens authenticatie"
 
-#: src/net.c:321 src/net_socket.c:264
+#: src/net.c:297 src/net_socket.c:264
 #, c-format
 msgid "Error while connecting to %s (%s): %s"
 msgstr "Fout tijdens schrijven naar %s (%s): %s"
 
-#: src/net.c:373
+#: src/net.c:349
 #, c-format
 msgid "Error while waiting for input: %s"
 msgstr "Fout tijdens wachten op invoer: %s"
 
-#: src/net.c:407
+#: src/net.c:383
 msgid "Regenerating symmetric key"
 msgstr "Hergenereren symmetrische sleutel"
 
-#: src/net.c:424
+#: src/net.c:400
 msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
-#: src/net.c:441
+#: src/net.c:417
 msgid "Rereading configuration file and restarting in 5 seconds..."
 msgstr "Herlezen configuratiebestand en herstarten na 5 seconden..."
 
-#: src/net.c:448
+#: src/net.c:424
 msgid "Unable to reread configuration file, exitting."
 msgstr "Kan configuratiebestand niet herlezen, beëindigen."
 
@@ -537,63 +545,73 @@ msgstr "Verzending %s naar %s (%s): %s"
 msgid "Sending %s to %s (%s)"
 msgstr "Verzending %s naar %s (%s)"
 
-#: src/protocol.c:104
+#: src/protocol.c:106
+#, c-format
+msgid "Broadcasting %s from %s (%s): %s"
+msgstr "Verspreiding %s van %s (%s): %s"
+
+#: src/protocol.c:108
+#, c-format
+msgid "Broadcasting %s from %s (%s)"
+msgstr "Verspreiding %s van %s (%s)"
+
+#: src/protocol.c:125
 #, c-format
 msgid "Unknown request from %s (%s): %s"
 msgstr "Onbekend verzoek van %s (%s): %s"
 
-#: src/protocol.c:107
+#: src/protocol.c:128
 #, c-format
 msgid "Unknown request from %s (%s)"
 msgstr "Onbekend verzoek van %s (%s)"
 
-#: src/protocol.c:117
+#: src/protocol.c:138
 #, c-format
 msgid "Got %s from %s (%s): %s"
 msgstr "Kreeg %s van %s (%s): %s"
 
-#: src/protocol.c:120
+#: src/protocol.c:141
 #, c-format
 msgid "Got %s from %s (%s)"
 msgstr "Kreeg %s van %s (%s)"
 
-#: src/protocol.c:127
+#: src/protocol.c:148
 #, c-format
 msgid "Unauthorized request from %s (%s)"
 msgstr "Niet toegestaan verzoek van %s (%s)"
 
-#: src/protocol.c:134
+#: src/protocol.c:155
 #, c-format
 msgid "Error while processing %s from %s (%s)"
 msgstr "Fout tijdens afhandelen %s van %s (%s)"
 
-#: src/protocol.c:141
+#: src/protocol.c:162
 #, c-format
 msgid "Bogus data received from %s (%s)"
 msgstr "Onzinnige data ontvangen van %s (%s)"
 
-#: src/protocol.c:187
+#: src/protocol.c:208
 msgid "Already seen request"
 msgstr "Verzoek reeds gezien"
 
-#: src/protocol.c:218
+#: src/protocol.c:239
 #, c-format
 msgid "Aging past requests: deleted %d, left %d\n"
 msgstr "Veroudering vorige verzoeken: %d gewist, %d overgebleven\n"
 
 #: src/protocol_auth.c:69 src/protocol_auth.c:224 src/protocol_auth.c:357
-#: src/protocol_auth.c:417 src/protocol_auth.c:529 src/protocol_edge.c:90
-#: src/protocol_edge.c:219 src/protocol_key.c:80 src/protocol_key.c:128
-#: src/protocol_key.c:196 src/protocol_misc.c:61 src/protocol_misc.c:91
-#: src/protocol_misc.c:177 src/protocol_subnet.c:71 src/protocol_subnet.c:163
+#: src/protocol_auth.c:417 src/protocol_auth.c:516 src/protocol_edge.c:78
+#: src/protocol_edge.c:195 src/protocol_key.c:68 src/protocol_key.c:110
+#: src/protocol_key.c:178 src/protocol_misc.c:61 src/protocol_misc.c:91
+#: src/protocol_misc.c:177 src/protocol_subnet.c:67 src/protocol_subnet.c:152
 #, c-format
 msgid "Got bad %s from %s (%s)"
 msgstr "Kreeg verkeerde %s van %s (%s)"
 
-#: src/protocol_auth.c:77 src/protocol_edge.c:98 src/protocol_edge.c:104
-#: src/protocol_edge.c:228 src/protocol_edge.c:234 src/protocol_subnet.c:79
-#: src/protocol_subnet.c:87 src/protocol_subnet.c:171
-#: src/protocol_subnet.c:189
+#: src/protocol_auth.c:77 src/protocol_edge.c:86 src/protocol_edge.c:92
+#: src/protocol_edge.c:204 src/protocol_edge.c:210 src/protocol_subnet.c:75
+#: src/protocol_subnet.c:83 src/protocol_subnet.c:160
+#: src/protocol_subnet.c:178
 #, c-format
 msgid "Got bad %s from %s (%s): %s"
 msgstr "Kreeg verkeerde %s van %s (%s): %s"
@@ -639,7 +657,7 @@ msgstr "Ontving willekeurige meta key (niet versleuteld): %s"
 msgid "%s (%s) uses unknown cipher!"
 msgstr "%s (%s) gebruikt onbekende cipher!"
 
-#: src/protocol_auth.c:296 src/protocol_key.c:267
+#: src/protocol_auth.c:296 src/protocol_key.c:250
 #, c-format
 msgid "Node %s (%s) uses unknown digest!"
 msgstr "Node %s (%s) gebruikt onbekende digest!"
@@ -662,60 +680,60 @@ msgstr "verkeerd antwoord op uitdaging"
 msgid "Expected challenge reply: %s"
 msgstr "Verwachtte antwoord op uitdaging: %s"
 
-#: src/protocol_auth.c:549
+#: src/protocol_auth.c:536
 #, c-format
 msgid "Established a second connection with %s (%s), closing old connection"
 msgstr "Tweede verbinding met %s (%s) gemaakt, oude verbinding wordt gesloten"
 
-#: src/protocol_auth.c:583
+#: src/protocol_auth.c:551
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Verbinding met %s (%s) geactiveerd"
 
-#: src/protocol_edge.c:98 src/protocol_edge.c:104 src/protocol_edge.c:228
-#: src/protocol_edge.c:234 src/protocol_subnet.c:79 src/protocol_subnet.c:171
+#: src/protocol_edge.c:86 src/protocol_edge.c:92 src/protocol_edge.c:204
+#: src/protocol_edge.c:210 src/protocol_subnet.c:75 src/protocol_subnet.c:160
 msgid "invalid name"
 msgstr "ongeldige naam"
 
-#: src/protocol_edge.c:150
+#: src/protocol_edge.c:134
 #, c-format
 msgid "Got %s from %s (%s) for ourself which does not match existing entry"
 msgstr ""
 "Kreeg %s van %s (%s) voor onszelf welke niet overeenkomt met reeds bekende"
 
-#: src/protocol_edge.c:157
+#: src/protocol_edge.c:141
 #, c-format
 msgid "Got %s from %s (%s) which does not match existing entry"
 msgstr "Kreeg %s van %s (%s) welke niet overeenkomt met reeds bekende"
 
-#: src/protocol_edge.c:167
+#: src/protocol_edge.c:151
 #, c-format
 msgid "Got %s from %s (%s) for ourself which does not exist"
 msgstr "Kreeg %s van %s (%s) voor onszelf welke niet bestaat"
 
-#: src/protocol_edge.c:248 src/protocol_edge.c:257 src/protocol_edge.c:268
+#: src/protocol_edge.c:224 src/protocol_edge.c:233 src/protocol_edge.c:244
 #, c-format
 msgid "Got %s from %s (%s) which does not appear in the edge tree"
 msgstr "Kreeg %s van %s (%s) welke niet voorkomt in de edge tree"
 
-#: src/protocol_edge.c:275 src/protocol_subnet.c:118 src/protocol_subnet.c:217
+#: src/protocol_edge.c:251 src/protocol_subnet.c:114 src/protocol_subnet.c:206
 #, c-format
 msgid "Got %s from %s (%s) for ourself"
 msgstr "Kreeg %s van %s (%s) voor onszelf"
 
-#: src/protocol_key.c:92
+#: src/protocol_key.c:80
 #, c-format
 msgid "Got %s from %s (%s) origin %s which does not exist"
 msgstr "Kreeg %s van %s (%s) herkomst %s welke niet bestaat"
 
-#: src/protocol_key.c:137 src/protocol_key.c:205
+#: src/protocol_key.c:119 src/protocol_key.c:187
 #, c-format
 msgid ""
 "Got %s from %s (%s) origin %s which does not exist in our connection list"
 msgstr ""
 "Kreeg %s van %s (%s) herkomst %s welke niet voorkomt in de verbindingslijst"
 
-#: src/protocol_key.c:146 src/protocol_key.c:214
+#: src/protocol_key.c:128 src/protocol_key.c:196
 #, c-format
 msgid ""
 "Got %s from %s (%s) destination %s which does not exist in our connection "
@@ -723,17 +741,17 @@ msgid ""
 msgstr ""
 "Kreeg %s van %s (%s) doel %s welke niet voorkomt in de verbindingslijst"
 
-#: src/protocol_key.c:246
+#: src/protocol_key.c:229
 #, c-format
 msgid "Node %s (%s) uses unknown cipher!"
 msgstr "Node %s (%s) gebruikt onbekende cipher!"
 
-#: src/protocol_key.c:251
+#: src/protocol_key.c:234
 #, c-format
 msgid "Node %s (%s) uses wrong keylength!"
 msgstr "Node %s (%s) gebruikt verkeerde lengte sleutel!"
 
-#: src/protocol_key.c:272
+#: src/protocol_key.c:255
 #, c-format
 msgid "Node %s (%s) uses bogus MAC length!"
 msgstr "Node %s (%s) gebruikt onzinnige MAC lengte!"
@@ -748,16 +766,16 @@ msgstr "Statusmelding van %s (%s): %s: %s"
 msgid "Error message from %s (%s): %s: %s"
 msgstr "Foutmelding van %s (%s): %s: %s"
 
-#: src/protocol_subnet.c:87 src/protocol_subnet.c:189
+#: src/protocol_subnet.c:83 src/protocol_subnet.c:178
 msgid "invalid subnet string"
 msgstr "ongeldige subnet string"
 
-#: src/protocol_subnet.c:180
+#: src/protocol_subnet.c:169
 #, c-format
 msgid "Got %s from %s (%s) for %s which is not in our node tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in de node boom"
 
-#: src/protocol_subnet.c:207
+#: src/protocol_subnet.c:196
 #, c-format
 msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in zijn subnet boom"
@@ -1133,25 +1151,25 @@ msgstr ""
 msgid "End of nodes."
 msgstr "Einde van nodes."
 
-#: src/edge.c:194
+#: src/edge.c:170
 msgid "Edges:"
 msgstr "Edges:"
 
-#: src/edge.c:201
+#: src/edge.c:176
 #, c-format
-msgid " %s at %s - %s at %s options %lx weight %d"
-msgstr " %s op %s - %s op %s opties %lx gewicht %d"
+msgid " %s to %s at %s options %lx weight %d"
+msgstr " %s naar %s op %s opties %lx gewicht %d"
 
-#: src/edge.c:209
+#: src/edge.c:182
 msgid "End of edges."
 msgstr "Einde van edges."
 
-#: src/graph.c:265
+#: src/graph.c:263
 #, c-format
 msgid "Node %s (%s) became reachable"
 msgstr "Node %s (%s) werd bereikbaar"
 
-#: src/graph.c:267
+#: src/graph.c:265
 #, c-format
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"
