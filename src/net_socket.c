@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.1 2002/02/18 16:25:16 guus Exp $
+    $Id: net_socket.c,v 1.1.2.2 2002/02/20 19:25:09 guus Exp $
 */
 
 #include "config.h"
@@ -375,6 +375,10 @@ cp
 
   c = new_connection();
   c->name = xstrdup(outgoing->name);
+  c->outcipher = myself->connection->outcipher;
+  c->outdigest = myself->connection->outdigest;
+  c->outmaclength = myself->connection->outmaclength;
+  c->outcompression = myself->connection->outcompression;
 
   init_configuration(&c->config_tree);
   read_connection_config(c);
@@ -415,6 +419,10 @@ cp
     }
 
   c = new_connection();
+  c->outcipher = myself->connection->outcipher;
+  c->outdigest = myself->connection->outdigest;
+  c->outmaclength = myself->connection->outmaclength;
+  c->outcompression = myself->connection->outcompression;
 
   c->address = sa;
   c->hostname = sockaddr2hostname(&sa);

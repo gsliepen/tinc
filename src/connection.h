@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.25 2002/02/18 16:25:16 guus Exp $
+    $Id: connection.h,v 1.1.2.26 2002/02/20 19:25:09 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -80,14 +80,20 @@ typedef struct connection_t {
   struct edge_t *edge;             /* edge associated with this connection */
 
   RSA *rsa_key;                    /* his public/private key */
-  EVP_CIPHER *incipher;            /* Cipher he will use to send data to us */
-  EVP_CIPHER *outcipher;           /* Cipher we will use to send data to him */
+  const EVP_CIPHER *incipher;      /* Cipher he will use to send data to us */
+  const EVP_CIPHER *outcipher;     /* Cipher we will use to send data to him */
   EVP_CIPHER_CTX *inctx;           /* Context of encrypted meta data that will come from him to us */
   EVP_CIPHER_CTX *outctx;          /* Context of encrypted meta data that will be sent from us to him */
   char *inkey;                     /* His symmetric meta key + iv */
   char *outkey;                    /* Our symmetric meta key + iv */
   int inkeylength;                 /* Length of his key + iv */
   int outkeylength;                /* Length of our key + iv */
+  const EVP_MD *indigest;
+  const EVP_MD *outdigest;
+  int inmaclength;
+  int outmaclength;
+  int incompression;
+  int outcompression;
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.2 2002/02/20 16:04:39 guus Exp $
+    $Id: net_setup.c,v 1.1.2.3 2002/02/20 19:25:09 guus Exp $
 */
 
 #include "config.h"
@@ -382,6 +382,8 @@ cp
   else
     myself->keylength = 1;
 
+  myself->connection->outcipher = EVP_bf_ofb();
+
   myself->key = (char *)xmalloc(myself->keylength);
   RAND_pseudo_bytes(myself->key, myself->keylength);
 
@@ -410,6 +412,8 @@ cp
   else
     myself->digest = EVP_sha1();
 
+  myself->connection->outdigest = EVP_sha1();
+
   if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->maclength))
     {
       if(myself->digest)
@@ -429,6 +433,8 @@ cp
   else
     myself->maclength = 4;
 
+  myself->connection->outmaclength = 0;
+
   /* Compression */
 
   if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->compression))
@@ -441,6 +447,8 @@ cp
     }
   else
     myself->compression = 0;
+
+  myself->connection->outcompression = 0;
 cp
   /* Done */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.2 2002/02/18 16:25:16 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.3 2002/02/20 19:25:09 guus Exp $
 */
 
 #include "config.h"
@@ -195,15 +195,20 @@ cp
 
   /* Send the meta key */
 
-  x = send_request(c, "%d %s", METAKEY, buffer);
+  x = send_request(c, "%d %d %d %d %d %s", METAKEY,
+                   c->outcipher?c->outcipher->nid:0, c->outdigest?c->outdigest->type:0,
+		   c->outmaclength, c->outcompression, buffer);
 
   /* Further outgoing requests are encrypted with the key we just generated */
 
-  EVP_EncryptInit(c->outctx, EVP_bf_cfb(),
-                  c->outkey + len - EVP_bf_cfb()->key_len,
-                  c->outkey + len - EVP_bf_cfb()->key_len - EVP_bf_cfb()->iv_len);
+  if(c->outcipher)
+    {
+      EVP_EncryptInit(c->outctx, c->outcipher,
+                      c->outkey + len - c->outcipher->key_len,
+                      c->outkey + len - c->outcipher->key_len - c->outcipher->iv_len);
 
-  c->status.encryptout = 1;
+      c->status.encryptout = 1;
+    }
 cp
   return x;
 }
@@ -211,9 +216,10 @@ cp
 int metakey_h(connection_t *c)
 {
   char buffer[MAX_STRING_SIZE];
+  int cipher, digest, maclength, compression;
   int len;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING, buffer) != 1)
+  if(sscanf(c->buffer, "%*d %d %d %d %d "MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name, c->hostname);
        return -1;
@@ -258,11 +264,51 @@ cp
 
   /* All incoming requests will now be encrypted. */
 cp
-  EVP_DecryptInit(c->inctx, EVP_bf_cfb(),
-                  c->inkey + len - EVP_bf_cfb()->key_len,
-                  c->inkey + len - EVP_bf_cfb()->key_len - EVP_bf_cfb()->iv_len);
-  
-  c->status.decryptin = 1;
+  /* Check and lookup cipher and digest algorithms */
+
+  if(cipher)
+    {
+      c->incipher = EVP_get_cipherbynid(cipher);
+      if(!c->incipher)
+	{
+	  syslog(LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name, c->hostname);
+	  return -1;
+	}
+
+      EVP_DecryptInit(c->inctx, c->incipher,
+                      c->inkey + len - c->incipher->key_len,
+                      c->inkey + len - c->incipher->key_len - c->incipher->iv_len);
+
+      c->status.decryptin = 1;
+    }
+  else
+    {
+      c->incipher = NULL;
+    }
+
+  c->inmaclength = maclength;
+
+  if(digest)
+    {
+      c->indigest = EVP_get_digestbynid(digest);
+      if(!c->indigest)
+	{
+	  syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name, c->hostname);
+	  return -1;
+	}
+      
+      if(c->inmaclength > c->indigest->md_size || c->inmaclength < 0)
+	{
+	  syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name, c->hostname);
+	  return -1;
+	}
+    }
+  else
+    {
+      c->indigest = NULL;
+    }
+
+  c->incompression = compression;
 
   c->allow_request = CHALLENGE;
 cp
@@ -340,16 +386,19 @@ cp
 
 int send_chal_reply(connection_t *c)
 {
-  char hash[SHA_DIGEST_LENGTH*2+1];
+  char hash[EVP_MAX_MD_SIZE*2+1];
+  EVP_MD_CTX ctx;
 cp
   /* Calculate the hash from the challenge we received */
 
-  SHA1(c->mychallenge, RSA_size(myself->connection->rsa_key), hash);
+  EVP_DigestInit(&ctx, c->indigest);
+  EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key));
+  EVP_DigestFinal(&ctx, hash, NULL);
 
   /* Convert the hash to a hexadecimal formatted string */
 
-  bin2hex(hash,hash,SHA_DIGEST_LENGTH);
-  hash[SHA_DIGEST_LENGTH*2] = '\0';
+  bin2hex(hash,hash,c->indigest->md_size);
+  hash[c->indigest->md_size*2] = '\0';
 
   /* Send the reply */
 
@@ -360,7 +409,8 @@ cp
 int chal_reply_h(connection_t *c)
 {
   char hishash[MAX_STRING_SIZE];
-  char myhash[SHA_DIGEST_LENGTH];
+  char myhash[EVP_MAX_MD_SIZE];
+  EVP_MD_CTX ctx;
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING, hishash) != 1)
     {
@@ -370,7 +420,7 @@ cp
 
   /* Check if the length of the hash is all right */
 
-  if(strlen(hishash) != SHA_DIGEST_LENGTH*2)
+  if(strlen(hishash) != c->outdigest->md_size*2)
     {
       syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, _("wrong challenge reply length"));
       return -1;
@@ -378,15 +428,17 @@ cp
 
   /* Convert the hash to binary format */
 
-  hex2bin(hishash, hishash, SHA_DIGEST_LENGTH);
+  hex2bin(hishash, hishash, c->outdigest->md_size);
 
   /* Calculate the hash from the challenge we sent */
 
-  SHA1(c->hischallenge, RSA_size(c->rsa_key), myhash);
+  EVP_DigestInit(&ctx, c->outdigest);
+  EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key));
+  EVP_DigestFinal(&ctx, myhash, NULL);
 
   /* Verify the incoming hash with the calculated hash */
 
-  if(memcmp(hishash, myhash, SHA_DIGEST_LENGTH))
+  if(memcmp(hishash, myhash, c->outdigest->md_size))
     {
       syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, _("wrong challenge reply"));
       if(debug_lvl >= DEBUG_SCARY_THINGS)

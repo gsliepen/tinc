@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.2 2002/02/11 15:59:18 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.3 2002/02/20 19:25:09 guus Exp $
 */
 
 #include "config.h"
@@ -41,7 +41,7 @@
 #include "connection.h"
 #include "node.h"
 #include "edge.h"
-\
+
 #include "system.h"
 
 int mykeyused = 0;
@@ -245,6 +245,8 @@ cp
       from->cipher = NULL;
     }
 
+  from->maclength = maclength;
+
   if(digest)
     {
       from->digest = EVP_get_digestbynid(digest);
@@ -253,7 +255,6 @@ cp
 	  syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name, from->hostname);
 	  return -1;
 	}
-      from->maclength = maclength;
       if(from->maclength > from->digest->md_size || from->maclength < 0)
 	{
 	  syslog(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
@@ -263,7 +264,6 @@ cp
   else
     {
       from->digest = NULL;
-      from->maclength = maclength;
     }
 
   from->compression = compression;
