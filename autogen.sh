@@ -96,18 +96,6 @@ do
     echo processing $dr
     macrodirs=`sed -n -e 's,AM_ACLOCAL_INCLUDE(\(.*\)),\1,gp' < $coin`
     ( cd $dr
-      aclocalinclude="$ACLOCAL_FLAGS"
-      for k in $macrodirs; do
-  	if test -d $k; then
-	  if test -f $k/Makefile.am.in; then
-	    make -C $k -f Makefile.am.in Makefile.am
-	  fi
-          aclocalinclude="$aclocalinclude -I $k"
-  	##else 
-	##  echo "**Warning**: No such directory \`$k'.  Ignored."
-        fi
-      done
-      touch ChangeLog
       if grep "^AM_GNU_GETTEXT" configure.in >/dev/null; then
 	if grep "sed.*POTFILES" configure.in >/dev/null; then
 	  : do nothing -- we still have an old unmodified configure.in
@@ -132,6 +120,18 @@ do
 	echo "Running libtoolize..."
 	libtoolize --force --copy
       fi
+      aclocalinclude="$ACLOCAL_FLAGS"
+      for k in $macrodirs; do
+  	if test -d $k; then
+	  if test -f $k/Makefile.am.in; then
+	    make -C $k -f Makefile.am.in Makefile.am
+	  fi
+          aclocalinclude="$aclocalinclude -I $k"
+  	##else 
+	##  echo "**Warning**: No such directory \`$k'.  Ignored."
+        fi
+      done
+      touch ChangeLog
       echo "Running aclocal $aclocalinclude ..."
       aclocal $aclocalinclude
       if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
