@@ -6,6 +6,9 @@
 @c %**end of header
 
 @ifinfo
+@direntry
+* tinc: (tinc).              The tinc Manual.
+@end direntry
 
 This is the info manual for tinc, a Virtual Private Network daemon.
 
