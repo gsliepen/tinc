@@ -6,9 +6,9 @@ SUBDIRS = m4 intl lib src doc po redhat
 
 ACLOCAL_AMFLAGS =
 
-EXTRA_DIST = system.h ABOUT-NLS COPYING.README
+EXTRA_DIST = system.h COPYING.README
 
-CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
+CVS_CREATED = ABOUT-NLS configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
  stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in \
  po/tinc.pot src/.libs intl
