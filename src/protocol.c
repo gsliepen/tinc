@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.75 2001/01/07 20:19:31 guus Exp $
+    $Id: protocol.c,v 1.28.4.76 2001/01/08 20:35:30 guus Exp $
 */
 
 #include "config.h"
@@ -1128,7 +1128,7 @@ cp
     {
       p = (connection_t *)node->data;
       if(p != cl && p->status.meta && p->status.active)
-        if(!(cl->options & OPTION_INDIRECT) || from == myself)
+        if(!(p->options & OPTION_INDIRECT) || from == myself)
           send_request(p, "%d %s", KEY_CHANGED, from->name);
     }
 cp
