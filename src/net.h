@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.9 2000/08/08 17:07:48 guus Exp $
+    $Id: net.h,v 1.9.4.10 2000/09/14 14:32:34 zarq Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -55,6 +55,16 @@
 typedef unsigned long ip_t;
 typedef short length_t;
 
+struct conn_list_t;
+
+typedef struct subnet_t {
+  ip_t netaddr;
+  ip_t netmask;
+  struct conn_list_t *owner;
+  struct subnet_t *next;
+  struct subnet_t *prev;
+} subnet_t;  
+
 typedef struct vpn_packet_t {
   length_t len;		/* the actual number of bytes in the `data' field */
   unsigned char data[MAXSIZE];
@@ -83,7 +93,9 @@ typedef struct status_bits_t {
   int validkey:1;                  /* 1 if we currently have a valid key for him */
   int waitingforkey:1;             /* 1 if we already sent out a request */
   int dataopen:1;                  /* 1 if we have a valid UDP connection open */
-  int unused:21;
+  int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
+  int encryptin:1;                 /* 1 if we have to decrypt incoming traffic */
+  int unused:19;
 } status_bits_t;
 
 typedef struct queue_element_t {
@@ -104,11 +116,11 @@ typedef struct enc_key_t {
 } enc_key_t;
 
 typedef struct conn_list_t {
+  char *name;                      /* name of this connection */
   ip_t vpn_ip;                     /* his vpn ip */
   ip_t vpn_mask;                   /* his vpn network address */
   ip_t real_ip;                    /* his real (internet) ip */
-  char *real_hostname;             /* the hostname of its real ip */
-  char *vpn_hostname;              /* the hostname of the vpn ip */
+  char *hostname;             /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
@@ -121,12 +133,15 @@ typedef struct conn_list_t {
 				      valid key to be decrypted with) */
   enc_key_t *public_key;           /* the other party's public key */
   enc_key_t *key;                  /* encrypt with this key */
-  char buffer[MAXBUFSIZE+1];       /* metadata input buffer */
+  char *buffer;       /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int reqlen;                      /* length of first request in buffer */
   int tcppacket;		   /* length of incoming TCP tunnelled packet */
   time_t last_ping_time;           /* last time we saw some activity from the other end */  
   int want_ping;                   /* 0 if there's no need to check for activity */
+  int allow_request;               /* defined if there's only one request possible */
+  char *chal_answer;               /* answer to the given challenge */
+  enc_key_t *metakey;
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
   struct conn_list_t *next;        /* after all, it's a list of connections */
 } conn_list_t;
@@ -140,6 +155,8 @@ extern int total_socket_out;
 
 extern conn_list_t *conn_list;
 extern conn_list_t *myself;
+
+extern char *request_name[256];
 
 extern int send_packet(ip_t, vpn_packet_t *);
 extern int setup_network_connections(void);

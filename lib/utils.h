@@ -20,6 +20,14 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
+enum {
+  DEBUG_CONNECTIONS = 0,
+  DEBUG_PROTOCOL,
+  DEBUG_STATUS,
+  DEBUG_error,
+  DEBUG_META
+};
+
 #define min(a,b) (((a)<(b))?(a):(b))
 
 #define cp { cp_line = __LINE__; cp_file = __FILE__; }
