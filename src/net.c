@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.18 2000/06/30 21:03:51 guus Exp $
+    $Id: net.c,v 1.35.4.19 2000/07/02 13:36:18 guus Exp $
 */
 
 #include "config.h"
@@ -545,12 +545,19 @@ cp
   an authentication sequence during which
   we will do just that.
 */
-int setup_outgoing_connection(ip_t ip)
+int setup_outgoing_connection(char *hostname)
 {
   conn_list_t *ncn;
+  struct hostent *h;
 cp
+  if(!(h = gethostbyname(hostname)))
+    {
+      syslog(LOG_ERR, _("Error looking up `%s': %m"), hostname);
+      return -1;
+    }
+
   ncn = new_conn_list();
-  ncn->real_ip = ip;
+  ncn->real_ip = ntohl(*((ip_t*)(h->h_addr_list[0])));
   ncn->real_hostname = hostlookup(htonl(ip));
   
   if(setup_outgoing_meta_socket(ncn) < 0)
@@ -628,7 +635,7 @@ cp
 
   while(cfg)
     {
-      if(!setup_outgoing_connection(cfg->data.ip->ip))   /* function returns 0 when there are no problems */
+      if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         {
           signal(SIGALRM, SIG_IGN);
           return;
@@ -671,7 +678,7 @@ cp
 
   while(cfg)
     {
-      if(!setup_outgoing_connection(cfg->data.ip->ip))   /* function returns 0 when there are no problems */
+      if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         return 0;
       cfg = get_next_config_val(upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
     }

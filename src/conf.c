@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.5 2000/06/30 11:45:14 guus Exp $
+    $Id: conf.c,v 1.9.4.6 2000/07/02 13:36:18 guus Exp $
 */
 
 
@@ -59,7 +59,7 @@ typedef struct internal_config_t {
 */
 static internal_config_t hazahaza[] = {
   { "AllowConnect", allowconnect,   TYPE_BOOL },   /* Is not used anywhere. Remove? */
-  { "ConnectTo",    upstreamip,     TYPE_IP },
+  { "ConnectTo",    upstreamip,     TYPE_NAME },
   { "ConnectPort",  upstreamport,   TYPE_INT },
   { "ListenPort",   listenport,     TYPE_INT },
   { "MyOwnVPNIP",   myvpnip,        TYPE_IP },
