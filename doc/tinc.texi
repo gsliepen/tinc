@@ -1,10 +1,12 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.42 2003/08/02 22:01:50 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.43 2003/08/08 14:07:12 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
 @setchapternewpage odd
 @c %**end of header
+
+@include tincinclude.texi
 
 @ifinfo
 @dircategory Networking tools
@@ -12,13 +14,13 @@
 * tinc: (tinc).              The tinc Manual.
 @end direntry
 
-This is the info manual for tinc, a Virtual Private Network daemon.
+This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
 Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.42 2003/08/02 22:01:50 guus Exp $
+$Id: tinc.texi,v 1.8.4.43 2003/08/08 14:07:12 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -39,11 +41,13 @@ permission notice identical to this one.
 @page
 @vskip 0pt plus 1filll
 @cindex copyright
+This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
+
 Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.42 2003/08/02 22:01:50 guus Exp $
+$Id: tinc.texi,v 1.8.4.43 2003/08/08 14:07:12 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -830,14 +834,14 @@ This means that you call tincd with the -n argument,
 which will assign a netname to this daemon.
 
 The effect of this is that the daemon will set its configuration
-``root'' to /etc/tinc/netname/, where netname is your argument to the -n
-option.  You'll notice that it appears in syslog as ``tinc.netname''.
+``root'' to @value{sysconfdir}/tinc/@emph{netname}/, where @emph{netname} is your argument to the -n
+option.  You'll notice that it appears in syslog as ``tinc.@emph{netname}''.
 
 However, it is not strictly necessary that you call tinc with the -n
 option.  In this case, the network name would just be empty, and it will
-be used as such.  tinc now looks for files in /etc/tinc/, instead of
-/etc/tinc/netname/; the configuration file should be /etc/tinc/tinc.conf,
-and the host configuration files are now expected to be in /etc/tinc/hosts/.
+be used as such.  tinc now looks for files in @value{sysconfdir}/tinc/, instead of
+@value{sysconfdir}/tinc/@emph{netname}/; the configuration file should be @value{sysconfdir}/tinc/tinc.conf,
+and the host configuration files are now expected to be in @value{sysconfdir}/tinc/hosts/.
 
 But it is highly recommended that you use this feature of tinc, because
 it will be so much clearer whom your daemon talks to.  Hence, we will
@@ -874,8 +878,8 @@ It does not matter if two tinc daemons have a `ConnectTo' value pointing to each
 @section Configuration files
 
 The actual configuration of the daemon is done in the file
-@file{/etc/tinc/netname/tinc.conf} and at least one other file in the directory
-@file{/etc/tinc/netname/hosts/}.
+@file{@value{sysconfdir}/tinc/@emph{netname}/tinc.conf} and at least one other file in the directory
+@file{@value{sysconfdir}/tinc/@emph{netname}/hosts/}.
 
 These file consists of comments (lines started with a #) or assignments
 in the form of
@@ -1144,13 +1148,13 @@ Setting this options also implicitly sets IndirectData.
 
 @subsubheading Step 1.  Creating the main configuration file
 
-The main configuration file will be called @file{/etc/tinc/netname/tinc.conf}.
+The main configuration file will be called @file{@value{sysconfdir}/tinc/@emph{netname}/tinc.conf}.
 Adapt the following example to create a basic configuration file:
 
 @example
 Name = @emph{yourname}
 Device = @emph{/dev/tap0}
-PrivateKeyFile = /etc/tinc/@emph{netname}/rsa_key.priv
+PrivateKeyFile = @value{sysconfdir}/tinc/@emph{netname}/rsa_key.priv
 @end example
 
 Then, if you know to which other tinc daemon(s) yours is going to connect,
@@ -1159,7 +1163,7 @@ add `ConnectTo' values.
 @subsubheading Step 2.  Creating your host configuration file
 
 If you added a line containing `Name = yourname' in the main configuarion file,
-you will need to create a host configuration file @file{/etc/tinc/netname/hosts/yourname}.
+you will need to create a host configuration file @file{@value{sysconfdir}/tinc/@emph{netname}/hosts/yourname}.
 Adapt the following example to create a host configuration file:
 
 @example
@@ -1205,9 +1209,9 @@ if you are using the Linux tun/tap driver, the network interface will by default
 
 @cindex tinc-up
 You can configure the network interface by putting ordinary ifconfig, route, and other commands
-to a script named @file{/etc/tinc/netname/tinc-up}. When tinc starts, this script
+to a script named @file{@value{sysconfdir}/tinc/@emph{netname}/tinc-up}. When tinc starts, this script
 will be executed. When tinc exits, it will execute the script named
-@file{/etc/tinc/netname/tinc-down}, but normally you don't need to create that script.
+@file{@value{sysconfdir}/tinc/@emph{netname}/tinc-down}, but normally you don't need to create that script.
 
 An example @file{tinc-up} script:
 
@@ -1262,7 +1266,7 @@ for this particular VPN.
 
 @emph{BranchA} would be configured like this:
 
-In @file{/etc/tinc/company/tinc-up}:
+In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
@@ -1271,15 +1275,15 @@ In @file{/etc/tinc/company/tinc-up}:
 ifconfig $INTERFACE 10.1.54.1 netmask 255.0.0.0
 @end example
 
-and in @file{/etc/tinc/company/tinc.conf}:
+and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchA
-PrivateKeyFile = /etc/tinc/company/rsa_key.priv
+PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 Device = /dev/tap0
 @end example
 
-On all hosts, /etc/tinc/company/hosts/BranchA contains:
+On all hosts, @value{sysconfdir}/tinc/company/hosts/BranchA contains:
 
 @example
 Subnet = 10.1.0.0/16
@@ -1298,7 +1302,7 @@ since that will make things a lot easier to remember and set up.
 
 @subsubheading For Branch B
 
-In @file{/etc/tinc/company/tinc-up}:
+In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
@@ -1307,19 +1311,19 @@ In @file{/etc/tinc/company/tinc-up}:
 ifconfig $INTERFACE 10.2.1.12 netmask 255.0.0.0
 @end example
 
-and in @file{/etc/tinc/company/tinc.conf}:
+and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchB
 ConnectTo = BranchA
-PrivateKeyFile = /etc/tinc/company/rsa_key.priv
+PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
 same as on the tap0 device.  Also, ConnectTo is given so that no-one can
 connect to this node.
 
-On all hosts, in @file{/etc/tinc/company/hosts/BranchB}:
+On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchB}:
 
 @example
 Subnet = 10.2.0.0/16
@@ -1333,7 +1337,7 @@ Address = 2.3.4.5
 
 @subsubheading For Branch C
 
-In @file{/etc/tinc/company/tinc-up}:
+In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
@@ -1342,7 +1346,7 @@ In @file{/etc/tinc/company/tinc-up}:
 ifconfig $INTERFACE 10.3.69.254 netmask 255.0.0.0
 @end example
 
-and in @file{/etc/tinc/company/tinc.conf}:
+and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchC
@@ -1354,7 +1358,7 @@ C already has another daemon that runs on port 655, so they have to
 reserve another port for tinc. It knows the portnumber it has to listen on
 from it's own host configuration file.
 
-On all hosts, in @file{/etc/tinc/company/hosts/BranchC}:
+On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchC}:
 
 @example
 Address = 3.4.5.6
@@ -1369,7 +1373,7 @@ Port = 2000
 
 @subsubheading For Branch D
 
-In @file{/etc/tinc/company/tinc-up}:
+In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
@@ -1378,13 +1382,13 @@ In @file{/etc/tinc/company/tinc-up}:
 ifconfig $INTERFACE 10.4.3.32 netmask 255.0.0.0
 @end example
 
-and in @file{/etc/tinc/company/tinc.conf}:
+and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchD
 ConnectTo = BranchC
 Device = /dev/net/tun
-PrivateKeyFile = /etc/tinc/company/rsa_key.priv
+PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
@@ -1393,7 +1397,7 @@ Also note that since D uses the tun/tap driver, the network interface
 will not be called `tun' or `tap0' or something like that, but will
 have the same name as netname.
 
-On all hosts, in @file{/etc/tinc/company/hosts/BranchD}:
+On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchD}:
 
 @example
 Subnet = 10.4.0.0/16
@@ -1412,8 +1416,8 @@ A, B, C and D all have generated a public/private keypair with the following com
 tincd -n company -K
 @end example
 
-The private key is stored in @file{/etc/tinc/company/rsa_key.priv},
-the public key is put into the host configuration file in the @file{/etc/tinc/company/hosts/} directory.
+The private key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
+the public key is put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
 During key generation, tinc automatically guesses the right filenames based on the -n option and
 the Name directive in the @file{tinc.conf} file (if it is available).
 
@@ -1460,7 +1464,7 @@ command line options.
 @table @samp
 @item -c, --config=PATH
 Read configuration options from the directory PATH.  The default is
-@file{/etc/tinc/netname/}.
+@file{@value{sysconfdir}/tinc/@emph{netname}/}.
 
 @item -D, --no-detach
 Don't fork and detach.
@@ -1492,10 +1496,10 @@ This will prevent sensitive data like shared private keys to be written to the s
 
 @item --logfile[=FILE]
 Write log entries to a file instead of to the system logging facility.
-If FILE is omitted, the default is /var/log/tinc.NETNAME.log.
+If FILE is omitted, the default is @value{localstatedir}/log/tinc.NETNAME.log.
 
 @item --pidfile=FILE
-Write PID to FILE instead of /var/run/tinc.NETNAME.pid.
+Write PID to FILE instead of @value{localstatedir}/run/tinc.NETNAME.pid.
 
 @item --bypass-security
 Disables encryption and authentication.

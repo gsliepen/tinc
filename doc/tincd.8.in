@@ -72,12 +72,12 @@ Write log entries to a file instead of to the system logging facility.
 If
 .Ar FILE
 is omitted, the default is
-.Pa /var/log/tinc. Ns Ar NETNAME Ns Pa .log.
+.Pa @localstatedir@/log/tinc. Ns Ar NETNAME Ns Pa .log.
 .It Fl -pidfile Ns = Ns Ar FILE
 Write PID to
 .Ar FILE
 instead of
-.Pa /var/run/tinc. Ns Ar NETNAME Ns Pa .pid.
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
@@ -141,29 +141,29 @@ This will log all network traffic over the virtual private network.
 .El
 .Sh FILES
 .Bl -tag -width indent
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 The configuration file for
 .Nm .
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 Script which is executed as soon as the virtual network device has been allocated.
 Purpose is to further configure that device.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 Script which is executed when
 .Nm
 exits.
 Purpose is to cleanly shut down the virtual network device before it will be deallocated.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/*
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/*
 The directory containing the host configuration files
 used to authenticate other tinc daemons.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -up
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -up
 Script which is executed as soon as host
 .Ar NAME
 becomes reachable.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -down
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -down
 Script which is executed as soon as host
 .Ar NAME
 becomes unreachable.
-.It Pa /var/run/tinc. Ns Ar NETNAME Ns Pa .pid
+.It Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid
 The PID of the currently running
 .Nm
 is stored in this file.

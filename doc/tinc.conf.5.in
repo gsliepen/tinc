@@ -8,7 +8,7 @@
 .Nd tinc daemon configuration
 .Sh DESCRIPTION
 The files in the
-.Pa /etc/tinc/
+.Pa @sysconfdir@/tinc/
 directory contain runtime and security information for the tinc daemon.
 .Sh NETWORKS
 It is perfectly ok for you to run more than one tinc daemon.
@@ -25,7 +25,7 @@ with the
 option, which will assign a name to this daemon.
 .Pp
 The effect of this is that the daemon will set its configuration root to
-.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa / ,
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa / ,
 where 
 .Ar NETNAME
 is your argument to the
@@ -41,13 +41,13 @@ In this case, the network name would just be empty,
 and it will be used as such.
 .Nm tinc
 now looks for files in
-.Pa /etc/tinc/ ,
+.Pa @sysconfdir@/tinc/ ,
 instead of 
-.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa / ;
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa / ;
 the configuration file should be
-.Pa /etc/tinc/tinc.conf ,
+.Pa @sysconfdir@/tinc/tinc.conf ,
 and the host configuration files are now expected to be in
-.Pa /etc/tinc/hosts/ .
+.Pa @sysconfdir@/tinc/hosts/ .
 .Pp
 But it is highly recommended that you use this feature of
 .Nm tinc ,
@@ -57,7 +57,7 @@ Hence, we will assume that you use it.
 Each tinc daemon should have a name that is unique in the network which it will be part of.
 The name will be used by other tinc daemons for identification.
 The name has to be declared in the
-.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 file.
 .Pp
 To make things easy,
@@ -69,21 +69,21 @@ You should use
 to generate public/private keypairs.
 It will generate two keys.
 The private key should be stored in a separate file
-.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv
 \-\- where 
 .Ar NETNAME
 stands for the network (see 
 .Sx NETWORKS )
 above.
 The public key should be stored in the host configuration file
-.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Va NAME
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Va NAME
 \-\- where
 .Va NAME
 stands for the name of the local tinc daemon (see
 .Sx NAMES ) .
 .Sh SERVER CONFIGURATION
 The server configuration of the daemon is done in the file
-.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf .
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf .
 This file consists of comments (lines started with a
 .Li # )
 or assignments in the form of:
@@ -306,14 +306,14 @@ Setting this options also implicitly sets IndirectData.
 .El
 .Sh FILES
 .Bl -tag -width indent
-.It Pa /etc/tinc/
+.It Pa @sysconfdir@/tinc/
 The top directory for configuration files.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 The default name of the server configuration file for net
 .Ar NETNAME .
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 Host configuration files are kept in this directory.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 If an executable file with this name exists,
 it will be executed right after the tinc daemon has connected to the virtual network device.
 It can be used to set up the corresponding network interface.
@@ -328,7 +328,7 @@ or if the virtual network device is a Linux tun/tap device,
 the environment variable
 .Ev $INTERFACE
 will be set to the name of the network interface.
-.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 If an executable file with this name exists,
 it will be executed right before the tinc daemon is going to close
 its connection to the virtual network device.

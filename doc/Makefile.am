@@ -2,17 +2,11 @@
 
 info_TEXINFOS = tinc.texi
 
-dyn_MANS =
-man_aux = $(dyn_MANS:.8=.x)
+man_MANS = tincd.8 tinc.conf.5
 
-man_MANS = tincd.8 tinc.conf.5 $(dyn_MANS)
+EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config.tar.gz
 
-PERL = @PERL@
-HELP2MAN = help2man
-MAINTAINERCLEANFILES = $(dyn_MANS)
-
-EXTRA_DIST = $(man_MANS) $(HELP2MAN) $(man_aux) \
-  Makefile.maint GNUmakefile Makefile.summ sample-config.tar.gz
+CLEANFILES = *.html
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -22,13 +16,8 @@ transform = s/ginstall/install/; @program_transform_name@
 # For additional rules usually of interest only to the maintainer,
 # see GNUmakefile and Makefile.maint.
 
-tinc.pdf: tinc.texi
-	texi2pdf -o tinc.pdf tinc.texi
-
 texi2html: tinc.texi
-	mkdir -p html
-	rm -f html/*.html
-	cd html && texi2html -split=chapter ../tinc.texi
+	texi2html -split=chapter tinc.texi
 
-%.html: %
+%.html: $(man_MANS)
 	w3mman2html $< > $@
