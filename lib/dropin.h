@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.1.2.3 2001/01/07 17:08:49 guus Exp $
+    $Id: dropin.h,v 1.1.2.4 2001/11/05 19:06:07 guus Exp $
 */
 
 #ifndef __DROPIN_H__
@@ -29,6 +29,10 @@ extern int daemon(int, int);
 
 #ifndef HAVE_GET_CURRENT_DIR_NAME
 extern char* get_current_dir_name(void);
+#endif
+
+#ifndef HAVE_ASPRINTF
+extern int asprintf(char **, const char *, ...);
 #endif
 
 #endif /* __DROPIN_H__ */

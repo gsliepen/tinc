@@ -17,22 +17,46 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.2 2001/10/12 15:38:35 guus Exp $
+    $Id: device.c,v 1.1.2.3 2001/11/05 19:06:07 guus Exp $
 */
 
-#include <sys/sockio.h>
+
+#include "config.h"
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stropts.h>
+#include <sys/sockio.h>
 #include <net/if_tun.h>
 
 #define DEFAULT_DEVICE "/dev/tun"
 
+#include <utils.h>
+#include "conf.h"
+#include "net.h"
+#include "subnet.h"
+
+#include "system.h"
+
 int device_fd = -1;
 int device_type;
-char *device_fname;
-char *device_info;
+char *device = NULL;
+char *interface = NULL;
+char ifrname[IFNAMSIZ];
+char *device_info = NULL;
 
 int device_total_in = 0;
 int device_total_out = 0;
+
+subnet_t mymac;
 
 int setup_device(void)
 {
@@ -41,19 +65,19 @@ int setup_device(void)
   char *ptr;
 
 cp
-  if(!get_config_string(lookup_config(config_tree, "Device"), &device_fname)))
-    device_fname = DEFAULT_DEVICE;
+  if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+    device = DEFAULT_DEVICE;
 
 cp
-  if((device_fd = open(device_fname, O_RDWR | O_NONBLOCK)) < 0)
+  if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
     {
-      syslog(LOG_ERR, _("Could not open %s: %m"), device_fname);
+      syslog(LOG_ERR, _("Could not open %s: %m"), device);
       return -1;
     }
 cp
   ppa = 0;
 
-  ptr = fname;
+  ptr = device;
   while(*ptr && !isdigit((int)*ptr)) ptr++;
   ppa = atoi(ptr);
 
@@ -63,13 +87,13 @@ cp
   }
 
   /* Assign a new PPA and get its unit number. */
-  if( (ppa = ioctl(fd, TUNNEWPPA, ppa)) < 0){
+  if( (ppa = ioctl(device_fd, TUNNEWPPA, ppa)) < 0){
      syslog(LOG_ERR, _("Can't assign new interface: %m"));
      return -1;
   }
 
-  if( (if_fd = open(fname, O_RDWR, 0)) < 0){
-     syslog(LOG_ERR, _("Could not open %s twice: %m"), fname);
+  if( (if_fd = open(device, O_RDWR, 0)) < 0){
+     syslog(LOG_ERR, _("Could not open %s twice: %m"), device);
      return -1;
   }
 
@@ -101,9 +125,15 @@ cp
   mymac.net.mac.address.x[4] = 0x00;
   mymac.net.mac.address.x[5] = 0x00;
 
-  syslog(LOG_INFO, _("%s is a %s"), device_fname, device_info);
+  syslog(LOG_INFO, _("%s is a %s"), device, device_info);
 cp
   return 0;
+}
+
+void close_device(void)
+{
+cp
+  close(device_fd);
 }
 
 int read_packet(vpn_packet_t *packet)
@@ -112,14 +142,14 @@ int read_packet(vpn_packet_t *packet)
 cp
   if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0)
     {
-      syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device_fname);
+      syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
       return -1;
     }
 
-  memcpy(vp->data, mymac.net.mac.address.x, 6);
-  memcpy(vp->data + 6, mymac.net.mac.address.x, 6);
-  vp->data[12] = 0x08;
-  vp->data[13] = 0x00;
+  memcpy(packet->data, mymac.net.mac.address.x, 6);
+  memcpy(packet->data + 6, mymac.net.mac.address.x, 6);
+  packet->data[12] = 0x08;
+  packet->data[13] = 0x00;
 
   packet->len = lenin + 14;
 
@@ -127,7 +157,7 @@ cp
 
   if(debug_lvl >= DEBUG_TRAFFIC)
     {
-      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), device_info, packet.len);
+      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), device_info, packet->len);
     }
 
   return 0;
@@ -143,10 +173,20 @@ cp
 
   if(write(device_fd, packet->data + 14, packet->len - 14) < 0)
     {
-      syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, packet.len);
+      syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, packet->len);
       return -1;
     }
 
   device_total_out += packet->len;
+cp
+  return 0;
+}
+
+void dump_device_stats(void)
+{
+cp
+  syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+  syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+  syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 cp
 }

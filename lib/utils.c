@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdarg.h>
 
 #include "config.h"
@@ -84,34 +85,5 @@ void cp_trace()
            cp_file[(cp_index+1)%16], cp_line[(cp_index+1)%16],
            cp_file[cp_index], cp_line[cp_index]
         );
-}
-#endif
-
-#ifndef HAVE_ASPRINTF
-int asprintf(char **buf, const char *fmt, ...)
-{
-  int status;
-  va_list ap;
-  int len;
-  
-  len = 4096;
-  *buf = xmalloc(len);
-
-  va_start(ap, fmt);
-  status = vsnprintf (*buf, len, fmt, ap);
-  va_end (ap);
-
-  if(status >= 0)
-    *buf = xrealloc(*buf, status);
-
-  if(status > len-1)
-    {
-      len = status;
-      va_start(ap, fmt);
-      status = vsnprintf (*buf, len, fmt, ap);
-      va_end (ap);
-    }
-
-  return status;
 }
 #endif

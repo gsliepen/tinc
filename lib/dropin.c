@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.4 2001/02/06 10:12:51 guus Exp $
+    $Id: dropin.c,v 1.1.2.5 2001/11/05 19:06:07 guus Exp $
 */
 
 #include "config.h"
@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <xalloc.h>
 
@@ -134,5 +135,34 @@ char *get_current_dir_name(void)
     }
 
   return buf;
+}
+#endif
+
+#ifndef HAVE_ASPRINTF
+int asprintf(char **buf, const char *fmt, ...)
+{
+  int status;
+  va_list ap;
+  int len;
+  
+  len = 4096;
+  *buf = xmalloc(len);
+
+  va_start(ap, fmt);
+  status = vsnprintf (*buf, len, fmt, ap);
+  va_end (ap);
+
+  if(status >= 0)
+    *buf = xrealloc(*buf, status);
+
+  if(status > len-1)
+    {
+      len = status;
+      va_start(ap, fmt);
+      status = vsnprintf (*buf, len, fmt, ap);
+      va_end (ap);
+    }
+
+  return status;
 }
 #endif
