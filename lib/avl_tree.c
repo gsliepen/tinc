@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.warande.net>.
 
-    $Id: avl_tree.c,v 1.1.2.6 2001/02/20 21:53:18 wsl Exp $
+    $Id: avl_tree.c,v 1.1.2.7 2001/02/27 16:50:29 guus Exp $
 */
 
 #include <stdio.h>
@@ -430,7 +430,7 @@ avl_node_t *avl_insert(avl_tree_t *tree, void *data)
         new->data = data;
         avl_insert_after(tree, closest, new);
         break;
-      case 0:
+      default:
         return NULL;
     }
   }
