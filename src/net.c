@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.36 2000/10/15 00:59:34 guus Exp $
+    $Id: net.c,v 1.35.4.37 2000/10/15 19:53:15 zarq Exp $
 */
 
 #include "config.h"
@@ -39,7 +39,10 @@
 
 /* Next two includes are for tun/tap support */
 #include <net/if.h>
-#include "/usr/src/linux/include/linux/if_tun.h"
+
+#ifdef HAVE_LINUX_IF_TUN_H
+#include <linux/if_tun.h>
+#endif
 
 #include <utils.h>
 #include <xalloc.h>
@@ -332,12 +335,19 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
+
+#ifdef HAVE_TUNTAP
   struct ifreq ifr;
+#endif
 cp  
   if((cfg = get_config_val(config, tapdevice)))
     tapfname = cfg->data.ptr;
   else
+#ifdef HAVE_TUNTAP
     tapfname = "/dev/misc/net/tun";
+#else
+    tapfname = "/dev/tap0";
+#endif
 cp
   if((nfd = open(tapfname, O_RDWR | O_NONBLOCK)) < 0)
     {
@@ -347,8 +357,8 @@ cp
 cp
   tap_fd = nfd;
 
+#ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
-  
   memset(&ifr, 0, sizeof(ifr));
 cp
   ifr.ifr_flags = IFF_TAP;
@@ -363,6 +373,7 @@ cp
     else
       /* Setup inetaddr/netmask etc */;
   }
+#endif
   
 cp
   return 0;
