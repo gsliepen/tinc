@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.96 2001/07/01 09:21:01 guus Exp $
+    $Id: protocol.c,v 1.28.4.97 2001/07/01 21:42:13 guus Exp $
 */
 
 #include "config.h"
@@ -227,22 +227,22 @@ cp
       return -1;
     }
 
-  /* First check if the host we connected to is already in our
+  /* First check if the host is already in our
      connection list. If so, we are probably making a loop, which
      is not desirable.
    */
 
-  if(cl->status.outgoing)
+  if((old = lookup_id(cl->name)))
     {
-      if((old = lookup_id(cl->name)))
+      if(debug_lvl >= DEBUG_CONNECTIONS)
+        syslog(LOG_NOTICE, _("%s (%s) is already in our connection list"), cl->name, cl->hostname);
+      if(cl->status.outgoing)
         {
-          if(debug_lvl >= DEBUG_CONNECTIONS)
-            syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"), cl->name, cl->hostname);
           cl->status.outgoing = 0;
           old->status.outgoing = 1;
-          terminate_connection(cl);
-          return 0;
         }
+      terminate_connection(cl);
+      return 0;
     }
     
   /* Now we can add the name to the id tree */
