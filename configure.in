@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.33 2001/06/07 07:48:11 guus Exp $
+dnl $Id: configure.in,v 1.13.2.34 2001/06/29 10:27:57 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -14,7 +14,7 @@ AM_ACLOCAL_INCLUDE(m4)
 # in the latter don't make it into the configure-time tests.
 AC_DEFINE([_GNU_SOURCE], [__USE_BSD])
 
-ALL_LINGUAS="es nl"
+ALL_LINGUAS="nl"
 
 dnl Checks for programs.
 AC_PROG_CC
