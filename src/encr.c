@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: encr.c,v 1.12 2000/05/31 18:23:06 zarq Exp $
+    $Id: encr.c,v 1.12.4.1 2000/06/25 15:16:11 guus Exp $
 */
 
 #include "config.h"
@@ -150,7 +150,7 @@ cp
   else
     my_key_expiry = (time_t)(time(NULL) + cfg->data.val);
 
-  syslog(LOG_NOTICE, _("Generating %d bits keys."), PRIVATE_KEY_BITS);
+  syslog(LOG_NOTICE, _("Generating %d bits keys"), PRIVATE_KEY_BITS);
 
   if((f = fopen("/dev/urandom", "r")) == NULL)
     {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10 2000/05/31 18:23:06 zarq Exp $
+    $Id: tincd.c,v 1.10.4.1 2000/06/25 15:16:12 guus Exp $
 */
 
 #include "config.h"
@@ -156,7 +156,7 @@ parse_options(int argc, char **argv, char **envp)
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, _("Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting."), cp_file, cp_line, size);
+  syslog(LOG_ERR, _("Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting."), cp_file, cp_line, size);
   exit(1);
 }
 
@@ -210,11 +210,11 @@ int detach(void)
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
-  if(debug_lvl > 1)
-    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d."),
+  if(debug_lvl > 0)
+    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
 	   VERSION, __DATE__, __TIME__, debug_lvl);
   else
-    syslog(LOG_NOTICE, _("tincd %s starting, debug level %d."), VERSION, debug_lvl);
+    syslog(LOG_NOTICE, _("tincd %s starting"), VERSION, debug_lvl);
 
   xalloc_fail_func = memory_full;
 
@@ -229,7 +229,7 @@ void cleanup_and_exit(int c)
   close_network_connections();
 
   if(debug_lvl > 0)
-    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d."),
+    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
 	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
 
   closelog();
@@ -410,10 +410,10 @@ RETSIGTYPE
 sigsegv_handler(int a)
 {
   if(cp_file)
-    syslog(LOG_NOTICE, _("Got SEGV signal after %s line %d. Trying to re-execute."),
+    syslog(LOG_NOTICE, _("Got SEGV signal after %s line %d, trying to re-execute"),
 	   cp_file, cp_line);
   else
-    syslog(LOG_NOTICE, _("Got SEGV signal; trying to re-execute."));
+    syslog(LOG_NOTICE, _("Got SEGV signal, trying to re-execute"));
 
   signal(SIGSEGV, sigsegv_square);
 
@@ -458,10 +458,10 @@ RETSIGTYPE
 sighuh(int a)
 {
   if(cp_file)
-    syslog(LOG_NOTICE, _("Got unexpected signal (%d) after %s line %d."),
+    syslog(LOG_NOTICE, _("Got unexpected signal %d after %s line %d"),
 	   a, cp_file, cp_line);
   else
-    syslog(LOG_NOTICE, _("Got unexpected signal (%d)."), a);
+    syslog(LOG_NOTICE, _("Got unexpected signal %d"), a);
 }
 
 void

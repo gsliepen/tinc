@@ -104,7 +104,7 @@ typedef struct conn_list_t {
   ip_t vpn_ip;                     /* his vpn ip */
   ip_t vpn_mask;                   /* his vpn network address */
   ip_t real_ip;                    /* his real (internet) ip */
-  char *hostname;                  /* the hostname of its real ip */
+/*  char *hostname;                  /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */

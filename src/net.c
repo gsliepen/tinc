@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.2 2000/06/24 12:35:42 guus Exp $
+    $Id: net.c,v 1.35.4.3 2000/06/25 15:16:11 guus Exp $
 */
 
 #include "config.h"
@@ -247,7 +247,7 @@ void flush_queues(conn_list_t *cl)
 cp
   if(cl->sq)
     {
-      if(debug_lvl > 1)
+      if(debug_lvl > 3)
 	syslog(LOG_DEBUG, _("Flushing send queue for " IP_ADDR_S),
 	       IP_ADDR_V(cl->vpn_ip));
       flush_queue(cl, &(cl->sq), xsend);
@@ -255,7 +255,7 @@ cp
 
   if(cl->rq)
     {
-      if(debug_lvl > 1)
+      if(debug_lvl > 3)
 	syslog(LOG_DEBUG, _("Flushing receive queue for " IP_ADDR_S),
 	       IP_ADDR_V(cl->vpn_ip));
       flush_queue(cl, &(cl->rq), xrecv);
@@ -272,9 +272,9 @@ int send_packet(ip_t to, vpn_packet_t *packet)
 cp
   if((cl = lookup_conn(to)) == NULL)
     {
-      if(debug_lvl > 2)
+      if(debug_lvl > 3)
         {
-          syslog(LOG_NOTICE, _("trying to look up " IP_ADDR_S " in connection list failed."),
+          syslog(LOG_NOTICE, _("Trying to look up " IP_ADDR_S " in connection list failed!"),
 	         IP_ADDR_V(to));
         }
         
@@ -285,8 +285,8 @@ cp
       for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
       if(!cl)
         { /* No open outgoing connection has been found. */
-	  if(debug_lvl > 2)
-	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to."));
+	  if(debug_lvl > 3)
+	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to!"));
           return -1;
         }
     }
@@ -298,8 +298,8 @@ cp
       for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
       if(!cl)
         { /* No open outgoing connection has been found. */
-	  if(debug_lvl > 2)
-	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to."));
+	  if(debug_lvl > 3)
+	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to!"));
           return -1;
         }
     }
@@ -314,9 +314,9 @@ cp
     {
       if((cl = lookup_conn(cl->vpn_ip)) == NULL)
         {
-          if(debug_lvl > 2)
+          if(debug_lvl > 3)
             {
-              syslog(LOG_NOTICE, _("indirect look up " IP_ADDR_S " in connection list failed."),
+              syslog(LOG_NOTICE, _("Indirect look up " IP_ADDR_S " in connection list failed!"),
 	             IP_ADDR_V(to));
             }
             
@@ -325,7 +325,7 @@ cp
           return -1;
         }
       if(cl->flags & INDIRECTDATA)  /* This should not happen */
-        if(debug_lvl > 1)
+        if(debug_lvl > 3)
           {
             syslog(LOG_NOTICE, _("double indirection for " IP_ADDR_S),
 	           IP_ADDR_V(to));
@@ -351,8 +351,8 @@ cp
   if(!cl->status.active)
     {
       add_queue(&(cl->sq), packet, packet->len + 2);
-      if(debug_lvl > 1)
-	syslog(LOG_INFO, _(IP_ADDR_S " is not ready, queueing packet."), IP_ADDR_V(cl->vpn_ip));
+      if(debug_lvl > 3)
+	syslog(LOG_INFO, _(IP_ADDR_S " is not ready, queueing packet"), IP_ADDR_V(cl->vpn_ip));
       return 0; /* We don't want to mess up, do we? */
     }
 
@@ -516,9 +516,8 @@ cp
       return -1;
     }
 
-  cl->hostname = hostlookup(htonl(cl->real_ip));
-
-  syslog(LOG_INFO, _("Connected to %s:%hd"), cl->hostname, cl->port);
+  syslog(LOG_INFO, _("Connected to " IP_ADDR_S ":%hd"),
+         IP_ADDR_V(cl->real_ip), cl->port);
 cp
   return 0;
 }
@@ -539,7 +538,7 @@ cp
 
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
-      syslog(LOG_ERR, _("Could not set up a meta connection."));
+      syslog(LOG_ERR, _("Could not set up a meta connection!"));
       free_conn_element(ncn);
       return -1;
     }
@@ -595,7 +594,7 @@ cp
 
   myself->status.active = 1;
 
-  syslog(LOG_NOTICE, _("Ready: listening on port %d."), myself->port);
+  syslog(LOG_NOTICE, _("Ready: listening on port %d"), myself->port);
 cp
   return 0;
 }
@@ -618,7 +617,7 @@ cp
       if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
         seconds_till_retry = 300;
       alarm(seconds_till_retry);
-      syslog(LOG_ERR, _("Still failed to connect to other. Will retry in %d seconds."),
+      syslog(LOG_ERR, _("Still failed to connect to other, will retry in %d seconds"),
 	     seconds_till_retry);
     }
 cp
@@ -651,7 +650,7 @@ cp
       signal(SIGALRM, sigalrm_handler);
       seconds_till_retry = 300;
       alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, _("Try to re-establish outgoing connection in 5 minutes."));
+      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 minutes"));
     }
 cp
   return 0;
@@ -689,7 +688,7 @@ cp
   close(tap_fd);
   destroy_conn_list();
 
-  syslog(LOG_NOTICE, _("Terminating."));
+  syslog(LOG_NOTICE, _("Terminating"));
 cp
   return;
 }
@@ -702,7 +701,7 @@ int setup_vpn_connection(conn_list_t *cl)
   int nfd, flags;
   struct sockaddr_in a;
 cp
-  if(debug_lvl > 1)
+  if(debug_lvl > 0)
     syslog(LOG_DEBUG, _("Opening UDP socket to " IP_ADDR_S), IP_ADDR_V(cl->real_ip));
 
   nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -754,7 +753,6 @@ cp
       return NULL;
     }
 
-  p->hostname = hostlookup(ci.sin_addr.s_addr);
   p->real_ip = ntohl(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
@@ -762,7 +760,8 @@ cp
   p->last_ping_time = time(NULL);
   p->want_ping = 0;
   
-  syslog(LOG_NOTICE, _("Connection from %s:%d"), p->hostname, htons(ci.sin_port));
+  syslog(LOG_NOTICE, _("Connection from " IP_ADDR_S ":%d"),
+         IP_ADDR_V(p->real_ip), htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
     {
@@ -874,7 +873,8 @@ cp
     return;
 
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Closing connection with %s."), cl->hostname);
+    syslog(LOG_NOTICE, _("Closing connection with " IP_ADDR_S " (" IP_ADDR_S ")"),
+           IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
 
   if(cl->status.timeout)
     send_timeout(cl);
@@ -890,7 +890,7 @@ cp
       signal(SIGALRM, sigalrm_handler);
       seconds_till_retry = 5;
       alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, _("Try to re-establish outgoing connection in 5 seconds."));
+      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 seconds"));
     }
   
   cl->status.active = 0;
@@ -942,8 +942,9 @@ cp
             {
               if(p->status.pinged && !p->status.got_pong)
                 {
-	          syslog(LOG_INFO, _("%s (" IP_ADDR_S ") didn't respond to ping"),
-		         p->hostname, IP_ADDR_V(p->vpn_ip));
+                  if(debug_lvl > 1)
+  	            syslog(LOG_INFO, _(IP_ADDR_S " (" IP_ADDR_S ") didn't respond to ping"),
+		           IP_ADDR_V(p->vpn_ip), IP_ADDR_V(p->real_ip));
 	          p->status.timeout = 1;
 	          terminate_connection(p);
                 }
@@ -981,7 +982,7 @@ cp
     {
       shutdown(nfd, 2);
       close(nfd);
-      syslog(LOG_NOTICE, _("Closed attempted connection."));
+      syslog(LOG_NOTICE, _("Closed attempted connection"));
       return 0;
     }
 
@@ -1014,7 +1015,7 @@ cp
 
   if(cl->buflen >= MAXBUFSIZE)
     {
-      syslog(LOG_ERR, _("Metadata read buffer overflow."));
+      syslog(LOG_ERR, _("Metadata read buffer overflow!"));
       return -1;
     }
 
@@ -1045,26 +1046,29 @@ cp
 
       if(cl->reqlen)
         {
+          if(debug_lvl > 2)
+            syslog(LOG_DEBUG, _("Got request from " IP_ADDR_S " (" IP_ADDR_S "): %s"),
+                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip), cl->buffer);
           if(sscanf(cl->buffer, "%d", &request) == 1)
             {
               if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
                 {
-                  syslog(LOG_ERR, _("Unknown request: %s"), cl->buffer);
+                  syslog(LOG_ERR, _("Unknown request from " IP_ADDR_S " (" IP_ADDR_S ")"),
+                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
                   return -1;
                 }
 
-              if(debug_lvl > 3)
-                syslog(LOG_DEBUG, _("Got request: %s"), cl->buffer);                             
-
               if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
                 {
-                  syslog(LOG_ERR, _("Error while processing request from " IP_ADDR_S), IP_ADDR_V(cl->real_ip));
+                  syslog(LOG_ERR, _("Error while processing request from " IP_ADDR_S " (" IP_ADDR_S ")"),
+                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
                   return -1;
                 }
             }
           else
             {
-              syslog(LOG_ERR, _("Bogus data received."));
+              syslog(LOG_ERR, _("Bogus data received from " IP_ADDR_S " (" IP_ADDR_S ")"),
+                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
               return -1;
             }
 
@@ -1152,7 +1156,7 @@ cp
   ether_type = ntohs(*((unsigned short*)(&vp.data[12])));
   if(ether_type != 0x0800)
     {
-      if(debug_lvl > 0)
+      if(debug_lvl > 3)
 	syslog(LOG_INFO, _("Non-IP ethernet frame %04x from " MAC_ADDR_S),
 	       ether_type, MAC_ADDR_V(vp.data[6]));
       return;
@@ -1160,7 +1164,7 @@ cp
   
   if(lenin < 32)
     {
-      if(debug_lvl > 0)
+      if(debug_lvl > 3)
 	syslog(LOG_INFO, _("Dropping short packet"));
       return;
     }
@@ -1171,7 +1175,7 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, _("An IP packet (%04x) for " IP_ADDR_S " from " IP_ADDR_S),
 	   ether_type, IP_ADDR_V(to), IP_ADDR_V(from));
-  if(debug_lvl > 4)
+  if(debug_lvl > 3)
     syslog(LOG_DEBUG, _(MAC_ADDR_S " to " MAC_ADDR_S),
 	   MAC_ADDR_V(vp.data[0]), MAC_ADDR_V(vp.data[6]));
   
