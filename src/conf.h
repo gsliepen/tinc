@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.28 2001/10/27 12:13:17 guus Exp $
+    $Id: conf.h,v 1.6.4.29 2001/10/28 08:41:19 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -40,6 +40,7 @@ extern int debug_lvl;
 extern int timeout;
 extern int maxtimeout;
 extern int sighup;
+extern int bypass_security;
 extern char *confbase;
 extern char *netname;
 

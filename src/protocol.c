@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.109 2001/10/27 12:13:17 guus Exp $
+    $Id: protocol.c,v 1.28.4.110 2001/10/28 08:41:19 guus Exp $
 */
 
 #include "config.h"
@@ -55,7 +55,7 @@
 #include "meta.h"
 #include "connection.h"
 #include "node.h"
-#include "vertex.h"
+#include "edge.h"
 
 #include "system.h"
 
@@ -176,10 +176,11 @@ cp
 int id_h(connection_t *c)
 {
   char name[MAX_STRING_SIZE];
+int bla;
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %d", name, &c->protocol_version) != 2)
     {
-       syslog(LOG_ERR, _("Got bad %s from %s"), "ID", c->hostname);
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name, c->hostname);
        return -1;
     }
 
@@ -187,7 +188,7 @@ cp
 
   if(check_id(name))
     {
-      syslog(LOG_ERR, _("Peer %s uses invalid identity name"), c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ID", c->name, c->hostname, "invalid name");
       return -1;
     }
 
@@ -213,9 +214,19 @@ cp
       return -1;
     }
   
+  if(bypass_security)
+    {
+      if(!c->config_tree)
+        init_configuration(&c->config_tree);
+      c->allow_request = ACK;
+      return send_ack(c);
+    }
+
   if(!c->config_tree)
     {
-      if(read_connection_config(c))
+      init_configuration(&c->config_tree);
+
+      if((bla = read_connection_config(c)))
         {
           syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname, c->name);
           return -1;
@@ -314,7 +325,7 @@ int metakey_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING, buffer) != 1)
     {
-       syslog(LOG_ERR, _("Got bad METAKEY from %s (%s)"), c->name, c->hostname);
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name, c->hostname);
        return -1;
     }
 
@@ -324,7 +335,7 @@ cp
 
   if(strlen(buffer) != len*2)
     {
-      syslog(LOG_ERR, _("Intruder: wrong meta key length from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong keylength");
       return -1;
     }
 
@@ -412,7 +423,7 @@ int challenge_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING, buffer) != 1)
     {
-       syslog(LOG_ERR, _("Got bad CHALLENGE from %s (%s)"), c->name, c->hostname);
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name, c->hostname);
        return -1;
     }
 
@@ -422,7 +433,7 @@ cp
 
   if(strlen(buffer) != len*2)
     {
-      syslog(LOG_ERR, _("Intruder: wrong challenge length from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong challenge length");
       return -1;
     }
 
@@ -446,12 +457,6 @@ int send_chal_reply(connection_t *c)
 {
   char hash[SHA_DIGEST_LENGTH*2+1];
 cp
-  if(!c->mychallenge)
-    {
-      syslog(LOG_ERR, _("Trying to send CHAL_REPLY to %s (%s) without a valid CHALLENGE"), c->name, c->hostname);
-      return -1;
-    }
-     
   /* Calculate the hash from the challenge we received */
 
   SHA1(c->mychallenge, RSA_size(myself->connection->rsa_key), hash);
@@ -474,7 +479,7 @@ int chal_reply_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING, hishash) != 1)
     {
-       syslog(LOG_ERR, _("Got bad CHAL_REPLY from %s (%s)"), c->name, c->hostname);
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name, c->hostname);
        return -1;
     }
 
@@ -482,7 +487,7 @@ cp
 
   if(strlen(hishash) != SHA_DIGEST_LENGTH*2)
     {
-      syslog(LOG_ERR, _("Intruder: wrong challenge reply length from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, _("wrong challenge reply length"));
       return -1;
     }
 
@@ -498,7 +503,7 @@ cp
 
   if(memcmp(hishash, myhash, SHA_DIGEST_LENGTH))
     {
-      syslog(LOG_ERR, _("Intruder: wrong challenge reply from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, _("wrong challenge reply"));
       if(debug_lvl >= DEBUG_SCARY_THINGS)
         {
           bin2hex(myhash, hishash, SHA_DIGEST_LENGTH);
@@ -520,7 +525,7 @@ cp
 int send_ack(connection_t *c)
 {
   /* ACK message contains rest of the information the other end needs
-     to create node_t and vertex_t structures. */
+     to create node_t and edge_t structures. */
 cp
   return send_request(c, "%d %d", ACK, myself->port);
 }
@@ -534,7 +539,7 @@ int ack_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d %hd", &port) != 1)
     {
-       syslog(LOG_ERR, _("Got bad %s from %s"), "ACK", c->hostname);
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
        return -1;
     }
 
@@ -589,20 +594,21 @@ cp
 
   */
 
-  /* Create a vertex_t for this connection */
+  /* Create a edge_t for this connection */
 
-  c->vertex = new_vertex();
+  c->edge = new_edge();
   
-  c->vertex->from = myself;
-  c->vertex->to = n;
-  c->vertex->metric = 1;
-  c->vertex->connection = c;
+  c->edge->from = myself;
+  c->edge->to = n;
+  c->edge->metric = 1;
+  c->edge->connection = c;
 
-  vertex_add(c->vertex);
+  edge_add(c->edge);
 
   /* Activate this connection */
 
   c->allow_request = ALL;
+  c->status.active = 1;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name, c->hostname);
@@ -621,23 +627,23 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      
-      if(n != c->node)
+
+      if(n == c->node || n == myself)
+        continue;
+
+      /* Notify others of this connection */
+
+      if(n->connection)
+        send_add_node(n->connection, c->node);
+
+      /* Notify new connection of everything we know */
+
+      send_add_node(c, n);
+
+      for(node2 = c->node->subnet_tree->head; node2; node2 = node2->next)
         {
-          /* Notify others of this connection */
-
-          if(n->connection)
-            send_add_node(n->connection, c->node);
-
-          /* Notify new connection of everything we know */
-
-          send_add_node(c, n);
-
-          for(node2 = c->node->subnet_tree->head; node2; node2 = node2->next)
-            {
-              s = (subnet_t *)node2->data;
-              send_add_subnet(c, s);
-            }
+          s = (subnet_t *)node2->data;
+          send_add_subnet(c, s);
         }
     }
 cp
@@ -671,7 +677,7 @@ int add_subnet_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
-      syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name, c->hostname);
       return -1;
     }
 
@@ -679,7 +685,7 @@ cp
 
   if(check_id(name))
     {
-      syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s): invalid identity name"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name, c->hostname, _("invalid name"));
       return -1;
     }
 
@@ -687,7 +693,7 @@ cp
 
   if(!(s = str2net(subnetstr)))
     {
-      syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s): invalid subnet string"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name, c->hostname, _("invalid subnet string"));
       return -1;
     }
 
@@ -695,7 +701,7 @@ cp
 
   if(!(owner = lookup_node(name)))
     {
-      syslog(LOG_ERR, _("Got ADD_SUBNET for %s from %s (%s) which is not in our connection list"),
+      syslog(LOG_ERR, _("Got ADD_SUBNET from %s (%s) for %s which is not in our connection list"),
              name, c->name, c->hostname);
       return -1;
     }
@@ -738,7 +744,7 @@ int del_subnet_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, name, subnetstr) != 3)
     {
-      syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name, c->hostname);
       return -1;
     }
 
@@ -746,7 +752,7 @@ cp
 
   if(check_id(name))
     {
-      syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s): invalid identity name"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid name"));
       return -1;
     }
 
@@ -754,7 +760,7 @@ cp
 
   if(!(s = str2net(subnetstr)))
     {
-      syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s): invalid subnet string"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid subnet string"));
       return -1;
     }
 
@@ -762,8 +768,8 @@ cp
 
   if(!(owner = lookup_node(name)))
     {
-      syslog(LOG_ERR, _("Got DEL_SUBNET for %s from %s (%s) which is not in our connection list"),
-             name, c->name, c->hostname);
+      syslog(LOG_ERR, _("Got %s from %s (%s) for %s which is not in our connection list"),
+             "DEL_SUBNET", c->name, c->hostname, name);
       return -1;
     }
 
@@ -773,8 +779,8 @@ cp
   
   if(!find)
     {
-      syslog(LOG_ERR, _("Got DEL_SUBNET for %s from %s (%s) which does not appear in his subnet tree"),
-             name, c->name, c->hostname);
+      syslog(LOG_ERR, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
+             "DEL_SUBNET", c->name, c->hostname, name);
       return -1;
     }
   
@@ -812,7 +818,7 @@ int add_node_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %lx:%hd", name, &address, &port) != 3)
     {
-       syslog(LOG_ERR, _("Got bad ADD_NODE from %s (%s)"), c->name, c->hostname);
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_NODE", c->name, c->hostname);
        return -1;
     }
 
@@ -820,18 +826,10 @@ cp
 
   if(check_id(name))
     {
-      syslog(LOG_ERR, _("Got bad ADD_NODE from %s (%s): invalid identity name"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_NODE", c->name, c->hostname, _("invalid name"));
       return -1;
     }
 
-  /* Check if somebody tries to add ourself */
-
-  if(!strcmp(name, myself->name))
-    {
-      syslog(LOG_ERR, _("Got ADD_NODE from %s (%s) for ourself!"), c->name, c->hostname);
-      return -1;
-    }
-    
   /* Check if node already exists */
   
   n = lookup_node(name);
@@ -880,7 +878,7 @@ int del_node_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %lx:%hd", name, &address, &port) != 3)
     {
-      syslog(LOG_ERR, _("Got bad DEL_NODE from %s (%s)"),
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_NODE",
              c->name, c->hostname);
       return -1;
     }
@@ -889,7 +887,7 @@ cp
 
   if(check_id(name))
     {
-      syslog(LOG_ERR, _("Got bad DEL_NODE from %s (%s): invalid identity name"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_NODE", c->name, c->hostname, _("invalid name"));
       return -1;
     }
 
@@ -897,7 +895,7 @@ cp
 
   if(!strcmp(name, myself->name))
     {
-      syslog(LOG_ERR, _("Got DEL_NODE from %s (%s) for ourself!"),
+      syslog(LOG_ERR, _("Got %s from %s (%s) for ourself!"), "DEL_NODE",
              c->name, c->hostname);
       return -1;
     }
@@ -908,7 +906,7 @@ cp
 
   if(!n)
     {
-      syslog(LOG_WARNING, _("Got DEL_NODE from %s (%s) for %s which does not exist"), c->name, c->hostname, n->name);
+      syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which does not exist"), "DEL_NODE", c->name, c->hostname, n->name);
       return 0;
     }
   
@@ -916,7 +914,7 @@ cp
   
   if(address != n->address || port != n->port)
     {
-      syslog(LOG_WARNING, _("Got DEL_NODE from %s (%s) for %s which doesn't match"), c->name, c->hostname, n->name);
+      syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which doesn't match"), "DEL_NODE", c->name, c->hostname, n->name);
       return 0;
     }
 
@@ -936,6 +934,180 @@ cp
   return 0;
 }
 
+/* Vertices */
+
+int send_add_edge(connection_t *c, edge_t *v)
+{
+cp
+  return send_request(c, "%d %s %s %lx", ADD_NODE,
+                      v->from->name, v->to->name, v->options);
+}
+
+int add_edge_h(connection_t *c)
+{
+  connection_t *other;
+  edge_t *v;
+  node_t *from, *to;
+  char from_name[MAX_STRING_SIZE];
+  char to_name[MAX_STRING_SIZE];
+  long int options;
+  avl_node_t *node;
+cp
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx", from_name, to_name, &options) != 3)
+    {
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name, c->hostname);
+       return -1;
+    }
+
+  /* Check if names are valid */
+
+  if(check_id(from_name))
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name, c->hostname, _("invalid name"));
+      return -1;
+    }
+
+  if(check_id(to_name))
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name, c->hostname, _("invalid name"));
+      return -1;
+    }
+
+  /* Lookup nodes */
+
+  from = lookup_node(from_name);
+  
+  if(!from)
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name, c->hostname, _("unknown node"));
+      return -1;
+    }
+
+  to = lookup_node(to_name);
+  
+  if(!to)
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name, c->hostname, _("unknown node"));
+      return -1;
+    }
+
+  /* Check if node already exists */
+  
+  v = lookup_edge(from, to);
+  
+  if(v)
+    {
+      /* Check if it matches */
+    }
+  else
+    {
+      v = new_edge();
+      v->from = from;
+      v->to = to;
+      v->options = options;
+      edge_add(v);
+    }
+
+  /* Tell the rest about the new edge */
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      other = (connection_t *)node->data;
+      if(other->status.active && other != c)
+        send_add_edge(other, v);
+    }
+
+cp
+  return 0;
+}
+
+int send_del_edge(connection_t *c, edge_t *v)
+{
+cp
+  return send_request(c, "%d %s %s %lx", DEL_EDGE,
+                      v->from->name, v->to->name, v->options);
+}
+
+int del_edge_h(connection_t *c)
+{
+  edge_t *v;
+  char from_name[MAX_STRING_SIZE];
+  char to_name[MAX_STRING_SIZE];
+  node_t *from, *to;
+  long int options;
+  connection_t *other;
+  avl_node_t *node;
+cp
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx", from_name, to_name, &options) != 3)
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE",
+             c->name, c->hostname);
+      return -1;
+    }
+
+  /* Check if names are valid */
+
+  if(check_id(from_name))
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("invalid name"));
+      return -1;
+    }
+
+  if(check_id(to_name))
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("invalid name"));
+      return -1;
+    }
+
+  /* Lookup nodes */
+
+  from = lookup_node(from_name);
+  
+  if(!from)
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("unknown node"));
+      return -1;
+    }
+
+  to = lookup_node(to_name);
+  
+  if(!to)
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("unknown node"));
+      return -1;
+    }
+
+  /* Check if edge exists */
+  
+  v = lookup_edge(from, to);
+  
+  if(v)
+    {
+      /* Check if it matches */
+    }
+  else
+    {
+      syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("unknown edge"));
+      return -1;
+    }
+
+  /* Tell the rest about the deleted edge */
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      other = (connection_t *)node->data;
+      if(other->status.active && other != c)
+        send_del_edge(other, v);
+    }
+
+  /* Delete the edge */
+  
+  edge_del(v);
+cp
+  return 0;
+}
+
+
 /* Status and error notification routines */
 
 int send_status(connection_t *c, int statusno, char *statusstring)
@@ -954,7 +1126,7 @@ int status_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d %d "MAX_STRING, &statusno, statusstring) != 2)
     {
-       syslog(LOG_ERR, _("Got bad STATUS from %s (%s)"),
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
               c->name, c->hostname);
        return -1;
     }
@@ -984,7 +1156,7 @@ int error_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d %d "MAX_STRING, &err, errorstring) != 2)
     {
-       syslog(LOG_ERR, _("Got bad ERROR from %s (%s)"),
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
               c->name, c->hostname);
        return -1;
     }
@@ -1083,7 +1255,7 @@ int key_changed_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING, name) != 1)
     {
-      syslog(LOG_ERR, _("Got bad KEY_CHANGED from %s (%s)"),
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
              c->name, c->hostname);
       return -1;
     }
@@ -1092,7 +1264,7 @@ cp
 
   if(!n)
     {
-      syslog(LOG_ERR, _("Got KEY_CHANGED from %s (%s) origin %s which does not exist"),
+      syslog(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"), "KEY_CHANGED",
              c->name, c->hostname, name);
       return -1;
     }
@@ -1121,7 +1293,7 @@ int req_key_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, from_name, to_name) != 2)
     {
-       syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"),
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY",
               c->name, c->hostname);
        return -1;
     }
@@ -1130,7 +1302,7 @@ cp
 
   if(!from)
     {
-      syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) origin %s which does not exist in our connection list"),
+      syslog(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"), "REQ_KEY",
              c->name, c->hostname, from_name);
       return -1;
     }
@@ -1139,7 +1311,7 @@ cp
   
   if(!to)
     {
-      syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) destination %s which does not exist in our connection list"),
+      syslog(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"), "REQ_KEY",
              c->name, c->hostname, to_name);
       return -1;
     }
@@ -1186,7 +1358,7 @@ int ans_key_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING, from_name, to_name, key) != 3)
     {
-       syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"),
+       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY",
               c->name, c->hostname);
        return -1;
     }
@@ -1195,7 +1367,7 @@ cp
 
   if(!from)
     {
-      syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"),
+      syslog(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"), "ANS_KEY",
              c->name, c->hostname, from_name);
       return -1;
     }
@@ -1204,7 +1376,7 @@ cp
 
   if(!to)
     {
-      syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"),
+      syslog(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"), "ANS_KEY",
              c->name, c->hostname, to_name);
       return -1;
     }
@@ -1215,8 +1387,8 @@ cp
 
   if(keylength != from->keylength * 2)
     {
-      syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key length"),
-             c->name, c->hostname, from->name);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s) origin %s: %s"), "ANS_KEY",
+             c->name, c->hostname, from->name, _("invalid key length"));
       return -1;
     }
 
@@ -1265,7 +1437,7 @@ int tcppacket_h(connection_t *c)
 cp  
   if(sscanf(c->buffer, "%*d %hd", &len) != 1)
     {
-      syslog(LOG_ERR, _("Got bad PACKET from %s (%s)"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name, c->hostname);
       return -1;
     }
 
@@ -1284,6 +1456,7 @@ int (*request_handlers[])(connection_t*) = {
   ping_h, pong_h,
   add_node_h, del_node_h,
   add_subnet_h, del_subnet_h,
+  add_edge_h, del_edge_h,
   key_changed_h, req_key_h, ans_key_h,
   tcppacket_h,
 };
@@ -1296,7 +1469,7 @@ char (*request_name[]) = {
   "PING", "PONG",
   "ADD_NODE", "DEL_NODE",
   "ADD_SUBNET", "DEL_SUBNET",
-  "ADD_VERTEX", "DEL_VERTEX",
+  "ADD_EDGE", "DEL_EDGE",
   "KEY_CHANGED", "REQ_KEY", "ANS_KEY",
   "PACKET",
 };

@@ -1,5 +1,5 @@
 /*
-    vertex.h -- header for vertex.c
+    edge.h -- header for edge.c
     Copyright (C) 2001 Guus Sliepen <guus@sliepen.warande.net>,
                   2001 Ivo Timmermans <itimmermans@bigfoot.com>
 
@@ -17,11 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.h,v 1.1.2.5 2001/10/27 12:13:17 guus Exp $
+    $Id: edge.h,v 1.1.2.1 2001/10/28 08:41:19 guus Exp $
 */
 
-#ifndef __TINC_VERTEX_H__
-#define __TINC_VERTEX_H__
+#ifndef __TINC_EDGE_H__
+#define __TINC_EDGE_H__
 
 #include <avl_tree.h>
 
@@ -38,25 +38,25 @@ typedef struct halfconnection_t {
   char *hostname;                  /* the hostname of real ip */
 } halfconnection_t;
 
-typedef struct vertex_t {
+typedef struct edge_t {
   struct node_t *from;
   struct node_t *to;
 
   long int options;                /* options turned on for this connection */
-  int metric;                      /* weight of this vertex */
+  int metric;                      /* weight of this edge */
   
-  struct connection_t *connection; /* connection associated with this vertex, if available */
-} vertex_t;
+  struct connection_t *connection; /* connection associated with this edge, if available */
+} edge_t;
 
-extern avl_tree_t *vertex_tree;    /* Tree with all known vertices (replaces active_tree) */
+extern avl_tree_t *edge_tree;    /* Tree with all known vertices (replaces active_tree) */
 
 extern void init_vertices(void);
 extern void exit_vertices(void);
-extern vertex_t *new_vertex(void);
-extern void free_vertex(vertex_t *);
-extern void vertex_add(vertex_t *);
-extern void vertex_del(vertex_t *);
-extern vertex_t *lookup_vertex(struct node_t *, struct node_t *);
+extern edge_t *new_edge(void);
+extern void free_edge(edge_t *);
+extern void edge_add(edge_t *);
+extern void edge_del(edge_t *);
+extern edge_t *lookup_edge(struct node_t *, struct node_t *);
 extern void dump_vertices(void);
 
-#endif /* __TINC_VERTEX_H__ */
+#endif /* __TINC_EDGE_H__ */

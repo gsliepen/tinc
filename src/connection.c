@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.21 2001/10/27 15:19:13 guus Exp $
+    $Id: connection.c,v 1.1.2.22 2001/10/28 08:41:19 guus Exp $
 */
 
 #include "config.h"
@@ -65,7 +65,6 @@ connection_t *new_connection(void)
   connection_t *c;
 cp
   c = (connection_t *)xmalloc_and_zero(sizeof(connection_t));
-  init_configuration(&c->config_tree);
 cp
   return c;
 }

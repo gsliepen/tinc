@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.23 2001/10/27 12:13:17 guus Exp $
+    $Id: protocol.h,v 1.5.4.24 2001/10/28 08:41:19 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -42,7 +42,7 @@ enum {
   PING, PONG,
   ADD_NODE, DEL_NODE,
   ADD_SUBNET, DEL_SUBNET,
-  ADD_VERTEX, DEL_VERTEX,
+  ADD_EDGE, DEL_EDGE,
   KEY_CHANGED, REQ_KEY, ANS_KEY,
   PACKET,
   LAST                               /* Guardian for the highest request number */
@@ -69,8 +69,8 @@ extern int send_add_node(connection_t*, node_t*);
 extern int send_del_node(connection_t*, node_t*);
 extern int send_add_subnet(connection_t*, subnet_t*);
 extern int send_del_subnet(connection_t*, subnet_t*);
-extern int send_add_vertex(connection_t*, node_t*);
-extern int send_del_vertex(connection_t*, node_t*);
+extern int send_add_edge(connection_t*, edge_t*);
+extern int send_del_edge(connection_t*, edge_t*);
 extern int send_key_changed(connection_t*, node_t*);
 extern int send_req_key(connection_t*, node_t*, node_t*);
 extern int send_ans_key(connection_t*, node_t*, node_t*, char*);

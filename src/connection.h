@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.17 2001/10/27 12:13:17 guus Exp $
+    $Id: connection.h,v 1.1.2.18 2001/10/28 08:41:19 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -42,7 +42,7 @@
 #include "conf.h"
 
 #include "node.h"
-#include "vertex.h"
+#include "edge.h"
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
@@ -72,7 +72,7 @@ typedef struct connection_t {
   struct connection_status_t status; /* status info */
 
   struct node_t *node;             /* node associated with the other end */
-  struct vertex_t *vertex;         /* vertex associated with this connection */
+  struct edge_t *edge;         /* edge associated with this connection */
 
   RSA *rsa_key;                    /* his public/private key */
   EVP_CIPHER *incipher;            /* Cipher he will use to send data to us */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.54 2001/10/27 15:19:13 guus Exp $
+    $Id: tincd.c,v 1.10.4.55 2001/10/28 08:41:19 guus Exp $
 */
 
 #include "config.h"
@@ -58,16 +58,19 @@
 char *program_name;
 
 /* If nonzero, display usage information and exit. */
-static int show_help;
+int show_help;
 
 /* If nonzero, print the version on standard output and exit.  */
-static int show_version;
+int show_version;
 
 /* If nonzero, it will attempt to kill a running tincd and exit. */
-static int kill_tincd = 0;
+int kill_tincd = 0;
 
 /* If nonzero, generate public/private keypair for this host/net. */
-static int generate_keys = 0;
+int generate_keys = 0;
+
+/* If nonzero, use null ciphers and skip all key exchanges. */
+int bypass_security = 0;
 
 char *identname;                 /* program name for syslog */
 char *pidfilename;               /* pid file location */
@@ -85,6 +88,7 @@ static struct option const long_options[] =
   { "no-detach", no_argument, &do_detach, 0 },
   { "generate-keys", optional_argument, NULL, 'K'},
   { "debug", optional_argument, NULL, 'd'},
+  { "bypass-security", no_argument, &bypass_security, 1 },
   { NULL, 0, NULL, 0 }
 };
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.139 2001/10/27 15:19:13 guus Exp $
+    $Id: net.c,v 1.35.4.140 2001/10/28 08:41:19 guus Exp $
 */
 
 #include "config.h"
@@ -458,6 +458,7 @@ cp
   c = new_connection();
   c->name = xstrdup(name);
 
+  init_configuration(&c->config_tree);
   read_connection_config(c);
   
   if(!get_config_string(lookup_config(c->config_tree, "Address"), &c->hostname))
@@ -622,6 +623,7 @@ int setup_myself(void)
 cp
   myself = new_node();
   myself->connection = new_connection();
+  init_configuration(&myself->connection->config_tree);
 
   asprintf(&myself->hostname, _("MYSELF"));
   asprintf(&myself->connection->hostname, _("MYSELF"));
@@ -774,6 +776,7 @@ cp
   init_connections();
   init_subnets();
   init_nodes();
+  init_vertices();
 
   if(get_config_int(lookup_config(config_tree, "PingTimeout"), &timeout))
     {
@@ -1197,9 +1200,9 @@ cp
           if(FD_ISSET(device_fd, &fset))
             {
               if(read_packet(&packet))
-                route_outgoing(&packet);
-              else
                 return;
+              else
+                route_outgoing(&packet);
             }
         }
     }
