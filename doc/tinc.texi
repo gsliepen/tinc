@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.41 2003/08/02 21:55:12 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.42 2003/08/02 22:01:50 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.41 2003/08/02 21:55:12 guus Exp $
+$Id: tinc.texi,v 1.8.4.42 2003/08/02 22:01:50 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.41 2003/08/02 21:55:12 guus Exp $
+$Id: tinc.texi,v 1.8.4.42 2003/08/02 22:01:50 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -797,6 +797,7 @@ What IP addresses/subnets do they have?
 What is the network mask of the entire VPN?
 Do you need special firewall rules?
 Do you have to set up masquerading or forwarding rules?
+Do you want to run tinc in router mode or switch mode?
 These questions can only be answered by yourself,
 you will not find the answers in this documentation.
 Make sure you have an adequate understanding of networks in general.
@@ -1953,7 +1954,7 @@ known, because a challenge reply can only be sent back if the challenge is
 decrypted correctly, and that can only be done with knowledge of the private
 key.
 
-Fourth: the first thing that is send via the symmetric cipher encrypted
+Fourth: the first thing that is sent via the symmetric cipher encrypted
 connection is a totally random string, so that there is no known plaintext (for
 an attacker) in the beginning of the encrypted stream.
 
