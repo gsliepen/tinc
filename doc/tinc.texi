@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.33 2002/10/07 07:32:31 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.34 2002/12/27 19:32:33 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.33 2002/10/07 07:32:31 guus Exp $
+$Id: tinc.texi,v 1.8.4.34 2002/12/27 19:32:33 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.33 2002/10/07 07:32:31 guus Exp $
+$Id: tinc.texi,v 1.8.4.34 2002/12/27 19:32:33 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -1215,7 +1215,7 @@ and in @file{/etc/tinc/company/tinc.conf}:
 
 @example
 Name = BranchA
-PrivateKey = /etc/tinc/company/rsa_key.priv
+PrivateKeyFile = /etc/tinc/company/rsa_key.priv
 Device = /dev/tap0
 @end example
 
@@ -1254,7 +1254,7 @@ and in @file{/etc/tinc/company/tinc.conf}:
 @example
 Name = BranchB
 ConnectTo = BranchA
-PrivateKey = /etc/tinc/company/rsa_key.priv
+PrivateKeyFile = /etc/tinc/company/rsa_key.priv
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
