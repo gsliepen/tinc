@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.30 2002/06/21 10:11:10 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.31 2002/07/16 13:18:27 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.30 2002/06/21 10:11:10 guus Exp $
+$Id: tinc.texi,v 1.8.4.31 2002/07/16 13:18:27 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.30 2002/06/21 10:11:10 guus Exp $
+$Id: tinc.texi,v 1.8.4.31 2002/07/16 13:18:27 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -635,12 +635,9 @@ ethertap devices:
 
 @example
 mknod -m 600 /dev/tap0 c 36 16
-chown 0.0 /dev/tap0
 mknod -m 600 /dev/tap1 c 36 17
-chown 0.0 /dev/tap0
 ...
 mknod -m 600 /dev/tap@emph{N} c 36 @emph{N+16}
-chown 0.0 /dev/tap@emph{N}
 @end example
 
 There is a maximum of 16 ethertap devices.
@@ -650,7 +647,6 @@ following device file (unless it already exist):
 
 @example
 mknod -m 600 /dev/tun c 10 200
-chown 0.0 /dev/tun
 @end example
 
 If you use Linux, and you run the new 2.4 kernel using the devfs filesystem,
@@ -851,15 +847,15 @@ This option may not work on all platforms.
 
 @cindex ConnectTo
 @item @strong{ConnectTo = <name>}
-Specifies which host to connect to on startup.  Multiple ConnectTo
-variables may be specified, if connecting to the first one fails then
-tinc will try the next one, and so on.  It is possible to specify
-hostnames for dynamic IP addresses (like those given on dyndns.org),
-tinc will not cache the resolved IP address.
+Specifies which other tinc daemon to connect to on startup.
+Multiple ConnectTo variables may be specified,
+in which case outgoing connections to each specified tinc daemon are made.
+The names should be known to this tinc daemon
+(i.e., there should be a host configuration file for the name on the ConnectTo line).
 
-If you don't specify a host with ConnectTo, regardless of whether a
-value for ConnectPort is given, tinc won't connect at all, and will
-instead just listen for incoming connections.
+If you don't specify a host with ConnectTo,
+tinc won't try to connect to other daemons at all,
+and will instead just listen for incoming connections.
 
 @cindex Device
 @item @strong{Device = <device>} (/dev/tap0 or /dev/misc/net/tun)
