@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.43 2001/09/01 12:46:49 guus Exp $
+    $Id: conf.c,v 1.9.4.44 2001/10/10 20:34:27 guus Exp $
 */
 
 #include "config.h"
@@ -39,13 +39,15 @@
 
 #include <xalloc.h>
 #include <utils.h> /* for cp */
+#include <avl_tree.h>
 
 #include "conf.h"
 #include "netutl.h" /* for strtoip */
 
 #include "system.h"
 
-config_t *config = NULL;
+avl_tree_t *config_tree;
+
 int debug_lvl = 0;
 int timeout = 0; /* seconds before timeout */
 char *confbase = NULL;           /* directory in which all config files are */
@@ -54,90 +56,168 @@ char *netname = NULL;            /* name of the vpn network */
 /* Will be set if HUP signal is received. It will be processed when it is safe. */
 int sighup = 0;
 
-/*
-  These are all the possible configurable values
-*/
-static internal_config_t hazahaza[] = {
-/* Main configuration file keywords */
-  { "ConnectTo",    config_connectto,      TYPE_NAME },
-  { "Hostnames",    config_hostnames,    TYPE_BOOL },
-  { "Interface",    config_interface,      TYPE_NAME },
-  { "InterfaceIP",  config_interfaceip,    TYPE_IP },
-  { "KeyExpire",    config_keyexpire,      TYPE_INT },
-  { "MyVirtualIP",  config_dummy,          TYPE_IP },
-  { "MyOwnVPNIP",   config_dummy,          TYPE_IP },
-  { "Name",         config_name,       TYPE_NAME },
-  { "PingTimeout",  config_pingtimeout,    TYPE_INT },
-  { "PrivateKey",   config_privatekey,     TYPE_NAME },
-  { "PrivateKeyFile", config_privatekeyfile, TYPE_NAME },
-  { "TapDevice",    config_tapdevice,      TYPE_NAME },
-  { "VpnMask",      config_dummy,          TYPE_IP },
-/* Host configuration file keywords */
-  { "Address",      config_address,        TYPE_NAME },
-  { "IndirectData", config_indirectdata,   TYPE_BOOL },
-  { "Port",         config_port,           TYPE_INT },
-  { "PublicKey",    config_publickey,      TYPE_NAME },
-  { "PublicKeyFile", config_publickeyfile, TYPE_NAME },
-  { "RestrictAddress", config_restrictaddress, TYPE_BOOL },
-  { "RestrictHosts", config_restricthosts, TYPE_BOOL },
-  { "RestrictPort", config_restrictport,   TYPE_BOOL },
-  { "RestrictSubnets", config_restrictsubnets, TYPE_BOOL },
-  { "Subnet",       config_subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
-  { "TCPonly",      config_tcponly,        TYPE_BOOL },
-  { "Mode",         config_mode,           TYPE_NAME },
-  { NULL, 0, 0 }
-};
-
-/*
-  Add given value to the list of configs cfg
-*/
-config_t *
-add_config_val(config_t **cfg, int argtype, char *val)
+int config_compare(config_t *a, config_t *b)
 {
-  config_t *p;
-  char *q;
-cp
-  p = (config_t*)xmalloc(sizeof(*p));
-  p->data.val = 0;
+  int result;
+  
+  result = strcmp(a->variable, b->variable);
+  
+  if(result)
+    return result;
 
-  switch(argtype)
-    {
-    case TYPE_INT:
-      p->data.val = strtol(val, &q, 0);
-      if(q && *q)
-	p->data.val = 0;
-      break;
-    case TYPE_NAME:
-      p->data.ptr = xmalloc(strlen(val) + 1);
-      strcpy(p->data.ptr, val);
-      break;
-    case TYPE_IP:
-      p->data.ip = strtoip(val);
-      break;
-    case TYPE_BOOL:
-      if(!strcasecmp("yes", val))
-	p->data.val = stupid_true;
-      else if(!strcasecmp("no", val))
-	p->data.val = stupid_false;
-      else
-	p->data.val = 0;
-    }
-
-  p->argtype = argtype;
-
-  if(p->data.val)
-    {
-      p->next = *cfg;
-      *cfg = p;
-cp
-      return p;
-    }
+  result = a->line - b->line;
+  
+  if(result)
+    return result;
   else
-    {
-      free(p);
+    return strcmp(a->file, b->file);
+}
+
+void init_configuration(avl_tree_t **config_tree)
+{
 cp
-      return NULL;
+  *config_tree = avl_alloc_tree((avl_compare_t)config_compare, (avl_action_t)free_config);
+cp
+}
+
+void exit_configuration(avl_tree_t **config_tree)
+{
+cp
+  avl_delete_tree(*config_tree);
+  *config_tree = NULL;
+cp
+}
+
+config_t *new_config(void)
+{
+  config_t *cfg;
+cp
+  cfg = (config_t *)xmalloc_and_zero(sizeof(*cfg));
+  
+  return cfg;
+}
+
+void free_config(config_t *cfg)
+{
+cp
+  if(cfg->variable)
+    free(cfg->variable);
+  if(cfg->value)
+    free(cfg->value);
+  if(cfg->file)
+    free(cfg->file);
+  free(cfg);
+cp
+}
+
+void config_add(avl_tree_t *config_tree, config_t *cfg)
+{
+cp
+  avl_insert(config_tree, cfg);
+cp
+}
+
+config_t *lookup_config(avl_tree_t *config_tree, char *variable)
+{
+  config_t cfg, *found;
+cp
+  cfg.variable = variable;
+  cfg.file = "";
+  cfg.line = 0;
+
+  found = avl_search_closest_greater(config_tree, &cfg);
+  
+  if(!strcmp(found->variable, variable))
+    return found;
+  else
+    return NULL;
+}
+
+config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
+{
+  avl_node_t *node;
+  config_t *found;
+cp
+  node = avl_search_node(config_tree, cfg);
+  
+  if(node)
+    {
+      if(node->next)
+        {
+          found = (config_t *)node->next->data;
+          if(!strcmp(found->variable, cfg->variable))
+            return found;
+        }
     }
+  
+  return NULL;
+}
+  
+int get_config_bool(config_t *cfg, int *result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  if(!strcasecmp(cfg->value, "yes"))
+    {
+      *result = 1;
+      return 1;
+    }
+  else if(!strcasecmp(cfg->value, "np"))
+    {
+      *result = 0;
+      return 1;
+    }
+
+  syslog(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+         cfg->value, cfg->file, cfg->line);
+
+  return 0;
+}
+
+int get_config_int(config_t *cfg, int *result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  if(sscanf(cfg->value, "%d", result) == 1)
+    return 1;
+    
+  syslog(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+         cfg->value, cfg->file, cfg->line);
+  return 0;
+}
+
+int get_config_string(config_t *cfg, char **result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  *result = cfg->value;
+  return 1;
+}
+
+int get_config_ip(config_t *cfg, ip_mask_t **result)
+{
+  ip_mask_t *ip;
+cp
+  if(!cfg)
+    return 0;
+
+  ip = strtoip(cfg->value);
+
+  if(ip)
+    {
+      *result = ip;
+      return 1;
+    }
+
+  syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
+         cfg->value, cfg->file, cfg->line);
+  return 0;
 }
 
 /*
@@ -224,13 +304,13 @@ char *readline(FILE *fp, char **buf, size_t *buflen)
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-int read_config_file(config_t **base, const char *fname)
+int read_config_file(avl_tree_t *config_tree, const char *fname)
 {
   int err = -2; /* Parse error */
   FILE *fp;
   char *buffer, *line;
-  char *p, *q;
-  int i, lineno = 0, ignore = 0;
+  char *variable, *value;
+  int lineno = 0, ignore = 0;
   config_t *cfg;
   size_t bufsize;
   
@@ -246,7 +326,6 @@ cp
   
   for(;;)
     {
-      
       if((line = readline(fp, &buffer, &bufsize)) == NULL)
 	{
 	  err = -1;
@@ -261,49 +340,34 @@ cp
 
       lineno++;
 
-      if((p = strtok(line, "\t =")) == NULL)
+      if((variable = strtok(line, "\t =")) == NULL)
 	continue; /* no tokens on this line */
 
-      if(p[0] == '#')
+      if(variable[0] == '#')
 	continue; /* comment: ignore */
 
-      if(!strcmp(p, "-----BEGIN"))
+      if(!strcmp(variable, "-----BEGIN"))
         ignore = 1;
         
-      if(ignore == 0)
+      if(!ignore)
         {
-          for(i = 0; hazahaza[i].name != NULL; i++)
-	    if(!strcasecmp(hazahaza[i].name, p))
-	      break;
-
-          if(!hazahaza[i].name)
-	    {
-	      syslog(LOG_ERR, _("Invalid variable name `%s' on line %d while reading config file %s"),
-		      p, lineno, fname);
-              break;
-	    }
-
-          if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
+          if(((value = strtok(NULL, "\t\n\r =")) == NULL) || value[0] == '#')
 	    {
 	      syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
-		      hazahaza[i].name, lineno, fname);
+		      variable, lineno, fname);
 	      break;
 	    }
 
-          cfg = add_config_val(base, hazahaza[i].argtype, q);
-          if(cfg == NULL)
-	    {
-	      syslog(LOG_ERR, _("Invalid value for variable `%s' on line %d while reading config file %s"),
-		      hazahaza[i].name, lineno, fname);
-	      break;
-	    }
+          cfg = new_config();
+          cfg->variable = xstrdup(variable);
+          cfg->value = xstrdup(value);
+          cfg->file = xstrdup(fname);
+          cfg->line = lineno;
 
-          cfg->which = hazahaza[i].which;
-          if(!config)
-	    config = cfg;
+          config_add(config_tree, cfg);
        }
 
-      if(!strcmp(p, "-----END"))
+      if(!strcmp(variable, "-----END"))
         ignore = 0;
     }
 
@@ -319,7 +383,7 @@ int read_server_config()
   int x;
 cp
   asprintf(&fname, "%s/tinc.conf", confbase);
-  x = read_config_file(&config, fname);
+  x = read_config_file(config_tree, fname);
   if(x == -1) /* System error: complain */
     {
       syslog(LOG_ERR, _("Failed to read `%s': %m"),
@@ -328,39 +392,6 @@ cp
   free(fname);
 cp
   return x;  
-}
-
-/*
-  Look up the value of the config option type
-*/
-const config_t *get_config_val(config_t const *p, which_t type)
-{
-cp
-  for(; p != NULL; p = p->next)
-    if(p->which == type)
-      break;
-cp
-  return p;
-}
-
-/*
-  Remove the complete configuration tree.
-*/
-void clear_config(config_t **base)
-{
-  config_t *p, *next;
-cp
-  for(p = *base; p != NULL; p = next)
-    {
-      next = p->next;
-      if(p->data.ptr && (p->argtype == TYPE_NAME))
-        {
-          free(p->data.ptr);
-        }
-      free(p);
-    }
-  *base = NULL;
-cp
 }
 
 int isadir(const char* f)

@@ -17,88 +17,44 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.26 2001/09/01 12:46:49 guus Exp $
+    $Id: conf.h,v 1.6.4.27 2001/10/10 20:34:27 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
 
+#include <avl_tree.h>
 #include "net.h"
 
-#define MAXTIMEOUT 900  /* Maximum timeout value for retries. Should this be a configuration option? */
-
-typedef struct ip_mask_t {
-  ipv4_t address;
-  ipv4_t mask;
-} ip_mask_t;
-
-typedef enum which_t {
-  config_dummy = 0,
-  config_name = 1,
-  config_connectto,
-  config_pingtimeout,
-  config_tapdevice,
-  config_privatekey,
-  config_privatekeyfile,
-  config_keyexpire,
-  config_hostnames,
-  config_interface,
-  config_interfaceip,
-  config_address,
-  config_port,
-  config_publickey,
-  config_publickeyfile,
-  config_subnet,
-  config_restricthosts,
-  config_restrictsubnets,
-  config_restrictaddress,
-  config_restrictport,
-  config_indirectdata,
-  config_tcponly,
-  config_mode,
-} which_t;
-
 typedef struct config_t {
-  struct config_t *next;
-  which_t which;
-  int argtype;
-  union data {
-    long val;
-    char *ptr;
-    ip_mask_t *ip;
-    struct config_t *next;	/* For nested configs! */
-  } data;
+  char *variable;
+  char *value;
+  char *file;
+  int line;
 } config_t;
 
-typedef struct internal_config_t {
-  char *name;
-  enum which_t which;
-  int argtype;
-} internal_config_t;
+extern avl_tree_t *config_tree;
 
-enum {
-  stupid_false = 1,
-  stupid_true
-};
-
-enum {
-  TYPE_NAME = 1,
-  TYPE_INT,
-  TYPE_IP,
-  TYPE_BOOL
-};
-
-extern config_t *config;
 extern int debug_lvl;
 extern int timeout;
+extern int maxtimeout;
 extern int sighup;
 extern char *confbase;
 extern char *netname;
 
-extern config_t *add_config_val(config_t **, int, char *);
-extern int read_config_file(config_t **, const char *);
-extern const config_t *get_config_val(config_t const *, which_t type);
-extern void clear_config();
+extern void init_configuration(avl_tree_t **);
+extern void exit_configuration(avl_tree_t **);
+extern config_t *new_config(void);
+extern void free_config(config_t *);
+extern void config_add(avl_tree_t *, config_t *);
+extern config_t *config_lookup(avl_tree_t *, char *);
+extern config_t *config_lookup_next(avl_tree_t *, config_t *);
+extern int get_config_bool(config_t *, int *);
+extern int get_config_int(config_t *, int *);
+extern int get_config_string(config_t *, char **);
+extern int get_config_ip(config_t *, ip_mask_t **);
+
+extern int read_config_file(avl_tree_t *, const char *);
 extern int read_server_config(void);
 extern FILE *ask_and_safe_open(const char*, const char*, const char *);
 extern int is_safe_path(const char *);
