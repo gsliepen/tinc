@@ -19,6 +19,3 @@
 #if !defined(__USE_BSD)
 # undef __USE_BSD
 #endif
-
-#undef HAVE_NAMESPACES
-#undef HAVE_STL
