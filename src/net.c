@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.58 2000/11/03 22:33:16 zarq Exp $
+    $Id: net.c,v 1.35.4.59 2000/11/04 10:37:27 guus Exp $
 */
 
 #include "config.h"
@@ -77,32 +77,6 @@ char *unknown = NULL;
 char *interface_name = NULL;  /* Contains the name of the interface */
 
 subnet_t mymac;
-
-/*
-  strip off the MAC adresses of an ethernet frame
-*/
-void strip_mac_addresses(vpn_packet_t *p)
-{
-cp
-  memmove(p->data, p->data + 12, p->len -= 12);
-cp
-}
-
-/*
-  reassemble MAC addresses
-*/
-void add_mac_addresses(vpn_packet_t *p)
-{
-cp
-  memcpy(p->data + 12, p->data, p->len);
-  p->len += 12;
-  p->data[0] = p->data[6] = 0xfe;
-  p->data[1] = p->data[7] = 0xfd;
-  /* Really evil pointer stuff just below! */
-  *((ip_t*)(&p->data[2])) = (ip_t)(htonl(myself->address));
-  *((ip_t*)(&p->data[8])) = *((ip_t*)(&p->data[26]));
-cp
-}
 
 /*
   Execute the given script.
