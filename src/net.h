@@ -17,13 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.64 2003/07/17 15:06:26 guus Exp $
+    $Id: net.h,v 1.9.4.65 2003/07/18 12:16:24 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
 
 #include <openssl/evp.h>
+
+#include "ipv6.h"
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9014				/* 9000 bytes payload + 14 bytes ethernet header */

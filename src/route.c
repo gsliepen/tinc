@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.59 2003/07/17 15:06:27 guus Exp $
+    $Id: route.c,v 1.1.2.60 2003/07/18 12:16:24 guus Exp $
 */
 
 #include "system.h"
@@ -44,6 +44,9 @@
 #include "avl_tree.h"
 #include "connection.h"
 #include "device.h"
+#include "ethernet.h"
+#include "ipv4.h"
+#include "ipv6.h"
 #include "logger.h"
 #include "net.h"
 #include "protocol.h"
