@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.15 2003/07/24 12:08:16 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.16 2003/11/10 22:31:53 guus Exp $
 */
 
 #include "system.h"
@@ -94,6 +94,9 @@ bool add_subnet_h(connection_t *c)
 		node_add(owner);
 	}
 
+	if(c->status.opaque && owner != myself && owner != c->node)
+		return false;
+
 	/* Check if we already know this subnet */
 
 	if(lookup_subnet(owner, s)) {
@@ -117,7 +120,8 @@ bool add_subnet_h(connection_t *c)
 
 	/* Tell the rest */
 
-	forward_request(c);
+	if(!c->status.opaque)
+		forward_request(c);
 
 	return true;
 }
@@ -171,6 +175,9 @@ bool del_subnet_h(connection_t *c)
 		return true;
 	}
 
+	if(c->status.opaque && owner != myself && owner != c->node)
+		return false;
+
 	/* Check if subnet string is valid */
 
 	s = str2net(subnetstr);
@@ -209,7 +216,8 @@ bool del_subnet_h(connection_t *c)
 
 	/* Tell the rest */
 
-	forward_request(c);
+	if(!c->status.opaque)
+		forward_request(c);
 
 	/* Finally, delete it. */
 

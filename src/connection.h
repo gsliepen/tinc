@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.36 2003/07/30 21:52:41 guus Exp $
+    $Id: connection.h,v 1.1.2.37 2003/11/10 22:31:53 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -40,7 +40,9 @@ typedef struct connection_status_t {
 	int timeout:1;				/* 1 if gotten timeout */
 	int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
 	int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
-	int mst:1;					/* 1 if this connection is part of a minimum spanning tree */
+	int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
+	int opaque:1;				/* 1 if we do not forward information about other nodes */
+	int strict:1;				/* 1 if we strictly check edges and subnets received from this connection */
 	int unused:18;
 } connection_status_t;
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.28 2003/10/11 12:28:48 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.29 2003/11/10 22:31:53 guus Exp $
 */
 
 #include "system.h"
@@ -51,7 +51,6 @@ bool send_id(connection_t *c)
 bool id_h(connection_t *c)
 {
 	char name[MAX_STRING_SIZE];
-	bool choice;
 
 	cp();
 
@@ -108,14 +107,6 @@ bool id_h(connection_t *c)
 	if(!read_rsa_public_key(c)) {
 		return false;
 	}
-
-	/* Check some options */
-
-	if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &choice) && choice) || myself->options & OPTION_INDIRECT)
-		c->options |= OPTION_INDIRECT;
-
-	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
-		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 
 	c->allow_request = METAKEY;
 
@@ -468,6 +459,7 @@ bool send_ack(connection_t *c)
 	   to create node_t and edge_t structures. */
 
 	struct timeval now;
+	bool choice;
 
 	cp();
 
@@ -475,6 +467,27 @@ bool send_ack(connection_t *c)
 
 	gettimeofday(&now, NULL);
 	c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
+
+	/* Check some options */
+
+	if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &choice) && choice) || myself->options & OPTION_INDIRECT)
+		c->options |= OPTION_INDIRECT;
+
+	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
+		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
+
+	choice = false;
+	get_config_bool(lookup_config(config_tree, "Opaque"), &choice);
+	get_config_bool(lookup_config(c->config_tree, "Opaque"), &choice);
+	c->status.opaque = choice;
+
+	if(c->status.opaque)
+		c->options |= OPTION_INDIRECT;
+
+	choice = false;
+	get_config_bool(lookup_config(config_tree, "Strict"), &choice);
+	get_config_bool(lookup_config(c->config_tree, "Strict"), &choice);
+	c->status.strict = choice;
 
 	return send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 }
@@ -552,7 +565,8 @@ bool ack_h(connection_t *c)
 
 	/* Send him everything we know */
 
-	send_everything(c);
+	if(!c->status.opaque)
+		send_everything(c);
 
 	/* Create an edge_t for this connection */
 
@@ -572,7 +586,10 @@ bool ack_h(connection_t *c)
 
 	/* Notify everyone of the new edge */
 
-	send_add_edge(broadcast, c->edge);
+	if(c->status.opaque)
+		send_add_edge(broadcast, c->edge);
+	else
+		send_add_edge(c, c->edge);
 
 	/* Run MST and SSSP algorithms */
 

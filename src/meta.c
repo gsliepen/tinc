@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.48 2003/10/12 11:40:00 guus Exp $
+    $Id: meta.c,v 1.1.2.49 2003/11/10 22:31:53 guus Exp $
 */
 
 #include "system.h"
@@ -88,7 +88,7 @@ void broadcast_meta(connection_t *from, const char *buffer, int length)
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
-		if(c != from && c->status.active)
+		if(c != from && c->status.active && !c->status.opaque)
 			send_meta(c, buffer, length);
 	}
 }
