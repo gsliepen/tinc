@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.52 2000/10/29 02:07:40 guus Exp $
+    $Id: net.c,v 1.35.4.53 2000/10/29 09:19:24 guus Exp $
 */
 
 #include "config.h"
@@ -48,7 +48,6 @@
 #include <xalloc.h>
 
 #include "conf.h"
-#include "encr.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.49 2000/10/29 01:08:09 guus Exp $
+    $Id: protocol.c,v 1.28.4.50 2000/10/29 09:19:25 guus Exp $
 */
 
 #include "config.h"
@@ -40,7 +40,6 @@
 #include <openssl/rand.h>
 
 #include "conf.h"
-#include "encr.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
@@ -1068,18 +1067,21 @@ cp
 
       keylength = strlen(pktkey);
 
-/* Don't do this... yet
-      if((keylength%2) || (keylength <= 0))
+      if((keylength%2)!=0 || (keylength <= 0))
         {
           syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
                  cl->name, cl->hostname, from->name);
           free(from_id); free(to_id); free(pktkey);
           return -1;
         }
+
+      if(from->cipher_pktkey)
+        free(from->cipher_pktkey);
+
       keylength /= 2;
       hex2bin(pktkey, pktkey, keylength);
-      BF_set_key(cl->cipher_pktkey, keylength, pktkey);
-*/
+      pktkey[keylength] = '\0';
+      from->cipher_pktkey = pktkey;
 
       from->status.validkey = 1;
       from->status.waitingforkey = 0;

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.13 2000/10/24 15:46:17 guus Exp $
+    $Id: netutl.c,v 1.12.4.14 2000/10/29 09:19:25 guus Exp $
 */
 
 #include "config.h"
@@ -35,7 +35,6 @@
 
 #include "errno.h"
 #include "conf.h"
-#include "encr.h"
 #include "net.h"
 #include "netutl.h"
 

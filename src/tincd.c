@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.18 2000/10/29 02:07:41 guus Exp $
+    $Id: tincd.c,v 1.10.4.19 2000/10/29 09:19:27 guus Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,6 @@
 #include <xalloc.h>
 
 #include "conf.h"
-#include "encr.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
@@ -252,7 +251,7 @@ int detach(void)
       if(pid) /* parent process */
 	{
 	  signal(SIGTERM, parent_exit);
-//	  sleep(600); /* wait 10 minutes */
+	  sleep(600); /* wait 10 minutes */
 	  exit(1);
 	}
     }
@@ -447,7 +446,7 @@ main(int argc, char **argv, char **envp)
         {
           main_loop();
           cleanup_and_exit(1);
-         }
+        }
       
       syslog(LOG_ERR, _("Unrecoverable error"));
       cp_trace();
@@ -470,6 +469,7 @@ sigterm_handler(int a)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got TERM signal"));
+
   cleanup_and_exit(0);
 }
 

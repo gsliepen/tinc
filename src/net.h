@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.19 2000/10/29 01:27:23 guus Exp $
+    $Id: net.h,v 1.9.4.20 2000/10/29 09:19:25 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -77,11 +77,6 @@ typedef struct vpn_packet_t {
   length_t len;		/* the actual number of bytes in the `data' field */
   unsigned char data[MAXSIZE];
 } vpn_packet_t;
-
-typedef struct passphrase_t {
-  unsigned short len;
-  unsigned char *phrase;
-} passphrase_t;
 
 typedef struct queue_element_t {
   void *packet;
