@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.5 2000/06/30 11:45:14 guus Exp $
+    $Id: conf.h,v 1.6.4.6 2000/08/07 14:52:14 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -49,6 +49,7 @@ typedef enum which_t {
   vpnmask,
   resolve_dns,
   indirectdata,
+  tcponly,
 } which_t;
 
 typedef struct config_t {

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.3 2000/06/29 17:09:08 guus Exp $
+    $Id: protocol.h,v 1.5.4.4 2000/08/07 14:52:16 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -59,6 +59,7 @@ enum {
   CALCULATE = 100,      /* calculate the following numer^privkey and send me the result */  
   CALC_RES,             /* result of the above */
   ALMOST_KEY,           /* this number^privkey is the shared key */
+  PACKET = 110,		/* TCP tunneled network packet */
   REQ_KEY = 160,        /* request public key */
   ANS_KEY,              /* answer to such request */
   KEY_CHANGED,		/* public key has changed */

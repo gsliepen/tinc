@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.6 2000/07/01 07:49:21 guus Exp $
+    $Id: net.h,v 1.9.4.7 2000/08/07 14:52:15 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -50,6 +50,7 @@
 /* flags */
 #define INDIRECTDATA        0x0001 /* Used to indicate that this host has to be reached indirect */
 #define EXPORTINDIRECTDATA  0x0002 /* Used to indicate uplink that it has to tell others to do INDIRECTDATA */
+#define TCPONLY             0x0004 /* Tells sender to send packets over TCP instead of UDP (for firewalls) */
 
 typedef unsigned long ip_t;
 typedef short length_t;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.20 2000/07/02 13:40:57 guus Exp $
+    $Id: net.c,v 1.35.4.21 2000/08/07 14:52:15 guus Exp $
 */
 
 #include "config.h"
@@ -107,16 +107,19 @@ cp
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
            ntohs(rp.len), cl->vpn_hostname, cl->real_hostname);
 
+  total_socket_out += r;
+
+  cl->want_ping = 1;
+
+  if((cl->flags | myself->flags) & TCPONLY)
+      return send_tcppacket(cl, packet, ntohs(rp.len));
+
   if((r = send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
-
-  total_socket_out += r;
-
-  cl->want_ping = 1;
 cp
   return 0;
 }
@@ -605,6 +608,10 @@ cp
   if(cfg = get_config_val(indirectdata))
     if(cfg->data.val == stupid_true)
       myself->flags |= EXPORTINDIRECTDATA;
+
+  if(cfg = get_config_val(tcponly))
+    if(cfg->data.val == stupid_true)
+      myself->flags |= TCPONLY;
 
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {

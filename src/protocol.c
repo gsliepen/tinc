@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.19 2000/06/30 21:03:51 guus Exp $
+    $Id: protocol.c,v 1.28.4.20 2000/08/07 14:52:15 guus Exp $
 */
 
 #include "config.h"
@@ -116,6 +116,32 @@ cp
       syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
     }
+cp
+  return 0;
+}
+
+/* Evil hack - TCP tunneling is bad */
+int send_tcppacket(conn_list_t *cl, void *data, int len)
+{
+cp
+  if(debug_lvl > 1)
+    syslog(LOG_DEBUG, _("Sending PACKET to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
+
+  buflen = snprintf(buffer, MAXBUFSIZE, "%d %d\n", PACKET, len);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
+    {
+      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
+      return -1;
+    }
+
+  if((write(cl->meta_socket, data, len)) < 0)
+    {
+      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
+      return -1;
+    }
+  
 cp
   return 0;
 }
@@ -638,6 +664,50 @@ cp
   return 0;
 }
 
+int tcppacket_h(conn_list_t *cl)
+{
+  char packet[1600];
+  int len;
+cp
+  if(!cl->status.active)
+    {
+      syslog(LOG_ERR, _("Got unauthorized PACKET from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
+      return -1;
+    }
+
+  if(sscanf(cl->buffer, "%*d %d", &len) != 1)
+    {
+       syslog(LOG_ERR, _("Got bad PACKET from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
+       return -1;
+    }  
+
+  if(len>1600)
+    {
+       syslog(LOG_ERR, _("Got too big PACKET from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
+       return -1;
+    }  
+
+  if(debug_lvl > 1)
+    syslog(LOG_DEBUG, _("Got PACKET from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
+
+  /* Evil kludge comming up */
+  if(read(cl->meta_socket,packet,len)!=len)
+    {
+       syslog(LOG_ERR, _("Error while receiving PACKET data from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
+       return -1;
+    }  
+
+  xrecv(cl,packet);    
+cp
+  return 0;
+}
+
+
 int ping_h(conn_list_t *cl)
 {
 cp
@@ -963,13 +1033,19 @@ int (*request_handlers[256])(conn_list_t*) = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  tcppacket_h, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   req_key_h, ans_key_h, key_changed_h, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0
 };
