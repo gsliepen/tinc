@@ -1,142 +1,111 @@
-#! /bin/sh -x
+#! /usr/bin/perl -w
 #
-# skeleton	example file to build /etc/init.d/ scripts.
-#		This file should be used to construct scripts for /etc/init.d.
+# System startup script for tinc
+# $Id: init.d,v 1.3 2000/05/13 00:54:27 zarq Exp $
 #
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian GNU/Linux
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#
-# Version:	@(#)skeleton  1.8  03-Mar-1998  miquels@cistron.nl
-#
-# This file was automatically customized by dh-make on Fri, 21 Apr 2000 17:07:50 +0200
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/tincd
-NAME=tinc
-DESC="tinc daemons"
-NETS="test2"
+my $DAEMON="/usr/sbin/tincd";
+my $NAME="tinc";
+my $DESC="tinc daemons";
+my $NETS="test2";
+my $TCONF="/etc/tinc";
+my $EXTRA="-d";
 
-TCONF="/etc/tinc"
-
-test -f $DAEMON || exit 0
-
-set -e
+if (! -f $DAEMON) { exit 0; }
 
 # Check the daemon
-if [ ! -x $TINCD ]; then
-    echo "**tinc: daemon $TINCD does not exist or is not executable!"
-    exit
-fi
+if ( ! -x $DAEMON ) {
+    print "**tinc: daemon $DAEMON does not exist or is not executable!\n";
+    exit 1;
+}
 
 # Check the configuration directory
-if [ ! -d $TCONF ]; then
-    echo "**tinc: configuration directory ($TCONF) not found!"
-    exit
-fi
+if ( ! -d $TCONF ) {
+    print "**tinc: configuration directory ($TCONF) not found!\n";
+    exit 1;
+}
 
 
 ##############################################################################
 # vpn_load ()		Loads VPN configuration
 # 
-# $1 ... VPN to load
+# $_[0] ... VPN to load
 
 
-vpn_load () {
-    CFG="$TCONF/$1/tinc.conf"
-    [ -f $CFG ] || { echo "tinc: $CFG does not exist" >&2 ; return 1; }
+sub vpn_load {
+    my @addr;
+    $CFG="$TCONF/$_[0]/tinc.conf";
+    open($CFG, "< $CFG") || die "tinc: $CFG does not exist";
 
     # load TINCD config
-    DEV=`grep -i -e '^[[:space:]]*TapDevice' $CFG | sed 's/[[:space:]]//g; s/^.*=//g'`
-    VPN=`grep -i -e '^[[:space:]]*(MyOwnVPNIP|MyVirtualIP)' -E $CFG | head -1 | sed 's/[[:space:]]//g; s/^.*=//g'`
+    while(<$CFG>) {
+	if( /^[ ]*TapDevice[ =]+([^ \#]+)/i ) {
+	    $DEV=$1;
+	    chomp($DEV);
+	    $DEV =~ s/^.*\/([^\/0-9]+)([0-9]+)$/$1$2/;
+	    $NUM = $2;
+	} elsif ( /^[ ]*(MyOwnVPNIP|MyVirtualIP)[ =]+([^ \#]+)/i ) {
+	    $VPN=$2;
+	    chomp($VPN);
+	}
+    }
+    if(!defined($DEV)) {
+	die "tinc: There must be a TapDevice";
+    }
+    if($DEV eq "") {
+	die "tinc: TapDevice should be of the form /dev/tapN";
+    }
+    if(!defined($VPN)) {
+	die "tinc: MyVirtualIP required";
+    }
+    if($VPN eq "") {
+	die "tinc: No argument to MyVirtualIP/MyOwnVPNIP";
+    }
+    $ADR = $VPN;
+    $ADR =~ s/^([^\/]+)\/.*$/$1/;
+    $LEN = $VPN;
+    $LEN =~ s/^.*\/([^\/]+)$/$1/;
+    if($ADR eq "" || $LEN eq "") {
+	die "tinc: Badly formed MyVirtualIP/MyOwnVPNIP";
+    }
+    @addr = split(/\./, $ADR);
 
-    # discourage empty and multiple entries
-    [ -z "$DEV" ] && \
-	{ echo "tinc: TapDevice required" >&2 ; return 2; }
-    echo $DEV | grep -q '^/dev/tap' ||
-	{ echo "tinc: TapDevice should be in form /dev/tapX" >&2 ; return 2; }
-    [ `echo $DEV | wc -l` -gt 1 ] &&
-	{ echo "tinc: multiple TapDevice entries not allowed" >&2 ; return 3; }
-    [ -z "$VPN" ] && \
-	{ echo "tinc: MyOwnVPNIP/MyVirtualIP required" >&2 ; return 2; }
-    [ `echo $VPN | wc -l` -gt 1 ] &&
-	{ echo "tinc: multiple MyOwnVPNIP/MyVirtualIP entries not allowed" >&2 ; return 3; }
-    echo $VPN | grep -q -x \
-	'\([[:digit:]]\{1,3\}\.\)\{3\}[[:digit:]]\{1,3\}/[[:digit:]]\{1,2\}' || \
-	{ echo "tinc: badly formed MyOwnVPNIP/MyVirtualIP address $VPN" ; return 3; }
+    $ADR = pack('C4', @addr);
+    $MSK = pack('N4', -1 << (32 - $LEN));
+    $BRD = join(".", unpack('C4', $ADR | ~$MSK));
+#    $NET = join(".", unpack('C4', $ADR & $MSK));
+    $MAC = "fe:fd:" . join(":", map { sprintf "%02x", $_ } unpack('C4', $ADR));
+    $ADR = join(".", unpack('C4', $ADR));
+    $MSK = join(".", unpack('C4', $MSK));
+    
+#    print "$DEV $VPN $NUM $LEN @addr $MAC $MASK $BRD $NET\n";
 
-    # network device
-    TAP=`echo $DEV | cut -d"/" -f3`
-    NUM=`echo $TAP | sed 's/tap//'`
-	    
-    # IP address, netmask length
-    ADR=`echo $VPN | cut -d"/" -f1`
-    LEN=`echo $VPN | cut -d"/" -f2`
-	    
-    # Expand bitlength to netmask    
-    MSK=""; len=$LEN
-    for cnt in 1 1 1 0 ; do
-	if [ $len -ge 8 ]; then
-	    msk=8
-	else
-	    msk=$len
-	fi
-	
-	MSK="$MSK$((255 & (255 << (8 - msk))))"
-	[ $cnt -ne 0 ] && MSK="$MSK."
-	len=$((len-msk))
-    done
-
-    # Network & broadcast addresses
-#    BRD=`ipcalc --broadcast $ADR $MSK | cut -d"=" -f2`
-#    NET=`ipcalc --network $ADR $MSK | cut -d"=" -f2`
-	    
-    # MAC address
-    MAC=`printf "fe:fd:%0.2x:%0.2x:%0.2x:%0.2x" $(echo $ADR | sed 's/\./ /g')`
-    echo
-    echo "TAP $TAP NUM $NUM ADR $ADR LEN $LEN MSK $MSK BRD $BRD NET $NET MAC $MAC" >&2
-    return 0
+    1;
 }
 
 
 ##############################################################################
 # vpn_start ()		starts specified VPN
 # 
-# $1 ... VPN to start
+# $_[0] ... VPN to start
 
-vpn_start () {    
+sub vpn_start {
+    vpn_load($_[0]) || die "tinc: could not vpn_load $_[0]";
 
-    vpn_load $1 || { echo "**tinc: could not vpn_load $1" >&2 ; return 1; }
-            
-    # create device file
-    if [ ! -c $DEV ]; then
-	[ -e $DEV ] && rm -f $DEV
-	mknod --mode=0600 $DEV c 36 $((16 + NUM))
-    fi
-    
-    # load device module
-    { insmod ethertap --name="ethertap$NUM" unit="$NUM" 2>&1 || \
-	{ echo "**tinc: cannot insmod ethertap$NUM" >&2 ; return 2; } ;
-    } | grep -v '^Us'
-    
-    # configure the interface
-    ip link set $TAP address $MAC
-    ip link set $TAP up
-    ip addr flush dev $TAP 2>&1 | grep -v -x '^Nothing to flush.'
-    ip addr add $VPN brd $BRD dev $TAP
-    
-    # start tincd
-    $TINCD --net="$1" $DEBUG || \
-	{ echo "**tinc: could not start $TINCD" >&2; return 3; }
+    if (! -c "/dev/$DEV") {
+	if (-e "/dev/$DEV") {
+	    unlink("/dev/$DEV");
+	}
+	$num = $NUM + 16;
+        system("echo mknod --mode=0600 /dev/$DEV c 36 $num");
+    }
+    system("insmod ethertap -s --name=\"ethertap$NUM\" unit=\"$NUM\" >/dev/null");
+    system("ifconfig $DEV hw ether $MAC");
+    system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD");
+    system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
+}
 
-    # default interface route
-    # ip route add $NET/$LEN dev $TAP
 
-    # setup routes
-    /etc/sysconfig/network-scripts/ifup-routes $TAP
-
-    return 0
-} # vpn_start
 
 
 ##############################################################################
@@ -144,100 +113,47 @@ vpn_start () {
 #
 # $1 ... VPN to stop
 
-vpn_stop () {
+sub vpn_stop {
+    vpn_load($_[0]) || return 1;
 
-    vpn_load $1 || return 1
+    system("start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA -k");
     
-    # flush the routing table
-    # ip route flush dev $TAP &> /dev/null
-    
-    # kill the tincd daemon
-    PID="$TPIDS/tinc.$1.pid"
-    if [ -f $PID ]; then
-        $TINCD --net="$1" --kill &> /dev/null
-        RET=$?
-    
-        if [ $RET -eq 0 ]; then
-	    dly=0
-	    while [ $dly -le 5 ]; do
-		[ -f $PID ] || break
-	        sleep 1; dly=$((dly+1))
-	    done
-	fi
-	
-	[ -f $PID ] && rm -f $PID
-    fi
-    
-    # bring the interface down
-    ip link set $TAP down &> /dev/null
-    
-    # remove ethertap module
-    rmmod "ethertap$NUM" &> /dev/null
-    
-    return 0
-} # vpn_stop
+    system("ifconfig $DEV down");
+    system("rmmod ethertap$NUM -s");
+}
 
 
+if(!defined($ARGV[0])) {
+    die "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}\n";
+}
 
-
-
-
-
-case "$1" in
-  start)
-	echo -n "Starting $DESC:"
-	for net in $NETS ; do
-	  echo -n " $net"
-	  vpn_start $net
-	  start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$net.pid \
-		  --exec $DAEMON -- -n $net
-	done
-	echo "."
-	;;
-  stop)
-	echo -n "Stopping $DESC:"
-	for net in $NETS ; do
-	  echo -n " $net"
-	  start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.$net.pid \
-		  --exec $DAEMON -- -n $net -k
-	done
-	echo "."
-	;;
-  #reload)
-	#
-	#	If the daemon can reload its config files on the fly
-	#	for example by sending it SIGHUP, do it here.
-	#
-	#	If the daemon responds to changes in its config file
-	#	directly anyway, make this a do-nothing entry.
-	#
-	# echo "Reloading $DESC configuration files."
-	# start-stop-daemon --stop --signal 1 --quiet --pidfile \
-	#	/var/run/$NAME.pid --exec $DAEMON
-  #;;
-  restart|force-reload)
-	#
-	#	If the "reload" option is implemented, move the "force-reload"
-	#	option to the "reload" entry above. If not, "force-reload" is
-	#	just the same as "restart".
-	#
-	echo -n "Restarting $DESC:"
-	for net in $NETS ; do
-	  start-stop-daemon --stop --quiet --pidfile \
-		  /var/run/$NAME.$net.pid --exec $DAEMON -- -n $net -k
-	  sleep 1
-	  start-stop-daemon --start --quiet --pidfile \
-		  /var/run/$NAME.$net.pid --exec $DAEMON -- -n $net
-	  echo -n " $net"
-	done
-	echo "."
-	;;
-  *)
-	N=/etc/init.d/$NAME
-	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $N {start|stop|restart|force-reload}" >&2
-	exit 1
-	;;
-esac
-
-exit 0
+if($ARGV[0] eq "start") {
+    print "Starting $DESC:";
+    foreach $n (split(" ", $NETS)) {
+	print " $n";
+	vpn_start($n);
+    }
+    print ".\n";
+} elsif ($ARGV[0] eq "stop") {
+    print "Stopping $DESC:";
+    foreach $n (split(" ", $NETS)) {
+	print " $n";
+	vpn_stop($n);
+    }
+    print ".\n";
+} elsif ($ARGV[0] eq "restart" || $ARGV[0] eq "force-reload") {
+    print "Stopping $DESC:";
+    foreach $n (split(" ", $NETS)) {
+	print " $n";
+	vpn_stop($n);
+    }
+    print ".\n";
+    print "Starting $DESC:";
+    foreach $n (split(" ", $NETS)) {
+	print " $n";
+	vpn_start($n);
+    }
+    print ".\n";
+} else {
+    die "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}\n";
+}    
