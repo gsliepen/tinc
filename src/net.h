@@ -1,6 +1,7 @@
 /*
     net.h -- header for net.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998-2001 Ivo Timmermans <zarq@iname.com>
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.25 2001/01/07 15:25:44 guus Exp $
+    $Id: net.h,v 1.9.4.26 2001/01/07 17:09:01 guus Exp $
 */
 
 #ifndef __TINC_NET_H__

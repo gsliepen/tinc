@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
-                            2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.40 2001/01/06 18:03:41 guus Exp $
+    $Id: tincd.c,v 1.10.4.41 2001/01/07 17:09:07 guus Exp $
 */
 
 #include "config.h"
@@ -305,7 +305,7 @@ main(int argc, char **argv, char **envp)
   if(show_version)
     {
       printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
-      printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans, Guus Sliepen and others.\n"
+      printf(_("Copyright (C) 1998-2001 Ivo Timmermans, Guus Sliepen and others.\n"
 	       "See the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 	       "and you are welcome to redistribute it under certain conditions;\n"

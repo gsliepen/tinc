@@ -1,7 +1,7 @@
 /*
     conf.h -- header for conf.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
-                            2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.20 2001/01/05 23:53:49 guus Exp $
+    $Id: conf.h,v 1.6.4.21 2001/01/07 17:08:56 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__

@@ -1,7 +1,7 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
+                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.16 2001/01/05 23:53:53 guus Exp $
+    $Id: subnet.c,v 1.1.2.17 2001/01/07 17:09:06 guus Exp $
 */
 
 #include "config.h"

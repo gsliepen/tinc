@@ -1,7 +1,7 @@
 /*
     protocol.h -- header for protocol.c
-    Copyright (C) 1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                       2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.17 2000/11/22 19:55:53 guus Exp $
+    $Id: protocol.h,v 1.5.4.18 2001/01/07 17:09:06 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__

@@ -1,7 +1,7 @@
 /*
     utils.c -- gathering of some stupid small functions
-    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
-                       2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2001 Ivo Timmermans <zarq@iname.com>
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

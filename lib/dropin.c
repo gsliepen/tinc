@@ -1,7 +1,7 @@
 /*
     dropin.c -- a set of drop-in replacements for libc functions
-    Copyright (C) 2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.2 2000/11/29 00:33:15 zarq Exp $
+    $Id: dropin.c,v 1.1.2.3 2001/01/07 17:08:49 guus Exp $
 */
 
 #include "config.h"

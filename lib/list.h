@@ -1,7 +1,7 @@
 /*
     list.h -- header file for list.c
-    Copyright (C) 2000 Ivo Timmermans <itimmermans@bigfoot.com>
-                  2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.h,v 1.1.2.3 2001/01/07 15:24:52 guus Exp $
+    $Id: list.h,v 1.1.2.4 2001/01/07 17:08:50 guus Exp $
 */
 
 #ifndef __TINC_LIST_H__

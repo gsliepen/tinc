@@ -1,7 +1,7 @@
 /*
     protocol.c -- handle the meta-protocol
-    Copyright (C) 1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                       2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.73 2001/01/07 15:25:45 guus Exp $
+    $Id: protocol.c,v 1.28.4.74 2001/01/07 17:09:02 guus Exp $
 */
 
 #include "config.h"

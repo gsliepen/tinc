@@ -1,7 +1,7 @@
 /*
     process.h -- header file for process.c
-    Copyright (C) 1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                       2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.6 2001/01/07 15:25:45 guus Exp $
+    $Id: process.h,v 1.1.2.7 2001/01/07 17:09:02 guus Exp $
 */
 
 #ifndef __TINC_PROCESS_H__

@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                            2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.90 2001/01/07 15:25:41 guus Exp $
+    $Id: net.c,v 1.35.4.91 2001/01/07 17:08:58 guus Exp $
 */
 
 #include "config.h"

@@ -1,9 +1,9 @@
 /*
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
-                  2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000 Guus Sliepen <guus@sliepen.warande.net>
-                  2000 Wessel Dankers <wsl@nl.linux.org>
+                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+                  2000,2001 Wessel Dankers <wsl@nl.linux.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org) by
     Guus Sliepen <guus@sliepen.warande.net>.
 
-    $Id: avl_tree.c,v 1.1.2.2 2001/01/06 18:21:17 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.3 2001/01/07 17:08:49 guus Exp $
 */
 
 #include <stdio.h>

@@ -1,6 +1,7 @@
 /*
     netutl.h -- header file for netutl.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998-2001 Ivo Timmermans <zarq@iname.com>
+                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.5 2000/11/09 21:33:18 zarq Exp $
+    $Id: netutl.h,v 1.2.4.6 2001/01/07 17:09:02 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
@@ -25,9 +26,7 @@
 #include "net.h"
 #include "conf.h"
 
-extern void destroy_queue(packet_queue_t *);
 extern char *hostlookup(unsigned long);
 extern ip_mask_t *strtoip(char*);
-extern void destroy_queue(packet_queue_t *);
 
 #endif /* __TINC_NETUTL_H__ */

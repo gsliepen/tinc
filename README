@@ -1,9 +1,13 @@
-This is the README file for tinc version 1.0pre3. Installation
+This is the README file for tinc version 1.0pre4. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans
-<itimmermans@bigfoot.com>, Guus Sliepen <guus@sliepen.warande.net> and
-others. For a complete list of authors see the AUTHORS file.
+tinc is Copyright (C) 1998-2001 by:
+
+Ivo Timmermans <itimmermans@bigfoot.com>,
+Guus Sliepen <guus@sliepen.warande.net>,
+and others.
+
+For a complete list of authors see the AUTHORS file.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
