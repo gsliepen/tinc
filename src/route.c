@@ -346,7 +346,7 @@ static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(packet->len > via->mtu && via != myself) {
+	if(via && packet->len > via->mtu && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
 			packet->len = via->mtu;
@@ -485,7 +485,7 @@ static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(packet->len > via->mtu && via != myself) {
+	if(via && packet->len > via->mtu && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		packet->len = via->mtu;
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
