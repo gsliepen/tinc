@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.3 2000/06/27 20:10:47 guus Exp $
+    $Id: conf.c,v 1.9.4.4 2000/06/29 19:47:02 guus Exp $
 */
 
 
@@ -36,12 +36,17 @@
 
 #include "conf.h"
 #include "netutl.h" /* for strtoip */
+#include <utils.h> /* for cp */
 
 #include "system.h"
 
 config_t *config;
 int debug_lvl = 0;
 int timeout = 0; /* seconds before timeout */
+char *configfilename = NULL;
+
+/* Will be set if HUP signal is received. It will be processed when it is safe. */
+int sighup = 0;
 
 typedef struct internal_config_t {
   char *name;
@@ -77,7 +82,7 @@ add_config_val(config_t **cfg, int argtype, char *val)
 {
   config_t *p, *r;
   char *q;
-
+cp
   p = (config_t*)xmalloc(sizeof(*p));
   p->data.val = 0;
   
@@ -120,6 +125,7 @@ add_config_val(config_t **cfg, int argtype, char *val)
     }
 
   free(p);
+cp
   return NULL;
 }
 
@@ -133,7 +139,7 @@ readconfig(const char *fname, FILE *fp)
   char *p, *q;
   int i, lineno = 0;
   config_t *cfg;
-
+cp
   line = (char *)xmalloc(80 * sizeof(char));
   temp_buf = (char *)xmalloc(80 * sizeof(char));
 	
@@ -188,6 +194,7 @@ readconfig(const char *fname, FILE *fp)
       if(!config)
 	config = cfg;
     }
+cp
 }
 
 /*
@@ -197,7 +204,7 @@ int
 read_config_file(const char *fname)
 {
   FILE *fp;
-
+cp
   if((fp = fopen (fname, "r")) == NULL)
     {
       fprintf(stderr, _("Could not open %s: %s\n"), fname, sys_errlist[errno]);
@@ -208,7 +215,7 @@ read_config_file(const char *fname)
     return -1;
 
   fclose (fp);
-
+cp
   return 0;
 }
 
@@ -219,11 +226,11 @@ const config_t *
 get_config_val(which_t type)
 {
   config_t *p;
-
+cp
   for(p = config; p != NULL; p = p->next)
     if(p->which == type)
       return p;
-
+cp
   /* Not found */
   return NULL;
 }
@@ -236,12 +243,30 @@ const config_t *
 get_next_config_val(which_t type, int index)
 {
   config_t *p;
-  
+cp  
   for(p = config; p != NULL; p = p->next)
     if(p->which == type)
       if(--index < 0)
         return p;
-  
+cp  
   /* Not found */
   return NULL;
+}
+
+/*
+  Remove the complete configuration tree.
+*/
+void clear_config()
+{
+  config_t *p, *next;
+cp
+  for(p = config; p; p = next)
+    {
+      next = p->next;
+      if(p->data.ptr)
+        free(p->data.ptr);
+      free(p);
+    }
+  config = NULL;
+cp
 }

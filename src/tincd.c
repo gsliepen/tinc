@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.4 2000/06/29 17:09:08 guus Exp $
+    $Id: tincd.c,v 1.10.4.5 2000/06/29 19:47:04 guus Exp $
 */
 
 #include "config.h"
@@ -62,7 +62,7 @@ static int kill_tincd = 0;
 static int do_detach = 1;
 
 char *confbase = NULL;           /* directory in which all config files are */
-char *configfilename = NULL;     /* configuration file name */
+/* char *configfilename = NULL;     /* configuration file name, moved to config.c */
 char *identname;                 /* program name for syslog */
 char *netname = NULL;            /* name of the vpn network */
 char *pidfilename;               /* pid file location */
@@ -416,7 +416,6 @@ sigsegv_handler(int a)
     syslog(LOG_NOTICE, _("Got SEGV signal, trying to re-execute"));
 
   signal(SIGSEGV, sigsegv_square);
-
   close_network_connections();
   remove_pid(pidfilename);
   execvp(g_argv[0], g_argv);
@@ -426,17 +425,15 @@ RETSIGTYPE
 sighup_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Got HUP signal"));
-  close_network_connections();
-  setup_network_connections();
-  /* FIXME: read config-file and re-establish network connections */
+    syslog(LOG_NOTICE, _("Got HUP signal, rereading configuration and restarting"));
+  sighup = 1;
 }
 
 RETSIGTYPE
 sigint_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Got INT signal"));
+    syslog(LOG_NOTICE, _("Got INT signal, exitting"));
   cleanup_and_exit(0);
 }
 
@@ -450,7 +447,7 @@ RETSIGTYPE
 sigusr2_handler(int a)
 {
   if(debug_lvl > 1)
-    syslog(LOG_NOTICE, _("Forcing new key generation"));
+    syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
   regenerate_keys();
 }
 

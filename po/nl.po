@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0pre3\n"
-"POT-Creation-Date: 2000-06-29 18:49+0200\n"
+"POT-Creation-Date: 2000-06-29 21:32+0200\n"
 "PO-Revision-Date: 2000-05-31 20:14+02:00\n"
 "Last-Translator: Ivo Timmermans <itimmermans@bigfoot.com>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -14,22 +14,22 @@ msgstr ""
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/conf.c:167
+#: src/conf.c:171
 #, c-format
 msgid "%s: %d: Invalid variable name `%s'.\n"
 msgstr "%s: %d: Ongeldige variabelenaam `%s'.\n"
 
-#: src/conf.c:174
+#: src/conf.c:178
 #, c-format
 msgid "%s: %d: No value given for `%s'.\n"
 msgstr "%s: %d: Geen waarde gegeven voor `%s'.\n"
 
-#: src/conf.c:182
+#: src/conf.c:186
 #, c-format
 msgid "%s: %d: Invalid value `%s' for variable `%s'.\n"
 msgstr "%s: %d: Ongeldige waarde `%s' voor variabele `%s'.\n"
 
-#: src/conf.c:203
+#: src/conf.c:208
 #, c-format
 msgid "Could not open %s: %s\n"
 msgstr "Kon %s niet openen: %s\n"
@@ -268,7 +268,7 @@ msgstr "Aanmaak UDP socket mislukte: %m"
 msgid "Connecting to %s port %d failed: %m"
 msgstr "Verbinding naar %s poort %d mislukt: %m"
 
-#: src/net.c:754 src/net.c:841 src/net.c:1044
+#: src/net.c:754 src/net.c:841 src/net.c:1037
 #, c-format
 msgid "This is a bug: %s:%d: %d:%m"
 msgstr "Dit is een programmeerfout: %s:%d: %d:%m"
@@ -307,81 +307,89 @@ msgstr "Kreeg pakket van %s (%s) met onbekende herkomst %d.%d.%d.%d?"
 msgid "Closing connection with %s (%s)"
 msgstr "Beëindigen verbinding met %s (%s)"
 
-#: src/net.c:919
+#: src/net.c:946
 msgid "Trying to re-establish outgoing connection in 5 seconds"
 msgstr "Poging tot herstellen van uitgaande verbinding over 5 seconden"
 
-#: src/net.c:983
+#: src/net.c:976
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) antwoordde niet op ping"
 
-#: src/net.c:1014
+#: src/net.c:1007
 #, c-format
 msgid "Accepting a new connection failed: %m"
 msgstr "Aanname van nieuwe verbinding is mislukt: %m"
 
-#: src/net.c:1022
+#: src/net.c:1015
 msgid "Closed attempted connection"
 msgstr "Aangenomen verbinding verbroken"
 
-#: src/net.c:1049
+#: src/net.c:1042
 #, c-format
 msgid "Metadata socket error: %s"
 msgstr "Fout op socket voor metaverkeer: %s"
 
-#: src/net.c:1055
+#: src/net.c:1048
 msgid "Metadata read buffer overflow!"
 msgstr "Metadata ontvangstbuffer overloop!"
 
-#: src/net.c:1065
+#: src/net.c:1058
 #, c-format
 msgid "Metadata socket read error: %m"
 msgstr "Fout op socket voor metaverkeer tijdens lezen: %m"
 
-#: src/net.c:1089
+#: src/net.c:1082
 #, c-format
 msgid "Got request from %s (%s): %s"
 msgstr "Ontving verzoek van %s (%s): %s"
 
-#: src/net.c:1095
+#: src/net.c:1088
 #, c-format
 msgid "Unknown request from %s (%s)"
 msgstr "Onbekend verzoek van %s (%s)"
 
-#: src/net.c:1102
+#: src/net.c:1095
 #, c-format
 msgid "Error while processing request from %s (%s)"
 msgstr "Fout tijdens afhandelen van verzoek van %s (%s)"
 
-#: src/net.c:1109
+#: src/net.c:1102
 #, c-format
 msgid "Bogus data received from %s (%s)"
 msgstr "Onzinnige data ontvangen van %s (%s)"
 
-#: src/net.c:1154
+#: src/net.c:1147
 #, c-format
 msgid "Outgoing data socket error for %s (%s): %s"
 msgstr "Fout op socket voor uitgaand verkeer voor %s (%s): %s"
 
-#: src/net.c:1190
+#: src/net.c:1183
 #, c-format
 msgid "Error while reading from tapdevice: %m"
 msgstr "Fout tijdens lezen van tap-apparaatbestand tijdens lezen: %m"
 
-#: src/net.c:1200
+#: src/net.c:1193
 #, c-format
 msgid "Non-IP ethernet frame %04x from "
 msgstr "Niet-IP ethernet pakket %04x van "
 
-#: src/net.c:1208
+#: src/net.c:1201
 msgid "Dropping short packet"
 msgstr "Te kort pakket genegeerd"
 
-#: src/net.c:1247
+#: src/net.c:1240
 #, c-format
 msgid "Error while waiting for input: %m"
 msgstr "Fout tijdens wachten op invoer: %m"
+
+#: src/net.c:1251
+msgid "Unable to reread configuration file, exitting"
+msgstr "Fout tijdens herlezen configuratie bestand, beëindigen"
+
+#: src/net.c:1256
+msgid "Unable to restart, exitting"
+msgstr "Kon niet herstarten, beëindigen"
 
 #: src/netutl.c:222
 #, c-format
@@ -417,7 +425,7 @@ msgstr "Verzending TERMREQ naar %s (%s)"
 #: src/protocol.c:80 src/protocol.c:98 src/protocol.c:116 src/protocol.c:134
 #: src/protocol.c:152 src/protocol.c:191 src/protocol.c:209 src/protocol.c:237
 #: src/protocol.c:258 src/protocol.c:276 src/protocol.c:319 src/protocol.c:349
-#: src/protocol.c:779 src/protocol.c:882
+#: src/protocol.c:784 src/protocol.c:887
 #, c-format
 msgid "Send failed: %s:%d: %m"
 msgstr "Verzenden mislukte: %s:%d: %m"
@@ -487,236 +495,236 @@ msgstr "Poging tot verzenden ANS_KEY naar %d.%d.%d.%d, die niet bestaat?"
 msgid "Sending ANS_KEY to %s (%s)"
 msgstr "Verzending ANS_KEY naar %s (%s)"
 
-#: src/protocol.c:396
+#: src/protocol.c:397
 #, c-format
 msgid "Got BASIC_INFO from %s"
 msgstr "Kreeg BASIC_INFO van %s"
 
-#: src/protocol.c:400
+#: src/protocol.c:401
 #, c-format
 msgid "Got bad BASIC_INFO from %s"
 msgstr "Kreeg ongeldige BASIC_INFO van %s"
 
-#: src/protocol.c:409
+#: src/protocol.c:410
 #, c-format
 msgid "Peer uses incompatible protocol version %d"
 msgstr "De ander gebruikt een niet-compatibel protocol versie %d"
 
-#: src/protocol.c:430
+#: src/protocol.c:425
 #, c-format
-msgid "Uplink %s (%s) is already in our connection list, aborting connect"
+msgid "Uplink %s (%s) is already in our connection list"
 msgstr ""
 
-#: src/protocol.c:450
+#: src/protocol.c:455
 #, c-format
 msgid "Got bad PASSPHRASE from %s (%s)"
 msgstr "Kreeg ongeldige PASSPHRASE van %s (%s)"
 
-#: src/protocol.c:457
+#: src/protocol.c:462
 #, c-format
 msgid "Got PASSPHRASE from %s (%s)"
 msgstr "Kreeg PASSPHRASE van %s (%s)"
 
-#: src/protocol.c:475
+#: src/protocol.c:480
 #, c-format
 msgid "Got bad PUBLIC_KEY from %s (%s)"
 msgstr "Kreeg ongeldige PUBLIC_KEY van %s (%s)"
 
-#: src/protocol.c:481
+#: src/protocol.c:486
 #, c-format
 msgid "Got PUBLIC_KEY from %s (%s)"
 msgstr "Kreeg PUBLIC_KEY van %s (%s)"
 
 #. intruder!
-#: src/protocol.c:487
+#: src/protocol.c:492
 #, c-format
 msgid "Intruder from %s: passphrase for %s does not match!"
 msgstr "Indringer van %s: wachwoord voor %s komt niet overeen!"
 
-#: src/protocol.c:505
+#: src/protocol.c:510
 #, c-format
 msgid "Removing old entry for %s at %s in favour of new connection from %s"
 msgstr ""
 "Verwijdering oude verbinding voor %s op %s in voordeel van nieuwe verbinding "
 "van %s"
 
-#: src/protocol.c:514 src/protocol.c:533
+#: src/protocol.c:519 src/protocol.c:538
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Verbinding met %s (%s) geactiveerd"
 
-#: src/protocol.c:528
+#: src/protocol.c:533
 #, c-format
 msgid "Got ACK from %s (%s)"
 msgstr "Kreeg ACK van  %s (%s)"
 
-#: src/protocol.c:549
+#: src/protocol.c:554
 #, c-format
 msgid "Got unauthorized TERMREQ from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde TERMREQ van %s (%s)"
 
-#: src/protocol.c:555
+#: src/protocol.c:560
 #, c-format
 msgid "Got TERMREQ from %s (%s)"
 msgstr "Kreeg TERMREQ van %s (%s)"
 
-#: src/protocol.c:570
+#: src/protocol.c:575
 #, c-format
 msgid "Got unauthorized TIMEOUT from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde TIMEOUT van %s (%s)"
 
-#: src/protocol.c:576
+#: src/protocol.c:581
 #, c-format
 msgid "Got TIMEOUT from %s (%s)"
 msgstr "Kreeg TIMEOUT van %s (%s)"
 
-#: src/protocol.c:592
+#: src/protocol.c:597
 #, c-format
 msgid "Got unauthorized DEL_HOST from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde DEL_HOST van %s (%s)"
 
-#: src/protocol.c:599
+#: src/protocol.c:604
 #, c-format
 msgid "Got bad DEL_HOST from %s (%s)"
 msgstr "Kreeg ongeldige DEL_HOST van %s (%s)"
 
-#: src/protocol.c:606
+#: src/protocol.c:611
 #, c-format
 msgid "Got DEL_HOST for %d.%d.%d.%d from %s (%s) which does not exist?"
 msgstr "Kreeg DEL_HOST voor %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:612
+#: src/protocol.c:617
 #, c-format
 msgid "Got DEL_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg DEL_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:630
+#: src/protocol.c:635
 #, c-format
 msgid "Got unauthorized PING from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde PING van %s (%s)"
 
-#: src/protocol.c:636
+#: src/protocol.c:641
 #, c-format
 msgid "Got PING from %s (%s)"
 msgstr "Kreeg PING van %s (%s)"
 
-#: src/protocol.c:652
+#: src/protocol.c:657
 #, c-format
 msgid "Got unauthorized PONG from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde PONG van %s (%s)"
 
-#: src/protocol.c:658
+#: src/protocol.c:663
 #, c-format
 msgid "Got PONG from %s (%s)"
 msgstr "Kreeg PONG van %s (%s)"
 
-#: src/protocol.c:677
+#: src/protocol.c:682
 #, c-format
 msgid "Got unauthorized ADD_HOST from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde ADD_HOST van %s (%s)"
 
-#: src/protocol.c:684
+#: src/protocol.c:689
 #, c-format
 msgid "Got bad ADD_HOST from %s (%s)"
 msgstr "Kreeg ongeldige ADD_HOST van %s (%s)"
 
-#: src/protocol.c:694
+#: src/protocol.c:699
 #, c-format
 msgid "Got duplicate ADD_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg een tweede ADD_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:701
+#: src/protocol.c:706
 #, c-format
 msgid "Removing old entry for %s (%s)"
 msgstr "Verwijdering oude verbinding voor %s (%s)"
 
-#: src/protocol.c:722
+#: src/protocol.c:727
 #, c-format
 msgid "Got ADD_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg ADD_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:740
+#: src/protocol.c:745
 #, c-format
 msgid "Got unauthorized REQ_KEY from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde REQ_KEY van %s (%s)"
 
-#: src/protocol.c:747
+#: src/protocol.c:752
 #, c-format
 msgid "Got bad REQ_KEY from %s (%s)"
 msgstr "Kreeg ongeldige REQ_KEY van %s (%s)"
 
-#: src/protocol.c:753
+#: src/protocol.c:758
 #, c-format
 msgid "Got REQ_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"
 msgstr "Kreeg REQ_KEY herkmonst %d.%d.%d.%d bestemming %d.%d.%d.%d van %s (%s)"
 
-#: src/protocol.c:766
+#: src/protocol.c:771
 #, c-format
 msgid "Attempting to forward REQ_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot doorsturen REQ_KEY naar %d.%d.%d.%d, die niet bestaat?"
 
-#: src/protocol.c:772
+#: src/protocol.c:777
 #, c-format
 msgid "Forwarding REQ_KEY to %s (%s)"
 msgstr "Doorsturen REQ_KEY naar %s (%s)"
 
-#: src/protocol.c:831
+#: src/protocol.c:836
 #, c-format
 msgid "Got unauthorized ANS_KEY from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde ANS_KEY van %s (%s)"
 
-#: src/protocol.c:838
+#: src/protocol.c:843
 #, c-format
 msgid "Got bad ANS_KEY from %s (%s)"
 msgstr "Kreeg ongeldige ANS_KEY van %s (%s)"
 
-#: src/protocol.c:844
+#: src/protocol.c:849
 #, c-format
 msgid "Got ANS_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"
 msgstr "Kreeg ANS_KEY herkomst %d.%d.%d.%d bestemming %d.%d.%d.%d van %s (%s)"
 
-#: src/protocol.c:853
+#: src/protocol.c:858
 #, c-format
 msgid ""
 "Receiving ANS_KEY origin %d.%d.%d.%d from %s (%s), which does not exist?"
 msgstr "Kreeg ANS_KEY herkomst %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:869
+#: src/protocol.c:874
 #, c-format
 msgid "Attempting to forward ANS_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot doorsturen ANS_KEY naar %d.%d.%d.%d, die niet besttaat?"
 
-#: src/protocol.c:875
+#: src/protocol.c:880
 #, c-format
 msgid "Forwarding ANS_KEY to %s (%s)"
 msgstr "Doorsturen ANS_KEY naar %s (%s)"
 
-#: src/protocol.c:896
+#: src/protocol.c:901
 #, c-format
 msgid "Got unauthorized KEY_CHANGED from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde KEY_CHANGED van %s (%s)"
 
-#: src/protocol.c:903
+#: src/protocol.c:908
 #, c-format
 msgid "Got bad KEY_CHANGED from %s (%s)"
 msgstr "Kreeg ongeldige KEY_CHANGED van %s (%s)"
 
-#: src/protocol.c:912
+#: src/protocol.c:917
 #, c-format
 msgid "Got KEY_CHANGED origin %d.%d.%d.%d from %s (%s), which does not exist?"
 msgstr "Kreeg KEY_CHANGED herkomst %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:918
+#: src/protocol.c:923
 #, c-format
 msgid "Got KEY_CHANGED origin %s from %s (%s)"
 msgstr "Kreeg KEY_CHANGED herkomst %s van %s (%s)"
 
-#: src/tincd.c:95
+#: src/tincd.c:98
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Probeer `%s --help' voor meer informatie.\n"
 
-#: src/tincd.c:98
+#: src/tincd.c:101
 #, c-format
 msgid ""
 "Usage: %s [option]...\n"
@@ -725,7 +733,7 @@ msgstr ""
 "Gebruik: %s [optie]...\n"
 "\n"
 
-#: src/tincd.c:99
+#: src/tincd.c:102
 msgid ""
 "  -c, --config=FILE     Read configuration options from FILE.\n"
 "  -D, --no-detach       Don't fork and detach.\n"
@@ -741,7 +749,7 @@ msgstr ""
 "  -n, --net=NETNAAM     Verbind met net NETNAAM.\n"
 "  -t, --timeout=TIMEOUT Seconden wachten op timeout.\n"
 
-#: src/tincd.c:105
+#: src/tincd.c:108
 msgid ""
 "      --help            Display this help and exit.\n"
 "      --version         Output version information and exit.\n"
@@ -751,69 +759,69 @@ msgstr ""
 "      --version         Geef versie informatie en beëindig.\n"
 "\n"
 
-#: src/tincd.c:107
+#: src/tincd.c:110
 msgid "Report bugs to tinc@nl.linux.org.\n"
 msgstr ""
 "Meld fouten in het programma aan tinc@nl.linux.org;\n"
 "meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
 
-#: src/tincd.c:145
+#: src/tincd.c:148
 #, c-format
 msgid "Invalid timeout value `%s'.\n"
 msgstr "Ongeldige timeout waarde `%s'.\n"
 
-#: src/tincd.c:159
+#: src/tincd.c:162
 #, c-format
-msgid "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting."
+msgid "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting"
 msgstr ""
-"Geheugen is vol (laatste %s:%d) (kon geen %d bytes vrijmaken); beëindigen."
+"Geheugen is vol (laatste %s:%d) (kon geen %d bytes vrijmaken), beëindigen"
 
-#: src/tincd.c:214
+#: src/tincd.c:217
 #, c-format
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) gestart, debugniveau %d."
 
-#: src/tincd.c:217
+#: src/tincd.c:220
 #, c-format
 msgid "tincd %s starting"
 msgstr "tincd %s gestart"
 
-#: src/tincd.c:232
+#: src/tincd.c:235
 #, c-format
 msgid "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"
 msgstr ""
 "Totaal aantal bytes geschreven: tap %d, socket %d; bytes gelezen: top %d, "
 "socket %d."
 
-#: src/tincd.c:250
+#: src/tincd.c:253
 #, c-format
 msgid "A tincd is already running for net `%s' with pid %d.\n"
 msgstr "Een tincd voor net `%s' draait al met procesnummer %d.\n"
 
-#: src/tincd.c:253
+#: src/tincd.c:256
 #, c-format
 msgid "A tincd is already running with pid %d.\n"
 msgstr "Een tincd draait al met procesnummer %d.\n"
 
-#: src/tincd.c:274
+#: src/tincd.c:277
 #, c-format
 msgid "No other tincd is running for net `%s'.\n"
 msgstr "Geen andere tincd gevonden voor net `%s'.\n"
 
-#: src/tincd.c:276
+#: src/tincd.c:279
 msgid "No other tincd is running.\n"
 msgstr "Geen andere tincd gevonden.\n"
 
-#: src/tincd.c:283
+#: src/tincd.c:286
 msgid "Removing stale lock file.\n"
 msgstr "Ongebruikt vergrendelingsbestand verwijderd.\n"
 
-#: src/tincd.c:339
+#: src/tincd.c:342
 #, c-format
 msgid "%s version %s\n"
 msgstr "%s versie %s\n"
 
-#: src/tincd.c:340
+#: src/tincd.c:343
 msgid ""
 "Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
 "see the AUTHORS file for a complete list.\n"
@@ -832,50 +840,50 @@ msgstr ""
 "zie het bestand COPYING voor details.\n"
 "\n"
 
-#: src/tincd.c:345
+#: src/tincd.c:348
 msgid ""
 "This product includes software developed by Eric Young (eay@mincom.oz.au)\n"
 msgstr ""
 "Dit produkt bevat programmatuur ontwikkeld door Eric Young "
 "(eay@mincom.oz.au)\n"
 
-#: src/tincd.c:355
+#: src/tincd.c:358
 msgid "You must be root to run this program. Sorry.\n"
 msgstr ""
 "Je moet systeembeheerder zijn om dit programma te kunnen draaien. Sorry.\n"
 
-#: src/tincd.c:390
+#: src/tincd.c:393
 msgid "Got TERM signal"
 msgstr "Kreeg TERM signaal"
 
-#: src/tincd.c:398
+#: src/tincd.c:401
 msgid "Got QUIT signal"
 msgstr "Kreeg QUIT signaal"
 
-#: src/tincd.c:405
+#: src/tincd.c:408
 msgid "Got another SEGV signal: not restarting"
 msgstr "Kreeg nog een SEGV signaal: niet herstarten"
 
-#: src/tincd.c:413
+#: src/tincd.c:416
 #, c-format
 msgid "Got SEGV signal after %s line %d, trying to re-execute"
-msgstr "Kreeg SEGV signaal na %s regel %d. Probeer opnieuw opstarten."
+msgstr "Kreeg SEGV signaal na %s regel %d, probeer opnieuw opstarten"
 
-#: src/tincd.c:416
+#: src/tincd.c:419
 msgid "Got SEGV signal, trying to re-execute"
 msgstr "Kreeg SEGV signaal, probeer opnieuw opstarten"
 
-#: src/tincd.c:429
-msgid "Got HUP signal"
-msgstr "Kreeg HUP signaal"
+#: src/tincd.c:431
+msgid "Got HUP signal, rereading configuration and restarting"
+msgstr "Kreeg HUP signaal, herlezen configuratie en herstarten"
 
 #: src/tincd.c:439
-msgid "Got INT signal"
-msgstr "Kreeg INT signaal"
+msgid "Got INT signal, exitting"
+msgstr "Kreeg INT signaal, beëindigen"
 
 #: src/tincd.c:453
-msgid "Forcing new key generation"
-msgstr "Nieuwe sleutels geforceerd"
+msgid "Got USR2 signal, forcing new key generation"
+msgstr "Kreeg USR2 signaal, nieuwe sleutels geforceerd"
 
 #: src/tincd.c:461
 #, c-format
@@ -886,3 +894,6 @@ msgstr "Kreeg onverwacht signaal %d na %s regel %d"
 #, c-format
 msgid "Got unexpected signal %d"
 msgstr "Kreeg onverwacht signaal %d"
+
+#~ msgid "Got HUP signal"
+#~ msgstr "Kreeg HUP signaal"

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.16 2000/06/29 17:09:06 guus Exp $
+    $Id: protocol.c,v 1.28.4.17 2000/06/29 19:47:03 guus Exp $
 */
 
 #include "config.h"
@@ -391,6 +391,7 @@ cp
 
 int basic_info_h(conn_list_t *cl)
 {
+  conn_list_t *old;
 cp
   if(debug_lvl > 1)
     syslog(LOG_DEBUG, _("Got BASIC_INFO from %s"), cl->real_hostname);
@@ -413,24 +414,28 @@ cp
 
   if(cl->status.outgoing)
     {
+      /* First check if the host we connected to is already in our
+         connection list. If so, we are probably making a loop, which
+         is not desirable.
+       */
+       
+      if(old=lookup_conn(cl->vpn_ip))
+        {
+          if(debug_lvl>0)
+            syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"),
+              cl->vpn_hostname, cl->real_hostname);
+          cl->status.outgoing = 0;
+          old->status.outgoing = 1;
+          terminate_connection(cl);
+          return 0;
+        }
+
       if(setup_vpn_connection(cl) < 0)
 	return -1;
       send_basic_info(cl);
     }
   else
     {
-      /* First check if the host we connected to is already in our
-         connection list. If so, we are probably making a loop, which
-         is not desirable. It should not happen though.
-       */
-       
-      if(lookup_conn(cl->vpn_ip))
-        {
-          if(debug_lvl>0)
-            syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list, aborting connect"),
-              cl->vpn_hostname, cl->real_hostname);
-          return -1;
-        }
         
       if(setup_vpn_connection(cl) < 0)
 	return -1;

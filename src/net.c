@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.14 2000/06/29 17:09:05 guus Exp $
+    $Id: net.c,v 1.35.4.15 2000/06/29 19:47:03 guus Exp $
 */
 
 #include "config.h"
@@ -794,7 +794,7 @@ cp
 
   if(send_basic_info(p) < 0)
     {
-      free(p);
+      free_conn_element(p);
       return NULL;
     }
 cp
@@ -904,13 +904,40 @@ cp
 
   if(cl->status.timeout)
     send_timeout(cl);
-  else if(!cl->status.termreq)
+/*  else if(!cl->status.termreq)
     send_termreq(cl);
-
-  close(cl->socket);
+ */
+ 
+  if(cl->socket)
+    close(cl->socket);
   if(cl->status.meta)
     close(cl->meta_socket);
 
+  cl->status.remove = 1;
+
+  /* If this cl isn't active, don't send any DEL_HOSTs. */
+  if(cl->status.active)
+    notify_others(cl,NULL,send_del_host);
+    
+cp
+  /* Find all connections that were lost because they were behind cl
+     (the connection that was dropped). */
+  if(cl->status.meta)
+    for(p = conn_list; p != NULL; p = p->next)
+      {
+        if((p->nexthop == cl) && (p != cl))
+          {
+            if(cl->status.active && p->status.active)
+              notify_others(p,cl,send_del_host);
+           if(cl->socket)
+             close(cl->socket);
+	    p->status.active = 0;
+	    p->status.remove = 1;
+          }
+      }
+    
+  cl->status.active = 0;
+  
   if(cl->status.outgoing)
     {
       signal(SIGALRM, sigalrm_handler);
@@ -918,40 +945,6 @@ cp
       alarm(seconds_till_retry);
       syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 seconds"));
     }
-  
-  cl->status.remove = 1;
-
-  /* If this cl isn't active, don't send any DEL_HOSTs. */
-  if(!cl->status.active)
-    return;
-    
-  cl->status.active = 0;
-  notify_others(cl,NULL,send_del_host);
-  
-cp
-  /* Find all connections that were lost because they were behind cl
-     (the connection that was dropped). */
-  if(cl->status.meta)
-    for(p = conn_list; p != NULL; p = p->next)
-      {
-        if(p->nexthop == cl)
-          {
-            if(p->status.active)
-              notify_others(p,cl,send_del_host);
-	    p->status.active = 0;
-	    p->status.remove = 1;
-          }
-      }
-    
-cp 
-  /* Then send a notification about all these connections to all hosts
-     that are still connected to us.
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p->status.active && p->status.meta)
-      for(q = conn_list; q != NULL; q = q->next)
-	if(q->status.remove)
-	  send_del_host(p, q);
-   */
 cp
 }
 
@@ -1015,7 +1008,7 @@ cp
       return -1;
     }
 
-  if((ncn = create_new_connection(nfd)) == NULL)
+  if(!(ncn = create_new_connection(nfd)))
     {
       shutdown(nfd, 2);
       close(nfd);
@@ -1242,10 +1235,29 @@ cp
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
         {
-	  if(errno == EINTR) /* because of alarm */
-	    continue;
-          syslog(LOG_ERR, _("Error while waiting for input: %m"));
-          return;
+	  if(errno != EINTR) /* because of alarm */
+            {
+              syslog(LOG_ERR, _("Error while waiting for input: %m"));
+              return;
+            }
+        }
+
+      if(sighup)
+        {
+          close_network_connections();
+          clear_config();
+          if(read_config_file(configfilename))
+            {
+              syslog(LOG_ERR, _("Unable to reread configuration file, exitting"));
+              exit(0);
+            }
+          if(setup_network_connections())
+            {
+              syslog(LOG_ERR, _("Unable to restart, exitting"));
+              exit(0);
+            }
+          sighup = 0;
+          continue;
         }
 
       if(last_ping_check + timeout < time(NULL))
