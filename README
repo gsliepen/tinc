@@ -1,60 +1,66 @@
-This is the README file for tinc version 1.0pre3. Installation instructions may
-be found in the INSTALL file.
+This is the README file for tinc version 1.0pre3. Installation
+instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-Guus Sliepen <guus@sliepen.warande.net> and others. For a complete list of
-authors see the AUTHORS file.
+tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans
+<itimmermans@bigfoot.com>, Guus Sliepen <guus@sliepen.warande.net> and
+others. For a complete list of authors see the AUTHORS file.
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version. See the file COPYING for more details.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version. See the file COPYING for more details.
 
 
 Security statement
 ------------------
 
-In august 2000, we discovered the existence of a security hole in all versions
-of tinc up to and including 1.0pre2. This had to do with the way we exchanged
-keys. Since then, we have been working on a new authentication scheme to make
-tinc as secure as possible. The current version uses the OpenSSL library and
-does authentication in much the same way as the SSH protocol does.
+In august 2000, we discovered the existence of a security hole in all
+versions of tinc up to and including 1.0pre2. This had to do with the
+way we exchanged keys. Since then, we have been working on a new
+authentication scheme to make tinc as secure as possible. The current
+version uses the OpenSSL library and does authentication in much the
+same way as the SSH protocol does.
 
-Cryptography is a hard thing to get right. We cannot make any guarantees. Time,
-review and feedback are the only things that can prove the security of any
-cryptographic product. If you wish to review tinc or give us feedback, you are
-stronly encouraged to do so.
+Cryptography is a hard thing to get right. We cannot make any
+guarantees. Time, review and feedback are the only things that can
+prove the security of any cryptographic product. If you wish to review
+tinc or give us feedback, you are stronly encouraged to do so.
+
 
 Requirements
 ------------
 
-Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you need to
-install this library first; grab it from http://www.openssl.org/.  We recommend
-version 0.9.5 or better.  If this library is not installed on you system,
-configure will fail.  The manual in doc/tinc.texi contains more detailed
-information on how to install this library.
+Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you
+need to install this library first; grab it from
+http://www.openssl.org/.  We recommend version 0.9.5 or better.  If
+this library is not installed on you system, configure will fail.  The
+manual in doc/tinc.texi contains more detailed information on how to
+install this library.
 
 
 Features
 --------
 
-This version of tinc supports multiple virtual networks at once. To use this
-feature, you may supply a netname via the -n or --net options. The standard
-locations for the config files will then be /etc/tinc/<net>/. Because of this
-feature, tinc will send packets directly to their destinations, instead of to
-the uplink. If this behaviour is undesirable (for instance because of firewalls
-or other restrictions), please use an older version of tinc (I would recommend
+This version of tinc supports multiple virtual networks at once. To
+use this feature, you may supply a netname via the -n or --net
+options. The standard locations for the config files will then be
+/etc/tinc/<net>/. Because of this feature, tinc will send packets
+directly to their destinations, instead of to the uplink. If this
+behaviour is undesirable (for instance because of firewalls or other
+restrictions), please use an older version of tinc (I would recommend
 tinc-0.2.19).
 
-In order to force the kernel to accept received packets, the destination MAC
-address will be set to FE:FD:00:00:00:00 upon reception. The MAC address of the
-ethertap or tun/tap interface must also be set to this address. See the manual
-for more detailed information.
+In order to force the kernel to accept received packets, the
+destination MAC address will be set to FE:FD:00:00:00:00 upon
+reception. The MAC address of the ethertap or tun/tap interface must
+also be set to this address. See the manual for more detailed
+information.
 
-tincd regenerates its encryption key pairs. It does this on the first activity
-after the keys have expired. This period is adjustable in the configuration
-file, and the default time is 3600 seconds (one hour).
+tincd regenerates its encryption key pairs. It does this on the first
+activity after the keys have expired. This period is adjustable in the
+configuration file, and the default time is 3600 seconds (one hour).
 
-This version supports multiple subnets at once. They are also sorted on subnet
-mask size. This means that it is possible to have overlapping subnets on the
-VPN, as long as their subnet mask sizes differ.
+This version supports multiple subnets at once. They are also sorted
+on subnet mask size. This means that it is possible to have
+overlapping subnets on the VPN, as long as their subnet mask sizes
+differ.
