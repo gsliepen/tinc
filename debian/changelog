@@ -1,6 +1,28 @@
-tinc (1.0pre2-0.4) unstable; urgency=low
+tinc (1.0pre2-0.3) unstable; urgency=low
+
+  * postinst creates a file /etc/tinc/nets.boot, containing all networks
+    to be started upon system startup;
+  * init.d script starts all networks from that list.
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>  Fri, 19 May 2000 01:28:49 +0200
+
+tinc (1.0pre2-0.2) unstable; urgency=low
+
+  * postinst script creates tap devices in /dev
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>  Tue, 16 May 2000 00:06:25 +0200
+
+tinc (1.0pre2-0.1) unstable; urgency=low
+
+  * postinst script creates tap devices
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>  Tue, 16 May 2000 00:06:25 +0200
+
+tinc (1.0pre1-0.4) unstable; urgency=low
 
   * postinst script
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>  Mon, 15 May 2000 19:22:05 +0200
 
 tinc (1.0pre1-0.3) unstable; urgency=low
 
