@@ -328,12 +328,12 @@ to this daemon.
 
 The effect of this is that the daemon will set its configuration
 ``root'' to /etc/tinc/nn/, where nn is your argument to the -n
-option. You'll notice that it appears in syslog as ``tincd.nn''.
+option. You'll notice that it appears in syslog as ``tinc.nn''.
 
 However, it is not strictly necessary that you call tinc with the -n
 option. In this case, the network name would just be empty, and it will
 be used as such. tinc now looks for files in /etc/tinc/, instead of
-/etc/tinc/nn/; the configuration file should be /etc/tinc/tincd.conf,
+/etc/tinc/nn/; the configuration file should be /etc/tinc/tinc.conf,
 and the passphrases are now expected to be in /etc/tinc/passphrases/.
 
 But it is highly recommended that you use this feature of tinc, because
@@ -357,7 +357,7 @@ will try to connect to it, on the given port. If this fails, tinc exits.
 @section Configuration file
 
 The actual configuration of the daemon is done in the file
-@file{/etc/tinc/nn/tincd.conf}.
+@file{/etc/tinc/nn/tinc.conf}.
 
 This file consists of comments (lines started with a #) or assignments
 in the form of
@@ -481,7 +481,7 @@ ifconfig tap0 10.1.54.1 netmask 255.0.0.0
 ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
 @end example
 
-and in /etc/tinc/tincd.conf:
+and in /etc/tinc/tinc.conf:
 
 @example
 TapDevice = /dev/tap0
@@ -496,7 +496,7 @@ ifconfig tap0 10.2.1.12 netmask 255.0.0.0
 ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
 @end example
 
-and in /etc/tinc/tincd.conf:
+and in /etc/tinc/tinc.conf:
 
 @example
 TapDevice = /dev/tap0
@@ -517,7 +517,7 @@ ifconfig tap0 10.3.69.254 netmask 255.0.0.0
 ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
 @end example
 
-and in /etc/tinc/A/tincd.conf:
+and in /etc/tinc/A/tinc.conf:
 
 @example
 MyVirtualIP = 10.3.69.254/16
@@ -537,7 +537,7 @@ ifconfig tap0 10.4.3.32 netmask 255.0.0.0
 ifconfig tap0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
 @end example
 
-and in /etc/tinc/tincd.conf:
+and in /etc/tinc/tinc.conf:
 
 @example
 MyVirtualIP = 10.4.3.32/16
@@ -645,7 +645,7 @@ generated automatically, so may be more up-to-date.
 @table @asis
 @item -c, --config=FILE
 Read configuration options from FILE. The default is
-@file{/etc/tinc/nn/tincd.conf}.
+@file{/etc/tinc/nn/tinc.conf}.
 
 @item -d
 Increase debug level. The higher it gets, the more gets
@@ -660,7 +660,7 @@ packets themselves.
 
 @item -k, --kill
 Attempt to kill a running tincd and exit. A TERM signal (15) gets sent
-to the daemon that his its PID in /var/run/tincd.nn.pid.
+to the daemon that his its PID in /var/run/tinc.nn.pid.
 
 Because it kills only one tincd, you should use -n here if you use it
 normally.

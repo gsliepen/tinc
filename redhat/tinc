@@ -44,7 +44,7 @@ fi
 # $1 ... VPN to load
 
 vpn_load () {
-    CFG="$TCONF/$1/tincd.conf"
+    CFG="$TCONF/$1/tinc.conf"
     [ -f $CFG ] || { echo "Error: $CFG does not exist" >&2 ; return 1 }
     
     # load TINCD config
@@ -153,7 +153,7 @@ vpn_stop () {
     ip route flush dev $TAP &> /dev/null
     
     # kill the tincd daemon
-    PID="$TPIDS/tincd.$1.pid"
+    PID="$TPIDS/tinc.$1.pid"
     if [ -f $PID ]; then
         $TINCD --net="$1" --kill &> /dev/null
         RET=$?
@@ -204,7 +204,7 @@ case "$1" in
     status)
 	echo -n "Currently running VPNs: "
 	for vpn in `ls -1 $TCONF`; do
-	    PID="$TPIDS/tincd.$vpn.pid"
+	    PID="$TPIDS/tinc.$vpn.pid"
 	    echo -n "$vpn "
 	    if [ -f $PID -a `ps ax | grep "^ *$(cat $PID)" | wc -l` -eq 1 ] 
 	    then

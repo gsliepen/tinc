@@ -1,13 +1,14 @@
 Summary: tinc vpn daemon
 Name: tinc
-Version: 1.0
-Release: pre1
+Version: 1.0pre1
+Release: 1
 Copyright: GPL
-Group: Networking
+Group: System Environment/Daemons
 URL: http://tinc.nl.linux.org/
 Source0: %{name}-%{version}.tar.gz
 Buildroot: /var/tmp/%{name}-%{version}-%{release}
-Requires: /usr/bin/texi2html /usr/bin/install /usr/bin/patch
+#for building the package the following is required:
+# /usr/bin/texi2html /usr/bin/install /usr/bin/patch
 
 %description
 tinc is cool!
@@ -18,24 +19,23 @@ See http://tinc.nl.linux.org/
 %setup -q -n %{name}-%{version}
 
 %build
-#autoconf
-#automake
 ./configure --prefix=/usr --sysconfdir=/etc
 make
-texi2html doc/tinc.texi
+/usr/bin/texi2html doc/tinc.texi
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
-install -D redhat/tinc $RPM_BUILD_ROOT/etc/rc.d/init.d/
+/usr/bin/install -D redhat/tinc $RPM_BUILD_ROOT/etc/rc.d/init.d/
 
 ME=my.vpn.ip.number
 PEER=peer.vpn.ip.number
 PEEREAL=peer.real.ip.number
 
+umask 077
 mkdir -p $RPM_BUILD_ROOT/etc/tinc/$PEER/passphrases
-cat <<END >$RPM_BUILD_ROOT/etc/tinc/$PEER/tincd.conf
+cat <<END >$RPM_BUILD_ROOT/etc/tinc/$PEER/tinc.conf
 #sample
 TapDevice = /dev/tap0
 ConnectTo = $PEEREAL
@@ -75,16 +75,13 @@ END
 %postun
 
 %files
-
 %doc AUTHORS ChangeLog NEWS README THANKS *.html
-
-#%defattr(-,root,root)
 %config /etc/tinc
 /etc/rc.d
 /usr/sbin
 /usr/lib/tinc
 /usr/man
-/usr/info
+/usr/info/tinc.info
 
 %changelog
 * Tue Apr 18 2000 Mads Kiileric <mads@kiilerich.com>
