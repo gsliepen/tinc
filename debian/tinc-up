@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # Device configuration script for tinc
-# $Id: tinc-up,v 1.1.2.1 2000/11/24 16:52:57 zarq Exp $
+# $Id: tinc-up,v 1.1.2.2 2000/12/22 16:54:56 zarq Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -42,8 +42,7 @@ sub vpn_load {
 	}
     }
     if(!defined($DEV)) {
-	warn "tinc: There must be a TapDevice\n";
-	return 0;
+	$DEV = "/dev/tap0";
     }
     if($DEV eq "") {
 	warn "tinc: TapDevice should be of the form /dev/tapN\n";
@@ -75,7 +74,7 @@ sub vpn_load {
     $ADR = pack('C4', @addr);
     $MSK = pack('N4', -1 << (32 - $LEN));
     $BRD = join(".", unpack('C4', $ADR | ~$MSK));
-    $MAC = "fe:fd:" . join(":", map { sprintf "%02x", $_ } unpack('C4', $ADR));
+    $MAC = "fe:fd:00:00:00:00";
 
     if(!defined($VPNMASK)) {
 	$VPNMASK = $MSK;
@@ -83,7 +82,7 @@ sub vpn_load {
     }
     $ADR = join(".", unpack('C4', $ADR));
     $MSK = join(".", unpack('C4', $MSK));
-    
+
     1;
 }
 
