@@ -10,7 +10,7 @@ EXTRA_DIST =
 
 CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
- stamp-h.in m4/Makefile.am
+ stamp-h.in m4/Makefile.am ChangeLog
 
 ChangeLog:
 	rm -f ChangeLog
