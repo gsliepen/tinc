@@ -1,6 +1,7 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
+                            2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: net.c,v 1.31 2000/05/29 22:20:04 zarq Exp $
 */
 
 #include "config.h"
@@ -970,7 +973,7 @@ cp
         {
           if(sscanf(cl->buffer, "%d", &request) == 1)
             {
-              if(request_handlers[request] == NULL)
+              if((request < 0 || request > 255) || request_handlers[request] == NULL)
                 {
                   syslog(LOG_ERR, _("Unknown request: %s"), cl->buffer);
                   return -1;
