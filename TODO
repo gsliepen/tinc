@@ -11,7 +11,7 @@ Goals for 1.0 release:
 * Reenable queues for delayed packets (done)
 * Merge documentation files (SECURITY, INSTALL, PROTOCOL) into tinc.texi
 * Different authentication scheme (done)
-* Add randomness to packet headers and PING/PONG requests
+* Add randomness to packet headers and PING/PONG requests (done)
 
 Goals for future releases:
 
