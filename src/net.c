@@ -248,7 +248,13 @@ static void check_dead_connections(void)
 				}
 				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
 						   c->name, c->hostname);
-				terminate_connection(c, false);
+				if(c->status.connecting) {
+					c->status.connecting = false;
+					closesocket(c->socket);
+					do_outgoing_connection(c);
+				} else {
+					terminate_connection(c, false);
+				}
 			}
 		}
 	}
