@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.81 2001/02/25 19:09:43 guus Exp $
+    $Id: protocol.c,v 1.28.4.82 2001/02/26 11:37:20 guus Exp $
 */
 
 #include "config.h"
@@ -439,8 +439,8 @@ cp
 
   RAND_bytes(cl->cipher_outkey, len);
 
-  cl->cipher_outkey[0] &= 0x7F;	/* FIXME: Somehow if the first byte is more than 0xD0 or something like that, decryption fails... */
-
+  cl->cipher_outkey[0] &= 0x0F;	/* Make sure that the random data is smaller than the modulus of the RSA key */
+  
   if(debug_lvl >= DEBUG_SCARY_THINGS)
     {
       bin2hex(cl->cipher_outkey, buffer, len);
@@ -469,7 +469,9 @@ cp
 
   /* Further outgoing requests are encrypted with the key we just generated */
 
-  EVP_EncryptInit(cl->cipher_outctx, EVP_bf_cfb(), cl->cipher_outkey, cl->cipher_outkey + EVP_bf_cfb()->key_len);
+  EVP_EncryptInit(cl->cipher_outctx, EVP_bf_cfb(),
+                  cl->cipher_outkey + len - EVP_bf_cfb()->key_len,
+                  cl->cipher_outkey + len - EVP_bf_cfb()->key_len - EVP_bf_cfb()->iv_len);
 
   cl->status.encryptout = 1;
 cp
@@ -526,7 +528,9 @@ cp
 
   /* All incoming requests will now be encrypted. */
 
-  EVP_DecryptInit(cl->cipher_inctx, EVP_bf_cfb(), cl->cipher_inkey, cl->cipher_inkey + EVP_bf_cfb()->key_len);
+  EVP_DecryptInit(cl->cipher_inctx, EVP_bf_cfb(),
+                  cl->cipher_inkey + len - EVP_bf_cfb()->key_len,
+                  cl->cipher_inkey + len - EVP_bf_cfb()->key_len - EVP_bf_cfb()->iv_len);
   
   cl->status.decryptin = 1;
 
