@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.100 2001/07/19 12:29:40 guus Exp $
+    $Id: protocol.c,v 1.28.4.101 2001/07/20 13:54:19 guus Exp $
 */
 
 #include "config.h"
@@ -307,7 +307,7 @@ cp
     {
       p = (connection_t *)node->data;
       
-      if(p != cl && p->status.active)
+      if(p != cl)
         {
           /* Notify others of this connection */
 
@@ -690,7 +690,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p->status.meta && p->status.active && p!= cl)
+      if(p->status.active && p!= cl)
         send_add_subnet(p, subnet);
     }
 cp
@@ -774,7 +774,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p->status.meta && p->status.active && p!= cl)
+      if(p->status.active && p!= cl)
         send_del_subnet(p, subnet);
     }
 cp
@@ -863,7 +863,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p->status.meta && p->status.active && p!=cl)
+      if(p->status.active && p!=cl)
         send_add_host(p, new);
     }
 
@@ -948,7 +948,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p->status.meta && p->status.active && p!=cl)
+      if(p->status.active && p!=cl)
         send_del_host(p, old);
     }
 cp
@@ -1088,7 +1088,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p != cl && p->status.meta && p->status.active)
+      if(p != cl && p->status.active)
         if(!(p->options & OPTION_INDIRECT) || from == myself)
           send_request(p, "%d %s", KEY_CHANGED, from->name);
     }

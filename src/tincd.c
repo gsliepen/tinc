@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.49 2001/07/04 08:43:32 guus Exp $
+    $Id: tincd.c,v 1.10.4.50 2001/07/20 13:54:19 guus Exp $
 */
 
 #include "config.h"
@@ -212,7 +212,7 @@ int keygen(int bits)
 
   if(!rsa_key)
     {
-      fprintf(stderr, _("Error during key generation!"));
+      fprintf(stderr, _("Error during key generation!\n"));
       return -1;
      }
   else

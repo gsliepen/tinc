@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.19 2001/07/04 08:41:36 guus Exp $
+    $Id: meta.c,v 1.1.2.20 2001/07/20 13:54:19 guus Exp $
 */
 
 #include "config.h"
@@ -75,7 +75,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p != cl && p->status.meta && p->status.active)
+      if(p != cl && p->status.active)
         send_meta(p, buffer, length);
     }
 cp

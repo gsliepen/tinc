@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.121 2001/07/19 12:29:40 guus Exp $
+    $Id: net.c,v 1.35.4.122 2001/07/20 13:54:19 guus Exp $
 */
 
 #include "config.h"
@@ -253,7 +253,7 @@ cp
     send_udppacket(cl, packet);
 }
 
-/* Broadcast a packet to all active connections */
+/* Broadcast a packet to all active direct connections */
 
 void broadcast_packet(connection_t *from, vpn_packet_t *packet)
 {
@@ -267,7 +267,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       cl = (connection_t *)node->data;
-      if(cl->status.meta && cl != from)
+      if(cl->status.active && cl != from)
         send_packet(cl, packet);
     }
 cp
@@ -1083,8 +1083,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
-      if(p->status.meta)
-        FD_SET(p->meta_socket, fs);
+      FD_SET(p->meta_socket, fs);
     }
 
   FD_SET(myself->meta_socket, fs);
@@ -1163,11 +1162,10 @@ cp
 
   if(cl->status.meta)
     {
-
       /* Find all connections that were lost because they were behind cl
          (the connection that was dropped). */
 
-        for(node = connection_tree->head; node; node = node->next)
+        for(node = active_tree->head; node; node = node->next)
           {
             p = (connection_t *)node->data;
             if(p->nexthop == cl && p != cl)
@@ -1180,7 +1178,7 @@ cp
         for(node = connection_tree->head; node; node = node->next)
           {
             p = (connection_t *)node->data;
-            if(p->status.meta && p->status.active && p != cl)
+            if(p->status.active && p != cl)
               send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
           }
     }
@@ -1229,7 +1227,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       cl = (connection_t *)node->data;
-      if(cl->status.active && cl->status.meta)
+      if(cl->status.active)
         {
           if(cl->last_ping_time + timeout < now)
             {
@@ -1301,13 +1299,12 @@ cp
       if(p->status.remove)
 	return;
 
-      if(p->status.meta)
-	if(FD_ISSET(p->meta_socket, f))
-	  if(receive_meta(p) < 0)
-	    {
-	      terminate_connection(p);
-	      return;
-	    }
+      if(FD_ISSET(p->meta_socket, f))
+	if(receive_meta(p) < 0)
+	  {
+	    terminate_connection(p);
+	    return;
+	  }
     }
 
   if(FD_ISSET(myself->meta_socket, f))
