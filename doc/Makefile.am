@@ -5,7 +5,7 @@ info_TEXINFOS = tinc.texi
 dyn_MANS = tincd.8
 man_aux = $(dyn_MANS:.8=.x)
 
-man_MANS = tincd.conf.5 $(dyn_MANS)
+man_MANS = tincd.conf.5 genauth.8 $(dyn_MANS)
 
 PERL = @PERL@
 HELP2MAN = help2man
