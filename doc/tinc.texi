@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.24 2002/03/25 15:01:32 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.25 2002/03/25 15:12:09 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.24 2002/03/25 15:01:32 guus Exp $
+$Id: tinc.texi,v 1.8.4.25 2002/03/25 15:12:09 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.24 2002/03/25 15:01:32 guus Exp $
+$Id: tinc.texi,v 1.8.4.25 2002/03/25 15:12:09 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -1673,8 +1673,13 @@ the tinc project after TINC.
 But in order to be ``immune'' to eavesdropping, you'll have to encrypt
 your data.  Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
 exactly that: encrypt.
-tinc uses blowfish encryption in CBC mode, sequence numbers and message authentication codes
-to make sure eavesdroppers cannot get and cannot change any information at all from the packets they can intercept.
+tinc by default uses blowfish encryption with 256 bit keys in CBC mode, 32 bit
+sequence numbers and 4 byte long message authentication codes to make sure
+eavesdroppers cannot get and cannot change any information at all from the
+packets they can intercept. The encryption algorithm and message authentication
+algorithm can be changed in the configuration. The length of the message
+authentication codes is also adjustable. The length of the key for the
+encryption algorithm is always the maximum length that is supported.
 
 @menu
 * Authentication protocol::
