@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.72 2003/08/16 12:11:11 guus Exp $
+    $Id: process.c,v 1.1.2.73 2003/08/17 12:05:08 guus Exp $
 */
 
 #include "system.h"
@@ -171,24 +171,28 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	switch(request) {
 		case SERVICE_CONTROL_STOP:
 			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_STOP");
-			running = false;
 			break;
 		case SERVICE_CONTROL_SHUTDOWN:
 			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_SHUTDOWN");
-			running = false;
 			break;
 		default:
 			logger(LOG_WARNING, _("Got unexpected request %d"), request);
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
-	if(!running) {
+	if(running) {
+		running = false;
 		status.dwWaitHint = 30000; 
 		status.dwCurrentState = SERVICE_STOP_PENDING; 
 		SetServiceStatus(statushandle, &status);
+		return NO_ERROR;
+	} else {
+		status.dwWaitHint = 0; 
+		status.dwCurrentState = SERVICE_STOPPED; 
+		SetServiceStatus(statushandle, &status);
+		exit(1);
 	}
 
-	return NO_ERROR;
 }
 
 VOID WINAPI run_service(DWORD argc, LPTSTR* argv)

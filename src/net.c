@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.196 2003/08/02 20:50:38 guus Exp $
+    $Id: net.c,v 1.35.4.197 2003/08/17 12:05:08 guus Exp $
 */
 
 #include "system.h"
@@ -42,7 +42,7 @@
 #include "xalloc.h"
 
 bool do_purge = false;
-volatile bool running;
+volatile bool running = false;
 
 time_t now = 0;
 
