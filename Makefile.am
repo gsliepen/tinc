@@ -14,11 +14,7 @@ CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
 
 ChangeLog:
 	rm -f ChangeLog
-	rcs2log \
-	  -u "zarq	Ivo Timmermans	itimmermans@bigfoot.com" \
-	  -u "guus	Guus Sliepen	guus@sliepen.warande.net" \
-	  -u "wsl	Wessel Dankers	wsl@nl.linux.org" | \
-	  sed -e 's,/home/CVS/tinc/,,g' > $@
+	cvs2cl -U cvsusers --fsf
 
 cvs-clean: maintainer-clean
 	for f in $(CVS_CREATED) `find -name Makefile.in` ; do\
