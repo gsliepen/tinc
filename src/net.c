@@ -185,9 +185,8 @@ cp
 }
 
 /* Remove a queue element */
-void del_queue(packet_queue_t **q, packet_element_t *e)
+void del_queue(packet_queue_t **q, queue_element_t *e)
 {
-  queue_element_t *p, *n;
 cp
   free(e->packet);
 
@@ -230,7 +229,7 @@ cp
 void flush_queue(conn_list_t *cl, packet_queue_t **pq,
 		 int (*function)(conn_list_t*,void*))
 {
-  queue_element_t *p, *prev = NULL, *next = NULL;
+  queue_element_t *p, *next = NULL;
 cp
   for(p = (*pq)->head; p != NULL; )
     {
