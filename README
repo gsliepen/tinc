@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.0. Installation
+This is the README file for tinc version 1.0.1. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2003 by:
@@ -47,7 +47,8 @@ should be changed into "Device", and "Device" should be changed into
 Compatibility
 -------------
 
-Version 1.0 is compatible with 1.0pre8 but not with older versions of tinc.
+Version 1.0.1 is compatible with 1.0 and 1.0pre8 but not with older versions
+of tinc.
 
 
 Requirements
