@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.6 2002/03/23 20:01:05 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.7 2002/03/23 20:21:10 guus Exp $
 */
 
 #include "config.h"
@@ -602,11 +602,6 @@ cp
   /* Run MST and SSSP algorithms */
  
   graph();
-
-  /* Succesful connection, reset timeout if this is an outgoing connection. */
-  
-  if(c->outgoing)
-    c->outgoing->timeout = 0;
 cp
   return 0;
 }

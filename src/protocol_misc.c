@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.2 2002/03/01 14:09:31 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.3 2002/03/23 20:21:10 guus Exp $
 */
 
 #include "config.h"
@@ -143,6 +143,11 @@ int pong_h(connection_t *c)
 {
 cp
   c->status.pinged = 0;
+
+  /* Succesful connection, reset timeout if this is an outgoing connection. */
+  
+  if(c->outgoing)
+    c->outgoing->timeout = 0;
 cp
   return 0;
 }
