@@ -35,4 +35,4 @@ $(dyn_MANS): %.8: %.x $(HELP2MAN)
 	fi
 
 sample-config.tar.gz:
-	GZIP=$(GZIP_ENV) $(TAR) chozf sample-config.tar.gz sample-config
+	GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz sample-config
