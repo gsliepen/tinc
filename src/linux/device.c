@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.12 2002/09/09 22:33:24 guus Exp $
+    $Id: device.c,v 1.1.2.13 2002/09/15 22:19:19 guus Exp $
 */
 
 #include "config.h"
@@ -39,7 +39,7 @@
 #else
 #include <linux/if_tun.h>
 #endif
-#define DEFAULT_DEVICE "/dev/misc/net/tun"
+#define DEFAULT_DEVICE "/dev/net/tun"
 #else
 #define DEFAULT_DEVICE "/dev/tap0"
 #endif
