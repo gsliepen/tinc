@@ -491,7 +491,7 @@ int ack_h(conn_list_t *cl, unsigned char *d, int len)
     {
       if(request_handlers[d[1]] == NULL)
 	syslog(LOG_ERR, "Unknown request %d.", d[1]);
-      if(request_handlers[d[1]](cl, d, len - 1) < 0)
+      if(request_handlers[d[1]](cl, d + 1, len - 1) < 0)
 	return -1;
     }
 
@@ -597,12 +597,13 @@ int add_host_h(conn_list_t *cl, unsigned char *d, int len)
 
   /*
     again, i'm cheating here. see the comment in ack_h.
+    Naughty zarq! Now you see what cheating will get you... [GS]
   */
   if(len > sizeof(add_host_t)) /* Another ADD_HOST follows */
     {
       if(request_handlers[d[sizeof(add_host_t)]] == NULL)
 	syslog(LOG_ERR, "Unknown request %d.", d[sizeof(add_host_t)]);
-      if(request_handlers[d[sizeof(add_host_t)]](cl, d, len - sizeof(add_host_t)) < 0)
+      if(request_handlers[d[sizeof(add_host_t)]](cl, d + sizeof(add_host_t), len - sizeof(add_host_t)) < 0)
 	return -1;
     }
 
