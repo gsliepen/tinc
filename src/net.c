@@ -1000,7 +1000,7 @@ cp
       if(p->status.remove)
 	continue;
 
-      if(p->status.active)
+      if(p->status.dataopen)
 	if(FD_ISSET(p->socket, f))
 	  {
 	    /*
