@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.54 2000/10/29 10:39:06 guus Exp $
+    $Id: net.c,v 1.35.4.55 2000/10/29 22:10:42 guus Exp $
 */
 
 #include "config.h"
@@ -111,7 +111,9 @@ int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
 cp
   outpkt.len = inpkt->len;
   
-  EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey);
+  /* Encrypt the packet */
+  
+  EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
   EVP_EncryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
   EVP_EncryptFinal(&ctx, outpkt.data + outlen, &outpad);
   outlen += outpad + 2;
@@ -146,8 +148,11 @@ int xrecv(vpn_packet_t *inpkt)
   EVP_CIPHER_CTX ctx;
 cp
   outpkt.len = inpkt->len;
-  EVP_DecryptInit(&ctx, myself->cipher_pkttype, myself->cipher_pktkey, NULL);
-  EVP_DecryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
+
+  /* Decrypt the packet */
+
+  EVP_DecryptInit(&ctx, myself->cipher_pkttype, myself->cipher_pktkey, myself->cipher_pktkey + myself->cipher_pkttype->key_len);
+  EVP_DecryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len + 8);
   EVP_DecryptFinal(&ctx, outpkt.data + outlen, &outpad);
   outlen += outpad;
 
@@ -156,6 +161,10 @@ cp
   memcpy(&outpkt, inpkt, outlen);
 */
      
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_ERR, _("Writing packet of %d (%d) bytes to tap device"),
+           outpkt.len, outlen);
+
   /* Fix mac address */
 
   memcpy(outpkt.data, mymac.net.mac.address.x, 6);
@@ -770,10 +779,12 @@ cp
 
   /* Generate packet encryption key */
 
-  myself->cipher_pkttype = EVP_bf_cbc();
+  myself->cipher_pkttype = EVP_bf_cfb();
 
-  myself->cipher_pktkey = (char *)xmalloc(64);
-  RAND_bytes(myself->cipher_pktkey, 64);
+  myself->cipher_pktkeylength = myself->cipher_pkttype->key_len + myself->cipher_pkttype->iv_len;
+
+  myself->cipher_pktkey = (char *)xmalloc(myself->cipher_pktkeylength);
+  RAND_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
 
   if(!(cfg = get_config_val(config, keyexpire)))
     keylifetime = 3600;
@@ -1041,6 +1052,7 @@ int handle_incoming_vpn_data()
   vpn_packet_t pkt;
   int x, l = sizeof(x);
   struct sockaddr from;
+  int lenin;
   socklen_t fromlen = sizeof(from);
 cp
   if(getsockopt(myself->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
@@ -1055,18 +1067,17 @@ cp
       return -1;
     }
 
-  if(recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, &from, &fromlen) <= 0)
+  if((lenin = recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, &from, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return -1;
     }
-/*
+
   if(debug_lvl >= DEBUG_TRAFFIC)
     {
-      syslog(LOG_DEBUG, _("Received packet of %d bytes from %d.%d.%d.%d"), pkt.len,
-             from.sa_addr[0], from.sa_addr[1], from.sa_addr[2], from.sa_addr[3]);
+      syslog(LOG_DEBUG, _("Received packet of %d bytes"), lenin);
     } 
-*/
+
 cp
   return xrecv(&pkt);
 }
@@ -1362,7 +1373,7 @@ cp
               if(debug_lvl >= DEBUG_STATUS)
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
                 
-              RAND_bytes(myself->cipher_pktkey, 64);
+              RAND_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
               send_key_changed(myself, NULL);
               keyexpires = time(NULL) + keylifetime;
             }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.19 2000/10/29 09:19:27 guus Exp $
+    $Id: tincd.c,v 1.10.4.20 2000/10/29 22:10:44 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
 #include <string.h>
 
 #ifdef HAVE_SYS_IOCTL_H
@@ -436,10 +437,9 @@ main(int argc, char **argv, char **envp)
   if(detach())
     exit(0);
 
-/* FIXME: wt* is this suppose to do?
-  if(security_init())
-    return 1;
-*/
+  if(debug_lvl >= DEBUG_ERROR)
+    ERR_load_crypto_strings();
+    
   for(;;)
     {
       if(!setup_network_connections())

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.7 2000/10/29 01:27:23 guus Exp $
+    $Id: connlist.h,v 1.1.2.8 2000/10/29 22:10:41 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -70,9 +70,9 @@ typedef struct conn_list_t {
   EVP_CIPHER_CTX *cipher_inctx;    /* Context of encrypted meta data that will come from him to us */
   EVP_CIPHER_CTX *cipher_outctx;   /* Context of encrypted meta data that will be sent from us to him */
 
-  EVP_CIPHER_CTX *cipher_pktctx;   /* Context of encrypted vpn packets that will be sent to him */
   EVP_CIPHER *cipher_pkttype;      /* Cipher type for encrypted vpn packets */ 
-  char *cipher_pktkey;             /* Cipher key */
+  char *cipher_pktkey;             /* Cipher key and iv */
+  int cipher_pktkeylength;         /* Cipher key and iv length*/
 
   char *buffer;                    /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.51 2000/10/29 10:39:08 guus Exp $
+    $Id: protocol.c,v 1.28.4.52 2000/10/29 22:10:43 guus Exp $
 */
 
 #include "config.h"
@@ -471,7 +471,8 @@ cp
   cl->allow_request = ALL;
   cl->status.active = 1;
   cl->nexthop = cl;
-  cl->cipher_pkttype = EVP_bf_cbc();
+  cl->cipher_pkttype = EVP_bf_cfb();
+  cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
@@ -1015,8 +1016,8 @@ cp
 
   if(!strcmp(to_id, myself->name))
     {
-      bin2hex(myself->cipher_pktkey, pktkey, 64);
-      pktkey[128] = 0;
+      bin2hex(myself->cipher_pktkey, pktkey, myself->cipher_pktkeylength);
+      pktkey[myself->cipher_pktkeylength*2] = '\0';
       send_ans_key(myself, from, pktkey);
     }
   else
@@ -1028,7 +1029,15 @@ cp
           free(from_id); free(to_id);
           return -1;
         }
-      send_req_key(from, to);
+        
+      if(to->status.validkey)	/* Proxy keys */
+        {
+          bin2hex(to->cipher_pktkey, pktkey, to->cipher_pktkeylength);
+          pktkey[to->cipher_pktkeylength*2] = '\0';
+          send_ans_key(to, from, pktkey);
+        }
+      else
+        send_req_key(from, to);
     }
 
   free(from_id); free(to_id);
@@ -1068,9 +1077,9 @@ cp
 
   keylength = strlen(pktkey);
 
-  if((keylength%2)!=0 || (keylength <= 0))
+  if(keylength != from->cipher_pktkeylength*2)
     {
-      syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
+      syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key length"),
              cl->name, cl->hostname, from->name);
       free(from_id); free(to_id); free(pktkey);
       return -1;
