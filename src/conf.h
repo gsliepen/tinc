@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.8 2000/08/09 14:02:16 guus Exp $
+    $Id: conf.h,v 1.6.4.9 2000/09/14 14:34:38 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -52,6 +52,7 @@ typedef enum which_t {
   tcponly,
   interface,
   interfaceip,
+  tincname,
 } which_t;
 
 typedef struct config_t {
