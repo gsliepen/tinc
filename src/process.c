@@ -363,6 +363,7 @@ bool execute_script(const char *name, char **envp)
 	int status, len;
 	struct stat s;
 	char *scriptname;
+	int i;
 
 	cp();
 
@@ -386,8 +387,8 @@ bool execute_script(const char *name, char **envp)
 #ifdef HAVE_PUTENV
 	/* Set environment */
 	
-	while(*envp)
-		putenv(*envp++);
+	for(i = 0; envp[i]; i++)
+		putenv(envp[i]);
 #endif
 
 	scriptname[len - 1] = '\"';
@@ -395,7 +396,13 @@ bool execute_script(const char *name, char **envp)
 
 	free(scriptname);
 
-	/* Unset environment? */
+	/* Unset environment */
+
+	for(i = 0; envp[i]; i++) {
+		char *e = strchr(envp[i], '=');
+		if(e)
+			putenv(strndupa(envp[i], e - envp[i]));
+	}
 
 #ifdef WEXITSTATUS
 	if(status != -1) {
