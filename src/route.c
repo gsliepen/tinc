@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.12 2001/06/05 16:31:59 guus Exp $
+    $Id: route.c,v 1.1.2.13 2001/06/06 19:12:38 guus Exp $
 */
 
 #include "config.h"
@@ -33,53 +33,60 @@
 #include <xalloc.h>
 #include <syslog.h>
 
+#include <avl_tree.h>
+
 #include "net.h"
 #include "net/ethernet.h"
 #include "netinet/if_ether.h"
 #include "connection.h"
 #include "subnet.h"
 #include "route.h"
+#include "protocol.h"
 
 #include "system.h"
 
 int routing_mode = RMODE_ROUTER;
 subnet_t mymac;
 
-void learn_mac(connection_t *source, mac_t *address)
+void learn_mac(mac_t *address)
 {
   subnet_t *subnet;
+  avl_node_t *node;
+  connection_t *p;
 cp
   subnet = lookup_subnet_mac(address);
+
+  /* If we don't know this MAC address yet, store it */
   
-  if(!subnet)
+  if(!subnet || subnet->owner!=myself)
     {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        syslog(LOG_INFO, _("Learned new MAC address %hhx:%hhx:%hhx:%hhx:%hhx:%hhx"),
+               address->x[0], address->x[1], address->x[2], address->x[3],  address->x[4], address->x[5]);
+               
       subnet = new_subnet();
       subnet->type = SUBNET_MAC;
-//      subnet->lasttime = gettimeofday();
       memcpy(&subnet->net.mac.address, address, sizeof(mac_t));
-      subnet_add(source, subnet);
+      subnet_add(myself, subnet);
 
-      if(debug_lvl >= DEBUG_TRAFFIC)
+      /* And tell all other tinc daemons it's our MAC */
+      
+      for(node = connection_tree->head; node; node = node->next)
         {
-          syslog(LOG_DEBUG, _("Learned new MAC address %x:%x:%x:%x:%x:%x from %s (%s)"),
-               address->x[0],
-               address->x[1],
-               address->x[2],
-               address->x[3],
-               address->x[4],
-               address->x[5],
-               source->name, source->hostname);
+          p = (connection_t *)node->data;
+          if(p->status.meta && p->status.active && p!= myself)
+            send_add_subnet(p, subnet);
         }
     }
 }
 
-connection_t *route_mac(connection_t *source, vpn_packet_t *packet)
+connection_t *route_mac(vpn_packet_t *packet)
 {
   subnet_t *subnet;
 cp
   /* Learn source address */
 
-  learn_mac(source, (mac_t *)(&packet->data[6]));
+  learn_mac((mac_t *)(&packet->data[6]));
   
   /* Lookup destination address */
     
@@ -228,7 +235,7 @@ cp
          break;
         
       case RMODE_SWITCH:
-        cl = route_mac(myself, packet);
+        cl = route_mac(packet);
         if(cl)
           send_packet(cl, packet);
         else
@@ -249,10 +256,8 @@ void route_incoming(connection_t *source, vpn_packet_t *packet)
         memcpy(packet->data, mymac.net.mac.address.x, 6);	/* Override destination address to make the kernel accept it */
         break;
       case RMODE_SWITCH:
-        if((packet->data[0] & packet->data[1]) == 0xFF)		/* Broadcast? */
+        if(packet->data[0] & 0x01)				/* Broadcast? */
           broadcast_packet(source, packet);			/* If yes, spread it on */
-        else
-          learn_mac(source, (mac_t *)(&packet->data[6]));
         break;
       case RMODE_HUB:
         broadcast_packet(source,packet);			/* Spread it on */
