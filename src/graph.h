@@ -17,9 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.h,v 1.1.2.5 2003/07/12 17:41:45 guus Exp $
+    $Id: graph.h,v 1.1.2.6 2003/09/03 16:20:33 guus Exp $
 */
+
+#ifndef __TINC_GRAPH_H__
+#define __TINC_GRAPH_H__
 
 extern void graph(void);
 extern void mst_kruskal(void);
 extern void sssp_bfs(void);
+
+#endif /* __TINC_GRAPH_H__ */
