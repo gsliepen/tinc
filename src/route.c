@@ -53,7 +53,7 @@ static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
 /* RFC 1071 */
 
-static __inline__ uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
+static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 {
 	uint16_t *p = data;
 	uint32_t checksum = prevsum ^ 0xFFFF;
@@ -72,7 +72,7 @@ static __inline__ uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 	return ~checksum;
 }
 
-static __inline__ bool ratelimit(int frequency) {
+static bool ratelimit(int frequency) {
 	static time_t lasttime = 0;
 	static int count = 0;
 	
@@ -87,7 +87,7 @@ static __inline__ bool ratelimit(int frequency) {
 	return false;
 }
 
-static __inline__ bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
+static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 	if(packet->len < length) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Got too short packet from %s (%s)"), source->name, source->hostname);
 		return false;
@@ -95,7 +95,7 @@ static __inline__ bool checklength(node_t *source, vpn_packet_t *packet, length_
 		return true;
 }
 	
-static __inline__ void learn_mac(mac_t *address)
+static void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
 	avl_node_t *node;
@@ -160,7 +160,7 @@ void age_subnets(void)
 	}
 }
 
-static __inline__ void route_mac(node_t *source, vpn_packet_t *packet)
+static void route_mac(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -262,7 +262,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 /* RFC 791 */
 
-static __inline__ void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
+static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	struct ip ip;
 	vpn_packet_t fragment;
 	int len, maxlen, todo;
@@ -312,7 +312,7 @@ static __inline__ void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) 
 	}	
 }
 
-static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
+static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 	node_t *via;
@@ -361,7 +361,7 @@ static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 	send_packet(subnet->owner, packet);
 }
 
-static __inline__ void route_ipv4(node_t *source, vpn_packet_t *packet)
+static void route_ipv4(node_t *source, vpn_packet_t *packet)
 {
 	cp();
 
@@ -450,7 +450,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	send_packet(source, packet);
 }
 
-static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
+static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 	node_t *via;
@@ -623,7 +623,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 	send_packet(source, packet);
 }
 
-static __inline__ void route_ipv6(node_t *source, vpn_packet_t *packet)
+static void route_ipv6(node_t *source, vpn_packet_t *packet)
 {
 	cp();
 
