@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.18 2001/01/07 20:19:08 guus Exp $
+    $Id: subnet.c,v 1.1.2.19 2001/06/01 08:02:09 guus Exp $
 */
 
 #include "config.h"
@@ -57,16 +57,12 @@ cp
 int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 {
 cp
-  /* If the subnet of a falls within the range of subnet b,
-     then we consider a smaller then b.
-     Otherwise, the addresses alone (and not the subnet masks) will be compared.
-   */
+  /* We compare as if a subnet is a number that equals (address << 32 + netmask). */
    
-  if(a->net.ipv4.mask > b->net.ipv4.mask)
-    if((a->net.ipv4.address & b->net.ipv4.mask) == b->net.ipv4.address)
-      return -1;
-
-  return a->net.ipv4.address - b->net.ipv4.address;
+  if(a->net.ipv4.address == b->net.ipv4.address)
+    return a->net.ipv4.mask - b->net.ipv4.mask;
+  else
+    return a->net.ipv4.address - b->net.ipv4.address;
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
@@ -276,14 +272,29 @@ cp
   subnet.net.ipv4.address = *address;
   subnet.net.ipv4.mask = 0xFFFFFFFF;
 
-  p = (subnet_t *)avl_search_closest_greater(subnet_tree, &subnet);
+  do
+  {
+    /* Go find subnet */
+  
+    p = (subnet_t *)avl_search_closest_smaller(subnet_tree, &subnet);
 
   /* Check if the found subnet REALLY matches */
 cp
-  if(p && ((*address & p->net.ipv4.mask) == p->net.ipv4.address))
-    return p;
-  else
-    return NULL;
+    if(p)
+      {
+        if ((*address & p->net.ipv4.mask) == p->net.ipv4.address)
+          break;
+        else
+          {
+            /* Otherwise, see if there is a bigger enclosing subnet */
+
+            subnet.net.ipv4.mask = p->net.ipv4.mask << 1;
+            subnet.net.ipv4.address &= subnet.net.ipv4.mask;
+          }
+      }
+   } while (p);
+   
+   return p;
 }
 
 subnet_t *lookup_subnet_ipv6(ipv6_t *address)
