@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.33 2002/03/12 14:20:44 guus Exp $
+    $Id: subnet.c,v 1.1.2.34 2002/04/09 11:42:48 guus Exp $
 */
 
 #include "config.h"
@@ -63,7 +63,7 @@ cp
   if(result)
     return result;
 
-  return a->net.ipv4.masklength - b->net.ipv4.masklength;
+  return a->net.ipv4.prefixlength - b->net.ipv4.prefixlength;
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
@@ -75,7 +75,7 @@ cp
   if(result)
     return result;
 
-  return a->net.ipv6.masklength - b->net.ipv6.masklength;
+  return a->net.ipv6.prefixlength - b->net.ipv6.prefixlength;
 }
 
 int subnet_compare(subnet_t *a, subnet_t *b)
@@ -185,7 +185,7 @@ cp
               &l) == 5)
     {
       subnet->type = SUBNET_IPV4;
-      subnet->net.ipv4.masklength = l;
+      subnet->net.ipv4.prefixlength = l;
       for(i = 0; i < 4; i++)
         subnet->net.ipv4.address.x[i] = x[i];
       return subnet;
@@ -196,7 +196,7 @@ cp
              &l) == 9)
     {
       subnet->type = SUBNET_IPV6;
-      subnet->net.ipv6.masklength = l;
+      subnet->net.ipv6.prefixlength = l;
       for(i = 0; i < 8; i++)
         subnet->net.ipv6.address.x[i] = htons(x[i]);
       return subnet;
@@ -206,7 +206,7 @@ cp
               &x[0], &x[1], &x[2], &x[3]) == 4)
     {
       subnet->type = SUBNET_IPV4;
-      subnet->net.ipv4.masklength = 32;
+      subnet->net.ipv4.prefixlength = 32;
       for(i = 0; i < 4; i++)
         subnet->net.ipv4.address.x[i] = x[i];
       return subnet;
@@ -216,7 +216,7 @@ cp
              &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7]) == 8)
     {
       subnet->type = SUBNET_IPV6;
-      subnet->net.ipv6.masklength = 128;
+      subnet->net.ipv6.prefixlength = 128;
       for(i = 0; i < 8; i++)
         subnet->net.ipv6.address.x[i] = htons(x[i]);
       return subnet;
@@ -256,7 +256,7 @@ cp
 	           subnet->net.ipv4.address.x[1],
 	           subnet->net.ipv4.address.x[2],
 	           subnet->net.ipv4.address.x[3],
-		   subnet->net.ipv4.masklength);
+		   subnet->net.ipv4.prefixlength);
         break;
       case SUBNET_IPV6:
         asprintf(&netstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
@@ -268,7 +268,7 @@ cp
                    ntohs(subnet->net.ipv6.address.x[5]),
                    ntohs(subnet->net.ipv6.address.x[6]),
                    ntohs(subnet->net.ipv6.address.x[7]),
-                   subnet->net.ipv6.masklength);
+                   subnet->net.ipv6.prefixlength);
         break;
       default:
         syslog(LOG_ERR, _("net2str() was called with unknown subnet type %d, exitting!"), subnet->type);
@@ -305,7 +305,7 @@ subnet_t *lookup_subnet_ipv4(ipv4_t *address)
 cp
   subnet.type = SUBNET_IPV4;
   memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
-  subnet.net.ipv4.masklength = 32;
+  subnet.net.ipv4.prefixlength = 32;
 
   do
   {
@@ -323,14 +323,14 @@ cp
 	    break;
 	  }
 
-        if (!maskcmp((char *)address, (char *)&p->net.ipv4.address, p->net.ipv4.masklength, sizeof(ipv4_t)))
+        if (!maskcmp((char *)address, (char *)&p->net.ipv4.address, p->net.ipv4.prefixlength, sizeof(ipv4_t)))
           break;
         else
           {
             /* Otherwise, see if there is a bigger enclosing subnet */
 
-            subnet.net.ipv4.masklength = p->net.ipv4.masklength - 1;
-            maskcpy((char *)&subnet.net.ipv4.address, (char *)&p->net.ipv4.address, subnet.net.ipv4.masklength, sizeof(ipv4_t));
+            subnet.net.ipv4.prefixlength = p->net.ipv4.prefixlength - 1;
+            maskcpy((char *)&subnet.net.ipv4.address, (char *)&p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t));
           }
       }
   } while (p);
@@ -344,7 +344,7 @@ subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 cp
   subnet.type = SUBNET_IPV6;
   memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
-  subnet.net.ipv6.masklength = 128;
+  subnet.net.ipv6.prefixlength = 128;
   
   do
   {
@@ -360,14 +360,14 @@ cp
 	if(p->type != SUBNET_IPV6)
 	  return NULL;
 
-        if (!maskcmp((char *)address, (char *)&p->net.ipv6.address, p->net.ipv6.masklength, sizeof(ipv6_t)))
+        if (!maskcmp((char *)address, (char *)&p->net.ipv6.address, p->net.ipv6.prefixlength, sizeof(ipv6_t)))
           break;
         else
           {
             /* Otherwise, see if there is a bigger enclosing subnet */
 
-            subnet.net.ipv6.masklength = p->net.ipv6.masklength - 1;
-            maskcpy((char *)&subnet.net.ipv6.address, (char *)&p->net.ipv6.address, subnet.net.ipv6.masklength, sizeof(ipv6_t));
+            subnet.net.ipv6.prefixlength = p->net.ipv6.prefixlength - 1;
+            maskcpy((char *)&subnet.net.ipv6.address, (char *)&p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t));
           }
       }
    } while (p);

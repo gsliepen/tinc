@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.54 2002/03/24 17:14:01 guus Exp $
+    $Id: conf.c,v 1.9.4.55 2002/04/09 11:42:48 guus Exp $
 */
 
 #include "config.h"
@@ -255,10 +255,10 @@ cp
 
   /* Teach newbies what subnets are... */
 
-  if(((subnet->type == SUBNET_IPV4) && maskcheck((char *)&subnet->net.ipv4.address, subnet->net.ipv4.masklength, sizeof(ipv4_t)))
-     || ((subnet->type == SUBNET_IPV6) && maskcheck((char *)&subnet->net.ipv6.address, subnet->net.ipv6.masklength, sizeof(ipv6_t))))
+  if(((subnet->type == SUBNET_IPV4) && maskcheck((char *)&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
+     || ((subnet->type == SUBNET_IPV6) && maskcheck((char *)&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t))))
     {
-      syslog(LOG_ERR, _("Network address and mask length do not match for configuration variable %s in %s line %d"),
+      syslog(LOG_ERR, _("Network address and prefix length do not match for configuration variable %s in %s line %d"),
              cfg->variable, cfg->file, cfg->line);
       free(subnet);
       return 0;
