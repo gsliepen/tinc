@@ -12,7 +12,7 @@ This is the protocol documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: PROTOCOL,v 1.1.2.7 2002/06/21 10:11:10 guus Exp $
+   $Id: PROTOCOL,v 1.1.2.8 2002/09/15 22:19:37 guus Exp $
 
 
 1.  Protocols used in tinc
@@ -69,23 +69,61 @@ synchronised.
 
 daemon	message
 --------------------------------------------------------------------------
-origin	ADD_EDGE node1 12.23.34.45 655 node2 21.32.43.54 655 222 0
-                    |       |       |  \___________________/  |  +-> options
-                    |       |       |             |           +----> weight
-		    |       |       |             +----------------> see below
-		    |       |       +--> UDP port
-		    |       +----------> real address
-                    +------------------> name of node on one side of the edge
+origin	ADD_EDGE node1 node2 21.32.43.54 655 222 0
+                   |     |        |       |   |  +-> options
+                   |     |        |       |   +----> weight
+		           |     |        |       +--------> UDP port of node2
+		           |     |        +----------------> real address of node2
+		           |     +-------------------------> name of destination node
+                   +-------------------------------> name of source node
 
 origin	ADD_SUBNET node 192.168.1.0/24
                      |         |     +--> prefixlength
-                     |         +--------> IPv4 network address
+                     |         +--------> network address
                      +------------------> owner of this subnet
 --------------------------------------------------------------------------
+
+The ADD_EDGE messages are to inform other tinc daemons that a connection between
+two nodes exist. The address of the destination node is available so that
+VPN packets can be sent directly to that node.
+
+The ADD_SUBNET messages inform other tinc daemons that certain subnets belong
+to certain nodes. tinc will use it to determine to which node a VPN packet has
+to be sent.
+
+message
+------------------------------------------------------------------
+DEL_EDGE node1 node2
+		   |     +----> name of destination node
+           +----------> name of source node
+
+DEL_SUBNET node 192.168.1.0/24
+             |         |     +--> prefixlength
+             |         +--------> network address
+             +------------------> owner of this subnet
+------------------------------------------------------------------
 
 In case a connection between two daemons is closed or broken, DEL_EDGE messages
 are sent to inform the other daemons of that fact. Each daemon will calculate a
 new route to the the daemons, or mark them unreachable if there isn't any.
+
+message
+------------------------------------------------------------------
+REQ_KEY origin destination
+           |       +--> name of the tinc daemon it wants the key from
+           +----------> name of the daemon that wants the key      
+
+ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
+           |       |       \______________/ |  |  +--> MAC length
+           |       |               |        |  +-----> digest algorithm
+           |       |               |        +--------> cipher algorithm
+           |       |               +--> 128 bits key
+           |       +--> name of the daemon that wants the key
+           +----------> name of the daemon that uses this key
+
+KEY_CHANGED origin
+              +--> daemon that has changed it's packet key
+--------------------------------------------------------------------------
 
 The keys used to encrypt VPN packets are not sent out directly. This is
 because it would generate a lot of traffic on VPNs with many daemons, and
@@ -97,33 +135,17 @@ act as a proxy and forward its copy back to the requestor.
 
 daemon	message
 --------------------------------------------------------------------------
-daemon	REQ_KEY origin destination
-                   |       +--> name of the tinc daemon it wants the key from
-                   +----------> name of the daemon that wants the key      
-
-daemon	ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
-                   |       |       \______________/ |  |  +--> MAC length
-                   |       |               |        |  +-----> digest algorithm
-                   |       |               |        +--------> cipher algorithm
-                   |       |               +--> 128 bits key
-                   |       +--> name of the daemon that wants the key
-                   +----------> name of the daemon that uses this key
-
-daemon	KEY_CHANGED origin
-                      +--> daemon that has changed it's packet key
+origin	PING
+dest.	PONG
 --------------------------------------------------------------------------
 
 There is also a mechanism to check if hosts are still alive. Since network
 failures or a crash can cause a daemon to be killed without properly
 shutting down the TCP connection, this is necessary to keep an up to date
 connection list. Pings are sent at regular intervals, except when there
-is also some other traffic.
-
-daemon	message
---------------------------------------------------------------------------
-origin	PING
-dest.	PONG
---------------------------------------------------------------------------
+is also some other traffic. A little bit of salt (random data) is added
+with each PING and PONG message, to make sure that long sequences of PING/PONG
+messages without any other traffic won't result in known plaintext.
 
 This basically covers everything that is sent over the meta connection by
 tinc.

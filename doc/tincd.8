@@ -62,6 +62,9 @@ Connect to net
 .It Fl D, -no-detach
 Don't fork and detach.
 This will also disable the automatic restart mechanism for fatal errors.
+.It Fl L, -mlock
+Lock tinc into main memory.
+This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
 .It Fl -version
 Output version information and exit.
 .El

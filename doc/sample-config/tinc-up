@@ -6,10 +6,13 @@
 # but for ethertap and FreeBSD this is tap0, tap1, tap2 etcetera,
 # for Solaris and OpenBSD it is tun0, tun1, etcetera.
 
-# Set hardware ethernet address (required!)
+# Set hardware ethernet address, needed on Linux when in router mode
 ifconfig $INTERFACE hw ether fe:fd:0:0:0:0
 
 # Give it the right ip and netmask. Remember, the subnet of the
 # tap device must be larger than that of the individual Subnets
 # as defined in the host configuration file!
-ifconfig $INTERFACE 192.168.1.1 netmask 255.255.0.0 -arp
+ifconfig $INTERFACE 192.168.1.1 netmask 255.255.0.0
+
+# Disable ARP, needed on Linux when in router mode
+ifconfig $INTERFACE -arp

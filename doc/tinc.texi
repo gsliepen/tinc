@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.31 2002/07/16 13:18:27 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.32 2002/09/15 22:19:37 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.31 2002/07/16 13:18:27 guus Exp $
+$Id: tinc.texi,v 1.8.4.32 2002/09/15 22:19:37 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.31 2002/07/16 13:18:27 guus Exp $
+$Id: tinc.texi,v 1.8.4.32 2002/09/15 22:19:37 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -456,8 +456,8 @@ and the corresponding network interfaces.
 @cindex requirements
 @cindex libraries
 Before you can configure or build tinc, you need to have the OpenSSL
-library installed on your system.  If you try to configure tinc without
-having installed it, configure will give you an error message, and stop.
+and zlib libraries installed on your system.  If you try to configure tinc without
+having them installed, configure will give you an error message, and stop.
 
 @menu
 * OpenSSL::
@@ -565,7 +565,7 @@ md5sum before continuing.
 
 tinc comes in a convenient autoconf/automake package, which you can just
 treat the same as any other package.  Which is just untar it, type
-`configure' and then `make'.
+`./configure' and then `make'.
 More detailed instructions are in the file @file{INSTALL}, which is
 included in the source distribution.
 
@@ -651,7 +651,7 @@ mknod -m 600 /dev/tun c 10 200
 
 If you use Linux, and you run the new 2.4 kernel using the devfs filesystem,
 then the tun/tap device will probably be automatically generated as
-@file{/dev/misc/net/tun}.
+@file{/dev/net/tun}.
 
 Unlike the ethertap device, you do not need multiple device files if
 you are planning to run multiple tinc daemons.
@@ -773,9 +773,9 @@ assume that you use it.
 @section How connections work
 
 When tinc starts up, it parses the command-line options and then
-reads in the configuration file.
-If it sees a `ConnectTo' value pointing to another tinc daemon in the file,
-it will try to connect to that other one.
+reads in the configuration file tinc.conf.
+If it sees one or more  `ConnectTo' values pointing to other tinc daemons in that file,
+it will try to connect to those other daemons.
 Whether this succeeds or not and whether `ConnectTo' is specified or not,
 tinc will listen for incoming connection from other deamons.
 If you did specify a `ConnectTo' value and the other side is not responding,
@@ -783,14 +783,14 @@ tinc will keep retrying.
 This means that once started, tinc will stay running until you tell it to stop,
 and failures to connect to other tinc daemons will not stop your tinc daemon
 for trying again later.
-This means you don't have to intervene if there are any network problems.
+This means you don't have to intervene if there are temporary network problems.
 
 @cindex client
 @cindex server
 There is no real distinction between a server and a client in tinc.
 If you wish, you can view a tinc daemon without a `ConnectTo' value as a server,
 and one which does specify such a value as a client.
-It does not matter if two tinc daemons have a `ConnectTo' value pointing to eachother however.
+It does not matter if two tinc daemons have a `ConnectTo' value pointing to each other however.
 
 
 @c ==================================================================
@@ -858,7 +858,7 @@ tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
 @cindex Device
-@item @strong{Device = <device>} (/dev/tap0 or /dev/misc/net/tun)
+@item @strong{Device = <device>} (/dev/tap0 or /dev/net/tun)
 The virtual network device to use.  Note that you can only use one device per
 daemon.  See also @ref{Device files}.
 
@@ -993,10 +993,8 @@ up to the length of the digest produced by the digest algorithm.
 
 @cindex Port
 @item Port = <port> (655)
-Connect to the upstream host (given with the ConnectTo directive) on
-port port.  port may be given in decimal (default), octal (when preceded
-by a single zero) o hexadecimal (prefixed with 0x).  port is the port
-number for both the UDP and the TCP (meta) connections.
+This is the port this tinc daemon listens on.
+You can use decimal portnumbers or symbolic names (as listed in /etc/services).
 
 @cindex PublicKey
 @item PublicKey = <key> [obsolete]
@@ -1323,7 +1321,7 @@ and in @file{/etc/tinc/company/tinc.conf}:
 @example
 Name = BranchD
 ConnectTo = BranchC
-Device = /dev/misc/net/tun
+Device = /dev/net/tun
 PrivateKeyFile = /etc/tinc/company/rsa_key.priv
 @end example
 
@@ -1393,9 +1391,6 @@ and look in the syslog to find out what the problems are.
 Besides the settings in the configuration file, tinc also accepts some
 command line options.
 
-This list is a longer version of that in the manpage.  The latter is
-generated automatically, so may be more up-to-date.
-
 @cindex command line
 @cindex runtime options
 @cindex options
@@ -1434,6 +1429,10 @@ Connect to net NETNAME.  @xref{Multiple networks}.
 Don't fork and detach.
 This will also disable the automatic restart mechanism for fatal errors.
 
+@item -L, --mlock
+Lock tinc into main memory.
+This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
+
 @item --version
 Output version information and exit.
 
@@ -1456,7 +1455,7 @@ only, so keep an eye on it!
 @item You forgot to compile `Netlink device emulation' in the kernel.
 @end itemize
 
-@item Can't write to /dev/misc/net/tun: No such device
+@item Can't write to /dev/net/tun: No such device
 
 @itemize
 @item You forgot to `modprobe tun'.
@@ -1481,15 +1480,6 @@ or if that is not the case, try changing the prefix length into /32.
 
 @item Network doesn't work, syslog shows only packets of length 46
 
-@cindex arp
-@example
-Jan 1 12:00:00 host tinc.net[1234]: Read packet of length 46 from tap device
-Jan 1 12:00:00 host tinc.net[1234]: Trying to look up 0.0.192.168 in connection list failed!
-@end example
-@itemize
-@item Add the `ifconfig $INTERFACE -arp' to tinc-up.
-@end itemize
-
 @item Network address and prefix length do not match!
 
 @itemize
@@ -1510,9 +1500,7 @@ this message.  In normal operation, these errors should not occur.
 @itemize
 @item You must specify the complete pathname.
 Specifying a relative path does not make sense here.  tinc changes its
-directory to / when starting (to avoid keeping a mount point busy); and
-even if we built in a default directory to look for these files, the key
-files are bound to be in a different directory.
+directory to / when starting (to avoid keeping a mount point busy).
 @end itemize
 
 @end table
@@ -1565,9 +1553,11 @@ to deduce the destination of the packets.
 Since the latter modes only depend on the link layer information,
 any protocol that runs over Ethernet is supported (for instance IPX and Appletalk).
 
-After the destination has been determined, a sequence number will be added to the packet.
-The packet will then be encrypted and a message authentication
-code will be appended.
+After the destination has been determined,
+the packet will be compressed (optionally),
+a sequence number will be added to the packet,
+the packet will then be encrypted
+and a message authentication code will be appended.
 
 @cindex encapsulating
 @cindex UDP
@@ -1586,16 +1576,21 @@ To let the kernel on the receiving end accept the packet, the destination MAC
 address must match that of the virtual network interface.
 If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC cannot be set
 by the sending daemons.
-tinc solves this by always overwriting the
-destination MAC address with fe:fd:0:0:0:0. That is also the reason why you must
-set the MAC address of your tap interface to that address.
+tinc solves this by letting the receiving end detect the MAC address
+and overwriting the destination MAC address of the received packet.
+However, the MAC address of the network interface at the receiver might not always be known to tinc.
+That is the reason why you should set the MAC address of your tap interface to that address
+when in routing mode.
+
+In switch or hub modes ARP does work so the sender already knows the correct destination MAC address.
+In those modes every interface should have a unique MAC address, so make sure they are not the same.
 
 
 @c ==================================================================
 @node    The meta-connection,  , The UDP tunnel, The connection
 @subsection The meta-connection
 
-Having only an UDP connection available is not enough.  Though suitable
+Having only a UDP connection available is not enough.  Though suitable
 for transmitting data, we want to be able to reliably send other
 information, such as routing and session key information to somebody.
 
@@ -1637,7 +1632,8 @@ The meta protocol consists of requests that can be sent to the other
 side.  Each request has a unique number and several parameters.  All
 requests are represented in the standard ASCII character set.  It is
 possible to use tools such as telnet or netcat to connect to a tinc
-daemon and to read and write requests by hand, provided that one
+daemon started with the --bypass-security option
+and to read and write requests by hand, provided that one
 understands the numeric codes sent.
 
 The authentication scheme is described in @ref{Authentication protocol}. After a
@@ -1651,64 +1647,78 @@ synchronised.
 @example
 daemon	message
 --------------------------------------------------------------------------
-origin	ADD_EDGE node1 12.23.34.45 655 node2 21.32.43.54 655 222 0
-                    |       |       |  \___________________/  |  +-> options
-                    |       |       |             |           +----> weight
-		    |       |       |             +----------------> see below
-		    |       |       +--> UDP port
-		    |       +----------> real address
-                    +------------------> name of node on one side of the edge
+origin	ADD_EDGE node1 node2 21.32.43.54 655 222 0
+                   |     |        |       |   |  +-> options
+                   |     |        |       |   +----> weight
+		           |     |        |       +--------> UDP port of node2
+		           |     |        +----------------> real address of node2
+		           |     +-------------------------> name of destination node
+                   +-------------------------------> name of source node
 
 origin	ADD_SUBNET node 192.168.1.0/24
                      |         |     +--> prefixlength
-                     |         +--------> IPv4 network address
+                     |         +--------> network address
                      +------------------> owner of this subnet
 --------------------------------------------------------------------------
 @end example
 
+The ADD_EDGE messages are to inform other tinc daemons that a connection between
+two nodes exist. The address of the destination node is available so that
+VPN packets can be sent directly to that node.
+
+The ADD_SUBNET messages inform other tinc daemons that certain subnets belong
+to certain nodes. tinc will use it to determine to which node a VPN packet has
+to be sent.
+
 @cindex DEL_EDGE
+@cindex DEL_SUBNET
+@example
+message
+------------------------------------------------------------------
+DEL_EDGE node1 node2
+		   |     +----> name of destination node
+           +----------> name of source node
+
+DEL_SUBNET node 192.168.1.0/24
+             |         |     +--> prefixlength
+             |         +--------> network address
+             +------------------> owner of this subnet
+------------------------------------------------------------------
+@end example
+
 In case a connection between two daemons is closed or broken, DEL_EDGE messages
 are sent to inform the other daemons of that fact. Each daemon will calculate a
 new route to the the daemons, or mark them unreachable if there isn't any.
+
+@cindex REQ_KEY
+@cindex ANS_KEY
+@cindex KEY_CHANGED
+@example
+message
+------------------------------------------------------------------
+REQ_KEY origin destination
+           |       +--> name of the tinc daemon it wants the key from
+           +----------> name of the daemon that wants the key      
+
+ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
+           |       |       \______________/ |  |  +--> MAC length
+           |       |               |        |  +-----> digest algorithm
+           |       |               |        +--------> cipher algorithm
+           |       |               +--> 128 bits key
+           |       +--> name of the daemon that wants the key
+           +----------> name of the daemon that uses this key
+
+KEY_CHANGED origin
+              +--> daemon that has changed it's packet key
+--------------------------------------------------------------------------
+@end example
 
 The keys used to encrypt VPN packets are not sent out directly. This is
 because it would generate a lot of traffic on VPNs with many daemons, and
 chances are that not every tinc daemon will ever send a packet to every
 other daemon. Instead, if a daemon needs a key it sends a request for it
 via the meta connection of the nearest hop in the direction of the
-destination. If any hop on the way has already learned the key, it will
-act as a proxy and forward its copy back to the requester.
-
-@cindex REQ_KEY
-@cindex ANS_KEY
-@cindex KEY_CHANGED
-@example
-daemon	message
---------------------------------------------------------------------------
-daemon	REQ_KEY origin destination
-                   |       +--> name of the tinc daemon it wants the key from
-                   +----------> name of the daemon that wants the key      
-
-daemon	ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
-                   |       |       \______________/ |  |  +--> MAC length
-                   |       |               |        |  +-----> digest algorithm
-                   |       |               |        +--------> cipher algorithm
-                   |       |               +--> 128 bits key
-                   |       +--> name of the daemon that wants the key
-                   +----------> name of the daemon that uses this key
-
-daemon	KEY_CHANGED origin
-                      +--> daemon that has changed it's packet key
---------------------------------------------------------------------------
-@end example
-
-There is also a mechanism to check if hosts are still alive. Since network
-failures or a crash can cause a daemon to be killed without properly
-shutting down the TCP connection, this is necessary to keep an up to date
-connection list. PINGs are sent at regular intervals, except when there
-is also some other traffic. A little bit of salt (random data) is added
-with each PING and PONG message, to make sure that long sequences of PING/PONG
-messages without any other traffic won't result in known plaintext.
+destination.
 
 @cindex PING
 @cindex PONG
@@ -1719,6 +1729,14 @@ origin	PING
 dest.	PONG
 --------------------------------------------------------------------------
 @end example
+
+There is also a mechanism to check if hosts are still alive. Since network
+failures or a crash can cause a daemon to be killed without properly
+shutting down the TCP connection, this is necessary to keep an up to date
+connection list. PINGs are sent at regular intervals, except when there
+is also some other traffic. A little bit of salt (random data) is added
+with each PING and PONG message, to make sure that long sequences of PING/PONG
+messages without any other traffic won't result in known plaintext.
 
 This basically covers what is sent over the meta connection by
 tinc.
@@ -1813,17 +1831,15 @@ server  CHAL_REPLY 928ffe
 After the correct challenge replies are received, both ends have proved
 their identity. Further information is exchanged.
 
-client  ACK 655 12.23.34.45 123 0
-             |       |       |  +-> options
-	     |       |       +----> estimated weight
-	     |       +------------> IP address of server as seen by client
-	     +--------------------> UDP port of client
+client  ACK 655 123 0
+             |   |  +-> options
+	         |   +----> estimated weight
+	         +--------> listening port of client
 
-server  ACK 655 21.32.43.54 321 0
-             |       |       |  +-> options
-	     |       |       +----> estimated weight
-	     |       +------------> IP address of client as seen by server
-	     +--------------------> UDP port of server
+server  ACK 655 321 0
+             |   |  +-> options
+	         |   +----> estimated weight
+	         +--------> listening port of server
 --------------------------------------------------------------------------
 @end example
 
@@ -1891,8 +1907,8 @@ The UDP packet containing the network packet from the VPN has the following layo
                          Encrypted with symmetric cipher
 @end example
 
-So, the entire VPN packet is encrypted using a symmetric cipher. A 32 bits
-sequence number is added in front of the actual VPN packet, to act as a unique
+So, the entire VPN packet is encrypted using a symmetric cipher, including a 32 bits
+sequence number that is added in front of the actual VPN packet, to act as a unique
 IV for each packet and to prevent replay attacks. A message authentication code
 is added to the UDP packet to prevent alteration of packets. By default the
 first 4 bytes of the digest are used for this, but this can be changed using
@@ -1918,8 +1934,8 @@ tinc's website is at @url{http://tinc.nl.linux.org/},
 this server is located in the Netherlands.
 
 @cindex IRC
-We have an IRC channel on the Open Projects IRC network.  Connect to
-@uref{http://openprojects.nu/services/irc.html, irc.openprojects.net},
+We have an IRC channel on the FreeNode IRC network. Connect to
+@uref{http://www.freenode.net/, irc.freenode.net}
 and join channel #tinc.
 
 
@@ -1929,14 +1945,7 @@ and join channel #tinc.
 
 @table @asis
 @item Ivo Timmermans (zarq) (@email{ivo@@o2w.nl})
-Main coder/hacker and maintainer of the package.
-
 @item Guus Sliepen (guus) (@email{guus@@sliepen.eu.org})
-Originator of it all, co-author.
-
-@item Wessel Dankers (Ubiq) (@email{wsl@@nl.linux.org})
-For the name `tinc' and various suggestions.
-
 @end table
 
 We have received a lot of valuable input from users.  With their help,
