@@ -1,4 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
+
+dnl $Id: configure.in,v 1.12 2000/05/29 21:40:20 zarq Exp $
+
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre2)
 AM_CONFIG_HEADER(config.h)
@@ -47,6 +50,8 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(ftime socket select strtol strerror)
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
+
+AM_GNU_GETTEXT
 
 # Check for the GNU Multi Precision Library
 libgmp=none
