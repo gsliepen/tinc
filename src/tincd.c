@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.11 2000/10/14 17:04:16 guus Exp $
+    $Id: tincd.c,v 1.10.4.12 2000/10/15 00:59:37 guus Exp $
 */
 
 #include "config.h"
@@ -64,7 +64,6 @@ static int kill_tincd = 0;
 static int do_detach = 1;
 
 char *identname;                 /* program name for syslog */
-char *netname = NULL;            /* name of the vpn network */
 char *pidfilename;               /* pid file location */
 static pid_t ppid;               /* pid of non-detached part */
 char **g_argv;                   /* a copy of the cmdline arguments */
@@ -180,7 +179,7 @@ int detach(void)
       if(pid) /* parent process */
 	{
 	  signal(SIGTERM, parent_exit);
-	  sleep(600); /* wait 10 minutes */
+//	  sleep(600); /* wait 10 minutes */
 	  exit(1);
 	}
     }
@@ -302,6 +301,7 @@ void make_names(void)
     }
   else
     {
+      netname = "bla";
       if(!pidfilename)
         pidfilename = "/var/run/tinc.pid";
       if(!confbase)
@@ -320,17 +320,20 @@ main(int argc, char **argv, char **envp)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  /* Do some intl stuff right now */
+  
+  unknown = _("unknown");
+
   parse_options(argc, argv, envp);
 
   if(show_version)
     {
       printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
-      printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
-	       "see the AUTHORS file for a complete list.\n\n"
+      printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans, Guus Sliepen and others.\n"
+	       "See the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 	       "and you are welcome to redistribute it under certain conditions;\n"
-	       "see the file COPYING for details.\n\n"));
-      printf(_("This product includes software developed by Eric Young (eay@mincom.oz.au)\n"));
+	       "see the file COPYING for details.\n"));
 
       return 0;
     }
@@ -365,14 +368,25 @@ main(int argc, char **argv, char **envp)
 */
   for(;;)
     {
-      setup_network_connections();
+      if(!setup_network_connections())
+        {
+          main_loop();
+          cleanup_and_exit(1);
+         }
+      
+      syslog(LOG_ERR, _("Unrecoverable error"));
+      cp_trace();
 
-      main_loop();
-
-      cleanup_and_exit(1);
-
-      syslog(LOG_ERR, _("Unrecoverable error, restarting in %d seconds!"), MAXTIMEOUT);
-      sleep(MAXTIMEOUT);
+      if(do_detach)
+        {
+          syslog(LOG_NOTICE, _("Restarting in %d seconds!"), MAXTIMEOUT);
+          sleep(MAXTIMEOUT);
+        }
+      else
+        {
+          syslog(LOG_ERR, _("Aieee! Not restarting."));
+          exit(0);
+        }
     }
 }
 
@@ -395,23 +409,30 @@ sigquit_handler(int a)
 RETSIGTYPE
 sigsegv_square(int a)
 {
-  syslog(LOG_NOTICE, _("Got another SEGV signal: not restarting"));
+  syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
   exit(0);
 }
 
 RETSIGTYPE
 sigsegv_handler(int a)
 {
-  if(cp_file)
-    syslog(LOG_NOTICE, _("Got SEGV signal after %s line %d, trying to re-execute"),
-	   cp_file, cp_line);
-  else
-    syslog(LOG_NOTICE, _("Got SEGV signal, trying to re-execute"));
+  syslog(LOG_ERR, _("Got SEGV signal"));
+  cp_trace();
 
-  signal(SIGSEGV, sigsegv_square);
-  close_network_connections();
-  remove_pid(pidfilename);
-  execvp(g_argv[0], g_argv);
+  if(do_detach)
+    {
+      syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
+      signal(SIGSEGV, sigsegv_square);
+      close_network_connections();
+      sleep(5);
+      remove_pid(pidfilename);
+      execvp(g_argv[0], g_argv);
+    }
+  else
+    {
+      syslog(LOG_NOTICE, _("Aieee! Not restarting."));
+      exit(0);
+    }
 }
 
 RETSIGTYPE
@@ -449,11 +470,8 @@ sigusr2_handler(int a)
 RETSIGTYPE
 sighuh(int a)
 {
-  if(cp_file)
-    syslog(LOG_NOTICE, _("Got unexpected %s after %s line %d"),
-	   strsignal(a), cp_file, cp_line);
-  else
-    syslog(LOG_NOTICE, _("Got unexpected %s"), strsignal(a));
+  syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+  cp_trace();
 }
 
 void

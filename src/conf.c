@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.13 2000/10/14 17:04:12 guus Exp $
+    $Id: conf.c,v 1.9.4.14 2000/10/15 00:59:34 guus Exp $
 */
 
 
@@ -41,10 +41,11 @@
 #include "connlist.h"
 #include "system.h"
 
-config_t *config;
+config_t *config = NULL;
 int debug_lvl = 0;
 int timeout = 0; /* seconds before timeout */
 char *confbase = NULL;           /* directory in which all config files are */
+char *netname = NULL;            /* name of the vpn network */
 
 /* Will be set if HUP signal is received. It will be processed when it is safe. */
 int sighup = 0;
@@ -58,6 +59,7 @@ static internal_config_t hazahaza[] = {
   { "ConnectTo",    connectto,      TYPE_NAME },
   { "PingTimeout",  pingtimeout,    TYPE_INT },
   { "TapDevice",    tapdevice,      TYPE_NAME },
+  { "TapSubnet",    tapsubnet,      TYPE_IP },
   { "PrivateKey",   privatekey,     TYPE_NAME },
   { "KeyExpire",    keyexpire,      TYPE_INT },
   { "Hostnames",    resolve_dns,    TYPE_BOOL },
@@ -116,22 +118,17 @@ cp
 
   if(p->data.val)
     {
-      if(*cfg)
-        {
-          r = *cfg;
-          while(r->next)
-            r = r->next;
-          r->next = p;
-        }
-      else
-        *cfg = p;
-      p->next = NULL;
+      p->next = *cfg;
+      *cfg = p;
+cp
       return p;
     }
-
-  free(p);
+  else
+    {
+      free(p);
 cp
-  return NULL;
+      return NULL;
+    }
 }
 
 /*
@@ -215,7 +212,7 @@ int read_server_config()
   char *fname;
   int x;
 cp
-  asprintf(fname, "%s/tinc.conf", confbase);
+  asprintf(&fname, "%s/tinc.conf", confbase);
   x = read_config_file(&config, fname);
   free(fname);
 cp
@@ -230,10 +227,9 @@ const config_t *get_config_val(config_t *p, which_t type)
 cp
   for(p = config; p != NULL; p = p->next)
     if(p->which == type)
-      return p;
+      break;
 cp
-  /* Not found */
-  return NULL;
+  return p;
 }
 
 /*
@@ -246,10 +242,9 @@ cp
   for(p = config; p != NULL; p = p->next)
     if(p->which == type)
       if(--index < 0)
-        return p;
+        break;
 cp  
-  /* Not found */
-  return NULL;
+  return p;
 }
 
 /*

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.16 2000/10/14 17:04:15 guus Exp $
+    $Id: net.h,v 1.9.4.17 2000/10/15 00:59:35 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -44,7 +44,7 @@
                       ((unsigned char*)&(x))[1],((unsigned char*)&(x))[0]
 #endif
 
-#define MAXBUFSIZE 2048 /* Probably way too much, but it must fit every possible request. */
+#define MAXBUFSIZE 4096 /* Probably way too much, but it must fit every possible request. */
 
 /* flags */
 #define INDIRECTDATA        0x0001 /* Used to indicate that this host has to be reached indirect */
@@ -123,6 +123,8 @@ extern int total_tap_in;
 extern int total_tap_out;
 extern int total_socket_in;
 extern int total_socket_out;
+
+extern char *unknown;
 
 extern char *request_name[256];
 extern char *status_text[10];

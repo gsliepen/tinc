@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.10 2000/10/11 22:01:02 guus Exp $
+    $Id: protocol.h,v 1.5.4.11 2000/10/15 00:59:36 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -37,7 +37,7 @@
    quite large.
  */
 
-#define CHAL_LENGTH 2048
+#define CHAL_LENGTH 1024 /* Okay, this is probably waaaaaaaaaaay too large */
 
 /* Request numbers */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.35 2000/10/14 17:04:13 guus Exp $
+    $Id: net.c,v 1.35.4.36 2000/10/15 00:59:34 guus Exp $
 */
 
 #include "config.h"
@@ -36,6 +36,10 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
+
+/* Next two includes are for tun/tap support */
+#include <net/if.h>
+#include "/usr/src/linux/include/linux/if_tun.h"
 
 #include <utils.h>
 #include <xalloc.h>
@@ -58,6 +62,8 @@ int total_socket_out = 0;
 
 int upstreamindex = 0;
 static int seconds_till_retry;
+
+char *unknown = NULL;
 
 /*
   strip off the MAC adresses of an ethernet frame
@@ -326,19 +332,38 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
+  struct ifreq ifr;
 cp  
-  if((cfg = get_config_val(config, tapdevice)) == NULL)
-    tapfname = "/dev/tap0";
-  else
+  if((cfg = get_config_val(config, tapdevice)))
     tapfname = cfg->data.ptr;
-
+  else
+    tapfname = "/dev/misc/net/tun";
+cp
   if((nfd = open(tapfname, O_RDWR | O_NONBLOCK)) < 0)
     {
       syslog(LOG_ERR, _("Could not open %s: %m"), tapfname);
       return -1;
     }
-
+cp
   tap_fd = nfd;
+
+  /* Ok now check if this is an old ethertap or a new tun/tap thingie */
+  
+  memset(&ifr, 0, sizeof(ifr));
+cp
+  ifr.ifr_flags = IFF_TAP;
+  if (netname)
+    strncpy(ifr.ifr_name, netname, IFNAMSIZ);
+cp
+  if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
+  { 
+    syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
+    if((cfg = get_config_val(config, tapsubnet)) == NULL)
+      syslog(LOG_INFO, _("tun/tap device will be left unconfigured"));
+    else
+      /* Setup inetaddr/netmask etc */;
+  }
+  
 cp
   return 0;
 }
@@ -554,6 +579,7 @@ cp
 
   asprintf(&myself->hostname, "MYSELF"); /* FIXME? Do hostlookup on ourselves? */
   myself->flags = 0;
+  myself->protocol_version = PROT_CURRENT;
 
   if(!(cfg = get_config_val(config, tincname))) /* Not acceptable */
     {
@@ -590,13 +616,13 @@ cp
 
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {
-      syslog(LOG_ERR, _("Unable to set up a listening socket"));
+      syslog(LOG_ERR, _("Unable to set up a listening socket!"));
       return -1;
     }
 
   if((myself->socket = setup_vpn_in_socket(myself->port)) < 0)
     {
-      syslog(LOG_ERR, _("Unable to set up an incoming vpn data socket"));
+      syslog(LOG_ERR, _("Unable to set up an incoming vpn data socket!"));
       close(myself->meta_socket);
       return -1;
     }
@@ -773,10 +799,12 @@ cp
       return NULL;
     }
 
+  p->name = unknown;
   p->address = ntohl(ci.sin_addr.s_addr);
   p->hostname = hostlookup(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
+  p->buffer = xmalloc(MAXBUFSIZE);
   p->buflen = 0;
   p->last_ping_time = time(NULL);
   p->want_ping = 0;

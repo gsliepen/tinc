@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.3 2000/10/11 22:00:58 guus Exp $
+    $Id: meta.c,v 1.1.2.4 2000/10/15 00:59:34 guus Exp $
 */
 
 #include "config.h"
@@ -42,6 +42,8 @@ cp
     syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s): %s"), length,
            cl->name, cl->hostname, buffer);
 
+  buffer[length-1]='\n';
+  
   if(cl->status.encryptout)
     {
       EVP_EncryptUpdate(cl->cipher_outctx, outbuf, &outlen, buffer, length);

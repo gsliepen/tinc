@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: genauth.c,v 1.7.4.1 2000/10/11 12:07:27 guus Exp $
+    $Id: genauth.c,v 1.7.4.2 2000/10/15 00:59:34 guus Exp $
 */
 
 #include "config.h"
@@ -98,7 +98,8 @@ int main(int argc, char **argv)
 
   fprintf(stderr, _("Done.\n"));
 
-  printf("Public key:\t%s\nPrivate key:\t%s\n", BN_bn2hex(key->n), BN_bn2hex(key->d));
+  printf(_("Public key:  %s\n"), BN_bn2hex(key->n));
+  printf(_("Private key: %s\n"), BN_bn2hex(key->d));
 
   return 0;
 }

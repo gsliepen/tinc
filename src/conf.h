@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.12 2000/10/14 17:04:13 guus Exp $
+    $Id: conf.h,v 1.6.4.13 2000/10/15 00:59:34 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -35,6 +35,7 @@ typedef enum which_t {
   connectto,
   pingtimeout,
   tapdevice,
+  tapsubnet,
   privatekey,
   keyexpire,
   resolve_dns,
@@ -88,6 +89,7 @@ extern int timeout;
 extern int upstreamindex;
 extern int sighup;
 extern char *confbase;
+extern char *netname;
 
 extern config_t *add_config_val(config_t **, int, char *);
 extern int read_config_file(config_t **, const char *);

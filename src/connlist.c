@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.3 2000/10/14 17:04:13 guus Exp $
+    $Id: connlist.c,v 1.1.2.4 2000/10/15 00:59:34 guus Exp $
 */
 
 #include <syslog.h>
@@ -53,7 +53,7 @@ cp
     destroy_queue(p->sq);
   if(p->rq)
     destroy_queue(p->rq);
-  if(p->name)
+  if(p->name && p->name!=unknown)
     free(p->name);
   if(p->hostname)
     free(p->hostname);
@@ -61,6 +61,8 @@ cp
     RSA_free(p->public_key);
   if(p->cipher_pktkey)
     free(p->cipher_pktkey);
+  if(p->buffer)
+    free(p->buffer);
   free(p);
 cp
 }
@@ -214,7 +216,7 @@ int read_host_config(conn_list_t *cl)
   char *fname;
   int x;
 cp
-  asprintf(fname, "%s/hosts/%s", confbase, cl->name);
+  asprintf(&fname, "%s/hosts/%s", confbase, cl->name);
   x = read_config_file(&cl->config, fname);
   free(fname);
 cp

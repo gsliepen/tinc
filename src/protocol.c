@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.39 2000/10/14 17:04:15 guus Exp $
+    $Id: protocol.c,v 1.28.4.40 2000/10/15 00:59:35 guus Exp $
 */
 
 #include "config.h"
@@ -52,40 +52,40 @@ int check_id(char *id)
   int i;
 
   for (i = 0; i < strlen(id); i++)
-    {
-      if(!isalpha(id[i]) && id[i] != '_')
-        {
-          return 0;
-        }
-    }
-
-  return 1;
+    if(!isalnum(id[i]) && id[i] != '_')
+      return -1;
+          
+  return 0;
 }
 
 /* Generic request routines - takes care of logging and error detection as well */
 
-int send_request(conn_list_t *cl, const char *format, int request, /*args*/ ...)
+int send_request(conn_list_t *cl, const char *format, ...)
 {
   va_list args;
-  char buffer[MAXBUFSIZE+1];
-  int len;
+  char buffer[MAXBUFSIZE];
+  int len, request;
 
 cp
   /* Use vsnprintf instead of vasprintf: faster, no memory fragmentation, cleanup is automatic,
      and there is a limit on the input buffer anyway */
 
-  va_start(args, request);
-  len = vsnprintf(buffer, MAXBUFSIZE+1, format, args);
+  va_start(args, format);
+  len = vsnprintf(buffer, MAXBUFSIZE, format, args);
+  request = va_arg(args, int);
   va_end(args);
 
-  if(len < 0 || len > MAXBUFSIZE)
+  if(len < 0 || len > MAXBUFSIZE-1)
     {
       syslog(LOG_ERR, _("Output buffer overflow while sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
       return -1;
     }
 
+  len++;
+
   if(debug_lvl >= DEBUG_PROTOCOL)
     syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
+
 cp
   return send_meta(cl, buffer, len);
 }
@@ -179,7 +179,7 @@ cp
 
   /* Check if identity is a valid name */
 
-  if(!check_id(cl->name))
+  if(check_id(cl->name))
     {
       syslog(LOG_ERR, _("Peer %s uses invalid identity name"), cl->hostname);
       return -1;
@@ -227,14 +227,14 @@ cp
 
   if(!cl->hischallenge)
     cl->hischallenge = xmalloc(CHAL_LENGTH);
-
+cp
   /* Copy random data to the buffer */
 
   RAND_bytes(cl->hischallenge, CHAL_LENGTH);
-
+cp
   /* Convert the random data to a hexadecimal formatted string */
 
-  bin2hex(cl->hischallenge,buffer,CHAL_LENGTH);
+  bin2hex(cl->hischallenge, buffer, CHAL_LENGTH);
   buffer[CHAL_LENGTH*2] = '\0';
 
   /* Send the challenge */
@@ -442,7 +442,7 @@ cp
 
   /* Check if owner name is a valid */
 
-  if(!check_id(name))
+  if(check_id(name))
     {
       syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s): invalid identity name"), cl->name, cl->hostname);
       free(name); free(subnetstr);
@@ -510,7 +510,7 @@ cp
 
   /* Check if owner name is a valid */
 
-  if(!check_id(name))
+  if(check_id(name))
     {
       syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s): invalid identity name"), cl->name, cl->hostname);
       free(name); free(subnetstr);
@@ -580,7 +580,7 @@ cp
 
   /* Check if identity is a valid name */
 
-  if(!check_id(new->name) || !check_id(sender))
+  if(check_id(new->name) || check_id(sender))
     {
       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid identity name"), cl->name, cl->hostname);
       free(sender);
@@ -687,7 +687,7 @@ cp
 
   /* Check if identity is a valid name */
 
-  if(!check_id(name) || !check_id(sender))
+  if(check_id(name) || check_id(sender))
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s): invalid identity name"), cl->name, cl->hostname);
       free(name); free(sender);
@@ -804,12 +804,12 @@ int error_h(conn_list_t *cl)
 cp
   if(sscanf(cl->buffer, "%*d %d %as", &errno, &errorstring) != 2)
     {
-       syslog(LOG_ERR, _("Got bad error from %s (%s)"),
+       syslog(LOG_ERR, _("Got bad ERROR from %s (%s)"),
               cl->name, cl->hostname);
        return -1;
     }
 
-  if(debug_lvl > DEBUG_error)
+  if(debug_lvl > DEBUG_ERROR)
     {
       syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
              cl->name, cl->hostname, strerror(errno), errorstring);

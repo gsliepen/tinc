@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.3 2000/10/11 22:01:02 guus Exp $
+    $Id: subnet.c,v 1.1.2.4 2000/10/15 00:59:37 guus Exp $
 */
 
 #include "config.h"
@@ -145,7 +145,7 @@ cp
   switch(subnet->type)
     {
       case SUBNET_MAC:
-        asprintf(netstr, "%d,%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", subnet->type,
+        asprintf(&netstr, "%d,%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", subnet->type,
                    subnet->net.mac.address.x[0],
                    subnet->net.mac.address.x[1],
                    subnet->net.mac.address.x[2],
@@ -153,9 +153,9 @@ cp
                    subnet->net.mac.address.x[4],
                    subnet->net.mac.address.x[5]);
       case SUBNET_IPV4:
-        asprintf(netstr, "%d,%lx:%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
+        asprintf(&netstr, "%d,%lx:%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
       case SUBNET_IPV6:
-        asprintf(netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+        asprintf(&netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
                    subnet->net.ipv6.address.x[0],
                    subnet->net.ipv6.address.x[1],
                    subnet->net.ipv6.address.x[2],
