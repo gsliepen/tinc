@@ -4,7 +4,7 @@ Goals for 1.0 release:
 
 * Check Solaris port
 * Check different linux architectures (x86, alpha done)
-* Store private key in a separate file
+* Store private key in a separate file (done, 1 dec 2000)
 * Sanity checks on configuration directory
 * Use efficient tree algorithms instead of linked lists (largely done)
 * Reenable queues for delayed packets
