@@ -118,7 +118,7 @@ typedef struct del_host_t {
   ip_t vpn_ip;
 } del_host_t;
 
-extern int (*request_handlers[256])(conn_list_t*, unsigned char*, int);
+extern int (*request_handlers[256])(conn_list_t*);
 
 extern int send_ping(conn_list_t*);
 extern int send_basic_info(conn_list_t *);

@@ -62,6 +62,7 @@ typedef struct real_packet_t {
 
 typedef struct passphrase_t {
   unsigned char type;
+  char unused1;
   unsigned short len;
   unsigned char phrase[MAX_PASSPHRASE_SIZE];
 } passphrase_t;

@@ -948,39 +948,10 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got request %d", request);
 
-  /* This is a hack.  After an ACK request, multiple ADD_HOSTs can
-     follow.  So if the request is one of these, only read as much
-     bytes as necessary.  (Luckily the ADD_HOST request is of fixed
-     length) :P -- ivo */
-     
-  if(request != ACK)
-    {
-      if(request == ADD_HOST)
-	{
-	  if((lenin = read(cl->meta_socket, &tmp[1], sizeof(add_host_t) - 1)) <= 0)
-	    {
-	      syslog(LOG_ERR, "Receive failed for ADD_HOST: %m");
-	      return -1;
-	    }
-	}
-      else
-	{
-	  if((lenin = read(cl->meta_socket, &tmp[1], sizeof(tmp) - 1)) <= 0)
-	    {
-	      if(errno != EAGAIN) /* talk about hacks... */
-		{
-		  syslog(LOG_ERR, "Receive failed: %m");
-		  return -1;
-		}
-	    }
-	}
-    }
-  
-  lenin++;
   if(request_handlers[request] == NULL)
     syslog(LOG_ERR, "Unknown request %d.", request);
   else
-    if(request_handlers[request](cl, tmp, lenin) < 0)
+    if(request_handlers[request](cl) < 0)
       return -1;
 cp  
   return 0;

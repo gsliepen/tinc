@@ -42,7 +42,7 @@
 conn_list_t *lookup_conn(ip_t ip)
 {
   conn_list_t *p = conn_list;
-cp
+
   /* Exact match suggested by James B. MacLean */
   for(p = conn_list; p != NULL; p = p->next)
     if(ip  == p->vpn_ip)
