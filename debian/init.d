@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.4 2000/05/15 09:41:34 guus Exp $
+# $Id: init.d,v 1.5 2000/05/15 17:15:52 zarq Exp $
 #
 
 my $DAEMON="/usr/sbin/tincd";
@@ -10,12 +10,15 @@ my $DESC="tinc daemons";
 my $TCONF="/etc/tinc";
 my $EXTRA="";
 
-# $NETS is a space seperated list of all tinc networks.
-my $NETS="";
+my $NETS="";  # This is a space-separated list of networks to be started.
 
-if ("$NETS" eq "") { print "No tinc networks configured."; exit 0; }
 
 if (! -f $DAEMON) { exit 0; }
+
+if ($NETS eq "") {
+    warn "Please edit /etc/init.d/tinc before attempting to start tinc.\n";
+    exit 0;
+}
 
 ##############################################################################
 # vpn_load ()		Loads VPN configuration
@@ -83,16 +86,9 @@ sub vpn_load {
 sub vpn_start {
     vpn_load($_[0]) || die "tinc: could not vpn_load $_[0]";
 
-    if (! -c "/dev/$DEV") {
-	if (-e "/dev/$DEV") {
-	    unlink("/dev/$DEV");
-	}
-	$num = $NUM + 16;
-        system("echo mknod --mode=0600 /dev/$DEV c 36 $num");
-    }
     system("insmod ethertap -s --name=\"ethertap$NUM\" unit=\"$NUM\" >/dev/null");
     system("ifconfig $DEV hw ether $MAC");
-    system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD");
+    system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD -arp");
     system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
 }
 
@@ -102,7 +98,7 @@ sub vpn_start {
 ##############################################################################
 # vpn_stop ()		Stops specified VPN
 #
-# $1 ... VPN to stop
+# $_[0] ... VPN to stop
 
 sub vpn_stop {
     vpn_load($_[0]) || return 1;
