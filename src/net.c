@@ -654,8 +654,8 @@ cp
 
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      syslog(LOG_ERR, "Create connection to %08lx:%d failed: %m", ntohs(cl->real_ip),
-	     cl->port);
+      syslog(LOG_ERR, "Connecting to " IP_ADDR_S ":%d failed: %m",
+	     IP_ADDR_V(cl->real_ip), cl->port);
       return -1;
     }
 
