@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.4 2000/06/25 16:01:12 guus Exp $
+    $Id: protocol.c,v 1.28.4.5 2000/06/25 16:20:27 guus Exp $
 */
 
 #include "config.h"
@@ -230,7 +230,7 @@ int send_basic_info(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending BASIC_INFO to " IP_ADDR_S),
+    syslog(LOG_DEBUG, _("Sending BASIC_INFO to %s"),
 	   cl->hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %d %lx/%lx:%x %d\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port, myself->flags);
@@ -396,7 +396,7 @@ int basic_info_h(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got BASIC_INFO from " IP_ADDR_S), cl->hostname);
+    syslog(LOG_DEBUG, _("Got BASIC_INFO from %s"), cl->hostname);
 
   if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx %d", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port, &cl->flags) != 5)
     {

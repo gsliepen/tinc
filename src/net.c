@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.4 2000/06/25 16:01:11 guus Exp $
+    $Id: net.c,v 1.35.4.5 2000/06/25 16:20:27 guus Exp $
 */
 
 #include "config.h"
@@ -754,14 +754,15 @@ cp
     }
 
   p->real_ip = ntohl(ci.sin_addr.s_addr);
+  p->hostname = hostlookup(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
   p->buflen = 0;
   p->last_ping_time = time(NULL);
   p->want_ping = 0;
   
-  syslog(LOG_NOTICE, _("Connection from " IP_ADDR_S ":%d"),
-         IP_ADDR_V(p->real_ip), htons(ci.sin_port));
+  syslog(LOG_NOTICE, _("Connection from %s port %d"),
+         p->hostname, htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
     {
