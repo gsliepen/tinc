@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.32 2002/09/15 22:19:37 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.33 2002/10/07 07:32:31 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.32 2002/09/15 22:19:37 guus Exp $
+$Id: tinc.texi,v 1.8.4.33 2002/10/07 07:32:31 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.32 2002/09/15 22:19:37 guus Exp $
+$Id: tinc.texi,v 1.8.4.33 2002/10/07 07:32:31 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -835,6 +835,14 @@ required directives are given in @strong{bold}.
 This option affects the address family of listening and outgoing sockets.
 If "any" is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
+
+@cindex BindToAddress
+@item BindToAddress = <address> [experimental]
+If your computer has more than one IPv4 or IPv6 address, tinc
+will by default listen on all of them for incoming connections.
+It is possible to bind only to a single address with this variable.
+
+This option may not work on all platforms.
 
 @cindex BindToInterface
 @item BindToInterface = <interface> [experimental]
