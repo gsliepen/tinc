@@ -27,6 +27,8 @@ enum {
   PROT_NOT_IN_USE,
   PROT_TOO_OLD = 2,
   PROT_3,
+  PROT_4,
+  PROT_ECHELON,
   PROT_CURRENT,                      /* protocol currently in use */
 };
 
@@ -58,65 +60,6 @@ enum {
   ANS_KEY,              /* answer to such request */
   KEY_CHANGED,		/* public key has changed */
 };
-
-typedef struct add_host_t {
-  unsigned char type;
-  char unused1;
-  ip_t real_ip;
-  ip_t vpn_ip;
-  ip_t vpn_mask;
-  unsigned short portnr;
-} add_host_t;
-
-typedef struct termreq_t {
-  unsigned char type;
-  char unused1;
-  ip_t vpn_ip;
-} termreq_t;
-
-typedef struct basic_info_t {
-  unsigned char type;
-  unsigned char protocol;
-  unsigned short portnr;
-  ip_t vpn_ip;
-  ip_t vpn_mask;
-} basic_info_t;
-
-typedef struct calculate_t {
-  unsigned char type;
-  char unused1;
-  unsigned short len;
-  char key;
-} calculate_t;
-
-typedef struct public_key_t {
-  unsigned char type;
-  char unused1;
-  unsigned short len;
-  char key;
-} public_key_t;
-
-typedef struct key_req_t {
-  unsigned char type;
-  char unused1;
-  ip_t from;
-  ip_t to;
-  time_t expiry;
-  short int len; /* 0 if requesting */
-  char key;
-} key_req_t;
-
-typedef struct key_changed_t {
-  unsigned char type;
-  char unused1;
-  ip_t from;
-} key_changed_t;
-
-typedef struct del_host_t {
-  unsigned char type;
-  char unused1;
-  ip_t vpn_ip;
-} del_host_t;
 
 extern int (*request_handlers[256])(conn_list_t*);
 

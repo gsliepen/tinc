@@ -704,7 +704,8 @@ cp
   p->real_ip = ntohl(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
-
+  p->buflen = 0;
+  
   syslog(LOG_NOTICE, "Connection from %s:%d", p->hostname, htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
@@ -922,8 +923,7 @@ cp
 int handle_incoming_meta_data(conn_list_t *cl)
 {
   int x, l = sizeof(x);
-  unsigned char tmp[1600];
-  int request;
+  int request, oldlen, p, i;
   int lenin = 0;
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
@@ -937,22 +937,66 @@ cp
       return -1;
     }
 
-  if(read(cl->meta_socket, &tmp, 1) <= 0)
+  if(cl->buflen >= MAXBUFSIZE)
     {
-      syslog(LOG_ERR, "Receive failed: %m");
+      syslog(LOG_ERR, "Metadata read buffer full! Discarding contents.");
+      cl->buflen = 0;
+    }
+
+  lenin = read(cl->meta_socket, cl->buffer, MAXBUFSIZE-cl->buflen);
+
+  if(lenin<=0)
+    {
+      syslog(LOG_ERR, "Metadata socket read error: %m");
       return -1;
     }
 
-  request = (int)(tmp[0]);
+  oldlen = cl->buflen;
+  cl->buflen += lenin;
 
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, "got request %d", request);
+  for(;;)
+    {
+      p=0;
 
-  if(request_handlers[request] == NULL)
-    syslog(LOG_ERR, "Unknown request %d.", request);
-  else
-    if(request_handlers[request](cl) < 0)
-      return -1;
+      for(i = oldlen; i < cl->buflen; i++)
+        {
+          if(cl->buffer[i] == '\n')
+            {
+              cl->buffer[i] = 0;  /* turn end-of-line into end-of-string */
+              p = i + 1;
+              break;
+            }
+        }
+
+      if(p)
+        {
+          if(sscanf(cl->buffer, "%d", &request) == 1)
+            {
+              if(request_handlers[request] == NULL)
+                {
+                  syslog(LOG_ERR, "Unknown request: %s", cl->buffer);
+                  return 0;
+                }
+
+              if(debug_lvl > 3)
+                syslog(LOG_DEBUG, "Got request: %s", cl->buffer);                             
+
+              request_handlers[request](cl);
+            }
+          else
+            {
+              syslog(LOG_ERR, "Bogus data received: %s", cl->buffer);
+            }
+
+          cl->buflen -= p;
+          memmove(cl->buffer, cl->buffer + p, cl->buflen);
+          oldlen = 0;
+        }
+      else
+        {
+          break;
+        }
+    }
 cp  
   return 0;
 }

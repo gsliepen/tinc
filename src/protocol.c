@@ -24,6 +24,7 @@
 #include <syslog.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include <utils.h>
 #include <xalloc.h>
@@ -34,36 +35,38 @@
 #include "netutl.h"
 #include "protocol.h"
 
+char buffer[MAXBUFSIZE];
+int buflen;
+
 int send_ack(conn_list_t *cl)
 {
-  unsigned char tmp = ACK;
 cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Send ACK to %s", cl->hostname);
 
-  syslog(LOG_NOTICE, "Connection with %s activated.", cl->hostname);
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d\n", ACK);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %d:%d: %m", __FILE__, __LINE__);
       return -1;
     }
+
+  syslog(LOG_NOTICE, "Connection with %s activated.", cl->hostname);
 cp
   return 0;
 }
 
 int send_termreq(conn_list_t *cl)
 {
-  termreq_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = TERMREQ;
-  tmp.vpn_ip = myself->vpn_ip;
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send TERMREQ(" IP_ADDR_S ") to " IP_ADDR_S, IP_ADDR_V(tmp.vpn_ip),
+    syslog(LOG_DEBUG, "Send TERMREQ to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d %lx\n", TERMREQ, myself->vpn_ip);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -74,17 +77,14 @@ cp
 
 int send_timeout(conn_list_t *cl)
 {
-  termreq_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = PINGTIMEOUT;
-  tmp.vpn_ip = myself->vpn_ip;
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send TIMEOUT(" IP_ADDR_S ") to " IP_ADDR_S, IP_ADDR_V(tmp.vpn_ip),
+    syslog(LOG_DEBUG, "Send TIMEOUT to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d %lx\n", PINGTIMEOUT, myself->vpn_ip);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -95,17 +95,14 @@ cp
 
 int send_del_host(conn_list_t *cl, conn_list_t *new_host)
 {
-  del_host_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = DEL_HOST;
-  tmp.vpn_ip = new_host->vpn_ip;
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Sending delete host %lx to " IP_ADDR_S,
-	   tmp.vpn_ip, IP_ADDR_V(cl->vpn_ip));
+    syslog(LOG_DEBUG, "Sending delete host " IP_ADDR_S " to " IP_ADDR_S,
+	   IP_ADDR_V(new_host->vpn_ip), IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d %lx\n", DEL_HOST, new_host->vpn_ip);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -116,12 +113,13 @@ cp
 
 int send_ping(conn_list_t *cl)
 {
-  unsigned char tmp = PING;
 cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "pinging " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d\n", PING);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -132,9 +130,10 @@ cp
 
 int send_pong(conn_list_t *cl)
 {
-  unsigned char tmp = PONG;
 cp
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d\n", PONG);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -145,21 +144,14 @@ cp
 
 int send_add_host(conn_list_t *cl, conn_list_t *new_host)
 {
-  add_host_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = ADD_HOST;
-  tmp.real_ip = new_host->real_ip;
-  tmp.vpn_ip = new_host->vpn_ip;
-  tmp.vpn_mask = new_host->vpn_mask;
-  tmp.portnr = new_host->port;
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Sending add host (%lx/%lx %lx:%hd) to " IP_ADDR_S,
-	   tmp.vpn_ip, tmp.vpn_mask, tmp.real_ip, tmp.portnr,
+    syslog(LOG_DEBUG, "Sending add host to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d %lx %lx/%lx:%x\n", ADD_HOST, new_host->real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -170,17 +162,14 @@ cp
 
 int send_key_changed(conn_list_t *cl, conn_list_t *src)
 {
-  key_changed_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = KEY_CHANGED;
-  tmp.from = src->vpn_ip;
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Sending KEY_CHANGED (%lx) to " IP_ADDR_S,
-	   tmp.from, IP_ADDR_V(cl->vpn_ip));
+    syslog(LOG_DEBUG, "Sending KEY_CHANGED to " IP_ADDR_S,
+	   IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d %lx\n", KEY_CHANGED, src->vpn_ip);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -201,22 +190,14 @@ cp
 
 int send_basic_info(conn_list_t *cl)
 {
-  basic_info_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = BASIC_INFO;
-  tmp.protocol = PROT_CURRENT;
-
-  tmp.portnr = myself->port;
-  tmp.vpn_ip = myself->vpn_ip;
-  tmp.vpn_mask = myself->vpn_mask;
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send BASIC_INFO(%d,%hd," IP_ADDR_S "," IP_ADDR_S ") to " IP_ADDR_S,
-	   tmp.protocol, tmp.portnr, IP_ADDR_V(tmp.vpn_ip), IP_ADDR_V(tmp.vpn_mask),
+    syslog(LOG_DEBUG, "Send BASIC_INFO to " IP_ADDR_S,
 	   IP_ADDR_V(cl->real_ip));
 
-  if((write(cl->meta_socket, &tmp, sizeof(tmp))) < 0)
+  buflen = sprintf(buffer, "%d %d %lx/%lx:%x\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -229,15 +210,15 @@ int send_passphrase(conn_list_t *cl)
 {
   passphrase_t tmp;
 cp
-  memset(&tmp, 0, sizeof(tmp));
-  tmp.type = PASSPHRASE;
   encrypt_passphrase(&tmp);
 
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send PASSPHRASE(%hd,...) to " IP_ADDR_S, tmp.len,
+    syslog(LOG_DEBUG, "Send PASSPHRASE to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, &tmp, tmp.len+3)) < 0)
+  buflen = sprintf(buffer, "%d %s\n", PASSPHRASE, tmp.phrase);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -248,19 +229,14 @@ cp
 
 int send_public_key(conn_list_t *cl)
 {
-  public_key_t *tmp;
 cp
-  tmp = (public_key_t*)xmalloc(strlen(my_public_key_base36)+sizeof(*tmp));
-  memset(tmp, 0, sizeof(*tmp));
-  tmp->type = PUBLIC_KEY;
-  tmp->len = strlen(my_public_key_base36);
-  strcpy(&tmp->key, my_public_key_base36);
-
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send PUBLIC_KEY(%hd,%s) to " IP_ADDR_S, tmp->len, &tmp->key,
+    syslog(LOG_DEBUG, "Send PUBLIC_KEY to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  if((write(cl->meta_socket, tmp, tmp->len+sizeof(*tmp))) < 0)
+  buflen = sprintf(buffer, "%d %s\n", PUBLIC_KEY, my_public_key_base36);
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -271,15 +247,10 @@ cp
 
 int send_calculate(conn_list_t *cl, char *k)
 {
-  calculate_t *tmp;
 cp
-  tmp = xmalloc(strlen(k)+sizeof(*tmp));
-  memset(tmp, 0, sizeof(*tmp));
-  tmp->type = CALCULATE;
-  tmp->len = strlen(k);
-  strcpy(&tmp->key, k);
+  buflen = sprintf(buffer, "%d %s\n", CALCULATE, k);
 
-  if((write(cl->meta_socket, tmp, tmp->len+sizeof(*tmp))) < 0)
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -290,16 +261,8 @@ cp
 
 int send_key_request(ip_t to)
 {
-  key_req_t *tmp;
   conn_list_t *fw;
 cp
-  tmp = xmalloc(sizeof(*tmp));
-  memset(tmp, 0, sizeof(*tmp));
-  tmp->type = REQ_KEY;
-  tmp->to = to;
-  tmp->from = myself->vpn_ip;
-  tmp->len = 0;
-
   fw = lookup_conn(to);
   if(!fw)
     {
@@ -311,7 +274,10 @@ cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Sending out request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-  if(write(fw->nexthop->meta_socket, tmp, sizeof(*tmp)) < 0)
+
+  buflen = sprintf(buffer, "%d %lx %lx\n", REQ_KEY, to, myself->vpn_ip);
+
+  if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -323,17 +289,8 @@ cp
 
 int send_key_answer(conn_list_t *cl, ip_t to)
 {
-  key_req_t *tmp;
   conn_list_t *fw;
 cp
-  tmp = xmalloc(sizeof(*tmp)+strlen(my_public_key_base36));
-  memset(tmp, 0, sizeof(*tmp));
-  tmp->type = ANS_KEY;
-  tmp->to = to;
-  tmp->from = myself->vpn_ip;
-  tmp->expiry = my_key_expiry;
-  tmp->len = strlen(my_public_key_base36);
-  strcpy(&(tmp->key), my_public_key_base36);
 
   fw = lookup_conn(to);
   
@@ -344,12 +301,13 @@ cp
       return -1;
     }
 
-cp
  if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Sending public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-cp
-  if(write(fw->nexthop->meta_socket, tmp, sizeof(*tmp)+tmp->len) < 0)
+
+  buflen = sprintf(buffer, "%d %lx %lx %d %s\n", ANS_KEY, to, myself->vpn_ip, my_key_expiry, my_public_key_base36);
+
+  if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -369,7 +327,7 @@ int notify_others(conn_list_t *new, conn_list_t *source,
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p != source && p->status.meta && p->protocol_version > PROT_3)
+    if(p != new && p != source && p->status.meta)
       function(p, new);
 cp
   return 0;
@@ -396,22 +354,16 @@ cp
 
 int basic_info_h(conn_list_t *cl)
 {
-  basic_info_t tmp;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-1) <= 0)
+  if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port) != 4)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
+       syslog(LOG_ERR, "got bad BASIC_INFO request: %s", cl->buffer);
+       return -1;
+    }  
 
-  cl->protocol_version = tmp.protocol;
-  cl->port = tmp.portnr;
-  cl->vpn_ip = tmp.vpn_ip;
-  cl->vpn_mask = tmp.vpn_mask;
-
-  if(cl->protocol_version < PROT_CURRENT)
+  if(cl->protocol_version != PROT_CURRENT)
     {
-      syslog(LOG_ERR, "Peer uses protocol version %d which is too old.",
+      syslog(LOG_ERR, "Peer uses incompatible protocol version %d.",
 	     cl->protocol_version);
       return -1;
     }
@@ -443,32 +395,15 @@ cp
 
 int passphrase_h(conn_list_t *cl)
 {
-  char unused;
-  unsigned short int len;
 cp
-  if(read(cl->meta_socket, &unused, sizeof(unused)) <= 0)
+  if(sscanf(cl->buffer, "%*d %s", cl->pp) != 1)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-
-  if(read(cl->meta_socket, &len, sizeof(len)) <= 0)
-    {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-  
-  cl->pp = xmalloc(len+4);
-
-  cl->pp->len = len;
-  if(read(cl->meta_socket, &(cl->pp->phrase), len) <= 0)
-    {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-  
+       syslog(LOG_ERR, "got bad PASSPHRASE request: %s", cl->buffer);
+       return -1;
+    }  
+    
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "got PASSPHRASE(%hd,...)", len);
+    syslog(LOG_DEBUG, "got PASSPHRASE");
 
   if(cl->status.outgoing)
     send_passphrase(cl);
@@ -481,30 +416,15 @@ cp
 int public_key_h(conn_list_t *cl)
 {
   char *g_n;
-  unsigned short int len;
-  char unused;
 cp
-  if(read(cl->meta_socket, &unused, sizeof(unused)) <= 0)
+  if(sscanf(cl->buffer, "%*d %as", &g_n) != 1)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-  if(read(cl->meta_socket, &len, sizeof(len)) <= 0)
-    {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-
-  g_n = xmalloc(len+2);
-
-  if(read(cl->meta_socket, g_n, len+2) <= 0)
-    {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
+       syslog(LOG_ERR, "got bad PUBLIC_KEY request: %s", cl->buffer);
+       return -1;
+    }  
 
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "got PUBLIC_KEY(%hd,%s)", len, g_n);
+    syslog(LOG_DEBUG, "got PUBLIC_KEY");
 
   if(verify_passphrase(cl, g_n))
     {
@@ -564,23 +484,23 @@ cp
 
 int del_host_h(conn_list_t *cl)
 {
-  del_host_t tmp;
+  ip_t vpn_ip;
   conn_list_t *fw;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-1) <= 0)
+  if(sscanf(cl->buffer, "%*d %lx", &vpn_ip) != 1)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
+       syslog(LOG_ERR, "got bad DEL_HOST request: %s", cl->buffer);
+       return -1;
+    }  
 
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got DEL_HOST for " IP_ADDR_S,
-	   IP_ADDR_V(tmp.vpn_ip));
+	   IP_ADDR_V(vpn_ip));
 
-  if(!(fw = lookup_conn(tmp.vpn_ip)))
+  if(!(fw = lookup_conn(vpn_ip)))
     {
       syslog(LOG_ERR, "Somebody wanted to delete " IP_ADDR_S " which does not exist?",
-	     IP_ADDR_V(tmp.vpn_ip));
+	     IP_ADDR_V(vpn_ip));
       return 0;
     }
 
@@ -617,36 +537,39 @@ cp
 
 int add_host_h(conn_list_t *cl)
 {
-  add_host_t tmp;
+  ip_t real_ip;
+  ip_t vpn_ip;
+  ip_t vpn_mask;
+  unsigned short port;
   conn_list_t *ncn, *fw;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-1) <= 0)
+  if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx", &real_ip, &vpn_ip, &vpn_mask, &port) != 4)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
+       syslog(LOG_ERR, "got bad ADD_HOST request: %s", cl->buffer);
+       return -1;
+    }  
 
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Add host request from " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got ADD_HOST(" IP_ADDR_S "," IP_ADDR_S ",%hd)",
-	   IP_ADDR_V(tmp.vpn_ip), IP_ADDR_V(tmp.vpn_mask), tmp.portnr);
+	   IP_ADDR_V(vpn_ip), IP_ADDR_V(vpn_mask), port);
 
   /*
     Suggestion of Hans Bayle
   */
-  if((fw = lookup_conn(tmp.vpn_ip)))
+  if((fw = lookup_conn(vpn_ip)))
     {
       notify_others(fw, cl, send_add_host);
       return 0;
     }
 
   ncn = new_conn_list();
-  ncn->real_ip = tmp.real_ip;
-  ncn->vpn_ip = tmp.vpn_ip;
-  ncn->vpn_mask = tmp.vpn_mask;
-  ncn->port = tmp.portnr;
-  ncn->hostname = hostlookup(tmp.real_ip);
+  ncn->real_ip = real_ip;
+  ncn->vpn_ip = vpn_ip;
+  ncn->vpn_mask = vpn_mask;
+  ncn->port = port;
+  ncn->hostname = hostlookup(real_ip);
   ncn->nexthop = cl;
   ncn->next = conn_list;
   conn_list = ncn;
@@ -658,31 +581,32 @@ cp
 
 int req_key_h(conn_list_t *cl)
 {
-  key_req_t tmp;
+  ip_t to;
+  ip_t from;
   conn_list_t *fw;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-1) <= 0)
+  if(sscanf(cl->buffer, "%*d %lx %lx", &to, &from) != 2)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
+       syslog(LOG_ERR, "got bad request: %s", cl->buffer);
+       return -1;
+    }  
 
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got REQ_KEY from " IP_ADDR_S " for " IP_ADDR_S,
-	   IP_ADDR_V(tmp.from), IP_ADDR_V(tmp.to));
+	   IP_ADDR_V(from), IP_ADDR_V(to));
 
-  if((tmp.to & myself->vpn_mask) == (myself->vpn_ip & myself->vpn_mask))
+  if((to & myself->vpn_mask) == (myself->vpn_ip & myself->vpn_mask))
     {  /* hey! they want something from ME! :) */
-      send_key_answer(cl, tmp.from);
+      send_key_answer(cl, from);
       return 0;
     }
 
-  fw = lookup_conn(tmp.to);
+  fw = lookup_conn(to);
   
   if(!fw)
     {
       syslog(LOG_ERR, "Attempting to forward key request to " IP_ADDR_S ", which does not exist?",
-	     IP_ADDR_V(tmp.to));
+	     IP_ADDR_V(to));
       return -1;
     }
 
@@ -690,9 +614,7 @@ cp
     syslog(LOG_DEBUG, "Forwarding request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
   
-  tmp.type = REQ_KEY;
-  tmp.key = 0;
-  if(write(fw->nexthop->meta_socket, &tmp, sizeof(tmp)) < 0)
+  if(write(fw->nexthop->meta_socket, cl->buffer, strlen(cl->buffer)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -701,7 +623,7 @@ cp
   return 0;
 }
 
-void set_keys(conn_list_t *cl, key_req_t *k, char *key)
+void set_keys(conn_list_t *cl, int expiry, char *key)
 {
   char *ek;
 cp
@@ -710,92 +632,84 @@ cp
       cl->public_key = xmalloc(sizeof(*cl->key));
       cl->public_key->key = NULL;
     }
+    
   if(cl->public_key->key)
     free(cl->public_key->key);
-  cl->public_key->length = k->len;
-  cl->public_key->expiry = k->expiry;
-  cl->public_key->key = xmalloc(k->len + 1);
+  cl->public_key->length = strlen(key);
+  cl->public_key->expiry = expiry;
+  cl->public_key->key = xmalloc(cl->public_key->length + 1);
   strcpy(cl->public_key->key, key);
 
   ek = make_shared_key(key);
+  
   if(!cl->key)
     {
       cl->key = xmalloc(sizeof(*cl->key));
       cl->key->key = NULL;
     }
+
   if(cl->key->key)
     free(cl->key->key);
+
   cl->key->length = strlen(ek);
-  cl->key->expiry = k->expiry;
-  cl->key->key = xmalloc(strlen(ek) + 1);
+  cl->key->expiry = expiry;
+  cl->key->key = xmalloc(cl->key->length + 1);
   strcpy(cl->key->key, ek);
 cp
 }
 
 int ans_key_h(conn_list_t *cl)
 {
-  key_req_t tmp;
-  conn_list_t *fw, *gk;
+  ip_t to;
+  ip_t from;
+  int expiry;
   char *key;
+  conn_list_t *fw, *gk;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp) - 3) <= 0)
+  if(sscanf(cl->buffer, "%*d %lx %lx %d %as", &to, &from, &expiry, &key) != 4)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-
-  key = xmalloc(tmp.len);
-  
-  if(read(cl->meta_socket, key, tmp.len + 2) <= 0)
-    {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
-  syslog(LOG_DEBUG, "%s", key);
+       syslog(LOG_ERR, "got bad ANS_KEY request: %s", cl->buffer);
+       return -1;
+    }  
 
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got ANS_KEY from " IP_ADDR_S " for " IP_ADDR_S,
-	   IP_ADDR_V(tmp.from), IP_ADDR_V(tmp.to));
+	   IP_ADDR_V(from), IP_ADDR_V(to));
 
-  if(tmp.to == myself->vpn_ip)
+  if(to == myself->vpn_ip)
     {  /* hey! that key's for ME! :) */
       if(debug_lvl > 2)
 	syslog(LOG_DEBUG, "Yeah! key arrived. Now do something with it.");
-      gk = lookup_conn(tmp.from);
+      gk = lookup_conn(from);
 
       if(!gk)
         {
           syslog(LOG_ERR, "Receiving key from " IP_ADDR_S ", which does not exist?",
-	         IP_ADDR_V(tmp.from));
+	         IP_ADDR_V(from));
           return -1;
         }
 
-      set_keys(gk, &tmp, key);
+      set_keys(gk, expiry, key);
       gk->status.validkey = 1;
       gk->status.waitingforkey = 0;
       flush_queues(gk);
       return 0;
     }
 
-  fw = lookup_conn(tmp.to);
+  fw = lookup_conn(to);
   
   if(!fw)
     {
       syslog(LOG_ERR, "Attempting to forward key to " IP_ADDR_S ", which does not exist?",
-	     IP_ADDR_V(tmp.to));
+	     IP_ADDR_V(to));
       return -1;
     }
 
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Forwarding public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
-  tmp.type = ANS_KEY;
-  if(write(fw->nexthop->meta_socket, &tmp, sizeof(tmp) - 2) < 0)
-    {
-      syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
-      return -1;
-    }
-  if(write(fw->nexthop->meta_socket, key, tmp.len + 2) < 0)
+
+  if((write(fw->nexthop->meta_socket, cl->buffer, strlen(cl->buffer))) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -806,25 +720,25 @@ cp
 
 int key_changed_h(conn_list_t *cl)
 {
-  key_changed_t tmp;
+  ip_t from;
   conn_list_t *ik;
 cp
-  if(read(cl->meta_socket, &((char*)(&tmp))[1], sizeof(tmp)-1) <= 0)
+  if(sscanf(cl->buffer, "%*d %lx", &from) != 1)
     {
-      syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
-      return -1;
-    }
+       syslog(LOG_ERR, "got bad ANS_KEY request: %s", cl->buffer);
+       return -1;
+    }  
 
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got KEY_CHANGED from " IP_ADDR_S,
-	   IP_ADDR_V(tmp.from));
+	   IP_ADDR_V(from));
 
-  ik = lookup_conn(tmp.from);
+  ik = lookup_conn(from);
 
   if(!ik)
     {
       syslog(LOG_ERR, "Got changed key from " IP_ADDR_S ", which does not exist?",
-	     IP_ADDR_V(tmp.from));
+	     IP_ADDR_V(from));
       return -1;
     }
 

@@ -46,6 +46,8 @@
                       ((unsigned char*)&(x))[1],((unsigned char*)&(x))[0]
 #endif
 
+#define MAXBUFSIZE 2048 /* Probably way too much, but it must fit every possible request. */
+
 typedef unsigned long ip_t;
 typedef short length_t;
 
@@ -61,8 +63,6 @@ typedef struct real_packet_t {
 } real_packet_t;
 
 typedef struct passphrase_t {
-  unsigned char type;
-  char unused1;
   unsigned short len;
   unsigned char phrase[MAX_PASSPHRASE_SIZE];
 } passphrase_t;
@@ -104,17 +104,19 @@ typedef struct conn_list_t {
   ip_t vpn_mask;                   /* his vpn network address */
   ip_t real_ip;                    /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
-  short int port;                  /* his portnumber */
+  short unsigned int port;         /* his portnumber */
   int socket;                      /* our udp vpn socket */
   int meta_socket;                 /* our tcp meta socket */
-  unsigned char protocol_version;  /* used protocol */
+  int protocol_version;            /* used protocol */
   status_bits_t status;            /* status info */
-  passphrase_t *pp;                /* encoded passphrase */
+  unsigned char *pp;               /* encoded passphrase */
   packet_queue_t *sq;              /* pending outgoing packets */
   packet_queue_t *rq;              /* pending incoming packets (they have no
 				      valid key to be decrypted with) */
   enc_key_t *public_key;           /* the other party's public key */
   enc_key_t *key;                  /* encrypt with this key */
+  char buffer[MAXBUFSIZE];         /* metadata input buffer */
+  int buflen;                      /* bytes read into buffer */
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
   struct conn_list_t *next;        /* after all, it's a list of connections */
 } conn_list_t;

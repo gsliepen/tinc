@@ -252,13 +252,13 @@ int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
   char which[sizeof("123.123.123.123")+1];
   char *meuk;
 cp
-  mpz_init_set_str(pk, his_pubkey, 36);
+  mpz_init_set_str(pk, his_pubkey, 16);
   mpz_get_str(tmp, 16, pk);
   len = str_hex_to_bin(key, tmp);
-  out = xmalloc(cl->pp->len+3);
+  out = xmalloc(strlen(cl->pp) + 3);
 
   cipher_set_key(&bf_key, len, key);
-  low_crypt_key(cl->pp->phrase, out, &bf_key, cl->pp->len, BF_DECRYPT);
+  low_crypt_key(cl->pp, out, &bf_key, strlen(cl->pp), BF_DECRYPT);
   if(key_inited)
     cipher_set_key(&encryption_key, encryption_keylen, text_key);
 

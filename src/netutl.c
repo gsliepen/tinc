@@ -81,8 +81,6 @@ void free_conn_element(conn_list_t *p)
 cp
   if(p->hostname)
     free(p->hostname);
-  if(p->pp)
-    free(p->pp);
   if(p->sq)
     destroy_queue(p->sq);
   if(p->rq)
