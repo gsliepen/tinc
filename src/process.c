@@ -362,7 +362,7 @@ bool execute_script(const char *name, char **envp)
 #ifdef HAVE_SYSTEM
 	int status, len;
 	struct stat s;
-	char *scriptname;
+	char *scriptname, *p;
 	int i;
 
 	cp();
@@ -400,8 +400,12 @@ bool execute_script(const char *name, char **envp)
 
 	for(i = 0; envp[i]; i++) {
 		char *e = strchr(envp[i], '=');
-		if(e)
-			putenv(strndupa(envp[i], e - envp[i]));
+		if(e) {
+			p = alloca(e - envp[i] + 1);
+			strncpy(p, envp[i], e - envp[i]);
+			p[e - envp[i]] = '\0';
+			putenv(p);
+		}
 	}
 
 #ifdef WEXITSTATUS
