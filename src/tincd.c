@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.13 2000/10/20 16:49:20 guus Exp $
+    $Id: tincd.c,v 1.10.4.14 2000/10/20 19:46:58 guus Exp $
 */
 
 #include "config.h"
@@ -373,7 +373,6 @@ void make_names(void)
     }
   else
     {
-      netname = "bla";
       if(!pidfilename)
         pidfilename = "/var/run/tinc.pid";
       if(!confbase)
@@ -570,7 +569,7 @@ setup_signals(void)
     signal(SIGINT, sigint_handler);
   signal(SIGUSR1, sigusr1_handler);
   signal(SIGUSR2, sigusr2_handler);
-//  signal(SIGCHLD, parent_exit);
+  signal(SIGCHLD, SIG_IGN);
 }
 
 RETSIGTYPE parent_exit(int a)

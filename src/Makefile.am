@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.3 2000/10/20 16:49:20 guus Exp $
+# $Id: Makefile.am,v 1.4.4.4 2000/10/20 19:46:57 guus Exp $
 
 sbin_PROGRAMS = tincd
 
@@ -13,8 +13,6 @@ LIBS = @LIBS@ @INTLLIBS@
 
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a
-
-genauth_LDADD = $(top_builddir)/lib/libvpn.a
 
 localedir = $(datadir)/locale
 

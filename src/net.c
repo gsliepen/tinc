@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.41 2000/10/20 15:34:35 guus Exp $
+    $Id: net.c,v 1.35.4.42 2000/10/20 19:46:57 guus Exp $
 */
 
 #include "config.h"
@@ -39,6 +39,7 @@
 
 #ifdef HAVE_TUNTAP
 #include <net/if.h>
+#include <linux/sockios.h>
 #include LINUX_IF_TUN_H
 #endif
 
@@ -333,7 +334,8 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
-
+  char *envvar;
+  
 #ifdef HAVE_TUNTAP
   struct ifreq ifr;
 #endif
@@ -369,12 +371,20 @@ cp
   { 
     syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
     taptype = 1;
+
     if((cfg = get_config_val(config, tapsubnet)) == NULL)
       syslog(LOG_INFO, _("tun/tap device will be left unconfigured"));
     else
       /* Setup inetaddr/netmask etc */;
   }
 #endif
+
+  /* Add name of network interface to environment (for scripts) */
+
+  ioctl(tap_fd, SIOCGIFNAME, (void *) &ifr);
+  asprintf(&envvar, "IFNAME=%s", ifr.ifr_name);
+  putenv(envvar);
+  free(envvar);
   
 cp
   return 0;
@@ -743,6 +753,7 @@ cp
 int setup_network_connections(void)
 {
   config_t const *cfg;
+  char *scriptname;
 cp
   if((cfg = get_config_val(config, pingtimeout)) == NULL)
     timeout = 5;
@@ -754,6 +765,23 @@ cp
 
   if(setup_myself() < 0)
     return -1;
+
+  /* Run tinc-up script to further initialize the tap interface */
+
+  asprintf(&scriptname, "%s/tinc-up", confbase);
+
+  if(!fork())
+    {
+
+      execl(scriptname, NULL);
+
+      if(errno != ENOENT)
+        syslog(LOG_WARNING, _("Error while executing %s: %m"), scriptname);
+
+      exit(0);
+    }
+
+  free(scriptname);
 
   if((cfg = get_next_config_val(config, connectto, upstreamindex++)) == NULL)
     /* No upstream IP given, we're listen only. */
@@ -781,6 +809,7 @@ cp
 void close_network_connections(void)
 {
   conn_list_t *p;
+  char *scriptname;
 cp
   for(p = conn_list; p != NULL; p = p->next)
     {
@@ -803,6 +832,22 @@ cp
 	close(myself->meta_socket);
 	close(myself->socket);
       }
+
+  /* Execute tinc-down script right before shutting down the interface */
+
+  asprintf(&scriptname, "%s/tinc-down", confbase);
+
+  if(!fork())
+    {
+      execl(scriptname, NULL);
+
+      if(errno != ENOENT)
+        syslog(LOG_WARNING, _("Error while executing %s: %m"), scriptname);
+
+      exit(0);
+    }
+      
+  free(scriptname);
 
   close(tap_fd);
   destroy_conn_list();
