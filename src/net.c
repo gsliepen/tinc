@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.73 2000/11/15 13:33:26 guus Exp $
+    $Id: net.c,v 1.35.4.74 2000/11/15 22:07:36 zarq Exp $
 */
 
 #include "config.h"
@@ -68,6 +68,7 @@
 
 #include "conf.h"
 #include "connlist.h"
+#include "list.h"
 #include "meta.h"
 #include "net.h"
 #include "netutl.h"
@@ -93,32 +94,14 @@ char *unknown = NULL;
 
 subnet_t mymac;
 
-/*
-  Execute the given script.
-  This function doesn't really belong here.
-*/
-int execute_script(const char *name)
+list_t *child_pids;
+
+void _execute_script(const char *name)
 {
+  int error = 0;
   char *scriptname;
-  pid_t pid;
   char *s;
-  int error;
-
-  if((pid = fork()) < 0)
-    {
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "fork");
-      return -1;
-    }
-
-  if(pid)
-    {
-      return 0;
-    }
-
-  /* Child here */
-
-  error = 0;
+  int fd;
 
   if(netname)
     {
@@ -182,6 +165,61 @@ int execute_script(const char *name)
 
   /* No need to free things */
   exit(0);
+}
+
+/*
+  Execute the given script.
+  This function doesn't really belong here.
+*/
+int execute_script(const char *name)
+{
+  pid_t pid;
+
+  if((pid = fork()) < 0)
+    {
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fork");
+      return -1;
+    }
+
+  if(pid)
+    {
+      list_append(child_pids, pid);
+      return 0;
+    }
+
+  /* Child here */
+
+  _execute_script(name);
+}
+
+int check_child(void *data)
+{
+  pid_t pid;
+  int status;
+
+  pid = (pid_t) data;
+  pid = waitpid(pid, &status, WNOHANG);
+  if(WIFEXITED(status))
+    {
+      if(WIFSIGNALED(status)) /* Child was killed by a signal */
+	{
+	  syslog(LOG_ERR, _("Child with PID %d was killed by signal %d (%s)"),
+		 pid, WTERMSIG(status), strsignal(WTERMSIG(status)));
+	  return -1;
+	}
+      if(WEXITSTATUS(status) != 0)
+	{
+	  syslog(LOG_INFO, _("Child with PID %d exited with code %d"),
+		 WEXITSTATUS(status));
+	}
+      return -1;
+    }
+}
+
+void check_children(void)
+{
+  list_forall_nodes(child_pids, check_child);
 }
 
 int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
@@ -893,6 +931,8 @@ cp
   myself->status.active = 1;
 
   syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
+
+  child_pids = list_new();
 cp
   return 0;
 }
@@ -1481,6 +1521,8 @@ cp
           if(FD_ISSET(tap_fd, &fset))
 	    handle_tap_input();
         }
+
+      check_children();
     }
 cp
 }
