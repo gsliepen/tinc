@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.59 2000/11/04 10:37:27 guus Exp $
+    $Id: net.c,v 1.35.4.60 2000/11/04 11:49:57 guus Exp $
 */
 
 #include "config.h"
@@ -903,7 +903,6 @@ cp
 void close_network_connections(void)
 {
   conn_list_t *p;
-  char *scriptname;
 cp
   for(p = conn_list; p != NULL; p = p->next)
     {
@@ -920,10 +919,11 @@ cp
         myself = NULL;
       }
 
-  /* Execute tinc-down script right before shutting down the interface */
+  close(tap_fd);
+
+  /* Execute tinc-down script right after shutting down the interface */
   execute_script("tinc-down");
 
-  close(tap_fd);
   destroy_conn_list();
 
   syslog(LOG_NOTICE, _("Terminating"));

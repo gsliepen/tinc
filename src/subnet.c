@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.9 2000/11/03 22:35:12 zarq Exp $
+    $Id: subnet.c,v 1.1.2.10 2000/11/04 11:49:58 guus Exp $
 */
 
 #include "config.h"
@@ -221,7 +221,7 @@ cp
         asprintf(&netstr, "%d,%lx/%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
         break;
       case SUBNET_IPV6:
-        asprintf(&netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+        asprintf(&netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx", subnet->type,
                    subnet->net.ipv6.address.x[0],
                    subnet->net.ipv6.address.x[1],
                    subnet->net.ipv6.address.x[2],

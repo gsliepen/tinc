@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.10 2000/11/03 22:35:10 zarq Exp $
+    $Id: connlist.h,v 1.1.2.11 2000/11/04 11:49:57 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -56,7 +56,7 @@ typedef struct conn_list_t {
   char *hostname;                  /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
   int protocol_version;            /* used protocol */
-  long int options;                /* options turned on for this connection */
+  long unsigned int options;       /* options turned on for this connection */
 
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
