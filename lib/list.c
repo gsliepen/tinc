@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.8 2001/01/07 17:08:49 guus Exp $
+    $Id: list.c,v 1.1.2.9 2001/02/25 15:34:50 guus Exp $
 */
 
 #include "config.h"
@@ -60,7 +60,7 @@ void list_free_node(list_t *list, list_node_t *node)
   if(node->data && list->delete)
     list->delete(node->data);
   
-  free(node->data);
+  free(node);
 }
 
 /* Insertion and deletion */
