@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.65 2003/08/08 14:48:33 guus Exp $
+    $Id: process.c,v 1.1.2.66 2003/08/08 17:17:13 guus Exp $
 */
 
 #include "system.h"
@@ -84,6 +84,7 @@ static SERVICE_STATUS_HANDLE statushandle = 0;
 bool install_service(void) {
 	char command[4096] = "";
 	char **argp;
+	bool space;
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!manager) {
@@ -98,8 +99,13 @@ bool install_service(void) {
 
 	strncat(command, program_name, sizeof(command));
 	for(argp = g_argv + 1; *argp; argp++) {
+		space = strchr(*argp, " ");
 		strncat(command, " ", sizeof(command));
+		if(space)
+			strncat(command, "\"", sizeof(command));
 		strncat(command, *argp, sizeof(command));
+		if(space)
+			strncat(command, "\"", sizeof(command));
 	}
 
 	service = CreateService(manager, identname, identname,
