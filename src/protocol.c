@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.64 2000/11/22 19:55:50 guus Exp $
+    $Id: protocol.c,v 1.28.4.65 2000/11/22 20:25:27 guus Exp $
 */
 
 #include "config.h"
@@ -1258,8 +1258,8 @@ cp
 
   from->cipher_pktkey = xstrdup(pktkey);
   keylength /= 2;
-  hex2bin(pktkey, pktkey, keylength);
-  pktkey[keylength] = '\0';
+  hex2bin(from->cipher_pktkey, from->cipher_pktkey, keylength);
+  from->cipher_pktkey[keylength] = '\0';
 
   from->status.validkey = 1;
   from->status.waitingforkey = 0;
