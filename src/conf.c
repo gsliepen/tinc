@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.72 2003/08/02 21:34:10 guus Exp $
+    $Id: conf.c,v 1.9.4.73 2003/08/08 12:24:52 guus Exp $
 */
 
 #include "system.h"
@@ -545,7 +545,11 @@ FILE *ask_and_safe_open(const char *filename, const char *what, bool safe, const
 			fn = xstrdup(filename);
 	}
 
-	if(!strchr(fn, '/') || fn[0] != '/') {
+#ifdef HAVE_MINGW
+	if(fn[0] != '\\' && fn[0] != '/' && !strchr(fn, ':')) {
+#else
+	if(fn[0] != '/') {
+#endif
 		/* The directory is a relative path or a filename. */
 		char *p;
 
