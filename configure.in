@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.73 2003/07/29 11:50:39 guus Exp $
+dnl $Id: configure.in,v 1.13.2.74 2003/07/29 23:21:00 guus Exp $
 
 AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
@@ -155,7 +155,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fcloseall flock ftime fork get_current_dir_name gettimeofday mlockall putenv select strdup strerror strsignal strtol unsetenv vsyslog])
+AC_CHECK_FUNCS([asprintf daemon fcloseall flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol unsetenv vsyslog])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 

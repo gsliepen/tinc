@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.13 2003/07/29 12:18:35 guus Exp $
+    $Id: device.c,v 1.1.2.14 2003/07/29 23:21:01 guus Exp $
 */
 
 #include "system.h"
@@ -139,8 +139,11 @@ bool setup_device(void)
 		return false;
 	}
 
-	device = adapterid;
-	iface = adaptername;	
+	if(!device)
+		device = xstrdup(adapterid);
+
+	if(!iface)
+		iface = xstrdup(adaptername);
 
 	snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
 	
