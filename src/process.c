@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.35 2002/02/18 16:25:16 guus Exp $
+    $Id: process.c,v 1.1.2.36 2002/03/11 11:23:04 guus Exp $
 */
 
 #include "config.h"
@@ -65,7 +65,7 @@ extern int do_purge;
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exiting."), size);
+  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
   cp_trace();
   exit(1);
 }
@@ -144,8 +144,15 @@ cp
   errno = 0;    /* No error, sometimes errno is only changed on error */
   /* ESRCH is returned when no process with that pid is found */
   if(kill(pid, signal) && errno == ESRCH)
-    fprintf(stderr, _("Removing stale lock file.\n"));
-  remove_pid(pidfilename);
+    {
+      if(netname)
+        fprintf(stderr, _("The tincd for net `%s' is no longer running. "), netname);
+      else
+        fprintf(stderr, _("The tincd is no longer running. "));
+
+      fprintf(stderr, _("Removing stale lock file.\n"));
+      remove_pid(pidfilename);
+    }
 cp
   return 0;
 }
@@ -323,25 +330,25 @@ sigquit_handler(int a)
 }
 
 RETSIGTYPE
-sigsegv_square(int a)
+fatal_signal_square(int a)
 {
-  syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
+  syslog(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a, strsignal(a));
   cp_trace();
   exit(1);
 }
 
 RETSIGTYPE
-sigsegv_handler(int a)
+fatal_signal_handler(int a)
 {
   struct sigaction act;
-  syslog(LOG_ERR, _("Got SEGV signal"));
+  syslog(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
   cp_trace();
 
   if(do_detach)
     {
       syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
 
-      act.sa_handler = sigsegv_square;
+      act.sa_handler = fatal_signal_square;
       act.sa_mask = emptysigset;
       act.sa_flags = 0;
       sigaction(SIGSEGV, &act, NULL);
@@ -439,7 +446,9 @@ struct {
   { SIGHUP, sighup_handler },
   { SIGTERM, sigterm_handler },
   { SIGQUIT, sigquit_handler },
-  { SIGSEGV, sigsegv_handler },
+  { SIGSEGV, fatal_signal_handler },
+  { SIGBUS, fatal_signal_handler },
+  { SIGILL, fatal_signal_handler },
   { SIGPIPE, ignore_signal_handler },
   { SIGINT, sigint_handler },
   { SIGUSR1, sigusr1_handler },

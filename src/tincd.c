@@ -17,13 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.57 2002/02/10 21:57:54 guus Exp $
+    $Id: tincd.c,v 1.10.4.58 2002/03/11 11:23:04 guus Exp $
 */
 
 #include "config.h"
 
 #include <errno.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
@@ -102,13 +102,13 @@ usage(int status)
     {
       printf(_("Usage: %s [option]...\n\n"), program_name);
       printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
-	       "  -D, --no-detach            Don't fork and detach.\n"
-	       "  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
-	       "  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
-	       "  -n, --net=NETNAME          Connect to net NETNAME.\n"));
+               "  -D, --no-detach            Don't fork and detach.\n"
+               "  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
+               "  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
+               "  -n, --net=NETNAME          Connect to net NETNAME.\n"));
       printf(_("  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
                "      --help                 Display this help and exit.\n"
- 	       "      --version              Output version information and exit.\n\n"));
+               "      --version              Output version information and exit.\n\n"));
       printf(_("Report bugs to tinc@nl.linux.org.\n"));
     }
   exit(status);
@@ -119,48 +119,77 @@ parse_options(int argc, char **argv, char **envp)
 {
   int r;
   int option_index = 0;
-  
+
   while((r = getopt_long(argc, argv, "c:Dd::k::n:K::", long_options, &option_index)) != EOF)
     {
       switch(r)
         {
         case 0: /* long option */
           break;
-	case 'c': /* config file */
-	  confbase = xmalloc(strlen(optarg)+1);
-	  strcpy(confbase, optarg);
-	  break;
-	case 'D': /* no detach */
-	  do_detach = 0;
-	  break;
-	case 'd': /* inc debug level */
-	  if(optarg)
-	    debug_lvl = atoi(optarg);
-	  else
-	    debug_lvl++;
-	  break;
-	case 'k': /* kill old tincds */
-	  kill_tincd = optarg?atoi(optarg):SIGTERM;
-	  break;
-	case 'n': /* net name given */
-	  netname = xmalloc(strlen(optarg)+1);
-	  strcpy(netname, optarg);
-	  break;
-	case 'K': /* generate public/private keypair */
+        case 'c': /* config file */
+          confbase = xmalloc(strlen(optarg)+1);
+          strcpy(confbase, optarg);
+          break;
+        case 'D': /* no detach */
+          do_detach = 0;
+          break;
+        case 'd': /* inc debug level */
+          if(optarg)
+            debug_lvl = atoi(optarg);
+          else
+            debug_lvl++;
+          break;
+        case 'k': /* kill old tincds */
+          if(optarg)
+            {
+              if(!strcasecmp(optarg, "HUP"))
+                kill_tincd = SIGHUP;
+              else if(!strcasecmp(optarg, "TERM"))
+                kill_tincd = SIGTERM;
+              else if(!strcasecmp(optarg, "KILL"))
+                kill_tincd = SIGKILL;
+              else if(!strcasecmp(optarg, "USR1"))
+                kill_tincd = SIGUSR1;
+              else if(!strcasecmp(optarg, "USR2"))
+                kill_tincd = SIGUSR2;
+              else if(!strcasecmp(optarg, "WINCH"))
+                kill_tincd = SIGWINCH;
+              else if(!strcasecmp(optarg, "INT"))
+                kill_tincd = SIGINT;
+              else if(!strcasecmp(optarg, "ALRM"))
+                kill_tincd = SIGALRM;
+              else
+                {
+                  kill_tincd = atoi(optarg);
+                  if(!kill_tincd)
+                    {
+                      fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"), optarg);
+                      usage(1);
+                    }
+                }
+            }
+          else
+            kill_tincd = SIGTERM;
+          break;
+        case 'n': /* net name given */
+          netname = xmalloc(strlen(optarg)+1);
+          strcpy(netname, optarg);
+          break;
+        case 'K': /* generate public/private keypair */
           if(optarg)
             {
               generate_keys = atoi(optarg);
               if(generate_keys < 512)
                 {
                   fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
-			  optarg);
+                          optarg);
                   usage(1);
                 }
-              generate_keys &= ~7;	/* Round it to bytes */
+              generate_keys &= ~7;      /* Round it to bytes */
             }
           else
             generate_keys = 1024;
-	  break;
+          break;
         case '?':
           usage(1);
         default:
@@ -188,7 +217,7 @@ void indicator(int a, int b, void *p)
       switch(b)
         {
           case 0:
-            fprintf(stderr, " p\n");      
+            fprintf(stderr, " p\n");
             break;
           case 1:
             fprintf(stderr, " q\n");
@@ -240,7 +269,7 @@ int keygen(int bits)
   PEM_write_RSAPublicKey(f, rsa_key);
   fclose(f);
   free(filename);
-  
+
   asprintf(&filename, "%s/rsa_key.priv", confbase);
   if((f = ask_and_safe_open(filename, _("private RSA key"), "a")) == NULL)
     return -1;
@@ -298,10 +327,10 @@ main(int argc, char **argv, char **envp)
     {
       printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
       printf(_("Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
-	       "See the AUTHORS file for a complete list.\n\n"
-	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-	       "and you are welcome to redistribute it under certain conditions;\n"
-	       "see the file COPYING for details.\n"));
+               "See the AUTHORS file for a complete list.\n\n"
+               "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+               "and you are welcome to redistribute it under certain conditions;\n"
+               "see the file COPYING for details.\n"));
 
       return 0;
     }
@@ -309,15 +338,9 @@ main(int argc, char **argv, char **envp)
   if(show_help)
     usage(0);
 
-  if(geteuid())
-    {
-      fprintf(stderr, _("You must be root to run this program.\n"));
-      return 1;
-    }
-
 #ifdef HAVE_SOLARIS
   openlog("tinc", LOG_CONS, LOG_DAEMON);        /* Catch all syslog() calls issued before detaching */
-#else  
+#else
   openlog("tinc", LOG_PERROR, LOG_DAEMON);      /* Catch all syslog() calls issued before detaching */
 #endif
 
@@ -342,7 +365,7 @@ cp
       read_server_config();
       exit(keygen(generate_keys));
     }
-    
+
   if(kill_tincd)
     exit(kill_other(kill_tincd));
 
@@ -359,7 +382,7 @@ cp
           main_loop();
           cleanup_and_exit(1);
         }
-      
+
       syslog(LOG_ERR, _("Unrecoverable error"));
       cp_trace();
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.31 2002/02/20 17:16:15 guus Exp $
+    $Id: subnet.c,v 1.1.2.32 2002/03/11 11:23:04 guus Exp $
 */
 
 #include "config.h"
@@ -233,7 +233,7 @@ cp
       subnet->type = SUBNET_IPV6;
       subnet->net.ipv6.masklength = 128;
       for(i = 0; i < 8; i++)
-      subnet->net.ipv6.address.x[i] = htons(x[i]);
+        subnet->net.ipv6.address.x[i] = htons(x[i]);
       return subnet;
     }
 
