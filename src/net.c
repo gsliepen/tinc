@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.10 2000/06/27 20:10:48 guus Exp $
+    $Id: net.c,v 1.35.4.11 2000/06/27 21:05:07 guus Exp $
 */
 
 #include "config.h"
@@ -940,7 +940,7 @@ cp
   /* Then send a notification about all these connections to all hosts
      that are still connected to us. */
   for(p = conn_list; p != NULL; p = p->next)
-    if(!p->status.remove && p->status.meta)
+    if(p->status.active && p->status.meta)
       for(q = conn_list; q != NULL; q = q->next)
 	if(q->status.remove)
 	  send_del_host(p, q);
