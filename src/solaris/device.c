@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.5 2002/02/11 12:33:01 guus Exp $
+    $Id: device.c,v 1.1.2.6 2002/02/11 14:20:46 guus Exp $
 */
 
 
@@ -114,7 +114,7 @@ cp
   }
 
   if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
-    asprintf(interface, "tun%d", ppa);
+    asprintf(&interface, "tun%d", ppa);
 
   device_info = _("Solaris tun device");
 
