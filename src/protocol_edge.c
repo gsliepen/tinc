@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.9 2002/09/04 13:48:52 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.10 2002/09/04 16:26:45 guus Exp $
 */
 
 #include "config.h"
@@ -62,7 +62,6 @@ cp
 
 int add_edge_h(connection_t *c)
 {
-  connection_t *other;
   edge_t *e;
   node_t *from, *to;
   char from_name[MAX_STRING_SIZE];
@@ -72,7 +71,6 @@ int add_edge_h(connection_t *c)
   sockaddr_t address;
   long int options;
   int weight;
-  avl_node_t *node;
 cp
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
             from_name, to_name, to_address, to_port, &options, &weight) != 6)
@@ -169,12 +167,7 @@ cp
 
   /* Tell the rest about the new edge */
 
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-      if(other->status.active && other != c)
-        send_request(other, "%s", c->buffer);
-    }
+  forward_request(c);
 
   /* Run MST before or after we tell the rest? */
 
@@ -196,8 +189,6 @@ int del_edge_h(connection_t *c)
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   node_t *from, *to;
-  connection_t *other;
-  avl_node_t *node;
 cp
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING"", from_name, to_name) != 2)
     {
@@ -264,12 +255,7 @@ cp
 
   /* Tell the rest about the deleted edge */
 
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-      if(other->status.active && other != c)
-        send_request(other, "%s", c->buffer);
-    }
+  forward_request(c);
 
   /* Delete the edge */
   

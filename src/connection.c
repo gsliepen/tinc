@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.30 2002/06/21 10:11:12 guus Exp $
+    $Id: connection.c,v 1.1.2.31 2002/09/04 16:26:44 guus Exp $
 */
 
 #include "config.h"
@@ -41,6 +41,7 @@
 #include "system.h"
 
 avl_tree_t *connection_tree;	/* Meta connections */
+connection_t *broadcast;
 
 int connection_compare(connection_t *a, connection_t *b)
 {
@@ -52,12 +53,18 @@ void init_connections(void)
 cp
   connection_tree = avl_alloc_tree((avl_compare_t)connection_compare, NULL);
 cp
+  broadcast = new_connection();
+  broadcast->name = xstrdup(_("everyone"));
+  broadcast->hostname = xstrdup(_("BROADCAST"));
+cp
 }
 
 void exit_connections(void)
 {
 cp
   avl_delete_tree(connection_tree);
+cp
+  free_connection(broadcast);
 cp
 }
 

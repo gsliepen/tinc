@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.33 2002/09/04 13:48:52 guus Exp $
+    $Id: protocol.h,v 1.5.4.34 2002/09/04 16:26:45 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -62,6 +62,7 @@ typedef struct past_request_t {
 /* Basic functions */
 
 extern int send_request(connection_t*, const char*, ...);
+extern int forward_request(connection_t *);
 extern int receive_request(connection_t *);
 extern int check_id(char *);
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.26 2002/06/21 10:11:12 guus Exp $
+    $Id: meta.c,v 1.1.2.27 2002/09/04 16:26:44 guus Exp $
 */
 
 #include "config.h"
@@ -182,6 +182,7 @@ cp
 
       if(reqlen)
         {
+          c->reqlen = reqlen;
           if(receive_request(c))
             return -1;
 

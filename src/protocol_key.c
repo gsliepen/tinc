@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.9 2002/09/04 08:02:33 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.10 2002/09/04 16:26:45 guus Exp $
 */
 
 #include "config.h"
@@ -54,17 +54,13 @@ cp
 
   if(n == myself && !mykeyused)
     return 0;
-
-  send_request(NULL, "%d %lx %s", KEY_CHANGED, random(), n->name);
 cp
-  return 0;
+  return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
 }
 
 int key_changed_h(connection_t *c)
 {
   char name[MAX_STRING_SIZE];
-  avl_node_t *node;
-  connection_t *other;
   node_t *n;
 cp
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING, name) != 1)
@@ -91,12 +87,7 @@ cp
 
   /* Tell the others */
 
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-      if(other->status.active && other != c)
-        send_request(other, "%s", c->buffer);
-    }
+  forward_request(c);
 cp
   return 0;
 }

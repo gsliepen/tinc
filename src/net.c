@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.176 2002/09/04 13:48:51 guus Exp $
+    $Id: net.c,v 1.35.4.177 2002/09/04 16:26:44 guus Exp $
 */
 
 #include "config.h"
@@ -87,11 +87,10 @@ time_t now = 0;
 
 void purge(void)
 {
-  avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext, *cnode;
+  avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
   node_t *n;
   edge_t *e;
   subnet_t *s;
-  connection_t *c;
 cp
   if(debug_lvl >= DEBUG_PROTOCOL)
     syslog(LOG_DEBUG, _("Purging unreachable nodes"));
@@ -110,14 +109,7 @@ cp
       {
         snext = snode->next;
         s = (subnet_t *)snode->data;
-
-        for(cnode = connection_tree->head; cnode; cnode = cnode->next)
-        {
-          c = (connection_t *)cnode->data;
-          if(c->status.active)
-            send_del_subnet(c, s);
-        }
-
+	send_del_subnet(broadcast, s);
         subnet_del(n, s);
       }
 
@@ -125,14 +117,7 @@ cp
       {
         enext = enode->next;
         e = (edge_t *)enode->data;
-
-        for(cnode = connection_tree->head; cnode; cnode = cnode->next)
-        {
-          c = (connection_t *)cnode->data;
-          if(c->status.active)
-            send_del_edge(c, e);
-        }
-
+	send_del_edge(broadcast, e);
         edge_del(e);
       }
 
@@ -188,8 +173,6 @@ cp
 */
 void terminate_connection(connection_t *c, int report)
 {
-  avl_node_t *node;
-  connection_t *other;
 cp
   if(c->status.remove)
     return;
@@ -210,14 +193,7 @@ cp
   if(c->edge)
     {
       if(report)
-        {
-          for(node = connection_tree->head; node; node = node->next)
-            {
-              other = (connection_t *)node->data;
-              if(other->status.active && other != c)
-                send_del_edge(other, c->edge);
-            }
-        }
+        send_del_edge(broadcast, c->edge);
 
       edge_del(c->edge);
 
@@ -407,7 +383,7 @@ cp
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
 
               RAND_pseudo_bytes(myself->key, myself->keylength);
-              send_key_changed(myself->connection, myself);
+              send_key_changed(broadcast, myself);
               keyexpires = now + keylifetime;
             }
         }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.13 2002/09/04 14:17:28 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.14 2002/09/04 16:26:45 guus Exp $
 */
 
 #include "config.h"
@@ -483,7 +483,7 @@ void send_everything(connection_t *c)
   subnet_t *s;
   edge_t *e;
 
-  /* Send all known subnets */
+  /* Send all known subnets and edges */
   
   for(node = node_tree->head; node; node = node->next)
     {
@@ -494,15 +494,12 @@ void send_everything(connection_t *c)
           s = (subnet_t *)node2->data;
           send_add_subnet(c, s);
         }
-    }
 
-  /* Send all known edges */
-
-  for(node = edge_tree->head; node; node = node->next)
-    {
-      e = (edge_t *)node->data;
-
-      send_add_edge(c, e);
+      for(node2 = n->edge_tree->head; node2; node2 = node2->next)
+        {
+          e = (edge_t *)node2->data;
+          send_add_edge(c, e);
+        }
     }
 }
 
@@ -513,8 +510,6 @@ int ack_h(connection_t *c)
   int weight;
   long int options;
   node_t *n;
-  connection_t *other;
-  avl_node_t *node;
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %d %lx", hisport, &weight, &options) != 3)
     {
@@ -541,13 +536,23 @@ cp
             syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"), n->name, n->hostname);
           terminate_connection(n->connection, 0);
         }
-          
-      /* FIXME: check if information in existing node matches that of the other end of this connection */
     }
   
   n->connection = c;
   c->node = n;
   c->options |= options;
+
+  /* Activate this connection */
+
+  c->allow_request = ALL;
+  c->status.active = 1;
+
+  if(debug_lvl >= DEBUG_CONNECTIONS)
+    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name, c->hostname);
+
+  /* Send him everything we know */
+
+  send_everything(c);
 
   /* Create an edge_t for this connection */
 
@@ -565,28 +570,10 @@ cp
 cp
   edge_add(c->edge);
 
-  /* Activate this connection */
-
-  c->allow_request = ALL;
-  c->status.active = 1;
-
-  if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name, c->hostname);
-
 cp
-  /* Send him everything we know */
+  /* Notify everyone of the new edge */
 
-  send_everything(c);
-
-  /* Notify others of this connection */
-
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-
-      if(other->status.active && other != c)
-        send_add_edge(other, c->edge);
-    }
+  send_add_edge(broadcast, c->edge);
 
   /* Run MST and SSSP algorithms */
  

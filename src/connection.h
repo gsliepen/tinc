@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.29 2002/09/04 13:48:51 guus Exp $
+    $Id: connection.h,v 1.1.2.30 2002/09/04 16:26:44 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -99,6 +99,7 @@ typedef struct connection_t {
 
   char buffer[MAXBUFSIZE];         /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
+  int reqlen;                      /* length of incoming request */
   int tcplen;                      /* length of incoming TCPpacket */
   int allow_request;               /* defined if there's only one request possible */
 
@@ -108,6 +109,7 @@ typedef struct connection_t {
 } connection_t;
 
 extern avl_tree_t *connection_tree;
+extern connection_t *broadcast;
 
 extern void init_connections(void);
 extern void exit_connections(void);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.5 2002/09/03 20:43:26 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.6 2002/09/04 16:26:45 guus Exp $
 */
 
 #include "config.h"
@@ -60,9 +60,7 @@ int add_subnet_h(connection_t *c)
   char subnetstr[MAX_STRING_SIZE];
   char name[MAX_STRING_SIZE];
   node_t *owner;
-  connection_t *other;
   subnet_t *s;
-  avl_node_t *node;
 cp
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
@@ -124,13 +122,8 @@ cp
   subnet_add(owner, s);
 
   /* Tell the rest */
-  
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-      if(other->status.active && other != c)
-        send_request(other, "%s", c->buffer);
-    }
+
+  forward_request(c);
 cp
   return 0;
 }
@@ -152,9 +145,7 @@ int del_subnet_h(connection_t *c)
   char subnetstr[MAX_STRING_SIZE];
   char name[MAX_STRING_SIZE];
   node_t *owner;
-  connection_t *other;
   subnet_t *s, *find;
-  avl_node_t *node;
 cp
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
@@ -218,13 +209,8 @@ cp
   }
 
   /* Tell the rest */
-  
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-      if(other->status.active && other != c)
-        send_request(other, "%s", c->buffer);
-    }
+
+  forward_request(c);
 
   /* Finally, delete it. */
 

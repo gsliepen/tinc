@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.132 2002/09/04 13:48:52 guus Exp $
+    $Id: protocol.c,v 1.28.4.133 2002/09/04 16:26:44 guus Exp $
 */
 
 #include "config.h"
@@ -89,7 +89,28 @@ cp
 
   buffer[len++] = '\n';
 cp
-  return send_meta(c, buffer, len);
+  if(c == broadcast)
+    return broadcast_meta(NULL, buffer, len);
+  else
+    return send_meta(c, buffer, len);
+}
+
+int forward_request(connection_t *from)
+{
+  int request;
+cp
+  if(debug_lvl >= DEBUG_PROTOCOL)
+    {
+      sscanf(from->buffer, "%d", &request);
+      if(debug_lvl >= DEBUG_META)
+        syslog(LOG_DEBUG, _("Broadcasting %s from %s (%s): %s"), request_name[request], from->name, from->hostname, from->buffer);
+      else
+        syslog(LOG_DEBUG, _("Broadcasting %s from %s (%s)"), request_name[request], from->name, from->hostname);
+    }
+
+  from->buffer[from->reqlen - 1] = '\n';
+cp
+  return broadcast_meta(from, from->buffer, from->reqlen);
 }
 
 int receive_request(connection_t *c)
