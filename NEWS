@@ -1,5 +1,6 @@
-version 1.0                  Apr  x 2000
- * The fix that was in 0.3.3 appeared to be wrong. Fixed now.
+version 1.0pre1              May  x 2000
+ * New meta-protocol
+ * Various other bugfixes
  * Documentation updates
 
 version 0.3.3                Feb  9 2000
