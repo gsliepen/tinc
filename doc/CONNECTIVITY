@@ -12,15 +12,15 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.10 2002/09/15 22:19:37 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.11 2002/09/16 14:08:04 wsl Exp $
 
 1. Synchronisation
 ==================
 
 Each tinc daemon has zero or more connections to other tinc daemons. It will
-try to keep it's own information synchronised with the other tinc daemons. If
-one of it's peers sends information, the tinc daemon will check if it is new
-information. If so, it will update it's own information and forward the new
+try to keep its own information synchronised with the other tinc daemons. If
+one of its peers sends information, the tinc daemon will check if it is new
+information. If so, it will update its own information and forward the new
 information to all the other peers.
 
 This scheme will make sure that after a short amount of time all tinc daemons
@@ -35,7 +35,7 @@ seen.
 2. Routing
 ==========
 
-Every node tells it's peers to which other peers it is connected. This way
+Every node tells its peers to which other peers it is connected. This way
 every node will eventually know every connection every node has on the VPN.
 Each node will use graph algorithms to determine if other nodes are reachable or not and
 what the best route is to other nodes.
