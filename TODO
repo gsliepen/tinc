@@ -3,7 +3,7 @@ TODO LIST
 Goals for 1.0 release:
 
 * Check Solaris port
-* Check FreeBSD port again
+* Check FreeBSD port again (done)
 * Check TCPonly and IndirectData
 
 * Check different linux architectures (x86, alpha and sparc32 done)
@@ -18,10 +18,10 @@ Goals for 1.0 release:
 Goals for future releases:
 
 * Compression
-* Routing by MAC/switching (allows for more than only IPv4)
-* Broadcast/multicast
+* Routing by MAC/switching (allows for more than only IPv4) (done)
+* Broadcast/multicast (done)
 * Windowing, chaffing, scattering, background noise
 * ABC protocol (superscalabilty)
-* Proxy ARP
+* Proxy ARP (done)
 * Easy setup scripts (graphical?)
 * Threading
