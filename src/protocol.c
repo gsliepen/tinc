@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.52 2000/10/29 22:10:43 guus Exp $
+    $Id: protocol.c,v 1.28.4.53 2000/10/29 22:55:14 guus Exp $
 */
 
 #include "config.h"
@@ -145,8 +145,8 @@ cp
    send_challenge(R)
                         send_chal_reply(H)
    ---------------------------------------
-   Any negotations about the meta protocol
-   encryption go here(u).
+   send_metakey(R)
+                        send_metakey(R)
    ---------------------------------------
    send_ack(u)
                         send_ack(u)
@@ -256,10 +256,6 @@ cp
     
   cl->hischallenge = xmalloc(len);
 cp
-  /* Seed the PRNG with urandom (can't afford to block) */
-
-  RAND_load_file("/dev/urandom", 1024);
-
   /* Copy random data to the buffer */
 
   RAND_bytes(cl->hischallenge, len);
@@ -374,7 +370,7 @@ cp
   if(cl->status.outgoing)
     cl->allow_request = ID;
   else
-    cl->allow_request = ACK;
+    cl->allow_request = METAKEY;
 
 cp
   return send_request(cl, "%d %s", CHAL_REPLY, hash);
@@ -433,18 +429,142 @@ cp
    */
 cp
   if(cl->status.outgoing)
-      return send_ack(cl);
+      return send_metakey(cl);
   else
       return send_id(cl);
 }
 
+int send_metakey(conn_list_t *cl)
+{
+  char *buffer;
+  int len, x;
+cp
+  len = RSA_size(cl->rsa_key);
+
+  /* Allocate buffers for the meta key */
+
+  buffer = xmalloc(len*2+1);
+
+  if(!cl->cipher_outkey)
+    cl->cipher_outkey = xmalloc(len);
+    
+  if(!cl->cipher_outctx)
+    cl->cipher_outctx = xmalloc(sizeof(*cl->cipher_outctx));
+cp
+  /* Copy random data to the buffer */
+
+  RAND_bytes(cl->cipher_outkey, len);
+
+  cl->cipher_outkey[0] &= 0x7F;	/* FIXME: Somehow if the first byte is more than 0xD0 or something like that, decryption fails... */
+
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+    {
+      bin2hex(cl->cipher_outkey, buffer, len);
+      buffer[len*2] = '\0';
+      syslog(LOG_DEBUG, _("Generated random meta key (unencrypted): %s"), buffer);
+    }
+
+  /* Encrypt the random data */
+  
+  if(RSA_public_encrypt(len, cl->cipher_outkey, buffer, cl->rsa_key, RSA_NO_PADDING) != len)	/* NO_PADDING because the message size equals the RSA key size and it is totally random */
+    {
+      syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), cl->name, cl->hostname);
+      free(buffer);
+      return -1;
+    }
+cp
+  /* Convert the encrypted random data to a hexadecimal formatted string */
+
+  bin2hex(buffer, buffer, len);
+  buffer[len*2] = '\0';
+
+  /* Send the meta key */
+
+  if(cl->status.outgoing)
+    cl->allow_request = METAKEY;
+  else
+    cl->allow_request = ACK;
+    
+  x = send_request(cl, "%d %s", METAKEY, buffer);
+  free(buffer);
+
+  EVP_EncryptInit(cl->cipher_outctx, EVP_bf_cfb(), cl->cipher_outkey, cl->cipher_outkey + EVP_bf_cfb()->key_len);
+cp
+  return x;
+}
+
+int metakey_h(conn_list_t *cl)
+{
+  char *buffer;
+  int len;
+cp
+  if(sscanf(cl->buffer, "%*d %as", &buffer) != 1)
+    {
+       syslog(LOG_ERR, _("Got bad METAKEY from %s (%s)"), cl->name, cl->hostname);
+       return -1;
+    }
+
+  len = RSA_size(myself->rsa_key);
+
+  /* Check if the length of the meta key is all right */
+
+  if(strlen(buffer) != len*2)
+    {
+      syslog(LOG_ERR, _("Intruder: wrong meta key length from %s (%s)"), cl->name, cl->hostname);
+      free(buffer);
+      return -1;
+    }
+
+  /* Allocate buffers for the meta key */
+
+  if(!cl->cipher_inkey)
+    cl->cipher_inkey = xmalloc(len);
+
+  if(!cl->cipher_inctx)
+    cl->cipher_inctx = xmalloc(sizeof(*cl->cipher_inctx));
+
+  /* Convert the challenge from hexadecimal back to binary */
+
+  hex2bin(buffer,buffer,len);
+
+  /* Decrypt the meta key */
+  
+  if(RSA_private_decrypt(len, buffer, cl->cipher_inkey, myself->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
+    {
+      syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), cl->name, cl->hostname);
+      free(buffer);
+      return -1;
+    }
+
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+    {
+      bin2hex(cl->cipher_inkey, buffer, len);
+      buffer[len*2] = '\0';
+      syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"), buffer);
+    }
+
+  free(buffer);
+
+  EVP_DecryptInit(cl->cipher_inctx, EVP_bf_cfb(), cl->cipher_inkey, cl->cipher_inkey + EVP_bf_cfb()->key_len);
+  
+cp
+  if(cl->status.outgoing)
+    return send_ack(cl);
+  else
+    return send_metakey(cl);
+}
+
 int send_ack(conn_list_t *cl)
 {
+  int x;
 cp
   if(cl->status.outgoing)
     cl->allow_request = ACK;
+
+  x = send_request(cl, "%d", ACK);
+  cl->status.encryptout = 1;
 cp
-  return send_request(cl, "%d", ACK);
+  return x;
 }
 
 int ack_h(conn_list_t *cl)
@@ -470,6 +590,7 @@ cp
 
   cl->allow_request = ALL;
   cl->status.active = 1;
+  cl->status.decryptin = 1;
   cl->nexthop = cl;
   cl->cipher_pkttype = EVP_bf_cfb();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
@@ -1116,7 +1237,7 @@ cp
 /* Jumptable for the request handlers */
 
 int (*request_handlers[])(conn_list_t*) = {
-  id_h, challenge_h, chal_reply_h, ack_h,
+  id_h, challenge_h, chal_reply_h, metakey_h, ack_h,
   status_h, error_h, termreq_h,
   ping_h, pong_h,
   add_host_h, del_host_h,
@@ -1127,7 +1248,7 @@ int (*request_handlers[])(conn_list_t*) = {
 /* Request names */
 
 char (*request_name[]) = {
-  "ID", "CHALLENGE", "CHAL_REPLY", "ACK",
+  "ID", "CHALLENGE", "CHAL_REPLY", "METAKEY", "ACK",
   "STATUS", "ERROR", "TERMREQ",
   "PING", "PONG",
   "ADD_HOST", "DEL_HOST",

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.20 2000/10/29 22:10:44 guus Exp $
+    $Id: tincd.c,v 1.10.4.21 2000/10/29 22:55:15 guus Exp $
 */
 
 #include "config.h"
@@ -204,9 +204,6 @@ void indicator(int a, int b, void *p)
 int keygen(int bits)
 {
   RSA *rsa_key;
-
-  fprintf(stderr, _("Seeding the PRNG: please press some keys or move\nthe mouse if this program seems to have halted...\n"));
-  RAND_load_file("/dev/random", 1024);	/* OpenSSL PRNG state apparently uses 1024 bytes, but it seems pretty sufficient anyway :) */
 
   fprintf(stderr, _("Generating %d bits keys:\n"), bits);
   rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
@@ -422,6 +419,10 @@ main(int argc, char **argv, char **envp)
   g_argv = argv;
 
   make_names();
+
+  /* Slllluuuuuuurrrrp! */
+
+  RAND_load_file("/dev/urandom", 1024);
 
   if(generate_keys)
     exit(keygen(generate_keys));

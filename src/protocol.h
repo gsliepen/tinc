@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.13 2000/10/28 21:05:20 guus Exp $
+    $Id: protocol.h,v 1.5.4.14 2000/10/29 22:55:15 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -36,7 +36,7 @@
 
 enum {
   ALL = -1,			     /* Guardian for allow_request */
-  ID = 0, CHALLENGE, CHAL_REPLY, ACK,
+  ID = 0, CHALLENGE, CHAL_REPLY, METAKEY, ACK,
   STATUS, ERROR, TERMREQ,
   PING,  PONG,
   ADD_HOST, DEL_HOST,
@@ -50,6 +50,7 @@ extern int (*request_handlers[])(conn_list_t*);
 extern int send_id(conn_list_t*);
 extern int send_challenge(conn_list_t*);
 extern int send_chal_reply(conn_list_t*);
+extern int send_metakey(conn_list_t*);
 extern int send_ack(conn_list_t*);
 extern int send_status(conn_list_t*, int, char*);
 extern int send_error(conn_list_t*, int, char*);
