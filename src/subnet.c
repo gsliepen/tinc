@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.11 2000/11/04 22:57:33 guus Exp $
+    $Id: subnet.c,v 1.1.2.12 2000/11/20 19:12:17 guus Exp $
 */
 
 #include "config.h"
@@ -27,15 +27,83 @@
 
 #include "conf.h"
 #include "net.h"
+#include "connection.h"
 #include "subnet.h"
 #include "system.h"
 
 #include <utils.h>
 #include <xalloc.h>
+#include <rbl.h>
 
 /* lists type of subnet */
 
-subnet_t *subnet_list[SUBNET_TYPES] = { NULL };
+rbltree_t _subnet_tree = { NULL };
+rbltree_t *subnet_tree = &_subnet_tree;
+
+/* Subnet comparison */
+
+int subnet_compare_mac(subnet_t *a, subnet_t *b)
+{
+cp
+  return memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
+}
+
+int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
+{
+cp
+  /* If the subnet of a falls within the range of subnet b,
+     then we consider a smaller then b.
+     Otherwise, the addresses alone (and not the subnet masks) will be compared.
+   */
+   
+  if(a->net.ipv4.mask > b->net.ipv4.mask)
+    if((a->net.ipv4.address & b->net.ipv4.mask) == b->net.ipv4.address)
+      return -1;
+
+  return a->net.ipv4.address - b->net.ipv4.address;
+}
+
+int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
+{
+cp
+  /* Same as ipv4 case, but with nasty 128 bit addresses */
+  
+  if(memcmp(&a->net.ipv6.mask, &b->net.ipv6.mask, sizeof(ipv6_t)) > 0)
+    if((a->net.ipv6.address.x[0] & b->net.ipv6.mask.x[0]) == b->net.ipv6.address.x[0] &&
+       (a->net.ipv6.address.x[1] & b->net.ipv6.mask.x[1]) == b->net.ipv6.address.x[1] &&
+       (a->net.ipv6.address.x[2] & b->net.ipv6.mask.x[2]) == b->net.ipv6.address.x[2] &&
+       (a->net.ipv6.address.x[3] & b->net.ipv6.mask.x[3]) == b->net.ipv6.address.x[3] &&
+       (a->net.ipv6.address.x[4] & b->net.ipv6.mask.x[4]) == b->net.ipv6.address.x[4] &&
+       (a->net.ipv6.address.x[5] & b->net.ipv6.mask.x[5]) == b->net.ipv6.address.x[5] &&
+       (a->net.ipv6.address.x[6] & b->net.ipv6.mask.x[6]) == b->net.ipv6.address.x[6] &&
+       (a->net.ipv6.address.x[7] & b->net.ipv6.mask.x[7]) == b->net.ipv6.address.x[7])
+      return -1;
+  
+  return memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
+}
+
+int subnet_compare(subnet_t *a, subnet_t *b)
+{
+  int x;
+cp  
+  x = a->type - b->type;
+  if(x)
+    return x;
+    
+  switch(a->type)
+    {
+      case SUBNET_MAC:
+        return subnet_compare_mac(a, b);
+      case SUBNET_IPV4:
+        return subnet_compare_ipv4(a, b);
+      case SUBNET_IPV6:
+        return subnet_compare_ipv6(a, b);
+      default:
+        syslog(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, restarting!"), a->type);
+        sighup = 1;
+        return 0;
+    }
+}
 
 /* Allocating and freeing space for subnets */
 
@@ -53,87 +121,19 @@ cp
 
 /* Linked list management */
 
-void subnet_add(conn_list_t *cl, subnet_t *subnet)
+void subnet_add(connection_t *cl, subnet_t *subnet)
 {
-  subnet_t *p = NULL;
-  subnet_t *q = NULL;
 cp
-  subnet->owner = cl;
-
-  /* Link it into the owners list of subnets (unsorted) */
-
-  subnet->next = cl->subnets;
-  subnet->prev = NULL;
-  if(subnet->next)
-    subnet->next->prev = subnet;
-  cl->subnets = subnet;
-  
-  /* And now add it to the global subnet list (sorted) */
-
-  /* Sort on size of subnet mask (IPv4 only at the moment!)
-  
-     Three cases: subnet_list[] = NULL -> just add this subnet
-                  insert before first -> add it in front of list
-                  rest: insert after another subnet
-   */
-cp
-  if(subnet_list[subnet->type])
-    {
-      p = q = subnet_list[subnet->type];
-
-      for(; p; p = p->global_next)
-        {
-          if(subnet->net.ipv4.mask >= p->net.ipv4.mask)
-            break;
-
-          q = p;
-        }
-     }
-cp  
-  if(p == subnet_list[subnet->type])	/* First two cases */
-    {
-      /* Insert in front */
-      subnet->global_next = subnet_list[subnet->type];
-      subnet->global_prev = NULL;
-      subnet_list[subnet->type] = subnet;
-    }
-  else                                  /* Third case */
-    {
-      /* Insert after q */
-      subnet->global_next = q->global_next;
-      subnet->global_prev = q;
-      q->global_next = subnet;
-    }
-cp
-  if(subnet->global_next)
-    subnet->global_next->global_prev = subnet;
+  rbl_insert(subnet_tree, subnet);
+  rbl_insert(cl->subnet_tree, subnet);
 cp
 }
 
 void subnet_del(subnet_t *subnet)
 {
 cp
-  /* Remove it from owner's list */
-
-  if(subnet->prev)
-    subnet->prev->next = subnet->next;
-  else
-    subnet->owner->subnets = subnet->next;
-
-  if(subnet->next)
-    subnet->next->prev = subnet->prev;
-
-  /* Remove it from the global list */
-  
-  if(subnet->global_prev)
-    subnet->global_prev->global_next = subnet->global_next;
-  else
-    subnet_list[subnet->type] = subnet->global_next;
-
-  if(subnet->global_next)
-    subnet->global_next->global_prev = subnet->global_prev;
-  
-  free_subnet(subnet);
+  free_rbl(rbl_unlink(subnet->owner->subnet_tree, subnet));
+  rbl_delete(subnet_tree, subnet);
 cp
 }
 
@@ -250,61 +250,47 @@ cp
 
 subnet_t *lookup_subnet_mac(mac_t address)
 {
-  subnet_t *subnet;
+  subnet_t subnet;
 cp
-  for(subnet = subnet_list[SUBNET_MAC]; subnet != NULL; subnet = subnet->global_next)
-    {
-      if(memcmp(&address, &subnet->net.mac.address, sizeof(address)) == 0)
-        break;
-    }
-cp
-  return subnet;
+  subnet.type = SUBNET_MAC;
+  subnet.net.mac.address = address;
+  return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
 }
 
 subnet_t *lookup_subnet_ipv4(ipv4_t address)
 {
-  subnet_t *subnet;
+  subnet_t subnet;
 cp
-  for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->global_next)
-    {
-      if((address & subnet->net.ipv4.mask) == subnet->net.ipv4.address)
-        break;
-    }
-cp
-  return subnet;
+  subnet.type = SUBNET_IPV4;
+  subnet.net.ipv4.address = address;
+  subnet.net.ipv4.mask = 0xFFFFFFFF;
+  return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
 }
 
 subnet_t *lookup_subnet_ipv6(ipv6_t address)
 {
-  subnet_t *subnet;
-  int i;
+  subnet_t subnet;
 cp
-  for(subnet = subnet_list[SUBNET_IPV6]; subnet != NULL; subnet = subnet->global_next)
-    {
-      for(i=0; i<8; i++)
-        if((address.x[i] & subnet->net.ipv6.mask.x[i]) != subnet->net.ipv6.address.x[i])
-          break;
-      if(i == 8)
-        break;
-    }
-cp
-  return subnet;
+  subnet.type = SUBNET_IPV6;
+  subnet.net.ipv6.address = address;
+  memset(&subnet.net.ipv6.mask, 0xFF, 16);
+  return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
 }
 
 void dump_subnet_list(void)
 {
-  subnet_t *subnet;
   char *netstr;
+  subnet_t *subnet;
+  rbl_t *rbl;
 cp
   syslog(LOG_DEBUG, _("Subnet list:"));
-
-  for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->global_next)
+  RBL_FOREACH(subnet_tree, rbl)
     {
+      subnet = (subnet_t *)rbl->data;
       netstr = net2str(subnet);
       syslog(LOG_DEBUG, " %s owner %s", netstr, subnet->owner->name);
       free(netstr);
     }
-
   syslog(LOG_DEBUG, _("End of subnet list."));
 cp
 }

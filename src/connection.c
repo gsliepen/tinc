@@ -1,5 +1,5 @@
 /*
-    connlist.c -- connection list management
+    connection.c -- connection list management
     Copyright (C) 2000 Guus Sliepen <guus@sliepen.warande.net>,
                   2000 Ivo Timmermans <itimmermans@bigfoot.com>
 
@@ -17,13 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.15 2000/11/04 22:57:30 guus Exp $
+    $Id: connection.c,v 1.1.2.1 2000/11/20 19:12:11 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
 #include <syslog.h>
+
+#include <rbl.h>
 
 #include "net.h"	/* Don't ask. */
 #include "netutl.h"
@@ -36,14 +38,26 @@
 
 /* Root of the connection list */
 
-conn_list_t *conn_list = NULL;
-conn_list_t *myself = NULL;
+rbltree_t *connection_tree;
+connection_t *myself = NULL;
 
-/* Creation and deletion of conn_list elements */
+/* Initialization and callbacks */
 
-conn_list_t *new_conn_list(void)
+int connection_compare(connection_t *a, connection_t *b)
 {
-  conn_list_t *p = (conn_list_t *)xmalloc(sizeof(*p));
+  return strcmp(a->name, b->name);
+}
+
+void init_connections(void)
+{
+  connection_tree = new_rbltree((rbl_compare_t)connection_compare, (rbl_action_t)free_connection);
+}
+
+/* Creation and deletion of connection elements */
+
+connection_t *new_connection(void)
+{
+  connection_t *p = (connection_t *)xmalloc(sizeof(*p));
 cp
   /* initialise all those stupid pointers at once */
   memset(p, '\0', sizeof(*p));
@@ -51,7 +65,7 @@ cp
   return p;
 }
 
-void free_conn_list(conn_list_t *p)
+void free_connection(connection_t *p)
 {
 cp
   if(p->sq)
@@ -77,110 +91,83 @@ cp
 /*
   remove all marked connections
 */
-void prune_conn_list(void)
+void prune_connection_tree(void)
 {
-  conn_list_t *p, *prev = NULL, *next = NULL;
+  rbl_t *rbl;
+  connection_t *cl;
 cp
-  for(p = conn_list; p != NULL; )
+  RBL_FOREACH(connection_tree, rbl)
     {
-      next = p->next;
-
-      if(p->status.remove)
-        conn_list_del(p);
-      else
-	prev = p;
-
-      p = next;
+      cl = (connection_t *) rbl->data;
+      if(cl->status.remove)
+        connection_del(cl);
     }
 cp
 }
 
 /*
-  free all elements of conn_list
+  free all elements of connection
 */
-void destroy_conn_list(void)
+void destroy_connection_tree(void)
 {
-  conn_list_t *p, *next;
 cp
-  for(p = conn_list; p != NULL; )
-    {
-      next = p->next;
-      free_conn_list(p);
-      p = next;
-    }
-
-  conn_list = NULL;
+  rbl_delete_rbltree(connection_tree);
 cp
 }
 
 /* Linked list management */
 
-void conn_list_add(conn_list_t *cl)
+void connection_add(connection_t *cl)
 {
 cp
-  cl->next = conn_list;
-  cl->prev = NULL;
-
-  if(cl->next)
-    cl->next->prev = cl;
-
-  conn_list = cl;
+  rbl_insert(connection_tree, cl);
 cp
 }
 
-void conn_list_del(conn_list_t *cl)
+void connection_del(connection_t *cl)
 {
 cp
-  if(cl->prev)
-    cl->prev->next = cl->next;
-  else
-    conn_list = cl->next;
-  
-  if(cl->next)
-    cl->next->prev = cl->prev;
-
-  free_conn_list(cl);
+  rbl_delete(connection_tree, cl);
 cp
 }
 
 /* Lookup functions */
 
-conn_list_t *lookup_id(char *name)
+connection_t *lookup_id(char *name)
 {
-  conn_list_t *p;
+  connection_t cl;
 cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p->status.active)
-      if(strcmp(name, p->name) == 0)
-        break;
+  cl.name = name;
+  return rbl_search(connection_tree, &cl);
 cp
-  return p;
 }
 
 /* Debugging */
 
-void dump_conn_list(void)
+void dump_connection_list(void)
 {
-  conn_list_t *p;
+  rbl_t *rbl;
+  connection_t *cl;
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
   syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
-	 myself->name, myself->hostname, myself->port, myself->flags,
-	 myself->socket, myself->meta_socket, myself->status);
+         myself->name, myself->hostname, myself->port, myself->flags,
+         myself->socket, myself->meta_socket, myself->status);
 
-  for(p = conn_list; p != NULL; p = p->next)
+  RBL_FOREACH(connection_tree, rbl)
     {
+      cl = (connection_t *)rbl->data;
       syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
-	     p->name, p->hostname, p->port, p->flags,
-	     p->socket, p->meta_socket, p->status);
+             cl->name, cl->hostname, cl->port, cl->flags,
+             cl->socket, cl->meta_socket, cl->status);
     }
-
+    
   syslog(LOG_DEBUG, _("End of connection list."));
 cp
 }
 
-int read_host_config(conn_list_t *cl)
+int read_host_config(connection_t *cl)
 {
   char *fname;
   int x;

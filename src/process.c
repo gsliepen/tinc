@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.4 2000/11/17 10:03:02 guus Exp $
+    $Id: process.c,v 1.1.2.5 2000/11/20 19:12:13 guus Exp $
 */
 
 #include "config.h"
@@ -365,7 +365,7 @@ sigint_handler(int a)
 RETSIGTYPE
 sigusr1_handler(int a)
 {
-  dump_conn_list();
+  dump_connection_list();
 }
 
 RETSIGTYPE

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.21 2000/11/04 22:57:30 guus Exp $
+    $Id: conf.c,v 1.9.4.22 2000/11/20 19:12:11 guus Exp $
 */
 
 #include "config.h"
@@ -39,7 +39,6 @@
 #include <utils.h> /* for cp */
 
 #include "config.h"
-#include "connlist.h"
 #include "system.h"
 
 config_t *config = NULL;

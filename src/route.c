@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.2 2000/11/04 22:57:33 guus Exp $
+    $Id: route.c,v 1.1.2.3 2000/11/20 19:12:17 guus Exp $
 */
 
 #include "config.h"
@@ -26,13 +26,13 @@
 #include <xalloc.h>
 
 #include "net.h"
-#include "connlist.h"
+#include "connection.h"
 
 #include "system.h"
 
 int routing_mode = 0;		/* Will be used to determine if we route by MAC or by payload's protocol */
 
-conn_list_t *route_packet(vpn_packet_t *packet)
+connection_t *route_packet(vpn_packet_t *packet)
 {
   unsigned short type;
 cp
@@ -64,9 +64,9 @@ cp
      }
 }
 
-conn_list_t *route_mac(vpn_packet_t *packet)
+connection_t *route_mac(vpn_packet_t *packet)
 {
-  conn_list_t *cl;
+  connection_t *cl;
 cp
   cl = lookup_subnet_mac((mac_t *)(&packet.data[6]));
   if(!cl)
@@ -85,10 +85,10 @@ cp
 }
 
 
-conn_list_t *route_ipv4(vpn_packet_t *packet)
+connection_t *route_ipv4(vpn_packet_t *packet)
 {
   ipv4_t dest;
-  conn_list_t *cl;
+  connection_t *cl;
 cp
   dest = ntohl(*((unsigned long*)(&packet.data[30]);
   
@@ -103,7 +103,7 @@ cp
   return cl;  
 }
 
-conn_list_t *route_ipv6(vpn_packet_t *packet)
+connection_t *route_ipv6(vpn_packet_t *packet)
 {
 cp
   syslog(LOG_WARNING, _("Cannot route packet: IPv6 routing not implemented yet"));

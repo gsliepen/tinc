@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.15 2000/11/03 22:35:12 zarq Exp $
+    $Id: protocol.h,v 1.5.4.16 2000/11/20 19:12:16 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -45,31 +45,31 @@ enum {
   LAST                               /* Guardian for the highest request number */
 };
 
-extern int (*request_handlers[])(conn_list_t*);
+extern int (*request_handlers[])(connection_t*);
 
-extern int send_id(conn_list_t*);
-extern int send_challenge(conn_list_t*);
-extern int send_chal_reply(conn_list_t*);
-extern int send_metakey(conn_list_t*);
-extern int send_ack(conn_list_t*);
-extern int send_status(conn_list_t*, int, char*);
-extern int send_error(conn_list_t*, int, char*);
-extern int send_termreq(conn_list_t*);
-extern int send_ping(conn_list_t*);
-extern int send_pong(conn_list_t*);
-extern int send_add_host(conn_list_t*, conn_list_t*);
-extern int send_del_host(conn_list_t*, conn_list_t*);
-extern int send_add_subnet(conn_list_t*, subnet_t*);
-extern int send_del_subnet(conn_list_t*, subnet_t*);
-extern int send_key_changed(conn_list_t*, conn_list_t*);
-extern int send_req_key(conn_list_t*, conn_list_t*);
-extern int send_ans_key(conn_list_t*, conn_list_t*, char*);
+extern int send_id(connection_t*);
+extern int send_challenge(connection_t*);
+extern int send_chal_reply(connection_t*);
+extern int send_metakey(connection_t*);
+extern int send_ack(connection_t*);
+extern int send_status(connection_t*, int, char*);
+extern int send_error(connection_t*, int, char*);
+extern int send_termreq(connection_t*);
+extern int send_ping(connection_t*);
+extern int send_pong(connection_t*);
+extern int send_add_host(connection_t*, connection_t*);
+extern int send_del_host(connection_t*, connection_t*);
+extern int send_add_subnet(connection_t*, subnet_t*);
+extern int send_del_subnet(connection_t*, subnet_t*);
+extern int send_key_changed(connection_t*, connection_t*);
+extern int send_req_key(connection_t*, connection_t*);
+extern int send_ans_key(connection_t*, connection_t*, char*);
 
 /* Old functions */
 
-extern int send_tcppacket(conn_list_t *, void *, int);
-extern int notify_others(conn_list_t *, conn_list_t *, int (*function)(conn_list_t*, conn_list_t*));
-extern int receive_request(conn_list_t *);
+extern int send_tcppacket(connection_t *, void *, int);
+extern int notify_others(connection_t *, connection_t *, int (*function)(connection_t*, connection_t*));
+extern int receive_request(connection_t *);
 extern int check_id(char *);
 
 #endif /* __TINC_PROTOCOL_H__ */

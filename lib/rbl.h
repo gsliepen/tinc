@@ -17,8 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.h,v 1.1.2.6 2000/11/19 22:12:46 guus Exp $
+    $Id: rbl.h,v 1.1.2.7 2000/11/20 19:12:10 guus Exp $
 */
+
+#ifndef __RBL_H__
+#define __RBL_H__
+
+#define RBL_FOREACH(tree,rbl) for(rbl = tree->head; rbl; rbl = rbl->next)
 
 typedef struct rbl_t
 {
@@ -91,3 +96,5 @@ extern void rbl_delete_rbltree(rbltree_t *);
 
 extern void rbl_foreach(rbltree_t *, rbl_action_t);
 extern void rbl_foreach_rbl(rbltree_t *, rbl_action_rbl_t);
+
+#endif /* __RBL_H__ */

@@ -17,9 +17,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.7 2000/11/19 22:12:46 guus Exp $
+    $Id: rbl.c,v 1.1.2.8 2000/11/20 19:12:10 guus Exp $
 */
 
+#include <stdlib.h>
 #include <xalloc.h>
 
 #include "rbl.h"

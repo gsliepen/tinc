@@ -1,15 +1,15 @@
 ## Process this file with automake to produce Makefile.in
-# $Id: Makefile.am,v 1.2.4.2 2000/11/15 22:04:48 zarq Exp $
+# $Id: Makefile.am,v 1.2.4.3 2000/11/20 19:12:10 guus Exp $
 
 noinst_LIBRARIES = libvpn.a
 
 INCLUDES = -I. -I$(top_builddir) -I$(top_srcdir)/intl
 
-libvpn_a_SOURCES = xmalloc.c pidfile.c utils.c getopt.c getopt1.c list.c
+libvpn_a_SOURCES = xmalloc.c pidfile.c utils.c getopt.c getopt1.c list.c rbl.c
 
 libvpn_a_LIBADD = @LIBOBJS@ @ALLOCA@
 libvpn_a_DEPENDENCIES = $(libvpn_a_LIBADD)
 
-noinst_HEADERS = xalloc.h pidfile.h utils.h getopt.h list.h
+noinst_HEADERS = xalloc.h pidfile.h utils.h getopt.h list.h rbl.h
 
 EXTRA_DIST = README

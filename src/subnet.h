@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.5 2000/10/28 21:05:20 guus Exp $
+    $Id: subnet.h,v 1.1.2.6 2000/11/20 19:12:17 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -51,8 +51,8 @@ typedef struct subnet_ipv6_t
 } subnet_ipv6_t;
 
 typedef struct subnet_t {
-  struct conn_list_t *owner;		/* the owner of this subnet */
-  struct conn_list_t *uplink;		/* the uplink which we should send packets to for this subnet */
+  struct connection_t *owner;		/* the owner of this subnet */
+  struct connection_t *uplink;		/* the uplink which we should send packets to for this subnet */
 
   struct subnet_t *prev;		/* previous subnet_t for this owner */
   struct subnet_t *next;		/* next subnet_t for this owner */
@@ -73,11 +73,11 @@ typedef struct subnet_t {
     
 } subnet_t;  
 
-#include "connlist.h"
+#include "connection.h"
 
 extern subnet_t *new_subnet(void);
 extern void free_subnet(subnet_t *);
-extern void subnet_add(struct conn_list_t *, subnet_t *);
+extern void subnet_add(struct connection_t *, subnet_t *);
 extern void subnet_del(subnet_t *);
 extern char *net2str(subnet_t *);
 extern subnet_t *str2net(char *);

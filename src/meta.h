@@ -17,16 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.h,v 1.1.2.3 2000/10/11 10:35:16 guus Exp $
+    $Id: meta.h,v 1.1.2.4 2000/11/20 19:12:12 guus Exp $
 */
 
 #ifndef __TINC_META_H__
 #define __TINC_META_H__
 
-#include "net.h"
+#include "connection.h"
 
-extern int send_meta(conn_list_t *, const char *, int);
-extern int broadcast_meta(conn_list_t *, const char *, int);
-extern int receive_meta(conn_list_t *);
+extern int send_meta(connection_t *, const char *, int);
+extern int broadcast_meta(connection_t *, const char *, int);
+extern int receive_meta(connection_t *);
 
 #endif /* __TINC_META_H__ */

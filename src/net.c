@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.76 2000/11/16 22:11:40 zarq Exp $
+    $Id: net.c,v 1.35.4.77 2000/11/20 19:12:12 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,7 @@
 #include <xalloc.h>
 
 #include "conf.h"
-#include "connlist.h"
+#include "connection.h"
 #include "list.h"
 #include "meta.h"
 #include "net.h"
@@ -95,7 +95,7 @@ char *unknown = NULL;
 
 subnet_t mymac;
 
-int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
+int xsend(connection_t *cl, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
@@ -131,7 +131,7 @@ cp
   return 0;
 }
 
-int xrecv(conn_list_t *cl, vpn_packet_t *inpkt)
+int xrecv(connection_t *cl, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
@@ -254,8 +254,8 @@ cp
   each packet, and removing it when that
   returned a zero exit code
 */
-void flush_queue(conn_list_t *cl, packet_queue_t **pq,
-		 int (*function)(conn_list_t*,vpn_packet_t*))
+void flush_queue(connection_t *cl, packet_queue_t **pq,
+		 int (*function)(connection_t*,vpn_packet_t*))
 {
   queue_element_t *p, *next = NULL;
 cp
@@ -279,7 +279,7 @@ cp
   void because nothing goes wrong here, packets
   remain in the queue if something goes wrong
 */
-void flush_queues(conn_list_t *cl)
+void flush_queues(connection_t *cl)
 {
 cp
   if(cl->sq)
@@ -305,7 +305,7 @@ cp
 */
 int send_packet(ip_t to, vpn_packet_t *packet)
 {
-  conn_list_t *cl;
+  connection_t *cl;
   subnet_t *subnet;
 cp
   if((subnet = lookup_subnet_ipv4(to)) == NULL)
@@ -384,6 +384,9 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
+#ifdef HAVE_TUNTAP
+  struct ifreq ifr;
+#endif
 
 cp  
   if((cfg = get_config_val(config, config_tapdevice)))
@@ -563,7 +566,7 @@ cp
 /*
   setup an outgoing meta (tcp) socket
 */
-int setup_outgoing_meta_socket(conn_list_t *cl)
+int setup_outgoing_meta_socket(connection_t *cl)
 {
   int flags;
   struct sockaddr_in a;
@@ -623,7 +626,7 @@ cp
 */
 int setup_outgoing_connection(char *name)
 {
-  conn_list_t *ncn;
+  connection_t *ncn;
   struct hostent *h;
   config_t const *cfg;
 cp
@@ -633,27 +636,27 @@ cp
       return -1;
     }
 
-  ncn = new_conn_list();
+  ncn = new_connection();
   asprintf(&ncn->name, "%s", name);
     
   if(read_host_config(ncn))
     {
       syslog(LOG_ERR, _("Error reading host configuration file for %s"));
-      free_conn_list(ncn);
+      free_connection(ncn);
       return -1;
     }
     
   if(!(cfg = get_config_val(ncn->config, config_address)))
     {
       syslog(LOG_ERR, _("No address specified for %s"));
-      free_conn_list(ncn);
+      free_connection(ncn);
       return -1;
     }
     
   if(!(h = gethostbyname(cfg->data.ptr)))
     {
       syslog(LOG_ERR, _("Error looking up `%s': %m"), cfg->data.ptr);
-      free_conn_list(ncn);
+      free_connection(ncn);
       return -1;
     }
 
@@ -664,7 +667,7 @@ cp
     {
       syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
              ncn->hostname);
-      free_conn_list(ncn);
+      free_connection(ncn);
       return -1;
     }
 
@@ -673,7 +676,7 @@ cp
   ncn->buflen = 0;
   ncn->last_ping_time = time(NULL);
 
-  conn_list_add(ncn);
+  connection_add(ncn);
 
   send_id(ncn);
 cp
@@ -681,7 +684,7 @@ cp
 }
 
 /*
-  Configure conn_list_t myself and set up the local sockets (listen only)
+  Configure connection_t myself and set up the local sockets (listen only)
 */
 int setup_myself(void)
 {
@@ -689,7 +692,7 @@ int setup_myself(void)
   config_t *next;
   subnet_t *net;
 cp
-  myself = new_conn_list();
+  myself = new_connection();
 
   asprintf(&myself->hostname, "MYSELF"); /* FIXME? Do hostlookup on ourselves? */
   myself->flags = 0;
@@ -895,10 +898,12 @@ cp
 */
 void close_network_connections(void)
 {
-  conn_list_t *p;
+  rbl_t *rbl;
+  connection_t *p;
 cp
-  for(p = conn_list; p != NULL; p = p->next)
+  RBL_FOREACH(connection_tree, rbl)
     {
+      p = (connection_t *)rbl->data;
       p->status.active = 0;
       terminate_connection(p);
     }
@@ -907,7 +912,7 @@ cp
     if(myself->status.active)
       {
 	close(myself->meta_socket);
-        free_conn_list(myself);
+        free_connection(myself);
         myself = NULL;
       }
 
@@ -916,7 +921,7 @@ cp
   /* Execute tinc-down script right after shutting down the interface */
   execute_script("tinc-down");
 
-  destroy_conn_list();
+  destroy_connection_tree();
 
   syslog(LOG_NOTICE, _("Terminating"));
 cp
@@ -926,7 +931,7 @@ cp
 /*
   create a data (udp) socket
 */
-int setup_vpn_connection(conn_list_t *cl)
+int setup_vpn_connection(connection_t *cl)
 {
   int nfd, flags;
   struct sockaddr_in a;
@@ -1002,13 +1007,13 @@ cp
   handle an incoming tcp connect call and open
   a connection to it.
 */
-conn_list_t *create_new_connection(int sfd)
+connection_t *create_new_connection(int sfd)
 {
-  conn_list_t *p;
+  connection_t *p;
   struct sockaddr_in ci;
   int len = sizeof(ci);
 cp
-  p = new_conn_list();
+  p = new_connection();
 
   if(getpeername(sfd, (struct sockaddr *) &ci, (socklen_t *) &len) < 0)
     {
@@ -1040,16 +1045,18 @@ cp
 */
 void build_fdset(fd_set *fs)
 {
-  conn_list_t *p;
+  rbl_t *rbl;
+  connection_t *p;
 cp
   FD_ZERO(fs);
 
-  for(p = conn_list; p != NULL; p = p->next)
+  RBL_FOREACH(connection_tree, rbl)
     {
+      p = (connection_t *)rbl->data;
       if(p->status.meta)
-	FD_SET(p->meta_socket, fs);
+        FD_SET(p->meta_socket, fs);
       if(p->status.dataopen)
-	FD_SET(p->socket, fs);
+        FD_SET(p->socket, fs);
     }
 
   FD_SET(myself->meta_socket, fs);
@@ -1062,7 +1069,7 @@ cp
   udp socket and write it to the ethertap
   device after being decrypted
 */
-int handle_incoming_vpn_data(conn_list_t *cl)
+int handle_incoming_vpn_data(connection_t *cl)
 {
   vpn_packet_t pkt;
   int x, l = sizeof(x);
@@ -1100,10 +1107,12 @@ cp
   terminate a connection and notify the other
   end before closing the sockets
 */
-void terminate_connection(conn_list_t *cl)
+void terminate_connection(connection_t *cl)
 {
-  conn_list_t *p;
+  connection_t *p;
   subnet_t *s;
+  rbl_t *rbl;
+
 cp
   if(cl->status.remove)
     return;
@@ -1124,21 +1133,26 @@ cp
      (the connection that was dropped). */
 
   if(cl->status.meta)
-    for(p = conn_list; p != NULL; p = p->next)
-      if((p->nexthop == cl) && (p != cl))
-        terminate_connection(p);	/* Sounds like recursion, but p does not have a meta connection :) */
+    RBL_FOREACH(connection_tree, rbl)
+      {
+        p = (connection_t *)rbl->data;
+        if(p->nexthop == cl && p != cl)
+          terminate_connection(p);
+      }
 
   /* Inform others of termination if it was still active */
 
   if(cl->status.active)
-    for(p = conn_list; p != NULL; p = p->next)
-      if(p->status.meta && p->status.active && p!=cl)
-        send_del_host(p, cl);
+    RBL_FOREACH(connection_tree, rbl)
+      {
+        p = (connection_t *)rbl->data;
+        if(p->status.meta && p->status.active && p!=cl)
+          send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
+      }
 
   /* Remove the associated subnets */
 
-  for(s = cl->subnets; s; s = s->next)
-    subnet_del(s);
+  rbl_delete_rbltree(cl->subnet_tree);
 
   /* Check if this was our outgoing connection */
     
@@ -1164,35 +1178,37 @@ cp
   end does not reply in time, we consider them dead
   and close the connection.
 */
-int check_dead_connections(void)
+void check_dead_connections(void)
 {
-  conn_list_t *p;
   time_t now;
+  rbl_t *rbl;
+  connection_t *cl;
 cp
   now = time(NULL);
-  for(p = conn_list; p != NULL; p = p->next)
+
+  RBL_FOREACH(connection_tree, rbl)
     {
-      if(p->status.active && p->status.meta)
-	{
-          if(p->last_ping_time + timeout < now)
+      cl = (connection_t *)rbl->data;
+      if(cl->status.active && cl->status.meta)
+        {
+          if(cl->last_ping_time + timeout < now)
             {
-              if(p->status.pinged)
+              if(cl->status.pinged)
                 {
                   if(debug_lvl >= DEBUG_PROTOCOL)
   	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
-		           p->name, p->hostname);
-	          p->status.timeout = 1;
-	          terminate_connection(p);
+		           cl->name, cl->hostname);
+	          cl->status.timeout = 1;
+	          terminate_connection(cl);
                 }
               else
                 {
-                  send_ping(p);
+                  send_ping(cl);
                 }
             }
-	}
+        }
     }
 cp
-  return 0;
 }
 
 /*
@@ -1201,7 +1217,7 @@ cp
 */
 int handle_new_meta_connection()
 {
-  conn_list_t *ncn;
+  connection_t *ncn;
   struct sockaddr client;
   int nfd, len = sizeof(client);
 cp
@@ -1219,7 +1235,7 @@ cp
       return 0;
     }
 
-  conn_list_add(ncn);
+  connection_add(ncn);
 cp
   return 0;
 }
@@ -1230,12 +1246,15 @@ cp
 */
 void check_network_activity(fd_set *f)
 {
-  conn_list_t *p;
+  connection_t *p;
+  rbl_t *rbl;
 cp
-  for(p = conn_list; p != NULL; p = p->next)
+  RBL_FOREACH(connection_tree, rbl)
     {
+      p = (connection_t *)rbl->data;
+
       if(p->status.remove)
-	continue;
+	return;
 
       if(p->status.dataopen)
 	if(FD_ISSET(p->socket, f))
@@ -1260,7 +1279,7 @@ cp
 	      return;
 	    } 
     }
-  
+    
   if(FD_ISSET(myself->meta_socket, f))
     handle_new_meta_connection();
 cp
@@ -1330,7 +1349,7 @@ cp
       tv.tv_sec = timeout;
       tv.tv_usec = 0;
 
-      prune_conn_list();
+      prune_connection_tree();
       build_fdset(&fset);
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.11 2000/11/15 13:33:25 guus Exp $
+    $Id: meta.c,v 1.1.2.12 2000/11/20 19:12:12 guus Exp $
 */
 
 #include "config.h"
@@ -38,10 +38,11 @@
 #endif
 
 #include "net.h"
+#include "connection.h"
 #include "system.h"
 #include "protocol.h"
 
-int send_meta(conn_list_t *cl, char *buffer, int length)
+int send_meta(connection_t *cl, char *buffer, int length)
 {
   char outbuf[MAXBUFSIZE];
   char *bufp;
@@ -71,18 +72,21 @@ cp
   return 0;
 }
 
-int broadcast_meta(conn_list_t *cl, char *buffer, int length)
+void broadcast_meta(connection_t *cl, char *buffer, int length)
 {
-  conn_list_t *p;
+  rbl_t *rbl;
+  connection_t *p;
 cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p != cl && p->status.meta && p->status.active)
-      send_meta(p, buffer, length);
+  RBL_FOREACH(connection_tree, rbl)
+    {
+      p = (connection_t *)rbl->data;
+      if(p != cl && p->status.meta && p->status.active)
+        send_meta(p, buffer, length);
+    }
 cp
-  return 0;
 }
 
-int receive_meta(conn_list_t *cl)
+int receive_meta(connection_t *cl)
 {
   int x, l = sizeof(x);
   int oldlen, i;

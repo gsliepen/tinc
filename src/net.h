@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.21 2000/11/04 22:57:31 guus Exp $
+    $Id: net.h,v 1.9.4.22 2000/11/20 19:12:13 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -107,7 +107,7 @@ extern char *unknown;
 extern char *request_name[256];
 extern char *status_text[10];
 
-#include "connlist.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
+#include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
 extern int str2opt(const char *);
 extern char *opt2str(int);
@@ -115,9 +115,9 @@ extern int send_packet(ip_t, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
-extern int setup_vpn_connection(conn_list_t *);
-extern void terminate_connection(conn_list_t *);
-extern void flush_queues(conn_list_t *);
+extern int setup_vpn_connection(connection_t *);
+extern void terminate_connection(connection_t *);
+extern void flush_queues(connection_t *);
 extern void add_queue(packet_queue_t **, void *, size_t);
 
 #endif /* __TINC_NET_H__ */

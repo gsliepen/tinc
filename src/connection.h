@@ -1,5 +1,5 @@
 /*
-    connlist.h -- header for connlist.c
+    connection.h -- header for connection.c
     Copyright (C) 2000 Guus Sliepen <guus@sliepen.warande.net>,
                   2000 Ivo Timmermans <itimmermans@bigfoot.com>
 
@@ -17,11 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.13 2000/11/15 01:06:10 zarq Exp $
+    $Id: connection.h,v 1.1.2.1 2000/11/20 19:12:11 guus Exp $
 */
 
-#ifndef __TINC_CONNLIST_H__
-#define __TINC_CONNLIST_H__
+#ifndef __TINC_CONNECTION_H__
+#define __TINC_CONNECTION_H__
+
+#include <rbl.h>
 
 #include "config.h"
 
@@ -60,7 +62,7 @@ typedef struct option_bits_t {
   int unused:32;
 } option_bits_t;
 
-typedef struct conn_list_t {
+typedef struct connection_t {
   char *name;                      /* name of this connection */
   ipv4_t address;                  /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
@@ -96,29 +98,25 @@ typedef struct conn_list_t {
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */
 
-  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
+  struct connection_t *nexthop;    /* nearest meta-hop in this direction */
   
-  struct subnet_t *subnets;        /* Pointer to a list of subnets belonging to this connection */
+  rbltree_t *subnet_tree;          /* Pointer to a tree of subnets belonging to this connection */
 
   struct config_t *config;         /* Pointer to configuration tree belonging to this host */
+} connection_t;
 
-  struct conn_list_t *next;        /* after all, it's a list of connections */
-  struct conn_list_t *prev;        /* doubly linked for O(1) deletions */
-} conn_list_t;
+extern rbltree_t *connection_tree;
+extern connection_t *myself;
 
-#include "subnet.h"
+extern void init_connections(void);
+extern connection_t *new_connection(void);
+extern void free_connection(connection_t *);
+extern void connection_add(connection_t *);
+extern void connection_del(connection_t *);
+extern connection_t *lookup_id(char *);
+extern void dump_connection_list(void);
+extern int read_host_config(connection_t *);
+extern void destroy_connection(void);
+extern void prune_connection_tree(void);
 
-extern conn_list_t *conn_list;
-extern conn_list_t *myself;
-
-extern conn_list_t *new_conn_list();
-extern void free_conn_list(conn_list_t *);
-extern void conn_list_add(conn_list_t *);
-extern void conn_list_del(conn_list_t *);
-extern conn_list_t *lookup_id(char *);
-extern void dump_conn_list(void);
-extern int read_host_config(conn_list_t *);
-extern void destroy_conn_list(void);
-extern void prune_conn_list(void);
-
-#endif /* __TINC_CONNLIST_H__ */
+#endif /* __TINC_CONNECTION_H__ */

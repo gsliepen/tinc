@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.61 2000/11/15 13:33:27 guus Exp $
+    $Id: protocol.c,v 1.28.4.62 2000/11/20 19:12:13 guus Exp $
 */
 
 #include "config.h"
@@ -61,7 +61,7 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "meta.h"
-#include "connlist.h"
+#include "connection.h"
 
 #include "system.h"
 
@@ -78,7 +78,7 @@ int check_id(char *id)
 
 /* Generic request routines - takes care of logging and error detection as well */
 
-int send_request(conn_list_t *cl, const char *format, ...)
+int send_request(connection_t *cl, const char *format, ...)
 {
   va_list args;
   char buffer[MAXBUFSIZE];
@@ -108,7 +108,7 @@ cp
   return send_meta(cl, buffer, len);
 }
 
-int receive_request(conn_list_t *cl)
+int receive_request(connection_t *cl)
 {
   int request;
 cp  
@@ -179,7 +179,7 @@ cp
    forge the key for the symmetric cipher.
 */
 
-int send_id(conn_list_t *cl)
+int send_id(connection_t *cl)
 {
 cp
   cl->allow_request = CHALLENGE;
@@ -187,9 +187,9 @@ cp
   return send_request(cl, "%d %s %d %lx %hd", ID, myself->name, myself->protocol_version, myself->options, myself->port);
 }
 
-int id_h(conn_list_t *cl)
+int id_h(connection_t *cl)
 {
-  conn_list_t *old;
+  connection_t *old;
   config_t const *cfg;
 cp
   if(sscanf(cl->buffer, "%*d %as %d %lx %hd", &cl->name, &cl->protocol_version, &cl->options, &cl->port) != 4)
@@ -256,7 +256,7 @@ cp
   return send_challenge(cl);
 }
 
-int send_challenge(conn_list_t *cl)
+int send_challenge(connection_t *cl)
 {
   char *buffer;
   int len, x;
@@ -308,7 +308,7 @@ cp
   return x;
 }
 
-int challenge_h(conn_list_t *cl)
+int challenge_h(connection_t *cl)
 {
   char *buffer;
   int len;
@@ -362,7 +362,7 @@ cp
   return send_chal_reply(cl);
 }
 
-int send_chal_reply(conn_list_t *cl)
+int send_chal_reply(connection_t *cl)
 {
   char hash[SHA_DIGEST_LENGTH*2+1];
 cp
@@ -392,7 +392,7 @@ cp
   return send_request(cl, "%d %s", CHAL_REPLY, hash);
 }
 
-int chal_reply_h(conn_list_t *cl)
+int chal_reply_h(connection_t *cl)
 {
   char *hishash;
   char myhash[SHA_DIGEST_LENGTH];
@@ -450,7 +450,7 @@ cp
       return send_id(cl);
 }
 
-int send_metakey(conn_list_t *cl)
+int send_metakey(connection_t *cl)
 {
   char *buffer;
   int len, x;
@@ -509,7 +509,7 @@ cp
   return x;
 }
 
-int metakey_h(conn_list_t *cl)
+int metakey_h(connection_t *cl)
 {
   char *buffer;
   int len;
@@ -570,7 +570,7 @@ cp
     return send_metakey(cl);
 }
 
-int send_ack(conn_list_t *cl)
+int send_ack(connection_t *cl)
 {
   int x;
 cp
@@ -585,10 +585,11 @@ cp
   return x;
 }
 
-int ack_h(conn_list_t *cl)
+int ack_h(connection_t *cl)
 {
-  conn_list_t *old, *p;
-  subnet_t *s;
+  connection_t *old, *p;
+  subnet_t *subnet;
+  rbl_t *rbl, *rbl2;
 cp
   /* Okay, before we active the connection, we check if there is another entry
      in the connection list with the same name. If so, it presumably is an
@@ -622,33 +623,42 @@ cp
 
   /* Send him our subnets */
   
-  for(s = myself->subnets; s; s = s->next)
-    send_add_subnet(cl, s);
-
+  RBL_FOREACH(myself->subnet_tree, rbl)
+    {
+      subnet = (subnet_t *)rbl->data;
+      send_add_subnet(cl, subnet);
+    }
   /* And send him all the hosts and their subnets we know... */
   
-  for(p = conn_list; p; p = p->next)
-    if(p != cl && p->status.active)
-      {
-        /* Notify others of this connection */
-  
-        if(p->status.meta)
-          send_add_host(p, cl);
+  RBL_FOREACH(connection_tree, rbl)
+    {
+      p = (connection_t *)rbl->data;
+      
+      if(p != cl && p->status.active)
+        {
+          /* Notify others of this connection */
 
-        /* Notify new connection of everything we know */
+          if(p->status.meta)
+            send_add_host(p, cl);
 
-        send_add_host(cl, p);
-        
-        for(s = p->subnets; s; s = s->next)
-          send_add_subnet(cl, s);
-      }
+          /* Notify new connection of everything we know */
+
+          send_add_host(cl, p);
+
+          RBL_FOREACH(p->subnet_tree, rbl2)
+            {
+              subnet = (subnet_t *)rbl2->data;
+              send_add_subnet(cl, subnet);
+            }
+        }
+    }  
 cp
   return 0;
 }
 
 /* Address and subnet information exchange */
 
-int send_add_subnet(conn_list_t *cl, subnet_t *subnet)
+int send_add_subnet(connection_t *cl, subnet_t *subnet)
 {
   int x;
   char *netstr;
@@ -660,12 +670,13 @@ cp
   return x;
 }
 
-int add_subnet_h(conn_list_t *cl)
+int add_subnet_h(connection_t *cl)
 {
   char *subnetstr;
   char *name;
-  conn_list_t *owner, *p;
+  connection_t *owner, *p;
   subnet_t *subnet;
+  rbl_t *rbl;
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 2)
     {
@@ -721,14 +732,17 @@ cp
 
   /* Tell the rest */
   
-  for(p = conn_list; p; p = p->next)
-    if(p->status.meta && p->status.active && p!= cl)
-      send_add_subnet(p, subnet);
+  RBL_FOREACH(connection_tree, rbl)
+    {
+      p = (connection_t *)rbl->data;
+      if(p->status.meta && p->status.active && p!= cl)
+        send_add_subnet(p, subnet);
+    }
 cp
   return 0;
 }
 
-int send_del_subnet(conn_list_t *cl, subnet_t *subnet)
+int send_del_subnet(connection_t *cl, subnet_t *subnet)
 {
   int x;
   char *netstr;
@@ -740,12 +754,13 @@ cp
   return x;
 }
 
-int del_subnet_h(conn_list_t *cl)
+int del_subnet_h(connection_t *cl)
 {
   char *subnetstr;
   char *name;
-  conn_list_t *owner, *p;
+  connection_t *owner, *p;
   subnet_t *subnet;
+  rbl_t *rbl;
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 3)
     {
@@ -801,29 +816,31 @@ cp
 
   /* Tell the rest */
   
-  for(p = conn_list; p; p = p->next)
-    if(p->status.meta && p->status.active && p!= cl)
-      send_del_subnet(p, subnet);
+  RBL_FOREACH(connection_tree, rbl)
+    {
+      p = (connection_t *)rbl->data;
+      if(p->status.meta && p->status.active && p!= cl)
+        send_del_subnet(p, subnet);
+    }
 cp
   return 0;
 }
 
 /* New and closed connections notification */
 
-int send_add_host(conn_list_t *cl, conn_list_t *other)
+int send_add_host(connection_t *cl, connection_t *other)
 {
 cp
   return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
                       other->name, other->address, other->port, other->options);
 }
 
-int add_host_h(conn_list_t *cl)
+int add_host_h(connection_t *cl)
 {
-  conn_list_t *old, *new;
-  conn_list_t *p;
-
+  connection_t *old, *new, *p;
+  rbl_t *rbl;
 cp
-  new = new_conn_list();
+  new = new_connection();
 
   if(sscanf(cl->buffer, "%*d %as %lx:%d %lx", &new->name, &new->address, &new->port, &new->options) != 4)
     {
@@ -836,7 +853,7 @@ cp
   if(check_id(new->name))
     {
       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid identity name"), cl->name, cl->hostname);
-      free_conn_list(new);
+      free_connection(new);
       return -1;
     }
 
@@ -846,11 +863,11 @@ cp
     {
       syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"), cl->name, cl->hostname);
       sighup = 1;
-      free_conn_list(new);
+      free_connection(new);
       return 0;
     }
     
-  /* Fill in more of the new conn_list structure */
+  /* Fill in more of the new connection structure */
 
   new->hostname = hostlookup(htonl(new->address));
 
@@ -863,7 +880,7 @@ cp
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
                    old->name, old->hostname, new->name, new->hostname);
-          free_conn_list(new);
+          free_connection(new);
           return 0;
         }
       else
@@ -876,17 +893,20 @@ cp
         }
     }
 
-  /* Hook it up into the conn_list */
+  /* Hook it up into the connection */
 
-  conn_list_add(new);
+  connection_add(new);
 
   /* Tell the rest about the new host */
 
-  for(p = conn_list; p; p = p->next)
-    if(p->status.meta && p->status.active && p!=cl)
-      send_add_host(p, new);
+  RBL_FOREACH(connection_tree, rbl)
+    {
+      p = (connection_t *)rbl->data;
+      if(p->status.meta && p->status.active && p!=cl)
+        send_add_host(p, new);
+    }
 
-  /* Fill in rest of conn_list structure */
+  /* Fill in rest of connection structure */
 
   new->nexthop = cl;
   new->status.active = 1;
@@ -902,20 +922,21 @@ cp
   return 0;
 }
 
-int send_del_host(conn_list_t *cl, conn_list_t *other)
+int send_del_host(connection_t *cl, connection_t *other)
 {
 cp
   return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
                       other->name, other->address, other->port, other->options);
 }
 
-int del_host_h(conn_list_t *cl)
+int del_host_h(connection_t *cl)
 {
   char *name;
   ip_t address;
   port_t port;
   long int options;
-  conn_list_t *old, *p;
+  connection_t *old, *p;
+  rbl_t *rbl;
 cp
   if(sscanf(cl->buffer, "%*d %as %lx:%d %lx", &name, &address, &port, &options) != 4)
     {
@@ -969,16 +990,19 @@ cp
 
   /* Tell the rest about the new host */
 
-  for(p = conn_list; p; p = p->next)
-    if(p->status.meta && p->status.active && p!=cl)
-      send_del_host(p, old);
+  RBL_FOREACH(connection_tree, rbl)
+    {
+      p = (connection_t *)rbl->data;
+      if(p->status.meta && p->status.active && p!=cl)
+        send_del_host(p, old);
+    }
 cp
   return 0;
 }
 
 /* Status and error notification routines */
 
-int send_status(conn_list_t *cl, int statusno, char *statusstring)
+int send_status(connection_t *cl, int statusno, char *statusstring)
 {
 cp
   if(!statusstring)
@@ -987,7 +1011,7 @@ cp
   return send_request(cl, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-int status_h(conn_list_t *cl)
+int status_h(connection_t *cl)
 {
   int statusno;
   char *statusstring;
@@ -1010,7 +1034,7 @@ cp
   return 0;
 }
 
-int send_error(conn_list_t *cl, int errno, char *errstring)
+int send_error(connection_t *cl, int errno, char *errstring)
 {
 cp
   if(!errstring)
@@ -1018,7 +1042,7 @@ cp
   return send_request(cl, "%d %d %s", ERROR, errno, errstring);
 }
 
-int error_h(conn_list_t *cl)
+int error_h(connection_t *cl)
 {
   int errno;
   char *errorstring;
@@ -1042,13 +1066,13 @@ cp
   return 0;
 }
 
-int send_termreq(conn_list_t *cl)
+int send_termreq(connection_t *cl)
 {
 cp
   return send_request(cl, "%d", TERMREQ);
 }
 
-int termreq_h(conn_list_t *cl)
+int termreq_h(connection_t *cl)
 {
 cp
   terminate_connection(cl);
@@ -1058,7 +1082,7 @@ cp
 
 /* Keepalive routines - FIXME: needs a closer look */
 
-int send_ping(conn_list_t *cl)
+int send_ping(connection_t *cl)
 {
 cp
   cl->status.pinged = 1;
@@ -1067,19 +1091,19 @@ cp
   return send_request(cl, "%d", PING);
 }
 
-int ping_h(conn_list_t *cl)
+int ping_h(connection_t *cl)
 {
 cp
   return send_pong(cl);
 }
 
-int send_pong(conn_list_t *cl)
+int send_pong(connection_t *cl)
 {
 cp
   return send_request(cl, "%d", PONG);
 }
 
-int pong_h(conn_list_t *cl)
+int pong_h(connection_t *cl)
 {
 cp
   cl->status.pinged = 0;
@@ -1089,24 +1113,25 @@ cp
 
 /* Key exchange */
 
-int send_key_changed(conn_list_t *from, conn_list_t *cl)
+int send_key_changed(connection_t *from, connection_t *cl)
 {
-  conn_list_t *p;
+  connection_t *p;
+  rbl_t *rbl;
 cp
-  for(p = conn_list; p != NULL; p = p->next)
+  RBL_FOREACH(connection_tree, rbl)
     {
-      if(p!=cl && p->status.meta && p->status.active)
-        send_request(p, "%d %s", KEY_CHANGED,
-                     from->name);
+      p = (connection_t *)rbl->data;
+      if(p != cl && p->status.meta && p->status.active)
+        send_request(p, "%d %s", KEY_CHANGED, from->name);
     }
 cp
   return 0;
 }
 
-int key_changed_h(conn_list_t *cl)
+int key_changed_h(connection_t *cl)
 {
   char *from_id;
-  conn_list_t *from;
+  connection_t *from;
 cp
   if(sscanf(cl->buffer, "%*d %as", &from_id) != 1)
     {
@@ -1133,17 +1158,17 @@ cp
   return 0;
 }
 
-int send_req_key(conn_list_t *from, conn_list_t *to)
+int send_req_key(connection_t *from, connection_t *to)
 {
 cp
   return send_request(to->nexthop, "%d %s %s", REQ_KEY,
                       from->name, to->name);
 }
 
-int req_key_h(conn_list_t *cl)
+int req_key_h(connection_t *cl)
 {
   char *from_id, *to_id;
-  conn_list_t *from, *to;
+  connection_t *from, *to;
   char pktkey[129];
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &from_id, &to_id) != 2)
@@ -1194,18 +1219,18 @@ cp
   return 0;
 }
 
-int send_ans_key(conn_list_t *from, conn_list_t *to, char *pktkey)
+int send_ans_key(connection_t *from, connection_t *to, char *pktkey)
 {
 cp
   return send_request(to->nexthop, "%d %s %s %s", ANS_KEY,
                       from->name, to->name, pktkey);
 }
 
-int ans_key_h(conn_list_t *cl)
+int ans_key_h(connection_t *cl)
 {
   char *from_id, *to_id, *pktkey;
   int keylength;
-  conn_list_t *from, *to;
+  connection_t *from, *to;
 cp
   if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &pktkey) != 3)
     {
@@ -1268,7 +1293,7 @@ cp
 
 /* Jumptable for the request handlers */
 
-int (*request_handlers[])(conn_list_t*) = {
+int (*request_handlers[])(connection_t*) = {
   id_h, challenge_h, chal_reply_h, metakey_h, ack_h,
   status_h, error_h, termreq_h,
   ping_h, pong_h,
