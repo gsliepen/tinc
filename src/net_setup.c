@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.35 2003/07/17 15:06:26 guus Exp $
+    $Id: net_setup.c,v 1.1.2.36 2003/07/18 13:45:06 guus Exp $
 */
 
 #include "system.h"
@@ -525,7 +525,7 @@ int setup_network_connections(void)
 	/* Run tinc-up script to further initialize the tap interface */
 	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", interface ? : "");
+	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	asprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
@@ -577,7 +577,7 @@ void close_network_connections(void)
 
 	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", interface ? : "");
+	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	asprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.28 2003/07/18 13:41:35 guus Exp $
+    $Id: net_socket.c,v 1.1.2.29 2003/07/18 13:45:06 guus Exp $
 */
 
 #include "system.h"
@@ -48,7 +48,7 @@ int setup_listen_socket(sockaddr_t *sa)
 	int nfd, flags;
 	char *addrstr;
 	int option;
-	char *interface;
+	char *iface;
 	struct ifreq ifr;
 
 	cp();
@@ -84,14 +84,14 @@ int setup_listen_socket(sockaddr_t *sa)
 #endif
 
 	if(get_config_string
-	   (lookup_config(config_tree, "BindToInterface"), &interface)) {
+	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
+		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
 			close(nfd);
-			logger(LOG_ERR, _("Can't bind to interface %s: %s"), interface,
+			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 				   strerror(errno));
 			return -1;
 		}
@@ -125,7 +125,7 @@ int setup_vpn_in_socket(sockaddr_t *sa)
 	char *addrstr;
 	int option;
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
-	char *interface;
+	char *iface;
 	struct ifreq ifr;
 #endif
 
@@ -151,13 +151,13 @@ int setup_vpn_in_socket(sockaddr_t *sa)
 
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 	if(get_config_string
-	   (lookup_config(config_tree, "BindToInterface"), &interface)) {
+	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
 		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
+		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
 			close(nfd);
-			logger(LOG_ERR, _("Can't bind to interface %s: %s"), interface,
+			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 				   strerror(errno));
 			return -1;
 		}
