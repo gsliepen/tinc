@@ -9,24 +9,25 @@ tinc \- tinc VPN daemon
 
 This is the daemon of tinc, a secure virtual private
 network (VPN) project. When started, tincd will read
-it's configuration file to determine what virtual subnet
+it's configuration file to determine what virtual subnets
 it has to serve and to what other tinc daemons it should connect.
-It will connect to the ethertap device and set up a socket for incomming
-connections.
+It will connect to the ethertap or tun/tap device and set up a socket
+for incomming connections.
 If that succeeds, it will detach from the controlling terminal and
 continue in the background, accepting and setting up connections to other
 tinc daemons that are part of the virtual private network.
 
 .SH OPTIONS
 .TP
-\fB\-c\fR, \fB\-\-config\fR=\fIFILE\fR
-Read configuration options from FILE.
+\fB\-c\fR, \fB\-\-config\fR=\fIDIR\fR
+Read configuration options from DIR.
 .TP
 \fB\-D\fR, \fB\-\-no\-detach\fR
-Don't fork and detach.
+Don't fork and detach. This will also disable the automatic
+restart mechanism for fatal errors.
 .TP
 \fB\-d\fR
-Increase debug level.
+Increase debug level (see below).
 .TP
 \fB\-k\fR, \fB\-\-kill\fR
 Attempt to kill a running tincd and exit.
@@ -34,11 +35,12 @@ Attempt to kill a running tincd and exit.
 \fB\-n\fR, \fB\-\-net\fR=\fINETNAME\fR
 Connect to net NETNAME.
 .TP
-\fB\-t\fR, \fB\-\-timeout\fR=\fITIMEOUT\fR
-Seconds to wait before giving a timeout.
+\fB\-K\fR, \fB\-\-generate-key\fR[=\fIBITS]\fR
+Generate public/private RSA keypair and exit. If BITS is omitted,
+the default length will be 1024 bits.
 .TP
 \fB\-\-help\fR
-Display this help and exit.
+Display short list of options.
 .TP
 \fB\-\-version\fR
 Output version information and exit.
@@ -55,7 +57,7 @@ Closes all connections and quits.
 Dumps the connection list to syslog.
 .TP
 \fBUSR2\fR
-Invalidates the current cryptographic key and generates a new one.
+Dumps the subnet list to syslog.
 .TP
 \fBALRM\fR
 Forces tincd to try to connect to an uplink immediately. Usually tincd attempts
@@ -75,24 +77,28 @@ It will also any serious error.
 \fB\-d\fR
 This will log all connections that are made with other tinc daemons.
 .TP
-\fB\-d \-d\fR
+\fB\-dd\fR
+This will log status and error messages from other tinc daemons.
+.TP
+\fB\-ddd\fR
 This will log all requests that are exchanged with other tinc daemons. These include
 authentication, key exchange and connection list updates.
 .TP
-\fB\-d \-d \-d\fR
+\fB\-dddd\fR
 This will log a copy of everything received on the meta socket.
 .TP
-\fB\-d \-d \-d \-d\fR
-This will log all packets that are sent over the virtual private network.
+\fB\-ddddd\fR
+This will log all network traffic over the virtual private network.
 .PP
 .SH "FILES"
 .TP
 \fI/etc/tinc/<NETNAME>/tinc.conf\fR
-The configuration file for tincd.
+The configuration file for tincd. This should also contain the private RSA key.
 .TP
-\fI/etc/tinc/<NETNAME>/passphrases/*\fR
-The directory containing the secret passphrases
-used to authenticate other tinc daemons.
+\fI/etc/tinc/<NETNAME>/hosts/*\fR
+The directory containing the host configuration files
+used to authenticate other tinc daemons. They contain
+the public RSA keys of other hosts.
 .PP
 .SH "BUGS"
 Maintaining a connection list on each tinc daemon that can connect and disconnect at any
@@ -100,13 +106,15 @@ moment, and making sure that all connections satisfy the tree property isn't eas
 we have done a lot to make sure tinc is sturdy and foolproof, it might happen that
 some connection lists get corrupted.
 .PP
+\fBThe cryptography in tinc is not well tested yet. Use it at your own risk!\fR
+.PP
 If you find any bugs, report them to tinc@nl.linux.org.
 .PP
 .SH "TODO"
-A lot. If something you would like to see is not implemented, just ask; we most certainly will.
+A lot, especially security auditting.
 .PP 
 .SH "SEE ALSO"
-\fBtinc.conf\fR(5), \fBgenauth\fR(8)
+\fBtinc.conf\fR(5)
 .TP
 \fBhttp://tinc.nl.linux.org/\fR
 .TP
@@ -127,8 +135,6 @@ should give you access to the complete manual.
 tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions;
 see the file COPYING for details.
-.PP
-This product includes software developed by Eric Young (eay@mincom.oz.au)
 .SH "AUTHORS"
 .na
 .nf

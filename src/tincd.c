@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.21 2000/10/29 22:55:15 guus Exp $
+    $Id: tincd.c,v 1.10.4.22 2000/10/30 00:22:54 guus Exp $
 */
 
 #include "config.h"
@@ -102,14 +102,14 @@ usage(int status)
   else
     {
       printf(_("Usage: %s [option]...\n\n"), program_name);
-      printf(_("  -c, --config=DIR      Read configuration options from DIR.\n"
-	       "  -D, --no-detach       Don't fork and detach.\n"
-	       "  -d                    Increase debug level.\n"
-	       "  -k, --kill            Attempt to kill a running tincd and exit.\n"
-	       "  -n, --net=NETNAME     Connect to net NETNAME.\n"));
-      printf(_("  -K, --keygen[=BITS]   Generate public/private RSA keypair.\n"
-               "      --help            Display this help and exit.\n"
- 	       "      --version         Output version information and exit.\n\n"));
+      printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
+	       "  -D, --no-detach            Don't fork and detach.\n"
+	       "  -d                         Increase debug level.\n"
+	       "  -k, --kill                 Attempt to kill a running tincd and exit.\n"
+	       "  -n, --net=NETNAME          Connect to net NETNAME.\n"));
+      printf(_("  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
+               "      --help                 Display this help and exit.\n"
+ 	       "      --version              Output version information and exit.\n\n"));
       printf(_("Report bugs to tinc@nl.linux.org.\n"));
     }
   exit(status);
@@ -537,11 +537,6 @@ RETSIGTYPE
 sigusr2_handler(int a)
 {
   dump_subnet_list();
-/* FIXME: reprogram this.
-  if(debug_lvl > DEBUG_NOTHING)
-   syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
-  regenerate_keys();
-*/
 }
 
 RETSIGTYPE
