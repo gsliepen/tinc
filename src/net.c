@@ -152,7 +152,7 @@ cp
 */
 void add_queue(packet_queue_t **q, void *packet, size_t s)
 {
-  queue_element_t *e, *p;
+  queue_element_t *e;
 cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "packet to queue: %d", s);
@@ -160,21 +160,65 @@ cp
   e = xmalloc(sizeof(queue_element_t));
   e->packet = xmalloc(s);
   memcpy(e->packet, packet, s);
+
   if(!*q)
     {
       *q = xmalloc(sizeof(packet_queue_t));
       (*q)->head = (*q)->tail = NULL;
     }
 
-  e->next = NULL;
+  e->next = NULL;			/* We insert at the tail */
 
-  if((*q)->tail != NULL)
-    (*q)->tail->next = e;
+  if((*q)->tail)			/* Do we have a tail? */
+    {
+      (*q)->tail->next = e;
+      e->prev = (*q)->tail;
+    }
+  else					/* No tail -> no head too */
+    {
+      (*q)->head = e;
+      e->prev = NULL;
+    }
 
   (*q)->tail = e;
+cp
+}
 
-  if((*q)->head == NULL)
-    (*q)->head = e;
+/* Remove a queue element */
+void del_queue(packet_queue_t **q, packet_element_t *e)
+{
+  queue_element_t *p, *n;
+cp
+  free(e->packet);
+
+  if(e->next)				/* There is a successor, so we are not tail */
+    {
+      if(e->prev)			/* There is a predecessor, so we are not head */
+        {
+          e->next->prev = e->prev;
+          e->prev->next = e->next;
+        }
+      else				/* We are head */
+        {
+          e->next->prev = NULL;
+          (*q)->head = e->next;
+        }
+    }
+  else					/* We are tail (or all alone!) */
+    {          
+      if(e->prev)			/* We are not alone :) */
+        {
+          e->prev->next = NULL;
+          (*q)->tail = e->prev;
+        }
+      else				/* Adieu */
+        {
+          free(*q);
+          *q = NULL;
+        }
+    }
+    
+  free(e);
 cp
 }
 
@@ -183,28 +227,18 @@ cp
   each packet, and removing it when that
   returned a zero exit code
 */
-void flush_queue(conn_list_t *cl, packet_queue_t *pq,
+void flush_queue(conn_list_t *cl, packet_queue_t **pq,
 		 int (*function)(conn_list_t*,void*))
 {
   queue_element_t *p, *prev = NULL, *next = NULL;
 cp
-  for(p = pq->head; p != NULL; )
+  for(p = (*pq)->head; p != NULL; )
     {
       next = p->next;
 
       if(!function(cl, p->packet))
-        {
-          if(prev)
-            prev->next = next;
-          else
-            pq->head = next;
-
-          free(p->packet);
-	  free(p);
-        }
-      else
-        prev = p;
-
+        del_queue(pq, p);
+        
       p = next;
     }
 
@@ -226,7 +260,7 @@ cp
       if(debug_lvl > 1)
 	syslog(LOG_DEBUG, "Flushing send queue for " IP_ADDR_S,
 	       IP_ADDR_V(cl->vpn_ip));
-      flush_queue(cl, cl->sq, xsend);
+      flush_queue(cl, &(cl->sq), xsend);
     }
 
   if(cl->rq)
@@ -234,7 +268,7 @@ cp
       if(debug_lvl > 1)
 	syslog(LOG_DEBUG, "Flushing receive queue for " IP_ADDR_S,
 	       IP_ADDR_V(cl->vpn_ip));
-      flush_queue(cl, cl->rq, xrecv);
+      flush_queue(cl, &(cl->rq), xrecv);
     }
 cp
 }

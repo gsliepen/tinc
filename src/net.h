@@ -83,6 +83,7 @@ typedef struct status_bits_t {
 
 typedef struct queue_element_t {
   void *packet;
+  struct queue_element_t *prev;
   struct queue_element_t *next;
 } queue_element_t;
 
