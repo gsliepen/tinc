@@ -17,14 +17,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: daemon.h,v 1.1.2.1 2000/11/24 23:30:50 guus Exp $
+    $Id: dropin.h,v 1.1.2.1 2000/11/28 23:23:41 zarq Exp $
 */
 
-#ifndef __DAEMON_H__
-#define __DAEMON_H__
+#ifndef __DROPIN_H__
+#define __DROPIN_H__
 
 #ifndef HAVE_DAEMON
 extern int daemon(int, int);
 #endif
 
-#endif /* __DAEMON_H__ */
+#ifndef HAVE_GET_CURRENT_DIR_NAME
+extern char* get_current_dir_name(void);
+#endif
+
+#endif /* __DROPIN_H__ */

@@ -1,5 +1,5 @@
 /*
-    daemon.c -- replacement daemon() for platforms that do not have it
+    dropin.c -- a set of drop-in replacements for libc functions
     Copyright (C) 2000 Ivo Timmermans <itimmermans@bigfoot.com>,
                   2000 Guus Sliepen <guus@sliepen.warande.net>
 
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: daemon.c,v 1.1.2.1 2000/11/24 23:30:50 guus Exp $
+    $Id: dropin.c,v 1.1.2.1 2000/11/28 23:23:41 zarq Exp $
 */
 
 #include "config.h"
@@ -85,4 +85,17 @@ int daemon(int nochdir, int noclose)
         }
     }
 }
+#endif
+
+
+
+
+
+#ifndef HAVE_GET_CURRENT_DIR_NAME
+
+char *get_current_dir_name(void)
+{
+  return ".";
+}
+
 #endif
