@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.3 2001/01/07 17:08:49 guus Exp $
+    $Id: dropin.c,v 1.1.2.4 2001/02/06 10:12:51 guus Exp $
 */
 
 #include "config.h"
@@ -31,6 +31,7 @@
 #include <xalloc.h>
 
 #include <system.h>
+#include <errno.h>
 
 #ifndef HAVE_DAEMON
 /*
@@ -113,6 +114,7 @@ char *get_current_dir_name(void)
 {
   size_t size;
   char *buf;
+  char *r;
 
   /* Start with 100 bytes.  If this turns out to be insufficient to
      contain the working directory, double the size.  */
@@ -123,7 +125,7 @@ char *get_current_dir_name(void)
   r = getcwd(buf, size);
   /* getcwd returns NULL and sets errno to ERANGE if the bufferspace
      is insufficient to contain the entire working directory.  */
-  while(r == NULL && errno = ERANGE)
+  while(r == NULL && errno == ERANGE)
     {
       free(buf);
       size <<= 1; /* double the size */

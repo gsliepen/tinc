@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.76 2001/01/08 20:35:30 guus Exp $
+    $Id: protocol.c,v 1.28.4.77 2001/02/06 10:12:51 guus Exp $
 */
 
 #include "config.h"
@@ -1043,12 +1043,12 @@ cp
   return 0;
 }
 
-int send_error(connection_t *cl, int errno, char *errstring)
+int send_error(connection_t *cl, int err, char *errstring)
 {
 cp
   if(!errstring)
-    errstring = strerror(errno);
-  return send_request(cl, "%d %d %s", ERROR, errno, errstring);
+    errstring = strerror(err);
+  return send_request(cl, "%d %d %s", ERROR, err, errstring);
 }
 
 int error_h(connection_t *cl)
