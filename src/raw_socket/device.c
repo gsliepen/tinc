@@ -20,31 +20,19 @@
     $Id$
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <netpacket/packet.h>
-#include <net/ethernet.h>
 
-#include <utils.h>
 #include "conf.h"
 #include "net.h"
 #include "logger.h"
-
-#include "system.h"
+#include "utils.h"
+#include "route.h"
 
 int device_fd = -1;
 char *device;
-char *interface;
+char *iface;
 char ifrname[IFNAMSIZ];
 char *device_info;
 
@@ -59,11 +47,11 @@ bool setup_device(void)
 	cp();
 
 	if(!get_config_string
-		  (lookup_config(config_tree, "Interface"), &interface))
-		interface = "eth0";
+		  (lookup_config(config_tree, "Interface"), &iface))
+		iface = "eth0";
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = interface;
+		device = iface;
 
 	device_info = _("raw socket");
 
@@ -74,10 +62,10 @@ bool setup_device(void)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
+	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);
-		logger(LOG_ERR, _("Can't find interface %s: %s"), interface,
+		logger(LOG_ERR, _("Can't find interface %s: %s"), iface,
 			   strerror(errno));
 		return false;
 	}
@@ -88,7 +76,7 @@ bool setup_device(void)
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
 	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof(sa))) {
-		logger(LOG_ERR, _("Could not bind to %s: %s"), device, strerror(errno));
+		logger(LOG_ERR, _("Could not bind %s to %s: %s"), device, iface, strerror(errno));
 		return false;
 	}
 
