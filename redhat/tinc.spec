@@ -1,13 +1,12 @@
 Summary: tinc vpn daemon
 Name: tinc
-Version: cvs_2000_04_17
-Release: mk1
+Version: 1.0
+Release: pre1
 Copyright: GPL
 Group: Networking
 URL: http://tinc.nl.linux.org/
-Source0: cabal.tgz
-Source1: tinc
-Buildroot: /var/tmp/%{name}-%{version}
+Source0: %{name}-%{version}.tar.gz
+Buildroot: /var/tmp/%{name}-%{version}-%{release}
 #Requires: 
 
 %description
@@ -16,24 +15,23 @@ See http://tinc.nl.linux.org/
 
 %prep
 
-%setup -q -n cabal
+%setup -q -n %{name}-%{version}
 
 %build
-autoconf
-automake
+#autoconf
+#automake
 ./configure --prefix=/usr --sysconfdir=/etc
 make
 
 %install
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+
+install -D redhat/tinc $RPM_BUILD_ROOT/etc/rc.d/init.d/
+
 ME=my.vpn.ip.number
 PEER=peer.vpn.ip.number
 PEEREAL=peer.real.ip.number
-
-rm -rf $RPM_BUILD_ROOT
-
-make install DESTDIR=$RPM_BUILD_ROOT
-
-install -D $RPM_SOURCE_DIR/tinc $RPM_BUILD_ROOT/etc/rc.d/init.d/
 
 mkdir -p $RPM_BUILD_ROOT/etc/tinc/$PEER/passphrases
 cat <<END >$RPM_BUILD_ROOT/etc/tinc/$PEER/tincd.conf
