@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.82 2000/11/25 13:33:30 guus Exp $
+    $Id: net.c,v 1.35.4.83 2000/11/30 20:08:41 zarq Exp $
 */
 
 #include "config.h"
@@ -692,6 +692,33 @@ cp
   return 0;
 }
 
+int read_rsa_private_key(RSA **key, const char *file)
+{
+  FILE *fp;
+
+  if((fp = fopen(file, "r")) == NULL)
+    {
+      syslog(LOG_ERR, _("Error reading file `%s': %m"),
+	     file);
+      return -1;
+    }
+  PEM_read_RSAPrivateKey(fp, key, NULL, NULL);
+}
+
+int read_rsa_keys(void)
+{
+  config_t const *cfg;
+
+  if(!(cfg = get_config_val(config, config_privatekey)))
+    {
+      syslog(LOG_ERR, _("Private key for tinc daemon required!"));
+      return -1;
+    }
+
+  myself->rsa_key = RSA_new();
+  return read_rsa_private_key(&(myself->rsa_key), cfg->data.ptr);
+}
+
 /*
   Configure connection_t myself and set up the local sockets (listen only)
 */
@@ -721,17 +748,8 @@ cp
       return -1;
     }
 cp
-  if(!(cfg = get_config_val(config, config_privatekey)))
-    {
-      syslog(LOG_ERR, _("Private key for tinc daemon required!"));
-      return -1;
-    }
-  else
-    {
-      myself->rsa_key = RSA_new();
-      BN_hex2bn(&myself->rsa_key->d, cfg->data.ptr);
-      BN_hex2bn(&myself->rsa_key->e, "FFFF");
-    }
+  if(read_rsa_keys())
+    return -1;
 
   if(read_host_config(myself))
     {
