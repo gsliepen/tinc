@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.15 2001/10/10 09:42:29 guus Exp $
+    $Id: connection.h,v 1.1.2.16 2001/10/10 20:35:10 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -72,6 +72,7 @@ typedef struct connection_t {
   int protocol_version;            /* used protocol */
 
   int socket;                      /* socket used for this connection */
+  long int options;                /* options for this connection */
   status_bits_t status;            /* status info */
 
   struct node_t *node;             /* node associated with the other end */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.h,v 1.1.2.3 2001/10/10 08:49:47 guus Exp $
+    $Id: vertex.h,v 1.1.2.4 2001/10/10 20:35:10 guus Exp $
 */
 
 #ifndef __TINC_VERTEX_H__
@@ -28,6 +28,14 @@
 #include "node.h"
 #include "connection.h"
 
+typedef struct halfconnection_t {
+  struct node_t *node;             /* node associated with this end of the connection */
+
+  ipv4_t address;                  /* real (internet) ip on this end of the meta connection */
+  short unsigned int port;         /* port number of this end of the meta connection */
+  char *hostname;                  /* the hostname of real ip */
+} halfconnection_t;
+
 typedef struct vertex_t {
   struct halfconnection_t from;
   struct halfconnection_t to;
@@ -37,14 +45,6 @@ typedef struct vertex_t {
   
   struct connection_t *connection; /* connection associated with this vertex, if available */
 } vertex_t;
-
-typedef struct halfconnection_t {
-  struct node_t *node;             /* node associated with this end of the connection */
-
-  ipv4_t address;                  /* real (internet) ip on this end of the meta connection */
-  short unsigned int port;         /* port number of this end of the meta connection */
-  char *hostname;                  /* the hostname of real ip */
-} halfconnection_t;
 
 extern avl_tree_t *vertex_tree;    /* Tree with all known vertices (replaces active_tree) */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.18 2001/10/10 09:42:29 guus Exp $
+    $Id: connection.c,v 1.1.2.19 2001/10/10 20:35:10 guus Exp $
 */
 
 #include "config.h"
@@ -63,7 +63,7 @@ cp
 connection_t *new_connection(void)
 {
 cp
-  return (connection_t *)xmalloc_and_zero(sizeof(*c));
+  return (connection_t *)xmalloc_and_zero(sizeof(connection_t));
 }
 
 void free_connection(connection_t *c)
@@ -73,10 +73,10 @@ cp
     free(c->hostname);
   if(c->rsa_key)
     RSA_free(c->rsa_key);
-  if(c->inpktkey)
-    free(c->inpktkey);
-  if(c->outpktkey)
-    free(c->outpktkey);
+  if(c->inkey)
+    free(c->inkey);
+  if(c->outkey)
+    free(c->outkey);
   if(c->mychallenge)
     free(c->mychallenge);
   if(c->hischallenge)
@@ -121,7 +121,7 @@ cp
       c = (connection_t *)node->data;
       syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld socket %d status %04x"),
              c->node->name, c->hostname, c->port, c->options,
-             cl->socket, c->status);
+             c->socket, c->status);
     }
     
   syslog(LOG_DEBUG, _("End of connections."));
