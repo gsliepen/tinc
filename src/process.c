@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.36 2002/03/11 11:23:04 guus Exp $
+    $Id: process.c,v 1.1.2.37 2002/03/19 00:07:09 guus Exp $
 */
 
 #include "config.h"
@@ -81,6 +81,7 @@ int fcloseall(void)
   fclose(stdin);
   fclose(stdout);
   fclose(stderr);
+  return 0;
 }
 #endif
 
