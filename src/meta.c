@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.8 2000/10/29 22:55:14 guus Exp $
+    $Id: meta.c,v 1.1.2.9 2000/11/04 20:44:26 guus Exp $
 */
 
 #include "config.h"
@@ -169,7 +169,6 @@ cp
     }
 
   cl->last_ping_time = time(NULL);
-  cl->want_ping = 0;
 cp  
   return 0;
 }

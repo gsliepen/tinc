@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.65 2000/11/04 17:09:10 guus Exp $
+    $Id: net.c,v 1.35.4.66 2000/11/04 20:44:26 guus Exp $
 */
 
 #include "config.h"
@@ -159,8 +159,6 @@ cp
            outlen, cl->name, cl->hostname);
 
   total_socket_out += outlen;
-
-  cl->want_ping = 1;
 
   if((send(cl->socket, (char *) &(outpkt.len), outlen, 0)) < 0)
     {
@@ -706,7 +704,6 @@ cp
   ncn->buffer = xmalloc(MAXBUFSIZE);
   ncn->buflen = 0;
   ncn->last_ping_time = time(NULL);
-  ncn->want_ping = 0;
 
   conn_list_add(ncn);
 
@@ -889,9 +886,15 @@ int setup_network_connections(void)
   config_t const *cfg;
 cp
   if((cfg = get_config_val(config, pingtimeout)) == NULL)
-    timeout = 5;
+    timeout = 60;
   else
-    timeout = cfg->data.val;
+    {
+      timeout = cfg->data.val;
+      if(timeout < 1)
+        {
+          timeout = 86400;
+        }
+     }
 
   if(setup_tap_fd() < 0)
     return -1;
@@ -1027,7 +1030,6 @@ cp
   p->buffer = xmalloc(MAXBUFSIZE);
   p->buflen = 0;
   p->last_ping_time = time(NULL);
-  p->want_ping = 0;
   
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
@@ -1181,7 +1183,7 @@ cp
 	{
           if(p->last_ping_time + timeout < now)
             {
-              if(p->status.pinged && !p->status.got_pong)
+              if(p->status.pinged)
                 {
                   if(debug_lvl >= DEBUG_PROTOCOL)
   	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
@@ -1189,12 +1191,9 @@ cp
 	          p->status.timeout = 1;
 	          terminate_connection(p);
                 }
-              else if(p->want_ping)
+              else
                 {
                   send_ping(p);
-                  p->last_ping_time = now;
-                  p->status.pinged = 1;
-                  p->status.got_pong = 0;
                 }
             }
 	}

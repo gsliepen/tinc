@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.11 2000/11/04 11:49:57 guus Exp $
+    $Id: connlist.h,v 1.1.2.12 2000/11/04 20:44:26 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -31,7 +31,6 @@
 
 typedef struct status_bits_t {
   int pinged:1;                    /* sent ping */
-  int got_pong:1;                  /* received pong */
   int meta:1;                      /* meta connection exists */
   int active:1;                    /* 1 if active.. */
   int outgoing:1;                  /* I myself asked for this conn */
@@ -82,7 +81,6 @@ typedef struct conn_list_t {
   int allow_request;               /* defined if there's only one request possible */
 
   time_t last_ping_time;           /* last time we saw some activity from the other end */  
-  int want_ping;                   /* 0 if there's no need to check for activity. Shouldn't this go into status? (GS) */
 
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */
