@@ -1,0 +1,159 @@
+#! /usr/bin/perl -w
+#
+# Device configuration script for tinc
+# $Id: tinc-up,v 1.1.2.1 2000/11/24 16:52:57 zarq Exp $
+#
+# Based on Lubomir Bulej's Redhat init script.
+#
+# This file is called after the tap device is opened by tinc.  The
+# environment variable IFNAME contains the name of the device; NETNAME
+# contains the name of the network that was started.
+
+my $IFNAME=$ENV{"IFNAME"};
+my $NETNAME=$ENV{"NETNAME"};
+
+
+##############################################################################
+# vpn_load ()		Loads VPN configuration
+# 
+# $_[0] ... VPN to load
+
+sub vpn_load {
+    my @addr;
+    $CFG="$TCONF/$_[0]/tinc.conf";
+    if(! open($CFG, "< $CFG")) {
+	warn "tinc: $CFG does not exist\n";
+	return 0;
+    }
+
+    # load TINCD config
+    while(<$CFG>) {
+	if( /^[ ]*TapDevice[ =]+([^ \#]+)/i ) {
+	    $DEV=$1;
+	    chomp($DEV);
+	    $DEV =~ s/^.*\/([^\/0-9]+)([0-9]+)$/$1$2/;
+	    $NUM = $2;
+	} elsif ( /^[ ]*(MyOwnVPNIP|MyVirtualIP)[ =]+([^ \#]+)/i ) {
+	    $VPN=$2;
+	    chomp($VPN);
+	} elsif ( /^[ ]*VpnMask[ =]+([^ \#]+)/i ) {
+	    $VPNMASK=$1;
+	    chomp($VPNMASK);
+	}
+    }
+    if(!defined($DEV)) {
+	warn "tinc: There must be a TapDevice\n";
+	return 0;
+    }
+    if($DEV eq "") {
+	warn "tinc: TapDevice should be of the form /dev/tapN\n";
+	return 0;
+    }
+    if(!defined($VPN)) {
+	warn "tinc: MyVirtualIP required\n";
+	return 0;
+    }
+    if($VPN eq "") {
+	warn "tinc: No argument to MyVirtualIP/MyOwnVPNIP\n";
+	return 0;
+    }
+    if(defined($VPNMASK) && $VPNMASK eq "") {
+	warn "tinc: Invalid argument to VpnMask\n";
+	return 0;
+    }
+
+    $ADR = $VPN;
+    $ADR =~ s/^([^\/]+)\/.*$/$1/;
+    $LEN = $VPN;
+    $LEN =~ s/^.*\/([^\/]+)$/$1/;
+    if($ADR eq "" || $LEN eq "") {
+	warn "tinc: Badly formed MyVirtualIP/MyOwnVPNIP\n";
+	return 0;
+    }
+    @addr = split(/\./, $ADR);
+
+    $ADR = pack('C4', @addr);
+    $MSK = pack('N4', -1 << (32 - $LEN));
+    $BRD = join(".", unpack('C4', $ADR | ~$MSK));
+    $MAC = "fe:fd:" . join(":", map { sprintf "%02x", $_ } unpack('C4', $ADR));
+
+    if(!defined($VPNMASK)) {
+	$VPNMASK = $MSK;
+	$VPNMASK = join(".", unpack('C4', $VPNMASK));
+    }
+    $ADR = join(".", unpack('C4', $ADR));
+    $MSK = join(".", unpack('C4', $MSK));
+    
+    1;
+}
+
+
+##############################################################################
+# vpn_start ()		starts specified VPN
+# 
+# $_[0] ... VPN to start
+
+sub vpn_start {
+    vpn_load($_[0]) || return 0;
+
+    system("insmod ethertap -s --name=\"ethertap$NUM\" unit=\"$NUM\" >/dev/null");
+    system("ifconfig $DEV hw ether $MAC");
+    system("ifconfig $DEV $ADR netmask $VPNMASK broadcast $BRD mtu 1448 -arp");
+    system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
+}
+
+
+
+
+##############################################################################
+# vpn_stop ()		Stops specified VPN
+#
+# $_[0] ... VPN to stop
+
+sub vpn_stop {
+    vpn_load($_[0]) || return 1;
+
+    system("start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA -k");
+    
+    system("ifconfig $DEV down");
+    system("rmmod ethertap$NUM -s");
+}
+
+
+if(!defined($ARGV[0])) {
+    die "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}\n";
+}
+
+if($ARGV[0] eq "start") {
+    find_nets;
+    print "Starting $DESC:";
+    foreach $n (@NETS) {
+	print " $n";
+	vpn_start($n);
+    }
+    print ".\n";
+} elsif ($ARGV[0] eq "stop") {
+    find_nets;
+    print "Stopping $DESC:";
+    foreach $n (@NETS) {
+	print " $n";
+	vpn_stop($n);
+    }
+    print ".\n";
+} elsif ($ARGV[0] eq "restart" || $ARGV[0] eq "force-reload") {
+    find_nets;
+    print "Stopping $DESC:";
+    foreach $n (@NETS) {
+	print " $n";
+	vpn_stop($n);
+    }
+    print ".\n";
+    print "Starting $DESC:";
+    foreach $n (@NETS) {
+	print " $n";
+	vpn_start($n);
+    }
+    print ".\n";
+} else {
+    die "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}\n";
+}

@@ -1,3 +1,9 @@
+tinc (1.0pre3-2) unstable; urgency=low
+
+  * Added universal tinc-up and tinc-down scripts
+
+ -- Ivo Timmermans <ivo@debian.org>  Wed, 15 Nov 2000 23:26:56 +0100
+
 tinc (1.0pre3-1) unstable; urgency=low
 
   * New upstream version (1.0pre3) (Closes: #71274).
