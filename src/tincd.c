@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.67 2003/05/06 23:14:45 guus Exp $
+    $Id: tincd.c,v 1.10.4.68 2003/06/11 19:07:56 guus Exp $
 */
 
 #include "config.h"
@@ -65,13 +65,13 @@
 #include "system.h"
 
 /* The name this program was run with. */
-char *program_name;
+char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
-int show_help;
+int show_help = 0;
 
 /* If nonzero, print the version on standard output and exit.  */
-int show_version;
+int show_version = 0;
 
 /* If nonzero, it will attempt to kill a running tincd and exit. */
 int kill_tincd = 0;
@@ -85,8 +85,8 @@ int bypass_security = 0;
 /* If nonzero, disable swapping for this process. */
 int do_mlock = 0;
 
-char *identname;				/* program name for syslog */
-char *pidfilename;				/* pid file location */
+char *identname = NULL;				/* program name for syslog */
+char *pidfilename = NULL;			/* pid file location */
 char **g_argv;					/* a copy of the cmdline arguments */
 char **environment;				/* A pointer to the environment on
 								   startup */
@@ -347,6 +347,7 @@ int main(int argc, char **argv, char **envp)
 
 	environment = envp;
 	parse_options(argc, argv, envp);
+	make_names();
 
 	if(show_version) {
 		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
@@ -388,7 +389,6 @@ int main(int argc, char **argv, char **envp)
 
 	g_argv = argv;
 
-	make_names();
 	init_configuration(&config_tree);
 
 	/* Slllluuuuuuurrrrp! */
