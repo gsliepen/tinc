@@ -225,6 +225,9 @@ as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
 @cindex OpenBSD
 Tinc on OpenBSD relies on the tun driver for its data
 acquisition from the kernel. It has been verified to work under at least OpenBSD 2.9.
+There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
+which adds a tap device to OpenBSD.
+This should work with tinc.
 
 Tunneling IPv6 packets may not work on OpenBSD.
 
@@ -239,7 +242,7 @@ Tunneling IPv6 packets may not work on OpenBSD.
 Tinc on NetBSD relies on the tun driver for its data
 acquisition from the kernel. It has been verified to work under at least NetBSD 1.5.2.
 
-Tunneling IPv6 does not work on OpenBSD.
+Tunneling IPv6 may not work on OpenBSD.
 
 
 @c ==================================================================
@@ -250,26 +253,23 @@ Tinc on Solaris relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
 as this driver. It has been verified to work under Solaris 8 (SunOS 5.8).
 
-IPv6 packets cannot be tunneled on Solaris.
-
 @c ==================================================================
 @subsection Darwin (MacOS/X)
 
 @cindex Darwin
 @cindex MacOS/X
-Tinc on Darwin relies on the tunnel driver for its data
-acquisition from the kernel. This driver is not part of Darwin but can be
-downloaded from @uref{http://chrisp.de/en/projects/tunnel.html}.
-
-IPv6 packets cannot be tunneled on Darwin.
+Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
+Tinc supports either the driver from @uref{http://www-user.rhrk.uni-kl.de/~nissler/tuntap/},
+which supports both tun and tap style devices,
+and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
+The former driver is recommended.
 
 @c ==================================================================
 @subsection Windows
 
 @cindex Windows
-Tinc on Windows, in a Cygwin environment, relies on the CIPE driver or the TAP-Win32 driver for its data
-acquisition from the kernel. This driver is not part of Windows but can be
-downloaded from @uref{http://cipe-win32.sourceforge.net/}.
+Tinc on Windows relies on the TAP-Win32 driver (as shipped by OpenVPN) for its data acquisition from the kernel.
+This driver is not part of Windows but can be downloaded from @uref{http://openvpn.sourceforge.net/}.
 
 
 @c
@@ -457,11 +457,11 @@ and the corresponding network interfaces.
 @node       Configuration of Windows
 @subsection Configuration of Windows
 
-You will need to install the CIPE-Win32 driver or the TAP-Win32 driver, it
-doesn't matter which one. You can download the CIPE driver from
-@uref{http://cipe-win32.sourceforge.net}.  Using the Network Connections
-control panel, configure the CIPE-Win32 or TAP-Win32 network interface in the same way as you would
-do from the tinc-up script as explained in the rest of the documentation.
+You will need to install the latest TAP-Win32 driver from OpenVPN.
+You can download it from @uref{http://openvpn.sourceforge.net}.
+Using the Network Connections control panel,
+configure the TAP-Win32 network interface in the same way as you would do from the tinc-up script,
+as explained in the rest of the documentation.
 
 
 @c ==================================================================
@@ -930,6 +930,15 @@ variable.
 
 This option may not work on all platforms.
 
+@cindex BlockingTCP
+@item BlockingTCP = <yes|no> (no) [experimental]
+This options selects whether TCP connections, when established, should use blocking writes.
+When turned off, tinc will never block when a TCP connection becomes congested,
+but will have to terminate that connection instead.
+If turned on, tinc will not terminate connections but will block,
+thereby unable to process data to/from other connections.
+Turn this option on if you also use TCPOnly and tinc terminates connections frequently.
+
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.
@@ -1041,6 +1050,12 @@ Note that there must be exactly one of PrivateKey
 or PrivateKeyFile
 specified in the configuration file.
 
+@cindex TunnelServer
+@item TunnelServer = <yes|no> (no) [experimental]
+When this option is enabled tinc will no longer forward information between other tinc daemons,
+and will only allow nodes and subnets on the VPN which are present in the
+@file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+
 @end table
 
 
@@ -1131,7 +1146,7 @@ IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
 @cindex CIDR notation
-prefixlength is the number of bits set to 1 in the netmask part; for
+Prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
@@ -1356,7 +1371,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchA
-PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 Device = /dev/tap0
 @end example
 
@@ -1393,7 +1407,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 @example
 Name = BranchB
 ConnectTo = BranchA
-PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
@@ -1465,7 +1478,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 Name = BranchD
 ConnectTo = BranchC
 Device = /dev/net/tun
-PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
@@ -1523,6 +1535,8 @@ and look in the syslog to find out what the problems are.
 
 @menu
 * Runtime options::
+* Signals::
+* Debug levels::
 * Solving problems::
 * Error messages::
 * Sending bug reports::
@@ -1589,6 +1603,77 @@ Display a short reminder of these runtime options and terminate.
 
 @item --version
 Output version information and exit.
+
+@end table
+
+@c ==================================================================
+@node    Signals
+@section Signals
+
+@cindex signals
+You can also send the following signals to a running tincd process:
+
+@c from the manpage
+@table @samp
+
+@item ALRM
+Forces tinc to try to connect to all uplinks immediately.
+Usually tinc attempts to do this itself,
+but increases the time it waits between the attempts each time it failed,
+and if tinc didn't succeed to connect to an uplink the first time after it started,
+it defaults to the maximum time of 15 minutes.
+
+@item HUP
+Partially rereads configuration files.
+Connections to hosts whose host config file are removed are closed.
+New outgoing connections specified in @file{tinc.conf} will be made.
+
+@item INT
+Temporarily increases debug level to 5.
+Send this signal again to revert to the original level.
+
+@item USR1
+Dumps the connection list to syslog.
+
+@item USR2
+Dumps virtual network device statistics, all known nodes, edges and subnets to syslog.
+
+@item WINCH
+Purges all information remembered about unreachable nodes.
+
+@end table
+
+@c ==================================================================
+@node    Debug levels
+@section Debug levels
+
+@cindex debug levels
+The tinc daemon can send a lot of messages to the syslog.
+The higher the debug level, the more messages it will log.
+Each level inherits all messages of the previous level:
+
+@c from the manpage
+@table @samp
+
+@item 0
+This will log a message indicating tinc has started along with a version number.
+It will also log any serious error.
+
+@item 1
+This will log all connections that are made with other tinc daemons.
+
+@item 2
+This will log status and error messages from scripts and other tinc daemons.
+
+@item 3
+This will log all requests that are exchanged with other tinc daemons. These include
+authentication, key exchange and connection list updates.
+
+@item 4
+This will log a copy of everything received on the meta socket.
+
+@item 5
+This will log all network traffic over the virtual private network.
 
 @end table
 
@@ -1893,21 +1978,21 @@ synchronised.
 @cindex ADD_EDGE
 @cindex ADD_SUBNET
 @example
-daemon	message
---------------------------------------------------------------------------
-origin	ADD_EDGE node1 node2 21.32.43.54 655 222 0
-                   |     |        |       |   |  +-> options
-                   |     |        |       |   +----> weight
-		           |     |        |       +--------> UDP port of node2
-		           |     |        +----------------> real address of node2
-		           |     +-------------------------> name of destination node
-                   +-------------------------------> name of source node
+message
+------------------------------------------------------------------
+ADD_EDGE node1 node2 21.32.43.54 655 222 0
+          |     |        |       |   |  +-> options
+          |     |        |       |   +----> weight
+          |     |        |       +--------> UDP port of node2
+          |     |        +----------------> real address of node2
+          |     +-------------------------> name of destination node
+          +-------------------------------> name of source node
 
-origin	ADD_SUBNET node 192.168.1.0/24
-                     |         |     +--> prefixlength
-                     |         +--------> network address
-                     +------------------> owner of this subnet
---------------------------------------------------------------------------
+ADD_SUBNET node 192.168.1.0/24
+            |         |     +--> prefixlength
+            |         +--------> network address
+            +------------------> owner of this subnet
+------------------------------------------------------------------
 @end example
 
 The ADD_EDGE messages are to inform other tinc daemons that a connection between
@@ -1924,7 +2009,7 @@ to be sent.
 message
 ------------------------------------------------------------------
 DEL_EDGE node1 node2
-		   |     +----> name of destination node
+           |     +----> name of destination node
            +----------> name of source node
 
 DEL_SUBNET node 192.168.1.0/24
@@ -1958,7 +2043,7 @@ ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
 
 KEY_CHANGED origin
               +--> daemon that has changed it's packet key
---------------------------------------------------------------------------
+------------------------------------------------------------------
 @end example
 
 The keys used to encrypt VPN packets are not sent out directly. This is
@@ -1972,10 +2057,10 @@ destination.
 @cindex PONG
 @example
 daemon	message
---------------------------------------------------------------------------
+------------------------------------------------------------------
 origin	PING
 dest.	PONG
---------------------------------------------------------------------------
+------------------------------------------------------------------
 @end example
 
 There is also a mechanism to check if hosts are still alive. Since network
@@ -2247,7 +2332,9 @@ For IPv6 addresses:
 @item NetBSD
 @tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
 @item Solaris
-@tab @code{ifconfig} @var{interface} @code{inet6 addif} @var{address}@code{/}@var{prefixlength}
+@tab @code{ifconfig} @var{interface} @code{inet6 plumb up}
+@item
+@tab @code{ifconfig} @var{interface} @code{inet6 addif} @var{address} @var{address}
 @item Darwin (MacOS/X)
 @tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
 @item Windows
@@ -2280,9 +2367,11 @@ Adding routes to IPv4 subnets:
 @item NetBSD
 @tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
 @item Solaris
+@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address} @code{-interface}
 @item Darwin (MacOS/X)
 @tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
 @item Windows
+@tab @code{netsh routing ip add persistentroute} @var{network_address} @var{netmask} @var{interface} @var{local_address}
 @end multitable
 
 Adding routes to IPv6 subnets:
@@ -2292,10 +2381,16 @@ Adding routes to IPv6 subnets:
 @tab @code{route add -A inet6} @var{network_address}@code{/}@var{prefixlength} @var{interface}
 @item Linux iproute2
 @tab @code{ip route add} @var{network_address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@item FreeBSD
+@tab @code{route add -inet6} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
 @item OpenBSD
+@tab @code{route add -inet6} @var{network_address} @var{local_address} @code{-prefixlen} @var{prefixlength}
 @item NetBSD
+@tab @code{route add -inet6} @var{network_address} @var{local_address} @code{-prefixlen} @var{prefixlength}
 @item Solaris
+@tab @code{route add -inet6} @var{network_address}@code{/}@var{prefixlength} @var{local_address} @code{-interface}
 @item Darwin (MacOS/X)
+@tab ?
 @item Windows
 @tab @code{netsh interface ipv6 add route} @var{network address}/@var{prefixlength} @var{interface}
 @end multitable
