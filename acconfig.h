@@ -19,3 +19,10 @@
 #if !defined(__USE_BSD)
 # undef __USE_BSD
 #endif
+
+/* For getopt */
+#if HAVE_STDLIB_H
+# define getopt system_getopt
+# include <stdlib.h>
+# undef getopt
+#endif
