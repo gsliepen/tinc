@@ -12,10 +12,14 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
+
 #include <system.h>
 
-/* RCSID("$Id: fake-getnameinfo.c,v 1.1.2.2 2002/06/09 15:50:11 zarq Exp $"); */
+/* RCSID("$Id: fake-getnameinfo.c,v 1.1.2.3 2002/06/09 16:12:04 zarq Exp $"); */
 
 #ifndef HAVE_GETNAMEINFO
 
