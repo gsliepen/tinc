@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.12 2002/02/18 16:25:16 guus Exp $
+    $Id: node.h,v 1.1.2.13 2002/03/19 22:48:25 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -34,7 +34,8 @@ typedef struct node_status_t {
   int waitingforkey:1;             /* 1 if we already sent out a request */
   int visited:1;                   /* 1 if this node has been visited by one of the graph algorithms */
   int reachable:1;                 /* 1 if this node is reachable in the graph */
-  int unused:27;
+  int indirect:1;                  /* 1 if this node is not directly reachable by us */
+  int unused:26;
 } node_status_t;
 
 typedef struct node_t {

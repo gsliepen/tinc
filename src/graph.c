@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.9 2002/03/12 16:30:15 guus Exp $
+    $Id: graph.c,v 1.1.2.10 2002/03/19 22:48:25 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -151,6 +151,7 @@ void sssp_bfs(void)
   node_t *n;
   halfconnection_t to_hc, from_hc;
   avl_tree_t *todo_tree;
+  int indirect;
 
   todo_tree = avl_alloc_tree(NULL, NULL);
 
@@ -160,11 +161,13 @@ void sssp_bfs(void)
     {
       n = (node_t *)node->data;
       n->status.visited = 0;
+      n->status.indirect = 1;
     }
 
   /* Begin with myself */
 
   myself->status.visited = 1;
+  myself->status.indirect = 0;
   myself->nexthop = myself;
   myself->via = myself;
   node = avl_alloc_node();
@@ -189,25 +192,47 @@ void sssp_bfs(void)
               else
                 to_hc = e->from, from_hc = e->to;
 
-              if(!to_hc.node->status.visited)
-                {
-                  to_hc.node->status.visited = 1;
-                  to_hc.node->nexthop = (n->nexthop == myself) ? to_hc.node : n->nexthop;
-                  to_hc.node->via = (e->options & OPTION_INDIRECT || n->via != n) ? n->via : to_hc.node;
-		  to_hc.node->options = e->options;
-                  if(sockaddrcmp(&to_hc.node->address, &to_hc.udpaddress))
-		  {
-                    node = avl_unlink(node_udp_tree, to_hc.node);
-                    to_hc.node->address = to_hc.udpaddress;
-		    if(to_hc.node->hostname)
-		      free(to_hc.node->hostname);
-		    to_hc.node->hostname = sockaddr2hostname(&to_hc.udpaddress);
-                    avl_insert_node(node_udp_tree, node);
-		  }
-                  node = avl_alloc_node();
-                  node->data = to_hc.node;
-                  avl_insert_before(todo_tree, from, node);
-                }
+              /* Situation:
+
+	        	  /
+	        	 /
+		 ------(n)from_hc-----to_hc
+                	 \
+                	  \
+
+                 n->address is set to the to_hc.udpaddress of the edge left of n.
+		 We are currently examining the edge right of n:
+
+                 - If from_hc.udpaddress != n->address, then to_hc.node is probably
+		   not reachable for the nodes left of n. We do as if the indirectdata
+		   flag is set on edge e.
+		 - If edge e provides for better reachability of to_hc.node, update
+		   to_hc.node and (re)add it to the todo_tree to (re)examine the reachability
+		   of nodes behind it.
+	      */
+
+              indirect = n->status.indirect || e->options & OPTION_INDIRECT || ((n != myself) && sockaddrcmp(&n->address, &from_hc.udpaddress));
+
+              if(to_hc.node->status.visited && (!to_hc.node->status.indirect || indirect))
+	        continue;
+
+              to_hc.node->status.visited = 1;
+              to_hc.node->status.indirect = indirect;
+              to_hc.node->nexthop = (n->nexthop == myself) ? to_hc.node : n->nexthop;
+              to_hc.node->via = indirect ? n->via : to_hc.node;
+	      to_hc.node->options = e->options;
+              if(sockaddrcmp(&to_hc.node->address, &to_hc.udpaddress))
+	      {
+                node = avl_unlink(node_udp_tree, to_hc.node);
+                to_hc.node->address = to_hc.udpaddress;
+		if(to_hc.node->hostname)
+		  free(to_hc.node->hostname);
+		to_hc.node->hostname = sockaddr2hostname(&to_hc.udpaddress);
+                avl_insert_node(node_udp_tree, node);
+	      }
+              node = avl_alloc_node();
+              node->data = to_hc.node;
+              avl_insert_before(todo_tree, from, node);
             }
 
           avl_delete_node(todo_tree, from);
