@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.21 2000/08/07 14:52:15 guus Exp $
+    $Id: net.c,v 1.35.4.22 2000/08/07 16:27:28 guus Exp $
 */
 
 #include "config.h"
@@ -95,7 +95,6 @@ cp
 
 int xsend(conn_list_t *cl, void *packet)
 {
-  int r;
   real_packet_t rp;
 cp
   do_encrypt((vpn_packet_t*)packet, &rp, cl->key);
@@ -107,14 +106,14 @@ cp
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
            ntohs(rp.len), cl->vpn_hostname, cl->real_hostname);
 
-  total_socket_out += r;
+  total_socket_out += ntohs(rp.len);
 
   cl->want_ping = 1;
 
   if((cl->flags | myself->flags) & TCPONLY)
-      return send_tcppacket(cl, packet, ntohs(rp.len));
+      return send_tcppacket(cl, (void*)&rp, ntohs(rp.len));
 
-  if((r = send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
+  if((send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->vpn_hostname, cl->real_hostname);
@@ -130,17 +129,18 @@ int xrecv(conn_list_t *cl, void *packet)
   int lenin;
 cp
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
+cp
   add_mac_addresses(&vp);
-
+cp
   if(debug_lvl > 3)
     syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
            ((real_packet_t*)packet)->len, cl->vpn_hostname, cl->real_hostname);
-
+cp
   if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
     total_tap_out += lenin;
-
+cp
   cl->want_ping = 0;
   cl->last_ping_time = time(NULL);
 cp
@@ -527,13 +527,13 @@ cp
     }
 
   flags = fcntl(cl->meta_socket, F_GETFL);
-  if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
+/*  if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
              cl->real_hostname, cl->port);
       return -1;
     }
-
+*/
   if(debug_lvl > 0)
     syslog(LOG_INFO, _("Connected to %s port %hd"),
          cl->real_hostname, cl->port);
@@ -605,11 +605,11 @@ cp
   else
     myself->port = cfg->data.val;
 
-  if(cfg = get_config_val(indirectdata))
+  if((cfg = get_config_val(indirectdata)))
     if(cfg->data.val == stupid_true)
       myself->flags |= EXPORTINDIRECTDATA;
 
-  if(cfg = get_config_val(tcponly))
+  if((cfg = get_config_val(tcponly)))
     if(cfg->data.val == stupid_true)
       myself->flags |= TCPONLY;
 
@@ -911,7 +911,7 @@ cp
 */
 void terminate_connection(conn_list_t *cl)
 {
-  conn_list_t *p, *q;
+  conn_list_t *p;
 
 cp
   if(cl->status.remove)
@@ -1077,9 +1077,11 @@ cp
       if(errno==EINTR)
         return 0;      
       if(errno==0)
-        if(debug_lvl>0)
-          syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
-                 cl->vpn_hostname, cl->real_hostname);
+        {
+          if(debug_lvl>0)
+            syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
+                cl->vpn_hostname, cl->real_hostname);
+        }
       else
         syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
                cl->vpn_hostname, cl->real_hostname);

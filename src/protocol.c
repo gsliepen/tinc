@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.20 2000/08/07 14:52:15 guus Exp $
+    $Id: protocol.c,v 1.28.4.21 2000/08/07 16:27:28 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,8 @@
 
 #include <utils.h>
 #include <xalloc.h>
+
+#include <netinet/in.h>
 
 #include "conf.h"
 #include "encr.h"
@@ -445,7 +447,7 @@ cp
          is not desirable.
        */
        
-      if(old=lookup_conn(cl->vpn_ip))
+      if((old=lookup_conn(cl->vpn_ip)))
         {
           if(debug_lvl>0)
             syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"),
@@ -531,7 +533,7 @@ cp
          old connection that has timed out but we don't know it yet.
        */
 
-      while(old = lookup_conn(cl->vpn_ip)) 
+      while((old = lookup_conn(cl->vpn_ip))) 
         {
           if(debug_lvl > 1)
             syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
@@ -666,8 +668,9 @@ cp
 
 int tcppacket_h(conn_list_t *cl)
 {
-  char packet[1600];
-  int len;
+  real_packet_t rp;
+  int len, count = 0, result;
+  conn_list_t *f;
 cp
   if(!cl->status.active)
     {
@@ -690,19 +693,52 @@ cp
        return -1;
     }  
 
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PACKET from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-
   /* Evil kludge comming up */
-  if(read(cl->meta_socket,packet,len)!=len)
+  while(len)
     {
-       syslog(LOG_ERR, _("Error while receiving PACKET data from %s (%s)"),
+       result=read(cl->meta_socket,&rp+count,len);
+       if(result<0)
+         {
+           syslog(LOG_ERR, _("Error while receiving PACKET data from %s (%s): %m"),
               cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
+           return -1;
+         }
+       count+=result;
+       len-=result;
+    }
 
-  xrecv(cl,packet);    
+  if(debug_lvl > 3)
+    syslog(LOG_DEBUG, _("Got PACKET length %d from %s (%s)"), len,
+              cl->vpn_hostname, cl->real_hostname);
+
+  total_socket_in += len;
+
+  rp.data.len = ntohs(rp.data.len);
+  rp.len = ntohs(rp.len);
+  rp.from = ntohl(rp.from);
+
+  if(rp.len >= 0)
+    {
+      f = lookup_conn(rp.from);
+      if(!f)
+	{
+	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
+		 cl->vpn_hostname, cl->real_hostname, IP_ADDR_V(rp.from));
+	  return -1;
+	}
+
+      if(f->status.validkey)
+	xrecv(f, &rp);
+      else
+	{
+	  add_queue(&(f->rq), &rp, rp.len);
+	  if(!cl->status.waitingforkey)
+	    send_key_request(rp.from);
+	}
+
+      if(my_key_expiry <= time(NULL))
+	regenerate_keys();
+    }
 cp
   return 0;
 }
@@ -772,7 +808,7 @@ cp
        return -1;
     }  
 
-  if(old = lookup_conn(vpn_ip))
+  if((old = lookup_conn(vpn_ip)))
     {
       if((real_ip==old->real_ip) && (vpn_mask==old->vpn_mask) && (port==old->port))
         {
@@ -817,9 +853,9 @@ cp
     syslog(LOG_DEBUG, _("Got ADD_HOST for %s (%s) from %s (%s)"),
            ncn->vpn_hostname, ncn->real_hostname, cl->vpn_hostname, cl->real_hostname);
 
-skip_add_host:
-
   notify_others(ncn, cl, send_add_host);
+
+skip_add_host:
 cp
   return 0;
 }
