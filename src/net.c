@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.19 2000/07/02 13:36:18 guus Exp $
+    $Id: net.c,v 1.35.4.20 2000/07/02 13:40:57 guus Exp $
 */
 
 #include "config.h"
@@ -558,7 +558,7 @@ cp
 
   ncn = new_conn_list();
   ncn->real_ip = ntohl(*((ip_t*)(h->h_addr_list[0])));
-  ncn->real_hostname = hostlookup(htonl(ip));
+  ncn->real_hostname = hostlookup(htonl(ncn->real_ip));
   
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
