@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.36 2002/06/05 00:25:54 guus Exp $
+    $Id: netutl.c,v 1.12.4.37 2002/06/07 11:14:05 wsl Exp $
 */
 
 #include "config.h"
@@ -236,14 +236,13 @@ int maskcheck(char *a, int masklen, int len)
 cp
   i = masklen / 8;
   masklen %= 8;
-  
-  if(masklen)
-    if(a[i++] & (char)~(0x100 - (1 << masklen)))
-      return -1;
-  
+
+  if(a[i++] & (0xff >> masklen))
+    return -1;
+
   for(; i < len; i++)
     if(a[i] != 0)
-      return -1;
+      return -2;
 
   return 0;
 }
