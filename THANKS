@@ -1,17 +1,19 @@
 I would like to thank
 
- * Guus Sliepen/guus
  * Hans Bayle (for making some useful coding suggestions and fixing a
    bug or two)
+ * Mads Kiilerich (for finding some bugs and some errors in the
+   documentation, and for making several suggestions to make it all
+   more userfriendly)
  * James B. MacLean (for fixing several mission critical bugs, and for
    giving me a few good ideas, and, most of all, for the wonderful
    testing and debugging)
- * Robert van der Meulen/Emphyrio
- * Sander Smeenk/Fluor
- * Tijs van Bakel/smoke
- * Wessel Dankers/Fruit (for the name `tinc' and being a royal pain in
-the ass (je hebt erom gevraagd))
+ * Robert van der Meulen
+ * Sander Smeenk
+ * Tijs van Bakel
+ * Wessel Dankers (for the name `tinc' and being a royal pain in the
+ass (je hebt erom gevraagd))
 
 for their help, support and ideas. Thank you guys!
 
-And especially guus, for starting this whole project...
+And especially Guus Sliepen, for starting this whole project...
