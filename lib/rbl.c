@@ -17,14 +17,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.4 2000/11/18 23:22:44 guus Exp $
+    $Id: rbl.c,v 1.1.2.5 2000/11/19 02:04:29 guus Exp $
 */
 
+#include <xalloc.h>
+
+#include "rbl.h"
 
 /* Allocate a new rbl node */
 rbl_t *new_rbl()
 {
-  return (rbl_t *)xmalloc_and_zero(sizeof(*rbl));
+  return (rbl_t *)xmalloc_and_zero(sizeof(rbl_t));
 }
 
 /* Free a rbl node */
@@ -34,7 +37,7 @@ void free_rbl(rbl_t *rbl)
 }
 
 /* Allocate a new rbltree header */
-rbltree_t *new_rbltree(rbl_compare_t *compare, rbl_action_t *delete)
+rbltree_t *new_rbltree(rbl_compare_t compare, rbl_action_t delete)
 {
   rbltree_t *tree;
 
@@ -55,7 +58,7 @@ void free_rbltree(rbltree_t *tree)
 }
 
 /* Search closest match in the tree */
-rbl_t rbl_search_closest(rbltree_t *tree, void *data)
+rbl_t *rbl_search_closest(rbltree_t *tree, void *data)
 {
   rbl_t *rbl, *next;
   int result;
@@ -66,7 +69,9 @@ rbl_t rbl_search_closest(rbltree_t *tree, void *data)
     {
       rbl = next;
       
-      result = tree->compare(rbl->data, data);
+      result = tree->compare(data, rbl->data);
+
+// fprintf(stderr, "comparing %s     with %s        = %d\n", rbl->data, data, result);
 
       if(result < 0)
         next = rbl->left;
@@ -80,7 +85,7 @@ rbl_t rbl_search_closest(rbltree_t *tree, void *data)
 }
 
 /* Search exact match or return NULL pointer */
-rbl_t rbl_search(rbltree_t *tree, void *data)
+rbl_t *rbl_search(rbltree_t *tree, void *data)
 {
   rbl_t *rbl, *next;
   int result;
@@ -127,7 +132,7 @@ void rbl_left_rotate(rbl_t *x)
       x->parent->left = y;
     else
       x->parent->right = y;
-  
+
   y->left = x;
   x->parent = y;      
 }
@@ -135,7 +140,7 @@ void rbl_left_rotate(rbl_t *x)
 void rbl_right_rotate(rbl_t *y)
 {
   rbl_t *x;
-  
+
   x = y->left;
   y->left = x->right;
 
@@ -157,113 +162,129 @@ void rbl_right_rotate(rbl_t *y)
 }
 
 /* Insert a node into the rbl tree */
-rbl_t rbl_insert_rbl(rbltree_t *tree, rbl_t *rbl)
+rbl_t *rbl_insert_rbl(rbltree_t *tree, rbl_t *rbl)
 {
-   rbl_t *closest, y;
-   int result;
+  rbl_t *closest, *x, *y;
+  int result;
   
+  rbl->tree = tree;
+
   /* Binary tree and linked list insert */
   
   if(tree->top)
     {
       closest = rbl_search_closest(tree, rbl->data);
-      result = tree->compare(rbl->data, data);
+      result = tree->compare(rbl->data, closest->data);
       if(result < 0)
         {
           closest->left = rbl;
+
           rbl->prev = closest->prev;
           rbl->next = closest;
           closest->prev = rbl;
-          rbl->prev->next = rbl;
+
+          if(rbl->prev)
+            rbl->prev->next = rbl;
+          else
+            tree->head = rbl;
         }
       else if(result > 0)
         {
           closest->right = rbl;
-          rbl->next = closest->right;
+
+          rbl->next = closest->next;
           rbl->prev = closest;
           closest->next = rbl;
-          rbl->next->prev = rbl;
+
+          if(rbl->next)
+            rbl->next->prev = rbl;
+          else
+            tree->tail = rbl;
         }
       else
         return closest;		/* Ofcourse, we cannot add two identical things */
+
+      rbl->parent = closest;
     }
   else
-    tree->top = rbl;
-
-  /* Linked list fixup */
-  
-  if(!rbl->prev)
-    tree->head = rbl;
-    
-  if(!rbl->next)
-    tree->tail = rbl;
+    {
+      tree->top = rbl;
+      tree->head = rbl;
+      tree->tail = rbl;
+    }
 
   /* Red-black part of insert */
   
-  rbl->color = RBL_RED;
+  x = rbl;
+  x->color = RBL_RED;
   
-  while(rbl->parent && rbl->parent->color == RBL_RED)
+  while(x != tree->top && x->parent->color == RBL_RED)
     {
-      if(rbl->parent == rbl->parent->parent->left)
+      if(x->parent == x->parent->parent->left)
         {
-          y = rbl->parent->parent->right;
-          if(y->color == RBL_RED)
+          y = x->parent->parent->right;
+          if(y && y->color == RBL_RED)
             {
-              rbl->parent->color = RBL_BLACK;
+              x->parent->color = RBL_BLACK;
               y->color = RBL_BLACK;
-              rbl->parent->parent->color = RBL_RED;
-              rbl = rbl->parent->parent;
+              x->parent->parent->color = RBL_RED;
+              x = x->parent->parent;
             }
           else          
             {
-              if(rbl == rbl->parent->right)
+              if(x == x->parent->right)
                 {
-                  rbl = rbl->parent;
-                  rbl_left_rotate(rbl);
+                  x = x->parent;
+                  rbl_left_rotate(x);
                 }
-              rbl->parent->color = RBL_BLACK;
-              rbl->parent->parent->color = RBL_RED;
-              rbl_right_rotate(rbl->parent->parent);
+              x->parent->color = RBL_BLACK;
+              x->parent->parent->color = RBL_RED;
+              rbl_right_rotate(x->parent->parent);
             }
         }
       else
         {
-          y = rbl->parent->parent->left;
-          if(y->color == RBL_RED)
+          y = x->parent->parent->left;
+          if(y && y->color == RBL_RED)
             {
-              rbl->parent->color = RBL_BLACK;
+              x->parent->color = RBL_BLACK;
               y->color = RBL_BLACK;
-              rbl->parent->parent->color = RBL_RED;
-              rbl = rbl->parent->parent;
+              x->parent->parent->color = RBL_RED;
+              x = x->parent->parent;
             }
           else          
             {
-              if(rbl == rbl->parent->left)
+              if(x == x->parent->left)
                 {
-                  rbl = rbl->parent;
-                  rbl_right_rotate(rbl);
+                  x = x->parent;
+                  rbl_right_rotate(x);
                 }
-              rbl->parent->color = RBL_BLACK;
-              rbl->parent->parent->color = RBL_RED;
-              rbl_left_rotate(rbl->parent->parent);
+              x->parent->color = RBL_BLACK;
+              x->parent->parent->color = RBL_RED;
+              rbl_left_rotate(x->parent->parent);
             }
         }
     }
   
   tree->top->color = RBL_BLACK;
-
   return rbl;
 }
 
 /* Create a new node and insert it into the tree */
-rbl_t rbl_insert(rbltree_t *tree, void *data)
+rbl_t *rbl_insert(rbltree_t *tree, void *data)
 {
   rbl_t *rbl;
   
   rbl = new_rbl();
   rbl->data = data;
 
-  return rbl_insert_rbl(tree, rbl);
+  if(rbl_insert_rbl(tree, rbl) == rbl)
+    return rbl;
+  else
+    {
+      free_rbl(rbl);
+      return NULL;
+    }
 }
 
 /* Restore red-black property after violation due to a deletion */
@@ -279,7 +300,7 @@ void rbl_delete_fixup(rbl_t *x)
           if(w->color == RBL_RED)
             {
               w->color = RBL_BLACK;
-              x->partent->color = RBL_RED;
+              x->parent->color = RBL_RED;
               rbl_left_rotate(x->parent);
               w = x->parent->right;
             }
@@ -310,7 +331,7 @@ void rbl_delete_fixup(rbl_t *x)
           if(w->color == RBL_RED)
             {
               w->color = RBL_BLACK;
-              x->partent->color = RBL_RED;
+              x->parent->color = RBL_RED;
               rbl_right_rotate(x->parent);
               w = x->parent->left;
             }
@@ -341,7 +362,7 @@ void rbl_delete_fixup(rbl_t *x)
 }
 
 /* Unlink node from the tree, but keep the node intact. */
-rbl_t rbl_unlink_rbl(rbl_t *rbl)
+rbl_t *rbl_unlink_rbl(rbl_t *rbl)
 {
   rbl_t *x, *y;
 
@@ -400,7 +421,7 @@ rbl_t rbl_unlink_rbl(rbl_t *rbl)
 }
 
 /* Search node in tree and unlink it */
-rbl_t rbl_unlink(rbltree_t *tree, void *data)
+rbl_t *rbl_unlink(rbltree_t *tree, void *data)
 {
   rbl_t *rbl;
   
@@ -427,11 +448,11 @@ void rbl_delete(rbltree_t *tree, void *data)
 /* Do action for each list entry (in order)
    Deletion of entry for which action is called is allowed.
  */
-void rbl_foreach(rbltree_t *tree, rbl_action_t *action)
+void rbl_foreach(rbltree_t *tree, rbl_action_t action)
 {
   rbl_t *rbl, *next;
   
-  for(rbl = tree->head; rbl; rbl = next);
+  for(rbl = tree->head; rbl; rbl = next)
     {
       next = rbl->next;
       action(rbl);
