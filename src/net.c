@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.126 2001/07/21 20:21:25 guus Exp $
+    $Id: net.c,v 1.35.4.127 2001/07/24 20:14:30 guus Exp $
 */
 
 #include "config.h"
@@ -204,7 +204,7 @@ cp
 
 #ifdef HAVE_SOLARIS
   if(write(tap_fd, packet->data + 14, packet->len - 14) < 0)
-    syslog(LOG_ERR, _("Can't write to tun device: %m"));
+    syslog(LOG_ERR, _("Can't write to tun/tap device: %m"));
   else
     total_tap_out += packet->len;
 #else
@@ -360,7 +360,6 @@ cp
   mymac.net.mac.address.x[5] = 0x00;
 
 #ifdef HAVE_LINUX
-  taptype = TAP_TYPE_ETHERTAP;
  #ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
   memset(&ifr, 0, sizeof(ifr));
@@ -371,12 +370,18 @@ cp
 cp
   if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
   {
-    syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
+    syslog(LOG_INFO, _("%s is a tun/tap device"), tapfname);
     taptype = TAP_TYPE_TUNTAP;
   }
+  else
  #endif
+  {
+    syslog(LOG_INFO, _("%s is an ethertap device"), tapfname);
+    taptype = TAP_TYPE_ETHERTAP;
+  }
 #endif
 #ifdef HAVE_FREEBSD
+ syslog(LOG_INFO, _("%s is a tun/tap device"), tapfname);
  taptype = TAP_TYPE_TUNTAP;
 #endif
 #ifdef HAVE_SOLARIS
@@ -412,10 +417,13 @@ cp
      syslog(LOG_ERR, _("Can't set PPA %d: %m"), ppa);
      return -1;
   }
+
   if(ioctl(ip_fd, I_LINK, if_fd) < 0){
      syslog(LOG_ERR, _("Can't link TUN device to IP: %m"));
      return -1;
   }
+
+  syslog(LOG_INFO, _("%s is a tun/tap device"), tapfname);
 #endif
 
 cp
