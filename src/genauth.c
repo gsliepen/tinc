@@ -35,12 +35,15 @@ int main(int argc, char **argv)
   int bits, c, i, bytes;
   unsigned char *p;
 
-  if(argc != 2)
+  if(argc > 2 || (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))))
     {
       fprintf(stderr, "Usage: %s bits\n", argv[0]);
       return 1;
     }
 
+  if(!argv[1])
+    argv[1] = "1024";
+  
   if(!(bits = atol(argv[1])))
     {
       fprintf(stderr, "Illegal number: %s\n", argv[1]);
