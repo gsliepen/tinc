@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.0.1. Installation
+This is the README file for tinc version 1.0.2. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2003 by:
@@ -31,6 +31,14 @@ launch a denial of service attack by replaying intercepted packets. The current
 version adds sequence numbers and message authentication codes to prevent such
 attacks.
 
+On September the 15th of 2003, Peter Gutmann contacted us and showed us a
+writeup describing various security issues in several VPN daemons. He showed
+that tinc lacks perfect forward security, the connection authentication could
+be done more properly, that the sequence number we use as an IV is not the best
+practice and that the default length of the HMAC for packets is too short in
+his opinion. We do not know of a way to exploit these weaknesses, but we will
+address these issues in tinc 2.0.
+
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
 prove the security of any cryptographic product. If you wish to review
@@ -47,7 +55,7 @@ should be changed into "Device", and "Device" should be changed into
 Compatibility
 -------------
 
-Version 1.0.1 is compatible with 1.0 and 1.0pre8 but not with older versions
+Version 1.0.2 is compatible with 1.0.1, 1.0 and 1.0pre8 but not with older versions
 of tinc.
 
 
