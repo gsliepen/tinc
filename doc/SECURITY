@@ -12,11 +12,34 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: SECURITY,v 1.1.2.1 2000/09/17 19:57:39 guus Exp $
+   $Id: SECURITY,v 1.1.2.2 2000/09/17 20:11:59 guus Exp $
 
 
 1.  Authentication
 ------------------
+
+The authentication protocol (see protocol.c for the up-to-date version) is:
+
+   Client               Server
+   send_id(u)
+                        send_challenge(R)
+   send_chal_reply(H)                   
+                        send_id(u)
+   send_challenge(R)
+                        send_chal_reply(H)
+   ---------------------------------------
+   Any negotations about the meta protocol
+   encryption go here(u).
+   ---------------------------------------
+   send_ack(u)
+                        send_ack(u)
+   ---------------------------------------
+   Other requests(E)...
+
+   (u) Unencrypted,
+   (R) RSA,
+   (H) SHA1,
+   (E) Encrypted with symmetric cipher.
 
 Authentication in tinc will be done in a way that is very similar to the way
 the SSH (Secure SHell) authentication protocol works. It is based on public
@@ -90,3 +113,11 @@ Other options for key exchange could be:
   them must be done with great care, nobody may eavesdrop. Exchanging public
   keys on the other hand is much safer, everybody may eavesdrop, just as long
   as you are sure that the public key itself belongs to the right owner.
+
+3.  Symmetric cipher
+--------------------
+
+Since the generalized encryption functions of OpenSSL are used, any symmetric
+cipher that is available in OpenSSL could possibly be used. The default however
+will be Blowfish. Blowfish is widely in use and still has not been cracked
+today (as far as we know). It also is one of the faster ciphers available.
