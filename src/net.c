@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.9 2000/06/27 15:08:58 guus Exp $
+    $Id: net.c,v 1.35.4.10 2000/06/27 20:10:48 guus Exp $
 */
 
 #include "config.h"
@@ -56,6 +56,7 @@ int total_tap_out = 0;
 int total_socket_in = 0;
 int total_socket_out = 0;
 
+int upstreamindex = 0;
 static int seconds_till_retry;
 
 /* The global list of existing connections */
@@ -496,6 +497,9 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
   struct sockaddr_in a;
   config_t const *cfg;
 cp
+  if(debug_lvl > 0)
+    syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
+
   if((cfg = get_config_val(upstreamport)) == NULL)
     cl->port = 655;
   else
@@ -615,9 +619,8 @@ RETSIGTYPE
 sigalrm_handler(int a)
 {
   config_t const *cfg;
-  int index = 1;
 cp
-  cfg = get_config_val(upstreamip);
+  cfg = get_next_config_val(upstreamip, upstreamindex++);
 
   while(cfg)
     {
@@ -626,10 +629,11 @@ cp
           signal(SIGALRM, SIG_IGN);
           return;
         }
-      cfg = get_next_config_val(upstreamip, index++); /* Or else we try the next ConnectTo line */
+      cfg = get_next_config_val(upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
     }
 
   signal(SIGALRM, sigalrm_handler);
+  upstreamindex = 0;
   seconds_till_retry += 5;
   if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
     seconds_till_retry = 300;
@@ -645,7 +649,6 @@ cp
 int setup_network_connections(void)
 {
   config_t const *cfg;
-  int index = 1;
 cp
   if((cfg = get_config_val(pingtimeout)) == NULL)
     timeout = 5;
@@ -658,7 +661,7 @@ cp
   if(setup_myself() < 0)
     return -1;
 
-  if((cfg = get_config_val(upstreamip)) == NULL)
+  if((cfg = get_next_config_val(upstreamip, upstreamindex++)) == NULL)
     /* No upstream IP given, we're listen only. */
     return 0;
 
@@ -666,10 +669,11 @@ cp
     {
       if(!setup_outgoing_connection(cfg->data.ip->ip))   /* function returns 0 when there are no problems */
         return 0;
-      cfg = get_next_config_val(upstreamip, index++); /* Or else we try the next ConnectTo line */
+      cfg = get_next_config_val(upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
     }
     
   signal(SIGALRM, sigalrm_handler);
+  upstreamindex = 0;
   seconds_till_retry = 300;
   alarm(seconds_till_retry);
   syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 minutes"));

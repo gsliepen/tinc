@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.2 2000/06/27 15:08:57 guus Exp $
+    $Id: conf.c,v 1.9.4.3 2000/06/27 20:10:47 guus Exp $
 */
 
 
@@ -75,7 +75,7 @@ static internal_config_t hazahaza[] = {
 config_t *
 add_config_val(config_t **cfg, int argtype, char *val)
 {
-  config_t *p;
+  config_t *p, *r;
   char *q;
 
   p = (config_t*)xmalloc(sizeof(*p));
@@ -106,8 +106,16 @@ add_config_val(config_t **cfg, int argtype, char *val)
 
   if(p->data.val)
     {
-      p->next = *cfg;
-      *cfg = p;
+      if(*cfg)
+        {
+          r = *cfg;
+          while(r->next)
+            r = r->next;
+          r->next = p;
+        }
+      else
+        *cfg = p;
+      p->next = NULL;
       return p;
     }
 

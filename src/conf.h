@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.2 2000/06/27 15:08:57 guus Exp $
+    $Id: conf.h,v 1.6.4.3 2000/06/27 20:10:47 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -70,6 +70,7 @@ enum {
 extern config_t *config;
 extern int debug_lvl;
 extern int timeout;
+extern int upstreamindex;
 
 extern config_t *add_config_val(config_t **, int, char *);
 extern int read_config_file(const char *);
