@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.9 2002/03/22 13:31:18 guus Exp $
+    $Id: edge.c,v 1.1.2.10 2002/03/27 15:26:43 guus Exp $
 */
 
 #include "config.h"
@@ -189,25 +189,20 @@ void dump_edges(void)
 {
   avl_node_t *node;
   edge_t *e;
-  char *from_tcp, *from_udp;
-  char *to_tcp, *to_udp;
+  char *from_udp, *to_udp;
 cp
   syslog(LOG_DEBUG, _("Edges:"));
 
   for(node = edge_tree->head; node; node = node->next)
     {
       e = (edge_t *)node->data;
-//      from_tcp = sockaddr2hostname(&e->from.tcpaddress);
       from_udp = sockaddr2hostname(&e->from.udpaddress);
-//      to_tcp = sockaddr2hostname(&e->to.tcpaddress);
       to_udp = sockaddr2hostname(&e->to.udpaddress);
       syslog(LOG_DEBUG, _(" %s at %s - %s at %s options %lx weight %d"),
              e->from.node->name, from_udp,
 	     e->to.node->name, to_udp,
 	     e->options, e->weight);
-//      free(from_tcp);
       free(from_udp);
-//      free(to_tcp);	
       free(to_udp);	
     }
 

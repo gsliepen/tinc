@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.7 2002/03/23 20:21:10 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.8 2002/03/27 15:26:44 guus Exp $
 */
 
 #include "config.h"
@@ -562,10 +562,8 @@ cp
   c->edge = new_edge();
 cp  
   c->edge->from.node = myself;
-//  c->edge->from.tcpaddress = str2sockaddr(address, port);
   c->edge->from.udpaddress = str2sockaddr(myaddress, myport);
   c->edge->to.node = n;
-//  c->edge->to.tcpaddress = c->address;
   sockaddr2str(&c->address, &hisaddress, &dummy);
   c->edge->to.udpaddress = str2sockaddr(hisaddress, hisport);
   free(hisaddress);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.127 2002/03/23 20:12:29 guus Exp $
+    $Id: protocol.c,v 1.28.4.128 2002/03/27 15:26:43 guus Exp $
 */
 
 #include "config.h"
@@ -225,7 +225,6 @@ int (*request_handlers[])(connection_t*) = {
   id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
   status_h, error_h, termreq_h,
   ping_h, pong_h,
-//  add_node_h, del_node_h,
   add_subnet_h, del_subnet_h,
   add_edge_h, del_edge_h,
   key_changed_h, req_key_h, ans_key_h,
@@ -238,7 +237,6 @@ char (*request_name[]) = {
   "ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
   "STATUS", "ERROR", "TERMREQ",
   "PING", "PONG",
-//  "ADD_NODE", "DEL_NODE",
   "ADD_SUBNET", "DEL_SUBNET",
   "ADD_EDGE", "DEL_EDGE",
   "KEY_CHANGED", "REQ_KEY", "ANS_KEY",

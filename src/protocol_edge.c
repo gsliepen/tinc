@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.6 2002/03/22 13:31:18 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.7 2002/03/27 15:26:44 guus Exp $
 */
 
 #include "config.h"
@@ -51,20 +51,14 @@ int send_add_edge(connection_t *c, edge_t *e)
   char *from_udpaddress, *from_udpport;
   char *to_udpaddress, *to_udpport;
 cp
-//  sockaddr2str(&e->from.tcpaddress, &from_tcpaddress, &from_tcpport);
   sockaddr2str(&e->from.udpaddress, &from_udpaddress, &from_udpport);
-//  sockaddr2str(&e->to.tcpaddress, &to_tcpaddress, &to_tcpport);
   sockaddr2str(&e->to.udpaddress, &to_udpaddress, &to_udpport);
   x = send_request(c, "%d %lx %s %s %s %s %s %s %lx %d", ADD_EDGE, random(),
                       e->from.node->name, from_udpaddress, from_udpport,
 		      e->to.node->name, to_udpaddress, to_udpport,
 		      e->options, e->weight);
-//  free(from_tcpaddress);
-//  free(from_tcpport);
   free(from_udpaddress);
   free(from_udpport);
-//  free(to_tcpaddress);
-//  free(to_tcpport);
   free(to_udpaddress);
   free(to_udpport);
 cp
@@ -79,10 +73,8 @@ int add_edge_h(connection_t *c)
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   char from_address[MAX_STRING_SIZE];
-//  char from_tcpport[MAX_STRING_SIZE];
   char from_udpport[MAX_STRING_SIZE];
   char to_address[MAX_STRING_SIZE];
-//  char to_tcpport[MAX_STRING_SIZE];
   char to_udpport[MAX_STRING_SIZE];
   sockaddr_t from_udpaddress;
   sockaddr_t to_udpaddress;
@@ -138,9 +130,7 @@ cp
 
   /* Convert addresses */
   
-//  from_tcpaddress = str2sockaddr(from_address, from_tcpport);
   from_udpaddress = str2sockaddr(from_address, from_udpport);
-//  to_tcpaddress = str2sockaddr(to_address, to_tcpport);
   to_udpaddress = str2sockaddr(to_address, to_udpport);
 
   /* Check if edge already exists */
@@ -185,10 +175,8 @@ cp
 
   e = new_edge();
   e->from.node = from;
-//  e->from.tcpaddress = from_tcpaddress;
   e->from.udpaddress = from_udpaddress;
   e->to.node = to;
-//  e->to.tcpaddress = to_tcpaddress;
   e->to.udpaddress = to_udpaddress;
   e->options = options;
   e->weight = weight;
