@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.89 2001/05/24 21:52:26 guus Exp $
+    $Id: protocol.c,v 1.28.4.90 2001/05/25 08:36:11 guus Exp $
 */
 
 #include "config.h"
@@ -1068,6 +1068,7 @@ cp
   cl->last_ping_time = time(NULL);
   RAND_bytes(salt, SALTLEN);
   bin2hex(salt, salt, SALTLEN);
+  salt[SALTLEN*2] = '\0';
 cp
   return send_request(cl, "%d %s", PING, salt);
 }
@@ -1084,6 +1085,7 @@ int send_pong(connection_t *cl)
 cp
   RAND_bytes(salt, SALTLEN);
   bin2hex(salt, salt, SALTLEN);
+  salt[SALTLEN*2] = '\0';
 cp
   return send_request(cl, "%d %s", PONG, salt);
 }

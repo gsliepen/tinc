@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.105 2001/05/07 19:08:43 guus Exp $
+    $Id: net.c,v 1.35.4.106 2001/05/25 08:36:11 guus Exp $
 */
 
 #include "config.h"
@@ -848,11 +848,13 @@ cp
   cfg = get_config_val(upstreamcfg, config_connectto);
 
   if(!cfg)
-    if(upstreamcfg == config)
     {
-      /* No upstream IP given, we're listen only. */
-      signal(SIGALRM, SIG_IGN);
-      return;
+      if(upstreamcfg == config)
+      {
+        /* No upstream IP given, we're listen only. */
+        signal(SIGALRM, SIG_IGN);
+        return;
+      }
     }
   else
     {
@@ -1074,6 +1076,8 @@ cp
       syslog(LOG_WARNING, _("Received UDP packets on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return;
     }
+
+  cl->last_ping_time = time(NULL);
 
   receive_udppacket(cl, &pkt);
 cp

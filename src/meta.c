@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.16 2001/03/12 23:58:19 guus Exp $
+    $Id: meta.c,v 1.1.2.17 2001/05/25 08:36:11 guus Exp $
 */
 
 #include "config.h"
@@ -93,7 +93,6 @@ int receive_meta(connection_t *cl)
   int oldlen, i;
   int lenin = 0;
   char inbuf[MAXBUFSIZE];
-  char *bufp;
   int decrypted = 0;
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
