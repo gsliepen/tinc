@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.93 2001/01/11 11:19:08 guus Exp $
+    $Id: net.c,v 1.35.4.94 2001/01/13 16:36:21 guus Exp $
 */
 
 #include "config.h"
@@ -610,17 +610,24 @@ int read_rsa_public_key(connection_t *cl)
 {
   config_t const *cfg;
   FILE *fp;
+  char *fname;
   void *result;
 cp
   if(!cl->rsa_key)
     cl->rsa_key = RSA_new();
 
+  /* First, check for simple PublicKey statement */
+
   if((cfg = get_config_val(cl->config, config_publickey)))
     {
       BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
       BN_hex2bn(&cl->rsa_key->e, "FFFF");
+      return 0;
     }
-  else if((cfg = get_config_val(cl->config, config_publickeyfile)))
+
+  /* Else, check for PublicKeyFile statement and read it */
+
+  if((cfg = get_config_val(cl->config, config_publickeyfile)))
     {
       if(is_safe_path(cfg->data.ptr))
         {
@@ -638,17 +645,31 @@ cp
 	             cfg->data.ptr);
               return -1;
             }
+          return 0;
         }
       else
         return -1;
     }    
-  else
+
+  /* Else, check if a harnessed public key is in the config file */
+  
+  asprintf(&fname, "%s/hosts/%s", confbase, cl->name);
+  if((fp = fopen(fname, "r")))
     {
-      syslog(LOG_ERR, _("No public key for %s specified!"), cl->name);
-      return -1;
+      result = PEM_read_RSAPublicKey(fp, &cl->rsa_key, NULL, NULL);
+      fclose(fp);
+      free(fname);
+      if(result)
+        return 0;
     }
+
+  free(fname);
+
+  /* Nothing worked. */
+
+  syslog(LOG_ERR, _("No public key for %s specified!"), cl->name);
 cp
-  return 0;
+  return -1;
 }
 
 int read_rsa_private_key(void)

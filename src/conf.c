@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.38 2001/01/07 17:08:55 guus Exp $
+    $Id: conf.c,v 1.9.4.39 2001/01/13 16:36:20 guus Exp $
 */
 
 #include "config.h"
@@ -228,7 +228,7 @@ int read_config_file(config_t **base, const char *fname)
   FILE *fp;
   char *buffer, *line;
   char *p, *q;
-  int i, lineno = 0;
+  int i, lineno = 0, ignore = 0;
   config_t *cfg;
   size_t bufsize;
   
@@ -265,35 +265,44 @@ cp
       if(p[0] == '#')
 	continue; /* comment: ignore */
 
-      for(i = 0; hazahaza[i].name != NULL; i++)
-	if(!strcasecmp(hazahaza[i].name, p))
-	  break;
+      if(!strcmp(p, "-----BEGIN"))
+        ignore = 1;
+        
+      if(ignore == 0)
+        {
+          for(i = 0; hazahaza[i].name != NULL; i++)
+	    if(!strcasecmp(hazahaza[i].name, p))
+	      break;
 
-      if(!hazahaza[i].name)
-	{
-	  syslog(LOG_ERR, _("Invalid variable name `%s' on line %d while reading config file %s"),
-		  p, lineno, fname);
-          break;
-	}
+          if(!hazahaza[i].name)
+	    {
+	      syslog(LOG_ERR, _("Invalid variable name `%s' on line %d while reading config file %s"),
+		      p, lineno, fname);
+              break;
+	    }
 
-      if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
-	{
-	  syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
-		  hazahaza[i].name, lineno, fname);
-	  break;
-	}
+          if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
+	    {
+	      syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+		      hazahaza[i].name, lineno, fname);
+	      break;
+	    }
 
-      cfg = add_config_val(base, hazahaza[i].argtype, q);
-      if(cfg == NULL)
-	{
-	  syslog(LOG_ERR, _("Invalid value for variable `%s' on line %d while reading config file %s"),
-		  hazahaza[i].name, lineno, fname);
-	  break;
-	}
+          cfg = add_config_val(base, hazahaza[i].argtype, q);
+          if(cfg == NULL)
+	    {
+	      syslog(LOG_ERR, _("Invalid value for variable `%s' on line %d while reading config file %s"),
+		      hazahaza[i].name, lineno, fname);
+	      break;
+	    }
 
-      cfg->which = hazahaza[i].which;
-      if(!config)
-	config = cfg;
+          cfg->which = hazahaza[i].which;
+          if(!config)
+	    config = cfg;
+       }
+
+      if(!strcmp(p, "-----END"))
+        ignore = 0;
     }
 
   free(buffer);
@@ -462,7 +471,7 @@ check2:
   return 1;
 }
 
-FILE *ask_and_safe_open(const char* filename, const char* what)
+FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode)
 {
   FILE *r;
   char *directory;
@@ -509,14 +518,14 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
   umask(0077); /* Disallow everything for group and other */
   
   /* Open it first to keep the inode busy */
-  if((r = fopen(fn, "w")) == NULL)
+  if((r = fopen(fn, mode)) == NULL)
     {
       fprintf(stderr, _("Error opening file `%s': %m\n"),
 	      fn);
       free(fn);
       return NULL;
     }
-
+    
   /* Then check the file for nasty attacks */
   if(!is_safe_path(fn))  /* Do not permit any directories that are
                             readable or writeable by other users. */
@@ -530,6 +539,6 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
     }
 
   free(fn);
-  
+
   return r;
 }

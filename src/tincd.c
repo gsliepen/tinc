@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.41 2001/01/07 17:09:07 guus Exp $
+    $Id: tincd.c,v 1.10.4.42 2001/01/13 16:36:23 guus Exp $
 */
 
 #include "config.h"
@@ -229,6 +229,7 @@ int keygen(int bits)
 {
   RSA *rsa_key;
   FILE *f;
+  config_t const *cfg;
   char *filename;
 
   fprintf(stderr, _("Generating %d bits keys:\n"), bits);
@@ -242,16 +243,28 @@ int keygen(int bits)
   else
     fprintf(stderr, _("Done.\n"));
 
-  asprintf(&filename, "%s/rsa_key.pub", confbase);
-  if((f = ask_and_safe_open(filename, _("public RSA key"))) == NULL)
+  if(config && (cfg = get_config_val(config, config_name)))
+    asprintf(&filename, "%s/hosts/%s", confbase, cfg->data.ptr);
+  else
+    asprintf(&filename, "%s/rsa_key.priv");
+
+  if((f = ask_and_safe_open(filename, _("public RSA key"), "a")) == NULL)
     return -1;
+
+  if(ftell(f))
+    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file."));
+
   PEM_write_RSAPublicKey(f, rsa_key);
   fclose(f);
   free(filename);
   
   asprintf(&filename, "%s/rsa_key.priv", confbase);
-  if((f = ask_and_safe_open(filename, _("private RSA key"))) == NULL)
+  if((f = ask_and_safe_open(filename, _("private RSA key"), "a")) == NULL)
     return -1;
+
+  if(ftell(f))
+    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file."));
+
   PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
   fclose(f);
   free(filename);
@@ -334,8 +347,11 @@ cp
   RAND_load_file("/dev/urandom", 1024);
 cp
   if(generate_keys)
-    exit(keygen(generate_keys));
-
+    {
+      read_server_config();
+      exit(keygen(generate_keys));
+    }
+    
   if(kill_tincd)
     exit(kill_other());
 
