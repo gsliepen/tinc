@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.47 2000/10/28 21:05:17 guus Exp $
+    $Id: net.c,v 1.35.4.48 2000/10/28 21:25:20 guus Exp $
 */
 
 #include "config.h"
@@ -56,7 +56,7 @@
 #include "system.h"
 
 int tap_fd = -1;
-int taptype = 0;
+int taptype = TAP_TYPE_ETHERTAP;
 int total_tap_in = 0;
 int total_tap_out = 0;
 int total_socket_in = 0;
@@ -148,11 +148,21 @@ cp
   /* FIXME sometime
   add_mac_addresses(&outpkt);
   */
-  
-  if(write(tap_fd, outpkt.data, outpkt.len) < 0)
-    syslog(LOG_ERR, _("Can't write to tap device: %m"));
-  else
-    total_tap_out += outpkt.len;
+
+  if(taptype == TAP_TYPE_TUNTAP)
+    {
+      if(write(tap_fd, outpkt.data, outpkt.len) < 0)
+        syslog(LOG_ERR, _("Can't write to tun/tap device: %m"));
+      else
+        total_tap_out += outpkt.len;
+    }
+  else	/* ethertap */
+    {
+      if(write(tap_fd, outpkt.data - 2, outpkt.len + 2) < 0)
+        syslog(LOG_ERR, _("Can't write to ethertap device: %m"));
+      else
+        total_tap_out += outpkt.len + 2;
+    }
 cp
   return 0;
 }
@@ -371,7 +381,7 @@ cp
 cp
   tap_fd = nfd;
 
-  taptype = 0;
+  taptype = TAP_TYPE_ETHERTAP;
 
 #ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
@@ -384,7 +394,7 @@ cp
   if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
   { 
     syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
-    taptype = 1;
+    taptype = TAP_TYPE_TUNTAP;
 
     if((cfg = get_config_val(config, tapsubnet)) == NULL)
       syslog(LOG_INFO, _("tun/tap device will be left unconfigured"));
@@ -1225,7 +1235,7 @@ void handle_tap_input(void)
   ipv4_t dest;
   int lenin;
 cp  
-  if(taptype = 1)
+  if(taptype == TAP_TYPE_TUNTAP)
     {
       if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
         {
@@ -1234,14 +1244,14 @@ cp
         }
       vp.len = lenin;
     }
-  else
+  else			/* ethertap */
     {
-      if((lenin = read(tap_fd, &vp.len, MTU)) <= 0)
+      if((lenin = read(tap_fd, vp.data - 2, MTU)) <= 0)
         {
           syslog(LOG_ERR, _("Error while reading from ethertap device: %m"));
           return;
         }
-//      vp.len = lenin - 2;
+      vp.len = lenin - 2;
     }
 
   total_tap_in += lenin;
