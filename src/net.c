@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.195 2003/07/29 22:59:00 guus Exp $
+    $Id: net.c,v 1.35.4.196 2003/08/02 20:50:38 guus Exp $
 */
 
 #include "system.h"
@@ -42,6 +42,7 @@
 #include "xalloc.h"
 
 bool do_purge = false;
+volatile bool running;
 
 time_t now = 0;
 
@@ -280,7 +281,7 @@ static void check_network_activity(fd_set * f)
 /*
   this is where it all happens...
 */
-void main_loop(void)
+int main_loop(void)
 {
 	fd_set fset;
 	struct timeval tv;
@@ -294,7 +295,9 @@ void main_loop(void)
 	last_config_check = now;
 	srand(now);
 
-	for(;;) {
+	running = true;
+
+	while(running) {
 		now = time(NULL);
 
 		tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
@@ -310,7 +313,7 @@ void main_loop(void)
 					   strerror(errno));
 				cp_trace();
 				dump_connections();
-				return;
+				return 1;
 			}
 
 			continue;
@@ -379,7 +382,7 @@ void main_loop(void)
 
 			if(!read_server_config()) {
 				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
-				exit(1);
+				return 1;
 			}
 
 			/* Close connections to hosts that have a changed or deleted host config file */
@@ -405,8 +408,8 @@ void main_loop(void)
 			/* Try to make outgoing connections */
 			
 			try_outgoing_connections();
-						
-			continue;
 		}
 	}
+
+	return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.68 2003/07/29 22:59:00 guus Exp $
+    $Id: net.h,v 1.9.4.69 2003/08/02 20:50:38 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -135,7 +135,7 @@ extern bool setup_network_connections(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
-extern void main_loop(void);
+extern int main_loop(void);
 extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
 extern bool read_rsa_public_key(struct connection_t *);

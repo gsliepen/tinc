@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.79 2003/07/30 11:50:45 guus Exp $
+    $Id: tincd.c,v 1.10.4.80 2003/08/02 20:50:38 guus Exp $
 */
 
 #include "system.h"
@@ -77,7 +77,8 @@ char *identname = NULL;				/* program name for syslog */
 char *pidfilename = NULL;			/* pid file location */
 char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
-char **environment;				/* A pointer to the environment on startup */
+
+int exitstatus = 0;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -119,11 +120,9 @@ static void usage(bool status)
 				"      --version              Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@nl.linux.org.\n"));
 	}
-
-	exit(status);
 }
 
-static void parse_options(int argc, char **argv, char **envp)
+static bool parse_options(int argc, char **argv)
 {
 	int r;
 	int option_index = 0;
@@ -178,10 +177,13 @@ static void parse_options(int argc, char **argv, char **envp)
 							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
 									optarg);
 							usage(true);
+							return false;
 						}
 					}
 				} else
 					kill_tincd = SIGTERM;
+#else
+					kill_tincd = 1;
 #endif
 				break;
 
@@ -197,6 +199,7 @@ static void parse_options(int argc, char **argv, char **envp)
 						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
 								optarg);
 						usage(true);
+						return false;
 					}
 
 					generate_keys &= ~7;	/* Round it to bytes */
@@ -228,11 +231,14 @@ static void parse_options(int argc, char **argv, char **envp)
 
 			case '?':
 				usage(true);
+				return false;
 
 			default:
 				break;
 		}
 	}
+
+	return true;
 }
 
 /* This function prettyprints the key generation process */
@@ -354,7 +360,7 @@ static void make_names(void)
 	}
 }
 
-int main(int argc, char **argv, char **envp)
+int main(int argc, char **argv)
 {
 	program_name = argv[0];
 
@@ -362,8 +368,9 @@ int main(int argc, char **argv, char **envp)
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	environment = envp;
-	parse_options(argc, argv, envp);
+	if(!parse_options(argc, argv))
+		return 1;
+	
 	make_names();
 
 	if(show_version) {
@@ -378,11 +385,13 @@ int main(int argc, char **argv, char **envp)
 		return 0;
 	}
 
-	if(show_help)
+	if(show_help) {
 		usage(false);
+		return 0;
+	}
 
 	if(kill_tincd)
-		exit(!kill_other(kill_tincd));
+		return !kill_other(kill_tincd);
 
 	openlogger("tinc", LOGMODE_STDERR);
 
@@ -412,31 +421,48 @@ int main(int argc, char **argv, char **envp)
 
 	if(generate_keys) {
 		read_server_config();
-		exit(!keygen(generate_keys));
+		return !keygen(generate_keys);
 	}
 
 	if(!read_server_config())
-		exit(1);
+		return 1;
 
 	if(lzo_init() != LZO_E_OK) {
 		logger(LOG_ERR, _("Error initializing LZO compressor!"));
-		exit(1);
+		return 1;
 	}
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", strerror(errno));
-		exit(1);
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", winerror(GetLastError()));
+		return 1;
 	}
+
+	if(!do_detach || !init_service())
+		return main2(argc, argv);
+	else
+		return 1;
+}
+
+int main2(int argc, char **argv)
+{
 #endif
-	
+
 	if(!detach())
-		exit(1);
+		return 1;
 		
 	for(;;) {
 		if(setup_network_connections()) {
-			main_loop();
-			cleanup_and_exit(1);
+			int status;
+			status = main_loop();
+
+		        close_network_connections();
+
+			ifdebug(CONNECTIONS)
+				dump_device_stats();
+
+			logger(LOG_NOTICE, _("Terminating"));
+			return status;
 		}
 
 		logger(LOG_ERR, _("Unrecoverable error"));
@@ -447,7 +473,7 @@ int main(int argc, char **argv, char **envp)
 			sleep(maxtimeout);
 		} else {
 			logger(LOG_ERR, _("Not restarting."));
-			exit(1);
+			return 1;
 		}
 	}
 }

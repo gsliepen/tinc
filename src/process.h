@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.18 2003/07/30 21:52:41 guus Exp $
+    $Id: process.h,v 1.1.2.19 2003/08/02 20:50:38 guus Exp $
 */
 
 #ifndef __TINC_PROCESS_H__
@@ -31,6 +31,5 @@ extern void setup_signals(void);
 extern bool execute_script(const char *, char **);
 extern bool detach(void);
 extern bool kill_other(int);
-extern void cleanup_and_exit(int) __attribute__ ((__noreturn__));
 
 #endif							/* __TINC_PROCESS_H__ */

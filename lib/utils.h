@@ -38,4 +38,8 @@ extern void cp_trace(void);
 extern void hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
 
+#ifdef HAVE_MINGW
+extern char *winerror(int);
+#endif
+
 #endif							/* __TINC_UTILS_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.8 2003/07/29 22:59:00 guus Exp $
+    $Id: logger.c,v 1.1.2.9 2003/08/02 20:50:38 guus Exp $
 */
 
 #include "system.h"
@@ -71,6 +71,7 @@ void logger(int priority, const char *format, ...) {
 			fprintf(logfile, "%ld %s[%d]: ", time(NULL), logident, logpid);
 			vfprintf(logfile, format, ap);
 			fprintf(logfile, "\n");
+			fflush(logfile);
 			break;
 		case LOGMODE_SYSLOG:
 #ifdef HAVE_SYSLOG_H

@@ -79,3 +79,17 @@ void cp_trace()
 		);
 }
 #endif
+
+#ifdef HAVE_MINGW
+char *winerror(int err) {
+	static char buf[1024];
+
+	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
+		strncpy(buf, _("(unable to format errormessage)"), sizeof(buf));
+	};
+
+	return buf;
+}
+#endif
+

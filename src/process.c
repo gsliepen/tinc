@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.60 2003/07/31 14:24:19 guus Exp $
+    $Id: process.c,v 1.1.2.61 2003/08/02 20:50:38 guus Exp $
 */
 
 #include "system.h"
@@ -43,6 +43,7 @@ extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
 extern bool use_logfile;
+extern volatile bool running;
 
 sigset_t emptysigset;
 
@@ -70,23 +71,153 @@ static int fcloseall(void)
 }
 #endif
 
-/*
-  Close network connections, and terminate neatly
-*/
-void cleanup_and_exit(int c)
-{
-	cp();
+#ifdef HAVE_MINGW
+extern char *identname;
+extern char *program_name;
+extern char **g_argv;
 
-	close_network_connections();
+static SC_HANDLE manager = NULL;
+static SC_HANDLE service = NULL;
+static SERVICE_STATUS status = {0};
+static SERVICE_STATUS_HANDLE statushandle = 0;
 
-	ifdebug(CONNECTIONS)
-		dump_device_stats();
+bool install_service(void) {
+	char command[4096] = "";
+	char **argp;
 
-	logger(LOG_NOTICE, _("Terminating"));
+	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if(!manager) {
+		logger(LOG_ERR, _("Could not open service manager: %s"), winerror(GetLastError()));
+		return false;
+	}
 
-	closelogger();
-	exit(c);
+	if(!strchr(program_name, '\\')) {
+		GetCurrentDirectory(sizeof(command), command);
+		strncat(command, "\\", sizeof(command));
+	}
+
+	strncat(command, program_name, sizeof(command));
+	for(argp = g_argv + 1; *argp; argp++) {
+		strncat(command, " ", sizeof(command));
+		strncat(command, *argp, sizeof(command));
+	}
+
+	service = CreateService(manager, identname, identname,
+			SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+			command, "NDIS", NULL, NULL, NULL, NULL);
+	
+	if(!service) {
+		logger(LOG_ERR, _("Could not create %s service: %s"), identname, winerror(GetLastError()));
+		return false;
+	}
+
+	logger(LOG_INFO, _("%s service installed"), identname);
+
+	if(!StartService(service, 0, NULL))
+		logger(LOG_WARNING, _("Could not start %s service: %s"), identname, winerror(GetLastError()));
+	else
+		logger(LOG_INFO, _("%s service started"), identname);
+
+	return true;
 }
+
+bool remove_service(void) {
+	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if(!manager) {
+		logger(LOG_ERR, _("Could not open service manager: %s"), winerror(GetLastError()));
+		return false;
+	}
+
+	service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
+
+	if(!service) {
+		logger(LOG_ERR, _("Could not open %s service: %s"), identname, winerror(GetLastError()));
+		return false;
+	}
+
+	if(!ControlService(service, SERVICE_CONTROL_STOP, &status))
+		logger(LOG_ERR, _("Could not stop %s service: %s"), identname, winerror(GetLastError()));
+	else
+		logger(LOG_INFO, _("%s service stopped"), identname);
+
+	if(!DeleteService(service)) {
+		logger(LOG_ERR, _("Could not remove %s service: %s"), identname, winerror(GetLastError()));
+		return false;
+	}
+
+	logger(LOG_INFO, _("%s service removed"), identname);
+
+	return true;
+}
+
+DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
+	switch(request) {
+		case SERVICE_CONTROL_STOP:
+			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_STOP");
+			running = false;
+			break;
+		case SERVICE_CONTROL_SHUTDOWN:
+			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_SHUTDOWN");
+			running = false;
+			break;
+		default:
+			logger(LOG_WARNING, _("Got unexpected request %d"), request);
+			return ERROR_CALL_NOT_IMPLEMENTED;
+	}
+
+	return NO_ERROR;
+}
+
+VOID WINAPI run_service(DWORD argc, LPTSTR* argv)
+{
+	int err = 1;
+	extern int main2(int argc, char **argv);
+
+
+	status.dwServiceType = SERVICE_WIN32; 
+	status.dwCurrentState = SERVICE_RUNNING; 
+	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+	status.dwWin32ExitCode = 0; 
+	status.dwServiceSpecificExitCode = 0; 
+	status.dwCheckPoint = 0; 
+	status.dwWaitHint = 0; 
+
+	statushandle = RegisterServiceCtrlHandlerEx(identname, controlhandler, NULL); 
+
+	if (!statushandle) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
+		err = 1;
+	} else {
+		SetServiceStatus(statushandle, &status);
+
+		err = main2(argc, argv);
+
+		status.dwCurrentState = SERVICE_STOPPED; 
+		status.dwWin32ExitCode = err; 
+
+		SetServiceStatus(statushandle, &status);
+	}
+
+	return;
+}
+
+bool init_service(void) {
+	SERVICE_TABLE_ENTRY services[] = {
+		{identname, run_service},
+		{NULL, NULL}
+	};
+
+	if(!StartServiceCtrlDispatcher(services)) {
+		if(GetLastError() == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
+			return false;
+		}
+		else
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "StartServiceCtrlDispatcher", winerror(GetLastError()));
+	}
+
+	return true;
+}
+#endif
 
 #ifndef HAVE_MINGW
 /*
@@ -151,9 +282,11 @@ bool kill_other(int signal)
 		fprintf(stderr, _("Removing stale lock file.\n"));
 		remove_pid(pidfilename);
 	}
-#endif
 
 	return true;
+#else
+	return remove_service();
+#endif
 }
 
 /*
@@ -170,14 +303,14 @@ bool detach(void)
 #ifndef HAVE_MINGW
 	if(!write_pidfile())
 		return false;
-#endif
 
 	/* If we succeeded in doing that, detach */
 
 	closelogger();
+#endif
 
-#ifdef HAVE_FORK
 	if(do_detach) {
+#ifndef HAVE_MINGW
 		if(daemon(0, 0)) {
 			fprintf(stderr, _("Couldn't detach from terminal: %s"),
 					strerror(errno));
@@ -188,8 +321,11 @@ bool detach(void)
 
 		if(!write_pid(pidfilename))
 			return false;
-	}
+#else
+		if(!statushandle)
+			exit(install_service());
 #endif
+	}
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
@@ -312,14 +448,13 @@ bool execute_script(const char *name, char **envp)
 static RETSIGTYPE sigterm_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got TERM signal"));
-
-	cleanup_and_exit(0);
+	running = false;
 }
 
 static RETSIGTYPE sigquit_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got QUIT signal"));
-	cleanup_and_exit(0);
+	running = false;
 }
 
 static RETSIGTYPE fatal_signal_square(int a)
