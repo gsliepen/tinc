@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.14 2003/07/29 23:21:01 guus Exp $
+    $Id: device.c,v 1.1.2.15 2003/08/02 21:33:18 guus Exp $
 */
 
 #include "system.h"
@@ -32,15 +32,11 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#define NETCARD_REG_KEY_2000 "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
-#define NETCARD_REG_KEY      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards"
-#define REG_SERVICE_KEY      "SYSTEM\\CurrentControlSet\\Services"
-#define REG_CONTROL_NET      "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
+#define REG_CONTROL_NET "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 
 #define USERMODEDEVICEDIR "\\\\.\\"
-#define SYSDEVICEDIR  "\\Device\\"
 #define USERDEVICEDIR "\\??\\"
-#define TAPSUFFIX     ".tap"
+#define TAPSUFFIX ".tap"
 
 #define TAP_CONTROL_CODE(request,method) CTL_CODE(FILE_DEVICE_PHYSICAL_NETCARD | 8000, request, method, FILE_ANY_ACCESS)
 
@@ -48,18 +44,14 @@
 #define TAP_IOCTL_GET_MAC        TAP_CONTROL_CODE(1, METHOD_BUFFERED)
 #define TAP_IOCTL_SET_STATISTICS TAP_CONTROL_CODE(2, METHOD_BUFFERED)
 
-/* FIXME: This only works for Windows 2000 */
-#define OSTYPE 5
-
 int device_fd = -1;
+static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
 char *device_info = NULL;
 
 int device_total_in = 0;
 int device_total_out = 0;
-
-HANDLE handle;
 
 pid_t reader_pid;
 int sp[2];
@@ -86,7 +78,7 @@ bool setup_device(void)
 	/* Open registry and look for network adapters */
 
 	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, REG_CONTROL_NET, 0, KEY_READ, &key)) {
-		logger(LOG_ERR, _("Unable to read registry"));
+		logger(LOG_ERR, _("Unable to read registry: %s"), winerror(GetLastError()));
 		return false;
 	}
 
@@ -124,9 +116,9 @@ bool setup_device(void)
 		}
 
 		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
-		handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
-		if(handle != INVALID_HANDLE_VALUE) {
-			CloseHandle(handle);
+		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
+		if(device_handle != INVALID_HANDLE_VALUE) {
+			CloseHandle(device_handle);
 			found = true;
 			break;
 		}
@@ -158,10 +150,10 @@ bool setup_device(void)
 
 	/* The parent opens the tap device for writing. */
 	
-	handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
+	device_handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
 	
-	if(handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("Could not open Windows tap device for writing!"));
+	if(device_handle == INVALID_HANDLE_VALUE) {
+		logger(LOG_ERR, _("Could not open Windows tap device for writing: %s"), winerror(GetLastError()));
 		return false;
 	}
 
@@ -169,8 +161,8 @@ bool setup_device(void)
 
 	/* Get MAC address from tap device */
 
-	if(!DeviceIoControl(handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
-		logger(LOG_ERR, _("Could not get MAC address from Windows tap device!"));
+	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
+		logger(LOG_ERR, _("Could not get MAC address from Windows tap device: %s"), winerror(GetLastError()));
 		return false;
 	}
 
@@ -194,12 +186,12 @@ bool setup_device(void)
 		char buf[MTU];
 		long lenin;
 
-		CloseHandle(handle);
+		CloseHandle(device_handle);
 
-		handle = CreateFile(tapname, GENERIC_READ, FILE_SHARE_WRITE, 0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
+		device_handle = CreateFile(tapname, GENERIC_READ, FILE_SHARE_WRITE, 0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
 
-		if(handle == INVALID_HANDLE_VALUE) {
-			logger(LOG_ERR, _("Could not open Windows tap device for reading!"));
+		if(device_handle == INVALID_HANDLE_VALUE) {
+			logger(LOG_ERR, _("Could not open Windows tap device for reading: %s"), winerror(GetLastError()));
 			buf[0] = 0;
 			write(sp[1], buf, 1);
 			exit(1);
@@ -215,7 +207,7 @@ bool setup_device(void)
 		/* Pass packets */
 
 		for(;;) {
-			ReadFile(handle, buf, MTU, &lenin, NULL);
+			ReadFile(device_handle, buf, MTU, &lenin, NULL);
 			write(sp[1], buf, lenin);
 		}
 	}
@@ -239,7 +231,7 @@ void close_device(void)
 
 	close(sp[0]);
 	close(sp[1]);
-	CloseHandle(handle);
+	CloseHandle(device_handle);
 
 	kill(reader_pid, SIGKILL);
 }
@@ -275,8 +267,8 @@ bool write_packet(vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(!WriteFile (handle, packet->data, packet->len, &lenout, NULL)) {
-		logger(LOG_ERR, _("Error while writing to %s %s"), device_info, device);
+	if(!WriteFile (device_handle, packet->data, packet->len, &lenout, NULL)) {
+		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, winerror(GetLastError()));
 		return false;
 	}
 

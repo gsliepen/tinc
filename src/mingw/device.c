@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.9 2003/08/02 21:01:50 guus Exp $
+    $Id: device.c,v 1.1.2.10 2003/08/02 21:33:19 guus Exp $
 */
 
 #include "system.h"
@@ -32,13 +32,9 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#define NETCARD_REG_KEY_2000 "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
-#define NETCARD_REG_KEY      "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards"
-#define REG_SERVICE_KEY      "SYSTEM\\CurrentControlSet\\Services"
 #define REG_CONTROL_NET      "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 
 #define USERMODEDEVICEDIR "\\\\.\\"
-#define SYSDEVICEDIR  "\\Device\\"
 #define USERDEVICEDIR "\\??\\"
 #define TAPSUFFIX     ".tap"
 
@@ -47,9 +43,6 @@
 #define TAP_IOCTL_GET_LASTMAC    TAP_CONTROL_CODE(0, METHOD_BUFFERED)
 #define TAP_IOCTL_GET_MAC        TAP_CONTROL_CODE(1, METHOD_BUFFERED)
 #define TAP_IOCTL_SET_STATISTICS TAP_CONTROL_CODE(2, METHOD_BUFFERED)
-
-/* FIXME: This only works for Windows 2000 */
-#define OSTYPE 5
 
 int device_fd = 0;
 HANDLE device_handle = INVALID_HANDLE_VALUE;
