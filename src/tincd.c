@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.73 2003/07/17 15:06:27 guus Exp $
+    $Id: tincd.c,v 1.10.4.74 2003/07/21 13:18:44 guus Exp $
 */
 
 #include "system.h"
@@ -27,7 +27,9 @@
 #define _P1003_1B_VISIBLE
 #endif
 
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
