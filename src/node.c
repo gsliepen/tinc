@@ -150,12 +150,12 @@ void node_del(node_t *n)
 	avl_delete(node_udp_tree, n);
 }
 
-void update_node_address(node_t *n, const sockaddr_t address) {
+void update_node_address(node_t *n, const sockaddr_t *address) {
 	avl_node_t *node;
 
 	node = avl_unlink(node_udp_tree, n);
 	sockaddrfree(&n->address);
-	sockaddrcpy(&n->address, &address);
+	sockaddrcpy(&n->address, address);
 
 	if(n->hostname)
 		free(n->hostname);
