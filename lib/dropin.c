@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.5 2001/11/05 19:06:07 guus Exp $
+    $Id: dropin.c,v 1.1.2.6 2001/11/05 19:09:08 guus Exp $
 */
 
 #include "config.h"
@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include <xalloc.h>
 
@@ -97,6 +98,8 @@ int daemon(int nochdir, int noclose)
           dup2(fd, 2);
         }
     }
+
+  return 0;
 }
 #endif
 

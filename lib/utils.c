@@ -21,8 +21,6 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 #include "config.h"
 

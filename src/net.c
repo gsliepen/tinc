@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.147 2001/11/03 22:53:01 guus Exp $
+    $Id: net.c,v 1.35.4.148 2001/11/05 19:09:08 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -250,9 +251,11 @@ int setup_listen_socket(int port)
   int nfd, flags;
   struct sockaddr_in a;
   int option;
-  char *interface;
   char *address;
   ip_mask_t *ipmask;
+#ifdef HAVE_LINUX
+  char *interface;
+#endif
 cp
   if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
@@ -811,7 +814,9 @@ cp
 
   terminate_connection(myself->connection, 0);
 
-//  destroy_trees();
+  close(udp_socket);
+  close(tcp_socket);
+
   exit_edges();
   exit_subnets();
   exit_nodes();
