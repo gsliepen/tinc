@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.7 2000/05/18 23:09:31 zarq Exp $
+# $Id: init.d,v 1.8 2000/05/19 00:15:37 zarq Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -25,7 +25,10 @@ if (! -f $DAEMON) { exit 0; }
 
 
 sub find_nets {
-    open(FH, $NETSFILE) || die "Please create $NETSFILE.\n";
+    if(! open(FH, $NETSFILE)) {
+	warn "Please create $NETSFILE.\n";
+	exit 0;
+    }
     while (<FH>) {
 	chomp;
 	if( /^[ ]*([^ \#]+)/i ) {
@@ -33,7 +36,8 @@ sub find_nets {
 	}
     }
     if($#NETS == -1) {
-	die "$NETSFILE doesn't contain any nets.\n";
+	warn "$NETSFILE doesn't contain any nets.\n";
+	exit 0;
     }
     
 }
