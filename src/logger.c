@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.9 2003/08/02 20:50:38 guus Exp $
+    $Id: logger.c,v 1.1.2.10 2003/08/17 09:04:00 guus Exp $
 */
 
 #include "system.h"
@@ -30,6 +30,9 @@ static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 extern char *logfilename;
 static FILE *logfile = NULL;
+#ifdef HAVE_MINGW
+static HANDLE loghandle = NULL;
+#endif
 static const char *logident = NULL;
 
 void openlogger(const char *ident, logmode_t mode) {
@@ -47,9 +50,16 @@ void openlogger(const char *ident, logmode_t mode) {
 				logmode = LOGMODE_NULL;
 			break;
 		case LOGMODE_SYSLOG:
+#ifdef HAVE_MINGW
+			loghandle = OpenEventLog(NULL, identname);
+			if(!loghandle)
+				logmode = LOGMODE_NULL;
+			break;
+#else
 #ifdef HAVE_SYSLOG_H
 			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
 			break;
+#endif
 #endif
 		case LOGMODE_NULL:
 			break;
@@ -74,6 +84,13 @@ void logger(int priority, const char *format, ...) {
 			fflush(logfile);
 			break;
 		case LOGMODE_SYSLOG:
+#ifdef HAVE_MINGW
+			{
+				char message[4096];
+				vsnprintf(message, sizeof(message), format, ap);
+				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, &message, NULL);
+			}
+#else
 #ifdef HAVE_SYSLOG_H
 #ifdef HAVE_VSYSLOG
 			vsyslog(priority, format, ap);
@@ -85,6 +102,7 @@ void logger(int priority, const char *format, ...) {
 			}
 #endif
 			break;
+#endif
 #endif
 		case LOGMODE_NULL:
 			break;
@@ -99,9 +117,14 @@ void closelogger(void) {
 			fclose(logfile);
 			break;
 		case LOGMODE_SYSLOG:
+#ifdef HAVE_MINGW
+			CloseEventLog(loghandle);
+			break;
+#else
 #ifdef HAVE_SYSLOG_H
 			closelog();
 			break;
+#endif
 #endif
 		case LOGMODE_NULL:
 		case LOGMODE_STDERR:

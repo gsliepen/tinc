@@ -21,6 +21,16 @@ typedef enum logmode_t {
 	LOGMODE_SYSLOG
 } logmode_t;
 
+#ifdef HAVE_MINGW
+#define LOG_EMERG EVENTLOG_ERROR_TYPE
+#define LOG_ALERT EVENTLOG_ERROR_TYPE
+#define LOG_CRIT EVENTLOG_ERROR_TYPE
+#define LOG_ERR EVENTLOG_ERROR_TYPE
+#define LOG_WARNING EVENTLOG_WARNING_TYPE
+#define LOG_NOTICE EVENTLOG_INFORMATION_TYPE
+#define LOG_INFO EVENTLOG_INFORMATION_TYPE
+#define LOG_DEBUG EVENTLOG_INFORMATION_TYPE
+#else
 #ifndef HAVE_SYSLOG_H
 enum {
 	LOG_EMERG,
@@ -32,6 +42,7 @@ enum {
 	LOG_INFO,
 	LOG_DEBUG,
 };
+#endif
 #endif
 
 extern debug_t debug_level;
