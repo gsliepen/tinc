@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.7 2002/02/18 16:25:16 guus Exp $
+    $Id: graph.c,v 1.1.2.8 2002/03/12 13:42:23 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -32,9 +32,7 @@
    favour Kruskal's, because we make an extra AVL tree of edges sorted on
    weights (metric). That tree only has to be updated when an edge is added or
    removed, and during the MST algorithm we just have go linearly through that
-   tree, adding safe edges until #edges = #nodes - 1. The implementation here
-   however is not so fast, because I tried to avoid having to make a forest and
-   merge trees.
+   tree.
 
    For the SSSP algorithm Dijkstra's seems to be a nice choice. Currently a
    simple breadth-first search is presented here.
@@ -62,20 +60,25 @@
 
 #include "system.h"
 
-/* Implementation of Kruskal's algorithm.
-   Running time: O(EN)
-   Please note that sorting on weight is already done by add_edge().
+/* Kruskal's minimum spanning tree algorithm.
+   Running time: O(E)
+   Edges are already sorted on weight.
 */
 
 void mst_kruskal(void)
 {
-  avl_node_t *node, *next;
+  avl_node_t *node;
   edge_t *e;
   node_t *n;
   connection_t *c;
-  int nodes = 0;
-  int safe_edges = 0;
-  int skipped;
+
+  /* Clear MST status on connections */
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      c = (connection_t *)node->data;
+      c->status.mst = 0;
+    }
 
   /* Do we have something to do at all? */
   
@@ -88,46 +91,25 @@ void mst_kruskal(void)
     {
       n = (node_t *)node->data;
       n->status.visited = 0;
-      nodes++;
     }
 
   /* Starting point */
   
   ((edge_t *)edge_weight_tree->head->data)->from.node->status.visited = 1;
 
-  /* Clear MST status on connections */
-
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      c = (connection_t *)node->data;
-      c->status.mst = 0;
-    }
-
   /* Add safe edges */
 
-  for(skipped = 0, node = edge_weight_tree->head; node; node = next)
+  for(node = edge_weight_tree->head; node; node = node->next)
     {
-      next = node->next;
       e = (edge_t *)node->data;
 
-      if(e->from.node->status.visited == e->to.node->status.visited)
-        {
-          skipped = 1;
-          continue;
-        }
+      if(e->from.node->status.visited && e->to.node->status.visited)
+        continue;
 
       e->from.node->status.visited = 1;
       e->to.node->status.visited = 1;
       if(e->connection)
         e->connection->status.mst = 1;
-
-      safe_edges++;
-
-      if(skipped)
-        {
-          next = edge_weight_tree->head;
-          continue;
-        }
     }
 }
 
