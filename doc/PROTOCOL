@@ -1,0 +1,96 @@
+This is the protocol documentation for tinc, a Virtual Private Network daemon.
+
+   Copyright 2000 Guus Sliepen <guus@sliepen.warande.net>
+
+   Permission is granted to make and distribute verbatim copies of
+   this documentation provided the copyright notice and this permission
+   notice are preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions
+   of this documentation under the conditions for verbatim copying, provided
+   that the entire resulting derived work is distributed under
+   the terms of a permission notice identical to this one.
+
+   $Id: PROTOCOL,v 1.1.2.1 2000/06/30 22:38:58 guus Exp $
+
+
+1. Protocols used in tinc
+-------------------------
+
+Tinc uses several protocols to function correctly. To enter the network of tinc
+daemons that make up the virtual private network, tinc makes TCP connections to
+other tinc daemons. It uses the "meta protocol" for these connections. To
+exchange packets on the virtual network, UDP connections are made and the
+"packet protocol" is used. Tinc also needs to exchange network packets with the
+kernel. This is done using the ethertap device in Linux. Also planned is a
+generic PPP interface, because it is supported on virtually all UNIX flavours.
+The protocols for those interfaces will not be described in this document.
+
+2. Packet protocol
+------------------
+
+This is described in net.h.
+
+3. Meta protocol
+----------------
+
+The meta protocol is used to tie all tinc daemons together, and exchange
+information about which tinc daemon serves which virtual subnet.
+
+The meta protocol consists of requests that can be sent to the other side. Each
+request has a unique number and several parameters. All requests are represented
+in the standard ASCII character set. It is possible to use tools such as telnet
+or netcat to connect to a tinc daemon and to read and write requests by hand,
+provided that one understands the numeric codes sent.
+
+When tinc daemons connect to each other, they will have to authenticate each
+other first. This is done by exchanging BASIC_INFO, PASSPHRASE, PUBLIC_KEY and
+ACK requests. BASIC_INFO requests contain the virtual address and netmask of the
+tinc daemon, protocol version, port number and flags. This identifies that tinc
+daemon, though it still has to be verified. To that end, passphrases and public
+keys are exchanged. The passphrases are known at both ends, but they are
+encrypted with the public key before transmission. This way, nobody that sniffs
+the network can see what the passphrase actually was, and at the same time this
+ensures that the other host really knows the secret key that belongs to the
+public key it sends. If both hosts are satisfied, the connection is activated,
+the contents of each other's connection lists are exchanged and other requests
+may be sent. The following diagram shows how authentication is done:
+
+Client				Server
+----------------------------------------------------------------
+Connects to server
+				Accepts connection
+                                Sends BASIC_INFO
+Verifies BASIC_INFO
+If server is already in
+connection list, abort.
+Else sends his own BASIC_INFO
+				Verifies BASIC_INFO
+                                If client is alread in
+                                connection list, remove
+                                old entry.
+                                Sends PASSPHRASE
+Receives and stores PASSPHRASE.
+Sends his own PASSPHRASE
+				Receives and stores PASSPHRASE.
+                                Sends PUBLIC_KEY
+Verifies PUBLIC key and stored
+PASSPHRASE. If wrong, abort.
+Else sends his own PUBLIC_KEY
+				Verifies PUBLIC key and stored
+                                PASSPHRASE. If wrong, abort.
+                                Else activates connection and
+                                sends ACK and ADD_HOSTs for all
+                                known hosts
+Receives ACK and activates
+connection.
+Sends ADD_HOSTs for all known
+hosts
+----------------------------------------------------------------
+
+The client must never make a connection to a server that is already in it's
+connection list. Not only would it corrupt the connection list, but it would
+also violate the tree property. The meta connections must always be so that
+there are no loops. This is very important, because certain requests are
+broadcast over the entire network of tinc daemons. If there were loops, packets
+would be sent infinitely.
