@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.1 2001/10/12 15:49:11 guus Exp $
+    $Id: device.c,v 1.1.2.2 2001/10/12 15:52:03 guus Exp $
 */
 
 #define DEFAULT_DEVICE "/dev/tun0"
@@ -70,7 +70,7 @@ int read_packet(vpn_packet_t *packet)
   int lenin;
   u_int32_t type;
 cp
-  struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data, MTU}};
+  struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, MTU - 14}};
 
   if((lenin = readv(device_fd, vector, 2)) <= 0)
     {
@@ -78,7 +78,12 @@ cp
       return -1;
     }
 
-  packet->len = lenin - sizeof(type);
+  memcpy(vp->data, mymac.net.mac.address.x, 6);
+  memcpy(vp->data + 6, mymac.net.mac.address.x, 6);
+  vp->data[12] = 0x08;
+  vp->data[13] = 0x00;
+
+  packet->len = lenin + 10;
 
   device_total_in += packet->len;
 
@@ -100,7 +105,7 @@ cp
            packet->len, device_info);
 
 
-  struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data, MTU}};
+  struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, packet->len - 14}};
 
   if(writev(device_fd, vector, 2) < 0)
     {
