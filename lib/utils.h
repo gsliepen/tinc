@@ -43,7 +43,7 @@ extern volatile char *cp_file[];
 extern volatile int cp_index;
 extern void cp_trace(void);
 
-  #define cp { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 8; }
+  #define cp { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 16; }
   #define ecp { fprintf(stderr, "Explicit checkpoint in %s line %d\n", __FILE__, __LINE__); }
 #else
   #define cp
