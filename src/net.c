@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.144 2001/10/31 12:50:24 guus Exp $
+    $Id: net.c,v 1.35.4.145 2001/10/31 20:22:52 guus Exp $
 */
 
 #include "config.h"
@@ -439,8 +439,19 @@ cp
 int setup_outgoing_connection(char *name)
 {
   connection_t *c;
+  node_t *n;
   struct hostent *h;
 cp
+  n = lookup_node(name);
+  
+  if(n)
+    if(n->connection)
+      {
+        if(debug_lvl >= DEBUG_CONNECTIONS)       
+          syslog(LOG_INFO, _("Already connected to %s"), name);
+        return 0;
+      }
+
   c = new_connection();
   c->name = xstrdup(name);
 
@@ -1095,6 +1106,12 @@ cp
     {
       get_config_string(cfg, &name);
       cfg = lookup_config_next(config_tree, cfg);  /* Next time skip to next ConnectTo line */
+
+      if(check_id(name))
+        {
+          syslog(LOG_ERR, _("Invalid name for outgoing connection in %s line %d"), cfg->file, cfg->line);
+          continue;
+        }
 
       if(setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
         retry = 1;
