@@ -110,12 +110,24 @@ The passphrases
 ---------------
 We will have to generate keys for ourselves, and get a key from everybody
 we want to ConnectTo. All of these go into a directory named
-/etc/tinc/passphrases. To generate our own key:
+/etc/tinc/passphrases. PROTECT THIS DIRECTORY!
+
+	mkdir -m 700 /etc/tinc/passphrases
+
+To generate our own key:
 
 	genauth 1024 >/etc/tinc/passphrases/local
 
 You should then proceed to give this key to anyone who wants to ConnectTo
-you.
+you. DO THIS IN A SECURE MANNER! Anyone who has this number can do icky
+things to the umbrella network! Encrypt it using PGP, GPG or another
+program using asymetric keys. Read it over the phone (without anyone
+listening of course). Send it by snailmail. Write the key down and bring
+it to your partners yourself!
+
+If you get any keys from your partners, store them under their network
+number. For example, the key we get from fdiv's network administrator
+will be stored in /etc/tinc/passphrases/192.168.2.0 (note the 0).
 
 --
-$Id: HOWTO,v 1.3 2000/06/30 20:57:30 wsl Exp $
+$Id: HOWTO,v 1.4 2000/06/30 21:09:32 wsl Exp $
