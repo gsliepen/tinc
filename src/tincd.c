@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.42 2001/01/13 16:36:23 guus Exp $
+    $Id: tincd.c,v 1.10.4.43 2001/02/25 14:51:42 guus Exp $
 */
 
 #include "config.h"
@@ -252,7 +252,7 @@ int keygen(int bits)
     return -1;
 
   if(ftell(f))
-    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file."));
+    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
 
   PEM_write_RSAPublicKey(f, rsa_key);
   fclose(f);
@@ -263,7 +263,7 @@ int keygen(int bits)
     return -1;
 
   if(ftell(f))
-    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file."));
+    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
 
   PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
   fclose(f);
