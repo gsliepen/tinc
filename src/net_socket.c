@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.14 2002/06/08 14:08:57 guus Exp $
+    $Id: net_socket.c,v 1.1.2.15 2002/06/13 16:12:40 guus Exp $
 */
 
 #include "config.h"
@@ -80,7 +80,7 @@ int maxtimeout = 900;
 int seconds_till_retry = 5;
 
 listen_socket_t listen_socket[MAXSOCKETS];
-int listen_sockets = 0;
+int listen_sockets;
 
 /* Setup sockets */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.18 2002/06/08 14:08:57 guus Exp $
+    $Id: net_setup.c,v 1.1.2.19 2002/06/13 16:12:40 guus Exp $
 */
 
 #include "config.h"
@@ -483,6 +483,8 @@ cp
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
       return -1;
     }
+
+  listen_sockets = 0;
 
   for(aip = ai; aip; aip = aip->ai_next)
     {
