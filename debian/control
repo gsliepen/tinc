@@ -1,0 +1,12 @@
+Source: tinc
+Section: non-US/main
+Priority: optional
+Maintainer: Ivo Timmermans <itimmermans@bigfoot.com>
+Standards-Version: 3.0.1
+Depends: libc6, libgmp2
+
+Package: tinc
+Architecture: i386
+Depends: ${shlibs:Depends}, libgmp2-dev
+Description: Virtual Private Network daemon
+ blablabla

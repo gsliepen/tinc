@@ -1,0 +1,9 @@
+tinc (1.0-0.1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>  Fri, 21 Apr 2000 17:07:50 +0200
+
+Local variables:
+mode: debian-changelog
+End:
