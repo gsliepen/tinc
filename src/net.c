@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.50 2000/10/29 00:02:18 guus Exp $
+    $Id: net.c,v 1.35.4.51 2000/10/29 00:46:43 guus Exp $
 */
 
 #include "config.h"
@@ -737,6 +737,14 @@ cp
       net->type = SUBNET_IPV4;
       net->net.ipv4.address = cfg->data.ip->address;
       net->net.ipv4.mask = cfg->data.ip->mask;
+      
+      /* Teach newbies what subnets are... */
+      
+      if((net->net.ipv4.address & net->net.ipv4.mask) != net->net.ipv4.address)
+        {
+          syslog(LOG_ERR, _("Network address and subnet mask do not match!"));
+          return -1;
+        }        
       
       subnet_add(myself, net);
     }
