@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org) by
     Guus Sliepen <guus@sliepen.warande.net>.
 
-    $Id: avl_tree.c,v 1.1.2.3 2001/01/07 17:08:49 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.4 2001/01/08 21:32:00 guus Exp $
 */
 
 #include <stdio.h>
@@ -383,7 +383,7 @@ avl_node_t *avl_search_closest_smaller_node(const avl_tree_t *tree, const void *
   
   node = avl_search_closest_node(tree, data, &result);
   
-  if(result > 0)
+  if(result < 0)
     node = node->prev;
   
   return node;
@@ -396,7 +396,7 @@ avl_node_t *avl_search_closest_greater_node(const avl_tree_t *tree, const void *
   
   node = avl_search_closest_node(tree, data, &result);
   
-  if(result < 0)
+  if(result > 0)
     node = node->next;
   
   return node;
