@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.122 2002/02/10 21:57:54 guus Exp $
+    $Id: protocol.c,v 1.28.4.123 2002/02/27 22:37:54 guus Exp $
 */
 
 #include "config.h"
@@ -67,17 +67,17 @@ cp
 
   va_start(args, format);
   len = vsnprintf(buffer, MAXBUFSIZE, format, args);
-  request = va_arg(args, int);
   va_end(args);
 
   if(len < 0 || len > MAXBUFSIZE-1)
     {
-      syslog(LOG_ERR, _("Output buffer overflow while sending %s to %s (%s)"), request_name[request], c->name, c->hostname);
+      syslog(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"), request_name[request], c->name, c->hostname);
       return -1;
     }
 
   if(debug_lvl >= DEBUG_PROTOCOL)
     {
+      sscanf(buffer, "%d", &request);
       if(debug_lvl >= DEBUG_META)
         syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request], c->name, c->hostname, buffer);
       else

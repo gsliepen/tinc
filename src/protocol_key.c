@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.3 2002/02/20 19:25:09 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.4 2002/02/27 22:37:55 guus Exp $
 */
 
 #include "config.h"
@@ -208,7 +208,7 @@ cp
 
   if(to != myself)
     {
-      return send_request(to->nexthop->connection, c->buffer);
+      return send_request(to->nexthop->connection, "%s", c->buffer);
     }
 
   /* Update our copy of the origin's packet key */
