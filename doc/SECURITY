@@ -12,7 +12,7 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: SECURITY,v 1.1.2.2 2000/09/17 20:11:59 guus Exp $
+   $Id: SECURITY,v 1.1.2.3 2000/09/25 20:08:50 guus Exp $
 
 
 1.  Authentication
@@ -41,11 +41,13 @@ The authentication protocol (see protocol.c for the up-to-date version) is:
    (H) SHA1,
    (E) Encrypted with symmetric cipher.
 
+See section 4 for a detailed example version of the authentication.
+
 Authentication in tinc will be done in a way that is very similar to the way
 the SSH (Secure SHell) authentication protocol works. It is based on public
 key cryptography.
 
-Every tinc host has it's own public/private key pair. Suppose there are two
+Every tinc host has its own public/private key pair. Suppose there are two
 tinc hosts, A and B. If A and B trust each other, they store a copy of
 eachothers public key (in the same way passphrases were stored in versions
 of tinc <= 1.0pre2). They know these public keys beforehand, and the origin
@@ -102,10 +104,13 @@ Other options for key exchange could be:
 
 * A second exchange of RSA encrypted random strings.
   This is equal to the former scheme just without knowing the hash value of
-  the unecrypted random string.
+  the unecrypted random string. Information theory tells that two seperate
+  RSA messages are as secure as one if the total amount of bits sent is the
+  same, so enlarging the challenge will make one exchange just as secure as
+  two seperate exchanges.
   
 * Diffie-Hellman with RSA signing.
-  This should be very secure, but there are a lot of pitholes with using both
+  This should be very secure, but there are a lot of pitfalls with using both
   encryption with public keys and private keys together with the same keypair.
 
 * Diffie-Hellman with passphrases.
@@ -121,3 +126,60 @@ Since the generalized encryption functions of OpenSSL are used, any symmetric
 cipher that is available in OpenSSL could possibly be used. The default however
 will be Blowfish. Blowfish is widely in use and still has not been cracked
 today (as far as we know). It also is one of the faster ciphers available.
+
+4.  Detailed "example" of communication
+---------------------------------------
+
+Tinc uses a peer-to-peer protocol, but during the authentication phase we will
+make a distinction between a server (a tinc daemon listening for incoming
+connections) and a client (a tinc daemon that is trying to connect to the tinc
+daemon playing server).
+
+The message strings here are kept short for clarity. The real length of the
+exchanged messages is indicated. The capital words ID, CHALLENGE, CHAL_REPLY
+and ACK are in reality replaced by the numbers 1, 2, 3 and 4 respectively.
+
+daemon	message
+--------------------------------------------------------------------------
+server	<listening for connection>
+client  <tries to connect>
+server  <accepts connection>
+client	ID client 8 0
+              |   | +-> options
+              |   +---> version
+              +-------> name of tinc daemon
+server  CHALLENGE 57fb4b2ccd70d6bb35a64c142f47e61d
+                  \________/\__/
+                       |      +----> 64 bits initial vector and
+                       +-----------> 448 bits symmetric cipher key for meta
+                                     data sent to the server
+                  \______________________________/
+                                 +-> 2048 bits totally random string, encrypted
+                                     with client's public RSA key
+client	CHAL_REPLY 191e23
+                      +-> 160 bits SHA1 value of the complete decrypted
+                          CHALLENGE sent by the server
+server	ID server 8 0
+              |   | +-> options
+              |   +---> version
+              +-------> name of tinc daemon
+client	CHALLENGE da02add1817c1920989ba6ae2a49cecb
+                  \________/\__/
+                       |      +----> 64 bits initial vector and
+                       +-----------> 448 bits symmetric cipher key for meta
+                                     data sent to the client
+                  \______________________________/
+                                 +-> 2048 bits totally random string, encrypted
+                                     with server's public RSA key
+server	CHAL_REPLY 2bdeed
+                      +-> 160 bits SHA1 value of the complete decrypted
+                          CHALLENGE sent by the client
+client	ACK
+server	ACK
+--------------------------------------------------------------------------
+
+When the server receives the ACK from the client, it should prepare itself
+for the fact that any subsequent data will be encrypted with the key the server
+sent itself in the CHALLENGE. Ofcourse, this key is taken from the decrypted
+version of that CHALLENGE, so that we will know for sure only the real client
+can send us messages. The same goes for the client when it receives an ACK.
