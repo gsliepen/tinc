@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-03-27 16:59+0100\n"
+"POT-Creation-Date: 2002-04-09 13:41+0200\n"
 "PO-Revision-Date: 2002-03-27 16:59+0100\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -44,10 +44,10 @@ msgstr "Subnet verwacht voor configuratievariabele %s in %s regel %d"
 #: src/conf.c:261
 #, c-format
 msgid ""
-"Network address and mask length do not match for configuration variable %s "
+"Network address and prefix length do not match for configuration variable %s "
 "in %s line %d"
 msgstr ""
-"Netwerk adres en maskerlengte komen niet overeen bij configuratievariabele %"
+"Netwerk adres en prefix lengte komen niet overeen bij configuratievariabele %"
 "s in %s regel %d"
 
 #: src/conf.c:369
@@ -206,19 +206,19 @@ msgstr "Fout tijdens schrijven naar %s (%s): %s"
 msgid "Error while waiting for input: %s"
 msgstr "Fout tijdens wachten op invoer: %s"
 
-#: src/net.c:395
+#: src/net.c:397
 msgid "Regenerating symmetric key"
 msgstr "Hergenereren symmetrische sleutel"
 
-#: src/net.c:412
+#: src/net.c:414
 msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
-#: src/net.c:429
+#: src/net.c:431
 msgid "Rereading configuration file and restarting in 5 seconds..."
 msgstr "Herlezen configuratiebestand en herstarten na 5 seconden..."
 
-#: src/net.c:436
+#: src/net.c:438
 msgid "Unable to reread configuration file, exitting."
 msgstr "Kan configuratiebestand niet herlezen, beëindigen."
 
@@ -259,7 +259,7 @@ msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
 #. SO_PRIORITY doesn't seem to work
-#: src/net_packet.c:290 src/net_setup.c:484 src/net_socket.c:98
+#: src/net_packet.c:290 src/net_setup.c:450 src/net_socket.c:98
 #: src/net_socket.c:144 src/net_socket.c:171 src/process.c:273
 #: src/process.c:310
 #, c-format
@@ -345,72 +345,68 @@ msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %s"
 msgid "Reading RSA private key file `%s' failed: %s"
 msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %s"
 
-#: src/net_setup.c:230 src/net_setup.c:231
+#: src/net_setup.c:202 src/net_setup.c:203
 msgid "MYSELF"
 msgstr "MIJZELF"
 
-#: src/net_setup.c:238
+#: src/net_setup.c:210
 msgid "Name for tinc daemon required!"
 msgstr "Naam voor tinc daemon verplicht!"
 
-#: src/net_setup.c:244
+#: src/net_setup.c:216
 msgid "Invalid name for myself!"
 msgstr "Ongeldige naam voor mijzelf!"
 
-#: src/net_setup.c:258
+#: src/net_setup.c:230
 msgid "Cannot open host configuration file for myself!"
 msgstr "Kan host configuratie bestand voor mijzelf niet openen!"
 
-#: src/net_setup.c:268
-msgid "Invalid public/private keypair!"
-msgstr "Ongeldig publiek/privé sleutelpaar!"
-
-#: src/net_setup.c:321
+#: src/net_setup.c:287
 msgid "Invalid routing mode!"
 msgstr "Ongeldige routing modus!"
 
-#: src/net_setup.c:332
+#: src/net_setup.c:298
 msgid "PriorityInheritance not supported on this platform"
 msgstr "PriorityInheritance wordt niet ondersteund op dit platform"
 
-#: src/net_setup.c:342
+#: src/net_setup.c:308
 msgid "Bogus maximum timeout!"
 msgstr "Onzinnige maximum timeout!"
 
-#: src/net_setup.c:359
+#: src/net_setup.c:325
 msgid "Invalid address family!"
 msgstr "Ongeldige adresfamilie!"
 
-#: src/net_setup.c:381
+#: src/net_setup.c:347
 msgid "Unrecognized cipher type!"
 msgstr "Onbekend cipher type!"
 
-#: src/net_setup.c:416
+#: src/net_setup.c:382
 msgid "Unrecognized digest type!"
 msgstr "Onbekend digest type!"
 
-#: src/net_setup.c:432
+#: src/net_setup.c:398
 msgid "MAC length exceeds size of digest!"
 msgstr "MAC lengte is groter dan dat van digest!"
 
-#: src/net_setup.c:437
+#: src/net_setup.c:403
 msgid "Bogus MAC length!"
 msgstr "Onzinnige MAC lengte!"
 
-#: src/net_setup.c:453
+#: src/net_setup.c:419
 msgid "Bogus compression level!"
 msgstr "Onzinnig compressieniveau!"
 
-#: src/net_setup.c:499
+#: src/net_setup.c:465
 #, c-format
 msgid "Listening on %s"
 msgstr "Luisterend op %s"
 
-#: src/net_setup.c:510
+#: src/net_setup.c:476
 msgid "Ready"
 msgstr "Gereed"
 
-#: src/net_setup.c:513
+#: src/net_setup.c:479
 msgid "Unable to create any listening socket!"
 msgstr "Kon geen enkele luistersocket aanmaken!"
 
@@ -1287,3 +1283,6 @@ msgstr "Onbekende adresfamilie tijdens lezen pakket van %s %s"
 #, c-format
 msgid "Unknown address family %d while writing packet to %s %s"
 msgstr "Onbekende adresfamilie tijdens schrijven pakket naar %s %s"
+
+#~ msgid "Invalid public/private keypair!"
+#~ msgstr "Ongeldig publiek/privé sleutelpaar!"
