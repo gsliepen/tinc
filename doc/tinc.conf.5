@@ -1,4 +1,4 @@
-.TH TINC 5 "May 2000" "tinc version 1.0" "FSF"
+.TH TINC 5 "Jan 2001" "tinc version 1.0pre4" "FSF"
 .SH NAME
 tinc.conf \- tinc daemon configuration
 .SH "DESCRIPTION"
@@ -104,9 +104,15 @@ probe to the other end. If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 .TP
-\fBPrivateKey\fR = <\fIkey\fR> (required)
+\fBPrivateKey\fR = <\fIkey\fR>
 The private RSA key of this tinc daemon. It will allow this tinc daemon to
 authenticate itself to other daemons.
+.TP
+\fBPrivateKeyFile\fR = <\fIfilename\fR>
+The file in which the private RSA key of this tinc daemon resides.
+
+Note that there must be exactly one of \fBPrivateKey\fR or \fBPrivateKeyFile\fR
+specified in the configuration file.
 .TP
 \fBTapDevice\fR = <\fIdevice\fR> (/dev/tap0)
 The ethertap or tun/tap device to use. tinc will automatically detect what
@@ -134,9 +140,16 @@ The real address or hostname of this tinc daemon.
 \fBPort\fR = <\fIport number\fR> (655)
 The port on which this tinc daemon is listening for incoming connections.
 .TP
-\fBPublicKey\fR = <\fIkey\fR> (required)
+\fBPublicKey\fR = <\fIkey\fR>
 The public RSA key of this tinc daemon. It will be used to cryptographically
 verify it's identity and to set up a secure connection.
+.TP
+\fBPublicKeyFile\fR = <\fIfilename\fR>
+The file in which the public RSA key of this tinc daemon resides.
+
+Note that there must be exactly one of \fBPublicKey\fR or \fBPublicKeyFile\fR
+specified in each host configuration file, if you want to be able to establish
+a connection with that host.
 .TP
 \fBSubnet\fR = <\fIaddress/masklength\fR> (optional)
 The subnet which this tinc daemon will serve. tinc tries to look up which other

@@ -1,4 +1,4 @@
-.TH TINCD 8 "June 2000" "tinc version 1.0pre3" "FSF"
+.TH TINCD 8 "Jan 2001" "tinc version 1.0pre4" "FSF"
 .SH NAME
 tincd \- tinc VPN daemon
 .SH SYNOPSIS
@@ -13,6 +13,7 @@ it's configuration file to determine what virtual subnets
 it has to serve and to what other tinc daemons it should connect.
 It will connect to the ethertap or tun/tap device and set up a socket
 for incoming connections.
+Optionally a script will be executed to further configure the tap device.
 If that succeeds, it will detach from the controlling terminal and
 continue in the background, accepting and setting up connections to other
 tinc daemons that are part of the virtual private network.
@@ -93,12 +94,19 @@ This will log all network traffic over the virtual private network.
 .SH "FILES"
 .TP
 \fI/etc/tinc/<NETNAME>/tinc.conf\fR
-The configuration file for tincd. This should also contain the private RSA key.
+The configuration file for tincd.
+.TP
+\fI/etc/tinc/<NETNAME>/tinc-up\fR
+Script which is executed as soon as a tap device has been allocated.
+Purpose is to further configure that device.
+.TP
+\fI/etc/tinc/<NETNAME>/tinc-down\fR
+Script which is executed when tinc quits.
+Purpose is to shut down the tap device.
 .TP
 \fI/etc/tinc/<NETNAME>/hosts/*\fR
 The directory containing the host configuration files
-used to authenticate other tinc daemons. They contain
-the public RSA keys of other hosts.
+used to authenticate other tinc daemons.
 .PP
 .SH "BUGS"
 Maintaining a connection list on each tinc daemon that can connect and disconnect at any
