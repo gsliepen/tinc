@@ -1,15 +1,15 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.13 2001/03/04 13:59:25 guus Exp $
+# $Id: Makefile.am,v 1.4.4.14 2001/10/13 13:53:07 guus Exp $
 
 sbin_PROGRAMS = tincd
 
-tincd_SOURCES = conf.c connection.c meta.c net.c netutl.c process.c	\
-	protocol.c route.c subnet.c tincd.c
+tincd_SOURCES = conf.c connection.c device.c meta.c net.c netutl.c node.c process.c	\
+	protocol.c route.c subnet.c tincd.c vertex.c
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib -I$(top_srcdir)/intl
 
-noinst_HEADERS = conf.h connection.h meta.h net.h netutl.h process.h	\
-	protocol.h route.h subnet.h
+noinst_HEADERS = conf.h connection.h device.h meta.h net.h netutl.h node.h process.h	\
+	protocol.h route.h subnet.h vertex.h
 
 LIBS = @LIBS@ @INTLLIBS@
 

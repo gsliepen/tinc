@@ -50,6 +50,9 @@
 /* FreeBSD */
 #undef HAVE_FREEBSD
 
+/* OpenBSD */
+#undef HAVE_OPENBSD
+
 /* Solaris */
 #undef HAVE_SOLARIS
 
