@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.93 2001/06/08 18:02:10 guus Exp $
+    $Id: protocol.c,v 1.28.4.94 2001/06/09 10:00:34 guus Exp $
 */
 
 #include "config.h"
@@ -1103,17 +1103,16 @@ cp
      This reduces unnecessary key_changed broadcasts.
   */
 
-  if(mykeyused)
+  if(from==myself && !mykeyused)
+    return 0;
+
+  for(node = connection_tree->head; node; node = node->next)
     {
-      for(node = connection_tree->head; node; node = node->next)
-        {
-          p = (connection_t *)node->data;
-          if(p != cl && p->status.meta && p->status.active)
-            if(!(p->options & OPTION_INDIRECT) || from == myself)
-              send_request(p, "%d %s", KEY_CHANGED, from->name);
-        }
-    mykeyused = 0;
-  }
+      p = (connection_t *)node->data;
+      if(p != cl && p->status.meta && p->status.active)
+        if(!(p->options & OPTION_INDIRECT) || from == myself)
+          send_request(p, "%d %s", KEY_CHANGED, from->name);
+    }
 cp
   return 0;
 }
