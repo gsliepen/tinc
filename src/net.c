@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.51 2000/10/29 00:46:43 guus Exp $
+    $Id: net.c,v 1.35.4.52 2000/10/29 02:07:40 guus Exp $
 */
 
 #include "config.h"
@@ -869,16 +869,8 @@ void close_network_connections(void)
 cp
   for(p = conn_list; p != NULL; p = p->next)
     {
-      if(p->status.dataopen)
-	{
-	  shutdown(p->socket, 0); /* No more receptions */
-	  close(p->socket);
-	}
-      if(p->status.meta)
-	{
-	  shutdown(p->meta_socket, 0); /* No more receptions */
-          close(p->meta_socket);
-        }
+      p->status.active = 0;
+      terminate_connection(p);
     }
 
   if(myself)
@@ -886,6 +878,8 @@ cp
       {
 	close(myself->meta_socket);
 	close(myself->socket);
+        free_conn_list(myself);
+        myself = NULL;
       }
 
   /* Execute tinc-down script right before shutting down the interface */
@@ -1065,9 +1059,7 @@ void terminate_connection(conn_list_t *cl)
   subnet_t *s;
 cp
   if(cl->status.remove)
-    {
-      return;
-    }
+    return;
 
   cl->status.remove = 1;
 
@@ -1101,19 +1093,19 @@ cp
   for(s = cl->subnets; s; s = s->next)
     subnet_del(s);
 
-  /* Inactivate */
-
-  cl->status.active = 0;
-
   /* Check if this was our outgoing connection */
     
-  if(cl->status.outgoing)
+  if(cl->status.outgoing && cl->status.active)
     {
       signal(SIGALRM, sigalrm_handler);
       seconds_till_retry = 5;
       alarm(seconds_till_retry);
       syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 seconds"));
     }
+
+  /* Inactivate */
+
+  cl->status.active = 0;
 cp
 }
 
@@ -1312,20 +1304,22 @@ cp
 
       if(sighup)
         {
+          syslog(LOG_INFO, _("Rereading configuration file and restarting in 5 seconds"));
           sighup = 0;
-/* FIXME: reprogram this.
-	  if(debug_lvl > 1)
-	    syslog(LOG_INFO, _("Rereading configuration file"));
           close_network_connections();
-          clear_config();
-          if(read_config_file(&config, configfilename))
+          clear_config(&config);
+
+          if(read_server_config())
             {
               syslog(LOG_ERR, _("Unable to reread configuration file, exiting"));
               exit(0);
             }
+
           sleep(5);
-          setup_network_connections();
-*/
+          
+          if(setup_network_connections())
+            return;
+            
           continue;
         }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.10 2000/10/29 00:02:17 guus Exp $
+    $Id: connlist.c,v 1.1.2.11 2000/10/29 02:07:39 guus Exp $
 */
 
 #include <syslog.h>
@@ -64,6 +64,8 @@ cp
     free(p->cipher_pktkey);
   if(p->buffer)
     free(p->buffer);
+  if(p->config)
+    clear_config(&p->config);
   free(p);
 cp
 }

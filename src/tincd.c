@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.17 2000/10/29 00:02:20 guus Exp $
+    $Id: tincd.c,v 1.10.4.18 2000/10/29 02:07:41 guus Exp $
 */
 
 #include "config.h"
@@ -459,7 +459,7 @@ main(int argc, char **argv, char **envp)
         }
       else
         {
-          syslog(LOG_ERR, _("Aieee! Not restarting."));
+          syslog(LOG_ERR, _("Not restarting."));
           exit(0);
         }
     }
@@ -505,7 +505,7 @@ sigsegv_handler(int a)
     }
   else
     {
-      syslog(LOG_NOTICE, _("Aieee! Not restarting."));
+      syslog(LOG_NOTICE, _("Not restarting."));
       exit(0);
     }
 }
@@ -514,7 +514,7 @@ RETSIGTYPE
 sighup_handler(int a)
 {
   if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got HUP signal, rereading configuration and restarting"));
+    syslog(LOG_NOTICE, _("Got HUP signal"));
   sighup = 1;
 }
 
@@ -536,9 +536,9 @@ RETSIGTYPE
 sigusr2_handler(int a)
 {
   dump_subnet_list();
-//  if(debug_lvl > DEBUG_NOTHING)
-//   syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
 /* FIXME: reprogram this.
+  if(debug_lvl > DEBUG_NOTHING)
+   syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
   regenerate_keys();
 */
 }
