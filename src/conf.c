@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.42 2001/07/24 20:03:40 guus Exp $
+    $Id: conf.c,v 1.9.4.43 2001/09/01 12:46:49 guus Exp $
 */
 
 #include "config.h"
@@ -333,7 +333,7 @@ cp
 /*
   Look up the value of the config option type
 */
-const config_t *get_config_val(config_t *p, which_t type)
+const config_t *get_config_val(config_t const *p, which_t type)
 {
 cp
   for(; p != NULL; p = p->next)
