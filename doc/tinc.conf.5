@@ -100,12 +100,15 @@ If you leave it out, remember to replace it with at least one space character.
 Here are all valid variables, listed in alphabetical order.
 The default value is given between parentheses.
 .Bl -tag -width indent
-.It Va AddressFamily Li = ipv4 | ipv6 | any Pq ipv4
+.It Va AddressFamily Li = ipv4 | ipv6 | any Po ipv4 Pc Bq experimental
 This option affects the address family of listening and outgoing sockets.
 If
 .Qq any
-is selected, then the listening sockets will be IPv6 sockets,
-but on most platforms those will also accept IPv4 connections.
+is selected, then depending on the operating system both IPv4 and IPv6 or just
+IPv6 listening sockets will be created.
+.Pp
+Mixing IPv4 and IPv6 may not work as desired.
+It's best to choose one address family and use that for all tinc daemons on the VPN.
 .It Va BindToInterface Li = Ar interface Bq experimental
 If your computer has more than one network interface,
 .Nm tinc
@@ -127,8 +130,8 @@ This option may not work on all platforms.
 Specifies which other tinc daemon to connect to on startup.
 Multiple
 .Va ConnectTo
-variables may be specified;
-if connecting to the first one fails then tinc will try the next one, and so on.
+variables may be specified,
+in which case outgoing connections to each specified tinc daemon are made.
 The names should be known to this tinc daemon
 (i.e., there should be a host configuration file for the name on the
 .Va ConnectTo
@@ -174,11 +177,13 @@ variables in the host configuration files will be used to form a routing table.
 Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
 .It switch
 In this mode the MAC addresses of the packets on the VPN will be used to
-dynamically create a routing table just like a network switch does.
-Unicast, multicast and broadcast packets of every Ethernet protocol are supported in this mode
+dynamically create a routing table just like an Ethernet switch does.
+Unicast, multicast and broadcast packets of every protocol that runs over Ethernet are supported in this mode
 at the cost of frequent broadcast ARP requests and routing table updates.
 .It hub
-In this mode every packet will be broadcast to the other daemons.
+This mode is almost the same as the switch mode, but instead
+every packet will be broadcast to the other daemons
+while no routing table is created.
 .El
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.
@@ -190,6 +195,9 @@ will wait before sending a probe to the other end.
 If that other end doesn't answer within that same amount of time,
 the connection is terminated,
 and the others will be notified of this.
+.It Va PriorityInheritance Li = yes | no Po no Pc Bq experimental
+When this option is enabled the value of the TOS field of tunneled IPv4 packets
+will be inherited by the UDP packets that are sent out.
 .It Va PrivateKey Li = Ar key Bq obsolete
 The private RSA key of this tinc daemon.
 It will allow this tinc daemon to authenticate itself to other daemons.
@@ -216,6 +224,11 @@ no secrets are revealed by sending out this information.
 .Bl -tag -width indent
 .It Va Address Li = Ar address Bq recommended
 The IP address or hostname of this tinc daemon on the real network.
+This wil only be used when trying to make an outgoing connection to this tinc daemon.
+Multiple
+.Va Address
+variables can be specified, in which case each address will be tried until a working
+connection has been established.
 .It Va Cipher Li = Ar cipher Pq blowfish
 The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by OpenSSL is recognised.
@@ -264,15 +277,20 @@ The subnet which this tinc daemon will serve.
 tries to look up which other daemon it should send a packet to by searching the appropriate subnet.
 If the packet matches a subnet,
 it will be sent to the daemon who has this subnet in his host configuration file.
-Multiple subnet lines can be specified.
+Multiple
+.Va Subnet
+variables can be specified.
 .Pp
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
 or they can be a IPv4 or IPv6 network address with a masklength.
+Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
 Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
+IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
+MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 .It Va TCPOnly Li = yes | no Po no Pc Bq experimental
 If this variable is set to yes,
 then the packets are tunnelled over the TCP connection instead of a UDP connection.
@@ -298,14 +316,14 @@ it will be executed right after the tinc daemon has connected to the virtual net
 It can be used to set up the corresponding network interface.
 .Pp
 The environment variable
-.Ev NETNAME
+.Ev $NETNAME
 will be passed to the executable.
 If specified with the
 .Va Interface
 configuration variable,
 or if the virtual network device is a Linux tun/tap device,
 the environment variable
-.Ev INTERFACE
+.Ev $INTERFACE
 will be set to the name of the network interface.
 .It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 If an executable file with this name exists,
