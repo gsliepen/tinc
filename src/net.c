@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.77 2000/11/20 19:12:12 guus Exp $
+    $Id: net.c,v 1.35.4.78 2000/11/20 19:41:10 guus Exp $
 */
 
 #include "config.h"
@@ -852,6 +852,9 @@ int setup_network_connections(void)
 {
   config_t const *cfg;
 cp
+  init_connections();
+  init_subnets();
+
   if((cfg = get_config_val(config, config_pingtimeout)) == NULL)
     timeout = 60;
   else

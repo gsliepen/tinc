@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.12 2000/11/20 19:12:17 guus Exp $
+    $Id: subnet.c,v 1.1.2.13 2000/11/20 19:41:13 guus Exp $
 */
 
 #include "config.h"
@@ -37,8 +37,14 @@
 
 /* lists type of subnet */
 
-rbltree_t _subnet_tree = { NULL };
-rbltree_t *subnet_tree = &_subnet_tree;
+rbltree_t *subnet_tree;
+
+void init_subnets(void)
+{
+cp
+  subnet_tree = new_rbltree((rbl_compare_t)subnet_compare, (rbl_action_t)free_subnet);
+cp
+}
 
 /* Subnet comparison */
 
@@ -132,7 +138,7 @@ cp
 void subnet_del(subnet_t *subnet)
 {
 cp
-  free_rbl(rbl_unlink(subnet->owner->subnet_tree, subnet));
+  rbl_delete(subnet->owner->subnet_tree, subnet);
   rbl_delete(subnet_tree, subnet);
 cp
 }
