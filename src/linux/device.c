@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.13 2002/09/15 22:19:19 guus Exp $
+    $Id: device.c,v 1.1.2.14 2003/06/11 19:09:52 guus Exp $
 */
 
 #include "config.h"
@@ -48,11 +48,15 @@
 #include "conf.h"
 #include "net.h"
 #include "subnet.h"
+#include "route.h"
 
 #include "system.h"
 
-#define DEVICE_TYPE_ETHERTAP 0
-#define DEVICE_TYPE_TUNTAP 1
+enum {
+	DEVICE_TYPE_ETHERTAP,
+	DEVICE_TYPE_TUN,
+	DEVICE_TYPE_TAP,
+};
 
 int device_fd = -1;
 int device_type;
@@ -104,20 +108,24 @@ int setup_device(void)
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
 	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
+	if(routing_mode == RMODE_ROUTER) {
+		ifr.ifr_flags = IFF_TUN;
+		device_type = DEVICE_TYPE_TUN;
+		device_info = _("Linux tun/tap device (tun mode)");
+	} else {
+		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
+		device_type = DEVICE_TYPE_TAP;
+		device_info = _("Linux tun/tap device (tap mode)");
+	}
 
 	if(interface)
 		strncpy(ifr.ifr_name, interface, IFNAMSIZ);
 
 	if(!ioctl(device_fd, TUNSETIFF, (void *) &ifr)) {
-		device_info = _("Linux tun/tap device");
-		device_type = DEVICE_TYPE_TUNTAP;
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		interface = ifrname;
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), (void *) &ifr)) {
 		syslog(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
-		device_type = DEVICE_TYPE_TUNTAP;
-		device_info = _("Linux tun/tap device");
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		interface = ifrname;
 	} else
@@ -150,27 +158,40 @@ int read_packet(vpn_packet_t *packet)
 	
 	cp();
 
-	if(device_type == DEVICE_TYPE_TUNTAP) {
-		lenin = read(device_fd, packet->data, MTU);
+	switch(device_type) {
+		case DEVICE_TYPE_TUN:
+			lenin = read(device_fd, packet->data + 10, MTU - 10);
 
-		if(lenin <= 0) {
-			syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
-				   device_info, device, strerror(errno));
-			return -1;
-		}
+			if(lenin <= 0) {
+				syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
+					   device_info, device, strerror(errno));
+				return -1;
+			}
 
-		packet->len = lenin;
-	} else {					/* ethertap */
+			packet->len = lenin + 10;
+			break;
+		case DEVICE_TYPE_TAP:
+			lenin = read(device_fd, packet->data, MTU);
 
-		lenin = read(device_fd, packet->data - 2, MTU + 2);
+			if(lenin <= 0) {
+				syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
+					   device_info, device, strerror(errno));
+				return -1;
+			}
 
-		if(lenin <= 0) {
-			syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
-				   device_info, device, strerror(errno));
-			return -1;
-		}
+			packet->len = lenin;
+			break;
+		case DEVICE_TYPE_ETHERTAP:
+			lenin = read(device_fd, packet->data - 2, MTU + 2);
 
-		packet->len = lenin - 2;
+			if(lenin <= 0) {
+				syslog(LOG_ERR, _("Error while reading from %s %s: %s"),
+					   device_info, device, strerror(errno));
+				return -1;
+			}
+
+			packet->len = lenin - 2;
+			break;
 	}
 
 	device_total_in += packet->len;
@@ -191,20 +212,31 @@ int write_packet(vpn_packet_t *packet)
 		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(device_type == DEVICE_TYPE_TUNTAP) {
-		if(write(device_fd, packet->data, packet->len) < 0) {
-			syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
-				   strerror(errno));
-			return -1;
-		}
-	} else {					/* ethertap */
-		*(short int *)(packet->data - 2) = packet->len;
+	switch(device_type) {
+		case DEVICE_TYPE_TUN:
+			packet->data[10] = packet->data[11] = 0;
+			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
+				syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+					   strerror(errno));
+				return -1;
+			}
+			break;
+		case DEVICE_TYPE_TAP:
+			if(write(device_fd, packet->data, packet->len) < 0) {
+				syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+					   strerror(errno));
+				return -1;
+			}
+			break;
+		case DEVICE_TYPE_ETHERTAP:
+			*(short int *)(packet->data - 2) = packet->len;
 
-		if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
-			syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
-				   strerror(errno));
-			return -1;
-		}
+			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
+				syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+					   strerror(errno));
+				return -1;
+			}
+			break;
 	}
 
 	device_total_out += packet->len;
