@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.25 2002/03/01 12:26:56 guus Exp $
+    $Id: route.c,v 1.1.2.26 2002/03/01 14:09:31 guus Exp $
 */
 
 #include "config.h"
@@ -52,6 +52,7 @@
 
 int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
+int macexpire = 600;
 subnet_t mymac;
 
 void learn_mac(mac_t *address)
@@ -84,6 +85,31 @@ cp
             send_add_subnet(c, subnet);
         }
     }
+
+  subnet->net.mac.lastseen = now;
+}
+
+void age_mac(void)
+{
+  subnet_t *s;
+  connection_t *c;
+  avl_node_t *node, *next, *node2;
+cp
+  for(node = myself->subnet_tree->head; node; node = next)
+    {
+      s = (subnet_t *)node->data;
+      if(s->type == SUBNET_MAC && s->net.mac.lastseen && s->net.mac.lastseen + macexpire < now)
+        {
+	  for(node2 = connection_tree->head; node2; node2 = node2->next)
+            {
+              c = (connection_t *)node2->data;
+              if(c->status.active)
+        	send_del_subnet(c, s);
+            }
+          subnet_del(myself, s);
+	}
+    }
+cp
 }
 
 node_t *route_mac(vpn_packet_t *packet)

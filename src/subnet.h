@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.16 2002/02/18 16:25:19 guus Exp $
+    $Id: subnet.h,v 1.1.2.17 2002/03/01 14:09:31 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -36,6 +36,7 @@ enum
 typedef struct subnet_mac_t
 {
   mac_t address;
+  time_t lastseen;
 } subnet_mac_t;
 
 typedef struct subnet_ipv4_t

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.159 2002/03/01 13:18:54 guus Exp $
+    $Id: net.c,v 1.35.4.160 2002/03/01 14:09:31 guus Exp $
 */
 
 #include "config.h"
@@ -72,6 +72,8 @@ int do_prune = 0;
 int do_purge = 0;
 int sighup = 0;
 int sigalrm = 0;
+
+time_t now = 0;
 
 /*
   put all file descriptors in an fd_set array
@@ -229,12 +231,9 @@ cp
 */
 void check_dead_connections(void)
 {
-  time_t now;
   avl_node_t *node, *next;
   connection_t *c;
 cp
-  now = time(NULL);
-
   for(node = connection_tree->head; node; node = next)
     {
       next = node->next;
@@ -359,12 +358,14 @@ void main_loop(void)
   int t;
   event_t *event;
 cp
-  last_ping_check = time(NULL);
+  last_ping_check = now;
 
-  srand(time(NULL));
+  srand(now);
 
   for(;;)
     {
+      now = time(NULL);
+
       tv.tv_sec = 1 + (rand() & 7); /* Approx. 5 seconds, randomized to prevent global synchronisation effects */
       tv.tv_usec = 0;
 
@@ -394,25 +395,26 @@ cp
           do_purge = 0;
         }
 
-      t = time(NULL);
-
       /* Let's check if everybody is still alive */
 
-      if(last_ping_check + pingtimeout < t)
+      if(last_ping_check + pingtimeout < now)
         {
           check_dead_connections();
-          last_ping_check = time(NULL);
+          last_ping_check = now;
+
+          if(routing_mode != RMODE_ROUTER)
+	    age_mac();
 
           /* Should we regenerate our key? */
 
-          if(keyexpires < t)
+          if(keyexpires < now)
             {
               if(debug_lvl >= DEBUG_STATUS)
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
 
               RAND_pseudo_bytes(myself->key, myself->keylength);
               send_key_changed(myself->connection, myself);
-              keyexpires = time(NULL) + keylifetime;
+              keyexpires = now + keylifetime;
             }
         }
 

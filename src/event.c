@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: event.c,v 1.1.4.2 2002/03/01 14:09:30 guus Exp $
 */
 
 #include "config.h"
@@ -34,6 +34,7 @@
 #include "system.h"
 
 avl_tree_t *event_tree;
+extern time_t now;
 
 int id;
 
@@ -98,7 +99,7 @@ cp
   if(event_tree->head)
   {
     event = (event_t *)event_tree->head->data;
-    if(event->time < time(NULL))
+    if(event->time < now)
     {
       avl_delete(event_tree, event);
       return event;

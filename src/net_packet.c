@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.6 2002/03/01 12:26:56 guus Exp $
+    $Id: net_packet.c,v 1.1.2.7 2002/03/01 14:09:31 guus Exp $
 */
 
 #include "config.h"
@@ -399,10 +399,9 @@ cp
       return;
     }
 
-/*
   if(n->connection)
-    n->connection->last_ping_time = time(NULL);
-*/
+    n->connection->last_ping_time = now;
+
   receive_udppacket(n, &pkt);
 cp
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.6 2002/03/01 13:18:54 guus Exp $
+    $Id: net_socket.c,v 1.1.2.7 2002/03/01 14:09:31 guus Exp $
 */
 
 #include "config.h"
@@ -204,7 +204,7 @@ cp
 
   event = new_event();
   event->handler = (event_handler_t)setup_outgoing_connection;
-  event->time = time(NULL) + outgoing->timeout;
+  event->time = now + outgoing->timeout;
   event->data = outgoing;
   event_add(event);
 
@@ -260,7 +260,7 @@ cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
 
-  c->last_ping_time = time(NULL);
+  c->last_ping_time = now;
 
   send_id(c);
 cp
@@ -407,7 +407,7 @@ cp
     }
   
   c->outgoing = outgoing;
-  c->last_ping_time = time(NULL);
+  c->last_ping_time = now;
 
   connection_add(c);
 
@@ -439,7 +439,7 @@ cp
   c->address = sa;
   c->hostname = sockaddr2hostname(&sa);
   c->socket = fd;
-  c->last_ping_time = time(NULL);
+  c->last_ping_time = now;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection from %s"), c->hostname);

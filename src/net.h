@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.45 2002/03/01 13:18:54 guus Exp $
+    $Id: net.h,v 1.9.4.46 2002/03/01 14:09:31 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -115,6 +115,7 @@ extern int keylifetime;
 extern int do_prune;
 extern int do_purge;
 extern char *myport;
+extern time_t now;
 
 extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(int);

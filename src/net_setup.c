@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.7 2002/03/01 13:18:54 guus Exp $
+    $Id: net_setup.c,v 1.1.2.8 2002/03/01 14:09:31 guus Exp $
 */
 
 #include "config.h"
@@ -328,6 +328,9 @@ cp
 
   get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
+  if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
+    macexpire= 600;
+
   if(get_config_int(lookup_config(myself->connection->config_tree, "MaxTimeout"), &maxtimeout))
     {
       if(maxtimeout <= 0)
@@ -392,7 +395,7 @@ cp
   if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
     keylifetime = 3600;
 
-  keyexpires = time(NULL) + keylifetime;
+  keyexpires = now + keylifetime;
 
   /* Check if we want to use message authentication codes... */
 
@@ -514,6 +517,8 @@ cp
 int setup_network_connections(void)
 {
 cp
+  now = time(NULL);
+
   init_connections();
   init_subnets();
   init_nodes();

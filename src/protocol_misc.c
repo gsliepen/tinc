@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.2 2002/03/01 14:09:31 guus Exp $
 */
 
 #include "config.h"
@@ -122,7 +122,7 @@ int send_ping(connection_t *c)
 {
 cp
   c->status.pinged = 1;
-  c->last_ping_time = time(NULL);
+  c->last_ping_time = now;
 cp
   return send_request(c, "%d", PING);
 }
