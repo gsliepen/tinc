@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.36 2001/10/27 13:13:35 guus Exp $
+    $Id: net.h,v 1.9.4.37 2001/11/16 12:08:38 zarq Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -56,20 +56,6 @@ typedef struct mac_t
 {
   unsigned char x[6];
 } mac_t;
-
-typedef unsigned long ipv4_t;
-
-typedef struct ip_mask_t {
-  ipv4_t address;
-  ipv4_t mask;
-} ip_mask_t;
-
-typedef struct ipv6_t
-{
-  unsigned short x[8];
-} ipv6_t;
-
-typedef unsigned short port_t;
 
 typedef short length_t;
 
