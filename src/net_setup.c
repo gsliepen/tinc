@@ -150,17 +150,23 @@ bool read_rsa_public_key(connection_t *c)
 bool read_rsa_private_key(void)
 {
 	FILE *fp;
-	char *fname, *key;
+	char *fname, *key, *pubkey;
 	struct stat s;
 
 	cp();
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
+		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
+			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
+			return false;
+		}
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
 		BN_hex2bn(&myself->connection->rsa_key->d, key);
+		BN_hex2bn(&myself->connection->rsa_key->n, pubkey);
 		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		free(key);
+		free(pubkey);
 		return true;
 	}
 
@@ -242,19 +248,15 @@ bool setup_myself(void)
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
 
-	if(!read_rsa_private_key())
-		return false;
-
 	if(!read_connection_config(myself->connection)) {
 		logger(LOG_ERR, _("Cannot open host configuration file for myself!"));
 		return false;
 	}
 
-	if(!read_rsa_public_key(myself->connection))
+	if(!read_rsa_private_key())
 		return false;
 
-	if(!get_config_string
-	   (lookup_config(myself->connection->config_tree, "Port"), &myport))
+	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
 		asprintf(&myport, "655");
 
 	/* Read in all the subnets specified in the host configuration file */
