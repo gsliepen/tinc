@@ -43,3 +43,13 @@
 # include <stdlib.h>
 # undef getopt
 #endif
+
+
+/* Define to the location of the kernel sources */
+#undef CONFIG_TINC_KERNELDIR
+
+/* Define to 1 if tun/tap support is enabled and found */
+#undef HAVE_TUNTAP
+
+/* Define to the location of if_tun.h */
+#undef LINUX_IF_TUN_H

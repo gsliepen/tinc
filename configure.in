@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.8 2000/10/13 23:34:56 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.9 2000/10/15 17:26:31 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre3)
@@ -33,7 +33,7 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h sys/ioctl.h syslog.h unistd.h sys/time.h)
+AC_CHECK_HEADERS(fcntl.h limits.h sys/ioctl.h syslog.h unistd.h sys/time.h linux/if_tun.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -79,6 +79,10 @@ AC_CHECK_FUNC(socket, [], [
 AC_CHECK_FUNC(gethostbyname, [], [
   AC_CHECK_LIB(nsl, gethostbyname)
 ])
+
+
+dnl Check for TUN/TAP support in the kernel
+tinc_TUNTAP
 
 AC_OUTPUT([Makefile src/Makefile
 doc/Makefile intl/Makefile lib/Makefile
