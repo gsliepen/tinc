@@ -12,40 +12,42 @@
 
 This is the info manual for tinc, a Virtual Private Network daemon.
 
-Copyright 1998,199,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
+Copyright @copyright{} 1998,199,2000 Ivo Timmermans
+<itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
+Wessel Dankers <wsl@@nl.linux.org>.
 
-     Permission is granted to make and distribute verbatim
-     copies of this manual provided the copyright notice and
-     this permission notice are preserved on all copies.
 
-     Permission is granted to copy and distribute modified
-     versions of this manual under the conditions for
-     verbatim copying, provided
-     that the entire resulting derived work is distributed
-     under the terms of a permission notice identical to this
-     one.
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
 
 @end ifinfo
 
 @titlepage
 @title tinc Manual
 @subtitle Setting up a Virtual Private Network with tinc
-@author Ivo Timmermans <itimmermans@@bigfoot.com> and Guus Sliepen <guus@sliepen.warande.net>
+@author Ivo Timmermans and Guus Sliepen
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1998,1999,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
+@cindex copyright
+Copyright @copyright{} 1998,1999,2000 Ivo Timmermans
+<itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
+Wessel Dankers <wsl@@nl.linux.org>.
 
-     Permission is granted to make and distribute verbatim
-     copies of this manual provided the copyright notice and
-     this permission notice are preserved on all copies.
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
 
-     Permission is granted to copy and distribute modified
-     versions of this manual under the conditions for
-     verbatim copying, provided
-     that the entire resulting derived work is distributed
-     under the terms of a permission notice identical to this
-     one.
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
 
 @end titlepage
 
@@ -54,8 +56,8 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
 
 @menu
 * Introduction::                Introduction
-* Configuring a Linux system::  Before compiling tinc
-* Installing tinc::             
+* Installing tinc - preparations::  
+* Installing tinc - installation::  
 * Configuring tinc::            
 * Running tinc::                
 * Technical information::       
@@ -63,12 +65,14 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
 * Concept Index::               All used terms explained
 @end menu
 
+
+@contents
+
 @c ==================================================================
-@node    Introduction, Configuring a Linux system, Top, Top
+@node    Introduction, Installing tinc - preparations, Top, Top
 @chapter Introduction
 
-@c straight from the www page
-
+@cindex tinc
 tinc is a Virtual Private Network (VPN) daemon that uses tunneling and
 encryption to create a secure private network between hosts on the
 Internet.
@@ -86,12 +90,14 @@ process of tinc itself.
 @menu
 * VPNs::                        Virtual Private Networks in general
 * tinc::                        about tinc
+* Supported platforms::         
 @end menu
 
 @c ==================================================================
 @node    VPNs, tinc, Introduction, Introduction
 @section Virtual Private Networks
 
+@cindex VPN
 A Virtual Private Network or VPN is a network that can only be accessed
 by a few elected computers that participate. This goal is achievable in
 more than just one way.
@@ -131,9 +137,11 @@ that flows over the network.
 
 
 @c ==================================================================
-@node    tinc,  , VPNs, Introduction
+@node    tinc, Supported platforms, VPNs, Introduction
 @section tinc
 
+@cindex vpnd
+@cindex ethertap
 I really don't quite remember what got us started, but it must have been
 Guus' idea. He wrote a simple implementation (about 50 lines of C) that
 used the @emph{ethertap} device that Linux knows of since somewhere
@@ -158,22 +166,100 @@ available too.
 
 
 @c ==================================================================
-@node    Configuring a Linux system, Installing tinc, Introduction, Top
-@chapter Configuring a Linux system
+@node    Supported platforms,  , tinc, Introduction
+@section Supported platforms
 
-This chapter contains information on how a Linux system is configured
-for the use of tinc.
+tinc works on Linux, FreeBSD and Solaris.  These are the three platforms
+that are supported by the universial TUN/TAP device driver, so if
+support for other operating systems is added to this driver, perhaps
+tinc will run on them as well.  Without this driver, tinc will most
+likely compile and run, but it will not be able to send or receive data
+packets.
+
+@c ==================================================================
+@subsection Linux
+
+tinc was first written for Linux running on an intel x86 processor, so
+this is the best supported platform.  The protocol however, and actually
+anything about tinc, has been rewritten to support random byte ordering
+and arbitrary word length.  So in theory it should run on other
+processors that Linux runs on.  Take care however, we haven't been able
+to really test it yet.  If you want to run tinc on another platform than
+x86, and want to tell us how it went, please do so.
+
+tinc uses the ethertap device that is provided in the standard kernel
+since version 2.1.60, so anything above that (2.2.x, 2.3.x, and the
+2.4.0-testx (which is current at the time of this writing) kernel
+versions) is able to support tinc.
+
+
+@c ==================================================================
+@subsection FreeBSD
+
+tinc on FreeBSD relies on the universial TUN/TAP driver for its data
+acquisition from the kernel.  Therefore, tinc suports the same platforms
+as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
+
+
+@c ==================================================================
+@subsection Solaris
+
+tinc on Solaris relies on the universial TUN/TAP driver for its data
+acquisition from the kernel.  Therefore, tinc suports the same platforms
+as this driver.  These are: Solaris, 2.1.x.
+
+
+@c
+@c
+@c
+@c
+@c
+@c
+@c       Preparing your system
+@c
+@c
+@c
+@c
+@c
+
+@c ==================================================================
+@node    Installing tinc - preparations, Installing tinc - installation, Introduction, Top
+@chapter Installing tinc: preparations
+
+This chapter contains information on how to prepare your system to
+support tinc.
 
 @menu
 * Configuring the kernel::      
-* Files Needed::                
-* Setting up the devices::      
+* Libraries::                   
 @end menu
 
 
 @c ==================================================================
-@node    Configuring the kernel, Files Needed, Configuring a Linux system, Configuring a Linux system
+@node    Configuring the kernel, Libraries, Installing tinc - preparations, Installing tinc - preparations
 @section Configuring the kernel
+
+If you are running Linux, chances are good that your kernel already
+supports all the devices that tinc needs for proper operation.  For
+example, the standard kernel from Redhat Linux already has support for
+ethertap and netlink compiled in.  Debian users can use the modconf
+utility to select the modules.  If your Linux distribution supports this
+method of selecting devices, look out for something called `ethertap',
+and `netlink_dev'.  You need both these devices.
+
+If you can install these devices in a similar manner, you may skip this
+section.
+
+@menu
+* Configuration of the Linux kernel::  
+* Configuration of the FreeBSD kernel::  
+* Configuration of the Solaris kernel::  
+@end menu
+
+
+@c ==================================================================
+@node       Configuration of the Linux kernel, Configuration of the FreeBSD kernel, Configuring the kernel, Configuring the kernel
+@subsection Configuring the Linux kernel
 
 Since this particular implementation only runs on 2.1 or higher Linux
 kernels, you should grab one (2.2 is current at this time). A 2.0 port
@@ -185,8 +271,10 @@ new kernel, you should read the
 @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html, Kernel
 HOWTO} first. Do that now!
 
-Here are the options you have to turn on/off when configuring a new
+Here are the options you have to turn on when configuring a new
 kernel.
+
+For kernel 2.2.x:
 
 @example
 Code maturity level options
@@ -198,6 +286,19 @@ Network device support
 <*> Ethertap network tap
 @end example
 
+For kernel 2.3.x and 2.4.x:
+
+@example
+Code maturity level options
+[*] Prompt for development and/or incomplete code/drivers
+Networking options
+[*] Kernel/User netlink socket
+<*> Netlink device emulation
+Network device support
+<*> Universal TUN/TAP device driver support
+@end example
+
+
 Any other options not mentioned here are not relevant to tinc. If you
 decide to build any of these as dynamic kernel modules, it's a good idea
 to add these lines to @file{/etc/modules.conf}.
@@ -207,37 +308,204 @@ alias tap0 ethertap
 alias char-major-36 netlink_dev
 @end example
 
+If you have a 2.4 kernel, you can also choose to use the `Ethertap
+network tap' device.  This is marked obsolete, because the universal
+TUN/TAP driver is a newer implementation that is supposed to be used in
+favor of ethertap.  For tinc, it doesn't really matter which one you
+choose; based on the device file name, tinc will make the right choice
+about what protocol to use.
+
 Finally, after having set up other options, build the kernel and boot
-it. Unfortunately it's not possible to insert these modules in a running
-kernel.
+it.  Unfortunately it's not possible to insert these modules in a
+running kernel.
 
 
 @c ==================================================================
-@node    Files Needed, Setting up the devices, Configuring the kernel, Configuring a Linux system
-@section Files Needed
+@node       Configuration of the FreeBSD kernel, Configuration of the Solaris kernel, Configuration of the Linux kernel, Configuring the kernel
+@subsection Configuring the FreeBSD kernel
 
-@subsubheading Device files
+This section will contain information on how to configure your FreeBSD
+kernel to support the universal TUN/TAP device.  For 5.0 and 4.1
+systems, this is included in the kernel configuration, for earlier
+systems (4.0 and 3.x), you need to install the universal TUN/TAP driver
+yourself.
+
+Unfortunately somebody still has to write the text.
+
+
+@c ==================================================================
+@node       Configuration of the Solaris kernel,  , Configuration of the FreeBSD kernel, Configuring the kernel
+@subsection Configuring the Solaris kernel
+
+This section will contain information on how to configure your Solaris
+kernel to support the universal TUN/TAP device.  You need to install
+this driver yourself.
+
+Unfortunately somebody still has to write the text.
+
+
+@c ==================================================================
+@node    Libraries,  , Configuring the kernel, Installing tinc - preparations
+@section Libraries
+
+@cindex requirements
+Before you can configure or build tinc, you need to have two libraries
+installed on your system, GMP and OpenSSL.  If you try to configure tinc
+without having installed both, configure will give you an error message,
+and stop.
+
+@menu
+* GMP::                         
+* OpenSSL::                     
+@end menu
+
+
+@c ==================================================================
+@node       GMP, OpenSSL, Libraries, Libraries
+@subsection GMP
+
+@cindex GMP
+tinc uses the GNU Multiple Precision (GMP) library to do some
+authentication-related calculations.  tinc cannot run without this
+library.  If you try to configure the tinc source code without this
+library installed, you will get an error message.
+
+Currently, versions 1.x, 2.x, 3.0 and 3.0.1 of this library are
+supported.  You may try to configure if you have another version
+installed, chances are big it works without a problem.
+
+You can use your operating system's package manager to install this if
+available.  Make sure you install the development AND runtime versions
+of this package.
+
+If you can't install GMP this way, you can get the source of this latest
+version of this library from
+@url{http://www.gnu.org/software/gmp/gmp.html}.  Instructions on how to
+configure, build and install this package are included within the
+package.  Please make sure you build development and runtime libraries
+(which is the default).
+
+
+@c ==================================================================
+@node       OpenSSL,  , GMP, Libraries
+@subsection OpenSSL
+
+@cindex OpenSSL
+For all cryptography-related functions, tinc uses the functions provided
+by the OpenSSL library.  We recommend using version 0.9.5 or 0.9.6 of
+this library.  Other versions may also work, but we can guarantee
+nothing.
+
+Disclaimers from the subsection on GMP also apply here; if this library
+is not installed, you wil get an error when running configure.  Support
+for running tinc without having OpenSSL installed @emph{may} be added in
+the future.
+
+If you have to install OpenSSL manually, you can get the source code
+from @url{http://www.openssl.org/}.  Instructions on how to configure,
+build and install this package are included within the package.  Please
+make sure you build development and runtime libraries (which is the
+default).
+
+
+@c
+@c
+@c
+@c      Installing tinc
+@c
+@c
+@c
+@c
+
+@c ==================================================================
+@node    Installing tinc - installation, Configuring tinc, Installing tinc - preparations, Top
+@chapter Installing tinc: installation
+
+If you use Redhat or Debian, you may want to install one of the
+precompiled packages for your system.  These packages are equipped with
+system startup scripts and sample configurations.
+
+If you don't run either of these systems, or you want to compile tinc
+for yourself, you can use the source.  The source is distributed under
+the GNU General Public License (GPL).  Download the source from the
+@uref{http://tinc.nl.linux.org/download.html, download page}, which has
+the checksums of these files listed; you may wish to check these with
+md5sum before continuing.
+
+tinc comes in a handy autoconf/automake package, which you can just
+treat the same as any other package. Which is just untar it, type
+`configure' and then `make'.
+
+More detailed instructions are in the file @file{INSTALL}, which is
+included in the source distribution.
+
+@menu
+* Building tinc::               
+* System files::                
+* Interfaces::                  
+@end menu
+
+
+@c ==================================================================
+@node    Building tinc, System files, Installing tinc - installation, Installing tinc - installation
+@section Building tinc
+
+Detailed instructions on configuring the source and building tinc can be
+found in the file called @file{INSTALL}.
+
+
+@c ==================================================================
+@node    System files, Interfaces, Building tinc, Installing tinc - installation
+@section System files
+
+Before you can run tinc, you 
+
+@menu
+* Device files::                
+* Other files::                 
+@end menu
+
+
+@c ==================================================================
+@node       Device files, Other files, System files, System files
+@subsection Device files
 
 First, you'll need the special device file(s) that form the interface
-between the kernel and the daemon. If you are running the new 2.4 kernel and
-you are using the devfs filesystem, then the tap device will be automatically
-generated as @file{/dev/netlink/tap0}. Otherwise, you have to make it yourself:
+between the kernel and the daemon.
+
+The permissions for these files have to be such that only the super user
+may read/write to this file.  You'd want this, because otherwise
+eavesdropping would become a bit too easy.  This does, however, imply
+that you'd have to run tincd as root.
+
+If you use the universal TUN/TAP driver, you have to create the
+following device files (unless they already exist):
+
+@example
+mknod -m 600 /dev/... c .. ..
+chown 0.0 /dev/...
+@end example
+
+If you want to have more devices, the device numbers will be .. .. ...
+
+If you use Linux, and you run the new 2.4 kernel using the devfs
+filesystem, then the tap device will be automatically generated as
+@file{/dev/netlink/tap0}.
+
+If you use Linux and have kernel 2.2.x, you have to make the ethertap
+devices:
 
 @example
 mknod -m 600 /dev/tap0 c 36 16
 chown 0.0 /dev/tap0
 @end example
 
-The permissions now will be such that only the super user may read/write
-to this file. You'd want this, because otherwise eavesdropping would
-become a bit too easy. This does, however, imply that you'd have to run
-tincd as root.
+Any further ethertap devices have minor device number 16 through 31.
 
-If you want to, you may also create more device files, which would be
-numbered 0...15, with minor device numbers 16...31. They all should be
-owned by root and have permission 600. Under devfs, these files will
-be automatically generated.
 
+@c ==================================================================
+@node       Other files,  , Device files, System files
+@subsection Other files
 
 @subsubheading @file{/etc/networks}
 
@@ -266,15 +534,15 @@ tinc            655/udp    TINC
 
 
 @c ==================================================================
-@node    Setting up the devices,  , Files Needed, Configuring a Linux system
-@section Setting up the devices
+@node    Interfaces,  , System files, Installing tinc - installation
+@section Interfaces
 
 Before you can start transmitting data over the tinc tunnel, you must
 set up the ethertap network devices.
 
 First, decide which IP addresses you want to have associated with these
-devices, and what network mask they must have. You also need these
-numbers when you are going to configure tinc itself. @xref{Configuring
+devices, and what network mask they must have.  You also need these
+numbers when you are going to configure tinc itself.  @xref{Configuring
 tinc}.
 
 It doesn't matter much which part you do first, setting up the network
@@ -288,44 +556,52 @@ after me:
 ifconfig tap@emph{n} hw ether fe:fd:@emph{xx}:@emph{xx}:@emph{xx}:@emph{xx}
 @end example
 
-The @emph{n} here is the number of the ethertap device you want to
-use. It should be the same @emph{n} as the one you use for
-@file{/dev/tap@emph{n}}. The @emph{xx}s are four hexadecimal numbers
+The @emph{n} here is the number of the ethertap device you want to use.
+It should be the same @emph{n} as the one you use for
+@file{/dev/tap@emph{n}}.  The @emph{xx}s are four hexadecimal numbers
 (0--ff). With previous versions of tincd, it didn't matter what they
-were. But newer kernels require properly set up ethernet addresses.
-In fact, the old behavior was wrong. It is required that the @emph{xx}s
-match the numbers of the IP address you will give to the tap device
-and to the MyOwnVPNIP configuration (which will be discussed later):
+were.  But newer kernels require properly set up ethernet addresses.  In
+fact, the old behavior was wrong.  It is required that the @emph{xx}s
+match the numbers of the IP address you will give to the tap device and
+to the MyOwnVPNIP configuration (which will be discussed later).
+
+@cindex MAC address
+@cindex hardware address
+@strong{Tip}: for finding out what the MAC address of the tap interface
+should be, you can use the following command:
+
+@example
+$ printf 'fe:fd:%02x:%02x:%02x:%02x' 10 1 54 1
+fe:fd:0a:01:36:01
+@end example
+
+@cindex ifconfig
+To activate the device, you have to assign an IP address to it.  To set
+an IP address @emph{IP} with network mask @emph{mask}, do the following:
 
 @example
 ifconfig tap@emph{n} @emph{xx}.@emph{xx}.@emph{xx}.@emph{xx} netmask @emph{mask}
 @end example
 
-This will activate the device with an IP address @emph{IP} with network
-mask @emph{mask}. The netmask is the mask of the @emph{entire} VPN network,
-not just your own subnet. It is the same netmask you will have to specify
-with the VpnMask configuration variable.
+@cindex netmask
+The netmask is the mask of the @emph{entire} VPN network, not just your
+own subnet.  It is the same netmask you will have to specify with the
+VpnMask configuration variable.
+
+
+@c
+@c
+@c
+@c
+@c         Configuring tinc
+@c
+@c
+@c
+@c
 
 
 @c ==================================================================
-@node    Installing tinc, Configuring tinc, Configuring a Linux system, Top
-@chapter Installing tinc
-
-First download it. This is the
-@uref{http://tinc.nl.linux.org/download.html, download
-page}, which has the checksums of these files listed; you may wish to
-check these with md5sum before continuing.
-
-tinc comes in a handy autoconf/automake package, which you can just
-treat the same as any other package. Which is just untar it, type
-`configure' and then `make'.
-
-More detailed instructions are in the file @file{INSTALL}, which is
-included in the source distribution.
-
-
-@c ==================================================================
-@node    Configuring tinc, Running tinc, Installing tinc, Top
+@node    Configuring tinc, Running tinc, Installing tinc - installation, Top
 @chapter Configuring tinc
 
 @menu
@@ -334,7 +610,6 @@ included in the source distribution.
 * Configuration file::          
 * Example::                     
 @end menu
-
 
 @c ==================================================================
 @node    Multiple networks, How connections work, Configuring tinc, Configuring tinc
@@ -513,6 +788,7 @@ the ethertap devices correctly.
 @c ==================================================================
 @node    Example,  , Configuration file, Configuring tinc
 @section Example
+
 
 Imagine the following situation. An A-based company wants to connect
 three branch offices in B, C and D using the internet. All four offices
@@ -868,7 +1144,7 @@ This chapter is a mixture of ideas, reasoning and explanation, please
 don't take it too serious.
 
 @menu
-* Key Types::
+* Key Types::                   
 * Key Management::              
 * Authentication::              
 * Protection::                  
@@ -908,8 +1184,7 @@ secure).
 @c ==================================================================
 @node    Key Management, Authentication, Key Types, Security
 @subsection Key Management
-@c FIXME: recheck
-@c I did, it sounds sane :) [guus]
+@c FIXME change for the current protocol
 
 @cindex Diffie-Hellman
 You can't just send a private encryption key to your peer, because
@@ -978,6 +1253,7 @@ Swapping floppy disks in real life might be the best way to do this!
 Now we have securely hidden our data. But a malicious cracker may still
 bother you by randomly altering the encrypted data he intercepts.
 
+@c FIXME what the hell is this all about? remove? IT
 
 @c ==================================================================
 @node    About us, Concept Index, Technical information, Top
