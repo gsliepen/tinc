@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.118 2001/11/03 21:22:02 guus Exp $
+    $Id: protocol.c,v 1.28.4.119 2001/11/04 23:29:50 guus Exp $
 */
 
 #include "config.h"
@@ -1126,7 +1126,7 @@ cp
   if(!from)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("unknown node"));
-      return -1;
+      return 0;
     }
 
   to = lookup_node(to_name);
@@ -1134,7 +1134,7 @@ cp
   if(!to)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("unknown node"));
-      return -1;
+      return 0;
     }
 
   /* Check if edge exists */
@@ -1152,7 +1152,7 @@ cp
   else
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("unknown edge"));
-      return -1;
+      return 0;
     }
 
   /* Tell the rest about the deleted edge */
