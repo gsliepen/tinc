@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.50 2003/06/11 19:28:35 guus Exp $
+    $Id: route.c,v 1.1.2.51 2003/06/11 19:40:43 guus Exp $
 */
 
 #include "config.h"
@@ -68,7 +68,7 @@ int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
 int macexpire = 600;
 int overwrite_mac = 0;
-mac_t mymac = {0xFE, 0xFD, 0, 0, 0, 0};
+mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
 
 /* RFC 1071 */
 
