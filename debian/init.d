@@ -1,7 +1,9 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.5 2000/05/15 17:15:52 zarq Exp $
+# $Id: init.d,v 1.6 2000/05/16 14:34:44 zarq Exp $
+#
+# Based on Lubomir Bulej's Redhat init script.
 #
 
 my $DAEMON="/usr/sbin/tincd";
@@ -10,6 +12,7 @@ my $DESC="tinc daemons";
 my $TCONF="/etc/tinc";
 my $EXTRA="";
 
+# Put your VPN names in here.
 my $NETS="";  # This is a space-separated list of networks to be started.
 
 
@@ -41,6 +44,8 @@ sub vpn_load {
 	} elsif ( /^[ ]*(MyOwnVPNIP|MyVirtualIP)[ =]+([^ \#]+)/i ) {
 	    $VPN=$2;
 	    chomp($VPN);
+	} elsif ( /^[ ]*VpnMask[ =]+([^ \#]+)/i ) {
+	    $VPNMASK=$1;
 	}
     }
     if(!defined($DEV)) {
@@ -54,6 +59,9 @@ sub vpn_load {
     }
     if($VPN eq "") {
 	die "tinc: No argument to MyVirtualIP/MyOwnVPNIP";
+    }
+    if(defined($VPNMASK) && $VPNMASK eq "") {
+	die "tinc: Invalid argument to VpnMask";
     }
     $ADR = $VPN;
     $ADR =~ s/^([^\/]+)\/.*$/$1/;
@@ -90,6 +98,9 @@ sub vpn_start {
     system("ifconfig $DEV hw ether $MAC");
     system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD -arp");
     system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
+    if(defined($VPNMASK)) {
+	system("route add -net $ADR netmask $VPNMASK dev $DEV");
+    }
 }
 
 
