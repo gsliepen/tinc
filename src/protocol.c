@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.103 2001/07/21 15:34:18 guus Exp $
+    $Id: protocol.c,v 1.28.4.104 2001/08/17 18:14:04 guus Exp $
 */
 
 #include "config.h"
@@ -1006,7 +1006,7 @@ cp
              cl->name, cl->hostname, strerror(err), errorstring);
     }
 
-  terminate_connection(cl, 1);
+  terminate_connection(cl, cl->status.meta);
 cp
   return 0;
 }
@@ -1020,7 +1020,7 @@ cp
 int termreq_h(connection_t *cl)
 {
 cp
-  terminate_connection(cl, 1);
+  terminate_connection(cl, cl->status.meta);
 cp
   return 0;
 }

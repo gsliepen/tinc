@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.127 2001/07/24 20:14:30 guus Exp $
+    $Id: net.c,v 1.35.4.128 2001/08/17 18:14:03 guus Exp $
 */
 
 #include "config.h"
@@ -1370,7 +1370,7 @@ cp
       if(FD_ISSET(p->meta_socket, f))
 	if(receive_meta(p) < 0)
 	  {
-	    terminate_connection(p, 1);
+	    terminate_connection(p, p->status.meta);
 	    return;
 	  }
     }
