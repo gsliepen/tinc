@@ -73,7 +73,7 @@ Internet.
 Because the tunnel appears to the IP level network code as a normal
 network device, there is no need to adapt any existing software.
 
-This tunneling allows VPN sites to share information with eachother
+This tunneling allows VPN sites to share information with each other
 over the Internet without exposing any information to others.
 
 This document is the manual for tinc. Included are chapters on how to
@@ -94,8 +94,8 @@ by a few elected computers that participate. This goal is achievable in
 more than just one way.
 
 @cindex private
-For instance, a VPN can consist of a single standalone ethernet LAN. Or
-even two computers hooked up using a nullmodem cable@footnote{Though
+For instance, a VPN can consist of a single stand-alone ethernet LAN. Or
+even two computers hooked up using a null-modem cable@footnote{Though
 discussable, I think it qualifies as a VPN.}. In these cases, it is
 obvious that the network is @emph{private}. But there is another type
 of VPN, the type tinc was made for.
@@ -110,14 +110,14 @@ As is the case with either type of VPN, anybody could eavesdrop. Or
 worse, alter data. Hence it's probably advisable to encrypt the data
 that flows over the network.
 
-`
+
 @c ==================================================================
 @node    tinc,  , VPNs, Introduction
 @section tinc
 
 I really don't quite remember what got us started, but it must have been
 Guus' idea. He wrote a simple implementation (about 50 lines of C) that
-used the @emph{ethertap} device that linux knows of since somewhere
+used the @emph{ethertap} device that Linux knows of since somewhere
 about kernel 2.1.60. It didn't work immediately and he improved it a
 bit. At this stage, the project was still simply called @samp{vpnd}.
 
@@ -125,7 +125,7 @@ Since then, a lot has changed---to say the least.
 
 @cindex tincd
 tinc now supports encryption, it consists of a single daemon (tincd) for
-both the receiving and sending end, it hase becom largely
+both the receiving and sending end, it has become largely
 runtime-configurable---in short, it has become a full-fledged
 professional package.
 
@@ -220,7 +220,7 @@ owned by root and have permission 600.
 @subsubheading @file{/etc/networks}
 
 You may add a line to @file{/etc/networks} so that your vpn will get a
-symoblic name. For example:
+symbolic name. For example:
 
 @example
 myvpn 10.0.0.0
@@ -267,8 +267,8 @@ The @emph{n} here is the number of the ethertap device you want to
 use. It should be the same @emph{n} as the one you use for
 @file{/dev/tap@emph{n}}. The @emph{xx}s are four hexadecimal numbers
 (0--ff). With previous versions of tincd, it didn't matter what they
-were. But newer kernels require properly set up ehternet addresses.
-In fact, the old behaviour was wrong. It is required that the @emph{xx}s
+were. But newer kernels require properly set up ethernet addresses.
+In fact, the old behavior was wrong. It is required that the @emph{xx}s
 match MyOwnVPNIP.
 
 @example
@@ -315,7 +315,7 @@ included in the source distribution.
 
 @c from the manpage
 
-It is perfectly ok for you to run more than one tinc daemon.
+It is perfectly OK for you to run more than one tinc daemon.
 However, in its default form, you will soon notice that you can't use
 two different configuration files without the -c option.
 
@@ -345,8 +345,8 @@ assume that you use it.
 Before going on, first a bit on how tinc sees connections.
 
 When tinc starts up, it reads in the configuration file and parses the
-commandline options. If it sees a `ConnectTo' value in the file, it will
-try to connect to it, on the given port. If this fails, tinc exits.
+command-line options. If it sees a `ConnectTo' value in the file, it
+will try to connect to it, on the given port. If this fails, tinc exits.
 
 
 @c ==================================================================
@@ -423,7 +423,7 @@ This is an alias for MyOwnVPNIP.
 
 @item Passphrases = directory
 The directory where tinc will look for passphrases when someone tries to
-cennect. Please see the manpage for genauth(8) for more information
+connect. Please see the manpage for genauth(8) for more information
 about passphrases as used by tinc.
 
 @item PingTimeout = number
@@ -435,7 +435,7 @@ will be notified of this.
 @item TapDevice = device
 The ethertap device to use. Note that you can only use one device per
 daemon. The info pages of the tinc package contain more information
-about configuring an ethertap device for linux.
+about configuring an ethertap device for Linux.
 
 @end table
 
@@ -462,7 +462,7 @@ D: net 10.4.0.0 mask 255.255.0.0 gateway 10.4.3.32 internet IP 4.5.6.7
 ``gateway'' is the VPN IP address of the machine that is running the
 tincd. ``internet IP'' is the IP address of the firewall, which does not
 need to run tincd, but it must do a port forwarding of TCP&UDP on port
-655 (unless otherwise configured).e
+655 (unless otherwise configured).
 
 In this example, it is assumed that eth0 is the interface that points to
 the inner LAN of the office. This could be the same as the interface
@@ -784,54 +784,14 @@ This chapter is a mixture of ideas, reasoning and explanation, please
 don't take it too serious.
 
 @menu
-* Encryption::                  
 * Key Management::              
-* Authentification::            How to be sure we're talking to the right person
+* Authentication::              
 * Protection::                  
 @end menu
 
 
 @c ==================================================================
-@node    Encryption, Key Management, Security, Security
-@subsection Encryption
-
-Encryption algorithms come in lots of flavors, most of which are not
-safe enough to use on the Internet, if at all. Algorithms that we've
-considered using are: RSA, blowfish, twofish and IDEA.
-
-@itemize @bullet
-@item
-@cindex RSA
-@emph{RSA} is patented. A fee must be paid if you use it, so it can't
-be used in an Open Source program.
-
-@item
-@cindex blowfish
-@emph{blowfish} was the standard encryption method at least up to version
-0.2.23, but as Dekan pointed out, it may not be all that secure. It is
-also patented, but it may be used freely.
-
-@item
-@cindex twofish
-@emph{twofish} should be better, but i've not seen a useable
-ready-to-use implementation somewhere out of the US. I'll remember this
-as a future encryption method.
-
-@item
-@cindex IDEA
-@emph{IDEA} is patented, and free for non-commercial use. It is going to
-be the standard encryption method.
-
-@end itemize
-
-You may choose any of the last three encryption methods in tinc. Please
-note, however, that ALL computers on your VPN must currenttly use the
-same. This should (among other things) be more flexible, tinc could for
-instance load a new encryption library the minute it is needed.
-
-
-@c ==================================================================
-@node    Key Management, Authentification, Encryption, Security
+@node    Key Management, Authentication, Security, Security
 @subsection Key Management
 @c FIXME: recheck
 
@@ -866,13 +826,13 @@ should be 2^129-1 or more.
 
 
 @c ==================================================================
-@node    Authentification, Protection, Key Management, Security
-@subsection Authentification
+@node    Authentication, Protection, Key Management, Security
+@subsection Authentication
 @c FIXME: recheck
 
 @cindex man-in-the-middle attack
 Because the Diffie-Hellman protocol is in itself vulnerable to the
-``man-in-the-middle attack,'' we should introduce an authentification
+``man-in-the-middle attack,'' we should introduce an authentication
 system.
 
 We will let A transmit a passphrase that is also known to B encrypted
@@ -892,7 +852,7 @@ passphrase to B.
 
 
 @c ==================================================================
-@node    Protection,  , Authentification, Security
+@node    Protection,  , Authentication, Security
 @subsection Protecting your data
 
 Now we have securely hidden our data. But a malicious cracker may still
@@ -934,7 +894,7 @@ the meta-protocol, during early identification stages.
 @node    Meta protocol,  , Data protocol, The Protocol
 @subsection The Meta protocol
 
-This protocol consists of separate packets of enformation, that are
+This protocol consists of separate packets of information, that are
 generally formatted thusly:
 
 @example
