@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.168 2002/03/27 14:02:36 guus Exp $
+    $Id: net.c,v 1.35.4.169 2002/04/01 21:28:05 guus Exp $
 */
 
 #include "config.h"
@@ -365,6 +365,8 @@ cp
 	      dump_connections();
               return;
             }
+
+	  continue;
         }
 
       check_network_activity(&fset);
