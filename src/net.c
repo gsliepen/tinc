@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.186 2003/05/06 21:13:14 guus Exp $
+    $Id: net.c,v 1.35.4.187 2003/07/06 17:15:25 guus Exp $
 */
 
 #include "config.h"
@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -72,10 +73,6 @@
 #include "event.h"
 
 #include "system.h"
-
-#ifndef HAVE_RAND_PSEUDO_BYTES
-#define RAND_pseudo_bytes RAND_bytes
-#endif
 
 int do_purge = 0;
 int sighup = 0;

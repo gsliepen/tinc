@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.68 2003/06/11 19:07:56 guus Exp $
+    $Id: tincd.c,v 1.10.4.69 2003/07/06 17:15:25 guus Exp $
 */
 
 #include "config.h"
@@ -395,19 +395,7 @@ int main(int argc, char **argv, char **envp)
 
 	RAND_load_file("/dev/urandom", 1024);
 
-#ifdef HAVE_OPENSSL_ADD_ALL_ALGORITHMS_NOCONF
-	OPENSSL_add_all_algorithms_noconf();
-#else
-#ifdef HAVE_OPENSSL_ADD_ALL_ALGORITHMS
 	OpenSSL_add_all_algorithms();
-#else
-#ifdef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
-	SSLeay_add_all_algorithms();
-#else
-#error No add_all_algorithms function available!
-#endif
-#endif
-#endif
 
 	if(generate_keys) {
 		read_server_config();

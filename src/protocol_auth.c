@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.19 2003/01/17 00:37:20 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.20 2003/07/06 17:15:25 guus Exp $
 */
 
 #include "config.h"
@@ -36,10 +36,6 @@
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
-
-#ifndef HAVE_RAND_PSEUDO_BYTES
-#define RAND_pseudo_bytes RAND_bytes
-#endif
 
 #include "conf.h"
 #include "net.h"

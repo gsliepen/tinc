@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.51 2003/06/11 19:40:43 guus Exp $
+    $Id: route.c,v 1.1.2.52 2003/07/06 17:15:25 guus Exp $
 */
 
 #include "config.h"
@@ -60,8 +60,22 @@
 
 #include "system.h"
 
+/* Missing definitions */
+
 #ifndef ETHER_ADDR_LEN
 #define ETHER_ADDR_LEN 6
+#endif
+
+#ifndef ICMP_DEST_UNREACH
+#define ICMP_DEST_UNREACH 3
+#endif
+
+#ifndef ICMP_NET_UNKNOWN
+#define ICMP_NET_UNKNOWN 6
+#endif
+
+#ifndef ICMP_NET_UNREACH
+#define ICMP_NET_UNREACH 0
 #endif
 
 int routing_mode = RMODE_ROUTER;
@@ -210,8 +224,8 @@ void route_ipv4_unreachable(vpn_packet_t *packet, uint8_t code)
 	memcpy(&ip_dst, &hdr->ip_dst, 4);
 	oldlen = packet->len - 14;
 	
-	if(oldlen >= IP_MSS - sizeof(*hdr) - sizeof(struct icmphdr))
-		oldlen = IP_MSS - sizeof(*hdr) - sizeof(struct icmphdr);
+	if(oldlen >= IP_MSS - sizeof(*hdr) - sizeof(*icmp))
+		oldlen = IP_MSS - sizeof(*hdr) - sizeof(*icmp);
 	
 	/* Copy first part of original contents to ICMP message */
 	

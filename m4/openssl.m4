@@ -29,13 +29,20 @@ AC_DEFUN(tinc_OPENSSL,
     [AC_MSG_ERROR([OpenSSL libraries not found.])]
   )
 
-  AC_CHECK_FUNCS([RAND_pseudo_bytes OPENSSL_add_all_algorithms_noconf OpenSSL_add_all_algorithms SSLeay_add_all_algorithms])
+  AC_CHECK_FUNCS([RAND_pseudo_bytes EVP_EncryptInit_ex], ,
+    [AC_MSG_ERROR([Missing OpenSSL functionality, make sure you have installed the latest version.]); break],
+  )
+
+  AC_CHECK_DECL([OpenSSL_add_all_algorithms], ,
+    [AC_MSG_ERROR([Missing OpenSSL functionality, make sure you have installed the latest version.]); break],
+    [#include <openssl/evp.h>]
+  )
 
   AC_CHECK_FUNC(dlopen,
     [],
     [AC_CHECK_LIB(dl, dlopen,
       [LIBS="$LIBS -ldl"],
-      [AC_MSG_ERROR([OpenSSL depends on libdl.])]
+      [AC_MSG_ERROR([OpenSSL depends on libdl.]); break]
     )]
   )
 ])
