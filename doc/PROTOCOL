@@ -1,7 +1,7 @@
 This is the protocol documentation for tinc, a Virtual Private Network daemon.
 
-   Copyright 2000 Guus Sliepen <guus@sliepen.warande.net>,
-             2000 Ivo Timmmermans <itimmermans@bigfoot.com>
+   Copyright 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
+             2000,2001 Ivo Timmmermans <itimmermans@bigfoot.com>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this
@@ -12,7 +12,7 @@ This is the protocol documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: PROTOCOL,v 1.1.2.3 2000/09/10 15:07:41 zarq Exp $
+   $Id: PROTOCOL,v 1.1.2.4 2001/01/07 17:08:02 guus Exp $
 
 
 1.  Protocols used in tinc
@@ -24,28 +24,21 @@ makes TCP connections to other tinc daemons.  It uses the "meta
 protocol" for these connections.  To exchange packets on the virtual
 network, UDP connections are made and the "packet protocol" is used.
 Tinc also needs to exchange network packets with the kernel.  This is
-done using the ethertap device in Linux.  Also planned is a generic
-PPP interface, because it is supported on virtually all UNIX flavours.
-The protocols for those interfaces will not be described in this
-document.
+done using the ethertap device or the universal TUN/TAP device that
+can be found in various UNIX flavours.
 
 2.  Packet protocol
 ------------------
 
 Normal packets are sent without any state information, so the layout
-is pretty basic.  An exception to this are the connections which only
-use TCP (configured with the directive `TCPonly=yes').  An explanation
-of this type of packet is given in the next chapter, when we explain
-the meta protocol.
+is pretty basic.
 
 A data packet can only be sent  if the encryption key is known to both
-parties, and the connection is  activated.  Normally, tinc opens a UDP
-connection when it  receives an acknowledgement that the  newly set up
-connection is properly initiated, and has been verified.
+parties, and the connection is  activated. If the encryption key is not
+known, a request is sent to the destination using the meta connection
+to retreive it.
 
  0   1   2   3
-|  SOURCE IP  |
-| SEQUENCE ID |
 | LEN  | DATA :   \
 : DATA        .   } encrypted
 . :               /
@@ -66,32 +59,61 @@ possible to use tools such as telnet or netcat to connect to a tinc
 daemon and to read and write requests by hand, provided that one
 understands the numeric codes sent.
 
-When tinc daemons connect to each other, they will have to
-authenticate each other first.  This is done by exchanging BASIC_INFO,
-PASSPHRASE, PUBLIC_KEY and ACK requests.  BASIC_INFO requests contain
-the virtual address and netmask of the tinc daemon, protocol version,
-port number and flags.  This identifies that tinc daemon, though it
-still has to be verified.  To that end, passphrases and public keys are
-exchanged.  The passphrases are known at both ends, but they are
-encrypted with the public key before transmission.  This way, nobody
-that sniffs the network can see what the passphrase actually was, and
-at the same time this ensures that the other host really knows the
-secret key that belongs to the public key it sends.  If both hosts are
-satisfied, the connection is activated, the contents of each other's
-connection lists are exchanged and other requests may be sent.  The
-following diagram shows how authentication is done:
+The authentication scheme is described in the SECURITY file. After a
+succesful authentication, the server and the client will exchange all the
+information about other tinc daemons and subnets they know of, so that both
+sides (and all the other tinc daemons behind them) have their information
+synchronised.
 
-Client				Server
-----------------------------------------------------------------
+daemon	message
+--------------------------------------------------------------------------
+origin	ADD_HOST daemon a329e18c:655 0
+                    |         |      +--> options
+                    |         +---------> real address:port
+                    +-------------------> name of new tinc daemon
+origin	ADD_SUBNET daemon 1,0a010100/ffffff00
+                      |   |     |       +--> netmask
+                      |   |     +----------> vpn IPv4 network address
+                      |   +----------------> subnet type (1=IPv4)
+                      +--------------------> owner of this subnet
+--------------------------------------------------------------------------
 
+In case daemons leave the VPN, DEL_HOST and DEL_SUBNET messages with exactly
+the same syntax are sent to inform the other daemons of the departure.
 
-----------------------------------------------------------------
+The keys used to encrypt VPN packets are not sent out directly. This is
+because it would generate a lot of traffic on VPNs with many daemons, and
+chances are that not every tinc daemon will ever send a packet to every
+other daemon. Instead, if a daemon needs a key it sends a request for it
+via the meta connection of the nearest hop in the direction of the
+destination. If any hop on the way has already learned the key, it will
+act as a proxy and forward it's copy back to the requestor.
 
-The client must never make a connection to a server that is already in
-it's connection list.  Not only would it corrupt the connection list,
-but it would also violate the tree property.  The meta connections must
-always be so that there are no loops.  This is very important, because
-certain requests are broadcast over the entire network of tinc
-daemons.  If there were loops in the network topology, some packets
-would be forwarded in a ring until the end of times (or until the ring
-breaks, which probably happens before time ends).
+daemon	message
+--------------------------------------------------------------------------
+daemon	REQ_KEY origin destination
+                   |       +--> name of the tinc daemon it wants the key from
+                   +----------> name of the daemon that wants the key      
+daemon	ANS_KEY origin destination e4ae0b0a82d6e0078179b5290c62c7d0
+                   |       |       \______________________________/
+                   |       |                      +--> 128 bits key
+                   |       +--> name of the daemon that wants the key
+                   +----------> name of the daemon that uses this key
+daemon	KEY_CHANGED origin
+                      +--> daemon that has changed it's packet key
+--------------------------------------------------------------------------
+
+There is also a mechanism to check if hosts are still alive. Since network
+failures or a crash can cause a daemon to be killed without properly
+shutting down the TCP connection, this is necessary to keep an up to date
+connection list. Pings are sent at regular intervals, except when there
+is also some other traffic.
+
+daemon	message
+--------------------------------------------------------------------------
+origin	PING
+dest.	PONG
+--------------------------------------------------------------------------
+
+This basically covers everything that is sent over the meta connection by
+tinc.

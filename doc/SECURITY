@@ -1,7 +1,7 @@
 This is the security documentation for tinc, a Virtual Private Network daemon.
 
-   Copyright 2000 Guus Sliepen <guus@sliepen.warande.net>,
-             2000 Ivo Timmmermans <itimmermans@bigfoot.com>
+   Copyright 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
+             2000,2001 Ivo Timmmermans <itimmermans@bigfoot.com>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this
@@ -12,7 +12,7 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: SECURITY,v 1.1.2.3 2000/09/25 20:08:50 guus Exp $
+   $Id: SECURITY,v 1.1.2.4 2001/01/07 17:08:03 guus Exp $
 
 
 1.  Authentication
@@ -27,10 +27,8 @@ The authentication protocol (see protocol.c for the up-to-date version) is:
                         send_id(u)
    send_challenge(R)
                         send_chal_reply(H)
-   ---------------------------------------
-   Any negotations about the meta protocol
-   encryption go here(u).
-   ---------------------------------------
+   send_metakey(R)
+                        send_metakey(R)
    send_ack(u)
                         send_ack(u)
    ---------------------------------------
@@ -76,49 +74,6 @@ made, both sides have to agree on a key for this block cipher. To make sure
 that this key exchange is also done securely, and no man-in-the-middle attack
 is possible, RSA would be the best choice for exchanging keys.
 
-Instead of doing RSA encryption again, tinc will use a part of the random
-string that was exchanged during the authentication phase as the key for the
-symmetric cipher. Some symmetric ciphers require a random initialisation vector
-for improved security. This vector can be taken from the random string as well.
-
-Is this secure? I (Guus Sliepen) think at this moment that it is:
-
-- Since the random string cannot be decrypted by anyone eavesdropping or
-  playing man-in-the-middle, the symmetric key cannot be known by sniffing.
-- The unencrypted returned hash value is supposed to be cryptographically
-  secure. Furthermore, it can only at most give a way 160 bits of information
-  from the complete random string which is longer than the key for the
-  symmetric cipher, so very few bits will actualy contain information about
-  the symmetric cipher key alone, if any.
-- If the RSA encryption is cracked, the rest of the communications can be
-  decrypted anyway.
-- If the symmetric cipher encryption is cracked without using the information
-  from the encrypted random strings or the hash values, this still won't give
-  the full plaintext for the random string, so it won't facilitate a known-
-  plaintext attack on the RSA encryption.
-- RSA and symmetric ciphers are fundamentally different. It is very unlikely
-  that the overlap of both will create any interference that will facilitate
-  an easier-than-brute-force attack.
-
-Other options for key exchange could be:
-
-* A second exchange of RSA encrypted random strings.
-  This is equal to the former scheme just without knowing the hash value of
-  the unecrypted random string. Information theory tells that two seperate
-  RSA messages are as secure as one if the total amount of bits sent is the
-  same, so enlarging the challenge will make one exchange just as secure as
-  two seperate exchanges.
-  
-* Diffie-Hellman with RSA signing.
-  This should be very secure, but there are a lot of pitfalls with using both
-  encryption with public keys and private keys together with the same keypair.
-
-* Diffie-Hellman with passphrases.
-  This is what tinc <= 1.0pre2 used to do. Passphrases are secret, exchanging
-  them must be done with great care, nobody may eavesdrop. Exchanging public
-  keys on the other hand is much safer, everybody may eavesdrop, just as long
-  as you are sure that the public key itself belongs to the right owner.
-
 3.  Symmetric cipher
 --------------------
 
@@ -136,8 +91,9 @@ connections) and a client (a tinc daemon that is trying to connect to the tinc
 daemon playing server).
 
 The message strings here are kept short for clarity. The real length of the
-exchanged messages is indicated. The capital words ID, CHALLENGE, CHAL_REPLY
-and ACK are in reality replaced by the numbers 1, 2, 3 and 4 respectively.
+exchanged messages is indicated. The capital words ID, CHALLENGE, CHAL_REPLY,
+META_KEY and ACK are in reality replaced by the numbers 0, 1, 2, 3 and 4
+respectively.
 
 daemon	message
 --------------------------------------------------------------------------
@@ -149,12 +105,8 @@ client	ID client 8 0
               |   +---> version
               +-------> name of tinc daemon
 server  CHALLENGE 57fb4b2ccd70d6bb35a64c142f47e61d
-                  \________/\__/
-                       |      +----> 64 bits initial vector and
-                       +-----------> 448 bits symmetric cipher key for meta
-                                     data sent to the server
                   \______________________________/
-                                 +-> 2048 bits totally random string, encrypted
+                                 +-> KEYLENGTH bits totally random string, encrypted
                                      with client's public RSA key
 client	CHAL_REPLY 191e23
                       +-> 160 bits SHA1 value of the complete decrypted
@@ -164,22 +116,36 @@ server	ID server 8 0
               |   +---> version
               +-------> name of tinc daemon
 client	CHALLENGE da02add1817c1920989ba6ae2a49cecb
-                  \________/\__/
-                       |      +----> 64 bits initial vector and
-                       +-----------> 448 bits symmetric cipher key for meta
-                                     data sent to the client
                   \______________________________/
-                                 +-> 2048 bits totally random string, encrypted
+                                 +-> KEYLENGTH bits totally random string, encrypted
                                      with server's public RSA key
 server	CHAL_REPLY 2bdeed
                       +-> 160 bits SHA1 value of the complete decrypted
                           CHALLENGE sent by the client
+client  META_KEY 5f0823a93e35b69e7086ec7866ce582b
+                  \______________________________/
+                                 +-> KEYLENGTH bits totally random string, encrypted
+                                     with server's public RSA key
+server  META_KEY 6ab9c1640388f8f045d1a07f8a672630
+                  \______________________________/
+                                 +-> KEYLENGTH bits totally random string, encrypted
+                                     with client's public RSA key
 client	ACK
 server	ACK
 --------------------------------------------------------------------------
 
 When the server receives the ACK from the client, it should prepare itself
 for the fact that any subsequent data will be encrypted with the key the server
-sent itself in the CHALLENGE. Ofcourse, this key is taken from the decrypted
-version of that CHALLENGE, so that we will know for sure only the real client
+sent itself in the META_KEY. Ofcourse, this key is taken from the decrypted
+version of that META_KEY, so that we will know for sure only the real client
 can send us messages. The same goes for the client when it receives an ACK.
+
+5.  Encryption of VPN packets
+-----------------------------
+
+The VPN packets are also encrypted, but with a different key than the one used
+for the meta connection. The reason is that VPN packets can also come from
+other clients which do not have a meta connection with server. Each tinc daemon
+propagates (on request) a separate key for packets that it receives. This key
+is a random string, generated on the fly. Since it is exchanged using the meta
+connection, this key itself will be encrypted.
