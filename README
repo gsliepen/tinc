@@ -4,17 +4,26 @@ Installation instructions may be found in the INSTALL file.
 tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans
 <itimmermans@bigfoot.com>, Guus Sliepen <guus@sliepen.warande.net> and
 others. For a complete list of authors see the AUTHORS file.
-This product includes software developed by Eric Young (eay@mincom.oz.au)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version. See the file COPYING for more details.
 
-This version of tinc relies on the GNU Multi-Precision Library
-(gmp). This library is available from your nearest GNU mirror. Please
-install this first even before trying to run configure. If you don't
-do this, configure will (hopefully) mention it to you.
+
+Requirements
+------------
+
+Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you
+need to install this library first; grab it from
+http://www.openssl.org/.  We recommend version 0.9.5 or better.  If
+this library is not installed on you system, configure will fail.  The
+manual in doc/tinc.texi contains more detailed information on how to
+install this library.
+
+
+Features
+--------
 
 This version of tinc supports multiple virtual networks at once. To
 use this feature, you may supply a netname via the -n or --net
@@ -29,7 +38,7 @@ In this version, MAC addresses are stripped off before encoding and
 sending a packet. When the packet reaches its destination, the MAC
 addresses are rebuilt again. They then have the form
 FE:FD:aa:bb:cc:dd. aa, bb, cc and dd are taken from the destination
-and source IP address.
+and source IP address.  See the manual for more detailed information.
 
 tincd regenerates its encryption key pairs. It does this on the first
 activity after the keys have expired. This period is adjustable in the
