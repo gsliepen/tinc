@@ -17,11 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.45 2003/10/10 16:24:24 guus Exp $
+    $Id: meta.c,v 1.1.2.46 2003/10/11 12:16:12 guus Exp $
 */
 
 #include "system.h"
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "avl_tree.h"
@@ -48,7 +49,8 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 	if(c->status.encryptout) {
 		result = EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
 		if(!result || outlen != length) {
-			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"), ERR_error_string(ERR_get_error(), NULL));
+			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
+					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
 		}
 		bufp = outbuf;
@@ -133,7 +135,8 @@ bool receive_meta(connection_t *c)
 		if(c->status.decryptin && !decrypted) {
 			result = EVP_DecryptUpdate(c->inctx, inbuf, &lenout, c->buffer + oldlen, lenin);
 			if(!result || lenout != lenin) {
-				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"), ERR_error_string(ERR_get_error(), NULL));
+				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
+						c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 				return false;
 			}
 			memcpy(c->buffer + oldlen, inbuf, lenin);

@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.26 2003/08/28 21:05:11 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.27 2003/10/11 12:16:13 guus Exp $
 */
 
 #include "system.h"
 
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "avl_tree.h"
@@ -141,7 +142,7 @@ bool send_metakey(connection_t *c)
 	cp();
 	/* Copy random data to the buffer */
 
-	RAND_bytes(c->outkey, len);
+	RAND_pseudo_bytes(c->outkey, len);
 
 	/* The message we send must be smaller than the modulus of the RSA key.
 	   By definition, for a key of k bits, the following formula holds:
@@ -190,10 +191,14 @@ bool send_metakey(connection_t *c)
 	/* Further outgoing requests are encrypted with the key we just generated */
 
 	if(c->outcipher) {
-		EVP_EncryptInit(c->outctx, c->outcipher,
-						c->outkey + len - c->outcipher->key_len,
-						c->outkey + len - c->outcipher->key_len -
-						c->outcipher->iv_len);
+		if(!EVP_EncryptInit(c->outctx, c->outcipher,
+					c->outkey + len - c->outcipher->key_len,
+					c->outkey + len - c->outcipher->key_len -
+					c->outcipher->iv_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
+					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
 
 		c->status.encryptout = true;
 	}
@@ -262,10 +267,14 @@ bool metakey_h(connection_t *c)
 			return false;
 		}
 
-		EVP_DecryptInit(c->inctx, c->incipher,
-						c->inkey + len - c->incipher->key_len,
-						c->inkey + len - c->incipher->key_len -
-						c->incipher->iv_len);
+		if(!EVP_DecryptInit(c->inctx, c->incipher,
+					c->inkey + len - c->incipher->key_len,
+					c->inkey + len - c->incipher->key_len -
+					c->incipher->iv_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher from %s (%s): %s"),
+					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
 
 		c->status.decryptin = true;
 	} else {
@@ -315,7 +324,7 @@ bool send_challenge(connection_t *c)
 
 	/* Copy random data to the buffer */
 
-	RAND_bytes(c->hischallenge, len);
+	RAND_pseudo_bytes(c->hischallenge, len);
 
 	/* Convert to hex */
 
@@ -375,10 +384,13 @@ bool send_chal_reply(connection_t *c)
 
 	/* Calculate the hash from the challenge we received */
 
-	EVP_DigestInit(&ctx, c->indigest);
-	EVP_DigestUpdate(&ctx, c->mychallenge,
-					 RSA_size(myself->connection->rsa_key));
-	EVP_DigestFinal(&ctx, hash, NULL);
+	if(!EVP_DigestInit(&ctx, c->indigest)
+			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key)
+			|| !EVP_DigestFinal(&ctx, hash, NULL))) {
+		logger(LOG_ERR, _("Error during calculation of response for %s (%s): %s"),
+			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
 
 	/* Convert the hash to a hexadecimal formatted string */
 
@@ -418,9 +430,13 @@ bool chal_reply_h(connection_t *c)
 
 	/* Calculate the hash from the challenge we sent */
 
-	EVP_DigestInit(&ctx, c->outdigest);
-	EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key));
-	EVP_DigestFinal(&ctx, myhash, NULL);
+	if(!EVP_DigestInit(&ctx, c->outdigest)
+			|| !EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key))
+			|| !EVP_DigestFinal(&ctx, myhash, NULL)) {
+		logger(LOG_ERR, _("Error during calculation of response from %s (%s): %s"),
+			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
 
 	/* Verify the incoming hash with the calculated hash */
 

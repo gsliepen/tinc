@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.44 2003/08/28 21:05:10 guus Exp $
+    $Id: net_setup.c,v 1.1.2.45 2003/10/11 12:16:12 guus Exp $
 */
 
 #include "system.h"
@@ -25,6 +25,8 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "avl_tree.h"
 #include "conf.h"
@@ -372,7 +374,12 @@ bool setup_myself(void)
 	
 	if(myself->cipher) {
 		EVP_CIPHER_CTX_init(&packet_ctx);
-		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
+					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
+
 	}
 
 	/* Check if we want to use message authentication codes... */

@@ -17,12 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.42 2003/10/10 16:24:24 guus Exp $
+    $Id: net_packet.c,v 1.1.2.43 2003/10/11 12:16:12 guus Exp $
 */
 
 #include "system.h"
 
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
@@ -114,7 +115,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	vpn_packet_t *outpkt = pkt[0];
 	int outlen, outpad;
 	char hmac[EVP_MAX_MD_SIZE];
-	int i, result;
+	int i;
 
 	cp();
 
@@ -145,14 +146,10 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->cipher) {
 		outpkt = pkt[nextpkt++];
 
-		EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL);
-		if(!EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
-					(char *) &inpkt->seqno, inpkt->len)) {
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
-						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return;
-		}
-		if(!EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+		if(!EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL)
+				|| !EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
+					(char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
@@ -288,14 +285,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(n->cipher) {
 		outpkt = pkt[nextpkt++];
 
-		EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL);
-		if(!EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
-					(char *) &inpkt->seqno, inpkt->len)) {
-			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
-						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return;
-		}
-		if(!EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+		if(!EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL)
+				|| !EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
+					(char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
