@@ -23,10 +23,12 @@
 #include "system.h"
 
 #include "avl_tree.h"
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
+#include "process.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -383,6 +385,52 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 	} while(p);
 
 	return p;
+}
+
+void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
+	avl_node_t *node;
+	int i;
+	char *envp[8];
+	char netstr[MAXNETSTR + 7] = "SUBNET=";
+	char *name, *address, *port;
+
+	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	asprintf(&envp[1], "DEVICE=%s", device ? : "");
+	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	asprintf(&envp[3], "NODE=%s", owner->name);
+	if(owner != myself) {
+		sockaddr2str(&owner->address, &address, &port);
+		asprintf(&envp[4], "REMOTEADDRESS=%s", address);
+		asprintf(&envp[5], "REMOTEPORT=%s", port);
+		envp[6] = netstr;
+		envp[7] = NULL;
+	} else {
+		envp[4] = netstr;
+		envp[5] = NULL;
+	}
+
+	name = up ? "subnet-up" : "subnet-down";
+
+	if(!subnet) {
+		for(node = owner->subnet_tree->head; node; node = node->next) {
+			subnet = node->data;
+			if(!net2str(netstr + 7, sizeof netstr - 7, subnet))
+				continue;
+			execute_script(name, envp);
+		}
+	} else {
+		if(net2str(netstr + 7, sizeof netstr - 7, subnet))
+			execute_script(name, envp);
+	}
+
+	net2str(netstr, sizeof netstr, subnet);
+	envp[6] = envp[7] = NULL;
+	
+	for(i = 0; i < (owner != myself ? 6 : 4); i++)
+		free(envp[i]);
+
+	free(address);
+	free(port);
 }
 
 void dump_subnets(void)

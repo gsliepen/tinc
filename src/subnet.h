@@ -74,6 +74,7 @@ extern avl_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
 extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
+extern void subnet_update(struct node_t *, subnet_t *, bool);
 extern bool net2str(char *, int, const subnet_t *);
 extern bool str2net(subnet_t *, const char *);
 extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);

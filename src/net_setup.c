@@ -462,6 +462,10 @@ bool setup_myself(void)
 	for(i = 0; i < 5; i++)
 		free(envp[i]);
 
+	/* Run subnet-up scripts for our own subnets */
+
+	subnet_update(myself, NULL, true);
+
 	/* Open sockets */
 
 	get_config_string(lookup_config(config_tree, "BindToAddress"), &address);
@@ -568,8 +572,10 @@ void close_network_connections(void)
 		terminate_connection(c, false);
 	}
 
-	if(myself && myself->connection)
+	if(myself && myself->connection) {
+		subnet_update(myself, NULL, false);
 		terminate_connection(myself->connection, false);
+	}
 
 	for(i = 0; i < listen_sockets; i++) {
 		close(listen_socket[i].tcp);

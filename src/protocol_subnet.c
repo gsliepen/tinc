@@ -134,6 +134,9 @@ bool add_subnet_h(connection_t *c)
 	*(new = new_subnet()) = s;
 	subnet_add(owner, new);
 
+	if(owner->status.reachable)
+		subnet_update(owner, new, true);
+
 	/* Tell the rest */
 
 	if(!tunnelserver)
@@ -228,6 +231,9 @@ bool del_subnet_h(connection_t *c)
 		forward_request(c);
 
 	/* Finally, delete it. */
+
+	if(owner->status.reachable)
+		subnet_update(owner, find, false);
 
 	subnet_del(owner, find);
 
