@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.94 2001/06/09 10:00:34 guus Exp $
+    $Id: protocol.c,v 1.28.4.95 2001/06/29 13:09:32 guus Exp $
 */
 
 #include "config.h"
@@ -253,8 +253,14 @@ cp
   
   node = avl_unlink(connection_tree, cl);
   cl->port = port;
-  avl_insert_node(connection_tree, node);
-
+  if(!avl_insert_node(connection_tree, node))
+    {
+      old = avl_search_node(connection_tree, node)->data;
+      syslog(LOG_ERR, _("%s is listening on %s:%s, which is already in use by %s!"),
+             cl->name, cl->hostname, cl->port, old->name);
+      return -1;
+    }
+    
   /* Read in the public key, so that we can send a metakey */
 
   if(read_rsa_public_key(cl))
