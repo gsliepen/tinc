@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.69 2003/08/08 22:11:54 guus Exp $
+    $Id: process.c,v 1.1.2.70 2003/08/08 22:45:46 guus Exp $
 */
 
 #include "system.h"
@@ -365,15 +365,17 @@ bool execute_script(const char *name, char **envp)
 
 	cp();
 
-	asprintf(&scriptname, "\"%s/%s\"", confbase, name);
-
 #ifndef HAVE_MINGW
+	asprintf(&scriptname, "%s/%s", confbase, name);
+
 	/* First check if there is a script */
 
 	if(stat(scriptname, &s))
 		return true;
 
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
+
+	free(scriptname);
 #endif
 
 #ifdef HAVE_PUTENV
@@ -383,6 +385,7 @@ bool execute_script(const char *name, char **envp)
 		putenv(*envp++);
 #endif
 
+	asprintf(&scriptname, "\"%s/%s\"", confbase, name);
 	status = system(scriptname);
 
 	free(scriptname);
