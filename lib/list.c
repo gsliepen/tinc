@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1 2000/10/20 16:44:32 zarq Exp $
+    $Id: list.c,v 1.1.2.1 2000/11/15 22:04:48 zarq Exp $
 */
 
 #include "config.h"
