@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.28 2003/01/14 12:53:59 guus Exp $
+    $Id: net_setup.c,v 1.1.2.29 2003/03/14 09:43:10 zarq Exp $
 */
 
 #include "config.h"
@@ -85,8 +85,10 @@ int read_rsa_public_key(connection_t *c)
 
 	cp();
 
-	if(!c->rsa_key)
+	if(!c->rsa_key) {
 		c->rsa_key = RSA_new();
+		RSA_blinding_on(c->rsa_key, NULL);
+	}
 
 	/* First, check for simple PublicKey statement */
 
@@ -132,8 +134,10 @@ int read_rsa_public_key(connection_t *c)
 			c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 			fclose(fp);
 
-			if(c->rsa_key)
+			if(c->rsa_key) {
+				RSA_blinding_on(c->rsa_key, NULL);
 				return 0;
+			}
 
 			syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
 				   fname, strerror(errno));
@@ -166,6 +170,7 @@ int read_rsa_public_key(connection_t *c)
 
 	if(fp) {
 		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+		RSA_blinding_on(c->rsa_key, NULL);
 		fclose(fp);
 	}
 
@@ -188,6 +193,7 @@ int read_rsa_private_key(void)
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		myself->connection->rsa_key = RSA_new();
+		RSA_blinding_on(myself->connection->rsa_key, NULL);
 		BN_hex2bn(&myself->connection->rsa_key->d, key);
 		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		free(key);
