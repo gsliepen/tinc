@@ -789,7 +789,7 @@ cp
     syslog(LOG_DEBUG, "Forwarding public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
   tmp.type = ANS_KEY;
-  if(write(fw->nexthop->meta_socket, &tmp, sizeof(tmp) -1) < 0)
+  if(write(fw->nexthop->meta_socket, &tmp, sizeof(tmp) -2) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
