@@ -5,7 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2003-05-06 23:10+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2003-06-11 22:14+0200\n"
 "PO-Revision-Date: 2003-05-06 23:10+0200\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -226,105 +227,105 @@ msgstr "Legen taakrij"
 msgid "Unable to reread configuration file, exitting."
 msgstr "Kan configuratiebestand niet herlezen, beëindigen."
 
-#: src/net_packet.c:154
+#: src/net_packet.c:153
 #, c-format
 msgid "Got unauthenticated packet from %s (%s)"
 msgstr "Kreeg niet-geauthenticeerd pakket van %s (%s)"
 
-#: src/net_packet.c:184
+#: src/net_packet.c:183
 #, c-format
 msgid "Lost %d packets from %s (%s)"
 msgstr "%d pakketten van %s (%s) verloren"
 
-#: src/net_packet.c:190
+#: src/net_packet.c:189
 #, c-format
 msgid "Got late or replayed packet from %s (%s), seqno %d, last received %d"
 msgstr ""
 "Kreeg laat of gedupliceerd pakket van %s (%s), seqno %d, laatste ontvangen %d"
 
-#: src/net_packet.c:210
+#: src/net_packet.c:209
 #, c-format
 msgid "Error while uncompressing packet from %s (%s)"
 msgstr "Fout tijdens decomprimeren pakket van %s (%s)"
 
-#: src/net_packet.c:238
+#: src/net_packet.c:237
 #, c-format
 msgid "Received packet of %d bytes from %s (%s)"
 msgstr "Ontvangst pakket van %d bytes van %s (%s)"
 
-#: src/net_packet.c:265
+#: src/net_packet.c:263
 #, c-format
 msgid "No valid key known yet for %s (%s), queueing packet"
 msgstr ""
 "Nog geen geldige sleutel bekend voor %s (%s), pakket wordt in wachtrij gezet"
 
-#: src/net_packet.c:295
+#: src/net_packet.c:293
 #, c-format
 msgid "Error while compressing packet to %s (%s)"
 msgstr "Fout tijdens comprimeren pakket naar %s (%s)"
 
-#: src/net_packet.c:347
+#: src/net_packet.c:345
 #, c-format
 msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
-#: src/net_packet.c:350 src/net_setup.c:485 src/net_socket.c:110
-#: src/net_socket.c:157 src/net_socket.c:187 src/tincd.c:375 src/process.c:265
+#: src/net_packet.c:348 src/net_setup.c:485 src/net_socket.c:110
+#: src/net_socket.c:157 src/net_socket.c:187 src/tincd.c:381 src/process.c:265
 #: src/process.c:295
 #, c-format
 msgid "System call `%s' failed: %s"
 msgstr "Systeemaanroep `%s' mislukte: %s"
 
-#: src/net_packet.c:356
+#: src/net_packet.c:354
 #, c-format
 msgid "Error sending packet to %s (%s): %s"
 msgstr "Fout tijdens verzenden pakket naar %s (%s): %s"
 
-#: src/net_packet.c:374
+#: src/net_packet.c:372
 #, c-format
 msgid "Sending packet of %d bytes to %s (%s)"
 msgstr "Verzending pakket van %d bytes naar %s (%s)"
 
-#: src/net_packet.c:379
+#: src/net_packet.c:377
 msgid "Packet is looping back to us!"
 msgstr "Pakket komt terug naar ons!"
 
-#: src/net_packet.c:386
+#: src/net_packet.c:384
 #, c-format
 msgid "Node %s (%s) is not reachable"
 msgstr "Node %s (%s) is niet bereikbaar"
 
-#: src/net_packet.c:395
+#: src/net_packet.c:393
 #, c-format
 msgid "Sending packet to %s via %s (%s)"
 msgstr "Verzending pakket naar %s via %s (%s)"
 
-#: src/net_packet.c:415
+#: src/net_packet.c:413
 #, c-format
 msgid "Broadcasting packet of %d bytes from %s (%s)"
 msgstr "Verspreiding pakket van %d bytes van %s (%s)"
 
-#: src/net_packet.c:433
+#: src/net_packet.c:431
 #, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr "Legen van wachtrij voor %s (%s)"
 
-#: src/net_packet.c:454
+#: src/net_packet.c:452
 #, c-format
 msgid "This is a bug: %s:%d: %d:%s"
 msgstr "Dit is een programmeerfout: %s:%d: %d:%s"
 
-#: src/net_packet.c:461
+#: src/net_packet.c:459
 #, c-format
 msgid "Incoming data socket error: %s"
 msgstr "Fout op socket voor inkomend verkeer: %s"
 
-#: src/net_packet.c:468
+#: src/net_packet.c:466
 #, c-format
 msgid "Receiving packet failed: %s"
 msgstr "Ontvangst pakket mislukt: %s"
 
-#: src/net_packet.c:478
+#: src/net_packet.c:476
 #, c-format
 msgid "Received UDP packet from unknown source %s"
 msgstr "Ontvangst UDP pakket van onbekende oorsprong %s"
@@ -813,12 +814,12 @@ msgstr " %s eigenaar %s"
 msgid "End of subnet list."
 msgstr "Einde van subnet lijst."
 
-#: src/tincd.c:109
+#: src/tincd.c:111
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Probeer `%s --help' voor meer informatie.\n"
 
-#: src/tincd.c:112
+#: src/tincd.c:114
 #, c-format
 msgid ""
 "Usage: %s [option]...\n"
@@ -827,7 +828,7 @@ msgstr ""
 "Gebruik: %s [optie]...\n"
 "\n"
 
-#: src/tincd.c:113
+#: src/tincd.c:115
 msgid ""
 "  -c, --config=DIR           Read configuration options from DIR.\n"
 "  -D, --no-detach            Don't fork and detach.\n"
@@ -852,13 +853,13 @@ msgstr ""
 "      --version              Geef versie informatie en beëindig.\n"
 "\n"
 
-#: src/tincd.c:122
+#: src/tincd.c:124
 msgid "Report bugs to tinc@nl.linux.org.\n"
 msgstr ""
 "Meld fouten in het programma aan tinc@nl.linux.org;\n"
 "Meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
 
-#: src/tincd.c:180
+#: src/tincd.c:182
 #, c-format
 msgid ""
 "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, "
@@ -867,7 +868,7 @@ msgstr ""
 "Ongeldig argument `%s'; SIGNAAL moet een getal zijn of één van HUP, TERM, "
 "KILL, USR1, USR2, WINCH, INT of ALRM.\n"
 
-#: src/tincd.c:199
+#: src/tincd.c:201
 #, c-format
 msgid ""
 "Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"
@@ -875,24 +876,24 @@ msgstr ""
 "Ongeldig argument `%s'; BITS moet een nummer zijn gelijk aan of groter dan "
 "512.\n"
 
-#: src/tincd.c:266
+#: src/tincd.c:268
 #, c-format
 msgid "Generating %d bits keys:\n"
 msgstr "Bezig met genereren van een %d bits sleutel:\n"
 
-#: src/tincd.c:270
+#: src/tincd.c:272
 msgid "Error during key generation!\n"
 msgstr "Fout tijdens genereren sleutel!\n"
 
-#: src/tincd.c:273
+#: src/tincd.c:275
 msgid "Done.\n"
 msgstr "Klaar.\n"
 
-#: src/tincd.c:282
+#: src/tincd.c:284
 msgid "public RSA key"
 msgstr "openbare RSA sleutel"
 
-#: src/tincd.c:288 src/tincd.c:301
+#: src/tincd.c:290 src/tincd.c:303
 msgid ""
 "Appending key to existing contents.\n"
 "Make sure only one key is stored in the file.\n"
@@ -900,21 +901,21 @@ msgstr ""
 "Sleutel wordt toegevoegd aan bestaande inhoud.\n"
 "Let er op dat er slechts één sleutel in het bestand is.\n"
 
-#: src/tincd.c:295
+#: src/tincd.c:297
 msgid "private RSA key"
 msgstr "geheime RSA sleutel"
 
-#: src/tincd.c:322
+#: src/tincd.c:324
 msgid "Both netname and configuration directory given, using the latter..."
 msgstr ""
 "Zowel netnaam als configuratiemap zijn gegeven, laatste wordt gebruikt..."
 
-#: src/tincd.c:350
+#: src/tincd.c:353
 #, c-format
 msgid "%s version %s (built %s %s, protocol %d)\n"
 msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 
-#: src/tincd.c:352
+#: src/tincd.c:355
 msgid ""
 "Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
@@ -931,20 +932,24 @@ msgstr ""
 "en je bent welkom om het te distribueren onder bepaalde voorwaarden;\n"
 "zie het bestand COPYING voor details.\n"
 
-#: src/tincd.c:379
+#: src/tincd.c:385
 msgid "mlockall() not supported on this platform!"
 msgstr "mlockall() wordt niet ondersteund op dit platform!"
 
-#: src/tincd.c:427
+#: src/tincd.c:421
+msgid "Error initializing LZO compressor!"
+msgstr "Fout tijdens initialiseren LZO compressor!"
+
+#: src/tincd.c:434
 msgid "Unrecoverable error"
 msgstr "Onherstelbare fout"
 
-#: src/tincd.c:431
+#: src/tincd.c:438
 #, c-format
 msgid "Restarting in %d seconds!"
 msgstr "Herstart in %d seconden!"
 
-#: src/tincd.c:434 src/process.c:353
+#: src/tincd.c:441 src/process.c:353
 msgid "Not restarting."
 msgstr "Geen herstart."
 
@@ -1088,22 +1093,22 @@ msgstr "Signaal %d (%s) genegeerd"
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
 
-#: src/route.c:117
+#: src/route.c:118
 #, c-format
 msgid "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"
 msgstr "Nieuw MAC adres %hx:%hx:%hx:%hx:%hx:%hx geleerd"
 
-#: src/route.c:151
+#: src/route.c:152
 #, c-format
 msgid "MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"
 msgstr "MAC adres %hx:%hx:%hx:%hx:%hx:%hx verlopen"
 
-#: src/route.c:261
+#: src/route.c:262
 #, c-format
 msgid "Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: onbekend IPv4 doeladres %d.%d.%d.%d"
 
-#: src/route.c:354
+#: src/route.c:355
 #, c-format
 msgid ""
 "Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%"
@@ -1112,19 +1117,19 @@ msgstr ""
 "Kan pakket niet routeren: onbekend IPv6 doeladres %hx:%hx:%hx:%hx:%hx:%hx:%"
 "hx:%hx"
 
-#: src/route.c:407
+#: src/route.c:409
 msgid ""
 "Cannot route packet: received unknown type neighbor solicitation request"
 msgstr ""
 "Kan pakket niet routeren: ontvangst van onbekend type neighbor solicitation "
 "verzoek"
 
-#: src/route.c:426
+#: src/route.c:428
 msgid "Cannot route packet: checksum error for neighbor solicitation request"
 msgstr ""
 "Kan pakket niet routeren: checksum fout voor neighbor solicitation verzoek"
 
-#: src/route.c:436
+#: src/route.c:438
 #, c-format
 msgid ""
 "Cannot route packet: neighbor solicitation request for unknown address %hx:%"
@@ -1133,16 +1138,16 @@ msgstr ""
 "Kan pakket niet routeren: neighbor solicitation verzoek voor onbekend adres %"
 "hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"
 
-#: src/route.c:516
+#: src/route.c:519
 msgid "Cannot route packet: received unknown type ARP request"
 msgstr "Kan pakket niet routeren: ontvangst van onbekend type ARP verzoek"
 
-#: src/route.c:527
+#: src/route.c:530
 #, c-format
 msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 
-#: src/route.c:585
+#: src/route.c:588
 #, c-format
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"
@@ -1187,130 +1192,135 @@ msgstr "Node %s (%s) werd bereikbaar"
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"
 
-#: src/linux/device.c:90 src/freebsd/device.c:70 src/solaris/device.c:74
-#: src/netbsd/device.c:74 src/openbsd/device.c:74
+#: src/linux/device.c:92 src/freebsd/device.c:68 src/solaris/device.c:72
+#: src/netbsd/device.c:72 src/openbsd/device.c:72
 #, c-format
 msgid "Could not open %s: %s"
 msgstr "Kon `%s' niet openen: %s"
 
-#: src/linux/device.c:113 src/linux/device.c:120
-msgid "Linux tun/tap device"
-msgstr "Linux tun/tap apparaat"
+#: src/linux/device.c:103
+msgid "Linux tun/tap device (tun mode)"
+msgstr "Linux tun/tap apparaat (tun modus)"
 
-#: src/linux/device.c:118
+#: src/linux/device.c:107
+msgid "Linux tun/tap device (tap mode)"
+msgstr "Linux tun/tap apparaat (tap modues)"
+
+#: src/linux/device.c:117
 #, c-format
 msgid "Old ioctl() request was needed for %s"
 msgstr "Oud ioctl() verzoek was nodig voor %s"
 
-#: src/linux/device.c:126
+#: src/linux/device.c:125
 msgid "Linux ethertap device"
 msgstr "Linux ethertap apparaat"
 
-#: src/linux/device.c:131 src/freebsd/device.c:85 src/solaris/device.c:133
-#: src/netbsd/device.c:89 src/openbsd/device.c:89
+#: src/linux/device.c:130 src/freebsd/device.c:74 src/solaris/device.c:121
+#: src/netbsd/device.c:78 src/openbsd/device.c:78
 #, c-format
 msgid "%s is a %s"
 msgstr "%s is een %s"
 
-#: src/linux/device.c:157 src/linux/device.c:168 src/freebsd/device.c:108
-#: src/solaris/device.c:152 src/netbsd/device.c:108 src/openbsd/device.c:110
+#: src/linux/device.c:157 src/linux/device.c:168 src/linux/device.c:179
+#: src/freebsd/device.c:97 src/solaris/device.c:140 src/netbsd/device.c:97
+#: src/openbsd/device.c:99
 #, c-format
 msgid "Error while reading from %s %s: %s"
 msgstr "Fout tijdens lezen van %s %s: %s"
 
-#: src/linux/device.c:179 src/freebsd/device.c:118 src/solaris/device.c:167
-#: src/netbsd/device.c:123 src/openbsd/device.c:143
+#: src/linux/device.c:191 src/freebsd/device.c:107 src/solaris/device.c:153
+#: src/netbsd/device.c:110 src/openbsd/device.c:129
 #, c-format
 msgid "Read packet of %d bytes from %s"
 msgstr "Pakket van %d bytes gelezen van %s"
 
-#: src/linux/device.c:191 src/freebsd/device.c:129 src/solaris/device.c:179
-#: src/netbsd/device.c:135 src/openbsd/device.c:159
+#: src/linux/device.c:203 src/freebsd/device.c:118 src/solaris/device.c:165
+#: src/netbsd/device.c:122 src/openbsd/device.c:145
 #, c-format
 msgid "Writing packet of %d bytes to %s"
 msgstr "Pakket van %d bytes geschreven naar %s"
 
-#: src/linux/device.c:196 src/linux/device.c:204 src/solaris/device.c:183
-#: src/netbsd/device.c:139 src/openbsd/device.c:185
+#: src/linux/device.c:210 src/linux/device.c:217 src/linux/device.c:226
+#: src/solaris/device.c:169 src/netbsd/device.c:126 src/openbsd/device.c:171
 #, c-format
 msgid "Can't write to %s %s: %s"
 msgstr "Kan niet schrijven naar %s %s: %s"
 
-#: src/linux/device.c:219 src/freebsd/device.c:145 src/solaris/device.c:197
-#: src/netbsd/device.c:151 src/openbsd/device.c:197
+#: src/linux/device.c:242 src/freebsd/device.c:134 src/solaris/device.c:183
+#: src/netbsd/device.c:138 src/openbsd/device.c:183
 #, c-format
 msgid "Statistics for %s %s:"
 msgstr "Statistieken voor %s %s:"
 
-#: src/linux/device.c:220 src/freebsd/device.c:146 src/solaris/device.c:198
-#: src/netbsd/device.c:152 src/openbsd/device.c:198
+#: src/linux/device.c:243 src/freebsd/device.c:135 src/solaris/device.c:184
+#: src/netbsd/device.c:139 src/openbsd/device.c:184
 #, c-format
 msgid " total bytes in:  %10d"
 msgstr " totaal aantal bytes in:  %10d"
 
-#: src/linux/device.c:221 src/freebsd/device.c:147 src/solaris/device.c:199
-#: src/netbsd/device.c:153 src/openbsd/device.c:199
+#: src/linux/device.c:244 src/freebsd/device.c:136 src/solaris/device.c:185
+#: src/netbsd/device.c:140 src/openbsd/device.c:185
 #, c-format
 msgid " total bytes out: %10d"
 msgstr " totaal aantal bytes uit: %10d"
 
-#: src/freebsd/device.c:83
+#: src/freebsd/device.c:72
 msgid "FreeBSD tap device"
 msgstr "FreeBSD tap apparaat"
 
-#: src/freebsd/device.c:133
+#: src/freebsd/device.c:122
 #, c-format
 msgid "Error while writing to %s %s: %s"
 msgstr "Fout tijdens schrijven naar %s %s: %s"
 
-#: src/solaris/device.c:86
+#: src/solaris/device.c:84
 #, c-format
 msgid "Could not open /dev/ip: %s"
 msgstr "Kon /dev/ip niet openen: %s"
 
-#: src/solaris/device.c:92
+#: src/solaris/device.c:90
 #, c-format
 msgid "Can't assign new interface: %s"
 msgstr "Kan geen nieuwe interface toekennen: %s"
 
-#: src/solaris/device.c:97
+#: src/solaris/device.c:95
 #, c-format
 msgid "Could not open %s twice: %s"
 msgstr "Kon `%s' niet twee keer openen: %s"
 
-#: src/solaris/device.c:103
+#: src/solaris/device.c:101
 #, c-format
 msgid "Can't push IP module: %s"
 msgstr "Kan IP module niet invoegen: %s"
 
-#: src/solaris/device.c:109
+#: src/solaris/device.c:107
 #, c-format
 msgid "Can't set PPA %d: %s"
 msgstr "Kon PPA %d niet instellen: %s"
 
-#: src/solaris/device.c:114
+#: src/solaris/device.c:112
 #, c-format
 msgid "Can't link TUN device to IP: %s"
 msgstr "Kan TUN apparaat niet koppelen aan IP: %s"
 
-#: src/solaris/device.c:121
+#: src/solaris/device.c:119
 msgid "Solaris tun device"
 msgstr "Solaris tun apparaat"
 
-#: src/netbsd/device.c:87
+#: src/netbsd/device.c:76
 msgid "NetBSD tun device"
 msgstr "NetBSD tun apparaat"
 
-#: src/openbsd/device.c:87
+#: src/openbsd/device.c:76
 msgid "OpenBSD tun device"
 msgstr "OpenBSD tun apparaat"
 
-#: src/openbsd/device.c:133
+#: src/openbsd/device.c:119
 #, c-format
 msgid "Unknown address family %d while reading packet from %s %s"
 msgstr "Onbekende adresfamilie %d tijdens lezen pakket van %s %s"
 
-#: src/openbsd/device.c:174
+#: src/openbsd/device.c:160
 #, c-format
 msgid "Unknown address family %d while writing packet to %s %s"
 msgstr "Onbekende adresfamilie %d tijdens schrijven pakket naar %s %s"
