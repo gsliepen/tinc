@@ -258,14 +258,8 @@ cp
 */
 int send_packet(ip_t to, vpn_packet_t *packet)
 {
-  config_t const *cfg;
   conn_list_t *cl;
 cp
-  if(!(cfg = get_config_val(proxymode)))		/* In case we are in proxy mode, just send everything to our uplink. */
-    cl = conn_list;
-  else
-    cl = lookup_conn(to);
-
   if((cl = lookup_conn(to)) == NULL)
     {
       if(debug_lvl > 2)
