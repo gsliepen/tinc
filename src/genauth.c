@@ -60,7 +60,7 @@ int main(int argc, char **argv)
   p = xmalloc(bytes);
 
   setbuf(stdout, NULL);
-  for(i = 0; i < 128; i++)
+  for(i = 0; i < bytes; i++)
     {
       c = fgetc(fp);
       if(feof(fp))
@@ -70,23 +70,13 @@ int main(int argc, char **argv)
         }
       p[i] = c;
     }
-
-  for(i = 0; i < (bytes); i++)
-    {
-      c = fgetc(fp);
-      if(feof(fp))
-	{
-	  puts("");
-	  fprintf(stderr, "File was empty!\n");
-	}
-      p[i] = c;
-    }
   fclose(fp);
 
   printf("%d ", bits);
   for(i = 0; i < bytes; i++)
     printf("%02x", p[i]);
   puts("");
+  fprintf(stderr, ": done.\n");
 
   return 0;
 }
