@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.70 2000/12/22 21:34:24 guus Exp $
+    $Id: protocol.c,v 1.28.4.71 2001/01/05 23:53:51 guus Exp $
 */
 
 #include "config.h"
@@ -34,6 +34,7 @@
 
 #include <utils.h>
 #include <xalloc.h>
+#include <avl_tree.h>
 
 #include <netinet/in.h>
 
@@ -193,10 +194,10 @@ cp
 int id_h(connection_t *cl)
 {
   connection_t *old;
-  config_t const *cfg;
+  unsigned short int port;
   char name[MAX_STRING_SIZE];
 cp
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %d %lx %hd", name, &cl->protocol_version, &cl->options, &cl->port) != 4)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %d %lx %hd", name, &cl->protocol_version, &cl->options, &port) != 4)
     {
        syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
        return -1;
@@ -253,6 +254,12 @@ cp
   
   id_add(cl);
 
+  /* And uhr... cl->port just changed so we have to unlink it from the connection tree and re-insert... */
+  
+  avl_unlink(connection_tree, cl);
+  cl->port = port;
+  avl_insert(connection_tree, cl);
+
   /* Read in the public key, so that we can send a challenge */
 
   if(read_rsa_public_key(cl))
@@ -283,7 +290,7 @@ cp
   RAND_bytes(cl->hischallenge, len);
 
   cl->hischallenge[0] &= 0x7F;	/* Somehow if the first byte is more than 0xD0 or something like that, decryption fails... */
-
+cp
   if(debug_lvl >= DEBUG_SCARY_THINGS)
     {
       bin2hex(cl->hischallenge, buffer, len);
@@ -304,7 +311,7 @@ cp
 
   bin2hex(buffer, buffer, len);
   buffer[len*2] = '\0';
-
+cp
   /* Send the challenge */
 
   cl->allow_request = CHAL_REPLY;
@@ -580,7 +587,7 @@ int ack_h(connection_t *cl)
 {
   connection_t *old, *p;
   subnet_t *subnet;
-  rbl_t *rbl, *rbl2;
+  avl_node_t *node, *node2;
 cp
   /* Okay, before we active the connection, we check if there is another entry
      in the connection list with the same name. If so, it presumably is an
@@ -614,16 +621,16 @@ cp
 
   /* Send him our subnets */
   
-  RBL_FOREACH(myself->subnet_tree, rbl)
+  for(node = myself->subnet_tree->head; node; node = node->next)
     {
-      subnet = (subnet_t *)rbl->data;
+      subnet = (subnet_t *)node->data;
       send_add_subnet(cl, subnet);
     }
   /* And send him all the hosts and their subnets we know... */
   
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       
       if(p != cl && p->status.active)
         {
@@ -636,9 +643,9 @@ cp
 
           send_add_host(cl, p);
 
-          RBL_FOREACH(p->subnet_tree, rbl2)
+          for(node2 = p->subnet_tree->head; node2; node2 = node2->next)
             {
-              subnet = (subnet_t *)rbl2->data;
+              subnet = (subnet_t *)node2->data;
               send_add_subnet(cl, subnet);
             }
         }
@@ -667,7 +674,7 @@ int add_subnet_h(connection_t *cl)
   char name[MAX_STRING_SIZE];
   connection_t *owner, *p;
   subnet_t *subnet;
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
   if(sscanf(cl->buffer, "%*d "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
@@ -716,9 +723,9 @@ cp
 
   /* Tell the rest */
   
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p->status.meta && p->status.active && p!= cl)
         send_add_subnet(p, subnet);
     }
@@ -744,7 +751,7 @@ int del_subnet_h(connection_t *cl)
   char name[MAX_STRING_SIZE];
   connection_t *owner, *p;
   subnet_t *subnet;
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
   if(sscanf(cl->buffer, "%*d "MAX_STRING" "MAX_STRING, name, subnetstr) != 3)
     {
@@ -795,9 +802,9 @@ cp
 
   /* Tell the rest */
   
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p->status.meta && p->status.active && p!= cl)
         send_del_subnet(p, subnet);
     }
@@ -818,7 +825,7 @@ int add_host_h(connection_t *cl)
 {
   connection_t *old, *new, *p;
   char name[MAX_STRING_SIZE];
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
   new = new_connection();
 
@@ -881,9 +888,9 @@ cp
 
   /* Tell the rest about the new host */
 
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p->status.meta && p->status.active && p!=cl)
         send_add_host(p, new);
     }
@@ -912,7 +919,7 @@ int del_host_h(connection_t *cl)
   port_t port;
   long int options;
   connection_t *old, *p;
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
   if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%d %lx", name, &address, &port, &options) != 4)
     {
@@ -963,9 +970,9 @@ cp
 
   /* Tell the rest about the new host */
 
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p->status.meta && p->status.active && p!=cl)
         send_del_host(p, old);
     }
@@ -1087,11 +1094,11 @@ cp
 int send_key_changed(connection_t *from, connection_t *cl)
 {
   connection_t *p;
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p != cl && p->status.meta && p->status.active)
         send_request(p, "%d %s", KEY_CHANGED, from->name);
     }

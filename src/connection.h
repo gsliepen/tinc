@@ -17,13 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.3 2000/11/22 22:18:03 guus Exp $
+    $Id: connection.h,v 1.1.2.4 2001/01/05 23:53:49 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
-#include <rbl.h>
+#include <avl_tree.h>
 
 #include "config.h"
 
@@ -66,8 +66,8 @@ typedef struct connection_t {
   char *name;                      /* name of this connection */
   ipv4_t address;                  /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
-  short unsigned int port;         /* his portnumber */
   int protocol_version;            /* used protocol */
+  short unsigned int port;         /* port number for UDP traffic */
   long unsigned int options;       /* options turned on for this connection */
 
   int flags;                       /* his flags */
@@ -100,12 +100,12 @@ typedef struct connection_t {
 
   struct connection_t *nexthop;    /* nearest meta-hop in this direction */
   
-  rbltree_t *subnet_tree;          /* Pointer to a tree of subnets belonging to this connection */
+  avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this connection */
 
   struct config_t *config;         /* Pointer to configuration tree belonging to this host */
 } connection_t;
 
-extern rbltree_t *connection_tree;
+extern avl_tree_t *connection_tree;
 extern connection_t *myself;
 
 extern void init_connections(void);

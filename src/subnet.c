@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.15 2000/11/24 23:13:06 guus Exp $
+    $Id: subnet.c,v 1.1.2.16 2001/01/05 23:53:53 guus Exp $
 */
 
 #include "config.h"
@@ -33,16 +33,16 @@
 
 #include <utils.h>
 #include <xalloc.h>
-#include <rbl.h>
+#include <avl_tree.h>
 
 /* lists type of subnet */
 
-rbltree_t *subnet_tree;
+avl_tree_t *subnet_tree;
 
 void init_subnets(void)
 {
 cp
-  subnet_tree = new_rbltree((rbl_compare_t)subnet_compare, (rbl_action_t)free_subnet);
+  subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, (avl_action_t)free_subnet);
 cp
 }
 
@@ -131,17 +131,17 @@ void subnet_add(connection_t *cl, subnet_t *subnet)
 {
 cp
   subnet->owner = cl;
-  rbl_insert(subnet_tree, subnet);
-  rbl_insert(cl->subnet_tree, subnet);
+  avl_insert(subnet_tree, subnet);
+  avl_insert(cl->subnet_tree, subnet);
 cp
 }
 
 void subnet_del(subnet_t *subnet)
 {
 cp
-  rbl_delete(subnet->owner->subnet_tree, subnet);
+  avl_delete(subnet->owner->subnet_tree, subnet);
 cp
-  rbl_delete(subnet_tree, subnet);
+  avl_delete(subnet_tree, subnet);
 cp
 }
 
@@ -256,62 +256,59 @@ cp
 
 /* Subnet lookup routines */
 
-subnet_t *lookup_subnet_mac(mac_t address)
+subnet_t *lookup_subnet_mac(mac_t *address)
 {
   subnet_t subnet, *p;
 cp
   subnet.type = SUBNET_MAC;
-  subnet.net.mac.address = address;
+  memcpy(&subnet.net.mac.address, address, sizeof(mac_t));
 
-  p = (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
+  p = (subnet_t *)avl_search(subnet_tree, &subnet);
 cp
-  if(p && !memcmp(&address, &p->net.mac.address, sizeof(mac_t)))
-    return p;
-  else
-    return NULL;
+  return p;
 }
 
-subnet_t *lookup_subnet_ipv4(ipv4_t address)
+subnet_t *lookup_subnet_ipv4(ipv4_t *address)
 {
   subnet_t subnet, *p;
 cp
   subnet.type = SUBNET_IPV4;
-  subnet.net.ipv4.address = address;
+  subnet.net.ipv4.address = *address;
   subnet.net.ipv4.mask = 0xFFFFFFFF;
 
-  p = (subnet_t *)rbl_search_closest_greater(subnet_tree, &subnet);
+  p = (subnet_t *)avl_search_closest_greater(subnet_tree, &subnet);
 
   /* Check if the found subnet REALLY matches */
 cp
-  if(p && ((address & p->net.ipv4.mask) == p->net.ipv4.address))
+  if(p && ((*address & p->net.ipv4.mask) == p->net.ipv4.address))
     return p;
   else
     return NULL;
 }
 
-subnet_t *lookup_subnet_ipv6(ipv6_t address)
+subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 {
   subnet_t subnet;
 cp
   subnet.type = SUBNET_IPV6;
-  subnet.net.ipv6.address = address;
+  memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
   memset(&subnet.net.ipv6.mask, 0xFF, 16);
   
 /* FIXME: check if it REALLY matches */
 
-  return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
+  return (subnet_t *)avl_search_closest_greater(subnet_tree, &subnet);
 }
 
 void dump_subnet_list(void)
 {
   char *netstr;
   subnet_t *subnet;
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
   syslog(LOG_DEBUG, _("Subnet list:"));
-  RBL_FOREACH(subnet_tree, rbl)
+  for(node = subnet_tree->head; node; node = node->next)
     {
-      subnet = (subnet_t *)rbl->data;
+      subnet = (subnet_t *)node->data;
       netstr = net2str(subnet);
       syslog(LOG_DEBUG, " %s owner %s", netstr, subnet->owner->name);
       free(netstr);

@@ -17,11 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.12 2000/11/20 19:12:12 guus Exp $
+    $Id: meta.c,v 1.1.2.13 2001/01/05 23:53:49 guus Exp $
 */
 
 #include "config.h"
 #include <utils.h>
+#include <avl_tree.h>
 
 #include <errno.h>
 #include <syslog.h>
@@ -74,12 +75,12 @@ cp
 
 void broadcast_meta(connection_t *cl, char *buffer, int length)
 {
-  rbl_t *rbl;
+  avl_node_t *node;
   connection_t *p;
 cp
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p != cl && p->status.meta && p->status.active)
         send_meta(p, buffer, length);
     }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.38 2000/12/03 12:23:06 zarq Exp $
+    $Id: tincd.c,v 1.10.4.39 2001/01/05 23:53:53 guus Exp $
 */
 
 #include "config.h"
@@ -283,6 +283,8 @@ void make_names(void)
 int
 main(int argc, char **argv, char **envp)
 {
+  openlog("tinc", LOG_PERROR, LOG_DAEMON);	/* Catch all syslog() calls issued before detaching */
+
   program_name = argv[0];
 
   setlocale (LC_ALL, "");
@@ -322,9 +324,9 @@ main(int argc, char **argv, char **envp)
   make_names();
 
   /* Slllluuuuuuurrrrp! */
-
+cp
   RAND_load_file("/dev/urandom", 1024);
-
+cp
   if(generate_keys)
     exit(keygen(generate_keys));
 
@@ -333,10 +335,10 @@ main(int argc, char **argv, char **envp)
 
   if(read_server_config())
     return 1;
-
+cp
   if(detach())
     exit(0);
-
+cp
   if(debug_lvl >= DEBUG_ERROR)
     ERR_load_crypto_strings();
     

@@ -19,12 +19,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.35 2000/12/22 21:34:20 guus Exp $
+    $Id: conf.c,v 1.9.4.36 2001/01/05 23:53:49 guus Exp $
 */
 
 #include "config.h"
 
-#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
@@ -35,6 +34,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include <xalloc.h>
 #include <utils.h> /* for cp */
@@ -311,7 +311,7 @@ cp
   x = read_config_file(&config, fname);
   if(x == -1) /* System error */
     {
-      fprintf(stderr, _("Failed to read `%s': %m\n"),
+      syslog(LOG_ERR, _("Failed to read `%s': %m"),
 	      fname);
     }
   free(fname);
@@ -358,7 +358,7 @@ int isadir(const char* f)
 
   if(stat(f, &s) < 0)
     {
-      fprintf(stderr, _("Couldn't stat `%s': %m\n"),
+      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
 	      f);
       return -1;
     }
@@ -371,24 +371,29 @@ int is_safe_path(const char *file)
   char *p;
   struct stat s;
 
+  if(*file != '/')
+    {
+      syslog(LOG_ERR, _("`%s' is not an absolute path"), file);
+      return 0;
+    }
+
   p = strrchr(file, '/');
-  assert(p); /* p has to contain a / */
   *p = '\0';
   if(stat(file, &s) < 0)
     {
-      fprintf(stderr, _("Couldn't stat `%s': %m\n"),
+      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
 	      file);
       return 0;
     }
   if(s.st_uid != geteuid())
     {
-      fprintf(stderr, _("`%s' is owned by UID %d instead of %d.\n"),
+      syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 	      file, s.st_uid, geteuid());
       return 0;
     }
   if(S_ISLNK(s.st_mode))
     {
-      fprintf(stderr, _("Warning: `%s' is a symlink\n"),
+      syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
 	      file);
       /* fixme: read the symlink and start again */
     }
@@ -396,7 +401,7 @@ int is_safe_path(const char *file)
   *p = '/';
   if(stat(file, &s) < 0 && errno != ENOENT)
     {
-      fprintf(stderr, _("Couldn't stat `%s': %m\n"),
+      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
 	      file);
       return 0;
     }
@@ -404,20 +409,20 @@ int is_safe_path(const char *file)
     return 1;
   if(s.st_uid != geteuid())
     {
-      fprintf(stderr, _("`%s' is owned by UID %d instead of %d.\n"),
+      syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 	      file, s.st_uid, geteuid());
       return 0;
     }
   if(S_ISLNK(s.st_mode))
     {
-      fprintf(stderr, _("Warning: `%s' is a symlink\n"),
+      syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
 	      file);
       /* fixme: read the symlink and start again */
     }
   if(s.st_mode & 0007)
     {
       /* Accessible by others */
-      fprintf(stderr, _("`%s' has unsecure permissions.\n"),
+      syslog(LOG_ERR, _("`%s' has unsecure permissions"),
 	      file);
       return 0;
     }
@@ -445,12 +450,14 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
       /* Ask for a file and/or directory name. */
       fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
 	      what, filename);
-      fflush(stdout);  /* Don't wait for a newline */
+      fflush(stdout);
+
       if((fn = readline(stdin, NULL, NULL)) == NULL)
 	{
 	  fprintf(stderr, _("Error while reading stdin: %m\n"));
 	  return NULL;
 	}
+
       if(strlen(fn) == 0)
 	/* User just pressed enter. */
 	fn = xstrdup(filename);

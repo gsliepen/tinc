@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.6 2000/11/24 23:13:01 guus Exp $
+    $Id: connection.c,v 1.1.2.7 2001/01/05 23:53:49 guus Exp $
 */
 
 #include "config.h"
@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <syslog.h>
 
-#include <rbl.h>
+#include <avl_tree.h>
 
 #include "net.h"	/* Don't ask. */
 #include "netutl.h"
@@ -39,8 +39,10 @@
 
 /* Root of the connection list */
 
-rbltree_t *connection_tree;
-rbltree_t *id_tree;
+avl_tree_t *connection_tree;
+avl_tree_t *id_tree;
+
+/* Pointer to connection describing myself */
 
 connection_t *myself = NULL;
 
@@ -49,6 +51,7 @@ connection_t *myself = NULL;
 int connection_compare(connection_t *a, connection_t *b)
 {
   ipv4_t result;
+
   result = a->address - b->address;
   if(result)
     return result;
@@ -63,8 +66,8 @@ int id_compare(connection_t *a, connection_t *b)
 
 void init_connections(void)
 {
-  connection_tree = new_rbltree((rbl_compare_t)connection_compare, (rbl_action_t)free_connection);
-  id_tree = new_rbltree((rbl_compare_t)id_compare, NULL);
+  connection_tree = avl_alloc_tree((avl_compare_t)connection_compare, (avl_action_t)free_connection);
+  id_tree = avl_alloc_tree((avl_compare_t)id_compare, NULL);
 }
 
 /* Creation and deletion of connection elements */
@@ -73,7 +76,7 @@ connection_t *new_connection(void)
 {
   connection_t *p = (connection_t *)xmalloc_and_zero(sizeof(*p));
 cp
-  p->subnet_tree = new_rbltree((rbl_compare_t)subnet_compare, NULL);
+  p->subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, NULL);
 cp
   return p;
 }
@@ -106,12 +109,13 @@ cp
 */
 void prune_connection_tree(void)
 {
-  rbl_t *rbl;
+  avl_node_t *node, *next;
   connection_t *cl;
 cp
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = next)
     {
-      cl = (connection_t *) rbl->data;
+      next = node->next;
+      cl = (connection_t *)node->data;
       if(cl->status.remove)
         connection_del(cl);
     }
@@ -124,8 +128,8 @@ cp
 void destroy_connection_tree(void)
 {
 cp
-  rbl_delete_rbltree(id_tree);
-  rbl_delete_rbltree(connection_tree);
+  avl_delete_tree(id_tree);
+  avl_delete_tree(connection_tree);
 cp
 }
 
@@ -134,22 +138,22 @@ cp
 void connection_add(connection_t *cl)
 {
 cp
-  rbl_insert(connection_tree, cl);
+  avl_insert(connection_tree, cl);
 cp
 }
 
 void id_add(connection_t *cl)
 {
 cp
-  rbl_insert(id_tree, cl);
+  avl_insert(id_tree, cl);
 cp
 }
 
 void connection_del(connection_t *cl)
 {
 cp
-  rbl_delete(id_tree, cl);
-  rbl_delete(connection_tree, cl);
+  avl_delete(id_tree, cl);
+  avl_delete(connection_tree, cl);
 cp
 }
 
@@ -162,7 +166,7 @@ cp
   cl.address = address;
   cl.port = port;
 
-  return rbl_search(connection_tree, &cl);
+  return avl_search(connection_tree, &cl);
 }
 
 connection_t *lookup_id(char *name)
@@ -170,7 +174,7 @@ connection_t *lookup_id(char *name)
   connection_t cl, *p;
 cp
   cl.name = name;
-  p = rbl_search(id_tree, &cl);
+  p = avl_search(id_tree, &cl);
   if(p && p->status.active)
     return p;
   else
@@ -181,7 +185,7 @@ cp
 
 void dump_connection_list(void)
 {
-  rbl_t *rbl;
+  avl_node_t *node;
   connection_t *cl;
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
@@ -190,9 +194,9 @@ cp
          myself->name, myself->hostname, myself->port, myself->flags,
          myself->socket, myself->meta_socket, myself->status);
 
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      cl = (connection_t *)rbl->data;
+      cl = (connection_t *)node->data;
       syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
              cl->name, cl->hostname, cl->port, cl->flags,
              cl->socket, cl->meta_socket, cl->status);

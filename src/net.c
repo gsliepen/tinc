@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.88 2000/12/22 21:34:20 guus Exp $
+    $Id: net.c,v 1.35.4.89 2001/01/05 23:53:49 guus Exp $
 */
 
 #include "config.h"
@@ -71,6 +71,7 @@
 
 #include <utils.h>
 #include <xalloc.h>
+#include <avl_tree.h>
 
 #include "conf.h"
 #include "connection.h"
@@ -165,7 +166,7 @@ cp
      
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Writing packet of %d bytes to tap device"),
-           outpkt.len, outlen);
+           outpkt.len);
 
   /* Fix mac address */
 
@@ -320,7 +321,7 @@ int send_packet(ip_t to, vpn_packet_t *packet)
   connection_t *cl;
   subnet_t *subnet;
 cp
-  if((subnet = lookup_subnet_ipv4(to)) == NULL)
+  if((subnet = lookup_subnet_ipv4(&to)) == NULL)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
@@ -607,6 +608,19 @@ cp
       return -1;
     }
 
+  /* Bind first to get a fix on our source port */
+
+  a.sin_family = AF_INET;
+  a.sin_port = htons(0);
+  a.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  if(bind(cl->meta_socket, (struct sockaddr *)&a, sizeof(struct sockaddr)))
+    {
+      close(cl->meta_socket);
+      syslog(LOG_ERR, _("System call `%s' failed: %m"), "bind");
+      return -1;
+    }
+  
   a.sin_family = AF_INET;
   a.sin_port = htons(cl->port);
   a.sin_addr.s_addr = htonl(cl->address);
@@ -656,14 +670,14 @@ cp
     
   if(read_host_config(ncn))
     {
-      syslog(LOG_ERR, _("Error reading host configuration file for %s"));
+      syslog(LOG_ERR, _("Error reading host configuration file for %s"), ncn->name);
       free_connection(ncn);
       return -1;
     }
     
   if(!(cfg = get_config_val(ncn->config, config_address)))
     {
-      syslog(LOG_ERR, _("No address specified for %s"));
+      syslog(LOG_ERR, _("No address specified for %s"), ncn->name);
       free_connection(ncn);
       return -1;
     }
@@ -876,7 +890,7 @@ cp
       syslog(LOG_ERR, _("Unable to set up a listening UDP socket!"));
       return -1;
     }
-
+cp
   /* Generate packet encryption key */
 
   myself->cipher_pkttype = EVP_bf_cfb();
@@ -892,9 +906,9 @@ cp
     keylifetime = cfg->data.val;
     
   keyexpires = time(NULL) + keylifetime;
-
+cp
   /* Activate ourselves */
-  
+
   myself->status.active = 1;
 
   syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
@@ -991,12 +1005,12 @@ cp
 */
 void close_network_connections(void)
 {
-  rbl_t *rbl;
+  avl_node_t *node;
   connection_t *p;
 cp
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       p->status.active = 0;
       terminate_connection(p);
     }
@@ -1117,6 +1131,7 @@ cp
   p->name = unknown;
   p->address = ntohl(ci.sin_addr.s_addr);
   p->hostname = hostlookup(ci.sin_addr.s_addr);
+  p->port = htons(ci.sin_port);				/* This one will be overwritten later */
   p->meta_socket = sfd;
   p->status.meta = 1;
   p->buffer = xmalloc(MAXBUFSIZE);
@@ -1137,16 +1152,16 @@ cp
 */
 void build_fdset(fd_set *fs)
 {
-  rbl_t *rbl;
+  avl_node_t *node;
   connection_t *p;
 cp
   FD_ZERO(fs);
 
   FD_SET(myself->socket, fs);
 
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
       if(p->status.meta)
         FD_SET(p->meta_socket, fs);
     }
@@ -1192,7 +1207,7 @@ cp
   
   if(!cl)
     {
-      syslog(LOG_WARNING, _("Received UDP packets on port %d from unknown source %lx:%d"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+      syslog(LOG_WARNING, _("Received UDP packets on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return 0;
     }
 
@@ -1214,7 +1229,7 @@ void terminate_connection(connection_t *cl)
 {
   connection_t *p;
   subnet_t *subnet;
-  rbl_t *rbl;
+  avl_node_t *node, *next;
 cp
   if(cl->status.remove)
     return;
@@ -1234,9 +1249,9 @@ cp
      (the connection that was dropped). */
 
   if(cl->status.meta)
-    RBL_FOREACH(connection_tree, rbl)
+    for(node = connection_tree->head; node; node = node->next)
       {
-        p = (connection_t *)rbl->data;
+        p = (connection_t *)node->data;
         if(p->nexthop == cl && p != cl)
           terminate_connection(p);
       }
@@ -1244,18 +1259,19 @@ cp
   /* Inform others of termination if it was still active */
 
   if(cl->status.active)
-    RBL_FOREACH(connection_tree, rbl)
+    for(node = connection_tree->head; node; node = node->next)
       {
-        p = (connection_t *)rbl->data;
+        p = (connection_t *)node->data;
         if(p->status.meta && p->status.active && p!=cl)
           send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
       }
 
   /* Remove the associated subnets */
 
-  RBL_FOREACH(cl->subnet_tree, rbl)
+  for(node = cl->subnet_tree->head; node; node = next)
     {
-      subnet = (subnet_t *)rbl->data;
+      next = node->next;
+      subnet = (subnet_t *)node->data;
       subnet_del(subnet);
     }
 
@@ -1286,14 +1302,14 @@ cp
 void check_dead_connections(void)
 {
   time_t now;
-  rbl_t *rbl;
+  avl_node_t *node;
   connection_t *cl;
 cp
   now = time(NULL);
 
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      cl = (connection_t *)rbl->data;
+      cl = (connection_t *)node->data;
       if(cl->status.active && cl->status.meta)
         {
           if(cl->last_ping_time + timeout < now)
@@ -1352,14 +1368,14 @@ cp
 void check_network_activity(fd_set *f)
 {
   connection_t *p;
-  rbl_t *rbl;
+  avl_node_t *node;
 cp
   if(FD_ISSET(myself->socket, f))
     handle_incoming_vpn_data();
 
-  RBL_FOREACH(connection_tree, rbl)
+  for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)rbl->data;
+      p = (connection_t *)node->data;
 
       if(p->status.remove)
 	return;
