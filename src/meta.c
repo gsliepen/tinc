@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.46 2003/10/11 12:16:12 guus Exp $
+    $Id: meta.c,v 1.1.2.47 2003/10/11 14:18:52 guus Exp $
 */
 
 #include "system.h"
@@ -178,7 +178,7 @@ bool receive_meta(connection_t *c)
 				return false;
 
 			c->buflen -= reqlen;
-			lenin -= reqlen;
+			lenin -= reqlen - oldlen;
 			memmove(c->buffer, c->buffer + reqlen, c->buflen);
 			oldlen = 0;
 			continue;
