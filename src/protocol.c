@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.35 2000/09/22 16:20:07 guus Exp $
+    $Id: protocol.c,v 1.28.4.36 2000/09/26 14:06:06 guus Exp $
 */
 
 #include "config.h"
@@ -43,6 +43,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
+#include "meta.h"
 
 #include "system.h"
 
@@ -61,7 +62,7 @@ int check_id(char *id)
   return 1;
 }
 
-/* Generic outgoing request routine - takes care of logging and error detection as well */
+/* Generic request routines - takes care of logging and error detection as well */
 
 int send_request(conn_list_t *cl, const char *format, int request, /*args*/ ...)
 {
@@ -89,37 +90,38 @@ cp
   return send_meta(cl, buffer, length);
 }
 
-
-int send_meta(conn_list_t *cl, const char *buffer, int length)
+int receive_request(conn_list_t *cl)
 {
-cp
-  if(debug_lvl >= DEBUG_META)
-    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s): %s"), int length,
-           cl->name, cl->hostname, buffer);
-
-  if(cl->status.encryptin)
+  int request;
+cp  
+  if(sscanf(cl->buffer, "%d", &request) == 1)
     {
-      /* FIXME: Do encryption */
+      if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
+        {
+          syslog(LOG_ERR, _("Unknown request from %s (%s)"),
+		 cl->name, cl->hostname);
+          return -1;
+        }
+      else
+        {
+          if(debug_lvl > DEBUG_PROTOCOL)
+            syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
+		   request_name[request], cl->name, cl->hostname);
+	}
+      if(request_handlers[request](cl))
+	/* Something went wrong. Probably scriptkiddies. Terminate. */
+        {
+          syslog(LOG_ERR, _("Error while processing %s from %s (%s)"),
+		 request_name[request], cl->name, cl->hostname);
+          return -1;
+        }
     }
-
-  if(write(cl->meta_socket, buffer, length) < 0)
+  else
     {
-      syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %m"), cl->name, cl->hostname);
+      syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
+	     cl->name, cl->hostname);
       return -1;
     }
-cp
-  return 0;
-}
-
-int broadcast_meta(conn_list_t *cl, const char *buffer, int length)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p != cl && p->status.meta && p->status.active)
-      send_meta(p, buffer, length);
-cp
-  return 0;
 }
 
 /* Connection protocol:

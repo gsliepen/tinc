@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.7 2000/09/11 10:05:35 guus Exp $
+    $Id: protocol.h,v 1.5.4.8 2000/09/26 14:06:11 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -29,17 +29,14 @@
    incompatible version have different protocols.
  */
 
-enum {
-  PROT_RESERVED = 0,                 /* reserved: do not use. */
-  PROT_NOT_IN_USE,
-  PROT_TOO_OLD = 2,
-  PROT_3,
-  PROT_4,
-  PROT_ECHELON,
-  PROT_6,
-  PROT_7,
-  PROT_CURRENT,                      /* protocol currently in use */
-};
+#define PROT_CURRENT 8
+
+/* Length of the challenge. Since the challenge will also
+   contain the key for the symmetric cipher, it must be
+   quite large.
+ */
+
+#define CHAL_LENGTH 2048
 
 /* Request numbers */
 
@@ -79,5 +76,3 @@ extern int send_tcppacket(conn_list_t *, void *, int);
 extern int notify_others(conn_list_t *, conn_list_t *, int (*function)(conn_list_t*, conn_list_t*));
 
 #endif /* __TINC_PROTOCOL_H__ */
-
-

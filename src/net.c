@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.31 2000/09/22 16:20:07 guus Exp $
+    $Id: net.c,v 1.35.4.32 2000/09/26 14:06:04 guus Exp $
 */
 
 #include "config.h"
@@ -46,6 +46,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
+#include "meta.h"
 
 #include "system.h"
 
@@ -1063,125 +1064,6 @@ cp
 }
 
 /*
-  dispatch any incoming meta requests
-*/
-int handle_incoming_meta_data(conn_list_t *cl)
-{
-  int x, l = sizeof(x);
-  int request, oldlen, i;
-  int lenin = 0;
-cp
-  if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
-    {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->meta_socket,
-             cl->name, cl->hostname);
-      return -1;
-    }
-  if(x)
-    {
-      syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
-             cl->name, cl->hostname, strerror(x));
-      return -1;
-    }
-
-  lenin = read(cl->meta_socket, cl->buffer+cl->buflen, MAXBUFSIZE - cl->buflen);
-
-  if(lenin<=0)
-    {
-      if(errno==EINTR)
-        return 0;      
-      if(errno==0)
-        {
-          if(debug_lvl>DEBUG_CONNECTIONS)
-            syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
-                cl->name, cl->hostname);
-        }
-      else
-        syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
-               cl->name, cl->hostname);
-      return -1;
-    }
-
-  if(cl->status.encryptin)
-    {
-      /* FIXME: do decryption. */
-    }
-
-  oldlen = cl->buflen;
-  cl->buflen += lenin;
-
-  for(;;)
-    {
-      cl->reqlen = 0;
-
-      for(i = oldlen; i < cl->buflen; i++)
-        {
-          if(cl->buffer[i] == '\n')
-            {
-              cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
-              cl->reqlen = i + 1;
-              break;
-            }
-        }
-
-      if(cl->reqlen)
-        {
-          if(debug_lvl > DEBUG_PROTOCOL)
-            syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
-		   cl->name, cl->hostname, cl->buffer);
-          if(sscanf(cl->buffer, "%d", &request) == 1)
-            {
-              if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
-                {
-                  syslog(LOG_ERR, _("Unknown request from %s (%s)"),
-			 cl->name, cl->hostname);
-                  return -1;
-                }
-              else
-                {
-                  if(debug_lvl > DEBUG_PROTOCOL)
-                    syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
-			   request_name[request], cl->name, cl->hostname);
-		}
-              if(request_handlers[request](cl))
-		/* Something went wrong. Probably scriptkiddies. Terminate. */
-                {
-                  syslog(LOG_ERR, _("Error while processing %s from %s (%s)"),
-			 request_name[request], cl->name, cl->hostname);
-                  return -1;
-                }
-            }
-          else
-            {
-              syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
-		     cl->name, cl->hostname);
-              return -1;
-            }
-
-          cl->buflen -= cl->reqlen;
-          memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
-          oldlen = 0;
-        }
-      else
-        {
-          break;
-        }
-    }
-
-  if(cl->buflen >= MAXBUFSIZE)
-    {
-      syslog(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
-	     cl->name, cl->hostname);
-      return -1;
-    }
-
-  cl->last_ping_time = time(NULL);
-  cl->want_ping = 0;
-cp  
-  return 0;
-}
-
-/*
   check all connections to see if anything
   happened on their sockets
 */
@@ -1213,7 +1095,7 @@ cp
 
       if(p->status.meta)
 	if(FD_ISSET(p->meta_socket, f))
-	  if(handle_incoming_meta_data(p) < 0)
+	  if(receive_meta(p) < 0)
 	    {
 	      terminate_connection(p);
 	      return;
