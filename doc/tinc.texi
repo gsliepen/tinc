@@ -194,84 +194,6 @@ For an up to date list of supported platforms, please check the list on
 our website:
 @uref{http://www.tinc-vpn.org/platforms}.
 
-
-@c ==================================================================
-@subsection Linux
-
-@cindex Linux
-Tinc was first written for Linux running on an intel x86 processor, so
-this is the best supported platform.  The protocol however, and actually
-anything about tinc, has been rewritten to support random byte ordering
-and arbitrary word length.  So in theory it should run on other
-processors that Linux runs on.  It has already been verified to run on
-alpha and sparc processors as well.
-
-Tinc uses the ethertap device or the universal tun/tap driver. The former is provided in the standard kernel
-from version 2.1.60 up to 2.3.x, but has been replaced in favour of the tun/tap driver in kernel versions 2.4.0 and later.
-
-
-@c ==================================================================
-@subsection FreeBSD
-
-@cindex FreeBSD
-Tinc on FreeBSD relies on the universal tun/tap driver for its data
-acquisition from the kernel.  Therefore, tinc will work on the same platforms
-as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
-
-
-@c ==================================================================
-@subsection OpenBSD
-
-@cindex OpenBSD
-Tinc on OpenBSD relies on the tun driver for its data
-acquisition from the kernel. It has been verified to work under at least OpenBSD 2.9.
-There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
-which adds a tap device to OpenBSD.
-This should work with tinc.
-
-Tunneling IPv6 packets may not work on OpenBSD.
-
-
-@c ==================================================================
-@subsection Solaris
-
-@c ==================================================================
-@subsection NetBSD
-
-@cindex NetBSD
-Tinc on NetBSD relies on the tun driver for its data
-acquisition from the kernel. It has been verified to work under at least NetBSD 1.5.2.
-
-Tunneling IPv6 may not work on OpenBSD.
-
-
-@c ==================================================================
-@subsection Solaris
-
-@cindex Solaris
-Tinc on Solaris relies on the universal tun/tap driver for its data
-acquisition from the kernel.  Therefore, tinc will work on the same platforms
-as this driver. It has been verified to work under Solaris 8 (SunOS 5.8).
-
-@c ==================================================================
-@subsection Darwin (MacOS/X)
-
-@cindex Darwin
-@cindex MacOS/X
-Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://www-user.rhrk.uni-kl.de/~nissler/tuntap/},
-which supports both tun and tap style devices,
-and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
-The former driver is recommended.
-
-@c ==================================================================
-@subsection Windows
-
-@cindex Windows
-Tinc on Windows relies on the TAP-Win32 driver (as shipped by OpenVPN) for its data acquisition from the kernel.
-This driver is not part of Windows but can be downloaded from @uref{http://openvpn.sourceforge.net/}.
-
-
 @c
 @c
 @c
@@ -302,26 +224,6 @@ support tinc.
 @node    Configuring the kernel
 @section Configuring the kernel
 
-@cindex RedHat
-@cindex Debian
-@cindex netlink_dev
-@cindex tun
-@cindex ethertap
-If you are running Linux, chances are good that your kernel already supports
-all the devices that tinc needs for proper operation.  For example, the
-standard kernel from Redhat Linux already has support for ethertap and netlink
-compiled in.  Debian users can use the modconf utility to select the modules.
-If your Linux distribution supports this method of selecting devices, look out
-for something called `ethertap', and `netlink_dev' if it is using a kernel
-version prior to 2.4.0. In that case you will need both these devices.  If you
-are using kernel 2.4.0 or later, you need to select `tun'.
-
-@cindex Kernel-HOWTO
-If you can install these devices in a similar manner, you may skip this section.
-Otherwise, you will have to recompile the kernel in order to turn on the required features.
-If you are unfamiliar with the process of configuring and compiling a new kernel,
-you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html, Kernel HOWTO} first.
-
 @menu
 * Configuration of Linux kernels 2.1.60 up to 2.4.0::
 * Configuration of Linux kernels 2.4.0 and higher::
@@ -338,7 +240,10 @@ you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html
 @node       Configuration of Linux kernels 2.1.60 up to 2.4.0
 @subsection Configuration of Linux kernels 2.1.60 up to 2.4.0
 
-Here are the options you have to turn on when configuring a new kernel:
+@cindex ethertap
+For kernels up to 2.4.0, you need a kernel that supports the ethertap device.
+Most distributions come with kernels that already support this.
+If not, here are the options you have to turn on when configuring a new kernel:
 
 @example
 Code maturity level options
@@ -375,6 +280,9 @@ Add as much alias/options lines as necessary.
 @node       Configuration of Linux kernels 2.4.0 and higher
 @subsection Configuration of Linux kernels 2.4.0 and higher
 
+@cindex Universal tun/tap
+For kernels 2.4.0 and higher, you need a kernel that supports the Universal tun/tap device.
+Most distributions come with kernels that already support this.
 Here are the options you have to turn on when configuring a new kernel:
 
 @example
@@ -404,9 +312,8 @@ alias char-major-10-200 tun
 @node       Configuration of FreeBSD kernels
 @subsection Configuration of FreeBSD kernels
 
-For FreeBSD version 4.1 and higher, the tap driver is included in the default kernel configuration, for earlier
-systems (4.0 and earlier), you need to install the universal tun/tap driver
-yourself.
+For FreeBSD version 4.1 and higher, tun and tap drivers are included in the default kernel configuration.
+Using tap devices is recommended.
 
 
 @c ==================================================================
@@ -415,6 +322,9 @@ yourself.
 
 For OpenBSD version 2.9 and higher,
 the tun driver is included in the default kernel configuration.
+There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
+which adds a tap device to OpenBSD.
+This should work with tinc.
 
 
 @c ==================================================================
@@ -423,6 +333,8 @@ the tun driver is included in the default kernel configuration.
 
 For NetBSD version 1.5.2 and higher,
 the tun driver is included in the default kernel configuration.
+
+Tunneling IPv6 may not work on NetBSD's tun device.
 
 
 @c ==================================================================
@@ -440,17 +352,16 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @node       Configuration of Darwin (MacOS/X) kernels
 @subsection Configuration of Darwin (MacOS/X) kernels
 
-Darwin does not come with a tunnel driver. You must download it at
-@uref{http://chrisp.de/en/projects/tunnel.html}. If compiling the source fails,
-try the binary module. The tunnel driver must be loaded before starting tinc
-with the following command:
+Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
+Tinc supports either the driver from @uref{http://www-user.rhrk.uni-kl.de/~nissler/tuntap/},
+which supports both tun and tap style devices,
+and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
+The former driver is recommended.
+The tunnel driver must be loaded before starting tinc with the following command:
 
 @example
 kmodload tunnel
 @end example
-
-Once loaded, the tunnel driver will automatically create @file{/dev/tun0}..@file{/dev/tun3}
-and the corresponding network interfaces.
 
 
 @c ==================================================================
