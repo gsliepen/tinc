@@ -27,10 +27,9 @@ src/node.c
 src/edge.c
 src/graph.c
 src/linux/device.c
-src/freebsd/device.c
 src/solaris/device.c
-src/netbsd/device.c
-src/darwin/device.c
+src/bsd/device.c
 src/cygwin/device.c
 src/mingw/device.c
 src/raw_socket/device.c
+src/uml_socket/device.c
