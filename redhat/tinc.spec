@@ -76,7 +76,7 @@ END
 
 %files
 
-%doc AUTHORS ChangeLog NEWS README THANKS TODO *.html
+%doc AUTHORS ChangeLog NEWS README THANKS *.html
 
 #%defattr(-,root,root)
 %config /etc/tinc
