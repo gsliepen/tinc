@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.108 2001/05/25 11:54:28 guus Exp $
+    $Id: net.c,v 1.35.4.109 2001/05/28 08:21:43 guus Exp $
 */
 
 #include "config.h"
@@ -26,8 +26,10 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
+#ifndef HAVE_FREEBSD
+ #include <netinet/ip.h>
+ #include <netinet/tcp.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -383,6 +385,7 @@ cp
   option = 1;
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
   setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+#ifndef HAVE_FREEBSD
   setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
   option = IPTOS_LOWDELAY;
@@ -397,6 +400,7 @@ cp
           return -1;
         }
     }
+#endif
 
   memset(&a, 0, sizeof(a));
   a.sin_family = AF_INET;
@@ -511,11 +515,12 @@ cp
 
   option = 1;
   setsockopt(cl->meta_socket, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+#ifndef HAVE_FREEBSD
   setsockopt(cl->meta_socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
   option = IPTOS_LOWDELAY;
   setsockopt(cl->meta_socket, SOL_IP, IP_TOS, &option, sizeof(option));
-
+#endif
   /* Connect */
 
   a.sin_family = AF_INET;

@@ -17,12 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.8 2001/05/25 11:54:28 guus Exp $
+    $Id: route.c,v 1.1.2.9 2001/05/28 08:21:43 guus Exp $
 */
 
 #include "config.h"
 
-#include <netinet/in.h>
+#ifdef HAVE_FREEBSD
+ #include <sys/param.h>
+#else
+ #include <netinet/in.h>
+#endif
 #include <utils.h>
 #include <xalloc.h>
 #include <syslog.h>
