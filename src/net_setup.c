@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.3 2002/02/20 19:25:09 guus Exp $
+    $Id: net_setup.c,v 1.1.2.4 2002/02/20 22:15:32 guus Exp $
 */
 
 #include "config.h"
@@ -221,7 +221,7 @@ int setup_myself(void)
   subnet_t *subnet;
   char *name, *mode, *afname, *cipher, *digest;
   struct addrinfo hint, *ai;
-  int choice;
+  int choice, err;
 cp
   myself = new_node();
   myself->connection = new_connection();
@@ -462,14 +462,16 @@ cp
 cp
   /* Open sockets */
   
+  memset(&hint, 0, sizeof(hint));
+  
   hint.ai_family = addressfamily;
   hint.ai_socktype = SOCK_STREAM;
   hint.ai_protocol = IPPROTO_TCP;
   hint.ai_flags = AI_PASSIVE;
 
-  if(getaddrinfo(NULL, myport, &hint, &ai) || !ai)
+  if((err = getaddrinfo(NULL, myport, &hint, &ai)) || !ai)
     {
-      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", strerror(errno));
+      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
       return -1;
     }
 
@@ -481,14 +483,12 @@ cp
 
   freeaddrinfo(ai);
 
-  hint.ai_family = addressfamily;
   hint.ai_socktype = SOCK_DGRAM;
   hint.ai_protocol = IPPROTO_UDP;
-  hint.ai_flags = AI_PASSIVE;
 
-  if(getaddrinfo(NULL, myport, &hint, &ai) || !ai)
+  if((err = getaddrinfo(NULL, myport, &hint, &ai)) || !ai)
     {
-      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", strerror(errno));
+      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
       return -1;
     }
 
