@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.31 2003/05/06 21:13:17 guus Exp $
+    $Id: net_setup.c,v 1.1.2.32 2003/06/25 20:52:59 guus Exp $
 */
 
 #include "config.h"
@@ -368,8 +368,7 @@ int setup_myself(void)
 			return -1;
 		}
 		free(afname);
-	} else
-		addressfamily = AF_INET;
+	}
 
 	get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
 
