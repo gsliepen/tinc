@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.5 2002/03/22 12:41:54 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.6 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -90,7 +90,7 @@ int add_edge_h(connection_t *c)
   int weight;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
+  if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
             from_name, from_address, from_udpport,
 	    to_name, to_address, to_udpport,
 	    &options, &weight) != 8)
@@ -226,7 +226,7 @@ int del_edge_h(connection_t *c)
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING"", from_name, to_name) != 2)
+  if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING"", from_name, to_name) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE",
              c->name, c->hostname);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.5 2002/03/21 23:11:53 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.6 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -75,7 +75,7 @@ int key_changed_h(connection_t *c)
   connection_t *other;
   node_t *n;
 cp
-  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING, name) != 1)
+  if(sscanf(c->buffer, "%*d %*x "MAX_STRING, name) != 1)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
              c->name, c->hostname);

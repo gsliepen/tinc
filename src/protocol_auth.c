@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.4 2002/03/22 11:43:48 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.5 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -473,7 +473,7 @@ cp
   gettimeofday(&now, NULL);
   c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
   sockaddr2str(&c->address, &address, &port);
-  x = send_request(c, "%d %s %s %s %d %d", ACK, myport, address, port, c->estimated_weight, c->options);
+  x = send_request(c, "%d %s %s %s %d %lx", ACK, myport, address, port, c->estimated_weight, c->options);
   free(address);
   free(port);
 cp
@@ -519,12 +519,12 @@ int ack_h(connection_t *c)
   char hisport[MAX_STRING_SIZE];
   char *hisaddress, *dummy;
   int weight;
-  int options;
+  long int options;
   node_t *n;
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %d %d", hisport, myaddress, &weight, &options) != 4)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %d %lx", hisport, myaddress, &weight, &options) != 4)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
        return -1;

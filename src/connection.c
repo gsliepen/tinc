@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.28 2002/02/18 16:25:16 guus Exp $
+    $Id: connection.c,v 1.1.2.29 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -116,7 +116,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       c = (connection_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s options %ld socket %d status %04x"),
+      syslog(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
              c->name, c->hostname, c->options, c->socket, c->status);
     }
     

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.8 2002/03/22 11:43:46 guus Exp $
+    $Id: edge.c,v 1.1.2.9 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -201,7 +201,7 @@ cp
       from_udp = sockaddr2hostname(&e->from.udpaddress);
 //      to_tcp = sockaddr2hostname(&e->to.tcpaddress);
       to_udp = sockaddr2hostname(&e->to.udpaddress);
-      syslog(LOG_DEBUG, _(" %s at %s - %s at %s options %ld weight %d"),
+      syslog(LOG_DEBUG, _(" %s at %s - %s at %s options %lx weight %d"),
              e->from.node->name, from_udp,
 	     e->to.node->name, to_udp,
 	     e->options, e->weight);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.2 2002/03/21 23:11:53 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.3 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -66,7 +66,7 @@ int add_subnet_h(connection_t *c)
   subnet_t *s;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
+  if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name, c->hostname);
       return -1;
@@ -158,7 +158,7 @@ int del_subnet_h(connection_t *c)
   subnet_t *s, *find;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
+  if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name, c->hostname);
       return -1;

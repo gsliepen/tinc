@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.10 2002/02/18 16:25:16 guus Exp $
+    $Id: node.c,v 1.1.2.11 2002/03/22 13:31:18 guus Exp $
 */
 
 #include "config.h"
@@ -163,7 +163,7 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %ld status %04x nexthop %s via %s"),
+      syslog(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
              n->name, n->hostname, n->cipher?n->cipher->nid:0, n->digest?n->digest->type:0, n->maclength, n->compression, n->options,
              n->status, n->nexthop?n->nexthop->name:"-", n->via?n->via->name:"-");
     }
