@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.24 2000/11/24 23:12:56 guus Exp $
+dnl $Id: configure.in,v 1.13.2.25 2000/11/25 13:33:30 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre4-cvs)
@@ -28,6 +28,22 @@ jm_PERL
 
 
 AC_ISC_POSIX
+
+dnl Check and set OS
+
+AC_CANONICAL_HOST
+
+case $host_os in
+  *linux*)
+    AC_DEFINE(HAVE_LINUX)
+  ;;
+  *freebsd*)
+    AC_DEFINE(HAVE_FREEBSD)
+  ;;
+  *solaris*)
+    AC_DEFINE(HAVE_SOLARIS)
+  ;;
+esac
 
 dnl Checks for libraries.
 
@@ -57,7 +73,6 @@ AM_GNU_GETTEXT
 
 dnl Crypto stuff
 tinc_OPENSSL
-
 
 dnl Support for SunOS
 

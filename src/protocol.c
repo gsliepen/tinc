@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.66 2000/11/22 22:05:37 guus Exp $
+    $Id: protocol.c,v 1.28.4.67 2000/11/25 13:33:33 guus Exp $
 */
 
 #include "config.h"
@@ -575,8 +575,6 @@ cp
   if(cl->status.outgoing)
     cl->allow_request = ACK;
 
-  setup_vpn_connection(cl);
-
   x = send_request(cl, "%d", ACK);
   cl->status.encryptout = 1;
 cp
@@ -901,12 +899,6 @@ cp
   new->status.active = 1;
   new->cipher_pkttype = EVP_bf_cfb();
   new->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
-
-  /* Okay this is a bit ugly... it would be better to setup UDP sockets dynamically, or
-   * perhaps just one UDP socket... but then again, this has benefits too...
-   */
-   
-  setup_vpn_connection(new);
 cp
   return 0;
 }

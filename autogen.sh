@@ -70,6 +70,9 @@ if test "$DIE" -eq 1; then
   exit 1
 fi
 
+# Make sure configure doesn't complain about old configuration
+rm -f config.status
+
 if test -z "$*"; then
   echo "**Warning**: I am going to run \`configure' with no arguments."
   echo "If you wish to pass any to it, please specify them on the"

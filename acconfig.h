@@ -44,6 +44,14 @@
 # undef getopt
 #endif
 
+/* Linux */
+#undef HAVE_LINUX
+
+/* FreeBSD */
+#undef HAVE_FREEBSD
+
+/* Solaris */
+#undef HAVE_SOLARIS
 
 /* Define to the location of the kernel sources */
 #undef CONFIG_TINC_KERNELDIR

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.14 2000/11/24 23:13:05 guus Exp $
+    $Id: process.c,v 1.1.2.15 2000/11/25 13:33:33 guus Exp $
 */
 
 #include "config.h"
@@ -150,12 +150,23 @@ int detach(void)
 cp
   setup_signals();
 
+  /* First check if we can open a fresh new pidfile */
+  
   if(write_pidfile())
     return -1;
 
+  /* If we succeeded in doing that, detach */
+
   if(do_detach)
-    if(daemon(0, 0) < 0)
-      return -1;
+    {
+      if(daemon(0, 0) < 0)
+        return -1;
+
+      /* Now UPDATE the pid in the pidfile, because we changed it... */
+
+      if(!write_pid(pidfilename))
+        return 1;
+    }
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
@@ -177,11 +188,8 @@ cp
 void _execute_script(const char *name)  __attribute__ ((noreturn));
 void _execute_script(const char *name)
 {
-  int error = 0;
   char *scriptname;
   char *s;
-  int fd;
-  
 cp
   if(netname)
     {

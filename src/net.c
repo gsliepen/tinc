@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.81 2000/11/24 23:13:02 guus Exp $
+    $Id: net.c,v 1.35.4.82 2000/11/25 13:33:30 guus Exp $
 */
 
 #include "config.h"
@@ -100,6 +100,8 @@ int xsend(connection_t *cl, vpn_packet_t *inpkt)
   vpn_packet_t outpkt;
   int outlen, outpad;
   EVP_CIPHER_CTX ctx;
+  struct sockaddr_in to;
+  socklen_t tolen = sizeof(to);
 cp
   outpkt.len = inpkt->len;
   
@@ -121,7 +123,11 @@ cp
 
   total_socket_out += outlen;
 
-  if((send(cl->socket, (char *) &(outpkt.len), outlen, 0)) < 0)
+  to.sin_family = AF_INET;
+  to.sin_addr.s_addr = htonl(cl->address);
+  to.sin_port = htons(cl->port);
+
+  if((sendto(myself->socket, (char *) &(outpkt.len), outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->name, cl->hostname);
@@ -336,17 +342,6 @@ cp
 
   /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
   
-  /* Connections are now opened beforehand...
-
-  if(!cl->status.dataopen)
-    if(setup_vpn_connection(cl) < 0)
-      {
-        syslog(LOG_ERR, _("Could not open UDP connection to %s (%s)"),
-	       cl->name, cl->hostname);
-        return -1;
-      }
-  */
-      
   if(!cl->status.validkey)
     {
 /* FIXME: Don't queue until everything else is fixed.
@@ -384,19 +379,31 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
-#ifdef HAVE_TUNTAP
+#ifdef HAVE_LINUX
+ #ifdef HAVE_TUNTAP
   struct ifreq ifr;
+ #endif
 #endif
 
 cp  
   if((cfg = get_config_val(config, config_tapdevice)))
     tapfname = cfg->data.ptr;
   else
-#ifdef HAVE_TUNTAP
-    tapfname = "/dev/misc/net/tun";
-#else
-    tapfname = "/dev/tap0";
+   {
+#ifdef HAVE_LINUX
+ #ifdef HAVE_TUNTAP
+      tapfname = "/dev/misc/net/tun";
+ #else
+      tapfname = "/dev/tap0";
+ #endif
 #endif
+#ifdef HAVE_FREEBSD
+      tapfname = "/dev/tap0";
+#endif
+#ifdef HAVE_SOLARIS
+      tapfname = "/dev/tun";
+#endif
+   }
 cp
   if((nfd = open(tapfname, O_RDWR | O_NONBLOCK)) < 0)
     {
@@ -406,9 +413,10 @@ cp
 cp
   tap_fd = nfd;
 
+  taptype = TAP_TYPE_ETHERTAP;
+
   /* Set default MAC address for ethertap devices */
   
-  taptype = TAP_TYPE_ETHERTAP;
   mymac.type = SUBNET_MAC;
   mymac.net.mac.address.x[0] = 0xfe;
   mymac.net.mac.address.x[1] = 0xfd;
@@ -417,7 +425,8 @@ cp
   mymac.net.mac.address.x[4] = 0x00;
   mymac.net.mac.address.x[5] = 0x00;
 
-#ifdef HAVE_TUNTAP
+#ifdef HAVE_LINUX
+ #ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
   memset(&ifr, 0, sizeof(ifr));
 cp
@@ -430,6 +439,10 @@ cp
     syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
     taptype = TAP_TYPE_TUNTAP;
   }
+ #endif
+#endif
+#ifdef HAVE_FREEBSD
+ taptype = TAP_TYPE_TUNTAP;
 #endif
 cp
   return 0;
@@ -618,11 +631,7 @@ cp
 }
 
 /*
-  setup an outgoing connection. It's not
-  necessary to also open an udp socket as
-  well, because the other host will initiate
-  an authentication sequence during which
-  we will do just that.
+  Setup an outgoing meta connection.
 */
 int setup_outgoing_connection(char *name)
 {
@@ -781,7 +790,13 @@ cp
     
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {
-      syslog(LOG_ERR, _("Unable to set up a listening socket!"));
+      syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
+      return -1;
+    }
+
+  if((myself->socket = setup_vpn_in_socket(myself->port)) < 0)
+    {
+      syslog(LOG_ERR, _("Unable to set up a listening UDP socket!"));
       return -1;
     }
 
@@ -929,6 +944,7 @@ cp
 
 /*
   create a data (udp) socket
+  OBSOLETED: use only one listening socket for compatibility with non-Linux operating systems
 */
 int setup_vpn_connection(connection_t *cl)
 {
@@ -1049,13 +1065,13 @@ void build_fdset(fd_set *fs)
 cp
   FD_ZERO(fs);
 
+  FD_SET(myself->socket, fs);
+
   RBL_FOREACH(connection_tree, rbl)
     {
       p = (connection_t *)rbl->data;
       if(p->status.meta)
         FD_SET(p->meta_socket, fs);
-      if(p->status.dataopen)
-        FD_SET(p->socket, fs);
     }
 
   FD_SET(myself->meta_socket, fs);
@@ -1068,16 +1084,19 @@ cp
   udp socket and write it to the ethertap
   device after being decrypted
 */
-int handle_incoming_vpn_data(connection_t *cl)
+int handle_incoming_vpn_data(void)
 {
   vpn_packet_t pkt;
   int x, l = sizeof(x);
   int lenin;
+  struct sockaddr_in from;
+  socklen_t fromlen = sizeof(from);
+  connection_t *cl;
 cp
-  if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
+  if(getsockopt(myself->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"),
-	     __FILE__, __LINE__, cl->socket);
+	     __FILE__, __LINE__, myself->socket);
       return -1;
     }
   if(x)
@@ -1086,10 +1105,18 @@ cp
       return -1;
     }
 
-  if((lenin = recv(cl->socket, (char *) &(pkt.len), MTU, 0)) <= 0)
+  if((lenin = recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return -1;
+    }
+
+  cl = lookup_connection(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+  
+  if(!cl)
+    {
+      syslog(LOG_WARNING, _("Received UDP packets on port %d from unknown source %lx:%d"), ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+      return 0;
     }
 
   if(debug_lvl >= DEBUG_TRAFFIC)
@@ -1250,27 +1277,15 @@ void check_network_activity(fd_set *f)
   connection_t *p;
   rbl_t *rbl;
 cp
+  if(FD_ISSET(myself->socket, f))
+    handle_incoming_vpn_data();
+
   RBL_FOREACH(connection_tree, rbl)
     {
       p = (connection_t *)rbl->data;
 
       if(p->status.remove)
 	return;
-
-      if(p->status.dataopen)
-	if(FD_ISSET(p->socket, f))
-	  {
-            handle_incoming_vpn_data(p);
-
-            /* Old error stuff (FIXME: copy this to handle_incoming_vpn_data()
-            
-	    getsockopt(p->socket, SOL_SOCKET, SO_ERROR, &x, &l);
-	    syslog(LOG_ERR, _("Outgoing data socket error for %s (%s): %s"),
-                   p->name, p->hostname, strerror(x));
-	    terminate_connection(p);
-            */
-	    return;
-	  }  
 
       if(p->status.meta)
 	if(FD_ISSET(p->meta_socket, f))
