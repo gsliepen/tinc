@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.34 2002/03/15 15:08:21 guus Exp $
+    $Id: route.c,v 1.1.2.35 2002/03/15 15:40:40 guus Exp $
 */
 
 #include "config.h"
@@ -51,6 +51,10 @@
 #include "device.h"
 
 #include "system.h"
+
+#ifndef s6_addr16
+#define s6_addr16 __u6_addr.__u6_addr16
+#endif
 
 int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
@@ -305,7 +309,7 @@ cp
   checksum = inet_checksum((unsigned short int *)&pseudo, sizeof(pseudo)/2, ~0);
   checksum = inet_checksum((unsigned short int *)ns, sizeof(*ns)/2 + 4, checksum);
 
-  ns->nd_ns_hdr.icmp6_cksum = checksum;
+  ns->nd_ns_hdr.icmp6_cksum = htons(checksum);
 
   write_packet(packet);
 cp
@@ -395,12 +399,12 @@ cp
               n = route_ipv4(packet);
               break;
             case 0x86DD:
-              n = route_ipv6(packet);
-	      if(!n && packet->data[0] == 0x33 && packet->data[1] == 0x33 && packet->data[2] == 0xff)
+              if(packet->data[20] == IPPROTO_ICMPV6 && packet->data[54] = ND_NEIGHBOR_SOLICIT)
 	        {
 	          route_neighborsol(packet);
 		  return;
 		}
+              n = route_ipv6(packet);
               break;
             case 0x0806:
               route_arp(packet);
