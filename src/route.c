@@ -17,21 +17,25 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.9 2001/05/28 08:21:43 guus Exp $
+    $Id: route.c,v 1.1.2.10 2001/06/04 11:14:35 guus Exp $
 */
 
 #include "config.h"
 
 #ifdef HAVE_FREEBSD
  #include <sys/param.h>
-#else
- #include <netinet/in.h>
 #endif
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <net/ethernet.h>
+#include <netinet/if_ether.h>
 #include <utils.h>
 #include <xalloc.h>
 #include <syslog.h>
 
 #include "net.h"
+#include "net/ethernet.h"
+#include "netinet/if_ether.h"
 #include "connection.h"
 #include "subnet.h"
 #include "route.h"
@@ -133,6 +137,71 @@ cp
   return NULL;
 }
 
+void route_arp(vpn_packet_t *packet)
+{
+  struct ether_arp *arp;
+  subnet_t *subnet;
+  unsigned char ipbuf[4];
+  ipv4_t dest;
+cp
+  /* This routine generates replies to ARP requests.
+     You don't need to set NOARP flag on the interface anymore (which is broken on FreeBSD).
+     Most of the code here is taken from choparp.c by Takamichi Tateoka (tree@mma.club.uec.ac.jp)
+   */
+
+  arp = (struct ether_arp *)(packet->data + 14);
+
+  /* Check if this is a valid ARP request */
+
+  if(ntohs(arp->arp_hrd) != ARPHRD_ETHER ||
+     ntohs(arp->arp_pro) != ETHERTYPE_IP ||
+     (int) (arp->arp_hln) != ETHER_ADDR_LEN ||
+     (int) (arp->arp_pln) != 4 ||
+     ntohs(arp->arp_op) != ARPOP_REQUEST )
+    {
+      if(debug_lvl > DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: received unknown type ARP request"));
+        } 
+      return;
+    }
+
+  /* Check if the IP address exists on the VPN */
+
+  dest = ntohl(*((unsigned long*)(arp->arp_tpa)));
+  subnet = lookup_subnet_ipv4(&dest);
+
+  if(!subnet)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: ARP request for unknown address %d.%d.%d.%d"),
+                 arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]);
+        }
+
+      return;
+    }
+
+  /* Check if it is for our own subnet */
+  
+  if(subnet->owner == myself)
+    return;	/* silently ignore */
+
+  memcpy(packet->data, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* copy destination address */
+  packet->data[ETHER_ADDR_LEN*2 - 1] ^= 0xFF;				/* mangle source address so it looks like it's not from us */
+
+  memcpy(ipbuf, arp->arp_tpa, 4);					/* save protocol addr */
+  memcpy(arp->arp_tpa, arp->arp_spa, 4);				/* swap destination and source protocol address */
+  memcpy(arp->arp_spa, ipbuf, 4);					/* ... */
+
+  memcpy(arp->arp_tha, arp->arp_sha, 10);				/* set target hard/proto addr */
+  memcpy(arp->arp_sha, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* add fake source hard addr */
+  arp->arp_op = htons(ARPOP_REPLY);
+  
+  accept_packet(packet);
+cp
+}
+
 void route_outgoing(vpn_packet_t *packet)
 {
   unsigned short int type;
@@ -153,6 +222,9 @@ cp
             case 0x86DD:
               cl = route_ipv6(packet);
               break;
+            case 0x0806:
+              route_arp(packet);
+              return;
             default:
               if(debug_lvl >= DEBUG_TRAFFIC)
                 {
