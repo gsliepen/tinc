@@ -80,7 +80,11 @@ void cp_trace()
 }
 #endif
 
-#ifdef HAVE_MINGW
+#if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
+#ifdef HAVE_CYGWIN
+#include <w32api/windows.h>
+#endif
+
 char *winerror(int err) {
 	static char buf[1024];
 
