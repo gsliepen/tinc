@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ethernet.h,v 1.1.2.1 2003/07/18 12:16:23 guus Exp $
+    $Id: ethernet.h,v 1.1.2.2 2003/07/18 12:21:02 guus Exp $
 */
 
 #ifndef __TINC_ETHERNET_H__
@@ -25,6 +25,10 @@
 
 #ifndef ETH_ALEN
 #define ETH_ALEN 6
+#endif
+
+#ifndef ETHER_ADDR_LEN
+#define ETHER_ADDR_LEN 6
 #endif
 
 #ifndef ARPHRD_ETHER

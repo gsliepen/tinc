@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.60 2003/07/18 12:16:24 guus Exp $
+    $Id: route.c,v 1.1.2.61 2003/07/18 12:21:03 guus Exp $
 */
 
 #include "system.h"
@@ -53,24 +53,6 @@
 #include "route.h"
 #include "subnet.h"
 #include "utils.h"
-
-/* Missing definitions */
-
-#ifndef ETHER_ADDR_LEN
-#define ETHER_ADDR_LEN 6
-#endif
-
-#ifndef ICMP_DEST_UNREACH
-#define ICMP_DEST_UNREACH 3
-#endif
-
-#ifndef ICMP_NET_UNKNOWN
-#define ICMP_NET_UNKNOWN 6
-#endif
-
-#ifndef ICMP_NET_UNREACH
-#define ICMP_NET_UNREACH 0
-#endif
 
 int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
