@@ -34,7 +34,8 @@ install: build
 
 	$(MAKE) install prefix=`pwd`/debian/tmp/usr
 	mkdir -p `pwd`/debian/tmp/etc/tinc
-	cp doc/tincd.conf.sample `pwd`/debian/tmp/etc/tinc/tincd.conf
+	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/tinc.conf
+	rm -f `pwd`/debian/tmp/usr/lib/tinc/libblowfish.so
 
 
 # Build architecture-independent files here.
