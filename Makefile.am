@@ -16,7 +16,7 @@ ChangeLog:
 	rm -f ChangeLog
 	rcs2log -u "zarq	Ivo Timmermans	itimmermans@bigfoot.com" \
 	  -u "guus	Guus Sliepen	guus@sliepen.warande.net" | \
-	  sed -e 's,/home/CVS/tinc/cabal/,,g' > $@
+	  sed -e 's,/home/CVS/tinc/,,g' > $@
 
 cvs-clean: maintainer-clean
 	for f in $(CVS_CREATED) `find -name Makefile.in` ; do\
