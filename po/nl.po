@@ -1,5 +1,5 @@
 # Dutch messages for tinc
-# Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+# Copyright (C) 1999, 2000 Ivo Timmermans
 # Ivo Timmermans <itimmermans@bigfoot.com>, 1999, 2000.
 #
 msgid ""
