@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.10 2000/05/21 22:04:56 guus Exp $
+# $Id: init.d,v 1.11 2000/05/21 22:08:21 guus Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -90,7 +90,7 @@ sub vpn_load {
 	warn "tinc: Invalid argument to VpnMask\n";
 	return 0;
     }
-    if(!defined($VPNMASK) {
+    if(!defined($VPNMASK)) {
         warn "tinc: No VpnMask specified. Using default 255.255.0.0\n";
         $VPNMASK="255.255.0.0";
     }
