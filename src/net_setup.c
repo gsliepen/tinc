@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.13 2002/03/25 13:54:49 guus Exp $
+    $Id: net_setup.c,v 1.1.2.14 2002/04/01 21:28:39 guus Exp $
 */
 
 #include "config.h"
@@ -184,34 +184,6 @@ cp
   return -1;
 }
 
-int check_rsa_key(RSA *rsa_key)
-{
-  char *test1, *test2, *test3;
-cp
-  if(rsa_key->p && rsa_key->q)
-    {
-      if(RSA_check_key(rsa_key) != 1)
-          return -1;
-    }
-  else
-    {
-      test1 = xmalloc(RSA_size(rsa_key));
-      test2 = xmalloc(RSA_size(rsa_key));
-      test3 = xmalloc(RSA_size(rsa_key));
-
-      if(RSA_public_encrypt(RSA_size(rsa_key), test1, test2, rsa_key, RSA_NO_PADDING) != RSA_size(rsa_key))
-          return -1;
-
-      if(RSA_private_decrypt(RSA_size(rsa_key), test2, test3, rsa_key, RSA_NO_PADDING) != RSA_size(rsa_key))
-          return -1;
-
-      if(memcmp(test1, test3, RSA_size(rsa_key)))
-          return -1;
-    }
-cp
-  return 0;
-}
-
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
@@ -262,12 +234,6 @@ cp
   if(read_rsa_public_key(myself->connection))
     return -1;
 cp
-
-  if(check_rsa_key(myself->connection->rsa_key))
-    {
-      syslog(LOG_ERR, _("Invalid public/private keypair!"));
-      return -1;
-    }
 
   if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
     asprintf(&myport, "655");
