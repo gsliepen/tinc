@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.13 2002/06/21 10:11:12 guus Exp $
+    $Id: graph.c,v 1.1.2.14 2002/07/10 11:27:06 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -63,6 +63,7 @@
 #include "edge.h"
 #include "connection.h"
 #include "process.h"
+#include "device.h"
 
 #include "system.h"
 
@@ -157,6 +158,9 @@ void sssp_bfs(void)
   avl_tree_t *todo_tree;
   int indirect;
   char *name;
+  char *address, *port;
+  char *envp[7];
+  int i;
 
   todo_tree = avl_alloc_tree(NULL, NULL);
 
@@ -253,32 +257,40 @@ void sssp_bfs(void)
       next = node->next;
       n = (node_t *)node->data;
 
-      if(n->status.visited)
+      if(n->status.visited ^ n->status.reachable)
       {
-        if(!n->status.reachable)
-	{
-          if(debug_lvl >= DEBUG_TRAFFIC)
+        n->status.reachable = !n->status.reachable;
+        if(debug_lvl >= DEBUG_TRAFFIC)
+	  if(n->status.reachable)
             syslog(LOG_DEBUG, _("Node %s (%s) became reachable"), n->name, n->hostname);
-          n->status.reachable = 1;
-	  asprintf(&name, "hosts/%s-up", n->name);
-	  execute_script(name);
-	  free(name);
-	}
-      }
-      else
-      {
-        if(n->status.reachable)
-	{
-          if(debug_lvl >= DEBUG_TRAFFIC)
-            syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"), n->name, n->hostname);
-          n->status.reachable = 0;
-	  n->status.validkey = 0;
-	  n->status.waitingforkey = 0;
-	  n->sent_seqno = 0;
-	  asprintf(&name, "hosts/%s-down", n->name);
-	  execute_script(name);
-	  free(name);
-	}
+	  else
+	    syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"), n->name, n->hostname);
+
+          if(!n->status.reachable)
+            {
+              n->status.reachable = 0;
+	      n->status.validkey = 0;
+	      n->status.waitingforkey = 0;
+	      n->sent_seqno = 0;
+            }
+
+	asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
+	asprintf(&envp[1], "DEVICE=%s", device?device:"");
+	asprintf(&envp[2], "INTERFACE=%s", interface?interface:"");
+	asprintf(&envp[3], "NODE=%s", n->name);
+	sockaddr2str(&n->address, &address, &port);
+        asprintf(&envp[4], "REMOTEADDRESS=%s", address);
+	asprintf(&envp[5], "REMOTEPORT=%s", port);
+	envp[6] = NULL;
+
+	asprintf(&name, n->status.reachable?"hosts/%s-up":"hosts/%s-down", n->name);
+	execute_script(name, envp);
+	free(name);
+        free(address);
+	free(port);
+
+	for(i = 0; i < 7; i++)
+	  free(envp[i]);
       }
     }
 }

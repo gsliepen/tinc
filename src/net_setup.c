@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.20 2002/06/21 10:11:12 guus Exp $
+    $Id: net_setup.c,v 1.1.2.21 2002/07/10 11:27:06 guus Exp $
 */
 
 #include "config.h"
@@ -523,6 +523,8 @@ cp
 */
 int setup_network_connections(void)
 {
+  char *envp[4];
+  int i;
 cp
   now = time(NULL);
 
@@ -547,7 +549,15 @@ cp
     return -1;
 
   /* Run tinc-up script to further initialize the tap interface */
-  execute_script("tinc-up");
+  asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
+  asprintf(&envp[1], "DEVICE=%s", device?device:"");
+  asprintf(&envp[2], "INTERFACE=%s", interface?interface:"");
+  envp[3] = NULL;
+
+  execute_script("tinc-up", envp);
+
+  for(i = 0; i < 4; i++)
+    free(envp[i]);
 
   if(setup_myself() < 0)
     return -1;
@@ -564,6 +574,7 @@ void close_network_connections(void)
 {
   avl_node_t *node, *next;
   connection_t *c;
+  char *envp[4];
   int i;
 cp
   for(node = connection_tree->head; node; node = next)
@@ -591,7 +602,15 @@ cp
   exit_nodes();
   exit_connections();
 
-  execute_script("tinc-down");
+  asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
+  asprintf(&envp[1], "DEVICE=%s", device?device:"");
+  asprintf(&envp[2], "INTERFACE=%s", interface?interface:"");
+  envp[3] = NULL;
+
+  execute_script("tinc-down", envp);
+
+  for(i = 0; i < 4; i++)
+    free(envp[i]);
 
   close_device();
 cp

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.41 2002/06/21 10:11:13 guus Exp $
+    $Id: process.c,v 1.1.2.42 2002/07/10 11:27:06 guus Exp $
 */
 
 #include "config.h"
@@ -207,35 +207,14 @@ cp
   Execute the program name, with sane environment.  All output will be
   redirected to syslog.
 */
-void _execute_script(const char *scriptname)  __attribute__ ((noreturn));
-void _execute_script(const char *scriptname)
+void _execute_script(const char *scriptname, char **envp)  __attribute__ ((noreturn));
+void _execute_script(const char *scriptname, char **envp)
 {
   char *s;
 cp
-#ifdef HAVE_UNSETENV
-  unsetenv("NETNAME");
-  unsetenv("DEVICE");
-  unsetenv("INTERFACE");
-#endif
-
-  if(netname)
-    {
-      asprintf(&s, "NETNAME=%s", netname);
-      putenv(s);	/* Don't free s! see man 3 putenv */
-    }
-
-  if(device)
-    {
-      asprintf(&s, "DEVICE=%s", device);
-      putenv(s);	/* Don't free s! see man 3 putenv */
-    }
-
-  if(interface)
-    {
-      asprintf(&s, "INTERFACE=%s", interface);
-      putenv(s);	/* Don't free s! see man 3 putenv */
-    }
-
+  while(*envp)
+    putenv(*envp++);
+      
   chdir("/");
   
   /* Close all file descriptors */
@@ -253,7 +232,7 @@ cp
 /*
   Fork and execute the program pointed to by name.
 */
-int execute_script(const char *name)
+int execute_script(const char *name, char **envp)
 {
   pid_t pid;
   int status;
@@ -313,7 +292,7 @@ cp
 cp
   /* Child here */
 
-  _execute_script(scriptname);
+  _execute_script(scriptname, envp);
 }
 
 
