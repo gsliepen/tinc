@@ -4,4 +4,7 @@ tinc for Debian
 The manual for tinc is also available as info pages, type `info tinc'
 to read it.
 
- -- Ivo Timmermans <itimmermans@bigfoot.com>, Fri, 21 Apr 2000 17:07:50 +0200
+The system startup script for tinc, /etc/init.d/tinc, uses the file
+/etc/tinc/nets.boot to find out which networks have to be started.
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>, Wed, 31 May 2000, 19:56:05 +0200
