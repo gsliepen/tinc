@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.12 2000/11/22 22:18:03 guus Exp $
+    $Id: process.c,v 1.1.2.13 2000/11/24 12:44:39 zarq Exp $
 */
 
 #include "config.h"
@@ -87,8 +87,7 @@ int fcloseall(void)
 }
 #endif
 
-#ifndef HAVE_DAEMON
-int daemon(int nochdir, int noclose)
+int become_daemon(void)
 {
   pid_t pid;
   int fd;
@@ -122,13 +121,9 @@ int daemon(int nochdir, int noclose)
 
   kill(ppid, SIGTERM);
 
-  if(!nochdir)
-    chdir("/");
-
-  if(!noclose)
-    fcloseall();
+  chdir("/");
+  fcloseall();
 }
-#endif
 
 /*
   Close network connections, and terminate neatly
@@ -205,7 +200,8 @@ cp
   setup_signals();
 
   if(do_detach)
-    daemon(0, 0);
+    if(become_daemon() < 0)
+      return -1;
 
   if(write_pidfile())
     return -1;
