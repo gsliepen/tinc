@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.9 2000/06/26 20:30:21 guus Exp $
+    $Id: protocol.c,v 1.28.4.10 2000/06/27 12:58:04 guus Exp $
 */
 
 #include "config.h"
@@ -403,6 +403,16 @@ cp
     {
        syslog(LOG_ERR, _("Got bad BASIC_INFO from %s"),
               cl->hostname);
+       if(cl->status.outgoing)
+         {
+           /* If we get here, it means that our uplink uses the wrong protocol.
+              If we don't do anything, we will reconnect every 5 seconds. Pretty dumb.
+              So we disable the outgoing flag, so that we won't reconnect anymore.
+              This still allows other tinc daemons to connect to us.
+            */
+           syslog(LOG_ERR, _("Warning: disabling uplink!"));
+           cl->status.outgoing = 0;
+         }
        return -1;
     }  
 
@@ -889,7 +899,7 @@ cp
   ik->status.validkey = 0;
   ik->status.waitingforkey = 0;
 
-  notify_others(cl, ik, send_key_changed);
+  notify_others(ik, cl, send_key_changed);
 cp
   return 0;
 }
