@@ -1,4 +1,8 @@
-version 1.0pre1              May  x 2000
+version 1.0pre2              xx xx xx
+ * Internationalized, Dutch translation available.
+ * Many sanity checks on the meta protocol added
+
+version 1.0pre1              May 12 2000
  * New meta-protocol
  * Various other bugfixes
  * Documentation updates
