@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.33 2000/05/30 12:31:41 zarq Exp $
+    $Id: net.c,v 1.34 2000/05/30 12:38:15 zarq Exp $
 */
 
 #include "config.h"
@@ -861,7 +861,7 @@ cp
      that are still connected to us. */
   for(p = conn_list; p != NULL; p = p->next)
     {
-      if(!p->status.remove)
+      if(!p->status.remove && p->status.meta)
 	for(q = conn_list; q != NULL; q = q->next)
 	  if(q->status.remove)
 	    send_del_host(p, q);
