@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.99 2001/07/15 18:07:31 guus Exp $
+    $Id: protocol.c,v 1.28.4.100 2001/07/19 12:29:40 guus Exp $
 */
 
 #include "config.h"
@@ -173,7 +173,6 @@ cp
 
 int id_h(connection_t *cl)
 {
-  connection_t *old;
   char name[MAX_STRING_SIZE];
 cp
   if(sscanf(cl->buffer, "%*d "MAX_STRING" %d %lx %hd", name, &cl->protocol_version, &cl->options, &cl->port) != 4)
@@ -206,17 +205,6 @@ cp
     
   cl->name = xstrdup(name);
 
-  /* Make sure we don't make an outgoing connection to a host that is already in our connection list */
-
-  if(cl->status.outgoing)
-    if((old = lookup_id(cl->name)))
-      {
-        if(debug_lvl >= DEBUG_CONNECTIONS)
-          syslog(LOG_NOTICE, _("We are already connected to %s."), cl->name);
-        old->status.outgoing = 1;
-        return -1;
-      }
-    
   /* Load information about peer */
 
   if(read_host_config(cl))
@@ -315,7 +303,7 @@ cp
 
   /* And send him all the hosts and their subnets we know... */
   
-  for(node = connection_tree->head; node; node = node->next)
+  for(node = active_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
       
@@ -336,7 +324,7 @@ cp
               send_add_subnet(cl, subnet);
             }
         }
-    }  
+    }
 cp
   return 0;
 }
@@ -850,7 +838,7 @@ cp
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
-                   old->name, old->hostname, name, new->hostname);
+                   old->name, old->hostname, cl->name, cl->hostname);
           free_connection(new);
           return 0;
         }
@@ -864,10 +852,10 @@ cp
         }
     }
 
-  /* Hook it up into the connection */
+  /* Hook it up into the active tree */
 
   new->name = xstrdup(name);
-  connection_add(new);
+  active_add(new);
   id_add(new);
 
   /* Tell the rest about the new host */
@@ -938,7 +926,7 @@ cp
   if(!(old = lookup_id(name)))
     {
       syslog(LOG_ERR, _("Got DEL_HOST from %s (%s) for %s which is not in our connection list"),
-             name, cl->name, cl->hostname);
+             cl->name, cl->hostname, name);
       return -1;
     }
   

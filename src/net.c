@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.120 2001/07/15 18:07:31 guus Exp $
+    $Id: net.c,v 1.35.4.121 2001/07/19 12:29:40 guus Exp $
 */
 
 #include "config.h"
@@ -568,7 +568,7 @@ cp
 */
 int setup_outgoing_connection(char *name)
 {
-  connection_t *ncn;
+  connection_t *ncn, *old;
   struct hostent *h;
   config_t const *cfg;
 cp
@@ -578,6 +578,16 @@ cp
       return -1;
     }
 
+  /* Make sure we don't make an outgoing connection to a host that is already in our connection list */
+
+  if((old = lookup_id(name)))
+    {
+      if(debug_lvl >= DEBUG_CONNECTIONS)
+        syslog(LOG_NOTICE, _("We are already connected to %s."), name);
+      old->status.outgoing = 1;
+      return 0;
+    }
+    
   ncn = new_connection();
   asprintf(&ncn->name, "%s", name);
 
