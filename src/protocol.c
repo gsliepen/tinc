@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.58 2000/11/04 22:57:32 guus Exp $
+    $Id: protocol.c,v 1.28.4.59 2000/11/07 22:02:14 guus Exp $
 */
 
 #include "config.h"
@@ -877,6 +877,11 @@ cp
   new->cipher_pkttype = EVP_bf_cfb();
   new->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 
+  /* Okay this is a bit ugly... it would be better to setup UDP sockets dynamically, or
+   * perhaps just one UDP socket... but then again, this has benefits too...
+   */
+   
+  setup_vpn_connection(new);
 cp
   return 0;
 }
