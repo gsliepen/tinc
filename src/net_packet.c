@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.25 2002/11/14 22:09:03 guus Exp $
+    $Id: net_packet.c,v 1.1.2.26 2003/03/28 13:41:49 guus Exp $
 */
 
 #include "config.h"
@@ -80,6 +80,7 @@
 
 int keylifetime = 0;
 int keyexpires = 0;
+EVP_CIPHER_CTX packet_ctx;
 
 #define MAX_SEQNO 1073741824
 
@@ -93,7 +94,6 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	vpn_packet_t *outpkt = pkt[0];
 	int outlen, outpad;
 	long int complen = MTU + 12;
-	EVP_CIPHER_CTX ctx;
 	char hmac[EVP_MAX_MD_SIZE];
 
 	cp();
@@ -118,12 +118,12 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->cipher) {
 		outpkt = pkt[nextpkt++];
 
-		EVP_DecryptInit(&ctx, myself->cipher, myself->key,
+		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key,
 						myself->key + myself->cipher->key_len);
-		EVP_DecryptUpdate(&ctx, (char *) &outpkt->seqno, &outlen,
+		EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
 						  (char *) &inpkt->seqno, inpkt->len);
-		EVP_DecryptFinal(&ctx, (char *) &outpkt->seqno + outlen, &outpad);
-
+		EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
+		
 		outpkt->len = outlen + outpad;
 		inpkt = outpkt;
 	}
@@ -196,7 +196,6 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int origlen;
 	int outlen, outpad;
 	long int complen = MTU + 12;
-	EVP_CIPHER_CTX ctx;
 	vpn_packet_t *copy;
 	static int priority = 0;
 	int origpriority;
@@ -260,10 +259,10 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(n->cipher) {
 		outpkt = pkt[nextpkt++];
 
-		EVP_EncryptInit(&ctx, n->cipher, n->key, n->key + n->cipher->key_len);
-		EVP_EncryptUpdate(&ctx, (char *) &outpkt->seqno, &outlen,
+		EVP_EncryptInit_ex(&packet_ctx, n->cipher, NULL, n->key, n->key + n->cipher->key_len);
+		EVP_EncryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
 						  (char *) &inpkt->seqno, inpkt->len);
-		EVP_EncryptFinal(&ctx, (char *) &outpkt->seqno + outlen, &outpad);
+		EVP_EncryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
 
 		outpkt->len = outlen + outpad;
 		inpkt = outpkt;

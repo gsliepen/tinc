@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.29 2003/03/14 09:43:10 zarq Exp $
+    $Id: net_setup.c,v 1.1.2.30 2003/03/28 13:41:49 guus Exp $
 */
 
 #include "config.h"
@@ -87,7 +87,7 @@ int read_rsa_public_key(connection_t *c)
 
 	if(!c->rsa_key) {
 		c->rsa_key = RSA_new();
-		RSA_blinding_on(c->rsa_key, NULL);
+//		RSA_blinding_on(c->rsa_key, NULL);
 	}
 
 	/* First, check for simple PublicKey statement */
@@ -135,7 +135,7 @@ int read_rsa_public_key(connection_t *c)
 			fclose(fp);
 
 			if(c->rsa_key) {
-				RSA_blinding_on(c->rsa_key, NULL);
+//				RSA_blinding_on(c->rsa_key, NULL);
 				return 0;
 			}
 
@@ -170,7 +170,7 @@ int read_rsa_public_key(connection_t *c)
 
 	if(fp) {
 		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-		RSA_blinding_on(c->rsa_key, NULL);
+//		RSA_blinding_on(c->rsa_key, NULL);
 		fclose(fp);
 	}
 
@@ -193,7 +193,7 @@ int read_rsa_private_key(void)
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		myself->connection->rsa_key = RSA_new();
-		RSA_blinding_on(myself->connection->rsa_key, NULL);
+//		RSA_blinding_on(myself->connection->rsa_key, NULL);
 		BN_hex2bn(&myself->connection->rsa_key->d, key);
 		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		free(key);
@@ -404,6 +404,8 @@ int setup_myself(void)
 		keylifetime = 3600;
 
 	keyexpires = now + keylifetime;
+	
+	EVP_CIPHER_CTX_init(&packet_ctx);
 
 	/* Check if we want to use message authentication codes... */
 

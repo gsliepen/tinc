@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.55 2002/09/15 12:26:24 guus Exp $
+    $Id: net.h,v 1.9.4.56 2003/03/28 13:41:49 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <openssl/evp.h>
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -128,6 +129,7 @@ extern int do_prune;
 extern int do_purge;
 extern char *myport;
 extern time_t now;
+extern EVP_CIPHER_CTX packet_ctx;
 
 extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(int);
