@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.22 2001/11/16 00:23:28 zarq Exp $
+    $Id: connection.h,v 1.1.2.23 2001/11/16 12:01:48 zarq Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -45,6 +45,9 @@
 
 #include "node.h"
 #include "edge.h"
+
+#include <config.h>
+#include <dropin.h>
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
@@ -109,7 +112,7 @@ extern connection_t *new_connection(void);
 extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
-extern connection_t *lookup_connection(ipv4_t, short unsigned int);
+extern connection_t *lookup_connection(struct addrinfo *);
 extern void dump_connections(void);
 extern int read_connection_config(connection_t *);
 
