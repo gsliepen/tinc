@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.105 2001/09/01 12:02:39 guus Exp $
+    $Id: protocol.c,v 1.28.4.106 2001/09/24 14:12:00 guus Exp $
 */
 
 #include "config.h"
@@ -263,6 +263,7 @@ cp
 
   cl->allow_request = ALL;
   cl->nexthop = cl;
+  cl->lastbutonehop = myself;
   cl->cipher_pkttype = EVP_bf_cbc();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 
@@ -775,19 +776,19 @@ cp
 int send_add_host(connection_t *cl, connection_t *other)
 {
 cp
-  return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
-                      other->name, other->address, other->port, other->options);
+  return send_request(cl, "%d %s %lx:%d %lx %s", ADD_HOST,
+                      other->name, other->address, other->port, other->options, other->lastbutonehop->name);
 }
 
 int add_host_h(connection_t *cl)
 {
   connection_t *old, *new, *p;
-  char name[MAX_STRING_SIZE];
+  char name[MAX_STRING_SIZE], lastbutone[MAX_STRING_SIZE];
   avl_node_t *node;
 cp
   new = new_connection();
 
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx", name, &new->address, &new->port, &new->options) != 4)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx "MAX_STRING, name, &new->address, &new->port, &new->options, lastbutone) != 5)
     {
        syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->name, cl->hostname);
        return -1;
@@ -802,19 +803,34 @@ cp
       return -1;
     }
 
+  if(check_id(lastbutone))
+    {
+      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid lastbutone name"), cl->name, cl->hostname);
+      free_connection(new);
+      return -1;
+    }
+
   /* Check if somebody tries to add ourself */
 
   if(!strcmp(name, myself->name))
     {
-      syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"), cl->name, cl->hostname);
-      sighup = 1;
+      syslog(LOG_ERR, _("Got ADD_HOST from %s (%s) for ourself!"), cl->name, cl->hostname);
       free_connection(new);
-      return 0;
+      return -1;
     }
     
   /* Fill in more of the new connection structure */
 
   new->hostname = hostlookup(htonl(new->address));
+
+  new->lastbutonehop = lookup_id(lastbutone);
+  
+  if(!new->lastbutonehop)
+    {
+      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): unknown lastbutone"), cl->name, cl->hostname);
+      free_connection(new);
+      return -1;
+    }
 
   /* Check if the new host already exists in the connnection list */
 
@@ -864,20 +880,20 @@ cp
 int send_del_host(connection_t *cl, connection_t *other)
 {
 cp
-  return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
-                      other->name, other->address, other->port, other->options);
+  return send_request(cl, "%d %s %lx:%d %lx %s", DEL_HOST,
+                      other->name, other->address, other->port, other->options, other->lastbutonehop->name);
 }
 
 int del_host_h(connection_t *cl)
 {
-  char name[MAX_STRING_SIZE];
+  char name[MAX_STRING_SIZE], lastbutone[MAX_STRING_SIZE];
   ipv4_t address;
   port_t port;
   long int options;
   connection_t *old, *p;
   avl_node_t *node;
 cp
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx", name, &address, &port, &options) != 4)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx "MAX_STRING, name, &address, &port, &options, lastbutone) != 5)
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
              cl->name, cl->hostname);
@@ -892,14 +908,19 @@ cp
       return -1;
     }
 
+  if(check_id(lastbutone))
+    {
+      syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s): invalid lastbutone name"), cl->name, cl->hostname);
+      return -1;
+    }
+
   /* Check if somebody tries to delete ourself */
 
   if(!strcmp(name, myself->name))
     {
-      syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) for ourself, restarting"),
+      syslog(LOG_ERR, _("Got DEL_HOST from %s (%s) for ourself!"),
              cl->name, cl->hostname);
-      sighup = 1;
-      return 0;
+      return -1;
     }
 
   /* Check if the deleted host already exists in the connnection list */
@@ -913,7 +934,7 @@ cp
   
   /* Check if the rest matches */
   
-  if(address!=old->address || port!=old->port || options!=old->options || cl!=old->nexthop)
+  if(address!=old->address || port!=old->port || options!=old->options || cl!=old->nexthop || strcmp(lastbutone, old->lastbutonehop->name))
     {
       syslog(LOG_WARNING, _("Got DEL_HOST from %s (%s) for %s which doesn't match"), cl->name, cl->hostname, old->name);
       return 0;

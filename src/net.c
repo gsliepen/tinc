@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.130 2001/09/24 13:31:15 guus Exp $
+    $Id: net.c,v 1.35.4.131 2001/09/24 14:12:00 guus Exp $
 */
 
 #include "config.h"
@@ -230,6 +230,7 @@ cp
 */
 void send_packet(connection_t *cl, vpn_packet_t *packet)
 {
+  connection_t *hop;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
@@ -254,15 +255,28 @@ cp
       return;
     }
 
-  /* Check if it has to go via TCP or UDP... */
-cp
-  if((cl->options | myself->options) & OPTION_TCPONLY)
+  if(myself->options & OPTION_TCPONLY)
     {
-      if(send_tcppacket(cl, packet))
-        terminate_connection(cl, 1);
+      if(send_tcppacket(cl->nexthop, packet))
+        terminate_connection(cl->nexthop, 1);
     }
   else
-    send_udppacket(cl, packet);
+    {
+      if(myself->options & OPTION_INDIRECT)
+        send_udppacket(cl->nexthop, packet);
+      else
+        {
+          hop = cl;
+
+          while(hop->options & OPTION_INDIRECT)
+            if(hop->lastbutonehop == myself)
+              break;
+            else
+              hop = hop->lastbutonehop;
+
+          send_udppacket(hop, packet);
+        }
+    }
 }
 
 /* Broadcast a packet to all active direct connections */
