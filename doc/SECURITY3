@@ -1,0 +1,79 @@
+This is the security documentation for tinc, a Virtual Private Network daemon.
+
+   Copyright 2001-2003 Guus Sliepen <guus@sliepen.eu.org>,
+             2001-2003 Wessel Dankers <wsl@nl.linux.org>
+
+   Permission is granted to make and distribute verbatim copies of
+   this documentation provided the copyright notice and this
+   permission notice are preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+   this documentation under the conditions for verbatim copying,
+   provided that the entire resulting derived work is distributed
+   under the terms of a permission notice identical to this one.
+
+   $Id: SECURITY3,v 1.1 2003/10/01 09:43:01 guus Exp $
+
+Proposed authentication scheme for tinc 2.0
+-------------------------------------------
+
+daemon  message
+--------------------------------------------------------------------------
+A       <attempts connection>
+
+B       <accepts connection>
+
+A       ID "A" <version> <cipher> <digest> <compression>
+
+B       ID "B" <version> <cipher> <digest> <compression>
+
+A       META_KEY <Diffie-Hellman public key> <nonce> <signature>
+
+        Where signature is that of the public key and nonce, using A's
+	private RSA key.
+
+B       META_KEY <Diffie-Hellman public key> <nonce> <signature>
+
+Both sides now use Diffie-Hellman to compute the shared secret key. Because
+only A and B can decrypt the respective public keys, only A and B can know this
+shared key.
+
+From the shared key the following things will be derived:
+
+A's symmetric cipher key
+A's symmetric cipher IV
+A's HMAC key
+A's verification data
+B's symmetric cipher key
+B's symmetric cipher IV
+B's HMAC key
+B's verification data
+
+From now on:
+ - A will symmetrically encrypt outgoing traffic using A's symmetric cipher key
+ - B will symmetrically encrypt outgoing traffic using B's symmetric cipher key
+
+A       ACK <A's verification data> <port> <weight> <options>
+
+B       ACK <B's verification data> <port> <weight> <options>
+
+After ACKs with the correct verification messages have been recieved, both ends have proved
+their identity.
+-------------------------------------------------------------------------
+
+Changes from the protocol used in tinc 1.0pre5 up to 1.0.1:
+
+Instead of directly sending the keys which will be used for symmetric
+encryption, a Diffie-Hellman key exchange will be done.  This prevents an
+attacker from being able to send and use his own key if he can't read the key
+that is sent to him.  It also allows us to have perfect forward security, since
+only public keys are exchanged in the Diffie-Hellman key exchange, so after the
+RSA keys have been compromised it still is not possible to recover the shared
+key from recorded authentications from the past.
+
+The CHALLENGE/RESPONSE messages have been replaced by verification data in the
+ACK message, which saves two round trips.
+
+The ID messages will also contain information about the cipher and digest
+algorithm and compression to use for encrypting the TCP connections.
+
