@@ -4,20 +4,21 @@ AUTOMAKE_OPTIONS = gnits
 
 SUBDIRS = m4 lib cipher src doc redhat
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS =
 
 EXTRA_DIST = TODO
 
-CVS_CREATED = configure aclocal.m4 config.h.in
+CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
+ config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
+ stamp-h.in m4/Makefile.am
 
 ChangeLog:
-	rcs2log -u "zarq	Ivo Timmermans	itimmermans@bigfoot.com" | \
+	rm -f ChangeLog
+	rcs2log -u "zarq	Ivo Timmermans	itimmermans@bigfoot.com" \
+	  -u "guus	Guus Sliepen	guus@sliepen.warande.net" | \
 	  sed -e 's,/home/CVS/tinc/cabal/,,g' > $@
 
 cvs-clean: maintainer-clean
 	for f in $(CVS_CREATED) `find -name Makefile.in` ; do\
-	  rm "$$f"; \
-	  if [ $$? -ne 0 ] ; then \
-	    echo $$f bestaat niet; \
-	  fi; \
+	  rm -f "$$f"; \
 	done
