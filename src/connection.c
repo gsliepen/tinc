@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.5 2000/11/22 22:18:03 guus Exp $
+    $Id: connection.c,v 1.1.2.6 2000/11/24 23:13:01 guus Exp $
 */
 
 #include "config.h"
@@ -71,11 +71,8 @@ void init_connections(void)
 
 connection_t *new_connection(void)
 {
-  connection_t *p = (connection_t *)xmalloc(sizeof(*p));
+  connection_t *p = (connection_t *)xmalloc_and_zero(sizeof(*p));
 cp
-  /* initialise all those stupid pointers at once */
-  memset(p, '\0', sizeof(*p));
-
   p->subnet_tree = new_rbltree((rbl_compare_t)subnet_compare, NULL);
 cp
   return p;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.11 2000/11/22 19:14:08 guus Exp $
+    $Id: rbl.c,v 1.1.2.12 2000/11/24 23:12:59 guus Exp $
 */
 
 #include "config.h"
@@ -88,11 +88,67 @@ rbl_t *rbl_search_closest_rbl(rbltree_t *tree, void *data)
   return rbl;
 }
 
+/* Search closest match in the tree */
+rbl_t *rbl_search_closest_greater_rbl(rbltree_t *tree, void *data)
+{
+  rbl_t *rbl;
+
+  rbl = rbl_search_closest_rbl(tree, data);
+
+  if(rbl)
+    {
+      if(tree->compare(data, rbl->data) > 0)
+        rbl = rbl->next;
+    }
+    
+  return rbl;
+}
+
+/* Search closest match in the tree */
+rbl_t *rbl_search_closest_smaller_rbl(rbltree_t *tree, void *data)
+{
+  rbl_t *rbl;
+
+  rbl = rbl_search_closest_rbl(tree, data);
+
+  if(rbl)
+    {
+      if(tree->compare(data, rbl->data) < 0)
+        rbl = rbl->next;
+    }
+    
+  return rbl;
+}
+
 void *rbl_search_closest(rbltree_t *tree, void *data)
 {
   rbl_t *rbl;
   
   rbl = rbl_search_closest_rbl(tree, data);
+
+  if(rbl)
+    return rbl->data;
+  else
+    return NULL;
+}
+
+void *rbl_search_closest_greater(rbltree_t *tree, void *data)
+{
+  rbl_t *rbl;
+  
+  rbl = rbl_search_closest_greater_rbl(tree, data);
+
+  if(rbl)
+    return rbl->data;
+  else
+    return NULL;
+}
+
+void *rbl_search_closest_smaller(rbltree_t *tree, void *data)
+{
+  rbl_t *rbl;
+  
+  rbl = rbl_search_closest_smaller_rbl(tree, data);
 
   if(rbl)
     return rbl->data;

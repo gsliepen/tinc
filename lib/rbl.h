@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.h,v 1.1.2.7 2000/11/20 19:12:10 guus Exp $
+    $Id: rbl.h,v 1.1.2.8 2000/11/24 23:13:00 guus Exp $
 */
 
 #ifndef __RBL_H__
@@ -83,8 +83,12 @@ extern void free_rbl(rbl_t *);
 
 extern void *rbl_search(rbltree_t *, void *);
 extern void *rbl_search_closest(rbltree_t *, void *);
+extern void *rbl_search_closest_greater(rbltree_t *, void *);
+extern void *rbl_search_closest_smaller(rbltree_t *, void *);
 extern rbl_t *rbl_search_rbl(rbltree_t *, void *);
 extern rbl_t *rbl_search_closest_rbl(rbltree_t *, void *);
+extern rbl_t *rbl_search_closest_greater_rbl(rbltree_t *, void *);
+extern rbl_t *rbl_search_closest_smaller_rbl(rbltree_t *, void *);
 extern rbl_t *rbl_insert(rbltree_t *, void *);
 extern rbl_t *rbl_unlink(rbltree_t *, void *);
 extern void rbl_delete(rbltree_t *, void *);

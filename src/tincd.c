@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.34 2000/11/22 19:14:09 guus Exp $
+    $Id: tincd.c,v 1.10.4.35 2000/11/24 23:13:07 guus Exp $
 */
 
 #include "config.h"
@@ -315,8 +315,6 @@ main(int argc, char **argv, char **envp)
 
   if(read_server_config())
     return 1;
-
-  init_processes();
 
   if(detach())
     exit(0);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.80 2000/11/20 23:29:46 guus Exp $
+    $Id: net.c,v 1.35.4.81 2000/11/24 23:13:02 guus Exp $
 */
 
 #include "config.h"
@@ -806,8 +806,6 @@ cp
   myself->status.active = 1;
 
   syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
-
-  child_pids = list_new();
 cp
   return 0;
 }
@@ -869,12 +867,12 @@ cp
   if(setup_tap_fd() < 0)
     return -1;
 
-  if(setup_myself() < 0)
-    return -1;
-
   /* Run tinc-up script to further initialize the tap interface */
   execute_script("tinc-up");
   
+  if(setup_myself() < 0)
+    return -1;
+
   if(!(cfg = get_config_val(config, config_connectto)))
     /* No upstream IP given, we're listen only. */
     return 0;
@@ -925,8 +923,6 @@ cp
   execute_script("tinc-down");
 
   destroy_connection_tree();
-
-  syslog(LOG_NOTICE, _("Terminating"));
 cp
   return;
 }
@@ -1417,8 +1413,6 @@ cp
           if(FD_ISSET(tap_fd, &fset))
 	    handle_tap_input();
         }
-
-      check_children();
     }
 cp
 }

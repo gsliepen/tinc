@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.14 2000/11/20 22:13:13 guus Exp $
+    $Id: subnet.c,v 1.1.2.15 2000/11/24 23:13:06 guus Exp $
 */
 
 #include "config.h"
@@ -140,6 +140,7 @@ void subnet_del(subnet_t *subnet)
 {
 cp
   rbl_delete(subnet->owner->subnet_tree, subnet);
+cp
   rbl_delete(subnet_tree, subnet);
 cp
 }
@@ -257,21 +258,35 @@ cp
 
 subnet_t *lookup_subnet_mac(mac_t address)
 {
-  subnet_t subnet;
+  subnet_t subnet, *p;
 cp
   subnet.type = SUBNET_MAC;
   subnet.net.mac.address = address;
-  return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
+
+  p = (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
+cp
+  if(p && !memcmp(&address, &p->net.mac.address, sizeof(mac_t)))
+    return p;
+  else
+    return NULL;
 }
 
 subnet_t *lookup_subnet_ipv4(ipv4_t address)
 {
-  subnet_t subnet;
+  subnet_t subnet, *p;
 cp
   subnet.type = SUBNET_IPV4;
   subnet.net.ipv4.address = address;
   subnet.net.ipv4.mask = 0xFFFFFFFF;
-  return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
+
+  p = (subnet_t *)rbl_search_closest_greater(subnet_tree, &subnet);
+
+  /* Check if the found subnet REALLY matches */
+cp
+  if(p && ((address & p->net.ipv4.mask) == p->net.ipv4.address))
+    return p;
+  else
+    return NULL;
 }
 
 subnet_t *lookup_subnet_ipv6(ipv6_t address)
@@ -281,6 +296,9 @@ cp
   subnet.type = SUBNET_IPV6;
   subnet.net.ipv6.address = address;
   memset(&subnet.net.ipv6.mask, 0xFF, 16);
+  
+/* FIXME: check if it REALLY matches */
+
   return (subnet_t *)rbl_search_closest(subnet_tree, &subnet);
 }
 

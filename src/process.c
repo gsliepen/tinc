@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.13 2000/11/24 12:44:39 zarq Exp $
+    $Id: process.c,v 1.1.2.14 2000/11/24 23:13:05 guus Exp $
 */
 
 #include "config.h"
@@ -47,24 +47,12 @@
 
 #include "system.h"
 
-/* A list containing all our children */
-list_t *child_pids = NULL;
-
 /* If zero, don't detach from the terminal. */
 int do_detach = 1;
-
-static pid_t ppid;
 
 extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
-
-void init_processes(void)
-{
-cp
-  child_pids = list_new();
-cp
-}
 
 void memory_full(int size)
 {
@@ -87,44 +75,6 @@ int fcloseall(void)
 }
 #endif
 
-int become_daemon(void)
-{
-  pid_t pid;
-  int fd;
-  
-  ppid = getpid();
-
-  if((pid = fork()) < 0)
-    {
-      perror("fork");
-      return -1;
-    }
-  if(pid) /* parent process */
-    {
-      signal(SIGTERM, parent_exit);
-      sleep(600); /* wait 10 minutes */
-      exit(1);
-    }
-
-  if((fd = open("/dev/tty", O_RDWR)) >= 0)
-    {
-      if(ioctl(fd, TIOCNOTTY, NULL))
-        {
-          perror("ioctl");
-          return -1;
-        }
-      close(fd);
-    }
-
-  if(setsid() < 0)
-    return -1;
-
-  kill(ppid, SIGTERM);
-
-  chdir("/");
-  fcloseall();
-}
-
 /*
   Close network connections, and terminate neatly
 */
@@ -137,8 +87,9 @@ cp
     syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
 	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
 
+  syslog(LOG_NOTICE, _("Terminating"));
+
   closelog();
-  kill(ppid, SIGTERM);
   exit(c);
 }
 
@@ -199,12 +150,12 @@ int detach(void)
 cp
   setup_signals();
 
-  if(do_detach)
-    if(become_daemon() < 0)
-      return -1;
-
   if(write_pidfile())
     return -1;
+
+  if(do_detach)
+    if(daemon(0, 0) < 0)
+      return -1;
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
@@ -244,62 +195,21 @@ cp
     }
 #endif
 
-  if(chdir(confbase) < 0)
-    /* This cannot fail since we already read config files from this
-       directory. - Guus */
-    /* Yes this can fail, somebody could have removed this directory
-       when we didn't pay attention. - Ivo */
-    {
-      if(chdir("/") < 0)
-	/* Now if THIS fails, something wicked is going on. - Ivo */
-	syslog(LOG_ERR, _("Couldn't chdir to `/': %m"));
-
-      /* Continue anyway. */
-    }
+  chdir("/");
   
   asprintf(&scriptname, "%s/%s", confbase, name);
 
   /* Close all file descriptors */
-  closelog();
+  closelog();		/* <- this means we cannot use syslog() here anymore! */
   fcloseall();
 
-  /* Open standard input */
-  if((fd = open("/dev/null", O_RDONLY)) < 0)
-    {
-      syslog(LOG_ERR, _("Opening `/dev/null' failed: %m"));
-      error = 1;
-    }
-  if(dup2(fd, 0) != 0)
-    {
-      syslog(LOG_ERR, _("Couldn't assign /dev/null to standard input: %m"));
-      error = 1;
-    }
-
-  if(!error)
-    {
-      close(1);  /* fd #1 should be the first available filedescriptor now. */
-      /* Standard output directly goes to syslog */
-      openlog(name, LOG_CONS | LOG_PID, LOG_DAEMON);
-      /* Standard error as well */
-      if(dup2(1, 2) < 0)
-	{
-	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
-		 "dup2");
-	  error = 1;
-	}
-    }
-  
-  if(error && debug_lvl > 1)
-    syslog(LOG_INFO, _("This means that any output the script generates will not be shown in syslog."));
-  
   execl(scriptname, NULL);
   /* No return on success */
   
-  if(errno != ENOENT)  /* Ignore if the file does not exist */
-    syslog(LOG_WARNING, _("Error executing `%s': %m"), scriptname);
-
-  /* No need to free things */
-  exit(0);
+  if(errno != ENOENT)	/* Ignore if the file does not exist */
+    exit(-1);		/* Some error while trying execl(). */
+  else
+    exit(0);
 }
 
 /*
@@ -308,6 +218,7 @@ cp
 int execute_script(const char *name)
 {
   pid_t pid;
+  int status;
 cp
   if((pid = fork()) < 0)
     {
@@ -318,54 +229,44 @@ cp
 
   if(pid)
     {
-      list_append(child_pids, &pid);
-      return 0;
+      if(debug_lvl >= DEBUG_STATUS)
+        syslog(LOG_INFO, _("Executing script %s"), name);
+
+      if(waitpid(pid, &status, 0) == pid)
+        {
+          if(WIFEXITED(status))		/* Child exited by itself */
+            {
+              if(WEXITSTATUS(status))
+                {
+                  syslog(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"), pid, name, WEXITSTATUS(status));
+                  return -1;
+                }
+              else
+                return 0;
+            }
+          else if(WIFSIGNALED(status))	/* Child was killed by a signal */
+	    {
+	      syslog(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"),
+		     pid, name, WTERMSIG(status), strsignal(WTERMSIG(status)));
+	      return -1;
+	    }
+          else				/* Something strange happened */
+            {
+	      syslog(LOG_ERR, _("Process %d (%s) terminated abnormaly"), pid, name);
+	      return -1;
+            }
+        }
+      else
+        {
+          syslog(LOG_ERR, _("System call `%s' failed: %m"), "waitpid");
+          return -1;
+        }
     }
 cp
   /* Child here */
+
   _execute_script(name);
 }
-
-/*
-  Check a child (the pointer data is actually an integer, the PID of
-  that child.  A non-zero return value means that the child has exited
-  and can be removed from our list.
-*/
-int check_child(void *data)
-{
-  pid_t pid;
-  int status;
-cp
-  pid = (pid_t) data;
-  pid = waitpid(pid, &status, WNOHANG);
-  if(WIFEXITED(status))
-    {
-      if(WIFSIGNALED(status)) /* Child was killed by a signal */
-	{
-	  syslog(LOG_ERR, _("Child with PID %d was killed by signal %d (%s)"),
-		 pid, WTERMSIG(status), strsignal(WTERMSIG(status)));
-	  return -1;
-	}
-      if(WEXITSTATUS(status) != 0)
-	{
-	  syslog(LOG_INFO, _("Child with PID %d exited with code %d"),
-		 WEXITSTATUS(status));
-	}
-      return -1;
-    }
-cp
-  /* Child is still running */
-  return 0;
-}
-
-/*
-  Check the status of all our children.
-*/
-void check_children(void)
-{
-  list_forall_nodes(child_pids, check_child);
-}
-
 
 /*
   Signal handlers.
@@ -392,6 +293,7 @@ RETSIGTYPE
 sigsegv_square(int a)
 {
   syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
+  cp_trace();
   exit(0);
 }
 
@@ -474,9 +376,4 @@ setup_signals(void)
   signal(SIGUSR1, sigusr1_handler);
   signal(SIGUSR2, sigusr2_handler);
   signal(SIGCHLD, SIG_IGN);
-}
-
-RETSIGTYPE parent_exit(int a)
-{
-  exit(0);
 }
