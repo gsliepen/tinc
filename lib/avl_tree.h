@@ -26,10 +26,10 @@
     the code. Mail me if you found a bug.
 
     Cleaned up and incorporated some of the ideas from the red-black tree
-    library for inclusion into tinc (http://tinc.nl.linux.org) by
+    library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.warande.net>.
 
-    $Id: avl_tree.h,v 1.1.2.3 2001/01/07 17:08:49 guus Exp $
+    $Id: avl_tree.h,v 1.1.2.4 2001/02/06 10:13:22 guus Exp $
 */
 
 

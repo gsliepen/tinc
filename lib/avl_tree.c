@@ -26,10 +26,10 @@
     the code. Mail me if you found a bug.
 
     Cleaned up and incorporated some of the ideas from the red-black tree
-    library for inclusion into tinc (http://tinc.nl.linux.org) by
+    library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.warande.net>.
 
-    $Id: avl_tree.c,v 1.1.2.4 2001/01/08 21:32:00 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.5 2001/02/06 10:13:21 guus Exp $
 */
 
 #include <stdio.h>
@@ -406,12 +406,43 @@ avl_node_t *avl_search_closest_greater_node(const avl_tree_t *tree, const void *
 
 avl_node_t *avl_insert(avl_tree_t *tree, void *data)
 {
-  avl_node_t *node;
+  avl_node_t *closest, *new;
+  int result;
 
-  node = avl_alloc_node();
-  node->data = data;
+  if (!tree->root)
+  {
+    new = avl_alloc_node();
+    new->data = data;
+    avl_insert_top(tree, new);
+  }
+  else
+  {
+    closest = avl_search_closest_node(tree, data, &result);
+    switch(result)
+    {
+      case -1:
+        new = avl_alloc_node();
+        new->data = data;
+        avl_insert_before(tree, closest, new);
+        break;
+      case 1:
+        new = avl_alloc_node();
+        new->data = data;
+        avl_insert_after(tree, closest, new);
+        break;
+      case 0:
+        return NULL;
+    }
+  }
+  
+#ifdef AVL_COUNT
+  new->count = 1;
+#endif
+#ifdef AVL_DEPTH
+  new->depth = 1;
+#endif
 
-  return avl_insert_node(tree, node);
+  return new;
 }
 
 avl_node_t *avl_insert_node(avl_tree_t *tree, avl_node_t *node)
@@ -433,7 +464,7 @@ avl_node_t *avl_insert_node(avl_tree_t *tree, avl_node_t *node)
         avl_insert_after(tree, closest, node);
         break;
       case 0:
-        return closest;
+        return NULL;
     }
   }
   
