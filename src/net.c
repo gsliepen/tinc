@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.113 2001/06/05 19:45:47 guus Exp $
+    $Id: net.c,v 1.35.4.114 2001/06/08 18:02:10 guus Exp $
 */
 
 #include "config.h"
@@ -99,7 +99,7 @@ int total_socket_in = 0;
 int total_socket_out = 0;
 
 config_t *upstreamcfg;
-static int seconds_till_retry;
+int seconds_till_retry = 5;
 
 int keylifetime = 0;
 int keyexpires = 0;
@@ -1200,9 +1200,8 @@ cp
     {
       cl->status.outgoing = 0;
       signal(SIGALRM, sigalrm_handler);
-      seconds_till_retry = 5;
       alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 seconds"));
+      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
     }
 
   /* Deactivate */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.32 2001/06/05 16:09:55 guus Exp $
+    $Id: net.h,v 1.9.4.33 2001/06/08 18:02:10 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -97,6 +97,8 @@ extern int total_tap_in;
 extern int total_tap_out;
 extern int total_socket_in;
 extern int total_socket_out;
+
+extern int seconds_till_retry;
 
 extern char *request_name[256];
 extern char *status_text[10];

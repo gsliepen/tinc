@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.92 2001/06/05 16:09:55 guus Exp $
+    $Id: protocol.c,v 1.28.4.93 2001/06/08 18:02:10 guus Exp $
 */
 
 #include "config.h"
@@ -297,6 +297,8 @@ cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
 
+  if(cl->status.outgoing)
+    seconds_till_retry = 5;	/* Reset retry timeout */
 cp
   /* Check some options */
   
