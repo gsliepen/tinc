@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.23 2000/10/30 10:19:06 guus Exp $
+    $Id: tincd.c,v 1.10.4.24 2000/11/03 22:31:55 zarq Exp $
 */
 
 #include "config.h"
@@ -74,6 +74,8 @@ char *identname;                 /* program name for syslog */
 char *pidfilename;               /* pid file location */
 static pid_t ppid;               /* pid of non-detached part */
 char **g_argv;                   /* a copy of the cmdline arguments */
+char **environment;              /* A pointer to the environment on
+                                    startup */
 
 void cleanup_and_exit(int);
 int detach(void);
@@ -393,6 +395,7 @@ main(int argc, char **argv, char **envp)
   
   unknown = _("unknown");
 
+  environment = envp;
   parse_options(argc, argv, envp);
 
   if(show_version)
