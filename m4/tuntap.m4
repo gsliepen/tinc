@@ -17,11 +17,13 @@ AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
 [ AC_TRY_COMPILE([linux/if_tun.h],
   [int a = IFF_TAP],
   if_tun_h="linux/if_tun.h",
-  [ AC_TRY_COMPILE([$kerneldir/include/linux/if_tun.h],
+  if_tun_h="no")
+  if test $if_tun_h = no; then
+    AC_TRY_COMPILE([$kerneldir/include/linux/if_tun.h],
     [int a = IFF_TAP],
     if_tun_h="$kerneldir/include/linux/if_tun.h",
     if_tun_h="no")
-  ])
+  fi
   if test $if_tun_h = no; then
     AC_MSG_RESULT(none)
   else
