@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.62 2003/07/06 17:15:24 guus Exp $
+dnl $Id: configure.in,v 1.13.2.63 2003/07/06 17:49:49 guus Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
@@ -87,7 +87,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h stdint.h strings.h syslog.h unistd.h \
 	sys/file.h sys/ioctl.h sys/param.h sys/time.h netinet/in_systm.h])
-AC_CHECK_HEADERS([net/ethernet.h net/if.h netinet/ip.h netinet/tcp.h], [], [],
+AC_CHECK_HEADERS([net/ethernet.h net/if.h netinet/ip.h netinet/tcp.h netinet/ip6.h], [], [],
 	[#include <sys/types.h>
 	 #include <sys/socket.h>
 	 #ifdef HAVE_NETINET_IN_SYSTM_H
