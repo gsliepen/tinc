@@ -11,7 +11,7 @@ msgstr ""
 "Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: src/conf.c:175
@@ -162,7 +162,7 @@ msgstr "Fout op metadata socket voor %s (%s): %s"
 #: src/meta.c:130
 #, c-format
 msgid "Connection closed by %s (%s)"
-msgstr "Verbinding beëindigd door %s (%s)"
+msgstr "Verbinding beÃ«indigd door %s (%s)"
 
 #: src/meta.c:135
 #, c-format
@@ -186,7 +186,7 @@ msgstr "Verwijdering node %s (%s)"
 #: src/net.c:188
 #, c-format
 msgid "Closing connection with %s (%s)"
-msgstr "Beëindigen verbinding met %s (%s)"
+msgstr "BeÃ«indigen verbinding met %s (%s)"
 
 #: src/net.c:242
 #, c-format
@@ -225,7 +225,7 @@ msgstr "Legen taakrij"
 
 #: src/net.c:425
 msgid "Unable to reread configuration file, exitting."
-msgstr "Kan configuratiebestand niet herlezen, beëindigen."
+msgstr "Kan configuratiebestand niet herlezen, beÃ«indigen."
 
 #: src/net_packet.c:153
 #, c-format
@@ -348,12 +348,12 @@ msgstr "Geen publieke sleutel bekend voor %s gespecificeerd!"
 #: src/net_setup.c:210
 #, c-format
 msgid "Error reading RSA private key file `%s': %s"
-msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %s"
+msgstr "Fout tijdens lezen RSA privÃ© sleutel bestand `%s': %s"
 
 #: src/net_setup.c:222
 #, c-format
 msgid "Reading RSA private key file `%s' failed: %s"
-msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %s"
+msgstr "Fout tijdens lezen RSA privÃ© sleutel bestand `%s': %s"
 
 #: src/net_setup.c:252 src/net_setup.c:253
 msgid "MYSELF"
@@ -533,7 +533,7 @@ msgstr "%s poort %s"
 #, c-format
 msgid "sockaddrcmp() was called with unknown address family %d, exitting!"
 msgstr ""
-"sockaddrcmp() werd aangeroepen met onbekende adresfamilie %d, beëindigen!"
+"sockaddrcmp() werd aangeroepen met onbekende adresfamilie %d, beÃ«indigen!"
 
 #: src/protocol.c:77
 #, c-format
@@ -794,12 +794,12 @@ msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in zijn subnet boom"
 #, c-format
 msgid "subnet_compare() was called with unknown subnet type %d, exitting!"
 msgstr ""
-"subnet_compare() werd aangeroepen met onbekend subnet type %d, beëindigen!"
+"subnet_compare() werd aangeroepen met onbekend subnet type %d, beÃ«indigen!"
 
 #: src/subnet.c:299
 #, c-format
 msgid "net2str() was called with unknown subnet type %d, exiting!"
-msgstr "net2str() werd aangeroepen met onbekend subnet type %d, beëindigen!"
+msgstr "net2str() werd aangeroepen met onbekend subnet type %d, beÃ«indigen!"
 
 #: src/subnet.c:414
 msgid "Subnet list:"
@@ -845,12 +845,12 @@ msgstr ""
 "  -D, --no-detach            Start geen nieuw proces.\n"
 "  -d, --debug[=NIVEAU]       Verhoog debugniveau of stel het in op NIVEAU.\n"
 "  -k, --kill[=SIGNAAL]       Poging tot zenden signaal naar lopende tincd en "
-"beëindig.\n"
+"beÃ«indig.\n"
 "  -n, --net=NETNAAM          Verbind met net NETNAAM.\n"
-"  -K, --generate-keys[=BITS] Genereer publiek/privé RSA sleutelpaar.\n"
+"  -K, --generate-keys[=BITS] Genereer publiek/privÃ© RSA sleutelpaar.\n"
 "  -L, --mlock                Houd tinc vast in het centrale geheugen.\n"
-"      --help                 Geef deze hulp en beëindig.\n"
-"      --version              Geef versie informatie en beëindig.\n"
+"      --help                 Geef deze hulp en beÃ«indig.\n"
+"      --version              Geef versie informatie en beÃ«indig.\n"
 "\n"
 
 #: src/tincd.c:124
@@ -865,7 +865,7 @@ msgid ""
 "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, "
 "USR1, USR2, WINCH, INT or ALRM.\n"
 msgstr ""
-"Ongeldig argument `%s'; SIGNAAL moet een getal zijn of één van HUP, TERM, "
+"Ongeldig argument `%s'; SIGNAAL moet een getal zijn of Ã©Ã©n van HUP, TERM, "
 "KILL, USR1, USR2, WINCH, INT of ALRM.\n"
 
 #: src/tincd.c:201
@@ -899,7 +899,7 @@ msgid ""
 "Make sure only one key is stored in the file.\n"
 msgstr ""
 "Sleutel wordt toegevoegd aan bestaande inhoud.\n"
-"Let er op dat er slechts één sleutel in het bestand is.\n"
+"Let er op dat er slechts Ã©Ã©n sleutel in het bestand is.\n"
 
 #: src/tincd.c:297
 msgid "private RSA key"
@@ -956,11 +956,11 @@ msgstr "Geen herstart."
 #: src/process.c:69
 #, c-format
 msgid "Memory exhausted (couldn't allocate %d bytes), exitting."
-msgstr "Geheugen uitgeput (kon geen %d bytes reserveren), beëindigen."
+msgstr "Geheugen uitgeput (kon geen %d bytes reserveren), beÃ«indigen."
 
 #: src/process.c:101
 msgid "Terminating"
-msgstr "Beëindigen"
+msgstr "BeÃ«indigen"
 
 #: src/process.c:120
 #, c-format
@@ -1022,7 +1022,7 @@ msgstr "Uitvoeren script %s"
 #: src/process.c:279
 #, c-format
 msgid "Process %d (%s) exited with non-zero status %d"
-msgstr "Proces %d (%s) beëindigde met status %d"
+msgstr "Proces %d (%s) beÃ«indigde met status %d"
 
 #: src/process.c:285
 #, c-format
@@ -1032,7 +1032,7 @@ msgstr "Proces %d (%s) was gestopt door signaal %d (%s)"
 #: src/process.c:290
 #, c-format
 msgid "Process %d (%s) terminated abnormally"
-msgstr "Proces %d (%s) abnormaal beëindigd"
+msgstr "Proces %d (%s) abnormaal beÃ«indigd"
 
 #: src/process.c:314
 msgid "Got TERM signal"
@@ -1204,7 +1204,7 @@ msgstr "Linux tun/tap apparaat (tun modus)"
 
 #: src/linux/device.c:107
 msgid "Linux tun/tap device (tap mode)"
-msgstr "Linux tun/tap apparaat (tap modues)"
+msgstr "Linux tun/tap apparaat (tap modus)"
 
 #: src/linux/device.c:117
 #, c-format
