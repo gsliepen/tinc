@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.77 2003/07/28 22:06:09 guus Exp $
+    $Id: tincd.c,v 1.10.4.78 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -92,6 +92,10 @@ static struct option const long_options[] = {
 	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
+
+#ifdef HAVE_MINGW
+static struct WSAData wsa_state;
+#endif
 
 static void usage(bool status)
 {
@@ -417,6 +421,13 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 	}
 
+#ifdef HAVE_MINGW
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", strerror(errno));
+		exit(1);
+	}
+#endif
+	
 	if(!detach())
 		exit(1);
 		

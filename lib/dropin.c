@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.17 2003/07/28 22:06:09 guus Exp $
+    $Id: dropin.c,v 1.1.2.18 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -139,7 +139,7 @@ int asprintf(char **buf, const char *fmt, ...)
 	va_end(ap);
 
 	if(status >= 0)
-		*buf = xrealloc(*buf, status);
+		*buf = xrealloc(*buf, status + 1);
 
 	if(status > len - 1) {
 		len = status;
@@ -157,5 +157,17 @@ int gettimeofday(struct timeval *tv, void *tz) {
 	tv->tv_sec = time(NULL);
 	tv->tv_usec = 0;
 	return 0;
+}
+#endif
+
+#ifndef HAVE_RANDOM
+#include <openssl/rand.h>
+
+long int random(void) {
+	long int x;
+	
+	RAND_pseudo_bytes((unsigned char *)&x, sizeof(x));
+
+	return x;
 }
 #endif

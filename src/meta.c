@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.37 2003/07/22 20:55:19 guus Exp $
+    $Id: meta.c,v 1.1.2.38 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -52,7 +52,7 @@ bool send_meta(connection_t *c, char *buffer, int length)
 		bufp = buffer;
 
 	while(length) {
-		result = write(c->socket, bufp, length);
+		result = send(c->socket, bufp, length, 0);
 		if(result <= 0) {
 			if(errno == EINTR)
 				continue;
@@ -114,7 +114,7 @@ bool receive_meta(connection_t *c)
 	   - If not, keep stuff in buffer and exit.
 	 */
 
-	lenin = read(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen);
+	lenin = recv(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen, 0);
 
 	if(lenin <= 0) {
 		if(lenin == 0) {

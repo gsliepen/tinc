@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.39 2003/07/23 22:17:31 guus Exp $
+    $Id: net_setup.c,v 1.1.2.40 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -444,14 +444,14 @@ bool setup_myself(void)
 
 	/* Open sockets */
 
-	memset(&hint, 0, sizeof(hint));
-
 	get_config_string(lookup_config(config_tree, "BindToAddress"), &address);
 
-	hint.ai_family = addressfamily;
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_protocol = IPPROTO_TCP;
-	hint.ai_flags = AI_PASSIVE;
+	hint = (struct addrinfo) {
+		.ai_family = addressfamily,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+		.ai_flags = AI_PASSIVE,
+	};
 
 	err = getaddrinfo(address, myport, &hint, &ai);
 

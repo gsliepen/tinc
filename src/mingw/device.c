@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.5 2003/07/29 12:38:49 guus Exp $
+    $Id: device.c,v 1.1.2.6 2003/07/29 22:59:01 guus Exp $
 */
 
 #include "system.h"
@@ -51,13 +51,80 @@
 /* FIXME: This only works for Windows 2000 */
 #define OSTYPE 5
 
-HANDLE device_fd = INVALID_HANDLE_VALUE;
+int device_fd = 0;
+HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
 char *device_info = NULL;
 
 int device_total_in = 0;
 int device_total_out = 0;
+
+DWORD WINAPI tapreader(void *bla) {
+	int sock, err, status;
+	struct addrinfo *ai;
+	struct addrinfo hint = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_DGRAM,
+		.ai_protocol = IPPROTO_UDP,
+		.ai_flags = 0,
+	};
+	char buf[MTU];
+	long len;
+	OVERLAPPED overlapped;
+
+	/* Open a socket to the parent process */
+
+	err = getaddrinfo(NULL, "12345", &hint, &ai);
+
+	if(err || !ai) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(errno));
+		return -1;
+	}
+
+	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
+	freeaddrinfo(ai);
+
+	if(sock < 0) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
+		return -1;
+	}
+
+	if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "connect", strerror(errno));
+		return -1;
+	}
+
+	logger(LOG_DEBUG, _("Tap reader running"));
+
+	/* Read from tap device and send to parent */
+
+	overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	
+	for(;;) {
+		overlapped.Offset = 0;
+		overlapped.OffsetHigh = 0;
+		ResetEvent(overlapped.hEvent);
+
+		status = ReadFile(device_handle, buf, sizeof(buf), &len, &overlapped);
+
+		if(!status) {
+			if(GetLastError() == ERROR_IO_PENDING) {
+				WaitForSingleObject(overlapped.hEvent, INFINITE);
+				if(!GetOverlappedResult(device_handle, &overlapped, &len, FALSE))
+					continue;
+			} else {
+				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+					   device, strerror(errno));
+				return -1;
+			}
+		}
+
+		if(send(sock, buf, len, 0) <= 0)
+			return -1;
+	}
+}
 
 bool setup_device(void)
 {
@@ -68,10 +135,20 @@ bool setup_device(void)
 	char adapterid[1024];
 	char adaptername[1024];
 	char tapname[1024];
-	char gelukt = 0;
 	long len;
 
 	bool found = false;
+
+	int sock, err;
+	HANDLE thread;
+
+	struct addrinfo *ai;
+	struct addrinfo hint = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_DGRAM,
+		.ai_protocol = IPPROTO_UDP,
+		.ai_flags = AI_PASSIVE,
+	};
 
 	cp();
 
@@ -117,8 +194,8 @@ bool setup_device(void)
 		}
 
 		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
-		device_fd = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
-		if(device_fd != INVALID_HANDLE_VALUE) {
+		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
+		if(device_handle != INVALID_HANDLE_VALUE) {
 			found = true;
 			break;
 		}
@@ -129,24 +206,27 @@ bool setup_device(void)
 		return false;
 	}
 
-	device = adapterid;
-	iface = adaptername;
+	if(!device)
+		device = xstrdup(adapterid);
+
+	if(!iface)
+		iface = xstrdup(adaptername);
 
 	/* Try to open the corresponding tap device */
 
-	if(device_fd == INVALID_HANDLE_VALUE) {
+	if(device_handle == INVALID_HANDLE_VALUE) {
 		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
-		device_fd = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
+		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
 	}
 	
-	if(device_fd == INVALID_HANDLE_VALUE) {
+	if(device_handle == INVALID_HANDLE_VALUE) {
 		logger(LOG_ERR, _("%s (%s) is no a usable Windows tap device!"), device, iface);
 		return false;
 	}
 
 	/* Get MAC address from tap device */
 
-	if(!DeviceIoControl(device_fd, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
+	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
 		logger(LOG_ERR, _("Could not get MAC address from Windows tap device!"));
 		return false;
 	}
@@ -154,6 +234,52 @@ bool setup_device(void)
 	if(routing_mode == RMODE_ROUTER) {
 		overwrite_mac = 1;
 	}
+
+	/* Create a listening socket */
+
+	err = getaddrinfo(NULL, "12345", &hint, &ai);
+
+	if(err || !ai) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(errno));
+		return false;
+	}
+
+	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
+	if(sock < 0) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
+		return false;
+	}
+
+	if(bind(sock, ai->ai_addr, ai->ai_addrlen)) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "bind", strerror(errno));
+		return false;
+	}
+
+	freeaddrinfo(ai);
+
+	if(listen(sock, 1)) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "listen", strerror(errno));
+		return false;
+	}
+
+	/* Start the tap reader */
+
+	thread = CreateThread(NULL, 0, tapreader, NULL, 0, NULL);
+
+	if(!thread) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "CreateThread", strerror(errno));
+		return false;
+	}
+
+	/* Wait for the tap reader to connect back to us */
+
+	if((device_fd = accept(sock, NULL, 0)) == -1) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "accept", strerror(errno));
+		return false;
+	}
+
+	closesocket(sock);
 
 	device_info = _("Windows tap device");
 
@@ -166,16 +292,16 @@ void close_device(void)
 {
 	cp();
 
-	CloseHandle(device_fd);
+	CloseHandle(device_handle);
 }
 
 bool read_packet(vpn_packet_t *packet)
 {
-	long lenin;
+	int lenin;
 
 	cp();
 
-	if(!ReadFile(device_fd, packet->data, MTU, &lenin, NULL)) {
+	if((lenin = recv(device_fd, packet->data, MTU, 0)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return false;
@@ -194,13 +320,14 @@ bool read_packet(vpn_packet_t *packet)
 bool write_packet(vpn_packet_t *packet)
 {
 	long lenout;
+	OVERLAPPED overlapped = {0};
 
 	cp();
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(!WriteFile(device_fd, packet->data, packet->len, &lenout, NULL)) {
+	if(!WriteFile(device_handle, packet->data, packet->len, &lenout, &overlapped)) {
 		logger(LOG_ERR, _("Error while writing to %s %s"), device_info, device);
 		return false;
 	}

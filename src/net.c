@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.194 2003/07/29 10:50:15 guus Exp $
+    $Id: net.c,v 1.35.4.195 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -39,6 +39,7 @@
 #include "protocol.h"
 #include "route.h"
 #include "subnet.h"
+#include "xalloc.h"
 
 bool do_purge = false;
 
@@ -153,7 +154,7 @@ void terminate_connection(connection_t *c, bool report)
 		c->node->connection = NULL;
 
 	if(c->socket)
-		close(c->socket);
+		closesocket(c->socket);
 
 	if(c->edge) {
 		if(report)
@@ -254,7 +255,7 @@ static void check_network_activity(fd_set * f)
 					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 							   _("Error while connecting to %s (%s): %s"),
 							   c->name, c->hostname, strerror(result));
-					close(c->socket);
+					closesocket(c->socket);
 					do_outgoing_connection(c);
 					continue;
 				}

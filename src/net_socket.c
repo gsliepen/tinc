@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.32 2003/07/28 22:06:09 guus Exp $
+    $Id: net_socket.c,v 1.1.2.33 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -70,7 +70,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 	flags = fcntl(nfd, F_GETFL);
 
 	if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-		close(nfd);
+		closesocket(nfd);
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
 			   strerror(errno));
 		return -1;
@@ -98,7 +98,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
-			close(nfd);
+			closesocket(nfd);
 			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 				   strerror(errno));
 			return -1;
@@ -109,7 +109,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 	}
 
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
-		close(nfd);
+		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
 		logger(LOG_ERR, _("Can't bind to %s/tcp: %s"), addrstr,
 			   strerror(errno));
@@ -118,7 +118,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 	}
 
 	if(listen(nfd, 3)) {
-		close(nfd);
+		closesocket(nfd);
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "listen",
 			   strerror(errno));
 		return -1;
@@ -149,7 +149,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 #ifdef O_NONBLOCK
 	flags = fcntl(nfd, F_GETFL);
 	if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-		close(nfd);
+		closesocket(nfd);
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
 			   strerror(errno));
 		return -1;
@@ -166,7 +166,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
-			close(nfd);
+			closesocket(nfd);
 			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 				   strerror(errno));
 			return -1;
@@ -175,7 +175,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 #endif
 
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
-		close(nfd);
+		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
 		logger(LOG_ERR, _("Can't bind to %s/udp: %s"), addrstr,
 			   strerror(errno));
@@ -308,7 +308,7 @@ begin:
 			return;
 		}
 
-		close(c->socket);
+		closesocket(c->socket);
 
 		ifdebug(CONNECTIONS) logger(LOG_ERR, _("%s: %s"), c->hostname, strerror(errno));
 

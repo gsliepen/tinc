@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.49 2003/07/24 12:08:15 guus Exp $
+    $Id: netutl.c,v 1.12.4.50 2003/07/29 22:59:00 guus Exp $
 */
 
 #include "system.h"
@@ -36,15 +36,14 @@ bool hostnames = false;
 */
 struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype)
 {
-	struct addrinfo hint, *ai;
+	struct addrinfo *ai;
+	struct addrinfo hint = {
+		.ai_family = addressfamily,
+		.ai_socktype = socktype,
+	};
 	int err;
 
 	cp();
-
-	memset(&hint, 0, sizeof(hint));
-
-	hint.ai_family = addressfamily;
-	hint.ai_socktype = socktype;
 
 	err = getaddrinfo(address, service, &hint, &ai);
 
@@ -59,17 +58,16 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 
 sockaddr_t str2sockaddr(const char *address, const char *port)
 {
-	struct addrinfo hint, *ai;
+	struct addrinfo *ai;
+	struct addrinfo hint = {
+		.ai_family = AF_UNSPEC,
+		.ai_flags = AI_NUMERICHOST,
+		.ai_socktype = SOCK_STREAM,
+	};
 	sockaddr_t result;
 	int err;
 
 	cp();
-
-	memset(&hint, 0, sizeof(hint));
-
-	hint.ai_family = AF_UNSPEC;
-	hint.ai_flags = AI_NUMERICHOST;
-	hint.ai_socktype = SOCK_STREAM;
 
 	err = getaddrinfo(address, port, &hint, &ai);
 

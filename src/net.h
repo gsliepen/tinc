@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.67 2003/07/24 12:08:15 guus Exp $
+    $Id: net.h,v 1.9.4.68 2003/07/29 22:59:00 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -139,5 +139,9 @@ extern void main_loop(void);
 extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
 extern bool read_rsa_public_key(struct connection_t *);
+
+#ifndef HAVE_MINGW
+#define closesocket(s) close(s)
+#endif
 
 #endif							/* __TINC_NET_H__ */

@@ -115,7 +115,7 @@
 
 #ifdef HAVE_MINGW
 #include <windows.h>
-#include <winsock.h>
+#include <winsock2.h>
 #endif
 
 /* Include localisation support */

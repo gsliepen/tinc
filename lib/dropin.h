@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.1.2.13 2003/07/18 13:42:35 guus Exp $
+    $Id: dropin.h,v 1.1.2.14 2003/07/29 22:59:00 guus Exp $
 */
 
 #ifndef __DROPIN_H__
@@ -41,6 +41,14 @@ extern int asprintf(char **, const char *, ...);
 #ifndef HAVE_GETNAMEINFO
 extern int getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 					   size_t hostlen, char *serv, size_t servlen, int flags);
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
+#ifndef HAVE_RANDOM
+extern long int random(void);
 #endif
 
 #endif							/* __DROPIN_H__ */
