@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.132 2001/09/25 13:35:45 guus Exp $
+    $Id: net.c,v 1.35.4.133 2001/09/25 13:39:11 guus Exp $
 */
 
 #include "config.h"
@@ -976,6 +976,8 @@ cp
 cp
   /* Done */
 
+  myself->nexthop = myself;
+  myself->lastbutonehop = myself;
   myself->status.active = 1;
   id_add(myself);
 
