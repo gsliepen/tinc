@@ -5,14 +5,14 @@ info_TEXINFOS = tinc.texi
 dyn_MANS = tincd.8
 man_aux = $(dyn_MANS:.8=.x)
 
-man_MANS = tincd.conf.5 genauth.8 $(dyn_MANS)
+man_MANS = tinc.conf.5 genauth.8 $(dyn_MANS)
 
 PERL = @PERL@
 HELP2MAN = help2man
 MAINTAINERCLEANFILES = $(dyn_MANS)
 
 EXTRA_DIST = $(man_MANS) $(HELP2MAN) $(man_aux) \
-  Makefile.maint GNUmakefile Makefile.summ tincd.conf.sample
+  Makefile.maint GNUmakefile Makefile.summ tinc.conf.sample
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'

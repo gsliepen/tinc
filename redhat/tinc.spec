@@ -83,7 +83,7 @@ grep -q '^tinc[[:space:]]' /etc/services || patch -s /etc/services << END
   hmmp-ind	612/tcp		dqs313_intercell# HMMP Indication / DQS
   hmmp-ind	612/udp		dqs313_intercell# HMMP Indication / DQS
 + tinc		655/tcp		TINC		# tinc vpn
-+ tinc		655/udp		TINC		# tinc.nl.linux.org
++ tinc		655/udp		TINC		# http://tinc.nl.linux.org/
   #
   # UNIX specific services
 END
@@ -101,13 +101,13 @@ END
 %postun
 
 %files
-%doc AUTHORS ChangeLog NEWS README THANKS *.html doc/tincd.conf.sample
+%doc AUTHORS ChangeLog NEWS README THANKS *.html doc/tinc.conf.sample
 %config /etc/tinc/
 /etc/rc.d/init.d/tinc
 /usr/sbin/genauth
 /usr/sbin/tincd
 /usr/lib/tinc/
-/usr/man/man5/tincd.conf.5
+/usr/man/man5/tinc.conf.5
 /usr/man/man8/genauth.8
 /usr/man/man8/tincd.8
 /usr/info/tinc.info.gz
