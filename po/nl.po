@@ -755,7 +755,7 @@ msgstr "Doorsturen ANS_KEY naar "
 #: src/protocol.c:855
 #, fuzzy
 msgid "Got unauthorized KEY_CHANGED from "
-msgstr Kreeg niet-geautoriseerde KEY_CHANGED van "
+msgstr "Kreeg niet-geautoriseerde KEY_CHANGED van "
 
 #: src/protocol.c:862
 #, fuzzy
