@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.15 2002/09/04 13:48:51 guus Exp $
+    $Id: graph.c,v 1.1.2.16 2002/09/06 09:48:39 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -266,7 +266,6 @@ void sssp_bfs(void)
 
 	n->status.validkey = 0;
 	n->status.waitingforkey = 0;
-	n->sent_seqno = 0;
 
 	asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
 	asprintf(&envp[1], "DEVICE=%s", device?device:"");
