@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.15 2002/04/28 12:46:26 zarq Exp $
+    $Id: tincd.c,v 1.16 2002/05/02 11:50:07 zarq Exp $
 */
 
 #include "config.h"
@@ -51,7 +51,8 @@
 #include <utils.h>
 #include <xalloc.h>
 
-#include "conf.h"
+#include "callbacks.h"
+#include "read_conf.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"
@@ -380,6 +381,8 @@ cp
 cp
   if(detach())
     exit(0);
+
+  init_callbacks();
 cp
   for(;;)
     {

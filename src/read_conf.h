@@ -17,11 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: read_conf.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
+    $Id: read_conf.h,v 1.2 2002/05/02 11:50:07 zarq Exp $
 */
 
 #ifndef __TINC_READ_CONF_H__
 #define __TINC_READ_CONF_H__
+
+#include <avl_tree.h>
 
 extern int read_config_file(avl_tree_t *, const char *);
 extern int read_server_config(void);

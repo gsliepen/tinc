@@ -17,13 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
+    $Id: node.h,v 1.2 2002/05/02 11:50:07 zarq Exp $
 */
 
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
 
+#ifdef USE_GCRYPT
 #include <gcrypt.h>
+#endif
 
 #include <avl_tree.h>
 

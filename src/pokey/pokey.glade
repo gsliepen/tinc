@@ -1703,7 +1703,8 @@ Ivo Timmermans &lt;ivo@o2w.nl&gt;
       <class>GtkScrolledWindow</class>
       <child_name>GnomeDock:contents</child_name>
       <name>scrolledwindow1</name>
-      <width>250</width>
+      <width>300</width>
+      <height>200</height>
       <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
       <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
       <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
@@ -1766,25 +1767,124 @@ Ivo Timmermans &lt;ivo@o2w.nl&gt;
   <auto_shrink>False</auto_shrink>
 
   <widget>
-    <class>GtkScrolledWindow</class>
-    <name>scrolledwindow2</name>
-    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
-    <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+    <class>GtkVBox</class>
+    <name>vbox7</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
 
     <widget>
-      <class>GtkText</class>
-      <name>Messages</name>
-      <width>500</width>
-      <height>300</height>
-      <signal>
-	<name>button_press_event</name>
-	<handler>on_messages_button_press_event</handler>
-	<last_modification_time>Sun, 14 Apr 2002 19:34:28 GMT</last_modification_time>
-      </signal>
-      <editable>False</editable>
-      <text></text>
+      <class>GtkScrolledWindow</class>
+      <name>scrolledwindow2</name>
+      <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+      <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkText</class>
+	<name>Messages</name>
+	<width>500</width>
+	<height>300</height>
+	<signal>
+	  <name>button_press_event</name>
+	  <handler>on_messages_button_press_event</handler>
+	  <last_modification_time>Sun, 14 Apr 2002 19:34:28 GMT</last_modification_time>
+	</signal>
+	<editable>False</editable>
+	<text></text>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox4</name>
+      <homogeneous>False</homogeneous>
+      <spacing>10</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkHBox</class>
+	<name>hbox5</name>
+	<homogeneous>False</homogeneous>
+	<spacing>9</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label32</name>
+	  <label>Debug level</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>DebugLevelSpinbutton</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_debug_level_changed</handler>
+	    <last_modification_time>Mon, 29 Apr 2002 21:31:08 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>True</numeric>
+	  <update_policy>GTK_UPDATE_IF_VALID</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>1</value>
+	  <lower>0</lower>
+	  <upper>1000</upper>
+	  <step>1</step>
+	  <page>10</page>
+	  <page_size>10</page_size>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button17</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_logwindow_close_clicked</handler>
+	  <last_modification_time>Mon, 29 Apr 2002 21:37:37 GMT</last_modification_time>
+	</signal>
+	<stock_button>GNOME_STOCK_BUTTON_CLOSE</stock_button>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
     </widget>
   </widget>
 </widget>
@@ -1801,30 +1901,168 @@ Ivo Timmermans &lt;ivo@o2w.nl&gt;
   <auto_shrink>False</auto_shrink>
 
   <widget>
-    <class>GtkScrolledWindow</class>
-    <name>scrolledwindow3</name>
-    <hscrollbar_policy>GTK_POLICY_ALWAYS</hscrollbar_policy>
-    <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+    <class>GtkVBox</class>
+    <name>vbox8</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
 
     <widget>
-      <class>GnomeCanvas</class>
-      <name>canvas1</name>
-      <width>500</width>
-      <height>300</height>
-      <can_focus>True</can_focus>
-      <signal>
-	<name>button_press_event</name>
-	<handler>on_canvas_button_press_event</handler>
-	<last_modification_time>Sun, 14 Apr 2002 15:21:11 GMT</last_modification_time>
-      </signal>
-      <anti_aliased>True</anti_aliased>
-      <scroll_x1>0</scroll_x1>
-      <scroll_y1>0</scroll_y1>
-      <scroll_x2>100</scroll_x2>
-      <scroll_y2>100</scroll_y2>
-      <pixels_per_unit>1</pixels_per_unit>
+      <class>GtkScrolledWindow</class>
+      <name>scrolledwindow3</name>
+      <hscrollbar_policy>GTK_POLICY_ALWAYS</hscrollbar_policy>
+      <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GnomeCanvas</class>
+	<name>canvas1</name>
+	<width>500</width>
+	<height>300</height>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>button_press_event</name>
+	  <handler>on_canvas_button_press_event</handler>
+	  <last_modification_time>Sun, 14 Apr 2002 15:21:11 GMT</last_modification_time>
+	</signal>
+	<anti_aliased>True</anti_aliased>
+	<scroll_x1>0</scroll_x1>
+	<scroll_y1>0</scroll_y1>
+	<scroll_x2>100</scroll_x2>
+	<scroll_y2>100</scroll_y2>
+	<pixels_per_unit>1</pixels_per_unit>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox6</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+
+      <widget>
+	<class>GtkHBox</class>
+	<name>hbox7</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label33</name>
+	  <label>Zoom</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>spinbutton2</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_spinbutton2_changed</handler>
+	    <last_modification_time>Wed, 01 May 2002 17:18:44 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>True</numeric>
+	  <update_policy>GTK_UPDATE_IF_VALID</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>100</value>
+	  <lower>1</lower>
+	  <upper>1000</upper>
+	  <step>1</step>
+	  <page>10</page>
+	  <page_size>10</page_size>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>KeepDrawingButton</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_checkbutton1_toggled</handler>
+	  <last_modification_time>Wed, 01 May 2002 17:18:37 GMT</last_modification_time>
+	</signal>
+	<label>Keep drawing</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button18</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_button18_clicked</handler>
+	  <last_modification_time>Wed, 01 May 2002 17:18:25 GMT</last_modification_time>
+	</signal>
+	<stock_button>GNOME_STOCK_BUTTON_CLOSE</stock_button>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	  <pack>GTK_PACK_END</pack>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button19</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_button19_clicked</handler>
+	  <last_modification_time>Wed, 01 May 2002 17:18:19 GMT</last_modification_time>
+	</signal>
+	<label>Shuffle</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	  <pack>GTK_PACK_END</pack>
+	</child>
+      </widget>
     </widget>
   </widget>
 </widget>

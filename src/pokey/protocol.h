@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
+    $Id: protocol.h,v 1.2 2002/05/02 11:50:07 zarq Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -40,7 +40,7 @@ enum {
   ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
   STATUS, ERROR, TERMREQ,
   PING, PONG,
-//  ADD_NODE, DEL_NODE,
+  /*  ADD_NODE, DEL_NODE,*/
   ADD_SUBNET, DEL_SUBNET,
   ADD_EDGE, DEL_EDGE,
   KEY_CHANGED, REQ_KEY, ANS_KEY,
@@ -81,8 +81,8 @@ extern int send_error(connection_t *, int, char *);
 extern int send_termreq(connection_t *);
 extern int send_ping(connection_t *);
 extern int send_pong(connection_t *);
-// extern int send_add_node(connection_t *, node_t *);
-// extern int send_del_node(connection_t *, node_t *);
+/* extern int send_add_node(connection_t *, node_t *); */
+/* extern int send_del_node(connection_t *, node_t *); */
 extern int send_add_subnet(connection_t *, subnet_t *);
 extern int send_del_subnet(connection_t *, subnet_t *);
 extern int send_add_edge(connection_t *, edge_t *);
@@ -106,8 +106,8 @@ extern int error_h(connection_t *);
 extern int termreq_h(connection_t *);
 extern int ping_h(connection_t *);
 extern int pong_h(connection_t *);
-// extern int add_node_h(connection_t *);
-// extern int del_node_h(connection_t *);
+/* extern int add_node_h(connection_t *); */
+/* extern int del_node_h(connection_t *); */
 extern int add_subnet_h(connection_t *);
 extern int del_subnet_h(connection_t *);
 extern int add_edge_h(connection_t *);

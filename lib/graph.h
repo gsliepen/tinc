@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.h,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: graph.h,v 1.1 2002/05/02 11:50:07 zarq Exp $
 */
 
 extern void graph(void);
