@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.13 2002/03/27 15:01:37 guus Exp $
+    $Id: net_packet.c,v 1.1.2.14 2002/04/18 20:09:05 zarq Exp $
 */
 
 #include "config.h"
@@ -49,10 +49,6 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
-
-#ifndef HAVE_RAND_PSEUDO_BYTES
-#define RAND_pseudo_bytes RAND_bytes
-#endif
 
 #include <zlib.h>
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.11 2002/03/27 14:02:36 guus Exp $
+    $Id: net_socket.c,v 1.1.2.12 2002/04/18 20:09:05 zarq Exp $
 */
 
 #include "config.h"
@@ -65,6 +65,10 @@
 #include "event.h"
 
 #include "system.h"
+
+#ifndef HAVE_RAND_PSEUDO_BYTES
+#define RAND_pseudo_bytes RAND_bytes
+#endif
 
 int addressfamily = AF_INET;
 int maxtimeout = 900;

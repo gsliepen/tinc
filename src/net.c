@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.169 2002/04/01 21:28:05 guus Exp $
+    $Id: net.c,v 1.35.4.170 2002/04/18 20:09:05 zarq Exp $
 */
 
 #include "config.h"
@@ -67,6 +67,10 @@
 #include "event.h"
 
 #include "system.h"
+
+#ifndef HAVE_RAND_PSEUDO_BYTES
+#define RAND_pseudo_bytes RAND_bytes
+#endif
 
 int do_purge = 0;
 int sighup = 0;
