@@ -8,6 +8,7 @@ Goals for 1.0 release:
 * Sanity checks on configuration directory
 * Use efficient tree algorithms instead of linked lists (largely done)
 * Reenable queues for delayed packets
+* Merge documentation files (SECURITY, INSTALL, PROTOCOL) into tinc.texi
 
 
 Goals for future releases:
