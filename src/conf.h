@@ -1,6 +1,7 @@
 /*
     conf.h -- header for conf.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
+                            2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: conf.h,v 1.6 2000/05/30 11:18:12 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -41,7 +44,8 @@ typedef enum which_t {
   allowconnect,
   pingtimeout,
   keyexpire,
-  vpnmask
+  vpnmask,
+  resolve_dns
 } which_t;
 
 typedef struct config_t {

@@ -1,7 +1,9 @@
 /*
     conf.c -- configuration code
     Copyright (C) 1998 Emphyrio,
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
+                            2000 Guus Sliepen <guus@sliepen.warande.net>
+			    2000 Cris van Pelt <tribbel@arise.dhs.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +18,10 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: conf.c,v 1.9 2000/05/30 11:18:12 zarq Exp $
 */
 
-/* Created more dynamic storage for lines read from the config file. --
-	Cris van Pelt */
 
 #include "config.h"
 
@@ -62,6 +64,7 @@ static internal_config_t hazahaza[] = {
   { "TapDevice",    tapdevice,      TYPE_NAME },
   { "KeyExpire",    keyexpire,      TYPE_INT },
   { "VpnMask",      vpnmask,        TYPE_IP },
+  { "Hostnames",    resolve_dns,    TYPE_BOOL },
   { NULL, 0, 0 }
 };
 

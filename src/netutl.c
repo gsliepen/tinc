@@ -1,6 +1,6 @@
 /*
     netutl.c -- some supporting network utility code
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: netutl.c,v 1.11 2000/05/30 11:18:12 zarq Exp $
 */
 
 #include "config.h"
@@ -31,6 +33,7 @@
 #include <utils.h>
 #include <xalloc.h>
 
+#include "conf.h"
 #include "encr.h"
 #include "net.h"
 #include "netutl.h"
@@ -166,20 +169,28 @@ char *hostlookup(unsigned long addr)
   char *name;
   struct hostent *host = NULL;
   struct in_addr in;
+  config_t const *cfg;
+  int lookup_hostname;
 cp
   in.s_addr = addr;
 
-  host = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
+  lookup_hostname = 0;
+  if((cfg = get_config_val(resolve_dns)) != NULL)
+    if(cfg->data.val == stupid_true)
+      lookup_hostname = 1;
 
-  if(host)
-    {
-      name = xmalloc(strlen(host->h_name)+20);
-      sprintf(name, "%s (%s)", host->h_name, inet_ntoa(in));
-    }
-  else
+  if(lookup_hostname)
+    host = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
+
+  if(!lookup_hostname || !host)
     {
       name = xmalloc(20);
       sprintf(name, "%s", inet_ntoa(in));
+    }
+  else
+    {
+      name = xmalloc(strlen(host->h_name)+20);
+      sprintf(name, "%s (%s)", host->h_name, inet_ntoa(in));
     }
 cp
   return name;
