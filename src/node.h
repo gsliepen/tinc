@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.21 2003/04/18 21:18:36 guus Exp $
+    $Id: node.h,v 1.1.2.22 2003/05/06 21:13:18 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -54,7 +54,8 @@ typedef struct node_t {
 	const EVP_CIPHER *cipher;	/* Cipher type for UDP packets */
 	char *key;					/* Cipher key and iv */
 	int keylength;				/* Cipher key and iv length */
-
+	EVP_CIPHER_CTX packet_ctx;	/* Cipher context */
+	
 	const EVP_MD *digest;		/* Digest type for MAC */
 	int maclength;				/* Length of MAC */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.30 2003/03/28 13:41:49 guus Exp $
+    $Id: net_setup.c,v 1.1.2.31 2003/05/06 21:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -406,6 +406,7 @@ int setup_myself(void)
 	keyexpires = now + keylifetime;
 	
 	EVP_CIPHER_CTX_init(&packet_ctx);
+	EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
 
 	/* Check if we want to use message authentication codes... */
 
@@ -448,7 +449,7 @@ int setup_myself(void)
 	if(get_config_int
 	   (lookup_config(myself->connection->config_tree, "Compression"),
 		&myself->compression)) {
-		if(myself->compression < 0 || myself->compression > 9) {
+		if(myself->compression < 0 || myself->compression > 11) {
 			syslog(LOG_ERR, _("Bogus compression level!"));
 			return -1;
 		}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.185 2003/04/19 11:12:45 guus Exp $
+    $Id: net.c,v 1.35.4.186 2003/05/06 21:13:14 guus Exp $
 */
 
 #include "config.h"
@@ -385,6 +385,7 @@ void main_loop(void)
 					syslog(LOG_INFO, _("Regenerating symmetric key"));
 
 				RAND_pseudo_bytes(myself->key, myself->keylength);
+				EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
 			}

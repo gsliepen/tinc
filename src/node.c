@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.18 2002/09/09 22:32:49 guus Exp $
+    $Id: node.c,v 1.1.2.19 2003/05/06 21:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -83,6 +83,7 @@ node_t *new_node(void)
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	n->queue = list_alloc((list_action_t) free);
+	EVP_CIPHER_CTX_init(&n->packet_ctx);
 
 	return n;
 }
@@ -109,6 +110,8 @@ void free_node(node_t *n)
 	if(n->edge_tree)
 		free_edge_tree(n->edge_tree);
 
+	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
+	
 	free(n);
 }
 

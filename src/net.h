@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.56 2003/03/28 13:41:49 guus Exp $
+    $Id: net.h,v 1.9.4.57 2003/05/06 21:13:17 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -37,13 +37,12 @@
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9014				/* 9000 bytes payload + 14 bytes ethernet header */
-#define MAXSIZE 9100			/* MTU + header (seqno) and trailer (CBC padding and HMAC) */
-#define MAXBUFSIZE 9100			/* Must support TCP packets of length 9000. */
 #else
 #define MTU 1514				/* 1500 bytes payload + 14 bytes ethernet header */
-#define MAXSIZE 1600			/* MTU + header (seqno) and trailer (CBC padding and HMAC) */
-#define MAXBUFSIZE 2100			/* Quite large but needed for support of keys up to 8192 bits. */
 #endif
+
+#define MAXSIZE (MTU + 4 + 8 + 64 + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
+#define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
 #define MAXSOCKETS 128			/* Overkill... */
 

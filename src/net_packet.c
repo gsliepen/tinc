@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.27 2003/04/18 21:18:36 guus Exp $
+    $Id: net_packet.c,v 1.1.2.28 2003/05/06 21:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -56,6 +56,7 @@
 #include <openssl/hmac.h>
 
 #include <zlib.h>
+#include <lzo1x.h>
 
 #include <utils.h>
 #include <xalloc.h>
@@ -81,8 +82,50 @@
 int keylifetime = 0;
 int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
+char lzo_wrkmem[MAXSIZE];
+
 
 #define MAX_SEQNO 1073741824
+
+length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
+{
+	if(level == 10) {
+		lzo_uint lzolen = sizeof(lzo_wrkmem);
+		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
+		return lzolen;
+	} else if(level < 10) {
+		unsigned long destlen;
+		if(compress2(dest, &destlen, source, len, level) == Z_OK)
+			return destlen;
+		else
+			return -1;
+	} else {
+		lzo_uint lzolen = sizeof(lzo_wrkmem);
+		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
+		return lzolen;
+	}
+	
+	return -1;
+}
+
+length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
+{
+	if(level > 9) {
+		lzo_uint lzolen = sizeof(lzo_wrkmem);
+		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
+			return lzolen;
+		else
+			return -1;
+	} else {
+		unsigned long destlen;
+		if(uncompress(dest, &destlen, source, len) == Z_OK)
+			return destlen;
+		else
+			return -1;
+	}
+	
+	return -1;
+}
 
 /* VPN packet I/O */
 
@@ -119,8 +162,9 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->cipher) {
 		outpkt = pkt[nextpkt++];
 
-		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key,
-						myself->key + myself->cipher->key_len);
+//		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key,
+//						myself->key + myself->cipher->key_len);
+		EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL);
 		EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
 						  (char *) &inpkt->seqno, inpkt->len);
 		EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
@@ -162,13 +206,12 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->compression) {
 		outpkt = pkt[nextpkt++];
 
-		if(uncompress(outpkt->data, &complen, inpkt->data, inpkt->len) != Z_OK) {
+		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, myself->compression)) < 0) {
 			syslog(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
 				   n->name, n->hostname);
 			return;
 		}
 
-		outpkt->len = complen;
 		inpkt = outpkt;
 	}
 
@@ -248,15 +291,12 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(n->compression) {
 		outpkt = pkt[nextpkt++];
 
-		if(compress2
-		   (outpkt->data, &complen, inpkt->data, inpkt->len,
-			n->compression) != Z_OK) {
+		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->compression)) < 0) {
 			syslog(LOG_ERR, _("Error while compressing packet to %s (%s)"),
 				   n->name, n->hostname);
 			return;
 		}
 
-		outpkt->len = complen;
 		inpkt = outpkt;
 	}
 
@@ -270,10 +310,11 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(n->cipher) {
 		outpkt = pkt[nextpkt++];
 
-		EVP_EncryptInit_ex(&packet_ctx, n->cipher, NULL, n->key, n->key + n->cipher->key_len);
-		EVP_EncryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
+//		EVP_EncryptInit_ex(&packet_ctx, n->cipher, NULL, n->key, n->key + n->cipher->key_len);
+		EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL);
+		EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
 						  (char *) &inpkt->seqno, inpkt->len);
-		EVP_EncryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
+		EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
 
 		outpkt->len = outlen + outpad;
 		inpkt = outpkt;

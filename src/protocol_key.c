@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.15 2003/04/18 21:18:36 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.16 2003/05/06 21:13:18 guus Exp $
 */
 
 #include "config.h"
@@ -254,7 +254,14 @@ int ans_key_h(connection_t *c)
 		from->digest = NULL;
 	}
 
+	if(compression < 0 || compression > 11) {
+		syslog(LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		return -1;
+	}
+	
 	from->compression = compression;
+
+	EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len);
 
 	flush_queue(from);
 
