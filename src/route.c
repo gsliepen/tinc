@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.29 2002/03/10 14:04:48 guus Exp $
+    $Id: route.c,v 1.1.2.30 2002/03/11 13:14:53 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,8 @@
 #else
  #include <net/ethernet.h>
 #endif
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #include <netinet/if_ether.h>
 #include <utils.h>
 #include <xalloc.h>
@@ -184,6 +186,71 @@ cp
   return subnet->owner;  
 }
 
+void route_neighborsol(vpn_packet_t *packet)
+{
+  struct ip6_hdr *hdr;
+  struct nd_neighbor_solicit *ns;
+  struct nd_opt_hdr *opt;
+  subnet_t *subnet;
+cp
+  hdr = (struct ip6_hdr *)(packet->data + 14);
+  ns = (struct nd_neighbor_solicit *)(packet->data + 14 + sizeof(struct ip6_hdr));
+  opt = (struct nd_opt_hdr *)(packet->data + 14 + sizeof(struct ip6_hdr) + sizeof(struct nd_neighbor_solicit));
+
+  /* First, snatch the source address from the neighbor solicitation packet */
+
+  memcpy(mymac.net.mac.address.x, packet->data + 6, 6);
+
+  /* Check if this is a valid neighbor solicitation request */
+  
+  if(ns->nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT ||
+     opt->nd_opt_type != ND_OPT_SOURCE_LINKADDR)
+    {
+      if(debug_lvl > DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: received unknown type neighbor solicitation request"));
+        } 
+      return;
+    }
+
+  /* Check if the IPv6 address exists on the VPN */
+
+  subnet = lookup_subnet_ipv6((ipv6_t *)&ns->nd_ns_target);
+
+  if(!subnet)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
+                 ntohs(ns->nd_ns_target.s6_addr16[0]), ntohs(ns->nd_ns_target.s6_addr16[1]), ntohs(ns->nd_ns_target.s6_addr16[2]), ntohs(ns->nd_ns_target.s6_addr16[3]),
+                 ntohs(ns->nd_ns_target.s6_addr16[4]), ntohs(ns->nd_ns_target.s6_addr16[5]), ntohs(ns->nd_ns_target.s6_addr16[6]), ntohs(ns->nd_ns_target.s6_addr16[7]));
+        }
+
+      return;
+    }
+
+  /* Check if it is for our own subnet */
+  
+  if(subnet->owner == myself)
+    return;	/* silently ignore */
+
+  /* Create neighbor advertation reply */
+
+  memcpy(packet->data, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* copy destination address */
+  packet->data[ETHER_ADDR_LEN*2 - 1] ^= 0xFF;				/* mangle source address so it looks like it's not from us */
+
+  memcpy(&hdr->ip6_dst, &hdr->ip6_src, 16);				/* swap destination and source protocol address */
+  memcpy(&hdr->ip6_src, &ns->nd_ns_target, 16);				/* ... */
+
+  memcpy((char *)opt + sizeof(*opt), packet->data + ETHER_ADDR_LEN, 6);	/* add fake source hard addr */
+
+  ns->nd_ns_hdr.icmp6_type = ND_NEIGHBOR_ADVERT;
+  opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
+  
+  write_packet(packet);
+cp
+}
+
 void route_arp(vpn_packet_t *packet)
 {
   struct ether_arp *arp;
@@ -216,7 +283,7 @@ cp
       return;
     }
 
-  /* Check if the IP address exists on the VPN */
+  /* Check if the IPv4 address exists on the VPN */
 
   subnet = lookup_subnet_ipv4((ipv4_t *)arp->arp_tpa);
 
@@ -269,6 +336,11 @@ cp
               break;
             case 0x86DD:
               n = route_ipv6(packet);
+	      if(!n && packet->data[6] == 0x33 && packet->data[7] == 0x33 && packet->data[8] == 0xff)
+	        {
+	          route_neighborsol(packet);
+		  return;
+		}
               break;
             case 0x0806:
               route_arp(packet);
