@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.36 2001/11/15 23:05:34 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.37 2001/11/15 23:26:27 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -74,7 +74,7 @@ AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftime socket select strtol strerror flock unsetenv \
 asprintf putenv strdup fcloseall daemon strsignal get_current_dir_name \
-getaddrinfo])
+getaddrinfo getnameinfo gai_strerror freeaddrinfo])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
