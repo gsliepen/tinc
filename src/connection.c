@@ -17,13 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.36 2003/06/25 20:55:05 guus Exp $
+    $Id: connection.c,v 1.1.2.37 2003/07/06 22:11:31 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 #include <sys/time.h>
 
@@ -35,6 +34,7 @@
 #include "conf.h"
 #include <utils.h>
 #include "subnet.h"
+#include "logger.h"
 
 #include "xalloc.h"
 #include "system.h"
@@ -124,15 +124,15 @@ void dump_connections(void)
 
 	cp();
 
-	syslog(LOG_DEBUG, _("Connections:"));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Connections:"));
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = (connection_t *) node->data;
-		syslog(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
 			   c->name, c->hostname, c->options, c->socket, c->status);
 	}
 
-	syslog(LOG_DEBUG, _("End of connections."));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of connections."));
 }
 
 int read_connection_config(connection_t *c)

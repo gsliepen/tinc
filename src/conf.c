@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.61 2002/09/15 12:26:24 guus Exp $
+    $Id: conf.c,v 1.9.4.62 2003/07/06 22:11:31 guus Exp $
 */
 
 #include "config.h"
@@ -30,11 +30,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <string.h>
 
 #include <xalloc.h>
@@ -43,12 +41,12 @@
 
 #include "conf.h"
 #include "netutl.h"				/* for str2address */
+#include "logger.h"
 
 #include "system.h"
 
 avl_tree_t *config_tree;
 
-int debug_lvl = 0;
 int pingtimeout = 0;			/* seconds before timeout */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
@@ -172,7 +170,7 @@ int get_config_bool(config_t *cfg, int *result)
 		return 1;
 	}
 
-	syslog(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+	logger(DEBUG_ALWAYS, LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
 	return 0;
@@ -188,7 +186,7 @@ int get_config_int(config_t *cfg, int *result)
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return 1;
 
-	syslog(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
 	return 0;
@@ -222,7 +220,7 @@ int get_config_address(config_t *cfg, struct addrinfo **result)
 		return 1;
 	}
 
-	syslog(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
 	return 0;
@@ -240,7 +238,7 @@ int get_config_subnet(config_t *cfg, subnet_t ** result)
 	subnet = str2net(cfg->value);
 
 	if(!subnet) {
-		syslog(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		return 0;
 	}
@@ -251,7 +249,7 @@ int get_config_subnet(config_t *cfg, subnet_t ** result)
 		&& maskcheck(&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
 		|| ((subnet->type == SUBNET_IPV6)
 		&& maskcheck(&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t)))) {
-		syslog(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		free(subnet);
 		return 0;
@@ -350,7 +348,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		syslog(LOG_ERR, _("Cannot open config file %s: %s"), fname,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot open config file %s: %s"), fname,
 			   strerror(errno));
 		return -3;
 	}
@@ -388,7 +386,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 			value = strtok(NULL, "\t\n\r =");
 
 			if(!value || value[0] == '#') {
-				syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+				logger(DEBUG_ALWAYS, LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
 					   variable, lineno, fname);
 				break;
 			}
@@ -423,7 +421,7 @@ int read_server_config()
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */
-		syslog(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
 	}
 
 	free(fname);
@@ -450,7 +448,7 @@ int is_safe_path(const char *file)
 	char l[MAXBUFSIZE];
 
 	if(*file != '/') {
-		syslog(LOG_ERR, _("`%s' is not an absolute path"), file);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' is not an absolute path"), file);
 		return 0;
 	}
 
@@ -466,21 +464,21 @@ int is_safe_path(const char *file)
 
 check1:
 	if(lstat(f, &s) < 0) {
-		syslog(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
 		return 0;
 	}
 
 	if(s.st_uid != geteuid()) {
-		syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 			   f, s.st_uid, geteuid());
 		return 0;
 	}
 
 	if(S_ISLNK(s.st_mode)) {
-		syslog(LOG_WARNING, _("Warning: `%s' is a symlink"), f);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: `%s' is a symlink"), f);
 
 		if(readlink(f, l, MAXBUFSIZE) < 0) {
-			syslog(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
 				   strerror(errno));
 			return 0;
 		}
@@ -494,7 +492,7 @@ check1:
 
 check2:
 	if(lstat(f, &s) < 0 && errno != ENOENT) {
-		syslog(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
 		return 0;
 	}
 
@@ -502,16 +500,16 @@ check2:
 		return 1;
 
 	if(s.st_uid != geteuid()) {
-		syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 			   f, s.st_uid, geteuid());
 		return 0;
 	}
 
 	if(S_ISLNK(s.st_mode)) {
-		syslog(LOG_WARNING, _("Warning: `%s' is a symlink"), f);
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: `%s' is a symlink"), f);
 
 		if(readlink(f, l, MAXBUFSIZE) < 0) {
-			syslog(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
 				   strerror(errno));
 			return 0;
 		}
@@ -522,7 +520,7 @@ check2:
 
 	if(s.st_mode & 0007) {
 		/* Accessible by others */
-		syslog(LOG_ERR, _("`%s' has unsecure permissions"), f);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' has unsecure permissions"), f);
 		return 0;
 	}
 

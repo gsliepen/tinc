@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.22 2003/01/17 00:37:17 guus Exp $
+    $Id: graph.c,v 1.1.2.23 2003/07/06 22:11:31 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -47,7 +47,6 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -63,6 +62,7 @@
 #include "connection.h"
 #include "process.h"
 #include "device.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -95,8 +95,7 @@ void mst_kruskal(void)
 	if(!edge_weight_tree->head)
 		return;
 
-	if(debug_lvl >= DEBUG_SCARY_THINGS)
-		syslog(LOG_DEBUG, "Running Kruskal's algorithm:");
+	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Kruskal's algorithm:");
 
 	/* Clear visited status on nodes */
 
@@ -132,8 +131,7 @@ void mst_kruskal(void)
 
 		safe_edges++;
 
-		if(debug_lvl >= DEBUG_SCARY_THINGS)
-			syslog(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
 				   e->to->name, e->weight);
 
 		if(skipped) {
@@ -143,8 +141,7 @@ void mst_kruskal(void)
 		}
 	}
 
-	if(debug_lvl >= DEBUG_SCARY_THINGS)
-		syslog(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
+	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
 			   safe_edges);
 }
 
@@ -262,14 +259,12 @@ void sssp_bfs(void)
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
 
-			if(debug_lvl >= DEBUG_TRAFFIC) {
-				if(n->status.reachable)
-					syslog(LOG_DEBUG, _("Node %s (%s) became reachable"),
-						   n->name, n->hostname);
-				else
-					syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"),
-						   n->name, n->hostname);
-			}
+			if(n->status.reachable)
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Node %s (%s) became reachable"),
+					   n->name, n->hostname);
+			else
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Node %s (%s) became unreachable"),
+					   n->name, n->hostname);
 
 			n->status.validkey = 0;
 			n->status.waitingforkey = 0;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.69 2003/07/06 17:15:25 guus Exp $
+    $Id: tincd.c,v 1.10.4.70 2003/07/06 22:11:33 guus Exp $
 */
 
 #include "config.h"
@@ -28,7 +28,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
@@ -61,6 +60,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -85,8 +85,12 @@ int bypass_security = 0;
 /* If nonzero, disable swapping for this process. */
 int do_mlock = 0;
 
+/* If nonzero, write log entries to a separate file. */
+int use_logfile = 0;
+
 char *identname = NULL;				/* program name for syslog */
 char *pidfilename = NULL;			/* pid file location */
+char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
 char **environment;				/* A pointer to the environment on
 								   startup */
@@ -102,6 +106,7 @@ static struct option const long_options[] = {
 	{"debug", optional_argument, NULL, 'd'},
 	{"bypass-security", no_argument, &bypass_security, 1},
 	{"mlock", no_argument, &do_mlock, 1},
+	{"logfile", optional_argument, NULL, 'F'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -119,6 +124,7 @@ static void usage(int status)
 				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
 				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
 				"  -L, --mlock                Lock tinc into main memory.\n"
+				"  -F, --logfile[=FILENAME]   Write log entries to a logfile.\n"
 				"      --help                 Display this help and exit.\n"
 				"      --version              Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@nl.linux.org.\n"));
@@ -132,7 +138,7 @@ void parse_options(int argc, char **argv, char **envp)
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::F::", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -152,9 +158,9 @@ void parse_options(int argc, char **argv, char **envp)
 
 			case 'd':				/* inc debug level */
 				if(optarg)
-					debug_lvl = atoi(optarg);
+					debug_level = atoi(optarg);
 				else
-					debug_lvl++;
+					debug_level++;
 				break;
 
 			case 'k':				/* kill old tincds */
@@ -189,8 +195,7 @@ void parse_options(int argc, char **argv, char **envp)
 				break;
 
 			case 'n':				/* net name given */
-				netname = xmalloc(strlen(optarg) + 1);
-				strcpy(netname, optarg);
+				netname = xstrdup(optarg);
 				break;
 
 			case 'K':				/* generate public/private keypair */
@@ -206,6 +211,12 @@ void parse_options(int argc, char **argv, char **envp)
 					generate_keys &= ~7;	/* Round it to bytes */
 				} else
 					generate_keys = 1024;
+				break;
+
+			case 'F':				/* write log entries to a file */
+				use_logfile = 1;
+				if(optarg)
+					logfilename = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -317,17 +328,21 @@ void make_names(void)
 	if(netname) {
 		if(!pidfilename)
 			asprintf(&pidfilename, LOCALSTATEDIR "/run/tinc.%s.pid", netname);
+		if(!logfilename)
+			asprintf(&logfilename, LOCALSTATEDIR "/log/tinc.%s.log", netname);
 
 		if(!confbase)
 			asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
 		else
-			syslog(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+			logger(DEBUG_ALWAYS, LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
 
 		if(!identname)
 			asprintf(&identname, "tinc.%s", netname);
 	} else {
 		if(!pidfilename)
 			pidfilename = LOCALSTATEDIR "/run/tinc.pid";
+		if(!logfilename)
+			logfilename = LOCALSTATEDIR "/log/tinc.log";
 
 		if(!confbase)
 			asprintf(&confbase, "%s/tinc", CONFDIR);
@@ -367,22 +382,18 @@ int main(int argc, char **argv, char **envp)
 	if(kill_tincd)
 		exit(kill_other(kill_tincd));
 
-#ifndef LOG_PERROR
-	openlog("tinc", LOG_CONS, LOG_DAEMON);	/* Catch all syslog() calls issued before detaching */
-#else
-	openlog("tinc", LOG_PERROR, LOG_DAEMON);	/* Catch all syslog() calls issued before detaching */
-#endif
+	openlogger("tinc", LOGMODE_STDERR);
 
 	/* Lock all pages into memory if requested */
 
 	if(do_mlock)
 #ifdef HAVE_MLOCKALL
 		if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
-			syslog(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
 				   strerror(errno));
 #else
 	{
-		syslog(LOG_ERR, _("mlockall() not supported on this platform!"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("mlockall() not supported on this platform!"));
 #endif
 		return -1;
 	}
@@ -406,7 +417,7 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 
 	if(lzo_init() != LZO_E_OK) {
-		syslog(LOG_ERR, _("Error initializing LZO compressor!"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error initializing LZO compressor!"));
 		exit(1);
 	}
 
@@ -419,14 +430,14 @@ int main(int argc, char **argv, char **envp)
 			cleanup_and_exit(1);
 		}
 
-		syslog(LOG_ERR, _("Unrecoverable error"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unrecoverable error"));
 		cp_trace();
 
 		if(do_detach) {
-			syslog(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
+			logger(DEBUG_ALWAYS, LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
 			sleep(maxtimeout);
 		} else {
-			syslog(LOG_ERR, _("Not restarting."));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Not restarting."));
 			exit(1);
 		}
 	}

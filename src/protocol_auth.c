@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.20 2003/07/06 17:15:25 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.21 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -46,6 +45,7 @@
 #include "node.h"
 #include "edge.h"
 #include "graph.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -65,7 +65,7 @@ int id_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING " %d", name, &c->protocol_version) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -73,7 +73,7 @@ int id_h(connection_t *c)
 	/* Check if identity is a valid name */
 
 	if(check_id(name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ID", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ID", c->name,
 			   c->hostname, "invalid name");
 		return -1;
 	}
@@ -82,7 +82,7 @@ int id_h(connection_t *c)
 
 	if(c->name) {
 		if(strcmp(c->name, name)) {
-			syslog(LOG_ERR, _("Peer %s is %s instead of %s"), c->hostname, name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s is %s instead of %s"), c->hostname, name,
 				   c->name);
 			return -1;
 		}
@@ -92,7 +92,7 @@ int id_h(connection_t *c)
 	/* Check if version matches */
 
 	if(c->protocol_version != myself->connection->protocol_version) {
-		syslog(LOG_ERR, _("Peer %s (%s) uses incompatible version %d"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s (%s) uses incompatible version %d"),
 			   c->name, c->hostname, c->protocol_version);
 		return -1;
 	}
@@ -110,7 +110,7 @@ int id_h(connection_t *c)
 		bla = read_connection_config(c);
 
 		if(bla) {
-			syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname,
 				   c->name);
 			return -1;
 		}
@@ -166,10 +166,10 @@ int send_metakey(connection_t *c)
 
 	c->outkey[0] &= 0x7F;
 
-	if(debug_lvl >= DEBUG_SCARY_THINGS) {
+	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(c->outkey, buffer, len);
 		buffer[len * 2] = '\0';
-		syslog(LOG_DEBUG, _("Generated random meta key (unencrypted): %s"),
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Generated random meta key (unencrypted): %s"),
 			   buffer);
 	}
 
@@ -181,7 +181,7 @@ int send_metakey(connection_t *c)
 	 */
 
 	if(RSA_public_encrypt(len, c->outkey, buffer, c->rsa_key, RSA_NO_PADDING) != len) {
-		syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}
@@ -221,7 +221,7 @@ int metakey_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -231,7 +231,7 @@ int metakey_h(connection_t *c)
 	/* Check if the length of the meta key is all right */
 
 	if(strlen(buffer) != len * 2) {
-		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong keylength");
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong keylength");
 		return -1;
 	}
 
@@ -250,15 +250,15 @@ int metakey_h(connection_t *c)
 	/* Decrypt the meta key */
 
 	if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
-		syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	if(debug_lvl >= DEBUG_SCARY_THINGS) {
+	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(c->inkey, buffer, len);
 		buffer[len * 2] = '\0';
-		syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"), buffer);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _("Received random meta key (unencrypted): %s"), buffer);
 	}
 
 	/* All incoming requests will now be encrypted. */
@@ -269,7 +269,7 @@ int metakey_h(connection_t *c)
 		c->incipher = EVP_get_cipherbynid(cipher);
 		
 		if(!c->incipher) {
-			syslog(LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name, c->hostname);
 			return -1;
 		}
 
@@ -289,12 +289,12 @@ int metakey_h(connection_t *c)
 		c->indigest = EVP_get_digestbynid(digest);
 
 		if(!c->indigest) {
-			syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name, c->hostname);
 			return -1;
 		}
 
 		if(c->inmaclength > c->indigest->md_size || c->inmaclength < 0) {
-			syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name, c->hostname);
 			return -1;
 		}
 	} else {
@@ -348,7 +348,7 @@ int challenge_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING, buffer) != 1) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -358,7 +358,7 @@ int challenge_h(connection_t *c)
 	/* Check if the length of the challenge is all right */
 
 	if(strlen(buffer) != len * 2) {
-		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
 			   c->hostname, "wrong challenge length");
 		return -1;
 	}
@@ -412,7 +412,7 @@ int chal_reply_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING, hishash) != 1) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -420,7 +420,7 @@ int chal_reply_h(connection_t *c)
 	/* Check if the length of the hash is all right */
 
 	if(strlen(hishash) != c->outdigest->md_size * 2) {
-		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
 			   c->hostname, _("wrong challenge reply length"));
 		return -1;
 	}
@@ -438,13 +438,13 @@ int chal_reply_h(connection_t *c)
 	/* Verify the incoming hash with the calculated hash */
 
 	if(memcmp(hishash, myhash, c->outdigest->md_size)) {
-		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
 			   c->hostname, _("wrong challenge reply"));
 
-		if(debug_lvl >= DEBUG_SCARY_THINGS) {
+		if(debug_level >= DEBUG_SCARY_THINGS) {
 			bin2hex(myhash, hishash, SHA_DIGEST_LENGTH);
 			hishash[SHA_DIGEST_LENGTH * 2] = '\0';
-			syslog(LOG_DEBUG, _("Expected challenge reply: %s"), hishash);
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Expected challenge reply: %s"), hishash);
 		}
 
 		return -1;
@@ -515,9 +515,8 @@ int ack_h(connection_t *c)
 
 	cp();
 
-	if(sscanf
-	   (c->buffer, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name,
+	if(sscanf(c->buffer, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -533,8 +532,7 @@ int ack_h(connection_t *c)
 	} else {
 		if(n->connection) {
 			/* Oh dear, we already have a connection to this node. */
-			if(debug_lvl >= DEBUG_CONNECTIONS)
-				syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"),
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"),
 					   n->name, n->hostname);
 			terminate_connection(n->connection, 0);
 			/* Run graph algorithm to purge key and make sure up/down scripts are rerun with new IP addresses and stuff */
@@ -551,8 +549,7 @@ int ack_h(connection_t *c)
 	c->allow_request = ALL;
 	c->status.active = 1;
 
-	if(debug_lvl >= DEBUG_CONNECTIONS)
-		syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name,
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection with %s (%s) activated"), c->name,
 			   c->hostname);
 
 	/* Send him everything we know */

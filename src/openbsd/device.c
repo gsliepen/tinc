@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.13 2003/06/11 19:28:37 guus Exp $
+    $Id: device.c,v 1.1.2.14 2003/07/06 22:11:37 guus Exp $
 */
 
 #include "config.h"
@@ -32,13 +32,12 @@
 #include <fcntl.h>
 #include <net/if.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <string.h>
 
 #include <utils.h>
 #include "conf.h"
 #include "net.h"
-#include "subnet.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -69,13 +68,13 @@ int setup_device(void)
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
 		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
-		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
 
 	device_info = _("OpenBSD tun device");
 
-	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return 0;
 }
@@ -96,7 +95,7 @@ int read_packet(vpn_packet_t *packet)
 	cp();
 
 	if((lenin = readv(device_fd, vector, 2)) <= 0) {
-		syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
 	}
@@ -113,10 +112,8 @@ int read_packet(vpn_packet_t *packet)
 		        break;
 
 	        default:
-		        if(debug_lvl >= DEBUG_TRAFFIC)
-			        syslog(LOG_ERR,
-				           _
-				           ("Unknown address family %d while reading packet from %s %s"),
+			logger(DEBUG_TRAFFIC, LOG_ERR,
+				           _ ("Unknown address family %d while reading packet from %s %s"),
 				           ntohl(type), device_info, device);
 		        return -1;
 	}
@@ -125,8 +122,7 @@ int read_packet(vpn_packet_t *packet)
 
 	device_total_in += packet->len;
 
-	if(debug_lvl >= DEBUG_TRAFFIC) {
-		syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 			   device_info);
 	}
 
@@ -141,8 +137,7 @@ int write_packet(vpn_packet_t *packet)
 
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
 	af = (packet->data[12] << 8) + packet->data[13];
@@ -155,8 +150,7 @@ int write_packet(vpn_packet_t *packet)
 		type = htonl(AF_INET6);
 		break;
 	default:
-		if(debug_lvl >= DEBUG_TRAFFIC)
-			syslog(LOG_ERR,
+		logger(DEBUG_TRAFFIC, LOG_ERR,
 				   _("Unknown address family %d while writing packet to %s %s"),
 				   af, device_info, device);
 		return -1;
@@ -168,7 +162,7 @@ int write_packet(vpn_packet_t *packet)
 	vector[1].iov_len = packet->len - 14;
 
 	if(writev(device_fd, vector, 2) < 0) {
-		syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 			   strerror(errno));
 		return -1;
 	}
@@ -180,7 +174,7 @@ void dump_device_stats(void)
 {
 	cp();
 
-	syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 }

@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.9 2002/09/09 22:33:13 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.10 2003/07/06 22:11:33 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -40,6 +39,7 @@
 #include "meta.h"
 #include "connection.h"
 #include "node.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -114,8 +114,7 @@ int add_subnet_h(connection_t *c)
 	/* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
 
 	if(owner == myself) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "ADD_SUBNET", c->name, c->hostname);
 		s->owner = myself;
 		send_del_subnet(c, s);
@@ -177,8 +176,7 @@ int del_subnet_h(connection_t *c)
 	owner = lookup_node(name);
 
 	if(!owner) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
 				   "DEL_SUBNET", c->name, c->hostname, name);
 		return 0;
 	}
@@ -205,8 +203,7 @@ int del_subnet_h(connection_t *c)
 	free_subnet(s);
 
 	if(!find) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
 				   "DEL_SUBNET", c->name, c->hostname, name);
 		return 0;
 	}
@@ -214,8 +211,7 @@ int del_subnet_h(connection_t *c)
 	/* If we are the owner of this subnet, retaliate with an ADD_SUBNET */
 
 	if(owner == myself) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "DEL_SUBNET", c->name, c->hostname);
 		send_add_subnet(c, find);
 		return 0;

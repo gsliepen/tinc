@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.16 2003/05/06 21:13:18 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.17 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -40,6 +39,7 @@
 #include "meta.h"
 #include "connection.h"
 #include "node.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -67,7 +67,7 @@ int key_changed_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING, name) != 1) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
 			   c->name, c->hostname);
 		return -1;
 	}
@@ -78,7 +78,7 @@ int key_changed_h(connection_t *c)
 	n = lookup_node(name);
 
 	if(!n) {
-		syslog(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"),
 			   "KEY_CHANGED", c->name, c->hostname, name);
 		return -1;
 	}
@@ -109,7 +109,7 @@ int req_key_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -117,7 +117,7 @@ int req_key_h(connection_t *c)
 	from = lookup_node(from_name);
 
 	if(!from) {
-		syslog(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
 			   "REQ_KEY", c->name, c->hostname, from_name);
 		return -1;
 	}
@@ -125,7 +125,7 @@ int req_key_h(connection_t *c)
 	to = lookup_node(to_name);
 
 	if(!to) {
-		syslog(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
 			   "REQ_KEY", c->name, c->hostname, to_name);
 		return -1;
 	}
@@ -173,7 +173,7 @@ int ans_key_h(connection_t *c)
 	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression) != 7) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -181,7 +181,7 @@ int ans_key_h(connection_t *c)
 	from = lookup_node(from_name);
 
 	if(!from) {
-		syslog(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
 			   "ANS_KEY", c->name, c->hostname, from_name);
 		return -1;
 	}
@@ -189,7 +189,7 @@ int ans_key_h(connection_t *c)
 	to = lookup_node(to_name);
 
 	if(!to) {
-		syslog(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
 			   "ANS_KEY", c->name, c->hostname, to_name);
 		return -1;
 	}
@@ -220,13 +220,13 @@ int ans_key_h(connection_t *c)
 		from->cipher = EVP_get_cipherbynid(cipher);
 
 		if(!from->cipher) {
-			syslog(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name,
 				   from->hostname);
 			return -1;
 		}
 
 		if(from->keylength != from->cipher->key_len + from->cipher->iv_len) {
-			syslog(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name,
 				   from->hostname);
 			return -1;
 		}
@@ -240,13 +240,13 @@ int ans_key_h(connection_t *c)
 		from->digest = EVP_get_digestbynid(digest);
 
 		if(!from->digest) {
-			syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name,
 				   from->hostname);
 			return -1;
 		}
 
 		if(from->maclength > from->digest->md_size || from->maclength < 0) {
-			syslog(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus MAC length!"),
 				   from->name, from->hostname);
 			return -1;
 		}
@@ -255,7 +255,7 @@ int ans_key_h(connection_t *c)
 	}
 
 	if(compression < 0 || compression > 11) {
-		syslog(LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
 		return -1;
 	}
 	

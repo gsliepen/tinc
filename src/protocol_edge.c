@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.15 2002/09/24 11:43:34 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.16 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -42,6 +41,7 @@
 #include "node.h"
 #include "edge.h"
 #include "graph.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -79,7 +79,7 @@ int add_edge_h(connection_t *c)
 
 	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
 			  from_name, to_name, to_address, to_port, &options, &weight) != 6) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -87,13 +87,13 @@ int add_edge_h(connection_t *c)
 	/* Check if names are valid */
 
 	if(check_id(from_name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name,
 			   c->hostname, _("invalid name"));
 		return -1;
 	}
 
 	if(check_id(to_name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name,
 			   c->hostname, _("invalid name"));
 		return -1;
 	}
@@ -130,14 +130,12 @@ int add_edge_h(connection_t *c)
 	if(e) {
 		if(e->weight != weight || e->options != options || sockaddrcmp(&e->address, &address)) {
 			if(from == myself) {
-				if(debug_lvl >= DEBUG_PROTOCOL)
-					syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself which does not match existing entry"),
+				logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself which does not match existing entry"),
 						   "ADD_EDGE", c->name, c->hostname);
 				send_add_edge(c, e);
 				return 0;
 			} else {
-				if(debug_lvl >= DEBUG_PROTOCOL)
-					syslog(LOG_WARNING, _("Got %s from %s (%s) which does not match existing entry"),
+				logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) which does not match existing entry"),
 						   "ADD_EDGE", c->name, c->hostname);
 				edge_del(e);
 				graph();
@@ -145,8 +143,7 @@ int add_edge_h(connection_t *c)
 		} else
 			return 0;
 	} else if(from == myself) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself which does not exist"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself which does not exist"),
 				   "ADD_EDGE", c->name, c->hostname);
 		e = new_edge();
 		e->from = from;
@@ -193,7 +190,7 @@ int del_edge_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, from_name, to_name) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -201,13 +198,13 @@ int del_edge_h(connection_t *c)
 	/* Check if names are valid */
 
 	if(check_id(from_name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name,
 			   c->hostname, _("invalid name"));
 		return -1;
 	}
 
 	if(check_id(to_name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name,
 			   c->hostname, _("invalid name"));
 		return -1;
 	}
@@ -220,8 +217,7 @@ int del_edge_h(connection_t *c)
 	from = lookup_node(from_name);
 
 	if(!from) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return 0;
 	}
@@ -229,8 +225,7 @@ int del_edge_h(connection_t *c)
 	to = lookup_node(to_name);
 
 	if(!to) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
+		logger(DEBUG_PROTOCOL, LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return 0;
 	}
@@ -240,15 +235,13 @@ int del_edge_h(connection_t *c)
 	e = lookup_edge(from, to);
 
 	if(!e) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) which does not appear in the edge tree"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return 0;
 	}
 
 	if(e->from == myself) {
-		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "DEL_EDGE", c->name, c->hostname);
 		send_add_edge(c, e);	/* Send back a correction */
 		return 0;

@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.7 2002/09/09 22:33:04 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.8 2003/07/06 22:11:33 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -37,6 +36,7 @@
 #include "protocol.h"
 #include "meta.h"
 #include "connection.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -60,15 +60,13 @@ int status_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	if(debug_lvl >= DEBUG_STATUS) {
-		syslog(LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
+	logger(DEBUG_STATUS, LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
 			   c->name, c->hostname, status_text[statusno], statusstring);
-	}
 
 	return 0;
 }
@@ -91,15 +89,13 @@ int error_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	if(debug_lvl >= DEBUG_ERROR) {
-		syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
+	logger(DEBUG_ERROR, LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
 			   c->name, c->hostname, strerror(err), errorstring);
-	}
 
 	terminate_connection(c, c->status.active);
 
@@ -185,7 +181,7 @@ int tcppacket_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
 			   c->hostname);
 		return -1;
 	}

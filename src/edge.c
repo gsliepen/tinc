@@ -17,13 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.18 2002/09/10 22:12:33 guus Exp $
+    $Id: edge.c,v 1.1.2.19 2003/07/06 22:11:31 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 
 #include <avl_tree.h>
@@ -36,6 +35,7 @@
 #include "subnet.h"
 #include "edge.h"
 #include "node.h"
+#include "logger.h"
 
 #include "xalloc.h"
 #include "system.h"
@@ -154,18 +154,18 @@ void dump_edges(void)
 
 	cp();
 
-	syslog(LOG_DEBUG, _("Edges:"));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Edges:"));
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = (node_t *) node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = (edge_t *) node2->data;
 			address = sockaddr2hostname(&e->address);
-			syslog(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
 				   e->from->name, e->to->name, address, e->options, e->weight);
 			free(address);
 		}
 	}
 
-	syslog(LOG_DEBUG, _("End of edges."));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of edges."));
 }

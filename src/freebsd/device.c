@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.9 2003/06/11 19:28:37 guus Exp $
+    $Id: device.c,v 1.1.2.10 2003/07/06 22:11:34 guus Exp $
 */
 
 #include "config.h"
@@ -31,13 +31,12 @@
 #include <fcntl.h>
 #include <net/if.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <string.h>
 
 #include <utils.h>
 #include "conf.h"
 #include "net.h"
-#include "subnet.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -65,13 +64,13 @@ int setup_device(void)
 		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
-		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
 
 	device_info = _("FreeBSD tap device");
 
-	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return 0;
 }
@@ -94,7 +93,7 @@ int read_packet(vpn_packet_t *packet)
 	cp();
 
 	if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
-		syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
 	}
@@ -103,8 +102,7 @@ int read_packet(vpn_packet_t *packet)
 
 	device_total_in += packet->len;
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"),
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"),
 			   packet->len, device_info);
 
 	return 0;
@@ -114,12 +112,11 @@ int write_packet(vpn_packet_t *packet)
 {
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
 	if(write(device_fd, packet->data, packet->len) < 0) {
-		syslog(LOG_ERR, _("Error while writing to %s %s: %s"), device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while writing to %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
 	}
@@ -131,7 +128,7 @@ void dump_device_stats(void)
 {
 	cp();
 
-	syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.50 2002/09/30 19:04:37 zarq Exp $
+    $Id: process.c,v 1.1.2.51 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
@@ -27,7 +27,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -46,6 +45,7 @@
 #include "device.h"
 #include "connection.h"
 #include "device.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -55,10 +55,11 @@ int do_detach = 1;
 extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
+extern int use_logfile;
 
 sigset_t emptysigset;
 
-static int saved_debug_lvl = -1;
+static int saved_debug_level = -1;
 
 extern int sighup;
 extern int sigalrm;
@@ -66,7 +67,7 @@ extern int do_purge;
 
 void memory_full(int size)
 {
-	syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
 	cp_trace();
 	exit(1);
 }
@@ -95,10 +96,10 @@ void cleanup_and_exit(int c)
 
 	close_network_connections();
 
-	if(debug_lvl > DEBUG_NOTHING)
+	if(debug_level > DEBUG_NOTHING)
 		dump_device_stats();
 
-	syslog(LOG_NOTICE, _("Terminating"));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Terminating"));
 
 	closelog();
 	exit(c);
@@ -199,13 +200,10 @@ int detach(void)
 			return -1;
 	}
 
-	openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
+	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
-	if(debug_lvl > DEBUG_NOTHING)
-		syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
-			   VERSION, __DATE__, __TIME__, debug_lvl);
-	else
-		syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
+			   VERSION, __DATE__, __TIME__, debug_level);
 
 	xalloc_fail_func = memory_full;
 
@@ -213,8 +211,7 @@ int detach(void)
 }
 
 /*
-  Execute the program name, with sane environment.  All output will be
-  redirected to syslog.
+  Execute the program name, with sane environment.
 */
 void _execute_script(const char *scriptname, char **envp)
 	__attribute__ ((noreturn));
@@ -227,15 +224,16 @@ void _execute_script(const char *scriptname, char **envp)
 
 	chdir("/");
 
+	closelogger();
+
 	/* Close all file descriptors */
-	closelog();					/* <- this means we cannot use syslog() here anymore! */
 	fcloseall();
 
 	execl(scriptname, NULL);
 	/* No return on success */
 
-	openlog("tinc", LOG_CONS | LOG_PID, LOG_DAEMON);
-	syslog(LOG_ERR, _("Could not execute `%s': %s"), scriptname,
+	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Could not execute `%s': %s"), scriptname,
 		   strerror(errno));
 	exit(errno);
 }
@@ -262,37 +260,35 @@ int execute_script(const char *name, char **envp)
 	pid = fork();
 
 	if(pid < 0) {
-		syslog(LOG_ERR, _("System call `%s' failed: %s"), "fork",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "fork",
 			   strerror(errno));
 		return -1;
 	}
 
 	if(pid) {
-		if(debug_lvl >= DEBUG_STATUS)
-			syslog(LOG_INFO, _("Executing script %s"), name);
+		logger(DEBUG_STATUS, LOG_INFO, _("Executing script %s"), name);
 
 		free(scriptname);
 
 		if(waitpid(pid, &status, 0) == pid) {
 			if(WIFEXITED(status)) {	/* Child exited by itself */
 				if(WEXITSTATUS(status)) {
-					syslog(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
+					logger(DEBUG_ALWAYS, LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
 						   pid, name, WEXITSTATUS(status));
 					return -1;
 				} else
 					return 0;
 			} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
-				syslog(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
 					   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 				return -1;
 			} else {			/* Something strange happened */
-
-				syslog(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
 					   name);
 				return -1;
 			}
 		} else {
-			syslog(LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
 				   strerror(errno));
 			return -1;
 		}
@@ -310,22 +306,20 @@ int execute_script(const char *name, char **envp)
 
 RETSIGTYPE sigterm_handler(int a)
 {
-	if(debug_lvl > DEBUG_NOTHING)
-		syslog(LOG_NOTICE, _("Got TERM signal"));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got TERM signal"));
 
 	cleanup_and_exit(0);
 }
 
 RETSIGTYPE sigquit_handler(int a)
 {
-	if(debug_lvl > DEBUG_NOTHING)
-		syslog(LOG_NOTICE, _("Got QUIT signal"));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got QUIT signal"));
 	cleanup_and_exit(0);
 }
 
 RETSIGTYPE fatal_signal_square(int a)
 {
-	syslog(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
 		   strsignal(a));
 	cp_trace();
 	exit(1);
@@ -334,11 +328,11 @@ RETSIGTYPE fatal_signal_square(int a)
 RETSIGTYPE fatal_signal_handler(int a)
 {
 	struct sigaction act;
-	syslog(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
+	logger(DEBUG_ALWAYS, LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
 	cp_trace();
 
 	if(do_detach) {
-		syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
 
 		act.sa_handler = fatal_signal_square;
 		act.sa_mask = emptysigset;
@@ -350,37 +344,36 @@ RETSIGTYPE fatal_signal_handler(int a)
 		remove_pid(pidfilename);
 		execvp(g_argv[0], g_argv);
 	} else {
-		syslog(LOG_NOTICE, _("Not restarting."));
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Not restarting."));
 		exit(1);
 	}
 }
 
 RETSIGTYPE sighup_handler(int a)
 {
-	if(debug_lvl > DEBUG_NOTHING)
-		syslog(LOG_NOTICE, _("Got HUP signal"));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got HUP signal"));
 	sighup = 1;
 }
 
 RETSIGTYPE sigint_handler(int a)
 {
-	if(saved_debug_lvl != -1) {
-		syslog(LOG_NOTICE, _("Reverting to old debug level (%d)"),
-			   saved_debug_lvl);
-		debug_lvl = saved_debug_lvl;
-		saved_debug_lvl = -1;
+	if(saved_debug_level != -1) {
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Reverting to old debug level (%d)"),
+			saved_debug_level);
+		debug_level = saved_debug_level;
+		saved_debug_level = -1;
 	} else {
-		syslog(LOG_NOTICE, _("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
-			   debug_lvl);
-		saved_debug_lvl = debug_lvl;
-		debug_lvl = 5;
+		logger(DEBUG_ALWAYS, LOG_NOTICE,
+			_("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
+			debug_level);
+		saved_debug_level = debug_level;
+		debug_level = 5;
 	}
 }
 
 RETSIGTYPE sigalrm_handler(int a)
 {
-	if(debug_lvl > DEBUG_NOTHING)
-		syslog(LOG_NOTICE, _("Got ALRM signal"));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got ALRM signal"));
 	sigalrm = 1;
 }
 
@@ -405,16 +398,13 @@ RETSIGTYPE sigwinch_handler(int a)
 
 RETSIGTYPE unexpected_signal_handler(int a)
 {
-	syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+	logger(DEBUG_ALWAYS, LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
 	cp_trace();
 }
 
 RETSIGTYPE ignore_signal_handler(int a)
 {
-	if(debug_lvl >= DEBUG_SCARY_THINGS) {
-		syslog(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
-		cp_trace();
-	}
+	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
 }
 
 struct {

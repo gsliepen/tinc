@@ -17,13 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.43 2002/09/15 14:55:54 guus Exp $
+    $Id: subnet.c,v 1.1.2.44 2003/07/06 22:11:33 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -39,6 +38,7 @@
 #include "node.h"
 #include "subnet.h"
 #include "netutl.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -111,7 +111,7 @@ int subnet_compare(subnet_t *a, subnet_t *b)
 	case SUBNET_IPV6:
 		return subnet_compare_ipv6(a, b);
 	default:
-		syslog(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
 			   a->type);
 		cp_trace();
 		exit(0);
@@ -295,7 +295,7 @@ char *net2str(subnet_t *subnet)
 			break;
 
 		default:
-			syslog(LOG_ERR,
+			logger(DEBUG_ALWAYS, LOG_ERR,
 				   _("net2str() was called with unknown subnet type %d, exiting!"),
 				   subnet->type);
 			cp_trace();
@@ -411,14 +411,14 @@ void dump_subnets(void)
 
 	cp();
 
-	syslog(LOG_DEBUG, _("Subnet list:"));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Subnet list:"));
 
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = (subnet_t *) node->data;
 		netstr = net2str(subnet);
-		syslog(LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
 		free(netstr);
 	}
 
-	syslog(LOG_DEBUG, _("End of subnet list."));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of subnet list."));
 }

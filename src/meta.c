@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.33 2003/03/19 11:45:05 guus Exp $
+    $Id: meta.c,v 1.1.2.34 2003/07/06 22:11:31 guus Exp $
 */
 
 #include "config.h"
@@ -25,7 +25,6 @@
 #include <avl_tree.h>
 
 #include <errno.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <string.h>
 /* This line must be below the rest for FreeBSD */
@@ -38,6 +37,7 @@
 #include "connection.h"
 #include "system.h"
 #include "protocol.h"
+#include "logger.h"
 
 int send_meta(connection_t *c, char *buffer, int length)
 {
@@ -48,8 +48,7 @@ int send_meta(connection_t *c, char *buffer, int length)
 
 	cp();
 
-	if(debug_lvl >= DEBUG_META)
-		syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
+	logger(DEBUG_META, LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
 	if(c->status.encryptout) {
@@ -64,7 +63,7 @@ int send_meta(connection_t *c, char *buffer, int length)
 		if(result <= 0) {
 			if(errno == EINTR)
 				continue;
-			syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
 				   c->hostname, strerror(errno));
 			return -1;
 		}
@@ -102,13 +101,13 @@ int receive_meta(connection_t *c)
 	cp();
 
 	if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0) {
-		syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__,
 			   __LINE__, c->socket, strerror(errno), c->name, c->hostname);
 		return -1;
 	}
 
 	if(x) {
-		syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata socket error for %s (%s): %s"),
 			   c->name, c->hostname, strerror(x));
 		return -1;
 	}
@@ -126,13 +125,12 @@ int receive_meta(connection_t *c)
 
 	if(lenin <= 0) {
 		if(lenin == 0) {
-			if(debug_lvl >= DEBUG_CONNECTIONS)
-				syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection closed by %s (%s)"),
 					   c->name, c->hostname);
 		} else if(errno == EINTR)
 			return 0;
 		else
-			syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
 				   c->name, c->hostname, strerror(errno));
 
 		return -1;
@@ -195,7 +193,7 @@ int receive_meta(connection_t *c)
 	}
 
 	if(c->buflen >= MAXBUFSIZE) {
-		syslog(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}

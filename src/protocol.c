@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.137 2002/09/09 22:32:49 guus Exp $
+    $Id: protocol.c,v 1.28.4.138 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
@@ -26,7 +26,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -38,6 +37,7 @@
 #include "protocol.h"
 #include "meta.h"
 #include "connection.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -74,18 +74,18 @@ int send_request(connection_t *c, const char *format, ...)
 	va_end(args);
 
 	if(len < 0 || len > MAXBUFSIZE - 1) {
-		syslog(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	if(debug_lvl >= DEBUG_PROTOCOL) {
+	if(debug_level >= DEBUG_PROTOCOL) {
 		sscanf(buffer, "%d", &request);
-		if(debug_lvl >= DEBUG_META)
-			syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"),
+		if(debug_level >= DEBUG_META)
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Sending %s to %s (%s): %s"),
 				   request_name[request], c->name, c->hostname, buffer);
 		else
-			syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
 				   c->name, c->hostname);
 	}
 
@@ -104,14 +104,14 @@ int forward_request(connection_t *from)
 
 	cp();
 
-	if(debug_lvl >= DEBUG_PROTOCOL) {
+	if(debug_level >= DEBUG_PROTOCOL) {
 		sscanf(from->buffer, "%d", &request);
-		if(debug_lvl >= DEBUG_META)
-			syslog(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
+		if(debug_level >= DEBUG_META)
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
 				   request_name[request], from->name, from->hostname,
 				   from->buffer);
 		else
-			syslog(LOG_DEBUG, _("Forwarding %s from %s (%s)"),
+			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Forwarding %s from %s (%s)"),
 				   request_name[request], from->name, from->hostname);
 	}
 
@@ -128,28 +128,28 @@ int receive_request(connection_t *c)
 
 	if(sscanf(c->buffer, "%d", &request) == 1) {
 		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
-			if(debug_lvl >= DEBUG_META)
-				syslog(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
+			if(debug_level >= DEBUG_META)
+				logger(DEBUG_ALWAYS, LOG_DEBUG, _("Unknown request from %s (%s): %s"),
 					   c->name, c->hostname, c->buffer);
 			else
-				syslog(LOG_ERR, _("Unknown request from %s (%s)"),
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown request from %s (%s)"),
 					   c->name, c->hostname);
 
 			return -1;
 		} else {
-			if(debug_lvl >= DEBUG_PROTOCOL) {
-				if(debug_lvl >= DEBUG_META)
-					syslog(LOG_DEBUG, _("Got %s from %s (%s): %s"),
+			if(debug_level >= DEBUG_PROTOCOL) {
+				if(debug_level >= DEBUG_META)
+					logger(DEBUG_ALWAYS, LOG_DEBUG, _("Got %s from %s (%s): %s"),
 						   request_name[request], c->name, c->hostname,
 						   c->buffer);
 				else
-					syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
+					logger(DEBUG_ALWAYS, LOG_DEBUG, _("Got %s from %s (%s)"),
 						   request_name[request], c->name, c->hostname);
 			}
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != request)) {
-			syslog(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
 				   c->hostname);
 			return -1;
 		}
@@ -157,12 +157,12 @@ int receive_request(connection_t *c)
 		if(request_handlers[request] (c))
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 		{
-			syslog(LOG_ERR, _("Error while processing %s from %s (%s)"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while processing %s from %s (%s)"),
 				   request_name[request], c->name, c->hostname);
 			return -1;
 		}
 	} else {
-		syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus data received from %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}
@@ -208,8 +208,7 @@ int seen_request(char *request)
 	p.request = request;
 
 	if(avl_search(past_request_tree, &p)) {
-		if(debug_lvl >= DEBUG_SCARY_THINGS)
-			syslog(LOG_DEBUG, _("Already seen request"));
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Already seen request"));
 		return 1;
 	} else {
 		new = (past_request_t *) xmalloc(sizeof(*new));
@@ -238,8 +237,8 @@ void age_past_requests(void)
 			left++;
 	}
 
-	if(debug_lvl >= DEBUG_SCARY_THINGS && left + deleted)
-		syslog(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
+	if(left || deleted)
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
 			   deleted, left);
 }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.32 2003/06/25 20:52:59 guus Exp $
+    $Id: net_setup.c,v 1.1.2.33 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
@@ -32,7 +32,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
@@ -72,6 +71,7 @@
 #include "route.h"
 #include "device.h"
 #include "event.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -107,7 +107,7 @@ int read_rsa_public_key(connection_t *c)
 			fp = fopen(fname, "r");
 
 			if(!fp) {
-				syslog(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading RSA public key file `%s': %s"),
 					   fname, strerror(errno));
 				free(fname);
 				return -1;
@@ -124,7 +124,7 @@ int read_rsa_public_key(connection_t *c)
 			fp = fopen(fname, "r");
 
 			if(!fp) {
-				syslog(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading RSA public key file `%s': %s"),
 					   fname, strerror(errno));
 				free(fname);
 				return -1;
@@ -139,7 +139,7 @@ int read_rsa_public_key(connection_t *c)
 				return 0;
 			}
 
-			syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
 				   fname, strerror(errno));
 			return -1;
 		} else {
@@ -179,7 +179,7 @@ int read_rsa_public_key(connection_t *c)
 	if(c->rsa_key)
 		return 0;
 
-	syslog(LOG_ERR, _("No public key for %s specified!"), c->name);
+	logger(DEBUG_ALWAYS, LOG_ERR, _("No public key for %s specified!"), c->name);
 
 	return -1;
 }
@@ -207,7 +207,7 @@ int read_rsa_private_key(void)
 		fp = fopen(fname, "r");
 
 		if(!fp) {
-			syslog(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error reading RSA private key file `%s': %s"),
 				   fname, strerror(errno));
 			free(fname);
 			return -1;
@@ -219,7 +219,7 @@ int read_rsa_private_key(void)
 		fclose(fp);
 
 		if(!myself->connection->rsa_key) {
-			syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
 				   fname, strerror(errno));
 			return -1;
 		}
@@ -256,12 +256,12 @@ int setup_myself(void)
 	myself->connection->protocol_version = PROT_CURRENT;
 
 	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
-		syslog(LOG_ERR, _("Name for tinc daemon required!"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Name for tinc daemon required!"));
 		return -1;
 	}
 
 	if(check_id(name)) {
-		syslog(LOG_ERR, _("Invalid name for myself!"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid name for myself!"));
 		free(name);
 		return -1;
 	}
@@ -273,7 +273,7 @@ int setup_myself(void)
 		return -1;
 
 	if(read_connection_config(myself->connection)) {
-		syslog(LOG_ERR, _("Cannot open host configuration file for myself!"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot open host configuration file for myself!"));
 		return -1;
 	}
 
@@ -329,7 +329,7 @@ int setup_myself(void)
 		else if(!strcasecmp(mode, "hub"))
 			routing_mode = RMODE_HUB;
 		else {
-			syslog(LOG_ERR, _("Invalid routing mode!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid routing mode!"));
 			return -1;
 		}
 		free(mode);
@@ -340,7 +340,7 @@ int setup_myself(void)
 					&priorityinheritance);
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		syslog(LOG_WARNING, _("PriorityInheritance not supported on this platform"));
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("PriorityInheritance not supported on this platform"));
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -350,7 +350,7 @@ int setup_myself(void)
 	   (lookup_config(myself->connection->config_tree, "MaxTimeout"),
 		&maxtimeout)) {
 		if(maxtimeout <= 0) {
-			syslog(LOG_ERR, _("Bogus maximum timeout!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus maximum timeout!"));
 			return -1;
 		}
 	} else
@@ -364,7 +364,7 @@ int setup_myself(void)
 		else if(!strcasecmp(afname, "any"))
 			addressfamily = AF_UNSPEC;
 		else {
-			syslog(LOG_ERR, _("Invalid address family!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Invalid address family!"));
 			return -1;
 		}
 		free(afname);
@@ -382,7 +382,7 @@ int setup_myself(void)
 			myself->cipher = EVP_get_cipherbyname(cipher);
 
 			if(!myself->cipher) {
-				syslog(LOG_ERR, _("Unrecognized cipher type!"));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Unrecognized cipher type!"));
 				return -1;
 			}
 		}
@@ -417,7 +417,7 @@ int setup_myself(void)
 			myself->digest = EVP_get_digestbyname(digest);
 
 			if(!myself->digest) {
-				syslog(LOG_ERR, _("Unrecognized digest type!"));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Unrecognized digest type!"));
 				return -1;
 			}
 		}
@@ -431,10 +431,10 @@ int setup_myself(void)
 		&myself->maclength)) {
 		if(myself->digest) {
 			if(myself->maclength > myself->digest->md_size) {
-				syslog(LOG_ERR, _("MAC length exceeds size of digest!"));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("MAC length exceeds size of digest!"));
 				return -1;
 			} else if(myself->maclength < 0) {
-				syslog(LOG_ERR, _("Bogus MAC length!"));
+				logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus MAC length!"));
 				return -1;
 			}
 		}
@@ -449,7 +449,7 @@ int setup_myself(void)
 	   (lookup_config(myself->connection->config_tree, "Compression"),
 		&myself->compression)) {
 		if(myself->compression < 0 || myself->compression > 11) {
-			syslog(LOG_ERR, _("Bogus compression level!"));
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus compression level!"));
 			return -1;
 		}
 	} else
@@ -481,7 +481,7 @@ int setup_myself(void)
 	err = getaddrinfo(address, myport, &hint, &ai);
 
 	if(err || !ai) {
-		syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo",
+		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo",
 			   gai_strerror(err));
 		return -1;
 	}
@@ -501,9 +501,9 @@ int setup_myself(void)
 		if(listen_socket[listen_sockets].udp < 0)
 			continue;
 
-		if(debug_lvl >= DEBUG_CONNECTIONS) {
+		if(debug_level >= DEBUG_CONNECTIONS) {
 			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			syslog(LOG_NOTICE, _("Listening on %s"), hostname);
+			logger(DEBUG_ALWAYS, LOG_NOTICE, _("Listening on %s"), hostname);
 			free(hostname);
 		}
 
@@ -514,9 +514,9 @@ int setup_myself(void)
 	freeaddrinfo(ai);
 
 	if(listen_sockets)
-		syslog(LOG_NOTICE, _("Ready"));
+		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Ready"));
 	else {
-		syslog(LOG_ERR, _("Unable to create any listening socket!"));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to create any listening socket!"));
 		return -1;
 	}
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.12 2003/06/11 19:28:38 guus Exp $
+    $Id: device.c,v 1.1.2.13 2003/07/06 22:11:37 guus Exp $
 */
 
 
@@ -31,7 +31,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/stropts.h>
@@ -43,7 +42,7 @@
 #include <utils.h>
 #include "conf.h"
 #include "net.h"
-#include "subnet.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -69,7 +68,7 @@ int setup_device(void)
 		device = DEFAULT_DEVICE;
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
-		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
 
@@ -81,35 +80,35 @@ int setup_device(void)
 	ppa = atoi(ptr);
 
 	if((ip_fd = open("/dev/ip", O_RDWR, 0)) < 0) {
-		syslog(LOG_ERR, _("Could not open /dev/ip: %s"), strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open /dev/ip: %s"), strerror(errno));
 		return -1;
 	}
 
 	/* Assign a new PPA and get its unit number. */
 	if((ppa = ioctl(device_fd, TUNNEWPPA, ppa)) < 0) {
-		syslog(LOG_ERR, _("Can't assign new interface: %s"), strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't assign new interface: %s"), strerror(errno));
 		return -1;
 	}
 
 	if((if_fd = open(device, O_RDWR, 0)) < 0) {
-		syslog(LOG_ERR, _("Could not open %s twice: %s"), device,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s twice: %s"), device,
 			   strerror(errno));
 		return -1;
 	}
 
 	if(ioctl(if_fd, I_PUSH, "ip") < 0) {
-		syslog(LOG_ERR, _("Can't push IP module: %s"), strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't push IP module: %s"), strerror(errno));
 		return -1;
 	}
 
 	/* Assign ppa according to the unit number returned by tun device */
 	if(ioctl(if_fd, IF_UNITSEL, (char *) &ppa) < 0) {
-		syslog(LOG_ERR, _("Can't set PPA %d: %s"), ppa, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't set PPA %d: %s"), ppa, strerror(errno));
 		return -1;
 	}
 
 	if(ioctl(ip_fd, I_LINK, if_fd) < 0) {
-		syslog(LOG_ERR, _("Can't link TUN device to IP: %s"), strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't link TUN device to IP: %s"), strerror(errno));
 		return -1;
 	}
 
@@ -118,7 +117,7 @@ int setup_device(void)
 
 	device_info = _("Solaris tun device");
 
-	syslog(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return 0;
 }
@@ -137,7 +136,7 @@ int read_packet(vpn_packet_t *packet)
 	cp();
 
 	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
-		syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
 	}
@@ -149,10 +148,8 @@ int read_packet(vpn_packet_t *packet)
 
 	device_total_in += packet->len;
 
-	if(debug_lvl >= DEBUG_TRAFFIC) {
-		syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 			   device_info);
-	}
 
 	return 0;
 }
@@ -161,12 +158,11 @@ int write_packet(vpn_packet_t *packet)
 {
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
 	if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
-		syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, packet->len,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, packet->len,
 			   strerror(errno));
 		return -1;
 	}
@@ -180,7 +176,7 @@ void dump_device_stats(void)
 {
 	cp();
 
-	syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 }

@@ -17,18 +17,19 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.19 2003/05/06 21:13:17 guus Exp $
+    $Id: node.c,v 1.1.2.20 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
 
 #include <string.h>
-#include <syslog.h>
 
 #include <avl_tree.h>
 #include "node.h"
 #include "netutl.h"
 #include "net.h"
+#include "logger.h"
+
 #include <utils.h>
 #include <xalloc.h>
 
@@ -172,16 +173,16 @@ void dump_nodes(void)
 
 	cp();
 
-	syslog(LOG_DEBUG, _("Nodes:"));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Nodes:"));
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = (node_t *) node->data;
-		syslog(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
+		logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
 			   n->options, n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-");
 	}
 
-	syslog(LOG_DEBUG, _("End of nodes."));
+	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of nodes."));
 }

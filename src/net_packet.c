@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.30 2003/05/07 11:21:58 guus Exp $
+    $Id: net_packet.c,v 1.1.2.31 2003/07/06 22:11:32 guus Exp $
 */
 
 #include "config.h"
@@ -32,7 +32,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
@@ -76,6 +75,7 @@
 #include "route.h"
 #include "device.h"
 #include "event.h"
+#include "logger.h"
 
 #include "system.h"
 
@@ -149,8 +149,7 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 			 (char *) &inpkt->seqno, inpkt->len, hmac, NULL);
 
 		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, myself->maclength)) {
-			if(debug_lvl >= DEBUG_TRAFFIC)
-				syslog(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
 					   n->name, n->hostname);
 			return;
 		}
@@ -179,14 +178,13 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	if(inpkt->seqno != n->received_seqno + 1) {
 		if(inpkt->seqno >= n->received_seqno + sizeof(n->late) * 8) {
-			if(debug_lvl >= DEBUG_TRAFFIC)
-				syslog(LOG_WARNING, _("Lost %d packets from %s (%s)"),
+			logger(DEBUG_ALWAYS, LOG_WARNING, _("Lost %d packets from %s (%s)"),
 					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
 			
 			memset(n->late, 0, sizeof(n->late));
 		} else if (inpkt->seqno <= n->received_seqno) {
 			if(inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8 || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
-				syslog(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
+				logger(DEBUG_ALWAYS, LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
 					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
 			} else
 				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
@@ -206,7 +204,7 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, myself->compression)) < 0) {
-			syslog(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
 				   n->name, n->hostname);
 			return;
 		}
@@ -233,8 +231,7 @@ void receive_packet(node_t *n, vpn_packet_t *packet)
 {
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
 			   packet->len, n->name, n->hostname);
 
 	route_incoming(n, packet);
@@ -258,8 +255,7 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	/* Make sure we have a valid key */
 
 	if(!n->status.validkey) {
-		if(debug_lvl >= DEBUG_TRAFFIC)
-			syslog(LOG_INFO,
+		logger(DEBUG_TRAFFIC, LOG_INFO,
 				   _("No valid key known yet for %s (%s), queueing packet"),
 				   n->name, n->hostname);
 
@@ -290,7 +286,7 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->compression)) < 0) {
-			syslog(LOG_ERR, _("Error while compressing packet to %s (%s)"),
+			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while compressing packet to %s (%s)"),
 				   n->name, n->hostname);
 			return;
 		}
@@ -341,17 +337,15 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(priorityinheritance && origpriority != priority
 	   && listen_socket[sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
-		if(debug_lvl >= DEBUG_TRAFFIC)
-			syslog(LOG_DEBUG, _("Setting outgoing packet priority to %d"),
-				   priority);
+		logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Setting outgoing packet priority to %d"), priority);
 		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
-			syslog(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt",
+			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "setsockopt",
 				   strerror(errno));
 	}
 #endif
 
 	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		syslog(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name,
 			   n->hostname, strerror(errno));
 		return;
 	}
@@ -368,29 +362,24 @@ void send_packet(node_t *n, vpn_packet_t *packet)
 
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
+	logger(DEBUG_TRAFFIC, LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
 			   packet->len, n->name, n->hostname);
 
 	if(n == myself) {
-		if(debug_lvl >= DEBUG_TRAFFIC)
-			syslog(LOG_NOTICE, _("Packet is looping back to us!"));
-
+		logger(DEBUG_TRAFFIC, LOG_NOTICE, _("Packet is looping back to us!"));
 		return;
 	}
 
 	if(!n->status.reachable) {
-		if(debug_lvl >= DEBUG_TRAFFIC)
-			syslog(LOG_INFO, _("Node %s (%s) is not reachable"),
+		logger(DEBUG_TRAFFIC, LOG_INFO, _("Node %s (%s) is not reachable"),
 				   n->name, n->hostname);
-
 		return;
 	}
 
 	via = (n->via == myself) ? n->nexthop : n->via;
 
-	if(via != n && debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),
+	if(via != n)
+		logger(DEBUG_TRAFFIC, LOG_ERR, _("Sending packet to %s via %s (%s)"),
 			   n->name, via->name, n->via->hostname);
 
 	if((myself->options | via->options) & OPTION_TCPONLY) {
@@ -409,8 +398,7 @@ void broadcast_packet(node_t *from, vpn_packet_t *packet)
 
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
 
 	for(node = connection_tree->head; node; node = node->next) {
@@ -427,8 +415,7 @@ void flush_queue(node_t *n)
 
 	cp();
 
-	if(debug_lvl >= DEBUG_TRAFFIC)
-		syslog(LOG_INFO, _("Flushing queue for %s (%s)"), n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, _("Flushing queue for %s (%s)"), n->name, n->hostname);
 
 	for(node = n->queue->head; node; node = next) {
 		next = node->next;
@@ -449,21 +436,21 @@ void handle_incoming_vpn_data(int sock)
 	cp();
 
 	if(getsockopt(sock, SOL_SOCKET, SO_ERROR, &x, &l) < 0) {
-		syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%s"),
+		logger(DEBUG_ALWAYS, LOG_ERR, _("This is a bug: %s:%d: %d:%s"),
 			   __FILE__, __LINE__, sock, strerror(errno));
 		cp_trace();
 		exit(1);
 	}
 
 	if(x) {
-		syslog(LOG_ERR, _("Incoming data socket error: %s"), strerror(x));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Incoming data socket error: %s"), strerror(x));
 		return;
 	}
 
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len <= 0) {
-		syslog(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
 		return;
 	}
 
@@ -473,7 +460,7 @@ void handle_incoming_vpn_data(int sock)
 
 	if(!n) {
 		hostname = sockaddr2hostname(&from);
-		syslog(LOG_WARNING, _("Received UDP packet from unknown source %s"),
+		logger(DEBUG_ALWAYS, LOG_WARNING, _("Received UDP packet from unknown source %s"),
 			   hostname);
 		free(hostname);
 		return;
