@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.30 2003/11/17 15:30:18 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.31 2003/12/20 19:47:52 guus Exp $
 */
 
 #include "system.h"
@@ -475,6 +475,9 @@ bool send_ack(connection_t *c)
 
 	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
 		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
+
+	if((get_config_bool(lookup_config(c->config_tree, "DontFragment"), &choice) && choice) || myself->options & OPTION_DONTFRAGMENT)
+		c->options |= OPTION_DONTFRAGMENT;
 
 	return send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 }

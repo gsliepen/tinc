@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.28 2003/08/28 21:05:10 guus Exp $
+    $Id: node.c,v 1.1.2.29 2003/12/20 19:47:52 guus Exp $
 */
 
 #include "system.h"
@@ -80,6 +80,7 @@ node_t *new_node(void)
 	n->edge_tree = new_edge_tree();
 	n->queue = list_alloc((list_action_t) free);
 	EVP_CIPHER_CTX_init(&n->packet_ctx);
+	n->mtu = MTU;
 
 	return n;
 }

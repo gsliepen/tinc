@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.30 2003/10/10 16:23:30 guus Exp $
+    $Id: graph.c,v 1.1.2.31 2003/12/20 19:47:52 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -229,6 +229,12 @@ void sssp_bfs(void)
 
 					e->to->hostname = sockaddr2hostname(&e->to->address);
 					avl_insert_node(node_udp_tree, node);
+
+					if(e->to->options & OPTION_DONTFRAGMENT) {
+						e->to->mtuprobes = 0;
+						if(e->to->status.validkey)
+							send_mtu_probe(e->to);
+					}
 				}
 
 				node = avl_alloc_node();

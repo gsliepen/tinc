@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.35 2003/12/12 19:52:25 guus Exp $
+    $Id: net_socket.c,v 1.1.2.36 2003/12/20 19:47:52 guus Exp $
 */
 
 #include "system.h"
@@ -49,13 +49,10 @@ int listen_sockets;
 
 int setup_listen_socket(const sockaddr_t *sa)
 {
-	int nfd, flags;
+	int nfd;
 	char *addrstr;
 	int option;
 	char *iface;
-#ifdef SO_BINDTODEVICE
-	struct ifreq ifr;
-#endif
 
 	cp();
 
@@ -67,13 +64,15 @@ int setup_listen_socket(const sockaddr_t *sa)
 	}
 
 #ifdef O_NONBLOCK
-	flags = fcntl(nfd, F_GETFL);
+	{
+		int flags = fcntl(nfd, F_GETFL);
 
-	if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-		closesocket(nfd);
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
-			   strerror(errno));
-		return -1;
+		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
+			closesocket(nfd);
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
+				   strerror(errno));
+			return -1;
+		}
 	}
 #endif
 
@@ -94,6 +93,8 @@ int setup_listen_socket(const sockaddr_t *sa)
 	if(get_config_string
 	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
+		struct ifreq ifr;
+
 		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
@@ -129,13 +130,9 @@ int setup_listen_socket(const sockaddr_t *sa)
 
 int setup_vpn_in_socket(const sockaddr_t *sa)
 {
-	int nfd, flags;
+	int nfd;
 	char *addrstr;
 	int option;
-#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
-	char *iface;
-	struct ifreq ifr;
-#endif
 
 	cp();
 
@@ -147,29 +144,51 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	}
 
 #ifdef O_NONBLOCK
-	flags = fcntl(nfd, F_GETFL);
-	if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-		closesocket(nfd);
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
-			   strerror(errno));
-		return -1;
+	{
+		int flags = fcntl(nfd, F_GETFL);
+
+		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
+			closesocket(nfd);
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
+				   strerror(errno));
+			return -1;
+		}
 	}
 #endif
 
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
-#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
-	if(get_config_string
-	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
-		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+#if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
+	{
+		bool choice;
 
-		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
-			closesocket(nfd);
-			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
-				   strerror(errno));
-			return -1;
+		if(get_config_bool(lookup_config(myself->connection->config_tree, "DontFragment"), &choice) && choice) {
+			option = IP_PMTUDISC_DO;
+			if(setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option))) {
+				closesocket(nfd);
+				logger(LOG_ERR, _("Can't set MTU discovery mode: %s"), strerror(errno));
+				return -1;
+			}
+		}
+	}
+#endif
+
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
+	{
+		char *iface;
+		struct ifreq ifr;
+
+		if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
+			memset(&ifr, 0, sizeof(ifr));
+			strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+
+			if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
+				closesocket(nfd);
+				logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
+					   strerror(errno));
+				return -1;
+			}
 		}
 	}
 #endif

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.24 2003/11/17 15:30:18 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.25 2003/12/20 19:47:53 guus Exp $
 */
 
 #include "system.h"
@@ -267,6 +267,8 @@ bool ans_key_h(connection_t *c)
 			return false;
 		}
 
+	if(from->options & OPTION_DONTFRAGMENT && !from->mtuprobes)
+		send_mtu_probe(from);
 
 	flush_queue(from);
 

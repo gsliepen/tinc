@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.202 2003/12/12 19:52:24 guus Exp $
+    $Id: net.c,v 1.35.4.203 2003/12/20 19:47:52 guus Exp $
 */
 
 #include "system.h"
@@ -334,7 +334,8 @@ int main_loop(void)
 	while(running) {
 		now = time(NULL);
 
-		tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
+	//	tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
+		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
 		maxfd = build_fdset(&fset);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.44 2003/12/12 19:52:25 guus Exp $
+    $Id: net_packet.c,v 1.1.2.45 2003/12/20 19:47:52 guus Exp $
 */
 
 #include "system.h"
@@ -52,8 +52,57 @@ int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
+static void send_udppacket(node_t *, vpn_packet_t *);
 
 #define MAX_SEQNO 1073741824
+
+void send_mtu_probe(node_t *n)
+{
+	vpn_packet_t packet;
+	int len, i;
+	
+	cp();
+
+	n->mtuprobes++;
+
+	for(i = 0; i < 3; i++) {
+		if(n->mtuprobes >= 100 || n->probedmtu >= n->mtu) {
+			n->mtu = n->probedmtu;
+			ifdebug(TRAFFIC) logger(LOG_INFO, _("Fixing MTU of %s (%s) to %d after %d probes"), n->name, n->hostname, n->mtu, n->mtuprobes);
+			return;
+		}
+
+		len = n->probedmtu + 1 + random() % (n->mtu - n->probedmtu);
+		if(len < 64)
+			len = 64;
+		
+		memset(packet.data, 0, 14);
+		RAND_pseudo_bytes(packet.data + 14, len - 14);
+		packet.len = len;
+
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending MTU probe length %d to %s (%s)"), len, n->name, n->hostname);
+
+		send_udppacket(n, &packet);
+	}
+
+	n->mtuevent = xmalloc(sizeof(*n->mtuevent));
+	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
+	n->mtuevent->data = n;
+	n->mtuevent->time = now + 1;
+	event_add(n->mtuevent);
+}
+
+void mtu_probe_h(node_t *n, vpn_packet_t *packet) {
+	ifdebug(TRAFFIC) logger(LOG_INFO, _("Got MTU probe length %d from %s (%s)"), packet->len, n->name, n->hostname);
+
+	if(!packet->data[0]) {
+		packet->data[0] = 1;
+		send_packet(n, packet);
+	} else {
+		if(n->probedmtu < packet->len)
+			n->probedmtu = packet->len;
+	}
+}
 
 static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
 {
@@ -203,7 +252,10 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(n->connection)
 		n->connection->last_ping_time = now;
 
-	receive_packet(n, inpkt);
+	if(!inpkt->data[12] && !inpkt->data[13])
+		mtu_probe_h(n, inpkt);
+	else
+		receive_packet(n, inpkt);
 }
 
 void receive_tcppacket(connection_t *c, char *buffer, int len)
@@ -328,6 +380,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
 		logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
+		if(errno == EMSGSIZE) {
+			if(n->mtu >= origlen)
+				n->mtu = origlen - 1;
+		}
 		return;
 	}
 

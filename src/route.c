@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.71 2003/12/13 21:50:26 guus Exp $
+    $Id: route.c,v 1.1.2.72 2003/12/20 19:47:53 guus Exp $
 */
 
 #include "system.h"
@@ -206,7 +206,7 @@ static __inline__ void route_mac(node_t *source, vpn_packet_t *packet)
 
 /* RFC 792 */
 
-static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t code)
+static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code)
 {
 	struct ip ip = {0};
 	struct icmp icmp = {0};
@@ -230,6 +230,9 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	ip_dst = ip.ip_dst;
 
 	oldlen = packet->len - ether_size;
+
+	if(type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
+		icmp.icmp_nextmtu = htons(packet->len - ether_size);
 
 	if(oldlen >= IP_MSS - ip_size - icmp_size)
 		oldlen = IP_MSS - ip_size - icmp_size;
@@ -256,7 +259,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	
 	/* Fill in ICMP header */
 	
-	icmp.icmp_type = ICMP_DEST_UNREACH;
+	icmp.icmp_type = type;
 	icmp.icmp_code = code;
 	icmp.icmp_cksum = 0;
 	
@@ -269,7 +272,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	memcpy(packet->data + ether_size + ip_size, &icmp, icmp_size);
 	
 	packet->len = ether_size + ip_size + icmp_size + oldlen;
-	
+
 	send_packet(source, packet);
 }
 
@@ -289,7 +292,7 @@ static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 				packet->data[32],
 				packet->data[33]);
 
-		route_ipv4_unreachable(source, packet, ICMP_NET_UNKNOWN);
+		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN);
 		return;
 	}
 	
@@ -299,7 +302,14 @@ static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 	}
 
 	if(!subnet->owner->status.reachable)
-		route_ipv4_unreachable(source, packet, ICMP_NET_UNREACH);
+		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+
+	if(subnet->owner->options & OPTION_DONTFRAGMENT && packet->len > subnet->owner->mtu && subnet->owner != myself) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, subnet->owner->mtu);
+		packet->len = subnet->owner->mtu;
+		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
+		return;
+	}
 
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
@@ -319,7 +329,7 @@ static __inline__ void route_ipv4(node_t *source, vpn_packet_t *packet)
 
 /* RFC 2463 */
 
-static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t code)
+static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code)
 {
 	struct ip6_hdr ip6;
 	struct icmp6_hdr icmp6 = {0};
@@ -347,6 +357,9 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	pseudo.ip6_dst = ip6.ip6_src;
 
 	pseudo.length = packet->len - ether_size;
+
+	if(type == ICMP6_PACKET_TOO_BIG)
+		icmp6.icmp6_mtu = htonl(pseudo.length);
 	
 	if(pseudo.length >= IP_MSS - ip6_size - icmp6_size)
 		pseudo.length = IP_MSS - ip6_size - icmp6_size;
@@ -366,7 +379,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 	/* Fill in ICMP header */
 	
-	icmp6.icmp6_type = ICMP6_DST_UNREACH;
+	icmp6.icmp6_type = type;
 	icmp6.icmp6_code = code;
 	icmp6.icmp6_cksum = 0;
 
@@ -413,7 +426,7 @@ static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 				ntohs(*(uint16_t *) &packet->data[50]),
 				ntohs(*(uint16_t *) &packet->data[52]));
 
-		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH_ADDR);
+		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR);
 		return;
 	}
 
@@ -423,8 +436,15 @@ static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 	}
 
 	if(!subnet->owner->status.reachable)
-		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH_NOROUTE);
+		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
 	
+	if(subnet->owner->options & OPTION_DONTFRAGMENT && packet->len > subnet->owner->mtu && subnet->owner != myself) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, subnet->owner->mtu);
+		packet->len = subnet->owner->mtu;
+		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
+		return;
+	}
+
 	send_packet(subnet->owner, packet);
 }
 
