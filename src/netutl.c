@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.53 2003/08/22 11:18:42 guus Exp $
+    $Id: netutl.c,v 1.12.4.54 2003/08/22 15:03:59 guus Exp $
 */
 
 #include "system.h"
@@ -193,6 +193,8 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
 }
 
 void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
+	cp();
+
 	if(b->sa.sa_family != AF_UNKNOWN) {
 		*a = *b;
 	} else {
@@ -203,6 +205,8 @@ void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
 }
 
 void sockaddrfree(sockaddr_t *a) {
+	cp();
+
 	if(a->sa.sa_family == AF_UNKNOWN) {
 		free(a->unknown.address);
 		free(a->unknown.port);
@@ -211,6 +215,8 @@ void sockaddrfree(sockaddr_t *a) {
 	
 void sockaddrunmap(sockaddr_t *sa)
 {
+	cp();
+
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
 		sa->in.sin_family = AF_INET;
