@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.49 2003/03/29 22:11:22 guus Exp $
+    $Id: route.c,v 1.1.2.50 2003/06/11 19:28:35 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,8 @@
 int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
 int macexpire = 600;
-subnet_t mymac;
+int overwrite_mac = 0;
+mac_t mymac = {0xFE, 0xFD, 0, 0, 0, 0};
 
 /* RFC 1071 */
 
@@ -397,7 +398,8 @@ void route_neighborsol(vpn_packet_t *packet)
 
 	/* First, snatch the source address from the neighbor solicitation packet */
 
-	memcpy(mymac.net.mac.address.x, packet->data + 6, 6);
+	if(overwrite_mac)
+		memcpy(mymac.x, packet->data + 6, 6);
 
 	/* Check if this is a valid neighbor solicitation request */
 
@@ -499,7 +501,8 @@ void route_arp(vpn_packet_t *packet)
 
 	/* First, snatch the source address from the ARP packet */
 
-	memcpy(mymac.net.mac.address.x, packet->data + 6, 6);
+	if(overwrite_mac)
+		memcpy(mymac.x, packet->data + 6, 6);
 
 	/* This routine generates replies to ARP requests.
 	   You don't need to set NOARP flag on the interface anymore (which is broken on FreeBSD).
@@ -628,7 +631,8 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
 
 				if(n) {
 					if(n == myself) {
-						memcpy(packet->data, mymac.net.mac.address.x, 6);
+						if(overwrite_mac)
+							memcpy(packet->data, mymac.x, 6);
 						write_packet(packet);
 					} else
 						send_packet(n, packet);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.h,v 1.1.2.9 2002/09/09 21:25:07 guus Exp $
+    $Id: route.h,v 1.1.2.10 2003/06/11 19:28:35 guus Exp $
 */
 
 #ifndef __TINC_ROUTE_H__
@@ -30,6 +30,7 @@ enum {
 };
 
 extern int routing_mode;
+extern int overwrite_mac;
 extern int priorityinheritance;
 extern int macexpire;
 

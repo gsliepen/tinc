@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.4 2002/09/10 21:29:42 guus Exp $
+    $Id: device.c,v 1.1.2.5 2003/06/11 19:28:36 guus Exp $
 */
 
 #include "config.h"
@@ -47,8 +47,6 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-extern subnet_t mymac;
-
 int setup_device(void)
 {
 	struct ifreq ifr;
@@ -65,15 +63,6 @@ int setup_device(void)
 		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
-
-	/* Set default MAC address for ethertap devices */
-	mymac.type = SUBNET_MAC;
-	mymac.net.mac.address.x[0] = 0xfe;
-	mymac.net.mac.address.x[1] = 0xfd;
-	mymac.net.mac.address.x[2] = 0x00;
-	mymac.net.mac.address.x[3] = 0x00;
-	mymac.net.mac.address.x[4] = 0x00;
-	mymac.net.mac.address.x[5] = 0x00;
 
 	device_info = _("Stub device for Cygwin environment");
 

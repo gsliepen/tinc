@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.14 2003/06/11 19:09:52 guus Exp $
+    $Id: device.c,v 1.1.2.15 2003/06/11 19:28:37 guus Exp $
 */
 
 #include "config.h"
@@ -68,8 +68,6 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-extern subnet_t mymac;
-
 /*
   open the local ethertap device
 */
@@ -94,15 +92,6 @@ int setup_device(void)
 		syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
-
-	/* Set default MAC address for ethertap devices */
-	mymac.type = SUBNET_MAC;
-	mymac.net.mac.address.x[0] = 0xfe;
-	mymac.net.mac.address.x[1] = 0xfd;
-	mymac.net.mac.address.x[2] = 0x00;
-	mymac.net.mac.address.x[3] = 0x00;
-	mymac.net.mac.address.x[4] = 0x00;
-	mymac.net.mac.address.x[5] = 0x00;
 
 #ifdef HAVE_TUNTAP
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
@@ -131,6 +120,8 @@ int setup_device(void)
 	} else
 #endif
 	{
+		if(routing_mode == RMODE_ROUTER)
+			overwrite_mac = 1;
 		device_info = _("Linux ethertap device");
 		device_type = DEVICE_TYPE_ETHERTAP;
 		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
