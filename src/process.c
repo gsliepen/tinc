@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.77 2003/11/27 23:24:59 guus Exp $
+    $Id: process.c,v 1.1.2.78 2003/12/07 14:29:02 guus Exp $
 */
 
 #include "system.h"
@@ -338,7 +338,7 @@ bool detach(void)
 		/* Now UPDATE the pid in the pidfile, because we changed it... */
 
 		if(!write_pid(pidfilename)) {
-			fprintf(stderr, _("Could not write pidfile %s: %s\n"), pidfilename, strerror(errno));
+			fprintf(stderr, _("Could not write pid file %s: %s\n"), pidfilename, strerror(errno));
 			return false;
 		}
 #else
@@ -431,13 +431,19 @@ bool execute_script(const char *name, char **envp)
 static RETSIGTYPE sigterm_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got %s signal"), "TERM");
-	running = false;
+	if(running)
+		running = false;
+	else
+		exit(1);
 }
 
 static RETSIGTYPE sigquit_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got %s signal"), "QUIT");
-	running = false;
+	if(running)
+		running = false;
+	else
+		exit(1);
 }
 
 static RETSIGTYPE fatal_signal_square(int a)
