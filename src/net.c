@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.32 2000/05/29 23:40:05 guus Exp $
+    $Id: net.c,v 1.33 2000/05/30 12:31:41 zarq Exp $
 */
 
 #include "config.h"
@@ -815,6 +815,8 @@ cp
 */
 void terminate_connection(conn_list_t *cl)
 {
+  conn_list_t *p, *q;
+
 cp
   if(cl->status.remove)
     return;
@@ -841,6 +843,29 @@ cp
   
   cl->status.active = 0;
   cl->status.remove = 1;
+
+cp
+  /* Find all connections that were lost because they were behind cl
+     (the connection that was dropped). */
+  for(p = conn_list; p != NULL; p = p->next)
+    {
+      if(p->nexthop == cl)
+	{
+	  p->status.active = 0;
+	  p->status.remove = 1;
+	}
+    }
+
+cp 
+  /* Then send a notification about all these connections to all hosts
+     that are still connected to us. */
+  for(p = conn_list; p != NULL; p = p->next)
+    {
+      if(!p->status.remove)
+	for(q = conn_list; q != NULL; q = q->next)
+	  if(q->status.remove)
+	    send_del_host(p, q);
+    }
 cp
 }
 
