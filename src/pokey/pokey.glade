@@ -1607,148 +1607,14 @@ Ivo Timmermans &lt;ivo@o2w.nl&gt;
 
 	    <widget>
 	      <class>GtkPixmapMenuItem</class>
-	      <name>new_file1</name>
+	      <name>exit1</name>
 	      <signal>
 		<name>activate</name>
-		<handler>on_new_file1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_NEW_ITEM</stock_item>
-	      <label>_Nieuw Bestand</label>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>open1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_open1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_OPEN_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>save1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_save1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_SAVE_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>save_as1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_save_as1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_SAVE_AS_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkMenuItem</class>
-	      <name>separator1</name>
-	      <right_justify>False</right_justify>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>exit2</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_exit2_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
+		<handler>on_exit1_activate</handler>
+		<last_modification_time>Mon, 29 Apr 2002 19:54:35 GMT</last_modification_time>
 	      </signal>
 	      <stock_item>GNOMEUIINFO_MENU_EXIT_ITEM</stock_item>
 	    </widget>
-	  </widget>
-	</widget>
-
-	<widget>
-	  <class>GtkMenuItem</class>
-	  <name>edit1</name>
-	  <stock_item>GNOMEUIINFO_MENU_EDIT_TREE</stock_item>
-
-	  <widget>
-	    <class>GtkMenu</class>
-	    <name>edit1_menu</name>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>cut1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_cut1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_CUT_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>copy1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_copy1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_COPY_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>paste1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_paste1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_PASTE_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>clear1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_clear1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_CLEAR_ITEM</stock_item>
-	    </widget>
-
-	    <widget>
-	      <class>GtkMenuItem</class>
-	      <name>separator2</name>
-	      <right_justify>False</right_justify>
-	    </widget>
-
-	    <widget>
-	      <class>GtkPixmapMenuItem</class>
-	      <name>properties1</name>
-	      <signal>
-		<name>activate</name>
-		<handler>on_properties1_activate</handler>
-		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
-	      </signal>
-	      <stock_item>GNOMEUIINFO_MENU_PROPERTIES_ITEM</stock_item>
-	    </widget>
-	  </widget>
-	</widget>
-
-	<widget>
-	  <class>GtkMenuItem</class>
-	  <name>view1</name>
-	  <stock_item>GNOMEUIINFO_MENU_VIEW_TREE</stock_item>
-
-	  <widget>
-	    <class>GtkMenu</class>
-	    <name>view1_menu</name>
 	  </widget>
 	</widget>
 
@@ -1770,6 +1636,41 @@ Ivo Timmermans &lt;ivo@o2w.nl&gt;
 		<last_modification_time>Sat, 27 Apr 2002 17:23:31 GMT</last_modification_time>
 	      </signal>
 	      <stock_item>GNOMEUIINFO_MENU_PREFERENCES_ITEM</stock_item>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkMenuItem</class>
+	  <name>vensters1</name>
+	  <stock_item>GNOMEUIINFO_MENU_WINDOWS_TREE</stock_item>
+
+	  <widget>
+	    <class>GtkMenu</class>
+	    <name>vensters1_menu</name>
+
+	    <widget>
+	      <class>GtkMenuItem</class>
+	      <name>log_window1</name>
+	      <signal>
+		<name>activate</name>
+		<handler>on_log_window1_activate</handler>
+		<last_modification_time>Mon, 29 Apr 2002 16:56:02 GMT</last_modification_time>
+	      </signal>
+	      <label>Log window</label>
+	      <right_justify>False</right_justify>
+	    </widget>
+
+	    <widget>
+	      <class>GtkMenuItem</class>
+	      <name>graph_window1</name>
+	      <signal>
+		<name>activate</name>
+		<handler>on_graph_window1_activate</handler>
+		<last_modification_time>Mon, 29 Apr 2002 16:56:02 GMT</last_modification_time>
+	      </signal>
+	      <label>Graph window</label>
+	      <right_justify>False</right_justify>
 	    </widget>
 	  </widget>
 	</widget>
