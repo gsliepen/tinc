@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.84 2003/10/06 16:13:06 guus Exp $
+dnl $Id: configure.in,v 1.13.2.85 2003/10/08 11:34:55 guus Exp $
 
 AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
@@ -197,7 +197,7 @@ AC_STRUCT_TM
 
 tinc_ATTRIBUTE(__malloc__)
 
-AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
+AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
   [#ifdef HAVE_SYS_TYPES_H
    #include <sys/types.h>
    #endif
