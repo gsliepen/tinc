@@ -17,13 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.8 2000/11/20 19:12:10 guus Exp $
+    $Id: rbl.c,v 1.1.2.9 2000/11/21 09:13:59 guus Exp $
 */
+
+#include "config.h"
 
 #include <stdlib.h>
 #include <xalloc.h>
 
 #include "rbl.h"
+#include <system.h>
 
 /* Allocate a new rbl node */
 rbl_t *new_rbl()
@@ -34,6 +37,8 @@ rbl_t *new_rbl()
 /* Free a rbl node */
 void free_rbl(rbl_t *rbl)
 {
+  if(rbl->data && rbl->tree->delete)
+    rbl->tree->delete(rbl->data);
   free(rbl);
 }
 
@@ -507,7 +512,8 @@ void rbl_delete_rbltree(rbltree_t *tree)
   for(rbl = tree->head; rbl; rbl = next)
     {
       next = rbl->next;
-      tree->delete(rbl->data);
+      if(tree->delete)
+        tree->delete(rbl->data);
     }
 
   tree->top = NULL;

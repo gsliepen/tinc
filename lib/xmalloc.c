@@ -21,6 +21,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 
 #if STDC_HEADERS
 # include <stdlib.h>
@@ -121,6 +122,18 @@ xrealloc (p, n)
   p = realloc (p, n);
   if (p == 0)
     xalloc_fail (n);
+  return p;
+}
+
+/* Duplicate a string */
+
+char *xstrdup(char *s)
+{
+  char *p;
+  
+  p = strdup(s);
+  if(!p)
+    xalloc_fail ((int)strlen(s));
   return p;
 }
 
