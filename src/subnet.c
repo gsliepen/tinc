@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.37 2002/06/21 10:11:33 guus Exp $
+    $Id: subnet.c,v 1.1.2.38 2002/07/10 11:32:33 guus Exp $
 */
 
 #include "config.h"
@@ -50,8 +50,14 @@ avl_tree_t *subnet_tree;
 
 int subnet_compare_mac(subnet_t *a, subnet_t *b)
 {
+  int result;
 cp
-  return memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
+  result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
+  
+  if(result || !a->owner || !b->owner)
+    return result;
+
+  return strcmp(a->owner->name, b->owner->name);
 }
 
 int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
@@ -63,7 +69,12 @@ cp
   if(result)
     return result;
 
-  return a->net.ipv4.prefixlength - b->net.ipv4.prefixlength;
+  result = a->net.ipv4.prefixlength - b->net.ipv4.prefixlength;
+  
+  if(result || !a->owner || !b->owner)
+    return result;
+
+  return strcmp(a->owner->name, b->owner->name);
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
@@ -75,7 +86,12 @@ cp
   if(result)
     return result;
 
-  return a->net.ipv6.prefixlength - b->net.ipv6.prefixlength;
+  result = a->net.ipv6.prefixlength - b->net.ipv6.prefixlength;
+  
+  if(result || !a->owner || !b->owner)
+    return result;
+
+  return strcmp(a->owner->name, b->owner->name);
 }
 
 int subnet_compare(subnet_t *a, subnet_t *b)
@@ -293,6 +309,7 @@ subnet_t *lookup_subnet_mac(mac_t *address)
 cp
   subnet.type = SUBNET_MAC;
   memcpy(&subnet.net.mac.address, address, sizeof(mac_t));
+  subnet.owner = NULL;
 
   p = (subnet_t *)avl_search(subnet_tree, &subnet);
 cp
@@ -306,6 +323,7 @@ cp
   subnet.type = SUBNET_IPV4;
   memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
   subnet.net.ipv4.prefixlength = 32;
+  subnet.owner = NULL;
 
   do
   {
@@ -345,6 +363,7 @@ cp
   subnet.type = SUBNET_IPV6;
   memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
   subnet.net.ipv6.prefixlength = 128;
+  subnet.owner = NULL;
   
   do
   {
