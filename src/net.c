@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.12 2000/06/28 10:11:10 guus Exp $
+    $Id: net.c,v 1.35.4.13 2000/06/29 13:04:14 guus Exp $
 */
 
 #include "config.h"
@@ -104,13 +104,13 @@ cp
   rp.len = htons(rp.len);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, _("Sending packet of %d bytes to " IP_ADDR_S " (%s)"),
-           ntohs(rp.len), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
+           ntohs(rp.len), cl->vpn_hostname, cl->real_hostname);
 
   if((r = send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
-      syslog(LOG_ERR, _("Error sending packet to " IP_ADDR_S " (%s): %m"),
-             IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
+             cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
@@ -130,8 +130,8 @@ cp
   add_mac_addresses(&vp);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, _("Receiving packet of %d bytes from " IP_ADDR_S " (%s)"),
-           ((real_packet_t*)packet)->len, IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
+           ((real_packet_t*)packet)->len, cl->vpn_hostname, cl->real_hostname);
 
   if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
@@ -252,16 +252,16 @@ cp
   if(cl->sq)
     {
       if(debug_lvl > 3)
-	syslog(LOG_DEBUG, _("Flushing send queue for " IP_ADDR_S),
-	       IP_ADDR_V(cl->vpn_ip));
+	syslog(LOG_DEBUG, _("Flushing send queue for %s (%s)"),
+	       cl->vpn_hostname, cl->real_hostname);
       flush_queue(cl, &(cl->sq), xsend);
     }
 
   if(cl->rq)
     {
       if(debug_lvl > 3)
-	syslog(LOG_DEBUG, _("Flushing receive queue for " IP_ADDR_S),
-	       IP_ADDR_V(cl->vpn_ip));
+	syslog(LOG_DEBUG, _("Flushing receive queue for %s (%s)"),
+	       cl->vpn_hostname, cl->real_hostname);
       flush_queue(cl, &(cl->rq), xrecv);
     }
 cp
@@ -278,7 +278,7 @@ cp
     {
       if(debug_lvl > 3)
         {
-          syslog(LOG_NOTICE, _("Trying to look up " IP_ADDR_S " in connection list failed!"),
+          syslog(LOG_NOTICE, _("Trying to look up %d.%d.%d.%d in connection list failed!"),
 	         IP_ADDR_V(to));
         }
         
@@ -317,12 +317,12 @@ cp
   if(cl->flags & INDIRECTDATA)
     {
       if(debug_lvl > 3)
-        syslog(LOG_NOTICE, _("Indirect packet to " IP_ADDR_S " via " IP_ADDR_S),
-               IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
+        syslog(LOG_NOTICE, _("Indirect packet to %s via %s"),
+               cl->vpn_hostname, cl->real_hostname);
       if((cl = lookup_conn(cl->real_ip)) == NULL)
         {
           if(debug_lvl > 3)
-              syslog(LOG_NOTICE, _("Indirect look up " IP_ADDR_S " in connection list failed!"),
+              syslog(LOG_NOTICE, _("Indirect look up %d.%d.%d.%d in connection list failed!"),
 	             IP_ADDR_V(to));
             
           /* Gateway tincd dead? Should we kill it? (GS) */
@@ -332,7 +332,7 @@ cp
       if(cl->flags & INDIRECTDATA)  /* This should not happen */
         {
           if(debug_lvl > 3)
-              syslog(LOG_NOTICE, _("Double indirection for " IP_ADDR_S),
+              syslog(LOG_NOTICE, _("Double indirection for %d.%d.%d.%d"),
 	             IP_ADDR_V(to));
           return -1;        
         }
@@ -344,14 +344,14 @@ cp
   if(!cl->status.dataopen)
     if(setup_vpn_connection(cl) < 0)
       {
-        syslog(LOG_ERR, _("Could not open UDP connection to " IP_ADDR_S " (%s)"), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+        syslog(LOG_ERR, _("Could not open UDP connection to %s (%s)"), cl->vpn_hostname, cl->real_hostname);
         return -1;
       }
       
   if(!cl->status.validkey)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _(IP_ADDR_S " (%s) has no valid key, queueing packet"), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+	syslog(LOG_INFO, _("%s (%s) has no valid key, queueing packet"), cl->vpn_hostname, cl->real_hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
       if(!cl->status.waitingforkey)
 	send_key_request(cl->vpn_ip);			/* Keys should be sent to the host running the tincd */
@@ -361,7 +361,7 @@ cp
   if(!cl->status.active)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _(IP_ADDR_S " (%s) is not ready, queueing packet"), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"), cl->vpn_hostname, cl->real_hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
       return 0; /* We don't want to mess up, do we? */
     }
@@ -498,7 +498,7 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
   config_t const *cfg;
 cp
   if(debug_lvl > 0)
-    syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
+    syslog(LOG_INFO, _("Trying to connect to %s"), cl->real_hostname);
 
   if((cfg = get_config_val(upstreamport)) == NULL)
     cl->port = 655;
@@ -518,7 +518,7 @@ cp
 
   if(connect(cl->meta_socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      syslog(LOG_ERR, _(IP_ADDR_S ":%d: %m"), IP_ADDR_V(cl->real_ip), cl->port);
+      syslog(LOG_ERR, _("%s port %hd: %m"), cl->real_hostname, cl->port);
       return -1;
     }
 
@@ -529,8 +529,8 @@ cp
       return -1;
     }
 
-  syslog(LOG_INFO, _("Connected to " IP_ADDR_S ":%hd"),
-         IP_ADDR_V(cl->real_ip), cl->port);
+  syslog(LOG_INFO, _("Connected to %s port %hd"),
+         cl->real_hostname, cl->port);
 cp
   return 0;
 }
@@ -548,12 +548,12 @@ int setup_outgoing_connection(ip_t ip)
 cp
   ncn = new_conn_list();
   ncn->real_ip = ip;
-  ncn->hostname = hostlookup(htonl(ip));
+  ncn->real_hostname = hostlookup(htonl(ip));
   
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
       syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
-             ncn->hostname);
+             ncn->real_hostname);
       free_conn_element(ncn);
       return -1;
     }
@@ -582,7 +582,8 @@ cp
     }
 
   myself->vpn_ip = cfg->data.ip->ip;
-  myself->hostname = hostlookup(htonl(myself->vpn_ip));
+  myself->vpn_hostname = hostlookup(htonl(myself->vpn_ip));
+  myself->real_hostname = hostlookup(htonl(myself->vpn_ip));
   myself->vpn_mask = cfg->data.ip->mask;
   myself->flags = 0;
 
@@ -610,7 +611,7 @@ cp
 
   myself->status.active = 1;
 
-  syslog(LOG_NOTICE, _("Ready: listening on port %d"), myself->port);
+  syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
 cp
   return 0;
 }
@@ -727,7 +728,7 @@ int setup_vpn_connection(conn_list_t *cl)
   struct sockaddr_in a;
 cp
   if(debug_lvl > 0)
-    syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->hostname);
+    syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->real_hostname);
 
   nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(nfd == -1)
@@ -743,7 +744,7 @@ cp
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
       syslog(LOG_ERR, _("Connecting to %s port %d failed: %m"),
-	     cl->hostname, cl->port);
+	     cl->real_hostname, cl->port);
       return -1;
     }
 
@@ -778,8 +779,9 @@ cp
       return NULL;
     }
 
+  p->vpn_hostname = _("unknown");
   p->real_ip = ntohl(ci.sin_addr.s_addr);
-  p->hostname = hostlookup(ci.sin_addr.s_addr);
+  p->real_hostname = hostlookup(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
   p->buflen = 0;
@@ -788,7 +790,7 @@ cp
   
   if(debug_lvl > 0)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
-         p->hostname, htons(ci.sin_port));
+         p->real_hostname, htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
     {
@@ -849,7 +851,7 @@ cp
   lenin = recvfrom(cl->socket, &rp, MTU, 0, NULL, NULL);
   if(lenin <= 0)
     {
-      syslog(LOG_ERR, _("Receiving packet from %s failed: %m"), cl->hostname);
+      syslog(LOG_ERR, _("Receiving packet from %s failed: %m"), cl->real_hostname);
       return -1;
     }
   total_socket_in += lenin;
@@ -863,8 +865,8 @@ cp
       f = lookup_conn(rp.from);
       if(!f)
 	{
-	  syslog(LOG_ERR, _("Got packet from " IP_ADDR_S " (%s) with unknown origin " IP_ADDR_S "?"),
-		 IP_ADDR_V(cl->vpn_ip), cl->hostname, IP_ADDR_V(rp.from));
+	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
+		 cl->vpn_hostname, cl->real_hostname, IP_ADDR_V(rp.from));
 	  return -1;
 	}
 
@@ -897,8 +899,8 @@ cp
     return;
 
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Closing connection with " IP_ADDR_S " (%s)"),
-           IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
+           cl->vpn_hostname, cl->real_hostname);
 
   if(cl->status.timeout)
     send_timeout(cl);
@@ -973,8 +975,8 @@ cp
               if(p->status.pinged && !p->status.got_pong)
                 {
                   if(debug_lvl > 1)
-  	            syslog(LOG_INFO, _(IP_ADDR_S " (%s) didn't respond to ping"),
-		           IP_ADDR_V(p->vpn_ip), p->hostname);
+  	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
+		           p->vpn_hostname, p->real_hostname);
 	          p->status.timeout = 1;
 	          terminate_connection(p);
                 }
@@ -1079,28 +1081,28 @@ cp
       if(cl->reqlen)
         {
           if(debug_lvl > 2)
-            syslog(LOG_DEBUG, _("Got request from " IP_ADDR_S " (%s): %s"),
-                         IP_ADDR_V(cl->vpn_ip), cl->hostname, cl->buffer);
+            syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
+                         cl->vpn_hostname, cl->real_hostname, cl->buffer);
           if(sscanf(cl->buffer, "%d", &request) == 1)
             {
               if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
                 {
-                  syslog(LOG_ERR, _("Unknown request from " IP_ADDR_S " (%s)"),
-                         IP_ADDR_V(cl->vpn_ip), cl->hostname);
+                  syslog(LOG_ERR, _("Unknown request from %s (%s)"),
+                         cl->vpn_hostname, cl->real_hostname);
                   return -1;
                 }
 
               if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
                 {
-                  syslog(LOG_ERR, _("Error while processing request from " IP_ADDR_S " (%s)"),
-                         IP_ADDR_V(cl->vpn_ip), cl->hostname);
+                  syslog(LOG_ERR, _("Error while processing request from %s (%s)"),
+                         cl->vpn_hostname, cl->real_hostname);
                   return -1;
                 }
             }
           else
             {
-              syslog(LOG_ERR, _("Bogus data received from " IP_ADDR_S " (%s)"),
-                         IP_ADDR_V(cl->vpn_ip), cl->hostname);
+              syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
+                         cl->vpn_hostname, cl->real_hostname);
               return -1;
             }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.14 2000/06/28 13:41:02 guus Exp $
+    $Id: protocol.c,v 1.28.4.15 2000/06/29 13:04:15 guus Exp $
 */
 
 #include "config.h"
@@ -51,8 +51,8 @@ int send_ack(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending ACK to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending ACK to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d\n", ACK);
 
@@ -69,8 +69,8 @@ int send_termreq(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending TERMREQ to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending TERMREQ to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", TERMREQ, myself->vpn_ip);
 
@@ -88,8 +88,8 @@ int send_timeout(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending TIMEOUT to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending TIMEOUT to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", PINGTIMEOUT, myself->vpn_ip);
 
@@ -106,8 +106,8 @@ int send_del_host(conn_list_t *cl, conn_list_t *new_host)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending DEL_HOST for " IP_ADDR_S " (%s) to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(new_host->vpn_ip), new_host->hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending DEL_HOST for %s (%s) to %s (%s)"),
+	   new_host->vpn_hostname, new_host->real_hostname, cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", DEL_HOST, new_host->vpn_ip);
 
@@ -124,8 +124,8 @@ int send_ping(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PING to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending PING to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d\n", PING);
 
@@ -142,8 +142,8 @@ int send_pong(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PONG to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending PONG to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d\n", PONG);
 
@@ -163,7 +163,7 @@ int send_add_host(conn_list_t *cl, conn_list_t *new_host)
   char *hostname;
 cp
   real_ip = new_host->real_ip;
-  hostname = new_host->hostname;
+  hostname = new_host->real_hostname;
   flags = new_host->flags;
   
   /* If we need to propagate information about a new host that wants us to export
@@ -177,12 +177,12 @@ cp
       flags &= ~EXPORTINDIRECTDATA;
       flags |= INDIRECTDATA;
       real_ip = myself->vpn_ip;
-      hostname = myself->hostname;
+      hostname = myself->real_hostname;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending ADD_HOST for " IP_ADDR_S " (%s) to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(new_host->vpn_ip), hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending ADD_HOST for %s (%s) to %s (%s)"),
+	   new_host->vpn_hostname, hostname, cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx/%lx:%x %d\n", ADD_HOST, real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port, flags);
 
@@ -199,8 +199,8 @@ int send_key_changed(conn_list_t *cl, conn_list_t *src)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending KEY_CHANGED origin " IP_ADDR_S " to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(src->vpn_ip), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending KEY_CHANGED origin %s to %s (%s)"),
+	   src->vpn_hostname, cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", KEY_CHANGED, src->vpn_ip);
 
@@ -228,7 +228,7 @@ int send_basic_info(conn_list_t *cl)
 cp
   if(debug_lvl > 1)
     syslog(LOG_DEBUG, _("Sending BASIC_INFO to %s"),
-	   cl->hostname);
+	   cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %d %lx/%lx:%x %d\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port, myself->flags);
 
@@ -248,8 +248,8 @@ cp
   encrypt_passphrase(&tmp);
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PASSPHRASE to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending PASSPHRASE to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %s\n", PASSPHRASE, tmp.phrase);
 
@@ -266,8 +266,8 @@ int send_public_key(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PUBLIC_KEY to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Sending PUBLIC_KEY to %s (%s)"),
+	   cl->vpn_hostname, cl->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %s\n", PUBLIC_KEY, my_public_key_base36);
 
@@ -303,14 +303,14 @@ cp
   fw = lookup_conn(to);
   if(!fw)
     {
-      syslog(LOG_ERR, _("Attempting to send REQ_KEY to " IP_ADDR_S ", which does not exist?"),
+      syslog(LOG_ERR, _("Attempting to send REQ_KEY to %d.%d.%d.%d, which does not exist?"),
 	     IP_ADDR_V(to));
       return -1;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending REQ_KEY to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(fw->nexthop->vpn_ip), fw->nexthop->hostname);
+    syslog(LOG_DEBUG, _("Sending REQ_KEY to %s (%s)"),
+	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx\n", REQ_KEY, to, myself->vpn_ip);
 
@@ -333,14 +333,14 @@ cp
   
   if(!fw)
     {
-      syslog(LOG_ERR, _("Attempting to send ANS_KEY to " IP_ADDR_S ", which does not exist?"),
+      syslog(LOG_ERR, _("Attempting to send ANS_KEY to %d.%d.%d.%d, which does not exist?"),
 	     IP_ADDR_V(to));
       return -1;
     }
 
  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending ANS_KEY to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(fw->nexthop->vpn_ip), fw->nexthop->hostname);
+    syslog(LOG_DEBUG, _("Sending ANS_KEY to %s (%s)"),
+	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx %d %s\n", ANS_KEY, to, myself->vpn_ip, my_key_expiry, my_public_key_base36);
 
@@ -393,14 +393,16 @@ int basic_info_h(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got BASIC_INFO from %s"), cl->hostname);
+    syslog(LOG_DEBUG, _("Got BASIC_INFO from %s"), cl->real_hostname);
 
   if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx %d", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port, &cl->flags) != 5)
     {
        syslog(LOG_ERR, _("Got bad BASIC_INFO from %s"),
-              cl->hostname);
+              cl->real_hostname);
        return -1;
-    }  
+    }
+    
+  cl->vpn_hostname = hostlookup(htonl(cl->vpn_ip));
 
   if(cl->protocol_version != PROT_CURRENT)
     {
@@ -432,15 +434,15 @@ cp
 
   if(sscanf(cl->buffer, "%*d %as", &(cl->pp->phrase)) != 1)
     {
-      syslog(LOG_ERR, _("Got bad PASSPHRASE from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got bad PASSPHRASE from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
   cl->pp->len = strlen(cl->pp->phrase);
     
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PASSPHRASE from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got PASSPHRASE from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
 
   if(cl->status.outgoing)
     send_passphrase(cl);
@@ -457,14 +459,14 @@ int public_key_h(conn_list_t *cl)
 cp
   if(sscanf(cl->buffer, "%*d %as", &g_n) != 1)
     {
-       syslog(LOG_ERR, _("Got bad PUBLIC_KEY from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+       syslog(LOG_ERR, _("Got bad PUBLIC_KEY from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PUBLIC_KEY from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got PUBLIC_KEY from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
 
   if(verify_passphrase(cl, g_n))
     {
@@ -490,8 +492,8 @@ cp
       cl->status.active = 1;
 
       if(debug_lvl > 0)
-        syslog(LOG_NOTICE, _("Connection with " IP_ADDR_S " (%s) activated"),
-                           IP_ADDR_V(cl->vpn_ip), cl->hostname);
+        syslog(LOG_NOTICE, _("Connection with %s (%s) activated"),
+                           cl->vpn_hostname, cl->real_hostname);
 
       notify_others(cl, NULL, send_add_host);
       notify_one(cl);
@@ -504,13 +506,13 @@ int ack_h(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ACK from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got ACK from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
   
   cl->status.active = 1;
 
-  syslog(LOG_NOTICE, _("Connection with " IP_ADDR_S " (%s) activated"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+  syslog(LOG_NOTICE, _("Connection with %s (%s) activated"),
+              cl->vpn_hostname, cl->real_hostname);
 
   notify_others(cl, NULL, send_add_host);
   notify_one(cl);
@@ -525,14 +527,14 @@ int termreq_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized TERMREQ from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized TERMREQ from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
     
   if(debug_lvl > 1)
-   syslog(LOG_DEBUG, _("Got TERMREQ from " IP_ADDR_S " (%s)"),
-             IP_ADDR_V(cl->vpn_ip), cl->hostname);
+   syslog(LOG_DEBUG, _("Got TERMREQ from %s (%s)"),
+             cl->vpn_hostname, cl->real_hostname);
   
   cl->status.termreq = 1;
 
@@ -551,14 +553,14 @@ int timeout_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized TIMEOUT from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized TIMEOUT from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got TIMEOUT from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got TIMEOUT from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
 
   cl->status.termreq = 1;
   terminate_connection(cl);
@@ -573,28 +575,28 @@ int del_host_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized DEL_HOST from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized DEL_HOST from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(sscanf(cl->buffer, "%*d %lx", &vpn_ip) != 1)
     {
-       syslog(LOG_ERR, _("Got bad DEL_HOST from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
 
   if(!(fw = lookup_conn(vpn_ip)))
     {
-      syslog(LOG_ERR, _("Got DEL_HOST for " IP_ADDR_S " from " IP_ADDR_S " (%s) which does not exist?"),
-	     IP_ADDR_V(vpn_ip), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got DEL_HOST for %d.%d.%d.%d from %s (%s) which does not exist?"),
+	     IP_ADDR_V(vpn_ip), cl->vpn_hostname, cl->real_hostname);
       return 0;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got DEL_HOST for " IP_ADDR_S " (%s) from " IP_ADDR_S " (%s)"),
-           IP_ADDR_V(fw->vpn_ip), fw->hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got DEL_HOST for %s (%s) from %s (%s)"),
+           fw->vpn_hostname, fw->real_hostname, cl->vpn_hostname, cl->real_hostname);
 
   notify_others(fw, cl, send_del_host);
 
@@ -611,14 +613,14 @@ int ping_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized PING from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized PING from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PING from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got PING from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
 
   cl->status.pinged = 0;
   cl->status.got_pong = 1;
@@ -633,14 +635,14 @@ int pong_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized PONG from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized PONG from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PONG from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got PONG from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
 
   cl->status.got_pong = 1;
 cp
@@ -658,15 +660,15 @@ int add_host_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized ADD_HOST from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized ADD_HOST from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
     
   if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx %d", &real_ip, &vpn_ip, &vpn_mask, &port, &flags) != 5)
     {
-       syslog(LOG_ERR, _("Got bad ADD_HOST from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
 
@@ -675,9 +677,10 @@ cp
     
   ncn = new_conn_list();
   ncn->real_ip = real_ip;
-  ncn->hostname = hostlookup(htonl(real_ip));
+  ncn->real_hostname = hostlookup(htonl(real_ip));
   ncn->vpn_ip = vpn_ip;
   ncn->vpn_mask = vpn_mask;
+  ncn->vpn_hostname = hostlookup(htonl(vpn_ip));
   ncn->port = port;
   ncn->flags = flags;
   ncn->nexthop = cl;
@@ -686,8 +689,8 @@ cp
   ncn->status.active = 1;
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ADD_HOST for " IP_ADDR_S " (%s) from " IP_ADDR_S " (%s)"),
-           IP_ADDR_V(ncn->vpn_ip), ncn->hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got ADD_HOST for %s (%s) from %s (%s)"),
+           ncn->vpn_hostname, ncn->real_hostname, cl->vpn_hostname, cl->real_hostname);
 
   notify_others(ncn, cl, send_add_host);
 cp
@@ -702,21 +705,21 @@ int req_key_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized REQ_KEY from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized REQ_KEY from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(sscanf(cl->buffer, "%*d %lx %lx", &to, &from) != 2)
     {
-       syslog(LOG_ERR, _("Got bad REQ_KEY from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+       syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got REQ_KEY origin " IP_ADDR_S " destination " IP_ADDR_S " from " IP_ADDR_S " (%s)"),
-           IP_ADDR_V(from), IP_ADDR_V(to), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got REQ_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"),
+           IP_ADDR_V(from), IP_ADDR_V(to), cl->vpn_hostname, cl->real_hostname);
 
   if((to & myself->vpn_mask) == (myself->vpn_ip & myself->vpn_mask))
     {  /* hey! they want something from ME! :) */
@@ -728,14 +731,14 @@ cp
   
   if(!fw)
     {
-      syslog(LOG_ERR, _("Attempting to forward REQ_KEY to " IP_ADDR_S ", which does not exist?"),
+      syslog(LOG_ERR, _("Attempting to forward REQ_KEY to %d.%d.%d.%d, which does not exist?"),
 	     IP_ADDR_V(to));
       return -1;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Forwarding REQ_KEY to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(fw->nexthop->vpn_ip), fw->nexthop->hostname);
+    syslog(LOG_DEBUG, _("Forwarding REQ_KEY to %s (%s)"),
+	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
   
   cl->buffer[cl->reqlen-1] = '\n';
   
@@ -793,21 +796,21 @@ int ans_key_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized ANS_KEY from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized ANS_KEY from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(sscanf(cl->buffer, "%*d %lx %lx %d %as", &to, &from, &expiry, &key) != 4)
     {
-       syslog(LOG_ERR, _("Got bad ANS_KEY from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+       syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ANS_KEY origin " IP_ADDR_S " destination " IP_ADDR_S " from " IP_ADDR_S " (%s)"),
-            IP_ADDR_V(from), IP_ADDR_V(to), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+    syslog(LOG_DEBUG, _("Got ANS_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"),
+            IP_ADDR_V(from), IP_ADDR_V(to), cl->vpn_hostname, cl->real_hostname);
 
   if(to == myself->vpn_ip)
     {  /* hey! that key's for ME! :) */
@@ -815,8 +818,8 @@ cp
 
       if(!gk)
         {
-          syslog(LOG_ERR, _("Receiving ANS_KEY from " IP_ADDR_S ", which does not exist?"),
-	         IP_ADDR_V(from));
+          syslog(LOG_ERR, _("Receiving ANS_KEY origin %d.%d.%d.%d from %s (%s), which does not exist?"),
+	         IP_ADDR_V(from), cl->vpn_hostname, cl->real_hostname);
           return -1;
         }
 
@@ -831,14 +834,14 @@ cp
   
   if(!fw)
     {
-      syslog(LOG_ERR, _("Attempting to forward ANS_KEY to " IP_ADDR_S ", which does not exist?"),
+      syslog(LOG_ERR, _("Attempting to forward ANS_KEY to %d.%d.%d.%d, which does not exist?"),
 	     IP_ADDR_V(to));
       return -1;
     }
 
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Forwarding ANS_KEY to " IP_ADDR_S " (%s)"),
-	   IP_ADDR_V(fw->nexthop->vpn_ip), fw->nexthop->hostname);
+    syslog(LOG_DEBUG, _("Forwarding ANS_KEY to %s (%s)"),
+	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
 
   cl->buffer[cl->reqlen-1] = '\n';
 
@@ -858,30 +861,30 @@ int key_changed_h(conn_list_t *cl)
 cp
   if(!cl->status.active)
     {
-      syslog(LOG_ERR, _("Got unauthorized KEY_CHANGED from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      syslog(LOG_ERR, _("Got unauthorized KEY_CHANGED from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
   if(sscanf(cl->buffer, "%*d %lx", &from) != 1)
     {
-       syslog(LOG_ERR, _("Got bad KEY_CHANGED from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
+       syslog(LOG_ERR, _("Got bad KEY_CHANGED from %s (%s)"),
+              cl->vpn_hostname, cl->real_hostname);
        return -1;
     }  
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got KEY_CHANGED origin " IP_ADDR_S " from " IP_ADDR_S " (%s)"),
-            IP_ADDR_V(from), IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
   ik = lookup_conn(from);
 
   if(!ik)
     {
-      syslog(LOG_ERR, _("Got KEY_CHANGED from " IP_ADDR_S ", which does not exist?"),
-	     IP_ADDR_V(from));
+      syslog(LOG_ERR, _("Got KEY_CHANGED origin %d.%d.%d.%d from %s (%s), which does not exist?"),
+	     IP_ADDR_V(from), cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
+
+  if(debug_lvl > 1)
+    syslog(LOG_DEBUG, _("Got KEY_CHANGED origin %s from %s (%s)"),
+            ik->vpn_hostname, cl->vpn_hostname, cl->real_hostname);
 
   ik->status.validkey = 0;
   ik->status.waitingforkey = 0;

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.4 2000/06/26 19:39:34 guus Exp $
+    $Id: netutl.c,v 1.12.4.5 2000/06/29 13:04:15 guus Exp $
 */
 
 #include "config.h"
@@ -89,6 +89,10 @@ cp
     destroy_queue(p->sq);
   if(p->rq)
     destroy_queue(p->rq);
+  if(p->vpn_hostname)
+    free(p->vpn_hostname);
+  if(p->real_hostname)
+    free(p->real_hostname);
   free_key(p->public_key);
   free_key(p->key);
   free(p);
@@ -188,8 +192,8 @@ cp
     }
   else
     {
-      name = xmalloc(strlen(host->h_name)+20);
-      sprintf(name, "%s (%s)", host->h_name, inet_ntoa(in));
+      name = xmalloc(strlen(host->h_name));
+      sprintf(name, "%s", host->h_name);
     }
 cp
   return name;
@@ -243,8 +247,8 @@ cp
 
   for(p = conn_list; p != NULL; p = p->next)
     {
-      syslog(LOG_DEBUG, _(" " IP_ADDR_S "/" IP_ADDR_S " at %s flags %d sockets %d, %d status %04x"),
-	     IP_ADDR_V(p->vpn_ip), IP_ADDR_V(p->vpn_mask), p->hostname, p->flags,
+      syslog(LOG_DEBUG, _("%s netmask %d.%d.%d.%d at %s port %hd flags %d sockets %d, %d status %04x"),
+	     p->vpn_hostname, IP_ADDR_V(p->vpn_mask), p->real_hostname, p->port, p->flags,
 	     p->socket, p->meta_socket, p->status);
     }
 cp

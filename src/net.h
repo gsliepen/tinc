@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.4 2000/06/25 16:01:12 guus Exp $
+    $Id: net.h,v 1.9.4.5 2000/06/29 13:04:15 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -106,7 +106,8 @@ typedef struct conn_list_t {
   ip_t vpn_ip;                     /* his vpn ip */
   ip_t vpn_mask;                   /* his vpn network address */
   ip_t real_ip;                    /* his real (internet) ip */
-  char *hostname;                  /* the hostname of its real ip */
+  char *real_hostname;             /* the hostname of its real ip */
+  char *vpn_hostname;              /* the hostname of the vpn ip */
   short unsigned int port;         /* his portnumber */
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
