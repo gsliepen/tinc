@@ -37,8 +37,8 @@ AC_DEFUN(jm_FUNC_REALLOC,
 	 jm_cv_func_working_realloc=no)
   ])
   if test $jm_cv_func_working_realloc = no; then
-dnl This should be converted to: AC_LIBOBJ([realloc])
-    LIBOBJS="$LIBOBJS realloc.$ac_objext"
+    dnl This was: LIBOBJS="$LIBOBJS realloc.$ac_objext"
+    AC_LIBOBJ([realloc])
     AC_DEFINE(realloc, rpl_realloc, [Replacement realloc()])
   fi
 ])

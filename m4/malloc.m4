@@ -37,8 +37,8 @@ AC_DEFUN(jm_FUNC_MALLOC,
 	 jm_cv_func_working_malloc=no)
   ])
   if test $jm_cv_func_working_malloc = no; then
-dnl This should be converted to: AC_LIBOBJ([malloc])
-    LIBOBJS="$LIBOBJS malloc.$ac_objext"
+    dnl This was: LIBOBJS="$LIBOBJS malloc.$ac_objext"
+    AC_LIBOBJ([malloc])
     AC_DEFINE(malloc, rpl_malloc, [Replacement malloc()])
   fi
 ])

@@ -20,26 +20,7 @@
 #ifndef __TINC_SYSTEM_H__
 #define __TINC_SYSTEM_H__
 
-/* Take care of NLS matters. -- from fileutils 4.0 */
-
-#if HAVE_LOCALE_H
-# include <locale.h>
-#endif
-#if !HAVE_SETLOCALE
-# define setlocale(Category, Locale) /* empty */
-#endif
-
-#if ENABLE_NLS
-# include <libintl.h>
-# define _(Text) gettext (Text)
-#else
-# undef bindtextdomain
-# define bindtextdomain(Domain, Directory) /* empty */
-# undef textdomain
-# define textdomain(Domain) /* empty */
-# define _(Text) Text
-#endif
-#define N_(Text) Text
+#include "gettext.h"
 
 #ifndef HAVE_STRSIGNAL
 # define strsignal(p) ""
@@ -53,4 +34,3 @@ typedef int socklen_t;
 #endif
 
 #endif /* __TINC_SYSTEM_H__ */
-

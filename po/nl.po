@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-06-09 17:28+0200\n"
-"PO-Revision-Date: 2002-03-27 16:59+0100\n"
+"POT-Creation-Date: 2002-08-24 13:45+0200\n"
+"PO-Revision-Date: 2002-08-24 14:20+0200\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
 "MIME-Version: 1.0\n"
@@ -92,13 +92,11 @@ msgstr "Waarschuwing: `%s' is een symbolische link"
 msgid "Unable to read symbolic link `%s': %s"
 msgstr "Kan symbolische link `%s' niet lezen: %s"
 
-#. Accessible by others
 #: src/conf.c:545
 #, c-format
 msgid "`%s' has unsecure permissions"
 msgstr "`%s' heeft onveilige permissies"
 
-#. Ask for a file and/or directory name.
 #: src/conf.c:570
 #, c-format
 msgid "Please enter a file to save %s to [%s]: "
@@ -258,10 +256,9 @@ msgstr "Fout tijdens comprimeren pakket naar %s (%s)"
 msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
-#. SO_PRIORITY doesn't seem to work
 #: src/net_packet.c:291 src/net_setup.c:483 src/net_socket.c:107
-#: src/net_socket.c:153 src/net_socket.c:180 src/process.c:272
-#: src/process.c:309
+#: src/net_socket.c:153 src/net_socket.c:180 src/tincd.c:360 src/process.c:251
+#: src/process.c:288
 #, c-format
 msgid "System call `%s' failed: %s"
 msgstr "Systeemaanroep `%s' mislukte: %s"
@@ -397,16 +394,16 @@ msgstr "Onzinnige MAC lengte!"
 msgid "Bogus compression level!"
 msgstr "Onzinnig compressieniveau!"
 
-#: src/net_setup.c:498
+#: src/net_setup.c:500
 #, c-format
 msgid "Listening on %s"
 msgstr "Luisterend op %s"
 
-#: src/net_setup.c:509
+#: src/net_setup.c:511
 msgid "Ready"
 msgstr "Gereed"
 
-#: src/net_setup.c:512
+#: src/net_setup.c:514
 msgid "Unable to create any listening socket!"
 msgstr "Kon geen enkele luistersocket aanmaken!"
 
@@ -765,36 +762,36 @@ msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in de node boom"
 msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in zijn subnet boom"
 
-#: src/subnet.c:99
+#: src/subnet.c:115
 #, c-format
 msgid "subnet_compare() was called with unknown subnet type %d, exitting!"
 msgstr ""
 "subnet_compare() werd aangeroepen met onbekend subnet type %d, beëindigen!"
 
-#: src/subnet.c:274
-#, fuzzy, c-format
+#: src/subnet.c:290
+#, c-format
 msgid "net2str() was called with unknown subnet type %d, exiting!"
 msgstr "net2str() werd aangeroepen met onbekend subnet type %d, beëindigen!"
 
-#: src/subnet.c:384
+#: src/subnet.c:403
 msgid "Subnet list:"
 msgstr "Subnet lijst:"
 
-#: src/subnet.c:389
+#: src/subnet.c:408
 #, c-format
 msgid " %s owner %s"
 msgstr " %s eigenaar %s"
 
-#: src/subnet.c:392
+#: src/subnet.c:411
 msgid "End of subnet list."
 msgstr "Einde van subnet lijst."
 
-#: src/tincd.c:100
+#: src/tincd.c:105
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Probeer `%s --help' voor meer informatie.\n"
 
-#: src/tincd.c:103
+#: src/tincd.c:108
 #, c-format
 msgid ""
 "Usage: %s [option]...\n"
@@ -803,13 +800,18 @@ msgstr ""
 "Gebruik: %s [optie]...\n"
 "\n"
 
-#: src/tincd.c:104
+#: src/tincd.c:109
 msgid ""
 "  -c, --config=DIR           Read configuration options from DIR.\n"
 "  -D, --no-detach            Don't fork and detach.\n"
 "  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
 "  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
 "  -n, --net=NETNAME          Connect to net NETNAME.\n"
+"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
+"  -L, --mlock                Lock tinc into main memory.\n"
+"      --help                 Display this help and exit.\n"
+"      --version              Output version information and exit.\n"
+"\n"
 msgstr ""
 "  -c, --config=MAP           Lees configuratie uit MAP.\n"
 "  -D, --no-detach            Start geen nieuw proces.\n"
@@ -817,26 +819,19 @@ msgstr ""
 "  -k, --kill[=SIGNAAL]       Poging tot zenden signaal naar lopende tincd en "
 "beëindig.\n"
 "  -n, --net=NETNAAM          Verbind met net NETNAAM.\n"
-
-#: src/tincd.c:109
-msgid ""
-"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
-"      --help                 Display this help and exit.\n"
-"      --version              Output version information and exit.\n"
-"\n"
-msgstr ""
 "  -K, --generate-keys[=BITS] Genereer publiek/privé RSA sleutelpaar.\n"
+"  -L, --mlock                Houd tinc vast in het centrale geheugen.\n"
 "      --help                 Geef deze hulp en beëindig.\n"
 "      --version              Geef versie informatie en beëindig.\n"
 "\n"
 
-#: src/tincd.c:112
+#: src/tincd.c:118
 msgid "Report bugs to tinc@nl.linux.org.\n"
 msgstr ""
 "Meld fouten in het programma aan tinc@nl.linux.org;\n"
 "Meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
 
-#: src/tincd.c:166
+#: src/tincd.c:175
 #, c-format
 msgid ""
 "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, "
@@ -845,7 +840,7 @@ msgstr ""
 "Ongeldig argument `%s'; SIGNAAL moet een getal zijn of één van HUP, TERM, "
 "KILL, USR1, USR2, WINCH, INT of ALRM.\n"
 
-#: src/tincd.c:184
+#: src/tincd.c:193
 #, c-format
 msgid ""
 "Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"
@@ -853,24 +848,24 @@ msgstr ""
 "Ongeldig argument `%s'; BITS moet een nummer zijn gelijk aan of groter dan "
 "512.\n"
 
-#: src/tincd.c:245
+#: src/tincd.c:254
 #, c-format
 msgid "Generating %d bits keys:\n"
 msgstr "Bezig met genereren van een %d bits sleutel:\n"
 
-#: src/tincd.c:250
+#: src/tincd.c:259
 msgid "Error during key generation!\n"
 msgstr "Fout tijdens genereren sleutel!\n"
 
-#: src/tincd.c:254
+#: src/tincd.c:263
 msgid "Done.\n"
 msgstr "Klaar.\n"
 
-#: src/tincd.c:263
+#: src/tincd.c:272
 msgid "public RSA key"
 msgstr "openbare RSA sleutel"
 
-#: src/tincd.c:267 src/tincd.c:278
+#: src/tincd.c:276 src/tincd.c:287
 msgid ""
 "Appending key to existing contents.\n"
 "Make sure only one key is stored in the file.\n"
@@ -878,21 +873,21 @@ msgstr ""
 "Sleutel wordt toegevoegd aan bestaande inhoud.\n"
 "Let er op dat er slechts één sleutel in het bestand is.\n"
 
-#: src/tincd.c:274
+#: src/tincd.c:283
 msgid "private RSA key"
 msgstr "geheime RSA sleutel"
 
-#: src/tincd.c:299
+#: src/tincd.c:308
 msgid "Both netname and configuration directory given, using the latter..."
 msgstr ""
 "Zowel netnaam als configuratiemap zijn gegeven, laatste wordt gebruikt..."
 
-#: src/tincd.c:328
+#: src/tincd.c:337
 #, c-format
 msgid "%s version %s (built %s %s, protocol %d)\n"
 msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 
-#: src/tincd.c:329
+#: src/tincd.c:338
 msgid ""
 "Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
@@ -909,16 +904,16 @@ msgstr ""
 "en je bent welkom om het te distribueren onder bepaalde voorwaarden;\n"
 "zie het bestand COPYING voor details.\n"
 
-#: src/tincd.c:386
+#: src/tincd.c:403
 msgid "Unrecoverable error"
 msgstr "Onherstelbare fout"
 
-#: src/tincd.c:391
+#: src/tincd.c:408
 #, c-format
 msgid "Restarting in %d seconds!"
 msgstr "Herstart in %d seconden!"
 
-#: src/process.c:372 src/tincd.c:396
+#: src/tincd.c:413 src/process.c:351
 msgid "Not restarting."
 msgstr "Geen herstart."
 
@@ -978,63 +973,63 @@ msgstr "tincd %s (%s %s) start, debug niveau %d"
 msgid "tincd %s starting"
 msgstr "tincd %s wordt gestart"
 
-#: src/process.c:249
-#, fuzzy, c-format
+#: src/process.c:228
+#, c-format
 msgid "Could not execute `%s': %s"
-msgstr "Kon `%s' niet openen: %s"
+msgstr "Kon `%s' niet uitvoeren: %s"
 
-#: src/process.c:279
+#: src/process.c:258
 #, c-format
 msgid "Executing script %s"
 msgstr "Uitvoeren script %s"
 
-#: src/process.c:289
+#: src/process.c:268
 #, c-format
 msgid "Process %d (%s) exited with non-zero status %d"
 msgstr "Proces %d (%s) beëindigde met status %d"
 
-#: src/process.c:297
+#: src/process.c:276
 #, c-format
 msgid "Process %d (%s) was killed by signal %d (%s)"
 msgstr "Proces %d (%s) was gestopt door signaal %d (%s)"
 
-#: src/process.c:303
+#: src/process.c:282
 #, c-format
 msgid "Process %d (%s) terminated abnormally"
 msgstr "Proces %d (%s) abnormaal beëindigd"
 
-#: src/process.c:328
+#: src/process.c:307
 msgid "Got TERM signal"
 msgstr "Kreeg TERM signaal"
 
-#: src/process.c:337
+#: src/process.c:316
 msgid "Got QUIT signal"
 msgstr "Kreeg QUIT signaal"
 
-#: src/process.c:344
+#: src/process.c:323
 #, c-format
 msgid "Got another fatal signal %d (%s): not restarting."
-msgstr "Kreeg nog een fataal signaal %s (%s): geen herstart."
+msgstr "Kreeg nog een fataal signaal %d (%s): geen herstart."
 
-#: src/process.c:353
+#: src/process.c:332
 #, c-format
 msgid "Got fatal signal %d (%s)"
 msgstr "Kreeg fataal signaal %d (%s)"
 
-#: src/process.c:358
+#: src/process.c:337
 msgid "Trying to re-execute in 5 seconds..."
 msgstr "Poging tot herstarten over 5 seconden..."
 
-#: src/process.c:381
+#: src/process.c:360
 msgid "Got HUP signal"
 msgstr "Kreeg HUP signaal"
 
-#: src/process.c:390
+#: src/process.c:369
 #, c-format
 msgid "Reverting to old debug level (%d)"
 msgstr "Herstellen van oud debug niveau (%d)"
 
-#: src/process.c:397
+#: src/process.c:376
 #, c-format
 msgid ""
 "Temporarily setting debug level to 5.  Kill me with SIGINT again to go back "
@@ -1043,21 +1038,21 @@ msgstr ""
 "Tijdelijk instellen debug niveau op 5. Zend nog een SIGINT signaal om niveau "
 "%d te herstellen."
 
-#: src/process.c:408
+#: src/process.c:387
 msgid "Got ALRM signal"
 msgstr "Kreeg ALRM signaal"
 
-#: src/process.c:437
+#: src/process.c:416
 #, c-format
 msgid "Got unexpected signal %d (%s)"
 msgstr "Kreeg onverwacht signaal %d (%s)"
 
-#: src/process.c:446
+#: src/process.c:425
 #, c-format
 msgid "Ignored signal %d (%s)"
 msgstr "Signaal %d (%s) genegeerd"
 
-#: src/process.c:503
+#: src/process.c:482
 #, c-format
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
@@ -1151,18 +1146,18 @@ msgstr " %s op %s - %s op %s opties %lx gewicht %d"
 msgid "End of edges."
 msgstr "Einde van edges."
 
-#: src/graph.c:261
+#: src/graph.c:265
 #, c-format
 msgid "Node %s (%s) became reachable"
 msgstr "Node %s (%s) werd bereikbaar"
 
-#: src/graph.c:273
+#: src/graph.c:267
 #, c-format
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"
 
-#: src/freebsd/device.c:70 src/linux/device.c:89 src/netbsd/device.c:74
-#: src/openbsd/device.c:74 src/solaris/device.c:75
+#: src/linux/device.c:89 src/freebsd/device.c:70 src/solaris/device.c:75
+#: src/netbsd/device.c:74 src/openbsd/device.c:74
 #, c-format
 msgid "Could not open %s: %s"
 msgstr "Kon `%s' niet openen: %s"
@@ -1180,50 +1175,50 @@ msgstr "Oud ioctl() verzoek was nodig voor %s"
 msgid "Linux ethertap device"
 msgstr "Linux ethertap apparaat"
 
-#: src/freebsd/device.c:87 src/linux/device.c:136 src/netbsd/device.c:90
-#: src/openbsd/device.c:90 src/solaris/device.c:132
+#: src/linux/device.c:136 src/freebsd/device.c:87 src/solaris/device.c:132
+#: src/netbsd/device.c:90 src/openbsd/device.c:90
 #, c-format
 msgid "%s is a %s"
 msgstr "%s is een %s"
 
-#: src/freebsd/device.c:108 src/linux/device.c:159 src/linux/device.c:169
-#: src/netbsd/device.c:109 src/openbsd/device.c:111 src/solaris/device.c:149
+#: src/linux/device.c:159 src/linux/device.c:169 src/freebsd/device.c:108
+#: src/solaris/device.c:149 src/netbsd/device.c:109 src/openbsd/device.c:111
 #, c-format
 msgid "Error while reading from %s %s: %s"
 msgstr "Fout tijdens lezen van %s %s: %s"
 
-#: src/freebsd/device.c:117 src/linux/device.c:180 src/netbsd/device.c:124
-#: src/openbsd/device.c:140 src/solaris/device.c:164
+#: src/linux/device.c:180 src/freebsd/device.c:117 src/solaris/device.c:164
+#: src/netbsd/device.c:124 src/openbsd/device.c:140
 #, c-format
 msgid "Read packet of %d bytes from %s"
 msgstr "Pakket van %d bytes gelezen van %s"
 
-#: src/freebsd/device.c:128 src/linux/device.c:191 src/netbsd/device.c:135
-#: src/openbsd/device.c:154 src/solaris/device.c:175
+#: src/linux/device.c:191 src/freebsd/device.c:128 src/solaris/device.c:175
+#: src/netbsd/device.c:135 src/openbsd/device.c:154
 #, c-format
 msgid "Writing packet of %d bytes to %s"
 msgstr "Pakket van %d bytes geschreven naar %s"
 
-#: src/linux/device.c:198 src/linux/device.c:207 src/netbsd/device.c:140
-#: src/openbsd/device.c:180 src/solaris/device.c:180
+#: src/linux/device.c:198 src/linux/device.c:207 src/solaris/device.c:180
+#: src/netbsd/device.c:140 src/openbsd/device.c:180
 #, c-format
 msgid "Can't write to %s %s: %s"
 msgstr "Kan niet schrijven naar %s %s: %s"
 
-#: src/freebsd/device.c:144 src/linux/device.c:220 src/netbsd/device.c:151
-#: src/openbsd/device.c:191 src/solaris/device.c:192
+#: src/linux/device.c:220 src/freebsd/device.c:144 src/solaris/device.c:192
+#: src/netbsd/device.c:151 src/openbsd/device.c:191
 #, c-format
 msgid "Statistics for %s %s:"
 msgstr "Statistieken voor %s %s:"
 
-#: src/freebsd/device.c:145 src/linux/device.c:221 src/netbsd/device.c:152
-#: src/openbsd/device.c:192 src/solaris/device.c:193
+#: src/linux/device.c:221 src/freebsd/device.c:145 src/solaris/device.c:193
+#: src/netbsd/device.c:152 src/openbsd/device.c:192
 #, c-format
 msgid " total bytes in:  %10d"
 msgstr " totaal aantal bytes in:  %10d"
 
-#: src/freebsd/device.c:146 src/linux/device.c:222 src/netbsd/device.c:153
-#: src/openbsd/device.c:193 src/solaris/device.c:194
+#: src/linux/device.c:222 src/freebsd/device.c:146 src/solaris/device.c:194
+#: src/netbsd/device.c:153 src/openbsd/device.c:193
 #, c-format
 msgid " total bytes out: %10d"
 msgstr " totaal aantal bytes uit: %10d"
@@ -1282,12 +1277,9 @@ msgstr "OpenBSD tun apparaat"
 #: src/openbsd/device.c:130
 #, c-format
 msgid "Unknown address family %d while reading packet from %s %s"
-msgstr "Onbekende adresfamilie tijdens lezen pakket van %s %s"
+msgstr "Onbekende adresfamilie %d tijdens lezen pakket van %s %s"
 
 #: src/openbsd/device.c:169
 #, c-format
 msgid "Unknown address family %d while writing packet to %s %s"
-msgstr "Onbekende adresfamilie tijdens schrijven pakket naar %s %s"
-
-#~ msgid "Invalid public/private keypair!"
-#~ msgstr "Ongeldig publiek/privé sleutelpaar!"
+msgstr "Onbekende adresfamilie %d tijdens schrijven pakket naar %s %s"

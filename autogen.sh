@@ -114,8 +114,8 @@ do
 	else
 	  echo "Creating $dr/aclocal.m4 ..."
 	  test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
-	  echo "Running gettextize...  Ignore non-fatal messages."
-	  echo "no" | gettextize --force --copy
+	  echo "Running autopoint..."
+	  autopoint --force
 	  echo "Making $dr/aclocal.m4 writable ..."
 	  test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
         fi
@@ -123,8 +123,8 @@ do
       if grep "^AM_GNOME_GETTEXT" configure.in >/dev/null; then
 	echo "Creating $dr/aclocal.m4 ..."
 	test -r $dr/aclocal.m4 || touch $dr/aclocal.m4
-	echo "Running gettextize...  Ignore non-fatal messages."
-	echo "no" | gettextize --force --copy
+	echo "Running autopoint..."
+	autopoint --force
 	echo "Making $dr/aclocal.m4 writable ..."
 	test -r $dr/aclocal.m4 && chmod u+w $dr/aclocal.m4
       fi
