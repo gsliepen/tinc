@@ -4,15 +4,23 @@ AC_DEFUN(tinc_LZO,
 [
   tinc_ac_save_CPPFLAGS="$CPPFLAGS"
 
+  AC_ARG_WITH(lzo,
+    AC_HELP_STRING([--with-lzo=DIR], [lzo base directory, or:]),
+    [lzo="$withval"
+     CFLAGS="$CFLAGS -I$withval/include"
+     CPPFLAGS="$CPPFLAGS -I$withval/include"
+     LIBS="$LIBS -L$withval/lib"]
+  )
+
   AC_ARG_WITH(lzo-include,
-    [  --with-lzo-include=DIR lzo headers directory],
+    AC_HELP_STRING([--with-lzo-include=DIR], [lzo headers directory]),
     [lzo_include="$withval"
      CFLAGS="$CFLAGS -I$withval"
      CPPFLAGS="$CPPFLAGS -I$withval"]
   )
 
   AC_ARG_WITH(lzo-lib,
-    [  --with-lzo-lib=DIR     lzo library directory],
+    AC_HELP_STRING([--with-lzo-lib=DIR], [lzo library directory]),
     [lzo_lib="$withval"
      LIBS="$LIBS -L$withval"]
   )
