@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.30 2002/03/11 13:14:53 guus Exp $
+    $Id: route.c,v 1.1.2.31 2002/03/11 13:56:00 guus Exp $
 */
 
 #include "config.h"
@@ -56,6 +56,10 @@ int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
 int macexpire = 600;
 subnet_t mymac;
+
+#ifdef HAVE_FREEBSD
+#define s6_addr16 __u6_addr.__u6_addr16
+#endif
 
 void learn_mac(mac_t *address)
 {
@@ -186,16 +190,14 @@ cp
   return subnet->owner;  
 }
 
-void route_neighborsol(vpn_packet_t *packet)
+node_t *route_neighborsol(vpn_packet_t *packet)
 {
   struct ip6_hdr *hdr;
   struct nd_neighbor_solicit *ns;
-  struct nd_opt_hdr *opt;
   subnet_t *subnet;
 cp
   hdr = (struct ip6_hdr *)(packet->data + 14);
   ns = (struct nd_neighbor_solicit *)(packet->data + 14 + sizeof(struct ip6_hdr));
-  opt = (struct nd_opt_hdr *)(packet->data + 14 + sizeof(struct ip6_hdr) + sizeof(struct nd_neighbor_solicit));
 
   /* First, snatch the source address from the neighbor solicitation packet */
 
@@ -203,8 +205,7 @@ cp
 
   /* Check if this is a valid neighbor solicitation request */
   
-  if(ns->nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT ||
-     opt->nd_opt_type != ND_OPT_SOURCE_LINKADDR)
+  if(ns->nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT)
     {
       if(debug_lvl > DEBUG_TRAFFIC)
         {
@@ -226,28 +227,17 @@ cp
                  ntohs(ns->nd_ns_target.s6_addr16[4]), ntohs(ns->nd_ns_target.s6_addr16[5]), ntohs(ns->nd_ns_target.s6_addr16[6]), ntohs(ns->nd_ns_target.s6_addr16[7]));
         }
 
-      return;
+      return NULL;
     }
 
   /* Check if it is for our own subnet */
   
   if(subnet->owner == myself)
-    return;	/* silently ignore */
+    return NULL;	/* silently ignore */
 
-  /* Create neighbor advertation reply */
+  /* Forward to destination */
 
-  memcpy(packet->data, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* copy destination address */
-  packet->data[ETHER_ADDR_LEN*2 - 1] ^= 0xFF;				/* mangle source address so it looks like it's not from us */
-
-  memcpy(&hdr->ip6_dst, &hdr->ip6_src, 16);				/* swap destination and source protocol address */
-  memcpy(&hdr->ip6_src, &ns->nd_ns_target, 16);				/* ... */
-
-  memcpy((char *)opt + sizeof(*opt), packet->data + ETHER_ADDR_LEN, 6);	/* add fake source hard addr */
-
-  ns->nd_ns_hdr.icmp6_type = ND_NEIGHBOR_ADVERT;
-  opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
-  
-  write_packet(packet);
+  return subnet->owner;
 cp
 }
 
@@ -336,11 +326,8 @@ cp
               break;
             case 0x86DD:
               n = route_ipv6(packet);
-	      if(!n && packet->data[6] == 0x33 && packet->data[7] == 0x33 && packet->data[8] == 0xff)
-	        {
-	          route_neighborsol(packet);
-		  return;
-		}
+	      if(!n && packet->data[0] == 0x33 && packet->data[1] == 0x33 && packet->data[2] == 0xff)
+	        n = route_neighborsol(packet);
               break;
             case 0x0806:
               route_arp(packet);
