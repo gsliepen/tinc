@@ -7,6 +7,7 @@ Group: System Environment/Daemons
 URL: http://tinc.nl.linux.org/
 Source0: %{name}-%{version}.tar.gz
 Buildroot: /var/tmp/%{name}-%{version}-%{release}
+Requires: iproute
 # for building the package the following is required:
 # /usr/bin/texi2html /usr/bin/patch
 
@@ -59,10 +60,10 @@ MyVirtualIP = $ME/32
 AllowConnect = no
 END
 cat <<END >$RPM_BUILD_ROOT/etc/tinc/$PEER/passphrases/local
-128 0c647a1fd34da9d04c1d340ae9363f31
+1024 c1da5b633b428d783fec96ac89bb6bd4ed97ac673942706ba2240cde977158b7cd5f4055b7db70a7365d1f8df6a1a7c9dbb73f4e2bf8484fc14aee68d0f950e2bce82dd2a6386f040546a61e77cd1c25265ce03182e4e2c9a00ae0ea2f1f89ac04a10f7b67312187b5d2d74618803974ba6f053116b1460bc194c652dc28c84a
 END
 cat <<END >$RPM_BUILD_ROOT/etc/tinc/$PEER/passphrases/$PEER
-128 aea5a5d414fea63ee3829b592afc0fba
+1024 9dff58799827c3ae73699d9d4029cf80ee4cfd3a8408495cdb68c78dec602c46f362aedeea80928384254bc7d0bfbf9756c0783b5ec9943161863530a8861947147d124286e8c46fd98af988c96ba65c63acefc01f6c03b6b8f7d9897acb02c083adb7416ee5ccbc19610a8b9ade2599d8f66e94c715f2e1a15054a78a3f3260
 END
 
 %clean
@@ -92,10 +93,11 @@ grep -q '^alias tap0' /etc/conf.modules || cat >> /etc/conf.modules << END
 alias tap0 ethertap
 alias char-major-36 netlink_dev
 END
-/sbin/install-info /usr/info/tinc.info.gz /usr/info/dir --entry= \
-	"* tinc: (tinc).				The tinc Manual."
+/sbin/install-info /usr/info/tinc.info.gz /usr/info/dir --entry="* tinc: (tinc).				The tinc Manual."
 
 %preun
+/sbin/install-info --delete /usr/info/tinc.info.gz /usr/info/dir --entry="* tinc: (tinc).				The tinc Manual."
+
 %postun
 
 %files
