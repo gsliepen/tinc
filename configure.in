@@ -1,10 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.20 2003/08/24 20:38:18 guus Exp $
+dnl $Id: configure.in,v 1.21 2003/08/24 20:50:30 guus Exp $
 
 AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
-AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
+AM_INIT_AUTOMAKE(tinc, 2.0-cvs)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 

@@ -1,3 +1,14 @@
 TODO LIST
 
-* Think of new things to do.
+* Stop using UDP source address as the identifier of the remote tinc daemon.
+  Use a unique number sent along with ANS_KEY.
+
+* Efficient multicast support.
+
+* Check if caches using hash tables speed up route.c.
+
+* Streamline the meta protocol. Use a binary format?
+
+* Add (hooks for) a (graphical) frontend, like Pokey.
+
+* Implement future goals as mentioned on the website.
