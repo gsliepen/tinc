@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.32 2003/03/19 11:43:42 guus Exp $
+    $Id: meta.c,v 1.1.2.33 2003/03/19 11:45:05 guus Exp $
 */
 
 #include "config.h"
@@ -62,7 +62,7 @@ int send_meta(connection_t *c, char *buffer, int length)
 	while(length) {
 		result = write(c->socket, bufp, length);
 		if(result <= 0) {
-			if(errno = EINTR)
+			if(errno == EINTR)
 				continue;
 			syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
 				   c->hostname, strerror(errno));
