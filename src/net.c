@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.98 2001/02/27 15:33:39 guus Exp $
+    $Id: net.c,v 1.35.4.99 2001/02/27 16:17:04 guus Exp $
 */
 
 #include "config.h"
@@ -26,6 +26,8 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -365,28 +367,12 @@ int setup_listen_meta_socket(int port)
 {
   int nfd, flags;
   struct sockaddr_in a;
-  const int one = 1;
+  int option;
   config_t const *cfg;
 cp
   if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       syslog(LOG_ERR, _("Creating metasocket failed: %m"));
-      return -1;
-    }
-
-  if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "setsockopt");
-      return -1;
-    }
-
-  if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)))
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "setsockopt");
       return -1;
     }
 
@@ -399,9 +385,19 @@ cp
       return -1;
     }
 
+  /* Optimize TCP settings */
+  
+  option = 1;
+  setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+  setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+  setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+
+  option = IPTOS_LOWDELAY;
+  setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
+  
   if((cfg = get_config_val(config, config_interface)))
     {
-      if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, cfg->data.ptr, strlen(cfg->data.ptr)))
+      if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, cfg->data.ptr, strlen(cfg->data.ptr)))
         {
           close(nfd);
           syslog(LOG_ERR, _("Unable to bind listen socket to interface %s: %m"), cfg->data.ptr);
@@ -453,13 +449,7 @@ cp
       return -1;
     }
 
-  if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "setsockopt");
-      return -1;
-    }
+  setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
@@ -493,6 +483,7 @@ int setup_outgoing_meta_socket(connection_t *cl)
   int flags;
   struct sockaddr_in a;
   config_t const *cfg;
+  int option;
 cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
@@ -522,6 +513,17 @@ cp
       syslog(LOG_ERR, _("System call `%s' failed: %m"), "bind");
       return -1;
     }
+
+  /* Optimize TCP settings */
+  
+  option = 1;
+  setsockopt(cl->meta_socket, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+  setsockopt(cl->meta_socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+
+  option = IPTOS_LOWDELAY;
+  setsockopt(cl->meta_socket, SOL_IP, IP_TOS, &option, sizeof(option));
+  
+  /* Connect */
   
   a.sin_family = AF_INET;
   a.sin_port = htons(cl->port);
@@ -989,13 +991,7 @@ cp
       return -1;
     }
 
-  if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "setsockopt");
-      return -1;
-    }
+  setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
