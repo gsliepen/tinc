@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.62 2000/11/20 19:12:13 guus Exp $
+    $Id: protocol.c,v 1.28.4.63 2000/11/22 18:54:08 guus Exp $
 */
 
 #include "config.h"
@@ -216,7 +216,7 @@ cp
     }
 
   /* Load information about peer */
-cp
+
   if(read_host_config(cl))
     {
       syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), cl->hostname, cl->name);
@@ -227,7 +227,7 @@ cp
      connection list. If so, we are probably making a loop, which
      is not desirable.
    */
-cp
+
   if(cl->status.outgoing)
     {
       if((old = lookup_id(cl->name)))
@@ -240,7 +240,13 @@ cp
           return 0;
         }
     }
-cp    
+    
+  /* Now we can add the name to the id tree */
+  
+  id_add(cl);
+
+  /* Read in the public key, so that we can send a challenge */
+
   if((cfg = get_config_val(cl->config, config_publickey)))
     {
       cl->rsa_key = RSA_new();
@@ -722,6 +728,17 @@ cp
     {
       syslog(LOG_ERR, _("Got ADD_SUBNET for %s from %s (%s) which is not in our connection list"),
              name, cl->name, cl->hostname);
+      cp_trace();
+      dump_connection_list();
+      {
+        connection_t cl;
+        rbl_t *rbl;
+        cl.name = name;
+        rbl = rbl_search_rbl(connection_tree, &cl);
+        syslog(LOG_ERR, "rbl_search_rbl: %p", rbl);
+        if(rbl)
+          syslog(LOG_ERR, "rbl->data->name: %s", ((connection_t *)rbl->data)->name);
+      }
       free(name);
       return -1;
     }
@@ -896,6 +913,7 @@ cp
   /* Hook it up into the connection */
 
   connection_add(new);
+  id_add(new);
 
   /* Tell the rest about the new host */
 

@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.9 2000/11/21 09:13:59 guus Exp $
+    $Id: rbl.c,v 1.1.2.10 2000/11/22 18:54:07 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <xalloc.h>
+#include <stdio.h>
 
 #include "rbl.h"
 #include <system.h>
@@ -68,7 +69,7 @@ rbl_t *rbl_search_closest_rbl(rbltree_t *tree, void *data)
 {
   rbl_t *rbl, *next;
   int result;
-  
+
   next = rbl = tree->top;
   
   while(next)
@@ -90,31 +91,36 @@ rbl_t *rbl_search_closest_rbl(rbltree_t *tree, void *data)
 
 void *rbl_search_closest(rbltree_t *tree, void *data)
 {
-  return rbl_search_closest_rbl(tree, data)->data;
+  rbl_t *rbl;
+  
+  rbl = rbl_search_closest_rbl(tree, data);
+
+  if(rbl)
+    return rbl->data;
+  else
+    return NULL;
 }
 
 /* Search exact match or return NULL pointer */
 rbl_t *rbl_search_rbl(rbltree_t *tree, void *data)
 {
-  rbl_t *rbl, *next;
+  rbl_t *rbl;
   int result;
+
+  rbl = tree->top;
   
-  next = rbl = tree->top;
-  
-  while(next)
+  while(rbl)
     {
-      rbl = next;
-      
       result = tree->compare(data, rbl->data);
 
       if(result < 0)
-        next = rbl->left;
+        rbl = rbl->left;
       else if(result > 0)
-        next = rbl->right;
+        rbl = rbl->right;
       else
         return rbl;
     }
-    
+
   return NULL;
 }
 
@@ -437,7 +443,7 @@ rbl_t *rbl_unlink_rbl(rbl_t *rbl)
   
   if(y->color == RBL_BLACK && x)
     rbl_delete_fixup(x);
-    
+
   return rbl;
 }
 
@@ -449,38 +455,27 @@ rbl_t *rbl_unlink(rbltree_t *tree, void *data)
   rbl = rbl_search_rbl(tree, data);
   
   if(rbl)
-    return rbl_unlink_rbl(rbl);
-  else
-    return NULL;
+    rbl_unlink_rbl(rbl);
+
+  return rbl;
 }
 
 /* Unlink node and free it */
 void rbl_delete_rbl(rbl_t *rbl)
 {
-  free_rbl(rbl_unlink_rbl(rbl));
+  rbl_unlink_rbl(rbl);
+  free_rbl(rbl);
 }
 
 /* Search node in tree, unlink and free it */
 void rbl_delete(rbltree_t *tree, void *data)
 {
-  free_rbl(rbl_unlink(tree, data));
-}
+  rbl_t *rbl;
 
-rbl_unlink_rbltree_branch(rbl_t *rbl)
-{
-  if(rbl->left)
-    rbl_unlink_rbltree_branch(rbl->left);
+  rbl = rbl_unlink(tree, data);
 
-  if(rbl->right)
-    rbl_unlink_rbltree_branch(rbl->right);
-
-  if(rbl->parent)
-    {
-      if(rbl == rbl->parent->left)
-        rbl->parent->left = NULL;
-      else
-        rbl->parent->right = NULL;
-    }
+  if(rbl)
+    free_rbl(rbl);
 }
 
 /* Optimized unlinking for a complete tree */
@@ -512,8 +507,7 @@ void rbl_delete_rbltree(rbltree_t *tree)
   for(rbl = tree->head; rbl; rbl = next)
     {
       next = rbl->next;
-      if(tree->delete)
-        tree->delete(rbl->data);
+      free_rbl(rbl);
     }
 
   tree->top = NULL;

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.15 2000/11/04 22:57:31 guus Exp $
+    $Id: netutl.c,v 1.12.4.16 2000/11/22 18:54:08 guus Exp $
 */
 
 #include "config.h"
@@ -111,7 +111,9 @@ cp
 
   if(!(h = gethostbyname(p)))
     {
-      fprintf(stderr, _("Error looking up `%s': %s\n"), p, strerror(errno));
+      if(debug_lvl >= DEBUG_ERROR)
+        syslog(LOG_WARNING, _("Error looking up `%s': %s\n"), p, strerror(errno));
+        
       return NULL;
     }
 

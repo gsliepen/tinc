@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.3 2000/11/20 22:13:03 guus Exp $
+    $Id: connection.c,v 1.1.2.4 2000/11/22 18:54:07 guus Exp $
 */
 
 #include "config.h"
@@ -40,11 +40,23 @@
 /* Root of the connection list */
 
 rbltree_t *connection_tree;
+rbltree_t *id_tree;
+
 connection_t *myself = NULL;
 
 /* Initialization and callbacks */
 
 int connection_compare(connection_t *a, connection_t *b)
+{
+  ipv4_t result;
+  result = a->address - b->address;
+  if(result)
+    return result;
+  else
+    return a->port - b->port;
+}
+
+int id_compare(connection_t *a, connection_t *b)
 {
   return strcmp(a->name, b->name);
 }
@@ -52,6 +64,7 @@ int connection_compare(connection_t *a, connection_t *b)
 void init_connections(void)
 {
   connection_tree = new_rbltree((rbl_compare_t)connection_compare, (rbl_action_t)free_connection);
+  id_tree = new_rbltree((rbl_compare_t)id_compare, NULL);
 }
 
 /* Creation and deletion of connection elements */
@@ -114,6 +127,7 @@ cp
 void destroy_connection_tree(void)
 {
 cp
+  rbl_delete_rbltree(id_tree);
   rbl_delete_rbltree(connection_tree);
 cp
 }
@@ -127,26 +141,43 @@ cp
 cp
 }
 
+void id_add(connection_t *cl)
+{
+cp
+  rbl_insert(id_tree, cl);
+cp
+}
+
 void connection_del(connection_t *cl)
 {
 cp
+  rbl_delete(id_tree, cl);
   rbl_delete(connection_tree, cl);
 cp
 }
 
 /* Lookup functions */
 
+connection_t *lookup_connection(ipv4_t address, short unsigned int port)
+{
+  connection_t cl, *p;
+cp
+  cl.address = address;
+  cl.port = port;
+
+  return rbl_search(connection_tree, &cl);
+}
+
 connection_t *lookup_id(char *name)
 {
   connection_t cl, *p;
 cp
   cl.name = name;
-  p = rbl_search(connection_tree, &cl);
+  p = rbl_search(id_tree, &cl);
   if(p && p->status.active)
     return p;
   else
     return NULL;
-cp
 }
 
 /* Debugging */
