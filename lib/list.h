@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.h,v 1.1.2.1 2000/11/15 22:04:48 zarq Exp $
+    $Id: list.h,v 1.1.2.2 2000/11/16 22:13:09 zarq Exp $
 */
 
 #ifndef __TINC_LIST_H__
@@ -39,6 +39,9 @@ typedef struct list_t {
   list_callbacks_t *callbacks;
 } list_t;
 
+extern list_t *list_new(void);
+extern void list_append(list_t *, void *);
+extern void list_forall_nodes(list_t *, int (*)(void *));
 
 
 #endif /* __TINC_LIST_H__ */

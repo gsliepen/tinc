@@ -17,12 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.1 2000/11/15 22:04:48 zarq Exp $
+    $Id: list.c,v 1.1.2.2 2000/11/16 22:13:08 zarq Exp $
 */
 
 #include "config.h"
 
+#include <malloc.h>
 #include <string.h>
+#include <syslog.h>
 
 #include <error.h>
 #include <list.h>
@@ -59,7 +61,7 @@ list_node_t *list_delete(list_t *list, list_node_t *idx)
 
   if(list->callbacks->delete != NULL)
     if(list->callbacks->delete(idx->data))
-      error(ERR_WARNING, N_("List callback[delete] failed for %08lx - freeing anyway"), idx->data);
+      syslog(LOG_WARNING, _("List callback[delete] failed for %08lx - freeing anyway"), idx->data);
   
   free(idx->data);
   
@@ -125,7 +127,7 @@ void list_destroy(list_t *list)
 {
   if(!list)
     return;
-  list_destroy_nodes(list);
+/*  list_destroy_nodes(list); */
   free(list);
 }
 
@@ -134,7 +136,7 @@ void list_destroy(list_t *list)
 
   Append a new node to the list that points to data.
 */
-list_append(list_t *list, void *data)
+void list_append(list_t *list, void *data)
 {
   list_node_t *n;
 
