@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.23 2001/02/27 16:37:24 guus Exp $
+    $Id: conf.h,v 1.6.4.24 2001/06/05 19:39:54 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -55,6 +55,7 @@ typedef enum which_t {
   config_restrictport,
   config_indirectdata,
   config_tcponly,
+  config_mode,
 } which_t;
 
 typedef struct config_t {

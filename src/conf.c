@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.40 2001/01/17 01:30:05 zarq Exp $
+    $Id: conf.c,v 1.9.4.41 2001/06/05 19:39:54 guus Exp $
 */
 
 #include "config.h"
@@ -83,6 +83,7 @@ static internal_config_t hazahaza[] = {
   { "RestrictSubnets", config_restrictsubnets, TYPE_BOOL },
   { "Subnet",       config_subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
   { "TCPonly",      config_tcponly,        TYPE_BOOL },
+  { "Mode",         config_mode,           TYPE_NAME },
   { NULL, 0, 0 }
 };
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.111 2001/06/05 16:09:55 guus Exp $
+    $Id: net.c,v 1.35.4.112 2001/06/05 19:39:54 guus Exp $
 */
 
 #include "config.h"
@@ -792,14 +792,6 @@ cp
   else
     myself->port = cfg->data.val;
 
-  if((cfg = get_config_val(myself->config, config_indirectdata)))
-    if(cfg->data.val == stupid_true)
-      myself->options |= OPTION_INDIRECT;
-
-  if((cfg = get_config_val(myself->config, config_tcponly)))
-    if(cfg->data.val == stupid_true)
-      myself->options |= OPTION_TCPONLY;
-
 /* Read in all the subnets specified in the host configuration file */
 
   for(next = myself->config; (cfg = get_config_val(next, config_subnet)); next = cfg->next)
@@ -820,6 +812,48 @@ cp
       subnet_add(myself, net);
     }
 
+cp
+  /* Check some options */
+
+  if((cfg = get_config_val(config, config_indirectdata)))
+    if(cfg->data.val == stupid_true)
+      myself->options |= OPTION_INDIRECT;
+
+  if((cfg = get_config_val(config, config_tcponly)))
+    if(cfg->data.val == stupid_true)
+      myself->options |= OPTION_TCPONLY;
+
+  if((cfg = get_config_val(myself->config, config_indirectdata)))
+    if(cfg->data.val == stupid_true)
+      myself->options |= OPTION_INDIRECT;
+
+  if((cfg = get_config_val(myself->config, config_tcponly)))
+    if(cfg->data.val == stupid_true)
+      myself->options |= OPTION_TCPONLY;
+
+  if(myself->options & OPTION_TCPONLY)
+    myself->options |= OPTION_INDIRECT;
+
+  if((cfg = get_config_val(config, config_mode)))
+    {
+      if(!strcasecmp(cfg->data.ptr, "router"))
+        routing_mode = RMODE_ROUTER;
+      else if (!strcasecmp(cfg->data.ptr, "switch"))
+        routing_mode = RMODE_SWITCH;
+      else if (!strcasecmp(cfg->data.ptr, "hub"))
+        routing_mode = RMODE_HUB;
+      else
+        {
+          syslog(LOG_ERR, _("Invalid routing mode!"));
+          return -1;
+        }
+    }
+  else
+    routing_mode = RMODE_ROUTER;
+
+cp
+  /* Open sockets */
+  
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
@@ -848,22 +882,6 @@ cp
 
   keyexpires = time(NULL) + keylifetime;
 cp
-  /* Check some options */
-
-  if((cfg = get_config_val(config, config_indirectdata)))
-    {
-      if(cfg->data.val == stupid_true)
-        myself->options |= OPTION_INDIRECT;
-    }
-
-  if((cfg = get_config_val(config, config_tcponly)))
-    {
-      if(cfg->data.val == stupid_true)
-        myself->options |= OPTION_TCPONLY;
-    }
-
-  if(myself->options & OPTION_TCPONLY)
-    myself->options |= OPTION_INDIRECT;
 
   /* Activate ourselves */
 
