@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.51 2003/07/30 11:50:45 guus Exp $
+    $Id: netutl.c,v 1.12.4.52 2003/08/03 12:38:43 guus Exp $
 */
 
 #include "system.h"
@@ -47,7 +47,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(LOG_WARNING, _("Error looking up %s port %s: %s\n"), address,
+		logger(LOG_WARNING, _("Error looking up %s port %s: %s"), address,
 				   service, gai_strerror(err));
 		return NULL;
 	}
@@ -70,7 +70,7 @@ sockaddr_t str2sockaddr(const char *address, const char *port)
 	err = getaddrinfo(address, port, &hint, &ai);
 
 	if(err || !ai) {
-		logger(LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port,
+		logger(LOG_ERR, _("Error looking up %s port %s: %s"), address, port,
 			   gai_strerror(err));
 		cp_trace();
 		raise(SIGFPE);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.145 2003/07/30 11:50:45 guus Exp $
+    $Id: protocol.c,v 1.28.4.146 2003/08/03 12:38:43 guus Exp $
 */
 
 #include "system.h"
@@ -246,6 +246,6 @@ void age_past_requests(void)
 	}
 
 	if(left || deleted)
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Aging past requests: deleted %d, left %d"),
 			   deleted, left);
 }
