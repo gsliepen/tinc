@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.9 2002/03/01 15:14:29 guus Exp $
+    $Id: net_setup.c,v 1.1.2.10 2002/03/10 16:09:15 guus Exp $
 */
 
 #include "config.h"
@@ -567,7 +567,7 @@ cp
       next = node->next;
       c = (connection_t *)node->data;
       if(c->outgoing)
-        free(c->outgoing->name), free(c->outgoing);
+        free(c->outgoing->name), free(c->outgoing), c->outgoing = NULL;
       terminate_connection(c, 0);
     }
 
