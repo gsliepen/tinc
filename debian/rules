@@ -42,12 +42,9 @@ install: build
 	dh_installdirs
 
 	$(MAKE) install DESTDIR=`pwd`/debian/tmp
-	mkdir -p `pwd`/debian/tmp/etc/tinc/example
-	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/example/tinc.conf
+	mkdir -p `pwd`/debian/tmp/etc/tinc
+	cp -a doc/sample-config `pwd`/debian/tmp/etc/tinc/example
 	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
-	cp debian/tinc-up debian/tmp/etc/tinc/example
-	cp debian/tinc-down debian/tmp/etc/tinc/example
-	chmod 700 debian/tmp/etc/tinc/example/tinc-up debian/tmp/etc/tinc/example/tinc-down
 
 
 # Build architecture-independent files here.
