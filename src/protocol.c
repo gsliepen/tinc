@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.27 2000/09/10 22:49:46 guus Exp $
+    $Id: protocol.c,v 1.28.4.28 2000/09/10 23:11:37 guus Exp $
 */
 
 #include "config.h"
@@ -674,9 +674,11 @@ cp
   if(!(from = lookup_id(from_id)))
     {
       syslog(LOG_ERR, _("Got KEY_CHANGED from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
-      free(from);
+      free(from_id);
       return -1;
     }
+
+  free(from_id);
     
   from->status.validkey = 0;
   from->status.waitingforkey = 0;
@@ -706,7 +708,7 @@ cp
   if(!(from = lookup_id(from_id)))
     {
       syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
-      free(from); free(to);
+      free(from_id); free(to_id);
       return -1;
     }
 
@@ -721,13 +723,13 @@ cp
       if(!(to = lookup_id(to_id)))
         {
           syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) destination %s which does not exist in our connection list"), cl->id, cl->hostname, to_id);
-          free(from); free(to);
+          free(from_id); free(to_id);
           return -1;
         }
       send_req_key(from, to);
     }
 
-  free(from); free(to);
+  free(from_id); free(to_id);
 cp
   return 0;
 }
@@ -741,6 +743,7 @@ cp
 int ans_key_h(conn_list_t *cl)
 {
   char *from_id, *to_id, *datakey;
+  int keylength;
   conn_list_t *from, *to;
 cp
   if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &datakey) != 3)
@@ -752,7 +755,7 @@ cp
   if(!(from = lookup_id(from_id)))
     {
       syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
-      free(from); free(to); free(datakey);
+      free(from_id); free(to_id); free(datakey);
       return -1;
     }
 
@@ -760,55 +763,37 @@ cp
 
   if(!strcmp(id, myself->strcmp))
     {
-      send_ans_key(myself, from);
+      /* It is for us, convert it to binary and set the key with it. */
+      
+      keylength = strlen(datakey);
+      
+      if((keylength%1) || (keylength <= 0))
+        {
+          syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"), cl->id, cl->hostname, from->id);
+          free(from_id); free(to_id); free(datakey);
+          return -1;
+        }
+      keylength /= 2;
+      hex2bin(datakey, datakey, keylength);
+      BF_set_key(cl->datakey, keylength, datakey);
     }
   else
     {
       if(!(to = lookup_id(to_id)))
         {
           syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"), cl->id, cl->hostname, to_id);
-          free(from); free(to); free(datakey);
+          free(from_id); free(to_id); free(datakey);
           return -1;
         }
       send_ans_key(from, to, datakey);
     }
 
-  free(from); free(to); free(datakey);
+  free(from_id); free(to_id); free(datakey);
 cp
   return 0;
 }
-
-
-
 
 /* Old routines */
-
-
-
-
-int send_tcppacket(conn_list_t *cl, void *data, int len)
-{
-cp
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _("Sending PACKET to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %d\n", PACKET, len);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-    
-  if((write(cl->meta_socket, data, len)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
 
 /*
   Notify all my direct connections of a new host
@@ -840,120 +825,6 @@ cp
   for(p = conn_list; p != NULL; p = p->next)
     if(p != new && p->status.active)
       send_add_host(new, p);
-cp
-  return 0;
-}
-
-/*
-  The incoming request handlers
-*/
-
-int tcppacket_h(conn_list_t *cl)
-{
-  int len;
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized PACKET from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(sscanf(cl->buffer, "%*d %d", &len) != 1)
-    {
-       syslog(LOG_ERR, _("Got bad PACKET from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if(len > MTU)
-    {
-       syslog(LOG_ERR, _("Got too big PACKET from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _("Got PACKET length %d from %s (%s)"), len,
-              cl->vpn_hostname, cl->real_hostname);
-
-  cl->tcppacket=len;
-cp
-  return 0;
-}
-
-void set_keys(conn_list_t *cl, int expiry, char *key)
-{
-  char *ek;
-cp
-  if(!cl->public_key)
-    {
-      cl->public_key = xmalloc(sizeof(*cl->key));
-      cl->public_key->key = NULL;
-    }
-    
-  if(cl->public_key->key)
-    free(cl->public_key->key);
-  cl->public_key->length = strlen(key);
-  cl->public_key->expiry = expiry;
-  cl->public_key->key = xmalloc(cl->public_key->length + 1);
-  strcpy(cl->public_key->key, key);
-
-  ek = make_shared_key(key);
-  
-  if(!cl->key)
-    {
-      cl->key = xmalloc(sizeof(*cl->key));
-      cl->key->key = NULL;
-    }
-
-  if(cl->key->key)
-    free(cl->key->key);
-
-  cl->key->length = strlen(ek);
-  cl->key->expiry = expiry;
-  cl->key->key = xmalloc(cl->key->length + 1);
-  strcpy(cl->key->key, ek);
-cp
-}
-
-
-int key_changed_h(conn_list_t *cl)
-{
-  ip_t from;
-  conn_list_t *ik;
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized KEY_CHANGED from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(sscanf(cl->buffer, "%*d %lx", &from) != 1)
-    {
-       syslog(LOG_ERR, _("Got bad KEY_CHANGED from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  ik = lookup_conn(from);
-
-  if(!ik)
-    {
-      syslog(LOG_ERR, _("Got KEY_CHANGED origin %d.%d.%d.%d from %s (%s), which does not exist?"),
-	     IP_ADDR_V(from), cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got KEY_CHANGED origin %s from %s (%s)"),
-            ik->vpn_hostname, cl->vpn_hostname, cl->real_hostname);
-
-  ik->status.validkey = 0;
-  ik->status.waitingforkey = 0;
-
-  notify_others(ik, cl, send_key_changed);
 cp
   return 0;
 }
