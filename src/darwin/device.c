@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.2 2003/08/24 20:38:29 guus Exp $
+    $Id: device.c,v 1.3 2003/08/27 13:47:47 guus Exp $
 */
 
 #include "system.h"
