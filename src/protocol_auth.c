@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.18 2003/01/12 17:02:23 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.19 2003/01/17 00:37:20 guus Exp $
 */
 
 #include "config.h"
@@ -152,7 +152,7 @@ int send_metakey(connection_t *c)
 		c->outkey = xmalloc(len);
 
 	if(!c->outctx)
-		c->outctx = xmalloc(sizeof(*c->outctx));
+		c->outctx = xmalloc_and_zero(sizeof(*c->outctx));
 	cp();
 	/* Copy random data to the buffer */
 
@@ -224,9 +224,7 @@ int metakey_h(connection_t *c)
 
 	cp();
 
-	if(sscanf
-	   (c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength,
-		&compression, buffer) != 5) {
+	if(sscanf(c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5) {
 		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name,
 			   c->hostname);
 		return -1;
@@ -237,8 +235,7 @@ int metakey_h(connection_t *c)
 	/* Check if the length of the meta key is all right */
 
 	if(strlen(buffer) != len * 2) {
-		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name,
-			   c->hostname, "wrong keylength");
+		syslog(LOG_ERR, _("Possible intruder %s (%s): %s"), c->name, c->hostname, "wrong keylength");
 		return -1;
 	}
 
@@ -248,7 +245,7 @@ int metakey_h(connection_t *c)
 		c->inkey = xmalloc(len);
 
 	if(!c->inctx)
-		c->inctx = xmalloc(sizeof(*c->inctx));
+		c->inctx = xmalloc_and_zero(sizeof(*c->inctx));
 
 	/* Convert the challenge from hexadecimal back to binary */
 
@@ -265,8 +262,7 @@ int metakey_h(connection_t *c)
 	if(debug_lvl >= DEBUG_SCARY_THINGS) {
 		bin2hex(c->inkey, buffer, len);
 		buffer[len * 2] = '\0';
-		syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"),
-			   buffer);
+		syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"), buffer);
 	}
 
 	/* All incoming requests will now be encrypted. */
@@ -275,10 +271,9 @@ int metakey_h(connection_t *c)
 
 	if(cipher) {
 		c->incipher = EVP_get_cipherbynid(cipher);
-
+		
 		if(!c->incipher) {
-			syslog(LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name,
-				   c->hostname);
+			syslog(LOG_ERR, _("%s (%s) uses unknown cipher!"), c->name, c->hostname);
 			return -1;
 		}
 
@@ -298,14 +293,12 @@ int metakey_h(connection_t *c)
 		c->indigest = EVP_get_digestbynid(digest);
 
 		if(!c->indigest) {
-			syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name,
-				   c->hostname);
+			syslog(LOG_ERR, _("Node %s (%s) uses unknown digest!"), c->name, c->hostname);
 			return -1;
 		}
 
 		if(c->inmaclength > c->indigest->md_size || c->inmaclength < 0) {
-			syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name,
-				   c->hostname);
+			syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name, c->hostname);
 			return -1;
 		}
 	} else {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.22 2002/09/15 14:55:53 guus Exp $
+    $Id: net_socket.c,v 1.1.2.23 2003/01/17 00:37:20 guus Exp $
 */
 
 #include "config.h"
@@ -139,7 +139,7 @@ int setup_listen_socket(sockaddr_t *sa)
 			return -1;
 		}
 #else
-		syslog(LOG_WARNING, _("BindToDevice not supported on this platform"));
+		syslog(LOG_WARNING, _("BindToInterface not supported on this platform"));
 #endif
 	}
 
@@ -241,52 +241,6 @@ void retry_outgoing(outgoing_t *outgoing)
 			   _("Trying to re-establish outgoing connection in %d seconds"),
 			   outgoing->timeout);
 }
-
-int setup_outgoing_socket(connection_t *c)
-{
-	int option;
-
-	cp();
-
-	if(debug_lvl >= DEBUG_CONNECTIONS)
-		syslog(LOG_INFO, _("Trying to connect to %s (%s)"), c->name,
-			   c->hostname);
-
-	c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-
-	if(c->socket == -1) {
-		syslog(LOG_ERR, _("Creating socket for %s failed: %s"), c->hostname,
-			   strerror(errno));
-		return -1;
-	}
-
-	/* Optimize TCP settings */
-
-#if defined(SOL_TCP) && defined(TCP_NODELAY)
-	option = 1;
-	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
-#endif
-
-#if defined(SOL_IP) && defined(IP_TOS)
-	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof(option));
-#endif
-
-	/* Connect */
-
-	if(connect(c->socket, &c->address.sa, SALEN(c->address.sa)) == -1) {
-		close(c->socket);
-		syslog(LOG_ERR, _("Error while connecting to %s (%s): %s"), c->name,
-			   c->hostname, strerror(errno));
-		return -1;
-	}
-
-	if(debug_lvl >= DEBUG_CONNECTIONS)
-		syslog(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
-
-	return 0;
-}
-
 
 void finish_connecting(connection_t *c)
 {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.182 2002/09/15 14:55:53 guus Exp $
+    $Id: net.c,v 1.35.4.183 2003/01/17 00:37:18 guus Exp $
 */
 
 #include "config.h"
@@ -129,11 +129,11 @@ void purge(void)
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-void build_fdset(fd_set * fs)
+int build_fdset(fd_set * fs)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
-	int i;
+	int i, max = 0;
 
 	cp();
 
@@ -147,16 +147,27 @@ void build_fdset(fd_set * fs)
 			connection_del(c);
 			if(!connection_tree->head)
 				purge();
-		} else
+		} else {
 			FD_SET(c->socket, fs);
+			if(c->socket > max)
+				max = c->socket;
+		}
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
 		FD_SET(listen_socket[i].tcp, fs);
+		if(listen_socket[i].tcp > max)
+			max = listen_socket[i].tcp;
 		FD_SET(listen_socket[i].udp, fs);
+		if(listen_socket[i].udp > max)
+			max = listen_socket[i].udp;
 	}
 
 	FD_SET(device_fd, fs);
+	if(device_fd > max)
+		max = device_fd;
+	
+	return max;
 }
 
 /*
@@ -317,7 +328,7 @@ void main_loop(void)
 {
 	fd_set fset;
 	struct timeval tv;
-	int r;
+	int r, maxfd;
 	time_t last_ping_check;
 	event_t *event;
 
@@ -332,9 +343,9 @@ void main_loop(void)
 		tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
 		tv.tv_usec = 0;
 
-		build_fdset(&fset);
+		maxfd = build_fdset(&fset);
 
-		r = select(FD_SETSIZE, &fset, NULL, NULL, &tv);
+		r = select(maxfd + 1, &fset, NULL, NULL, &tv);
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
