@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.24 2000/11/29 14:24:40 zarq Exp $
+    $Id: conf.c,v 1.9.4.25 2000/11/29 14:27:24 zarq Exp $
 */
 
 #include "config.h"
@@ -197,7 +197,7 @@ int read_config_file(config_t **base, const char *fname)
 {
   int err = -1;
   FILE *fp;
-  char line[MAXBUFSIZE];	/* There really should not be any line longer than this... */
+  char *line;
   char *p, *q;
   int i, lineno = 0;
   config_t *cfg;
@@ -209,21 +209,15 @@ cp
 
   for(;;)
     {
-      if(fgets(line, MAXBUFSIZE, fp) == NULL)
-        {
-          err = 0;
-          break;
-        }
+      if((line = readline(fp)) == NULL)
+	{
+	  err = -1;
+	  break;
+	}
         
       lineno++;
 
-      if(!index(line, '\n'))
-        {
-          syslog(LOG_ERR, _("Line %d too long while reading config file %s"), lineno, fname);
-          break;
-        }        
-
-      if((p = strtok(line, "\t\n\r =")) == NULL)
+      if((p = strtok(line, "\t =")) == NULL)
 	continue; /* no tokens on this line */
 
       if(p[0] == '#')
