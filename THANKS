@@ -1,33 +1,32 @@
-We would like to thank
+We would like to thank the following people for their contributions to tinc:
 
- * Hans Bayle (for making some useful coding suggestions and fixing a
-   bug or two)
- * Lubomír Bulej (for the Redhat system init script)
- * Wessel Dankers (for the name `tinc' and various suggestions)
- * Mads Kiilerich (for finding some bugs and some errors in the
-   documentation, and for making several suggestions to make it all
-   more userfriendly, and the Redhat package)
- * James MacLean (for fixing several mission critical bugs, and for
-   giving me a few good ideas, and, most of all, for the wonderful
-   testing and debugging)
- * Robert van der Meulen (early configuration code)
- * Cris van Pelt (small fixes)
- * Enrique Zanardi (for the Spanish translation)
- * Matias Carrasco (for the Spanish translation of the manual)
- * Jamie Briggs (for finding a lot of socket leaks)
- * Armijn Hemel (for being our very own PR manager)
- * Jerome Etienne (for a thorough security analysis of tinc)
- * Mark Glines (for his compression patch) 
- * Nick Patavalis (RedHat package)
- * Alessandro Gatti (for helping us support Darwin)
- * Ivo van Dong (for help during the early versions of tinc)
- * Jeroen Ubbink (for help testing tinc on Free- and NetBSD)
- * LarstiQ (for help testing tinc on MacOS/X)
- * Marc A. Lehmann (for criticism)
- * Teemu Kiviniemi (for his lzo compression patch)
- * Flynn Marquardt (for help testing tinc on Solaris 2.6)
+* Alexander Reil and Gemeinde Berg
+* Allesandro Gatti
+* Armijn Hemel
+* Cris van Pelt
+* Enrique Zanardi
+* Flynn Marquardt
+* Hans Bayle
+* Ivo van Dong
+* James MacLean
+* Jamie Briggs
+* Jason Harper
+* Jeroen Ubbink
+* Jerome Etienne
+* Lubomír Bulej
+* Mads Kiilerich
+* Marc A. Lehmann
+* Mark Glines
+* Martin Kihlgren
+* Matias Carrasco
+* Nick Patavalis
+* Paul Littlefield
+* Robert van der Meulen
+* Teemu Kiviniemi
+* Wessel Dankers
+* Wouter van Heyst
 
-for their help, support and ideas.  Thank you guys!
+And everyone we forgot. Thank you guys!
 
 Ivo Timmermans
 Guus Sliepen
