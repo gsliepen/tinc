@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.57 2000/11/04 20:44:28 guus Exp $
+    $Id: protocol.c,v 1.28.4.58 2000/11/04 22:57:32 guus Exp $
 */
 
 #include "config.h"
@@ -225,7 +225,7 @@ cp
         }
     }
 cp    
-  if((cfg = get_config_val(cl->config, publickey)))
+  if((cfg = get_config_val(cl->config, config_publickey)))
     {
       cl->rsa_key = RSA_new();
       BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
@@ -560,6 +560,8 @@ int send_ack(conn_list_t *cl)
 cp
   if(cl->status.outgoing)
     cl->allow_request = ACK;
+
+  setup_vpn_connection(cl);
 
   x = send_request(cl, "%d", ACK);
   cl->status.encryptout = 1;

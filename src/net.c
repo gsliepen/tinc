@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.66 2000/11/04 20:44:26 guus Exp $
+    $Id: net.c,v 1.35.4.67 2000/11/04 22:57:30 guus Exp $
 */
 
 #include "config.h"
@@ -170,7 +170,7 @@ cp
   return 0;
 }
 
-int xrecv(vpn_packet_t *inpkt)
+int xrecv(conn_list_t *cl, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
@@ -294,7 +294,7 @@ cp
   returned a zero exit code
 */
 void flush_queue(conn_list_t *cl, packet_queue_t **pq,
-		 int (*function)(conn_list_t*,void*))
+		 int (*function)(conn_list_t*,vpn_packet_t*))
 {
   queue_element_t *p, *next = NULL;
 cp
@@ -375,6 +375,8 @@ cp
 
   /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
   
+  /* Connections are now opened beforehand...
+
   if(!cl->status.dataopen)
     if(setup_vpn_connection(cl) < 0)
       {
@@ -382,6 +384,7 @@ cp
 	       cl->name, cl->hostname);
         return -1;
       }
+  */
       
   if(!cl->status.validkey)
     {
@@ -423,7 +426,7 @@ int setup_tap_fd(void)
   struct ifreq ifr;
 
 cp  
-  if((cfg = get_config_val(config, tapdevice)))
+  if((cfg = get_config_val(config, config_tapdevice)))
     tapfname = cfg->data.ptr;
   else
 #ifdef HAVE_TUNTAP
@@ -515,7 +518,7 @@ cp
       return -1;
     }
 
-  if((cfg = get_config_val(config, interface)))
+  if((cfg = get_config_val(config, config_interface)))
     {
       if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, cfg->data.ptr, strlen(cfg->data.ptr)))
         {
@@ -528,7 +531,7 @@ cp
   a.sin_family = AF_INET;
   a.sin_port = htons(port);
   
-  if((cfg = get_config_val(config, interfaceip)))
+  if((cfg = get_config_val(config, config_interfaceip)))
     a.sin_addr.s_addr = htonl(cfg->data.ip->address);
   else
     a.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -606,7 +609,7 @@ cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
 
-  if((cfg = get_config_val(cl->config, port)) == NULL)
+  if((cfg = get_config_val(cl->config, config_port)) == NULL)
     cl->port = 655;
   else
     cl->port = cfg->data.val;
@@ -675,7 +678,7 @@ cp
       return -1;
     }
     
-  if(!(cfg = get_config_val(ncn->config, address)))
+  if(!(cfg = get_config_val(ncn->config, config_address)))
     {
       syslog(LOG_ERR, _("No address specified for %s"));
       free_conn_list(ncn);
@@ -718,6 +721,7 @@ cp
 int setup_myself(void)
 {
   config_t const *cfg;
+  config_t *next;
   subnet_t *net;
 cp
   myself = new_conn_list();
@@ -726,7 +730,7 @@ cp
   myself->flags = 0;
   myself->protocol_version = PROT_CURRENT;
 
-  if(!(cfg = get_config_val(config, tincname))) /* Not acceptable */
+  if(!(cfg = get_config_val(config, config_name))) /* Not acceptable */
     {
       syslog(LOG_ERR, _("Name for tinc daemon required!"));
       return -1;
@@ -740,7 +744,7 @@ cp
       return -1;
     }
 cp
-  if(!(cfg = get_config_val(config, privatekey)))
+  if(!(cfg = get_config_val(config, config_privatekey)))
     {
       syslog(LOG_ERR, _("Private key for tinc daemon required!"));
       return -1;
@@ -758,7 +762,7 @@ cp
       return -1;
     }
 cp  
-  if(!(cfg = get_config_val(myself->config, publickey)))
+  if(!(cfg = get_config_val(myself->config, config_publickey)))
     {
       syslog(LOG_ERR, _("Public key for tinc daemon required!"));
       return -1;
@@ -774,22 +778,22 @@ cp
       return -1;
     }
 */
-  if(!(cfg = get_config_val(myself->config, port)))
+  if(!(cfg = get_config_val(myself->config, config_port)))
     myself->port = 655;
   else
     myself->port = cfg->data.val;
 
-  if((cfg = get_config_val(myself->config, indirectdata)))
+  if((cfg = get_config_val(myself->config, config_indirectdata)))
     if(cfg->data.val == stupid_true)
       myself->flags |= EXPORTINDIRECTDATA;
 
-  if((cfg = get_config_val(myself->config, tcponly)))
+  if((cfg = get_config_val(myself->config, config_tcponly)))
     if(cfg->data.val == stupid_true)
       myself->flags |= TCPONLY;
 
 /* Read in all the subnets specified in the host configuration file */
 
-  for(cfg = myself->config; (cfg = get_config_val(cfg, subnet)); cfg = cfg->next)
+  for(next = myself->config; (cfg = get_config_val(next, config_subnet)); next = cfg->next)
     {
       net = new_subnet();
       net->type = SUBNET_IPV4;
@@ -813,13 +817,6 @@ cp
       return -1;
     }
 
-  if((myself->socket = setup_vpn_in_socket(myself->port)) < 0)
-    {
-      syslog(LOG_ERR, _("Unable to set up an incoming vpn data socket!"));
-      close(myself->meta_socket);
-      return -1;
-    }
-
   /* Generate packet encryption key */
 
   myself->cipher_pkttype = EVP_bf_cfb();
@@ -829,7 +826,7 @@ cp
   myself->cipher_pktkey = (char *)xmalloc(myself->cipher_pktkeylength);
   RAND_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
 
-  if(!(cfg = get_config_val(config, keyexpire)))
+  if(!(cfg = get_config_val(config, config_keyexpire)))
     keylifetime = 3600;
   else
     keylifetime = cfg->data.val;
@@ -850,7 +847,7 @@ sigalrm_handler(int a)
 {
   config_t const *cfg;
 cp
-  cfg = get_config_val(upstreamcfg, connectto);
+  cfg = get_config_val(upstreamcfg, config_connectto);
 
   if(!cfg && upstreamcfg == config)
     /* No upstream IP given, we're listen only. */
@@ -864,7 +861,7 @@ cp
           signal(SIGALRM, SIG_IGN);
           return;
         }
-      cfg = get_config_val(upstreamcfg, connectto); /* Or else we try the next ConnectTo line */
+      cfg = get_config_val(upstreamcfg, config_connectto); /* Or else we try the next ConnectTo line */
     }
 
   signal(SIGALRM, sigalrm_handler);
@@ -885,7 +882,7 @@ int setup_network_connections(void)
 {
   config_t const *cfg;
 cp
-  if((cfg = get_config_val(config, pingtimeout)) == NULL)
+  if((cfg = get_config_val(config, config_pingtimeout)) == NULL)
     timeout = 60;
   else
     {
@@ -905,7 +902,7 @@ cp
   /* Run tinc-up script to further initialize the tap interface */
   execute_script("tinc-up");
   
-  if(!(cfg = get_config_val(config, connectto)))
+  if(!(cfg = get_config_val(config, config_connectto)))
     /* No upstream IP given, we're listen only. */
     return 0;
 
@@ -914,7 +911,7 @@ cp
       upstreamcfg = cfg->next;
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         return 0;
-      cfg = get_config_val(upstreamcfg, connectto); /* Or else we try the next ConnectTo line */
+      cfg = get_config_val(upstreamcfg, config_connectto); /* Or else we try the next ConnectTo line */
     }
     
   signal(SIGALRM, sigalrm_handler);
@@ -943,7 +940,6 @@ cp
     if(myself->status.active)
       {
 	close(myself->meta_socket);
-	close(myself->socket);
         free_conn_list(myself);
         myself = NULL;
       }
@@ -967,6 +963,7 @@ int setup_vpn_connection(conn_list_t *cl)
 {
   int nfd, flags;
   struct sockaddr_in a;
+  const int one = 1;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->hostname);
@@ -975,6 +972,32 @@ cp
   if(nfd == -1)
     {
       syslog(LOG_ERR, _("Creating UDP socket failed: %m"));
+      return -1;
+    }
+
+  if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
+    {
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "setsockopt");
+      return -1;
+    }
+
+  flags = fcntl(nfd, F_GETFL);
+  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fcntl");
+      return -1;
+    }
+
+  memset(&a, 0, sizeof(a));
+  a.sin_family = AF_INET;
+  a.sin_port = htons(myself->port);
+  a.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
+    {
+      syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), myself->port);
       return -1;
     }
 
@@ -1058,7 +1081,6 @@ cp
     }
 
   FD_SET(myself->meta_socket, fs);
-  FD_SET(myself->socket, fs);
   FD_SET(tap_fd, fs);
 cp
 }
@@ -1068,18 +1090,16 @@ cp
   udp socket and write it to the ethertap
   device after being decrypted
 */
-int handle_incoming_vpn_data()
+int handle_incoming_vpn_data(conn_list_t *cl)
 {
   vpn_packet_t pkt;
   int x, l = sizeof(x);
-  struct sockaddr from;
   int lenin;
-  socklen_t fromlen = sizeof(from);
 cp
-  if(getsockopt(myself->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
+  if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"),
-	     __FILE__, __LINE__, myself->socket);
+	     __FILE__, __LINE__, cl->socket);
       return -1;
     }
   if(x)
@@ -1088,7 +1108,7 @@ cp
       return -1;
     }
 
-  if((lenin = recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, &from, &fromlen)) <= 0)
+  if((lenin = recv(cl->socket, (char *) &(pkt.len), MTU, 0)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return -1;
@@ -1096,11 +1116,12 @@ cp
 
   if(debug_lvl >= DEBUG_TRAFFIC)
     {
-      syslog(LOG_DEBUG, _("Received packet of %d bytes"), lenin);
-    } 
+      syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), lenin,
+             cl->name, cl->hostname);
+    }
 
 cp
-  return xrecv(&pkt);
+  return xrecv(cl, &pkt);
 }
 
 /*
@@ -1238,7 +1259,6 @@ cp
 void check_network_activity(fd_set *f)
 {
   conn_list_t *p;
-  int x, l = sizeof(x);
 cp
   for(p = conn_list; p != NULL; p = p->next)
     {
@@ -1248,16 +1268,15 @@ cp
       if(p->status.dataopen)
 	if(FD_ISSET(p->socket, f))
 	  {
-	    /*
-	      The only thing that can happen to get us here is apparently an
-	      error on this outgoing(!) UDP socket that isn't immediate (i.e.
-	      something that will not trigger an error directly on send()).
-	      I've once got here when it said `No route to host'.
-	    */
+            handle_incoming_vpn_data(p);
+
+            /* Old error stuff (FIXME: copy this to handle_incoming_vpn_data()
+            
 	    getsockopt(p->socket, SOL_SOCKET, SO_ERROR, &x, &l);
 	    syslog(LOG_ERR, _("Outgoing data socket error for %s (%s): %s"),
                    p->name, p->hostname, strerror(x));
 	    terminate_connection(p);
+            */
 	    return;
 	  }  
 
@@ -1270,9 +1289,6 @@ cp
 	    } 
     }
   
-  if(FD_ISSET(myself->socket, f))
-    handle_incoming_vpn_data();
-
   if(FD_ISSET(myself->meta_socket, f))
     handle_new_meta_connection();
 cp

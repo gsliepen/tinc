@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.20 2000/11/03 22:35:10 zarq Exp $
+    $Id: conf.c,v 1.9.4.21 2000/11/04 22:57:30 guus Exp $
 */
 
 #include "config.h"
@@ -56,26 +56,26 @@ int sighup = 0;
 */
 static internal_config_t hazahaza[] = {
 /* Main configuration file keywords */
-  { "Name",         tincname,       TYPE_NAME },
-  { "ConnectTo",    connectto,      TYPE_NAME },
-  { "PingTimeout",  pingtimeout,    TYPE_INT },
-  { "TapDevice",    tapdevice,      TYPE_NAME },
-  { "PrivateKey",   privatekey,     TYPE_NAME },
-  { "KeyExpire",    keyexpire,      TYPE_INT },
-  { "Hostnames",    resolve_dns,    TYPE_BOOL },
-  { "Interface",    interface,      TYPE_NAME },
-  { "InterfaceIP",  interfaceip,    TYPE_IP },
+  { "Name",         config_name,       TYPE_NAME },
+  { "ConnectTo",    config_connectto,      TYPE_NAME },
+  { "PingTimeout",  config_pingtimeout,    TYPE_INT },
+  { "TapDevice",    config_tapdevice,      TYPE_NAME },
+  { "PrivateKey",   config_privatekey,     TYPE_NAME },
+  { "KeyExpire",    config_keyexpire,      TYPE_INT },
+  { "Hostnames",    config_hostnames,    TYPE_BOOL },
+  { "Interface",    config_interface,      TYPE_NAME },
+  { "InterfaceIP",  config_interfaceip,    TYPE_IP },
 /* Host configuration file keywords */
-  { "Address",      address,        TYPE_NAME },
-  { "Port",         port,           TYPE_INT },
-  { "PublicKey",    publickey,      TYPE_NAME },
-  { "Subnet",       subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
-  { "RestrictHosts", restricthosts, TYPE_BOOL },
-  { "RestrictSubnets", restrictsubnets, TYPE_BOOL },
-  { "RestrictAddress", restrictaddress, TYPE_BOOL },
-  { "RestrictPort", restrictport,   TYPE_BOOL },
-  { "IndirectData", indirectdata,   TYPE_BOOL },
-  { "TCPonly",      tcponly,        TYPE_BOOL },
+  { "Address",      config_address,        TYPE_NAME },
+  { "Port",         config_port,           TYPE_INT },
+  { "PublicKey",    config_publickey,      TYPE_NAME },
+  { "Subnet",       config_subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
+  { "RestrictHosts", config_restricthosts, TYPE_BOOL },
+  { "RestrictSubnets", config_restrictsubnets, TYPE_BOOL },
+  { "RestrictAddress", config_restrictaddress, TYPE_BOOL },
+  { "RestrictPort", config_restrictport,   TYPE_BOOL },
+  { "IndirectData", config_indirectdata,   TYPE_BOOL },
+  { "TCPonly",      config_tcponly,        TYPE_BOOL },
   { NULL, 0, 0 }
 };
 

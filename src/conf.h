@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.15 2000/10/29 00:24:31 guus Exp $
+    $Id: conf.h,v 1.6.4.16 2000/11/04 22:57:30 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -33,25 +33,25 @@ typedef struct ip_mask_t {
 } ip_mask_t;
 
 typedef enum which_t {
-  tincname = 1,
-  connectto,
-  pingtimeout,
-  tapdevice,
-  privatekey,
-  keyexpire,
-  resolve_dns,
-  interface,
-  interfaceip,
-  address,
-  port,
-  publickey,
-  subnet,
-  restricthosts,
-  restrictsubnets,
-  restrictaddress,
-  restrictport,
-  indirectdata,
-  tcponly,
+  config_name = 1,
+  config_connectto,
+  config_pingtimeout,
+  config_tapdevice,
+  config_privatekey,
+  config_keyexpire,
+  config_hostnames,
+  config_interface,
+  config_interfaceip,
+  config_address,
+  config_port,
+  config_publickey,
+  config_subnet,
+  config_restricthosts,
+  config_restrictsubnets,
+  config_restrictaddress,
+  config_restrictport,
+  config_indirectdata,
+  config_tcponly,
 } which_t;
 
 typedef struct config_t {

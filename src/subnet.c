@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.10 2000/11/04 11:49:58 guus Exp $
+    $Id: subnet.c,v 1.1.2.11 2000/11/04 22:57:33 guus Exp $
 */
 
 #include "config.h"
@@ -301,7 +301,7 @@ cp
   for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->global_next)
     {
       netstr = net2str(subnet);
-      syslog(LOG_DEBUG, "  %s owner %s", netstr, subnet->owner->name);
+      syslog(LOG_DEBUG, " %s owner %s", netstr, subnet->owner->name);
       free(netstr);
     }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.14 2000/11/04 15:34:07 guus Exp $
+    $Id: connlist.c,v 1.1.2.15 2000/11/04 22:57:30 guus Exp $
 */
 
 #include "config.h"
@@ -162,8 +162,6 @@ cp
 void dump_conn_list(void)
 {
   conn_list_t *p;
-  subnet_t *s;
-  char *netstr;
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
@@ -171,25 +169,11 @@ cp
 	 myself->name, myself->hostname, myself->port, myself->flags,
 	 myself->socket, myself->meta_socket, myself->status);
 
-  for(s = myself->subnets; s != NULL; s = s->next)
-    {
-      netstr = net2str(s);
-      syslog(LOG_DEBUG, "  %s", netstr);
-      free(netstr);
-    }
-
   for(p = conn_list; p != NULL; p = p->next)
     {
       syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
 	     p->name, p->hostname, p->port, p->flags,
 	     p->socket, p->meta_socket, p->status);
-
-      for(s = p->subnets; s != NULL; s = s->next)
-        {
-          netstr = net2str(s);
-          syslog(LOG_DEBUG, "  %s", netstr);
-          free(netstr);
-        }
     }
 
   syslog(LOG_DEBUG, _("End of connection list."));

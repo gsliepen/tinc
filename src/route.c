@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.1 2000/10/23 13:52:54 guus Exp $
+    $Id: route.c,v 1.1.2.2 2000/11/04 22:57:33 guus Exp $
 */
 
 #include "config.h"
@@ -30,13 +30,18 @@
 
 #include "system.h"
 
-int routing_mode = 0;	/* Will be used to determine if we route by MAC or by payload's protocol */
+int routing_mode = 0;		/* Will be used to determine if we route by MAC or by payload's protocol */
 
 conn_list_t *route_packet(vpn_packet_t *packet)
 {
   unsigned short type;
 cp
   type = ntohs(*((unsigned short*)(&packet.data[12])))
+
+  if(routing_mode)
+    {
+      return route_mac(packet);
+    }
 
   switch(type)
     {
@@ -51,14 +56,34 @@ cp
         return route_arp(packet);
 */
       default:
-        /* TODO: try MAC as last resort? */
         if(debug_lvl >= DEBUG_TRAFFIC)
           {
             syslog(LOG_WARNING, _("Cannot route packet: unknown type %hx"), type);
           }
-            return NULL;
+        return NULL;
      }
 }
+
+conn_list_t *route_mac(vpn_packet_t *packet)
+{
+  conn_list_t *cl;
+cp
+  cl = lookup_subnet_mac((mac_t *)(&packet.data[6]));
+  if(!cl)
+    if(debug_lvl >= DEBUG_TRAFFIC)
+      {
+        syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %x:%x:%x:%x:%x:%x"),
+               packet.data[6],
+               packet.data[7],
+               packet.data[8],
+               packet.data[9],
+               packet.data[10],
+               packet.data[11]);
+      } 
+cp  
+  return cl;  
+}
+
 
 conn_list_t *route_ipv4(vpn_packet_t *packet)
 {
@@ -67,22 +92,21 @@ conn_list_t *route_ipv4(vpn_packet_t *packet)
 cp
   dest = ntohl(*((unsigned long*)(&packet.data[30]);
   
-  cl = lookup_conn_list_ipv4(dest);
+  cl = lookup_subnet_ipv4(dest);
   if(!cl)
     if(debug_lvl >= DEBUG_TRAFFIC)
       {
         syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %d.%d.%d.%d"),
                packet.data[30], packet.data[31], packet.data[32], packet.data[33]);
       } 
-  
-  return cl;  
 cp
+  return cl;  
 }
 
 conn_list_t *route_ipv6(vpn_packet_t *packet)
 {
 cp
   syslog(LOG_WARNING, _("Cannot route packet: IPv6 routing not implemented yet"));
-  return NULL;
 cp
+  return NULL;
 }
