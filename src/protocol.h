@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.16 2000/11/20 19:12:16 guus Exp $
+    $Id: protocol.h,v 1.5.4.17 2000/11/22 19:55:53 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -44,6 +44,11 @@ enum {
   KEY_CHANGED, REQ_KEY, ANS_KEY,
   LAST                               /* Guardian for the highest request number */
 };
+
+/* Maximum size of strings in a request */
+
+#define MAX_STRING_SIZE 1024
+#define MAX_STRING "%1024s"
 
 extern int (*request_handlers[])(connection_t*);
 
