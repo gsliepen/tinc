@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.37 2000/11/29 14:24:40 zarq Exp $
+    $Id: tincd.c,v 1.10.4.38 2000/12/03 12:23:06 zarq Exp $
 */
 
 #include "config.h"
@@ -153,7 +153,10 @@ parse_options(int argc, char **argv, char **envp)
 	  do_detach = 0;
 	  break;
 	case 'd': /* inc debug level */
-	  debug_lvl++;
+	  if(optarg)
+	    debug_lvl = atoi(optarg);
+	  else
+	    debug_lvl++;
 	  break;
 	case 'k': /* kill old tincds */
 	  kill_tincd = 1;
@@ -168,7 +171,8 @@ parse_options(int argc, char **argv, char **envp)
               generate_keys = atoi(optarg);
               if(generate_keys < 512)
                 {
-                  fprintf(stderr, _("Invalid argument! BITS must be a number equal to or greater than 512.\n"));
+                  fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
+			  optarg);
                   usage(1);
                 }
               generate_keys &= ~7;	/* Round it to bytes */
