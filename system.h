@@ -27,7 +27,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
@@ -35,6 +34,14 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#ifdef HAVE_STDBOOL_H
+#include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+#endif
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
