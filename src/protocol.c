@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.38 2000/10/11 22:01:00 guus Exp $
+    $Id: protocol.c,v 1.28.4.39 2000/10/14 17:04:15 guus Exp $
 */
 
 #include "config.h"
@@ -399,9 +399,10 @@ cp
 
   /* Exchange information about other tinc daemons */
 
+/* FIXME: reprogram this.
   notify_others(cl, NULL, send_add_host);
   notify_one(cl);
-
+*/
   upstreamindex = 0;
 
 cp
@@ -653,9 +654,9 @@ cp
   conn_list_add(conn_list, new);
 
   /* Tell the rest about the new host */
-
+/* FIXME: reprogram this.
   notify_others(new, cl, send_add_host);
-
+*/
 cp
   return 0;
 }
@@ -942,7 +943,7 @@ cp
 
   if(!strcmp(to_id, myself->name))
     {
-      send_ans_key(myself, from, myself->datakey->key);
+      send_ans_key(myself, from, myself->cipher_pktkey);
     }
   else
     {
@@ -961,20 +962,20 @@ cp
   return 0;
 }
 
-int send_ans_key(conn_list_t *from, conn_list_t *to, char *datakey)
+int send_ans_key(conn_list_t *from, conn_list_t *to, char *pktkey)
 {
 cp
   return send_request(to->nexthop, "%d %s %s %s", ANS_KEY,
-                      from->name, to->name, datakey);
+                      from->name, to->name, pktkey);
 }
 
 int ans_key_h(conn_list_t *cl)
 {
-  char *from_id, *to_id, *datakey;
+  char *from_id, *to_id, *pktkey;
   int keylength;
   conn_list_t *from, *to;
 cp
-  if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &datakey) != 3)
+  if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &pktkey) != 3)
     {
        syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"),
               cl->name, cl->hostname);
@@ -985,7 +986,7 @@ cp
     {
       syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"),
              cl->name, cl->hostname, from_id);
-      free(from_id); free(to_id); free(datakey);
+      free(from_id); free(to_id); free(pktkey);
       return -1;
     }
 
@@ -995,18 +996,18 @@ cp
     {
       /* It is for us, convert it to binary and set the key with it. */
 
-      keylength = strlen(datakey);
+      keylength = strlen(pktkey);
 
       if((keylength%2) || (keylength <= 0))
         {
           syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
                  cl->name, cl->hostname, from->name);
-          free(from_id); free(to_id); free(datakey);
+          free(from_id); free(to_id); free(pktkey);
           return -1;
         }
       keylength /= 2;
-      hex2bin(datakey, datakey, keylength);
-      BF_set_key(cl->datakey, keylength, datakey);
+      hex2bin(pktkey, pktkey, keylength);
+      BF_set_key(cl->cipher_pktkey, keylength, pktkey);
     }
   else
     {
@@ -1014,13 +1015,13 @@ cp
         {
           syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"),
                  cl->name, cl->hostname, to_id);
-          free(from_id); free(to_id); free(datakey);
+          free(from_id); free(to_id); free(pktkey);
           return -1;
         }
-      send_ans_key(from, to, datakey);
+      send_ans_key(from, to, pktkey);
     }
 
-  free(from_id); free(to_id); free(datakey);
+  free(from_id); free(to_id); free(pktkey);
 cp
   return 0;
 }
@@ -1045,4 +1046,16 @@ char (*request_name[]) = {
   "ADD_HOST", "DEL_HOST",
   "ADD_SUBNET", "DEL_SUBNET",
   "KEY_CHANGED", "REQ_KEY", "ANS_KEY",
+};
+
+/* Status strings */
+
+char (*status_text[]) = {
+  "FIXME: status text",
+};
+
+/* Error strings */
+
+char (*error_text[]) = {
+  "FIXME: error text",
 };

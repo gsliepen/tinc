@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.15 2000/10/11 22:01:00 guus Exp $
+    $Id: net.h,v 1.9.4.16 2000/10/14 17:04:15 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -25,7 +25,6 @@
 #include <sys/time.h>
 
 #include "config.h"
-#include "conf.h"
 
 #define MAXSIZE 1700  /* should be a bit more than the MTU for the tapdevice */
 #define MTU 1600

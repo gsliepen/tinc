@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.34 2000/10/11 22:00:58 guus Exp $
+    $Id: net.c,v 1.35.4.35 2000/10/14 17:04:13 guus Exp $
 */
 
 #include "config.h"
@@ -59,10 +59,6 @@ int total_socket_out = 0;
 int upstreamindex = 0;
 static int seconds_till_retry;
 
-/* The global list of existing connections */
-conn_list_t *conn_list = NULL;
-conn_list_t *myself = NULL;
-
 /*
   strip off the MAC adresses of an ethernet frame
 */
@@ -95,7 +91,7 @@ int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
   int outlen, outpad;
 cp
   outpkt.len = inpkt->len;
-  EVP_EncryptInit(cl->cipher_pktctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktiv);
+  EVP_EncryptInit(cl->cipher_pktctx, cl->cipher_pkttype, cl->cipher_pktkey, NULL);
   EVP_EncryptUpdate(cl->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
   EVP_EncryptFinal(cl->cipher_pktctx, outpkt.data + outlen, &outpad);
   outlen += outpad;
@@ -128,7 +124,7 @@ cp
            inpkt->len);
 
   outpkt.len = inpkt->len;
-  EVP_DecryptInit(myself->cipher_pktctx, myself->cipher_pkttype, myself->cipher_pktkey, myself->cipher_pktiv);
+  EVP_DecryptInit(myself->cipher_pktctx, myself->cipher_pkttype, myself->cipher_pktkey, NULL);
   EVP_DecryptUpdate(myself->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
   /* FIXME: grok DecryptFinal  
   EVP_DecryptFinal(myself->cipher_pktctx, outpkt.data + outlen, &outpad);
@@ -289,9 +285,6 @@ cp
 
   /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
   
-  if(my_key_expiry <= time(NULL))
-    regenerate_keys();
-
   if(!cl->status.dataopen)
     if(setup_vpn_connection(cl) < 0)
       {
@@ -538,7 +531,7 @@ cp
     {
       syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
              ncn->hostname);
-      free_conn_element(ncn);
+      free_conn_list(ncn);
       return -1;
     }
 
@@ -559,7 +552,7 @@ int setup_myself(void)
 cp
   myself = new_conn_list();
 
-  myself->hostname = "MYSELF"; /* FIXME? */
+  asprintf(&myself->hostname, "MYSELF"); /* FIXME? Do hostlookup on ourselves? */
   myself->flags = 0;
 
   if(!(cfg = get_config_val(config, tincname))) /* Not acceptable */
@@ -569,17 +562,29 @@ cp
     }
   else
     myself->name = (char*)cfg->data.val;
+
+  if(check_id(myself->name))
+    {
+      syslog(LOG_ERR, _("Invalid name for myself!"));
+      return -1;
+    }
+
+  if(read_host_config(myself))
+    {
+      syslog(LOG_ERR, _("Cannot open host configuration file for myself!"));
+      return -1;
+    }
   
-  if(!(cfg = get_config_val(myself, port)))
+  if(!(cfg = get_config_val(myself->config, port)))
     myself->port = 655;
   else
     myself->port = cfg->data.val;
 
-  if((cfg = get_config_val(config, indirectdata)))
+  if((cfg = get_config_val(myself->config, indirectdata)))
     if(cfg->data.val == stupid_true)
       myself->flags |= EXPORTINDIRECTDATA;
 
-  if((cfg = get_config_val(config, tcponly)))
+  if((cfg = get_config_val(myself->config, tcponly)))
     if(cfg->data.val == stupid_true)
       myself->flags |= TCPONLY;
 
@@ -780,9 +785,9 @@ cp
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
          p->hostname, htons(ci.sin_port));
 
-  if(send_basic_info(p) < 0)
+  if(send_id(p) < 0)
     {
-      free_conn_element(p);
+      free_conn_list(p);
       return NULL;
     }
 cp
@@ -860,12 +865,6 @@ cp
   if(debug_lvl > 0)
     syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
            cl->name, cl->hostname);
-
-  if(cl->status.timeout)
-    send_timeout(cl);
-/*  else if(!cl->status.termreq)
-    send_termreq(cl);
- */
  
   if(cl->socket)
     close(cl->socket);
@@ -875,8 +874,11 @@ cp
   cl->status.remove = 1;
 
   /* If this cl isn't active, don't send any DEL_HOSTs. */
+
+/* FIXME: reprogram this.
   if(cl->status.active)
     notify_others(cl,NULL,send_del_host);
+*/
     
 cp
   /* Find all connections that were lost because they were behind cl
@@ -887,7 +889,9 @@ cp
         if((p->nexthop == cl) && (p != cl))
           {
             if(cl->status.active && p->status.active)
+/* FIXME: reprogram this
               notify_others(p,cl,send_del_host);
+*/;
            if(cl->socket)
              close(cl->socket);
 	    p->status.active = 0;
@@ -1106,6 +1110,7 @@ cp
       if(sighup)
         {
           sighup = 0;
+/* FIXME: reprogram this.
 	  if(debug_lvl > 1)
 	    syslog(LOG_INFO, _("Rereading configuration file"));
           close_network_connections();
@@ -1117,6 +1122,7 @@ cp
             }
           sleep(5);
           setup_network_connections();
+*/
           continue;
         }
 

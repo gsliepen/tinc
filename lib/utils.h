@@ -20,6 +20,8 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
+#include <ctype.h>
+
 enum {
   DEBUG_CONNECTIONS = 0,
   DEBUG_PROTOCOL,
@@ -34,5 +36,8 @@ enum {
 
 extern volatile int cp_line;
 extern volatile char *cp_file;
+
+extern void hex2bin(char *src, char *dst, size_t length);
+extern void bin2hex(char *src, char *dst, size_t length);
 
 #endif /* __TINC_UTILS_H__ */

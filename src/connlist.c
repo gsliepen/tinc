@@ -17,15 +17,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.2 2000/10/11 22:00:58 guus Exp $
+    $Id: connlist.c,v 1.1.2.3 2000/10/14 17:04:13 guus Exp $
 */
 
 #include <syslog.h>
 
+#include "net.h"	/* Don't ask. */
 #include "config.h"
+#include "conf.h"
 #include <utils.h>
 
-#include "net.h"	/* Don't ask. */
+#include "system.h"
 
 /* Root of the connection list */
 
@@ -55,8 +57,10 @@ cp
     free(p->name);
   if(p->hostname)
     free(p->hostname);
-  free_key(p->public_key);
-  free_key(p->datakey);
+  if(p->public_key)
+    RSA_free(p->public_key);
+  if(p->cipher_pktkey)
+    free(p->cipher_pktkey);
   free(p);
 cp
 }
@@ -79,7 +83,7 @@ cp
 	  else
 	    conn_list = next;
 
-	  free_conn_element(p);
+	  free_conn_list(p);
 	}
       else
 	prev = p;
@@ -99,7 +103,7 @@ cp
   for(p = conn_list; p != NULL; )
     {
       next = p->next;
-      free_conn_element(p);
+      free_conn_list(p);
       p = next;
     }
 
@@ -203,4 +207,16 @@ cp
 
   syslog(LOG_DEBUG, _("End of connection list."));
 cp
+}
+
+int read_host_config(conn_list_t *cl)
+{
+  char *fname;
+  int x;
+cp
+  asprintf(fname, "%s/hosts/%s", confbase, cl->name);
+  x = read_config_file(&cl->config, fname);
+  free(fname);
+cp
+  return x;
 }

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.12 2000/10/11 22:00:57 guus Exp $
+    $Id: conf.c,v 1.9.4.13 2000/10/14 17:04:12 guus Exp $
 */
 
 
@@ -38,13 +38,13 @@
 #include <utils.h> /* for cp */
 
 #include "config.h"
-
+#include "connlist.h"
 #include "system.h"
 
 config_t *config;
 int debug_lvl = 0;
 int timeout = 0; /* seconds before timeout */
-char *configfilename = NULL;
+char *confbase = NULL;           /* directory in which all config files are */
 
 /* Will be set if HUP signal is received. It will be processed when it is safe. */
 int sighup = 0;
@@ -208,6 +208,18 @@ cp
   fclose (fp);
 cp
   return err;
+}
+
+int read_server_config()
+{
+  char *fname;
+  int x;
+cp
+  asprintf(fname, "%s/tinc.conf", confbase);
+  x = read_config_file(&config, fname);
+  free(fname);
+cp
+  return x;  
 }
 
 /*

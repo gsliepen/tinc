@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.10 2000/10/11 22:01:02 guus Exp $
+    $Id: tincd.c,v 1.10.4.11 2000/10/14 17:04:16 guus Exp $
 */
 
 #include "config.h"
@@ -63,8 +63,6 @@ static int kill_tincd = 0;
 /* If zero, don't detach from the terminal. */
 static int do_detach = 1;
 
-char *confbase = NULL;           /* directory in which all config files are */
-/* char *configfilename = NULL;     /* configuration file name, moved to config.c */
 char *identname;                 /* program name for syslog */
 char *netname = NULL;            /* name of the vpn network */
 char *pidfilename;               /* pid file location */
@@ -98,7 +96,7 @@ usage(int status)
   else
     {
       printf(_("Usage: %s [option]...\n\n"), program_name);
-      printf(_("  -c, --config=FILE     Read configuration options from FILE.\n"
+      printf(_("  -c, --config=DIR      Read configuration options from DIR.\n"
 	       "  -D, --no-detach       Don't fork and detach.\n"
 	       "  -d                    Increase debug level.\n"
 	       "  -k, --kill            Attempt to kill a running tincd and exit.\n"
@@ -125,8 +123,8 @@ parse_options(int argc, char **argv, char **envp)
         case 0: /* long option */
           break;
 	case 'c': /* config file */
-	  configfilename = xmalloc(strlen(optarg)+1);
-	  strcpy(configfilename, optarg);
+	  confbase = xmalloc(strlen(optarg)+1);
+	  strcpy(confbase, optarg);
 	  break;
 	case 'D': /* no detach */
 	  do_detach = 0;
@@ -293,29 +291,23 @@ int kill_other(void)
 */
 void make_names(void)
 {
-  if(!configfilename)
-    {
-      if(netname)
-	{
-	  asprintf(&configfilename, "%s/tinc/%s/tinc.conf", CONFDIR, netname);
-	}
-      else
-	{
-	  asprintf(&configfilename, "%s/tinc/tinc.conf", CONFDIR);
-	}
-    }
-  
   if(netname)
     {
-      asprintf(&pidfilename, "/var/run/tinc.%s.pid", netname);
-      asprintf(&confbase, "%s/tinc/%s/", CONFDIR, netname);
-      asprintf(&identname, "tinc.%s", netname);
+      if(!pidfilename)
+        asprintf(&pidfilename, "/var/run/tinc.%s.pid", netname);
+      if(!confbase)
+        asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
+      if(!identname)
+        asprintf(&identname, "tinc.%s", netname);
     }
   else
     {
-      pidfilename = "/var/run/tinc.pid";
-      asprintf(&confbase, "%s/tinc/", CONFDIR);
-      identname = "tinc";
+      if(!pidfilename)
+        pidfilename = "/var/run/tinc.pid";
+      if(!confbase)
+        asprintf(&confbase, "%s/tinc", CONFDIR);
+      if(!identname)
+        identname = "tinc";
     }
 }
 
@@ -359,7 +351,7 @@ main(int argc, char **argv, char **envp)
   if(kill_tincd)
     exit(kill_other());
 
-  if(read_config_file(&config, configfilename))
+  if(read_server_config())
     return 1;
 
   setup_signals();
@@ -367,9 +359,10 @@ main(int argc, char **argv, char **envp)
   if(detach())
     exit(0);
 
+/* FIXME: wt* is this suppose to do?
   if(security_init())
     return 1;
-
+*/
   for(;;)
     {
       setup_network_connections();
@@ -448,7 +441,9 @@ sigusr2_handler(int a)
 {
   if(debug_lvl > 1)
     syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
+/* FIXME: reprogram this.
   regenerate_keys();
+*/
 }
 
 RETSIGTYPE
