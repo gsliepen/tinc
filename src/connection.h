@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.14 2001/10/10 08:49:47 guus Exp $
+    $Id: connection.h,v 1.1.2.15 2001/10/10 09:42:29 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -89,7 +89,7 @@ typedef struct connection_t {
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */
 
-  char *buffer;                    /* metadata input buffer */
+  char buffer[MAXBUFSIZE];         /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int tcplen;                      /* length of incoming TCPpacket */
   int allow_request;               /* defined if there's only one request possible */
