@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.h,v 1.6 2002/04/13 10:55:42 zarq Exp $
+    $Id: logging.h,v 1.7 2002/04/13 11:00:41 zarq Exp $
 */
 
 #ifndef __TINC_LOGGING_H__
@@ -54,6 +54,7 @@ extern void log(int, int, char *, ...);
 extern void log_add_hook(log_function_t *);
 extern void log_del_hook(log_function_t *);
 extern log_function_t log_default;
+extern log_function_t log_syslog;
 extern void tinc_syslog(int, char *, ...);
 
 #ifndef LOG_ERR /* Something from syslog.h */
