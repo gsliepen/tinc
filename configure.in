@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.49 2002/06/09 15:58:05 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.50 2002/06/10 14:35:18 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -43,8 +43,8 @@ case $host_os in
     [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
   ;;
   *darwin*)
-    AC_DEFINE(HAVE_FREEBSD)
-    [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
+    AC_DEFINE(HAVE_DARWIN)
+    [ rm -f src/device.c; ln -sf darwin/device.c src/device.c ]
   ;;
   *solaris*)
     AC_DEFINE(HAVE_SOLARIS)
