@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.4 2003/07/29 11:06:23 guus Exp $
+    $Id: device.c,v 1.1.2.5 2003/07/29 12:38:49 guus Exp $
 */
 
 #include "system.h"
@@ -90,6 +90,16 @@ bool setup_device(void)
 		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
 			break;
 
+		/* Find out more about this adapter */
+
+		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", REG_CONTROL_NET, adapterid);
+
+                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+			continue;
+
+		len = sizeof(adaptername);
+		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
+
 		if(device) {
 			if(!strcmp(device, adapterid)) {
 				found = true;
@@ -97,18 +107,6 @@ bool setup_device(void)
 			} else
 				continue;
 		}
-
-		/* Find out more about this adapter */
-
-		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", REG_CONTROL_NET, adapterid);
-
-                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2)) {
-			logger(LOG_ERR, _("Unable to read registry"));
-			return false;
-		}
-
-		len = sizeof(adaptername);
-		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
 		if(iface) {
 			if(!strcmp(iface, adaptername)) {
@@ -148,7 +146,7 @@ bool setup_device(void)
 
 	/* Get MAC address from tap device */
 
-	if(DeviceIoControl(device_fd, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
+	if(!DeviceIoControl(device_fd, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
 		logger(LOG_ERR, _("Could not get MAC address from Windows tap device!"));
 		return false;
 	}
@@ -156,9 +154,6 @@ bool setup_device(void)
 	if(routing_mode == RMODE_ROUTER) {
 		overwrite_mac = 1;
 	}
-
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = device;
 
 	device_info = _("Windows tap device");
 
@@ -176,7 +171,7 @@ void close_device(void)
 
 bool read_packet(vpn_packet_t *packet)
 {
-	int lenin;
+	long lenin;
 
 	cp();
 
@@ -198,7 +193,7 @@ bool read_packet(vpn_packet_t *packet)
 
 bool write_packet(vpn_packet_t *packet)
 {
-	int lenout;
+	long lenout;
 
 	cp();
 
