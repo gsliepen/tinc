@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.81 2003/08/02 21:33:52 guus Exp $
+    $Id: tincd.c,v 1.10.4.82 2003/08/03 09:08:52 guus Exp $
 */
 
 #include "system.h"
@@ -452,23 +452,10 @@ int main2(int argc, char **argv)
 	if(!detach())
 		return 1;
 		
-	for(;;) {
-		if(setup_network_connections()) {
-			int status;
-			status = main_loop();
 
-		        close_network_connections();
+	/* Setup sockets and open device. If it doesn't work, don't give up but try again. */
 
-			ifdebug(CONNECTIONS)
-				dump_device_stats();
-
-			logger(LOG_NOTICE, _("Terminating"));
-			return status;
-		}
-
-		logger(LOG_ERR, _("Unrecoverable error"));
-		cp_trace();
-
+	while(!setup_network_connections()) {
 		if(do_detach) {
 			logger(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
 			sleep(maxtimeout);
@@ -477,4 +464,19 @@ int main2(int argc, char **argv)
 			return 1;
 		}
 	}
+
+	/* Start main loop. It only exits when tinc is killed. */
+
+	int status;
+	status = main_loop();
+
+	/* Shutdown properly. */
+
+	close_network_connections();
+
+	ifdebug(CONNECTIONS)
+		dump_device_stats();
+
+	logger(LOG_NOTICE, _("Terminating"));
+	return status;
 }
