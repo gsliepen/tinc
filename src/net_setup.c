@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.37 2003/07/22 20:55:20 guus Exp $
+    $Id: net_setup.c,v 1.1.2.38 2003/07/22 21:13:23 guus Exp $
 */
 
 #include "system.h"
@@ -201,9 +201,10 @@ bool setup_myself(void)
 	subnet_t *subnet;
 	char *name, *hostname, *mode, *afname, *cipher, *digest;
 	char *address = NULL;
+	char *envp[5];
 	struct addrinfo hint, *ai, *aip;
 	bool choice;
-	int err;
+	int i, err;
 
 	cp();
 
@@ -383,8 +384,7 @@ bool setup_myself(void)
 
 	myself->connection->outdigest = EVP_sha1();
 
-	if(get_config_int
-	   (lookup_config(myself->connection->config_tree, "MACLength"),
+	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"),
 		&myself->maclength)) {
 		if(myself->digest) {
 			if(myself->maclength > myself->digest->md_size) {
@@ -402,8 +402,7 @@ bool setup_myself(void)
 
 	/* Compression */
 
-	if(get_config_int
-	   (lookup_config(myself->connection->config_tree, "Compression"),
+	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"),
 		&myself->compression)) {
 		if(myself->compression < 0 || myself->compression > 11) {
 			logger(LOG_ERR, _("Bogus compression level!"));
@@ -423,6 +422,23 @@ bool setup_myself(void)
 	node_add(myself);
 
 	graph();
+
+	/* Open device */
+
+	if(!setup_device())
+		return false;
+
+	/* Run tinc-up script to further initialize the tap interface */
+	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	asprintf(&envp[1], "DEVICE=%s", device ? : "");
+	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	asprintf(&envp[3], "NAME=%s", myself->name);
+	envp[4] = NULL;
+
+	execute_script("tinc-up", envp);
+
+	for(i = 0; i < 5; i++)
+		free(envp[i]);
 
 	/* Open sockets */
 
@@ -485,9 +501,6 @@ bool setup_myself(void)
 */
 bool setup_network_connections(void)
 {
-	char *envp[5];
-	int i;
-
 	cp();
 
 	now = time(NULL);
@@ -506,23 +519,8 @@ bool setup_network_connections(void)
 	} else
 		pingtimeout = 60;
 
-	if(!setup_device())
-		return false;
-
 	if(!setup_myself())
 		return false;
-
-	/* Run tinc-up script to further initialize the tap interface */
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
-
-	execute_script("tinc-up", envp);
-
-	for(i = 0; i < 5; i++)
-		free(envp[i]);
 
 	try_outgoing_connections();
 
