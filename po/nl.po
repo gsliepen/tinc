@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0pre3\n"
-"POT-Creation-Date: 2000-06-30 14:36+0200\n"
+"POT-Creation-Date: 2000-08-17 18:13+0100\n"
 "PO-Revision-Date: 2000-05-31 20:14+02:00\n"
 "Last-Translator: Ivo Timmermans <itimmermans@bigfoot.com>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -14,32 +14,32 @@ msgstr ""
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/conf.c:175
+#: src/conf.c:178
 #, c-format
 msgid "%s: %d: Invalid variable name `%s'.\n"
 msgstr "%s: %d: Ongeldige variabelenaam `%s'.\n"
 
-#: src/conf.c:182
+#: src/conf.c:185
 #, c-format
 msgid "%s: %d: No value given for `%s'.\n"
 msgstr "%s: %d: Geen waarde gegeven voor `%s'.\n"
 
-#: src/conf.c:190
+#: src/conf.c:193
 #, c-format
 msgid "%s: %d: Invalid value `%s' for variable `%s'.\n"
 msgstr "%s: %d: Ongeldige waarde `%s' voor variabele `%s'.\n"
 
-#: src/conf.c:214
+#: src/conf.c:217
 #, c-format
 msgid "Could not open %s: %s\n"
 msgstr "Kon %s niet openen: %s\n"
 
-#: src/encr.c:112 src/net.c:390
+#: src/encr.c:111 src/net.c:445
 #, c-format
 msgid "Could not open %s: %m"
 msgstr "Kon %s niet openen: %m"
 
-#: src/encr.c:119
+#: src/encr.c:118
 #, c-format
 msgid "Illegal passphrase in %s; size would be %d"
 msgstr "Ongeldig wachtwoord in %s; grootte zou %d zijn"
@@ -95,654 +95,689 @@ msgstr ""
 msgid ": done.\n"
 msgstr ": klaar.\n"
 
-#: src/net.c:107
+#: src/net.c:106
 #, c-format
 msgid "Sending packet of %d bytes to %s (%s)"
 msgstr "Verzending pakket van %d bytes naar %s (%s)"
 
-#: src/net.c:112
+#: src/net.c:118
 #, c-format
 msgid "Error sending packet to %s (%s): %m"
 msgstr "Fout tijdens verzenden pakket naar %s (%s): %m"
 
-#: src/net.c:133
+#: src/net.c:135 src/net.c:177
 #, c-format
 msgid "Receiving packet of %d bytes from %s (%s)"
 msgstr "Ontvangst pakket van %d bytes van %s (%s)"
 
-#: src/net.c:137
+#: src/net.c:139 src/net.c:181
 #, c-format
 msgid "Can't write to tap device: %m"
 msgstr "Kan niet naar tap apparaat schrijven: %m"
 
-#: src/net.c:240
-msgid "Queue flushed"
-msgstr "Wachtrij leeggemaakt"
-
-#: src/net.c:255
-#, c-format
-msgid "Flushing send queue for %s (%s)"
-msgstr "Legen van verzend-wachtrij voor %s (%s)"
-
-#: src/net.c:263
-#, c-format
-msgid "Flushing receive queue for %s (%s)"
-msgstr "Legen van de ontvangst-wachtrij voor %s (%s)"
-
-#: src/net.c:281
-#, c-format
-msgid "Trying to look up %d.%d.%d.%d in connection list failed!"
-msgstr "Poging tot opzoeken %d.%d.%d.%d in verbindingslijst mislukte!"
-
-#: src/net.c:293 src/net.c:306
-msgid "There is no remote host I can send this packet to!"
-msgstr "Er is geen partner waar ik dit pakket naar kan sturen!"
-
-#: src/net.c:320
-#, c-format
-msgid "Indirect packet to %s via %s"
-msgstr "Indirect pakket naar %s via %s"
-
-#: src/net.c:325
-#, c-format
-msgid "Indirect look up %d.%d.%d.%d in connection list failed!"
-msgstr "Indirect opzoeken %d.%d.%d.%d in verbindingslijst mislukte!"
-
-#: src/net.c:335
-#, c-format
-msgid "Double indirection for %d.%d.%d.%d"
-msgstr "Dubbele indirectie voor %d.%d.%d.%d"
-
-#: src/net.c:347
-#, c-format
-msgid "Could not open UDP connection to %s (%s)"
-msgstr "Kon geen UDP verbinding openen naar %s (%s)"
-
-#: src/net.c:354
-#, c-format
-msgid "%s (%s) has no valid key, queueing packet"
-msgstr "%s (%s) heeft geen geldige sleutel, pakket wordt in de wachtrij gezet"
-
-#: src/net.c:364
-#, c-format
-msgid "%s (%s) is not ready, queueing packet"
-msgstr "%s (%s) is niet gereed, pakket wordt in de wachtrij gezet"
-
-#: src/net.c:411
-#, c-format
-msgid "Creating metasocket failed: %m"
-msgstr "Aanmaak van metasocket mislukt: %m"
-
-#: src/net.c:417 src/net.c:466
-#, c-format
-msgid "setsockopt: %m"
-msgstr "setsockopt: %m"
-
-#: src/net.c:424 src/net.c:473
-#, c-format
-msgid "fcntl: %m"
-msgstr "fcntl: %m"
-
-#: src/net.c:435
-#, c-format
-msgid "Can't bind to port %hd/tcp: %m"
-msgstr "Kan niet aan poort %hd/tcp binden: %m"
-
-#: src/net.c:441
-#, c-format
-msgid "listen: %m"
-msgstr "listen: %m"
-
-#: src/net.c:460
-#, c-format
-msgid "Creating socket failed: %m"
-msgstr "Aanmaak socket mislukte: %m"
-
-#: src/net.c:484
-#, c-format
-msgid "Can't bind to port %hd/udp: %m"
-msgstr "Kan niet aan poort %hd/udp binden: %m"
-
-#: src/net.c:501
-#, c-format
-msgid "Trying to connect to %s"
-msgstr "Poging tot verbinding met %s"
-
-#: src/net.c:511
-#, c-format
-msgid "Creating socket for %s port %d failed: %m"
-msgstr "Aanmaken socket voor %s poort %d mislukt: %m"
-
-#: src/net.c:522
-#, c-format
-msgid "%s port %hd: %m"
-msgstr "%s poort %hd: %m"
-
-#: src/net.c:529
-#, c-format
-msgid "fcntl for %s port %d: %m"
-msgstr "fcntl voor %s poort %d: %m"
-
-#: src/net.c:534
-#, c-format
-msgid "Connected to %s port %hd"
-msgstr "Verbonden met %s poort %hd"
-
-#: src/net.c:557
-#, c-format
-msgid "Could not set up a meta connection to %s"
-msgstr "Kon geen metaverbinding aangaan met %s"
-
-#: src/net.c:582
-msgid "No value for my VPN IP given"
-msgstr "Geen waarde gegeven voor mijn VPN IP adres"
-
-#: src/net.c:603
-msgid "Unable to set up a listening socket"
-msgstr "Kon geen luistersocket aanmaken"
-
-#: src/net.c:609
-msgid "Unable to set up an incoming vpn data socket"
-msgstr "Kon geen socket maken voor inkomend vpn verkeer"
-
-#: src/net.c:616
-#, c-format
-msgid "Ready: listening on port %hd"
-msgstr "Gereed: luisterend op poort %hd"
-
-#: src/net.c:643
-#, c-format
-msgid "Still failed to connect to other, will retry in %d seconds"
-msgstr "Wederom niet verbonden met de ander, nieuwe poging over %d seconden"
-
-#: src/net.c:681
-#, c-format
-msgid "Trying to re-establish outgoing connection in %d seconds"
-msgstr "Poging tot herstellen van uitgaande verbinding over %d seconden"
-
-#: src/net.c:719
-msgid "Terminating"
-msgstr "Beëindigen"
-
-#: src/net.c:733
-#, c-format
-msgid "Opening UDP socket to %s"
-msgstr "Bezig met openen UDP socket naar %s"
-
-#: src/net.c:738
-#, c-format
-msgid "Creating UDP socket failed: %m"
-msgstr "Aanmaak UDP socket mislukte: %m"
-
-#: src/net.c:748
-#, c-format
-msgid "Connecting to %s port %d failed: %m"
-msgstr "Verbinding naar %s poort %d mislukt: %m"
-
-#: src/net.c:756 src/net.c:843 src/net.c:1041
-#, c-format
-msgid "This is a bug: %s:%d: %d:%m %s (%s)"
-msgstr "Dit is een programmeerfout: %s:%d: %d:%m %s (%s)"
-
-#: src/net.c:781
-#, c-format
-msgid "Error: getpeername: %m"
-msgstr "Fout: getpeername: %m"
-
-#: src/net.c:794
-#, c-format
-msgid "Connection from %s port %d"
-msgstr "Verbinding van %s poort %d"
-
-#: src/net.c:849
-#, c-format
-msgid "Incoming data socket error for %s (%s): %s"
-msgstr "Fout op socket voor inkomend verkeer voor %s (%s): %s"
-
-#: src/net.c:858
-#, c-format
-msgid "Receiving packet from %s (%s) failed: %m"
-msgstr "Ontvangst pakket van %s (%s) mislukt: %m"
-
-#: src/net.c:872
+#: src/net.c:166 src/net.c:959
 #, c-format
 msgid "Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"
 msgstr "Kreeg pakket van %s (%s) met onbekende herkomst %d.%d.%d.%d?"
 
-#: src/net.c:906
+#: src/net.c:295
+msgid "Queue flushed"
+msgstr "Wachtrij leeggemaakt"
+
+#: src/net.c:310
+#, c-format
+msgid "Flushing send queue for %s (%s)"
+msgstr "Legen van verzend-wachtrij voor %s (%s)"
+
+#: src/net.c:318
+#, c-format
+msgid "Flushing receive queue for %s (%s)"
+msgstr "Legen van de ontvangst-wachtrij voor %s (%s)"
+
+#: src/net.c:336
+#, c-format
+msgid "Trying to look up %d.%d.%d.%d in connection list failed!"
+msgstr "Poging tot opzoeken %d.%d.%d.%d in verbindingslijst mislukte!"
+
+#: src/net.c:348 src/net.c:361
+msgid "There is no remote host I can send this packet to!"
+msgstr "Er is geen partner waar ik dit pakket naar kan sturen!"
+
+#: src/net.c:375
+#, c-format
+msgid "Indirect packet to %s via %s"
+msgstr "Indirect pakket naar %s via %s"
+
+#: src/net.c:380
+#, c-format
+msgid "Indirect look up %d.%d.%d.%d in connection list failed!"
+msgstr "Indirect opzoeken %d.%d.%d.%d in verbindingslijst mislukte!"
+
+#: src/net.c:390
+#, c-format
+msgid "Double indirection for %d.%d.%d.%d"
+msgstr "Dubbele indirectie voor %d.%d.%d.%d"
+
+#: src/net.c:402
+#, c-format
+msgid "Could not open UDP connection to %s (%s)"
+msgstr "Kon geen UDP verbinding openen naar %s (%s)"
+
+#: src/net.c:409
+#, c-format
+msgid "%s (%s) has no valid key, queueing packet"
+msgstr "%s (%s) heeft geen geldige sleutel, pakket wordt in de wachtrij gezet"
+
+#: src/net.c:419
+#, c-format
+msgid "%s (%s) is not ready, queueing packet"
+msgstr "%s (%s) is niet gereed, pakket wordt in de wachtrij gezet"
+
+#: src/net.c:467
+#, c-format
+msgid "Creating metasocket failed: %m"
+msgstr "Aanmaak van metasocket mislukt: %m"
+
+#: src/net.c:473 src/net.c:479 src/net.c:541
+#, c-format
+msgid "setsockopt: %m"
+msgstr "setsockopt: %m"
+
+#: src/net.c:486 src/net.c:548
+#, c-format
+msgid "fcntl: %m"
+msgstr "fcntl: %m"
+
+#: src/net.c:494
+#, c-format
+msgid "Unable to bind listen socket to interface %s: %m"
+msgstr "Kon luistersocket niet binden aan interface %s: %m"
+
+#: src/net.c:510
+#, c-format
+msgid "Can't bind to port %hd/tcp: %m"
+msgstr "Kan niet aan poort %hd/tcp binden: %m"
+
+#: src/net.c:516
+#, c-format
+msgid "listen: %m"
+msgstr "listen: %m"
+
+#: src/net.c:535
+#, c-format
+msgid "Creating socket failed: %m"
+msgstr "Aanmaak socket mislukte: %m"
+
+#: src/net.c:559
+#, c-format
+msgid "Can't bind to port %hd/udp: %m"
+msgstr "Kan niet aan poort %hd/udp binden: %m"
+
+#: src/net.c:576
+#, c-format
+msgid "Trying to connect to %s"
+msgstr "Poging tot verbinding met %s"
+
+#: src/net.c:586
+#, c-format
+msgid "Creating socket for %s port %d failed: %m"
+msgstr "Aanmaken socket voor %s poort %d mislukt: %m"
+
+#: src/net.c:597
+#, c-format
+msgid "%s port %hd: %m"
+msgstr "%s poort %hd: %m"
+
+#: src/net.c:604
+#, c-format
+msgid "fcntl for %s port %d: %m"
+msgstr "fcntl voor %s poort %d: %m"
+
+#: src/net.c:610
+#, c-format
+msgid "Connected to %s port %hd"
+msgstr "Verbonden met %s poort %hd"
+
+#: src/net.c:630
+#, c-format
+msgid "Error looking up `%s': %m"
+msgstr "Fout bij het opzoeken van `%s': %m"
+
+#: src/net.c:640
+#, c-format
+msgid "Could not set up a meta connection to %s"
+msgstr "Kon geen metaverbinding aangaan met %s"
+
+#: src/net.c:665
+msgid "No value for my VPN IP given"
+msgstr "Geen waarde gegeven voor mijn VPN IP adres"
+
+#: src/net.c:690
+msgid "Unable to set up a listening socket"
+msgstr "Kon geen luistersocket aanmaken"
+
+#: src/net.c:696
+msgid "Unable to set up an incoming vpn data socket"
+msgstr "Kon geen socket maken voor inkomend vpn verkeer"
+
+#: src/net.c:703
+#, c-format
+msgid "Ready: listening on port %hd"
+msgstr "Gereed: luisterend op poort %hd"
+
+#: src/net.c:730
+#, c-format
+msgid "Still failed to connect to other, will retry in %d seconds"
+msgstr "Wederom niet verbonden met de ander, nieuwe poging over %d seconden"
+
+#: src/net.c:768
+#, c-format
+msgid "Trying to re-establish outgoing connection in %d seconds"
+msgstr "Poging tot herstellen van uitgaande verbinding over %d seconden"
+
+#: src/net.c:806
+msgid "Terminating"
+msgstr "Beëindigen"
+
+#: src/net.c:820
+#, c-format
+msgid "Opening UDP socket to %s"
+msgstr "Bezig met openen UDP socket naar %s"
+
+#: src/net.c:825
+#, c-format
+msgid "Creating UDP socket failed: %m"
+msgstr "Aanmaak UDP socket mislukte: %m"
+
+#: src/net.c:835
+#, c-format
+msgid "Connecting to %s port %d failed: %m"
+msgstr "Verbinding naar %s poort %d mislukt: %m"
+
+#: src/net.c:843 src/net.c:930 src/net.c:1128
+#, c-format
+msgid "This is a bug: %s:%d: %d:%m %s (%s)"
+msgstr "Dit is een programmeerfout: %s:%d: %d:%m %s (%s)"
+
+#: src/net.c:868
+#, c-format
+msgid "Error: getpeername: %m"
+msgstr "Fout: getpeername: %m"
+
+#: src/net.c:881
+#, c-format
+msgid "Connection from %s port %d"
+msgstr "Verbinding van %s poort %d"
+
+#: src/net.c:936
+#, c-format
+msgid "Incoming data socket error for %s (%s): %s"
+msgstr "Fout op socket voor inkomend verkeer voor %s (%s): %s"
+
+#: src/net.c:945
+#, c-format
+msgid "Receiving packet from %s (%s) failed: %m"
+msgstr "Ontvangst pakket van %s (%s) mislukt: %m"
+
+#: src/net.c:993
 #, c-format
 msgid "Closing connection with %s (%s)"
 msgstr "Beëindigen verbinding met %s (%s)"
 
-#: src/net.c:950
+#: src/net.c:1037
 msgid "Trying to re-establish outgoing connection in 5 seconds"
 msgstr "Poging tot herstellen van uitgaande verbinding over 5 seconden"
 
-#: src/net.c:980
+#: src/net.c:1067
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) antwoordde niet op ping"
 
-#: src/net.c:1011
+#: src/net.c:1098
 #, c-format
 msgid "Accepting a new connection failed: %m"
 msgstr "Aanname van nieuwe verbinding is mislukt: %m"
 
-#: src/net.c:1019
+#: src/net.c:1106
 msgid "Closed attempted connection"
 msgstr "Aangenomen verbinding verbroken"
 
-#: src/net.c:1047
+#: src/net.c:1134
 #, c-format
 msgid "Metadata socket error for %s (%s): %s"
 msgstr "Fout op socket voor metaverkeer voor %s (%s): %s"
 
-#: src/net.c:1054
+#: src/net.c:1141
 msgid "Metadata read buffer overflow!"
 msgstr "Metadata ontvangstbuffer overloop!"
 
-#: src/net.c:1066
+#: src/net.c:1154
 #, c-format
 msgid "Connection closed by %s (%s)"
 msgstr "Verbinding verbroken door %s (%s)"
 
-#: src/net.c:1069
+#: src/net.c:1158
 #, c-format
 msgid "Metadata socket read error for %s (%s): %m"
 msgstr "Fout op socket voor metaverkeer voor %s (%s) tijdens lezen: %m"
 
-#: src/net.c:1094
+#: src/net.c:1200
 #, c-format
 msgid "Got request from %s (%s): %s"
 msgstr "Ontving verzoek van %s (%s): %s"
 
-#: src/net.c:1100
+#: src/net.c:1206
 #, c-format
 msgid "Unknown request from %s (%s)"
 msgstr "Onbekend verzoek van %s (%s)"
 
-#: src/net.c:1107
+#: src/net.c:1213
 #, c-format
 msgid "Error while processing request from %s (%s)"
 msgstr "Fout tijdens afhandelen van verzoek van %s (%s)"
 
-#: src/net.c:1114
+#: src/net.c:1220
 #, c-format
 msgid "Bogus data received from %s (%s)"
 msgstr "Onzinnige data ontvangen van %s (%s)"
 
-#: src/net.c:1159
+#: src/net.c:1266
 #, c-format
 msgid "Outgoing data socket error for %s (%s): %s"
 msgstr "Fout op socket voor uitgaand verkeer voor %s (%s): %s"
 
-#: src/net.c:1195
+#: src/net.c:1302
 #, c-format
 msgid "Error while reading from tapdevice: %m"
 msgstr "Fout tijdens lezen van tap-apparaatbestand tijdens lezen: %m"
 
-#: src/net.c:1205
+#: src/net.c:1312
 #, c-format
 msgid "Non-IP ethernet frame %04x from "
 msgstr "Niet-IP ethernet pakket %04x van "
 
-#: src/net.c:1213
+#: src/net.c:1320
 msgid "Dropping short packet"
 msgstr "Te kort pakket genegeerd"
 
-#: src/net.c:1252
+#: src/net.c:1359
 #, c-format
 msgid "Error while waiting for input: %m"
 msgstr "Fout tijdens wachten op invoer: %m"
 
-#: src/net.c:1264
+#: src/net.c:1371
 msgid "Unable to reread configuration file, exiting"
 msgstr "Fout tijdens herlezen configuratie bestand, beëindigen"
 
-#: src/netutl.c:222
+#: src/netutl.c:220
 #, c-format
 msgid "Error looking up `%s': %s\n"
 msgstr "Fout bij het opzoeken van `%s': %s\n"
 
-#: src/netutl.c:246
+#: src/netutl.c:244
 msgid "Connection list:"
 msgstr "Verbindingslijst:"
 
-#: src/netutl.c:250
+#: src/netutl.c:248
 #, c-format
 msgid ""
 "%s netmask %d.%d.%d.%d at %s port %hd flags %d sockets %d, %d status %04x"
 msgstr ""
 "%s netmask %d.%d.%d.%d op %s poort %hd vlaggen %hd sockets %d, %d status %04x"
 
-#: src/protocol.c:54
+#: src/protocol.c:56
 #, c-format
 msgid "Sending ACK to %s (%s)"
 msgstr "Verzending ACK naar %s (%s)"
 
-#: src/protocol.c:61
+#: src/protocol.c:63
 #, c-format
 msgid "Send failed: %d:%d: %m"
 msgstr "Verzenden mislukte: %d:%d: %m"
 
-#: src/protocol.c:72
+#: src/protocol.c:74
 #, c-format
 msgid "Sending TERMREQ to %s (%s)"
 msgstr "Verzending TERMREQ naar %s (%s)"
 
-#: src/protocol.c:80 src/protocol.c:98 src/protocol.c:116 src/protocol.c:134
-#: src/protocol.c:152 src/protocol.c:191 src/protocol.c:209 src/protocol.c:237
-#: src/protocol.c:258 src/protocol.c:276 src/protocol.c:319 src/protocol.c:349
-#: src/protocol.c:802 src/protocol.c:905
+#: src/protocol.c:82 src/protocol.c:100 src/protocol.c:118 src/protocol.c:137
+#: src/protocol.c:143 src/protocol.c:161 src/protocol.c:179 src/protocol.c:218
+#: src/protocol.c:236 src/protocol.c:264 src/protocol.c:285 src/protocol.c:303
+#: src/protocol.c:346 src/protocol.c:376 src/protocol.c:866 src/protocol.c:969
 #, c-format
 msgid "Send failed: %s:%d: %m"
 msgstr "Verzenden mislukte: %s:%d: %m"
 
-#: src/protocol.c:91
+#: src/protocol.c:93
 #, c-format
 msgid "Sending TIMEOUT to %s (%s)"
 msgstr "Verzending TIMEOUT naar %s (%s)"
 
-#: src/protocol.c:109
+#: src/protocol.c:111
 #, c-format
 msgid "Sending DEL_HOST for %s (%s) to %s (%s)"
 msgstr "Verzending DEL_HOST voor %s (%s) naar %s (%s)"
 
-#: src/protocol.c:127
+#: src/protocol.c:130
+#, c-format
+msgid "Sending PACKET to %s (%s)"
+msgstr "Verzending PACKET naar %s (%s)"
+
+#: src/protocol.c:154
 #, c-format
 msgid "Sending PING to %s (%s)"
 msgstr "Verzending PING naar %s (%s)"
 
-#: src/protocol.c:145
+#: src/protocol.c:172
 #, c-format
 msgid "Sending PONG to %s (%s)"
 msgstr "Verzending PONG naar %s (%s)"
 
-#: src/protocol.c:184
+#: src/protocol.c:211
 #, c-format
 msgid "Sending ADD_HOST for %s (%s) to %s (%s)"
 msgstr "Verzending ADD_HOST voor %s (%s) naar %s (%s)"
 
-#: src/protocol.c:202
+#: src/protocol.c:229
 #, c-format
 msgid "Sending KEY_CHANGED origin %s to %s (%s)"
 msgstr "Verzending KEY_CHANGED herkomst %s naar %s (%s)"
 
-#: src/protocol.c:230
+#: src/protocol.c:257
 #, c-format
 msgid "Sending BASIC_INFO to %s"
 msgstr "Verzending BASIC_INFO naar %s"
 
-#: src/protocol.c:251
+#: src/protocol.c:278
 #, c-format
 msgid "Sending PASSPHRASE to %s (%s)"
 msgstr "Verzending PASSPHRASE naar %s (%s)"
 
-#: src/protocol.c:269
+#: src/protocol.c:296
 #, c-format
 msgid "Sending PUBLIC_KEY to %s (%s)"
 msgstr "Verzending PUBLIC_KEY naar %s (%s)"
 
-#: src/protocol.c:306
+#: src/protocol.c:333
 #, c-format
 msgid "Attempting to send REQ_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot verzenden REQ_KEY naar %d.%d.%d.%d, die niet bestaat?"
 
-#: src/protocol.c:312
+#: src/protocol.c:339
 #, c-format
 msgid "Sending REQ_KEY to %s (%s)"
 msgstr "Verzending REQ_KEY naar %s (%s)"
 
-#: src/protocol.c:336
+#: src/protocol.c:363
 #, c-format
 msgid "Attempting to send ANS_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot verzenden ANS_KEY naar %d.%d.%d.%d, die niet bestaat?"
 
-#: src/protocol.c:342
+#: src/protocol.c:369
 #, c-format
 msgid "Sending ANS_KEY to %s (%s)"
 msgstr "Verzending ANS_KEY naar %s (%s)"
 
-#: src/protocol.c:397
+#: src/protocol.c:424
 #, c-format
 msgid "Got BASIC_INFO from %s"
 msgstr "Kreeg BASIC_INFO van %s"
 
-#: src/protocol.c:401
+#: src/protocol.c:428
 #, c-format
 msgid "Got bad BASIC_INFO from %s"
 msgstr "Kreeg ongeldige BASIC_INFO van %s"
 
-#: src/protocol.c:410
+#: src/protocol.c:437
 #, c-format
 msgid "Peer uses incompatible protocol version %d"
 msgstr "De ander gebruikt een niet-compatibel protocol versie %d"
 
-#: src/protocol.c:425
+#: src/protocol.c:452
 #, c-format
 msgid "Uplink %s (%s) is already in our connection list"
 msgstr "%s (%s) staat al in onze verbindingslijst"
 
-#: src/protocol.c:455
+#: src/protocol.c:482
 #, c-format
 msgid "Got bad PASSPHRASE from %s (%s)"
 msgstr "Kreeg ongeldige PASSPHRASE van %s (%s)"
 
-#: src/protocol.c:462
+#: src/protocol.c:489
 #, c-format
 msgid "Got PASSPHRASE from %s (%s)"
 msgstr "Kreeg PASSPHRASE van %s (%s)"
 
-#: src/protocol.c:480
+#: src/protocol.c:507
 #, c-format
 msgid "Got bad PUBLIC_KEY from %s (%s)"
 msgstr "Kreeg ongeldige PUBLIC_KEY van %s (%s)"
 
-#: src/protocol.c:486
+#: src/protocol.c:513
 #, c-format
 msgid "Got PUBLIC_KEY from %s (%s)"
 msgstr "Kreeg PUBLIC_KEY van %s (%s)"
 
 #. intruder!
-#: src/protocol.c:492
+#: src/protocol.c:519
 #, c-format
 msgid "Intruder from %s: passphrase for %s does not match!"
 msgstr "Indringer van %s: wachwoord voor %s komt niet overeen!"
 
-#: src/protocol.c:510
+#: src/protocol.c:538
 #, c-format
 msgid "Removing old entry for %s at %s in favour of new connection from %s"
 msgstr ""
 "Verwijdering oude verbinding voor %s op %s in voordeel van nieuwe verbinding "
 "van %s"
 
-#: src/protocol.c:519 src/protocol.c:538
+#: src/protocol.c:547 src/protocol.c:567
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Verbinding met %s (%s) geactiveerd"
 
-#: src/protocol.c:533
+#: src/protocol.c:561
 #, c-format
 msgid "Got ACK from %s (%s)"
 msgstr "Kreeg ACK van  %s (%s)"
 
-#: src/protocol.c:554
+#: src/protocol.c:583
 #, c-format
 msgid "Got unauthorized TERMREQ from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde TERMREQ van %s (%s)"
 
-#: src/protocol.c:560
+#: src/protocol.c:589
 #, c-format
 msgid "Got TERMREQ from %s (%s)"
 msgstr "Kreeg TERMREQ van %s (%s)"
 
-#: src/protocol.c:575
+#: src/protocol.c:604
 #, c-format
 msgid "Got unauthorized TIMEOUT from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde TIMEOUT van %s (%s)"
 
-#: src/protocol.c:581
+#: src/protocol.c:610
 #, c-format
 msgid "Got TIMEOUT from %s (%s)"
 msgstr "Kreeg TIMEOUT van %s (%s)"
 
-#: src/protocol.c:597
+#: src/protocol.c:626
 #, c-format
 msgid "Got unauthorized DEL_HOST from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde DEL_HOST van %s (%s)"
 
-#: src/protocol.c:604
+#: src/protocol.c:633
 #, c-format
 msgid "Got bad DEL_HOST from %s (%s)"
 msgstr "Kreeg ongeldige DEL_HOST van %s (%s)"
 
-#: src/protocol.c:611
+#: src/protocol.c:640
 #, c-format
 msgid "Got DEL_HOST for %d.%d.%d.%d from %s (%s) which does not exist?"
 msgstr "Kreeg DEL_HOST voor %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:619
+#: src/protocol.c:648
 #, c-format
 msgid "Warning: got DEL_HOST from %s (%s) for ourself, restarting"
 msgstr "Waarschuwing: kreeg DEL_HOST van %s (%s) voor onszelf, herstart"
 
-#: src/protocol.c:626
+#: src/protocol.c:655
 #, c-format
 msgid "Got DEL_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg DEL_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:644
+#: src/protocol.c:674
+#, c-format
+msgid "Got unauthorized PACKET from %s (%s)"
+msgstr "Kreeg niet-geautoriseerde PACKET van %s (%s)"
+
+#: src/protocol.c:681
+#, c-format
+msgid "Got bad PACKET from %s (%s)"
+msgstr "Kreeg ongeldige PACKET van %s (%s)"
+
+#: src/protocol.c:688
+#, c-format
+msgid "Got too big PACKET from %s (%s)"
+msgstr "Kreeg een te grote PACKET van %s (%s)"
+
+#: src/protocol.c:694
+#, c-format
+msgid "Got PACKET length %d from %s (%s)"
+msgstr "Kreeg PACKET met lengte %d van %s (%s)"
+
+#: src/protocol.c:708
 #, c-format
 msgid "Got unauthorized PING from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde PING van %s (%s)"
 
-#: src/protocol.c:650
+#: src/protocol.c:714
 #, c-format
 msgid "Got PING from %s (%s)"
 msgstr "Kreeg PING van %s (%s)"
 
-#: src/protocol.c:666
+#: src/protocol.c:730
 #, c-format
 msgid "Got unauthorized PONG from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde PONG van %s (%s)"
 
-#: src/protocol.c:672
+#: src/protocol.c:736
 #, c-format
 msgid "Got PONG from %s (%s)"
 msgstr "Kreeg PONG van %s (%s)"
 
-#: src/protocol.c:691
+#: src/protocol.c:755
 #, c-format
 msgid "Got unauthorized ADD_HOST from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde ADD_HOST van %s (%s)"
 
-#: src/protocol.c:698
+#: src/protocol.c:762
 #, c-format
 msgid "Got bad ADD_HOST from %s (%s)"
 msgstr "Kreeg ongeldige ADD_HOST van %s (%s)"
 
-#: src/protocol.c:708
+#: src/protocol.c:772
 #, c-format
 msgid "Got duplicate ADD_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg een tweede ADD_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:715
+#: src/protocol.c:779
 #, c-format
 msgid "Removing old entry for %s (%s)"
 msgstr "Verwijdering oude verbinding voor %s (%s)"
 
-#: src/protocol.c:725
+#: src/protocol.c:789
 #, c-format
 msgid "Warning: got ADD_HOST from %s (%s) for ourself, restarting"
 msgstr "Waarschuwing: kreeg ADD_HOST van %s (%s) voor onszelf, herstart"
 
-#: src/protocol.c:745
+#: src/protocol.c:809
 #, c-format
 msgid "Got ADD_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg ADD_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:763
+#: src/protocol.c:827
 #, c-format
 msgid "Got unauthorized REQ_KEY from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde REQ_KEY van %s (%s)"
 
-#: src/protocol.c:770
+#: src/protocol.c:834
 #, c-format
 msgid "Got bad REQ_KEY from %s (%s)"
 msgstr "Kreeg ongeldige REQ_KEY van %s (%s)"
 
-#: src/protocol.c:776
+#: src/protocol.c:840
 #, c-format
 msgid "Got REQ_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"
 msgstr "Kreeg REQ_KEY herkmonst %d.%d.%d.%d bestemming %d.%d.%d.%d van %s (%s)"
 
-#: src/protocol.c:789
+#: src/protocol.c:853
 #, c-format
 msgid "Attempting to forward REQ_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot doorsturen REQ_KEY naar %d.%d.%d.%d, die niet bestaat?"
 
-#: src/protocol.c:795
+#: src/protocol.c:859
 #, c-format
 msgid "Forwarding REQ_KEY to %s (%s)"
 msgstr "Doorsturen REQ_KEY naar %s (%s)"
 
-#: src/protocol.c:854
+#: src/protocol.c:918
 #, c-format
 msgid "Got unauthorized ANS_KEY from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde ANS_KEY van %s (%s)"
 
-#: src/protocol.c:861
+#: src/protocol.c:925
 #, c-format
 msgid "Got bad ANS_KEY from %s (%s)"
 msgstr "Kreeg ongeldige ANS_KEY van %s (%s)"
 
-#: src/protocol.c:867
+#: src/protocol.c:931
 #, c-format
 msgid "Got ANS_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"
 msgstr "Kreeg ANS_KEY herkomst %d.%d.%d.%d bestemming %d.%d.%d.%d van %s (%s)"
 
-#: src/protocol.c:876
+#: src/protocol.c:940
 #, c-format
 msgid ""
 "Receiving ANS_KEY origin %d.%d.%d.%d from %s (%s), which does not exist?"
 msgstr "Kreeg ANS_KEY herkomst %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:892
+#: src/protocol.c:956
 #, c-format
 msgid "Attempting to forward ANS_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot doorsturen ANS_KEY naar %d.%d.%d.%d, die niet besttaat?"
 
-#: src/protocol.c:898
+#: src/protocol.c:962
 #, c-format
 msgid "Forwarding ANS_KEY to %s (%s)"
 msgstr "Doorsturen ANS_KEY naar %s (%s)"
 
-#: src/protocol.c:919
+#: src/protocol.c:983
 #, c-format
 msgid "Got unauthorized KEY_CHANGED from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde KEY_CHANGED van %s (%s)"
 
-#: src/protocol.c:926
+#: src/protocol.c:990
 #, c-format
 msgid "Got bad KEY_CHANGED from %s (%s)"
 msgstr "Kreeg ongeldige KEY_CHANGED van %s (%s)"
 
-#: src/protocol.c:935
+#: src/protocol.c:999
 #, c-format
 msgid "Got KEY_CHANGED origin %d.%d.%d.%d from %s (%s), which does not exist?"
 msgstr "Kreeg KEY_CHANGED herkomst %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:941
+#: src/protocol.c:1005
 #, c-format
 msgid "Got KEY_CHANGED origin %s from %s (%s)"
 msgstr "Kreeg KEY_CHANGED herkomst %s van %s (%s)"
 
-#: src/tincd.c:95
+#: src/tincd.c:96
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Probeer `%s --help' voor meer informatie.\n"
 
-#: src/tincd.c:98
+#: src/tincd.c:99
 #, c-format
 msgid ""
 "Usage: %s [option]...\n"
@@ -751,7 +786,7 @@ msgstr ""
 "Gebruik: %s [optie]...\n"
 "\n"
 
-#: src/tincd.c:99
+#: src/tincd.c:100
 msgid ""
 "  -c, --config=FILE     Read configuration options from FILE.\n"
 "  -D, --no-detach       Don't fork and detach.\n"
@@ -767,7 +802,7 @@ msgstr ""
 "  -n, --net=NETNAAM     Verbind met net NETNAAM.\n"
 "  -t, --timeout=TIMEOUT Seconden wachten op timeout.\n"
 
-#: src/tincd.c:105
+#: src/tincd.c:106
 msgid ""
 "      --help            Display this help and exit.\n"
 "      --version         Output version information and exit.\n"
@@ -777,69 +812,69 @@ msgstr ""
 "      --version         Geef versie informatie en beëindig.\n"
 "\n"
 
-#: src/tincd.c:107
+#: src/tincd.c:108
 msgid "Report bugs to tinc@nl.linux.org.\n"
 msgstr ""
 "Meld fouten in het programma aan tinc@nl.linux.org;\n"
 "meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
 
-#: src/tincd.c:145
+#: src/tincd.c:146
 #, c-format
 msgid "Invalid timeout value `%s'.\n"
 msgstr "Ongeldige timeout waarde `%s'.\n"
 
-#: src/tincd.c:159
+#: src/tincd.c:160
 #, c-format
 msgid "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting."
 msgstr ""
 "Geheugen is vol (laatste %s:%d) (kon geen %d bytes vrijmaken), beëindigen."
 
-#: src/tincd.c:214
+#: src/tincd.c:215
 #, c-format
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) gestart, debugniveau %d"
 
-#: src/tincd.c:217
+#: src/tincd.c:218
 #, c-format
 msgid "tincd %s starting"
 msgstr "tincd %s gestart"
 
-#: src/tincd.c:232
+#: src/tincd.c:233
 #, c-format
 msgid "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"
 msgstr ""
 "Totaal aantal bytes geschreven: tap %d, socket %d; bytes gelezen: top %d, "
 "socket %d."
 
-#: src/tincd.c:250
+#: src/tincd.c:251
 #, c-format
 msgid "A tincd is already running for net `%s' with pid %d.\n"
 msgstr "Een tincd voor net `%s' draait al met procesnummer %d.\n"
 
-#: src/tincd.c:253
+#: src/tincd.c:254
 #, c-format
 msgid "A tincd is already running with pid %d.\n"
 msgstr "Een tincd draait al met procesnummer %d.\n"
 
-#: src/tincd.c:274
+#: src/tincd.c:275
 #, c-format
 msgid "No other tincd is running for net `%s'.\n"
 msgstr "Geen andere tincd gevonden voor net `%s'.\n"
 
-#: src/tincd.c:276
+#: src/tincd.c:277
 msgid "No other tincd is running.\n"
 msgstr "Geen andere tincd gevonden.\n"
 
-#: src/tincd.c:283
+#: src/tincd.c:284
 msgid "Removing stale lock file.\n"
 msgstr "Ongebruikt vergrendelingsbestand verwijderd.\n"
 
-#: src/tincd.c:339
+#: src/tincd.c:334
 #, c-format
-msgid "%s version %s\n"
-msgstr "%s versie %s\n"
+msgid "%s version %s (built %s %s, protocol %d)\n"
+msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 
-#: src/tincd.c:340
+#: src/tincd.c:335
 msgid ""
 "Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
 "see the AUTHORS file for a complete list.\n"
@@ -858,62 +893,62 @@ msgstr ""
 "zie het bestand COPYING voor details.\n"
 "\n"
 
-#: src/tincd.c:345
+#: src/tincd.c:340
 msgid ""
 "This product includes software developed by Eric Young (eay@mincom.oz.au)\n"
 msgstr ""
 "Dit produkt bevat programmatuur ontwikkeld door Eric Young "
 "(eay@mincom.oz.au)\n"
 
-#: src/tincd.c:355
+#: src/tincd.c:350
 msgid "You must be root to run this program. Sorry.\n"
 msgstr ""
 "Je moet systeembeheerder zijn om dit programma te kunnen draaien. Sorry.\n"
 
-#: src/tincd.c:385
+#: src/tincd.c:380
 #, c-format
 msgid "Unrecoverable error, restarting in %d seconds!"
 msgstr "Onherstelbare fout, herstart in %d seconden!"
 
-#: src/tincd.c:394
+#: src/tincd.c:389
 msgid "Got TERM signal"
 msgstr "Kreeg TERM signaal"
 
-#: src/tincd.c:402
+#: src/tincd.c:397
 msgid "Got QUIT signal"
 msgstr "Kreeg QUIT signaal"
 
-#: src/tincd.c:409
+#: src/tincd.c:404
 msgid "Got another SEGV signal: not restarting"
 msgstr "Kreeg nog een SEGV signaal: niet herstarten"
 
-#: src/tincd.c:417
+#: src/tincd.c:412
 #, c-format
 msgid "Got SEGV signal after %s line %d, trying to re-execute"
 msgstr "Kreeg SEGV signaal na %s regel %d, probeer opnieuw opstarten"
 
-#: src/tincd.c:420
+#: src/tincd.c:415
 msgid "Got SEGV signal, trying to re-execute"
 msgstr "Kreeg SEGV signaal, probeer opnieuw opstarten"
 
-#: src/tincd.c:432
+#: src/tincd.c:427
 msgid "Got HUP signal, rereading configuration and restarting"
 msgstr "Kreeg HUP signaal, herlezen configuratie en herstarten"
 
-#: src/tincd.c:440
+#: src/tincd.c:435
 msgid "Got INT signal, exiting"
 msgstr "Kreeg INT signaal, beëindigen"
 
-#: src/tincd.c:454
+#: src/tincd.c:449
 msgid "Got USR2 signal, forcing new key generation"
 msgstr "Kreeg USR2 signaal, nieuwe sleutels geforceerd"
 
-#: src/tincd.c:462
+#: src/tincd.c:457
 #, c-format
 msgid "Got unexpected signal %d after %s line %d"
 msgstr "Kreeg onverwacht signaal %d na %s regel %d"
 
-#: src/tincd.c:465
-#, fuzzy, c-format
+#: src/tincd.c:460
+#, c-format
 msgid "Got unexpected signal %d"
-msgstr "Kreeg onverwacht signaal %d na %s regel %d"
+msgstr "Kreeg onverwacht signaal %d"
