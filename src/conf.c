@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.39 2001/01/13 16:36:20 guus Exp $
+    $Id: conf.c,v 1.9.4.40 2001/01/17 01:30:05 zarq Exp $
 */
 
 #include "config.h"
@@ -236,7 +236,7 @@ cp
   if((fp = fopen (fname, "r")) == NULL)
     {
       syslog(LOG_ERR, _("Cannot open config file %s: %m"), fname);
-      return -1;
+      return -3;
     }
 
   bufsize = 100;
@@ -318,7 +318,7 @@ int read_server_config()
 cp
   asprintf(&fname, "%s/tinc.conf", confbase);
   x = read_config_file(&config, fname);
-  if(x == -1) /* System error */
+  if(x == -1) /* System error: complain */
     {
       syslog(LOG_ERR, _("Failed to read `%s': %m"),
 	      fname);
