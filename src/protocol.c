@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.24 2000/08/08 17:07:48 guus Exp $
+    $Id: protocol.c,v 1.28.4.25 2000/09/10 15:18:03 guus Exp $
 */
 
 #include "config.h"
@@ -44,28 +44,358 @@
 
 #include "system.h"
 
-char buffer[MAXBUFSIZE+1];
-int buflen;
+/* Generic outgoing request routine - takes care of logging and error detection as well */
 
-/* Outgoing request routines */
+int send_request(conn_list_t *cl, const char *format, int request, /*args*/ ...)
+{
+  va_list args;
+  char *buffer = NULL;
+cp
+  if(debug_lvl >= DEBUG_PROTOCOL)
+    syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), requestname[request], cl->id, cl->hostname);
+
+  va_start(args, format);
+  len = vasprintf(&buffer, format, args);
+  va_end(args);
+
+  if(len < 0 || !buffer)
+    {
+      syslog(LOG_ERR, _("Error during vasprintf(): %m"));
+      return -1;
+    }
+
+  if(debug_lvl >= DEBUG_META)
+    syslog(LOG_DEBUG, _("Sending meta data to %s (%s): %s"), cl->id, cl->hostname, buffer);
+
+  if(cl->status.encryptout)
+    {
+      /* FIXME: Do encryption */
+    }
+
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
+    {
+      syslog(LOG_ERR, _("Sending meta data failed:  %m"));
+      return -1;
+    }
+cp  
+}
+
+/* Connection protocol:
+
+   Client               Server
+   send_id(*)
+                        send_challenge
+   send_chal_reply(*)                   
+                        send_id
+   send_challenge
+                        send_chal_reply
+   send_ack
+			send_ack
+
+   (*) Unencrypted.
+*/      
+
+int send_id(conn_list_t *cl)
+{
+cp
+  return send_request(cl, "%d %s %d-%d %s", ID, myself->id, myself->min_version, myself->max_version, opt2str(myself->options));
+}
+
+int id_h(conn_list_t *cl)
+{
+  conn_list_t *old;
+  char *options;
+cp
+  if(sscanf(cl->buffer, "%*d %as %d-%d %as", &cl->id, &cl->min_version, &cl->max_version, &options) != 4)
+    {
+       syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
+       return -1;
+    }
+    
+  /* Check if version ranges overlap */
+  
+  if((cl->min_version > myself->max_version) || (cl->max_version < myself_min_version) || (cl->min_version > cl->max_version))
+    {
+      syslog(LOG_ERR, _("Peer %s uses incompatible version (%d-%d)"), cl->hostname, cl->min_version, cl->max_version);
+      return -1;
+    }
+
+  /* Check if option string is valid */
+  
+  if(str2opt(options) == -1)
+    {
+      syslog(LOG_ERR, _("Peer %s uses invalid option string"), cl->hostname);
+      return -1;
+    }
+    
+  /* Check if identity is a valid name */
+  
+  if(!check_id(cl->id))
+    {
+      syslog(LOG_ERR, _("Peer %s uses invalid identity name"), cl->hostname);
+      return -1;
+    }
+    
+  /* Load information about peer */
+  
+  if(!read_id(cl))
+    {
+      syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), cl->hostname, cl->id);
+      return -1;
+    }
+
+
+  /* First check if the host we connected to is already in our
+     connection list. If so, we are probably making a loop, which
+     is not desirable.
+   */
+
+  if(cl->status.outgoing)
+    {
+      if((old=lookup_id(cl->id)))
+        {
+          if(debug_lvl > DEBUG_CONNECTIONS)
+            syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"), cl->id, cl->hostname);
+          cl->status.outgoing = 0;
+          old->status.outgoing = 1;
+          terminate_connection(cl);
+          return 0;
+        }
+    }
+
+  /* Since we know the identity now, we can encrypt the meta channel */
+  
+  cl->status.encryptout = 1;
+
+  /* Send a challenge to verify the identity */
+
+  cl->allow_request = CHAL_REPLY;
+cp
+  return send_challenge(cl);
+}
+
+int send_challenge(conn_list_t *cl)
+{
+  char *buffer;
+  int keylength;
+  int x;
+cp
+  if(cl->chal_hash)
+    free(cl->chal_hash);
+  
+  /* Allocate buffers for the challenge and the hash */
+  
+  cl->chal_hash = xmalloc(SHA_DIGEST_LEN);
+  keylength = BN_num_bytes(cl->metakey.n);
+  buffer = xmalloc(keylength*2);
+
+  /* Copy random data and the public key to the buffer */
+  
+  RAND_bytes(buffer, keylength);
+  BN_bn2bin(cl->metakey.n, buffer+keylength);
+
+  /* Calculate the hash from that */
+
+  SHA1(buffer, keylength*2, cl->chal_hash);
+
+  /* Convert the random data to a hexadecimal formatted string */
+
+  bin2hex(buffer,buffer,keylength);
+  buffer[keylength*2] = '\0';
+
+  /* Send the challenge */
+  
+  cl->allow_request = CHAL_REPLY;
+  x = send_request(cl, "%d %s", CHALLENGE, buffer);
+  free(buffer);
+cp
+  return x;
+}
+
+int challenge_h(conn_list_t *cl)
+{
+  char *challenge;
+cp
+  if(sscanf(cl->buffer, "%*d %as", &cl->id, &challenge) != 1)
+    {
+       syslog(LOG_ERR, _("Got bad CHALLENGE from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }
+
+  /* Rest is done by send_chal_reply() */
+  
+  x = send_chal_reply(cl, challenge);
+  free(challenge);
+cp
+  return x;
+}
+
+int send_chal_reply(conn_list_t *cl, char *challenge)
+{
+  char *buffer;
+  int keylength;
+  char *hash;
+  int x;
+cp
+  keylength = BN_num_bytes(myself->meyakey.n);
+
+  /* Check if the length of the challenge is all right */
+
+  if(strlen(challenge) != keylength*2)
+    {
+      syslog(LOG_ERROR, _("Intruder: wrong challenge length from %s (%s)"), cl->id, cl->hostname);
+      return -1;
+    }
+
+  /* Allocate buffers for the challenge and the hash */
+  
+  buffer = xmalloc(keylength*2);
+  hash = xmalloc(SHA_DIGEST_LEN*2+1);
+
+  /* Copy the incoming random data and our public key to the buffer */
+
+  hex2bin(challenge, buffer, keylength); 
+  BN_bn2bin(myself->metakey.n, buffer+keylength);
+
+  /* Calculate the hash from that */
+  
+  SHA1(buffer, keylength*2, hash);
+  free(buffer);
+
+  /* Convert the hash to a hexadecimal formatted string */
+
+  bin2hex(hash,hash,SHA_DIGEST_LEN);
+  hash[SHA_DIGEST_LEN*2] = '\0';
+
+  /* Send the reply */
+
+  if(cl->status.outgoing)
+    cl->allow_resuest = ID;
+  else
+    cl->allow_request = ACK;
+
+  x = send_request(cl, "%d %s", CHAL_REPLY, hash);
+  free(hash);
+cp
+  return x;
+} 
+
+int chal_reply_h(conn_list_t *cl)
+{
+  char *hash;
+cp
+  if(sscanf(cl->buffer, "%*d %as", &cl->id, &hash) != 2)
+    {
+       syslog(LOG_ERR, _("Got bad CHAL_REPLY from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }
+
+  /* Check if the length of the hash is all right */
+  
+  if(strlen(hash) != SHA_DIGEST_LEN*2)
+    {
+      syslog(LOG_ERROR, _("Intruder: wrong challenge reply length from %s (%s)"), cl->id, cl->hostname);
+      return -1;
+    }
+    
+  /* Convert the hash to binary format */
+  
+  hex2bin(hash, hash, SHA_DIGEST_LEN);
+  
+  /* Verify the incoming hash with the calculated hash */
+  
+  if{!memcmp(hash, cl->chal_hash, SHA_DIGEST_LEN)}
+    {
+      syslog(LOG_ERROR, _("Intruder: wrong challenge reply from %s (%s)"), cl->id, cl->hostname);
+      return -1;
+    }
+
+  /* Identity has now been positively verified.
+     If we are accepting this new connection, then send our identity,
+     if we are making this connecting, acknowledge.
+   */
+   
+  free(hash);
+  free(cl->chal_hash);
+
+cp
+  if(cl->status.outgoing)
+    {
+      cl->allow_request = ACK;
+      return send_ack(cl);
+    }
+  else
+    {
+      cl->allow_request = CHALLENGE;
+      return send_id(cl);
+    }
+}
 
 int send_ack(conn_list_t *cl)
 {
 cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending ACK to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d\n", ACK);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %d:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
+  return send_request(cl, "%d", ACK);
 }
+
+int ack_h(conn_list_t *cl)
+{
+cp
+  /* Okay, before we active the connection, we check if there is another entry
+     in the connection list with the same vpn_ip. If so, it presumably is an
+     old connection that has timed out but we don't know it yet.
+   */
+
+  while((old = lookup_conn(cl->vpn_ip))) 
+    {
+      if(debug_lvl > 1)
+        syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
+        cl->vpn_hostname, old->real_hostname, cl->real_hostname);
+      old->status.active = 0;
+      terminate_connection(old);
+    }
+
+  /* Activate this connection */
+
+  cl->allow_request = ALL;
+  cl->status.active = 1;
+
+  if(debug_lvl > DEBUG_CONNECTIONS)
+    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->id, cl->hostname);
+
+  /* Exchange information about other tinc daemons */
+
+  notify_others(cl, NULL, send_add_host);
+  notify_one(cl);
+
+  upstreamindex = 0;
+
+cp
+  if(cl->status.outgoing)
+    return 0;
+  else
+    return send_ack(cl);
+}
+
+/* Address and subnet information exchange */
+
+/* New and closed connections notification */
+
+/* Status and error notification routines */
+
+int send_status(conn_list_t *cl, int statusno, char *statusstring)
+{
+cp
+  return send_request(cl, "%d %d %s", STATUS, statusno, statusstring);
+}
+
+int send_error(conn_list_t *cl, int errno, char *errstring)
+{
+cp
+  return send_request(cl, "%d %d %s", ERROR, errno, errstring);
+}
+
+/* Old routines */
+
 
 int send_termreq(conn_list_t *cl)
 {
@@ -122,7 +452,6 @@ cp
   return 0;
 }
 
-/* Evil hack - TCP tunneling is bad */
 int send_tcppacket(conn_list_t *cl, void *data, int len)
 {
 cp
@@ -250,78 +579,6 @@ cp
 cp
 }
 
-int send_basic_info(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending BASIC_INFO to %s"),
-	   cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %d %lx/%lx:%x %d\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port, myself->flags);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_passphrase(conn_list_t *cl)
-{
-  passphrase_t tmp;
-cp
-  encrypt_passphrase(&tmp);
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PASSPHRASE to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %s\n", PASSPHRASE, tmp.phrase);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_public_key(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PUBLIC_KEY to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %s\n", PUBLIC_KEY, my_public_key_base36);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-/* WDN doet deze functie? (GS)
-int send_calculate(conn_list_t *cl, char *k)
-{
-cp
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %s\n", CALCULATE, k);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-*/
 
 int send_key_request(ip_t to)
 {
@@ -416,164 +673,6 @@ cp
   The incoming request handlers
 */
 
-int basic_info_h(conn_list_t *cl)
-{
-  conn_list_t *old;
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got BASIC_INFO from %s"), cl->real_hostname);
-
-  if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx %d", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port, &cl->flags) != 5)
-    {
-       syslog(LOG_ERR, _("Got bad BASIC_INFO from %s"),
-              cl->real_hostname);
-       return -1;
-    }
-    
-  cl->vpn_hostname = hostlookup(htonl(cl->vpn_ip));
-
-  if(cl->protocol_version != PROT_CURRENT)
-    {
-      syslog(LOG_ERR, _("Peer uses incompatible protocol version %d"),
-	     cl->protocol_version);
-      return -1;
-    }
-
-  if(cl->status.outgoing)
-    {
-      /* First check if the host we connected to is already in our
-         connection list. If so, we are probably making a loop, which
-         is not desirable.
-       */
-       
-      if((old=lookup_conn(cl->vpn_ip)))
-        {
-          if(debug_lvl>0)
-            syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"),
-              cl->vpn_hostname, cl->real_hostname);
-          cl->status.outgoing = 0;
-          old->status.outgoing = 1;
-          terminate_connection(cl);
-          return 0;
-        }
-
-      if(setup_vpn_connection(cl) < 0)
-	return -1;
-      send_basic_info(cl);
-    }
-  else
-    {
-        
-      if(setup_vpn_connection(cl) < 0)
-	return -1;
-      send_passphrase(cl);
-    }
-cp
-  return 0;
-}
-
-int passphrase_h(conn_list_t *cl)
-{
-cp
-  cl->pp = xmalloc(sizeof(*(cl->pp)));
-
-  if(sscanf(cl->buffer, "%*d %as", &(cl->pp->phrase)) != 1)
-    {
-      syslog(LOG_ERR, _("Got bad PASSPHRASE from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-  cl->pp->len = strlen(cl->pp->phrase);
-    
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PASSPHRASE from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-
-  if(cl->status.outgoing)
-    send_passphrase(cl);
-  else
-    send_public_key(cl);
-cp
-  return 0;
-}
-
-int public_key_h(conn_list_t *cl)
-{
-  char *g_n;
-  conn_list_t *old;
-cp
-  if(sscanf(cl->buffer, "%*d %as", &g_n) != 1)
-    {
-       syslog(LOG_ERR, _("Got bad PUBLIC_KEY from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PUBLIC_KEY from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-
-  if(verify_passphrase(cl, g_n))
-    {
-      /* intruder! */
-      syslog(LOG_ERR, _("Intruder from %s: passphrase for %s does not match!"),
-              cl->real_hostname, cl->vpn_hostname);
-      return -1;
-    }
-
-  if(cl->status.outgoing)
-    send_public_key(cl);
-  else
-    {
-      send_ack(cl);
-
-      /* Okay, before we active the connection, we check if there is another entry
-         in the connection list with the same vpn_ip. If so, it presumably is an
-         old connection that has timed out but we don't know it yet.
-       */
-
-      while((old = lookup_conn(cl->vpn_ip))) 
-        {
-          if(debug_lvl > 1)
-            syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
-            cl->vpn_hostname, old->real_hostname, cl->real_hostname);
-          old->status.active = 0;
-          terminate_connection(old);
-        }
-        
-      cl->status.active = 1;
-
-      if(debug_lvl > 0)
-        syslog(LOG_NOTICE, _("Connection with %s (%s) activated"),
-                           cl->vpn_hostname, cl->real_hostname);
-
-      notify_others(cl, NULL, send_add_host);
-      notify_one(cl);
-    }
-cp
-  return 0;
-}
-
-int ack_h(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ACK from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-  
-  cl->status.active = 1;
-
-  if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"),
-              cl->vpn_hostname, cl->real_hostname);
-
-  notify_others(cl, NULL, send_add_host);
-  notify_one(cl);
-
-  upstreamindex = 0;
-cp
-  return 0;
-}
 
 int termreq_h(conn_list_t *cl)
 {
@@ -1013,31 +1112,14 @@ cp
   return 0;
 }
 
-int (*request_handlers[256])(conn_list_t*) = {
-  0, ack_h, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  termreq_h, timeout_h, del_host_h, 0, 0, 0, 0, 0, 0, 0,
-  ping_h, pong_h, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  add_host_h, basic_info_h, passphrase_h, public_key_h, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  tcppacket_h, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  req_key_h, ans_key_h, key_changed_h, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0
+/* "Complete overhaul". */
+
+int (*request_handlers[6])(conn_list_t*) = {
+  id_h, challenge_h, chal_reply_h, ack_h,
+  status_h, error_h,
+};
+
+char (*request_name[6]) = {
+  "ID", "CHALLENGE", "CHAL_REPLY", "ACK",
+  "STATUS", "ERROR",
 };
