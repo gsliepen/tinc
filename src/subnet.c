@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.34 2002/04/09 11:42:48 guus Exp $
+    $Id: subnet.c,v 1.1.2.35 2002/04/26 18:13:00 zarq Exp $
 */
 
 #include "config.h"
@@ -271,7 +271,7 @@ cp
                    subnet->net.ipv6.prefixlength);
         break;
       default:
-        syslog(LOG_ERR, _("net2str() was called with unknown subnet type %d, exitting!"), subnet->type);
+        syslog(LOG_ERR, _("net2str() was called with unknown subnet type %d, exiting!"), subnet->type);
 	cp_trace();
         exit(0);
     }
