@@ -6,12 +6,12 @@ SUBDIRS = m4 intl lib src doc po
 
 ACLOCAL_AMFLAGS =
 
-EXTRA_DIST = system.h COPYING.README
+EXTRA_DIST = system.h COPYING.README depcomp
 
 CVS_CREATED = ABOUT-NLS configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
  stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in.in \
- po/tinc.pot src/.libs intl
+ po/tinc.pot src/.libs intl depcomp
 
 ChangeLog:
 	cvs2cl -U cvsusers --fsf
