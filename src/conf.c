@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.28 2000/11/30 21:11:03 zarq Exp $
+    $Id: conf.c,v 1.9.4.29 2000/11/30 22:32:14 zarq Exp $
 */
 
 #include "config.h"
@@ -158,6 +158,7 @@ char *readline(FILE *fp)
   maxlen = size;
   line = xmalloc(size);
   idx = line;
+  *idx = 0;
   for(;;)
     {
       errno = 0;
@@ -216,7 +217,13 @@ cp
 	  err = -1;
 	  break;
 	}
-        
+
+      if(feof(fp))
+	{
+	  err = 0;
+	  break;
+	}
+
       lineno++;
 
       if((p = strtok(line, "\t =")) == NULL)
@@ -231,23 +238,23 @@ cp
 
       if(!hazahaza[i].name)
 	{
-	  syslog(LOG_ERR, _("Invalid variable name on line %d while reading config file %s"),
-		  lineno, fname);
+	  syslog(LOG_ERR, _("Invalid variable name `%s' on line %d while reading config file %s"),
+		  p, lineno, fname);
           break;
 	}
 
       if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
 	{
-	  fprintf(stderr, _("No value for variable on line %d while reading config file %s"),
-		  lineno, fname);
+	  fprintf(stderr, _("No value for variable `%s' on line %d while reading config file %s"),
+		  hazahaza[i].name, lineno, fname);
 	  break;
 	}
 
       cfg = add_config_val(base, hazahaza[i].argtype, q);
       if(cfg == NULL)
 	{
-	  fprintf(stderr, _("Invalid value for variable on line %d while reading config file %s"),
-		  lineno, fname);
+	  fprintf(stderr, _("Invalid value for variable `%s' on line %d while reading config file %s"),
+		  hazahaza[i].name, lineno, fname);
 	  break;
 	}
 
