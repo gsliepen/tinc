@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.36 2003/07/24 12:08:15 guus Exp $
+    $Id: net_packet.c,v 1.1.2.37 2003/08/08 19:42:35 guus Exp $
 */
 
 #include "system.h"
@@ -306,14 +306,12 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		priority = origpriority;
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Setting outgoing packet priority to %d"), priority);
 		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt",
-				   strerror(errno));
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", strerror(errno));
 	}
 #endif
 
 	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name,
-			   n->hostname, strerror(errno));
+		logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
 		return;
 	}
 
