@@ -231,20 +231,20 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 			
 			memset(n->late, 0, sizeof(n->late));
 		} else if (inpkt->seqno <= n->received_seqno) {
-			if(inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8 || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
+			if((n->received_seqno >= sizeof(n->late) * 8 && inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8) || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
 				logger(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
 					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
 				return;
 			}
 		} else {
 			for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
-				n->late[(inpkt->seqno / 8) % sizeof(n->late)] |= 1 << i % 8;
+				n->late[(i / 8) % sizeof(n->late)] |= 1 << i % 8;
 		}
 	}
 	
 	n->late[(inpkt->seqno / 8) % sizeof(n->late)] &= ~(1 << inpkt->seqno % 8);
 
-	if(n->received_seqno > inpkt->seqno)
+	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;
 			
 	if(n->received_seqno > MAX_SEQNO)
