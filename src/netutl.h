@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.4 2000/11/04 11:49:58 guus Exp $
+    $Id: netutl.h,v 1.2.4.5 2000/11/09 21:33:18 zarq Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
@@ -28,5 +28,6 @@
 extern void destroy_queue(packet_queue_t *);
 extern char *hostlookup(unsigned long);
 extern ip_mask_t *strtoip(char*);
+extern void destroy_queue(packet_queue_t *);
 
 #endif /* __TINC_NETUTL_H__ */
