@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-08-03 22:09+0200\n"
+"POT-Creation-Date: 2003-08-09 20:57+0200\n"
 "PO-Revision-Date: 2003-05-06 23:10+0200\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -67,60 +67,20 @@ msgstr ""
 msgid "Failed to read `%s': %s"
 msgstr "Lezen van `%s' mislukte: %s"
 
-#: src/conf.c:437
-#, c-format
-msgid "`%s' is not an absolute path"
-msgstr "`%s' is geen absoluut pad"
-
-#: src/conf.c:453 src/conf.c:481
-#, c-format
-msgid "Couldn't stat `%s': %s"
-msgstr "Kon `%s' niet statten: %s"
-
-#: src/conf.c:458 src/conf.c:489
-#, c-format
-msgid "`%s' is owned by UID %d instead of %d"
-msgstr "`%s' is eigendom van UID %d in plaats van %d"
-
-#: src/conf.c:464 src/conf.c:495
-#, c-format
-msgid "Warning: `%s' is a symlink"
-msgstr "Waarschuwing: `%s' is een symbolische link"
-
-#: src/conf.c:467 src/conf.c:498
-#, c-format
-msgid "Unable to read symbolic link `%s': %s"
-msgstr "Kan symbolische link `%s' niet lezen: %s"
-
-#: src/conf.c:509
-#, c-format
-msgid "`%s' has unsecure permissions"
-msgstr "`%s' heeft onveilige permissies"
-
-#: src/conf.c:531
+#: src/conf.c:441
 #, c-format
 msgid "Please enter a file to save %s to [%s]: "
 msgstr "Geef een bestand om de %s naar de schrijven [%s]: "
 
-#: src/conf.c:538
+#: src/conf.c:448
 #, c-format
 msgid "Error while reading stdin: %s\n"
 msgstr "Fout tijdens lezen van standaardinvoer: %s\n"
 
-#: src/conf.c:566
+#: src/conf.c:480
 #, c-format
 msgid "Error opening file `%s': %s\n"
 msgstr "Fout bij het openen van het bestand `%s': %s\n"
-
-#: src/conf.c:575
-#, c-format
-msgid ""
-"The file `%s' (or any of the leading directories) has unsafe permissions.\n"
-"I will not create or overwrite this file.\n"
-msgstr ""
-"Het bestand `%s' (of een van de voorgaande mappen) heeft onvoldoende "
-"bescherming.\n"
-"Ik maak of overschrijf dit bestand niet.\n"
 
 #: src/connection.c:49
 msgid "everyone"
@@ -148,32 +108,32 @@ msgstr "Einde van verbindingen."
 msgid "Sending %d bytes of metadata to %s (%s)"
 msgstr "Verzenden van %d bytes metadata naar %s (%s)"
 
-#: src/meta.c:59
-#, c-format
-msgid "Sending meta data to %s (%s) failed: %s"
-msgstr "Fout tijdens verzenden metadata naar %s (%s): %s"
-
-#: src/meta.c:97
-#, c-format
-msgid "This is a bug: %s:%d: %d:%s %s (%s)"
-msgstr "Dit is een programmeerfout: %s:%d: %d:%s %s (%s)"
-
-#: src/meta.c:103
-#, c-format
-msgid "Metadata socket error for %s (%s): %s"
-msgstr "Fout op metadata socket voor %s (%s): %s"
-
-#: src/meta.c:121
+#: src/meta.c:58 src/meta.c:125
 #, c-format
 msgid "Connection closed by %s (%s)"
 msgstr "Verbinding beëindigd door %s (%s)"
 
-#: src/meta.c:126
+#: src/meta.c:63
+#, c-format
+msgid "Sending meta data to %s (%s) failed: %s"
+msgstr "Fout tijdens verzenden metadata naar %s (%s): %s"
+
+#: src/meta.c:101
+#, c-format
+msgid "This is a bug: %s:%d: %d:%s %s (%s)"
+msgstr "Dit is een programmeerfout: %s:%d: %d:%s %s (%s)"
+
+#: src/meta.c:107
+#, c-format
+msgid "Metadata socket error for %s (%s): %s"
+msgstr "Fout op metadata socket voor %s (%s): %s"
+
+#: src/meta.c:130
 #, c-format
 msgid "Metadata socket read error for %s (%s): %s"
 msgstr "Fout op metadata socket voor %s (%s) tijdens lezen: %s"
 
-#: src/meta.c:189
+#: src/meta.c:193
 #, c-format
 msgid "Metadata read buffer overflow for %s (%s)"
 msgstr "Metadata leesbuffer overloop voor %s (%s)"
@@ -273,67 +233,67 @@ msgstr "Fout tijdens comprimeren pakket naar %s (%s)"
 msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
-#: src/net_packet.c:309 src/net_setup.c:457 src/net_socket.c:74
-#: src/net_socket.c:122 src/net_socket.c:153 src/tincd.c:404 src/tincd.c:438
-#: src/process.c:192 src/process.c:222 src/process.c:404 src/process.c:432
-#: src/cygwin/device.c:147 src/cygwin/device.c:178 src/mingw/device.c:76
-#: src/mingw/device.c:85 src/mingw/device.c:90 src/mingw/device.c:242
-#: src/mingw/device.c:249 src/mingw/device.c:254 src/mingw/device.c:261
-#: src/mingw/device.c:270 src/mingw/device.c:277
+#: src/net_packet.c:309 src/net_setup.c:465 src/net_socket.c:74
+#: src/net_socket.c:122 src/net_socket.c:153 src/tincd.c:433 src/tincd.c:467
+#: src/process.c:204 src/process.c:237 src/process.c:415
+#: src/cygwin/device.c:150 src/cygwin/device.c:181 src/mingw/device.c:76
+#: src/mingw/device.c:85 src/mingw/device.c:90 src/mingw/device.c:245
+#: src/mingw/device.c:252 src/mingw/device.c:257 src/mingw/device.c:264
+#: src/mingw/device.c:273 src/mingw/device.c:280
 #, c-format
 msgid "System call `%s' failed: %s"
 msgstr "Systeemaanroep `%s' mislukte: %s"
 
-#: src/net_packet.c:315
+#: src/net_packet.c:314
 #, c-format
 msgid "Error sending packet to %s (%s): %s"
 msgstr "Fout tijdens verzenden pakket naar %s (%s): %s"
 
-#: src/net_packet.c:332
+#: src/net_packet.c:330
 #, c-format
 msgid "Sending packet of %d bytes to %s (%s)"
 msgstr "Verzending pakket van %d bytes naar %s (%s)"
 
-#: src/net_packet.c:336
+#: src/net_packet.c:334
 msgid "Packet is looping back to us!"
 msgstr "Pakket komt terug naar ons!"
 
-#: src/net_packet.c:341
+#: src/net_packet.c:339
 #, c-format
 msgid "Node %s (%s) is not reachable"
 msgstr "Node %s (%s) is niet bereikbaar"
 
-#: src/net_packet.c:349
+#: src/net_packet.c:347
 #, c-format
 msgid "Sending packet to %s via %s (%s)"
 msgstr "Verzending pakket naar %s via %s (%s)"
 
-#: src/net_packet.c:368
+#: src/net_packet.c:366
 #, c-format
 msgid "Broadcasting packet of %d bytes from %s (%s)"
 msgstr "Verspreiding pakket van %d bytes van %s (%s)"
 
-#: src/net_packet.c:385
+#: src/net_packet.c:383
 #, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr "Legen van wachtrij voor %s (%s)"
 
-#: src/net_packet.c:406
+#: src/net_packet.c:404
 #, c-format
 msgid "This is a bug: %s:%d: %d:%s"
 msgstr "Dit is een programmeerfout: %s:%d: %d:%s"
 
-#: src/net_packet.c:413
+#: src/net_packet.c:411
 #, c-format
 msgid "Incoming data socket error: %s"
 msgstr "Fout op socket voor inkomend verkeer: %s"
 
-#: src/net_packet.c:420
+#: src/net_packet.c:418
 #, c-format
 msgid "Receiving packet failed: %s"
 msgstr "Ontvangst pakket mislukt: %s"
 
-#: src/net_packet.c:430
+#: src/net_packet.c:428
 #, c-format
 msgid "Received UDP packet from unknown source %s"
 msgstr "Ontvangst UDP pakket van onbekende oorsprong %s"
@@ -358,73 +318,84 @@ msgstr "Geen publieke sleutel bekend voor %s gespecificeerd!"
 msgid "Error reading RSA private key file `%s': %s"
 msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %s"
 
-#: src/net_setup.c:183
+#: src/net_setup.c:179
+#, c-format
+msgid "Could not stat RSA private key file `%s': %s'"
+msgstr "Kon gegevens RSA privé sleutel bestand `%s' niet opvragen: %s"
+
+#: src/net_setup.c:186
+#, c-format
+msgid "Warning: insecure file permissions for RSA private key file `%s'!"
+msgstr ""
+"Waarschuwing: onveilige permissies voor RSA privé sleutel bestand `%s'!"
+
+#: src/net_setup.c:193
 #, c-format
 msgid "Reading RSA private key file `%s' failed: %s"
 msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %s"
 
-#: src/net_setup.c:215 src/net_setup.c:216
+#: src/net_setup.c:223 src/net_setup.c:224
 msgid "MYSELF"
 msgstr "MIJZELF"
 
-#: src/net_setup.c:222
+#: src/net_setup.c:230
 msgid "Name for tinc daemon required!"
 msgstr "Naam voor tinc daemon verplicht!"
 
-#: src/net_setup.c:227
+#: src/net_setup.c:235
 msgid "Invalid name for myself!"
 msgstr "Ongeldige naam voor mijzelf!"
 
-#: src/net_setup.c:239
+#: src/net_setup.c:247
 msgid "Cannot open host configuration file for myself!"
 msgstr "Kan host configuratie bestand voor mijzelf niet openen!"
 
-#: src/net_setup.c:292
+#: src/net_setup.c:300
 msgid "Invalid routing mode!"
 msgstr "Ongeldige routing modus!"
 
-#: src/net_setup.c:303
+#: src/net_setup.c:311
 msgid "PriorityInheritance not supported on this platform"
 msgstr "PriorityInheritance wordt niet ondersteund op dit platform"
 
-#: src/net_setup.c:311
+#: src/net_setup.c:319
 msgid "Bogus maximum timeout!"
 msgstr "Onzinnige maximum timeout!"
 
-#: src/net_setup.c:325
+#: src/net_setup.c:333
 msgid "Invalid address family!"
 msgstr "Ongeldige adresfamilie!"
 
-#: src/net_setup.c:343
+#: src/net_setup.c:351
 msgid "Unrecognized cipher type!"
 msgstr "Onbekend cipher type!"
 
-#: src/net_setup.c:380
+#: src/net_setup.c:388
 msgid "Unrecognized digest type!"
 msgstr "Onbekend digest type!"
 
-#: src/net_setup.c:393
+#: src/net_setup.c:401
 msgid "MAC length exceeds size of digest!"
 msgstr "MAC lengte is groter dan dat van digest!"
 
-#: src/net_setup.c:396
+#: src/net_setup.c:404
 msgid "Bogus MAC length!"
 msgstr "Onzinnige MAC lengte!"
 
-#: src/net_setup.c:410
+#: src/net_setup.c:418
 msgid "Bogus compression level!"
 msgstr "Onzinnig compressieniveau!"
 
-#: src/net_setup.c:479
+#: src/net_setup.c:487
 #, c-format
 msgid "Listening on %s"
 msgstr "Luisterend op %s"
 
-#: src/net_setup.c:490
+#: src/net_setup.c:498
 msgid "Ready"
 msgstr "Gereed"
 
-#: src/net_setup.c:492
+#: src/net_setup.c:500
 msgid "Unable to create any listening socket!"
 msgstr "Kon geen enkele luistersocket aanmaken!"
 
@@ -905,7 +876,7 @@ msgstr "Klaar.\n"
 msgid "private RSA key"
 msgstr "geheime RSA sleutel"
 
-#: src/tincd.c:309 src/tincd.c:328
+#: src/tincd.c:314 src/tincd.c:333
 msgid ""
 "Appending key to existing contents.\n"
 "Make sure only one key is stored in the file.\n"
@@ -913,21 +884,21 @@ msgstr ""
 "Sleutel wordt toegevoegd aan bestaande inhoud.\n"
 "Let er op dat er slechts één sleutel in het bestand is.\n"
 
-#: src/tincd.c:322
+#: src/tincd.c:327
 msgid "public RSA key"
 msgstr "openbare RSA sleutel"
 
-#: src/tincd.c:357
+#: src/tincd.c:386
 msgid "Both netname and configuration directory given, using the latter..."
 msgstr ""
 "Zowel netnaam als configuratiemap zijn gegeven, laatste wordt gebruikt..."
 
-#: src/tincd.c:378
+#: src/tincd.c:407
 #, c-format
 msgid "%s version %s (built %s %s, protocol %d)\n"
 msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 
-#: src/tincd.c:380
+#: src/tincd.c:409
 msgid ""
 "Copyright (C) 1998-2003 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
@@ -944,24 +915,24 @@ msgstr ""
 "en je bent welkom om het te distribueren onder bepaalde voorwaarden;\n"
 "zie het bestand COPYING voor details.\n"
 
-#: src/tincd.c:408
+#: src/tincd.c:437
 msgid "mlockall() not supported on this platform!"
 msgstr "mlockall() wordt niet ondersteund op dit platform!"
 
-#: src/tincd.c:432
+#: src/tincd.c:461
 msgid "Error initializing LZO compressor!"
 msgstr "Fout tijdens initialiseren LZO compressor!"
 
-#: src/tincd.c:460
+#: src/tincd.c:489
 #, c-format
 msgid "Restarting in %d seconds!"
 msgstr "Herstart in %d seconden!"
 
-#: src/tincd.c:463 src/process.c:494
+#: src/tincd.c:492 src/process.c:468
 msgid "Not restarting."
 msgstr "Geen herstart."
 
-#: src/tincd.c:479
+#: src/tincd.c:508
 msgid "Terminating"
 msgstr "Beëindigen"
 
@@ -970,159 +941,154 @@ msgstr "Beëindigen"
 msgid "Memory exhausted (couldn't allocate %d bytes), exitting."
 msgstr "Geheugen uitgeput (kon geen %d bytes reserveren), beëindigen."
 
-#: src/process.c:90 src/process.c:127
+#: src/process.c:92 src/process.c:139
 #, c-format
 msgid "Could not open service manager: %s"
 msgstr "Kon service manager niet openen: %s"
 
-#: src/process.c:110
+#: src/process.c:120
 #, c-format
 msgid "Could not create %s service: %s"
 msgstr "Kon %s service niet aanmaken: %s"
 
-#: src/process.c:114
+#: src/process.c:126
 #, c-format
 msgid "%s service installed"
 msgstr "%s service geïnstalleerd"
 
-#: src/process.c:117
+#: src/process.c:129
 #, c-format
 msgid "Could not start %s service: %s"
 msgstr "Kon %s service niet starten: %s"
 
-#: src/process.c:119
+#: src/process.c:131
 #, c-format
 msgid "%s service started"
 msgstr "%s service gestart"
 
-#: src/process.c:134
+#: src/process.c:146
 #, c-format
 msgid "Could not open %s service: %s"
 msgstr "Kon %s service niet openen: %s"
 
-#: src/process.c:139
+#: src/process.c:151
 #, c-format
 msgid "Could not stop %s service: %s"
 msgstr "Kon %s service niet stoppen: %s"
 
-#: src/process.c:141
+#: src/process.c:153
 #, c-format
 msgid "%s service stopped"
 msgstr "%s service gestopt"
 
-#: src/process.c:144
+#: src/process.c:156
 #, c-format
 msgid "Could not remove %s service: %s"
 msgstr "Kon %s service niet verwijderen: %s"
 
-#: src/process.c:148
+#: src/process.c:160
 #, c-format
 msgid "%s service removed"
 msgstr "%s service verwijderd"
 
-#: src/process.c:156 src/process.c:160
+#: src/process.c:168 src/process.c:172
 #, c-format
 msgid "Got %s request"
 msgstr "Kreeg %s verzoek"
 
-#: src/process.c:164
+#: src/process.c:176
 #, c-format
 msgid "Got unexpected request %d"
 msgstr "Kreeg onverwacht verzoek %d"
 
-#: src/process.c:243
+#: src/process.c:258
 #, c-format
 msgid "A tincd is already running for net `%s' with pid %d.\n"
 msgstr "Een tincd draait al voor net `%s' met pid %d.\n"
 
-#: src/process.c:246
+#: src/process.c:261
 #, c-format
 msgid "A tincd is already running with pid %d.\n"
 msgstr "Een tincd draait al met pid %d.\n"
 
-#: src/process.c:272
+#: src/process.c:287
 #, c-format
 msgid "No other tincd is running for net `%s'.\n"
 msgstr "Geen andere tincd draait voor net `%s'.\n"
 
-#: src/process.c:275
+#: src/process.c:290
 msgid "No other tincd is running.\n"
 msgstr "Geen andere tincd draait.\n"
 
-#: src/process.c:284
+#: src/process.c:299
 #, c-format
 msgid "The tincd for net `%s' is no longer running. "
 msgstr "De tincd voor net `%s' draait niet meer. "
 
-#: src/process.c:287
+#: src/process.c:302
 msgid "The tincd is no longer running. "
 msgstr "De tincd draait niet meer. "
 
-#: src/process.c:289
+#: src/process.c:304
 msgid "Removing stale lock file.\n"
 msgstr "Verwijdering oud vergrendelingsbestand.\n"
 
-#: src/process.c:322
+#: src/process.c:337
 #, c-format
 msgid "Couldn't detach from terminal: %s"
 msgstr "Kon niet ontkoppelen van terminal: %s"
 
-#: src/process.c:339
+#: src/process.c:354
 #, c-format
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) start, debug niveau %d"
 
-#: src/process.c:375
-#, c-format
-msgid "Could not execute `%s': %s"
-msgstr "Kon `%s' niet uitvoeren: %s"
-
-#: src/process.c:410
+#: src/process.c:379
 #, c-format
 msgid "Executing script %s"
 msgstr "Uitvoeren script %s"
 
-#: src/process.c:417
+#: src/process.c:402
 #, c-format
-msgid "Process %d (%s) exited with non-zero status %d"
-msgstr "Proces %d (%s) beëindigde met status %d"
+msgid "Script %s exited with non-zero status %d"
+msgstr "Script %s beëindigde met status %d"
 
-#: src/process.c:423
+#: src/process.c:407
 #, c-format
-msgid "Process %d (%s) was killed by signal %d (%s)"
-msgstr "Proces %d (%s) was gestopt door signaal %d (%s)"
+msgid "Script %s was killed by signal %d (%s)"
+msgstr "Script %s was gestopt door signaal %d (%s)"
 
-#: src/process.c:427
+#: src/process.c:411
 #, c-format
-msgid "Process %d (%s) terminated abnormally"
-msgstr "Proces %d (%s) abnormaal beëindigd"
+msgid "Script %s terminated abnormally"
+msgstr "Script %s abnormaal beëindigd"
 
-#: src/process.c:457 src/process.c:463 src/process.c:501 src/process.c:507
-#: src/process.c:525
+#: src/process.c:431 src/process.c:437 src/process.c:475 src/process.c:481
+#: src/process.c:499
 #, c-format
 msgid "Got %s signal"
 msgstr "Kreeg %s signaal"
 
-#: src/process.c:469
+#: src/process.c:443
 #, c-format
 msgid "Got another fatal signal %d (%s): not restarting."
 msgstr "Kreeg nog een fataal signaal %d (%s): geen herstart."
 
-#: src/process.c:478
+#: src/process.c:452
 #, c-format
 msgid "Got fatal signal %d (%s)"
 msgstr "Kreeg fataal signaal %d (%s)"
 
-#: src/process.c:482
+#: src/process.c:456
 msgid "Trying to re-execute in 5 seconds..."
 msgstr "Poging tot herstarten over 5 seconden..."
 
-#: src/process.c:510
+#: src/process.c:484
 #, c-format
 msgid "Reverting to old debug level (%d)"
 msgstr "Herstellen van oud debug niveau (%d)"
 
-#: src/process.c:516
+#: src/process.c:490
 #, c-format
 msgid ""
 "Temporarily setting debug level to 5.  Kill me with SIGINT again to go back "
@@ -1131,17 +1097,17 @@ msgstr ""
 "Tijdelijk instellen debug niveau op 5. Zend nog een SIGINT signaal om niveau "
 "%d te herstellen."
 
-#: src/process.c:549
+#: src/process.c:523
 #, c-format
 msgid "Got unexpected signal %d (%s)"
 msgstr "Kreeg onverwacht signaal %d (%s)"
 
-#: src/process.c:555
+#: src/process.c:529
 #, c-format
 msgid "Ignored signal %d (%s)"
 msgstr "Signaal %d (%s) genegeerd"
 
-#: src/process.c:609
+#: src/process.c:583
 #, c-format
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
@@ -1276,22 +1242,22 @@ msgstr "%s is een %s"
 
 #: src/linux/device.c:137 src/linux/device.c:148 src/linux/device.c:159
 #: src/freebsd/device.c:75 src/solaris/device.c:126 src/netbsd/device.c:78
-#: src/darwin/device.c:75 src/cygwin/device.c:246 src/mingw/device.c:113
-#: src/mingw/device.c:304 src/raw_socket/device.c:114
+#: src/darwin/device.c:75 src/cygwin/device.c:249 src/mingw/device.c:113
+#: src/mingw/device.c:307 src/raw_socket/device.c:114
 #, c-format
 msgid "Error while reading from %s %s: %s"
 msgstr "Fout tijdens lezen van %s %s: %s"
 
 #: src/linux/device.c:170 src/freebsd/device.c:84 src/solaris/device.c:138
-#: src/netbsd/device.c:90 src/darwin/device.c:87 src/cygwin/device.c:255
-#: src/mingw/device.c:313 src/raw_socket/device.c:123
+#: src/netbsd/device.c:90 src/darwin/device.c:87 src/cygwin/device.c:258
+#: src/mingw/device.c:316 src/raw_socket/device.c:123
 #, c-format
 msgid "Read packet of %d bytes from %s"
 msgstr "Pakket van %d bytes gelezen van %s"
 
 #: src/linux/device.c:180 src/freebsd/device.c:94 src/solaris/device.c:148
-#: src/netbsd/device.c:100 src/darwin/device.c:97 src/cygwin/device.c:267
-#: src/mingw/device.c:326 src/raw_socket/device.c:133
+#: src/netbsd/device.c:100 src/darwin/device.c:97 src/cygwin/device.c:270
+#: src/mingw/device.c:329 src/raw_socket/device.c:133
 #, c-format
 msgid "Writing packet of %d bytes to %s"
 msgstr "Pakket van %d bytes geschreven naar %s"
@@ -1304,22 +1270,22 @@ msgid "Can't write to %s %s: %s"
 msgstr "Kan niet schrijven naar %s %s: %s"
 
 #: src/linux/device.c:219 src/freebsd/device.c:112 src/solaris/device.c:166
-#: src/netbsd/device.c:118 src/darwin/device.c:115 src/cygwin/device.c:284
-#: src/mingw/device.c:343 src/raw_socket/device.c:151
+#: src/netbsd/device.c:118 src/darwin/device.c:115 src/cygwin/device.c:287
+#: src/mingw/device.c:346 src/raw_socket/device.c:151
 #, c-format
 msgid "Statistics for %s %s:"
 msgstr "Statistieken voor %s %s:"
 
 #: src/linux/device.c:220 src/freebsd/device.c:113 src/solaris/device.c:167
-#: src/netbsd/device.c:119 src/darwin/device.c:116 src/cygwin/device.c:285
-#: src/mingw/device.c:344 src/raw_socket/device.c:152
+#: src/netbsd/device.c:119 src/darwin/device.c:116 src/cygwin/device.c:288
+#: src/mingw/device.c:347 src/raw_socket/device.c:152
 #, c-format
 msgid " total bytes in:  %10d"
 msgstr " totaal aantal bytes in:  %10d"
 
 #: src/linux/device.c:221 src/freebsd/device.c:114 src/solaris/device.c:168
-#: src/netbsd/device.c:120 src/darwin/device.c:117 src/cygwin/device.c:286
-#: src/mingw/device.c:345 src/raw_socket/device.c:153
+#: src/netbsd/device.c:120 src/darwin/device.c:117 src/cygwin/device.c:289
+#: src/mingw/device.c:348 src/raw_socket/device.c:153
 #, c-format
 msgid " total bytes out: %10d"
 msgstr " totaal aantal bytes uit: %10d"
@@ -1328,8 +1294,8 @@ msgstr " totaal aantal bytes uit: %10d"
 msgid "FreeBSD tap device"
 msgstr "FreeBSD tap apparaat"
 
-#: src/freebsd/device.c:98 src/darwin/device.c:101 src/cygwin/device.c:271
-#: src/mingw/device.c:330
+#: src/freebsd/device.c:98 src/darwin/device.c:101 src/cygwin/device.c:274
+#: src/mingw/device.c:333
 #, c-format
 msgid "Error while writing to %s %s: %s"
 msgstr "Fout tijdens schrijven naar %s %s: %s"
@@ -1381,38 +1347,38 @@ msgstr "MaxOS/X tun apparaat"
 msgid "Unable to read registry: %s"
 msgstr "Kon registry niet lezen: %s"
 
-#: src/cygwin/device.c:130 src/mingw/device.c:204
+#: src/cygwin/device.c:133 src/mingw/device.c:207
 msgid "No Windows tap device found!"
 msgstr "Geen Windows tap apparaat gevonden!"
 
-#: src/cygwin/device.c:156
+#: src/cygwin/device.c:159
 #, c-format
-msgid "Could not open Windows tap device for writing: %s"
-msgstr "Kon Windows tap apparaat niet openen om te schrijven: %s"
+msgid "Could not open Windows tap device %s (%s) for writing: %s"
+msgstr "Kon Windows tap apparaat %s (%s) niet openen om te schrijven: %s"
 
-#: src/cygwin/device.c:165
+#: src/cygwin/device.c:168 src/mingw/device.c:232
 #, c-format
-msgid "Could not get MAC address from Windows tap device: %s"
-msgstr "Kon MAC adres niet achterhalen van Windows tap apparaat: %s"
+msgid "Could not get MAC address from Windows tap device %s (%s): %s"
+msgstr "Kon MAC adres niet achterhalen van Windows tap apparaat %s (%s): %s"
 
-#: src/cygwin/device.c:194
+#: src/cygwin/device.c:197
 #, c-format
-msgid "Could not open Windows tap device for reading: %s"
-msgstr "Kon Windows tap apparaat niet openen om te lezen: %s"
+msgid "Could not open Windows tap device %s (%s) for reading: %s"
+msgstr "Kon Windows tap apparaat %s (%s) niet openen om te lezen: %s"
 
-#: src/cygwin/device.c:200
+#: src/cygwin/device.c:203
 msgid "Tap reader forked and running."
 msgstr "Taplezer is geforked en draait."
 
-#: src/cygwin/device.c:217
+#: src/cygwin/device.c:220
 msgid "Tap reader failed!"
 msgstr "Taplezer faalde!"
 
-#: src/cygwin/device.c:221 src/mingw/device.c:283
+#: src/cygwin/device.c:224 src/mingw/device.c:286
 msgid "Windows tap device"
 msgstr "Windows tap apparaat"
 
-#: src/cygwin/device.c:223 src/mingw/device.c:285
+#: src/cygwin/device.c:226 src/mingw/device.c:288
 #, c-format
 msgid "%s (%s) is a %s"
 msgstr "%s (%s) is een %s"
@@ -1421,14 +1387,10 @@ msgstr "%s (%s) is een %s"
 msgid "Tap reader running"
 msgstr "Taplezer draait"
 
-#: src/mingw/device.c:222
+#: src/mingw/device.c:225
 #, c-format
-msgid "%s (%s) is no a usable Windows tap device!"
-msgstr "%s (%s) is geen bruikbaar Windows tap apparaat!"
-
-#: src/mingw/device.c:229
-msgid "Could not get MAC address from Windows tap device!"
-msgstr "Kon MAC adres niet achterhalen van Windows tap apparaat!"
+msgid "%s (%s) is not a usable Windows tap device: %s"
+msgstr "%s (%s) is geen bruikbaar Windows tap apparaat: %s"
 
 #: src/raw_socket/device.c:68
 msgid "raw socket"
