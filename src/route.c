@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.32 2002/03/12 14:25:04 guus Exp $
+    $Id: route.c,v 1.1.2.33 2002/03/15 14:41:57 guus Exp $
 */
 
 #include "config.h"
@@ -33,10 +33,8 @@
 #else
  #include <net/ethernet.h>
 #endif
-#ifdef NEIGHBORSOL
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-#endif
 #include <netinet/if_ether.h>
 #include <utils.h>
 #include <xalloc.h>
@@ -188,14 +186,17 @@ cp
   return subnet->owner;  
 }
 
-#ifdef NEIGHBORSOL
-unsigned short int ipv6_cksum(short int *data, int len, unsigned short int cksum)
+unsigned short int inet_checksum(unsigned short int *data, int len, unsigned short int prevsum)
 {
+  unsigned long int checksum = prevsum ^ 0xFFFF;
+
   while(len--)
-    {
-      cksum += ntohs(*data++);
-    }
-  return cksum;
+    checksum += ntohs(*data++);
+
+  while(checksum >> 16)
+    checksum = (checksum & 0xFFFF) + (checksum >> 16);
+
+  return checksum ^ 0xFFFF;
 }
 
 void route_neighborsol(vpn_packet_t *packet)
@@ -204,7 +205,7 @@ void route_neighborsol(vpn_packet_t *packet)
   struct nd_neighbor_solicit *ns;
   struct nd_opt_hdr *opt;
   subnet_t *subnet;
-  short int cksum;
+  short unsigned int checksum;
   
   struct {
     struct in6_addr ip6_src;      /* source address */
@@ -215,8 +216,8 @@ void route_neighborsol(vpn_packet_t *packet)
 
 cp
   hdr = (struct ip6_hdr *)(packet->data + 14);
-  ns = (struct nd_neighbor_solicit *)(packet->data + 14 + sizeof(struct ip6_hdr));
-  opt = (struct nd_opt_hdr *)(packet->data + 14 + sizeof(struct ip6_hdr) + sizeof(struct nd_neighbor_solicit));
+  ns = (struct nd_neighbor_solicit *)(packet->data + 14 + sizeof(*hdr));
+  opt = (struct nd_opt_hdr *)(packet->data + 14 + sizeof(*hdr) + sizeof(*ns));
 
   /* First, snatch the source address from the neighbor solicitation packet */
 
@@ -234,8 +235,28 @@ cp
       return;
     }
 
+  /* Create pseudo header */
+
+  memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
+  memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
+  pseudo.length = htonl(sizeof(*ns) + sizeof(*opt) + 6);
+  pseudo.junk[0] = pseudo.junk[1] = pseudo.junk[2] = 0;
+  pseudo.junk[3] = IPPROTO_ICMPV6;
+  
+  /* Generate checksum */
+  
+  checksum = inet_checksum((unsigned short int *)&pseudo, sizeof(pseudo)/2, ~0);
+  checksum = inet_checksum((unsigned short int *)ns, sizeof(*ns)/2 + 4, checksum);
+
+  if(checksum)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+          syslog(LOG_WARNING, _("Cannot route packet: checksum error for neighbor solicitation request"));
+      return;
+    }
+
   /* Check if the IPv6 address exists on the VPN */
-#if 0
+
   subnet = lookup_subnet_ipv6((ipv6_t *)&ns->nd_ns_target);
 
   if(!subnet)
@@ -254,35 +275,8 @@ cp
   
   if(subnet->owner == myself)
     return;	/* silently ignore */
-#endif
  
-  syslog(LOG_DEBUG, "Neighbor solicitation request with checksum %hx", ntohs(ns->nd_ns_hdr.icmp6_cksum));
- 
-  /* Create pseudo header */
-
-  memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
-  memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
-  pseudo.length = htonl(sizeof(*ns));
-  pseudo.junk[0] = pseudo.junk[1] = pseudo.junk[2] = 0;
-  pseudo.junk[3] = IPPROTO_ICMPV6;
-  
-  /* Generate checksum */
-  
-  ns->nd_ns_hdr.icmp6_cksum = 0;
-  
-  cksum = ipv6_cksum((short int *)&pseudo, sizeof(pseudo)/2, 0);
-
-  syslog(LOG_DEBUG, "Our checksum %hx", cksum);
-
-  cksum = ipv6_cksum((short int *)ns, sizeof(*ns)/2, cksum);
-
-  syslog(LOG_DEBUG, "Our checksum %hx", cksum);
- 
-  cksum = ipv6_cksum((short int *)opt, sizeof(*opt)/2, cksum);
-
-  syslog(LOG_DEBUG, "Our checksum %hx", cksum);
- 
-   /* Create neighbor advertation reply */
+  /* Create neighbor advertation reply */
 
   memcpy(packet->data, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* copy destination address */
   packet->data[ETHER_ADDR_LEN*2 - 1] ^= 0xFF;				/* mangle source address so it looks like it's not from us */
@@ -294,27 +288,26 @@ cp
 
   ns->nd_ns_hdr.icmp6_cksum = 0;
   ns->nd_ns_hdr.icmp6_type = ND_NEIGHBOR_ADVERT;
+  ns->nd_ns_hdr.icmp6_dataun.icmp6_un_data8[0] = 0x40;			/* Set solicited flag */
+  ns->nd_ns_hdr.icmp6_dataun.icmp6_un_data8[1] = ns->nd_ns_hdr.icmp6_dataun.icmp6_un_data8[2] = ns->nd_ns_hdr.icmp6_dataun.icmp6_un_data8[3] = 0;
   opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 
   /* Create pseudo header */
   
   memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
   memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
-  pseudo.length = htonl(sizeof(struct icmp6_hdr));
+  pseudo.length = htonl(sizeof(*ns) + sizeof(*opt) + 6);
   pseudo.junk[0] = pseudo.junk[1] = pseudo.junk[2] = 0;
   pseudo.junk[3] = IPPROTO_ICMPV6;
   
   /* Generate checksum */
   
-  cksum = ipv6_cksum((short int *)&pseudo, sizeof(pseudo)/2, 0);
-  cksum = ipv6_cksum((short int *)ns, sizeof(*ns)/2, cksum);
+  checksum = inet_checksum((unsigned short int *)&pseudo, sizeof(pseudo)/2, ~0);
+  checksum = inet_checksum((unsigned short int *)ns, sizeof(*ns)/2 + 4, checksum);
 
-  ns->nd_ns_hdr.icmp6_cksum = htons(cksum);
-  
   write_packet(packet);
 cp
 }
-#endif
 
 void route_arp(vpn_packet_t *packet)
 {
@@ -401,13 +394,11 @@ cp
               break;
             case 0x86DD:
               n = route_ipv6(packet);
-#ifdef NEIGHBORSOL
 	      if(!n && packet->data[0] == 0x33 && packet->data[1] == 0x33 && packet->data[2] == 0xff)
 	        {
 	          route_neighborsol(packet);
 		  return;
 		}
-#endif
               break;
             case 0x0806:
               route_arp(packet);
