@@ -130,6 +130,9 @@ conn_list_t *new_conn_list(void)
 cp
   /* initialise all those stupid pointers at once */
   memset(p, '\0', sizeof(*p));
+  p->vpn_mask = (ip_t)(~0L); /* If this isn't done, it would be a
+                                wastebucket for all packets with
+                                unknown destination. */
   p->nexthop = p;
 cp
   return p;
