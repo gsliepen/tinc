@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.47 2002/06/08 14:08:56 guus Exp $
+dnl $Id: configure.in,v 1.13.2.48 2002/06/09 15:26:10 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -83,7 +83,8 @@ AC_STRUCT_TM
 AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
 [
   AC_TRY_COMPILE(
-  [#include <sys/socket.h>],
+  [#include <sys/types.h>
+  #include <sys/socket.h>],
   [socklen_t len = 42; return len;],
   ac_cv_type_socklen_t=yes,
   ac_cv_type_socklen_t=no)
@@ -97,7 +98,7 @@ AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([asprintf daemon fcloseall flock ftime get_current_dir_name \
-putenv select strdup strerror strsignal strtol unsetenv])
+putenv select strdup strerror strsignal strtol unsetenv getnameinfo])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
