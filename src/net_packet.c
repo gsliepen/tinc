@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.12 2002/03/25 15:51:58 guus Exp $
+    $Id: net_packet.c,v 1.1.2.13 2002/03/27 15:01:37 guus Exp $
 */
 
 #include "config.h"
@@ -211,6 +211,9 @@ cp
       memcpy(copy, inpkt, sizeof(vpn_packet_t));
 
       list_insert_tail(n->queue, copy);
+
+      if(n->queue->count > MAXQUEUELENGTH)
+        list_delete_head(n->queue);
 
       if(!n->status.waitingforkey)
         send_req_key(n->nexthop->connection, myself, n);

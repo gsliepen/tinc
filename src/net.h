@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.48 2002/03/22 11:43:48 guus Exp $
+    $Id: net.h,v 1.9.4.49 2002/03/27 15:01:36 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -41,6 +41,8 @@
 #endif
 
 #define MAXSOCKETS 128 /* Overkill... */
+
+#define MAXQUEUELENGTH 8 /* Maximum number of packats in a single queue */
 
 typedef struct mac_t
 {
