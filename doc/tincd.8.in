@@ -34,16 +34,19 @@ If that succeeds,
 it will detach from the controlling terminal and continue in the background,
 accepting and setting up connections to other tinc daemons
 that are part of the virtual private network.
-Under Windows (native) tinc will install itself as a service,
+Under Windows (not Cygwin) tinc will install itself as a service,
 which will be restarted automatically after reboots.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl c, -config Ns = Ns Ar DIR
-Read configuration options from
-.Ar DIR .
+Read configuration files from
+.Ar DIR
+instead of
+.Pa @sysconfdir@/tinc/ .
 .It Fl D, -no-detach
 Don't fork and detach.
 This will also disable the automatic restart mechanism for fatal errors.
+If not mentioned otherwise, this will show log messages on the standard error output.
 .It Fl d, -debug Ns Op = Ns Ar LEVEL
 Increase debug level or set it to
 .Ar LEVEL
@@ -54,7 +57,7 @@ Attempt to kill a running
 (optionally with the specified
 .Ar SIGNAL
 instead of SIGTERM) and exit.
-Under native Windows the optional argument is ignored,
+Under Windows (not Cygwin) the optional argument is ignored,
 the service will always be stopped and removed.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
@@ -78,6 +81,7 @@ Write PID to
 .Ar FILE
 instead of
 .Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
+Under Windows this option will be ignored.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
@@ -130,7 +134,7 @@ It will also any serious error.
 .It 1
 This will log all connections that are made with other tinc daemons.
 .It 2
-This will log status and error messages from other tinc daemons.
+This will log status and error messages from scripts and other tinc daemons.
 .It 3
 This will log all requests that are exchanged with other tinc daemons. These include
 authentication, key exchange and connection list updates.
@@ -141,28 +145,10 @@ This will log all network traffic over the virtual private network.
 .El
 .Sh FILES
 .Bl -tag -width indent
-.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
-The configuration file for
-.Nm .
-.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
-Script which is executed as soon as the virtual network device has been allocated.
-Purpose is to further configure that device.
-.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
-Script which is executed when
-.Nm
-exits.
-Purpose is to cleanly shut down the virtual network device before it will be deallocated.
-.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/*
-The directory containing the host configuration files
-used to authenticate other tinc daemons.
-.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -up
-Script which is executed as soon as host
-.Ar NAME
-becomes reachable.
-.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -down
-Script which is executed as soon as host
-.Ar NAME
-becomes unreachable.
+.It Pa @sysconfdir@/tinc/
+Directory containing the configuration files tinc uses.
+For more information, see
+.Xr tinc.conf 5 .
 .It Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid
 The PID of the currently running
 .Nm

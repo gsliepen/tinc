@@ -136,11 +136,15 @@ If you don't specify a host with
 .Nm tinc
 won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
-.It Va Device Li = Ar device Po /dev/tap0 or /dev/net/tun Pc
+.It Va Device Li = Ar device Po Pa /dev/tap0 , Pa /dev/net/tun No or other depending on platform Pc
 The virtual network device to use.
 .Nm tinc
 will automatically detect what kind of device it is.
 Note that you can only use one device per daemon.
+Under Windows, use
+.Va Interface
+instead of
+.Va Device .
 The info pages of the tinc package contain more information
 about configuring the virtual network device.
 .It Va Hostnames Li = yes | no Pq no
@@ -153,19 +157,22 @@ This does not affect resolving hostnames to IP addresses from the
 host configuration files.
 .It Va Interface Li = Ar interface
 Defines the name of the interface corresponding to the virtual network device.
-Depending on the operating system and the type of device this may or may not actually set the name of the interface
-or choose the device corresponding to this interface.
-.It Va KeyExpire Li = Ar period Pq 3600
+Depending on the operating system and the type of device this may or may not actually set the name of the interface.
+Under Windows, this variable is used to select which network interface will be used.
+If you specified a
+.Va Device ,
+this variable is almost always already correctly set.
+.It Va KeyExpire Li = Ar seconds Pq 3600
 This option controls the period the encryption keys used to encrypt the data are valid.
 It is common practice to change keys at regular intervals to make it even harder for crackers,
 even though it is thought to be nearly impossible to crack a single key.
-.It Va MACExpire Li = Ar period Pq 600
+.It Va MACExpire Li = Ar seconds Pq 600
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when
 .Va Mode
 is set to
 .Qq switch .
-.It Va MaxTimeout Li = Ar period Pq 900
+.It Va MaxTimeout Li = Ar seconds Pq 900
 This is the maximum delay before trying to reconnect to other tinc daemons.
 .It Va Mode Li = router | switch | hub Pq router
 This option selects the way packets are routed to other daemons.
@@ -192,7 +199,7 @@ while no routing table is managed.
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.
 It must be unique for the virtual private network this daemon will connect to.
-.It Va PingTimeout Li = Ar period Pq 60
+.It Va PingTimeout Li = Ar seconds Pq 60
 The number of seconds of inactivity that
 .Nm tinc
 will wait before sending a probe to the other end.
@@ -205,7 +212,7 @@ will be inherited by the UDP packets that are sent out.
 .It Va PrivateKey Li = Ar key Bq obsolete
 The private RSA key of this tinc daemon.
 It will allow this tinc daemon to authenticate itself to other daemons.
-.It Va PrivateKeyFile Li = Ar filename Bq recommended
+.It Va PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv Pc
 The file in which the private RSA key of this tinc daemon resides.
 Note that there must be exactly one of
 .Va PrivateKey
@@ -304,7 +311,59 @@ from behind a masquerading firewall,
 or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
 .El
+.Sh SCRIPTS
+Apart from reading the server and host configuration files,
+tinc can also run scripts at certain moments.
+On Windows (not Cygwin), the scripts should have the extension
+.Pa .bat .
+.Bl -tag -width indent
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
+This is the most important script.
+If it is present it will be executed right after the tinc daemon has been started and has connected to the virtual network device.
+It should be used to set up the corresponding network interface,
+but can also be used to start other things.
+Under Windows you can use the Network Connections control panel instead of creating this script.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
+This script is started right before the tinc daemon quits.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar HOST Ns Pa -up
+This script is started when the tinc daemon with name
+.Ar HOST
+becomes reachable.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar HOST Ns Pa -down
+This script is started when the tinc daemon with name
+.Ar HOST
+becomes unreachable.
+.El
+.Pp
+The scripts are started without command line arguments, but can make use of certain environment variables.
+Under UNIX like operating systems the names of environment variables must be preceded by a
+.Li $ 
+in scripts.
+Under Windows, in
+.Pa .bat
+files, they have to be put between
+.Li %
+signs.
+.Bl -tag -width indent
+.It Ev NETNAME
+If a netname was specified, this environment variable contains it.
+.It Ev NAME
+Contains the name of this tinc daemon.
+.It Ev DEVICE
+Contains the name of the virtual network device that tinc uses.
+.It Ev INTERFACE
+Contains the name of the virtual network interface that tinc uses.
+This should be used for commands like
+.Pa ifconfig .
+.It Ev NODE
+When a host becomes (un)reachable, this is set to its name.
+.It Ev REMOTEADDRESS
+When a host becomes (un)reachable, this is set to its real address.
+.It Ev REMOTEPORT
+When a host becomes (un)reachable, this is set to the port number it uses for communication with other tinc daemons.
+.El
 .Sh FILES
+The most important files are:
 .Bl -tag -width indent
 .It Pa @sysconfdir@/tinc/
 The top directory for configuration files.
@@ -317,22 +376,10 @@ Host configuration files are kept in this directory.
 If an executable file with this name exists,
 it will be executed right after the tinc daemon has connected to the virtual network device.
 It can be used to set up the corresponding network interface.
-.Pp
-The environment variable
-.Ev $NETNAME
-will be passed to the executable.
-If specified with the
-.Va Interface
-configuration variable,
-or if the virtual network device is a Linux tun/tap device,
-the environment variable
-.Ev $INTERFACE
-will be set to the name of the network interface.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 If an executable file with this name exists,
 it will be executed right before the tinc daemon is going to close
 its connection to the virtual network device.
-The same environment variables will be passed as mentioned above.
 .El
 .Sh SEE ALSO
 .Xr tincd 8 ,
