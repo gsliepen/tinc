@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.39 2002/03/26 12:00:38 guus Exp $
+    $Id: process.c,v 1.1.2.40 2002/04/27 11:40:45 guus Exp $
 */
 
 #include "config.h"
@@ -244,11 +244,10 @@ cp
 
   execl(scriptname, NULL);
   /* No return on success */
-  
-  if(errno != ENOENT)	/* Ignore if the file does not exist */
-    exit(1);		/* Some error while trying execl(). */
-  else
-    exit(0);
+
+  openlog("tinc", LOG_CONS | LOG_PID, LOG_DAEMON);
+  syslog(LOG_ERR, _("Could not execute `%s': %s"), scriptname, strerror(errno));
+  exit(errno);
 }
 
 /*
