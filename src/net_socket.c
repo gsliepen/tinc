@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.4 2002/02/26 23:26:41 guus Exp $
+    $Id: net_socket.c,v 1.1.2.5 2002/03/01 11:18:34 guus Exp $
 */
 
 #include "config.h"
@@ -84,6 +84,7 @@ int setup_listen_socket(sockaddr_t *sa)
   int option;
 #ifdef HAVE_LINUX
   char *interface;
+  struct ifreq ifr;
 #endif
 cp
   if((nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -111,12 +112,16 @@ cp
   setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
 
   if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
-    if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
-      {
-        close(nfd);
-        syslog(LOG_ERR, _("Can't bind to interface %s: %s"), interface, strerror(errno));
-        return -1;
-      }
+    {
+      memset(&ifr, 0, sizeof(ifr));
+      strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
+      if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)))
+	{
+          close(nfd);
+          syslog(LOG_ERR, _("Can't bind to interface %s: %s"), interface, strerror(errno));
+          return -1;
+	}
+    }
 #endif
 
   if(bind(nfd, &sa->sa, SALEN(sa->sa)))
@@ -145,6 +150,7 @@ int setup_vpn_in_socket(sockaddr_t *sa)
   int option;
 #ifdef HAVE_LINUX
   char *interface;
+  struct ifreq ifr;
 #endif
 cp
   if((nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -165,12 +171,16 @@ cp
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 #ifdef HAVE_LINUX
   if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
-    if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
-      {
-        close(nfd);
-        syslog(LOG_ERR, _("Can't bind to interface %s: %s"), interface, strerror(errno));
-        return -1;
-      }
+    {
+      memset(&ifr, 0, sizeof(ifr));
+      strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
+      if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)))
+	{
+          close(nfd);
+          syslog(LOG_ERR, _("Can't bind to interface %s: %s"), interface, strerror(errno));
+          return -1;
+	}
+    }
 #endif
 
   if(bind(nfd, &sa->sa, SALEN(sa->sa)))
