@@ -17,6 +17,13 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/*
+ * $Log: tincd.c,v $
+ * Revision 1.4  2000/04/06 18:28:29  zarq
+ * New option -D, don't detach.
+ *
+ */
+
 #include "config.h"
 
 #include <errno.h>
@@ -53,6 +60,9 @@ static int show_version;
 /* If nonzero, it will attempt to kill a running tincd and exit. */
 static int kill_tincd = 0;
 
+/* If zero, don't detach from the terminal. */
+static int do_detach = 1;
+
 char *confbase = NULL;           /* directory in which all config files are */
 char *configfilename = NULL;     /* configuration file name */
 char *identname;                 /* program name for syslog */
@@ -76,6 +86,7 @@ static struct option const long_options[] =
   { "timeout", required_argument, NULL, 'p' },
   { "help", no_argument, &show_help, 1 },
   { "version", no_argument, &show_version, 1 },
+  { "no-detach", no_argument, &do_detach, 0 },
   { NULL, 0, NULL, 0 }
 };
 
@@ -88,6 +99,7 @@ usage(int status)
     {
       printf("Usage: %s [option]...\n\n", program_name);
       printf("  -c, --config=FILE     Read configuration options from FILE.\n"
+	     "  -D, --no-detach       Don't fork and detach.\n"
 	     "  -d                    Increase debug level.\n"
 	     "  -k, --kill            Attempt to kill a running tincd and exit.\n"
 	     "  -n, --net=NETNAME     Connect to net NETNAME.\n"
@@ -106,7 +118,7 @@ parse_options(int argc, char **argv, char **envp)
   int option_index = 0;
   config_t *p;
 
-  while((r = getopt_long(argc, argv, "c:dkn:t:", long_options, &option_index)) != EOF)
+  while((r = getopt_long(argc, argv, "c:Ddkn:t:", long_options, &option_index)) != EOF)
     {
       switch(r)
         {
@@ -115,6 +127,9 @@ parse_options(int argc, char **argv, char **envp)
 	case 'c': /* config file */
 	  configfilename = xmalloc(strlen(optarg)+1);
 	  strcpy(configfilename, optarg);
+	  break;
+	case 'D': /* no detach */
+	  do_detach = 0;
 	  break;
 	case 'd': /* inc debug level */
 	  debug_lvl++;
@@ -154,37 +169,44 @@ int detach(void)
 {
   int fd;
   pid_t pid;
-  
-  ppid = getpid();
-  if((pid = fork()) < 0)
-    {
-      perror("fork");
-      return -1;
-    }
-  if(pid) /* parent process */
-    {
-      signal(SIGTERM, parent_exit);
-      sleep(600); /* wait 10 minutes */
-      exit(1);
-    }
 
+  if(do_detach)
+    {
+      ppid = getpid();
+
+      if((pid = fork()) < 0)
+	{
+	  perror("fork");
+	  return -1;
+	}
+      if(pid) /* parent process */
+	{
+	  signal(SIGTERM, parent_exit);
+	  sleep(600); /* wait 10 minutes */
+	  exit(1);
+	}
+    }
+  
   if(write_pidfile())
     return -1;
 
-  if((fd = open("/dev/tty", O_RDWR)) >= 0)
+  if(do_detach)
     {
-      if(ioctl(fd, TIOCNOTTY, NULL))
+      if((fd = open("/dev/tty", O_RDWR)) >= 0)
 	{
-	  perror("ioctl");
-	  return -1;
+	  if(ioctl(fd, TIOCNOTTY, NULL))
+	    {
+	      perror("ioctl");
+	      return -1;
+	    }
+	  close(fd);
 	}
-      close(fd);
+
+      if(setsid() < 0)
+	return -1;
+
+      kill(ppid, SIGTERM);
     }
-
-  if(setsid() < 0)
-    return -1;
-
-  kill(ppid, SIGTERM);
   
   chdir("/"); /* avoid keeping a mointpoint busy */
 
@@ -460,7 +482,7 @@ setup_signals(void)
     signal(SIGINT, sigint_handler);
   signal(SIGUSR1, sigusr1_handler);
   signal(SIGUSR2, sigusr2_handler);
-  signal(SIGCHLD, SIG_IGN);
+  signal(SIGCHLD, parent_exit);
 }
 
 RETSIGTYPE parent_exit(int a)
