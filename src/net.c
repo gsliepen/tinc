@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.197 2003/08/17 12:05:08 guus Exp $
+    $Id: net.c,v 1.35.4.198 2003/08/22 15:04:26 guus Exp $
 */
 
 #include "system.h"
@@ -59,6 +59,8 @@ static void purge(void)
 
 	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
 
+	/* Remove all edges and subnets owned by unreachable nodes. */
+
 	for(nnode = node_tree->head; nnode; nnode = nnext) {
 		nnext = nnode->next;
 		n = (node_t *) nnode->data;
@@ -80,8 +82,26 @@ static void purge(void)
 				send_del_edge(broadcast, e);
 				edge_del(e);
 			}
+		}
+	}
 
-			node_del(n);
+	/* Check if anyone else claims to have an edge to an unreachable node. If not, delete node. */
+
+	for(nnode = node_tree->head; nnode; nnode = nnext) {
+		nnext = nnode->next;
+		n = (node_t *) nnode->data;
+
+		if(!n->status.reachable) {
+			for(enode = edge_weight_tree->head; enode; enode = enext) {
+				enext = enode->next;
+				e = (edge_t *) enode->data;
+
+				if(e->to == n)
+					break;
+			}
+
+			if(!enode)
+				node_del(n);
 		}
 	}
 }
