@@ -207,7 +207,7 @@ case "$1" in
 	    vpn_stop $vpn && action "" /bin/true
 	done
 	
-	rm -f /var/lock/susbsys/tinc
+	rm -f /var/lock/subsys/tinc
 	;;
 	
     status)

@@ -93,17 +93,17 @@ grep -q '^alias tap0' /etc/conf.modules || cat >> /etc/conf.modules << END
 alias tap0 ethertap
 alias char-major-36 netlink_dev
 END
-/sbin/install-info /usr/info/tinc.info.gz /usr/info/dir --entry="* tinc: (tinc).				The tinc Manual."
+/sbin/install-info /usr/info/tinc.info.gz /usr/info/dir 
 
 %preun
-/sbin/install-info --delete /usr/info/tinc.info.gz /usr/info/dir --entry="* tinc: (tinc).				The tinc Manual."
+/sbin/install-info --delete /usr/info/tinc.info.gz /usr/info/dir
 
 %postun
 
 %files
 %doc AUTHORS ChangeLog NEWS README THANKS *.html doc/tinc.conf.sample
 %config /etc/tinc/
-/etc/rc.d/init.d/tinc
+%attr(0755,root,root) /etc/rc.d/init.d/tinc
 /usr/sbin/genauth
 /usr/sbin/tincd
 /usr/lib/tinc/
