@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.25 2000/11/29 14:27:24 zarq Exp $
+    $Id: conf.c,v 1.9.4.26 2000/11/29 14:30:07 zarq Exp $
 */
 
 #include "config.h"
@@ -252,8 +252,10 @@ cp
       cfg->which = hazahaza[i].which;
       if(!config)
 	config = cfg;
+      free(line);
     }
 
+  free(line);
   fclose (fp);
 cp
   return err;
