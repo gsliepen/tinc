@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.9 2001/01/07 17:09:07 guus Exp $
+    $Id: subnet.h,v 1.1.2.10 2001/01/08 21:32:30 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -53,12 +53,6 @@ typedef struct subnet_ipv6_t
 typedef struct subnet_t {
   struct connection_t *owner;		/* the owner of this subnet */
   struct connection_t *uplink;		/* the uplink which we should send packets to for this subnet */
-
-  struct subnet_t *prev;		/* previous subnet_t for this owner */
-  struct subnet_t *next;		/* next subnet_t for this owner */
-
-  struct subnet_t *global_prev;		/* previous subnet_t for this subnet type */
-  struct subnet_t *global_next;		/* next subnet_t for this subnet type */
 
   int type;				/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
 
