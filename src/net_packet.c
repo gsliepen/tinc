@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.45 2003/12/20 19:47:52 guus Exp $
+    $Id: net_packet.c,v 1.1.2.46 2003/12/20 21:09:33 guus Exp $
 */
 
 #include "system.h"
@@ -65,8 +65,13 @@ void send_mtu_probe(node_t *n)
 
 	n->mtuprobes++;
 
+	if(n->mtuprobes >= 10 && !n->probedmtu) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
+		return;
+	}
+
 	for(i = 0; i < 3; i++) {
-		if(n->mtuprobes >= 100 || n->probedmtu >= n->mtu) {
+		if(n->mtuprobes >= 30 || n->probedmtu >= n->mtu) {
 			n->mtu = n->probedmtu;
 			ifdebug(TRAFFIC) logger(LOG_INFO, _("Fixing MTU of %s (%s) to %d after %d probes"), n->name, n->hostname, n->mtu, n->mtuprobes);
 			return;
