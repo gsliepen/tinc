@@ -73,6 +73,7 @@ int check_pid (char *pidfile)
    * be found -- GW
    */
   /* But... errno is usually changed only on error.. */
+  errno = 0;
   if (kill(pid, 0) && errno == ESRCH)
 	  return(0);
 
