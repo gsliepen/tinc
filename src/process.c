@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.64 2003/08/08 12:55:05 guus Exp $
+    $Id: process.c,v 1.1.2.65 2003/08/08 14:48:33 guus Exp $
 */
 
 #include "system.h"
@@ -347,46 +347,9 @@ bool detach(void)
 	return true;
 }
 
-#ifdef HAVE_FORK
-/*
-  Execute the program name, with sane environment.
-*/
-static void _execute_script(const char *scriptname, char **envp)
-	__attribute__ ((__noreturn__));
-static void _execute_script(const char *scriptname, char **envp)
-{
-	int save_errno;
-
-	cp();
-
-	while(*envp)
-		putenv(*envp++);
-
-	chdir("/");
-
-	closelogger();
-
-	/* Close all file descriptors */
-	fcloseall();
-
-	execl(scriptname, scriptname, NULL);
-	/* No return on success */
-
-	save_errno = errno;
-
-	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
-	logger(LOG_ERR, _("Could not execute `%s': %s"), scriptname,
-		   strerror(save_errno));
-	exit(save_errno);
-}
-#endif
-
-/*
-  Fork and execute the program pointed to by name.
-*/
 bool execute_script(const char *name, char **envp)
 {
-#ifdef HAVE_FORK
+#ifdef HAVE_SYSTEM
 	pid_t pid;
 	int status;
 	struct stat s;
@@ -401,52 +364,42 @@ bool execute_script(const char *name, char **envp)
 	if(stat(scriptname, &s))
 		return true;
 
-	pid = fork();
+	/* Set environment */
+	
+	while(*envp)
+		putenv(*envp++);
 
-	if(pid < 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "fork",
+	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
+
+	status = system(scriptname);
+
+	free(scriptname);
+
+	/* Unset environment? */
+
+	if(status != -1) {
+		if(WIFEXITED(status)) {	/* Child exited by itself */
+			if(WEXITSTATUS(status)) {
+				logger(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
+					   pid, name, WEXITSTATUS(status));
+				return false;
+			}
+		} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
+			logger(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
+				   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
+			return false;
+		} else {			/* Something strange happened */
+			logger(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
+				   name);
+			return false;
+		}
+	} else {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "system",
 			   strerror(errno));
 		return false;
 	}
-
-	if(pid) {
-		ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
-
-		free(scriptname);
-
-		if(waitpid(pid, &status, 0) == pid) {
-			if(WIFEXITED(status)) {	/* Child exited by itself */
-				if(WEXITSTATUS(status)) {
-					logger(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
-						   pid, name, WEXITSTATUS(status));
-					return false;
-				} else
-					return true;
-			} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
-				logger(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
-					   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
-				return false;
-			} else {			/* Something strange happened */
-				logger(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
-					   name);
-				return false;
-			}
-		} else if (errno != EINTR) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
-				   strerror(errno));
-			return false;
-		}
-
-		/* Why do we get EINTR? */
-		return true;
-	}
-
-	/* Child here */
-
-	_execute_script(scriptname, envp);
-#else
-	return true;
 #endif
+	return true;
 }
 
 
