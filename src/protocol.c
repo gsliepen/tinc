@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.28 2000/09/10 23:11:37 guus Exp $
+    $Id: protocol.c,v 1.28.4.29 2000/09/11 10:05:34 guus Exp $
 */
 
 #include "config.h"
@@ -767,7 +767,7 @@ cp
       
       keylength = strlen(datakey);
       
-      if((keylength%1) || (keylength <= 0))
+      if((keylength%2) || (keylength <= 0))
         {
           syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"), cl->id, cl->hostname, from->id);
           free(from_id); free(to_id); free(datakey);

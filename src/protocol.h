@@ -17,13 +17,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.6 2000/09/10 21:57:11 zarq Exp $
+    $Id: protocol.h,v 1.5.4.7 2000/09/11 10:05:35 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
 #include "net.h"
+
+/* Protocol version. Different versions are incompatible,
+   incompatible version have different protocols.
+ */
 
 enum {
   PROT_RESERVED = 0,                 /* reserved: do not use. */
@@ -33,50 +37,44 @@ enum {
   PROT_4,
   PROT_ECHELON,
   PROT_6,
+  PROT_7,
   PROT_CURRENT,                      /* protocol currently in use */
 };
 
+/* Request numbers */
+
 enum {
-  ACK = 1,              /* acknowledged */
-/* These requests are obsolete.
-  AUTH_S_INIT = 10,
-  AUTH_C_INIT,
-  AUTH_S_SPP,
-  AUTH_C_SPP,
-  AUTH_S_SKEY,
-  AUTH_C_SKEY,
-  AUTH_S_SACK,
-  AUTH_C_RACK, */
-  TERMREQ = 30,         /* terminate connection */
-  PINGTIMEOUT,          /* terminate due to ping t.o. */
-  DEL_HOST,		/* forward a termreq to others */
-  PING = 40,            /* ping */
-  PONG,
-  ADD_HOST = 60,        /* Add new given host to connection list */
-  BASIC_INFO,           /* some basic info follows */
-  PASSPHRASE,           /* encrypted passphrase */
-  PUBLIC_KEY,           /* public key in base-36 */
-  HOLD = 80,            /* don't send any data */
-  RESUME,               /* resume dataflow with new encryption key */
-  CALCULATE = 100,      /* calculate the following numer^privkey and send me the result */  
-  CALC_RES,             /* result of the above */
-  ALMOST_KEY,           /* this number^privkey is the shared key */
-  PACKET = 110,		/* TCP tunneled network packet */
-  REQ_KEY = 160,        /* request public key */
-  ANS_KEY,              /* answer to such request */
-  KEY_CHANGED,		/* public key has changed */
-  
+  ALL = -1,			     /* Guardian for allow_request */
+  ID = 0, CHALLENGE, CHAL_REPLY, ACK,
+  STATUS, ERROR, TERMREQ,
+  PING,  PONG,
+  ADD_HOST, DEL_HOST,
+  ADD_SUBNET, DEL_SUBNET,
+  KEY_CHANGED, REQ_KEY, ANS_KEY,
+  LAST                               /* Guardian for the highest request number */
 };
 
-extern int (*request_handlers[256])(conn_list_t*);
+extern int (*request_handlers[])(conn_list_t*);
 
+extern int send_id(conn_list_t*);
+extern int send_challenge(conn_list_t*);
+extern int send_chal_reply(conn_list_t*, char*);
+extern int send_ack(conn_list_t*);
+extern int send_status(conn_list_t*, int, char*);
+extern int send_error(conn_list_t*, int, char*);
+extern int send_termreq(conn_list_t*);
 extern int send_ping(conn_list_t*);
-extern int send_basic_info(conn_list_t *);
-extern int send_termreq(conn_list_t *);
-extern int send_timeout(conn_list_t *);
-extern int send_key_request(ip_t);
-extern void send_key_changed_all(void);
-extern int send_del_host(conn_list_t *, conn_list_t *);
+extern int send_pong(conn_list_t*);
+extern int send_add_host(conn_list_t*, conn_list_t*);
+extern int send_del_host(conn_list_t*, conn_list_t*);
+extern int send_add_subnet(conn_list_t*, conn_list_t*, subnet_t*);
+extern int send_del_subnet(conn_list_t*, conn_list_t*, subnet_t*);
+extern int send_key_changed(conn_list_t*, conn_list_t*);
+extern int send_req_key(conn_list_t*, conn_list_t*);
+extern int send_ans_key(conn_list_t*, conn_list_t*, char*);
+
+/* Old functions */
+
 extern int send_tcppacket(conn_list_t *, void *, int);
 extern int notify_others(conn_list_t *, conn_list_t *, int (*function)(conn_list_t*, conn_list_t*));
 
