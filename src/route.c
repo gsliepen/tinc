@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.65 2003/09/23 20:59:01 guus Exp $
+    $Id: route.c,v 1.1.2.66 2003/10/01 09:14:01 guus Exp $
 */
 
 #include "system.h"
@@ -532,7 +532,7 @@ void route_outgoing(vpn_packet_t *packet)
 
 	cp();
 
-	if(packet->len < 64) {
+	if(packet->len < 14) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
 		return;
 	}
@@ -544,11 +544,21 @@ void route_outgoing(vpn_packet_t *packet)
 			type = ntohs(*((uint16_t *)(&packet->data[12])));
 			switch (type) {
 				case 0x0800:
+					if(packet->len < 34) {
+						ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
+						return;
+					}
+
 					n = route_ipv4(packet);
 					break;
 
 				case 0x86DD:
-					if(packet->data[20] == IPPROTO_ICMPV6 && packet->data[54] == ND_NEIGHBOR_SOLICIT) {
+					if(packet->len < 54) {
+						ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
+						return;
+					}
+
+					if(packet->data[20] == IPPROTO_ICMPV6 && packet->len >= 62 && packet->data[54] == ND_NEIGHBOR_SOLICIT) {
 						route_neighborsol(packet);
 						return;
 					}
@@ -556,6 +566,11 @@ void route_outgoing(vpn_packet_t *packet)
 					break;
 
 				case 0x0806:
+					if(packet->len < 42) {
+						ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
+						return;
+					}
+
 					route_arp(packet);
 					return;
 
@@ -583,7 +598,7 @@ void route_outgoing(vpn_packet_t *packet)
 
 void route_incoming(node_t *source, vpn_packet_t *packet)
 {
-	if(packet->len < 64) {
+	if(packet->len < 14) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Got too short packet from %s (%s)"),
 					source->name, source->hostname);
 		return;
@@ -598,10 +613,20 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
 				type = ntohs(*((uint16_t *)(&packet->data[12])));
 				switch (type) {
 					case 0x0800:
+						if(packet->len < 34) {
+							ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
+							return;
+						}
+
 						n = route_ipv4(packet);
 						break;
 
 					case 0x86DD:
+						if(packet->len < 54) {
+							ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
+							return;
+						}
+
 						n = route_ipv6(packet);
 						break;
 
