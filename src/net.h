@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.50 2002/06/08 12:57:09 guus Exp $
+    $Id: net.h,v 1.9.4.51 2002/06/08 13:46:07 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -28,8 +28,8 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-#ifdef HAVE_STDINT_H
- #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
 #endif
 
 #include "config.h"

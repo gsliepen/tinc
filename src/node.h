@@ -17,14 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.14 2002/06/08 12:57:10 guus Exp $
+    $Id: node.h,v 1.1.2.15 2002/06/08 13:46:07 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
 
-#ifdef HAVE_STDINT_H
- #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
 #endif
 
 #include <avl_tree.h>

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.38 2002/06/08 12:57:10 guus Exp $
+    $Id: netutl.c,v 1.12.4.39 2002/06/08 13:46:43 guus Exp $
 */
 
 #include "config.h"
@@ -27,8 +27,8 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef HAVE_STDINT_H
- #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
 #endif
 #include <string.h>
 #include <signal.h>

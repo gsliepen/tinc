@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.40 2002/06/08 12:57:10 guus Exp $
+    $Id: route.c,v 1.1.2.41 2002/06/08 13:46:07 guus Exp $
 */
 
 #include "config.h"
@@ -40,8 +40,8 @@
 #include <xalloc.h>
 #include <syslog.h>
 #include <string.h>
-#ifdef HAVE_STDINT_H
- #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
 #endif
 
 #include <avl_tree.h>
