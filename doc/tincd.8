@@ -1,0 +1,174 @@
+.Dd 2002-03-25
+.Dt TINCD 8
+.\" Manual page created by:
+.\" Ivo Timmermans <itimmermans@bigfoot.com>
+.\" Guus Sliepen <guus@sliepen.warande.net>
+.Sh NAME
+.Nm tincd
+.Nd tinc VPN daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl cdDkKn
+.Op Fl -bypass-security
+.Op Fl -config Ns = Ns Ar DIR
+.Op Fl -debug Ns = Ns Ar LEVEL
+.Op Fl -generate-keys Ns Op = Ns Ar BITS
+.Op Fl -help
+.Op Fl -kill Ns = Ns Ar SIGNAL
+.Op Fl -net Ns = Ns Ar NETNAME
+.Op Fl -no-detach
+.Op Fl -version
+.Sh DESCRIPTION
+This is the daemon of tinc, a secure virtual private network (VPN) project.
+When started,
+.Nm
+will read it's configuration file to determine what virtual subnets it has to serve
+and to what other tinc daemons it should connect.
+It will connect to the ethertap or tun/tap device
+and set up a socket for incoming connections.
+Optionally a script will be executed to further configure the virtual device.
+If that succeeds,
+it will detach from the controlling terminal and continue in the background,
+accepting and setting up connections to other tinc daemons
+that are part of the virtual private network.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl -bypass-security
+Disables encryption and authentication.
+Only useful for debugging.
+.It Fl c, -config Ns = Ns Ar DIR
+Read configuration options from
+.Ar DIR .
+.It Fl d, -debug Ns Op = Ns Ar LEVEL
+Increase debug level or set it to
+.Ar LEVEL
+(see below).
+.It Fl K, -generate-keys Ns Op = Ns Ar BITS
+Generate public/private RSA keypair and exit.
+If
+.Ar BITS
+is omitted, the default length will be 1024 bits.
+.It Fl -help
+Display short list of options.
+.It Fl k, -kill Ns Op = Ns Ar SIGNAL
+Attempt to kill a running
+.Nm
+(optionally with the specified
+.Ar SIGNAL
+instead of SIGTERM) and exit.
+.It Fl n, -net Ns = Ns Ar NETNAME
+Connect to net
+.Ar NETNAME .
+.It Fl D, -no-detach
+Don't fork and detach.
+This will also disable the automatic restart mechanism for fatal errors.
+.It Fl -version
+Output version information and exit.
+.El
+.Sh SIGNALS
+.Bl -tag -width indent
+.It ALRM
+Forces
+.Nm
+to try to connect to all uplinks immediately.
+Usually
+.Nm
+attempts to do this itself,
+but increases the time it waits between the attempts each time it failed,
+and if
+.Nm
+didn't succeed to connect to an uplink the first time after it started,
+it defaults to the maximum time of 15 minutes.
+.It HUP
+Closes all connections, rereads the configuration file and restarts the daemon.
+.It INT
+Temporarily increases debug level to 5.
+Send this signal again to revert to the original level.
+.It USR1
+Dumps the connection list to syslog.
+.It USR2
+Dumps virtual network device statistics, all known nodes, edges and subnets to syslog.
+.It WINCH
+Purges all information remembered about unreachable nodes.
+.El
+.Sh DEBUG LEVELS
+The tinc daemon can send a lot of messages to the syslog.
+The higher the debug level,
+the more messages it will log.
+Each level inherits all messages of the previous level:
+.Bl -tag -width indent
+.It 0
+This will log a message indicating
+.Nm
+has started along with a version number.
+It will also any serious error.
+.It 1
+This will log all connections that are made with other tinc daemons.
+.It 2
+This will log status and error messages from other tinc daemons.
+.It 3
+This will log all requests that are exchanged with other tinc daemons. These include
+authentication, key exchange and connection list updates.
+.It 4
+This will log a copy of everything received on the meta socket.
+.It 5
+This will log all network traffic over the virtual private network.
+.El
+.Sh FILES
+.Bl -tag -width indent
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
+The configuration file for
+.Nm .
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
+Script which is executed as soon as the virtual network device has been allocated.
+Purpose is to further configure that device.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
+Script which is executed when
+.Nm
+exits.
+Purpose is to cleanly shut down the virtual network device before it will be deallocated.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/*
+The directory containing the host configuration files
+used to authenticate other tinc daemons.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -up
+Script which is executed as soon as host
+.Ar NAME
+becomes reachable.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -down
+Script which is executed as soon as host
+.Ar NAME
+becomes unreachable.
+.It Pa /var/run/tinc. Ns Ar NETNAME Ns Pa .pid
+The PID of the currently running
+.Nm
+is stored in this file.
+.El
+.Sh BUGS
+The
+.Va BindToInterface
+option may not work correctly.
+.Pp
+.Sy The cryptography in tinc is not well tested yet. Use it at your own risk!
+.Pp
+If you find any bugs, report them to tinc@nl.linux.org.
+.Sh TODO
+A lot, especially security auditing.
+.Sh SEE ALSO
+.Xr tinc.conf 5 ,
+.Pa http://tinc.nl.linux.org/ ,
+.Pa http://www.cabal.org/ .
+.Pp
+The full documentation for tinc is maintained as a Texinfo manual.
+If the info and tinc programs are properly installed at your site,
+the command
+.Ic info tinc
+should give you access to the complete manual.
+.Pp
+tinc comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it under certain conditions;
+see the file COPYING for details.
+.Sh AUTHORS
+.An "Ivo Timmermans" Aq itimmermans@bigfoot.com
+.An "Guus Sliepen" Aq guus@sliepen.warande.net
+.Pp
+And thanks to many others for their contributions to tinc!
