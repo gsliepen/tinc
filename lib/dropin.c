@@ -1,7 +1,7 @@
 /*
     dropin.c -- a set of drop-in replacements for libc functions
-    Copyright (C) 2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2000-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,23 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: dropin.c,v 1.3 2003/08/24 20:38:20 guus Exp $
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
-#include <xalloc.h>
-
-#include <system.h>
-#include <errno.h>
+#include "xalloc.h"
 
 #ifndef HAVE_DAEMON
 /*
@@ -51,60 +40,54 @@
 */
 int daemon(int nochdir, int noclose)
 {
-  pid_t pid;
-  int fd;
-  
-  pid = fork();
-  
-  /* Check if forking failed */
-  if(pid < 0)
-    {
-      perror("fork");
-      exit(-1);
-    }
+#ifdef HAVE_FORK
+	pid_t pid;
+	int fd;
 
-  /* If we are the parent, terminate */
-  if(pid)
-    exit(0);
+	pid = fork();
 
-  /* Detach by becoming the new process group leader */
-  if(setsid() < 0)
-    {
-      perror("setsid");
-      return -1;
-    }
-  
-  /* Change working directory to the root (to avoid keeping mount
-     points busy) */
-  if(!nochdir)
-    {
-      chdir("/");
-    }
-    
-  /* Redirect stdin/out/err to /dev/null */
-  if(!noclose)
-    {
-      fd = open("/dev/null", O_RDWR);
+	/* Check if forking failed */
+	if(pid < 0) {
+		perror("fork");
+		exit(-1);
+	}
 
-      if(fd < 0)
-        {
-          perror("opening /dev/null");
-          return -1;
-        }
-      else
-        {
-          dup2(fd, 0);
-          dup2(fd, 1);
-          dup2(fd, 2);
-        }
-    }
+	/* If we are the parent, terminate */
+	if(pid)
+		exit(0);
 
-  return 0;
+	/* Detach by becoming the new process group leader */
+	if(setsid() < 0) {
+		perror("setsid");
+		return -1;
+	}
+
+	/* Change working directory to the root (to avoid keeping mount
+	   points busy) */
+	if(!nochdir) {
+		chdir("/");
+	}
+
+	/* Redirect stdin/out/err to /dev/null */
+	if(!noclose) {
+		fd = open("/dev/null", O_RDWR);
+
+		if(fd < 0) {
+			perror("opening /dev/null");
+			return -1;
+		} else {
+			dup2(fd, 0);
+			dup2(fd, 1);
+			dup2(fd, 2);
+		}
+	}
+
+	return 0;
+#else
+	return -1;
+#endif
 }
 #endif
-
-
-
 
 #ifndef HAVE_GET_CURRENT_DIR_NAME
 /*
@@ -116,56 +99,75 @@ int daemon(int nochdir, int noclose)
 */
 char *get_current_dir_name(void)
 {
-  size_t size;
-  char *buf;
-  char *r;
+	size_t size;
+	char *buf;
+	char *r;
 
-  /* Start with 100 bytes.  If this turns out to be insufficient to
-     contain the working directory, double the size.  */
-  size = 100;
-  buf = xmalloc(size);
+	/* Start with 100 bytes.  If this turns out to be insufficient to
+	   contain the working directory, double the size.  */
+	size = 100;
+	buf = xmalloc(size);
 
-  errno = 0; /* Success */
-  r = getcwd(buf, size);
-  /* getcwd returns NULL and sets errno to ERANGE if the bufferspace
-     is insufficient to contain the entire working directory.  */
-  while(r == NULL && errno == ERANGE)
-    {
-      free(buf);
-      size <<= 1; /* double the size */
-      buf = xmalloc(size);
-      r = getcwd(buf, size);
-    }
+	errno = 0;					/* Success */
+	r = getcwd(buf, size);
 
-  return buf;
+	/* getcwd returns NULL and sets errno to ERANGE if the bufferspace
+	   is insufficient to contain the entire working directory.  */
+	while(r == NULL && errno == ERANGE) {
+		free(buf);
+		size <<= 1;				/* double the size */
+		buf = xmalloc(size);
+		r = getcwd(buf, size);
+	}
+
+	return buf;
 }
 #endif
 
 #ifndef HAVE_ASPRINTF
 int asprintf(char **buf, const char *fmt, ...)
 {
-  int status;
-  va_list ap;
-  int len;
-  
-  len = 4096;
-  *buf = xmalloc(len);
+	int status;
+	va_list ap;
+	int len;
 
-  va_start(ap, fmt);
-  status = vsnprintf (*buf, len, fmt, ap);
-  va_end (ap);
+	len = 4096;
+	*buf = xmalloc(len);
 
-  if(status >= 0)
-    *buf = xrealloc(*buf, status);
+	va_start(ap, fmt);
+	status = vsnprintf(*buf, len, fmt, ap);
+	va_end(ap);
 
-  if(status > len-1)
-    {
-      len = status;
-      va_start(ap, fmt);
-      status = vsnprintf (*buf, len, fmt, ap);
-      va_end (ap);
-    }
+	if(status >= 0)
+		*buf = xrealloc(*buf, status + 1);
 
-  return status;
+	if(status > len - 1) {
+		len = status;
+		va_start(ap, fmt);
+		status = vsnprintf(*buf, len, fmt, ap);
+		va_end(ap);
+	}
+
+	return status;
+}
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+int gettimeofday(struct timeval *tv, void *tz) {
+	tv->tv_sec = time(NULL);
+	tv->tv_usec = 0;
+	return 0;
+}
+#endif
+
+#ifndef HAVE_RANDOM
+#include <openssl/rand.h>
+
+long int random(void) {
+	long int x;
+	
+	RAND_pseudo_bytes((unsigned char *)&x, sizeof(x));
+
+	return x;
 }
 #endif

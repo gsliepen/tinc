@@ -32,15 +32,7 @@ void *realloc ();
 void free ();
 #endif
 
-#if ENABLE_NLS
-# include <libintl.h>
-# define _(Text) gettext (Text)
-#else
-# define textdomain(Domain)
-# define _(Text) Text
-#endif
-#define N_(Text) Text
-
+#include "gettext.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE

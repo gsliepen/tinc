@@ -1,7 +1,7 @@
 /*
     net.h -- generic header for device.c
-    Copyright (C) 2001-2002 Ivo Timmermans <zarq@iname.com>
-                  2001-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2001-2003 Ivo Timmermans <zarq@iname.com>
+                  2001-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,20 +17,23 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.h,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: device.h,v 1.3 2003/08/24 20:38:24 guus Exp $
 */
 
 #ifndef __TINC_DEVICE_H__
 #define __TINC_DEVICE_H__
 
+#include "net.h"
+
 extern int device_fd;
 extern char *device;
-extern char *interface;
 
-extern int setup_device(void);
+extern char *iface;
+
+extern bool setup_device(void);
 extern void close_device(void);
-extern int read_packet(vpn_packet_t *);
-extern int write_packet(vpn_packet_t *);
+extern bool read_packet(struct vpn_packet_t *);
+extern bool write_packet(struct vpn_packet_t *);
 extern void dump_device_stats(void);
 
-#endif /* __TINC_DEVICE_H__ */
+#endif							/* __TINC_DEVICE_H__ */

@@ -19,6 +19,7 @@
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
 */
 
+#ifndef HAVE_MINGW
 /* read_pid
  *
  * Reads the specified pidfile and returns the read pid.
@@ -48,3 +49,4 @@ int write_pid (char *pidfile);
  * is returned
  */
 int remove_pid (char *pidfile);
+#endif

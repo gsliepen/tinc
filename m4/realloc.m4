@@ -20,8 +20,7 @@ AC_DEFUN(jm_FUNC_REALLOC,
  fi
  dnl xmalloc.c requires that this symbol be defined so it doesn't
  dnl mistakenly use a broken realloc -- as it might if this test were omitted.
- ac_kludge=HAVE_DONE_WORKING_REALLOC_CHECK
- AC_DEFINE_UNQUOTED($ac_kludge)
+ AC_DEFINE(HAVE_DONE_WORKING_REALLOC_CHECK, 1, [Needed for xmalloc.c])
 
  AC_CACHE_CHECK([for working realloc], jm_cv_func_working_realloc,
   [AC_TRY_RUN([
@@ -38,7 +37,8 @@ AC_DEFUN(jm_FUNC_REALLOC,
 	 jm_cv_func_working_realloc=no)
   ])
   if test $jm_cv_func_working_realloc = no; then
-    LIBOBJS="$LIBOBJS realloc.o"
-    AC_DEFINE_UNQUOTED(realloc, rpl_realloc)
+    dnl This was: LIBOBJS="$LIBOBJS realloc.$ac_objext"
+    AC_LIBOBJ([realloc])
+    AC_DEFINE(realloc, rpl_realloc, [Replacement realloc()])
   fi
 ])

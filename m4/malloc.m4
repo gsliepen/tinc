@@ -20,8 +20,7 @@ AC_DEFUN(jm_FUNC_MALLOC,
  fi
  dnl xmalloc.c requires that this symbol be defined so it doesn't
  dnl mistakenly use a broken malloc -- as it might if this test were omitted.
- ac_kludge=HAVE_DONE_WORKING_MALLOC_CHECK
- AC_DEFINE_UNQUOTED($ac_kludge)
+ AC_DEFINE(HAVE_DONE_WORKING_MALLOC_CHECK, 1, [Needed for xmalloc.c])
 
  AC_CACHE_CHECK([for working malloc], jm_cv_func_working_malloc,
   [AC_TRY_RUN([
@@ -38,7 +37,8 @@ AC_DEFUN(jm_FUNC_MALLOC,
 	 jm_cv_func_working_malloc=no)
   ])
   if test $jm_cv_func_working_malloc = no; then
-    LIBOBJS="$LIBOBJS malloc.o"
-    AC_DEFINE_UNQUOTED(malloc, rpl_malloc)
+    dnl This was: LIBOBJS="$LIBOBJS malloc.$ac_objext"
+    AC_LIBOBJ([malloc])
+    AC_DEFINE(malloc, rpl_malloc, [Replacement malloc()])
   fi
 ])

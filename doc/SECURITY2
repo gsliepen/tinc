@@ -1,6 +1,6 @@
 This is the security documentation for tinc, a Virtual Private Network daemon.
 
-   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.eu.org>,
              2001-2002 Wessel Dankers <wsl@nl.linux.org>
 
    Permission is granted to make and distribute verbatim copies of
@@ -12,7 +12,7 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: SECURITY2,v 1.2 2002/04/12 08:25:01 guus Exp $
+   $Id: SECURITY2,v 1.3 2003/08/24 20:38:18 guus Exp $
 
 Proposed new authentication scheme
 ----------------------------------
@@ -66,17 +66,15 @@ server  CHAL_REPLY 928ffe
 After the correct challenge replies are recieved, both ends have proved
 their identity. Further information is exchanged.
 
-client  ACK 655 12.23.34.45 123 0
-             |       |       |  +-> options
-	     |       |       +----> estimated weight
-	     |       +------------> IP address of server as seen by client
-	     +--------------------> UDP port of client
+client  ACK 655 123 0
+             |   |  +-> options
+	         |   +----> estimated weight
+	         +--------> listening port of client
 
-server  ACK 655 21.32.43.54 321 0
-             |       |       |  +-> options
-	     |       |       +----> estimated weight
-	     |       +------------> IP address of client as seen by server
-	     +--------------------> UDP port of server
+server  ACK 655 321 0
+             |   |  +-> options
+	         |   +----> estimated weight
+	         +--------> listening port of server
 --------------------------------------------------------------------------
 
 This new scheme has several improvements, both in efficiency and security.

@@ -1,7 +1,7 @@
 /*
     protocol.h -- header for protocol.c
-    Copyright (C) 1999-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2001 Ivo Timmermans <ivo@o2w.nl>,
+                  2000,2001 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,40 +17,41 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.8 2002/04/28 12:46:26 zarq Exp $
+    $Id: protocol.h,v 1.9 2003/08/24 20:38:27 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
-#include "net.h"
-#include "node.h"
-#include "subnet.h"
-
 /* Protocol version. Different versions are incompatible,
    incompatible version have different protocols.
  */
 
-#define PROT_CURRENT 14
+#define PROT_CURRENT 17
+
+/* Silly Windows */
+
+#ifdef ERROR
+#undef ERROR
+#endif
 
 /* Request numbers */
 
-enum {
-  ALL = -1,			     /* Guardian for allow_request */
-  ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
-  STATUS, ERROR, TERMREQ,
-  PING, PONG,
-  /*  ADD_NODE, DEL_NODE, */
-  ADD_SUBNET, DEL_SUBNET,
-  ADD_EDGE, DEL_EDGE,
-  KEY_CHANGED, REQ_KEY, ANS_KEY,
-  PACKET,
-  LAST                               /* Guardian for the highest request number */
-};
+typedef enum request_t {
+	ALL = -1,					/* Guardian for allow_request */
+	ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
+	STATUS, ERROR, TERMREQ,
+	PING, PONG,
+	ADD_SUBNET, DEL_SUBNET,
+	ADD_EDGE, DEL_EDGE,
+	KEY_CHANGED, REQ_KEY, ANS_KEY,
+	PACKET,
+	LAST						/* Guardian for the highest request number */
+} request_t;
 
 typedef struct past_request_t {
-  char *request;
-  time_t firstseen;
+	char *request;
+	time_t firstseen;
 } past_request_t;
 
 /* Maximum size of strings in a request */
@@ -58,63 +59,63 @@ typedef struct past_request_t {
 #define MAX_STRING_SIZE 2048
 #define MAX_STRING "%2048s"
 
+#include "edge.h"
+#include "net.h"
+#include "node.h"
+#include "subnet.h"
+
 /* Basic functions */
 
-extern int send_request(connection_t*, const char*, ...);
-extern int receive_request(connection_t *);
-extern int check_id(char *);
+extern bool send_request(struct connection_t *, const char *, ...) __attribute__ ((__format__(printf, 2, 3)));
+extern void forward_request(struct connection_t *);
+extern bool receive_request(struct connection_t *);
+extern bool check_id(const char *);
 
 extern void init_requests(void);
 extern void exit_requests(void);
-extern int seen_request(char *);
+extern bool seen_request(char *);
 extern void age_past_requests(void);
 
 /* Requests */
 
-extern int send_id(connection_t *);
-extern int send_metakey(connection_t *);
-extern int send_challenge(connection_t *);
-extern int send_chal_reply(connection_t *);
-extern int send_ack(connection_t *);
-extern int send_status(connection_t *, int, char *);
-extern int send_error(connection_t *, int, char *);
-extern int send_termreq(connection_t *);
-extern int send_ping(connection_t *);
-extern int send_pong(connection_t *);
-/* extern int send_add_node(connection_t *, node_t *); */
-/* extern int send_del_node(connection_t *, node_t *); */
-extern int send_add_subnet(connection_t *, subnet_t *);
-extern int send_del_subnet(connection_t *, subnet_t *);
-extern int send_add_edge(connection_t *, edge_t *);
-extern int send_del_edge(connection_t *, edge_t *);
-extern int send_key_changed(connection_t *, node_t *);
-extern int send_req_key(connection_t *, node_t *, node_t *);
-extern int send_ans_key(connection_t *, node_t *, node_t *);
-extern int send_tcppacket(connection_t *, vpn_packet_t *);
+extern bool send_id(struct connection_t *);
+extern bool send_metakey(struct connection_t *);
+extern bool send_challenge(struct connection_t *);
+extern bool send_chal_reply(struct connection_t *);
+extern bool send_ack(struct connection_t *);
+extern bool send_status(struct connection_t *, int, const char *);
+extern bool send_error(struct connection_t *, int,const  char *);
+extern bool send_termreq(struct connection_t *);
+extern bool send_ping(struct connection_t *);
+extern bool send_pong(struct connection_t *);
+extern bool send_add_subnet(struct connection_t *, const struct subnet_t *);
+extern bool send_del_subnet(struct connection_t *, const struct subnet_t *);
+extern bool send_add_edge(struct connection_t *, const struct edge_t *);
+extern bool send_del_edge(struct connection_t *, const struct edge_t *);
+extern bool send_key_changed(struct connection_t *, const struct node_t *);
+extern bool send_req_key(struct connection_t *, const struct node_t *, const struct node_t *);
+extern bool send_ans_key(struct connection_t *, const struct node_t *, const struct node_t *);
+extern bool send_tcppacket(struct connection_t *, struct vpn_packet_t *);
 
 /* Request handlers  */
 
-extern int (*request_handlers[])(connection_t *);
+extern bool id_h(struct connection_t *);
+extern bool metakey_h(struct connection_t *);
+extern bool challenge_h(struct connection_t *);
+extern bool chal_reply_h(struct connection_t *);
+extern bool ack_h(struct connection_t *);
+extern bool status_h(struct connection_t *);
+extern bool error_h(struct connection_t *);
+extern bool termreq_h(struct connection_t *);
+extern bool ping_h(struct connection_t *);
+extern bool pong_h(struct connection_t *);
+extern bool add_subnet_h(struct connection_t *);
+extern bool del_subnet_h(struct connection_t *);
+extern bool add_edge_h(struct connection_t *);
+extern bool del_edge_h(struct connection_t *);
+extern bool key_changed_h(struct connection_t *);
+extern bool req_key_h(struct connection_t *);
+extern bool ans_key_h(struct connection_t *);
+extern bool tcppacket_h(struct connection_t *);
 
-extern int id_h(connection_t *);
-extern int metakey_h(connection_t *);
-extern int challenge_h(connection_t *);
-extern int chal_reply_h(connection_t *);
-extern int ack_h(connection_t *);
-extern int status_h(connection_t *);
-extern int error_h(connection_t *);
-extern int termreq_h(connection_t *);
-extern int ping_h(connection_t *);
-extern int pong_h(connection_t *);
-/* extern int add_node_h(connection_t *); */
-/* extern int del_node_h(connection_t *); */
-extern int add_subnet_h(connection_t *);
-extern int del_subnet_h(connection_t *);
-extern int add_edge_h(connection_t *);
-extern int del_edge_h(connection_t *);
-extern int key_changed_h(connection_t *);
-extern int req_key_h(connection_t *);
-extern int ans_key_h(connection_t *);
-extern int tcppacket_h(connection_t *);
-
-#endif /* __TINC_PROTOCOL_H__ */
+#endif							/* __TINC_PROTOCOL_H__ */

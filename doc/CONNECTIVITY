@@ -1,7 +1,7 @@
 This document describes how nodes in a VPN find and connect to eachother and
 maintain a stable network.
 
-   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.eu.org>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this
@@ -12,343 +12,34 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.2 2002/04/12 08:25:01 guus Exp $
+   $Id: CONNECTIVITY,v 1.3 2003/08/24 20:38:18 guus Exp $
 
-1. Problem
+1. Synchronisation
+==================
+
+Each tinc daemon has zero or more connections to other tinc daemons. It will
+try to keep its own information synchronised with the other tinc daemons. If
+one of its peers sends information, the tinc daemon will check if it is new
+information. If so, it will update its own information and forward the new
+information to all the other peers.
+
+This scheme will make sure that after a short amount of time all tinc daemons
+share the same information. It will also almost completely prevent information
+from looping, because "new" information that is already known is ignored and
+not forwarded any further. However, since information can also be deleted
+there's the possibility of a looping sequence of add/delete messages. This is
+resolved by additionaly adding a unique identifier to each broadcasted message.
+Messages are dropped if the same message with that identifier has already been
+seen.
+
+2. Routing
 ==========
 
-We have a set of nodes (A, B, C, ...) that are part of the same VPN. They need
-to connect to eachother and form a single graph that satisfies the tree
-property.
+Every node tells its peers to which other peers it is connected. This way
+every node will eventually know every connection every node has on the VPN.
+Each node will use graph algorithms to determine if other nodes are reachable or not and
+what the best route is to other nodes.
 
-There is the possibility that loops are formed, the offending connections must
-be eliminated.
-
-Suppose we start with two smaller graphs that want to form a single larger
-graph. Both graphs consist of three nodes:
-
-  A-----B-----C
-  
-  
-
-  D-----E-----F
-  
-It is very well possible that A wants to connect to D, and F wants to connect
-to C, both at the same time. The following loop will occur:
-
-  A-----B-----C
-  |           ^
-  |           |
-  v           |
-  D-----E-----F
-
-The situation described here is totally symmetric, there is no preference to
-one connection over the other. The problem of resolving the loop, maintaining
-consistency and stability is therefore not a trivial one.
-
-What happens when A---D and C---F are connected to eachother? They exchange
-lists of known hosts. A knows of B and C, and D knows of E and F. The protocol
-defines ADD_HOST messages, from now on we will say that "node X sends and
-ADD_HOST(Y) to Z".
-
-There are two possible scenarios: either both A---D and C---F finish
-authentication at the same time, or A---D finishes first, so that ADD_HOST
-messages will reach C and F before they finish authentication.
-
-1.1 A---D finishes first
-------------------------
-
-After A---D authentication finishes the following actions are taken:
-
-  1 A sends ADD_HOST(B) to D
-    A sends ADD_HOST(C) to D
-    D sends ADD_HOST(E) to A
-    D sends ADD_HOST(F) to A
-
-  2 A sends ADD_HOST(D) to B
-    A receives ADD_HOST(E) from D:
-      A sends ADD_HOST(E) to B
-    A receives ADD_HOST(F) from D:
-      A sends ADD_HOST(F) to B
-    D sends ADD_HOST(A) to E
-    D receives ADD_HOST(B) from A:
-      D sends ADD_HOST(B) to E
-    D receives ADD_HOST(C) from A:
-      D sends ADD_HOST(C) to E
-
-  3 B receives ADD_HOST(D) from A,
-      B sends ADD_HOST(D) to C
-    B receives ADD_HOST(E) from A:
-      B sends ADD_HOST(E) to C
-    B receives ADD_HOST(F) from A:
-      B sends ADD_HOST(F) to C
-    E receives ADD_HOST(A) from D:
-      E sends ADD_HOST(A) to F
-    E receives ADD_HOST(B) from D:
-      E sends ADD_HOST(B) to F
-    E receives ADD_HOST(C) from D:
-      E sends ADD_HOST(C) to F
-
-  4 C receives ADD_HOST(D) from B.
-    C receives ADD_HOST(E) from B.
-    C receives ADD_HOST(F) from B.
-    F receives ADD_HOST(A) from E.
-    F receives ADD_HOST(B) from E.
-    F receives ADD_HOST(C) from E.
-
-Then C---F authentication finishes, the following actions are taken:
-
-  1 C notes that F is already known:
-      Connection is closed.
-    F notes that C is already known:
-      Connection is closed.
-
-1.2 Both A---D and C---F finish at the same time.
--------------------------------------------------
-
-  1 A sends ADD_HOST(B) to D
-    A sends ADD_HOST(C) to D
-    D sends ADD_HOST(E) to A
-    D sends ADD_HOST(F) to A
-    
-    C sends ADD_HOST(A) to F
-    C sends ADD_HOST(B) to F
-    F sends ADD_HOST(D) to C
-    F sends ADD_HOST(E) to C
-
-  2 A sends ADD_HOST(D) to B
-    A receives ADD_HOST(E) from D:
-      A sends ADD_HOST(E) to B
-    A receives ADD_HOST(F) from D:
-      A sends ADD_HOST(F) to B
-    D sends ADD_HOST(A) to E
-    D receives ADD_HOST(B) from A:
-      D sends ADD_HOST(B) to E
-    D receives ADD_HOST(C) from A:
-      D sends ADD_HOST(C) to E
-
-    C sends ADD_HOST(F) to B
-    C receives ADD_HOST(D) from F:
-      A sends ADD_HOST(D) to B
-    C receives ADD_HOST(E) from F:
-      A sends ADD_HOST(E) to B
-    F sends ADD_HOSTS(C) to E
-    F receives ADD_HOST(A) from C:
-      D sends ADD_HOST(A) to E
-    F receives ADD_HOST(B) from C:
-      D sends ADD_HOST(B) to E
-
-  3 B receives ADD_HOST(D) from A,
-      B sends ADD_HOST(D) to C
-    B receives ADD_HOST(E) from A:
-      B sends ADD_HOST(E) to C
-    B receives ADD_HOST(F) from A:
-      B sends ADD_HOST(F) to C
-    E receives ADD_HOST(A) from D:
-      E sends ADD_HOST(A) to F
-    E receives ADD_HOST(B) from D:
-      E sends ADD_HOST(B) to F
-    E receives ADD_HOST(C) from D:
-      E sends ADD_HOST(C) to F
-    
-    B receives ADD_HOST(F) from C, and notes that is is already known:
-      <insert solution here>
-    B receives ADD_HOST(D) from C, and notes that is is already known:
-      <insert solution here>
-    B receives ADD_HOST(E) from C, and notes that is is already known:
-      <insert solution here>
-    E receives ADD_HOST(C) from F, and notes that is is already known:
-      <insert solution here>
-    E receives ADD_HOST(A) from F, and notes that is is already known:
-      <insert solution here>
-    E receives ADD_HOST(B) from F, and notes that is is already known:
-      <insert solution here>
-
-  4 A receives ADD_HOST(D) from B, and notes that it is already known:
-      <insert solution here>
-    A receives ADD_HOST(E) from B, and notes that it is already known:
-      <insert solution here>
-    A receives ADD_HOST(F) from B, and notes that it is already known:
-      <insert solution here>
-    F receives ADD_HOST(A) from E, and notes that it is already known:
-      <insert solution here>
-    F receives ADD_HOST(B) from E, and notes that it is already known:
-      <insert solution here>
-    F receives ADD_HOST(B) from E, and notes that it is already known:
-      <insert solution here>
-
-    ...
-
-1.2.1 Augmenting ADD_HOST
--------------------------
-
-A solution would be to augment ADD_HOST with an extra parameter, the nexthop of
-the added host:
-
-  3 B receives ADD_HOST(D,A) from A,
-      B sends ADD_HOST(D,A) to C
-    B receives ADD_HOST(E,D) from A:
-      B sends ADD_HOST(E,D) to C
-    B receives ADD_HOST(F,E) from A:
-      B sends ADD_HOST(F,E) to C
-    E receives ADD_HOST(A,D) from D:
-      E sends ADD_HOST(A,D) to F
-    E receives ADD_HOST(B,A) from D:
-      E sends ADD_HOST(B,A) to F
-    E receives ADD_HOST(C,B) from D:
-      E sends ADD_HOST(C,B) to F
-    
-    B receives ADD_HOST(F,C) from C, and notes that F is already known:
-      <insert solution here>
-    B receives ADD_HOST(D,E) from C, and notes that D is already known:
-      <insert solution here>
-    B receives ADD_HOST(E,F) from C, and notes that E is already known:
-      <insert solution here>
-    E receives ADD_HOST(C,F) from F, and notes that C is already known:
-      <insert solution here>
-    E receives ADD_HOST(A,B) from F, and notes that A is already known:
-      <insert solution here>
-    E receives ADD_HOST(B,C) from F, and notes that B is already known:
-      <insert solution here>
-
-So, B and E have to make a choice. Which ADD_HOST is going to win? Fortunately,
-since the ADD_HOST messages are augmented, they have an extra piece of
-information they can use to decide in a deterministic way which one is going to
-win. For example, B got ADD_HOST(F,E) and ADD_HOST(F,C). Since "E" > "C", it
-could let ADD_HOST(F,E) win.
-
-    B receives ADD_HOST(F,C) from C, and notes that F is already known:
-      since "C" < "E", B ignores ADD_HOST(F,E)
-      B sends ADD_HOST(F,C) to A
-    ...
-    E receives ADD_HOST(C,F) from F, and notes that C is already known:
-      since "F" > "B", E removes the ADD_HOST(C,B) in favour of the new one
-      E sends ADD_HOST(C,F) to D
-
-  4 A receives ADD_HOST(F,E) from B, and notes that F is already known:
-      since "E" < "D", A ignores ADD_HOST(F,D).
-    ...
-    D receives ADD_HOST(C,F) from E, and notes that C is already known:
-      since "F" > "B", D removes the ADD_HOST(C,B),
-      closes the connection with C, in favour of the new one.
-
-Ok, time to forget this crap.
-
-1.2.2
------
-
-The problem with the current ADD/DEL_HOST technique is that each host only
-knows the general direction in which to send packets for the other hosts. It
-really doesn't know much about the true topology of the network, only about
-it's direct neighbours. With so little information each host cannot make a
-certain decision which it knows for sure all the others will decide too.
-
-Let's do something totally different. Instead of notifying every host of the
-addition of a new host, which is represented by a vertex in a graph, lets send
-out notifications of new connections, which are the edges in a graph. This is
-rather cheap, since our graphs are (almost) spanning trees, there is
-approximately one edge for each vertex in the graph, so we don't need to send
-more messages. Furthermore, an edge is characterized by two vertices, so we
-only send a fixed amount of extra information. The size/complexity of the
-problem therefore does not increase much.
-
-What is the advantage of notifying each vertex of new edges instead of new
-vertices? Well, all the vertices now know exactly which connections are made
-between each host. This was not known with the former schemes.
-
-Ok back to our problem:
-
-  A-----B-----C
-  
-  
-
-  D-----E-----F
-  
-Edges are undirected, and are characterised by the vertices it connects, sorted
-alphabetically, so the edges in the two graphs are:
-
-(A,B), (B,C), (D,E) and (E,F).
-
-So again we have that A wants to connect to D, and F wants to connect to C,
-both at the same time. The following loop will occur:
-
-  A-----B-----C
-  |           ^
-  |           |
-  v           |
-  D-----E-----F
-
-Instead of sending ADD_HOSTs, lets assume the hosts send ADD_EDGEs. So, after
-making the connections:
-
-  1 A sends ADD_EDGE(A,D) to B
-    A sends ADD_EDGE(A,B) to D
-    A sends ADD_EDGE(B,C) to D
-    D sends ADD_EDGE(A,D) to E
-    D sends ADD_EDGE(D,E) to A
-    D sends ADD_EDGE(E,F) to A
-    
-    C sends ADD_EDGE(C,F) to B
-    C sends ADD_EDGE(A,B) to F
-    C sends ADD_EDGE(B,C) to F
-    F sends ADD_EDGE(C,F) to E
-    F sends ADD_EDGE(D,E) to C
-    F sends ADD_EDGE(E,F) to C
-
-  2 B receives ADD_EDGE(A,D) from A:
-      B sends ADD_EDGE(A,D) to C
-    B receives ADD_EDGE(D,E) from A:
-      B sends ADD_EDGE(D,E) to C
-    B receives ADD_EDGE(E,F) from A:
-      B sends ADD_EDGE(E,F) to C
-    ...
-    
-    B receives ADD_EDGE(C,F) from C, notes that both C and F are already known,
-    but that the edge (C,F) was not known, so a loop has been created:
-      <resolve loop here>
-
-Ok, how to resolve the loop? Remeber, we want to do that in such a way that it
-is consistent with the way all the other hosts resolve the loop. Here is the
-things B does when it notices that a loop is going to be formed:
-
-  B performs a Breadth First Search from the first element of the list of all
-  known hosts sorted alfabetically, in this case A, and thereby finds a
-  spanning tree. (This might later be changed into a minimum spanning tree
-  alhorithm, but the key point here is that all hosts do this with exactly the
-  same starting parameters.) All known edges that are not in the spanning tree
-  are marked inactive.
-
-An edge marked inactive does not mean anything, unless this edge is connected
-to B itself. In that case, B will stop sending messages over that edge. B might
-consider closing this edge, but this is not really needed. Keeping it means no
-DEL_EDGE has to be sent for it, and if another edge is removed (which will
-quite certainly split the graph if it's a spanning tree), this edge might be
-reactivated, without the need of sending a new ADD_EDGE for it. On the other
-hand, we mustn't keep to many inactive edges, because we want to keep the
-number of known edges linear to the number of hosts (otherwise the size of the
-problem will grow quadratically).
-
-So, since B didn't deactivate one of it's own edges, it forwards the
-ADD_EDGE(C,F) to A, which also does a BFS, and so on, until it reaches F. F of
-course also does a BFS, notes that is is one of it's own edges. It deactivates
-the edge (C,F), and consequently will not forward the ADD_EDGE(C,F) to C
-anymore. In the mean time, C got messages from B which will make C do the same.
-
-Ok, suppose a DEL_EDGE was sent, and it means an inactive edge has to be
-reactivated. The vertices connected by that edge must exchange their entire
-knowledge of edges again, because in the mean time other messages could have
-been sent, which were not properly forwarded. Take this example:
-
-  X     C-----D
-  |     |     |
-  |     |     |
-  v     |     |
-  A-----B- - -E
-
-The edge (B,E) is inactive. X is trying to make a new connection with A. A
-sends an ADD_EDGE(A,X) to B, which forwards it to C. At that time, the
-connection between C and D goes down, so C sends a DEL_EDGE(C,D) to B, and D
-sends a DEL_EDGE(C,D) to E. If we just allow (B,E) to be reactivated again
-without anything else, then E and D will never have received the ADD_EDGE(A,X).
-So, B and E have to exchange edges again, and propagate them to the hosts they
-already know.
+Because all nodes share the same information, using a deterministic algorithm
+each node will calculate the same minimum spanning tree for the entire VPN.
+The MST will be used to send broadcast VPN packets.

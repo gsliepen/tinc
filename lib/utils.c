@@ -1,7 +1,7 @@
 /*
     utils.c -- gathering of some stupid small functions
-    Copyright (C) 1999-2001 Ivo Timmermans <zarq@iname.com>
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2003 Ivo Timmermans <zarq@iname.com>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,15 +18,10 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include <sys/types.h>
-#include <ctype.h>
-#include <string.h>
+#include "system.h"
 
-#include "config.h"
-
-#include <utils.h>
-#include <syslog.h>
-#include <xalloc.h>
+#include "../src/logger.h"
+#include "utils.h"
 
 #ifdef ENABLE_TRACING
 volatile int (cp_line[]) = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -38,50 +33,70 @@ char *hexadecimals = "0123456789ABCDEF";
 
 int charhex2bin(char c)
 {
-  if(isdigit(c))
-    return c - '0';
-  else
-    return toupper(c) - 'A' + 10;
+	if(isdigit(c))
+		return c - '0';
+	else
+		return toupper(c) - 'A' + 10;
 }
 
 
 void hex2bin(char *src, char *dst, int length)
 {
-  int i;
-  for(i=0; i<length; i++)
-    dst[i] = charhex2bin(src[i*2])*16 + charhex2bin(src[i*2+1]);
+	int i;
+	for(i = 0; i < length; i++)
+		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 }
 
 void bin2hex(char *src, char *dst, int length)
 {
-  int i;
-  for(i=length-1; i>=0; i--)
-    {
-      dst[i*2+1] = hexadecimals[(unsigned char)src[i] & 15];
-      dst[i*2] = hexadecimals[(unsigned char)src[i]>>4];
-    }
+	int i;
+	for(i = length - 1; i >= 0; i--) {
+		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
+		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
+	}
 }
 
 #ifdef ENABLE_TRACING
 void cp_trace()
 {
-  syslog(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
-           cp_file[(cp_index+15)%16], cp_line[(cp_index+15)%16],
-           cp_file[(cp_index+14)%16], cp_line[(cp_index+14)%16],
-           cp_file[(cp_index+13)%16], cp_line[(cp_index+13)%16],
-           cp_file[(cp_index+12)%16], cp_line[(cp_index+12)%16],
-           cp_file[(cp_index+11)%16], cp_line[(cp_index+11)%16],
-           cp_file[(cp_index+10)%16], cp_line[(cp_index+10)%16],
-           cp_file[(cp_index+9)%16], cp_line[(cp_index+9)%16],
-           cp_file[(cp_index+8)%16], cp_line[(cp_index+8)%16],
-           cp_file[(cp_index+7)%16], cp_line[(cp_index+7)%16],
-           cp_file[(cp_index+6)%16], cp_line[(cp_index+6)%16],
-           cp_file[(cp_index+5)%16], cp_line[(cp_index+5)%16],
-           cp_file[(cp_index+4)%16], cp_line[(cp_index+4)%16],
-           cp_file[(cp_index+3)%16], cp_line[(cp_index+3)%16],
-           cp_file[(cp_index+2)%16], cp_line[(cp_index+2)%16],
-           cp_file[(cp_index+1)%16], cp_line[(cp_index+1)%16],
-           cp_file[cp_index], cp_line[cp_index]
-        );
+	logger(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
+		   cp_file[(cp_index + 15) % 16], cp_line[(cp_index + 15) % 16],
+		   cp_file[(cp_index + 14) % 16], cp_line[(cp_index + 14) % 16],
+		   cp_file[(cp_index + 13) % 16], cp_line[(cp_index + 13) % 16],
+		   cp_file[(cp_index + 12) % 16], cp_line[(cp_index + 12) % 16],
+		   cp_file[(cp_index + 11) % 16], cp_line[(cp_index + 11) % 16],
+		   cp_file[(cp_index + 10) % 16], cp_line[(cp_index + 10) % 16],
+		   cp_file[(cp_index + 9) % 16], cp_line[(cp_index + 9) % 16],
+		   cp_file[(cp_index + 8) % 16], cp_line[(cp_index + 8) % 16],
+		   cp_file[(cp_index + 7) % 16], cp_line[(cp_index + 7) % 16],
+		   cp_file[(cp_index + 6) % 16], cp_line[(cp_index + 6) % 16],
+		   cp_file[(cp_index + 5) % 16], cp_line[(cp_index + 5) % 16],
+		   cp_file[(cp_index + 4) % 16], cp_line[(cp_index + 4) % 16],
+		   cp_file[(cp_index + 3) % 16], cp_line[(cp_index + 3) % 16],
+		   cp_file[(cp_index + 2) % 16], cp_line[(cp_index + 2) % 16],
+		   cp_file[(cp_index + 1) % 16], cp_line[(cp_index + 1) % 16],
+		   cp_file[cp_index], cp_line[cp_index]
+		);
 }
 #endif
+
+#if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
+#ifdef HAVE_CYGWIN
+#include <w32api/windows.h>
+#endif
+
+char *winerror(int err) {
+	static char buf[1024], *newline;
+
+	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
+		strncpy(buf, _("(unable to format errormessage)"), sizeof(buf));
+	};
+
+	if((newline = strchr(buf, '\r')))
+		*newline = '\0';
+
+	return buf;
+}
+#endif
+

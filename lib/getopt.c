@@ -85,16 +85,7 @@ USA.  */
 #define getpid() GetCurrentProcessId()
 #endif
 
-#ifndef _
-/* This is for other GNU distributions with internationalized messages.
-   When compiling libc, the _ macro is predefined.  */
-#ifdef HAVE_LIBINTL_H
-# include <libintl.h>
-# define _(msgid)	gettext (msgid)
-#else
-# define _(msgid)	(msgid)
-#endif
-#endif
+#include "gettext.h"
 
 /* This version of `getopt' appears to the caller like standard Unix `getopt'
    but it behaves differently for the user, since it allows the user
@@ -268,7 +259,7 @@ extern pid_t __libc_pid;
    is valid for the getopt call we must make sure that the ARGV passed
    to getopt is that one passed to the process.  */
 static void
-__attribute__ ((unused))
+__attribute__ ((__unused__))
 store_args_and_env (int argc, char *const *argv)
 {
   /* XXX This is no good solution.  We should rather copy the args so

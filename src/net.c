@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,213 +17,183 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.39 2002/04/28 12:46:26 zarq Exp $
+    $Id: net.c,v 1.40 2003/08/24 20:38:24 guus Exp $
 */
 
-#include "config.h"
-
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#ifdef HAVE_LINUX
- #include <netinet/ip.h>
- #include <netinet/tcp.h>
-#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-/* SunOS really wants sys/socket.h BEFORE net/if.h,
-   and FreeBSD wants these lines below the rest. */
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <net/if.h>
+#include "system.h"
 
 #include <openssl/rand.h>
 
-#include <utils.h>
-#include <xalloc.h>
-#include <avl_tree.h>
-#include <list.h>
-
+#include "utils.h"
+#include "avl_tree.h"
 #include "conf.h"
 #include "connection.h"
+#include "device.h"
+#include "event.h"
+#include "graph.h"
+#include "logger.h"
 #include "meta.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"
 #include "protocol.h"
-#include "subnet.h"
-#include "graph.h"
-#include "process.h"
 #include "route.h"
-#include "device.h"
-#include "event.h"
-#include "logging.h"
+#include "subnet.h"
+#include "xalloc.h"
 
-#include "system.h"
-
-int do_purge = 0;
-int sighup = 0;
-int sigalrm = 0;
+bool do_purge = false;
+volatile bool running = false;
 
 time_t now = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
-void purge(void)
+static void purge(void)
 {
-  avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext, *cnode;
-  node_t *n;
-  edge_t *e;
-  subnet_t *s;
-  connection_t *c;
-cp
-  if(debug_lvl >= DEBUG_PROTOCOL)
-    syslog(LOG_DEBUG, _("Purging unreachable nodes"));
+	avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
+	node_t *n;
+	edge_t *e;
+	subnet_t *s;
 
-  for(nnode = node_tree->head; nnode; nnode = nnext)
-  {
-    nnext = nnode->next;
-    n = (node_t *)nnode->data;
+	cp();
 
-    if(!n->status.reachable)
-    {
-      if(debug_lvl >= DEBUG_SCARY_THINGS)
-        syslog(LOG_DEBUG, _("Purging node %s (%s)"), n->name, n->hostname);
+	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
 
-      for(snode = n->subnet_tree->head; snode; snode = snext)
-      {
-        snext = snode->next;
-        s = (subnet_t *)snode->data;
+	/* Remove all edges and subnets owned by unreachable nodes. */
 
-        for(cnode = connection_tree->head; cnode; cnode = cnode->next)
-        {
-          c = (connection_t *)cnode->data;
-          if(c->status.active)
-            send_del_subnet(c, s);
-        }
+	for(nnode = node_tree->head; nnode; nnode = nnext) {
+		nnext = nnode->next;
+		n = (node_t *) nnode->data;
 
-        subnet_del(n, s);
-      }
+		if(!n->status.reachable) {
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
+					   n->hostname);
 
-      for(enode = n->edge_tree->head; enode; enode = enext)
-      {
-        enext = enode->next;
-        e = (edge_t *)enode->data;
+			for(snode = n->subnet_tree->head; snode; snode = snext) {
+				snext = snode->next;
+				s = (subnet_t *) snode->data;
+				send_del_subnet(broadcast, s);
+				subnet_del(n, s);
+			}
 
-        for(cnode = connection_tree->head; cnode; cnode = cnode->next)
-        {
-          c = (connection_t *)cnode->data;
-          if(c->status.active)
-            send_del_edge(c, e);
-        }
+			for(enode = n->edge_tree->head; enode; enode = enext) {
+				enext = enode->next;
+				e = (edge_t *) enode->data;
+				send_del_edge(broadcast, e);
+				edge_del(e);
+			}
+		}
+	}
 
-        edge_del(e);
-      }
+	/* Check if anyone else claims to have an edge to an unreachable node. If not, delete node. */
 
-      node_del(n);
-    }
-  }
-cp
+	for(nnode = node_tree->head; nnode; nnode = nnext) {
+		nnext = nnode->next;
+		n = (node_t *) nnode->data;
+
+		if(!n->status.reachable) {
+			for(enode = edge_weight_tree->head; enode; enode = enext) {
+				enext = enode->next;
+				e = (edge_t *) enode->data;
+
+				if(e->to == n)
+					break;
+			}
+
+			if(!enode)
+				node_del(n);
+		}
+	}
 }
 
 /*
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-void build_fdset(fd_set *fs)
+static int build_fdset(fd_set * fs)
 {
-  avl_node_t *node, *next;
-  connection_t *c;
-  int i;
-cp
-  FD_ZERO(fs);
+	avl_node_t *node, *next;
+	connection_t *c;
+	int i, max = 0;
 
-  for(node = connection_tree->head; node; node = next)
-    {
-      next = node->next;
-      c = (connection_t *)node->data;
+	cp();
 
-      if(c->status.remove)
-        connection_del(c);
-      else
-        FD_SET(c->socket, fs);
-    }
+	FD_ZERO(fs);
 
-  if(!connection_tree->head)
-    purge();
+	for(node = connection_tree->head; node; node = next) {
+		next = node->next;
+		c = (connection_t *) node->data;
 
-  for(i = 0; i < listen_sockets; i++)
-    {
-      FD_SET(listen_socket[i].tcp, fs);
-      FD_SET(listen_socket[i].udp, fs);
-    }
+		if(c->status.remove) {
+			connection_del(c);
+			if(!connection_tree->head)
+				purge();
+		} else {
+			FD_SET(c->socket, fs);
+			if(c->socket > max)
+				max = c->socket;
+		}
+	}
 
-  FD_SET(device_fd, fs);
-cp
+	for(i = 0; i < listen_sockets; i++) {
+		FD_SET(listen_socket[i].tcp, fs);
+		if(listen_socket[i].tcp > max)
+			max = listen_socket[i].tcp;
+		FD_SET(listen_socket[i].udp, fs);
+		if(listen_socket[i].udp > max)
+			max = listen_socket[i].udp;
+	}
+
+	FD_SET(device_fd, fs);
+	if(device_fd > max)
+		max = device_fd;
+	
+	return max;
 }
 
 /*
   Terminate a connection:
   - Close the socket
-  - Remove associated edge and tell other connections about it if report = 1
+  - Remove associated edge and tell other connections about it if report = true
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
-void terminate_connection(connection_t *c, int report)
+void terminate_connection(connection_t *c, bool report)
 {
-  avl_node_t *node;
-  connection_t *other;
-cp
-  if(c->status.remove)
-    return;
+	cp();
 
-  if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
-           c->name, c->hostname);
+	if(c->status.remove)
+		return;
 
-  c->status.remove = 1;
-  c->status.active = 0;
+	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
+			   c->name, c->hostname);
 
-  if(c->node)
-    c->node->connection = NULL;
+	c->status.remove = true;
+	c->status.active = false;
 
-  if(c->socket)
-    close(c->socket);
+	if(c->node)
+		c->node->connection = NULL;
 
-  if(c->edge)
-    {
-      if(report)
-        {
-          for(node = connection_tree->head; node; node = node->next)
-            {
-              other = (connection_t *)node->data;
-              if(other->status.active && other != c)
-                send_del_edge(other, c->edge);
-            }
-        }
+	if(c->socket)
+		closesocket(c->socket);
 
-      edge_del(c->edge);
+	if(c->edge) {
+		if(report)
+			send_del_edge(broadcast, c->edge);
 
-      /* Run MST and SSSP algorithms */
+		edge_del(c->edge);
 
-      graph();
-    }
+		/* Run MST and SSSP algorithms */
 
-  /* Check if this was our outgoing connection */
+		graph();
+	}
 
-  if(c->outgoing)
-    {
-      retry_outgoing(c->outgoing);
-      c->outgoing = NULL;
-    }
-cp
+	/* Check if this was our outgoing connection */
+
+	if(c->outgoing) {
+		retry_outgoing(c->outgoing);
+		c->outgoing = NULL;
+	}
 }
 
 /*
@@ -234,218 +204,232 @@ cp
   end does not reply in time, we consider them dead
   and close the connection.
 */
-void check_dead_connections(void)
+static void check_dead_connections(void)
 {
-  avl_node_t *node, *next;
-  connection_t *c;
-cp
-  for(node = connection_tree->head; node; node = next)
-    {
-      next = node->next;
-      c = (connection_t *)node->data;
-      if(c->last_ping_time + pingtimeout < now)
-        {
-          if(c->status.active)
-            {
-              if(c->status.pinged)
-                {
-                  if(debug_lvl >= DEBUG_PROTOCOL)
-                    syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
-                           c->name, c->hostname);
-                  c->status.timeout = 1;
-                  terminate_connection(c, 1);
-                }
-              else
-                {
-                  send_ping(c);
-                }
-            }
-          else
-            {
-              if(debug_lvl >= DEBUG_CONNECTIONS)
-                syslog(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
-                       c->name, c->hostname);
-              terminate_connection(c, 0);
-            }
-        }
-    }
-cp
+	avl_node_t *node, *next;
+	connection_t *c;
+
+	cp();
+
+	for(node = connection_tree->head; node; node = next) {
+		next = node->next;
+		c = (connection_t *) node->data;
+
+		if(c->last_ping_time + pingtimeout < now) {
+			if(c->status.active) {
+				if(c->status.pinged) {
+					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING"),
+							   c->name, c->hostname);
+					c->status.timeout = true;
+					terminate_connection(c, true);
+				} else {
+					send_ping(c);
+				}
+			} else {
+				if(c->status.remove) {
+					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
+						   c->name, c->hostname, *(uint32_t *)&c->status);
+					connection_del(c);
+					continue;
+				}
+				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
+						   c->name, c->hostname);
+				terminate_connection(c, false);
+			}
+		}
+	}
 }
 
 /*
   check all connections to see if anything
   happened on their sockets
 */
-void check_network_activity(fd_set *f)
+static void check_network_activity(fd_set * f)
 {
-  connection_t *c;
-  avl_node_t *node;
-  int result, i;
-  int len = sizeof(result);
-  vpn_packet_t packet;
-cp
-  if(FD_ISSET(device_fd, f))
-    {
-      if(!read_packet(&packet))
-        route_outgoing(&packet);
-    }
+	connection_t *c;
+	avl_node_t *node;
+	int result, i;
+	int len = sizeof(result);
+	vpn_packet_t packet;
 
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      c = (connection_t *)node->data;
+	cp();
 
-      if(c->status.remove)
-        continue;
+	if(FD_ISSET(device_fd, f)) {
+		if(read_packet(&packet))
+			route_outgoing(&packet);
+	}
 
-      if(FD_ISSET(c->socket, f))
-        {
-          if(c->status.connecting)
-            {
-              c->status.connecting = 0;
-              getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
-              if(!result)
-                finish_connecting(c);
-              else
-                {
-                  if(debug_lvl >= DEBUG_CONNECTIONS)
-                    syslog(LOG_DEBUG, _("Error while connecting to %s (%s): %s"), c->name, c->hostname, strerror(result));
-                  close(c->socket);
-                  do_outgoing_connection(c);
-                  continue;
-                }
-            }
-          if(receive_meta(c) < 0)
-            {
-              terminate_connection(c, c->status.active);
-              continue;
-            }
-        }
-    }
+	for(node = connection_tree->head; node; node = node->next) {
+		c = (connection_t *) node->data;
 
-  for(i = 0; i < listen_sockets; i++)
-    {
-      if(FD_ISSET(listen_socket[i].udp, f))
-	handle_incoming_vpn_data(listen_socket[i].udp);
-      if(FD_ISSET(listen_socket[i].tcp, f))
-	handle_new_meta_connection(listen_socket[i].tcp);
-    }
-cp
+		if(c->status.remove)
+			continue;
+
+		if(FD_ISSET(c->socket, f)) {
+			if(c->status.connecting) {
+				c->status.connecting = false;
+				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+
+				if(!result)
+					finish_connecting(c);
+				else {
+					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
+							   _("Error while connecting to %s (%s): %s"),
+							   c->name, c->hostname, strerror(result));
+					closesocket(c->socket);
+					do_outgoing_connection(c);
+					continue;
+				}
+			}
+
+			if(!receive_meta(c)) {
+				terminate_connection(c, c->status.active);
+				continue;
+			}
+		}
+	}
+
+	for(i = 0; i < listen_sockets; i++) {
+		if(FD_ISSET(listen_socket[i].udp, f))
+			handle_incoming_vpn_data(listen_socket[i].udp);
+
+		if(FD_ISSET(listen_socket[i].tcp, f))
+			handle_new_meta_connection(listen_socket[i].tcp);
+	}
 }
 
 /*
   this is where it all happens...
 */
-void main_loop(void)
+int main_loop(void)
 {
-  fd_set fset;
-  struct timeval tv;
-  int r;
-  time_t last_ping_check;
-  event_t *event;
-cp
-  last_ping_check = now;
+	fd_set fset;
+	struct timeval tv;
+	int r, maxfd;
+	time_t last_ping_check, last_config_check;
+	event_t *event;
 
-  srand(now);
+	cp();
 
-  for(;;)
-    {
-      now = time(NULL);
+	last_ping_check = now;
+	last_config_check = now;
+	srand(now);
 
-      tv.tv_sec = 1 + (rand() & 7); /* Approx. 5 seconds, randomized to prevent global synchronisation effects */
-      tv.tv_usec = 0;
+	running = true;
 
-      build_fdset(&fset);
+	while(running) {
+		now = time(NULL);
 
-      if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
-        {
-          if(errno != EINTR && errno != EAGAIN)
-            {
-              syslog(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
-              cp_trace();
-	      dump_connections();
-              return;
-            }
+		tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
+		tv.tv_usec = 0;
 
-	  continue;
-        }
+		maxfd = build_fdset(&fset);
 
-      check_network_activity(&fset);
+		r = select(maxfd + 1, &fset, NULL, NULL, &tv);
 
-      if(do_purge)
-        {
-          purge();
-          do_purge = 0;
-        }
+		if(r < 0) {
+			if(errno != EINTR && errno != EAGAIN) {
+				logger(LOG_ERR, _("Error while waiting for input: %s"),
+					   strerror(errno));
+				cp_trace();
+				dump_connections();
+				return 1;
+			}
 
-      /* Let's check if everybody is still alive */
+			continue;
+		}
 
-      if(last_ping_check + pingtimeout < now)
-        {
-          check_dead_connections();
-          last_ping_check = now;
+		check_network_activity(&fset);
 
-          if(routing_mode== RMODE_SWITCH)
-	    age_mac();
+		if(do_purge) {
+			purge();
+			do_purge = false;
+		}
 
-          age_past_requests();
+		/* Let's check if everybody is still alive */
 
-          /* Should we regenerate our key? */
+		if(last_ping_check + pingtimeout < now) {
+			check_dead_connections();
+			last_ping_check = now;
 
-          if(keyexpires < now)
-            {
-              if(debug_lvl >= DEBUG_STATUS)
-                syslog(LOG_INFO, _("Regenerating symmetric key"));
+			if(routing_mode == RMODE_SWITCH)
+				age_mac();
 
-#ifdef USE_OPENSSL
-              RAND_pseudo_bytes(myself->key, myself->keylength);
-#endif
-              send_key_changed(myself->connection, myself);
-              keyexpires = now + keylifetime;
-            }
-        }
+			age_past_requests();
+
+			/* Should we regenerate our key? */
+
+			if(keyexpires < now) {
+				ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
+
+				RAND_pseudo_bytes(myself->key, myself->keylength);
+				if(myself->cipher)
+					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+				send_key_changed(broadcast, myself);
+				keyexpires = now + keylifetime;
+			}
+		}
 
 
-      while((event = get_expired_event()))
-        {
-          event->handler(event->data);
-          free(event);
-        }
+		while((event = get_expired_event())) {
+			event->handler(event->data);
+			free(event);
+		}
 
-      if(sigalrm)
-        {
-          syslog(LOG_INFO, _("Flushing event queue"));
+		if(sigalrm) {
+			logger(LOG_INFO, _("Flushing event queue"));
 
-          while(event_tree->head)
-            {
-              event = (event_t *)event_tree->head->data;
-              event->handler(event->data);
-              event_del(event);
-            }
-          sigalrm = 0;
-        }
+			while(event_tree->head) {
+				event = (event_t *) event_tree->head->data;
+				event->handler(event->data);
+				event_del(event);
+			}
+			sigalrm = false;
+		}
 
-      if(sighup)
-        {
-          sighup = 0;
-          close_network_connections();
-          exit_configuration(&config_tree);
+		if(sighup) {
+			connection_t *c;
+			avl_node_t *node;
+			char *fname;
+			struct stat s;
+			
+			sighup = false;
+			
+			/* Reread our own configuration file */
 
-          syslog(LOG_INFO, _("Rereading configuration file and restarting in 5 seconds..."));
-          sleep(5);
+			exit_configuration(&config_tree);
+			init_configuration(&config_tree);
 
-          init_configuration(&config_tree);
+			if(!read_server_config()) {
+				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
+				return 1;
+			}
 
-          if(read_server_config())
-            {
-              syslog(LOG_ERR, _("Unable to reread configuration file, exitting."));
-              exit(1);
-            }
+			/* Close connections to hosts that have a changed or deleted host config file */
+			
+			for(node = connection_tree->head; node; node = node->next) {
+				c = (connection_t *) node->data;
+				
+				if(c->outgoing) {
+					free(c->outgoing->name);
+					freeaddrinfo(c->outgoing->ai);
+					free(c->outgoing);
+					c->outgoing = NULL;
+				}
+				
+				asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+				if(stat(fname, &s) || s.st_mtime > last_config_check)
+					terminate_connection(c, c->status.active);
+				free(fname);
+			}
 
-          if(setup_network_connections())
-            return;
+			last_config_check = now;
 
-          continue;
-        }
-    }
-cp
+			/* Try to make outgoing connections */
+			
+			try_outgoing_connections();
+		}
+	}
+
+	return 0;
 }

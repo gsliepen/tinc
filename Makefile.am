@@ -2,16 +2,17 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS = m4 intl lib src doc po
+SUBDIRS =  m4 lib src doc po
 
-ACLOCAL_AMFLAGS =
+ACLOCAL_AMFLAGS = -I m4 
 
-EXTRA_DIST = system.h COPYING.README depcomp
+EXTRA_DIST = config.rpath mkinstalldirs system.h COPYING.README depcomp
 
 CVS_CREATED = ABOUT-NLS configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
  stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in.in \
- po/tinc.pot src/.libs intl depcomp
+ po/tinc.pot po/*.sed po/*.header po/*.sin po/Rules-quot \
+ src/.libs intl depcomp
 
 ChangeLog:
 	cvs2cl -U cvsusers --fsf
@@ -20,6 +21,7 @@ cvs-clean: maintainer-clean
 	for f in $(CVS_CREATED) `find . -name Makefile.in` tinc-$(VERSION).tar.gz; do\
 	  rm -Rf "$$f"; \
 	done
+	grep -l gettext `find m4 -type f` | xargs rm -f
 
 deb:
 	dpkg-buildpackage -rfakeroot

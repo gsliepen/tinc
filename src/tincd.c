@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,59 +17,47 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.16 2002/05/02 11:50:07 zarq Exp $
+    $Id: tincd.c,v 1.17 2003/08/24 20:38:29 guus Exp $
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <getopt.h>
-#include <signal.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <signal.h>
-#include <string.h>
-#include <termios.h>
-
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
+/* Darwin (MacOS/X) needs the following definition... */
+#ifndef _P1003_1B_VISIBLE
+#define _P1003_1B_VISIBLE
 #endif
 
-#ifdef USE_OPENSSL
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
-#endif
 
-#ifdef USE_GCRYPT
-#include <gcrypt.h>
-#endif
+#include <lzo1x.h>
 
-#include <utils.h>
-#include <xalloc.h>
+#include <getopt.h>
 
-#include "callbacks.h"
-#include "read_conf.h"
+#include "conf.h"
+#include "device.h"
+#include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"
 #include "protocol.h"
-#include "subnet.h"
-#include "logging.h"
-
-#include "system.h"
+#include "utils.h"
+#include "xalloc.h"
 
 /* The name this program was run with. */
-char *program_name;
+char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
-int show_help;
+bool show_help = false;
 
 /* If nonzero, print the version on standard output and exit.  */
-int show_version;
+bool show_version = false;
 
 /* If nonzero, it will attempt to kill a running tincd and exit. */
 int kill_tincd = 0;
@@ -78,332 +66,445 @@ int kill_tincd = 0;
 int generate_keys = 0;
 
 /* If nonzero, use null ciphers and skip all key exchanges. */
-int bypass_security = 0;
+bool bypass_security = false;
 
-char *identname;                 /* program name for syslog */
-char *pidfilename;               /* pid file location */
-char **g_argv;                   /* a copy of the cmdline arguments */
-char **environment;              /* A pointer to the environment on
-                                    startup */
+/* If nonzero, disable swapping for this process. */
+bool do_mlock = false;
 
-static struct option const long_options[] =
-{
-  { "config", required_argument, NULL, 'c' },
-  { "kill", optional_argument, NULL, 'k' },
-  { "net", required_argument, NULL, 'n' },
-  { "help", no_argument, &show_help, 1 },
-  { "version", no_argument, &show_version, 1 },
-  { "no-detach", no_argument, &do_detach, 0 },
-  { "generate-keys", optional_argument, NULL, 'K'},
-  { "debug", optional_argument, NULL, 'd'},
-  { "bypass-security", no_argument, &bypass_security, 1 },
-  { NULL, 0, NULL, 0 }
+/* If nonzero, write log entries to a separate file. */
+bool use_logfile = false;
+
+char *identname = NULL;				/* program name for syslog */
+char *pidfilename = NULL;			/* pid file location */
+char *logfilename = NULL;			/* log file location */
+char **g_argv;					/* a copy of the cmdline arguments */
+
+static int status;
+
+static struct option const long_options[] = {
+	{"config", required_argument, NULL, 'c'},
+	{"kill", optional_argument, NULL, 'k'},
+	{"net", required_argument, NULL, 'n'},
+	{"help", no_argument, NULL, 1},
+	{"version", no_argument, NULL, 2},
+	{"no-detach", no_argument, NULL, 'D'},
+	{"generate-keys", optional_argument, NULL, 'K'},
+	{"debug", optional_argument, NULL, 'd'},
+	{"bypass-security", no_argument, NULL, 3},
+	{"mlock", no_argument, NULL, 'L'},
+	{"logfile", optional_argument, NULL, 4},
+	{"pidfile", required_argument, NULL, 5},
+	{NULL, 0, NULL, 0}
 };
 
-static void
-usage(int status)
+#ifdef HAVE_MINGW
+static struct WSAData wsa_state;
+#endif
+
+static void usage(bool status)
 {
-  if(status != 0)
-    fprintf(stderr, _("Try `%s --help\' for more information.\n"), program_name);
-  else
-    {
-      printf(_("Usage: %s [option]...\n\n"), program_name);
-      printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
-               "  -D, --no-detach            Don't fork and detach.\n"
-               "  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
-               "  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
-               "  -n, --net=NETNAME          Connect to net NETNAME.\n"));
-      printf(_("  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
-               "      --help                 Display this help and exit.\n"
-               "      --version              Output version information and exit.\n\n"));
-      printf(_("Report bugs to tinc@nl.linux.org.\n"));
-    }
-  exit(status);
+	if(status)
+		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
+				program_name);
+	else {
+		printf(_("Usage: %s [option]...\n\n"), program_name);
+		printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
+				"  -D, --no-detach            Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
+				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
+				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
+				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
+				"  -L, --mlock                Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
+				"      --help                 Display this help and exit.\n"
+				"      --version              Output version information and exit.\n\n"));
+		printf(_("Report bugs to tinc@nl.linux.org.\n"));
+	}
 }
 
-void
-parse_options(int argc, char **argv, char **envp)
+static bool parse_options(int argc, char **argv)
 {
-  int r;
-  int option_index = 0;
+	int r;
+	int option_index = 0;
 
-  while((r = getopt_long(argc, argv, "c:Dd::k::n:K::", long_options, &option_index)) != EOF)
-    {
-      switch(r)
-        {
-        case 0: /* long option */
-          break;
-        case 'c': /* config file */
-          confbase = xmalloc(strlen(optarg)+1);
-          strcpy(confbase, optarg);
-          break;
-        case 'D': /* no detach */
-          do_detach = 0;
-          break;
-        case 'd': /* inc debug level */
-          if(optarg)
-            debug_lvl = atoi(optarg);
-          else
-            debug_lvl++;
-          break;
-        case 'k': /* kill old tincds */
-          if(optarg)
-            {
-              if(!strcasecmp(optarg, "HUP"))
-                kill_tincd = SIGHUP;
-              else if(!strcasecmp(optarg, "TERM"))
-                kill_tincd = SIGTERM;
-              else if(!strcasecmp(optarg, "KILL"))
-                kill_tincd = SIGKILL;
-              else if(!strcasecmp(optarg, "USR1"))
-                kill_tincd = SIGUSR1;
-              else if(!strcasecmp(optarg, "USR2"))
-                kill_tincd = SIGUSR2;
-              else if(!strcasecmp(optarg, "WINCH"))
-                kill_tincd = SIGWINCH;
-              else if(!strcasecmp(optarg, "INT"))
-                kill_tincd = SIGINT;
-              else if(!strcasecmp(optarg, "ALRM"))
-                kill_tincd = SIGALRM;
-              else
-                {
-                  kill_tincd = atoi(optarg);
-                  if(!kill_tincd)
-                    {
-                      fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"), optarg);
-                      usage(1);
-                    }
-                }
-            }
-          else
-            kill_tincd = SIGTERM;
-          break;
-        case 'n': /* net name given */
-          netname = xmalloc(strlen(optarg)+1);
-          strcpy(netname, optarg);
-          break;
-        case 'K': /* generate public/private keypair */
-          if(optarg)
-            {
-              generate_keys = atoi(optarg);
-              if(generate_keys < 512)
-                {
-                  fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
-                          optarg);
-                  usage(1);
-                }
-              generate_keys &= ~7;      /* Round it to bytes */
-            }
-          else
-            generate_keys = 1024;
-          break;
-        case '?':
-          usage(1);
-        default:
-          break;
-        }
-    }
+	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF) {
+		switch (r) {
+			case 0:				/* long option */
+				break;
+
+			case 'c':				/* config file */
+				confbase = xstrdup(optarg);
+				break;
+
+			case 'D':				/* no detach */
+				do_detach = false;
+				break;
+
+			case 'L':				/* no detach */
+				do_mlock = true;
+				break;
+
+			case 'd':				/* inc debug level */
+				if(optarg)
+					debug_level = atoi(optarg);
+				else
+					debug_level++;
+				break;
+
+			case 'k':				/* kill old tincds */
+#ifndef HAVE_MINGW
+				if(optarg) {
+					if(!strcasecmp(optarg, "HUP"))
+						kill_tincd = SIGHUP;
+					else if(!strcasecmp(optarg, "TERM"))
+						kill_tincd = SIGTERM;
+					else if(!strcasecmp(optarg, "KILL"))
+						kill_tincd = SIGKILL;
+					else if(!strcasecmp(optarg, "USR1"))
+						kill_tincd = SIGUSR1;
+					else if(!strcasecmp(optarg, "USR2"))
+						kill_tincd = SIGUSR2;
+					else if(!strcasecmp(optarg, "WINCH"))
+						kill_tincd = SIGWINCH;
+					else if(!strcasecmp(optarg, "INT"))
+						kill_tincd = SIGINT;
+					else if(!strcasecmp(optarg, "ALRM"))
+						kill_tincd = SIGALRM;
+					else {
+						kill_tincd = atoi(optarg);
+
+						if(!kill_tincd) {
+							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
+									optarg);
+							usage(true);
+							return false;
+						}
+					}
+				} else
+					kill_tincd = SIGTERM;
+#else
+					kill_tincd = 1;
+#endif
+				break;
+
+			case 'n':				/* net name given */
+				netname = xstrdup(optarg);
+				break;
+
+			case 'K':				/* generate public/private keypair */
+				if(optarg) {
+					generate_keys = atoi(optarg);
+
+					if(generate_keys < 512) {
+						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
+								optarg);
+						usage(true);
+						return false;
+					}
+
+					generate_keys &= ~7;	/* Round it to bytes */
+				} else
+					generate_keys = 1024;
+				break;
+
+			case 1:					/* show help */
+				show_help = true;
+				break;
+
+			case 2:					/* show version */
+				show_version = true;
+				break;
+
+			case 3:					/* bypass security */
+				bypass_security = true;
+				break;
+
+			case 4:					/* write log entries to a file */
+				use_logfile = true;
+				if(optarg)
+					logfilename = xstrdup(optarg);
+				break;
+
+			case 5:					/* write PID to a file */
+				pidfilename = xstrdup(optarg);
+				break;
+
+			case '?':
+				usage(true);
+				return false;
+
+			default:
+				break;
+		}
+	}
+
+	return true;
 }
 
 /* This function prettyprints the key generation process */
 
-void indicator(int a, int b, void *p)
+static void indicator(int a, int b, void *p)
 {
-  switch(a)
-  {
-    case 0:
-      fprintf(stderr, ".");
-      break;
-    case 1:
-      fprintf(stderr, "+");
-      break;
-    case 2:
-      fprintf(stderr, "-");
-      break;
-    case 3:
-      switch(b)
-        {
-          case 0:
-            fprintf(stderr, " p\n");
-            break;
-          case 1:
-            fprintf(stderr, " q\n");
-            break;
-          default:
-            fprintf(stderr, "?");
-         }
-       break;
-    default:
-      fprintf(stderr, "?");
-  }
+	switch (a) {
+		case 0:
+			fprintf(stderr, ".");
+			break;
+
+		case 1:
+			fprintf(stderr, "+");
+			break;
+
+		case 2:
+			fprintf(stderr, "-");
+			break;
+
+		case 3:
+			switch (b) {
+				case 0:
+					fprintf(stderr, " p\n");
+					break;
+
+				case 1:
+					fprintf(stderr, " q\n");
+					break;
+
+				default:
+					fprintf(stderr, "?");
+			}
+			break;
+
+		default:
+			fprintf(stderr, "?");
+	}
 }
 
-#ifdef USE_OPENSSL
 /*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-int keygen(int bits)
+static bool keygen(int bits)
 {
-  RSA *rsa_key;
-  FILE *f;
-  char *name = NULL;
-  char *filename;
+	RSA *rsa_key;
+	FILE *f;
+	char *name = NULL;
+	char *filename;
 
-  fprintf(stderr, _("Generating %d bits keys:\n"), bits);
-  rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
+	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
+	rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
 
-  if(!rsa_key)
-    {
-      fprintf(stderr, _("Error during key generation!\n"));
-      return -1;
-    }
-  else
-    fprintf(stderr, _("Done.\n"));
+	if(!rsa_key) {
+		fprintf(stderr, _("Error during key generation!\n"));
+		return false;
+	} else
+		fprintf(stderr, _("Done.\n"));
 
-  get_config_string(lookup_config(config_tree, "Name"), &name);
+	asprintf(&filename, "%s/rsa_key.priv", confbase);
+	f = ask_and_open(filename, _("private RSA key"), "a");
 
-  if(name)
-    asprintf(&filename, "%s/hosts/%s", confbase, name);
-  else
-    asprintf(&filename, "%s/rsa_key.pub", confbase);
-
-  if((f = ask_and_safe_open(filename, _("public RSA key"), "a")) == NULL)
-    return -1;
-
-  if(ftell(f))
-    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
-
-  PEM_write_RSAPublicKey(f, rsa_key);
-  fclose(f);
-  free(filename);
-
-  asprintf(&filename, "%s/rsa_key.priv", confbase);
-  if((f = ask_and_safe_open(filename, _("private RSA key"), "a")) == NULL)
-    return -1;
-
-  if(ftell(f))
-    fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
-
-  PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
-  fclose(f);
-  free(filename);
-
-  return 0;
-}
+	if(!f)
+		return false;
+  
+#ifdef HAVE_FCHMOD
+	/* Make it unreadable for others. */
+	fchmod(fileno(f), 0600);
 #endif
+		
+	if(ftell(f))
+		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
+
+	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
+	fclose(f);
+	free(filename);
+
+	get_config_string(lookup_config(config_tree, "Name"), &name);
+
+	if(name)
+		asprintf(&filename, "%s/hosts/%s", confbase, name);
+	else
+		asprintf(&filename, "%s/rsa_key.pub", confbase);
+
+	f = ask_and_open(filename, _("public RSA key"), "a");
+
+	if(!f)
+		return false;
+
+	if(ftell(f))
+		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
+
+	PEM_write_RSAPublicKey(f, rsa_key);
+	fclose(f);
+	free(filename);
+
+	return true;
+}
 
 /*
   Set all files and paths according to netname
 */
-void make_names(void)
+static void make_names(void)
 {
-  if(netname)
-    {
-      if(!pidfilename)
-        asprintf(&pidfilename, LOCALSTATEDIR "/run/tinc.%s.pid", netname);
-      if(!confbase)
-        asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
-      else
-        log(0, TLOG_INFO, _("Both netname and configuration directory given, using the latter..."));
-      if(!identname)
-        asprintf(&identname, "tinc.%s", netname);
-    }
-  else
-    {
-      if(!pidfilename)
-        pidfilename = LOCALSTATEDIR "/run/tinc.pid";
-      if(!confbase)
-        asprintf(&confbase, "%s/tinc", CONFDIR);
-      if(!identname)
-        identname = "tinc";
-    }
+#ifdef HAVE_MINGW
+	HKEY key;
+	char installdir[1024] = "";
+	long len = sizeof(installdir);
+#endif
+
+	if(netname)
+		asprintf(&identname, "tinc.%s", netname);
+	else
+		identname = xstrdup("tinc");
+
+#ifdef HAVE_MINGW
+	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
+		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
+			if(!logfilename)
+				asprintf(&logfilename, "%s/log/%s.log", identname);
+			if(!confbase) {
+				if(netname)
+					asprintf(&confbase, "%s/%s", installdir, netname);
+				else
+					asprintf(&confbase, "%s", installdir);
+			}
+		}
+		RegCloseKey(key);
+		if(*installdir)
+			return;
+	}
+#endif
+
+	if(!pidfilename)
+		asprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+
+	if(!logfilename)
+		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+
+	if(netname) {
+		if(!confbase)
+			asprintf(&confbase, CONFDIR "/tinc/%s", netname);
+		else
+			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+	} else {
+		if(!confbase)
+			asprintf(&confbase, CONFDIR "/tinc");
+	}
 }
 
-int
-main(int argc, char **argv, char **envp)
+int main(int argc, char **argv)
 {
-  program_name = argv[0];
+	program_name = argv[0];
 
-  setlocale (LC_ALL, "");
-  bindtextdomain (PACKAGE, LOCALEDIR);
-  textdomain (PACKAGE);
+	setlocale(LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
 
-  environment = envp;
-  parse_options(argc, argv, envp);
+	if(!parse_options(argc, argv))
+		return 1;
+	
+	make_names();
 
-  if(show_version)
-    {
-      printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
-      printf(_("Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
-               "See the AUTHORS file for a complete list.\n\n"
-               "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-               "and you are welcome to redistribute it under certain conditions;\n"
-               "see the file COPYING for details.\n"));
+	if(show_version) {
+		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
+			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
+		printf(_("Copyright (C) 1998-2003 Ivo Timmermans, Guus Sliepen and others.\n"
+				"See the AUTHORS file for a complete list.\n\n"
+				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+				"and you are welcome to redistribute it under certain conditions;\n"
+				"see the file COPYING for details.\n"));
 
-      return 0;
-    }
+		return 0;
+	}
 
-  if(show_help)
-    usage(0);
+	if(show_help) {
+		usage(false);
+		return 0;
+	}
 
-  log_add_hook(log_default);
+	if(kill_tincd)
+		return !kill_other(kill_tincd);
 
-  g_argv = argv;
+	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
-  make_names();
-  init_configuration(&config_tree);
+	/* Lock all pages into memory if requested */
 
-  /* Slllluuuuuuurrrrp! */
-cp
-#ifdef USE_OPENSSL
-  RAND_load_file("/dev/urandom", 1024);
-
-#ifdef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
-  SSLeay_add_all_algorithms();
+	if(do_mlock)
+#ifdef HAVE_MLOCKALL
+		if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+				   strerror(errno));
 #else
-  OpenSSL_add_all_algorithms();
+	{
+		logger(LOG_ERR, _("mlockall() not supported on this platform!"));
+#endif
+		return -1;
+	}
+
+	g_argv = argv;
+
+	init_configuration(&config_tree);
+
+	/* Slllluuuuuuurrrrp! */
+
+	RAND_load_file("/dev/urandom", 1024);
+
+	OpenSSL_add_all_algorithms();
+
+	if(generate_keys) {
+		read_server_config();
+		return !keygen(generate_keys);
+	}
+
+	if(!read_server_config())
+		return 1;
+
+	if(lzo_init() != LZO_E_OK) {
+		logger(LOG_ERR, _("Error initializing LZO compressor!"));
+		return 1;
+	}
+
+#ifdef HAVE_MINGW
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", winerror(GetLastError()));
+		return 1;
+	}
+
+	if(!do_detach || !init_service())
+		return main2(argc, argv);
+	else
+		return 1;
+}
+
+int main2(int argc, char **argv)
+{
 #endif
 
-cp
-  if(generate_keys)
-    {
-      read_server_config();
-      exit(keygen(generate_keys));
-    }
-#endif
+	if(!detach())
+		return 1;
+		
 
-  if(kill_tincd)
-    exit(kill_other(kill_tincd));
+	/* Setup sockets and open device. If it doesn't work, don't give up but try again. */
 
-  if(read_server_config())
-    exit(1);
-cp
-  if(detach())
-    exit(0);
+	while(!setup_network_connections()) {
+		if(do_detach) {
+			logger(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
+			sleep(maxtimeout);
+		} else {
+			logger(LOG_ERR, _("Not restarting."));
+			return 1;
+		}
+	}
 
-  init_callbacks();
-cp
-  for(;;)
-    {
-      if(!setup_network_connections())
-        {
-          main_loop();
-          cleanup_and_exit(1);
-        }
+	/* Start main loop. It only exits when tinc is killed. */
 
-      log(0, TLOG_ERROR, _("Unrecoverable error"));
-      cp_trace();
+	status = main_loop();
 
-      if(do_detach)
-        {
-          log(0, TLOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
-          sleep(maxtimeout);
-        }
-      else
-        {
-          log(0, TLOG_ERROR, _("Not restarting."));
-          exit(1);
-        }
-    }
+	/* Shutdown properly. */
+
+	close_network_connections();
+
+	ifdebug(CONNECTIONS)
+		dump_device_stats();
+
+	logger(LOG_NOTICE, _("Terminating"));
+	return status;
 }

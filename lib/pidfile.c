@@ -25,16 +25,9 @@
  *	First version (v0.2) released
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <fcntl.h>
+#include "system.h"
 
+#ifndef HAVE_MINGW
 /* read_pid
  *
  * Reads the specified pidfile and returns the read pid.
@@ -135,4 +128,4 @@ int remove_pid (char *pidfile)
 {
   return unlink (pidfile);
 }
-  
+#endif

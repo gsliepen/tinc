@@ -1,3 +1,40 @@
+version 1.0.1                Aug 14 2003
+
+* Allow empty lines in config files.
+
+* Fix handling of spaces and backslashes in filenames under native Windows.
+
+* Allow scripts to be executed under native Windows.
+
+* Update documentation, make it less Linux specific.
+
+version 1.0                  Aug  4 2003
+
+* Lots of small bugfixes and code cleanups.
+
+* Throughput doubled and latency reduced.
+
+* Added support for LZO compression.
+
+* No need to set MAC address or disable ARP anymore.
+
+* Added support for Windows 2000 and XP, both natively and in a Cygwin
+  environment.
+
+version 1.0pre8              Sep 16 2002
+
+* More fixes for subnets with prefixlength undivisible by 8.
+
+* Added support for NetBSD and MacOS/X.
+
+* Switched from undirected graphs to directed graphs to avoid certain race
+  conditions and improve scalability.
+
+* Generalized broadcasting and forwarding of protocol messages.
+
+* Cleanup of source code.
+
+
 version 1.0pre7              Apr  7 2002
 
 * Don't do blocking read()s when getting a signal.

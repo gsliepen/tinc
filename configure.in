@@ -1,18 +1,24 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.19 2002/04/28 12:46:25 zarq Exp $
+dnl $Id: configure.in,v 1.20 2003/08/24 20:38:18 guus Exp $
 
+AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
 AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
 
 dnl Include the macros from the m4/ directory
 AM_ACLOCAL_INCLUDE(m4)
 
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.12.1)
+
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
 # in the latter don't make it into the configure-time tests.
-AC_DEFINE([_GNU_SOURCE], [__USE_BSD])
+AC_DEFINE([_GNU_SOURCE], 1, [Enable GNU extenstions])
+AC_DEFINE([__USE_BSD], 1, [Enable BSD extensions])
 
 ALL_LINGUAS="nl"
 
@@ -24,65 +30,232 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-jm_PERL
-
+AC_PROG_RANLIB
 
 AC_ISC_POSIX
 
 dnl Check and set OS
 
-AC_CANONICAL_HOST
+#AC_CANONICAL_HOST
 
 case $host_os in
   *linux*)
-    AC_DEFINE(HAVE_LINUX)
+    AC_DEFINE(HAVE_LINUX, 1, [Linux])
     [ rm -f src/device.c; ln -sf linux/device.c src/device.c ]
   ;;
   *freebsd*)
-    AC_DEFINE(HAVE_FREEBSD)
+    AC_DEFINE(HAVE_FREEBSD, 1, [FreeBSD])
     [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
   ;;
+  *darwin*)
+    AC_DEFINE(HAVE_DARWIN, 1, [Darwin (MacOS/X)])
+    [ rm -f src/device.c; ln -sf darwin/device.c src/device.c ]
+  ;;
   *solaris*)
-    AC_DEFINE(HAVE_SOLARIS)
+    AC_DEFINE(HAVE_SOLARIS, 1, [Solaris/SunOS])
     [ rm -f src/device.c; ln -sf solaris/device.c src/device.c ]
   ;;
   *openbsd*)
-    AC_DEFINE(HAVE_OPENBSD)
+    AC_DEFINE(HAVE_OPENBSD, 1, [OpenBSD])
     [ rm -f src/device.c; ln -sf openbsd/device.c src/device.c ]
   ;;
   *netbsd*)
-    AC_DEFINE(HAVE_NETBSD)
+    AC_DEFINE(HAVE_NETBSD, 1, [NetBSD])
     [ rm -f src/device.c; ln -sf netbsd/device.c src/device.c ]
+  ;;
+  *cygwin*)
+    AC_DEFINE(HAVE_CYGWIN, 1, [Cygwin])
+    [ rm -f src/device.c; ln -sf cygwin/device.c src/device.c ]
+  ;;
+  *mingw*)
+    AC_DEFINE(HAVE_MINGW, 1, [MinGW])
+    [ rm -f src/device.c; cp -f src/mingw/device.c src/device.c ]
+    LIBS="$LIBS -lws2_32"
+  ;;
+  *)
+    AC_MSG_ERROR("Unknown operating system.")
   ;;
 esac
 
 AC_CACHE_SAVE
 
+if test -d /sw/include ; then
+  CPPFLAGS="$CPPFLAGS -I/sw/include"
+fi
+if test -d /sw/lib ; then
+  LIBS="$LIBS -L/sw/lib"
+fi
+
 dnl Checks for libraries.
 
 dnl Checks for header files.
+dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
+
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h limits.h sys/ioctl.h syslog.h unistd.h \
-sys/time.h malloc.h strings.h sys/file.h])
+AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/param.h sys/time.h sys/socket.h sys/wait.h sys/mman.h netdb.h arpa/inet.h])
+AC_CHECK_HEADERS([net/if.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h],
+  [], [],
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+  ]
+)
+AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
+  [], [],
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NET_IF_H
+   #include <net/if.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_SYSTM_H
+   #include <netinet/in_systm.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_H
+   #include <netinet/in.h>
+   #endif
+   #ifdef HAVE_NETINET_IN6_H
+   #include <netinet/in6.h>
+   #endif
+   #ifdef HAVE_NET_ETHERNET_H
+   #include <net/ethernet.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+  ]
+)
+AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
+  [], [],
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NET_IF_H
+   #include <net/if.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_SYSTM_H
+   #include <netinet/in_systm.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_H
+   #include <netinet/in.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_H
+   #include <netinet/ip.h>
+   #endif
+   #ifdef HAVE_NETINET_IN6_H
+   #include <netinet/in6.h>
+   #endif
+   #ifdef HAVE_NETINET_IP6_H
+   #include <netinet/ip6.h>
+   #endif
+   #ifdef HAVE_NET_ETHERNET_H
+   #include <net/ethernet.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+   #ifdef HAVE_NETINET_IF_ETHER_H
+   #include <netinet/if_ether.h>
+   #endif
+  ]
+)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+AC_C_VOLATILE
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
+tinc_ATTRIBUTE(__malloc__)
+
+AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
+  [#ifdef HAVE_SYS_TYPES_H
+   #include <sys/types.h>
+   #endif
+   #ifdef HAVE_NETDB_H
+   #include <netdb.h>
+   #endif
+   #ifdef HAVE_ARPA_INET_H
+   #include <arpa/inet.h>
+   #endif
+   #ifdef HAVE_SYS_SOCKET_H
+   #include <sys/socket.h>
+   #endif
+   #ifdef HAVE_NET_IF_H
+   #include <net/if.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_SYSTM_H
+   #include <netinet/in_systm.h>
+   #endif
+   #ifdef HAVE_NETINET_IN_H
+   #include <netinet/in.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_H
+   #include <netinet/ip.h>
+   #endif
+   #ifdef HAVE_NETINET_TCP_H
+   #include <netinet/tcp.h>
+   #endif
+   #ifdef HAVE_NETINET_IN6_H
+   #include <netinet/in6.h>
+   #endif
+   #ifdef HAVE_NETINET_IP6_H
+   #include <netinet/ip6.h>
+   #endif
+   #ifdef HAVE_NET_ETHERNET_H
+   #include <net/ethernet.h>
+   #endif
+   #ifdef HAVE_NET_IF_ARP_H
+   #include <net/if_arp.h>
+   #endif
+   #ifdef HAVE_NETINET_IF_ETHER_H
+   #include <netinet/if_ether.h>
+   #endif
+   #ifdef HAVE_NETINET_IP_ICMP_H
+   #include <netinet/ip_icmp.h>
+   #endif
+   #ifdef HAVE_NETINET_ICMP6_H
+   #include <netinet/icmp6.h>
+   #endif
+  ]
+)
+
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([ftime socket select strtol strerror flock unsetenv \
-asprintf putenv strdup fcloseall daemon strsignal get_current_dir_name])
+AC_CHECK_FUNCS([asprintf daemon fchmod fcloseall flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system unsetenv vsyslog])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
-
-AM_GNU_GETTEXT
-
 
 dnl Support for SunOS
 
@@ -93,79 +266,36 @@ AC_CHECK_FUNC(gethostbyname, [], [
   AC_CHECK_LIB(nsl, gethostbyname)
 ])
 
+AC_CHECK_FUNCS([freeaddrinfo gai_strerror getaddrinfo getnameinfo inet_aton])
+
 AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
-tinc_TUNTAP
 
-	use_gcrypt=0
-	use_openssl=0
+case $host_os in
+  *linux*)
+    tinc_TUNTAP
+  ;;
+esac
 
-	AC_ARG_WITH(gcrypt,
-	[  --with-gcrypt           Use GCRYPT for all cryptographic functions],
-	[
-	  if test "x$withval" = "xyes" ; then
-	    use_gcrypt=1
-	  else
-	    use_gcrypt=0
-	  fi
-	],
-	[use_gcrypt=0])
-
-	AC_ARG_WITH(openssl,
-	[  --with-openssl          Use OpenSSL for all cryptographic functions],
-	[
-	  if test "x$withval" = "xyes" ; then
-	    use_openssl=1
-	  else
-	    use_openssl=0
-	  fi
-	],
-	[use_openssl=0])
-
-	if test \( $use_gcrypt -eq 0 -a $use_openssl -eq 0 \) \
-	     -o \( $use_gcrypt -eq 1 -a $use_openssl -eq 1 \) ; then
-	  cat << EOM
-Error: You must select exactly one of GCRYPT or OpenSSL.
-EOM
-	  echo use_openssl=$use_openssl, use_gcrypt=$use_gcrypt
-	  exit 1
-	fi
-
-	if test $use_gcrypt -eq 1 ; then
-	  AC_MSG_RESULT([Selecting GCRYPT for crypto])
-	  tinc_GCRYPT
-	  AC_DEFINE(USE_GCRYPT)
-	fi
-	if test $use_openssl -eq 1 ; then
-	  AC_MSG_RESULT([Selecting OpenSSL for crypto])
-	  tinc_OPENSSL
-	  AC_DEFINE(USE_OPENSSL)
-	fi
-
-	tinc_ZLIB
+tinc_OPENSSL
+tinc_ZLIB
+tinc_LZO
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
-  [  --enable-jumbograms     enable support for jumbograms (packets up to 9000 bytes)],
-  [ AC_DEFINE(ENABLE_JUMBOGRAMS) ]
+  AC_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
+  [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ]
 )
 
 dnl Check if checkpoint tracing has to be enabled
 AC_ARG_ENABLE(tracing,
-  [  --enable-tracing        enable checkpoint tracing (debugging only)],
-  [ AC_DEFINE(ENABLE_TRACING) ]
+  AC_HELP_STRING([--enable-tracing], [enable checkpoint tracing (debugging only)]),
+  [ AC_DEFINE(ENABLE_TRACING, 1, [Checkpoint tracing]) ]
 )
 
 AC_SUBST(INCLUDES)
 
-AC_OUTPUT(Makefile
-src/Makefile
-src/pokey/Makefile
-doc/Makefile
-doc/es/Makefile
-intl/Makefile
-lib/Makefile
-m4/Makefile
-po/Makefile.in
-)
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile doc/tincd.8 doc/tinc.conf.5 doc/tincinclude.texi lib/Makefile po/Makefile.in m4/Makefile])
+
+AC_OUTPUT

@@ -1,7 +1,7 @@
 /*
     route.h -- header file for route.c
-    Copyright (C) 2000-2002 Ivo Timmermans <zarq@iname.com>
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>         
+    Copyright (C) 2000-2003 Ivo Timmermans <zarq@iname.com>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>         
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,25 +17,30 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.h,v 1.2 2002/04/09 15:26:01 zarq Exp $
+    $Id: route.h,v 1.3 2003/08/24 20:38:28 guus Exp $
 */
 
 #ifndef __TINC_ROUTE_H__
 #define __TINC_ROUTE_H__
 
-enum
-{
-  RMODE_HUB = 0,
-  RMODE_SWITCH,
-  RMODE_ROUTER,
-};
+#include "net.h"
+#include "node.h"
 
-extern int routing_mode;
-extern int priorityinheritance;
+typedef enum rmode_t {
+	RMODE_HUB = 0,
+	RMODE_SWITCH,
+	RMODE_ROUTER,
+} rmode_t;
+
+extern rmode_t routing_mode;
+extern bool overwrite_mac;
+extern bool priorityinheritance;
 extern int macexpire;
 
-extern void age_mac(void);
-extern void route_incoming(node_t *, vpn_packet_t *);
-extern void route_outgoing(vpn_packet_t *);
+extern mac_t mymac;
 
-#endif /* __TINC_ROUTE_H__ */
+extern void age_mac(void);
+extern void route_incoming(struct node_t *, struct vpn_packet_t *);
+extern void route_outgoing(struct vpn_packet_t *);
+
+#endif							/* __TINC_ROUTE_H__ */

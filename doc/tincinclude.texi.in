@@ -1,0 +1,4 @@
+@set VERSION @VERSION@
+@set PACKAGE @PACKAGE@
+@set sysconfdir @sysconfdir@
+@set localstatedir @localstatedir@

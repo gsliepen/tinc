@@ -1,7 +1,7 @@
 /*
     utils.h -- header file for utils.c
-    Copyright (C) 1999-2002 Ivo Timmermans <ivo@o2w.nl>
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2003 Ivo Timmermans <zarq@iname.com>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,25 +21,26 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
-#include <ctype.h>
-
-#define min(a,b) (((a)<(b))?(a):(b))
-
 #ifdef ENABLE_TRACING
 extern volatile int cp_line[];
 extern volatile char *cp_file[];
 extern volatile int cp_index;
 extern void cp_trace(void);
 
-  #define cp { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 16; }
-  #define ecp { fprintf(stderr, "Explicit checkpoint in %s line %d\n", __FILE__, __LINE__); }
+#define cp() { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 16; }
+#define ecp() { fprintf(stderr, "Explicit checkpoint in %s line %d\n", __FILE__, __LINE__); }
 #else
-  #define cp
-  #define ecp
-  #define cp_trace()
+#define cp()
+#define ecp()
+#define cp_trace()
 #endif
 
 extern void hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
 
-#endif /* __TINC_UTILS_H__ */
+#ifdef HAVE_MINGW
+extern char *winerror(int);
+#define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
+#endif
+
+#endif							/* __TINC_UTILS_H__ */
