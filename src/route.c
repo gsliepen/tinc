@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.11 2001/06/05 16:09:55 guus Exp $
+    $Id: route.c,v 1.1.2.12 2001/06/05 16:31:59 guus Exp $
 */
 
 #include "config.h"
@@ -132,6 +132,10 @@ void route_arp(vpn_packet_t *packet)
   unsigned char ipbuf[4];
   ipv4_t dest;
 cp
+  /* First, snatch the source address from the ARP packet */
+
+  memcpy(mymac.net.mac.address.x, packet->data + 6, 6);
+
   /* This routine generates replies to ARP requests.
      You don't need to set NOARP flag on the interface anymore (which is broken on FreeBSD).
      Most of the code here is taken from choparp.c by Takamichi Tateoka (tree@mma.club.uec.ac.jp)
