@@ -1,5 +1,5 @@
 /*
-    device.c -- Interaction with CIPE driver in a MinGW environment
+    device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2003 Ivo Timmermans <ivo@o2w.nl>,
                   2002-2003 Guus Sliepen <guus@sliepen.eu.org>
 
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.3 2003/07/28 21:54:03 guus Exp $
+    $Id: device.c,v 1.1.2.4 2003/07/29 11:06:23 guus Exp $
 */
 
 #include "system.h"
@@ -206,7 +206,7 @@ bool write_packet(vpn_packet_t *packet)
 			   packet->len, device_info);
 
 	if(!WriteFile(device_fd, packet->data, packet->len, &lenout, NULL)) {
-		logger(LOG_ERR, "Error while writing to %s %s", device_info, device);
+		logger(LOG_ERR, _("Error while writing to %s %s"), device_info, device);
 		return false;
 	}
 

@@ -1,5 +1,5 @@
 /*
-    device.c -- Interaction with CIPE driver in a Cygwin environment
+    device.c -- Interaction with Windows tap driver in a Cygwin environment
     Copyright (C) 2002-2003 Ivo Timmermans <ivo@o2w.nl>,
                   2002-2003 Guus Sliepen <guus@sliepen.eu.org>
 
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.11 2003/07/28 21:54:03 guus Exp $
+    $Id: device.c,v 1.1.2.12 2003/07/29 11:06:23 guus Exp $
 */
 
 #include "system.h"
@@ -156,7 +156,7 @@ bool setup_device(void)
 	handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
 	
 	if(handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("Could not open CIPE tap device for writing!"));
+		logger(LOG_ERR, _("Could not open Windows tap device for writing!"));
 		return false;
 	}
 
@@ -192,7 +192,7 @@ bool setup_device(void)
 		handle = CreateFile(tapname, GENERIC_READ,  FILE_SHARE_WRITE,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
 
 		if(handle == INVALID_HANDLE_VALUE) {
-			logger(LOG_ERR, _("Could not open CIPE tap device for reading!"));
+			logger(LOG_ERR, _("Could not open Windows tap device for reading!"));
 			buf[0] = 0;
 			write(sp[1], buf, 1);
 			exit(1);
@@ -215,7 +215,7 @@ bool setup_device(void)
 
 	read(device_fd, &gelukt, 1);
 	if(gelukt != 1) {
-		logger(LOG_DEBUG, "Tap reader failed!");
+		logger(LOG_DEBUG, _("Tap reader failed!"));
 		return false;
 	}
 
@@ -272,7 +272,7 @@ bool write_packet(vpn_packet_t *packet)
 			   packet->len, device_info);
 
 	if(!WriteFile (handle, packet->data, packet->len, &lenout, NULL)) {
-		logger(LOG_ERR, "Error while writing to %s %s", device_info, device);
+		logger(LOG_ERR, _("Error while writing to %s %s"), device_info, device);
 		return false;
 	}
 
