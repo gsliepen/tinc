@@ -1,0 +1,47 @@
+This document describes how nodes in a VPN find and connect to eachother and
+maintain a stable network.
+
+   Copyright 2001 Guus Sliepen <guus@sliepen.warande.net>
+
+   Permission is granted to make and distribute verbatim copies of
+   this documentation provided the copyright notice and this
+   permission notice are preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+   this documentation under the conditions for verbatim copying,
+   provided that the entire resulting derived work is distributed
+   under the terms of a permission notice identical to this one.
+
+   $Id: CONNECTIVITY,v 1.1.2.1 2001/07/22 14:04:38 guus Exp $
+
+1. Problem
+==========
+
+We have a set of nodes (A, B, C, ...) that are part of the same VPN. They need
+to connect to eachother and form a single graph that satisfies the tree
+property.
+
+There is the possibility that loops are formed, the offending connections must
+be eliminated.
+
+Suppose we start with two smaller graphs that want to form a single larger
+graph. Both graphs consist of three nodes:
+
+  A-----B-----C
+  
+  
+
+  D-----E-----F
+  
+It is very well possible that A wants to connect to D, and F wants to connect
+to C, both at the same time. The following loop will occur:
+
+  A-----B-----C
+  |           ^
+  |           |
+  v           |
+  D-----E-----F
+
+The situation described here is totally symmetric, there is no preference to
+one connection over the other. The problem of resolving the loop, maintaining
+consistency and stability is therefore not a trivial one.
