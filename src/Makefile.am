@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.32 2003/07/30 09:45:21 guus Exp $
+# $Id: Makefile.am,v 1.4.4.33 2003/08/02 15:13:08 guus Exp $
 
 sbin_PROGRAMS = tincd
 
@@ -10,6 +10,8 @@ tincd_SOURCES = conf.c connection.c edge.c event.c graph.c logger.c meta.c net.c
 	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
 
 nodist_tincd_SOURCES = device.c
+
+DEFAULT_INCLUDES =
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 
@@ -23,11 +25,7 @@ tincd_LDADD = \
 
 localedir = $(datadir)/locale
 
-AM_CFLAGS = @CFLAGS@ -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"$(sysconfdir)\"	\
-	-DLOCALEDIR=\"$(localedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALEDIR=\"$(localedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
 
 dist-hook:
 	rm -f `find . -type l`
-
-lint: $(tincd_SOURCES)
-	lclint -nullassign -nullret +trytorecover +posixlib -skipansiheaders -skipposixheaders +gnuextensions -I/usr/include -I/usr/lib/gcc-lib/i386-linux/2.95.2/include -I. -I/home/zarq/p/tinc/cvs/cabal/src -I.. -I.. -I/home/zarq/p/tinc/cvs/cabal/lib -I/home/zarq/p/tinc/cvs/cabal/intl -D_POSIX_SOURCE -D__ELF__ -Dunix -D__i386__ -Dlinux -DHAVE_CONFIG_H -DPKGLIBDIR=/usr/local/lib/tinc -DCONFDIR=\"/usr/local/etc\" -DLOCALEDIR=\"/usr/local/share/locale\" $^
