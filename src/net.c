@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.48 2000/10/28 21:25:20 guus Exp $
+    $Id: net.c,v 1.35.4.49 2000/10/28 21:52:22 guus Exp $
 */
 
 #include "config.h"
@@ -52,6 +52,8 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "meta.h"
+#include "connlist.h"
+#include "subnet.h"
 
 #include "system.h"
 
@@ -66,6 +68,8 @@ config_t *upstreamcfg;
 static int seconds_till_retry;
 
 char *unknown = NULL;
+
+subnet_t mymac;
 
 /*
   strip off the MAC adresses of an ethernet frame
@@ -145,9 +149,9 @@ cp
   outlen = outpkt.len+2;
   memcpy(&outpkt, inpkt, outlen);
      
-  /* FIXME sometime
-  add_mac_addresses(&outpkt);
-  */
+  /* Fix mac address */
+
+  memcpy(outpkt.data, mymac.net.mac.address.x, 6);
 
   if(taptype == TAP_TYPE_TUNTAP)
     {
@@ -381,7 +385,16 @@ cp
 cp
   tap_fd = nfd;
 
+  /* Set default MAC address for ethertap devices */
+  
   taptype = TAP_TYPE_ETHERTAP;
+  mymac.type = SUBNET_MAC;
+  mymac.net.mac.address.x[0] = 0xfe;
+  mymac.net.mac.address.x[1] = 0xfd;
+  mymac.net.mac.address.x[2] = 0x00;
+  mymac.net.mac.address.x[3] = 0x00;
+  mymac.net.mac.address.x[4] = 0x00;
+  mymac.net.mac.address.x[5] = 0x00;
 
 #ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
@@ -395,11 +408,6 @@ cp
   { 
     syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
     taptype = TAP_TYPE_TUNTAP;
-
-    if((cfg = get_config_val(config, tapsubnet)) == NULL)
-      syslog(LOG_INFO, _("tun/tap device will be left unconfigured"));
-    else
-      /* Setup inetaddr/netmask etc */;
   }
 #endif
 
