@@ -1,1 +1,1 @@
-EXTRA_DIST = README.Debian changelog conffiles control copyright dirs docs info init.d rules shlibs
+EXTRA_DIST = README.Debian changelog conffiles control copyright dirs docs info init.d postinst rules shlibs
