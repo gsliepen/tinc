@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.99 2001/02/27 16:17:04 guus Exp $
+    $Id: net.c,v 1.35.4.100 2001/02/27 16:37:25 guus Exp $
 */
 
 #include "config.h"
@@ -969,76 +969,6 @@ cp
   destroy_connection_tree();
 cp
   return;
-}
-
-/*
-  create a data (udp) socket
-  OBSOLETED: use only one listening socket for compatibility with non-Linux operating systems
-*/
-int setup_vpn_connection(connection_t *cl)
-{
-  int nfd, flags;
-  struct sockaddr_in a;
-  const int one = 1;
-cp
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->hostname);
-
-  nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if(nfd == -1)
-    {
-      syslog(LOG_ERR, _("Creating UDP socket failed: %m"));
-      return -1;
-    }
-
-  setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
-
-  flags = fcntl(nfd, F_GETFL);
-  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "fcntl");
-      return -1;
-    }
-
-  memset(&a, 0, sizeof(a));
-  a.sin_family = AF_INET;
-  a.sin_port = htons(myself->port);
-  a.sin_addr.s_addr = htonl(INADDR_ANY);
-
-  if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), myself->port);
-      return -1;
-    }
-
-  a.sin_family = AF_INET;
-  a.sin_port = htons(cl->port);
-  a.sin_addr.s_addr = htonl(cl->address);
-
-  if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("Connecting to %s port %d failed: %m"),
-	     cl->hostname, cl->port);
-      return -1;
-    }
-
-  flags = fcntl(nfd, F_GETFL);
-  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, nfd,
-             cl->name, cl->hostname);
-      return -1;
-    }
-
-  cl->socket = nfd;
-  cl->status.dataopen = 1;
-cp
-  return 0;
 }
 
 /*

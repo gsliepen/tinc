@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.82 2001/02/26 11:37:20 guus Exp $
+    $Id: protocol.c,v 1.28.4.83 2001/02/27 16:37:28 guus Exp $
 */
 
 #include "config.h"
@@ -269,6 +269,88 @@ cp
   cl->allow_request = METAKEY;
 cp
   return send_metakey(cl);
+}
+
+int ack_h(connection_t *cl)
+{
+  config_t const *cfg;
+  connection_t *old, *p;
+  subnet_t *subnet;
+  avl_node_t *node, *node2;
+cp
+  /* Okay, before we active the connection, we check if there is another entry
+     in the connection list with the same name. If so, it presumably is an
+     old connection that has timed out but we don't know it yet.
+   */
+
+  while((old = lookup_id(cl->name)))
+    {
+      if(debug_lvl >= DEBUG_CONNECTIONS)
+        syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
+        cl->name, old->hostname, cl->hostname);
+
+      terminate_connection(old);
+    }
+
+  /* Activate this connection */
+
+  cl->allow_request = ALL;
+  cl->status.active = 1;
+  cl->nexthop = cl;
+  cl->cipher_pkttype = EVP_bf_cbc();
+  cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
+
+  if(debug_lvl >= DEBUG_CONNECTIONS)
+    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
+
+cp
+  /* Check some options */
+  
+  if((cfg = get_config_val(cl->config, config_indirectdata)))
+    {
+      if(cfg->data.val == stupid_true)
+        cl->options |= OPTION_INDIRECT;
+    }
+
+  if((cfg = get_config_val(cl->config, config_tcponly)))
+    {
+      if(cfg->data.val == stupid_true)
+        cl->options |= OPTION_TCPONLY;
+    }
+
+  /* Send him our subnets */
+  
+  for(node = myself->subnet_tree->head; node; node = node->next)
+    {
+      subnet = (subnet_t *)node->data;
+      send_add_subnet(cl, subnet);
+    }
+  /* And send him all the hosts and their subnets we know... */
+  
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      p = (connection_t *)node->data;
+      
+      if(p != cl && p->status.active)
+        {
+          /* Notify others of this connection */
+
+          if(p->status.meta)
+            send_add_host(p, cl);
+
+          /* Notify new connection of everything we know */
+
+          send_add_host(cl, p);
+
+          for(node2 = p->subnet_tree->head; node2; node2 = node2->next)
+            {
+              subnet = (subnet_t *)node2->data;
+              send_add_subnet(cl, subnet);
+            }
+        }
+    }  
+cp
+  return 0;
 }
 
 int send_challenge(connection_t *cl)
@@ -539,88 +621,6 @@ cp
   return send_challenge(cl);
 }
 
-int ack_h(connection_t *cl)
-{
-  config_t const *cfg;
-  connection_t *old, *p;
-  subnet_t *subnet;
-  avl_node_t *node, *node2;
-cp
-  /* Okay, before we active the connection, we check if there is another entry
-     in the connection list with the same name. If so, it presumably is an
-     old connection that has timed out but we don't know it yet.
-   */
-
-  while((old = lookup_id(cl->name)))
-    {
-      if(debug_lvl >= DEBUG_CONNECTIONS)
-        syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
-        cl->name, old->hostname, cl->hostname);
-
-      terminate_connection(old);
-    }
-
-  /* Activate this connection */
-
-  cl->allow_request = ALL;
-  cl->status.active = 1;
-  cl->nexthop = cl;
-  cl->cipher_pkttype = EVP_bf_cbc();
-  cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
-
-  if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
-
-cp
-  /* Check some options */
-  
-  if((cfg = get_config_val(cl->config, config_indirectdata)))
-    {
-      if(cfg->data.val == stupid_true)
-        cl->options |= OPTION_INDIRECT;
-    }
-
-  if((cfg = get_config_val(cl->config, config_tcponly)))
-    {
-      if(cfg->data.val == stupid_true)
-        cl->options |= OPTION_TCPONLY;
-    }
-
-  /* Send him our subnets */
-  
-  for(node = myself->subnet_tree->head; node; node = node->next)
-    {
-      subnet = (subnet_t *)node->data;
-      send_add_subnet(cl, subnet);
-    }
-  /* And send him all the hosts and their subnets we know... */
-  
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      p = (connection_t *)node->data;
-      
-      if(p != cl && p->status.active)
-        {
-          /* Notify others of this connection */
-
-          if(p->status.meta)
-            send_add_host(p, cl);
-
-          /* Notify new connection of everything we know */
-
-          send_add_host(cl, p);
-
-          for(node2 = p->subnet_tree->head; node2; node2 = node2->next)
-            {
-              subnet = (subnet_t *)node2->data;
-              send_add_subnet(cl, subnet);
-            }
-        }
-    }  
-cp
-  return 0;
-}
-
 /* Address and subnet information exchange */
 
 int send_add_subnet(connection_t *cl, subnet_t *subnet)
@@ -798,6 +798,8 @@ cp
   if(!(cl->options & OPTION_INDIRECT))
     return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
                       other->name, other->address, other->port, other->options);
+  else
+    return 0;
 }
 
 int add_host_h(connection_t *cl)
@@ -808,7 +810,7 @@ int add_host_h(connection_t *cl)
 cp
   new = new_connection();
 
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%d %lx", name, &new->address, &new->port, &new->options) != 4)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx", name, &new->address, &new->port, &new->options) != 4)
     {
        syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->name, cl->hostname);
        return -1;
@@ -890,6 +892,8 @@ cp
   if(!(cl->options & OPTION_INDIRECT))
     return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
                       other->name, other->address, other->port, other->options);
+  else
+    return 0;
 }
 
 int del_host_h(connection_t *cl)
@@ -901,7 +905,7 @@ int del_host_h(connection_t *cl)
   connection_t *old, *p;
   avl_node_t *node;
 cp
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%d %lx", name, &address, &port, &options) != 4)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx", name, &address, &port, &options) != 4)
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
              cl->name, cl->hostname);
