@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.41 2002/02/20 22:37:38 guus Exp $
+    $Id: net.h,v 1.9.4.42 2002/02/26 22:47:51 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -65,10 +65,10 @@ typedef union {
   struct sockaddr_in6 in6;
 } sockaddr_t;
 
-#ifdef HAVE_LINUX
- #define SALEN(s) sizeof(sockaddr_t)
+#ifdef SA_LEN
+#define SALEN(s) SA_LEN(&s)
 #else
- #define SALEN(s) (s.sa_len)
+#define SALEN(s) (s.sa_family==AF_INET?sizeof(struct sockaddr_in):sizeof(struct sockaddr_in6))
 #endif
 
 typedef struct vpn_packet_t {

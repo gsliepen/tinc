@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.27 2002/02/20 22:37:38 guus Exp $
+    $Id: netutl.c,v 1.12.4.28 2002/02/26 22:47:51 guus Exp $
 */
 
 #include "config.h"
@@ -101,6 +101,7 @@ void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
 {
   char address[NI_MAXHOST];
   char port[NI_MAXSERV];
+  char *scopeid;
   int err;
 cp
   if((err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV)))
@@ -110,6 +111,11 @@ cp
       raise(SIGFPE);
       exit(0);
     }
+
+#ifdef HAVE_LINUX
+  if((scopeid = strchr(address, '%')))
+    *scopeid = '\0';  /* Descope. */
+#endif
 
   *addrstr = xstrdup(address);
   *portstr = xstrdup(port);
@@ -147,9 +153,15 @@ cp
       case AF_UNSPEC:
         return 0;
       case AF_INET:
-	return memcmp(&a->in, &b->in, sizeof(a->in));
+	result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+	if(result)
+	  return result;
+	return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof(a->in.sin_port));
       case AF_INET6:
-	return memcmp(&a->in6, &b->in6, sizeof(a->in6));
+	result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+	if(result)
+	  return result;
+	return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
       default:
         syslog(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"), a->sa.sa_family);
 	cp_trace();
