@@ -44,6 +44,8 @@
 #include "netutl.h"
 #include "protocol.h"
 
+#include "system.h"
+
 int tap_fd = -1;
 
 int total_tap_in = 0;
@@ -98,11 +100,11 @@ cp
   rp.len = htons(rp.len);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, "Sent %d bytes to %lx", ntohs(rp.len), cl->vpn_ip);
+    syslog(LOG_ERR, _("Sent %d bytes to %lx"), ntohs(rp.len), cl->vpn_ip);
 
   if((r = send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
-      syslog(LOG_ERR, "Error sending data: %m");
+      syslog(LOG_ERR, _("Error sending data: %m"));
       return -1;
     }
 
@@ -122,7 +124,7 @@ cp
   add_mac_addresses(&vp);
 
   if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
-    syslog(LOG_ERR, "Can't write to tap device: %m");
+    syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
     total_tap_out += lenin;
 
@@ -141,7 +143,7 @@ void add_queue(packet_queue_t **q, void *packet, size_t s)
   queue_element_t *e;
 cp
   if(debug_lvl > 3)
-    syslog(LOG_DEBUG, "packet to queue: %d", s);
+    syslog(LOG_DEBUG, _("packet to queue: %d"), s);
 
   e = xmalloc(sizeof(*e));
   e->packet = xmalloc(s);
@@ -228,7 +230,7 @@ cp
     }
 
   if(debug_lvl > 3)
-    syslog(LOG_DEBUG, "queue flushed");
+    syslog(LOG_DEBUG, _("queue flushed"));
 cp
 }
 
@@ -243,7 +245,7 @@ cp
   if(cl->sq)
     {
       if(debug_lvl > 1)
-	syslog(LOG_DEBUG, "Flushing send queue for " IP_ADDR_S,
+	syslog(LOG_DEBUG, _("Flushing send queue for " IP_ADDR_S),
 	       IP_ADDR_V(cl->vpn_ip));
       flush_queue(cl, &(cl->sq), xsend);
     }
@@ -251,7 +253,7 @@ cp
   if(cl->rq)
     {
       if(debug_lvl > 1)
-	syslog(LOG_DEBUG, "Flushing receive queue for " IP_ADDR_S,
+	syslog(LOG_DEBUG, _("Flushing receive queue for " IP_ADDR_S),
 	       IP_ADDR_V(cl->vpn_ip));
       flush_queue(cl, &(cl->rq), xrecv);
     }
@@ -269,14 +271,14 @@ cp
     {
       if(debug_lvl > 2)
         {
-          syslog(LOG_NOTICE, "trying to look up " IP_ADDR_S " in connection list failed.",
+          syslog(LOG_NOTICE, _("trying to look up " IP_ADDR_S " in connection list failed."),
 	         IP_ADDR_V(to));
         }
       for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
       if(!cl)
         { /* No open outgoing connection has been found. */
 	  if(debug_lvl > 2)
-	    syslog(LOG_NOTICE, "There is no remote host I can send this packet to.");
+	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to."));
           return -1;
         }
     }
@@ -300,7 +302,7 @@ cp
     {
       add_queue(&(cl->sq), packet, packet->len + 2);
       if(debug_lvl > 1)
-	syslog(LOG_INFO, IP_ADDR_S " is not ready, queueing packet.", IP_ADDR_V(cl->vpn_ip));
+	syslog(LOG_INFO, _(IP_ADDR_S " is not ready, queueing packet."), IP_ADDR_V(cl->vpn_ip));
       return 0; /* We don't want to mess up, do we? */
     }
 
@@ -325,7 +327,7 @@ cp
 
   if((nfd = open(tapfname, O_RDWR | O_NONBLOCK)) < 0)
     {
-      syslog(LOG_ERR, "Could not open %s: %m", tapfname);
+      syslog(LOG_ERR, _("Could not open %s: %m"), tapfname);
       return -1;
     }
 
@@ -346,20 +348,20 @@ int setup_listen_meta_socket(int port)
 cp
   if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
-      syslog(LOG_ERR, "Creating metasocket failed: %m");
+      syslog(LOG_ERR, _("Creating metasocket failed: %m"));
       return -1;
     }
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
-      syslog(LOG_ERR, "setsockopt: %m");
+      syslog(LOG_ERR, _("setsockopt: %m"));
       return -1;
     }
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, "fcntl: %m");
+      syslog(LOG_ERR, _("fcntl: %m"));
       return -1;
     }
 
@@ -370,13 +372,13 @@ cp
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
-      syslog(LOG_ERR, "Can't bind to port %hd/tcp: %m", port);
+      syslog(LOG_ERR, _("Can't bind to port %hd/tcp: %m"), port);
       return -1;
     }
 
   if(listen(nfd, 3))
     {
-      syslog(LOG_ERR, "listen: %m");
+      syslog(LOG_ERR, _("listen: %m"));
       return -1;
     }
 cp
@@ -395,20 +397,20 @@ int setup_vpn_in_socket(int port)
 cp
   if((nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
-      syslog(LOG_ERR, "Creating socket failed: %m");
+      syslog(LOG_ERR, _("Creating socket failed: %m"));
       return -1;
     }
 
   if(setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
     {
-      syslog(LOG_ERR, "setsockopt: %m");
+      syslog(LOG_ERR, _("setsockopt: %m"));
       return -1;
     }
 
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, "fcntl: %m");
+      syslog(LOG_ERR, _("fcntl: %m"));
       return -1;
     }
 
@@ -419,7 +421,7 @@ cp
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
-      syslog(LOG_ERR, "Can't bind to port %hd/udp: %m", port);
+      syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), port);
       return -1;
     }
 cp
@@ -443,7 +445,7 @@ cp
   cl->meta_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if(cl->meta_socket == -1)
     {
-      syslog(LOG_ERR, "Creating socket failed: %m");
+      syslog(LOG_ERR, _("Creating socket failed: %m"));
       return -1;
     }
 
@@ -453,20 +455,20 @@ cp
 
   if(connect(cl->meta_socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      syslog(LOG_ERR, IP_ADDR_S ":%d: %m", IP_ADDR_V(cl->real_ip), cl->port);
+      syslog(LOG_ERR, _(IP_ADDR_S ":%d: %m"), IP_ADDR_V(cl->real_ip), cl->port);
       return -1;
     }
 
   flags = fcntl(cl->meta_socket, F_GETFL);
   if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, "fcntl: %m");
+      syslog(LOG_ERR, _("fcntl: %m"));
       return -1;
     }
 
   cl->hostname = hostlookup(htonl(cl->real_ip));
 
-  syslog(LOG_INFO, "Connected to %s:%hd" , cl->hostname, cl->port);
+  syslog(LOG_INFO, _("Connected to %s:%hd"), cl->hostname, cl->port);
 cp
   return 0;
 }
@@ -487,7 +489,7 @@ cp
 
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
-      syslog(LOG_ERR, "Could not set up a meta connection.");
+      syslog(LOG_ERR, _("Could not set up a meta connection."));
       free_conn_element(ncn);
       return -1;
     }
@@ -511,7 +513,7 @@ cp
 
   if(!(cfg = get_config_val(myvpnip)))
     {
-      syslog(LOG_ERR, "No value for my VPN IP given");
+      syslog(LOG_ERR, _("No value for my VPN IP given"));
       return -1;
     }
 
@@ -525,20 +527,20 @@ cp
 
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {
-      syslog(LOG_ERR, "Unable to set up a listening socket");
+      syslog(LOG_ERR, _("Unable to set up a listening socket"));
       return -1;
     }
 
   if((myself->socket = setup_vpn_in_socket(myself->port)) < 0)
     {
-      syslog(LOG_ERR, "Unable to set up an incoming vpn data socket");
+      syslog(LOG_ERR, _("Unable to set up an incoming vpn data socket"));
       close(myself->meta_socket);
       return -1;
     }
 
   myself->status.active = 1;
 
-  syslog(LOG_NOTICE, "Ready: listening on port %d.", myself->port);
+  syslog(LOG_NOTICE, _("Ready: listening on port %d."), myself->port);
 cp
   return 0;
 }
@@ -561,7 +563,7 @@ cp
       if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
         seconds_till_retry = 300;
       alarm(seconds_till_retry);
-      syslog(LOG_ERR, "Still failed to connect to other. Will retry in %d seconds.",
+      syslog(LOG_ERR, _("Still failed to connect to other. Will retry in %d seconds."),
 	     seconds_till_retry);
     }
 cp
@@ -594,7 +596,7 @@ cp
       signal(SIGALRM, sigalrm_handler);
       seconds_till_retry = 300;
       alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, "Try to re-establish outgoing connection in 5 minutes.");
+      syslog(LOG_NOTICE, _("Try to re-establish outgoing connection in 5 minutes."));
     }
 cp
   return 0;
@@ -632,7 +634,7 @@ cp
   close(tap_fd);
   destroy_conn_list();
 
-  syslog(LOG_NOTICE, "Terminating.");
+  syslog(LOG_NOTICE, _("Terminating."));
 cp
   return;
 }
@@ -646,12 +648,12 @@ int setup_vpn_connection(conn_list_t *cl)
   struct sockaddr_in a;
 cp
   if(debug_lvl > 1)
-    syslog(LOG_DEBUG, "Opening UDP socket to " IP_ADDR_S, IP_ADDR_V(cl->real_ip));
+    syslog(LOG_DEBUG, _("Opening UDP socket to " IP_ADDR_S), IP_ADDR_V(cl->real_ip));
 
   nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(nfd == -1)
     {
-      syslog(LOG_ERR, "Creating data socket failed: %m");
+      syslog(LOG_ERR, _("Creating data socket failed: %m"));
       return -1;
     }
 
@@ -661,7 +663,7 @@ cp
 
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      syslog(LOG_ERR, "Connecting to " IP_ADDR_S ":%d failed: %m",
+      syslog(LOG_ERR, _("Connecting to " IP_ADDR_S ":%d failed: %m"),
 	     IP_ADDR_V(cl->real_ip), cl->port);
       return -1;
     }
@@ -669,7 +671,7 @@ cp
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, "This is a bug: %s:%d: %d:%m", __FILE__, __LINE__, nfd);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"), __FILE__, __LINE__, nfd);
       return -1;
     }
 
@@ -693,7 +695,7 @@ cp
 
   if(getpeername(sfd, &ci, &len) < 0)
     {
-      syslog(LOG_ERR, "Error: getpeername: %m");
+      syslog(LOG_ERR, _("Error: getpeername: %m"));
       return NULL;
     }
 
@@ -705,7 +707,7 @@ cp
   p->last_ping_time = time(NULL);
   p->want_ping = 0;
   
-  syslog(LOG_NOTICE, "Connection from %s:%d", p->hostname, htons(ci.sin_port));
+  syslog(LOG_NOTICE, _("Connection from %s:%d"), p->hostname, htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
     {
@@ -753,12 +755,12 @@ int handle_incoming_vpn_data(conn_list_t *cl)
 cp
   if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, "This is a bug: %s:%d: %d:%m", __FILE__, __LINE__, cl->socket);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"), __FILE__, __LINE__, cl->socket);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, "Incoming data socket error: %s", sys_errlist[x]);
+      syslog(LOG_ERR, _("Incoming data socket error: %s"), sys_errlist[x]);
       return -1;
     }
 
@@ -766,7 +768,7 @@ cp
   lenin = recvfrom(cl->socket, &rp, MTU, 0, NULL, NULL);
   if(lenin <= 0)
     {
-      syslog(LOG_ERR, "Receiving data failed: %m");
+      syslog(LOG_ERR, _("Receiving data failed: %m"));
       return -1;
     }
   total_socket_in += lenin;
@@ -779,11 +781,11 @@ cp
     {
       f = lookup_conn(rp.from);
       if(debug_lvl > 3)
-	syslog(LOG_DEBUG, "packet from " IP_ADDR_S " (len %d)",
+	syslog(LOG_DEBUG, _("packet from " IP_ADDR_S " (len %d)"),
 	       IP_ADDR_V(rp.from), rp.len);
       if(!f)
 	{
-	  syslog(LOG_ERR, "Got packet from unknown source " IP_ADDR_S,
+	  syslog(LOG_ERR, _("Got packet from unknown source " IP_ADDR_S),
 		 IP_ADDR_V(rp.from));
 	  return -1;
 	}
@@ -815,7 +817,7 @@ cp
     return;
 
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, "Closing connection with %s.", cl->hostname);
+    syslog(LOG_NOTICE, _("Closing connection with %s."), cl->hostname);
 
   if(cl->status.timeout)
     send_timeout(cl);
@@ -831,7 +833,7 @@ cp
       signal(SIGALRM, sigalrm_handler);
       seconds_till_retry = 5;
       alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, "Try to re-establish outgoing connection in 5 seconds.");
+      syslog(LOG_NOTICE, _("Try to re-establish outgoing connection in 5 seconds."));
     }
   
   cl->status.active = 0;
@@ -863,7 +865,7 @@ cp
             {
               if(p->status.pinged && !p->status.got_pong)
                 {
-	          syslog(LOG_INFO, "%s (" IP_ADDR_S ") didn't respond to ping",
+	          syslog(LOG_INFO, _("%s (" IP_ADDR_S ") didn't respond to ping"),
 		         p->hostname, IP_ADDR_V(p->vpn_ip));
 	          p->status.timeout = 1;
 	          terminate_connection(p);
@@ -894,7 +896,7 @@ int handle_new_meta_connection(conn_list_t *cl)
 cp
   if((nfd = accept(cl->meta_socket, &client, &len)) < 0)
     {
-      syslog(LOG_ERR, "Accepting a new connection failed: %m");
+      syslog(LOG_ERR, _("Accepting a new connection failed: %m"));
       return -1;
     }
 
@@ -902,7 +904,7 @@ cp
     {
       shutdown(nfd, 2);
       close(nfd);
-      syslog(LOG_NOTICE, "Closed attempted connection.");
+      syslog(LOG_NOTICE, _("Closed attempted connection."));
       return 0;
     }
 
@@ -924,18 +926,18 @@ int handle_incoming_meta_data(conn_list_t *cl)
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, "This is a bug: %s:%d: %d:%m", __FILE__, __LINE__, cl->meta_socket);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"), __FILE__, __LINE__, cl->meta_socket);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, "Metadata socket error: %s", sys_errlist[x]);
+      syslog(LOG_ERR, _("Metadata socket error: %s"), sys_errlist[x]);
       return -1;
     }
 
   if(cl->buflen >= MAXBUFSIZE)
     {
-      syslog(LOG_ERR, "Metadata read buffer overflow.");
+      syslog(LOG_ERR, _("Metadata read buffer overflow."));
       return -1;
     }
 
@@ -943,7 +945,7 @@ cp
 
   if(lenin<=0)
     {
-      syslog(LOG_ERR, "Metadata socket read error: %m");
+      syslog(LOG_ERR, _("Metadata socket read error: %m"));
       return -1;
     }
 
@@ -970,22 +972,22 @@ cp
             {
               if(request_handlers[request] == NULL)
                 {
-                  syslog(LOG_ERR, "Unknown request: %s", cl->buffer);
+                  syslog(LOG_ERR, _("Unknown request: %s"), cl->buffer);
                   return -1;
                 }
 
               if(debug_lvl > 3)
-                syslog(LOG_DEBUG, "Got request: %s", cl->buffer);                             
+                syslog(LOG_DEBUG, _("Got request: %s"), cl->buffer);                             
 
               if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
                 {
-                  syslog(LOG_ERR, "Error while processing request from IP_ADDR_S", IP_ADDR_V(cl->real_ip));
+                  syslog(LOG_ERR, _("Error while processing request from " IP_ADDR_S), IP_ADDR_V(cl->real_ip));
                   return -1;
                 }
             }
           else
             {
-              syslog(LOG_ERR, "Bogus data received.");
+              syslog(LOG_ERR, _("Bogus data received."));
               return -1;
             }
 
@@ -1029,7 +1031,7 @@ cp
 	      I've once got here when it said `No route to host'.
 	    */
 	    getsockopt(p->socket, SOL_SOCKET, SO_ERROR, &x, &l);
-	    syslog(LOG_ERR, "Outgoing data socket error: %s", sys_errlist[x]);
+	    syslog(LOG_ERR, _("Outgoing data socket error: %s"), sys_errlist[x]);
 	    terminate_connection(p);
 	    return;
 	  }  
@@ -1064,7 +1066,7 @@ cp
   memset(&vp, 0, sizeof(vp));
   if((lenin = read(tap_fd, &vp, MTU)) <= 0)
     {
-      syslog(LOG_ERR, "Error while reading from tapdevice: %m");
+      syslog(LOG_ERR, _("Error while reading from tapdevice: %m"));
       return;
     }
 
@@ -1074,7 +1076,7 @@ cp
   if(ether_type != 0x0800)
     {
       if(debug_lvl > 0)
-	syslog(LOG_INFO, "Non-IP ethernet frame %04x from " MAC_ADDR_S,
+	syslog(LOG_INFO, _("Non-IP ethernet frame %04x from " MAC_ADDR_S),
 	       ether_type, MAC_ADDR_V(vp.data[6]));
       return;
     }
@@ -1082,7 +1084,7 @@ cp
   if(lenin < 32)
     {
       if(debug_lvl > 0)
-	syslog(LOG_INFO, "Dropping short packet");
+	syslog(LOG_INFO, _("Dropping short packet"));
       return;
     }
 
@@ -1090,10 +1092,10 @@ cp
   to = ntohl(*((unsigned long*)(&vp.data[30])));
 
   if(debug_lvl > 3)
-    syslog(LOG_DEBUG, "An IP packet (%04x) for " IP_ADDR_S " from " IP_ADDR_S,
+    syslog(LOG_DEBUG, _("An IP packet (%04x) for " IP_ADDR_S " from " IP_ADDR_S),
 	   ether_type, IP_ADDR_V(to), IP_ADDR_V(from));
   if(debug_lvl > 4)
-    syslog(LOG_DEBUG, MAC_ADDR_S " to " MAC_ADDR_S,
+    syslog(LOG_DEBUG, _(MAC_ADDR_S " to " MAC_ADDR_S),
 	   MAC_ADDR_V(vp.data[0]), MAC_ADDR_V(vp.data[6]));
   
   vp.len = (length_t)lenin - 2;
@@ -1128,7 +1130,7 @@ cp
         {
 	  if(errno == EINTR) /* because of alarm */
 	    continue;
-          syslog(LOG_ERR, "Error while waiting for input: %m");
+          syslog(LOG_ERR, _("Error while waiting for input: %m"));
           return;
         }
 

@@ -27,6 +27,8 @@
 
 #include "encr.h"
 
+#include "system.h"
+
 unsigned char initvec[] = { 0x22, 0x7b, 0xad, 0x55, 0x41, 0xf4, 0x3e, 0xf3 };
 
 int main(int argc, char **argv)
@@ -37,7 +39,7 @@ int main(int argc, char **argv)
 
   if(argc > 2 || (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))))
     {
-      fprintf(stderr, "Usage: %s bits\n", argv[0]);
+      fprintf(stderr, _("Usage: %s bits\n"), argv[0]);
       return 1;
     }
 
@@ -46,17 +48,17 @@ int main(int argc, char **argv)
   
   if(!(bits = atol(argv[1])))
     {
-      fprintf(stderr, "Illegal number: %s\n", argv[1]);
+      fprintf(stderr, _("Illegal number: %s\n"), argv[1]);
       return 1;
     }
 
   bits = ((bits - 1) | 63) + 1;
-  fprintf(stderr, "Generating %d bits number", bits);
+  fprintf(stderr, _("Generating %d bits number"), bits);
   bytes = bits >> 3;
 
   if((fp = fopen("/dev/urandom", "r")) == NULL)
     {
-      perror("Opening /dev/urandom");
+      perror(_("Opening /dev/urandom"));
       return 1;
     }
 
@@ -69,7 +71,7 @@ int main(int argc, char **argv)
       if(feof(fp))
         {
           puts("");
-          fprintf(stderr, "File was empty!\n");
+          fprintf(stderr, _("File was empty!\n"));
         }
       p[i] = c;
     }
@@ -77,7 +79,7 @@ int main(int argc, char **argv)
 
   if(isatty(1))
     {
-      fprintf(stderr, ": done.\nThe following line should be ENTIRELY copied into a passphrase file:\n");
+      fprintf(stderr, _(": done.\nThe following line should be ENTIRELY copied into a passphrase file:\n"));
       printf("%d ", bits);
       for(i = 0; i < bytes; i++)
 	printf("%02x", p[i]);
@@ -89,7 +91,7 @@ int main(int argc, char **argv)
       for(i = 0; i < bytes; i++)
 	printf("%02x", p[i]);
       puts("");
-      fprintf(stderr, ": done.\n");
+      fprintf(stderr, _(": done.\n"));
     }
 
   return 0;

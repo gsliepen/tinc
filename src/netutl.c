@@ -35,6 +35,8 @@
 #include "net.h"
 #include "netutl.h"
 
+#include "system.h"
+
 /*
   look for a connection associated with the given vpn ip,
   return its connection structure.
@@ -203,7 +205,7 @@ cp
 
   if(!(h = gethostbyname(p)))
     {
-      fprintf(stderr, "Error looking up `%s': %s\n", p, sys_errlist[h_errno]);
+      fprintf(stderr, _("Error looking up `%s': %s\n"), p, sys_errlist[h_errno]);
       return NULL;
     }
 
@@ -227,7 +229,7 @@ void dump_conn_list(void)
 {
   conn_list_t *p;
 cp
-  syslog(LOG_DEBUG, "Connection list:");
+  syslog(LOG_DEBUG, _("Connection list:"));
 
   for(p = conn_list; p != NULL; p = p->next)
     {

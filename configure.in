@@ -9,8 +9,9 @@ AM_ACLOCAL_INCLUDE(m4)
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
 # in the latter don't make it into the configure-time tests.
-AC_DEFINE([_GNU_SOURCE])
-AC_DEFINE([__USE_BSD])
+AC_DEFINE([_GNU_SOURCE], [__USE_BSD])
+
+ALL_LINGUAS="nl"
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -22,6 +23,8 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 jm_PERL
 AM_PROG_LIBTOOL
+
+AC_ISC_POSIX
 
 dnl Checks for libraries.
 
@@ -68,5 +71,6 @@ AC_CHECK_LIB(dl, dlopen, [
   LIBS="$LIBS -ldl"
 ])
 
-AC_OUTPUT([Makefile src/Makefile cipher/Makefile cipher/blowfish/Makefile
-doc/Makefile lib/Makefile m4/Makefile redhat/Makefile debian/Makefile])
+AC_OUTPUT([Makefile src/Makefile cipher/Makefile
+cipher/blowfish/Makefile doc/Makefile intl/Makefile lib/Makefile
+m4/Makefile po/Makefile.in redhat/Makefile debian/Makefile])

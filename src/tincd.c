@@ -19,6 +19,9 @@
 
 /*
  * $Log: tincd.c,v $
+ * Revision 1.9  2000/05/29 21:01:26  zarq
+ * Internationalization of tinc.
+ *
  * Revision 1.8  2000/05/14 12:22:42  guus
  * Cleanups.
  *
@@ -59,6 +62,8 @@
 #include "encr.h"
 #include "net.h"
 #include "netutl.h"
+
+#include "system.h"
 
 /* The name this program was run with. */
 char *program_name;
@@ -106,19 +111,19 @@ static void
 usage(int status)
 {
   if(status != 0)
-    fprintf(stderr, "Try `%s --help\' for more information.\n", program_name);
+    fprintf(stderr, _("Try `%s --help\' for more information.\n"), program_name);
   else
     {
-      printf("Usage: %s [option]...\n\n", program_name);
-      printf("  -c, --config=FILE     Read configuration options from FILE.\n"
-	     "  -D, --no-detach       Don't fork and detach.\n"
-	     "  -d                    Increase debug level.\n"
-	     "  -k, --kill            Attempt to kill a running tincd and exit.\n"
-	     "  -n, --net=NETNAME     Connect to net NETNAME.\n"
-	     "  -t, --timeout=TIMEOUT Seconds to wait before giving a timeout.\n");
-      printf("      --help            Display this help and exit.\n"
-	     "      --version         Output version information and exit.\n\n");
-      printf("Report bugs to tinc@nl.linux.org.\n");
+      printf(_("Usage: %s [option]...\n\n"), program_name);
+      printf(_("  -c, --config=FILE     Read configuration options from FILE.\n"
+	       "  -D, --no-detach       Don't fork and detach.\n"
+	       "  -d                    Increase debug level.\n"
+	       "  -k, --kill            Attempt to kill a running tincd and exit.\n"
+	       "  -n, --net=NETNAME     Connect to net NETNAME.\n"
+	       "  -t, --timeout=TIMEOUT Seconds to wait before giving a timeout.\n"));
+      printf(_("      --help            Display this help and exit.\n"
+ 	       "      --version         Output version information and exit.\n\n"));
+      printf(_("Report bugs to tinc@nl.linux.org.\n"));
     }
   exit(status);
 }
@@ -156,7 +161,7 @@ parse_options(int argc, char **argv, char **envp)
 	case 't': /* timeout */
 	  if(!(p = add_config_val(&config, TYPE_INT, optarg)))
 	    {
-	      printf("Invalid timeout value `%s'.\n", optarg);
+	      printf(_("Invalid timeout value `%s'.\n"), optarg);
 	      usage(1);
 	    }
 	  break;
@@ -170,7 +175,7 @@ parse_options(int argc, char **argv, char **envp)
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting.", cp_file, cp_line, size);
+  syslog(LOG_ERR, _("Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting."), cp_file, cp_line, size);
   exit(1);
 }
 
@@ -225,10 +230,10 @@ int detach(void)
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
   if(debug_lvl > 1)
-    syslog(LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d.",
+    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d."),
 	   VERSION, __DATE__, __TIME__, debug_lvl);
   else
-    syslog(LOG_NOTICE, "tincd %s starting, debug level %d.", VERSION, debug_lvl);
+    syslog(LOG_NOTICE, _("tincd %s starting, debug level %d."), VERSION, debug_lvl);
 
   xalloc_fail_func = memory_full;
 
@@ -243,7 +248,7 @@ void cleanup_and_exit(int c)
   close_network_connections();
 
   if(debug_lvl > 0)
-    syslog(LOG_INFO, "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d.",
+    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d."),
 	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
 
   closelog();
@@ -261,10 +266,10 @@ int write_pidfile(void)
   if((pid = check_pid(pidfilename)))
     {
       if(netname)
-	fprintf(stderr, "A tincd is already running for net `%s' with pid %d.\n",
+	fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
 		netname, pid);
       else
-	fprintf(stderr, "A tincd is already running with pid %d.\n", pid);
+	fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
       return 1;
     }
 
@@ -285,16 +290,16 @@ int kill_other(void)
   if(!(pid = read_pid(pidfilename)))
     {
       if(netname)
-	fprintf(stderr, "No other tincd is running for net `%s'.\n", netname);
+	fprintf(stderr, _("No other tincd is running for net `%s'.\n"), netname);
       else
-	fprintf(stderr, "No other tincd is running.\n");
+	fprintf(stderr, _("No other tincd is running.\n"));
       return 1;
     }
 
   errno = 0;    /* No error, sometimes errno is only changed on error */
   /* ESRCH is returned when no process with that pid is found */
   if(kill(pid, SIGTERM) && errno == ESRCH)
-    fprintf(stderr, "Removing stale lock file.\n");
+    fprintf(stderr, _("Removing stale lock file.\n"));
   remove_pid(pidfilename);
 
   return 0;
@@ -342,16 +347,21 @@ main(int argc, char **argv, char **envp)
 {
   program_name = argv[0];
 
+  setlocale (LC_ALL, "");
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
+
   parse_options(argc, argv, envp);
 
   if(show_version)
     {
-      printf("%s version %s\nCopyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
-	     "see the AUTHORS file for a complete list.\n\n"
-	     "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-	     "and you are welcome to redistribute it under certain conditions;\n"
-	     "see the file COPYING for details.\n\n", PACKAGE, VERSION);
-      printf("This product includes software developed by Eric Young (eay@mincom.oz.au)\n");
+      printf(_("%s version %s\n"), PACKAGE, VERSION);
+      printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
+	       "see the AUTHORS file for a complete list.\n\n"
+	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+	       "and you are welcome to redistribute it under certain conditions;\n"
+	       "see the file COPYING for details.\n\n"));
+      printf(_("This product includes software developed by Eric Young (eay@mincom.oz.au)\n"));
 
       return 0;
     }
@@ -361,7 +371,7 @@ main(int argc, char **argv, char **envp)
 
   if(geteuid())
     {
-      fprintf(stderr, "You must be root to run this program. sorry.\n");
+      fprintf(stderr, _("You must be root to run this program. sorry.\n"));
       return 1;
     }
 
@@ -396,7 +406,7 @@ RETSIGTYPE
 sigterm_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, "Got TERM signal");
+    syslog(LOG_NOTICE, _("Got TERM signal"));
   cleanup_and_exit(0);
 }
 
@@ -404,14 +414,14 @@ RETSIGTYPE
 sigquit_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, "Got QUIT signal");
+    syslog(LOG_NOTICE, _("Got QUIT signal"));
   cleanup_and_exit(0);
 }
 
 RETSIGTYPE
 sigsegv_square(int a)
 {
-  syslog(LOG_NOTICE, "Got another SEGV signal: not restarting");
+  syslog(LOG_NOTICE, _("Got another SEGV signal: not restarting"));
   exit(0);
 }
 
@@ -419,10 +429,10 @@ RETSIGTYPE
 sigsegv_handler(int a)
 {
   if(cp_file)
-    syslog(LOG_NOTICE, "Got SEGV signal after %s line %d. Trying to re-execute.",
+    syslog(LOG_NOTICE, _("Got SEGV signal after %s line %d. Trying to re-execute."),
 	   cp_file, cp_line);
   else
-    syslog(LOG_NOTICE, "Got SEGV signal; trying to re-execute.");
+    syslog(LOG_NOTICE, _("Got SEGV signal; trying to re-execute."));
 
   signal(SIGSEGV, sigsegv_square);
 
@@ -435,7 +445,7 @@ RETSIGTYPE
 sighup_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, "Got HUP signal");
+    syslog(LOG_NOTICE, _("Got HUP signal"));
   close_network_connections();
   setup_network_connections();
   /* FIXME: read config-file and re-establish network connections */
@@ -445,7 +455,7 @@ RETSIGTYPE
 sigint_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, "Got INT signal");
+    syslog(LOG_NOTICE, _("Got INT signal"));
   cleanup_and_exit(0);
 }
 
@@ -459,7 +469,7 @@ RETSIGTYPE
 sigusr2_handler(int a)
 {
   if(debug_lvl > 1)
-    syslog(LOG_NOTICE, "Forcing new keys");
+    syslog(LOG_NOTICE, _("Forcing new key generation"));
   regenerate_keys();
 }
 
@@ -467,10 +477,10 @@ RETSIGTYPE
 sighuh(int a)
 {
   if(cp_file)
-    syslog(LOG_NOTICE, "Got unexpected signal (%d) after %s line %d.",
+    syslog(LOG_NOTICE, _("Got unexpected signal (%d) after %s line %d."),
 	   a, cp_file, cp_line);
   else
-    syslog(LOG_NOTICE, "Got unexpected signal (%d).", a);
+    syslog(LOG_NOTICE, _("Got unexpected signal (%d)."), a);
 }
 
 void

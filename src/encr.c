@@ -47,6 +47,8 @@
 #include "net.h"
 #include "protocol.h"
 
+#include "system.h"
+
 #define ENCR_GENERATOR "0xd"
 #define ENCR_PRIME "0x7fffffffffffffffffffffffffffffff" /* Mersenne :) */
 
@@ -104,14 +106,14 @@ cp
 
   if((f = fopen(filename, "rb")) == NULL)
     {
-      syslog(LOG_ERR, "Could not open %s: %m", filename);
+      syslog(LOG_ERR, _("Could not open %s: %m"), filename);
       return -1;
     }
 
   fscanf(f, "%d ", &size);
   if(size < 1 || size > (1<<15))
     {
-      syslog(LOG_ERR, "Illegal passphrase in %s; size would be %d", filename, size);
+      syslog(LOG_ERR, _("Illegal passphrase in %s; size would be %d"), filename, size);
       return -1;
     }
   size >>= 2; /* bits->nibbles */
@@ -145,11 +147,11 @@ cp
   else
     my_key_expiry = (time_t)(time(NULL) + cfg->data.val);
 
-  syslog(LOG_NOTICE, "Generating %d bits keys.", PRIVATE_KEY_BITS);
+  syslog(LOG_NOTICE, _("Generating %d bits keys."), PRIVATE_KEY_BITS);
 
   if((f = fopen("/dev/urandom", "r")) == NULL)
     {
-      syslog(LOG_ERR, "Opening /dev/urandom failed: %m");
+      syslog(LOG_ERR, _("Opening /dev/urandom failed: %m"));
       return -1;
     }
 
@@ -214,7 +216,7 @@ cp
   encryption_keylen = len;
 
   if(debug_lvl > 2)
-    syslog(LOG_INFO, "Encryption key set to %s", tmp);
+    syslog(LOG_INFO, _("Encryption key set to %s"), tmp);
 
   free(tmp);
   mpz_clear(ak);

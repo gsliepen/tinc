@@ -1,0 +1,13 @@
+# List of files which contain translatable strings.
+# Copyright (C) 1999,2000 Ivo Timmermans
+
+# Package source files
+
+lib/pidfile.c
+src/conf.c
+src/encr.c
+src/genauth.c
+src/net.c
+src/netutl.c
+src/protocol.c
+src/tincd.c

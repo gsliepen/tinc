@@ -35,6 +35,8 @@
 #include "conf.h"
 #include "netutl.h" /* for strtoip */
 
+#include "system.h"
+
 config_t *config;
 int debug_lvl = 0;
 int timeout = 0; /* seconds before timeout */
@@ -150,14 +152,14 @@ readconfig(const char *fname, FILE *fp)
 
       if(!hazahaza[i].name)
 	{
-	  fprintf(stderr, "%s: %d: Invalid variable name `%s'.\n",
+	  fprintf(stderr, _("%s: %d: Invalid variable name `%s'.\n"),
 		  fname, lineno, p);
 	  return -1;
 	}
 
       if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
 	{
-	  fprintf(stderr, "%s: %d: No value given for `%s'.\n",
+	  fprintf(stderr, _("%s: %d: No value given for `%s'.\n"),
 		  fname, lineno, hazahaza[i].name);
 	  return -1;
 	}
@@ -165,7 +167,7 @@ readconfig(const char *fname, FILE *fp)
       cfg = add_config_val(&config, hazahaza[i].argtype, q);
       if(cfg == NULL)
 	{
-	  fprintf(stderr, "%s: %d: Invalid value `%s' for variable `%s'.\n",
+	  fprintf(stderr, _("%s: %d: Invalid value `%s' for variable `%s'.\n"),
 		  fname, lineno, q, hazahaza[i].name);
 	  return -1;
 	}
@@ -186,7 +188,7 @@ read_config_file(const char *fname)
 
   if((fp = fopen (fname, "r")) == NULL)
     {
-      fprintf(stderr, "Could not open %s: %s\n", fname, sys_errlist[errno]);
+      fprintf(stderr, _("Could not open %s: %s\n"), fname, sys_errlist[errno]);
       return 1;
     }
 
