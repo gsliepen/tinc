@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.28 2000/11/15 01:06:13 zarq Exp $
+    $Id: tincd.c,v 1.10.4.29 2000/11/16 17:54:29 zarq Exp $
 */
 
 #include "config.h"
@@ -83,7 +83,7 @@ static int show_version;
 static int kill_tincd = 0;
 
 /* If zero, don't detach from the terminal. */
-static int do_detach = 1;
+extern int do_detach;
 
 /* If nonzero, generate public/private keypair for this host/net. */
 static int generate_keys = 0;
@@ -249,67 +249,6 @@ void memory_full(int size)
   syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exiting."), size);
   cp_trace();
   exit(1);
-}
-
-/*
-  Detach from current terminal, write pidfile, kill parent
-*/
-int detach(void)
-{
-  int fd;
-  pid_t pid;
-
-  if(do_detach)
-    {
-      ppid = getpid();
-
-      if((pid = fork()) < 0)
-	{
-	  perror("fork");
-	  return -1;
-	}
-      if(pid) /* parent process */
-	{
-	  signal(SIGTERM, parent_exit);
-	  sleep(600); /* wait 10 minutes */
-	  exit(1);
-	}
-    }
-  
-  if(write_pidfile())
-    return -1;
-
-  if(do_detach)
-    {
-      if((fd = open("/dev/tty", O_RDWR)) >= 0)
-	{
-	  if(ioctl(fd, TIOCNOTTY, NULL))
-	    {
-	      perror("ioctl");
-	      return -1;
-	    }
-	  close(fd);
-	}
-
-      if(setsid() < 0)
-	return -1;
-
-      kill(ppid, SIGTERM);
-    }
-  
-  chdir("/"); /* avoid keeping a mointpoint busy */
-
-  openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
-
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
-	   VERSION, __DATE__, __TIME__, debug_lvl);
-  else
-    syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
-
-  xalloc_fail_func = memory_full;
-
-  return 0;
 }
 
 /*
@@ -490,112 +429,3 @@ main(int argc, char **argv, char **envp)
     }
 }
 
-RETSIGTYPE
-sigterm_handler(int a)
-{
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got TERM signal"));
-
-  cleanup_and_exit(0);
-}
-
-RETSIGTYPE
-sigquit_handler(int a)
-{
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got QUIT signal"));
-  cleanup_and_exit(0);
-}
-
-RETSIGTYPE
-sigsegv_square(int a)
-{
-  syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
-  exit(0);
-}
-
-RETSIGTYPE
-sigsegv_handler(int a)
-{
-  syslog(LOG_ERR, _("Got SEGV signal"));
-  cp_trace();
-
-  if(do_detach)
-    {
-      syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
-      signal(SIGSEGV, sigsegv_square);
-      close_network_connections();
-      sleep(5);
-      remove_pid(pidfilename);
-      execvp(g_argv[0], g_argv);
-    }
-  else
-    {
-      syslog(LOG_NOTICE, _("Not restarting."));
-      exit(0);
-    }
-}
-
-RETSIGTYPE
-sighup_handler(int a)
-{
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got HUP signal"));
-  sighup = 1;
-}
-
-RETSIGTYPE
-sigint_handler(int a)
-{
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got INT signal, exiting"));
-  cleanup_and_exit(0);
-}
-
-RETSIGTYPE
-sigusr1_handler(int a)
-{
-  dump_conn_list();
-}
-
-RETSIGTYPE
-sigusr2_handler(int a)
-{
-  dump_subnet_list();
-}
-
-RETSIGTYPE
-sighuh(int a)
-{
-  syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
-  cp_trace();
-}
-
-void
-setup_signals(void)
-{
-  int i;
-
-  for(i=0;i<32;i++)
-    signal(i,sighuh);
-
-  if(signal(SIGTERM, SIG_IGN) != SIG_ERR)
-    signal(SIGTERM, sigterm_handler);
-  if(signal(SIGQUIT, SIG_IGN) != SIG_ERR)
-    signal(SIGQUIT, sigquit_handler);
-  if(signal(SIGSEGV, SIG_IGN) != SIG_ERR)
-    signal(SIGSEGV, sigsegv_handler);
-  if(signal(SIGHUP, SIG_IGN) != SIG_ERR)
-    signal(SIGHUP, sighup_handler);
-  signal(SIGPIPE, SIG_IGN);
-  if(signal(SIGINT, SIG_IGN) != SIG_ERR)
-    signal(SIGINT, sigint_handler);
-  signal(SIGUSR1, sigusr1_handler);
-  signal(SIGUSR2, sigusr2_handler);
-  signal(SIGCHLD, SIG_IGN);
-}
-
-RETSIGTYPE parent_exit(int a)
-{
-  exit(0);
-}

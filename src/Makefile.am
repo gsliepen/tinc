@@ -1,13 +1,15 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.6 2000/11/15 13:33:25 guus Exp $
+# $Id: Makefile.am,v 1.4.4.7 2000/11/16 17:54:27 zarq Exp $
 
 sbin_PROGRAMS = tincd
 
-tincd_SOURCES = conf.c connlist.c meta.c net.c netutl.c protocol.c subnet.c tincd.c
+tincd_SOURCES = conf.c connlist.c meta.c net.c netutl.c process.c	\
+	protocol.c subnet.c tincd.c
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib -I$(top_srcdir)/intl
 
-noinst_HEADERS = conf.h connlist.h meta.h net.h netutl.h protocol.h subnet.h
+noinst_HEADERS = conf.h connlist.h meta.h net.h netutl.h process.h	\
+	protocol.h subnet.h
 
 LIBS = @LIBS@ @INTLLIBS@
 
@@ -16,4 +18,5 @@ tincd_LDADD = \
 
 localedir = $(datadir)/locale
 
-CFLAGS = @CFLAGS@ -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"@sysconfdir@\" -DLOCALEDIR=\"$(localedir)\"
+CFLAGS = @CFLAGS@ -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"@sysconfdir@\"	\
+	-DLOCALEDIR=\"$(localedir)\"

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.74 2000/11/15 22:07:36 zarq Exp $
+    $Id: net.c,v 1.35.4.75 2000/11/16 17:54:27 zarq Exp $
 */
 
 #include "config.h"
@@ -72,6 +72,7 @@
 #include "meta.h"
 #include "net.h"
 #include "netutl.h"
+#include "process.h"
 #include "protocol.h"
 #include "subnet.h"
 
@@ -93,134 +94,6 @@ int keyexpires = 0;
 char *unknown = NULL;
 
 subnet_t mymac;
-
-list_t *child_pids;
-
-void _execute_script(const char *name)
-{
-  int error = 0;
-  char *scriptname;
-  char *s;
-  int fd;
-
-  if(netname)
-    {
-      asprintf(&s, "NETNAME=%s", netname);
-      putenv(s);	/* Don't free s! see man 3 putenv */
-    }
-#ifdef HAVE_UNSETENV
-  else
-    {
-      unsetenv("NETNAME");
-    }
-#endif
-
-  if(chdir(confbase) < 0)
-    /* This cannot fail since we already read config files from this
-       directory. - Guus */
-    /* Yes this can fail, somebody could have removed this directory
-       when we didn't pay attention. - Ivo */
-    {
-      if(chdir("/") < 0)
-	/* Now if THIS fails, something wicked is going on. - Ivo */
-	syslog(LOG_ERR, _("Couldn't chdir to `/': %m"));
-
-      /* Continue anyway. */
-    }
-  
-  asprintf(&scriptname, "%s/%s", confbase, name);
-
-  /* Close all file descriptors */
-  closelog();
-  fcloseall();
-
-  /* Open standard input */
-  if(open("/dev/null", O_RDONLY) < 0)
-    {
-      syslog(LOG_ERR, _("Opening `/dev/null' failed: %m"));
-      error = 1;
-    }
-
-  if(!error)
-    {
-      /* Standard output directly goes to syslog */
-      openlog(name, LOG_CONS | LOG_PID, LOG_DAEMON);
-      /* Standard error as well */
-      if(dup2(1, 2) < 0)
-	{
-	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
-		 "dup2");
-	  error = 1;
-	}
-    }
-  
-  if(error && debug_lvl > 1)
-    syslog(LOG_INFO, _("This means that any output the script generates will not be shown in syslog."));
-  
-  execl(scriptname, NULL);
-  /* No return on success */
-  
-  if(errno != ENOENT)  /* Ignore if the file does not exist */
-    syslog(LOG_WARNING, _("Error executing `%s': %m"), scriptname);
-
-  /* No need to free things */
-  exit(0);
-}
-
-/*
-  Execute the given script.
-  This function doesn't really belong here.
-*/
-int execute_script(const char *name)
-{
-  pid_t pid;
-
-  if((pid = fork()) < 0)
-    {
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "fork");
-      return -1;
-    }
-
-  if(pid)
-    {
-      list_append(child_pids, pid);
-      return 0;
-    }
-
-  /* Child here */
-
-  _execute_script(name);
-}
-
-int check_child(void *data)
-{
-  pid_t pid;
-  int status;
-
-  pid = (pid_t) data;
-  pid = waitpid(pid, &status, WNOHANG);
-  if(WIFEXITED(status))
-    {
-      if(WIFSIGNALED(status)) /* Child was killed by a signal */
-	{
-	  syslog(LOG_ERR, _("Child with PID %d was killed by signal %d (%s)"),
-		 pid, WTERMSIG(status), strsignal(WTERMSIG(status)));
-	  return -1;
-	}
-      if(WEXITSTATUS(status) != 0)
-	{
-	  syslog(LOG_INFO, _("Child with PID %d exited with code %d"),
-		 WEXITSTATUS(status));
-	}
-      return -1;
-    }
-}
-
-void check_children(void)
-{
-  list_forall_nodes(child_pids, check_child);
-}
 
 int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
 {
