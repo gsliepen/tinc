@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.18 2000/12/06 13:33:49 zarq Exp $
+    $Id: conf.h,v 1.6.4.19 2000/12/22 21:34:20 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -39,6 +39,7 @@ typedef enum which_t {
   config_pingtimeout,
   config_tapdevice,
   config_privatekey,
+  config_privatekeyfile,
   config_keyexpire,
   config_hostnames,
   config_interface,
@@ -46,6 +47,7 @@ typedef enum which_t {
   config_address,
   config_port,
   config_publickey,
+  config_publickeyfile,
   config_subnet,
   config_restricthosts,
   config_restrictsubnets,

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.69 2000/12/05 08:59:30 zarq Exp $
+    $Id: protocol.c,v 1.28.4.70 2000/12/22 21:34:24 guus Exp $
 */
 
 #include "config.h"
@@ -255,17 +255,9 @@ cp
 
   /* Read in the public key, so that we can send a challenge */
 
-  if((cfg = get_config_val(cl->config, config_publickey)))
-    {
-      cl->rsa_key = RSA_new();
-      if(read_rsa_public_key(&(cl->rsa_key), cfg->data.ptr) < 0)
-	return -1;
-    }
-  else
-    {
-      syslog(LOG_ERR, _("No public key known for %s (%s)"), cl->name, cl->hostname);
-      return -1;
-    }
+  if(read_rsa_public_key(cl))
+    return -1;
+
 cp
   return send_challenge(cl);
 }
@@ -300,7 +292,7 @@ cp
     }
 
   /* Encrypt the random data */
-  
+
   if(RSA_public_encrypt(len, cl->hischallenge, buffer, cl->rsa_key, RSA_NO_PADDING) != len)	/* NO_PADDING because the message size equals the RSA key size and it is totally random */
     {
       syslog(LOG_ERR, _("Error during encryption of challenge for %s (%s)"), cl->name, cl->hostname);

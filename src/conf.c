@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.34 2000/12/06 13:33:48 zarq Exp $
+    $Id: conf.c,v 1.9.4.35 2000/12/22 21:34:20 guus Exp $
 */
 
 #include "config.h"
@@ -68,6 +68,7 @@ static internal_config_t hazahaza[] = {
   { "Name",         config_name,       TYPE_NAME },
   { "PingTimeout",  config_pingtimeout,    TYPE_INT },
   { "PrivateKey",   config_privatekey,     TYPE_NAME },
+  { "PrivateKeyFile", config_privatekeyfile, TYPE_NAME },
   { "TapDevice",    config_tapdevice,      TYPE_NAME },
   { "VpnMask",      config_dummy,          TYPE_IP },
 /* Host configuration file keywords */
@@ -75,6 +76,7 @@ static internal_config_t hazahaza[] = {
   { "IndirectData", config_indirectdata,   TYPE_BOOL },
   { "Port",         config_port,           TYPE_INT },
   { "PublicKey",    config_publickey,      TYPE_NAME },
+  { "PublicKeyFile", config_publickeyfile, TYPE_NAME },
   { "RestrictAddress", config_restrictaddress, TYPE_BOOL },
   { "RestrictHosts", config_restricthosts, TYPE_BOOL },
   { "RestrictPort", config_restrictport,   TYPE_BOOL },
@@ -232,7 +234,10 @@ int read_config_file(config_t **base, const char *fname)
   
 cp
   if((fp = fopen (fname, "r")) == NULL)
-    return -1;
+    {
+      syslog(LOG_ERR, _("Cannot open config file %s: %m"), fname);
+      return -1;
+    }
 
   bufsize = 100;
   buffer = xmalloc(bufsize);
@@ -273,7 +278,7 @@ cp
 
       if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
 	{
-	  fprintf(stderr, _("No value for variable `%s' on line %d while reading config file %s"),
+	  syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
 		  hazahaza[i].name, lineno, fname);
 	  break;
 	}
@@ -281,7 +286,7 @@ cp
       cfg = add_config_val(base, hazahaza[i].argtype, q);
       if(cfg == NULL)
 	{
-	  fprintf(stderr, _("Invalid value for variable `%s' on line %d while reading config file %s"),
+	  syslog(LOG_ERR, _("Invalid value for variable `%s' on line %d while reading config file %s"),
 		  hazahaza[i].name, lineno, fname);
 	  break;
 	}

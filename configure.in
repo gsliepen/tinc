@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.28 2000/11/29 01:37:50 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.29 2000/12/22 21:34:19 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre4-cvs)
@@ -84,8 +84,6 @@ AC_CHECK_FUNC(gethostbyname, [], [
 dnl These are defined in files in m4/
 tinc_TUNTAP
 tinc_OPENSSL
-tinc_SCANF_AS
-
 
 dnl Check if checkpoint tracing has to be enabled
 AC_ARG_ENABLE(tracing,

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.23 2000/11/30 23:18:21 zarq Exp $
+    $Id: net.h,v 1.9.4.24 2000/12/22 21:34:23 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -128,6 +128,6 @@ extern void add_queue(packet_queue_t **, void *, size_t);
 # include <rsa.h>
 #endif
 
-extern int read_rsa_public_key(RSA **, const char *);
+extern int read_rsa_public_key(connection_t *);
 
 #endif /* __TINC_NET_H__ */

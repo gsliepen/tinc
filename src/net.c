@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.87 2000/12/05 08:59:29 zarq Exp $
+    $Id: net.c,v 1.35.4.88 2000/12/22 21:34:20 guus Exp $
 */
 
 #include "config.h"
@@ -698,59 +698,89 @@ cp
   return 0;
 }
 
-int read_rsa_public_key(RSA **key, const char *file)
-{
-  FILE *fp;
-
-  if((fp = fopen(file, "r")) == NULL)
-    {
-      syslog(LOG_ERR, _("Error reading RSA public key file `%s': %m"),
-	     file);
-      return -1;
-    }
-  if(PEM_read_RSAPublicKey(fp, key, NULL, NULL) == NULL)
-    {
-      syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
-	     file);
-      return -1;
-    }
-
-  return 0;
-}
-
-int read_rsa_private_key(RSA **key, const char *file)
-{
-  FILE *fp;
-
-  if((fp = fopen(file, "r")) == NULL)
-    {
-      syslog(LOG_ERR, _("Error reading RSA private key file `%s': %m"),
-	     file);
-      return -1;
-    }
-  if(PEM_read_RSAPrivateKey(fp, key, NULL, NULL) == NULL)
-    {
-      syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
-	     file);
-      return -1;
-    }
-
-  return 0;
-}
-
-int read_rsa_keys(void)
+int read_rsa_public_key(connection_t *cl)
 {
   config_t const *cfg;
+  FILE *fp;
+  void *result;
+cp
+  if(!cl->rsa_key)
+    cl->rsa_key = RSA_new();
 
-  if(!(cfg = get_config_val(config, config_privatekey)))
+  if((cfg = get_config_val(cl->config, config_publickey)))
     {
-      syslog(LOG_ERR, _("Private key for tinc daemon required!"));
+      BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
+      BN_hex2bn(&cl->rsa_key->e, "FFFF");
+    }
+  else if((cfg = get_config_val(cl->config, config_publickeyfile)))
+    {
+      if(is_safe_path(cfg->data.ptr))
+        {
+          if((fp = fopen(cfg->data.ptr, "r")) == NULL)
+            {
+              syslog(LOG_ERR, _("Error reading RSA public key file `%s': %m"),
+	             cfg->data.ptr);
+              return -1;
+            }
+          result = PEM_read_RSAPublicKey(fp, &cl->rsa_key, NULL, NULL);
+          fclose(fp);
+          if(!result)
+            {
+              syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %m"),
+	             cfg->data.ptr);
+              return -1;
+            }
+        }
+      else
+        return -1;
+    }    
+  else
+    {
+      syslog(LOG_ERR, _("No public key for %s specified!"), cl->name);
       return -1;
     }
+cp
+  return 0;
+}
 
-  myself->rsa_key = RSA_new();
+int read_rsa_private_key(void)
+{
+  config_t const *cfg;
+  FILE *fp;
+  void *result;
+cp
+  if(!myself->rsa_key)
+    myself->rsa_key = RSA_new();
 
-  return read_rsa_private_key(&(myself->rsa_key), cfg->data.ptr);
+  if((cfg = get_config_val(config, config_privatekey)))
+    {
+      BN_hex2bn(&myself->rsa_key->d, cfg->data.ptr);
+      BN_hex2bn(&myself->rsa_key->e, "FFFF");
+    }
+  else if((cfg = get_config_val(config, config_privatekeyfile)))
+    {
+      if((fp = fopen(cfg->data.ptr, "r")) == NULL)
+        {
+          syslog(LOG_ERR, _("Error reading RSA private key file `%s': %m"),
+	         cfg->data.ptr);
+          return -1;
+        }
+      result = PEM_read_RSAPrivateKey(fp, &myself->rsa_key, NULL, NULL);
+      fclose(fp);
+      if(!result)
+        {
+          syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
+	         cfg->data.ptr);
+          return -1;
+        }
+    }    
+  else
+    {
+      syslog(LOG_ERR, _("No private key for tinc daemon specified!"));
+      return -1;
+    }
+cp
+  return 0;
 }
 
 /*
@@ -782,7 +812,7 @@ cp
       return -1;
     }
 cp
-  if(read_rsa_keys())
+  if(read_rsa_private_key())
     return -1;
 
   if(read_host_config(myself))
@@ -790,6 +820,9 @@ cp
       syslog(LOG_ERR, _("Cannot open host configuration file for myself!"));
       return -1;
     }
+
+  if(read_rsa_public_key(myself))
+    return -1;
 cp  
 
 /*
@@ -1159,7 +1192,7 @@ cp
   
   if(!cl)
     {
-      syslog(LOG_WARNING, _("Received UDP packets on port %d from unknown source %lx:%d"), ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+      syslog(LOG_WARNING, _("Received UDP packets on port %d from unknown source %lx:%d"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return 0;
     }
 
