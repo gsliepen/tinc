@@ -14,7 +14,6 @@ CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
  po/tinc.pot src/.libs intl
 
 ChangeLog:
-	rm -f ChangeLog
 	cvs2cl -U cvsusers --fsf
 
 cvs-clean: maintainer-clean
@@ -30,3 +29,10 @@ rpm: dist
 	cp redhat/tinc.spec /usr/src/redhat/SOURCES/
 	cd /usr/src/redhat/SOURCES/
 	rpm -bi tinc.spec
+
+release:
+	rm -f ChangeLog
+	$(MAKE) ChangeLog
+	echo "Please edit the NEWS file now..."
+	/usr/bin/editor NEWS
+	$(MAKE) dist
