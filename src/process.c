@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.59 2003/07/30 21:52:41 guus Exp $
+    $Id: process.c,v 1.1.2.60 2003/07/31 14:24:19 guus Exp $
 */
 
 #include "system.h"
@@ -223,7 +223,7 @@ static void _execute_script(const char *scriptname, char **envp)
 	/* Close all file descriptors */
 	fcloseall();
 
-	execl(scriptname, NULL);
+	execl(scriptname, scriptname, NULL);
 	/* No return on success */
 
 	save_errno = errno;
