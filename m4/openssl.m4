@@ -29,6 +29,8 @@ AC_DEFUN(tinc_OPENSSL,
     [AC_MSG_ERROR("OpenSSL libraries not found.")]
   )
 
+  AC_CHECK_FUNCS(RAND_pseudo_bytes)
+
   AC_CHECK_FUNC(dlopen,
     [],
     AC_CHECK_LIB(dl, dlopen,

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.97 2001/07/01 21:42:13 guus Exp $
+    $Id: protocol.c,v 1.28.4.98 2001/07/04 08:41:36 guus Exp $
 */
 
 #include "config.h"
@@ -40,24 +40,13 @@
 
 #include <netinet/in.h>
 
-#ifdef HAVE_OPENSSL_SHA_H
-# include <openssl/sha.h>
-#else
-# include <sha.h>
-#endif
+#include <openssl/sha.h>
+#include <openssl/rand.h>
+#include <openssl/evp.h>
 
-#ifdef HAVE_OPENSSL_RAND_H
-# include <openssl/rand.h>
-#else
-# include <rand.h>
+#ifndef HAVE_RAND_PSEUDO_BYTES
+#define RAND_pseudo_bytes RAND_bytes
 #endif
-
-#ifdef HAVE_OPENSSL_EVP_H
-# include <openssl/evp.h>
-#else
-# include <evp.h>
-#endif
-
 
 #include "conf.h"
 #include "net.h"
@@ -1066,7 +1055,7 @@ int send_ping(connection_t *cl)
 cp
   cl->status.pinged = 1;
   cl->last_ping_time = time(NULL);
-  RAND_bytes(salt, SALTLEN);
+  RAND_pseudo_bytes(salt, SALTLEN);
   bin2hex(salt, salt, SALTLEN);
   salt[SALTLEN*2] = '\0';
 cp
@@ -1083,7 +1072,7 @@ int send_pong(connection_t *cl)
 {
   char salt[SALTLEN*2+1];
 cp
-  RAND_bytes(salt, SALTLEN);
+  RAND_pseudo_bytes(salt, SALTLEN);
   bin2hex(salt, salt, SALTLEN);
   salt[SALTLEN*2] = '\0';
 cp

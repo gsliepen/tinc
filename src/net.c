@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.117 2001/06/29 10:30:18 guus Exp $
+    $Id: net.c,v 1.35.4.118 2001/07/04 08:41:36 guus Exp $
 */
 
 #include "config.h"
@@ -45,28 +45,12 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#ifdef HAVE_OPENSSL_RAND_H
-# include <openssl/rand.h>
-#else
-# include <rand.h>
-#endif
+#include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 
-#ifdef HAVE_OPENSSL_EVP_H
-# include <openssl/evp.h>
-#else
-# include <evp.h>
-#endif
-
-#ifdef HAVE_OPENSSL_ERR_H
-# include <openssl/err.h>
-#else
-# include <err.h>
-#endif
-
-#ifdef HAVE_OPENSSL_PEM_H
-# include <openssl/pem.h>
-#else
-# include <pem.h>
+#ifndef HAVE_RAND_PSEUDO_BYTES
+#define RAND_pseudo_bytes RAND_bytes
 #endif
 
 #ifdef HAVE_TUNTAP
@@ -134,7 +118,7 @@ cp
 
   /* Encrypt the packet. */
 
-  RAND_bytes(inpkt->salt, sizeof(inpkt->salt));
+  RAND_pseudo_bytes(inpkt->salt, sizeof(inpkt->salt));
 
   EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
   EVP_EncryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len + sizeof(inpkt->salt));
@@ -344,12 +328,12 @@ cp
   /* Set default MAC address for ethertap devices */
 
   mymac.type = SUBNET_MAC;
-  mymac.net.mac.address.x[0] = 0xff;
-  mymac.net.mac.address.x[1] = 0xff;
-  mymac.net.mac.address.x[2] = 0xff;
-  mymac.net.mac.address.x[3] = 0xff;
-  mymac.net.mac.address.x[4] = 0xff;
-  mymac.net.mac.address.x[5] = 0xff;
+  mymac.net.mac.address.x[0] = 0xfe;
+  mymac.net.mac.address.x[1] = 0xfd;
+  mymac.net.mac.address.x[2] = 0x00;
+  mymac.net.mac.address.x[3] = 0x00;
+  mymac.net.mac.address.x[4] = 0x00;
+  mymac.net.mac.address.x[5] = 0x00;
 
 #ifdef HAVE_LINUX
  #ifdef HAVE_TUNTAP
@@ -366,8 +350,7 @@ cp
     taptype = TAP_TYPE_TUNTAP;
   }
  #endif
-#endif
-#ifdef HAVE_FREEBSD
+#else
  taptype = TAP_TYPE_TUNTAP;
 #endif
 cp
@@ -1427,7 +1410,7 @@ cp
               if(debug_lvl >= DEBUG_STATUS)
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
 
-              RAND_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
+              RAND_pseudo_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
               send_key_changed(myself, NULL);
               keyexpires = time(NULL) + keylifetime;
             }

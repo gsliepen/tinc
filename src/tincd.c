@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.47 2001/06/05 16:09:55 guus Exp $
+    $Id: tincd.c,v 1.10.4.48 2001/07/04 08:41:36 guus Exp $
 */
 
 #include "config.h"
@@ -38,31 +38,9 @@
 # include <sys/ioctl.h>
 #endif
 
-#ifdef HAVE_OPENSSL_RAND_H
-# include <openssl/rand.h>
-#else
-# include <rand.h>
-#endif
-
-#ifdef HAVE_OPENSSL_RSA_H
-# include <openssl/rsa.h>
-#else
-# include <rsa.h>
-#endif
-
-#ifdef HAVE_OPENSSL_ERR_H
-# include <openssl/err.h>
-#else
-# include <err.h>
-#endif
-
-#ifdef HAVE_OPENSSL_PEM_H
-# include <openssl/pem.h>
-#else
-# include <pem.h>
-#endif
-
-
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
 
 #include <utils.h>
 #include <xalloc.h>
