@@ -32,7 +32,7 @@ install: build
 	dh_clean -k
 	dh_installdirs
 
-	$(MAKE) install DESTDIR=`pwd`/debian/tmp/usr
+	$(MAKE) install DESTDIR=`pwd`/debian/tmp
 	mkdir -p `pwd`/debian/tmp/etc/tinc/example
 	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/example/tinc.conf
 	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
