@@ -17,63 +17,22 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.26 2003/07/12 17:41:46 guus Exp $
+    $Id: net_socket.c,v 1.1.2.27 2003/07/17 15:06:26 guus Exp $
 */
-
-#include "config.h"
-
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-/* SunOS really wants sys/socket.h BEFORE net/if.h,
-   and FreeBSD wants these lines below the rest. */
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
-#endif
-#ifdef HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
-
-#include <utils.h>
-#include <xalloc.h>
-#include <avl_tree.h>
-#include <list.h>
-
-#include "conf.h"
-#include "connection.h"
-#include "meta.h"
-#include "net.h"
-#include "netutl.h"
-#include "process.h"
-#include "protocol.h"
-#include "subnet.h"
-#include "graph.h"
-#include "process.h"
-#include "route.h"
-#include "device.h"
-#include "event.h"
-#include "logger.h"
 
 #include "system.h"
 
-#ifndef HAVE_RAND_PSEUDO_BYTES
-#define RAND_pseudo_bytes RAND_bytes
-#endif
+#include "avl_tree.h"
+#include "conf.h"
+#include "connection.h"
+#include "event.h"
+#include "logger.h"
+#include "meta.h"
+#include "net.h"
+#include "netutl.h"
+#include "protocol.h"
+#include "utils.h"
+#include "xalloc.h"
 
 int addressfamily = AF_UNSPEC;
 int maxtimeout = 900;

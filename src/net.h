@@ -17,25 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.63 2003/07/12 17:41:46 guus Exp $
+    $Id: net.h,v 1.9.4.64 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
 
-#include "config.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/time.h>
 #include <openssl/evp.h>
-
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-
-#include "utils.h"
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9014				/* 9000 bytes payload + 14 bytes ethernet header */
@@ -97,6 +85,8 @@ typedef struct packet_queue_t {
 	queue_element_t *tail;
 } packet_queue_t;
 
+#include "conf.h"
+
 typedef struct outgoing_t {
 	char *name;
 	int timeout;
@@ -115,8 +105,6 @@ extern int maxtimeout;
 extern int seconds_till_retry;
 extern int addressfamily;
 
-#include "connection.h"			/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
-
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keyexpires;
@@ -127,10 +115,14 @@ extern char *myport;
 extern time_t now;
 extern EVP_CIPHER_CTX packet_ctx;
 
+/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
+#include "connection.h"
+#include "node.h"
+
 extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(int);
-extern void finish_connecting(connection_t *);
-extern void do_outgoing_connection(connection_t *);
+extern void finish_connecting(struct connection_t *);
+extern void do_outgoing_connection(struct connection_t *);
 extern int handle_new_meta_connection(int);
 extern int setup_listen_socket(sockaddr_t *);
 extern int setup_vpn_in_socket(sockaddr_t *);
@@ -142,7 +134,7 @@ extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
-extern void terminate_connection(connection_t *, int);
+extern void terminate_connection(struct connection_t *, int);
 extern void flush_queue(struct node_t *);
 extern int read_rsa_public_key(struct connection_t *);
 

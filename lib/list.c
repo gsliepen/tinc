@@ -17,17 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.15 2003/07/12 17:48:38 guus Exp $
+    $Id: list.c,v 1.1.2.16 2003/07/17 15:06:25 guus Exp $
 */
 
-#include "config.h"
-
-#include <stdlib.h>
-
-#include <xalloc.h>
-#include <system.h>
+#include "system.h"
 
 #include "list.h"
+#include "xalloc.h"
 
 /* (De)constructors */
 

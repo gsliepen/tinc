@@ -1,13 +1,7 @@
-/* $Id: fake-getaddrinfo.h,v 1.1.2.2 2003/07/06 23:16:27 guus Exp $ */
+/* $Id: fake-getaddrinfo.h,v 1.1.2.3 2003/07/17 15:06:25 guus Exp $ */
 
 #ifndef _FAKE_GETADDRINFO_H
 #define _FAKE_GETADDRINFO_H
-
-#include "config.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
 
 #include "fake-gai-errnos.h"
 

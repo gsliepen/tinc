@@ -17,20 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.24 2003/07/12 17:41:46 guus Exp $
+    $Id: node.h,v 1.1.2.25 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
 
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-
-#include <avl_tree.h>
-
-#include "subnet.h"
+#include "avl_tree.h"
 #include "connection.h"
+#include "list.h"
+#include "subnet.h"
 
 typedef struct node_status_t {
 	int active:1;				/* 1 if active.. */

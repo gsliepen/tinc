@@ -17,27 +17,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.35 2003/07/12 17:41:45 guus Exp $
+    $Id: meta.c,v 1.1.2.36 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
-#include <utils.h>
-#include <avl_tree.h>
-
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
-/* This line must be below the rest for FreeBSD */
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "system.h"
 
 #include <openssl/evp.h>
 
-#include "net.h"
+#include "avl_tree.h"
 #include "connection.h"
-#include "system.h"
-#include "protocol.h"
 #include "logger.h"
+#include "net.h"
+#include "protocol.h"
+#include "system.h"
+#include "utils.h"
 
 int send_meta(connection_t *c, char *buffer, int length)
 {

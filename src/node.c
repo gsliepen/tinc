@@ -17,23 +17,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.22 2003/07/12 17:41:46 guus Exp $
+    $Id: node.c,v 1.1.2.23 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
-
-#include <string.h>
-
-#include <avl_tree.h>
-#include "node.h"
-#include "netutl.h"
-#include "net.h"
-#include "logger.h"
-
-#include <utils.h>
-#include <xalloc.h>
-
 #include "system.h"
+
+#include "avl_tree.h"
+#include "logger.h"
+#include "net.h"
+#include "netutl.h"
+#include "node.h"
+#include "utils.h"
+#include "xalloc.h"
 
 avl_tree_t *node_tree;			/* Known nodes, sorted by name */
 avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */

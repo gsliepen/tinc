@@ -18,15 +18,10 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <sys/types.h>
-#include <ctype.h>
-#include <string.h>
-
-#include <utils.h>
-#include <syslog.h>
-#include <xalloc.h>
+#include "../src/logger.h"
+#include "utils.h"
 
 #ifdef ENABLE_TRACING
 volatile int (cp_line[]) = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -64,7 +59,7 @@ void bin2hex(char *src, char *dst, int length)
 #ifdef ENABLE_TRACING
 void cp_trace()
 {
-	syslog(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
+	logger(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
 		   cp_file[(cp_index + 15) % 16], cp_line[(cp_index + 15) % 16],
 		   cp_file[(cp_index + 14) % 16], cp_line[(cp_index + 14) % 16],
 		   cp_file[(cp_index + 13) % 16], cp_line[(cp_index + 13) % 16],

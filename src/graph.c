@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.24 2003/07/12 17:41:45 guus Exp $
+    $Id: graph.c,v 1.1.2.25 2003/07/17 15:06:26 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -44,27 +44,17 @@
    destination address and port of a node if possible.
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <stdio.h>
-#include <string.h>
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#include <netinet/in.h>
-
-#include <avl_tree.h>
-#include <utils.h>
-
+#include "avl_tree.h"
+#include "connection.h"
+#include "device.h"
+#include "edge.h"
+#include "logger.h"
 #include "netutl.h"
 #include "node.h"
-#include "edge.h"
-#include "connection.h"
 #include "process.h"
-#include "device.h"
-#include "logger.h"
-
-#include "system.h"
+#include "utils.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)

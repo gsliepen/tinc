@@ -17,50 +17,39 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.58 2003/07/15 16:26:18 guus Exp $
+    $Id: route.c,v 1.1.2.59 2003/07/17 15:06:27 guus Exp $
 */
 
-#include "config.h"
+#include "system.h"
 
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#include <sys/socket.h>
-#include <netinet/in.h>
-#ifdef HAVE_NET_IF_H
-#include <net/if.h>
-#endif
 #ifdef HAVE_NET_ETHERNET_H
 #include <net/ethernet.h>
 #endif
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
+#ifdef HAVE_NET_IF_ARP_H
+#include <net/if_arp.h>
 #endif
-#include <netinet/ip.h>
+#ifdef HAVE_NETINET_IP_ICMP_H
 #include <netinet/ip_icmp.h>
+#endif
 #ifdef HAVE_NETINET_IP6_H
 #include <netinet/ip6.h>
+#endif
+#ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
 #endif
+#ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
-#include <utils.h>
-#include <xalloc.h>
-#include <string.h>
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
 #endif
 
-#include <avl_tree.h>
-
-#include "net.h"
+#include "avl_tree.h"
 #include "connection.h"
-#include "subnet.h"
-#include "route.h"
-#include "protocol.h"
 #include "device.h"
 #include "logger.h"
-
-#include "system.h"
+#include "net.h"
+#include "protocol.h"
+#include "route.h"
+#include "subnet.h"
+#include "utils.h"
 
 /* Missing definitions */
 

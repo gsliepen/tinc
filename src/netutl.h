@@ -17,15 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.15 2003/07/12 17:41:46 guus Exp $
+    $Id: netutl.h,v 1.2.4.16 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
 #define __TINC_NETUTL_H__
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
 
 #include "net.h"
 

@@ -9,17 +9,7 @@
  * that ai_family is AF_INET. Don't use it for another purpose.
  */
 
-#include "config.h"
-
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <string.h>
-
-#include <system.h>
+#include "system.h"
 
 #include "fake-getnameinfo.h"
 #include "fake-getaddrinfo.h"

@@ -17,37 +17,22 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.54 2003/07/12 17:41:46 guus Exp $
+    $Id: process.c,v 1.1.2.55 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
-
-#include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <termios.h>
-
-#include <pidfile.h>
-#include <utils.h>
-#include <xalloc.h>
+#include "system.h"
 
 #include "conf.h"
-#include "process.h"
-#include "subnet.h"
-#include "device.h"
 #include "connection.h"
 #include "device.h"
+#include "edge.h"
 #include "logger.h"
-
-#include "system.h"
+#include "node.h"
+#include "pidfile.h"
+#include "process.h"
+#include "subnet.h"
+#include "utils.h"
+#include "xalloc.h"
 
 /* If zero, don't detach from the terminal. */
 int do_detach = 1;

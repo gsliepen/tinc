@@ -25,16 +25,7 @@
  *	First version (v0.2) released
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <fcntl.h>
+#include "system.h"
 
 /* read_pid
  *

@@ -19,31 +19,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.65 2003/07/12 17:41:45 guus Exp $
+    $Id: conf.c,v 1.9.4.66 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
-
-#include <ctype.h>
-#include <errno.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <string.h>
-
-#include <xalloc.h>
-#include <utils.h>				/* for cp */
-#include <avl_tree.h>
-
-#include "conf.h"
-#include "netutl.h"				/* for str2address */
-#include "logger.h"
-
 #include "system.h"
+
+#include "avl_tree.h"
+#include "conf.h"
+#include "logger.h"
+#include "netutl.h"				/* for str2address */
+#include "utils.h"				/* for cp */
+#include "xalloc.h"
 
 avl_tree_t *config_tree;
 

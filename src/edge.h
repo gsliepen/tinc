@@ -17,17 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.13 2003/07/12 17:41:45 guus Exp $
+    $Id: edge.h,v 1.1.2.14 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
 #define __TINC_EDGE_H__
 
-#include <avl_tree.h>
-
+#include "avl_tree.h"
+#include "connection.h"
 #include "net.h"
 #include "node.h"
-#include "connection.h"
 
 typedef struct edge_t {
 	struct node_t *from;

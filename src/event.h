@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.1.4.6 2003/07/12 17:41:45 guus Exp $
+    $Id: event.h,v 1.1.4.7 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_EVENT_H__
 #define __TINC_EVENT_H__
 
-#include <time.h>
-#include <avl_tree.h>
+#include "avl_tree.h"
 
 extern avl_tree_t *event_tree;
 

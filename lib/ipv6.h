@@ -17,18 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv6.h,v 1.1.2.3 2003/07/11 16:12:59 guus Exp $
+    $Id: ipv6.h,v 1.1.2.4 2003/07/17 15:06:25 guus Exp $
 */
 
 #ifndef __TINC_IPV6_H__
 #define __TINC_IPV6_H__
-
-#include "config.h"
-
-#include <netinet/in.h>
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
 
 #ifndef AF_INET6
 #define AF_INET6 10

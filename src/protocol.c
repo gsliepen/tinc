@@ -17,29 +17,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.140 2003/07/12 17:41:46 guus Exp $
+    $Id: protocol.c,v 1.28.4.141 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
-
-#include <sys/types.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <errno.h>
-
-#include <utils.h>
-#include <xalloc.h>
+#include "system.h"
 
 #include "conf.h"
-#include "protocol.h"
-#include "meta.h"
 #include "connection.h"
 #include "logger.h"
-
-#include "system.h"
+#include "meta.h"
+#include "protocol.h"
+#include "utils.h"
+#include "xalloc.h"
 
 /* Jumptable for the request handlers */
 

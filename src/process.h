@@ -17,13 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.15 2003/07/12 17:41:46 guus Exp $
+    $Id: process.h,v 1.1.2.16 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_PROCESS_H__
 #define __TINC_PROCESS_H__
-
-#include "config.h"
 
 extern int do_detach;
 

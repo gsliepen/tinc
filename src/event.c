@@ -17,21 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.8 2003/07/12 17:41:45 guus Exp $
+    $Id: event.c,v 1.1.4.9 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <xalloc.h>
-#include <string.h>
-#include <utils.h>
-#include <avl_tree.h>
-#include <time.h>
-
-#include "event.h"
-
 #include "system.h"
+
+#include "avl_tree.h"
+#include "event.h"
+#include "utils.h"
+#include "xalloc.h"
 
 avl_tree_t *event_tree;
 extern time_t now;

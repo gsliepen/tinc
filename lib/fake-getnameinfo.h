@@ -1,12 +1,7 @@
-/* $Id: fake-getnameinfo.h,v 1.1.2.2 2003/07/12 17:41:45 guus Exp $ */
+/* $Id: fake-getnameinfo.h,v 1.1.2.3 2003/07/17 15:06:25 guus Exp $ */
 
 #ifndef _FAKE_GETNAMEINFO_H
 #define _FAKE_GETNAMEINFO_H
-
-#include "config.h"
-
-#include <sys/socket.h>
-#include <netdb.h>
 
 #ifndef HAVE_GETNAMEINFO
 int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, 

@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.66 2003/07/11 16:12:58 guus Exp $
+dnl $Id: configure.in,v 1.13.2.67 2003/07/17 15:06:25 guus Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
@@ -67,6 +67,10 @@ case $host_os in
     AC_DEFINE(HAVE_CYGWIN, 1, [Cygwin])
     [ rm -f src/device.c; ln -sf cygwin/device.c src/device.c ]
   ;;
+  *mingw*)
+    AC_DEFINE(HAVE_CYGWIN, 1, [MinGW])
+    [ rm -f src/device.c; ln -sf mingw/device.c src/device.c ]
+  ;;
   *)
     AC_MSG_ERROR("Unknown operating system.")
   ;;
@@ -85,14 +89,18 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h stdint.h strings.h syslog.h unistd.h \
-	sys/file.h sys/ioctl.h sys/param.h sys/time.h netinet/in_systm.h])
-AC_CHECK_HEADERS([net/ethernet.h net/if.h netinet/ip.h netinet/tcp.h netinet/ip6.h], [], [],
-	[#include <sys/types.h>
-	 #include <sys/socket.h>
-	 #ifdef HAVE_NETINET_IN_SYSTM_H
-     #include <netinet/in_systm.h>
-	 #endif])
+AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/param.h \
+  sys/time.h sys/socket.h sys/wait.h netdb.h arpa/inet.h netinet/in_systm.h])
+AC_CHECK_HEADERS([net/ethernet.h net/if.h net/if_arp.h netinet/if_ether.h netinet/ip.h \
+  netinet/tcp.h netinet/ip_icmp.h netinet/ip6.h netinet/icmp6.h],
+  [], [],
+  [#include <sys/types.h>
+   #include <sys/socket.h>
+   #ifdef HAVE_NETINET_IN_SYSTM_H
+   #include <netinet/in_systm.h>
+   #endif
+  ]
+)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

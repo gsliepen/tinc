@@ -17,34 +17,21 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.33 2003/07/12 17:41:45 guus Exp $
+    $Id: connection.h,v 1.1.2.34 2003/07/17 15:06:26 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
-#include <sys/time.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
 
-#include <avl_tree.h>
-#include <list.h>
-
-#ifdef HAVE_OPENSSL_EVP_H
-# include <openssl/evp.h>
-#else
-# include <evp.h>
-#endif
-
-#ifdef HAVE_OPENSSL_RSA_H
-# include <openssl/rsa.h>
-#else
-# include <rsa.h>
-#endif
-
-#include "net.h"
+#include "avl_tree.h"
 #include "conf.h"
-
-#include "node.h"
 #include "edge.h"
+#include "list.h"
+#include "net.h"
+#include "node.h"
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002

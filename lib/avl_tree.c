@@ -29,14 +29,13 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.15 2003/07/12 17:48:38 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.16 2003/07/17 15:06:25 guus Exp $
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <xalloc.h>
+#include "system.h"
 
 #include "avl_tree.h"
+#include "xalloc.h"
 
 #ifdef AVL_COUNT
 #define AVL_NODE_COUNT(n)  ((n) ? (n)->count : 0)

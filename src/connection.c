@@ -17,27 +17,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.39 2003/07/12 17:41:45 guus Exp $
+    $Id: connection.c,v 1.1.2.40 2003/07/17 15:06:26 guus Exp $
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/time.h>
-
-#include <avl_tree.h>
-#include <list.h>
-
+#include "avl_tree.h"
+#include "conf.h"
+#include "list.h"
+#include "logger.h"
 #include "net.h"				/* Don't ask. */
 #include "netutl.h"
-#include "conf.h"
-#include <utils.h>
 #include "subnet.h"
-#include "logger.h"
-
+#include "utils.h"
 #include "xalloc.h"
-#include "system.h"
 
 avl_tree_t *connection_tree;	/* Meta connections */
 connection_t *broadcast;

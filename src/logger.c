@@ -17,18 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.3 2003/07/12 17:41:45 guus Exp $
+    $Id: logger.c,v 1.1.2.4 2003/07/17 15:06:26 guus Exp $
 */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <syslog.h>
-#include <unistd.h>
+#include "system.h"
 
 #include "conf.h"
 #include "logger.h"
-
-#include "system.h"
 
 int debug_level = DEBUG_NOTHING;
 static int logmode = LOGMODE_STDERR;

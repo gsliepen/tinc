@@ -21,14 +21,6 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
-#include <ctype.h>
-
-#include "fake-getaddrinfo.h"
-#include "fake-getnameinfo.h"
-#include "ipv6.h"
-
-#define min(a,b) (((a)<(b))?(a):(b))
-
 #ifdef ENABLE_TRACING
 extern volatile int cp_line[];
 extern volatile char *cp_file[];

@@ -1,8 +1,5 @@
 #ifndef __TINC_LOGGER_H__
 
-#include <syslog.h>
-#include <stdarg.h>
-
 enum {
 	DEBUG_NOTHING = 0,			/* Quiet mode, only show starting/stopping of the daemon */
 	DEBUG_ALWAYS = 0,

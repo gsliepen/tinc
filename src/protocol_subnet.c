@@ -17,31 +17,21 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.11 2003/07/12 17:41:47 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.12 2003/07/17 15:06:27 guus Exp $
 */
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <errno.h>
-
-#include <utils.h>
-#include <xalloc.h>
-#include <avl_tree.h>
+#include "system.h"
 
 #include "conf.h"
+#include "connection.h"
+#include "logger.h"
 #include "net.h"
 #include "netutl.h"
-#include "protocol.h"
-#include "meta.h"
-#include "connection.h"
 #include "node.h"
-#include "logger.h"
-
-#include "system.h"
+#include "protocol.h"
+#include "subnet.h"
+#include "utils.h"
+#include "xalloc.h"
 
 int send_add_subnet(connection_t *c, subnet_t *subnet)
 {

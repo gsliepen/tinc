@@ -17,20 +17,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.17 2003/07/12 17:41:48 guus Exp $
+    $Id: device.c,v 1.1.2.18 2003/07/17 15:06:27 guus Exp $
 */
 
-#include "config.h"
-
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/ioctl.h>
+#include "system.h"
 
 #ifdef HAVE_TUNTAP
 #ifdef LINUX_IF_TUN_H
@@ -43,13 +33,11 @@
 #define DEFAULT_DEVICE "/dev/tap0"
 #endif
 
-#include <utils.h>
 #include "conf.h"
+#include "logger.h"
 #include "net.h"
 #include "route.h"
-#include "logger.h"
-
-#include "system.h"
+#include "utils.h"
 
 enum {
 	DEVICE_TYPE_ETHERTAP,
