@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.16 2000/11/26 22:42:34 zarq Exp $
+    $Id: process.c,v 1.1.2.17 2000/11/28 08:59:27 zarq Exp $
 */
 
 #include "config.h"
@@ -53,6 +53,8 @@ int do_detach = 1;
 extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
+
+sigset_t emptysigset;
 
 void memory_full(int size)
 {
@@ -263,7 +265,7 @@ cp
 	    }
           else				/* Something strange happened */
             {
-	      syslog(LOG_ERR, _("Process %d (%s) terminated abnormaly"), pid, name);
+	      syslog(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid, name);
 	      return -1;
             }
         }
@@ -285,7 +287,7 @@ cp
 */
 
 RETSIGTYPE
-sigterm_handler(int a, siginfo_t *info, void *)
+sigterm_handler(int a, siginfo_t *info, void *b)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got TERM signal"));
@@ -294,7 +296,7 @@ sigterm_handler(int a, siginfo_t *info, void *)
 }
 
 RETSIGTYPE
-sigquit_handler(int a, siginfo_t *info, void *)
+sigquit_handler(int a, siginfo_t *info, void *b)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got QUIT signal"));
@@ -302,7 +304,7 @@ sigquit_handler(int a, siginfo_t *info, void *)
 }
 
 RETSIGTYPE
-sigsegv_square(int a, siginfo_t *info, void *)
+sigsegv_square(int a, siginfo_t *info, void *b)
 {
   syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
   cp_trace();
@@ -310,15 +312,21 @@ sigsegv_square(int a, siginfo_t *info, void *)
 }
 
 RETSIGTYPE
-sigsegv_handler(int a, siginfo_t *info, void *)
+sigsegv_handler(int a, siginfo_t *info, void *b)
 {
+  struct sigaction act;
   syslog(LOG_ERR, _("Got SEGV signal"));
   cp_trace();
 
   if(do_detach)
     {
       syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
-      signal(SIGSEGV, sigsegv_square);
+
+      act.sa_handler = NULL;
+      act.sa_mask = emptysigset;
+      act.sa_flags = SA_SIGINFO;
+      act.sa_sigaction = sigsegv_square;
+
       close_network_connections();
       sleep(5);
       remove_pid(pidfilename);
@@ -332,7 +340,7 @@ sigsegv_handler(int a, siginfo_t *info, void *)
 }
 
 RETSIGTYPE
-sighup_handler(int a, siginfo_t *info, void *)
+sighup_handler(int a, siginfo_t *info, void *b)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got HUP signal"));
@@ -340,7 +348,7 @@ sighup_handler(int a, siginfo_t *info, void *)
 }
 
 RETSIGTYPE
-sigint_handler(int a, siginfo_t *info, void *)
+sigint_handler(int a, siginfo_t *info, void *b)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got INT signal, exiting"));
@@ -348,19 +356,19 @@ sigint_handler(int a, siginfo_t *info, void *)
 }
 
 RETSIGTYPE
-sigusr1_handler(int a, siginfo_t *info, void *)
+sigusr1_handler(int a, siginfo_t *info, void *b)
 {
   dump_connection_list();
 }
 
 RETSIGTYPE
-sigusr2_handler(int a, siginfo_t *info, void *)
+sigusr2_handler(int a, siginfo_t *info, void *b)
 {
   dump_subnet_list();
 }
 
 RETSIGTYPE
-sighuh(int a, siginfo_t *info, void *)
+unexpected_signal_handler(int a, siginfo_t *info, void *b)
 {
   syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
   cp_trace();
@@ -386,19 +394,18 @@ void
 setup_signals(void)
 {
   int i;
-  sigset_t a;
   struct sigaction act;
 
-  sigemptyset(&a);
+  sigemptyset(&emptysigset);
   act.sa_handler = NULL;
-  act.sa_mask = a;
+  act.sa_mask = emptysigset;
   act.sa_flags = SA_SIGINFO;
 
   /* Set a default signal handler for every signal, errors will be
      ignored. */
   for(i = 0; i < NSIG; i++) 
     {
-      act.sa_sigaction = sighuh_handler;
+      act.sa_sigaction = unexpected_signal_handler;
       sigaction(sighandlers[i].signal, &act, NULL);
     }
 
