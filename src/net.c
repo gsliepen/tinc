@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.184 2003/04/03 11:43:17 guus Exp $
+    $Id: net.c,v 1.35.4.185 2003/04/19 11:12:45 guus Exp $
 */
 
 #include "config.h"
@@ -432,6 +432,7 @@ void main_loop(void)
 				
 				if(c->outgoing) {
 					free(c->outgoing->name);
+					freeaddrinfo(c->outgoing->ai);
 					free(c->outgoing);
 					c->outgoing = NULL;
 				}
