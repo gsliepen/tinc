@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.44 2002/03/01 12:26:56 guus Exp $
+    $Id: net.h,v 1.9.4.45 2002/03/01 13:18:54 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -109,8 +109,7 @@ extern char *status_text[];
 
 extern int tcp_socket[MAXSOCKETS];
 extern int udp_socket[MAXSOCKETS];
-extern int tcp_sockets;
-extern int udp_sockets;
+extern int listen_sockets;
 extern int keyexpires;
 extern int keylifetime;
 extern int do_prune;

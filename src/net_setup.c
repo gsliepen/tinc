@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.6 2002/03/01 12:25:58 guus Exp $
+    $Id: net_setup.c,v 1.1.2.7 2002/03/01 13:18:54 guus Exp $
 */
 
 #include "config.h"
@@ -221,7 +221,7 @@ int setup_myself(void)
   subnet_t *subnet;
   char *name, *hostname, *mode, *afname, *cipher, *digest;
   struct addrinfo hint, *ai, *aip;
-  int choice, err, sock;
+  int choice, err;
 cp
   myself = new_node();
   myself->connection = new_connection();
@@ -477,52 +477,33 @@ cp
       return -1;
     }
 
-  tcp_sockets = 0;
-
   for(aip = ai; aip; aip = aip->ai_next)
     {
-      if((sock = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
+      if((tcp_socket[listen_sockets] = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
         continue;
 
-      tcp_socket[tcp_sockets++] = sock;
+      if((udp_socket[listen_sockets] = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
+        continue;
+
       if(debug_lvl >= DEBUG_CONNECTIONS)
         {
 	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
-	  syslog(LOG_NOTICE, _("Listening on %s/tcp"), hostname);
+	  syslog(LOG_NOTICE, _("Listening on %s"), hostname);
 	  free(hostname);
 	}
+
+      listen_sockets++;
     }
 
   freeaddrinfo(ai);
 
-  hint.ai_socktype = SOCK_DGRAM;
-  hint.ai_protocol = IPPROTO_UDP;
-
-  if((err = getaddrinfo(NULL, myport, &hint, &ai)) || !ai)
+  if(listen_sockets)
+    syslog(LOG_NOTICE, _("Ready"));
+  else
     {
-      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
+      syslog(LOG_ERR, _("Unable to create any listening socket!"));
       return -1;
     }
-
-  udp_sockets = 0;
-
-  for(aip = ai; aip; aip = aip->ai_next)
-    {
-      if((sock = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
-        continue;
-
-      udp_socket[udp_sockets++] = sock;
-      if(debug_lvl >= DEBUG_CONNECTIONS)
-        {
-	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
-	  syslog(LOG_NOTICE, _("Listening on %s/udp"), hostname);
-	  free(hostname);
-	}
-    }
-
-  freeaddrinfo(ai);
-
-  syslog(LOG_NOTICE, _("Ready"));
 cp
   return 0;
 }
@@ -584,10 +565,11 @@ cp
   if(myself && myself->connection)
     terminate_connection(myself->connection, 0);
 
-  for(i = 0; i < udp_sockets; i++)
-    close(udp_socket[i]);
-  for(i = 0; i < tcp_sockets; i++)
-    close(tcp_socket[i]);
+  for(i = 0; i < listen_sockets; i++)
+    {
+      close(udp_socket[i]);
+      close(tcp_socket[i]);
+    }
 
   exit_events();
   exit_edges();

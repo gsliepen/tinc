@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.5 2002/03/01 11:18:34 guus Exp $
+    $Id: net_socket.c,v 1.1.2.6 2002/03/01 13:18:54 guus Exp $
 */
 
 #include "config.h"
@@ -72,8 +72,7 @@ int seconds_till_retry = 5;
 
 int tcp_socket[MAXSOCKETS];
 int udp_socket[MAXSOCKETS];
-int tcp_sockets = 0;
-int udp_sockets = 0;
+int listen_sockets = 0;
 
 /* Setup sockets */
 
