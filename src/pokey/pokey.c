@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: pokey.c,v 1.1 2002/04/11 14:23:56 zarq Exp $
+    $Id: pokey.c,v 1.2 2002/04/13 11:21:01 zarq Exp $
 */
 
 #include "config.h"
@@ -56,6 +56,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "logging.h"
 
 #include "system.h"
 
@@ -274,7 +275,8 @@ void make_names(void)
       if(!confbase)
         asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
       else
-        log_message(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+        log(0, LOG_INFO,
+	    _("Both netname and configuration directory given, using the latter..."));
       if(!identname)
         asprintf(&identname, "tinc.%s", netname);
     }
@@ -317,22 +319,19 @@ main(int argc, char **argv, char **envp)
   if(show_help)
     usage(0);
 
+  log_add_hook(log_default);
+
   gnome_init("Pokey", "0.0", 1, fake_argv);
 
   glade_init();
 
-  xml = glade_xml_new("pokey.glade", NULL);
+  xml = glade_xml_new("pokey.glade", "MainWindow");
 
-  if (!xml) {
-    g_warning("something bad happened while creating the interface");
-    return 1;
-  }
-
-/*   if(geteuid()) */
-/*     { */
-/*       fprintf(stderr, _("You must be root to run this program.\n")); */
-/*       return 1; */
-/*     } */
+  if (!xml)
+    {
+      fprintf(stderr, _("Something bad happened while creating the interface.\n"));
+      exit(1);
+    }
 
   g_argv = argv;
 
@@ -367,7 +366,8 @@ cp
       cleanup_and_exit(1);
     }
       
-  log_message(LOG_ERR, _("Unrecoverable error"));
+  log(0, LOG_ERR,
+      _("Unrecoverable error"));
   cp_trace();
 
   return 1;
