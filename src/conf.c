@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.41 2001/06/05 19:39:54 guus Exp $
+    $Id: conf.c,v 1.9.4.42 2001/07/24 20:03:40 guus Exp $
 */
 
 #include "config.h"
@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <string.h>
 
 #include <xalloc.h>
 #include <utils.h> /* for cp */
@@ -495,7 +496,7 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
 
       if((fn = readline(stdin, NULL, NULL)) == NULL)
 	{
-	  fprintf(stderr, _("Error while reading stdin: %m\n"));
+	  fprintf(stderr, _("Error while reading stdin: %s\n"), strerror(errno));
 	  return NULL;
 	}
 
@@ -521,8 +522,8 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
   /* Open it first to keep the inode busy */
   if((r = fopen(fn, mode)) == NULL)
     {
-      fprintf(stderr, _("Error opening file `%s': %m\n"),
-	      fn);
+      fprintf(stderr, _("Error opening file `%s': %s\n"),
+	      fn, strerror(errno));
       free(fn);
       return NULL;
     }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.22 2001/03/13 09:55:14 guus Exp $
+    $Id: process.c,v 1.1.2.23 2001/07/24 20:03:40 guus Exp $
 */
 
 #include "config.h"
@@ -164,7 +164,7 @@ cp
     {
       if(daemon(0, 0) < 0)
 	{
-	  fprintf(stderr, _("Couldn't detach from terminal: %m"));
+	  fprintf(stderr, _("Couldn't detach from terminal: %s"), strerror(errno));
 	  return -1;
 	}
 
@@ -427,7 +427,7 @@ setup_signals(void)
     {
       act.sa_sigaction = sighandlers[i].handler;
       if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
-	fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %m\n"),
-		sighandlers[i].signal, strsignal(sighandlers[i].signal));
+	fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %s\n"),
+		sighandlers[i].signal, strsignal(sighandlers[i].signal), strerror(errno));
     }
 }
