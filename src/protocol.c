@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.34 2000/09/22 15:06:28 guus Exp $
+    $Id: protocol.c,v 1.28.4.35 2000/09/22 16:20:07 guus Exp $
 */
 
 #include "config.h"
@@ -83,24 +83,43 @@ cp
       return -1;
     }
 
-  if(debug_lvl >= DEBUG_META)
-    syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request],
-           cl->name, cl->hostname, buffer);
-  else if(debug_lvl >= DEBUG_PROTOCOL)
+  if(debug_lvl >= DEBUG_PROTOCOL)
     syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
+cp
+  return send_meta(cl, buffer, length);
+}
 
+
+int send_meta(conn_list_t *cl, const char *buffer, int length)
+{
+cp
+  if(debug_lvl >= DEBUG_META)
+    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s): %s"), int length,
+           cl->name, cl->hostname, buffer);
 
   if(cl->status.encryptin)
     {
       /* FIXME: Do encryption */
     }
 
-  if((write(cl->meta_socket, buffer, len)) < 0)
+  if(write(cl->meta_socket, buffer, length) < 0)
     {
-      syslog(LOG_ERR, _("Sending meta data failed:  %m"));
+      syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %m"), cl->name, cl->hostname);
       return -1;
     }
 cp
+  return 0;
+}
+
+int broadcast_meta(conn_list_t *cl, const char *buffer, int length)
+{
+  conn_list_t *p;
+cp
+  for(p = conn_list; p != NULL; p = p->next)
+    if(p != cl && p->status.meta && p->status.active)
+      send_meta(p, buffer, length);
+cp
+  return 0;
 }
 
 /* Connection protocol:
@@ -133,21 +152,15 @@ cp
 
 int send_id(conn_list_t *cl)
 {
-  int x;
-  char *optstr;
 cp
-  x = send_request(cl, "%d %s %d %s", ID, myself->name, myself->protocol_version, optstr=opt2str(myself->options));
-  free(optstr);
-cp
-  return x;
+  return send_request(cl, "%d %s %d %lx", ID, myself->name, myself->protocol_version, myself->options);
 }
 
 int id_h(conn_list_t *cl)
 {
   conn_list_t *old;
-  char *optstr;
 cp
-  if(sscanf(cl->buffer, "%*d %as %d %as", &cl->name, &cl->protocol_version, &optstr) != 3)
+  if(sscanf(cl->buffer, "%*d %as %d %lx", &cl->name, &cl->protocol_version, &cl->options) != 3)
     {
        syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
        return -1;
@@ -161,17 +174,6 @@ cp
              cl->name, cl->hostname, cl->protocol_version);
       return -1;
     }
-
-  /* Check if option string is valid */
-
-  if((cl->options = str2opt(optstr)) == -1)
-    {
-      syslog(LOG_ERR, _("Peer %s uses invalid option string"), cl->hostname);
-      free(optstr);
-      return -1;
-    }
-
-  free(optstr);
 
   /* Check if identity is a valid name */
 
@@ -312,6 +314,7 @@ cp
   if(sscanf(cl->buffer, "%*d %as", &hishash) != 2)
     {
        syslog(LOG_ERR, _("Got bad CHAL_REPLY from %s (%s)"), cl->name, cl->hostname);
+       free(hishash);
        return -1;
     }
 
@@ -320,6 +323,7 @@ cp
   if(strlen(hishash) != SHA_DIGEST_LENGTH*2)
     {
       syslog(LOG_ERR, _("Intruder: wrong challenge reply length from %s (%s)"), cl->name, cl->hostname);
+      free(hishash);
       return -1;
     }
 
@@ -549,40 +553,23 @@ cp
 
 int send_add_host(conn_list_t *cl, conn_list_t *other)
 {
-  char *optstr;
-  int x;
 cp
-  x = send_request(cl, "%d %s %s %lx:%d %s", ADD_HOST,
-                      myself->name, other->name, other->real_ip, other->port, optstr = opt2str(other->options));
-  free(optstr);
-cp
-  return x;
+  return send_request(cl, "%d %s %s %lx:%d %lx", ADD_HOST,
+                      myself->name, other->name, other->real_ip, other->port, other->options);
 }
 
 int add_host_h(conn_list_t *cl)
 {
-  char *optstr;
   char *sender;
   conn_list_t *old, *new, *hisuplink;
 cp
   new = new_conn_list();
 
-  if(sscanf(cl->buffer, "%*d %as %as %lx:%d %as", &sender, &new->name, &new->address, &new->port, &optstr) != 5)
+  if(sscanf(cl->buffer, "%*d %as %as %lx:%d %lx", &sender, &new->name, &new->address, &new->port, &new->options) != 5)
     {
        syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->name, cl->hostname);
        return -1;
     }
-
-  /* Check if option string is valid */
-
-  if((new->options = str2opt(optstr)) == -1)
-    {
-      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid option string"), cl->name, cl->hostname);
-      free(optstr); free(sender);
-      return -1;
-    }
-
-  free(optstr);
 
   /* Check if identity is a valid name */
 
@@ -669,45 +656,28 @@ cp
 
 int send_del_host(conn_list_t *cl, conn_list_t *other)
 {
-  char *optstr;
-  int x;
 cp
-  x = send_request(cl, "%d %s %s %lx:%d %s", DEL_HOST,
-                      myself->name, other->name, other->real_ip, other->port, optstr = opt2str(other->options));
-  free(optstr);
-cp
-  return x;
+  return send_request(cl, "%d %s %s %lx:%d %lx", DEL_HOST,
+                      myself->name, other->name, other->real_ip, other->port, other->options);
 }
 
 int del_host_h(conn_list_t *cl)
 {
   char *name;
   char *sender;
-  char *opstr;
   ip_t address;
   port_t port;
   int options;
   conn_list_t *old, *hisuplink;
 
 cp
-  if(sscanf(cl->buffer, "%*d %as %as %lx:%d %as", &sender, &name, &address, &port, &optstr) != 5)
+  if(sscanf(cl->buffer, "%*d %as %as %lx:%d %lx", &sender, &name, &address, &port, &options) != 5)
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
              cl->name, cl->hostname);
       return -1;
     }
 
-  /* Check if option string is valid */
-
-  if((options = str2opt(optstr)) == -1)
-    {
-      syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s): invalid option string"), cl->name, cl->hostname);
-      free(optstr); free(sender); free(name);
-      return -1;
-    }
-
-  free(optstr);
-      
   /* Check if identity is a valid name */
 
   if(!check_id(name) || !check_id(sender))
@@ -1049,43 +1019,7 @@ cp
   return 0;
 }
 
-/* Old routines */
-
-/*
-  Notify all my direct connections of a new host
-  that was added to the vpn, with the exception
-  of the source of the announcement.
-*/
-
-int notify_others(conn_list_t *new, conn_list_t *source,
-                  int (*function)(conn_list_t*, conn_list_t*))
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p != source && p->status.meta && p->status.active)
-      function(p, new);
-cp
-  return 0;
-}
-
-/*
-  Notify one connection of everything
-  I have connected
-*/
-
-int notify_one(conn_list_t *new)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p->status.active)
-      send_add_host(new, p);
-cp
-  return 0;
-}
-
-/* "Complete overhaul". */
+/* Jumptable for the request handlers */
 
 int (*request_handlers[])(conn_list_t*) = {
   id_h, challenge_h, chal_reply_h, ack_h,
@@ -1095,6 +1029,8 @@ int (*request_handlers[])(conn_list_t*) = {
   add_subnet_h, del_subnet_h,
   key_changed_h, req_key_h, ans_key_h,
 };
+
+/* Request names */
 
 char (*request_name[]) = {
   "ID", "CHALLENGE", "CHAL_REPLY", "ACK",

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.30 2000/09/15 12:58:39 zarq Exp $
+    $Id: net.c,v 1.35.4.31 2000/09/22 16:20:07 guus Exp $
 */
 
 #include "config.h"
@@ -91,20 +91,6 @@ cp
   *((ip_t*)(&tmp[8])) = *((ip_t*)(&tmp[26]));
   memcpy(p->data, &tmp[0], p->len);
 cp
-}
-
-int str2opt(const char *str) {
-  int r;
-
-  r = 0;
-  return r;
-}
-
-char *opt2str(int opt) {
-  static char s[50];
-
-  snprintf(s, 49, "%d", opt);
-  return &s;
 }
 
 int xsend(conn_list_t *cl, void *packet)
