@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.6 2002/02/10 21:57:54 guus Exp $
+    $Id: graph.c,v 1.1.2.7 2002/02/18 16:25:16 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -186,17 +186,15 @@ void sssp_bfs(void)
                   to_hc.node->nexthop = (n->nexthop == myself) ? to_hc.node : n->nexthop;
                   to_hc.node->via = (e->options & OPTION_INDIRECT || n->via != n) ? n->via : to_hc.node;
 		  to_hc.node->options = e->options;
-                  if(to_hc.node->address != to_hc.address || to_hc.node->port != to_hc.port)
+                  if(sockaddrcmp(&to_hc.node->address, &to_hc.udpaddress))
 		  {
                     node = avl_unlink(node_udp_tree, to_hc.node);
-                    to_hc.node->address = to_hc.address;
-		    to_hc.node->port = to_hc.port;
+                    to_hc.node->address = to_hc.udpaddress;
 		    if(to_hc.node->hostname)
 		      free(to_hc.node->hostname);
-		    to_hc.node->hostname = hostlookup(htonl(to_hc.address));
+		    to_hc.node->hostname = sockaddr2hostname(&to_hc.udpaddress);
                     avl_insert_node(node_udp_tree, node);
 		  }
-		  to_hc.node->port = to_hc.port;
                   node = avl_alloc_node();
                   node->data = to_hc.node;
                   avl_insert_before(todo_tree, from, node);

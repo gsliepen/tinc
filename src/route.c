@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.22 2002/02/10 21:57:54 guus Exp $
+    $Id: route.c,v 1.1.2.23 2002/02/18 16:25:19 guus Exp $
 */
 
 #include "config.h"
@@ -105,23 +105,15 @@ cp
 
 node_t *route_ipv4(vpn_packet_t *packet)
 {
-  ipv4_t dest;
   subnet_t *subnet;
 cp
-#ifdef HAVE_SOLARIS
-  /* The other form gives bus errors on a SparcStation 20. */
-  dest = ((packet->data[30] * 0x100 + packet->data[31]) * 0x100 + packet->data[32]) * 0x100 + packet->data[33];
-#else
-  dest = ntohl(*((unsigned long*)(&packet->data[30])));
-#endif
-cp  
-  subnet = lookup_subnet_ipv4(&dest);
+  subnet = lookup_subnet_ipv4((ipv4_t *)&packet->data[30]);
 cp
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
-          syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %d.%d.%d.%d"),
+          syslog(LOG_WARNING, _("Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"),
                  packet->data[30], packet->data[31], packet->data[32], packet->data[33]);
         }
 
@@ -163,7 +155,6 @@ void route_arp(vpn_packet_t *packet)
   struct ether_arp *arp;
   subnet_t *subnet;
   unsigned char ipbuf[4];
-  ipv4_t dest;
 cp
   /* First, snatch the source address from the ARP packet */
 
@@ -193,8 +184,7 @@ cp
 
   /* Check if the IP address exists on the VPN */
 
-  dest = ntohl(*((unsigned long*)(arp->arp_tpa)));
-  subnet = lookup_subnet_ipv4(&dest);
+  subnet = lookup_subnet_ipv4((ipv4_t *)arp->arp_tpa);
 
   if(!subnet)
     {

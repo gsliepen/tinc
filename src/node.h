@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.11 2002/02/11 15:59:18 guus Exp $
+    $Id: node.h,v 1.1.2.12 2002/02/18 16:25:16 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -41,8 +41,7 @@ typedef struct node_t {
   char *name;                      /* name of this node */
   long int options;                /* options turned on for this node */
 
-  ipv4_t address;                  /* his real (internet) ip to send UDP packets to */
-  port_t port;                     /* port number of UDP connection */
+  sockaddr_t address;              /* his real (internet) ip to send UDP packets to */
   char *hostname;                  /* the hostname of its real ip */
 
   struct node_status_t status;
@@ -78,11 +77,11 @@ extern avl_tree_t *node_udp_tree;
 extern void init_nodes(void);
 extern void exit_nodes(void);
 extern node_t *new_node(void);
-extern void free_node(node_t *n);
-extern void node_add(node_t *n);
-extern void node_del(node_t *n);
+extern void free_node(node_t *);
+extern void node_add(node_t *);
+extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
-extern node_t *lookup_node_udp(ipv4_t, port_t);
+extern node_t *lookup_node_udp(sockaddr_t *);
 extern void dump_nodes(void);
 
 #endif /* __TINC_NODE_H__ */

@@ -17,11 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.31 2002/02/10 21:57:53 guus Exp $
+    $Id: conf.h,v 1.6.4.32 2002/02/18 16:25:16 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <avl_tree.h>
 #include "net.h"
@@ -54,7 +58,7 @@ extern int get_config_bool(config_t *, int *);
 extern int get_config_int(config_t *, int *);
 extern int get_config_port(config_t *, port_t *);
 extern int get_config_string(config_t *, char **);
-extern int get_config_address(config_t *, ipv4_t **);
+extern int get_config_address(config_t *, struct addrinfo **);
 struct subnet_t; /* Needed for next line. */
 extern int get_config_subnet(config_t *, struct subnet_t **);
 

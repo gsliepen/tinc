@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.23 2002/02/12 14:36:45 guus Exp $
+    $Id: meta.c,v 1.1.2.24 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -60,7 +60,7 @@ cp
 
   if(write(c->socket, bufp, length) < 0)
     {
-      syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %m"), c->name, c->hostname);
+      syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name, c->hostname, strerror(errno));
       return -1;
     }
 cp
@@ -91,7 +91,7 @@ int receive_meta(connection_t *c)
 cp
   if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, c->socket,
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__, __LINE__, c->socket, strerror(errno),
              c->name, c->hostname);
       return -1;
     }
@@ -125,8 +125,8 @@ cp
         if(errno==EINTR)
           return 0;      
         else
-          syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
-                 c->name, c->hostname);
+          syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
+                 c->name, c->hostname, strerror(errno));
 
       return -1;
     }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.15 2002/02/10 21:57:54 guus Exp $
+    $Id: subnet.h,v 1.1.2.16 2002/02/18 16:25:19 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -41,14 +41,12 @@ typedef struct subnet_mac_t
 typedef struct subnet_ipv4_t
 {
   ipv4_t address;
-  ipv4_t mask;
   int masklength;
 } subnet_ipv4_t;
 
 typedef struct subnet_ipv6_t
 {
   ipv6_t address;
-  ipv6_t mask;
   int masklength;
 } subnet_ipv6_t;
 

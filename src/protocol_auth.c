@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.2 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -413,16 +413,17 @@ int send_ack(connection_t *c)
      to create node_t and edge_t structures. */
 
   int x;
-  char *addrstr;
+  char *address, *port;
   struct timeval now;
 cp
   /* Estimate weight */
   
   gettimeofday(&now, NULL);
   c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
-  addrstr = address2str(c->address);
-  x = send_request(c, "%d %hd %s %d %d", ACK, myself->port, addrstr, c->estimated_weight, c->options);
-  free(addrstr);
+  sockaddr2str(&c->address, &address, &port);
+  x = send_request(c, "%d %s %s %s %d %d", ACK, myport, address, port, c->estimated_weight, c->options);
+  free(address);
+  free(port);
 cp
   return x;
 }
@@ -462,15 +463,17 @@ void send_everything(connection_t *c)
 
 int ack_h(connection_t *c)
 {
-  port_t hisport;
-  char addrstr[MAX_STRING_SIZE];
+  char address[MAX_STRING_SIZE];
+  char port[MAX_STRING_SIZE];
+  char hisport[MAX_STRING_SIZE];
+  char *hisaddress, *dummy;
   int weight;
   int options;
   node_t *n;
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d %hd "MAX_STRING" %d %d", &hisport, addrstr, &weight, &options) != 4)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d", hisport, address, port, &weight, &options) != 5)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
        return -1;
@@ -484,12 +487,6 @@ cp
     {
       n = new_node();
       n->name = xstrdup(c->name);
-      n->address = c->address;
-      n->hostname = xstrdup(c->hostname);
-      n->port = hisport;
-
-      /* FIXME: Also check if no other tinc daemon uses the same IP and port for UDP traffic */
-
       node_add(n);
     }
   else
@@ -512,17 +509,20 @@ cp
   /* Create an edge_t for this connection */
 
   c->edge = new_edge();
-  
+cp  
   c->edge->from.node = myself;
-  c->edge->from.address = str2address(addrstr);
-  c->edge->from.port = myself->port;
+  c->edge->from.tcpaddress = str2sockaddr(address, port);
+  c->edge->from.udpaddress = str2sockaddr(address, myport);
   c->edge->to.node = n;
-  c->edge->to.address = c->address;
-  c->edge->to.port = hisport;
+  c->edge->to.tcpaddress = c->address;
+  sockaddr2str(&c->address, &hisaddress, &dummy);
+  c->edge->to.udpaddress = str2sockaddr(hisaddress, hisport);
+  free(hisaddress);
+  free(dummy);
   c->edge->weight = (weight + c->estimated_weight) / 2;
   c->edge->connection = c;
   c->edge->options = c->options;
-
+cp
   edge_add(c->edge);
 
   /* Activate this connection */

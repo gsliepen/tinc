@@ -100,6 +100,12 @@ If you leave it out, remember to replace it with at least one space character.
 Here are all valid variables, listed in alphabetical order.
 The default value is given between parentheses.
 .Bl -tag -width indent
+.It Va AddressFamily Li = ipv4 | ipv6 | any Pq ipv4
+This option affects the address family of listening and outgoing sockets.
+If
+.Qq any
+is selected, then the listening sockets will be IPv6 sockets,
+but on most platforms those will also accept IPv4 connections.
 .It Va BindToInterface Li = Ar interface Bq experimental
 If your computer has more than one network interface,
 .Nm tinc

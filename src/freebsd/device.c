@@ -17,12 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.3 2002/02/11 12:33:01 guus Exp $
+    $Id: device.c,v 1.1.2.4 2002/02/18 16:25:19 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -66,7 +67,7 @@ cp
 cp
   if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
     {
-      syslog(LOG_ERR, _("Could not open %s: %m"), device);
+      syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
       return -1;
     }
 cp
@@ -104,7 +105,7 @@ int read_packet(vpn_packet_t *packet)
 cp
   if((lenin = read(device_fd, packet->data, MTU)) <= 0)
     {
-      syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
+      syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
       return -1;
     }
 
@@ -129,7 +130,7 @@ cp
 
   if(write(device_fd, packet->data, packet->len) < 0)
     {
-      syslog(LOG_ERR, _("Error while writing to %s %s: %m"), device_info, device);
+      syslog(LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, strerror(errno));
       return -1;
     }
 

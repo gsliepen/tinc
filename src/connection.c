@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.27 2002/02/10 21:57:53 guus Exp $
+    $Id: connection.c,v 1.1.2.28 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,7 @@ avl_tree_t *connection_tree;	/* Meta connections */
 
 int connection_compare(connection_t *a, connection_t *b)
 {
-  return a->socket - b->socket;
+  return a - b;
 }
 
 void init_connections(void)
@@ -106,16 +106,6 @@ cp
 cp
 }
 
-connection_t *lookup_connection(ipv4_t address, port_t port)
-{
-  connection_t c;
-cp
-  c.address = address;
-  c.port = port;
-
-  return avl_search(connection_tree, &c);
-}
-
 void dump_connections(void)
 {
   avl_node_t *node;
@@ -126,9 +116,8 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       c = (connection_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld socket %d status %04x"),
-             c->name, c->hostname, c->port, c->options,
-             c->socket, c->status);
+      syslog(LOG_DEBUG, _(" %s at %s options %ld socket %d status %04x"),
+             c->name, c->hostname, c->options, c->socket, c->status);
     }
     
   syslog(LOG_DEBUG, _("End of connections."));

@@ -17,12 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.38 2002/02/10 21:57:54 guus Exp $
+    $Id: net.h,v 1.9.4.39 2002/02/18 16:25:16 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <sys/time.h>
 
 #include "config.h"
@@ -37,7 +40,10 @@ typedef struct mac_t
   unsigned char x[6];
 } mac_t;
 
-typedef unsigned long ipv4_t;
+typedef struct ipv4_t
+{
+  unsigned char x[4];
+} ipv4_t;
 
 typedef struct ip_mask_t {
   ipv4_t address;
@@ -52,6 +58,14 @@ typedef struct ipv6_t
 typedef unsigned short port_t;
 
 typedef short length_t;
+
+typedef union {
+  struct sockaddr sa;
+  struct sockaddr_in in;
+  struct sockaddr_in6 in6;
+} sockaddr_t;
+
+#define SA_PORT(s) ((s.sa.sa_family==AF_INET)?s.in.sin_port:(s.sa.sa_family==AF_INET6)?s.in6.sin6_port:0)
 
 typedef struct vpn_packet_t {
   length_t len;			/* the actual number of bytes in the `data' field */
@@ -73,16 +87,35 @@ typedef struct packet_queue_t {
 typedef struct outgoing_t {
   char *name;
   int timeout;
+  struct config_t *cfg;
+  struct addrinfo *ai;
+  struct addrinfo *aip;
 } outgoing_t;
 
 extern int maxtimeout;
 extern int seconds_till_retry;
+extern int addressfamily;
 
 extern char *request_name[];
 extern char *status_text[];
 
 #include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
+extern int tcp_socket;
+extern int udp_socket;
+extern int keyexpires;
+extern int keylifetime;
+extern int do_prune;
+extern int do_purge;
+extern char *myport;
+
+extern void retry_outgoing(outgoing_t *);
+extern void handle_incoming_vpn_data(void);
+extern void finish_connecting(connection_t *);
+extern void do_outgoing_connection(connection_t *);
+extern int handle_new_meta_connection(void);
+extern int setup_listen_socket(sockaddr_t *);
+extern int setup_vpn_in_socket(sockaddr_t *);
 extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, char *, int);

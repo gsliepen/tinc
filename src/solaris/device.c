@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.6 2002/02/11 14:20:46 guus Exp $
+    $Id: device.c,v 1.1.2.7 2002/02/18 16:25:19 guus Exp $
 */
 
 
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -71,7 +72,7 @@ cp
 cp
   if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
     {
-      syslog(LOG_ERR, _("Could not open %s: %m"), device);
+      syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
       return -1;
     }
 cp
@@ -82,34 +83,34 @@ cp
   ppa = atoi(ptr);
 
   if( (ip_fd = open("/dev/ip", O_RDWR, 0)) < 0){
-     syslog(LOG_ERR, _("Could not open /dev/ip: %m"));
+     syslog(LOG_ERR, _("Could not open /dev/ip: %s"), strerror(errno));
      return -1;
   }
 
   /* Assign a new PPA and get its unit number. */
   if( (ppa = ioctl(device_fd, TUNNEWPPA, ppa)) < 0){
-     syslog(LOG_ERR, _("Can't assign new interface: %m"));
+     syslog(LOG_ERR, _("Can't assign new interface: %s"), strerror(errno));
      return -1;
   }
 
   if( (if_fd = open(device, O_RDWR, 0)) < 0){
-     syslog(LOG_ERR, _("Could not open %s twice: %m"), device);
+     syslog(LOG_ERR, _("Could not open %s twice: %s"), device, strerror(errno));
      return -1;
   }
 
   if(ioctl(if_fd, I_PUSH, "ip") < 0){
-     syslog(LOG_ERR, _("Can't push IP module: %m"));
+     syslog(LOG_ERR, _("Can't push IP module: %s"), strerror(errno));
      return -1;
   }
 
   /* Assign ppa according to the unit number returned by tun device */
   if(ioctl(if_fd, IF_UNITSEL, (char *)&ppa) < 0){
-     syslog(LOG_ERR, _("Can't set PPA %d: %m"), ppa);
+     syslog(LOG_ERR, _("Can't set PPA %d: %s"), ppa, strerror(errno));
      return -1;
   }
 
   if(ioctl(ip_fd, I_LINK, if_fd) < 0){
-     syslog(LOG_ERR, _("Can't link TUN device to IP: %m"));
+     syslog(LOG_ERR, _("Can't link TUN device to IP: %s"), strerror(errno));
      return -1;
   }
 
@@ -145,7 +146,7 @@ int read_packet(vpn_packet_t *packet)
 cp
   if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0)
     {
-      syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
+      syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
       return -1;
     }
 
@@ -176,7 +177,7 @@ cp
 
   if(write(device_fd, packet->data + 14, packet->len - 14) < 0)
     {
-      syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, packet->len);
+      syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, packet->len, strerror(errno));
       return -1;
     }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.29 2002/02/10 21:57:54 guus Exp $
+    $Id: subnet.c,v 1.1.2.30 2002/02/18 16:25:19 guus Exp $
 */
 
 #include "config.h"
@@ -30,15 +30,17 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+#include <utils.h>
+#include <xalloc.h>
+#include <avl_tree.h>
+
 #include "conf.h"
 #include "net.h"
 #include "node.h"
 #include "subnet.h"
-#include "system.h"
+#include "netutl.h"
 
-#include <utils.h>
-#include <xalloc.h>
-#include <avl_tree.h>
+#include "system.h"
 
 /* lists type of subnet */
 
@@ -54,48 +56,36 @@ cp
 
 int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 {
+  int result;
 cp
-  /* We compare as if a subnet is a number that equals (address << 32 + netmask). */
-   
-  if(a->net.ipv4.address < b->net.ipv4.address)
-    return -1;
-  else if(a->net.ipv4.address > b->net.ipv4.address)
-    return 1;
+  result = memcmp(&a->net.ipv4.address, &b->net.ipv4.address, sizeof(ipv4_t));
+  
+  if(result)
+    return result;
 
-  if(a->net.ipv4.mask < b->net.ipv4.mask)
-    return -1;
-  else if(a->net.ipv4.mask > b->net.ipv4.mask)
-    return 1;
-
-  return 0;
+  return a->net.ipv4.masklength - b->net.ipv4.masklength;
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 {
   int result;
 cp
-  /* Same as ipv4 case, but with nasty 128 bit addresses */
-  
-  result = memcmp(a->net.ipv6.address.x, b->net.ipv6.address.x, sizeof(ipv6_t));
+  result = memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
   
   if(result)
     return result;
 
-  result = memcmp(a->net.ipv6.mask.x, b->net.ipv6.mask.x, sizeof(ipv6_t));
-  
-  if(result)
-    return result;
-
-  return 0;
+  return a->net.ipv6.masklength - b->net.ipv6.masklength;
 }
 
 int subnet_compare(subnet_t *a, subnet_t *b)
 {
-  int x;
+  int result;
 cp  
-  x = a->type - b->type;
-  if(x)
-    return x;
+  result = a->type - b->type;
+ 
+  if(result)
+    return result;
     
   switch(a->type)
     {
@@ -186,101 +176,58 @@ subnet_t *str2net(char *subnetstr)
 {
   int i, l;
   subnet_t *subnet;
-  unsigned short int x[6];
+  unsigned short int x[8];
 cp
   subnet = new_subnet();
 cp
   if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d",
-              &x[0],
-              &x[1],
-              &x[2],
-              &x[3],
-              &subnet->net.ipv4.masklength) == 5)
+              &x[0], &x[1], &x[2], &x[3],
+              &l) == 5)
     {
       subnet->type = SUBNET_IPV4;
-      subnet->net.ipv4.address = (((((x[0] << 8) + x[1]) << 8) + x[2]) << 8) + x[3];
-      subnet->net.ipv4.mask = ~((1 << (32 - subnet->net.ipv4.masklength)) - 1);
+      subnet->net.ipv4.masklength = l;
+      for(i = 0; i < 4; i++)
+        subnet->net.ipv4.address.x[i] = x[i];
       return subnet;
     }
 	      
   if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
-             &subnet->net.ipv6.address.x[0],
-             &subnet->net.ipv6.address.x[1],
-             &subnet->net.ipv6.address.x[2],
-             &subnet->net.ipv6.address.x[3],
-             &subnet->net.ipv6.address.x[4],
-             &subnet->net.ipv6.address.x[5],
-             &subnet->net.ipv6.address.x[6],
-             &subnet->net.ipv6.address.x[7],
-             &subnet->net.ipv6.masklength) == 9)
+             &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7],
+             &l) == 9)
     {
       subnet->type = SUBNET_IPV6;
-      for(l = subnet->net.ipv6.masklength, i = 0; i < 8; l -= 16, i++)
-      {
-        subnet->net.ipv6.address.x[i] = htons(subnet->net.ipv6.address.x[i]);
-        if(l >= 16)
-          subnet->net.ipv6.mask.x[i] = 65535;
-	else if (l > 0)
-	  subnet->net.ipv6.mask.x[i] = htons(65536 - (1 << l));
-	else
-          subnet->net.ipv6.mask.x[i] = 0;
-      }
+      subnet->net.ipv6.masklength = l;
+      for(i = 0; i < 8; i++)
+        subnet->net.ipv6.address.x[i] = htons(x[i]);
       return subnet;
     }
 
   if(sscanf(subnetstr, "%hu.%hu.%hu.%hu",
-              &x[0],
-              &x[1],
-              &x[2],
-              &x[3]) == 4)
+              &x[0], &x[1], &x[2], &x[3]) == 4)
     {
       subnet->type = SUBNET_IPV4;
-      subnet->net.ipv4.address = (((((x[0] << 8) + x[1]) << 8) + x[2]) << 8) + x[3];
-      subnet->net.ipv4.mask = ~0;
       subnet->net.ipv4.masklength = 32;
+      for(i = 0; i < 4; i++)
+        subnet->net.ipv4.address.x[i] = x[i];
       return subnet;
     }
 	      
   if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
-             &subnet->net.ipv6.address.x[0],
-             &subnet->net.ipv6.address.x[1],
-             &subnet->net.ipv6.address.x[2],
-             &subnet->net.ipv6.address.x[3],
-             &subnet->net.ipv6.address.x[4],
-             &subnet->net.ipv6.address.x[5],
-             &subnet->net.ipv6.address.x[6],
-             &subnet->net.ipv6.address.x[7]) == 8)
+             &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7]) == 8)
     {
       subnet->type = SUBNET_IPV6;
       subnet->net.ipv6.masklength = 128;
-      for(l = subnet->net.ipv6.masklength, i = 0; i < 8; l -= 16, i++)
-      {
-        subnet->net.ipv6.address.x[i] = htons(subnet->net.ipv6.address.x[i]);
-        if(l >= 16)
-          subnet->net.ipv6.mask.x[i] = 65535;
-	else if (l > 0)
-	  subnet->net.ipv6.mask.x[i] = htons(65536 - (1 << l));
-	else
-          subnet->net.ipv6.mask.x[i] = 0;
-      }
+      for(i = 0; i < 8; i++)
+      subnet->net.ipv6.address.x[i] = htons(x[i]);
       return subnet;
     }
 
   if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx",
-              &x[0],
-              &x[1],
-              &x[2],
-              &x[3],
-              &x[4],
-              &x[5]) == 6)
+              &x[0], &x[1], &x[2], &x[3], &x[4], &x[5]) == 6)
     {
       subnet->type = SUBNET_MAC;
-      subnet->net.mac.address.x[0] = x[0];
-      subnet->net.mac.address.x[1] = x[1];
-      subnet->net.mac.address.x[2] = x[2];
-      subnet->net.mac.address.x[3] = x[3];
-      subnet->net.mac.address.x[4] = x[4];
-      subnet->net.mac.address.x[5] = x[5];
+      for(i = 0; i < 6; i++)
+        subnet->net.mac.address.x[i] = x[i];
       return subnet;
     }
 
@@ -305,10 +252,10 @@ cp
         break;
       case SUBNET_IPV4:
         asprintf(&netstr, "%hu.%hu.%hu.%hu/%d",
-	           (unsigned short int)((subnet->net.ipv4.address >> 24) & 255),
-	           (unsigned short int)((subnet->net.ipv4.address >> 16) & 255),
-	           (unsigned short int)((subnet->net.ipv4.address >> 8) & 255),
-	           (unsigned short int)(subnet->net.ipv4.address & 255),
+	           subnet->net.ipv4.address.x[0],
+	           subnet->net.ipv4.address.x[1],
+	           subnet->net.ipv4.address.x[2],
+	           subnet->net.ipv4.address.x[3],
 		   subnet->net.ipv4.masklength);
         break;
       case SUBNET_IPV6:
@@ -324,7 +271,9 @@ cp
                    subnet->net.ipv6.masklength);
         break;
       default:
-        asprintf(&netstr, _("unknown subnet type"));
+        syslog(LOG_ERR, _("net2str() was called with unknown subnet type %d, exitting!"), subnet->type);
+	cp_trace();
+        exit(0);
     }
 cp
   return netstr;
@@ -355,8 +304,8 @@ subnet_t *lookup_subnet_ipv4(ipv4_t *address)
   subnet_t subnet, *p;
 cp
   subnet.type = SUBNET_IPV4;
-  subnet.net.ipv4.address = *address;
-  subnet.net.ipv4.mask = 0xFFFFFFFF;
+  memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
+  subnet.net.ipv4.masklength = 32;
 
   do
   {
@@ -368,14 +317,17 @@ cp
 cp
     if(p)
       {
-        if ((*address & p->net.ipv4.mask) == p->net.ipv4.address)
+	if(p->type != SUBNET_IPV4)
+	  return NULL;
+
+        if (!maskcmp((char *)address, (char *)&p->net.ipv4.address, p->net.ipv4.masklength, sizeof(ipv4_t)))
           break;
         else
           {
             /* Otherwise, see if there is a bigger enclosing subnet */
 
-            subnet.net.ipv4.mask = p->net.ipv4.mask << 1;
-            subnet.net.ipv4.address = p->net.ipv4.address & subnet.net.ipv4.mask;
+            subnet.net.ipv4.masklength = p->net.ipv4.masklength - 1;
+            maskcpy((char *)&subnet.net.ipv4.address, (char *)&p->net.ipv4.address, subnet.net.ipv4.masklength, sizeof(ipv4_t));
           }
       }
    } while (p);
@@ -386,18 +338,36 @@ cp
 subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 {
   subnet_t subnet, *p;
-  int i;
 cp
   subnet.type = SUBNET_IPV6;
-  memcpy(subnet.net.ipv6.address.x, address, sizeof(ipv6_t));
-  memset(subnet.net.ipv6.mask.x, 0xFF, 16);
+  memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
+  subnet.net.ipv6.masklength = 128;
   
-  p = (subnet_t *)avl_search_closest_greater(subnet_tree, &subnet);
+  do
+  {
+    /* Go find subnet */
   
-  if(p)
-    for(i=0; i<8; i++)
-      if((address->x[i] & p->net.ipv6.address.x[i]) != p->net.ipv6.address.x[i])
-        return NULL;
+    p = (subnet_t *)avl_search_closest_smaller(subnet_tree, &subnet);
+
+    /* Check if the found subnet REALLY matches */
+
+cp
+    if(p)
+      {
+	if(p->type != SUBNET_IPV6)
+	  return NULL;
+
+        if (!maskcmp((char *)address, (char *)&p->net.ipv6.address, p->net.ipv6.masklength, sizeof(ipv6_t)))
+          break;
+        else
+          {
+            /* Otherwise, see if there is a bigger enclosing subnet */
+
+            subnet.net.ipv6.masklength = p->net.ipv6.masklength - 1;
+            maskcpy((char *)&subnet.net.ipv6.address, (char *)&p->net.ipv6.address, subnet.net.ipv6.masklength, sizeof(ipv6_t));
+          }
+      }
+   } while (p);
 
   return p;
 }

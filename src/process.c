@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.34 2002/02/12 14:29:00 guus Exp $
+    $Id: process.c,v 1.1.2.35 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -255,8 +255,7 @@ int execute_script(const char *name)
 cp
   if((pid = fork()) < 0)
     {
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "fork");
+      syslog(LOG_ERR, _("System call `%s' failed: %s"), "fork", strerror(errno));
       return -1;
     }
 
@@ -291,7 +290,7 @@ cp
         }
       else
         {
-          syslog(LOG_ERR, _("System call `%s' failed: %m"), "waitpid");
+          syslog(LOG_ERR, _("System call `%s' failed: %s"), "waitpid", strerror(errno));
           return -1;
         }
     }

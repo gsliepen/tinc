@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.9 2002/02/11 15:59:18 guus Exp $
+    $Id: node.c,v 1.1.2.10 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -27,6 +27,7 @@
 
 #include <avl_tree.h>
 #include "node.h"
+#include "netutl.h"
 #include "net.h"
 #include <utils.h>
 #include <xalloc.h>
@@ -45,14 +46,13 @@ int node_compare(node_t *a, node_t *b)
 
 int node_udp_compare(node_t *a, node_t *b)
 {
-  if(a->address < b->address)
-    return -1;
-  if (a->address > b->address)
-    return 1;
-  if (a->port < b->port)
-    return -1;
-  if (a->port > b->port)
-    return 1;
+  int result;
+cp
+  result = sockaddrcmp(&a->address, &b->address);
+
+  if(result)
+    return result;
+
   return (a->name && b->name)?strcmp(a->name, b->name):0;
 }
 
@@ -143,13 +143,13 @@ cp
   return avl_search(node_tree, &n);
 }
 
-node_t *lookup_node_udp(ipv4_t address, port_t port)
+node_t *lookup_node_udp(sockaddr_t *sa)
 {
   node_t n;
 cp
+  n.address = *sa;
   n.name = NULL;
-  n.address = address;
-  n.port = port;
+
   return avl_search(node_udp_tree, &n);
 }
 
@@ -163,8 +163,8 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd cipher %d digest %d maclength %d compression %d options %ld status %04x nexthop %s via %s"),
-             n->name, n->hostname, n->port, n->cipher?n->cipher->nid:0, n->digest?n->digest->type:0, n->maclength, n->compression, n->options,
+      syslog(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %ld status %04x nexthop %s via %s"),
+             n->name, n->hostname, n->cipher?n->cipher->nid:0, n->digest?n->digest->type:0, n->maclength, n->compression, n->options,
              n->status, n->nexthop?n->nexthop->name:"-", n->via?n->via->name:"-");
     }
     

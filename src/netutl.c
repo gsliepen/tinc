@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.23 2002/02/11 10:16:18 guus Exp $
+    $Id: netutl.c,v 1.12.4.24 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <syslog.h>
 #include <arpa/inet.h>
@@ -42,64 +43,183 @@
 
 #include "system.h"
 
-char *hostlookup(unsigned long addr)
-{
-  char *name;
-  struct hostent *host = NULL;
-  struct in_addr in;
-  int lookup_hostname = 0;
-cp
-  in.s_addr = addr;
-
-  get_config_bool(lookup_config(config_tree, "Hostnames"), &lookup_hostname);
-
-  if(lookup_hostname)
-    host = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
-
-  if(!lookup_hostname || !host)
-    {
-      asprintf(&name, "%s", inet_ntoa(in));
-    }
-  else
-    {
-      asprintf(&name, "%s", host->h_name);
-    }
-cp
-  return name;
-}
+int hostnames = 0;
 
 /*
-  Turn a string into an IP address
-  return NULL on failure
-  Should support IPv6 and other stuff in the future.
+  Turn a string into a struct addrinfo.
+  Return NULL on failure.
 */
-ipv4_t str2address(char *str)
+struct addrinfo *str2addrinfo(char *address, char *service, int socktype)
 {
-  ipv4_t address;
-  struct hostent *h;
+  struct addrinfo hint, *ai;
+  int err;
 cp
-  if(!(h = gethostbyname(str)))
+  memset(&hint, 0, sizeof(hint));
+
+  hint.ai_family = addressfamily;
+  hint.ai_socktype = socktype;
+
+  if((err = getaddrinfo(address, service, &hint, &ai)))
     {
       if(debug_lvl >= DEBUG_ERROR)
-        syslog(LOG_WARNING, _("Error looking up `%s': %s\n"), str, strerror(errno));
-        
-      return 0;
+        syslog(LOG_WARNING, _("Error looking up %s port %s: %s\n"), address, service, gai_strerror(err));
+      cp_trace();
+      return NULL;
     }
 
-  address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
 cp
-  return address;
+  return ai;
 }
 
-char *address2str(ipv4_t address)
+sockaddr_t str2sockaddr(char *address, char *port)
+{
+  struct addrinfo hint, *ai;
+  sockaddr_t result;
+  int err;
+cp
+  memset(&hint, 0, sizeof(hint));
+
+  hint.ai_family = AF_UNSPEC;
+  hint.ai_flags = AI_NUMERICHOST;
+  hint.ai_socktype = SOCK_STREAM;
+
+  if((err = getaddrinfo(address, port, &hint, &ai) || !ai))
+    {
+      syslog(LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port, gai_strerror(err));
+      cp_trace();
+      raise(SIGFPE);
+      exit(0);
+    }
+
+  result = *(sockaddr_t *)ai->ai_addr;
+  freeaddrinfo(ai);
+cp
+  return result;
+}
+
+void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
+{
+  char address[NI_MAXHOST];
+  char port[NI_MAXSERV];
+  int err;
+cp
+  if((err = getnameinfo((struct sockaddr *)sa, sizeof(sockaddr_t), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV)))
+    {
+      syslog(LOG_ERR, _("Error while translating addresses: %s"), gai_strerror(err));
+      cp_trace();
+      raise(SIGFPE);
+      exit(0);
+    }
+
+  *addrstr = xstrdup(address);
+  *portstr = xstrdup(port);
+cp
+}
+
+char *sockaddr2hostname(sockaddr_t *sa)
 {
   char *str;
+  char address[NI_MAXHOST] = "unknown";
+  char port[NI_MAXSERV] = "unknown";
+  int err;
 cp
-  asprintf(&str, "%hu.%hu.%hu.%hu",
-	   (unsigned short int)((address >> 24) & 255),
-	   (unsigned short int)((address >> 16) & 255),
-	   (unsigned short int)((address >> 8) & 255),
-	   (unsigned short int)(address & 255));
+  if((err = getnameinfo((struct sockaddr *)sa, sizeof(sockaddr_t), address, sizeof(address), port, sizeof(port), hostnames?0:(NI_NUMERICHOST|NI_NUMERICSERV))))
+    {
+      syslog(LOG_ERR, _("Error while looking up hostname: %s"), gai_strerror(err));
+    }
+
+  asprintf(&str, _("%s port %s"), address, port);
 cp
   return str;
+}
+
+int sockaddrcmp(sockaddr_t *a, sockaddr_t *b)
+{
+  int result;
+cp
+  result = a->sa.sa_family - b->sa.sa_family;
+  
+  if(result)
+    return result;
+  
+  switch(a->sa.sa_family)
+    {
+      case AF_UNSPEC:
+        return 0;
+      case AF_INET:
+	return memcmp(&a->in, &b->in, sizeof(a->in));
+      case AF_INET6:
+	return memcmp(&a->in6, &b->in6, sizeof(a->in6));
+      default:
+        syslog(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"), a->sa.sa_family);
+	cp_trace();
+        raise(SIGFPE);
+        exit(0);
+    }
+cp
+}
+
+/* Subnet mask handling */
+
+int maskcmp(char *a, char *b, int masklen, int len)
+{
+  int i, m, result;
+cp
+  for(m = masklen, i = 0; m > 8; m -= 8, i++)
+    if((result = a[i] - b[i]))
+      return result;
+
+  if(m)
+    return (a[i] & (0x100 - (m << 1))) - (b[i] & (0x100 - (m << 1)));
+
+  return 0;
+}
+
+void mask(char *a, int masklen, int len)
+{
+  int i;
+cp
+  i = masklen / 8;
+  masklen %= 8;
+  
+  if(masklen)
+    a[i++] &= (0x100 - (masklen << 1));
+  
+  for(; i < len; i++)
+    a[i] = 0;
+}
+
+void maskcpy(char *a, char *b, int masklen, int len)
+{
+  int i, m;
+cp
+  for(m = masklen, i = 0; m > 8; m -= 8, i++)
+    a[i] = b[i];
+
+  if(m)
+    {
+      a[i] = b[i] & (0x100 - (m << 1));
+      i++;
+    }
+
+  for(; i < len; i++)
+    a[i] = 0;
+}
+
+int maskcheck(char *a, int masklen, int len)
+{
+  int i;
+cp
+  i = masklen / 8;
+  masklen %= 8;
+  
+  if(masklen)
+    if(a[i++] & ~(0x100 - (masklen << 1)))
+      return -1;
+  
+  for(; i < len; i++)
+    if(a[i] != 0)
+      return -1;
+
+  return 0;
 }

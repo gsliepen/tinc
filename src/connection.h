@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.24 2002/02/10 21:57:53 guus Exp $
+    $Id: connection.h,v 1.1.2.25 2002/02/18 16:25:16 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -52,6 +52,7 @@
 typedef struct connection_status_t {
   int pinged:1;                    /* sent ping */
   int active:1;                    /* 1 if active.. */
+  int connecting:1;                /* 1 if we are waiting for a non-blocking connect() to finish */
   int termreq:1;                   /* the termination of this connection was requested */
   int remove:1;                    /* Set to 1 if you want this connection removed */
   int timeout:1;                   /* 1 if gotten timeout */
@@ -64,8 +65,7 @@ typedef struct connection_status_t {
 typedef struct connection_t {
   char *name;                      /* name he claims to have */
 
-  ipv4_t address;                  /* his real (internet) ip */
-  port_t port;                     /* port number of meta connection */
+  sockaddr_t address;              /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
 
@@ -77,7 +77,7 @@ typedef struct connection_t {
   struct outgoing_t *outgoing;     /* used to keep track of outgoing connections */
 
   struct node_t *node;             /* node associated with the other end */
-  struct edge_t *edge;         /* edge associated with this connection */
+  struct edge_t *edge;             /* edge associated with this connection */
 
   RSA *rsa_key;                    /* his public/private key */
   EVP_CIPHER *incipher;            /* Cipher he will use to send data to us */
@@ -109,7 +109,6 @@ extern connection_t *new_connection(void);
 extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
-extern connection_t *lookup_connection(ipv4_t, short unsigned int);
 extern void dump_connections(void);
 extern int read_connection_config(connection_t *);
 

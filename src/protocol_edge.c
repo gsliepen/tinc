@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.2 2002/02/18 16:25:18 guus Exp $
 */
 
 #include "config.h"
@@ -48,16 +48,25 @@
 int send_add_edge(connection_t *c, edge_t *e)
 {
   int x;
-  char *from_addrstr, *to_addrstr;
+  char *from_tcpaddress, *from_tcpport, *from_udpaddress, *from_udpport;
+  char *to_tcpaddress, *to_tcpport, *to_udpaddress, *to_udpport;
 cp
-  from_addrstr = address2str(e->from.address);
-  to_addrstr = address2str(e->to.address);
-  x = send_request(c, "%d %s %s %hd %s %s %hd %lx %d", ADD_EDGE,
-                      e->from.node->name, from_addrstr, e->from.port,
-		      e->to.node->name, to_addrstr, e->to.port,
+  sockaddr2str(&e->from.tcpaddress, &from_tcpaddress, &from_tcpport);
+  sockaddr2str(&e->from.udpaddress, &from_udpaddress, &from_udpport);
+  sockaddr2str(&e->to.tcpaddress, &to_tcpaddress, &to_tcpport);
+  sockaddr2str(&e->to.udpaddress, &to_udpaddress, &to_udpport);
+  x = send_request(c, "%d %s %s %s %s %s %s %s %s %lx %d", ADD_EDGE,
+                      e->from.node->name, from_tcpaddress, from_tcpport, from_udpport,
+		      e->to.node->name, to_tcpaddress, to_tcpport, to_udpport,
 		      e->options, e->weight);
-  free(from_addrstr);
-  free(to_addrstr);
+  free(from_tcpaddress);
+  free(from_tcpport);
+  free(from_udpaddress);
+  free(from_udpport);
+  free(to_tcpaddress);
+  free(to_tcpport);
+  free(to_udpaddress);
+  free(to_udpport);
 cp
   return x;
 }
@@ -69,18 +78,22 @@ int add_edge_h(connection_t *c)
   node_t *from, *to;
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
-  char from_addrstr[MAX_STRING_SIZE];
-  char to_addrstr[MAX_STRING_SIZE];
-  ipv4_t from_address, to_address;
-  port_t from_port, to_port;
+  char from_address[MAX_STRING_SIZE];
+  char from_tcpport[MAX_STRING_SIZE];
+  char from_udpport[MAX_STRING_SIZE];
+  char to_address[MAX_STRING_SIZE];
+  char to_tcpport[MAX_STRING_SIZE];
+  char to_udpport[MAX_STRING_SIZE];
+  sockaddr_t from_tcpaddress, from_udpaddress;
+  sockaddr_t to_tcpaddress, to_udpaddress;
   long int options;
   int weight;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %hd "MAX_STRING" "MAX_STRING" %hd %lx %d",
-            from_name, from_addrstr, &from_port,
-	    to_name, to_addrstr, &to_port,
-	    &options, &weight) != 8)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
+            from_name, from_address, from_tcpport, from_udpport,
+	    to_name, to_address, to_tcpport, to_udpport,
+	    &options, &weight) != 10)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name, c->hostname);
        return -1;
@@ -122,8 +135,10 @@ cp
 
   /* Convert addresses */
   
-  from_address = str2address(from_addrstr);
-  to_address = str2address(to_addrstr);
+  from_tcpaddress = str2sockaddr(from_address, from_tcpport);
+  from_udpaddress = str2sockaddr(from_address, from_udpport);
+  to_tcpaddress = str2sockaddr(to_address, to_tcpport);
+  to_udpaddress = str2sockaddr(to_address, to_udpport);
 
   /* Check if edge already exists */
   
@@ -132,9 +147,9 @@ cp
   if(e)
   {
     if(e->weight != weight || e->options != options
-       || ((e->from.node == from) && (e->from.address != from_address || e->from.port != from_port || e->to.address != to_address || e->to.port != to_port))
-       || ((e->from.node == to) && (e->from.address != to_address || e->from.port != to_port || e->to.address != from_address || e->to.port != from_port))
-      )     
+       || ((e->from.node == from) && (sockaddrcmp(&e->from.tcpaddress, &from_tcpaddress) || sockaddrcmp(&e->from.udpaddress, &from_udpaddress) || sockaddrcmp(&e->to.tcpaddress, &to_tcpaddress) || sockaddrcmp(&e->to.udpaddress, &to_udpaddress)))
+       || ((e->from.node == to) && (sockaddrcmp(&e->from.tcpaddress, &to_tcpaddress) || sockaddrcmp(&e->from.udpaddress, &to_udpaddress) || sockaddrcmp(&e->to.tcpaddress, &from_tcpaddress) || sockaddrcmp(&e->to.udpaddress, &from_udpaddress)))
+      )
     {
       if(from == myself || to == myself)
       {
@@ -169,11 +184,11 @@ cp
 
   e = new_edge();
   e->from.node = from;
-  e->from.address = from_address;
-  e->from.port = from_port;
+  e->from.tcpaddress = from_tcpaddress;
+  e->from.udpaddress = from_udpaddress;
   e->to.node = to;
-  e->to.address = to_address;
-  e->to.port = to_port;
+  e->to.tcpaddress = to_tcpaddress;
+  e->to.udpaddress = to_udpaddress;
   e->options = options;
   e->weight = weight;
   edge_add(e);

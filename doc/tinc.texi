@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.20 2002/02/11 15:59:18 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.21 2002/02/18 16:25:15 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.20 2002/02/11 15:59:18 guus Exp $
+$Id: tinc.texi,v 1.8.4.21 2002/02/18 16:25:15 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.20 2002/02/11 15:59:18 guus Exp $
+$Id: tinc.texi,v 1.8.4.21 2002/02/18 16:25:15 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -736,6 +736,12 @@ required directives are given in @strong{bold}.
 @subsection Main configuration variables
 
 @table @asis
+@cindex AddressFamily
+@item AddressFamily = <ipv4|ipv6|any> (ipv4)
+This option affects the address family of listening and outgoing sockets.
+If "any" is selected, then the listening sockets will be IPv6 sockets,
+but on most platforms those will also accept IPv4 connections.
+
 @cindex BindToInterface
 @item BindToInterface = <interface>
 If you have more than one network interface in your computer, tinc will

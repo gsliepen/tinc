@@ -17,16 +17,29 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.9 2002/02/11 10:16:18 guus Exp $
+    $Id: netutl.h,v 1.2.4.10 2002/02/18 16:25:16 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
 #define __TINC_NETUTL_H__
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include "net.h"
 
+extern int hostnames;
+
 extern char *hostlookup(unsigned long);
-extern ipv4_t str2address(char*);
-extern char *address2str(ipv4_t);
+extern struct addrinfo *str2addrinfo(char *, char *, int);
+extern sockaddr_t str2sockaddr(char *, char *);
+extern void sockaddr2str(sockaddr_t *, char **, char **);
+extern char *sockaddr2hostname(sockaddr_t *);
+extern int sockaddrcmp(sockaddr_t *, sockaddr_t *);
+extern int maskcmp(char *, char *, int, int);
+extern void maskcpy(char *, char *, int, int);
+extern void mask(char *, int, int);
+extern int maskcheck(char *, int, int);
 
 #endif /* __TINC_NETUTL_H__ */

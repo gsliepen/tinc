@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.52 2002/02/10 21:57:53 guus Exp $
+    $Id: conf.c,v 1.9.4.53 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -56,14 +56,14 @@ char *netname = NULL;            /* name of the vpn network */
 int config_compare(config_t *a, config_t *b)
 {
   int result;
-  
-  result = strcmp(a->variable, b->variable);
-  
+
+  result = strcasecmp(a->variable, b->variable);
+
   if(result)
     return result;
 
   result = a->line - b->line;
-  
+
   if(result)
     return result;
   else
@@ -90,7 +90,7 @@ config_t *new_config(void)
   config_t *cfg;
 cp
   cfg = (config_t *)xmalloc_and_zero(sizeof(*cfg));
-  
+
   return cfg;
 }
 
@@ -126,7 +126,7 @@ cp
 
   if(!found)
     return NULL;
-  
+
   if(strcmp(found->variable, variable))
     return NULL;
 
@@ -139,7 +139,7 @@ config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
   config_t *found;
 cp
   node = avl_search_node(config_tree, cfg);
-  
+
   if(node)
     {
       if(node->next)
@@ -149,10 +149,10 @@ cp
             return found;
         }
     }
-  
+
   return NULL;
 }
-  
+
 int get_config_bool(config_t *cfg, int *result)
 {
 cp
@@ -184,7 +184,7 @@ cp
 
   if(sscanf(cfg->value, "%d", result) == 1)
     return 1;
-    
+
   syslog(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
          cfg->variable, cfg->file, cfg->line);
   return 0;
@@ -196,27 +196,26 @@ cp
   if(!cfg)
     return 0;
 
-  *result = cfg->value;
+  *result = xstrdup(cfg->value);
   return 1;
 }
 
-int get_config_address(config_t *cfg, ipv4_t **result)
+int get_config_address(config_t *cfg, struct addrinfo **result)
 {
-  ipv4_t *ip;
+  struct addrinfo *ai;
 cp
   if(!cfg)
     return 0;
 
-  ip = xmalloc(sizeof(*ip));
-  *ip = str2address(cfg->value);
+  ai = str2addrinfo(cfg->value, NULL, 0);
 
-  if(ip)
+  if(ai)
     {
-      *result = ip;
+      *result = ai;
       return 1;
     }
 
-  syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
+  syslog(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
          cfg->variable, cfg->file, cfg->line);
   return 0;
 }
@@ -228,8 +227,11 @@ cp
     return 0;
 
   if(sscanf(cfg->value, "%hu", result) == 1)
-    return 1;
-    
+    {
+      *result = htons(*result);
+      return 1;
+    }
+
   syslog(LOG_ERR, _("Port number expected for configuration variable %s in %s line %d"),
          cfg->variable, cfg->file, cfg->line);
   return 0;
@@ -250,20 +252,20 @@ cp
              cfg->variable, cfg->file, cfg->line);
       return 0;
     }
-  
+
   /* Teach newbies what subnets are... */
 
-  if(subnet->type == SUBNET_IPV4)
-    if((subnet->net.ipv4.address & subnet->net.ipv4.mask) != subnet->net.ipv4.address)
-      {
-	syslog(LOG_ERR, _("Network address and mask length do not match for configuration variable %s in %s line %d"),
-               cfg->variable, cfg->file, cfg->line);
-	free(subnet);
-	return 0;
-      }
+  if(((subnet->type == SUBNET_IPV4) && maskcheck((char *)&subnet->net.ipv4.address, subnet->net.ipv4.masklength, sizeof(ipv4_t)))
+     || ((subnet->type == SUBNET_IPV6) && maskcheck((char *)&subnet->net.ipv6.address, subnet->net.ipv6.masklength, sizeof(ipv6_t))))
+    {
+      syslog(LOG_ERR, _("Network address and mask length do not match for configuration variable %s in %s line %d"),
+             cfg->variable, cfg->file, cfg->line);
+      free(subnet);
+      return 0;
+    }
 
   *result = subnet;
-  
+
   return 1;
 }
 
@@ -271,7 +273,7 @@ cp
   Read exactly one line and strip the trailing newline if any.  If the
   file was on EOF, return NULL. Otherwise, return all the data in a
   dynamically allocated buffer.
-  
+
   If line is non-NULL, it will be used as an initial buffer, to avoid
   unnecessary mallocing each time this function is called.  If buf is
   given, and buf needs to be expanded, the var pointed to by buflen
@@ -360,17 +362,17 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
   int lineno = 0, ignore = 0;
   config_t *cfg;
   size_t bufsize;
-  
+
 cp
   if((fp = fopen (fname, "r")) == NULL)
     {
-      syslog(LOG_ERR, _("Cannot open config file %s: %m"), fname);
+      syslog(LOG_ERR, _("Cannot open config file %s: %s"), fname, strerror(errno));
       return -3;
     }
 
   bufsize = 100;
   buffer = xmalloc(bufsize);
-  
+
   for(;;)
     {
       if((line = readline(fp, &buffer, &bufsize)) == NULL)
@@ -395,7 +397,7 @@ cp
 
       if(!strcmp(variable, "-----BEGIN"))
         ignore = 1;
-        
+
       if(!ignore)
         {
           if(((value = strtok(NULL, "\t\n\r =")) == NULL) || value[0] == '#')
@@ -433,12 +435,11 @@ cp
   x = read_config_file(config_tree, fname);
   if(x == -1) /* System error: complain */
     {
-      syslog(LOG_ERR, _("Failed to read `%s': %m"),
-	      fname);
+      syslog(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
     }
   free(fname);
 cp
-  return x;  
+  return x;
 }
 
 int isadir(const char* f)
@@ -466,10 +467,10 @@ int is_safe_path(const char *file)
     }
 
   p = strrchr(file, '/');
-  
+
   if(p == file)		/* It's in the root */
     p++;
-    
+
   x = *p;
   *p = '\0';
 
@@ -477,8 +478,7 @@ int is_safe_path(const char *file)
 check1:
   if(lstat(f, &s) < 0)
     {
-      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
-	      f);
+      syslog(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
       return 0;
     }
 
@@ -496,25 +496,24 @@ check1:
 
       if(readlink(f, l, MAXBUFSIZE) < 0)
         {
-          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %m"), f);
+          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f, strerror(errno));
           return 0;
         }
-      
+
       f = l;
       goto check1;
     }
 
   *p = x;
   f = file;
-  
+
 check2:
   if(lstat(f, &s) < 0 && errno != ENOENT)
     {
-      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
-	      f);
+      syslog(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
       return 0;
     }
-    
+
   if(errno == ENOENT)
     return 1;
 
@@ -532,10 +531,10 @@ check2:
 
       if(readlink(f, l, MAXBUFSIZE) < 0)
         {
-          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %m"), f);
+          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f, strerror(errno));
           return 0;
         }
-      
+
       f = l;
       goto check2;
     }
@@ -547,7 +546,7 @@ check2:
 	      f);
       return 0;
     }
-  
+
   return 1;
 }
 
@@ -587,7 +586,7 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
     {
       /* The directory is a relative path or a filename. */
       char *p;
-      
+
       directory = get_current_dir_name();
       asprintf(&p, "%s/%s", directory, fn);
       free(fn);
@@ -596,7 +595,7 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
     }
 
   umask(0077); /* Disallow everything for group and other */
-  
+
   /* Open it first to keep the inode busy */
   if((r = fopen(fn, mode)) == NULL)
     {
@@ -605,7 +604,7 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
       free(fn);
       return NULL;
     }
-    
+
   /* Then check the file for nasty attacks */
   if(!is_safe_path(fn))  /* Do not permit any directories that are
                             readable or writeable by other users. */

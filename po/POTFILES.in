@@ -9,6 +9,9 @@ src/conf.c
 src/connection.c
 src/meta.c
 src/net.c
+src/net_packet.c
+src/net_setup.c
+src/net_socket.c
 src/netutl.c
 src/protocol.c
 src/protocol_auth.c
@@ -25,5 +28,6 @@ src/edge.c
 src/graph.c
 src/linux/device.c
 src/freebsd/device.c
-src/openbsd/device.c
 src/solaris/device.c
+src/netbsd/device.c
+src/openbsd/device.c

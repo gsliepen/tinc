@@ -17,12 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.4 2002/02/11 12:33:01 guus Exp $
+    $Id: device.c,v 1.1.2.5 2002/02/18 16:25:19 guus Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -70,7 +71,7 @@ int setup_device(void)
 cp
   if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
     {
-      syslog(LOG_ERR, _("Could not open %s: %m"), device);
+      syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
       return -1;
     }
 cp
@@ -107,7 +108,7 @@ cp
 
   if((lenin = readv(device_fd, vector, 2)) <= 0)
     {
-      syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
+      syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
       return -1;
     }
 
@@ -145,7 +146,7 @@ cp
 
   if(writev(device_fd, vector, 2) < 0)
     {
-      syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device);
+      syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
       return -1;
     }
 

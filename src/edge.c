@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.6 2002/02/10 21:57:54 guus Exp $
+    $Id: edge.c,v 1.1.2.7 2002/02/18 16:25:16 guus Exp $
 */
 
 #include "config.h"
@@ -47,7 +47,7 @@ int edge_compare(edge_t *a, edge_t *b)
   int result;
 
   result = strcmp(a->from.node->name, b->from.node->name);
-  
+
   if(result)
     return result;
   else
@@ -69,7 +69,7 @@ int edge_name_compare(edge_t *a, edge_t *b)
 {
   int result;
   char *name_a1, *name_a2, *name_b1, *name_b2;
-  
+
   if(strcmp(a->from.node->name, a->to.node->name) < 0)
     name_a1 = a->from.node->name, name_a2 = a->to.node->name;
   else
@@ -81,7 +81,7 @@ int edge_name_compare(edge_t *a, edge_t *b)
     name_b1 = b->to.node->name, name_b2 = b->from.node->name;
 
   result = strcmp(name_a1, name_b1);
-  
+
   if(result)
     return result;
   else
@@ -91,9 +91,9 @@ int edge_name_compare(edge_t *a, edge_t *b)
 int edge_weight_compare(edge_t *a, edge_t *b)
 {
   int result;
-  
+
   result = a->weight - b->weight;
-  
+
   if(result)
     return result;
   else
@@ -189,23 +189,28 @@ void dump_edges(void)
 {
   avl_node_t *node;
   edge_t *e;
-  char *from_address, *to_address;
+  char *from_tcp, *from_udp;
+  char *to_tcp, *to_udp;
 cp
   syslog(LOG_DEBUG, _("Edges:"));
 
   for(node = edge_tree->head; node; node = node->next)
     {
       e = (edge_t *)node->data;
-      from_address = address2str(e->from.address);
-      to_address = address2str(e->to.address);
-      syslog(LOG_DEBUG, _(" %s at %s port %hd - %s at %s port %hd options %ld weight %d"),
-             e->from.node->name, from_address, e->from.port,
-	     e->to.node->name, to_address, e->to.port,
+      from_tcp = sockaddr2hostname(&e->from.tcpaddress);
+      from_udp = sockaddr2hostname(&e->from.udpaddress);
+      to_tcp = sockaddr2hostname(&e->to.tcpaddress);
+      to_udp = sockaddr2hostname(&e->to.udpaddress);
+      syslog(LOG_DEBUG, _(" %s tcp at %s udp at %s - %s tcp at %s udp at %s options %ld weight %d"),
+             e->from.node->name, from_tcp, from_udp,
+	     e->to.node->name, to_tcp, to_udp,
 	     e->options, e->weight);
-      free(from_address);
-      free(to_address);	     
+      free(from_tcp);
+      free(from_udp);
+      free(to_tcp);	
+      free(to_udp);	
     }
-    
+
   syslog(LOG_DEBUG, _("End of edges."));
 cp
 }
