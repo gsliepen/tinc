@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.14 2002/04/01 21:28:39 guus Exp $
+    $Id: net_setup.c,v 1.1.2.15 2002/04/23 07:49:38 guus Exp $
 */
 
 #include "config.h"
@@ -192,6 +192,7 @@ int setup_myself(void)
   config_t *cfg;
   subnet_t *subnet;
   char *name, *hostname, *mode, *afname, *cipher, *digest;
+  char *address = NULL;
   struct addrinfo hint, *ai, *aip;
   int choice, err;
 cp
@@ -440,12 +441,14 @@ cp
   
   memset(&hint, 0, sizeof(hint));
   
+  get_config_string(lookup_config(config_tree, "BindToAddress"), &address);
+
   hint.ai_family = addressfamily;
   hint.ai_socktype = SOCK_STREAM;
   hint.ai_protocol = IPPROTO_TCP;
   hint.ai_flags = AI_PASSIVE;
 
-  if((err = getaddrinfo(NULL, myport, &hint, &ai)) || !ai)
+  if((err = getaddrinfo(address, myport, &hint, &ai)) || !ai)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
       return -1;
