@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.43 2000/10/21 11:52:06 guus Exp $
+    $Id: net.c,v 1.35.4.44 2000/10/22 13:37:15 zarq Exp $
 */
 
 #include "config.h"
@@ -25,6 +25,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/sockios.h>
+#include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -38,8 +40,6 @@
 #include <unistd.h>
 
 #ifdef HAVE_TUNTAP
-#include <net/if.h>
-#include <linux/sockios.h>
 #include LINUX_IF_TUN_H
 #endif
 
@@ -335,10 +335,8 @@ int setup_tap_fd(void)
   const char *tapfname;
   config_t const *cfg;
   char *envvar;
-  
-#ifdef HAVE_TUNTAP
   struct ifreq ifr;
-#endif
+
 cp  
   if((cfg = get_config_val(config, tapdevice)))
     tapfname = cfg->data.ptr;
