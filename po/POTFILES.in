@@ -11,6 +11,5 @@ src/meta.c
 src/net.c
 src/netutl.c
 src/protocol.c
-src/route.c
 src/subnet.c
 src/tincd.c
