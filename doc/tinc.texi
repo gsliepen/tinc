@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.8 2000/11/24 14:13:51 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.9 2000/11/30 23:39:55 zarq Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998,199,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.8 2000/11/24 14:13:51 zarq Exp $
+$Id: tinc.texi,v 1.8.4.9 2000/11/30 23:39:55 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.8 2000/11/24 14:13:51 zarq Exp $
+$Id: tinc.texi,v 1.8.4.9 2000/11/30 23:39:55 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -87,7 +87,7 @@ network device, there is no need to adapt any existing software.
 This tunneling allows VPN sites to share information with each other
 over the Internet without exposing any information to others.
 
-This document is the manual for tinc. Included are chapters on how to
+This document is the manual for tinc.  Included are chapters on how to
 configure your computer to use tinc, as well as the configuration
 process of tinc itself.
 
@@ -103,40 +103,40 @@ process of tinc itself.
 
 @cindex VPN
 A Virtual Private Network or VPN is a network that can only be accessed
-by a few elected computers that participate. This goal is achievable in
+by a few elected computers that participate.  This goal is achievable in
 more than just one way.
 
 @cindex private
-Private networks can consist of a single stand-alone ethernet LAN. Or
-even two computers hooked up using a null-modem cable. In these cases,
+Private networks can consist of a single stand-alone ethernet LAN.  Or
+even two computers hooked up using a null-modem cable.  In these cases,
 it is
 obvious that the network is @emph{private}, no one can access it from the
-outside. But if your computers are linked to the internet, the network
+outside.  But if your computers are linked to the internet, the network
 is not private anymore, unless one uses firewalls to block all private
-traffic. But then, there is no way to send private data to trusted
+traffic.  But then, there is no way to send private data to trusted
 computers on the other end of the internet.
 
 @cindex virtual
-This problem can be solved by using @emph{virtual} networks. Virtual
+This problem can be solved by using @emph{virtual} networks.  Virtual
 networks can live on top of other networks, but do not interfere with
-each other. Mostly, virtual networks appear like a singe LAN, even though
-they can span the entire world. But virtual networks can't be secured
+each other.  Mostly, virtual networks appear like a singe LAN, even though
+they can span the entire world.  But virtual networks can't be secured
 by using firewalls, because the traffic that flows through it has to go
 through the internet, where other people can look at it.
 
-When one introduces encryption, we can form a true VPN. Other people may
+When one introduces encryption, we can form a true VPN.  Other people may
 see encrypted traffic, but if they don't know how to decipher it (they
 need to know the key for that), they cannot read the information that flows
-through the VPN. This is what tinc was made for.
+through the VPN.  This is what tinc was made for.
 
 @cindex virtual
 tinc uses normal IP datagrams to encapsulate data that goes over the VPN
-network link. In this case it's also clear that the network is
+network link.  In this case it's also clear that the network is
 @emph{virtual}, because no direct network link has to exist between to
 participants.
 
-As is the case with either type of VPN, anybody could eavesdrop. Or
-worse, alter data. Hence it's probably advisable to encrypt the data
+As is the case with either type of VPN, anybody could eavesdrop.  Or
+worse, alter data.  Hence it's probably advisable to encrypt the data
 that flows over the network.
 
 
@@ -147,10 +147,10 @@ that flows over the network.
 @cindex vpnd
 @cindex ethertap
 I really don't quite remember what got us started, but it must have been
-Guus' idea. He wrote a simple implementation (about 50 lines of C) that
+Guus' idea.  He wrote a simple implementation (about 50 lines of C) that
 used the @emph{ethertap} device that Linux knows of since somewhere
-about kernel 2.1.60. It didn't work immediately and he improved it a
-bit. At this stage, the project was still simply called @samp{vpnd}.
+about kernel 2.1.60.  It didn't work immediately and he improved it a
+bit.  At this stage, the project was still simply called @samp{vpnd}.
 
 Since then, a lot has changed---to say the least.
 
@@ -160,12 +160,12 @@ both the receiving and sending end, it has become largely
 runtime-configurable---in short, it has become a full-fledged
 professional package.
 
-A lot can---and will be---changed. I have a few things that I'd like to
-see in the future releases of tinc. Not everything will be available in
-the near future. Our first objective is to make tinc work perfectly as
+A lot can---and will be---changed.  I have a few things that I'd like to
+see in the future releases of tinc.  Not everything will be available in
+the near future.  Our first objective is to make tinc work perfectly as
 it stands, and then add more advanced features.
 
-Meanwhile, we're always open-minded towards new ideas. And we're
+Meanwhile, we're always open-minded towards new ideas.  And we're
 available too.
 
 
@@ -270,14 +270,14 @@ section.
 @subsection Configuring the Linux kernel
 
 Since this particular implementation only runs on 2.1 or higher Linux
-kernels, you should grab one (2.2 is current at this time). A 2.0 port
+kernels, you should grab one (2.2 is current at this time).  A 2.0 port
 is not really possible, unless someone tells me someone ported the
 ethertap and netlink devices back to 2.0.
 
 If you are unfamiliar with the process of configuring and compiling a
 new kernel, you should read the
 @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html, Kernel
-HOWTO} first. Do that now!
+HOWTO} first.  Do that now!
 
 Here are the options you have to turn on when configuring a new
 kernel.
@@ -307,7 +307,7 @@ Network device support
 @end example
 
 
-Any other options not mentioned here are not relevant to tinc. If you
+Any other options not mentioned here are not relevant to tinc.  If you
 decide to build any of these as dynamic kernel modules, it's a good idea
 to add these lines to @file{/etc/modules.conf}.
 
@@ -428,7 +428,7 @@ the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
 tinc comes in a handy autoconf/automake package, which you can just
-treat the same as any other package. Which is just untar it, type
+treat the same as any other package.  Which is just untar it, type
 `configure' and then `make'.
 
 More detailed instructions are in the file @file{INSTALL}, which is
@@ -505,7 +505,7 @@ Any further ethertap devices have minor device number 16 through 31.
 @subsubheading @file{/etc/networks}
 
 You may add a line to @file{/etc/networks} so that your VPN will get a
-symbolic name. For example:
+symbolic name.  For example:
 
 @example
 myvpn 10.0.0.0
@@ -517,8 +517,8 @@ legible.
 
 @subsubheading @file{/etc/services}
 
-You may add this line to @file{/etc/services}. The effect is that you
-may supply a @samp{tinc} as a valid port number to some programs. The
+You may add this line to @file{/etc/services}.  The effect is that you
+may supply a @samp{tinc} as a valid port number to some programs.  The
 number 655 is registered with the IANA.
 
 @example
@@ -541,7 +541,7 @@ numbers when you are going to configure tinc itself.  @xref{Configuring
 tinc}.
 
 It doesn't matter much which part you do first, setting up the network
-devices or configure tinc. But they both have to be done before you try
+devices or configure tinc.  But they both have to be done before you try
 to start a tincd.
 
 The actual setup of the ethertap device is quite simple, just repeat
@@ -603,22 +603,22 @@ It is perfectly OK for you to run more than one tinc daemon.
 However, in its default form, you will soon notice that you can't use
 two different configuration files without the -c option.
 
-We have thought of another way of dealing with this: network names. This
+We have thought of another way of dealing with this: network names.  This
 means that you call tincd with the -n argument, which will assign a name
 to this daemon.
 
 The effect of this is that the daemon will set its configuration
 ``root'' to /etc/tinc/nn/, where nn is your argument to the -n
-option. You'll notice that it appears in syslog as ``tinc.nn''.
+option.  You'll notice that it appears in syslog as ``tinc.nn''.
 
 However, it is not strictly necessary that you call tinc with the -n
-option. In this case, the network name would just be empty, and it will
-be used as such. tinc now looks for files in /etc/tinc/, instead of
+option.  In this case, the network name would just be empty, and it will
+be used as such.  tinc now looks for files in /etc/tinc/, instead of
 /etc/tinc/nn/; the configuration file should be /etc/tinc/tinc.conf,
 and the passphrases are now expected to be in /etc/tinc/passphrases/.
 
 But it is highly recommended that you use this feature of tinc, because
-it will be so much clearer whom your daemon talks to. Hence, we will
+it will be so much clearer whom your daemon talks to.  Hence, we will
 assume that you use it.
 
 
@@ -629,8 +629,8 @@ assume that you use it.
 Before going on, first a bit on how tinc sees connections.
 
 When tinc starts up, it reads in the configuration file and parses the
-command-line options. If it sees a `ConnectTo' value in the file, it
-will try to connect to it, on the given port. If this fails, tinc exits.
+command-line options.  If it sees a `ConnectTo' value in the file, it
+will try to connect to it, on the given port.  If this fails, tinc exits.
 
 
 @c ==================================================================
@@ -648,7 +648,7 @@ Variable = Value.
 @end example
 
 The variable names are case insensitive, and any spaces, tabs, newlines
-and carriage returns are ignored. Note: it is not required that you put
+and carriage returns are ignored.  Note: it is not required that you put
 in the `=' sign, but doing so improves readability.  If you leave it
 out, remember to replace it with at least one space character.
 
@@ -660,21 +660,21 @@ out, remember to replace it with at least one space character.
 @node    Variables,  , Configuration file, Configuration file
 @subsection Variables
 
-Here are all valid variables, listed in alphabetical order. The default
+Here are all valid variables, listed in alphabetical order.  The default
 value, required or optional is given between parentheses.
 
 @c straight from the manpage
 @table @asis
 @item ConnectPort = <port> (655)
 Connect to the upstream host (given with the ConnectTo directive) on
-port port. port may be given in decimal (default), octal (when preceded
+port port.  port may be given in decimal (default), octal (when preceded
 by a single zero) or hexadecimal (prefixed with 0x).  port is the port
 number for both the UDP and the TCP (meta) connections.
 
 @item ConnectTo = <IP address|hostname> (optional)
-Specifies which host to connect to on startup. Multiple ConnectTo variables
+Specifies which host to connect to on startup.  Multiple ConnectTo variables
 may be specified, if connecting to the first one fails then tinc will try
-the next one, and so on. It is possible to specify hostnames for dynamic IP
+the next one, and so on.  It is possible to specify hostnames for dynamic IP
 addresses (like those given on dyndns.org), tinc will not cache the resolved
 IP address.
 
@@ -684,7 +684,7 @@ instead just listen for incoming connections.
 
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN) should
-be resolved. Since DNS lookups are blocking, it might affect tinc's
+be resolved.  Since DNS lookups are blocking, it might affect tinc's
 efficiency, even stopping the daemon for a few seconds everytime it does
 a lookup if your DNS server is not responding.
 
@@ -693,41 +693,41 @@ file.
 
 @item IndirectData = <yes|no> (no)
 This option specifies whether other tinc daemons besides the one you
-specified with ConnectTo can make a direct connection to you. This is
+specified with ConnectTo can make a direct connection to you.  This is
 especially useful if you are behind a firewall and it is impossible
-to make a connection from the outside to your tinc daemon. Otherwise,
+to make a connection from the outside to your tinc daemon.  Otherwise,
 it is best to leave this option out or set it to no.
 
 @item Interface = <device> (optional)
 If you have more than one network interface in your computer, tinc will by
-default listen on all of them for incoming connections. It is possible to
+default listen on all of them for incoming connections.  It is possible to
 bind tinc to a single interface like eth0 or ppp0 with this variable.
 
 @item InterfaceIP = <local address> (optional)
 If your computer has more than one IP address on a single interface (for example
 if you are running virtual hosts), tinc will by default listen on all of them for
-incoming connections. It is possible to bind tinc to a single IP address with
-this variable. It is still possible to listen on several interfaces at the same
+incoming connections.  It is possible to bind tinc to a single IP address with
+this variable.  It is still possible to listen on several interfaces at the same
 time though, if they share the same IP address.
 
 @item KeyExpire = <seconds> (3600)
 This option controls the time the encryption keys used to encrypt the data
-are valid. It is common practice to change keys at regular intervals to
+are valid.  It is common practice to change keys at regular intervals to
 make it even harder for crackers, even though it is thought to be nearly
 impossible to crack a single key.
 
 @item ListenPort = <port> (655)
-Listen on local port port. The computer connecting to this daemon should
+Listen on local port port.  The computer connecting to this daemon should
 use this number as the argument for his ConnectPort.
 
 @item MyOwnVPNIP = <local address[/maskbits]> (required)
 The local address is the number that the daemon will propagate to
-other daemons on the network when it is identifying itself. Hence this
+other daemons on the network when it is identifying itself.  Hence this
 will be the file name of the passphrase file that the other end expects
 to find the passphrase in.
 
 The local address is the IP address of the tap device, not the real IP
-address of the host running tincd. Due to changes in recent kernels, it
+address of the host running tincd.  Due to changes in recent kernels, it
 is also necessary that you make the ethernet (also known as MAC) address
 equal to the IP address (see the example).
 
@@ -738,32 +738,34 @@ This is an alias for MyOwnVPNIP.
 
 @item PingTimeout = <seconds> (5)
 The number of seconds of inactivity that tinc will wait before sending a
-probe to the other end. If that other end doesn't answer within that
+probe to the other end.  If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
 @item PrivateKey = <key>
 This is a sequence of hexadecimal numbers, as generated by ``tincd
---generate-keys''.
+--generate-keys''.  Please be careful with line breaking, the entire key
+should be on one line.
 
 @item PublicKey = <key>
 This is a sequence of hexadecimal numbers, as generated by ``tincd
---generate-keys''.
+--generate-keys''.  Please be careful with line breaking, the entire key
+should be on one line.
 
 @item TapDevice = <device> (/dev/tap0)
-The ethertap device to use. Note that you can only use one device per
-daemon. The info pages of the tinc package contain more information
+The ethertap device to use.  Note that you can only use one device per
+daemon.  The info pages of the tinc package contain more information
 about configuring an ethertap device for Linux.
 
 @item TCPonly = <yes|no> (no, experimental)
 If this variable is set to yes, then the packets are tunnelled over a TCP
-connection instead of a UDP connection. This is especially useful for those
+connection instead of a UDP connection.  This is especially useful for those
 who want to run a tinc daemon from behind a masquerading firewall, or if
-UDP packet routing is disabled somehow. This is experimental code,
+UDP packet routing is disabled somehow.  This is experimental code,
 try this at your own risk.
 
 @item VpnMask = <mask> (optional)
-The mask that defines the scope of the entire VPN. This option is not used
+The mask that defines the scope of the entire VPN.  This option is not used
 by the tinc daemon itself, but can be used by startup scripts to configure
 the ethertap devices correctly.
 @end table
@@ -775,12 +777,12 @@ the ethertap devices correctly.
 @section Example
 
 
-Imagine the following situation. An A-based company wants to connect
-three branch offices in B, C and D using the internet. All four offices
+Imagine the following situation.  An A-based company wants to connect
+three branch offices in B, C and D using the internet.  All four offices
 have a 24/7 connection to the internet.
 
-A is going to serve as the center of the network. B and C will connect
-to A, and D will connect to C. Each office will be assigned their own IP
+A is going to serve as the center of the network.  B and C will connect
+to A, and D will connect to C.  Each office will be assigned their own IP
 network, 10.x.0.0.
 
 @example
@@ -791,13 +793,13 @@ D: net 10.4.0.0 mask 255.255.0.0 gateway 10.4.3.32 internet IP 4.5.6.7
 @end example
 
 ``gateway'' is the VPN IP address of the machine that is running the
-tincd. ``internet IP'' is the IP address of the firewall, which does not
+tincd.  ``internet IP'' is the IP address of the firewall, which does not
 need to run tincd, but it must do a port forwarding of TCP&UDP on port
 655 (unless otherwise configured).
 
 In this example, it is assumed that eth0 is the interface that points to
 the inner LAN of the office, although this could also be the same as the
-interface that leads to the internet. The configuration of the real
+interface that leads to the internet.  The configuration of the real
 interface is also shown as a comment, to give you an idea of how these
 example host is set up.
 
@@ -837,7 +839,7 @@ VpnMask = 255.0.0.0
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
-same as on the tap0 device. Also, ConnectTo is given so that no-one can
+same as on the tap0 device.  Also, ConnectTo is given so that no-one can
 connect to this node.
 
 @subsubheading For C
@@ -859,10 +861,10 @@ VpnMask = 255.0.0.0
 @end example
 
 C already has another daemon that runs on port 655, so they have to
-reserve another port for tinc. It can connect to other tinc daemons on
+reserve another port for tinc.  It can connect to other tinc daemons on
 the regular port though, so no ConnectPort variable is needed.
 They also use the netname to distinguish
-between the two. tinc is started with `tincd -n A'.
+between the two.  tinc is started with `tincd -n A'.
 
 @subsubheading For D
 
@@ -882,7 +884,7 @@ VpnMask=255.0.0.0
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
-port 2000. Hence they need to put in a ConnectPort, but it doesn't need
+port 2000.  Hence they need to put in a ConnectPort, but it doesn't need
 to have a different ListenPort.
 
 @subsubheading Authentication
@@ -905,9 +907,9 @@ D stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.69.254
 
 @subsubheading Starting
 
-A has to start their tincd first. Then come B and C, where C has to
+A has to start their tincd first.  Then come B and C, where C has to
 provide the option `-n A', because they have more than one tinc
-network. Finally, D's tincd is started.
+network.  Finally, D's tincd is started.
 
 
 
@@ -916,7 +918,7 @@ network. Finally, D's tincd is started.
 @chapter Running tinc
 
 Running tinc isn't just as easy as typing `tincd' and hoping everything
-will just work out the way you wanted. Instead, the use of tinc is a
+will just work out the way you wanted.  Instead, the use of tinc is a
 project that involves trust relations and more than one computer.
 
 @menu
@@ -929,16 +931,16 @@ project that involves trust relations and more than one computer.
 @node    Managing keys, Runtime options, Running tinc, Running tinc
 @section Managing keys
 
-Before attempting to start tinc, you have to create passphrases. When
+Before attempting to start tinc, you have to create passphrases.  When
 tinc tries to make a connection, it exchanges some sensitive
-data. Before doing so, it likes to know if the other end is
+data.  Before doing so, it likes to know if the other end is
 trustworthy.
 
-To do this, both ends must have some knowledge about the other. In the
+To do this, both ends must have some knowledge about the other.  In the
 case of tinc this is the authentication passphrase.
 
-This passphrase is a number, which is chosen at random. This number is
-then sent to the other computers which want to talk to us directly. To
+This passphrase is a number, which is chosen at random.  This number is
+then sent to the other computers which want to talk to us directly.  To
 avoid breaking security, this should be done over a known secure channel
 (such as ssh or similar).
 
@@ -946,23 +948,23 @@ All passphrases are stored in the passphrases directory, which is
 normally /etc/tinc/nn/passphrases/, but it may be changed using the
 `Passphrases' option in the config file.
 
-To generate a passphrase, run `genauth'. genauth takes one argument,
-which is the length of the passphrase in bits. The length of the
+To generate a passphrase, run `genauth'.  genauth takes one argument,
+which is the length of the passphrase in bits.  The length of the
 passphrase should be in the range 1024--2048 for a key length of 128
-bits. genauth creates a random number of the specified length, and puts
+bits.  genauth creates a random number of the specified length, and puts
 it to stdout.
 
 Every computer that wants to participate in the VPN should do this, and
 store the output in the passphrases directory, in the file @file{local}.
 
 When every computer has his own local key, it should copy it to the
-computer that it wants to talk to directly. (i.e. the one it connects to
+computer that it wants to talk to directly.  (i.e.  the one it connects to
 during startup.) This should be done via a secure channel, because it is
-sensitive information. If this is not done securely, someone might break
+sensitive information.  If this is not done securely, someone might break
 in on you later on.
 
 Those non-local passphrase files must have the name of the VPN IP
-address that they will advertise to you. For instance, if a computer
+address that they will advertise to you.  For instance, if a computer
 tells us it likes to be 10.1.1.3 with netmask 255.255.0.0, the file
 should still be called 10.1.1.3, and not 10.1.0.0.
 
@@ -974,38 +976,38 @@ should still be called 10.1.1.3, and not 10.1.0.0.
 Besides the settings in the configuration file, tinc also accepts some
 command line options.
 
-This list is a longer version of that in the manpage. The latter is
+This list is a longer version of that in the manpage.  The latter is
 generated automatically, so may be more up-to-date.
 
 @c from the manpage
 @table @asis
 @item -c, --config=FILE
-Read configuration options from FILE. The default is
+Read configuration options from FILE.  The default is
 @file{/etc/tinc/nn/tinc.conf}.
 
 @item -d
-Increase debug level. The higher it gets, the more gets
-logged. Everything goes via syslog.
+Increase debug level.  The higher it gets, the more gets
+logged.  Everything goes via syslog.
 
 0 is the default, only some basic information connection attempts get
-logged. Setting it to 1 will log a bit more, still not very
-disturbing. With two -d's tincd will log protocol information, which can
-get pretty noisy. Three or more -d's will output every single packet
+logged.  Setting it to 1 will log a bit more, still not very
+disturbing.  With two -d's tincd will log protocol information, which can
+get pretty noisy.  Three or more -d's will output every single packet
 that goes out or comes in, which probably generates more data than the
 packets themselves.
 
 @item -k, --kill
-Attempt to kill a running tincd and exit. A TERM signal (15) gets sent
+Attempt to kill a running tincd and exit.  A TERM signal (15) gets sent
 to the daemon that his its PID in /var/run/tinc.nn.pid.
 
 Because it kills only one tincd, you should use -n here if you use it
 normally.
 
 @item -n, --net=NETNAME
-Connect to net NETNAME. @xref{Multiple networks}.
+Connect to net NETNAME.  @xref{Multiple networks}.
 
 @item -t, --timeout=TIMEOUT
-Seconds to wait before giving a timeout. Should not be set too low,
+Seconds to wait before giving a timeout.  Should not be set too low,
 because every time tincd senses a timeout, it disconnects and reconnects
 again, which will cause unnecessary network traffic and log messages.
 
@@ -1049,31 +1051,31 @@ computer over the existing Internet infrastructure.
 @cindex ethertap
 @cindex frame type
 The data itself is read from a character device file, the so-called
-@emph{ethertap} device. This device is associated with a network
-interface. Any data sent to this interface can be read from the device,
-and any data written to the device gets sent from the interface. Data to
+@emph{ethertap} device.  This device is associated with a network
+interface.  Any data sent to this interface can be read from the device,
+and any data written to the device gets sent from the interface.  Data to
 and from the device is formatted as if it were a normal ethernet card,
 so a frame is preceded by two MAC addresses and a @emph{frame type}
 field.
 
 So when tinc reads an ethernet frame from the device, it determines its
-type. Right now, tinc can only handle Internet Protocol version 4 (IPv4)
-frames. Plans to support other protocols are being made. When tinc knows
+type.  Right now, tinc can only handle Internet Protocol version 4 (IPv4)
+frames.  Plans to support other protocols are being made.  When tinc knows
 which type of frame it has read, it can also read the source and
 destination address from it.
 
-Now it is time that the frame gets encrypted. Currently the only
+Now it is time that the frame gets encrypted.  Currently the only
 encryption algorithm available is blowfish.
 
 @cindex encapsulating
 When the encryption is ready, time has come to actually transport the
-packet to the destination computer. We do this by sending the packet
-over an UDP connection to the destination host. This is called
+packet to the destination computer.  We do this by sending the packet
+over an UDP connection to the destination host.  This is called
 @emph{encapsulating}, the VPN packet (though now encrypted) is
 encapsulated in another IP datagram.
 
 When the destination receives this packet, the same thing happens, only
-in reverse. So it does a decrypt on the contents of the UDP datagram,
+in reverse.  So it does a decrypt on the contents of the UDP datagram,
 and it writes the decrypted information to its own ethertap device.
 
 
@@ -1081,31 +1083,31 @@ and it writes the decrypted information to its own ethertap device.
 @node    The Meta-connection,  , Protocol Preview, The Connection
 @subsection The meta-connection
 
-Having only an UDP connection available is not enough. Though suitable
+Having only an UDP connection available is not enough.  Though suitable
 for transmitting data, we want to be able to reliably send other
 information, such as routing and encryption information to somebody.
 
 TCP is a better alternative, because it already contains protection
 against information being lost, unlike UDP.
 
-So we establish two connections. One for the encrypted VPN data, and one
-for other information, the meta-data. Hence, we call the second
-connection the meta-connection. We can now be sure that the
+So we establish two connections.  One for the encrypted VPN data, and one
+for other information, the meta-data.  Hence, we call the second
+connection the meta-connection.  We can now be sure that the
 meta-information doesn't get lost on the way to another computer.
 
 @cindex data-protocol
 @cindex meta-protocol
 Like with any communication, we must have a protocol, so that everybody
-knows what everything stands for, an how he should react. Because we
-have two connections, we also have two protocols. The protocol used for
+knows what everything stands for, an how he should react.  Because we
+have two connections, we also have two protocols.  The protocol used for
 the UDP data is the ``data-protocol,'' the other one is the
 ``meta-protocol.''
 
 The reason we don't use TCP for both protocols is that UDP is much
-better for encapsulation, even while it is less reliable. The real
+better for encapsulation, even while it is less reliable.  The real
 problem is that when TCP would be used to encapsulate a TCP stream
 that's on the private network, for every packet sent there would be
-three ACK's sent instead of just one. Furthermore, if there would be
+three ACK's sent instead of just one.  Furthermore, if there would be
 a timeout, both TCP streams would sense the timeout, and both would
 start resending packets.
 
@@ -1117,12 +1119,12 @@ start resending packets.
 @cindex Cabal
 tinc got its name from ``TINC,'' short for @emph{There Is No Cabal}; the
 alleged Cabal was/is an organization that was said to keep an eye on the
-entire Internet. As this is exactly what you @emph{don't} want, we named
+entire Internet.  As this is exactly what you @emph{don't} want, we named
 the tinc project after TINC.
 
 @cindex SVPN
 But in order to be ``immune'' to eavesdropping, you'll have to encrypt
-your data. Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
+your data.  Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
 exactly that: encrypt.
 
 This chapter is a mixture of ideas, reasoning and explanation, please
@@ -1140,27 +1142,27 @@ don't take it too serious.
 @subsection Key Types
 @c FIXME: check if I'm not talking nonsense
 
-There are several types of encryption keys. Tinc uses two of them,
+There are several types of encryption keys.  Tinc uses two of them,
 symmetric private keypairs and public/private keypairs.
 
-Public/private keypairs are used in public key cryptography. It enables
+Public/private keypairs are used in public key cryptography.  It enables
 someone to send out a public key with which other people can encrypt their
-data. The encrypted data now can only be decrypted by the person who has
-the private key that matches the public key. So, a public key only allows
-@emph{other} people to send encrypted messages to you. This is very useful
-in setting up private communications channels. Just send out your public key
-and other people can talk to you in a secure way. But how can you know
+data.  The encrypted data now can only be decrypted by the person who has
+the private key that matches the public key.  So, a public key only allows
+@emph{other} people to send encrypted messages to you.  This is very useful
+in setting up private communications channels.  Just send out your public key
+and other people can talk to you in a secure way.  But how can you know
 the other person is who he says he is?
 
 For authentication itself tinc uses symmetric private keypairs, referred
-to as a passphrase. The identity of each tinc daemon is defined by it's
+to as a passphrase.  The identity of each tinc daemon is defined by it's
 passphrase (like you can be identified by your social security number).
 Every tinc daemon that is allowed to connect to you has a copy of your
 passphrase (hence symmetrical).
 
 It would also be possible to use public/private keypairs for authentication,
 so that you could shout out your public key and don't need to keep it
-secret (like the passphrase you would have to send to someone else). Also,
+secret (like the passphrase you would have to send to someone else).  Also,
 no one else has to know a private key from you.
 Both forms have their pros and cons, and at the moment tinc just uses passphrases
 (which are computationaly more efficient and perhaps in some way more
@@ -1173,24 +1175,24 @@ secure).
 
 @cindex Diffie-Hellman
 You can't just send a private encryption key to your peer, because
-somebody else might already be listening to you. So you'll have to
-negotiate over a shared but secret key. One way to do this is by using
+somebody else might already be listening to you.  So you'll have to
+negotiate over a shared but secret key.  One way to do this is by using
 the ``Diffie-Hellman key exchange'' protocol
-(@uref{http://www.rsa.com/rsalabs/faq/html/3-6-1.html}). The idea is as
+(@uref{http://www.rsa.com/rsalabs/faq/html/3-6-1.html}).  The idea is as
 follows.
 
 You have two participants A and B that want to agree over a shared
-secret encryption key. Both parties have some large prime number p and a
-generator g. These numbers may be known to the outside world, and hence
+secret encryption key.  Both parties have some large prime number p and a
+generator g.  These numbers may be known to the outside world, and hence
 may be included in the source distribution.
 
 @cindex secret key
-Both parties then generate a secret key. A generates a, and computes g^a
-mod p. This is then sent to B; while B computes g^b mod p, and transmits
-this to A, b being generated by B. Both a and b must be smaller than
+Both parties then generate a secret key.  A generates a, and computes g^a
+mod p.  This is then sent to B; while B computes g^b mod p, and transmits
+this to A, b being generated by B.  Both a and b must be smaller than
 p-1.
 
-Both parties then calculate g^ab mod p = k. k is the new, shared, but
+Both parties then calculate g^ab mod p = k.  k is the new, shared, but
 still secret key.
 
 To obtain a key k of a sufficient length (128 bits in our vpnd), p
@@ -1208,24 +1210,24 @@ Because the Diffie-Hellman protocol is in itself vulnerable to the
 system.
 
 We will let A transmit a passphrase that is also known to B encrypted
-with g^a, before A sends this to B. This way, B can check whether A is
+with g^a, before A sends this to B.  This way, B can check whether A is
 really A or just someone else.
 B will never receive the real passphrase though, because it was
-encrypted using public/private keypairs. This way there is no way an
+encrypted using public/private keypairs.  This way there is no way an
 imposter could steal A's passphrase.
 
 @cindex passphrase
-@c ehrmz... but we only use 1024 bits passphrases ourselves? [guus]
+@c ehrmz...  but we only use 1024 bits passphrases ourselves? [guus]
 This passphrase should be 2304 bits for a symmetric encryption
-system. But since an asymmetric system is more secure, we could do with
-2048 bits. This only holds if the passphrase is very random. 
+system.  But since an asymmetric system is more secure, we could do with
+2048 bits.  This only holds if the passphrase is very random. 
 
 These passphrases could be stored in a file that is non-readable by
-anyone else but root; e.g. @file{/etc/tinc/passphrases} with UID 0
+anyone else but root; e.g.  @file{/etc/tinc/passphrases} with UID 0
 and permissions mode 700.
 
 The only thing that needs to be taken care of is how A can securely send
-a copy of it's passphrase to B if B doesn't have it yet. This could be
+a copy of it's passphrase to B if B doesn't have it yet.  This could be
 done via mail with PGP, but you should be really convinced of the
 identity of the person who owns the email address you are sending this to.
 Swapping floppy disks in real life might be the best way to do this!
@@ -1235,7 +1237,7 @@ Swapping floppy disks in real life might be the best way to do this!
 @node    Protection,  , Authentication, Security
 @subsection Protecting your data
 
-Now we have securely hidden our data. But a malicious cracker may still
+Now we have securely hidden our data.  But a malicious cracker may still
 bother you by randomly altering the encrypted data he intercepts.
 
 @c FIXME what the hell is this all about? remove? IT
@@ -1258,7 +1260,7 @@ bother you by randomly altering the encrypted data he intercepts.
 tinc's main page is at @url{http://tinc.nl.linux.org/},
 this server is located in the Netherlands.
 
-We have an IRC channel on the Open Projects IRC network. Connect to
+We have an IRC channel on the Open Projects IRC network.  Connect to
 @uref{http://openprojects.nu/services/irc.html, irc.openprojects.net},
 and join channel #tinc.
 
