@@ -1,11 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.56 2002/09/04 19:57:53 guus Exp $
+dnl $Id: configure.in,v 1.13.2.57 2002/09/06 11:08:21 zarq Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
 AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
 
 dnl Include the macros from the m4/ directory
 AM_ACLOCAL_INCLUDE(m4)
