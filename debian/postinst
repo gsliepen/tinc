@@ -1,7 +1,7 @@
 #! /bin/sh
 # postinst script for tinc
 #
-# $Id: postinst,v 1.6 2000/05/21 23:01:28 zarq Exp $
+# $Id: postinst,v 1.6.4.1 2000/12/05 09:04:32 zarq Exp $
 #
 # see: dh_installdeb(1)
 
@@ -42,6 +42,12 @@ case "$1" in
 	if [ ! -e $NETSFILE ] ; then
 	    echo "## This file contains all names of the networks to be started on system startup." > $NETSFILE
 	fi
+
+	if fgrep -q PublicKey `find /etc/tinc -type f` ; then
+	    echo "If you are upgrading from version 1.0pre3, make sure you"
+	    echo "regenerate the host keys.  For more information, refer to"
+	    echo "/usr/share/doc/tinc/UPGRADING.txt."
+        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
