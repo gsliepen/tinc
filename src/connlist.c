@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.8 2000/10/24 15:46:16 guus Exp $
+    $Id: connlist.c,v 1.1.2.9 2000/10/28 16:41:37 guus Exp $
 */
 
 #include <syslog.h>
@@ -149,39 +149,6 @@ cp
     if(p->status.active)
       if(strcmp(name, p->name) == 0)
         break;
-cp
-  return p;
-}
-
-conn_list_t *lookup_conn_list_mac(mac_t address)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(lookup_subnet_mac(p->subnets, address))
-      break;
-cp
-  return p;
-}
-
-conn_list_t *lookup_conn_list_ipv4(ipv4_t address)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(lookup_subnet_ipv4(p->subnets, address))
-      break;
-cp
-  return p;
-}
-
-conn_list_t *lookup_conn_list_ipv6(ipv6_t address)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(lookup_subnet_ipv6(p->subnets, address))
-      break;
 cp
   return p;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.45 2000/10/24 15:46:16 guus Exp $
+    $Id: net.c,v 1.35.4.46 2000/10/28 16:41:38 guus Exp $
 */
 
 #include "config.h"
@@ -274,8 +274,9 @@ cp
 int send_packet(ip_t to, vpn_packet_t *packet)
 {
   conn_list_t *cl;
+  subnet_t *subnet;
 cp
-  if((cl = lookup_conn_list_ipv4(to)) == NULL)
+  if((subnet = lookup_subnet_ipv4(to)) == NULL)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
@@ -285,6 +286,8 @@ cp
 
       return -1;
    }
+
+  cl = subnet->owner;
     
   /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
 

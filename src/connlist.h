@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.4 2000/10/20 15:34:34 guus Exp $
+    $Id: connlist.h,v 1.1.2.5 2000/10/28 16:41:37 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -86,9 +86,6 @@ extern void free_conn_list(conn_list_t *);
 extern void add_conn_list(conn_list_t *);
 extern void del_conn_list(conn_list_t *);
 extern conn_list_t *lookup_id(char *);
-extern conn_list_t *lookup_conn_list_mac(mac_t);
-extern conn_list_t *lookup_conn_list_ipv4(ipv4_t);
-extern conn_list_t *lookup_conn_list_ipv6(ipv6_t);
 extern void dump_conn_list(void);
 extern int read_host_config(conn_list_t *);
 
