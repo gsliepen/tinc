@@ -35,13 +35,13 @@
 #include "mingw/common.h"
 
 int device_fd = 0;
-HANDLE device_handle = INVALID_HANDLE_VALUE;
+static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
 char *device_info = NULL;
 
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 
 extern char *myport;
 

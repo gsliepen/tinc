@@ -37,11 +37,10 @@
 int device_fd = -1;
 char *device = NULL;
 char *iface = NULL;
-char ifrname[IFNAMSIZ];
 char *device_info = NULL;
 
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 
 bool setup_device(void)
 {

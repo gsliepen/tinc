@@ -39,8 +39,8 @@ int device_fd = -1;
 char *device;
 char *iface;
 char *device_info;
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 static device_type_t device_type = DEVICE_TYPE_TUN;
 
 bool setup_device(void)

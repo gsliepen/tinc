@@ -43,8 +43,8 @@ char *device_info;
 extern char *identname;
 extern bool running;
 
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 
 enum request_type { REQ_NEW_CONTROL };
 

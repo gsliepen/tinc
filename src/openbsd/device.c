@@ -30,16 +30,13 @@
 
 #define DEFAULT_DEVICE "/dev/tun0"
 
-#define DEVICE_TYPE_ETHERTAP 0
-#define DEVICE_TYPE_TUNTAP 1
-
 int device_fd = -1;
 char *device;
 char *iface;
 char *device_info;
 
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 
 bool setup_device(void)
 {

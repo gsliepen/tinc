@@ -40,11 +40,11 @@ char *device = NULL;
 char *iface = NULL;
 char *device_info = NULL;
 
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 
-pid_t reader_pid;
-int sp[2];
+static pid_t reader_pid;
+static int sp[2];
 
 bool setup_device(void)
 {

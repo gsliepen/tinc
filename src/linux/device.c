@@ -46,14 +46,14 @@ typedef enum device_type_t {
 } device_type_t;
 
 int device_fd = -1;
-device_type_t device_type;
+static device_type_t device_type;
 char *device;
 char *iface;
 char ifrname[IFNAMSIZ];
 char *device_info;
 
-int device_total_in = 0;
-int device_total_out = 0;
+static int device_total_in = 0;
+static int device_total_out = 0;
 
 bool setup_device(void)
 {
