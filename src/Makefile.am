@@ -1,5 +1,7 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.6 2002/04/09 15:28:45 zarq Exp $
+# $Id: Makefile.am,v 1.7 2002/04/11 20:18:02 zarq Exp $
+
+SUBDIRS = pokey
 
 sbin_PROGRAMS = tincd
 
