@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.8 2002/09/03 20:43:25 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.9 2002/09/04 08:02:33 guus Exp $
 */
 
 #include "config.h"
@@ -47,8 +47,6 @@ int mykeyused = 0;
 
 int send_key_changed(connection_t *c, node_t *n)
 {
-  connection_t *other;
-  avl_node_t *node;
 cp
   /* Only send this message if some other daemon requested our key previously.
      This reduces unnecessary key_changed broadcasts.
@@ -57,12 +55,7 @@ cp
   if(n == myself && !mykeyused)
     return 0;
 
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      other = (connection_t *)node->data;
-      if(other->status.active && other != c)
-        send_request(other, "%d %lx %s", KEY_CHANGED, random(), n->name);
-    }
+  send_request(NULL, "%d %lx %s", KEY_CHANGED, random(), n->name);
 cp
   return 0;
 }
