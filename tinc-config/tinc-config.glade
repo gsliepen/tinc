@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<GTK-Interface>
+
+<project>
+  <name>tinc-config</name>
+  <program_name>tinc-config</program_name>
+  <directory></directory>
+  <source_directory>src</source_directory>
+  <pixmaps_directory>pixmaps</pixmaps_directory>
+  <language>C++</language>
+  <gnome_support>True</gnome_support>
+  <gettext_support>True</gettext_support>
+  <use_widget_names>True</use_widget_names>
+  <gnome_help_support>True</gnome_help_support>
+</project>
+
+</GTK-Interface>
