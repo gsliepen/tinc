@@ -14,7 +14,9 @@ The top directory for configuration files.
 .PP
 
 [SEE ALSO]
-\fBtincd.conf\fR(5)
+\fBtincd.conf\fR(5), \fBgenauth\fR(8)
+.TP
+\fBhttp://tinc.nl.linux.org/\fR
 .TP
 \fBhttp://www.cabal.org/\fR
 
