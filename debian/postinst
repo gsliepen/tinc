@@ -1,9 +1,12 @@
 #! /bin/sh
 # postinst script for tinc
 #
-# $Id: postinst,v 1.2 2000/05/16 13:03:32 zarq Exp $
+# $Id: postinst,v 1.3 2000/05/18 23:18:54 zarq Exp $
 #
 # see: dh_installdeb(1)
+
+TCONF="/etc/tinc"
+NETSFILE="$TCONF/nets.boot"
 
 set -e
 
@@ -36,6 +39,10 @@ case "$1" in
 	    fi
 	fi
 
+	if [ ! -e $NETSFILE ] ; then
+	    echo "## This file contains all names of the networks to be started on system startup." > $NETSFILE
+	    find -maxdepth 1 -mindepth 1 -type d -printf "%f\n" >> $NETSFILE
+	fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
