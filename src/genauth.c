@@ -72,11 +72,22 @@ int main(int argc, char **argv)
     }
   fclose(fp);
 
-  printf("%d ", bits);
-  for(i = 0; i < bytes; i++)
-    printf("%02x", p[i]);
-  puts("");
-  fprintf(stderr, ": done.\n");
+  if(isatty(1))
+    {
+      fprintf(stderr, ": done.\nThe following line should be ENTIRELY copied into a passphrase file:\n");
+      printf("%d ", bits);
+      for(i = 0; i < bytes; i++)
+	printf("%02x", p[i]);
+      puts("");
+    }
+  else
+    {
+      printf("%d ", bits);
+      for(i = 0; i < bytes; i++)
+	printf("%02x", p[i]);
+      puts("");
+      fprintf(stderr, ": done.\n");
+    }
 
   return 0;
 }
