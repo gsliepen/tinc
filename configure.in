@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.13 2000/11/02 21:38:55 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.14 2000/11/07 22:33:33 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre3)
@@ -46,7 +46,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(ftime socket select strtol strerror)
+AC_CHECK_FUNCS(ftime socket select strtol strerror flock)
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
