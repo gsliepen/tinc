@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.46 2002/09/09 22:33:16 guus Exp $
+    $Id: route.c,v 1.1.2.47 2003/03/29 21:51:21 guus Exp $
 */
 
 #include "config.h"
@@ -36,6 +36,8 @@
 #ifdef HAVE_NETINET_IN_SYSTM_H
 #include <netinet/in_systm.h>
 #endif
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/if_ether.h>
@@ -67,6 +69,34 @@ int priorityinheritance = 0;
 int macexpire = 600;
 subnet_t mymac;
 
+/* RFC 1071 */
+
+uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
+{
+	uint16_t *p = data;
+	uint32_t checksum = prevsum ^ 0xFFFF;
+
+	len /= 2;
+		
+	while(len--)
+		checksum += *p++;
+
+	while(checksum >> 16)
+		checksum = (checksum & 0xFFFF) + (checksum >> 16);
+
+	return ~checksum;
+}
+
+int ratelimit(void) {
+	static time_t lasttime = 0;
+	
+	if(lasttime == now)
+		return 1;
+
+	lasttime = now;
+	return 0;
+}
+	
 void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
@@ -151,6 +181,67 @@ node_t *route_mac(vpn_packet_t *packet)
 		return NULL;
 }
 
+/* RFC 792 */
+
+void route_ipv4_unreachable(vpn_packet_t *packet, uint8_t code)
+{
+	struct ip *hdr;
+	struct icmp *icmp;
+	
+	struct in_addr ip_src;
+	struct in_addr ip_dst;
+	uint32_t oldlen;
+
+	if(ratelimit())
+		return;
+	
+	cp();
+
+	hdr = (struct ip *)(packet->data + 14);
+	icmp = (struct icmp *)(packet->data + 14 + 20);
+
+	/* Remember original source and destination */
+		
+	memcpy(&ip_src, &hdr->ip_src, 4);
+	memcpy(&ip_dst, &hdr->ip_dst, 4);
+	oldlen = packet->len - 14;
+	
+	if(oldlen >= IP_MSS - sizeof(*hdr) - sizeof(struct icmphdr))
+		oldlen = IP_MSS - sizeof(*hdr) - sizeof(struct icmphdr);
+	
+	/* Copy first part of original contents to ICMP message */
+	
+	memmove(&icmp->icmp_ip, hdr, oldlen);
+
+	/* Fill in IPv4 header */
+	
+	hdr->ip_v = 4;
+	hdr->ip_hl = sizeof(*hdr) / 4;
+	hdr->ip_tos = 0;
+	hdr->ip_len = htons(20 + 8 + oldlen);
+	hdr->ip_id = 0;
+	hdr->ip_off = 0;
+	hdr->ip_ttl = 255;
+	hdr->ip_p = IPPROTO_ICMP;
+	hdr->ip_sum = 0;
+	memcpy(&hdr->ip_src, &ip_dst, 4);
+	memcpy(&hdr->ip_dst, &ip_src, 4);
+
+	hdr->ip_sum = inet_checksum(hdr, 20, ~0);
+	
+	/* Fill in ICMP header */
+	
+	icmp->icmp_type = ICMP_DEST_UNREACH;
+	icmp->icmp_code = code;
+	icmp->icmp_cksum = 0;
+	
+	icmp->icmp_cksum = inet_checksum(icmp, 8 + oldlen, ~0);
+	
+	packet->len = 14 + 20 + 8 + oldlen;
+	
+	write_packet(packet);
+}
+
 node_t *route_ipv4(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
@@ -169,10 +260,84 @@ node_t *route_ipv4(vpn_packet_t *packet)
 				   packet->data[33]);
 		}
 
+		route_ipv4_unreachable(packet, ICMP_NET_UNKNOWN);
 		return NULL;
 	}
+	
+	if(!subnet->owner->status.reachable)
+		route_ipv4_unreachable(packet, ICMP_NET_UNREACH);
 
 	return subnet->owner;
+}
+
+/* RFC 2463 */
+
+void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
+{
+	struct ip6_hdr *hdr;
+	struct icmp6_hdr *icmp;
+	uint16_t checksum;	
+
+	struct {
+		struct in6_addr ip6_src;	/* source address */
+		struct in6_addr ip6_dst;	/* destination address */
+		uint32_t length;
+		uint32_t next;
+	} pseudo;
+
+	if(ratelimit())
+		return;
+	
+	cp();
+
+	hdr = (struct ip6_hdr *)(packet->data + 14);
+	icmp = (struct icmp6_hdr *)(packet->data + 14 + sizeof(*hdr));
+
+	/* Remember original source and destination */
+		
+	memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
+	memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
+	pseudo.length = ntohs(hdr->ip6_plen) + sizeof(*hdr);
+	
+	if(pseudo.length >= IP_MSS - sizeof(*hdr) - sizeof(*icmp))
+		pseudo.length = IP_MSS - sizeof(*hdr) - sizeof(*icmp);
+	
+	/* Copy first part of original contents to ICMP message */
+	
+	memmove(((char *)icmp) + sizeof(*icmp), hdr, pseudo.length);
+
+	/* Fill in IPv6 header */
+	
+	hdr->ip6_flow = htonl(0x60000000UL);
+	hdr->ip6_plen = htons(sizeof(*icmp) + pseudo.length);
+	hdr->ip6_nxt = IPPROTO_ICMPV6;
+	hdr->ip6_hlim = 255;
+	memcpy(&hdr->ip6_dst, &pseudo.ip6_src, 16);
+	memcpy(&hdr->ip6_src, &pseudo.ip6_dst, 16);
+
+	/* Fill in ICMP header */
+	
+	icmp->icmp6_type = ICMP6_DST_UNREACH;
+	icmp->icmp6_code = code;
+	icmp->icmp6_cksum = 0;
+
+	/* Create pseudo header */
+		
+	memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
+	memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
+	pseudo.length = htonl(sizeof(*icmp) + pseudo.length);
+	pseudo.next = htonl(IPPROTO_ICMPV6);
+
+	/* Generate checksum */
+	
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(icmp, ntohl(pseudo.length), checksum);
+
+	icmp->icmp6_cksum = checksum;
+	
+	packet->len = 14 + sizeof(*hdr) + ntohl(pseudo.length);
+	
+	write_packet(packet);
 }
 
 node_t *route_ipv6(vpn_packet_t *packet)
@@ -195,25 +360,18 @@ node_t *route_ipv6(vpn_packet_t *packet)
 				   ntohs(*(uint16_t *) & packet->data[50]),
 				   ntohs(*(uint16_t *) & packet->data[52]));
 		}
+		route_ipv6_unreachable(packet, ICMP6_DST_UNREACH_ADDR);
 
 		return NULL;
 	}
 
+	if(!subnet->owner->status.reachable)
+		route_ipv6_unreachable(packet, ICMP6_DST_UNREACH_NOROUTE);
+
 	return subnet->owner;
 }
 
-uint16_t inet_checksum(uint16_t *data, int len, uint16_t prevsum)
-{
-	uint32_t checksum = prevsum ^ 0xFFFF;
-
-	while(len--)
-		checksum += ntohs(*data++);
-
-	while(checksum >> 16)
-		checksum = (checksum & 0xFFFF) + (checksum >> 16);
-
-	return checksum ^ 0xFFFF;
-}
+/* RFC 2461 */
 
 void route_neighborsol(vpn_packet_t *packet)
 {
@@ -227,7 +385,7 @@ void route_neighborsol(vpn_packet_t *packet)
 		struct in6_addr ip6_src;	/* source address */
 		struct in6_addr ip6_dst;	/* destination address */
 		uint32_t length;
-		uint8_t junk[4];
+		uint32_t next;
 	} pseudo;
 
 	cp();
@@ -255,13 +413,12 @@ void route_neighborsol(vpn_packet_t *packet)
 	memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
 	memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
 	pseudo.length = htonl(sizeof(*ns) + sizeof(*opt) + 6);
-	pseudo.junk[0] = pseudo.junk[1] = pseudo.junk[2] = 0;
-	pseudo.junk[3] = IPPROTO_ICMPV6;
+	pseudo.next = htonl(IPPROTO_ICMPV6);
 
 	/* Generate checksum */
 
-	checksum = inet_checksum((uint16_t *) & pseudo, sizeof(pseudo) / 2, ~0);
-	checksum = inet_checksum((uint16_t *) ns, sizeof(*ns) / 2 + 4, checksum);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(ns, sizeof(*ns) + 8, checksum);
 
 	if(checksum) {
 		if(debug_lvl >= DEBUG_TRAFFIC)
@@ -317,18 +474,19 @@ void route_neighborsol(vpn_packet_t *packet)
 	memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
 	memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
 	pseudo.length = htonl(sizeof(*ns) + sizeof(*opt) + 6);
-	pseudo.junk[0] = pseudo.junk[1] = pseudo.junk[2] = 0;
-	pseudo.junk[3] = IPPROTO_ICMPV6;
+	pseudo.next = htonl(IPPROTO_ICMPV6);
 
 	/* Generate checksum */
 
-	checksum = inet_checksum((uint16_t *) & pseudo, sizeof(pseudo) / 2, ~0);
-	checksum = inet_checksum((uint16_t *) ns, sizeof(*ns) / 2 + 4, checksum);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(ns, sizeof(*ns) + 8, checksum);
 
-	ns->nd_ns_hdr.icmp6_cksum = htons(checksum);
+	ns->nd_ns_hdr.icmp6_cksum = checksum;
 
 	write_packet(packet);
 }
+
+/* RFC 826 */
 
 void route_arp(vpn_packet_t *packet)
 {
