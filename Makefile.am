@@ -10,7 +10,8 @@ EXTRA_DIST = system.h ABOUT-NLS COPYING.README autogen.sh
 
 CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
- stamp-h.in m4/Makefile.am ChangeLog
+ stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in.in \
+ po/tinc.pot src/.libs intl
 
 ChangeLog:
 	rm -f ChangeLog
@@ -18,7 +19,7 @@ ChangeLog:
 
 cvs-clean: maintainer-clean
 	for f in $(CVS_CREATED) `find -name Makefile.in` ; do\
-	  rm -f "$$f"; \
+	  rm -Rf "$$f"; \
 	done
 
 deb:

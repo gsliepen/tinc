@@ -1,9 +1,9 @@
 ## Process this file with automake to produce Makefile.in
-# $Id: Makefile.am,v 1.2.4.6 2001/01/05 23:50:55 guus Exp $
+# $Id: Makefile.am,v 1.2.4.7 2001/02/11 11:50:09 guus Exp $
 
 noinst_LIBRARIES = libvpn.a
 
-INCLUDES = -I. -I$(top_builddir) -I$(top_srcdir)/intl
+INCLUDES = @INCLUDES@ -I. -I$(top_builddir) -I$(top_srcdir)/intl
 
 libvpn_a_SOURCES = xmalloc.c pidfile.c utils.c getopt.c getopt1.c list.c avl_tree.c dropin.c
 
