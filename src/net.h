@@ -28,9 +28,9 @@
 #include "ipv6.h"
 
 #ifdef ENABLE_JUMBOGRAMS
-#define MTU 9014				/* 9000 bytes payload + 14 bytes ethernet header */
+#define MTU 9018				/* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #else
-#define MTU 1514				/* 1500 bytes payload + 14 bytes ethernet header */
+#define MTU 1518				/* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #endif
 
 #define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
