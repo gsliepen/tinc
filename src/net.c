@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.150 2001/11/16 17:38:39 zarq Exp $
+    $Id: net.c,v 1.35.4.151 2001/11/16 22:41:38 zarq Exp $
 */
 
 #include "config.h"
@@ -87,21 +87,19 @@ int do_prune = 0;
 
 char *hostlookup(struct sockaddr *addr, int numericonly)
 {
-  char *name;
-  struct hostent *host = NULL;
-  struct in_addr in;
-  config_t const *cfg;
+  char *hostname;
   int flags = 0;
+  int r;
 
 cp
   if(numericonly
-     || ((cfg = get_config_val(config, resolve_dns)) == NULL
-	 || cfg->data.val != stupid_true))
+     || (get_config_bool(lookup_config(config_tree, "ResolveDNS"), &r)
+	 || !r ))
       flags |= NI_NUMERICHOST;
 
   hostname = xmalloc(NI_MAXHOST);
 
-  if((r = getnameinfo(addr, sizeof(*addr), &hostname, NI_MAXHOST, NULL, 0, flags)) != 0)
+  if((r = getnameinfo(addr, sizeof(*addr), hostname, NI_MAXHOST, NULL, 0, flags)) != 0)
     {
       free(hostname);
       if(flags & NI_NUMERICHOST)
@@ -161,8 +159,6 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
   vpn_packet_t outpkt;
   int outlen, outpad;
   EVP_CIPHER_CTX ctx;
-  struct sockaddr_in to;
-  socklen_t tolen = sizeof(to);
   vpn_packet_t *copy;
 cp
   if(!n->status.validkey)
@@ -349,7 +345,7 @@ cp
       if(bind(nfd, ai->ai_addr, ai->ai_addrlen))
 	{
 	  close(nfd);
-	  syslog(LOG_ERR, _("Can't bind to %s port %d/tcp: %m"),
+	  syslog(LOG_ERR, _("Can't bind to %s port %s/tcp: %m"),
 		 ai->ai_canonname, n->port);
 	  continue;
 	}
@@ -447,7 +443,7 @@ cp
       if(bind(nfd, ai->ai_addr, ai->ai_addrlen))
 	{
 	  close(nfd);
-	  syslog(LOG_ERR, _("Can't bind to %s port %d/tcp: %m"),
+	  syslog(LOG_ERR, _("Can't bind to %s port %s/tcp: %m"),
 		 ai->ai_canonname, n->port);
 	  continue;
 	}
@@ -467,7 +463,6 @@ cp
 int setup_outgoing_socket(connection_t *c)
 {
   int flags;
-  struct sockaddr_in a;
 cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s (%s)"), c->name, c->hostname);
@@ -476,7 +471,7 @@ cp
 
   if(c->socket == -1)
     {
-      syslog(LOG_ERR, _("Creating socket for %s port %d failed: %m"),
+      syslog(LOG_ERR, _("Creating socket for %s port %s failed: %m"),
              c->hostname, c->port);
       return -1;
     }
@@ -863,7 +858,7 @@ cp
   myself->status.active = 1;
   node_add(myself);
 
-  syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
+  syslog(LOG_NOTICE, _("Ready: listening on port %s"), myself->port);
 cp
   return 0;
 }
@@ -957,14 +952,21 @@ cp
       return NULL;
     }
 
-  asprintf(&(c->address), " = ntohl(ci.sin_addr.s_addr);
-  c->hostname = hostlookup(ci.sin_addr.s_addr);
+  c->address = sockaddr_to_addrinfo(ci);
+
+  c->hostname = xmalloc(INET6_ADDRSTRLEN);
+  if((inet_ntop(ci.sin_family, &(ci.sin_addr), c->hostname, INET6_ADDRSTRLEN)) == NULL)
+    {
+      syslog(LOG_ERR, _("Couldn't convert address to string: %m"));
+      free(c->hostname);
+      return NULL;
+    }
   asprintf(&(c->port), "%d", htons(ci.sin_port));
   c->socket = sfd;
   c->last_ping_time = time(NULL);
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Connection from %s port %d"),
+    syslog(LOG_NOTICE, _("Connection from %s port %s"),
          c->hostname, c->port);
 
   c->allow_request = ID;
@@ -1025,11 +1027,11 @@ cp
       return;
     }
 
-  n = lookup_node_udp(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+  n = lookup_node_udp(sockaddr_to_addrinfo(&from));
 
   if(!n)
     {
-      syslog(LOG_WARNING, _("Received UDP packet on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+      syslog(LOG_WARNING, _("Received UDP packet on port %s from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return;
     }
 /*
@@ -1221,7 +1223,7 @@ cp
       if(setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
         retry = 1;
 
-      cfg = lookup_config_next(config._tree, cfg); /* Next time skip to next ConnectTo line */
+      cfg = lookup_config_next(config_tree, cfg); /* Next time skip to next ConnectTo line */
     }
 
   get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout);
