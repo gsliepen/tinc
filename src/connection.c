@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.34 2002/09/09 22:32:30 guus Exp $
+    $Id: connection.c,v 1.1.2.35 2002/09/10 22:12:33 guus Exp $
 */
 
 #include "config.h"
@@ -32,7 +32,6 @@
 
 #include "net.h"				/* Don't ask. */
 #include "netutl.h"
-#include "config.h"
 #include "conf.h"
 #include <utils.h>
 #include "subnet.h"

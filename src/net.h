@@ -17,11 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.53 2002/09/09 21:24:36 guus Exp $
+    $Id: net.h,v 1.9.4.54 2002/09/10 22:12:33 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
+
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,8 +33,6 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
-
-#include "config.h"
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9014				/* 9000 bytes payload + 14 bytes ethernet header */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.20 2002/09/10 09:40:21 guus Exp $
+    $Id: graph.c,v 1.1.2.21 2002/09/10 22:12:33 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -48,7 +48,6 @@
 
 #include <stdio.h>
 #include <syslog.h>
-#include "config.h"
 #include <string.h>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>

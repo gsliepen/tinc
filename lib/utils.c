@@ -18,11 +18,11 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
-
-#include "config.h"
 
 #include <utils.h>
 #include <syslog.h>
