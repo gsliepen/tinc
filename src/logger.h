@@ -25,7 +25,7 @@ enum {
 
 extern int debug_level;
 extern void openlogger(const char *, int);
-extern void logger(int, const char *, ...);
+extern void logger(int, const char *, ...) __attribute__ ((format(printf, 2, 3)));
 extern void closelogger(void);
 
 #define ifdebug(l) if(debug_level >= DEBUG_##l)
