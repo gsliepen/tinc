@@ -1,5 +1,5 @@
 /*
-    daemon.h -- header file for daemon.c
+    dropin.h -- header file for dropin.c
     Copyright (C) 2000 Ivo Timmermans <itimmermans@bigfoot.com>,
                   2000 Guus Sliepen <guus@sliepen.warande.net>
 
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.1.2.1 2000/11/28 23:23:41 zarq Exp $
+    $Id: dropin.h,v 1.1.2.2 2000/11/29 00:33:15 zarq Exp $
 */
 
 #ifndef __DROPIN_H__
