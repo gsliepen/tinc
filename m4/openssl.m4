@@ -33,10 +33,10 @@ AC_DEFUN(tinc_OPENSSL,
     )
   ])
 
-if test "$openssl_lib" != "none given" ; then
+if test "$tinc_cv_openssl_lib" != "none given" ; then
   LIBS="$LIBS -L$tinc_cv_openssl_lib"
 fi
-if test "$openssl_include" != "none given" ; then
+if test "$tinc_cv_openssl_include" != "none given" ; then
   INCLUDES="$INCLUDES -I$tinc_cv_openssl_include"
 fi
 
