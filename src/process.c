@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.49 2002/09/15 14:55:53 guus Exp $
+    $Id: process.c,v 1.1.2.50 2002/09/30 19:04:37 zarq Exp $
 */
 
 #include "config.h"
@@ -58,7 +58,7 @@ extern char **g_argv;
 
 sigset_t emptysigset;
 
-static int saved_debug_lvl = 0;
+static int saved_debug_lvl = -1;
 
 extern int sighup;
 extern int sigalrm;
@@ -364,11 +364,11 @@ RETSIGTYPE sighup_handler(int a)
 
 RETSIGTYPE sigint_handler(int a)
 {
-	if(saved_debug_lvl) {
+	if(saved_debug_lvl != -1) {
 		syslog(LOG_NOTICE, _("Reverting to old debug level (%d)"),
 			   saved_debug_lvl);
 		debug_lvl = saved_debug_lvl;
-		saved_debug_lvl = 0;
+		saved_debug_lvl = -1;
 	} else {
 		syslog(LOG_NOTICE, _("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
 			   debug_lvl);
