@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.8 2003/08/01 08:18:22 guus Exp $
+    $Id: device.c,v 1.1.2.9 2003/08/02 21:01:50 guus Exp $
 */
 
 #include "system.h"
@@ -158,7 +158,7 @@ bool setup_device(void)
 	/* Open registry and look for network adapters */
 
 	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, REG_CONTROL_NET, 0, KEY_READ, &key)) {
-		logger(LOG_ERR, _("Unable to read registry"));
+		logger(LOG_ERR, _("Unable to read registry: %s"), winerror(GetLastError()));
 		return false;
 	}
 
@@ -272,7 +272,7 @@ bool setup_device(void)
 	thread = CreateThread(NULL, 0, tapreader, NULL, 0, NULL);
 
 	if(!thread) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "CreateThread", strerror(errno));
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "CreateThread", winerror(GetLastError()));
 		return false;
 	}
 
@@ -332,7 +332,7 @@ bool write_packet(vpn_packet_t *packet)
 			   packet->len, device_info);
 
 	if(!WriteFile(device_handle, packet->data, packet->len, &lenout, &overlapped)) {
-		logger(LOG_ERR, _("Error while writing to %s %s"), device_info, device);
+		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, winerror(GetLastError()));
 		return false;
 	}
 
