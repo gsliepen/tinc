@@ -1,7 +1,7 @@
 /*
     ethernet.h -- missing Ethernet related definitions
-    Copyright (C) 2003 Ivo Timmermans <ivo@o2w.nl>
-                  2003 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 2004 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ethernet.h,v 1.1.2.5 2003/10/08 11:34:55 guus Exp $
+    $Id$
 */
 
 #ifndef __TINC_ETHERNET_H__

@@ -1,7 +1,7 @@
 /*
     protocol.h -- header for protocol.c
-    Copyright (C) 1999-2001 Ivo Timmermans <ivo@o2w.nl>,
-                  2000,2001 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1999-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.45 2003/11/17 15:30:18 guus Exp $
+    $Id$
 */
 
 #ifndef __TINC_PROTOCOL_H__

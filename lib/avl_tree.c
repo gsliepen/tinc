@@ -1,9 +1,9 @@
 /*
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
-                  2000-2003 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
-                  2000-2003 Wessel Dankers <wsl@nl.linux.org>
+                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2004 Wessel Dankers <wsl@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,15 +21,15 @@
 
     Original AVL tree library by Michael H. Buselli <cosine@cosine.org>.
 
-    Modified 2000-11-28 by Wessel Dankers <wsl@nl.linux.org> to use counts
+    Modified 2000-11-28 by Wessel Dankers <wsl@tinc-vpn.org> to use counts
     instead of depths, to add the ->next and ->prev and to generally obfuscate
     the code. Mail me if you found a bug.
 
     Cleaned up and incorporated some of the ideas from the red-black tree
-    library for inclusion into tinc (http://tinc.nl.linux.org/) by
-    Guus Sliepen <guus@sliepen.eu.org>.
+    library for inclusion into tinc (http://www.tinc-vpn.org/) by
+    Guus Sliepen <guus@tinc-vpn.org>.
 
-    $Id: avl_tree.c,v 1.1.2.19 2003/08/28 21:05:09 guus Exp $
+    $Id$
 */
 
 #include "system.h"

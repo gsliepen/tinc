@@ -1,6 +1,6 @@
 # Spanish messages for tinc
 # Copyright (C) 1999, 2000 Free Software Foundation, Inc.
-# Ivo Timmermans <ivo@o2w.nl>, 1999, 2000.
+# Ivo Timmermans <ivo@tinc-vpn.org>, 1999, 2000.
 #
 msgid ""
 msgstr ""

@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
+@c $Id$
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -16,11 +16,11 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2003 Ivo Timmermans
-<ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
-Wessel Dankers <wsl@@nl.linux.org>.
+Copyright @copyright{} 1998-2004 Ivo Timmermans
+<ivo@@tinc-vpn.org>, Guus Sliepen <guus@@tinc-vpn.org> and
+Wessel Dankers <wsl@@tinc-vpn.org>.
 
-$Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
+$Id$
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,11 +43,11 @@ permission notice identical to this one.
 @cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2003 Ivo Timmermans
-<ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
-Wessel Dankers <wsl@@nl.linux.org>.
+Copyright @copyright{} 1998-2004 Ivo Timmermans
+<ivo@@tinc-vpn.org>, Guus Sliepen <guus@@tinc-vpn.org> and
+Wessel Dankers <wsl@@tinc-vpn.org>.
 
-$Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
+$Id$
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -192,7 +192,7 @@ packets.
 @cindex release
 For an up to date list of supported platforms, please check the list on
 our website:
-@uref{http://tinc.nl.linux.org/platforms}.
+@uref{http://www.tinc-vpn.org/platforms}.
 
 
 @c ==================================================================
@@ -538,7 +538,7 @@ we also present the following exemption:
 
 @quotation
 Hereby I grant a special exception to the tinc VPN project
-(http://tinc.nl.linux.org/) to link the LZO library with the OpenSSL library
+(http://www.tinc-vpn.org/) to link the LZO library with the OpenSSL library
 (http://www.openssl.org).
 
 Markus F.X.J. Oberhumer
@@ -610,7 +610,7 @@ system startup scripts and sample configurations.
 If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
-@uref{http://tinc.nl.linux.org/download, download page}, which has
+@uref{http://www.tinc-vpn.org/download, download page}, which has
 the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
@@ -756,7 +756,7 @@ number 655 is registered with the IANA.
 @example
 tinc            655/tcp    TINC
 tinc            655/udp    TINC
-#                          Ivo Timmermans <ivo@@o2w.nl>
+#                          Ivo Timmermans <ivo@@tinc-vpn.org>
 @end example
 
 
@@ -2317,7 +2317,7 @@ Adding routes to IPv6 subnets:
 @section Contact information
 
 @cindex website
-Tinc's website is at @url{http://tinc.nl.linux.org/},
+Tinc's website is at @url{http://www.tinc-vpn.org/},
 this server is located in the Netherlands.
 
 @cindex IRC
@@ -2333,8 +2333,8 @@ and join channel #tinc.
 @section Authors
 
 @table @asis
-@item Ivo Timmermans (zarq) (@email{ivo@@o2w.nl})
-@item Guus Sliepen (guus) (@email{guus@@sliepen.eu.org})
+@item Ivo Timmermans (zarq) (@email{ivo@@tinc-vpn.org})
+@item Guus Sliepen (guus) (@email{guus@@tinc-vpn.org})
 @end table
 
 We have received a lot of valuable input from users.  With their help,

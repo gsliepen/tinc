@@ -1,4 +1,4 @@
-/* $Id: fake-getnameinfo.h,v 1.1.2.3 2003/07/17 15:06:25 guus Exp $ */
+/* $Id$ */
 
 #ifndef _FAKE_GETNAMEINFO_H
 #define _FAKE_GETNAMEINFO_H

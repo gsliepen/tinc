@@ -1,8 +1,8 @@
 .Dd 2002-04-09
 .Dt TINC.CONF 5
 .\" Manual page created by:
-.\" Ivo Timmermans <ivo@o2w.nl>
-.\" Guus Sliepen <guus@sliepen.eu.org>
+.\" Ivo Timmermans <ivo@tinc-vpn.org>
+.\" Guus Sliepen <guus@tinc-vpn.org>
 .Sh NAME
 .Nm tinc.conf
 .Nd tinc daemon configuration
@@ -394,7 +394,7 @@ its connection to the virtual network device.
 .El
 .Sh SEE ALSO
 .Xr tincd 8 ,
-.Pa http://tinc.nl.linux.org/ ,
+.Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.linuxdoc.org/LDP/nag2/ .
 .Pp
 The full documentation for

@@ -1,7 +1,7 @@
 This document describes how nodes in a VPN find and connect to eachother and
 maintain a stable network.
 
-   Copyright 2001-2002 Guus Sliepen <guus@sliepen.eu.org>
+   Copyright 2001-2004 Guus Sliepen <guus@tinc-vpn.org>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this
@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.11 2002/09/16 14:08:04 wsl Exp $
+   $Id$
 
 1. Synchronisation
 ==================

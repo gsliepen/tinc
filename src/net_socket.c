@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
-    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.38 2003/12/22 11:04:16 guus Exp $
+    $Id$
 */
 
 #include "system.h"

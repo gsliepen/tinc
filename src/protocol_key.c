@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
-    Copyright (C) 1999-2003 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1999-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.26 2003/12/20 21:25:17 guus Exp $
+    $Id$
 */
 
 #include "system.h"

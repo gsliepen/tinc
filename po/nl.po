@@ -1,15 +1,15 @@
 # Dutch messages for tinc
 # Copyright (C) 1999-2004 Ivo Timmermans, Guus Sliepen.
-# Ivo Timmermans <ivo@o2w.nl>, 1999-2003.
-# Guus Sliepen <guus@sliepen.eu.org>, 2000-2003.
+# Ivo Timmermans <ivo@tinc-vpn.org>, 1999-2004.
+# Guus Sliepen <guus@tinc-vpn.org>, 2000-2004.
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-svn\n"
-"Report-Msgid-Bugs-To: tinc-devel@nl.linux.org\n"
+"Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
 "POT-Creation-Date: 2004-03-15 19:28+0100\n"
 "PO-Revision-Date: 2004-03-15 19:28+0100\n"
-"Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
-"Language-Team: Dutch <vertaling@nl.linux.org>\n"
+"Last-Translator: Guus Sliepen <guus@tinc-vpn.org>\n"
+"Language-Team: Dutch <vertaling@tinc-vpn.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -889,9 +889,9 @@ msgstr ""
 
 #: src/tincd.c:123
 #, c-format
-msgid "Report bugs to tinc@nl.linux.org.\n"
+msgid "Report bugs to tinc@tinc-vpn.org.\n"
 msgstr ""
-"Meld fouten in het programma aan tinc@nl.linux.org;\n"
+"Meld fouten in het programma aan tinc@tinc-vpn.org;\n"
 "Meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
 
 #: src/tincd.c:179

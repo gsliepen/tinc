@@ -1,10 +1,10 @@
 This is the README file for tinc version 1.0.2. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2003 by:
+tinc is Copyright (C) 1998-2004 by:
 
-Ivo Timmermans <ivo@o2w.nl>,
-Guus Sliepen <guus@sliepen.eu.org>,
+Ivo Timmermans <ivo@tinc-vpn.org>,
+Guus Sliepen <guus@tinc-vpn.org>,
 and others.
 
 For a complete list of authors see the AUTHORS file.

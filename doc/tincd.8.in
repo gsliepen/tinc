@@ -1,8 +1,8 @@
 .Dd 2002-03-25
 .Dt TINCD 8
 .\" Manual page created by:
-.\" Ivo Timmermans <ivo@o2w.nl>
-.\" Guus Sliepen <guus@sliepen.eu.org>
+.\" Ivo Timmermans <ivo@tinc-vpn.org>
+.\" Guus Sliepen <guus@tinc-vpn.org>
 .Sh NAME
 .Nm tincd
 .Nd tinc VPN daemon
@@ -163,12 +163,12 @@ option may not work correctly.
 .Pp
 .Sy The cryptography in tinc is not well tested yet. Use it at your own risk!
 .Pp
-If you find any bugs, report them to tinc@nl.linux.org.
+If you find any bugs, report them to tinc@tinc-vpn.org.
 .Sh TODO
 A lot, especially security auditing.
 .Sh SEE ALSO
 .Xr tinc.conf 5 ,
-.Pa http://tinc.nl.linux.org/ ,
+.Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.cabal.org/ .
 .Pp
 The full documentation for tinc is maintained as a Texinfo manual.
@@ -181,7 +181,7 @@ tinc comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain conditions;
 see the file COPYING for details.
 .Sh AUTHORS
-.An "Ivo Timmermans" Aq ivo@o2w.nl
-.An "Guus Sliepen" Aq guus@sliepen.eu.org
+.An "Ivo Timmermans" Aq ivo@tinc-vpn.org
+.An "Guus Sliepen" Aq guus@tinc-vpn.org
 .Pp
 And thanks to many others for their contributions to tinc!

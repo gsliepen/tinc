@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Solaris tun device
-    Copyright (C) 2001-2003 Ivo Timmermans <ivo@o2w.nl>,
-                  2001-2003 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 2001-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2001-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.17 2003/07/31 11:20:32 guus Exp $
+    $Id$
 */
 
 

@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>
-                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.90 2003/12/07 14:31:09 guus Exp $
+    $Id$
 */
 
 #include "system.h"
@@ -120,7 +120,7 @@ static void usage(bool status)
 				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
 				"      --help                 Display this help and exit.\n"
 				"      --version              Output version information and exit.\n\n"));
-		printf(_("Report bugs to tinc@nl.linux.org.\n"));
+		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
 }
 
@@ -407,7 +407,7 @@ int main(int argc, char **argv)
 	if(show_version) {
 		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2003 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf(_("Copyright (C) 1998-2004 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

@@ -5,7 +5,7 @@
  * See getaddrinfo.c and getnameinfo.c.
  */
 
-/* $Id: fake-gai-errnos.h,v 1.1.2.3 2003/08/17 08:32:38 guus Exp $ */
+/* $Id$ */
 
 /* for old netdb.h */
 #ifndef EAI_NODATA
