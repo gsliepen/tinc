@@ -1,2 +1,2 @@
 # -*- makefile -*-
-tincd-summary = tinc daemon
+tincd-summary = tinc VPN daemon
