@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.70 2003/07/21 13:18:43 guus Exp $
+dnl $Id: configure.in,v 1.13.2.71 2003/07/21 15:51:00 guus Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
@@ -68,7 +68,7 @@ case $host_os in
     [ rm -f src/device.c; ln -sf cygwin/device.c src/device.c ]
   ;;
   *mingw*)
-    AC_DEFINE(HAVE_CYGWIN, 1, [MinGW])
+    AC_DEFINE(HAVE_MINGW, 1, [MinGW])
     [ rm -f src/device.c; ln -sf mingw/device.c src/device.c ]
   ;;
   *)
