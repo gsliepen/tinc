@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.64 2003/07/06 22:11:31 guus Exp $
+dnl $Id: configure.in,v 1.13.2.65 2003/07/07 11:11:33 guus Exp $
 
 AC_PREREQ(2.53)
 AC_INIT(src/tincd.c)
@@ -101,7 +101,7 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-AC_CHECK_TYPES([socklen_t, struct addrinfo, struct sockaddr_in6], , ,
+AC_CHECK_TYPES([socklen_t, struct addrinfo, struct in6_addr, struct sockaddr_in6], , ,
   [#include <sys/types.h>
    #include <sys/socket.h>
    #include <netdb.h>

@@ -25,6 +25,7 @@
 
 #include "fake-getaddrinfo.h"
 #include "fake-getnameinfo.h"
+#include "ipv6.h"
 
 #define min(a,b) (((a)<(b))?(a):(b))
 

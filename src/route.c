@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.55 2003/07/06 23:16:29 guus Exp $
+    $Id: route.c,v 1.1.2.56 2003/07/07 11:11:33 guus Exp $
 */
 
 #include "config.h"
@@ -286,8 +286,6 @@ static node_t *route_ipv4(vpn_packet_t *packet)
 	return subnet->owner;
 }
 
-#ifdef HAVE_NETINET_IP6_H
-
 /* RFC 2463 */
 
 static void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
@@ -356,8 +354,6 @@ static void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
 	write_packet(packet);
 }
 
-#endif
-
 static node_t *route_ipv6(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
@@ -376,22 +372,16 @@ static node_t *route_ipv6(vpn_packet_t *packet)
 				   ntohs(*(uint16_t *) & packet->data[48]),
 				   ntohs(*(uint16_t *) & packet->data[50]),
 				   ntohs(*(uint16_t *) & packet->data[52]));
-#ifdef HAVE_NETINET_IP6_H
 		route_ipv6_unreachable(packet, ICMP6_DST_UNREACH_ADDR);
-#endif
 
 		return NULL;
 	}
 
-#ifdef HAVE_NETINET_IP6_H
 	if(!subnet->owner->status.reachable)
 		route_ipv6_unreachable(packet, ICMP6_DST_UNREACH_NOROUTE);
-#endif
 	
 	return subnet->owner;
 }
-
-#ifdef HAVE_NETINET_IP6_H
 
 /* RFC 2461 */
 
@@ -504,8 +494,6 @@ static void route_neighborsol(vpn_packet_t *packet)
 	write_packet(packet);
 }
 
-#endif
-
 /* RFC 826 */
 
 static void route_arp(vpn_packet_t *packet)
@@ -584,12 +572,10 @@ void route_outgoing(vpn_packet_t *packet)
 					break;
 
 				case 0x86DD:
-#ifdef HAVE_NETINET_IP6_H
 					if(packet->data[20] == IPPROTO_ICMPV6 && packet->data[54] == ND_NEIGHBOR_SOLICIT) {
 						route_neighborsol(packet);
 						return;
 					}
-#endif
 					n = route_ipv6(packet);
 					break;
 
