@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.27 2000/11/30 00:24:13 zarq Exp $
+    $Id: conf.c,v 1.9.4.28 2000/11/30 21:11:03 zarq Exp $
 */
 
 #include "config.h"
@@ -356,12 +356,14 @@ int is_safe_path(const char *file)
     }
 
   *p = '/';
-  if(stat(file, &s) < 0)
+  if(stat(file, &s) < 0 && errno != ENOENT)
     {
       fprintf(stderr, _("Couldn't stat `%s': %m\n"),
 	      file);
       return 0;
     }
+  if(errno == ENOENT)
+    return 1;
   if(s.st_uid != geteuid())
     {
       fprintf(stderr, _("`%s' is owned by UID %d instead of %d.\n"),
