@@ -41,6 +41,7 @@ typedef enum which_t {
   allowconnect,
   pingtimeout,
   keyexpire,
+  proxymode
 } which_t;
 
 typedef struct config_t {
