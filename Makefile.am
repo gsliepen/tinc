@@ -1,8 +1,8 @@
 ## Process this file with automake to get Makefile.in
 
-AUTOMAKE_OPTIONS = gnits
+AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS = m4 lib cipher src doc redhat
+SUBDIRS = m4 lib cipher src doc redhat debian
 
 ACLOCAL_AMFLAGS =
 

@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/tincd.c)
-AM_INIT_AUTOMAKE(tinc, 1.0)
+AM_INIT_AUTOMAKE(tinc, 1.0pre1)
 AM_CONFIG_HEADER(config.h)
 
 dnl Include the macros from the m4/ directory
@@ -62,4 +62,4 @@ else
 fi
 
 AC_OUTPUT([Makefile src/Makefile cipher/Makefile cipher/blowfish/Makefile
-doc/Makefile lib/Makefile m4/Makefile redhat/Makefile])
+doc/Makefile lib/Makefile m4/Makefile redhat/Makefile debian/Makefile])
