@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.15 2001/07/21 15:34:18 guus Exp $
+    $Id: connection.c,v 1.1.2.16 2001/09/24 14:16:29 guus Exp $
 */
 
 #include "config.h"
@@ -248,9 +248,9 @@ cp
   for(node = id_tree->head; node; node = node->next)
     {
       cl = (connection_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
+      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x nexthop %s lastbutonehop %s"),
              cl->name, cl->hostname, cl->port, cl->options,
-             cl->socket, cl->meta_socket, cl->status);
+             cl->socket, cl->meta_socket, cl->status, cl->nexthop->name, cl->lastbutonehop->name);
     }
     
   syslog(LOG_DEBUG, _("End of connection list."));
