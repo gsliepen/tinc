@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.6 2000/06/26 17:20:58 guus Exp $
+    $Id: net.c,v 1.35.4.7 2000/06/26 19:39:34 guus Exp $
 */
 
 #include "config.h"
@@ -103,11 +103,13 @@ cp
   rp.len = htons(rp.len);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, _("Sent %d bytes to %lx"), ntohs(rp.len), cl->vpn_ip);
+    syslog(LOG_ERR, _("Sending packet of %d bytes to " IP_ADDR_S " (%s)"),
+           ntohs(rp.len), IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
   if((r = send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
-      syslog(LOG_ERR, _("Error sending data: %m"));
+      syslog(LOG_ERR, _("Error sending packet to " IP_ADDR_S " (%s): %m"),
+             IP_ADDR_V(cl->vpn_ip), cl->hostname);
       return -1;
     }
 
@@ -125,6 +127,10 @@ int xrecv(conn_list_t *cl, void *packet)
 cp
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
   add_mac_addresses(&vp);
+
+  if(debug_lvl > 3)
+    syslog(LOG_ERR, _("Receiving packet of %d bytes from " IP_ADDR_S " (%s)"),
+           ((real_packet_t*)packet)->len, IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
   if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
@@ -145,9 +151,6 @@ void add_queue(packet_queue_t **q, void *packet, size_t s)
 {
   queue_element_t *e;
 cp
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _("packet to queue: %d"), s);
-
   e = xmalloc(sizeof(*e));
   e->packet = xmalloc(s);
   memcpy(e->packet, packet, s);
@@ -233,7 +236,7 @@ cp
     }
 
   if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _("queue flushed"));
+    syslog(LOG_DEBUG, _("Queue flushed"));
 cp
 }
 
@@ -290,7 +293,7 @@ cp
           return -1;
         }
     }
-
+    
   /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
   
   if(myself->flags & EXPORTINDIRECTDATA)
@@ -312,25 +315,26 @@ cp
    
   if(cl->flags & INDIRECTDATA)
     {
-      if((cl = lookup_conn(cl->vpn_ip)) == NULL)
+      if(debug_lvl > 3)
+        syslog(LOG_NOTICE, _("Indirect packet to " IP_ADDR_S " via " IP_ADDR_S),
+               IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
+      if((cl = lookup_conn(cl->real_ip)) == NULL)
         {
           if(debug_lvl > 3)
-            {
               syslog(LOG_NOTICE, _("Indirect look up " IP_ADDR_S " in connection list failed!"),
 	             IP_ADDR_V(to));
-            }
             
           /* Gateway tincd dead? Should we kill it? (GS) */
 
           return -1;
         }
       if(cl->flags & INDIRECTDATA)  /* This should not happen */
-        if(debug_lvl > 3)
-          {
-            syslog(LOG_NOTICE, _("double indirection for " IP_ADDR_S),
-	           IP_ADDR_V(to));
-          }
-        return -1;        
+        {
+          if(debug_lvl > 3)
+              syslog(LOG_NOTICE, _("Double indirection for " IP_ADDR_S),
+	             IP_ADDR_V(to));
+          return -1;        
+        }
     }            
 
   if(my_key_expiry <= time(NULL))
@@ -338,10 +342,15 @@ cp
 
   if(!cl->status.dataopen)
     if(setup_vpn_connection(cl) < 0)
-      return -1;
-
+      {
+        syslog(LOG_ERR, _("Could not open UDP connection to " IP_ADDR_S " (%s)"), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+        return -1;
+      }
+      
   if(!cl->status.validkey)
     {
+      if(debug_lvl > 3)
+	syslog(LOG_INFO, _(IP_ADDR_S " (%s) has no valid key, queueing packet"), IP_ADDR_V(cl->vpn_ip), cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
       if(!cl->status.waitingforkey)
 	send_key_request(cl->vpn_ip);			/* Keys should be sent to the host running the tincd */
@@ -350,9 +359,9 @@ cp
 
   if(!cl->status.active)
     {
-      add_queue(&(cl->sq), packet, packet->len + 2);
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _(IP_ADDR_S " is not ready, queueing packet"), IP_ADDR_V(cl->vpn_ip));
+	syslog(LOG_INFO, _(IP_ADDR_S " (%s) is not ready, queueing packet"), IP_ADDR_V(cl->vpn_ip), cl->hostname);
+      add_queue(&(cl->sq), packet, packet->len + 2);
       return 0; /* We don't want to mess up, do we? */
     }
 
@@ -704,12 +713,12 @@ int setup_vpn_connection(conn_list_t *cl)
   struct sockaddr_in a;
 cp
   if(debug_lvl > 0)
-    syslog(LOG_DEBUG, _("Opening UDP socket to " IP_ADDR_S), IP_ADDR_V(cl->real_ip));
+    syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->hostname);
 
   nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(nfd == -1)
     {
-      syslog(LOG_ERR, _("Creating data socket failed: %m"));
+      syslog(LOG_ERR, _("Creating UDP socket failed: %m"));
       return -1;
     }
 
@@ -719,8 +728,8 @@ cp
 
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      syslog(LOG_ERR, _("Connecting to " IP_ADDR_S ":%d failed: %m"),
-	     IP_ADDR_V(cl->real_ip), cl->port);
+      syslog(LOG_ERR, _("Connecting to %s port %d failed: %m"),
+	     cl->hostname, cl->port);
       return -1;
     }
 
@@ -825,7 +834,7 @@ cp
   lenin = recvfrom(cl->socket, &rp, MTU, 0, NULL, NULL);
   if(lenin <= 0)
     {
-      syslog(LOG_ERR, _("Receiving data failed: %m"));
+      syslog(LOG_ERR, _("Receiving packet from %s failed: %m"), cl->hostname);
       return -1;
     }
   total_socket_in += lenin;
@@ -837,13 +846,10 @@ cp
   if(rp.len >= 0)
     {
       f = lookup_conn(rp.from);
-      if(debug_lvl > 3)
-	syslog(LOG_DEBUG, _("packet from " IP_ADDR_S " (len %d)"),
-	       IP_ADDR_V(rp.from), rp.len);
       if(!f)
 	{
-	  syslog(LOG_ERR, _("Got packet from unknown source " IP_ADDR_S),
-		 IP_ADDR_V(rp.from));
+	  syslog(LOG_ERR, _("Got packet from " IP_ADDR_S " (%s) with unknown origin " IP_ADDR_S "?"),
+		 IP_ADDR_V(cl->vpn_ip), cl->hostname, IP_ADDR_V(rp.from));
 	  return -1;
 	}
 
@@ -1175,13 +1181,6 @@ cp
   from = ntohl(*((unsigned long*)(&vp.data[26])));
   to = ntohl(*((unsigned long*)(&vp.data[30])));
 
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _("An IP packet (%04x) for " IP_ADDR_S " from " IP_ADDR_S),
-	   ether_type, IP_ADDR_V(to), IP_ADDR_V(from));
-  if(debug_lvl > 3)
-    syslog(LOG_DEBUG, _(MAC_ADDR_S " to " MAC_ADDR_S),
-	   MAC_ADDR_V(vp.data[0]), MAC_ADDR_V(vp.data[6]));
-  
   vp.len = (length_t)lenin - 2;
 
   strip_mac_addresses(&vp);

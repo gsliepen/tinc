@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.3 2000/06/25 16:39:16 guus Exp $
+    $Id: netutl.c,v 1.12.4.4 2000/06/26 19:39:34 guus Exp $
 */
 
 #include "config.h"
@@ -243,9 +243,9 @@ cp
 
   for(p = conn_list; p != NULL; p = p->next)
     {
-      syslog(LOG_DEBUG, " " IP_ADDR_S "/" IP_ADDR_S " at %s status %04x flags %04x sockets %d, %d",
-	     IP_ADDR_V(p->vpn_ip), IP_ADDR_V(p->vpn_mask), p->hostname, p->status, p->flags,
-	     p->socket, p->meta_socket);
+      syslog(LOG_DEBUG, _(" " IP_ADDR_S "/" IP_ADDR_S " at %s flags %d sockets %d, %d status %04x"),
+	     IP_ADDR_V(p->vpn_ip), IP_ADDR_V(p->vpn_mask), p->hostname, p->flags,
+	     p->socket, p->meta_socket, p->status);
     }
 cp
 }

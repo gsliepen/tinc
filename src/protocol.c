@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.7 2000/06/26 17:20:58 guus Exp $
+    $Id: protocol.c,v 1.28.4.8 2000/06/26 19:39:34 guus Exp $
 */
 
 #include "config.h"
@@ -400,7 +400,7 @@ cp
 
   if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx %d", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port, &cl->flags) != 5)
     {
-       syslog(LOG_ERR, _("Got bad BASIC_INFO from " IP_ADDR_S),
+       syslog(LOG_ERR, _("Got bad BASIC_INFO from %s"),
               cl->hostname);
        return -1;
     }  
