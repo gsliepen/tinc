@@ -16,5 +16,5 @@ Description: Virtual Private Network daemon
  participating computer.
  .
  You need to have two kernel modules installed, on a Debian system
- they should already be there; if they are not, the manual will
+ they should already be there.  If they are not, the manual will
  explain you how to do that.
