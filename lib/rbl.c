@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.5 2000/11/19 02:04:29 guus Exp $
+    $Id: rbl.c,v 1.1.2.6 2000/11/19 11:05:59 guus Exp $
 */
 
 #include <xalloc.h>
@@ -71,8 +71,6 @@ rbl_t *rbl_search_closest(rbltree_t *tree, void *data)
       
       result = tree->compare(data, rbl->data);
 
-// fprintf(stderr, "comparing %s     with %s        = %d\n", rbl->data, data, result);
-
       if(result < 0)
         next = rbl->left;
       else if(result > 0)
@@ -96,7 +94,7 @@ rbl_t *rbl_search(rbltree_t *tree, void *data)
     {
       rbl = next;
       
-      result = tree->compare(rbl->data, data);
+      result = tree->compare(data, rbl->data);
 
       if(result < 0)
         next = rbl->left;
@@ -367,7 +365,7 @@ rbl_t *rbl_unlink_rbl(rbl_t *rbl)
   rbl_t *x, *y;
 
   /* Binary tree delete */
-  
+
   if(rbl->left && rbl->right)
     y = rbl->next;
   else
@@ -414,7 +412,7 @@ rbl_t *rbl_unlink_rbl(rbl_t *rbl)
 
   /* Red-black part of delete */
   
-  if(y->color == RBL_BLACK)
+  if(y->color == RBL_BLACK && x)
     rbl_delete_fixup(x);
     
   return rbl;
@@ -445,10 +443,74 @@ void rbl_delete(rbltree_t *tree, void *data)
   free_rbl(rbl_unlink(tree, data));
 }
 
+rbl_unlink_rbltree_branch(rbl_t *rbl)
+{
+  if(rbl->left)
+    rbl_unlink_rbltree_branch(rbl->left);
+
+  if(rbl->right)
+    rbl_unlink_rbltree_branch(rbl->right);
+
+  if(rbl->parent)
+    {
+      if(rbl == rbl->parent->left)
+        rbl->parent->left = NULL;
+      else
+        rbl->parent->right = NULL;
+}
+
+/* Optimized unlinking for a complete tree */
+rbl_unlink_rbltree(rbltree_t *tree)
+{
+  rbl_t *rbl, *next;
+  
+  for(rbl = tree->head; rbl; rbl = next)
+    {
+      next = rbl->next;
+      rbl->tree = NULL;
+      rbl->parent = NULL;
+      rbl->left = NULL;
+      rbl->right = NULL;
+      rbl->prev = NULL;
+      rbl->next = NULL;
+    }
+    
+  tree->top = NULL;
+  tree->head = NULL;
+  tree->tail = NULL;
+}
+
+/* Optimized deletion for a complete tree */
+rbl_delete_rbltree(rbltree_t *tree)
+{
+  rbl_t *rbl, *next;
+  
+  for(rbl = tree->head; rbl; rbl = next)
+    {
+      next = rbl->next;
+      tree->delete(rbl->data)
+    }
+
+  tree->top = NULL;
+  tree->head = NULL;
+  tree->tail = NULL;
+}
+
 /* Do action for each list entry (in order)
    Deletion of entry for which action is called is allowed.
  */
 void rbl_foreach(rbltree_t *tree, rbl_action_t action)
+{
+  rbl_t *rbl, *next;
+  
+  for(rbl = tree->head; rbl; rbl = next)
+    {
+      next = rbl->next;
+      action(rbl->data);
+    }
+}
+
+void rbl_foreach_rbl(rbltree_t *tree, rbl_action_rbl_t action)
 {
   rbl_t *rbl, *next;
   

@@ -17,11 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.h,v 1.1.2.4 2000/11/19 02:04:29 guus Exp $
+    $Id: rbl.h,v 1.1.2.5 2000/11/19 11:05:59 guus Exp $
 */
 
 typedef int (*rbl_compare_t) (const void *, const void *);
 typedef void (*rbl_action_t) (const void *);
+typedef void (*rbl_action_rbl_t) (const struct rbl_t *);
 
 typedef struct rbl_t
 {
@@ -83,5 +84,8 @@ extern void rbl_delete(rbltree_t *, void *);
 extern rbl_t *rbl_insert_rbl(rbltree_t *, rbl_t *);
 extern rbl_t *rbl_unlink_rbl(rbl_t *);
 extern void rbl_delete_rbl(rbl_t *);
+extern void rbl_unlink_rbltree(rbltree_t *);
+extern void rbl_delete_rbltree(rbltree_t *);
 
 extern void rbl_foreach(rbltree_t *, rbl_action_t);
+extern void rbl_foreach_rbl(rbltree_t *, rbl_action_rbl_t);
