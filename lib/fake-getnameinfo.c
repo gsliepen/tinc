@@ -35,7 +35,7 @@ int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t host
 		return 0;
 
 	if(flags & NI_NUMERICHOST) {
-		len = snprintf((host, hostlen, "%s", inet_ntoa(sin->sin_addr));
+		len = snprintf(host, hostlen, "%s", inet_ntoa(sin->sin_addr));
 		if(len < 0 || len >= hostlen)
 			return EAI_MEMORY;
 		return 0;
@@ -46,7 +46,7 @@ int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t host
 	if(!hp || !hp->h_name || !hp->h_name[0])
 		return EAI_NODATA;
 	
-	len = snprintf((host, hostlen, "%s", hp->h_name);
+	len = snprintf(host, hostlen, "%s", hp->h_name);
 	if(len < 0 || len >= hostlen)
 		return EAI_MEMORY;
 
