@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.14.2.1 2000/06/03 23:32:03 zarq Exp $
+# $Id: init.d,v 1.14.2.2 2000/08/20 23:08:17 zarq Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -68,6 +68,7 @@ sub vpn_load {
 	    chomp($VPN);
 	} elsif ( /^[ ]*VpnMask[ =]+([^ \#]+)/i ) {
 	    $VPNMASK=$1;
+	    chomp($VPNMASK);
 	}
     }
     if(!defined($DEV)) {
