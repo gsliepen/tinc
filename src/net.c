@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.154 2002/02/11 15:59:18 guus Exp $
+    $Id: net.c,v 1.35.4.155 2002/02/12 14:36:45 guus Exp $
 */
 
 #include "config.h"
@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <syslog.h>
