@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.4 2000/10/15 00:59:34 guus Exp $
+    $Id: connlist.c,v 1.1.2.5 2000/10/16 16:33:29 guus Exp $
 */
 
 #include <syslog.h>
@@ -120,7 +120,8 @@ void conn_list_add(conn_list_t *cl)
 cp
   cl->next = conn_list;
   cl->prev = NULL;
-  cl->next->prev = cl;
+  if(cl->next)
+    cl->next->prev = cl;
   conn_list = cl;
 cp
 }

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.14 2000/10/15 00:59:34 guus Exp $
+    $Id: conf.c,v 1.9.4.15 2000/10/16 16:33:29 guus Exp $
 */
 
 
@@ -90,7 +90,7 @@ add_config_val(config_t **cfg, int argtype, char *val)
 cp
   p = (config_t*)xmalloc(sizeof(*p));
   p->data.val = 0;
-  
+
   switch(argtype)
     {
     case TYPE_INT:
@@ -225,7 +225,7 @@ cp
 const config_t *get_config_val(config_t *p, which_t type)
 {
 cp
-  for(p = config; p != NULL; p = p->next)
+  for(; p != NULL; p = p->next)
     if(p->which == type)
       break;
 cp
@@ -239,7 +239,7 @@ cp
 const config_t *get_next_config_val(config_t *p, which_t type, int index)
 {
 cp  
-  for(p = config; p != NULL; p = p->next)
+  for(; p != NULL; p = p->next)
     if(p->which == type)
       if(--index < 0)
         break;

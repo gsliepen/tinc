@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.38 2000/10/15 20:30:39 guus Exp $
+    $Id: net.c,v 1.35.4.39 2000/10/16 16:33:29 guus Exp $
 */
 
 #include "config.h"
@@ -535,6 +535,8 @@ cp
   if(debug_lvl > 0)
     syslog(LOG_INFO, _("Connected to %s port %hd"),
          cl->hostname, cl->port);
+
+  cl->status.meta = 1;
 cp
   return 0;
 }
@@ -546,18 +548,42 @@ cp
   an authentication sequence during which
   we will do just that.
 */
-int setup_outgoing_connection(char *hostname)
+int setup_outgoing_connection(char *name)
 {
   conn_list_t *ncn;
   struct hostent *h;
+  config_t *cfg;
 cp
-  if(!(h = gethostbyname(hostname)))
+  if(check_id(name))
     {
-      syslog(LOG_ERR, _("Error looking up `%s': %m"), hostname);
+      syslog(LOG_ERR, _("Invalid name for outgoing connection"));
       return -1;
     }
 
   ncn = new_conn_list();
+  asprintf(&ncn->name, "%s", name);
+    
+  if(read_host_config(ncn))
+    {
+      syslog(LOG_ERR, _("Error reading host configuration file for %s"));
+      free_conn_list(ncn);
+      return -1;
+    }
+    
+  if(!(cfg = get_config_val(ncn->config, address)))
+    {
+      syslog(LOG_ERR, _("No address specified for %s"));
+      free_conn_list(ncn);
+      return -1;
+    }
+    
+  if(!(h = gethostbyname(cfg->data.ptr)))
+    {
+      syslog(LOG_ERR, _("Error looking up `%s': %m"), cfg->data.ptr);
+      free_conn_list(ncn);
+      return -1;
+    }
+
   ncn->address = ntohl(*((ip_t*)(h->h_addr_list[0])));
   ncn->hostname = hostlookup(htonl(ncn->address));
   
@@ -569,10 +595,15 @@ cp
       return -1;
     }
 
-  ncn->status.meta = 1;
   ncn->status.outgoing = 1;
-  ncn->next = conn_list;
-  conn_list = ncn;
+  ncn->buffer = xmalloc(MAXBUFSIZE);
+  ncn->buflen = 0;
+  ncn->last_ping_time = time(NULL);
+  ncn->want_ping = 0;
+
+  conn_list_add(ncn);
+
+  send_id(ncn);
 cp
   return 0;
 }
@@ -596,7 +627,7 @@ cp
       return -1;
     }
   else
-    myself->name = (char*)cfg->data.val;
+    asprintf(&myself->name, "%s", (char*)cfg->data.val);
 
   if(check_id(myself->name))
     {
@@ -648,9 +679,12 @@ sigalrm_handler(int a)
 {
   config_t const *cfg;
 cp
-/* FIXME! Use name instead of upstreamip.
-  cfg = get_next_config_val(config, upstreamip, upstreamindex++);
-*/
+  cfg = get_next_config_val(config, connectto, upstreamindex++);
+
+  if(!upstreamindex && !cfg)
+    /* No upstream IP given, we're listen only. */
+    return;
+
   while(cfg)
     {
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
@@ -658,7 +692,7 @@ cp
           signal(SIGALRM, SIG_IGN);
           return;
         }
-//      cfg = get_next_config_val(config, upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
+      cfg = get_next_config_val(config, connectto, upstreamindex++); /* Or else we try the next ConnectTo line */
     }
 
   signal(SIGALRM, sigalrm_handler);
@@ -690,7 +724,7 @@ cp
   if(setup_myself() < 0)
     return -1;
 
-//  if((cfg = get_next_config_val(config, upstreamip, upstreamindex++)) == NULL)
+  if((cfg = get_next_config_val(config, connectto, upstreamindex++)) == NULL)
     /* No upstream IP given, we're listen only. */
     return 0;
 
@@ -698,7 +732,7 @@ cp
     {
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         return 0;
-//      cfg = get_next_config_val(config, upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
+      cfg = get_next_config_val(config, connectto, upstreamindex++); /* Or else we try the next ConnectTo line */
     }
     
   signal(SIGALRM, sigalrm_handler);
@@ -822,11 +856,7 @@ cp
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
          p->hostname, htons(ci.sin_port));
 
-  if(send_id(p) < 0)
-    {
-      free_conn_list(p);
-      return NULL;
-    }
+  p->allow_request = ID;
 cp
   return p;
 }

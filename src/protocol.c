@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.40 2000/10/15 00:59:35 guus Exp $
+    $Id: protocol.c,v 1.28.4.41 2000/10/16 16:33:30 guus Exp $
 */
 
 #include "config.h"
@@ -155,6 +155,8 @@ cp
 int send_id(conn_list_t *cl)
 {
 cp
+  cl->allow_request = CHALLENGE;
+cp
   return send_request(cl, "%d %s %d %lx", ID, myself->name, myself->protocol_version, myself->options);
 }
 
@@ -187,7 +189,7 @@ cp
 
   /* Load information about peer */
 
-  if(!read_host_config(cl))
+  if(read_host_config(cl))
     {
       syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), cl->hostname, cl->name);
       return -1;
@@ -202,6 +204,7 @@ cp
   if(cl->status.outgoing)
     {
       if((old = lookup_id(cl->name)))
+       if(old != cl)
         {
           if(debug_lvl > DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"), cl->name, cl->hostname);
@@ -211,10 +214,6 @@ cp
           return 0;
         }
     }
-
-  /* Send a challenge to verify the identity */
-
-  cl->allow_request = CHAL_REPLY;
 cp
   return send_challenge(cl);
 }
@@ -313,7 +312,7 @@ int chal_reply_h(conn_list_t *cl)
   char *hishash;
   char myhash[SHA_DIGEST_LENGTH];
 cp
-  if(sscanf(cl->buffer, "%*d %as", &hishash) != 2)
+  if(sscanf(cl->buffer, "%*d %as", &hishash) != 1)
     {
        syslog(LOG_ERR, _("Got bad CHAL_REPLY from %s (%s)"), cl->name, cl->hostname);
        free(hishash);
@@ -339,7 +338,7 @@ cp
 
   /* Verify the incoming hash with the calculated hash */
 
-  if(!memcmp(hishash, myhash, SHA_DIGEST_LENGTH))
+  if(memcmp(hishash, myhash, SHA_DIGEST_LENGTH))
     {
       syslog(LOG_ERR, _("Intruder: wrong challenge reply from %s (%s)"), cl->name, cl->hostname);
       free(hishash);
@@ -354,19 +353,15 @@ cp
    */
 cp
   if(cl->status.outgoing)
-    {
-      cl->allow_request = ACK;
       return send_ack(cl);
-    }
   else
-    {
-      cl->allow_request = CHALLENGE;
       return send_id(cl);
-    }
 }
 
 int send_ack(conn_list_t *cl)
 {
+cp
+  cl->allow_request = ACK;
 cp
   return send_request(cl, "%d", ACK);
 }
@@ -1051,11 +1046,11 @@ char (*request_name[]) = {
 /* Status strings */
 
 char (*status_text[]) = {
-  "FIXME: status text",
+  "Warning",
 };
 
 /* Error strings */
 
 char (*error_text[]) = {
-  "FIXME: error text",
+  "Error",
 };
