@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.63 2002/09/09 21:25:16 guus Exp $
+    $Id: tincd.c,v 1.10.4.64 2002/09/15 12:26:04 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,12 @@
 #include <signal.h>
 #include <string.h>
 #include <termios.h>
+
+/* Darwin (MacOS/X) needs the following definition... */
+#ifndef _P1003_1B_VISIBLE
+#define _P1003_1B_VISIBLE
+#endif
+
 #include <sys/mman.h>
 
 #ifdef HAVE_SYS_IOCTL_H
