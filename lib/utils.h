@@ -23,6 +23,9 @@
 
 #include <ctype.h>
 
+#include "fake-getaddrinfo.h"
+#include "fake-getnameinfo.h"
+
 enum {
   DEBUG_NOTHING = 0,		/* Quiet mode, only show starting/stopping of the daemon */
   DEBUG_CONNECTIONS = 1,	/* Show (dis)connects of other tinc daemons via TCP */

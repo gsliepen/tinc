@@ -19,7 +19,7 @@
 
 #include <system.h>
 
-/* RCSID("$Id: fake-getnameinfo.c,v 1.1.2.3 2002/06/09 16:12:04 zarq Exp $"); */
+#include "fake-getnameinfo.h"
 
 #ifndef HAVE_GETNAMEINFO
 

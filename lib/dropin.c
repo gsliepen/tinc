@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.10 2002/06/21 10:11:11 guus Exp $
+    $Id: dropin.c,v 1.1.2.11 2002/07/12 11:45:21 guus Exp $
 */
 
 #include "config.h"
@@ -34,8 +34,6 @@
 
 #include <system.h>
 #include <errno.h>
-
-#include "fake-getnameinfo.c"
 
 #ifndef HAVE_DAEMON
 /*
