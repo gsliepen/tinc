@@ -86,12 +86,15 @@ void cp_trace()
 #endif
 
 char *winerror(int err) {
-	static char buf[1024];
+	static char buf[1024], *newline;
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
 		strncpy(buf, _("(unable to format errormessage)"), sizeof(buf));
 	};
+
+	if((newline = strchr(buf, '\r')))
+		*newline = '\0';
 
 	return buf;
 }

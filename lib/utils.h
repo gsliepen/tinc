@@ -40,6 +40,7 @@ extern void bin2hex(char *src, char *dst, int length);
 
 #ifdef HAVE_MINGW
 extern char *winerror(int);
+#define strerror(x) (x>0?strerror(x):winerror(GetLastError()))
 #endif
 
 #endif							/* __TINC_UTILS_H__ */
