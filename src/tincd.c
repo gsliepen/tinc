@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.25 2000/11/08 00:10:50 guus Exp $
+    $Id: tincd.c,v 1.10.4.26 2000/11/08 00:20:06 guus Exp $
 */
 
 #include "config.h"
@@ -88,6 +88,7 @@ int write_pidfile(void);
 
 static struct option const long_options[] =
 {
+  { "config", required_argument, NULL, 'c' },
   { "kill", no_argument, NULL, 'k' },
   { "net", required_argument, NULL, 'n' },
   { "help", no_argument, &show_help, 1 },
@@ -369,6 +370,8 @@ void make_names(void)
         asprintf(&pidfilename, "/var/run/tinc.%s.pid", netname);
       if(!confbase)
         asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
+      else
+        fprintf(stderr, "Both netname and configuration directory given, using the latter...\n");
       if(!identname)
         asprintf(&identname, "tinc.%s", netname);
     }
