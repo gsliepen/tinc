@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.12 2000/10/15 00:59:37 guus Exp $
+    $Id: tincd.c,v 1.10.4.13 2000/10/20 16:49:20 guus Exp $
 */
 
 #include "config.h"
@@ -31,6 +31,8 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -63,6 +65,9 @@ static int kill_tincd = 0;
 /* If zero, don't detach from the terminal. */
 static int do_detach = 1;
 
+/* If nonzero, generate public/private keypair for this host/net. */
+static int generate_keys = 0;
+
 char *identname;                 /* program name for syslog */
 char *pidfilename;               /* pid file location */
 static pid_t ppid;               /* pid of non-detached part */
@@ -80,10 +85,10 @@ static struct option const long_options[] =
 {
   { "kill", no_argument, NULL, 'k' },
   { "net", required_argument, NULL, 'n' },
-  { "timeout", required_argument, NULL, 'p' },
   { "help", no_argument, &show_help, 1 },
   { "version", no_argument, &show_version, 1 },
   { "no-detach", no_argument, &do_detach, 0 },
+  { "keygen", optional_argument, NULL, 'K'},
   { NULL, 0, NULL, 0 }
 };
 
@@ -99,9 +104,9 @@ usage(int status)
 	       "  -D, --no-detach       Don't fork and detach.\n"
 	       "  -d                    Increase debug level.\n"
 	       "  -k, --kill            Attempt to kill a running tincd and exit.\n"
-	       "  -n, --net=NETNAME     Connect to net NETNAME.\n"
-	       "  -t, --timeout=TIMEOUT Seconds to wait before giving a timeout.\n"));
-      printf(_("      --help            Display this help and exit.\n"
+	       "  -n, --net=NETNAME     Connect to net NETNAME.\n"));
+      printf(_("  -K, --keygen[=BITS]   Generate public/private RSA keypair.\n"
+               "      --help            Display this help and exit.\n"
  	       "      --version         Output version information and exit.\n\n"));
       printf(_("Report bugs to tinc@nl.linux.org.\n"));
     }
@@ -115,7 +120,7 @@ parse_options(int argc, char **argv, char **envp)
   int option_index = 0;
   config_t *p;
 
-  while((r = getopt_long(argc, argv, "c:Ddkn:t:", long_options, &option_index)) != EOF)
+  while((r = getopt_long(argc, argv, "c:Ddkn:K::", long_options, &option_index)) != EOF)
     {
       switch(r)
         {
@@ -138,12 +143,19 @@ parse_options(int argc, char **argv, char **envp)
 	  netname = xmalloc(strlen(optarg)+1);
 	  strcpy(netname, optarg);
 	  break;
-	case 't': /* timeout */
-	  if(!(p = add_config_val(&config, TYPE_INT, optarg)))
-	    {
-	      printf(_("Invalid timeout value `%s'.\n"), optarg);
-	      usage(1);
-	    }
+	case 'K': /* generate public/private keypair */
+          if(optarg)
+            {
+              generate_keys = atoi(optarg);
+              if(generate_keys < 512)
+                {
+                  fprintf(stderr, _("Invalid argument! BITS must be a number equal to or greater than 512.\n"));
+                  usage(1);
+                }
+              generate_keys &= ~7;	/* Round it to bytes */
+            }
+          else
+            generate_keys = 1024;
 	  break;
         case '?':
           usage(1);
@@ -151,6 +163,66 @@ parse_options(int argc, char **argv, char **envp)
           break;
         }
     }
+}
+
+/* This function prettyprints the key generation process */
+
+void indicator(int a, int b, void *p)
+{
+  switch(a)
+  {
+    case 0:
+      fprintf(stderr, ".");
+      break;
+    case 1:
+      fprintf(stderr, "+");
+      break;
+    case 2:
+      fprintf(stderr, "-");
+      break;
+    case 3:
+      switch(b)
+        {
+          case 0:
+            fprintf(stderr, " p\n");      
+            break;
+          case 1:
+            fprintf(stderr, " q\n");
+            break;
+          default:
+            fprintf(stderr, "?");
+         }
+       break;
+    default:
+      fprintf(stderr, "?");
+  }
+}
+
+/* Generate a public/private RSA keypair, and possibly store it into the configuration file. */
+
+int keygen(int bits)
+{
+  RSA *rsa_key;
+
+  fprintf(stderr, _("Seeding the PRNG: please press some keys or move\nthe mouse if this program seems to have halted...\n"));
+  RAND_load_file("/dev/random", 1024);	/* OpenSSL PRNG state apparently uses 1024 bytes, but it seems pretty sufficient anyway :) */
+
+  fprintf(stderr, _("Generating %d bits keys:\n"), bits);
+  rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
+  if(!rsa_key)
+    {
+      fprintf(stderr, _("Error during key generation!"));
+      return -1;
+     }
+  else
+    fprintf(stderr, _("Done.\n"));
+
+  fprintf(stderr, _("Please copy the private key to tinc.conf and the\npublic key to your host configuration file:\n\n"));
+  printf("PublicKey = %s\n", BN_bn2hex(rsa_key->n));
+  printf("PrivateKey = %s\n", BN_bn2hex(rsa_key->d));
+  
+  fflush(stdin);
+  return 0;
 }
 
 void memory_full(int size)
@@ -350,6 +422,9 @@ main(int argc, char **argv, char **envp)
   g_argv = argv;
 
   make_names();
+
+  if(generate_keys)
+    exit(keygen(generate_keys));
 
   if(kill_tincd)
     exit(kill_other());
