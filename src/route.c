@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.26 2002/03/01 14:09:31 guus Exp $
+    $Id: route.c,v 1.1.2.27 2002/03/01 14:25:10 guus Exp $
 */
 
 #include "config.h"
@@ -100,6 +100,9 @@ cp
       s = (subnet_t *)node->data;
       if(s->type == SUBNET_MAC && s->net.mac.lastseen && s->net.mac.lastseen + macexpire < now)
         {
+	  if(debug_lvl >= DEBUG_TRAFFIC)
+            syslog(LOG_INFO, _("MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"),
+        	   s->net.mac.address.x[0], s->net.mac.address.x[1], s->net.mac.address.x[2], s->net.mac.address.x[3],  s->net.mac.address.x[4], s->net.mac.address.x[5]);
 	  for(node2 = connection_tree->head; node2; node2 = node2->next)
             {
               c = (connection_t *)node2->data;

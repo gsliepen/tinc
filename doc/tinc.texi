@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.22 2002/03/01 13:38:02 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.23 2002/03/01 14:25:10 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.22 2002/03/01 13:38:02 guus Exp $
+$Id: tinc.texi,v 1.8.4.23 2002/03/01 14:25:10 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.22 2002/03/01 13:38:02 guus Exp $
+$Id: tinc.texi,v 1.8.4.23 2002/03/01 14:25:10 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -813,13 +813,15 @@ Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this
 @cindex switch
 @item switch
 In this mode the MAC addresses of the packets on the VPN will be used to
-dynamically create a routing table just like a network switch does.
-Unicast, multicast and broadcast packets of every ethernet protocol are supported in this mode
+dynamically create a routing table just like an Ethernet switch does.
+Unicast, multicast and broadcast packets of every protocol that runs over Ethernet are supported in this mode
 at the cost of frequent broadcast ARP requests and routing table updates.
 
 @cindex hub
 @item hub
-In this mode every packet will be broadcast to the other daemons.
+This mode is almost the same as the switch mode, but instead
+every packet will be broadcast to the other daemons
+while no routing table is managed.
 @end table
 
 @cindex KeyExpire
@@ -828,6 +830,11 @@ This option controls the time the encryption keys used to encrypt the data
 are valid.  It is common practice to change keys at regular intervals to
 make it even harder for crackers, even though it is thought to be nearly
 impossible to crack a single key.
+
+@cindex MACExpire
+@item MACExpire = <seconds> (600)
+This option controls the amount of time MAC addresses are kept before they are removed.
+This only has effect when Mode is set to "switch".
 
 @cindex Name
 @item @strong{Name = <name>}

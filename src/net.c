@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.160 2002/03/01 14:09:31 guus Exp $
+    $Id: net.c,v 1.35.4.161 2002/03/01 14:25:10 guus Exp $
 */
 
 #include "config.h"
@@ -402,7 +402,7 @@ cp
           check_dead_connections();
           last_ping_check = now;
 
-          if(routing_mode != RMODE_ROUTER)
+          if(routing_mode== RMODE_SWITCH)
 	    age_mac();
 
           /* Should we regenerate our key? */

@@ -165,6 +165,12 @@ Currently this option only affects the Linux tun/tap device.
 This option controls the period the encryption keys used to encrypt the data are valid.
 It is common practice to change keys at regular intervals to make it even harder for crackers,
 even though it is thought to be nearly impossible to crack a single key.
+.It Va MACExpire Li = Ar period Pq 600
+This option controls the amount of time MAC addresses are kept before they are removed.
+This only has effect when
+.Va Mode
+is set to
+.Qq switch .
 .It Va MaxTimeout Li = Ar period Pq 900
 This is the maximum delay before trying to reconnect to other tinc daemons.
 .It Va Mode Li = router | switch | hub Pq router
@@ -183,7 +189,7 @@ at the cost of frequent broadcast ARP requests and routing table updates.
 .It hub
 This mode is almost the same as the switch mode, but instead
 every packet will be broadcast to the other daemons
-while no routing table is created.
+while no routing table is managed.
 .El
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.

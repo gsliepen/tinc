@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-03-01 14:19+0100\n"
+"POT-Creation-Date: 2002-03-01 15:22+0100\n"
 "PO-Revision-Date: 2002-03-01 14:19+0100\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -172,53 +172,53 @@ msgstr "Fout op metadata socket voor %s (%s) tijdens lezen: %s"
 msgid "Metadata read buffer overflow for %s (%s)"
 msgstr "Metadata leesbuffer overloop voor %s (%s)"
 
-#: src/net.c:114
+#: src/net.c:116
 msgid "Purging unreachable nodes"
 msgstr "Verwijderen onbereikbare nodes"
 
-#: src/net.c:124
+#: src/net.c:126
 #, c-format
 msgid "Purging node %s (%s)"
 msgstr "Verwijdering node %s (%s)"
 
-#: src/net.c:178
+#: src/net.c:180
 #, c-format
 msgid "Closing connection with %s (%s)"
 msgstr "Beëindigen verbinding met %s (%s)"
 
-#: src/net.c:249
+#: src/net.c:248
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) antwoordde niet op ping"
 
-#: src/net.c:262
+#: src/net.c:261
 #, c-format
 msgid "Timeout from %s (%s) during authentication"
 msgstr "Timeout van %s (%s) tijdens authenticatie"
 
-#: src/net.c:315 src/net_socket.c:246
+#: src/net.c:314 src/net_socket.c:246
 #, c-format
 msgid "Error while connecting to %s (%s): %s"
 msgstr "Fout tijdens schrijven naar %s (%s): %s"
 
-#: src/net.c:377
+#: src/net.c:378
 #, c-format
 msgid "Error while waiting for input: %s"
 msgstr "Fout tijdens wachten op invoer: %s"
 
-#: src/net.c:411
+#: src/net.c:413
 msgid "Regenerating symmetric key"
 msgstr "Hergenereren symmetrische sleutel"
 
-#: src/net.c:428
+#: src/net.c:430
 msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
-#: src/net.c:445
+#: src/net.c:447
 msgid "Rereading configuration file and restarting in 5 seconds"
 msgstr "Herlezen configuratiebestand en herstart in 5 seconden"
 
-#: src/net.c:452
+#: src/net.c:454
 msgid "Unable to reread configuration file, exiting"
 msgstr "Kan configuratiebestand niet herlezen, beëindigen"
 
@@ -259,7 +259,7 @@ msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
 #. SO_PRIORITY doesn't seem to work
-#: src/net_packet.c:270 src/net_setup.c:476 src/net_socket.c:99
+#: src/net_packet.c:270 src/net_setup.c:479 src/net_socket.c:99
 #: src/net_socket.c:138 src/net_socket.c:165 src/process.c:258
 #: src/process.c:293
 #, c-format
@@ -369,44 +369,44 @@ msgstr "Ongeldig publiek/privé sleutelpaar!"
 msgid "Invalid routing mode!"
 msgstr "Ongeldige routing modus!"
 
-#: src/net_setup.c:335
+#: src/net_setup.c:338
 msgid "Bogus maximum timeout!"
 msgstr "Onzinnige maximum timeout!"
 
-#: src/net_setup.c:352
+#: src/net_setup.c:355
 msgid "Invalid address family!"
 msgstr "Ongeldige adresfamilie!"
 
-#: src/net_setup.c:374
+#: src/net_setup.c:377
 msgid "Unrecognized cipher type!"
 msgstr "Onbekend cipher type!"
 
-#: src/net_setup.c:409
+#: src/net_setup.c:412
 msgid "Unrecognized digest type!"
 msgstr "Onbekend digest type!"
 
-#: src/net_setup.c:425
+#: src/net_setup.c:428
 msgid "MAC length exceeds size of digest!"
 msgstr "MAC lengte is groter dan dat van digest!"
 
-#: src/net_setup.c:430
+#: src/net_setup.c:433
 msgid "Bogus MAC length!"
 msgstr "Onzinnige MAC lengte!"
 
-#: src/net_setup.c:446
+#: src/net_setup.c:449
 msgid "Bogus compression level!"
 msgstr "Onzinnig compressieniveau!"
 
-#: src/net_setup.c:491
+#: src/net_setup.c:494
 #, c-format
 msgid "Listening on %s"
 msgstr "Luisterend op %s"
 
-#: src/net_setup.c:501
+#: src/net_setup.c:504
 msgid "Ready"
 msgstr "Gereed"
 
-#: src/net_setup.c:504
+#: src/net_setup.c:507
 msgid "Unable to create any listening socket!"
 msgstr "Kon geen enkele luistersocket aanmaken!"
 
@@ -1028,17 +1028,22 @@ msgstr "Signaal %d (%s) genegeerd"
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
 
-#: src/route.c:70
+#: src/route.c:71
 #, c-format
 msgid "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"
 msgstr "Nieuw MAC adres %hx:%hx:%hx:%hx:%hx:%hx geleerd"
 
-#: src/route.c:120
+#: src/route.c:104
+#, c-format
+msgid "MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"
+msgstr "MAC adres %hx:%hx:%hx:%hx:%hx:%hx verlopen"
+
+#: src/route.c:149
 #, c-format
 msgid "Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: onbekend IPv4 doeladres %d.%d.%d.%d"
 
-#: src/route.c:140
+#: src/route.c:169
 #, c-format
 msgid ""
 "Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%"
@@ -1047,16 +1052,16 @@ msgstr ""
 "Kan pakket niet routeren: onbekend IPv6 doeladres %hx:%hx:%hx:%hx:%hx:%hx:%"
 "hx:%hx"
 
-#: src/route.c:184
+#: src/route.c:213
 msgid "Cannot route packet: received unknown type ARP request"
 msgstr "Kan pakket niet routeren: ontvangst van onbekend type ARP verzoek"
 
-#: src/route.c:197
+#: src/route.c:226
 #, c-format
 msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 
-#: src/route.c:249
+#: src/route.c:278
 #, c-format
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"
