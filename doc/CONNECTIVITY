@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.3 2001/07/22 14:58:18 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.4 2001/07/22 15:25:13 guus Exp $
 
 1. Problem
 ==========
@@ -65,26 +65,34 @@ After A---D authentication finishes the following actions are taken:
     D sends ADD_HOST(E) to A
     D sends ADD_HOST(F) to A
 
-  2 A receives ADD_HOST(E) from D:
+  2 A sends ADD_HOST(D) to B
+    A receives ADD_HOST(E) from D:
       A sends ADD_HOST(E) to B
     A receives ADD_HOST(F) from D:
       A sends ADD_HOST(F) to B
+    D sends ADD_HOST(A) to E
     D receives ADD_HOST(B) from A:
       D sends ADD_HOST(B) to E
     D receives ADD_HOST(C) from A:
       D sends ADD_HOST(C) to E
 
-  3 B receives ADD_HOST(E) from A:
+  3 B receives ADD_HOST(D) from A,
+      B sends ADD_HOST(D) to C
+    B receives ADD_HOST(E) from A:
       B sends ADD_HOST(E) to C
     B receives ADD_HOST(F) from A:
       B sends ADD_HOST(F) to C
+    E receives ADD_HOST(A) from D:
+      E sends ADD_HOST(A) to F
     E receives ADD_HOST(B) from D:
       E sends ADD_HOST(B) to F
     E receives ADD_HOST(C) from D:
       E sends ADD_HOST(C) to F
 
-  4 C receives ADD_HOST(E) from B.
+  4 C receives ADD_HOST(D) from B.
+    C receives ADD_HOST(E) from B.
     C receives ADD_HOST(F) from B.
+    F receives ADD_HOST(A) from E.
     F receives ADD_HOST(B) from E.
     F receives ADD_HOST(C) from E.
 
@@ -108,25 +116,31 @@ Then C---F authentication finishes, the following actions are taken:
     F sends ADD_HOST(D) to C
     F sends ADD_HOST(E) to C
 
-  2 A receives ADD_HOST(E) from D:
+  2 A sends ADD_HOST(D) to B
+    A receives ADD_HOST(E) from D:
       A sends ADD_HOST(E) to B
     A receives ADD_HOST(F) from D:
       A sends ADD_HOST(F) to B
+    D sends ADD_HOST(A) to E
     D receives ADD_HOST(B) from A:
       D sends ADD_HOST(B) to E
     D receives ADD_HOST(C) from A:
       D sends ADD_HOST(C) to E
 
+    C sends ADD_HOST(F) to B
     C receives ADD_HOST(D) from F:
       A sends ADD_HOST(D) to B
     C receives ADD_HOST(E) from F:
       A sends ADD_HOST(E) to B
+    F sends ADD_HOSTS(C) to E
     F receives ADD_HOST(A) from C:
       D sends ADD_HOST(A) to E
     F receives ADD_HOST(B) from C:
       D sends ADD_HOST(B) to E
 
-  3 B receives ADD_HOST(E) from A:
+  3 B receives ADD_HOST(D) from A,
+      B sends ADD_HOST(D) to C
+    B receives ADD_HOST(E) from A:
       B sends ADD_HOST(E) to C
     B receives ADD_HOST(F) from A:
       B sends ADD_HOST(F) to C
@@ -134,21 +148,68 @@ Then C---F authentication finishes, the following actions are taken:
       E sends ADD_HOST(A) to F
     E receives ADD_HOST(B) from D:
       E sends ADD_HOST(B) to F
+    E receives ADD_HOST(C) from D:
+      E sends ADD_HOST(C) to F
     
+    B receives ADD_HOST(F) from C, and notes that is is already known:
+      <insert solution here>
+    B receives ADD_HOST(D) from C, and notes that is is already known:
+      <insert solution here>
     B receives ADD_HOST(E) from C, and notes that is is already known:
       <insert solution here>
-    B receives ADD_HOST(F) from C, and notes that is is already known:
+    E receives ADD_HOST(C) from F, and notes that is is already known:
       <insert solution here>
     E receives ADD_HOST(A) from F, and notes that is is already known:
       <insert solution here>
     E receives ADD_HOST(B) from F, and notes that is is already known:
       <insert solution here>
 
-  4 A receives ADD_HOST(E) from B, and notes that it is already known:
+  4 A receives ADD_HOST(D) from B, and notes that it is already known:
+      <insert solution here>
+    A receives ADD_HOST(E) from B, and notes that it is already known:
       <insert solution here>
     A receives ADD_HOST(F) from B, and notes that it is already known:
       <insert solution here>
     F receives ADD_HOST(A) from E, and notes that it is already known:
       <insert solution here>
     F receives ADD_HOST(B) from E, and notes that it is already known:
+      <insert solution here>
+    F receives ADD_HOST(B) from E, and notes that it is already known:
+      <insert solution here>
+
+    ...
+
+1.2.1 Augmenting ADD_HOST
+-------------------------
+
+A solution would be to augment ADD_HOST with an extra parameter, for example
+the host which told us about the new host. From A's point of view, D told it
+about itself, E and F. So, A would send out ADD_HOST(D, D) to B, and
+ADD_HOST(E,D) and ADD_HOST(F,D). Lets review what happens at point 3 in the
+preceding example:
+
+  3 B receives ADD_HOST(D,D) from A,
+      B sends ADD_HOST(D,D) to C
+    B receives ADD_HOST(E,D) from A:
+      B sends ADD_HOST(E,D) to C
+    B receives ADD_HOST(F,D) from A:
+      B sends ADD_HOST(F,D) to C
+    E receives ADD_HOST(A,A) from D:
+      E sends ADD_HOST(A,A) to F
+    E receives ADD_HOST(B,A) from D:
+      E sends ADD_HOST(B,A) to F
+    E receives ADD_HOST(C,A) from D:
+      E sends ADD_HOST(C,A) to F
+    
+    B receives ADD_HOST(F,F) from C, and notes that F is already known:
+      <insert solution here>
+    B receives ADD_HOST(D,F) from C, and notes that D is already known:
+      <insert solution here>
+    B receives ADD_HOST(E,F) from C, and notes that E is already known:
+      <insert solution here>
+    E receives ADD_HOST(C,C) from F, and notes that C is already known:
+      <insert solution here>
+    E receives ADD_HOST(A,C) from F, and notes that A is already known:
+      <insert solution here>
+    E receives ADD_HOST(B,C) from F, and notes that B is already known:
       <insert solution here>
