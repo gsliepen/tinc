@@ -1,3 +1,10 @@
+version 1.0pre3              Oct 31 2000
+ * Major overhaul
+ * Use public/private key cryptography (fixes security hole)
+ * Use OpenSSL crypto library for all cryptography
+ * Support for multiple subnets per tinc daemon
+ * Support for tun/tap device
+ 
 version 1.0pre2              May 31 2000
  * Internationalized, Dutch translation available
  * Many sanity checks on the meta protocol added
