@@ -17,30 +17,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.8 2003/07/15 16:27:39 guus Exp $
+    $Id: device.c,v 1.1.2.9 2003/07/18 13:41:35 guus Exp $
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
 #include <w32api/windows.h>
 #include <w32api/winioctl.h>
 
-// #include <utils.h>
 #include "conf.h"
-#include "net.h"
 #include "logger.h"
+#include "net.h"
 #include "route.h"
-
-#include "system.h"
+#include "utils.h"
+#include "xalloc.h"
 
 /* Definitions from CIPE */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.27 2003/07/17 15:06:26 guus Exp $
+    $Id: net_socket.c,v 1.1.2.28 2003/07/18 13:41:35 guus Exp $
 */
 
 #include "system.h"
@@ -48,10 +48,8 @@ int setup_listen_socket(sockaddr_t *sa)
 	int nfd, flags;
 	char *addrstr;
 	int option;
-#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 	char *interface;
 	struct ifreq ifr;
-#endif
 
 	cp();
 

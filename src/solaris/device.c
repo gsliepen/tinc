@@ -17,39 +17,27 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.14 2003/07/12 17:41:48 guus Exp $
+    $Id: device.c,v 1.1.2.15 2003/07/18 13:41:37 guus Exp $
 */
 
 
-#include "config.h"
+#include "system.h"
 
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/ioctl.h>
 #include <sys/stropts.h>
 #include <sys/sockio.h>
 #include <net/if_tun.h>
 
-#define DEFAULT_DEVICE "/dev/tun"
-
-#include <utils.h>
 #include "conf.h"
-#include "net.h"
 #include "logger.h"
+#include "net.h"
+#include "utils.h"
 
-#include "system.h"
+#define DEFAULT_DEVICE "/dev/tun"
 
 int device_fd = -1;
 int device_type;
 char *device = NULL;
-char *interface = NULL;
+char *iface = NULL;
 char ifrname[IFNAMSIZ];
 char *device_info = NULL;
 
@@ -112,8 +100,8 @@ int setup_device(void)
 		return -1;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
-		asprintf(&interface, "tun%d", ppa);
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		asprintf(&iface, "tun%d", ppa);
 
 	device_info = _("Solaris tun device");
 

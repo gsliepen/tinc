@@ -17,29 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.10 2003/07/12 17:41:48 guus Exp $
+    $Id: device.c,v 1.1.2.11 2003/07/18 13:41:36 guus Exp $
 */
 
-#include "config.h"
-
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <string.h>
-
-#include <utils.h>
-#include "conf.h"
-#include "net.h"
-#include "logger.h"
-
 #include "system.h"
+
+#include "conf.h"
+#include "logger.h"
+#include "net.h"
+#include "utils.h"
 
 #define DEFAULT_DEVICE "/dev/tun0"
 
@@ -49,7 +35,7 @@
 int device_fd = -1;
 int device_type;
 char *device;
-char *interface;
+char *iface;
 char *device_info;
 
 int device_total_in = 0;
@@ -62,8 +48,8 @@ int setup_device(void)
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		device = DEFAULT_DEVICE;
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
-		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
 		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;

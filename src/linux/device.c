@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.18 2003/07/17 15:06:27 guus Exp $
+    $Id: device.c,v 1.1.2.19 2003/07/18 13:41:36 guus Exp $
 */
 
 #include "system.h"
@@ -48,7 +48,7 @@ enum {
 int device_fd = -1;
 int device_type;
 char *device;
-char *interface;
+char *iface;
 char ifrname[IFNAMSIZ];
 char *device_info;
 
@@ -64,11 +64,11 @@ int setup_device(void)
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		device = DEFAULT_DEVICE;
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 #ifdef HAVE_TUNTAP
-		interface = netname;
+		iface = netname;
 #else
-		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 #endif
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
@@ -91,16 +91,16 @@ int setup_device(void)
 		device_info = _("Linux tun/tap device (tap mode)");
 	}
 
-	if(interface)
-		strncpy(ifr.ifr_name, interface, IFNAMSIZ);
+	if(iface)
+		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
 
 	if(!ioctl(device_fd, TUNSETIFF, (void *) &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		interface = ifrname;
+		iface = ifrname;
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), (void *) &ifr)) {
 		logger(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		interface = ifrname;
+		iface = ifrname;
 	} else
 #endif
 	{
@@ -108,7 +108,7 @@ int setup_device(void)
 			overwrite_mac = 1;
 		device_info = _("Linux ethertap device");
 		device_type = DEVICE_TYPE_ETHERTAP;
-		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 	}
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
