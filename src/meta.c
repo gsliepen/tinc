@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.41 2003/08/12 14:48:12 guus Exp $
+    $Id: meta.c,v 1.1.2.42 2003/08/16 12:40:00 guus Exp $
 */
 
 #include "system.h"
@@ -97,18 +97,6 @@ bool receive_meta(connection_t *c)
 	char inbuf[MAXBUFSIZE];
 
 	cp();
-
-	if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0) {
-		logger(LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__,
-			   __LINE__, c->socket, strerror(errno), c->name, c->hostname);
-		return false;
-	}
-
-	if(x) {
-		logger(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
-			   c->name, c->hostname, strerror(x));
-		return false;
-	}
 
 	/* Strategy:
 	   - Read as much as possible from the TCP socket in one go.

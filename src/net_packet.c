@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.37 2003/08/08 19:42:35 guus Exp $
+    $Id: net_packet.c,v 1.1.2.38 2003/08/16 12:40:01 guus Exp $
 */
 
 #include "system.h"
@@ -399,18 +399,6 @@ void handle_incoming_vpn_data(int sock)
 	node_t *n;
 
 	cp();
-
-	if(getsockopt(sock, SOL_SOCKET, SO_ERROR, &x, &l) < 0) {
-		logger(LOG_ERR, _("This is a bug: %s:%d: %d:%s"),
-			   __FILE__, __LINE__, sock, strerror(errno));
-		cp_trace();
-		exit(1);
-	}
-
-	if(x) {
-		logger(LOG_ERR, _("Incoming data socket error: %s"), strerror(x));
-		return;
-	}
 
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
