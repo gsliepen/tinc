@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.3 2003/08/24 20:38:20 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.19 2003/08/28 21:05:09 guus Exp $
 */
 
 #include "system.h"
@@ -280,7 +280,7 @@ void avl_free_tree(avl_tree_t *tree)
 
 avl_node_t *avl_alloc_node(void)
 {
-	return (avl_node_t *)xmalloc_and_zero(sizeof(avl_node_t));
+	return xmalloc_and_zero(sizeof(avl_node_t));
 }
 
 void avl_free_node(avl_tree_t *tree, avl_node_t *node)

@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.13 2003/08/24 20:38:23 guus Exp $
+# $Id: Makefile.am,v 1.4.4.33 2003/08/02 15:13:08 guus Exp $
 
 sbin_PROGRAMS = tincd
 

@@ -17,10 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.4 2003/08/24 20:38:27 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.26 2003/12/20 21:25:17 guus Exp $
 */
 
 #include "system.h"
+
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
 #include "avl_tree.h"
 #include "connection.h"
@@ -77,7 +80,8 @@ bool key_changed_h(connection_t *c)
 
 	/* Tell the others */
 
-	forward_request(c);
+	if(!tunnelserver)
+		forward_request(c);
 
 	return true;
 }
@@ -127,6 +131,9 @@ bool req_key_h(connection_t *c)
 		memset(from->late, 0, sizeof(from->late));
 		send_ans_key(c, myself, from);
 	} else {
+		if(tunnelserver)
+			return false;
+
 		send_req_key(to->nexthop->connection, from, to);
 	}
 
@@ -186,6 +193,9 @@ bool ans_key_h(connection_t *c)
 	/* Forward it if necessary */
 
 	if(to != myself) {
+		if(tunnelserver)
+			return false;
+
 		return send_request(to->nexthop->connection, "%s", c->buffer);
 	}
 
@@ -251,7 +261,14 @@ bool ans_key_h(connection_t *c)
 	from->compression = compression;
 
 	if(from->cipher)
-		EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len);
+		if(!EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len)) {
+			logger(LOG_ERR, _("Error during initialisation of key from %s (%s): %s"),
+					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
+
+	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
+		send_mtu_probe(from);
 
 	flush_queue(from);
 

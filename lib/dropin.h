@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.3 2003/08/24 20:38:20 guus Exp $
+    $Id: dropin.h,v 1.1.2.14 2003/07/29 22:59:00 guus Exp $
 */
 
 #ifndef __DROPIN_H__

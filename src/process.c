@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.5 2003/08/24 20:38:25 guus Exp $
+    $Id: process.c,v 1.1.2.78 2003/12/07 14:29:02 guus Exp $
 */
 
 #include "system.h"
@@ -57,19 +57,6 @@ static void memory_full(int size)
 }
 
 /* Some functions the less gifted operating systems might lack... */
-
-#ifndef HAVE_FCLOSEALL
-static int fcloseall(void)
-{
-	fflush(stdin);
-	fflush(stdout);
-	fflush(stderr);
-	fclose(stdin);
-	fclose(stdout);
-	fclose(stderr);
-	return 0;
-}
-#endif
 
 #ifdef HAVE_MINGW
 extern char *identname;
@@ -254,7 +241,7 @@ bool init_service(void) {
 */
 static bool write_pidfile(void)
 {
-	int pid;
+	pid_t pid;
 
 	cp();
 
@@ -262,16 +249,18 @@ static bool write_pidfile(void)
 
 	if(pid) {
 		if(netname)
-			fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
-					netname, pid);
+			fprintf(stderr, _("A tincd is already running for net `%s' with pid %ld.\n"),
+					netname, (long)pid);
 		else
-			fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
+			fprintf(stderr, _("A tincd is already running with pid %ld.\n"), (long)pid);
 		return false;
 	}
 
 	/* if it's locked, write-protected, or whatever */
-	if(!write_pid(pidfilename))
+	if(!write_pid(pidfilename)) {
+		fprintf(stderr, _("Could write pid file %s: %s\n"), pidfilename, strerror(errno));
 		return false;
+	}
 
 	return true;
 }
@@ -283,7 +272,7 @@ static bool write_pidfile(void)
 bool kill_other(int signal)
 {
 #ifndef HAVE_MINGW
-	int pid;
+	pid_t pid;
 
 	cp();
 
@@ -348,8 +337,10 @@ bool detach(void)
 
 		/* Now UPDATE the pid in the pidfile, because we changed it... */
 
-		if(!write_pid(pidfilename))
+		if(!write_pid(pidfilename)) {
+			fprintf(stderr, _("Could not write pid file %s: %s\n"), pidfilename, strerror(errno));
 			return false;
+		}
 #else
 		if(!statushandle)
 			exit(install_service());
@@ -440,13 +431,19 @@ bool execute_script(const char *name, char **envp)
 static RETSIGTYPE sigterm_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got %s signal"), "TERM");
-	running = false;
+	if(running)
+		running = false;
+	else
+		exit(1);
 }
 
 static RETSIGTYPE sigquit_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got %s signal"), "QUIT");
-	running = false;
+	if(running)
+		running = false;
+	else
+		exit(1);
 }
 
 static RETSIGTYPE fatal_signal_square(int a)

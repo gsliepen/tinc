@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.h,v 1.3 2003/08/24 20:38:24 guus Exp $
+    $Id: meta.h,v 1.1.2.11 2003/08/12 14:48:13 guus Exp $
 */
 
 #ifndef __TINC_META_H__

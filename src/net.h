@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.13 2003/08/24 20:38:24 guus Exp $
+    $Id: net.h,v 1.9.4.73 2003/12/20 19:47:52 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -54,7 +54,7 @@ typedef struct ipv6_t {
 
 typedef short length_t;
 
-#define AF_UNKNOWN 0xFFFF
+#define AF_UNKNOWN 255
 
 struct sockaddr_unknown {
 	uint16_t family;
@@ -150,6 +150,7 @@ extern int main_loop(void);
 extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
 extern bool read_rsa_public_key(struct connection_t *);
+extern void send_mtu_probe(struct node_t *);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

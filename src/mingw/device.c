@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.3 2003/08/27 13:47:49 guus Exp $
+    $Id: device.c,v 1.1.2.14 2003/10/08 11:37:53 guus Exp $
 */
 
 #include "system.h"
@@ -40,9 +40,15 @@
 
 #define TAP_CONTROL_CODE(request,method) CTL_CODE(FILE_DEVICE_PHYSICAL_NETCARD | 8000, request, method, FILE_ANY_ACCESS)
 
-#define TAP_IOCTL_GET_LASTMAC    TAP_CONTROL_CODE(0, METHOD_BUFFERED)
-#define TAP_IOCTL_GET_MAC        TAP_CONTROL_CODE(1, METHOD_BUFFERED)
-#define TAP_IOCTL_SET_STATISTICS TAP_CONTROL_CODE(2, METHOD_BUFFERED)
+#define TAP_IOCTL_GET_LASTMAC           TAP_CONTROL_CODE(0, METHOD_BUFFERED)
+#define TAP_IOCTL_GET_MAC               TAP_CONTROL_CODE(1, METHOD_BUFFERED)
+#define TAP_IOCTL_SET_STATISTICS        TAP_CONTROL_CODE(2, METHOD_BUFFERED)
+#define TAP_IOCTL_GET_VERSION           TAP_CONTROL_CODE(3, METHOD_BUFFERED)
+#define TAP_IOCTL_GET_MTU               TAP_CONTROL_CODE(4, METHOD_BUFFERED)
+#define TAP_IOCTL_GET_INFO              TAP_CONTROL_CODE(5, METHOD_BUFFERED)
+#define TAP_IOCTL_CONFIG_POINT_TO_POINT TAP_CONTROL_CODE(6, METHOD_BUFFERED)
+#define TAP_IOCTL_SET_MEDIA_STATUS      TAP_CONTROL_CODE(7, METHOD_BUFFERED)
+
 
 int device_fd = 0;
 HANDLE device_handle = INVALID_HANDLE_VALUE;
@@ -131,6 +137,7 @@ bool setup_device(void)
 	char adaptername[1024];
 	char tapname[1024];
 	long len;
+	unsigned long status;
 
 	bool found = false;
 
@@ -282,6 +289,11 @@ bool setup_device(void)
 	}
 
 	closesocket(sock);
+
+	/* Set media status for newer TAP-Win32 devices */
+
+	status = true;
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof(status), &len, NULL);
 
 	device_info = _("Windows tap device");
 

@@ -1,5 +1,5 @@
 ## Process this file with automake to produce Makefile.in
-# $Id: Makefile.am,v 1.10 2003/08/24 20:38:20 guus Exp $
+# $Id: Makefile.am,v 1.2.4.13 2003/07/18 12:16:23 guus Exp $
 
 noinst_LIBRARIES = libvpn.a
 

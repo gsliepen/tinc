@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.17 2003/08/24 20:38:29 guus Exp $
+    $Id: tincd.c,v 1.10.4.90 2003/12/07 14:31:09 guus Exp $
 */
 
 #include "system.h"
@@ -39,6 +39,7 @@
 #include <lzo1x.h>
 
 #include <getopt.h>
+#include <pidfile.h>
 
 #include "conf.h"
 #include "device.h"
@@ -291,7 +292,7 @@ static bool keygen(int bits)
 	char *filename;
 
 	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
-	rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
+	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
 
 	if(!rsa_key) {
 		fprintf(stderr, _("Error during key generation!\n"));
@@ -482,17 +483,10 @@ int main2(int argc, char **argv)
 		return 1;
 		
 
-	/* Setup sockets and open device. If it doesn't work, don't give up but try again. */
+	/* Setup sockets and open device. */
 
-	while(!setup_network_connections()) {
-		if(do_detach) {
-			logger(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
-			sleep(maxtimeout);
-		} else {
-			logger(LOG_ERR, _("Not restarting."));
-			return 1;
-		}
-	}
+	if(!setup_network_connections())
+		goto end;
 
 	/* Start main loop. It only exits when tinc is killed. */
 
@@ -505,6 +499,12 @@ int main2(int argc, char **argv)
 	ifdebug(CONNECTIONS)
 		dump_device_stats();
 
+end:
 	logger(LOG_NOTICE, _("Terminating"));
+
+#ifndef HAVE_MINGW
+	remove_pid(pidfilename);
+#endif
+	
 	return status;
 }

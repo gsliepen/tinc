@@ -67,6 +67,8 @@ Generate public/private RSA keypair and exit.
 If
 .Ar BITS
 is omitted, the default length will be 1024 bits.
+When saving keys to existing files, tinc will not delete the old keys,
+you have to remove them manually.
 .It Fl L, -mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
@@ -130,7 +132,7 @@ Each level inherits all messages of the previous level:
 This will log a message indicating
 .Nm
 has started along with a version number.
-It will also any serious error.
+It will also log any serious error.
 .It 1
 This will log all connections that are made with other tinc daemons.
 .It 2

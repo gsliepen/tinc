@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.40 2003/08/24 20:38:24 guus Exp $
+    $Id: net.c,v 1.35.4.203 2003/12/20 19:47:52 guus Exp $
 */
 
 #include "system.h"
@@ -63,7 +63,7 @@ static void purge(void)
 
 	for(nnode = node_tree->head; nnode; nnode = nnext) {
 		nnext = nnode->next;
-		n = (node_t *) nnode->data;
+		n = nnode->data;
 
 		if(!n->status.reachable) {
 			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
@@ -71,15 +71,17 @@ static void purge(void)
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
-				s = (subnet_t *) snode->data;
-				send_del_subnet(broadcast, s);
+				s = snode->data;
+				if(!tunnelserver)
+					send_del_subnet(broadcast, s);
 				subnet_del(n, s);
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
 				enext = enode->next;
-				e = (edge_t *) enode->data;
-				send_del_edge(broadcast, e);
+				e = enode->data;
+				if(!tunnelserver)
+					send_del_edge(broadcast, e);
 				edge_del(e);
 			}
 		}
@@ -89,12 +91,12 @@ static void purge(void)
 
 	for(nnode = node_tree->head; nnode; nnode = nnext) {
 		nnext = nnode->next;
-		n = (node_t *) nnode->data;
+		n = nnode->data;
 
 		if(!n->status.reachable) {
 			for(enode = edge_weight_tree->head; enode; enode = enext) {
 				enext = enode->next;
-				e = (edge_t *) enode->data;
+				e = enode->data;
 
 				if(e->to == n)
 					break;
@@ -122,7 +124,7 @@ static int build_fdset(fd_set * fs)
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->status.remove) {
 			connection_del(c);
@@ -178,7 +180,7 @@ void terminate_connection(connection_t *c, bool report)
 		closesocket(c->socket);
 
 	if(c->edge) {
-		if(report)
+		if(report && !tunnelserver)
 			send_del_edge(broadcast, c->edge);
 
 		edge_del(c->edge);
@@ -186,6 +188,18 @@ void terminate_connection(connection_t *c, bool report)
 		/* Run MST and SSSP algorithms */
 
 		graph();
+
+		/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
+
+		if(report && !c->node->status.reachable) {
+			edge_t *e;
+			e = lookup_edge(c->node, myself);
+			if(e) {
+				if(!tunnelserver)
+					send_del_edge(broadcast, e);
+				edge_del(e);
+			}
+		}
 	}
 
 	/* Check if this was our outgoing connection */
@@ -213,7 +227,7 @@ static void check_dead_connections(void)
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
@@ -256,11 +270,11 @@ static void check_network_activity(fd_set * f)
 
 	if(FD_ISSET(device_fd, f)) {
 		if(read_packet(&packet))
-			route_outgoing(&packet);
+			route(myself, &packet);
 	}
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->status.remove)
 			continue;
@@ -320,7 +334,8 @@ int main_loop(void)
 	while(running) {
 		now = time(NULL);
 
-		tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
+	//	tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
+		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
 		maxfd = build_fdset(&fset);
@@ -353,7 +368,7 @@ int main_loop(void)
 			last_ping_check = now;
 
 			if(routing_mode == RMODE_SWITCH)
-				age_mac();
+				age_subnets();
 
 			age_past_requests();
 
@@ -380,7 +395,7 @@ int main_loop(void)
 			logger(LOG_INFO, _("Flushing event queue"));
 
 			while(event_tree->head) {
-				event = (event_t *) event_tree->head->data;
+				event = event_tree->head->data;
 				event->handler(event->data);
 				event_del(event);
 			}
@@ -408,7 +423,7 @@ int main_loop(void)
 			/* Close connections to hosts that have a changed or deleted host config file */
 			
 			for(node = connection_tree->head; node; node = node->next) {
-				c = (connection_t *) node->data;
+				c = node->data;
 				
 				if(c->outgoing) {
 					free(c->outgoing->name);

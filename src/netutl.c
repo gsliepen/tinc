@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.17 2003/08/24 20:38:25 guus Exp $
+    $Id: netutl.c,v 1.12.4.54 2003/08/22 15:03:59 guus Exp $
 */
 
 #include "system.h"

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv4.h,v 1.2 2003/08/24 20:38:20 guus Exp $
+    $Id: ipv4.h,v 1.1.2.5 2003/12/22 11:05:23 guus Exp $
 */
 
 #ifndef __TINC_IPV4_H__
@@ -33,6 +33,10 @@
 
 #ifndef ICMP_DEST_UNREACH
 #define ICMP_DEST_UNREACH 3
+#endif
+
+#ifndef ICMP_FRAG_NEEDED
+#define ICMP_FRAG_NEEDED 4
 #endif
 
 #ifndef ICMP_NET_UNKNOWN
@@ -68,7 +72,7 @@ struct ip {
 	uint8_t ip_p;
 	uint16_t ip_sum;
 	struct in_addr ip_src, ip_dst;
-};
+} __attribute__ ((__packed__));
 #endif
 
 #ifndef HAVE_STRUCT_ICMP
@@ -126,7 +130,7 @@ struct icmp {
 #define icmp_radv icmp_dun.id_radv
 #define icmp_mask icmp_dun.id_mask
 #define icmp_data icmp_dun.id_data
-};
+} __attribute__ ((__packed__));
 #endif
 
 #endif /* __TINC_IPV4_H__ */

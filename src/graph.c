@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.6 2003/08/24 20:38:24 guus Exp $
+    $Id: graph.c,v 1.1.2.34 2003/12/22 11:04:16 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -76,7 +76,7 @@ void mst_kruskal(void)
 	/* Clear MST status on connections */
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 		c->status.mst = false;
 	}
 
@@ -90,7 +90,7 @@ void mst_kruskal(void)
 	/* Clear visited status on nodes */
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 		n->status.visited = false;
 		nodes++;
 	}
@@ -103,7 +103,7 @@ void mst_kruskal(void)
 
 	for(skipped = false, node = edge_weight_tree->head; node; node = next) {
 		next = node->next;
-		e = (edge_t *) node->data;
+		e = node->data;
 
 		if(!e->reverse || e->from->status.visited == e->to->status.visited) {
 			skipped = true;
@@ -158,7 +158,7 @@ void sssp_bfs(void)
 	/* Clear visited status on nodes */
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 		n->status.visited = false;
 		n->status.indirect = true;
 	}
@@ -178,22 +178,23 @@ void sssp_bfs(void)
 	while(todo_tree->head) {
 		for(from = todo_tree->head; from; from = next) {	/* "from" is the node from which we start */
 			next = from->next;
-			n = (node_t *) from->data;
+			n = from->data;
 
 			for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
-				e = (edge_t *) to->data;
+				e = to->data;
 
 				if(!e->reverse)
 					continue;
 
 				/* Situation:
 
-				    /
-				   /
-				   ------(n)-----(e->to)
-				   \
-				    \
+				           /
+				          /
+				   ----->(n)---e-->(e->to)
+				          \
+				           \
 
+				   Where e is an edge, (n) and (e->to) are nodes.
 				   n->address is set to the e->address of the edge left of n to n.
 				   We are currently examining the edge e right of n from n:
 
@@ -228,6 +229,14 @@ void sssp_bfs(void)
 
 					e->to->hostname = sockaddr2hostname(&e->to->address);
 					avl_insert_node(node_udp_tree, node);
+
+					if(e->to->options & OPTION_PMTU_DISCOVERY) {
+						e->to->mtuprobes = 0;
+						e->to->minmtu = 0;
+						e->to->maxmtu = MTU;
+						if(e->to->status.validkey)
+							send_mtu_probe(e->to);
+					}
 				}
 
 				node = avl_alloc_node();
@@ -245,7 +254,7 @@ void sssp_bfs(void)
 
 	for(node = node_tree->head; node; node = next) {
 		next = node->next;
-		n = (node_t *) node->data;
+		n = node->data;
 
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
@@ -260,6 +269,10 @@ void sssp_bfs(void)
 
 			n->status.validkey = false;
 			n->status.waitingforkey = false;
+
+			n->maxmtu = MTU;
+			n->minmtu = 0;
+			n->mtuprobes = 0;
 
 			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			asprintf(&envp[1], "DEVICE=%s", device ? : "");

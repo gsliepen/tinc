@@ -17,12 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.5 2003/08/24 20:38:24 guus Exp $
+    $Id: net_packet.c,v 1.1.2.49 2003/12/27 16:32:52 guus Exp $
 */
 
 #include "system.h"
 
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
@@ -34,6 +35,7 @@
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
+#include "ethernet.h"
 #include "event.h"
 #include "graph.h"
 #include "list.h"
@@ -46,13 +48,72 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#ifdef WSAEMSGSIZE
+#define EMSGSIZE WSAEMSGSIZE
+#endif
+
 int keylifetime = 0;
 int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
+static void send_udppacket(node_t *, vpn_packet_t *);
 
 #define MAX_SEQNO 1073741824
+
+void send_mtu_probe(node_t *n)
+{
+	vpn_packet_t packet;
+	int len, i;
+	
+	cp();
+
+	n->mtuprobes++;
+	n->mtuevent = NULL;
+
+	if(n->mtuprobes >= 10 && !n->minmtu) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
+		return;
+	}
+
+	for(i = 0; i < 3; i++) {
+		if(n->mtuprobes >= 30 || n->minmtu >= n->maxmtu) {
+			n->mtu = n->minmtu;
+			ifdebug(TRAFFIC) logger(LOG_INFO, _("Fixing MTU of %s (%s) to %d after %d probes"), n->name, n->hostname, n->mtu, n->mtuprobes);
+			return;
+		}
+
+		len = n->minmtu + 1 + random() % (n->maxmtu - n->minmtu);
+		if(len < 64)
+			len = 64;
+		
+		memset(packet.data, 0, 14);
+		RAND_pseudo_bytes(packet.data + 14, len - 14);
+		packet.len = len;
+
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending MTU probe length %d to %s (%s)"), len, n->name, n->hostname);
+
+		send_udppacket(n, &packet);
+	}
+
+	n->mtuevent = xmalloc(sizeof(*n->mtuevent));
+	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
+	n->mtuevent->data = n;
+	n->mtuevent->time = now + 1;
+	event_add(n->mtuevent);
+}
+
+void mtu_probe_h(node_t *n, vpn_packet_t *packet) {
+	ifdebug(TRAFFIC) logger(LOG_INFO, _("Got MTU probe length %d from %s (%s)"), packet->len, n->name, n->hostname);
+
+	if(!packet->data[0]) {
+		packet->data[0] = 1;
+		send_packet(n, packet);
+	} else {
+		if(n->minmtu < packet->len)
+			n->minmtu = packet->len;
+	}
+}
 
 static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
 {
@@ -103,7 +164,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
 			   packet->len, n->name, n->hostname);
 
-	route_incoming(n, packet);
+	route(n, packet);
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
@@ -117,6 +178,14 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int i;
 
 	cp();
+
+	/* Check packet length */
+
+	if(inpkt->len < sizeof(inpkt->seqno) + myself->maclength) {
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
+					n->name, n->hostname);
+		return;
+	}
 
 	/* Check the message authentication code */
 
@@ -137,12 +206,14 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->cipher) {
 		outpkt = pkt[nextpkt++];
 
-//		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key,
-//						myself->key + myself->cipher->key_len);
-		EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL);
-		EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
-						  (char *) &inpkt->seqno, inpkt->len);
-		EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
+		if(!EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL)
+				|| !EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
+					(char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
+						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return;
+		}
 		
 		outpkt->len = outlen + outpad;
 		inpkt = outpkt;
@@ -181,15 +252,21 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, myself->compression)) < 0) {
-			logger(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
-				   n->name, n->hostname);
+			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
+				  		 n->name, n->hostname);
 			return;
 		}
 
 		inpkt = outpkt;
 	}
 
-	receive_packet(n, inpkt);
+	if(n->connection)
+		n->connection->last_ping_time = now;
+
+	if(!inpkt->data[12] && !inpkt->data[13])
+		mtu_probe_h(n, inpkt);
+	else
+		receive_packet(n, inpkt);
 }
 
 void receive_tcppacket(connection_t *c, char *buffer, int len)
@@ -228,8 +305,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 		/* Since packet is on the stack of handle_tap_input(), we have to make a copy of it first. */
 
-		copy = xmalloc(sizeof(vpn_packet_t));
-		memcpy(copy, inpkt, sizeof(vpn_packet_t));
+		*(copy = xmalloc(sizeof(*copy))) = *inpkt;
 
 		list_insert_tail(n->queue, copy);
 
@@ -253,7 +329,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->compression)) < 0) {
-			logger(LOG_ERR, _("Error while compressing packet to %s (%s)"),
+			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while compressing packet to %s (%s)"),
 				   n->name, n->hostname);
 			return;
 		}
@@ -271,11 +347,14 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(n->cipher) {
 		outpkt = pkt[nextpkt++];
 
-//		EVP_EncryptInit_ex(&packet_ctx, n->cipher, NULL, n->key, n->key + n->cipher->key_len);
-		EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL);
-		EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
-						  (char *) &inpkt->seqno, inpkt->len);
-		EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad);
+		if(!EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL)
+				|| !EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
+					(char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
+						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
+			goto end;
+		}
 
 		outpkt->len = outlen + outpad;
 		inpkt = outpkt;
@@ -311,10 +390,16 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 #endif
 
 	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
-		return;
+		if(errno == EMSGSIZE) {
+			if(n->maxmtu >= origlen)
+				n->maxmtu = origlen - 1;
+			if(n->mtu >= origlen)
+				n->mtu = origlen - 1;
+		} else
+			logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
 	}
 
+end:
 	inpkt->len = origlen;
 }
 
@@ -327,13 +412,15 @@ void send_packet(const node_t *n, vpn_packet_t *packet)
 
 	cp();
 
-	ifdebug(TRAFFIC) logger(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
-			   packet->len, n->name, n->hostname);
-
 	if(n == myself) {
-		ifdebug(TRAFFIC) logger(LOG_NOTICE, _("Packet is looping back to us!"));
+		if(overwrite_mac)
+			 memcpy(packet->data, mymac.x, ETH_ALEN);
+		write_packet(packet);
 		return;
 	}
+
+	ifdebug(TRAFFIC) logger(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
+			   packet->len, n->name, n->hostname);
 
 	if(!n->status.reachable) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Node %s (%s) is not reachable"),
@@ -367,7 +454,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 			   packet->len, from->name, from->hostname);
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->status.active && c->status.mst && c != from->nexthop->connection)
 			send_packet(c->node, packet);
@@ -384,7 +471,7 @@ void flush_queue(node_t *n)
 
 	for(node = n->queue->head; node; node = next) {
 		next = node->next;
-		send_udppacket(n, (vpn_packet_t *) node->data);
+		send_udppacket(n, node->data);
 		list_delete_node(n->queue, node);
 	}
 }
@@ -401,7 +488,7 @@ void handle_incoming_vpn_data(int sock)
 
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
-	if(pkt.len <= 0) {
+	if(pkt.len < 0) {
 		logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
 		return;
 	}
@@ -417,9 +504,6 @@ void handle_incoming_vpn_data(int sock)
 		free(hostname);
 		return;
 	}
-
-	if(n->connection)
-		n->connection->last_ping_time = now;
 
 	receive_udppacket(n, &pkt);
 }

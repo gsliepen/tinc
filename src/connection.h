@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.4 2003/08/24 20:38:24 guus Exp $
+    $Id: connection.h,v 1.1.2.40 2003/12/20 21:25:17 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -30,6 +30,7 @@
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
+#define OPTION_PMTU_DISCOVERY	0x0004
 
 typedef struct connection_status_t {
 	int pinged:1;				/* sent ping */
@@ -40,8 +41,8 @@ typedef struct connection_status_t {
 	int timeout:1;				/* 1 if gotten timeout */
 	int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
 	int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
-	int mst:1;					/* 1 if this connection is part of a minimum spanning tree */
-	int unused:18;
+	int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
+	int unused:23;
 } connection_status_t;
 
 #include "edge.h"

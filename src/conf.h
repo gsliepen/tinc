@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.11 2003/08/24 20:38:24 guus Exp $
+    $Id: conf.h,v 1.6.4.43 2003/08/08 22:11:54 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__

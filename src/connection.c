@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.4 2003/08/24 20:38:24 guus Exp $
+    $Id: connection.c,v 1.1.2.44 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -64,7 +64,7 @@ connection_t *new_connection(void)
 
 	cp();
 
-	c = (connection_t *) xmalloc_and_zero(sizeof(connection_t));
+	c = xmalloc_and_zero(sizeof(connection_t));
 
 	if(!c)
 		return NULL;
@@ -120,7 +120,7 @@ void dump_connections(void)
 	logger(LOG_DEBUG, _("Connections:"));
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
 			   c->name, c->hostname, c->options, c->socket, *(uint32_t *)&c->status);
 	}

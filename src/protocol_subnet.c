@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.4 2003/08/24 20:38:27 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.18 2003/12/12 19:52:25 guus Exp $
 */
 
 #include "system.h"
@@ -35,17 +35,14 @@
 
 bool send_add_subnet(connection_t *c, const subnet_t *subnet)
 {
-	bool x;
-	char *netstr;
+	char netstr[MAXNETSTR];
 
 	cp();
 
-	x = send_request(c, "%d %lx %s %s", ADD_SUBNET, random(),
-					 subnet->owner->name, netstr = net2str(subnet));
+	if(!net2str(netstr, sizeof netstr, subnet))
+		return false;
 
-	free(netstr);
-
-	return x;
+	return send_request(c, "%d %lx %s %s", ADD_SUBNET, random(), subnet->owner->name, netstr);
 }
 
 bool add_subnet_h(connection_t *c)
@@ -53,7 +50,7 @@ bool add_subnet_h(connection_t *c)
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
-	subnet_t *s;
+	subnet_t s = {0}, *new;
 
 	cp();
 
@@ -73,9 +70,7 @@ bool add_subnet_h(connection_t *c)
 
 	/* Check if subnet string is valid */
 
-	s = str2net(subnetstr);
-
-	if(!s) {
+	if(!str2net(&s, subnetstr)) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
 			   c->hostname, _("invalid subnet string"));
 		return false;
@@ -94,48 +89,69 @@ bool add_subnet_h(connection_t *c)
 		node_add(owner);
 	}
 
+	if(tunnelserver && owner != myself && owner != c->node)
+		return false;
+
 	/* Check if we already know this subnet */
 
-	if(lookup_subnet(owner, s)) {
-		free_subnet(s);
+	if(lookup_subnet(owner, &s))
 		return true;
-	}
 
 	/* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
 
 	if(owner == myself) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "ADD_SUBNET", c->name, c->hostname);
-		s->owner = myself;
-		send_del_subnet(c, s);
+		s.owner = myself;
+		send_del_subnet(c, &s);
 		return true;
+	}
+
+	/* In tunnel server mode, check if the subnet matches one in the config file of this node */
+
+	if(tunnelserver) {
+		config_t *cfg;
+		subnet_t *allowed;
+
+		for(cfg = lookup_config(c->config_tree, "Subnet"); cfg; cfg = lookup_config_next(c->config_tree, cfg)) {
+			if(!get_config_subnet(cfg, &allowed))
+				return false;
+
+			if(!subnet_compare(&s, allowed))
+				break;
+
+			free_subnet(allowed);
+		}
+
+		if(!cfg)
+			return false;
+
+		free_subnet(allowed);
 	}
 
 	/* If everything is correct, add the subnet to the list of the owner */
 
-	subnet_add(owner, s);
+	*(new = new_subnet()) = s;
+	subnet_add(owner, new);
 
 	/* Tell the rest */
 
-	forward_request(c);
+	if(!tunnelserver)
+		forward_request(c);
 
 	return true;
 }
 
 bool send_del_subnet(connection_t *c, const subnet_t *s)
 {
-	bool x;
-	char *netstr;
+	char netstr[MAXNETSTR];
 
 	cp();
 
-	netstr = net2str(s);
+	if(!net2str(netstr, sizeof netstr, s))
+		return false;
 
-	x = send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
-
-	free(netstr);
-
-	return x;
+	return send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
 }
 
 bool del_subnet_h(connection_t *c)
@@ -143,7 +159,7 @@ bool del_subnet_h(connection_t *c)
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
-	subnet_t *s, *find;
+	subnet_t s = {0}, *find;
 
 	cp();
 
@@ -171,11 +187,12 @@ bool del_subnet_h(connection_t *c)
 		return true;
 	}
 
+	if(tunnelserver && owner != myself && owner != c->node)
+		return false;
+
 	/* Check if subnet string is valid */
 
-	s = str2net(subnetstr);
-
-	if(!s) {
+	if(!str2net(&s, subnetstr)) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
 			   c->hostname, _("invalid subnet string"));
 		return false;
@@ -186,11 +203,9 @@ bool del_subnet_h(connection_t *c)
 
 	/* If everything is correct, delete the subnet from the list of the owner */
 
-	s->owner = owner;
+	s.owner = owner;
 
-	find = lookup_subnet(owner, s);
-
-	free_subnet(s);
+	find = lookup_subnet(owner, &s);
 
 	if(!find) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
@@ -209,7 +224,8 @@ bool del_subnet_h(connection_t *c)
 
 	/* Tell the rest */
 
-	forward_request(c);
+	if(!tunnelserver)
+		forward_request(c);
 
 	/* Finally, delete it. */
 

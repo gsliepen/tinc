@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.3 2003/08/24 20:38:27 guus Exp $
+    $Id: process.h,v 1.1.2.19 2003/08/02 20:50:38 guus Exp $
 */
 
 #ifndef __TINC_PROCESS_H__

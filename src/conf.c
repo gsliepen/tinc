@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.14 2003/08/24 20:38:24 guus Exp $
+    $Id: conf.c,v 1.9.4.77 2003/12/12 19:52:24 guus Exp $
 */
 
 #include "system.h"
@@ -73,7 +73,7 @@ config_t *new_config(void)
 {
 	cp();
 
-	return (config_t *) xmalloc_and_zero(sizeof(config_t));
+	return xmalloc_and_zero(sizeof(config_t));
 }
 
 void free_config(config_t *cfg)
@@ -131,7 +131,7 @@ config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg)
 
 	if(node) {
 		if(node->next) {
-			found = (config_t *) node->next->data;
+			found = node->next->data;
 
 			if(!strcasecmp(found->variable, cfg->variable))
 				return found;
@@ -214,16 +214,14 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result)
 
 bool get_config_subnet(const config_t *cfg, subnet_t ** result)
 {
-	subnet_t *subnet;
+	subnet_t subnet = {0};
 
 	cp();
 
 	if(!cfg)
 		return false;
 
-	subnet = str2net(cfg->value);
-
-	if(!subnet) {
+	if(!str2net(&subnet, cfg->value)) {
 		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
@@ -231,17 +229,16 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result)
 
 	/* Teach newbies what subnets are... */
 
-	if(((subnet->type == SUBNET_IPV4)
-		&& !maskcheck(&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
-		|| ((subnet->type == SUBNET_IPV6)
-		&& !maskcheck(&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t)))) {
+	if(((subnet.type == SUBNET_IPV4)
+		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t)))
+		|| ((subnet.type == SUBNET_IPV6)
+		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t)))) {
 		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
-		free(subnet);
 		return false;
 	}
 
-	*result = subnet;
+	*(*result = new_subnet()) = subnet;
 
 	return true;
 }
@@ -324,7 +321,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	int err = -2;				/* Parse error */
 	FILE *fp;
 	char *buffer, *line;
-	char *variable, *value;
+	char *variable, *value, *eol;
 	int lineno = 0;
 	int len;
 	bool ignore = false;
@@ -375,6 +372,10 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 
 		variable = value = line;
 
+		eol = line + strlen(line);
+		while(strchr("\t ", *--eol))
+			*eol = '\0';
+
 		len = strcspn(value, "\t =");
 		value += len;
 		value += strspn(value, "\t ");
@@ -384,6 +385,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 		}
 		variable[len] = '\0';
 
+	
 		if(!*value) {
 			logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
 				   variable, lineno, fname);

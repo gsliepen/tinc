@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.5 2003/08/24 20:38:24 guus Exp $
+    $Id: net_setup.c,v 1.1.2.50 2003/12/20 21:25:17 guus Exp $
 */
 
 #include "system.h"
@@ -25,6 +25,8 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "avl_tree.h"
 #include "conf.h"
@@ -148,17 +150,23 @@ bool read_rsa_public_key(connection_t *c)
 bool read_rsa_private_key(void)
 {
 	FILE *fp;
-	char *fname, *key;
+	char *fname, *key, *pubkey;
 	struct stat s;
 
 	cp();
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
+		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
+			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
+			return false;
+		}
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
 		BN_hex2bn(&myself->connection->rsa_key->d, key);
+		BN_hex2bn(&myself->connection->rsa_key->n, pubkey);
 		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		free(key);
+		free(pubkey);
 		return true;
 	}
 
@@ -240,19 +248,15 @@ bool setup_myself(void)
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
 
-	if(!read_rsa_private_key())
-		return false;
-
 	if(!read_connection_config(myself->connection)) {
 		logger(LOG_ERR, _("Cannot open host configuration file for myself!"));
 		return false;
 	}
 
-	if(!read_rsa_public_key(myself->connection))
+	if(!read_rsa_private_key())
 		return false;
 
-	if(!get_config_string
-	   (lookup_config(myself->connection->config_tree, "Port"), &myport))
+	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
 		asprintf(&myport, "655");
 
 	/* Read in all the subnets specified in the host configuration file */
@@ -270,24 +274,25 @@ bool setup_myself(void)
 
 	/* Check some options */
 
-	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice))
-		if(choice)
-			myself->options |= OPTION_INDIRECT;
+	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice)
+		myself->options |= OPTION_INDIRECT;
 
-	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice))
-		if(choice)
-			myself->options |= OPTION_TCPONLY;
+	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice)
+		myself->options |= OPTION_TCPONLY;
 
-	if(get_config_bool(lookup_config(myself->connection->config_tree, "IndirectData"), &choice))
-		if(choice)
-			myself->options |= OPTION_INDIRECT;
+	if(get_config_bool(lookup_config(myself->connection->config_tree, "IndirectData"), &choice) && choice)
+		myself->options |= OPTION_INDIRECT;
 
-	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice))
-		if(choice)
-			myself->options |= OPTION_TCPONLY;
+	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
+		myself->options |= OPTION_TCPONLY;
+
+	if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice)
+		myself->options |= OPTION_PMTU_DISCOVERY;
 
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
+
+	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
 		if(!strcasecmp(mode, "router"))
@@ -314,7 +319,7 @@ bool setup_myself(void)
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
 		macexpire = 600;
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "MaxTimeout"), &maxtimeout)) {
+	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
 			logger(LOG_ERR, _("Bogus maximum timeout!"));
 			return false;
@@ -362,7 +367,7 @@ bool setup_myself(void)
 
 	myself->connection->outcipher = EVP_bf_ofb();
 
-	myself->key = (char *) xmalloc(myself->keylength);
+	myself->key = xmalloc(myself->keylength);
 	RAND_pseudo_bytes(myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
@@ -372,7 +377,12 @@ bool setup_myself(void)
 	
 	if(myself->cipher) {
 		EVP_CIPHER_CTX_init(&packet_ctx);
-		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
+					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
+
 	}
 
 	/* Check if we want to use message authentication codes... */
@@ -549,7 +559,7 @@ void close_network_connections(void)
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->outgoing)
 			free(c->outgoing->name), free(c->outgoing), c->outgoing = NULL;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.4 2003/08/24 20:38:24 guus Exp $
+    $Id: event.c,v 1.1.4.11 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -61,7 +61,7 @@ event_t *new_event(void)
 {
 	cp();
 
-	return (event_t *) xmalloc_and_zero(sizeof(event_t));
+	return xmalloc_and_zero(sizeof(event_t));
 }
 
 void free_event(event_t *event)
@@ -93,7 +93,7 @@ event_t *get_expired_event(void)
 	cp();
 
 	if(event_tree->head) {
-		event = (event_t *) event_tree->head->data;
+		event = event_tree->head->data;
 
 		if(event->time < now) {
 			avl_delete(event_tree, event);

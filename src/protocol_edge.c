@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.4 2003/08/24 20:38:27 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.23 2003/11/17 15:30:18 guus Exp $
 */
 
 #include "system.h"
@@ -110,6 +110,9 @@ bool add_edge_h(connection_t *c)
 		node_add(to);
 	}
 
+	if(tunnelserver && from != myself && from != c->node && to != myself && to != c->node)
+		return false;
+
 	/* Convert addresses */
 
 	address = str2sockaddr(to_address, to_port);
@@ -154,7 +157,8 @@ bool add_edge_h(connection_t *c)
 
 	/* Tell the rest about the new edge */
 
-	forward_request(c);
+	if(!tunnelserver)
+		forward_request(c);
 
 	/* Run MST before or after we tell the rest? */
 
@@ -221,6 +225,9 @@ bool del_edge_h(connection_t *c)
 		return true;
 	}
 
+	if(tunnelserver && from != myself && from != c->node && to != myself && to != c->node)
+		return false;
+
 	/* Check if edge exists */
 
 	e = lookup_edge(from, to);
@@ -240,7 +247,8 @@ bool del_edge_h(connection_t *c)
 
 	/* Tell the rest about the deleted edge */
 
-	forward_request(c);
+	if(!tunnelserver)
+		forward_request(c);
 
 	/* Delete the edge */
 
@@ -249,6 +257,17 @@ bool del_edge_h(connection_t *c)
 	/* Run MST before or after we tell the rest? */
 
 	graph();
+
+	/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
+
+	if(!to->status.reachable) {
+		e = lookup_edge(to, myself);
+		if(e) {
+			if(!tunnelserver)
+				send_del_edge(broadcast, e);
+			edge_del(e);
+		}
+	}
 
 	return true;
 }

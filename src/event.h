@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.4 2003/08/24 20:38:24 guus Exp $
+    $Id: event.h,v 1.1.4.8 2003/07/30 21:52:41 guus Exp $
 */
 
 #ifndef __TINC_EVENT_H__

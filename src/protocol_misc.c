@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.4 2003/08/24 20:38:27 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.13 2003/07/24 12:08:16 guus Exp $
 */
 
 #include "system.h"

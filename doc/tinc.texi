@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.10 2003/08/24 20:38:19 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -20,7 +20,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.10 2003/08/24 20:38:19 guus Exp $
+$Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -47,7 +47,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.10 2003/08/24 20:38:19 guus Exp $
+$Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -60,8 +60,10 @@ permission notice identical to this one.
 
 @end titlepage
 
+@ifinfo
 @c ==================================================================
-@node Top, Introduction, (dir), (dir)
+@node Top
+@top Top
 
 @menu
 * Introduction::
@@ -70,19 +72,18 @@ permission notice identical to this one.
 * Configuration::
 * Running tinc::
 * Technical information::
+* Platform specific information::
 * About us::
 * Concept Index::               All used terms explained
 @end menu
-
-
-@contents
+@end ifinfo
 
 @c ==================================================================
-@node    Introduction, Preparations, Top, Top
+@node    Introduction
 @chapter Introduction
 
 @cindex tinc
-tinc is a Virtual Private Network (VPN) daemon that uses tunneling and
+Tinc is a Virtual Private Network (VPN) daemon that uses tunneling and
 encryption to create a secure private network between hosts on the
 Internet.
 
@@ -102,7 +103,7 @@ process of tinc itself.
 @end menu
 
 @c ==================================================================
-@node    Virtual Private Networks, tinc, Introduction, Introduction
+@node    Virtual Private Networks
 @section Virtual Private Networks
 
 @cindex VPN
@@ -140,7 +141,7 @@ through the VPN.  This is what tinc was made for.
 
 
 @c ==================================================================
-@node    tinc, Supported platforms, Virtual Private Networks, Introduction
+@node    tinc
 @section tinc
 
 @cindex vpnd
@@ -148,22 +149,22 @@ I really don't quite remember what got us started, but it must have been
 Guus' idea.  He wrote a simple implementation (about 50 lines of C) that
 used the ethertap device that Linux knows of since somewhere
 about kernel 2.1.60.  It didn't work immediately and he improved it a
-bit.  At this stage, the project was still simply called @samp{vpnd}.
+bit.  At this stage, the project was still simply called "vpnd".
 
 Since then, a lot has changed---to say the least.
 
 @cindex tincd
-tinc now supports encryption, it consists of a single daemon (tincd) for
+Tinc now supports encryption, it consists of a single daemon (tincd) for
 both the receiving and sending end, it has become largely
 runtime-configurable---in short, it has become a full-fledged
 professional package.
 
-@cindex Traditional VPNs
+@cindex traditional VPNs
 @cindex scalability
-tinc also allows more than two sites to connect to eachother and form a single VPN.
+Tinc also allows more than two sites to connect to eachother and form a single VPN.
 Traditionally VPNs are created by making tunnels, which only have two endpoints.
 Larger VPNs with more sites are created by adding more tunnels.
-tinc takes another approach: only endpoints are specified,
+Tinc takes another approach: only endpoints are specified,
 the software itself will take care of creating the tunnels.
 This allows for easier configuration and improved scalability.
 
@@ -177,11 +178,11 @@ available too.
 
 
 @c ==================================================================
-@node    Supported platforms,  , tinc, Introduction
+@node    Supported platforms
 @section Supported platforms
 
 @cindex platforms
-tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, MacOS/X (Darwin), Solaris, and Windows (both natively and in a Cygwin environment),
+Tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, MacOS/X (Darwin), Solaris, and Windows (both natively and in a Cygwin environment),
 with various hardware architectures.  These are some of the platforms
 that are supported by the universal tun/tap device driver or other virtual network device drivers.
 Without such a driver, tinc will most
@@ -198,14 +199,14 @@ our website:
 @subsection Linux
 
 @cindex Linux
-tinc was first written for Linux running on an intel x86 processor, so
+Tinc was first written for Linux running on an intel x86 processor, so
 this is the best supported platform.  The protocol however, and actually
 anything about tinc, has been rewritten to support random byte ordering
 and arbitrary word length.  So in theory it should run on other
 processors that Linux runs on.  It has already been verified to run on
 alpha and sparc processors as well.
 
-tinc uses the ethertap device or the universal tun/tap driver. The former is provided in the standard kernel
+Tinc uses the ethertap device or the universal tun/tap driver. The former is provided in the standard kernel
 from version 2.1.60 up to 2.3.x, but has been replaced in favour of the tun/tap driver in kernel versions 2.4.0 and later.
 
 
@@ -213,7 +214,7 @@ from version 2.1.60 up to 2.3.x, but has been replaced in favour of the tun/tap 
 @subsection FreeBSD
 
 @cindex FreeBSD
-tinc on FreeBSD relies on the universal tun/tap driver for its data
+Tinc on FreeBSD relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
 as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
 
@@ -222,7 +223,7 @@ as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
 @subsection OpenBSD
 
 @cindex OpenBSD
-tinc on OpenBSD relies on the tun driver for its data
+Tinc on OpenBSD relies on the tun driver for its data
 acquisition from the kernel. It has been verified to work under at least OpenBSD 2.9.
 
 Tunneling IPv6 packets may not work on OpenBSD.
@@ -235,7 +236,7 @@ Tunneling IPv6 packets may not work on OpenBSD.
 @subsection NetBSD
 
 @cindex NetBSD
-tinc on NetBSD relies on the tun driver for its data
+Tinc on NetBSD relies on the tun driver for its data
 acquisition from the kernel. It has been verified to work under at least NetBSD 1.5.2.
 
 Tunneling IPv6 does not work on OpenBSD.
@@ -245,9 +246,9 @@ Tunneling IPv6 does not work on OpenBSD.
 @subsection Solaris
 
 @cindex Solaris
-tinc on Solaris relies on the universal tun/tap driver for its data
+Tinc on Solaris relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
-as this driver.  These are: Solaris 8 (SunOS 5.8).
+as this driver. It has been verified to work under Solaris 8 (SunOS 5.8).
 
 IPv6 packets cannot be tunneled on Solaris.
 
@@ -256,7 +257,7 @@ IPv6 packets cannot be tunneled on Solaris.
 
 @cindex Darwin
 @cindex MacOS/X
-tinc on Darwin relies on the tunnel driver for its data
+Tinc on Darwin relies on the tunnel driver for its data
 acquisition from the kernel. This driver is not part of Darwin but can be
 downloaded from @uref{http://chrisp.de/en/projects/tunnel.html}.
 
@@ -266,7 +267,7 @@ IPv6 packets cannot be tunneled on Darwin.
 @subsection Windows
 
 @cindex Windows
-tinc on Windows, in a Cygwin environment, relies on the CIPE driver or the TAP-Win32 driver for its data
+Tinc on Windows, in a Cygwin environment, relies on the CIPE driver or the TAP-Win32 driver for its data
 acquisition from the kernel. This driver is not part of Windows but can be
 downloaded from @uref{http://cipe-win32.sourceforge.net/}.
 
@@ -285,7 +286,7 @@ downloaded from @uref{http://cipe-win32.sourceforge.net/}.
 @c
 
 @c ==================================================================
-@node    Preparations, Installation, Introduction, Top
+@node    Preparations
 @chapter Preparations
 
 This chapter contains information on how to prepare your system to
@@ -298,7 +299,7 @@ support tinc.
 
 
 @c ==================================================================
-@node    Configuring the kernel, Libraries, Preparations, Preparations
+@node    Configuring the kernel
 @section Configuring the kernel
 
 @cindex RedHat
@@ -334,7 +335,7 @@ you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html
 
 
 @c ==================================================================
-@node       Configuration of Linux kernels 2.1.60 up to 2.4.0, Configuration of Linux kernels 2.4.0 and higher, Configuring the kernel, Configuring the kernel
+@node       Configuration of Linux kernels 2.1.60 up to 2.4.0
 @subsection Configuration of Linux kernels 2.1.60 up to 2.4.0
 
 Here are the options you have to turn on when configuring a new kernel:
@@ -371,7 +372,7 @@ Add as much alias/options lines as necessary.
 
 
 @c ==================================================================
-@node       Configuration of Linux kernels 2.4.0 and higher, Configuration of FreeBSD kernels, Configuration of Linux kernels 2.1.60 up to 2.4.0, Configuring the kernel
+@node       Configuration of Linux kernels 2.4.0 and higher
 @subsection Configuration of Linux kernels 2.4.0 and higher
 
 Here are the options you have to turn on when configuring a new kernel:
@@ -400,7 +401,7 @@ alias char-major-10-200 tun
 
 
 @c ==================================================================
-@node       Configuration of FreeBSD kernels, Configuration of OpenBSD kernels, Configuration of Linux kernels 2.4.0 and higher, Configuring the kernel
+@node       Configuration of FreeBSD kernels
 @subsection Configuration of FreeBSD kernels
 
 For FreeBSD version 4.1 and higher, the tap driver is included in the default kernel configuration, for earlier
@@ -409,7 +410,7 @@ yourself.
 
 
 @c ==================================================================
-@node       Configuration of OpenBSD kernels, Configuration of NetBSD kernels, Configuration of FreeBSD kernels, Configuring the kernel
+@node       Configuration of OpenBSD kernels
 @subsection Configuration of OpenBSD kernels
 
 For OpenBSD version 2.9 and higher,
@@ -417,7 +418,7 @@ the tun driver is included in the default kernel configuration.
 
 
 @c ==================================================================
-@node       Configuration of NetBSD kernels, Configuration of Solaris kernels, Configuration of OpenBSD kernels, Configuring the kernel
+@node       Configuration of NetBSD kernels
 @subsection Configuration of NetBSD kernels
 
 For NetBSD version 1.5.2 and higher,
@@ -425,15 +426,18 @@ the tun driver is included in the default kernel configuration.
 
 
 @c ==================================================================
-@node       Configuration of Solaris kernels, Configuration of Darwin (MacOS/X) kernels, Configuration of NetBSD kernels, Configuring the kernel
+@node       Configuration of Solaris kernels
 @subsection Configuration of Solaris kernels
 
 For Solaris 8 (SunOS 5.8) and higher,
-the tun driver is included in the default kernel configuration.
+the tun driver may or may not be included in the default kernel configuration.
+If it isn't, the source can be downloaded from @uref{http://vtun.sourceforge.net/tun/}.
+For x86 and sparc64 architectures, precompiled versions can be found at @uref{http://www.monkey.org/~dugsong/fragroute/}.
+If the @file{net/if_tun.h} header file is missing, install it from the source package.
 
 
 @c ==================================================================
-@node       Configuration of Darwin (MacOS/X) kernels, Configuration of Windows, Configuration of Solaris kernels, Configuring the kernel
+@node       Configuration of Darwin (MacOS/X) kernels
 @subsection Configuration of Darwin (MacOS/X) kernels
 
 Darwin does not come with a tunnel driver. You must download it at
@@ -450,17 +454,18 @@ and the corresponding network interfaces.
 
 
 @c ==================================================================
-@node       Configuration of Windows,  , Configuration of Darwin (MacOS/X) kernels, Configuring the kernel
+@node       Configuration of Windows
 @subsection Configuration of Windows
 
-You will need to install the CIPE driver or the TAP-Win32 driver. You can download the CIPE driver from
-@uref{http://cipe-win32.sourceforge.net}.  Using the Network Connections control panel,
-configure the CIPE network device in the same way as you would do from the tinc-up script
-as explained in the rest of the documentation.
+You will need to install the CIPE-Win32 driver or the TAP-Win32 driver, it
+doesn't matter which one. You can download the CIPE driver from
+@uref{http://cipe-win32.sourceforge.net}.  Using the Network Connections
+control panel, configure the CIPE-Win32 or TAP-Win32 network interface in the same way as you would
+do from the tinc-up script as explained in the rest of the documentation.
 
 
 @c ==================================================================
-@node    Libraries,  , Configuring the kernel, Preparations
+@node    Libraries
 @section Libraries
 
 @cindex requirements
@@ -477,7 +482,7 @@ having them installed, configure will give you an error message, and stop.
 
 
 @c ==================================================================
-@node       OpenSSL, zlib, Libraries, Libraries
+@node       OpenSSL
 @subsection OpenSSL
 
 @cindex OpenSSL
@@ -514,10 +519,12 @@ to let configure know where they are, by passing configure one of the
 @subsubheading License
 
 @cindex license
+The complete source code of tinc is covered by the GNU GPL version 2.
 Since the license under which OpenSSL is distributed is not directly
 compatible with the terms of the GNU GPL
-@uref{http://www.openssl.org/support/faq.html#LEGAL2}, therefore we
-include an addition to the GPL (see also the file COPYING.README):
+@uref{http://www.openssl.org/support/faq.html#LEGAL2}, we
+include an exemption to the GPL (see also the file COPYING.README) to allow
+everyone to create a statically or dynamically linked executable:
 
 @quotation
 This program is released under the GPL with the additional exemption
@@ -526,9 +533,20 @@ provide binary packages linked to the OpenSSL libraries, provided that
 all other requirements of the GPL are met.
 @end quotation
 
+Since the LZO library used by tinc is also covered by the GPL,
+we also present the following exemption:
+
+@quotation
+Hereby I grant a special exception to the tinc VPN project
+(http://tinc.nl.linux.org/) to link the LZO library with the OpenSSL library
+(http://www.openssl.org).
+
+Markus F.X.J. Oberhumer
+@end quotation
+
 
 @c ==================================================================
-@node       zlib, lzo, OpenSSL, Libraries
+@node       zlib
 @subsection zlib
 
 @cindex zlib
@@ -551,7 +569,7 @@ default).
 
 
 @c ==================================================================
-@node       lzo,  , zlib, Libraries
+@node       lzo
 @subsection lzo
 
 @cindex lzo
@@ -582,7 +600,7 @@ default).
 @c
 
 @c ==================================================================
-@node    Installation, Configuration, Preparations, Top
+@node    Installation
 @chapter Installation
 
 If you use Debian, you may want to install one of the
@@ -596,7 +614,7 @@ the GNU General Public License (GPL).  Download the source from the
 the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
-tinc comes in a convenient autoconf/automake package, which you can just
+Tinc comes in a convenient autoconf/automake package, which you can just
 treat the same as any other package.  Which is just untar it, type
 `./configure' and then `make'.
 More detailed instructions are in the file @file{INSTALL}, which is
@@ -609,7 +627,7 @@ included in the source distribution.
 
 
 @c ==================================================================
-@node    Building and installing tinc, System files, Installation, Installation
+@node    Building and installing tinc
 @section Building and installing tinc
 
 Detailed instructions on configuring the source, building tinc and installing tinc
@@ -628,7 +646,7 @@ The documentation that comes along with your distribution will tell you how to d
 
 
 @c ==================================================================
-@node       Darwin (MacOS/X) build environment, Cygwin (Windows) build environment, Building and installing tinc, Building and installing tinc
+@node       Darwin (MacOS/X) build environment
 @subsection Darwin (MacOS/X) build environment
 
 In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
@@ -639,7 +657,7 @@ After installation use fink to download and install the following packages:
 autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
 
 @c ==================================================================
-@node       Cygwin (Windows) build environment, MinGW (Windows) build environment, Darwin (MacOS/X) build environment, Building and installing tinc
+@node       Cygwin (Windows) build environment
 @subsection Cygwin (Windows) build environment
 
 If Cygwin hasn't already been installed, install it directly from
@@ -650,7 +668,7 @@ but all programs, including those started outside the Cygwin environment, will b
 It will also support all features.
 
 @c ==================================================================
-@node       MinGW (Windows) build environment,  , Cygwin (Windows) build environment, Building and installing tinc
+@node       MinGW (Windows) build environment
 @subsection MinGW (Windows) build environment
 
 You will need to install the MinGW environment from @uref{http://www.mingw.org}.
@@ -663,7 +681,7 @@ which will be restarted automatically after reboots.
 
 
 @c ==================================================================
-@node    System files,  , Building and installing tinc, Installation
+@node    System files
 @section System files
 
 Before you can run tinc, you must make sure you have all the needed
@@ -676,7 +694,7 @@ files on your system.
 
 
 @c ==================================================================
-@node       Device files, Other files, System files, System files
+@node       Device files
 @subsection Device files
 
 @cindex device files
@@ -716,7 +734,7 @@ you are planning to run multiple tinc daemons.
 
 
 @c ==================================================================
-@node       Other files,  , Device files, System files
+@node       Other files
 @subsection Other files
 
 @subsubheading @file{/etc/networks}
@@ -754,7 +772,7 @@ tinc            655/udp    TINC
 
 
 @c ==================================================================
-@node    Configuration, Running tinc, Installation, Top
+@node    Configuration
 @chapter Configuration
 
 @menu
@@ -768,7 +786,7 @@ tinc            655/udp    TINC
 @end menu
 
 @c ==================================================================
-@node    Configuration introduction, Multiple networks, Configuration, Configuration
+@node    Configuration introduction
 @section Configuration introduction
 
 Before actually starting to configure tinc and editing files,
@@ -796,14 +814,14 @@ These steps are described in the subsections below.
 
 
 @c ==================================================================
-@node    Multiple networks, How connections work, Configuration introduction, Configuration
+@node    Multiple networks
 @section Multiple networks
 
 @cindex multiple networks
 @cindex netname
 In order to allow you to run more than one tinc daemon on one computer,
 for instance if your computer is part of more than one VPN,
-you can assign a ``netname'' to your VPN.
+you can assign a @var{netname} to your VPN.
 It is not required if you only run one tinc daemon,
 it doesn't even have to be the same on all the sites of your VPN,
 but it is recommended that you choose one anyway.
@@ -813,14 +831,14 @@ This means that you call tincd with the -n argument,
 which will assign a netname to this daemon.
 
 The effect of this is that the daemon will set its configuration
-``root'' to @value{sysconfdir}/tinc/@var{netname}/, where @var{netname} is your argument to the -n
-option.  You'll notice that it appears in syslog as ``tinc.@var{netname}''.
+root to @file{@value{sysconfdir}/tinc/@var{netname}/}, where @var{netname} is your argument to the -n
+option.  You'll notice that it appears in syslog as @file{tinc.@var{netname}}.
 
 However, it is not strictly necessary that you call tinc with the -n
 option.  In this case, the network name would just be empty, and it will
-be used as such.  tinc now looks for files in @value{sysconfdir}/tinc/, instead of
-@value{sysconfdir}/tinc/@var{netname}/; the configuration file should be @value{sysconfdir}/tinc/tinc.conf,
-and the host configuration files are now expected to be in @value{sysconfdir}/tinc/hosts/.
+be used as such.  tinc now looks for files in @file{@value{sysconfdir}/tinc/}, instead of
+@file{@value{sysconfdir}/tinc/@var{netname}/}; the configuration file should be @file{@value{sysconfdir}/tinc/tinc.conf},
+and the host configuration files are now expected to be in @file{@value{sysconfdir}/tinc/hosts/}.
 
 But it is highly recommended that you use this feature of tinc, because
 it will be so much clearer whom your daemon talks to.  Hence, we will
@@ -828,7 +846,7 @@ assume that you use it.
 
 
 @c ==================================================================
-@node    How connections work, Configuration files, Multiple networks, Configuration
+@node    How connections work
 @section How connections work
 
 When tinc starts up, it parses the command-line options and then
@@ -853,7 +871,7 @@ It does not matter if two tinc daemons have a `ConnectTo' value pointing to each
 
 
 @c ==================================================================
-@node    Configuration files, Generating keypairs, How connections work, Configuration
+@node    Configuration files
 @section Configuration files
 
 The actual configuration of the daemon is done in the file
@@ -885,18 +903,18 @@ other comments are between square brackets.
 
 
 @c ==================================================================
-@node       Main configuration variables, Host configuration variables, Configuration files, Configuration files
+@node       Main configuration variables
 @subsection Main configuration variables
 
 @table @asis
 @cindex AddressFamily
-@item @var{AddressFamily} = <ipv4|ipv6|any> (any)
+@item AddressFamily = <ipv4|ipv6|any> (any)
 This option affects the address family of listening and outgoing sockets.
-If "any" is selected, then depending on the operating system
+If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
 @cindex BindToAddress
-@item @var{BindToAddress} = <address> [experimental]
+@item BindToAddress = <@var{address}> [experimental]
 If your computer has more than one IPv4 or IPv6 address, tinc
 will by default listen on all of them for incoming connections.
 It is possible to bind only to a single address with this variable.
@@ -904,7 +922,7 @@ It is possible to bind only to a single address with this variable.
 This option may not work on all platforms.
 
 @cindex BindToInterface
-@item @var{BindToInterface} = <interface> [experimental]
+@item BindToInterface = <@var{interface}> [experimental]
 If you have more than one network interface in your computer, tinc will
 by default listen on all of them for incoming connections.  It is
 possible to bind tinc to a single interface like eth0 or ppp0 with this
@@ -913,7 +931,7 @@ variable.
 This option may not work on all platforms.
 
 @cindex ConnectTo
-@item @var{ConnectTo} = <name>
+@item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.
 Multiple ConnectTo variables may be specified,
 in which case outgoing connections to each specified tinc daemon are made.
@@ -925,16 +943,16 @@ tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
 @cindex Device
-@item @var{Device} = <device> (@file{/dev/tap0}, @file{/dev/net/tun} or other depending on platform)
+@item Device = <@var{device}> (@file{/dev/tap0}, @file{/dev/net/tun} or other depending on platform)
 The virtual network device to use.
-tinc will automatically detect what kind of device it is.
+Tinc will automatically detect what kind of device it is.
 Note that you can only use one device per daemon.
 Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
 
 @cindex Hostnames
-@item @var{Hostnames} = <yes|no> (no)
+@item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
 should be resolved.  Since DNS lookups are blocking, it might affect
 tinc's efficiency, even stopping the daemon for a few seconds everytime
@@ -944,14 +962,14 @@ This does not affect resolving hostnames to IP addresses from the
 configuration file.
 
 @cindex Interface
-@item @var{Interface} = <interface>
+@item Interface = <@var{interface}>
 Defines the name of the interface corresponding to the virtual network device.
 Depending on the operating system and the type of device this may or may not actually set the name of the interface.
 Under Windows, this variable is used to select which network interface will be used.
 If you specified a Device, this variable is almost always already correctly set.
 
 @cindex Mode
-@item @var{Mode} = <router|switch|hub> (router)
+@item Mode = <router|switch|hub> (router)
 This option selects the way packets are routed to other daemons.
 
 @table @asis
@@ -980,82 +998,84 @@ while no routing table is managed.
 @end table
 
 @cindex KeyExpire
-@item @var{KeyExpire} = <seconds> (3600)
+@item KeyExpire = <@var{seconds}> (3600)
 This option controls the time the encryption keys used to encrypt the data
 are valid.  It is common practice to change keys at regular intervals to
 make it even harder for crackers, even though it is thought to be nearly
 impossible to crack a single key.
 
 @cindex MACExpire
-@item @var{MACExpire} = <seconds> (600)
+@item MACExpire = <@var{seconds}> (600)
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when Mode is set to "switch".
 
 @cindex Name
-@item @var{Name} = <name> [required]
+@item Name = <@var{name}> [required]
 This is a symbolic name for this connection.  It can be anything
 
 @cindex PingTimeout
-@item @var{PingTimeout} = <seconds> (60)
+@item PingTimeout = <@var{seconds}> (60)
 The number of seconds of inactivity that tinc will wait before sending a
 probe to the other end.  If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
 @cindex PriorityInheritance
-@item @var{PriorityInheritance} = <yes|no> (no) [experimental]
+@item PriorityInheritance = <yes|no> (no) [experimental]
 When this option is enabled the value of the TOS field of tunneled IPv4 packets
 will be inherited by the UDP packets that are sent out.
 
 @cindex PrivateKey
-@item @var{PrivateKey} = <key> [obsolete]
+@item PrivateKey = <@var{key}> [obsolete]
 This is the RSA private key for tinc. However, for safety reasons it is
 advised to store private keys of any kind in separate files. This prevents
 accidental eavesdropping if you are editting the configuration file.
 
 @cindex PrivateKeyFile
-@item @var{PrivateKeyFile} = <path> (@file{@value{sysconfdir}/tinc/@var{netname}/rsa_key.priv})
+@item PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/rsa_key.priv})
 This is the full path name of the RSA private key file that was
-generated by ``tincd --generate-keys''.  It must be a full path, not a
+generated by @samp{tincd --generate-keys}.  It must be a full path, not a
 relative directory.
 
-Note that there must be exactly one of @var{PrivateKey}
-or @var{PrivateKeyFile}
+Note that there must be exactly one of PrivateKey
+or PrivateKeyFile
 specified in the configuration file.
 
 @end table
 
 
 @c ==================================================================
-@node       Host configuration variables, Scripts, Main configuration variables, Configuration files
+@node       Host configuration variables
 @subsection Host configuration variables
 
 @table @asis
 @cindex Address
-@item @var{Address} = <IP address|hostname> [recommended]
+@item Address = <@var{IP address}|@var{hostname}> [recommended]
 This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 
 @cindex Cipher
-@item @var{Cipher} = <cipher> (blowfish)
+@item Cipher = <@var{cipher}> (blowfish)
 The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by OpenSSL is recognized.
+Furthermore, specifying "none" will turn off packet encryption.
+It is best to use only those ciphers which support CBC mode.
 
 @cindex Compression
-@item @var{Compression} = <level> (0)
+@item Compression = <@var{level}> (0)
 This option sets the level of compression used for UDP packets.
 Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 10 (fast lzo) and 11 (best lzo).
 
 @cindex Digest
-@item @var{Digest} = <digest> (sha1)
+@item Digest = <@var{digest}> (sha1)
 The digest algorithm used to authenticate UDP packets.
 Any digest supported by OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet authentication.
 
 @cindex IndirectData
-@item @var{IndirectData} = <yes|no> (no)
+@item IndirectData = <yes|no> (no)
 This option specifies whether other tinc daemons besides the one you
 specified with ConnectTo can make a direct connection to you.  This is
 especially useful if you are behind a firewall and it is impossible to
@@ -1063,24 +1083,24 @@ make a connection from the outside to your tinc daemon.  Otherwise, it
 is best to leave this option out or set it to no.
 
 @cindex MACLength
-@item @var{MACLength} = <length> (4)
+@item MACLength = <@var{bytes}> (4)
 The length of the message authentication code used to authenticate UDP packets.
 Can be anything from 0
 up to the length of the digest produced by the digest algorithm.
 
 @cindex Port
-@item @var{Port} = <port> (655)
+@item Port = <@var{port}> (655)
 This is the port this tinc daemon listens on.
-You can use decimal portnumbers or symbolic names (as listed in /etc/services).
+You can use decimal portnumbers or symbolic names (as listed in @file{/etc/services}).
 
 @cindex PublicKey
-@item @var{PublicKey} = <key> [obsolete]
+@item PublicKey = <@var{key}> [obsolete]
 This is the RSA public key for this host.
 
 @cindex PublicKeyFile
-@item @var{PublicKeyFile} = <path> [obsolete]
+@item PublicKeyFile = <@var{path}> [obsolete]
 This is the full path name of the RSA public key file that was generated
-by ``tincd --generate-keys''.  It must be a full path, not a relative
+by @samp{tincd --generate-keys}.  It must be a full path, not a relative
 directory.
 
 @cindex PEM format
@@ -1092,9 +1112,9 @@ in each host configuration file, if you want to be able to establish a
 connection with that host.
 
 @cindex Subnet
-@item @var{Subnet} = <address[/prefixlength]>
+@item Subnet = <@var{address}[/@var{prefixlength}]>
 The subnet which this tinc daemon will serve.
-tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
+Tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
 If the packet matches a subnet,
 it will be sent to the daemon who has this subnet in his host configuration file.
 Multiple subnet lines can be specified for each daemon.
@@ -1117,7 +1137,7 @@ example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
 @cindex TCPonly
-@item @var{TCPonly} = <yes|no> (no) [experimental]
+@item TCPonly = <yes|no> (no) [experimental]
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
@@ -1127,13 +1147,13 @@ Setting this options also implicitly sets IndirectData.
 
 
 @c ==================================================================
-@node       Scripts, How to configure, Host configuration variables, Configuration files
+@node       Scripts
 @subsection Scripts
 
 @cindex scripts
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
-On Windows (not Cygwin), the scripts should have the extension .bat.
+Under Windows (not Cygwin), the scripts should have the extension .bat.
 
 @table @file
 @cindex tinc-up
@@ -1196,7 +1216,7 @@ this is set to the port number it uses for communication with other tinc daemons
 
 
 @c ==================================================================
-@node       How to configure,  , Scripts, Configuration files
+@node       How to configure
 @subsection How to configure
 
 @subsubheading Step 1.  Creating the main configuration file
@@ -1230,7 +1250,7 @@ You might also need to add a `Port' if you want your tinc daemon to run on a dif
 
 
 @c ==================================================================
-@node    Generating keypairs, Network interfaces, Configuration files, Configuration
+@node    Generating keypairs
 @section Generating keypairs
 
 @cindex key generation
@@ -1241,12 +1261,12 @@ you can easily create a public/private keypair by entering the following command
 tincd -n @var{netname} -K
 @end example
 
-tinc will generate a public and a private key and ask you where to put them.
+Tinc will generate a public and a private key and ask you where to put them.
 Just press enter to accept the defaults.
 
 
 @c ==================================================================
-@node    Network interfaces, Example configuration, Generating keypairs, Configuration
+@node    Network interfaces
 @section Network interfaces
 
 Before tinc can start transmitting data over the tunnel, it must
@@ -1255,14 +1275,15 @@ set up the virtual network interface.
 First, decide which IP addresses you want to have associated with these
 devices, and what network mask they must have.
 
-tinc will open a virtual network device (@file{/dev/tun}, @file{/dev/tap0} or similar),
-which will also create a network interface called something like `tun0', `tap0', or,
-if you are using the Linux tun/tap driver, the network interface will by default have the same name as the netname.
+Tinc will open a virtual network device (@file{/dev/tun}, @file{/dev/tap0} or similar),
+which will also create a network interface called something like @samp{tun0}, @samp{tap0}.
+If you are using the Linux tun/tap driver, the network interface will by default have the same name as the @var{netname}.
+Under Windows you can change the name of the network interface from the Network Connections control panel.
 
 @cindex tinc-up
 You can configure the network interface by putting ordinary ifconfig, route, and other commands
-to a script named @file{@value{sysconfdir}/tinc/@var{netname}/tinc-up}. When tinc starts, this script
-will be executed. When tinc exits, it will execute the script named
+to a script named @file{@value{sysconfdir}/tinc/@var{netname}/tinc-up}.
+When tinc starts, this script will be executed. When tinc exits, it will execute the script named
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc-down}, but normally you don't need to create that script.
 
 An example @file{tinc-up} script:
@@ -1280,9 +1301,13 @@ The kernel will also bring the interface up after this command.
 The netmask is the mask of the @emph{entire} VPN network, not just your
 own subnet.
 
+The exact syntax of the ifconfig and route commands differs from platform to platform.
+You can look up the commands for setting addresses and adding routes in @ref{Platform specific information},
+but it is best to consult the manpages of those utilities on your platform.
+
 
 @c ==================================================================
-@node    Example configuration,  , Network interfaces, Configuration
+@node    Example configuration
 @section Example configuration
 
 
@@ -1302,9 +1327,9 @@ C: net 10.3.0.0 mask 255.255.0.0 gateway 10.3.69.254 internet IP 3.4.5.6
 D: net 10.4.0.0 mask 255.255.0.0 gateway 10.4.3.32 internet IP 4.5.6.7
 @end example
 
-``gateway'' is the VPN IP address of the machine that is running the
-tincd.  ``internet IP'' is the IP address of the firewall, which does not
-need to run tincd, but it must do a port forwarding of TCP&UDP on port
+Here, ``gateway'' is the VPN IP address of the machine that is running the
+tincd, and ``internet IP'' is the IP address of the firewall, which does not
+need to run tincd, but it must do a port forwarding of TCP and UDP on port
 655 (unless otherwise configured).
 
 In this example, it is assumed that eth0 is the interface that points to
@@ -1322,7 +1347,7 @@ In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
-# ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
+# ifconfig eth0 10.1.54.1 netmask 255.255.0.0
 
 ifconfig $INTERFACE 10.1.54.1 netmask 255.0.0.0
 @end example
@@ -1335,7 +1360,7 @@ PrivateKeyFile = @value{sysconfdir}/tinc/company/rsa_key.priv
 Device = /dev/tap0
 @end example
 
-On all hosts, @value{sysconfdir}/tinc/company/hosts/BranchA contains:
+On all hosts, @file{@value{sysconfdir}/tinc/company/hosts/BranchA} contains:
 
 @example
 Subnet = 10.1.0.0/16
@@ -1358,7 +1383,7 @@ In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
-# ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
+# ifconfig eth0 10.2.43.8 netmask 255.255.0.0
 
 ifconfig $INTERFACE 10.2.1.12 netmask 255.0.0.0
 @end example
@@ -1393,7 +1418,7 @@ In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
-# ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
+# ifconfig eth0 10.3.69.254 netmask 255.255.0.0
 
 ifconfig $INTERFACE 10.3.69.254 netmask 255.0.0.0
 @end example
@@ -1429,7 +1454,7 @@ In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
 # Real interface of internal network:
-# ifconfig eth0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
+# ifconfig eth0 10.4.3.32 netmask 255.255.0.0
 
 ifconfig $INTERFACE 10.4.3.32 netmask 255.0.0.0
 @end example
@@ -1482,7 +1507,7 @@ their daemons, tinc will try connecting until they are available.
 
 
 @c ==================================================================
-@node    Running tinc, Technical information, Configuration, Top
+@node    Running tinc
 @chapter Running tinc
 
 If everything else is done, you can start tinc by typing the following command:
@@ -1492,18 +1517,20 @@ tincd -n @var{netname}
 @end example
 
 @cindex daemon
-tinc will detach from the terminal and continue to run in the background like a good daemon.
+Tinc will detach from the terminal and continue to run in the background like a good daemon.
 If there are any problems however you can try to increase the debug level
 and look in the syslog to find out what the problems are.
 
 @menu
 * Runtime options::
+* Solving problems::
 * Error messages::
+* Sending bug reports::
 @end menu
 
 
 @c ==================================================================
-@node    Runtime options, Error messages, Running tinc, Running tinc
+@node    Runtime options
 @section Runtime options
 
 Besides the settings in the configuration file, tinc also accepts some
@@ -1514,8 +1541,8 @@ command line options.
 @cindex options
 @c from the manpage
 @table @option
-@item -c, --config=PATH
-Read configuration options from the directory PATH.  The default is
+@item -c, --config=@var{path}
+Read configuration options from the directory @var{path}.  The default is
 @file{@value{sysconfdir}/tinc/@var{netname}/}.
 
 @item -D, --no-detach
@@ -1523,21 +1550,21 @@ Don't fork and detach.
 This will also disable the automatic restart mechanism for fatal errors.
 
 @cindex debug level
-@item -d, --debug=LEVEL
-Set debug level to LEVEL.  The higher the debug level, the more gets
+@item -d, --debug=@var{level}
+Set debug level to @var{level}.  The higher the debug level, the more gets
 logged.  Everything goes via syslog.
 
-@item -k, --kill[=SIGNAL]
-Attempt to kill a running tincd (optionally with the specified SIGNAL instead of SIGTERM) and exit.
+@item -k, --kill[=@var{signal}]
+Attempt to kill a running tincd (optionally with the specified @var{signal} instead of SIGTERM) and exit.
 Use it in conjunction with the -n option to make sure you kill the right tinc daemon.
 Under native Windows the optional argument is ignored,
 the service will always be stopped and removed.
 
-@item -n, --net=NETNAME
-Connect to net NETNAME.  @xref{Multiple networks}.
+@item -n, --net=@var{netname}
+Use configuration for net @var{netname}. @xref{Multiple networks}.
 
-@item -K, --generate-keys[=BITS]
-Generate public/private keypair of BITS length. If BITS is not specified,
+@item -K, --generate-keys[=@var{bits}]
+Generate public/private keypair of @var{bits} length. If @var{bits} is not specified,
 1024 is the default. tinc will ask where you want to store the files,
 but will default to the configuration directory (you can use the -c or -n option
 in combination with -K). After that, tinc will quit.
@@ -1546,12 +1573,12 @@ in combination with -K). After that, tinc will quit.
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
 
-@item --logfile[=FILE]
+@item --logfile[=@var{file}]
 Write log entries to a file instead of to the system logging facility.
-If FILE is omitted, the default is @value{localstatedir}/log/tinc.NETNAME.log.
+If @var{file} is omitted, the default is @file{@value{localstatedir}/log/tinc.@var{netname}.log}.
 
-@item --pidfile=FILE
-Write PID to FILE instead of @value{localstatedir}/run/tinc.NETNAME.pid.
+@item --pidfile=@var{file}
+Write PID to @var{file} instead of @file{@value{localstatedir}/run/tinc.@var{netname}.pid}.
 
 @item --bypass-security
 Disables encryption and authentication.
@@ -1565,16 +1592,46 @@ Output version information and exit.
 
 @end table
 
+@c ==================================================================
+@node    Solving problems
+@section Solving problems
+
+If tinc starts without problems, but if the VPN doesn't work, you will have to find the cause of the problem.
+The first thing to do is to start tinc with a high debug level in the foreground,
+so you can directly see everything tinc logs:
+
+@example
+tincd -n @var{netname} -d5 -D
+@end example
+
+If tinc does not log any error messages, then you might want to check the following things:
+
+@itemize
+@item @file{tinc-up} script
+Does this script contain the right commands?
+Normally you must give the interface the address of this host on the VPN, and the netmask must be big enough so that the entire VPN is covered.
+
+@item Subnet
+Does the Subnet (or Subnets) in the host configuration file of this host match the portion of the VPN that belongs to this host?
+
+@item Firewalls and NATs
+Do you have a firewall or a NAT device (a masquerading firewall or perhaps an ADSL router that performs masquerading)?
+If so, check that it allows TCP and UDP traffic on port 655.
+If it masquerades and the host running tinc is behind it, make sure that it forwards TCP and UDP traffic to port 655 to the host running tinc.
+You can add @samp{TCPOnly = yes} to your host config file to force tinc to only use a single TCP connection,
+this works through most firewalls and NATs.
+
+@end itemize
+
 
 @c ==================================================================
-@node    Error messages,  , Runtime options, Running tinc
+@node    Error messages
 @section Error messages
 
-What follows is a list of the most common error messages you can see
-when configuring tinc.  Most of these messages are visible in the syslog
-only, so keep an eye on it!
+What follows is a list of the most common error messages you might find in the logs.
+Some of them will only be visible if the debug level is high enough.
 
-@table @strong
+@table @samp
 @item Could not open /dev/tap0: No such device
 
 @itemize
@@ -1587,6 +1644,52 @@ only, so keep an eye on it!
 @itemize
 @item You forgot to `modprobe tun'.
 @item You forgot to compile `Universal TUN/TAP driver' in the kernel.
+@item The tun device is located somewhere else in @file{/dev/}.
+@end itemize
+
+@item Network address and prefix length do not match!
+
+@itemize
+@item The Subnet field must contain a @emph{network} address, trailing bits should be 0.
+@item If you only want to use one IP address, set the netmask to /32.
+@end itemize
+
+@item Error reading RSA key file `rsa_key.priv': No such file or directory
+
+@itemize
+@item You forgot to create a public/private keypair.
+@item Specify the complete pathname to the private key file with the @samp{PrivateKeyFile} option.
+@end itemize
+
+@item Warning: insecure file permissions for RSA private key file `rsa_key.priv'!
+
+@itemize
+@item The private key file is readable by users other than root.
+Use chmod to correct the file permissions.
+@end itemize
+
+@item Creating metasocket failed: Address family not supported
+
+@itemize
+@item By default tinc tries to create both IPv4 and IPv6 sockets.
+On some platforms this might not be implemented.
+If the logs show @samp{Ready} later on, then at least one metasocket was created,
+and you can ignore this message.
+You can add @samp{AddressFamily = ipv4} to @file{tinc.conf} to prevent this from happening.
+@end itemize
+
+@item Cannot route packet: unknown IPv4 destination 1.2.3.4
+
+@itemize
+@item You try to send traffic to a host on the VPN for which no Subnet is known.
+@item If it is a broadcast address (ending in .255), it probably is a samba server or a Windows host sending broadcast packets.
+You can ignore it.
+@end itemize
+
+@item Cannot route packet: ARP request for unknown address 1.2.3.4
+
+@itemize
+@item You try to send traffic to a host on the VPN for which no Subnet is known.
 @end itemize
 
 @item Packet with destination 1.2.3.4 is looping back to us!
@@ -1600,40 +1703,55 @@ just as large as the prefix of the virtual network interface. The latter should 
 cases be larger. Rethink your configuration.
 Note that you will only see this message if you specified a debug
 level of 5 or higher!
-@item Chances are that a `Subnet = ...' line in the host configuration file of this tinc daemon is wrong.
+@item Chances are that a @samp{Subnet = ...} line in the host configuration file of this tinc daemon is wrong.
 Change it to a subnet that is accepted locally by another interface,
 or if that is not the case, try changing the prefix length into /32. 
 @end itemize
 
-@item Network doesn't work, syslog shows only packets of length 46
-
-@item Network address and prefix length do not match!
+@item Node foo (1.2.3.4) is not reachable
 
 @itemize
-@item The Subnet field must contain a @emph{network} address.
-@item If you only want to use one IP address, set the netmask to /32.
+@item Node foo does not have a connection anymore, its tinc daemon is not running or its connection to the Internet is broken.
 @end itemize
 
-@item This is a bug: net.c:253: 24: Some error
+@item Received UDP packet from unknown source 1.2.3.4 (port 12345)
 
 @itemize
-@item This is something that should not have happened.
-Please report this, and tell us exactly what went wrong before you got
-this message.  In normal operation, these errors should not occur.
+@item If you see this only sporadically, it is harmless and caused by a node sending packets using an old key.
+@item If you see this often and another node is not reachable anymore, then a NAT (masquerading firewall) is changing the source address of UDP packets.
+You can add @samp{TCPOnly = yes} to host configuration files to force all VPN traffic to go over a TCP connection.
 @end itemize
 
-@item Error reading RSA key file `rsa_key.priv': No such file or directory
+@item Got bad/bogus/unauthorized REQUEST from foo (1.2.3.4 port 12345)
 
 @itemize
-@item You must specify the complete pathname.
-Specifying a relative path does not make sense here.  tinc changes its
-directory to / when starting (to avoid keeping a mount point busy).
+@item Node foo does not have the right public/private keypair.
+Generate new keypairs and distribute them again.
+@item An attacker tries to gain access to your VPN.
+@item A network error caused corruption of metadata sent from foo.
 @end itemize
 
 @end table
 
 @c ==================================================================
-@node    Technical information, About us, Running tinc, Top
+@node    Sending bug reports
+@section Sending bug reports
+
+If you really can't find the cause of a problem, or if you suspect tinc is not working right,
+you can send us a bugreport, see @ref{Contact information}.
+Be sure to include the following information in your bugreport:
+
+@itemize
+@item A clear description of what you are trying to achieve and what the problem is.
+@item What platform (operating system, version, hardware architecture) and which version of tinc you use.
+@item If compiling tinc fails, a copy of @file{config.log} and the error messages you get.
+@item Otherwise, a copy of @file{tinc.conf}, @file{tinc-up} and all files in the @file{hosts/} directory.
+@item The output of the commands @samp{ifconfig -a} and @samp{route -n} (or @samp{netstat -rn} if that doesn't work).
+@item The output of any command that fails to work as it should (like ping or traceroute).
+@end itemize
+
+@c ==================================================================
+@node    Technical information
 @chapter Technical information
 
 
@@ -1645,11 +1763,11 @@ directory to / when starting (to avoid keeping a mount point busy).
 
 
 @c ==================================================================
-@node    The connection, The meta-protocol, Technical information, Technical information
+@node    The connection
 @section The connection
 
 @cindex connection
-tinc is a daemon that takes VPN data and transmit that to another host
+Tinc is a daemon that takes VPN data and transmit that to another host
 computer over the existing Internet infrastructure.
 
 @menu
@@ -1659,7 +1777,7 @@ computer over the existing Internet infrastructure.
 
 
 @c ==================================================================
-@node    The UDP tunnel, The meta-connection, The connection, The connection
+@node    The UDP tunnel
 @subsection The UDP tunnel
 
 @cindex virtual network device
@@ -1706,7 +1824,7 @@ However, if it is a `tap' device (this is the only available type on FreeBSD),
 the destination MAC address must match that of the virtual network interface.
 If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC 
 can not be known by the sending host.
-tinc solves this by letting the receiving end detect the MAC address of its own virtual network interface
+Tinc solves this by letting the receiving end detect the MAC address of its own virtual network interface
 and overwriting the destination MAC address of the received packet.
 
 In switch or hub modes ARP does work so the sender already knows the correct destination MAC address.
@@ -1717,7 +1835,7 @@ OpenBSD, NetBSD, Darwin and Solaris.
 
 
 @c ==================================================================
-@node    The meta-connection,  , The UDP tunnel, The connection
+@node    The meta-connection
 @subsection The meta-connection
 
 Having only a UDP connection available is not enough.  Though suitable
@@ -1751,7 +1869,7 @@ start re-sending packets.
 
 
 @c ==================================================================
-@node    The meta-protocol, Security, The connection, Technical information
+@node    The meta-protocol
 @section The meta-protocol
 
 The meta protocol is used to tie all tinc daemons together, and
@@ -1868,17 +1986,16 @@ is also some other traffic. A little bit of salt (random data) is added
 with each PING and PONG message, to make sure that long sequences of PING/PONG
 messages without any other traffic won't result in known plaintext.
 
-This basically covers what is sent over the meta connection by
-tinc.
+This basically covers what is sent over the meta connection by tinc.
 
 
 @c ==================================================================
-@node    Security,  , The meta-protocol, Technical information
-@section About tinc's encryption and other security-related issues.
+@node    Security
+@section Security
 
 @cindex TINC
 @cindex Cabal
-tinc got its name from ``TINC,'' short for @emph{There Is No Cabal}; the
+Tinc got its name from ``TINC,'' short for @emph{There Is No Cabal}; the
 alleged Cabal was/is an organisation that was said to keep an eye on the
 entire Internet.  As this is exactly what you @emph{don't} want, we named
 the tinc project after TINC.
@@ -1887,7 +2004,7 @@ the tinc project after TINC.
 But in order to be ``immune'' to eavesdropping, you'll have to encrypt
 your data.  Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
 exactly that: encrypt.
-tinc by default uses blowfish encryption with 128 bit keys in CBC mode, 32 bit
+Tinc by default uses blowfish encryption with 128 bit keys in CBC mode, 32 bit
 sequence numbers and 4 byte long message authentication codes to make sure
 eavesdroppers cannot get and cannot change any information at all from the
 packets they can intercept. The encryption algorithm and message authentication
@@ -1898,11 +2015,12 @@ encryption algorithm is always the default length used by OpenSSL.
 @menu
 * Authentication protocol::
 * Encryption of network packets::
+* Security issues::
 @end menu
 
 
 @c ==================================================================
-@node       Authentication protocol, Encryption of network packets, Security, Security
+@node       Authentication protocol
 @subsection Authentication protocol
 
 @cindex authentication
@@ -2016,8 +2134,8 @@ an attacker) in the beginning of the encrypted stream.
 
 
 @c ==================================================================
-@node       Encryption of network packets,  , Authentication protocol, Security
-@subsection Encryption of network packet
+@node       Encryption of network packets
+@subsection Encryption of network packets
 @cindex encryption
 
 A data packet can only be sent if the encryption key is known to both
@@ -2045,22 +2163,161 @@ first 4 bytes of the digest are used for this, but this can be changed using
 the MACLength configuration variable.
 
 @c ==================================================================
-@node    About us, Concept Index, Technical information, Top
+@node    Security issues
+@subsection Security issues
+
+In August 2000, we discovered the existence of a security hole in all versions
+of tinc up to and including 1.0pre2. This had to do with the way we exchanged
+keys. Since then, we have been working on a new authentication scheme to make
+tinc as secure as possible. The current version uses the OpenSSL library and
+uses strong authentication with RSA keys.
+
+On the 29th of December 2001, Jerome Etienne posted a security analysis of tinc
+1.0pre4. Due to a lack of sequence numbers and a message authentication code
+for each packet, an attacker could possibly disrupt certain network services or
+launch a denial of service attack by replaying intercepted packets. The current
+version adds sequence numbers and message authentication codes to prevent such
+attacks.
+
+On the 15th of September 2003, Peter Gutmann posted a security analysis of tinc
+1.0.1. He argues that the 32 bit sequence number used by tinc is not a good IV,
+that tinc's default length of 4 bytes for the MAC is too short, and he doesn't
+like tinc's use of RSA during authentication. We do not know of a security hole
+in this version of tinc, but tinc's security is not as strong as TLS or IPsec.
+We will address these issues in tinc 2.0.
+
+Cryptography is a hard thing to get right. We cannot make any
+guarantees. Time, review and feedback are the only things that can
+prove the security of any cryptographic product. If you wish to review
+tinc or give us feedback, you are stronly encouraged to do so.
+
+
+@c ==================================================================
+@node    Platform specific information
+@chapter Platform specific information
+
+@menu
+* Interface configuration::
+* Routes::
+@end menu
+
+@c ==================================================================
+@node    Interface configuration
+@section Interface configuration
+
+When configuring an interface, one normally assigns it an address and a
+netmask.  The address uniquely identifies the host on the network attached to
+the interface.  The netmask, combined with the address, forms a subnet.  It is
+used to add a route to the routing table instructing the kernel to send all
+packets which fall into that subnet to that interface.  Because all packets for
+the entire VPN should go to the virtual network interface used by tinc, the
+netmask should be such that it encompasses the entire VPN.
+
+For IPv4 addresses:
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item Linux
+@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@item Linux iproute2
+@tab @code{ip addr add} @var{address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@item FreeBSD
+@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@item OpenBSD
+@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@item NetBSD
+@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@item Solaris
+@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@item Darwin (MacOS/X)
+@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@item Windows
+@tab @code{netsh interface ip set address} @var{interface} @code{static} @var{address} @var{netmask}
+@end multitable
+
+
+For IPv6 addresses:
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item Linux
+@tab @code{ifconfig} @var{interface} @code{add} @var{address}@code{/}@var{prefixlength}
+@item FreeBSD
+@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@item OpenBSD
+@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@item NetBSD
+@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@item Solaris
+@tab @code{ifconfig} @var{interface} @code{inet6 addif} @var{address}@code{/}@var{prefixlength}
+@item Darwin (MacOS/X)
+@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@item Windows
+@tab @code{netsh interface ipv6 add address} @var{interface} @code{static} @var{address}/@var{prefixlength}
+@end multitable
+
+
+@c ==================================================================
+@node    Routes
+@section Routes
+
+In some cases it might be necessary to add more routes to the virtual network
+interface.  There are two ways to indicate which interface a packet should go
+to, one is to use the name of the interface itself, another way is to specify
+the (local) address that is assigned to that interface (@var{local_address}). The
+former way is unambiguous and therefore preferable, but not all platforms
+support this.
+
+Adding routes to IPv4 subnets:
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item Linux
+@tab @code{route add -net} @var{network_address} @code{netmask} @var{netmask} @var{interface}
+@item Linux iproute2
+@tab @code{ip route add} @var{network_address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@item FreeBSD
+@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@item OpenBSD
+@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@item NetBSD
+@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@item Solaris
+@item Darwin (MacOS/X)
+@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@item Windows
+@end multitable
+
+Adding routes to IPv6 subnets:
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item Linux
+@tab @code{route add -A inet6} @var{network_address}@code{/}@var{prefixlength} @var{interface}
+@item Linux iproute2
+@tab @code{ip route add} @var{network_address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@item OpenBSD
+@item NetBSD
+@item Solaris
+@item Darwin (MacOS/X)
+@item Windows
+@tab @code{netsh interface ipv6 add route} @var{network address}/@var{prefixlength} @var{interface}
+@end multitable
+
+
+@c ==================================================================
+@node    About us
 @chapter About us
 
 
 @menu
-* Contact Information::
+* Contact information::
 * Authors::
 @end menu
 
 
 @c ==================================================================
-@node    Contact Information, Authors, About us, About us
+@node    Contact information
 @section Contact information
 
 @cindex website
-tinc's website is at @url{http://tinc.nl.linux.org/},
+Tinc's website is at @url{http://tinc.nl.linux.org/},
 this server is located in the Netherlands.
 
 @cindex IRC
@@ -2072,7 +2329,7 @@ and join channel #tinc.
 
 
 @c ==================================================================
-@node    Authors,  , Contact Information, About us
+@node    Authors
 @section Authors
 
 @table @asis
@@ -2087,8 +2344,7 @@ the source distribution.
 
 
 @c ==================================================================
-@node    Concept Index,  , About us, Top
-@c        node-name,    next, previous,        up
+@node    Concept Index
 @unnumbered Concept Index
 
 @c ==================================================================

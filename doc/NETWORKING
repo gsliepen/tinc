@@ -12,7 +12,7 @@ Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: NETWORKING,v 1.3 2003/08/24 20:38:18 guus Exp $
+   $Id: NETWORKING,v 1.1.2.3 2002/06/21 10:11:10 guus Exp $
 
 1. Packet flow
 ==============

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.32 2003/08/24 20:38:27 guus Exp $
+    $Id: protocol.c,v 1.28.4.148 2003/11/17 15:30:17 guus Exp $
 */
 
 #include "system.h"
@@ -29,6 +29,8 @@
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
+
+bool tunnelserver = false;
 
 /* Jumptable for the request handlers */
 
@@ -219,7 +221,7 @@ bool seen_request(char *request)
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
 		return true;
 	} else {
-		new = (past_request_t *) xmalloc(sizeof(*new));
+		new = xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
 		new->firstseen = now;
 		avl_insert(past_request_tree, new);
@@ -237,7 +239,7 @@ void age_past_requests(void)
 
 	for(node = past_request_tree->head; node; node = next) {
 		next = node->next;
-		p = (past_request_t *) node->data;
+		p = node->data;
 
 		if(p->firstseen + pingtimeout < now)
 			avl_delete_node(past_request_tree, node), deleted++;

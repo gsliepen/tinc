@@ -10,7 +10,7 @@ dnl  /* Define to rpl_malloc if the replacement function should be used.  */
 dnl  #undef malloc
 dnl
 
-AC_DEFUN(jm_FUNC_MALLOC,
+AC_DEFUN([jm_FUNC_MALLOC],
 [
  if test x = y; then
    dnl This code is deliberately never run via ./configure.
@@ -23,21 +23,19 @@ AC_DEFUN(jm_FUNC_MALLOC,
  AC_DEFINE(HAVE_DONE_WORKING_MALLOC_CHECK, 1, [Needed for xmalloc.c])
 
  AC_CACHE_CHECK([for working malloc], jm_cv_func_working_malloc,
-  [AC_TRY_RUN([
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([
     char *malloc ();
     int
     main ()
     {
       exit (malloc (0) ? 0 : 1);
     }
-	  ],
-	 jm_cv_func_working_malloc=yes,
-	 jm_cv_func_working_malloc=no,
-	 dnl When crosscompiling, assume malloc is broken.
-	 jm_cv_func_working_malloc=no)
+   ])],
+   [jm_cv_func_working_malloc=yes],
+   [jm_cv_func_working_malloc=no],
+   [When crosscompiling])
   ])
   if test $jm_cv_func_working_malloc = no; then
-    dnl This was: LIBOBJS="$LIBOBJS malloc.$ac_objext"
     AC_LIBOBJ([malloc])
     AC_DEFINE(malloc, rpl_malloc, [Replacement malloc()])
   fi

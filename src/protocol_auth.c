@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.5 2003/08/24 20:38:27 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.34 2003/12/22 11:04:16 guus Exp $
 */
 
 #include "system.h"
 
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "avl_tree.h"
@@ -50,7 +51,6 @@ bool send_id(connection_t *c)
 bool id_h(connection_t *c)
 {
 	char name[MAX_STRING_SIZE];
-	bool choice;
 
 	cp();
 
@@ -108,14 +108,6 @@ bool id_h(connection_t *c)
 		return false;
 	}
 
-	/* Check some options */
-
-	if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &choice) && choice) || myself->options & OPTION_INDIRECT)
-		c->options |= OPTION_INDIRECT;
-
-	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
-		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
-
 	c->allow_request = METAKEY;
 
 	return send_metakey(c);
@@ -141,7 +133,7 @@ bool send_metakey(connection_t *c)
 	cp();
 	/* Copy random data to the buffer */
 
-	RAND_bytes(c->outkey, len);
+	RAND_pseudo_bytes(c->outkey, len);
 
 	/* The message we send must be smaller than the modulus of the RSA key.
 	   By definition, for a key of k bits, the following formula holds:
@@ -190,10 +182,14 @@ bool send_metakey(connection_t *c)
 	/* Further outgoing requests are encrypted with the key we just generated */
 
 	if(c->outcipher) {
-		EVP_EncryptInit(c->outctx, c->outcipher,
-						c->outkey + len - c->outcipher->key_len,
-						c->outkey + len - c->outcipher->key_len -
-						c->outcipher->iv_len);
+		if(!EVP_EncryptInit(c->outctx, c->outcipher,
+					c->outkey + len - c->outcipher->key_len,
+					c->outkey + len - c->outcipher->key_len -
+					c->outcipher->iv_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
+					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
 
 		c->status.encryptout = true;
 	}
@@ -262,10 +258,14 @@ bool metakey_h(connection_t *c)
 			return false;
 		}
 
-		EVP_DecryptInit(c->inctx, c->incipher,
-						c->inkey + len - c->incipher->key_len,
-						c->inkey + len - c->incipher->key_len -
-						c->incipher->iv_len);
+		if(!EVP_DecryptInit(c->inctx, c->incipher,
+					c->inkey + len - c->incipher->key_len,
+					c->inkey + len - c->incipher->key_len -
+					c->incipher->iv_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher from %s (%s): %s"),
+					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
 
 		c->status.decryptin = true;
 	} else {
@@ -315,7 +315,7 @@ bool send_challenge(connection_t *c)
 
 	/* Copy random data to the buffer */
 
-	RAND_bytes(c->hischallenge, len);
+	RAND_pseudo_bytes(c->hischallenge, len);
 
 	/* Convert to hex */
 
@@ -375,10 +375,13 @@ bool send_chal_reply(connection_t *c)
 
 	/* Calculate the hash from the challenge we received */
 
-	EVP_DigestInit(&ctx, c->indigest);
-	EVP_DigestUpdate(&ctx, c->mychallenge,
-					 RSA_size(myself->connection->rsa_key));
-	EVP_DigestFinal(&ctx, hash, NULL);
+	if(!EVP_DigestInit(&ctx, c->indigest)
+			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
+			|| !EVP_DigestFinal(&ctx, hash, NULL)) {
+		logger(LOG_ERR, _("Error during calculation of response for %s (%s): %s"),
+			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
 
 	/* Convert the hash to a hexadecimal formatted string */
 
@@ -418,9 +421,13 @@ bool chal_reply_h(connection_t *c)
 
 	/* Calculate the hash from the challenge we sent */
 
-	EVP_DigestInit(&ctx, c->outdigest);
-	EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key));
-	EVP_DigestFinal(&ctx, myhash, NULL);
+	if(!EVP_DigestInit(&ctx, c->outdigest)
+			|| !EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key))
+			|| !EVP_DigestFinal(&ctx, myhash, NULL)) {
+		logger(LOG_ERR, _("Error during calculation of response from %s (%s): %s"),
+			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
 
 	/* Verify the incoming hash with the calculated hash */
 
@@ -452,6 +459,7 @@ bool send_ack(connection_t *c)
 	   to create node_t and edge_t structures. */
 
 	struct timeval now;
+	bool choice;
 
 	cp();
 
@@ -459,6 +467,19 @@ bool send_ack(connection_t *c)
 
 	gettimeofday(&now, NULL);
 	c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
+
+	/* Check some options */
+
+	if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &choice) && choice) || myself->options & OPTION_INDIRECT)
+		c->options |= OPTION_INDIRECT;
+
+	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
+		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
+
+	if((get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) && choice) || myself->options & OPTION_PMTU_DISCOVERY)
+		c->options |= OPTION_PMTU_DISCOVERY;
+
+	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
 
 	return send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 }
@@ -472,16 +493,25 @@ static void send_everything(connection_t *c)
 
 	/* Send all known subnets and edges */
 
+	if(tunnelserver) {
+		for(node = myself->subnet_tree->head; node; node = node->next) {
+			s = node->data;
+			send_add_subnet(c, s);
+		}
+
+		return;
+	}
+
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 
 		for(node2 = n->subnet_tree->head; node2; node2 = node2->next) {
-			s = (subnet_t *) node2->data;
+			s = node2->data;
 			send_add_subnet(c, s);
 		}
 
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = (edge_t *) node2->data;
+			e = node2->data;
 			send_add_edge(c, e);
 		}
 	}
@@ -491,7 +521,7 @@ bool ack_h(connection_t *c)
 {
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress, *dummy;
-	int weight;
+	int weight, mtu;
 	long int options;
 	node_t *n;
 
@@ -526,6 +556,12 @@ bool ack_h(connection_t *c)
 	c->node = n;
 	c->options |= options;
 
+	if(get_config_int(lookup_config(c->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
+		n->mtu = mtu;
+
+	if(get_config_int(lookup_config(myself->connection->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
+		n->mtu = mtu;
+
 	/* Activate this connection */
 
 	c->allow_request = ALL;
@@ -556,7 +592,10 @@ bool ack_h(connection_t *c)
 
 	/* Notify everyone of the new edge */
 
-	send_add_edge(broadcast, c->edge);
+	if(tunnelserver)
+		send_add_edge(c, c->edge);
+	else
+		send_add_edge(broadcast, c->edge);
 
 	/* Run MST and SSSP algorithms */
 

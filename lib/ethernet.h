@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ethernet.h,v 1.2 2003/08/24 20:38:20 guus Exp $
+    $Id: ethernet.h,v 1.1.2.5 2003/10/08 11:34:55 guus Exp $
 */
 
 #ifndef __TINC_ETHERNET_H__
@@ -27,26 +27,38 @@
 #define ETH_ALEN 6
 #endif
 
-#ifndef ETHER_ADDR_LEN
-#define ETHER_ADDR_LEN 6
-#endif
-
 #ifndef ARPHRD_ETHER
 #define ARPHRD_ETHER 1
 #endif
 
-#ifndef ETHERTYPE_IP
-#define ETHERTYPE_IP 0x0800
+#ifndef ETH_P_IP
+#define ETH_P_IP 0x0800
+#endif
+
+#ifndef ETH_P_ARP
+#define ETH_P_ARP 0x0806
+#endif
+
+#ifndef ETH_P_IPV6
+#define ETH_P_IPV6 0x86DD
+#endif
+
+#ifndef HAVE_STRUCT_ETHER_HEADER
+struct ether_header {
+	uint8_t ether_dhost[ETH_ALEN];
+	uint8_t ether_shost[ETH_ALEN];
+	uint16_t ether_type;
+} __attribute__ ((__packed__));
 #endif
 
 #ifndef HAVE_STRUCT_ARPHDR
 struct arphdr {
-	unsigned short int ar_hrd;
-	unsigned short int ar_pro;
-	unsigned char ar_hln;
-	unsigned char ar_pln; 
-	unsigned short int ar_op; 
-};
+	uint16_t ar_hrd;
+	uint16_t ar_pro;
+	uint8_t ar_hln;
+	uint8_t ar_pln; 
+	uint16_t ar_op; 
+} __attribute__ ((__packed__));
 
 #define ARPOP_REQUEST 1 
 #define ARPOP_REPLY 2 
@@ -64,7 +76,7 @@ struct  ether_arp {
 	uint8_t arp_spa[4];
 	uint8_t arp_tha[ETH_ALEN];
 	uint8_t arp_tpa[4];
-};
+} __attribute__ ((__packed__));
 #define arp_hrd ea_hdr.ar_hrd
 #define arp_pro ea_hdr.ar_pro
 #define arp_hln ea_hdr.ar_hln

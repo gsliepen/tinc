@@ -12,7 +12,7 @@ This is the protocol documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: PROTOCOL,v 1.3 2003/08/24 20:38:18 guus Exp $
+   $Id: PROTOCOL,v 1.1.2.8 2002/09/15 22:19:37 guus Exp $
 
 
 1.  Protocols used in tinc

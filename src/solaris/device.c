@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.4 2003/08/27 13:47:52 guus Exp $
+    $Id: device.c,v 1.1.2.17 2003/07/31 11:20:32 guus Exp $
 */
 
 

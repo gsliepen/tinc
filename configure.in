@@ -1,11 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.21 2003/08/24 20:50:30 guus Exp $
+dnl $Id: configure.in,v 1.13.2.86 2004/01/10 23:21:36 guus Exp $
 
-AC_PREREQ(2.57)
-AC_INIT(src/tincd.c)
-AM_INIT_AUTOMAKE(tinc, 2.0-cvs)
-AM_CONFIG_HEADER(config.h)
+AC_PREREQ(2.59)
+AC_INIT
+AC_CONFIG_SRCDIR([src/tincd.c])
+AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
+AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
 dnl Include the macros from the m4/ directory
@@ -197,7 +198,7 @@ AC_STRUCT_TM
 
 tinc_ATTRIBUTE(__malloc__)
 
-AC_CHECK_TYPES([socklen_t, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
+AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
   [#ifdef HAVE_SYS_TYPES_H
    #include <sys/types.h>
    #endif
@@ -253,7 +254,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod fcloseall flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system unsetenv vsyslog])
+AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system unsetenv vsyslog])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
@@ -284,13 +285,13 @@ tinc_LZO
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
-  AC_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
+  AS_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
   [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ]
 )
 
 dnl Check if checkpoint tracing has to be enabled
 AC_ARG_ENABLE(tracing,
-  AC_HELP_STRING([--enable-tracing], [enable checkpoint tracing (debugging only)]),
+  AS_HELP_STRING([--enable-tracing], [enable checkpoint tracing (debugging only)]),
   [ AC_DEFINE(ENABLE_TRACING, 1, [Checkpoint tracing]) ]
 )
 
