@@ -1,6 +1,6 @@
 ## Process this file with automake to get Makefile.in
 
-SUBDIRS = blowfish idea
+SUBDIRS = blowfish
 
 noinst_LTLIBRARIES = libcipher.la
 
