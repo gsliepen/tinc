@@ -19,6 +19,7 @@ We would like to thank
  * Jerome Etienne (for a thorough security analysis of tinc)
  * Mark Glines (for his compression patch) 
  * Nick Patavalis (RedHat package)
+ * Alessandro Gatti (for helping us support Darwin)
 
 for their help, support and ideas.  Thank you guys!
 
