@@ -17,11 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.h,v 1.1.2.2 2000/11/18 18:14:57 guus Exp $
+    $Id: rbl.h,v 1.1.2.3 2000/11/18 23:21:01 guus Exp $
 */
 
 typedef int (*rbl_compare_t) (const void *, const void *);
-typedef void (*rbl_delete_t) (const void *);
+typedef void (*rbl_action_t) (const void *);
 
 typedef struct rbl_t
 {
@@ -48,9 +48,20 @@ typedef struct rbl_t
 
 typedef struct rbltree_t
 {
+  /* callback functions */
+
   rbl_compare_t *compare;
-  rbl_delete_t *delete;
+  rbl_action_t *delete;
+
+  /* tree part */
+
+  struct rbl_t *top;
+
+  /* linked list */
+
   struct rbl_t *head;
+  struct rbl_t *tail;
+
 } rbltree_t;
 
 enum
@@ -59,7 +70,7 @@ enum
   RBL_BLACK;
 };
 
-extern rbl_t *new_rbltree(rbl_compare_t *, rbl_delete_t *);
+extern rbl_t *new_rbltree(rbl_compare_t *, rbl_action_t *);
 extern void free_rbltree(rbltree_t *);
 extern rbl_t *new_rbl(void);
 extern void free_rbl(rbl_t *);
@@ -72,3 +83,5 @@ extern rbl_t *rbl_delete(rbltree_t *, void *);
 extern rbl_t *rbl_insert_rbl(rbltree_t *, rbl_t *);
 extern rbl_t *rbl_unlink_rbl(rbltree_t *, rbl_t *);
 extern rbl_t *rbl_delete_rbl(rbltree_t *, rbl_t *);
+
+extern void rbl_foreach(rbltree_t *, rbl_action_t *);
