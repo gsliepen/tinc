@@ -1,7 +1,7 @@
 /*
     device.c -- raw socket
-    Copyright (C) 2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 2002-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2002-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.6 2003/07/06 22:11:37 guus Exp $
+    $Id: device.c,v 1.1.2.7 2003/07/12 17:41:48 guus Exp $
 */
 
 #include "config.h"
@@ -52,9 +52,6 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-/*
-  open the local ethertap device
-*/
 int setup_device(void)
 {
 	struct ifreq ifr;
@@ -72,7 +69,7 @@ int setup_device(void)
 	device_info = _("raw socket");
 
 	if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device_info,
+		logger(LOG_ERR, _("Could not open %s: %s"), device_info,
 			   strerror(errno));
 		return -1;
 	}
@@ -81,7 +78,7 @@ int setup_device(void)
 	strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't find interface %s: %s"), interface,
+		logger(LOG_ERR, _("Can't find interface %s: %s"), interface,
 			   strerror(errno));
 		return -1;
 	}
@@ -92,11 +89,11 @@ int setup_device(void)
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
 	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof(sa))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not bind to %s: %s"), device, strerror(errno));
+		logger(LOG_ERR, _("Could not bind to %s: %s"), device, strerror(errno));
 		return -1;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return 0;
 }
@@ -108,10 +105,6 @@ void close_device(void)
 	close(device_fd);
 }
 
-/*
-  read, encrypt and send data that is
-  available through the ethertap device
-*/
 int read_packet(vpn_packet_t *packet)
 {
 	int lenin;
@@ -119,7 +112,7 @@ int read_packet(vpn_packet_t *packet)
 	cp();
 
 	if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
 	}
@@ -128,7 +121,7 @@ int read_packet(vpn_packet_t *packet)
 
 	device_total_in += packet->len;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 			   device_info);
 	}
 
@@ -139,11 +132,11 @@ int write_packet(vpn_packet_t *packet)
 {
 	cp();
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
 	if(write(device_fd, packet->data, packet->len) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+		logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 			   strerror(errno));
 		return -1;
 	}
@@ -157,7 +150,7 @@ void dump_device_stats(void)
 {
 	cp();
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 }

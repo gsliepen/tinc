@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.h,v 1.1.2.7 2002/09/09 22:32:27 guus Exp $
+    $Id: avl_tree.h,v 1.1.2.8 2003/07/12 17:41:45 guus Exp $
 */
 
 

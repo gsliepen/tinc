@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
-    Copyright (C) 1999-2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1999-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.53 2003/07/11 16:13:00 guus Exp $
+    $Id: process.c,v 1.1.2.54 2003/07/12 17:41:46 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,7 @@ extern int do_purge;
 
 static void memory_full(int size)
 {
-	logger(DEBUG_ALWAYS, LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
+	logger(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
 	cp_trace();
 	exit(1);
 }
@@ -96,10 +96,10 @@ void cleanup_and_exit(int c)
 
 	close_network_connections();
 
-	if(debug_level > DEBUG_NOTHING)
+	ifdebug(CONNECTIONS)
 		dump_device_stats();
 
-	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Terminating"));
+	logger(LOG_NOTICE, _("Terminating"));
 
 	closelog();
 	exit(c);
@@ -202,7 +202,7 @@ int detach(void)
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
-	logger(DEBUG_ALWAYS, LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
+	logger(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
 			   VERSION, __DATE__, __TIME__, debug_level);
 
 	xalloc_fail_func = memory_full;
@@ -217,6 +217,8 @@ static void _execute_script(const char *scriptname, char **envp)
 	__attribute__ ((noreturn));
 static void _execute_script(const char *scriptname, char **envp)
 {
+	int save_errno;
+
 	cp();
 
 	while(*envp)
@@ -232,10 +234,12 @@ static void _execute_script(const char *scriptname, char **envp)
 	execl(scriptname, NULL);
 	/* No return on success */
 
+	save_errno = errno;
+
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
-	logger(DEBUG_ALWAYS, LOG_ERR, _("Could not execute `%s': %s"), scriptname,
-		   strerror(errno));
-	exit(errno);
+	logger(LOG_ERR, _("Could not execute `%s': %s"), scriptname,
+		   strerror(save_errno));
+	exit(save_errno);
 }
 
 /*
@@ -260,35 +264,35 @@ int execute_script(const char *name, char **envp)
 	pid = fork();
 
 	if(pid < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "fork",
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "fork",
 			   strerror(errno));
 		return -1;
 	}
 
 	if(pid) {
-		logger(DEBUG_STATUS, LOG_INFO, _("Executing script %s"), name);
+		ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 
 		free(scriptname);
 
 		if(waitpid(pid, &status, 0) == pid) {
 			if(WIFEXITED(status)) {	/* Child exited by itself */
 				if(WEXITSTATUS(status)) {
-					logger(DEBUG_ALWAYS, LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
+					logger(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
 						   pid, name, WEXITSTATUS(status));
 					return -1;
 				} else
 					return 0;
 			} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
-				logger(DEBUG_ALWAYS, LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
+				logger(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
 					   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 				return -1;
 			} else {			/* Something strange happened */
-				logger(DEBUG_ALWAYS, LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
+				logger(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
 					   name);
 				return -1;
 			}
 		} else if (errno != EINTR) {
-			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
 				   strerror(errno));
 			return -1;
 		}
@@ -309,20 +313,20 @@ int execute_script(const char *name, char **envp)
 
 static RETSIGTYPE sigterm_handler(int a)
 {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got TERM signal"));
+	logger(LOG_NOTICE, _("Got TERM signal"));
 
 	cleanup_and_exit(0);
 }
 
 static RETSIGTYPE sigquit_handler(int a)
 {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got QUIT signal"));
+	logger(LOG_NOTICE, _("Got QUIT signal"));
 	cleanup_and_exit(0);
 }
 
 static RETSIGTYPE fatal_signal_square(int a)
 {
-	logger(DEBUG_ALWAYS, LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
+	logger(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
 		   strsignal(a));
 	cp_trace();
 	exit(1);
@@ -331,11 +335,11 @@ static RETSIGTYPE fatal_signal_square(int a)
 static RETSIGTYPE fatal_signal_handler(int a)
 {
 	struct sigaction act;
-	logger(DEBUG_ALWAYS, LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
+	logger(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
 	cp_trace();
 
 	if(do_detach) {
-		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
+		logger(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
 
 		act.sa_handler = fatal_signal_square;
 		act.sa_mask = emptysigset;
@@ -347,26 +351,26 @@ static RETSIGTYPE fatal_signal_handler(int a)
 		remove_pid(pidfilename);
 		execvp(g_argv[0], g_argv);
 	} else {
-		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Not restarting."));
+		logger(LOG_NOTICE, _("Not restarting."));
 		exit(1);
 	}
 }
 
 static RETSIGTYPE sighup_handler(int a)
 {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got HUP signal"));
+	logger(LOG_NOTICE, _("Got HUP signal"));
 	sighup = 1;
 }
 
 static RETSIGTYPE sigint_handler(int a)
 {
 	if(saved_debug_level != -1) {
-		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Reverting to old debug level (%d)"),
+		logger(LOG_NOTICE, _("Reverting to old debug level (%d)"),
 			saved_debug_level);
 		debug_level = saved_debug_level;
 		saved_debug_level = -1;
 	} else {
-		logger(DEBUG_ALWAYS, LOG_NOTICE,
+		logger(LOG_NOTICE,
 			_("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
 			debug_level);
 		saved_debug_level = debug_level;
@@ -376,7 +380,7 @@ static RETSIGTYPE sigint_handler(int a)
 
 static RETSIGTYPE sigalrm_handler(int a)
 {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got ALRM signal"));
+	logger(LOG_NOTICE, _("Got ALRM signal"));
 	sigalrm = 1;
 }
 
@@ -401,13 +405,13 @@ static RETSIGTYPE sigwinch_handler(int a)
 
 static RETSIGTYPE unexpected_signal_handler(int a)
 {
-	logger(DEBUG_ALWAYS, LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+	logger(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
 	cp_trace();
 }
 
 static RETSIGTYPE ignore_signal_handler(int a)
 {
-	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
 }
 
 static struct {

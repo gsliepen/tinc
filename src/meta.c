@@ -1,7 +1,7 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2000-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2000-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.34 2003/07/06 22:11:31 guus Exp $
+    $Id: meta.c,v 1.1.2.35 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"
@@ -48,7 +48,7 @@ int send_meta(connection_t *c, char *buffer, int length)
 
 	cp();
 
-	logger(DEBUG_META, LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
+	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
 	if(c->status.encryptout) {
@@ -63,7 +63,7 @@ int send_meta(connection_t *c, char *buffer, int length)
 		if(result <= 0) {
 			if(errno == EINTR)
 				continue;
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
+			logger(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
 				   c->hostname, strerror(errno));
 			return -1;
 		}
@@ -101,13 +101,13 @@ int receive_meta(connection_t *c)
 	cp();
 
 	if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__,
+		logger(LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__,
 			   __LINE__, c->socket, strerror(errno), c->name, c->hostname);
 		return -1;
 	}
 
 	if(x) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata socket error for %s (%s): %s"),
+		logger(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
 			   c->name, c->hostname, strerror(x));
 		return -1;
 	}
@@ -125,12 +125,12 @@ int receive_meta(connection_t *c)
 
 	if(lenin <= 0) {
 		if(lenin == 0) {
-			logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Connection closed by %s (%s)"),
+			ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 					   c->name, c->hostname);
 		} else if(errno == EINTR)
 			return 0;
 		else
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
+			logger(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
 				   c->name, c->hostname, strerror(errno));
 
 		return -1;
@@ -193,7 +193,7 @@ int receive_meta(connection_t *c)
 	}
 
 	if(c->buflen >= MAXBUFSIZE) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
+		logger(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}

@@ -1,7 +1,7 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2001-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2001-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2001-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.23 2003/07/06 23:16:28 guus Exp $
+    $Id: node.h,v 1.1.2.24 2003/07/12 17:41:46 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__

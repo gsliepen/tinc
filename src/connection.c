@@ -1,7 +1,7 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2000-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2000-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.38 2003/07/06 23:16:28 guus Exp $
+    $Id: connection.c,v 1.1.2.39 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"
@@ -124,15 +124,15 @@ void dump_connections(void)
 
 	cp();
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Connections:"));
+	logger(LOG_DEBUG, _("Connections:"));
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = (connection_t *) node->data;
-		logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
+		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
 			   c->name, c->hostname, c->options, c->socket, c->status);
 	}
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of connections."));
+	logger(LOG_DEBUG, _("End of connections."));
 }
 
 int read_connection_config(connection_t *c)

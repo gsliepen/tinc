@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.37 2003/06/12 11:08:40 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.38 2003/07/12 17:41:45 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -14,11 +14,11 @@
 
 This is the info manual for tinc, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2002 Ivo Timmermans
+Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.37 2003/06/12 11:08:40 guus Exp $
+$Id: tinc.texi,v 1.8.4.38 2003/07/12 17:41:45 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -39,11 +39,11 @@ permission notice identical to this one.
 @page
 @vskip 0pt plus 1filll
 @cindex copyright
-Copyright @copyright{} 1998-2002 Ivo Timmermans
+Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.37 2003/06/12 11:08:40 guus Exp $
+$Id: tinc.texi,v 1.8.4.38 2003/07/12 17:41:45 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are

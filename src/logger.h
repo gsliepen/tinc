@@ -23,21 +23,11 @@ enum {
 	LOGMODE_SYSLOG
 };
 
-extern volatile int debug_level;
+extern int debug_level;
 extern void openlogger(const char *, int);
-extern void vlogger(int, const char *, va_list ap);
+extern void logger(int, const char *, ...);
 extern void closelogger(void);
 
-/* Inline logger function because it's used quite often */
-
-static inline void logger(int level, int priority, const char *format, ...) {
-	va_list ap;
-
-	if(level == DEBUG_ALWAYS || debug_level >= level) {
-		va_start(ap, format);
-		vlogger(priority, format, ap);
-		va_end(ap);
-	}
-}
+#define ifdebug(l) if(debug_level >= DEBUG_##l)
 
 #endif /* __TINC_LOGGER_H__ */

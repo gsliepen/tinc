@@ -1,7 +1,7 @@
 /*
     protocol_misc.c -- handle the meta-protocol, miscellaneous functions
-    Copyright (C) 1999-2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1999-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.9 2003/07/06 23:16:29 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.10 2003/07/12 17:41:47 guus Exp $
 */
 
 #include "config.h"
@@ -40,18 +40,6 @@
 
 #include "system.h"
 
-/* Status strings */
-
-static char (*status_text[]) = {
-	"Warning",
-};
-
-/* Error strings */
-
-static char (*error_text[]) = {
-	"Error",
-};
-
 /* Status and error notification routines */
 
 int send_status(connection_t *c, int statusno, char *statusstring)
@@ -59,7 +47,7 @@ int send_status(connection_t *c, int statusno, char *statusstring)
 	cp();
 
 	if(!statusstring)
-		statusstring = status_text[statusno];
+		statusstring = "Status";
 
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
@@ -72,13 +60,13 @@ int status_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
+		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	logger(DEBUG_STATUS, LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
-			   c->name, c->hostname, status_text[statusno], statusstring);
+	ifdebug(STATUS) logger(LOG_NOTICE, _("Status message from %s (%s): %d: %s"),
+			   c->name, c->hostname, statusno, statusstring);
 
 	return 0;
 }
@@ -88,7 +76,7 @@ int send_error(connection_t *c, int err, char *errstring)
 	cp();
 
 	if(!errstring)
-		errstring = strerror(err);
+		errstring = "Error";
 
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
@@ -101,13 +89,13 @@ int error_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
+		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	logger(DEBUG_ERROR, LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
-			   c->name, c->hostname, strerror(err), errorstring);
+	ifdebug(ERROR) logger(LOG_NOTICE, _("Error message from %s (%s): %d: %s"),
+			   c->name, c->hostname, err, errorstring);
 
 	terminate_connection(c, c->status.active);
 
@@ -193,7 +181,7 @@ int tcppacket_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
 			   c->hostname);
 		return -1;
 	}

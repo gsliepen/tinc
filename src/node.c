@@ -1,7 +1,7 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2001-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2001-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2001-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.21 2003/07/06 23:16:28 guus Exp $
+    $Id: node.c,v 1.1.2.22 2003/07/12 17:41:46 guus Exp $
 */
 
 #include "config.h"
@@ -173,16 +173,16 @@ void dump_nodes(void)
 
 	cp();
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Nodes:"));
+	logger(LOG_DEBUG, _("Nodes:"));
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = (node_t *) node->data;
-		logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
+		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
 			   n->options, n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-");
 	}
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of nodes."));
+	logger(LOG_DEBUG, _("End of nodes."));
 }

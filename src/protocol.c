@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.139 2003/07/06 23:16:28 guus Exp $
+    $Id: protocol.c,v 1.28.4.140 2003/07/12 17:41:46 guus Exp $
 */
 
 #include "config.h"
@@ -95,18 +95,18 @@ int send_request(connection_t *c, const char *format, ...)
 	va_end(args);
 
 	if(len < 0 || len > MAXBUFSIZE - 1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
+		logger(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}
 
-	if(debug_level >= DEBUG_PROTOCOL) {
+	ifdebug(PROTOCOL) {
 		sscanf(buffer, "%d", &request);
-		if(debug_level >= DEBUG_META)
-			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Sending %s to %s (%s): %s"),
+		ifdebug(META)
+			logger(LOG_DEBUG, _("Sending %s to %s (%s): %s"),
 				   request_name[request], c->name, c->hostname, buffer);
 		else
-			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
+			logger(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
 				   c->name, c->hostname);
 	}
 
@@ -125,14 +125,14 @@ int forward_request(connection_t *from)
 
 	cp();
 
-	if(debug_level >= DEBUG_PROTOCOL) {
+	ifdebug(PROTOCOL) {
 		sscanf(from->buffer, "%d", &request);
-		if(debug_level >= DEBUG_META)
-			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
+		ifdebug(META)
+			logger(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
 				   request_name[request], from->name, from->hostname,
 				   from->buffer);
 		else
-			logger(DEBUG_ALWAYS, LOG_DEBUG, _("Forwarding %s from %s (%s)"),
+			logger(LOG_DEBUG, _("Forwarding %s from %s (%s)"),
 				   request_name[request], from->name, from->hostname);
 	}
 
@@ -149,28 +149,28 @@ int receive_request(connection_t *c)
 
 	if(sscanf(c->buffer, "%d", &request) == 1) {
 		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
-			if(debug_level >= DEBUG_META)
-				logger(DEBUG_ALWAYS, LOG_DEBUG, _("Unknown request from %s (%s): %s"),
+			ifdebug(META)
+				logger(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
 					   c->name, c->hostname, c->buffer);
 			else
-				logger(DEBUG_ALWAYS, LOG_ERR, _("Unknown request from %s (%s)"),
+				logger(LOG_ERR, _("Unknown request from %s (%s)"),
 					   c->name, c->hostname);
 
 			return -1;
 		} else {
-			if(debug_level >= DEBUG_PROTOCOL) {
-				if(debug_level >= DEBUG_META)
-					logger(DEBUG_ALWAYS, LOG_DEBUG, _("Got %s from %s (%s): %s"),
+			ifdebug(PROTOCOL) {
+				ifdebug(META)
+					logger(LOG_DEBUG, _("Got %s from %s (%s): %s"),
 						   request_name[request], c->name, c->hostname,
 						   c->buffer);
 				else
-					logger(DEBUG_ALWAYS, LOG_DEBUG, _("Got %s from %s (%s)"),
+					logger(LOG_DEBUG, _("Got %s from %s (%s)"),
 						   request_name[request], c->name, c->hostname);
 			}
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != request)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
+			logger(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
 				   c->hostname);
 			return -1;
 		}
@@ -178,12 +178,12 @@ int receive_request(connection_t *c)
 		if(request_handlers[request] (c))
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 		{
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Error while processing %s from %s (%s)"),
+			logger(LOG_ERR, _("Error while processing %s from %s (%s)"),
 				   request_name[request], c->name, c->hostname);
 			return -1;
 		}
 	} else {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Bogus data received from %s (%s)"),
+		logger(LOG_ERR, _("Bogus data received from %s (%s)"),
 			   c->name, c->hostname);
 		return -1;
 	}
@@ -229,7 +229,7 @@ int seen_request(char *request)
 	p.request = request;
 
 	if(avl_search(past_request_tree, &p)) {
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Already seen request"));
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
 		return 1;
 	} else {
 		new = (past_request_t *) xmalloc(sizeof(*new));
@@ -259,6 +259,6 @@ void age_past_requests(void)
 	}
 
 	if(left || deleted)
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
 			   deleted, left);
 }

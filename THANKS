@@ -23,8 +23,9 @@ We would like to thank
  * Ivo van Dong (for help during the early versions of tinc)
  * Jeroen Ubbink (for help testing tinc on Free- and NetBSD)
  * LarstiQ (for help testing tinc on MacOS/X)
- * Marc A. Lehmann (for bitching and valid criticism)
+ * Marc A. Lehmann (for criticism)
  * Teemu Kiviniemi (for his lzo compression patch)
+ * Flynn Marquardt (for help testing tinc on Solaris 2.6)
 
 for their help, support and ideas.  Thank you guys!
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.13 2002/09/09 22:32:27 guus Exp $
+    $Id: list.c,v 1.1.2.14 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"

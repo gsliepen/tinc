@@ -1,7 +1,7 @@
 /*
     protocol_subnet.c -- handle the meta-protocol, subnets
-    Copyright (C) 1999-2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1999-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.10 2003/07/06 22:11:33 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.11 2003/07/12 17:41:47 guus Exp $
 */
 
 #include "config.h"
@@ -114,7 +114,7 @@ int add_subnet_h(connection_t *c)
 	/* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
 
 	if(owner == myself) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "ADD_SUBNET", c->name, c->hostname);
 		s->owner = myself;
 		send_del_subnet(c, s);
@@ -176,7 +176,7 @@ int del_subnet_h(connection_t *c)
 	owner = lookup_node(name);
 
 	if(!owner) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
 				   "DEL_SUBNET", c->name, c->hostname, name);
 		return 0;
 	}
@@ -203,7 +203,7 @@ int del_subnet_h(connection_t *c)
 	free_subnet(s);
 
 	if(!find) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
 				   "DEL_SUBNET", c->name, c->hostname, name);
 		return 0;
 	}
@@ -211,7 +211,7 @@ int del_subnet_h(connection_t *c)
 	/* If we are the owner of this subnet, retaliate with an ADD_SUBNET */
 
 	if(owner == myself) {
-		logger(DEBUG_PROTOCOL, LOG_WARNING, _("Got %s from %s (%s) for ourself"),
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "DEL_SUBNET", c->name, c->hostname);
 		send_add_subnet(c, find);
 		return 0;

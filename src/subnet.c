@@ -1,7 +1,7 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2000-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2000-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.45 2003/07/06 23:16:29 guus Exp $
+    $Id: subnet.c,v 1.1.2.46 2003/07/12 17:41:47 guus Exp $
 */
 
 #include "config.h"
@@ -111,7 +111,7 @@ static int subnet_compare(subnet_t *a, subnet_t *b)
 	case SUBNET_IPV6:
 		return subnet_compare_ipv6(a, b);
 	default:
-		logger(DEBUG_ALWAYS, LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
+		logger(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
 			   a->type);
 		cp_trace();
 		exit(0);
@@ -295,7 +295,7 @@ char *net2str(subnet_t *subnet)
 			break;
 
 		default:
-			logger(DEBUG_ALWAYS, LOG_ERR,
+			logger(LOG_ERR,
 				   _("net2str() was called with unknown subnet type %d, exiting!"),
 				   subnet->type);
 			cp_trace();
@@ -411,14 +411,14 @@ void dump_subnets(void)
 
 	cp();
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Subnet list:"));
+	logger(LOG_DEBUG, _("Subnet list:"));
 
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = (subnet_t *) node->data;
 		netstr = net2str(subnet);
-		logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
+		logger(LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
 		free(netstr);
 	}
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of subnet list."));
+	logger(LOG_DEBUG, _("End of subnet list."));
 }

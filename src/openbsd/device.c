@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with OpenBSD tun device
-    Copyright (C) 2001-2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2001-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 2001-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2001-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.14 2003/07/06 22:11:37 guus Exp $
+    $Id: device.c,v 1.1.2.15 2003/07/12 17:41:48 guus Exp $
 */
 
 #include "config.h"
@@ -55,9 +55,6 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-/*
-  open the local ethertap device
-*/
 int setup_device(void)
 {
 	cp();
@@ -68,13 +65,13 @@ int setup_device(void)
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
 		interface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
 		return -1;
 	}
 
 	device_info = _("OpenBSD tun device");
 
-	logger(DEBUG_ALWAYS, LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, _("%s is a %s"), device, device_info);
 
 	return 0;
 }
@@ -95,7 +92,7 @@ int read_packet(vpn_packet_t *packet)
 	cp();
 
 	if((lenin = readv(device_fd, vector, 2)) <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return -1;
 	}
@@ -112,7 +109,7 @@ int read_packet(vpn_packet_t *packet)
 		        break;
 
 	        default:
-			logger(DEBUG_TRAFFIC, LOG_ERR,
+			ifdebug(TRAFFIC) logger(LOG_ERR,
 				           _ ("Unknown address family %d while reading packet from %s %s"),
 				           ntohl(type), device_info, device);
 		        return -1;
@@ -122,7 +119,7 @@ int read_packet(vpn_packet_t *packet)
 
 	device_total_in += packet->len;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 			   device_info);
 	}
 
@@ -137,7 +134,7 @@ int write_packet(vpn_packet_t *packet)
 
 	cp();
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
 	af = (packet->data[12] << 8) + packet->data[13];
@@ -150,7 +147,7 @@ int write_packet(vpn_packet_t *packet)
 		type = htonl(AF_INET6);
 		break;
 	default:
-		logger(DEBUG_TRAFFIC, LOG_ERR,
+		ifdebug(TRAFFIC) logger(LOG_ERR,
 				   _("Unknown address family %d while writing packet to %s %s"),
 				   af, device_info, device);
 		return -1;
@@ -162,7 +159,7 @@ int write_packet(vpn_packet_t *packet)
 	vector[1].iov_len = packet->len - 14;
 
 	if(writev(device_fd, vector, 2) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+		logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 			   strerror(errno));
 		return -1;
 	}
@@ -174,7 +171,7 @@ void dump_device_stats(void)
 {
 	cp();
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
+	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
+	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 }

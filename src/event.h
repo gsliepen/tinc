@@ -1,7 +1,7 @@
 /*
     event.h -- header for event.c
-    Copyright (C) 2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2002-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2002-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.1.4.5 2003/07/06 23:16:28 guus Exp $
+    $Id: event.h,v 1.1.4.6 2003/07/12 17:41:45 guus Exp $
 */
 
 #ifndef __TINC_EVENT_H__

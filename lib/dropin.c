@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.12 2002/09/09 21:49:16 guus Exp $
+    $Id: dropin.c,v 1.1.2.13 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"

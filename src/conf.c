@@ -1,8 +1,8 @@
 /*
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
-                  1998-2002 Ivo Timmermans <ivo@o2w.nl>
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+                  1998-2003 Ivo Timmermans <ivo@o2w.nl>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 		  2000 Cris van Pelt <tribbel@arise.dhs.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.64 2003/07/11 16:12:59 guus Exp $
+    $Id: conf.c,v 1.9.4.65 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"
@@ -170,7 +170,7 @@ int get_config_bool(config_t *cfg, int *result)
 		return 1;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
 	return 0;
@@ -186,7 +186,7 @@ int get_config_int(config_t *cfg, int *result)
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return 1;
 
-	logger(DEBUG_ALWAYS, LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
 	return 0;
@@ -220,7 +220,7 @@ int get_config_address(config_t *cfg, struct addrinfo **result)
 		return 1;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
 	return 0;
@@ -238,7 +238,7 @@ int get_config_subnet(config_t *cfg, subnet_t ** result)
 	subnet = str2net(cfg->value);
 
 	if(!subnet) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		return 0;
 	}
@@ -249,7 +249,7 @@ int get_config_subnet(config_t *cfg, subnet_t ** result)
 		&& maskcheck(&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
 		|| ((subnet->type == SUBNET_IPV6)
 		&& maskcheck(&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t)))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		free(subnet);
 		return 0;
@@ -348,7 +348,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Cannot open config file %s: %s"), fname,
+		logger(LOG_ERR, _("Cannot open config file %s: %s"), fname,
 			   strerror(errno));
 		return -3;
 	}
@@ -386,7 +386,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 			value = strtok(NULL, "\t\n\r =");
 
 			if(!value || value[0] == '#') {
-				logger(DEBUG_ALWAYS, LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+				logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
 					   variable, lineno, fname);
 				break;
 			}
@@ -421,7 +421,7 @@ int read_server_config()
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
+		logger(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
 	}
 
 	free(fname);
@@ -438,7 +438,7 @@ int is_safe_path(const char *file)
 	char l[MAXBUFSIZE];
 
 	if(*file != '/') {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' is not an absolute path"), file);
+		logger(LOG_ERR, _("`%s' is not an absolute path"), file);
 		return 0;
 	}
 
@@ -454,21 +454,21 @@ int is_safe_path(const char *file)
 
 check1:
 	if(lstat(f, &s) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
+		logger(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
 		return 0;
 	}
 
 	if(s.st_uid != geteuid()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+		logger(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 			   f, s.st_uid, geteuid());
 		return 0;
 	}
 
 	if(S_ISLNK(s.st_mode)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: `%s' is a symlink"), f);
+		logger(LOG_WARNING, _("Warning: `%s' is a symlink"), f);
 
 		if(readlink(f, l, MAXBUFSIZE) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
+			logger(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
 				   strerror(errno));
 			return 0;
 		}
@@ -482,7 +482,7 @@ check1:
 
 check2:
 	if(lstat(f, &s) < 0 && errno != ENOENT) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
+		logger(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
 		return 0;
 	}
 
@@ -490,16 +490,16 @@ check2:
 		return 1;
 
 	if(s.st_uid != geteuid()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+		logger(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 			   f, s.st_uid, geteuid());
 		return 0;
 	}
 
 	if(S_ISLNK(s.st_mode)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, _("Warning: `%s' is a symlink"), f);
+		logger(LOG_WARNING, _("Warning: `%s' is a symlink"), f);
 
 		if(readlink(f, l, MAXBUFSIZE) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
+			logger(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
 				   strerror(errno));
 			return 0;
 		}
@@ -510,7 +510,7 @@ check2:
 
 	if(s.st_mode & 0007) {
 		/* Accessible by others */
-		logger(DEBUG_ALWAYS, LOG_ERR, _("`%s' has unsecure permissions"), f);
+		logger(LOG_ERR, _("`%s' has unsecure permissions"), f);
 		return 0;
 	}
 

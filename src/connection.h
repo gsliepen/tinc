@@ -1,7 +1,7 @@
 /*
     connection.h -- header for connection.c
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2000-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2000-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.32 2003/07/06 23:16:28 guus Exp $
+    $Id: connection.h,v 1.1.2.33 2003/07/12 17:41:45 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__

@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998-2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.189 2003/07/06 23:16:28 guus Exp $
+    $Id: net.c,v 1.35.4.190 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"
@@ -91,14 +91,14 @@ static void purge(void)
 
 	cp();
 
-	logger(DEBUG_PROTOCOL, LOG_DEBUG, _("Purging unreachable nodes"));
+	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
 
 	for(nnode = node_tree->head; nnode; nnode = nnext) {
 		nnext = nnode->next;
 		n = (node_t *) nnode->data;
 
 		if(!n->status.reachable) {
-			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Purging node %s (%s)"), n->name,
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
 					   n->hostname);
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
@@ -179,7 +179,7 @@ void terminate_connection(connection_t *c, int report)
 	if(c->status.remove)
 		return;
 
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, _("Closing connection with %s (%s)"),
+	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
 			   c->name, c->hostname);
 
 	c->status.remove = 1;
@@ -232,7 +232,7 @@ static void check_dead_connections(void)
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, _("%s (%s) didn't respond to PING"),
+					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING"),
 							   c->name, c->hostname);
 					c->status.timeout = 1;
 					terminate_connection(c, 1);
@@ -241,12 +241,12 @@ static void check_dead_connections(void)
 				}
 			} else {
 				if(c->status.remove) {
-					logger(DEBUG_ALWAYS, LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
+					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
 						   c->name, c->hostname, c->status);
 					connection_del(c);
 					continue;
 				}
-				logger(DEBUG_CONNECTIONS, LOG_WARNING, _("Timeout from %s (%s) during authentication"),
+				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
 						   c->name, c->hostname);
 				terminate_connection(c, 0);
 			}
@@ -287,7 +287,7 @@ static void check_network_activity(fd_set * f)
 				if(!result)
 					finish_connecting(c);
 				else {
-					logger(DEBUG_CONNECTIONS, LOG_DEBUG,
+					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 							   _("Error while connecting to %s (%s): %s"),
 							   c->name, c->hostname, strerror(result));
 					close(c->socket);
@@ -341,7 +341,7 @@ void main_loop(void)
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
-				logger(DEBUG_ALWAYS, LOG_ERR, _("Error while waiting for input: %s"),
+				logger(LOG_ERR, _("Error while waiting for input: %s"),
 					   strerror(errno));
 				cp_trace();
 				dump_connections();
@@ -372,7 +372,7 @@ void main_loop(void)
 			/* Should we regenerate our key? */
 
 			if(keyexpires < now) {
-				logger(DEBUG_STATUS, LOG_INFO, _("Regenerating symmetric key"));
+				ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
 
 				RAND_pseudo_bytes(myself->key, myself->keylength);
 				EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
@@ -388,7 +388,7 @@ void main_loop(void)
 		}
 
 		if(sigalrm) {
-			logger(DEBUG_ALWAYS, LOG_INFO, _("Flushing event queue"));
+			logger(LOG_INFO, _("Flushing event queue"));
 
 			while(event_tree->head) {
 				event = (event_t *) event_tree->head->data;
@@ -412,7 +412,7 @@ void main_loop(void)
 			init_configuration(&config_tree);
 
 			if(read_server_config()) {
-				logger(DEBUG_ALWAYS, LOG_ERR, _("Unable to reread configuration file, exitting."));
+				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
 				exit(1);
 			}
 

@@ -1,7 +1,7 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2001-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2001-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2001-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.23 2003/07/06 22:11:31 guus Exp $
+    $Id: graph.c,v 1.1.2.24 2003/07/12 17:41:45 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -95,7 +95,7 @@ void mst_kruskal(void)
 	if(!edge_weight_tree->head)
 		return;
 
-	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Kruskal's algorithm:");
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Kruskal's algorithm:");
 
 	/* Clear visited status on nodes */
 
@@ -131,7 +131,7 @@ void mst_kruskal(void)
 
 		safe_edges++;
 
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
 				   e->to->name, e->weight);
 
 		if(skipped) {
@@ -141,7 +141,7 @@ void mst_kruskal(void)
 		}
 	}
 
-	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
 			   safe_edges);
 }
 
@@ -259,12 +259,13 @@ void sssp_bfs(void)
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
 
-			if(n->status.reachable)
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Node %s (%s) became reachable"),
+			if(n->status.reachable) {
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
 					   n->name, n->hostname);
-			else
-				logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Node %s (%s) became unreachable"),
+			} else {
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
 					   n->name, n->hostname);
+			}
 
 			n->status.validkey = 0;
 			n->status.waitingforkey = 0;

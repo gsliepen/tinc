@@ -1,7 +1,7 @@
 /*
     route.c -- routing
-    Copyright (C) 2000-2002 Ivo Timmermans <ivo@o2w.nl>,
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 2000-2003 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.56 2003/07/07 11:11:33 guus Exp $
+    $Id: route.c,v 1.1.2.57 2003/07/12 17:41:47 guus Exp $
 */
 
 #include "config.h"
@@ -130,7 +130,7 @@ static void learn_mac(mac_t *address)
 	/* If we don't know this MAC address yet, store it */
 
 	if(!subnet || subnet->owner != myself) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, _("Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"),
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"),
 				   address->x[0], address->x[1], address->x[2], address->x[3],
 				   address->x[4], address->x[5]);
 
@@ -163,7 +163,7 @@ void age_mac(void)
 		next = node->next;
 		s = (subnet_t *) node->data;
 		if(s->type == SUBNET_MAC && s->net.mac.lastseen && s->net.mac.lastseen + macexpire < now) {
-			logger(DEBUG_TRAFFIC, LOG_INFO, _("MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"),
+			ifdebug(TRAFFIC) logger(LOG_INFO, _("MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"),
 					   s->net.mac.address.x[0], s->net.mac.address.x[1],
 					   s->net.mac.address.x[2], s->net.mac.address.x[3],
 					   s->net.mac.address.x[4], s->net.mac.address.x[5]);
@@ -272,7 +272,7 @@ static node_t *route_ipv4(vpn_packet_t *packet)
 	subnet = lookup_subnet_ipv4((ipv4_t *) & packet->data[30]);
 
 	if(!subnet) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"),
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"),
 				   packet->data[30], packet->data[31], packet->data[32],
 				   packet->data[33]);
 
@@ -363,7 +363,7 @@ static node_t *route_ipv6(vpn_packet_t *packet)
 	subnet = lookup_subnet_ipv6((ipv6_t *) & packet->data[38]);
 
 	if(!subnet) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
 				   ntohs(*(uint16_t *) & packet->data[38]),
 				   ntohs(*(uint16_t *) & packet->data[40]),
 				   ntohs(*(uint16_t *) & packet->data[42]),
@@ -415,7 +415,7 @@ static void route_neighborsol(vpn_packet_t *packet)
 
 	if(ns->nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT ||
 	   opt->nd_opt_type != ND_OPT_SOURCE_LINKADDR) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: received unknown type neighbor solicitation request"));
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: received unknown type neighbor solicitation request"));
 		return;
 	}
 
@@ -432,7 +432,7 @@ static void route_neighborsol(vpn_packet_t *packet)
 	checksum = inet_checksum(ns, sizeof(*ns) + 8, checksum);
 
 	if(checksum) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: checksum error for neighbor solicitation request"));
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: checksum error for neighbor solicitation request"));
 		return;
 	}
 
@@ -441,7 +441,7 @@ static void route_neighborsol(vpn_packet_t *packet)
 	subnet = lookup_subnet_ipv6((ipv6_t *) & ns->nd_ns_target);
 
 	if(!subnet) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
 				   ntohs(((uint16_t *) & ns->nd_ns_target)[0]),
 				   ntohs(((uint16_t *) & ns->nd_ns_target)[1]),
 				   ntohs(((uint16_t *) & ns->nd_ns_target)[2]),
@@ -520,7 +520,7 @@ static void route_arp(vpn_packet_t *packet)
 
 	if(ntohs(arp->arp_hrd) != ARPHRD_ETHER || ntohs(arp->arp_pro) != ETHERTYPE_IP ||
 	   arp->arp_hln != ETHER_ADDR_LEN || arp->arp_pln != 4 || ntohs(arp->arp_op) != ARPOP_REQUEST) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: received unknown type ARP request"));
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: received unknown type ARP request"));
 		return;
 	}
 
@@ -529,7 +529,7 @@ static void route_arp(vpn_packet_t *packet)
 	subnet = lookup_subnet_ipv4((ipv4_t *) arp->arp_tpa);
 
 	if(!subnet) {
-		logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: ARP request for unknown address %d.%d.%d.%d"),
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: ARP request for unknown address %d.%d.%d.%d"),
 				   arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2],
 				   arp->arp_tpa[3]);
 		return;
@@ -584,7 +584,7 @@ void route_outgoing(vpn_packet_t *packet)
 					return;
 
 				default:
-					logger(DEBUG_TRAFFIC, LOG_WARNING, _("Cannot route packet: unknown type %hx"), type);
+					ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: unknown type %hx"), type);
 					return;
 			}
 			if(n)

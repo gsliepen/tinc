@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.2 2003/07/06 23:16:28 guus Exp $
+    $Id: logger.c,v 1.1.2.3 2003/07/12 17:41:45 guus Exp $
 */
 
 #include <stdio.h>
@@ -30,7 +30,7 @@
 
 #include "system.h"
 
-volatile int debug_level = DEBUG_NOTHING;
+int debug_level = DEBUG_NOTHING;
 static int logmode = LOGMODE_STDERR;
 static pid_t logpid;
 extern char *logfilename;
@@ -57,7 +57,11 @@ void openlogger(const char *ident, int mode) {
 	}
 }
 
-void vlogger(int priority, const char *format, va_list ap) {
+void logger(int priority, const char *format, ...) {
+	va_list ap;
+
+	va_start(ap, format);
+
 	switch(logmode) {
 		case LOGMODE_STDERR:
 			vfprintf(stderr, format, ap);
@@ -80,6 +84,8 @@ void vlogger(int priority, const char *format, va_list ap) {
 #endif
 			break;
 	}
+
+	va_end(ap);
 }
 
 void closelogger(void) {

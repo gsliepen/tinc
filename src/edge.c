@@ -1,7 +1,7 @@
 /*
     edge.c -- edge tree management
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.eu.org>,
-                  2000-2002 Ivo Timmermans <ivo@o2w.nl>
+    Copyright (C) 2000-2003 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000-2003 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.20 2003/07/06 23:16:28 guus Exp $
+    $Id: edge.c,v 1.1.2.21 2003/07/12 17:41:45 guus Exp $
 */
 
 #include "config.h"
@@ -154,18 +154,18 @@ void dump_edges(void)
 
 	cp();
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("Edges:"));
+	logger(LOG_DEBUG, _("Edges:"));
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = (node_t *) node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = (edge_t *) node2->data;
 			address = sockaddr2hostname(&e->address);
-			logger(DEBUG_ALWAYS, LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
+			logger(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
 				   e->from->name, e->to->name, address, e->options, e->weight);
 			free(address);
 		}
 	}
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, _("End of edges."));
+	logger(LOG_DEBUG, _("End of edges."));
 }

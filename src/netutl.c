@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
-    Copyright (C) 1998-2002 Ivo Timmermans <ivo@o2w.nl>
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.45 2003/07/06 22:11:32 guus Exp $
+    $Id: netutl.c,v 1.12.4.46 2003/07/12 17:41:46 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,7 @@ struct addrinfo *str2addrinfo(char *address, char *service, int socktype)
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, _("Error looking up %s port %s: %s\n"), address,
+		logger(LOG_WARNING, _("Error looking up %s port %s: %s\n"), address,
 				   service, gai_strerror(err));
 		return NULL;
 	}
@@ -92,7 +92,7 @@ sockaddr_t str2sockaddr(char *address, char *port)
 	err = getaddrinfo(address, port, &hint, &ai);
 
 	if(err || !ai) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port,
+		logger(LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port,
 			   gai_strerror(err));
 		cp_trace();
 		raise(SIGFPE);
@@ -117,7 +117,7 @@ void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while translating addresses: %s"),
+		logger(LOG_ERR, _("Error while translating addresses: %s"),
 			   gai_strerror(err));
 		cp_trace();
 		raise(SIGFPE);
@@ -145,7 +145,7 @@ char *sockaddr2hostname(sockaddr_t *sa)
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Error while looking up hostname: %s"),
+		logger(LOG_ERR, _("Error while looking up hostname: %s"),
 			   gai_strerror(err));
 	}
 
@@ -186,7 +186,7 @@ int sockaddrcmp(sockaddr_t *a, sockaddr_t *b)
 			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
 
 		default:
-			logger(DEBUG_ALWAYS, LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
 				   a->sa.sa_family);
 			cp_trace();
 			raise(SIGFPE);

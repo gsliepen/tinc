@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998-2002 Ivo Timmermans <ivo@o2w.nl>
-                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
+    Copyright (C) 1998-2003 Ivo Timmermans <ivo@o2w.nl>
+                  2000-2003 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.71 2003/07/06 23:16:29 guus Exp $
+    $Id: tincd.c,v 1.10.4.72 2003/07/12 17:41:47 guus Exp $
 */
 
 #include "config.h"
@@ -334,7 +334,7 @@ static void make_names(void)
 		if(!confbase)
 			asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
 		else
-			logger(DEBUG_ALWAYS, LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
 
 		if(!identname)
 			asprintf(&identname, "tinc.%s", netname);
@@ -367,7 +367,7 @@ int main(int argc, char **argv, char **envp)
 	if(show_version) {
 		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf(_("Copyright (C) 1998-2003 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -389,11 +389,11 @@ int main(int argc, char **argv, char **envp)
 	if(do_mlock)
 #ifdef HAVE_MLOCKALL
 		if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+			logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
 				   strerror(errno));
 #else
 	{
-		logger(DEBUG_ALWAYS, LOG_ERR, _("mlockall() not supported on this platform!"));
+		logger(LOG_ERR, _("mlockall() not supported on this platform!"));
 #endif
 		return -1;
 	}
@@ -417,7 +417,7 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 
 	if(lzo_init() != LZO_E_OK) {
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Error initializing LZO compressor!"));
+		logger(LOG_ERR, _("Error initializing LZO compressor!"));
 		exit(1);
 	}
 
@@ -430,14 +430,14 @@ int main(int argc, char **argv, char **envp)
 			cleanup_and_exit(1);
 		}
 
-		logger(DEBUG_ALWAYS, LOG_ERR, _("Unrecoverable error"));
+		logger(LOG_ERR, _("Unrecoverable error"));
 		cp_trace();
 
 		if(do_detach) {
-			logger(DEBUG_ALWAYS, LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
+			logger(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
 			sleep(maxtimeout);
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, _("Not restarting."));
+			logger(LOG_ERR, _("Not restarting."));
 			exit(1);
 		}
 	}
