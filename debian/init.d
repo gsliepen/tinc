@@ -1,7 +1,7 @@
-#! /usr/bin/perl -w
+#! /bin/sh
 #
 # System startup script for tinc
-# $Id: init.d,v 1.14.2.3 2000/10/31 16:22:49 guus Exp $
+# $Id: init.d,v 1.14.2.4 2000/12/05 09:03:41 zarq Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -11,71 +11,56 @@
 # file.
 #
 
-my $DAEMON="/usr/sbin/tincd";
-my $NAME="tinc";
-my $DESC="tinc daemons";
-my $TCONF="/etc/tinc";
-my $EXTRA="";
-my $NETSFILE="$TCONF/nets.boot";
-my @NETS=();
+DAEMON="/usr/sbin/tincd"
+NAME="tinc"
+DESC="tinc daemons"
+TCONF="/etc/tinc"
+EXTRA=""
+NETSFILE="$TCONF/nets.boot"
+NETS=""
 
+test -f $DAEMON || exit 0
 
-if (! -f $DAEMON) { exit 0; }
-
-
-
-sub find_nets {
-    if(! open(FH, $NETSFILE)) {
-	warn "Please create $NETSFILE.\n";
-	exit 0;
-    }
-    while (<FH>) {
-	chomp;
-	if( /^[ ]*([^ \#]+)/i ) {
-	    push(@NETS, "$1");
-	}
-    }
-    if($#NETS == -1) {
-	warn "$NETSFILE doesn't contain any nets.\n";
-	exit 0;
-    }
-    
+find_nets () {
+  if [ ! -f $NETSFILE ] ; then
+    echo "Please create $NETSFILE."
+    exit 0
+  fi
+  NETS="`egrep '^[ ]*[a-zA-Z0-9_]+[ ]*$' $NETSFILE`"
 }
 
-if(!defined($ARGV[0])) {
-    die "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}\n";
-}
-
-if($ARGV[0] eq "start") {
-    find_nets;
-    print "Starting $DESC:";
-    foreach $n (@NETS) {
-	print " $n";
-        system("$DAEMON -n $_[0] $EXTRA");
-    }
-    print ".\n";
-} elsif ($ARGV[0] eq "stop") {
-    find_nets;
-    print "Stopping $DESC:";
-    foreach $n (@NETS) {
-	print " $n";
-        system("$DAEMON -n $_[0] $EXTRA -k");
-    }
-    print ".\n";
-} elsif ($ARGV[0] eq "restart" || $ARGV[0] eq "force-reload") {
-    find_nets;
-    print "Stopping $DESC:";
-    foreach $n (@NETS) {
-	print " $n";
-        system("$DAEMON -n $_[0] $EXTRA -k");
-    }
-    print ".\n";
-    print "Starting $DESC:";
-    foreach $n (@NETS) {
-	print " $n";
-        system("$DAEMON -n $_[0] $EXTRA");
-    }
-    print ".\n";
-} else {
-    die "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}\n";
-}    
+case "$1" in
+  start)
+    find_nets
+    echo -n "Starting $DESC:"
+    for n in $NETS ; do
+      echo -n " $n"
+      $DAEMON -n $n $EXTRA
+    done
+    echo "."
+  ;;
+  stop)
+    find_nets
+    echo -n "Stopping $DESC:"
+    for n in $NETS ; do
+      echo -n " $n"
+      $DAEMON -n $n $EXTRA -k
+    done
+    echo "."
+  ;;
+  restart|force-reload)
+    find_nets
+    echo -n "Restarting $DESC:"
+    for n in $NETS ; do
+      echo -n " $n"
+      $DAEMON -n $n $EXTRA -k
+      sleep 1
+      $DAEMON -n $n $EXTRA
+    done
+    echo "."
+  ;;
+  *)
+    echo "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}"
+    exit 1
+  ;;
+esac
