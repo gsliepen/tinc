@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.36 2003/06/11 20:18:48 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.37 2003/06/12 11:08:40 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.36 2003/06/11 20:18:48 guus Exp $
+$Id: tinc.texi,v 1.8.4.37 2003/06/12 11:08:40 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.36 2003/06/11 20:18:48 guus Exp $
+$Id: tinc.texi,v 1.8.4.37 2003/06/12 11:08:40 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -1001,7 +1001,7 @@ Any cipher supported by OpenSSL is recognized.
 @item Compression = <level> (0)
 This option sets the level of compression used for UDP packets.
 Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
-and 10 (lzo).
+10 (fast lzo) and 11 (best lzo).
 
 @cindex Digest
 @item Digest = <digest> (sha1)
