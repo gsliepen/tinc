@@ -20,11 +20,11 @@ char *gai_strerror(int ecode)
 {
 	switch (ecode) {
 		case EAI_NODATA:
-			return "no address associated with hostname.";
+			return "No address associated with hostname";
 		case EAI_MEMORY:
-			return "memory allocation failure.";
+			return "Memory allocation failure";
 		default:
-			return "unknown error.";
+			return "Unknown error";
 	}
 }    
 #endif /* !HAVE_GAI_STRERROR */
@@ -34,91 +34,66 @@ void freeaddrinfo(struct addrinfo *ai)
 {
 	struct addrinfo *next;
 
-	do {
+	while(ai) {
 		next = ai->ai_next;
 		free(ai);
-	} while (NULL != (ai = next));
+		ai = next;
+	}
 }
 #endif /* !HAVE_FREEADDRINFO */
 
 #ifndef HAVE_GETADDRINFO
-static struct addrinfo *malloc_ai(int port, uint32_t addr)
+static struct addrinfo *malloc_ai(uint16_t port, uint32_t addr)
 {
 	struct addrinfo *ai;
 
-	ai = malloc(sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
-	if (ai == NULL)
-		return(NULL);
-	
-	memset(ai, 0, sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
+	ai = xmalloc_and_zero(sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
 	
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
-	/* XXX -- ssh doesn't use sa_len */
 	ai->ai_addrlen = sizeof(struct sockaddr_in);
 	ai->ai_addr->sa_family = ai->ai_family = AF_INET;
 
 	((struct sockaddr_in *)(ai)->ai_addr)->sin_port = port;
 	((struct sockaddr_in *)(ai)->ai_addr)->sin_addr.s_addr = addr;
 	
-	return(ai);
+	return ai;
 }
 
-int getaddrinfo(const char *hostname, const char *servname, 
-                const struct addrinfo *hints, struct addrinfo **res)
+int getaddrinfo(const char *hostname, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
 {
-	struct addrinfo *cur, *prev = NULL;
+	struct addrinfo *prev = NULL;
 	struct hostent *hp;
-	struct in_addr in;
-	int i, port;
+	struct in_addr in = {0};
+	int i;
+	uint16_t port = 0;
 
 	if (servname)
 		port = htons(atoi(servname));
-	else
-		port = 0;
 
 	if (hints && hints->ai_flags & AI_PASSIVE) {
-		if (NULL != (*res = malloc_ai(port, htonl(0x00000000))))
-			return 0;
-		else
-			return EAI_MEMORY;
+		*res = malloc_ai(port, htonl(0x00000000));
+		return 0;
 	}
 		
 	if (!hostname) {
-		if (NULL != (*res = malloc_ai(port, htonl(0x7f000001))))
-			return 0;
-		else
-			return EAI_MEMORY;
-	}
-	
-#ifdef HAVE_INET_ATON
-	if (inet_aton(hostname, &in)) {
-		if (NULL != (*res = malloc_ai(port, in.s_addr)))
-			return 0;
-		else
-			return EAI_MEMORY;
-	}
-#endif
-	
-	hp = gethostbyname(hostname);
-	if (hp && hp->h_name && hp->h_name[0] && hp->h_addr_list[0]) {
-		for (i = 0; hp->h_addr_list[i]; i++) {
-			cur = malloc_ai(port, ((struct in_addr *)hp->h_addr_list[i])->s_addr);
-			if (cur == NULL) {
-				if (*res)
-					freeaddrinfo(*res);
-				return EAI_MEMORY;
-			}
-			
-			if (prev)
-				prev->ai_next = cur;
-			else
-				*res = cur;
-
-			prev = cur;
-		}
+		*res = malloc_ai(port, htonl(0x7f000001));
 		return 0;
 	}
 	
-	return EAI_NODATA;
+	hp = gethostbyname(hostname);
+
+	if(!hp || !hp->h_addr_list[0])
+		return EAI_NODATA;
+
+	for (i = 0; hp->h_addr_list[i]; i++) {
+		*res = malloc_ai(port, ((struct in_addr *)hp->h_addr_list[i])->s_addr);
+
+		if(prev)
+			prev->ai_next = *res;
+
+		prev = *res;
+	}
+
+	return 0;
 }
 #endif /* !HAVE_GETADDRINFO */

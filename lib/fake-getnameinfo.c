@@ -16,41 +16,31 @@
 
 #ifndef HAVE_GETNAMEINFO
 
-int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, 
-                size_t hostlen, char *serv, size_t servlen, int flags)
+int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t hostlen, char *serv, size_t servlen, int flags)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 	struct hostent *hp;
-	char tmpserv[16];
 
-	if (serv) {
-		snprintf(tmpserv, sizeof(tmpserv), "%d", ntohs(sin->sin_port));
-		if (strlen(tmpserv) >= servlen)
-			return EAI_MEMORY;
-		else
-			strcpy(serv, tmpserv);
+	if(serv)
+		snprintf(serv, sizeof(tmpserv), "%d", ntohs(sin->sin_port));
+
+	if(!host)
+		return 0;
+
+	if(flags & NI_NUMERICHOST) {
+		strncpy(host, inet_ntoa(sin->sin_addr), sizeof(host));
+		return 0;
 	}
 
-	if (host) {
-		if (flags & NI_NUMERICHOST) {
-			if (strlen(inet_ntoa(sin->sin_addr)) >= hostlen)
-				return EAI_MEMORY;
+	hp = gethostbyaddr((char *)&sin->sin_addr, sizeof(struct in_addr), AF_INET);
+	
+	if(!hp || !hp->h_name)
+		return EAI_NODATA;
+	
+	if(strlen(hp->h_name) >= hostlen)
+		return EAI_MEMORY;
 
-			strcpy(host, inet_ntoa(sin->sin_addr));
-			return 0;
-		} else {
-			hp = gethostbyaddr((char *)&sin->sin_addr, 
-				sizeof(struct in_addr), AF_INET);
-			if (hp == NULL)
-				return EAI_NODATA;
-			
-			if (strlen(hp->h_name) >= hostlen)
-				return EAI_MEMORY;
-
-			strcpy(host, hp->h_name);
-			return 0;
-		}
-	}
+	strncpy(host, hp->h_name, hostlen);
 	return 0;
 }
 #endif /* !HAVE_GETNAMEINFO */
