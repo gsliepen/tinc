@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.67 2003/08/08 19:43:47 guus Exp $
+    $Id: process.c,v 1.1.2.68 2003/08/08 19:56:11 guus Exp $
 */
 
 #include "system.h"
@@ -100,8 +100,13 @@ bool install_service(void) {
 	strncat(command, program_name, sizeof(command));
 	for(argp = g_argv + 1; *argp; argp++) {
 		space = strchr(*argp, ' ');
-		strncat(command, space?" \"":" ", sizeof(command));
+		strncat(command, " ", sizeof(command));
+		
+		if(space)
+			strncat(command, "\"", sizeof(command));
+		
 		strncat(command, *argp, sizeof(command));
+
 		if(space)
 			strncat(command, "\"", sizeof(command));
 	}
@@ -372,10 +377,12 @@ bool execute_script(const char *name, char **envp)
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 #endif
 
+#ifdef HAVE_PUTENV
 	/* Set environment */
 	
 	while(*envp)
 		putenv(*envp++);
+#endif
 
 	status = system(scriptname);
 
