@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.68 2000/11/30 23:18:21 zarq Exp $
+    $Id: protocol.c,v 1.28.4.69 2000/12/05 08:59:30 zarq Exp $
 */
 
 #include "config.h"
@@ -72,11 +72,12 @@ int check_id(char *id)
   for (i = 0; i < strlen(id); i++)
     if(!isalnum(id[i]) && id[i] != '_')
       return -1;
-          
+  
   return 0;
 }
 
-/* Generic request routines - takes care of logging and error detection as well */
+/* Generic request routines - takes care of logging and error
+   detection as well */
 
 int send_request(connection_t *cl, const char *format, ...)
 {
@@ -85,8 +86,9 @@ int send_request(connection_t *cl, const char *format, ...)
   int len, request;
 
 cp
-  /* Use vsnprintf instead of vasprintf: faster, no memory fragmentation, cleanup is automatic,
-     and there is a limit on the input buffer anyway */
+  /* Use vsnprintf instead of vasprintf: faster, no memory
+     fragmentation, cleanup is automatic, and there is a limit on the
+     input buffer anyway */
 
   va_start(args, format);
   len = vsnprintf(buffer, MAXBUFSIZE, format, args);
@@ -174,9 +176,10 @@ cp
    (H) SHA1,
    (E) Encrypted with symmetric cipher.
 
-   Part of the challenge is directly used to set the symmetric cipher key and the initial vector.
-   Since a man-in-the-middle cannot decrypt the RSA challenges, this means that he cannot get or
-   forge the key for the symmetric cipher.
+   Part of the challenge is directly used to set the symmetric cipher
+   key and the initial vector.  Since a man-in-the-middle cannot
+   decrypt the RSA challenges, this means that he cannot get or forge
+   the key for the symmetric cipher.
 */
 
 int send_id(connection_t *cl)

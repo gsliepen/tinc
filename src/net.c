@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.86 2000/11/30 23:18:19 zarq Exp $
+    $Id: net.c,v 1.35.4.87 2000/12/05 08:59:29 zarq Exp $
 */
 
 #include "config.h"
@@ -386,9 +386,9 @@ int setup_tap_fd(void)
   const char *tapfname;
   config_t const *cfg;
 #ifdef HAVE_LINUX
- #ifdef HAVE_TUNTAP
+# ifdef HAVE_TUNTAP
   struct ifreq ifr;
- #endif
+# endif
 #endif
 
 cp  
@@ -397,11 +397,11 @@ cp
   else
    {
 #ifdef HAVE_LINUX
- #ifdef HAVE_TUNTAP
+# ifdef HAVE_TUNTAP
       tapfname = "/dev/misc/net/tun";
- #else
+# else
       tapfname = "/dev/tap0";
- #endif
+# endif
 #endif
 #ifdef HAVE_FREEBSD
       tapfname = "/dev/tap0";
