@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.73 2003/08/08 12:24:52 guus Exp $
+    $Id: conf.c,v 1.9.4.74 2003/08/08 14:59:27 guus Exp $
 */
 
 #include "system.h"
@@ -359,7 +359,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 
 		lineno++;
 
-		if(*line == '#')
+		if(!*line || *line == '#')
 			continue;
 
 		if(ignore) {
