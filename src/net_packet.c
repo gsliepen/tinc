@@ -457,6 +457,12 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
 
+	if(from != myself) {
+		if(overwrite_mac)
+			 memcpy(packet->data, mymac.x, ETH_ALEN);
+		write_packet(packet);
+	}
+
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
