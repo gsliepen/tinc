@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.11 2002/03/22 13:31:18 guus Exp $
+    $Id: node.c,v 1.1.2.12 2002/04/29 20:05:07 guus Exp $
 */
 
 #include "config.h"
@@ -123,7 +123,7 @@ cp
       subnet_del(n, s);
     }
 
-  for(node = n->subnet_tree->head; node; node = next)
+  for(node = n->edge_tree->head; node; node = next)
     {
       next = node->next;
       e = (edge_t *)node->data;
