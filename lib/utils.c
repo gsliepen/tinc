@@ -38,50 +38,49 @@ char *hexadecimals = "0123456789ABCDEF";
 
 int charhex2bin(char c)
 {
-  if(isdigit(c))
-    return c - '0';
-  else
-    return toupper(c) - 'A' + 10;
+	if(isdigit(c))
+		return c - '0';
+	else
+		return toupper(c) - 'A' + 10;
 }
 
 
 void hex2bin(char *src, char *dst, int length)
 {
-  int i;
-  for(i=0; i<length; i++)
-    dst[i] = charhex2bin(src[i*2])*16 + charhex2bin(src[i*2+1]);
+	int i;
+	for(i = 0; i < length; i++)
+		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 }
 
 void bin2hex(char *src, char *dst, int length)
 {
-  int i;
-  for(i=length-1; i>=0; i--)
-    {
-      dst[i*2+1] = hexadecimals[(unsigned char)src[i] & 15];
-      dst[i*2] = hexadecimals[(unsigned char)src[i]>>4];
-    }
+	int i;
+	for(i = length - 1; i >= 0; i--) {
+		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
+		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
+	}
 }
 
 #ifdef ENABLE_TRACING
 void cp_trace()
 {
-  syslog(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
-           cp_file[(cp_index+15)%16], cp_line[(cp_index+15)%16],
-           cp_file[(cp_index+14)%16], cp_line[(cp_index+14)%16],
-           cp_file[(cp_index+13)%16], cp_line[(cp_index+13)%16],
-           cp_file[(cp_index+12)%16], cp_line[(cp_index+12)%16],
-           cp_file[(cp_index+11)%16], cp_line[(cp_index+11)%16],
-           cp_file[(cp_index+10)%16], cp_line[(cp_index+10)%16],
-           cp_file[(cp_index+9)%16], cp_line[(cp_index+9)%16],
-           cp_file[(cp_index+8)%16], cp_line[(cp_index+8)%16],
-           cp_file[(cp_index+7)%16], cp_line[(cp_index+7)%16],
-           cp_file[(cp_index+6)%16], cp_line[(cp_index+6)%16],
-           cp_file[(cp_index+5)%16], cp_line[(cp_index+5)%16],
-           cp_file[(cp_index+4)%16], cp_line[(cp_index+4)%16],
-           cp_file[(cp_index+3)%16], cp_line[(cp_index+3)%16],
-           cp_file[(cp_index+2)%16], cp_line[(cp_index+2)%16],
-           cp_file[(cp_index+1)%16], cp_line[(cp_index+1)%16],
-           cp_file[cp_index], cp_line[cp_index]
-        );
+	syslog(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
+		   cp_file[(cp_index + 15) % 16], cp_line[(cp_index + 15) % 16],
+		   cp_file[(cp_index + 14) % 16], cp_line[(cp_index + 14) % 16],
+		   cp_file[(cp_index + 13) % 16], cp_line[(cp_index + 13) % 16],
+		   cp_file[(cp_index + 12) % 16], cp_line[(cp_index + 12) % 16],
+		   cp_file[(cp_index + 11) % 16], cp_line[(cp_index + 11) % 16],
+		   cp_file[(cp_index + 10) % 16], cp_line[(cp_index + 10) % 16],
+		   cp_file[(cp_index + 9) % 16], cp_line[(cp_index + 9) % 16],
+		   cp_file[(cp_index + 8) % 16], cp_line[(cp_index + 8) % 16],
+		   cp_file[(cp_index + 7) % 16], cp_line[(cp_index + 7) % 16],
+		   cp_file[(cp_index + 6) % 16], cp_line[(cp_index + 6) % 16],
+		   cp_file[(cp_index + 5) % 16], cp_line[(cp_index + 5) % 16],
+		   cp_file[(cp_index + 4) % 16], cp_line[(cp_index + 4) % 16],
+		   cp_file[(cp_index + 3) % 16], cp_line[(cp_index + 3) % 16],
+		   cp_file[(cp_index + 2) % 16], cp_line[(cp_index + 2) % 16],
+		   cp_file[(cp_index + 1) % 16], cp_line[(cp_index + 1) % 16],
+		   cp_file[cp_index], cp_line[cp_index]
+		);
 }
 #endif

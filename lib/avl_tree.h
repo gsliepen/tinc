@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.h,v 1.1.2.5 2002/06/21 10:11:11 guus Exp $
+    $Id: avl_tree.h,v 1.1.2.6 2002/09/09 21:49:16 guus Exp $
 */
 
 
@@ -37,34 +37,34 @@
 #define __AVL_TREE_H__
 
 #ifndef AVL_DEPTH
- #ifndef AVL_COUNT
-  #define AVL_DEPTH
- #endif
+#ifndef AVL_COUNT
+#define AVL_DEPTH
+#endif
 #endif
 
 typedef struct avl_node_t {
 
-  /* Linked list part */
+	/* Linked list part */
 
-  struct avl_node_t *next;
-  struct avl_node_t *prev;
+	struct avl_node_t *next;
+	struct avl_node_t *prev;
 
-  /* Tree part */
+	/* Tree part */
 
-  struct avl_node_t *parent;
-  struct avl_node_t *left;
-  struct avl_node_t *right;
+	struct avl_node_t *parent;
+	struct avl_node_t *left;
+	struct avl_node_t *right;
 
 #ifdef AVL_COUNT
-  unsigned int count;
+	unsigned int count;
 #endif
 #ifdef AVL_DEPTH
-  unsigned char depth;
+	unsigned char depth;
 #endif
 
-  /* Payload */
+	/* Payload */
 
-  void *data;
+	void *data;
 
 } avl_node_t;
 
@@ -74,17 +74,17 @@ typedef void (*avl_action_node_t) (const avl_node_t *);
 
 typedef struct avl_tree_t {
 
-  /* Linked list part */
+	/* Linked list part */
 
-  avl_node_t *head;
-  avl_node_t *tail;
+	avl_node_t *head;
+	avl_node_t *tail;
 
-  /* Tree part */
+	/* Tree part */
 
-  avl_node_t *root;
+	avl_node_t *root;
 
-  avl_compare_t compare;
-  avl_action_t delete;
+	avl_compare_t compare;
+	avl_action_t delete;
 
 } avl_tree_t;
 
@@ -94,7 +94,7 @@ extern avl_tree_t *avl_alloc_tree(avl_compare_t, avl_action_t);
 extern void avl_free_tree(avl_tree_t *);
 
 extern avl_node_t *avl_alloc_node(void);
-extern void avl_free_node(avl_tree_t *tree, avl_node_t *);
+extern void avl_free_node(avl_tree_t * tree, avl_node_t *);
 
 /* Insertion and deletion */
 
@@ -106,7 +106,7 @@ extern void avl_insert_before(avl_tree_t *, avl_node_t *, avl_node_t *);
 extern void avl_insert_after(avl_tree_t *, avl_node_t *, avl_node_t *);
 
 extern avl_node_t *avl_unlink(avl_tree_t *, void *);
-extern void avl_unlink_node(avl_tree_t *tree, avl_node_t *);
+extern void avl_unlink_node(avl_tree_t * tree, avl_node_t *);
 extern void avl_delete(avl_tree_t *, void *);
 extern void avl_delete_node(avl_tree_t *, avl_node_t *);
 
@@ -142,4 +142,4 @@ extern unsigned int avl_index(const avl_node_t *);
 extern unsigned int avl_depth(avl_tree_t *);
 #endif
 
-#endif /* __AVL_TREE_H__ */
+#endif							/* __AVL_TREE_H__ */
