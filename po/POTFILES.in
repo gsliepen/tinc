@@ -14,3 +14,4 @@ src/protocol.c
 src/subnet.c
 src/tincd.c
 src/process.c
+src/route.c
