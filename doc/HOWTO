@@ -109,7 +109,13 @@ any data because it doesn't know where everybody is.
 The passphrases
 ---------------
 We will have to generate keys for ourselves, and get a key from everybody
-we want to ConnectTo. 
+we want to ConnectTo. All of these go into a directory named
+/etc/tinc/passphrases. To generate our own key:
+
+	genauth 1024 >/etc/tinc/passphrases/local
+
+You should then proceed to give this key to anyone who wants to ConnectTo
+you.
 
 --
-$Id: HOWTO,v 1.2 2000/06/30 20:42:07 wsl Exp $
+$Id: HOWTO,v 1.3 2000/06/30 20:57:30 wsl Exp $
