@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.12 2000/09/15 12:58:40 zarq Exp $
+    $Id: net.h,v 1.9.4.13 2000/10/01 03:21:49 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -57,14 +57,6 @@ typedef unsigned short port_t;
 typedef short length_t;
 
 struct conn_list_t;
-
-typedef struct subnet_t {
-  ip_t netaddr;
-  ip_t netmask;
-  struct conn_list_t *owner;
-  struct subnet_t *next;
-  struct subnet_t *prev;
-} subnet_t;  
 
 typedef struct vpn_packet_t {
   length_t len;		/* the actual number of bytes in the `data' field */
@@ -123,33 +115,40 @@ typedef struct enc_key_t {
 
 typedef struct conn_list_t {
   char *name;                      /* name of this connection */
-  ip_t vpn_ip;                     /* his vpn ip */
-  ip_t vpn_mask;                   /* his vpn network address */
   ip_t real_ip;                    /* his real (internet) ip */
-  char *hostname;             /* the hostname of its real ip */
+  char *hostname;                  /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
+  int protocol_version;            /* used protocol */
+  int options;                     /* options turned on for this connection */
+
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
   int meta_socket;                 /* our tcp meta socket */
-  int protocol_version;            /* used protocol */
   status_bits_t status;            /* status info */
-  int options;           /* options turned on for this connection */
-  passphrase_t *pp;                /* encoded passphrase */
   packet_queue_t *sq;              /* pending outgoing packets */
   packet_queue_t *rq;              /* pending incoming packets (they have no
 				      valid key to be decrypted with) */
   enc_key_t *public_key;           /* the other party's public key */
   enc_key_t *datakey;              /* encrypt data packets with this key */
-  char *buffer;       /* metadata input buffer */
+  enc_key_t *rsakey;
+
+  char *buffer;                    /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int reqlen;                      /* length of first request in buffer */
-  int tcppacket;		   /* length of incoming TCP tunnelled packet */
-  time_t last_ping_time;           /* last time we saw some activity from the other end */  
-  int want_ping;                   /* 0 if there's no need to check for activity */
   int allow_request;               /* defined if there's only one request possible */
-  char *chal_answer;               /* answer to the given challenge */
-  enc_key_t *rsakey;
-  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
+
+  time_t last_ping_time;           /* last time we saw some activity from the other end */  
+  int want_ping;                   /* 0 if there's no need to check for activity. Shouldn't this go into status? (GS) */
+
+  char *mychallenge;               /* challenge we received from him */
+  char *hischallenge;              /* challenge we sent to him */
+
+  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction, will be changed to myuplink (GS) */
+  struct conn_list_t *hisuplink;   /* his nearest meta-hop in our direction */
+  struct conn_list_t *myuplink;    /* our nearest meta-hop in his direction */
+
+  struct subnet_t *subnets;        /* Pointer to a list of subnets belonging to this connection */
+
   struct conn_list_t *next;        /* after all, it's a list of connections */
 } conn_list_t;
 

@@ -1,5 +1,5 @@
 /*
-    meta.h -- header for meta.c
+    subnet.h -- header for subnet.c
     Copyright (C) 2000 Guus Sliepen <guus@sliepen.warande.net>,
                   2000 Ivo Timmermans <itimmermans@bigfoot.com>
 
@@ -17,16 +17,32 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.h,v 1.1.2.2 2000/10/01 03:21:49 guus Exp $
+    $Id: subnet.h,v 1.1.2.1 2000/10/01 03:21:49 guus Exp $
 */
 
-#ifndef __TINC_META_H__
-#define __TINC_META_H__
+#ifndef __TINC_SUBNET_H__
+#define __TINC_SUBNET_H__
 
-#include net.h
+enum{
+  SUBNET_MAC = 0,
+  SUBNET_IPv4,
+  SUBNET_IPv6,
+};
 
-extern int send_meta(conn_list_t *, const char *, int)
-extern int broadcast_meta(conn_list_t *, const char *, int)
-extern int receive_meta(conn_list_t *)
+typedef struct subnet_t {
+  struct conn_list_t *owner;		/* the owner of this subnet */
+  struct conn_list_t *uplink;		/* the uplink which we should send packets to for this subnet */
 
-#endif /* __TINC_META_H__ */
+  struct subnet_t *prev;		/* previous subnet_t for this owner */
+  struct subnet_t *next;		/* next subnet_t for this owner */
+
+  int type;				/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+
+  /* Okay this is IPv4 specific because we are lazy and don't want to implement
+     other types just now. Type should always be SUBNET_IPv4 for now. */
+
+  ip_t netaddr;
+  ip_t netmask;
+} subnet_t;  
+
+#endif /* __TINC_SUBNET_H__ */
