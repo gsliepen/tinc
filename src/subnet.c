@@ -398,6 +398,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	asprintf(&envp[1], "DEVICE=%s", device ? : "");
 	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	asprintf(&envp[3], "NODE=%s", owner->name);
+
 	if(owner != myself) {
 		sockaddr2str(&owner->address, &address, &port);
 		asprintf(&envp[4], "REMOTEADDRESS=%s", address);
@@ -425,12 +426,14 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 
 	net2str(netstr, sizeof netstr, subnet);
 	envp[6] = envp[7] = NULL;
-	
+
 	for(i = 0; i < (owner != myself ? 6 : 4); i++)
 		free(envp[i]);
 
-	free(address);
-	free(port);
+	if(owner != myself) {
+		free(address);
+		free(port);
+	}
 }
 
 void dump_subnets(void)
