@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.123 2001/07/20 20:25:10 guus Exp $
+    $Id: net.c,v 1.35.4.124 2001/07/21 15:34:18 guus Exp $
 */
 
 #include "config.h"
@@ -247,7 +247,7 @@ cp
   if((cl->options | myself->options) & OPTION_TCPONLY)
     {
       if(send_tcppacket(cl, packet))
-        terminate_connection(cl);
+        terminate_connection(cl, 1);
     }
   else
     send_udppacket(cl, packet);
@@ -1009,10 +1009,10 @@ cp
       next = node->next;
       p = (connection_t *)node->data;
       p->status.outgoing = 0;
-      terminate_connection(p);
+      terminate_connection(p, 0);
     }
 
-  terminate_connection(myself);
+  terminate_connection(myself, 0);
 
   destroy_trees();
 
@@ -1136,8 +1136,9 @@ cp
   - Remove associated hosts and subnets
   - Deactivate the host
   - Since it might still be referenced, put it on the prune list.
+  - If report == 1, then send DEL_HOST messages to the other tinc daemons.
 */
-void terminate_connection(connection_t *cl)
+void terminate_connection(connection_t *cl, int report)
 {
   connection_t *p;
   subnet_t *subnet;
@@ -1151,6 +1152,8 @@ cp
   if(cl->socket)
     close(cl->socket);
 
+  connection_del(cl);
+
   if(cl->status.meta)
     {
       if(debug_lvl >= DEBUG_CONNECTIONS)
@@ -1159,27 +1162,30 @@ cp
 
       close(cl->meta_socket);
 
-      /* Find all connections that were lost because they were behind cl
-         (the connection that was dropped). */
-
-        for(node = active_tree->head; node; node = next)
-          {
-            next = node->next;
-            p = (connection_t *)node->data;
-            if(p->nexthop == cl && p != cl)
-              terminate_connection(p);
-          }
-
-      /* Inform others of termination if it was still active */
-
       if(cl->status.active)
-        for(node = connection_tree->head; node; node = node->next)
-          {
-            p = (connection_t *)node->data;
-            if(p->status.active && p != cl)
-              send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
-          }
+        {
+          /* Find all connections that were lost because they were behind cl
+             (the connection that was dropped). */
+
+          for(node = active_tree->head; node; node = next)
+            {
+              next = node->next;
+              p = (connection_t *)node->data;
+              if(p->nexthop == cl)
+                terminate_connection(p, report);
+            }
+        }
     }
+
+  /* Inform others of termination if needed */
+
+  if(report)
+    for(node = connection_tree->head; node; node = node->next)
+      {
+        p = (connection_t *)node->data;
+        if(p->status.active)
+          send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
+      }
 
   /* Remove the associated subnets */
 
@@ -1203,7 +1209,6 @@ cp
   /* Schedule it for pruning */
 
   prune_add(cl);
-  connection_del(cl);
 }
 
 /*
@@ -1235,7 +1240,7 @@ cp
   	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
 		           cl->name, cl->hostname);
 	          cl->status.timeout = 1;
-	          terminate_connection(cl);
+	          terminate_connection(cl, 1);
                 }
               else
                 {
@@ -1300,7 +1305,7 @@ cp
       if(FD_ISSET(p->meta_socket, f))
 	if(receive_meta(p) < 0)
 	  {
-	    terminate_connection(p);
+	    terminate_connection(p, 1);
 	    return;
 	  }
     }

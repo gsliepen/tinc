@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.33 2001/06/08 18:02:10 guus Exp $
+    $Id: net.h,v 1.9.4.34 2001/07/21 15:34:18 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -115,7 +115,7 @@ extern void broadcast_packet(connection_t *, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
-extern void terminate_connection(connection_t *);
+extern void terminate_connection(connection_t *, int);
 extern void flush_queue(connection_t *);
 
 #include <config.h>

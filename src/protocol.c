@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.102 2001/07/20 20:25:10 guus Exp $
+    $Id: protocol.c,v 1.28.4.103 2001/07/21 15:34:18 guus Exp $
 */
 
 #include "config.h"
@@ -245,7 +245,7 @@ cp
           cl->status.outgoing = 1;
           old->status.outgoing = 0;
         }
-      terminate_connection(old);
+      terminate_connection(old, 0);
       return 0;
     }
     
@@ -829,7 +829,7 @@ cp
 
   if((old = lookup_id(name)))
     {
-      if((new->address == old->address) && (new->port == old->port))
+      if((new->address == old->address) && (new->port == old->port) && (cl == old->nexthop))
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
@@ -843,7 +843,7 @@ cp
             syslog(LOG_NOTICE, _("Removing old entry for %s (%s) in favour of new connection"),
                    old->name, old->hostname);
 
-          terminate_connection(old);
+          terminate_connection(old, 0);
         }
     }
 
@@ -933,7 +933,7 @@ cp
 
   /* Ok, since EVERYTHING seems to check out all right, delete it */
 
-  terminate_connection(old);
+  terminate_connection(old, 0);
 
   /* Tell the rest about the deleted host */
 
@@ -1006,7 +1006,7 @@ cp
              cl->name, cl->hostname, strerror(err), errorstring);
     }
 
-  terminate_connection(cl);
+  terminate_connection(cl, 1);
 cp
   return 0;
 }
@@ -1020,7 +1020,7 @@ cp
 int termreq_h(connection_t *cl)
 {
 cp
-  terminate_connection(cl);
+  terminate_connection(cl, 1);
 cp
   return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.14 2001/07/20 20:25:10 guus Exp $
+    $Id: connection.c,v 1.1.2.15 2001/07/21 15:34:18 guus Exp $
 */
 
 #include "config.h"
@@ -172,7 +172,6 @@ cp
   {
     avl_delete(id_tree, cl);
     avl_delete(active_tree, cl);
-    cl->status.active = 0;
   }
 cp
 }
