@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.9 2001/02/25 15:34:50 guus Exp $
+    $Id: list.c,v 1.1.2.10 2002/03/27 15:01:16 guus Exp $
 */
 
 #include "config.h"
@@ -81,6 +81,8 @@ list_node_t *list_insert_head(list_t *list, void *data)
   else
     list->tail = node;
 
+  list->count++;
+
   return node;
 }
 
@@ -100,6 +102,8 @@ list_node_t *list_insert_tail(list_t *list, void *data)
   else
     list->head = node;
 
+  list->count++;
+  
   return node;
 }
 
@@ -114,6 +118,8 @@ void list_unlink_node(list_t *list, list_node_t *node)
     node->next->prev = node->prev;
   else
     list->tail = node->prev;
+
+  list->count--;
 }
 
 void list_delete_node(list_t *list, list_node_t *node)

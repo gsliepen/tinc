@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.h,v 1.1.2.4 2001/01/07 17:08:50 guus Exp $
+    $Id: list.h,v 1.1.2.5 2002/03/27 15:01:16 guus Exp $
 */
 
 #ifndef __TINC_LIST_H__
@@ -40,6 +40,7 @@ typedef struct list_t
 {
   list_node_t *head;
   list_node_t *tail;
+  int count;
 
   /* Callbacks */
 
