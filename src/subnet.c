@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.38 2002/07/10 11:32:33 guus Exp $
+    $Id: subnet.c,v 1.1.2.39 2002/07/11 12:42:43 guus Exp $
 */
 
 #include "config.h"
@@ -155,7 +155,7 @@ cp
 subnet_t *new_subnet(void)
 {
 cp
-  return (subnet_t *)xmalloc(sizeof(subnet_t));
+  return (subnet_t *)xmalloc_and_zero(sizeof(subnet_t));
 }
 
 void free_subnet(subnet_t *subnet)
