@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ethernet.h,v 1.1.2.3 2003/07/18 13:42:35 guus Exp $
+    $Id: ethernet.h,v 1.1.2.4 2003/10/06 14:16:51 guus Exp $
 */
 
 #ifndef __TINC_ETHERNET_H__
@@ -27,16 +27,20 @@
 #define ETH_ALEN 6
 #endif
 
-#ifndef ETHER_ADDR_LEN
-#define ETHER_ADDR_LEN 6
-#endif
-
 #ifndef ARPHRD_ETHER
 #define ARPHRD_ETHER 1
 #endif
 
-#ifndef ETHERTYPE_IP
-#define ETHERTYPE_IP 0x0800
+#ifndef ETH_P_IP
+#define ETH_P_IP 0x0800
+#endif
+
+#ifndef ETH_P_ARP
+#define ETH_P_ARP 0x0806
+#endif
+
+#ifndef ETH_P_IPV6
+#define ETH_P_IPV6 0x86DD
 #endif
 
 #ifndef HAVE_STRUCT_ARPHDR
