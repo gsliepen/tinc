@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.146 2001/11/03 21:21:04 guus Exp $
+    $Id: net.c,v 1.35.4.147 2001/11/03 22:53:01 guus Exp $
 */
 
 #include "config.h"
@@ -549,7 +549,7 @@ cp
   asprintf(&fname, "%s/hosts/%s", confbase, c->name);
   if((fp = fopen(fname, "r")))
     {
-      c->rsa_key = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
+      c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
       fclose(fp);
     }
 

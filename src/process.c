@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.31 2001/10/31 20:37:54 guus Exp $
+    $Id: process.c,v 1.1.2.32 2001/11/03 22:53:02 guus Exp $
 */
 
 #include "config.h"
@@ -446,7 +446,10 @@ setup_signals(void)
      ignored. */
   for(i = 0; i < NSIG; i++) 
     {
-      act.sa_sigaction = unexpected_signal_handler;
+      if(!do_detach)
+        act.sa_sigaction = SIG_DFL;
+      else
+        act.sa_sigaction = unexpected_signal_handler;
       sigaction(i, &act, NULL);
     }
 
