@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.6 2002/03/24 16:50:58 guus Exp $
+    $Id: device.c,v 1.1.2.7 2002/03/24 17:08:38 guus Exp $
 */
 
 #include "config.h"
@@ -114,8 +114,22 @@ cp
 
   memcpy(packet->data, mymac.net.mac.address.x, 6);
   memcpy(packet->data + 6, mymac.net.mac.address.x, 6);
-  packet->data[12] = (ntohl(type) >> 8) & 0xFF;
-  packet->data[13] = ntohl(type) & 0xFF;
+
+  switch(ntohl(type))
+    {
+      case AF_INET:
+        packet->data[12] = 0x8;
+	packet->data[13] = 0x0;
+	break;
+      case AF_INET6:
+        packet->data[12] = 0x86;
+	packet->data[13] = 0xDD;
+	break;
+      default:
+        if(debug_lvl >= DEBUG_TRAFFIC)
+	  syslog(LOG_ERR, _("Unknown address family %s while reading packet from %s %s"), ntohl(type), device_info, device);
+	return -1;
+    }
 
   packet->len = lenin + 10;
 
@@ -134,12 +148,27 @@ int write_packet(vpn_packet_t *packet)
 {
   u_int32_t type;
   struct iovec vector[2];
+  int af;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
            packet->len, device_info);
 
-  type = htonl((packet->data[12] << 8) + packet->data[13]);
+  af = (packet->data[12] << 8) + packet->data[13];
+
+  switch(af)
+    {
+      case 0x800:
+        type = htonl(AF_INET);
+	break;
+      case 0x86DD:
+        type = htonl(AF_INET6);
+	break;
+      default:
+        if(debug_lvl >= DEBUG_TRAFFIC)
+	  syslog(LOG_ERR, _("Unknown address family %s while writing packet to %s %s"), af, device_info, device);
+	return -1;
+    }
 
   vector[0].iov_base = &type;
   vector[0].iov_len = sizeof(type);
