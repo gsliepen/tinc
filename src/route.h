@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.h,v 1.1.2.11 2003/07/12 17:41:47 guus Exp $
+    $Id: route.h,v 1.1.2.12 2003/07/15 16:26:18 guus Exp $
 */
 
 #ifndef __TINC_ROUTE_H__
@@ -33,6 +33,8 @@ extern int routing_mode;
 extern int overwrite_mac;
 extern int priorityinheritance;
 extern int macexpire;
+
+extern mac_t mymac;
 
 extern void age_mac(void);
 extern void route_incoming(node_t *, vpn_packet_t *);
