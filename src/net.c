@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.39 2000/10/16 16:33:29 guus Exp $
+    $Id: net.c,v 1.35.4.40 2000/10/16 19:04:46 guus Exp $
 */
 
 #include "config.h"
@@ -55,7 +55,7 @@
 #include "system.h"
 
 int tap_fd = -1;
-
+int taptype = 0;
 int total_tap_in = 0;
 int total_tap_out = 0;
 int total_socket_in = 0;
@@ -355,17 +355,20 @@ cp
 cp
   tap_fd = nfd;
 
+  taptype = 0;
+
 #ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
   memset(&ifr, 0, sizeof(ifr));
 cp
-  ifr.ifr_flags = IFF_TAP;
+  ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
   if (netname)
     strncpy(ifr.ifr_name, netname, IFNAMSIZ);
 cp
   if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
   { 
     syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
+    taptype = 1;
     if((cfg = get_config_val(config, tapsubnet)) == NULL)
       syslog(LOG_INFO, _("tun/tap device will be left unconfigured"));
     else
@@ -1111,10 +1114,24 @@ void handle_tap_input(void)
   int ether_type, lenin;
 cp  
   memset(&vp, 0, sizeof(vp));
-  if((lenin = read(tap_fd, &vp, MTU)) <= 0)
+
+  if(taptype = 1)
     {
-      syslog(LOG_ERR, _("Error while reading from tapdevice: %m"));
-      return;
+      if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
+        {
+          syslog(LOG_ERR, _("Error while reading from tapdevice: %m"));
+          return;
+        }
+      vp.len = lenin;
+    }
+  else
+    {
+      if((lenin = read(tap_fd, &vp, MTU)) <= 0)
+        {
+          syslog(LOG_ERR, _("Error while reading from tapdevice: %m"));
+          return;
+        }
+      vp.len = lenin - 2;
     }
 
   total_tap_in += lenin;
@@ -1136,10 +1153,6 @@ cp
 
   from = ntohl(*((unsigned long*)(&vp.data[26])));
   to = ntohl(*((unsigned long*)(&vp.data[30])));
-
-  vp.len = (length_t)lenin - 2;
-
-  strip_mac_addresses(&vp);
 
   send_packet(to, &vp);
 cp

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.5 2000/10/16 16:33:29 guus Exp $
+    $Id: connlist.c,v 1.1.2.6 2000/10/16 19:04:46 guus Exp $
 */
 
 #include <syslog.h>
@@ -146,8 +146,9 @@ conn_list_t *lookup_id(char *name)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(strcmp(name, p->name) == 0)
-      break;
+    if(p->status.active)
+      if(strcmp(name, p->name) == 0)
+        break;
 cp
   return p;
 }

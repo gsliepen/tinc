@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.41 2000/10/16 16:33:30 guus Exp $
+    $Id: protocol.c,v 1.28.4.42 2000/10/16 19:04:47 guus Exp $
 */
 
 #include "config.h"
@@ -157,14 +157,14 @@ int send_id(conn_list_t *cl)
 cp
   cl->allow_request = CHALLENGE;
 cp
-  return send_request(cl, "%d %s %d %lx", ID, myself->name, myself->protocol_version, myself->options);
+  return send_request(cl, "%d %s %d %lx %hd", ID, myself->name, myself->protocol_version, myself->options, myself->port);
 }
 
 int id_h(conn_list_t *cl)
 {
   conn_list_t *old;
 cp
-  if(sscanf(cl->buffer, "%*d %as %d %lx", &cl->name, &cl->protocol_version, &cl->options) != 3)
+  if(sscanf(cl->buffer, "%*d %as %d %lx %hd", &cl->name, &cl->protocol_version, &cl->options, &cl->port) != 4)
     {
        syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
        return -1;
@@ -204,7 +204,6 @@ cp
   if(cl->status.outgoing)
     {
       if((old = lookup_id(cl->name)))
-       if(old != cl)
         {
           if(debug_lvl > DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"), cl->name, cl->hostname);
