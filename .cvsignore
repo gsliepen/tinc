@@ -1,0 +1,3 @@
+Makefile Makefile.in aclocal.m4 config.cache config.log config.status configure
+config.guess config.sub install-sh missing mkinstalldirs
+intl
