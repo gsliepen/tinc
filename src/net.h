@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.57 2003/05/06 21:13:17 guus Exp $
+    $Id: net.h,v 1.9.4.58 2003/05/07 11:21:58 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -41,7 +41,7 @@
 #define MTU 1514				/* 1500 bytes payload + 14 bytes ethernet header */
 #endif
 
-#define MAXSIZE (MTU + 4 + 8 + 64 + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
+#define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
 #define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
 #define MAXSOCKETS 128			/* Overkill... */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.29 2003/05/06 23:14:45 guus Exp $
+    $Id: net_packet.c,v 1.1.2.30 2003/05/07 11:21:58 guus Exp $
 */
 
 #include "config.h"
@@ -90,7 +90,7 @@ char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_CO
 length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
 {
 	if(level == 10) {
-		lzo_uint lzolen = sizeof(lzo_wrkmem);
+		lzo_uint lzolen = MAXSIZE;
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 	} else if(level < 10) {
@@ -100,7 +100,7 @@ length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int
 		else
 			return -1;
 	} else {
-		lzo_uint lzolen = sizeof(lzo_wrkmem);
+		lzo_uint lzolen = MAXSIZE;
 		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 	}
@@ -111,7 +111,7 @@ length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int
 length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
 {
 	if(level > 9) {
-		lzo_uint lzolen = sizeof(lzo_wrkmem);
+		lzo_uint lzolen = MAXSIZE;
 		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
 			return lzolen;
 		else
