@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.8 2002/03/01 15:14:29 guus Exp $
+    $Id: net_packet.c,v 1.1.2.9 2002/03/12 14:19:51 guus Exp $
 */
 
 #include "config.h"
@@ -103,7 +103,8 @@ cp
       HMAC(myself->digest, myself->key, myself->keylength, (char *)&inpkt->seqno, inpkt->len, hmac, NULL);
       if(memcmp(hmac, (char *)&inpkt->seqno + inpkt->len, myself->maclength))
         {
-          syslog(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
+          if(debug_lvl >= DEBUG_TRAFFIC)
+            syslog(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
           return;
         }
     }
@@ -129,7 +130,8 @@ cp
 
   if(inpkt->seqno <= n->received_seqno)
   {
-    syslog(LOG_DEBUG, _("Got late or replayed packet from %s (%s), seqno %d"), n->name, n->hostname, inpkt->seqno);
+    if(debug_lvl >= DEBUG_TRAFFIC)
+      syslog(LOG_DEBUG, _("Got late or replayed packet from %s (%s), seqno %d"), n->name, n->hostname, inpkt->seqno);
     return;
   }
   
