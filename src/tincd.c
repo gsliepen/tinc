@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.80 2003/08/02 20:50:38 guus Exp $
+    $Id: tincd.c,v 1.10.4.81 2003/08/02 21:33:52 guus Exp $
 */
 
 #include "system.h"
@@ -41,6 +41,7 @@
 #include <getopt.h>
 
 #include "conf.h"
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
