@@ -1,0 +1,960 @@
+<HTML>
+<HEAD>
+
+<TITLE>Manual DE tinc</TITLE>
+</HEAD>
+<BODY>
+<H1>Manual de tinc</H1>
+<H2>Preparando una Red Privada Virtual con tinc</H2>
+<ADDRESS>Ivo Timmermans &#60;<A HREF="mailto:itimmermans@bigfoot.com">itimmermans@bigfoot.com</A>&#62;</ADDRESS>
+<P>
+<P><HR><P>
+
+<H1><A NAME="SEC1" HREF="tinc_toc-es.html#TOC1">Introducción</A></H1>
+
+<P>
+Tinc es un demonio de Red Privada Virtual (VPN) que usa túnel y 
+cifrado de datos para crear una red privada segura entre hosts en 
+Internet. 
+
+
+<P>
+El túnel se realiza en la capa del protocolo IP como un dispositivo de 
+red normal, por lo cual hay necesidad de adaptar el software existente. 
+
+
+<P>
+Este túnel permite que sitios VPN compartan información entre ellos en 
+Internet sin exponer esta información a otros. 
+
+
+<P>
+Este documento es el manual de tinc. Incluye capítulos sobre cómo configurar 
+su computadora para usar tinc, así como el proceso de configuración de tinc. 
+
+
+
+
+
+<H2><A NAME="SEC2" HREF="tinc_toc-es.html#TOC2">Redes Privadas Virtuales</A></H2>
+
+<P>
+Una Red Privada Virtual o VPN es una red que sólo puede ser accedida por 
+computadoras elegidas para participar. Esta meta es alcanzable en más de una 
+manera. 
+
+
+<P>
+<A NAME="IDX1"></A>
+Por ejemplo, una VPN puede consistir en una ethernet LAN. O incluso dos 
+computadoras conectadas usando un cable módem nulo(1). En estos casos, es obvio que la red es <EM>privada</EM>, nadie puede acceder a esta desde afuera. Pero si estas si estas computadoras están conectadas a internet, la red deja de ser privada, a menos que use cortafuego para bloquear el trafico privado. Pero entonces, no hay manera de enviar datos privado a una computadora de confianza en otro lugar de internet. 
+
+
+<P>
+<A NAME="IDX2"></A>
+Este problema puede resolverse usando redes <EM>virtuales</EM>. Las redes virtuales pueden vivir arriba de otras redes, pero no interfieren interfieren entre ellas. En su mayor parte, las redes virtuales se ven como simples LAN, aun cuando pueden extenderse a lo largo del mundo. Pero las redes virtuales pueden no ser seguras aunque se uso cortafuegos, porque el trafico que fluye a traves de estas hacia internet puede ser visto por otras personas.
+
+
+<P>
+Cuando se introduce cifrado de datos, podemos formar una verdadera VPN, Otras personas pueden ver el trafico cifrado, pero no pueden saber como decifrar este (necesitan conocer la llave para esto), no pueden leer la información que fluye a traves de la VPN, Esto es para lo que tinc fue hecho.
+
+
+<P>
+<A NAME="IDX3"></A>
+Tinc usa datagramas IP normales para encapsular datos que viajan sobre el enlace 
+de red VPN. En este caso está también claro que la red es <EM>virtual</EM>, porque ningún enlace de red directo tiene que existir entre los participantes. 
+
+
+<P>
+Como es el caso con cualquier tipo de VPN, alguien podría escuchar secretamente, 
+o peor, alterar datos. Aquí es probablemente aconsejable el cifrar los datos que fluyen sobre la red. 
+
+
+
+
+<H2><A NAME="SEC3" HREF="tinc_toc-es.html#TOC3">TINC</A></H2>
+
+<P>
+Yo realmente no recuerdo lo que nos llevó a empezar, pero debe de haber sido idea de Guus. Él escribió una aplicación simple (aproximadamente 50 líneas en C) que usó el dispositivo <EM>ethertap</EM> que linux tiene desde el núcleo 2.1.60. No funcionó inmediatamente y él la mejoró un poco. En esta fase, el proyecto se llamó simplemente <SAMP>`vpnd'</SAMP>. 
+
+
+<P>
+Desde entonces, mucho ha cambiado -- por así decirlo. 
+
+
+<P>
+<A NAME="IDX4"></A>
+Tinc ahora soporta cifrado, consiste en un solo demonio (tincd) para la 
+recepción y el envío de información, se ha vuelto un paquete profesional completo. 
+
+
+<p>
+Mucho puede ser, y será, mejorado. Hay varias cosas que me gustaría ver en las 
+futuras versiones de tinc. No todo estará disponible en el futuro cercano. Nuestro primer objetivo es hacer que tinc trabaje perfectamente, y luego agregar rasgos más avanzados. 
+
+
+<P>
+Entretanto, siempre estaremos abiertos y disponibles hacia las nuevas ideas. 
+
+
+
+
+<H1><A NAME="SEC4" HREF="tinc_toc-es.html#TOC4">Configurando un sistema Linux</A></H1>
+
+<P>
+Este capítulo contiene información sobre cómo configurar un sistema Linux para el uso de tinc. 
+
+
+
+
+<H2><A NAME="SEC5" HREF="tinc_toc-es.html#TOC5">Configurando el Núcleo</A></H2>
+
+<P>
+Dado que esta implementación particular sólo corre en núcleos 2.1 o mayores, 
+debería conseguir uno (los 2.2 son actuales en este momento). Una migración a 2.0 no es posible, a menos que alguien migre los dispositivos ethertap y netlink a 2.0. 
+
+
+<P>
+Si no esta familiarizado con el proceso de configurar y compilar un nuevo núcleo, debería leer primero el <A HREF="http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html">Núcleo COMO</A>. ¡Haga eso ahora! 
+
+
+<P>
+Aquí están las opciones que usted tiene que activar al configurar un nuevo núcleo. 
+
+
+
+<PRE>
+Code maturity level options 
+[*] Prompt for development and/or incomplete code/drivers 
+Networking options 
+[*] Kernel/User netlink socket 
+&#60;*&#62; Netlink device emulation 
+Network device support 
+&#60;*&#62; Ethertap network tap 
+</PRE>
+
+<P>
+Cualquier otra opción no mencionada aquí no es relevante a tinc. Si usted decide 
+construirlos como módulos dinámicos, es una buena idea agregar estas líneas en 
+<TT>`/etc/modules.conf'</TT>.
+
+
+
+<PRE>
+alias tap0 ethertap 
+alias char-major-36 netlink_dev
+</PRE>
+
+<P> Finalmente, construya el núcleo y reinicie la maquina. Desgraciadamente no es 
+posible insertar estos módulos en un Núcleo que se esta ejecutando. 
+
+
+
+
+<H2><A NAME="SEC6" HREF="tinc_toc-es.html#TOC6">Archivos Necesarios</A></H2>
+
+
+<H4>Archivos de dispositivos</H4>
+
+<P>
+Primero, necesitará el archivo de dispositivo especial que forma la interfaz entre el Núcleo y el demonio. 
+
+
+
+<PRE>
+mknod -m 600 /dev/tap0 c 36 16 
+chown 0.0 /dev/tap0 
+</PRE>
+
+<P>
+Los permisos serán ahora tales que sólo el super usuario(root) puede leer y escribir en este archivo. Esto debería ser así, porque es más fácil que se filtre información por aquí. Esto, sin embargo, implica que usted tendría que ejecutar tincd como root. 
+
+
+<P>
+Si usted quiere, también se puede crear más archivos de dispositivos que se 
+numerarían de 0 a 15 con números menores de dispositivos de 16 a 31. Todos deben 
+pertenecer  al root y deben tener permisos 600. 
+
+
+
+<H4><TT>`/etc/networks'</TT></H4>
+
+<P>
+Puede agregar una línea en <TT>`/etc/networks'</TT> para que sus vpn tengan nombres simbólicos. Por ejemplo: 
+
+
+
+<PRE>
+Mi_vpn 10.0.0.0 
+</PRE>
+
+
+<H4><TT>`/etc/services'</TT></H4>
+
+<P>
+Puede agregar estas líneas en <TT>`/etc/services'</TT>. El resultado es que puede proporcionar a una <SAMP>`tinc'</SAMP> como un número de puerto válido a algunos programas. El número 655 esta registrado en el IANA. 
+
+
+
+<PRE>
+tinc            655/tcp    TINC 
+tinc            655/udp   TINC 
+#               Ivo Timmermans &#60;itimmermans@bigfoot.com&#62;
+62;
+</PRE>
+
+
+
+<H2><A NAME="SEC7" HREF="tinc_toc-es.html#TOC7">Preparando los dispositivos</A></H2>
+
+<P>
+Antes de que pueda empezar a transmitir datos sobre el túnel tinc, debe preparar los dispositivos de red ethertap. 
+
+
+<P>
+Primero, decida qué direcciones IP quiere asociar con estos dispositivos, y qué 
+máscara de red deben tener. También necesitara estos números cuando configure tinc. Vea la sección section <A HREF="tinc-es.html#SEC9">Configurando tinc</A>.
+
+
+<P>
+No importa mucho que se hace primero, si preparar los dispositivos red o configurar tinc. Pero deben hacerse ante de usar tincd. 
+
+
+<P>
+La configuración de dispositivo ethertap es bastante simple, simplemente escriba 
+esto: 
+
+
+
+<PRE>
+ifconfig tap<EM>n</EM> hw ether fe:fd:<EM>xx</EM>:<EM>xx</EM>:<EM>xx</EM>:<EM>xx</EM> 
+</PRE>
+
+<P>
+El <EM>n</EM> aquí es el número del dispositivo ethertap que quiere usar. Debe ser uno de los mismos <EM>n</EM> que uso para <TT>`/dev/tap<EM>n</EM>'</TT>. Las <EM>xx</EM>s son cuatro números hexadecimales (0--ff). En las versiones anteriores de tincd no importaban lo que  eran, pero los nuevos Núcleos 
+requieren que sean puestas las direcciones de ethernet. De hecho, el comportamiento estaba equivocado, se requiere que los <EM>xx</EM>s mapeen Mi_IP_VPN.
+
+
+
+<PRE>
+ifconfig tap<EM>n</EM> <EM>IP</EM> netmask <EM>mask</EM>
+</PRE>
+
+<P>
+Esto activará el dispositivo con una dirección red <EM>IP</EM> y con una máscara de red <EM>mask</EM>. 
+
+
+
+
+<H1><A NAME="SEC8" HREF="tinc_toc-es.html#TOC8">Instalando Tinc</A></H1>
+
+<P>
+Primero consígalo. Esta es la <A HREF="http://tinc.nl.linux.org/download.html">página principal</A>, que tiene las suma de verificación (checksums) de los archivos listados; puede desear verificar éstos con md5sum antes de continuar. 
+
+
+<P>
+Tinc viene en un paquete autoconf/automake, que simplemente puede tratar como 
+cualquier otro paquete. Sólo tiene que descomprimirlo, escribir "Configure" y luego "Make". 
+
+
+<P>
+Las instrucciones más detalladas están en el archivo <TT>`INSTALL'</TT>, que es incluido en la distribución fuente. 
+
+
+
+
+<H1><A NAME="SEC9" HREF="tinc_toc-es.html#TOC9">Configurando Tinc</A></H1>
+
+
+
+<H2><A NAME="SEC10" HREF="tinc_toc-es.html#TOC10">Redes múltiples</A></H2>
+
+<P>
+Es perfectamente aceptable correr más de un demonio tinc. Sin embargo, en su 
+forma predefinida, pronto notará que no puede usar dos archivos diferentes de 
+configuración sin la opción -c. 
+
+
+<P>
+Hemos pensado en otra manera de tratar esto: nombres de red. Esto significa que 
+usted llama a tincd con el argumento -n que asignará un nombre a este demonio. 
+
+
+<P>
+El efecto de esto es que los demonios buscaran su configuración en /etc/tinc/nn/, donde nn es un argumento a la opción -n. Notará que aparece en syslog como "tincd.nn." 
+
+
+<P>
+Sin embargo, no es estrictamente un requisito llamar a tinc con la opción -n. En este caso, el nombre de la red estaría simplemente vacío, y se usará como tal. Tinc busca archivos ahora en /etc/tinc/, en lugar de /etc/tinc/nn/; el archivo de  configuración debe ser /etc/tinc/tincd.conf, y se espera ahora que los passphrases (N.T. passphrases es una contraseña o palabra de paso(password), que al ser bastante larga se le llama frase de paso)  estén en /etc/tinc/passphrases/. 
+
+
+<P>
+Es recomendable usar este rasgo de tinc, porque será él quien decida con que 
+demonio hablar. Asumiremos que lo usa. 
+
+
+
+
+<H2><A NAME="SEC11" HREF="tinc_toc-es.html#TOC11">Cómo trabajan las conexiones</A></H2>
+
+<P>
+Antes de seguir, primero un poco de cómo tinc ve las conexiones. 
+
+
+<P>
+Cuando tinc se pone en marcha, lee en el archivo la configuración y analiza las 
+opciones de la línea de comandos. Si ve un valor "ConnectTo" en el archivo, intentará conectarse a ese servidor, en el puerto dado. Si esto falla, tinc termina. 
+
+
+
+
+<H2><A NAME="SEC12" HREF="tinc_toc-es.html#TOC12">Archivo de configuración</A></H2>
+
+<P>
+La configuración actual del demonio se hace en el archivo <TT>`/etc/tinc/nn/tinc.conf'</TT>.
+
+
+<P>
+Este archivo consiste en comentarios (las líneas empiezan con #) o asignaciones de la forma: 
+
+
+
+<PRE>
+Variable = Valor. 
+</PRE>
+
+<P>
+En los nombres de variables se distingue entre mayúsculas o minúsculas, y se 
+ignora cualquier espacio, etiquetas, nueva línea y retorno de carro. Nota: no se requiere que ponga "=", pero se usa para mejorar la legibilidad. Si lo omite, recuerde reemplazarlo con por lo menos un carácter espacial. 
+
+
+
+
+<H3><A NAME="SEC13" HREF="tinc_toc-es.html#TOC13">Variables</A></H3>
+
+<P>
+Aquí está todas las variables válidas, listadas en orden alfabético: 
+
+
+<DL COMPACT>
+
+<DT>ConnectPort = port
+<DD>
+Conéctese al host (dado en la directiva ConnectTo) en el puerto "port". El puerto puede darse en decimal (valor por defecto), octal (cuando es precedido por un solo cero) o hexadecimal (prefijó con 0x). El puerto es el número del puerto para las conexiones UDP y TCP (meta). 
+
+<DT>ConnectTo = (IP address|hostname)
+<DD>
+Especifica a qué host conectarse al arrancar. Si la variable "ConnectPort" se 
+omite, entonces tinc intentará conectarse al puerto 655. 
+
+Si usted no especifica un host con "ConnectTo", sin tener en cuenta si un valor para "ConnectPort" se da, tinc no se conectará en absoluto, y escuchará en cambio simplemente las conexiones entrantes. Sólo el iniciador de un tinc VPN puede necesitar esto. 
+
+<DT>ListenPort = port
+<DD>
+Escuche en el puerto local "port". La computadora que se conecta a este demonio debe usar este número como el argumento para su "ConnectPort". De nuevo, el 
+valor por defecto es 655. 
+
+<DT>MyOwnVPNIP = local address[/maskbits]
+<DD>
+La dirección local es el número que los demonios propagarán a otro demonios en la red cuando se identifican. Aquí será el nombre del archivo de passphrase que el otro extremo espera encontrar en el passphrase. 
+
+La dirección local es la dirección IP del dispositivo Tap, no la dirección IP real del host donde tincd esta corriendo. Debido a los cambios en recientes núcleos, es también necesario que usted haga coincidir la dirección  ethernet (también conocida como MAC) y la dirección de IP (vea el ejemplo). 
+
+maskbits es el número de bits en 1 en la parte de la netmask(mascara de red). 
+
+<DT>MyVirtualIP = local address[/maskbits]
+<DD>
+Esto es un alias para "MyOwnVPNIP". 
+
+<DT>Passphrases = directory
+<DD>
+El directorio donde tinc buscara las passphrases cuando alguien intenta 
+conectarse. Por favor vea la pagina del manual de genauth(8) para más información sobre el passphrases usado por tinc. 
+
+<DT>PingTimeout = number
+<DD>
+El número de segundos de inactividad que tinc esperara antes de enviar una 
+sonda(ping) al otro extremo. Si el otro extremo no contesta dentro de esa misma cantidad de segundos, la conexión se termina, y se notificara de esto. 
+
+<DT>TapDevice = device
+<DD>
+El dispositivo ethertap a usar. Note que se puede usar sólo un dispositivo por 
+demonio. La paginas info del paquete tinc contiene más información sobre como 
+configurar un dispositivo ethertap en linux. 
+
+<DT>VpnMask = mask
+<DD>
+La mascara de red que define el alcance de la VPN, Esta opción no es usada por el demonio tinc sino por los script de inicio(startup)para sonigurar los dispositivos ethertap correctamente
+</DL>
+
+
+
+<H2><A NAME="SEC14" HREF="tinc_toc-es.html#TOC14">Ejemplo</A></H2>
+
+<P>
+Imagine la situación siguiente. Una compañía A-base quiere conectar tres oficinas en B, C y D usando internet. Las cuatro oficinas tienen una 24/7 (24 horas los 7 días) conexión a internet. 
+
+
+<P>
+ A va a servir como el centro de la red. B y C conectarán a A, y D se 
+conectará a C. Cada oficina asignará sus propios IP de red, 10.x.0.0. 
+
+
+
+<PRE>
+A: red 10.1.0.0 máscara 255.255.0.0 gateway 10.1.54.1 internet IP 1.2.3.4 
+B: red 10.2.0.0 máscara 255.255.0.0 gateway 10.2.1.12 internet IP 2.3.4.5 
+C: red 10.3.0.0 máscara 255.255.0.0 gateway 10.3.69.254 internet IP 3.4.5.6 
+D: red 10.4.0.0 máscara 255.255.0.0 gateway 10.4.3.32 internet IP 4.5.6.7 
+</PRE>
+
+<P>
+"gateway" es la dirección IP VPN_IP de la máquina que está ejecutando el tincd. 
+"internet IP" es la dirección IP del cortafuego que no necesita ejecutar tincd pero debe tener un puerto de forwarding de TCP y UDP en 655 (a menos que configure otro). 
+
+
+<P>
+En este ejemplo, se asume que eth0 es la interfaz que apunta a la LAN interna de la oficina. Esto podría ser igual que la interfaz que lleva a internet. 
+
+
+
+<H4>Para A</H4>
+
+<P>
+<EM>A</EM>se configuraría como esto: 
+
+
+
+<PRE>
+ifconfig tap0 hw ether fe:fd:0a:01:36:01 
+ifconfig tap0 10.1.54.1 netmask 255.0.0.0 
+ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255 
+</PRE>
+
+<P>
+y en /etc/tinc/tincd.conf: 
+
+
+
+<PRE>
+TapDevice = /dev/tap0 
+MyVirtualIP = 10.1.54.1/16 
+VpnMask = 255.0.0.0
+</PRE>
+
+
+<H4>Para B</H4>
+
+
+<PRE>
+ifconfig tap0 hw ether fe:fd:0a:02:01:0c 
+ifconfig tap0 10.2.1.12 netmask 255.0.0.0 
+ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255 
+</PRE>
+
+<P>
+y en /etc/tinc/tincd.conf: 
+
+
+
+<PRE>
+TapDevice = /dev/tap0 
+MyVirtualIP = 10.2.1.12/16 
+ConnectTo = 1.2.3.4 
+VpnMask = 255.0.0.0
+</PRE>
+
+<P>
+Note aquí que la dirección interna (en eth0) no tiene por que ser igual que el 
+dispositivo tap0. También, ConnectTo se da para que nadie pueda conectarse a 
+este nodo. 
+
+
+
+<H4>Para C</H4>
+
+
+<PRE>
+ifconfig tap0 hw ether fe:fd:0a:03:45:fe 
+ifconfig tap0 10.3.69.254 netmask 255.0.0.0 
+ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255 
+</PRE>
+
+<P>
+y en /etc/tinc/A/tincd.conf: 
+
+
+
+<PRE>
+MyVirtualIP = 10.3.69.254/16 
+ConnectTo = 1.2.3.4 
+ListenPort = 2000 
+VpnMask = 255.0.0.0
+</PRE>
+
+<P>
+C ya tiene otro demonio que corre en el puerto 655, entonces se reservar otro puerto para los que se conecten. Se usa el nombre de red para distinguir entre los dos. tinc se ejecuta con "tincd -n A". 
+
+
+
+<H4>Para D</H4>
+
+
+<PRE>
+ifconfig tap0 hw ether fe:fd:0a:04:03:20 
+ifconfig tap0 10.4.3.32 netmask 255.0.0.0 
+ifconfig tap0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255 
+</PRE>
+
+<P>
+y en /etc/tinc/tincd.conf: 
+
+
+
+<PRE>
+MyVirtualIP = 10.4.3.32/16 
+ConnectTo = 3.4.5.6 
+ConnectPort = 2000 
+VpnMask=255.0.0.0
+</PRE>
+
+<P>
+D estará conectando a C que tiene un tincd que corre para esta red en el puerto 
+2000. Aquí se debe poner un ConnectPort. 
+
+
+
+<H4>Autenticación</H4>
+
+<P>
+A, B, C y D generan su passphrase con genauth 2048, la salida se guarda en 
+/etc/tinc/passphrases/local, salvo C, donde debe ser /etc/tinc/A/passphrases/local. 
+
+
+<P>
+A guarda una copia del passphrase de B en /etc/tinc/passphrases/10.2.0.0 
+
+
+<P>
+A guarda una copia del passphrase de C en /etc/tinc/passphrases/10.3.0.0 
+
+
+<P>
+B guarda una copia del passphrase de A en /etc/tinc/passphrases/10.1.0.0 
+
+
+<P>
+C guarda una copia del passphrase de A en /etc/tinc/A/passphrases/10.1.0.0 
+
+
+<P>
+C guarda una copia del passphrase de D en /etc/tinc/A/passphrases/10.4.0.0 
+
+
+<P>
+D guarda una copia del passphrase de C en /etc/tinc/passphrases/10.3.0.0 
+
+
+
+<H4>Ejecución</H4>
+
+<P>
+A tiene que ejecutar su tincd primero. Entonces viene B y C, donde C tiene que 
+proporcionar la opción "-n A", porque aquí se tiene más de una red del tinc. Finalmente, el tincd de D se ejecuta. 
+
+
+
+
+<H1><A NAME="SEC15" HREF="tinc_toc-es.html#TOC15">Corriendo Tinc</A></H1>
+
+<P>
+Ejecutar tinc no es así de fácil como teclear "tincd" y esperar que todo funcione de la manera que se quiso. En cambio, el uso de tinc es un proyecto que involucra relaciones de confianza en más de una computadora. 
+
+
+
+
+<H2><A NAME="SEC16" HREF="tinc_toc-es.html#TOC16">Manejo Llaves</A></H2>
+
+<P>
+Antes de intentar ejecutar tinc, se tienen que crear los passphrases. Cuando tinc intenta hacer una conexión, intercambia algunos datos sensibles. Antes de hacer esto, le gusta saber si el otro extremo es confiable. 
+
+
+<P>
+Para hacer esto, ambos extremos deben tener un poco de conocimiento sobre el 
+otro. En el caso de tinc éste es la autenticación passphrase. 
+
+
+<P>
+Este passphrase es un número que es escogido al azar. Este número se envía 
+entonces a las otras computadoras que quieren hablar directamente con nosotros. Para evitar romper seguridad, esto debe hacerse sobre un cauce seguro conocido (como ssh o similar). 
+
+
+<P>
+Todos los passphrases se guardan en el directorio de passphrases que 
+normalmente es /etc/tinc/nn/passphrases/, pero este puede cambiarse usando la opción "Passphrases" en el archivo de configuración. 
+
+
+<P>
+Para generar un passphrase, ejecute "genauth". genauth toma un argumento que es 
+la longitud del passphrase en bits. La longitud del passphrase debe estar en el rango  de 1024--2048 para una llave de 128 bits. genauth crea un número al azar de la longitud especificada, y lo pone en la salida estándar. 
+
+
+<P>
+Cada computadora que quiere participar en el VPN debe hacer esto, y guardar la 
+salida en el directorio de passrasphes, en el archivo <TT>`local'</TT>.
+
+
+<P>
+Cuando cada computadora tiene su propia llave local, debe copiarlo a la 
+computadora con la que quiere hablar directamente. Esto debe hacerse vía un cauce seguro, porque es información sensible. Si esto no se hace con seguridad, alguien podría forzar la entrada después de usted. 
+
+
+<P>
+Esos archivos de passphrase no locales deben tener el nombre de la dirección IP 
+VPN con la que ellos se anuncian. Por ejemplo, si una computadora nos dice que es 10.1.1.3 con netmask 255.255.0.0, el archivo debería llamarse 10.1.1.3, y no 10.1.0.0. 
+
+
+
+
+<H2><A NAME="SEC17" HREF="tinc_toc-es.html#TOC17">Opciones en Tiempo de Ejecución</A></H2>
+
+<P>
+Además de las opciones en el archivo de configuración, tinc también acepta algunas opciones de línea de comandos.
+
+
+<P>
+Esta lista es una versión más larga que la de la pagina del manual. Lo ultimo se 
+genera automáticamente, para que pueda ser más actualizable. 
+
+
+<DL COMPACT>
+
+<DT>-c, --config=FILE
+<DD>
+Lee opciones de configuración desde el archivo FILE. El valor por defecto es 
+<TT>`/etc/tinc/nn/tinc.conf'</TT>.
+
+<DT>-d
+<DD>
+Incrementa el nivel de depuración. El más alto conseguido es en el que más se 
+registra en los logs, todo vía syslog. 
+
+0 es el valor por defecto, sólo información básica de algunos intentos de conexión se registran. Poniéndolo a 1 se registra un poco más, todavía no muy alentador. Con dos opciones -d, tincd  registrara información protocolar que puede ponerse bastante ruidosa. Tres o más opciones -d, harían que cada paquete 
+que sale o entra probablemente genere más datos que los paquetes en si. 
+
+<DT>-k, --kill
+<DD>
+Intente matar un tincd y termina. Una señal TERM(15) se envía al demonio que tiene su PID en /var/run/tincd.nn.pid. 
+
+Como mata sólo un tincd, usted debe usar -n aquí si normalmente lo usa. 
+
+<DT>-n, --net=NETNAME
+<DD>
+Conectar a la red NETNAME. Vea la sección<A HREF="tinc-es.html#SEC10"> redes Múltiples</A>. 
+
+<DT>-t, --timeout=TIMEOUT
+<DD>
+Segundos a esperar antes de dar una interrupción. No debe ponerse demasiado 
+bajo, porque a cada rato tincd dará interrupción, se desconectara y re-conectara de nuevo, lo que causará tráfico de la red innecesario y mensajes de log. 
+
+<DT>--help
+<DD>
+Despliegue un recordatorio corto de estas opciones de tiempo de ejecución y 
+termina. 
+
+<DT>--version
+<DD>
+Muestra información de versión y termina. 
+
+</DL>
+
+
+
+<H1><A NAME="SEC18" HREF="tinc_toc-es.html#TOC18">Información técnica</A></H1>
+
+
+
+<H2><A NAME="SEC19" HREF="tinc_toc-es.html#TOC19">Filosofía básica del modo de trabajo de tinc</A></H2>
+<P>
+<A NAME="IDX5"></A>
+
+
+<P>
+Tinc es un demonio que toma datos VPN y transmite estos a otra computadora Host 
+sobre la infraestructura existente de Internet. 
+
+
+
+
+<H3><A NAME="SEC20" HREF="tinc_toc-es.html#TOC20">Una vista previa del modo de trabajo de tinc</A></H3>
+
+<P>
+<A NAME="IDX6"></A>
+<A NAME="IDX7"></A>
+Los propios datos se leen de un archivo de dispositivo de caracteres, el dispositivo llamado <EM>ethertap</EM>. Este dispositivo es asociado con una interfaz de la red. Puede leerse cualquier dato enviado a la interfaz de dispositivo, y cualquier dato escrito al dispositivo se envía a la interfaz. Datos a y desde el dispositivo se estructuran como si fuera una tarjeta ethernet 
+normal, cada marco es precedido por dos direcciones MAC y un campo de <EM>tipo de marco</EM>.
+
+<P>
+Para que cuando tinc lea un marco del dispositivo ethernet determine su tipo. 
+Actualmente, tinc puede manejar sólo marcos del Protocolo Internet versión 4 (IPv4), están haciéndose planes para soportar otros protocolos. Cuando tinc sabe que qué tipo de marco ha leído, también puede leer la dirección de origen y de destino de este.
+
+<P>
+Ahora es cuando el marco se cifra. Actualmente el único algoritmo de cifrado disponible es blowfish. 
+
+
+<P>
+<A NAME="IDX8"></A>
+Cuando el cifrado está listo, es tiempo de transportar el paquete realmente a la 
+computadora de destino. Se hace esto enviando el paquete sobre una conexión UDP al host de destino. Esto se llama <EM>encapsulación</EM>, el paquete de VPN (aunque ahora cifrado) se encapsula en otro datagrama IP. 
+
+
+<P>
+Cuando el destino recibe este paquete, ocurre lo mismo, sólo que al revés. Así que realiza un descifrado del contenido del datagrama UDP, y escribe la información descifrada en su propio dispositivo ethertap. 
+
+
+
+
+<H3><A NAME="SEC21" HREF="tinc_toc-es.html#TOC21">La meta-conexión</A></H3>
+
+<P>
+Teniendo sólo una conexión de UDP disponible no es bastante. Aunque conveniente 
+para transmitir datos, queremos poder enviar otra información confiablemente, como rutear y cifrar información a alguien. 
+
+
+<P>
+TCP es una alternativa mejor, porque ya contiene protección contra información que es perdida, no como UDP. 
+
+
+<P>
+Así que nosotros establecemos dos conexiones. Una para los datos cifrados de 
+VPN, y una para la otra información, los meta-datos. Aquí, llamamos a la segunda 
+conexión la meta-conexión. Podemos estar ahora seguros que la meta-información no se pierde en el camino a la otra computadora.
+
+
+<P>
+<A NAME="IDX9"></A>
+<A NAME="IDX10"></A>
+Como con cualquier comunicación, debemos tener un protocolo, para que todos 
+sepan como comunicarse y cómo se debe reaccionar. Como tenemos dos conexiones, 
+también tenemos dos protocolos. El protocolo usado para los datos de UDP es el "data-protocolo" y el otro es el "meta-protocolo".
+
+
+<P>
+La razon por la que no se usa TCP para ambos protocolos es que UDP es mucho mejor para encapsulación, includo mistra este es menos confiable. El problema real es que cuando TCP es usado para encapsular un stream TCP que esta sobre la red privada, para cada paquete enviado habria tres ACK's enviados en lugar de uno. Aun mas, si se da un timeout, ambos TCP streams serian sencibles al timeout, y ambos reenviarian los paquetes.
+
+
+
+
+<H2><A NAME="SEC22" HREF="tinc_toc-es.html#TOC22">Algo de cifrado en tinc y otros problemas de seguridad relacionados. </A></H2>
+
+<P>
+<A NAME="IDX11"></A>
+<A NAME="IDX12"></A>
+tinc consiguio su nombre de "TINC", iniciales de There Is No Cabal (Allí No Hay 
+Conspiración); el hubo/hay de la Conspiración alega a una organización que se decía que tenia ojos en Internet. Como esto es exactamente lo que usted <EM>no</EM> quiere, nombramos al proyecto tinc después de TINC. 
+
+
+<P>
+<A NAME="IDX13"></A>
+Pero para ser "inmune" a las escuchas secretas, usted tendrá que cifrar sus 
+datos. Como tinc es un demonio VPN Seguro (SVPN), hace eso exactamente: cifrar. 
+
+
+<P>
+Este capítulo es una mezcla de ideas, razonamientos y explicaciones, por favor no lo tome demasiado en serio. 
+
+
+
+
+<H3><A NAME="SEC23" HREF="tinc_toc-es.html#TOC23">Manejo de Llaves</A></H3>
+
+<P>
+<A NAME="IDX14"></A>
+Usted no puede enviar simplemente una llave de cifrado privada a su par, 
+porque alguien podría estar escuchando. De modo que tendrá que negociar sobre una llave compartida pero confidencial. Una manera de hacer esto es usar el protocolo de "Intercambio de Llaves Diffie-Hellman" (<A HREF="http://www.rsa.com/rsalabs/faq/html/3-6-1.html">http://www.rsa.com/rsalabs/faq/html/3-6-1.html</A>). 
+La idea es como sigue. 
+
+
+<P>
+Usted tiene dos participantes A y B que quiere estar de acuerdo sobre una llave de cifrado confidencial compartida. Ambas parte tienen algún número primo grande p y un generador g. Estos números pueden conocerse al mundo externo, y pueden ser incluidos en la distribución de la fuente. 
+
+
+<P>
+<A NAME="IDX15"></A>
+Ambas partes generan una llave confidencial entonces. A genera a, y calcula g^a 
+mod p. Este es entonces mandado a B; mientras B calcula g^b mod p, y transmite este a A. a y b deben ser mayores que p-1. 
+
+
+<P>
+Estas llaves privadas se generan en el inicio, y ellas no se cambian mientras la 
+conexión existe. Un posible rasgo en el futuro es cambiar las llaves dinámicamente, todas las horas por ejemplo. 
+
+
+<P>
+Ambas partes calculan  g^ab mod p = k, k es la nueva llave compartida, pero 
+secreta. 
+
+
+<P>
+Para obtener un k importante de una longitud suficiente (128 bits en nuestro vpnd), p debe tener 2^129-1 o más. 
+
+
+
+
+<H3><A NAME="SEC24" HREF="tinc_toc-es.html#TOC24">Autenticación</A></H3>
+
+<P>
+<A NAME="IDX16"></A>
+Como el protocolo de Diffie-Hellman es en sí mismo vulnerable al "el ataque del 
+hombre-en-el-medio," nosotros debemos introducir un sistema de autenticación. 
+
+
+<P>
+Nosotros permitiremos que A transmita un passphrase que también conoce B 
+cifrado con g^a, antes que A le envíe esto a B. De esta manera, B puede verificar si A realmente es A o simplemente alguien más.
+
+
+<P>
+<A NAME="IDX17"></A>
+Este passphrase deben ser de 2304 bits para un sistema de cifrado simétrico. Pero como un sistema asimétrico es más seguro, nosotros podríamos hacerlo con 2048 bits. Esto sólo sirve si el passphrase es muy el azar. 
+
+
+<P>
+Estos passphrases podrían guardarse en un archivo solo leíble por el root; ej. 
+<TT>`/etc/vpn/passphrases'</TT>.
+
+
+<P>
+La única cosa que necesita tener en cuidado es cómo A le anuncia su passphrase a 
+B. 
+
+
+
+
+<H3><A NAME="SEC25" HREF="tinc_toc-es.html#TOC25">Protegiendo sus datos</A></H3>
+
+<P>
+Ahora nosotros hemos escondido nuestros datos firmemente. Pero un cracker 
+malévolo todavía puede molestarnos alterando los datos cifrados al azar que el intercepta. 
+
+
+
+
+<H1><A NAME="SEC26" HREF="tinc_toc-es.html#TOC26">Sobre Nosotros</A></H1>
+
+
+
+<H2><A NAME="SEC27" HREF="tinc_toc-es.html#TOC27">Informacion de Contacto</A></H2>
+
+<P>
+La página principal de tinc está en <A HREF="http://tinc.nl.linux.org/">http://tinc.nl.linux.org/</A>, este servidor se localiza en los Países Bajos. 
+
+
+<P>
+Nosotros tenemos un canal IRC en la red IRC  de Open Projects. Conectarse a 
+<A HREF="http://openprojects.nu/services/irc.html">irc.openprojects.net</A>, y entrar en el canal #tinc. 
+
+
+
+
+<H2><A NAME="SEC28" HREF="tinc_toc-es.html#TOC28">Autores</A></H2>
+
+<DL COMPACT>
+
+<DT>Ivo Timmermans (zarq) (<A HREF="mailto:itimmermans@bigfoot.com">itimmermans@bigfoot.com</A>)
+<DD>
+El codificador/hacker principal y el que mantiene el paquete. 
+
+<DT>Guus Sliepen (guus)
+<DD>
+Originador de todo esto, coautor. 
+
+<DT>Wessel Dankers (Ubiq)
+<DD>
+Ofuscador general del código. 
+
+</DL>
+
+<P>
+Gracias a: Dekan, Emphyrio, vDong 
+
+
+<P>
+Saludos a: braque, Fluor, giggles, macro, smoke, tribbel 
+
+<P>
+Traductor
+<P>
+Carrasco Matias (<A HREF="mailto:mcarrasco@softwork.com.ar">mcarrasco@softwork.com.ar</A>)
+
+
+<H1><A NAME="SEC29" HREF="tinc_toc-es.html#TOC29">Indice de Conceptos</A></H1>
+
+<P>
+Ir a:
+<A HREF="#cindex_a">a</A>
+-
+<A HREF="#cindex_c">c</A>
+-
+<A HREF="#cindex_d">d</A>
+-
+<A HREF="#cindex_e">e</A>
+-
+<A HREF="#cindex_m">m</A>
+-
+<A HREF="#cindex_p">p</A>
+-
+<A HREF="#cindex_s">s</A>
+-
+<A HREF="#cindex_t">t</A>
+-
+<A HREF="#cindex_v">v</A>
+<P>
+<H2><A NAME="cindex_a">a</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX16">ataque hombre-en-el-medio</A>
+</DIR>
+<H2><A NAME="cindex_c">c</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX12">Cabal</A>
+<LI><A HREF="tinc-es.html#IDX15">Clave secreta</A>
+<LI><A HREF="tinc-es.html#IDX5">Conexión</A>
+</DIR>
+<H2><A NAME="cindex_d">d</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX9">data-protocol</A>
+<LI><A HREF="tinc-es.html#IDX14">Diffie-Hellman</A>
+</DIR>
+<H2><A NAME="cindex_e">e</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX8">encapsulación</A>
+<LI><A HREF="tinc-es.html#IDX6">ethertap</A>
+</DIR>
+<H2><A NAME="cindex_m">m</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX10">meta-protocol</A>
+</DIR>
+<H2><A NAME="cindex_p">p</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX17">passphrase</A>
+<LI><A HREF="tinc-es.html#IDX1">privado</A>
+</DIR>
+<H2><A NAME="cindex_s">s</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX13">SVPN</A>
+</DIR>
+<H2><A NAME="cindex_t">t</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX11">tinc</A>
+<LI><A HREF="tinc-es.html#IDX4">tincd</A>
+<LI><A HREF="tinc-es.html#IDX7">Tipo de Marco</A>
+</DIR>
+<H2><A NAME="cindex_v">v</A></H2>
+<DIR>
+<LI><A HREF="tinc-es.html#IDX2">virtual</A>, <A HREF="tinc-es.html#IDX3">virtual</A>
+</DIR>
+
+
+<P><HR><P>
+</BODY>
+</HTML>
