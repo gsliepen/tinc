@@ -1,13 +1,14 @@
 Source: tinc
 Section: non-US/main
 Priority: optional
-Maintainer: Ivo Timmermans <itimmermans@bigfoot.com>
+Maintainer: Ivo Timmermans <ivo@debian.org>
 Standards-Version: 3.0.1
-Build-Depends: libc6-dev, libssl095a-dev, autoconf (>= 2.12), automake,
+Build-Depends: libc6-dev, libssl095a-dev, autoconf (>= 2.12),
+ automake, debhelper
 
 Package: tinc
 Architecture: i386
-Depends: ${shlibs:Depends}, (libssl095a|libssl09), perl5
+Depends: ${shlibs:Depends}, (libssl095a|libssl095|libssl09), perl5
 Description: Virtual Private Network daemon
  tinc is a daemon with which you can create a virtual private network
  (VPN).  One daemon can handle multiple connections, so you can

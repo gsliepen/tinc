@@ -1,10 +1,19 @@
 tinc (1.0pre3-0.1) unstable; urgency=low
 
-  * New upstream version (1.0pre3)
-  * Better Depends and Build-Depends lines, including all available
-    versions of GMP.
+  * New upstream version (1.0pre3) (Closes: #71274).
+  * Better Depends and Build-Depends lines.
+  * Dropped dependencies on libgmp, added libssl.
+  * doc-base.tinc: New file.
+  * Deleted the file shlibs, as there on longer is a libblowfish.
 
- -- Ivo Timmermans <itimmermans@bigfoot.com>  Wed, 20 Sep 2000 20:26:35 +0200
+ -- Ivo Timmermans <ivo@debian.org>  Thu,  2 Nov 2000 16:53:52 +0100
+
+tinc (1.0pre2-1.1) unstable; urgency=low
+
+  * NMU at Ivo's request as his application is being processed, and his
+    sponsor is based in the US.
+
+ -- J.H.M. Dassen (Ray) <jdassen@debian.org>  Wed, 28 Jun 2000 21:52:30 +0200
 
 tinc (1.0pre2-1) unstable; urgency=low
 
