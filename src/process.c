@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.55 2003/07/17 15:06:26 guus Exp $
+    $Id: process.c,v 1.1.2.56 2003/07/21 14:47:43 guus Exp $
 */
 
 #include "system.h"
@@ -86,7 +86,7 @@ void cleanup_and_exit(int c)
 
 	logger(LOG_NOTICE, _("Terminating"));
 
-	closelog();
+	closelogger();
 	exit(c);
 }
 
@@ -170,7 +170,7 @@ int detach(void)
 
 	/* If we succeeded in doing that, detach */
 
-	closelog();
+	closelogger();
 
 	if(do_detach) {
 		if(daemon(0, 0) < 0) {

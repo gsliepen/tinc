@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.12 2003/07/17 15:06:27 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.13 2003/07/21 14:47:43 guus Exp $
 */
 
 #include "system.h"
@@ -58,7 +58,7 @@ int add_subnet_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -66,7 +66,7 @@ int add_subnet_h(connection_t *c)
 	/* Check if owner name is a valid */
 
 	if(check_id(name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
 			   c->hostname, _("invalid name"));
 		return -1;
 	}
@@ -76,7 +76,7 @@ int add_subnet_h(connection_t *c)
 	s = str2net(subnetstr);
 
 	if(!s) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
 			   c->hostname, _("invalid subnet string"));
 		return -1;
 	}
@@ -148,7 +148,7 @@ int del_subnet_h(connection_t *c)
 	cp();
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,
 			   c->hostname);
 		return -1;
 	}
@@ -156,7 +156,7 @@ int del_subnet_h(connection_t *c)
 	/* Check if owner name is a valid */
 
 	if(check_id(name)) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
 			   c->hostname, _("invalid name"));
 		return -1;
 	}
@@ -176,7 +176,7 @@ int del_subnet_h(connection_t *c)
 	s = str2net(subnetstr);
 
 	if(!s) {
-		syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
+		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
 			   c->hostname, _("invalid subnet string"));
 		return -1;
 	}
