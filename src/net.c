@@ -93,12 +93,14 @@ int xsend(conn_list_t *cl, void *packet)
   real_packet_t rp;
 cp
   do_encrypt((vpn_packet_t*)packet, &rp, cl->key);
-  rp.from = myself->vpn_ip;
+  rp.from = htonl(myself->vpn_ip);
+  rp.data->len = htons(rp.data->len);
+  rp.len = htons(rp.data->len);
 
   if(debug_lvl > 3)
-    syslog(LOG_ERR, "Sent %d bytes to %lx", rp.len, cl->vpn_ip);
+    syslog(LOG_ERR, "Sent %d bytes to %lx", ntohs(rp.len), cl->vpn_ip);
 
-  if((r = send(cl->socket, (char*)&rp, rp.len, 0)) < 0)
+  if((r = send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
     {
       syslog(LOG_ERR, "Error sending data: %m");
       return -1;
@@ -114,6 +116,10 @@ int xrecv(conn_list_t *cl, void *packet)
   vpn_packet_t vp;
   int lenin;
 cp
+  packet->data->len = ntohs(packet->data->len);
+  packet->len = ntohs(packet->len);
+  packet->from = ntohl(packet->from);
+
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
   add_mac_addresses(&vp);
 
