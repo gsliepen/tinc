@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.53 2001/10/27 12:13:17 guus Exp $
+    $Id: tincd.c,v 1.10.4.54 2001/10/27 15:19:13 guus Exp $
 */
 
 #include "config.h"
@@ -319,6 +319,7 @@ main(int argc, char **argv, char **envp)
   g_argv = argv;
 
   make_names();
+  init_configuration(&config_tree);
 
   /* Slllluuuuuuurrrrp! */
 cp

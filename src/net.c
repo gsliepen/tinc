@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.138 2001/10/27 13:13:35 guus Exp $
+    $Id: net.c,v 1.35.4.139 2001/10/27 15:19:13 guus Exp $
 */
 
 #include "config.h"
@@ -666,8 +666,10 @@ cp
       return -1;
     }
 */
-  if(!get_config_port(lookup_config(myself->connection->config_tree, "Port"), &myself->connection->port))
+  if(!get_config_port(lookup_config(myself->connection->config_tree, "Port"), &myself->port))
     myself->port = 655;
+
+  myself->connection->port = myself->port;
 
 /* Read in all the subnets specified in the host configuration file */
 
@@ -705,7 +707,7 @@ cp
   if(myself->options & OPTION_TCPONLY)
     myself->options |= OPTION_INDIRECT;
 
-  if(get_config_string(lookup_config(myself->connection->config_tree, "Mode"), &mode))
+  if(get_config_string(lookup_config(config_tree, "Mode"), &mode))
     {
       if(!strcasecmp(mode, "router"))
         routing_mode = RMODE_ROUTER;
@@ -746,7 +748,7 @@ cp
   myself->key = (char *)xmalloc(myself->keylength);
   RAND_pseudo_bytes(myself->key, myself->keylength);
 
-  if(!get_config_int(lookup_config(myself->connection->config_tree, "KeyExpire"), &keylifetime))
+  if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
     keylifetime = 3600;
 
   keyexpires = time(NULL) + keylifetime;
@@ -771,8 +773,9 @@ int setup_network_connections(void)
 cp
   init_connections();
   init_subnets();
+  init_nodes();
 
-  if(get_config_int(lookup_config(myself->connection->config_tree, "PingTimeout"), &timeout))
+  if(get_config_int(lookup_config(config_tree, "PingTimeout"), &timeout))
     {
       if(timeout < 1)
         {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.27 2001/10/27 13:13:35 guus Exp $
+    $Id: process.c,v 1.1.2.28 2001/10/27 15:19:13 guus Exp $
 */
 
 #include "config.h"
@@ -436,6 +436,9 @@ setup_signals(void)
       act.sa_sigaction = unexpected_signal_handler;
       sigaction(i, &act, NULL);
     }
+
+  if(!do_detach)
+    sighandlers[3].handler = SIG_DFL;
 
   /* Then, for each known signal that we want to catch, assign a
      handler to the signal, with error checking this time. */

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.45 2001/10/27 12:13:17 guus Exp $
+    $Id: conf.c,v 1.9.4.46 2001/10/27 15:19:13 guus Exp $
 */
 
 #include "config.h"
@@ -126,11 +126,14 @@ cp
   cfg.line = 0;
 
   found = avl_search_closest_greater(config_tree, &cfg);
-  
-  if(!strcmp(found->variable, variable))
-    return found;
-  else
+
+  if(!found)
     return NULL;
+  
+  if(strcmp(found->variable, variable))
+    return NULL;
+
+  return found;
 }
 
 config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
@@ -253,12 +256,12 @@ cp
   
   /* Teach newbies what subnets are... */
 
-  if((subnet->net.ipv4.address & subnet->net.ipv4.mask) != subnet->net.ipv4.address)
+  if((ip->address & ip->mask) != ip->address)
     {
       syslog(LOG_ERR, _("Network address and subnet mask for configuration variable %s in %s line %d"),
              cfg->value, cfg->file, cfg->line);
       free(ip);
-      return -1;
+      return 0;
     }
 
   subnet = new_subnet();
