@@ -1,0 +1,807 @@
+# Dutch messages for tinc
+# Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+# Ivo Timmermans <itimmermans@bigfoot.com>, 1999, 2000.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc 1.0pre2\n"
+"POT-Creation-Date: 2000-05-29 23:26+0200\n"
+"PO-Revision-Date: 2000-05-30 00:13+02:00\n"
+"Last-Translator: Ivo Timmermans <itimmermans@bigfoot.com>\n"
+"Language-Team: Dutch <vertaling@nl.linux.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/conf.c:155
+#, c-format
+msgid "%s: %d: Invalid variable name `%s'.\n"
+msgstr "%s: %d: Ongeldige variabelenaam `%s'.\n"
+
+#: src/conf.c:162
+#, c-format
+msgid "%s: %d: No value given for `%s'.\n"
+msgstr "%s: %d: Geen waarde gegeven voor `%s'.\n"
+
+#: src/conf.c:170
+#, c-format
+msgid "%s: %d: Invalid value `%s' for variable `%s'.\n"
+msgstr "%s: %d: Ongeldige waarde `%s' voor variabele `%s'.\n"
+
+#: src/conf.c:191
+#, c-format
+msgid "Could not open %s: %s\n"
+msgstr "Kon %s niet openen: %s\n"
+
+#: src/encr.c:109 src/net.c:330
+#, c-format
+msgid "Could not open %s: %m"
+msgstr "Kon %s niet openen: %m"
+
+#: src/encr.c:116
+#, c-format
+msgid "Illegal passphrase in %s; size would be %d"
+msgstr "Ongeldig wachtwoord in %s; grootte zou %d zijn"
+
+#: src/encr.c:150
+#, c-format
+msgid "Generating %d bits keys."
+msgstr "%d bits sleutel genereren."
+
+#: src/encr.c:154
+#, c-format
+msgid "Opening /dev/urandom failed: %m"
+msgstr "Openen van /dev/urandom mislukt: %m"
+
+#: src/encr.c:219
+#, c-format
+msgid "Encryption key set to %s"
+msgstr "Sleutel ingesteld op %s"
+
+#: src/genauth.c:42
+#, c-format
+msgid "Usage: %s bits\n"
+msgstr "Gebruik: %s bits\n"
+
+#: src/genauth.c:51
+#, c-format
+msgid "Illegal number: %s\n"
+msgstr "Ongeldig nummer: %s\n"
+
+#: src/genauth.c:56
+#, c-format
+msgid "Generating %d bits number"
+msgstr "Genereren van %d bits nummer"
+
+#: src/genauth.c:61
+msgid "Opening /dev/urandom"
+msgstr "Openen van /dev/urandom"
+
+#: src/genauth.c:74
+msgid "File was empty!\n"
+msgstr "Bestand was leeg!\n"
+
+#: src/genauth.c:82
+msgid ""
+": done.\n"
+"The following line should be ENTIRELY copied into a passphrase file:\n"
+msgstr ""
+": klaar.\n"
+"De volgende regel dient in zijn GEHEEL naar een wachtwoordbestand worden gekopieerd:\n"
+
+#: src/genauth.c:94
+msgid ": done.\n"
+msgstr ": klaar.\n"
+
+#: src/net.c:103
+#, c-format
+msgid "Sent %d bytes to %lx"
+msgstr "%d bytes verzonden naar %lx"
+
+#: src/net.c:107
+#, c-format
+msgid "Error sending data: %m"
+msgstr "Fout bij verzenden van gegevens: %m"
+
+#: src/net.c:127
+#, c-format
+msgid "Can't write to tap device: %m"
+msgstr "Kan niet naar tap apparaat schrijven: %m"
+
+#: src/net.c:146
+#, c-format
+msgid "packet to queue: %d"
+msgstr "pakket naar wachtrij: %d"
+
+#: src/net.c:233
+msgid "queue flushed"
+msgstr "wachtrij leeggemaakt"
+
+#: src/net.c:248
+msgid "Flushing send queue for "
+msgstr "Legen van verzend-wachtrij naar "
+
+#: src/net.c:256
+msgid "Flushing receive queue for "
+msgstr "Legen van de ontvangst-wachtrij voor "
+
+#: src/net.c:274
+msgid "trying to look up "
+msgstr "proberen op te zoeken van "
+
+#: src/net.c:274
+msgid " in connection list failed."
+msgstr " in verbindingslijst mislukte."
+
+#: src/net.c:281
+msgid "There is no remote host I can send this packet to."
+msgstr "Er is geen partner waar ik dit pakket naar kan sturen."
+
+#: src/net.c:305
+msgid " is not ready, queueing packet."
+msgstr " is niet gereed, pakket wordt in de wachtrij gezet."
+
+#: src/net.c:351
+#, c-format
+msgid "Creating metasocket failed: %m"
+msgstr "Aanmaak van metasocket mislukt: %m"
+
+#: src/net.c:357 src/net.c:406
+#, c-format
+msgid "setsockopt: %m"
+msgstr "setsockopt: %m"
+
+#: src/net.c:364 src/net.c:413 src/net.c:465
+#, c-format
+msgid "fcntl: %m"
+msgstr "fcntl: %m"
+
+#: src/net.c:375
+#, c-format
+msgid "Can't bind to port %hd/tcp: %m"
+msgstr "Kan niet aan poort %hd/tcp binden: %m"
+
+#: src/net.c:381
+#, c-format
+msgid "listen: %m"
+msgstr "listen: %m"
+
+#: src/net.c:400 src/net.c:448
+#, c-format
+msgid "Creating socket failed: %m"
+msgstr "Aanmaak socket mislukte: %m"
+
+#: src/net.c:424
+#, c-format
+msgid "Can't bind to port %hd/udp: %m"
+msgstr "Kan niet aan poort %hd/udp binden: %m"
+
+#: src/net.c:458
+#, c-format
+msgid ":%d: %m"
+msgstr ":%d: %m"
+
+#: src/net.c:471
+#, c-format
+msgid "Connected to %s:%hd"
+msgstr "Verbonden met %s:%hd"
+
+#: src/net.c:492
+msgid "Could not set up a meta connection."
+msgstr "Kon geen metaverbinding aangaan."
+
+#: src/net.c:516
+msgid "No value for my VPN IP given"
+msgstr "Geen waarde gegeven voor mijn VPN IP adres"
+
+#: src/net.c:530
+msgid "Unable to set up a listening socket"
+msgstr "Kon geen luistersocket aanmaken"
+
+#: src/net.c:536
+msgid "Unable to set up an incoming vpn data socket"
+msgstr "Kon geen socket maken voor inkomend vpn verkeer"
+
+#: src/net.c:543
+#, c-format
+msgid "Ready: listening on port %d."
+msgstr "Gereed: luister op poort %d."
+
+#: src/net.c:566
+#, c-format
+msgid "Still failed to connect to other. Will retry in %d seconds."
+msgstr "Wederom niet verbonden met de ander. Nieuwe poging over %d seconden."
+
+#: src/net.c:599
+msgid "Try to re-establish outgoing connection in 5 minutes."
+msgstr "Poging tot herstellen van uitgaande verbinding over 5 minuten."
+
+#: src/net.c:637
+msgid "Terminating."
+msgstr "Beëindigen."
+
+#: src/net.c:651
+msgid "Opening UDP socket to "
+msgstr "Tijdens openen van UDP socket naar "
+
+#: src/net.c:656
+#, c-format
+msgid "Creating data socket failed: %m"
+msgstr "Aanmaak datasocket mislukt: %m"
+
+#: src/net.c:666
+msgid "Connecting to "
+msgstr "Verbinden naar "
+
+#: src/net.c:666
+#, c-format
+msgid ":%d failed: %m"
+msgstr ":%d mislukt: %m"
+
+#: src/net.c:674 src/net.c:758 src/net.c:929
+#, c-format
+msgid "This is a bug: %s:%d: %d:%m"
+msgstr "Dit is een programmeerfout: %s:%d: %d:%m"
+
+#: src/net.c:698
+#, c-format
+msgid "Error: getpeername: %m"
+msgstr "Fout: getpeername: %m"
+
+#: src/net.c:710
+#, c-format
+msgid "Connection from %s:%d"
+msgstr "Verbinding van %s:%d"
+
+#: src/net.c:763
+#, c-format
+msgid "Incoming data socket error: %s"
+msgstr "Fout op socket voor inkomend verkeer: %s"
+
+#: src/net.c:771
+#, c-format
+msgid "Receiving data failed: %m"
+msgstr "Ontvangen van data mislukt: %m"
+
+#: src/net.c:784
+msgid "packet from "
+msgstr "pakket van "
+
+#: src/net.c:784
+#, c-format
+msgid " (len %d)"
+msgstr " (lengte %d)"
+
+#: src/net.c:788
+msgid "Got packet from unknown source "
+msgstr "Pakket ontvangen met onbekende afzender "
+
+#: src/net.c:820
+#, c-format
+msgid "Closing connection with %s."
+msgstr "Beëindigen verbinding met %s."
+
+#: src/net.c:836
+msgid "Try to re-establish outgoing connection in 5 seconds."
+msgstr "Poging tot herstellen van uitgaande verbinding over 5 seconden."
+
+#: src/net.c:868
+#, c-format
+msgid "%s ("
+msgstr "%s ("
+
+#: src/net.c:868
+msgid ") didn't respond to ping"
+msgstr ") antwoordde niet op verzoeken"
+
+#: src/net.c:899
+#, c-format
+msgid "Accepting a new connection failed: %m"
+msgstr "Aanname van nieuwe verbinding is mislukt: %m"
+
+#: src/net.c:907
+msgid "Closed attempted connection."
+msgstr "Aangenomen verbinding verbroken."
+
+#: src/net.c:934
+#, c-format
+msgid "Metadata socket error: %s"
+msgstr "Fout op socket voor metaverkeer: %s"
+
+#: src/net.c:940
+msgid "Metadata read buffer overflow."
+msgstr "Metadata ontvangstbuffer overloop."
+
+#: src/net.c:948
+#, c-format
+msgid "Metadata socket read error: %m"
+msgstr "Fout op socket voor metaverkeer: %m"
+
+#: src/net.c:975
+#, c-format
+msgid "Unknown request: %s"
+msgstr "Onbekend verzoek: %s"
+
+#: src/net.c:980
+#, c-format
+msgid "Got request: %s"
+msgstr "Ontving verzoek: %s"
+
+#: src/net.c:984
+msgid "Error while processing request from "
+msgstr "Fout tijdens afhandelen van verzoek van "
+
+#: src/net.c:990
+msgid "Bogus data received."
+msgstr "Onzinnige data ontvangen."
+
+#: src/net.c:1034
+#, c-format
+msgid "Outgoing data socket error: %s"
+msgstr "Fout op socket voor uitgaand verkeer: %s"
+
+#: src/net.c:1069
+#, c-format
+msgid "Error while reading from tapdevice: %m"
+msgstr "Fout tijdens lezen van tap-apparaatbestand: %m"
+
+#: src/net.c:1079
+#, c-format
+msgid "Non-IP ethernet frame %04x from "
+msgstr "Niet-IP ethernet pakket %04x van "
+
+#: src/net.c:1087
+msgid "Dropping short packet"
+msgstr "Te kort pakket genegeerd"
+
+#: src/net.c:1095
+#, c-format
+msgid "An IP packet (%04x) for "
+msgstr "Een IP pakket (%04x) voor "
+
+#: src/net.c:1095
+msgid " from "
+msgstr " van "
+
+#: src/net.c:1098 src/protocol.c:110
+msgid " to "
+msgstr " naar "
+
+#: src/net.c:1133
+#, c-format
+msgid "Error while waiting for input: %m"
+msgstr "Fout tijdens wachten op invoer: %m"
+
+#: src/netutl.c:208
+#, c-format
+msgid "Error looking up `%s': %s\n"
+msgstr "Fout bij het opzoeken van `%s': %s\n"
+
+#: src/netutl.c:232
+msgid "Connection list:"
+msgstr "Verbindingslijst:"
+
+#: src/protocol.c:54
+#, c-format
+msgid "Send ACK to %s"
+msgstr "ACK zenden naar %s"
+
+#: src/protocol.c:60
+#, c-format
+msgid "send failed: %d:%d: %m"
+msgstr "verzenden mislukte: %d:%d: %m"
+
+#: src/protocol.c:64 src/protocol.c:478
+#, c-format
+msgid "Connection with %s activated."
+msgstr "Verbinding met %s geactiveerd."
+
+#: src/protocol.c:73
+msgid "Send TERMREQ to "
+msgstr "TERMREQ zenden naar "
+
+#: src/protocol.c:81 src/protocol.c:99 src/protocol.c:117 src/protocol.c:134
+#: src/protocol.c:148 src/protocol.c:166 src/protocol.c:184 src/protocol.c:212
+#: src/protocol.c:233 src/protocol.c:251 src/protocol.c:265 src/protocol.c:292
+#: src/protocol.c:322 src/protocol.c:648 src/protocol.c:746
+#, c-format
+msgid "send failed: %s:%d: %m"
+msgstr "verzenden mislukte: %s:%d: %m"
+
+#: src/protocol.c:92
+msgid "Send TIMEOUT to "
+msgstr "TIMEOUT zenden naar "
+
+#: src/protocol.c:110
+msgid "Sending delete host "
+msgstr "Verzenden van verwijderingsverzoek van "
+
+#: src/protocol.c:128
+msgid "pinging "
+msgstr "pingen van "
+
+#: src/protocol.c:159
+msgid "Sending add host to "
+msgstr "Verzenden van toevoegen van "
+
+#: src/protocol.c:177
+msgid "Sending KEY_CHANGED to "
+msgstr "KEY_CHANGED verzenden naar "
+
+#: src/protocol.c:205
+msgid "Send BASIC_INFO to "
+msgstr "BASIC_INFO sturen naar "
+
+#: src/protocol.c:226
+#, c-format
+msgid "Send PASSPHRASE %s to "
+msgstr "PASSPHRASE %s sturen naar "
+
+#: src/protocol.c:244
+#, c-format
+msgid "Send PUBLIC_KEY %s to "
+msgstr "PUBLIC_KEY %s verzenden naar "
+
+#: src/protocol.c:279
+msgid "Attempting to send key request to "
+msgstr "Poging tot verzenden van sleutelverzoek naar "
+
+#: src/protocol.c:279 src/protocol.c:309 src/protocol.c:635 src/protocol.c:717
+#: src/protocol.c:733 src/protocol.c:773
+msgid ", which does not exist?"
+msgstr ", die niet bestaat?"
+
+#: src/protocol.c:285
+msgid "Sending out request for public key to "
+msgstr "Verzoek om openbare sleutel verzenden naar "
+
+#: src/protocol.c:309
+msgid "Attempting to send key answer to "
+msgstr "Poging tot verzenden van een sleutel naar "
+
+#: src/protocol.c:315
+msgid "Sending public key to "
+msgstr "Verzenden van openbare sleutel naar "
+
+#: src/protocol.c:370
+#, c-format
+msgid "got bad BASIC_INFO request: %s"
+msgstr "Ongeldig BASIC_INFO verzoek ontvangen: %s"
+
+#: src/protocol.c:376
+#, c-format
+msgid "Peer uses incompatible protocol version %d."
+msgstr "De ander gebruikt een niet-compatibel protocol versie %d."
+
+#: src/protocol.c:382
+#, c-format
+msgid "got BASIC_INFO(%hd,"
+msgstr "BASIC_INFO(%hd,"
+
+#: src/protocol.c:382 src/protocol.c:581
+msgid ","
+msgstr ","
+
+#: src/protocol.c:382
+msgid ")"
+msgstr ") ontvangen"
+
+#: src/protocol.c:385
+#, c-format
+msgid "Peer uses protocol version %d"
+msgstr "De ander gebruikt protocol versie %d"
+
+#: src/protocol.c:411
+#, c-format
+msgid "got bad PASSPHRASE request: %s"
+msgstr "Ongeldig PASSPHRASE verzoek ontvangen: %s"
+
+#: src/protocol.c:417
+msgid "got PASSPHRASE"
+msgstr "PASSPHRASE ontvangen"
+
+#: src/protocol.c:434
+#, c-format
+msgid "got bad PUBLIC_KEY request: %s"
+msgstr "Ongeldig PUBLIC_KEY verzoek ontvangen: %s"
+
+#: src/protocol.c:439
+#, c-format
+msgid "got PUBLIC_KEY %s"
+msgstr "PUBLIC_KEY %s verzoek ontvangen"
+
+#. intruder!
+#: src/protocol.c:444
+msgid "Intruder: passphrase does not match."
+msgstr "Indringer: wachwoord komt niet overeen."
+
+#: src/protocol.c:449
+msgid "Passphrase OK"
+msgstr "Wachtwoord OK"
+
+#: src/protocol.c:475
+msgid "got ACK"
+msgstr "ACK ontvangen"
+
+#: src/protocol.c:486
+msgid " wants to quit"
+msgstr " wil beëindigen"
+
+#: src/protocol.c:499
+msgid " says it's gotten a timeout from us"
+msgstr " vindt dat wij te traag zijn"
+
+#: src/protocol.c:515
+#, c-format
+msgid "got bad DEL_HOST request: %s"
+msgstr "Ongeldig DEL_HOST verzoek ontvangen: %s"
+
+#: src/protocol.c:520
+msgid "got DEL_HOST for "
+msgstr "DEL_HOST ontvangen voor "
+
+#: src/protocol.c:525
+msgid "Somebody wanted to delete "
+msgstr "Iemand wilde "
+
+#: src/protocol.c:525
+msgid " which does not exist?"
+msgstr " verwijderen, die niet bestaat?"
+
+#: src/protocol.c:543
+msgid "responding to ping from "
+msgstr " antwoordde niet op verzoeken"
+
+#: src/protocol.c:557
+msgid "ok, got pong from "
+msgstr "ok, pong ontvangen van "
+
+#: src/protocol.c:574
+#, c-format
+msgid "got bad ADD_HOST request: %s"
+msgstr "Ongeldig ADD_HOST verzoek ontvangen: %s"
+
+#: src/protocol.c:579
+msgid "Add host request from "
+msgstr "Ontving verzoek tot toevoegen van "
+
+#: src/protocol.c:581
+msgid "got ADD_HOST("
+msgstr "ADD_HOST("
+
+#: src/protocol.c:581
+#, c-format
+msgid ",%hd)"
+msgstr ",%hd) ontvangen"
+
+#: src/protocol.c:617
+#, c-format
+msgid "got bad request: %s"
+msgstr "Ongeldig verzoek ontvangen: %s"
+
+#: src/protocol.c:622
+msgid "got REQ_KEY from "
+msgstr "REQ_KEY ontvangen van "
+
+#: src/protocol.c:622 src/protocol.c:706
+msgid " for "
+msgstr " voor "
+
+#: src/protocol.c:635
+msgid "Attempting to forward key request to "
+msgstr "Poging tot doorsturen van sleutelaanvraag naar "
+
+#: src/protocol.c:641
+msgid "Forwarding request for public key to "
+msgstr "Doorsturen van openbare sleutel-aanvraag naar "
+
+#: src/protocol.c:701 src/protocol.c:761
+#, c-format
+msgid "got bad ANS_KEY request: %s"
+msgstr "Ongeldig ANS_KEY verzoek ontvangen: %s"
+
+#: src/protocol.c:706
+msgid "got ANS_KEY from "
+msgstr "ANS_KEY ontvangen van "
+
+#: src/protocol.c:712
+msgid "Yeah! key arrived. Now do something with it."
+msgstr "Hoi hoi! sleutel is binnen. Doe er nu iets leuks mee."
+
+#: src/protocol.c:717
+msgid "Receiving key from "
+msgstr "Sleutel ontvangen van "
+
+#: src/protocol.c:733
+msgid "Attempting to forward key to "
+msgstr "Poging tot doorsturen van sleutel naar "
+
+#: src/protocol.c:739
+msgid "Forwarding public key to "
+msgstr "Doorsturen van openbare sleutel naar "
+
+#: src/protocol.c:766
+msgid "got KEY_CHANGED from "
+msgstr "KEY_CHANGED verzoek ontvangen "
+
+#: src/protocol.c:773
+msgid "Got changed key from "
+msgstr "Veranderde sleutel ontvangen van "
+
+#: src/protocol.c:782
+msgid "Forwarding key invalidation request"
+msgstr "Doorsturen van sleutelvervalaanvraag"
+
+#: src/tincd.c:114
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Probeer `%s --help' voor meer informatie.\n"
+
+#: src/tincd.c:117
+#, c-format
+msgid ""
+"Usage: %s [option]...\n"
+"\n"
+msgstr ""
+"Gebruik: %s [optie]...\n"
+"\n"
+
+#: src/tincd.c:118
+msgid ""
+"  -c, --config=FILE     Read configuration options from FILE.\n"
+"  -D, --no-detach       Don't fork and detach.\n"
+"  -d                    Increase debug level.\n"
+"  -k, --kill            Attempt to kill a running tincd and exit.\n"
+"  -n, --net=NETNAME     Connect to net NETNAME.\n"
+"  -t, --timeout=TIMEOUT Seconds to wait before giving a timeout.\n"
+msgstr ""
+"  -c, --config=BESTAND  Lees configuratie uit BESTAND.\n"
+"  -D, --no-detach       Start geen nieuw proces.\n"
+"  -d                    Verhoog debugniveau.\n"
+"  -k, --kill            Poging tot doden van lopende tincd en beëindig.\n"
+"  -n, --net=NETNAAM     Verbind met net NETNAAM.\n"
+"  -t, --timeout=TIMEOUT Seconden wachten op timeout.\n"
+
+#: src/tincd.c:124
+msgid ""
+"      --help            Display this help and exit.\n"
+"      --version         Output version information and exit.\n"
+"\n"
+msgstr ""
+"      --help            Geef deze hulp en beëindig.\n"
+"      --version         Geef versie informatie en beëindig.\n"
+"\n"
+
+#: src/tincd.c:126
+msgid "Report bugs to tinc@nl.linux.org.\n"
+msgstr ""
+"Meld fouten in het programma aan tinc@nl.linux.org;\n"
+"meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
+
+#: src/tincd.c:164
+#, c-format
+msgid "Invalid timeout value `%s'.\n"
+msgstr "Ongeldige timeout waarde `%s'.\n"
+
+#: src/tincd.c:178
+#, c-format
+msgid "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting."
+msgstr "Geheugen is vol (laatste %s:%d) (kon geen %d bytes vrijmaken); beëindigen."
+
+#: src/tincd.c:233
+#, c-format
+msgid "tincd %s (%s %s) starting, debug level %d."
+msgstr "tincd %s (%s %s) gestart, debugniveau %d."
+
+#: src/tincd.c:236
+#, c-format
+msgid "tincd %s starting, debug level %d."
+msgstr "tincd %s gestart, debugniveau %d."
+
+#: src/tincd.c:251
+#, c-format
+msgid "Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d."
+msgstr ""
+"Totaal aantal bytes geschreven: tap %d, socket %d; bytes gelezen: top %d, "
+"socket %d."
+
+#: src/tincd.c:269
+#, c-format
+msgid "A tincd is already running for net `%s' with pid %d.\n"
+msgstr "Een tincd voor net `%s' draait al met procesnummer %d.\n"
+
+#: src/tincd.c:272
+#, c-format
+msgid "A tincd is already running with pid %d.\n"
+msgstr "Een tincd draait al met procesnummer %d.\n"
+
+#: src/tincd.c:293
+#, c-format
+msgid "No other tincd is running for net `%s'.\n"
+msgstr "Geen andere tincd gevonden voor net `%s'.\n"
+
+#: src/tincd.c:295
+msgid "No other tincd is running.\n"
+msgstr "Geen andere tincd gevonden.\n"
+
+#: src/tincd.c:302
+msgid "Removing stale lock file.\n"
+msgstr "Ongebruikt vergrendelingsbestand verwijderd.\n"
+
+#: src/tincd.c:358
+#, c-format
+msgid "%s version %s\n"
+msgstr "%s versie %s\n"
+
+#: src/tincd.c:359
+msgid ""
+"Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
+"see the AUTHORS file for a complete list.\n"
+"\n"
+"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+"and you are welcome to redistribute it under certain conditions;\n"
+"see the file COPYING for details.\n"
+"\n"
+msgstr ""
+"Copyright (C) 1998,1999,2000 Ivo Timmermans en anderen,\n"
+"zie het bestand AUTHORS voor een volledige lijst.\n"
+"\n"
+"tinc wordt gedistribueerd ZONDER ENIGE GARANTIE.  Dit is vrije programmatuur,\n"
+"en je bent welkom om het te distribueren onder bepaalde voorwaarden;\n"
+"zie het bestand COPYING voor details.\n"
+"\n"
+
+#: src/tincd.c:364
+msgid ""
+"This product includes software developed by Eric Young (eay@mincom.oz.au)\n"
+msgstr ""
+"Dit produkt bevat programmatuur ontwikkeld door Eric Young "
+"(eay@mincom.oz.au)\n"
+
+#: src/tincd.c:374
+msgid "You must be root to run this program. sorry.\n"
+msgstr ""
+"Je moet systeembeheerder zijn om dit programma te kunnen draaien. sorry.\n"
+
+#: src/tincd.c:409
+msgid "Got TERM signal"
+msgstr "Kreeg TERM signaal"
+
+#: src/tincd.c:417
+msgid "Got QUIT signal"
+msgstr "Kreeg QUIT signaal"
+
+#: src/tincd.c:424
+msgid "Got another SEGV signal: not restarting"
+msgstr "Kreeg nog een SEGV signaal: niet herstarten"
+
+#: src/tincd.c:432
+#, c-format
+msgid "Got SEGV signal after %s line %d. Trying to re-execute."
+msgstr "Kreeg SEGV signaal na %s regel %d. Probeer opnieuw opstarten."
+
+#: src/tincd.c:435
+msgid "Got SEGV signal; trying to re-execute."
+msgstr "Kreeg SEGV signaal; probeer opnieuw opstarten."
+
+#: src/tincd.c:448
+msgid "Got HUP signal"
+msgstr "Kreeg HUP signaal"
+
+#: src/tincd.c:458
+msgid "Got INT signal"
+msgstr "Kreeg INT signaal"
+
+#: src/tincd.c:472
+msgid "Forcing new key generation"
+msgstr "Nieuwe sleutels geforceerd"
+
+#: src/tincd.c:480
+#, c-format
+msgid "Got unexpected signal (%d) after %s line %d."
+msgstr "Ontving onverwacht signaal (%d) na %s regel %d."
+
+#: src/tincd.c:483
+#, c-format
+msgid "Got unexpected signal (%d)."
+msgstr "Ontving onverwacht signaal (%d)."
