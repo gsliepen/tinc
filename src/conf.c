@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.18 2000/10/29 00:02:17 guus Exp $
+    $Id: conf.c,v 1.9.4.19 2000/10/29 00:24:31 guus Exp $
 */
 
 
@@ -60,7 +60,6 @@ static internal_config_t hazahaza[] = {
   { "ConnectTo",    connectto,      TYPE_NAME },
   { "PingTimeout",  pingtimeout,    TYPE_INT },
   { "TapDevice",    tapdevice,      TYPE_NAME },
-  { "TapSubnet",    tapsubnet,      TYPE_IP },
   { "PrivateKey",   privatekey,     TYPE_NAME },
   { "KeyExpire",    keyexpire,      TYPE_INT },
   { "Hostnames",    resolve_dns,    TYPE_BOOL },

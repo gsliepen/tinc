@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.14 2000/10/24 15:46:16 guus Exp $
+    $Id: conf.h,v 1.6.4.15 2000/10/29 00:24:31 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -37,7 +37,6 @@ typedef enum which_t {
   connectto,
   pingtimeout,
   tapdevice,
-  tapsubnet,
   privatekey,
   keyexpire,
   resolve_dns,

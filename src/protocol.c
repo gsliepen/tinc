@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.47 2000/10/29 00:02:19 guus Exp $
+    $Id: protocol.c,v 1.28.4.48 2000/10/29 00:24:31 guus Exp $
 */
 
 #include "config.h"
@@ -1074,8 +1074,8 @@ cp
       BF_set_key(cl->cipher_pktkey, keylength, pktkey);
 */
 
-      cl->status.validkey = 1;
-      cl->status.waitingforkey = 0;
+      from->status.validkey = 1;
+      from->status.waitingforkey = 0;
     }
   else
     {
