@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.11 2000/05/21 22:08:21 guus Exp $
+# $Id: init.d,v 1.12 2000/05/21 22:21:38 guus Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -129,7 +129,7 @@ sub vpn_start {
 
     system("insmod ethertap -s --name=\"ethertap$NUM\" unit=\"$NUM\" >/dev/null");
     system("ifconfig $DEV hw ether $MAC");
-    system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD -arp");
+    system("ifconfig $DEV $ADR netmask $VPNMASK broadcast $BRD -arp");
     system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
 }
 
