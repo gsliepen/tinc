@@ -46,10 +46,10 @@ conn_list_t *lookup_conn(ip_t ip)
 cp
   /* Exact match suggested by James B. MacLean */
   for(p = conn_list; p != NULL; p = p->next)
-    if((ip  == p->vpn_ip) && p->active)
+    if((ip  == p->vpn_ip) && p->status.active)
       return p;
   for(p = conn_list; p != NULL; p = p->next)
-    if(((ip & p->vpn_mask) == (p->vpn_ip & p->vpn_mask)) && p->active)
+    if(((ip & p->vpn_mask) == (p->vpn_ip & p->vpn_mask)) && p->status.active)
       return p;
 cp
   return NULL;

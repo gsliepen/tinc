@@ -188,7 +188,7 @@ void send_key_changed_all(void)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p->status.meta && p->active)
+    if(p->status.meta && p->status.active)
       send_key_changed(p, myself);
 cp
 }
@@ -332,7 +332,7 @@ int notify_others(conn_list_t *new, conn_list_t *source,
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p != source && p->status.meta && p->active)
+    if(p != new && p != source && p->status.meta && p->status.active)
       function(p, new);
 cp
   return 0;
@@ -347,7 +347,7 @@ int notify_one(conn_list_t *new)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p->active)
+    if(p != new && p->status.active)
       send_add_host(new, p);
 cp
   return 0;
@@ -453,7 +453,7 @@ cp
      old connection that has timed out but we don't know it yet. Because our
      conn_list entry is not active, lookup_conn will skip ourself. */
 
-  if(old=lookup_conn(cl->vpn_ip)) 
+  while(old=lookup_conn(cl->vpn_ip)) 
     terminate_connection(old);
 
   cl->status.active = 1;

@@ -826,6 +826,7 @@ cp
       syslog(LOG_NOTICE, "Try to re-establish outgoing connection in 5 seconds.");
     }
   
+  cl->status.active = 0;
   cl->status.remove = 1;
 cp
 }
