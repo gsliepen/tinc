@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.11 2000/06/27 21:05:07 guus Exp $
+    $Id: net.c,v 1.35.4.12 2000/06/28 10:11:10 guus Exp $
 */
 
 #include "config.h"
@@ -1053,6 +1053,8 @@ cp
 
   if(lenin<=0)
     {
+      if(errno==EINTR)
+        return 0;      
       syslog(LOG_ERR, _("Metadata socket read error: %m"));
       return -1;
     }
