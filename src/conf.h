@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.42 2003/07/30 21:52:41 guus Exp $
+    $Id: conf.h,v 1.6.4.43 2003/08/08 22:11:54 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -57,7 +57,7 @@ extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
 extern int read_config_file(avl_tree_t *, const char *);
 extern bool read_server_config(void);
-extern FILE *ask_and_safe_open(const char *, const char *, bool, const char *);
+extern FILE *ask_and_open(const char *, const char *, const char *);
 extern bool is_safe_path(const char *);
 
 #endif							/* __TINC_CONF_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.68 2003/08/08 19:56:11 guus Exp $
+    $Id: process.c,v 1.1.2.69 2003/08/08 22:11:54 guus Exp $
 */
 
 #include "system.h"
@@ -359,7 +359,6 @@ bool detach(void)
 bool execute_script(const char *name, char **envp)
 {
 #ifdef HAVE_SYSTEM
-	pid_t pid;
 	int status;
 	struct stat s;
 	char *scriptname;
@@ -394,22 +393,20 @@ bool execute_script(const char *name, char **envp)
 	if(status != -1) {
 		if(WIFEXITED(status)) {	/* Child exited by itself */
 			if(WEXITSTATUS(status)) {
-				logger(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
-					   pid, name, WEXITSTATUS(status));
+				logger(LOG_ERR, _("Script %s exited with non-zero status %d"),
+					   name, WEXITSTATUS(status));
 				return false;
 			}
 		} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
-			logger(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
+			logger(LOG_ERR, _("Script %s was killed by signal %d (%s)"),
 				   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 			return false;
 		} else {			/* Something strange happened */
-			logger(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
-				   name);
+			logger(LOG_ERR, _("Script %s terminated abnormally"), name);
 			return false;
 		}
 	} else {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "system",
-			   strerror(errno));
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "system", strerror(errno));
 		return false;
 	}
 #endif

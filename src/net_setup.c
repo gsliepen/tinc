@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.41 2003/07/30 11:50:45 guus Exp $
+    $Id: net_setup.c,v 1.1.2.42 2003/08/08 22:11:54 guus Exp $
 */
 
 #include "system.h"
@@ -149,6 +149,7 @@ bool read_rsa_private_key(void)
 {
 	FILE *fp;
 	char *fname, *key;
+	struct stat s;
 
 	cp();
 
@@ -164,32 +165,39 @@ bool read_rsa_private_key(void)
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
 		asprintf(&fname, "%s/rsa_key.priv", confbase);
 
-	if(is_safe_path(fname)) {
-		fp = fopen(fname, "r");
+	fp = fopen(fname, "r");
 
-		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
-				   fname, strerror(errno));
-			free(fname);
-			return false;
-		}
-
+	if(!fp) {
+		logger(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
+			   fname, strerror(errno));
 		free(fname);
-		myself->connection->rsa_key =
-			PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
-		fclose(fp);
+		return false;
+	}
 
-		if(!myself->connection->rsa_key) {
-			logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
-				   fname, strerror(errno));
-			return false;
-		}
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+	if(fstat(fileno(fp), &s)) {
+		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"),
+				fname, strerror(errno));
+		free(fname);
+		return false;
+	}
 
-		return true;
+	if(s.st_mode & ~0700)
+		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
+#endif
+
+	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
+	fclose(fp);
+
+	if(!myself->connection->rsa_key) {
+		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
+			   fname, strerror(errno));
+		free(fname);
+		return false;
 	}
 
 	free(fname);
-	return false;
+	return true;
 }
 
 /*

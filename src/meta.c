@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.39 2003/08/08 14:24:09 guus Exp $
+    $Id: meta.c,v 1.1.2.40 2003/08/08 22:11:54 guus Exp $
 */
 
 #include "system.h"
@@ -54,10 +54,10 @@ bool send_meta(connection_t *c, char *buffer, int length)
 	while(length) {
 		result = send(c->socket, bufp, length, 0);
 		if(result <= 0) {
-			if(!errno || errno == EPIPE)
+			if(!errno || errno == EPIPE) {
 				ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 						   c->name, c->hostname);
-			else if(errno == EINTR)
+			} else if(errno == EINTR)
 				continue;
 			else
 				logger(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
@@ -121,10 +121,10 @@ bool receive_meta(connection_t *c)
 	lenin = recv(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen, 0);
 
 	if(lenin <= 0) {
-		if(!lenin || !errno)
+		if(!lenin || !errno) {
 			ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 					   c->name, c->hostname);
-		else if(errno == EINTR)
+		} else if(errno == EINTR)
 			return true;
 		else
 			logger(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),

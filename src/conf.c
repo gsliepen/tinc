@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.74 2003/08/08 14:59:27 guus Exp $
+    $Id: conf.c,v 1.9.4.75 2003/08/08 22:11:54 guus Exp $
 */
 
 #include "system.h"
@@ -424,97 +424,7 @@ bool read_server_config()
 	return x == 0;
 }
 
-bool is_safe_path(const char *file)
-{
-#if !(defined(HAVE_CYGWIN) || defined(HAVE_MINGW))
-	char *p;
-	const char *f;
-	char x;
-	struct stat s;
-	char l[MAXBUFSIZE];
-
-	if(*file != '/') {
-		logger(LOG_ERR, _("`%s' is not an absolute path"), file);
-		return false;
-	}
-
-	p = strrchr(file, '/');
-
-	if(p == file)				/* It's in the root */
-		p++;
-
-	x = *p;
-	*p = '\0';
-
-	f = file;
-
-check1:
-	if(lstat(f, &s) < 0) {
-		logger(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
-		return false;
-	}
-
-	if(s.st_uid != geteuid()) {
-		logger(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
-			   f, s.st_uid, geteuid());
-		return false;
-	}
-
-	if(S_ISLNK(s.st_mode)) {
-		logger(LOG_WARNING, _("Warning: `%s' is a symlink"), f);
-
-		if(readlink(f, l, MAXBUFSIZE) < 0) {
-			logger(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
-				   strerror(errno));
-			return false;
-		}
-
-		f = l;
-		goto check1;
-	}
-
-	*p = x;
-	f = file;
-
-check2:
-	if(lstat(f, &s) < 0 && errno != ENOENT) {
-		logger(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
-		return false;
-	}
-
-	if(errno == ENOENT)
-		return true;
-
-	if(s.st_uid != geteuid()) {
-		logger(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
-			   f, s.st_uid, geteuid());
-		return false;
-	}
-
-	if(S_ISLNK(s.st_mode)) {
-		logger(LOG_WARNING, _("Warning: `%s' is a symlink"), f);
-
-		if(readlink(f, l, MAXBUFSIZE) < 0) {
-			logger(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
-				   strerror(errno));
-			return false;
-		}
-
-		f = l;
-		goto check2;
-	}
-
-	if(s.st_mode & 0007) {
-		/* Accessible by others */
-		logger(LOG_ERR, _("`%s' has unsecure permissions"), f);
-		return false;
-	}
-#endif
-
-	return true;
-}
-
-FILE *ask_and_safe_open(const char *filename, const char *what, bool safe, const char *mode)
+FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 {
 	FILE *r;
 	char *directory;
@@ -571,17 +481,6 @@ FILE *ask_and_safe_open(const char *filename, const char *what, bool safe, const
 				fn, strerror(errno));
 		free(fn);
 		return NULL;
-	}
-
-	/* Then check the file for nasty attacks */
-	if(safe) {
-		if(!is_safe_path(fn)) {		/* Do not permit any directories that are readable or writeable by other users. */
-			fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
-					 "I will not create or overwrite this file.\n"), fn);
-			fclose(r);
-			free(fn);
-			return NULL;
-		}
 	}
 
 	free(fn);

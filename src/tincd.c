@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.84 2003/08/08 19:45:21 guus Exp $
+    $Id: tincd.c,v 1.10.4.85 2003/08/08 22:11:54 guus Exp $
 */
 
 #include "system.h"
@@ -300,11 +300,16 @@ static bool keygen(int bits)
 		fprintf(stderr, _("Done.\n"));
 
 	asprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_safe_open(filename, _("private RSA key"), true, "a");
+	f = ask_and_open(filename, _("private RSA key"), "a");
 
 	if(!f)
 		return false;
-
+  
+#ifdef HAVE_FCHMOD
+	/* Make it unreadable for others. */
+	fchmod(fileno(f), 0600);
+#endif
+		
 	if(ftell(f))
 		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
 
@@ -319,7 +324,7 @@ static bool keygen(int bits)
 	else
 		asprintf(&filename, "%s/rsa_key.pub", confbase);
 
-	f = ask_and_safe_open(filename, _("public RSA key"), false, "a");
+	f = ask_and_open(filename, _("public RSA key"), "a");
 
 	if(!f)
 		return false;
