@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.28 2003/05/06 21:13:17 guus Exp $
+    $Id: net_packet.c,v 1.1.2.29 2003/05/06 23:14:45 guus Exp $
 */
 
 #include "config.h"
@@ -82,7 +82,7 @@
 int keylifetime = 0;
 int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
-char lzo_wrkmem[MAXSIZE];
+char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
 
 #define MAX_SEQNO 1073741824
@@ -94,7 +94,7 @@ length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 	} else if(level < 10) {
-		unsigned long destlen;
+		unsigned long destlen = MAXSIZE;
 		if(compress2(dest, &destlen, source, len, level) == Z_OK)
 			return destlen;
 		else
@@ -117,7 +117,7 @@ length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, i
 		else
 			return -1;
 	} else {
-		unsigned long destlen;
+		unsigned long destlen = MAXSIZE;
 		if(uncompress(dest, &destlen, source, len) == Z_OK)
 			return destlen;
 		else
@@ -136,7 +136,6 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int nextpkt = 0;
 	vpn_packet_t *outpkt = pkt[0];
 	int outlen, outpad;
-	long int complen = MTU + 12;
 	char hmac[EVP_MAX_MD_SIZE];
 	int i;
 
@@ -188,7 +187,7 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		} else if (inpkt->seqno <= n->received_seqno) {
 			if(inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8 || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
 				syslog(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
-					   n->name, n->hostname, inpkt->seqno, n->received_seqno, n->late[(inpkt->seqno / 8) % sizeof(n->late)]);
+					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
 			} else
 				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
 					n->late[(inpkt->seqno / 8) % sizeof(n->late)] |= 1 << i % 8;
@@ -249,7 +248,6 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	vpn_packet_t *outpkt;
 	int origlen;
 	int outlen, outpad;
-	long int complen = MTU + 12;
 	vpn_packet_t *copy;
 	static int priority = 0;
 	int origpriority;

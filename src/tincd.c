@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.66 2003/01/17 00:43:58 guus Exp $
+    $Id: tincd.c,v 1.10.4.67 2003/05/06 23:14:45 guus Exp $
 */
 
 #include "config.h"
@@ -49,6 +49,8 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+
+#include <lzo1x.h>
 
 #include <utils.h>
 #include <xalloc.h>
@@ -361,6 +363,9 @@ int main(int argc, char **argv, char **envp)
 	if(show_help)
 		usage(0);
 
+	if(kill_tincd)
+		exit(kill_other(kill_tincd));
+
 #ifndef LOG_PERROR
 	openlog("tinc", LOG_CONS, LOG_DAEMON);	/* Catch all syslog() calls issued before detaching */
 #else
@@ -409,15 +414,17 @@ int main(int argc, char **argv, char **envp)
 		exit(keygen(generate_keys));
 	}
 
-	if(kill_tincd)
-		exit(kill_other(kill_tincd));
-
 	if(read_server_config())
 		exit(1);
 
+	if(lzo_init() != LZO_E_OK) {
+		syslog(LOG_ERR, _("Error initializing LZO compressor!"));
+		exit(1);
+	}
+
 	if(detach())
 		exit(0);
-
+		
 	for(;;) {
 		if(!setup_network_connections()) {
 			main_loop();
