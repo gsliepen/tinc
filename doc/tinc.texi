@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.10 2000/12/05 08:54:22 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.11 2001/01/06 20:02:21 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998,199,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.10 2000/12/05 08:54:22 zarq Exp $
+$Id: tinc.texi,v 1.8.4.11 2001/01/06 20:02:21 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.10 2000/12/05 08:54:22 zarq Exp $
+$Id: tinc.texi,v 1.8.4.11 2001/01/06 20:02:21 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -118,7 +118,8 @@ computers on the other end of the internet.
 
 @cindex virtual
 This problem can be solved by using @emph{virtual} networks.  Virtual
-networks can live on top of other networks, but do not interfere with
+networks can live on top of other networks, but they use encapsulation to
+keep using their private address space so they do not interfere with
 each other.  Mostly, virtual networks appear like a singe LAN, even though
 they can span the entire world.  But virtual networks can't be secured
 by using firewalls, because the traffic that flows through it has to go
@@ -160,7 +161,7 @@ both the receiving and sending end, it has become largely
 runtime-configurable---in short, it has become a full-fledged
 professional package.
 
-A lot can---and will be---changed.  I have a few things that I'd like to
+A lot can---and will be---changed. We have a number of things that we would like to
 see in the future releases of tinc.  Not everything will be available in
 the near future.  Our first objective is to make tinc work perfectly as
 it stands, and then add more advanced features.
@@ -173,14 +174,16 @@ available too.
 @node    Supported platforms,  , tinc, Introduction
 @section Supported platforms
 
-tinc works on Linux, FreeBSD and Solaris.  These are the three platforms
+tinc has been verified to work under Linux, FreeBSD and Solaris, with
+various hardware architectures.  These are the three platforms
 that are supported by the universial TUN/TAP device driver, so if
 support for other operating systems is added to this driver, perhaps
 tinc will run on them as well.  Without this driver, tinc will most
 likely compile and run, but it will not be able to send or receive data
 packets.
 
-For a more up to date list, please check the list on our website:
+For an up to date list of supported platforms, please check the list on
+our website:
 @uref{http://tinc.nl.linux.org/platforms.html}.
 
 
@@ -191,14 +194,12 @@ tinc was first written for Linux running on an intel x86 processor, so
 this is the best supported platform.  The protocol however, and actually
 anything about tinc, has been rewritten to support random byte ordering
 and arbitrary word length.  So in theory it should run on other
-processors that Linux runs on.  Take care however, we haven't been able
-to really test it yet.  If you want to run tinc on another platform than
-x86, and want to tell us how it went, please do so.
+processors that Linux runs on.  It has already been verified to run on
+alpha and sparc processors as well.
 
 tinc uses the ethertap device that is provided in the standard kernel
-since version 2.1.60, so anything above that (2.2.x, 2.3.x, and the
-2.4.0-testx (which is current at the time of this writing) kernel
-versions) is able to support tinc.
+since version 2.1.60, so anything above that (2.2.x, 2.3.x, and 2.4.0)
+kernel version is able to support tinc.
 
 
 @c ==================================================================
@@ -294,6 +295,10 @@ Network device support
 <*> Ethertap network tap
 @end example
 
+Note that if you want to run more than one instance of tinc or other
+programs that use the ethertap, you have to compile the ethertap driver
+as a module.
+
 For kernel 2.3.x and 2.4.x:
 
 @example
@@ -316,12 +321,14 @@ alias tap0 ethertap
 alias char-major-36 netlink_dev
 @end example
 
-If you have a 2.4 kernel, you can also choose to use the `Ethertap
-network tap' device.  This is marked obsolete, because the universal
-TUN/TAP driver is a newer implementation that is supposed to be used in
-favor of ethertap.  For tinc, it doesn't really matter which one you
-choose; based on the device file name, tinc will make the right choice
-about what protocol to use.
+If you have a 2.4-pre kernel, you can choose both the TUN/TAP driver and
+the `Ethertap network tap' device.  This latter is marked obsolete,
+because the universal TUN/TAP driver is a newer implementation that is
+supposed to be used in favour of ethertap.  For tinc, it doesn't really
+matter which one you choose; based on the device file name, tinc will make
+the right choice about what protocol to use. However, chances are that
+although you can choose the obsolote ethertap driver, it will not function
+at all. The TUN/TAP driver is the safe choice.
 
 Finally, after having set up other options, build the kernel and boot
 it.  Unfortunately it's not possible to insert these modules in a
@@ -733,11 +740,17 @@ probe to the other end.  If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
-@item @strong{PrivateKey = <path>}
+@item PrivateKey = <key>
+This is the RSA private key for tinc. However, for safety reasons it is
+advised to store private keys of any kind in separate files. This prevents
+accidental eavesdropping if you are editting the configuration file.
+
+@item PrivateKeyFile = <path>
 This is the full path name of the RSA private key file that was
 generated by ``tincd --generate-keys''.  It must be a full path, not a
-relative directory.  (NOTE: In version 1.0pre3, this variable was used
-to give the key inline.  This is no longer supported.)
+relative directory.
+
+Note that exactly @strong{one of the above two options} must be specified.
 
 @item TapDevice = <device> (/dev/tap0)
 The ethertap device to use.  Note that you can only use one device per
@@ -774,32 +787,36 @@ port port.  port may be given in decimal (default), octal (when preceded
 by a single zero) o hexadecimal (prefixed with 0x).  port is the port
 number for both the UDP and the TCP (meta) connections.
 
-@item PublicKey = <path>
+@item PublicKey = <key>
+This is the RSA public key for this host.
+
+@item PublicKeyFile = <path>
 This is the full path name of the RSA public key file that was generated
 by ``tincd --generate-keys''.  It must be a full path, not a relative
-directory.  (NOTE: In version 1.0pre3, this variable was used to give
-the key inline.  This is no longer supported.)
+directory.
+
+Note that exactly @strong{one of the above two options} must be specified
+in each host configuration file, if you want to be able to establish a
+connection with that host.
 
 @item Subnet = <IP address/maskbits>
 This is the subnet range of all IP addresses that will be accepted by
-the host that defines it.  Please be careful that no two subnets
-overlap.  Every host @strong{must} have a different range of IP
-addresses that it can handle, otherwise you will see messages like
-`packet comes back to us'.
+the host that defines it.
 
-The range must contain the IP address of the tap device, not the real IP
-address of the host running tincd.
+The range must be contained in the IP address range of the tap device,
+not the real IP address of the host running tincd.
 
 maskbits is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
-/22.
+/22. This conforms to standard CIDR notation as described in
+@uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
 @item TCPonly = <yes|no> (no)
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
 firewall, or if UDP packet routing is disabled somehow.  @emph{This is
-experimental code, try this at your own risk.}
+experimental code, try this at your own risk. It may not work at all.}
 @end table
 
 
@@ -1018,21 +1035,21 @@ to have a different ListenPort.
 
 @subsubheading Key files
 
-A, B, C and D all generate a passphrase with genauth 2048, the output is
-stored in /etc/tinc/passphrases/local, except for C, where it should be
-/etc/tinc/A/passphrases/local.
+A, B, C and D all have generate a public key with tincd -K, the output is
+stored in /etc/tinc/hosts/X.pub (where X is A, B or D), except for C,
+who stored it in /etc/tinc/A/hosts/C.pub.
 
-A stores a copy of B's passphrase in /etc/tinc/passphrases/10.2.1.12
+A stores a copy of B's public key in /etc/tinc/hosts/B.pub
 
-A stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.69.254
+A stores a copy of C's public key in /etc/tinc/hosts/C.pub
 
-B stores a copy of A's passphrase in /etc/tinc/passphrases/10.1.54.1
+B stores a copy of A's public key in /etc/tinc/hosts/A.pub
 
-C stores a copy of A's passphrase in /etc/tinc/A/passphrases/10.1.54.1
+C stores a copy of A's public key in /etc/tinc/A/hosts/A.pub
 
-C stores a copy of D's passphrase in /etc/tinc/A/passphrases/10.4.3.32
+C stores a copy of D's public key in /etc/tinc/A/hosts/D.pub
 
-D stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.69.254
+D stores a copy of C's public key in /etc/tinc/hosts/C.pub
 
 @subsubheading Starting
 
@@ -1061,42 +1078,28 @@ project that involves trust relations and more than one computer.
 @node    Managing keys, Runtime options, Running tinc, Running tinc
 @section Managing keys
 
-Before attempting to start tinc, you have to create passphrases.  When
-tinc tries to make a connection, it exchanges some sensitive
+Before attempting to start tinc, you have to create public/private keypairs.
+When tinc tries to make a connection, it exchanges some sensitive
 data.  Before doing so, it likes to know if the other end is
 trustworthy.
 
 To do this, both ends must have some knowledge about the other.  In the
-case of tinc this is the authentication passphrase.
+case of tinc this is the public keys.
 
-This passphrase is a number, which is chosen at random.  This number is
-then sent to the other computers which want to talk to us directly.  To
-avoid breaking security, this should be done over a known secure channel
-(such as ssh or similar).
+To generate a public/private keypair, run `tincd -n vpn-name -K<bits>'.
+<bits> is optional, you can use it to specify the length of the keys.
+The length of the public/private keypairs
+should be at least 1024 for reasonable security (reasonable being good enough
+to keep the NSA busy for a few weeks).
 
-All passphrases are stored in the passphrases directory, which is
-normally /etc/tinc/nn/passphrases/, but it may be changed using the
-`Passphrases' option in the config file.
+Every computer that wants to participate in the VPN should do this. The
+public keyfile should get the name of each tinc daemon and an extension .pub,
+and it should be stored in the hosts directory.
 
-To generate a passphrase, run `genauth'.  genauth takes one argument,
-which is the length of the passphrase in bits.  The length of the
-passphrase should be in the range 1024--2048 for a key length of 128
-bits.  genauth creates a random number of the specified length, and puts
-it to stdout.
-
-Every computer that wants to participate in the VPN should do this, and
-store the output in the passphrases directory, in the file @file{local}.
-
-When every computer has his own local key, it should copy it to the
-computer that it wants to talk to directly.  (i.e.  the one it connects to
-during startup.) This should be done via a secure channel, because it is
-sensitive information.  If this is not done securely, someone might break
-in on you later on.
-
-Those non-local passphrase files must have the name of the VPN IP
-address that they will advertise to you.  For instance, if a computer
-tells us it likes to be 10.1.1.3 with netmask 255.255.0.0, the file
-should still be called 10.1.1.3, and not 10.1.0.0.
+When every computer has his own keys and configuration files, the files in the
+hosts directory should be exchanged with each other computer that it wants to
+talk to directly. Since only public keys are involved, you can safely do this
+via email, telnet or ftp, or even putting the contents on a public billboard.
 
 
 @c ==================================================================
@@ -1114,9 +1117,9 @@ generated automatically, so may be more up-to-date.
 @cindex options
 @c from the manpage
 @table @samp
-@item -c, --config=FILE
-Read configuration options from FILE.  The default is
-@file{/etc/tinc/nn/tinc.conf}.
+@item -c, --config=PATH
+Read configuration options from the directory PATH.  The default is
+@file{/etc/tinc/nn/}.
 
 @item -d
 Increase debug level.  The higher it gets, the more gets
@@ -1140,10 +1143,11 @@ started it that way.  It will then read the PID from
 @item -n, --net=NETNAME
 Connect to net NETNAME.  @xref{Multiple networks}.
 
-@item -t, --timeout=TIMEOUT
-Seconds to wait before giving a timeout.  Should not be set too low,
-because every time tincd senses a timeout, it disconnects and reconnects
-again, which will cause unnecessary network traffic and log messages.
+@item -K, --generate-keys[=BITS]
+Generate public/private keypair of BITS length. If BITS is not specified,
+1024 is the default. tinc will ask where you want to store the files,
+but will default to the configuration directory (you can use the -c or -n option
+in combination with -K). After that, tinc will quit.
 
 @item --help
 Display a short reminder of these runtime options and terminate.
@@ -1177,18 +1181,22 @@ only, so keep an eye on it!
 
 @item Packet with destination 1.2.3.4 is looping back to us!
 @table @bullet
-@item Some host has an IP address range that overlaps with yours
-Different hosts must have different IP ranges (as given with Subnet in
-the host configuration files).  tinc relies on this information to route
-its data, so each IP address range must have exactly one host
-associated.  You will only see this message if you specified a debug
+@item Something is not configured right. Packets are being sent out to the
+tap device, but according to the Subnet directives in your host configuration
+file, those packets should go to your own host. Most common mistake is that
+you have a Subnet line in your host configuration file with a netmask which is
+just as large as the netmask of the tap device. The latter should in almost all
+cases be larger. Rethink your configuration.
+Note that you will only see this message if you specified a debug
 level of 5 or higher!
 @end table
 
 @item Network address and subnet mask do not match!
 @table @bullet
-@item The Subnet field must contain a network address
-If you only want to use one IP address, set the netmask to /32.
+@item The Subnet field must contain a network address. That means that
+the lower order bits of the address must be zero. For example, 192.168.1.1/24
+is wrong, you should use 192.168.1.0/24.
+@item If you only want to use one IP address, set the netmask to /32.
 @end table
 
 @item This is a bug: net.c:253: 24: Some error
@@ -1207,16 +1215,7 @@ even if we built in a default directory to look for these files, the key
 files are bound to be in a different directory.
 @end table
 
-@item Error reading RSA key file `fd47...8ceb': No such file or directory
-@table @bullet
-@item You specified the key here, not a pathname
-In version 1.0pre3, you had to put your key here.  This has changed, the
-keys are now stored in separate files.  This means you have to
-regenerate these keys.
 @end table
-
-@end table
-
 
 
 @c ==================================================================
@@ -1259,7 +1258,9 @@ field.
 
 So when tinc reads an ethernet frame from the device, it determines its
 type.  Right now, tinc can only handle Internet Protocol version 4 (IPv4)
-frames.  Plans to support other protocols are being made.  When tinc knows
+frames, because it needs IP headers for routing.
+Plans to support other protocols and switching instead of routing are being made.
+When tinc knows
 which type of frame it has read, it can also read the source and
 destination address from it.
 
@@ -1276,6 +1277,12 @@ encapsulated in another IP datagram.
 When the destination receives this packet, the same thing happens, only
 in reverse.  So it does a decrypt on the contents of the UDP datagram,
 and it writes the decrypted information to its own ethertap device.
+
+To let the kernel on the receiving end accept the packet, the destination MAC
+address must match that of the tap interface. Because of the routing nature
+of tinc, ARP is not possible. tinc solves this by always overwriting the
+destination MAC address with fe:fd:0:0:0:0. That is also the reason why you must
+set the MAC address of your tap interface to that address.
 
 
 @c ==================================================================
@@ -1331,12 +1338,10 @@ don't take it too serious.
 
 @menu
 * Key Types::                   
-* Key Management::              
-* Authentication::              
 @end menu
 
 @c ==================================================================
-@node    Key Types, Key Management, Security, Security
+@node    Key Types, , Security, Security
 @subsection Key Types
 @c FIXME: check if I'm not talking nonsense
 
@@ -1350,85 +1355,17 @@ the private key that matches the public key.  So, a public key only allows
 @emph{other} people to send encrypted messages to you.  This is very useful
 in setting up private communications channels.  Just send out your public key
 and other people can talk to you in a secure way.  But how can you know
-the other person is who she says she is?
+the other person is who she says she is? This is done by sending out an
+encrypted challenge that only the person with the right private key can decode
+an respond to.
 
-For authentication itself tinc uses symmetric private keypairs, referred
-to as a passphrase.  The identity of each tinc daemon is defined by it's
-passphrase (like you can be identified by your social security number).
-Every tinc daemon that is allowed to connect to you has a copy of your
-passphrase (hence symmetrical).
+However, encryption with public/private keys is very slow. Symmetric key cryptography
+is orders of magnitudes faster, but it is very hard to safely exchange the symmetric
+keys, since they should be kept private.
 
-It would also be possible to use public/private keypairs for authentication,
-so that you could shout out your public key and don't need to keep it
-secret (like the passphrase you would have to send to someone else).  Also,
-no one else has to know a private key from you.
-Both forms have their pros and cons, and at the moment tinc just uses passphrases
-(which are computationaly more efficient and perhaps in some way more
-secure).
-
-@c ==================================================================
-@node    Key Management, Authentication, Key Types, Security
-@subsection Key Management
-@c FIXME change for the current protocol
-
-@cindex Diffie-Hellman
-You can't just send a private encryption key to your peer, because
-somebody else might already be listening to you.  So you'll have to
-negotiate over a shared but secret key.  One way to do this is by using
-the ``Diffie-Hellman key exchange'' protocol
-(@uref{http://www.rsa.com/rsalabs/faq/html/3-6-1.html}).  The idea is as
-follows.
-
-You have two participants A and B that want to agree over a shared
-secret encryption key.  Both parties have some large prime number p and a
-generator g.  These numbers may be known to the outside world, and hence
-may be included in the source distribution.
-
-@cindex secret key
-Both parties then generate a secret key.  A generates a, and computes g^a
-mod p.  This is then sent to B; while B computes g^b mod p, and transmits
-this to A, b being generated by B.  Both a and b must be smaller than
-p-1.
-
-Both parties then calculate g^ab mod p = k.  k is the new, shared, but
-still secret key.
-
-To obtain a key k of a sufficient length (128 bits in our vpnd), p
-should be 2^129-1 or more.
-
-
-@c ==================================================================
-@node    Authentication,  , Key Management, Security
-@subsection Authentication
-@c FIXME: recheck
-
-@cindex man-in-the-middle attack
-Because the Diffie-Hellman protocol is in itself vulnerable to the
-``man-in-the-middle attack,'' we should introduce an authentication
-system.
-
-We will let A transmit a passphrase that is also known to B encrypted
-with g^a, before A sends this to B.  This way, B can check whether A is
-really A or just someone else.
-B will never receive the real passphrase though, because it was
-encrypted using public/private keypairs.  This way there is no way an
-imposter could steal A's passphrase.
-
-@cindex passphrase
-@c ehrmz...  but we only use 1024 bits passphrases ourselves? [guus]
-This passphrase should be 2304 bits for a symmetric encryption
-system.  But since an asymmetric system is more secure, we could do with
-2048 bits.  This only holds if the passphrase is very random. 
-
-These passphrases could be stored in a file that is non-readable by
-anyone else but root; e.g.  @file{/etc/tinc/passphrases} with UID 0
-and permissions mode 700.
-
-The only thing that needs to be taken care of is how A can securely send
-a copy of it's passphrase to B if B doesn't have it yet.  This could be
-done via mail with PGP, but you should be really convinced of the
-identity of the person who owns the email address you are sending this to.
-Swapping floppy disks in real life might be the best way to do this!
+The idea is to use public/private cryptography for authentication, and for
+exchanging symmetric keys in a safe way. After that, all communications are encrypted
+with the symmetric cipher.
 
 
 @c ==================================================================
@@ -1462,11 +1399,11 @@ and join channel #tinc.
 @item Ivo Timmermans (zarq) (@email{itimmermans@@bigfoot.com})
 Main coder/hacker and maintainer of the package.
 
-@item Guus Sliepen (guus)
+@item Guus Sliepen (guus) (@email{guus@@sliepen.warande.net})
 Originator of it all, co-author.
 
-@item Wessel Dankers (Ubiq)
-General obfuscater of the code.
+@item Wessel Dankers (Ubiq) (@email{wsl@@nl.linux.org})
+For the name `tinc' and various suggestions.
 
 @end table
 
