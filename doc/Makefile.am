@@ -16,6 +16,9 @@ transform = s/ginstall/install/; @program_transform_name@
 # For additional rules usually of interest only to the maintainer,
 # see GNUmakefile and Makefile.maint.
 
+sample-config.tar.gz: sample-config
+	GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz sample-config
+
 texi2html: tinc.texi
 	texi2html -split=chapter tinc.texi
 
