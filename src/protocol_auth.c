@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.27 2003/10/11 12:16:13 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.28 2003/10/11 12:28:48 guus Exp $
 */
 
 #include "system.h"
@@ -385,8 +385,8 @@ bool send_chal_reply(connection_t *c)
 	/* Calculate the hash from the challenge we received */
 
 	if(!EVP_DigestInit(&ctx, c->indigest)
-			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key)
-			|| !EVP_DigestFinal(&ctx, hash, NULL))) {
+			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
+			|| !EVP_DigestFinal(&ctx, hash, NULL)) {
 		logger(LOG_ERR, _("Error during calculation of response for %s (%s): %s"),
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
