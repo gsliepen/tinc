@@ -343,6 +343,8 @@ bool setup_myself(void)
 
 	get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
 
+	get_config_bool(lookup_config(config_tree, "StrictSource"), &strictsource);
+
 	/* Generate packet encryption key */
 
 	if(get_config_string

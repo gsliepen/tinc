@@ -90,6 +90,7 @@ extern node_t *new_node(void) __attribute__ ((__malloc__));
 extern void free_node(node_t *);
 extern void node_add(node_t *);
 extern void node_del(node_t *);
+extern void update_node_udpaddress(node_t *, const sockaddr_t *);
 extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
 extern void dump_nodes(void);

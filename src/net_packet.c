@@ -54,6 +54,7 @@
 
 int keylifetime = 0;
 int keyexpires = 0;
+bool strictsource = true;
 EVP_CIPHER_CTX packet_ctx;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
@@ -167,6 +168,25 @@ static void receive_packet(node_t *n, vpn_packet_t *packet)
 	route(n, packet);
 }
 
+static bool authenticate_udppacket(node_t *n, vpn_packet_t *inpkt) {
+	char hmac[EVP_MAX_MD_SIZE];
+
+	if(inpkt->len < sizeof(inpkt->seqno) + (myself->digest ? myself->maclength : 0))
+		return false;
+
+	/* Check the message authentication code */
+
+	if(myself->digest && myself->maclength) {
+		HMAC(myself->digest, myself->key, myself->keylength,
+			 (char *) &inpkt->seqno, inpkt->len - myself->maclength, hmac, NULL);
+
+		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len - myself->maclength, myself->maclength))
+			return false;
+	}
+
+	return true;
+}
+
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
 	vpn_packet_t pkt1, pkt2;
@@ -174,32 +194,17 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int nextpkt = 0;
 	vpn_packet_t *outpkt = pkt[0];
 	int outlen, outpad;
-	char hmac[EVP_MAX_MD_SIZE];
 	int i;
 
 	cp();
 
-	/* Check packet length */
-
-	if(inpkt->len < sizeof(inpkt->seqno) + myself->maclength) {
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
-					n->name, n->hostname);
+	if(!authenticate_udppacket(n, inpkt)) {
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
+					   n->name, n->hostname);
 		return;
 	}
 
-	/* Check the message authentication code */
-
-	if(myself->digest && myself->maclength) {
-		inpkt->len -= myself->maclength;
-		HMAC(myself->digest, myself->key, myself->keylength,
-			 (char *) &inpkt->seqno, inpkt->len, hmac, NULL);
-
-		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, myself->maclength)) {
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
-					   n->name, n->hostname);
-			return;
-		}
-	}
+	inpkt->len -= myself->digest ? myself->maclength : 0;
 
 	/* Decrypt the packet */
 
@@ -483,6 +488,7 @@ void handle_incoming_vpn_data(int sock)
 	sockaddr_t from;
 	socklen_t fromlen = sizeof(from);
 	node_t *n;
+	static time_t lasttime = 0;
 
 	cp();
 
@@ -497,10 +503,25 @@ void handle_incoming_vpn_data(int sock)
 
 	n = lookup_node_udp(&from);
 
+	if(!n && !strictsource && myself->digest && myself->maclength && lasttime != now) {
+		avl_node_t *node;
+
+		lasttime = now;
+
+		for(node = node_tree->head; node; node = node->next) {
+			n = node->data;
+
+			if(authenticate_udppacket(n, &pkt)) {
+				update_node_address(n, &from);
+				logger(LOG_DEBUG, _("Updated address of node %s to %s"), n->name, n->hostname);
+				break;
+			}
+		}
+	}
+
 	if(!n) {
 		hostname = sockaddr2hostname(&from);
-		logger(LOG_WARNING, _("Received UDP packet from unknown source %s"),
-			   hostname);
+		logger(LOG_WARNING, _("Received UDP packet from unknown source %s"), hostname);
 		free(hostname);
 		return;
 	}
