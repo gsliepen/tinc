@@ -55,6 +55,9 @@
 /* Solaris */
 #undef HAVE_SOLARIS
 
+/* NetBSD */
+#undef HAVE_NETBSD
+
 /* Define to the location of the kernel sources */
 #undef CONFIG_TINC_KERNELDIR
 
