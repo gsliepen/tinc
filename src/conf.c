@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.7 2000/08/07 14:52:14 guus Exp $
+    $Id: conf.c,v 1.9.4.8 2000/08/09 14:02:15 guus Exp $
 */
 
 
@@ -72,6 +72,8 @@ static internal_config_t hazahaza[] = {
   { "Hostnames",    resolve_dns,    TYPE_BOOL },
   { "IndirectData", indirectdata,   TYPE_BOOL },
   { "TCPonly",      tcponly,        TYPE_BOOL },
+  { "Interface",    interface,      TYPE_NAME },
+  { "InterfaceIP",  interfaceip,    TYPE_IP },
   { NULL, 0, 0 }
 };
 

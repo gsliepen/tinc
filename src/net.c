@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.25 2000/08/09 09:34:21 guus Exp $
+    $Id: net.c,v 1.35.4.26 2000/08/09 14:02:16 guus Exp $
 */
 
 #include "config.h"
@@ -157,7 +157,7 @@ cp
   rp->from = ntohl(rp->from);
 
   total_socket_in += rp->len;
-  
+
   if(rp->len >= 0)
     {
       f = lookup_conn(rp->from);
@@ -460,6 +460,7 @@ int setup_listen_meta_socket(int port)
   int nfd, flags;
   struct sockaddr_in a;
   const int one = 1;
+  config_t const *cfg;
 cp
   if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
@@ -486,10 +487,23 @@ cp
       return -1;
     }
 
+  if((cfg = get_config_val(interface)))
+    {
+      if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, cfg->data.ptr, strlen(cfg->data.ptr)))
+        {
+          syslog(LOG_ERR, _("Unable to bind listen socket to interface %s: %m"), cfg->data.ptr);
+          return -1;
+        }
+    }
+
   memset(&a, 0, sizeof(a));
   a.sin_family = AF_INET;
   a.sin_port = htons(port);
-  a.sin_addr.s_addr = htonl(INADDR_ANY);
+  
+  if((cfg = get_config_val(interfaceip)))
+    a.sin_addr.s_addr = htonl(cfg->data.ip->ip);
+  else
+    a.sin_addr.s_addr = htonl(INADDR_ANY);
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
@@ -1128,7 +1142,7 @@ cp
       return -1;
     }
 
-  lenin = read(cl->meta_socket, cl->buffer, MAXBUFSIZE-cl->buflen);
+  lenin = read(cl->meta_socket, cl->buffer, MAXBUFSIZE - cl->buflen);
 
   if(lenin<=0)
     {
