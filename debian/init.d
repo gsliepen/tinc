@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.12 2000/05/21 22:21:38 guus Exp $
+# $Id: init.d,v 1.13 2000/05/21 22:27:31 zarq Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -90,10 +90,6 @@ sub vpn_load {
 	warn "tinc: Invalid argument to VpnMask\n";
 	return 0;
     }
-    if(!defined($VPNMASK)) {
-        warn "tinc: No VpnMask specified. Using default 255.255.0.0\n";
-        $VPNMASK="255.255.0.0";
-    }
 
     $ADR = $VPN;
     $ADR =~ s/^([^\/]+)\/.*$/$1/;
@@ -109,12 +105,16 @@ sub vpn_load {
     $MSK = pack('N4', -1 << (32 - $LEN));
     $BRD = join(".", unpack('C4', $ADR | ~$MSK));
     $MAC = "fe:fd:" . join(":", map { sprintf "%02x", $_ } unpack('C4', $ADR));
+
+    if(!defined($VPNMASK)) {
+	$VPNMASK = $MSK;
+    }
+    
     $VPNMASK = pack('C4', split(/\./, $VPNMASK));
     $VPNMASK = join(".", unpack('C4', $VPNMASK));
     $ADR = join(".", unpack('C4', $ADR));
     $MSK = join(".", unpack('C4', $MSK));
     
-
     1;
 }
 
