@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.166 2002/03/23 20:13:56 guus Exp $
+    $Id: net.c,v 1.35.4.167 2002/03/24 16:28:27 guus Exp $
 */
 
 #include "config.h"
@@ -298,7 +298,7 @@ cp
       c = (connection_t *)node->data;
 
       if(c->status.remove)
-        return;
+        continue;
 
       if(FD_ISSET(c->socket, f))
         {
@@ -379,9 +379,10 @@ cp
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
         {
-          if(errno != EINTR) /* because of a signal */
+          if(errno != EINTR && errno != EAGAIN)
             {
               syslog(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
+	      dump_connections();
               return;
             }
         }
