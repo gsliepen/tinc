@@ -41,5 +41,9 @@
 #endif
 #define N_(Text) Text
 
+#ifndef HAVE_STRSIGNAL
+# define strsignal(p) ""
+#endif
+
 #endif /* __TINC_SYSTEM_H__ */
 
