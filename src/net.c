@@ -63,10 +63,11 @@ conn_list_t *myself = NULL;
 void strip_mac_addresses(vpn_packet_t *p)
 {
   unsigned char tmp[MAXSIZE];
-
+cp
   memcpy(tmp, p->data, p->len);
   p->len -= 12;
   memcpy(p->data, &tmp[12], p->len);
+cp
 }
 
 /*
@@ -75,7 +76,7 @@ void strip_mac_addresses(vpn_packet_t *p)
 void add_mac_addresses(vpn_packet_t *p)
 {
   unsigned char tmp[MAXSIZE];
-
+cp
   memcpy(&tmp[12], p->data, p->len);
   p->len += 12;
   tmp[0] = tmp[6] = 0xfe;
@@ -83,13 +84,14 @@ void add_mac_addresses(vpn_packet_t *p)
   *((ip_t*)(&tmp[2])) = (ip_t)(htonl(myself->vpn_ip));
   *((ip_t*)(&tmp[8])) = *((ip_t*)(&tmp[26]));
   memcpy(p->data, &tmp[0], p->len);
+cp
 }
 
 int xsend(conn_list_t *cl, void *packet)
 {
   int r;
   real_packet_t rp;
-
+cp
   do_encrypt((vpn_packet_t*)packet, &rp, cl->key);
   rp.from = myself->vpn_ip;
 
@@ -103,7 +105,7 @@ int xsend(conn_list_t *cl, void *packet)
     }
 
   total_socket_out += r;
-
+cp
   return 0;
 }
 
@@ -114,7 +116,7 @@ int xsend(conn_list_t *cl, void *packet)
 int write_n(int fd, void *buf, size_t len)
 {
   int r, done = 0;
-  
+cp  
   do
     {
       if((r = write(fd, buf, len)) < 0)
@@ -125,13 +127,14 @@ int write_n(int fd, void *buf, size_t len)
     } while(len > 0);
 
   return done;
+cp
 }
 
 int xrecv(conn_list_t *cl, void *packet)
 {
   vpn_packet_t vp;
   int lenin;
-
+cp
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
   add_mac_addresses(&vp);
 
@@ -139,7 +142,7 @@ int xrecv(conn_list_t *cl, void *packet)
     syslog(LOG_ERR, "Can't write to tap device: %m");
   else
     total_tap_out += lenin;
-
+cp
   return 0;
 }
 
@@ -150,7 +153,7 @@ int xrecv(conn_list_t *cl, void *packet)
 void add_queue(packet_queue_t **q, void *packet, size_t s)
 {
   queue_element_t *e, *p;
-
+cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "packet to queue: %d", s);
 
@@ -172,6 +175,7 @@ void add_queue(packet_queue_t **q, void *packet, size_t s)
 
   if((*q)->head == NULL)
     (*q)->head = e;
+cp
 }
 
 /*
@@ -183,12 +187,11 @@ void flush_queue(conn_list_t *cl, packet_queue_t *pq,
 		 int (*function)(conn_list_t*,void*))
 {
   queue_element_t *p, *prev = NULL, *next = NULL;
-
+cp
   for(p = pq->head; p != NULL; )
     {
       next = p->next;
 
-cp
       if(!function(cl, p->packet))
         {
           if(prev)
@@ -196,21 +199,18 @@ cp
           else
             pq->head = next;
 
-cp
           free(p->packet);
-cp
 	  free(p);
-cp
         }
       else
         prev = p;
-cp
 
       p = next;
     }
 
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "queue flushed");
+cp
 }
 
 /*
@@ -228,7 +228,6 @@ cp
 	       IP_ADDR_V(cl->vpn_ip));
       flush_queue(cl, cl->sq, xsend);
     }
-cp
 
   if(cl->rq)
     {
@@ -246,7 +245,7 @@ cp
 int send_packet(ip_t to, vpn_packet_t *packet)
 {
   conn_list_t *cl;
-
+cp
   if((cl = lookup_conn(to)) == NULL)
     {
       if(debug_lvl > 2)
@@ -263,15 +262,12 @@ int send_packet(ip_t to, vpn_packet_t *packet)
         }
     }
 
-cp
   if(my_key_expiry <= time(NULL))
     regenerate_keys();
 
-cp
   if(!cl->status.dataopen)
     if(setup_vpn_connection(cl) < 0)
       return -1;
-cp
 
   if(!cl->status.validkey)
     {
@@ -281,7 +277,6 @@ cp
       return 0;
     }
 
-cp
   if(!cl->status.active)
     {
       add_queue(&(cl->sq), packet, packet->len + 2);
@@ -298,7 +293,7 @@ cp
 int send_broadcast(conn_list_t *cl, vpn_packet_t *packet)
 {
   conn_list_t *p;
-
+cp
   for(p = cl; p != NULL; p = p->next)
     if(send_packet(p->real_ip, packet) < 0)
       {
@@ -306,7 +301,7 @@ int send_broadcast(conn_list_t *cl, vpn_packet_t *packet)
 	       p->vpn_ip, p->real_ip);
 	break; /* FIXME: should retry later, and send a ping over the metaconnection. */
       }
-
+cp
   return 0;
 }
 
@@ -318,7 +313,7 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
-  
+cp  
   if((cfg = get_config_val(tapdevice)) == NULL)
     tapfname = "/dev/tap0";
   else
@@ -331,6 +326,7 @@ int setup_tap_fd(void)
     }
 
   tap_fd = nfd;
+cp
   return 0;
 }
 
@@ -343,7 +339,7 @@ int setup_listen_meta_socket(int port)
   int nfd, flags;
   struct sockaddr_in a;
   const int one = 1;
-
+cp
   if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
       syslog(LOG_ERR, "Creating metasocket failed: %m");
@@ -379,7 +375,7 @@ int setup_listen_meta_socket(int port)
       syslog(LOG_ERR, "listen: %m");
       return -1;
     }
-
+cp
   return nfd;
 }
 
@@ -392,7 +388,7 @@ int setup_vpn_in_socket(int port)
   int nfd, flags;
   struct sockaddr_in a;
   const int one = 1;
-
+cp
   if((nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
       syslog(LOG_ERR, "Creating socket failed: %m");
@@ -422,7 +418,7 @@ int setup_vpn_in_socket(int port)
       syslog(LOG_ERR, "Can't bind to port %hd/udp: %m", port);
       return -1;
     }
-
+cp
   return nfd;
 }
 
@@ -434,7 +430,7 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
   int flags;
   struct sockaddr_in a;
   config_t const *cfg;
-
+cp
   if((cfg = get_config_val(upstreamport)) == NULL)
     cl->port = 655;
   else
@@ -467,7 +463,7 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
   cl->hostname = hostlookup(htonl(cl->real_ip));
 
   syslog(LOG_INFO, "Connected to %s:%hd" , cl->hostname, cl->port);
-
+cp
   return 0;
 }
 
@@ -481,7 +477,7 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
 int setup_outgoing_connection(ip_t ip)
 {
   conn_list_t *ncn;
-
+cp
   ncn = new_conn_list();
   ncn->real_ip = ip;
 
@@ -496,7 +492,7 @@ int setup_outgoing_connection(ip_t ip)
   ncn->status.outgoing = 1;
   ncn->next = conn_list;
   conn_list = ncn;
-
+cp
   return 0;
 }
 
@@ -506,7 +502,7 @@ int setup_outgoing_connection(ip_t ip)
 int setup_myself(void)
 {
   config_t const *cfg;
-
+cp
   myself = new_conn_list();
 
   if(!(cfg = get_config_val(myvpnip)))
@@ -539,7 +535,7 @@ int setup_myself(void)
   myself->status.active = 1;
 
   syslog(LOG_NOTICE, "Ready: listening on port %d.", myself->port);
-
+cp
   return 0;
 }
 
@@ -549,7 +545,7 @@ int setup_myself(void)
 int setup_network_connections(void)
 {
   config_t const *cfg;
-
+cp
   if((cfg = get_config_val(pingtimeout)) == NULL)
     timeout = 10;
   else
@@ -567,7 +563,7 @@ int setup_network_connections(void)
 
   if(setup_outgoing_connection(cfg->data.ip->ip))
     return -1;
-
+cp
   return 0;
 }
 
@@ -576,7 +572,7 @@ sigalrm_handler(int a)
 {
   config_t const *cfg;
   static int seconds_till_retry;
-
+cp
   cfg = get_config_val(upstreamip);
 
   if(!setup_outgoing_connection(cfg->data.ip->ip))
@@ -592,6 +588,7 @@ sigalrm_handler(int a)
       syslog(LOG_ERR, "Still failed to connect to other. Will retry in %d seconds.",
 	     seconds_till_retry);
     }
+cp
 }
 
 /*
@@ -600,7 +597,7 @@ sigalrm_handler(int a)
 void close_network_connections(void)
 {
   conn_list_t *p;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(p->status.dataopen)
@@ -627,6 +624,7 @@ void close_network_connections(void)
   destroy_conn_list();
 
   syslog(LOG_NOTICE, "Terminating.");
+cp
   return;
 }
 
@@ -637,7 +635,7 @@ int setup_vpn_connection(conn_list_t *cl)
 {
   int nfd, flags;
   struct sockaddr_in a;
-
+cp
   if(debug_lvl > 1)
     syslog(LOG_DEBUG, "Opening UDP socket to " IP_ADDR_S, IP_ADDR_V(cl->real_ip));
 
@@ -668,7 +666,7 @@ int setup_vpn_connection(conn_list_t *cl)
 
   cl->socket = nfd;
   cl->status.dataopen = 1;
-
+cp
   return 0;
 }
 
@@ -681,7 +679,7 @@ conn_list_t *create_new_connection(int sfd)
   conn_list_t *p;
   struct sockaddr_in ci;
   int len = sizeof(ci);
-
+cp
   p = new_conn_list();
 
   if(getpeername(sfd, &ci, &len) < 0)
@@ -702,7 +700,7 @@ conn_list_t *create_new_connection(int sfd)
       free(p);
       return NULL;
     }
-
+cp
   return p;
 }
 
@@ -712,7 +710,7 @@ conn_list_t *create_new_connection(int sfd)
 void build_fdset(fd_set *fs)
 {
   conn_list_t *p;
-
+cp
   FD_ZERO(fs);
 
   for(p = conn_list; p != NULL; p = p->next)
@@ -726,6 +724,7 @@ void build_fdset(fd_set *fs)
   FD_SET(myself->meta_socket, fs);
   FD_SET(myself->socket, fs);
   FD_SET(tap_fd, fs);
+cp
 }
 
 /*
@@ -739,7 +738,7 @@ int handle_incoming_vpn_data(conn_list_t *cl)
   int lenin;
   int x, l = sizeof(x);
   conn_list_t *f;
-
+cp
   if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, "This is a bug: %s:%d: %d:%m", __FILE__, __LINE__, cl->socket);
@@ -784,7 +783,7 @@ int handle_incoming_vpn_data(conn_list_t *cl)
       if(my_key_expiry <= time(NULL))
 	regenerate_keys();
     }
-
+cp
   return 0;
 }
 
@@ -794,6 +793,7 @@ int handle_incoming_vpn_data(conn_list_t *cl)
 */
 void terminate_connection(conn_list_t *cl)
 {
+cp
   if(cl->status.remove)
     return;
 
@@ -817,6 +817,7 @@ void terminate_connection(conn_list_t *cl)
     }
   
   cl->status.remove = 1;
+cp
 }
 
 /*
@@ -826,7 +827,7 @@ void terminate_connection(conn_list_t *cl)
 int send_broadcast_ping(void)
 {
   conn_list_t *p;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(p->status.remove)
@@ -844,7 +845,7 @@ int send_broadcast_ping(void)
     }
 
   last_ping_time = time(NULL);
-
+cp
   return 0;
 }
 
@@ -855,7 +856,7 @@ int send_broadcast_ping(void)
 int check_dead_connections(void)
 {
   conn_list_t *p;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(p->status.remove)
@@ -868,7 +869,7 @@ int check_dead_connections(void)
 	  terminate_connection(p);
 	}
     }
-
+cp
   return 0;
 }
 
@@ -881,7 +882,7 @@ int handle_new_meta_connection(conn_list_t *cl)
   conn_list_t *ncn;
   struct sockaddr client;
   int nfd, len = sizeof(struct sockaddr);
-
+cp
   if((nfd = accept(cl->meta_socket, &client, &len)) < 0)
     {
       syslog(LOG_ERR, "Accepting a new connection failed: %m");
@@ -899,7 +900,7 @@ int handle_new_meta_connection(conn_list_t *cl)
   ncn->status.meta = 1;
   ncn->next = conn_list;
   conn_list = ncn;
-
+cp
   return 0;
 }
 
@@ -911,7 +912,7 @@ int handle_incoming_meta_data(conn_list_t *cl)
   int x, l = sizeof(x), lenin;
   unsigned char tmp[1600];
   int request;
-  
+cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, "This is a bug: %s:%d: %d:%m", __FILE__, __LINE__, cl->meta_socket);
@@ -939,7 +940,7 @@ int handle_incoming_meta_data(conn_list_t *cl)
   else
     if(request_handlers[request](cl, tmp, lenin) < 0)
       return -1;
-  
+cp  
   return 0;
 }
 
@@ -951,12 +952,12 @@ void check_network_activity(fd_set *f)
 {
   conn_list_t *p;
   int x, l = sizeof(x);
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(p->status.remove)
 	continue;
-cp
+
       if(p->status.active)
 	if(FD_ISSET(p->socket, f))
 	  {
@@ -971,7 +972,7 @@ cp
 	    terminate_connection(p);
 	    return;
 	  }  
-cp
+
       if(p->status.meta)
 	if(FD_ISSET(p->meta_socket, f))
 	  if(handle_incoming_meta_data(p) < 0)
@@ -979,13 +980,11 @@ cp
 	      terminate_connection(p);
 	      return;
 	    } 
-cp
     }
   
-cp
   if(FD_ISSET(myself->socket, f))
     handle_incoming_vpn_data(myself);
-cp
+
   if(FD_ISSET(myself->meta_socket, f))
     handle_new_meta_connection(myself);
 cp
@@ -1000,7 +999,7 @@ void handle_tap_input(void)
   vpn_packet_t vp;
   ip_t from, to;
   int ether_type, lenin;
-  
+cp  
   memset(&vp, 0, sizeof(vp));
   if((lenin = read(tap_fd, &vp, MTU)) <= 0)
     {
@@ -1037,9 +1036,9 @@ void handle_tap_input(void)
 	   MAC_ADDR_V(vp.data[0]), MAC_ADDR_V(vp.data[6]));
   
   vp.len = (length_t)lenin - 2;
-cp
+
   strip_mac_addresses(&vp);
-cp
+
   send_packet(to, &vp);
 cp
 }
@@ -1052,7 +1051,7 @@ void main_loop(void)
   fd_set fset;
   struct timeval tv;
   int r;
-
+cp
   last_ping_time = time(NULL);
 
   for(;;)
@@ -1060,11 +1059,8 @@ void main_loop(void)
       tv.tv_sec = timeout;
       tv.tv_usec = 0;
 
-cp
       prune_conn_list();
-cp
       build_fdset(&fset);
-cp
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
         {
@@ -1073,7 +1069,6 @@ cp
           syslog(LOG_ERR, "Error while waiting for input: %m");
           return;
         }
-cp
 
       if(r == 0 || last_ping_time + timeout < time(NULL))
 	/* Timeout... hm... something might be wrong. */
@@ -1083,13 +1078,11 @@ cp
 	  continue;
 	}
 
-cp
       check_network_activity(&fset);
 
-cp
       /* local tap data */
       if(FD_ISSET(tap_fd, &fset))
 	handle_tap_input();
-cp
     }
+cp
 }

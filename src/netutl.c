@@ -42,7 +42,7 @@
 conn_list_t *lookup_conn(ip_t ip)
 {
   conn_list_t *p = conn_list;
-
+cp
   /* Exact match suggested by James B. MacLean */
   for(p = conn_list; p != NULL; p = p->next)
     if(ip  == p->vpn_ip)
@@ -50,7 +50,7 @@ conn_list_t *lookup_conn(ip_t ip)
   for(p = conn_list; p != NULL; p = p->next)
     if((ip & p->vpn_mask) == (p->vpn_ip & p->vpn_mask))
       return p;
-
+cp
   return NULL;
 }
 
@@ -60,7 +60,7 @@ conn_list_t *lookup_conn(ip_t ip)
 void destroy_queue(packet_queue_t *pq)
 {
   queue_element_t *p, *q;
-
+cp
   for(p = pq->head; p != NULL; p = q)
     {
       q = p->next;
@@ -70,6 +70,7 @@ void destroy_queue(packet_queue_t *pq)
     }
 
   free(pq);
+cp
 }
 
 /*
@@ -77,6 +78,7 @@ void destroy_queue(packet_queue_t *pq)
 */
 void free_conn_element(conn_list_t *p)
 {
+cp
   if(p->hostname)
     free(p->hostname);
   if(p->pp)
@@ -88,6 +90,7 @@ void free_conn_element(conn_list_t *p)
   free_key(p->public_key);
   free_key(p->key);
   free(p);
+cp
 }
 
 /*
@@ -96,7 +99,7 @@ void free_conn_element(conn_list_t *p)
 void prune_conn_list(void)
 {
   conn_list_t *p, *prev = NULL, *next = NULL;
-
+cp
   for(p = conn_list; p != NULL; )
     {
       next = p->next;
@@ -115,6 +118,7 @@ void prune_conn_list(void)
 
       p = next;
     }
+cp
 }
 
 /*
@@ -123,10 +127,11 @@ void prune_conn_list(void)
 conn_list_t *new_conn_list(void)
 {
   conn_list_t *p = xmalloc(sizeof(conn_list_t));
-
+cp
   /* initialise all those stupid pointers at once */
   memset(p, '\0', sizeof(conn_list_t));
   p->nexthop = p;
+cp
   return p;
 }
 
@@ -137,16 +142,15 @@ void destroy_conn_list(void)
 {
   conn_list_t *p, *next;
 cp
-
   for(p = conn_list; p != NULL; )
     {
       next = p->next;
       free_conn_element(p);
       p = next;
     }
-cp
 
   conn_list = NULL;
+cp
 }
 
 /*
@@ -158,7 +162,7 @@ char *hostlookup(unsigned long addr)
   char *name;
   struct hostent *host = NULL;
   struct in_addr in;
-
+cp
   in.s_addr = addr;
 
   host = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
@@ -173,7 +177,7 @@ char *hostlookup(unsigned long addr)
       name = xmalloc(20);
       sprintf(name, "%s", inet_ntoa(in));
     }
-
+cp
   return name;
 }
 
@@ -187,7 +191,7 @@ ip_mask_t *strtoip(char *str)
   int masker;
   char *q, *p;
   struct hostent *h;
-
+cp
   p = str;
   if((q = strchr(p, '/')))
     {
@@ -213,14 +217,14 @@ ip_mask_t *strtoip(char *str)
   ip->ip = ntohl(*((ip_t*)(h->h_addr_list[0])));
 
   ip->mask = masker ? ~((1 << (32 - masker)) - 1) : 0;
-
+cp
   return ip;
 }
 
 void dump_conn_list(void)
 {
   conn_list_t *p;
-
+cp
   syslog(LOG_DEBUG, "Connection list:");
 
   for(p = conn_list; p != NULL; p = p->next)
@@ -229,4 +233,5 @@ void dump_conn_list(void)
 	     IP_ADDR_V(p->vpn_ip), IP_ADDR_V(p->vpn_mask), p->status,
 	     p->socket, p->meta_socket);
     }
+cp
 }

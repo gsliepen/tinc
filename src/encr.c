@@ -68,7 +68,7 @@ int char_hex_to_bin(int c)
 int str_hex_to_bin(unsigned char *bin, unsigned char *hex)
 {
   int i = 0, j = 0, l = strlen(hex);
-
+cp
   if(l&1)
     {
       i = j = 1;
@@ -76,7 +76,7 @@ int str_hex_to_bin(unsigned char *bin, unsigned char *hex)
     }
   for(; i < l; i+=2, j++)
     bin[j] = (char_hex_to_bin(hex[i]) << 4) + char_hex_to_bin(hex[i+1]);
-
+cp
   return j&1?j+1:j;
 }
 
@@ -88,7 +88,7 @@ int read_passphrase(char *which, char **out)
   int size;
   extern char *confbase;
   char *pp;
-
+cp
   if((cfg = get_config_val(passphrasesdir)) == NULL)
     {
       filename = xmalloc(strlen(confbase)+13+strlen(which));
@@ -118,14 +118,16 @@ int read_passphrase(char *which, char **out)
   fclose(f);
 
   *out = xmalloc(size);
+cp
   return str_hex_to_bin(*out, pp);
 }
 
 int read_my_passphrase(void)
 {
+cp
   if((mypassphraselen = read_passphrase("local", &mypassphrase)) < 0)
     return -1;
-
+cp
   return 0;
 }
 
@@ -135,7 +137,7 @@ int generate_private_key(void)
   int i;
   char *s;
   config_t const *cfg;
-
+cp
   if((cfg = get_config_val(keyexpire)) == NULL)
     my_key_expiry = (time_t)(time(NULL) + 3600);
   else
@@ -157,20 +159,23 @@ int generate_private_key(void)
   s[2 * PRIVATE_KEY_LENGTH] = '\0';
 
   mpz_set_str(my_private_key, s, 16);
-
+cp
   return 0;
 }
 
 void calculate_public_key(void)
 {
+cp
   mpz_powm(my_public_key, generator, my_private_key, shared_prime);
   my_public_key_base36 = mpz_get_str(NULL, 36, my_public_key);
+cp
 }
 
 unsigned char static_key[] = { 0x9c, 0xbf, 0x36, 0xa9, 0xce, 0x20, 0x1b, 0x8b, 0x67, 0x56, 0x21, 0x5d, 0x27, 0x1b, 0xd8, 0x7a };
 
 int security_init(void)
 {
+cp
   mpz_init(my_private_key);
   mpz_init(my_public_key);
   mpz_init_set_str(shared_prime, ENCR_PRIME, 0);
@@ -185,7 +190,7 @@ int security_init(void)
     return -1;
 
   calculate_public_key();
-
+cp
   return 0;
 }
 
@@ -194,7 +199,7 @@ void set_shared_key(char *almost_key)
   char *tmp;
   int len;
   mpz_t ak, our_shared_key;
-
+cp
   mpz_init_set_str(ak, almost_key, 36);
   mpz_init(our_shared_key);
   mpz_powm(our_shared_key, ak, my_private_key, shared_prime);
@@ -212,6 +217,7 @@ void set_shared_key(char *almost_key)
   free(tmp);
   mpz_clear(ak);
   mpz_clear(our_shared_key);
+cp
 }
 
 
@@ -221,7 +227,7 @@ void encrypt_passphrase(passphrase_t *pp)
   char tmp[1000];
   int len;
   BF_KEY bf_key;
-  
+cp  
   mpz_get_str(&tmp[0], 16, my_public_key);
   len = str_hex_to_bin(key, tmp);
 
@@ -232,6 +238,7 @@ void encrypt_passphrase(passphrase_t *pp)
 
   if(key_inited)
     cipher_set_key(&encryption_key, encryption_keylen, &text_key[0]);
+cp
 }
 
 int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
@@ -244,7 +251,7 @@ int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
   BF_KEY bf_key;
   char which[sizeof("123.123.123.123")+1];
   char *meuk;
-
+cp
   mpz_init_set_str(pk, his_pubkey, 36);
   mpz_get_str(&tmp[0], 16, pk);
   len = str_hex_to_bin(key, tmp);
@@ -261,7 +268,7 @@ int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
 
   if(memcmp(meuk, out, len))
     return -1;
-
+cp
   return 0;
 }
 
@@ -269,7 +276,7 @@ char *make_shared_key(char *pk)
 {
   mpz_t tmp, res;
   char *r;
-
+cp
   mpz_init_set_str(tmp, pk, 36);
   mpz_init(res);
   mpz_powm(res, tmp, my_private_key, shared_prime);
@@ -278,7 +285,7 @@ char *make_shared_key(char *pk)
 
   mpz_clear(res);
   mpz_clear(tmp);
-
+cp
   return r;
 }
 
@@ -287,6 +294,7 @@ char *make_shared_key(char *pk)
 */
 void free_key(enc_key_t *k)
 {
+cp
   if(!k)
     return;
   if(k->key)
@@ -295,13 +303,14 @@ void free_key(enc_key_t *k)
       free(k->key);
     }
   free(k);
+cp
 }
 
 void recalculate_encryption_keys(void)
 {
   conn_list_t *p;
   char *ek;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     {
       if(!p->public_key || !p->public_key->key)
@@ -315,12 +324,15 @@ void recalculate_encryption_keys(void)
       p->key->key = xmalloc(strlen(ek) + 1);
       strcpy(p->key->key, ek);
     }
+cp
 }
 
 void regenerate_keys(void)
 {
+cp
   generate_private_key();
   calculate_public_key();
   send_key_changed2();
   recalculate_encryption_keys();
+cp
 }

@@ -36,7 +36,7 @@
 int send_ack(conn_list_t *cl)
 {
   unsigned char tmp = ACK;
-
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Send ACK to %s", cl->hostname);
 
@@ -46,14 +46,14 @@ int send_ack(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %d:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_termreq(conn_list_t *cl)
 {
   termreq_t tmp;
-
+cp
   tmp.type = TERMREQ;
   tmp.vpn_ip = myself->vpn_ip;
 
@@ -66,14 +66,14 @@ int send_termreq(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_timeout(conn_list_t *cl)
 {
   termreq_t tmp;
-
+cp
   tmp.type = PINGTIMEOUT;
   tmp.vpn_ip = myself->vpn_ip;
 
@@ -86,14 +86,14 @@ int send_timeout(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_del_host(conn_list_t *cl, conn_list_t *new_host)
 {
   del_host_t tmp;
-
+cp
   tmp.type = DEL_HOST;
   tmp.vpn_ip = new_host->vpn_ip;
 
@@ -106,14 +106,14 @@ int send_del_host(conn_list_t *cl, conn_list_t *new_host)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_ping(conn_list_t *cl)
 {
   unsigned char tmp = PING;
-
+cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "pinging " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
 
@@ -122,27 +122,27 @@ int send_ping(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_pong(conn_list_t *cl)
 {
   unsigned char tmp = PONG;
-
+cp
   if((send(cl->meta_socket, &tmp, sizeof(tmp), 0)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_add_host(conn_list_t *cl, conn_list_t *new_host)
 {
   add_host_t tmp;
-
+cp
   tmp.type = ADD_HOST;
   tmp.real_ip = new_host->real_ip;
   tmp.vpn_ip = new_host->vpn_ip;
@@ -159,14 +159,14 @@ int send_add_host(conn_list_t *cl, conn_list_t *new_host)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_key_changed(conn_list_t *cl, conn_list_t *src)
 {
   key_changed_t tmp;
-
+cp
   tmp.type = KEY_CHANGED;
   tmp.from = src->vpn_ip;
 
@@ -179,23 +179,24 @@ int send_key_changed(conn_list_t *cl, conn_list_t *src)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 void send_key_changed2(void)
 {
   conn_list_t *p;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     if(p->status.meta && p->protocol_version > PROT_3)
       send_key_changed(p, myself);
+cp
 }
 
 int send_basic_info(conn_list_t *cl)
 {
   basic_info_t tmp;
-
+cp
   tmp.type = BASIC_INFO;
   tmp.protocol = PROT_CURRENT;
 
@@ -213,14 +214,14 @@ int send_basic_info(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_passphrase(conn_list_t *cl)
 {
   passphrase_t tmp;
-
+cp
   tmp.type = PASSPHRASE;
   encrypt_passphrase(&tmp);
 
@@ -233,14 +234,14 @@ int send_passphrase(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_public_key(conn_list_t *cl)
 {
   public_key_t *tmp;
-
+cp
   tmp = (public_key_t*)xmalloc(strlen(my_public_key_base36)+sizeof(public_key_t));
   tmp->type = PUBLIC_KEY;
   tmp->len = strlen(my_public_key_base36);
@@ -255,14 +256,14 @@ int send_public_key(conn_list_t *cl)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 int send_calculate(conn_list_t *cl, char *k)
 {
   calculate_t *tmp;
-
+cp
   tmp = xmalloc(strlen(k)+sizeof(calculate_t));
   tmp->type = CALCULATE;
   tmp->len = strlen(k);
@@ -273,7 +274,7 @@ int send_calculate(conn_list_t *cl, char *k)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
@@ -281,7 +282,7 @@ int send_key_request(ip_t to)
 {
   key_req_t *tmp;
   conn_list_t *fw;
-
+cp
   tmp = xmalloc(sizeof(key_req_t));
   tmp->type = REQ_KEY;
   tmp->to = to;
@@ -305,7 +306,7 @@ int send_key_request(ip_t to)
       return -1;
     }
   fw->status.waitingforkey = 1;
-
+cp
   return 0;
 }
 
@@ -313,7 +314,7 @@ int send_key_answer(conn_list_t *cl, ip_t to)
 {
   key_req_t *tmp;
   conn_list_t *fw;
-
+cp
   tmp = xmalloc(sizeof(key_req_t)+strlen(my_public_key_base36));
   tmp->type = ANS_KEY;
   tmp->to = to;
@@ -339,7 +340,7 @@ int send_key_answer(conn_list_t *cl, ip_t to)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
@@ -352,11 +353,11 @@ int notify_others(conn_list_t *new, conn_list_t *source,
 		  int (*function)(conn_list_t*, conn_list_t*))
 {
   conn_list_t *p;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     if(p != new && p != source && p->status.meta && p->protocol_version > PROT_3)
       function(p, new);
-
+cp
   return 0;
 }
 
@@ -367,11 +368,11 @@ int notify_others(conn_list_t *new, conn_list_t *source,
 int notify_one(conn_list_t *new)
 {
   conn_list_t *p;
-
+cp
   for(p = conn_list; p != NULL; p = p->next)
     if(p != new && p->protocol_version > PROT_3)
       send_add_host(new, p);
-
+cp
   return 0;
 }
 
@@ -382,7 +383,7 @@ int notify_one(conn_list_t *new)
 int basic_info_h(conn_list_t *cl, unsigned char *d, int len)
 {
   basic_info_t *tmp = (basic_info_t*)d;
-
+cp
   cl->protocol_version = tmp->protocol;
   cl->port = tmp->portnr;
   cl->vpn_ip = tmp->vpn_ip;
@@ -416,14 +417,14 @@ int basic_info_h(conn_list_t *cl, unsigned char *d, int len)
     }
 
   cl->status.active = 0;
-
+cp
   return 0;
 }
 
 int passphrase_h(conn_list_t *cl, unsigned char *d, int len)
 {
   passphrase_t *tmp = (passphrase_t*)d;
-
+cp
   cl->pp = xmalloc(tmp->len+3);
   memcpy(cl->pp, tmp, tmp->len+3);
 
@@ -434,7 +435,7 @@ int passphrase_h(conn_list_t *cl, unsigned char *d, int len)
     send_passphrase(cl);
   else
     send_public_key(cl);
-
+cp
   return 0;
 }
 
@@ -442,7 +443,7 @@ int public_key_h(conn_list_t *cl, unsigned char *d, int len)
 {
   char *g_n;
   public_key_t *tmp = (public_key_t*)d;
-
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got PUBLIC_KEY(%hd,%s)", tmp->len, &tmp->key);
 
@@ -467,12 +468,13 @@ int public_key_h(conn_list_t *cl, unsigned char *d, int len)
   cl->status.active = 1;
   notify_others(cl, NULL, send_add_host);
   notify_one(cl);
-
+cp
   return 0;
 }
 
 int ack_h(conn_list_t *cl, unsigned char *d, int len)
 {
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got ACK");
   
@@ -480,6 +482,7 @@ int ack_h(conn_list_t *cl, unsigned char *d, int len)
   syslog(LOG_NOTICE, "Connection with %s activated.", cl->hostname);
 
   /*
+                        === FIXME ===
     Now I'm going to cheat. The meta protocol is actually
     a stream of requests, that may come in in the same TCP
     packet. This is the only place that it will happen,
@@ -494,27 +497,29 @@ int ack_h(conn_list_t *cl, unsigned char *d, int len)
       if(request_handlers[d[1]](cl, d + 1, len - 1) < 0)
 	return -1;
     }
-
+cp
   return 0;
 }
 
 int termreq_h(conn_list_t *cl, unsigned char *d, int len)
 {
+cp
   syslog(LOG_NOTICE, IP_ADDR_S " wants to quit", IP_ADDR_V(cl->vpn_ip));
   cl->status.termreq = 1;
   terminate_connection(cl);
 
   notify_others(cl, NULL, send_del_host);
-
+cp
   return 0;
 }
 
 int timeout_h(conn_list_t *cl, unsigned char *d, int len)
 {
+cp
   syslog(LOG_NOTICE, IP_ADDR_S " says it's gotten a timeout from us", IP_ADDR_V(cl->vpn_ip));
   cl->status.termreq = 1;
   terminate_connection(cl);
-
+cp
   return 0;
 }
 
@@ -522,7 +527,7 @@ int del_host_h(conn_list_t *cl, unsigned char *d, int len)
 {
   del_host_t *tmp = (del_host_t*)d;
   conn_list_t *fw;
-
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got DEL_HOST for " IP_ADDR_S,
 	   IP_ADDR_V(tmp->vpn_ip));
@@ -538,28 +543,30 @@ int del_host_h(conn_list_t *cl, unsigned char *d, int len)
 
   fw->status.termreq = 1;
   terminate_connection(fw);
-
+cp
   return 0;
 }
 
 int ping_h(conn_list_t *cl, unsigned char *d, int len)
 {
+cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "responding to ping from " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   cl->status.pinged = 0;
   cl->status.got_pong = 1;
 
   send_pong(cl);
-  
+cp
   return 0;
 }
 
 int pong_h(conn_list_t *cl, unsigned char *d, int len)
 {
+cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "ok, got pong from " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   cl->status.got_pong = 1;
-
+cp
   return 0;
 }
 
@@ -567,7 +574,7 @@ int add_host_h(conn_list_t *cl, unsigned char *d, int len)
 {
   add_host_t *tmp = (add_host_t*)d;
   conn_list_t *ncn, *fw;
-
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Add host request from " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   if(debug_lvl > 3)
@@ -606,7 +613,7 @@ int add_host_h(conn_list_t *cl, unsigned char *d, int len)
       if(request_handlers[d[sizeof(add_host_t)]](cl, d + sizeof(add_host_t), len - sizeof(add_host_t)) < 0)
 	return -1;
     }
-
+cp
   return 0;
 }
 
@@ -614,7 +621,7 @@ int req_key_h(conn_list_t *cl, unsigned char *d, int len)
 {
   key_req_t *tmp = (key_req_t*)d;
   conn_list_t *fw;
-
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got REQ_KEY from " IP_ADDR_S " for " IP_ADDR_S,
 	   IP_ADDR_V(tmp->from), IP_ADDR_V(tmp->to));
@@ -642,14 +649,14 @@ int req_key_h(conn_list_t *cl, unsigned char *d, int len)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
 void set_keys(conn_list_t *cl, key_req_t *k)
 {
   char *ek;
-
+cp
   if(!cl->public_key)
     {
       cl->public_key = xmalloc(sizeof(enc_key_t));
@@ -674,13 +681,14 @@ void set_keys(conn_list_t *cl, key_req_t *k)
   cl->key->expiry = k->expiry;
   cl->key->key = xmalloc(strlen(ek) + 1);
   strcpy(cl->key->key, ek);
+cp
 }
 
 int ans_key_h(conn_list_t *cl, unsigned char *d, int len)
 {
   key_req_t *tmp = (key_req_t*)d;
   conn_list_t *fw, *gk;
-
+cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got ANS_KEY from " IP_ADDR_S " for " IP_ADDR_S,
 	   IP_ADDR_V(tmp->from), IP_ADDR_V(tmp->to));
@@ -722,7 +730,7 @@ int ans_key_h(conn_list_t *cl, unsigned char *d, int len)
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-
+cp
   return 0;
 }
 
@@ -730,7 +738,7 @@ int key_changed_h(conn_list_t *cl, unsigned char *d, int len)
 {
   key_changed_t *tmp = (key_changed_t*)d;
   conn_list_t *ik;
-
+cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got KEY_CHANGED from " IP_ADDR_S,
 	   IP_ADDR_V(tmp->from));
@@ -751,7 +759,7 @@ int key_changed_h(conn_list_t *cl, unsigned char *d, int len)
     syslog(LOG_DEBUG, "Forwarding key invalidation request");
 
   notify_others(cl, ik, send_key_changed);
-
+cp
   return 0;
 }
 
@@ -777,4 +785,3 @@ int (*request_handlers[256])(conn_list_t*, unsigned char*, int) = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0
 };
-
