@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.9 2000/05/19 01:17:32 zarq Exp $
+# $Id: init.d,v 1.10 2000/05/21 22:04:56 guus Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -90,6 +90,11 @@ sub vpn_load {
 	warn "tinc: Invalid argument to VpnMask\n";
 	return 0;
     }
+    if(!defined($VPNMASK) {
+        warn "tinc: No VpnMask specified. Using default 255.255.0.0\n";
+        $VPNMASK="255.255.0.0";
+    }
+
     $ADR = $VPN;
     $ADR =~ s/^([^\/]+)\/.*$/$1/;
     $LEN = $VPN;
@@ -103,15 +108,12 @@ sub vpn_load {
     $ADR = pack('C4', @addr);
     $MSK = pack('N4', -1 << (32 - $LEN));
     $BRD = join(".", unpack('C4', $ADR | ~$MSK));
-#    $NET = join(".", unpack('C4', $ADR & $MSK));
     $MAC = "fe:fd:" . join(":", map { sprintf "%02x", $_ } unpack('C4', $ADR));
     $VPNMASK = pack('C4', split(/\./, $VPNMASK));
-    $VPNNET = join(".", unpack('C4', $ADR & $VPNMASK));
     $VPNMASK = join(".", unpack('C4', $VPNMASK));
     $ADR = join(".", unpack('C4', $ADR));
     $MSK = join(".", unpack('C4', $MSK));
     
-#    print "$DEV $VPN $NUM $LEN @addr $MAC $MASK $BRD $NET\n";
 
     1;
 }
@@ -129,9 +131,6 @@ sub vpn_start {
     system("ifconfig $DEV hw ether $MAC");
     system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD -arp");
     system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
-    if(defined($VPNMASK)) {
-	system("route add -net $VPNNET netmask $VPNMASK dev $DEV");
-    }
 }
 
 
