@@ -9,10 +9,10 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = config.rpath mkinstalldirs system.h COPYING.README depcomp
 
 ChangeLog:
-	cvs2cl -U cvsusers --fsf
+	svn log > ChangeLog
 
 svn-clean: maintainer-clean
-	svn status --no-ignore | sed -n 's/^\? \+//p' | tr '\012' '\0' | xargs -r0 rm -rf
+	svn status --no-ignore | sed -n 's/^[?I] \+//p' | tr '\012' '\0' | xargs -r0 rm -rf
 
 deb:
 	dpkg-buildpackage -rfakeroot
