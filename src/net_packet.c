@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.10 2002/03/17 15:59:29 guus Exp $
+    $Id: net_packet.c,v 1.1.2.11 2002/03/18 22:47:20 guus Exp $
 */
 
 #include "config.h"
@@ -194,7 +194,10 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
   vpn_packet_t *copy;
   static int priority = 0;
   int origpriority;
+  int sock;
 cp
+  /* Make sure we have a valid key */
+
   if(!n->status.validkey)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
@@ -261,20 +264,29 @@ cp
       inpkt->len += n->maclength;
     }
 
+  /* Determine which socket we have to use */
+
+  for(sock = 0; sock < listen_sockets; sock++)
+    if(n->address.sa.sa_family == listen_socket[sock].sa.sa.sa_family)
+      break;
+
+  if(sock >= listen_sockets)
+    sock = 0;  /* If none is available, just use the first and hope for the best. */
+  
   /* Send the packet */
 
 #if defined(SOL_IP) && defined(IP_TOS)
-  if(priorityinheritance && origpriority != priority)
+  if(priorityinheritance && origpriority != priority && listen_socket[sock].sa.sa.sa_family == AF_INET)
     {
       priority = origpriority;
       if(debug_lvl >= DEBUG_TRAFFIC)
         syslog(LOG_DEBUG, _("Setting outgoing packet priority to %d"), priority);
-      if(setsockopt(udp_socket[0], SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
+      if(setsockopt(sock, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
 	syslog(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", strerror(errno));
     }
 #endif
 
-  if((sendto(udp_socket[0], (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0)
+  if((sendto(listen_socket[sock].udp, (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %s"),
              n->name, n->hostname, strerror(errno));

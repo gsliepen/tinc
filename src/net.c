@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.163 2002/03/11 11:45:12 guus Exp $
+    $Id: net.c,v 1.35.4.164 2002/03/18 22:47:20 guus Exp $
 */
 
 #include "config.h"
@@ -94,8 +94,8 @@ cp
 
   for(i = 0; i < listen_sockets; i++)
     {
-      FD_SET(tcp_socket[i], fs);
-      FD_SET(udp_socket[i], fs);
+      FD_SET(listen_socket[i].tcp, fs);
+      FD_SET(listen_socket[i].udp, fs);
     }
 
   FD_SET(device_fd, fs);
@@ -287,10 +287,10 @@ cp
 
   for(i = 0; i < listen_sockets; i++)
     {
-      if(FD_ISSET(udp_socket[i], f))
-	handle_incoming_vpn_data(udp_socket[i]);
-      if(FD_ISSET(tcp_socket[i], f))
-	handle_new_meta_connection(tcp_socket[i]);
+      if(FD_ISSET(listen_socket[i].udp, f))
+	handle_incoming_vpn_data(listen_socket[i].udp);
+      if(FD_ISSET(listen_socket[i].tcp, f))
+	handle_new_meta_connection(listen_socket[i].tcp);
     }
 
   for(node = connection_tree->head; node; node = node->next)

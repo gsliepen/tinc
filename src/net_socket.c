@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.9 2002/03/17 15:59:29 guus Exp $
+    $Id: net_socket.c,v 1.1.2.10 2002/03/18 22:47:20 guus Exp $
 */
 
 #include "config.h"
@@ -70,8 +70,7 @@ int addressfamily = AF_INET;
 int maxtimeout = 900;
 int seconds_till_retry = 5;
 
-int tcp_socket[MAXSOCKETS];
-int udp_socket[MAXSOCKETS];
+listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets = 0;
 
 /* Setup sockets */

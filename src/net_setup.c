@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.10 2002/03/10 16:09:15 guus Exp $
+    $Id: net_setup.c,v 1.1.2.11 2002/03/18 22:47:20 guus Exp $
 */
 
 #include "config.h"
@@ -486,10 +486,10 @@ cp
 
   for(aip = ai; aip; aip = aip->ai_next)
     {
-      if((tcp_socket[listen_sockets] = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
+      if((listen_socket[listen_sockets].tcp = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
         continue;
 
-      if((udp_socket[listen_sockets] = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
+      if((listen_socket[listen_sockets].udp = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
         continue;
 
       if(debug_lvl >= DEBUG_CONNECTIONS)
@@ -499,6 +499,7 @@ cp
 	  free(hostname);
 	}
 
+      listen_socket[listen_sockets].sa.sa = *aip->ai_addr;
       listen_sockets++;
     }
 
@@ -576,8 +577,8 @@ cp
 
   for(i = 0; i < listen_sockets; i++)
     {
-      close(udp_socket[i]);
-      close(tcp_socket[i]);
+      close(listen_socket[i].tcp);
+      close(listen_socket[i].udp);
     }
 
   exit_events();

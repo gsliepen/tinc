@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.46 2002/03/01 14:09:31 guus Exp $
+    $Id: net.h,v 1.9.4.47 2002/03/18 22:47:20 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -98,6 +98,12 @@ typedef struct outgoing_t {
   struct addrinfo *aip;
 } outgoing_t;
 
+typedef struct listen_socket_t {
+  int tcp;
+  int udp;
+  sockaddr_t sa;
+} listen_socket_t;
+
 extern int maxtimeout;
 extern int seconds_till_retry;
 extern int addressfamily;
@@ -107,8 +113,7 @@ extern char *status_text[];
 
 #include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
-extern int tcp_socket[MAXSOCKETS];
-extern int udp_socket[MAXSOCKETS];
+extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keyexpires;
 extern int keylifetime;
