@@ -150,28 +150,6 @@ void node_del(node_t *n)
 	avl_delete(node_udp_tree, n);
 }
 
-void update_node_address(node_t *n, const sockaddr_t *address) {
-	avl_node_t *node;
-
-	node = avl_unlink(node_udp_tree, n);
-	sockaddrfree(&n->address);
-	sockaddrcpy(&n->address, address);
-
-	if(n->hostname)
-		free(n->hostname);
-
-	n->hostname = sockaddr2hostname(&n->address);
-	avl_insert_node(node_udp_tree, node);
-
-	if(n->options & OPTION_PMTU_DISCOVERY) {
-		n->mtuprobes = 0;
-		n->minmtu = 0;
-		n->maxmtu = MTU;
-		if(n->status.validkey)
-			send_mtu_probe(n);
-	}
-}
-
 node_t *lookup_node(char *name)
 {
 	node_t n = {0};

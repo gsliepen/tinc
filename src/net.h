@@ -122,7 +122,6 @@ extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keyexpires;
 extern int keylifetime;
-extern bool strictsource;
 extern bool do_prune;
 extern bool do_purge;
 extern char *myport;

@@ -219,8 +219,25 @@ void sssp_bfs(void)
 				e->to->via = indirect ? n->via : e->to;
 				e->to->options = e->options;
 
-				if(sockaddrcmp(&e->to->address, &e->address))
-					update_node_address(e->to, &e->address);
+				if(sockaddrcmp(&e->to->address, &e->address)) {
+					node = avl_unlink(node_udp_tree, e->to);
+					sockaddrfree(&e->to->address);
+					sockaddrcpy(&e->to->address, &e->address);
+
+					if(e->to->hostname)
+						free(e->to->hostname);
+
+					e->to->hostname = sockaddr2hostname(&e->to->address);
+					avl_insert_node(node_udp_tree, node);
+
+					if(e->to->options & OPTION_PMTU_DISCOVERY) {
+						e->to->mtuprobes = 0;
+						e->to->minmtu = 0;
+						e->to->maxmtu = MTU;
+						if(e->to->status.validkey)
+							send_mtu_probe(e->to);
+					}
+				}
 
 				node = avl_alloc_node();
 				node->data = e->to;
