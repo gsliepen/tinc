@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.12 2002/09/04 13:48:52 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.13 2002/09/04 14:17:28 guus Exp $
 */
 
 #include "config.h"
@@ -471,7 +471,7 @@ cp
   
   gettimeofday(&now, NULL);
   c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
-  x = send_request(c, "%d %s %s %d %lx", ACK, myport, c->estimated_weight, c->options);
+  x = send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 cp
   return x;
 }
