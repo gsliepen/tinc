@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.135 2001/10/08 11:59:08 guus Exp $
+    $Id: net.c,v 1.35.4.136 2001/10/08 13:37:30 guus Exp $
 */
 
 #include "config.h"
@@ -1284,17 +1284,18 @@ cp
 void check_dead_connections(void)
 {
   time_t now;
-  avl_node_t *node;
+  avl_node_t *node, *next;
   connection_t *cl;
 cp
   now = time(NULL);
 
-  for(node = connection_tree->head; node; node = node->next)
+  for(node = connection_tree->head; node; node = next)
     {
+      next = node->next;
       cl = (connection_t *)node->data;
-      if(cl->status.active)
+      if(cl->last_ping_time + timeout < now)
         {
-          if(cl->last_ping_time + timeout < now)
+          if(cl->status.active)
             {
               if(cl->status.pinged)
                 {
@@ -1308,6 +1309,13 @@ cp
                 {
                   send_ping(cl);
                 }
+            }
+          else
+            {
+              if(debug_lvl >= DEBUG_CONNECTIONS)
+                syslog(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
+                       cl->name, cl->hostname);
+              terminate_connection(cl, 0);
             }
         }
     }
