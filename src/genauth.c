@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: genauth.c,v 1.7 2000/05/31 18:21:27 zarq Exp $
 */
 
 #include "config.h"
@@ -36,6 +38,10 @@ int main(int argc, char **argv)
   FILE *fp;
   int bits, c, i, bytes;
   unsigned char *p;
+
+  setlocale (LC_ALL, "");
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
 
   if(argc > 2 || (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))))
     {
