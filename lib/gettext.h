@@ -24,6 +24,7 @@
 
 /* Get declarations of GNU message catalog functions.  */
 # include <libintl.h>
+# include <locale.h>
 
 /* Shorthand notation */
 
@@ -60,6 +61,7 @@
 # define bind_textdomain_codeset(Domainname, Codeset) ((const char *) (Codeset))
 
 # define _(Text) Text
+# define setlocale(Category, Locale) ((chonst char *) (Locale))
 
 #endif
 
