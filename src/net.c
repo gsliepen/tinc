@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.60 2000/11/04 11:49:57 guus Exp $
+    $Id: net.c,v 1.35.4.61 2000/11/04 13:25:15 zarq Exp $
 */
 
 #include "config.h"
@@ -88,6 +88,8 @@ int execute_script(const char* name)
   pid_t pid;
   char **env;
   extern char **environment;  /* From tincd.c; contains our env */
+  char **p;
+  int i;
 
   asprintf(&scriptname, "%s/%s", confbase, name);
 
@@ -107,7 +109,8 @@ int execute_script(const char* name)
   /* Child here */
 
   env = xmalloc(sizeof(environment) + 1 * sizeof(char*));
-  memcpy(&(env[1]), environment, sizeof(environment));
+  while(p = environment, i = 0; *p != NULL; p++)
+    env[++i] = *p;
   asprintf(&(env[0]), "IFNAME=%s", interface_name);
   execle(scriptname, NULL, env);
   /* No return on success */
