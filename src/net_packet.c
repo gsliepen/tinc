@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.1 2002/02/18 16:25:16 guus Exp $
+    $Id: net_packet.c,v 1.1.2.2 2002/02/20 19:31:15 guus Exp $
 */
 
 #include "config.h"
@@ -185,6 +185,7 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
   vpn_packet_t *pkt[] = {&pkt1, &pkt2, &pkt1, &pkt2};
   int nextpkt = 0;
   vpn_packet_t *outpkt;
+  int origlen;
   int outlen, outpad;
   long int complen = MTU + 12;
   EVP_CIPHER_CTX ctx;
@@ -209,6 +210,8 @@ cp
 
       return;
     }
+
+  origlen = inpkt->len;
 
   /* Compress the packet */
 
@@ -261,6 +264,8 @@ cp
              n->name, n->hostname, strerror(errno));
       return;
     }
+  
+  inpkt->len = origlen;
 cp
 }
 
