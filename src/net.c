@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.64 2000/11/04 15:32:05 zarq Exp $
+    $Id: net.c,v 1.35.4.65 2000/11/04 17:09:10 guus Exp $
 */
 
 #include "config.h"
@@ -358,10 +358,21 @@ cp
         }
 
       return -1;
-   }
+    }
 
   cl = subnet->owner;
     
+  if(cl == myself)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_NOTICE, _("Packet with destination %d.%d.%d.%d is looping back to us!"),
+	         IP_ADDR_V(to));
+        }
+
+      return -1;
+    }
+
   /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
 
   /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
