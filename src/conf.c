@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.30 2000/12/01 12:36:36 zarq Exp $
+    $Id: conf.c,v 1.9.4.31 2000/12/01 12:38:42 zarq Exp $
 */
 
 #include "config.h"
@@ -218,7 +218,7 @@ int read_config_file(config_t **base, const char *fname)
 {
   int err = -1;
   FILE *fp;
-  char *line;
+  char *buffer, *line;
   char *p, *q;
   int i, lineno = 0;
   config_t *cfg;
@@ -229,11 +229,11 @@ cp
     return -1;
 
   bufsize = 100;
-  line = xmalloc(bufsize);
+  buffer = xmalloc(bufsize);
   
   for(;;)
     {
-      if((line = readline(fp, line, &bufsize)) == NULL)
+      if((line = readline(fp, buffer, &bufsize)) == NULL)
 	{
 	  err = -1;
 	  break;
@@ -284,7 +284,7 @@ cp
 	config = cfg;
     }
 
-  free(line);
+  free(buffer);
   fclose (fp);
 cp
   return err;
