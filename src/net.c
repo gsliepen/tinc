@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.200 2003/08/28 21:05:10 guus Exp $
+    $Id: net.c,v 1.35.4.201 2003/11/17 15:30:17 guus Exp $
 */
 
 #include "system.h"
@@ -72,14 +72,16 @@ static void purge(void)
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
-				send_del_subnet(broadcast, s);
+				if(!tunnelserver)
+					send_del_subnet(broadcast, s);
 				subnet_del(n, s);
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
 				enext = enode->next;
 				e = enode->data;
-				send_del_edge(broadcast, e);
+				if(!tunnelserver)
+					send_del_edge(broadcast, e);
 				edge_del(e);
 			}
 		}
@@ -178,7 +180,7 @@ void terminate_connection(connection_t *c, bool report)
 		closesocket(c->socket);
 
 	if(c->edge) {
-		if(report)
+		if(report && !tunnelserver)
 			send_del_edge(broadcast, c->edge);
 
 		edge_del(c->edge);
@@ -193,7 +195,8 @@ void terminate_connection(connection_t *c, bool report)
 			edge_t *e;
 			e = lookup_edge(c->node, myself);
 			if(e) {
-				send_del_edge(broadcast, e);
+				if(!tunnelserver)
+					send_del_edge(broadcast, e);
 				edge_del(e);
 			}
 		}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.50 2003/08/28 21:05:11 guus Exp $
+    $Id: subnet.c,v 1.1.2.51 2003/11/17 15:30:18 guus Exp $
 */
 
 #include "system.h"
@@ -83,7 +83,7 @@ static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-static int subnet_compare(const subnet_t *a, const subnet_t *b)
+int subnet_compare(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 

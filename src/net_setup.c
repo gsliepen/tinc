@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.45 2003/10/11 12:16:12 guus Exp $
+    $Id: net_setup.c,v 1.1.2.46 2003/11/17 15:30:17 guus Exp $
 */
 
 #include "system.h"
@@ -290,6 +290,8 @@ bool setup_myself(void)
 
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
+
+	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
 		if(!strcasecmp(mode, "router"))

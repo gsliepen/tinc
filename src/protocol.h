@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.44 2003/07/30 21:52:41 guus Exp $
+    $Id: protocol.h,v 1.5.4.45 2003/11/17 15:30:18 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -53,6 +53,8 @@ typedef struct past_request_t {
 	char *request;
 	time_t firstseen;
 } past_request_t;
+
+extern bool tunnelserver;
 
 /* Maximum size of strings in a request */
 

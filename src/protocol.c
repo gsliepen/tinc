@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.147 2003/08/28 21:05:10 guus Exp $
+    $Id: protocol.c,v 1.28.4.148 2003/11/17 15:30:17 guus Exp $
 */
 
 #include "system.h"
@@ -29,6 +29,8 @@
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
+
+bool tunnelserver = false;
 
 /* Jumptable for the request handlers */
 

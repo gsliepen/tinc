@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.25 2003/10/06 14:33:04 guus Exp $
+    $Id: subnet.h,v 1.1.2.26 2003/11/17 15:30:18 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -63,6 +63,7 @@ typedef struct subnet_t {
 	} net;
 } subnet_t;
 
+extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
 extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
 extern void free_subnet(subnet_t *);
 extern void init_subnets(void);

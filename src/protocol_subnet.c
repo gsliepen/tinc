@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.16 2003/11/10 22:31:53 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.17 2003/11/17 15:30:18 guus Exp $
 */
 
 #include "system.h"
@@ -94,7 +94,7 @@ bool add_subnet_h(connection_t *c)
 		node_add(owner);
 	}
 
-	if(c->status.opaque && owner != myself && owner != c->node)
+	if(tunnelserver && owner != myself && owner != c->node)
 		return false;
 
 	/* Check if we already know this subnet */
@@ -114,13 +114,35 @@ bool add_subnet_h(connection_t *c)
 		return true;
 	}
 
+	/* In tunnel server mode, check if the subnet matches one in the config file of this node */
+
+	if(tunnelserver) {
+		config_t *cfg;
+		subnet_t *allowed;
+
+		for(cfg = lookup_config(c->config_tree, "Subnet"); cfg; cfg = lookup_config_next(c->config_tree, cfg)) {
+			if(!get_config_subnet(cfg, &allowed))
+				return false;
+
+			if(!subnet_compare(s, allowed))
+				break;
+
+			free_subnet(allowed);
+		}
+
+		if(!cfg)
+			return false;
+
+		free_subnet(allowed);
+	}
+
 	/* If everything is correct, add the subnet to the list of the owner */
 
 	subnet_add(owner, s);
 
 	/* Tell the rest */
 
-	if(!c->status.opaque)
+	if(!tunnelserver)
 		forward_request(c);
 
 	return true;
@@ -175,7 +197,7 @@ bool del_subnet_h(connection_t *c)
 		return true;
 	}
 
-	if(c->status.opaque && owner != myself && owner != c->node)
+	if(tunnelserver && owner != myself && owner != c->node)
 		return false;
 
 	/* Check if subnet string is valid */
@@ -216,7 +238,7 @@ bool del_subnet_h(connection_t *c)
 
 	/* Tell the rest */
 
-	if(!c->status.opaque)
+	if(!tunnelserver)
 		forward_request(c);
 
 	/* Finally, delete it. */
