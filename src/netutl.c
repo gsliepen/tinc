@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.35 2002/04/19 14:06:40 guus Exp $
+    $Id: netutl.c,v 1.12.4.36 2002/06/05 00:25:54 guus Exp $
 */
 
 #include "config.h"
@@ -27,7 +27,9 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#ifndef HAVE_NETBSD
+ #include <stdint.h>
+#endif
 #include <string.h>
 #include <signal.h>
 #include <sys/socket.h>

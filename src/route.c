@@ -17,17 +17,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.38 2002/04/19 14:06:40 guus Exp $
+    $Id: route.c,v 1.1.2.39 2002/06/05 00:25:55 guus Exp $
 */
 
 #include "config.h"
 
-#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
+#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD) || defined(HAVE_NETBSD)
  #include <sys/param.h>
 #endif
 #include <sys/socket.h>
 #include <netinet/in.h>
-#if defined(HAVE_SOLARIS) || defined(HAVE_OPENBSD)
+#if defined(HAVE_SOLARIS) || defined(HAVE_OPENBSD) || defined(HAVE_NETBSD)
  #include <net/if.h>
  #define ETHER_ADDR_LEN 6
 #else
@@ -40,7 +40,9 @@
 #include <xalloc.h>
 #include <syslog.h>
 #include <string.h>
-#include <stdint.h>
+#ifndef HAVE_NETBSD
+ #include <stdint.h>
+#endif
 
 #include <avl_tree.h>
 
