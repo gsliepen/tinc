@@ -286,6 +286,8 @@ bool setup_myself(void)
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
 		myself->options |= OPTION_TCPONLY;
 
+	get_config_bool(lookup_config(config_tree, "BlockingTCP"), &blockingtcp);
+
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
 

@@ -120,6 +120,13 @@ will by default listen on all of them for incoming connections.
 It is possible to bind only to a single interface with this variable.
 .Pp
 This option may not work on all platforms.
+.It Va BlockingTCP Li = yes | no Po no Pc Bq experimental
+This options selects whether TCP connections, when established, should use blocking writes.
+When turned off, tinc will never block when a TCP connection becomes congested, but will have to terminate that connection instead.
+If turned on, tinc will not terminate connections but will block, thereby unable to process data to/from other connections.
+Turn this option on if you also use
+.Va TCPOnly
+and tinc terminates connections frequently.
 .It Va ConnectTo Li = Ar name
 Specifies which other tinc daemon to connect to on startup.
 Multiple
