@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.140 2001/10/28 08:41:19 guus Exp $
+    $Id: net.c,v 1.35.4.141 2001/10/28 10:16:18 guus Exp $
 */
 
 #include "config.h"
@@ -776,7 +776,7 @@ cp
   init_connections();
   init_subnets();
   init_nodes();
-  init_vertices();
+  init_edges();
 
   if(get_config_int(lookup_config(config_tree, "PingTimeout"), &timeout))
     {

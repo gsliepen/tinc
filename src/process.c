@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.28 2001/10/27 15:19:13 guus Exp $
+    $Id: process.c,v 1.1.2.29 2001/10/28 10:16:18 guus Exp $
 */
 
 #include "config.h"
@@ -380,7 +380,7 @@ sigusr2_handler(int a, siginfo_t *info, void *b)
 {
   dump_device_stats();
   dump_nodes();
-  dump_vertices();
+  dump_edges();
   dump_subnets();
 }
 

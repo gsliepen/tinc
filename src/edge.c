@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.1 2001/10/28 08:41:19 guus Exp $
+    $Id: edge.c,v 1.1.2.2 2001/10/28 10:16:18 guus Exp $
 */
 
 #include "config.h"
@@ -39,7 +39,8 @@
 #include "xalloc.h"
 #include "system.h"
 
-avl_tree_t *edge_tree;        /* Tree with all known vertices (replaces active_tree) */
+avl_tree_t *edge_tree;        /* Tree with all known edges (replaces active_tree) */
+avl_tree_t *edge_weight_tree; /* Tree with all edges, sorted on weight */
 
 int edge_compare(edge_t *a, edge_t *b)
 {
@@ -64,14 +65,44 @@ int edge_compare(edge_t *a, edge_t *b)
 
 */
 
-void init_vertices(void)
+int edge_weight_compare(edge_t *a, edge_t *b)
+{
+  int result;
+  char *name_a1, *name_a2, *name_b1, *name_b2;
+  
+  
+  result = a->weight - b->weight;
+  
+  if(result)
+    return result;
+
+  if(strcmp(a->from->name, a->to->name) < 0)
+    name_a1 = a->from->name, name_a2 = a->to->name;
+  else
+    name_a1 = a->to->name, name_a2 = a->from->name;
+
+  if(strcmp(b->from->name, b->to->name) < 0)
+    name_b1 = b->from->name, name_b2 = b->to->name;
+  else
+    name_b1 = b->to->name, name_b2 = b->from->name;
+
+  result = strcmp(name_a1, name_b1);
+  
+  if(result)
+    return result;
+  else
+    return strcmp(name_a2, name_b2);
+}
+
+void init_edges(void)
 {
 cp
   edge_tree = avl_alloc_tree((avl_compare_t)edge_compare, NULL);
+  edge_weight_tree = avl_alloc_tree((avl_compare_t)edge_weight_compare, NULL);
 cp
 }
 
-void exit_vertices(void)
+void exit_edges(void)
 {
 cp
   avl_delete_tree(edge_tree);
@@ -83,29 +114,31 @@ cp
 edge_t *new_edge(void)
 {
 cp
-  edge_t *v = (edge_t *)xmalloc_and_zero(sizeof(*v));
+  edge_t *e = (edge_t *)xmalloc_and_zero(sizeof(*e));
 cp
-  return v;
+  return e;
 }
 
-void free_edge(edge_t *v)
+void free_edge(edge_t *e)
 {
 cp
-  free(v);
-cp
-}
-
-void edge_add(edge_t *v)
-{
-cp
-  avl_insert(edge_tree, v);
+  free(e);
 cp
 }
 
-void edge_del(edge_t *v)
+void edge_add(edge_t *e)
 {
 cp
-  avl_delete(edge_tree, v);
+  avl_insert(edge_tree, e);
+  avl_insert(edge_weight_tree, e);
+cp
+}
+
+void edge_del(edge_t *e)
+{
+cp
+  avl_delete(edge_tree, e);
+  avl_delete(edge_weight_tree, e);
 cp
 }
 
@@ -127,20 +160,20 @@ cp
   return avl_search(edge_tree, &v);
 }
 
-void dump_vertices(void)
+void dump_edges(void)
 {
   avl_node_t *node;
-  edge_t *v;
+  edge_t *e;
 cp
-  syslog(LOG_DEBUG, _("Vertices:"));
+  syslog(LOG_DEBUG, _("Edges:"));
 
   for(node = edge_tree->head; node; node = node->next)
     {
-      v = (edge_t *)node->data;
+      e = (edge_t *)node->data;
       syslog(LOG_DEBUG, _(" %s - %s options %ld"),
-             v->from->name, v->to->name, v->options);
+             e->from->name, e->to->name, e->options);
     }
     
-  syslog(LOG_DEBUG, _("End of vertices."));
+  syslog(LOG_DEBUG, _("End of edges."));
 cp
 }

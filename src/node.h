@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.5 2001/10/27 12:13:17 guus Exp $
+    $Id: node.h,v 1.1.2.6 2001/10/28 10:16:18 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -32,7 +32,8 @@ typedef struct node_status_t {
   int active:1;                    /* 1 if active.. */
   int validkey:1;                  /* 1 if we currently have a valid key for him */
   int waitingforkey:1;             /* 1 if we already sent out a request */
-  int unused:29;
+  int mst:1;                       /* 1 if this node has been visited by the MST algorithm */
+  int unused:28;
 } node_status_t;
 
 typedef struct node_t {

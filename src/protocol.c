@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.110 2001/10/28 08:41:19 guus Exp $
+    $Id: protocol.c,v 1.28.4.111 2001/10/28 10:16:18 guus Exp $
 */
 
 #include "config.h"
@@ -600,7 +600,7 @@ cp
   
   c->edge->from = myself;
   c->edge->to = n;
-  c->edge->metric = 1;
+  c->edge->weight = 1;
   c->edge->connection = c;
 
   edge_add(c->edge);
@@ -934,19 +934,19 @@ cp
   return 0;
 }
 
-/* Vertices */
+/* Edges */
 
-int send_add_edge(connection_t *c, edge_t *v)
+int send_add_edge(connection_t *c, edge_t *e)
 {
 cp
   return send_request(c, "%d %s %s %lx", ADD_NODE,
-                      v->from->name, v->to->name, v->options);
+                      e->from->name, e->to->name, e->options);
 }
 
 int add_edge_h(connection_t *c)
 {
   connection_t *other;
-  edge_t *v;
+  edge_t *e;
   node_t *from, *to;
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
@@ -993,19 +993,19 @@ cp
 
   /* Check if node already exists */
   
-  v = lookup_edge(from, to);
+  e = lookup_edge(from, to);
   
-  if(v)
+  if(e)
     {
       /* Check if it matches */
     }
   else
     {
-      v = new_edge();
-      v->from = from;
-      v->to = to;
-      v->options = options;
-      edge_add(v);
+      e = new_edge();
+      e->from = from;
+      e->to = to;
+      e->options = options;
+      edge_add(e);
     }
 
   /* Tell the rest about the new edge */
@@ -1014,23 +1014,23 @@ cp
     {
       other = (connection_t *)node->data;
       if(other->status.active && other != c)
-        send_add_edge(other, v);
+        send_add_edge(other, e);
     }
 
 cp
   return 0;
 }
 
-int send_del_edge(connection_t *c, edge_t *v)
+int send_del_edge(connection_t *c, edge_t *e)
 {
 cp
   return send_request(c, "%d %s %s %lx", DEL_EDGE,
-                      v->from->name, v->to->name, v->options);
+                      e->from->name, e->to->name, e->options);
 }
 
 int del_edge_h(connection_t *c)
 {
-  edge_t *v;
+  edge_t *e;
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   node_t *from, *to;
@@ -1079,9 +1079,9 @@ cp
 
   /* Check if edge exists */
   
-  v = lookup_edge(from, to);
+  e = lookup_edge(from, to);
   
-  if(v)
+  if(e)
     {
       /* Check if it matches */
     }
@@ -1097,12 +1097,12 @@ cp
     {
       other = (connection_t *)node->data;
       if(other->status.active && other != c)
-        send_del_edge(other, v);
+        send_del_edge(other, e);
     }
 
   /* Delete the edge */
   
-  edge_del(v);
+  edge_del(e);
 cp
   return 0;
 }
