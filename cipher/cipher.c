@@ -26,7 +26,6 @@
 #include <cipher.h>
 
 #include "blowfish/blowfish.h"
-#include "idea/idea.h"
 
 #include "net.h"
 
