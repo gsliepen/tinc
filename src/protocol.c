@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.124 2002/03/21 23:11:53 guus Exp $
+    $Id: protocol.c,v 1.28.4.125 2002/03/22 11:43:48 guus Exp $
 */
 
 #include "config.h"
@@ -159,7 +159,7 @@ cp
 cp
 }
 
-void exit_request(void)
+void exit_requests(void)
 {
 cp
   avl_delete_tree(past_request_tree);
@@ -173,7 +173,11 @@ cp
   p.request = request;
 
   if(avl_search(past_request_tree, &p))
-    return 1;
+    {
+      if(debug_lvl >= DEBUG_SCARY_THINGS)
+        syslog(LOG_DEBUG, _("Already seen request"));
+      return 1;
+    }
   else
     {
       new = (past_request_t *)xmalloc(sizeof(*new));

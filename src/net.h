@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.47 2002/03/18 22:47:20 guus Exp $
+    $Id: net.h,v 1.9.4.48 2002/03/22 11:43:48 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -30,10 +30,16 @@
 
 #include "config.h"
 
-#define MTU 1514     /* 1500 bytes payload + 14 bytes ethernet header */
-#define MAXSIZE 1600 /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+#ifdef ENABLE_JUMBOGRAMS
+ #define MTU 9014        /* 9000 bytes payload + 14 bytes ethernet header */
+ #define MAXSIZE 9100    /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+ #define MAXBUFSIZE 9100 /* Must support TCP packets of length 9000. */
+#else
+ #define MTU 1514        /* 1500 bytes payload + 14 bytes ethernet header */
+ #define MAXSIZE 1600    /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+ #define MAXBUFSIZE 2100 /* Quite large but needed for support of keys up to 8192 bits. */
+#endif
 
-#define MAXBUFSIZE 2048 /* Probably way too much, but it must fit every possible request. */
 #define MAXSOCKETS 128 /* Overkill... */
 
 typedef struct mac_t

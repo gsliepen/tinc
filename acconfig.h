@@ -67,6 +67,9 @@
 /* Define to the location of if_tun.h */
 #undef LINUX_IF_TUN_H
 
+/* Define to 1 if support for jumbograms is enabled */
+#undef ENABLE_JUMBOGRAMS
+
 /* Define to 1 if checkpoint tracing is enabled */
 #undef ENABLE_TRACING
 

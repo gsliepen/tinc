@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.164 2002/03/18 22:47:20 guus Exp $
+    $Id: net.c,v 1.35.4.165 2002/03/22 11:43:46 guus Exp $
 */
 
 #include "config.h"
@@ -404,6 +404,8 @@ cp
 
           if(routing_mode== RMODE_SWITCH)
 	    age_mac();
+
+          age_past_requests();
 
           /* Should we regenerate our key? */
 

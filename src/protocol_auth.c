@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.3 2002/02/20 19:25:09 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.4 2002/03/22 11:43:48 guus Exp $
 */
 
 #include "config.h"
@@ -515,8 +515,7 @@ void send_everything(connection_t *c)
 
 int ack_h(connection_t *c)
 {
-  char address[MAX_STRING_SIZE];
-  char port[MAX_STRING_SIZE];
+  char myaddress[MAX_STRING_SIZE];
   char hisport[MAX_STRING_SIZE];
   char *hisaddress, *dummy;
   int weight;
@@ -525,7 +524,7 @@ int ack_h(connection_t *c)
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d", hisport, address, port, &weight, &options) != 5)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %d %d", hisport, myaddress, &weight, &options) != 4)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
        return -1;
@@ -563,10 +562,10 @@ cp
   c->edge = new_edge();
 cp  
   c->edge->from.node = myself;
-  c->edge->from.tcpaddress = str2sockaddr(address, port);
-  c->edge->from.udpaddress = str2sockaddr(address, myport);
+//  c->edge->from.tcpaddress = str2sockaddr(address, port);
+  c->edge->from.udpaddress = str2sockaddr(myaddress, myport);
   c->edge->to.node = n;
-  c->edge->to.tcpaddress = c->address;
+//  c->edge->to.tcpaddress = c->address;
   sockaddr2str(&c->address, &hisaddress, &dummy);
   c->edge->to.udpaddress = str2sockaddr(hisaddress, hisport);
   free(hisaddress);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.11 2002/03/18 22:47:20 guus Exp $
+    $Id: net_setup.c,v 1.1.2.12 2002/03/22 11:43:48 guus Exp $
 */
 
 #include "config.h"
@@ -529,6 +529,7 @@ cp
   init_nodes();
   init_edges();
   init_events();
+  init_requests();
 
   if(get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout))
     {
@@ -581,6 +582,7 @@ cp
       close(listen_socket[i].udp);
     }
 
+  exit_requests();
   exit_events();
   exit_edges();
   exit_subnets();
