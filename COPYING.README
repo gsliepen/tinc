@@ -1,4 +1,14 @@
-This program is released under the GPL with the additional exemption
-that compiling, linking, and/or using OpenSSL is allowed.  You may
-provide binary packages linked to the OpenSSL libraries, provided that
-all other requirements of the GPL are met.
+The following applies to tinc:
+
+This program is released under the GPL with the additional exemption that
+compiling, linking, and/or using OpenSSL is allowed.  You may provide binary
+packages linked to the OpenSSL libraries, provided that all other requirements
+of the GPL are met.
+
+The following applies to the LZO library:
+
+Hereby I grant a special exception to the tinc VPN project
+(http://tinc.nl.linux.org/) to link the LZO library with the OpenSSL library
+(http://www.openssl.org).
+
+Markus F.X.J. Oberhumer
