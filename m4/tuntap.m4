@@ -24,7 +24,7 @@ AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
   if test $if_tun_h = no; then
     tinc_cv_linux_if_tun_h=none
   else
-    tinc_cv_linux_if_tun_h=$if_tun_h
+    tinc_cv_linux_if_tun_h="$if_tun_h"
   fi
 ])
 
