@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.23 2001/06/29 13:09:55 guus Exp $
+    $Id: subnet.c,v 1.1.2.24 2001/08/28 20:52:39 guus Exp $
 */
 
 #include "config.h"
@@ -61,9 +61,23 @@ cp
   /* We compare as if a subnet is a number that equals (address << 32 + netmask). */
    
   if(a->net.ipv4.address == b->net.ipv4.address)
-    return a->net.ipv4.mask - b->net.ipv4.mask;
+  {
+    if(a->net.ipv4.mask < b->net.ipv4.mask)
+      return -1;
+    else if(a->net.ipv4.mask > b->net.ipv4.mask)
+      return 1;
+    else
+      return 0;
+  }
   else
-    return a->net.ipv4.address - b->net.ipv4.address;
+  {
+    if(a->net.ipv4.address < b->net.ipv4.address)
+      return -1;
+    else if(a->net.ipv4.address > b->net.ipv4.address)
+      return 1;
+    else
+      return 0;
+  }
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
