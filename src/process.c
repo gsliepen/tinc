@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.23 2001/07/24 20:03:40 guus Exp $
+    $Id: process.c,v 1.1.2.24 2001/09/01 12:36:53 guus Exp $
 */
 
 #include "config.h"
@@ -121,7 +121,7 @@ cp
 /*
   kill older tincd for this net
 */
-int kill_other(void)
+int kill_other(int signal)
 {
   int pid;
 cp
@@ -136,7 +136,7 @@ cp
 
   errno = 0;    /* No error, sometimes errno is only changed on error */
   /* ESRCH is returned when no process with that pid is found */
-  if(kill(pid, SIGTERM) && errno == ESRCH)
+  if(kill(pid, signal) && errno == ESRCH)
     fprintf(stderr, _("Removing stale lock file.\n"));
   remove_pid(pidfilename);
 cp

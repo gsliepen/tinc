@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.51 2001/07/24 20:04:22 guus Exp $
+    $Id: tincd.c,v 1.10.4.52 2001/09/01 12:36:53 guus Exp $
 */
 
 #include "config.h"
@@ -78,12 +78,13 @@ char **environment;              /* A pointer to the environment on
 static struct option const long_options[] =
 {
   { "config", required_argument, NULL, 'c' },
-  { "kill", no_argument, NULL, 'k' },
+  { "kill", optional_argument, NULL, 'k' },
   { "net", required_argument, NULL, 'n' },
   { "help", no_argument, &show_help, 1 },
   { "version", no_argument, &show_version, 1 },
   { "no-detach", no_argument, &do_detach, 0 },
   { "generate-keys", optional_argument, NULL, 'K'},
+  { "debug", optional_argument, NULL, 'd'},
   { NULL, 0, NULL, 0 }
 };
 
@@ -97,8 +98,8 @@ usage(int status)
       printf(_("Usage: %s [option]...\n\n"), program_name);
       printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
 	       "  -D, --no-detach            Don't fork and detach.\n"
-	       "  -d                         Increase debug level.\n"
-	       "  -k, --kill                 Attempt to kill a running tincd and exit.\n"
+	       "  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
+	       "  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
 	       "  -n, --net=NETNAME          Connect to net NETNAME.\n"));
       printf(_("  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
                "      --help                 Display this help and exit.\n"
@@ -114,7 +115,7 @@ parse_options(int argc, char **argv, char **envp)
   int r;
   int option_index = 0;
   
-  while((r = getopt_long(argc, argv, "c:Ddkn:K::", long_options, &option_index)) != EOF)
+  while((r = getopt_long(argc, argv, "c:Dd::k::n:K::", long_options, &option_index)) != EOF)
     {
       switch(r)
         {
@@ -134,7 +135,7 @@ parse_options(int argc, char **argv, char **envp)
 	    debug_lvl++;
 	  break;
 	case 'k': /* kill old tincds */
-	  kill_tincd = 1;
+	  kill_tincd = optarg?atoi(optarg):SIGTERM;
 	  break;
 	case 'n': /* net name given */
 	  netname = xmalloc(strlen(optarg)+1);
@@ -214,7 +215,7 @@ int keygen(int bits)
     {
       fprintf(stderr, _("Error during key generation!\n"));
       return -1;
-     }
+    }
   else
     fprintf(stderr, _("Done.\n"));
 
@@ -328,7 +329,7 @@ cp
     }
     
   if(kill_tincd)
-    exit(kill_other());
+    exit(kill_other(kill_tincd));
 
   if(read_server_config())
     exit(1);
