@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.13 2002/09/09 22:33:02 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.14 2002/09/15 14:55:53 guus Exp $
 */
 
 #include "config.h"
@@ -220,9 +220,7 @@ int del_edge_h(connection_t *c)
 
 	if(!from) {
 		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_ERR,
-				   _
-				   ("Got %s from %s (%s) which does not appear in the edge tree"),
+			syslog(LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return 0;
 	}
@@ -231,9 +229,7 @@ int del_edge_h(connection_t *c)
 
 	if(!to) {
 		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_ERR,
-				   _
-				   ("Got %s from %s (%s) which does not appear in the edge tree"),
+			syslog(LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return 0;
 	}
@@ -244,9 +240,7 @@ int del_edge_h(connection_t *c)
 
 	if(!e) {
 		if(debug_lvl >= DEBUG_PROTOCOL)
-			syslog(LOG_WARNING,
-				   _
-				   ("Got %s from %s (%s) which does not appear in the edge tree"),
+			syslog(LOG_WARNING, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return 0;
 	}

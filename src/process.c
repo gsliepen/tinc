@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.48 2002/09/10 09:40:25 guus Exp $
+    $Id: process.c,v 1.1.2.49 2002/09/15 14:55:53 guus Exp $
 */
 
 #include "config.h"
@@ -370,9 +370,7 @@ RETSIGTYPE sigint_handler(int a)
 		debug_lvl = saved_debug_lvl;
 		saved_debug_lvl = 0;
 	} else {
-		syslog(LOG_NOTICE,
-			   _
-			   ("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
+		syslog(LOG_NOTICE, _("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
 			   debug_lvl);
 		saved_debug_lvl = debug_lvl;
 		debug_lvl = 5;
@@ -469,9 +467,7 @@ void setup_signals(void)
 	for(i = 0; sighandlers[i].signal; i++) {
 		act.sa_handler = sighandlers[i].handler;
 		if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
-			fprintf(stderr,
-					_
-					("Installing signal handler for signal %d (%s) failed: %s\n"),
+			fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %s\n"),
 					sighandlers[i].signal, strsignal(sighandlers[i].signal),
 					strerror(errno));
 	}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.42 2002/09/09 22:33:21 guus Exp $
+    $Id: subnet.c,v 1.1.2.43 2002/09/15 14:55:54 guus Exp $
 */
 
 #include "config.h"
@@ -111,9 +111,7 @@ int subnet_compare(subnet_t *a, subnet_t *b)
 	case SUBNET_IPV6:
 		return subnet_compare_ipv6(a, b);
 	default:
-		syslog(LOG_ERR,
-			   _
-			   ("subnet_compare() was called with unknown subnet type %d, exitting!"),
+		syslog(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
 			   a->type);
 		cp_trace();
 		exit(0);

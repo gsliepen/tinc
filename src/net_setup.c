@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.26 2002/09/09 22:32:44 guus Exp $
+    $Id: net_setup.c,v 1.1.2.27 2002/09/15 14:55:53 guus Exp $
 */
 
 #include "config.h"
@@ -26,15 +26,6 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
-#endif
-#ifdef HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +40,15 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.64 2002/09/15 12:26:04 guus Exp $
+    $Id: tincd.c,v 1.10.4.65 2002/09/15 14:55:54 guus Exp $
 */
 
 #include "config.h"
@@ -110,8 +110,7 @@ static void usage(int status)
 				program_name);
 	else {
 		printf(_("Usage: %s [option]...\n\n"), program_name);
-		printf(_
-			   ("  -c, --config=DIR           Read configuration options from DIR.\n"
+		printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
 				"  -D, --no-detach            Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
 				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
@@ -178,9 +177,7 @@ void parse_options(int argc, char **argv, char **envp)
 						kill_tincd = atoi(optarg);
 
 						if(!kill_tincd) {
-							fprintf(stderr,
-									_
-									("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
+							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
 									optarg);
 							usage(1);
 						}
@@ -199,9 +196,7 @@ void parse_options(int argc, char **argv, char **envp)
 					generate_keys = atoi(optarg);
 
 					if(generate_keys < 512) {
-						fprintf(stderr,
-								_
-								("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
+						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
 								optarg);
 						usage(1);
 					}
