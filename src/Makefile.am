@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.28 2002/09/10 21:46:05 guus Exp $
+# $Id: Makefile.am,v 1.4.4.29 2003/06/07 13:18:31 guus Exp $
 
 sbin_PROGRAMS = tincd
 
@@ -21,7 +21,7 @@ tincd_LDADD = \
 
 localedir = $(datadir)/locale
 
-CFLAGS = @CFLAGS@ -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"$(sysconfdir)\"	\
+AM_CFLAGS = @CFLAGS@ -DPKGLIBDIR=$(pkglibdir) -DCONFDIR=\"$(sysconfdir)\"	\
 	-DLOCALEDIR=\"$(localedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
 
 dist-hook:
