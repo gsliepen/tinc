@@ -1,6 +1,6 @@
 /*
     system.h -- header for locale settings
-    Copyright (C) 1998,99,2000 Ivo Timmermans <itimmermans@bigfoot.com.com>
+    Copyright (C) 1998,99,2000 Ivo Timmermans <ivo@o2w.nl.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 /*
     subnet.h -- header for subnet.c
-    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000,2001 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.18 2002/04/09 11:42:48 guus Exp $
+    $Id: subnet.h,v 1.1.2.19 2002/06/21 10:11:34 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__

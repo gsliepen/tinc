@@ -1,7 +1,7 @@
 /*
     netutl.h -- header file for netutl.c
     Copyright (C) 1998-2002 Ivo Timmermans <zarq@iname.com>
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.12 2002/06/08 12:57:10 guus Exp $
+    $Id: netutl.h,v 1.2.4.13 2002/06/21 10:11:13 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__

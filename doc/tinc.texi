@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.29 2002/06/12 13:45:23 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.30 2002/06/21 10:11:10 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -15,10 +15,10 @@
 This is the info manual for tinc, a Virtual Private Network daemon.
 
 Copyright @copyright{} 1998-2002 Ivo Timmermans
-<itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
+<ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.29 2002/06/12 13:45:23 guus Exp $
+$Id: tinc.texi,v 1.8.4.30 2002/06/21 10:11:10 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -40,10 +40,10 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 @cindex copyright
 Copyright @copyright{} 1998-2002 Ivo Timmermans
-<itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
+<ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.29 2002/06/12 13:45:23 guus Exp $
+$Id: tinc.texi,v 1.8.4.30 2002/06/21 10:11:10 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -684,7 +684,7 @@ number 655 is registered with the IANA.
 @example
 tinc            655/tcp    TINC
 tinc            655/udp    TINC
-#                          Ivo Timmermans <itimmermans@@bigfoot.com>
+#                          Ivo Timmermans <ivo@@o2w.nl>
 @end example
 
 
@@ -1932,10 +1932,10 @@ and join channel #tinc.
 @section Authors
 
 @table @asis
-@item Ivo Timmermans (zarq) (@email{itimmermans@@bigfoot.com})
+@item Ivo Timmermans (zarq) (@email{ivo@@o2w.nl})
 Main coder/hacker and maintainer of the package.
 
-@item Guus Sliepen (guus) (@email{guus@@sliepen.warande.net})
+@item Guus Sliepen (guus) (@email{guus@@sliepen.eu.org})
 Originator of it all, co-author.
 
 @item Wessel Dankers (Ubiq) (@email{wsl@@nl.linux.org})

@@ -1,8 +1,8 @@
 /*
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
-                  1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+                  1998-2002 Ivo Timmermans <ivo@o2w.nl>
+                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
 		  2000 Cris van Pelt <tribbel@arise.dhs.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.56 2002/06/08 12:57:09 guus Exp $
+    $Id: conf.c,v 1.9.4.57 2002/06/21 10:11:12 guus Exp $
 */
 
 #include "config.h"

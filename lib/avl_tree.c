@@ -1,8 +1,8 @@
 /*
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+                  2000,2001 Ivo Timmermans <ivo@o2w.nl>,
+                  2000,2001 Guus Sliepen <guus@sliepen.eu.org>
                   2000,2001 Wessel Dankers <wsl@nl.linux.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -27,9 +27,9 @@
 
     Cleaned up and incorporated some of the ideas from the red-black tree
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
-    Guus Sliepen <guus@sliepen.warande.net>.
+    Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.8 2002/02/10 21:57:51 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.9 2002/06/21 10:11:11 guus Exp $
 */
 
 #include <stdio.h>

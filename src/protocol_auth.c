@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
-    Copyright (C) 1999-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2002 Ivo Timmermans <ivo@o2w.nl>,
+                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.8 2002/03/27 15:26:44 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.9 2002/06/21 10:11:13 guus Exp $
 */
 
 #include "config.h"

@@ -1,7 +1,7 @@
 /*
     edge.c -- edge tree management
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.eu.org>,
+                  2000-2002 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.10 2002/03/27 15:26:43 guus Exp $
+    $Id: edge.c,v 1.1.2.11 2002/06/21 10:11:12 guus Exp $
 */
 
 #include "config.h"

@@ -1,6 +1,6 @@
 This is the security documentation for tinc, a Virtual Private Network daemon.
 
-   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.eu.org>,
              2001-2002 Wessel Dankers <wsl@nl.linux.org>
 
    Permission is granted to make and distribute verbatim copies of
@@ -12,7 +12,7 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: SECURITY2,v 1.1.2.2 2002/02/10 21:57:51 guus Exp $
+   $Id: SECURITY2,v 1.1.2.3 2002/06/21 10:11:10 guus Exp $
 
 Proposed new authentication scheme
 ----------------------------------

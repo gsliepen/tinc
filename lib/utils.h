@@ -1,7 +1,7 @@
 /*
     utils.h -- header file for utils.c
     Copyright (C) 1999-2001 Ivo Timmermans <zarq@iname.com>
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+                  2000,2001 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

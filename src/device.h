@@ -1,7 +1,7 @@
 /*
     net.h -- generic header for device.c
     Copyright (C) 2001-2002 Ivo Timmermans <zarq@iname.com>
-                  2001-2002 Guus Sliepen <guus@sliepen.warande.net>
+                  2001-2002 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.h,v 1.1.2.5 2002/02/10 21:57:54 guus Exp $
+    $Id: device.h,v 1.1.2.6 2002/06/21 10:11:12 guus Exp $
 */
 
 #ifndef __TINC_DEVICE_H__

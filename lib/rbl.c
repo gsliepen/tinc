@@ -1,7 +1,7 @@
 /*
     rbl.c -- red-black tree + linked list convenience
-    Copyright (C) 2000 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2000 Ivo Timmermans <ivo@o2w.nl>,
+                  2000 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.12 2000/11/24 23:12:59 guus Exp $
+    $Id: rbl.c,v 1.1.2.13 2002/06/21 10:11:11 guus Exp $
 */
 
 #include "config.h"

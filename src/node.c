@@ -1,7 +1,7 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.eu.org>,
+                  2001-2002 Ivo Timmermans <ivo@o2w.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.12 2002/04/29 20:05:07 guus Exp $
+    $Id: node.c,v 1.1.2.13 2002/06/21 10:11:13 guus Exp $
 */
 
 #include "config.h"

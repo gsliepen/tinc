@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with MacOS/X tun device
-    Copyright (C) 2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2001-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2001-2002 Ivo Timmermans <ivo@o2w.nl>,
+                  2001-2002 Guus Sliepen <guus@sliepen.eu.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.1 2002/06/10 14:33:40 guus Exp $
+    $Id: device.c,v 1.1.2.2 2002/06/21 10:11:34 guus Exp $
 */
 
 #include "config.h"

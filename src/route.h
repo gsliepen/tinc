@@ -1,7 +1,7 @@
 /*
     route.h -- header file for route.c
     Copyright (C) 2000-2002 Ivo Timmermans <zarq@iname.com>
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>         
+                  2000-2002 Guus Sliepen <guus@sliepen.eu.org>         
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.h,v 1.1.2.7 2002/03/01 14:09:31 guus Exp $
+    $Id: route.h,v 1.1.2.8 2002/06/21 10:11:33 guus Exp $
 */
 
 #ifndef __TINC_ROUTE_H__
