@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.47 2003/03/29 21:51:21 guus Exp $
+    $Id: route.c,v 1.1.2.48 2003/03/29 21:58:35 guus Exp $
 */
 
 #include "config.h"
@@ -295,8 +295,8 @@ void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
 
 	/* Remember original source and destination */
 		
-	memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
-	memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
+	memcpy(&pseudo.ip6_src, &hdr->ip6_dst, 16);
+	memcpy(&pseudo.ip6_dst, &hdr->ip6_src, 16);
 	pseudo.length = ntohs(hdr->ip6_plen) + sizeof(*hdr);
 	
 	if(pseudo.length >= IP_MSS - sizeof(*hdr) - sizeof(*icmp))
@@ -312,8 +312,8 @@ void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
 	hdr->ip6_plen = htons(sizeof(*icmp) + pseudo.length);
 	hdr->ip6_nxt = IPPROTO_ICMPV6;
 	hdr->ip6_hlim = 255;
-	memcpy(&hdr->ip6_dst, &pseudo.ip6_src, 16);
-	memcpy(&hdr->ip6_src, &pseudo.ip6_dst, 16);
+	memcpy(&hdr->ip6_dst, &pseudo.ip6_dst, 16);
+	memcpy(&hdr->ip6_src, &pseudo.ip6_src, 16);
 
 	/* Fill in ICMP header */
 	
@@ -323,8 +323,6 @@ void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
 
 	/* Create pseudo header */
 		
-	memcpy(&pseudo.ip6_src, &hdr->ip6_src, 16);
-	memcpy(&pseudo.ip6_dst, &hdr->ip6_dst, 16);
 	pseudo.length = htonl(sizeof(*icmp) + pseudo.length);
 	pseudo.next = htonl(IPPROTO_ICMPV6);
 
