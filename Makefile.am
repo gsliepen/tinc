@@ -6,7 +6,7 @@ SUBDIRS = m4 lib cipher src doc redhat
 
 ACLOCAL_AMFLAGS =
 
-EXTRA_DIST = TODO
+EXTRA_DIST = 
 
 CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
