@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.1 2000/10/11 10:35:15 guus Exp $
+    $Id: connlist.h,v 1.1.2.2 2000/10/11 22:00:58 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -26,11 +26,11 @@
 #include <openssl/evp.h>
 
 #include "net.h"
-#include "subnet.h"
+#include "conf.h"
 
 typedef struct conn_list_t {
   char *name;                      /* name of this connection */
-  ip_t real_ip;                    /* his real (internet) ip */
+  ipv4_t address;                    /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
   int protocol_version;            /* used protocol */
@@ -72,8 +72,13 @@ typedef struct conn_list_t {
 
   struct subnet_t *subnets;        /* Pointer to a list of subnets belonging to this connection */
 
+  struct config_t *config;         /* Pointer to configuration tree belonging to this host */
+
   struct conn_list_t *next;        /* after all, it's a list of connections */
+  struct conn_list_t *prev;        /* doubly linked for O(1) deletions */
 } conn_list_t;
+
+#include "subnet.h"
 
 extern conn_list_t *conn_list;
 extern conn_list_t *myself;
@@ -82,6 +87,7 @@ extern conn_list_t *new_conn_list();
 extern void free_conn_list(conn_list_t *);
 extern void add_conn_list(conn_list_t *);
 extern void del_conn_list(conn_list_t *);
+extern conn_list_t *lookup_id(char *);
 extern conn_list_t *lookup_conn_list_mac(mac_t);
 extern conn_list_t *lookup_conn_list_ipv4(ipv4_t);
 extern conn_list_t *lookup_conn_list_ipv6(ipv6_t);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.33 2000/10/11 10:35:16 guus Exp $
+    $Id: net.c,v 1.35.4.34 2000/10/11 22:00:58 guus Exp $
 */
 
 #include "config.h"
@@ -84,7 +84,7 @@ cp
   p->data[0] = p->data[6] = 0xfe;
   p->data[1] = p->data[7] = 0xfd;
   /* Really evil pointer stuff just below! */
-  *((ip_t*)(&p->data[2])) = (ip_t)(htonl(myself->real_ip));
+  *((ip_t*)(&p->data[2])) = (ip_t)(htonl(myself->address));
   *((ip_t*)(&p->data[8])) = *((ip_t*)(&p->data[26]));
 cp
 }
@@ -274,7 +274,7 @@ int send_packet(ip_t to, vpn_packet_t *packet)
 {
   conn_list_t *cl;
 cp
-  if((cl = lookup_conn(to)) == NULL)
+  if((cl = lookup_conn_list_ipv4(to)) == NULL)
     {
       if(debug_lvl > 3)
         {
@@ -286,50 +286,9 @@ cp
    }
     
   /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
+
+  /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
   
-  /* The next few lines will be obsoleted, if we are going indirect, matching subnet_t
-     should point to only our uplink as the recepient
-  */
-
-  if(myself->flags & EXPORTINDIRECTDATA)
-    {
-      for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
-      if(!cl)
-        { /* No open outgoing connection has been found. */
-	  if(debug_lvl > 3)
-	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to!"));
-          return -1;
-        }
-    }
-  else
-
-  /* If indirectdata flag is set for the destination we just looked up,
-   * then real_ip is actually the vpn_ip of the gateway tincd
-   * it is behind.
-   */
-   
-  if(cl->flags & INDIRECTDATA)
-    {
-      if(debug_lvl > 3)
-        syslog(LOG_NOTICE, _("Indirect packet to %s via %s"),
-               cl->name, cl->hostname);
-      if((cl = lookup_conn(cl->real_ip)) == NULL)
-        {
-          if(debug_lvl > 3)
-              syslog(LOG_NOTICE, _("Indirect look up %d.%d.%d.%d in connection list failed!"), IP_ADDR_V(to));
-            
-          /* Gateway tincd dead? Should we kill it? (GS) */
-
-          return -1;
-        }
-      if(cl->flags & INDIRECTDATA)  /* This should not happen */
-        {
-          if(debug_lvl > 3)
-              syslog(LOG_NOTICE, _("Double indirection for %d.%d.%d.%d"), IP_ADDR_V(to));
-          return -1;        
-        }
-    }            
-
   if(my_key_expiry <= time(NULL))
     regenerate_keys();
 
@@ -375,7 +334,7 @@ int setup_tap_fd(void)
   const char *tapfname;
   config_t const *cfg;
 cp  
-  if((cfg = get_config_val(tapdevice)) == NULL)
+  if((cfg = get_config_val(config, tapdevice)) == NULL)
     tapfname = "/dev/tap0";
   else
     tapfname = cfg->data.ptr;
@@ -427,7 +386,7 @@ cp
       return -1;
     }
 
-  if((cfg = get_config_val(interface)))
+  if((cfg = get_config_val(config, interface)))
     {
       if(setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, cfg->data.ptr, strlen(cfg->data.ptr)))
         {
@@ -440,7 +399,7 @@ cp
   a.sin_family = AF_INET;
   a.sin_port = htons(port);
   
-  if((cfg = get_config_val(interfaceip)))
+  if((cfg = get_config_val(config, interfaceip)))
     a.sin_addr.s_addr = htonl(cfg->data.ip->ip);
   else
     a.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -515,7 +474,7 @@ cp
   if(debug_lvl > 0)
     syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
 
-  if((cfg = get_config_val(upstreamport)) == NULL)
+  if((cfg = get_config_val(cl->config, port)) == NULL)
     cl->port = 655;
   else
     cl->port = cfg->data.val;
@@ -530,7 +489,7 @@ cp
 
   a.sin_family = AF_INET;
   a.sin_port = htons(cl->port);
-  a.sin_addr.s_addr = htonl(cl->real_ip);
+  a.sin_addr.s_addr = htonl(cl->address);
 
   if(connect(cl->meta_socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
@@ -572,8 +531,8 @@ cp
     }
 
   ncn = new_conn_list();
-  ncn->real_ip = ntohl(*((ip_t*)(h->h_addr_list[0])));
-  ncn->hostname = hostlookup(htonl(ncn->real_ip));
+  ncn->address = ntohl(*((ip_t*)(h->h_addr_list[0])));
+  ncn->hostname = hostlookup(htonl(ncn->address));
   
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
@@ -603,7 +562,7 @@ cp
   myself->hostname = "MYSELF"; /* FIXME? */
   myself->flags = 0;
 
-  if(!(cfg = get_config_val(tincname))) /* Not acceptable */
+  if(!(cfg = get_config_val(config, tincname))) /* Not acceptable */
     {
       syslog(LOG_ERR, _("Name for tinc daemon required!"));
       return -1;
@@ -611,16 +570,16 @@ cp
   else
     myself->name = (char*)cfg->data.val;
   
-  if(!(cfg = get_config_val(listenport)))
+  if(!(cfg = get_config_val(myself, port)))
     myself->port = 655;
   else
     myself->port = cfg->data.val;
 
-  if((cfg = get_config_val(indirectdata)))
+  if((cfg = get_config_val(config, indirectdata)))
     if(cfg->data.val == stupid_true)
       myself->flags |= EXPORTINDIRECTDATA;
 
-  if((cfg = get_config_val(tcponly)))
+  if((cfg = get_config_val(config, tcponly)))
     if(cfg->data.val == stupid_true)
       myself->flags |= TCPONLY;
 
@@ -649,8 +608,9 @@ sigalrm_handler(int a)
 {
   config_t const *cfg;
 cp
-  cfg = get_next_config_val(upstreamip, upstreamindex++);
-
+/* FIXME! Use name instead of upstreamip.
+  cfg = get_next_config_val(config, upstreamip, upstreamindex++);
+*/
   while(cfg)
     {
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
@@ -658,7 +618,7 @@ cp
           signal(SIGALRM, SIG_IGN);
           return;
         }
-      cfg = get_next_config_val(upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
+//      cfg = get_next_config_val(config, upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
     }
 
   signal(SIGALRM, sigalrm_handler);
@@ -679,7 +639,7 @@ int setup_network_connections(void)
 {
   config_t const *cfg;
 cp
-  if((cfg = get_config_val(pingtimeout)) == NULL)
+  if((cfg = get_config_val(config, pingtimeout)) == NULL)
     timeout = 5;
   else
     timeout = cfg->data.val;
@@ -690,7 +650,7 @@ cp
   if(setup_myself() < 0)
     return -1;
 
-  if((cfg = get_next_config_val(upstreamip, upstreamindex++)) == NULL)
+//  if((cfg = get_next_config_val(config, upstreamip, upstreamindex++)) == NULL)
     /* No upstream IP given, we're listen only. */
     return 0;
 
@@ -698,7 +658,7 @@ cp
     {
       if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         return 0;
-      cfg = get_next_config_val(upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
+//      cfg = get_next_config_val(config, upstreamip, upstreamindex++); /* Or else we try the next ConnectTo line */
     }
     
   signal(SIGALRM, sigalrm_handler);
@@ -767,7 +727,7 @@ cp
 
   a.sin_family = AF_INET;
   a.sin_port = htons(cl->port);
-  a.sin_addr.s_addr = htonl(cl->real_ip);
+  a.sin_addr.s_addr = htonl(cl->address);
 
   if(connect(nfd, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
@@ -808,7 +768,7 @@ cp
       return NULL;
     }
 
-  p->real_ip = ntohl(ci.sin_addr.s_addr);
+  p->address = ntohl(ci.sin_addr.s_addr);
   p->hostname = hostlookup(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
   p->status.meta = 1;
@@ -1150,7 +1110,7 @@ cp
 	    syslog(LOG_INFO, _("Rereading configuration file"));
           close_network_connections();
           clear_config();
-          if(read_config_file(configfilename))
+          if(read_config_file(&config, configfilename))
             {
               syslog(LOG_ERR, _("Unable to reread configuration file, exiting"));
               exit(0);

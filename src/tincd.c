@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.9 2000/09/06 11:49:05 guus Exp $
+    $Id: tincd.c,v 1.10.4.10 2000/10/11 22:01:02 guus Exp $
 */
 
 #include "config.h"
@@ -359,7 +359,7 @@ main(int argc, char **argv, char **envp)
   if(kill_tincd)
     exit(kill_other());
 
-  if(read_config_file(configfilename))
+  if(read_config_file(&config, configfilename))
     return 1;
 
   setup_signals();

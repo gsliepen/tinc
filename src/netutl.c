@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.11 2000/10/11 10:35:17 guus Exp $
+    $Id: netutl.c,v 1.12.4.12 2000/10/11 22:01:00 guus Exp $
 */
 
 #include "config.h"
@@ -73,7 +73,7 @@ cp
   in.s_addr = addr;
 
   lookup_hostname = 0;
-  if((cfg = get_config_val(resolve_dns)) != NULL)
+  if((cfg = get_config_val(config, resolve_dns)) != NULL)
     if(cfg->data.val == stupid_true)
       lookup_hostname = 1;
 

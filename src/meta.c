@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.2 2000/10/11 10:35:15 guus Exp $
+    $Id: meta.c,v 1.1.2.3 2000/10/11 22:00:58 guus Exp $
 */
 
 #include "config.h"
@@ -59,7 +59,7 @@ cp
   return 0;
 }
 
-int broadcast_meta(conn_list_t *cl, const char *buffer, int length)
+int broadcast_meta(conn_list_t *cl, char *buffer, int length)
 {
   conn_list_t *p;
 cp

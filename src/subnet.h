@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.2 2000/10/11 10:35:17 guus Exp $
+    $Id: subnet.h,v 1.1.2.3 2000/10/11 22:01:02 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
 #define __TINC_SUBNET_H__
 
 #include "net.h"
-#include "connlist.h"
 
 enum
 {
@@ -61,7 +60,7 @@ typedef struct subnet_t {
 
   /* And now for the actual subnet: */
 
-  union
+  union net
     {
       subnet_mac_t mac;
       subnet_ipv4_t ipv4;
@@ -70,9 +69,11 @@ typedef struct subnet_t {
     
 } subnet_t;  
 
+#include "connlist.h"
+
 extern subnet_t *new_subnet(void);
 extern void free_subnet(subnet_t *);
-extern void subnet_add(conn_list_t *, subnet_t *);
+extern void subnet_add(struct conn_list_t *, subnet_t *);
 extern void subnet_del(subnet_t *);
 extern char *net2str(subnet_t *);
 extern subnet_t *str2net(char *);

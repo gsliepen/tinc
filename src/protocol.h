@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.9 2000/10/11 10:35:17 guus Exp $
+    $Id: protocol.h,v 1.5.4.10 2000/10/11 22:01:02 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -56,7 +56,7 @@ extern int (*request_handlers[])(conn_list_t*);
 
 extern int send_id(conn_list_t*);
 extern int send_challenge(conn_list_t*);
-extern int send_chal_reply(conn_list_t*, char*);
+extern int send_chal_reply(conn_list_t*);
 extern int send_ack(conn_list_t*);
 extern int send_status(conn_list_t*, int, char*);
 extern int send_error(conn_list_t*, int, char*);

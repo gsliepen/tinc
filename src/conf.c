@@ -19,11 +19,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.11 2000/10/11 13:42:52 guus Exp $
+    $Id: conf.c,v 1.9.4.12 2000/10/11 22:00:57 guus Exp $
 */
 
-
-#include "config.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -31,12 +29,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 
 #include <xalloc.h>
 
 #include "conf.h"
 #include "netutl.h" /* for strtoip */
 #include <utils.h> /* for cp */
+
+#include "config.h"
 
 #include "system.h"
 
@@ -139,11 +140,11 @@ cp
 */
 int read_config_file(config_t **base, const char *fname)
 {
-  int err;
+  int err = -1;
   FILE *fp;
   char line[MAXBUFSIZE];	/* There really should not be any line longer than this... */
   char *p, *q;
-  int i, err = -1, lineno = 0;
+  int i, lineno = 0;
   config_t *cfg;
 cp
   if((fp = fopen (fname, "r")) == NULL)

@@ -17,13 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.1 2000/10/11 10:35:15 guus Exp $
+    $Id: connlist.c,v 1.1.2.2 2000/10/11 22:00:58 guus Exp $
 */
+
+#include <syslog.h>
 
 #include "config.h"
 #include <utils.h>
 
-#include "connlist.h"
+#include "net.h"	/* Don't ask. */
 
 /* Root of the connection list */
 
@@ -34,7 +36,7 @@ conn_list_t *myself = NULL;
 
 conn_list_t *new_conn_list(void)
 {
-  conn_list_t *p = xmalloc(sizeof(*p));
+  conn_list_t *p = (conn_list_t *)xmalloc(sizeof(*p));
 cp
   /* initialise all those stupid pointers at once */
   memset(p, '\0', sizeof(*p));
@@ -110,10 +112,10 @@ cp
 void conn_list_add(conn_list_t *cl)
 {
 cp
-  cl->next = connlist;
+  cl->next = conn_list;
   cl->prev = NULL;
   cl->next->prev = cl;
-  connlist = cl;
+  conn_list = cl;
 cp
 }
 
@@ -123,7 +125,7 @@ cp
   if(cl->prev)
     cl->prev->next = cl->next;
   else
-    connlist = cl->next;
+    conn_list = cl->next;
   
   cl->next->prev = cl->prev;
   free_conn_list(cl);
@@ -132,12 +134,23 @@ cp
 
 /* Lookup functions */
 
+conn_list_t *lookup_id(char *name)
+{
+  conn_list_t *p;
+cp
+  for(p = conn_list; p != NULL; p = p->next)
+    if(strcmp(name, p->name) == 0)
+      break;
+cp
+  return p;
+}
+
 conn_list_t *lookup_conn_list_mac(mac_t address)
 {
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(lookup_subnet_mac(p, address))
+    if(lookup_subnet_mac(p->subnets, address))
       break;
 cp
   return p;
@@ -148,7 +161,7 @@ conn_list_t *lookup_conn_list_ipv4(ipv4_t address)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(lookup_subnet_ipv4(p, address))
+    if(lookup_subnet_ipv4(p->subnets, address))
       break;
 cp
   return p;
@@ -159,7 +172,7 @@ conn_list_t *lookup_conn_list_ipv6(ipv6_t address)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(lookup_subnet_ipv6(p, address))
+    if(lookup_subnet_ipv6(p->subnets, address))
       break;
 cp
   return p;
@@ -170,14 +183,24 @@ cp
 void dump_conn_list(void)
 {
   conn_list_t *p;
+  subnet_t *s;
+  char *netstr;
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
   for(p = conn_list; p != NULL; p = p->next)
     {
-      syslog(LOG_DEBUG, _("%s netmask %d.%d.%d.%d at %s port %hd flags %d sockets %d, %d status %04x"),
-	     p->name, IP_ADDR_V(p->vpn_mask), p->hostname, p->port, p->flags,
+      syslog(LOG_DEBUG, _("%s at %s port %hd flags %d sockets %d, %d status %04x"),
+	     p->name, p->hostname, p->port, p->flags,
 	     p->socket, p->meta_socket, p->status);
+      for(s = p->subnets; s != NULL; s = s->next)
+        {
+          netstr = net2str(s);
+          syslog(LOG_DEBUG, ": %s", netstr);
+          free(netstr);
+        }
     }
+
+  syslog(LOG_DEBUG, _("End of connection list."));
 cp
 }

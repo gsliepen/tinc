@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.37 2000/10/11 13:42:52 guus Exp $
+    $Id: protocol.c,v 1.28.4.38 2000/10/11 22:01:00 guus Exp $
 */
 
 #include "config.h"
@@ -87,7 +87,7 @@ cp
   if(debug_lvl >= DEBUG_PROTOCOL)
     syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
 cp
-  return send_meta(cl, buffer, length);
+  return send_meta(cl, buffer, len);
 }
 
 int receive_request(conn_list_t *cl)
@@ -235,7 +235,7 @@ cp
   /* Convert the random data to a hexadecimal formatted string */
 
   bin2hex(cl->hischallenge,buffer,CHAL_LENGTH);
-  buffer[keylength*2] = '\0';
+  buffer[CHAL_LENGTH*2] = '\0';
 
   /* Send the challenge */
 
@@ -450,7 +450,7 @@ cp
 
   /* Check if subnet string is valid */
 
-  if((subnet = str2net(subnetstr)) == -1)
+  if(!(subnet = str2net(subnetstr)))
     {
       syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s): invalid subnet string"), cl->name, cl->hostname);
       free(name); free(subnetstr);
@@ -472,7 +472,7 @@ cp
 
   /* Check if the owner of the new subnet is in the connection list */
 
-  if(!(owner = lookup_id(name))
+  if(!(owner = lookup_id(name)))
     {
       syslog(LOG_ERR, _("Got ADD_SUBNET for %s from %s (%s) which is not in our connection list"),
              name, cl->name, cl->hostname);
@@ -481,8 +481,10 @@ cp
     }
 
   /* If everything is correct, add the subnet to the list of the owner */
+
+  subnet_add(owner, subnet);
 cp
-  return subnet_add(owner, subnet);
+  return 0;
 }
 
 int send_del_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
@@ -516,7 +518,7 @@ cp
 
   /* Check if subnet string is valid */
 
-  if((subnet = str2net(subnetstr)) == -1)
+  if(!(subnet = str2net(subnetstr)))
     {
       syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s): invalid subnet string"), cl->name, cl->hostname);
       free(name); free(subnetstr);
@@ -538,7 +540,7 @@ cp
 
   /* Check if the owner of the new subnet is in the connection list */
 
-  if(!(owner = lookup_id(name))
+  if(!(owner = lookup_id(name)))
     {
       syslog(LOG_ERR, _("Got DEL_SUBNET for %s from %s (%s) which is not in our connection list"),
              name, cl->name, cl->hostname);
@@ -546,9 +548,11 @@ cp
       return -1;
     }
 
-  /* If everything is correct, add the subnet to the list of the owner */
+  /* If everything is correct, delete the subnet from the list of the owner */
+
+  subnet_del(subnet);
 cp
-  return subnet_del(owner, subnet);
+  return 0;
 }
 
 /* New and closed connections notification */
@@ -557,7 +561,7 @@ int send_add_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
   return send_request(cl, "%d %s %s %lx:%d %lx", ADD_HOST,
-                      myself->name, other->name, other->real_ip, other->port, other->options);
+                      myself->name, other->name, other->address, other->port, other->options);
 }
 
 int add_host_h(conn_list_t *cl)
@@ -604,7 +608,7 @@ cp
 
   /* Lookup his uplink */
 
-  if(!(new->hisuplink = lookup_id(sender))
+  if(!(new->hisuplink = lookup_id(sender)))
     {
       syslog(LOG_ERR, _("Got ADD_HOST from %s (%s) with origin %s which is not in our connection list"),
              sender, cl->name, cl->hostname);
@@ -616,13 +620,13 @@ cp
 
   /* Fill in more of the new conn_list structure */
 
-  new->hostname = hostlookup(htonl(new->real_ip));
+  new->hostname = hostlookup(htonl(new->address));
 
   /* Check if the new host already exists in the connnection list */
 
   if((old = lookup_id(new->name)))
     {
-      if((new->real_ip == old->real_ip) && (new->port == old->port))
+      if((new->address == old->address) && (new->port == old->port))
         {
           if(debug_lvl > DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
@@ -660,7 +664,7 @@ int send_del_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
   return send_request(cl, "%d %s %s %lx:%d %lx", DEL_HOST,
-                      myself->name, other->name, other->real_ip, other->port, other->options);
+                      myself->name, other->name, other->address, other->port, other->options);
 }
 
 int del_host_h(conn_list_t *cl)
@@ -712,7 +716,7 @@ cp
 
   /* Lookup his uplink */
 
-  if(!(hisuplink = lookup_id(sender))
+  if(!(hisuplink = lookup_id(sender)))
     {
       syslog(LOG_ERR, _("Got DEL_HOST from %s (%s) with origin %s which is not in our connection list"),
              cl->name, cl->hostname, sender);

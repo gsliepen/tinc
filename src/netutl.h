@@ -16,13 +16,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.2 2000/10/11 10:35:17 guus Exp $
+    $Id: netutl.h,v 1.2.4.3 2000/10/11 22:01:00 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
 #define __TINC_NETUTL_H__
 
 #include "net.h"
+#include "conf.h"
 
 extern char *hostlookup(unsigned long);
 extern ip_mask_t *strtoip(char*);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.10 2000/10/11 13:42:52 guus Exp $
+    $Id: conf.h,v 1.6.4.11 2000/10/11 22:00:58 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -30,12 +30,6 @@ typedef struct ip_mask_t {
   unsigned long mask;
 } ip_mask_t;
 
-typedef union data_t {
-  unsigned long val;
-  void *ptr;
-  ip_mask_t *ip;
-} data_t;
-
 typedef enum which_t {
   tincname = 1,
   connectto,
@@ -46,7 +40,6 @@ typedef enum which_t {
   resolve_dns,
   interface,
   interfaceip,
-  configuration
   address,
   port,
   publickey,
@@ -63,7 +56,12 @@ typedef struct config_t {
   struct config_t *next;
   which_t which;
   int argtype;
-  data_t data;
+  union data {
+    unsigned long val;
+    void *ptr;
+    ip_mask_t *ip;
+    struct config_t *next;	/* For nested configs! */
+  } data;
 } config_t;
 
 typedef struct internal_config_t {
@@ -92,9 +90,9 @@ extern int sighup;
 extern char *configfilename;
 
 extern config_t *add_config_val(config_t **, int, char *);
-extern int read_config_file(const char *);
-extern const config_t *get_config_val(which_t type);
-extern const config_t *get_next_config_val(which_t type, int);
+extern int read_config_file(config_t **, const char *);
+extern const config_t *get_config_val(config_t *, which_t type);
+extern const config_t *get_next_config_val(config_t *, which_t type, int);
 extern void clear_config();
 
 #endif /* __TINC_CONF_H__ */
