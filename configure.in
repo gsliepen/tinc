@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.78 2003/07/31 13:18:34 guus Exp $
+dnl $Id: configure.in,v 1.13.2.79 2003/08/02 15:32:57 guus Exp $
 
 AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
@@ -69,7 +69,7 @@ case $host_os in
   ;;
   *mingw*)
     AC_DEFINE(HAVE_MINGW, 1, [MinGW])
-    [ rm -f src/device.c; ln -sf mingw/device.c src/device.c ]
+    [ rm -f src/device.c; cp -f src/mingw/device.c src/device.c ]
   ;;
   *)
     AC_MSG_ERROR("Unknown operating system.")
