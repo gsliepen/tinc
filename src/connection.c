@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.35 2002/09/10 22:12:33 guus Exp $
+    $Id: connection.c,v 1.1.2.36 2003/06/25 20:55:05 guus Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,7 @@ connection_t *broadcast;
 
 int connection_compare(connection_t *a, connection_t *b)
 {
-	return a - b;
+	return (void *)a - (void *)b;
 }
 
 void init_connections(void)
