@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.57 2003/07/22 20:55:20 guus Exp $
+    $Id: process.c,v 1.1.2.58 2003/07/28 22:06:09 guus Exp $
 */
 
 #include "system.h"
@@ -88,6 +88,7 @@ void cleanup_and_exit(int c)
 	exit(c);
 }
 
+#ifndef HAVE_MINGW
 /*
   check for an existing tinc for this net, and write pid to pidfile
 */
@@ -114,12 +115,14 @@ static bool write_pidfile(void)
 
 	return true;
 }
+#endif
 
 /*
   kill older tincd for this net
 */
 bool kill_other(int signal)
 {
+#ifndef HAVE_MINGW
 	int pid;
 
 	cp();
@@ -148,6 +151,7 @@ bool kill_other(int signal)
 		fprintf(stderr, _("Removing stale lock file.\n"));
 		remove_pid(pidfilename);
 	}
+#endif
 
 	return true;
 }
@@ -163,13 +167,16 @@ bool detach(void)
 
 	/* First check if we can open a fresh new pidfile */
 
+#ifndef HAVE_MINGW
 	if(!write_pidfile())
 		return false;
+#endif
 
 	/* If we succeeded in doing that, detach */
 
 	closelogger();
 
+#ifdef HAVE_FORK
 	if(do_detach) {
 		if(daemon(0, 0)) {
 			fprintf(stderr, _("Couldn't detach from terminal: %s"),
@@ -182,6 +189,7 @@ bool detach(void)
 		if(!write_pid(pidfilename))
 			return false;
 	}
+#endif
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
@@ -193,6 +201,7 @@ bool detach(void)
 	return true;
 }
 
+#ifdef HAVE_FORK
 /*
   Execute the program name, with sane environment.
 */
@@ -224,12 +233,14 @@ static void _execute_script(const char *scriptname, char **envp)
 		   strerror(save_errno));
 	exit(save_errno);
 }
+#endif
 
 /*
   Fork and execute the program pointed to by name.
 */
 bool execute_script(const char *name, char **envp)
 {
+#ifdef HAVE_FORK
 	pid_t pid;
 	int status;
 	struct stat s;
@@ -287,6 +298,9 @@ bool execute_script(const char *name, char **envp)
 	/* Child here */
 
 	_execute_script(scriptname, envp);
+#else
+	return true;
+#endif
 }
 
 
@@ -294,6 +308,7 @@ bool execute_script(const char *name, char **envp)
   Signal handlers.
 */
 
+#ifndef HAVE_MINGW
 static RETSIGTYPE sigterm_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got TERM signal"));
@@ -415,9 +430,11 @@ static struct {
 	{SIGWINCH, sigwinch_handler},
 	{0, NULL}
 };
+#endif
 
 void setup_signals(void)
 {
+#ifndef HAVE_MINGW
 	int i;
 	struct sigaction act;
 
@@ -449,4 +466,5 @@ void setup_signals(void)
 					sighandlers[i].signal, strsignal(sighandlers[i].signal),
 					strerror(errno));
 	}
+#endif
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.31 2003/07/24 12:08:15 guus Exp $
+    $Id: net_socket.c,v 1.1.2.32 2003/07/28 22:06:09 guus Exp $
 */
 
 #include "system.h"
@@ -34,6 +34,10 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#ifdef WSAEINPROGRESS
+#define EINPROGRESS WSAEINPROGRESS
+#endif
+
 int addressfamily = AF_UNSPEC;
 int maxtimeout = 900;
 int seconds_till_retry = 5;
@@ -49,7 +53,9 @@ int setup_listen_socket(const sockaddr_t *sa)
 	char *addrstr;
 	int option;
 	char *iface;
+#ifdef SO_BINDTODEVICE
 	struct ifreq ifr;
+#endif
 
 	cp();
 
@@ -60,6 +66,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 		return -1;
 	}
 
+#ifdef O_NONBLOCK
 	flags = fcntl(nfd, F_GETFL);
 
 	if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
@@ -68,6 +75,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 			   strerror(errno));
 		return -1;
 	}
+#endif
 
 	/* Optimize TCP settings */
 
@@ -138,6 +146,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 		return -1;
 	}
 
+#ifdef O_NONBLOCK
 	flags = fcntl(nfd, F_GETFL);
 	if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
 		close(nfd);
@@ -145,6 +154,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 			   strerror(errno));
 		return -1;
 	}
+#endif
 
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
@@ -280,11 +290,13 @@ begin:
 
 	/* Non-blocking */
 
+#ifdef O_NONBLOCK
 	flags = fcntl(c->socket, F_GETFL);
 
 	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
 		logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
 	}
+#endif
 
 	/* Connect */
 

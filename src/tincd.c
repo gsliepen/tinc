@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.76 2003/07/22 20:55:20 guus Exp $
+    $Id: tincd.c,v 1.10.4.77 2003/07/28 22:06:09 guus Exp $
 */
 
 #include "system.h"
@@ -147,6 +147,7 @@ static void parse_options(int argc, char **argv, char **envp)
 				break;
 
 			case 'k':				/* kill old tincds */
+#ifndef HAVE_MINGW
 				if(optarg) {
 					if(!strcasecmp(optarg, "HUP"))
 						kill_tincd = SIGHUP;
@@ -175,6 +176,7 @@ static void parse_options(int argc, char **argv, char **envp)
 					}
 				} else
 					kill_tincd = SIGTERM;
+#endif
 				break;
 
 			case 'n':				/* net name given */

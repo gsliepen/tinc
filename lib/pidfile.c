@@ -27,6 +27,7 @@
 
 #include "system.h"
 
+#ifndef HAVE_MINGW
 /* read_pid
  *
  * Reads the specified pidfile and returns the read pid.
@@ -68,6 +69,7 @@ int check_pid (char *pidfile)
   errno = 0;
   if (kill(pid, 0) && errno == ESRCH)
 	  return(0);
+#endif
 
   return pid;
 }
@@ -127,4 +129,4 @@ int remove_pid (char *pidfile)
 {
   return unlink (pidfile);
 }
-  
+#endif

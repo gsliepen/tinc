@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.16 2003/07/21 13:14:02 guus Exp $
+    $Id: dropin.c,v 1.1.2.17 2003/07/28 22:06:09 guus Exp $
 */
 
 #include "system.h"
@@ -40,6 +40,7 @@
 */
 int daemon(int nochdir, int noclose)
 {
+#ifdef HAVE_FORK
 	pid_t pid;
 	int fd;
 
@@ -82,6 +83,9 @@ int daemon(int nochdir, int noclose)
 	}
 
 	return 0;
+#else
+	return -1;
+#endif
 }
 #endif
 
@@ -145,5 +149,13 @@ int asprintf(char **buf, const char *fmt, ...)
 	}
 
 	return status;
+}
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+int gettimeofday(struct timeval *tv, void *tz) {
+	tv->tv_sec = time(NULL);
+	tv->tv_usec = 0;
+	return 0;
 }
 #endif

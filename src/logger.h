@@ -20,6 +20,19 @@ typedef enum logmode_t {
 	LOGMODE_SYSLOG
 } logmode_t;
 
+#ifndef HAVE_SYSLOG
+enum {
+	LOG_EMERG,
+	LOG_ALERT,
+	LOG_CRIT,
+	LOG_ERR,
+	LOG_WARNING,
+	LOG_NOTICE,
+	LOG_INFO,
+	LOG_DEBUG,
+};
+#endif
+
 extern debug_t debug_level;
 extern void openlogger(const char *, logmode_t);
 extern void logger(int, const char *, ...) __attribute__ ((format(printf, 2, 3)));

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.5 2003/07/22 20:55:19 guus Exp $
+    $Id: logger.c,v 1.1.2.6 2003/07/28 22:06:09 guus Exp $
 */
 
 #include "system.h"
@@ -37,8 +37,6 @@ void openlogger(const char *ident, logmode_t mode) {
 	logmode = mode;
 	
 	switch(mode) {
-		case LOGMODE_NULL:
-			break;
 		case LOGMODE_STDERR:
 			logpid = getpid();
 			break;
@@ -49,7 +47,11 @@ void openlogger(const char *ident, logmode_t mode) {
 				logmode = LOGMODE_NULL;
 			break;
 		case LOGMODE_SYSLOG:
+#ifdef HAVE_SYSLOG
 			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
+			break;
+#endif
+		case LOGMODE_NULL:
 			break;
 	}
 }
@@ -60,8 +62,6 @@ void logger(int priority, const char *format, ...) {
 	va_start(ap, format);
 
 	switch(logmode) {
-		case LOGMODE_NULL:
-			break;
 		case LOGMODE_STDERR:
 			vfprintf(stderr, format, ap);
 			fprintf(stderr, "\n");
@@ -72,6 +72,7 @@ void logger(int priority, const char *format, ...) {
 			fprintf(logfile, "\n");
 			break;
 		case LOGMODE_SYSLOG:
+#ifdef HAVE_SYSLOG
 #ifdef HAVE_VSYSLOG
 			vsyslog(priority, format, ap);
 #else
@@ -82,6 +83,9 @@ void logger(int priority, const char *format, ...) {
 			}
 #endif
 			break;
+#endif
+		case LOGMODE_NULL:
+			break;
 	}
 
 	va_end(ap);
@@ -89,14 +93,17 @@ void logger(int priority, const char *format, ...) {
 
 void closelogger(void) {
 	switch(logmode) {
-		case LOGMODE_NULL:
-		case LOGMODE_STDERR:
-			break;
 		case LOGMODE_FILE:
 			fclose(logfile);
 			break;
 		case LOGMODE_SYSLOG:
+#ifdef HAVE_SYSLOG
 			closelog();
+			break;
+#endif
+		case LOGMODE_NULL:
+		case LOGMODE_STDERR:
+			break;
 			break;
 	}
 }
