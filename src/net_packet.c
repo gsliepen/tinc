@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.9 2002/03/12 14:19:51 guus Exp $
+    $Id: net_packet.c,v 1.1.2.10 2002/03/17 15:59:29 guus Exp $
 */
 
 #include "config.h"
@@ -392,6 +392,8 @@ cp
       syslog(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
       return;
     }
+
+  sockaddrunmap(&from);  /* Some braindead IPv6 implementations do stupid things. */
 
   n = lookup_node_udp(&from);
 

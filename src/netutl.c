@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.28 2002/02/26 22:47:51 guus Exp $
+    $Id: netutl.c,v 1.12.4.29 2002/03/17 15:59:29 guus Exp $
 */
 
 #include "config.h"
@@ -169,6 +169,15 @@ cp
         exit(0);
     }
 cp
+}
+
+void sockaddrunmap(sockaddr_t *sa)
+{
+  if(IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr))
+    {
+      sa->in.sin_addr.s_addr = sa->in6.sin6_addr.s6_addr32[3];
+      sa->in.sin_family = AF_INET;
+    }
 }
 
 /* Subnet mask handling */
