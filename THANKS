@@ -14,6 +14,7 @@ We would like to thank
  * Cris van Pelt (small fixes)
  * Enrique Zanardi (for the Spanish translation)
  * Matias Carrasco (for the Spanish translation of the manual)
+ * Jamie Briggs (for finding a lot of socket leaks)
 
 for their help, support and ideas.  Thank you guys!
 
