@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.26 2002/02/20 22:15:32 guus Exp $
+    $Id: netutl.c,v 1.12.4.27 2002/02/20 22:37:38 guus Exp $
 */
 
 #include "config.h"
@@ -103,7 +103,7 @@ void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
   char port[NI_MAXSERV];
   int err;
 cp
-  if((err = getnameinfo(&sa->sa, SA_LEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV)))
+  if((err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV)))
     {
       syslog(LOG_ERR, _("Error while translating addresses: %s"), gai_strerror(err));
       cp_trace();
@@ -123,7 +123,7 @@ char *sockaddr2hostname(sockaddr_t *sa)
   char port[NI_MAXSERV] = "unknown";
   int err;
 cp
-  if((err = getnameinfo(&sa->sa, SA_LEN(sa->sa), address, sizeof(address), port, sizeof(port), hostnames?0:(NI_NUMERICHOST|NI_NUMERICSERV))))
+  if((err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), hostnames?0:(NI_NUMERICHOST|NI_NUMERICSERV))))
     {
       syslog(LOG_ERR, _("Error while looking up hostname: %s"), gai_strerror(err));
     }

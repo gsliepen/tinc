@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.2 2002/02/20 19:25:09 guus Exp $
+    $Id: net_socket.c,v 1.1.2.3 2002/02/20 22:37:38 guus Exp $
 */
 
 #include "config.h"
@@ -116,7 +116,7 @@ cp
       }
 #endif
 
-  if(bind(nfd, &sa->sa, sizeof(*sa)))
+  if(bind(nfd, &sa->sa, SALEN(sa->sa)))
     {
       close(nfd);
       addrstr = sockaddr2hostname(sa);
@@ -170,7 +170,7 @@ cp
       }
 #endif
 
-  if(bind(nfd, &sa->sa, sizeof(*sa)))
+  if(bind(nfd, &sa->sa, SALEN(sa->sa)))
     {
       close(nfd);
       addrstr = sockaddr2hostname(sa);
@@ -228,10 +228,10 @@ cp
 
   /* Connect */
 
-  if(connect(c->socket, &c->address.sa, sizeof(c->address)) == -1)
+  if(connect(c->socket, &c->address.sa, SALEN(c->address.sa)) == -1)
     {
       close(c->socket);
-      syslog(LOG_ERR, _("%s: %s"), c->hostname, strerror(errno));
+      syslog(LOG_ERR, _("Error while connecting to %s (%s): %s"), c->name, c->hostname, strerror(errno));
       return -1;
     }
 
@@ -334,7 +334,7 @@ begin:
 
   /* Connect */
 
-  result = connect(c->socket, &c->address.sa, sizeof(c->address));
+  result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
 
   if(result == -1)
     {

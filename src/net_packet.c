@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.3 2002/02/20 22:15:32 guus Exp $
+    $Id: net_packet.c,v 1.1.2.4 2002/02/20 22:37:38 guus Exp $
 */
 
 #include "config.h"
@@ -258,7 +258,7 @@ cp
 
   /* Send the packet */
 
-  if((sendto(udp_socket, (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SA_LEN(n->address.sa))) < 0)
+  if((sendto(udp_socket, (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %s"),
              n->name, n->hostname, strerror(errno));
