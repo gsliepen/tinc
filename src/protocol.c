@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.123 2002/02/27 22:37:54 guus Exp $
+    $Id: protocol.c,v 1.28.4.124 2002/03/21 23:11:53 guus Exp $
 */
 
 #include "config.h"
@@ -32,6 +32,7 @@
 #include <errno.h>
 
 #include <utils.h>
+#include <xalloc.h>
 
 #include "conf.h"
 #include "protocol.h"
@@ -39,6 +40,8 @@
 #include "connection.h"
 
 #include "system.h"
+
+avl_tree_t *past_request_tree;
 
 int check_id(char *id)
 {
@@ -141,6 +144,66 @@ cp
     }
 cp
   return 0;
+}
+
+int request_compare(past_request_t *a, past_request_t *b)
+{
+cp
+  return strcmp(a->request, b->request);
+}
+
+void init_requests(void)
+{
+cp
+  past_request_tree = avl_alloc_tree((avl_compare_t)request_compare, (avl_action_t)free);
+cp
+}
+
+void exit_request(void)
+{
+cp
+  avl_delete_tree(past_request_tree);
+cp
+}
+
+int seen_request(char *request)
+{
+  past_request_t p, *new;
+cp
+  p.request = request;
+
+  if(avl_search(past_request_tree, &p))
+    return 1;
+  else
+    {
+      new = (past_request_t *)xmalloc(sizeof(*new));
+      new->request = xstrdup(request);
+      new->firstseen = now;
+      avl_insert(past_request_tree, new);
+      return 0;
+    }
+cp  
+}
+
+void age_past_requests(void)
+{
+  avl_node_t *node, *next;
+  past_request_t *p;
+  int left = 0, deleted = 0;
+cp 
+  for(node = past_request_tree->head; node; node = next)
+    {
+      next = node->next;
+      p = (past_request_t *)node->data;
+      if(p->firstseen + pingtimeout < now)
+        avl_delete_node(past_request_tree, node), deleted++;
+      else
+        left++;
+    }
+
+  if(debug_lvl >= DEBUG_SCARY_THINGS && left + deleted)
+    syslog(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"), deleted, left);
+cp
 }
 
 /* Jumptable for the request handlers */

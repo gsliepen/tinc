@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.2 2002/02/18 16:25:18 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.3 2002/03/21 23:11:53 guus Exp $
 */
 
 #include "config.h"
@@ -55,7 +55,7 @@ cp
   sockaddr2str(&e->from.udpaddress, &from_udpaddress, &from_udpport);
   sockaddr2str(&e->to.tcpaddress, &to_tcpaddress, &to_tcpport);
   sockaddr2str(&e->to.udpaddress, &to_udpaddress, &to_udpport);
-  x = send_request(c, "%d %s %s %s %s %s %s %s %s %lx %d", ADD_EDGE,
+  x = send_request(c, "%d %lx %s %s %s %s %s %s %s %s %lx %d", ADD_EDGE, random(),
                       e->from.node->name, from_tcpaddress, from_tcpport, from_udpport,
 		      e->to.node->name, to_tcpaddress, to_tcpport, to_udpport,
 		      e->options, e->weight);
@@ -90,7 +90,7 @@ int add_edge_h(connection_t *c)
   int weight;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
+  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
             from_name, from_address, from_tcpport, from_udpport,
 	    to_name, to_address, to_tcpport, to_udpport,
 	    &options, &weight) != 10)
@@ -112,6 +112,9 @@ cp
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_EDGE", c->name, c->hostname, _("invalid name"));
       return -1;
     }
+
+  if(seen_request(c->buffer))
+    return 0;
 
   /* Lookup nodes */
 
@@ -180,8 +183,6 @@ cp
     return 0;
   }
 
-
-
   e = new_edge();
   e->from.node = from;
   e->from.tcpaddress = from_tcpaddress;
@@ -199,7 +200,7 @@ cp
     {
       other = (connection_t *)node->data;
       if(other->status.active && other != c)
-        send_add_edge(other, e);
+        send_request(other, "%s", c->buffer);
     }
 
   /* Run MST before or after we tell the rest? */
@@ -212,7 +213,7 @@ cp
 int send_del_edge(connection_t *c, edge_t *e)
 {
 cp
-  return send_request(c, "%d %s %s", DEL_EDGE,
+  return send_request(c, "%d %lx %s %s", DEL_EDGE, random(),
                       e->from.node->name, e->to.node->name);
 }
 
@@ -225,7 +226,7 @@ int del_edge_h(connection_t *c)
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING"", from_name, to_name) != 2)
+  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING"", from_name, to_name) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE",
              c->name, c->hostname);
@@ -245,6 +246,9 @@ cp
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_EDGE", c->name, c->hostname, _("invalid name"));
       return -1;
     }
+
+  if(seen_request(c->buffer))
+    return 0;
 
   /* Lookup nodes */
 
@@ -291,7 +295,7 @@ cp
     {
       other = (connection_t *)node->data;
       if(other->status.active && other != c)
-        send_del_edge(other, e);
+        send_request(other, "%s", c->buffer);
     }
 
   /* Delete the edge */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.2 2002/03/21 23:11:53 guus Exp $
 */
 
 #include "config.h"
@@ -50,7 +50,7 @@ int send_add_subnet(connection_t *c, subnet_t *subnet)
   int x;
   char *netstr;
 cp
-  x = send_request(c, "%d %s %s", ADD_SUBNET,
+  x = send_request(c, "%d %lx %s %s", ADD_SUBNET, random(),
                       subnet->owner->name, netstr = net2str(subnet));
   free(netstr);
 cp
@@ -66,7 +66,7 @@ int add_subnet_h(connection_t *c)
   subnet_t *s;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
+  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name, c->hostname);
       return -1;
@@ -88,6 +88,9 @@ cp
       return -1;
     }
 
+  if(seen_request(c->buffer))
+    return 0;
+ 
   /* Check if the owner of the new subnet is in the connection list */
 
   owner = lookup_node(name);
@@ -128,7 +131,7 @@ cp
     {
       other = (connection_t *)node->data;
       if(other->status.active && other != c)
-        send_add_subnet(other, s);
+        send_request(other, "%s", c->buffer);
     }
 cp
   return 0;
@@ -140,7 +143,7 @@ int send_del_subnet(connection_t *c, subnet_t *s)
   char *netstr;
 cp
   netstr = net2str(s);
-  x = send_request(c, "%d %s %s", DEL_SUBNET, s->owner->name, netstr);
+  x = send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
   free(netstr);
 cp
   return x;
@@ -155,7 +158,7 @@ int del_subnet_h(connection_t *c)
   subnet_t *s, *find;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
+  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name, c->hostname);
       return -1;
@@ -186,6 +189,9 @@ cp
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid subnet string"));
       return -1;
     }
+
+  if(seen_request(c->buffer))
+    return 0;
 
   /* If everything is correct, delete the subnet from the list of the owner */
 
@@ -219,7 +225,7 @@ cp
     {
       other = (connection_t *)node->data;
       if(other->status.active && other != c)
-        send_del_subnet(other, find);
+        send_request(other, "%s", c->buffer);
     }
 
   /* Finally, delete it. */

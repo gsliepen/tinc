@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.4 2002/02/27 22:37:55 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.5 2002/03/21 23:11:53 guus Exp $
 */
 
 #include "config.h"
@@ -61,8 +61,8 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       other = (connection_t *)node->data;
-      if(other->status.active && other->status.mst && other != c)
-        send_request(other, "%d %s", KEY_CHANGED, n->name);
+      if(other->status.active && other != c)
+        send_request(other, "%d %lx %s", KEY_CHANGED, random(), n->name);
     }
 cp
   return 0;
@@ -71,14 +71,19 @@ cp
 int key_changed_h(connection_t *c)
 {
   char name[MAX_STRING_SIZE];
+  avl_node_t *node;
+  connection_t *other;
   node_t *n;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING, name) != 1)
+  if(sscanf(c->buffer, "%*d %*lx "MAX_STRING, name) != 1)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
              c->name, c->hostname);
       return -1;
     }
+
+  if(seen_request(c->buffer))
+    return 0;
 
   n = lookup_node(name);
 
@@ -93,7 +98,14 @@ cp
   n->status.waitingforkey = 0;
   n->sent_seqno = 0;
 
-  send_key_changed(c, n);
+  /* Tell the others */
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      other = (connection_t *)node->data;
+      if(other->status.active && other != c)
+        send_request(other, "%s", c->buffer);
+    }
 cp
   return 0;
 }
