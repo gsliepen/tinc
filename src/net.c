@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.175 2002/09/03 20:43:25 guus Exp $
+    $Id: net.c,v 1.35.4.176 2002/09/04 13:48:51 guus Exp $
 */
 
 #include "config.h"
@@ -65,6 +65,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "graph.h"
 #include "process.h"
 #include "route.h"
 #include "device.h"
@@ -82,12 +83,13 @@ int sigalrm = 0;
 
 time_t now = 0;
 
-/* Purge subnets of unreachable nodes. Use carefully. */
+/* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 void purge(void)
 {
-  avl_node_t *nnode, *nnext, *snode, *snext, *cnode;
+  avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext, *cnode;
   node_t *n;
+  edge_t *e;
   subnet_t *s;
   connection_t *c;
 cp
@@ -117,6 +119,21 @@ cp
         }
 
         subnet_del(n, s);
+      }
+
+      for(enode = n->edge_tree->head; enode; enode = enext)
+      {
+        enext = enode->next;
+        e = (edge_t *)enode->data;
+
+        for(cnode = connection_tree->head; cnode; cnode = cnode->next)
+        {
+          c = (connection_t *)cnode->data;
+          if(c->status.active)
+            send_del_edge(c, e);
+        }
+
+        edge_del(e);
       }
 
       node_del(n);
@@ -165,15 +182,14 @@ cp
 /*
   Terminate a connection:
   - Close the socket
-  - Tell other connections about it if report = 1
+  - Remove associated edge and tell other connections about it if report = 1
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
 void terminate_connection(connection_t *c, int report)
 {
-  avl_node_t *node, *node2;
+  avl_node_t *node;
   connection_t *other;
-  node_t *n;
 cp
   if(c->status.remove)
     return;
@@ -186,30 +202,29 @@ cp
   c->status.active = 0;
 
   if(c->node)
+    c->node->connection = NULL;
+
+  if(c->socket)
+    close(c->socket);
+
+  if(c->edge)
     {
-      if(report && c->node->connection)
+      if(report)
         {
           for(node = connection_tree->head; node; node = node->next)
             {
               other = (connection_t *)node->data;
-              if(other == c)
-                continue;
-              for(node2 = node_tree->head; node2; node2 = node2->next)
-                {
-                  n = (node_t *)node2->data;
-                  if(n->nexthop == c->node)
-                    {
-                      send_del_node(other, n);
-                      n->status.reachable = 0;
-                    }
-                }
+              if(other->status.active && other != c)
+                send_del_edge(other, c->edge);
             }
         }
-      c->node->connection = NULL;
-    }
 
-  if(c->socket)
-    close(c->socket);
+      edge_del(c->edge);
+
+      /* Run MST and SSSP algorithms */
+
+      graph();
+    }
 
   /* Check if this was our outgoing connection */
 
@@ -231,13 +246,14 @@ cp
 */
 void check_dead_connections(void)
 {
-  avl_node_t *node;
+  avl_node_t *node, *next;
   connection_t *c;
 cp
-  for(node = connection_tree->head; node; node = node->next)
+  for(node = connection_tree->head; node; node = next)
     {
+      next = node->next;
       c = (connection_t *)node->data;
-      if(c->last_ping_time + pingtimeout < now && !c->status.remove)
+      if(c->last_ping_time + pingtimeout < now)
         {
           if(c->status.active)
             {

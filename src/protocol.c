@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.131 2002/09/04 08:02:33 guus Exp $
+    $Id: protocol.c,v 1.28.4.132 2002/09/04 13:48:52 guus Exp $
 */
 
 #include "config.h"
@@ -62,15 +62,8 @@ int send_request(connection_t *c, const char *format, ...)
   va_list args;
   char buffer[MAXBUFSIZE];
   int len, request;
-  char *name = "everyone";
-  char *hostname = "broadcast";
-cp
-  if(c)
-    {
-      name = c->name;
-      hostname = c->hostname;
-    }
 
+cp
   /* Use vsnprintf instead of vasprintf: faster, no memory
      fragmentation, cleanup is automatic, and there is a limit on the
      input buffer anyway */
@@ -81,7 +74,7 @@ cp
 
   if(len < 0 || len > MAXBUFSIZE-1)
     {
-      syslog(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"), name, hostname);
+      syslog(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"), c->name, c->hostname);
       return -1;
     }
 
@@ -89,17 +82,14 @@ cp
     {
       sscanf(buffer, "%d", &request);
       if(debug_lvl >= DEBUG_META)
-        syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request], name, hostname, buffer);
+        syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request], c->name, c->hostname, buffer);
       else
-        syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], name, hostname);
+        syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], c->name, c->hostname);
     }
 
   buffer[len++] = '\n';
 cp
-  if(c)
-    return send_meta(c, buffer, len);
-  else
-    return broadcast_meta(NULL, buffer, len);
+  return send_meta(c, buffer, len);
 }
 
 int receive_request(connection_t *c)
@@ -236,7 +226,7 @@ int (*request_handlers[])(connection_t*) = {
   status_h, error_h, termreq_h,
   ping_h, pong_h,
   add_subnet_h, del_subnet_h,
-  add_node_h, del_node_h,
+  add_edge_h, del_edge_h,
   key_changed_h, req_key_h, ans_key_h,
   tcppacket_h,
 };
@@ -248,7 +238,7 @@ char (*request_name[]) = {
   "STATUS", "ERROR", "TERMREQ",
   "PING", "PONG",
   "ADD_SUBNET", "DEL_SUBNET",
-  "ADD_NODE", "DEL_NODE",
+  "ADD_EDGE", "DEL_EDGE",
   "KEY_CHANGED", "REQ_KEY", "ANS_KEY",
   "PACKET",
 };

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.8 2002/06/21 10:11:12 guus Exp $
+    $Id: edge.h,v 1.1.2.9 2002/09/04 13:48:51 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -29,23 +29,19 @@
 #include "node.h"
 #include "connection.h"
 
-typedef struct halfconnection_t {
-  struct node_t *node;             /* node associated with this end of the connection */
-//  sockaddr_t tcpaddress;           /* real (internet) ip on this end of the meta connection */
-  sockaddr_t udpaddress;           /* real (internet) ip on this end of the vpn connection */
-} halfconnection_t;
-
 typedef struct edge_t {
-  struct halfconnection_t from;
-  struct halfconnection_t to;
+  struct node_t *from;
+  struct node_t *to;
+  sockaddr_t address;
 
   long int options;                /* options turned on for this edge */
   int weight;                      /* weight of this edge */
   
   struct connection_t *connection; /* connection associated with this edge, if available */
+  struct edge_t *reverse;          /* edge in the opposite direction, if available */
 } edge_t;
 
-extern avl_tree_t *edge_tree;    /* Tree with all known edges (replaces active_tree) */
+extern avl_tree_t *edge_tree;        /* Tree with all known edges */
 extern avl_tree_t *edge_weight_tree; /* Tree with all known edges sorted on weight */
 
 extern void init_edges(void);

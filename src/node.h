@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.18 2002/09/04 08:33:08 guus Exp $
+    $Id: node.h,v 1.1.2.19 2002/09/04 13:48:52 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -51,8 +51,6 @@ typedef struct node_t {
 
   struct node_status_t status;
 
-  int distance;                    /* Distance from us to that node */
-  
   const EVP_CIPHER *cipher;        /* Cipher type for UDP packets */ 
   char *key;                       /* Cipher key and iv */
   int keylength;                   /* Cipher key and iv length*/
@@ -65,10 +63,11 @@ typedef struct node_t {
   list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 
   struct node_t *nexthop;          /* nearest node from us to him */
-  struct node_t *prevhop;          /* nearest node from him to us */
   struct node_t *via;              /* next hop for UDP packets */
   
   avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this node */
+
+  avl_tree_t *edge_tree;           /* Edges with this node as one of the endpoints */
 
   struct connection_t *connection; /* Connection associated with this node (if a direct connection exists) */
 

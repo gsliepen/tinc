@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.18 2002/09/03 20:43:25 guus Exp $
+    $Id: net_packet.c,v 1.1.2.19 2002/09/04 13:48:52 guus Exp $
 */
 
 #include "config.h"
@@ -70,6 +70,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "graph.h"
 #include "process.h"
 #include "route.h"
 #include "device.h"
@@ -331,7 +332,7 @@ cp
       return;
     }
 
-  via = (n->options & OPTION_INDIRECT)?n->nexthop:n;
+  via = (n->via == myself)?n->nexthop:n->via;
 
   if(via != n && debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),

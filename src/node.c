@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.14 2002/09/03 20:43:25 guus Exp $
+    $Id: node.c,v 1.1.2.15 2002/09/04 13:48:52 guus Exp $
 */
 
 #include "config.h"
@@ -77,6 +77,7 @@ node_t *new_node(void)
   node_t *n = (node_t *)xmalloc_and_zero(sizeof(*n));
 cp
   n->subnet_tree = new_subnet_tree();
+  n->edge_tree = new_edge_tree();
   n->queue = list_alloc((list_action_t)free);
 cp
   return n;
@@ -95,6 +96,8 @@ cp
     free(n->key);
   if(n->subnet_tree)
     free_subnet_tree(n->subnet_tree);
+  if(n->edge_tree)
+    free_edge_tree(n->edge_tree);
   free(n);
 cp
 }
@@ -110,6 +113,7 @@ cp
 void node_del(node_t *n)
 {
   avl_node_t *node, *next;
+  edge_t *e;
   subnet_t *s;
 cp
   for(node = n->subnet_tree->head; node; node = next)
@@ -117,6 +121,13 @@ cp
       next = node->next;
       s = (subnet_t *)node->data;
       subnet_del(n, s);
+    }
+
+  for(node = n->edge_tree->head; node; node = next)
+    {
+      next = node->next;
+      e = (edge_t *)node->data;
+      edge_del(e);
     }
 cp
   avl_delete(node_tree, n);
@@ -152,9 +163,9 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s distance %d"),
+      syslog(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
              n->name, n->hostname, n->cipher?n->cipher->nid:0, n->digest?n->digest->type:0, n->maclength, n->compression, n->options,
-             n->status, n->nexthop?n->nexthop->name:"-", n->distance);
+             n->status, n->nexthop?n->nexthop->name:"-", n->via?n->via->name:"-");
     }
     
   syslog(LOG_DEBUG, _("End of nodes."));

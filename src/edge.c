@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.11 2002/06/21 10:11:12 guus Exp $
+    $Id: edge.c,v 1.1.2.12 2002/09/04 13:48:51 guus Exp $
 */
 
 #include "config.h"
@@ -35,6 +35,8 @@
 #include "conf.h"
 #include <utils.h>
 #include "subnet.h"
+#include "edge.h"
+#include "node.h"
 
 #include "xalloc.h"
 #include "system.h"
@@ -46,12 +48,12 @@ int edge_compare(edge_t *a, edge_t *b)
 {
   int result;
 
-  result = strcmp(a->from.node->name, b->from.node->name);
+  result = strcmp(a->from->name, b->from->name);
 
   if(result)
     return result;
   else
-    return strcmp(a->to.node->name, b->to.node->name);
+    return strcmp(a->to->name, b->to->name);
 }
 
 /* Evil edge_compare() from a parallel universe ;)
@@ -60,33 +62,10 @@ int edge_compare(edge_t *a, edge_t *b)
 {
   int result;
 
-  return (result = strcmp(a->from.node->name, b->from.node->name)) || (result = strcmp(a->to.node->name, b->to.node->name)), result;
+  return (result = strcmp(a->from->name, b->from->name)) || (result = strcmp(a->to->name, b->to->name)), result;
 }
 
 */
-
-int edge_name_compare(edge_t *a, edge_t *b)
-{
-  int result;
-  char *name_a1, *name_a2, *name_b1, *name_b2;
-
-  if(strcmp(a->from.node->name, a->to.node->name) < 0)
-    name_a1 = a->from.node->name, name_a2 = a->to.node->name;
-  else
-    name_a1 = a->to.node->name, name_a2 = a->from.node->name;
-
-  if(strcmp(b->from.node->name, b->to.node->name) < 0)
-    name_b1 = b->from.node->name, name_b2 = b->to.node->name;
-  else
-    name_b1 = b->to.node->name, name_b2 = b->from.node->name;
-
-  result = strcmp(name_a1, name_b1);
-
-  if(result)
-    return result;
-  else
-    return strcmp(name_a2, name_b2);
-}
 
 int edge_weight_compare(edge_t *a, edge_t *b)
 {
@@ -97,7 +76,7 @@ int edge_weight_compare(edge_t *a, edge_t *b)
   if(result)
     return result;
   else
-    return edge_name_compare(a, b);
+    return edge_compare(a, b);
 }
 
 void init_edges(void)
@@ -111,7 +90,7 @@ cp
 avl_tree_t *new_edge_tree(void)
 {
 cp
-  return avl_alloc_tree((avl_compare_t)edge_name_compare, NULL);
+  return avl_alloc_tree((avl_compare_t)edge_compare, NULL);
 cp
 }
 
@@ -152,35 +131,32 @@ void edge_add(edge_t *e)
 cp
   avl_insert(edge_tree, e);
   avl_insert(edge_weight_tree, e);
-  avl_insert(e->from.node->edge_tree, e);
-  avl_insert(e->to.node->edge_tree, e);
+  avl_insert(e->from->edge_tree, e);
+cp
+  e->reverse = lookup_edge(e->to, e->from);
+  if(e->reverse)
+    e->reverse->reverse = e;
 cp
 }
 
 void edge_del(edge_t *e)
 {
 cp
+  if(e->reverse)
+    e->reverse->reverse = NULL;
+cp
   avl_delete(edge_tree, e);
   avl_delete(edge_weight_tree, e);
-  avl_delete(e->from.node->edge_tree, e);
-  avl_delete(e->to.node->edge_tree, e);
+  avl_delete(e->from->edge_tree, e);
 cp
 }
 
 edge_t *lookup_edge(node_t *from, node_t *to)
 {
-  edge_t v, *result;
+  edge_t v;
 cp
-  v.from.node = from;
-  v.to.node = to;
-
-  result = avl_search(edge_tree, &v);
-
-  if(result)
-    return result;
-cp
-  v.from.node = to;
-  v.to.node = from;
+  v.from = from;
+  v.to = to;
 
   return avl_search(edge_tree, &v);
 }
@@ -189,21 +165,18 @@ void dump_edges(void)
 {
   avl_node_t *node;
   edge_t *e;
-  char *from_udp, *to_udp;
+  char *address;
 cp
   syslog(LOG_DEBUG, _("Edges:"));
 
   for(node = edge_tree->head; node; node = node->next)
     {
       e = (edge_t *)node->data;
-      from_udp = sockaddr2hostname(&e->from.udpaddress);
-      to_udp = sockaddr2hostname(&e->to.udpaddress);
-      syslog(LOG_DEBUG, _(" %s at %s - %s at %s options %lx weight %d"),
-             e->from.node->name, from_udp,
-	     e->to.node->name, to_udp,
+      address = sockaddr2hostname(&e->address);
+      syslog(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
+             e->from->name, e->to->name, address,
 	     e->options, e->weight);
-      free(from_udp);
-      free(to_udp);	
+      free(address);
     }
 
   syslog(LOG_DEBUG, _("End of edges."));

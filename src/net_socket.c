@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.17 2002/09/03 20:43:25 guus Exp $
+    $Id: net_socket.c,v 1.1.2.18 2002/09/04 13:48:52 guus Exp $
 */
 
 #include "config.h"
@@ -63,6 +63,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "graph.h"
 #include "process.h"
 #include "route.h"
 #include "device.h"
@@ -146,7 +147,7 @@ cp
       return -1;
     }
 
-  if(listen(nfd, 0))
+  if(listen(nfd, 3))
     {
       close(nfd);
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "listen", strerror(errno));

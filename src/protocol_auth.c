@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.11 2002/09/04 08:36:34 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.12 2002/09/04 13:48:52 guus Exp $
 */
 
 #include "config.h"
@@ -48,6 +48,8 @@
 #include "meta.h"
 #include "connection.h"
 #include "node.h"
+#include "edge.h"
+#include "graph.h"
 
 #include "system.h"
 
@@ -460,20 +462,16 @@ cp
 int send_ack(connection_t *c)
 {
   /* ACK message contains rest of the information the other end needs
-     to create node_t structures. */
+     to create node_t and edge_t structures. */
 
   int x;
-  char *address, *port;
   struct timeval now;
 cp
   /* Estimate weight */
   
   gettimeofday(&now, NULL);
   c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
-  sockaddr2str(&c->address, &address, &port);
-  x = send_request(c, "%d %s %s %lx", ACK, myport, address, c->options);
-  free(address);
-  free(port);
+  x = send_request(c, "%d %s %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 cp
   return x;
 }
@@ -483,16 +481,13 @@ void send_everything(connection_t *c)
   avl_node_t *node, *node2;
   node_t *n;
   subnet_t *s;
-  connection_t *other;
+  edge_t *e;
 
-  /* Send all known nodes and subnets */
+  /* Send all known subnets */
   
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      
-      if(n != c->node && n != myself)
-        send_add_node(c, n);
 
       for(node2 = n->subnet_tree->head; node2; node2 = node2->next)
         {
@@ -501,27 +496,27 @@ void send_everything(connection_t *c)
         }
     }
 
-  /* Inform others of this new node */
-      
-  for(node = connection_tree->head; node; node = node->next)
+  /* Send all known edges */
+
+  for(node = edge_tree->head; node; node = node->next)
     {
-      other = (connection_t *)node->data;
-      
-      if(other->status.active && other != c)
-        send_add_node(other, c->node);
+      e = (edge_t *)node->data;
+
+      send_add_edge(c, e);
     }
 }
 
 int ack_h(connection_t *c)
 {
-  char myaddress[MAX_STRING_SIZE];
   char hisport[MAX_STRING_SIZE];
   char *hisaddress, *dummy;
+  int weight;
   long int options;
   node_t *n;
+  connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" %lx", hisport, myaddress, &options) != 3)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" %d %lx", hisport, &weight, &options) != 3)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
        return -1;
@@ -546,27 +541,29 @@ cp
             syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"), n->name, n->hostname);
           terminate_connection(n->connection, 0);
         }
+          
+      /* FIXME: check if information in existing node matches that of the other end of this connection */
     }
   
+  n->connection = c;
   c->node = n;
   c->options |= options;
-  c->myaddress = str2sockaddr(myaddress, myport);
-  
-  n->connection = c;
+
+  /* Create an edge_t for this connection */
+
+  c->edge = new_edge();
+cp  
+  c->edge->from = myself;
+  c->edge->to = n;
   sockaddr2str(&c->address, &hisaddress, &dummy);
-  node = avl_unlink(node_udp_tree, n);
-  n->address = str2sockaddr(hisaddress, hisport);
-  avl_insert_node(node_udp_tree, node);
-  if(n->hostname)
-    free(n->hostname);
-  n->hostname = sockaddr2hostname(&n->address);
-  n->options = c->options;
-  n->distance = 1;
-  n->via = n->nexthop = n;
-  n->prevhop = myself;
-  n->status.reachable = 1;
-  n->status.validkey = 0;
-  n->status.waitingforkey = 0;
+  c->edge->address = str2sockaddr(hisaddress, hisport);
+  free(hisaddress);
+  free(dummy);
+  c->edge->weight = (weight + c->estimated_weight) / 2;
+  c->edge->connection = c;
+  c->edge->options = c->options;
+cp
+  edge_add(c->edge);
 
   /* Activate this connection */
 
@@ -577,9 +574,23 @@ cp
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), c->name, c->hostname);
 
 cp
-  /* Send him everything we know and tell the others about him */
+  /* Send him everything we know */
 
   send_everything(c);
+
+  /* Notify others of this connection */
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      other = (connection_t *)node->data;
+
+      if(other->status.active && other != c)
+        send_add_edge(other, c->edge);
+    }
+
+  /* Run MST and SSSP algorithms */
+ 
+  graph();
 cp
   return 0;
 }

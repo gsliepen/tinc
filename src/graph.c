@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.14 2002/07/10 11:27:06 guus Exp $
+    $Id: graph.c,v 1.1.2.15 2002/09/04 13:48:51 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -109,7 +109,7 @@ void mst_kruskal(void)
 
   /* Starting point */
   
-  ((edge_t *)edge_weight_tree->head->data)->from.node->status.visited = 1;
+  ((edge_t *)edge_weight_tree->head->data)->from->status.visited = 1;
 
   /* Add safe edges */
 
@@ -118,24 +118,25 @@ void mst_kruskal(void)
       next = node->next;
       e = (edge_t *)node->data;
 
-      if(e->from.node->status.visited == e->to.node->status.visited)
+      if(!e->reverse || e->from->status.visited == e->to->status.visited)
         {
           skipped = 1;
           continue;
         }
 
-      e->from.node->status.visited = 1;
-      e->to.node->status.visited = 1;
+      e->from->status.visited = 1;
+      e->to->status.visited = 1;
       if(e->connection)
         e->connection->status.mst = 1;
 
       safe_edges++;
 
       if(debug_lvl >= DEBUG_SCARY_THINGS)
-	syslog(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from.node->name, e->to.node->name, e->weight);
+	syslog(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name, e->to->name, e->weight);
 
       if(skipped)
         {
+	  skipped = 0;
           next = edge_weight_tree->head;
           continue;
         }
@@ -154,7 +155,6 @@ void sssp_bfs(void)
   avl_node_t *node, *from, *next, *to;
   edge_t *e;
   node_t *n;
-  halfconnection_t to_hc, from_hc;
   avl_tree_t *todo_tree;
   int indirect;
   char *name;
@@ -195,52 +195,50 @@ void sssp_bfs(void)
           for(to = n->edge_tree->head; to; to = to->next)        /* "to" is the edge connected to "from" */
             {
               e = (edge_t *)to->data;
-
-              if(e->from.node == n)                              /* "from_hc" is the halfconnection with .node == from */
-                to_hc = e->to, from_hc = e->from;
-              else
-                to_hc = e->from, from_hc = e->to;
+	      
+	      if(!e->reverse)
+                continue;
 
               /* Situation:
 
 	        	  /
 	        	 /
-		 ------(n)from_hc-----to_hc
+		 ------(n)-----(e->to)
                 	 \
                 	  \
 
-                 n->address is set to the to_hc.udpaddress of the edge left of n.
-		 We are currently examining the edge right of n:
+                 n->address is set to the e->address of the edge left of n to n.
+		 We are currently examining the edge e right of n from n:
 
-                 - If from_hc.udpaddress != n->address, then to_hc.node is probably
+                 - If e->reverse->address != n->address, then e->to is probably
 		   not reachable for the nodes left of n. We do as if the indirectdata
 		   flag is set on edge e.
-		 - If edge e provides for better reachability of to_hc.node, update
-		   to_hc.node and (re)add it to the todo_tree to (re)examine the reachability
+		 - If edge e provides for better reachability of e->to, update
+		   e->to and (re)add it to the todo_tree to (re)examine the reachability
 		   of nodes behind it.
 	      */
 
-              indirect = n->status.indirect || e->options & OPTION_INDIRECT || ((n != myself) && sockaddrcmp(&n->address, &from_hc.udpaddress));
+              indirect = n->status.indirect || e->options & OPTION_INDIRECT || ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
 
-              if(to_hc.node->status.visited && (!to_hc.node->status.indirect || indirect))
+              if(e->to->status.visited && (!e->to->status.indirect || indirect))
 	        continue;
 
-              to_hc.node->status.visited = 1;
-              to_hc.node->status.indirect = indirect;
-              to_hc.node->nexthop = (n->nexthop == myself) ? to_hc.node : n->nexthop;
-              to_hc.node->via = indirect ? n->via : to_hc.node;
-	      to_hc.node->options = e->options;
-              if(sockaddrcmp(&to_hc.node->address, &to_hc.udpaddress))
-	      {
-                node = avl_unlink(node_udp_tree, to_hc.node);
-                to_hc.node->address = to_hc.udpaddress;
-		if(to_hc.node->hostname)
-		  free(to_hc.node->hostname);
-		to_hc.node->hostname = sockaddr2hostname(&to_hc.udpaddress);
-                avl_insert_node(node_udp_tree, node);
-	      }
+              e->to->status.visited = 1;
+              e->to->status.indirect = indirect;
+              e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+              e->to->via = indirect ? n->via : e->to;
+	      e->to->options = e->options;
+              if(sockaddrcmp(&e->to->address, &e->address))
+	        {
+                  node = avl_unlink(node_udp_tree, e->to);
+                  e->to->address = e->address;
+		  if(e->to->hostname)
+		    free(e->to->hostname);
+		  e->to->hostname = sockaddr2hostname(&e->to->address);
+                  avl_insert_node(node_udp_tree, node);
+	        }
               node = avl_alloc_node();
-              node->data = to_hc.node;
+              node->data = e->to;
               avl_insert_before(todo_tree, from, node);
             }
 
@@ -257,7 +255,7 @@ void sssp_bfs(void)
       next = node->next;
       n = (node_t *)node->data;
 
-      if(n->status.visited ^ n->status.reachable)
+      if(n->status.visited != n->status.reachable)
       {
         n->status.reachable = !n->status.reachable;
         if(debug_lvl >= DEBUG_TRAFFIC)
@@ -266,13 +264,9 @@ void sssp_bfs(void)
 	  else
 	    syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"), n->name, n->hostname);
 
-          if(!n->status.reachable)
-            {
-              n->status.reachable = 0;
-	      n->status.validkey = 0;
-	      n->status.waitingforkey = 0;
-	      n->sent_seqno = 0;
-            }
+	n->status.validkey = 0;
+	n->status.waitingforkey = 0;
+	n->sent_seqno = 0;
 
 	asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
 	asprintf(&envp[1], "DEVICE=%s", device?device:"");
