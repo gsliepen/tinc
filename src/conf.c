@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.36 2001/01/05 23:53:49 guus Exp $
+    $Id: conf.c,v 1.9.4.37 2001/01/06 18:03:39 guus Exp $
 */
 
 #include "config.h"
@@ -357,19 +357,18 @@ int isadir(const char* f)
   struct stat s;
 
   if(stat(f, &s) < 0)
-    {
-      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
-	      f);
-      return -1;
-    }
-
-  return S_ISDIR(s.st_mode);
+    return 0;
+  else
+    return S_ISDIR(s.st_mode);
 }
 
 int is_safe_path(const char *file)
 {
   char *p;
+  const char *f;
+  char x;
   struct stat s;
+  char l[MAXBUFSIZE];
 
   if(*file != '/')
     {
@@ -378,52 +377,85 @@ int is_safe_path(const char *file)
     }
 
   p = strrchr(file, '/');
+  
+  if(p == file)		/* It's in the root */
+    p++;
+    
+  x = *p;
   *p = '\0';
-  if(stat(file, &s) < 0)
+
+  f = file;
+check1:
+  if(lstat(f, &s) < 0)
     {
       syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
-	      file);
+	      f);
       return 0;
-    }
-  if(s.st_uid != geteuid())
-    {
-      syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
-	      file, s.st_uid, geteuid());
-      return 0;
-    }
-  if(S_ISLNK(s.st_mode))
-    {
-      syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
-	      file);
-      /* fixme: read the symlink and start again */
     }
 
-  *p = '/';
-  if(stat(file, &s) < 0 && errno != ENOENT)
-    {
-      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
-	      file);
-      return 0;
-    }
-  if(errno == ENOENT)
-    return 1;
   if(s.st_uid != geteuid())
     {
       syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
-	      file, s.st_uid, geteuid());
+	      f, s.st_uid, geteuid());
       return 0;
     }
+
   if(S_ISLNK(s.st_mode))
     {
       syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
-	      file);
-      /* fixme: read the symlink and start again */
+	      f);
+
+      if(readlink(f, l, MAXBUFSIZE) < 0)
+        {
+          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %m"), f);
+          return 0;
+        }
+      
+      f = l;
+      goto check1;
     }
+
+  *p = x;
+  f = file;
+  
+check2:
+  if(lstat(f, &s) < 0 && errno != ENOENT)
+    {
+      syslog(LOG_ERR, _("Couldn't stat `%s': %m"),
+	      f);
+      return 0;
+    }
+    
+  if(errno == ENOENT)
+    return 1;
+
+  if(s.st_uid != geteuid())
+    {
+      syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+	      f, s.st_uid, geteuid());
+      return 0;
+    }
+
+  if(S_ISLNK(s.st_mode))
+    {
+      syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
+	      f);
+
+      if(readlink(f, l, MAXBUFSIZE) < 0)
+        {
+          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %m"), f);
+          return 0;
+        }
+      
+      f = l;
+      goto check2;
+    }
+
   if(s.st_mode & 0007)
     {
       /* Accessible by others */
       syslog(LOG_ERR, _("`%s' has unsecure permissions"),
-	      file);
+	      f);
       return 0;
     }
   
@@ -435,7 +467,6 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
   FILE *r;
   char *directory;
   char *fn;
-  int len;
 
   /* Check stdin and stdout */
   if(!isatty(0) || !isatty(1))
@@ -469,22 +500,9 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
       char *p;
       
       directory = get_current_dir_name();
-      len = strlen(fn) + strlen(directory) + 2; /* 1 for the / */
-      p = xmalloc(len);
-      snprintf(p, len, "%s/%s", directory, fn);
+      asprintf(&p, "%s/%s", directory, fn);
       free(fn);
       free(directory);
-      fn = p;
-    }
-
-  if(isadir(fn) > 0) /* -1 is error */
-    {
-      char *p;
-
-      len = strlen(fn) + strlen(filename) + 2; /* 1 for the / */
-      p = xmalloc(len);
-      snprintf(p, len, "%s/%s", fn, filename);
-      free(fn);
       fn = p;
     }
 

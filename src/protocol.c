@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.71 2001/01/05 23:53:51 guus Exp $
+    $Id: protocol.c,v 1.28.4.72 2001/01/06 18:03:40 guus Exp $
 */
 
 #include "config.h"
@@ -196,6 +196,7 @@ int id_h(connection_t *cl)
   connection_t *old;
   unsigned short int port;
   char name[MAX_STRING_SIZE];
+  avl_node_t *node;
 cp
   if(sscanf(cl->buffer, "%*d "MAX_STRING" %d %lx %hd", name, &cl->protocol_version, &cl->options, &port) != 4)
     {
@@ -256,9 +257,9 @@ cp
 
   /* And uhr... cl->port just changed so we have to unlink it from the connection tree and re-insert... */
   
-  avl_unlink(connection_tree, cl);
+  node = avl_unlink(connection_tree, cl);
   cl->port = port;
-  avl_insert(connection_tree, cl);
+  avl_insert_node(connection_tree, node);
 
   /* Read in the public key, so that we can send a challenge */
 

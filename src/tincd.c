@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.39 2001/01/05 23:53:53 guus Exp $
+    $Id: tincd.c,v 1.10.4.40 2001/01/06 18:03:41 guus Exp $
 */
 
 #include "config.h"
@@ -229,9 +229,11 @@ int keygen(int bits)
 {
   RSA *rsa_key;
   FILE *f;
+  char *filename;
 
   fprintf(stderr, _("Generating %d bits keys:\n"), bits);
   rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
+
   if(!rsa_key)
     {
       fprintf(stderr, _("Error during key generation!"));
@@ -240,15 +242,19 @@ int keygen(int bits)
   else
     fprintf(stderr, _("Done.\n"));
 
-  if((f = ask_and_safe_open("rsa_key.pub", _("public RSA key"))) == NULL)
+  asprintf(&filename, "%s/rsa_key.pub", confbase);
+  if((f = ask_and_safe_open(filename, _("public RSA key"))) == NULL)
     return -1;
   PEM_write_RSAPublicKey(f, rsa_key);
   fclose(f);
+  free(filename);
   
-  if((f = ask_and_safe_open("rsa_key.priv", _("private RSA key"))) == NULL)
+  asprintf(&filename, "%s/rsa_key.priv", confbase);
+  if((f = ask_and_safe_open(filename, _("private RSA key"))) == NULL)
     return -1;
   PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
   fclose(f);
+  free(filename);
 
   return 0;
 }
@@ -265,7 +271,7 @@ void make_names(void)
       if(!confbase)
         asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
       else
-        fprintf(stderr, _("Both netname and configuration directory given, using the latter...\n"));
+        syslog(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
       if(!identname)
         asprintf(&identname, "tinc.%s", netname);
     }
@@ -283,8 +289,6 @@ void make_names(void)
 int
 main(int argc, char **argv, char **envp)
 {
-  openlog("tinc", LOG_PERROR, LOG_DAEMON);	/* Catch all syslog() calls issued before detaching */
-
   program_name = argv[0];
 
   setlocale (LC_ALL, "");
@@ -315,9 +319,11 @@ main(int argc, char **argv, char **envp)
 
   if(geteuid())
     {
-      fprintf(stderr, _("You must be root to run this program. Sorry.\n"));
+      fprintf(stderr, _("You must be root to run this program.\n"));
       return 1;
     }
+
+  openlog("tinc", LOG_PERROR, LOG_DAEMON);	/* Catch all syslog() calls issued before detaching */
 
   g_argv = argv;
 
