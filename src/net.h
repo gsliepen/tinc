@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.24 2000/12/22 21:34:23 guus Exp $
+    $Id: net.h,v 1.9.4.25 2001/01/07 15:25:44 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -117,9 +117,7 @@ extern void close_network_connections(void);
 extern void main_loop(void);
 extern int setup_vpn_connection(connection_t *);
 extern void terminate_connection(connection_t *);
-extern void flush_queues(connection_t *);
-extern void add_queue(packet_queue_t **, void *, size_t);
-
+extern void flush_queue(connection_t *);
 
 #include <config.h>
 #ifdef HAVE_OPENSSL_RSA_H

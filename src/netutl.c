@@ -1,6 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
     Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
+                            2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.16 2000/11/22 18:54:08 guus Exp $
+    $Id: netutl.c,v 1.12.4.17 2001/01/07 15:25:44 guus Exp $
 */
 
 #include "config.h"
@@ -39,27 +40,6 @@
 #include "netutl.h"
 
 #include "system.h"
-
-
-/*
-  free a queue and all of its elements
-*/
-void destroy_queue(packet_queue_t *pq)
-{
-  queue_element_t *p, *q;
-cp
-  for(p = pq->head; p != NULL; p = q)
-    {
-      q = p->next;
-      if(p->packet)
-	free(p->packet);
-      free(p);
-    }
-
-  free(pq);
-cp
-}
-
 
 char *hostlookup(unsigned long addr)
 {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.4 2001/01/05 23:53:53 guus Exp $
+    $Id: route.c,v 1.1.2.5 2001/01/07 15:25:49 guus Exp $
 */
 
 #include "config.h"
@@ -33,7 +33,36 @@
 
 #include "system.h"
 
-int routing_mode = RMODE_ROUTER;	/* Will be used to determine if we route by MAC or by payload's protocol */
+int routing_mode = RMODE_ROUTER;
+
+void learn_mac(connection_t *source, mac_t *address)
+{
+  connection_t *old;
+  subnet_t *subnet;
+cp
+  old = lookup_subnet_mac(address)->owner;
+  
+  if(!old)
+    {
+      subnet = new_subnet();
+      subnet->type = SUBNET_MAC;
+//      subnet->lasttime = gettimeofday();
+      memcpy(&subnet->net.mac.address, address, sizeof(mac_t));
+      subnet_add(source, subnet);
+
+      if(DEBUG_LVL >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_DEBUG, _("Learned new MAC address %x:%x:%x:%x:%x:%x from %s (%s)"),
+               address->address.x[0],
+               address->address.x[1],
+               address->address.x[2],
+               address->address.x[3],
+               address->address.x[4],
+               address->address.x[5],
+               cl->name, cl->hostname);
+        }
+    }
+}
 
 connection_t *route_mac(connection_t *source, vpn_packet_t *packet)
 {
@@ -42,17 +71,7 @@ connection_t *route_mac(connection_t *source, vpn_packet_t *packet)
 cp
   /* Learn source address */
 
-  oldsrc = lookup_subnet_mac((mac_t *)(&packet->data[0]))->owner;
-  
-  if(!oldsrc)
-    {
-      subnet = new_subnet();
-      subnet->type = SUBNET_MAC;
-      memcpy(&subnet->net.mac.address, (mac_t *)(&packet->data[0]), sizeof(mac_t));
-      subnet_add(source, subnet);
-    }
-
-  /* FIXME: do ageing and roaming */
+  learn_mac(source, (mac_t *)(&packet->data[0]));
   
   /* Lookup destination address */
     
@@ -96,46 +115,67 @@ connection_t *route_ipv6(vpn_packet_t *packet)
 cp
   if(debug_lvl > DEBUG_NOTHING)
     {
-      syslog(LOG_WARNING, _("Cannot route packet: IPv6 routing not implemented yet"));
+      syslog(LOG_WARNING, _("Cannot route packet: IPv6 routing not yet implemented"));
     } 
 cp
   return NULL;
 }
 
-connection_t *route_packet(connection_t *source, vpn_packet_t *packet)
+void route_outgoing(vpn_packet_t *packet)
 {
   unsigned short int type;
+  avl_tree_t *node;
+  connection_t *cl;
 cp
   /* FIXME: multicast? */
 
   switch(routing_mode)
     {
-      case RMODE_HUB:
-        return broadcast;
-        
-      case RMODE_SWITCH:
-        return route_mac(source, packet);
-        
       case RMODE_ROUTER:
         type = ntohs(*((unsigned short*)(&packet->data[12])));
         switch(type)
           {
             case 0x0800:
-              return route_ipv4(packet);
+              cl = route_ipv4(packet);
+              break;
             case 0x86DD:
-              return route_ipv6(packet);
-      /*
-            case 0x8137:
-              return route_ipx(packet);
-            case 0x0806:
-              return route_arp(packet);
-      */
+              cl = route_ipv6(packet);
+              break;
             default:
               if(debug_lvl >= DEBUG_TRAFFIC)
                 {
                   syslog(LOG_WARNING, _("Cannot route packet: unknown type %hx"), type);
                 }
-              return NULL;
+              return;
            }
+         send_packet(cl, packet);
+         break;
+        
+      case RMODE_SWITCH:
+        cl = route_mac(packet);
+        if(cl)
+          send_packet(cl, packet);
+        break;
+        
+      case RMODE_HUB:
+        for(node = connection_tree->head; node; node = node->next)
+          {
+            cl = (connection_t *)node->data;
+            if(cl->status.active)
+              send_packet(cl, packet);
+          }
+        break;
     }
+}
+
+void route_incoming(connection_t *source, vpn_packet_t *packet)
+{
+  switch(routing_mode)
+    {
+      case RMODE_SWITCH:
+        learn_mac(source, &packet->data[0]);
+        break;
+    }
+  
+  accept_packet(packet);
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.7 2001/01/05 23:53:49 guus Exp $
+    $Id: connection.c,v 1.1.2.8 2001/01/07 15:25:40 guus Exp $
 */
 
 #include "config.h"
@@ -26,6 +26,7 @@
 #include <syslog.h>
 
 #include <avl_tree.h>
+#include <list.h>
 
 #include "net.h"	/* Don't ask. */
 #include "netutl.h"
@@ -77,6 +78,7 @@ connection_t *new_connection(void)
   connection_t *p = (connection_t *)xmalloc_and_zero(sizeof(*p));
 cp
   p->subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, NULL);
+  p->queue = list_alloc((list_action_t)free);
 cp
   return p;
 }
@@ -84,10 +86,8 @@ cp
 void free_connection(connection_t *p)
 {
 cp
-  if(p->sq)
-    destroy_queue(p->sq);
-  if(p->rq)
-    destroy_queue(p->rq);
+  if(p->queue)
+    list_delete_list(p->queue);
   if(p->name && p->name!=unknown)
     free(p->name);
   if(p->hostname)

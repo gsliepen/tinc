@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.72 2001/01/06 18:03:40 guus Exp $
+    $Id: protocol.c,v 1.28.4.73 2001/01/07 15:25:45 guus Exp $
 */
 
 #include "config.h"
@@ -35,6 +35,7 @@
 #include <utils.h>
 #include <xalloc.h>
 #include <avl_tree.h>
+#include <list.h>
 
 #include <netinet/in.h>
 
@@ -1258,6 +1259,8 @@ cp
 
   from->status.validkey = 1;
   from->status.waitingforkey = 0;
+  
+  flush_queue(from);
 cp
   return 0;
 }

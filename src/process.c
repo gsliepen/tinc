@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.18 2001/01/05 23:53:51 guus Exp $
+    $Id: process.c,v 1.1.2.19 2001/01/07 15:25:45 guus Exp $
 */
 
 #include "config.h"
@@ -35,7 +35,6 @@
 #include <unistd.h>
 #include <termios.h>
 
-#include <list.h>
 #include <pidfile.h>
 #include <utils.h>
 #include <xalloc.h>

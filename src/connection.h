@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.4 2001/01/05 23:53:49 guus Exp $
+    $Id: connection.h,v 1.1.2.5 2001/01/07 15:25:41 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
 #include <avl_tree.h>
+#include <list.h>
 
 #include "config.h"
 
@@ -74,16 +75,12 @@ typedef struct connection_t {
   int socket;                      /* our udp vpn socket */
   int meta_socket;                 /* our tcp meta socket */
   status_bits_t status;            /* status info */
-  packet_queue_t *sq;              /* pending outgoing packets */
-  packet_queue_t *rq;              /* pending incoming packets (they have no
-				      valid key to be decrypted with) */
-  RSA *rsa_key;                    /* the public/private key */
 
+  RSA *rsa_key;                    /* the public/private key */
   EVP_CIPHER_CTX *cipher_inctx;    /* Context of encrypted meta data that will come from him to us */
   EVP_CIPHER_CTX *cipher_outctx;   /* Context of encrypted meta data that will be sent from us to him */
   char *cipher_inkey;              /* His symmetric meta key */
   char *cipher_outkey;             /* Our symmetric meta key */
-
   EVP_CIPHER *cipher_pkttype;      /* Cipher type for encrypted vpn packets */ 
   char *cipher_pktkey;             /* Cipher key and iv */
   int cipher_pktkeylength;         /* Cipher key and iv length*/
@@ -94,6 +91,8 @@ typedef struct connection_t {
   int allow_request;               /* defined if there's only one request possible */
 
   time_t last_ping_time;           /* last time we saw some activity from the other end */  
+
+  list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */

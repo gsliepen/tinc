@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.89 2001/01/05 23:53:49 guus Exp $
+    $Id: net.c,v 1.35.4.90 2001/01/07 15:25:41 guus Exp $
 */
 
 #include "config.h"
@@ -72,10 +72,10 @@
 #include <utils.h>
 #include <xalloc.h>
 #include <avl_tree.h>
+#include <list.h>
 
 #include "conf.h"
 #include "connection.h"
-#include "list.h"
 #include "meta.h"
 #include "net.h"
 #include "netutl.h"
@@ -191,129 +191,6 @@ cp
 }
 
 /*
-  add the given packet of size s to the
-  queue q, be it the send or receive queue
-*/
-void add_queue(packet_queue_t **q, void *packet, size_t s)
-{
-  queue_element_t *e;
-cp
-  e = xmalloc(sizeof(*e));
-  e->packet = xmalloc(s);
-  memcpy(e->packet, packet, s);
-
-  if(!*q)
-    {
-      *q = xmalloc(sizeof(**q));
-      (*q)->head = (*q)->tail = NULL;
-    }
-
-  e->next = NULL;			/* We insert at the tail */
-
-  if((*q)->tail)			/* Do we have a tail? */
-    {
-      (*q)->tail->next = e;
-      e->prev = (*q)->tail;
-    }
-  else					/* No tail -> no head too */
-    {
-      (*q)->head = e;
-      e->prev = NULL;
-    }
-
-  (*q)->tail = e;
-cp
-}
-
-/* Remove a queue element */
-void del_queue(packet_queue_t **q, queue_element_t *e)
-{
-cp
-  free(e->packet);
-
-  if(e->next)				/* There is a successor, so we are not tail */
-    {
-      if(e->prev)			/* There is a predecessor, so we are not head */
-        {
-          e->next->prev = e->prev;
-          e->prev->next = e->next;
-        }
-      else				/* We are head */
-        {
-          e->next->prev = NULL;
-          (*q)->head = e->next;
-        }
-    }
-  else					/* We are tail (or all alone!) */
-    {          
-      if(e->prev)			/* We are not alone :) */
-        {
-          e->prev->next = NULL;
-          (*q)->tail = e->prev;
-        }
-      else				/* Adieu */
-        {
-          free(*q);
-          *q = NULL;
-        }
-    }
-    
-  free(e);
-cp
-}
-
-/*
-  flush a queue by calling function for
-  each packet, and removing it when that
-  returned a zero exit code
-*/
-void flush_queue(connection_t *cl, packet_queue_t **pq,
-		 int (*function)(connection_t*,vpn_packet_t*))
-{
-  queue_element_t *p, *next = NULL;
-cp
-  for(p = (*pq)->head; p != NULL; )
-    {
-      next = p->next;
-
-      if(!function(cl, p->packet))
-        del_queue(pq, p);
-        
-      p = next;
-    }
-
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_DEBUG, _("Queue flushed"));
-cp
-}
-
-/*
-  flush the send&recv queues
-  void because nothing goes wrong here, packets
-  remain in the queue if something goes wrong
-*/
-void flush_queues(connection_t *cl)
-{
-cp
-  if(cl->sq)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_DEBUG, _("Flushing send queue for %s (%s)"),
-	       cl->name, cl->hostname);
-      flush_queue(cl, &(cl->sq), xsend);
-    }
-
-  if(cl->rq)
-    {
-      if(debug_lvl >=  DEBUG_TRAFFIC)
-	syslog(LOG_DEBUG, _("Flushing receive queue for %s (%s)"),
-	       cl->name, cl->hostname);
-      flush_queue(cl, &(cl->rq), xrecv);
-    }
-cp
-}
-
-/*
   send a packet to the given vpn ip.
 */
 int send_packet(ip_t to, vpn_packet_t *packet)
@@ -345,37 +222,50 @@ cp
       return -1;
     }
 
+  if(!cl->status.active)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+	syslog(LOG_INFO, _("%s (%s) is not active, dropping packet"),
+	       cl->name, cl->hostname);
+
+      return 0;
+    }
+
   /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
 
   /* FIXME - check for indirection and reprogram it The Right Way(tm) this time. */
   
   if(!cl->status.validkey)
     {
-/* FIXME: Don't queue until everything else is fixed.
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
 	       cl->name, cl->hostname);
-      add_queue(&(cl->sq), packet, packet->len + 2);
-*/
+
+      list_insert_tail(cl->queue, packet);
+
       if(!cl->status.waitingforkey)
 	send_req_key(myself, cl);			/* Keys should be sent to the host running the tincd */
       return 0;
     }
 
-  if(!cl->status.active)
-    {
-/* FIXME: Don't queue until everything else is fixed.
-      if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"),
-	       cl->name, cl->hostname);
-      add_queue(&(cl->sq), packet, packet->len + 2);
-*/
-      return 0; /* We don't want to mess up, do we? */
-    }
-
   /* can we send it? can we? can we? huh? */
 cp
   return xsend(cl, packet);
+}
+
+void flush_queue(connection_t *cl)
+{
+  list_node_t *node, *next;
+
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_INFO, _("Flushing queue for %s (%s)"), cl->name, cl->hostname);
+  
+  for(node = cl->queue->head; node; node = next)
+    {
+      next = node->next;
+      xsend(cl, (vpn_packet_t *)node->data);
+      list_delete_node(cl->queue, node);
+    }
 }
 
 /*
