@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.33 2002/02/10 21:57:54 guus Exp $
+    $Id: process.c,v 1.1.2.34 2002/02/12 14:29:00 guus Exp $
 */
 
 #include "config.h"
@@ -307,7 +307,7 @@ cp
 */
 
 RETSIGTYPE
-sigterm_handler(int a, siginfo_t *info, void *b)
+sigterm_handler(int a)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got TERM signal"));
@@ -316,7 +316,7 @@ sigterm_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigquit_handler(int a, siginfo_t *info, void *b)
+sigquit_handler(int a)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got QUIT signal"));
@@ -324,7 +324,7 @@ sigquit_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigsegv_square(int a, siginfo_t *info, void *b)
+sigsegv_square(int a)
 {
   syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
   cp_trace();
@@ -332,7 +332,7 @@ sigsegv_square(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigsegv_handler(int a, siginfo_t *info, void *b)
+sigsegv_handler(int a)
 {
   struct sigaction act;
   syslog(LOG_ERR, _("Got SEGV signal"));
@@ -342,10 +342,9 @@ sigsegv_handler(int a, siginfo_t *info, void *b)
     {
       syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
 
-      act.sa_handler = NULL;
+      act.sa_handler = sigsegv_square;
       act.sa_mask = emptysigset;
-      act.sa_flags = SA_SIGINFO;
-      act.sa_sigaction = sigsegv_square;
+      act.sa_flags = 0;
       sigaction(SIGSEGV, &act, NULL);
 
       close_network_connections();
@@ -361,7 +360,7 @@ sigsegv_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sighup_handler(int a, siginfo_t *info, void *b)
+sighup_handler(int a)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got HUP signal"));
@@ -369,7 +368,7 @@ sighup_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigint_handler(int a, siginfo_t *info, void *b)
+sigint_handler(int a)
 {
   if(saved_debug_lvl)
     {
@@ -388,7 +387,7 @@ sigint_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigalrm_handler(int a, siginfo_t *info, void *b)
+sigalrm_handler(int a)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got ALRM signal"));
@@ -396,13 +395,13 @@ sigalrm_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigusr1_handler(int a, siginfo_t *info, void *b)
+sigusr1_handler(int a)
 {
   dump_connections();
 }
 
 RETSIGTYPE
-sigusr2_handler(int a, siginfo_t *info, void *b)
+sigusr2_handler(int a)
 {
   dump_device_stats();
   dump_nodes();
@@ -411,21 +410,21 @@ sigusr2_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
-sigwinch_handler(int a, siginfo_t *info, void *b)
+sigwinch_handler(int a)
 {
   extern int do_purge;
   do_purge = 1;
 }
 
 RETSIGTYPE
-unexpected_signal_handler(int a, siginfo_t *info, void *b)
+unexpected_signal_handler(int a)
 {
   syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
   cp_trace();
 }
 
 RETSIGTYPE
-ignore_signal_handler(int a, siginfo_t *info, void *b)
+ignore_signal_handler(int a)
 {
   if(debug_lvl >= DEBUG_SCARY_THINGS)
   {
@@ -436,7 +435,7 @@ ignore_signal_handler(int a, siginfo_t *info, void *b)
 
 struct {
   int signal;
-  void (*handler)(int, siginfo_t *, void *);
+  void (*handler)(int);
 } sighandlers[] = {
   { SIGHUP, sighup_handler },
   { SIGTERM, sigterm_handler },
@@ -461,28 +460,28 @@ setup_signals(void)
   sigemptyset(&emptysigset);
   act.sa_handler = NULL;
   act.sa_mask = emptysigset;
-  act.sa_flags = SA_SIGINFO;
+  act.sa_flags = 0;
 
   /* Set a default signal handler for every signal, errors will be
      ignored. */
   for(i = 0; i < NSIG; i++) 
     {
       if(!do_detach)
-        act.sa_sigaction = (void(*)(int, siginfo_t *, void *))SIG_DFL;
+        act.sa_handler = SIG_DFL;
       else
-        act.sa_sigaction = unexpected_signal_handler;
+        act.sa_handler = unexpected_signal_handler;
       sigaction(i, &act, NULL);
     }
 
   /* If we didn't detach, allow coredumps */
   if(!do_detach)
-    sighandlers[3].handler = (void(*)(int, siginfo_t *, void *))SIG_DFL;
+    sighandlers[3].handler = SIG_DFL;
 
   /* Then, for each known signal that we want to catch, assign a
      handler to the signal, with error checking this time. */
   for(i = 0; sighandlers[i].signal; i++)
     {
-      act.sa_sigaction = sighandlers[i].handler;
+      act.sa_handler = sighandlers[i].handler;
       if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
 	fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %s\n"),
 		sighandlers[i].signal, strsignal(sighandlers[i].signal), strerror(errno));
