@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: process.c,v 1.3 2002/04/13 10:25:38 zarq Exp $
 */
 
 #include "config.h"
@@ -189,8 +189,10 @@ cp
       if(!write_pid(pidfilename))
         return -1;
     }
-  
+
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
+  log_add_hook(log_syslog);
+  log_del_hook(log_default);
 
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
