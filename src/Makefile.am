@@ -12,7 +12,7 @@ noinst_HEADERS = conf.h encr.h net.h netutl.h protocol.h
 LIBS = @LIBS@
 
 tincd_LDADD = $(top_builddir)/cipher/libcipher.la \
-	$(top_builddir)/lib/libvpn.a -ldl
+	$(top_builddir)/lib/libvpn.a
 
 genauth_LDADD = $(top_builddir)/lib/libvpn.a
 
