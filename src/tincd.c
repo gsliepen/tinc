@@ -19,6 +19,9 @@
 
 /*
  * $Log: tincd.c,v $
+ * Revision 1.7  2000/04/27 13:47:51  zarq
+ * Default config file name is tinc.conf, and pidfile is tinc.pid.
+ *
  * Revision 1.6  2000/04/18 16:04:10  zarq
  * Address for bugreports changed to tinc@nl.linux.org.
  *
@@ -304,30 +307,30 @@ void make_names(void)
       if(netname)
 	{
 	  configfilename = xmalloc(strlen(netname)+18+strlen(CONFDIR));
-	  sprintf(configfilename, "%s/tinc/%s/tincd.conf", CONFDIR, netname);
+	  sprintf(configfilename, "%s/tinc/%s/tinc.conf", CONFDIR, netname);
 	}
       else
 	{
 	  configfilename = xmalloc(17+strlen(CONFDIR));
-	  sprintf(configfilename, "%s/tinc/tincd.conf", CONFDIR);
+	  sprintf(configfilename, "%s/tinc/tinc.conf", CONFDIR);
 	}
     }
   
   if(netname)
     {
       pidfilename = xmalloc(strlen(netname)+20);
-      sprintf(pidfilename, "/var/run/tincd.%s.pid", netname);
+      sprintf(pidfilename, "/var/run/tinc.%s.pid", netname);
       confbase = xmalloc(strlen(netname)+8+strlen(CONFDIR));
       sprintf(confbase, "%s/tinc/%s/", CONFDIR, netname);
       identname = xmalloc(strlen(netname)+7);
-      sprintf(identname, "tincd.%s", netname);
+      sprintf(identname, "tinc.%s", netname);
     }
   else
     {
-      pidfilename = "/var/run/tincd.pid";
+      pidfilename = "/var/run/tinc.pid";
       confbase = xmalloc(7+strlen(CONFDIR));
       sprintf(confbase, "%s/tinc/", CONFDIR);
-      identname = "tincd";
+      identname = "tinc";
     }
 }
 
