@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.67 2003/10/06 13:49:57 guus Exp $
+    $Id: route.c,v 1.1.2.68 2003/10/06 13:57:12 guus Exp $
 */
 
 #include "system.h"
@@ -59,14 +59,14 @@ mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
 
 /* Sizes of various headers */
 
-static size_t ether_size = sizeof(struct ether_header);
-static size_t arp_size = sizeof(struct ether_arp);
-static size_t ip_size = sizeof(struct ip);
-static size_t icmp_size = sizeof(struct icmp) - sizeof(struct ip);
-static size_t ip6_size = sizeof(struct ip6_hdr);
-static size_t icmp6_size = sizeof(struct icmp6_hdr);
-static size_t ns_size = sizeof(struct nd_neighbor_solicit);
-static size_t opt_size = sizeof(struct nd_opt_hdr);
+static const size_t ether_size = sizeof(struct ether_header);
+static const size_t arp_size = sizeof(struct ether_arp);
+static const size_t ip_size = sizeof(struct ip);
+static const size_t icmp_size = sizeof(struct icmp) - sizeof(struct ip);
+static const size_t ip6_size = sizeof(struct ip6_hdr);
+static const size_t icmp6_size = sizeof(struct icmp6_hdr);
+static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
+static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
 /* RFC 1071 */
 
