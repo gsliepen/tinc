@@ -1,6 +1,6 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -302,21 +302,6 @@ cp
   /* can we send it? can we? can we? huh? */
 cp
   return xsend(cl, packet);
-}
-
-int send_broadcast(conn_list_t *cl, vpn_packet_t *packet)
-{
-  conn_list_t *p;
-cp
-  for(p = cl; p != NULL; p = p->next)
-    if(send_packet(p->real_ip, packet) < 0)
-      {
-	syslog(LOG_ERR, "Could not send a broadcast packet to %08lx (%08lx): %m",
-	       p->vpn_ip, p->real_ip);
-	break; /* FIXME: should retry later, and send a ping over the metaconnection. */
-      }
-cp
-  return 0;
 }
 
 /*

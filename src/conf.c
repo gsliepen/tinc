@@ -1,7 +1,7 @@
 /*
     conf.c -- configuration code
     Copyright (C) 1998 Emphyrio,
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,9 +17,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
-
-/* foute config read code, GPL, emphyrio 1998 */
-/* Mutilated by me -- Ivo */
 
 #include "config.h"
 
@@ -49,7 +46,7 @@ typedef struct internal_config_t {
   These are all the possible configurable values
 */
 static internal_config_t hazahaza[] = {
-  { "AllowConnect", allowconnect,   TYPE_BOOL },
+  { "AllowConnect", allowconnect,   TYPE_BOOL },   /* Is not used anywhere. Remove? */
   { "ConnectTo",    upstreamip,     TYPE_IP },
   { "ConnectPort",  upstreamport,   TYPE_INT },
   { "ListenPort",   listenport,     TYPE_INT },
@@ -200,4 +197,3 @@ get_config_val(which_t type)
   /* Not found */
   return NULL;
 }
-

@@ -1,6 +1,6 @@
 /*
     encr.h -- header for encr.c
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

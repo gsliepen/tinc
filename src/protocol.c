@@ -1,6 +1,6 @@
 /*
     protocol.c -- handle the meta-protocol
-    Copyright (C) 1999 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +39,8 @@
 
 char buffer[MAXBUFSIZE+1];
 int buflen;
+
+/* Outgoing request routines */
 
 int send_ack(conn_list_t *cl)
 {
@@ -180,7 +182,7 @@ cp
   return 0;
 }
 
-void send_key_changed2(void)
+void send_key_changed_all(void)
 {
   conn_list_t *p;
 cp

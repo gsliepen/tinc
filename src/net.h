@@ -1,6 +1,6 @@
 /*
     net.h -- header for net.c
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -130,7 +130,6 @@ extern conn_list_t *conn_list;
 extern conn_list_t *myself;
 
 extern int send_packet(ip_t, vpn_packet_t *);
-extern int send_broadcast(conn_list_t *, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);

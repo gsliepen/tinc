@@ -1,6 +1,6 @@
 /*
     protocol.h -- header for protocol.c
-    Copyright (C) 1999 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ extern int send_basic_info(conn_list_t *);
 extern int send_termreq(conn_list_t *);
 extern int send_timeout(conn_list_t *);
 extern int send_key_request(ip_t);
-extern void send_key_changed2(void);
+extern void send_key_changed_all(void);
 
 #endif /* __TINC_PROTOCOL_H__ */
 

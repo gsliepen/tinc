@@ -1,6 +1,6 @@
 /*
     encr.c -- everything that deals with encryption
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -345,7 +345,7 @@ void regenerate_keys(void)
 cp
   generate_private_key();
   calculate_public_key();
-  send_key_changed2();
+  send_key_changed_all();
   recalculate_encryption_keys();
 cp
 }

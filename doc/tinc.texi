@@ -12,7 +12,7 @@
 
 This is the info manual for tinc, a Virtual Private Network daemon.
 
-Copyright 1998 Ivo Timmermans <itimmermans@@bigfoot.com>
+Copyright 1998,199,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
 
      Permission is granted to make and distribute verbatim
      copies of this manual provided the copyright notice and
@@ -34,7 +34,7 @@ Copyright 1998 Ivo Timmermans <itimmermans@@bigfoot.com>
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1998 Ivo Timmermans <itimmermans@@bigfoot.com>
+Copyright @copyright{} 1998,1999,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
 
      Permission is granted to make and distribute verbatim
      copies of this manual provided the copyright notice and
@@ -765,6 +765,13 @@ have two connections, we also have two protocols. The protocol used for
 the UDP data is the ``data-protocol,'' the other one is the
 ``meta-protocol.''
 
+The reason we don't use TCP for both protocols is that UDP is much
+better for encapsulation, even while it is less reliable. The real
+problem is that when TCP would be used to encapsulate a TCP stream
+that's on the private network, for every packet sent there would be
+three ACK's sent instead of just one. Furthermore, if there would be
+a timeout, both TCP streams would sense the timeout, and both would
+start resending packets.
 
 @c ==================================================================
 @node    Security,  , The Connection, Technical information

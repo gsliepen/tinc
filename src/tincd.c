@@ -1,6 +1,6 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@
 
 /*
  * $Log: tincd.c,v $
+ * Revision 1.8  2000/05/14 12:22:42  guus
+ * Cleanups.
+ *
  * Revision 1.7  2000/04/27 13:47:51  zarq
  * Default config file name is tinc.conf, and pidfile is tinc.pid.
  *
@@ -343,7 +346,7 @@ main(int argc, char **argv, char **envp)
 
   if(show_version)
     {
-      printf("%s version %s\nCopyright (C) 1998,99 Ivo Timmermans and others,\n"
+      printf("%s version %s\nCopyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
 	     "see the AUTHORS file for a complete list.\n\n"
 	     "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 	     "and you are welcome to redistribute it under certain conditions;\n"
@@ -498,4 +501,3 @@ RETSIGTYPE parent_exit(int a)
 {
   exit(0);
 }
-

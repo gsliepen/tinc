@@ -1,6 +1,6 @@
 /*
     cipher.c -- header file for cipher.c
-    Copyright (C) 1999 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

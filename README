@@ -1,7 +1,7 @@
 This is the README file for tinc version 1.0.
 Installation instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com> and
+tinc is Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com> and
 others. For a complete list of authors see the AUTHORS file.
 This product includes software developed by Eric Young (eay@mincom.oz.au)
 
@@ -18,7 +18,11 @@ do this, configure will (hopefully) mention it to you.
 This version of tinc supports multiple virtual networks at once. To
 use this feature, you may supply a netname via the -n or --net
 options. The standard locations for the config files will then be
-/etc/tinc/<net>/.
+/etc/tinc/<net>/. Because of this feature, tinc will send packets
+directly to their destinations, instead of to the uplink. If this
+behaviour is undesirable (for instance because of firewalls or
+other restrictions), please use an older version of tinc (I would
+recommend tinc-0.2.19).
 
 In this version, MAC addresses are stripped off before encoding and
 sending a packet. When the packet reaches its destination, the MAC

@@ -1,6 +1,6 @@
 /*
     netutl.c -- some supporting network utility code
-    Copyright (C) 1998,99 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@
 conn_list_t *lookup_conn(ip_t ip)
 {
   conn_list_t *p = conn_list;
-
+cp
   /* Exact match suggested by James B. MacLean */
   for(p = conn_list; p != NULL; p = p->next)
     if(ip  == p->vpn_ip)
