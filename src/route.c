@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.2 2002/04/09 15:26:01 zarq Exp $
+    $Id: route.c,v 1.3 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -38,7 +38,6 @@
 #include <netinet/if_ether.h>
 #include <utils.h>
 #include <xalloc.h>
-#include <syslog.h>
 #include <string.h>
 
 #include <avl_tree.h>
@@ -49,6 +48,7 @@
 #include "route.h"
 #include "protocol.h"
 #include "device.h"
+#include "logging.h"
 
 #include "system.h"
 

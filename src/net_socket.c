@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: net_socket.c,v 1.3 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -36,7 +36,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
@@ -63,6 +62,7 @@
 #include "route.h"
 #include "device.h"
 #include "event.h"
+#include "logging.h"
 
 #include "system.h"
 

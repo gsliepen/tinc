@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: meta.c,v 1.3 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -25,7 +25,6 @@
 #include <avl_tree.h>
 
 #include <errno.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <string.h>
 /* This line must be below the rest for FreeBSD */
@@ -38,6 +37,7 @@
 #include "connection.h"
 #include "system.h"
 #include "protocol.h"
+#include "logging.h"
 
 int send_meta(connection_t *c, char *buffer, int length)
 {

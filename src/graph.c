@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: graph.c,v 1.3 2002/04/13 11:07:12 zarq Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -47,7 +47,6 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <syslog.h>
 #include "config.h"
 #include <string.h>
 #if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
@@ -63,6 +62,7 @@
 #include "edge.h"
 #include "connection.h"
 #include "process.h"
+#include "logging.h"
 
 #include "system.h"
 

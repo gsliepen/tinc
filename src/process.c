@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.3 2002/04/13 10:25:38 zarq Exp $
+    $Id: process.c,v 1.4 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -27,11 +27,11 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <syslog.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
@@ -46,6 +46,7 @@
 #include "device.h"
 #include "connection.h"
 #include "device.h"
+#include "logging.h"
 
 #include "system.h"
 
@@ -66,7 +67,9 @@ extern int do_purge;
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
+  log(0, TLOG_ERROR,
+      _("Memory exhausted (couldn't allocate %d bytes), exitting."),
+      size);
   cp_trace();
   exit(1);
 }

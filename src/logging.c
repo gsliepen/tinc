@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.c,v 1.3 2002/04/13 10:43:10 zarq Exp $
+    $Id: logging.c,v 1.4 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -85,10 +85,10 @@ void log_syslog(int level, int priority, char *fmt, va_list ap)
     vsyslog(priorities[priority], fmt, ap);
 }
 
-void syslog(int priority, char *fmt, ...)
+void tinc_syslog(int priority, char *fmt, ...)
 {
   /* Mapping syslog prio -> tinc prio */
-  const int priorities[] = { TLOG_CRIT, TLOG_CRIT, TLOG_CRIT, TLOG_ERR,
+  const int priorities[] = { TLOG_CRITICAL, TLOG_CRITICAL, TLOG_CRITICAL, TLOG_ERROR,
 			       TLOG_NOTICE, TLOG_NOTICE, TLOG_INFO, TLOG_DEBUG };
   avl_node_t *avlnode;
   va_list args;

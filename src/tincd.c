@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.13 2002/04/13 10:25:38 zarq Exp $
+    $Id: tincd.c,v 1.14 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -28,7 +28,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
@@ -52,6 +51,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "logging.h"
 
 #include "system.h"
 
@@ -296,7 +296,7 @@ void make_names(void)
       if(!confbase)
         asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
       else
-        syslog(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+        log(0, TLOG_INFO, _("Both netname and configuration directory given, using the latter..."));
       if(!identname)
         asprintf(&identname, "tinc.%s", netname);
     }
@@ -379,17 +379,17 @@ cp
           cleanup_and_exit(1);
         }
 
-      syslog(LOG_ERR, _("Unrecoverable error"));
+      log(0, TLOG_ERROR, _("Unrecoverable error"));
       cp_trace();
 
       if(do_detach)
         {
-          syslog(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
+          log(0, TLOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
           sleep(maxtimeout);
         }
       else
         {
-          syslog(LOG_ERR, _("Not restarting."));
+          log(0, TLOG_ERROR, _("Not restarting."));
           exit(1);
         }
     }

@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: protocol_auth.c,v 1.3 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -50,6 +49,7 @@
 #include "node.h"
 #include "edge.h"
 #include "graph.h"
+#include "logging.h"
 
 #include "system.h"
 

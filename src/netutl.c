@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.14 2002/04/09 15:26:00 zarq Exp $
+    $Id: netutl.c,v 1.15 2002/04/13 11:07:12 zarq Exp $
 */
 
 #include "config.h"
@@ -30,7 +30,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/socket.h>
-#include <syslog.h>
+
 #include <arpa/inet.h>
 
 #include <utils.h>
@@ -40,6 +40,7 @@
 #include "conf.h"
 #include "net.h"
 #include "netutl.h"
+#include "logging.h"
 
 #include "system.h"
 
