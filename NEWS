@@ -1,3 +1,16 @@
+version 1.0                  Aug  4 2003
+
+* Lots of small bugfixes and code cleanups.
+
+* Throughput doubled and latency reduced.
+
+* Added support for LZO compression.
+
+* No need to set MAC address or disable ARP anymore.
+
+* Added support for Windows 2000 and XP, both natively and in a Cygwin
+  environment.
+
 version 1.0pre8              Sep 16 2002
 
 * More fixes for subnets with prefixlength undivisible by 8.

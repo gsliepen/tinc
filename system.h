@@ -92,10 +92,6 @@ typedef int bool;
 #include <netdb.h>
 #endif
 
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -110,6 +106,10 @@ typedef int bool;
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
 #endif
 
 #ifdef HAVE_NETINET_IP_H

@@ -17,10 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.18 2003/07/31 11:31:51 guus Exp $
+    $Id: device.c,v 1.1.2.19 2003/08/08 11:45:37 guus Exp $
 */
 
 #include "system.h"
+#include <sys/uio.h>
 
 #include "conf.h"
 #include "logger.h"

@@ -1,7 +1,7 @@
-This is the README file for tinc version 1.0pre8. Installation
+This is the README file for tinc version 1.0. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2002 by:
+tinc is Copyright (C) 1998-2003 by:
 
 Ivo Timmermans <ivo@o2w.nl>,
 Guus Sliepen <guus@sliepen.eu.org>,
@@ -47,7 +47,7 @@ should be changed into "Device", and "Device" should be changed into
 Compatibility
 -------------
 
-Version 1.0pre8 is not compatible with older versions of tinc.
+Version 1.0 is compatible with 1.0pre8 but not with older versions of tinc.
 
 
 Requirements
@@ -55,7 +55,7 @@ Requirements
 
 Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you
 need to install this library first; grab it from
-http://www.openssl.org/.  We recommend version 0.9.5 or better.  If
+http://www.openssl.org/.  You will need version 0.9.7 or later.  If
 this library is not installed on you system, configure will fail.  The
 manual in doc/tinc.texi contains more detailed information on how to
 install this library.
@@ -65,8 +65,11 @@ library whether or not you plan to enable the compression. You can find it at
 http://www.gzip.org/zlib/. Because of a possible exploit in earlier versions we
 recommand that you download version 1.1.4 or later.
 
-In order to compile tinc, you will also need autoconf, automake, GNU make, m4
-and gettext.
+Since 1.0, the lzo library is also used for optional compression. You need this
+library whether or not you plan to enable compression. You can find it at
+http://www.oberhumer.com/opensource/lzo/.
+
+In order to compile tinc, you will need a GNU C compiler environment.
 
 
 Features
@@ -75,17 +78,7 @@ Features
 This version of tinc supports multiple virtual networks at once. To
 use this feature, you may supply a netname via the -n or --net
 options. The standard locations for the config files will then be
-/etc/tinc/<net>/. Because of this feature, tinc will send packets
-directly to their destinations, instead of to the uplink. If this
-behaviour is undesirable (for instance because of firewalls or other
-restrictions), please use an older version of tinc (I would recommend
-tinc-0.2.19).
-
-In order to force the kernel to accept received packets, the
-destination MAC address will be set to FE:FD:00:00:00:00 upon
-reception. The MAC address of the ethertap or tun/tap interface must
-also be set to this address. See the manual for more detailed
-information.
+/etc/tinc/<net>/.
 
 tincd regenerates its encryption key pairs. It does this on the first
 activity after the keys have expired. This period is adjustable in the
@@ -101,7 +94,7 @@ Since pre5, tinc can operate in several routing modes. The default mode,
 determine the destination of packets. The other two modes, "switch" and "hub",
 allow the tinc daemons to work together like a single network switch or hub.
 This is useful for bridging networks. The latter modes only work properly on
-Linux and FreeBSD.
+Linux, FreeBSD and Windows.
 
 The algorithms used for encryption and generating message authentication codes
 can now be changed in the configuration files. All cipher and digest algorithms
@@ -113,11 +106,16 @@ Support for routing IPv6 packets has been added. Just add Subnet lines with
 IPv6 addresses (without using :: abbreviations) and use ifconfig or ip (from
 the iproute package) to give the virtual network interface corresponding IPv6
 addresses. tinc does not provide autoconfiguration for IPv6 hosts, if you need
-it use radvd or zebra. Tunneling IPv6 packets only works on Linux, FreeBSD and
-possibly OpenBSD.
+it use radvd or zebra. Tunneling IPv6 packets only works on Linux, FreeBSD,
+Windows and possibly OpenBSD.
 
-It is also possible to make tunnels to other tinc daemons over IPv6 networks.
-In order to enable this feature the option "AddressFamily = any" or
-"AddressFamily = ipv6" must be added to the tinc.conf file. The host
-configuration files should contain IPv6 addresses for the "Address" variables,
-or hostnames which have an AAAA or A6 record.
+It is also possible to make tunnels to other tinc daemons over IPv6 networks,
+if the operating system supports IPv6.  tinc will automatically use both IPv6
+and IPv4 when available, but this can be changed by adding the option
+"AddressFamily = ipv4" or "AddressFamily = ipv6" to the tinc.conf file.
+
+Normally, when started tinc will detach and run in the background. In a native
+Windows environment this means tinc will intall itself as a service, which will
+restart after reboots.  To prevent tinc from detaching or running as a service,
+use the -D option.
+
