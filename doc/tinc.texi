@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.13 2001/01/17 01:40:46 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.14 2001/01/18 13:00:57 zarq Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998-2001 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.13 2001/01/17 01:40:46 zarq Exp $
+$Id: tinc.texi,v 1.8.4.14 2001/01/18 13:00:57 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998-2001 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.13 2001/01/17 01:40:46 zarq Exp $
+$Id: tinc.texi,v 1.8.4.14 2001/01/18 13:00:57 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -613,7 +613,6 @@ VpnMask configuration variable.
 * Multiple networks::           
 * How connections work::        
 * Configuration file::          
-* Required directives::         
 * Example::                     
 @end menu
 
@@ -658,7 +657,7 @@ will try to connect to it, on the given port.  If this fails, tinc exits.
 
 
 @c ==================================================================
-@node    Configuration file, Required directives, How connections work, Configuring tinc
+@node    Configuration file, Example, How connections work, Configuring tinc
 @section Configuration file
 
 The actual configuration of the daemon is done in the file
@@ -931,7 +930,7 @@ there.  If you get an error, you can check @ref{Error messages}.
 
 
 @c ==================================================================
-@node    Example,  , Required directives, Configuring tinc
+@node    Example,  , Configuration file, Configuring tinc
 @section Example
 
 
@@ -1254,8 +1253,6 @@ files are bound to be in a different directory.
 
 @end table
 
-@end table
-
 @c ==================================================================
 @node    Technical information, About us, Running tinc, Top
 @chapter Technical information
@@ -1380,7 +1377,7 @@ don't take it too serious.
 @end menu
 
 @c ==================================================================
-@node    Key Types, , Security, Security
+@node    Key Types,  , Security, Security
 @subsection Key Types
 @c FIXME: check if I'm not talking nonsense
 
