@@ -17,11 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.6 2001/01/07 17:09:06 guus Exp $
+    $Id: route.c,v 1.1.2.7 2001/03/04 13:59:32 guus Exp $
 */
 
 #include "config.h"
 
+#include <netinet/in.h>
 #include <utils.h>
 #include <xalloc.h>
 #include <syslog.h>
@@ -34,15 +35,15 @@
 #include "system.h"
 
 int routing_mode = RMODE_ROUTER;
+subnet_t mymac;
 
 void learn_mac(connection_t *source, mac_t *address)
 {
-  connection_t *old;
   subnet_t *subnet;
 cp
-  old = lookup_subnet_mac(address)->owner;
+  subnet = lookup_subnet_mac(address);
   
-  if(!old)
+  if(!subnet)
     {
       subnet = new_subnet();
       subnet->type = SUBNET_MAC;
@@ -50,23 +51,22 @@ cp
       memcpy(&subnet->net.mac.address, address, sizeof(mac_t));
       subnet_add(source, subnet);
 
-      if(DEBUG_LVL >= DEBUG_TRAFFIC)
+      if(debug_lvl >= DEBUG_TRAFFIC)
         {
           syslog(LOG_DEBUG, _("Learned new MAC address %x:%x:%x:%x:%x:%x from %s (%s)"),
-               address->address.x[0],
-               address->address.x[1],
-               address->address.x[2],
-               address->address.x[3],
-               address->address.x[4],
-               address->address.x[5],
-               cl->name, cl->hostname);
+               address->x[0],
+               address->x[1],
+               address->x[2],
+               address->x[3],
+               address->x[4],
+               address->x[5],
+               source->name, source->hostname);
         }
     }
 }
 
 connection_t *route_mac(connection_t *source, vpn_packet_t *packet)
 {
-  connection_t *oldsrc, *dst;
   subnet_t *subnet;
 cp
   /* Learn source address */
@@ -75,39 +75,47 @@ cp
   
   /* Lookup destination address */
     
-  dst = lookup_subnet_mac((mac_t *)(&packet->data[6]))->owner;
+  subnet = lookup_subnet_mac((mac_t *)(&packet->data[6]));
 
-  if(!dst)
-    if(debug_lvl >= DEBUG_TRAFFIC)
-      {
-        syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %x:%x:%x:%x:%x:%x"),
-               packet->data[6],
-               packet->data[7],
-               packet->data[8],
-               packet->data[9],
-               packet->data[10],
-               packet->data[11]);
-      } 
+  if(!subnet)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %x:%x:%x:%x:%x:%x"),
+                 packet->data[6],
+                 packet->data[7],
+                 packet->data[8],
+                 packet->data[9],
+                 packet->data[10],
+                 packet->data[11]);
+        } 
+      return NULL;
+    }
 cp  
-  return dst;  
+  return subnet->owner;  
 }
 
 connection_t *route_ipv4(vpn_packet_t *packet)
 {
   ipv4_t dest;
-  connection_t *cl;
+  subnet_t *subnet;
 cp
   dest = ntohl(*((unsigned long*)(&packet->data[30])));
   
-  cl = lookup_subnet_ipv4(&dest)->owner;
-  if(!cl)
-    if(debug_lvl >= DEBUG_TRAFFIC)
-      {
-        syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %d.%d.%d.%d"),
-               packet->data[30], packet->data[31], packet->data[32], packet->data[33]);
-      } 
+  subnet = lookup_subnet_ipv4(&dest);
+
+  if(!subnet)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %d.%d.%d.%d"),
+                 packet->data[30], packet->data[31], packet->data[32], packet->data[33]);
+        }
+
+      return NULL;
+    }
 cp
-  return cl;  
+  return subnet->owner;  
 }
 
 connection_t *route_ipv6(vpn_packet_t *packet)
@@ -124,7 +132,7 @@ cp
 void route_outgoing(vpn_packet_t *packet)
 {
   unsigned short int type;
-  avl_tree_t *node;
+  avl_node_t *node;
   connection_t *cl;
 cp
   /* FIXME: multicast? */
@@ -148,11 +156,12 @@ cp
                 }
               return;
            }
-         send_packet(cl, packet);
+         if(cl)
+           send_packet(cl, packet);
          break;
         
       case RMODE_SWITCH:
-        cl = route_mac(packet);
+        cl = route_mac(myself, packet);
         if(cl)
           send_packet(cl, packet);
         break;
@@ -173,8 +182,10 @@ void route_incoming(connection_t *source, vpn_packet_t *packet)
   switch(routing_mode)
     {
       case RMODE_SWITCH:
-        learn_mac(source, &packet->data[0]);
+        learn_mac(source, (mac_t *)(&packet->data[0]));
         break;
+      case RMODE_ROUTER:
+        memcpy(packet->data, mymac.net.mac.address.x, 6);
     }
   
   accept_packet(packet);

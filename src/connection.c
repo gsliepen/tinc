@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.9 2001/01/07 17:08:56 guus Exp $
+    $Id: connection.c,v 1.1.2.10 2001/03/04 13:59:25 guus Exp $
 */
 
 #include "config.h"
@@ -190,15 +190,15 @@ void dump_connection_list(void)
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
-  syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
-         myself->name, myself->hostname, myself->port, myself->flags,
+  syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
+         myself->name, myself->hostname, myself->port, myself->options,
          myself->socket, myself->meta_socket, myself->status);
 
   for(node = connection_tree->head; node; node = node->next)
     {
       cl = (connection_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
-             cl->name, cl->hostname, cl->port, cl->flags,
+      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
+             cl->name, cl->hostname, cl->port, cl->options,
              cl->socket, cl->meta_socket, cl->status);
     }
     

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.7 2001/01/07 20:19:29 guus Exp $
+    $Id: connection.h,v 1.1.2.8 2001/03/04 13:59:25 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -70,7 +70,6 @@ typedef struct connection_t {
   short unsigned int port;         /* port number for UDP traffic */
   long int options;                /* options turned on for this connection */
 
-  int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
   int meta_socket;                 /* our tcp meta socket */
   status_bits_t status;            /* status info */

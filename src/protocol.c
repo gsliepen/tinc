@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.84 2001/03/02 11:25:56 guus Exp $
+    $Id: protocol.c,v 1.28.4.85 2001/03/04 13:59:28 guus Exp $
 */
 
 #include "config.h"
@@ -119,7 +119,7 @@ int receive_request(connection_t *cl)
 cp  
   if(sscanf(cl->buffer, "%d", &request) == 1)
     {
-      if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
+      if((request < 0) || (request >= LAST) || (request_handlers[request] == NULL))
         {
           syslog(LOG_ERR, _("Unknown request from %s (%s)"),
 		 cl->name, cl->hostname);
@@ -1264,7 +1264,7 @@ cp
 int send_tcppacket(connection_t *cl, vpn_packet_t *packet)
 {
   int x;
-  
+cp  
   x = send_request(cl->nexthop, "%d %hd", PACKET, packet->len);
 
   if(x)
@@ -1278,8 +1278,8 @@ int tcppacket_h(connection_t *cl)
   vpn_packet_t packet;
   char *p;
   int todo, x;
-  
-  if(sscanf(cl->buffer, "%*d %hd", packet.len) != 1)
+cp  
+  if(sscanf(cl->buffer, "%*d %hd", &packet.len) != 1)
     {
       syslog(LOG_ERR, _("Got bad PACKET from %s (%s)"), cl->name, cl->hostname);
       return -1;
@@ -1289,7 +1289,7 @@ int tcppacket_h(connection_t *cl)
 
   p = packet.data;
   todo = packet.len;
-  
+
   while(todo)
     {
       x = read(cl->meta_socket, p, todo);
@@ -1299,7 +1299,7 @@ int tcppacket_h(connection_t *cl)
           if(x==0)
             syslog(LOG_NOTICE, _("Connection closed by %s (%s)"), cl->name, cl->hostname);
           else
-            if(errno==EINTR)
+            if(errno==EINTR || errno==EAGAIN)	/* FIXME: select() or poll() or reimplement this evil hack */
               continue;
             else
               syslog(LOG_ERR, _("Error during reception of PACKET from %s (%s): %m"), cl->name, cl->hostname);
@@ -1311,7 +1311,9 @@ int tcppacket_h(connection_t *cl)
       p += x;
     }
 
-  return receive_packet(cl, &packet);
+  receive_packet(cl, &packet);
+cp
+  return 0;
 }
 
 /* Jumptable for the request handlers */

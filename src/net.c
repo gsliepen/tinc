@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.101 2001/03/01 21:32:01 guus Exp $
+    $Id: net.c,v 1.35.4.102 2001/03/04 13:59:25 guus Exp $
 */
 
 #include "config.h"
@@ -85,6 +85,7 @@
 #include "protocol.h"
 #include "subnet.h"
 #include "process.h"
+#include "route.h"
 
 #include "system.h"
 
@@ -103,33 +104,42 @@ int keyexpires = 0;
 
 char *unknown = NULL;
 
-subnet_t mymac;
-
-int xsend(connection_t *cl, vpn_packet_t *inpkt)
+void send_udppacket(connection_t *cl, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
   EVP_CIPHER_CTX ctx;
   struct sockaddr_in to;
   socklen_t tolen = sizeof(to);
+  vpn_packet_t *copy;
 cp
-  outpkt.len = inpkt->len;
-  
+  if(!cl->status.validkey)
+    {
+      if(debug_lvl >= DEBUG_TRAFFIC)
+	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
+	       cl->name, cl->hostname);
+
+      /* Since packet is on the stack of handle_tap_input(),
+         we have to make a copy of it first. */
+
+      copy = xmalloc(sizeof(vpn_packet_t));
+      memcpy(copy, inpkt, sizeof(vpn_packet_t));
+
+      list_insert_tail(cl->queue, copy);
+
+      if(!cl->status.waitingforkey)
+	send_req_key(myself, cl);
+      return;
+    }
+
   /* Encrypt the packet. */
-  
+
+  outpkt.len = inpkt->len;
+
   EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
   EVP_EncryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
   EVP_EncryptFinal(&ctx, outpkt.data + outlen, &outpad);
   outlen += outpad + 2;
-
-/* Bypass
-  outlen = outpkt.len + 2;
-  memcpy(&outpkt, inpkt, outlen);
-*/  
-
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
-           outlen, cl->name, cl->hostname);
 
   total_socket_out += outlen;
 
@@ -141,13 +151,22 @@ cp
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->name, cl->hostname);
-      return -1;
+      return;
     }
 cp
-  return 0;
 }
 
-int xrecv(connection_t *cl, vpn_packet_t *inpkt)
+void receive_packet(connection_t *cl, vpn_packet_t *packet)
+{
+cp
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), packet->len, cl->name, cl->hostname);
+
+  route_incoming(cl, packet);
+cp
+}
+
+void receive_udppacket(connection_t *cl, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
@@ -162,23 +181,16 @@ cp
   EVP_DecryptFinal(&ctx, outpkt.data + outlen, &outpad);
   outlen += outpad;
 
-/* Bypass
-  outlen = outpkt.len+2;
-  memcpy(&outpkt, inpkt, outlen);
-*/
+  receive_packet(cl, &outpkt);
 cp
-  return receive_packet(cl, &outpkt);
 }
 
-int receive_packet(connection_t *cl, vpn_packet_t *packet)
+void accept_packet(vpn_packet_t *packet)
 {
+cp
   if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_ERR, _("Writing packet of %d bytes to tap device"),
+    syslog(LOG_DEBUG, _("Writing packet of %d bytes to tap device"),
            packet->len);
-
-  /* Fix mac address */
-
-  memcpy(packet->data, mymac.net.mac.address.x, 6);
 
   if(taptype == TAP_TYPE_TUNTAP)
     {
@@ -195,40 +207,26 @@ int receive_packet(connection_t *cl, vpn_packet_t *packet)
         total_tap_out += packet->len + 2;
     }
 cp
-  return 0;
 }
 
 /*
   send a packet to the given vpn ip.
 */
-int send_packet(ip_t to, vpn_packet_t *packet)
+void send_packet(connection_t *cl, vpn_packet_t *packet)
 {
-  connection_t *cl;
-  subnet_t *subnet;
-  vpn_packet_t *copy;
 cp
-  if((subnet = lookup_subnet_ipv4(&to)) == NULL)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-        {
-          syslog(LOG_NOTICE, _("Trying to look up %d.%d.%d.%d in connection list failed!"),
-	         IP_ADDR_V(to));
-        }
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
+           packet->len, cl->name, cl->hostname);
 
-      return -1;
-    }
-
-  cl = subnet->owner;
-    
   if(cl == myself)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
-          syslog(LOG_NOTICE, _("Packet with destination %d.%d.%d.%d is looping back to us!"),
-	         IP_ADDR_V(to));
+          syslog(LOG_NOTICE, _("Packet is looping back to us!"));
         }
 
-      return -1;
+      return;
     }
 
   if(!cl->status.active)
@@ -237,34 +235,18 @@ cp
 	syslog(LOG_INFO, _("%s (%s) is not active, dropping packet"),
 	       cl->name, cl->hostname);
 
-      return 0;
+      return;
     }
 
-  if(!cl->status.validkey)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
-	       cl->name, cl->hostname);
-
-      /* Since packet is on the stack of handle_tap_input(),
-         we have to make a copy of it first. */
-
-      copy = xmalloc(sizeof(vpn_packet_t));
-      memcpy(copy, packet, sizeof(vpn_packet_t));
-
-      list_insert_tail(cl->queue, copy);
-
-      if(!cl->status.waitingforkey)
-	send_req_key(myself, cl);			/* Keys should be sent to the host running the tincd */
-      return 0;
-    }
-
-  /* Check if it has to go via UDP or TCP... */
+  /* Check if it has to go via TCP or UDP... */
 cp
-  if(cl->options & OPTION_TCPONLY)
-    return send_tcppacket(cl, packet);      
+  if((cl->options | myself->options) & OPTION_TCPONLY)
+    {
+      if(send_tcppacket(cl, packet))
+        terminate_connection(cl);
+    }
   else
-    return xsend(cl, packet);
+    send_udppacket(cl, packet);
 }
 
 void flush_queue(connection_t *cl)
@@ -273,11 +255,11 @@ void flush_queue(connection_t *cl)
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_INFO, _("Flushing queue for %s (%s)"), cl->name, cl->hostname);
-  
+
   for(node = cl->queue->head; node; node = next)
     {
       next = node->next;
-      xsend(cl, (vpn_packet_t *)node->data);
+      send_udppacket(cl, (vpn_packet_t *)node->data);
       list_delete_node(cl->queue, node);
     }
 cp
@@ -297,7 +279,7 @@ int setup_tap_fd(void)
 # endif
 #endif
 
-cp  
+cp
   if((cfg = get_config_val(config, config_tapdevice)))
     tapfname = cfg->data.ptr;
   else
@@ -328,7 +310,7 @@ cp
   taptype = TAP_TYPE_ETHERTAP;
 
   /* Set default MAC address for ethertap devices */
-  
+
   mymac.type = SUBNET_MAC;
   mymac.net.mac.address.x[0] = 0xfe;
   mymac.net.mac.address.x[1] = 0xfd;
@@ -387,7 +369,7 @@ cp
     }
 
   /* Optimize TCP settings */
-  
+
   option = 1;
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
   setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
@@ -395,7 +377,7 @@ cp
 
   option = IPTOS_LOWDELAY;
   setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
-  
+
   if((cfg = get_config_val(config, config_interface)))
     {
       if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, cfg->data.ptr, strlen(cfg->data.ptr)))
@@ -409,7 +391,7 @@ cp
   memset(&a, 0, sizeof(a));
   a.sin_family = AF_INET;
   a.sin_port = htons(port);
-  
+
   if((cfg = get_config_val(config, config_interfaceip)))
     a.sin_addr.s_addr = htonl(cfg->data.ip->address);
   else
@@ -516,16 +498,16 @@ cp
     }
 
   /* Optimize TCP settings */
-  
+
   option = 1;
   setsockopt(cl->meta_socket, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
   setsockopt(cl->meta_socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
   option = IPTOS_LOWDELAY;
   setsockopt(cl->meta_socket, SOL_IP, IP_TOS, &option, sizeof(option));
-  
+
   /* Connect */
-  
+
   a.sin_family = AF_INET;
   a.sin_port = htons(cl->port);
   a.sin_addr.s_addr = htonl(cl->address);
@@ -572,21 +554,21 @@ cp
 
   ncn = new_connection();
   asprintf(&ncn->name, "%s", name);
-    
+
   if(read_host_config(ncn))
     {
       syslog(LOG_ERR, _("Error reading host configuration file for %s"), ncn->name);
       free_connection(ncn);
       return -1;
     }
-    
+
   if(!(cfg = get_config_val(ncn->config, config_address)))
     {
       syslog(LOG_ERR, _("No address specified for %s"), ncn->name);
       free_connection(ncn);
       return -1;
     }
-    
+
   if(!(h = gethostbyname(cfg->data.ptr)))
     {
       syslog(LOG_ERR, _("Error looking up `%s': %m"), cfg->data.ptr);
@@ -596,7 +578,7 @@ cp
 
   ncn->address = ntohl(*((ip_t*)(h->h_addr_list[0])));
   ncn->hostname = hostlookup(htonl(ncn->address));
-  
+
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
       syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
@@ -660,10 +642,10 @@ cp
         }
       else
         return -1;
-    }    
+    }
 
   /* Else, check if a harnessed public key is in the config file */
-  
+
   asprintf(&fname, "%s/hosts/%s", confbase, cl->name);
   if((fp = fopen(fname, "r")))
     {
@@ -713,7 +695,7 @@ cp
 	         cfg->data.ptr);
           return -1;
         }
-    }    
+    }
   else
     {
       syslog(LOG_ERR, _("No private key for tinc daemon specified!"));
@@ -735,7 +717,7 @@ cp
   myself = new_connection();
 
   asprintf(&myself->hostname, "MYSELF");
-  myself->flags = 0;
+  myself->options = 0;
   myself->protocol_version = PROT_CURRENT;
 
   if(!(cfg = get_config_val(config, config_name))) /* Not acceptable */
@@ -763,7 +745,7 @@ cp
 
   if(read_rsa_public_key(myself))
     return -1;
-cp  
+cp
 
 /*
   if(RSA_check_key(myself->rsa_key) != 1)
@@ -779,11 +761,11 @@ cp
 
   if((cfg = get_config_val(myself->config, config_indirectdata)))
     if(cfg->data.val == stupid_true)
-      myself->flags |= EXPORTINDIRECTDATA;
+      myself->options |= OPTION_INDIRECT;
 
   if((cfg = get_config_val(myself->config, config_tcponly)))
     if(cfg->data.val == stupid_true)
-      myself->flags |= TCPONLY;
+      myself->options |= OPTION_TCPONLY;
 
 /* Read in all the subnets specified in the host configuration file */
 
@@ -793,18 +775,18 @@ cp
       net->type = SUBNET_IPV4;
       net->net.ipv4.address = cfg->data.ip->address;
       net->net.ipv4.mask = cfg->data.ip->mask;
-      
+
       /* Teach newbies what subnets are... */
-      
+
       if((net->net.ipv4.address & net->net.ipv4.mask) != net->net.ipv4.address)
         {
           syslog(LOG_ERR, _("Network address and subnet mask do not match!"));
           return -1;
-        }        
-      
+        }
+
       subnet_add(myself, net);
     }
-    
+
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
@@ -830,11 +812,11 @@ cp
     keylifetime = 3600;
   else
     keylifetime = cfg->data.val;
-    
+
   keyexpires = time(NULL) + keylifetime;
 cp
   /* Check some options */
-  
+
   if((cfg = get_config_val(config, config_indirectdata)))
     {
       if(cfg->data.val == stupid_true)
@@ -846,6 +828,10 @@ cp
       if(cfg->data.val == stupid_true)
         myself->options |= OPTION_TCPONLY;
     }
+
+  if(myself->options & OPTION_TCPONLY)
+    myself->options |= OPTION_INDIRECT;
+
   /* Activate ourselves */
 
   myself->status.active = 1;
@@ -914,7 +900,7 @@ cp
 
   /* Run tinc-up script to further initialize the tap interface */
   execute_script("tinc-up");
-  
+
   if(setup_myself() < 0)
     return -1;
 
@@ -929,7 +915,7 @@ cp
         return 0;
       cfg = get_config_val(upstreamcfg, config_connectto); /* Or else we try the next ConnectTo line */
     }
-    
+
   if(do_detach)
     {
       signal(SIGALRM, sigalrm_handler);
@@ -1008,7 +994,7 @@ cp
   p->buffer = xmalloc(MAXBUFSIZE);
   p->buflen = 0;
   p->last_ping_time = time(NULL);
-  
+
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
          p->hostname, htons(ci.sin_port));
@@ -1047,7 +1033,7 @@ cp
   udp socket and write it to the ethertap
   device after being decrypted
 */
-int handle_incoming_vpn_data(void)
+void handle_incoming_vpn_data(void)
 {
   vpn_packet_t pkt;
   int x, l = sizeof(x);
@@ -1060,36 +1046,30 @@ cp
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"),
 	     __FILE__, __LINE__, myself->socket);
-      return -1;
+      return;
     }
   if(x)
     {
       syslog(LOG_ERR, _("Incoming data socket error: %s"), strerror(x));
-      return -1;
+      return;
     }
 
   if((lenin = recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
-      return -1;
+      return;
     }
 
   cl = lookup_connection(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
-  
+
   if(!cl)
     {
       syslog(LOG_WARNING, _("Received UDP packets on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
-      return 0;
+      return;
     }
 
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    {
-      syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), lenin,
-             cl->name, cl->hostname);
-    }
-
+  receive_udppacket(cl, &pkt);
 cp
-  return xrecv(cl, &pkt);
 }
 
 /*
@@ -1108,9 +1088,9 @@ cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
            cl->name, cl->hostname);
- 
+
   cl->status.remove = 1;
-  
+
   if(cl->socket)
     close(cl->socket);
   if(cl->status.meta)
@@ -1118,7 +1098,7 @@ cp
 
   if(cl->status.meta)
     {
-    
+
       /* Find all connections that were lost because they were behind cl
          (the connection that was dropped). */
 
@@ -1150,7 +1130,7 @@ cp
     }
 
   /* Check if this was our outgoing connection */
-    
+
   if(cl->status.outgoing)
     {
       cl->status.outgoing = 0;
@@ -1232,7 +1212,7 @@ cp
     }
 
   connection_add(ncn);
-  
+
   send_id(ncn);
 cp
   return 0;
@@ -1263,9 +1243,9 @@ cp
 	    {
 	      terminate_connection(p);
 	      return;
-	    } 
+	    }
     }
-    
+
   if(FD_ISSET(myself->meta_socket, f))
     handle_new_meta_connection();
 cp
@@ -1279,7 +1259,7 @@ void handle_tap_input(void)
 {
   vpn_packet_t vp;
   int lenin;
-cp  
+cp
   if(taptype == TAP_TYPE_TUNTAP)
     {
       if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
@@ -1313,7 +1293,7 @@ cp
       syslog(LOG_DEBUG, _("Read packet of length %d from tap device"), vp.len);
     }
 
-  send_packet(ntohl(*((unsigned long*)(&vp.data[30]))), &vp);
+  route_outgoing(&vp);
 cp
 }
 
@@ -1361,10 +1341,10 @@ cp
             }
 
           sleep(5);
-          
+
           if(setup_network_connections())
             return;
-            
+
           continue;
         }
 
@@ -1383,7 +1363,7 @@ cp
             {
               if(debug_lvl >= DEBUG_STATUS)
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
-                
+
               RAND_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
               send_key_changed(myself, NULL);
               keyexpires = time(NULL) + keylifetime;

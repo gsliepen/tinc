@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.28 2001/02/27 16:37:28 guus Exp $
+    $Id: net.h,v 1.9.4.29 2001/03/04 13:59:28 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -46,11 +46,6 @@
 #endif
 
 #define MAXBUFSIZE 4096 /* Probably way too much, but it must fit every possible request. */
-
-/* flags */
-#define INDIRECTDATA        0x0001 /* Used to indicate that this host has to be reached indirect */
-#define EXPORTINDIRECTDATA  0x0002 /* Used to indicate uplink that it has to tell others to do INDIRECTDATA */
-#define TCPONLY             0x0004 /* Tells sender to send packets over TCP instead of UDP (for firewalls) */
 
 /* tap types */
 #define TAP_TYPE_ETHERTAP 0
@@ -112,8 +107,9 @@ extern char *status_text[10];
 
 extern int str2opt(const char *);
 extern char *opt2str(int);
-extern int send_packet(ip_t, vpn_packet_t *);
-extern int receive_packet(connection_t *, vpn_packet_t *);
+extern void send_packet(connection_t *, vpn_packet_t *);
+extern void receive_packet(connection_t *, vpn_packet_t *);
+extern void accept_packet(vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
