@@ -181,10 +181,11 @@ int detach(void)
       close(fd);
     }
 
-  kill(ppid, SIGTERM);
-  
   if(setsid() < 0)
     return -1;
+
+  kill(ppid, SIGTERM);
+  
   chdir("/"); /* avoid keeping a mointpoint busy */
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
@@ -343,7 +344,10 @@ main(int argc, char **argv, char **envp)
   setup_signals();
 
   if(detach())
-    cleanup_and_exit(1);
+    {
+      kill(ppid, SIGTERM);
+      exit(0);
+    }
 
   if(security_init())
     return 1;
@@ -432,10 +436,10 @@ RETSIGTYPE
 sighuh(int a)
 {
   if(cp_file)
-    syslog(LOG_NOTICE, "Got unexpected signal after %s line %d.",
-	   cp_file, cp_line);
+    syslog(LOG_NOTICE, "Got unexpected signal (%d) after %s line %d.",
+	   a, cp_file, cp_line);
   else
-    syslog(LOG_NOTICE, "Got unexpected signal.");
+    syslog(LOG_NOTICE, "Got unexpected signal (%d).", a);
 }
 
 void
