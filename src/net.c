@@ -921,9 +921,10 @@ cp
 */
 int handle_incoming_meta_data(conn_list_t *cl)
 {
-  int x, l = sizeof(x), lenin;
+  int x, l = sizeof(x);
   unsigned char tmp[1600];
   int request;
+  int lenin = 0;
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
@@ -936,7 +937,7 @@ cp
       return -1;
     }
 
-  if((lenin = read(cl->meta_socket, &tmp, sizeof(tmp))) <= 0)
+  if(read(cl->meta_socket, &tmp, 1) <= 0)
     {
       syslog(LOG_ERR, "Receive failed: %m");
       return -1;
@@ -947,6 +948,35 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got request %d", request);
 
+  /* This is a hack.  After an ACK request, multiple ADD_HOSTs can
+     follow.  So if the request is one of these, only read as much
+     bytes as necessary.  (Luckily the ADD_HOST request is of fixed
+     length) :P -- ivo */
+     
+  if(request != ACK)
+    {
+      if(request == ADD_HOST)
+	{
+	  if((lenin = read(cl->meta_socket, &tmp[1], sizeof(add_host_t) - 1)) <= 0)
+	    {
+	      syslog(LOG_ERR, "Receive failed for ADD_HOST: %m");
+	      return -1;
+	    }
+	}
+      else
+	{
+	  if((lenin = read(cl->meta_socket, &tmp[1], sizeof(tmp) - 1)) <= 0)
+	    {
+	      if(errno != EAGAIN) /* talk about hacks... */
+		{
+		  syslog(LOG_ERR, "Receive failed: %m");
+		  return -1;
+		}
+	    }
+	}
+    }
+  
+  lenin++;
   if(request_handlers[request] == NULL)
     syslog(LOG_ERR, "Unknown request %d.", request);
   else
@@ -1056,7 +1086,7 @@ cp
 }
 
 /*
-  this is where it al happens...
+  this is where it all happens...
 */
 void main_loop(void)
 {

@@ -492,23 +492,6 @@ cp
   
   cl->status.active = 1;
   syslog(LOG_NOTICE, "Connection with %s activated.", cl->hostname);
-
-  /*
-                        === FIXME ===
-    Now I'm going to cheat. The meta protocol is actually
-    a stream of requests, that may come in in the same TCP
-    packet. This is the only place that it will happen,
-    though.
-    I may change it in the future, if it appears that this
-    is not retainable.
-  */
-  if(len > 1) /* An ADD_HOST follows */
-    {
-      if(request_handlers[d[1]] == NULL)
-	syslog(LOG_ERR, "Unknown request %d.", d[1]);
-      if(request_handlers[d[1]](cl, d + 1, len - 1) < 0)
-	return -1;
-    }
 cp
   return 0;
 }
@@ -613,18 +596,6 @@ cp
   conn_list = ncn;
   ncn->status.active = 1;
   notify_others(ncn, cl, send_add_host);
-
-  /*
-    again, i'm cheating here. see the comment in ack_h.
-    Naughty zarq! Now you see what cheating will get you... [GS]
-  */
-  if(len > sizeof(*tmp)) /* Another ADD_HOST follows */
-    {
-      if(request_handlers[d[sizeof(*tmp)]] == NULL)
-	syslog(LOG_ERR, "Unknown request %d.", d[sizeof(*tmp)]);
-      if(request_handlers[d[sizeof(*tmp)]](cl, d + sizeof(*tmp), len - sizeof(*tmp)) < 0)
-	return -1;
-    }
 cp
   return 0;
 }
@@ -647,11 +618,11 @@ cp
   fw = lookup_conn(tmp->to);
   
   if(!fw)
-  {
-    syslog(LOG_ERR, "Attempting to forward key request to " IP_ADDR_S ", which does not exist?",
-	   IP_ADDR_V(tmp->to));
-    return -1;
-  }
+    {
+      syslog(LOG_ERR, "Attempting to forward key request to " IP_ADDR_S ", which does not exist?",
+	     IP_ADDR_V(tmp->to));
+      return -1;
+    }
 
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "Forwarding request for public key to " IP_ADDR_S,
