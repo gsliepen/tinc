@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.13 2000/11/04 11:49:56 guus Exp $
+    $Id: connlist.c,v 1.1.2.14 2000/11/04 15:34:07 guus Exp $
 */
 
 #include "config.h"
@@ -167,7 +167,7 @@ void dump_conn_list(void)
 cp
   syslog(LOG_DEBUG, _("Connection list:"));
 
-  syslog(LOG_DEBUG, _("%s at %s port %hd flags %d sockets %d, %d status %04x"),
+  syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
 	 myself->name, myself->hostname, myself->port, myself->flags,
 	 myself->socket, myself->meta_socket, myself->status);
 
