@@ -67,6 +67,8 @@ Generate public/private RSA keypair and exit.
 If
 .Ar BITS
 is omitted, the default length will be 1024 bits.
+When saving keys to existing files, tinc will not delete the old keys,
+you have to remove them manually.
 .It Fl L, -mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
