@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.24 2001/09/01 12:36:53 guus Exp $
+    $Id: process.c,v 1.1.2.25 2001/09/05 18:38:09 zarq Exp $
 */
 
 #include "config.h"
@@ -54,6 +54,8 @@ extern char *pidfilename;
 extern char **g_argv;
 
 sigset_t emptysigset;
+
+static int saved_debug_lvl = 0;
 
 void memory_full(int size)
 {
@@ -351,9 +353,20 @@ sighup_handler(int a, siginfo_t *info, void *b)
 RETSIGTYPE
 sigint_handler(int a, siginfo_t *info, void *b)
 {
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got INT signal, exiting"));
-  cleanup_and_exit(0);
+  if(saved_debug_lvl)
+    {
+      syslog(LOG_NOTICE, _("Reverting to old debug level (%d)"),
+	     saved_debug_lvl);
+      debug_lvl = saved_debug_lvl;
+      saved_debug_lvl = 0;
+    }
+  else
+    {
+      syslog(LOG_NOTICE, _("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
+	     debug_lvl);
+      saved_debug_lvl = debug_lvl;
+      debug_lvl = 5;
+    }
 }
 
 RETSIGTYPE
