@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: genauth.c,v 1.7.4.2 2000/10/15 00:59:34 guus Exp $
+    $Id: genauth.c,v 1.7.4.3 2000/10/19 14:42:00 guus Exp $
 */
 
 #include "config.h"
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <openssl/rsa.h>
+#include <openssl/rand.h>
 
 #include <xalloc.h>
 
@@ -92,16 +93,20 @@ int main(int argc, char **argv)
     
   bits = ((bits - 1) | 7) + 1;		/* Align to bytes for easy mallocing and reading */
 
+  fprintf(stderr, _("Seeding the PRNG: please press some keys or move\nthe mouse if this program seems to have halted...\n"));
+
+  RAND_load_file("/dev/random", 1024);	/* OpenSSL PRNG state apparently uses 1024 bytes */
+
   fprintf(stderr, _("Generating %d bits keys:\n"), bits);
 
-  key = RSA_generate_key(bits, RSA_PUBLIC_EXPONENT, indicator, NULL); 
+  key = RSA_generate_key(bits, RSA_PUBLIC_EXPONENT, indicator, NULL);
 
   fprintf(stderr, _("Done.\n"));
 
   printf(_("Public key:  %s\n"), BN_bn2hex(key->n));
   printf(_("Private key: %s\n"), BN_bn2hex(key->d));
 
+  fflush(stdin);	/* Flush any input caused by random keypresses */
+
   return 0;
 }
-
-
