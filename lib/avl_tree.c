@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.warande.net>.
 
-    $Id: avl_tree.c,v 1.1.2.5 2001/02/06 10:13:21 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.6 2001/02/20 21:53:18 wsl Exp $
 */
 
 #include <stdio.h>
@@ -493,6 +493,9 @@ void avl_insert_before(avl_tree_t *tree, avl_node_t *before, avl_node_t *node)
   node->parent = before;
   node->prev = before->prev;
 
+  if(before->left)
+    return avl_insert_after(tree, before->prev, node);
+
   if (before->prev)
     before->prev->next = node;
   else
@@ -508,6 +511,9 @@ void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node)
 {
   if (!after)
     return tree->head ? avl_insert_before(tree, tree->head, node) : avl_insert_top(tree, node);
+
+  if(after->right)
+    return avl_insert_before(tree, after->next, node);
 
   node->prev = after;
   node->parent = after;
