@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.9 2002/09/04 13:48:51 guus Exp $
+    $Id: edge.h,v 1.1.2.10 2002/09/06 10:23:52 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -41,7 +41,6 @@ typedef struct edge_t {
   struct edge_t *reverse;          /* edge in the opposite direction, if available */
 } edge_t;
 
-extern avl_tree_t *edge_tree;        /* Tree with all known edges */
 extern avl_tree_t *edge_weight_tree; /* Tree with all known edges sorted on weight */
 
 extern void init_edges(void);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.19 2002/09/04 13:48:52 guus Exp $
+    $Id: net_packet.c,v 1.1.2.20 2002/09/06 10:23:52 guus Exp $
 */
 
 #include "config.h"
@@ -429,4 +429,3 @@ cp
   receive_udppacket(n, &pkt);
 cp
 }
-

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.12 2002/09/04 13:48:51 guus Exp $
+    $Id: edge.c,v 1.1.2.13 2002/09/06 10:23:52 guus Exp $
 */
 
 #include "config.h"
@@ -41,31 +41,12 @@
 #include "xalloc.h"
 #include "system.h"
 
-avl_tree_t *edge_tree;        /* Tree with all known edges (replaces active_tree) */
 avl_tree_t *edge_weight_tree; /* Tree with all edges, sorted on weight */
 
 int edge_compare(edge_t *a, edge_t *b)
 {
-  int result;
-
-  result = strcmp(a->from->name, b->from->name);
-
-  if(result)
-    return result;
-  else
-    return strcmp(a->to->name, b->to->name);
+  return strcmp(a->to->name, b->to->name);
 }
-
-/* Evil edge_compare() from a parallel universe ;)
-
-int edge_compare(edge_t *a, edge_t *b)
-{
-  int result;
-
-  return (result = strcmp(a->from->name, b->from->name)) || (result = strcmp(a->to->name, b->to->name)), result;
-}
-
-*/
 
 int edge_weight_compare(edge_t *a, edge_t *b)
 {
@@ -82,7 +63,6 @@ int edge_weight_compare(edge_t *a, edge_t *b)
 void init_edges(void)
 {
 cp
-  edge_tree = avl_alloc_tree((avl_compare_t)edge_compare, NULL);
   edge_weight_tree = avl_alloc_tree((avl_compare_t)edge_weight_compare, NULL);
 cp
 }
@@ -104,7 +84,7 @@ cp
 void exit_edges(void)
 {
 cp
-  avl_delete_tree(edge_tree);
+  avl_delete_tree(edge_weight_tree);
 cp
 }
 
@@ -129,7 +109,6 @@ cp
 void edge_add(edge_t *e)
 {
 cp
-  avl_insert(edge_tree, e);
   avl_insert(edge_weight_tree, e);
   avl_insert(e->from->edge_tree, e);
 cp
@@ -145,7 +124,6 @@ cp
   if(e->reverse)
     e->reverse->reverse = NULL;
 cp
-  avl_delete(edge_tree, e);
   avl_delete(edge_weight_tree, e);
   avl_delete(e->from->edge_tree, e);
 cp
@@ -158,25 +136,30 @@ cp
   v.from = from;
   v.to = to;
 
-  return avl_search(edge_tree, &v);
+  return avl_search(from->edge_tree, &v);
 }
 
 void dump_edges(void)
 {
-  avl_node_t *node;
+  avl_node_t *node, *node2;
+  node_t *n;
   edge_t *e;
   char *address;
 cp
   syslog(LOG_DEBUG, _("Edges:"));
 
-  for(node = edge_tree->head; node; node = node->next)
+  for(node = node_tree->head; node; node = node->next)
     {
-      e = (edge_t *)node->data;
-      address = sockaddr2hostname(&e->address);
-      syslog(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
-             e->from->name, e->to->name, address,
-	     e->options, e->weight);
-      free(address);
+      n = (node_t *)node->data;
+      for(node2 = n->edge_tree->head; node2; node2 = node2->next)
+	{
+	  e = (edge_t *)node2->data;
+	  address = sockaddr2hostname(&e->address);
+	  syslog(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
+        	 e->from->name, e->to->name, address,
+		 e->options, e->weight);
+	  free(address);
+	}
     }
 
   syslog(LOG_DEBUG, _("End of edges."));
