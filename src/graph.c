@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.16 2002/09/06 09:48:39 guus Exp $
+    $Id: graph.c,v 1.1.2.17 2002/09/06 21:02:36 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -128,6 +128,8 @@ void mst_kruskal(void)
       e->to->status.visited = 1;
       if(e->connection)
         e->connection->status.mst = 1;
+      if(e->reverse->connection)
+        e->reverse->connection->status.mst = 1;
 
       safe_edges++;
 
