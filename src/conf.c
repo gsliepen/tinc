@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9 2000/05/30 11:18:12 zarq Exp $
+    $Id: conf.c,v 1.9.4.1 2000/06/17 20:55:54 zarq Exp $
 */
 
 
@@ -65,6 +65,7 @@ static internal_config_t hazahaza[] = {
   { "KeyExpire",    keyexpire,      TYPE_INT },
   { "VpnMask",      vpnmask,        TYPE_IP },
   { "Hostnames",    resolve_dns,    TYPE_BOOL },
+  { "IndirectData", indirectdata,   TYPE_BOOL },
   { NULL, 0, 0 }
 };
 

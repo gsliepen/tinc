@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6 2000/05/30 11:18:12 zarq Exp $
+    $Id: conf.h,v 1.6.4.1 2000/06/17 20:55:54 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -45,7 +45,8 @@ typedef enum which_t {
   pingtimeout,
   keyexpire,
   vpnmask,
-  resolve_dns
+  resolve_dns,
+  indirectdata
 } which_t;
 
 typedef struct config_t {
