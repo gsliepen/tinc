@@ -17,14 +17,21 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.1 2000/11/16 17:54:28 zarq Exp $
+    $Id: process.h,v 1.1.2.2 2000/11/16 22:12:23 zarq Exp $
 */
 
 #ifndef __TINC_PROCESS_H__
 #define __TINC_PROCESS_H__
 
+#include "config.h"
 #include <list.h>
 
 extern list_t *child_pids;
+
+extern RETSIGTYPE parent_exit(int a);
+extern void setup_signals(void);
+extern int execute_script(const char *);
+extern void check_children(void);
+extern int detach(void);
 
 #endif /* __TINC_PROCESS_H__ */

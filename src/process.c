@@ -17,18 +17,115 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.1 2000/11/16 17:54:28 zarq Exp $
+    $Id: process.c,v 1.1.2.2 2000/11/16 22:12:23 zarq Exp $
 */
 
 #include "config.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <syslog.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <list.h>
+#include <pidfile.h>
+#include <utils.h>
+#include <xalloc.h>
+
+#include "conf.h"
+#include "process.h"
+
+#include "system.h"
 
 /* A list containing all our children */
 list_t *child_pids;
 
 /* If zero, don't detach from the terminal. */
 int do_detach = 1;
+
+static pid_t ppid;
+
+extern char *identname;
+extern char *pidfilename;
+extern char **g_argv;
+
+void memory_full(int size)
+{
+  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exiting."), size);
+  cp_trace();
+  exit(1);
+}
+
+/*
+  Close network connections, and terminate neatly
+*/
+void cleanup_and_exit(int c)
+{
+  close_network_connections();
+
+  if(debug_lvl > DEBUG_NOTHING)
+    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
+	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
+
+  closelog();
+  kill(ppid, SIGTERM);
+  exit(c);
+}
+
+/*
+  check for an existing tinc for this net, and write pid to pidfile
+*/
+int write_pidfile(void)
+{
+  int pid;
+
+  if((pid = check_pid(pidfilename)))
+    {
+      if(netname)
+	fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
+		netname, pid);
+      else
+	fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
+      return 1;
+    }
+
+  /* if it's locked, write-protected, or whatever */
+  if(!write_pid(pidfilename))
+    return 1;
+
+  return 0;
+}
+
+/*
+  kill older tincd for this net
+*/
+int kill_other(void)
+{
+  int pid;
+
+  if(!(pid = read_pid(pidfilename)))
+    {
+      if(netname)
+	fprintf(stderr, _("No other tincd is running for net `%s'.\n"), netname);
+      else
+	fprintf(stderr, _("No other tincd is running.\n"));
+      return 1;
+    }
+
+  errno = 0;    /* No error, sometimes errno is only changed on error */
+  /* ESRCH is returned when no process with that pid is found */
+  if(kill(pid, SIGTERM) && errno == ESRCH)
+    fprintf(stderr, _("Removing stale lock file.\n"));
+  remove_pid(pidfilename);
+
+  return 0;
+}
 
 /*
   Detach from current terminal, write pidfile, kill parent
@@ -37,6 +134,8 @@ int detach(void)
 {
   int fd;
   pid_t pid;
+
+  setup_signals();
 
   if(do_detach)
     {
@@ -95,12 +194,12 @@ int detach(void)
   Execute the program name, with sane environment.  All output will be
   redirected to syslog.
 */
+void _execute_script(const char *name)  __attribute__ ((noreturn));
 void _execute_script(const char *name)
 {
   int error = 0;
   char *scriptname;
   char *s;
-  int fd;
 
   if(netname)
     {
@@ -182,12 +281,11 @@ int execute_script(const char *name)
 
   if(pid)
     {
-      list_append(child_pids, pid);
+      list_append(child_pids, (void*)(int)pid);
       return 0;
     }
 
   /* Child here */
-
   _execute_script(name);
 }
 
@@ -230,7 +328,6 @@ void check_children(void)
 {
   list_forall_nodes(child_pids, check_child);
 }
-
 
 
 /*

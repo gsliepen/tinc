@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.29 2000/11/16 17:54:29 zarq Exp $
+    $Id: tincd.c,v 1.10.4.30 2000/11/16 22:12:23 zarq Exp $
 */
 
 #include "config.h"
@@ -58,7 +58,6 @@
 
 
 
-#include <pidfile.h>
 #include <utils.h>
 #include <xalloc.h>
 
@@ -90,17 +89,13 @@ static int generate_keys = 0;
 
 char *identname;                 /* program name for syslog */
 char *pidfilename;               /* pid file location */
-static pid_t ppid;               /* pid of non-detached part */
 char **g_argv;                   /* a copy of the cmdline arguments */
 char **environment;              /* A pointer to the environment on
                                     startup */
 
 void cleanup_and_exit(int);
-int detach(void);
 int kill_other(void);
 void make_names(void);
-RETSIGTYPE parent_exit(int a);
-void setup_signals(void);
 int write_pidfile(void);
 
 static struct option const long_options[] =
@@ -244,78 +239,6 @@ int keygen(int bits)
   return 0;
 }
 
-void memory_full(int size)
-{
-  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exiting."), size);
-  cp_trace();
-  exit(1);
-}
-
-/*
-  Close network connections, and terminate neatly
-*/
-void cleanup_and_exit(int c)
-{
-  close_network_connections();
-
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
-	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
-
-  closelog();
-  kill(ppid, SIGTERM);
-  exit(c);
-}
-
-/*
-  check for an existing tinc for this net, and write pid to pidfile
-*/
-int write_pidfile(void)
-{
-  int pid;
-
-  if((pid = check_pid(pidfilename)))
-    {
-      if(netname)
-	fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
-		netname, pid);
-      else
-	fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
-      return 1;
-    }
-
-  /* if it's locked, write-protected, or whatever */
-  if(!write_pid(pidfilename))
-    return 1;
-
-  return 0;
-}
-
-/*
-  kill older tincd for this net
-*/
-int kill_other(void)
-{
-  int pid;
-
-  if(!(pid = read_pid(pidfilename)))
-    {
-      if(netname)
-	fprintf(stderr, _("No other tincd is running for net `%s'.\n"), netname);
-      else
-	fprintf(stderr, _("No other tincd is running.\n"));
-      return 1;
-    }
-
-  errno = 0;    /* No error, sometimes errno is only changed on error */
-  /* ESRCH is returned when no process with that pid is found */
-  if(kill(pid, SIGTERM) && errno == ESRCH)
-    fprintf(stderr, _("Removing stale lock file.\n"));
-  remove_pid(pidfilename);
-
-  return 0;
-}
-
 /*
   Set all files and paths according to netname
 */
@@ -396,8 +319,6 @@ main(int argc, char **argv, char **envp)
 
   if(read_server_config())
     return 1;
-
-  setup_signals();
 
   if(detach())
     exit(0);
