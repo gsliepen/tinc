@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.1 2000/06/25 15:16:12 guus Exp $
+    $Id: netutl.c,v 1.12.4.2 2000/06/25 16:01:12 guus Exp $
 */
 
 #include "config.h"
@@ -158,9 +158,10 @@ cp
 cp
 }
 
-/* Hostlookups stink. (GS)
+/*
   look up the name associated with the ip
   address `addr'
+*/
 
 char *hostlookup(unsigned long addr)
 {
@@ -193,7 +194,6 @@ cp
 cp
   return name;
 }
-*/
 
 /*
   Turn a string into an IP addy with netmask

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.3 2000/06/25 15:16:11 guus Exp $
+    $Id: net.c,v 1.35.4.4 2000/06/25 16:01:11 guus Exp $
 */
 
 #include "config.h"
@@ -873,8 +873,8 @@ cp
     return;
 
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Closing connection with " IP_ADDR_S " (" IP_ADDR_S ")"),
-           IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
+    syslog(LOG_NOTICE, _("Closing connection with " IP_ADDR_S " (%s)"),
+           IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
   if(cl->status.timeout)
     send_timeout(cl);
@@ -943,8 +943,8 @@ cp
               if(p->status.pinged && !p->status.got_pong)
                 {
                   if(debug_lvl > 1)
-  	            syslog(LOG_INFO, _(IP_ADDR_S " (" IP_ADDR_S ") didn't respond to ping"),
-		           IP_ADDR_V(p->vpn_ip), IP_ADDR_V(p->real_ip));
+  	            syslog(LOG_INFO, _(IP_ADDR_S " (%s) didn't respond to ping"),
+		           IP_ADDR_V(p->vpn_ip), p->hostname);
 	          p->status.timeout = 1;
 	          terminate_connection(p);
                 }
@@ -1047,28 +1047,28 @@ cp
       if(cl->reqlen)
         {
           if(debug_lvl > 2)
-            syslog(LOG_DEBUG, _("Got request from " IP_ADDR_S " (" IP_ADDR_S "): %s"),
-                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip), cl->buffer);
+            syslog(LOG_DEBUG, _("Got request from " IP_ADDR_S " (%s): %s"),
+                         IP_ADDR_V(cl->vpn_ip), cl->hostname, cl->buffer);
           if(sscanf(cl->buffer, "%d", &request) == 1)
             {
               if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
                 {
-                  syslog(LOG_ERR, _("Unknown request from " IP_ADDR_S " (" IP_ADDR_S ")"),
-                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
+                  syslog(LOG_ERR, _("Unknown request from " IP_ADDR_S " (%s)"),
+                         IP_ADDR_V(cl->vpn_ip), cl->hostname);
                   return -1;
                 }
 
               if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
                 {
-                  syslog(LOG_ERR, _("Error while processing request from " IP_ADDR_S " (" IP_ADDR_S ")"),
-                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
+                  syslog(LOG_ERR, _("Error while processing request from " IP_ADDR_S " (%s)"),
+                         IP_ADDR_V(cl->vpn_ip), cl->hostname);
                   return -1;
                 }
             }
           else
             {
-              syslog(LOG_ERR, _("Bogus data received from " IP_ADDR_S " (" IP_ADDR_S ")"),
-                         IP_ADDR_V(cl->vpn_ip), IP_ADDR_V(cl->real_ip));
+              syslog(LOG_ERR, _("Bogus data received from " IP_ADDR_S " (%s)"),
+                         IP_ADDR_V(cl->vpn_ip), cl->hostname);
               return -1;
             }
 
