@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.131 2001/09/24 14:12:00 guus Exp $
+    $Id: net.c,v 1.35.4.132 2001/09/25 13:35:45 guus Exp $
 */
 
 #include "config.h"
@@ -1003,7 +1003,7 @@ cp
     {
       if(setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
         retry = 1;
-      cfg = get_config_val(cfg, config_connectto); /* Or else we try the next ConnectTo line */
+      cfg = get_config_val(cfg->next, config_connectto); /* Or else we try the next ConnectTo line */
     }
 
   if(retry)
