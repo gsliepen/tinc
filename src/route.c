@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.27 2002/03/01 14:25:10 guus Exp $
+    $Id: route.c,v 1.1.2.28 2002/03/01 14:33:48 guus Exp $
 */
 
 #include "config.h"
@@ -97,6 +97,7 @@ void age_mac(void)
 cp
   for(node = myself->subnet_tree->head; node; node = next)
     {
+      next = node->next;
       s = (subnet_t *)node->data;
       if(s->type == SUBNET_MAC && s->net.mac.lastseen && s->net.mac.lastseen + macexpire < now)
         {
