@@ -49,10 +49,6 @@ static device_type_t device_type = DEVICE_TYPE_TUN;
 #endif
 
 bool setup_device(void) {
-#ifdef TUNSIFHEAD
-	const int zero = 0;
-	const int one = 1;
-#endif
 	char *type;
 
 	cp();
@@ -91,20 +87,40 @@ bool setup_device(void) {
 			device_type = DEVICE_TYPE_TUN;
 		case DEVICE_TYPE_TUN:
 #ifdef TUNSIFHEAD
+		{	
+			const int zero = 0;
 			if(ioctl(device_fd, TUNSIFHEAD, &zero, sizeof zero) == -1) {
 				logger(LOG_ERR, _("System call `%s' failed: %s"), "ioctl", strerror(errno));
 				return false;
 			}
+		}
 #endif
+#if defined(TUNSIFMODE) && defined(IFF_BROADCAST) && defined(IFF_MULTICAST)
+		{
+			const int mode = IFF_BROADCAST | IFF_MULTICAST;
+			ioctl(device_fd, TUNSIFMODE, &mode, sizeof mode);
+		}
+#endif
+
 			device_info = _("Generic BSD tun device");
 			break;
 		case DEVICE_TYPE_TUNIFHEAD:
 #ifdef TUNSIFHEAD
+		{
+			const int one = 1;
 			if(ioctl(device_fd, TUNSIFHEAD, &one, sizeof one) == -1) {
 				logger(LOG_ERR, _("System call `%s' failed: %s"), "ioctl", strerror(errno));
 				return false;
 			}
+		}
 #endif
+#if defined(TUNSIFMODE) && defined(IFF_BROADCAST) && defined(IFF_MULTICAST)
+		{
+				const int mode = IFF_BROADCAST | IFF_MULTICAST;
+				ioctl(device_fd, TUNSIFMODE, &mode, sizeof mode);
+		}
+#endif
+
 			device_info = _("Generic BSD tun device");
 			break;
 		case DEVICE_TYPE_TAP:

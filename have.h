@@ -96,6 +96,10 @@
 #include <net/if.h>
 #endif
 
+#ifdef HAVE_NET_IF_TYPES_H
+#include <net/if_types.h>
+#endif
+
 #ifdef HAVE_NET_IF_TUN_H
 #include <net/if_tun.h>
 #endif
