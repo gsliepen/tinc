@@ -3,6 +3,7 @@ TODO LIST
 Goals for 1.0 release:
 
 * Check Solaris port
+* Check FreeBSD port again
 * Check different linux architectures (x86, alpha and sparc32 done)
 * Store private key in a separate file (done, 1 dec 2000)
 * Sanity checks on configuration directory (mostly done)
@@ -10,7 +11,7 @@ Goals for 1.0 release:
 * Reenable queues for delayed packets (done)
 * Merge documentation files (SECURITY, INSTALL, PROTOCOL) into tinc.texi
 * Different authentication scheme (done)
-
+* Add randomness to packet headers and PING/PONG requests
 
 Goals for future releases:
 

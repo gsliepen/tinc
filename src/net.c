@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.103 2001/03/13 21:32:24 guus Exp $
+    $Id: net.c,v 1.35.4.104 2001/05/04 18:45:02 guus Exp $
 */
 
 #include "config.h"
@@ -848,11 +848,17 @@ sigalrm_handler(int a)
 cp
   cfg = get_config_val(upstreamcfg, config_connectto);
 
-  if(!cfg && upstreamcfg == config)
+  if(!cfg)
+    if(upstreamcfg == config)
     {
       /* No upstream IP given, we're listen only. */
       signal(SIGALRM, SIG_IGN);
       return;
+    }
+  else
+    {
+      /* We previously tried all the ConnectTo lines. Now wrap back to the first. */
+      cfg = get_config_val(config, config_connectto);
     }
     
   while(cfg)
