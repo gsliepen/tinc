@@ -1,6 +1,7 @@
 # Dutch messages for tinc
-# Copyright (C) 1999, 2000 Ivo Timmermans
+# Copyright (C) 1999, 2000 Ivo Timmermans, Guus Sliepen.
 # Ivo Timmermans <itimmermans@bigfoot.com>, 1999, 2000.
+# Guus Sliepen <guus@sliepen.warande.net>, 2000.
 #
 msgid ""
 msgstr ""
