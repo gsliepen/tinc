@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.71 2003/10/06 16:49:42 guus Exp $
+    $Id: net.h,v 1.9.4.72 2003/10/08 12:09:37 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -54,7 +54,7 @@ typedef struct ipv6_t {
 
 typedef short length_t;
 
-#define AF_UNKNOWN ((sa_family_t)-1)
+#define AF_UNKNOWN 255
 
 struct sockaddr_unknown {
 	uint16_t family;
