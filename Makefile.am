@@ -8,20 +8,11 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = config.rpath mkinstalldirs system.h COPYING.README depcomp
 
-CVS_CREATED = ABOUT-NLS INSTALL COPYING configure aclocal.m4 config.h.in config.guess \
- config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
- stamp-h.in ChangeLog po/Makefile.in.in \
- po/tinc.pot po/*.sed po/*.header po/*.sin po/Rules-quot \
- src/.libs intl depcomp
-
 ChangeLog:
 	cvs2cl -U cvsusers --fsf
 
-cvs-clean: maintainer-clean
-	for f in $(CVS_CREATED) `find . -name Makefile.in` tinc-$(VERSION).tar.gz; do\
-	  rm -Rf "$$f"; \
-	done
-	grep -l gettext `find m4 -type f` | xargs rm -f
+svn-clean: maintainer-clean
+	svn status --no-ignore | grep '^\?' | sed 's/^\? \+//g' | xargs rm -rf
 
 deb:
 	dpkg-buildpackage -rfakeroot
