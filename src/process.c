@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.70 2003/08/08 22:45:46 guus Exp $
+    $Id: process.c,v 1.1.2.71 2003/08/10 13:35:05 guus Exp $
 */
 
 #include "system.h"
@@ -85,6 +85,7 @@ bool install_service(void) {
 	char command[4096] = "";
 	char **argp;
 	bool space;
+	SERVICE_DESCRIPTION description = {"Virtual Private Network daemon"};
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!manager) {
@@ -119,6 +120,8 @@ bool install_service(void) {
 		logger(LOG_ERR, _("Could not create %s service: %s"), identname, winerror(GetLastError()));
 		return false;
 	}
+
+	ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
 
 	logger(LOG_INFO, _("%s service installed"), identname);
 
