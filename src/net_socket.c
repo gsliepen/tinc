@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.18 2002/09/04 13:48:52 guus Exp $
+    $Id: net_socket.c,v 1.1.2.19 2002/09/09 19:39:59 guus Exp $
 */
 
 #include "config.h"
@@ -93,8 +93,10 @@ int setup_listen_socket(sockaddr_t *sa)
   char *interface;
   struct ifreq ifr;
 #endif
-cp
-  if((nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP)) < 0)
+  cp();
+  nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
+
+  if(nfd < 0)
     {
       syslog(LOG_ERR, _("Creating metasocket failed: %s"), strerror(errno));
       return -1;
@@ -153,7 +155,7 @@ cp
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "listen", strerror(errno));
       return -1;
     }
-cp
+  cp();
   return nfd;
 }
 
@@ -166,8 +168,10 @@ int setup_vpn_in_socket(sockaddr_t *sa)
   char *interface;
   struct ifreq ifr;
 #endif
-cp
-  if((nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+  cp();
+  nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+
+  if(nfd < 0)
     {
       syslog(LOG_ERR, _("Creating UDP socket failed: %s"), strerror(errno));
       return -1;
@@ -206,14 +210,14 @@ cp
       free(addrstr);
       return -1;
     }
-cp
+  cp();
   return nfd;
 }
 
 void retry_outgoing(outgoing_t *outgoing)
 {
   event_t *event;
-cp
+  cp();
   outgoing->timeout += 5;
   if(outgoing->timeout > maxtimeout)
     outgoing->timeout = maxtimeout;
@@ -226,13 +230,13 @@ cp
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), outgoing->timeout);
-cp
+  cp();
 }
 
 int setup_outgoing_socket(connection_t *c)
 {
   int option;
-cp
+  cp();
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s (%s)"), c->name, c->hostname);
 
@@ -267,28 +271,28 @@ cp
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
-cp
+  cp();
   return 0;
 }
 
 
 void finish_connecting(connection_t *c)
 {
-cp
+  cp();
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
 
   c->last_ping_time = now;
 
   send_id(c);
-cp
+  cp();
 }
 
 void do_outgoing_connection(connection_t *c)
 {
   char *address, *port;
   int option, result, flags;
-cp
+  cp();
 begin:
   if(!c->outgoing->ai)
     {
@@ -385,14 +389,14 @@ begin:
 
   finish_connecting(c);
   return;
-cp
+  cp();
 }
 
 void setup_outgoing_connection(outgoing_t *outgoing)
 {
   connection_t *c;
   node_t *n;
-cp
+  cp();
   n = lookup_node(outgoing->name);
   
   if(n)
@@ -442,8 +446,10 @@ int handle_new_meta_connection(int sock)
   connection_t *c;
   sockaddr_t sa;
   int fd, len = sizeof(sa);
-cp
-  if((fd = accept(sock, &sa.sa, &len)) < 0)
+  cp();
+  fd = accept(sock, &sa.sa, &len);
+
+  if(fd < 0)
     {
       syslog(LOG_ERR, _("Accepting a new connection failed: %s"), strerror(errno));
       return -1;
@@ -469,7 +475,7 @@ cp
 
   c->allow_request = ID;
   send_id(c);
-cp
+  cp();
   return 0;
 }
 
@@ -478,7 +484,7 @@ void try_outgoing_connections(void)
   static config_t *cfg = NULL;
   char *name;
   outgoing_t *outgoing;
-cp
+  cp();
   for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg))
     {
       get_config_string(cfg, &name);

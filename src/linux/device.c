@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.9 2002/06/21 10:11:36 guus Exp $
+    $Id: device.c,v 1.1.2.10 2002/09/09 19:40:12 guus Exp $
 */
 
 #include "config.h"
@@ -84,7 +84,9 @@ cp
     interface = rindex(device, '/')?rindex(device, '/')+1:device;
 #endif
 cp
-  if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
+  device_fd = open(device, O_RDWR | O_NONBLOCK);
+
+  if(device_fd < 0)
     {
       syslog(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
       return -1;
@@ -154,7 +156,9 @@ int read_packet(vpn_packet_t *packet)
 cp
   if(device_type == DEVICE_TYPE_TUNTAP)
     {
-      if((lenin = read(device_fd, packet->data, MTU)) <= 0)
+      lenin = read(device_fd, packet->data, MTU);
+
+      if(lenin <= 0)
         {
           syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
           return -1;
@@ -164,7 +168,9 @@ cp
     }
   else /* ethertap */
     {
-      if((lenin = read(device_fd, packet->data - 2, MTU + 2)) <= 0)
+      lenin = read(device_fd, packet->data - 2, MTU + 2);
+
+      if(lenin <= 0)
         {
           syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
           return -1;

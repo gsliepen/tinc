@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.57 2002/06/21 10:11:12 guus Exp $
+    $Id: conf.c,v 1.9.4.58 2002/09/09 19:39:55 guus Exp $
 */
 
 #include "config.h"
@@ -72,23 +72,23 @@ int config_compare(config_t *a, config_t *b)
 
 void init_configuration(avl_tree_t **config_tree)
 {
-cp
+  cp();
   *config_tree = avl_alloc_tree((avl_compare_t)config_compare, (avl_action_t)free_config);
-cp
+  cp();
 }
 
 void exit_configuration(avl_tree_t **config_tree)
 {
-cp
+  cp();
   avl_delete_tree(*config_tree);
   *config_tree = NULL;
-cp
+  cp();
 }
 
 config_t *new_config(void)
 {
   config_t *cfg;
-cp
+  cp();
   cfg = (config_t *)xmalloc_and_zero(sizeof(*cfg));
 
   return cfg;
@@ -96,7 +96,7 @@ cp
 
 void free_config(config_t *cfg)
 {
-cp
+  cp();
   if(cfg->variable)
     free(cfg->variable);
   if(cfg->value)
@@ -104,20 +104,20 @@ cp
   if(cfg->file)
     free(cfg->file);
   free(cfg);
-cp
+  cp();
 }
 
 void config_add(avl_tree_t *config_tree, config_t *cfg)
 {
-cp
+  cp();
   avl_insert(config_tree, cfg);
-cp
+  cp();
 }
 
 config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 {
   config_t cfg, *found;
-cp
+  cp();
   cfg.variable = variable;
   cfg.file = "";
   cfg.line = 0;
@@ -137,7 +137,7 @@ config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
 {
   avl_node_t *node;
   config_t *found;
-cp
+  cp();
   node = avl_search_node(config_tree, cfg);
 
   if(node)
@@ -155,7 +155,7 @@ cp
 
 int get_config_bool(config_t *cfg, int *result)
 {
-cp
+  cp();
   if(!cfg)
     return 0;
 
@@ -178,7 +178,7 @@ cp
 
 int get_config_int(config_t *cfg, int *result)
 {
-cp
+  cp();
   if(!cfg)
     return 0;
 
@@ -192,7 +192,7 @@ cp
 
 int get_config_string(config_t *cfg, char **result)
 {
-cp
+  cp();
   if(!cfg)
     return 0;
 
@@ -203,7 +203,7 @@ cp
 int get_config_address(config_t *cfg, struct addrinfo **result)
 {
   struct addrinfo *ai;
-cp
+  cp();
   if(!cfg)
     return 0;
 
@@ -222,7 +222,7 @@ cp
 
 int get_config_port(config_t *cfg, port_t *result)
 {
-cp
+  cp();
   if(!cfg)
     return 0;
 
@@ -240,7 +240,7 @@ cp
 int get_config_subnet(config_t *cfg, subnet_t **result)
 {
   subnet_t *subnet;
-cp
+  cp();
   if(!cfg)
     return 0;
 
@@ -295,7 +295,7 @@ char *readline(FILE *fp, char **buf, size_t *buflen)
   if(feof(fp))
     return NULL;
 
-  if((buf != NULL) && (buflen != NULL))
+  if(buf && buflen)
     {
       size = *buflen;
       line = *buf;
@@ -313,7 +313,7 @@ char *readline(FILE *fp, char **buf, size_t *buflen)
     {
       errno = 0;
       p = fgets(idx, maxlen, fp);
-      if(p == NULL)  /* EOF or error */
+      if(!p)  /* EOF or error */
 	{
 	  if(feof(fp))
 	    break;
@@ -325,7 +325,7 @@ char *readline(FILE *fp, char **buf, size_t *buflen)
 	}
 
       newline = strchr(p, '\n');
-      if(newline == NULL)
+      if(!newline)
 	/* We haven't yet read everything to the end of the line */
 	{
 	  newsize = size << 1;
@@ -341,7 +341,7 @@ char *readline(FILE *fp, char **buf, size_t *buflen)
 	}
     }
 
-  if((buf != NULL) && (buflen != NULL))
+  if(buf && buflen)
     {
       *buflen = size;
       *buf = line;
@@ -363,8 +363,10 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
   config_t *cfg;
   size_t bufsize;
 
-cp
-  if((fp = fopen (fname, "r")) == NULL)
+  cp();
+  fp = fopen (fname, "r");
+
+  if(!fp)
     {
       syslog(LOG_ERR, _("Cannot open config file %s: %s"), fname, strerror(errno));
       return -3;
@@ -375,7 +377,9 @@ cp
 
   for(;;)
     {
-      if((line = readline(fp, &buffer, &bufsize)) == NULL)
+      line = readline(fp, &buffer, &bufsize);
+
+      if(!line)
 	{
 	  err = -1;
 	  break;
@@ -389,7 +393,9 @@ cp
 
       lineno++;
 
-      if((variable = strtok(line, "\t =")) == NULL)
+      variable = strtok(line, "\t =");
+      
+      if(!variable)
 	continue; /* no tokens on this line */
 
       if(variable[0] == '#')
@@ -400,7 +406,9 @@ cp
 
       if(!ignore)
         {
-          if(((value = strtok(NULL, "\t\n\r =")) == NULL) || value[0] == '#')
+          value = strtok(NULL, "\t\n\r =");
+
+          if(!value || value[0] == '#')
 	    {
 	      syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
 		      variable, lineno, fname);
@@ -422,7 +430,7 @@ cp
 
   free(buffer);
   fclose (fp);
-cp
+  cp();
   return err;
 }
 
@@ -430,7 +438,7 @@ int read_server_config()
 {
   char *fname;
   int x;
-cp
+  cp();
   asprintf(&fname, "%s/tinc.conf", confbase);
   x = read_config_file(config_tree, fname);
   if(x == -1) /* System error: complain */
@@ -438,7 +446,7 @@ cp
       syslog(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
     }
   free(fname);
-cp
+  cp();
   return x;
 }
 
@@ -571,18 +579,20 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
 	      what, filename);
       fflush(stdout);
 
-      if((fn = readline(stdin, NULL, NULL)) == NULL)
+      fn = readline(stdin, NULL, NULL);
+
+      if(!fn)
 	{
 	  fprintf(stderr, _("Error while reading stdin: %s\n"), strerror(errno));
 	  return NULL;
 	}
 
-      if(strlen(fn) == 0)
+      if(!strlen(fn))
 	/* User just pressed enter. */
 	fn = xstrdup(filename);
     }
 
-  if((strchr(fn, '/') == NULL) || (fn[0] != '/'))
+  if(!strchr(fn, '/') || fn[0] != '/')
     {
       /* The directory is a relative path or a filename. */
       char *p;
@@ -597,7 +607,10 @@ FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode
   umask(0077); /* Disallow everything for group and other */
 
   /* Open it first to keep the inode busy */
-  if((r = fopen(fn, mode)) == NULL)
+
+  r = fopen(fn, mode);
+
+  if(!r)
     {
       fprintf(stderr, _("Error opening file `%s': %s\n"),
 	      fn, strerror(errno));

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.4 2002/06/21 10:11:19 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.5 2002/09/09 19:40:08 guus Exp $
 */
 
 #include "config.h"
@@ -44,10 +44,10 @@
 
 int send_status(connection_t *c, int statusno, char *statusstring)
 {
-cp
+  cp();
   if(!statusstring)
     statusstring = status_text[statusno];
-cp
+  cp();
   return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
@@ -55,7 +55,7 @@ int status_h(connection_t *c)
 {
   int statusno;
   char statusstring[MAX_STRING_SIZE];
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %d "MAX_STRING, &statusno, statusstring) != 2)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
@@ -69,13 +69,13 @@ cp
              c->name, c->hostname, status_text[statusno], statusstring);
     }
 
-cp
+  cp();
   return 0;
 }
 
 int send_error(connection_t *c, int err, char *errstring)
 {
-cp
+  cp();
   if(!errstring)
     errstring = strerror(err);
   return send_request(c, "%d %d %s", ERROR, err, errstring);
@@ -85,7 +85,7 @@ int error_h(connection_t *c)
 {
   int err;
   char errorstring[MAX_STRING_SIZE];
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %d "MAX_STRING, &err, errorstring) != 2)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
@@ -100,55 +100,55 @@ cp
     }
 
   terminate_connection(c, c->status.active);
-cp
+  cp();
   return 0;
 }
 
 int send_termreq(connection_t *c)
 {
-cp
+  cp();
   return send_request(c, "%d", TERMREQ);
 }
 
 int termreq_h(connection_t *c)
 {
-cp
+  cp();
   terminate_connection(c, c->status.active);
-cp
+  cp();
   return 0;
 }
 
 int send_ping(connection_t *c)
 {
-cp
+  cp();
   c->status.pinged = 1;
   c->last_ping_time = now;
-cp
+  cp();
   return send_request(c, "%d", PING);
 }
 
 int ping_h(connection_t *c)
 {
-cp
+  cp();
   return send_pong(c);
 }
 
 int send_pong(connection_t *c)
 {
-cp
+  cp();
   return send_request(c, "%d", PONG);
 }
 
 int pong_h(connection_t *c)
 {
-cp
+  cp();
   c->status.pinged = 0;
 
   /* Succesful connection, reset timeout if this is an outgoing connection. */
   
   if(c->outgoing)
     c->outgoing->timeout = 0;
-cp
+  cp();
   return 0;
 }
 
@@ -157,21 +157,21 @@ cp
 int send_tcppacket(connection_t *c, vpn_packet_t *packet)
 {
   int x;
-cp  
+  cp();
   /* Evil hack. */
 
   x = send_request(c, "%d %hd", PACKET, packet->len);
 
   if(x)
     return x;
-cp
+  cp();
   return send_meta(c, packet->data, packet->len);
 }
 
 int tcppacket_h(connection_t *c)
 {
   short int len;
-cp  
+  cp();
   if(sscanf(c->buffer, "%*d %hd", &len) != 1)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name, c->hostname);
@@ -181,7 +181,7 @@ cp
   /* Set reqlen to len, this will tell receive_meta() that a tcppacket is coming. */
 
   c->tcplen = len;
-cp
+  cp();
   return 0;
 }
 

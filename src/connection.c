@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.31 2002/09/04 16:26:44 guus Exp $
+    $Id: connection.c,v 1.1.2.32 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -50,41 +50,41 @@ int connection_compare(connection_t *a, connection_t *b)
 
 void init_connections(void)
 {
-cp
+  cp();
   connection_tree = avl_alloc_tree((avl_compare_t)connection_compare, NULL);
-cp
+  cp();
   broadcast = new_connection();
   broadcast->name = xstrdup(_("everyone"));
   broadcast->hostname = xstrdup(_("BROADCAST"));
-cp
+  cp();
 }
 
 void exit_connections(void)
 {
-cp
+  cp();
   avl_delete_tree(connection_tree);
-cp
+  cp();
   free_connection(broadcast);
-cp
+  cp();
 }
 
 connection_t *new_connection(void)
 {
   connection_t *c;
-cp
+  cp();
   c = (connection_t *)xmalloc_and_zero(sizeof(connection_t));
 
   if(!c)
     return NULL;
 
   gettimeofday(&c->start, NULL);
-cp
+  cp();
   return c;
 }
 
 void free_connection(connection_t *c)
 {
-cp
+  cp();
   if(c->hostname)
     free(c->hostname);
   if(c->inkey)
@@ -96,28 +96,28 @@ cp
   if(c->hischallenge)
     free(c->hischallenge);
   free(c);
-cp
+  cp();
 }
 
 void connection_add(connection_t *c)
 {
-cp
+  cp();
   avl_insert(connection_tree, c);
-cp
+  cp();
 }
 
 void connection_del(connection_t *c)
 {
-cp
+  cp();
   avl_delete(connection_tree, c);
-cp
+  cp();
 }
 
 void dump_connections(void)
 {
   avl_node_t *node;
   connection_t *c;
-cp
+  cp();
   syslog(LOG_DEBUG, _("Connections:"));
 
   for(node = connection_tree->head; node; node = node->next)
@@ -128,17 +128,17 @@ cp
     }
     
   syslog(LOG_DEBUG, _("End of connections."));
-cp
+  cp();
 }
 
 int read_connection_config(connection_t *c)
 {
   char *fname;
   int x;
-cp
+  cp();
   asprintf(&fname, "%s/hosts/%s", confbase, c->name);
   x = read_config_file(c->config_tree, fname);
   free(fname);
-cp
+  cp();
   return x;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.6 2002/09/04 16:26:45 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.7 2002/09/09 19:40:09 guus Exp $
 */
 
 #include "config.h"
@@ -47,11 +47,11 @@ int send_add_subnet(connection_t *c, subnet_t *subnet)
 {
   int x;
   char *netstr;
-cp
+  cp();
   x = send_request(c, "%d %lx %s %s", ADD_SUBNET, random(),
                       subnet->owner->name, netstr = net2str(subnet));
   free(netstr);
-cp
+  cp();
   return x;
 }
 
@@ -61,7 +61,7 @@ int add_subnet_h(connection_t *c)
   char name[MAX_STRING_SIZE];
   node_t *owner;
   subnet_t *s;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name, c->hostname);
@@ -78,7 +78,9 @@ cp
 
   /* Check if subnet string is valid */
 
-  if(!(s = str2net(subnetstr)))
+  s = str2net(subnetstr);
+
+  if(!s)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name, c->hostname, _("invalid subnet string"));
       return -1;
@@ -124,7 +126,7 @@ cp
   /* Tell the rest */
 
   forward_request(c);
-cp
+  cp();
   return 0;
 }
 
@@ -132,11 +134,11 @@ int send_del_subnet(connection_t *c, subnet_t *s)
 {
   int x;
   char *netstr;
-cp
+  cp();
   netstr = net2str(s);
   x = send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
   free(netstr);
-cp
+  cp();
   return x;
 }
 
@@ -146,7 +148,7 @@ int del_subnet_h(connection_t *c)
   char name[MAX_STRING_SIZE];
   node_t *owner;
   subnet_t *s, *find;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, name, subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name, c->hostname);
@@ -163,7 +165,9 @@ cp
 
   /* Check if the owner of the new subnet is in the connection list */
 
-  if(!(owner = lookup_node(name)))
+  owner = lookup_node(name);    
+
+  if(!owner)
     {
       if(debug_lvl >= DEBUG_PROTOCOL)
         syslog(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
@@ -173,7 +177,9 @@ cp
 
   /* Check if subnet string is valid */
 
-  if(!(s = str2net(subnetstr)))
+  s = str2net(subnetstr);
+
+  if(!s)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name, c->hostname, _("invalid subnet string"));
       return -1;
@@ -216,6 +222,6 @@ cp
 
   subnet_del(owner, find);
 
-cp
+  cp();
   return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.178 2002/09/06 21:22:35 guus Exp $
+    $Id: net.c,v 1.35.4.179 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -91,7 +91,7 @@ void purge(void)
   node_t *n;
   edge_t *e;
   subnet_t *s;
-cp
+  cp();
   if(debug_lvl >= DEBUG_PROTOCOL)
     syslog(LOG_DEBUG, _("Purging unreachable nodes"));
 
@@ -124,7 +124,7 @@ cp
       node_del(n);
     }
   }
-cp
+  cp();
 }
 
 /*
@@ -136,7 +136,7 @@ void build_fdset(fd_set *fs)
   avl_node_t *node, *next;
   connection_t *c;
   int i;
-cp
+  cp();
   FD_ZERO(fs);
 
   for(node = connection_tree->head; node; node = next)
@@ -161,7 +161,7 @@ cp
     }
 
   FD_SET(device_fd, fs);
-cp
+  cp();
 }
 
 /*
@@ -173,7 +173,7 @@ cp
 */
 void terminate_connection(connection_t *c, int report)
 {
-cp
+  cp();
   if(c->status.remove)
     return;
 
@@ -209,7 +209,7 @@ cp
       retry_outgoing(c->outgoing);
       c->outgoing = NULL;
     }
-cp
+  cp();
 }
 
 /*
@@ -224,7 +224,7 @@ void check_dead_connections(void)
 {
   avl_node_t *node, *next;
   connection_t *c;
-cp
+  cp();
   for(node = connection_tree->head; node; node = next)
     {
       next = node->next;
@@ -261,7 +261,7 @@ cp
             }
         }
     }
-cp
+  cp();
 }
 
 /*
@@ -275,7 +275,7 @@ void check_network_activity(fd_set *f)
   int result, i;
   int len = sizeof(result);
   vpn_packet_t packet;
-cp
+  cp();
   if(FD_ISSET(device_fd, f))
     {
       if(!read_packet(&packet))
@@ -321,7 +321,7 @@ cp
       if(FD_ISSET(listen_socket[i].tcp, f))
 	handle_new_meta_connection(listen_socket[i].tcp);
     }
-cp
+  cp();
 }
 
 /*
@@ -334,7 +334,7 @@ void main_loop(void)
   int r;
   time_t last_ping_check;
   event_t *event;
-cp
+  cp();
   last_ping_check = now;
 
   srand(now);
@@ -348,7 +348,9 @@ cp
 
       build_fdset(&fset);
 
-      if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
+      r = select(FD_SETSIZE, &fset, NULL, NULL, &tv);
+
+      if(r < 0)
         {
           if(errno != EINTR && errno != EAGAIN)
             {
@@ -437,5 +439,5 @@ cp
           continue;
         }
     }
-cp
+  cp();
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.23 2002/09/04 13:48:52 guus Exp $
+    $Id: net_setup.c,v 1.1.2.24 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -82,7 +82,7 @@ int read_rsa_public_key(connection_t *c)
   FILE *fp;
   char *fname;
   char *key;
-cp
+  cp();
   if(!c->rsa_key)
     c->rsa_key = RSA_new();
 
@@ -102,7 +102,8 @@ cp
     {
       if(is_safe_path(fname))
         {
-          if((fp = fopen(fname, "r")) == NULL)
+          fp = fopen(fname, "r");
+          if(!fp)
             {
               syslog(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
                      fname, strerror(errno));
@@ -116,7 +117,8 @@ cp
 	    return 0; /* Woohoo. */
 	  
 	  /* If it fails, try PEM_read_RSA_PUBKEY. */
-          if((fp = fopen(fname, "r")) == NULL)
+          fp = fopen(fname, "r");
+          if(!fp)
             {
               syslog(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
                      fname, strerror(errno));
@@ -143,7 +145,9 @@ cp
   /* Else, check if a harnessed public key is in the config file */
 
   asprintf(&fname, "%s/hosts/%s", confbase, c->name);
-  if((fp = fopen(fname, "r")))
+  fp = fopen(fname, "r");
+
+  if(fp)
     {
       c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
       fclose(fp);
@@ -157,7 +161,9 @@ cp
   /* Try again with PEM_read_RSA_PUBKEY. */
 
   asprintf(&fname, "%s/hosts/%s", confbase, c->name);
-  if((fp = fopen(fname, "r")))
+  fp = fopen(fname, "r");
+
+  if(fp)
     {
       c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
       fclose(fp);
@@ -176,7 +182,7 @@ int read_rsa_private_key(void)
 {
   FILE *fp;
   char *fname, *key;
-cp
+  cp();
   if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key))
     {
       myself->connection->rsa_key = RSA_new();
@@ -191,7 +197,8 @@ cp
 
   if(is_safe_path(fname))
     {
-      if((fp = fopen(fname, "r")) == NULL)
+      fp = fopen(fname, "r");
+      if(!fp)
         {
           syslog(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
                  fname, strerror(errno));
@@ -225,7 +232,7 @@ int setup_myself(void)
   char *address = NULL;
   struct addrinfo hint, *ai, *aip;
   int choice, err;
-cp
+  cp();
   myself = new_node();
   myself->connection = new_connection();
   init_configuration(&myself->connection->config_tree);
@@ -252,7 +259,7 @@ cp
   myself->name = name;
   myself->connection->name = xstrdup(name);
 
-cp
+  cp();
   if(read_rsa_private_key())
     return -1;
 
@@ -264,7 +271,7 @@ cp
 
   if(read_rsa_public_key(myself->connection))
     return -1;
-cp
+  cp();
 
   if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
     asprintf(&myport, "655");
@@ -283,7 +290,7 @@ cp
       cfg = lookup_config_next(myself->connection->config_tree, cfg);
     }
 
-cp
+  cp();
   /* Check some options */
 
   if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice))
@@ -362,7 +369,7 @@ cp
     addressfamily = AF_INET;
 
   get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
-cp
+  cp();
   /* Generate packet encryption key */
 
   if(get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
@@ -373,7 +380,9 @@ cp
         }
       else
         {
-          if(!(myself->cipher = EVP_get_cipherbyname(cipher)))
+          myself->cipher = EVP_get_cipherbyname(cipher);
+
+          if(!myself->cipher)
             {
               syslog(LOG_ERR, _("Unrecognized cipher type!"));
               return -1;
@@ -408,7 +417,9 @@ cp
         }
       else
         {
-          if(!(myself->digest = EVP_get_digestbyname(digest)))
+          myself->digest = EVP_get_digestbyname(digest);
+
+          if(!myself->digest)
             {
               syslog(LOG_ERR, _("Unrecognized digest type!"));
               return -1;
@@ -455,7 +466,7 @@ cp
     myself->compression = 0;
 
   myself->connection->outcompression = 0;
-cp
+  cp();
   /* Done */
 
   myself->nexthop = myself;
@@ -466,7 +477,7 @@ cp
 
   graph();
 
-cp
+  cp();
   /* Open sockets */
   
   memset(&hint, 0, sizeof(hint));
@@ -478,7 +489,9 @@ cp
   hint.ai_protocol = IPPROTO_TCP;
   hint.ai_flags = AI_PASSIVE;
 
-  if((err = getaddrinfo(address, myport, &hint, &ai)) || !ai)
+  err = getaddrinfo(address, myport, &hint, &ai);
+
+  if(err || !ai)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
       return -1;
@@ -488,10 +501,14 @@ cp
 
   for(aip = ai; aip; aip = aip->ai_next)
     {
-      if((listen_socket[listen_sockets].tcp = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
+      listen_socket[listen_sockets].tcp = setup_listen_socket((sockaddr_t *)aip->ai_addr);
+
+      if(listen_socket[listen_sockets].tcp < 0)
         continue;
 
-      if((listen_socket[listen_sockets].udp = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
+      listen_socket[listen_sockets].udp = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr);
+ 
+     if(listen_socket[listen_sockets].udp < 0)
         continue;
 
       if(debug_lvl >= DEBUG_CONNECTIONS)
@@ -514,7 +531,7 @@ cp
       syslog(LOG_ERR, _("Unable to create any listening socket!"));
       return -1;
     }
-cp
+  cp();
   return 0;
 }
 
@@ -525,7 +542,7 @@ int setup_network_connections(void)
 {
   char *envp[4];
   int i;
-cp
+  cp();
   now = time(NULL);
 
   init_connections();
@@ -549,9 +566,9 @@ cp
     return -1;
 
   /* Run tinc-up script to further initialize the tap interface */
-  asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
-  asprintf(&envp[1], "DEVICE=%s", device?device:"");
-  asprintf(&envp[2], "INTERFACE=%s", interface?interface:"");
+  asprintf(&envp[0], "NETNAME=%s", netname?:"");
+  asprintf(&envp[1], "DEVICE=%s", device?:"");
+  asprintf(&envp[2], "INTERFACE=%s", interface?:"");
   envp[3] = NULL;
 
   execute_script("tinc-up", envp);
@@ -563,7 +580,7 @@ cp
     return -1;
 
   try_outgoing_connections();
-cp
+  cp();
   return 0;
 }
 
@@ -576,7 +593,7 @@ void close_network_connections(void)
   connection_t *c;
   char *envp[4];
   int i;
-cp
+  cp();
   for(node = connection_tree->head; node; node = next)
     {
       next = node->next;
@@ -602,9 +619,9 @@ cp
   exit_nodes();
   exit_connections();
 
-  asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
-  asprintf(&envp[1], "DEVICE=%s", device?device:"");
-  asprintf(&envp[2], "INTERFACE=%s", interface?interface:"");
+  asprintf(&envp[0], "NETNAME=%s", netname?:"");
+  asprintf(&envp[1], "DEVICE=%s", device?:"");
+  asprintf(&envp[2], "INTERFACE=%s", interface?:"");
   envp[3] = NULL;
 
   execute_script("tinc-down", envp);
@@ -613,6 +630,6 @@ cp
     free(envp[i]);
 
   close_device();
-cp
+  cp();
   return;
 }

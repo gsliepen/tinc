@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.44 2002/09/04 14:17:28 guus Exp $
+    $Id: process.c,v 1.1.2.45 2002/09/09 19:39:59 guus Exp $
 */
 
 #include "config.h"
@@ -91,7 +91,7 @@ int fcloseall(void)
 */
 void cleanup_and_exit(int c)
 {
-cp
+  cp();
   close_network_connections();
 
   if(debug_lvl > DEBUG_NOTHING)
@@ -109,8 +109,10 @@ cp
 int write_pidfile(void)
 {
   int pid;
-cp
-  if((pid = check_pid(pidfilename)))
+  cp();
+  pid = check_pid(pidfilename);
+
+  if(pid)
     {
       if(netname)
 	fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
@@ -123,7 +125,7 @@ cp
   /* if it's locked, write-protected, or whatever */
   if(!write_pid(pidfilename))
     return 1;
-cp
+  cp();
   return 0;
 }
 
@@ -133,8 +135,10 @@ cp
 int kill_other(int signal)
 {
   int pid;
-cp
-  if(!(pid = read_pid(pidfilename)))
+  cp();
+  pid = read_pid(pidfilename);
+
+  if(!pid)
     {
       if(netname)
 	fprintf(stderr, _("No other tincd is running for net `%s'.\n"), netname);
@@ -155,7 +159,7 @@ cp
       fprintf(stderr, _("Removing stale lock file.\n"));
       remove_pid(pidfilename);
     }
-cp
+  cp();
   return 0;
 }
 
@@ -164,7 +168,7 @@ cp
 */
 int detach(void)
 {
-cp
+  cp();
   setup_signals();
 
   /* First check if we can open a fresh new pidfile */
@@ -199,7 +203,7 @@ cp
     syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
 
   xalloc_fail_func = memory_full;
-cp
+  cp();
   return 0;
 }
 
@@ -211,7 +215,7 @@ void _execute_script(const char *scriptname, char **envp)  __attribute__ ((noret
 void _execute_script(const char *scriptname, char **envp)
 {
   char *s;
-cp
+  cp();
   while(*envp)
     putenv(*envp++);
       
@@ -238,7 +242,7 @@ int execute_script(const char *name, char **envp)
   int status;
   struct stat s;
   char *scriptname;
-cp
+  cp();
   asprintf(&scriptname, "%s/%s", confbase, name);
 
   /* First check if there is a script */
@@ -246,7 +250,9 @@ cp
   if(stat(scriptname, &s))
     return 0;
 
-  if((pid = fork()) < 0)
+  pid = fork();
+  
+  if(pid < 0)
     {
       syslog(LOG_ERR, _("System call `%s' failed: %s"), "fork", strerror(errno));
       return -1;
@@ -289,7 +295,7 @@ cp
           return -1;
         }
     }
-cp
+  cp();
   /* Child here */
 
   _execute_script(scriptname, envp);

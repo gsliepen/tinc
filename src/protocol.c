@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.134 2002/09/04 19:57:53 guus Exp $
+    $Id: protocol.c,v 1.28.4.135 2002/09/09 19:39:59 guus Exp $
 */
 
 #include "config.h"
@@ -63,7 +63,7 @@ int send_request(connection_t *c, const char *format, ...)
   char buffer[MAXBUFSIZE];
   int len, request;
 
-cp
+  cp();
   /* Use vsnprintf instead of vasprintf: faster, no memory
      fragmentation, cleanup is automatic, and there is a limit on the
      input buffer anyway */
@@ -88,7 +88,7 @@ cp
     }
 
   buffer[len++] = '\n';
-cp
+  cp();
   if(c == broadcast)
     return broadcast_meta(NULL, buffer, len);
   else
@@ -98,7 +98,7 @@ cp
 int forward_request(connection_t *from)
 {
   int request;
-cp
+  cp();
   if(debug_lvl >= DEBUG_PROTOCOL)
     {
       sscanf(from->buffer, "%d", &request);
@@ -109,17 +109,17 @@ cp
     }
 
   from->buffer[from->reqlen - 1] = '\n';
-cp
+  cp();
   return broadcast_meta(from, from->buffer, from->reqlen);
 }
 
 int receive_request(connection_t *c)
 {
   int request;
-cp
+  cp();
   if(sscanf(c->buffer, "%d", &request) == 1)
     {
-      if((request < 0) || (request >= LAST) || (request_handlers[request] == NULL))
+      if((request < 0) || (request >= LAST) || !request_handlers[request])
         {
           if(debug_lvl >= DEBUG_META)
             syslog(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
@@ -163,43 +163,43 @@ cp
 	     c->name, c->hostname);
       return -1;
     }
-cp
+  cp();
   return 0;
 }
 
 int past_request_compare(past_request_t *a, past_request_t *b)
 {
-cp
+  cp();
   return strcmp(a->request, b->request);
 }
 
 void free_past_request(past_request_t *r)
 {
-cp
+  cp();
   if(r->request)
     free(r->request);
   free(r);
-cp
+  cp();
 }
 
 void init_requests(void)
 {
-cp
+  cp();
   past_request_tree = avl_alloc_tree((avl_compare_t)past_request_compare, (avl_action_t)free_past_request);
-cp
+  cp();
 }
 
 void exit_requests(void)
 {
-cp
+  cp();
   avl_delete_tree(past_request_tree);
-cp
+  cp();
 }
 
 int seen_request(char *request)
 {
   past_request_t p, *new;
-cp
+  cp();
   p.request = request;
 
   if(avl_search(past_request_tree, &p))
@@ -216,7 +216,7 @@ cp
       avl_insert(past_request_tree, new);
       return 0;
     }
-cp  
+  cp();
 }
 
 void age_past_requests(void)
@@ -224,7 +224,7 @@ void age_past_requests(void)
   avl_node_t *node, *next;
   past_request_t *p;
   int left = 0, deleted = 0;
-cp 
+  cp();
   for(node = past_request_tree->head; node; node = next)
     {
       next = node->next;
@@ -237,7 +237,7 @@ cp
 
   if(debug_lvl >= DEBUG_SCARY_THINGS && left + deleted)
     syslog(LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"), deleted, left);
-cp
+  cp();
 }
 
 /* Jumptable for the request handlers */

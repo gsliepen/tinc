@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.14 2002/09/06 12:19:16 guus Exp $
+    $Id: edge.c,v 1.1.2.15 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -67,30 +67,30 @@ int edge_weight_compare(edge_t *a, edge_t *b)
 
 void init_edges(void)
 {
-cp
+  cp();
   edge_weight_tree = avl_alloc_tree((avl_compare_t)edge_weight_compare, NULL);
-cp
+  cp();
 }
 
 avl_tree_t *new_edge_tree(void)
 {
-cp
+  cp();
   return avl_alloc_tree((avl_compare_t)edge_compare, NULL);
-cp
+  cp();
 }
 
 void free_edge_tree(avl_tree_t *edge_tree)
 {
-cp
+  cp();
   avl_delete_tree(edge_tree);
-cp
+  cp();
 }
 
 void exit_edges(void)
 {
-cp
+  cp();
   avl_delete_tree(edge_weight_tree);
-cp
+  cp();
 }
 
 /* Creation and deletion of connection elements */
@@ -98,46 +98,46 @@ cp
 edge_t *new_edge(void)
 {
   edge_t *e;
-cp
+  cp();
   e = (edge_t *)xmalloc_and_zero(sizeof(*e));
-cp
+  cp();
   return e;
 }
 
 void free_edge(edge_t *e)
 {
-cp
+  cp();
   free(e);
-cp
+  cp();
 }
 
 void edge_add(edge_t *e)
 {
-cp
+  cp();
   avl_insert(edge_weight_tree, e);
   avl_insert(e->from->edge_tree, e);
-cp
+  cp();
   e->reverse = lookup_edge(e->to, e->from);
   if(e->reverse)
     e->reverse->reverse = e;
-cp
+  cp();
 }
 
 void edge_del(edge_t *e)
 {
-cp
+  cp();
   if(e->reverse)
     e->reverse->reverse = NULL;
-cp
+  cp();
   avl_delete(edge_weight_tree, e);
   avl_delete(e->from->edge_tree, e);
-cp
+  cp();
 }
 
 edge_t *lookup_edge(node_t *from, node_t *to)
 {
   edge_t v;
-cp
+  cp();
   v.from = from;
   v.to = to;
 
@@ -150,7 +150,7 @@ void dump_edges(void)
   node_t *n;
   edge_t *e;
   char *address;
-cp
+  cp();
   syslog(LOG_DEBUG, _("Edges:"));
 
   for(node = node_tree->head; node; node = node->next)
@@ -168,5 +168,5 @@ cp
     }
 
   syslog(LOG_DEBUG, _("End of edges."));
-cp
+  cp();
 }

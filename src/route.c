@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.43 2002/06/21 10:11:33 guus Exp $
+    $Id: route.c,v 1.1.2.44 2002/09/09 19:40:11 guus Exp $
 */
 
 #include "config.h"
@@ -72,7 +72,7 @@ void learn_mac(mac_t *address)
   subnet_t *subnet;
   avl_node_t *node;
   connection_t *c;
-cp
+  cp();
   subnet = lookup_subnet_mac(address);
 
   /* If we don't know this MAC address yet, store it */
@@ -106,7 +106,7 @@ void age_mac(void)
   subnet_t *s;
   connection_t *c;
   avl_node_t *node, *next, *node2;
-cp
+  cp();
   for(node = myself->subnet_tree->head; node; node = next)
     {
       next = node->next;
@@ -125,13 +125,13 @@ cp
           subnet_del(myself, s);
 	}
     }
-cp
+  cp();
 }
 
 node_t *route_mac(vpn_packet_t *packet)
 {
   subnet_t *subnet;
-cp
+  cp();
   /* Learn source address */
 
   learn_mac((mac_t *)(&packet->data[6]));
@@ -149,12 +149,12 @@ cp
 node_t *route_ipv4(vpn_packet_t *packet)
 {
   subnet_t *subnet;
-cp
+  cp();
   if(priorityinheritance)
     packet->priority = packet->data[15];
 
   subnet = lookup_subnet_ipv4((ipv4_t *)&packet->data[30]);
-cp
+  cp();
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
@@ -165,16 +165,16 @@ cp
 
       return NULL;
     }
-cp
+  cp();
   return subnet->owner;  
 }
 
 node_t *route_ipv6(vpn_packet_t *packet)
 {
   subnet_t *subnet;
-cp
+  cp();
   subnet = lookup_subnet_ipv6((ipv6_t *)&packet->data[38]);
-cp
+  cp();
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
@@ -192,7 +192,7 @@ cp
 
       return NULL;
     }
-cp
+  cp();
   return subnet->owner;  
 }
 
@@ -224,7 +224,7 @@ void route_neighborsol(vpn_packet_t *packet)
     uint8_t junk[4];
   } pseudo;
 
-cp
+  cp();
   hdr = (struct ip6_hdr *)(packet->data + 14);
   ns = (struct nd_neighbor_solicit *)(packet->data + 14 + sizeof(*hdr));
   opt = (struct nd_opt_hdr *)(packet->data + 14 + sizeof(*hdr) + sizeof(*ns));
@@ -318,7 +318,7 @@ cp
   ns->nd_ns_hdr.icmp6_cksum = htons(checksum);
 
   write_packet(packet);
-cp
+  cp();
 }
 
 void route_arp(vpn_packet_t *packet)
@@ -326,7 +326,7 @@ void route_arp(vpn_packet_t *packet)
   struct ether_arp *arp;
   subnet_t *subnet;
   uint8_t ipbuf[4];
-cp
+  cp();
   /* First, snatch the source address from the ARP packet */
 
   memcpy(mymac.net.mac.address.x, packet->data + 6, 6);
@@ -385,14 +385,14 @@ cp
   arp->arp_op = htons(ARPOP_REPLY);
   
   write_packet(packet);
-cp
+  cp();
 }
 
 void route_outgoing(vpn_packet_t *packet)
 {
   uint16_t type;
   node_t *n = NULL;
-cp
+  cp();
   /* FIXME: multicast? */
 
   switch(routing_mode)

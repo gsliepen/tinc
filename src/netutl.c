@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.41 2002/06/21 17:49:48 guus Exp $
+    $Id: netutl.c,v 1.12.4.42 2002/09/09 19:39:59 guus Exp $
 */
 
 #include "config.h"
@@ -56,13 +56,15 @@ struct addrinfo *str2addrinfo(char *address, char *service, int socktype)
 {
   struct addrinfo hint, *ai;
   int err;
-cp
+  cp();
   memset(&hint, 0, sizeof(hint));
 
   hint.ai_family = addressfamily;
   hint.ai_socktype = socktype;
 
-  if((err = getaddrinfo(address, service, &hint, &ai)))
+  err = getaddrinfo(address, service, &hint, &ai);
+
+  if(err)
     {
       if(debug_lvl >= DEBUG_ERROR)
         syslog(LOG_WARNING, _("Error looking up %s port %s: %s\n"), address, service, gai_strerror(err));
@@ -70,7 +72,7 @@ cp
       return NULL;
     }
 
-cp
+  cp();
   return ai;
 }
 
@@ -79,14 +81,16 @@ sockaddr_t str2sockaddr(char *address, char *port)
   struct addrinfo hint, *ai;
   sockaddr_t result;
   int err;
-cp
+  cp();
   memset(&hint, 0, sizeof(hint));
 
   hint.ai_family = AF_UNSPEC;
   hint.ai_flags = AI_NUMERICHOST;
   hint.ai_socktype = SOCK_STREAM;
 
-  if((err = getaddrinfo(address, port, &hint, &ai) || !ai))
+  err = getaddrinfo(address, port, &hint, &ai);
+
+  if(err || !ai)
     {
       syslog(LOG_ERR, _("Error looking up %s port %s: %s\n"), address, port, gai_strerror(err));
       cp_trace();
@@ -96,7 +100,7 @@ cp
 
   result = *(sockaddr_t *)ai->ai_addr;
   freeaddrinfo(ai);
-cp
+  cp();
   return result;
 }
 
@@ -106,8 +110,10 @@ void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
   char port[NI_MAXSERV];
   char *scopeid;
   int err;
-cp
-  if((err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV)))
+  cp();
+  err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST|NI_NUMERICSERV);
+
+  if(err)
     {
       syslog(LOG_ERR, _("Error while translating addresses: %s"), gai_strerror(err));
       cp_trace();
@@ -115,12 +121,14 @@ cp
       exit(0);
     }
 
-  if((scopeid = strchr(address, '%')))
+  scopeid = strchr(address, '%');
+
+  if(scopeid)
     *scopeid = '\0';  /* Descope. */
 
   *addrstr = xstrdup(address);
   *portstr = xstrdup(port);
-cp
+  cp();
 }
 
 char *sockaddr2hostname(sockaddr_t *sa)
@@ -129,21 +137,22 @@ char *sockaddr2hostname(sockaddr_t *sa)
   char address[NI_MAXHOST] = "unknown";
   char port[NI_MAXSERV] = "unknown";
   int err;
-cp
-  if((err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), hostnames?0:(NI_NUMERICHOST|NI_NUMERICSERV))))
+  cp();
+  err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), hostnames?0:(NI_NUMERICHOST|NI_NUMERICSERV));
+  if(err)
     {
       syslog(LOG_ERR, _("Error while looking up hostname: %s"), gai_strerror(err));
     }
 
   asprintf(&str, _("%s port %s"), address, port);
-cp
+  cp();
   return str;
 }
 
 int sockaddrcmp(sockaddr_t *a, sockaddr_t *b)
 {
   int result;
-cp
+  cp();
   result = a->sa.sa_family - b->sa.sa_family;
   
   if(result)
@@ -169,7 +178,7 @@ cp
         raise(SIGFPE);
         exit(0);
     }
-cp
+  cp();
 }
 
 void sockaddrunmap(sockaddr_t *sa)
@@ -188,11 +197,14 @@ int maskcmp(void *va, void *vb, int masklen, int len)
   int i, m, result;
   char *a = va;
   char *b = vb;
-cp
+  cp();
   for(m = masklen, i = 0; m >= 8; m -= 8, i++)
-    if((result = a[i] - b[i]))
-      return result;
-
+    {
+      result = a[i] - b[i];
+      if(result)
+        return result;
+    }
+ 
   if(m)
     return (a[i] & (0x100 - (1 << (8 - m)))) - (b[i] & (0x100 - (1 << (8 - m))));
 
@@ -203,7 +215,7 @@ void mask(void *va, int masklen, int len)
 {
   int i;
   char *a = va;
-cp
+  cp();
   i = masklen / 8;
   masklen %= 8;
   
@@ -219,7 +231,7 @@ void maskcpy(void *va, void *vb, int masklen, int len)
   int i, m;
   char *a = va;
   char *b = vb;
-cp
+  cp();
   for(m = masklen, i = 0; m >= 8; m -= 8, i++)
     a[i] = b[i];
 
@@ -237,7 +249,7 @@ int maskcheck(void *va, int masklen, int len)
 {
   int i;
   char *a = va;
-cp
+  cp();
   i = masklen / 8;
   masklen %= 8;
 

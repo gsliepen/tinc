@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.14 2002/09/04 16:26:45 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.15 2002/09/09 19:39:59 guus Exp $
 */
 
 #include "config.h"
@@ -55,7 +55,7 @@
 
 int send_id(connection_t *c)
 {
-cp
+  cp();
   return send_request(c, "%d %s %d", ID, myself->connection->name, myself->connection->protocol_version);
 }
 
@@ -63,7 +63,7 @@ int id_h(connection_t *c)
 {
   char name[MAX_STRING_SIZE];
   int bla;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING" %d", name, &c->protocol_version) != 2)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name, c->hostname);
@@ -112,7 +112,9 @@ cp
     {
       init_configuration(&c->config_tree);
 
-      if((bla = read_connection_config(c)))
+      bla = read_connection_config(c);
+
+      if(bla)
         {
           syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname, c->name);
           return -1;
@@ -133,7 +135,7 @@ cp
         c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 
   c->allow_request = METAKEY;
-cp
+  cp();
   return send_metakey(c);
 }
 
@@ -141,7 +143,7 @@ int send_metakey(connection_t *c)
 {
   char buffer[MAX_STRING_SIZE];
   int len, x;
-cp
+  cp();
   len = RSA_size(c->rsa_key);
 
   /* Allocate buffers for the meta key */
@@ -151,7 +153,7 @@ cp
     
   if(!c->outctx)
     c->outctx = xmalloc(sizeof(*c->outctx));
-cp
+  cp();
   /* Copy random data to the buffer */
 
   RAND_bytes(c->outkey, len);
@@ -187,7 +189,7 @@ cp
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
       return -1;
     }
-cp
+  cp();
   /* Convert the encrypted random data to a hexadecimal formatted string */
 
   bin2hex(buffer, buffer, len);
@@ -209,7 +211,7 @@ cp
 
       c->status.encryptout = 1;
     }
-cp
+  cp();
   return x;
 }
 
@@ -218,13 +220,13 @@ int metakey_h(connection_t *c)
   char buffer[MAX_STRING_SIZE];
   int cipher, digest, maclength, compression;
   int len;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %d %d %d %d "MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name, c->hostname);
        return -1;
     }
-cp
+  cp();
   len = RSA_size(myself->connection->rsa_key);
 
   /* Check if the length of the meta key is all right */
@@ -236,7 +238,7 @@ cp
     }
 
   /* Allocate buffers for the meta key */
-cp
+  cp();
   if(!c->inkey)
     c->inkey = xmalloc(len);
 
@@ -244,11 +246,11 @@ cp
     c->inctx = xmalloc(sizeof(*c->inctx));
 
   /* Convert the challenge from hexadecimal back to binary */
-cp
+  cp();
   hex2bin(buffer,buffer,len);
 
   /* Decrypt the meta key */
-cp  
+  cp();
   if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
     {
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
@@ -263,7 +265,7 @@ cp
     }
 
   /* All incoming requests will now be encrypted. */
-cp
+  cp();
   /* Check and lookup cipher and digest algorithms */
 
   if(cipher)
@@ -311,7 +313,7 @@ cp
   c->incompression = compression;
 
   c->allow_request = CHALLENGE;
-cp
+  cp();
   return send_challenge(c);
 }
 
@@ -319,7 +321,7 @@ int send_challenge(connection_t *c)
 {
   char buffer[MAX_STRING_SIZE];
   int len, x;
-cp
+  cp();
   /* CHECKME: what is most reasonable value for len? */
 
   len = RSA_size(c->rsa_key);
@@ -328,22 +330,22 @@ cp
 
   if(!c->hischallenge)
     c->hischallenge = xmalloc(len);
-cp
+  cp();
   /* Copy random data to the buffer */
 
   RAND_bytes(c->hischallenge, len);
 
-cp
+  cp();
   /* Convert to hex */
 
   bin2hex(c->hischallenge, buffer, len);
   buffer[len*2] = '\0';
 
-cp
+  cp();
   /* Send the challenge */
 
   x = send_request(c, "%d %s", CHALLENGE, buffer);
-cp
+  cp();
   return x;
 }
 
@@ -351,7 +353,7 @@ int challenge_h(connection_t *c)
 {
   char buffer[MAX_STRING_SIZE];
   int len;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING, buffer) != 1)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name, c->hostname);
@@ -380,7 +382,7 @@ cp
   c->allow_request = CHAL_REPLY;
 
   /* Rest is done by send_chal_reply() */
-cp
+  cp();
   return send_chal_reply(c);
 }
 
@@ -388,7 +390,7 @@ int send_chal_reply(connection_t *c)
 {
   char hash[EVP_MAX_MD_SIZE*2+1];
   EVP_MD_CTX ctx;
-cp
+  cp();
   /* Calculate the hash from the challenge we received */
 
   EVP_DigestInit(&ctx, c->indigest);
@@ -402,7 +404,7 @@ cp
 
   /* Send the reply */
 
-cp
+  cp();
   return send_request(c, "%d %s", CHAL_REPLY, hash);
 }
 
@@ -411,7 +413,7 @@ int chal_reply_h(connection_t *c)
   char hishash[MAX_STRING_SIZE];
   char myhash[EVP_MAX_MD_SIZE];
   EVP_MD_CTX ctx;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING, hishash) != 1)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name, c->hostname);
@@ -455,7 +457,7 @@ cp
    */
 
   c->allow_request = ACK;
-cp
+  cp();
   return send_ack(c);
 }
 
@@ -466,13 +468,13 @@ int send_ack(connection_t *c)
 
   int x;
   struct timeval now;
-cp
+  cp();
   /* Estimate weight */
   
   gettimeofday(&now, NULL);
   c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
   x = send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
-cp
+  cp();
   return x;
 }
 
@@ -510,7 +512,7 @@ int ack_h(connection_t *c)
   int weight;
   long int options;
   node_t *n;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING" %d %lx", hisport, &weight, &options) != 3)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
@@ -557,7 +559,7 @@ cp
   /* Create an edge_t for this connection */
 
   c->edge = new_edge();
-cp  
+  cp();
   c->edge->from = myself;
   c->edge->to = n;
   sockaddr2str(&c->address, &hisaddress, &dummy);
@@ -567,10 +569,10 @@ cp
   c->edge->weight = (weight + c->estimated_weight) / 2;
   c->edge->connection = c;
   c->edge->options = c->options;
-cp
+  cp();
   edge_add(c->edge);
 
-cp
+  cp();
   /* Notify everyone of the new edge */
 
   send_add_edge(broadcast, c->edge);
@@ -578,6 +580,6 @@ cp
   /* Run MST and SSSP algorithms */
  
   graph();
-cp
+  cp();
   return 0;
 }

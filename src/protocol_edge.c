@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.10 2002/09/04 16:26:45 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.11 2002/09/09 19:40:04 guus Exp $
 */
 
 #include "config.h"
@@ -49,14 +49,14 @@ int send_add_edge(connection_t *c, edge_t *e)
 {
   int x;
   char *address, *port;
-cp
+  cp();
   sockaddr2str(&e->address, &address, &port);
   x = send_request(c, "%d %lx %s %s %s %s %lx %d", ADD_EDGE, random(),
                       e->from->name, e->to->name, address, port,
 		      e->options, e->weight);
   free(address);
   free(port);
-cp
+  cp();
   return x;
 }
 
@@ -71,7 +71,7 @@ int add_edge_h(connection_t *c)
   sockaddr_t address;
   long int options;
   int weight;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
             from_name, to_name, to_address, to_port, &options, &weight) != 6)
     {
@@ -172,13 +172,13 @@ cp
   /* Run MST before or after we tell the rest? */
 
   graph();
-cp
+  cp();
   return 0;
 }
 
 int send_del_edge(connection_t *c, edge_t *e)
 {
-cp
+  cp();
   return send_request(c, "%d %lx %s %s", DEL_EDGE, random(),
                       e->from->name, e->to->name);
 }
@@ -189,7 +189,7 @@ int del_edge_h(connection_t *c)
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   node_t *from, *to;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING"", from_name, to_name) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE",
@@ -264,6 +264,6 @@ cp
   /* Run MST before or after we tell the rest? */
 
   graph();
-cp
+  cp();
   return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.11 2002/09/06 14:31:12 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.12 2002/09/09 19:40:05 guus Exp $
 */
 
 #include "config.h"
@@ -47,14 +47,14 @@ int mykeyused = 0;
 
 int send_key_changed(connection_t *c, node_t *n)
 {
-cp
+  cp();
   /* Only send this message if some other daemon requested our key previously.
      This reduces unnecessary key_changed broadcasts.
   */
 
   if(n == myself && !mykeyused)
     return 0;
-cp
+  cp();
   return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
 }
 
@@ -62,7 +62,7 @@ int key_changed_h(connection_t *c)
 {
   char name[MAX_STRING_SIZE];
   node_t *n;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d %*x "MAX_STRING, name) != 1)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
@@ -88,13 +88,13 @@ cp
   /* Tell the others */
 
   forward_request(c);
-cp
+  cp();
   return 0;
 }
 
 int send_req_key(connection_t *c, node_t *from, node_t *to)
 {
-cp
+  cp();
   return send_request(c, "%d %s %s", REQ_KEY,
                       from->name, to->name);
 }
@@ -104,7 +104,7 @@ int req_key_h(connection_t *c)
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   node_t *from, *to;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, from_name, to_name) != 2)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY",
@@ -150,17 +150,17 @@ cp
         send_req_key(to->nexthop->connection, from, to);
     }
 
-cp
+  cp();
   return 0;
 }
 
 int send_ans_key(connection_t *c, node_t *from, node_t *to)
 {
   char key[MAX_STRING_SIZE];
-cp
+  cp();
   bin2hex(from->key, key, from->keylength);
   key[from->keylength * 2] = '\0';
-cp
+  cp();
   return send_request(c, "%d %s %s %s %d %d %d %d", ANS_KEY,
                       from->name, to->name, key, from->cipher?from->cipher->nid:0, from->digest?from->digest->type:0, from->maclength, from->compression);
 }
@@ -172,7 +172,7 @@ int ans_key_h(connection_t *c)
   char key[MAX_STRING_SIZE];
   int cipher, digest, maclength, compression;
   node_t *from, *to;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d", from_name, to_name, key, &cipher, &digest, &maclength, &compression) != 7)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY",
@@ -264,6 +264,6 @@ cp
   from->compression = compression;
   
   flush_queue(from);
-cp
+  cp();
   return 0;
 }

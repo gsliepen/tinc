@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.39 2002/07/11 12:42:43 guus Exp $
+    $Id: subnet.c,v 1.1.2.40 2002/09/09 19:40:11 guus Exp $
 */
 
 #include "config.h"
@@ -51,7 +51,7 @@ avl_tree_t *subnet_tree;
 int subnet_compare_mac(subnet_t *a, subnet_t *b)
 {
   int result;
-cp
+  cp();
   result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
   
   if(result || !a->owner || !b->owner)
@@ -63,7 +63,7 @@ cp
 int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 {
   int result;
-cp
+  cp();
   result = memcmp(&a->net.ipv4.address, &b->net.ipv4.address, sizeof(ipv4_t));
   
   if(result)
@@ -80,7 +80,7 @@ cp
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 {
   int result;
-cp
+  cp();
   result = memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
   
   if(result)
@@ -97,7 +97,7 @@ cp
 int subnet_compare(subnet_t *a, subnet_t *b)
 {
   int result;
-cp  
+  cp();
   result = a->type - b->type;
  
   if(result)
@@ -124,43 +124,43 @@ cp
 
 void init_subnets(void)
 {
-cp
+  cp();
   subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, (avl_action_t)free_subnet);
-cp
+  cp();
 }
 
 void exit_subnets(void)
 {
-cp
+  cp();
   avl_delete_tree(subnet_tree);
-cp
+  cp();
 }
 
 avl_tree_t *new_subnet_tree(void)
 {
-cp
+  cp();
   return avl_alloc_tree((avl_compare_t)subnet_compare, NULL);
-cp
+  cp();
 }
 
 void free_subnet_tree(avl_tree_t *subnet_tree)
 {
-cp
+  cp();
   avl_delete_tree(subnet_tree);
-cp
+  cp();
 }
 
 /* Allocating and freeing space for subnets */
 
 subnet_t *new_subnet(void)
 {
-cp
+  cp();
   return (subnet_t *)xmalloc_and_zero(sizeof(subnet_t));
 }
 
 void free_subnet(subnet_t *subnet)
 {
-cp
+  cp();
   free(subnet);
 }
 
@@ -168,22 +168,22 @@ cp
 
 void subnet_add(node_t *n, subnet_t *subnet)
 {
-cp
+  cp();
   subnet->owner = n;
 
   avl_insert(subnet_tree, subnet);
-cp
+  cp();
   avl_insert(n->subnet_tree, subnet);
-cp
+  cp();
 }
 
 void subnet_del(node_t *n, subnet_t *subnet)
 {
-cp
+  cp();
   avl_delete(n->subnet_tree, subnet);
-cp
+  cp();
   avl_delete(subnet_tree, subnet);
-cp
+  cp();
 }
 
 /* Ascii representation of subnets */
@@ -193,9 +193,9 @@ subnet_t *str2net(char *subnetstr)
   int i, l;
   subnet_t *subnet;
   uint16_t x[8];
-cp
+  cp();
   subnet = new_subnet();
-cp
+  cp();
   if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d",
               &x[0], &x[1], &x[2], &x[3],
               &l) == 5)
@@ -254,7 +254,7 @@ cp
 char *net2str(subnet_t *subnet)
 {
   char *netstr;
-cp
+  cp();
   switch(subnet->type)
     {
       case SUBNET_MAC:
@@ -291,7 +291,7 @@ cp
 	cp_trace();
         exit(0);
     }
-cp
+  cp();
   return netstr;
 }
 
@@ -299,27 +299,27 @@ cp
 
 subnet_t *lookup_subnet(node_t *owner, subnet_t *subnet)
 {
-cp  
+  cp();
   return avl_search(owner->subnet_tree, subnet);
 }
 
 subnet_t *lookup_subnet_mac(mac_t *address)
 {
   subnet_t subnet, *p;
-cp
+  cp();
   subnet.type = SUBNET_MAC;
   memcpy(&subnet.net.mac.address, address, sizeof(mac_t));
   subnet.owner = NULL;
 
   p = (subnet_t *)avl_search(subnet_tree, &subnet);
-cp
+  cp();
   return p;
 }
 
 subnet_t *lookup_subnet_ipv4(ipv4_t *address)
 {
   subnet_t subnet, *p;
-cp
+  cp();
   subnet.type = SUBNET_IPV4;
   memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
   subnet.net.ipv4.prefixlength = 32;
@@ -332,7 +332,7 @@ cp
     p = (subnet_t *)avl_search_closest_smaller(subnet_tree, &subnet);
 
   /* Check if the found subnet REALLY matches */
-cp
+  cp();
     if(p)
       {
 	if(p->type != SUBNET_IPV4)
@@ -352,14 +352,14 @@ cp
           }
       }
   } while (p);
-cp
+  cp();
   return p;
 }
 
 subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 {
   subnet_t subnet, *p;
-cp
+  cp();
   subnet.type = SUBNET_IPV6;
   memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
   subnet.net.ipv6.prefixlength = 128;
@@ -373,7 +373,7 @@ cp
 
     /* Check if the found subnet REALLY matches */
 
-cp
+  cp();
     if(p)
       {
 	if(p->type != SUBNET_IPV6)
@@ -390,7 +390,7 @@ cp
           }
       }
    } while (p);
-cp   
+  cp();
   return p;
 }
 
@@ -399,7 +399,7 @@ void dump_subnets(void)
   char *netstr;
   subnet_t *subnet;
   avl_node_t *node;
-cp
+  cp();
   syslog(LOG_DEBUG, _("Subnet list:"));
   for(node = subnet_tree->head; node; node = node->next)
     {
@@ -409,5 +409,5 @@ cp
       free(netstr);
     }
   syslog(LOG_DEBUG, _("End of subnet list."));
-cp
+  cp();
 }

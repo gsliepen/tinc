@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_node.c,v 1.1.4.6 2002/09/04 08:48:03 guus Exp $
+    $Id: protocol_node.c,v 1.1.4.7 2002/09/09 19:40:08 guus Exp $
 */
 
 #include "config.h"
@@ -47,7 +47,7 @@ int send_add_node(connection_t *c, node_t *n)
 {
   int x;
   char *address, *port;
-cp
+  cp();
   if(!n->status.reachable)
     return 0;
 
@@ -58,7 +58,7 @@ cp
                       n->prevhop->name, n->via->name);
   free(address);
   free(port);
-cp
+  cp();
   return x;
 }
 
@@ -74,7 +74,7 @@ int add_node_h(connection_t *c)
   long int options;
   int distance;
   avl_node_t *node;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d "MAX_STRING" "MAX_STRING,
             name, address, port, &options, &distance, prevhopname, vianame) != 7)
     {
@@ -176,13 +176,13 @@ cp
         send_add_node(other, n);
     }
 
-cp
+  cp();
   return 0;
 }
 
 int send_del_node(connection_t *c, node_t *n)
 {
-cp
+  cp();
   return send_request(c, "%d %s %s", DEL_NODE, n->name, n->prevhop->name);
 }
 
@@ -193,7 +193,7 @@ int del_node_h(connection_t *c)
   node_t *n, *prevhop;
   connection_t *other;
   avl_node_t *node;
-cp
+  cp();
   if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, name, prevhopname) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_NODE",
@@ -241,6 +241,6 @@ cp
   
   n->status.reachable = 0;
   n->status.validkey = 0;
-cp
+  cp();
   return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.15 2002/09/04 13:48:52 guus Exp $
+    $Id: node.c,v 1.1.2.16 2002/09/09 19:39:59 guus Exp $
 */
 
 #include "config.h"
@@ -47,7 +47,7 @@ int node_compare(node_t *a, node_t *b)
 int node_udp_compare(node_t *a, node_t *b)
 {
   int result;
-cp
+  cp();
   result = sockaddrcmp(&a->address, &b->address);
 
   if(result)
@@ -58,34 +58,34 @@ cp
 
 void init_nodes(void)
 {
-cp
+  cp();
   node_tree = avl_alloc_tree((avl_compare_t)node_compare, NULL);
   node_udp_tree = avl_alloc_tree((avl_compare_t)node_udp_compare, NULL);
-cp
+  cp();
 }
 
 void exit_nodes(void)
 {
-cp
+  cp();
   avl_delete_tree(node_tree);
   avl_delete_tree(node_udp_tree);
-cp
+  cp();
 }
 
 node_t *new_node(void)
 {
   node_t *n = (node_t *)xmalloc_and_zero(sizeof(*n));
-cp
+  cp();
   n->subnet_tree = new_subnet_tree();
   n->edge_tree = new_edge_tree();
   n->queue = list_alloc((list_action_t)free);
-cp
+  cp();
   return n;
 }
 
 void free_node(node_t *n)
 {
-cp
+  cp();
   if(n->queue)
     list_delete_list(n->queue);
   if(n->name)
@@ -99,15 +99,15 @@ cp
   if(n->edge_tree)
     free_edge_tree(n->edge_tree);
   free(n);
-cp
+  cp();
 }
 
 void node_add(node_t *n)
 {
-cp
+  cp();
   avl_insert(node_tree, n);
   avl_insert(node_udp_tree, n);
-cp
+  cp();
 }
 
 void node_del(node_t *n)
@@ -115,7 +115,7 @@ void node_del(node_t *n)
   avl_node_t *node, *next;
   edge_t *e;
   subnet_t *s;
-cp
+  cp();
   for(node = n->subnet_tree->head; node; node = next)
     {
       next = node->next;
@@ -129,16 +129,16 @@ cp
       e = (edge_t *)node->data;
       edge_del(e);
     }
-cp
+  cp();
   avl_delete(node_tree, n);
   avl_delete(node_udp_tree, n);
-cp
+  cp();
 }
 
 node_t *lookup_node(char *name)
 {
   node_t n;
-cp
+  cp();
   n.name = name;
   return avl_search(node_tree, &n);
 }
@@ -146,7 +146,7 @@ cp
 node_t *lookup_node_udp(sockaddr_t *sa)
 {
   node_t n;
-cp
+  cp();
   n.address = *sa;
   n.name = NULL;
 
@@ -157,7 +157,7 @@ void dump_nodes(void)
 {
   avl_node_t *node;
   node_t *n;
-cp
+  cp();
   syslog(LOG_DEBUG, _("Nodes:"));
 
   for(node = node_tree->head; node; node = node->next)
@@ -169,5 +169,5 @@ cp
     }
     
   syslog(LOG_DEBUG, _("End of nodes."));
-cp
+  cp();
 }

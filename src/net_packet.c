@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.20 2002/09/06 10:23:52 guus Exp $
+    $Id: net_packet.c,v 1.1.2.21 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -95,7 +95,7 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
   long int complen = MTU + 12;
   EVP_CIPHER_CTX ctx;
   char hmac[EVP_MAX_MD_SIZE];
-cp
+  cp();
   /* Check the message authentication code */
 
   if(myself->digest && myself->maclength)
@@ -158,28 +158,28 @@ cp
   }
 
   receive_packet(n, inpkt);
-cp
+  cp();
 }
 
 void receive_tcppacket(connection_t *c, char *buffer, int len)
 {
   vpn_packet_t outpkt;
-cp
+  cp();
   outpkt.len = len;
   memcpy(outpkt.data, buffer, len);
 
   receive_packet(c->node, &outpkt);
-cp
+  cp();
 }
 
 void receive_packet(node_t *n, vpn_packet_t *packet)
 {
-cp
+  cp();
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), packet->len, n->name, n->hostname);
 
   route_incoming(n, packet);
-cp
+  cp();
 }
 
 void send_udppacket(node_t *n, vpn_packet_t *inpkt)
@@ -196,7 +196,7 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
   static int priority = 0;
   int origpriority;
   int sock;
-cp
+  cp();
   /* Make sure we have a valid key */
 
   if(!n->status.validkey)
@@ -300,7 +300,7 @@ cp
     }
   
   inpkt->len = origlen;
-cp
+  cp();
 }
 
 /*
@@ -309,7 +309,7 @@ cp
 void send_packet(node_t *n, vpn_packet_t *packet)
 {
   node_t *via;
-cp
+  cp();
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
            packet->len, n->name, n->hostname);
@@ -353,7 +353,7 @@ void broadcast_packet(node_t *from, vpn_packet_t *packet)
 {
   avl_node_t *node;
   connection_t *c;
-cp
+  cp();
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
            packet->len, from->name, from->hostname);
@@ -364,13 +364,13 @@ cp
       if(c->status.active && c->status.mst && c != from->nexthop->connection)
         send_packet(c->node, packet);
     }
-cp
+  cp();
 }
 
 void flush_queue(node_t *n)
 {
   list_node_t *node, *next;
-cp
+  cp();
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_INFO, _("Flushing queue for %s (%s)"), n->name, n->hostname);
 
@@ -380,7 +380,7 @@ cp
       send_udppacket(n, (vpn_packet_t *)node->data);
       list_delete_node(n->queue, node);
     }
-cp
+  cp();
 }
 
 void handle_incoming_vpn_data(int sock)
@@ -391,7 +391,7 @@ void handle_incoming_vpn_data(int sock)
   sockaddr_t from;
   socklen_t fromlen = sizeof(from);
   node_t *n;
-cp
+  cp();
   if(getsockopt(sock, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%s"),
@@ -405,7 +405,9 @@ cp
       return;
     }
 
-  if((pkt.len = recvfrom(sock, (char *)&pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen)) <= 0)
+  pkt.len = recvfrom(sock, (char *)&pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+
+  if(pkt.len <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
       return;
@@ -427,5 +429,5 @@ cp
     n->connection->last_ping_time = now;
 
   receive_udppacket(n, &pkt);
-cp
+  cp();
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.61 2002/07/16 13:12:49 guus Exp $
+    $Id: tincd.c,v 1.10.4.62 2002/09/09 19:40:12 guus Exp $
 */
 
 #include "config.h"
@@ -269,7 +269,9 @@ int keygen(int bits)
   else
     asprintf(&filename, "%s/rsa_key.pub", confbase);
 
-  if((f = ask_and_safe_open(filename, _("public RSA key"), "a")) == NULL)
+  f = ask_and_safe_open(filename, _("public RSA key"), "a");
+  
+  if(!f)
     return -1;
 
   if(ftell(f))
@@ -280,7 +282,9 @@ int keygen(int bits)
   free(filename);
 
   asprintf(&filename, "%s/rsa_key.priv", confbase);
-  if((f = ask_and_safe_open(filename, _("private RSA key"), "a")) == NULL)
+  f = ask_and_safe_open(filename, _("private RSA key"), "a");
+  
+  if(!f)
     return -1;
 
   if(ftell(f))
@@ -356,10 +360,16 @@ main(int argc, char **argv, char **envp)
   /* Lock all pages into memory if requested */
   
   if(do_mlock)
-    if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
-      syslog(LOG_ERR, _("System call `%s' failed: %s"), "mlockall", strerror(errno));
-      return -1;
-    }
+#ifdef HAVE_MLOCKALL
+    if(mlockall(MCL_CURRENT | MCL_FUTURE))
+      {
+	syslog(LOG_ERR, _("System call `%s' failed: %s"), "mlockall", strerror(errno));
+#else
+      {
+        syslog(LOG_ERR, _("mlockall() not supported on this platform!"));
+#endif
+	return -1;
+      }
   
   g_argv = argv;
 
@@ -367,7 +377,7 @@ main(int argc, char **argv, char **envp)
   init_configuration(&config_tree);
 
   /* Slllluuuuuuurrrrp! */
-cp
+  cp();
   RAND_load_file("/dev/urandom", 1024);
 
 #ifdef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
@@ -376,7 +386,7 @@ cp
   OpenSSL_add_all_algorithms();
 #endif
 
-cp
+  cp();
   if(generate_keys)
     {
       read_server_config();
@@ -388,10 +398,10 @@ cp
 
   if(read_server_config())
     exit(1);
-cp
+  cp();
   if(detach())
     exit(0);
-cp
+  cp();
   for(;;)
     {
       if(!setup_network_connections())

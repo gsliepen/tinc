@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.17 2002/09/06 21:02:36 guus Exp $
+    $Id: graph.c,v 1.1.2.18 2002/09/09 19:39:58 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -269,9 +269,9 @@ void sssp_bfs(void)
 	n->status.validkey = 0;
 	n->status.waitingforkey = 0;
 
-	asprintf(&envp[0], "NETNAME=%s", netname?netname:"");
-	asprintf(&envp[1], "DEVICE=%s", device?device:"");
-	asprintf(&envp[2], "INTERFACE=%s", interface?interface:"");
+	asprintf(&envp[0], "NETNAME=%s", netname?:"");
+	asprintf(&envp[1], "DEVICE=%s", device?:"");
+	asprintf(&envp[2], "INTERFACE=%s", interface?:"");
 	asprintf(&envp[3], "NODE=%s", n->name);
 	sockaddr2str(&n->address, &address, &port);
         asprintf(&envp[4], "REMOTEADDRESS=%s", address);

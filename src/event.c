@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.3 2002/06/21 10:11:12 guus Exp $
+    $Id: event.c,v 1.1.4.4 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -49,53 +49,53 @@ int event_compare(event_t *a, event_t *b)
 
 void init_events(void)
 {
-cp
+  cp();
   event_tree = avl_alloc_tree((avl_compare_t)event_compare, NULL);
-cp
+  cp();
 }
 
 void exit_events(void)
 {
-cp
+  cp();
   avl_delete_tree(event_tree);
-cp
+  cp();
 }
 
 event_t *new_event(void)
 {
   event_t *event;
-cp
+  cp();
   event = (event_t *)xmalloc_and_zero(sizeof(*event));
-cp
+  cp();
   return event;
 }
 
 void free_event(event_t *event)
 {
-cp
+  cp();
   free(event);
-cp
+  cp();
 }
 
 void event_add(event_t *event)
 {
-cp
+  cp();
   event->id = ++id;
   avl_insert(event_tree, event);
-cp
+  cp();
 }
 
 void event_del(event_t *event)
 {
-cp
+  cp();
   avl_delete(event_tree, event);
-cp
+  cp();
 }
 
 event_t *get_expired_event(void)
 {
   event_t *event;
-cp
+  cp();
   if(event_tree->head)
   {
     event = (event_t *)event_tree->head->data;
@@ -105,6 +105,6 @@ cp
       return event;
     }
   }
-cp  
+  cp();
   return NULL;
 }

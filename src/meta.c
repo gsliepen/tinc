@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.27 2002/09/04 16:26:44 guus Exp $
+    $Id: meta.c,v 1.1.2.28 2002/09/09 19:39:58 guus Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,7 @@ int send_meta(connection_t *c, char *buffer, int length)
   char *bufp;
   int outlen;
   char outbuf[MAXBUFSIZE];
-cp
+  cp();
   if(debug_lvl >= DEBUG_META)
     syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
            c->name, c->hostname);
@@ -63,7 +63,7 @@ cp
       syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name, c->hostname, strerror(errno));
       return -1;
     }
-cp
+  cp();
   return 0;
 }
 
@@ -71,14 +71,14 @@ void broadcast_meta(connection_t *from, char *buffer, int length)
 {
   avl_node_t *node;
   connection_t *c;
-cp
+  cp();
   for(node = connection_tree->head; node; node = node->next)
     {
       c = (connection_t *)node->data;
       if(c != from && c->status.active)
         send_meta(c, buffer, length);
     }
-cp
+  cp();
 }
 
 int receive_meta(connection_t *c)
@@ -88,7 +88,7 @@ int receive_meta(connection_t *c)
   int lenin, reqlen;
   int decrypted = 0;
   char inbuf[MAXBUFSIZE];
-cp
+  cp();
   if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__, __LINE__, c->socket, strerror(errno),
@@ -206,6 +206,6 @@ cp
     }
 
   c->last_ping_time = now;
-cp  
+  cp();
   return 0;
 }
