@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.7 2000/11/20 23:29:47 guus Exp $
+    $Id: process.c,v 1.1.2.8 2000/11/22 17:48:15 zarq Exp $
 */
 
 #include "config.h"
@@ -207,14 +207,20 @@ cp
   fcloseall();
 
   /* Open standard input */
-  if(open("/dev/null", O_RDONLY) < 0)
+  if((fd = open("/dev/null", O_RDONLY)) < 0)
     {
       syslog(LOG_ERR, _("Opening `/dev/null' failed: %m"));
+      error = 1;
+    }
+  if(dup2(fd, 0) != 0)
+    {
+      syslog(LOG_ERR, _("Couldn't assign /dev/null to standard input: %m"));
       error = 1;
     }
 
   if(!error)
     {
+      close(1);  /* fd #1 should be the first available filedescriptor now. */
       /* Standard output directly goes to syslog */
       openlog(name, LOG_CONS | LOG_PID, LOG_DAEMON);
       /* Standard error as well */
