@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.74 2003/08/22 15:05:01 guus Exp $
+    $Id: process.c,v 1.1.2.75 2003/08/22 15:07:57 guus Exp $
 */
 
 #include "system.h"
@@ -114,8 +114,6 @@ bool install_service(void) {
 		if(space)
 			strncat(command, "\"", sizeof(command));
 	}
-
-	logger(LOG_DEBUG, "Command: '%s'", command);
 
 	service = CreateService(manager, identname, identname,
 			SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
