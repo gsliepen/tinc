@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.22 2003/07/17 15:06:26 guus Exp $
+    $Id: edge.c,v 1.1.2.23 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -32,12 +32,12 @@
 
 avl_tree_t *edge_weight_tree;	/* Tree with all edges, sorted on weight */
 
-static int edge_compare(edge_t *a, edge_t *b)
+static int edge_compare(const edge_t *a, const edge_t *b)
 {
 	return strcmp(a->to->name, b->to->name);
 }
 
-static int edge_weight_compare(edge_t *a, edge_t *b)
+static int edge_weight_compare(const edge_t *a, const edge_t *b)
 {
 	int result;
 
@@ -123,14 +123,14 @@ void edge_del(edge_t *e)
 	avl_delete(edge_weight_tree, e);
 }
 
-edge_t *lookup_edge(node_t *from, node_t *to)
+edge_t *lookup_edge(const node_t *from, const node_t *to)
 {
-	edge_t v;
+	edge_t v = {
+		.from = from,
+		.to = to
+	};
 
 	cp();
-
-	v.from = from;
-	v.to = to;
 
 	return avl_search(from->edge_tree, &v);
 }

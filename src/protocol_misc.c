@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.12 2003/07/22 20:55:20 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.13 2003/07/24 12:08:16 guus Exp $
 */
 
 #include "system.h"
@@ -33,7 +33,7 @@
 
 /* Status and error notification routines */
 
-bool send_status(connection_t *c, int statusno, char *statusstring)
+bool send_status(connection_t *c, int statusno, const char *statusstring)
 {
 	cp();
 
@@ -62,7 +62,7 @@ bool status_h(connection_t *c)
 	return true;
 }
 
-bool send_error(connection_t *c, int err, char *errstring)
+bool send_error(connection_t *c, int err, const char *errstring)
 {
 	cp();
 

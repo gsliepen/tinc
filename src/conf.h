@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.40 2003/07/22 20:55:19 guus Exp $
+    $Id: conf.h,v 1.6.4.41 2003/07/24 12:08:15 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -47,13 +47,13 @@ extern void exit_configuration(avl_tree_t **);
 extern config_t *new_config(void) __attribute__ ((malloc));
 extern void free_config(config_t *);
 extern void config_add(avl_tree_t *, config_t *);
-extern config_t *lookup_config(avl_tree_t *, char *);
-extern config_t *lookup_config_next(avl_tree_t *, config_t *);
-extern bool get_config_bool(config_t *, bool *);
-extern bool get_config_int(config_t *, int *);
-extern bool get_config_string(config_t *, char **);
-extern bool get_config_address(config_t *, struct addrinfo **);
-extern bool get_config_subnet(config_t *, struct subnet_t **);
+extern config_t *lookup_config(const avl_tree_t *, char *);
+extern config_t *lookup_config_next(const avl_tree_t *, const config_t *);
+extern bool get_config_bool(const config_t *, bool *);
+extern bool get_config_int(const config_t *, int *);
+extern bool get_config_string(const config_t *, char **);
+extern bool get_config_address(const config_t *, struct addrinfo **);
+extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
 extern int read_config_file(avl_tree_t *, const char *);
 extern bool read_server_config(void);

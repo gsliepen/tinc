@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.23 2003/07/17 15:06:26 guus Exp $
+    $Id: node.c,v 1.1.2.24 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -35,12 +35,12 @@ avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
 
 node_t *myself;
 
-static int node_compare(node_t *a, node_t *b)
+static int node_compare(const node_t *a, const node_t *b)
 {
 	return strcmp(a->name, b->name);
 }
 
-static int node_udp_compare(node_t *a, node_t *b)
+static int node_udp_compare(const node_t *a, const node_t *b)
 {
 	int result;
 
@@ -143,20 +143,25 @@ void node_del(node_t *n)
 	avl_delete(node_udp_tree, n);
 }
 
-node_t *lookup_node(char *name)
+node_t *lookup_node(const char *name)
 {
-	node_t n;
+	node_t n = {
+		.name = name,
+	};
+
 	cp();
-	n.name = name;
+	
 	return avl_search(node_tree, &n);
 }
 
-node_t *lookup_node_udp(sockaddr_t *sa)
+node_t *lookup_node_udp(const sockaddr_t *sa)
 {
-	node_t n;
+	node_t n = {
+		.address = *sa,
+		.name = NULL,
+	};
+
 	cp();
-	n.address = *sa;
-	n.name = NULL;
 
 	return avl_search(node_udp_tree, &n);
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.35 2003/07/22 20:55:20 guus Exp $
+    $Id: net_packet.c,v 1.1.2.36 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -323,7 +323,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 /*
   send a packet to the given vpn ip.
 */
-void send_packet(node_t *n, vpn_packet_t *packet)
+void send_packet(const node_t *n, vpn_packet_t *packet)
 {
 	node_t *via;
 
@@ -358,7 +358,7 @@ void send_packet(node_t *n, vpn_packet_t *packet)
 
 /* Broadcast a packet using the minimum spanning tree */
 
-void broadcast_packet(node_t *from, vpn_packet_t *packet)
+void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 {
 	avl_node_t *node;
 	connection_t *c;

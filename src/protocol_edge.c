@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.19 2003/07/22 20:55:20 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.20 2003/07/24 12:08:16 guus Exp $
 */
 
 #include "system.h"
@@ -36,7 +36,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_add_edge(connection_t *c, edge_t *e)
+bool send_add_edge(connection_t *c, const edge_t *e)
 {
 	bool x;
 	char *address, *port;
@@ -163,7 +163,7 @@ bool add_edge_h(connection_t *c)
 	return true;
 }
 
-bool send_del_edge(connection_t *c, edge_t *e)
+bool send_del_edge(connection_t *c, const edge_t *e)
 {
 	cp();
 

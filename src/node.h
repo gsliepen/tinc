@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.26 2003/07/22 20:55:20 guus Exp $
+    $Id: node.h,v 1.1.2.27 2003/07/24 12:08:15 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -83,8 +83,8 @@ extern node_t *new_node(void) __attribute__ ((malloc));
 extern void free_node(node_t *);
 extern void node_add(node_t *);
 extern void node_del(node_t *);
-extern node_t *lookup_node(char *);
-extern node_t *lookup_node_udp(sockaddr_t *);
+extern node_t *lookup_node(const char *);
+extern node_t *lookup_node_udp(const sockaddr_t *);
 extern void dump_nodes(void);
 
 #endif							/* __TINC_NODE_H__ */

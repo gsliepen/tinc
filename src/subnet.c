@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.47 2003/07/17 15:06:27 guus Exp $
+    $Id: subnet.c,v 1.1.2.48 2003/07/24 12:08:16 guus Exp $
 */
 
 #include "system.h"
@@ -37,7 +37,7 @@ avl_tree_t *subnet_tree;
 
 /* Subnet comparison */
 
-static int subnet_compare_mac(subnet_t *a, subnet_t *b)
+static int subnet_compare_mac(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
@@ -49,7 +49,7 @@ static int subnet_compare_mac(subnet_t *a, subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-static int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
+static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
@@ -66,7 +66,7 @@ static int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-static int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
+static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
@@ -83,7 +83,7 @@ static int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-static int subnet_compare(subnet_t *a, subnet_t *b)
+static int subnet_compare(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
@@ -177,7 +177,7 @@ void subnet_del(node_t *n, subnet_t *subnet)
 
 /* Ascii representation of subnets */
 
-subnet_t *str2net(char *subnetstr)
+subnet_t *str2net(const char *subnetstr)
 {
 	int i, l;
 	subnet_t *subnet;
@@ -246,7 +246,7 @@ subnet_t *str2net(char *subnetstr)
 	return NULL;
 }
 
-char *net2str(subnet_t *subnet)
+char *net2str(const subnet_t *subnet)
 {
 	char *netstr;
 
@@ -296,38 +296,40 @@ char *net2str(subnet_t *subnet)
 
 /* Subnet lookup routines */
 
-subnet_t *lookup_subnet(node_t *owner, subnet_t *subnet)
+subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet)
 {
 	cp();
 
 	return avl_search(owner->subnet_tree, subnet);
 }
 
-subnet_t *lookup_subnet_mac(mac_t *address)
+subnet_t *lookup_subnet_mac(const mac_t *address)
 {
-	subnet_t subnet, *p;
+	subnet_t subnet = {
+		.type = SUBNET_MAC,
+		.net.mac.address = *address,
+		.owner = NULL
+	};
+	subnet_t *p;
 
 	cp();
-
-	subnet.type = SUBNET_MAC;
-	memcpy(&subnet.net.mac.address, address, sizeof(mac_t));
-	subnet.owner = NULL;
 
 	p = (subnet_t *) avl_search(subnet_tree, &subnet);
 
 	return p;
 }
 
-subnet_t *lookup_subnet_ipv4(ipv4_t *address)
+subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 {
-	subnet_t subnet, *p;
+	subnet_t subnet = {
+		.type = SUBNET_IPV4,
+		.net.ipv4.address = *address,
+		.net.ipv4.prefixlength = 32,
+		.owner = NULL
+	};
+	subnet_t *p;
 
 	cp();
-
-	subnet.type = SUBNET_IPV4;
-	memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
-	subnet.net.ipv4.prefixlength = 32;
-	subnet.owner = NULL;
 
 	do {
 		/* Go find subnet */
@@ -356,16 +358,17 @@ subnet_t *lookup_subnet_ipv4(ipv4_t *address)
 	return p;
 }
 
-subnet_t *lookup_subnet_ipv6(ipv6_t *address)
+subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 {
-	subnet_t subnet, *p;
+	subnet_t subnet = {
+		.type = SUBNET_IPV6,
+		.net.ipv6.address = *address,
+		.net.ipv6.prefixlength = 128,
+		.owner = NULL
+	};
+	subnet_t *p;
 
 	cp();
-
-	subnet.type = SUBNET_IPV6;
-	memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
-	subnet.net.ipv6.prefixlength = 128;
-	subnet.owner = NULL;
 
 	do {
 		/* Go find subnet */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.30 2003/07/22 20:55:20 guus Exp $
+    $Id: net_socket.c,v 1.1.2.31 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -43,7 +43,7 @@ int listen_sockets;
 
 /* Setup sockets */
 
-int setup_listen_socket(sockaddr_t *sa)
+int setup_listen_socket(const sockaddr_t *sa)
 {
 	int nfd, flags;
 	char *addrstr;
@@ -119,7 +119,7 @@ int setup_listen_socket(sockaddr_t *sa)
 	return nfd;
 }
 
-int setup_vpn_in_socket(sockaddr_t *sa)
+int setup_vpn_in_socket(const sockaddr_t *sa)
 {
 	int nfd, flags;
 	char *addrstr;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.14 2003/07/17 15:06:26 guus Exp $
+    $Id: edge.h,v 1.1.2.15 2003/07/24 12:08:15 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -50,7 +50,7 @@ extern avl_tree_t *new_edge_tree(void) __attribute__ ((malloc));
 extern void free_edge_tree(avl_tree_t *);
 extern void edge_add(edge_t *);
 extern void edge_del(edge_t *);
-extern edge_t *lookup_edge(struct node_t *, struct node_t *);
+extern edge_t *lookup_edge(const struct node_t *, const struct node_t *);
 extern void dump_edges(void);
 
 #endif							/* __TINC_EDGE_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.142 2003/07/22 20:55:20 guus Exp $
+    $Id: protocol.c,v 1.28.4.143 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -53,12 +53,10 @@ static char (*request_name[]) = {
 
 static avl_tree_t *past_request_tree;
 
-bool check_id(char *id)
+bool check_id(const char *id)
 {
-	int i;
-
-	for(i = 0; i < strlen(id); i++)
-		if(!isalnum(id[i]) && id[i] != '_')
+	for(; *id; id++)
+		if(!isalnum(*id) && *id != '_')
 			return false;
 
 	return true;
@@ -180,7 +178,7 @@ bool receive_request(connection_t *c)
 	return true;
 }
 
-static int past_request_compare(past_request_t *a, past_request_t *b)
+static int past_request_compare(const past_request_t *a, const past_request_t *b)
 {
 	return strcmp(a->request, b->request);
 }
@@ -209,13 +207,14 @@ void exit_requests(void)
 	avl_delete_tree(past_request_tree);
 }
 
-bool seen_request(char *request)
+bool seen_request(const char *request)
 {
-	past_request_t p, *new;
+	past_request_t p = {
+		.request = request,
+	};
+	past_request_t *new;
 
 	cp();
-
-	p.request = request;
 
 	if(avl_search(past_request_tree, &p)) {
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));

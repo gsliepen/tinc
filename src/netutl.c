@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.48 2003/07/22 20:55:20 guus Exp $
+    $Id: netutl.c,v 1.12.4.49 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -34,7 +34,7 @@ bool hostnames = false;
   Turn a string into a struct addrinfo.
   Return NULL on failure.
 */
-struct addrinfo *str2addrinfo(char *address, char *service, int socktype)
+struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype)
 {
 	struct addrinfo hint, *ai;
 	int err;
@@ -57,7 +57,7 @@ struct addrinfo *str2addrinfo(char *address, char *service, int socktype)
 	return ai;
 }
 
-sockaddr_t str2sockaddr(char *address, char *port)
+sockaddr_t str2sockaddr(const char *address, const char *port)
 {
 	struct addrinfo hint, *ai;
 	sockaddr_t result;
@@ -87,7 +87,7 @@ sockaddr_t str2sockaddr(char *address, char *port)
 	return result;
 }
 
-void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
+void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
 {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
@@ -115,7 +115,7 @@ void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
 	*portstr = xstrdup(port);
 }
 
-char *sockaddr2hostname(sockaddr_t *sa)
+char *sockaddr2hostname(const sockaddr_t *sa)
 {
 	char *str;
 	char address[NI_MAXHOST] = "unknown";
@@ -136,7 +136,7 @@ char *sockaddr2hostname(sockaddr_t *sa)
 	return str;
 }
 
-int sockaddrcmp(sockaddr_t *a, sockaddr_t *b)
+int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
 {
 	int result;
 
@@ -186,11 +186,11 @@ void sockaddrunmap(sockaddr_t *sa)
 
 /* Subnet mask handling */
 
-int maskcmp(void *va, void *vb, int masklen, int len)
+int maskcmp(const void *va, const void *vb, int masklen, int len)
 {
 	int i, m, result;
-	char *a = va;
-	char *b = vb;
+	const char *a = va;
+	const char *b = vb;
 
 	cp();
 
@@ -224,11 +224,11 @@ void mask(void *va, int masklen, int len)
 		a[i] = 0;
 }
 
-void maskcpy(void *va, void *vb, int masklen, int len)
+void maskcpy(void *va, const void *vb, int masklen, int len)
 {
 	int i, m;
 	char *a = va;
-	char *b = vb;
+	const char *b = vb;
 
 	cp();
 
@@ -244,10 +244,10 @@ void maskcpy(void *va, void *vb, int masklen, int len)
 		a[i] = 0;
 }
 
-bool maskcheck(void *va, int masklen, int len)
+bool maskcheck(const void *va, int masklen, int len)
 {
 	int i;
-	char *a = va;
+	const char *a = va;
 
 	cp();
 

@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.16 2003/07/17 15:06:25 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.17 2003/07/24 12:08:14 guus Exp $
 */
 
 #include "system.h"
@@ -90,7 +90,7 @@ static int lg(unsigned int u)
 
 /* Internal helper functions */
 
-static int avl_check_balance(avl_node_t *node)
+static int avl_check_balance(const avl_node_t *node)
 {
 #ifdef AVL_DEPTH
 	int d;
@@ -666,7 +666,7 @@ void avl_delete_tree(avl_tree_t *tree)
 
 /* Tree walking */
 
-void avl_foreach(avl_tree_t *tree, avl_action_t action)
+void avl_foreach(const avl_tree_t *tree, avl_action_t action)
 {
 	avl_node_t *node, *next;
 
@@ -676,7 +676,7 @@ void avl_foreach(avl_tree_t *tree, avl_action_t action)
 	}
 }
 
-void avl_foreach_node(avl_tree_t *tree, avl_action_t action)
+void avl_foreach_node(const avl_tree_t *tree, avl_action_t action)
 {
 	avl_node_t *node, *next;
 
@@ -689,7 +689,7 @@ void avl_foreach_node(avl_tree_t *tree, avl_action_t action)
 /* Indexing */
 
 #ifdef AVL_COUNT
-unsigned int avl_count(avl_tree_t *tree)
+unsigned int avl_count(const avl_tree_t *tree)
 {
 	return AVL_NODE_COUNT(tree->root);
 }
@@ -734,7 +734,7 @@ unsigned int avl_index(const avl_node_t *node)
 }
 #endif
 #ifdef AVL_DEPTH
-unsigned int avl_depth(avl_tree_t *tree)
+unsigned int avl_depth(const avl_tree_t *tree)
 {
 	return AVL_NODE_DEPTH(tree->root);
 }

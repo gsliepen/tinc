@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.h,v 1.1.2.9 2003/07/12 17:48:38 guus Exp $
+    $Id: avl_tree.h,v 1.1.2.10 2003/07/24 12:08:15 guus Exp $
 */
 
 
@@ -128,18 +128,18 @@ extern avl_node_t *avl_search_closest_greater_node(const avl_tree_t *, const voi
 
 /* Tree walking */
 
-extern void avl_foreach(avl_tree_t *, avl_action_t);
-extern void avl_foreach_node(avl_tree_t *, avl_action_t);
+extern void avl_foreach(const avl_tree_t *, avl_action_t);
+extern void avl_foreach_node(const avl_tree_t *, avl_action_t);
 
 /* Indexing */
 
 #ifdef AVL_COUNT
-extern unsigned int avl_count(avl_tree_t *);
+extern unsigned int avl_count(const avl_tree_t *);
 extern avl_node_t *avl_get_node(const avl_tree_t *, unsigned int);
 extern unsigned int avl_index(const avl_node_t *);
 #endif
 #ifdef AVL_DEPTH
-extern unsigned int avl_depth(avl_tree_t *);
+extern unsigned int avl_depth(const avl_tree_t *);
 #endif
 
 #endif							/* __AVL_TREE_H__ */

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.68 2003/07/22 20:55:19 guus Exp $
+    $Id: conf.c,v 1.9.4.69 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -37,7 +37,7 @@ int pingtimeout = 0;			/* seconds before timeout */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
 
-static int config_compare(config_t *a, config_t *b)
+static int config_compare(const config_t *a, const config_t *b)
 {
 	int result;
 
@@ -99,7 +99,7 @@ void config_add(avl_tree_t *config_tree, config_t *cfg)
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(avl_tree_t *config_tree, char *variable)
+config_t *lookup_config(const avl_tree_t *config_tree, char *variable)
 {
 	config_t cfg, *found;
 
@@ -120,7 +120,7 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 	return found;
 }
 
-config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
+config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg)
 {
 	avl_node_t *node;
 	config_t *found;
@@ -141,7 +141,7 @@ config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
 	return NULL;
 }
 
-bool get_config_bool(config_t *cfg, bool *result)
+bool get_config_bool(const config_t *cfg, bool *result)
 {
 	cp();
 
@@ -162,7 +162,7 @@ bool get_config_bool(config_t *cfg, bool *result)
 	return false;
 }
 
-bool get_config_int(config_t *cfg, int *result)
+bool get_config_int(const config_t *cfg, int *result)
 {
 	cp();
 
@@ -178,7 +178,7 @@ bool get_config_int(config_t *cfg, int *result)
 	return false;
 }
 
-bool get_config_string(config_t *cfg, char **result)
+bool get_config_string(const config_t *cfg, char **result)
 {
 	cp();
 
@@ -190,7 +190,7 @@ bool get_config_string(config_t *cfg, char **result)
 	return true;
 }
 
-bool get_config_address(config_t *cfg, struct addrinfo **result)
+bool get_config_address(const config_t *cfg, struct addrinfo **result)
 {
 	struct addrinfo *ai;
 
@@ -212,7 +212,7 @@ bool get_config_address(config_t *cfg, struct addrinfo **result)
 	return false;
 }
 
-bool get_config_subnet(config_t *cfg, subnet_t ** result)
+bool get_config_subnet(const config_t *cfg, subnet_t ** result)
 {
 	subnet_t *subnet;
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.41 2003/07/22 20:55:19 guus Exp $
+    $Id: connection.c,v 1.1.2.42 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -35,7 +35,7 @@
 avl_tree_t *connection_tree;	/* Meta connections */
 connection_t *broadcast;
 
-static int connection_compare(connection_t *a, connection_t *b)
+static int connection_compare(const connection_t *a, const connection_t *b)
 {
 	return (void *)a - (void *)b;
 }

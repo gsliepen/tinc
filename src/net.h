@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.66 2003/07/22 20:55:20 guus Exp $
+    $Id: net.h,v 1.9.4.67 2003/07/24 12:08:15 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -126,11 +126,11 @@ extern void handle_incoming_vpn_data(int);
 extern void finish_connecting(struct connection_t *);
 extern void do_outgoing_connection(struct connection_t *);
 extern bool handle_new_meta_connection(int);
-extern int setup_listen_socket(sockaddr_t *);
-extern int setup_vpn_in_socket(sockaddr_t *);
-extern void send_packet(struct node_t *, vpn_packet_t *);
+extern int setup_listen_socket(const sockaddr_t *);
+extern int setup_vpn_in_socket(const sockaddr_t *);
+extern void send_packet(const struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, char *, int);
-extern void broadcast_packet(struct node_t *, vpn_packet_t *);
+extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern bool setup_network_connections(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.9 2003/07/17 15:06:26 guus Exp $
+    $Id: event.c,v 1.1.4.10 2003/07/24 12:08:15 guus Exp $
 */
 
 #include "system.h"
@@ -32,7 +32,7 @@ extern time_t now;
 
 int id;
 
-static int event_compare(event_t *a, event_t *b)
+static int event_compare(const event_t *a, const event_t *b)
 {
 	if(a->time > b->time)
 		return 1;

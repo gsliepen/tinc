@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.22 2003/07/22 20:55:20 guus Exp $
+    $Id: subnet.h,v 1.1.2.23 2003/07/24 12:08:16 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -72,12 +72,12 @@ extern avl_tree_t *new_subnet_tree(void) __attribute__ ((malloc));
 extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
-extern char *net2str(subnet_t *);
-extern subnet_t *str2net(char *);
-extern subnet_t *lookup_subnet(struct node_t *, subnet_t *);
-extern subnet_t *lookup_subnet_mac(mac_t *);
-extern subnet_t *lookup_subnet_ipv4(ipv4_t *);
-extern subnet_t *lookup_subnet_ipv6(ipv6_t *);
+extern char *net2str(const subnet_t *);
+extern subnet_t *str2net(const char *);
+extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
+extern subnet_t *lookup_subnet_mac(const mac_t *);
+extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
+extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern void dump_subnets(void);
 
 #endif							/* __TINC_SUBNET_H__ */

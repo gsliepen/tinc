@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.21 2003/07/23 22:17:31 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.22 2003/07/24 12:08:16 guus Exp $
 */
 
 #include "system.h"
@@ -34,7 +34,7 @@
 
 bool mykeyused = false;
 
-bool send_key_changed(connection_t *c, node_t *n)
+bool send_key_changed(connection_t *c, const node_t *n)
 {
 	cp();
 
@@ -82,7 +82,7 @@ bool key_changed_h(connection_t *c)
 	return true;
 }
 
-bool send_req_key(connection_t *c, node_t *from, node_t *to)
+bool send_req_key(connection_t *c, const node_t *from, const node_t *to)
 {
 	cp();
 
@@ -133,7 +133,7 @@ bool req_key_h(connection_t *c)
 	return true;
 }
 
-bool send_ans_key(connection_t *c, node_t *from, node_t *to)
+bool send_ans_key(connection_t *c, const node_t *from, const node_t *to)
 {
 	char key[MAX_STRING_SIZE];
 

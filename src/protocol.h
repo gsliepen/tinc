@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.40 2003/07/22 20:55:20 guus Exp $
+    $Id: protocol.h,v 1.5.4.41 2003/07/24 12:08:16 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -63,11 +63,11 @@ typedef struct past_request_t {
 extern bool send_request(struct connection_t *, const char *, ...) __attribute__ ((format(printf, 2, 3)));
 extern void forward_request(struct connection_t *);
 extern bool receive_request(struct connection_t *);
-extern bool check_id(char *);
+extern bool check_id(const char *);
 
 extern void init_requests(void);
 extern void exit_requests(void);
-extern bool seen_request(char *);
+extern bool seen_request(const char *);
 extern void age_past_requests(void);
 
 /* Requests */
@@ -77,18 +77,18 @@ extern bool send_metakey(struct connection_t *);
 extern bool send_challenge(struct connection_t *);
 extern bool send_chal_reply(struct connection_t *);
 extern bool send_ack(struct connection_t *);
-extern bool send_status(struct connection_t *, int, char *);
-extern bool send_error(struct connection_t *, int, char *);
+extern bool send_status(struct connection_t *, int, const char *);
+extern bool send_error(struct connection_t *, int,const  char *);
 extern bool send_termreq(struct connection_t *);
 extern bool send_ping(struct connection_t *);
 extern bool send_pong(struct connection_t *);
-extern bool send_add_subnet(struct connection_t *, struct subnet_t *);
-extern bool send_del_subnet(struct connection_t *, struct subnet_t *);
-extern bool send_add_edge(struct connection_t *, struct edge_t *);
-extern bool send_del_edge(struct connection_t *, struct edge_t *);
-extern bool send_key_changed(struct connection_t *, struct node_t *);
-extern bool send_req_key(struct connection_t *, struct node_t *, struct node_t *);
-extern bool send_ans_key(struct connection_t *, struct node_t *, struct node_t *);
+extern bool send_add_subnet(struct connection_t *, const struct subnet_t *);
+extern bool send_del_subnet(struct connection_t *, const struct subnet_t *);
+extern bool send_add_edge(struct connection_t *, const struct edge_t *);
+extern bool send_del_edge(struct connection_t *, const struct edge_t *);
+extern bool send_key_changed(struct connection_t *, const struct node_t *);
+extern bool send_req_key(struct connection_t *, const struct node_t *, const struct node_t *);
+extern bool send_ans_key(struct connection_t *, const struct node_t *, const struct node_t *);
 extern bool send_tcppacket(struct connection_t *, struct vpn_packet_t *);
 
 /* Request handlers  */
