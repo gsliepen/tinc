@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.4 2000/09/10 15:16:07 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.5 2000/09/11 11:40:46 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre3)
@@ -96,8 +96,12 @@ fi
 
 dnl Support for SunOS
 
-AC_CHECK_LIB(socket, connect)
-AC_CHECK_LIB(nsl, gethostbyname)
+AC_CHECK_FUNC(socket, [], [
+  AC_CHECK_LIB(socket, connect)
+])
+AC_CHECK_FUNC(gethostbyname, [], [
+  AC_CHECK_LIB(nsl, gethostbyname)
+])
 
 AC_OUTPUT([Makefile src/Makefile cipher/Makefile
 doc/Makefile intl/Makefile lib/Makefile
