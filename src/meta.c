@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.6 2000/10/24 15:46:16 guus Exp $
+    $Id: meta.c,v 1.1.2.7 2000/10/29 00:02:18 guus Exp $
 */
 
 #include "config.h"
@@ -28,9 +28,12 @@
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <openssl/evp.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "net.h"
 #include "system.h"
+#include "protocol.h"
 
 int send_meta(conn_list_t *cl, char *buffer, int length)
 {

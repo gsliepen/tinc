@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.17 2000/10/24 15:46:15 guus Exp $
+    $Id: conf.c,v 1.9.4.18 2000/10/29 00:02:17 guus Exp $
 */
 
 
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdio.h>
 
 #include <xalloc.h>
 
@@ -85,7 +86,7 @@ static internal_config_t hazahaza[] = {
 config_t *
 add_config_val(config_t **cfg, int argtype, char *val)
 {
-  config_t *p, *r;
+  config_t *p;
   char *q;
 cp
   p = (config_t*)xmalloc(sizeof(*p));

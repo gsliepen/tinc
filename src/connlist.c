@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.9 2000/10/28 16:41:37 guus Exp $
+    $Id: connlist.c,v 1.1.2.10 2000/10/29 00:02:17 guus Exp $
 */
 
 #include <syslog.h>
@@ -27,6 +27,7 @@
 #include "conf.h"
 #include <utils.h>
 
+#include "xalloc.h"
 #include "system.h"
 
 /* Root of the connection list */
@@ -79,14 +80,7 @@ cp
       next = p->next;
 
       if(p->status.remove)
-	{
-	  if(prev)
-	    prev->next = next;
-	  else
-	    conn_list = next;
-
-	  free_conn_list(p);
-	}
+        conn_list_del(p);
       else
 	prev = p;
 
@@ -120,8 +114,10 @@ void conn_list_add(conn_list_t *cl)
 cp
   cl->next = conn_list;
   cl->prev = NULL;
+
   if(cl->next)
     cl->next->prev = cl;
+
   conn_list = cl;
 cp
 }
@@ -134,7 +130,9 @@ cp
   else
     conn_list = cl->next;
   
-  cl->next->prev = cl->prev;
+  if(cl->next)
+    cl->next->prev = cl->prev;
+
   free_conn_list(cl);
 cp
 }
@@ -170,20 +168,20 @@ cp
   for(s = myself->subnets; s != NULL; s = s->next)
     {
       netstr = net2str(s);
-      syslog(LOG_DEBUG, ": %s", netstr);
+      syslog(LOG_DEBUG, "  %s", netstr);
       free(netstr);
     }
 
   for(p = conn_list; p != NULL; p = p->next)
     {
-      syslog(LOG_DEBUG, _("%s at %s port %hd flags %d sockets %d, %d status %04x"),
+      syslog(LOG_DEBUG, _(" %s at %s port %hd flags %d sockets %d, %d status %04x"),
 	     p->name, p->hostname, p->port, p->flags,
 	     p->socket, p->meta_socket, p->status);
 
       for(s = p->subnets; s != NULL; s = s->next)
         {
           netstr = net2str(s);
-          syslog(LOG_DEBUG, ": %s", netstr);
+          syslog(LOG_DEBUG, "  %s", netstr);
           free(netstr);
         }
     }

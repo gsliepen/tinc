@@ -17,10 +17,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.7 2000/10/28 21:05:20 guus Exp $
+    $Id: subnet.c,v 1.1.2.8 2000/10/29 00:02:20 guus Exp $
 */
 
 #include <syslog.h>
+#include <stdio.h>
 
 #include "config.h"
 #include <utils.h>
@@ -114,28 +115,22 @@ cp
   /* Remove it from owner's list */
 
   if(subnet->prev)
-    {
-      subnet->prev->next = subnet->next;
-    }
+    subnet->prev->next = subnet->next;
   else
-    {
-      subnet->owner->subnets = subnet->next;
-    }
+    subnet->owner->subnets = subnet->next;
 
-  subnet->next->prev = subnet->prev;
+  if(subnet->next)
+    subnet->next->prev = subnet->prev;
 
   /* Remove it from the global list */
   
   if(subnet->global_prev)
-    {
-      subnet->global_prev->global_next = subnet->global_next;
-    }
+    subnet->global_prev->global_next = subnet->global_next;
   else
-    {
-      subnet_list[subnet->type] = subnet->global_next;
-    }
+    subnet_list[subnet->type] = subnet->global_next;
 
-  subnet->global_next->global_prev = subnet->global_prev;
+  if(subnet->global_next)
+    subnet->global_next->global_prev = subnet->global_prev;
   
   free_subnet(subnet);
 cp
@@ -288,7 +283,7 @@ cp
       for(i=0; i<8; i++)
         if((address.x[i] & subnet->net.ipv6.mask.x[i]) != subnet->net.ipv6.address.x[i])
           break;
-      if(i=8)
+      if(i == 8)
         break;
     }
 cp
@@ -305,7 +300,7 @@ cp
   for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->global_next)
     {
       netstr = net2str(subnet);
-      syslog(LOG_DEBUG, "%s owner %s", netstr, subnet->owner->name);
+      syslog(LOG_DEBUG, "  %s owner %s", netstr, subnet->owner->name);
       free(netstr);
     }
 

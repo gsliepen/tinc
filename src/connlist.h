@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.5 2000/10/28 16:41:37 guus Exp $
+    $Id: connlist.h,v 1.1.2.6 2000/10/29 00:02:18 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -31,11 +31,11 @@
 
 typedef struct conn_list_t {
   char *name;                      /* name of this connection */
-  ipv4_t address;                    /* his real (internet) ip */
+  ipv4_t address;                  /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
   int protocol_version;            /* used protocol */
-  int options;                     /* options turned on for this connection */
+  long int options;                /* options turned on for this connection */
 
   int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
@@ -64,10 +64,8 @@ typedef struct conn_list_t {
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */
 
-  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction, will be changed to myuplink (GS) */
-  struct conn_list_t *hisuplink;   /* his nearest meta-hop in our direction */
-  struct conn_list_t *myuplink;    /* our nearest meta-hop in his direction */
-
+  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
+  
   struct subnet_t *subnets;        /* Pointer to a list of subnets belonging to this connection */
 
   struct config_t *config;         /* Pointer to configuration tree belonging to this host */
@@ -83,8 +81,8 @@ extern conn_list_t *myself;
 
 extern conn_list_t *new_conn_list();
 extern void free_conn_list(conn_list_t *);
-extern void add_conn_list(conn_list_t *);
-extern void del_conn_list(conn_list_t *);
+extern void conn_list_add(conn_list_t *);
+extern void conn_list_del(conn_list_t *);
 extern conn_list_t *lookup_id(char *);
 extern void dump_conn_list(void);
 extern int read_host_config(conn_list_t *);

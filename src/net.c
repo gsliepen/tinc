@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.49 2000/10/28 21:52:22 guus Exp $
+    $Id: net.c,v 1.35.4.50 2000/10/29 00:02:18 guus Exp $
 */
 
 #include "config.h"
@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 #ifdef HAVE_TUNTAP
 #include LINUX_IF_TUN_H
@@ -660,7 +661,6 @@ int setup_myself(void)
 {
   config_t const *cfg;
   subnet_t *net;
-  int i;
 cp
   myself = new_conn_list();
 
@@ -731,7 +731,7 @@ cp
 
 /* Read in all the subnets specified in the host configuration file */
 
-  for(cfg = myself->config; cfg = get_config_val(cfg, subnet); cfg = cfg->next)
+  for(cfg = myself->config; (cfg = get_config_val(cfg, subnet)); cfg = cfg->next)
     {
       net = new_subnet();
       net->type = SUBNET_IPV4;
@@ -868,7 +868,6 @@ cp
 	}
       if(p->status.meta)
 	{
-	  send_termreq(p);
 	  shutdown(p->meta_socket, 0); /* No more receptions */
           close(p->meta_socket);
         }
@@ -1016,7 +1015,6 @@ cp
 int handle_incoming_vpn_data()
 {
   vpn_packet_t pkt;
-  int lenin;
   int x, l = sizeof(x);
   struct sockaddr from;
   socklen_t fromlen = sizeof(from);
@@ -1056,10 +1054,14 @@ cp
 void terminate_connection(conn_list_t *cl)
 {
   conn_list_t *p;
-
+  subnet_t *s;
 cp
   if(cl->status.remove)
-    return;
+    {
+      return;
+    }
+
+  cl->status.remove = 1;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
@@ -1070,36 +1072,33 @@ cp
   if(cl->status.meta)
     close(cl->meta_socket);
 
-  cl->status.remove = 1;
-
-  /* If this cl isn't active, don't send any DEL_HOSTs. */
-
-/* FIXME: reprogram this.
-  if(cl->status.active)
-    notify_others(cl,NULL,send_del_host);
-*/
-    
 cp
   /* Find all connections that were lost because they were behind cl
      (the connection that was dropped). */
+
   if(cl->status.meta)
     for(p = conn_list; p != NULL; p = p->next)
-      {
-        if((p->nexthop == cl) && (p != cl))
-          {
-            if(cl->status.active && p->status.active)
-/* FIXME: reprogram this
-              notify_others(p,cl,send_del_host);
-*/;
-           if(cl->socket)
-             close(cl->socket);
-	    p->status.active = 0;
-	    p->status.remove = 1;
-          }
-      }
-    
+      if((p->nexthop == cl) && (p != cl))
+        terminate_connection(p);	/* Sounds like recursion, but p does not have a meta connection :) */
+
+  /* Inform others of termination if it was still active */
+
+  if(cl->status.active)
+    for(p = conn_list; p != NULL; p = p->next)
+      if(p->status.meta && p->status.active && p!=cl)
+        send_del_host(p, cl);
+
+  /* Remove the associated subnets */
+
+  for(s = cl->subnets; s; s = s->next)
+    subnet_del(s);
+
+  /* Inactivate */
+
   cl->status.active = 0;
-  
+
+  /* Check if this was our outgoing connection */
+    
   if(cl->status.outgoing)
     {
       signal(SIGALRM, sigalrm_handler);
@@ -1126,8 +1125,6 @@ cp
   now = time(NULL);
   for(p = conn_list; p != NULL; p = p->next)
     {
-      if(p->status.remove)
-	continue;
       if(p->status.active && p->status.meta)
 	{
           if(p->last_ping_time + timeout < now)
@@ -1178,9 +1175,7 @@ cp
       return 0;
     }
 
-  ncn->status.meta = 1;
-  ncn->next = conn_list;
-  conn_list = ncn;
+  conn_list_add(ncn);
 cp
   return 0;
 }
@@ -1239,8 +1234,6 @@ cp
 void handle_tap_input(void)
 {
   vpn_packet_t vp;
-  subnet_t *subnet;
-  ipv4_t dest;
   int lenin;
 cp  
   if(taptype == TAP_TYPE_TUNTAP)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.16 2000/10/28 21:05:20 guus Exp $
+    $Id: tincd.c,v 1.10.4.17 2000/10/29 00:02:20 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -119,8 +120,7 @@ parse_options(int argc, char **argv, char **envp)
 {
   int r;
   int option_index = 0;
-  config_t *p;
-
+  
   while((r = getopt_long(argc, argv, "c:Ddkn:K::", long_options, &option_index)) != EOF)
     {
       switch(r)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.46 2000/10/28 21:05:18 guus Exp $
+    $Id: protocol.c,v 1.28.4.47 2000/10/29 00:02:19 guus Exp $
 */
 
 #include "config.h"
@@ -37,6 +37,7 @@
 #include <netinet/in.h>
 
 #include <openssl/sha.h>
+#include <openssl/rand.h>
 
 #include "conf.h"
 #include "encr.h"
@@ -44,6 +45,7 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "meta.h"
+#include "connlist.h"
 
 #include "system.h"
 
@@ -108,6 +110,7 @@ cp
             syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
 		   request_name[request], cl->name, cl->hostname);
 	}
+
       if(request_handlers[request](cl))
 	/* Something went wrong. Probably scriptkiddies. Terminate. */
         {
@@ -122,6 +125,8 @@ cp
 	     cl->name, cl->hostname);
       return -1;
     }
+cp
+  return 0;
 }
 
 /* Connection protocol:
@@ -214,19 +219,17 @@ cp
         }
     }
 cp    
-  if(!(cfg = get_config_val(cl->config, publickey)))
+  if((cfg = get_config_val(cl->config, publickey)))
     {
-      syslog(LOG_ERR, _("No public key known for %s (%s)"), cl->name, cl->hostname);
-      return -1;
-    }
-  else
-    {
-cp
       cl->rsa_key = RSA_new();
       BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
       BN_hex2bn(&cl->rsa_key->e, "FFFF");
     }
-
+  else
+    {
+      syslog(LOG_ERR, _("No public key known for %s (%s)"), cl->name, cl->hostname);
+      return -1;
+    }
 cp
   return send_challenge(cl);
 }
@@ -452,15 +455,9 @@ cp
       if(debug_lvl >= DEBUG_CONNECTIONS)
         syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
         cl->name, old->hostname, cl->hostname);
-      old->status.active = 0;
+
       terminate_connection(old);
     }
-
-  /* Notify others of this connection */
-  
-  for(p = conn_list; p; p = p->next)
-    if(p->status.active)
-      send_add_host(p, cl);
 
   /* Activate this connection */
 
@@ -479,6 +476,24 @@ cp
   
   for(s = myself->subnets; s; s = s->next)
     send_add_subnet(cl, s);
+
+  /* And send him all the hosts and their subnets we know... */
+  
+  for(p = conn_list; p; p = p->next)
+    if(p != cl && p->status.active)
+      {
+        /* Notify others of this connection */
+  
+        if(p->status.meta)
+          send_add_host(p, cl);
+
+        /* Notify new connection of everything we know */
+
+        send_add_host(cl, p);
+        
+        for(s = p->subnets; s; s = s->next)
+          send_add_subnet(cl, s);
+      }
 cp
   return 0;
 }
@@ -501,8 +516,8 @@ int add_subnet_h(conn_list_t *cl)
 {
   char *subnetstr;
   char *name;
-  conn_list_t *owner;
-  subnet_t *subnet, *old;
+  conn_list_t *owner, *p;
+  subnet_t *subnet;
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 2)
     {
@@ -555,6 +570,12 @@ cp
   /* If everything is correct, add the subnet to the list of the owner */
 
   subnet_add(owner, subnet);
+
+  /* Tell the rest */
+  
+  for(p = conn_list; p; p = p->next)
+    if(p->status.meta && p->status.active && p!= cl)
+      send_add_subnet(p, subnet);
 cp
   return 0;
 }
@@ -575,8 +596,8 @@ int del_subnet_h(conn_list_t *cl)
 {
   char *subnetstr;
   char *name;
-  conn_list_t *owner;
-  subnet_t *subnet, *old;
+  conn_list_t *owner, *p;
+  subnet_t *subnet;
 cp
   if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 3)
     {
@@ -629,6 +650,12 @@ cp
   /* If everything is correct, delete the subnet from the list of the owner */
 
   subnet_del(subnet);
+
+  /* Tell the rest */
+  
+  for(p = conn_list; p; p = p->next)
+    if(p->status.meta && p->status.active && p!= cl)
+      send_del_subnet(p, subnet);
 cp
   return 0;
 }
@@ -638,18 +665,18 @@ cp
 int send_add_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
-  return send_request(cl, "%d %s %s %lx:%d %lx", ADD_HOST,
-                      myself->name, other->name, other->address, other->port, other->options);
+  return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
+                      other->name, other->address, other->port, other->options);
 }
 
 int add_host_h(conn_list_t *cl)
 {
-  char *sender;
-  conn_list_t *old, *new, *hisuplink;
+  conn_list_t *old, *new;
+  conn_list_t *p;
 cp
   new = new_conn_list();
 
-  if(sscanf(cl->buffer, "%*d %as %as %lx:%d %lx", &sender, &new->name, &new->address, &new->port, &new->options) != 5)
+  if(sscanf(cl->buffer, "%*d %as %lx:%d %lx", &new->name, &new->address, &new->port, &new->options) != 4)
     {
        syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->name, cl->hostname);
        return -1;
@@ -657,10 +684,10 @@ cp
 
   /* Check if identity is a valid name */
 
-  if(check_id(new->name) || check_id(sender))
+  if(check_id(new->name))
     {
       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid identity name"), cl->name, cl->hostname);
-      free(sender);
+      free_conn_list(new);
       return -1;
     }
 
@@ -670,32 +697,10 @@ cp
     {
       syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"), cl->name, cl->hostname);
       sighup = 1;
-      free(sender);
+      free_conn_list(new);
       return 0;
-    }
-
-  /* We got an ADD_HOST from ourself!? */
-
-  if(!strcmp(sender, myself->name))
-    {
-      syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) from ourself, restarting"), cl->name, cl->hostname);
-      sighup = 1;
-      free(sender);
-      return 0;
-    }
-
-  /* Lookup his uplink */
-
-  if(!(new->hisuplink = lookup_id(sender)))
-    {
-      syslog(LOG_ERR, _("Got ADD_HOST from %s (%s) with origin %s which is not in our connection list"),
-             sender, cl->name, cl->hostname);
-      free(sender);
-      return -1;
     }
     
-  free(sender);
-
   /* Fill in more of the new conn_list structure */
 
   new->hostname = hostlookup(htonl(new->address));
@@ -709,31 +714,34 @@ cp
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
                    old->name, old->hostname, new->name, new->hostname);
+          free_conn_list(new);
           return 0;
         }
       else
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
-            syslog(LOG_NOTICE, _("Removing old entry for %s (%s)"),
+            syslog(LOG_NOTICE, _("Removing old entry for %s (%s) in favour of new connection"),
                    old->name, old->hostname);
-          old->status.active = 0;
+
           terminate_connection(old);
         }
     }
+
+  /* Hook it up into the conn_list */
+
+  conn_list_add(new);
+
+  /* Tell the rest about the new host */
+
+  for(p = conn_list; p; p = p->next)
+    if(p->status.meta && p->status.active && p!=cl)
+      send_add_host(p, new);
 
   /* Fill in rest of conn_list structure */
 
   new->nexthop = cl;
   new->status.active = 1;
 
-  /* Hook it up into the conn_list */
-
-  conn_list_add(conn_list, new);
-
-  /* Tell the rest about the new host */
-/* FIXME: reprogram this.
-  notify_others(new, cl, send_add_host);
-*/
 cp
   return 0;
 }
@@ -741,21 +749,19 @@ cp
 int send_del_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
-  return send_request(cl, "%d %s %s %lx:%d %lx", DEL_HOST,
-                      myself->name, other->name, other->address, other->port, other->options);
+  return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
+                      other->name, other->address, other->port, other->options);
 }
 
 int del_host_h(conn_list_t *cl)
 {
   char *name;
-  char *sender;
   ip_t address;
   port_t port;
-  int options;
-  conn_list_t *old, *hisuplink;
-
+  long int options;
+  conn_list_t *old, *p;
 cp
-  if(sscanf(cl->buffer, "%*d %as %as %lx:%d %lx", &sender, &name, &address, &port, &options) != 5)
+  if(sscanf(cl->buffer, "%*d %as %lx:%d %lx", &name, &address, &port, &options) != 4)
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
              cl->name, cl->hostname);
@@ -764,10 +770,10 @@ cp
 
   /* Check if identity is a valid name */
 
-  if(check_id(name) || check_id(sender))
+  if(check_id(name))
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s): invalid identity name"), cl->name, cl->hostname);
-      free(name); free(sender);
+      free(name);
       return -1;
     }
 
@@ -777,32 +783,10 @@ cp
     {
       syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) for ourself, restarting"),
              cl->name, cl->hostname);
-      free(name); free(sender);
+      free(name);
       sighup = 1;
       return 0;
     }
-
-  /* We got an ADD_HOST from ourself!? */
-
-  if(!strcmp(sender, myself->name))
-    {
-      syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) from ourself, restarting"), cl->name, cl->hostname);
-      sighup = 1;
-      free(name); free(sender);
-      return 0;
-    }
-
-  /* Lookup his uplink */
-
-  if(!(hisuplink = lookup_id(sender)))
-    {
-      syslog(LOG_ERR, _("Got DEL_HOST from %s (%s) with origin %s which is not in our connection list"),
-             cl->name, cl->hostname, sender);
-      free(name); free(sender);
-      return -1;
-    }
-    
-  free(sender);
 
   /* Check if the new host already exists in the connnection list */
 
@@ -816,7 +800,7 @@ cp
   
   /* Check if the rest matches */
   
-  if(address!=old->address || port!=old->port || options!=old->options || hisuplink!=old->hisuplink || cl!=old->myuplink)
+  if(address!=old->address || port!=old->port || options!=old->options || cl!=old->nexthop)
     {
       syslog(LOG_WARNING, _("Got DEL_HOST from %s (%s) for %s which doesn't match"), cl->name, cl->hostname, old->name);
       return 0;
@@ -824,10 +808,14 @@ cp
 
   /* Ok, since EVERYTHING seems to check out all right, delete it */
 
-  old->status.termreq = 1;
   old->status.active = 0;
-
   terminate_connection(old);
+
+  /* Tell the rest about the new host */
+
+  for(p = conn_list; p; p = p->next)
+    if(p->status.meta && p->status.active && p!=cl)
+      send_del_host(p, old);
 cp
   return 0;
 }
@@ -893,7 +881,6 @@ cp
     }
 
   free(errorstring);
-  cl->status.termreq = 1;
   terminate_connection(cl);
 cp
   return 0;
@@ -908,7 +895,6 @@ cp
 int termreq_h(conn_list_t *cl)
 {
 cp
-  cl->status.termreq = 1;
   terminate_connection(cl);
 cp
   return 0;
