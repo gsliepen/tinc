@@ -1,1 +1,1 @@
-*.o .libs tincd Makefile.in Makefile
+*.o .libs tincd Makefile.in Makefile .deps

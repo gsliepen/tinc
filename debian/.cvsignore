@@ -1,0 +1,2 @@
+Makefile Makefile.in tmp postinst.debhelper postrm.debhelper
+preinst.debhelper prerm.debhelper substvars files
