@@ -69,7 +69,7 @@ int xalloc_exit_failure = EXIT_FAILURE;
 char *const xalloc_msg_memory_exhausted = N_("Memory exhausted");
 
 /* FIXME: describe */
-void (*xalloc_fail_func) () = 0;
+void (*xalloc_fail_func) (int) = 0;
 
 #if __STDC__ && (HAVE_VPRINTF || HAVE_DOPRNT)
 void error (int, int, const char *, ...);
@@ -78,10 +78,10 @@ void error ();
 #endif
 
 static void
-xalloc_fail ()
+xalloc_fail (int size)
 {
   if (xalloc_fail_func)
-    (*xalloc_fail_func) ();
+    (*xalloc_fail_func) (size);
   error (xalloc_exit_failure, 0, xalloc_msg_memory_exhausted);
 }
 
@@ -92,10 +92,12 @@ xmalloc (n)
      size_t n;
 {
   void *p;
+  extern char*cp_file;
+  extern int cp_line;
 
   p = malloc (n);
   if (p == 0)
-    xalloc_fail ();
+    xalloc_fail ((int)n);
   return p;
 }
 
@@ -110,7 +112,7 @@ xrealloc (p, n)
 {
   p = realloc (p, n);
   if (p == 0)
-    xalloc_fail ();
+    xalloc_fail (n);
   return p;
 }
 

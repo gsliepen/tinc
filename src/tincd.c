@@ -19,6 +19,9 @@
 
 /*
  * $Log: tincd.c,v $
+ * Revision 1.5  2000/04/17 16:23:29  zarq
+ * Pass the requested size from xmalloc() and xrealloc() on to xalloc_fail_func()
+ *
  * Revision 1.4  2000/04/06 18:28:29  zarq
  * New option -D, don't detach.
  *
@@ -156,9 +159,9 @@ parse_options(int argc, char **argv, char **envp)
     }
 }
 
-void memory_full(void)
+void memory_full(int size)
 {
-  syslog(LOG_ERR, "Memory exhausted; exiting.");
+  syslog(LOG_ERR, "Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting.", cp_file, cp_line, size);
   exit(1);
 }
 
