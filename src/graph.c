@@ -54,6 +54,7 @@
 #include "netutl.h"
 #include "node.h"
 #include "process.h"
+#include "subnet.h"
 #include "utils.h"
 
 /* Implementation of Kruskal's algorithm.
@@ -141,10 +142,11 @@ void mst_kruskal(void)
 
 void sssp_bfs(void)
 {
-	avl_node_t *node, *from, *next, *to;
+	avl_node_t *node, *next, *to;
 	edge_t *e;
 	node_t *n;
-	avl_tree_t *todo_tree;
+	list_t *todo_list;
+	list_node_t *from, *todonext;
 	bool indirect;
 	char *name;
 	char *address, *port;
@@ -153,7 +155,7 @@ void sssp_bfs(void)
 
 	cp();
 
-	todo_tree = avl_alloc_tree(NULL, NULL);
+	todo_list = list_alloc(NULL);
 
 	/* Clear visited status on nodes */
 
@@ -169,86 +171,80 @@ void sssp_bfs(void)
 	myself->status.indirect = false;
 	myself->nexthop = myself;
 	myself->via = myself;
-	node = avl_alloc_node();
-	node->data = myself;
-	avl_insert_top(todo_tree, node);
+	list_insert_head(todo_list, myself);
 
-	/* Loop while todo_tree is filled */
+	/* Loop while todo_list is filled */
 
-	while(todo_tree->head) {
-		for(from = todo_tree->head; from; from = next) {	/* "from" is the node from which we start */
-			next = from->next;
-			n = from->data;
+	for(from = todo_list->head; from; from = todonext) {	/* "from" is the node from which we start */
+		n = from->data;
 
-			for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
-				e = to->data;
+		for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
+			e = to->data;
 
-				if(!e->reverse)
-					continue;
+			if(!e->reverse)
+				continue;
 
-				/* Situation:
+			/* Situation:
 
-				           /
-				          /
-				   ----->(n)---e-->(e->to)
-				          \
-				           \
+				   /
+				  /
+			   ----->(n)---e-->(e->to)
+				  \
+				   \
 
-				   Where e is an edge, (n) and (e->to) are nodes.
-				   n->address is set to the e->address of the edge left of n to n.
-				   We are currently examining the edge e right of n from n:
+			   Where e is an edge, (n) and (e->to) are nodes.
+			   n->address is set to the e->address of the edge left of n to n.
+			   We are currently examining the edge e right of n from n:
 
-				   - If e->reverse->address != n->address, then e->to is probably
-				     not reachable for the nodes left of n. We do as if the indirectdata
-				     flag is set on edge e.
-				   - If edge e provides for better reachability of e->to, update
-				     e->to and (re)add it to the todo_tree to (re)examine the reachability
-				     of nodes behind it.
-				 */
+			   - If e->reverse->address != n->address, then e->to is probably
+			     not reachable for the nodes left of n. We do as if the indirectdata
+			     flag is set on edge e.
+			   - If edge e provides for better reachability of e->to, update
+			     e->to and (re)add it to the todo_list to (re)examine the reachability
+			     of nodes behind it.
+			 */
 
-				indirect = n->status.indirect || e->options & OPTION_INDIRECT
-					|| ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
+			indirect = n->status.indirect || e->options & OPTION_INDIRECT
+				|| ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
 
-				if(e->to->status.visited
-				   && (!e->to->status.indirect || indirect))
-					continue;
+			if(e->to->status.visited
+			   && (!e->to->status.indirect || indirect))
+				continue;
 
-				e->to->status.visited = true;
-				e->to->status.indirect = indirect;
-				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
-				e->to->via = indirect ? n->via : e->to;
-				e->to->options = e->options;
+			e->to->status.visited = true;
+			e->to->status.indirect = indirect;
+			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+			e->to->via = indirect ? n->via : e->to;
+			e->to->options = e->options;
 
-				if(sockaddrcmp(&e->to->address, &e->address)) {
-					node = avl_unlink(node_udp_tree, e->to);
-					sockaddrfree(&e->to->address);
-					sockaddrcpy(&e->to->address, &e->address);
+			if(sockaddrcmp(&e->to->address, &e->address)) {
+				node = avl_unlink(node_udp_tree, e->to);
+				sockaddrfree(&e->to->address);
+				sockaddrcpy(&e->to->address, &e->address);
 
-					if(e->to->hostname)
-						free(e->to->hostname);
+				if(e->to->hostname)
+					free(e->to->hostname);
 
-					e->to->hostname = sockaddr2hostname(&e->to->address);
-					avl_insert_node(node_udp_tree, node);
+				e->to->hostname = sockaddr2hostname(&e->to->address);
+				avl_insert_node(node_udp_tree, node);
 
-					if(e->to->options & OPTION_PMTU_DISCOVERY) {
-						e->to->mtuprobes = 0;
-						e->to->minmtu = 0;
-						e->to->maxmtu = MTU;
-						if(e->to->status.validkey)
-							send_mtu_probe(e->to);
-					}
+				if(e->to->options & OPTION_PMTU_DISCOVERY) {
+					e->to->mtuprobes = 0;
+					e->to->minmtu = 0;
+					e->to->maxmtu = MTU;
+					if(e->to->status.validkey)
+						send_mtu_probe(e->to);
 				}
-
-				node = avl_alloc_node();
-				node->data = e->to;
-				avl_insert_before(todo_tree, from, node);
 			}
 
-			avl_delete_node(todo_tree, from);
+			list_insert_tail(todo_list, e->to);
 		}
+
+		todonext = from->next;
+		list_delete_node(todo_list, from);
 	}
 
-	avl_free_tree(todo_tree);
+	list_free(todo_list);
 
 	/* Check reachability status. */
 
@@ -292,8 +288,10 @@ void sssp_bfs(void)
 			free(address);
 			free(port);
 
-			for(i = 0; i < 7; i++)
+			for(i = 0; i < 6; i++)
 				free(envp[i]);
+
+			subnet_update(n, NULL, n->status.reachable);
 		}
 	}
 }
