@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.20 2003/07/22 20:55:20 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.21 2003/07/23 22:17:31 guus Exp $
 */
 
 #include "system.h"
@@ -250,7 +250,8 @@ bool ans_key_h(connection_t *c)
 	
 	from->compression = compression;
 
-	EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len);
+	if(from->cipher)
+		EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len);
 
 	flush_queue(from);
 

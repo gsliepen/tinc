@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.38 2003/07/22 21:13:23 guus Exp $
+    $Id: net_setup.c,v 1.1.2.39 2003/07/23 22:17:31 guus Exp $
 */
 
 #include "system.h"
@@ -362,8 +362,10 @@ bool setup_myself(void)
 
 	keyexpires = now + keylifetime;
 	
-	EVP_CIPHER_CTX_init(&packet_ctx);
-	EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+	if(myself->cipher) {
+		EVP_CIPHER_CTX_init(&packet_ctx);
+		EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+	}
 
 	/* Check if we want to use message authentication codes... */
 
