@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.10 2002/09/03 20:43:25 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.11 2002/09/04 08:36:34 guus Exp $
 */
 
 #include "config.h"
@@ -563,6 +563,7 @@ cp
   n->options = c->options;
   n->distance = 1;
   n->via = n->nexthop = n;
+  n->prevhop = myself;
   n->status.reachable = 1;
   n->status.validkey = 0;
   n->status.waitingforkey = 0;
