@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.32 2000/09/15 12:58:40 zarq Exp $
+    $Id: protocol.c,v 1.28.4.33 2000/09/17 21:42:05 guus Exp $
 */
 
 #include "config.h"
@@ -53,9 +53,9 @@ int check_id(char *id)
   for (i = 0; i < strlen(id); i++)
     {
       if(!isalpha(id[i]) && id[i] != '_')
-	{
-	  return 0;
-	}
+        {
+          return 0;
+        }
     }
 
   return 1;
@@ -66,26 +66,29 @@ int check_id(char *id)
 int send_request(conn_list_t *cl, const char *format, int request, /*args*/ ...)
 {
   va_list args;
-  char *buffer = NULL;
+  char buffer[MAXBUFSIZE+1];
   int len;
-  
+
 cp
-  if(debug_lvl >= DEBUG_PROTOCOL)
-    syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
+  /* Use vsnprintf instead of vasprintf: faster, no memory fragmentation, cleanup is automatic,
+     and there is a limit on the input buffer anyway */
 
   va_start(args, request);
-  len = vasprintf(&buffer, format, args);
+  len = vsnprintf(buffer, MAXBUFSIZE+1, format, args);
   va_end(args);
 
-  if(len < 0 || !buffer)
+  if(len < 0 || len > MAXBUFSIZE)
     {
-      syslog(LOG_ERR, _("Error during vasprintf(): %m"));
+      syslog(LOG_ERR, _("Output buffer overflow while sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
       return -1;
     }
 
   if(debug_lvl >= DEBUG_META)
-    syslog(LOG_DEBUG, _("Sending meta data to %s (%s): %s"),
-	   cl->name, cl->hostname, buffer);
+    syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request],
+           cl->name, cl->hostname, buffer);
+  else if(debug_lvl >= DEBUG_PROTOCOL)
+    syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
+
 
   if(cl->status.encryptin)
     {
@@ -97,7 +100,7 @@ cp
       syslog(LOG_ERR, _("Sending meta data failed:  %m"));
       return -1;
     }
-cp  
+cp
 }
 
 /* Connection protocol:
@@ -105,27 +108,34 @@ cp
    Client               Server
    send_id(u)
                         send_challenge(R)
-   send_chal_reply(BH)                   
-                        send_id(B)
-   send_challenge(BR)
-                        send_chal_reply(BH)
-   send_ack(B)
-			send_ack(B)
+   send_chal_reply(H)
+                        send_id(u)
+   send_challenge(R)
+                        send_chal_reply(H)
+   ---------------------------------------
+   Any negotations about the meta protocol
+   encryption go here(u).
+   ---------------------------------------
+   send_ack(u)
+                        send_ack(u)
+   ---------------------------------------
+   Other requests(E)...
 
    (u) Unencrypted,
    (R) RSA,
    (H) SHA1,
-   (B) Blowfish.
+   (E) Encrypted with symmetric cipher.
 
-   Part of the challenge is directly used to set the blowfish key and the initial vector.
-   (Twee vliegen in één klap!)
-*/      
+   Part of the challenge is directly used to set the symmetric cipher key and the initial vector.
+   Since a man-in-the-middle cannot decrypt the RSA challenges, this means that he cannot get or
+   forge the key for the symmetric cipher.
+*/
 
 int send_id(conn_list_t *cl)
 {
 cp
   return send_request(cl, "%d %s %d %s", ID,
-		      myself->name, myself->protocol_version, opt2str(myself->options));
+                      myself->name, myself->protocol_version, opt2str(myself->options));
 }
 
 int id_h(conn_list_t *cl)
@@ -138,34 +148,34 @@ cp
        syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
        return -1;
     }
-    
+
   /* Check if version matches */
-  
+
   if(cl->protocol_version != myself->protocol_version)
     {
       syslog(LOG_ERR, _("Peer %s (%s) uses incompatible version %d"),
-	     cl->name, cl->hostname, cl->protocol_version);
+             cl->name, cl->hostname, cl->protocol_version);
       return -1;
     }
 
   /* Check if option string is valid */
-  
+
   if((cl->options = str2opt(options)) == -1)
     {
       syslog(LOG_ERR, _("Peer %s uses invalid option string"), cl->hostname);
       return -1;
     }
-    
+
   /* Check if identity is a valid name */
-  
+
   if(!check_id(cl->name))
     {
       syslog(LOG_ERR, _("Peer %s uses invalid identity name"), cl->hostname);
       return -1;
     }
-    
+
   /* Load information about peer */
-  
+
   if(!read_id(cl))
     {
       syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), cl->hostname, cl->name);
@@ -206,20 +216,20 @@ int send_challenge(conn_list_t *cl)
 cp
   if(cl->chal_answer)
     free(cl->chal_answer);
-  
+
   /* Allocate buffers for the challenge and the hash */
-  
+
   cl->chal_answer = xmalloc(SHA_DIGEST_LENGTH);
   keylength = BN_num_bytes(cl->rsakey->length);
   buffer = xmalloc(keylength*2);
 
   /* Copy random data and the public key to the buffer */
-  
+
   RAND_bytes(buffer, keylength);
   BN_bn2bin(cl->rsakey->length, buffer+keylength);
 
   /* If we don't have a blowfish key set yet, use the random data from the challenge to do so. */
-  
+
   if(!cl->status.encryptin)
     {
       set_metakey(cl, buffer, keylength);
@@ -235,7 +245,7 @@ cp
   buffer[keylength*2] = '\0';
 
   /* Send the challenge */
-  
+
   cl->allow_request = CHAL_REPLY;
   x = send_request(cl, "%d %s", CHALLENGE, buffer);
   free(buffer);
@@ -248,7 +258,7 @@ int challenge_h(conn_list_t *cl)
 {
   char *challenge;
   int x;
-  
+
 cp
   if(sscanf(cl->buffer, "%*d %as", &cl->name, &challenge) != 1)
     {
@@ -257,7 +267,7 @@ cp
     }
 
   /* Rest is done by send_chal_reply() */
-  
+
   x = send_chal_reply(cl, challenge);
   free(challenge);
 cp
@@ -270,7 +280,7 @@ int send_chal_reply(conn_list_t *cl, char *challenge)
   int keylength;
   char *hash;
   int x;
-  
+
 cp
   keylength = BN_num_bytes(myself->rsakey->length);
 
@@ -283,21 +293,21 @@ cp
     }
 
   /* Allocate buffers for the challenge and the hash */
-  
+
   buffer = xmalloc(keylength*2);
   hash = xmalloc(SHA_DIGEST_LENGTH*2+1);
 
   /* Copy the incoming random data and our public key to the buffer */
 
-  hex2bin(challenge, buffer, keylength); 
+  hex2bin(challenge, buffer, keylength);
   BN_bn2bin(myself->rsakey->length, buffer+keylength);
 
   /* Calculate the hash from that */
-  
+
   SHA1(buffer, keylength*2, hash);
 
   /* If we don't have a blowfish key set yet, use the random data from the challenge to do so. */
-  
+
   if(!cl->status.encrypted)
     {
       set_metakey(cl, buffer, keylength);
@@ -322,7 +332,7 @@ cp
   free(hash);
 cp
   return x;
-} 
+}
 
 int chal_reply_h(conn_list_t *cl)
 {
@@ -335,19 +345,19 @@ cp
     }
 
   /* Check if the length of the hash is all right */
-  
+
   if(strlen(hash) != SHA_DIGEST_LENGTH*2)
     {
       syslog(LOG_ERR, _("Intruder: wrong challenge reply length from %s (%s)"), cl->name, cl->hostname);
       return -1;
     }
-    
+
   /* Convert the hash to binary format */
-  
+
   hex2bin(hash, hash, SHA_DIGEST_LENGTH);
-  
+
   /* Verify the incoming hash with the calculated hash */
-  
+
   if(!memcmp(hash, cl->chal_answer, SHA_DIGEST_LENGTH))
     {
       syslog(LOG_ERR, _("Intruder: wrong challenge reply from %s (%s)"), cl->name, cl->hostname);
@@ -358,7 +368,7 @@ cp
      If we are accepting this new connection, then send our identity,
      if we are making this connecting, acknowledge.
    */
-   
+
   free(hash);
   free(cl->chal_answer);
 
@@ -384,14 +394,14 @@ cp
 int ack_h(conn_list_t *cl)
 {
   conn_list_t *old;
-  
+
 cp
   /* Okay, before we active the connection, we check if there is another entry
      in the connection list with the same vpn_ip. If so, it presumably is an
      old connection that has timed out but we don't know it yet.
    */
 
-  while((old = lookup_id(cl->name))) 
+  while((old = lookup_id(cl->name)))
     {
       if(debug_lvl > DEBUG_CONNECTIONS)
         syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
@@ -427,14 +437,58 @@ cp
 int send_add_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
 {
 cp
-/*  return send_request(cl, "%d %s %d %s", ADD_SUBNET,
-		      other->name, subnet->type, net2str(subnet)); */
   return send_request(cl, "%d %s %s", ADD_SUBNET,
-		      other->name, net2str(subnet));
+                      other->name, net2str(subnet));
 }
 
 int add_subnet_h(conn_list_t *cl)
 {
+  char *subnetstr;
+  char *name;
+  conn_list_t *owner;
+  subnet_t *subnet, *old;
+cp
+  if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 3)
+    {
+       syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s)"), cl->name, cl->hostname);
+       return -1;
+    }
+
+  /* Check if owner name is a valid */
+
+  if(!check_id(name))
+    {
+      syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s): invalid identity name"), cl->name, cl->hostname);
+      return -1;
+    }
+
+  /* Check if subnet string is valid */
+
+  if((subnet = str2net(subnetstr)) == -1)
+    {
+      syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s): invalid subnet string"), cl->name, cl->hostname);
+      return -1;
+    }
+  
+  /* Check if somebody tries to add a subnet of ourself */
+
+  if(!strcmp(name, myself->name))
+    {
+      syslog(LOG_ERR, _("Warning: got ADD_SUBNET from %s (%s) for ourself, restarting"),
+             cl->name, cl->hostname);
+      sighup = 1;
+      return 0;
+    }
+
+  /* Check if the owner of the new subnet is in the connection list */
+
+  if(!(owner = lookup_id(name))
+    {
+      syslog(LOG_NOTICE, _("Got ADD_SUBNET for %s from %s (%s) which is not in our connection list"),
+             name, cl->name, cl->hostname);
+    }
+
+
 }
 
 int send_del_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
@@ -445,6 +499,50 @@ cp
 
 int del_subnet_h(conn_list_t *cl)
 {
+  char *subnetstr;
+  char *name;
+  conn_list_t *owner;
+  subnet_t *subnet, *old;
+cp
+  if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 3)
+    {
+       syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s)"), cl->name, cl->hostname);
+       return -1;
+    }
+
+  /* Check if owner name is a valid */
+
+  if(!check_id(name))
+    {
+      syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s): invalid identity name"), cl->name, cl->hostname);
+      return -1;
+    }
+
+  /* Check if subnet string is valid */
+
+  if((subnet = str2net(subnetstr)) == -1)
+    {
+      syslog(LOG_ERR, _("Got bad DEL_SUBNET from %s (%s): invalid subnet string"), cl->name, cl->hostname);
+      return -1;
+    }
+
+  /* Check if somebody tries to delete a subnet of ourself */
+
+  if(!strcmp(name, myself->name))
+    {
+      syslog(LOG_ERR, _("Warning: got DEL_SUBNET from %s (%s) for ourself, restarting"),
+             cl->name, cl->hostname);
+      sighup = 1;
+      return 0;
+    }
+
+  /* Check if the owner of the new subnet is in the connection list */
+
+  if(!(owner = lookup_id(name))
+    {
+      syslog(LOG_NOTICE, _("Got DEL_SUBNET for %s from %s (%s) which is not in our connection list"),
+             name, cl->name, cl->hostname);
+    }
 }
 
 /* New and closed connections notification */
@@ -466,10 +564,10 @@ cp
     {
        syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->name, cl->hostname);
        return -1;
-    }  
+    }
 
   /* Check if option string is valid */
-  
+
   if((new->options = str2opt(options)) == -1)
     {
       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid option string"), cl->name, cl->hostname);
@@ -477,15 +575,15 @@ cp
     }
 
   /* Check if identity is a valid name */
-  
+
   if(!check_id(new->name))
     {
       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid identity name"), cl->name, cl->hostname);
       return -1;
     }
-    
+
   /* Check if somebody tries to add ourself */
-  
+
   if(!strcmp(new->name, myself->name))
     {
       syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"), cl->name, cl->hostname);
@@ -496,7 +594,7 @@ cp
   /* Fill in more of the new conn_list structure */
 
   new->hostname = hostlookup(htonl(new->real_ip));
-  
+
   /* Check if the new host already exists in the connnection list */
 
   if((old = lookup_id(new->name)))
@@ -505,14 +603,14 @@ cp
         {
           if(debug_lvl > DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
-		   old->name, old->hostname, new->name, new->hostname);
-	  return 0;
+                   old->name, old->hostname, new->name, new->hostname);
+          return 0;
         }
       else
         {
           if(debug_lvl > DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Removing old entry for %s (%s)"),
-		   old->name, old->hostname);
+                   old->name, old->hostname);
           old->status.active = 0;
           terminate_connection(old);
         }
@@ -522,15 +620,15 @@ cp
 
   new->nexthop = cl;
   new->status.active = 1;
-  
+
   /* Hook it up into the conn_list */
 
   conn_list_add(conn_list, new);
 
   /* Tell the rest about the new host */
-  
+
   notify_others(new, cl, send_add_host);
-  
+
 cp
   return 0;
 }
@@ -539,7 +637,7 @@ int send_del_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
   return send_request(cl, "%d %s %lx:%d", DEL_HOST,
-		      other->name, other->real_ip, other->port);
+                      other->name, other->real_ip, other->port);
 }
 
 int del_host_h(conn_list_t *cl)
@@ -548,21 +646,21 @@ int del_host_h(conn_list_t *cl)
   ip_t address;
   port_t port;
   conn_list_t *old;
-  
+
 cp
   if(sscanf(cl->buffer, "%*d %as %lx:%d", &id, &address, &port) != 3)
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
-	     cl->name, cl->hostname);
+             cl->name, cl->hostname);
       return -1;
-    }  
+    }
 
   /* Check if somebody tries to delete ourself */
-  
+
   if(!strcmp(id, myself->name))
     {
       syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) for ourself, restarting"),
-	     cl->name, cl->hostname);
+             cl->name, cl->hostname);
       sighup = 1;
       return 0;
     }
@@ -587,7 +685,7 @@ cp
   if(debug_lvl > DEBUG_CONNECTIONS)
     {
       syslog(LOG_NOTICE, _("Got DEL_HOST for %s from %s (%s) which is not in our connection list"),
-	     id, cl->name, cl->hostname);
+             id, cl->name, cl->hostname);
     }
 cp
   return 0;
@@ -612,14 +710,14 @@ cp
   if(sscanf(cl->buffer, "%*d %d %as", &statusno, &statusstring) != 2)
     {
        syslog(LOG_ERR, _("Got bad STATUS from %s (%s)"),
-	      cl->name, cl->hostname);
+              cl->name, cl->hostname);
        return -1;
     }
 
   if(debug_lvl > DEBUG_STATUS)
     {
       syslog(LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
-	     cl->name, cl->hostname, status_text[statusno], statusstring);
+             cl->name, cl->hostname, status_text[statusno], statusstring);
     }
 
 cp
@@ -643,14 +741,14 @@ cp
   if(sscanf(cl->buffer, "%*d %d %as", &errno, &errorstring) != 2)
     {
        syslog(LOG_ERR, _("Got bad error from %s (%s)"),
-	      cl->name, cl->hostname);
+              cl->name, cl->hostname);
        return -1;
     }
 
   if(debug_lvl > DEBUG_error)
     {
       syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
-	     cl->name, cl->hostname, strerror(errno), errorstring);
+             cl->name, cl->hostname, strerror(errno), errorstring);
     }
 
   free(errorstring);
@@ -714,7 +812,7 @@ cp
     {
       if(p!=cl && p->status.meta && p->status.active)
         send_request(p, "%d %s", KEY_CHANGED,
-		     from->name);
+                     from->name);
     }
 cp
   return 0;
@@ -728,33 +826,33 @@ cp
   if(sscanf(cl->buffer, "%*d %as", &from_id) != 1)
     {
       syslog(LOG_ERR, _("Got bad KEY_CHANGED from %s (%s)"),
-	     cl->name, cl->hostname);
+             cl->name, cl->hostname);
       return -1;
-    }  
+    }
 
   if(!(from = lookup_id(from_id)))
     {
       syslog(LOG_ERR, _("Got KEY_CHANGED from %s (%s) origin %s which does not exist in our connection list"),
-	     cl->name, cl->hostname, from_id);
+             cl->name, cl->hostname, from_id);
       free(from_id);
       return -1;
     }
 
   free(from_id);
-    
+
   from->status.validkey = 0;
   from->status.waitingforkey = 0;
-  
+
   send_key_changed(from, cl);
 cp
   return 0;
 }
-  
+
 int send_req_key(conn_list_t *from, conn_list_t *to)
 {
 cp
   return send_request(to->nexthop, "%d %s %s", REQ_KEY,
-		      from->name, to->name);
+                      from->name, to->name);
 }
 
 int req_key_h(conn_list_t *cl)
@@ -765,14 +863,14 @@ cp
   if(sscanf(cl->buffer, "%*d %as %as", &from_id, &to_id) != 2)
     {
        syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"),
-	      cl->name, cl->hostname);
+              cl->name, cl->hostname);
        return -1;
-    }  
+    }
 
   if(!(from = lookup_id(from_id)))
     {
       syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) origin %s which does not exist in our connection list"),
-	     cl->name, cl->hostname, from_id);
+             cl->name, cl->hostname, from_id);
       free(from_id); free(to_id);
       return -1;
     }
@@ -788,7 +886,7 @@ cp
       if(!(to = lookup_id(to_id)))
         {
           syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) destination %s which does not exist in our connection list"),
-		 cl->name, cl->hostname, to_id);
+                 cl->name, cl->hostname, to_id);
           free(from_id); free(to_id);
           return -1;
         }
@@ -804,7 +902,7 @@ int send_ans_key(conn_list_t *from, conn_list_t *to, char *datakey)
 {
 cp
   return send_request(to->nexthop, "%d %s %s %s", ANS_KEY,
-		      from->name, to->name, datakey);
+                      from->name, to->name, datakey);
 }
 
 int ans_key_h(conn_list_t *cl)
@@ -816,14 +914,14 @@ cp
   if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &datakey) != 3)
     {
        syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"),
-	      cl->name, cl->hostname);
+              cl->name, cl->hostname);
        return -1;
-    }  
+    }
 
   if(!(from = lookup_id(from_id)))
     {
       syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"),
-	     cl->name, cl->hostname, from_id);
+             cl->name, cl->hostname, from_id);
       free(from_id); free(to_id); free(datakey);
       return -1;
     }
@@ -833,13 +931,13 @@ cp
   if(!strcmp(to_id, myself->name))
     {
       /* It is for us, convert it to binary and set the key with it. */
-      
+
       keylength = strlen(datakey);
-      
+
       if((keylength%2) || (keylength <= 0))
         {
           syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
-		 cl->name, cl->hostname, from->name);
+                 cl->name, cl->hostname, from->name);
           free(from_id); free(to_id); free(datakey);
           return -1;
         }
@@ -852,7 +950,7 @@ cp
       if(!(to = lookup_id(to_id)))
         {
           syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"),
-		 cl->name, cl->hostname, to_id);
+                 cl->name, cl->hostname, to_id);
           free(from_id); free(to_id); free(datakey);
           return -1;
         }
@@ -873,7 +971,7 @@ cp
 */
 
 int notify_others(conn_list_t *new, conn_list_t *source,
-		  int (*function)(conn_list_t*, conn_list_t*))
+                  int (*function)(conn_list_t*, conn_list_t*))
 {
   conn_list_t *p;
 cp
