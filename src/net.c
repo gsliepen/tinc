@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.42 2000/10/20 19:46:57 guus Exp $
+    $Id: net.c,v 1.35.4.43 2000/10/21 11:52:06 guus Exp $
 */
 
 #include "config.h"
@@ -104,7 +104,7 @@ cp
   EVP_EncryptFinal(cl->cipher_pktctx, outpkt.data + outlen, &outpad);
   outlen += outpad;
   
-  if(debug_lvl > 3)
+  if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
            outlen, cl->name, cl->hostname);
 
@@ -127,7 +127,7 @@ int xrecv(vpn_packet_t *inpkt)
   vpn_packet_t outpkt;
   int outlen, outpad;
 cp
-  if(debug_lvl > 3)
+  if(debug_lvl > DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Receiving packet of %d bytes"),
            inpkt->len);
 
@@ -240,7 +240,7 @@ cp
       p = next;
     }
 
-  if(debug_lvl > 3)
+  if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Queue flushed"));
 cp
 }
@@ -255,7 +255,7 @@ void flush_queues(conn_list_t *cl)
 cp
   if(cl->sq)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_DEBUG, _("Flushing send queue for %s (%s)"),
 	       cl->name, cl->hostname);
       flush_queue(cl, &(cl->sq), xsend);
@@ -263,7 +263,7 @@ cp
 
   if(cl->rq)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >=  DEBUG_TRAFFIC)
 	syslog(LOG_DEBUG, _("Flushing receive queue for %s (%s)"),
 	       cl->name, cl->hostname);
       flush_queue(cl, &(cl->rq), xrecv);
@@ -280,7 +280,7 @@ int send_packet(ip_t to, vpn_packet_t *packet)
 cp
   if((cl = lookup_conn_list_ipv4(to)) == NULL)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >= DEBUG_TRAFFIC)
         {
           syslog(LOG_NOTICE, _("Trying to look up %d.%d.%d.%d in connection list failed!"),
 	         IP_ADDR_V(to));
@@ -303,7 +303,7 @@ cp
       
   if(!cl->status.validkey)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
 	       cl->name, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
@@ -314,7 +314,7 @@ cp
 
   if(!cl->status.active)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"),
 	       cl->name, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
@@ -511,7 +511,7 @@ int setup_outgoing_meta_socket(conn_list_t *cl)
   struct sockaddr_in a;
   config_t const *cfg;
 cp
-  if(debug_lvl > 0)
+  if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
 
   if((cfg = get_config_val(cl->config, port)) == NULL)
@@ -545,7 +545,7 @@ cp
       return -1;
     }
 
-  if(debug_lvl > 0)
+  if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Connected to %s port %hd"),
          cl->hostname, cl->port);
 
@@ -865,7 +865,7 @@ int setup_vpn_connection(conn_list_t *cl)
   int nfd, flags;
   struct sockaddr_in a;
 cp
-  if(debug_lvl > 0)
+  if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Opening UDP socket to %s"), cl->hostname);
 
   nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -928,7 +928,7 @@ cp
   p->last_ping_time = time(NULL);
   p->want_ping = 0;
   
-  if(debug_lvl > 0)
+  if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
          p->hostname, htons(ci.sin_port));
 
@@ -1005,7 +1005,7 @@ cp
   if(cl->status.remove)
     return;
 
-  if(debug_lvl > 0)
+  if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
            cl->name, cl->hostname);
  
@@ -1078,7 +1078,7 @@ cp
             {
               if(p->status.pinged && !p->status.got_pong)
                 {
-                  if(debug_lvl > 1)
+                  if(debug_lvl >= DEBUG_PROTOCOL)
   	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
 		           p->name, p->hostname);
 	          p->status.timeout = 1;
@@ -1212,14 +1212,14 @@ cp
   ether_type = ntohs(*((unsigned short*)(&vp.data[12])));
   if(ether_type != 0x0800)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("Non-IP ethernet frame %04x from %02x:%02x:%02x:%02x:%02x:%02x"), ether_type, MAC_ADDR_V(vp.data[6]));
       return;
     }
   
   if(lenin < 32)
     {
-      if(debug_lvl > 3)
+      if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("Dropping short packet from %02x:%02x:%02x:%02x:%02x:%02x"), MAC_ADDR_V(vp.data[6]));
       return;
     }

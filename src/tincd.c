@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.14 2000/10/20 19:46:58 guus Exp $
+    $Id: tincd.c,v 1.10.4.15 2000/10/21 11:52:08 guus Exp $
 */
 
 #include "config.h"
@@ -281,11 +281,11 @@ int detach(void)
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
-  if(debug_lvl > 0)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
 	   VERSION, __DATE__, __TIME__, debug_lvl);
   else
-    syslog(LOG_NOTICE, _("tincd %s starting"), VERSION, debug_lvl);
+    syslog(LOG_NOTICE, _("tincd %s starting"), VERSION);
 
   xalloc_fail_func = memory_full;
 
@@ -299,7 +299,7 @@ void cleanup_and_exit(int c)
 {
   close_network_connections();
 
-  if(debug_lvl > 0)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
 	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
 
@@ -467,7 +467,7 @@ main(int argc, char **argv, char **envp)
 RETSIGTYPE
 sigterm_handler(int a)
 {
-  if(debug_lvl > 0)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got TERM signal"));
   cleanup_and_exit(0);
 }
@@ -475,7 +475,7 @@ sigterm_handler(int a)
 RETSIGTYPE
 sigquit_handler(int a)
 {
-  if(debug_lvl > 0)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got QUIT signal"));
   cleanup_and_exit(0);
 }
@@ -512,7 +512,7 @@ sigsegv_handler(int a)
 RETSIGTYPE
 sighup_handler(int a)
 {
-  if(debug_lvl > 0)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got HUP signal, rereading configuration and restarting"));
   sighup = 1;
 }
@@ -520,7 +520,7 @@ sighup_handler(int a)
 RETSIGTYPE
 sigint_handler(int a)
 {
-  if(debug_lvl > 0)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got INT signal, exiting"));
   cleanup_and_exit(0);
 }
@@ -534,7 +534,7 @@ sigusr1_handler(int a)
 RETSIGTYPE
 sigusr2_handler(int a)
 {
-  if(debug_lvl > 1)
+  if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
 /* FIXME: reprogram this.
   regenerate_keys();

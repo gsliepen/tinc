@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.4 2000/10/15 00:59:34 guus Exp $
+    $Id: meta.c,v 1.1.2.5 2000/10/21 11:52:06 guus Exp $
 */
 
 #include "config.h"
@@ -106,7 +106,7 @@ cp
         return 0;      
       if(errno==0)
         {
-          if(debug_lvl>DEBUG_CONNECTIONS)
+          if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
                 cl->name, cl->hostname);
         }
@@ -140,7 +140,7 @@ cp
 
       if(cl->reqlen)
         {
-          if(debug_lvl > DEBUG_META)
+          if(debug_lvl >= DEBUG_PROTOCOL)
             syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
 	           cl->name, cl->hostname, cl->buffer);
 

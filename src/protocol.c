@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.43 2000/10/20 15:34:37 guus Exp $
+    $Id: protocol.c,v 1.28.4.44 2000/10/21 11:52:07 guus Exp $
 */
 
 #include "config.h"
@@ -104,7 +104,7 @@ cp
         }
       else
         {
-          if(debug_lvl > DEBUG_PROTOCOL)
+          if(debug_lvl >= DEBUG_PROTOCOL)
             syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
 		   request_name[request], cl->name, cl->hostname);
 	}
@@ -205,7 +205,7 @@ cp
     {
       if((old = lookup_id(cl->name)))
         {
-          if(debug_lvl > DEBUG_CONNECTIONS)
+          if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list"), cl->name, cl->hostname);
           cl->status.outgoing = 0;
           old->status.outgoing = 1;
@@ -247,9 +247,22 @@ cp
     
   cl->hischallenge = xmalloc(len);
 cp
+  /* Seed the PRNG with urandom (can't afford to block) */
+
+  RAND_load_file("/dev/urandom", 1024);
+
   /* Copy random data to the buffer */
 
   RAND_bytes(cl->hischallenge, len);
+
+  cl->hischallenge[0] &= 0x7F;	/* Somehow if the first byte is more than 0xD0 or something like that, decryption fails... */
+
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+    {
+      bin2hex(cl->hischallenge, buffer, len);
+      buffer[len*2] = '\0';
+      syslog(LOG_DEBUG, _("Generated random challenge (unencrypted): %s"), buffer);
+    }
 
   /* Encrypt the random data */
   
@@ -312,6 +325,13 @@ cp
       syslog(LOG_ERR, _("Error during encryption of challenge for %s (%s)"), cl->name, cl->hostname);
       free(buffer);
       return -1;
+    }
+
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+    {
+      bin2hex(cl->mychallenge, buffer, len);
+      buffer[len*2] = '\0';
+      syslog(LOG_DEBUG, _("Received random challenge (unencrypted): %s"), buffer);
     }
 
   free(buffer);
@@ -385,9 +405,16 @@ cp
   if(memcmp(hishash, myhash, SHA_DIGEST_LENGTH))
     {
       syslog(LOG_ERR, _("Intruder: wrong challenge reply from %s (%s)"), cl->name, cl->hostname);
+      if(debug_lvl >= DEBUG_SCARY_THINGS)
+        {
+          bin2hex(myhash, hishash, SHA_DIGEST_LENGTH);
+          hishash[SHA_DIGEST_LENGTH*2] = '\0';
+          syslog(LOG_DEBUG, _("Expected challenge reply: %s"), hishash);
+        }
       free(hishash);
       return -1;
     }
+
 
   free(hishash);
 
@@ -421,7 +448,7 @@ cp
 
   while((old = lookup_id(cl->name)))
     {
-      if(debug_lvl > DEBUG_CONNECTIONS)
+      if(debug_lvl >= DEBUG_CONNECTIONS)
         syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
         cl->name, old->hostname, cl->hostname);
       old->status.active = 0;
@@ -433,7 +460,7 @@ cp
   cl->allow_request = ALL;
   cl->status.active = 1;
 
-  if(debug_lvl > DEBUG_CONNECTIONS)
+  if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
 
   /* Exchange information about other tinc daemons */
@@ -668,14 +695,14 @@ cp
     {
       if((new->address == old->address) && (new->port == old->port))
         {
-          if(debug_lvl > DEBUG_CONNECTIONS)
+          if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
                    old->name, old->hostname, new->name, new->hostname);
           return 0;
         }
       else
         {
-          if(debug_lvl > DEBUG_CONNECTIONS)
+          if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Removing old entry for %s (%s)"),
                    old->name, old->hostname);
           old->status.active = 0;
@@ -817,7 +844,7 @@ cp
        return -1;
     }
 
-  if(debug_lvl > DEBUG_STATUS)
+  if(debug_lvl >= DEBUG_STATUS)
     {
       syslog(LOG_NOTICE, _("Status message from %s (%s): %s: %s"),
              cl->name, cl->hostname, status_text[statusno], statusstring);
@@ -848,7 +875,7 @@ cp
        return -1;
     }
 
-  if(debug_lvl > DEBUG_ERROR)
+  if(debug_lvl >= DEBUG_ERROR)
     {
       syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
              cl->name, cl->hostname, strerror(errno), errorstring);
