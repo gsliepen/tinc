@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_node.c,v 1.1.4.5 2002/09/04 08:33:08 guus Exp $
+    $Id: protocol_node.c,v 1.1.4.6 2002/09/04 08:48:03 guus Exp $
 */
 
 #include "config.h"
@@ -133,7 +133,7 @@ cp
       if(prevhop == myself)
         {
           syslog(LOG_WARNING, _("Got ADD_NODE %s prevhop %s via %s from %s, sending back a DEL_NODE!"), name, prevhopname, vianame, c->name);
-          send_del_node(c, n);
+          // send_del_node(c, n);
           return 0;
         }
       n->status.reachable = 1;
@@ -146,7 +146,7 @@ cp
           if(prevhop == myself)
             {
               syslog(LOG_WARNING, _("Got ADD_NODE %s prevhop %s via %s from %s!"), name, prevhopname, vianame, c->name);
-              send_del_node(c, n);
+              // send_del_node(c, n);
               return 0;
             }
           node = avl_unlink(node_udp_tree, n);
@@ -223,7 +223,7 @@ cp
 
   /* If we got a DEL_NODE but we know of a different route to it, tell the one who send the DEL_NODE */
 
-  if(n->nexthop != c->node || n->prevhop != prevhop)
+  if(n->nexthop != c->node)
     {
       return send_add_node(c, n);
     }
