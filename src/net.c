@@ -956,19 +956,19 @@ cp
 
   for(;;)
     {
-      p=0;
+      cl->reqlen = 0;
 
       for(i = oldlen; i < cl->buflen; i++)
         {
           if(cl->buffer[i] == '\n')
             {
-              p = i + 1;
-              cl->buffer[p] = 0;  /* add end-of-string so we can use sscanf */
+              cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
+              cl->reqlen = i + 1;
               break;
             }
         }
 
-      if(p)
+      if(cl->reqlen)
         {
           if(sscanf(cl->buffer, "%d", &request) == 1)
             {
@@ -988,8 +988,8 @@ cp
               syslog(LOG_ERR, "Bogus data received: %s", cl->buffer);
             }
 
-          cl->buflen -= p;
-          memmove(cl->buffer, cl->buffer + p, cl->buflen);
+          cl->buflen -= cl->reqlen;
+          memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
           oldlen = 0;
         }
       else

@@ -616,7 +616,9 @@ cp
     syslog(LOG_DEBUG, "Forwarding request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
   
-  if(write(fw->nexthop->meta_socket, cl->buffer, strlen(cl->buffer)) < 0)
+  cl->buffer[cl->reqlen-1] = '\n';
+  
+  if(write(fw->nexthop->meta_socket, cl->buffer, cl->reqlen) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
@@ -711,7 +713,9 @@ cp
     syslog(LOG_DEBUG, "Forwarding public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
 
-  if((write(fw->nexthop->meta_socket, cl->buffer, strlen(cl->buffer))) < 0)
+  cl->buffer[cl->reqlen-1] = '\n';
+
+  if((write(fw->nexthop->meta_socket, cl->buffer, cl->reqlen)) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;

@@ -114,6 +114,7 @@ typedef struct conn_list_t {
   enc_key_t *key;                  /* encrypt with this key */
   char buffer[MAXBUFSIZE];         /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
+  int reqlen;                      /* length of first request in buffer */
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
   struct conn_list_t *next;        /* after all, it's a list of connections */
 } conn_list_t;
