@@ -14,12 +14,12 @@ AC_CACHE_CHECK([for directory with kernel source], tinc_cv_kerneldir,
   AC_MSG_RESULT($kerneldir)
 ])
 AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
-[ AC_TRY_COMPILE([linux/if_tun.h],
+[ AC_TRY_COMPILE([#include <linux/if_tun.h>],
   [int a = IFF_TAP],
   if_tun_h="linux/if_tun.h",
   if_tun_h="no")
   if test $if_tun_h = no; then
-    AC_TRY_COMPILE([$kerneldir/include/linux/if_tun.h],
+    AC_TRY_COMPILE([#include "$kerneldir/include/linux/if_tun.h"],
     [int a = IFF_TAP],
     if_tun_h="$kerneldir/include/linux/if_tun.h",
     if_tun_h="no")
