@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.10 2003/08/02 21:33:19 guus Exp $
+    $Id: device.c,v 1.1.2.11 2003/08/03 21:45:41 guus Exp $
 */
 
 #include "system.h"
@@ -53,6 +53,8 @@ char *device_info = NULL;
 int device_total_in = 0;
 int device_total_out = 0;
 
+extern char *myport;
+
 DWORD WINAPI tapreader(void *bla) {
 	int sock, err, status;
 	struct addrinfo *ai;
@@ -68,7 +70,7 @@ DWORD WINAPI tapreader(void *bla) {
 
 	/* Open a socket to the parent process */
 
-	err = getaddrinfo(NULL, "12345", &hint, &ai);
+	err = getaddrinfo(NULL, myport, &hint, &ai);
 
 	if(err || !ai) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(errno));
@@ -140,7 +142,7 @@ bool setup_device(void)
 		.ai_family = AF_UNSPEC,
 		.ai_socktype = SOCK_DGRAM,
 		.ai_protocol = IPPROTO_UDP,
-		.ai_flags = AI_PASSIVE,
+		.ai_flags = 0,
 	};
 
 	cp();
@@ -234,7 +236,7 @@ bool setup_device(void)
 
 	/* Create a listening socket */
 
-	err = getaddrinfo(NULL, "12345", &hint, &ai);
+	err = getaddrinfo(NULL, myport, &hint, &ai);
 
 	if(err || !ai) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(errno));
