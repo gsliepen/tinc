@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.29 2001/10/28 08:41:19 guus Exp $
+    $Id: conf.h,v 1.6.4.30 2001/11/16 12:14:20 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -53,9 +53,7 @@ extern config_t *lookup_config(avl_tree_t *, char *);
 extern config_t *lookup_config_next(avl_tree_t *, config_t *);
 extern int get_config_bool(config_t *, int *);
 extern int get_config_int(config_t *, int *);
-extern int get_config_port(config_t *, port_t *);
 extern int get_config_string(config_t *, char **);
-extern int get_config_ip(config_t *, struct ip_mask_t **);
 struct subnet_t; /* Needed for next line. */
 extern int get_config_subnet(config_t *, struct subnet_t **);
 
