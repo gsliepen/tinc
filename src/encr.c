@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: encr.c,v 1.12.4.3 2000/08/17 16:51:07 guus Exp $
+    $Id: encr.c,v 1.12.4.4 2000/08/18 11:17:09 guus Exp $
 */
 
 #include "config.h"
@@ -61,8 +61,8 @@ int key_inited = 0, encryption_keylen;
 mpz_t my_private_key, my_public_key, generator, shared_prime;
 int my_key_expiry = (time_t)(-1);
 
-static char* mypassphrase;
-static int mypassphraselen;
+char* mypassphrase;
+int mypassphraselen;
 
 int char_hex_to_bin(int c)
 {
@@ -118,12 +118,14 @@ cp
       syslog(LOG_ERR, _("Illegal passphrase in %s; size would be %d"), filename, size);
       return -1;
     }
-  size >>= 2; /* bits->nibbles */
-  pp = xmalloc(size+2);
-  fgets(pp, size+1, f);
+
+  /* Hmz... hackish... strange +1 and +2 stuff... I really like more comments on those alignment thingies! */
+
+  pp = xmalloc(size/4 + 1);	/* Allocate enough for fgets */
+  fgets(pp, size/4 + 1, f);	/* Read passhrase and reserve one byte for end-of-string */
   fclose(f);
 
-  *out = xmalloc(size);
+  *out = xmalloc(size/8 + 2);	/* Allocate enough bytes, +1 for rounding if bits%8 != 0, +1 for 2-byte alignment */
 cp
   return str_hex_to_bin(*out, pp);
 }
