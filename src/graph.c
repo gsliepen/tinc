@@ -226,7 +226,9 @@ void sssp_bfs(void)
 					free(e->to->hostname);
 
 				e->to->hostname = sockaddr2hostname(&e->to->address);
-				avl_insert_node(node_udp_tree, node);
+
+				if(node)
+					avl_insert_node(node_udp_tree, node);
 
 				if(e->to->options & OPTION_PMTU_DISCOVERY) {
 					e->to->mtuprobes = 0;
