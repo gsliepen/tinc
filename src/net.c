@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.112 2001/06/05 19:39:54 guus Exp $
+    $Id: net.c,v 1.35.4.113 2001/06/05 19:45:47 guus Exp $
 */
 
 #include "config.h"
@@ -179,6 +179,8 @@ cp
   EVP_DecryptFinal(&ctx, outpkt.salt + outlen, &outpad);
   outlen += outpad;
   outpkt.len = outlen - sizeof(outpkt.salt);
+
+  total_socket_in += outlen;
 
   receive_packet(cl, &outpkt);
 cp
