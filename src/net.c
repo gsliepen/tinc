@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.71 2000/11/15 01:06:10 zarq Exp $
+    $Id: net.c,v 1.35.4.72 2000/11/15 01:28:21 zarq Exp $
 */
 
 #include "config.h"
@@ -101,6 +101,7 @@ int execute_script(const char *name)
   char *scriptname;
   pid_t pid;
   char *s;
+  int error;
 
   if((pid = fork()) < 0)
     {
@@ -116,6 +117,8 @@ int execute_script(const char *name)
 
   /* Child here */
 
+  error = 0;
+
   if(netname)
     {
       asprintf(&s, "NETNAME=%s", netname);
@@ -128,18 +131,55 @@ int execute_script(const char *name)
     }
 #endif
 
-  chdir(confbase);	/* This cannot fail since we already read config files from this directory. */
+  if(chdir(confbase) < 0)
+    /* This cannot fail since we already read config files from this
+       directory. - Guus */
+    /* Yes this can fail, somebody could have removed this directory
+       when we didn't pay attention. - Ivo */
+    {
+      if(chdir("/") < 0)
+	/* Now if THIS fails, something wicked is going on. - Ivo */
+	syslog(LOG_ERR, _("Couldn't chdir to `/': %m"));
+
+      /* Continue anyway. */
+    }
   
   asprintf(&scriptname, "%s/%s", confbase, name);
-  execl(scriptname, NULL);
 
+  /* Close all file descriptors */
+  closelog();
+  fcloseall();
+
+  /* Open standard input */
+  if(open("/dev/null", O_RDONLY) < 0)
+    {
+      syslog(LOG_ERR, _("Opening `/dev/null' failed: %m"));
+      error = 1;
+    }
+
+  if(!error)
+    {
+      /* Standard output directly goes to syslog */
+      openlog(name, LOG_CONS | LOG_PID, LOG_DAEMON);
+      /* Standard error as well */
+      if(dup2(1, 2) < 0)
+	{
+	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
+		 "dup2");
+	  error = 1;
+	}
+    }
+  
+  if(error && debug_lvl > 1)
+    syslog(LOG_INFO, _("This means that any output the script generates will not be shown in syslog."));
+  
+  execl(scriptname, NULL);
   /* No return on success */
   
   if(errno != ENOENT)  /* Ignore if the file does not exist */
     syslog(LOG_WARNING, _("Error executing `%s': %m"), scriptname);
 
   /* No need to free things */
-
   exit(0);
 }
 
