@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.26 2002/03/26 13:19:56 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.27 2002/03/27 15:26:29 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.26 2002/03/26 13:19:56 guus Exp $
+$Id: tinc.texi,v 1.8.4.27 2002/03/27 15:26:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.26 2002/03/26 13:19:56 guus Exp $
+$Id: tinc.texi,v 1.8.4.27 2002/03/27 15:26:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -961,6 +961,7 @@ Multiple subnet lines can be specified for each daemon.
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
 or they can be a IPv4 or IPv6 network address with a masklength.
+Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
 Note that subnets like 192.168.1.1/24 are invalid!
@@ -979,8 +980,7 @@ example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
-firewall, or if UDP packet routing is disabled somehow. This is
-experimental code, try this at your own risk. It may not work at all.
+firewall, or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
 @end table
 
