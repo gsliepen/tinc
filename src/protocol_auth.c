@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.17 2002/09/09 22:32:59 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.18 2003/01/12 17:02:23 guus Exp $
 */
 
 #include "config.h"
@@ -548,6 +548,8 @@ int ack_h(connection_t *c)
 				syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"),
 					   n->name, n->hostname);
 			terminate_connection(n->connection, 0);
+			/* Run graph algorithm to purge key and make sure up/down scripts are rerun with new IP addresses and stuff */
+			graph();
 		}
 	}
 
