@@ -50,6 +50,9 @@ libgmp=none
 AC_CHECK_LIB(gmp2, mpz_powm, [
   libgmp=gmp2
 ])
+AC_CHECK_LIB(gmp3, mpz_powm, [
+  libgmp=gmp3
+])
 AC_CHECK_LIB(gmp, mpz_powm, [
   libgmp=gmp
 ])
