@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.125 2001/07/21 15:46:34 guus Exp $
+    $Id: net.c,v 1.35.4.126 2001/07/21 20:21:25 guus Exp $
 */
 
 #include "config.h"
@@ -63,6 +63,12 @@
  #else
   #include <net/if_tun.h>
  #endif
+#endif
+
+#ifdef HAVE_SOLARIS
+ #include <sys/sockio.h>
+ #include <sys/stropts.h>
+ #include <net/if_tun.h>
 #endif
 
 #include <utils.h>
@@ -196,6 +202,12 @@ cp
     syslog(LOG_DEBUG, _("Writing packet of %d bytes to tap device"),
            packet->len);
 
+#ifdef HAVE_SOLARIS
+  if(write(tap_fd, packet->data + 14, packet->len - 14) < 0)
+    syslog(LOG_ERR, _("Can't write to tun device: %m"));
+  else
+    total_tap_out += packet->len;
+#else
   if(taptype == TAP_TYPE_TUNTAP)
     {
       if(write(tap_fd, packet->data, packet->len) < 0)
@@ -210,6 +222,7 @@ cp
       else
         total_tap_out += packet->len;
     }
+#endif
 cp
 }
 
@@ -302,6 +315,11 @@ int setup_tap_fd(void)
   struct ifreq ifr;
 # endif
 #endif
+#ifdef HAVE_SOLARIS
+  int ip_fd = -1, if_fd = -1;
+  int ppa;
+  char *ptr;
+#endif
 
 cp
   if((cfg = get_config_val(config, config_tapdevice)))
@@ -331,8 +349,6 @@ cp
 cp
   tap_fd = nfd;
 
-  taptype = TAP_TYPE_ETHERTAP;
-
   /* Set default MAC address for ethertap devices */
 
   mymac.type = SUBNET_MAC;
@@ -344,6 +360,7 @@ cp
   mymac.net.mac.address.x[5] = 0x00;
 
 #ifdef HAVE_LINUX
+  taptype = TAP_TYPE_ETHERTAP;
  #ifdef HAVE_TUNTAP
   /* Ok now check if this is an old ethertap or a new tun/tap thingie */
   memset(&ifr, 0, sizeof(ifr));
@@ -358,9 +375,49 @@ cp
     taptype = TAP_TYPE_TUNTAP;
   }
  #endif
-#else
+#endif
+#ifdef HAVE_FREEBSD
  taptype = TAP_TYPE_TUNTAP;
 #endif
+#ifdef HAVE_SOLARIS
+  ppa = 0;
+
+  ptr = tapfname;
+  while(*ptr && !isdigit((int)*ptr)) ptr++;
+  ppa = atoi(ptr);
+
+  if( (ip_fd = open("/dev/ip", O_RDWR, 0)) < 0){
+     syslog(LOG_ERR, _("Could not open /dev/ip: %m"));
+     return -1;
+  }
+
+  /* Assign a new PPA and get its unit number. */
+  if( (ppa = ioctl(nfd, TUNNEWPPA, ppa)) < 0){
+     syslog(LOG_ERR, _("Can't assign new interface: %m"));
+     return -1;
+  }
+
+  if( (if_fd = open(tapfname, O_RDWR, 0)) < 0){
+     syslog(LOG_ERR, _("Could not open %s twice: %m"), tapfname);
+     return -1;
+  }
+
+  if(ioctl(if_fd, I_PUSH, "ip") < 0){
+     syslog(LOG_ERR, _("Can't push IP module: %m"));
+     return -1;
+  }
+
+  /* Assign ppa according to the unit number returned by tun device */
+  if(ioctl(if_fd, IF_UNITSEL, (char *)&ppa) < 0){
+     syslog(LOG_ERR, _("Can't set PPA %d: %m"), ppa);
+     return -1;
+  }
+  if(ioctl(ip_fd, I_LINK, if_fd) < 0){
+     syslog(LOG_ERR, _("Can't link TUN device to IP: %m"));
+     return -1;
+  }
+#endif
+
 cp
   return 0;
 }
@@ -1324,6 +1381,18 @@ void handle_tap_input(void)
   vpn_packet_t vp;
   int lenin;
 cp
+#ifdef HAVE_SOLARIS
+  if((lenin = read(tap_fd, vp.data + 14, MTU)) <= 0)
+    {
+      syslog(LOG_ERR, _("Error while reading from tun device: %m"));
+      return;
+    }
+  memcpy(vp.data, mymac.net.mac.address.x, 6);
+  memcpy(vp.data + 6, mymac.net.mac.address.x, 6);
+  vp.data[12] = 0x08;
+  vp.data[13] = 0x00;
+  vp.len = lenin + 14;
+#else
   if(taptype == TAP_TYPE_TUNTAP)
     {
       if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
@@ -1342,6 +1411,7 @@ cp
         }
       vp.len = lenin - 2;
     }
+#endif
 
   total_tap_in += vp.len;
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.17 2001/07/20 20:25:10 guus Exp $
+    $Id: route.c,v 1.1.2.18 2001/07/21 20:21:25 guus Exp $
 */
 
 #include "config.h"
@@ -28,7 +28,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #ifdef HAVE_SOLARIS
- #include <netinet/if.h>
+ #include <net/if.h>
  #define ETHER_ADDR_LEN 6
 #else
  #include <net/ethernet.h>
@@ -107,10 +107,15 @@ connection_t *route_ipv4(vpn_packet_t *packet)
   ipv4_t dest;
   subnet_t *subnet;
 cp
+#ifdef HAVE_SOLARIS
+  /* The other form gives bus errors on a SparcStation 20. */
+  dest = ((packet->data[30] * 0x100 + packet->data[31]) * 0x100 + packet->data[32]) * 0x100 + packet->data[33];
+#else
   dest = ntohl(*((unsigned long*)(&packet->data[30])));
-  
+#endif
+cp  
   subnet = lookup_subnet_ipv4(&dest);
-
+cp
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
