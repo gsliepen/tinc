@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.67 2000/11/04 22:57:30 guus Exp $
+    $Id: net.c,v 1.35.4.68 2000/11/07 21:43:28 guus Exp $
 */
 
 #include "config.h"
@@ -74,7 +74,6 @@ int keylifetime = 0;
 int keyexpires = 0;
 
 char *unknown = NULL;
-char *interface_name = NULL;  /* Contains the name of the interface */
 
 subnet_t mymac;
 
@@ -82,7 +81,7 @@ subnet_t mymac;
   Execute the given script.
   This function doesn't really belong here.
 */
-int execute_script(const char* name)
+int execute_script(const char *name)
 {
   char *scriptname;
   pid_t pid;
@@ -102,35 +101,28 @@ int execute_script(const char* name)
 
   /* Child here */
 
-  asprintf(&scriptname, "%s/%s", confbase, name);
-  asprintf(&s, "IFNAME=%s", interface_name);
-  putenv(s);
-  free(s);
-
   if(netname)
     {
       asprintf(&s, "NETNAME=%s", netname);
-      putenv(s);
-      free(s);
+      putenv(s);	/* Don't free s! see man 3 putenv */
     }
   else
     {
       unsetenv("NETNAME");
     }
 
-  if(chdir(confbase) < 0)
-    {
-      syslog(LOG_ERR, _("Couldn't chdir to `%s': %m"),
-	     confbase);
-    }
+  chdir(confbase);	/* This cannot fail since we already read config files from this directory. */
   
+  asprintf(&scriptname, "%s/%s", confbase, name);
   execl(scriptname, NULL);
+
   /* No return on success */
   
   if(errno != ENOENT)  /* Ignore if the file does not exist */
     syslog(LOG_WARNING, _("Error executing `%s': %m"), scriptname);
 
   /* No need to free things */
+
   exit(0);
 }
 
@@ -463,18 +455,11 @@ cp
     strncpy(ifr.ifr_name, netname, IFNAMSIZ);
 cp
   if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
-  { 
+  {
     syslog(LOG_INFO, _("%s is a new style tun/tap device"), tapfname);
     taptype = TAP_TYPE_TUNTAP;
   }
 #endif
-
-  /* Add name of network interface to environment (for scripts) */
-
-  ioctl(tap_fd, SIOCGIFNAME, (void *) &ifr);
-  interface_name = xmalloc(strlen(ifr.ifr_name));
-  strcpy(interface_name, ifr.ifr_name);
-  
 cp
   return 0;
 }
