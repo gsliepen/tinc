@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.77 2001/02/06 10:12:51 guus Exp $
+    $Id: protocol.c,v 1.28.4.78 2001/02/06 10:42:27 guus Exp $
 */
 
 #include "config.h"
@@ -1053,10 +1053,10 @@ cp
 
 int error_h(connection_t *cl)
 {
-  int errno;
+  int err;
   char errorstring[MAX_STRING_SIZE];
 cp
-  if(sscanf(cl->buffer, "%*d %d "MAX_STRING, &errno, errorstring) != 2)
+  if(sscanf(cl->buffer, "%*d %d "MAX_STRING, &err, errorstring) != 2)
     {
        syslog(LOG_ERR, _("Got bad ERROR from %s (%s)"),
               cl->name, cl->hostname);
@@ -1066,7 +1066,7 @@ cp
   if(debug_lvl >= DEBUG_ERROR)
     {
       syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"),
-             cl->name, cl->hostname, strerror(errno), errorstring);
+             cl->name, cl->hostname, strerror(err), errorstring);
     }
 
   terminate_connection(cl);
