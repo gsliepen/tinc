@@ -123,7 +123,6 @@ void node_add(node_t *n)
 	cp();
 
 	avl_insert(node_tree, n);
-	avl_insert(node_udp_tree, n);
 }
 
 void node_del(node_t *n)
@@ -147,7 +146,6 @@ void node_del(node_t *n)
 	}
 
 	avl_delete(node_tree, n);
-	avl_delete(node_udp_tree, n);
 }
 
 node_t *lookup_node(char *name)

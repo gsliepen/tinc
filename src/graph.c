@@ -258,9 +258,11 @@ void sssp_bfs(void)
 			if(n->status.reachable) {
 				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
 					   n->name, n->hostname);
+				avl_insert(node_udp_tree, n);
 			} else {
 				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
 					   n->name, n->hostname);
+				avl_delete(node_udp_tree, n);
 			}
 
 			n->status.validkey = false;
