@@ -9,6 +9,7 @@ Goals for 1.0 release:
 * Use efficient tree algorithms instead of linked lists (done)
 * Reenable queues for delayed packets (done)
 * Merge documentation files (SECURITY, INSTALL, PROTOCOL) into tinc.texi
+* Different authentication scheme (done)
 
 
 Goals for future releases:
@@ -19,5 +20,5 @@ Goals for future releases:
 * Windowing, chaffing, scattering, background noise
 * ABC protocol (superscalabilty)
 * Proxy ARP
-* Eazy setup scripts (graphical?)
+* Easy setup scripts (graphical?)
 * Threading
