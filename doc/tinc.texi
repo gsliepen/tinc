@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.7 2000/11/09 21:29:58 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.8 2000/11/24 14:13:51 zarq Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998,199,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.7 2000/11/09 21:29:58 zarq Exp $
+$Id: tinc.texi,v 1.8.4.8 2000/11/24 14:13:51 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.7 2000/11/09 21:29:58 zarq Exp $
+$Id: tinc.texi,v 1.8.4.8 2000/11/24 14:13:51 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -179,6 +179,10 @@ support for other operating systems is added to this driver, perhaps
 tinc will run on them as well.  Without this driver, tinc will most
 likely compile and run, but it will not be able to send or receive data
 packets.
+
+For a more up to date list, please check the list on our website:
+@uref{http://tinc.nl.linux.org/platforms.html}.
+
 
 @c ==================================================================
 @subsection Linux
@@ -385,6 +389,18 @@ from @url{http://www.openssl.org/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
+
+If you installed the OpenSSL libraries from source, it may be necessary
+to let configure know where they are, by passing configure one of the
+--with-openssl-* parameters.
+
+@example
+--with-openssl=DIR      OpenSSL library and headers prefix
+--with-openssl-include=DIR OpenSSL headers directory
+                        (Default is OPENSSL_DIR/include)
+--with-openssl-lib=DIR  OpenSSL library directory
+                        (Default is OPENSSL_DIR/lib)
+@end example
 
 
 @c
