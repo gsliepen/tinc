@@ -3,10 +3,16 @@ Section: non-US/main
 Priority: optional
 Maintainer: Ivo Timmermans <itimmermans@bigfoot.com>
 Standards-Version: 3.0.1
-Depends: libc6, libgmp2
+Build-Depends: libc6-dev, libgmp2-dev
 
 Package: tinc
 Architecture: i386
-Depends: ${shlibs:Depends}, libgmp2-dev
+Depends: ${shlibs:Depends}, libgmp2
 Description: Virtual Private Network daemon
- blablabla
+ tinc is a daemon with which you can create a virtual private network
+ (VPN).  One daemon can handle multiple connections, so you can
+ create an entire (moderately sized) VPN with only one daemon per
+ participating computer.
+ .
+ You need to have two kernel modules installed, the manual will
+ explain you how to do that.
