@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.19 2001/06/01 08:02:09 guus Exp $
+    $Id: subnet.c,v 1.1.2.20 2001/06/05 16:09:55 guus Exp $
 */
 
 #include "config.h"
@@ -244,7 +244,7 @@ cp
                    subnet->net.ipv6.mask.x[7]);
         break;
       default:
-        asprintf(&netstr, _("unknown"));
+        asprintf(&netstr, _("unknown subnet type"));
     }
 cp
   return netstr;

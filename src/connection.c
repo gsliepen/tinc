@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.10 2001/03/04 13:59:25 guus Exp $
+    $Id: connection.c,v 1.1.2.11 2001/06/05 16:09:55 guus Exp $
 */
 
 #include "config.h"
@@ -88,7 +88,7 @@ void free_connection(connection_t *p)
 cp
   if(p->queue)
     list_delete_list(p->queue);
-  if(p->name && p->name!=unknown)
+  if(p->name)
     free(p->name);
   if(p->hostname)
     free(p->hostname);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.10 2001/06/04 11:14:35 guus Exp $
+    $Id: route.c,v 1.1.2.11 2001/06/05 16:09:55 guus Exp $
 */
 
 #include "config.h"
@@ -79,28 +79,16 @@ connection_t *route_mac(connection_t *source, vpn_packet_t *packet)
 cp
   /* Learn source address */
 
-  learn_mac(source, (mac_t *)(&packet->data[0]));
+  learn_mac(source, (mac_t *)(&packet->data[6]));
   
   /* Lookup destination address */
     
-  subnet = lookup_subnet_mac((mac_t *)(&packet->data[6]));
+  subnet = lookup_subnet_mac((mac_t *)(&packet->data[0]));
 
-  if(!subnet)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-        {
-          syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %x:%x:%x:%x:%x:%x"),
-                 packet->data[6],
-                 packet->data[7],
-                 packet->data[8],
-                 packet->data[9],
-                 packet->data[10],
-                 packet->data[11]);
-        } 
-      return NULL;
-    }
-cp  
-  return subnet->owner;  
+  if(subnet)
+    return subnet->owner;
+  else
+    return NULL;
 }
 
 connection_t *route_ipv4(vpn_packet_t *packet)
@@ -205,7 +193,6 @@ cp
 void route_outgoing(vpn_packet_t *packet)
 {
   unsigned short int type;
-  avl_node_t *node;
   connection_t *cl;
 cp
   /* FIXME: multicast? */
@@ -240,15 +227,12 @@ cp
         cl = route_mac(myself, packet);
         if(cl)
           send_packet(cl, packet);
+        else
+          broadcast_packet(myself, packet);
         break;
         
       case RMODE_HUB:
-        for(node = connection_tree->head; node; node = node->next)
-          {
-            cl = (connection_t *)node->data;
-            if(cl->status.active)
-              send_packet(cl, packet);
-          }
+        broadcast_packet(myself, packet);
         break;
     }
 }
@@ -258,10 +242,16 @@ void route_incoming(connection_t *source, vpn_packet_t *packet)
   switch(routing_mode)
     {
       case RMODE_ROUTER:
-        memcpy(packet->data, mymac.net.mac.address.x, 6);
+        memcpy(packet->data, mymac.net.mac.address.x, 6);	/* Override destination address to make the kernel accept it */
         break;
       case RMODE_SWITCH:
-        learn_mac(source, (mac_t *)(&packet->data[0]));
+        if((packet->data[0] & packet->data[1]) == 0xFF)		/* Broadcast? */
+          broadcast_packet(source, packet);			/* If yes, spread it on */
+        else
+          learn_mac(source, (mac_t *)(&packet->data[6]));
+        break;
+      case RMODE_HUB:
+        broadcast_packet(source,packet);			/* Spread it on */
         break;
     }
   

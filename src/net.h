@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.31 2001/05/25 11:54:28 guus Exp $
+    $Id: net.h,v 1.9.4.32 2001/06/05 16:09:55 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -98,8 +98,6 @@ extern int total_tap_out;
 extern int total_socket_in;
 extern int total_socket_out;
 
-extern char *unknown;
-
 extern char *request_name[256];
 extern char *status_text[10];
 
@@ -111,6 +109,7 @@ extern void send_packet(connection_t *, vpn_packet_t *);
 extern void receive_packet(connection_t *, vpn_packet_t *);
 extern void receive_tcppacket(connection_t *, char *, int);
 extern void accept_packet(vpn_packet_t *);
+extern void broadcast_packet(connection_t *, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);

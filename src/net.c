@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.110 2001/05/28 08:56:57 guus Exp $
+    $Id: net.c,v 1.35.4.111 2001/06/05 16:09:55 guus Exp $
 */
 
 #include "config.h"
@@ -103,8 +103,6 @@ static int seconds_till_retry;
 
 int keylifetime = 0;
 int keyexpires = 0;
-
-char *unknown = NULL;
 
 void send_udppacket(connection_t *cl, vpn_packet_t *inpkt)
 {
@@ -259,6 +257,26 @@ cp
     }
   else
     send_udppacket(cl, packet);
+}
+
+/* Broadcast a packet to all active connections */
+
+void broadcast_packet(connection_t *from, vpn_packet_t *packet)
+{
+  avl_node_t *node;
+  connection_t *cl;
+cp
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
+	   packet->len, from->name, from->hostname);
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      cl = (connection_t *)node->data;
+      if(cl->status.meta && cl != from)
+        send_packet(cl, packet);
+    }
+cp
 }
 
 void flush_queue(connection_t *cl)
@@ -731,7 +749,7 @@ int setup_myself(void)
 cp
   myself = new_connection();
 
-  asprintf(&myself->hostname, "MYSELF");
+  asprintf(&myself->hostname, _("MYSELF"));
   myself->options = 0;
   myself->protocol_version = PROT_CURRENT;
 
@@ -1011,7 +1029,7 @@ cp
       return NULL;
     }
 
-  p->name = unknown;
+  asprintf(&p->name, _("UNKNOWN"));
   p->address = ntohl(ci.sin_addr.s_addr);
   p->hostname = hostlookup(ci.sin_addr.s_addr);
   p->port = htons(ci.sin_port);				/* This one will be overwritten later */

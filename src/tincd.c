@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.46 2001/05/28 08:56:57 guus Exp $
+    $Id: tincd.c,v 1.10.4.47 2001/06/05 16:09:55 guus Exp $
 */
 
 #include "config.h"
@@ -304,10 +304,6 @@ main(int argc, char **argv, char **envp)
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
-
-  /* Do some intl stuff right now */
-  
-  unknown = _("unknown");
 
   environment = envp;
   parse_options(argc, argv, envp);
