@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.57 2000/11/02 22:05:35 zarq Exp $
+    $Id: net.c,v 1.35.4.58 2000/11/03 22:33:16 zarq Exp $
 */
 
 #include "config.h"
@@ -51,11 +51,11 @@
 #include <xalloc.h>
 
 #include "conf.h"
+#include "connlist.h"
+#include "meta.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
-#include "meta.h"
-#include "connlist.h"
 #include "subnet.h"
 
 #include "system.h"
@@ -74,6 +74,7 @@ int keylifetime = 0;
 int keyexpires = 0;
 
 char *unknown = NULL;
+char *interface_name = NULL;  /* Contains the name of the interface */
 
 subnet_t mymac;
 
@@ -101,6 +102,47 @@ cp
   *((ip_t*)(&p->data[2])) = (ip_t)(htonl(myself->address));
   *((ip_t*)(&p->data[8])) = *((ip_t*)(&p->data[26]));
 cp
+}
+
+/*
+  Execute the given script.
+  This function doesn't really belong here.
+*/
+int execute_script(const char* name)
+{
+  char *scriptname;
+  pid_t pid;
+  char **env;
+  extern char **environment;  /* From tincd.c; contains our env */
+
+  asprintf(&scriptname, "%s/%s", confbase, name);
+
+  if((pid = fork()) < 0)
+    {
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fork");
+      return -1;
+    }
+
+  if(pid)
+    {
+      free(scriptname);
+      return 0;
+    }
+
+  /* Child here */
+
+  env = xmalloc(sizeof(environment) + 1 * sizeof(char*));
+  memcpy(&(env[1]), environment, sizeof(environment));
+  asprintf(&(env[0]), "IFNAME=%s", interface_name);
+  execle(scriptname, NULL, env);
+  /* No return on success */
+  
+  if(errno != ENOENT)  /* Ignore if the file does not exist */
+    syslog(LOG_WARNING, _("Error executing `%s': %m"), scriptname);
+
+  /* No need to free things */
+  exit(0);
 }
 
 int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
@@ -380,7 +422,6 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
-  char *envvar;
   struct ifreq ifr;
 
 cp  
@@ -430,9 +471,8 @@ cp
   /* Add name of network interface to environment (for scripts) */
 
   ioctl(tap_fd, SIOCGIFNAME, (void *) &ifr);
-  asprintf(&envvar, "IFNAME=%s", ifr.ifr_name);
-  putenv(envvar);
-  free(envvar);
+  interface_name = xmalloc(strlen(ifr.ifr_name));
+  strcpy(interface_name, ifr.ifr_name);
   
 cp
   return 0;
@@ -619,7 +659,7 @@ int setup_outgoing_connection(char *name)
 {
   conn_list_t *ncn;
   struct hostent *h;
-  config_t *cfg;
+  config_t const *cfg;
 cp
   if(check_id(name))
     {
@@ -847,7 +887,6 @@ cp
 int setup_network_connections(void)
 {
   config_t const *cfg;
-  char *scriptname;
 cp
   if((cfg = get_config_val(config, pingtimeout)) == NULL)
     timeout = 5;
@@ -861,21 +900,8 @@ cp
     return -1;
 
   /* Run tinc-up script to further initialize the tap interface */
-
-  asprintf(&scriptname, "%s/tinc-up", confbase);
-
-  if(!fork())
-    {
-      execl(scriptname, NULL);
-
-      if(errno != ENOENT)
-        syslog(LOG_WARNING, _("Error while executing %s: %m"), scriptname);
-
-      exit(0);
-    }
-
-  free(scriptname);
-
+  execute_script("tinc-up");
+  
   if(!(cfg = get_config_val(config, connectto)))
     /* No upstream IP given, we're listen only. */
     return 0;
@@ -921,20 +947,7 @@ cp
       }
 
   /* Execute tinc-down script right before shutting down the interface */
-
-  asprintf(&scriptname, "%s/tinc-down", confbase);
-
-  if(!fork())
-    {
-      execl(scriptname, NULL);
-
-      if(errno != ENOENT)
-        syslog(LOG_WARNING, _("Error while executing %s: %m"), scriptname);
-
-      exit(0);
-    }
-      
-  free(scriptname);
+  execute_script("tinc-down");
 
   close(tap_fd);
   destroy_conn_list();
