@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.5 2000/06/29 13:04:15 guus Exp $
+    $Id: net.h,v 1.9.4.6 2000/07/01 07:49:21 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -82,7 +82,7 @@ typedef struct status_bits_t {
   int validkey:1;                  /* 1 if we currently have a valid key for him */
   int waitingforkey:1;             /* 1 if we already sent out a request */
   int dataopen:1;                  /* 1 if we have a valid UDP connection open */
-  int unused:22;
+  int unused:21;
 } status_bits_t;
 
 typedef struct queue_element_t {
