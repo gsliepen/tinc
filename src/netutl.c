@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.11 2000/05/30 11:18:12 zarq Exp $
+    $Id: netutl.c,v 1.12 2000/05/31 18:23:06 zarq Exp $
 */
 
 #include "config.h"
@@ -51,7 +51,7 @@ conn_list_t *lookup_conn(ip_t ip)
 cp
   /* Exact match suggested by James B. MacLean */
   for(p = conn_list; p != NULL; p = p->next)
-    if((ip  == p->vpn_ip) && p->status.active)
+    if((ip == p->vpn_ip) && p->status.active)
       return p;
   for(p = conn_list; p != NULL; p = p->next)
     if(((ip & p->vpn_mask) == (p->vpn_ip & p->vpn_mask)) && p->status.active)

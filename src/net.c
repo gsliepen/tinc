@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.34 2000/05/30 12:38:15 zarq Exp $
+    $Id: net.c,v 1.35 2000/05/31 18:23:05 zarq Exp $
 */
 
 #include "config.h"
@@ -848,24 +848,21 @@ cp
   /* Find all connections that were lost because they were behind cl
      (the connection that was dropped). */
   for(p = conn_list; p != NULL; p = p->next)
-    {
-      if(p->nexthop == cl)
-	{
-	  p->status.active = 0;
-	  p->status.remove = 1;
-	}
-    }
+    if(p->nexthop == cl)
+      {
+	p->status.active = 0;
+	p->status.remove = 1;
+      }
 
 cp 
   /* Then send a notification about all these connections to all hosts
      that are still connected to us. */
   for(p = conn_list; p != NULL; p = p->next)
-    {
-      if(!p->status.remove && p->status.meta)
-	for(q = conn_list; q != NULL; q = q->next)
-	  if(q->status.remove)
-	    send_del_host(p, q);
-    }
+    if(!p->status.remove && p->status.meta)
+      for(q = conn_list; q != NULL; q = q->next)
+	if(q->status.remove)
+	  send_del_host(p, q);
+
 cp
 }
 

@@ -1,6 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
+                            2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,29 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
 
-/*
- * $Log: tincd.c,v $
- * Revision 1.9  2000/05/29 21:01:26  zarq
- * Internationalization of tinc.
- *
- * Revision 1.8  2000/05/14 12:22:42  guus
- * Cleanups.
- *
- * Revision 1.7  2000/04/27 13:47:51  zarq
- * Default config file name is tinc.conf, and pidfile is tinc.pid.
- *
- * Revision 1.6  2000/04/18 16:04:10  zarq
- * Address for bugreports changed to tinc@nl.linux.org.
- *
- * Revision 1.5  2000/04/17 16:23:29  zarq
- * Pass the requested size from xmalloc() and xrealloc() on to xalloc_fail_func()
- *
- * Revision 1.4  2000/04/06 18:28:29  zarq
- * New option -D, don't detach.
- *
- */
+    $Id: tincd.c,v 1.10 2000/05/31 18:23:06 zarq Exp $
+*/
 
 #include "config.h"
 
