@@ -75,3 +75,6 @@
 
 /* Define to enable use of old SSLeay_add_all_algorithms() function */
 #undef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
+
+/* Define if there a socklen_t */
+#undef HAVE_SOCKLEN_T

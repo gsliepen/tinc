@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.43 2002/03/22 11:43:46 guus Exp $
+dnl $Id: configure.in,v 1.13.2.44 2002/04/19 14:06:40 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -42,6 +42,10 @@ case $host_os in
     AC_DEFINE(HAVE_FREEBSD)
     [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
   ;;
+  *darwin*)
+    AC_DEFINE(HAVE_FREEBSD)
+    [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
+  ;;
   *solaris*)
     AC_DEFINE(HAVE_SOLARIS)
     [ rm -f src/device.c; ln -sf solaris/device.c src/device.c ]
@@ -53,6 +57,9 @@ case $host_os in
   *netbsd*)
     AC_DEFINE(HAVE_NETBSD)
     [ rm -f src/device.c; ln -sf netbsd/device.c src/device.c ]
+  ;;
+  *)
+    AC_MSG_ERROR("Unknown operating system.")
   ;;
 esac
 
@@ -72,6 +79,18 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
+AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
+[
+  AC_TRY_COMPILE(
+  [#include <sys/socket.h>],
+  [socklen_t len = 42; return len;],
+  ac_cv_type_socklen_t=yes,
+  ac_cv_type_socklen_t=no)
+])
+if test $ac_cv_type_socklen_t == yes; then
+  AC_DEFINE(HAVE_SOCKLEN_T)
+fi
+
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
@@ -82,7 +101,6 @@ jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
 AM_GNU_GETTEXT
-
 
 dnl Support for SunOS
 
