@@ -4,7 +4,7 @@
 
 DIE=0
 
-alias make=${MAKE:-make}
+alias make=${MAKE:-`which gmake || which make`}
 
 srcdir="`/bin/pwd`"
 
