@@ -1,6 +1,7 @@
 /*
-    genauth.c -- generate a random passphrase
+    genauth.c -- generate public/private keypairs
     Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+                            2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: genauth.c,v 1.7 2000/05/31 18:21:27 zarq Exp $
+    $Id: genauth.c,v 1.7.4.1 2000/10/11 12:07:27 guus Exp $
 */
 
 #include "config.h"
@@ -24,20 +25,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <openssl/rsa.h>
 
 #include <xalloc.h>
 
-#include "encr.h"
-
 #include "system.h"
 
-unsigned char initvec[] = { 0x22, 0x7b, 0xad, 0x55, 0x41, 0xf4, 0x3e, 0xf3 };
+#define RSA_PUBLIC_EXPONENT 65535
+
+void indicator(int a, int b, void *p)
+{
+  switch(a)
+  {
+    case 0:
+      fprintf(stderr, ".");
+      break;
+    case 1:
+      fprintf(stderr, "+");
+      break;
+    case 2:
+      fprintf(stderr, "-");
+      break;
+    case 3:
+      switch(b)
+        {
+          case 0:
+            fprintf(stderr, " p\n");      
+            break;
+          case 1:
+            fprintf(stderr, " q\n");
+            break;
+          default:
+            fprintf(stderr, "?");
+         }
+       break;
+    default:
+      fprintf(stderr, "?");
+  }
+}
 
 int main(int argc, char **argv)
 {
-  FILE *fp;
-  int bits, c, i, bytes;
-  unsigned char *p;
+  int bits;
+  RSA *key;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -51,54 +81,24 @@ int main(int argc, char **argv)
 
   if(!argv[1])
     argv[1] = "1024";
-  
-  if(!(bits = atol(argv[1])))
+    
+  bits = atol(argv[1]);
+
+  if(bits<32)
     {
       fprintf(stderr, _("Illegal number: %s\n"), argv[1]);
       return 1;
     }
+    
+  bits = ((bits - 1) | 7) + 1;		/* Align to bytes for easy mallocing and reading */
 
-  bits = ((bits - 1) | 63) + 1;
-  fprintf(stderr, _("Generating %d bits number"), bits);
-  bytes = bits >> 3;
+  fprintf(stderr, _("Generating %d bits keys:\n"), bits);
 
-  if((fp = fopen("/dev/urandom", "r")) == NULL)
-    {
-      perror(_("Opening /dev/urandom"));
-      return 1;
-    }
+  key = RSA_generate_key(bits, RSA_PUBLIC_EXPONENT, indicator, NULL); 
 
-  p = xmalloc(bytes);
+  fprintf(stderr, _("Done.\n"));
 
-  setbuf(stdout, NULL);
-  for(i = 0; i < bytes; i++)
-    {
-      c = fgetc(fp);
-      if(feof(fp))
-        {
-          puts("");
-          fprintf(stderr, _("File was empty!\n"));
-        }
-      p[i] = c;
-    }
-  fclose(fp);
-
-  if(isatty(1))
-    {
-      fprintf(stderr, _(": done.\nThe following line should be ENTIRELY copied into a passphrase file:\n"));
-      printf("%d ", bits);
-      for(i = 0; i < bytes; i++)
-	printf("%02x", p[i]);
-      puts("");
-    }
-  else
-    {
-      printf("%d ", bits);
-      for(i = 0; i < bytes; i++)
-	printf("%02x", p[i]);
-      puts("");
-      fprintf(stderr, _(": done.\n"));
-    }
+  printf("Public key:\t%s\nPrivate key:\t%s\n", BN_bn2hex(key->n), BN_bn2hex(key->d));
 
   return 0;
 }
