@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.24 2001/08/28 20:52:39 guus Exp $
+    $Id: subnet.c,v 1.1.2.25 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -28,7 +28,7 @@
 
 #include "conf.h"
 #include "net.h"
-#include "connection.h"
+#include "node.h"
 #include "subnet.h"
 #include "system.h"
 
@@ -51,8 +51,14 @@ cp
 
 int subnet_compare_mac(subnet_t *a, subnet_t *b)
 {
+  int result;
 cp
-  return memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
+  result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
+  
+  if(result)
+    return result;
+
+  return strcmp(a->owner->name, b->owner->name);
 }
 
 int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
@@ -60,43 +66,36 @@ int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 cp
   /* We compare as if a subnet is a number that equals (address << 32 + netmask). */
    
-  if(a->net.ipv4.address == b->net.ipv4.address)
-  {
-    if(a->net.ipv4.mask < b->net.ipv4.mask)
-      return -1;
-    else if(a->net.ipv4.mask > b->net.ipv4.mask)
-      return 1;
-    else
-      return 0;
-  }
-  else
-  {
-    if(a->net.ipv4.address < b->net.ipv4.address)
-      return -1;
-    else if(a->net.ipv4.address > b->net.ipv4.address)
-      return 1;
-    else
-      return 0;
-  }
+  if(a->net.ipv4.address < b->net.ipv4.address)
+    return -1;
+  else if(a->net.ipv4.address > b->net.ipv4.address)
+    return 1;
+
+  if(a->net.ipv4.mask < b->net.ipv4.mask)
+    return -1;
+  else if(a->net.ipv4.mask > b->net.ipv4.mask)
+    return 1;
+
+  return strcmp(a->owner->name, b->owner->name);
 }
 
 int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 {
+  int result;
 cp
   /* Same as ipv4 case, but with nasty 128 bit addresses */
   
-  if(memcmp(&a->net.ipv6.mask, &b->net.ipv6.mask, sizeof(ipv6_t)) > 0)
-    if((a->net.ipv6.address.x[0] & b->net.ipv6.mask.x[0]) == b->net.ipv6.address.x[0] &&
-       (a->net.ipv6.address.x[1] & b->net.ipv6.mask.x[1]) == b->net.ipv6.address.x[1] &&
-       (a->net.ipv6.address.x[2] & b->net.ipv6.mask.x[2]) == b->net.ipv6.address.x[2] &&
-       (a->net.ipv6.address.x[3] & b->net.ipv6.mask.x[3]) == b->net.ipv6.address.x[3] &&
-       (a->net.ipv6.address.x[4] & b->net.ipv6.mask.x[4]) == b->net.ipv6.address.x[4] &&
-       (a->net.ipv6.address.x[5] & b->net.ipv6.mask.x[5]) == b->net.ipv6.address.x[5] &&
-       (a->net.ipv6.address.x[6] & b->net.ipv6.mask.x[6]) == b->net.ipv6.address.x[6] &&
-       (a->net.ipv6.address.x[7] & b->net.ipv6.mask.x[7]) == b->net.ipv6.address.x[7])
-      return -1;
+  result = memcmp(a->net.ipv6.address.x, b->net.ipv6.address.x, sizeof(ipv6_t));
   
-  return memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
+  if(result)
+    return result;
+
+  result = memcmp(a->net.ipv6.mask.x, b->net.ipv6.mask.x, sizeof(ipv6_t));
+  
+  if(result)
+    return result;
+
+  return strcmp(a->owner->name, b->owner->name);
 }
 
 int subnet_compare(subnet_t *a, subnet_t *b)
@@ -138,37 +137,21 @@ cp
 
 /* Linked list management */
 
-void subnet_add(connection_t *cl, subnet_t *subnet)
+void subnet_add(node_t *n, subnet_t *subnet)
 {
 cp
-  subnet->owner = cl;
+  subnet->owner = n;
 
-  while(!avl_insert(subnet_tree, subnet))
-    {
-      subnet_t *old;
-      
-      old = (subnet_t *)avl_search(subnet_tree, subnet);
-
-      if(debug_lvl >= DEBUG_PROTOCOL)
-        {
-          char *subnetstr;
-          subnetstr = net2str(subnet);
-          syslog(LOG_WARNING, _("Duplicate subnet %s for %s (%s), previous owner %s (%s)!"),
-                 subnetstr, cl->name, cl->hostname, old->owner->name, old->owner->hostname);
-          free(subnetstr);
-        }
-
-      subnet_del(old);
-    }
-
-  avl_insert(cl->subnet_tree, subnet);
+  avl_insert(subnet_tree, subnet);
+cp
+  avl_insert(n->subnet_tree, subnet);
 cp
 }
 
-void subnet_del(subnet_t *subnet)
+void subnet_del(node_t *n, subnet_t *subnet)
 {
 cp
-  avl_delete(subnet->owner->subnet_tree, subnet);
+  avl_delete(n->subnet_tree, subnet);
 cp
   avl_delete(subnet_tree, subnet);
 cp
@@ -284,6 +267,12 @@ cp
 }
 
 /* Subnet lookup routines */
+
+subnet_t *lookup_subnet(node_t *owner, subnet_t *subnet)
+{
+cp  
+  return avl_search(owner->subnet_tree, subnet);
+}
 
 subnet_t *lookup_subnet_mac(mac_t *address)
 {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.52 2001/09/01 12:36:53 guus Exp $
+    $Id: tincd.c,v 1.10.4.53 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -205,7 +205,7 @@ int keygen(int bits)
 {
   RSA *rsa_key;
   FILE *f;
-  config_t const *cfg;
+  char *name = NULL;
   char *filename;
 
   fprintf(stderr, _("Generating %d bits keys:\n"), bits);
@@ -219,8 +219,10 @@ int keygen(int bits)
   else
     fprintf(stderr, _("Done.\n"));
 
-  if(config && (cfg = get_config_val(config, config_name)))
-    asprintf(&filename, "%s/hosts/%s", confbase, cfg->data.ptr);
+  get_config_string(lookup_config(config_tree, "Name"), &name);
+
+  if(name)
+    asprintf(&filename, "%s/hosts/%s", confbase, name);
   else
     asprintf(&filename, "%s/rsa_key.pub", confbase);
 
@@ -350,8 +352,8 @@ cp
 
       if(do_detach)
         {
-          syslog(LOG_NOTICE, _("Restarting in %d seconds!"), MAXTIMEOUT);
-          sleep(MAXTIMEOUT);
+          syslog(LOG_NOTICE, _("Restarting in %d seconds!"), maxtimeout);
+          sleep(maxtimeout);
         }
       else
         {

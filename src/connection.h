@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.16 2001/10/10 20:35:10 guus Exp $
+    $Id: connection.h,v 1.1.2.17 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -25,8 +25,6 @@
 
 #include <avl_tree.h>
 #include <list.h>
-
-#include "config.h"
 
 #ifdef HAVE_OPENSSL_EVP_H
 # include <openssl/evp.h>
@@ -46,26 +44,24 @@
 #include "node.h"
 #include "vertex.h"
 
-typedef struct status_bits_t {
+#define OPTION_INDIRECT		0x0001
+#define OPTION_TCPONLY		0x0002
+
+typedef struct connection_status_t {
   int pinged:1;                    /* sent ping */
-  int meta:1;                      /* meta connection exists */
   int active:1;                    /* 1 if active.. */
   int outgoing:1;                  /* I myself asked for this conn */
   int termreq:1;                   /* the termination of this connection was requested */
   int remove:1;                    /* Set to 1 if you want this connection removed */
   int timeout:1;                   /* 1 if gotten timeout */
-  int validkey:1;                  /* 1 if we currently have a valid key for him */
-  int waitingforkey:1;             /* 1 if we already sent out a request */
-  int dataopen:1;                  /* 1 if we have a valid UDP connection open */
   int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
   int decryptin:1;                 /* 1 if we have to decrypt incoming traffic */
   int unused:18;
-} status_bits_t;
-
-#define OPTION_INDIRECT		0x0001
-#define OPTION_TCPONLY		0x0002
+} connection_status_t;
 
 typedef struct connection_t {
+  char *name;                      /* name he claims to have */
+
   ipv4_t address;                  /* his real (internet) ip */
   short unsigned int port;         /* port number of meta connection */
   char *hostname;                  /* the hostname of its real ip */
@@ -73,7 +69,7 @@ typedef struct connection_t {
 
   int socket;                      /* socket used for this connection */
   long int options;                /* options for this connection */
-  status_bits_t status;            /* status info */
+  struct connection_status_t status; /* status info */
 
   struct node_t *node;             /* node associated with the other end */
   struct vertex_t *vertex;         /* vertex associated with this connection */
@@ -96,8 +92,20 @@ typedef struct connection_t {
   int allow_request;               /* defined if there's only one request possible */
 
   time_t last_ping_time;           /* last time we saw some activity from the other end */
+
+  avl_tree_t *config_tree;         /* Pointer to configuration tree belonging to him */
 } connection_t;
 
 extern avl_tree_t *connection_tree;
+
+extern void init_connections(void);
+extern void exit_connection(void);
+extern connection_t *new_connection(void);
+extern void free_connection(connection_t *);
+extern void connection_add(connection_t *);
+extern void connection_del(connection_t *);
+extern connection_t *lookup_connection(ipv4_t, short unsigned int);
+extern void dump_connections(void);
+extern int read_connection_config(connection_t *);
 
 #endif /* __TINC_CONNECTION_H__ */

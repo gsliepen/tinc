@@ -17,20 +17,45 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.1 2001/10/10 08:49:47 guus Exp $
+    $Id: node.c,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
 */
 
-avl_tree_t *node_tree;		/* Known nodes, sorted by name */
+#include "config.h"
 
-int node_compare(connection_t *a, connection_t *b)
+#include <string.h>
+#include <syslog.h>
+
+#include <avl_tree.h>
+#include "node.h"
+#include "net.h"
+#include <utils.h>
+#include <xalloc.h>
+
+#include "system.h"
+
+avl_tree_t *node_tree;		/* Known nodes, sorted by name */
+avl_tree_t *node_udp_tree;	/* Known nodes, sorted by address and port */
+
+int node_compare(node_t *a, node_t *b)
 {
   return strcmp(a->name, b->name);
+}
+
+int node_udp_compare(connection_t *a, connection_t *b)
+{
+  if(a->address < b->address)
+    return -1;
+  else if (a->address > b->address)
+    return 1;
+  else
+    return a->port - b->port;
 }
 
 void init_nodes(void)
 {
 cp
   node_tree = avl_alloc_tree((avl_compare_t)node_compare, NULL);
+  node_udp_tree = avl_alloc_tree((avl_compare_t)node_udp_compare, NULL);
 cp
 }
 
@@ -38,6 +63,7 @@ void exit_nodes(void)
 {
 cp
   avl_delete_tree(node_tree);
+  avl_delete_tree(node_udp_tree);
 cp
 }
 
@@ -62,9 +88,23 @@ cp
     free(n->hostname);
   if(n->key)
     free(n->key);
-  if(n->config)
-    clear_config(&n->config);
   free(n);
+cp
+}
+
+void node_add(node_t *n)
+{
+cp
+  avl_insert(node_tree, n);
+  avl_insert(node_udp_tree, n);
+cp
+}
+
+void node_del(node_t *n)
+{
+cp
+  avl_delete(node_tree, n);
+  avl_delete(node_udp_tree, n);
 cp
 }
 
@@ -76,17 +116,13 @@ cp
   return avl_search(node_tree, &n);
 }
 
-
-int read_host_config(nodet *n)
+node_t *lookup_node_udp(ipv4_t address, port_t port)
 {
-  char *fname;
-  int x;
+  node_t n;
 cp
-  asprintf(&fname, "%s/hosts/%s", confbase, n->name);
-  x = read_config_file(&n->config, fname);
-  free(fname);
-cp
-  return x;
+  n.address = address;
+  n.port = port;
+  return avl_search(node_udp_tree, &n);
 }
 
 void dump_nodes(void)
@@ -98,10 +134,10 @@ cp
 
   for(node = node_tree->head; node; node = node->next)
     {
-      n = (connection_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld sockets %d, %d status %04x"),
+      n = (node_t *)node->data;
+      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld status %04x"),
              n->name, n->hostname, n->port, n->options,
-             n->socket, n->meta_socket, n->status);
+             n->status);
     }
     
   syslog(LOG_DEBUG, _("End of nodes."));

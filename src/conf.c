@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.44 2001/10/10 20:34:27 guus Exp $
+    $Id: conf.c,v 1.9.4.45 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -218,6 +218,59 @@ cp
   syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
          cfg->value, cfg->file, cfg->line);
   return 0;
+}
+
+int get_config_port(config_t *cfg, port_t *result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  if(sscanf(cfg->value, "%hu", result) == 1)
+    return 1;
+    
+  syslog(LOG_ERR, _("Port number expected for configuration variable %s in %s line %d"),
+         cfg->value, cfg->file, cfg->line);
+  return 0;
+}
+
+int get_config_subnet(config_t *cfg, subnet_t **result)
+{
+  ip_mask_t *ip;
+  subnet_t *subnet;
+cp
+  if(!cfg)
+    return 0;
+
+  ip = strtoip(cfg->value);
+
+  if(!ip)
+    {
+      syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
+             cfg->value, cfg->file, cfg->line);
+      return 0;
+    }
+  
+  /* Teach newbies what subnets are... */
+
+  if((subnet->net.ipv4.address & subnet->net.ipv4.mask) != subnet->net.ipv4.address)
+    {
+      syslog(LOG_ERR, _("Network address and subnet mask for configuration variable %s in %s line %d"),
+             cfg->value, cfg->file, cfg->line);
+      free(ip);
+      return -1;
+    }
+
+  subnet = new_subnet();
+  subnet->type = SUBNET_IPV4;
+  subnet->net.ipv4.address = ip->address;
+  subnet->net.ipv4.mask = ip->mask;
+  
+  free(ip);
+
+  *result = subnet;
+  
+  return 1;
 }
 
 /*

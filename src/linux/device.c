@@ -17,8 +17,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.1 2001/10/12 15:16:03 guus Exp $
+    $Id: device.c,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
 */
+
+#include "config.h"
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <net/if.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <sys/ioctl.h>
 
 #ifdef HAVE_TUNTAP
  #ifdef LINUX_IF_TUN_H
@@ -31,6 +43,13 @@
  #define DEFAULT_DEVICE "/dev/tap0"
 #endif
 
+#include <utils.h>
+#include "conf.h"
+#include "net.h"
+#include "subnet.h"
+
+#include "system.h"
+
 #define DEVICE_TYPE_ETHERTAP 0
 #define DEVICE_TYPE_TUNTAP 1
 
@@ -42,6 +61,8 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
+subnet_t mymac;
+
 /*
   open the local ethertap device
 */
@@ -50,7 +71,7 @@ int setup_device(void)
   struct ifreq ifr;
 
 cp
-  if(!get_config_string(lookup_config(config_tree, "Device"), &device_fname)))
+  if(!get_config_string(lookup_config(config_tree, "Device"), &device_fname))
     device_fname = DEFAULT_DEVICE;
 
 cp
@@ -60,8 +81,6 @@ cp
       return -1;
     }
 cp
-  device_fd = device_fd;
-
   /* Set default MAC address for ethertap devices */
 
   mymac.type = SUBNET_MAC;
@@ -90,14 +109,14 @@ cp
     if (!ioctl(device_fd, (('T'<< 8) | 202), (void *) &ifr))
     {
       syslog(LOG_WARNING, _("Old ioctl() request was needed for %s"), device_fname);
-      device_type = TAP_TYPE_TUNTAP;
+      device_type = DEVICE_TYPE_TUNTAP;
       device_info = _("Linux tun/tap device");
     }
     else
 #endif
     {
       device_info = _("Linux ethertap device");
-      device_type = TAP_TYPE_ETHERTAP;
+      device_type = DEVICE_TYPE_ETHERTAP;
     }
 
   syslog(LOG_INFO, _("%s is a %s"), device_fname, device_info);
@@ -125,7 +144,7 @@ cp
     }
   else /* ethertap */
     {
-      struct iovec vector[2] = {{packet->len, 2}, {packet->data, MTU}};
+      struct iovec vector[2] = {{&packet->len, 2}, {packet->data, MTU}};
 
       if((lenin = readv(device_fd, vector, 2)) <= 0)
         {
@@ -135,13 +154,12 @@ cp
 
       packet->len = lenin - 2;
     }
-#endif
 
   device_total_in += packet->len;
 
   if(debug_lvl >= DEBUG_TRAFFIC)
     {
-      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), device_info, packet.len);
+      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len, device_info);
     }
 
   return 0;
@@ -159,21 +177,22 @@ cp
     {
       if(write(device_fd, packet->data, packet->len) < 0)
         {
-          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, packet.len);
+          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device_fname);
           return -1;
         }
     }
   else/* ethertap */
     {
-      struct iovec vector[2] = {{packet->len, 2}, {packet->data, MTU}};
+      struct iovec vector[2] = {{&packet->len, 2}, {packet->data, MTU}};
 
       if(writev(device_fd, vector, 2) < 0)
         {
-          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, packet.len);
+          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device_fname);
           return -1;
         }
     }
 
   device_total_out += packet->len;
 cp
+  return 0;
 }

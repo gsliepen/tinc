@@ -17,16 +17,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.h,v 1.1.2.1 2001/10/12 15:16:03 guus Exp $
+    $Id: device.h,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_DEVICE_H__
 #define __TINC_DEVICE_H__
 
-extern void setup_device(void);
+extern int device_fd;
+
+extern int setup_device(void);
 extern void close_device(void);
 extern vpn_packet_t *read_packet(void);
-extern void write_packet(vpn_packet_t *);
+extern int write_packet(vpn_packet_t *);
 extern void dump_device_stats(void);
 
-#endif __TINC_DEVICE_H__
+#endif /* __TINC_DEVICE_H__ */

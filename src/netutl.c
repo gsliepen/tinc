@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.19 2001/05/07 19:08:46 guus Exp $
+    $Id: netutl.c,v 1.12.4.20 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -46,15 +46,11 @@ char *hostlookup(unsigned long addr)
   char *name;
   struct hostent *host = NULL;
   struct in_addr in;
-  config_t const *cfg;
-  int lookup_hostname;
+  int lookup_hostname = 0;
 cp
   in.s_addr = addr;
 
-  lookup_hostname = 0;
-  if((cfg = get_config_val(config, config_hostnames)) != NULL)
-    if(cfg->data.val == stupid_true)
-      lookup_hostname = 1;
+  get_config_int(lookup_config(config_tree, "Hostnames"), &lookup_hostname);
 
   if(lookup_hostname)
     host = gethostbyaddr((char *)&in, sizeof(in), AF_INET);

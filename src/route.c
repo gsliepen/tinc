@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.18 2001/07/21 20:21:25 guus Exp $
+    $Id: route.c,v 1.1.2.19 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -56,7 +56,7 @@ void learn_mac(mac_t *address)
 {
   subnet_t *subnet;
   avl_node_t *node;
-  connection_t *p;
+  connection_t *c;
 cp
   subnet = lookup_subnet_mac(address);
 
@@ -77,14 +77,14 @@ cp
       
       for(node = connection_tree->head; node; node = node->next)
         {
-          p = (connection_t *)node->data;
-          if(p->status.active)
-            send_add_subnet(p, subnet);
+          c = (connection_t *)node->data;
+          if(c->status.active)
+            send_add_subnet(c, subnet);
         }
     }
 }
 
-connection_t *route_mac(vpn_packet_t *packet)
+node_t *route_mac(vpn_packet_t *packet)
 {
   subnet_t *subnet;
 cp
@@ -102,7 +102,7 @@ cp
     return NULL;
 }
 
-connection_t *route_ipv4(vpn_packet_t *packet)
+node_t *route_ipv4(vpn_packet_t *packet)
 {
   ipv4_t dest;
   subnet_t *subnet;
@@ -130,15 +130,26 @@ cp
   return subnet->owner;  
 }
 
-connection_t *route_ipv6(vpn_packet_t *packet)
+node_t *route_ipv6(vpn_packet_t *packet)
 {
+  ipv6_t dest;
+  subnet_t *subnet;
 cp
-  if(debug_lvl > DEBUG_NOTHING)
+  memcpy(&dest, &packet->data[30], sizeof(ipv6_t));
+
+  subnet = lookup_subnet_ipv6(&dest);
+cp
+  if(!subnet)
     {
-      syslog(LOG_WARNING, _("Cannot route packet: IPv6 routing not yet implemented"));
-    } 
+      if(debug_lvl >= DEBUG_TRAFFIC)
+        {
+          syslog(LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address"));
+        }
+
+      return NULL;
+    }
 cp
-  return NULL;
+  return subnet->owner;  
 }
 
 void route_arp(vpn_packet_t *packet)
@@ -213,7 +224,7 @@ cp
 void route_outgoing(vpn_packet_t *packet)
 {
   unsigned short int type;
-  connection_t *cl;
+  node_t *n;
 cp
   /* FIXME: multicast? */
 
@@ -224,10 +235,10 @@ cp
         switch(type)
           {
             case 0x0800:
-              cl = route_ipv4(packet);
+              n = route_ipv4(packet);
               break;
             case 0x86DD:
-              cl = route_ipv6(packet);
+              n = route_ipv6(packet);
               break;
             case 0x0806:
               route_arp(packet);
@@ -239,14 +250,14 @@ cp
                 }
               return;
            }
-         if(cl)
-           send_packet(cl, packet);
+         if(n)
+           send_packet(n, packet);
          break;
         
       case RMODE_SWITCH:
-        cl = route_mac(packet);
-        if(cl)
-          send_packet(cl, packet);
+        n = route_mac(packet);
+        if(n)
+          send_packet(n, packet);
         else
           broadcast_packet(myself, packet);
         break;
@@ -257,7 +268,7 @@ cp
     }
 }
 
-void route_incoming(connection_t *source, vpn_packet_t *packet)
+void route_incoming(node_t *source, vpn_packet_t *packet)
 {
   switch(routing_mode)
     {
@@ -286,7 +297,7 @@ void route_incoming(connection_t *source, vpn_packet_t *packet)
           }
         break;
       case RMODE_HUB:
-        broadcast_packet(source,packet);			/* Spread it on */
+        broadcast_packet(source, packet);			/* Spread it on */
         accept_packet(packet);
         break;
     }

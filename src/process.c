@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.25 2001/09/05 18:38:09 zarq Exp $
+    $Id: process.c,v 1.1.2.26 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -42,6 +42,7 @@
 #include "conf.h"
 #include "process.h"
 #include "subnet.h"
+#include "device.h"
 #include "connection.h"
 
 #include "system.h"
@@ -87,8 +88,7 @@ cp
   close_network_connections();
 
   if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
-	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
+    dump_device_stats();
 
   syslog(LOG_NOTICE, _("Terminating"));
 

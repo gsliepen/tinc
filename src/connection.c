@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.19 2001/10/10 20:35:10 guus Exp $
+    $Id: connection.c,v 1.1.2.20 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -71,8 +71,6 @@ void free_connection(connection_t *c)
 cp
   if(c->hostname)
     free(c->hostname);
-  if(c->rsa_key)
-    RSA_free(c->rsa_key);
   if(c->inkey)
     free(c->inkey);
   if(c->outkey)
@@ -120,10 +118,22 @@ cp
     {
       c = (connection_t *)node->data;
       syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld socket %d status %04x"),
-             c->node->name, c->hostname, c->port, c->options,
+             c->name, c->hostname, c->port, c->options,
              c->socket, c->status);
     }
     
   syslog(LOG_DEBUG, _("End of connections."));
 cp
+}
+
+int read_connection_config(connection_t *c)
+{
+  char *fname;
+  int x;
+cp
+  asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+  x = read_config_file(c->config_tree, fname);
+  free(fname);
+cp
+  return x;
 }

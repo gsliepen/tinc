@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.34 2001/07/21 15:34:18 guus Exp $
+    $Id: net.h,v 1.9.4.35 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -59,6 +59,11 @@ typedef struct mac_t
 
 typedef unsigned long ipv4_t;
 
+typedef struct ip_mask_t {
+  ipv4_t address;
+  ipv4_t mask;
+} ip_mask_t;
+
 typedef struct ipv6_t
 {
   unsigned short x[8];
@@ -85,19 +90,6 @@ typedef struct packet_queue_t {
   queue_element_t *tail;
 } packet_queue_t;
 
-typedef struct enc_key_t {
-  int length;
-  char *key;
-  time_t expiry;
-} enc_key_t;
-
-extern int tap_fd;
-
-extern int total_tap_in;
-extern int total_tap_out;
-extern int total_socket_in;
-extern int total_socket_out;
-
 extern int seconds_till_retry;
 
 extern char *request_name[256];
@@ -105,26 +97,16 @@ extern char *status_text[10];
 
 #include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
-extern int str2opt(const char *);
-extern char *opt2str(int);
-extern void send_packet(connection_t *, vpn_packet_t *);
-extern void receive_packet(connection_t *, vpn_packet_t *);
-extern void receive_tcppacket(connection_t *, char *, int);
-extern void accept_packet(vpn_packet_t *);
-extern void broadcast_packet(connection_t *, vpn_packet_t *);
+extern void send_packet(struct node_t *, vpn_packet_t *);
+extern void receive_packet(struct node_t *, vpn_packet_t *);
+extern void receive_tcppacket(struct connection_t *, char *, int);
+extern void broadcast_packet(struct node_t *, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
 extern void terminate_connection(connection_t *, int);
-extern void flush_queue(connection_t *);
-
-#include <config.h>
-#ifdef HAVE_OPENSSL_RSA_H
-# include <openssl/rsa.h>
-#else
-# include <rsa.h>
-#endif
-
-extern int read_rsa_public_key(connection_t *);
+extern void flush_queue(struct node_t *);
+extern int read_rsa_public_key(struct connection_t *);
+extern RETSIGTYPE try_outgoing_connections(int);
 
 #endif /* __TINC_NET_H__ */

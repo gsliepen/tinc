@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.4 2001/10/10 20:35:10 guus Exp $
+    $Id: node.h,v 1.1.2.5 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -25,31 +25,52 @@
 
 #include <avl_tree.h>
 
+#include "subnet.h"
+#include "connection.h"
+
+typedef struct node_status_t {
+  int active:1;                    /* 1 if active.. */
+  int validkey:1;                  /* 1 if we currently have a valid key for him */
+  int waitingforkey:1;             /* 1 if we already sent out a request */
+  int unused:29;
+} node_status_t;
+
 typedef struct node_t {
-  char *name;                      /* name of this connection */
-  int protocol_version;            /* used protocol */
-  long int options;                /* options turned on for this connection */
+  char *name;                      /* name of this node */
+  long int options;                /* options turned on for this node */
 
   ipv4_t address;                  /* his real (internet) ip to send UDP packets to */
   short unsigned int port;         /* port number of UDP connection */
   char *hostname;                  /* the hostname of its real ip */
 
+  struct node_status_t status;
+
   EVP_CIPHER *cipher;              /* Cipher type for UDP packets */ 
   char *key;                       /* Cipher key and iv */
   int keylength;                   /* Cipher key and iv length*/
 
-  list_t *queue;                   /* Queue for packets awaiting to be encrypted */
+  list_t *queue;               /* Queue for packets awaiting to be encrypted */
 
-  struct node_t *nexthop;          /* nearest meta-hop from us to him */
-  struct node_t *prevhop;          /* nearest meta-hop from him to us */
+  struct node_t *nexthop;          /* nearest node from us to him */
   struct node_t *via;              /* next hop for UDP packets */
   
   avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this node */
 
-  struct config_t *config;         /* Pointer to configuration tree belonging to this node */
+  struct connection_t *connection; /* Connection associated with this node (if a direct connection exists) */
 } node_t;
 
-struct node_t *myself;
+extern struct node_t *myself;
 extern avl_tree_t *node_tree;
+
+extern void init_nodes(void);
+extern void exit_nodes(void);
+extern node_t *new_node(void);
+extern void free_node(node_t *n);
+extern void node_add(node_t *n);
+extern void node_del(node_t *n);
+extern node_t *lookup_node(char *);
+extern node_t *lookup_node_udp(ipv4_t, port_t);
+extern void dump_nodes(void);
+
 
 #endif /* __TINC_NODE_H__ */

@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.22 2001/09/24 14:12:00 guus Exp $
+    $Id: protocol.h,v 1.5.4.23 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
 #include "net.h"
+#include "node.h"
 #include "subnet.h"
 
 /* Protocol version. Different versions are incompatible,
@@ -36,11 +37,12 @@
 
 enum {
   ALL = -1,			     /* Guardian for allow_request */
-  ID = 0, METAKEY, CHALLENGE, CHAL_REPLY,
+  ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
   STATUS, ERROR, TERMREQ,
-  PING,  PONG,
-  ADD_HOST, DEL_HOST,
+  PING, PONG,
+  ADD_NODE, DEL_NODE,
   ADD_SUBNET, DEL_SUBNET,
+  ADD_VERTEX, DEL_VERTEX,
   KEY_CHANGED, REQ_KEY, ANS_KEY,
   PACKET,
   LAST                               /* Guardian for the highest request number */
@@ -54,21 +56,24 @@ enum {
 extern int (*request_handlers[])(connection_t*);
 
 extern int send_id(connection_t*);
+extern int send_metakey(connection_t*);
 extern int send_challenge(connection_t*);
 extern int send_chal_reply(connection_t*);
-extern int send_metakey(connection_t*);
+extern int send_ack(connection_t*);
 extern int send_status(connection_t*, int, char*);
 extern int send_error(connection_t*, int, char*);
 extern int send_termreq(connection_t*);
 extern int send_ping(connection_t*);
 extern int send_pong(connection_t*);
-extern int send_add_host(connection_t*, connection_t*);
-extern int send_del_host(connection_t*, connection_t*);
+extern int send_add_node(connection_t*, node_t*);
+extern int send_del_node(connection_t*, node_t*);
 extern int send_add_subnet(connection_t*, subnet_t*);
 extern int send_del_subnet(connection_t*, subnet_t*);
-extern int send_key_changed(connection_t*, connection_t*);
-extern int send_req_key(connection_t*, connection_t*);
-extern int send_ans_key(connection_t*, connection_t*, char*);
+extern int send_add_vertex(connection_t*, node_t*);
+extern int send_del_vertex(connection_t*, node_t*);
+extern int send_key_changed(connection_t*, node_t*);
+extern int send_req_key(connection_t*, node_t*, node_t*);
+extern int send_ans_key(connection_t*, node_t*, node_t*, char*);
 extern int send_tcppacket(connection_t *, vpn_packet_t *);
 
 /* Old functions */

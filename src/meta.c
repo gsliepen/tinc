@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.20 2001/07/20 13:54:19 guus Exp $
+    $Id: meta.c,v 1.1.2.21 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -39,7 +39,7 @@
 #include "system.h"
 #include "protocol.h"
 
-int send_meta(connection_t *cl, char *buffer, int length)
+int send_meta(connection_t *c, char *buffer, int length)
 {
   char *bufp;
   int outlen;
@@ -47,41 +47,41 @@ int send_meta(connection_t *cl, char *buffer, int length)
 cp
   if(debug_lvl >= DEBUG_META)
     syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
-           cl->name, cl->hostname);
+           c->name, c->hostname);
 
-  if(cl->status.encryptout)
+  if(c->status.encryptout)
     {
-      EVP_EncryptUpdate(cl->cipher_outctx, outbuf, &outlen, buffer, length);
+      EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
       bufp = outbuf;
       length = outlen;
     }
   else
       bufp = buffer;
 
-  if(write(cl->meta_socket, bufp, length) < 0)
+  if(write(c->socket, bufp, length) < 0)
     {
-      syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %m"), cl->name, cl->hostname);
+      syslog(LOG_ERR, _("Sending meta data to %s (%s) failed: %m"), c->name, c->hostname);
       return -1;
     }
 cp
   return 0;
 }
 
-void broadcast_meta(connection_t *cl, char *buffer, int length)
+void broadcast_meta(connection_t *from, char *buffer, int length)
 {
   avl_node_t *node;
-  connection_t *p;
+  connection_t *c;
 cp
   for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)node->data;
-      if(p != cl && p->status.active)
-        send_meta(p, buffer, length);
+      c = (connection_t *)node->data;
+      if(c != from && c->status.active)
+        send_meta(c, buffer, length);
     }
 cp
 }
 
-int receive_meta(connection_t *cl)
+int receive_meta(connection_t *c)
 {
   int x, l = sizeof(x);
   int oldlen, i;
@@ -89,16 +89,16 @@ int receive_meta(connection_t *cl)
   int decrypted = 0;
   char inbuf[MAXBUFSIZE];
 cp
-  if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
+  if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->meta_socket,
-             cl->name, cl->hostname);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, c->socket,
+             c->name, c->hostname);
       return -1;
     }
   if(x)
     {
       syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
-             cl->name, cl->hostname, strerror(x));
+             c->name, c->hostname, strerror(x));
       return -1;
     }
 
@@ -111,7 +111,7 @@ cp
        - If not, keep stuff in buffer and exit.
    */
 
-  lenin = read(cl->meta_socket, cl->buffer + cl->buflen, MAXBUFSIZE - cl->buflen);
+  lenin = read(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen);
 
   if(lenin<=0)
     {
@@ -119,45 +119,45 @@ cp
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
-                cl->name, cl->hostname);
+                c->name, c->hostname);
         }
       else
         if(errno==EINTR)
           return 0;      
         else
           syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
-                 cl->name, cl->hostname);
+                 c->name, c->hostname);
 
       return -1;
     }
 
-  oldlen = cl->buflen;
-  cl->buflen += lenin;
+  oldlen = c->buflen;
+  c->buflen += lenin;
 
   while(lenin)
     {
       /* Decrypt */
 
-      if(cl->status.decryptin && !decrypted)
+      if(c->status.decryptin && !decrypted)
         {
-          EVP_DecryptUpdate(cl->cipher_inctx, inbuf, &lenin, cl->buffer + oldlen, lenin);
-          memcpy(cl->buffer + oldlen, inbuf, lenin);
+          EVP_DecryptUpdate(c->inctx, inbuf, &lenin, c->buffer + oldlen, lenin);
+          memcpy(c->buffer + oldlen, inbuf, lenin);
           decrypted = 1;
         }
 
       /* Are we receiving a TCPpacket? */
 
-      if(cl->tcplen)
+      if(c->tcplen)
         {
-          if(cl->tcplen <= cl->buflen)
+          if(c->tcplen <= c->buflen)
             {
-              receive_tcppacket(cl, cl->buffer, cl->tcplen);
+              receive_tcppacket(c, c->buffer, c->tcplen);
 
-              cl->buflen -= cl->tcplen;
-              lenin -= cl->tcplen;
-              memmove(cl->buffer, cl->buffer + cl->tcplen, cl->buflen);
+              c->buflen -= c->tcplen;
+              lenin -= c->tcplen;
+              memmove(c->buffer, c->buffer + c->tcplen, c->buflen);
               oldlen = 0;
-              cl->tcplen = 0;
+              c->tcplen = 0;
               continue;
             }
           else
@@ -170,11 +170,11 @@ cp
 
       reqlen = 0;
 
-      for(i = oldlen; i < cl->buflen; i++)
+      for(i = oldlen; i < c->buflen; i++)
         {
-          if(cl->buffer[i] == '\n')
+          if(c->buffer[i] == '\n')
             {
-              cl->buffer[i] = '\0';  /* replace end-of-line by end-of-string so we can use sscanf */
+              c->buffer[i] = '\0';  /* replace end-of-line by end-of-string so we can use sscanf */
               reqlen = i + 1;
               break;
             }
@@ -182,12 +182,12 @@ cp
 
       if(reqlen)
         {
-          if(receive_request(cl))
+          if(receive_request(c))
             return -1;
 
-          cl->buflen -= reqlen;
+          c->buflen -= reqlen;
           lenin -= reqlen;
-          memmove(cl->buffer, cl->buffer + reqlen, cl->buflen);
+          memmove(c->buffer, c->buffer + reqlen, c->buflen);
           oldlen = 0;
           continue;
         }
@@ -197,14 +197,14 @@ cp
         }
     }
 
-  if(cl->buflen >= MAXBUFSIZE)
+  if(c->buflen >= MAXBUFSIZE)
     {
       syslog(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
-	     cl->name, cl->hostname);
+	     c->name, c->hostname);
       return -1;
     }
 
-  cl->last_ping_time = time(NULL);
+  c->last_ping_time = time(NULL);
 cp  
   return 0;
 }

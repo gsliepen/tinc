@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.136 2001/10/08 13:37:30 guus Exp $
+    $Id: net.c,v 1.35.4.137 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -53,24 +53,6 @@
 #define RAND_pseudo_bytes RAND_bytes
 #endif
 
-#ifdef HAVE_TUNTAP
- #ifdef HAVE_LINUX
-  #ifdef LINUX_IF_TUN_H
-   #include LINUX_IF_TUN_H
-  #else
-   #include <linux/if_tun.h>
-  #endif
- #else
-  #include <net/if_tun.h>
- #endif
-#endif
-
-#ifdef HAVE_SOLARIS
- #include <sys/sockio.h>
- #include <sys/stropts.h>
- #include <net/if_tun.h>
-#endif
-
 #include <utils.h>
 #include <xalloc.h>
 #include <avl_tree.h>
@@ -86,22 +68,59 @@
 #include "subnet.h"
 #include "process.h"
 #include "route.h"
+#include "device.h"
 
 #include "system.h"
 
-int tap_fd = -1;
-int taptype = TAP_TYPE_ETHERTAP;
-int total_tap_in = 0;
-int total_tap_out = 0;
-int total_socket_in = 0;
-int total_socket_out = 0;
-
 int seconds_till_retry = 5;
+int tcp_socket = -1;
+int udp_socket = -1;
 
 int keylifetime = 0;
 int keyexpires = 0;
 
-void send_udppacket(connection_t *cl, vpn_packet_t *inpkt)
+/* VPN packet I/O */
+
+void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
+{
+  vpn_packet_t outpkt;
+  int outlen, outpad;
+  EVP_CIPHER_CTX ctx;
+cp
+  /* Decrypt the packet */
+
+  EVP_DecryptInit(&ctx, myself->cipher, myself->key, myself->key + myself->cipher->key_len);
+  EVP_DecryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len);
+  EVP_DecryptFinal(&ctx, outpkt.salt + outlen, &outpad);
+  outlen += outpad;
+  outpkt.len = outlen - sizeof(outpkt.salt);
+
+  receive_packet(n, &outpkt);
+cp
+}
+
+void receive_tcppacket(connection_t *c, char *buffer, int len)
+{
+  vpn_packet_t outpkt;
+cp
+  outpkt.len = len;
+  memcpy(outpkt.data, buffer, len);
+
+  receive_packet(c->node, &outpkt);
+cp
+}
+
+void receive_packet(node_t *n, vpn_packet_t *packet)
+{
+cp
+  if(debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), packet->len, n->name, n->hostname);
+
+  route_incoming(n, packet);
+cp
+}
+
+void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
@@ -110,11 +129,11 @@ void send_udppacket(connection_t *cl, vpn_packet_t *inpkt)
   socklen_t tolen = sizeof(to);
   vpn_packet_t *copy;
 cp
-  if(!cl->status.validkey)
+  if(!n->status.validkey)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
-	       cl->name, cl->hostname);
+	       n->name, n->hostname);
 
       /* Since packet is on the stack of handle_tap_input(),
          we have to make a copy of it first. */
@@ -122,10 +141,10 @@ cp
       copy = xmalloc(sizeof(vpn_packet_t));
       memcpy(copy, inpkt, sizeof(vpn_packet_t));
 
-      list_insert_tail(cl->queue, copy);
+      list_insert_tail(n->queue, copy);
 
-      if(!cl->status.waitingforkey)
-	send_req_key(myself, cl);
+      if(!n->status.waitingforkey)
+	send_req_key(n->nexthop->connection, myself, n);
       return;
     }
 
@@ -133,110 +152,35 @@ cp
 
   RAND_pseudo_bytes(inpkt->salt, sizeof(inpkt->salt));
 
-  EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
+  EVP_EncryptInit(&ctx, n->cipher, n->key, n->key + n->cipher->key_len);
   EVP_EncryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len + sizeof(inpkt->salt));
   EVP_EncryptFinal(&ctx, outpkt.salt + outlen, &outpad);
   outlen += outpad;
 
-  total_socket_out += outlen;
-
   to.sin_family = AF_INET;
-  to.sin_addr.s_addr = htonl(cl->address);
-  to.sin_port = htons(cl->port);
+  to.sin_addr.s_addr = htonl(n->address);
+  to.sin_port = htons(n->port);
 
-  if((sendto(myself->socket, (char *) outpkt.salt, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
+  if((sendto(socket, (char *) outpkt.salt, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
-             cl->name, cl->hostname);
+             n->name, n->hostname);
       return;
     }
-cp
-}
-
-void receive_packet(connection_t *cl, vpn_packet_t *packet)
-{
-cp
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), packet->len, cl->name, cl->hostname);
-
-  route_incoming(cl, packet);
-cp
-}
-
-void receive_udppacket(connection_t *cl, vpn_packet_t *inpkt)
-{
-  vpn_packet_t outpkt;
-  int outlen, outpad;
-  EVP_CIPHER_CTX ctx;
-cp
-  /* Decrypt the packet */
-
-  EVP_DecryptInit(&ctx, myself->cipher_pkttype, myself->cipher_pktkey, myself->cipher_pktkey + myself->cipher_pkttype->key_len);
-  EVP_DecryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len);
-  EVP_DecryptFinal(&ctx, outpkt.salt + outlen, &outpad);
-  outlen += outpad;
-  outpkt.len = outlen - sizeof(outpkt.salt);
-
-  total_socket_in += outlen;
-
-  receive_packet(cl, &outpkt);
-cp
-}
-
-void receive_tcppacket(connection_t *cl, char *buffer, int len)
-{
-  vpn_packet_t outpkt;
-cp
-  outpkt.len = len;
-  memcpy(outpkt.data, buffer, len);
-
-  receive_packet(cl, &outpkt);
-cp
-}
-
-void accept_packet(vpn_packet_t *packet)
-{
-cp
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_DEBUG, _("Writing packet of %d bytes to tap device"),
-           packet->len);
-
-#ifdef HAVE_SOLARIS
-  if(write(tap_fd, packet->data + 14, packet->len - 14) < 0)
-    syslog(LOG_ERR, _("Can't write to tun/tap device: %m"));
-  else
-    total_tap_out += packet->len;
-#else
-  if(taptype == TAP_TYPE_TUNTAP)
-    {
-      if(write(tap_fd, packet->data, packet->len) < 0)
-        syslog(LOG_ERR, _("Can't write to tun/tap device: %m"));
-      else
-        total_tap_out += packet->len;
-    }
-  else	/* ethertap */
-    {
-      if(write(tap_fd, packet->data - 2, packet->len + 2) < 0)
-        syslog(LOG_ERR, _("Can't write to ethertap device: %m"));
-      else
-        total_tap_out += packet->len;
-    }
-#endif
 cp
 }
 
 /*
   send a packet to the given vpn ip.
 */
-void send_packet(connection_t *cl, vpn_packet_t *packet)
+void send_packet(node_t *n, vpn_packet_t *packet)
 {
-  connection_t *via;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
-           packet->len, cl->name, cl->hostname);
+           packet->len, n->name, n->hostname);
 
-  if(cl == myself)
+  if(n == myself)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
@@ -246,39 +190,40 @@ cp
       return;
     }
 
-  if(!cl->status.active)
+  if(!n->status.active)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("%s (%s) is not active, dropping packet"),
-	       cl->name, cl->hostname);
+	       n->name, n->hostname);
 
       return;
     }
-
-  if(cl->via == myself)
-    via = cl->nexthop;
+/* FIXME
+  if(n->via == myself)
+    via = n->nexthop;
   else
-    via = cl->via;
+    via = n->via;
 
-  if(via != cl && debug_lvl >= DEBUG_TRAFFIC)
+  if(via != n && debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),
-           cl->name, via->name, via->hostname);
+           n->name, via->name, via->hostname);
 
   if((myself->options | via->options) & OPTION_TCPONLY)
     {
-      if(send_tcppacket(via, packet))
-        terminate_connection(via, 1);
+      if(send_tcppacket(via->connection, packet))
+        terminate_connection(via->connection, 1);
     }
   else
     send_udppacket(via, packet);
+*/
 }
 
 /* Broadcast a packet to all active direct connections */
 
-void broadcast_packet(connection_t *from, vpn_packet_t *packet)
+void broadcast_packet(node_t *from, vpn_packet_t *packet)
 {
   avl_node_t *node;
-  connection_t *cl;
+  connection_t *c;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
@@ -286,174 +231,39 @@ cp
 
   for(node = connection_tree->head; node; node = node->next)
     {
-      cl = (connection_t *)node->data;
-      if(cl->status.active && cl != from)
-        send_packet(cl, packet);
+      c = (connection_t *)node->data;
+      if(c->status.active && c != from->nexthop->connection)
+        send_packet(c->node, packet);
     }
 cp
 }
 
-void flush_queue(connection_t *cl)
+void flush_queue(node_t *n)
 {
   list_node_t *node, *next;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_INFO, _("Flushing queue for %s (%s)"), cl->name, cl->hostname);
+    syslog(LOG_INFO, _("Flushing queue for %s (%s)"), n->name, n->hostname);
 
-  for(node = cl->queue->head; node; node = next)
+  for(node = n->queue->head; node; node = next)
     {
       next = node->next;
-      send_udppacket(cl, (vpn_packet_t *)node->data);
-      list_delete_node(cl->queue, node);
+      send_udppacket(n, (vpn_packet_t *)node->data);
+      list_delete_node(n->queue, node);
     }
 cp
 }
 
-/*
-  open the local ethertap device
-*/
-int setup_tap_fd(void)
-{
-  int nfd;
-  const char *tapfname;
-  config_t const *cfg;
-#ifdef HAVE_LINUX
-# ifdef HAVE_TUNTAP
-  struct ifreq ifr;
-# endif
-#endif
-#ifdef HAVE_SOLARIS
-  int ip_fd = -1, if_fd = -1;
-  int ppa;
-  char *ptr;
-#endif
+/* Setup sockets */
 
-cp
-  if((cfg = get_config_val(config, config_tapdevice)))
-    tapfname = cfg->data.ptr;
-  else
-   {
-#ifdef HAVE_LINUX
-# ifdef HAVE_TUNTAP
-      tapfname = "/dev/net/tun";
-# else
-      tapfname = "/dev/tap0";
-# endif
-#endif
-#ifdef HAVE_FREEBSD
-      tapfname = "/dev/tap0";
-#endif
-#ifdef HAVE_SOLARIS
-      tapfname = "/dev/tun";
-#endif
-   }
-cp
-  if((nfd = open(tapfname, O_RDWR | O_NONBLOCK)) < 0)
-    {
-      syslog(LOG_ERR, _("Could not open %s: %m"), tapfname);
-      return -1;
-    }
-cp
-  tap_fd = nfd;
-
-  /* Set default MAC address for ethertap devices */
-
-  mymac.type = SUBNET_MAC;
-  mymac.net.mac.address.x[0] = 0xfe;
-  mymac.net.mac.address.x[1] = 0xfd;
-  mymac.net.mac.address.x[2] = 0x00;
-  mymac.net.mac.address.x[3] = 0x00;
-  mymac.net.mac.address.x[4] = 0x00;
-  mymac.net.mac.address.x[5] = 0x00;
-
-#ifdef HAVE_LINUX
- #ifdef HAVE_TUNTAP
-  /* Ok now check if this is an old ethertap or a new tun/tap thingie */
-  memset(&ifr, 0, sizeof(ifr));
-cp
-  ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-  if (netname)
-    strncpy(ifr.ifr_name, netname, IFNAMSIZ);
-cp
-  if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
-  {
-    syslog(LOG_INFO, _("%s is a Linux tun/tap device"), tapfname);
-    taptype = TAP_TYPE_TUNTAP;
-  }
-  else
-    if (!ioctl(tap_fd, (('T'<< 8) | 202), (void *) &ifr))
-    {
-      syslog(LOG_INFO, _("%s is a Linux tun/tap device"), tapfname);
-      syslog(LOG_WARNING, _("Old ioctl() request used"));
-      taptype = TAP_TYPE_TUNTAP;
-    }
-    else
- #endif
-    {
-      syslog(LOG_INFO, _("%s is a Linux ethertap device"), tapfname);
-      taptype = TAP_TYPE_ETHERTAP;
-    }
-#endif
-#ifdef HAVE_FREEBSD
- syslog(LOG_INFO, _("%s is a FreeBSD tap device"), tapfname);
- taptype = TAP_TYPE_TUNTAP;
-#endif
-#ifdef HAVE_SOLARIS
-  ppa = 0;
-
-  ptr = tapfname;
-  while(*ptr && !isdigit((int)*ptr)) ptr++;
-  ppa = atoi(ptr);
-
-  if( (ip_fd = open("/dev/ip", O_RDWR, 0)) < 0){
-     syslog(LOG_ERR, _("Could not open /dev/ip: %m"));
-     return -1;
-  }
-
-  /* Assign a new PPA and get its unit number. */
-  if( (ppa = ioctl(nfd, TUNNEWPPA, ppa)) < 0){
-     syslog(LOG_ERR, _("Can't assign new interface: %m"));
-     return -1;
-  }
-
-  if( (if_fd = open(tapfname, O_RDWR, 0)) < 0){
-     syslog(LOG_ERR, _("Could not open %s twice: %m"), tapfname);
-     return -1;
-  }
-
-  if(ioctl(if_fd, I_PUSH, "ip") < 0){
-     syslog(LOG_ERR, _("Can't push IP module: %m"));
-     return -1;
-  }
-
-  /* Assign ppa according to the unit number returned by tun device */
-  if(ioctl(if_fd, IF_UNITSEL, (char *)&ppa) < 0){
-     syslog(LOG_ERR, _("Can't set PPA %d: %m"), ppa);
-     return -1;
-  }
-
-  if(ioctl(ip_fd, I_LINK, if_fd) < 0){
-     syslog(LOG_ERR, _("Can't link TUN device to IP: %m"));
-     return -1;
-  }
-
-  syslog(LOG_INFO, _("%s is a Solaris tun device"), tapfname);
-#endif
-
-cp
-  return 0;
-}
-
-/*
-  set up the socket that we listen on for incoming
-  (tcp) connections
-*/
-int setup_listen_meta_socket(int port)
+int setup_listen_socket(int port)
 {
   int nfd, flags;
   struct sockaddr_in a;
   int option;
-  config_t const *cfg;
+  char *interface;
+  char *address;
+  ip_mask_t *ipmask;
 cp
   if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
@@ -481,25 +291,29 @@ cp
   option = IPTOS_LOWDELAY;
   setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
 
-  if((cfg = get_config_val(config, config_interface)))
-    {
-      if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, cfg->data.ptr, strlen(cfg->data.ptr)))
-        {
-          close(nfd);
-          syslog(LOG_ERR, _("Unable to bind listen socket to interface %s: %m"), cfg->data.ptr);
-          return -1;
-        }
-    }
+  if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
+    if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
+      {
+        close(nfd);
+        syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
+        return -1;
+      }
 #endif
 
   memset(&a, 0, sizeof(a));
   a.sin_family = AF_INET;
+  a.sin_addr.s_addr = htonl(INADDR_ANY);
   a.sin_port = htons(port);
 
-  if((cfg = get_config_val(config, config_interfaceip)))
-    a.sin_addr.s_addr = htonl(cfg->data.ip->address);
-  else
-    a.sin_addr.s_addr = htonl(INADDR_ANY);
+  if(get_config_string(lookup_config(config_tree, "BindToAddress"), &address))
+    {
+      ipmask = strtoip(address);
+      if(ipmask)
+      {
+        a.sin_addr.s_addr = htonl(ipmask->address);
+        free(ipmask);
+      }
+    }
 
   if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
@@ -519,10 +333,6 @@ cp
   return nfd;
 }
 
-/*
-  setup the socket for incoming encrypted
-  data (the udp part)
-*/
 int setup_vpn_in_socket(int port)
 {
   int nfd, flags;
@@ -562,199 +372,171 @@ cp
   return nfd;
 }
 
-/*
-  setup an outgoing meta (tcp) socket
-*/
-int setup_outgoing_meta_socket(connection_t *cl)
+int setup_outgoing_socket(connection_t *c)
 {
   int flags;
   struct sockaddr_in a;
-  config_t const *cfg;
   int option;
 cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_INFO, _("Trying to connect to %s"), cl->hostname);
+    syslog(LOG_INFO, _("Trying to connect to %s (%s)"), c->name, c->hostname);
 
-  if((cfg = get_config_val(cl->config, config_port)) == NULL)
-    cl->port = 655;
-  else
-    cl->port = cfg->data.val;
+  c->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-  cl->meta_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if(cl->meta_socket == -1)
+  if(c->socket == -1)
     {
       syslog(LOG_ERR, _("Creating socket for %s port %d failed: %m"),
-             cl->hostname, cl->port);
+             c->hostname, c->port);
       return -1;
     }
 
-  /* Bind first to get a fix on our source port */
+  /* Bind first to get a fix on our source port???
 
   a.sin_family = AF_INET;
   a.sin_port = htons(0);
   a.sin_addr.s_addr = htonl(INADDR_ANY);
 
-  if(bind(cl->meta_socket, (struct sockaddr *)&a, sizeof(struct sockaddr)))
+  if(bind(c->socket, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
-      close(cl->meta_socket);
+      close(c->socket);
       syslog(LOG_ERR, _("System call `%s' failed: %m"), "bind");
       return -1;
     }
 
-  /* Optimize TCP settings */
+  */
+
+  /* Optimize TCP settings?
 
   option = 1;
-  setsockopt(cl->meta_socket, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+  setsockopt(c->socket, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
 #ifdef HAVE_LINUX
-  setsockopt(cl->meta_socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+  setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
   option = IPTOS_LOWDELAY;
-  setsockopt(cl->meta_socket, SOL_IP, IP_TOS, &option, sizeof(option));
+  setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof(option));
 #endif
+
+  */
+
   /* Connect */
 
   a.sin_family = AF_INET;
-  a.sin_port = htons(cl->port);
-  a.sin_addr.s_addr = htonl(cl->address);
+  a.sin_port = htons(c->port);
+  a.sin_addr.s_addr = htonl(c->address);
 
-  if(connect(cl->meta_socket, (struct sockaddr *)&a, sizeof(a)) == -1)
+  if(connect(c->socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
-      close(cl->meta_socket);
-      syslog(LOG_ERR, _("%s port %hd: %m"), cl->hostname, cl->port);
+      close(c->socket);
+      syslog(LOG_ERR, _("%s port %hd: %m"), c->hostname, c->port);
       return -1;
     }
 
-  flags = fcntl(cl->meta_socket, F_GETFL);
-  if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
+  flags = fcntl(c->socket, F_GETFL);
+
+  if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      close(cl->meta_socket);
+      close(c->socket);
       syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
-             cl->hostname, cl->port);
+             c->hostname, c->port);
       return -1;
     }
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Connected to %s port %hd"),
-         cl->hostname, cl->port);
-
-  cl->status.meta = 1;
+         c->hostname, c->port);
 cp
   return 0;
 }
 
-/*
-  Setup an outgoing meta connection.
-*/
 int setup_outgoing_connection(char *name)
 {
-  connection_t *ncn, *old;
+  connection_t *c;
   struct hostent *h;
-  config_t const *cfg;
 cp
-  if(check_id(name))
+  c = new_connection();
+  c->name = xstrdup(name);
+
+  read_connection_config(c);
+  
+  if(!get_config_string(lookup_config(c->config_tree, "Address"), &c->hostname))
     {
-      syslog(LOG_ERR, _("Invalid name for outgoing connection"));
+      syslog(LOG_ERR, _("No address specified for %s"), c->name);
+      free_connection(c);
       return -1;
     }
 
-  /* Make sure we don't make an outgoing connection to a host that is already in our connection list */
-
-  if((old = lookup_id(name)))
+  if(!get_config_port(lookup_config(c->config_tree, "Port"), &c->port))
     {
-      if(!old->status.outgoing)
-        {
-          if(debug_lvl >= DEBUG_CONNECTIONS)
-            syslog(LOG_NOTICE, _("We are already connected to %s."), name);
-
-          old->status.outgoing = 1;
-        }
-      return 0;
-    }
-    
-  ncn = new_connection();
-  asprintf(&ncn->name, "%s", name);
-
-  if(read_host_config(ncn))
-    {
-      syslog(LOG_ERR, _("Error reading host configuration file for %s"), ncn->name);
-      free_connection(ncn);
+      syslog(LOG_ERR, _("No port specified for %s"), c->name);
+      free_connection(c);
       return -1;
     }
 
-  if(!(cfg = get_config_val(ncn->config, config_address)))
+  if(!(h = gethostbyname(c->hostname)))
     {
-      syslog(LOG_ERR, _("No address specified for %s"), ncn->name);
-      free_connection(ncn);
+      syslog(LOG_ERR, _("Error looking up `%s': %m"), c->hostname);
+      free_connection(c);
       return -1;
     }
 
-  if(!(h = gethostbyname(cfg->data.ptr)))
+  c->address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
+  c->hostname = hostlookup(htonl(c->address));
+
+  if(setup_outgoing_socket(c) < 0)
     {
-      syslog(LOG_ERR, _("Error looking up `%s': %m"), cfg->data.ptr);
-      free_connection(ncn);
+      syslog(LOG_ERR, _("Could not set up a meta connection to %s (%s)"),
+             c->name, c->hostname);
+      free_connection(c);
       return -1;
     }
 
-  ncn->address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
-  ncn->hostname = hostlookup(htonl(ncn->address));
+  c->status.outgoing = 1;
+  c->last_ping_time = time(NULL);
 
-  if(setup_outgoing_meta_socket(ncn) < 0)
-    {
-      syslog(LOG_ERR, _("Could not set up a meta connection to %s"),
-             ncn->hostname);
-      free_connection(ncn);
-      return -1;
-    }
+  connection_add(c);
 
-  ncn->status.outgoing = 1;
-  ncn->buffer = xmalloc(MAXBUFSIZE);
-  ncn->buflen = 0;
-  ncn->last_ping_time = time(NULL);
-
-  connection_add(ncn);
-
-  send_id(ncn);
+  send_id(c);
 cp
   return 0;
 }
 
-int read_rsa_public_key(connection_t *cl)
+int read_rsa_public_key(connection_t *c)
 {
-  config_t const *cfg;
   FILE *fp;
   char *fname;
+  char *key;
   void *result;
 cp
-  if(!cl->rsa_key)
-    cl->rsa_key = RSA_new();
+  if(!c->rsa_key)
+    c->rsa_key = RSA_new();
 
   /* First, check for simple PublicKey statement */
 
-  if((cfg = get_config_val(cl->config, config_publickey)))
+  if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key))
     {
-      BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
-      BN_hex2bn(&cl->rsa_key->e, "FFFF");
+      BN_hex2bn(&c->rsa_key->n, key);
+      BN_hex2bn(&c->rsa_key->e, "FFFF");
       return 0;
     }
 
   /* Else, check for PublicKeyFile statement and read it */
 
-  if((cfg = get_config_val(cl->config, config_publickeyfile)))
+  if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
     {
-      if(is_safe_path(cfg->data.ptr))
+      if(is_safe_path(fname))
         {
-          if((fp = fopen(cfg->data.ptr, "r")) == NULL)
+          if((fp = fopen(fname, "r")) == NULL)
             {
               syslog(LOG_ERR, _("Error reading RSA public key file `%s': %m"),
-	             cfg->data.ptr);
+	             fname);
               return -1;
             }
-          result = PEM_read_RSAPublicKey(fp, &cl->rsa_key, NULL, NULL);
+          result = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
           fclose(fp);
           if(!result)
             {
               syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %m"),
-	             cfg->data.ptr);
+	             fname);
               return -1;
             }
           return 0;
@@ -765,53 +547,55 @@ cp
 
   /* Else, check if a harnessed public key is in the config file */
 
-  asprintf(&fname, "%s/hosts/%s", confbase, cl->name);
+  result = NULL;
+
+  asprintf(&fname, "%s/hosts/%s", confbase, c->name);
   if((fp = fopen(fname, "r")))
     {
-      result = PEM_read_RSAPublicKey(fp, &cl->rsa_key, NULL, NULL);
+      result = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
       fclose(fp);
       free(fname);
-      if(result)
-        return 0;
     }
 
   free(fname);
 
-  /* Nothing worked. */
-
-  syslog(LOG_ERR, _("No public key for %s specified!"), cl->name);
-cp
-  return -1;
+  if(result)
+    return 0;
+  else
+    {
+      syslog(LOG_ERR, _("No public key for %s specified!"), c->name);
+      return -1;
+    }
 }
 
 int read_rsa_private_key(void)
 {
-  config_t const *cfg;
   FILE *fp;
   void *result;
+  char *fname, *key;
 cp
-  if(!myself->rsa_key)
-    myself->rsa_key = RSA_new();
+  if(!myself->connection->rsa_key)
+    myself->connection->rsa_key = RSA_new();
 
-  if((cfg = get_config_val(config, config_privatekey)))
+  if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key))
     {
-      BN_hex2bn(&myself->rsa_key->d, cfg->data.ptr);
-      BN_hex2bn(&myself->rsa_key->e, "FFFF");
+      BN_hex2bn(&myself->connection->rsa_key->d, key);
+      BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
     }
-  else if((cfg = get_config_val(config, config_privatekeyfile)))
+  else if(get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
     {
-      if((fp = fopen(cfg->data.ptr, "r")) == NULL)
+      if((fp = fopen(fname, "r")) == NULL)
         {
           syslog(LOG_ERR, _("Error reading RSA private key file `%s': %m"),
-	         cfg->data.ptr);
+	         fname);
           return -1;
         }
-      result = PEM_read_RSAPrivateKey(fp, &myself->rsa_key, NULL, NULL);
+      result = PEM_read_RSAPrivateKey(fp, &myself->connection->rsa_key, NULL, NULL);
       fclose(fp);
       if(!result)
         {
           syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
-	         cfg->data.ptr);
+	         fname);
           return -1;
         }
     }
@@ -825,108 +609,107 @@ cp
 }
 
 /*
-  Configure connection_t myself and set up the local sockets (listen only)
+  Configure node_t myself and set up the local sockets (listen only)
 */
 int setup_myself(void)
 {
-  config_t const *cfg;
-  config_t *next;
-  subnet_t *net;
+  config_t *cfg;
+  subnet_t *subnet;
+  char *name, *mode;
+  int choice;
 cp
-  myself = new_connection();
+  myself = new_node();
+  myself->connection = new_connection();
 
   asprintf(&myself->hostname, _("MYSELF"));
-  myself->options = 0;
-  myself->protocol_version = PROT_CURRENT;
+  asprintf(&myself->connection->hostname, _("MYSELF"));
 
-  if(!(cfg = get_config_val(config, config_name))) /* Not acceptable */
+  myself->connection->options = 0;
+  myself->connection->protocol_version = PROT_CURRENT;
+
+  if(!get_config_string(lookup_config(config_tree, "Name"), &name)) /* Not acceptable */
     {
       syslog(LOG_ERR, _("Name for tinc daemon required!"));
       return -1;
     }
-  else
-    asprintf(&myself->name, "%s", (char*)cfg->data.val);
 
-  if(check_id(myself->name))
+  if(check_id(name))
     {
       syslog(LOG_ERR, _("Invalid name for myself!"));
+      free(name);
       return -1;
     }
+
+  myself->name = name;
+  myself->connection->name = xstrdup(name);
+
 cp
   if(read_rsa_private_key())
     return -1;
 
-  if(read_host_config(myself))
+  if(read_connection_config(myself->connection))
     {
       syslog(LOG_ERR, _("Cannot open host configuration file for myself!"));
       return -1;
     }
 
-  if(read_rsa_public_key(myself))
+  if(read_rsa_public_key(myself->connection))
     return -1;
 cp
 
 /*
-  if(RSA_check_key(myself->rsa_key) != 1)
+  if(RSA_check_key(rsa_key) != 1)
     {
       syslog(LOG_ERR, _("Invalid public/private keypair!"));
       return -1;
     }
 */
-  if(!(cfg = get_config_val(myself->config, config_port)))
+  if(!get_config_port(lookup_config(myself->connection->config_tree, "Port"), &myself->connection->port))
     myself->port = 655;
-  else
-    myself->port = cfg->data.val;
 
 /* Read in all the subnets specified in the host configuration file */
 
-  for(next = myself->config; (cfg = get_config_val(next, config_subnet)); next = cfg->next)
+  cfg = lookup_config(myself->connection->config_tree, "Subnet");
+
+  while(cfg)
     {
-      net = new_subnet();
-      net->type = SUBNET_IPV4;
-      net->net.ipv4.address = cfg->data.ip->address;
-      net->net.ipv4.mask = cfg->data.ip->mask;
+      if(!get_config_subnet(cfg, &subnet))
+        return -1;
 
-      /* Teach newbies what subnets are... */
+      subnet_add(myself, subnet);
 
-      if((net->net.ipv4.address & net->net.ipv4.mask) != net->net.ipv4.address)
-        {
-          syslog(LOG_ERR, _("Network address and subnet mask do not match!"));
-          return -1;
-        }
-
-      subnet_add(myself, net);
+      cfg = lookup_config_next(myself->connection->config_tree, cfg);
     }
 
 cp
   /* Check some options */
 
-  if((cfg = get_config_val(config, config_indirectdata)))
-    if(cfg->data.val == stupid_true)
+  if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice))
+    if(choice)
       myself->options |= OPTION_INDIRECT;
 
-  if((cfg = get_config_val(config, config_tcponly)))
-    if(cfg->data.val == stupid_true)
+  if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice))
+    if(choice)
       myself->options |= OPTION_TCPONLY;
 
-  if((cfg = get_config_val(myself->config, config_indirectdata)))
-    if(cfg->data.val == stupid_true)
+  if(get_config_bool(lookup_config(myself->connection->config_tree, "IndirectData"), &choice))
+    if(choice)
       myself->options |= OPTION_INDIRECT;
 
-  if((cfg = get_config_val(myself->config, config_tcponly)))
-    if(cfg->data.val == stupid_true)
+  if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice))
+    if(choice)
       myself->options |= OPTION_TCPONLY;
 
   if(myself->options & OPTION_TCPONLY)
     myself->options |= OPTION_INDIRECT;
 
-  if((cfg = get_config_val(config, config_mode)))
+  if(get_config_string(lookup_config(myself->connection->config_tree, "Mode"), &mode))
     {
-      if(!strcasecmp(cfg->data.ptr, "router"))
+      if(!strcasecmp(mode, "router"))
         routing_mode = RMODE_ROUTER;
-      else if (!strcasecmp(cfg->data.ptr, "switch"))
+      else if (!strcasecmp(mode, "switch"))
         routing_mode = RMODE_SWITCH;
-      else if (!strcasecmp(cfg->data.ptr, "hub"))
+      else if (!strcasecmp(mode, "hub"))
         routing_mode = RMODE_HUB;
       else
         {
@@ -940,13 +723,13 @@ cp
 cp
   /* Open sockets */
   
-  if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
+  if((tcp_socket = setup_listen_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
       return -1;
     }
 
-  if((myself->socket = setup_vpn_in_socket(myself->port)) < 0)
+  if((udp_socket = setup_vpn_in_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening UDP socket!"));
       return -1;
@@ -954,72 +737,28 @@ cp
 cp
   /* Generate packet encryption key */
 
-  myself->cipher_pkttype = EVP_bf_cbc();
+  myself->cipher = EVP_bf_cbc();
 
-  myself->cipher_pktkeylength = myself->cipher_pkttype->key_len + myself->cipher_pkttype->iv_len;
+  myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
 
-  myself->cipher_pktkey = (char *)xmalloc(myself->cipher_pktkeylength);
-  RAND_pseudo_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
+  myself->key = (char *)xmalloc(myself->keylength);
+  RAND_pseudo_bytes(myself->key, myself->keylength);
 
-  if(!(cfg = get_config_val(config, config_keyexpire)))
+  if(!get_config_int(lookup_config(myself->connection->config_tree, "KeyExpire"), &keylifetime))
     keylifetime = 3600;
-  else
-    keylifetime = cfg->data.val;
 
   keyexpires = time(NULL) + keylifetime;
 cp
   /* Done */
 
   myself->nexthop = myself;
-  myself->prevhop = myself;
   myself->via = myself;
   myself->status.active = 1;
-  id_add(myself);
+  node_add(myself);
 
   syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
 cp
   return 0;
-}
-
-void randomized_alarm(int seconds)
-{
-  unsigned char r;
-  RAND_pseudo_bytes(&r, 1);
-  alarm((seconds * (int)r) / 128 + 1);
-}
-
-RETSIGTYPE
-try_outgoing_connections(int a)
-{
-  config_t const *cfg;
-  int retry = 0;
-cp
-  cfg = get_config_val(config, config_connectto);
-
-  while(cfg)
-    {
-      if(setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
-        retry = 1;
-      cfg = get_config_val(cfg->next, config_connectto); /* Or else we try the next ConnectTo line */
-    }
-
-  if(retry)
-    {
-      seconds_till_retry += 5;
-      if(seconds_till_retry > MAXTIMEOUT)    /* Don't wait more than MAXTIMEOUT seconds. */
-        seconds_till_retry = MAXTIMEOUT;
-
-      syslog(LOG_ERR, _("Failed to setup all outgoing connections, will retry in %d seconds"),
-        seconds_till_retry);
-  
-      /* Randomize timeout to avoid global synchronisation effects */
-      randomized_alarm(seconds_till_retry);
-    }
-  else
-    {
-      seconds_till_retry = 5;
-    }
-cp
 }
 
 /*
@@ -1027,23 +766,21 @@ cp
 */
 int setup_network_connections(void)
 {
-  config_t const *cfg;
 cp
   init_connections();
   init_subnets();
 
-  if((cfg = get_config_val(config, config_pingtimeout)) == NULL)
-    timeout = 60;
-  else
+  if(get_config_int(lookup_config(myself->connection->config_tree, "PingTimeout"), &timeout))
     {
-      timeout = cfg->data.val;
       if(timeout < 1)
         {
           timeout = 86400;
         }
-     }
+    }
+  else
+    timeout = 60;
 
-  if(setup_tap_fd() < 0)
+  if(setup_device() < 0)
     return -1;
 
   /* Run tinc-up script to further initialize the tap interface */
@@ -1064,23 +801,23 @@ cp
 void close_network_connections(void)
 {
   avl_node_t *node, *next;
-  connection_t *p;
+  connection_t *c;
 cp
   for(node = connection_tree->head; node; node = next)
     {
       next = node->next;
-      p = (connection_t *)node->data;
-      p->status.outgoing = 0;
-      terminate_connection(p, 0);
+      c = (connection_t *)node->data;
+      c->status.outgoing = 0;
+      terminate_connection(c, 0);
     }
 
-  terminate_connection(myself, 0);
+//  terminate_connection(myself, 0);
 
-  destroy_trees();
+//  destroy_trees();
 
   execute_script("tinc-down");
 
-  close(tap_fd);
+  close_device();
 cp
   return;
 }
@@ -1091,11 +828,11 @@ cp
 */
 connection_t *create_new_connection(int sfd)
 {
-  connection_t *p;
+  connection_t *c;
   struct sockaddr_in ci;
   int len = sizeof(ci);
 cp
-  p = new_connection();
+  c = new_connection();
 
   if(getpeername(sfd, (struct sockaddr *) &ci, (socklen_t *) &len) < 0)
     {
@@ -1105,23 +842,19 @@ cp
       return NULL;
     }
 
-  asprintf(&p->name, _("UNKNOWN"));
-  p->address = ntohl(ci.sin_addr.s_addr);
-  p->hostname = hostlookup(ci.sin_addr.s_addr);
-  p->port = htons(ci.sin_port);				/* This one will be overwritten later */
-  p->meta_socket = sfd;
-  p->status.meta = 1;
-  p->buffer = xmalloc(MAXBUFSIZE);
-  p->buflen = 0;
-  p->last_ping_time = time(NULL);
+  c->address = ntohl(ci.sin_addr.s_addr);
+  c->hostname = hostlookup(ci.sin_addr.s_addr);
+  c->port = htons(ci.sin_port);				/* This one will be overwritten later */
+  c->socket = sfd;
+  c->last_ping_time = time(NULL);
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
-         p->hostname, htons(ci.sin_port));
+         c->hostname, htons(ci.sin_port));
 
-  p->allow_request = ID;
+  c->allow_request = ID;
 cp
-  return p;
+  return c;
 }
 
 /*
@@ -1130,20 +863,19 @@ cp
 void build_fdset(fd_set *fs)
 {
   avl_node_t *node;
-  connection_t *p;
+  connection_t *c;
 cp
   FD_ZERO(fs);
 
-  FD_SET(myself->socket, fs);
-
   for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)node->data;
-      FD_SET(p->meta_socket, fs);
+      c = (connection_t *)node->data;
+      FD_SET(c->socket, fs);
     }
 
-  FD_SET(myself->meta_socket, fs);
-  FD_SET(tap_fd, fs);
+  FD_SET(tcp_socket, fs);
+  FD_SET(udp_socket, fs);
+  FD_SET(device_fd, fs);
 cp
 }
 
@@ -1158,12 +890,12 @@ void handle_incoming_vpn_data(void)
   int x, l = sizeof(x);
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
-  connection_t *cl;
+  node_t *n;
 cp
-  if(getsockopt(myself->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
+  if(getsockopt(udp_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"),
-	     __FILE__, __LINE__, myself->socket);
+	     __FILE__, __LINE__, udp_socket);
       return;
     }
   if(x)
@@ -1172,23 +904,24 @@ cp
       return;
     }
 
-  if((pkt.len = recvfrom(myself->socket, (char *) pkt.salt, MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
+  if((pkt.len = recvfrom(udp_socket, (char *) pkt.salt, MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return;
     }
 
-  cl = lookup_active(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+  n = lookup_node_udp(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
 
-  if(!cl)
+  if(!n)
     {
       syslog(LOG_WARNING, _("Received UDP packets on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return;
     }
-
-  cl->last_ping_time = time(NULL);
-
-  receive_udppacket(cl, &pkt);
+/*
+  if(n->connection)
+    n->connection->last_ping_time = time(NULL);
+*/
+  receive_udppacket(n, &pkt);
 cp
 }
 
@@ -1200,77 +933,9 @@ cp
   - Since it might still be referenced, put it on the prune list.
   - If report == 1, then send DEL_HOST messages to the other tinc daemons.
 */
-void terminate_connection(connection_t *cl, int report)
+void terminate_connection(connection_t *c, int report)
 {
-  connection_t *p;
-  subnet_t *subnet;
-  avl_node_t *node, *next;
-cp
-  if(cl->status.remove)
-    return;
-  else
-    cl->status.remove = 1;
-
-  if(cl->socket)
-    close(cl->socket);
-  if(cl->meta_socket)
-    close(cl->meta_socket);
-
-  connection_del(cl);
-
-  if(cl->status.meta)
-    {
-      if(debug_lvl >= DEBUG_CONNECTIONS)
-        syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
-               cl->name, cl->hostname);
-
-      if(cl->status.active)
-        {
-          /* Find all connections that were lost because they were behind cl
-             (the connection that was dropped). */
-
-          for(node = active_tree->head; node; node = next)
-            {
-              next = node->next;
-              p = (connection_t *)node->data;
-              if(p->nexthop == cl)
-                terminate_connection(p, report);
-            }
-        }
-    }
-
-  /* Inform others of termination if needed */
-
-  if(report)
-    for(node = connection_tree->head; node; node = node->next)
-      {
-        p = (connection_t *)node->data;
-        if(p->status.active)
-          send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
-      }
-
-  /* Remove the associated subnets */
-
-  for(node = cl->subnet_tree->head; node; node = next)
-    {
-      next = node->next;
-      subnet = (subnet_t *)node->data;
-      subnet_del(subnet);
-    }
-
-  /* Check if this was our outgoing connection */
-
-  if(cl->status.outgoing)
-    {
-      cl->status.outgoing = 0;
-      signal(SIGALRM, try_outgoing_connections);
-      alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
-    }
-cp
-  /* Schedule it for pruning */
-
-  prune_add(cl);
+  /* Needs a serious rewrite. */
 }
 
 /*
@@ -1285,37 +950,37 @@ void check_dead_connections(void)
 {
   time_t now;
   avl_node_t *node, *next;
-  connection_t *cl;
+  connection_t *c;
 cp
   now = time(NULL);
 
   for(node = connection_tree->head; node; node = next)
     {
       next = node->next;
-      cl = (connection_t *)node->data;
-      if(cl->last_ping_time + timeout < now)
+      c = (connection_t *)node->data;
+      if(c->last_ping_time + timeout < now)
         {
-          if(cl->status.active)
+          if(c->status.active)
             {
-              if(cl->status.pinged)
+              if(c->status.pinged)
                 {
                   if(debug_lvl >= DEBUG_PROTOCOL)
   	            syslog(LOG_INFO, _("%s (%s) didn't respond to PING"),
-		           cl->name, cl->hostname);
-	          cl->status.timeout = 1;
-	          terminate_connection(cl, 1);
+		           c->name, c->hostname);
+	          c->status.timeout = 1;
+	          terminate_connection(c, 1);
                 }
               else
                 {
-                  send_ping(cl);
+                  send_ping(c);
                 }
             }
           else
             {
               if(debug_lvl >= DEBUG_CONNECTIONS)
                 syslog(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
-                       cl->name, cl->hostname);
-              terminate_connection(cl, 0);
+                       c->name, c->hostname);
+              terminate_connection(c, 0);
             }
         }
     }
@@ -1328,29 +993,91 @@ cp
 */
 int handle_new_meta_connection()
 {
-  connection_t *ncn;
+  connection_t *new;
   struct sockaddr client;
-  int nfd, len = sizeof(client);
+  int fd, len = sizeof(client);
 cp
-  if((nfd = accept(myself->meta_socket, &client, &len)) < 0)
+  if((fd = accept(tcp_socket, &client, &len)) < 0)
     {
       syslog(LOG_ERR, _("Accepting a new connection failed: %m"));
       return -1;
     }
 
-  if(!(ncn = create_new_connection(nfd)))
+  if(!(new = create_new_connection(fd)))
     {
-      shutdown(nfd, 2);
-      close(nfd);
+      shutdown(fd, 2);
+      close(fd);
       syslog(LOG_NOTICE, _("Closed attempted connection"));
       return 0;
     }
 
-  connection_add(ncn);
+  connection_add(new);
 
-  send_id(ncn);
+  send_id(new);
 cp
   return 0;
+}
+
+void randomized_alarm(int seconds)
+{
+  unsigned char r;
+  RAND_pseudo_bytes(&r, 1);
+  alarm((seconds * (int)r) / 128 + 1);
+}
+
+/* This function is severely fucked up.
+   We want to redesign it so the following rules apply:
+   
+   - Try all ConnectTo's in a row:
+     - if a connect() fails, try next one immediately,
+     - if it works, wait 5 seconds or so.
+   - If none of them were succesful, increase delay and retry.
+   - If all were succesful, don't try anymore.
+*/
+
+RETSIGTYPE
+try_outgoing_connections(int a)
+{
+  static config_t *cfg = NULL;
+  static int retry = 0;
+  char *name;
+  int maxtimeout = 900;
+cp
+  if(!cfg)
+    cfg = lookup_config(config_tree, "ConnectTo");
+
+  if(!cfg)
+    return;
+
+  while(cfg)
+    {
+      get_config_string(cfg, &name);
+      cfg = lookup_config_next(config_tree, cfg);  /* Next time skip to next ConnectTo line */
+
+      if(!setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
+        retry = 1;
+
+    }
+
+  get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout);
+
+  if(retry)
+    {
+      seconds_till_retry += 5;
+      if(seconds_till_retry > maxtimeout)    /* Don't wait more than MAXTIMEOUT seconds. */
+        seconds_till_retry = maxtimeout;
+
+      syslog(LOG_ERR, _("Failed to setup all outgoing connections, will retry in %d seconds"),
+        seconds_till_retry);
+  
+      /* Randomize timeout to avoid global synchronisation effects */
+      randomized_alarm(seconds_till_retry);
+    }
+  else
+    {
+      seconds_till_retry = 5;
+    }
+cp
 }
 
 /*
@@ -1359,88 +1086,29 @@ cp
 */
 void check_network_activity(fd_set *f)
 {
-  connection_t *p;
+  connection_t *c;
   avl_node_t *node;
 cp
-  if(FD_ISSET(myself->socket, f))
+  if(FD_ISSET(udp_socket, f))
     handle_incoming_vpn_data();
 
   for(node = connection_tree->head; node; node = node->next)
     {
-      p = (connection_t *)node->data;
+      c = (connection_t *)node->data;
 
-      if(p->status.remove)
+      if(c->status.remove)
 	return;
 
-      if(FD_ISSET(p->meta_socket, f))
-	if(receive_meta(p) < 0)
+      if(FD_ISSET(c->socket, f))
+	if(receive_meta(c) < 0)
 	  {
-	    terminate_connection(p, p->status.active);
+	    terminate_connection(c, c->status.active);
 	    return;
 	  }
     }
 
-  if(FD_ISSET(myself->meta_socket, f))
+  if(FD_ISSET(tcp_socket, f))
     handle_new_meta_connection();
-cp
-}
-
-/*
-  read, encrypt and send data that is
-  available through the ethertap device
-*/
-void handle_tap_input(void)
-{
-  vpn_packet_t vp;
-  int lenin;
-cp
-#ifdef HAVE_SOLARIS
-  if((lenin = read(tap_fd, vp.data + 14, MTU)) <= 0)
-    {
-      syslog(LOG_ERR, _("Error while reading from tun device: %m"));
-      return;
-    }
-  memcpy(vp.data, mymac.net.mac.address.x, 6);
-  memcpy(vp.data + 6, mymac.net.mac.address.x, 6);
-  vp.data[12] = 0x08;
-  vp.data[13] = 0x00;
-  vp.len = lenin + 14;
-#else
-  if(taptype == TAP_TYPE_TUNTAP)
-    {
-      if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
-        {
-          syslog(LOG_ERR, _("Error while reading from tun/tap device: %m"));
-          return;
-        }
-      vp.len = lenin;
-    }
-  else			/* ethertap */
-    {
-      if((lenin = read(tap_fd, vp.data - 2, MTU)) <= 0)
-        {
-          syslog(LOG_ERR, _("Error while reading from ethertap device: %m"));
-          return;
-        }
-      vp.len = lenin - 2;
-    }
-#endif
-
-  total_tap_in += vp.len;
-
-  if(lenin < 32)
-    {
-      if(debug_lvl >= DEBUG_TRAFFIC)
-	syslog(LOG_WARNING, _("Received short packet from tap device"));
-      return;
-    }
-
-  if(debug_lvl >= DEBUG_TRAFFIC)
-    {
-      syslog(LOG_DEBUG, _("Read packet of length %d from tap device"), vp.len);
-    }
-
-  route_outgoing(&vp);
 cp
 }
 
@@ -1462,7 +1130,6 @@ cp
       tv.tv_sec = timeout;
       tv.tv_usec = 0;
 
-      prune_flush();
       build_fdset(&fset);
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
@@ -1479,7 +1146,7 @@ cp
           syslog(LOG_INFO, _("Rereading configuration file and restarting in 5 seconds"));
           sighup = 0;
           close_network_connections();
-          clear_config(&config);
+          exit_configuration(&config_tree);
 
           if(read_server_config())
             {
@@ -1511,8 +1178,8 @@ cp
               if(debug_lvl >= DEBUG_STATUS)
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
 
-              RAND_pseudo_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
-              send_key_changed(myself, NULL);
+              RAND_pseudo_bytes(myself->key, myself->keylength);
+              send_key_changed(myself->connection, myself);
               keyexpires = time(NULL) + keylifetime;
             }
 	}
@@ -1522,7 +1189,7 @@ cp
           check_network_activity(&fset);
 
           /* local tap data */
-          if(FD_ISSET(tap_fd, &fset))
+          if(FD_ISSET(device_fd, &fset))
 	    handle_tap_input();
         }
     }

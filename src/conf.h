@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.27 2001/10/10 20:34:27 guus Exp $
+    $Id: conf.h,v 1.6.4.28 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -25,6 +25,7 @@
 
 #include <avl_tree.h>
 #include "net.h"
+#include "subnet.h"
 
 typedef struct config_t {
   char *variable;
@@ -47,12 +48,15 @@ extern void exit_configuration(avl_tree_t **);
 extern config_t *new_config(void);
 extern void free_config(config_t *);
 extern void config_add(avl_tree_t *, config_t *);
-extern config_t *config_lookup(avl_tree_t *, char *);
-extern config_t *config_lookup_next(avl_tree_t *, config_t *);
+extern config_t *lookup_config(avl_tree_t *, char *);
+extern config_t *lookup_config_next(avl_tree_t *, config_t *);
 extern int get_config_bool(config_t *, int *);
 extern int get_config_int(config_t *, int *);
+extern int get_config_port(config_t *, port_t *);
 extern int get_config_string(config_t *, char **);
-extern int get_config_ip(config_t *, ip_mask_t **);
+extern int get_config_ip(config_t *, struct ip_mask_t **);
+struct subnet_t; /* Needed for next line. */
+extern int get_config_subnet(config_t *, struct subnet_t **);
 
 extern int read_config_file(avl_tree_t *, const char *);
 extern int read_server_config(void);

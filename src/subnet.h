@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.10 2001/01/08 21:32:30 guus Exp $
+    $Id: subnet.h,v 1.1.2.11 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -50,9 +50,11 @@ typedef struct subnet_ipv6_t
   ipv6_t mask;
 } subnet_ipv6_t;
 
+#include "node.h"
+
 typedef struct subnet_t {
-  struct connection_t *owner;		/* the owner of this subnet */
-  struct connection_t *uplink;		/* the uplink which we should send packets to for this subnet */
+  struct node_t *owner;			/* the owner of this subnet */
+  struct node_t *uplink;		/* the uplink which we should send packets to for this subnet */
 
   int type;				/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
 
@@ -65,18 +67,17 @@ typedef struct subnet_t {
       subnet_ipv6_t ipv6;
     } net;
     
-} subnet_t;  
-
-#include "connection.h"
+} subnet_t;
 
 extern subnet_t *new_subnet(void);
 extern void free_subnet(subnet_t *);
 extern void init_subnets(void);
-extern void subnet_add(struct connection_t *, subnet_t *);
-extern void subnet_del(subnet_t *);
+extern void subnet_add(struct node_t *, subnet_t *);
+extern void subnet_del(struct node_t *, subnet_t *);
 extern char *net2str(subnet_t *);
 extern subnet_t *str2net(char *);
 extern int subnet_compare(subnet_t *, subnet_t *);
+extern subnet_t *lookup_subnet(struct node_t *, subnet_t *);
 extern subnet_t *lookup_subnet_mac(mac_t *);
 extern subnet_t *lookup_subnet_ipv4(ipv4_t *);
 extern subnet_t *lookup_subnet_ipv6(ipv6_t *);

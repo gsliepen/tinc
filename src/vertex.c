@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.c,v 1.1.2.1 2001/10/10 08:49:47 guus Exp $
+    $Id: vertex.c,v 1.1.2.2 2001/10/27 12:13:17 guus Exp $
 */
 
 #include "config.h"
@@ -44,7 +44,7 @@ avl_tree_t *connection_tree;    /* Tree with all meta connections with ourself *
 
 int connection_compare(connection_t *a, connection_t *b)
 {
-  return a->meta_socket - b->meta_socket;
+  return a->socket - b->socket;
 }
 
 int vertex_compare(vertex_t *a, vertex_t *b)
@@ -97,12 +97,21 @@ cp
 void free_vertex(vertex_t *v)
 {
 cp
-  if(v->from.hostname)
-    free(v->from.hostname)
-  if(v->to.hostname)
-    free(v->to.hostname)
-
   free(v);
+cp
+}
+
+void vertex_add(vertex_t *v)
+{
+cp
+  avl_insert(vertex_tree, v);
+cp
+}
+
+void vertex_del(vertex_t *v)
+{
+cp
+  avl_delete(vertex_tree, v);
 cp
 }
 
@@ -110,16 +119,16 @@ vertex_t *lookup_vertex(node_t *from, node_t *to)
 {
   vertex_t v, *result;
 cp
-  v.from.node = from;
-  v.to.node = to;
+  v.from = from;
+  v.to = to;
 
   result = avl_search(vertex_tree, &v);
 
   if(result)
     return result;
 cp
-  v.from.node = to;
-  v.to.node = from;
+  v.from = to;
+  v.to = from;
 
   return avl_search(vertex_tree, &v);
 }
@@ -135,7 +144,7 @@ cp
     {
       v = (vertex_t *)node->data;
       syslog(LOG_DEBUG, _(" %s - %s options %ld"),
-             v->from.node->name, v->to.node->name, v->options);
+             v->from->name, v->to->name, v->options);
     }
     
   syslog(LOG_DEBUG, _("End of vertices."));

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.h,v 1.1.2.4 2001/10/10 20:35:10 guus Exp $
+    $Id: vertex.h,v 1.1.2.5 2001/10/27 12:13:17 guus Exp $
 */
 
 #ifndef __TINC_VERTEX_H__
@@ -28,6 +28,8 @@
 #include "node.h"
 #include "connection.h"
 
+/* I don't know if halfconnection_t is useful... */
+
 typedef struct halfconnection_t {
   struct node_t *node;             /* node associated with this end of the connection */
 
@@ -37,8 +39,8 @@ typedef struct halfconnection_t {
 } halfconnection_t;
 
 typedef struct vertex_t {
-  struct halfconnection_t from;
-  struct halfconnection_t to;
+  struct node_t *from;
+  struct node_t *to;
 
   long int options;                /* options turned on for this connection */
   int metric;                      /* weight of this vertex */
@@ -47,5 +49,14 @@ typedef struct vertex_t {
 } vertex_t;
 
 extern avl_tree_t *vertex_tree;    /* Tree with all known vertices (replaces active_tree) */
+
+extern void init_vertices(void);
+extern void exit_vertices(void);
+extern vertex_t *new_vertex(void);
+extern void free_vertex(vertex_t *);
+extern void vertex_add(vertex_t *);
+extern void vertex_del(vertex_t *);
+extern vertex_t *lookup_vertex(struct node_t *, struct node_t *);
+extern void dump_vertices(void);
 
 #endif /* __TINC_VERTEX_H__ */
