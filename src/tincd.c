@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.70 2003/07/06 22:11:33 guus Exp $
+    $Id: tincd.c,v 1.10.4.71 2003/07/06 23:16:29 guus Exp $
 */
 
 #include "config.h"
@@ -133,7 +133,7 @@ static void usage(int status)
 	exit(status);
 }
 
-void parse_options(int argc, char **argv, char **envp)
+static void parse_options(int argc, char **argv, char **envp)
 {
 	int r;
 	int option_index = 0;
@@ -230,7 +230,7 @@ void parse_options(int argc, char **argv, char **envp)
 
 /* This function prettyprints the key generation process */
 
-void indicator(int a, int b, void *p)
+static void indicator(int a, int b, void *p)
 {
 	switch (a) {
 		case 0:
@@ -269,7 +269,7 @@ void indicator(int a, int b, void *p)
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-int keygen(int bits)
+static int keygen(int bits)
 {
 	RSA *rsa_key;
 	FILE *f;
@@ -323,7 +323,7 @@ int keygen(int bits)
 /*
   Set all files and paths according to netname
 */
-void make_names(void)
+static void make_names(void)
 {
 	if(netname) {
 		if(!pidfilename)

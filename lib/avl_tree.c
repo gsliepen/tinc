@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.13 2003/06/11 19:39:02 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.14 2003/07/06 23:16:27 guus Exp $
 */
 
 #include <stdio.h>
@@ -53,7 +53,9 @@
 #endif
 
 #ifndef AVL_DEPTH
-int lg(unsigned int u)
+static int lg(unsigned int u) __attribute__ ((const));
+
+static int lg(unsigned int u)
 {
 	int r = 1;
 
@@ -89,7 +91,7 @@ int lg(unsigned int u)
 
 /* Internal helper functions */
 
-int avl_check_balance(avl_node_t *node)
+static int avl_check_balance(avl_node_t *node)
 {
 #ifdef AVL_DEPTH
 	int d;
@@ -117,7 +119,7 @@ int avl_check_balance(avl_node_t *node)
 #endif
 }
 
-void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
+static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 {
 	avl_node_t *child;
 	avl_node_t *gchild;

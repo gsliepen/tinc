@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.20 2003/07/06 22:11:32 guus Exp $
+    $Id: node.c,v 1.1.2.21 2003/07/06 23:16:28 guus Exp $
 */
 
 #include "config.h"
@@ -40,12 +40,12 @@ avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
 
 node_t *myself;
 
-int node_compare(node_t *a, node_t *b)
+static int node_compare(node_t *a, node_t *b)
 {
 	return strcmp(a->name, b->name);
 }
 
-int node_udp_compare(node_t *a, node_t *b)
+static int node_udp_compare(node_t *a, node_t *b)
 {
 	int result;
 

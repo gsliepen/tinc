@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.31 2003/07/06 22:11:32 guus Exp $
+    $Id: net_packet.c,v 1.1.2.32 2003/07/06 23:16:28 guus Exp $
 */
 
 #include "config.h"
@@ -82,12 +82,12 @@
 int keylifetime = 0;
 int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
-char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
+static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
 
 #define MAX_SEQNO 1073741824
 
-length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
+static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
 {
 	if(level == 10) {
 		lzo_uint lzolen = MAXSIZE;
@@ -108,7 +108,7 @@ length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int
 	return -1;
 }
 
-length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
+static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
 {
 	if(level > 9) {
 		lzo_uint lzolen = MAXSIZE;
@@ -129,7 +129,17 @@ length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, i
 
 /* VPN packet I/O */
 
-void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
+static void receive_packet(node_t *n, vpn_packet_t *packet)
+{
+	cp();
+
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
+			   packet->len, n->name, n->hostname);
+
+	route_incoming(n, packet);
+}
+
+static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
@@ -227,17 +237,7 @@ void receive_tcppacket(connection_t *c, char *buffer, int len)
 	receive_packet(c->node, &outpkt);
 }
 
-void receive_packet(node_t *n, vpn_packet_t *packet)
-{
-	cp();
-
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
-			   packet->len, n->name, n->hostname);
-
-	route_incoming(n, packet);
-}
-
-void send_udppacket(node_t *n, vpn_packet_t *inpkt)
+static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.62 2003/07/06 22:11:31 guus Exp $
+    $Id: conf.c,v 1.9.4.63 2003/07/06 23:16:28 guus Exp $
 */
 
 #include "config.h"
@@ -51,7 +51,7 @@ int pingtimeout = 0;			/* seconds before timeout */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
 
-int config_compare(config_t *a, config_t *b)
+static int config_compare(config_t *a, config_t *b)
 {
 	int result;
 
@@ -270,7 +270,7 @@ int get_config_subnet(config_t *cfg, subnet_t ** result)
   given, and buf needs to be expanded, the var pointed to by buflen
   will be increased.
 */
-char *readline(FILE * fp, char **buf, size_t *buflen)
+static char *readline(FILE * fp, char **buf, size_t *buflen)
 {
 	char *newline = NULL;
 	char *p;
@@ -429,7 +429,7 @@ int read_server_config()
 	return x;
 }
 
-int isadir(const char *f)
+static int isadir(const char *f)
 {
 	struct stat s;
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.44 2003/07/06 22:11:33 guus Exp $
+    $Id: subnet.c,v 1.1.2.45 2003/07/06 23:16:29 guus Exp $
 */
 
 #include "config.h"
@@ -48,7 +48,7 @@ avl_tree_t *subnet_tree;
 
 /* Subnet comparison */
 
-int subnet_compare_mac(subnet_t *a, subnet_t *b)
+static int subnet_compare_mac(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -60,7 +60,7 @@ int subnet_compare_mac(subnet_t *a, subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
+static int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -77,7 +77,7 @@ int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
+static int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -94,7 +94,7 @@ int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare(subnet_t *a, subnet_t *b)
+static int subnet_compare(subnet_t *a, subnet_t *b)
 {
 	int result;
 

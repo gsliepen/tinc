@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.188 2003/07/06 22:11:32 guus Exp $
+    $Id: net.c,v 1.35.4.189 2003/07/06 23:16:28 guus Exp $
 */
 
 #include "config.h"
@@ -82,7 +82,7 @@ time_t now = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
-void purge(void)
+static void purge(void)
 {
 	avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
 	node_t *n;
@@ -124,7 +124,7 @@ void purge(void)
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-int build_fdset(fd_set * fs)
+static int build_fdset(fd_set * fs)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
@@ -218,7 +218,7 @@ void terminate_connection(connection_t *c, int report)
   end does not reply in time, we consider them dead
   and close the connection.
 */
-void check_dead_connections(void)
+static void check_dead_connections(void)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
@@ -258,7 +258,7 @@ void check_dead_connections(void)
   check all connections to see if anything
   happened on their sockets
 */
-void check_network_activity(fd_set * f)
+static void check_network_activity(fd_set * f)
 {
 	connection_t *c;
 	avl_node_t *node;

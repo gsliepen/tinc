@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.54 2003/07/06 22:11:33 guus Exp $
+    $Id: route.c,v 1.1.2.55 2003/07/06 23:16:29 guus Exp $
 */
 
 #include "config.h"
@@ -84,11 +84,11 @@ int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
 int macexpire = 600;
 int overwrite_mac = 0;
-mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
+static mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
 
 /* RFC 1071 */
 
-uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
+static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 {
 	uint16_t *p = data;
 	uint32_t checksum = prevsum ^ 0xFFFF;
@@ -107,7 +107,7 @@ uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 	return ~checksum;
 }
 
-int ratelimit(void) {
+static int ratelimit(void) {
 	static time_t lasttime = 0;
 	
 	if(lasttime == now)
@@ -117,7 +117,7 @@ int ratelimit(void) {
 	return 0;
 }
 	
-void learn_mac(mac_t *address)
+static void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
 	avl_node_t *node;
@@ -179,7 +179,7 @@ void age_mac(void)
 	}
 }
 
-node_t *route_mac(vpn_packet_t *packet)
+static node_t *route_mac(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -201,7 +201,7 @@ node_t *route_mac(vpn_packet_t *packet)
 
 /* RFC 792 */
 
-void route_ipv4_unreachable(vpn_packet_t *packet, uint8_t code)
+static void route_ipv4_unreachable(vpn_packet_t *packet, uint8_t code)
 {
 	struct ip *hdr;
 	struct icmp *icmp;
@@ -260,7 +260,7 @@ void route_ipv4_unreachable(vpn_packet_t *packet, uint8_t code)
 	write_packet(packet);
 }
 
-node_t *route_ipv4(vpn_packet_t *packet)
+static node_t *route_ipv4(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -290,7 +290,7 @@ node_t *route_ipv4(vpn_packet_t *packet)
 
 /* RFC 2463 */
 
-void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
+static void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
 {
 	struct ip6_hdr *hdr;
 	struct icmp6_hdr *icmp;
@@ -358,7 +358,7 @@ void route_ipv6_unreachable(vpn_packet_t *packet, uint8_t code)
 
 #endif
 
-node_t *route_ipv6(vpn_packet_t *packet)
+static node_t *route_ipv6(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -395,7 +395,7 @@ node_t *route_ipv6(vpn_packet_t *packet)
 
 /* RFC 2461 */
 
-void route_neighborsol(vpn_packet_t *packet)
+static void route_neighborsol(vpn_packet_t *packet)
 {
 	struct ip6_hdr *hdr;
 	struct nd_neighbor_solicit *ns;
@@ -508,7 +508,7 @@ void route_neighborsol(vpn_packet_t *packet)
 
 /* RFC 826 */
 
-void route_arp(vpn_packet_t *packet)
+static void route_arp(vpn_packet_t *packet)
 {
 	struct ether_arp *arp;
 	subnet_t *subnet;

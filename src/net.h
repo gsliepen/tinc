@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.59 2003/07/06 17:15:25 guus Exp $
+    $Id: net.h,v 1.9.4.60 2003/07/06 23:16:28 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -121,9 +121,6 @@ extern int maxtimeout;
 extern int seconds_till_retry;
 extern int addressfamily;
 
-extern char *request_name[];
-extern char *status_text[];
-
 #include "connection.h"			/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
@@ -144,7 +141,6 @@ extern int handle_new_meta_connection(int);
 extern int setup_listen_socket(sockaddr_t *);
 extern int setup_vpn_in_socket(sockaddr_t *);
 extern void send_packet(struct node_t *, vpn_packet_t *);
-extern void receive_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, char *, int);
 extern void broadcast_packet(struct node_t *, vpn_packet_t *);
 extern int setup_network_connections(void);

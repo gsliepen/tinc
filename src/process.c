@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.51 2003/07/06 22:11:32 guus Exp $
+    $Id: process.c,v 1.1.2.52 2003/07/06 23:16:28 guus Exp $
 */
 
 #include "config.h"
@@ -65,7 +65,7 @@ extern int sighup;
 extern int sigalrm;
 extern int do_purge;
 
-void memory_full(int size)
+static void memory_full(int size)
 {
 	logger(DEBUG_ALWAYS, LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
 	cp_trace();
@@ -75,7 +75,7 @@ void memory_full(int size)
 /* Some functions the less gifted operating systems might lack... */
 
 #ifndef HAVE_FCLOSEALL
-int fcloseall(void)
+static int fcloseall(void)
 {
 	fflush(stdin);
 	fflush(stdout);
@@ -108,7 +108,7 @@ void cleanup_and_exit(int c)
 /*
   check for an existing tinc for this net, and write pid to pidfile
 */
-int write_pidfile(void)
+static int write_pidfile(void)
 {
 	int pid;
 
@@ -213,9 +213,9 @@ int detach(void)
 /*
   Execute the program name, with sane environment.
 */
-void _execute_script(const char *scriptname, char **envp)
+static void _execute_script(const char *scriptname, char **envp)
 	__attribute__ ((noreturn));
-void _execute_script(const char *scriptname, char **envp)
+static void _execute_script(const char *scriptname, char **envp)
 {
 	cp();
 
@@ -304,20 +304,20 @@ int execute_script(const char *name, char **envp)
   Signal handlers.
 */
 
-RETSIGTYPE sigterm_handler(int a)
+static RETSIGTYPE sigterm_handler(int a)
 {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got TERM signal"));
 
 	cleanup_and_exit(0);
 }
 
-RETSIGTYPE sigquit_handler(int a)
+static RETSIGTYPE sigquit_handler(int a)
 {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got QUIT signal"));
 	cleanup_and_exit(0);
 }
 
-RETSIGTYPE fatal_signal_square(int a)
+static RETSIGTYPE fatal_signal_square(int a)
 {
 	logger(DEBUG_ALWAYS, LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
 		   strsignal(a));
@@ -325,7 +325,7 @@ RETSIGTYPE fatal_signal_square(int a)
 	exit(1);
 }
 
-RETSIGTYPE fatal_signal_handler(int a)
+static RETSIGTYPE fatal_signal_handler(int a)
 {
 	struct sigaction act;
 	logger(DEBUG_ALWAYS, LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
@@ -349,13 +349,13 @@ RETSIGTYPE fatal_signal_handler(int a)
 	}
 }
 
-RETSIGTYPE sighup_handler(int a)
+static RETSIGTYPE sighup_handler(int a)
 {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got HUP signal"));
 	sighup = 1;
 }
 
-RETSIGTYPE sigint_handler(int a)
+static RETSIGTYPE sigint_handler(int a)
 {
 	if(saved_debug_level != -1) {
 		logger(DEBUG_ALWAYS, LOG_NOTICE, _("Reverting to old debug level (%d)"),
@@ -371,18 +371,18 @@ RETSIGTYPE sigint_handler(int a)
 	}
 }
 
-RETSIGTYPE sigalrm_handler(int a)
+static RETSIGTYPE sigalrm_handler(int a)
 {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, _("Got ALRM signal"));
 	sigalrm = 1;
 }
 
-RETSIGTYPE sigusr1_handler(int a)
+static RETSIGTYPE sigusr1_handler(int a)
 {
 	dump_connections();
 }
 
-RETSIGTYPE sigusr2_handler(int a)
+static RETSIGTYPE sigusr2_handler(int a)
 {
 	dump_device_stats();
 	dump_nodes();
@@ -390,24 +390,24 @@ RETSIGTYPE sigusr2_handler(int a)
 	dump_subnets();
 }
 
-RETSIGTYPE sigwinch_handler(int a)
+static RETSIGTYPE sigwinch_handler(int a)
 {
 	extern int do_purge;
 	do_purge = 1;
 }
 
-RETSIGTYPE unexpected_signal_handler(int a)
+static RETSIGTYPE unexpected_signal_handler(int a)
 {
 	logger(DEBUG_ALWAYS, LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
 	cp_trace();
 }
 
-RETSIGTYPE ignore_signal_handler(int a)
+static RETSIGTYPE ignore_signal_handler(int a)
 {
 	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
 }
 
-struct {
+static struct {
 	int signal;
 	void (*handler)(int);
 } sighandlers[] = {

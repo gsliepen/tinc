@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.1.4.4 2002/09/09 22:32:36 guus Exp $
+    $Id: event.h,v 1.1.4.5 2003/07/06 23:16:28 guus Exp $
 */
 
 #ifndef __TINC_EVENT_H__
@@ -26,7 +26,7 @@
 #include <time.h>
 #include <avl_tree.h>
 
-avl_tree_t *event_tree;
+extern avl_tree_t *event_tree;
 
 typedef void (*event_handler_t)(void *);
 
@@ -39,7 +39,7 @@ typedef struct {
 
 extern void init_events(void);
 extern void exit_events(void);
-extern event_t *new_event(void);
+extern event_t *new_event(void) __attribute__ ((malloc));
 extern void free_event(event_t *);
 extern void event_add(event_t *);
 extern void event_del(event_t *);

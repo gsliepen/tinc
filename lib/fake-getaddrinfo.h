@@ -1,4 +1,4 @@
-/* $Id: fake-getaddrinfo.h,v 1.1.2.1 2002/07/12 11:45:21 guus Exp $ */
+/* $Id: fake-getaddrinfo.h,v 1.1.2.2 2003/07/06 23:16:27 guus Exp $ */
 
 #ifndef _FAKE_GETADDRINFO_H
 #define _FAKE_GETADDRINFO_H
@@ -20,6 +20,10 @@
 # define NI_NUMERICHOST    2
 # define NI_NAMEREQD       4
 # define NI_NUMERICSERV    8
+#endif
+
+#ifndef AI_NUMERICHOST
+#define AI_NUMERICHOST 4
 #endif
 
 #ifndef HAVE_STRUCT_ADDRINFO

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.22 2003/05/06 21:13:18 guus Exp $
+    $Id: node.h,v 1.1.2.23 2003/07/06 23:16:28 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -83,7 +83,7 @@ extern avl_tree_t *node_udp_tree;
 
 extern void init_nodes(void);
 extern void exit_nodes(void);
-extern node_t *new_node(void);
+extern node_t *new_node(void) __attribute__ ((malloc));
 extern void free_node(node_t *);
 extern void node_add(node_t *);
 extern void node_del(node_t *);

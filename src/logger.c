@@ -17,12 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.1 2003/07/06 22:11:31 guus Exp $
+    $Id: logger.c,v 1.1.2.2 2003/07/06 23:16:28 guus Exp $
 */
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "conf.h"
 #include "logger.h"
@@ -30,15 +31,13 @@
 #include "system.h"
 
 volatile int debug_level = DEBUG_NOTHING;
-int logmode = LOGMODE_STDERR;
-pid_t logpid;
+static int logmode = LOGMODE_STDERR;
+static pid_t logpid;
 extern char *logfilename;
-FILE *logfile = NULL;
-const char *logident = NULL;
+static FILE *logfile = NULL;
+static const char *logident = NULL;
 
 void openlogger(const char *ident, int mode) {
-	char *fname;
-
 	logident = ident;
 	logmode = mode;
 	
@@ -65,7 +64,7 @@ void vlogger(int priority, const char *format, va_list ap) {
 			fprintf(stderr, "\n");
 			break;
 		case LOGMODE_FILE:
-			fprintf(logfile, "%d %s[%d]: ", time(NULL), logident, logpid);
+			fprintf(logfile, "%ld %s[%d]: ", time(NULL), logident, logpid);
 			vfprintf(logfile, format, ap);
 			fprintf(logfile, "\n");
 			break;

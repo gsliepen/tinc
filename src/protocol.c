@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.138 2003/07/06 22:11:32 guus Exp $
+    $Id: protocol.c,v 1.28.4.139 2003/07/06 23:16:28 guus Exp $
 */
 
 #include "config.h"
@@ -41,7 +41,28 @@
 
 #include "system.h"
 
-avl_tree_t *past_request_tree;
+/* Jumptable for the request handlers */
+
+static int (*request_handlers[])(connection_t *) = {
+		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
+		status_h, error_h, termreq_h,
+		ping_h, pong_h,
+		add_subnet_h, del_subnet_h,
+		add_edge_h, del_edge_h,
+		key_changed_h, req_key_h, ans_key_h, tcppacket_h,
+};
+
+/* Request names */
+
+static char (*request_name[]) = {
+		"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
+		"STATUS", "ERROR", "TERMREQ",
+		"PING", "PONG",
+		"ADD_SUBNET", "DEL_SUBNET",
+		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
+};
+
+static avl_tree_t *past_request_tree;
 
 int check_id(char *id)
 {
@@ -170,12 +191,12 @@ int receive_request(connection_t *c)
 	return 0;
 }
 
-int past_request_compare(past_request_t *a, past_request_t *b)
+static int past_request_compare(past_request_t *a, past_request_t *b)
 {
 	return strcmp(a->request, b->request);
 }
 
-void free_past_request(past_request_t *r)
+static void free_past_request(past_request_t *r)
 {
 	cp();
 
@@ -241,24 +262,3 @@ void age_past_requests(void)
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, _("Aging past requests: deleted %d, left %d\n"),
 			   deleted, left);
 }
-
-/* Jumptable for the request handlers */
-
-int (*request_handlers[])(connection_t *) = {
-		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
-		status_h, error_h, termreq_h,
-		ping_h, pong_h,
-		add_subnet_h, del_subnet_h,
-		add_edge_h, del_edge_h,
-		key_changed_h, req_key_h, ans_key_h, tcppacket_h,
-};
-
-/* Request names */
-
-char (*request_name[]) = {
-		"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
-		"STATUS", "ERROR", "TERMREQ",
-		"PING", "PONG",
-		"ADD_SUBNET", "DEL_SUBNET",
-		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
-};

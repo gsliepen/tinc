@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.8 2003/07/06 22:11:33 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.9 2003/07/06 23:16:29 guus Exp $
 */
 
 #include "config.h"
@@ -39,6 +39,18 @@
 #include "logger.h"
 
 #include "system.h"
+
+/* Status strings */
+
+static char (*status_text[]) = {
+	"Warning",
+};
+
+/* Error strings */
+
+static char (*error_text[]) = {
+	"Error",
+};
 
 /* Status and error notification routines */
 
@@ -192,15 +204,3 @@ int tcppacket_h(connection_t *c)
 
 	return 0;
 }
-
-/* Status strings */
-
-char (*status_text[]) = {
-	"Warning",
-};
-
-/* Error strings */
-
-char (*error_text[]) = {
-	"Error",
-};

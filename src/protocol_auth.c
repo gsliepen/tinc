@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.21 2003/07/06 22:11:32 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.22 2003/07/06 23:16:29 guus Exp $
 */
 
 #include "config.h"
@@ -481,7 +481,7 @@ int send_ack(connection_t *c)
 	return x;
 }
 
-void send_everything(connection_t *c)
+static void send_everything(connection_t *c)
 {
 	avl_node_t *node, *node2;
 	node_t *n;
