@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.75 2000/11/16 17:54:27 zarq Exp $
+    $Id: net.c,v 1.35.4.76 2000/11/16 22:11:40 zarq Exp $
 */
 
 #include "config.h"
@@ -384,7 +384,6 @@ int setup_tap_fd(void)
   int nfd;
   const char *tapfname;
   config_t const *cfg;
-  struct ifreq ifr;
 
 cp  
   if((cfg = get_config_val(config, config_tapdevice)))
