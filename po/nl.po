@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-03-01 16:10+0100\n"
-"PO-Revision-Date: 2002-03-01 16:10+0100\n"
+"POT-Creation-Date: 2002-03-18 20:20+0100\n"
+"PO-Revision-Date: 2002-03-18 20:20+0100\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
 "MIME-Version: 1.0\n"
@@ -196,12 +196,12 @@ msgstr "%s (%s) antwoordde niet op ping"
 msgid "Timeout from %s (%s) during authentication"
 msgstr "Timeout van %s (%s) tijdens authenticatie"
 
-#: src/net.c:314 src/net_socket.c:254
+#: src/net.c:314 src/net_socket.c:253
 #, c-format
 msgid "Error while connecting to %s (%s): %s"
 msgstr "Fout tijdens schrijven naar %s (%s): %s"
 
-#: src/net.c:378
+#: src/net.c:384
 #, c-format
 msgid "Error while waiting for input: %s"
 msgstr "Fout tijdens wachten op invoer: %s"
@@ -215,107 +215,107 @@ msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
 #: src/net.c:447
-msgid "Rereading configuration file and restarting in 5 seconds"
-msgstr "Herlezen configuratiebestand en herstart in 5 seconden"
+msgid "Rereading configuration file and restarting in 5 seconds..."
+msgstr "Herlezen configuratiebestand en herstarten na 5 seconden..."
 
 #: src/net.c:454
-msgid "Unable to reread configuration file, exiting"
-msgstr "Kan configuratiebestand niet herlezen, beëindigen"
+msgid "Unable to reread configuration file, exitting."
+msgstr "Kan configuratiebestand niet herlezen, beëindigen."
 
-#: src/net_packet.c:106
+#: src/net_packet.c:107
 #, c-format
 msgid "Got unauthenticated packet from %s (%s)"
 msgstr "Kreeg niet-geauthenticeerd pakket van %s (%s)"
 
-#: src/net_packet.c:132
+#: src/net_packet.c:134
 #, c-format
 msgid "Got late or replayed packet from %s (%s), seqno %d"
 msgstr "Kreeg laat of gedupliceerd pakket van %s (%s), seqno %d"
 
-#: src/net_packet.c:149
+#: src/net_packet.c:151
 #, c-format
 msgid "Error while uncompressing packet from %s (%s)"
 msgstr "Fout tijdens decomprimeren pakket van %s (%s)"
 
-#: src/net_packet.c:176
+#: src/net_packet.c:178
 #, c-format
 msgid "Received packet of %d bytes from %s (%s)"
 msgstr "Ontvangst pakket van %d bytes van %s (%s)"
 
-#: src/net_packet.c:199
+#: src/net_packet.c:204
 #, c-format
 msgid "No valid key known yet for %s (%s), queueing packet"
 msgstr ""
 "Nog geen geldige sleutel bekend voor %s (%s), pakket wordt in wachtrij gezet"
 
-#: src/net_packet.c:227
+#: src/net_packet.c:232
 #, c-format
 msgid "Error while compressing packet to %s (%s)"
 msgstr "Fout tijdens comprimeren pakket naar %s (%s)"
 
-#: src/net_packet.c:269
+#: src/net_packet.c:283
 #, c-format
 msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
 #. SO_PRIORITY doesn't seem to work
-#: src/net_packet.c:271 src/net_setup.c:483 src/net_socket.c:99
-#: src/net_socket.c:145 src/net_socket.c:172 src/process.c:258
-#: src/process.c:293
+#: src/net_packet.c:285 src/net_setup.c:483 src/net_socket.c:98
+#: src/net_socket.c:144 src/net_socket.c:171 src/process.c:265
+#: src/process.c:300
 #, c-format
 msgid "System call `%s' failed: %s"
 msgstr "Systeemaanroep `%s' mislukte: %s"
 
-#: src/net_packet.c:277
+#: src/net_packet.c:291
 #, c-format
 msgid "Error sending packet to %s (%s): %s"
 msgstr "Fout tijdens verzenden pakket naar %s (%s): %s"
 
-#: src/net_packet.c:294
+#: src/net_packet.c:308
 #, c-format
 msgid "Sending packet of %d bytes to %s (%s)"
 msgstr "Verzending pakket van %d bytes naar %s (%s)"
 
-#: src/net_packet.c:301
+#: src/net_packet.c:315
 msgid "Packet is looping back to us!"
 msgstr "Pakket komt terug naar ons!"
 
-#: src/net_packet.c:310
+#: src/net_packet.c:324
 #, c-format
 msgid "Node %s (%s) is not reachable"
 msgstr "Node %s (%s) is niet bereikbaar"
 
-#: src/net_packet.c:318
+#: src/net_packet.c:332
 #, c-format
 msgid "Sending packet to %s via %s (%s)"
 msgstr "Verzending pakket naar %s via %s (%s)"
 
-#: src/net_packet.c:338
+#: src/net_packet.c:352
 #, c-format
 msgid "Broadcasting packet of %d bytes from %s (%s)"
 msgstr "Verspreiding pakket van %d bytes van %s (%s)"
 
-#: src/net_packet.c:355
+#: src/net_packet.c:369
 #, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr "Legen van wachtrij voor %s (%s)"
 
-#: src/net_packet.c:377
+#: src/net_packet.c:391
 #, c-format
 msgid "This is a bug: %s:%d: %d:%s"
 msgstr "Dit is een programmeerfout: %s:%d: %d:%s"
 
-#: src/net_packet.c:384
+#: src/net_packet.c:398
 #, c-format
 msgid "Incoming data socket error: %s"
 msgstr "Fout op socket voor inkomend verkeer: %s"
 
-#: src/net_packet.c:390
+#: src/net_packet.c:404
 #, c-format
 msgid "Receiving packet failed: %s"
 msgstr "Ontvangst pakket mislukt: %s"
 
-#: src/net_packet.c:399
+#: src/net_packet.c:415
 #, c-format
 msgid "Received UDP packet from unknown source %s"
 msgstr "Ontvangst UDP pakket van onbekende oorsprong %s"
@@ -406,124 +406,124 @@ msgstr "Onzinnig compressieniveau!"
 msgid "Listening on %s"
 msgstr "Luisterend op %s"
 
-#: src/net_setup.c:508
+#: src/net_setup.c:509
 msgid "Ready"
 msgstr "Gereed"
 
-#: src/net_setup.c:511
+#: src/net_setup.c:512
 msgid "Unable to create any listening socket!"
 msgstr "Kon geen enkele luistersocket aanmaken!"
 
-#: src/net_socket.c:91
+#: src/net_socket.c:90
 #, c-format
 msgid "Creating metasocket failed: %s"
 msgstr "Aanmaak van metasocket mislukt: %s"
 
-#: src/net_socket.c:125 src/net_socket.c:187
+#: src/net_socket.c:124 src/net_socket.c:186
 #, c-format
 msgid "Can't bind to interface %s: %s"
 msgstr "Kan niet aan interface %s binden: %s"
 
-#: src/net_socket.c:129
+#: src/net_socket.c:128
 msgid "BindToDevice not supported on this platform"
 msgstr "BindToDevice wordt niet ondersteund op dit platform"
 
-#: src/net_socket.c:137
+#: src/net_socket.c:136
 #, c-format
 msgid "Can't bind to %s/tcp: %s"
 msgstr "Kan niet aan %s/tcp binden: %s"
 
-#: src/net_socket.c:164
+#: src/net_socket.c:163
 #, c-format
 msgid "Creating UDP socket failed: %s"
 msgstr "Aanmaak UDP socket mislukte: %s"
 
-#: src/net_socket.c:197
+#: src/net_socket.c:196
 #, c-format
 msgid "Can't bind to %s/udp: %s"
 msgstr "Kan niet aan %s/udp binden: %s"
 
-#: src/net_socket.c:220
+#: src/net_socket.c:219
 #, c-format
 msgid "Trying to re-establish outgoing connection in %d seconds"
 msgstr "Poging tot herstellen van uitgaande verbinding over %d seconden"
 
-#: src/net_socket.c:229 src/net_socket.c:324
+#: src/net_socket.c:228 src/net_socket.c:323
 #, c-format
 msgid "Trying to connect to %s (%s)"
 msgstr "Poging tot verbinden met %s (%s)"
 
-#: src/net_socket.c:235 src/net_socket.c:331
+#: src/net_socket.c:234 src/net_socket.c:330
 #, c-format
 msgid "Creating socket for %s failed: %s"
 msgstr "Aanmaken socket voor %s mislukt: %s"
 
-#: src/net_socket.c:259 src/net_socket.c:269
+#: src/net_socket.c:258 src/net_socket.c:268
 #, c-format
 msgid "Connected to %s (%s)"
 msgstr "Verbonden met %s (%s)"
 
-#: src/net_socket.c:288
+#: src/net_socket.c:287
 #, c-format
 msgid "Could not set up a meta connection to %s"
 msgstr "Kon geen metaverbinding aangaan met %s"
 
-#: src/net_socket.c:352
+#: src/net_socket.c:351
 #, c-format
 msgid "fcntl for %s: %s"
 msgstr "fcntl voor %s: %s"
 
-#: src/net_socket.c:370
+#: src/net_socket.c:369
 #, c-format
 msgid "%s: %s"
 msgstr "%s: %s"
 
-#: src/net_socket.c:391
+#: src/net_socket.c:390
 #, c-format
 msgid "Already connected to %s"
 msgstr "Reeds verbonden met %s"
 
-#: src/net_socket.c:410
+#: src/net_socket.c:409
 #, c-format
 msgid "No address specified for %s"
 msgstr "Geen adres gespecificeerd voor %s"
 
-#: src/net_socket.c:437
+#: src/net_socket.c:436
 #, c-format
 msgid "Accepting a new connection failed: %s"
 msgstr "Aanname van nieuwe verbinding is mislukt: %s"
 
-#: src/net_socket.c:453
+#: src/net_socket.c:454
 #, c-format
 msgid "Connection from %s"
 msgstr "Verbinding van %s"
 
-#: src/net_socket.c:475
+#: src/net_socket.c:476
 #, c-format
 msgid "Invalid name for outgoing connection in %s line %d"
 msgstr "Ongeldige naam voor uitgaande verbinding in %s regel %d"
 
-#: src/netutl.c:65 src/netutl.c:88
+#: src/netutl.c:69 src/netutl.c:92
 #, c-format
 msgid "Error looking up %s port %s: %s\n"
 msgstr "Fout bij het opzoeken van %s poort %s: %s\n"
 
-#: src/netutl.c:109
+#: src/netutl.c:113
 #, c-format
 msgid "Error while translating addresses: %s"
 msgstr "Fout tijdens vertalen adressen: %s"
 
-#: src/netutl.c:134
+#: src/netutl.c:138
 #, c-format
 msgid "Error while looking up hostname: %s"
 msgstr "Fout bij het opzoeken van hostnaam: %s"
 
-#: src/netutl.c:137
+#: src/netutl.c:141
 #, c-format
 msgid "%s port %s"
 msgstr "%s poort %s"
 
-#: src/netutl.c:166
+#: src/netutl.c:170
 #, c-format
 msgid "sockaddrcmp() was called with unknown address family %d, exitting!"
 msgstr ""
@@ -760,27 +760,27 @@ msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in de node boom"
 msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in zijn subnet boom"
 
-#: src/subnet.c:103
+#: src/subnet.c:99
 #, c-format
 msgid "subnet_compare() was called with unknown subnet type %d, exitting!"
 msgstr ""
 "subnet_compare() werd aangeroepen met onbekend subnet type %d, beëindigen!"
 
-#: src/subnet.c:289
+#: src/subnet.c:274
 #, c-format
 msgid "net2str() was called with unknown subnet type %d, exitting!"
 msgstr "net2str() werd aangeroepen met onbekend subnet type %d, beëindigen!"
 
-#: src/subnet.c:415
+#: src/subnet.c:384
 msgid "Subnet list:"
 msgstr "Subnet lijst:"
 
-#: src/subnet.c:420
+#: src/subnet.c:389
 #, c-format
 msgid " %s owner %s"
 msgstr " %s eigenaar %s"
 
-#: src/subnet.c:423
+#: src/subnet.c:392
 msgid "End of subnet list."
 msgstr "Einde van subnet lijst."
 
@@ -831,7 +831,15 @@ msgstr ""
 "Meld fouten in het programma aan tinc@nl.linux.org;\n"
 "Meld fouten in de vertaling aan vertaling@nl.linux.org.\n"
 
-#: src/tincd.c:155
+#: src/tincd.c:166
+#, c-format
+msgid ""
+"Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, "
+"USR1, USR2, WINCH, INT or ALRM.\n"
+msgstr "Ongeldig argument `%s'; SIGNAAL moet een getal zijn of één van HUP, TERM, KILL, "
+"USR1, USR2, WINCH, INT of ALRM.\n"
+
+#: src/tincd.c:184
 #, c-format
 msgid ""
 "Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"
@@ -839,24 +847,24 @@ msgstr ""
 "Ongeldig argument `%s'; BITS moet een nummer zijn gelijk aan of groter dan "
 "512.\n"
 
-#: src/tincd.c:216
+#: src/tincd.c:245
 #, c-format
 msgid "Generating %d bits keys:\n"
 msgstr "Bezig met genereren van een %d bits sleutel:\n"
 
-#: src/tincd.c:221
+#: src/tincd.c:250
 msgid "Error during key generation!\n"
 msgstr "Fout tijdens genereren sleutel!\n"
 
-#: src/tincd.c:225
+#: src/tincd.c:254
 msgid "Done.\n"
 msgstr "Klaar.\n"
 
-#: src/tincd.c:234
+#: src/tincd.c:263
 msgid "public RSA key"
 msgstr "openbare RSA sleutel"
 
-#: src/tincd.c:238 src/tincd.c:249
+#: src/tincd.c:267 src/tincd.c:278
 msgid ""
 "Appending key to existing contents.\n"
 "Make sure only one key is stored in the file.\n"
@@ -864,21 +872,21 @@ msgstr ""
 "Sleutel wordt toegevoegd aan bestaande inhoud.\n"
 "Let er op dat er slechts één sleutel in het bestand is.\n"
 
-#: src/tincd.c:245
+#: src/tincd.c:274
 msgid "private RSA key"
 msgstr "geheime RSA sleutel"
 
-#: src/tincd.c:270
+#: src/tincd.c:299
 msgid "Both netname and configuration directory given, using the latter..."
 msgstr ""
 "Zowel netnaam als configuratiemap zijn gegeven, laatste wordt gebruikt..."
 
-#: src/tincd.c:299
+#: src/tincd.c:328
 #, c-format
 msgid "%s version %s (built %s %s, protocol %d)\n"
 msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 
-#: src/tincd.c:300
+#: src/tincd.c:329
 msgid ""
 "Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
@@ -895,26 +903,22 @@ msgstr ""
 "en je bent welkom om het te distribueren onder bepaalde voorwaarden;\n"
 "zie het bestand COPYING voor details.\n"
 
-#: src/tincd.c:314
-msgid "You must be root to run this program.\n"
-msgstr "Je moet systeembeheerder zijn om dit programma te kunnen draaien.\n"
-
-#: src/tincd.c:363
+#: src/tincd.c:386
 msgid "Unrecoverable error"
 msgstr "Onherstelbare fout"
 
-#: src/tincd.c:368
+#: src/tincd.c:391
 #, c-format
 msgid "Restarting in %d seconds!"
 msgstr "Herstart in %d seconden!"
 
-#: src/process.c:356 src/tincd.c:373
+#: src/process.c:363 src/tincd.c:396
 msgid "Not restarting."
 msgstr "Geen herstart."
 
 #: src/process.c:68
 #, c-format
-msgid "Memory exhausted (couldn't allocate %d bytes), exiting."
+msgid "Memory exhausted (couldn't allocate %d bytes), exitting."
 msgstr "Geheugen uitgeput (kon geen %d bytes reserveren), beëindigen."
 
 #: src/process.c:98
@@ -940,75 +944,86 @@ msgstr "Geen andere tincd draait voor net `%s'.\n"
 msgid "No other tincd is running.\n"
 msgstr "Geen andere tincd draait.\n"
 
-#: src/process.c:147
+#: src/process.c:149
+#, c-format
+msgid "The tincd for net `%s' is no longer running. "
+msgstr "De tincd voor net `%s' draait niet meer. "
+
+#: src/process.c:151
+msgid "The tincd is no longer running. "
+msgstr "De tincd draait niet meer. "
+
+#: src/process.c:153
 msgid "Removing stale lock file.\n"
 msgstr "Verwijdering oud vergrendelingsbestand.\n"
 
-#: src/process.c:174
+#: src/process.c:181
 #, c-format
 msgid "Couldn't detach from terminal: %s"
 msgstr "Kon niet ontkoppelen van terminal: %s"
 
-#: src/process.c:187
+#: src/process.c:194
 #, c-format
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) start, debug niveau %d"
 
-#: src/process.c:190
+#: src/process.c:197
 #, c-format
 msgid "tincd %s starting"
 msgstr "tincd %s wordt gestart"
 
-#: src/process.c:265
+#: src/process.c:272
 #, c-format
 msgid "Executing script %s"
 msgstr "Uitvoeren script %s"
 
-#: src/process.c:273
+#: src/process.c:280
 #, c-format
 msgid "Process %d (%s) exited with non-zero status %d"
 msgstr "Proces %d (%s) beëindigde met status %d"
 
-#: src/process.c:281
+#: src/process.c:288
 #, c-format
 msgid "Process %d (%s) was killed by signal %d (%s)"
 msgstr "Proces %d (%s) was gestopt door signaal %d (%s)"
 
-#: src/process.c:287
+#: src/process.c:294
 #, c-format
 msgid "Process %d (%s) terminated abnormally"
 msgstr "Proces %d (%s) abnormaal beëindigd"
 
-#: src/process.c:312
+#: src/process.c:319
 msgid "Got TERM signal"
 msgstr "Kreeg TERM signaal"
 
-#: src/process.c:321
+#: src/process.c:328
 msgid "Got QUIT signal"
 msgstr "Kreeg QUIT signaal"
 
-#: src/process.c:328
-msgid "Got another SEGV signal: not restarting"
-msgstr "Kreeg nog een SEGV signaal: geen herstart"
+#: src/process.c:335
+#, c-format
+msgid "Got another fatal signal %d (%s): not restarting."
+msgstr "Kreeg nog een fataal signaal %s (%s): geen herstart."
 
-#: src/process.c:337
-msgid "Got SEGV signal"
-msgstr "Kreeg SEGV signaal"
+#: src/process.c:344
+#, c-format
+msgid "Got fatal signal %d (%s)"
+msgstr "Kreeg fataal signaal %d (%s)"
 
-#: src/process.c:342
+#: src/process.c:349
 msgid "Trying to re-execute in 5 seconds..."
 msgstr "Poging tot herstarten over 5 seconden..."
 
-#: src/process.c:365
+#: src/process.c:372
 msgid "Got HUP signal"
 msgstr "Kreeg HUP signaal"
 
-#: src/process.c:374
+#: src/process.c:381
 #, c-format
 msgid "Reverting to old debug level (%d)"
 msgstr "Herstellen van oud debug niveau (%d)"
 
-#: src/process.c:381
+#: src/process.c:388
 #, c-format
 msgid ""
 "Temporarily setting debug level to 5.  Kill me with SIGINT again to go back "
@@ -1017,41 +1032,41 @@ msgstr ""
 "Tijdelijk instellen debug niveau op 5. Zend nog een SIGINT signaal om niveau "
 "%d te herstellen."
 
-#: src/process.c:392
+#: src/process.c:399
 msgid "Got ALRM signal"
 msgstr "Kreeg ALRM signaal"
 
-#: src/process.c:421
+#: src/process.c:428
 #, c-format
 msgid "Got unexpected signal %d (%s)"
 msgstr "Kreeg onverwacht signaal %d (%s)"
 
-#: src/process.c:430
+#: src/process.c:437
 #, c-format
 msgid "Ignored signal %d (%s)"
 msgstr "Signaal %d (%s) genegeerd"
 
-#: src/process.c:485
+#: src/process.c:494
 #, c-format
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
 
-#: src/route.c:71
+#: src/route.c:77
 #, c-format
 msgid "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"
 msgstr "Nieuw MAC adres %hx:%hx:%hx:%hx:%hx:%hx geleerd"
 
-#: src/route.c:105
+#: src/route.c:111
 #, c-format
 msgid "MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"
 msgstr "MAC adres %hx:%hx:%hx:%hx:%hx:%hx verlopen"
 
-#: src/route.c:150
+#: src/route.c:156
 #, c-format
 msgid "Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: onbekend IPv4 doeladres %d.%d.%d.%d"
 
-#: src/route.c:170
+#: src/route.c:176
 #, c-format
 msgid ""
 "Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%"
@@ -1060,16 +1075,34 @@ msgstr ""
 "Kan pakket niet routeren: onbekend IPv6 doeladres %hx:%hx:%hx:%hx:%hx:%hx:%"
 "hx:%hx"
 
-#: src/route.c:214
+#: src/route.c:237
+msgid ""
+"Cannot route packet: received unknown type neighbor solicitation request"
+msgstr "Kan pakket niet routeren: ontvangst van onbekend type neighbor solicitation verzoek"
+
+#: src/route.c:258
+msgid "Cannot route packet: checksum error for neighbor solicitation request"
+msgstr "Kan pakket niet routeren: checksum fout voor neighbor solicitation verzoek"
+
+#: src/route.c:270
+#, c-format
+msgid ""
+"Cannot route packet: neighbor solicitation request for unknown address %hx:%"
+"hx:%hx:%hx:%hx:%hx:%hx:%hx"
+msgstr ""
+"Kan pakket niet routeren: neighbor solicitation verzoek voor onbekend adres "
+"%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"
+
+#: src/route.c:345
 msgid "Cannot route packet: received unknown type ARP request"
 msgstr "Kan pakket niet routeren: ontvangst van onbekend type ARP verzoek"
 
-#: src/route.c:227
+#: src/route.c:358
 #, c-format
 msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 
-#: src/route.c:279
+#: src/route.c:415
 #, c-format
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"
@@ -1104,12 +1137,12 @@ msgstr " %s tcp op %s udp op %s - %s tcp op %s udp op %s opties %ld gewicht %d"
 msgid "End of edges."
 msgstr "Einde van edges."
 
-#: src/graph.c:222
+#: src/graph.c:231
 #, c-format
 msgid "Node %s (%s) became reachable"
 msgstr "Node %s (%s) werd bereikbaar"
 
-#: src/graph.c:231
+#: src/graph.c:240
 #, c-format
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"
@@ -1231,3 +1264,9 @@ msgstr "NetBSD tun apparaat"
 #: src/openbsd/device.c:88
 msgid "OpenBSD tun device"
 msgstr "OpenBSD tun apparaat"
+
+#~ msgid "You must be root to run this program.\n"
+#~ msgstr "Je moet systeembeheerder zijn om dit programma te kunnen draaien.\n"
+
+#~ msgid "Got SEGV signal"
+#~ msgstr "Kreeg SEGV signaal"
