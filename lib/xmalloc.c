@@ -87,8 +87,6 @@ xmalloc (n)
      size_t n;
 {
   void *p;
-  extern char*cp_file;
-  extern int cp_line;
 
   p = malloc (n);
   if (p == 0)
