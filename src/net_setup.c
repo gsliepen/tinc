@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.1 2002/02/18 16:25:16 guus Exp $
+    $Id: net_setup.c,v 1.1.2.2 2002/02/20 16:04:39 guus Exp $
 */
 
 #include "config.h"
@@ -454,7 +454,7 @@ cp
 cp
   /* Open sockets */
   
-  hint.ai_family = (addressfamily == AF_UNSPEC)?AF_INET6:addressfamily;
+  hint.ai_family = addressfamily;
   hint.ai_socktype = SOCK_STREAM;
   hint.ai_protocol = IPPROTO_TCP;
   hint.ai_flags = AI_PASSIVE;
@@ -468,6 +468,19 @@ cp
   if((tcp_socket = setup_listen_socket((sockaddr_t *)ai->ai_addr)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
+      return -1;
+    }
+
+  freeaddrinfo(ai);
+
+  hint.ai_family = addressfamily;
+  hint.ai_socktype = SOCK_DGRAM;
+  hint.ai_protocol = IPPROTO_UDP;
+  hint.ai_flags = AI_PASSIVE;
+
+  if(getaddrinfo(NULL, myport, &hint, &ai) || !ai)
+    {
+      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", strerror(errno));
       return -1;
     }
 
