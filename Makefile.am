@@ -6,7 +6,7 @@ SUBDIRS = m4 intl lib src doc po redhat debian
 
 ACLOCAL_AMFLAGS =
 
-EXTRA_DIST = system.h ABOUT-NLS COPYING.README
+EXTRA_DIST = system.h ABOUT-NLS COPYING.README autogen.sh
 
 CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
