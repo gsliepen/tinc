@@ -10,7 +10,7 @@ EXTRA_DIST = system.h ABOUT-NLS COPYING.README
 
 CVS_CREATED = configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
- stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in.in \
+ stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in \
  po/tinc.pot src/.libs intl
 
 ChangeLog:
