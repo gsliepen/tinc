@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.42 2003/08/08 22:11:54 guus Exp $
+    $Id: net_setup.c,v 1.1.2.43 2003/08/14 14:21:35 guus Exp $
 */
 
 #include "system.h"
@@ -182,7 +182,7 @@ bool read_rsa_private_key(void)
 		return false;
 	}
 
-	if(s.st_mode & ~0700)
+	if(s.st_mode & ~0100700)
 		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
 #endif
 
