@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.71 2003/08/10 13:35:05 guus Exp $
+    $Id: process.c,v 1.1.2.72 2003/08/16 12:11:11 guus Exp $
 */
 
 #include "system.h"
@@ -93,12 +93,17 @@ bool install_service(void) {
 		return false;
 	}
 
+	strncat(command, "\"", sizeof(command));
+
 	if(!strchr(program_name, '\\')) {
 		GetCurrentDirectory(sizeof(command), command);
 		strncat(command, "\\", sizeof(command));
 	}
 
 	strncat(command, program_name, sizeof(command));
+
+	strncat(command, "\"", sizeof(command));
+
 	for(argp = g_argv + 1; *argp; argp++) {
 		space = strchr(*argp, ' ');
 		strncat(command, " ", sizeof(command));
@@ -362,24 +367,28 @@ bool detach(void)
 bool execute_script(const char *name, char **envp)
 {
 #ifdef HAVE_SYSTEM
-	int status;
+	int status, len;
 	struct stat s;
 	char *scriptname;
 
 	cp();
 
 #ifndef HAVE_MINGW
-	asprintf(&scriptname, "%s/%s", confbase, name);
+	len = asprintf(&scriptname, "\"%s/%s\"", confbase, name);
+#else
+	len = asprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
+#endif
+	if(len < 0)
+		return false;
+
+	scriptname[len - 1] = '\0';
 
 	/* First check if there is a script */
 
-	if(stat(scriptname, &s))
+	if(stat(scriptname + 1, &s))
 		return true;
 
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
-
-	free(scriptname);
-#endif
 
 #ifdef HAVE_PUTENV
 	/* Set environment */
@@ -388,7 +397,7 @@ bool execute_script(const char *name, char **envp)
 		putenv(*envp++);
 #endif
 
-	asprintf(&scriptname, "\"%s/%s\"", confbase, name);
+	scriptname[len - 1] = '\"';
 	status = system(scriptname);
 
 	free(scriptname);
