@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.24 2002/09/15 14:55:53 guus Exp $
+    $Id: net_packet.c,v 1.1.2.25 2002/11/14 22:09:03 guus Exp $
 */
 
 #include "config.h"
@@ -295,7 +295,7 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		if(debug_lvl >= DEBUG_TRAFFIC)
 			syslog(LOG_DEBUG, _("Setting outgoing packet priority to %d"),
 				   priority);
-		if(setsockopt(sock, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
+		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
 			syslog(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt",
 				   strerror(errno));
 	}
