@@ -1,4 +1,16 @@
-version 1.0pre4              UNRELEASED
+version 1.0pre4              Jan 17 2000
+
+* Updated documentation; the documentation now reflects the
+  configuration as it is.
+
+* Some internal changes to make tinc scale better for large
+  networks, such as using AVL trees instead of linked lists for the
+  connection list.  
+
+* RSA keys can be stored in separate files if needed.  See the
+  documentation for more information.
+
+* tinc has now been reported to run on Linux PowerPC and FreeBSD x86.
 
 
 
