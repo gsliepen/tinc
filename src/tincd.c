@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.86 2003/08/17 09:03:30 guus Exp $
+    $Id: tincd.c,v 1.10.4.87 2003/09/08 21:52:47 guus Exp $
 */
 
 #include "system.h"
@@ -506,5 +506,10 @@ int main2(int argc, char **argv)
 		dump_device_stats();
 
 	logger(LOG_NOTICE, _("Terminating"));
+
+#ifndef HAVE_MINGW
+	remove_pid(pidfilename);
+#endif
+	
 	return status;
 }
