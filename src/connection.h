@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.27 2002/06/21 10:11:12 guus Exp $
+    $Id: connection.h,v 1.1.2.28 2002/09/03 20:43:24 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -44,7 +44,6 @@
 #include "conf.h"
 
 #include "node.h"
-#include "edge.h"
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
@@ -66,18 +65,19 @@ typedef struct connection_t {
   char *name;                      /* name he claims to have */
 
   sockaddr_t address;              /* his real (internet) ip */
+  sockaddr_t myaddress;            /* our own address as seen by him */
+
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
 
   int socket;                      /* socket used for this connection */
   long int options;                /* options for this connection */
   struct connection_status_t status; /* status info */
-  int estimated_weight;            /* estimation for the weight of the edge for this connection */
+  int estimated_weight;            /* estimation for the weight for this connection */
   struct timeval start;            /* time this connection was started, used for above estimation */
   struct outgoing_t *outgoing;     /* used to keep track of outgoing connections */
 
   struct node_t *node;             /* node associated with the other end */
-  struct edge_t *edge;             /* edge associated with this connection */
 
   RSA *rsa_key;                    /* his public/private key */
   const EVP_CIPHER *incipher;      /* Cipher he will use to send data to us */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.4 2002/06/21 10:11:19 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.5 2002/09/03 20:43:26 guus Exp $
 */
 
 #include "config.h"
@@ -40,8 +40,6 @@
 #include "meta.h"
 #include "connection.h"
 #include "node.h"
-#include "edge.h"
-#include "graph.h"
 
 #include "system.h"
 

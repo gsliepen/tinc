@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.21 2002/07/10 11:27:06 guus Exp $
+    $Id: net_setup.c,v 1.1.2.22 2002/09/03 20:43:25 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,6 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
-#include "graph.h"
 #include "process.h"
 #include "route.h"
 #include "device.h"
@@ -464,8 +463,6 @@ cp
   myself->status.reachable = 1;
   node_add(myself);
 
-  graph();
-
 cp
   /* Open sockets */
   
@@ -531,7 +528,6 @@ cp
   init_connections();
   init_subnets();
   init_nodes();
-  init_edges();
   init_events();
   init_requests();
 
@@ -597,7 +593,6 @@ cp
 
   exit_requests();
   exit_events();
-  exit_edges();
   exit_subnets();
   exit_nodes();
   exit_connections();

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_node.c,v 1.1.4.1 2002/09/02 22:40:42 guus Exp $
+    $Id: protocol_node.c,v 1.1.4.2 2002/09/03 20:43:25 guus Exp $
 */
 
 #include "config.h"
@@ -48,10 +48,13 @@ int send_add_node(connection_t *c, node_t *n)
   int x;
   char *address, *port;
 cp
+  if(!n->status.reachable)
+    return 0;
+
   sockaddr2str(&n->address, &address, &port);
   x = send_request(c, "%d %s %s %s %lx %d", ADD_NODE,
                       n->name, address, port,
-		      n->options, n->distance + 1);
+		      n->options, n->distance + 1); // Alternatively, use n->distance + c->estimated_weight
   free(address);
   free(port);
 cp
@@ -84,6 +87,11 @@ cp
       return -1;
     }
 
+  /* This node is indirect if it's nexthop is as well */
+  
+  if(c->node->options & OPTION_INDIRECT)
+    options |= OPTION_INDIRECT;
+
   /* Lookup nodes */
 
   n = lookup_node(name);
@@ -97,20 +105,27 @@ cp
       n->hostname = sockaddr2hostname(&n->address);
       n->options = options;
       n->distance = distance;
-      n->nexthop = c->node;
+      n->via = n->nexthop = c->node;
+      n->status.reachable = 1;
       node_add(n);
     }
   else
     {
       // If this ADD_NODE is closer or more direct, use it instead of the old one.
-      if((n->options & OPTION_INDIRECT) && !(options & OPTION_INDIRECT) || n->distance > distance)
+      if(((n->options & OPTION_INDIRECT) && !(options & OPTION_INDIRECT)) || n->distance > distance)
         {
-          free(n->hostname);
+          avl_node_t *node = avl_unlink(node_udp_tree, n);
           n->address = str2sockaddr(address, port);
+          avl_insert_node(node_udp_tree, node);
+          if(n->hostname)
+            free(n->hostname);
           n->hostname = sockaddr2hostname(&n->address);
           n->options = options;
           n->distance = distance;
-          n->nexthop = c->node;
+          n->via = n->nexthop = c->node;
+          n->status.reachable = 1;
+          n->status.validkey = 0;
+          n->status.waitingforkey = 0;
         }
       else
         // Otherwise, just ignore it.
@@ -185,11 +200,10 @@ cp
         send_del_node(other, n);
     }
 
-  /* Delete the node */
+  /* "Delete" the node */
   
-  node_del(n);
-
-  exit:
+  n->status.reachable = 0;
+  n->status.validkey = 0;
 cp
   return 0;
 }
