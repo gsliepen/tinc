@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.12 2003/07/29 11:06:23 guus Exp $
+    $Id: device.c,v 1.1.2.13 2003/07/29 12:18:35 guus Exp $
 */
 
 #include "system.h"
@@ -95,6 +95,18 @@ bool setup_device(void)
 		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
 			break;
 
+		/* Find out more about this adapter */
+
+		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", REG_CONTROL_NET, adapterid);
+
+                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+			continue;
+
+		len = sizeof(adaptername);
+		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
+
+		RegCloseKey(key2);
+
 		if(device) {
 			if(!strcmp(device, adapterid)) {
 				found = true;
@@ -102,18 +114,6 @@ bool setup_device(void)
 			} else
 				continue;
 		}
-
-		/* Find out more about this adapter */
-
-		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", REG_CONTROL_NET, adapterid);
-
-                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2)) {
-			logger(LOG_ERR, _("Unable to read registry"));
-			return false;
-		}
-
-		len = sizeof(adaptername);
-		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
 		if(iface) {
 			if(!strcmp(iface, adaptername)) {
@@ -131,6 +131,8 @@ bool setup_device(void)
 			break;
 		}
 	}
+
+	RegCloseKey(key);
 
 	if(!found) {
 		logger(LOG_ERR, _("No Windows tap device found!"));
@@ -164,7 +166,7 @@ bool setup_device(void)
 
 	/* Get MAC address from tap device */
 
-	if(DeviceIoControl(device_fd, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
+	if(!DeviceIoControl(handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
 		logger(LOG_ERR, _("Could not get MAC address from Windows tap device!"));
 		return false;
 	}
@@ -187,9 +189,11 @@ bool setup_device(void)
 		   It passes everything it reads to the socket. */
 	
 		char buf[MTU];
-		int lenin;
+		long lenin;
 
-		handle = CreateFile(tapname, GENERIC_READ,  FILE_SHARE_WRITE,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
+		CloseHandle(handle);
+
+		handle = CreateFile(tapname, GENERIC_READ, FILE_SHARE_WRITE, 0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
 
 		if(handle == INVALID_HANDLE_VALUE) {
 			logger(LOG_ERR, _("Could not open Windows tap device for reading!"));
@@ -208,7 +212,7 @@ bool setup_device(void)
 		/* Pass packets */
 
 		for(;;) {
-			ReadFile (handle, buf, MTU, &lenin, NULL);
+			ReadFile(handle, buf, MTU, &lenin, NULL);
 			write(sp[1], buf, lenin);
 		}
 	}
@@ -219,14 +223,11 @@ bool setup_device(void)
 		return false;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = device;
-
 	device_info = _("Windows tap device");
 
 	logger(LOG_INFO, _("%s (%s) is a %s"), device, iface, device_info);
 
-	return false;
+	return true;
 }
 
 void close_device(void)
@@ -264,7 +265,7 @@ bool read_packet(vpn_packet_t *packet)
 
 bool write_packet(vpn_packet_t *packet)
 {
-	int lenout;
+	long lenout;
 
 	cp();
 
