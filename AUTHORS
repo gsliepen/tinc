@@ -1,7 +1,6 @@
 Main tinc authors:
 Guus Sliepen <guus@sliepen.warande.net>
-Ivo Timmermans <zarq@iname.com>
-Robert van der Meulen <emphyrio@null.net>
+Ivo Timmermans <itimmermans@bigfoot.com>
 
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from
