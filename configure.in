@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.18 2000/11/13 22:29:22 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.19 2000/11/20 18:05:34 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre4-cvs)
@@ -27,13 +27,15 @@ AC_PROG_MAKE_SET
 jm_PERL
 AM_PROG_LIBTOOL
 
+
 AC_ISC_POSIX
 
 dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h sys/ioctl.h syslog.h unistd.h sys/time.h)
+AC_CHECK_HEADERS([fcntl.h limits.h sys/ioctl.h syslog.h unistd.h \
+sys/time.h malloc.h strings.h sys/file.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -46,7 +48,8 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(ftime socket select strtol strerror flock unsetenv asprintf)
+AC_CHECK_FUNCS([ftime socket select strtol strerror flock unsetenv \
+asprintf putenv strdup])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
@@ -76,9 +79,11 @@ tinc_TUNTAP
 
 dnl Check if checkpoint tracing has to be enabled
 AC_ARG_ENABLE(tracing,
-  [  --enable-tracing   enable checkpoint tracing (for debugging purposes only)],
+  [  --enable-tracing        enable checkpoint tracing (debugging only)],
   [ AC_DEFINE(ENABLE_TRACING) ]
 )
+
+AC_SUBST(INCLUDES)
 
 AC_OUTPUT([Makefile src/Makefile
 doc/Makefile doc/es/Makefile intl/Makefile lib/Makefile
