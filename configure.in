@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.48 2002/06/09 15:26:10 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.49 2002/06/09 15:58:05 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -64,6 +64,13 @@ case $host_os in
 esac
 
 AC_CACHE_SAVE
+
+if test -d /sw/include ; then
+  CPPFLAGS="$CPPFLAGS -I/sw/include"
+fi
+if test -d /sw/lib ; then
+  LIBS="$LIBS -L/sw/lib"
+fi
 
 dnl Checks for libraries.
 
