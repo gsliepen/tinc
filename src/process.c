@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.6 2000/11/20 22:13:12 guus Exp $
+    $Id: process.c,v 1.1.2.7 2000/11/20 23:29:47 guus Exp $
 */
 
 #include "config.h"
@@ -252,12 +252,10 @@ cp
 	     "fork");
       return -1;
     }
-cp
+
   if(pid)
     {
-      syslog(LOG_DEBUG, "%p, %d (%p)", child_pids, pid, &pid);
       list_append(child_pids, &pid);
-cp
       return 0;
     }
 cp

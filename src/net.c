@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.79 2000/11/20 22:13:03 guus Exp $
+    $Id: net.c,v 1.35.4.80 2000/11/20 23:29:46 guus Exp $
 */
 
 #include "config.h"
@@ -1115,7 +1115,6 @@ void terminate_connection(connection_t *cl)
   connection_t *p;
   subnet_t *subnet;
   rbl_t *rbl;
-
 cp
   if(cl->status.remove)
     return;
@@ -1131,7 +1130,6 @@ cp
   if(cl->status.meta)
     close(cl->meta_socket);
 
-cp
   /* Find all connections that were lost because they were behind cl
      (the connection that was dropped). */
 
