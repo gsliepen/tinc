@@ -851,21 +851,22 @@ cp
       if(p->status.active && p->status.meta)
 	{
           if(p->last_ping_time + timeout < now)
-            if(p->status.pinged && !p->status.got_pong)
-              {
-	        syslog(LOG_INFO, "%s (" IP_ADDR_S ") didn't respond to ping",
-		       p->hostname, IP_ADDR_V(p->vpn_ip));
-	        p->status.timeout = 1;
-	        terminate_connection(p);
-              }
-            else if(p->want_ping)
-              {
-                send_ping(p);
-                p->last_ping_time = now;
-                p->status.pinged = 1;
-                p->status.get_pong = 0;
-              }
-          }
+            {
+              if(p->status.pinged && !p->status.got_pong)
+                {
+	          syslog(LOG_INFO, "%s (" IP_ADDR_S ") didn't respond to ping",
+		         p->hostname, IP_ADDR_V(p->vpn_ip));
+	          p->status.timeout = 1;
+	          terminate_connection(p);
+                }
+              else if(p->want_ping)
+                {
+                  send_ping(p);
+                  p->last_ping_time = now;
+                  p->status.pinged = 1;
+                  p->status.got_pong = 0;
+                }
+            }
 	}
     }
 cp
