@@ -40,7 +40,7 @@ msgstr "Ongeldig wachtwoord in %s; grootte zou %d zijn"
 
 #: src/encr.c:153
 msgid "Generating %d bits keys"
-msgstr "%d bits sleutel genereren."
+msgstr "%d bits sleutel genereren"
 
 #: src/encr.c:157
 msgid "Opening /dev/urandom failed: %m"
@@ -85,7 +85,7 @@ msgstr ": klaar.\n"
 
 #: src/net.c:107
 msgid "Sending packet of %d bytes to "
-msgstr "%d bytes verzonden naar %lx"
+msgstr "Verzending pakket van %d bytes naar "
 
 #: src/net.c:107 src/net.c:133 src/net.c:347 src/net.c:900 src/net.c:1088
 #: src/net.c:1095 src/net.c:1102 src/protocol.c:54 src/protocol.c:72
@@ -104,15 +104,15 @@ msgstr " (%s)"
 
 #: src/net.c:112
 msgid "Error sending packet to "
-msgstr "Fout bij verzenden van gegevens: %m"
+msgstr "Fout tijdens verzenden pakket naar "
 
 #: src/net.c:112
 msgid " (%s): %m"
-msgstr ":%d: %m"
+msgstr " (%s): %m"
 
 #: src/net.c:133
 msgid "Receiving packet of %d bytes from "
-msgstr "Sleutel ontvangen van "
+msgstr "Ontvangst pakket van %d bytes van "
 
 #: src/net.c:137
 msgid "Can't write to tap device: %m"
@@ -120,11 +120,11 @@ msgstr "Kan niet naar tap apparaat schrijven: %m"
 
 #: src/net.c:240
 msgid "Queue flushed"
-msgstr "wachtrij leeggemaakt"
+msgstr "Wachtrij leeggemaakt"
 
 #: src/net.c:255
 msgid "Flushing send queue for "
-msgstr "Legen van verzend-wachtrij naar "
+msgstr "Legen van verzend-wachtrij voor "
 
 #: src/net.c:263
 msgid "Flushing receive queue for "
@@ -164,11 +164,11 @@ msgstr "Kon geen UDP verbinding openen naar "
 
 #: src/net.c:354
 msgid " (%s) has no valid key, queueing packet"
-msgstr " is niet gereed, pakket wordt in de wachtrij gezet."
+msgstr " (%s) heeft geen geldige sleutel, pakket wordt in de wachtrij gezet."
 
 #: src/net.c:364
 msgid " (%s) is not ready, queueing packet"
-msgstr " is niet gereed, pakket wordt in de wachtrij gezet."
+msgstr " (%s) is niet gereed, pakket wordt in de wachtrij gezet."
 
 #: src/net.c:411
 msgid "Creating metasocket failed: %m"
@@ -200,7 +200,7 @@ msgstr "Kan niet aan poort %hd/udp binden: %m"
 
 #: src/net.c:501
 msgid "Trying to connect to %s"
-msgstr "Beëindigen verbinding met %s."
+msgstr "Poging tot verbinding met %s"
 
 #: src/net.c:521
 msgid ":%d: %m"
@@ -208,15 +208,15 @@ msgstr ":%d: %m"
 
 #: src/net.c:532
 msgid "Connected to "
-msgstr "Verbinden naar "
+msgstr "Verbonden met "
 
 #: src/net.c:532
 msgid ":%hd"
-msgstr ",%hd) ontvangen"
+msgstr ":%hd"
 
 #: src/net.c:555
 msgid "Could not set up a meta connection to %s"
-msgstr "Kon geen metaverbinding aangaan."
+msgstr "Kon geen metaverbinding aangaan met %s"
 
 #: src/net.c:580
 msgid "No value for my VPN IP given"
@@ -232,19 +232,19 @@ msgstr "Kon geen socket maken voor inkomend vpn verkeer"
 
 #: src/net.c:613
 msgid "Ready: listening on port %d"
-msgstr "Gereed: luister op poort %d."
+msgstr "Gereed: luisterend op poort %d"
 
 #: src/net.c:641
 msgid "Still failed to connect to other, will retry in %d seconds"
-msgstr "Wederom niet verbonden met de ander. Nieuwe poging over %d seconden."
+msgstr "Wederom niet verbonden met de ander, nieuwe poging over %d seconden"
 
 #: src/net.c:679
 msgid "Trying to re-establish outgoing connection in 5 minutes"
-msgstr "Poging tot herstellen van uitgaande verbinding over 5 minuten."
+msgstr "Poging tot herstellen van uitgaande verbinding over 5 minuten"
 
 #: src/net.c:716
 msgid "Terminating"
-msgstr "Beëindigen."
+msgstr "Beëindigen"
 
 #: src/net.c:730
 msgid "Opening UDP socket to %s"
@@ -252,11 +252,11 @@ msgstr "Bezig met openen UDP socket naar %s"
 
 #: src/net.c:735
 msgid "Creating UDP socket failed: %m"
-msgstr "Aanmaak socket mislukte: %m"
+msgstr "Aanmaak UDP socket mislukte: %m"
 
 #: src/net.c:745
 msgid "Connecting to %s port %d failed: %m"
-msgstr "Aanmaak datasocket mislukt: %m"
+msgstr "Verbinding naar %s poort %d mislukt: %m"
 
 #: src/net.c:753 src/net.c:839 src/net.c:1037
 msgid "This is a bug: %s:%d: %d:%m"
@@ -268,7 +268,7 @@ msgstr "Fout: getpeername: %m"
 
 #: src/net.c:790
 msgid "Connection from %s port %d"
-msgstr "Verbinding van %s:%d"
+msgstr "Verbinding van %s poort %d"
 
 #: src/net.c:844
 msgid "Incoming data socket error: %s"
@@ -276,7 +276,7 @@ msgstr "Fout op socket voor inkomend verkeer: %s"
 
 #: src/net.c:852
 msgid "Receiving packet from %s failed: %m"
-msgstr "Ontvangen van data mislukt: %m"
+msgstr "Ontvangst pakket van %s mislukt: %m"
 
 #: src/net.c:866
 msgid "Got packet from "
