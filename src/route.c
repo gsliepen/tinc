@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.33 2002/03/15 14:41:57 guus Exp $
+    $Id: route.c,v 1.1.2.34 2002/03/15 15:08:21 guus Exp $
 */
 
 #include "config.h"
@@ -275,7 +275,7 @@ cp
   
   if(subnet->owner == myself)
     return;	/* silently ignore */
- 
+
   /* Create neighbor advertation reply */
 
   memcpy(packet->data, packet->data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);	/* copy destination address */
@@ -304,6 +304,8 @@ cp
   
   checksum = inet_checksum((unsigned short int *)&pseudo, sizeof(pseudo)/2, ~0);
   checksum = inet_checksum((unsigned short int *)ns, sizeof(*ns)/2 + 4, checksum);
+
+  ns->nd_ns_hdr.icmp6_cksum = checksum;
 
   write_packet(packet);
 cp
