@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.170 2002/04/18 20:09:05 zarq Exp $
+    $Id: net.c,v 1.35.4.171 2002/05/01 09:15:58 guus Exp $
 */
 
 #include "config.h"
@@ -155,13 +155,14 @@ cp
       c = (connection_t *)node->data;
 
       if(c->status.remove)
-        connection_del(c);
+        {
+	  connection_del(c);
+          if(!connection_tree->head)
+            purge();
+        }
       else
         FD_SET(c->socket, fs);
     }
-
-  if(!connection_tree->head)
-    purge();
 
   for(i = 0; i < listen_sockets; i++)
     {
