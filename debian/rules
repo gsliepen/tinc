@@ -18,8 +18,10 @@ build-stamp:
 	    patch -Ns -p0 < `pwd`/../debian/po-Makefile.in.in.diff || true ;\
 	  fi ;\
 	)
-	env CFLAGS='-O2 -Wall' ./configure --prefix=/usr --mandir=\$${prefix}/share/man \
+
+	env CFLAGS='-O2 -Wall' ./autogen.sh --prefix=/usr --mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info --sysconfdir=/etc --localstatedir=/var
+
 	$(MAKE)
 
 	touch build-stamp
@@ -29,7 +31,7 @@ clean:
 	dh_testroot
 	rm -f build-stamp
 
-	-$(MAKE) distclean
+	-$(MAKE) cvs-clean
 
 	dh_clean
 
@@ -43,6 +45,9 @@ install: build
 	mkdir -p `pwd`/debian/tmp/etc/tinc/example
 	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/example/tinc.conf
 	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
+	cp debian/tinc-up debian/tmp/etc/tinc/example
+	cp debian/tinc-down debian/tmp/etc/tinc/example
+	chmod 700 debian/tmp/etc/tinc/example/tinc-up debian/tmp/etc/tinc/example/tinc-down
 
 
 # Build architecture-independent files here.
