@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.20 2001/10/27 12:13:17 guus Exp $
+    $Id: netutl.c,v 1.12.4.21 2001/10/31 20:37:54 guus Exp $
 */
 
 #include "config.h"
@@ -50,7 +50,7 @@ char *hostlookup(unsigned long addr)
 cp
   in.s_addr = addr;
 
-  get_config_int(lookup_config(config_tree, "Hostnames"), &lookup_hostname);
+  get_config_bool(lookup_config(config_tree, "Hostnames"), &lookup_hostname);
 
   if(lookup_hostname)
     host = gethostbyaddr((char *)&in, sizeof(in), AF_INET);

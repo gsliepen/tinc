@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.116 2001/10/31 20:02:06 guus Exp $
+    $Id: protocol.c,v 1.28.4.117 2001/10/31 20:37:54 guus Exp $
 */
 
 #include "config.h"
@@ -983,7 +983,7 @@ cp
 int send_add_edge(connection_t *c, edge_t *e)
 {
 cp
-  return send_request(c, "%d %s %s %lx %d", ADD_NODE,
+  return send_request(c, "%d %s %s %lx %d", ADD_EDGE,
                       e->from->name, e->to->name, e->options, e->weight);
 }
 

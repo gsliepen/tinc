@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.30 2001/10/31 12:50:24 guus Exp $
+    $Id: process.c,v 1.1.2.31 2001/10/31 20:37:54 guus Exp $
 */
 
 #include "config.h"
@@ -409,7 +409,7 @@ ignore_signal_handler(int a, siginfo_t *info, void *b)
 {
   if(debug_lvl >= DEBUG_SCARY_THINGS)
   {
-    syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+    syslog(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
     cp_trace();
   }
 }
@@ -450,6 +450,7 @@ setup_signals(void)
       sigaction(i, &act, NULL);
     }
 
+  /* If we didn't detach, allow coredumps */
   if(!do_detach)
     sighandlers[3].handler = SIG_DFL;
 
