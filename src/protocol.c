@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.18 2000/06/30 12:41:06 guus Exp $
+    $Id: protocol.c,v 1.28.4.19 2000/06/30 21:03:51 guus Exp $
 */
 
 #include "config.h"
@@ -507,7 +507,8 @@ cp
 
       while(old = lookup_conn(cl->vpn_ip)) 
         {
-          syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
+          if(debug_lvl > 1)
+            syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
             cl->vpn_hostname, old->real_hostname, cl->real_hostname);
           old->status.active = 0;
           terminate_connection(old);
@@ -535,7 +536,8 @@ cp
   
   cl->status.active = 1;
 
-  syslog(LOG_NOTICE, _("Connection with %s (%s) activated"),
+  if(debug_lvl > 0)
+    syslog(LOG_NOTICE, _("Connection with %s (%s) activated"),
               cl->vpn_hostname, cl->real_hostname);
 
   notify_others(cl, NULL, send_add_host);

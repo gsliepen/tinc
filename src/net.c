@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.17 2000/06/30 12:41:05 guus Exp $
+    $Id: net.c,v 1.35.4.18 2000/06/30 21:03:51 guus Exp $
 */
 
 #include "config.h"
@@ -531,7 +531,8 @@ cp
       return -1;
     }
 
-  syslog(LOG_INFO, _("Connected to %s port %hd"),
+  if(debug_lvl > 0)
+    syslog(LOG_INFO, _("Connected to %s port %hd"),
          cl->real_hostname, cl->port);
 cp
   return 0;
