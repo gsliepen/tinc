@@ -33,8 +33,9 @@ install: build
 	dh_installdirs
 
 	$(MAKE) install prefix=`pwd`/debian/tmp/usr
-	mkdir -p `pwd`/debian/tmp/etc/tinc
-	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/tinc.conf
+	mkdir -p `pwd`/debian/tmp/etc/tinc/example
+	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/example/tinc.conf
+	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
 	rm -f `pwd`/debian/tmp/usr/lib/tinc/libblowfish.so
 
 

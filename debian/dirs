@@ -1,2 +1,3 @@
 etc/tinc
-etc/tinc/passphrases
+etc/tinc/example
+etc/tinc/example/passphrases

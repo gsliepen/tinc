@@ -1,2 +1,2 @@
-/etc/tinc/tinc.conf
+/etc/tinc/example/tinc.conf
 /etc/init.d/tinc
