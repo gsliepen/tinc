@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.5 2001/10/30 12:59:12 guus Exp $
+    $Id: node.c,v 1.1.2.6 2001/10/31 12:50:24 guus Exp $
 */
 
 #include "config.h"
@@ -109,6 +109,23 @@ cp
 
 void node_del(node_t *n)
 {
+  avl_node_t *node, *next;
+  edge_t *e;
+  subnet_t *s;
+cp
+  for(node = n->subnet_tree->head; node; node = next)
+    {
+      next = node->next;
+      s = (subnet_t *)node->data;
+      subnet_del(n, s);
+    }
+
+  for(node = n->subnet_tree->head; node; node = next)
+    {
+      next = node->next;
+      e = (edge_t *)node->data;
+      edge_del(e);
+    }
 cp
   avl_delete(node_tree, n);
   avl_delete(node_udp_tree, n);

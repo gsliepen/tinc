@@ -17,9 +17,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.h,v 1.1.2.1 2001/10/29 13:14:57 guus Exp $
+    $Id: graph.h,v 1.1.2.2 2001/10/31 12:50:24 guus Exp $
 */
 
 extern void mst_kruskal(void);
-extern void mst_prim(void);
-extern void sssp_bfs(void);
+extern void sssp_bfs(int);

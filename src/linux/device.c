@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.3 2001/10/27 13:13:35 guus Exp $
+    $Id: device.c,v 1.1.2.4 2001/10/31 12:50:24 guus Exp $
 */
 
 #include "config.h"
@@ -55,7 +55,9 @@
 
 int device_fd = -1;
 int device_type;
-char *device_fname;
+char *device;
+char *interface;
+char ifrname[IFNAMSIZ];
 char *device_info;
 
 int device_total_in = 0;
@@ -71,13 +73,15 @@ int setup_device(void)
   struct ifreq ifr;
 
 cp
-  if(!get_config_string(lookup_config(config_tree, "Device"), &device_fname))
-    device_fname = DEFAULT_DEVICE;
+  if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+    device = DEFAULT_DEVICE;
 
+  if(!get_config_string(lookup_config(config_tree, "Interface"), &interface))
+    interface = netname;
 cp
-  if((device_fd = open(device_fname, O_RDWR | O_NONBLOCK)) < 0)
+  if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0)
     {
-      syslog(LOG_ERR, _("Could not open %s: %m"), device_fname);
+      syslog(LOG_ERR, _("Could not open %s: %m"), device);
       return -1;
     }
 cp
@@ -97,20 +101,24 @@ cp
   memset(&ifr, 0, sizeof(ifr));
 cp
   ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-  if (netname)
-    strncpy(ifr.ifr_name, netname, IFNAMSIZ);
+  if (interface)
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ);
 cp
   if (!ioctl(device_fd, TUNSETIFF, (void *) &ifr))
   {
-      device_info = _("Linux tun/tap device");
+    device_info = _("Linux tun/tap device");
     device_type = DEVICE_TYPE_TUNTAP;
+    strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
+    interface = ifrname;
   }
   else
     if (!ioctl(device_fd, (('T'<< 8) | 202), (void *) &ifr))
     {
-      syslog(LOG_WARNING, _("Old ioctl() request was needed for %s"), device_fname);
+      syslog(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
       device_type = DEVICE_TYPE_TUNTAP;
       device_info = _("Linux tun/tap device");
+      strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
+      interface = ifrname;
     }
     else
 #endif
@@ -119,7 +127,7 @@ cp
       device_type = DEVICE_TYPE_ETHERTAP;
     }
 
-  syslog(LOG_INFO, _("%s is a %s"), device_fname, device_info);
+  syslog(LOG_INFO, _("%s is a %s"), device, device_info);
 cp
   return 0;
 }
@@ -142,7 +150,7 @@ cp
     {
       if((lenin = read(device_fd, packet->data, MTU)) <= 0)
         {
-          syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device_fname);
+          syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
           return -1;
         }
 
@@ -154,7 +162,7 @@ cp
 
       if((lenin = readv(device_fd, vector, 2)) <= 0)
         {
-          syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device_fname);
+          syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
           return -1;
         }
 
@@ -183,7 +191,7 @@ cp
     {
       if(write(device_fd, packet->data, packet->len) < 0)
         {
-          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device_fname);
+          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device);
           return -1;
         }
     }
@@ -193,7 +201,7 @@ cp
 
       if(writev(device_fd, vector, 2) < 0)
         {
-          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device_fname);
+          syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device);
           return -1;
         }
     }
@@ -206,7 +214,7 @@ cp
 void dump_device_stats(void)
 {
 cp
-  syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device_fname);
+  syslog(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
   syslog(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
   syslog(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
 cp

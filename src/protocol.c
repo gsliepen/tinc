@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.114 2001/10/30 16:34:32 guus Exp $
+    $Id: protocol.c,v 1.28.4.115 2001/10/31 12:50:24 guus Exp $
 */
 
 #include "config.h"
@@ -682,7 +682,7 @@ cp
   /* Run MST and SSSP algorithms */
   
   mst_kruskal();
-  sssp_bfs();
+  sssp_bfs(0);
 cp
   return 0;
 }
@@ -912,12 +912,11 @@ cp
 int del_node_h(connection_t *c)
 {
   node_t *n;
-  edge_t *e;
   char name[MAX_STRING_SIZE];
   ipv4_t address;
   port_t port;
   connection_t *other;
-  avl_node_t *node, *next;
+  avl_node_t *node;
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %lx:%hd", name, &address, &port) != 3)
     {
@@ -969,21 +968,12 @@ cp
         send_del_node(other, n);
     }
 
-  /* Delete all edges associated with the node */
-
-  for(node = n->edge_tree->head; node; node = next)
-    {
-      next = node->next;
-      e = (edge_t *)node->data;
-      edge_del(e);
-    }
-
   /* Delete the node */
   
   node_del(n);
 
   mst_kruskal();
-  sssp_bfs();
+  sssp_bfs(0);
 cp
   return 0;
 }
@@ -1082,7 +1072,7 @@ cp
   /* Run MST before or after we tell the rest? */
 
   mst_kruskal();
-  sssp_bfs();
+  sssp_bfs(0);
 cp
   return 0;
 }
@@ -1178,7 +1168,7 @@ cp
   /* Run MST before or after we tell the rest? */
 
   mst_kruskal();
-  sssp_bfs();
+  sssp_bfs(1);
 cp
   return 0;
 }

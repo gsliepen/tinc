@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.143 2001/10/30 16:34:32 guus Exp $
+    $Id: net.c,v 1.35.4.144 2001/10/31 12:50:24 guus Exp $
 */
 
 #include "config.h"
@@ -975,7 +975,8 @@ cp
   /* Deactivate */
 
   c->status.active = 0;
-  c->node->connection = NULL;
+  if(c->node)
+    c->node->connection = NULL;
   do_prune = 1;
 cp
 }

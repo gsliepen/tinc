@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.4 2001/10/30 12:59:12 guus Exp $
+    $Id: graph.c,v 1.1.2.5 2001/10/31 12:50:24 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -59,7 +59,7 @@
 
 void mst_kruskal(void)
 {
-  avl_node_t *node;
+  avl_node_t *node, *next;
   edge_t *e;
   node_t *n;
   connection_t *c;
@@ -90,9 +90,9 @@ void mst_kruskal(void)
 
   /* Add safe edges */
 
-  while(safe_edges < nodes - 1)
-  for(skipped = 0, node = edge_weight_tree->head; node; node = node->next)
+  for(skipped = 0, node = edge_weight_tree->head; node; node = next)
     {
+      next = node->next;
       e = (edge_t *)node->data;
 
       if(e->from->status.visited == e->to->status.visited)
@@ -109,7 +109,10 @@ void mst_kruskal(void)
       safe_edges++;
 
       if(skipped)
-        break;
+        {
+          next = edge_weight_tree->head;
+          continue;
+        }
     }
 }
 
@@ -117,7 +120,7 @@ void mst_kruskal(void)
    Running time: O(E)
 */
 
-void sssp_bfs(void)
+void sssp_bfs(int prune)
 {
   avl_node_t *node, *from, *next, *to;
   edge_t *e;
@@ -165,7 +168,7 @@ void sssp_bfs(void)
                 {
                   check->status.visited = 1;
                   check->nexthop = (n->nexthop == myself) ? check : n->nexthop;
-                  check->via = check; /* FIXME: only if !(e->options & INDIRECT), otherwise use n->via */
+                  check->via = (e->options & OPTION_INDIRECT || n->via != n) ? n->via : check;
                   node = avl_alloc_node();
                   node->data = check;
                   avl_insert_before(todo_tree, from, node);
@@ -177,4 +180,16 @@ void sssp_bfs(void)
     }
 
   avl_free_tree(todo_tree);
+  
+  /* Nodes we haven't visited are unreachable, prune them. */
+
+  if(prune)
+    for(node = node_tree->head; node; node = next)
+      {
+        next = node->next;
+        n = (node_t *)node->data;
+
+        if(n->status.visited == 0)
+          node_del(n);
+      }
 }

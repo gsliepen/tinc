@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.29 2001/10/28 10:16:18 guus Exp $
+    $Id: process.c,v 1.1.2.30 2001/10/31 12:50:24 guus Exp $
 */
 
 #include "config.h"
@@ -44,6 +44,7 @@
 #include "subnet.h"
 #include "device.h"
 #include "connection.h"
+#include "device.h"
 
 #include "system.h"
 
@@ -199,17 +200,29 @@ void _execute_script(const char *name)
   char *scriptname;
   char *s;
 cp
+#ifdef HAVE_UNSETENV
+  unsetenv("NETNAME");
+  unsetenv("DEVICE");
+  unsetenv("INTERFACE");
+#endif
+
   if(netname)
     {
       asprintf(&s, "NETNAME=%s", netname);
       putenv(s);	/* Don't free s! see man 3 putenv */
     }
-#ifdef HAVE_UNSETENV
-  else
+
+  if(device)
     {
-      unsetenv("NETNAME");
+      asprintf(&s, "DEVICE=%s", device);
+      putenv(s);	/* Don't free s! see man 3 putenv */
     }
-#endif
+
+  if(interface)
+    {
+      asprintf(&s, "INTERFACE=%s", interface);
+      putenv(s);	/* Don't free s! see man 3 putenv */
+    }
 
   chdir("/");
   

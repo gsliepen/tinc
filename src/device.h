@@ -17,13 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.h,v 1.1.2.3 2001/10/27 13:13:35 guus Exp $
+    $Id: device.h,v 1.1.2.4 2001/10/31 12:50:24 guus Exp $
 */
 
 #ifndef __TINC_DEVICE_H__
 #define __TINC_DEVICE_H__
 
 extern int device_fd;
+extern char *device;
+extern char *interface;
 
 extern int setup_device(void);
 extern void close_device(void);
