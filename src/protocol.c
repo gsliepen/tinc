@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.85 2001/03/04 13:59:28 guus Exp $
+    $Id: protocol.c,v 1.28.4.86 2001/03/13 21:33:31 guus Exp $
 */
 
 #include "config.h"
@@ -325,6 +325,7 @@ cp
       subnet = (subnet_t *)node->data;
       send_add_subnet(cl, subnet);
     }
+
   /* And send him all the hosts and their subnets we know... */
   
   for(node = connection_tree->head; node; node = node->next)
@@ -644,7 +645,7 @@ int send_add_subnet(connection_t *cl, subnet_t *subnet)
   char *netstr;
   char *owner;
 cp
-  if(cl->options & OPTION_INDIRECT)
+  if((cl->options | myself->options | subnet->owner->options) & OPTION_INDIRECT)
     owner = myself->name;
   else
     owner = subnet->owner->name;
@@ -810,7 +811,7 @@ cp
 int send_add_host(connection_t *cl, connection_t *other)
 {
 cp
-  if(!(cl->options & OPTION_INDIRECT))
+  if(!((cl->options | myself->options | other->options) & OPTION_INDIRECT))
     return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
                       other->name, other->address, other->port, other->options);
   else
@@ -904,7 +905,7 @@ cp
 int send_del_host(connection_t *cl, connection_t *other)
 {
 cp
-  if(!(cl->options & OPTION_INDIRECT))
+  if(!((cl->options | myself->options) & OPTION_INDIRECT))
     return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
                       other->name, other->address, other->port, other->options);
   else
@@ -1126,7 +1127,8 @@ cp
   from->status.validkey = 0;
   from->status.waitingforkey = 0;
 
-  send_key_changed(from, cl);
+  if(!(from->options | cl->options | myself->options) & OPTION_INDIRECT)
+    send_key_changed(from, cl);
 cp
   return 0;
 }
