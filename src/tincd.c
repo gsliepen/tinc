@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.87 2003/09/08 21:52:47 guus Exp $
+    $Id: tincd.c,v 1.10.4.88 2003/09/25 10:34:16 guus Exp $
 */
 
 #include "system.h"
@@ -291,7 +291,7 @@ static bool keygen(int bits)
 	char *filename;
 
 	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
-	rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
+	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
 
 	if(!rsa_key) {
 		fprintf(stderr, _("Error during key generation!\n"));
