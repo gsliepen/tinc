@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.48 2003/07/24 12:08:16 guus Exp $
+    $Id: subnet.c,v 1.1.2.49 2003/07/30 11:50:45 guus Exp $
 */
 
 #include "system.h"
@@ -305,14 +305,13 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet)
 
 subnet_t *lookup_subnet_mac(const mac_t *address)
 {
-	subnet_t subnet = {
-		.type = SUBNET_MAC,
-		.net.mac.address = *address,
-		.owner = NULL
-	};
-	subnet_t *p;
+	subnet_t *p, subnet = {0};
 
 	cp();
+
+	subnet.type = SUBNET_MAC;
+	subnet.net.mac.address = *address;
+	subnet.owner = NULL;
 
 	p = (subnet_t *) avl_search(subnet_tree, &subnet);
 
@@ -321,15 +320,14 @@ subnet_t *lookup_subnet_mac(const mac_t *address)
 
 subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 {
-	subnet_t subnet = {
-		.type = SUBNET_IPV4,
-		.net.ipv4.address = *address,
-		.net.ipv4.prefixlength = 32,
-		.owner = NULL
-	};
-	subnet_t *p;
+	subnet_t *p, subnet = {0};
 
 	cp();
+
+	subnet.type = SUBNET_IPV4;
+	subnet.net.ipv4.address = *address;
+	subnet.net.ipv4.prefixlength = 32;
+	subnet.owner = NULL;
 
 	do {
 		/* Go find subnet */
@@ -360,15 +358,14 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 
 subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 {
-	subnet_t subnet = {
-		.type = SUBNET_IPV6,
-		.net.ipv6.address = *address,
-		.net.ipv6.prefixlength = 128,
-		.owner = NULL
-	};
-	subnet_t *p;
+	subnet_t *p, subnet = {0};
 
 	cp();
+
+	subnet.type = SUBNET_IPV6;
+	subnet.net.ipv6.address = *address;
+	subnet.net.ipv6.prefixlength = 128;
+	subnet.owner = NULL;
 
 	do {
 		/* Go find subnet */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.78 2003/07/29 22:59:00 guus Exp $
+    $Id: tincd.c,v 1.10.4.79 2003/07/30 11:50:45 guus Exp $
 */
 
 #include "system.h"
@@ -37,6 +37,8 @@
 #include <openssl/evp.h>
 
 #include <lzo1x.h>
+
+#include <getopt.h>
 
 #include "conf.h"
 #include "logger.h"

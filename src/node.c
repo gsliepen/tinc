@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.25 2003/07/29 10:50:15 guus Exp $
+    $Id: node.c,v 1.1.2.26 2003/07/30 11:50:45 guus Exp $
 */
 
 #include "system.h"
@@ -145,23 +145,23 @@ void node_del(node_t *n)
 
 node_t *lookup_node(char *name)
 {
-	node_t n = {
-		.name = name,
-	};
+	node_t n = {0};
 
 	cp();
 	
+	n.name = name;
+
 	return avl_search(node_tree, &n);
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa)
 {
-	node_t n = {
-		.address = *sa,
-		.name = NULL,
-	};
+	node_t n = {0};
 
 	cp();
+
+	n.address = *sa;
+	n.name = NULL;
 
 	return avl_search(node_udp_tree, &n);
 }

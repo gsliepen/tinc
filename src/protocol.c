@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.144 2003/07/29 10:50:15 guus Exp $
+    $Id: protocol.c,v 1.28.4.145 2003/07/30 11:50:45 guus Exp $
 */
 
 #include "system.h"
@@ -209,12 +209,11 @@ void exit_requests(void)
 
 bool seen_request(char *request)
 {
-	past_request_t p = {
-		.request = request,
-	};
-	past_request_t *new;
+	past_request_t *new, p = {0};
 
 	cp();
+
+	p.request = request;
 
 	if(avl_search(past_request_tree, &p)) {
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));

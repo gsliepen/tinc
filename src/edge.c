@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.24 2003/07/29 10:50:15 guus Exp $
+    $Id: edge.c,v 1.1.2.25 2003/07/30 11:50:45 guus Exp $
 */
 
 #include "system.h"
@@ -125,12 +125,12 @@ void edge_del(edge_t *e)
 
 edge_t *lookup_edge(node_t *from, node_t *to)
 {
-	edge_t v = {
-		.from = from,
-		.to = to
-	};
-
+	edge_t v;
+	
 	cp();
+
+	v.from = from;
+	v.to = to;
 
 	return avl_search(from->edge_tree, &v);
 }

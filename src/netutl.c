@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.50 2003/07/29 22:59:00 guus Exp $
+    $Id: netutl.c,v 1.12.4.51 2003/07/30 11:50:45 guus Exp $
 */
 
 #include "system.h"
@@ -36,14 +36,13 @@ bool hostnames = false;
 */
 struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype)
 {
-	struct addrinfo *ai;
-	struct addrinfo hint = {
-		.ai_family = addressfamily,
-		.ai_socktype = socktype,
-	};
+	struct addrinfo *ai, hint = {0};
 	int err;
 
 	cp();
+
+	hint.ai_family = addressfamily;
+	hint.ai_socktype = socktype;
 
 	err = getaddrinfo(address, service, &hint, &ai);
 
@@ -58,16 +57,15 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 
 sockaddr_t str2sockaddr(const char *address, const char *port)
 {
-	struct addrinfo *ai;
-	struct addrinfo hint = {
-		.ai_family = AF_UNSPEC,
-		.ai_flags = AI_NUMERICHOST,
-		.ai_socktype = SOCK_STREAM,
-	};
+	struct addrinfo *ai, hint = {0};
 	sockaddr_t result;
 	int err;
 
 	cp();
+
+	hint.ai_family = AF_UNSPEC;
+	hint.ai_flags = AI_NUMERICHOST;
+	hint.ai_socktype = SOCK_STREAM;
 
 	err = getaddrinfo(address, port, &hint, &ai);
 
