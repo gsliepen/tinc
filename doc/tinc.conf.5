@@ -153,8 +153,8 @@ This does not affect resolving hostnames to IP addresses from the
 host configuration files.
 .It Va Interface Li = Ar interface
 Defines the name of the interface corresponding to the virtual network device.
-Depending on the operating system and the type of device this may or may not actually set the name.
-Currently this option only affects the Linux tun/tap device.
+Depending on the operating system and the type of device this may or may not actually set the name of the interface
+or choose the device corresponding to this interface.
 .It Va KeyExpire Li = Ar period Pq 3600
 This option controls the period the encryption keys used to encrypt the data are valid.
 It is common practice to change keys at regular intervals to make it even harder for crackers,
@@ -175,11 +175,15 @@ In this mode
 .Va Subnet
 variables in the host configuration files will be used to form a routing table.
 Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
+.Pp
+This is the default mode, and unless you really know you need another mode, don't change it.
 .It switch
 In this mode the MAC addresses of the packets on the VPN will be used to
 dynamically create a routing table just like an Ethernet switch does.
 Unicast, multicast and broadcast packets of every protocol that runs over Ethernet are supported in this mode
 at the cost of frequent broadcast ARP requests and routing table updates.
+.Pp
+This mode is primarily useful if you want to bridge Ethernet segments.
 .It hub
 This mode is almost the same as the switch mode, but instead
 every packet will be broadcast to the other daemons

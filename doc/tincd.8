@@ -8,15 +8,18 @@
 .Nd tinc VPN daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdDkKn
-.Op Fl -bypass-security
+.Op Fl cdDkKnL
 .Op Fl -config Ns = Ns Ar DIR
-.Op Fl -debug Ns = Ns Ar LEVEL
-.Op Fl -generate-keys Ns Op = Ns Ar BITS
-.Op Fl -help
-.Op Fl -kill Ns = Ns Ar SIGNAL
-.Op Fl -net Ns = Ns Ar NETNAME
 .Op Fl -no-detach
+.Op Fl -debug Ns Op = Ns Ar LEVEL
+.Op Fl -kill Ns Op = Ns Ar SIGNAL
+.Op Fl -net Ns = Ns Ar NETNAME
+.Op Fl -generate-keys Ns Op = Ns Ar BITS
+.Op Fl -mlock
+.Op Fl -logfile Ns Op = Ns Ar FILE
+.Op Fl -pidfile Ns = Ns Ar FILE
+.Op Fl -bypass-security
+.Op Fl -help
 .Op Fl -version
 .Sh DESCRIPTION
 This is the daemon of tinc, a secure virtual private network (VPN) project.
@@ -33,23 +36,16 @@ accepting and setting up connections to other tinc daemons
 that are part of the virtual private network.
 .Sh OPTIONS
 .Bl -tag -width indent
-.It Fl -bypass-security
-Disables encryption and authentication.
-Only useful for debugging.
 .It Fl c, -config Ns = Ns Ar DIR
 Read configuration options from
 .Ar DIR .
+.It Fl D, -no-detach
+Don't fork and detach.
+This will also disable the automatic restart mechanism for fatal errors.
 .It Fl d, -debug Ns Op = Ns Ar LEVEL
 Increase debug level or set it to
 .Ar LEVEL
 (see below).
-.It Fl K, -generate-keys Ns Op = Ns Ar BITS
-Generate public/private RSA keypair and exit.
-If
-.Ar BITS
-is omitted, the default length will be 1024 bits.
-.It Fl -help
-Display short list of options.
 .It Fl k, -kill Ns Op = Ns Ar SIGNAL
 Attempt to kill a running
 .Nm
@@ -59,12 +55,30 @@ instead of SIGTERM) and exit.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
 .Ar NETNAME .
-.It Fl D, -no-detach
-Don't fork and detach.
-This will also disable the automatic restart mechanism for fatal errors.
+.It Fl K, -generate-keys Ns Op = Ns Ar BITS
+Generate public/private RSA keypair and exit.
+If
+.Ar BITS
+is omitted, the default length will be 1024 bits.
 .It Fl L, -mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
+.It Fl -logfile Ns Op = Ns Ar FILE
+Write log entries to a file instead of to the system logging facility.
+If
+.Ar FILE
+is omitted, the default is
+.Pa /var/log/tinc. Ns Ar NETNAME Ns Pa .log.
+.It Fl -pidfile Ns = Ns Ar FILE
+Write PID to
+.Ar FILE
+instead of
+.Pa /var/run/tinc. Ns Ar NETNAME Ns Pa .pid.
+.It Fl -bypass-security
+Disables encryption and authentication of the meta protocol.
+Only useful for debugging.
+.It Fl -help
+Display short list of options.
 .It Fl -version
 Output version information and exit.
 .El
@@ -83,7 +97,11 @@ and if
 didn't succeed to connect to an uplink the first time after it started,
 it defaults to the maximum time of 15 minutes.
 .It HUP
-Closes all connections, rereads the configuration file and restarts the daemon.
+Partially rereads configuration files.
+Connections to hosts whose host config file are removed are closed.
+New outgoing connections specified in
+.Pa tinc.conf
+will be made.
 .It INT
 Temporarily increases debug level to 5.
 Send this signal again to revert to the original level.

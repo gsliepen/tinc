@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.39 2003/07/21 19:58:58 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.40 2003/07/30 09:22:29 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.39 2003/07/21 19:58:58 guus Exp $
+$Id: tinc.texi,v 1.8.4.40 2003/07/30 09:22:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.39 2003/07/21 19:58:58 guus Exp $
+$Id: tinc.texi,v 1.8.4.40 2003/07/30 09:22:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -267,6 +267,15 @@ tinc on Windows, in a Cygwin environment, relies on the CIPE driver for its data
 acquisition from the kernel. This driver is not part of Windows but can be
 downloaded from @uref{http://cipe-win32.sourceforge.net/}.
 
+@c ==================================================================
+@subsection MinGW (Windows)
+
+@cindex MinGW
+@cindex Windows
+tinc on Windows, compiled using MinGW, relies on the CIPE driver for its data
+acquisition from the kernel. This driver is not part of Windows but can be
+downloaded from @uref{http://cipe-win32.sourceforge.net/}.
+
 
 @c
 @c
@@ -327,6 +336,7 @@ you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html
 * Configuration of Solaris kernels::
 * Configuration of Darwin (MacOS/X) kernels::
 * Configuration of Cygwin (Windows)::
+* Configuration of MinGW (Windows)::
 @end menu
 
 
@@ -400,46 +410,33 @@ alias char-major-10-200 tun
 @node       Configuration of FreeBSD kernels, Configuration of OpenBSD kernels, Configuration of Linux kernels 2.4.0 and higher, Configuring the kernel
 @subsection Configuration of FreeBSD kernels
 
-This section will contain information on how to configure your FreeBSD
-kernel to support the universal tun/tap device.  For 4.1 and higher
-versions, this is included in the default kernel configuration, for earlier
+For FreeBSD version 4.1 and higher, the tap driver is included in the default kernel configuration, for earlier
 systems (4.0 and earlier), you need to install the universal tun/tap driver
 yourself.
-
-Unfortunately somebody still has to write the text.
 
 
 @c ==================================================================
 @node       Configuration of OpenBSD kernels, Configuration of NetBSD kernels, Configuration of FreeBSD kernels, Configuring the kernel
 @subsection Configuration of OpenBSD kernels
 
-This section will contain information on how to configure your OpenBSD
-kernel to support the tun device.  For 2.9 and 3.0 systems,
-this is included in the default kernel configuration.
-
-Unfortunately somebody still has to write the text.
+For OpenBSD version 2.9 and higher,
+the tun driver is included in the default kernel configuration.
 
 
 @c ==================================================================
 @node       Configuration of NetBSD kernels, Configuration of Solaris kernels, Configuration of OpenBSD kernels, Configuring the kernel
 @subsection Configuration of NetBSD kernels
 
-This section will contain information on how to configure your NetBSD
-kernel to support the tun device.  For 1.5.2 systems,
-this is included in the default kernel configuration.
-
-Unfortunately somebody still has to write the text.
+For NetBSD version 1.5.2 and higher,
+the tun driver is included in the default kernel configuration.
 
 
 @c ==================================================================
 @node       Configuration of Solaris kernels, Configuration of Darwin (MacOS/X) kernels, Configuration of NetBSD kernels, Configuring the kernel
 @subsection Configuration of Solaris kernels
 
-This section will contain information on how to configure your Solaris
-kernel to support the universal tun/tap device.  For Solaris 8 (SunOS 5.8),
-this is included in the default kernel configuration.
-
-Unfortunately somebody still has to write the text.
+For Solaris 8 (SunOS 5.8) and higher,
+the tun driver is included in the default kernel configuration.
 
 
 @c ==================================================================
@@ -460,13 +457,21 @@ and the corresponding network interfaces.
 
 
 @c ==================================================================
-@node       Configuration of Cygwin (Windows), , Configuration of Darwin (MacOS/X) kernels, Configuring the kernel
+@node       Configuration of Cygwin (Windows), Configuration of MinGW (Windows), Configuration of Darwin (MacOS/X) kernels, Configuring the kernel
 @subsection Configuration of Cygwin (Windows)
 
-If Cygwin hasn't already been installed, install it directly from
-@uref{http://www.cygwin.com/}. You will also need to install the
-CIPE driver, you can download it from @uref{http://cipe-win32.sourceforge.net}.
-Configure the CIPE network device in the same way as you would do from the tinc-up script.
+You will need to install the CIPE driver, you can download it from
+@uref{http://cipe-win32.sourceforge.net}.  Configure the CIPE network device in
+the same way as you would do from the tinc-up script.
+
+
+@c ==================================================================
+@node       Configuration of MinGW (Windows), , Configuration of Cygwin (Windows), Configuring the kernel
+@subsection Configuration of MinGW (Windows)
+
+You will need to install the CIPE driver, you can download it from
+@uref{http://cipe-win32.sourceforge.net}.  Configure the CIPE network device in
+the same way as you would do from the tinc-up script.
 
 
 @c ==================================================================
@@ -632,11 +637,13 @@ The documentation that comes along with your distribution will tell you how to d
 
 @menu
 * Darwin (MacOS/X) build environment::
+* Cygwin (Windows) build environment::
+* MinGW (Windows) build environment::
 @end menu
 
 
 @c ==================================================================
-@node       Darwin (MacOS/X) build environment,  ,  , Building and installing tinc
+@node       Darwin (MacOS/X) build environment, Cygwin (Windows) build environment,  , Building and installing tinc
 @subsection Darwin (MacOS/X) build environment
 
 In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
@@ -645,6 +652,28 @@ a recent version of Fink from @uref{http://fink.sourceforge.net/}.
 
 After installation use fink to download and install the following packages:
 autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
+
+@c ==================================================================
+@node       Cygwin (Windows) build environment, MinGW (Windows) build environment, Darwin (MacOS/X) build environment, Building and installing tinc
+@subsection Cygwin (Windows) build environment
+
+If Cygwin hasn't already been installed, install it directly from
+@uref{http://www.cygwin.com/}.
+
+When tinc is compiled in a Cygwin environment, it can only be run in this environment,
+but all programs, including those started outside the Cygwin environment, will be able to use the VPN.
+It will also support all features.
+
+@c ==================================================================
+@node       MinGW (Windows) build environment, , Cygwin (Windows) build environment, Building and installing tinc
+@subsection MinGW (Windows) build environment
+
+You will need to install the MinGW environment from @uref{http://www.mingw.org}.
+
+When tinc is compiled using MinGW it runs natively under Windows,
+it is not necessary to keep MinGW installed.
+However, when compiled using MinGW, tinc will not be able to start
+scripts or be able to receive signals.
 
 
 @c ==================================================================
@@ -926,8 +955,8 @@ configuration file.
 @cindex Interface
 @item Interface = <interface>
 Defines the name of the interface corresponding to the virtual network device.
-Depending on the operating system and the type of device this may or may not actually set the name.
-Currently this option only affects the Linux tun/tap device.
+Depending on the operating system and the type of device this may or may not actually set the name of the interface
+or choose the device corresponding to this interface.
 
 @cindex Mode
 @item Mode = <router|switch|hub> (router)
@@ -940,12 +969,16 @@ In this mode Subnet
 variables in the host configuration files will be used to form a routing table.
 Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
 
+This is the default mode, and unless you really know you need another mode, don't change it.
+
 @cindex switch
 @item switch
 In this mode the MAC addresses of the packets on the VPN will be used to
 dynamically create a routing table just like an Ethernet switch does.
 Unicast, multicast and broadcast packets of every protocol that runs over Ethernet are supported in this mode
 at the cost of frequent broadcast ARP requests and routing table updates.
+
+This mode is primarily useful if you want to bridge Ethernet segments.
 
 @cindex hub
 @item hub
@@ -1421,27 +1454,18 @@ command line options.
 @cindex options
 @c from the manpage
 @table @samp
-@item --bypass-security
-Disables encryption and authentication.
-Only useful for debugging.
-
 @item -c, --config=PATH
 Read configuration options from the directory PATH.  The default is
 @file{/etc/tinc/netname/}.
+
+@item -D, --no-detach
+Don't fork and detach.
+This will also disable the automatic restart mechanism for fatal errors.
 
 @cindex debug level
 @item -d, --debug=LEVEL
 Set debug level to LEVEL.  The higher the debug level, the more gets
 logged.  Everything goes via syslog.
-
-@item -K, --generate-keys[=BITS]
-Generate public/private keypair of BITS length. If BITS is not specified,
-1024 is the default. tinc will ask where you want to store the files,
-but will default to the configuration directory (you can use the -c or -n option
-in combination with -K). After that, tinc will quit.
-
-@item --help
-Display a short reminder of these runtime options and terminate.
 
 @item -k, --kill[=SIGNAL]
 Attempt to kill a running tincd (optionally with the specified SIGNAL instead of SIGTERM) and exit.
@@ -1450,13 +1474,29 @@ Use it in conjunction with the -n option to make sure you kill the right tinc da
 @item -n, --net=NETNAME
 Connect to net NETNAME.  @xref{Multiple networks}.
 
-@item -D, --no-detach
-Don't fork and detach.
-This will also disable the automatic restart mechanism for fatal errors.
+@item -K, --generate-keys[=BITS]
+Generate public/private keypair of BITS length. If BITS is not specified,
+1024 is the default. tinc will ask where you want to store the files,
+but will default to the configuration directory (you can use the -c or -n option
+in combination with -K). After that, tinc will quit.
 
 @item -L, --mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
+
+@item --logfile[=FILE]
+Write log entries to a file instead of to the system logging facility.
+If FILE is omitted, the default is /var/log/tinc.NETNAME.log.
+
+@item --pidfile=FILE
+Write PID to FILE instead of /var/run/tinc.NETNAME.pid.
+
+@item --bypass-security
+Disables encryption and authentication.
+Only useful for debugging.
+
+@item --help
+Display a short reminder of these runtime options and terminate.
 
 @item --version
 Output version information and exit.
@@ -1962,8 +2002,10 @@ tinc's website is at @url{http://tinc.nl.linux.org/},
 this server is located in the Netherlands.
 
 @cindex IRC
-We have an IRC channel on the FreeNode IRC network. Connect to
+We have an IRC channel on the FreeNode and OFTC IRC networks. Connect to
 @uref{http://www.freenode.net/, irc.freenode.net}
+or
+@uref{http://www.oftc.net/, irc.oftc.net}
 and join channel #tinc.
 
 

@@ -23,3 +23,14 @@ transform = s/ginstall/install/; @program_transform_name@
 
 # For additional rules usually of interest only to the maintainer,
 # see GNUmakefile and Makefile.maint.
+
+tinc.pdf: tinc.texi
+	texi2pdf -o tinc.pdf tinc.texi
+
+texi2html: tinc.texi
+	mkdir -p html
+	rm -f html/*.html
+	cd html && texi2html -split=chapter ../tinc.texi
+
+%.html: %
+	w3mman2html $< > $@
