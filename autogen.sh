@@ -94,6 +94,9 @@ do
       aclocalinclude="$ACLOCAL_FLAGS"
       for k in $macrodirs; do
   	if test -d $k; then
+	  if test -f $k/Makefile.am.in; then
+	    make -C $k -f Makefile.am.in Makefile.am
+	  fi
           aclocalinclude="$aclocalinclude -I $k"
   	##else 
 	##  echo "**Warning**: No such directory \`$k'.  Ignored."
