@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: net.h,v 1.9.4.3 2000/06/25 15:22:16 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
