@@ -117,7 +117,7 @@ mask_to_prefix () {
 
 vpn_load () {
     CFG="$TCONF/$1/tinc.conf"
-    [ -f $CFG ] || { MSG="$CFG does not exist!"; return 1 }
+    [ -f $CFG ] || { MSG="$CFG does not exist!"; return 1; }
     
     # load TINCD config
     DEV="$(grep -i -e '^[[:space:]]*TapDevice' $CFG | sed 's/[[:space:]]//g; s/^.*=//g')"
@@ -126,24 +126,24 @@ vpn_load () {
     
     # TapDevice syntax validation
     [ -z "$DEV" ] && \
-	{ MSG="TapDevice required!"; return 1 }
+	{ MSG="TapDevice required!"; return 1; }
     [ $(echo $DEV | wc -l) -gt 1 ] && \
-	{ MSG="multiple TapDevice entries not allowed!"; return 1 }
+	{ MSG="multiple TapDevice entries not allowed!"; return 1; }
     echo $DEV | grep -q -x -E '/dev/tap[[:digit:]]+' ||
-	{ MSG="TapDevice should be in form /dev/tapX!"; return 1 }
+	{ MSG="TapDevice should be in form /dev/tapX!"; return 1; }
 
     # MyOwnVPNIP/MyVirtualIP syntax validation	
     [ -z "$VPN" ] && \
-	{ MSG="MyOwnVPNIP/MyVirtualIP required!"; return 1 }
+	{ MSG="MyOwnVPNIP/MyVirtualIP required!"; return 1; }
     [ $(echo $VPN | wc -l) -gt 1 ] && \
-	{ MSG="multiple MyOwnVPNIP/MyVirtualIP entries not allowed!"; return 1 }
+	{ MSG="multiple MyOwnVPNIP/MyVirtualIP entries not allowed!"; return 1; }
     echo $VPN | grep -q -x -E \
 	'([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}/[[:digit:]]{1,2}' || \
-	{ MSG="badly formed MyOwnVPNIP/MyVirtualIP address $VPN!"; return 1 }
+	{ MSG="badly formed MyOwnVPNIP/MyVirtualIP address $VPN!"; return 1; }
 
     # VPNMask syntax validation	
     [ $(echo $IFM | wc -l) -gt 1 ] && \
-	{ MSG="multiple VPNMask entries not allowed!"; return 1 }
+	{ MSG="multiple VPNMask entries not allowed!"; return 1; }
 	
 	                                                                                    
     # device & IP address extraction
@@ -208,21 +208,21 @@ vpn_start () {
     
     # load device module
     ERR="$(insmod ethertap -o "ethertap$NUM" unit="$NUM" 2>&1 1> /dev/null)" ||
-        { MSG="could not insmod ethertap as unit $NUM!"; return 2 }
+        { MSG="could not insmod ethertap as unit $NUM!"; return 2; }
     
     # configure the interface
     ERR="$(ip link set $TAP address $MAC 2>&1)" ||
-    	{ MSG="could not set address for device $TAP!"; return 3 }
+    	{ MSG="could not set address for device $TAP!"; return 3; }
 	
     ERR="$(ip link set $TAP up 2>&1)" ||
-    	{ MSG="could not bring up device $TAP!"; return 3 }
+    	{ MSG="could not bring up device $TAP!"; return 3; }
 	
     ERR="$(ip addr add $VPN brd $BRD dev $TAP 2>&1)" ||
-    	{ MSG="could not set IP address for device $TAP!"; return 3 }
+    	{ MSG="could not set IP address for device $TAP!"; return 3; }
     
     # start tincd
     $TINCD --net="$1" $DEBUG || \
-	{ MSG="could not start daemon for network $1"; return 3 }
+	{ MSG="could not start daemon for network $1"; return 3; }
 
     # setup custom static routes
     /etc/sysconfig/network-scripts/ifup-routes $TAP
