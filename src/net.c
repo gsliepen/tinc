@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.165 2002/03/22 11:43:46 guus Exp $
+    $Id: net.c,v 1.35.4.166 2002/03/23 20:13:56 guus Exp $
 */
 
 #include "config.h"
@@ -198,11 +198,11 @@ cp
         }
 
       edge_del(c->edge);
+
+      /* Run MST and SSSP algorithms */
+
+      graph();
     }
-
-  /* Run MST and SSSP algorithms */
-
-  graph();
 
   /* Check if this was our outgoing connection */
 
