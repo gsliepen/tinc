@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.44 2003/08/28 21:05:10 guus Exp $
+    $Id: meta.c,v 1.1.2.45 2003/10/10 16:24:24 guus Exp $
 */
 
 #include "system.h"
@@ -46,7 +46,11 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 			   c->name, c->hostname);
 
 	if(c->status.encryptout) {
-		EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
+		result = EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
+		if(!result || outlen != length) {
+			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"), ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
 		bufp = outbuf;
 		length = outlen;
 	} else
@@ -89,8 +93,8 @@ void broadcast_meta(connection_t *from, const char *buffer, int length)
 
 bool receive_meta(connection_t *c)
 {
-	int oldlen, i;
-	int lenin, reqlen;
+	int oldlen, i, result;
+	int lenin, lenout, reqlen;
 	bool decrypted = false;
 	char inbuf[MAXBUFSIZE];
 
@@ -123,11 +127,15 @@ bool receive_meta(connection_t *c)
 	oldlen = c->buflen;
 	c->buflen += lenin;
 
-	while(lenin) {
+	while(lenin > 0) {
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
-			EVP_DecryptUpdate(c->inctx, inbuf, &lenin, c->buffer + oldlen, lenin);
+			result = EVP_DecryptUpdate(c->inctx, inbuf, &lenout, c->buffer + oldlen, lenin);
+			if(!result || lenout != lenin) {
+				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"), ERR_error_string(ERR_get_error(), NULL));
+				return false;
+			}
 			memcpy(c->buffer + oldlen, inbuf, lenin);
 			decrypted = true;
 		}
