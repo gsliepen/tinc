@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.11 2003/08/03 21:45:41 guus Exp $
+    $Id: device.c,v 1.1.2.12 2003/08/08 17:20:12 guus Exp $
 */
 
 #include "system.h"
@@ -219,7 +219,7 @@ bool setup_device(void)
 	}
 	
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("%s (%s) is no a usable Windows tap device!"), device, iface);
+		logger(LOG_ERR, _("%s (%s) is not a usable Windows tap device!"), device, iface);
 		return false;
 	}
 
