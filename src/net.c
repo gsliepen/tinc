@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.124 2001/07/21 15:34:18 guus Exp $
+    $Id: net.c,v 1.35.4.125 2001/07/21 15:46:34 guus Exp $
 */
 
 #include "config.h"
@@ -1151,6 +1151,8 @@ cp
 
   if(cl->socket)
     close(cl->socket);
+  if(cl->meta_socket)
+    close(cl->meta_socket);
 
   connection_del(cl);
 
@@ -1159,8 +1161,6 @@ cp
       if(debug_lvl >= DEBUG_CONNECTIONS)
         syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
                cl->name, cl->hostname);
-
-      close(cl->meta_socket);
 
       if(cl->status.active)
         {
