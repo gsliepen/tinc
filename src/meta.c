@@ -31,7 +31,6 @@
 #include "meta.h"
 #include "net.h"
 #include "protocol.h"
-#include "system.h"
 #include "utils.h"
 
 bool send_meta(connection_t *c, const char *buffer, int length)

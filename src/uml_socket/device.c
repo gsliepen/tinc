@@ -30,8 +30,6 @@
 #include "utils.h"
 #include "route.h"
 
-#include "system.h"
-
 int device_fd = -1;
 static int listen_fd = -1;
 static int request_fd = -1;
