@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.126 2002/03/22 13:31:18 guus Exp $
+    $Id: protocol.c,v 1.28.4.127 2002/03/23 20:12:29 guus Exp $
 */
 
 #include "config.h"
@@ -146,16 +146,25 @@ cp
   return 0;
 }
 
-int request_compare(past_request_t *a, past_request_t *b)
+int past_request_compare(past_request_t *a, past_request_t *b)
 {
 cp
   return strcmp(a->request, b->request);
 }
 
+void free_past_request(past_request_t *r)
+{
+cp
+  if(r->request)
+    free(r->request);
+  free(r);
+cp
+}
+
 void init_requests(void)
 {
 cp
-  past_request_tree = avl_alloc_tree((avl_compare_t)request_compare, (avl_action_t)free);
+  past_request_tree = avl_alloc_tree((avl_compare_t)past_request_compare, (avl_action_t)free_past_request);
 cp
 }
 
