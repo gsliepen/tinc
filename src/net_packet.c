@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.4 2002/02/20 22:37:38 guus Exp $
+    $Id: net_packet.c,v 1.1.2.5 2002/02/26 23:26:41 guus Exp $
 */
 
 #include "config.h"
@@ -258,7 +258,7 @@ cp
 
   /* Send the packet */
 
-  if((sendto(udp_socket, (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0)
+  if((sendto(udp_socket[0], (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %s"),
              n->name, n->hostname, strerror(errno));
@@ -349,7 +349,7 @@ cp
 cp
 }
 
-void handle_incoming_vpn_data(void)
+void handle_incoming_vpn_data(int sock)
 {
   vpn_packet_t pkt;
   int x, l = sizeof(x);
@@ -358,10 +358,10 @@ void handle_incoming_vpn_data(void)
   socklen_t fromlen = sizeof(from);
   node_t *n;
 cp
-  if(getsockopt(udp_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
+  if(getsockopt(sock, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
       syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%s"),
-             __FILE__, __LINE__, udp_socket, strerror(errno));
+             __FILE__, __LINE__, sock, strerror(errno));
       return;
     }
   if(x)
@@ -370,7 +370,7 @@ cp
       return;
     }
 
-  if((pkt.len = recvfrom(udp_socket, (char *)&pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen)) <= 0)
+  if((pkt.len = recvfrom(sock, (char *)&pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
       return;

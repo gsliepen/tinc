@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.157 2002/02/20 16:04:07 guus Exp $
+    $Id: net.c,v 1.35.4.158 2002/02/26 23:26:41 guus Exp $
 */
 
 #include "config.h"
@@ -80,6 +80,7 @@ void build_fdset(fd_set *fs)
 {
   avl_node_t *node;
   connection_t *c;
+  int i;
 cp
   FD_ZERO(fs);
 
@@ -89,8 +90,12 @@ cp
       FD_SET(c->socket, fs);
     }
 
-  FD_SET(tcp_socket, fs);
-  FD_SET(udp_socket, fs);
+  for(i = 0; i < tcp_sockets; i++)
+    FD_SET(tcp_socket[i], fs);
+
+  for(i = 0; i < udp_sockets; i++)
+    FD_SET(udp_socket[i], fs);
+
   FD_SET(device_fd, fs);
 cp
 }
@@ -271,7 +276,7 @@ void check_network_activity(fd_set *f)
 {
   connection_t *c;
   avl_node_t *node;
-  int result;
+  int result, i;
   int len = sizeof(result);
   vpn_packet_t packet;
 cp
@@ -281,8 +286,9 @@ cp
         route_outgoing(&packet);
     }
 
-  if(FD_ISSET(udp_socket, f))
-    handle_incoming_vpn_data();
+  for(i = 0; i < udp_sockets; i++)
+    if(FD_ISSET(udp_socket[i], f))
+      handle_incoming_vpn_data(udp_socket[i]);
 
   for(node = connection_tree->head; node; node = node->next)
     {
@@ -316,8 +322,9 @@ cp
         }
     }
 
-  if(FD_ISSET(tcp_socket, f))
-    handle_new_meta_connection();
+  for(i = 0; i < tcp_sockets; i++)
+    if(FD_ISSET(tcp_socket[i], f))
+      handle_new_meta_connection(tcp_socket[i]);
 cp
 }
 

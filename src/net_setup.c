@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.4 2002/02/20 22:15:32 guus Exp $
+    $Id: net_setup.c,v 1.1.2.5 2002/02/26 23:26:41 guus Exp $
 */
 
 #include "config.h"
@@ -219,9 +219,9 @@ int setup_myself(void)
 {
   config_t *cfg;
   subnet_t *subnet;
-  char *name, *mode, *afname, *cipher, *digest;
-  struct addrinfo hint, *ai;
-  int choice, err;
+  char *name, *hostname, *mode, *afname, *cipher, *digest;
+  struct addrinfo hint, *ai, *aip;
+  int choice, err, sock;
 cp
   myself = new_node();
   myself->connection = new_connection();
@@ -475,10 +475,20 @@ cp
       return -1;
     }
 
-  if((tcp_socket = setup_listen_socket((sockaddr_t *)ai->ai_addr)) < 0)
+  tcp_sockets = 0;
+
+  for(aip = ai; aip; aip = aip->ai_next)
     {
-      syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
-      return -1;
+      if((sock = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
+        continue;
+
+      tcp_socket[++tcp_sockets] = sock;
+      if(debug_lvl >= DEBUG_CONNECTIONS)
+        {
+	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
+	  syslog(LOG_NOTICE, _("Listening on %s/tcp"), hostname);
+	  free(hostname);
+	}
     }
 
   freeaddrinfo(ai);
@@ -492,15 +502,25 @@ cp
       return -1;
     }
 
-  if((udp_socket = setup_vpn_in_socket((sockaddr_t *)ai->ai_addr)) < 0)
+  udp_sockets = 0;
+
+  for(aip = ai; aip; aip = aip->ai_next)
     {
-      syslog(LOG_ERR, _("Unable to set up a listening UDP socket!"));
-      return -1;
+      if((sock = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
+        continue;
+
+      udp_socket[++udp_sockets] = sock;
+      if(debug_lvl >= DEBUG_CONNECTIONS)
+        {
+	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
+	  syslog(LOG_NOTICE, _("Listening on %s/udp"), hostname);
+	  free(hostname);
+	}
     }
 
   freeaddrinfo(ai);
 
-  syslog(LOG_NOTICE, _("Ready: listening on port %s"), myport);
+  syslog(LOG_NOTICE, _("Ready"));
 cp
   return 0;
 }
@@ -548,6 +568,7 @@ void close_network_connections(void)
 {
   avl_node_t *node, *next;
   connection_t *c;
+  int i;
 cp
   for(node = connection_tree->head; node; node = next)
     {
@@ -561,8 +582,10 @@ cp
   if(myself && myself->connection)
     terminate_connection(myself->connection, 0);
 
-  close(udp_socket);
-  close(tcp_socket);
+  for(i = 0; i < udp_sockets; i++)
+    close(udp_socket[i]);
+  for(i = 0; i < tcp_sockets; i++)
+    close(tcp_socket[i]);
 
   exit_events();
   exit_edges();

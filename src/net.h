@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.42 2002/02/26 22:47:51 guus Exp $
+    $Id: net.h,v 1.9.4.43 2002/02/26 23:26:41 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -34,6 +34,7 @@
 #define MAXSIZE 1600 /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
 
 #define MAXBUFSIZE 2048 /* Probably way too much, but it must fit every possible request. */
+#define MAXSOCKETS 128 /* Overkill... */
 
 typedef struct mac_t
 {
@@ -105,8 +106,10 @@ extern char *status_text[];
 
 #include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
-extern int tcp_socket;
-extern int udp_socket;
+extern int tcp_socket[MAXSOCKETS];
+extern int udp_socket[MAXSOCKETS];
+extern int tcp_sockets;
+extern int udp_sockets;
 extern int keyexpires;
 extern int keylifetime;
 extern int do_prune;
@@ -114,10 +117,10 @@ extern int do_purge;
 extern char *myport;
 
 extern void retry_outgoing(outgoing_t *);
-extern void handle_incoming_vpn_data(void);
+extern void handle_incoming_vpn_data(int);
 extern void finish_connecting(connection_t *);
 extern void do_outgoing_connection(connection_t *);
-extern int handle_new_meta_connection(void);
+extern int handle_new_meta_connection(int);
 extern int setup_listen_socket(sockaddr_t *);
 extern int setup_vpn_in_socket(sockaddr_t *);
 extern void send_packet(struct node_t *, vpn_packet_t *);

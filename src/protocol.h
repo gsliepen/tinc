@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.26 2002/02/11 15:59:18 guus Exp $
+    $Id: protocol.h,v 1.5.4.27 2002/02/26 23:26:41 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -50,8 +50,8 @@ enum {
 
 /* Maximum size of strings in a request */
 
-#define MAX_STRING_SIZE 1024
-#define MAX_STRING "%1024s"
+#define MAX_STRING_SIZE 2048
+#define MAX_STRING "%2048s"
 
 /* Basic functions */
 

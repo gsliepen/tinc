@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.3 2002/02/20 22:37:38 guus Exp $
+    $Id: net_socket.c,v 1.1.2.4 2002/02/26 23:26:41 guus Exp $
 */
 
 #include "config.h"
@@ -70,8 +70,11 @@ int addressfamily = AF_INET;
 int maxtimeout = 900;
 int seconds_till_retry = 5;
 
-int tcp_socket = -1;
-int udp_socket = -1;
+int tcp_socket[MAXSOCKETS];
+int udp_socket[MAXSOCKETS];
+int tcp_sockets = 0;
+int udp_sockets = 0;
+
 /* Setup sockets */
 
 int setup_listen_socket(sockaddr_t *sa)
@@ -406,13 +409,13 @@ cp
   accept a new tcp connect and create a
   new connection
 */
-int handle_new_meta_connection()
+int handle_new_meta_connection(int sock)
 {
   connection_t *c;
   sockaddr_t sa;
   int fd, len = sizeof(sa);
 cp
-  if((fd = accept(tcp_socket, &sa.sa, &len)) < 0)
+  if((fd = accept(sock, &sa.sa, &len)) < 0)
     {
       syslog(LOG_ERR, _("Accepting a new connection failed: %s"), strerror(errno));
       return -1;
