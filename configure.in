@@ -3,6 +3,9 @@ AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0)
 AM_CONFIG_HEADER(config.h)
 
+dnl Include the macros from the m4/ directory
+AM_ACLOCAL_INCLUDE(m4)
+
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
 # in the latter don't make it into the configure-time tests.
@@ -16,7 +19,6 @@ AC_PROG_GCC_TRADITIONAL
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 jm_PERL
 AM_PROG_LIBTOOL
