@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.26 2000/09/10 16:15:35 guus Exp $
+    $Id: protocol.c,v 1.28.4.27 2000/09/10 22:49:46 guus Exp $
 */
 
 #include "config.h"
@@ -98,7 +98,7 @@ cp
 int send_id(conn_list_t *cl)
 {
 cp
-  return send_request(cl, "%d %s %d-%d %s", ID, myself->id, myself->min_version, myself->max_version, opt2str(myself->options));
+  return send_request(cl, "%d %s %d %s", ID, myself->id, myself->version, opt2str(myself->options));
 }
 
 int id_h(conn_list_t *cl)
@@ -106,23 +106,23 @@ int id_h(conn_list_t *cl)
   conn_list_t *old;
   char *options;
 cp
-  if(sscanf(cl->buffer, "%*d %as %d-%d %as", &cl->id, &cl->min_version, &cl->max_version, &options) != 4)
+  if(sscanf(cl->buffer, "%*d %as %d %as", &cl->id, &cl->version, &options) != 3)
     {
        syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
        return -1;
     }
     
-  /* Check if version ranges overlap */
+  /* Check if version matches */
   
-  if((cl->min_version > myself->max_version) || (cl->max_version < myself_min_version) || (cl->min_version > cl->max_version))
+  if(cl->version != myself->version)
     {
-      syslog(LOG_ERR, _("Peer %s uses incompatible version (%d-%d)"), cl->hostname, cl->min_version, cl->max_version);
+      syslog(LOG_ERR, _("Peer %s uses incompatible version %d"), cl->hostname, cl->min_version, cl->max_version);
       return -1;
     }
 
   /* Check if option string is valid */
   
-  if(str2opt(options) == -1)
+  if((cl->options = str2opt(options)) == -1)
     {
       syslog(LOG_ERR, _("Peer %s uses invalid option string"), cl->hostname);
       return -1;
@@ -382,7 +382,7 @@ cp
 int send_add_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
 {
 cp
-  return send_meta(cl, "%d %s %d %s", ADD_SUBNET, other->id, subnet->type, net2str(subnet));
+  return send_request(cl, "%d %s %d %s", ADD_SUBNET, other->id, subnet->type, net2str(subnet));
 }
 
 int add_subnet_h(conn_list_t *cl)
@@ -392,7 +392,7 @@ int add_subnet_h(conn_list_t *cl)
 int send_del_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
 {
 cp
-  return send_meta(cl, "%d %s %d %s", DEL_SUBNET, other->id, subnet->type, net2str(subnet));
+  return send_request(cl, "%d %s %d %s", DEL_SUBNET, other->id, subnet->type, net2str(subnet));
 }
 
 int del_subnet_h(conn_list_t *cl)
@@ -404,21 +404,138 @@ int del_subnet_h(conn_list_t *cl)
 int send_add_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
-  return send_meta(cl, "%d %lx:%d", ADD_HOST, other->id, other->address, other->port);
+  return send_request(cl, "%d %s %lx:%d %s", ADD_HOST, other->id, other->address, other->port, opt2str(other->options));
 }
 
 int add_host_h(conn_list_t *cl)
 {
+  char *options;
+  conn_list_t *old, *new;
+cp
+  new = new_conn_list();
+
+  if(sscanf(cl->buffer, "%*d %as %lx:%d %as", &new->id, &new->address, &new->port, &options) != 4)
+    {
+       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }  
+
+  /* Check if option string is valid */
+  
+  if((new->options = str2opt(options) == -1)
+    {
+      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid option string"), cl->hostname);
+      return -1;
+    }
+
+  /* Check if identity is a valid name */
+  
+  if(!check_id(new->id))
+    {
+      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid identity name"), cl->id, cl->hostname);
+      return -1;
+    }
+    
+  /* Check if somebody tries to add ourself */
+  
+  if(!strcmp(new->id, myself->id))
+    {
+      syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"), cl->id, cl->hostname);
+      sighup = 1;
+      return 0;
+    }
+
+  /* Fill in more of the new conn_list structure */
+
+  new->hostname = hostlookup(htonl(new->address));
+  
+  /* Check if the new host already exists in the connnection list */
+
+  if((old = lookup_id(id))
+    {
+      if((new->address == old->address) && (new->port == old->port))
+        {
+          if(debug_lvl > DEBUG_CONNECTIONS)
+            syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"), old->id, old->hostname, new->id, new->hostname);
+	  return 0;
+        }
+      else
+        {
+          if(debug_lvl > DEBUG_CONNECTIONS)
+            syslog(LOG_NOTICE, _("Removing old entry for %s (%s)"), old->id, old->hostname);
+          old->status.active = 0;
+          terminate_connection(old);
+        }
+    }
+
+  /* Fill in rest of conn_list structure */
+
+  new->nexthop = cl;
+  new->status.active = 1;
+  
+  /* Hook it up into the conn_list */
+
+  conn_list_add(conn_list, new);
+
+  /* Tell the rest about the new host */
+  
+  notify_others(new, cl, send_add_host);
+  
+cp
+  return 0;
 }
 
 int send_del_host(conn_list_t *cl, conn_list_t *other)
 {
 cp
-  return send_meta(cl, "%d %lx:%d", DEL_HOST, other->id, other->address, other->port);
+  return send_request(cl, "%d %s %lx:%d", DEL_HOST, other->id, other->address, other->port);
 }
 
 int del_host_h(conn_list_t *cl)
 {
+  char *id;
+  ip_t address;
+  port_t port;
+  conn_list_t *old;
+cp
+  if(sscanf(cl->buffer, "%*d %as %lx:%d", &id, &address, &port) != 3)
+    {
+       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }  
+
+  /* Check if somebody tries to delete ourself */
+  
+  if(!strcmp(id, myself->id))
+    {
+      syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) for ourself, restarting"), cl->id, cl->hostname);
+      sighup = 1;
+      return 0;
+    }
+
+  /* Check if the new host already exists in the connnection list */
+
+  if((old = lookup_id(id))
+    {
+      if((address == old->address) && (port == old->port))
+        {
+          notify_others(old, cl, send_del_host);
+
+          fw->status.termreq = 1;
+          fw->status.active = 0;
+
+          terminate_connection(fw);
+cp
+          return 0;
+        }
+    }
+
+  if(debug_lvl > DEBUG_CONNECTIONS)
+    {
+      syslog(LOG_NOTICE, _("Got DEL_HOST for %s from %s (%s) which is not in our connection list"), id, cl->id, cl->hostname);
+    }
+cp
+  return 0;
 }
 
 /* Status and error notification routines */
@@ -477,59 +594,188 @@ cp
       syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"), cl->id, cl->hostname, error_text[errno], errorstring);
     }
 
-cp
   free(errorstring);
+  cl->status.termreq = 1;
+  terminate_connection(cl);
+cp
   return 0;
 }
 
 int send_termreq(conn_list_t *cl)
 {
+cp
+  return send_request(cl, "%d", TERMREQ);
 }
 
 int termreq_h(conn_list_t *cl)
 {
+cp
+  cl->status.termreq = 1;
+  terminate_connection(cl);
+cp
+  return 0;
 }
 
-/* Keepalive routines */
+/* Keepalive routines - FIXME: needs a closer look */
 
 int send_ping(conn_list_t *cl)
 {
+  cl->status.pinged = 1;
 cp
-  return send_meta(cl, "%d", PING);
+  return send_request(cl, "%d", PING);
 }
 
 int ping_h(conn_list_t *cl)
 {
+cp
+  return send_pong(cl);
 }
 
 int send_pong(conn_list_t *cl)
 {
 cp
-  return send_meta(cl, "%d", PONG);
+  return send_request(cl, "%d", PONG);
 }
 
 int pong_h(conn_list_t *cl)
 {
+cp
+  cl->status.got_pong = 1;
+cp
+  return 0;
 }
 
 /* Key exchange */
 
-int send_req_key(conn_list_t *cl, conn_list_t *source)
+int send_key_changed(conn_list_t *from, conn_list_t *cl)
+{
+  conn_list_t *p;
+cp
+  for(p = conn_list; p != NULL; p = p->next)
+    {
+      if(p!=cl && p->status.meta && p->status.active)
+        send_request(p, "%d %s", KEY_CHANGED, from->id);
+    }
+cp
+  return 0;
+}
+
+int key_changed_h(conn_list_t *cl)
+{
+  char *from_id;
+  conn_list_t *from;
+cp
+  if(sscanf(cl->buffer, "%*d %as", &from_id) != 1)
+    {
+       syslog(LOG_ERR, _("Got bad KEY_CHANGED from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }  
+
+  if(!(from = lookup_id(from_id)))
+    {
+      syslog(LOG_ERR, _("Got KEY_CHANGED from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
+      free(from);
+      return -1;
+    }
+    
+  from->status.validkey = 0;
+  from->status.waitingforkey = 0;
+  
+  send_key_changed(from, cl);
+cp
+  return 0;
+}
+  
+int send_req_key(conn_list_t *from, conn_list_t *to)
 {
 cp
-  return send_meta(cl, "%d %s", REQ_KEY, source->id);
+  return send_request(to->nexthop, "%d %s %s", REQ_KEY, from->id, to->id);
 }
 
 int req_key_h(conn_list_t *cl)
 {
+  char *from_id, *to_id;
+  conn_list_t *from, *to;
+cp
+  if(sscanf(cl->buffer, "%*d %as %as", &from_id, &to_id) != 2)
+    {
+       syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }  
+
+  if(!(from = lookup_id(from_id)))
+    {
+      syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
+      free(from); free(to);
+      return -1;
+    }
+
+  /* Check if this key request is for us */
+
+  if(!strcmp(id, myself->strcmp))
+    {
+      send_ans_key(myself, from, myself->datakey);
+    }
+  else
+    {
+      if(!(to = lookup_id(to_id)))
+        {
+          syslog(LOG_ERR, _("Got REQ_KEY from %s (%s) destination %s which does not exist in our connection list"), cl->id, cl->hostname, to_id);
+          free(from); free(to);
+          return -1;
+        }
+      send_req_key(from, to);
+    }
+
+  free(from); free(to);
+cp
+  return 0;
 }
 
-int send_key(conn_list_t *cl)
+int send_ans_key(conn_list_t *from, conn_list_t *to, char *datakey)
 {
+cp
+  return send_request(to->nexthop, "%d %s %s %s", ANS_KEY, from->id, to->id, datakey);
 }
 
-int key_h(conn_list_t *cl)
+int ans_key_h(conn_list_t *cl)
 {
+  char *from_id, *to_id, *datakey;
+  conn_list_t *from, *to;
+cp
+  if(sscanf(cl->buffer, "%*d %as %as %as", &from_id, &to_id, &datakey) != 3)
+    {
+       syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }  
+
+  if(!(from = lookup_id(from_id)))
+    {
+      syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) origin %s which does not exist in our connection list"), cl->id, cl->hostname, from_id);
+      free(from); free(to); free(datakey);
+      return -1;
+    }
+
+  /* Check if this key request is for us */
+
+  if(!strcmp(id, myself->strcmp))
+    {
+      send_ans_key(myself, from);
+    }
+  else
+    {
+      if(!(to = lookup_id(to_id)))
+        {
+          syslog(LOG_ERR, _("Got ANS_KEY from %s (%s) destination %s which does not exist in our connection list"), cl->id, cl->hostname, to_id);
+          free(from); free(to); free(datakey);
+          return -1;
+        }
+      send_ans_key(from, to, datakey);
+    }
+
+  free(from); free(to); free(datakey);
+cp
+  return 0;
 }
 
 
@@ -538,60 +784,7 @@ int key_h(conn_list_t *cl)
 /* Old routines */
 
 
-int send_termreq(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending TERMREQ to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
 
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", TERMREQ, myself->vpn_ip);
-
-  if(write(cl->meta_socket, buffer, buflen) < 0)
-    {
-      if(debug_lvl > 1)
-	syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_timeout(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending TIMEOUT to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", PINGTIMEOUT, myself->vpn_ip);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_del_host(conn_list_t *cl, conn_list_t *new_host)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending DEL_HOST for %s (%s) to %s (%s)"),
-	   new_host->vpn_hostname, new_host->real_hostname, cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", DEL_HOST, new_host->vpn_ip);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
 
 int send_tcppacket(conn_list_t *cl, void *data, int len)
 {
@@ -617,172 +810,12 @@ cp
   return 0;
 }
 
-int send_ping(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PING to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d\n", PING);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_pong(conn_list_t *cl)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending PONG to %s (%s)"),
-	   cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d\n", PONG);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_add_host(conn_list_t *cl, conn_list_t *new_host)
-{
-  ip_t real_ip;
-  int flags;
-  char *hostname;
-cp
-  real_ip = new_host->real_ip;
-  hostname = new_host->real_hostname;
-  flags = new_host->flags;
-  
-  /* If we need to propagate information about a new host that wants us to export
-   * it's indirectdata flag, we set the INDIRECTDATA flag and unset the EXPORT...
-   * flag, and set it's real_ip to our vpn_ip, so that net.c send_packet() will
-   * work correctly.
-   */
-     
-  if(flags & EXPORTINDIRECTDATA)
-    {
-      flags &= ~EXPORTINDIRECTDATA;
-      flags |= INDIRECTDATA;
-      real_ip = myself->vpn_ip;
-      hostname = myself->real_hostname;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending ADD_HOST for %s (%s) to %s (%s)"),
-	   new_host->vpn_hostname, hostname, cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx/%lx:%x %d\n", ADD_HOST, real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port, flags);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-int send_key_changed(conn_list_t *cl, conn_list_t *src)
-{
-cp
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending KEY_CHANGED origin %s to %s (%s)"),
-	   src->vpn_hostname, cl->vpn_hostname, cl->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", KEY_CHANGED, src->vpn_ip);
-
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
-void send_key_changed_all(void)
-{
-  conn_list_t *p;
-cp
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p->status.meta && p->status.active)
-      send_key_changed(p, myself);
-cp
-}
-
-
-int send_key_request(ip_t to)
-{
-  conn_list_t *fw;
-cp
-  fw = lookup_conn(to);
-  if(!fw)
-    {
-      syslog(LOG_ERR, _("Attempting to send REQ_KEY to %d.%d.%d.%d, which does not exist?"),
-	     IP_ADDR_V(to));
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending REQ_KEY to %s (%s)"),
-	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx\n", REQ_KEY, to, myself->vpn_ip);
-
-  if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-  fw->status.waitingforkey = 1;
-cp
-  return 0;
-}
-
-int send_key_answer(conn_list_t *cl, ip_t to)
-{
-  conn_list_t *fw;
-cp
-
-  fw = lookup_conn(to);
-  
-  if(!fw)
-    {
-      syslog(LOG_ERR, _("Attempting to send ANS_KEY to %d.%d.%d.%d, which does not exist?"),
-	     IP_ADDR_V(to));
-      return -1;
-    }
-
- if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Sending ANS_KEY to %s (%s)"),
-	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
-
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx %d %s\n", ANS_KEY, to, myself->vpn_ip, my_key_expiry, my_public_key_base36);
-
-  if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
-
 /*
-  notify all my direct connections of a new host
+  Notify all my direct connections of a new host
   that was added to the vpn, with the exception
   of the source of the announcement.
 */
+
 int notify_others(conn_list_t *new, conn_list_t *source,
 		  int (*function)(conn_list_t*, conn_list_t*))
 {
@@ -796,9 +829,10 @@ cp
 }
 
 /*
-  notify one connection of everything
-  i have connected
+  Notify one connection of everything
+  I have connected
 */
+
 int notify_one(conn_list_t *new)
 {
   conn_list_t *p;
@@ -813,97 +847,6 @@ cp
 /*
   The incoming request handlers
 */
-
-
-int termreq_h(conn_list_t *cl)
-{
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized TERMREQ from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-    
-  if(debug_lvl > 1)
-   syslog(LOG_DEBUG, _("Got TERMREQ from %s (%s)"),
-             cl->vpn_hostname, cl->real_hostname);
-  
-  cl->status.termreq = 1;
-
-  terminate_connection(cl);
-cp
-  return 0;
-}
-
-int timeout_h(conn_list_t *cl)
-{
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized TIMEOUT from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got TIMEOUT from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-
-  cl->status.termreq = 1;
-  terminate_connection(cl);
-cp
-  return 0;
-}
-
-int del_host_h(conn_list_t *cl)
-{
-  ip_t vpn_ip;
-  conn_list_t *fw;
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized DEL_HOST from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(sscanf(cl->buffer, "%*d %lx", &vpn_ip) != 1)
-    {
-       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if(!(fw = lookup_conn(vpn_ip)))
-    {
-      syslog(LOG_ERR, _("Got DEL_HOST for %d.%d.%d.%d from %s (%s) which does not exist?"),
-	     IP_ADDR_V(vpn_ip), cl->vpn_hostname, cl->real_hostname);
-      return 0;
-    }
-
-  /* Connections lists are really messed up if this happens */
-  if(vpn_ip == myself->vpn_ip)
-    {
-      syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) for ourself, restarting"),
-               cl->vpn_hostname, cl->real_hostname);
-      sighup = 1;
-      return 0;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got DEL_HOST for %s (%s) from %s (%s)"),
-           fw->vpn_hostname, fw->real_hostname, cl->vpn_hostname, cl->real_hostname);
-
-  notify_others(fw, cl, send_del_host);
-
-  fw->status.termreq = 1;
-  fw->status.active = 0;
-
-  terminate_connection(fw);
-cp
-  return 0;
-}
 
 int tcppacket_h(conn_list_t *cl)
 {
@@ -935,177 +878,6 @@ cp
               cl->vpn_hostname, cl->real_hostname);
 
   cl->tcppacket=len;
-cp
-  return 0;
-}
-
-
-int ping_h(conn_list_t *cl)
-{
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized PING from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PING from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-
-  cl->status.pinged = 0;
-  cl->status.got_pong = 1;
-
-  send_pong(cl);
-cp
-  return 0;
-}
-
-int pong_h(conn_list_t *cl)
-{
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized PONG from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got PONG from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-
-  cl->status.got_pong = 1;
-cp
-  return 0;
-}
-
-int add_host_h(conn_list_t *cl)
-{
-  ip_t real_ip;
-  ip_t vpn_ip;
-  ip_t vpn_mask;
-  unsigned short port;
-  int flags;
-  conn_list_t *ncn, *old;
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized ADD_HOST from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-    
-  if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx %d", &real_ip, &vpn_ip, &vpn_mask, &port, &flags) != 5)
-    {
-       syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if((old = lookup_conn(vpn_ip)))
-    {
-      if((real_ip==old->real_ip) && (vpn_mask==old->vpn_mask) && (port==old->port))
-        {
-          if(debug_lvl>1)
-            syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
-                   old->vpn_hostname, old->real_hostname, cl->vpn_hostname, cl->real_hostname);
-          goto skip_add_host;  /* One goto a day keeps the deeply nested if constructions away. */
-        }
-      else
-        {
-          if(debug_lvl>1)
-            syslog(LOG_NOTICE, _("Removing old entry for %s (%s)"),
-                   old->vpn_hostname, old->real_hostname);
-          old->status.active = 0;
-          terminate_connection(old);
-        }
-    }
-  
-  /* Connections lists are really messed up if this happens */
-  if(vpn_ip == myself->vpn_ip)
-    {
-      syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"),
-               cl->vpn_hostname, cl->real_hostname);
-      sighup = 1;
-      return 0;
-    }
-    
-  ncn = new_conn_list();
-  ncn->real_ip = real_ip;
-  ncn->real_hostname = hostlookup(htonl(real_ip));
-  ncn->vpn_ip = vpn_ip;
-  ncn->vpn_mask = vpn_mask;
-  ncn->vpn_hostname = hostlookup(htonl(vpn_ip));
-  ncn->port = port;
-  ncn->flags = flags;
-  ncn->nexthop = cl;
-  ncn->next = conn_list;
-  conn_list = ncn;
-  ncn->status.active = 1;
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ADD_HOST for %s (%s) from %s (%s)"),
-           ncn->vpn_hostname, ncn->real_hostname, cl->vpn_hostname, cl->real_hostname);
-
-  notify_others(ncn, cl, send_add_host);
-
-skip_add_host:
-cp
-  return 0;
-}
-
-int req_key_h(conn_list_t *cl)
-{
-  ip_t to;
-  ip_t from;
-  conn_list_t *fw;
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized REQ_KEY from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(sscanf(cl->buffer, "%*d %lx %lx", &to, &from) != 2)
-    {
-       syslog(LOG_ERR, _("Got bad REQ_KEY from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got REQ_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"),
-           IP_ADDR_V(from), IP_ADDR_V(to), cl->vpn_hostname, cl->real_hostname);
-
-  if((to & myself->vpn_mask) == (myself->vpn_ip & myself->vpn_mask))
-    {  /* hey! they want something from ME! :) */
-      send_key_answer(cl, from);
-      return 0;
-    }
-
-  fw = lookup_conn(to);
-  
-  if(!fw)
-    {
-      syslog(LOG_ERR, _("Attempting to forward REQ_KEY to %d.%d.%d.%d, which does not exist?"),
-	     IP_ADDR_V(to));
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Forwarding REQ_KEY to %s (%s)"),
-	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
-  
-  cl->buffer[cl->reqlen-1] = '\n';
-  
-  if(write(fw->nexthop->meta_socket, cl->buffer, cl->reqlen) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
 cp
   return 0;
 }
@@ -1145,73 +917,6 @@ cp
 cp
 }
 
-int ans_key_h(conn_list_t *cl)
-{
-  ip_t to;
-  ip_t from;
-  int expiry;
-  char *key;
-  conn_list_t *fw, *gk;
-cp
-  if(!cl->status.active)
-    {
-      syslog(LOG_ERR, _("Got unauthorized ANS_KEY from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-      return -1;
-    }
-
-  if(sscanf(cl->buffer, "%*d %lx %lx %d %as", &to, &from, &expiry, &key) != 4)
-    {
-       syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s)"),
-              cl->vpn_hostname, cl->real_hostname);
-       return -1;
-    }  
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ANS_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"),
-            IP_ADDR_V(from), IP_ADDR_V(to), cl->vpn_hostname, cl->real_hostname);
-
-  if(to == myself->vpn_ip)
-    {  /* hey! that key's for ME! :) */
-      gk = lookup_conn(from);
-
-      if(!gk)
-        {
-          syslog(LOG_ERR, _("Receiving ANS_KEY origin %d.%d.%d.%d from %s (%s), which does not exist?"),
-	         IP_ADDR_V(from), cl->vpn_hostname, cl->real_hostname);
-          return -1;
-        }
-
-      set_keys(gk, expiry, key);
-      gk->status.validkey = 1;
-      gk->status.waitingforkey = 0;
-      flush_queues(gk);
-      return 0;
-    }
-
-  fw = lookup_conn(to);
-  
-  if(!fw)
-    {
-      syslog(LOG_ERR, _("Attempting to forward ANS_KEY to %d.%d.%d.%d, which does not exist?"),
-	     IP_ADDR_V(to));
-      return -1;
-    }
-
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Forwarding ANS_KEY to %s (%s)"),
-	   fw->nexthop->vpn_hostname, fw->nexthop->real_hostname);
-
-  cl->buffer[cl->reqlen-1] = '\n';
-
-  if((write(fw->nexthop->meta_socket, cl->buffer, cl->reqlen)) < 0)
-    {
-      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
-      return -1;
-    }
-cp
-  return 0;
-}
 
 int key_changed_h(conn_list_t *cl)
 {
@@ -1258,13 +963,17 @@ cp
 int (*request_handlers[])(conn_list_t*) = {
   id_h, challenge_h, chal_reply_h, ack_h,
   status_h, error_h, termreq_h,
-  add_host_h, del_host_h,
   ping_h, pong_h,
+  add_host_h, del_host_h,
+  add_subnet_h, del_subnet_h,
+  key_changed_h, req_key_h, ans_key_h,
 };
 
 char (*request_name[]) = {
   "ID", "CHALLENGE", "CHAL_REPLY", "ACK",
   "STATUS", "ERROR", "TERMREQ",
-  "ADD_HOST", "DEL_HOST",
   "PING", "PONG",
+  "ADD_HOST", "DEL_HOST",
+  "ADD_SUBNET", "DEL_SUBNET",
+  "KEY_CHANGED", "REQ_KEY", "ANS_KEY",
 };
