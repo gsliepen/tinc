@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.61 2003/08/02 20:50:38 guus Exp $
+    $Id: process.c,v 1.1.2.62 2003/08/03 12:38:18 guus Exp $
 */
 
 #include "system.h"
@@ -165,6 +165,11 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
+	if(!running) {
+		status.dwCurrentState = SERVICE_STOP_PENDING; 
+		SetServiceStatus(statushandle, &status);
+	}
+
 	return NO_ERROR;
 }
 
@@ -175,7 +180,6 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv)
 
 
 	status.dwServiceType = SERVICE_WIN32; 
-	status.dwCurrentState = SERVICE_RUNNING; 
 	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
 	status.dwWin32ExitCode = 0; 
 	status.dwServiceSpecificExitCode = 0; 
@@ -188,13 +192,16 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv)
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
 		err = 1;
 	} else {
+		status.dwCurrentState = SERVICE_START_PENDING; 
+		SetServiceStatus(statushandle, &status);
+
+		status.dwCurrentState = SERVICE_RUNNING;
 		SetServiceStatus(statushandle, &status);
 
 		err = main2(argc, argv);
 
 		status.dwCurrentState = SERVICE_STOPPED; 
-		status.dwWin32ExitCode = err; 
-
+		//status.dwWin32ExitCode = err; 
 		SetServiceStatus(statushandle, &status);
 	}
 
