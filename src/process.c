@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.62 2003/08/03 12:38:18 guus Exp $
+    $Id: process.c,v 1.1.2.63 2003/08/03 21:45:13 guus Exp $
 */
 
 #include "system.h"
@@ -454,13 +454,13 @@ bool execute_script(const char *name, char **envp)
 #ifndef HAVE_MINGW
 static RETSIGTYPE sigterm_handler(int a)
 {
-	logger(LOG_NOTICE, _("Got TERM signal"));
+	logger(LOG_NOTICE, _("Got %s signal"), "TERM");
 	running = false;
 }
 
 static RETSIGTYPE sigquit_handler(int a)
 {
-	logger(LOG_NOTICE, _("Got QUIT signal"));
+	logger(LOG_NOTICE, _("Got %s signal"), "QUIT");
 	running = false;
 }
 
@@ -498,12 +498,14 @@ static RETSIGTYPE fatal_signal_handler(int a)
 
 static RETSIGTYPE sighup_handler(int a)
 {
-	logger(LOG_NOTICE, _("Got HUP signal"));
+	logger(LOG_NOTICE, _("Got %s signal"), "HUP");
 	sighup = true;
 }
 
 static RETSIGTYPE sigint_handler(int a)
 {
+	logger(LOG_NOTICE, _("Got %s signal"), "INT");
+
 	if(saved_debug_level != -1) {
 		logger(LOG_NOTICE, _("Reverting to old debug level (%d)"),
 			saved_debug_level);
@@ -520,7 +522,7 @@ static RETSIGTYPE sigint_handler(int a)
 
 static RETSIGTYPE sigalrm_handler(int a)
 {
-	logger(LOG_NOTICE, _("Got ALRM signal"));
+	logger(LOG_NOTICE, _("Got %s signal"), "ALRM");
 	sigalrm = true;
 }
 
