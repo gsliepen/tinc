@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.31 2002/09/03 20:43:25 guus Exp $
+    $Id: protocol.h,v 1.5.4.32 2002/09/04 08:33:08 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -31,7 +31,7 @@
    incompatible version have different protocols.
  */
 
-#define PROT_CURRENT 15
+#define PROT_CURRENT 16
 
 /* Request numbers */
 

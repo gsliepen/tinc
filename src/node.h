@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.17 2002/09/03 20:43:25 guus Exp $
+    $Id: node.h,v 1.1.2.18 2002/09/04 08:33:08 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -65,6 +65,7 @@ typedef struct node_t {
   list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 
   struct node_t *nexthop;          /* nearest node from us to him */
+  struct node_t *prevhop;          /* nearest node from him to us */
   struct node_t *via;              /* next hop for UDP packets */
   
   avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this node */

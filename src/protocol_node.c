@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_node.c,v 1.1.4.4 2002/09/03 22:49:55 guus Exp $
+    $Id: protocol_node.c,v 1.1.4.5 2002/09/04 08:33:08 guus Exp $
 */
 
 #include "config.h"
@@ -52,9 +52,10 @@ cp
     return 0;
 
   sockaddr2str(&n->address, &address, &port);
-  x = send_request(c, "%d %s %s %s %lx %d", ADD_NODE,
+  x = send_request(c, "%d %s %s %s %lx %d %s %s", ADD_NODE,
                       n->name, address, port,
-		      n->options, n->distance + 1); // Alternatively, use n->distance + c->estimated_weight
+		      n->options, n->distance + 1, // Alternatively, use n->distance + c->estimated_weight
+                      n->prevhop->name, n->via->name);
   free(address);
   free(port);
 cp
@@ -64,16 +65,18 @@ cp
 int add_node_h(connection_t *c)
 {
   connection_t *other;
-  node_t *n;
+  node_t *n, *prevhop, *via;
   char name[MAX_STRING_SIZE];
   char address[MAX_STRING_SIZE];
   char port[MAX_STRING_SIZE];
+  char prevhopname[MAX_STRING_SIZE];
+  char vianame[MAX_STRING_SIZE];
   long int options;
   int distance;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
-            name, address, port, &options, &distance) != 5)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d "MAX_STRING" "MAX_STRING,
+            name, address, port, &options, &distance, prevhopname, vianame) != 7)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_NODE", c->name, c->hostname);
        return -1;
@@ -94,6 +97,24 @@ cp
 
   /* Lookup nodes */
 
+  prevhop = lookup_node(prevhopname);
+  
+  if(!prevhop)
+    {
+      prevhop = new_node();
+      prevhop->name = xstrdup(prevhopname);
+      node_add(prevhop);
+    }
+
+  via = lookup_node(vianame);
+  
+  if(!via)
+    {
+      via = new_node();
+      via->name = xstrdup(vianame);
+      node_add(via);
+    }
+
   n = lookup_node(name);
   
   if(!n)
@@ -105,16 +126,30 @@ cp
       n->hostname = sockaddr2hostname(&n->address);
       n->options = options;
       n->distance = distance;
-      n->via = n->nexthop = c->node;
-      n->status.reachable = 1;
+      n->nexthop = c->node;
+      n->prevhop = prevhop;
+      n->via = via;
       node_add(n);
+      if(prevhop == myself)
+        {
+          syslog(LOG_WARNING, _("Got ADD_NODE %s prevhop %s via %s from %s, sending back a DEL_NODE!"), name, prevhopname, vianame, c->name);
+          send_del_node(c, n);
+          return 0;
+        }
+      n->status.reachable = 1;
     }
   else
     {
       // If this ADD_NODE is closer or more direct, use it instead of the old one.
       if(!n->status.reachable || ((n->options & OPTION_INDIRECT) && !(options & OPTION_INDIRECT)) || n->distance > distance)
         {
-          avl_node_t *node = avl_unlink(node_udp_tree, n);
+          if(prevhop == myself)
+            {
+              syslog(LOG_WARNING, _("Got ADD_NODE %s prevhop %s via %s from %s!"), name, prevhopname, vianame, c->name);
+              send_del_node(c, n);
+              return 0;
+            }
+          node = avl_unlink(node_udp_tree, n);
           n->address = str2sockaddr(address, port);
           avl_insert_node(node_udp_tree, node);
           if(n->hostname)
@@ -148,17 +183,18 @@ cp
 int send_del_node(connection_t *c, node_t *n)
 {
 cp
-  return send_request(c, "%d %s", DEL_NODE, n->name);
+  return send_request(c, "%d %s %s", DEL_NODE, n->name, n->prevhop->name);
 }
 
 int del_node_h(connection_t *c)
 {
   char name[MAX_STRING_SIZE];
-  node_t *n;
+  char prevhopname[MAX_STRING_SIZE];
+  node_t *n, *prevhop;
   connection_t *other;
   avl_node_t *node;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING, name) != 1)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING, name, prevhopname) != 2)
     {
       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_NODE",
              c->name, c->hostname);
@@ -176,8 +212,9 @@ cp
   /* Lookup nodes */
 
   n = lookup_node(name);
-  
-  if(!n)
+  prevhop = lookup_node(prevhopname);
+
+  if(!n || !prevhop)
     {
       if(debug_lvl >= DEBUG_PROTOCOL)
         syslog(LOG_WARNING, _("Got %s from %s (%s) which does not appear in the node tree"), "DEL_NODE", c->name, c->hostname);
@@ -186,7 +223,7 @@ cp
 
   /* If we got a DEL_NODE but we know of a different route to it, tell the one who send the DEL_NODE */
 
-  if(n->nexthop != c->node)
+  if(n->nexthop != c->node || n->prevhop != prevhop)
     {
       return send_add_node(c, n);
     }
