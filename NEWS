@@ -1,3 +1,13 @@
+version 1.0pre7              Apr  7 2002
+
+* Don't do blocking read()s when getting a signal.
+
+* Remove RSA key checking code, since it sometimes thinks perfectly good RSA
+  keys are bad.
+
+* Fix handling of subnets when prefixlength isn't divisible by 8.
+
+
 version 1.0pre6              Mar 27 2002
 
 * Improvement of redundant links:
@@ -16,7 +26,7 @@ version 1.0pre6              Mar 27 2002
 
 * Optional compression of UDP connections using zlib.
 
-* Optionally let UDP connections inherit TOS field of tunneld packets.
+* Optionally let UDP connections inherit TOS field of tunneled packets.
 
 * Optionally start scripts when certain hosts become (un)reachable.
 
