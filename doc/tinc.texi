@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.5 2000/10/14 22:22:06 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.6 2000/11/02 21:34:45 zarq Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998,199,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.5 2000/10/14 22:22:06 zarq Exp $
+$Id: tinc.texi,v 1.8.4.6 2000/11/02 21:34:45 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.5 2000/10/14 22:22:06 zarq Exp $
+$Id: tinc.texi,v 1.8.4.6 2000/11/02 21:34:45 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -553,6 +553,14 @@ should be, you can use the following command:
 $ printf 'fe:fd:%02x:%02x:%02x:%02x' 10 1 54 1
 fe:fd:0a:01:36:01
 @end example
+
+or with perl:
+
+@example
+$ perl -e 'print "fe:fd:", join(":", map @{sprintf "%02x", $_@} split(/\./, $ARGV[0])), "\n";' 10.1.54.1
+fe:fd:0a:01:36:01
+@end example
+
 
 @cindex ifconfig
 To activate the device, you have to assign an IP address to it.  To set
