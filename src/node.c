@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.6 2001/10/31 12:50:24 guus Exp $
+    $Id: node.c,v 1.1.2.7 2001/11/16 17:39:38 zarq Exp $
 */
 
 #include "config.h"
@@ -140,12 +140,11 @@ cp
   return avl_search(node_tree, &n);
 }
 
-node_t *lookup_node_udp(ipv4_t address, port_t port)
+node_t *lookup_node_udp(struct addrinfo *address)
 {
   node_t n;
 cp
   n.address = address;
-  n.port = port;
   return avl_search(node_udp_tree, &n);
 }
 
@@ -159,7 +158,7 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %hd options %ld status %04x nexthop %s via %s"),
+      syslog(LOG_DEBUG, _(" %s at %s port %s options %ld status %04x nexthop %s via %s"),
              n->name, n->hostname, n->port, n->options,
              n->status, n->nexthop->name, n->via->name);
     }
