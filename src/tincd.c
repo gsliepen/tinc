@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.85 2003/08/08 22:11:54 guus Exp $
+    $Id: tincd.c,v 1.10.4.86 2003/08/17 09:03:30 guus Exp $
 */
 
 #include "system.h"
@@ -358,7 +358,7 @@ static void make_names(void)
 #ifdef HAVE_MINGW
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
-			if(!pidfilename)
+			if(!logfilename)
 				asprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
 				if(netname)
