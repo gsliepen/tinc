@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.1 2001/07/22 14:04:38 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.2 2001/07/22 14:46:11 guus Exp $
 
 1. Problem
 ==========
@@ -45,3 +45,96 @@ to C, both at the same time. The following loop will occur:
 The situation described here is totally symmetric, there is no preference to
 one connection over the other. The problem of resolving the loop, maintaining
 consistency and stability is therefore not a trivial one.
+
+What happens when A---D and C---F are connected to eachother? They exchange
+lists of known hosts. A knows of B and C, and D knows of E and F. The protocol
+defines ADD_HOST messages, from now on we will say that "node X sends and
+ADD_HOST(Y) to Z".
+
+There are two possible scenarios: either both A---D and C---F finish
+authentication at the same time, or A---D finishes first, so that ADD_HOST
+messages will reach C and F before they finish authentication.
+
+1.1 A---D finishes first
+------------------------
+
+After A---D authentication finishes the following actions are taken:
+
+  1 A sends ADD_HOST(B) to D
+    A sends ADD_HOST(C) to D
+    D sends ADD_HOST(E) to A
+    D sends ADD_HOST(F) to A
+
+  2 A receives ADD_HOST(E) from D:
+      A sends ADD_HOST(E) to B
+    A receives ADD_HOST(F) from D:
+      A sends ADD_HOST(F) to B
+    D receives ADD_HOST(B) from A:
+      D sends ADD_HOST(B) to E
+    D receives ADD_HOST(C) from A:
+      D sends ADD_HOST(C) to E
+
+  3 B receives ADD_HOST(E) from A:
+      B sends ADD_HOST(E) to C
+    B receives ADD_HOST(F) from A:
+      B sends ADD_HOST(F) to C
+    E receives ADD_HOST(B) from D:
+      E sends ADD_HOST(B) to F
+    E receives ADD_HOST(C) from D:
+      E sends ADD_HOST(C) to F
+
+  4 C receives ADD_HOST(E) from B.
+    C receives ADD_HOST(F) from B.
+    F receives ADD_HOST(B) from E.
+    F receives ADD_HOST(C) from E.
+
+Then C---F authentication finishes, the following actions are taken:
+
+  1 C notes that F is already known:
+      Connection is closed.
+    F notes that C is already known:
+      Connection is closed.
+
+1.2 Both A---D and C---F finish at the same time.
+-------------------------------------------------
+
+  1 A sends ADD_HOST(B) to D
+    A sends ADD_HOST(C) to D
+    D sends ADD_HOST(E) to A
+    D sends ADD_HOST(F) to A
+    
+    C sends ADD_HOST(A) to F
+    C sends ADD_HOST(B) to F
+    F sends ADD_HOST(D) to C
+    F sends ADD_HOST(E) to C
+
+  2 A receives ADD_HOST(E) from D:
+      A sends ADD_HOST(E) to B
+    A receives ADD_HOST(F) from D:
+      A sends ADD_HOST(F) to B
+    D receives ADD_HOST(B) from A:
+      D sends ADD_HOST(B) to E
+    D receives ADD_HOST(C) from A:
+      D sends ADD_HOST(C) to E
+
+    C receives ADD_HOST(D) from F:
+      A sends ADD_HOST(D) to B
+    C receives ADD_HOST(E) from F:
+      A sends ADD_HOST(E) to B
+    F receives ADD_HOST(A) from C:
+      D sends ADD_HOST(A) to E
+    F receives ADD_HOST(B) from C:
+      D sends ADD_HOST(B) to E
+
+  3 B receives ADD_HOST(E) from A:
+      B sends ADD_HOST(E) to C
+    B receives ADD_HOST(F) from A:
+      B sends ADD_HOST(F) to C
+    E receives ADD_HOST(A) from D:
+      E sends ADD_HOST(A) to F
+    E receives ADD_HOST(B) from D:
+      E sends ADD_HOST(B) to F
+    
+    B receives ADD_HOST(E) from C, and notes that is is already known:
+      <insert solution here>
+
