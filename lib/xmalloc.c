@@ -20,6 +20,7 @@
 #endif
 
 #include <sys/types.h>
+#include <stdio.h>
 
 #if STDC_HEADERS
 # include <stdlib.h>
