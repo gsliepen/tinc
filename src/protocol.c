@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.42 2000/10/16 19:04:47 guus Exp $
+    $Id: protocol.c,v 1.28.4.43 2000/10/20 15:34:37 guus Exp $
 */
 
 #include "config.h"
@@ -163,6 +163,7 @@ cp
 int id_h(conn_list_t *cl)
 {
   conn_list_t *old;
+  config_t *cfg;
 cp
   if(sscanf(cl->buffer, "%*d %as %d %lx %hd", &cl->name, &cl->protocol_version, &cl->options, &cl->port) != 4)
     {
@@ -188,19 +189,18 @@ cp
     }
 
   /* Load information about peer */
-
+cp
   if(read_host_config(cl))
     {
       syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), cl->hostname, cl->name);
       return -1;
     }
 
-
   /* First check if the host we connected to is already in our
      connection list. If so, we are probably making a loop, which
      is not desirable.
    */
-
+cp
   if(cl->status.outgoing)
     {
       if((old = lookup_id(cl->name)))
@@ -213,38 +213,71 @@ cp
           return 0;
         }
     }
+cp    
+  if(!(cfg = get_config_val(cl->config, publickey)))
+    {
+      syslog(LOG_ERR, _("No public key known for %s (%s)"), cl->name, cl->hostname);
+      return -1;
+    }
+  else
+    {
+cp
+      cl->rsa_key = RSA_new();
+      BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
+      BN_hex2bn(&cl->rsa_key->e, "FFFF");
+    }
+
 cp
   return send_challenge(cl);
 }
 
 int send_challenge(conn_list_t *cl)
 {
-  char buffer[CHAL_LENGTH*2+1];
+  char *buffer;
+  int len, x;
 cp
+  len = RSA_size(cl->rsa_key);
+
   /* Allocate buffers for the challenge */
 
-  if(!cl->hischallenge)
-    cl->hischallenge = xmalloc(CHAL_LENGTH);
+  buffer = xmalloc(len*2+1);
+
+  if(cl->hischallenge)
+    free(cl->hischallenge);
+    
+  cl->hischallenge = xmalloc(len);
 cp
   /* Copy random data to the buffer */
 
-  RAND_bytes(cl->hischallenge, CHAL_LENGTH);
-cp
-  /* Convert the random data to a hexadecimal formatted string */
+  RAND_bytes(cl->hischallenge, len);
 
-  bin2hex(cl->hischallenge, buffer, CHAL_LENGTH);
-  buffer[CHAL_LENGTH*2] = '\0';
+  /* Encrypt the random data */
+  
+  if(RSA_public_encrypt(len, cl->hischallenge, buffer, cl->rsa_key, RSA_NO_PADDING) != len)	/* NO_PADDING because the message size equals the RSA key size and it is totally random */
+    {
+      syslog(LOG_ERR, _("Error during encryption of challenge for %s (%s)"), cl->name, cl->hostname);
+      free(buffer);
+      return -1;
+    }
+cp
+  /* Convert the encrypted random data to a hexadecimal formatted string */
+
+  bin2hex(buffer, buffer, len);
+  buffer[len*2] = '\0';
 
   /* Send the challenge */
 
   cl->allow_request = CHAL_REPLY;
+  x = send_request(cl, "%d %s", CHALLENGE, buffer);
+  free(buffer);
 cp
-  return send_request(cl, "%d %s", CHALLENGE, buffer);
+  return x;
 }
 
 int challenge_h(conn_list_t *cl)
 {
   char *buffer;
+  int len;
 cp
   if(sscanf(cl->buffer, "%*d %as", &buffer) != 1)
     {
@@ -252,9 +285,11 @@ cp
        return -1;
     }
 
+  len = RSA_size(myself->rsa_key);
+
   /* Check if the length of the challenge is all right */
 
-  if(strlen(buffer) != CHAL_LENGTH*2)
+  if(strlen(buffer) != len*2)
     {
       syslog(LOG_ERR, _("Intruder: wrong challenge length from %s (%s)"), cl->name, cl->hostname);
       free(buffer);
@@ -264,11 +299,21 @@ cp
   /* Allocate buffers for the challenge */
 
   if(!cl->mychallenge)
-    cl->mychallenge = xmalloc(CHAL_LENGTH);
+    cl->mychallenge = xmalloc(len);
 
   /* Convert the challenge from hexadecimal back to binary */
 
-  hex2bin(buffer,cl->mychallenge,CHAL_LENGTH);
+  hex2bin(buffer,buffer,len);
+
+  /* Decrypt the challenge */
+  
+  if(RSA_private_decrypt(len, buffer, cl->mychallenge, myself->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
+    {
+      syslog(LOG_ERR, _("Error during encryption of challenge for %s (%s)"), cl->name, cl->hostname);
+      free(buffer);
+      return -1;
+    }
+
   free(buffer);
     
   /* Rest is done by send_chal_reply() */
@@ -288,7 +333,7 @@ cp
      
   /* Calculate the hash from the challenge we received */
 
-  SHA1(cl->mychallenge, CHAL_LENGTH, hash);
+  SHA1(cl->mychallenge, RSA_size(myself->rsa_key), hash);
 
   /* Convert the hash to a hexadecimal formatted string */
 
@@ -333,7 +378,7 @@ cp
 
   /* Calculate the hash from the challenge we sent */
 
-  SHA1(cl->hischallenge, CHAL_LENGTH, myhash);
+  SHA1(cl->hischallenge, RSA_size(cl->rsa_key), myhash);
 
   /* Verify the incoming hash with the calculated hash */
 

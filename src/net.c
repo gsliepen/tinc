@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.40 2000/10/16 19:04:46 guus Exp $
+    $Id: net.c,v 1.35.4.41 2000/10/20 15:34:35 guus Exp $
 */
 
 #include "config.h"
@@ -637,13 +637,41 @@ cp
       syslog(LOG_ERR, _("Invalid name for myself!"));
       return -1;
     }
+cp
+  if(!(cfg = get_config_val(config, privatekey)))
+    {
+      syslog(LOG_ERR, _("Private key for tinc daemon required!"));
+      return -1;
+    }
+  else
+    {
+      myself->rsa_key = RSA_new();
+      BN_hex2bn(&myself->rsa_key->d, cfg->data.ptr);
+      BN_hex2bn(&myself->rsa_key->e, "FFFF");
+    }
 
   if(read_host_config(myself))
     {
       syslog(LOG_ERR, _("Cannot open host configuration file for myself!"));
       return -1;
     }
-  
+cp  
+  if(!(cfg = get_config_val(myself->config, publickey)))
+    {
+      syslog(LOG_ERR, _("Public key for tinc daemon required!"));
+      return -1;
+    }
+  else
+    {
+      BN_hex2bn(&myself->rsa_key->n, cfg->data.ptr);
+    }
+/*
+  if(RSA_check_key(myself->rsa_key) != 1)
+    {
+      syslog(LOG_ERR, _("Invalid public/private keypair!"));
+      return -1;
+    }
+*/
   if(!(cfg = get_config_val(myself->config, port)))
     myself->port = 655;
   else

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.6 2000/10/16 19:04:46 guus Exp $
+    $Id: connlist.c,v 1.1.2.7 2000/10/20 15:34:34 guus Exp $
 */
 
 #include <syslog.h>
@@ -57,8 +57,8 @@ cp
     free(p->name);
   if(p->hostname)
     free(p->hostname);
-  if(p->public_key)
-    RSA_free(p->public_key);
+  if(p->rsa_key)
+    RSA_free(p->rsa_key);
   if(p->cipher_pktkey)
     free(p->cipher_pktkey);
   if(p->buffer)

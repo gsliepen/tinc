@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.11 2000/10/15 00:59:36 guus Exp $
+    $Id: protocol.h,v 1.5.4.12 2000/10/20 15:34:38 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -31,13 +31,6 @@
  */
 
 #define PROT_CURRENT 8
-
-/* Length of the challenge. Since the challenge will also
-   contain the key for the symmetric cipher, it must be
-   quite large.
- */
-
-#define CHAL_LENGTH 1024 /* Okay, this is probably waaaaaaaaaaay too large */
 
 /* Request numbers */
 

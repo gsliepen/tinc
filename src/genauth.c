@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: genauth.c,v 1.7.4.3 2000/10/19 14:42:00 guus Exp $
+    $Id: genauth.c,v 1.7.4.4 2000/10/20 15:34:35 guus Exp $
 */
 
 #include "config.h"
@@ -105,6 +105,7 @@ int main(int argc, char **argv)
 
   printf(_("Public key:  %s\n"), BN_bn2hex(key->n));
   printf(_("Private key: %s\n"), BN_bn2hex(key->d));
+  printf(_("Public exp:  %s\n"), BN_bn2hex(key->e));
 
   fflush(stdin);	/* Flush any input caused by random keypresses */
 

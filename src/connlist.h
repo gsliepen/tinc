@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.3 2000/10/14 17:04:13 guus Exp $
+    $Id: connlist.h,v 1.1.2.4 2000/10/20 15:34:34 guus Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -44,7 +44,7 @@ typedef struct conn_list_t {
   packet_queue_t *sq;              /* pending outgoing packets */
   packet_queue_t *rq;              /* pending incoming packets (they have no
 				      valid key to be decrypted with) */
-  RSA *public_key;                 /* the other party's public key */
+  RSA *rsa_key;                    /* the public/private key */
 
   EVP_CIPHER_CTX *cipher_inctx;    /* Context of encrypted meta data that will come from him to us */
   EVP_CIPHER_CTX *cipher_outctx;   /* Context of encrypted meta data that will be sent from us to him */
