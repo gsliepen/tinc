@@ -107,7 +107,12 @@ int read_passphrase(char *which, char **out)
     }
 
   fscanf(f, "%d ", &size);
-  size >>= 2; /* nibbles->bits */
+  if(size < 1 || size > (1<<15))
+    {
+      syslog(LOG_ERR, "Illegal passphrase in %s; size would be %d", filename, size);
+      return -1;
+    }
+  size >>= 2; /* bits->nibbles */
   pp = xmalloc(size+2);
   fgets(pp, size+1, f);
   fclose(f);
