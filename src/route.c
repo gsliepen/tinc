@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.48 2003/03/29 21:58:35 guus Exp $
+    $Id: route.c,v 1.1.2.49 2003/03/29 22:11:22 guus Exp $
 */
 
 #include "config.h"
@@ -76,10 +76,13 @@ uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 	uint16_t *p = data;
 	uint32_t checksum = prevsum ^ 0xFFFF;
 
-	len /= 2;
-		
-	while(len--)
+	while(len >= 2) {
 		checksum += *p++;
+		len -= 2;
+	}
+	
+	if(len)
+		checksum += *(unsigned char *)p;
 
 	while(checksum >> 16)
 		checksum = (checksum & 0xFFFF) + (checksum >> 16);
