@@ -22,3 +22,6 @@ cvs-clean: maintainer-clean
 	for f in $(CVS_CREATED) `find -name Makefile.in` ; do\
 	  rm -f "$$f"; \
 	done
+
+deb:
+	dpkg-buildpackage -rfakeroot
