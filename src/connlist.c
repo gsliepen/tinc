@@ -17,9 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.c,v 1.1.2.11 2000/10/29 02:07:39 guus Exp $
+    $Id: connlist.c,v 1.1.2.12 2000/11/03 22:35:10 zarq Exp $
 */
 
+#include "config.h"
+
+#include <stdio.h>
 #include <syslog.h>
 
 #include "net.h"	/* Don't ask. */

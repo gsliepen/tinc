@@ -19,9 +19,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.19 2000/10/29 00:24:31 guus Exp $
+    $Id: conf.c,v 1.9.4.20 2000/11/03 22:35:10 zarq Exp $
 */
 
+#include "config.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -30,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <stdio.h>
 
 #include <xalloc.h>
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.53 2000/10/29 22:55:14 guus Exp $
+    $Id: protocol.c,v 1.28.4.54 2000/11/03 22:35:11 zarq Exp $
 */
 
 #include "config.h"
@@ -174,7 +174,7 @@ cp
 int id_h(conn_list_t *cl)
 {
   conn_list_t *old;
-  config_t *cfg;
+  config_t const *cfg;
 cp
   if(sscanf(cl->buffer, "%*d %as %d %lx %hd", &cl->name, &cl->protocol_version, &cl->options, &cl->port) != 4)
     {
@@ -803,6 +803,7 @@ int add_host_h(conn_list_t *cl)
 {
   conn_list_t *old, *new;
   conn_list_t *p;
+
 cp
   new = new_conn_list();
 

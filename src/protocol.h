@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.14 2000/10/29 22:55:15 guus Exp $
+    $Id: protocol.h,v 1.5.4.15 2000/11/03 22:35:12 zarq Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -69,5 +69,7 @@ extern int send_ans_key(conn_list_t*, conn_list_t*, char*);
 
 extern int send_tcppacket(conn_list_t *, void *, int);
 extern int notify_others(conn_list_t *, conn_list_t *, int (*function)(conn_list_t*, conn_list_t*));
+extern int receive_request(conn_list_t *);
+extern int check_id(char *);
 
 #endif /* __TINC_PROTOCOL_H__ */

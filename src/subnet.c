@@ -17,20 +17,21 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.8 2000/10/29 00:02:20 guus Exp $
+    $Id: subnet.c,v 1.1.2.9 2000/11/03 22:35:12 zarq Exp $
 */
 
-#include <syslog.h>
-#include <stdio.h>
-
 #include "config.h"
-#include <utils.h>
 
-#include <xalloc.h>
-#include "subnet.h"
-#include "net.h"
+#include <stdio.h>
+#include <syslog.h>
+
 #include "conf.h"
+#include "net.h"
+#include "subnet.h"
 #include "system.h"
+
+#include <utils.h>
+#include <xalloc.h>
 
 /* lists type of subnet */
 

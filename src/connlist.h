@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.9 2000/10/29 22:55:14 guus Exp $
+    $Id: connlist.h,v 1.1.2.10 2000/11/03 22:35:10 zarq Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
@@ -109,5 +109,7 @@ extern void conn_list_del(conn_list_t *);
 extern conn_list_t *lookup_id(char *);
 extern void dump_conn_list(void);
 extern int read_host_config(conn_list_t *);
+extern void destroy_conn_list(void);
+extern void prune_conn_list(void);
 
 #endif /* __TINC_CONNLIST_H__ */
