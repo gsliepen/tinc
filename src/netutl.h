@@ -1,6 +1,7 @@
 /*
     netutl.h -- header file for netutl.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998-2002 Ivo Timmermans <zarq@iname.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,16 +17,30 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.3 2000/10/18 20:12:09 zarq Exp $
+    $Id: netutl.h,v 1.4 2002/04/09 15:26:00 zarq Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
 #define __TINC_NETUTL_H__
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include "net.h"
-#include "conf.h"
+
+extern int hostnames;
 
 extern char *hostlookup(unsigned long);
-extern ip_mask_t *strtoip(char*);
+extern struct addrinfo *str2addrinfo(char *, char *, int);
+extern sockaddr_t str2sockaddr(char *, char *);
+extern void sockaddr2str(sockaddr_t *, char **, char **);
+extern char *sockaddr2hostname(sockaddr_t *);
+extern int sockaddrcmp(sockaddr_t *, sockaddr_t *);
+extern void sockaddrunmap(sockaddr_t *);
+extern int maskcmp(char *, char *, int, int);
+extern void maskcpy(char *, char *, int, int);
+extern void mask(char *, int, int);
+extern int maskcheck(char *, int, int);
 
 #endif /* __TINC_NETUTL_H__ */

@@ -1,7 +1,7 @@
 /*
     conf.h -- header for conf.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
-                            2000 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,85 +17,54 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.7 2000/10/18 20:12:08 zarq Exp $
+    $Id: conf.h,v 1.8 2002/04/09 15:26:00 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
 
-#define MAXTIMEOUT 900  /* Maximum timeout value for retries. Should this be a configuration option? */
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
-typedef struct ip_mask_t {
-  unsigned long ip;
-  unsigned long mask;
-} ip_mask_t;
-
-typedef enum which_t {
-  tincname = 1,
-  connectto,
-  pingtimeout,
-  tapdevice,
-  tapsubnet,
-  privatekey,
-  keyexpire,
-  resolve_dns,
-  interface,
-  interfaceip,
-  address,
-  port,
-  publickey,
-  subnet,
-  restricthosts,
-  restrictsubnets,
-  restrictaddress,
-  restrictport,
-  indirectdata,
-  tcponly,
-} which_t;
+#include <avl_tree.h>
+#include "net.h"
+#include "subnet.h"
 
 typedef struct config_t {
-  struct config_t *next;
-  which_t which;
-  int argtype;
-  union data {
-    unsigned long val;
-    void *ptr;
-    ip_mask_t *ip;
-    struct config_t *next;	/* For nested configs! */
-  } data;
+  char *variable;
+  char *value;
+  char *file;
+  int line;
 } config_t;
 
-typedef struct internal_config_t {
-  char *name;
-  enum which_t which;
-  int argtype;
-} internal_config_t;
+extern avl_tree_t *config_tree;
 
-enum {
-  stupid_false = 1,
-  stupid_true
-};
-
-enum {
-  TYPE_NAME = 1,
-  TYPE_INT,
-  TYPE_IP,
-  TYPE_BOOL
-};
-
-extern config_t *config;
 extern int debug_lvl;
-extern int timeout;
-extern int upstreamindex;
-extern int sighup;
+extern int pingtimeout;
+extern int maxtimeout;
+extern int bypass_security;
 extern char *confbase;
 extern char *netname;
 
-extern config_t *add_config_val(config_t **, int, char *);
-extern int read_config_file(config_t **, const char *);
-extern const config_t *get_config_val(config_t *, which_t type);
-extern const config_t *get_next_config_val(config_t *, which_t type, int);
-extern void clear_config();
+extern void init_configuration(avl_tree_t **);
+extern void exit_configuration(avl_tree_t **);
+extern config_t *new_config(void);
+extern void free_config(config_t *);
+extern void config_add(avl_tree_t *, config_t *);
+extern config_t *lookup_config(avl_tree_t *, char *);
+extern config_t *lookup_config_next(avl_tree_t *, config_t *);
+extern int get_config_bool(config_t *, int *);
+extern int get_config_int(config_t *, int *);
+extern int get_config_port(config_t *, port_t *);
+extern int get_config_string(config_t *, char **);
+extern int get_config_address(config_t *, struct addrinfo **);
+struct subnet_t; /* Needed for next line. */
+extern int get_config_subnet(config_t *, struct subnet_t **);
+
+extern int read_config_file(avl_tree_t *, const char *);
 extern int read_server_config(void);
+extern FILE *ask_and_safe_open(const char*, const char*, const char *);
+extern int is_safe_path(const char *);
 
 #endif /* __TINC_CONF_H__ */

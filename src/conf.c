@@ -1,9 +1,9 @@
 /*
     conf.c -- configuration code
-    Copyright (C) 1998 Emphyrio,
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
-                            2000 Guus Sliepen <guus@sliepen.warande.net>
-			    2000 Cris van Pelt <tribbel@arise.dhs.org>
+    Copyright (C) 1998 Robert van der Meulen
+                  1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+		  2000 Cris van Pelt <tribbel@arise.dhs.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,9 +19,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.10 2000/10/18 20:12:08 zarq Exp $
+    $Id: conf.c,v 1.11 2002/04/09 15:26:00 zarq Exp $
 */
 
+#include "config.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -30,178 +31,396 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
 
 #include <xalloc.h>
+#include <utils.h> /* for cp */
+#include <avl_tree.h>
 
 #include "conf.h"
-#include "netutl.h" /* for strtoip */
-#include <utils.h> /* for cp */
+#include "netutl.h" /* for str2address */
 
-#include "config.h"
-#include "connlist.h"
 #include "system.h"
 
-config_t *config = NULL;
+avl_tree_t *config_tree;
+
 int debug_lvl = 0;
-int timeout = 0; /* seconds before timeout */
+int pingtimeout = 0;             /* seconds before timeout */
 char *confbase = NULL;           /* directory in which all config files are */
 char *netname = NULL;            /* name of the vpn network */
 
-/* Will be set if HUP signal is received. It will be processed when it is safe. */
-int sighup = 0;
-
-/*
-  These are all the possible configurable values
-*/
-static internal_config_t hazahaza[] = {
-/* Main configuration file keywords */
-  { "Name",         tincname,       TYPE_NAME },
-  { "ConnectTo",    connectto,      TYPE_NAME },
-  { "PingTimeout",  pingtimeout,    TYPE_INT },
-  { "TapDevice",    tapdevice,      TYPE_NAME },
-  { "TapSubnet",    tapsubnet,      TYPE_IP },
-  { "PrivateKey",   privatekey,     TYPE_NAME },
-  { "KeyExpire",    keyexpire,      TYPE_INT },
-  { "Hostnames",    resolve_dns,    TYPE_BOOL },
-  { "Interface",    interface,      TYPE_NAME },
-  { "InterfaceIP",  interfaceip,    TYPE_IP },
-/* Host configuration file keywords */
-  { "Address",      address,        TYPE_NAME },
-  { "Port",         port,           TYPE_INT },
-  { "PublicKey",    publickey,      TYPE_NAME },
-  { "Subnet",       subnet,         TYPE_NAME },
-  { "RestrictHosts", restricthosts, TYPE_BOOL },
-  { "RestrictSubnets", restrictsubnets, TYPE_BOOL },
-  { "RestrictAddress", restrictaddress, TYPE_BOOL },
-  { "RestrictPort", restrictport,   TYPE_BOOL },
-  { "IndirectData", indirectdata,   TYPE_BOOL },
-  { "TCPonly",      tcponly,        TYPE_BOOL },
-  { NULL, 0, 0 }
-};
-
-/*
-  Add given value to the list of configs cfg
-*/
-config_t *
-add_config_val(config_t **cfg, int argtype, char *val)
+int config_compare(config_t *a, config_t *b)
 {
-  config_t *p, *r;
-  char *q;
-cp
-  p = (config_t*)xmalloc(sizeof(*p));
-  p->data.val = 0;
+  int result;
 
-  switch(argtype)
+  result = strcasecmp(a->variable, b->variable);
+
+  if(result)
+    return result;
+
+  result = a->line - b->line;
+
+  if(result)
+    return result;
+  else
+    return strcmp(a->file, b->file);
+}
+
+void init_configuration(avl_tree_t **config_tree)
+{
+cp
+  *config_tree = avl_alloc_tree((avl_compare_t)config_compare, (avl_action_t)free_config);
+cp
+}
+
+void exit_configuration(avl_tree_t **config_tree)
+{
+cp
+  avl_delete_tree(*config_tree);
+  *config_tree = NULL;
+cp
+}
+
+config_t *new_config(void)
+{
+  config_t *cfg;
+cp
+  cfg = (config_t *)xmalloc_and_zero(sizeof(*cfg));
+
+  return cfg;
+}
+
+void free_config(config_t *cfg)
+{
+cp
+  if(cfg->variable)
+    free(cfg->variable);
+  if(cfg->value)
+    free(cfg->value);
+  if(cfg->file)
+    free(cfg->file);
+  free(cfg);
+cp
+}
+
+void config_add(avl_tree_t *config_tree, config_t *cfg)
+{
+cp
+  avl_insert(config_tree, cfg);
+cp
+}
+
+config_t *lookup_config(avl_tree_t *config_tree, char *variable)
+{
+  config_t cfg, *found;
+cp
+  cfg.variable = variable;
+  cfg.file = "";
+  cfg.line = 0;
+
+  found = avl_search_closest_greater(config_tree, &cfg);
+
+  if(!found)
+    return NULL;
+
+  if(strcasecmp(found->variable, variable))
+    return NULL;
+
+  return found;
+}
+
+config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
+{
+  avl_node_t *node;
+  config_t *found;
+cp
+  node = avl_search_node(config_tree, cfg);
+
+  if(node)
     {
-    case TYPE_INT:
-      p->data.val = strtol(val, &q, 0);
-      if(q && *q)
-	p->data.val = 0;
-      break;
-    case TYPE_NAME:
-      p->data.ptr = xmalloc(strlen(val) + 1);
-      strcpy(p->data.ptr, val);
-      break;
-    case TYPE_IP:
-      p->data.ip = strtoip(val);
-      break;
-    case TYPE_BOOL:
-      if(!strcasecmp("yes", val))
-	p->data.val = stupid_true;
-      else if(!strcasecmp("no", val))
-	p->data.val = stupid_false;
-      else
-	p->data.val = 0;
+      if(node->next)
+        {
+          found = (config_t *)node->next->data;
+          if(!strcasecmp(found->variable, cfg->variable))
+            return found;
+        }
     }
 
-  p->argtype = argtype;
+  return NULL;
+}
 
-  if(p->data.val)
-    {
-      p->next = *cfg;
-      *cfg = p;
+int get_config_bool(config_t *cfg, int *result)
+{
 cp
-      return p;
+  if(!cfg)
+    return 0;
+
+  if(!strcasecmp(cfg->value, "yes"))
+    {
+      *result = 1;
+      return 1;
+    }
+  else if(!strcasecmp(cfg->value, "no"))
+    {
+      *result = 0;
+      return 1;
+    }
+
+  syslog(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+         cfg->variable, cfg->file, cfg->line);
+
+  return 0;
+}
+
+int get_config_int(config_t *cfg, int *result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  if(sscanf(cfg->value, "%d", result) == 1)
+    return 1;
+
+  syslog(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+         cfg->variable, cfg->file, cfg->line);
+  return 0;
+}
+
+int get_config_string(config_t *cfg, char **result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  *result = xstrdup(cfg->value);
+  return 1;
+}
+
+int get_config_address(config_t *cfg, struct addrinfo **result)
+{
+  struct addrinfo *ai;
+cp
+  if(!cfg)
+    return 0;
+
+  ai = str2addrinfo(cfg->value, NULL, 0);
+
+  if(ai)
+    {
+      *result = ai;
+      return 1;
+    }
+
+  syslog(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
+         cfg->variable, cfg->file, cfg->line);
+  return 0;
+}
+
+int get_config_port(config_t *cfg, port_t *result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  if(sscanf(cfg->value, "%hu", result) == 1)
+    {
+      *result = htons(*result);
+      return 1;
+    }
+
+  syslog(LOG_ERR, _("Port number expected for configuration variable %s in %s line %d"),
+         cfg->variable, cfg->file, cfg->line);
+  return 0;
+}
+
+int get_config_subnet(config_t *cfg, subnet_t **result)
+{
+  subnet_t *subnet;
+cp
+  if(!cfg)
+    return 0;
+
+  subnet = str2net(cfg->value);
+
+  if(!subnet)
+    {
+      syslog(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+             cfg->variable, cfg->file, cfg->line);
+      return 0;
+    }
+
+  /* Teach newbies what subnets are... */
+
+  if(((subnet->type == SUBNET_IPV4) && maskcheck((char *)&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
+     || ((subnet->type == SUBNET_IPV6) && maskcheck((char *)&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t))))
+    {
+      syslog(LOG_ERR, _("Network address and prefix length do not match for configuration variable %s in %s line %d"),
+             cfg->variable, cfg->file, cfg->line);
+      free(subnet);
+      return 0;
+    }
+
+  *result = subnet;
+
+  return 1;
+}
+
+/*
+  Read exactly one line and strip the trailing newline if any.  If the
+  file was on EOF, return NULL. Otherwise, return all the data in a
+  dynamically allocated buffer.
+
+  If line is non-NULL, it will be used as an initial buffer, to avoid
+  unnecessary mallocing each time this function is called.  If buf is
+  given, and buf needs to be expanded, the var pointed to by buflen
+  will be increased.
+*/
+char *readline(FILE *fp, char **buf, size_t *buflen)
+{
+  char *newline = NULL;
+  char *p;
+  char *line; /* The array that contains everything that has been read
+                 so far */
+  char *idx; /* Read into this pointer, which points to an offset
+                within line */
+  size_t size, newsize; /* The size of the current array pointed to by
+                           line */
+  size_t maxlen; /* Maximum number of characters that may be read with
+                    fgets.  This is newsize - oldsize. */
+
+  if(feof(fp))
+    return NULL;
+
+  if((buf != NULL) && (buflen != NULL))
+    {
+      size = *buflen;
+      line = *buf;
     }
   else
     {
-      free(p);
-cp
-      return NULL;
+      size = 100;
+      line = xmalloc(size);
     }
+
+  maxlen = size;
+  idx = line;
+  *idx = 0;
+  for(;;)
+    {
+      errno = 0;
+      p = fgets(idx, maxlen, fp);
+      if(p == NULL)  /* EOF or error */
+	{
+	  if(feof(fp))
+	    break;
+
+	  /* otherwise: error; let the calling function print an error
+             message if applicable */
+	  free(line);
+	  return NULL;
+	}
+
+      newline = strchr(p, '\n');
+      if(newline == NULL)
+	/* We haven't yet read everything to the end of the line */
+	{
+	  newsize = size << 1;
+	  line = xrealloc(line, newsize);
+	  idx = &line[size - 1];
+	  maxlen = newsize - size + 1;
+	  size = newsize;
+	}
+      else
+	{
+	  *newline = '\0'; /* kill newline */
+	  break;  /* yay */
+	}
+    }
+
+  if((buf != NULL) && (buflen != NULL))
+    {
+      *buflen = size;
+      *buf = line;
+    }
+  return line;
 }
 
 /*
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-int read_config_file(config_t **base, const char *fname)
+int read_config_file(avl_tree_t *config_tree, const char *fname)
 {
-  int err = -1;
+  int err = -2; /* Parse error */
   FILE *fp;
-  char line[MAXBUFSIZE];	/* There really should not be any line longer than this... */
-  char *p, *q;
-  int i, lineno = 0;
+  char *buffer, *line;
+  char *variable, *value;
+  int lineno = 0, ignore = 0;
   config_t *cfg;
+  size_t bufsize;
+
 cp
   if((fp = fopen (fname, "r")) == NULL)
     {
-      return -1;
+      syslog(LOG_ERR, _("Cannot open config file %s: %s"), fname, strerror(errno));
+      return -3;
     }
+
+  bufsize = 100;
+  buffer = xmalloc(bufsize);
 
   for(;;)
     {
-      if(fgets(line, MAXBUFSIZE, fp) == NULL)
-        {
-          err = 0;
-          break;
-        }
-        
+      if((line = readline(fp, &buffer, &bufsize)) == NULL)
+	{
+	  err = -1;
+	  break;
+	}
+
+      if(feof(fp))
+	{
+	  err = 0;
+	  break;
+	}
+
       lineno++;
 
-      if(!index(line, '\n'))
-        {
-          syslog(LOG_ERR, _("Line %d too long while reading config file %s"), lineno, fname);
-          break;
-        }        
-
-      if((p = strtok(line, "\t\n\r =")) == NULL)
+      if((variable = strtok(line, "\t =")) == NULL)
 	continue; /* no tokens on this line */
 
-      if(p[0] == '#')
+      if(variable[0] == '#')
 	continue; /* comment: ignore */
 
-      for(i = 0; hazahaza[i].name != NULL; i++)
-	if(!strcasecmp(hazahaza[i].name, p))
-	  break;
+      if(!strcmp(variable, "-----BEGIN"))
+        ignore = 1;
 
-      if(!hazahaza[i].name)
-	{
-	  syslog(LOG_ERR, _("Invalid variable name on line %d while reading config file %s"),
-		  lineno, fname);
-          break;
-	}
+      if(!ignore)
+        {
+          if(((value = strtok(NULL, "\t\n\r =")) == NULL) || value[0] == '#')
+	    {
+	      syslog(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+		      variable, lineno, fname);
+	      break;
+	    }
 
-      if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
-	{
-	  fprintf(stderr, _("No value for variable on line %d while reading config file %s"),
-		  lineno, fname);
-	  break;
-	}
+          cfg = new_config();
+          cfg->variable = xstrdup(variable);
+          cfg->value = xstrdup(value);
+          cfg->file = xstrdup(fname);
+          cfg->line = lineno;
 
-      cfg = add_config_val(base, hazahaza[i].argtype, q);
-      if(cfg == NULL)
-	{
-	  fprintf(stderr, _("Invalid value for variable on line %d while reading config file %s"),
-		  lineno, fname);
-	  break;
-	}
+          config_add(config_tree, cfg);
+       }
 
-      cfg->which = hazahaza[i].which;
-      if(!config)
-	config = cfg;
+      if(!strcmp(variable, "-----END"))
+        ignore = 0;
     }
 
+  free(buffer);
   fclose (fp);
 cp
   return err;
@@ -213,56 +432,192 @@ int read_server_config()
   int x;
 cp
   asprintf(&fname, "%s/tinc.conf", confbase);
-  x = read_config_file(&config, fname);
+  x = read_config_file(config_tree, fname);
+  if(x == -1) /* System error: complain */
+    {
+      syslog(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
+    }
   free(fname);
 cp
-  return x;  
+  return x;
 }
 
-/*
-  Look up the value of the config option type
-*/
-const config_t *get_config_val(config_t *p, which_t type)
+int isadir(const char* f)
 {
-cp
-  for(; p != NULL; p = p->next)
-    if(p->which == type)
-      break;
-cp
-  return p;
+  struct stat s;
+
+  if(stat(f, &s) < 0)
+    return 0;
+  else
+    return S_ISDIR(s.st_mode);
 }
 
-/*
-  Support for multiple config lines.
-  Index is used to get a specific value, 0 being the first, 1 the second etc.
-*/
-const config_t *get_next_config_val(config_t *p, which_t type, int index)
+int is_safe_path(const char *file)
 {
-cp  
-  for(; p != NULL; p = p->next)
-    if(p->which == type)
-      if(--index < 0)
-        break;
-cp  
-  return p;
-}
+  char *p;
+  const char *f;
+  char x;
+  struct stat s;
+  char l[MAXBUFSIZE];
 
-/*
-  Remove the complete configuration tree.
-*/
-void clear_config(config_t **base)
-{
-  config_t *p, *next;
-cp
-  for(p = *base; p != NULL; p = next)
+  if(*file != '/')
     {
-      next = p->next;
-      if(p->data.ptr && (p->argtype == TYPE_NAME))
-        {
-          free(p->data.ptr);
-        }
-      free(p);
+      syslog(LOG_ERR, _("`%s' is not an absolute path"), file);
+      return 0;
     }
-  *base = NULL;
-cp
+
+  p = strrchr(file, '/');
+
+  if(p == file)		/* It's in the root */
+    p++;
+
+  x = *p;
+  *p = '\0';
+
+  f = file;
+check1:
+  if(lstat(f, &s) < 0)
+    {
+      syslog(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
+      return 0;
+    }
+
+  if(s.st_uid != geteuid())
+    {
+      syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+	      f, s.st_uid, geteuid());
+      return 0;
+    }
+
+  if(S_ISLNK(s.st_mode))
+    {
+      syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
+	      f);
+
+      if(readlink(f, l, MAXBUFSIZE) < 0)
+        {
+          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f, strerror(errno));
+          return 0;
+        }
+
+      f = l;
+      goto check1;
+    }
+
+  *p = x;
+  f = file;
+
+check2:
+  if(lstat(f, &s) < 0 && errno != ENOENT)
+    {
+      syslog(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
+      return 0;
+    }
+
+  if(errno == ENOENT)
+    return 1;
+
+  if(s.st_uid != geteuid())
+    {
+      syslog(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
+	      f, s.st_uid, geteuid());
+      return 0;
+    }
+
+  if(S_ISLNK(s.st_mode))
+    {
+      syslog(LOG_WARNING, _("Warning: `%s' is a symlink"),
+	      f);
+
+      if(readlink(f, l, MAXBUFSIZE) < 0)
+        {
+          syslog(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f, strerror(errno));
+          return 0;
+        }
+
+      f = l;
+      goto check2;
+    }
+
+  if(s.st_mode & 0007)
+    {
+      /* Accessible by others */
+      syslog(LOG_ERR, _("`%s' has unsecure permissions"),
+	      f);
+      return 0;
+    }
+
+  return 1;
+}
+
+FILE *ask_and_safe_open(const char* filename, const char* what, const char* mode)
+{
+  FILE *r;
+  char *directory;
+  char *fn;
+
+  /* Check stdin and stdout */
+  if(!isatty(0) || !isatty(1))
+    {
+      /* Argh, they are running us from a script or something.  Write
+         the files to the current directory and let them burn in hell
+         for ever. */
+      fn = xstrdup(filename);
+    }
+  else
+    {
+      /* Ask for a file and/or directory name. */
+      fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
+	      what, filename);
+      fflush(stdout);
+
+      if((fn = readline(stdin, NULL, NULL)) == NULL)
+	{
+	  fprintf(stderr, _("Error while reading stdin: %s\n"), strerror(errno));
+	  return NULL;
+	}
+
+      if(strlen(fn) == 0)
+	/* User just pressed enter. */
+	fn = xstrdup(filename);
+    }
+
+  if((strchr(fn, '/') == NULL) || (fn[0] != '/'))
+    {
+      /* The directory is a relative path or a filename. */
+      char *p;
+
+      directory = get_current_dir_name();
+      asprintf(&p, "%s/%s", directory, fn);
+      free(fn);
+      free(directory);
+      fn = p;
+    }
+
+  umask(0077); /* Disallow everything for group and other */
+
+  /* Open it first to keep the inode busy */
+  if((r = fopen(fn, mode)) == NULL)
+    {
+      fprintf(stderr, _("Error opening file `%s': %s\n"),
+	      fn, strerror(errno));
+      free(fn);
+      return NULL;
+    }
+
+  /* Then check the file for nasty attacks */
+  if(!is_safe_path(fn))  /* Do not permit any directories that are
+                            readable or writeable by other users. */
+    {
+      fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
+			"I will not create or overwrite this file.\n"),
+			fn);
+      fclose(r);
+      free(fn);
+      return NULL;
+    }
+
+  free(fn);
+
+  return r;
 }

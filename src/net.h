@@ -1,6 +1,7 @@
 /*
     net.h -- header for net.c
-    Copyright (C) 1998,1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1998-2002 Ivo Timmermans <zarq@iname.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,49 +17,47 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.10 2000/10/18 20:12:09 zarq Exp $
+    $Id: net.h,v 1.11 2002/04/09 15:26:00 zarq Exp $
 */
 
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <sys/time.h>
 
 #include "config.h"
 
-#define MAXSIZE 1700  /* should be a bit more than the MTU for the tapdevice */
-#define MTU 1600
-
-#define MAC_ADDR_S "%02x:%02x:%02x:%02x:%02x:%02x"
-#define MAC_ADDR_V(x) ((unsigned char*)&(x))[0],((unsigned char*)&(x))[1], \
-                      ((unsigned char*)&(x))[2],((unsigned char*)&(x))[3], \
-                      ((unsigned char*)&(x))[4],((unsigned char*)&(x))[5]
-
-#define IP_ADDR_S "%d.%d.%d.%d"
-
-#ifdef WORDS_BIGENDIAN
-# define IP_ADDR_V(x) ((unsigned char*)&(x))[0],((unsigned char*)&(x))[1], \
-                      ((unsigned char*)&(x))[2],((unsigned char*)&(x))[3]
+#ifdef ENABLE_JUMBOGRAMS
+ #define MTU 9014        /* 9000 bytes payload + 14 bytes ethernet header */
+ #define MAXSIZE 9100    /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+ #define MAXBUFSIZE 9100 /* Must support TCP packets of length 9000. */
 #else
-# define IP_ADDR_V(x) ((unsigned char*)&(x))[3],((unsigned char*)&(x))[2], \
-                      ((unsigned char*)&(x))[1],((unsigned char*)&(x))[0]
+ #define MTU 1514        /* 1500 bytes payload + 14 bytes ethernet header */
+ #define MAXSIZE 1600    /* MTU + header (seqno) and trailer (CBC padding and HMAC) */
+ #define MAXBUFSIZE 2100 /* Quite large but needed for support of keys up to 8192 bits. */
 #endif
 
-#define MAXBUFSIZE 4096 /* Probably way too much, but it must fit every possible request. */
+#define MAXSOCKETS 128 /* Overkill... */
 
-/* flags */
-#define INDIRECTDATA        0x0001 /* Used to indicate that this host has to be reached indirect */
-#define EXPORTINDIRECTDATA  0x0002 /* Used to indicate uplink that it has to tell others to do INDIRECTDATA */
-#define TCPONLY             0x0004 /* Tells sender to send packets over TCP instead of UDP (for firewalls) */
+#define MAXQUEUELENGTH 8 /* Maximum number of packats in a single queue */
 
 typedef struct mac_t
 {
   unsigned char x[6];
 } mac_t;
 
-typedef unsigned long ipv4_t;
+typedef struct ipv4_t
+{
+  unsigned char x[4];
+} ipv4_t;
 
-typedef ipv4_t ip_t; /* alias for ipv4_t */
+typedef struct ip_mask_t {
+  ipv4_t address;
+  ipv4_t mask;
+} ip_mask_t;
 
 typedef struct ipv6_t
 {
@@ -69,36 +68,24 @@ typedef unsigned short port_t;
 
 typedef short length_t;
 
+typedef union {
+  struct sockaddr sa;
+  struct sockaddr_in in;
+  struct sockaddr_in6 in6;
+} sockaddr_t;
+
+#ifdef SA_LEN
+#define SALEN(s) SA_LEN(&s)
+#else
+#define SALEN(s) (s.sa_family==AF_INET?sizeof(struct sockaddr_in):sizeof(struct sockaddr_in6))
+#endif
+
 typedef struct vpn_packet_t {
-  length_t len;		/* the actual number of bytes in the `data' field */
+  length_t len;			/* the actual number of bytes in the `data' field */
+  int priority;                 /* priority or TOS */
+  unsigned int seqno;	        /* 32 bits sequence number (network byte order of course) */
   unsigned char data[MAXSIZE];
 } vpn_packet_t;
-
-typedef struct passphrase_t {
-  unsigned short len;
-  unsigned char *phrase;
-} passphrase_t;
-
-typedef struct status_bits_t {
-  int pinged:1;                    /* sent ping */
-  int got_pong:1;                  /* received pong */
-  int meta:1;                      /* meta connection exists */
-  int active:1;                    /* 1 if active.. */
-  int outgoing:1;                  /* I myself asked for this conn */
-  int termreq:1;                   /* the termination of this connection was requested */
-  int remove:1;                    /* Set to 1 if you want this connection removed */
-  int timeout:1;                   /* 1 if gotten timeout */
-  int validkey:1;                  /* 1 if we currently have a valid key for him */
-  int waitingforkey:1;             /* 1 if we already sent out a request */
-  int dataopen:1;                  /* 1 if we have a valid UDP connection open */
-  int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
-  int decryptin:1;                 /* 1 if we have to decrypt incoming traffic */
-  int unused:18;
-} status_bits_t;
-
-typedef struct option_bits_t {
-  int unused:32;
-} option_bits_t;
 
 typedef struct queue_element_t {
   void *packet;
@@ -111,36 +98,56 @@ typedef struct packet_queue_t {
   queue_element_t *tail;
 } packet_queue_t;
 
-typedef struct enc_key_t {
-  int length;
-  char *key;
-  time_t expiry;
-} enc_key_t;
+typedef struct outgoing_t {
+  char *name;
+  int timeout;
+  struct config_t *cfg;
+  struct addrinfo *ai;
+  struct addrinfo *aip;
+} outgoing_t;
 
-extern int tap_fd;
+typedef struct listen_socket_t {
+  int tcp;
+  int udp;
+  sockaddr_t sa;
+} listen_socket_t;
 
-extern int total_tap_in;
-extern int total_tap_out;
-extern int total_socket_in;
-extern int total_socket_out;
+extern int maxtimeout;
+extern int seconds_till_retry;
+extern int addressfamily;
 
-extern char *unknown;
+extern char *request_name[];
+extern char *status_text[];
 
-extern char *request_name[256];
-extern char *status_text[10];
+#include "connection.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 
-#include "connlist.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
+extern listen_socket_t listen_socket[MAXSOCKETS];
+extern int listen_sockets;
+extern int keyexpires;
+extern int keylifetime;
+extern int do_prune;
+extern int do_purge;
+extern char *myport;
+extern time_t now;
 
-extern int str2opt(const char *);
-extern char *opt2str(int);
-extern int send_packet(ip_t, vpn_packet_t *);
+extern void retry_outgoing(outgoing_t *);
+extern void handle_incoming_vpn_data(int);
+extern void finish_connecting(connection_t *);
+extern void do_outgoing_connection(connection_t *);
+extern int handle_new_meta_connection(int);
+extern int setup_listen_socket(sockaddr_t *);
+extern int setup_vpn_in_socket(sockaddr_t *);
+extern void send_packet(struct node_t *, vpn_packet_t *);
+extern void receive_packet(struct node_t *, vpn_packet_t *);
+extern void receive_tcppacket(struct connection_t *, char *, int);
+extern void broadcast_packet(struct node_t *, vpn_packet_t *);
 extern int setup_network_connections(void);
+extern void setup_outgoing_connection(struct outgoing_t *);
+extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
-extern int setup_vpn_connection(conn_list_t *);
-extern void terminate_connection(conn_list_t *);
-extern void flush_queues(conn_list_t *);
-extern int xrecv(vpn_packet_t *);
-extern void add_queue(packet_queue_t **, void *, size_t);
+extern void terminate_connection(connection_t *, int);
+extern void flush_queue(struct node_t *);
+extern int read_rsa_public_key(struct connection_t *);
 
 #endif /* __TINC_NET_H__ */

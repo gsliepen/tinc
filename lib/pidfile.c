@@ -32,6 +32,8 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 /* read_pid
  *
@@ -71,6 +73,7 @@ int check_pid (char *pidfile)
    * be found -- GW
    */
   /* But... errno is usually changed only on error.. */
+  errno = 0;
   if (kill(pid, 0) && errno == ESRCH)
 	  return(0);
 
@@ -93,13 +96,15 @@ int write_pid (char *pidfile)
       fprintf(stderr, "Can't open or create %s.\n", pidfile);
       return 0;
   }
-
+  
+#ifdef HAVE_FLOCK
   if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
       fscanf(f, "%d", &pid);
       fclose(f);
       printf("Can't lock, lock is held by pid %d.\n", pid);
       return 0;
   }
+#endif
 
   pid = getpid();
   if (!fprintf(f,"%d\n", pid)) {
@@ -109,11 +114,13 @@ int write_pid (char *pidfile)
   }
   fflush(f);
 
+#ifdef HAVE_FLOCK
   if (flock(fd, LOCK_UN) == -1) {
       printf("Can't unlock pidfile %s, %s.\n", pidfile, strerror(errno));
       close(fd);
       return 0;
   }
+#endif
   close(fd);
 
   return pid;
