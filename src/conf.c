@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.31 2000/12/01 12:38:42 zarq Exp $
+    $Id: conf.c,v 1.9.4.32 2000/12/03 12:22:19 zarq Exp $
 */
 
 #include "config.h"
@@ -58,25 +58,25 @@ int sighup = 0;
 */
 static internal_config_t hazahaza[] = {
 /* Main configuration file keywords */
-  { "Name",         config_name,       TYPE_NAME },
   { "ConnectTo",    config_connectto,      TYPE_NAME },
-  { "PingTimeout",  config_pingtimeout,    TYPE_INT },
-  { "TapDevice",    config_tapdevice,      TYPE_NAME },
-  { "PrivateKey",   config_privatekey,     TYPE_NAME },
-  { "KeyExpire",    config_keyexpire,      TYPE_INT },
   { "Hostnames",    config_hostnames,    TYPE_BOOL },
   { "Interface",    config_interface,      TYPE_NAME },
   { "InterfaceIP",  config_interfaceip,    TYPE_IP },
+  { "KeyExpire",    config_keyexpire,      TYPE_INT },
+  { "Name",         config_name,       TYPE_NAME },
+  { "PingTimeout",  config_pingtimeout,    TYPE_INT },
+  { "PrivateKey",   config_privatekey,     TYPE_NAME },
+  { "TapDevice",    config_tapdevice,      TYPE_NAME },
 /* Host configuration file keywords */
   { "Address",      config_address,        TYPE_NAME },
+  { "IndirectData", config_indirectdata,   TYPE_BOOL },
   { "Port",         config_port,           TYPE_INT },
   { "PublicKey",    config_publickey,      TYPE_NAME },
-  { "Subnet",       config_subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
-  { "RestrictHosts", config_restricthosts, TYPE_BOOL },
-  { "RestrictSubnets", config_restrictsubnets, TYPE_BOOL },
   { "RestrictAddress", config_restrictaddress, TYPE_BOOL },
+  { "RestrictHosts", config_restricthosts, TYPE_BOOL },
   { "RestrictPort", config_restrictport,   TYPE_BOOL },
-  { "IndirectData", config_indirectdata,   TYPE_BOOL },
+  { "RestrictSubnets", config_restrictsubnets, TYPE_BOOL },
+  { "Subnet",       config_subnet,         TYPE_IP },		/* Use IPv4 subnets only for now */
   { "TCPonly",      config_tcponly,        TYPE_BOOL },
   { NULL, 0, 0 }
 };
