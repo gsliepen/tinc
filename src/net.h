@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.18 2000/10/28 21:25:21 guus Exp $
+    $Id: net.h,v 1.9.4.19 2000/10/29 01:27:23 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -82,27 +82,6 @@ typedef struct passphrase_t {
   unsigned short len;
   unsigned char *phrase;
 } passphrase_t;
-
-typedef struct status_bits_t {
-  int pinged:1;                    /* sent ping */
-  int got_pong:1;                  /* received pong */
-  int meta:1;                      /* meta connection exists */
-  int active:1;                    /* 1 if active.. */
-  int outgoing:1;                  /* I myself asked for this conn */
-  int termreq:1;                   /* the termination of this connection was requested */
-  int remove:1;                    /* Set to 1 if you want this connection removed */
-  int timeout:1;                   /* 1 if gotten timeout */
-  int validkey:1;                  /* 1 if we currently have a valid key for him */
-  int waitingforkey:1;             /* 1 if we already sent out a request */
-  int dataopen:1;                  /* 1 if we have a valid UDP connection open */
-  int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
-  int decryptin:1;                 /* 1 if we have to decrypt incoming traffic */
-  int unused:18;
-} status_bits_t;
-
-typedef struct option_bits_t {
-  int unused:32;
-} option_bits_t;
 
 typedef struct queue_element_t {
   void *packet;
