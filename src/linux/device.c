@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.7 2002/02/18 16:25:19 guus Exp $
+    $Id: device.c,v 1.1.2.8 2002/03/24 16:36:56 guus Exp $
 */
 
 #include "config.h"
@@ -130,6 +130,7 @@ cp
     {
       device_info = _("Linux ethertap device");
       device_type = DEVICE_TYPE_ETHERTAP;
+      interface = rindex(device, '/')?rindex(device, '/')+1:device;
     }
 
   syslog(LOG_INFO, _("%s is a %s"), device, device_info);
