@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.48 2003/12/24 10:48:14 guus Exp $
+    $Id: net_packet.c,v 1.1.2.49 2003/12/27 16:32:52 guus Exp $
 */
 
 #include "system.h"
@@ -35,6 +35,7 @@
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
+#include "ethernet.h"
 #include "event.h"
 #include "graph.h"
 #include "list.h"
@@ -412,6 +413,8 @@ void send_packet(const node_t *n, vpn_packet_t *packet)
 	cp();
 
 	if(n == myself) {
+		if(overwrite_mac)
+			 memcpy(packet->data, mymac.x, ETH_ALEN);
 		write_packet(packet);
 		return;
 	}
