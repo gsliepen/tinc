@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.79 2001/02/25 11:09:29 guus Exp $
+    $Id: protocol.c,v 1.28.4.80 2001/02/25 16:34:19 guus Exp $
 */
 
 #include "config.h"
@@ -613,7 +613,7 @@ cp
   cl->status.active = 1;
   cl->status.decryptin = 1;
   cl->nexthop = cl;
-  cl->cipher_pkttype = EVP_bf_cfb();
+  cl->cipher_pkttype = EVP_bf_cbc();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
@@ -929,7 +929,7 @@ cp
 
   new->nexthop = cl;
   new->status.active = 1;
-  new->cipher_pkttype = EVP_bf_cfb();
+  new->cipher_pkttype = EVP_bf_cbc();
   new->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 cp
   return 0;

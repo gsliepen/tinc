@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.95 2001/02/25 16:04:00 guus Exp $
+    $Id: net.c,v 1.35.4.96 2001/02/25 16:34:17 guus Exp $
 */
 
 #include "config.h"
@@ -112,7 +112,7 @@ int xsend(connection_t *cl, vpn_packet_t *inpkt)
 cp
   outpkt.len = inpkt->len;
   
-  /* Encrypt the packet. FIXME: we should use CBC, not CFB. */
+  /* Encrypt the packet. */
   
   EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
   EVP_EncryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
@@ -816,7 +816,7 @@ cp
 cp
   /* Generate packet encryption key */
 
-  myself->cipher_pkttype = EVP_bf_cfb();
+  myself->cipher_pkttype = EVP_bf_cbc();
 
   myself->cipher_pktkeylength = myself->cipher_pkttype->key_len + myself->cipher_pkttype->iv_len;
 
