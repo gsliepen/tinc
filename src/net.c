@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.129 2001/09/01 12:36:06 guus Exp $
+    $Id: net.c,v 1.35.4.130 2001/09/24 13:31:15 guus Exp $
 */
 
 #include "config.h"
@@ -369,18 +369,25 @@ cp
 cp
   if (!ioctl(tap_fd, TUNSETIFF, (void *) &ifr))
   {
-    syslog(LOG_INFO, _("%s is a tun/tap device"), tapfname);
+    syslog(LOG_INFO, _("%s is a Linux tun/tap device"), tapfname);
     taptype = TAP_TYPE_TUNTAP;
   }
   else
+    if (!ioctl(tap_fd, (('T'<< 8) | 202), (void *) &ifr))
+    {
+      syslog(LOG_INFO, _("%s is a Linux tun/tap device"), tapfname);
+      syslog(LOG_WARNING, _("Old ioctl() request used"));
+      taptype = TAP_TYPE_TUNTAP;
+    }
+    else
  #endif
-  {
-    syslog(LOG_INFO, _("%s is an ethertap device"), tapfname);
-    taptype = TAP_TYPE_ETHERTAP;
-  }
+    {
+      syslog(LOG_INFO, _("%s is a Linux ethertap device"), tapfname);
+      taptype = TAP_TYPE_ETHERTAP;
+    }
 #endif
 #ifdef HAVE_FREEBSD
- syslog(LOG_INFO, _("%s is a tun/tap device"), tapfname);
+ syslog(LOG_INFO, _("%s is a FreeBSD tap device"), tapfname);
  taptype = TAP_TYPE_TUNTAP;
 #endif
 #ifdef HAVE_SOLARIS
@@ -422,7 +429,7 @@ cp
      return -1;
   }
 
-  syslog(LOG_INFO, _("%s is a tun/tap device"), tapfname);
+  syslog(LOG_INFO, _("%s is a Solaris tun device"), tapfname);
 #endif
 
 cp
