@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.29 2002/06/12 13:45:23 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
+$Id: tinc.texi,v 1.8.4.29 2002/06/12 13:45:23 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
+$Id: tinc.texi,v 1.8.4.29 2002/06/12 13:45:23 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -227,12 +227,36 @@ Tunneling IPv6 packets may not work on OpenBSD.
 @c ==================================================================
 @subsection Solaris
 
+@c ==================================================================
+@subsection NetBSD
+
+@cindex NetBSD
+tinc on NetBSD relies on the tun driver for its data
+acquisition from the kernel. It has been verified to work under at least NetBSD 1.5.2.
+
+Tunneling IPv6 does not work on OpenBSD.
+
+
+@c ==================================================================
+@subsection Solaris
+
 @cindex Solaris
 tinc on Solaris relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
 as this driver.  These are: Solaris 8 (SunOS 5.8).
 
 IPv6 packets cannot be tunneled on Solaris.
+
+@c ==================================================================
+@subsection Darwin (MacOS/X)
+
+@cindex Darwin
+@cindex MacOS/X
+tinc on Darwin relies on the tunnel driver for its data
+acquisition from the kernel. This driver is not part of Darwin but can be
+downloaded from @uref{http://chrisp.de/en/projects/tunnel.html}.
+
+IPv6 packets cannot be tunneled on Darwin.
 
 
 @c
@@ -290,7 +314,9 @@ you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html
 * Configuration of Linux kernels 2.4.0 and higher::
 * Configuration of FreeBSD kernels::
 * Configuration of OpenBSD kernels::
+* Configuration of NetBSD kernels::
 * Configuration of Solaris kernels::
+* Configuration of Darwin (MacOS/X) kernels::
 @end menu
 
 
@@ -374,7 +400,7 @@ Unfortunately somebody still has to write the text.
 
 
 @c ==================================================================
-@node       Configuration of OpenBSD kernels, Configuration of Solaris kernels, Configuration of FreeBSD kernels, Configuring the kernel
+@node       Configuration of OpenBSD kernels, Configuration of NetBSD kernels, Configuration of FreeBSD kernels, Configuring the kernel
 @subsection Configuration of OpenBSD kernels
 
 This section will contain information on how to configure your OpenBSD
@@ -385,7 +411,18 @@ Unfortunately somebody still has to write the text.
 
 
 @c ==================================================================
-@node       Configuration of Solaris kernels,  , Configuration of OpenBSD kernels, Configuring the kernel
+@node       Configuration of NetBSD kernels, Configuration of Solaris kernels, Configuration of OpenBSD kernels, Configuring the kernel
+@subsection Configuration of NetBSD kernels
+
+This section will contain information on how to configure your NetBSD
+kernel to support the tun device.  For 1.5.2 systems,
+this is included in the default kernel configuration.
+
+Unfortunately somebody still has to write the text.
+
+
+@c ==================================================================
+@node       Configuration of Solaris kernels, Configuration of Darwin (MacOS/X) kernels, Configuration of NetBSD kernels, Configuring the kernel
 @subsection Configuration of Solaris kernels
 
 This section will contain information on how to configure your Solaris
@@ -393,6 +430,23 @@ kernel to support the universal tun/tap device.  For Solaris 8 (SunOS 5.8),
 this is included in the default kernel configuration.
 
 Unfortunately somebody still has to write the text.
+
+
+@c ==================================================================
+@node       Configuration of Darwin (MacOS/X) kernels, , Configuration of Solaris kernels, Configuring the kernel
+@subsection Configuration of Darwin (MacOS/X) kernels
+
+Darwin does not come with a tunnel driver. You must download it at
+@uref{http://chrisp.de/en/projects/tunnel.html}. If compiling the source fails,
+try the binary module. The tunnel driver must be loaded before starting tinc
+with the following command:
+
+@example
+kmodload tunnel
+@end example
+
+Once loaded, the tunnel driver will automatically create @file{/dev/tun0}..@file{/dev/tun3}
+and the corresponding network interfaces.
 
 
 @c ==================================================================
@@ -532,6 +586,22 @@ can be found in the file called @file{INSTALL}.
 If you happen to have a binary package for tinc for your distribution,
 you can use the package management tools of that distribution to install tinc.
 The documentation that comes along with your distribution will tell you how to do that.
+
+@menu
+* Darwin (MacOS/X) build environment::
+@end menu
+
+
+@c ==================================================================
+@node       Darwin (MacOS/X) build environment,  ,  , Building and installing tinc
+@subsection Darwin (MacOS/X) build environment
+
+In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
+from @uref{http://developer.apple.com/tools/macosxtools.html} and
+a recent version of Fink from @uref{http://fink.sourceforge.net/}.
+
+After installation use fink to download and install the following packages:
+autoconf25, automake, dlcompat, m4, openssl and zlib.
 
 
 @c ==================================================================
