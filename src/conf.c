@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.15 2000/10/16 16:33:29 guus Exp $
+    $Id: conf.c,v 1.9.4.16 2000/10/22 13:47:41 zarq Exp $
 */
 
 
@@ -214,6 +214,11 @@ int read_server_config()
 cp
   asprintf(&fname, "%s/tinc.conf", confbase);
   x = read_config_file(&config, fname);
+  if(x != 0)
+    {
+      fprintf(stderr, _("Failed to read `%s': %m\n"),
+	      fname);
+    }
   free(fname);
 cp
   return x;  
