@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.2 2001/10/28 10:16:18 guus Exp $
+    $Id: edge.c,v 1.1.2.3 2001/10/28 22:42:49 guus Exp $
 */
 
 #include "config.h"
@@ -65,17 +65,11 @@ int edge_compare(edge_t *a, edge_t *b)
 
 */
 
-int edge_weight_compare(edge_t *a, edge_t *b)
+int edge_name_compare(edge_t *a, edge_t *b)
 {
   int result;
   char *name_a1, *name_a2, *name_b1, *name_b2;
   
-  
-  result = a->weight - b->weight;
-  
-  if(result)
-    return result;
-
   if(strcmp(a->from->name, a->to->name) < 0)
     name_a1 = a->from->name, name_a2 = a->to->name;
   else
@@ -94,11 +88,37 @@ int edge_weight_compare(edge_t *a, edge_t *b)
     return strcmp(name_a2, name_b2);
 }
 
+int edge_weight_compare(edge_t *a, edge_t *b)
+{
+  int result;
+  
+  result = a->weight - b->weight;
+  
+  if(result)
+    return result;
+  else
+    return edge_name_compare(a, b);
+}
+
 void init_edges(void)
 {
 cp
   edge_tree = avl_alloc_tree((avl_compare_t)edge_compare, NULL);
   edge_weight_tree = avl_alloc_tree((avl_compare_t)edge_weight_compare, NULL);
+cp
+}
+
+avl_tree_t *new_edge_tree(void)
+{
+cp
+  edge_tree = avl_alloc_tree((avl_compare_t)edge_name_compare, NULL);
+cp
+}
+
+void free_edge_tree(avl_tree_t *edge_tree)
+{
+cp
+  avl_delete_tree(edge_tree);
 cp
 }
 
@@ -113,8 +133,9 @@ cp
 
 edge_t *new_edge(void)
 {
+  edge_t *e;
 cp
-  edge_t *e = (edge_t *)xmalloc_and_zero(sizeof(*e));
+  e = (edge_t *)xmalloc_and_zero(sizeof(*e));
 cp
   return e;
 }
@@ -131,6 +152,8 @@ void edge_add(edge_t *e)
 cp
   avl_insert(edge_tree, e);
   avl_insert(edge_weight_tree, e);
+  avl_insert(e->from->edge_tree, e);
+  avl_insert(e->to->edge_tree, e);
 cp
 }
 
@@ -139,6 +162,8 @@ void edge_del(edge_t *e)
 cp
   avl_delete(edge_tree, e);
   avl_delete(edge_weight_tree, e);
+  avl_delete(e->from->edge_tree, e);
+  avl_delete(e->to->edge_tree, e);
 cp
 }
 

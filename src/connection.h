@@ -17,11 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.19 2001/10/28 10:16:18 guus Exp $
+    $Id: connection.h,v 1.1.2.20 2001/10/28 22:42:49 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
+
+#include <sys/time.h>
 
 #include <avl_tree.h>
 #include <list.h>
@@ -71,6 +73,8 @@ typedef struct connection_t {
   int socket;                      /* socket used for this connection */
   long int options;                /* options for this connection */
   struct connection_status_t status; /* status info */
+  int estimated_weight;            /* estimation for the weight of the edge for this connection */
+  struct timeval start;            /* time this connection was started, used for above estimation */
 
   struct node_t *node;             /* node associated with the other end */
   struct edge_t *edge;         /* edge associated with this connection */

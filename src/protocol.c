@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.111 2001/10/28 10:16:18 guus Exp $
+    $Id: protocol.c,v 1.28.4.112 2001/10/28 22:42:49 guus Exp $
 */
 
 #include "config.h"
@@ -526,18 +526,26 @@ int send_ack(connection_t *c)
 {
   /* ACK message contains rest of the information the other end needs
      to create node_t and edge_t structures. */
+
+  struct timeval now;
+
+  /* Estimate weight */
+  
+  gettimeofday(&now, NULL);
+  c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
 cp
-  return send_request(c, "%d %d", ACK, myself->port);
+  return send_request(c, "%d %hd %d", ACK, myself->port, c->estimated_weight);
 }
 
 int ack_h(connection_t *c)
 {
   port_t port;
+  int weight;
   node_t *n;
   subnet_t *s;
   avl_node_t *node, *node2;
 cp
-  if(sscanf(c->buffer, "%*d %hd", &port) != 1)
+  if(sscanf(c->buffer, "%*d %hd %d", &port, &weight) != 2)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name, c->hostname);
        return -1;
@@ -600,7 +608,7 @@ cp
   
   c->edge->from = myself;
   c->edge->to = n;
-  c->edge->weight = 1;
+  c->edge->weight = (weight + c->estimated_weight) / 2;
   c->edge->connection = c;
 
   edge_add(c->edge);

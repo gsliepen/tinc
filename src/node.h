@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.6 2001/10/28 10:16:18 guus Exp $
+    $Id: node.h,v 1.1.2.7 2001/10/28 22:42:49 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -32,7 +32,7 @@ typedef struct node_status_t {
   int active:1;                    /* 1 if active.. */
   int validkey:1;                  /* 1 if we currently have a valid key for him */
   int waitingforkey:1;             /* 1 if we already sent out a request */
-  int mst:1;                       /* 1 if this node has been visited by the MST algorithm */
+  int visited:1;                   /* 1 if this node has been visited by one of the graph algorithms */
   int unused:28;
 } node_status_t;
 
@@ -50,12 +50,14 @@ typedef struct node_t {
   char *key;                       /* Cipher key and iv */
   int keylength;                   /* Cipher key and iv length*/
 
-  list_t *queue;               /* Queue for packets awaiting to be encrypted */
+  list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 
   struct node_t *nexthop;          /* nearest node from us to him */
   struct node_t *via;              /* next hop for UDP packets */
   
   avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this node */
+
+  avl_tree_t *edge_tree;           /* Edges with this node as one of the endpoints */
 
   struct connection_t *connection; /* Connection associated with this node (if a direct connection exists) */
 } node_t;

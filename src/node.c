@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.3 2001/10/27 13:13:35 guus Exp $
+    $Id: node.c,v 1.1.2.4 2001/10/28 22:42:49 guus Exp $
 */
 
 #include "config.h"
@@ -73,7 +73,8 @@ node_t *new_node(void)
 {
   node_t *n = (node_t *)xmalloc_and_zero(sizeof(*n));
 cp
-  n->subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, NULL);
+  n->subnet_tree = new_subnet_tree();
+  n->edge_tree = new_edge_tree();
   n->queue = list_alloc((list_action_t)free);
 cp
   return n;
@@ -90,6 +91,10 @@ cp
     free(n->hostname);
   if(n->key)
     free(n->key);
+  if(n->subnet_tree)
+    free_subnet_tree(n->subnet_tree);
+  if(n->edge_tree)
+    free_edge_tree(n->edge_tree);
   free(n);
 cp
 }

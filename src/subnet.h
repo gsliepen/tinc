@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.12 2001/10/27 13:13:35 guus Exp $
+    $Id: subnet.h,v 1.1.2.13 2001/10/28 22:42:49 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -72,11 +72,13 @@ typedef struct subnet_t {
 extern subnet_t *new_subnet(void);
 extern void free_subnet(subnet_t *);
 extern void init_subnets(void);
+extern void exit_subnets(void);
+extern avl_tree_t *new_subnet_tree(void);
+extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
 extern char *net2str(subnet_t *);
 extern subnet_t *str2net(char *);
-extern int subnet_compare(subnet_t *, subnet_t *);
 extern subnet_t *lookup_subnet(struct node_t *, subnet_t *);
 extern subnet_t *lookup_subnet_mac(mac_t *);
 extern subnet_t *lookup_subnet_ipv4(ipv4_t *);

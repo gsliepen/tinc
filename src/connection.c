@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.22 2001/10/28 08:41:19 guus Exp $
+    $Id: connection.c,v 1.1.2.23 2001/10/28 22:42:49 guus Exp $
 */
 
 #include "config.h"
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include <avl_tree.h>
 #include <list.h>
@@ -65,6 +66,11 @@ connection_t *new_connection(void)
   connection_t *c;
 cp
   c = (connection_t *)xmalloc_and_zero(sizeof(connection_t));
+
+  if(!c)
+    return NULL;
+
+  gettimeofday(&c->start, NULL);
 cp
   return c;
 }

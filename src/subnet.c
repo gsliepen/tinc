@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.26 2001/10/27 13:13:35 guus Exp $
+    $Id: subnet.c,v 1.1.2.27 2001/10/28 22:42:49 guus Exp $
 */
 
 #include "config.h"
@@ -39,13 +39,6 @@
 /* lists type of subnet */
 
 avl_tree_t *subnet_tree;
-
-void init_subnets(void)
-{
-cp
-  subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, (avl_action_t)free_subnet);
-cp
-}
 
 /* Subnet comparison */
 
@@ -119,6 +112,36 @@ cp
         sighup = 1;
         return 0;
     }
+}
+
+/* Initialising trees */
+
+void init_subnets(void)
+{
+cp
+  subnet_tree = avl_alloc_tree((avl_compare_t)subnet_compare, (avl_action_t)free_subnet);
+cp
+}
+
+void exit_subnets(void)
+{
+cp
+  avl_delete_tree(subnet_tree);
+cp
+}
+
+avl_tree_t *new_subnet_tree(void)
+{
+cp
+  return avl_alloc_tree((avl_compare_t)subnet_compare, NULL);
+cp
+}
+
+void free_subnet_tree(avl_tree_t *subnet_tree)
+{
+cp
+  avl_delete_tree(subnet_tree);
+cp
 }
 
 /* Allocating and freeing space for subnets */
