@@ -12,7 +12,7 @@ ChangeLog:
 	cvs2cl -U cvsusers --fsf
 
 svn-clean: maintainer-clean
-	svn status --no-ignore | grep '^\?' | sed 's/^\? \+//g' | xargs rm -rf
+	svn status --no-ignore | sed -n 's/^\? \+//p' | tr '\012' '\0' | xargs -r0 rm -rf
 
 deb:
 	dpkg-buildpackage -rfakeroot
