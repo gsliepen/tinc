@@ -39,7 +39,7 @@ static int data_fd = -1;
 static int write_fd = -1;
 static int state = 0;
 char *device;
-char *iface;
+char *iface = NULL;
 char *device_info;
 
 extern char *identname;
@@ -75,8 +75,7 @@ bool setup_device(void)
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		asprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = device;
+	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
 	device_info = _("UML network socket");
 
@@ -264,16 +263,18 @@ bool write_packet(vpn_packet_t *packet)
 	if(state != 2) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Dropping packet of %d bytes to %s: not connected to UML yet"),
 				packet->len, device_info);
-		return true;
+		return false;
 	}
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(sendto(write_fd, packet->data, packet->len, 0, &request.sock, sizeof request.sock) < 0) {
-		logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
-			   strerror(errno));
-		running = false;
+	if(write(write_fd, packet->data, packet->len) < 0) {
+		if(errno != EINTR && errno != EAGAIN) {
+			logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
+			running = false;
+		}
+
 		return false;
 	}
 
