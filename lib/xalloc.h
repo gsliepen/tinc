@@ -23,4 +23,4 @@ void *xmalloc_and_zero PARAMS ((size_t n));
 void *xcalloc PARAMS ((size_t n, size_t s));
 void *xrealloc PARAMS ((void *p, size_t n));
 
-char *xstrdup PARAMS ((char *s));
+char *xstrdup PARAMS ((const char *s));

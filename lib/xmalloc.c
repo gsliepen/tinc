@@ -127,7 +127,7 @@ xrealloc (p, n)
 
 /* Duplicate a string */
 
-char *xstrdup(char *s)
+char *xstrdup(const char *s)
 {
   char *p;
   
