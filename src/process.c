@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.8 2000/11/22 17:48:15 zarq Exp $
+    $Id: process.c,v 1.1.2.9 2000/11/22 17:49:16 zarq Exp $
 */
 
 #include "config.h"
@@ -174,6 +174,8 @@ void _execute_script(const char *name)
   int error = 0;
   char *scriptname;
   char *s;
+  int fd;
+  
 cp
   if(netname)
     {
