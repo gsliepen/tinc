@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.102 2001/03/04 13:59:25 guus Exp $
+    $Id: net.c,v 1.35.4.103 2001/03/13 21:32:24 guus Exp $
 */
 
 #include "config.h"
@@ -849,9 +849,12 @@ cp
   cfg = get_config_val(upstreamcfg, config_connectto);
 
   if(!cfg && upstreamcfg == config)
-    /* No upstream IP given, we're listen only. */
-    return;
-
+    {
+      /* No upstream IP given, we're listen only. */
+      signal(SIGALRM, SIG_IGN);
+      return;
+    }
+    
   while(cfg)
     {
       upstreamcfg = cfg->next;
