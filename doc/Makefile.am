@@ -1,7 +1,5 @@
 ## Process this file with automake to get Makefile.in
 
-SUBDIRS = es
-
 info_TEXINFOS = tinc.texi
 
 dyn_MANS =

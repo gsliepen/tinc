@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.74 2003/07/29 23:21:00 guus Exp $
+dnl $Id: configure.in,v 1.13.2.75 2003/07/30 09:45:20 guus Exp $
 
 AC_PREREQ(2.57)
 AC_INIT(src/tincd.c)
@@ -201,7 +201,6 @@ AC_SUBST(INCLUDES)
 AC_OUTPUT(Makefile 
 src/Makefile
 doc/Makefile
-doc/es/Makefile
 lib/Makefile
 po/Makefile.in
 m4/Makefile
