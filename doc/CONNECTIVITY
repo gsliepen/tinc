@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.2 2001/07/22 14:46:11 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.3 2001/07/22 14:58:18 guus Exp $
 
 1. Problem
 ==========
@@ -137,4 +137,18 @@ Then C---F authentication finishes, the following actions are taken:
     
     B receives ADD_HOST(E) from C, and notes that is is already known:
       <insert solution here>
+    B receives ADD_HOST(F) from C, and notes that is is already known:
+      <insert solution here>
+    E receives ADD_HOST(A) from F, and notes that is is already known:
+      <insert solution here>
+    E receives ADD_HOST(B) from F, and notes that is is already known:
+      <insert solution here>
 
+  4 A receives ADD_HOST(E) from B, and notes that it is already known:
+      <insert solution here>
+    A receives ADD_HOST(F) from B, and notes that it is already known:
+      <insert solution here>
+    F receives ADD_HOST(A) from E, and notes that it is already known:
+      <insert solution here>
+    F receives ADD_HOST(B) from E, and notes that it is already known:
+      <insert solution here>
