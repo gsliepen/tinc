@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.10 2000/09/14 14:32:34 zarq Exp $
+    $Id: net.h,v 1.9.4.11 2000/09/14 21:51:20 zarq Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -53,6 +53,7 @@
 #define TCPONLY             0x0004 /* Tells sender to send packets over TCP instead of UDP (for firewalls) */
 
 typedef unsigned long ip_t;
+typedef unsigned short port_t;
 typedef short length_t;
 
 struct conn_list_t;
@@ -95,8 +96,13 @@ typedef struct status_bits_t {
   int dataopen:1;                  /* 1 if we have a valid UDP connection open */
   int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
   int encryptin:1;                 /* 1 if we have to decrypt incoming traffic */
-  int unused:19;
+  int encrypted:1;
+  int unused:18;
 } status_bits_t;
+
+typedef struct option_bits_t {
+  int unused:32;
+} option_bits_t;
 
 typedef struct queue_element_t {
   void *packet;
@@ -127,6 +133,7 @@ typedef struct conn_list_t {
   int meta_socket;                 /* our tcp meta socket */
   int protocol_version;            /* used protocol */
   status_bits_t status;            /* status info */
+  option_bits_t options;           /* options turned on for this connection */
   passphrase_t *pp;                /* encoded passphrase */
   packet_queue_t *sq;              /* pending outgoing packets */
   packet_queue_t *rq;              /* pending incoming packets (they have no
@@ -141,7 +148,7 @@ typedef struct conn_list_t {
   int want_ping;                   /* 0 if there's no need to check for activity */
   int allow_request;               /* defined if there's only one request possible */
   char *chal_answer;               /* answer to the given challenge */
-  enc_key_t *metakey;
+  enc_key_t *rsakey;
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
   struct conn_list_t *next;        /* after all, it's a list of connections */
 } conn_list_t;

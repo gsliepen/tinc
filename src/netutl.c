@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.8 2000/09/06 11:49:05 guus Exp $
+    $Id: netutl.c,v 1.12.4.9 2000/09/14 21:51:20 zarq Exp $
 */
 
 #include "config.h"
@@ -90,10 +90,10 @@ cp
     destroy_queue(p->sq);
   if(p->rq)
     destroy_queue(p->rq);
-  if(p->vpn_hostname)
-    free(p->vpn_hostname);
-  if(p->real_hostname)
-    free(p->real_hostname);
+  if(p->name)
+    free(p->name);
+  if(p->hostname)
+    free(p->hostname);
   free_key(p->public_key);
   free_key(p->key);
   free(p);
@@ -247,7 +247,7 @@ cp
   for(p = conn_list; p != NULL; p = p->next)
     {
       syslog(LOG_DEBUG, _("%s netmask %d.%d.%d.%d at %s port %hd flags %d sockets %d, %d status %04x"),
-	     p->vpn_hostname, IP_ADDR_V(p->vpn_mask), p->real_hostname, p->port, p->flags,
+	     p->name, IP_ADDR_V(p->vpn_mask), p->hostname, p->port, p->flags,
 	     p->socket, p->meta_socket, p->status);
     }
 cp
