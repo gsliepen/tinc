@@ -94,6 +94,21 @@ xmalloc (n)
   return p;
 }
 
+/* Allocate N bytes of memory dynamically, and set it all to zero. */
+
+void *
+xmalloc_and_zero (n)
+     size_t n;
+{
+  void *p;
+
+  p = malloc (n);
+  if (p == 0)
+    xalloc_fail ((int)n);
+  memset (p, '\0', n);
+  return p;
+}
+
 /* Change the size of an allocated block of memory P to N bytes,
    with error checking.
    If P is NULL, run xmalloc.  */
