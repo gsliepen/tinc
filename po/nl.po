@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-09-04 18:33+0200\n"
+"POT-Creation-Date: 2002-09-04 18:47+0200\n"
 "PO-Revision-Date: 2002-09-04 18:33+0200\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.eu.org>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -547,13 +547,13 @@ msgstr "Verzending %s naar %s (%s)"
 
 #: src/protocol.c:106
 #, c-format
-msgid "Broadcasting %s from %s (%s): %s"
-msgstr "Verspreiding %s van %s (%s): %s"
+msgid "Forwarding %s from %s (%s): %s"
+msgstr "Doorsturen %s van %s (%s): %s"
 
 #: src/protocol.c:108
 #, c-format
-msgid "Broadcasting %s from %s (%s)"
-msgstr "Verspreiding %s van %s (%s)"
+msgid "Forwarding %s from %s (%s)"
+msgstr "Doorsturen %s van %s (%s)"
 
 #: src/protocol.c:125
 #, c-format

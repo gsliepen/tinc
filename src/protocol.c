@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.133 2002/09/04 16:26:44 guus Exp $
+    $Id: protocol.c,v 1.28.4.134 2002/09/04 19:57:53 guus Exp $
 */
 
 #include "config.h"
@@ -103,9 +103,9 @@ cp
     {
       sscanf(from->buffer, "%d", &request);
       if(debug_lvl >= DEBUG_META)
-        syslog(LOG_DEBUG, _("Broadcasting %s from %s (%s): %s"), request_name[request], from->name, from->hostname, from->buffer);
+        syslog(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"), request_name[request], from->name, from->hostname, from->buffer);
       else
-        syslog(LOG_DEBUG, _("Broadcasting %s from %s (%s)"), request_name[request], from->name, from->hostname);
+        syslog(LOG_DEBUG, _("Forwarding %s from %s (%s)"), request_name[request], from->name, from->hostname);
     }
 
   from->buffer[from->reqlen - 1] = '\n';
