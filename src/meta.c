@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.15 2001/02/25 11:09:29 guus Exp $
+    $Id: meta.c,v 1.1.2.16 2001/03/12 23:58:19 guus Exp $
 */
 
 #include "config.h"
@@ -94,6 +94,7 @@ int receive_meta(connection_t *cl)
   int lenin = 0;
   char inbuf[MAXBUFSIZE];
   char *bufp;
+  int decrypted = 0;
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
@@ -108,12 +109,7 @@ cp
       return -1;
     }
 
-  if(cl->status.decryptin)
-    bufp = inbuf;
-  else
-    bufp = cl->buffer + cl->buflen;
-
-  lenin = read(cl->meta_socket, bufp, MAXBUFSIZE - cl->buflen);
+  lenin = read(cl->meta_socket, cl->buffer + cl->buflen, MAXBUFSIZE - cl->buflen);
 
   if(lenin<=0)
     {
@@ -133,16 +129,18 @@ cp
       return -1;
     }
 
-  if(cl->status.decryptin)
-    {
-      EVP_DecryptUpdate(cl->cipher_inctx, cl->buffer + cl->buflen, &lenin, inbuf, lenin);
-    }
-
   oldlen = cl->buflen;
   cl->buflen += lenin;
 
-  for(;;)
+  while(lenin)
     {
+      if(cl->status.decryptin && !decrypted)
+        {
+          EVP_DecryptUpdate(cl->cipher_inctx, inbuf, &lenin, cl->buffer + oldlen, lenin);
+          memcpy(cl->buffer + oldlen, inbuf, lenin);
+          decrypted = 1;
+        }
+
       cl->reqlen = 0;
 
       for(i = oldlen; i < cl->buflen; i++)
@@ -165,6 +163,7 @@ cp
             return -1;
 
           cl->buflen -= cl->reqlen;
+          lenin -= cl->reqlen;
           memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
           oldlen = 0;
         }
