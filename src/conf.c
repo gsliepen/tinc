@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.50 2001/11/16 22:31:15 zarq Exp $
+    $Id: conf.c,v 1.9.4.51 2001/11/16 22:31:41 zarq Exp $
 */
 
 #include "config.h"
@@ -166,7 +166,7 @@ cp
       *result = 1;
       return 1;
     }
-  else if(!strcasecmp(cfg->value, "np"))
+  else if(!strcasecmp(cfg->value, "no"))
     {
       *result = 0;
       return 1;
