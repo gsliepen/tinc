@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.114 2001/06/08 18:02:10 guus Exp $
+    $Id: net.c,v 1.35.4.115 2001/06/21 16:16:31 guus Exp $
 */
 
 #include "config.h"
@@ -69,9 +69,12 @@
 # include <pem.h>
 #endif
 
+#warning oi1
 #ifdef HAVE_TUNTAP
+#warning oi2
 #include LINUX_IF_TUN_H
 #endif
+#warning oi3
 
 #include <utils.h>
 #include <xalloc.h>
@@ -344,12 +347,12 @@ cp
   /* Set default MAC address for ethertap devices */
 
   mymac.type = SUBNET_MAC;
-  mymac.net.mac.address.x[0] = 0xfe;
-  mymac.net.mac.address.x[1] = 0xfd;
-  mymac.net.mac.address.x[2] = 0x00;
-  mymac.net.mac.address.x[3] = 0x00;
-  mymac.net.mac.address.x[4] = 0x00;
-  mymac.net.mac.address.x[5] = 0x00;
+  mymac.net.mac.address.x[0] = 0xff;
+  mymac.net.mac.address.x[1] = 0xff;
+  mymac.net.mac.address.x[2] = 0xff;
+  mymac.net.mac.address.x[3] = 0xff;
+  mymac.net.mac.address.x[4] = 0xff;
+  mymac.net.mac.address.x[5] = 0xff;
 
 #ifdef HAVE_LINUX
  #ifdef HAVE_TUNTAP

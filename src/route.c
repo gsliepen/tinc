@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.13 2001/06/06 19:12:38 guus Exp $
+    $Id: route.c,v 1.1.2.14 2001/06/21 16:16:32 guus Exp $
 */
 
 #include "config.h"
@@ -27,7 +27,12 @@
 #endif
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <net/ethernet.h>
+#ifdef HAVE_SOLARIS
+ #include <netinet/if.h>
+ #define ETHER_ADDR_LEN 6
+#else
+ #include <net/ethernet.h>
+#endif
 #include <netinet/if_ether.h>
 #include <utils.h>
 #include <xalloc.h>
@@ -36,8 +41,6 @@
 #include <avl_tree.h>
 
 #include "net.h"
-#include "net/ethernet.h"
-#include "netinet/if_ether.h"
 #include "connection.h"
 #include "subnet.h"
 #include "route.h"
@@ -254,15 +257,31 @@ void route_incoming(connection_t *source, vpn_packet_t *packet)
     {
       case RMODE_ROUTER:
         memcpy(packet->data, mymac.net.mac.address.x, 6);	/* Override destination address to make the kernel accept it */
+        accept_packet(packet);
         break;
       case RMODE_SWITCH:
-        if(packet->data[0] & 0x01)				/* Broadcast? */
-          broadcast_packet(source, packet);			/* If yes, spread it on */
+        {
+          subnet_t *subnet;
+
+          subnet = lookup_subnet_mac((mac_t *)(&packet->data[0]));
+
+          if(subnet)
+            {
+              if(subnet->owner == myself)
+                accept_packet(packet);
+              else
+                send_packet(subnet->owner, packet);
+            }
+          else
+            {
+              broadcast_packet(source, packet);
+              accept_packet(packet);
+            }
+          }
         break;
       case RMODE_HUB:
         broadcast_packet(source,packet);			/* Spread it on */
+        accept_packet(packet);
         break;
     }
-  
-  accept_packet(packet);
 }
