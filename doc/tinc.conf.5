@@ -100,7 +100,7 @@ If you leave it out, remember to replace it with at least one space character.
 Here are all valid variables, listed in alphabetical order.
 The default value is given between parentheses.
 .Bl -tag -width indent
-.It Va AddressFamily Li = ipv4 | ipv6 | any Po ipv4 Pc Bq experimental
+.It Va AddressFamily Li = ipv4 | ipv6 | any Pq any
 This option affects the address family of listening and outgoing sockets.
 If
 .Qq any
@@ -237,7 +237,8 @@ Furthermore, specifying
 will turn off packet encryption.
 .It Va Compression Li = Ar level Pq 0
 This option sets the level of compression used for UDP packets.
-Possible values are 0 (off), 1 (fast) and any integer up to 9 (best).
+Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
+and 10 (lzo).
 .It Va Digest Li = Ar digest Pq sha1
 The digest algorithm used to authenticate UDP packets.
 Any digest supported by OpenSSL is recognised.

@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.35 2003/05/17 22:12:52 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.36 2003/06/11 20:18:48 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.35 2003/05/17 22:12:52 guus Exp $
+$Id: tinc.texi,v 1.8.4.36 2003/06/11 20:18:48 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.35 2003/05/17 22:12:52 guus Exp $
+$Id: tinc.texi,v 1.8.4.36 2003/06/11 20:18:48 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -455,13 +455,14 @@ and the corresponding network interfaces.
 
 @cindex requirements
 @cindex libraries
-Before you can configure or build tinc, you need to have the OpenSSL
-and zlib libraries installed on your system.  If you try to configure tinc without
+Before you can configure or build tinc, you need to have the OpenSSL,
+zlib and lzo libraries installed on your system.  If you try to configure tinc without
 having them installed, configure will give you an error message, and stop.
 
 @menu
 * OpenSSL::
 * zlib::
+* lzo::
 @end menu
 
 
@@ -517,7 +518,7 @@ all other requirements of the GPL are met.
 
 
 @c ==================================================================
-@node       zlib,  , OpenSSL, Libraries
+@node       zlib, lzo, OpenSSL, Libraries
 @subsection zlib
 
 @cindex zlib
@@ -534,6 +535,28 @@ of this package.
 
 If you have to install zlib manually, you can get the source code
 from @url{http://www.gzip.org/zlib/}.  Instructions on how to configure,
+build and install this package are included within the package.  Please
+make sure you build development and runtime libraries (which is the
+default).
+
+
+@c ==================================================================
+@node       lzo,  , zlib, Libraries
+@subsection lzo
+
+@cindex lzo
+Another form of compression is offered using the lzo library.
+
+If this library is not installed, you wil get an error when configuring
+tinc for build.  Support for running tinc without having lzo
+installed @emph{may} be added in the future.
+
+You can use your operating system's package manager to install this if
+available.  Make sure you install the development AND runtime versions
+of this package.
+
+If you have to install lzo manually, you can get the source code
+from @url{http://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
@@ -601,7 +624,7 @@ from @uref{http://developer.apple.com/tools/macosxtools.html} and
 a recent version of Fink from @uref{http://fink.sourceforge.net/}.
 
 After installation use fink to download and install the following packages:
-autoconf25, automake, dlcompat, m4, openssl and zlib.
+autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
 
 
 @c ==================================================================
@@ -831,7 +854,7 @@ required directives are given in @strong{bold}.
 
 @table @asis
 @cindex AddressFamily
-@item AddressFamily = <ipv4|ipv6|any> (ipv4) [experimental]
+@item AddressFamily = <ipv4|ipv6|any> (any)
 This option affects the address family of listening and outgoing sockets.
 If "any" is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
@@ -977,7 +1000,8 @@ Any cipher supported by OpenSSL is recognized.
 @cindex Compression
 @item Compression = <level> (0)
 This option sets the level of compression used for UDP packets.
-Possible values are 0 (off), 1 (fast) and any integer up to 9 (best).
+Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
+and 10 (lzo).
 
 @cindex Digest
 @item Digest = <digest> (sha1)
@@ -1132,35 +1156,16 @@ An example @file{tinc-up} script:
 
 @example
 #!/bin/sh
-ifconfig $INTERFACE hw ether fe:fd:0:0:0:0
 ifconfig $INTERFACE 192.168.1.1 netmask 255.255.0.0
-ifconfig $INTERFACE -arp
 @end example
 
-@cindex MAC address
-@cindex hardware address
-The first line sets up the MAC address of the network interface.
-Due to the nature of how Ethernet and tinc work, it has to be set to fe:fd:0:0:0:0
-for tinc to work in it's normal mode.
-If you configured tinc to work in `switch' or `hub' mode, the hardware address should instead
-be set to a unique address instead of fe:fd:0:0:0:0.
-
-You can use the environment variable $INTERFACE to get the name of the interface.
-However, this might not be reliable. If in doubt, use the name of the interface explicitly.
-
-@cindex ifconfig
-The next line gives the interface an IP address and a netmask.
+This script gives the interface an IP address and a netmask.
 The kernel will also automatically add a route to this interface, so normally you don't need
 to add route commands to the @file{tinc-up} script.
 The kernel will also bring the interface up after this command.
 @cindex netmask
 The netmask is the mask of the @emph{entire} VPN network, not just your
 own subnet.
-
-@cindex arp
-The last line tells the kernel not to use ARP on that interface.
-Again this has to do with how Ethernet and tinc work.
-Use this option only if you are running tinc under Linux and are using tinc's normal routing mode.
 
 
 @c ==================================================================
@@ -1206,9 +1211,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
 
-ifconfig tap0 hw ether fe:fd:0:0:0:0
-ifconfig tap0 10.1.54.1 netmask 255.0.0.0
-ifconfig tap0 -arp
+ifconfig $INTERFACE 10.1.54.1 netmask 255.0.0.0
 @end example
 
 and in @file{/etc/tinc/company/tinc.conf}:
@@ -1225,15 +1228,15 @@ On all hosts, /etc/tinc/company/hosts/BranchA contains:
 Subnet = 10.1.0.0/16
 Address = 1.2.3.4
 
-Note that the IP addresses of eth0 and tap0 are the same.
-This is quite possible, if you make sure that the netmasks of the interfaces are different.
-It is in fact recommended to give give both real internal network interfaces and tap interfaces the same IP address,
-since that will make things a lot easier to remember and set up.
-
 -----BEGIN RSA PUBLIC KEY-----
 ...
 -----END RSA PUBLIC KEY-----
 @end example
+
+Note that the IP addresses of eth0 and tap0 are the same.
+This is quite possible, if you make sure that the netmasks of the interfaces are different.
+It is in fact recommended to give give both real internal network interfaces and tap interfaces the same IP address,
+since that will make things a lot easier to remember and set up.
 
 
 @subsubheading For Branch B
@@ -1244,9 +1247,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
 
-ifconfig tap0 hw ether fe:fd:0:0:0:0
-ifconfig tap0 10.2.1.12 netmask 255.0.0.0
-ifconfig tap0 -arp
+ifconfig $INTERFACE 10.2.1.12 netmask 255.0.0.0
 @end example
 
 and in @file{/etc/tinc/company/tinc.conf}:
@@ -1281,9 +1282,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
 
-ifconfig tap1 hw ether fe:fd:0:0:0:0
-ifconfig tap1 10.3.69.254 netmask 255.0.0.0
-ifconfig tap1 -arp
+ifconfig $INTERFACE 10.3.69.254 netmask 255.0.0.0
 @end example
 
 and in @file{/etc/tinc/company/tinc.conf}:
@@ -1319,9 +1318,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
 
-ifconfig company hw ether fe:fd:0:0:0:0
-ifconfig company 10.4.3.32 netmask 255.0.0.0
-ifconfig company -arp
+ifconfig $INTERFACE 10.4.3.32 netmask 255.0.0.0
 @end example
 
 and in @file{/etc/tinc/company/tinc.conf}:
@@ -1548,18 +1545,19 @@ computer over the existing Internet infrastructure.
 The data itself is read from a character device file, the so-called
 @emph{virtual network device}.  This device is associated with a network
 interface.  Any data sent to this interface can be read from the device,
-and any data written to the device gets sent from the interface.  Data to
-and from the device is formatted as if it were a normal Ethernet card,
-so a frame is preceded by two MAC addresses and a @emph{frame type}
-field.
+and any data written to the device gets sent from the interface.
+There are two possible types of virtual network devices:
+`tun' style, which are point-to-point devices which can only handle IPv4 and/or IPv6 packets,
+and `tap' style, which are Ethernet devices and handle complete Ethernet frames.
 
 So when tinc reads an Ethernet frame from the device, it determines its
 type. When tinc is in it's default routing mode, it can handle IPv4 and IPv6
-packets. Depending on the Subnet lines, it will send the packets off to their destination.
+packets. Depending on the Subnet lines, it will send the packets off to their destination IP address.
 In the `switch' and `hub' mode, tinc will use broadcasts and MAC address discovery
 to deduce the destination of the packets.
 Since the latter modes only depend on the link layer information,
 any protocol that runs over Ethernet is supported (for instance IPX and Appletalk).
+However, only `tap' style devices provide this information.
 
 After the destination has been determined,
 the packet will be compressed (optionally),
@@ -1580,18 +1578,20 @@ in reverse.  So it checks the message authentication code, decrypts the contents
 checks the sequence number
 and writes the decrypted information to its own virtual network device.
 
-To let the kernel on the receiving end accept the packet, the destination MAC
-address must match that of the virtual network interface.
-If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC cannot be set
-by the sending daemons.
-tinc solves this by letting the receiving end detect the MAC address
+If the virtual network device is a `tun' device (a point-to-point tunnel),
+there is no problem for the kernel to accept a packet.
+However, if it is a `tap' device (this is the only available type on FreeBSD),
+the destination MAC address must match that of the virtual network interface.
+If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC 
+can not be known by the sending host.
+tinc solves this by letting the receiving end detect the MAC address of its own virtual network interface
 and overwriting the destination MAC address of the received packet.
-However, the MAC address of the network interface at the receiver might not always be known to tinc.
-That is the reason why you should set the MAC address of your tap interface to that address
-when in routing mode.
 
 In switch or hub modes ARP does work so the sender already knows the correct destination MAC address.
 In those modes every interface should have a unique MAC address, so make sure they are not the same.
+Because switch and hub modes rely on MAC addresses to function correctly,
+these modes cannot be used on the following operating systems which don't have a `tap' style virtual network device:
+OpenBSD, NetBSD, Darwin and Solaris.
 
 
 @c ==================================================================
