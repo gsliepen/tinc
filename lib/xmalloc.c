@@ -39,7 +39,6 @@ void free ();
 #endif
 #define N_(Text) Text
 
-#include "error.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE
@@ -54,11 +53,11 @@ void *xrealloc (void *p, size_t n);
 #endif
 
 #ifndef HAVE_DONE_WORKING_MALLOC_CHECK
-you must run the autoconf test for a properly working malloc -- see malloc.m4
+#error you must run the autoconf test for a properly working malloc -- see malloc.m4
 #endif
 
 #ifndef HAVE_DONE_WORKING_REALLOC_CHECK
-you must run the autoconf test for a properly working realloc -- see realloc.m4
+#error you must run the autoconf test for a properly working realloc -- see realloc.m4
 #endif
 
 /* Exit value when the requested amount of memory is not available.
@@ -71,18 +70,13 @@ char *const xalloc_msg_memory_exhausted = N_("Memory exhausted");
 /* FIXME: describe */
 void (*xalloc_fail_func) (int) = 0;
 
-#if __STDC__ && (HAVE_VPRINTF || HAVE_DOPRNT)
-void error (int, int, const char *, ...);
-#else
-void error ();
-#endif
-
 static void
 xalloc_fail (int size)
 {
   if (xalloc_fail_func)
     (*xalloc_fail_func) (size);
-  error (xalloc_exit_failure, 0, xalloc_msg_memory_exhausted);
+  fprintf(stderr, "%s\n", xalloc_msg_memory_exhausted);
+  exit(xalloc_exit_failure);
 }
 
 /* Allocate N bytes of memory dynamically, with error checking.  */
