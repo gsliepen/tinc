@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.74 2003/12/22 11:04:17 guus Exp $
+    $Id: route.c,v 1.1.2.75 2003/12/24 10:48:15 guus Exp $
 */
 
 #include "system.h"
@@ -331,6 +331,7 @@ static __inline__ void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) 
 static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
+	node_t *via;
 
 	cp();
 
@@ -359,13 +360,15 @@ static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
 
-	if(subnet->owner->options & OPTION_PMTU_DISCOVERY && packet->len > subnet->owner->mtu && subnet->owner != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, subnet->owner->mtu);
+	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+	
+	if(packet->len > via->mtu && via != myself) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
-			packet->len = subnet->owner->mtu;
+			packet->len = via->mtu;
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
-			fragment_ipv4_packet(subnet->owner, packet);
+			fragment_ipv4_packet(via, packet);
 		}
 
 		return;
@@ -466,6 +469,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
+	node_t *via;
 
 	cp();
 
@@ -494,10 +498,12 @@ static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 
 	if(!subnet->owner->status.reachable)
 		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+
+	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(subnet->owner->options & OPTION_PMTU_DISCOVERY && packet->len > subnet->owner->mtu && subnet->owner != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, subnet->owner->mtu);
-		packet->len = subnet->owner->mtu;
+	if(packet->len > via->mtu && via != myself) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		packet->len = via->mtu;
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}

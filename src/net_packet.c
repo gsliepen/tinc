@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.47 2003/12/22 11:04:16 guus Exp $
+    $Id: net_packet.c,v 1.1.2.48 2003/12/24 10:48:14 guus Exp $
 */
 
 #include "system.h"
@@ -352,7 +352,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return;
+			goto end;
 		}
 
 		outpkt->len = outlen + outpad;
@@ -389,16 +389,16 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 #endif
 
 	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
 		if(errno == EMSGSIZE) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
-		}
-		return;
+		} else
+			logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
 	}
 
+end:
 	inpkt->len = origlen;
 }
 
