@@ -4,6 +4,8 @@
 
 DIE=0
 
+alias make=${MAKE:-make}
+
 srcdir="`/bin/pwd`"
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
