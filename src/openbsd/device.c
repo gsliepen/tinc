@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.7 2002/03/24 17:08:38 guus Exp $
+    $Id: device.c,v 1.1.2.8 2002/03/27 16:00:38 guus Exp $
 */
 
 #include "config.h"
@@ -127,7 +127,7 @@ cp
 	break;
       default:
         if(debug_lvl >= DEBUG_TRAFFIC)
-	  syslog(LOG_ERR, _("Unknown address family %s while reading packet from %s %s"), ntohl(type), device_info, device);
+	  syslog(LOG_ERR, _("Unknown address family %d while reading packet from %s %s"), ntohl(type), device_info, device);
 	return -1;
     }
 
@@ -166,7 +166,7 @@ cp
 	break;
       default:
         if(debug_lvl >= DEBUG_TRAFFIC)
-	  syslog(LOG_ERR, _("Unknown address family %s while writing packet to %s %s"), af, device_info, device);
+	  syslog(LOG_ERR, _("Unknown address family %d while writing packet to %s %s"), af, device_info, device);
 	return -1;
     }
 
