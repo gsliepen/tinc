@@ -35,7 +35,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -72,7 +75,7 @@
 #endif
 
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/ioctl.h>
+#include <sys/param.h>
 #endif
 
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
