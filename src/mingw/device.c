@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.7 2003/07/29 23:21:01 guus Exp $
+    $Id: device.c,v 1.1.2.8 2003/08/01 08:18:22 guus Exp $
 */
 
 #include "system.h"
@@ -177,7 +177,7 @@ bool setup_device(void)
 		len = sizeof(adaptername);
 		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
-		RegKeyClose(key2);
+		RegCloseKey(key2);
 
 		if(device) {
 			if(!strcmp(device, adapterid)) {
@@ -203,7 +203,7 @@ bool setup_device(void)
 		}
 	}
 
-	RegKeyClose(key);
+	RegCloseKey(key);
 
 	if(!found) {
 		logger(LOG_ERR, _("No Windows tap device found!"));
