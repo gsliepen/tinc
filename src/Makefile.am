@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.8 2002/04/13 11:14:50 zarq Exp $
+# $Id: Makefile.am,v 1.9 2002/04/13 11:23:46 zarq Exp $
 
 SUBDIRS = pokey
 
@@ -19,7 +19,7 @@ noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logging.h m
 LIBS = @LIBS@ @INTLLIBS@
 
 tincd_LDADD = \
-	$(top_builddir)/lib/libvpn.a
+	$(top_builddir)/lib/libtinc.a
 
 localedir = $(datadir)/locale
 
