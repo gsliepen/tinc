@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.17 2001/01/07 17:09:06 guus Exp $
+    $Id: subnet.c,v 1.1.2.18 2001/01/07 20:19:08 guus Exp $
 */
 
 #include "config.h"
@@ -288,15 +288,21 @@ cp
 
 subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 {
-  subnet_t subnet;
+  subnet_t subnet, *p;
+  int i;
 cp
   subnet.type = SUBNET_IPV6;
   memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
   memset(&subnet.net.ipv6.mask, 0xFF, 16);
   
-/* FIXME: check if it REALLY matches */
+  p = (subnet_t *)avl_search_closest_greater(subnet_tree, &subnet);
+  
+  if(p)
+    for(i=0; i<8; i++)
+      if((address->x[i] & p->net.ipv6.address.x[i]) != p->net.ipv6.address.x[i])
+        return NULL;
 
-  return (subnet_t *)avl_search_closest_greater(subnet_tree, &subnet);
+  return p;
 }
 
 void dump_subnet_list(void)
