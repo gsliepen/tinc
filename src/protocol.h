@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.12 2000/10/20 15:34:38 guus Exp $
+    $Id: protocol.h,v 1.5.4.13 2000/10/28 21:05:20 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -58,8 +58,8 @@ extern int send_ping(conn_list_t*);
 extern int send_pong(conn_list_t*);
 extern int send_add_host(conn_list_t*, conn_list_t*);
 extern int send_del_host(conn_list_t*, conn_list_t*);
-extern int send_add_subnet(conn_list_t*, conn_list_t*, subnet_t*);
-extern int send_del_subnet(conn_list_t*, conn_list_t*, subnet_t*);
+extern int send_add_subnet(conn_list_t*, subnet_t*);
+extern int send_del_subnet(conn_list_t*, subnet_t*);
 extern int send_key_changed(conn_list_t*, conn_list_t*);
 extern int send_req_key(conn_list_t*, conn_list_t*);
 extern int send_ans_key(conn_list_t*, conn_list_t*, char*);

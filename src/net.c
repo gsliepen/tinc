@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.46 2000/10/28 16:41:38 guus Exp $
+    $Id: net.c,v 1.35.4.47 2000/10/28 21:05:17 guus Exp $
 */
 
 #include "config.h"
@@ -99,10 +99,16 @@ int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
   int outlen, outpad;
 cp
   outpkt.len = inpkt->len;
+/*
   EVP_EncryptInit(cl->cipher_pktctx, cl->cipher_pkttype, cl->cipher_pktkey, NULL);
   EVP_EncryptUpdate(cl->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
   EVP_EncryptFinal(cl->cipher_pktctx, outpkt.data + outlen, &outpad);
-  outlen += outpad;
+  outlen += outpad + 2;
+
+  Do encryption when everything else is fixed...
+*/
+  outlen = outpkt.len + 2;
+  memcpy(&outpkt, inpkt, outlen);
   
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
@@ -112,7 +118,7 @@ cp
 
   cl->want_ping = 1;
 
-  if((send(cl->socket, (char *) &(outpkt.len), outlen + 2, 0)) < 0)
+  if((send(cl->socket, (char *) &(outpkt.len), outlen, 0)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->name, cl->hostname);
@@ -128,11 +134,17 @@ int xrecv(vpn_packet_t *inpkt)
   int outlen, outpad;
 cp
   outpkt.len = inpkt->len;
+/*
   EVP_DecryptInit(myself->cipher_pktctx, myself->cipher_pkttype, myself->cipher_pktkey, NULL);
   EVP_DecryptUpdate(myself->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
   EVP_DecryptFinal(myself->cipher_pktctx, outpkt.data + outlen, &outpad);
   outlen += outpad;
-   
+
+  Do decryption is everything else is fixed...
+*/
+  outlen = outpkt.len+2;
+  memcpy(&outpkt, inpkt, outlen);
+     
   /* FIXME sometime
   add_mac_addresses(&outpkt);
   */
@@ -303,10 +315,12 @@ cp
       
   if(!cl->status.validkey)
     {
+/* Don't queue until everything else is fixed.
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
 	       cl->name, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
+*/
       if(!cl->status.waitingforkey)
 	send_req_key(myself, cl);			/* Keys should be sent to the host running the tincd */
       return 0;
@@ -314,10 +328,12 @@ cp
 
   if(!cl->status.active)
     {
+/* Don't queue until everything else is fixed.
       if(debug_lvl >= DEBUG_TRAFFIC)
 	syslog(LOG_INFO, _("%s (%s) is not ready, queueing packet"),
 	       cl->name, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
+*/
       return 0; /* We don't want to mess up, do we? */
     }
 
@@ -734,7 +750,7 @@ sigalrm_handler(int a)
 cp
   cfg = get_config_val(upstreamcfg, connectto);
 
-  if(!cfg && upstreamcfg == myself->config)
+  if(!cfg && upstreamcfg == config)
     /* No upstream IP given, we're listen only. */
     return;
 
@@ -750,7 +766,7 @@ cp
     }
 
   signal(SIGALRM, sigalrm_handler);
-  upstreamcfg = myself->config;
+  upstreamcfg = config;
   seconds_till_retry += 5;
   if(seconds_till_retry > MAXTIMEOUT)    /* Don't wait more than MAXTIMEOUT seconds. */
     seconds_till_retry = MAXTIMEOUT;
@@ -796,7 +812,7 @@ cp
 
   free(scriptname);
 
-  if(!(cfg = get_config_val(myself->config, connectto)))
+  if(!(cfg = get_config_val(config, connectto)))
     /* No upstream IP given, we're listen only. */
     return 0;
 
@@ -809,7 +825,7 @@ cp
     }
     
   signal(SIGALRM, sigalrm_handler);
-  upstreamcfg = myself->config;
+  upstreamcfg = config;
   seconds_till_retry = MAXTIMEOUT;
   syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
   alarm(seconds_till_retry);
@@ -1205,25 +1221,27 @@ cp
 void handle_tap_input(void)
 {
   vpn_packet_t vp;
+  subnet_t *subnet;
+  ipv4_t dest;
   int lenin;
 cp  
   if(taptype = 1)
     {
       if((lenin = read(tap_fd, vp.data, MTU)) <= 0)
         {
-          syslog(LOG_ERR, _("Error while reading from tapdevice: %m"));
+          syslog(LOG_ERR, _("Error while reading from tun/tap device: %m"));
           return;
         }
       vp.len = lenin;
     }
   else
     {
-      if((lenin = read(tap_fd, &vp, MTU)) <= 0)
+      if((lenin = read(tap_fd, &vp.len, MTU)) <= 0)
         {
-          syslog(LOG_ERR, _("Error while reading from tapdevice: %m"));
+          syslog(LOG_ERR, _("Error while reading from ethertap device: %m"));
           return;
         }
-      vp.len = lenin - 2;
+//      vp.len = lenin - 2;
     }
 
   total_tap_in += lenin;
@@ -1240,7 +1258,7 @@ cp
       syslog(LOG_DEBUG, _("Read packet of length %d from tap device"), vp.len);
     }
 
-//  route_packet(&vp);
+  send_packet(ntohl(*((unsigned long*)(&vp.data[30]))), &vp);
 cp
 }
 

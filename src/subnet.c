@@ -17,8 +17,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.6 2000/10/28 16:41:40 guus Exp $
+    $Id: subnet.c,v 1.1.2.7 2000/10/28 21:05:20 guus Exp $
 */
+
+#include <syslog.h>
 
 #include "config.h"
 #include <utils.h>
@@ -26,6 +28,8 @@
 #include <xalloc.h>
 #include "subnet.h"
 #include "net.h"
+#include "conf.h"
+#include "system.h"
 
 /* lists type of subnet */
 
@@ -56,7 +60,7 @@ cp
 
   /* Link it into the owners list of subnets (unsorted) */
 
-  subnet->next = cl->subnets->next;
+  subnet->next = cl->subnets;
   subnet->prev = NULL;
   if(subnet->next)
     subnet->next->prev = subnet;
@@ -70,7 +74,7 @@ cp
                   insert before first -> add it in front of list
                   rest: insert after another subnet
    */
-
+cp
   if(subnet_list[subnet->type])
     {
       p = q = subnet_list[subnet->type];
@@ -83,8 +87,8 @@ cp
           q = p;
         }
      }
-  
-  if(!subnet_list[subnet->type] || p == subnet_list[subnet->type])  /* First two cases */
+cp  
+  if(p == subnet_list[subnet->type])	/* First two cases */
     {
       /* Insert in front */
       subnet->global_next = subnet_list[subnet->type];
@@ -98,7 +102,7 @@ cp
       subnet->global_prev = q;
       q->global_next = subnet;
     }
-
+cp
   if(subnet->global_next)
     subnet->global_next->global_prev = subnet;
 cp
@@ -146,9 +150,9 @@ subnet_t *str2net(char *subnetstr)
 cp
   if(sscanf(subnetstr, "%d,", &type) != 1)
     return NULL;
-
+cp
   subnet = new_subnet();
-
+cp
   switch(type)
     {
       case SUBNET_MAC:
@@ -194,7 +198,6 @@ cp
             return NULL;
           }
         break;
-                break;
       default:
         free_subnet(subnet);
         return NULL;
@@ -217,8 +220,10 @@ cp
                    subnet->net.mac.address.x[3],
                    subnet->net.mac.address.x[4],
                    subnet->net.mac.address.x[5]);
+        break;
       case SUBNET_IPV4:
         asprintf(&netstr, "%d,%lx/%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
+        break;
       case SUBNET_IPV6:
         asprintf(&netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
                    subnet->net.ipv6.address.x[0],
@@ -237,8 +242,9 @@ cp
                    subnet->net.ipv6.mask.x[5],
                    subnet->net.ipv6.mask.x[6],
                    subnet->net.ipv6.mask.x[7]);
+        break;
       default:
-        netstr = NULL;
+        asprintf(&netstr, _("unknown"));
     }
 cp
   return netstr;
@@ -250,7 +256,7 @@ subnet_t *lookup_subnet_mac(mac_t address)
 {
   subnet_t *subnet;
 cp
-  for(subnet = subnet_list[SUBNET_MAC]; subnet != NULL; subnet = subnet->next)
+  for(subnet = subnet_list[SUBNET_MAC]; subnet != NULL; subnet = subnet->global_next)
     {
       if(memcmp(&address, &subnet->net.mac.address, sizeof(address)) == 0)
         break;
@@ -263,7 +269,7 @@ subnet_t *lookup_subnet_ipv4(ipv4_t address)
 {
   subnet_t *subnet;
 cp
-  for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->next)
+  for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->global_next)
     {
       if((address & subnet->net.ipv4.mask) == subnet->net.ipv4.address)
         break;
@@ -277,7 +283,7 @@ subnet_t *lookup_subnet_ipv6(ipv6_t address)
   subnet_t *subnet;
   int i;
 cp
-  for(subnet = subnet_list[SUBNET_IPV6]; subnet != NULL; subnet = subnet->next)
+  for(subnet = subnet_list[SUBNET_IPV6]; subnet != NULL; subnet = subnet->global_next)
     {
       for(i=0; i<8; i++)
         if((address.x[i] & subnet->net.ipv6.mask.x[i]) != subnet->net.ipv6.address.x[i])
@@ -287,4 +293,22 @@ cp
     }
 cp
   return subnet;
+}
+
+void dump_subnet_list(void)
+{
+  subnet_t *subnet;
+  char *netstr;
+cp
+  syslog(LOG_DEBUG, _("Subnet list:"));
+
+  for(subnet = subnet_list[SUBNET_IPV4]; subnet != NULL; subnet = subnet->global_next)
+    {
+      netstr = net2str(subnet);
+      syslog(LOG_DEBUG, "%s owner %s", netstr, subnet->owner->name);
+      free(netstr);
+    }
+
+  syslog(LOG_DEBUG, _("End of subnet list."));
+cp
 }

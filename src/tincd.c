@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.15 2000/10/21 11:52:08 guus Exp $
+    $Id: tincd.c,v 1.10.4.16 2000/10/28 21:05:20 guus Exp $
 */
 
 #include "config.h"
@@ -47,6 +47,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
+#include "subnet.h"
 
 #include "system.h"
 
@@ -534,8 +535,9 @@ sigusr1_handler(int a)
 RETSIGTYPE
 sigusr2_handler(int a)
 {
-  if(debug_lvl > DEBUG_NOTHING)
-    syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
+  dump_subnet_list();
+//  if(debug_lvl > DEBUG_NOTHING)
+//   syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
 /* FIXME: reprogram this.
   regenerate_keys();
 */

@@ -46,6 +46,6 @@ extern volatile int cp_index;
 
 extern void hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
-extern char *cp_trace(void);
+extern void cp_trace(void);
 
 #endif /* __TINC_UTILS_H__ */

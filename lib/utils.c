@@ -59,7 +59,7 @@ void bin2hex(char *src, char *dst, int length)
     }
 }
 
-char *cp_trace()
+void cp_trace()
 {
   syslog(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d ...",
            cp_file[(cp_index+7)%8], cp_line[(cp_index+7)%8],

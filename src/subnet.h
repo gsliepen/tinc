@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.4 2000/10/28 16:41:40 guus Exp $
+    $Id: subnet.h,v 1.1.2.5 2000/10/28 21:05:20 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -84,6 +84,6 @@ extern subnet_t *str2net(char *);
 extern subnet_t *lookup_subnet_mac(mac_t);
 extern subnet_t *lookup_subnet_ipv4(ipv4_t);
 extern subnet_t *lookup_subnet_ipv6(ipv6_t);
-
+extern void dump_subnet_list(void);
 
 #endif /* __TINC_SUBNET_H__ */

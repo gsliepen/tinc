@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.45 2000/10/24 15:46:17 guus Exp $
+    $Id: protocol.c,v 1.28.4.46 2000/10/28 21:05:18 guus Exp $
 */
 
 #include "config.h"
@@ -439,7 +439,8 @@ cp
 
 int ack_h(conn_list_t *cl)
 {
-  conn_list_t *old;
+  conn_list_t *old, *p;
+  subnet_t *s;
 cp
   /* Okay, before we active the connection, we check if there is another entry
      in the connection list with the same name. If so, it presumably is an
@@ -455,37 +456,42 @@ cp
       terminate_connection(old);
     }
 
+  /* Notify others of this connection */
+  
+  for(p = conn_list; p; p = p->next)
+    if(p->status.active)
+      send_add_host(p, cl);
+
   /* Activate this connection */
 
   cl->allow_request = ALL;
   cl->status.active = 1;
+  cl->nexthop = cl;
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
 
-  /* Exchange information about other tinc daemons */
-
-/* FIXME: reprogram this.
-  notify_others(cl, NULL, send_add_host);
-  notify_one(cl);
-*/
-
 cp
-  if(cl->status.outgoing)
-    return 0;
-  else
-    return send_ack(cl);
+  if(!cl->status.outgoing)
+    send_ack(cl);
+
+  /* Send him our subnets */
+  
+  for(s = myself->subnets; s; s = s->next)
+    send_add_subnet(cl, s);
+cp
+  return 0;
 }
 
 /* Address and subnet information exchange */
 
-int send_add_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
+int send_add_subnet(conn_list_t *cl, subnet_t *subnet)
 {
   int x;
   char *netstr;
 cp
   x = send_request(cl, "%d %s %s", ADD_SUBNET,
-                      other->name, netstr = net2str(subnet));
+                      subnet->owner->name, netstr = net2str(subnet));
   free(netstr);
 cp
   return x;
@@ -498,7 +504,7 @@ int add_subnet_h(conn_list_t *cl)
   conn_list_t *owner;
   subnet_t *subnet, *old;
 cp
-  if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 3)
+  if(sscanf(cl->buffer, "%*d %as %as", &name, &subnetstr) != 2)
     {
       syslog(LOG_ERR, _("Got bad ADD_SUBNET from %s (%s)"), cl->name, cl->hostname);
       free(name); free(subnetstr);
@@ -553,10 +559,16 @@ cp
   return 0;
 }
 
-int send_del_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
+int send_del_subnet(conn_list_t *cl, subnet_t *subnet)
 {
+  int x;
+  char *netstr;
 cp
-  return send_request(cl, "%d %s %s", DEL_SUBNET, other->name, net2str(subnet));
+  netstr = net2str(subnet);
+  x = send_request(cl, "%d %s %s", DEL_SUBNET, subnet->owner->name, netstr);
+  free(netstr);
+cp
+  return x;
 }
 
 int del_subnet_h(conn_list_t *cl)
@@ -711,7 +723,7 @@ cp
 
   /* Fill in rest of conn_list structure */
 
-  new->myuplink = cl;
+  new->nexthop = cl;
   new->status.active = 1;
 
   /* Hook it up into the conn_list */
@@ -1063,6 +1075,7 @@ cp
 
       keylength = strlen(pktkey);
 
+/* Don't do this... yet
       if((keylength%2) || (keylength <= 0))
         {
           syslog(LOG_ERR, _("Got bad ANS_KEY from %s (%s) origin %s: invalid key"),
@@ -1073,6 +1086,10 @@ cp
       keylength /= 2;
       hex2bin(pktkey, pktkey, keylength);
       BF_set_key(cl->cipher_pktkey, keylength, pktkey);
+*/
+
+      cl->status.validkey = 1;
+      cl->status.waitingforkey = 0;
     }
   else
     {
