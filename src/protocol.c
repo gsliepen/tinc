@@ -333,10 +333,12 @@ cp
   tmp->from = myself->vpn_ip;
   tmp->expiry = my_key_expiry;
   tmp->len = strlen(my_public_key_base36);
-  strcpy(&tmp->key, my_public_key_base36);
+  strcpy(&(tmp->key), my_public_key_base36);
 
 cp
-  fw = lookup_conn(to);
+  syslog(LOG_DEBUG, "key sent = %s", my_public_key_base36);
+cp
+ fw = lookup_conn(to);
   
 cp
   if(!fw)
@@ -346,9 +348,10 @@ cp
       return -1;
     }
 cp
+  syslog(LOG_DEBUG, "key sent = %s", &(tmp->key));
 
-  syslog(LOG_DEBUG, "key sent = %s", tmp->key);
-  if(debug_lvl > 2)
+cp
+ if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Sending public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
 cp
