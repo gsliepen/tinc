@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: vertex.h,v 1.1.2.1 2001/10/09 19:30:30 guus Exp $
+    $Id: vertex.h,v 1.1.2.2 2001/10/09 19:37:10 guus Exp $
 */
 
 typedef struct vertex_t {
@@ -29,13 +29,16 @@ typedef struct vertex_t {
 typedef struct halfconnection_t {
   struct node_t *node;
 
-  ipv4_t address;                  /* his real (internet) ip to send UDP packets to */
-  short unsigned int port;         /* port number of UDP connection */
-  char *hostname;                  /* the hostname of its real ip */
+  ipv4_t address;                  /* real (internet) ip on this end of the meta connection */
+  short unsigned int port;         /* port number of this end of the meta connection */
+  char *hostname;                  /* the hostname of real ip */
   
-  RSA *rsa_key;
-  EVP_CIPHER_CTX *ctx;
-  char *metakey;
-  char *pktkey;
-  char *challenge;
+  /* Following bits only used when this is a connection with ourself. */
+  
+  RSA *rsa_key;                    /* RSA key used for authentication */
+  EVP_CIPHER *cipher;              /* Cipher type for meta protocol */ 
+  EVP_CIPHER_CTX *ctx;             /* Cipher state for meta protocol */
+  char *key;                       /* Cipher key + iv */
+  int keylength;                   /* Cipher keylength */
+  char *challenge;                 /* Challenge sent to this end */
 } halfconnection_t;

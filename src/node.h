@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.1 2001/10/09 19:30:30 guus Exp $
+    $Id: node.h,v 1.1.2.2 2001/10/09 19:37:10 guus Exp $
 */
 
 typedef struct node_t {
@@ -31,9 +31,9 @@ typedef struct node_t {
 
   status_bits_t status;            /* status info */
 
-  EVP_CIPHER *cipher_pkttype;      /* Cipher type for UDP packets */ 
-  char *cipher_pktkey;             /* Cipher key and iv */
-  int cipher_pktkeylength;         /* Cipher key and iv length*/
+  EVP_CIPHER *cipher;              /* Cipher type for UDP packets */ 
+  char *key;                       /* Cipher key and iv */
+  int keylength;                   /* Cipher key and iv length*/
 
   list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 
