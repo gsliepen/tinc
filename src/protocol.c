@@ -188,7 +188,7 @@ void send_key_changed_all(void)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p->status.meta && p->protocol_version > PROT_3)
+    if(p->status.meta && p->active)
       send_key_changed(p, myself);
 cp
 }
@@ -332,7 +332,7 @@ int notify_others(conn_list_t *new, conn_list_t *source,
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p != source && p->status.meta)
+    if(p != new && p != source && p->status.meta && p->active)
       function(p, new);
 cp
   return 0;
@@ -347,7 +347,7 @@ int notify_one(conn_list_t *new)
   conn_list_t *p;
 cp
   for(p = conn_list; p != NULL; p = p->next)
-    if(p != new && p->protocol_version > PROT_3)
+    if(p != new && p->active)
       send_add_host(new, p);
 cp
   return 0;
@@ -392,8 +392,6 @@ cp
 	return -1;
       send_passphrase(cl);
     }
-
-  cl->status.active = 0;
 cp
   return 0;
 }
@@ -424,6 +422,7 @@ cp
 int public_key_h(conn_list_t *cl)
 {
   char *g_n;
+  conn_list_t *old;
 cp
   if(sscanf(cl->buffer, "%*d %as", &g_n) != 1)
     {
@@ -448,6 +447,14 @@ cp
     send_public_key(cl);
   else
     send_ack(cl);
+
+  /* Okay, before we active the connection, we check if there is another entry
+     in the connection list with the same vpn_ip. If so, it presumably is an
+     old connection that has timed out but we don't know it yet. Because our
+     conn_list entry is not active, lookup_conn will skip ourself. */
+
+  if(old=lookup_conn(cl->vpn_ip)) 
+    terminate_connection(old);
 
   cl->status.active = 1;
   notify_others(cl, NULL, send_add_host);

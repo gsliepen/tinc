@@ -37,7 +37,8 @@
 
 /*
   look for a connection associated with the given vpn ip,
-  return its connection structure
+  return its connection structure.
+  Skips connections that are not activated!
 */
 conn_list_t *lookup_conn(ip_t ip)
 {
@@ -45,10 +46,10 @@ conn_list_t *lookup_conn(ip_t ip)
 cp
   /* Exact match suggested by James B. MacLean */
   for(p = conn_list; p != NULL; p = p->next)
-    if(ip  == p->vpn_ip)
+    if((ip  == p->vpn_ip) && p->active)
       return p;
   for(p = conn_list; p != NULL; p = p->next)
-    if((ip & p->vpn_mask) == (p->vpn_ip & p->vpn_mask))
+    if(((ip & p->vpn_mask) == (p->vpn_ip & p->vpn_mask)) && p->active)
       return p;
 cp
   return NULL;

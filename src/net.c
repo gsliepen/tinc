@@ -821,8 +821,8 @@ cp
 
   if(cl->status.outgoing)
     {
-      alarm(5);
       signal(SIGALRM, sigalrm_handler);
+      alarm(5);
       syslog(LOG_NOTICE, "Try to re-establish outgoing connection in 5 seconds.");
     }
   
