@@ -242,8 +242,10 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		}
 	}
 	
-	n->received_seqno = inpkt->seqno;
-	n->late[(n->received_seqno / 8) % sizeof(n->late)] &= ~(1 << n->received_seqno % 8);
+	n->late[(inpkt->seqno / 8) % sizeof(n->late)] &= ~(1 << inpkt->seqno % 8);
+
+	if(n->received_seqno > inpkt->seqno)
+		n->received_seqno = inpkt->seqno;
 			
 	if(n->received_seqno > MAX_SEQNO)
 		keyexpires = 0;
