@@ -70,9 +70,10 @@ cp
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx\n", TERMREQ, myself->vpn_ip);
 
-  if((write(cl->meta_socket, buffer, buflen)) < 0)
+  if(write(cl->meta_socket, buffer, buflen) < 0)
     {
-      syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
+      if(debug_lvl > 1)
+	syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
 cp
@@ -400,7 +401,8 @@ cp
 int passphrase_h(conn_list_t *cl)
 {
 cp
-  cl->pp=xmalloc(sizeof(*(cl->pp)));
+  cl->pp = xmalloc(sizeof(*(cl->pp)));
+
   if(sscanf(cl->buffer, "%*d %as", &(cl->pp->phrase)) != 1)
     {
       syslog(LOG_ERR, "got bad PASSPHRASE request: %s", cl->buffer);
