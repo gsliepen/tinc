@@ -17,6 +17,7 @@ We would like to thank
  * Jamie Briggs (for finding a lot of socket leaks)
  * Armijn Hemel (for being our very own PR manager)
  * Jerome Etienne (for a thorough security analysis of tinc)
+ * Mark Glines (for his compression patch) 
 
 for their help, support and ideas.  Thank you guys!
 

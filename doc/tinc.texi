@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.19 2002/02/10 21:57:51 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.20 2002/02/11 15:59:18 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.19 2002/02/10 21:57:51 guus Exp $
+$Id: tinc.texi,v 1.8.4.20 2002/02/11 15:59:18 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.19 2002/02/10 21:57:51 guus Exp $
+$Id: tinc.texi,v 1.8.4.20 2002/02/11 15:59:18 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -864,6 +864,11 @@ not the one that is internal to the VPN.
 @item Cipher = <cipher> (blowfish)
 The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by OpenSSL is recognized.
+
+@cindex Compression
+@item Compression = <level> (0)
+This option sets the level of compression used for UDP packets.
+Possible values are 0 (off), 1 (fast) and any integer up to 9 (best).
 
 @cindex Digest
 @item Digest = <digest> (sha1)

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-02-09 21:32+0100\n"
-"PO-Revision-Date: 2002-02-09 17:20+0100\n"
+"POT-Creation-Date: 2002-02-11 16:57+0100\n"
+"PO-Revision-Date: 2002-02-11 16:57+0100\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
 "MIME-Version: 1.0\n"
@@ -170,302 +170,315 @@ msgstr "Fout op metadata socket voor %s (%s) tijdens lezen: %m"
 msgid "Metadata read buffer overflow for %s (%s)"
 msgstr "Metadata leesbuffer overloop voor %s (%s)"
 
-#: src/net.c:111
+#: src/net.c:118
 #, c-format
 msgid "Got unauthenticated packet from %s (%s)"
 msgstr "Kreeg niet-geauthenticeerd pakket van %s (%s)"
 
-#: src/net.c:134
+#: src/net.c:144
 #, c-format
 msgid "Got late or replayed packet from %s (%s), seqno %d"
 msgstr "Kreeg laat of gedupliceerd pakket van %s (%s), seqno %d"
 
-#: src/net.c:162
+#: src/net.c:161
+#, c-format
+msgid "Error while uncompressing packet from %s (%s)"
+msgstr "Fout tijdens decomprimeren pakket van %s (%s)"
+
+#: src/net.c:188
 #, c-format
 msgid "Received packet of %d bytes from %s (%s)"
 msgstr "Ontvangst pakket van %d bytes van %s (%s)"
 
-#: src/net.c:180
+#: src/net.c:210
 #, c-format
 msgid "No valid key known yet for %s (%s), queueing packet"
 msgstr ""
 "Nog geen geldige sleutel bekend voor %s (%s), pakket wordt in wachtrij gezet"
 
-#: src/net.c:225
+#: src/net.c:235
+#, c-format
+msgid "Error while compressing packet to %s (%s)"
+msgstr "Fout tijdens comprimeren pakket naar %s (%s)"
+
+#: src/net.c:278
 #, c-format
 msgid "Error sending packet to %s (%s): %m"
 msgstr "Fout tijdens verzenden pakket naar %s (%s): %m"
 
-#: src/net.c:240
+#: src/net.c:293
 #, c-format
 msgid "Sending packet of %d bytes to %s (%s)"
 msgstr "Verzending pakket van %d bytes naar %s (%s)"
 
-#: src/net.c:247
+#: src/net.c:300
 msgid "Packet is looping back to us!"
 msgstr "Pakket komt terug naar ons!"
 
-#: src/net.c:256
+#: src/net.c:309
 #, c-format
 msgid "Node %s (%s) is not reachable"
 msgstr "Node %s (%s) is niet bereikbaar"
 
-#: src/net.c:264
+#: src/net.c:317
 #, c-format
 msgid "Sending packet to %s via %s (%s)"
 msgstr "Verzending pakket naar %s via %s (%s)"
 
-#: src/net.c:284
+#: src/net.c:337
 #, c-format
 msgid "Broadcasting packet of %d bytes from %s (%s)"
 msgstr "Verspreiding pakket van %d bytes van %s (%s)"
 
-#: src/net.c:301
+#: src/net.c:354
 #, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr "Legen van wachtrij voor %s (%s)"
 
-#: src/net.c:326
+#: src/net.c:379
 #, c-format
 msgid "Creating metasocket failed: %m"
 msgstr "Aanmaak van metasocket mislukt: %m"
 
-#: src/net.c:334 src/net.c:380 src/net.c:407 src/net.c:987 src/process.c:258
+#: src/net.c:387 src/net.c:433 src/net.c:460 src/net.c:1091 src/process.c:258
 #: src/process.c:294
 #, c-format
 msgid "System call `%s' failed: %m"
 msgstr "Systeemaanroep `%s' mislukte: %m"
 
-#: src/net.c:354
+#: src/net.c:407
 #, c-format
 msgid "Can't bind to interface %s: %m"
 msgstr "Kan niet aan interface %s binden: %m"
 
-#: src/net.c:373
+#: src/net.c:426
 #, c-format
 msgid "Can't bind to port %hd/tcp: %m"
 msgstr "Kan niet aan poort %hd/tcp binden: %m"
 
-#: src/net.c:397
+#: src/net.c:450
 #, c-format
 msgid "Creating socket failed: %m"
 msgstr "Aanmaak socket mislukte: %m"
 
-#: src/net.c:420
+#: src/net.c:473
 #, c-format
 msgid "Can't bind to port %hd/udp: %m"
 msgstr "Kan niet aan poort %hd/udp binden: %m"
 
-#: src/net.c:442
+#: src/net.c:495
 #, c-format
 msgid "Trying to re-establish outgoing connection in %d seconds"
 msgstr "Poging tot herstellen van uitgaande verbinding over %d seconden"
 
-#: src/net.c:452
+#: src/net.c:505
 #, c-format
 msgid "Trying to connect to %s (%s)"
 msgstr "Poging tot verbinden met %s (%s)"
 
-#: src/net.c:458
+#: src/net.c:511
 #, c-format
 msgid "Creating socket for %s port %d failed: %m"
 msgstr "Aanmaken socket voor %s poort %d mislukt: %m"
 
-#: src/net.c:500
+#: src/net.c:553
 #, c-format
 msgid "%s port %hd: %m"
 msgstr "%s poort %hd: %m"
 
-#: src/net.c:509
+#: src/net.c:562
 #, c-format
 msgid "fcntl for %s port %d: %m"
 msgstr "fcntl voor %s poort %d: %m"
 
-#: src/net.c:515
+#: src/net.c:568
 #, c-format
 msgid "Connected to %s port %hd"
 msgstr "Verbonden met %s poort %hd"
 
-#: src/net.c:533
+#: src/net.c:586
 #, c-format
 msgid "Already connected to %s"
 msgstr "Reeds verbonden met %s"
 
-#: src/net.c:546
+#: src/net.c:599
 #, c-format
 msgid "No address specified for %s"
 msgstr "Geen adres gespecificeerd voor %s"
 
-#: src/net.c:558
+#: src/net.c:611
 #, c-format
 msgid "Error looking up `%s': %m"
 msgstr "Fout bij het opzoeken van `%s': %m"
 
-#: src/net.c:569
+#: src/net.c:622
 #, c-format
 msgid "Could not set up a meta connection to %s (%s)"
 msgstr "Kon geen metaverbinding aangaan met %s (%s)"
 
-#: src/net.c:610
+#: src/net.c:664
 #, c-format
 msgid "Error reading RSA public key file `%s': %m"
 msgstr "Fout tijdens lezen RSA publieke sleutel bestand `%s': %m"
 
-#: src/net.c:618
+#: src/net.c:674
 #, c-format
 msgid "Reading RSA public key file `%s' failed: %m"
 msgstr "Lezen RSA publieke sleutel bestand `%s' mislukt: %m"
 
-#: src/net.c:643
+#: src/net.c:702
 #, c-format
 msgid "No public key for %s specified!"
 msgstr "Geen publieke sleutel bekend voor %s gespecificeerd!"
 
-#: src/net.c:663
+#: src/net.c:728
 #, c-format
 msgid "Error reading RSA private key file `%s': %m"
 msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %m"
 
-#: src/net.c:671
+#: src/net.c:738
 #, c-format
 msgid "Reading RSA private key file `%s' failed: %m"
 msgstr "Fout tijdens lezen RSA privé sleutel bestand `%s': %m"
 
-#
-#: src/net.c:678
-msgid "No private key for tinc daemon specified!"
-msgstr "Geen privé sleutel voor tinc daemon gespecificeerd!"
-
-#: src/net.c:699 src/net.c:700
+#: src/net.c:791 src/net.c:792
 msgid "MYSELF"
 msgstr "MIJZELF"
 
-#: src/net.c:707
+#: src/net.c:799
 msgid "Name for tinc daemon required!"
 msgstr "Naam voor tinc daemon verplicht!"
 
-#: src/net.c:713
+#: src/net.c:805
 msgid "Invalid name for myself!"
 msgstr "Ongelige naam voor mijzelf!"
 
-#: src/net.c:727
+#: src/net.c:819
 msgid "Cannot open host configuration file for myself!"
 msgstr "Kan host configuratie bestand voor mijzelf niet openen!"
 
-#: src/net.c:793
+#: src/net.c:829
+msgid "Invalid public/private keypair!"
+msgstr "Ongeldig publiek/privé sleutelpaar!"
+
+#: src/net.c:884
 msgid "Invalid routing mode!"
 msgstr "Ongelige routing modus!"
 
-#: src/net.c:805
+#: src/net.c:896
 msgid "Unable to set up a listening TCP socket!"
 msgstr "Kon geen TCP luistersocket aanmaken!"
 
-#: src/net.c:811
+#: src/net.c:902
 msgid "Unable to set up a listening UDP socket!"
 msgstr "Kon geen UDP luistersocket aanmaken!"
 
-#: src/net.c:827
+#: src/net.c:918
 msgid "Unrecognized cipher type!"
 msgstr "Onbekend cipher type!"
 
-#: src/net.c:860
+#: src/net.c:951
 msgid "Unrecognized digest type!"
 msgstr "Onbekend digest type!"
 
-#: src/net.c:874
+#: src/net.c:965
 msgid "MAC length exceeds size of digest!"
 msgstr "MAC lengte is groter dan dat van digest!"
 
-#: src/net.c:879
+#: src/net.c:970
 msgid "Bogus MAC length!"
 msgstr "Onzinnige MAC lengte!"
 
-#: src/net.c:896
+#: src/net.c:984
+msgid "Bogus compression level!"
+msgstr "Onzinnig compressieniveau!"
+
+#: src/net.c:1000
 #, c-format
 msgid "Ready: listening on port %hd"
 msgstr "Gereed: luisterend op poort %hd"
 
-#: src/net.c:1000
+#: src/net.c:1104
 #, c-format
 msgid "Connection from %s port %d"
 msgstr "Verbinding van %s poort %d"
 
-#: src/net.c:1045
+#: src/net.c:1149
 #, c-format
 msgid "This is a bug: %s:%d: %d:%m"
 msgstr "Dit is een programmeerfout: %s:%d: %d:%m"
 
-#: src/net.c:1051
+#: src/net.c:1155
 #, c-format
 msgid "Incoming data socket error: %s"
 msgstr "Fout op socket voor inkomend verkeer: %s"
 
-#: src/net.c:1057
+#: src/net.c:1161
 #, c-format
 msgid "Receiving packet failed: %m"
 msgstr "Ontvangst pakket mislukt: %m"
 
-#: src/net.c:1065
+#: src/net.c:1169
 #, c-format
 msgid "Received UDP packet on port %hd from unknown source %x:%hd"
 msgstr "Ontvangst UDP pakket op poort %hd van onbekende oorsprong %x:%hd"
 
-#: src/net.c:1088
+#: src/net.c:1192
 msgid "Purging unreachable nodes"
 msgstr "Verwijderen onbereikbare nodes"
 
-#: src/net.c:1098
+#: src/net.c:1202
 #, c-format
 msgid "Purging node %s (%s)"
 msgstr "Verwijdering node %s (%s)"
 
-#: src/net.c:1152
+#: src/net.c:1256
 #, c-format
 msgid "Closing connection with %s (%s)"
 msgstr "Beëindigen verbinding met %s (%s)"
 
-#: src/net.c:1223
+#: src/net.c:1327
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) antwoordde niet op ping"
 
-#: src/net.c:1236
+#: src/net.c:1340
 #, c-format
 msgid "Timeout from %s (%s) during authentication"
 msgstr "Timeout van %s (%s) tijdens authenticatie"
 
-#: src/net.c:1257
+#: src/net.c:1361
 #, c-format
 msgid "Accepting a new connection failed: %m"
 msgstr "Aanname van nieuwe verbinding is mislukt: %m"
 
-#: src/net.c:1265
+#: src/net.c:1369
 msgid "Closed attempted connection"
 msgstr "Aangenomen verbinding verbroken"
 
-#: src/net.c:1288
+#: src/net.c:1392
 #, c-format
 msgid "Invalid name for outgoing connection in %s line %d"
 msgstr "Ongelige naam voor uitgaande verbinding in %s regel %d"
 
-#: src/net.c:1384
+#: src/net.c:1488
 #, c-format
 msgid "Error while waiting for input: %m"
 msgstr "Fout tijdens wachten op invoer: %m"
 
-#: src/net.c:1391
+#: src/net.c:1495
 msgid "Rereading configuration file and restarting in 5 seconds"
 msgstr "Herlezen configuratiebestand en herstart in 5 seconden"
 
-#: src/net.c:1398
+#: src/net.c:1502
 msgid "Unable to reread configuration file, exiting"
 msgstr "Kan configuratiebestand niet herlezen, beëindigen"
 
-#: src/net.c:1430
+#: src/net.c:1534
 msgid "Regenerating symmetric key"
 msgstr "Hergenereren symmetrische sleutel"
 
-#: src/net.c:1440
+#: src/net.c:1544
 msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
@@ -1010,11 +1023,11 @@ msgstr "Nodes:"
 #: src/node.c:166
 #, c-format
 msgid ""
-" %s at %s port %hd cipher %d digest %d maclength %d options %ld status %04x "
-"nexthop %s via %s"
+" %s at %s port %hd cipher %d digest %d maclength %d compression %d options %"
+"ld status %04x nexthop %s via %s"
 msgstr ""
-" %s op %s poort %hd cipher %d digest %d maclengte %d opties %ld status %04x "
-"nexthop %s via %s"
+" %s op %s poort %hd cipher %d digest %d maclengte %d compressie %d opties %"
+"ld status %04x nexthop %s via %s"
 
 #: src/node.c:171
 msgid "End of nodes."
@@ -1043,69 +1056,69 @@ msgstr "Node %s (%s) werd bereikbaar"
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"
 
-#: src/freebsd/device.c:69 src/linux/device.c:84 src/openbsd/device.c:73
+#: src/freebsd/device.c:69 src/linux/device.c:88 src/openbsd/device.c:73
 #: src/solaris/device.c:74
 #, c-format
 msgid "Could not open %s: %m"
 msgstr "Kon `%s' niet openen: %m"
 
-#: src/linux/device.c:109 src/linux/device.c:119
+#: src/linux/device.c:113 src/linux/device.c:123
 msgid "Linux tun/tap device"
 msgstr "Linux tun/tap apparaat"
 
-#: src/linux/device.c:117
+#: src/linux/device.c:121
 #, c-format
 msgid "Old ioctl() request was needed for %s"
 msgstr "Oud ioctl() verzoek was nodig voor %s"
 
-#: src/linux/device.c:126
+#: src/linux/device.c:130
 msgid "Linux ethertap device"
 msgstr "Linux ethertap apparaat"
 
-#: src/freebsd/device.c:86 src/linux/device.c:130 src/openbsd/device.c:89
-#: src/solaris/device.c:128
+#: src/freebsd/device.c:86 src/linux/device.c:134 src/openbsd/device.c:89
+#: src/solaris/device.c:131
 #, c-format
 msgid "%s is a %s"
 msgstr "%s is een %s"
 
-#: src/freebsd/device.c:107 src/linux/device.c:153 src/linux/device.c:163
-#: src/openbsd/device.c:110 src/solaris/device.c:145
+#: src/freebsd/device.c:107 src/linux/device.c:157 src/linux/device.c:167
+#: src/openbsd/device.c:110 src/solaris/device.c:148
 #, c-format
 msgid "Error while reading from %s %s: %m"
 msgstr "Fout tijdens lezen van %s %s: %m"
 
-#: src/freebsd/device.c:116 src/linux/device.c:174 src/openbsd/device.c:125
-#: src/solaris/device.c:160
+#: src/freebsd/device.c:116 src/linux/device.c:178 src/openbsd/device.c:125
+#: src/solaris/device.c:163
 #, c-format
 msgid "Read packet of %d bytes from %s"
 msgstr "Pakket van %d bytes gelezen van %s"
 
-#: src/freebsd/device.c:127 src/linux/device.c:185 src/openbsd/device.c:138
-#: src/solaris/device.c:171
+#: src/freebsd/device.c:127 src/linux/device.c:189 src/openbsd/device.c:138
+#: src/solaris/device.c:174
 #, c-format
 msgid "Writing packet of %d bytes to %s"
 msgstr "Pakket van %d bytes geschreven naar %s"
 
-#: src/linux/device.c:192 src/linux/device.c:201 src/openbsd/device.c:148
-#: src/solaris/device.c:176
+#: src/linux/device.c:196 src/linux/device.c:205 src/openbsd/device.c:148
+#: src/solaris/device.c:179
 #, c-format
 msgid "Can't write to %s %s: %m"
 msgstr "Kan niet schrijven naar %s %s: %m"
 
-#: src/freebsd/device.c:143 src/linux/device.c:214 src/openbsd/device.c:159
-#: src/solaris/device.c:188
+#: src/freebsd/device.c:143 src/linux/device.c:218 src/openbsd/device.c:159
+#: src/solaris/device.c:191
 #, c-format
 msgid "Statistics for %s %s:"
 msgstr "Statistieken voor %s %s:"
 
-#: src/freebsd/device.c:144 src/linux/device.c:215 src/openbsd/device.c:160
-#: src/solaris/device.c:189
+#: src/freebsd/device.c:144 src/linux/device.c:219 src/openbsd/device.c:160
+#: src/solaris/device.c:192
 #, c-format
 msgid " total bytes in:  %10d"
 msgstr " totaal aantal bytes in:  %10d"
 
-#: src/freebsd/device.c:145 src/linux/device.c:216 src/openbsd/device.c:161
-#: src/solaris/device.c:190
+#: src/freebsd/device.c:145 src/linux/device.c:220 src/openbsd/device.c:161
+#: src/solaris/device.c:193
 #, c-format
 msgid " total bytes out: %10d"
 msgstr " totaal aantal bytes uit: %10d"
@@ -1153,14 +1166,6 @@ msgstr "Kon PPA %d niet instellen: %m"
 msgid "Can't link TUN device to IP: %m"
 msgstr "Kan TUN apparaat niet koppelen aan IP: %m"
 
-#: src/solaris/device.c:116
+#: src/solaris/device.c:119
 msgid "Solaris tun device"
 msgstr "Solaris tun apparaat"
-
-#~ msgid "No digest, MAC length ignored"
-#~ msgstr "Geen digest, MAC lengte genegeerd"
-
-#~ msgid "Failed to setup all outgoing connections, will retry in %d seconds"
-#~ msgstr ""
-#~ "Poging tot maken van alle uitgaande verbinding faalde, nieuwe poging over "
-#~ "%d seconden"

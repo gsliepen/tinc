@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.153 2002/02/11 14:20:21 guus Exp $
+    $Id: net.c,v 1.35.4.154 2002/02/11 15:59:18 guus Exp $
 */
 
 #include "config.h"
@@ -54,6 +54,8 @@
 #ifndef HAVE_RAND_PSEUDO_BYTES
 #define RAND_pseudo_bytes RAND_bytes
 #endif
+
+#include <zlib.h>
 
 #include <utils.h>
 #include <xalloc.h>
@@ -96,11 +98,16 @@ int sigalrm = 0;
 
 void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
-  vpn_packet_t outpkt;
+  vpn_packet_t pkt1, pkt2;
+  vpn_packet_t *pkt[] = {&pkt1, &pkt2, &pkt1, &pkt2};
+  int nextpkt = 0;
+  vpn_packet_t *outpkt = pkt[0];
   int outlen, outpad;
+  long int complen = MTU + 12;
   EVP_CIPHER_CTX ctx;
   char hmac[EVP_MAX_MD_SIZE];
 cp
+  /* Check the message authentication code */
 
   if(myself->digest && myself->maclength)
     {
@@ -117,30 +124,49 @@ cp
 
   if(myself->cipher)
   {
+    outpkt = pkt[nextpkt++];
+
     EVP_DecryptInit(&ctx, myself->cipher, myself->key, myself->key + myself->cipher->key_len);
-    EVP_DecryptUpdate(&ctx, (char *)&outpkt.seqno, &outlen, (char *)&inpkt->seqno, inpkt->len);
-    EVP_DecryptFinal(&ctx, (char *)&outpkt.seqno + outlen, &outpad);
-    outlen += outpad;
-    outpkt.len = outlen - sizeof(outpkt.seqno);
-  }
-  else
-  {
-    memcpy((char *)&outpkt.seqno, (char *)&inpkt->seqno, inpkt->len);
-    outpkt.len = inpkt->len - sizeof(outpkt.seqno);
+    EVP_DecryptUpdate(&ctx, (char *)&outpkt->seqno, &outlen, (char *)&inpkt->seqno, inpkt->len);
+    EVP_DecryptFinal(&ctx, (char *)&outpkt->seqno + outlen, &outpad);
+
+    outpkt->len = outlen + outpad;
+    inpkt = outpkt;
   }
 
-  if (ntohl(outpkt.seqno) <= n->received_seqno)
+  /* Check the sequence number */
+
+  inpkt->len -= sizeof(inpkt->seqno);
+  inpkt->seqno = ntohl(inpkt->seqno);
+
+  if(inpkt->seqno <= n->received_seqno)
   {
-    syslog(LOG_DEBUG, _("Got late or replayed packet from %s (%s), seqno %d"), n->name, n->hostname, ntohl(*(unsigned int *)&outpkt.seqno));
+    syslog(LOG_DEBUG, _("Got late or replayed packet from %s (%s), seqno %d"), n->name, n->hostname, inpkt->seqno);
     return;
   }
   
-  n->received_seqno = ntohl(outpkt.seqno);
+  n->received_seqno = inpkt->seqno;
 
   if(n->received_seqno > MAX_SEQNO)
     keyexpires = 0;
 
-  receive_packet(n, &outpkt);
+  /* Decompress the packet */
+  
+  if(myself->compression)
+  {
+    outpkt = pkt[nextpkt++];
+
+    if(uncompress(outpkt->data, &complen, inpkt->data, inpkt->len) != Z_OK)
+    {
+      syslog(LOG_ERR, _("Error while uncompressing packet from %s (%s)"), n->name, n->hostname);
+      return;
+    }
+    
+    outpkt->len = complen;
+    inpkt = outpkt;
+  }
+
+  receive_packet(n, inpkt);
 cp
 }
 
@@ -167,8 +193,12 @@ cp
 
 void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
-  vpn_packet_t outpkt;
+  vpn_packet_t pkt1, pkt2;
+  vpn_packet_t *pkt[] = {&pkt1, &pkt2, &pkt1, &pkt2};
+  int nextpkt = 0;
+  vpn_packet_t *outpkt;
   int outlen, outpad;
+  long int complen = MTU + 12;
   EVP_CIPHER_CTX ctx;
   struct sockaddr_in to;
   socklen_t tolen = sizeof(to);
@@ -190,37 +220,60 @@ cp
 
       if(!n->status.waitingforkey)
 	send_req_key(n->nexthop->connection, myself, n);
+
       return;
     }
 
-  /* Encrypt the packet. */
+  /* Compress the packet */
+
+  if(n->compression)
+  {
+    outpkt = pkt[nextpkt++];
+
+    if(compress2(outpkt->data, &complen, inpkt->data, inpkt->len, n->compression) != Z_OK)
+    {
+      syslog(LOG_ERR, _("Error while compressing packet to %s (%s)"), n->name, n->hostname);
+      return;
+    }
+    
+    outpkt->len = complen;
+    inpkt = outpkt;
+  }
+
+  /* Add sequence number */
 
   inpkt->seqno = htonl(++(n->sent_seqno));
+  inpkt->len += sizeof(inpkt->seqno);
+
+  /* Encrypt the packet */
 
   if(n->cipher)
   {
+    outpkt = pkt[nextpkt++];
+
     EVP_EncryptInit(&ctx, n->cipher, n->key, n->key + n->cipher->key_len);
-    EVP_EncryptUpdate(&ctx, (char *)&outpkt.seqno, &outlen, (char *)&inpkt->seqno, inpkt->len + sizeof(inpkt->seqno));
-    EVP_EncryptFinal(&ctx, (char *)&outpkt.seqno + outlen, &outpad);
-    outlen += outpad;
+    EVP_EncryptUpdate(&ctx, (char *)&outpkt->seqno, &outlen, (char *)&inpkt->seqno, inpkt->len);
+    EVP_EncryptFinal(&ctx, (char *)&outpkt->seqno + outlen, &outpad);
+
+    outpkt->len = outlen + outpad;
+    inpkt = outpkt;
   }
-  else
-  {
-    memcpy((char *)&outpkt.seqno, (char *)&inpkt->seqno, inpkt->len + sizeof(inpkt->seqno));
-    outlen = inpkt->len + sizeof(inpkt->seqno);
-  }
+
+  /* Add the message authentication code */
 
   if(n->digest && n->maclength)
     {
-      HMAC(n->digest, n->key, n->keylength, (char *)&outpkt.seqno, outlen, (char *)&outpkt.seqno + outlen, &outpad);
-      outlen += n->maclength;
+      HMAC(n->digest, n->key, n->keylength, (char *)&inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len, &outlen);
+      inpkt->len += n->maclength;
     }
+
+  /* Send the packet */
 
   to.sin_family = AF_INET;
   to.sin_addr.s_addr = htonl(n->address);
   to.sin_port = htons(n->port);
 
-  if((sendto(udp_socket, (char *)&outpkt.seqno, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
+  if((sendto(udp_socket, (char *)&inpkt->seqno, inpkt->len, 0, (const struct sockaddr *)&to, tolen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              n->name, n->hostname);
@@ -921,6 +974,19 @@ cp
     }
   else
     myself->maclength = 4;
+
+  /* Compression */
+
+  if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->compression))
+    {
+      if(myself->compression < 0 || myself->compression > 9)
+        {
+	  syslog(LOG_ERR, _("Bogus compression level!"));
+	  return -1;
+	}
+    }
+  else
+    myself->compression = 0;
 cp
   /* Done */
 

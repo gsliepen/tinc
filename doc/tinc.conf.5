@@ -216,6 +216,9 @@ Any cipher supported by OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet encryption.
+.It Va Compression Li = Ar level Pq 0
+This option sets the level of compression used for UDP packets.
+Possible values are 0 (off), 1 (fast) and any integer up to 9 (best).
 .It Va Digest Li = Ar digest Pq sha1
 The digest algorithm used to authenticate UDP packets.
 Any digest supported by OpenSSL is recognised.

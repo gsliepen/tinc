@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.10 2002/02/10 21:57:54 guus Exp $
+    $Id: node.h,v 1.1.2.11 2002/02/11 15:59:18 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -53,6 +53,8 @@ typedef struct node_t {
 
   const EVP_MD *digest;            /* Digest type for MAC */
   int maclength;                   /* Length of MAC */
+
+  int compression;                 /* Compressionlevel, 0 = no compression */
 
   list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.2 2002/02/11 15:59:18 guus Exp $
 */
 
 #include "config.h"
@@ -167,8 +167,8 @@ cp
   bin2hex(from->key, key, from->keylength);
   key[from->keylength * 2] = '\0';
 cp
-  return send_request(c, "%d %s %s %s %d %d %d", ANS_KEY,
-                      from->name, to->name, key, from->cipher?from->cipher->nid:0, from->digest?from->digest->type:0, from->maclength);
+  return send_request(c, "%d %s %s %s %d %d %d %d", ANS_KEY,
+                      from->name, to->name, key, from->cipher?from->cipher->nid:0, from->digest?from->digest->type:0, from->maclength, from->compression);
 }
 
 int ans_key_h(connection_t *c)
@@ -176,10 +176,10 @@ int ans_key_h(connection_t *c)
   char from_name[MAX_STRING_SIZE];
   char to_name[MAX_STRING_SIZE];
   char key[MAX_STRING_SIZE];
-  int cipher, digest, maclength;
+  int cipher, digest, maclength, compression;
   node_t *from, *to;
 cp
-  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d", from_name, to_name, key, &cipher, &digest, &maclength) != 6)
+  if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d", from_name, to_name, key, &cipher, &digest, &maclength, &compression) != 7)
     {
        syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY",
               c->name, c->hostname);
@@ -265,6 +265,8 @@ cp
       from->digest = NULL;
       from->maclength = maclength;
     }
+
+  from->compression = compression;
   
   flush_queue(from);
 cp
