@@ -25,9 +25,15 @@
 #include "conf.h"
 #include "logger.h"
 #include "net.h"
+#include "route.h"
 #include "utils.h"
 
 #define DEFAULT_DEVICE "/dev/tun0"
+
+typedef enum device_type {
+	DEVICE_TYPE_TUN,
+	DEVICE_TYPE_TAP,
+} device_type_t;
 
 int device_fd = -1;
 char *device;
@@ -35,9 +41,12 @@ char *iface;
 char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
+static device_type_t device_type = DEVICE_TYPE_TUN;
 
 bool setup_device(void)
 {
+	char *type;
+
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
@@ -51,7 +60,32 @@ bool setup_device(void)
 		return false;
 	}
 
-	device_info = _("MacOS/X tun device");
+	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+		if(!strcasecmp(type, "tun"))
+			device_type = DEVICE_TYPE_TUN;
+		else if(!strcasecmp(type, "tap"))
+			device_type = DEVICE_TYPE_TAP;
+		else {
+			logger(LOG_ERR, _("Unknown device type %s!"), type);
+			return false;
+		}
+	} else {
+		if(strstr(device, "tap"))
+			device_type = DEVICE_TYPE_TAP;
+	}
+
+	switch(device_type) {
+		default:
+			device_type = DEVICE_TYPE_TUN;
+		case DEVICE_TYPE_TUN:
+			device_info = _("MacOS/X tun device");
+			break;
+		case DEVICE_TYPE_TAP:
+			if(routing_mode == RMODE_ROUTER)
+				overwrite_mac = true;
+			device_info = _("MacOS/X tap device");
+			break;
+	}
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
 
@@ -71,17 +105,45 @@ bool read_packet(vpn_packet_t *packet)
 
 	cp();
 
-	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
-		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
-			   device, strerror(errno));
-		return false;
+	switch(device_type) {
+		case DEVICE_TYPE_TUN:
+			if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
+				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+					   device, strerror(errno));
+				return false;
+			}
+
+			switch(packet->data[14] >> 4) {
+				case 4:
+					packet->data[12] = 0x08;
+					packet->data[13] = 0x00;
+					break;
+				case 6:
+					packet->data[12] = 0x86;
+					packet->data[13] = 0xDD;
+					break;
+				default:
+					ifdebug(TRAFFIC) logger(LOG_ERR,
+							   _ ("Unknown IP type %d while reading packet from %s %s"),
+							   packet->data[14] >> 4, device_info, device);
+					return false;
+			}
+
+			packet->len = lenin + 14;
+			break;
+		case DEVICE_TYPE_TAP:
+			if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
+				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+					   device, strerror(errno));
+				return false;
+			}
+
+			packet->len = lenin;
+			break;
+		default:
+			return false;
 	}
-
-	packet->data[12] = 0x08;
-	packet->data[13] = 0x00;
-
-	packet->len = lenin + 14;
-
+		
 	device_total_in += packet->len;
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"),
@@ -97,10 +159,23 @@ bool write_packet(vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
-		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info,
-			   device, strerror(errno));
-		return false;
+	switch(device_type) {
+		case DEVICE_TYPE_TUN:
+			if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
+				logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info,
+					   device, strerror(errno));
+				return false;
+			}
+			break;
+		case DEVICE_TYPE_TAP:
+			if(write(device_fd, packet->data, packet->len) < 0) {
+				logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info,
+					   device, strerror(errno));
+				return false;
+			}
+			break;
+		default:
+			return false;
 	}
 
 	device_total_out += packet->len;
