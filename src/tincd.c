@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.6 2000/06/30 11:45:16 guus Exp $
+    $Id: tincd.c,v 1.10.4.7 2000/08/08 14:54:57 guus Exp $
 */
 
 #include "config.h"
@@ -43,6 +43,7 @@
 #include "encr.h"
 #include "net.h"
 #include "netutl.h"
+#include "protocol.h"
 
 #include "system.h"
 
@@ -336,7 +337,7 @@ main(int argc, char **argv, char **envp)
 
   if(show_version)
     {
-      printf(_("%s version %s\n"), PACKAGE, VERSION);
+      printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
       printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
 	       "see the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
