@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35 2000/05/31 18:23:05 zarq Exp $
+    $Id: net.c,v 1.35.4.1 2000/06/23 19:27:02 guus Exp $
 */
 
 #include "config.h"
@@ -277,6 +277,11 @@ cp
           syslog(LOG_NOTICE, _("trying to look up " IP_ADDR_S " in connection list failed."),
 	         IP_ADDR_V(to));
         }
+        
+      /* Is this really necessary? If we can't find "to", then neither should any uplink. (GS) */
+      
+      return -1;
+        
       for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
       if(!cl)
         { /* No open outgoing connection has been found. */
@@ -285,6 +290,33 @@ cp
           return -1;
         }
     }
+
+  /* If indirectdata flag is set, then real_ip is actually the vpn_ip of the gateway tincd
+   * it is behind.
+   */
+   
+  if(cl->flags & INDIRECTDATA)
+    {
+      if((cl = lookup_conn(cl->vpn_ip)) == NULL)
+        {
+          if(debug_lvl > 2)
+            {
+              syslog(LOG_NOTICE, _("indirect look up " IP_ADDR_S " in connection list failed."),
+	             IP_ADDR_V(to));
+            }
+            
+          /* Gateway tincd dead? Should we kill it? (GS) */
+
+          return -1;
+        }
+      if(cl->flags & INDIRECTDATA)  /* This should not happen */
+        if(debug_lvl > 1)
+          {
+            syslog(LOG_NOTICE, _("double indirection for " IP_ADDR_S),
+	           IP_ADDR_V(to));
+          }
+        return -1;        
+    }            
 
   if(my_key_expiry <= time(NULL))
     regenerate_keys();
@@ -522,11 +554,16 @@ cp
 
   myself->vpn_ip = cfg->data.ip->ip;
   myself->vpn_mask = cfg->data.ip->mask;
+  myself->flags = 0;
 
   if(!(cfg = get_config_val(listenport)))
     myself->port = 655;
   else
     myself->port = cfg->data.val;
+
+  if(cfg = get_config_val(indirectdata))
+    if(cfg->data.val)
+      myself->flags |= EXPORTINDIRECTDATA;
 
   if((myself->meta_socket = setup_listen_meta_socket(myself->port)) < 0)
     {

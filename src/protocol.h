@@ -29,6 +29,7 @@ enum {
   PROT_3,
   PROT_4,
   PROT_ECHELON,
+  PROT_6,
   PROT_CURRENT,                      /* protocol currently in use */
 };
 

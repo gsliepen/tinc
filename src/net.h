@@ -45,6 +45,10 @@
 
 #define MAXBUFSIZE 2048 /* Probably way too much, but it must fit every possible request. */
 
+/* flags */
+#define INDIRECTDATA        0x0001 /* Used to indicate that this host has to be reached indirect */
+#define EXPORTINDIRECTDATA  0x0002 /* Used to indicate uplink that it has to tell others to do INDIRECTDATA */
+
 typedef unsigned long ip_t;
 typedef short length_t;
 
@@ -102,6 +106,7 @@ typedef struct conn_list_t {
   ip_t real_ip;                    /* his real (internet) ip */
   char *hostname;                  /* the hostname of its real ip */
   short unsigned int port;         /* his portnumber */
+  int flags;                       /* his flags */
   int socket;                      /* our udp vpn socket */
   int meta_socket;                 /* our tcp meta socket */
   int protocol_version;            /* used protocol */

@@ -3,13 +3,7 @@ Things left to do to make cabal superstable:
  * Check for connection loops. Inter-daemon
    connections should always satisfy the
    tree property.
- * Check for duplicates. If there's a
-   timeout and a host reconnects before the
-   old connection is closed, duplicate
-   entries appear in every connection list.
  * Redundancy: multiple ConnectTo lines, if
    one fails others might be tried.
- * Persistence: don't quit when no connection
-   can be made directly after start of the
-   daemon.
-
+ * Allow connects to hosts that use
+   nodirectdata.

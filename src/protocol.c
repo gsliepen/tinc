@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28 2000/05/30 21:36:16 zarq Exp $
+    $Id: protocol.c,v 1.28.4.1 2000/06/23 19:27:03 guus Exp $
 */
 
 #include "config.h"
@@ -154,12 +154,30 @@ cp
 
 int send_add_host(conn_list_t *cl, conn_list_t *new_host)
 {
+  ip_t real_ip;
+  int flags;
 cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, _("Sending add host to " IP_ADDR_S),
 	   IP_ADDR_V(cl->vpn_ip));
 
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx/%lx:%x\n", ADD_HOST, new_host->real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port);
+  real_ip = new_host->real_ip;
+  flags = new_host->flags;
+  
+  /* If we need to propagate information about a new host that wants us to export
+   * it's indirectdata flag, we set the INDIRECTDATA flag and unset the EXPORT...
+   * flag, and set it's real_ip to our vpn_ip, so that net.c send_packet() will
+   * work correctly.
+   */
+     
+  if(flags & EXPORTINDIRECTDATA)
+    {
+      flags &= ~EXPORTINDIRECTDATA;
+      flags |= INDIRECTDATA;
+      real_ip = myself->vpn_ip;
+    }
+
+  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx/%lx:%x %d\n", ADD_HOST, new_host->real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port, flags);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -205,7 +223,7 @@ cp
     syslog(LOG_DEBUG, _("Send BASIC_INFO to " IP_ADDR_S),
 	   IP_ADDR_V(cl->real_ip));
 
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %d %lx/%lx:%x\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port);
+  buflen = snprintf(buffer, MAXBUFSIZE, "%d %d %lx/%lx:%x %d\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port, myself->flags);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -365,7 +383,7 @@ cp
 int basic_info_h(conn_list_t *cl)
 {
 cp
-  if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port) != 4)
+  if(sscanf(cl->buffer, "%*d %d %lx/%lx:%hx %d", &cl->protocol_version, &cl->vpn_ip, &cl->vpn_mask, &cl->port, &cl->flags) != 5)
     {
        syslog(LOG_ERR, _("got bad BASIC_INFO request: %s"), cl->buffer);
        return -1;
@@ -568,11 +586,12 @@ int add_host_h(conn_list_t *cl)
   ip_t vpn_ip;
   ip_t vpn_mask;
   unsigned short port;
+  int flags;
   conn_list_t *ncn, *fw;
 cp
   if(!cl->status.active)
     return -1;
-  if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx", &real_ip, &vpn_ip, &vpn_mask, &port) != 4)
+  if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx %d", &real_ip, &vpn_ip, &vpn_mask, &port, &flags) != 5)
     {
        syslog(LOG_ERR, _("got bad ADD_HOST request: %s"), cl->buffer);
        return -1;
@@ -603,6 +622,7 @@ cp
   ncn->vpn_ip = vpn_ip;
   ncn->vpn_mask = vpn_mask;
   ncn->port = port;
+  ncn->flags = flags;
   ncn->hostname = hostlookup(real_ip);
   ncn->nexthop = cl;
   ncn->next = conn_list;
