@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.21 2001/10/30 16:34:32 guus Exp $
+    $Id: connection.h,v 1.1.2.22 2001/11/16 00:23:28 zarq Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -65,8 +65,8 @@ typedef struct connection_status_t {
 typedef struct connection_t {
   char *name;                      /* name he claims to have */
 
-  ipv4_t address;                  /* his real (internet) ip */
-  short unsigned int port;         /* port number of meta connection */
+  struct addrinfo *address;        /* his real (internet) ip */
+  char *port;                      /* port number of meta connection */
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
 
@@ -77,7 +77,7 @@ typedef struct connection_t {
   struct timeval start;            /* time this connection was started, used for above estimation */
 
   struct node_t *node;             /* node associated with the other end */
-  struct edge_t *edge;         /* edge associated with this connection */
+  struct edge_t *edge;             /* edge associated with this connection */
 
   RSA *rsa_key;                    /* his public/private key */
   EVP_CIPHER *incipher;            /* Cipher he will use to send data to us */
