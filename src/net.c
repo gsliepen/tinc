@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.83 2000/11/30 20:08:41 zarq Exp $
+    $Id: net.c,v 1.35.4.84 2000/11/30 22:33:16 zarq Exp $
 */
 
 #include "config.h"
@@ -698,11 +698,13 @@ int read_rsa_private_key(RSA **key, const char *file)
 
   if((fp = fopen(file, "r")) == NULL)
     {
-      syslog(LOG_ERR, _("Error reading file `%s': %m"),
+      syslog(LOG_ERR, _("Error reading RSA key file `%s': %m"),
 	     file);
       return -1;
     }
-  PEM_read_RSAPrivateKey(fp, key, NULL, NULL);
+  if(PEM_read_RSAPrivateKey(fp, key, NULL, NULL) == NULL)
+    return -1;
+  return 0;
 }
 
 int read_rsa_keys(void)
@@ -716,7 +718,14 @@ int read_rsa_keys(void)
     }
 
   myself->rsa_key = RSA_new();
-  return read_rsa_private_key(&(myself->rsa_key), cfg->data.ptr);
+
+  if(read_rsa_private_key(&(myself->rsa_key), cfg->data.ptr) < 0)
+    {
+      syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
+	     cfg->data.ptr);
+      return -1;
+    }
+  return 0;
 }
 
 /*
