@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.27 2000/11/08 20:52:37 guus Exp $
+    $Id: tincd.c,v 1.10.4.28 2000/11/15 01:06:13 zarq Exp $
 */
 
 #include "config.h"
@@ -31,15 +31,32 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
-#include <openssl/rand.h>
-#include <openssl/rsa.h>
-#include <openssl/err.h>
 #include <string.h>
 #include <termios.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
+
+#ifdef HAVE_OPENSSL_RAND_H
+# include <openssl/rand.h>
+#else
+# include <rand.h>
+#endif
+
+#ifdef HAVE_OPENSSL_RSA_H
+# include <openssl/rsa.h>
+#else
+# include <rsa.h>
+#endif
+
+#ifdef HAVE_OPENSSL_ERR_H
+# include <openssl/err.h>
+#else
+# include <err.h>
+#endif
+
+
 
 #include <pidfile.h>
 #include <utils.h>

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.59 2000/11/07 22:02:14 guus Exp $
+    $Id: protocol.c,v 1.28.4.60 2000/11/15 01:06:11 zarq Exp $
 */
 
 #include "config.h"
@@ -36,9 +36,24 @@
 
 #include <netinet/in.h>
 
-#include <openssl/sha.h>
-#include <openssl/rand.h>
-#include <openssl/evp.h>
+#ifdef HAVE_OPENSSL_SHA_H
+# include <openssl/sha.h>
+#else
+# include <sha.h>
+#endif
+
+#ifdef HAVE_OPENSSL_RAND_H
+# include <openssl/rand.h>
+#else
+# include <rand.h>
+#endif
+
+#ifdef HAVE_OPENSSL_EVP_H
+# include <openssl/evp.h>
+#else
+# include <evp.h>
+#endif
+
 
 #include "conf.h"
 #include "net.h"

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.70 2000/11/08 17:56:34 guus Exp $
+    $Id: net.c,v 1.35.4.71 2000/11/15 01:06:10 zarq Exp $
 */
 
 #include "config.h"
@@ -39,9 +39,24 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <openssl/rand.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+
+#ifdef HAVE_OPENSSL_RAND_H
+# include <openssl/rand.h>
+#else
+# include <rand.h>
+#endif
+
+#ifdef HAVE_OPENSSL_EVP_H
+# include <openssl/evp.h>
+#else
+# include <evp.h>
+#endif
+
+#ifdef HAVE_OPENSSL_ERR_H
+# include <openssl/err.h>
+#else
+# include <err.h>
+#endif
 
 #ifdef HAVE_TUNTAP
 #include LINUX_IF_TUN_H

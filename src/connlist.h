@@ -17,14 +17,25 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connlist.h,v 1.1.2.12 2000/11/04 20:44:26 guus Exp $
+    $Id: connlist.h,v 1.1.2.13 2000/11/15 01:06:10 zarq Exp $
 */
 
 #ifndef __TINC_CONNLIST_H__
 #define __TINC_CONNLIST_H__
 
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
+#include "config.h"
+
+#ifdef HAVE_OPENSSL_EVP_H
+# include <openssl/evp.h>
+#else
+# include <evp.h>
+#endif
+
+#ifdef HAVE_OPENSSL_RSA_H
+# include <openssl/rsa.h>
+#else
+# include <rsa.h>
+#endif
 
 #include "net.h"
 #include "conf.h"
