@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.80 2001/02/25 16:34:19 guus Exp $
+    $Id: protocol.c,v 1.28.4.81 2001/02/25 19:09:43 guus Exp $
 */
 
 #include "config.h"
@@ -188,8 +188,6 @@ cp
 int send_id(connection_t *cl)
 {
 cp
-  cl->allow_request = CHALLENGE;
-cp
   return send_request(cl, "%d %s %d %lx %hd", ID, myself->name, myself->protocol_version, myself->options, myself->port);
 }
 
@@ -263,13 +261,14 @@ cp
   cl->port = port;
   avl_insert_node(connection_tree, node);
 
-  /* Read in the public key, so that we can send a challenge */
+  /* Read in the public key, so that we can send a metakey */
 
   if(read_rsa_public_key(cl))
     return -1;
 
+  cl->allow_request = METAKEY;
 cp
-  return send_challenge(cl);
+  return send_metakey(cl);
 }
 
 int send_challenge(connection_t *cl)
@@ -277,6 +276,8 @@ int send_challenge(connection_t *cl)
   char *buffer;
   int len, x;
 cp
+  /* CHECKME: what is most reasonable value for len? */
+
   len = RSA_size(cl->rsa_key);
 
   /* Allocate buffers for the challenge */
@@ -292,32 +293,15 @@ cp
 
   RAND_bytes(cl->hischallenge, len);
 
-  cl->hischallenge[0] &= 0x7F;	/* Somehow if the first byte is more than 0xD0 or something like that, decryption fails... */
 cp
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    {
-      bin2hex(cl->hischallenge, buffer, len);
-      buffer[len*2] = '\0';
-      syslog(LOG_DEBUG, _("Generated random challenge (unencrypted): %s"), buffer);
-    }
+  /* Convert to hex */
 
-  /* Encrypt the random data */
-
-  if(RSA_public_encrypt(len, cl->hischallenge, buffer, cl->rsa_key, RSA_NO_PADDING) != len)	/* NO_PADDING because the message size equals the RSA key size and it is totally random */
-    {
-      syslog(LOG_ERR, _("Error during encryption of challenge for %s (%s)"), cl->name, cl->hostname);
-      free(buffer);
-      return -1;
-    }
-cp
-  /* Convert the encrypted random data to a hexadecimal formatted string */
-
-  bin2hex(buffer, buffer, len);
+  bin2hex(cl->hischallenge, buffer, len);
   buffer[len*2] = '\0';
+
 cp
   /* Send the challenge */
 
-  cl->allow_request = CHAL_REPLY;
   x = send_request(cl, "%d %s", CHALLENGE, buffer);
   free(buffer);
 cp
@@ -352,22 +336,9 @@ cp
 
   /* Convert the challenge from hexadecimal back to binary */
 
-  hex2bin(buffer,buffer,len);
+  hex2bin(buffer,cl->mychallenge,len);
 
-  /* Decrypt the challenge */
-  
-  if(RSA_private_decrypt(len, buffer, cl->mychallenge, myself->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
-    {
-      syslog(LOG_ERR, _("Error during encryption of challenge for %s (%s)"), cl->name, cl->hostname);
-      return -1;
-    }
-
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    {
-      bin2hex(cl->mychallenge, buffer, len);
-      buffer[len*2] = '\0';
-      syslog(LOG_DEBUG, _("Received random challenge (unencrypted): %s"), buffer);
-    }
+  cl->allow_request = CHAL_REPLY;
 
   /* Rest is done by send_chal_reply() */
 cp
@@ -394,11 +365,6 @@ cp
   hash[SHA_DIGEST_LENGTH*2] = '\0';
 
   /* Send the reply */
-
-  if(cl->status.outgoing)
-    cl->allow_request = ID;
-  else
-    cl->allow_request = METAKEY;
 
 cp
   return send_request(cl, "%d %s", CHAL_REPLY, hash);
@@ -445,16 +411,11 @@ cp
       return -1;
     }
 
-
   /* Identity has now been positively verified.
-     If we are accepting this new connection, then send our identity,
-     if we are making this connecting, acknowledge.
+     ack_h() handles the rest from now on.
    */
 cp
-  if(cl->status.outgoing)
-      return send_metakey(cl);
-  else
-      return send_id(cl);
+  return ack_h(cl);
 }
 
 int send_metakey(connection_t *cl)
@@ -503,15 +464,14 @@ cp
 
   /* Send the meta key */
 
-  if(cl->status.outgoing)
-    cl->allow_request = METAKEY;
-  else
-    cl->allow_request = ACK;
-    
   x = send_request(cl, "%d %s", METAKEY, buffer);
   free(buffer);
 
+  /* Further outgoing requests are encrypted with the key we just generated */
+
   EVP_EncryptInit(cl->cipher_outctx, EVP_bf_cfb(), cl->cipher_outkey, cl->cipher_outkey + EVP_bf_cfb()->key_len);
+
+  cl->status.encryptout = 1;
 cp
   return x;
 }
@@ -564,26 +524,15 @@ cp
       syslog(LOG_DEBUG, _("Received random meta key (unencrypted): %s"), buffer);
     }
 
+  /* All incoming requests will now be encrypted. */
+
   EVP_DecryptInit(cl->cipher_inctx, EVP_bf_cfb(), cl->cipher_inkey, cl->cipher_inkey + EVP_bf_cfb()->key_len);
   
-cp
-  if(cl->status.outgoing)
-    return send_ack(cl);
-  else
-    return send_metakey(cl);
-}
+  cl->status.decryptin = 1;
 
-int send_ack(connection_t *cl)
-{
-  int x;
+  cl->allow_request = CHALLENGE;
 cp
-  if(cl->status.outgoing)
-    cl->allow_request = ACK;
-
-  x = send_request(cl, "%d", ACK);
-  cl->status.encryptout = 1;
-cp
-  return x;
+  return send_challenge(cl);
 }
 
 int ack_h(connection_t *cl)
@@ -611,7 +560,6 @@ cp
 
   cl->allow_request = ALL;
   cl->status.active = 1;
-  cl->status.decryptin = 1;
   cl->nexthop = cl;
   cl->cipher_pkttype = EVP_bf_cbc();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
@@ -620,9 +568,6 @@ cp
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);
 
 cp
-  if(!cl->status.outgoing)
-    send_ack(cl);
-
   /* Check some options */
   
   if((cfg = get_config_val(cl->config, config_indirectdata)))
@@ -1349,7 +1294,7 @@ int tcppacket_h(connection_t *cl)
 /* Jumptable for the request handlers */
 
 int (*request_handlers[])(connection_t*) = {
-  id_h, challenge_h, chal_reply_h, metakey_h, ack_h,
+  id_h, metakey_h, challenge_h, chal_reply_h,
   status_h, error_h, termreq_h,
   ping_h, pong_h,
   add_host_h, del_host_h,
@@ -1361,7 +1306,7 @@ int (*request_handlers[])(connection_t*) = {
 /* Request names */
 
 char (*request_name[]) = {
-  "ID", "CHALLENGE", "CHAL_REPLY", "METAKEY", "ACK",
+  "ID", "METAKEY", "CHALLENGE", "CHAL_REPLY",
   "STATUS", "ERROR", "TERMREQ",
   "PING", "PONG",
   "ADD_HOST", "DEL_HOST",

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.96 2001/02/25 16:34:17 guus Exp $
+    $Id: net.c,v 1.35.4.97 2001/02/25 19:09:41 guus Exp $
 */
 
 #include "config.h"
@@ -1297,6 +1297,8 @@ cp
     }
 
   connection_add(ncn);
+  
+  send_id(ncn);
 cp
   return 0;
 }
