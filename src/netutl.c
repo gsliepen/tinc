@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.40 2002/06/21 10:11:12 guus Exp $
+    $Id: netutl.c,v 1.12.4.41 2002/06/21 17:49:48 guus Exp $
 */
 
 #include "config.h"
@@ -241,7 +241,7 @@ cp
   i = masklen / 8;
   masklen %= 8;
 
-  if(a[i++] & (0xff >> masklen))
+  if(masklen && a[i++] & (0xff >> masklen))
     return -1;
 
   for(; i < len; i++)
