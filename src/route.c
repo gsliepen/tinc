@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.7 2001/03/04 13:59:32 guus Exp $
+    $Id: route.c,v 1.1.2.8 2001/05/25 11:54:28 guus Exp $
 */
 
 #include "config.h"
@@ -181,11 +181,12 @@ void route_incoming(connection_t *source, vpn_packet_t *packet)
 {
   switch(routing_mode)
     {
+      case RMODE_ROUTER:
+        memcpy(packet->data, mymac.net.mac.address.x, 6);
+        break;
       case RMODE_SWITCH:
         learn_mac(source, (mac_t *)(&packet->data[0]));
         break;
-      case RMODE_ROUTER:
-        memcpy(packet->data, mymac.net.mac.address.x, 6);
     }
   
   accept_packet(packet);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.90 2001/05/25 08:36:11 guus Exp $
+    $Id: protocol.c,v 1.28.4.91 2001/05/25 11:54:28 guus Exp $
 */
 
 #include "config.h"
@@ -106,11 +106,15 @@ cp
       return -1;
     }
 
-  len++;
-
   if(debug_lvl >= DEBUG_PROTOCOL)
-    syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
+    {
+      if(debug_lvl >= DEBUG_META)
+        syslog(LOG_DEBUG, _("Sending %s to %s (%s): %s"), request_name[request], cl->name, cl->hostname, buffer);
+      else
+        syslog(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request], cl->name, cl->hostname);
+    }
 
+  buffer[len++] = '\n';
 cp
   return send_meta(cl, buffer, len);
 }
@@ -118,20 +122,31 @@ cp
 int receive_request(connection_t *cl)
 {
   int request;
-cp  
+cp
   if(sscanf(cl->buffer, "%d", &request) == 1)
     {
       if((request < 0) || (request >= LAST) || (request_handlers[request] == NULL))
         {
-          syslog(LOG_ERR, _("Unknown request from %s (%s)"),
-		 cl->name, cl->hostname);
+          if(debug_lvl >= DEBUG_META)
+            syslog(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
+	           cl->name, cl->hostname, cl->buffer);
+          else
+            syslog(LOG_ERR, _("Unknown request from %s (%s)"),
+                   cl->name, cl->hostname);
+                   
           return -1;
         }
       else
         {
           if(debug_lvl >= DEBUG_PROTOCOL)
-            syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
-		   request_name[request], cl->name, cl->hostname);
+            {
+              if(debug_lvl >= DEBUG_META)
+                syslog(LOG_DEBUG, _("Got %s from %s (%s): %s"),
+	               request_name[request], cl->name, cl->hostname, cl->buffer);
+              else
+                syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
+		       request_name[request], cl->name, cl->hostname);
+            }
 	}
 
       if((cl->allow_request != ALL) && (cl->allow_request != request))
@@ -158,34 +173,8 @@ cp
   return 0;
 }
 
-/* Connection protocol:
-
-   Client               Server
-   send_id(u)
-                        send_challenge(R)
-   send_chal_reply(H)
-                        send_id(u)
-   send_challenge(R)
-                        send_chal_reply(H)
-   ---------------------------------------
-   send_metakey(R)
-                        send_metakey(R)
-   ---------------------------------------
-   send_ack(u)
-                        send_ack(u)
-   ---------------------------------------
-   Other requests(E)...
-
-   (u) Unencrypted,
-   (R) RSA,
-   (H) SHA1,
-   (E) Encrypted with symmetric cipher.
-
-   Part of the challenge is directly used to set the symmetric cipher
-   key and the initial vector.  Since a man-in-the-middle cannot
-   decrypt the RSA challenges, this means that he cannot get or forge
-   the key for the symmetric cipher.
-*/
+/* The authentication protocol is described in detail in doc/SECURITY2,
+   the rest will be described in doc/PROTOCOL. */
 
 int send_id(connection_t *cl)
 {
@@ -1287,53 +1276,29 @@ int send_tcppacket(connection_t *cl, vpn_packet_t *packet)
 {
   int x;
 cp  
+  /* Evil hack. */
+
   x = send_request(cl->nexthop, "%d %hd", PACKET, packet->len);
 
   if(x)
     return x;
-  
-  return send_meta(cl->nexthop, packet->data, packet->len);  
+cp
+  return send_meta(cl, packet->data, packet->len);
 }
 
 int tcppacket_h(connection_t *cl)
 {
-  vpn_packet_t packet;
-  char *p;
-  int todo, x;
+  short int len;
 cp  
-  if(sscanf(cl->buffer, "%*d %hd", &packet.len) != 1)
+  if(sscanf(cl->buffer, "%*d %hd", &len) != 1)
     {
       syslog(LOG_ERR, _("Got bad PACKET from %s (%s)"), cl->name, cl->hostname);
       return -1;
     }
 
-  /* Evil hack. */
+  /* Set reqlen to len, this will tell receive_meta() that a tcppacket is coming. */
 
-  p = packet.data;
-  todo = packet.len;
-
-  while(todo)
-    {
-      x = read(cl->meta_socket, p, todo);
-
-      if(x<=0)
-        {
-          if(x==0)
-            syslog(LOG_NOTICE, _("Connection closed by %s (%s)"), cl->name, cl->hostname);
-          else
-            if(errno==EINTR || errno==EAGAIN)	/* FIXME: select() or poll() or reimplement this evil hack */
-              continue;
-            else
-              syslog(LOG_ERR, _("Error during reception of PACKET from %s (%s): %m"), cl->name, cl->hostname);
-
-          return -1;
-        }
-      
-      todo -= x;
-      p += x;
-    }
-
-  receive_packet(cl, &packet);
+  cl->tcplen = len;
 cp
   return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.8 2001/03/04 13:59:25 guus Exp $
+    $Id: connection.h,v 1.1.2.9 2001/05/25 11:54:28 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -85,7 +85,7 @@ typedef struct connection_t {
 
   char *buffer;                    /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
-  int reqlen;                      /* length of first request in buffer */
+  int tcplen;                      /* length of incoming TCPpacket */
   int allow_request;               /* defined if there's only one request possible */
 
   time_t last_ping_time;           /* last time we saw some activity from the other end */  

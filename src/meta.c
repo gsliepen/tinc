@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.17 2001/05/25 08:36:11 guus Exp $
+    $Id: meta.c,v 1.1.2.18 2001/05/25 11:54:28 guus Exp $
 */
 
 #include "config.h"
@@ -45,15 +45,13 @@
 
 int send_meta(connection_t *cl, char *buffer, int length)
 {
-  char outbuf[MAXBUFSIZE];
   char *bufp;
   int outlen;
+  char outbuf[MAXBUFSIZE];
 cp
   if(debug_lvl >= DEBUG_META)
-    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s): %s"), length,
-           cl->name, cl->hostname, buffer);
-
-  buffer[length-1]='\n';
+    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
+           cl->name, cl->hostname);
 
   if(cl->status.encryptout)
     {
@@ -91,9 +89,9 @@ int receive_meta(connection_t *cl)
 {
   int x, l = sizeof(x);
   int oldlen, i;
-  int lenin = 0;
-  char inbuf[MAXBUFSIZE];
+  int lenin, reqlen;
   int decrypted = 0;
+  char inbuf[MAXBUFSIZE];
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
@@ -107,6 +105,15 @@ cp
              cl->name, cl->hostname, strerror(x));
       return -1;
     }
+
+  /* Strategy:
+     - Read as much as possible from the TCP socket in one go.
+     - Decrypt it.
+     - Check if a full request is in the input buffer.
+       - If yes, process request and remove it from the buffer,
+         then check again.
+       - If not, keep stuff in buffer and exit.
+   */
 
   lenin = read(cl->meta_socket, cl->buffer + cl->buflen, MAXBUFSIZE - cl->buflen);
 
@@ -133,6 +140,8 @@ cp
 
   while(lenin)
     {
+      /* Decrypt */
+
       if(cl->status.decryptin && !decrypted)
         {
           EVP_DecryptUpdate(cl->cipher_inctx, inbuf, &lenin, cl->buffer + oldlen, lenin);
@@ -140,31 +149,51 @@ cp
           decrypted = 1;
         }
 
-      cl->reqlen = 0;
+      /* Are we receiving a TCPpacket? */
+
+      if(cl->tcplen)
+        {
+          if(cl->tcplen <= cl->buflen)
+            {
+              receive_tcppacket(cl, cl->buffer, cl->tcplen);
+
+              cl->buflen -= cl->tcplen;
+              lenin -= cl->tcplen;
+              memmove(cl->buffer, cl->buffer + cl->tcplen, cl->buflen);
+              oldlen = 0;
+              cl->tcplen = 0;
+              continue;
+            }
+          else
+            {
+              break;
+            }
+        }
+
+      /* Otherwise we are waiting for a request */
+
+      reqlen = 0;
 
       for(i = oldlen; i < cl->buflen; i++)
         {
           if(cl->buffer[i] == '\n')
             {
-              cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
-              cl->reqlen = i + 1;
+              cl->buffer[i] = '\0';  /* replace end-of-line by end-of-string so we can use sscanf */
+              reqlen = i + 1;
               break;
             }
         }
 
-      if(cl->reqlen)
+      if(reqlen)
         {
-          if(debug_lvl >= DEBUG_META)
-            syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
-	           cl->name, cl->hostname, cl->buffer);
-
           if(receive_request(cl))
             return -1;
 
-          cl->buflen -= cl->reqlen;
-          lenin -= cl->reqlen;
-          memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
+          cl->buflen -= reqlen;
+          lenin -= reqlen;
+          memmove(cl->buffer, cl->buffer + reqlen, cl->buflen);
           oldlen = 0;
+          continue;
         }
       else
         {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.107 2001/05/25 10:08:11 guus Exp $
+    $Id: net.c,v 1.35.4.108 2001/05/25 11:54:28 guus Exp $
 */
 
 #include "config.h"
@@ -184,6 +184,17 @@ cp
 cp
 }
 
+void receive_tcppacket(connection_t *cl, char *buffer, int len)
+{
+  vpn_packet_t outpkt;
+cp
+  outpkt.len = len;
+  memcpy(outpkt.data, buffer, len);
+
+  receive_packet(cl, &outpkt);
+cp
+}
+
 void accept_packet(vpn_packet_t *packet)
 {
 cp
@@ -203,7 +214,7 @@ cp
       if(write(tap_fd, packet->data - 2, packet->len + 2) < 0)
         syslog(LOG_ERR, _("Can't write to ethertap device: %m"));
       else
-        total_tap_out += packet->len + 2;
+        total_tap_out += packet->len;
     }
 cp
 }
@@ -1290,7 +1301,7 @@ cp
       vp.len = lenin - 2;
     }
 
-  total_tap_in += lenin;
+  total_tap_in += vp.len;
 
   if(lenin < 32)
     {
