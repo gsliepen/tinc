@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.92 2001/01/07 20:19:29 guus Exp $
+    $Id: net.c,v 1.35.4.93 2001/01/11 11:19:08 guus Exp $
 */
 
 #include "config.h"
@@ -1032,6 +1032,7 @@ cp
     {
       syslog(LOG_ERR, _("System call `%s' failed: %m"),
 	     "getpeername");
+      close(sfd);
       return NULL;
     }
 
@@ -1141,37 +1142,40 @@ cp
   if(cl->status.remove)
     return;
 
-  cl->status.remove = 1;
-
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Closing connection with %s (%s)"),
            cl->name, cl->hostname);
  
+  cl->status.remove = 1;
+  
   if(cl->socket)
     close(cl->socket);
   if(cl->status.meta)
     close(cl->meta_socket);
 
-  /* Find all connections that were lost because they were behind cl
-     (the connection that was dropped). */
-
   if(cl->status.meta)
-    for(node = connection_tree->head; node; node = node->next)
-      {
-        p = (connection_t *)node->data;
-        if(p->nexthop == cl && p != cl)
-          terminate_connection(p);
-      }
+    {
+    
+      /* Find all connections that were lost because they were behind cl
+         (the connection that was dropped). */
 
-  /* Inform others of termination if it was still active */
+        for(node = connection_tree->head; node; node = node->next)
+          {
+            p = (connection_t *)node->data;
+            if(p->nexthop == cl && p != cl)
+              terminate_connection(p);
+          }
 
-  if(cl->status.active)
-    for(node = connection_tree->head; node; node = node->next)
-      {
-        p = (connection_t *)node->data;
-        if(p->status.meta && p->status.active && p!=cl)
-          send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
-      }
+      /* Inform others of termination if it was still active */
+
+      if(cl->status.active)
+        for(node = connection_tree->head; node; node = node->next)
+          {
+            p = (connection_t *)node->data;
+            if(p->status.meta && p->status.active && p != cl)
+              send_del_host(p, cl);	/* Sounds like recursion, but p does not have a meta connection :) */
+          }
+    }
 
   /* Remove the associated subnets */
 
