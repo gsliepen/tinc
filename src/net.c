@@ -51,6 +51,8 @@ int total_tap_out = 0;
 int total_socket_in = 0;
 int total_socket_out = 0;
 
+static int seconds_till_retry;
+
 /* The global list of existing connections */
 conn_list_t *conn_list = NULL;
 conn_list_t *myself = NULL;
@@ -541,6 +543,30 @@ cp
   return 0;
 }
 
+RETSIGTYPE
+sigalrm_handler(int a)
+{
+  config_t const *cfg;
+cp
+  cfg = get_config_val(upstreamip);
+
+  if(!setup_outgoing_connection(cfg->data.ip->ip))
+    {
+      signal(SIGALRM, SIG_IGN);
+    }
+  else
+    {
+      signal(SIGALRM, sigalrm_handler);
+      seconds_till_retry += 5;
+      if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
+        seconds_till_retry = 300;
+      alarm(seconds_till_retry);
+      syslog(LOG_ERR, "Still failed to connect to other. Will retry in %d seconds.",
+	     seconds_till_retry);
+    }
+cp
+}
+
 /*
   setup all initial network connections
 */
@@ -564,33 +590,14 @@ cp
     return 0;
 
   if(setup_outgoing_connection(cfg->data.ip->ip))
-    return -1;
-cp
-  return 0;
-}
-
-RETSIGTYPE
-sigalrm_handler(int a)
-{
-  config_t const *cfg;
-  static int seconds_till_retry;
-cp
-  cfg = get_config_val(upstreamip);
-
-  if(!setup_outgoing_connection(cfg->data.ip->ip))
-    {
-      signal(SIGALRM, SIG_IGN);
-      seconds_till_retry = 5;
-    }
-  else
     {
       signal(SIGALRM, sigalrm_handler);
-      seconds_till_retry += 5;
+      seconds_till_retry = 300;
       alarm(seconds_till_retry);
-      syslog(LOG_ERR, "Still failed to connect to other. Will retry in %d seconds.",
-	     seconds_till_retry);
+      syslog(LOG_NOTICE, "Try to re-establish outgoing connection in 5 minutes.");
     }
 cp
+  return 0;
 }
 
 /*
@@ -822,7 +829,8 @@ cp
   if(cl->status.outgoing)
     {
       signal(SIGALRM, sigalrm_handler);
-      alarm(5);
+      seconds_till_retry = 5;
+      alarm(seconds_till_retry);
       syslog(LOG_NOTICE, "Try to re-establish outgoing connection in 5 seconds.");
     }
   
