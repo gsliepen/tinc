@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.33 2000/11/22 16:19:07 zarq Exp $
+    $Id: tincd.c,v 1.10.4.34 2000/11/22 19:14:09 guus Exp $
 */
 
 #include "config.h"
@@ -93,11 +93,6 @@ char *pidfilename;               /* pid file location */
 char **g_argv;                   /* a copy of the cmdline arguments */
 char **environment;              /* A pointer to the environment on
                                     startup */
-
-void cleanup_and_exit(int);
-int kill_other(void);
-void make_names(void);
-int write_pidfile(void);
 
 static struct option const long_options[] =
 {

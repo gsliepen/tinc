@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.9 2000/11/22 17:49:16 zarq Exp $
+    $Id: process.c,v 1.1.2.10 2000/11/22 19:14:08 guus Exp $
 */
 
 #include "config.h"
@@ -145,11 +145,11 @@ int detach(void)
 cp
   setup_signals();
 
-  if(write_pidfile())
-    return -1;
-
   if(do_detach)
     daemon(0, 0);
+
+  if(write_pidfile())
+    return -1;
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
