@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2001-06-29 15:38+0200\n"
+"POT-Creation-Date: 2001-07-01 11:19+0200\n"
 "PO-Revision-Date: 2001-06-05 17:54+0200\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -538,8 +538,8 @@ msgstr "%s (%s) staat al in onze verbindingslijst"
 
 #: src/protocol.c:259
 #, c-format
-msgid "%s is listening on %s:%s, which is already in use by %s!"
-msgstr "%s luistert op %s:%s, wat al in gebruik is door %s!"
+msgid "%s is listening on %s:%hd, which is already in use by %s!"
+msgstr "%s luistert op %s:%hd, wat al in gebruik is door %s!"
 
 #: src/protocol.c:289
 #, c-format
@@ -1072,30 +1072,30 @@ msgstr "Kreeg onverwacht signaal %d (%s)"
 msgid "Installing signal handler for signal %d (%s) failed: %m\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %m\n"
 
-#: src/route.c:67
+#: src/route.c:68
 #, c-format
 msgid "Learned new MAC address %hhx:%hhx:%hhx:%hhx:%hhx:%hhx"
 msgstr "Nieuw MAC adres %hhx:%hhx:%hhx:%hhx:%hhx:%hhx geleerd"
 
-#: src/route.c:117
+#: src/route.c:118
 #, c-format
 msgid "Cannot route packet: unknown destination address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: onbekend doeladres %d.%d.%d.%d"
 
-#: src/route.c:132
+#: src/route.c:133
 msgid "Cannot route packet: IPv6 routing not yet implemented"
 msgstr "Kan pakket niet routeren: IPv6 routering nog niet geïmplementeerd"
 
-#: src/route.c:166
+#: src/route.c:167
 msgid "Cannot route packet: received unknown type ARP request"
 msgstr "Kan pakket niet routeren: ontvangst van onbekend type ARP verzoek"
 
-#: src/route.c:180
+#: src/route.c:181
 #, c-format
 msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 
-#: src/route.c:232
+#: src/route.c:233
 #, c-format
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"

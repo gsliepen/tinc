@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.95 2001/06/29 13:09:32 guus Exp $
+    $Id: protocol.c,v 1.28.4.96 2001/07/01 09:21:01 guus Exp $
 */
 
 #include "config.h"
@@ -256,7 +256,7 @@ cp
   if(!avl_insert_node(connection_tree, node))
     {
       old = avl_search_node(connection_tree, node)->data;
-      syslog(LOG_ERR, _("%s is listening on %s:%s, which is already in use by %s!"),
+      syslog(LOG_ERR, _("%s is listening on %s:%hd, which is already in use by %s!"),
              cl->name, cl->hostname, cl->port, old->name);
       return -1;
     }
