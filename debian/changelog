@@ -1,3 +1,7 @@
+tinc (1.0pre2-0.4) unstable; urgency=low
+
+  * postinst script
+
 tinc (1.0pre1-0.3) unstable; urgency=low
 
   * system startup script
