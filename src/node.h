@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.20 2002/09/09 21:24:41 guus Exp $
+    $Id: node.h,v 1.1.2.21 2003/04/18 21:18:36 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -73,6 +73,7 @@ typedef struct node_t {
 
 	uint32_t sent_seqno;		/* Sequence number last sent to this node */
 	uint32_t received_seqno;	/* Sequence number last received from this node */
+	unsigned char late[16];	/* Bitfield marking late packets */
 } node_t;
 
 extern struct node_t *myself;

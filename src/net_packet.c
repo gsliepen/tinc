@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.26 2003/03/28 13:41:49 guus Exp $
+    $Id: net_packet.c,v 1.1.2.27 2003/04/18 21:18:36 guus Exp $
 */
 
 #include "config.h"
@@ -95,6 +95,7 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int outlen, outpad;
 	long int complen = MTU + 12;
 	char hmac[EVP_MAX_MD_SIZE];
+	int i;
 
 	cp();
 
@@ -133,16 +134,26 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	inpkt->len -= sizeof(inpkt->seqno);
 	inpkt->seqno = ntohl(inpkt->seqno);
 
-	if(inpkt->seqno <= n->received_seqno) {
-		if(debug_lvl >= DEBUG_TRAFFIC)
-			syslog(LOG_DEBUG,
-				   _("Got late or replayed packet from %s (%s), seqno %d"),
-				   n->name, n->hostname, inpkt->seqno);
-		return;
+	if(inpkt->seqno != n->received_seqno + 1) {
+		if(inpkt->seqno >= n->received_seqno + sizeof(n->late) * 8) {
+			if(debug_lvl >= DEBUG_TRAFFIC)
+				syslog(LOG_WARNING, _("Lost %d packets from %s (%s)"),
+					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
+			
+			memset(n->late, 0, sizeof(n->late));
+		} else if (inpkt->seqno <= n->received_seqno) {
+			if(inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8 || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
+				syslog(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
+					   n->name, n->hostname, inpkt->seqno, n->received_seqno, n->late[(inpkt->seqno / 8) % sizeof(n->late)]);
+			} else
+				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
+					n->late[(inpkt->seqno / 8) % sizeof(n->late)] |= 1 << i % 8;
+		}
 	}
-
+	
 	n->received_seqno = inpkt->seqno;
-
+	n->late[(n->received_seqno / 8) % sizeof(n->late)] &= ~(1 << n->received_seqno % 8);
+			
 	if(n->received_seqno > MAX_SEQNO)
 		keyexpires = 0;
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.14 2002/09/09 22:33:03 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.15 2003/04/18 21:18:36 guus Exp $
 */
 
 #include "config.h"
@@ -135,6 +135,7 @@ int req_key_h(connection_t *c)
 	if(to == myself) {			/* Yes, send our own key back */
 		mykeyused = 1;
 		from->received_seqno = 0;
+		memset(from->late, 0, sizeof(from->late));
 		send_ans_key(c, myself, from);
 	} else {
 		send_req_key(to->nexthop->connection, from, to);
