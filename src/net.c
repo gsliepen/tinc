@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.100 2001/02/27 16:37:25 guus Exp $
+    $Id: net.c,v 1.35.4.101 2001/03/01 21:32:01 guus Exp $
 */
 
 #include "config.h"
@@ -84,6 +84,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "process.h"
 
 #include "system.h"
 
@@ -929,11 +930,17 @@ cp
       cfg = get_config_val(upstreamcfg, config_connectto); /* Or else we try the next ConnectTo line */
     }
     
-  signal(SIGALRM, sigalrm_handler);
-  upstreamcfg = config;
-  seconds_till_retry = MAXTIMEOUT;
-  syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
-  alarm(seconds_till_retry);
+  if(do_detach)
+    {
+      signal(SIGALRM, sigalrm_handler);
+      upstreamcfg = config;
+      seconds_till_retry = MAXTIMEOUT;
+      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
+      alarm(seconds_till_retry);
+    }
+  else
+    return -1;
+
 cp
   return 0;
 }
@@ -949,6 +956,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       p = (connection_t *)node->data;
+      p->status.outgoing = 0;
       p->status.active = 0;
       terminate_connection(p);
     }
@@ -1349,7 +1357,7 @@ cp
           if(read_server_config())
             {
               syslog(LOG_ERR, _("Unable to reread configuration file, exiting"));
-              exit(0);
+              exit(1);
             }
 
           sleep(5);

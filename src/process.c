@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.20 2001/01/07 17:09:02 guus Exp $
+    $Id: process.c,v 1.1.2.21 2001/03/01 21:32:04 guus Exp $
 */
 
 #include "config.h"
@@ -221,7 +221,7 @@ cp
   /* No return on success */
   
   if(errno != ENOENT)	/* Ignore if the file does not exist */
-    exit(-1);		/* Some error while trying execl(). */
+    exit(1);		/* Some error while trying execl(). */
   else
     exit(0);
 }
@@ -309,7 +309,7 @@ sigsegv_square(int a, siginfo_t *info, void *b)
 {
   syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
   cp_trace();
-  exit(0);
+  exit(1);
 }
 
 RETSIGTYPE

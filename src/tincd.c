@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.44 2001/02/27 16:37:31 guus Exp $
+    $Id: tincd.c,v 1.10.4.45 2001/03/01 21:32:04 guus Exp $
 */
 
 #include "config.h"
@@ -87,9 +87,6 @@ static int show_version;
 
 /* If nonzero, it will attempt to kill a running tincd and exit. */
 static int kill_tincd = 0;
-
-/* If zero, don't detach from the terminal. */
-extern int do_detach;
 
 /* If nonzero, generate public/private keypair for this host/net. */
 static int generate_keys = 0;
@@ -356,7 +353,7 @@ cp
     exit(kill_other());
 
   if(read_server_config())
-    return 1;
+    exit(1);
 cp
   if(detach())
     exit(0);
@@ -383,8 +380,7 @@ cp
       else
         {
           syslog(LOG_ERR, _("Not restarting."));
-          exit(0);
+          exit(1);
         }
     }
 }
-
