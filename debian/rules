@@ -1,4 +1,4 @@
-#!/usr/bin/make -f
+#!/bin/make -f
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
 
@@ -49,11 +49,11 @@ binary-arch: build install
 #	dh_installdebconf	
 	dh_installdocs
 	dh_installexamples
-	dh_installmenu
+#	dh_installmenu
 #	dh_installemacsen
 #	dh_installpam
-#	dh_installinit
-	dh_installcron
+	dh_installinit
+#	dh_installcron
 	dh_installmanpages
 	dh_installinfo
 #	dh_undocumented
@@ -62,8 +62,8 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	# You may want to make some executables suid here.
-	dh_suidregister
+#	# You may want to make some executables suid here.
+#	dh_suidregister
 #	dh_makeshlibs
 	dh_installdeb
 #	dh_perl
