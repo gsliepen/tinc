@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.145 2001/10/31 20:22:52 guus Exp $
+    $Id: net.c,v 1.35.4.146 2001/11/03 21:21:04 guus Exp $
 */
 
 #include "config.h"
@@ -505,7 +505,6 @@ int read_rsa_public_key(connection_t *c)
   FILE *fp;
   char *fname;
   char *key;
-  void *result;
 cp
   if(!c->rsa_key)
     c->rsa_key = RSA_new();
@@ -531,9 +530,9 @@ cp
 	             fname);
               return -1;
             }
-          result = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+          c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
           fclose(fp);
-          if(!result)
+          if(!c->rsa_key)
             {
               syslog(LOG_ERR, _("Reading RSA public key file `%s' failed: %m"),
 	             fname);
@@ -547,19 +546,16 @@ cp
 
   /* Else, check if a harnessed public key is in the config file */
 
-  result = NULL;
-
   asprintf(&fname, "%s/hosts/%s", confbase, c->name);
   if((fp = fopen(fname, "r")))
     {
-      result = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+      c->rsa_key = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
       fclose(fp);
-      free(fname);
     }
 
   free(fname);
 
-  if(result)
+  if(c->rsa_key)
     return 0;
   else
     {
@@ -571,14 +567,11 @@ cp
 int read_rsa_private_key(void)
 {
   FILE *fp;
-  void *result;
   char *fname, *key;
 cp
-  if(!myself->connection->rsa_key)
-    myself->connection->rsa_key = RSA_new();
-
   if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key))
     {
+      myself->connection->rsa_key = RSA_new();
       BN_hex2bn(&myself->connection->rsa_key->d, key);
       BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
     }
@@ -590,9 +583,9 @@ cp
 	         fname);
           return -1;
         }
-      result = PEM_read_RSAPrivateKey(fp, &myself->connection->rsa_key, NULL, NULL);
+      myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
       fclose(fp);
-      if(!result)
+      if(!myself->connection->rsa_key)
         {
           syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
 	         fname);
@@ -853,13 +846,13 @@ cp
 
   c->address = ntohl(ci.sin_addr.s_addr);
   c->hostname = hostlookup(ci.sin_addr.s_addr);
-  c->port = htons(ci.sin_port);				/* This one will be overwritten later */
+  c->port = htons(ci.sin_port);
   c->socket = sfd;
   c->last_ping_time = time(NULL);
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection from %s port %d"),
-         c->hostname, htons(ci.sin_port));
+         c->hostname, c->port);
 
   c->allow_request = ID;
 cp
