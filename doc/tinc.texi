@@ -96,7 +96,7 @@ more than just one way.
 @cindex private
 For instance, a VPN can consist of a single stand-alone ethernet LAN. Or
 even two computers hooked up using a null-modem cable@footnote{Though
-discussable, I think it qualifies as a VPN.}. In these cases, it is
+discuss-able, I think it qualifies as a VPN.}. In these cases, it is
 obvious that the network is @emph{private}. But there is another type
 of VPN, the type tinc was made for.
 
@@ -209,7 +209,7 @@ chown 0.0 /dev/tap0
 
 The permissions now will be such that only the super user may read/write
 to this file. You'd want this, because otherwise eavesdropping would
-become a tad too easy. This does, however, imply that you'd have to run
+become a bit too easy. This does, however, imply that you'd have to run
 tincd as root.
 
 If you want to, you may also create more device files, which would be
@@ -219,7 +219,7 @@ owned by root and have permission 600.
 
 @subsubheading @file{/etc/networks}
 
-You may add a line to @file{/etc/networks} so that your vpn will get a
+You may add a line to @file{/etc/networks} so that your VPN will get a
 symbolic name. For example:
 
 @example
@@ -230,7 +230,7 @@ myvpn 10.0.0.0
 @subsubheading @file{/etc/services}
 
 You may add this line to @file{/etc/services}. The effect is that you
-may supply a @samp{vpn} as a valid port number to some programs. The
+may supply a @samp{tinc} as a valid port number to some programs. The
 number 655 is registered with the IANA.
 
 @example
@@ -1154,7 +1154,7 @@ Main coder/hacker and maintainer of the package.
 Originator of it all, co-author.
 
 @item Wessel Dankers (Ubiq)
-General obfuscator of the code.
+General obfuscater of the code.
 
 @end table
 
