@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.21 2001/03/01 21:32:04 guus Exp $
+    $Id: process.c,v 1.1.2.22 2001/03/13 09:55:14 guus Exp $
 */
 
 #include "config.h"
@@ -375,6 +375,16 @@ unexpected_signal_handler(int a, siginfo_t *info, void *b)
   cp_trace();
 }
 
+RETSIGTYPE
+ignore_signal_handler(int a, siginfo_t *info, void *b)
+{
+  if(debug_lvl >= DEBUG_SCARY_THINGS)
+  {
+    syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+    cp_trace();
+  }
+}
+
 struct {
   int signal;
   void (*handler)(int, siginfo_t *, void *);
@@ -383,11 +393,12 @@ struct {
   { SIGTERM, sigterm_handler },
   { SIGQUIT, sigquit_handler },
   { SIGSEGV, sigsegv_handler },
-  { SIGPIPE, NULL },
+  { SIGPIPE, ignore_signal_handler },
   { SIGINT, sigint_handler },
   { SIGUSR1, sigusr1_handler },
   { SIGUSR2, sigusr2_handler },
-  { SIGCHLD, NULL },
+  { SIGCHLD, ignore_signal_handler },
+  { SIGALRM, ignore_signal_handler },
   { 0, NULL }
 };
 
@@ -407,7 +418,7 @@ setup_signals(void)
   for(i = 0; i < NSIG; i++) 
     {
       act.sa_sigaction = unexpected_signal_handler;
-      sigaction(sighandlers[i].signal, &act, NULL);
+      sigaction(i, &act, NULL);
     }
 
   /* Then, for each known signal that we want to catch, assign a
