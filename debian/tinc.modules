@@ -9,3 +9,5 @@ options tap0 -o tap0 -x unit=0
 options tap1 -o tap1 -x unit=1
 options tap2 -o tap2 -x unit=2
 options tap3 -o tap3 -x unit=3
+
+alias char-major-10-200 tun
