@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.1 2000/06/23 19:27:02 guus Exp $
+    $Id: net.c,v 1.35.4.2 2000/06/24 12:35:42 guus Exp $
 */
 
 #include "config.h"
@@ -291,7 +291,22 @@ cp
         }
     }
 
-  /* If indirectdata flag is set, then real_ip is actually the vpn_ip of the gateway tincd
+  /* If we ourselves have indirectdata flag set, we should send only to our uplink! */
+  
+  if(myself->flags & EXPORTINDIRECTDATA)
+    {
+      for(cl = conn_list; cl != NULL && !cl->status.outgoing; cl = cl->next);
+      if(!cl)
+        { /* No open outgoing connection has been found. */
+	  if(debug_lvl > 2)
+	    syslog(LOG_NOTICE, _("There is no remote host I can send this packet to."));
+          return -1;
+        }
+    }
+  else
+
+  /* If indirectdata flag is set for the destination we just looked up,
+   * then real_ip is actually the vpn_ip of the gateway tincd
    * it is behind.
    */
    
