@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.73 2003/08/17 12:05:08 guus Exp $
+    $Id: process.c,v 1.1.2.74 2003/08/22 15:05:01 guus Exp $
 */
 
 #include "system.h"
@@ -82,7 +82,7 @@ static SERVICE_STATUS status = {0};
 static SERVICE_STATUS_HANDLE statushandle = 0;
 
 bool install_service(void) {
-	char command[4096] = "";
+	char command[4096] = "\"";
 	char **argp;
 	bool space;
 	SERVICE_DESCRIPTION description = {"Virtual Private Network daemon"};
@@ -93,10 +93,8 @@ bool install_service(void) {
 		return false;
 	}
 
-	strncat(command, "\"", sizeof(command));
-
 	if(!strchr(program_name, '\\')) {
-		GetCurrentDirectory(sizeof(command), command);
+		GetCurrentDirectory(sizeof(command) - 1, command + 1);
 		strncat(command, "\\", sizeof(command));
 	}
 
@@ -116,6 +114,8 @@ bool install_service(void) {
 		if(space)
 			strncat(command, "\"", sizeof(command));
 	}
+
+	logger(LOG_DEBUG, "Command: '%s'", command);
 
 	service = CreateService(manager, identname, identname,
 			SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
