@@ -335,20 +335,14 @@ cp
   tmp->len = strlen(my_public_key_base36);
   strcpy(&(tmp->key), my_public_key_base36);
 
-cp
-  syslog(LOG_DEBUG, "key sent = %s", my_public_key_base36);
-cp
- fw = lookup_conn(to);
+  fw = lookup_conn(to);
   
-cp
   if(!fw)
     {
       syslog(LOG_ERR, "Attempting to send key answer to " IP_ADDR_S ", which does not exist?",
 	     IP_ADDR_V(to));
       return -1;
     }
-cp
-  syslog(LOG_DEBUG, "key sent = %s", &(tmp->key));
 
 cp
  if(debug_lvl > 2)
@@ -757,8 +751,6 @@ cp
       syslog(LOG_ERR, "%d: Receive failed: %m", __LINE__);
       return -1;
     }
-
-  syslog(LOG_DEBUG, "key = %s", key);
 
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "got ANS_KEY from " IP_ADDR_S " for " IP_ADDR_S,
