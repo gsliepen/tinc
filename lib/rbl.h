@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.h,v 1.1.2.1 2000/11/16 09:18:38 guus Exp $
+    $Id: rbl.h,v 1.1.2.2 2000/11/18 18:14:57 guus Exp $
 */
 
 typedef int (*rbl_compare_t) (const void *, const void *);
@@ -59,13 +59,16 @@ enum
   RBL_BLACK;
 };
 
-extern rbl_t rbl_search(rbltree_t *, void *);
-extern rbl_t rbl_search_closest(rbltree_t *, void *);
-extern rbl_t rbl_insert(rbltree_t *, void *);
-extern rbl_t rbl_unlink(rbltree_t *, void *);
-extern rbl_t rbl_delete(rbltree_t *, void *);
-extern rbl_t rbl_insert_rbl(rbltree_t *, rbl_t *);
-extern rbl_t rbl_unlink_rbl(rbltree_t *, rbl_t *);
-extern rbl_t rbl_delete_rbl(rbltree_t *, rbl_t *);
-extern rbl_t rbl_prev(rbl_t *);
-extern rbl_t rbl_next(rbl_t *);
+extern rbl_t *new_rbltree(rbl_compare_t *, rbl_delete_t *);
+extern void free_rbltree(rbltree_t *);
+extern rbl_t *new_rbl(void);
+extern void free_rbl(rbl_t *);
+
+extern rbl_t *rbl_search(rbltree_t *, void *);
+extern rbl_t *rbl_search_closest(rbltree_t *, void *);
+extern rbl_t *rbl_insert(rbltree_t *, void *);
+extern rbl_t *rbl_unlink(rbltree_t *, void *);
+extern rbl_t *rbl_delete(rbltree_t *, void *);
+extern rbl_t *rbl_insert_rbl(rbltree_t *, rbl_t *);
+extern rbl_t *rbl_unlink_rbl(rbltree_t *, rbl_t *);
+extern rbl_t *rbl_delete_rbl(rbltree_t *, rbl_t *);
