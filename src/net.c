@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.7 2000/06/26 19:39:34 guus Exp $
+    $Id: net.c,v 1.35.4.8 2000/06/26 20:30:20 guus Exp $
 */
 
 #include "config.h"
@@ -772,7 +772,8 @@ cp
   p->last_ping_time = time(NULL);
   p->want_ping = 0;
   
-  syslog(LOG_NOTICE, _("Connection from %s port %d"),
+  if(debug_lvl > 0)
+    syslog(LOG_NOTICE, _("Connection from %s port %d"),
          p->hostname, htons(ci.sin_port));
 
   if(send_basic_info(p) < 0)
@@ -902,8 +903,14 @@ cp
       syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 seconds"));
     }
   
-  cl->status.active = 0;
   cl->status.remove = 1;
+
+  /* If this cl isn't active, don't send any DEL_HOSTs and don't bother
+     checking for other lost connections. */
+  if(!cl->status.active)
+    return;
+    
+  cl->status.active = 0;
 
 cp
   /* Find all connections that were lost because they were behind cl

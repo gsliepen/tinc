@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.8 2000/06/26 19:39:34 guus Exp $
+    $Id: protocol.c,v 1.28.4.9 2000/06/26 20:30:21 guus Exp $
 */
 
 #include "config.h"
@@ -62,7 +62,8 @@ cp
       return -1;
     }
 
-  syslog(LOG_NOTICE, _("Connection with " IP_ADDR_S " (%s) activated"),
+  if(debug_lvl > 0)
+    syslog(LOG_NOTICE, _("Connection with " IP_ADDR_S " (%s) activated"),
                        IP_ADDR_V(cl->vpn_ip), cl->hostname);
 cp
   return 0;
@@ -527,10 +528,11 @@ cp
              IP_ADDR_V(cl->vpn_ip), cl->hostname);
   
   cl->status.termreq = 1;
-  cl->status.active = 0;
 
   if(cl->status.active)
     notify_others(cl, NULL, send_del_host);
+
+  cl->status.active = 0;
 
   terminate_connection(cl);
 cp
@@ -587,9 +589,11 @@ cp
       return 0;
     }
 
-  notify_others(cl, fw, send_del_host);
+  notify_others(fw, cl, send_del_host);
 
   fw->status.termreq = 1;
+  fw->status.active = 0;
+
   terminate_connection(fw);
 cp
   return 0;
