@@ -29,9 +29,11 @@
 #include <syslog.h>
 #include <xalloc.h>
 
+#ifdef ENABLE_TRACING
 volatile int (cp_line[]) = {0, 0, 0, 0, 0, 0, 0, 0};
 volatile char (*cp_file[]) = {"?", "?", "?", "?", "?", "?", "?", "?"};
 volatile int cp_index = 0;
+#endif
 
 char *hexadecimals = "0123456789ABCDEF";
 
@@ -61,6 +63,7 @@ void bin2hex(char *src, char *dst, int length)
     }
 }
 
+#ifdef ENABLE_TRACING
 void cp_trace()
 {
   syslog(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d ...",
@@ -74,6 +77,7 @@ void cp_trace()
            cp_file[cp_index], cp_line[cp_index]
         );
 }
+#endif
 
 #ifndef HAVE_ASPRINTF
 int asprintf(char **buf, const char *fmt, ...)

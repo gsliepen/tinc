@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.26 2000/11/08 00:20:06 guus Exp $
+    $Id: tincd.c,v 1.10.4.27 2000/11/08 20:52:37 guus Exp $
 */
 
 #include "config.h"
@@ -229,7 +229,8 @@ int keygen(int bits)
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, _("Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting."), cp_file, cp_line, size);
+  syslog(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exiting."), size);
+  cp_trace();
   exit(1);
 }
 
@@ -371,7 +372,7 @@ void make_names(void)
       if(!confbase)
         asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
       else
-        fprintf(stderr, "Both netname and configuration directory given, using the latter...\n");
+        fprintf(stderr, _("Both netname and configuration directory given, using the latter...\n"));
       if(!identname)
         asprintf(&identname, "tinc.%s", netname);
     }
