@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.63 2000/11/04 14:52:40 guus Exp $
+    $Id: net.c,v 1.35.4.64 2000/11/04 15:32:05 zarq Exp $
 */
 
 #include "config.h"
@@ -105,6 +105,25 @@ int execute_script(const char* name)
   asprintf(&scriptname, "%s/%s", confbase, name);
   asprintf(&s, "IFNAME=%s", interface_name);
   putenv(s);
+  free(s);
+
+  if(netname)
+    {
+      asprintf(&s, "NETNAME=%s", netname);
+      putenv(s);
+      free(s);
+    }
+  else
+    {
+      unsetenv("NETNAME");
+    }
+
+  if(chdir(confbase) < 0)
+    {
+      syslog(LOG_ERR, _("Couldn't chdir to `%s': %m"),
+	     confbase);
+    }
+  
   execl(scriptname, NULL);
   /* No return on success */
   
