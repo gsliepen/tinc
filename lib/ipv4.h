@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv4.h,v 1.1.2.2 2003/07/18 13:42:35 guus Exp $
+    $Id: ipv4.h,v 1.1.2.3 2003/07/21 13:14:02 guus Exp $
 */
 
 #ifndef __TINC_IPV4_H__
@@ -57,16 +57,16 @@ struct ip {
 	unsigned int ip_hl:4;
 #endif
 	uint8_t ip_tos;
-	u_short ip_len;
-	u_short ip_id; 
-	u_short ip_off;
+	uint16_t ip_len;
+	uint16_t ip_id; 
+	uint16_t ip_off;
 #define IP_RF 0x8000
 #define IP_DF 0x4000
 #define IP_MF 0x2000
 #define IP_OFFMASK 0x1fff
 	uint8_t ip_ttl;
 	uint8_t ip_p;
-	u_short ip_sum;
+	uint16_t ip_sum;
 	struct in_addr ip_src, ip_dst;
 };
 #endif
@@ -77,7 +77,7 @@ struct icmp {
 	uint8_t icmp_code;
 	uint16_t icmp_cksum;
 	union {
-		u_char ih_pptr;
+		uint8_t ih_pptr;
 		struct in_addr ih_gwaddr;
 		struct ih_idseq {
 			uint16_t icd_id;

@@ -17,10 +17,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.c,v 1.1.2.15 2003/07/17 15:06:25 guus Exp $
+    $Id: dropin.c,v 1.1.2.16 2003/07/21 13:14:02 guus Exp $
 */
 
 #include "system.h"
+
+#include "xalloc.h"
 
 #ifndef HAVE_DAEMON
 /*

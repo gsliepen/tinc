@@ -11,6 +11,8 @@
 
 #include "system.h"
 
+#include "ipv4.h"
+#include "ipv6.h"
 #include "fake-getaddrinfo.h"
 
 #ifndef HAVE_GAI_STRERROR
@@ -40,7 +42,7 @@ void freeaddrinfo(struct addrinfo *ai)
 #endif /* !HAVE_FREEADDRINFO */
 
 #ifndef HAVE_GETADDRINFO
-static struct addrinfo *malloc_ai(int port, u_long addr)
+static struct addrinfo *malloc_ai(int port, uint32_t addr)
 {
 	struct addrinfo *ai;
 
