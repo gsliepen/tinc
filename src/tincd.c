@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.50 2001/07/20 13:54:19 guus Exp $
+    $Id: tincd.c,v 1.10.4.51 2001/07/24 20:04:22 guus Exp $
 */
 
 #include "config.h"
@@ -221,7 +221,7 @@ int keygen(int bits)
   if(config && (cfg = get_config_val(config, config_name)))
     asprintf(&filename, "%s/hosts/%s", confbase, cfg->data.ptr);
   else
-    asprintf(&filename, "%s/rsa_key.priv", confbase);
+    asprintf(&filename, "%s/rsa_key.pub", confbase);
 
   if((f = ask_and_safe_open(filename, _("public RSA key"), "a")) == NULL)
     return -1;
