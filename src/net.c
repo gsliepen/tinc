@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.84 2000/11/30 22:33:16 zarq Exp $
+    $Id: net.c,v 1.35.4.85 2000/11/30 22:48:48 zarq Exp $
 */
 
 #include "config.h"
@@ -57,6 +57,12 @@
 # include <openssl/err.h>
 #else
 # include <err.h>
+#endif
+
+#ifdef HAVE_OPENSSL_PEM_H
+# include <openssl/pem.h>
+#else
+# include <pem.h>
 #endif
 
 #ifdef HAVE_TUNTAP
@@ -703,7 +709,12 @@ int read_rsa_private_key(RSA **key, const char *file)
       return -1;
     }
   if(PEM_read_RSAPrivateKey(fp, key, NULL, NULL) == NULL)
-    return -1;
+    {
+      syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
+	     cfg->data.ptr);
+      return -1;
+    }
+
   return 0;
 }
 
@@ -719,13 +730,7 @@ int read_rsa_keys(void)
 
   myself->rsa_key = RSA_new();
 
-  if(read_rsa_private_key(&(myself->rsa_key), cfg->data.ptr) < 0)
-    {
-      syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
-	     cfg->data.ptr);
-      return -1;
-    }
-  return 0;
+  return read_rsa_private_key(&(myself->rsa_key), cfg->data.ptr);
 }
 
 /*
