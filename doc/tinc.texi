@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.9 2000/11/30 23:39:55 zarq Exp $
+@c $Id: tinc.texi,v 1.8.4.10 2000/12/05 08:54:22 zarq Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -17,7 +17,7 @@ Copyright @copyright{} 1998,199,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.9 2000/11/30 23:39:55 zarq Exp $
+$Id: tinc.texi,v 1.8.4.10 2000/12/05 08:54:22 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -42,7 +42,7 @@ Copyright @copyright{} 1998,1999,2000 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.9 2000/11/30 23:39:55 zarq Exp $
+$Id: tinc.texi,v 1.8.4.10 2000/12/05 08:54:22 zarq Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -403,6 +403,21 @@ to let configure know where they are, by passing configure one of the
 @end example
 
 
+@subsubheading License
+
+Since the license under which OpenSSL is distributed is not directly
+compatible with the terms of the GNU GPL
+@uref{http://www.openssl.org/support/faq.html#LEGAL2}, therefore we
+include an addition to the GPL (see also the file COPYING.README):
+
+@quotation
+This program is released under the GPL with the additional exemption
+that compiling, linking, and/or using OpenSSL is allowed.  You may
+provide binary packages linked to the OpenSSL libraries, provided that
+all other requirements of the GPL are met.
+@end quotation
+
+
 @c
 @c
 @c
@@ -427,7 +442,7 @@ the GNU General Public License (GPL).  Download the source from the
 the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
-tinc comes in a handy autoconf/automake package, which you can just
+tinc comes in a convenient autoconf/automake package, which you can just
 treat the same as any other package.  Which is just untar it, type
 `configure' and then `make'.
 
@@ -453,7 +468,8 @@ found in the file called @file{INSTALL}.
 @node    System files, Interfaces, Building tinc, Installing tinc - installation
 @section System files
 
-Before you can run tinc, you 
+Before you can run tinc, you must make sure you have all the needed
+files on your system.
 
 @menu
 * Device files::                
@@ -652,89 +668,64 @@ and carriage returns are ignored.  Note: it is not required that you put
 in the `=' sign, but doing so improves readability.  If you leave it
 out, remember to replace it with at least one space character.
 
+In this section all valid variables are listed in alphabetical order.
+The default value is given between parentheses; required directives are
+given in @strong{bold}.
+
 @menu
-* Variables::                   
+* Main configuration variables::  
+* Host configuration variables::  
+* How to configure::            
 @end menu
 
+
 @c ==================================================================
-@node    Variables,  , Configuration file, Configuration file
-@subsection Variables
+@node    Main configuration variables, Host configuration variables, Configuration file, Configuration file
+@subsection Main configuration variables
 
-Here are all valid variables, listed in alphabetical order.  The default
-value, required or optional is given between parentheses.
-
-@c straight from the manpage
 @table @asis
-@item ConnectPort = <port> (655)
-Connect to the upstream host (given with the ConnectTo directive) on
-port port.  port may be given in decimal (default), octal (when preceded
-by a single zero) or hexadecimal (prefixed with 0x).  port is the port
-number for both the UDP and the TCP (meta) connections.
-
-@item ConnectTo = <IP address|hostname> (optional)
-Specifies which host to connect to on startup.  Multiple ConnectTo variables
-may be specified, if connecting to the first one fails then tinc will try
-the next one, and so on.  It is possible to specify hostnames for dynamic IP
-addresses (like those given on dyndns.org), tinc will not cache the resolved
-IP address.
+@item @strong{ConnectTo = <name>}
+Specifies which host to connect to on startup.  Multiple ConnectTo
+variables may be specified, if connecting to the first one fails then
+tinc will try the next one, and so on.  It is possible to specify
+hostnames for dynamic IP addresses (like those given on dyndns.org),
+tinc will not cache the resolved IP address.
 
 If you don't specify a host with ConnectTo, regardless of whether a
 value for ConnectPort is given, tinc won't connect at all, and will
 instead just listen for incoming connections.
 
 @item Hostnames = <yes|no> (no)
-This option selects whether IP addresses (both real and on the VPN) should
-be resolved.  Since DNS lookups are blocking, it might affect tinc's
-efficiency, even stopping the daemon for a few seconds everytime it does
-a lookup if your DNS server is not responding.
+This option selects whether IP addresses (both real and on the VPN)
+should be resolved.  Since DNS lookups are blocking, it might affect
+tinc's efficiency, even stopping the daemon for a few seconds everytime
+it does a lookup if your DNS server is not responding.
 
-This does not affect resolving hostnames to IP addresses from the configuration
-file.
+This does not affect resolving hostnames to IP addresses from the
+configuration file.
 
-@item IndirectData = <yes|no> (no)
-This option specifies whether other tinc daemons besides the one you
-specified with ConnectTo can make a direct connection to you.  This is
-especially useful if you are behind a firewall and it is impossible
-to make a connection from the outside to your tinc daemon.  Otherwise,
-it is best to leave this option out or set it to no.
+@item Interface = <device>
+If you have more than one network interface in your computer, tinc will
+by default listen on all of them for incoming connections.  It is
+possible to bind tinc to a single interface like eth0 or ppp0 with this
+variable.
 
-@item Interface = <device> (optional)
-If you have more than one network interface in your computer, tinc will by
-default listen on all of them for incoming connections.  It is possible to
-bind tinc to a single interface like eth0 or ppp0 with this variable.
-
-@item InterfaceIP = <local address> (optional)
-If your computer has more than one IP address on a single interface (for example
-if you are running virtual hosts), tinc will by default listen on all of them for
-incoming connections.  It is possible to bind tinc to a single IP address with
-this variable.  It is still possible to listen on several interfaces at the same
-time though, if they share the same IP address.
+@item InterfaceIP = <local address>
+If your computer has more than one IP address on a single interface (for
+example if you are running virtual hosts), tinc will by default listen
+on all of them for incoming connections.  It is possible to bind tinc to
+a single IP address with this variable.  It is still possible to listen
+on several interfaces at the same time though, if they share the same IP
+address.
 
 @item KeyExpire = <seconds> (3600)
-This option controls the time the encryption keys used to encrypt the data
-are valid.  It is common practice to change keys at regular intervals to
-make it even harder for crackers, even though it is thought to be nearly
-impossible to crack a single key.
+This option controls the time the encryption keys used to encrypt the
+data are valid.  It is common practice to change keys at regular
+intervals to make it even harder for crackers, even though it is thought
+to be nearly impossible to crack a single key.
 
-@item ListenPort = <port> (655)
-Listen on local port port.  The computer connecting to this daemon should
-use this number as the argument for his ConnectPort.
-
-@item MyOwnVPNIP = <local address[/maskbits]> (required)
-The local address is the number that the daemon will propagate to
-other daemons on the network when it is identifying itself.  Hence this
-will be the file name of the passphrase file that the other end expects
-to find the passphrase in.
-
-The local address is the IP address of the tap device, not the real IP
-address of the host running tincd.  Due to changes in recent kernels, it
-is also necessary that you make the ethernet (also known as MAC) address
-equal to the IP address (see the example).
-
-maskbits is the number of bits set to 1 in the netmask part.
-
-@item MyVirtualIP = <local address[/maskbits]>
-This is an alias for MyOwnVPNIP.
+@item @strong{Name = <name>}
+This is a symbolic name for this connection.  It can be anything 
 
 @item PingTimeout = <seconds> (5)
 The number of seconds of inactivity that tinc will wait before sending a
@@ -742,34 +733,145 @@ probe to the other end.  If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
-@item PrivateKey = <key>
-This is a sequence of hexadecimal numbers, as generated by ``tincd
---generate-keys''.  Please be careful with line breaking, the entire key
-should be on one line.
-
-@item PublicKey = <key>
-This is a sequence of hexadecimal numbers, as generated by ``tincd
---generate-keys''.  Please be careful with line breaking, the entire key
-should be on one line.
+@item @strong{PrivateKey = <path>}
+This is the full path name of the RSA private key file that was
+generated by ``tincd --generate-keys''.  It must be a full path, not a
+relative directory.  (NOTE: In version 1.0pre3, this variable was used
+to give the key inline.  This is no longer supported.)
 
 @item TapDevice = <device> (/dev/tap0)
 The ethertap device to use.  Note that you can only use one device per
 daemon.  The info pages of the tinc package contain more information
 about configuring an ethertap device for Linux.
 
-@item TCPonly = <yes|no> (no, experimental)
-If this variable is set to yes, then the packets are tunnelled over a TCP
-connection instead of a UDP connection.  This is especially useful for those
-who want to run a tinc daemon from behind a masquerading firewall, or if
-UDP packet routing is disabled somehow.  This is experimental code,
-try this at your own risk.
-
-@item VpnMask = <mask> (optional)
-The mask that defines the scope of the entire VPN.  This option is not used
-by the tinc daemon itself, but can be used by startup scripts to configure
-the ethertap devices correctly.
+@item VpnMask = <mask>
+The mask that defines the scope of the entire VPN.  This option is not
+used by the tinc daemon itself, but can be used by startup scripts to
+configure the ethertap devices correctly.
 @end table
 
+
+@c ==================================================================
+@node    Host configuration variables, How to configure, Main configuration variables, Configuration file
+@subsection Host configuration variables
+
+@table @asis
+@item @strong{Address = <IP address|hostname>}
+This variable is only required if you want to connect to this host.  It
+must resolve to the external IP address where the host can be reached,
+not the one that is internal to the VPN.
+
+@item IndirectData = <yes|no> (no)
+This option specifies whether other tinc daemons besides the one you
+specified with ConnectTo can make a direct connection to you.  This is
+especially useful if you are behind a firewall and it is impossible to
+make a connection from the outside to your tinc daemon.  Otherwise, it
+is best to leave this option out or set it to no.
+
+@item Port = <port> (655)
+Connect to the upstream host (given with the ConnectTo directive) on
+port port.  port may be given in decimal (default), octal (when preceded
+by a single zero) o hexadecimal (prefixed with 0x).  port is the port
+number for both the UDP and the TCP (meta) connections.
+
+@item PublicKey = <path>
+This is the full path name of the RSA public key file that was generated
+by ``tincd --generate-keys''.  It must be a full path, not a relative
+directory.  (NOTE: In version 1.0pre3, this variable was used to give
+the key inline.  This is no longer supported.)
+
+@item Subnet = <IP address/maskbits>
+This is the subnet range of all IP addresses that will be accepted by
+the host that defines it.  Please be careful that no two subnets
+overlap.  Every host @strong{must} have a different range of IP
+addresses that it can handle, otherwise you will see messages like
+`packet comes back to us'.
+
+The range must contain the IP address of the tap device, not the real IP
+address of the host running tincd.
+
+maskbits is the number of bits set to 1 in the netmask part; for
+example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
+/22.
+
+@item TCPonly = <yes|no> (no)
+If this variable is set to yes, then the packets are tunnelled over a
+TCP connection instead of a UDP connection.  This is especially useful
+for those who want to run a tinc daemon from behind a masquerading
+firewall, or if UDP packet routing is disabled somehow.  @emph{This is
+experimental code, try this at your own risk.}
+@end table
+
+
+@c ==================================================================
+@node    How to configure,  , Host configuration variables, Configuration file
+@subsection How to configure
+
+@subsubheading Step 1.  Creating the key files
+
+For each host, you have to create a pair of RSA keys.  One key is your
+private key, which is only known to you.  The other one is the public
+key, which you should copy to all hosts wanting to authenticate to you.
+
+
+@subsubheading Step 2.  Configuring each host
+
+For every host in the VPN, you have to create two files.  First there is
+the main configuration file, @file{/etc/tinc/vpn-name/tinc.conf}.  In
+this file there should at least be three directives:
+
+@table @samp
+@item Name
+You should fill in the name of this host (or rather, the name of this
+leaf of the VPN).  It can be called after the hostname, the physical
+location, the department, or the name of one of your boss' pets.  It can
+be anything, as long as all these names are unique across the entire
+VPN.
+
+@item PrivateKey
+Fill in the full pathname to the file that contains the private RSA key.
+
+@item ConnectTo
+This is the name of the host that you want to connect to (not a DNS
+name, rather the name that is given with the Name parameter in that
+hosts tinc.conf).  This is the upstream connection.  If your computer is
+a central node, you might want to leave this out to make it stay idle
+until someone connects to it.
+@end table
+
+@cindex host configuration file
+Then you should create a file with the name you gave yourself in
+tinc.conf (the `Name' parameter), located in
+@file{/etc/tinc/vpn-name/hosts/}.  In this file, which we call the
+`@emph{host configuration file}', only one variable is required:
+
+@table @samp
+@item Subnet
+The IP range that this host accepts as being `local'.  All packets with
+a destination address that is within this subnet will be sent to us.
+@end table
+
+
+@subsubheading Step 3.  Bringing it all together
+
+Now for all hosts that you want to create a direct connection to, -- you
+connect to them or they connect to you -- you get a copy of their host
+configuration file and their public RSA key.
+
+For each host configuration file, you add two variables:
+
+@table @samp
+@item Address
+Enter the IP address or DNS hostname for this host.  This is only needed
+if you connect to this host.
+
+@item PublicKey
+Put the full pathname to this hosts public RSA key here.
+@end table
+
+When you did this, you should be ready to create your first connection.
+Pay attention to the system log, most errors will only be visible
+there.  If you get an error, you can check @ref{Error messages}.
 
 
 @c ==================================================================
@@ -777,6 +879,7 @@ the ethertap devices correctly.
 @section Example
 
 
+@cindex example
 Imagine the following situation.  An A-based company wants to connect
 three branch offices in B, C and D using the internet.  All four offices
 have a 24/7 connection to the internet.
@@ -798,10 +901,10 @@ need to run tincd, but it must do a port forwarding of TCP&UDP on port
 655 (unless otherwise configured).
 
 In this example, it is assumed that eth0 is the interface that points to
-the inner LAN of the office, although this could also be the same as the
-interface that leads to the internet.  The configuration of the real
-interface is also shown as a comment, to give you an idea of how these
-example host is set up.
+the inner (physical) LAN of the office, although this could also be the
+same as the interface that leads to the internet.  The configuration of
+the real interface is also shown as a comment, to give you an idea of
+how these example host is set up.
 
 @subsubheading For A
 
@@ -809,32 +912,41 @@ example host is set up.
 
 @example
 #ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
-ifconfig tap0 hw ether fe:fd:0a:01:36:01
+ifconfig tap0 hw ether fe:fd:00:00:00:00
 ifconfig tap0 10.1.54.1 netmask 255.0.0.0
 @end example
 
 and in /etc/tinc/tinc.conf:
 
 @example
-TapDevice = /dev/tap0
-MyVirtualIP = 10.1.54.1/16
+Name = A
+PrivateKey = /etc/tinc/A.priv
 VpnMask = 255.0.0.0
 @end example
+
+On all hosts, /etc/tinc/hosts/A contains:
+
+@example
+Subnet = 10.1.0.0/16
+Address = 1.2.3.4
+PublicKey = /etc/tinc/hosts/A.pub
+@end example
+
 
 @subsubheading For B
 
 @example
 #ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
-ifconfig tap0 hw ether fe:fd:0a:02:01:0c
+ifconfig tap0 hw ether fe:fd:00:00:00:00
 ifconfig tap0 10.2.1.12 netmask 255.0.0.0
 @end example
 
 and in /etc/tinc/tinc.conf:
 
 @example
-TapDevice = /dev/tap0
-MyVirtualIP = 10.2.1.12/16
-ConnectTo = 1.2.3.4
+Name = B
+ConnectTo = A
+PrivateKey = /etc/tinc/B.priv
 VpnMask = 255.0.0.0
 @end example
 
@@ -842,29 +954,46 @@ Note here that the internal address (on eth0) doesn't have to be the
 same as on the tap0 device.  Also, ConnectTo is given so that no-one can
 connect to this node.
 
+On all hosts, /etc/tinc/hosts/B:
+
+@example
+Subnet = 10.2.0.0/16
+Address = 2.3.4.5
+PublicKey = /etc/tinc/hosts/B.pub
+@end example
+
+
 @subsubheading For C
 
 @example
 #ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
-ifconfig tap0 hw ether fe:fd:0a:03:45:fe
+ifconfig tap0 hw ether fe:fd:00:00:00:00
 ifconfig tap0 10.3.69.254 netmask 255.0.0.0
 @end example
 
 and in /etc/tinc/A/tinc.conf:
 
 @example
-MyVirtualIP = 10.3.69.254/16
+Name = C
+ConnectTo = A
 TapDevice = /dev/tap1
-ConnectTo = 1.2.3.4
-ListenPort = 2000
 VpnMask = 255.0.0.0
 @end example
 
 C already has another daemon that runs on port 655, so they have to
 reserve another port for tinc.  It can connect to other tinc daemons on
-the regular port though, so no ConnectPort variable is needed.
-They also use the netname to distinguish
-between the two.  tinc is started with `tincd -n A'.
+the regular port though, so no ConnectPort variable is needed.  They
+also use the netname to distinguish between the two.  tinc is started
+with `tincd -n A'.
+
+On all hosts, /etc/tinc/hosts/C:
+
+@example
+Subnet = 10.3.0.0/16
+Port = 2000
+PublicKey = /etc/tinc/hosts/C.pub
+@end example
+
 
 @subsubheading For D
 
@@ -887,7 +1016,7 @@ D will be connecting to C, which has a tincd running for this network on
 port 2000.  Hence they need to put in a ConnectPort, but it doesn't need
 to have a different ListenPort.
 
-@subsubheading Authentication
+@subsubheading Key files
 
 A, B, C and D all generate a passphrase with genauth 2048, the output is
 stored in /etc/tinc/passphrases/local, except for C, where it should be
@@ -924,6 +1053,7 @@ project that involves trust relations and more than one computer.
 @menu
 * Managing keys::               
 * Runtime options::             
+* Error messages::              
 @end menu
 
 
@@ -970,7 +1100,7 @@ should still be called 10.1.1.3, and not 10.1.0.0.
 
 
 @c ==================================================================
-@node    Runtime options,  , Managing keys, Running tinc
+@node    Runtime options, Error messages, Managing keys, Running tinc
 @section Runtime options
 
 Besides the settings in the configuration file, tinc also accepts some
@@ -979,8 +1109,11 @@ command line options.
 This list is a longer version of that in the manpage.  The latter is
 generated automatically, so may be more up-to-date.
 
+@cindex command line
+@cindex runtime options
+@cindex options
 @c from the manpage
-@table @asis
+@table @samp
 @item -c, --config=FILE
 Read configuration options from FILE.  The default is
 @file{/etc/tinc/nn/tinc.conf}.
@@ -998,10 +1131,11 @@ packets themselves.
 
 @item -k, --kill
 Attempt to kill a running tincd and exit.  A TERM signal (15) gets sent
-to the daemon that his its PID in /var/run/tinc.nn.pid.
+to the daemon that his its PID in /var/run/tinc.pid.
 
-Because it kills only one tincd, you should use -n here if you use it
-normally.
+Because it kills only one tinc daemon, you should use -n here if you
+started it that way.  It will then read the PID from
+@file{/var/run/tinc.NETNAME.pid}.
 
 @item -n, --net=NETNAME
 Connect to net NETNAME.  @xref{Multiple networks}.
@@ -1021,19 +1155,84 @@ Output version information and exit.
 
 
 @c ==================================================================
-@node    Technical information, About us, Running tinc, Top
-@chapter Technical information
+@node    Error messages,  , Runtime options, Running tinc
+@section Error messages
+
+What follows is a list of the most common error messages you can see
+when configuring tinc.  Most of these messages are visible in the syslog
+only, so keep an eye on it!
+
+@table @strong
+@item Could not open /dev/tap0: No such device
+@table @bullet
+@item You forgot to insmod netlink_dev.o
+@item You forgot to compile `Netlink device emulation' in the kernel
+@end table
+
+@item Can't write to tun/tap device: No such device
+@table @bullet
+@item You forgot to insmod tun.o
+@item You forgot to compile `Universal TUN/TAP driver' in the kernel
+@end table
+
+@item Packet with destination 1.2.3.4 is looping back to us!
+@table @bullet
+@item Some host has an IP address range that overlaps with yours
+Different hosts must have different IP ranges (as given with Subnet in
+the host configuration files).  tinc relies on this information to route
+its data, so each IP address range must have exactly one host
+associated.  You will only see this message if you specified a debug
+level of 5 or higher!
+@end table
+
+@item Network address and subnet mask do not match!
+@table @bullet
+@item The Subnet field must contain a network address
+If you only want to use one IP address, set the netmask to /32.
+@end table
+
+@item This is a bug: net.c:253: 24: Some error
+@table @bullet
+@item This is something that should not have happened
+Please report this, and tell us exactly what went wrong before you got
+this message.  In normal operation, these errors should not occur.
+@end table
+
+@item Error reading RSA key file `rsa_key.priv': No such file or directory
+@table @bullet
+@item You must specify the complete pathname
+Specifying a relative path does not make sense here.  tinc changes its
+directory to / when starting (to avoid keeping a mount point busy); and
+even if we built in a default directory to look for these files, the key
+files are bound to be in a different directory.
+@end table
+
+@item Error reading RSA key file `fd47...8ceb': No such file or directory
+@table @bullet
+@item You specified the key here, not a pathname
+In version 1.0pre3, you had to put your key here.  This has changed, the
+keys are now stored in separate files.  This means you have to
+regenerate these keys.
+@end table
+
+@end table
+
 
 
 @c ==================================================================
+@node    Technical information, About us, Running tinc, Top
+@chapter Technical information
+
 @menu
 * The Connection::              
 * Security::                    
 @end menu
 
+
+@c ==================================================================
 @node    The Connection, Security, Technical information, Technical information
 @section The basic philosophy of the way tinc works
-@cindex Connection
+@cindex connection
 
 tinc is a daemon that takes VPN data and transmit that to another host
 computer over the existing Internet infrastructure.
@@ -1098,7 +1297,7 @@ meta-information doesn't get lost on the way to another computer.
 @cindex data-protocol
 @cindex meta-protocol
 Like with any communication, we must have a protocol, so that everybody
-knows what everything stands for, an how he should react.  Because we
+knows what everything stands for, and how she should react.  Because we
 have two connections, we also have two protocols.  The protocol used for
 the UDP data is the ``data-protocol,'' the other one is the
 ``meta-protocol.''
@@ -1134,7 +1333,6 @@ don't take it too serious.
 * Key Types::                   
 * Key Management::              
 * Authentication::              
-* Protection::                  
 @end menu
 
 @c ==================================================================
@@ -1152,7 +1350,7 @@ the private key that matches the public key.  So, a public key only allows
 @emph{other} people to send encrypted messages to you.  This is very useful
 in setting up private communications channels.  Just send out your public key
 and other people can talk to you in a secure way.  But how can you know
-the other person is who he says he is?
+the other person is who she says she is?
 
 For authentication itself tinc uses symmetric private keypairs, referred
 to as a passphrase.  The identity of each tinc daemon is defined by it's
@@ -1200,7 +1398,7 @@ should be 2^129-1 or more.
 
 
 @c ==================================================================
-@node    Authentication, Protection, Key Management, Security
+@node    Authentication,  , Key Management, Security
 @subsection Authentication
 @c FIXME: recheck
 
@@ -1232,15 +1430,6 @@ done via mail with PGP, but you should be really convinced of the
 identity of the person who owns the email address you are sending this to.
 Swapping floppy disks in real life might be the best way to do this!
 
-
-@c ==================================================================
-@node    Protection,  , Authentication, Security
-@subsection Protecting your data
-
-Now we have securely hidden our data.  But a malicious cracker may still
-bother you by randomly altering the encrypted data he intercepts.
-
-@c FIXME what the hell is this all about? remove? IT
 
 @c ==================================================================
 @node    About us, Concept Index, Technical information, Top
@@ -1281,9 +1470,10 @@ General obfuscater of the code.
 
 @end table
 
-Thank you's to: Dekan, Emphyrio, vDong
-
-Greetings to: braque, Fluor, giggles, macro, smoke, tribbel
+We have received a lot of valuable input from users.  With their help,
+tinc has become the flexible and robust tool that it is today.  We have
+composed a list of contributions, in the file called @file{THANKS} in
+the source distribution.
 
 
 @c ==================================================================
