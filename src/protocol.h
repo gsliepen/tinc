@@ -1,6 +1,7 @@
 /*
     protocol.h -- header for protocol.c
-    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
+                       2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.5 2000/08/07 16:27:29 guus Exp $
+    $Id: protocol.h,v 1.5.4.6 2000/09/10 21:57:11 zarq Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -37,14 +38,15 @@ enum {
 
 enum {
   ACK = 1,              /* acknowledged */
-  AUTH_S_INIT = 10,     /* initiate authentication */
+/* These requests are obsolete.
+  AUTH_S_INIT = 10,
   AUTH_C_INIT,
-  AUTH_S_SPP,           /* send passphrase */
+  AUTH_S_SPP,
   AUTH_C_SPP,
-  AUTH_S_SKEY,          /* send g^k */
+  AUTH_S_SKEY,
   AUTH_C_SKEY,
-  AUTH_S_SACK,          /* send ack */
-  AUTH_C_RACK,          /* waiting for ack */
+  AUTH_S_SACK,
+  AUTH_C_RACK, */
   TERMREQ = 30,         /* terminate connection */
   PINGTIMEOUT,          /* terminate due to ping t.o. */
   DEL_HOST,		/* forward a termreq to others */
@@ -63,6 +65,7 @@ enum {
   REQ_KEY = 160,        /* request public key */
   ANS_KEY,              /* answer to such request */
   KEY_CHANGED,		/* public key has changed */
+  
 };
 
 extern int (*request_handlers[256])(conn_list_t*);
