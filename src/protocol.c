@@ -213,10 +213,10 @@ cp
   encrypt_passphrase(&tmp);
 
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send PASSPHRASE to " IP_ADDR_S,
-	   IP_ADDR_V(cl->vpn_ip));
+    syslog(LOG_DEBUG, "Send PASSPHRASE %s to " IP_ADDR_S,
+	   tmp.phrase, IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %s\n", PASSPHRASE, tmp.phrase);
+  buflen = snprintf(buffer, MAXBUFSIZE, "%d %s\n", PASSPHRASE, tmp.phrase);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -231,8 +231,8 @@ int send_public_key(conn_list_t *cl)
 {
 cp
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "Send PUBLIC_KEY to " IP_ADDR_S,
-	   IP_ADDR_V(cl->vpn_ip));
+    syslog(LOG_DEBUG, "Send PUBLIC_KEY %s to " IP_ADDR_S,
+	   my_public_key_base36, IP_ADDR_V(cl->vpn_ip));
 
   buflen = sprintf(buffer, "%d %s\n", PUBLIC_KEY, my_public_key_base36);
 
@@ -396,11 +396,13 @@ cp
 int passphrase_h(conn_list_t *cl)
 {
 cp
-  if(sscanf(cl->buffer, "%*d %s", cl->pp) != 1)
+  cl->pp=xmalloc(sizeof(*(cl->pp)));
+  if(sscanf(cl->buffer, "%*d %as", &(cl->pp->phrase)) != 1)
     {
-       syslog(LOG_ERR, "got bad PASSPHRASE request: %s", cl->buffer);
-       return -1;
-    }  
+      syslog(LOG_ERR, "got bad PASSPHRASE request: %s", cl->buffer);
+      return -1;
+    }
+  cl->pp->len = strlen(cl->pp->phrase);
     
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "got PASSPHRASE");
@@ -424,7 +426,7 @@ cp
     }  
 
   if(debug_lvl > 2)
-    syslog(LOG_DEBUG, "got PUBLIC_KEY");
+    syslog(LOG_DEBUG, "got PUBLIC_KEY %s",  g_n);
 
   if(verify_passphrase(cl, g_n))
     {

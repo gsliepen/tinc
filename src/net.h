@@ -28,9 +28,6 @@
 #define MAXSIZE 1700  /* should be a bit more than the MTU for the tapdevice */
 #define MTU 1600
 
-#define MAX_PASSPHRASE_SIZE 2000 /* 2kb is really waaaay too much. nobody's
-				    gonna need a 16 kbit passphrase */
-
 #define MAC_ADDR_S "%02x:%02x:%02x:%02x:%02x:%02x"
 #define MAC_ADDR_V(x) ((unsigned char*)&(x))[0],((unsigned char*)&(x))[1], \
                       ((unsigned char*)&(x))[2],((unsigned char*)&(x))[3], \
@@ -64,7 +61,7 @@ typedef struct real_packet_t {
 
 typedef struct passphrase_t {
   unsigned short len;
-  unsigned char phrase[MAX_PASSPHRASE_SIZE];
+  unsigned char *phrase;
 } passphrase_t;
 
 typedef struct status_bits_t {
@@ -109,7 +106,7 @@ typedef struct conn_list_t {
   int meta_socket;                 /* our tcp meta socket */
   int protocol_version;            /* used protocol */
   status_bits_t status;            /* status info */
-  unsigned char *pp;               /* encoded passphrase */
+  passphrase_t *pp;                /* encoded passphrase */
   packet_queue_t *sq;              /* pending outgoing packets */
   packet_queue_t *rq;              /* pending incoming packets (they have no
 				      valid key to be decrypted with) */

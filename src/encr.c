@@ -225,16 +225,25 @@ void encrypt_passphrase(passphrase_t *pp)
 {
   char key[1000];
   char tmp[1000];
-  int len;
+  unsigned char phrase[1000];
+  int keylen;
+  int i;
   BF_KEY bf_key;
+  
 cp  
   mpz_get_str(tmp, 16, my_public_key);
-  len = str_hex_to_bin(key, tmp);
+  keylen = str_hex_to_bin(key, tmp);
 
-  cipher_set_key(&bf_key, len, key);
+  cipher_set_key(&bf_key, keylen, key);
 
-  low_crypt_key(mypassphrase, pp->phrase, &bf_key, mypassphraselen, BF_ENCRYPT);
-  pp->len = ((mypassphraselen - 1) | 7) + 5;
+  low_crypt_key(mypassphrase, phrase, &bf_key, mypassphraselen, BF_ENCRYPT);
+  pp->len = ((mypassphraselen - 1) | 7) + 1;
+  pp->phrase = xmalloc((pp->len << 1) + 1);
+  
+  for(i = 0; i < pp->len; i++)
+    snprintf(&(pp->phrase)[i << 1], 3, "%02x", (int)phrase[i]);
+
+  pp->phrase[(pp->len << 1) + 1] = '\0';
 
   if(key_inited)
     cipher_set_key(&encryption_key, encryption_keylen, text_key);
@@ -244,29 +253,31 @@ cp
 int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
 {
   char key[1000];
-  char tmp[1000];
-  int len;
+  char *tmp;
+  unsigned char phrase[1000];
+  int keylen, pplen;
   mpz_t pk;
   unsigned char *out;
   BF_KEY bf_key;
   char which[sizeof("123.123.123.123")+1];
   char *meuk;
 cp
-  mpz_init_set_str(pk, his_pubkey, 16);
-  mpz_get_str(tmp, 16, pk);
-  len = str_hex_to_bin(key, tmp);
-  out = xmalloc(strlen(cl->pp) + 3);
+  mpz_init_set_str(pk, his_pubkey, 36);
+  tmp = mpz_get_str(NULL, 16, pk);
+  keylen = str_hex_to_bin(key, tmp);
+  out = xmalloc((cl->pp->len >> 1) + 3);
+  pplen = str_hex_to_bin(phrase, cl->pp->phrase);
 
-  cipher_set_key(&bf_key, len, key);
-  low_crypt_key(cl->pp, out, &bf_key, strlen(cl->pp), BF_DECRYPT);
+  cipher_set_key(&bf_key, keylen, key);
+  low_crypt_key(phrase, out, &bf_key, pplen, BF_DECRYPT);
   if(key_inited)
     cipher_set_key(&encryption_key, encryption_keylen, text_key);
 
   sprintf(which, IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
-  if((len = read_passphrase(which, &meuk)) < 0)
+  if((pplen = read_passphrase(which, &meuk)) < 0)
     return -1;
 
-  if(memcmp(meuk, out, len))
+  if(memcmp(meuk, out, pplen))
     return -1;
 cp
   return 0;
