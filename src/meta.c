@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.30 2002/09/09 22:32:39 guus Exp $
+    $Id: meta.c,v 1.1.2.31 2002/09/10 09:40:25 guus Exp $
 */
 
 #include "config.h"
@@ -84,7 +84,8 @@ void broadcast_meta(connection_t *from, char *buffer, int length)
 
 int receive_meta(connection_t *c)
 {
-	int x, l = sizeof(x);
+	int x;
+	socklen_t l = sizeof(x);
 	int oldlen, i;
 	int lenin, reqlen;
 	int decrypted = 0;
@@ -136,8 +137,7 @@ int receive_meta(connection_t *c)
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
-			EVP_DecryptUpdate(c->inctx, inbuf, &lenin, c->buffer + oldlen,
-							  lenin);
+			EVP_DecryptUpdate(c->inctx, inbuf, &lenin, c->buffer + oldlen, lenin);
 			memcpy(c->buffer + oldlen, inbuf, lenin);
 			decrypted = 1;
 		}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.47 2002/09/09 22:32:49 guus Exp $
+    $Id: process.c,v 1.1.2.48 2002/09/10 09:40:25 guus Exp $
 */
 
 #include "config.h"
@@ -220,8 +220,6 @@ void _execute_script(const char *scriptname, char **envp)
 	__attribute__ ((noreturn));
 void _execute_script(const char *scriptname, char **envp)
 {
-	char *s;
-
 	cp();
 
 	while(*envp)

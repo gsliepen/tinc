@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.19 2002/09/09 21:24:34 guus Exp $
+    $Id: graph.c,v 1.1.2.20 2002/09/10 09:40:21 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -264,13 +264,14 @@ void sssp_bfs(void)
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
 
-			if(debug_lvl >= DEBUG_TRAFFIC)
+			if(debug_lvl >= DEBUG_TRAFFIC) {
 				if(n->status.reachable)
 					syslog(LOG_DEBUG, _("Node %s (%s) became reachable"),
 						   n->name, n->hostname);
 				else
 					syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"),
 						   n->name, n->hostname);
+			}
 
 			n->status.validkey = 0;
 			n->status.waitingforkey = 0;

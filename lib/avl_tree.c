@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.11 2002/09/09 22:32:24 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.12 2002/09/10 09:40:15 guus Exp $
 */
 
 #include <stdio.h>
@@ -494,15 +494,22 @@ void avl_insert_top(avl_tree_t *tree, avl_node_t *node)
 void avl_insert_before(avl_tree_t *tree, avl_node_t *before,
 					   avl_node_t *node)
 {
-	if(!before)
-		return tree->tail ? avl_insert_after(tree, tree->tail, node) : avl_insert_top(tree, node);
+	if(!before) {
+		if(tree->tail)
+			avl_insert_after(tree, tree->tail, node);
+		else
+			avl_insert_top(tree, node);
+		return;
+	}
 
 	node->next = before;
 	node->parent = before;
 	node->prev = before->prev;
 
-	if(before->left)
-		return avl_insert_after(tree, before->prev, node);
+	if(before->left) {
+		avl_insert_after(tree, before->prev, node);
+		return;
+	}
 
 	if(before->prev)
 		before->prev->next = node;
@@ -517,13 +524,18 @@ void avl_insert_before(avl_tree_t *tree, avl_node_t *before,
 
 void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node)
 {
-	if(!after)
-		return tree->head ? avl_insert_before(tree, tree->head,
-											  node) : avl_insert_top(tree,
-																	 node);
+	if(!after) {
+		if(tree->head)
+			avl_insert_before(tree, tree->head, node);
+		else
+			avl_insert_top(tree, node);
+		return;
+	}
 
-	if(after->right)
-		return avl_insert_before(tree, after->next, node);
+	if(after->right) {
+		avl_insert_before(tree, after->next, node);
+		return;
+	}
 
 	node->prev = after;
 	node->parent = after;

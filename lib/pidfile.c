@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <signal.h>
 #include <fcntl.h>
 
 /* read_pid
