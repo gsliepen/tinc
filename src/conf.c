@@ -59,6 +59,7 @@ static internal_config_t hazahaza[] = {
   { "PingTimeout",  pingtimeout,    TYPE_INT },
   { "TapDevice",    tapdevice,      TYPE_NAME },
   { "KeyExpire",    keyexpire,      TYPE_INT },
+  { "VpnMask",      vpnmask,        TYPE_IP },
   { NULL, 0, 0 }
 };
 

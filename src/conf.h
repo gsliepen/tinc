@@ -40,7 +40,8 @@ typedef enum which_t {
   tapdevice,
   allowconnect,
   pingtimeout,
-  keyexpire
+  keyexpire,
+  vpnmask
 } which_t;
 
 typedef struct config_t {
