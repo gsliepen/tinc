@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.3 2000/11/17 00:56:49 guus Exp $
+    $Id: process.c,v 1.1.2.4 2000/11/17 10:03:02 guus Exp $
 */
 
 #include "config.h"
@@ -141,7 +141,7 @@ int detach(void)
     return -1;
 
   if(do_detach)
-    daemon(FALSE, FALSE);
+    daemon(0, 0);
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
