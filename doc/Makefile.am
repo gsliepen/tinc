@@ -6,7 +6,7 @@ man_MANS = tincd.8 tinc.conf.5
 
 EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config.tar.gz
 
-CLEANFILES = *.html
+CLEANFILES = *.html tinc.info tincd.8 tinc.conf.5 tincinclude.texi
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -24,3 +24,20 @@ texi2html: tinc.texi
 
 %.html: $(man_MANS)
 	w3mman2html $< > $@
+
+substitute = sed \
+	-e s,'@PACKAGE\@',"$(PACKAGE)",g \
+	-e s,'@VERSION\@',"$(VERSION)",g \
+	-e s,'@sysconfdir\@',"$(sysconfdir)",g \
+	-e s,'@localstatedir\@',"$(localstatedir)",g
+
+tincd.8: tincd.8.in
+	$(substitute) tincd.8.in > tincd.8
+
+tinc.conf.5: tinc.conf.5.in
+	$(substitute) tinc.conf.5.in > tinc.conf.5
+
+tincinclude.texi: tincinclude.texi.in
+	$(substitute) tincinclude.texi.in > tincinclude.texi
+	
+tinc.texi: tincinclude.texi
