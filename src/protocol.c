@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.115 2001/10/31 12:50:24 guus Exp $
+    $Id: protocol.c,v 1.28.4.116 2001/10/31 20:02:06 guus Exp $
 */
 
 #include "config.h"
@@ -232,11 +232,11 @@ cp
           syslog(LOG_ERR, _("Peer %s had unknown identity (%s)"), c->hostname, c->name);
           return -1;
         }
+    }
 
-      if(read_rsa_public_key(c))
-        {
-          return -1;
-        }
+  if(read_rsa_public_key(c))
+    {
+      return -1;
     }
 
   c->allow_request = METAKEY;
