@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.46 2003/11/17 15:30:17 guus Exp $
+    $Id: net_setup.c,v 1.1.2.47 2003/12/07 14:28:39 guus Exp $
 */
 
 #include "system.h"
@@ -318,7 +318,7 @@ bool setup_myself(void)
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
 		macexpire = 600;
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "MaxTimeout"), &maxtimeout)) {
+	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
 			logger(LOG_ERR, _("Bogus maximum timeout!"));
 			return false;
