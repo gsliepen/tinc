@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_node.c,v 1.1.4.2 2002/09/03 20:43:25 guus Exp $
+    $Id: protocol_node.c,v 1.1.4.3 2002/09/03 22:37:49 guus Exp $
 */
 
 #include "config.h"
@@ -112,7 +112,7 @@ cp
   else
     {
       // If this ADD_NODE is closer or more direct, use it instead of the old one.
-      if(((n->options & OPTION_INDIRECT) && !(options & OPTION_INDIRECT)) || n->distance > distance)
+      if(!n->reachable || ((n->options & OPTION_INDIRECT) && !(options & OPTION_INDIRECT)) || n->distance > distance)
         {
           avl_node_t *node = avl_unlink(node_udp_tree, n);
           n->address = str2sockaddr(address, port);
