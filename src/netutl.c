@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.6 2000/06/29 17:09:06 guus Exp $
+    $Id: netutl.c,v 1.12.4.7 2000/08/17 16:51:07 guus Exp $
 */
 
 #include "config.h"
@@ -187,13 +187,11 @@ cp
 
   if(!lookup_hostname || !host)
     {
-      name = xmalloc(20);
-      sprintf(name, "%s", inet_ntoa(in));
+      asprintf(&name, "%s", inet_ntoa(in));
     }
   else
     {
-      name = xmalloc(strlen(host->h_name)+1);
-      sprintf(name, "%s", host->h_name);
+      asprintf(&name, "%s", host->h_name);
     }
 cp
   return name;

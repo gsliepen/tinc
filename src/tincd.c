@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.7 2000/08/08 14:54:57 guus Exp $
+    $Id: tincd.c,v 1.10.4.8 2000/08/17 16:51:08 guus Exp $
 */
 
 #include "config.h"
@@ -296,30 +296,24 @@ void make_names(void)
     {
       if(netname)
 	{
-	  configfilename = xmalloc(strlen(netname)+18+strlen(CONFDIR));
-	  sprintf(configfilename, "%s/tinc/%s/tinc.conf", CONFDIR, netname);
+	  asprintf(&configfilename, "%s/tinc/%s/tinc.conf", CONFDIR, netname);
 	}
       else
 	{
-	  configfilename = xmalloc(17+strlen(CONFDIR));
-	  sprintf(configfilename, "%s/tinc/tinc.conf", CONFDIR);
+	  asprintf(&configfilename, "%s/tinc/tinc.conf", CONFDIR);
 	}
     }
   
   if(netname)
     {
-      pidfilename = xmalloc(strlen(netname)+20);
-      sprintf(pidfilename, "/var/run/tinc.%s.pid", netname);
-      confbase = xmalloc(strlen(netname)+8+strlen(CONFDIR));
-      sprintf(confbase, "%s/tinc/%s/", CONFDIR, netname);
-      identname = xmalloc(strlen(netname)+7);
-      sprintf(identname, "tinc.%s", netname);
+      asprintf(&pidfilename, "/var/run/tinc.%s.pid", netname);
+      asprintf(&confbase, "%s/tinc/%s/", CONFDIR, netname);
+      asprintf(&identname, "tinc.%s", netname);
     }
   else
     {
       pidfilename = "/var/run/tinc.pid";
-      confbase = xmalloc(7+strlen(CONFDIR));
-      sprintf(confbase, "%s/tinc/", CONFDIR);
+      asprintf(&confbase, "%s/tinc/", CONFDIR);
       identname = "tinc";
     }
 }

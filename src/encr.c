@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: encr.c,v 1.12.4.2 2000/06/30 21:03:50 guus Exp $
+    $Id: encr.c,v 1.12.4.3 2000/08/17 16:51:07 guus Exp $
 */
 
 #include "config.h"
@@ -98,13 +98,11 @@ int read_passphrase(char *which, char **out)
 cp
   if((cfg = get_config_val(passphrasesdir)) == NULL)
     {
-      filename = xmalloc(strlen(confbase)+13+strlen(which));
-      sprintf(filename, "%spassphrases/%s", confbase, which);
+      asprintf(&filename, "%spassphrases/%s", confbase, which);
     }
   else
     {
-      filename = xmalloc(strlen(cfg->data.ptr)+2+strlen(which));
-      sprintf(filename, "%s/%s", (char*)cfg->data.ptr, which);
+      asprintf(&filename, "%s/%s", (char*)cfg->data.ptr, which);
     }
 
   if((f = fopen(filename, "rb")) == NULL)
@@ -268,7 +266,7 @@ int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
   mpz_t pk;
   unsigned char *out;
   BF_KEY bf_key;
-  char which[sizeof("123.123.123.123")+1];
+  char *which;
   char *meuk;
 cp
   mpz_init_set_str(pk, his_pubkey, 36);
@@ -282,7 +280,7 @@ cp
   if(key_inited)
     cipher_set_key(&encryption_key, encryption_keylen, text_key);
 
-  sprintf(which, IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
+  asprintf(&which, IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   if((pplen = read_passphrase(which, &meuk)) < 0)
     return -1;
 
