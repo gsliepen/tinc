@@ -219,6 +219,11 @@ Note that there must be exactly one of
 or
 .Va PrivateKeyFile
 specified in the configuration file.
+.It Va TunnelServer Li = yes | no Po no Pc Bq experimental
+When this option is enabled tinc will no longer forward information between other tinc daemons,
+and will only allow nodes and subnets on the VPN which are present in the
+Pa hosts/
+directory.
 .El
 .Sh HOST CONFIGURATION FILES
 The host configuration files contain all information needed
@@ -269,6 +274,9 @@ The length of the message authentication code used to authenticate UDP packets.
 Can be anything from
 .Qq 0
 up to the length of the digest produced by the digest algorithm.
+.It Va PMTUDiscovery Li = yes | no Po no Pc Bq experimental
+When this option is enabled, tinc will try to discover the PMTU to other nodes.
+After the PMTU has been discovered, it will be enforced on the VPN.
 .It Va Port Li = Ar port Pq 655
 The port number on which this tinc daemon is listening for incoming connections.
 .It Va PublicKey Li = Ar key Bq obsolete
