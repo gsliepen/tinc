@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.21 2001/06/05 18:07:14 guus Exp $
+    $Id: subnet.c,v 1.1.2.22 2001/06/06 19:11:16 guus Exp $
 */
 
 #include "config.h"
@@ -127,7 +127,25 @@ void subnet_add(connection_t *cl, subnet_t *subnet)
 {
 cp
   subnet->owner = cl;
-  avl_insert(subnet_tree, subnet);
+
+  while(!avl_insert(subnet_tree, subnet))
+    {
+      subnet_t *old;
+      
+      old = (subnet_t *)avl_search(subnet_tree, subnet);
+
+      if(debug_lvl >= DEBUG_PROTOCOL)
+        {
+          char *subnetstr;
+          subnetstr = net2str(subnet);
+          syslog(LOG_WARNING, _("Duplicate subnet %s for %s (%s), previous owner %s (%s)!"),
+                 subnetstr, cl->name, cl->hostname, old->owner->name, old->owner->hostname);
+          free(subnetstr);
+        }
+
+      subnet_del(old);
+    }
+
   avl_insert(cl->subnet_tree, subnet);
 cp
 }
