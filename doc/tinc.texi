@@ -97,11 +97,27 @@ by a few elected computers that participate. This goal is achievable in
 more than just one way.
 
 @cindex private
-For instance, a VPN can consist of a single stand-alone ethernet LAN. Or
-even two computers hooked up using a null-modem cable@footnote{Though
-discuss-able, I think it qualifies as a VPN.}. In these cases, it is
-obvious that the network is @emph{private}. But there is another type
-of VPN, the type tinc was made for.
+Private networks can consist of a single stand-alone ethernet LAN. Or
+even two computers hooked up using a null-modem cable. In these cases,
+it is
+obvious that the network is @emph{private}, noone can access it from the
+outside. But if your computers are linked to the internet, the network
+is not private anymore, unless one uses firewalls to block all private
+traffic. But then, there is no way to send private data to trusted
+computers on the other end of the internet.
+
+@cindex virtual
+This problem can be solved by using @emph{virtual} networks. Virtual
+networks can live on top of other networks, but do not interfere with
+each other. Mostly, virtual networks appear like a singe LAN, even though
+they can span the entire world. But virtual networks can't be secured
+by using firewalls, because the traffic that flows through it has to go
+through the internet, where other people can look at it.
+
+When one introduces encryption, we can form a true VPN. Other people may
+see encrypted traffic, but if they don't know how to decipher it (they
+need to know the key for that), they cannot read the information that flows
+through the VPN. This is what tinc was made for.
 
 @cindex virtual
 tinc uses normal IP datagrams to encapsulate data that goes over the VPN
@@ -383,11 +399,6 @@ Here are all valid variables, listed in alphabetical order:
 
 @c straight from the manpage
 @table @asis
-@item AllowConnect = (yes|no)
-If set to yes, anyone may try to connect to you. If you set this to no,
-no incoming connections will be accepted. This does not affect the
-outgoing connections.
-
 @item ConnectPort = port
 Connect to the upstream host (given with the ConnectTo directive) on
 port port. port may be given in decimal (default), octal (when preceded
@@ -440,6 +451,10 @@ The ethertap device to use. Note that you can only use one device per
 daemon. The info pages of the tinc package contain more information
 about configuring an ethertap device for Linux.
 
+@item VpnMask = mask
+The mask that defines the scope of the entire VPN. This option is not used
+by the tinc daemon itself, but can be used by startup scripts to configure
+the ethertap devices correctly.
 @end table
 
 
@@ -486,6 +501,7 @@ and in /etc/tinc/tinc.conf:
 @example
 TapDevice = /dev/tap0
 MyVirtualIP = 10.1.54.1/16
+VpnMask = 255.0.0.0
 @end example
 
 @subsubheading For B
@@ -502,7 +518,7 @@ and in /etc/tinc/tinc.conf:
 TapDevice = /dev/tap0
 MyVirtualIP = 10.2.1.12/16
 ConnectTo = 1.2.3.4
-AllowConnect = no
+VpnMask = 255.0.0.0
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
@@ -523,6 +539,7 @@ and in /etc/tinc/A/tinc.conf:
 MyVirtualIP = 10.3.69.254/16
 ConnectTo = 1.2.3.4
 ListenPort = 2000
+VpnMask = 255.0.0.0
 @end example
 
 C already has another daemon that runs on port 655, so they have to
@@ -543,7 +560,7 @@ and in /etc/tinc/tinc.conf:
 MyVirtualIP = 10.4.3.32/16
 ConnectTo = 3.4.5.6
 ConnectPort = 2000
-AllowConnect = no
+VpnMask=255.0.0.0
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
@@ -745,7 +762,7 @@ and it writes the decrypted information to its own ethertap device.
 @node    The Meta-connection,  , Protocol Preview, The Connection
 @subsection The meta-connection
 
-Having only a UDP connection available is not enough. Though suitable
+Having only an UDP connection available is not enough. Though suitable
 for transmitting data, we want to be able to reliably send other
 information, such as routing and encryption information to somebody.
 

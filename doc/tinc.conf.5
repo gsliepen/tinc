@@ -61,11 +61,6 @@ one space character.
 .PP
 Here are all valid variables, listed in alphabetical order:
 .TP
-\fBAllowConnect = \fB(\fIyes\fB|\fIno\fB)\fR
-If set to \fIyes\fR, anyone may try to connect to you. If you set this
-to no, no incoming connections will be accepted. This does not affect
-the outgoing connections.
-.TP
 \fBConnectPort = \fIport\fR
 Connect to the upstream host (given with the \fBConnectTo\fR
 directive) on port \fIport\fR. \fIport\fR may be given in decimal
@@ -123,6 +118,11 @@ will be notified of this.
 The ethertap device to use. Note that you can only use one device per
 daemon. The info pages of the tinc package contain more information
 about configuring an ethertap device for linux.
+.TP
+\fBNetMask = \fImask\fR
+The mask that defines the scope of the entire VPN. This option is not used
+by the tinc daemon itself, but can be used by startup scripts to configure
+the ethertap devices correctly.
 .PP
 .SH "FILES"
 .TP
