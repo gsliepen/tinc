@@ -17,11 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.4 2000/06/29 19:47:03 guus Exp $
+    $Id: conf.h,v 1.6.4.5 2000/06/30 11:45:14 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
+
+#define MAXTIMEOUT 900  /* Maximum timeout value for retries. Should this be a configuration option? */
 
 typedef struct ip_mask_t {
   unsigned long ip;
@@ -46,12 +48,13 @@ typedef enum which_t {
   keyexpire,
   vpnmask,
   resolve_dns,
-  indirectdata
+  indirectdata,
 } which_t;
 
 typedef struct config_t {
   struct config_t *next;
   which_t which;
+  int argtype;
   data_t data;
 } config_t;
 

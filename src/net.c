@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.15 2000/06/29 19:47:03 guus Exp $
+    $Id: net.c,v 1.35.4.16 2000/06/30 11:45:14 guus Exp $
 */
 
 #include "config.h"
@@ -636,11 +636,11 @@ cp
   signal(SIGALRM, sigalrm_handler);
   upstreamindex = 0;
   seconds_till_retry += 5;
-  if(seconds_till_retry>300)    /* Don't wait more than 5 minutes. */
-    seconds_till_retry = 300;
-  alarm(seconds_till_retry);
+  if(seconds_till_retry > MAXTIMEOUT)    /* Don't wait more than MAXTIMEOUT seconds. */
+    seconds_till_retry = MAXTIMEOUT;
   syslog(LOG_ERR, _("Still failed to connect to other, will retry in %d seconds"),
 	 seconds_till_retry);
+  alarm(seconds_till_retry);
 cp
 }
 
@@ -675,9 +675,9 @@ cp
     
   signal(SIGALRM, sigalrm_handler);
   upstreamindex = 0;
-  seconds_till_retry = 300;
+  seconds_till_retry = MAXTIMEOUT;
+  syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
   alarm(seconds_till_retry);
-  syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in 5 minutes"));
 cp
   return 0;
 }
@@ -779,7 +779,6 @@ cp
       return NULL;
     }
 
-  p->vpn_hostname = _("unknown");
   p->real_ip = ntohl(ci.sin_addr.s_addr);
   p->real_hostname = hostlookup(ci.sin_addr.s_addr);
   p->meta_socket = sfd;
@@ -1244,19 +1243,15 @@ cp
 
       if(sighup)
         {
+          sighup = 0;
           close_network_connections();
           clear_config();
           if(read_config_file(configfilename))
             {
-              syslog(LOG_ERR, _("Unable to reread configuration file, exitting"));
+              syslog(LOG_ERR, _("Unable to reread configuration file, exiting"));
               exit(0);
             }
-          if(setup_network_connections())
-            {
-              syslog(LOG_ERR, _("Unable to restart, exitting"));
-              exit(0);
-            }
-          sighup = 0;
+          setup_network_connections();
           continue;
         }
 
@@ -1265,14 +1260,16 @@ cp
 	{
 	  check_dead_connections();
           last_ping_check = time(NULL);
-	  continue;
 	}
 
-      check_network_activity(&fset);
+      if(r > 0)
+        {
+          check_network_activity(&fset);
 
-      /* local tap data */
-      if(FD_ISSET(tap_fd, &fset))
-	handle_tap_input();
+          /* local tap data */
+          if(FD_ISSET(tap_fd, &fset))
+	    handle_tap_input();
+        }
     }
 cp
 }

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.4 2000/06/29 19:47:02 guus Exp $
+    $Id: conf.c,v 1.9.4.5 2000/06/30 11:45:14 guus Exp $
 */
 
 
@@ -109,6 +109,8 @@ cp
 	p->data.val = 0;
     }
 
+  p->argtype = argtype;
+
   if(p->data.val)
     {
       if(*cfg)
@@ -195,6 +197,7 @@ cp
 	config = cfg;
     }
 cp
+  return 0;
 }
 
 /*
@@ -203,6 +206,7 @@ cp
 int
 read_config_file(const char *fname)
 {
+  int err;
   FILE *fp;
 cp
   if((fp = fopen (fname, "r")) == NULL)
@@ -211,12 +215,10 @@ cp
       return 1;
     }
 
-  if(readconfig(fname, fp))
-    return -1;
-
+  err = readconfig(fname, fp);
   fclose (fp);
 cp
-  return 0;
+  return err;
 }
 
 /*
@@ -260,11 +262,13 @@ void clear_config()
 {
   config_t *p, *next;
 cp
-  for(p = config; p; p = next)
+  for(p = config; p != NULL; p = next)
     {
       next = p->next;
-      if(p->data.ptr)
-        free(p->data.ptr);
+      if(p->data.ptr && (p->argtype == TYPE_NAME))
+        {
+          free(p->data.ptr);
+        }
       free(p);
     }
   config = NULL;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.5 2000/06/29 19:47:04 guus Exp $
+    $Id: tincd.c,v 1.10.4.6 2000/06/30 11:45:16 guus Exp $
 */
 
 #include "config.h"
@@ -374,13 +374,17 @@ main(int argc, char **argv, char **envp)
   if(security_init())
     return 1;
 
-  if(setup_network_connections())
-    cleanup_and_exit(1);
+  for(;;)
+    {
+      setup_network_connections();
 
-  main_loop();
+      main_loop();
 
-  cleanup_and_exit(1);
-  return 1;
+      cleanup_and_exit(1);
+
+      syslog(LOG_ERR, _("Unrecoverable error, restarting in %d seconds!"), MAXTIMEOUT);
+      sleep(MAXTIMEOUT);
+    }
 }
 
 RETSIGTYPE
@@ -433,7 +437,7 @@ RETSIGTYPE
 sigint_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Got INT signal, exitting"));
+    syslog(LOG_NOTICE, _("Got INT signal, exiting"));
   cleanup_and_exit(0);
 }
 
