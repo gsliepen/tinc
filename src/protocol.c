@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.54 2000/11/03 22:35:11 zarq Exp $
+    $Id: protocol.c,v 1.28.4.55 2000/11/04 16:39:19 guus Exp $
 */
 
 #include "config.h"
@@ -872,6 +872,8 @@ cp
 
   new->nexthop = cl;
   new->status.active = 1;
+  new->cipher_pkttype = EVP_bf_cfb();
+  new->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 
 cp
   return 0;
