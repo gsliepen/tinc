@@ -1,0 +1,85 @@
+                                ==============
+                                The TINC HOWTO
+                                ==============
+
+                                Wessel Dankers
+                               wsl@nl.linux.org
+
+Introduction
+------------
+Tinc is a system to create a virtual ethernet network on top of an existing
+infrastructure. This infrastructure can be anything from modem lines to
+gigabit ethernet networks, as long as they talk IP. Once you install and
+configure tinc, your host will get an extra IP address, just like it would
+when you stick an extra ethernet card into it. Using this IP address, it can
+communicate with all hosts in its virtual network using strong encryption.
+
+If you install Tinc on a router (and pick your numbers correctly) you can
+have the router forward all packets. This way you can---instead of
+connecting hosts---connect entire sites together! Now you need only one
+outgoing network connection for both internet and intranet.
+
+Getting Tinc
+------------
+Before you fetch the latest tarball, you might want to check if there's a
+package for your Linux distribution. One of the main authors is a Debian
+Developer, so you can expect the Debian packages to be very up to date.
+
+The official website for Tinc can be found at http://tinc.nl.linux.org/.
+There you can find Debian packages, RPM's and of course... the tarball!
+Since we run Doohickey Linux Pro 1.0, for which no package exists (or
+indeed the distribution itself) we shall compile the package ourselves.
+
+Building
+--------
+The Tinc source adheres to so many standards it makes you head spin.
+Even the debug messages have been localized! Amazing. Tinc also comes
+with a configuration script. If you like to see what is there to
+configure run ./configure --help | more. If you don't have time for such
+nonsense:
+
+	./configure --sysconfdir=/etc
+
+This will see if your system is nice enough to run tinc on, and will
+create some Makefiles and other stuff which will together build tinc.
+
+	make
+	make install
+
+The first will do the actual build, the second copies all files into place.
+
+The kernel
+----------
+FIXME
+
+Configuring
+-----------
+The first thing we should do is pick network numbers. Tinc has a very
+peculiar taste for network numbers, which is caused by the way it routes
+traffic. However, it turns out to be really handy if you want to use
+your tinc host as a router for a site.
+
+The numbers have to be in a range that is not yet in use in your existing,
+real network! In this example we will use numbers from the 192.168.0/16
+range. This is standard CIDR notation for all IP addresses from 192.168.0.0
+to 192.168.255.255. The /16 means that the first 16 bits form the network
+part.
+
+In the example we will connect three machines: f00f, fdiv and hlt. We will
+give each an address, but not just that, also a slice of our address space
+to play with.
+
+      Host          Real address           Tinc network
+      ---------------------------------------------------
+      f00f          126.202.37.20          192.168.1.1/24
+      fdiv          126.202.37.81          192.168.2.1/24
+      hlt           103.22.1.218           192.168.3.1/24
+
+It is very important that none of the Tinc netmasks overlap! Note how the
+192.168.0/16 network covers the entire address space of the three hosts.
+We will refer to the 192.168.0/16 network as the `umbrella' from now on.
+As you can see we can fit 256 hosts into this umbrella this way, which is
+also the practical maximum for tinc.
+
+Let's create a configuration file for f00f. We have to put it in /etc/tinc,
+unless you participate in multiple umbrella's (more on that later).
