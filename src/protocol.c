@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.6 2000/06/25 16:39:17 guus Exp $
+    $Id: protocol.c,v 1.28.4.7 2000/06/26 17:20:58 guus Exp $
 */
 
 #include "config.h"
@@ -180,14 +180,14 @@ cp
       flags &= ~EXPORTINDIRECTDATA;
       flags |= INDIRECTDATA;
       real_ip = myself->vpn_ip;
-      hostname = "myself";
+      hostname = myself->hostname;
     }
 
   if(debug_lvl > 1)
     syslog(LOG_DEBUG, _("Sending ADD_HOST for " IP_ADDR_S " (%s) to " IP_ADDR_S " (%s)"),
 	   IP_ADDR_V(new_host->vpn_ip), hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
 
-  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx/%lx:%x %d\n", ADD_HOST, new_host->real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port, flags);
+  buflen = snprintf(buffer, MAXBUFSIZE, "%d %lx %lx/%lx:%x %d\n", ADD_HOST, real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port, flags);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -659,10 +659,6 @@ cp
        return -1;
     }  
 
-  if(debug_lvl > 1)
-    syslog(LOG_DEBUG, _("Got ADD_HOST from " IP_ADDR_S " (%s)"),
-              IP_ADDR_V(cl->vpn_ip), cl->hostname);
-
   /*
     Suggestion of Hans Bayle
   */
@@ -673,12 +669,12 @@ cp
       else
 	syslog(LOG_DEBUG, _("Invalid ADD_HOST from " IP_ADDR_S " (%s)"),
             IP_ADDR_V(cl->vpn_ip), cl->hostname);
-      return 0;
+      return -1;
     }
 
   ncn = new_conn_list();
   ncn->real_ip = real_ip;
-  ncn->hostname = hostlookup(real_ip);
+  ncn->hostname = hostlookup(htonl(real_ip));
   ncn->vpn_ip = vpn_ip;
   ncn->vpn_mask = vpn_mask;
   ncn->port = port;
@@ -687,6 +683,11 @@ cp
   ncn->next = conn_list;
   conn_list = ncn;
   ncn->status.active = 1;
+
+  if(debug_lvl > 1)
+    syslog(LOG_DEBUG, _("Got ADD_HOST for " IP_ADDR_S " (%s) from " IP_ADDR_S " (%s)"),
+           IP_ADDR_V(ncn->vpn_ip), ncn->hostname, IP_ADDR_V(cl->vpn_ip), cl->hostname);
+
   notify_others(ncn, cl, send_add_host);
 cp
   return 0;

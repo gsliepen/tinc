@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.5 2000/06/25 16:20:27 guus Exp $
+    $Id: net.c,v 1.35.4.6 2000/06/26 17:20:58 guus Exp $
 */
 
 #include "config.h"
@@ -535,7 +535,8 @@ int setup_outgoing_connection(ip_t ip)
 cp
   ncn = new_conn_list();
   ncn->real_ip = ip;
-
+  ncn->hostname = hostlookup(htonl(ip));
+  
   if(setup_outgoing_meta_socket(ncn) < 0)
     {
       syslog(LOG_ERR, _("Could not set up a meta connection!"));
@@ -567,6 +568,7 @@ cp
     }
 
   myself->vpn_ip = cfg->data.ip->ip;
+  myself->hostname = hostlookup(htonl(myself->vpn_ip));
   myself->vpn_mask = cfg->data.ip->mask;
   myself->flags = 0;
 
