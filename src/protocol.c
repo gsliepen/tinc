@@ -744,7 +744,6 @@ cp
       return -1;
     }
 
-  syslog(LOG_DEBUG, "%08lx %08lx %d %hd", tmp.from, tmp.to, tmp.expiry, tmp.len); 
   key = xmalloc(tmp.len);
   
   if(read(cl->meta_socket, key, tmp.len + 2) <= 0)
@@ -791,12 +790,12 @@ cp
     syslog(LOG_DEBUG, "Forwarding public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
   tmp.type = ANS_KEY;
-  if(write(fw->nexthop->meta_socket, &tmp, sizeof(tmp) -2) < 0)
+  if(write(fw->nexthop->meta_socket, &tmp, sizeof(tmp) - 2) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
     }
-  if(write(fw->nexthop->meta_socket, key, tmp.len + 1) < 0)
+  if(write(fw->nexthop->meta_socket, key, tmp.len + 2) < 0)
     {
       syslog(LOG_ERR, "send failed: %s:%d: %m", __FILE__, __LINE__);
       return -1;
