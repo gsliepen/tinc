@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.152 2002/02/10 21:57:54 guus Exp $
+    $Id: net.c,v 1.35.4.153 2002/02/11 14:20:21 guus Exp $
 */
 
 #include "config.h"
@@ -596,6 +596,7 @@ cp
     {
       BN_hex2bn(&c->rsa_key->n, key);
       BN_hex2bn(&c->rsa_key->e, "FFFF");
+      free(key);
       return 0;
     }
 
@@ -609,8 +610,10 @@ cp
             {
               syslog(LOG_ERR, _("Error reading RSA public key file `%s': %m"),
 	             fname);
+              free(fname);
               return -1;
             }
+          free(fname);
           c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
           fclose(fp);
           if(!c->rsa_key)
@@ -622,7 +625,10 @@ cp
           return 0;
         }
       else
-        return -1;
+        {
+          free(fname);
+          return -1;
+	}
     }
 
   /* Else, check if a harnessed public key is in the config file */
@@ -655,15 +661,23 @@ cp
       myself->connection->rsa_key = RSA_new();
       BN_hex2bn(&myself->connection->rsa_key->d, key);
       BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
+      free(key);
+      return 0;
     }
-  else if(get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
+
+  if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
+    asprintf(&fname, "%s/rsa_key.priv", confbase);
+
+  if(is_safe_path(fname))
     {
       if((fp = fopen(fname, "r")) == NULL)
         {
           syslog(LOG_ERR, _("Error reading RSA private key file `%s': %m"),
 	         fname);
+          free(fname);
           return -1;
         }
+      free(fname);
       myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
       fclose(fp);
       if(!myself->connection->rsa_key)
@@ -672,11 +686,36 @@ cp
 	         fname);
           return -1;
         }
+      return 0;
+    }
+
+  free(fname);
+  return -1;
+}
+
+int check_rsa_key(RSA *rsa_key)
+{
+  char *test1, *test2, *test3;
+cp
+  if(rsa_key->p && rsa_key->q)
+    {
+      if(RSA_check_key(rsa_key) != 1)
+	  return -1;
     }
   else
     {
-      syslog(LOG_ERR, _("No private key for tinc daemon specified!"));
-      return -1;
+      test1 = xmalloc(RSA_size(rsa_key));
+      test2 = xmalloc(RSA_size(rsa_key));
+      test3 = xmalloc(RSA_size(rsa_key));
+
+      if(RSA_public_encrypt(RSA_size(rsa_key), test1, test2, rsa_key, RSA_NO_PADDING) != RSA_size(rsa_key))
+	  return -1;
+
+      if(RSA_private_decrypt(RSA_size(rsa_key), test2, test3, rsa_key, RSA_NO_PADDING) != RSA_size(rsa_key))
+	  return -1;
+
+      if(memcmp(test1, test3, RSA_size(rsa_key)))
+	  return -1;
     }
 cp
   return 0;
@@ -732,13 +771,12 @@ cp
     return -1;
 cp
 
-/*
-  if(RSA_check_key(rsa_key) != 1)
+  if(check_rsa_key(myself->connection->rsa_key))
     {
       syslog(LOG_ERR, _("Invalid public/private keypair!"));
       return -1;
     }
-*/
+
   if(!get_config_port(lookup_config(myself->connection->config_tree, "Port"), &myself->port))
     myself->port = 655;
 
