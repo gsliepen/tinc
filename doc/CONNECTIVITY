@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.4 2001/07/22 15:25:13 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.5 2001/07/22 17:41:52 guus Exp $
 
 1. Problem
 ==========
@@ -182,34 +182,52 @@ Then C---F authentication finishes, the following actions are taken:
 1.2.1 Augmenting ADD_HOST
 -------------------------
 
-A solution would be to augment ADD_HOST with an extra parameter, for example
-the host which told us about the new host. From A's point of view, D told it
-about itself, E and F. So, A would send out ADD_HOST(D, D) to B, and
-ADD_HOST(E,D) and ADD_HOST(F,D). Lets review what happens at point 3 in the
-preceding example:
+A solution would be to augment ADD_HOST with an extra parameter, the nexthop of
+the added host:
 
-  3 B receives ADD_HOST(D,D) from A,
-      B sends ADD_HOST(D,D) to C
+  3 B receives ADD_HOST(D,A) from A,
+      B sends ADD_HOST(D,A) to C
     B receives ADD_HOST(E,D) from A:
       B sends ADD_HOST(E,D) to C
-    B receives ADD_HOST(F,D) from A:
-      B sends ADD_HOST(F,D) to C
-    E receives ADD_HOST(A,A) from D:
-      E sends ADD_HOST(A,A) to F
+    B receives ADD_HOST(F,E) from A:
+      B sends ADD_HOST(F,E) to C
+    E receives ADD_HOST(A,D) from D:
+      E sends ADD_HOST(A,D) to F
     E receives ADD_HOST(B,A) from D:
       E sends ADD_HOST(B,A) to F
-    E receives ADD_HOST(C,A) from D:
-      E sends ADD_HOST(C,A) to F
+    E receives ADD_HOST(C,B) from D:
+      E sends ADD_HOST(C,B) to F
     
-    B receives ADD_HOST(F,F) from C, and notes that F is already known:
+    B receives ADD_HOST(F,C) from C, and notes that F is already known:
       <insert solution here>
-    B receives ADD_HOST(D,F) from C, and notes that D is already known:
+    B receives ADD_HOST(D,E) from C, and notes that D is already known:
       <insert solution here>
     B receives ADD_HOST(E,F) from C, and notes that E is already known:
       <insert solution here>
-    E receives ADD_HOST(C,C) from F, and notes that C is already known:
+    E receives ADD_HOST(C,F) from F, and notes that C is already known:
       <insert solution here>
-    E receives ADD_HOST(A,C) from F, and notes that A is already known:
+    E receives ADD_HOST(A,B) from F, and notes that A is already known:
       <insert solution here>
     E receives ADD_HOST(B,C) from F, and notes that B is already known:
       <insert solution here>
+
+So, B and E have to make a choice. Which ADD_HOST is going to win? Fortunately,
+since the ADD_HOST messages are augmented, they have an extra piece of
+information they can use to decide in a deterministic way which one is going to
+win. For example, B got ADD_HOST(F,E) and ADD_HOST(F,C). Since "E" > "C", it
+could let ADD_HOST(F,E) win.
+
+    B receives ADD_HOST(F,C) from C, and notes that F is already known:
+      since "C" < "E", B ignores ADD_HOST(F,E)
+      B sends ADD_HOST(F,C) to A
+    ...
+    E receives ADD_HOST(C,F) from F, and notes that C is already known:
+      since "F" > "B", E removes the ADD_HOST(C,B) in favour of the new one
+      E sends ADD_HOST(C,F) to D
+
+  4 A receives ADD_HOST(F,E) from B, and notes that F is already known:
+      since "E" < "D", A ignores ADD_HOST(F,D).
+    ...
+    D receives ADD_HOST(C,F) from E, and notes that C is already known:
+      since "F" > "B", D removes the ADD_HOST(C,B),
+      closes the connection with C, in favour of the new one.
