@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.34 2002/12/27 19:32:33 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.35 2003/05/17 22:12:52 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.34 2002/12/27 19:32:33 guus Exp $
+$Id: tinc.texi,v 1.8.4.35 2003/05/17 22:12:52 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.34 2002/12/27 19:32:33 guus Exp $
+$Id: tinc.texi,v 1.8.4.35 2003/05/17 22:12:52 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -187,7 +187,7 @@ packets.
 @cindex release
 For an up to date list of supported platforms, please check the list on
 our website:
-@uref{http://tinc.nl.linux.org/platforms.html}.
+@uref{http://tinc.nl.linux.org/platforms}.
 
 
 @c ==================================================================
@@ -559,7 +559,7 @@ system startup scripts and sample configurations.
 If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
-@uref{http://tinc.nl.linux.org/download.html, download page}, which has
+@uref{http://tinc.nl.linux.org/download, download page}, which has
 the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
