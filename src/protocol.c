@@ -323,6 +323,14 @@ int send_key_answer(conn_list_t *cl, ip_t to)
   strcpy(&tmp->key, my_public_key_base36);
 
   fw = lookup_conn(to);
+  
+  if(!fw)
+  {
+    syslog(LOG_ERR, "Attempting to send key answer to " IP_ADDR_S ", which does not exist?",
+	   IP_ADDR_V(to));
+    return -1;
+  }
+  
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Sending public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
@@ -617,6 +625,14 @@ int req_key_h(conn_list_t *cl, unsigned char *d, int len)
     }
 
   fw = lookup_conn(tmp->to);
+  
+  if(!fw)
+  {
+    syslog(LOG_ERR, "Attempting to forward key request to " IP_ADDR_S ", which does not exist?",
+	   IP_ADDR_V(tmp->to));
+    return -1;
+  }
+
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "Forwarding request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
@@ -673,6 +689,14 @@ int ans_key_h(conn_list_t *cl, unsigned char *d, int len)
       if(debug_lvl > 2)
 	syslog(LOG_DEBUG, "Yeah! key arrived. Now do something with it.");
       gk = lookup_conn(tmp->from);
+
+      if(!gk)
+        {
+          syslog(LOG_ERR, "Receiving key from " IP_ADDR_S ", which does not exist?",
+	         IP_ADDR_V(tmp->from));
+          return -1;
+        }
+
       set_keys(gk, tmp);
       gk->status.validkey = 1;
       gk->status.waitingforkey = 0;
@@ -681,6 +705,14 @@ int ans_key_h(conn_list_t *cl, unsigned char *d, int len)
     }
 
   fw = lookup_conn(tmp->to);
+  
+  if(!fw)
+  {
+    syslog(LOG_ERR, "Attempting to forward key to " IP_ADDR_S ", which does not exist?",
+	   IP_ADDR_V(tmp->to));
+    return -1;
+  }
+
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Forwarding public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
@@ -703,6 +735,14 @@ int key_changed_h(conn_list_t *cl, unsigned char *d, int len)
 	   IP_ADDR_V(tmp->from));
 
   ik = lookup_conn(tmp->from);
+
+  if(!ik)
+    {
+      syslog(LOG_ERR, "Got changed key from " IP_ADDR_S ", which does not exist?",
+	     IP_ADDR_V(tmp->from));
+      return -1;
+    }
+
   ik->status.validkey = 0;
   ik->status.waitingforkey = 0;
 
