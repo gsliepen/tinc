@@ -1,7 +1,7 @@
 #! /bin/sh
 # postinst script for tinc
 #
-# $Id: postinst,v 1.4 2000/05/19 00:09:20 zarq Exp $
+# $Id: postinst,v 1.5 2000/05/19 00:58:01 zarq Exp $
 #
 # see: dh_installdeb(1)
 
@@ -32,7 +32,7 @@ case "$1" in
 	if [ ! -e /dev/.devfs ] ; then
 	    devices_exist=1
 	    for d in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ; do
-		test -e /dev/tap$d || $devices_exist=0
+		test -e /dev/tap$d || devices_exist=0
 	    done
 	    if [ $devices_exist -eq 0 ] ; then
 		cd /dev && ./MAKEDEV netlink || true
