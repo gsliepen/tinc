@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.27 2002/09/04 13:48:51 guus Exp $
+# $Id: Makefile.am,v 1.4.4.28 2002/09/10 21:46:05 guus Exp $
 
 sbin_PROGRAMS = tincd
 
@@ -14,7 +14,7 @@ INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h meta.h net.h netutl.h node.h process.h	\
 	protocol.h route.h subnet.h
 
-LIBS = @LIBS@
+LIBS = @LIBS@ @LIBINTL@
 
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a
