@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.29 2001/03/04 13:59:28 guus Exp $
+    $Id: net.h,v 1.9.4.30 2001/05/07 19:08:46 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -27,8 +27,9 @@
 
 #include "config.h"
 
-#define MAXSIZE 1700  /* should be a bit more than the MTU for the tapdevice */
+#define MAXSIZE 1700	/* should be a bit more than the MTU for the tapdevice */
 #define MTU 1600
+#define SALTLEN	2	/* to spice things up for the NSA... */
 
 #define MAC_ADDR_S "%02x:%02x:%02x:%02x:%02x:%02x"
 #define MAC_ADDR_V(x) ((unsigned char*)&(x))[0],((unsigned char*)&(x))[1], \
@@ -58,8 +59,6 @@ typedef struct mac_t
 
 typedef unsigned long ipv4_t;
 
-typedef ipv4_t ip_t; /* alias for ipv4_t */
-
 typedef struct ipv6_t
 {
   unsigned short x[8];
@@ -70,7 +69,8 @@ typedef unsigned short port_t;
 typedef short length_t;
 
 typedef struct vpn_packet_t {
-  length_t len;		/* the actual number of bytes in the `data' field */
+  length_t len;			/* the actual number of bytes in the `data' field */
+  unsigned char salt[SALTLEN];	/* two bytes of randomness */
   unsigned char data[MAXSIZE];
 } vpn_packet_t;
 

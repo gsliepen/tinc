@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.104 2001/05/04 18:45:02 guus Exp $
+    $Id: net.c,v 1.35.4.105 2001/05/07 19:08:43 guus Exp $
 */
 
 #include "config.h"
@@ -134,12 +134,12 @@ cp
 
   /* Encrypt the packet. */
 
-  outpkt.len = inpkt->len;
+  RAND_bytes(inpkt->salt, sizeof(inpkt->salt));
 
   EVP_EncryptInit(&ctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktkey + cl->cipher_pkttype->key_len);
-  EVP_EncryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
-  EVP_EncryptFinal(&ctx, outpkt.data + outlen, &outpad);
-  outlen += outpad + 2;
+  EVP_EncryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len + sizeof(inpkt->salt));
+  EVP_EncryptFinal(&ctx, outpkt.salt + outlen, &outpad);
+  outlen += outpad;
 
   total_socket_out += outlen;
 
@@ -147,7 +147,7 @@ cp
   to.sin_addr.s_addr = htonl(cl->address);
   to.sin_port = htons(cl->port);
 
-  if((sendto(myself->socket, (char *) &(outpkt.len), outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
+  if((sendto(myself->socket, (char *) outpkt.salt, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->name, cl->hostname);
@@ -172,14 +172,13 @@ void receive_udppacket(connection_t *cl, vpn_packet_t *inpkt)
   int outlen, outpad;
   EVP_CIPHER_CTX ctx;
 cp
-  outpkt.len = inpkt->len;
-
   /* Decrypt the packet */
 
   EVP_DecryptInit(&ctx, myself->cipher_pkttype, myself->cipher_pktkey, myself->cipher_pktkey + myself->cipher_pkttype->key_len);
-  EVP_DecryptUpdate(&ctx, outpkt.data, &outlen, inpkt->data, inpkt->len + 8);
-  EVP_DecryptFinal(&ctx, outpkt.data + outlen, &outpad);
+  EVP_DecryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len);
+  EVP_DecryptFinal(&ctx, outpkt.salt + outlen, &outpad);
   outlen += outpad;
+  outpkt.len = outlen - sizeof(outpkt.salt);
 
   receive_packet(cl, &outpkt);
 cp
@@ -576,7 +575,7 @@ cp
       return -1;
     }
 
-  ncn->address = ntohl(*((ip_t*)(h->h_addr_list[0])));
+  ncn->address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
   ncn->hostname = hostlookup(htonl(ncn->address));
 
   if(setup_outgoing_meta_socket(ncn) < 0)
@@ -806,7 +805,7 @@ cp
   myself->cipher_pktkeylength = myself->cipher_pkttype->key_len + myself->cipher_pkttype->iv_len;
 
   myself->cipher_pktkey = (char *)xmalloc(myself->cipher_pktkeylength);
-  RAND_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
+  RAND_pseudo_bytes(myself->cipher_pktkey, myself->cipher_pktkeylength);
 
   if(!(cfg = get_config_val(config, config_keyexpire)))
     keylifetime = 3600;
@@ -1046,7 +1045,6 @@ void handle_incoming_vpn_data(void)
 {
   vpn_packet_t pkt;
   int x, l = sizeof(x);
-  int lenin;
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
   connection_t *cl;
@@ -1063,7 +1061,7 @@ cp
       return;
     }
 
-  if((lenin = recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
+  if((pkt.len = recvfrom(myself->socket, (char *) pkt.salt, MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return;

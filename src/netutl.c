@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.18 2001/01/07 17:09:02 guus Exp $
+    $Id: netutl.c,v 1.12.4.19 2001/05/07 19:08:46 guus Exp $
 */
 
 #include "config.h"
@@ -106,7 +106,7 @@ cp
     }
 
   ip = xmalloc(sizeof(*ip));
-  ip->address = ntohl(*((ip_t*)(h->h_addr_list[0])));
+  ip->address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
 
   ip->mask = masker ? ~((1 << (32 - masker)) - 1) : 0;
 cp

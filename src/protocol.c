@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.86 2001/03/13 21:33:31 guus Exp $
+    $Id: protocol.c,v 1.28.4.87 2001/05/07 19:08:46 guus Exp $
 */
 
 #include "config.h"
@@ -915,7 +915,7 @@ cp
 int del_host_h(connection_t *cl)
 {
   char name[MAX_STRING_SIZE];
-  ip_t address;
+  ipv4_t address;
   port_t port;
   long int options;
   connection_t *old, *p;
