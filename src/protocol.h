@@ -1,6 +1,7 @@
 /*
     protocol.h -- header for protocol.c
-    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>,
+                       2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,60 +16,64 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: protocol.h,v 1.6 2000/10/18 20:12:09 zarq Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
 #include "net.h"
+#include "subnet.h"
+
+/* Protocol version. Different versions are incompatible,
+   incompatible version have different protocols.
+ */
+
+#define PROT_CURRENT 8
+
+/* Length of the challenge. Since the challenge will also
+   contain the key for the symmetric cipher, it must be
+   quite large.
+ */
+
+#define CHAL_LENGTH 1024 /* Okay, this is probably waaaaaaaaaaay too large */
+
+/* Request numbers */
 
 enum {
-  PROT_RESERVED = 0,                 /* reserved: do not use. */
-  PROT_NOT_IN_USE,
-  PROT_TOO_OLD = 2,
-  PROT_3,
-  PROT_4,
-  PROT_ECHELON,
-  PROT_CURRENT,                      /* protocol currently in use */
+  ALL = -1,			     /* Guardian for allow_request */
+  ID = 0, CHALLENGE, CHAL_REPLY, ACK,
+  STATUS, ERROR, TERMREQ,
+  PING,  PONG,
+  ADD_HOST, DEL_HOST,
+  ADD_SUBNET, DEL_SUBNET,
+  KEY_CHANGED, REQ_KEY, ANS_KEY,
+  LAST                               /* Guardian for the highest request number */
 };
 
-enum {
-  ACK = 1,              /* acknowledged */
-  AUTH_S_INIT = 10,     /* initiate authentication */
-  AUTH_C_INIT,
-  AUTH_S_SPP,           /* send passphrase */
-  AUTH_C_SPP,
-  AUTH_S_SKEY,          /* send g^k */
-  AUTH_C_SKEY,
-  AUTH_S_SACK,          /* send ack */
-  AUTH_C_RACK,          /* waiting for ack */
-  TERMREQ = 30,         /* terminate connection */
-  PINGTIMEOUT,          /* terminate due to ping t.o. */
-  DEL_HOST,		/* forward a termreq to others */
-  PING = 40,            /* ping */
-  PONG,
-  ADD_HOST = 60,        /* Add new given host to connection list */
-  BASIC_INFO,           /* some basic info follows */
-  PASSPHRASE,           /* encrypted passphrase */
-  PUBLIC_KEY,           /* public key in base-36 */
-  HOLD = 80,            /* don't send any data */
-  RESUME,               /* resume dataflow with new encryption key */
-  CALCULATE = 100,      /* calculate the following numer^privkey and send me the result */  
-  CALC_RES,             /* result of the above */
-  ALMOST_KEY,           /* this number^privkey is the shared key */
-  REQ_KEY = 160,        /* request public key */
-  ANS_KEY,              /* answer to such request */
-  KEY_CHANGED,		/* public key has changed */
-};
+extern int (*request_handlers[])(conn_list_t*);
 
-extern int (*request_handlers[256])(conn_list_t*);
-
+extern int send_id(conn_list_t*);
+extern int send_challenge(conn_list_t*);
+extern int send_chal_reply(conn_list_t*);
+extern int send_ack(conn_list_t*);
+extern int send_status(conn_list_t*, int, char*);
+extern int send_error(conn_list_t*, int, char*);
+extern int send_termreq(conn_list_t*);
 extern int send_ping(conn_list_t*);
-extern int send_basic_info(conn_list_t *);
-extern int send_termreq(conn_list_t *);
-extern int send_timeout(conn_list_t *);
-extern int send_key_request(ip_t);
-extern void send_key_changed_all(void);
+extern int send_pong(conn_list_t*);
+extern int send_add_host(conn_list_t*, conn_list_t*);
+extern int send_del_host(conn_list_t*, conn_list_t*);
+extern int send_add_subnet(conn_list_t*, conn_list_t*, subnet_t*);
+extern int send_del_subnet(conn_list_t*, conn_list_t*, subnet_t*);
+extern int send_key_changed(conn_list_t*, conn_list_t*);
+extern int send_req_key(conn_list_t*, conn_list_t*);
+extern int send_ans_key(conn_list_t*, conn_list_t*, char*);
+
+/* Old functions */
+
+extern int send_tcppacket(conn_list_t *, void *, int);
+extern int notify_others(conn_list_t *, conn_list_t *, int (*function)(conn_list_t*, conn_list_t*));
 
 #endif /* __TINC_PROTOCOL_H__ */
-

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: encr.c,v 1.12 2000/05/31 18:23:06 zarq Exp $
+    $Id: encr.c,v 1.13 2000/10/18 20:12:08 zarq Exp $
 */
 
 #include "config.h"
@@ -61,8 +61,8 @@ int key_inited = 0, encryption_keylen;
 mpz_t my_private_key, my_public_key, generator, shared_prime;
 int my_key_expiry = (time_t)(-1);
 
-static char* mypassphrase;
-static int mypassphraselen;
+char* mypassphrase;
+int mypassphraselen;
 
 int char_hex_to_bin(int c)
 {
@@ -98,18 +98,17 @@ int read_passphrase(char *which, char **out)
 cp
   if((cfg = get_config_val(passphrasesdir)) == NULL)
     {
-      filename = xmalloc(strlen(confbase)+13+strlen(which));
-      sprintf(filename, "%spassphrases/%s", confbase, which);
+      asprintf(&filename, "%spassphrases/%s", confbase, which);
     }
   else
     {
-      filename = xmalloc(strlen(cfg->data.ptr)+2+strlen(which));
-      sprintf(filename, "%s/%s", (char*)cfg->data.ptr, which);
+      asprintf(&filename, "%s/%s", (char*)cfg->data.ptr, which);
     }
 
   if((f = fopen(filename, "rb")) == NULL)
     {
-      syslog(LOG_ERR, _("Could not open %s: %m"), filename);
+      if(debug_lvl > 1)
+        syslog(LOG_ERR, _("Could not open %s: %m"), filename);
       return -1;
     }
 
@@ -119,12 +118,14 @@ cp
       syslog(LOG_ERR, _("Illegal passphrase in %s; size would be %d"), filename, size);
       return -1;
     }
-  size >>= 2; /* bits->nibbles */
-  pp = xmalloc(size+2);
-  fgets(pp, size+1, f);
+
+  /* Hmz... hackish... strange +1 and +2 stuff... I really like more comments on those alignment thingies! */
+
+  pp = xmalloc(size/4 + 1);	/* Allocate enough for fgets */
+  fgets(pp, size/4 + 1, f);	/* Read passhrase and reserve one byte for end-of-string */
   fclose(f);
 
-  *out = xmalloc(size);
+  *out = xmalloc(size/8 + 2);	/* Allocate enough bytes, +1 for rounding if bits%8 != 0, +1 for 2-byte alignment */
 cp
   return str_hex_to_bin(*out, pp);
 }
@@ -150,7 +151,8 @@ cp
   else
     my_key_expiry = (time_t)(time(NULL) + cfg->data.val);
 
-  syslog(LOG_NOTICE, _("Generating %d bits keys."), PRIVATE_KEY_BITS);
+  if(debug_lvl > 1)
+    syslog(LOG_NOTICE, _("Generating %d bits keys"), PRIVATE_KEY_BITS);
 
   if((f = fopen("/dev/urandom", "r")) == NULL)
     {
@@ -266,7 +268,7 @@ int verify_passphrase(conn_list_t *cl, unsigned char *his_pubkey)
   mpz_t pk;
   unsigned char *out;
   BF_KEY bf_key;
-  char which[sizeof("123.123.123.123")+1];
+  char *which;
   char *meuk;
 cp
   mpz_init_set_str(pk, his_pubkey, 36);
@@ -280,7 +282,7 @@ cp
   if(key_inited)
     cipher_set_key(&encryption_key, encryption_keylen, text_key);
 
-  sprintf(which, IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
+  asprintf(&which, IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   if((pplen = read_passphrase(which, &meuk)) < 0)
     return -1;
 
@@ -335,12 +337,12 @@ cp
 	/* We haven't received a key from this host (yet). */
 	continue;
       ek = make_shared_key(p->public_key->key);
-      free_key(p->key);
-      p->key = xmalloc(sizeof(*p->key));
-      p->key->length = strlen(ek);
-      p->key->expiry = p->public_key->expiry;
-      p->key->key = xmalloc(strlen(ek) + 1);
-      strcpy(p->key->key, ek);
+      free_key(p->datakey);
+      p->datakey = xmalloc(sizeof(*p->datakey));
+      p->datakey->length = strlen(ek);
+      p->datakey->expiry = p->public_key->expiry;
+      p->datakey->key = xmalloc(strlen(ek) + 1);
+      strcpy(p->datakey->key, ek);
     }
 cp
 }

@@ -1,3 +1,9 @@
+tinc (1.0pre3-0.1) unstable; urgency=low
+
+  * upgraded to upstream version 1.0pre3
+
+ -- Ivo Timmermans <itimmermans@bigfoot.com>  Sun, 25 Jun 2000 00:00:00 +0200
+
 tinc (1.0pre2-1) unstable; urgency=low
 
   * postinst creates a file /etc/tinc/nets.boot, containing all networks

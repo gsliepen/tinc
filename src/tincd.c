@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10 2000/05/31 18:23:06 zarq Exp $
+    $Id: tincd.c,v 1.11 2000/10/18 20:12:10 zarq Exp $
 */
 
 #include "config.h"
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -43,6 +44,7 @@
 #include "encr.h"
 #include "net.h"
 #include "netutl.h"
+#include "protocol.h"
 
 #include "system.h"
 
@@ -61,10 +63,7 @@ static int kill_tincd = 0;
 /* If zero, don't detach from the terminal. */
 static int do_detach = 1;
 
-char *confbase = NULL;           /* directory in which all config files are */
-char *configfilename = NULL;     /* configuration file name */
 char *identname;                 /* program name for syslog */
-char *netname = NULL;            /* name of the vpn network */
 char *pidfilename;               /* pid file location */
 static pid_t ppid;               /* pid of non-detached part */
 char **g_argv;                   /* a copy of the cmdline arguments */
@@ -96,7 +95,7 @@ usage(int status)
   else
     {
       printf(_("Usage: %s [option]...\n\n"), program_name);
-      printf(_("  -c, --config=FILE     Read configuration options from FILE.\n"
+      printf(_("  -c, --config=DIR      Read configuration options from DIR.\n"
 	       "  -D, --no-detach       Don't fork and detach.\n"
 	       "  -d                    Increase debug level.\n"
 	       "  -k, --kill            Attempt to kill a running tincd and exit.\n"
@@ -123,8 +122,8 @@ parse_options(int argc, char **argv, char **envp)
         case 0: /* long option */
           break;
 	case 'c': /* config file */
-	  configfilename = xmalloc(strlen(optarg)+1);
-	  strcpy(configfilename, optarg);
+	  confbase = xmalloc(strlen(optarg)+1);
+	  strcpy(confbase, optarg);
 	  break;
 	case 'D': /* no detach */
 	  do_detach = 0;
@@ -156,7 +155,7 @@ parse_options(int argc, char **argv, char **envp)
 
 void memory_full(int size)
 {
-  syslog(LOG_ERR, _("Memory exhausted (last is %s:%d) (couldn't allocate %d bytes); exiting."), cp_file, cp_line, size);
+  syslog(LOG_ERR, _("Memory exhausted (last is %s:%d) (couldn't allocate %d bytes), exiting."), cp_file, cp_line, size);
   exit(1);
 }
 
@@ -180,7 +179,7 @@ int detach(void)
       if(pid) /* parent process */
 	{
 	  signal(SIGTERM, parent_exit);
-	  sleep(600); /* wait 10 minutes */
+//	  sleep(600); /* wait 10 minutes */
 	  exit(1);
 	}
     }
@@ -210,11 +209,11 @@ int detach(void)
 
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
-  if(debug_lvl > 1)
-    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d."),
+  if(debug_lvl > 0)
+    syslog(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
 	   VERSION, __DATE__, __TIME__, debug_lvl);
   else
-    syslog(LOG_NOTICE, _("tincd %s starting, debug level %d."), VERSION, debug_lvl);
+    syslog(LOG_NOTICE, _("tincd %s starting"), VERSION, debug_lvl);
 
   xalloc_fail_func = memory_full;
 
@@ -229,7 +228,7 @@ void cleanup_and_exit(int c)
   close_network_connections();
 
   if(debug_lvl > 0)
-    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d."),
+    syslog(LOG_INFO, _("Total bytes written: tap %d, socket %d; bytes read: tap %d, socket %d"),
 	   total_tap_out, total_socket_out, total_tap_in, total_socket_in);
 
   closelog();
@@ -291,35 +290,24 @@ int kill_other(void)
 */
 void make_names(void)
 {
-  if(!configfilename)
-    {
-      if(netname)
-	{
-	  configfilename = xmalloc(strlen(netname)+18+strlen(CONFDIR));
-	  sprintf(configfilename, "%s/tinc/%s/tinc.conf", CONFDIR, netname);
-	}
-      else
-	{
-	  configfilename = xmalloc(17+strlen(CONFDIR));
-	  sprintf(configfilename, "%s/tinc/tinc.conf", CONFDIR);
-	}
-    }
-  
   if(netname)
     {
-      pidfilename = xmalloc(strlen(netname)+20);
-      sprintf(pidfilename, "/var/run/tinc.%s.pid", netname);
-      confbase = xmalloc(strlen(netname)+8+strlen(CONFDIR));
-      sprintf(confbase, "%s/tinc/%s/", CONFDIR, netname);
-      identname = xmalloc(strlen(netname)+7);
-      sprintf(identname, "tinc.%s", netname);
+      if(!pidfilename)
+        asprintf(&pidfilename, "/var/run/tinc.%s.pid", netname);
+      if(!confbase)
+        asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
+      if(!identname)
+        asprintf(&identname, "tinc.%s", netname);
     }
   else
     {
-      pidfilename = "/var/run/tinc.pid";
-      confbase = xmalloc(7+strlen(CONFDIR));
-      sprintf(confbase, "%s/tinc/", CONFDIR);
-      identname = "tinc";
+      netname = "bla";
+      if(!pidfilename)
+        pidfilename = "/var/run/tinc.pid";
+      if(!confbase)
+        asprintf(&confbase, "%s/tinc", CONFDIR);
+      if(!identname)
+        identname = "tinc";
     }
 }
 
@@ -332,17 +320,20 @@ main(int argc, char **argv, char **envp)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
+  /* Do some intl stuff right now */
+  
+  unknown = _("unknown");
+
   parse_options(argc, argv, envp);
 
   if(show_version)
     {
-      printf(_("%s version %s\n"), PACKAGE, VERSION);
-      printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans and others,\n"
-	       "see the AUTHORS file for a complete list.\n\n"
+      printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
+      printf(_("Copyright (C) 1998,1999,2000 Ivo Timmermans, Guus Sliepen and others.\n"
+	       "See the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 	       "and you are welcome to redistribute it under certain conditions;\n"
-	       "see the file COPYING for details.\n\n"));
-      printf(_("This product includes software developed by Eric Young (eay@mincom.oz.au)\n"));
+	       "see the file COPYING for details.\n"));
 
       return 0;
     }
@@ -352,7 +343,7 @@ main(int argc, char **argv, char **envp)
 
   if(geteuid())
     {
-      fprintf(stderr, _("You must be root to run this program. sorry.\n"));
+      fprintf(stderr, _("You must be root to run this program. Sorry.\n"));
       return 1;
     }
 
@@ -363,7 +354,7 @@ main(int argc, char **argv, char **envp)
   if(kill_tincd)
     exit(kill_other());
 
-  if(read_config_file(configfilename))
+  if(read_server_config())
     return 1;
 
   setup_signals();
@@ -371,16 +362,32 @@ main(int argc, char **argv, char **envp)
   if(detach())
     exit(0);
 
+/* FIXME: wt* is this suppose to do?
   if(security_init())
     return 1;
+*/
+  for(;;)
+    {
+      if(!setup_network_connections())
+        {
+          main_loop();
+          cleanup_and_exit(1);
+         }
+      
+      syslog(LOG_ERR, _("Unrecoverable error"));
+      cp_trace();
 
-  if(setup_network_connections())
-    cleanup_and_exit(1);
-
-  main_loop();
-
-  cleanup_and_exit(1);
-  return 1;
+      if(do_detach)
+        {
+          syslog(LOG_NOTICE, _("Restarting in %d seconds!"), MAXTIMEOUT);
+          sleep(MAXTIMEOUT);
+        }
+      else
+        {
+          syslog(LOG_ERR, _("Aieee! Not restarting."));
+          exit(0);
+        }
+    }
 }
 
 RETSIGTYPE
@@ -402,41 +409,45 @@ sigquit_handler(int a)
 RETSIGTYPE
 sigsegv_square(int a)
 {
-  syslog(LOG_NOTICE, _("Got another SEGV signal: not restarting"));
+  syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
   exit(0);
 }
 
 RETSIGTYPE
 sigsegv_handler(int a)
 {
-  if(cp_file)
-    syslog(LOG_NOTICE, _("Got SEGV signal after %s line %d. Trying to re-execute."),
-	   cp_file, cp_line);
+  syslog(LOG_ERR, _("Got SEGV signal"));
+  cp_trace();
+
+  if(do_detach)
+    {
+      syslog(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
+      signal(SIGSEGV, sigsegv_square);
+      close_network_connections();
+      sleep(5);
+      remove_pid(pidfilename);
+      execvp(g_argv[0], g_argv);
+    }
   else
-    syslog(LOG_NOTICE, _("Got SEGV signal; trying to re-execute."));
-
-  signal(SIGSEGV, sigsegv_square);
-
-  close_network_connections();
-  remove_pid(pidfilename);
-  execvp(g_argv[0], g_argv);
+    {
+      syslog(LOG_NOTICE, _("Aieee! Not restarting."));
+      exit(0);
+    }
 }
 
 RETSIGTYPE
 sighup_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Got HUP signal"));
-  close_network_connections();
-  setup_network_connections();
-  /* FIXME: read config-file and re-establish network connections */
+    syslog(LOG_NOTICE, _("Got HUP signal, rereading configuration and restarting"));
+  sighup = 1;
 }
 
 RETSIGTYPE
 sigint_handler(int a)
 {
   if(debug_lvl > 0)
-    syslog(LOG_NOTICE, _("Got INT signal"));
+    syslog(LOG_NOTICE, _("Got INT signal, exiting"));
   cleanup_and_exit(0);
 }
 
@@ -450,18 +461,17 @@ RETSIGTYPE
 sigusr2_handler(int a)
 {
   if(debug_lvl > 1)
-    syslog(LOG_NOTICE, _("Forcing new key generation"));
+    syslog(LOG_NOTICE, _("Got USR2 signal, forcing new key generation"));
+/* FIXME: reprogram this.
   regenerate_keys();
+*/
 }
 
 RETSIGTYPE
 sighuh(int a)
 {
-  if(cp_file)
-    syslog(LOG_NOTICE, _("Got unexpected signal (%d) after %s line %d."),
-	   a, cp_file, cp_line);
-  else
-    syslog(LOG_NOTICE, _("Got unexpected signal (%d)."), a);
+  syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
+  cp_trace();
 }
 
 void
@@ -485,7 +495,7 @@ setup_signals(void)
     signal(SIGINT, sigint_handler);
   signal(SIGUSR1, sigusr1_handler);
   signal(SIGUSR2, sigusr2_handler);
-  signal(SIGCHLD, parent_exit);
+//  signal(SIGCHLD, parent_exit);
 }
 
 RETSIGTYPE parent_exit(int a)

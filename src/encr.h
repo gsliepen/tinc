@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: encr.h,v 1.3 2000/10/18 20:12:08 zarq Exp $
 */
 
 #ifndef __TINC_ENCR_H__
@@ -29,9 +31,6 @@ extern char *my_public_key_base36;
 extern int my_key_expiry;
 
 extern int security_init(void);
-
-extern void do_bf_encrypt(vpn_packet_t *, real_packet_t *);
-extern void do_bf_decrypt(real_packet_t *, vpn_packet_t *);
 
 extern int send_portnumbers(int);
 extern void set_shared_key(char *);

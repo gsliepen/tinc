@@ -5,3 +5,5 @@ Things left to do to make cabal superstable:
    tree property.
  * Redundancy: multiple ConnectTo lines, if
    one fails others might be tried.
+ * Allow connects to hosts that use
+   nodirectdata.

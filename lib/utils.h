@@ -1,6 +1,7 @@
 /*
     utils.h -- header file for utils.c
-    Copyright (C) 1999 Ivo Timmermans <zarq@iname.com>
+    Copyright (C) 1999,2000 Ivo Timmermans <zarq@iname.com>
+                       2000 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,11 +21,27 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
+#include <ctype.h>
+
+enum {
+  DEBUG_CONNECTIONS = 0,
+  DEBUG_PROTOCOL,
+  DEBUG_STATUS,
+  DEBUG_ERROR,
+  DEBUG_META
+};
+
 #define min(a,b) (((a)<(b))?(a):(b))
 
-#define cp { cp_line = __LINE__; cp_file = __FILE__; }
+extern volatile int cp_line[];
+extern volatile char *cp_file[];
+extern volatile int cp_index;
 
-extern volatile int cp_line;
-extern volatile char *cp_file;
+#define cp { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 8; }
+#define ecp { fprintf(stderr, "Explicit checkpoint in %s line %d\n", __FILE__, __LINE__); }
+
+extern void hex2bin(char *src, char *dst, int length);
+extern void bin2hex(char *src, char *dst, int length);
+extern char *cp_trace(void);
 
 #endif /* __TINC_UTILS_H__ */

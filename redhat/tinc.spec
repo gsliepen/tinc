@@ -1,6 +1,6 @@
 Summary: tinc Virtual Private Network daemon
 Name: tinc
-Version: 1.0pre2
+Version: 1.0pre3
 Release: 1
 Copyright: GPL
 Group: System Environment/Daemons

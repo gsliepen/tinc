@@ -4,10 +4,12 @@
 # Package source files
 
 lib/pidfile.c
+lib/utils.c
 src/conf.c
-src/encr.c
 src/genauth.c
+src/meta.c
 src/net.c
 src/netutl.c
 src/protocol.c
+src/subnet.c
 src/tincd.c

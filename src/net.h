@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: net.h,v 1.10 2000/10/18 20:12:09 zarq Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -23,7 +25,6 @@
 #include <sys/time.h>
 
 #include "config.h"
-#include "conf.h"
 
 #define MAXSIZE 1700  /* should be a bit more than the MTU for the tapdevice */
 #define MTU 1600
@@ -43,21 +44,35 @@
                       ((unsigned char*)&(x))[1],((unsigned char*)&(x))[0]
 #endif
 
-#define MAXBUFSIZE 2048 /* Probably way too much, but it must fit every possible request. */
+#define MAXBUFSIZE 4096 /* Probably way too much, but it must fit every possible request. */
 
-typedef unsigned long ip_t;
+/* flags */
+#define INDIRECTDATA        0x0001 /* Used to indicate that this host has to be reached indirect */
+#define EXPORTINDIRECTDATA  0x0002 /* Used to indicate uplink that it has to tell others to do INDIRECTDATA */
+#define TCPONLY             0x0004 /* Tells sender to send packets over TCP instead of UDP (for firewalls) */
+
+typedef struct mac_t
+{
+  unsigned char x[6];
+} mac_t;
+
+typedef unsigned long ipv4_t;
+
+typedef ipv4_t ip_t; /* alias for ipv4_t */
+
+typedef struct ipv6_t
+{
+  unsigned short x[8];
+} ipv6_t;
+
+typedef unsigned short port_t;
+
 typedef short length_t;
 
 typedef struct vpn_packet_t {
   length_t len;		/* the actual number of bytes in the `data' field */
   unsigned char data[MAXSIZE];
 } vpn_packet_t;
-
-typedef struct real_packet_t {
-  length_t len;		/* the length of the entire packet */
-  ip_t from;		/* where the packet came from */
-  vpn_packet_t data;	/* encrypted vpn_packet_t */
-} real_packet_t;
 
 typedef struct passphrase_t {
   unsigned short len;
@@ -76,8 +91,14 @@ typedef struct status_bits_t {
   int validkey:1;                  /* 1 if we currently have a valid key for him */
   int waitingforkey:1;             /* 1 if we already sent out a request */
   int dataopen:1;                  /* 1 if we have a valid UDP connection open */
-  int unused:22;
+  int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
+  int decryptin:1;                 /* 1 if we have to decrypt incoming traffic */
+  int unused:18;
 } status_bits_t;
+
+typedef struct option_bits_t {
+  int unused:32;
+} option_bits_t;
 
 typedef struct queue_element_t {
   void *packet;
@@ -96,31 +117,6 @@ typedef struct enc_key_t {
   time_t expiry;
 } enc_key_t;
 
-typedef struct conn_list_t {
-  ip_t vpn_ip;                     /* his vpn ip */
-  ip_t vpn_mask;                   /* his vpn network address */
-  ip_t real_ip;                    /* his real (internet) ip */
-  char *hostname;                  /* the hostname of its real ip */
-  short unsigned int port;         /* his portnumber */
-  int socket;                      /* our udp vpn socket */
-  int meta_socket;                 /* our tcp meta socket */
-  int protocol_version;            /* used protocol */
-  status_bits_t status;            /* status info */
-  passphrase_t *pp;                /* encoded passphrase */
-  packet_queue_t *sq;              /* pending outgoing packets */
-  packet_queue_t *rq;              /* pending incoming packets (they have no
-				      valid key to be decrypted with) */
-  enc_key_t *public_key;           /* the other party's public key */
-  enc_key_t *key;                  /* encrypt with this key */
-  char buffer[MAXBUFSIZE+1];       /* metadata input buffer */
-  int buflen;                      /* bytes read into buffer */
-  int reqlen;                      /* length of first request in buffer */
-  time_t last_ping_time;           /* last time we saw some activity from the other end */  
-  int want_ping;                   /* 0 if there's no need to check for activity */
-  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
-  struct conn_list_t *next;        /* after all, it's a list of connections */
-} conn_list_t;
-
 extern int tap_fd;
 
 extern int total_tap_in;
@@ -128,15 +124,23 @@ extern int total_tap_out;
 extern int total_socket_in;
 extern int total_socket_out;
 
-extern conn_list_t *conn_list;
-extern conn_list_t *myself;
+extern char *unknown;
 
+extern char *request_name[256];
+extern char *status_text[10];
+
+#include "connlist.h"		/* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
+
+extern int str2opt(const char *);
+extern char *opt2str(int);
 extern int send_packet(ip_t, vpn_packet_t *);
 extern int setup_network_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
 extern int setup_vpn_connection(conn_list_t *);
 extern void terminate_connection(conn_list_t *);
-extern void flush_queues(conn_list_t*);
+extern void flush_queues(conn_list_t *);
+extern int xrecv(vpn_packet_t *);
+extern void add_queue(packet_queue_t **, void *, size_t);
 
 #endif /* __TINC_NET_H__ */
