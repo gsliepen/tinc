@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.98 2001/07/04 08:41:36 guus Exp $
+    $Id: protocol.c,v 1.28.4.99 2001/07/15 18:07:31 guus Exp $
 */
 
 #include "config.h"
@@ -174,11 +174,9 @@ cp
 int id_h(connection_t *cl)
 {
   connection_t *old;
-  unsigned short int port;
   char name[MAX_STRING_SIZE];
-  avl_node_t *node;
 cp
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %d %lx %hd", name, &cl->protocol_version, &cl->options, &port) != 4)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %d %lx %hd", name, &cl->protocol_version, &cl->options, &cl->port) != 4)
     {
        syslog(LOG_ERR, _("Got bad ID from %s"), cl->hostname);
        return -1;
@@ -208,6 +206,17 @@ cp
     
   cl->name = xstrdup(name);
 
+  /* Make sure we don't make an outgoing connection to a host that is already in our connection list */
+
+  if(cl->status.outgoing)
+    if((old = lookup_id(cl->name)))
+      {
+        if(debug_lvl >= DEBUG_CONNECTIONS)
+          syslog(LOG_NOTICE, _("We are already connected to %s."), cl->name);
+        old->status.outgoing = 1;
+        return -1;
+      }
+    
   /* Load information about peer */
 
   if(read_host_config(cl))
@@ -216,40 +225,6 @@ cp
       return -1;
     }
 
-  /* First check if the host is already in our
-     connection list. If so, we are probably making a loop, which
-     is not desirable.
-   */
-
-  if((old = lookup_id(cl->name)))
-    {
-      if(debug_lvl >= DEBUG_CONNECTIONS)
-        syslog(LOG_NOTICE, _("%s (%s) is already in our connection list"), cl->name, cl->hostname);
-      if(cl->status.outgoing)
-        {
-          cl->status.outgoing = 0;
-          old->status.outgoing = 1;
-        }
-      terminate_connection(cl);
-      return 0;
-    }
-    
-  /* Now we can add the name to the id tree */
-  
-  id_add(cl);
-
-  /* And uhr... cl->port just changed so we have to unlink it from the connection tree and re-insert... */
-  
-  node = avl_unlink(connection_tree, cl);
-  cl->port = port;
-  if(!avl_insert_node(connection_tree, node))
-    {
-      old = avl_search_node(connection_tree, node)->data;
-      syslog(LOG_ERR, _("%s is listening on %s:%hd, which is already in use by %s!"),
-             cl->name, cl->hostname, cl->port, old->name);
-      return -1;
-    }
-    
   /* Read in the public key, so that we can send a metakey */
 
   if(read_rsa_public_key(cl))
@@ -272,15 +247,34 @@ cp
      old connection that has timed out but we don't know it yet.
    */
 
-  while((old = lookup_id(cl->name)))
+  if((old = lookup_id(cl->name)))
     {
       if(debug_lvl >= DEBUG_CONNECTIONS)
-        syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
-        cl->name, old->hostname, cl->hostname);
-
+        syslog(LOG_NOTICE, _("Removing old connection for %s at %s in favour of new connection from %s"),
+               cl->name, old->hostname, cl->hostname);
+      if(old->status.outgoing)
+        {
+          cl->status.outgoing = 1;
+          old->status.outgoing = 0;
+        }
       terminate_connection(old);
+      return 0;
     }
+    
+  /* Now we can add the name to the id tree */
+  
+  id_add(cl);
 
+  /* Also check if no other tinc daemon uses the same IP and port for UDP traffic */
+  
+  old = avl_search(active_tree, cl);
+  if(old)
+  {
+    syslog(LOG_ERR, _("%s is listening on %s:%hd, which is already in use by %s!"),
+           cl->name, cl->hostname, cl->port, old->name);
+    return -1;
+  }
+    
   /* Activate this connection */
 
   cl->allow_request = ALL;
@@ -288,6 +282,8 @@ cp
   cl->nexthop = cl;
   cl->cipher_pkttype = EVP_bf_cbc();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
+
+  active_add(cl);
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_NOTICE, _("Connection with %s (%s) activated"), cl->name, cl->hostname);

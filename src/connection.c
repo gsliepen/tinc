@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.12 2001/06/29 13:09:55 guus Exp $
+    $Id: connection.c,v 1.1.2.13 2001/07/15 18:07:31 guus Exp $
 */
 
 #include "config.h"
@@ -42,6 +42,7 @@
 /* Root of the connection list */
 
 avl_tree_t *connection_tree;
+avl_tree_t *active_tree;
 avl_tree_t *id_tree;
 
 /* Pointer to connection describing myself */
@@ -51,6 +52,11 @@ connection_t *myself = NULL;
 /* Initialization and callbacks */
 
 int connection_compare(connection_t *a, connection_t *b)
+{
+  return a->meta_socket - b->meta_socket;
+}
+
+int active_compare(connection_t *a, connection_t *b)
 {
   ipv4_t result;
 
@@ -69,6 +75,7 @@ int id_compare(connection_t *a, connection_t *b)
 void init_connections(void)
 {
   connection_tree = avl_alloc_tree((avl_compare_t)connection_compare, (avl_action_t)free_connection);
+  active_tree = avl_alloc_tree((avl_compare_t)active_compare, NULL);
   id_tree = avl_alloc_tree((avl_compare_t)id_compare, NULL);
 }
 
@@ -130,6 +137,7 @@ void destroy_connection_tree(void)
 {
 cp
   avl_delete_tree(id_tree);
+  avl_delete_tree(active_tree);
   avl_delete_tree(connection_tree);
 cp
 }
@@ -140,6 +148,13 @@ void connection_add(connection_t *cl)
 {
 cp
   avl_insert(connection_tree, cl);
+cp
+}
+
+void active_add(connection_t *cl)
+{
+cp
+  avl_insert(active_tree, cl);
 cp
 }
 
@@ -154,20 +169,21 @@ void connection_del(connection_t *cl)
 {
 cp
   avl_delete(id_tree, cl);
+  avl_delete(active_tree, cl);
   avl_delete(connection_tree, cl);
 cp
 }
 
 /* Lookup functions */
 
-connection_t *lookup_connection(ipv4_t address, short unsigned int port)
+connection_t *lookup_active(ipv4_t address, short unsigned int port)
 {
   connection_t cl;
 cp
   cl.address = address;
   cl.port = port;
 
-  return avl_search(connection_tree, &cl);
+  return avl_search(active_tree, &cl);
 }
 
 connection_t *lookup_id(char *name)

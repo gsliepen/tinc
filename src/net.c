@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.119 2001/07/15 14:21:12 guus Exp $
+    $Id: net.c,v 1.35.4.120 2001/07/15 18:07:31 guus Exp $
 */
 
 #include "config.h"
@@ -1113,7 +1113,7 @@ cp
       return;
     }
 
-  cl = lookup_connection(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+  cl = lookup_active(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
 
   if(!cl)
     {

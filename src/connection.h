@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.9 2001/05/25 11:54:28 guus Exp $
+    $Id: connection.h,v 1.1.2.10 2001/07/15 18:07:31 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -65,6 +65,7 @@ typedef struct status_bits_t {
 typedef struct connection_t {
   char *name;                      /* name of this connection */
   ipv4_t address;                  /* his real (internet) ip */
+  short unsigned int meta_port;    /* port number of meta connection */
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
   short unsigned int port;         /* port number for UDP traffic */
@@ -103,16 +104,18 @@ typedef struct connection_t {
 } connection_t;
 
 extern avl_tree_t *connection_tree;
+extern avl_tree_t *active_tree;
 extern connection_t *myself;
 
 extern void init_connections(void);
 extern connection_t *new_connection(void);
 extern void free_connection(connection_t *);
 extern void id_add(connection_t *);
+extern void active_add(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
 extern connection_t *lookup_id(char *);
-extern connection_t *lookup_connection(ipv4_t, short unsigned int);
+extern connection_t *lookup_active(ipv4_t, short unsigned int);
 extern void dump_connection_list(void);
 extern int read_host_config(connection_t *);
 extern void destroy_connection_tree(void);
