@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.2 2000/11/20 22:13:03 guus Exp $
+    $Id: connection.h,v 1.1.2.3 2000/11/22 22:18:03 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -111,9 +111,11 @@ extern connection_t *myself;
 extern void init_connections(void);
 extern connection_t *new_connection(void);
 extern void free_connection(connection_t *);
+extern void id_add(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
 extern connection_t *lookup_id(char *);
+extern connection_t *lookup_connection(ipv4_t, short unsigned int);
 extern void dump_connection_list(void);
 extern int read_host_config(connection_t *);
 extern void destroy_connection_tree(void);

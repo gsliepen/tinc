@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.4 2000/11/22 22:05:36 guus Exp $
+    $Id: list.c,v 1.1.2.5 2000/11/22 22:18:03 guus Exp $
 */
 
 #include "config.h"
@@ -49,14 +49,10 @@ list_t *list_new(void)
 
   Delete the element pointed to by idx from the list.
 */
-list_node_t *list_delete(list_t *list, list_node_t *idx)
+void list_delete(list_t *list, list_node_t *idx)
 {
-  list_node_t *res;
-  
-  if(!list)
-    return NULL;
-  if(!idx)
-    return NULL;
+  if(!list || !idx)
+    return;
 
   if(list->callbacks->delete != NULL)
     if(list->callbacks->delete(idx->data))
@@ -67,13 +63,11 @@ list_node_t *list_delete(list_t *list, list_node_t *idx)
   if(idx->prev == NULL)
     /* First element in list */
     {
-      res = idx->next;
       list->head = idx->next;
     }
   if(idx->next == NULL)
     /* Last element in list */
     {
-      res = NULL;
       list->tail = idx->prev;
     }
   if(idx->prev != NULL && idx->next != NULL)
@@ -87,8 +81,8 @@ list_node_t *list_delete(list_t *list, list_node_t *idx)
   else
     if(list->tail == NULL)
       list->head = NULL;
+
   free(idx);
-  return res;
 }
 
 /*
@@ -99,7 +93,7 @@ list_node_t *list_delete(list_t *list, list_node_t *idx)
 */
 void list_forall_nodes(list_t *list, int (*function)(void *data))
 {
-  list_node_t *p;
+  list_node_t *p, *next;
   int res;
   
   if(!list)       /* no list given */
@@ -108,11 +102,12 @@ void list_forall_nodes(list_t *list, int (*function)(void *data))
     return;
   if(!list->head) /* list is empty */
     return;
-  for(p = list->head; p != NULL; p = p->next)
+  for(p = list->head; p != NULL; p = next)
     {
+      next = p->next;
       res = function(p->data);
       if(res != 0)
-	p = list_delete(list, p);
+	list_delete(list, p);
     }
 }
 

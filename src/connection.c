@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.4 2000/11/22 18:54:07 guus Exp $
+    $Id: connection.c,v 1.1.2.5 2000/11/22 22:18:03 guus Exp $
 */
 
 #include "config.h"
@@ -160,7 +160,7 @@ cp
 
 connection_t *lookup_connection(ipv4_t address, short unsigned int port)
 {
-  connection_t cl, *p;
+  connection_t cl;
 cp
   cl.address = address;
   cl.port = port;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.11 2000/11/22 22:05:37 guus Exp $
+    $Id: process.c,v 1.1.2.12 2000/11/22 22:18:03 guus Exp $
 */
 
 #include "config.h"
@@ -42,6 +42,8 @@
 
 #include "conf.h"
 #include "process.h"
+#include "subnet.h"
+#include "connection.h"
 
 #include "system.h"
 
@@ -199,8 +201,6 @@ cp
 */
 int detach(void)
 {
-  int fd;
-  pid_t pid;
 cp
   setup_signals();
 
