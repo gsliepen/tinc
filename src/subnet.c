@@ -17,10 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.1 2000/10/01 03:21:49 guus Exp $
+    $Id: subnet.c,v 1.1.2.2 2000/10/11 10:35:17 guus Exp $
 */
 
 #include "config.h"
+#include <utils.h>
+
+#include <xalloc.h>
 #include "subnet.h"
 #include "net.h"
 
@@ -29,29 +32,30 @@
 subnet_t *new_subnet(void)
 {
 cp
-cp
+  return (subnet_t *)xmalloc(sizeof(subnet_t));
 }
 
 void free_subnet(subnet_t *subnet)
 {
 cp
-cp
+  free(subnet);
 }
 
 /* Linked list management */
 
-int subnet_add(conn_list_t *cl, subnet_t *subnet)
+void subnet_add(conn_list_t *cl, subnet_t *subnet)
 {
 cp
+  /* FIXME: do sorting on netmask size if necessary */
+
   subnet->next = cl->subnets->next;
   subnet->prev = NULL;
-  subnet->next->prev = subnet
+  subnet->next->prev = subnet;
   cl->subnets = subnet;
 cp
-  return 0;
 }
 
-int subnet_del(conn_list_t *cl, subnet_t *subnet)
+void subnet_del(conn_list_t *cl, subnet_t *subnet)
 {
 cp
   if(subnet->prev)
@@ -62,25 +66,163 @@ cp
     {
       subnet->owner->subnets = subnet->next;
     }
-  
+
   subnet->next->prev = subnet->prev;
   free_subnet(subnet);
 cp
-  return 0;
 }
 
 /* Ascii representation of subnets */
 
 subnet_t *str2net(char *subnetstr)
 {
+  int type;
+  subnet_t *subnet;
 cp
+  if(sscanf(subnetstr, "%d,", &type) != 1)
+    return NULL;
+
+  subnet = new_subnet();
+
+  switch(type)
+    {
+      case SUBNET_MAC:
+        if(sscanf(netstr, "%d,%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &subnet->type,
+                   &subnet->net.mac.x[0],
+                   &subnet->net.mac.x[1],
+                   &subnet->net.mac.x[2],
+                   &subnet->net.mac.x[3],
+                   &subnet->net.mac.x[4],
+                   &subnet->net.mac.x[5]) != 7)
+          {
+            free_subnet(subnet);
+            return NULL;
+          }
+        break;
+      case SUBNET_IPv4:
+        if(sscanf(subnetstr, "%d,%lx:%lx", &subnet->type, &subnet->net.ipv4.address, &subnet->net.ipv4.mask) != 3)
+          {
+            free_subnet(subnet);
+            return NULL;
+          }
+        break;
+      case SUBNET_IPv6:
+        if(sscanf(netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx", &subnet->type,
+                   &subnet->net.ipv6.address.x[0],
+                   &subnet->net.ipv6.address.x[1],
+                   &subnet->net.ipv6.address.x[2],
+                   &subnet->net.ipv6.address.x[3],
+                   &subnet->net.ipv6.address.x[4],
+                   &subnet->net.ipv6.address.x[5],
+                   &subnet->net.ipv6.address.x[6],
+                   &subnet->net.ipv6.address.x[7],
+                   &subnet->net.ipv6.mask.x[0],
+                   &subnet->net.ipv6.mask.x[1],
+                   &subnet->net.ipv6.mask.x[2],
+                   &subnet->net.ipv6.mask.x[3],
+                   &subnet->net.ipv6.mask.x[4],
+                   &subnet->net.ipv6.mask.x[5],
+                   &subnet->net.ipv6.mask.x[6],
+                   &subnet->net.ipv6.mask.x[7]) != 17)
+          {
+            free_subnet(subnet);
+            return NULL;
+          }
+        break;
+                break;
+      default:
+        free_subnet(subnet);
+        return NULL;
 cp
+  return subnet;
 }
 
 char *net2str(subnet_t *subnet)
 {
+  char *netstr;
 cp
+  switch(subnet->type)
+    {
+      case SUBNET_MAC:
+        asprintf(netstr, "%d,%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", subnet->type,
+                   subnet->net.mac.x[0],
+                   subnet->net.mac.x[1],
+                   subnet->net.mac.x[2],
+                   subnet->net.mac.x[3],
+                   subnet->net.mac.x[4],
+                   subnet->net.mac.x[5]);
+      case SUBNET_IPv4:
+        asprintf(netstr, "%d,%lx:%lx", subnet->type, subnet->net.ipv4.address, subnet->net.ipv4.mask);
+      case SUBNET_IPv6:
+        asprintf(netstr, "%d,%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+                   subnet->net.ipv6.address.x[0],
+                   subnet->net.ipv6.address.x[1],
+                   subnet->net.ipv6.address.x[2],
+                   subnet->net.ipv6.address.x[3],
+                   subnet->net.ipv6.address.x[4],
+                   subnet->net.ipv6.address.x[5],
+                   subnet->net.ipv6.address.x[6],
+                   subnet->net.ipv6.address.x[7],
+                   subnet->net.ipv6.mask.x[0],
+                   subnet->net.ipv6.mask.x[1],
+                   subnet->net.ipv6.mask.x[2],
+                   subnet->net.ipv6.mask.x[3],
+                   subnet->net.ipv6.mask.x[4],
+                   subnet->net.ipv6.mask.x[5],
+                   subnet->net.ipv6.mask.x[6],
+                   subnet->net.ipv6.mask.x[7]);
+      default:
+        netstr = NULL;
+    }
 cp
+  return netstr;
 }
 
 /* Subnet lookup routines */
+
+subnet_t *lookup_subnet_mac(subnet_t *subnets, mac_t address)
+{
+  subnet_t *subnet;
+cp
+  for(subnet = subnets; subnet != NULL; subnet = subnet->next)
+    {
+      if(subnet->type == SUBNET_MAC)
+        if(memcmp(&address, &subnet->net.mac.address, sizeof(address)) == 0)
+          break;
+    }
+cp
+  return subnet;
+}
+
+subnet_t *lookup_subnet_ipv4(subnet_t *subnets, ipv4_t address)
+{
+  subnet_t *subnet;
+cp
+  for(subnet = subnets; subnet != NULL; subnet = subnet->next)
+    {
+      if(subnet->type == SUBNET_IPV4)
+        if((address & subnet->net.ipv4.mask) == subnet->net.ipv4.address)
+          break;
+    }
+cp
+  return subnet;
+}
+
+subnet_t *lookup_subnet_ipv6(subnet_t *subnets, ipv6_t address)
+{
+  subnet_t *subnet;
+cp
+  for(subnet = subnets; subnet != NULL; subnet = subnet->next)
+    {
+      if(subnet->type == SUBNET_IPV6)
+        {
+          for(i=0; i<8; i++)
+            if((address.x[i] & subnet->net.ipv6.mask.x[i]) != subnet->net.ipv6.address.x[i])
+              break;
+          if(i=8)
+            break;
+        }
+    }
+cp
+  return subnet;
+}

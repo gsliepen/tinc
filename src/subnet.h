@@ -17,17 +17,38 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.1 2000/10/01 03:21:49 guus Exp $
+    $Id: subnet.h,v 1.1.2.2 2000/10/11 10:35:17 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
 #define __TINC_SUBNET_H__
 
-enum{
+#include "net.h"
+#include "connlist.h"
+
+enum
+{
   SUBNET_MAC = 0,
-  SUBNET_IPv4,
-  SUBNET_IPv6,
+  SUBNET_IPV4,
+  SUBNET_IPV6,
 };
+
+typedef struct subnet_mac_t
+{
+  mac_t address;
+} subnet_mac_t;
+
+typedef struct subnet_ipv4_t
+{
+  ipv4_t address;
+  ipv4_t mask;
+} subnet_ipv4_t;
+
+typedef struct subnet_ipv6_t
+{
+  ipv6_t address;
+  ipv6_t mask;
+} subnet_ipv6_t;
 
 typedef struct subnet_t {
   struct conn_list_t *owner;		/* the owner of this subnet */
@@ -38,11 +59,26 @@ typedef struct subnet_t {
 
   int type;				/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
 
-  /* Okay this is IPv4 specific because we are lazy and don't want to implement
-     other types just now. Type should always be SUBNET_IPv4 for now. */
+  /* And now for the actual subnet: */
 
-  ip_t netaddr;
-  ip_t netmask;
+  union
+    {
+      subnet_mac_t mac;
+      subnet_ipv4_t ipv4;
+      subnet_ipv6_t ipv6;
+    } net;
+    
 } subnet_t;  
+
+extern subnet_t *new_subnet(void);
+extern void free_subnet(subnet_t *);
+extern void subnet_add(conn_list_t *, subnet_t *);
+extern void subnet_del(subnet_t *);
+extern char *net2str(subnet_t *);
+extern subnet_t *str2net(char *);
+extern subnet_t *lookup_subnet_mac(subnet_t *, mac_t);
+extern subnet_t *lookup_subnet_ipv4(subnet_t *, ipv4_t);
+extern subnet_t *lookup_subnet_ipv6(subnet_t *, ipv6_t);
+
 
 #endif /* __TINC_SUBNET_H__ */

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: encr.h,v 1.2.4.1 2000/06/25 15:22:16 guus Exp $
+    $Id: encr.h,v 1.2.4.2 2000/10/11 10:35:15 guus Exp $
 */
 
 #ifndef __TINC_ENCR_H__
@@ -31,9 +31,6 @@ extern char *my_public_key_base36;
 extern int my_key_expiry;
 
 extern int security_init(void);
-
-extern void do_bf_encrypt(vpn_packet_t *, real_packet_t *);
-extern void do_bf_decrypt(real_packet_t *, vpn_packet_t *);
 
 extern int send_portnumbers(int);
 extern void set_shared_key(char *);

@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS = m4 intl lib cipher src doc po redhat debian
+SUBDIRS = m4 intl lib src doc po redhat debian
 
 ACLOCAL_AMFLAGS =
 

@@ -5,5 +5,3 @@ Ivo Timmermans <itimmermans@bigfoot.com>
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from
  the syslog 1.3 sources.
- * The files in cipher/blowfish/ are from the SSLeay package by
- Eric Young.

@@ -17,13 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.8 2000/09/26 14:06:11 guus Exp $
+    $Id: protocol.h,v 1.5.4.9 2000/10/11 10:35:17 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
 #include "net.h"
+#include "subnet.h"
 
 /* Protocol version. Different versions are incompatible,
    incompatible version have different protocols.

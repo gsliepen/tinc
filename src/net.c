@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.32 2000/09/26 14:06:04 guus Exp $
+    $Id: net.c,v 1.35.4.33 2000/10/11 10:35:16 guus Exp $
 */
 
 #include "config.h"
@@ -37,7 +37,6 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include <cipher.h>
 #include <utils.h>
 #include <xalloc.h>
 
@@ -69,11 +68,8 @@ conn_list_t *myself = NULL;
 */
 void strip_mac_addresses(vpn_packet_t *p)
 {
-  unsigned char tmp[MAXSIZE];
 cp
-  memcpy(tmp, p->data, p->len);
-  p->len -= 12;
-  memcpy(p->data, &tmp[12], p->len);
+  memmove(p->data, p->data + 12, p->len -= 12);
 cp
 }
 
@@ -82,39 +78,37 @@ cp
 */
 void add_mac_addresses(vpn_packet_t *p)
 {
-  unsigned char tmp[MAXSIZE];
 cp
-  memcpy(&tmp[12], p->data, p->len);
+  memcpy(p->data + 12, p->data, p->len);
   p->len += 12;
-  tmp[0] = tmp[6] = 0xfe;
-  tmp[1] = tmp[7] = 0xfd;
-  *((ip_t*)(&tmp[2])) = (ip_t)(htonl(myself->vpn_ip));
-  *((ip_t*)(&tmp[8])) = *((ip_t*)(&tmp[26]));
-  memcpy(p->data, &tmp[0], p->len);
+  p->data[0] = p->data[6] = 0xfe;
+  p->data[1] = p->data[7] = 0xfd;
+  /* Really evil pointer stuff just below! */
+  *((ip_t*)(&p->data[2])) = (ip_t)(htonl(myself->real_ip));
+  *((ip_t*)(&p->data[8])) = *((ip_t*)(&p->data[26]));
 cp
 }
 
-int xsend(conn_list_t *cl, void *packet)
+int xsend(conn_list_t *cl, vpn_packet_t *inpkt)
 {
-  real_packet_t rp;
+  vpn_packet_t outpkt;
+  int outlen, outpad;
 cp
-  do_encrypt((vpn_packet_t*)packet, &rp, cl->datakey);
-  rp.from = htonl(myself->vpn_ip);
-  rp.data.len = htons(rp.data.len);
-  rp.len = htons(rp.len);
-
+  outpkt.len = inpkt->len;
+  EVP_EncryptInit(cl->cipher_pktctx, cl->cipher_pkttype, cl->cipher_pktkey, cl->cipher_pktiv);
+  EVP_EncryptUpdate(cl->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
+  EVP_EncryptFinal(cl->cipher_pktctx, outpkt.data + outlen, &outpad);
+  outlen += outpad;
+  
   if(debug_lvl > 3)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
-           ntohs(rp.len), cl->name, cl->hostname);
+           outlen, cl->name, cl->hostname);
 
-  total_socket_out += ntohs(rp.len);
+  total_socket_out += outlen;
 
   cl->want_ping = 1;
 
-  if((cl->flags | myself->flags) & TCPONLY)
-      return send_tcppacket(cl, (void*)&rp, ntohs(rp.len));
-
-  if((send(cl->socket, (char*)&rp, ntohs(rp.len), 0)) < 0)
+  if((send(cl->socket, (char *) &(outpkt.len), outlen + 2, 0)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              cl->name, cl->hostname);
@@ -124,25 +118,28 @@ cp
   return 0;
 }
 
-int xrecv(conn_list_t *cl, void *packet)
+int xrecv(vpn_packet_t *inpkt)
 {
-  vpn_packet_t vp;
-  int lenin;
+  vpn_packet_t outpkt;
+  int outlen, outpad;
 cp
-  do_decrypt((real_packet_t*)packet, &vp, cl->datakey);
-  add_mac_addresses(&vp);
-
   if(debug_lvl > 3)
-    syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
-           ((real_packet_t*)packet)->len, cl->name, cl->hostname);
+    syslog(LOG_ERR, _("Receiving packet of %d bytes"),
+           inpkt->len);
 
-  if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
+  outpkt.len = inpkt->len;
+  EVP_DecryptInit(myself->cipher_pktctx, myself->cipher_pkttype, myself->cipher_pktkey, myself->cipher_pktiv);
+  EVP_DecryptUpdate(myself->cipher_pktctx, outpkt.data, &outlen, inpkt->data, inpkt->len);
+  /* FIXME: grok DecryptFinal  
+  EVP_DecryptFinal(myself->cipher_pktctx, outpkt.data + outlen, &outpad);
+   */
+   
+  add_mac_addresses(&outpkt);
+
+  if(write(tap_fd, outpkt.data, outpkt.len) < 0)
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
-    total_tap_out += lenin;
-
-  cl->want_ping = 0;
-  cl->last_ping_time = time(NULL);
+    total_tap_out += outpkt.len;
 cp
   return 0;
 }
@@ -347,11 +344,11 @@ cp
   if(!cl->status.validkey)
     {
       if(debug_lvl > 3)
-	syslog(LOG_INFO, _("%s (%s) has no valid key, queueing packet"),
+	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
 	       cl->name, cl->hostname);
       add_queue(&(cl->sq), packet, packet->len + 2);
       if(!cl->status.waitingforkey)
-	send_key_request(cl->vpn_ip);			/* Keys should be sent to the host running the tincd */
+	send_req_key(myself, cl);			/* Keys should be sent to the host running the tincd */
       return 0;
     }
 
@@ -603,19 +600,14 @@ int setup_myself(void)
 cp
   myself = new_conn_list();
 
-  if(!(cfg = get_config_val(myvpnip)))
-    {
-      syslog(LOG_ERR, _("No value for my VPN IP given"));
-      return -1;
-    }
-
-  myself->vpn_ip = cfg->data.ip->ip;
-  myself->hostname = hostlookup(htonl(myself->vpn_ip));
-  myself->vpn_mask = cfg->data.ip->mask;
+  myself->hostname = "MYSELF"; /* FIXME? */
   myself->flags = 0;
 
-  if(!(cfg = get_config_val(tincname)))
-    asprintf(&(myself->name), IP_ADDR_S, IP_ADDR_V(myself->vpn_ip));
+  if(!(cfg = get_config_val(tincname))) /* Not acceptable */
+    {
+      syslog(LOG_ERR, _("Name for tinc daemon required!"));
+      return -1;
+    }
   else
     myself->name = (char*)cfg->data.val;
   
@@ -865,65 +857,32 @@ cp
   udp socket and write it to the ethertap
   device after being decrypted
 */
-int handle_incoming_vpn_data(conn_list_t *cl)
+int handle_incoming_vpn_data()
 {
-  real_packet_t rp;
+  vpn_packet_t pkt;
   int lenin;
   int x, l = sizeof(x);
-  conn_list_t *f;
 cp
-  if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
+  if(getsockopt(myself->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"),
-	     __FILE__, __LINE__, cl->socket,
-             cl->name, cl->hostname);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"),
+	     __FILE__, __LINE__, myself->socket);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, _("Incoming data socket error for %s (%s): %s"),
-             cl->name, cl->hostname, strerror(x));
+      syslog(LOG_ERR, _("Incoming data socket error: %s"), strerror(x));
       return -1;
     }
 
-  rp.len = -1;
-  lenin = recvfrom(cl->socket, &rp, MTU, 0, NULL, NULL);
-  if(lenin <= 0)
+  if(recvfrom(myself->socket, (char *) &(pkt.len), MTU, 0, NULL, NULL) <= 0)
     {
-      syslog(LOG_ERR, _("Receiving packet from %s (%s) failed: %m"),
-	     cl->name, cl->hostname);
+      syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return -1;
     }
-  total_socket_in += lenin;
 
-  rp.data.len = ntohs(rp.data.len);
-  rp.len = ntohs(rp.len);
-  rp.from = ntohl(rp.from);
-
-  if(rp.len >= 0)
-    {
-      f = lookup_conn(rp.from);
-      if(!f)
-	{
-	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
-		 cl->name, cl->hostname, IP_ADDR_V(rp.from));
-	  return -1;
-	}
-
-      if(f->status.validkey)
-	xrecv(f, &rp);
-      else
-	{
-	  add_queue(&(f->rq), &rp, rp.len);
-	  if(!cl->status.waitingforkey)
-	    send_key_request(rp.from);
-	}
-
-      if(my_key_expiry <= time(NULL))
-	regenerate_keys();
-    }
 cp
-  return 0;
+  return xrecv(&pkt);
 }
 
 /*
@@ -1036,13 +995,13 @@ cp
   accept a new tcp connect and create a
   new connection
 */
-int handle_new_meta_connection(conn_list_t *cl)
+int handle_new_meta_connection()
 {
   conn_list_t *ncn;
   struct sockaddr client;
   int nfd, len = sizeof(client);
 cp
-  if((nfd = accept(cl->meta_socket, &client, &len)) < 0)
+  if((nfd = accept(myself->meta_socket, &client, &len)) < 0)
     {
       syslog(LOG_ERR, _("Accepting a new connection failed: %m"));
       return -1;
@@ -1103,10 +1062,10 @@ cp
     }
   
   if(FD_ISSET(myself->socket, f))
-    handle_incoming_vpn_data(myself);
+    handle_incoming_vpn_data();
 
   if(FD_ISSET(myself->meta_socket, f))
-    handle_new_meta_connection(myself);
+    handle_new_meta_connection();
 cp
 }
 

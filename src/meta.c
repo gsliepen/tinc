@@ -17,27 +17,34 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.1 2000/09/26 14:06:03 guus Exp $
+    $Id: meta.c,v 1.1.2.2 2000/10/11 10:35:15 guus Exp $
 */
 
 #include "config.h"
+#include <utils.h>
 
-int send_meta(conn_list_t *cl, const char *buffer, int length)
+#include <errno.h>
+#include <syslog.h>
+#include <sys/signal.h>
+#include <sys/socket.h>
+#include <openssl/evp.h>
+
+#include "net.h"
+#include "system.h"
+
+int send_meta(conn_list_t *cl, char *buffer, int length)
 {
   char outbuf[MAXBUFSIZE];
   char *bufp;
+  int outlen;
 cp
   if(debug_lvl >= DEBUG_META)
-    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s): %s"), int length,
+    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s): %s"), length,
            cl->name, cl->hostname, buffer);
 
   if(cl->status.encryptout)
     {
-      if(EVP_EncryptUpdate(cl->cipher_outctx, cl->buffer + cl->buflen, NULL, inbuf, length) != 1)
-        {
-          syslog(LOG_ERR, _("Error during encryption of outgoing metadata to %s (%s)"), cl->name, cl->hostname);
-          return -1;
-        }
+      EVP_EncryptUpdate(cl->cipher_outctx, outbuf, &outlen, buffer, length);
       bufp = outbuf;
     }
   else
@@ -84,7 +91,7 @@ cp
       return -1;
     }
 
-  if(cl->status.encryptin)
+  if(cl->status.decryptin)
     bufp = inbuf;
   else
     bufp = cl->buffer + cl->buflen;
@@ -109,11 +116,7 @@ cp
 
   if(cl->status.decryptin)
     {
-      if(EVP_DecryptUpdate(cl->cipher_inctx, cl->buffer + cl->buflen, NULL, inbuf, lenin) != 1)
-        {
-          syslog(LOG_ERR, _("Error during decryption of incoming metadata from %s (%s)"), cl->name, cl->hostname);
-          return -1;
-        }
+      EVP_DecryptUpdate(cl->cipher_inctx, cl->buffer + cl->buflen, NULL, inbuf, lenin);
     }
     
   oldlen = cl->buflen;

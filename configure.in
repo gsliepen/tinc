@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.5 2000/09/11 11:40:46 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.6 2000/10/11 10:35:15 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre3)
@@ -103,6 +103,6 @@ AC_CHECK_FUNC(gethostbyname, [], [
   AC_CHECK_LIB(nsl, gethostbyname)
 ])
 
-AC_OUTPUT([Makefile src/Makefile cipher/Makefile
+AC_OUTPUT([Makefile src/Makefile
 doc/Makefile intl/Makefile lib/Makefile
 m4/Makefile po/Makefile.in redhat/Makefile debian/Makefile])

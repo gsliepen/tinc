@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.13 2000/10/01 03:21:49 guus Exp $
+    $Id: net.h,v 1.9.4.14 2000/10/11 10:35:16 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include "conf.h"
+#include "connlist.h"
 
 #define MAXSIZE 1700  /* should be a bit more than the MTU for the tapdevice */
 #define MTU 1600
@@ -52,22 +53,28 @@
 #define EXPORTINDIRECTDATA  0x0002 /* Used to indicate uplink that it has to tell others to do INDIRECTDATA */
 #define TCPONLY             0x0004 /* Tells sender to send packets over TCP instead of UDP (for firewalls) */
 
-typedef unsigned long ip_t;
-typedef unsigned short port_t;
-typedef short length_t;
+typedef struct mac_t
+{
+  unsigned char x[6];
+} mac_t;
 
-struct conn_list_t;
+typedef unsigned long ipv4_t;
+
+typedef ipv4_t ip_t; /* alias for ipv4_t */
+
+typedef struct ipv6_t
+{
+  unsigned short x[8];
+} ipv6_t;
+
+typedef unsigned short port_t;
+
+typedef short length_t;
 
 typedef struct vpn_packet_t {
   length_t len;		/* the actual number of bytes in the `data' field */
   unsigned char data[MAXSIZE];
 } vpn_packet_t;
-
-typedef struct real_packet_t {
-  length_t len;		/* the length of the entire packet */
-  ip_t from;		/* where the packet came from */
-  vpn_packet_t data;	/* encrypted vpn_packet_t */
-} real_packet_t;
 
 typedef struct passphrase_t {
   unsigned short len;
@@ -87,8 +94,7 @@ typedef struct status_bits_t {
   int waitingforkey:1;             /* 1 if we already sent out a request */
   int dataopen:1;                  /* 1 if we have a valid UDP connection open */
   int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
-  int encryptin:1;                 /* 1 if we have to decrypt incoming traffic */
-  int encrypted:1;
+  int decryptin:1;                 /* 1 if we have to decrypt incoming traffic */
   int unused:18;
 } status_bits_t;
 
@@ -113,54 +119,12 @@ typedef struct enc_key_t {
   time_t expiry;
 } enc_key_t;
 
-typedef struct conn_list_t {
-  char *name;                      /* name of this connection */
-  ip_t real_ip;                    /* his real (internet) ip */
-  char *hostname;                  /* the hostname of its real ip */
-  short unsigned int port;         /* his portnumber */
-  int protocol_version;            /* used protocol */
-  int options;                     /* options turned on for this connection */
-
-  int flags;                       /* his flags */
-  int socket;                      /* our udp vpn socket */
-  int meta_socket;                 /* our tcp meta socket */
-  status_bits_t status;            /* status info */
-  packet_queue_t *sq;              /* pending outgoing packets */
-  packet_queue_t *rq;              /* pending incoming packets (they have no
-				      valid key to be decrypted with) */
-  enc_key_t *public_key;           /* the other party's public key */
-  enc_key_t *datakey;              /* encrypt data packets with this key */
-  enc_key_t *rsakey;
-
-  char *buffer;                    /* metadata input buffer */
-  int buflen;                      /* bytes read into buffer */
-  int reqlen;                      /* length of first request in buffer */
-  int allow_request;               /* defined if there's only one request possible */
-
-  time_t last_ping_time;           /* last time we saw some activity from the other end */  
-  int want_ping;                   /* 0 if there's no need to check for activity. Shouldn't this go into status? (GS) */
-
-  char *mychallenge;               /* challenge we received from him */
-  char *hischallenge;              /* challenge we sent to him */
-
-  struct conn_list_t *nexthop;     /* nearest meta-hop in this direction, will be changed to myuplink (GS) */
-  struct conn_list_t *hisuplink;   /* his nearest meta-hop in our direction */
-  struct conn_list_t *myuplink;    /* our nearest meta-hop in his direction */
-
-  struct subnet_t *subnets;        /* Pointer to a list of subnets belonging to this connection */
-
-  struct conn_list_t *next;        /* after all, it's a list of connections */
-} conn_list_t;
-
 extern int tap_fd;
 
 extern int total_tap_in;
 extern int total_tap_out;
 extern int total_socket_in;
 extern int total_socket_out;
-
-extern conn_list_t *conn_list;
-extern conn_list_t *myself;
 
 extern char *request_name[256];
 extern char *status_text[10];
@@ -174,7 +138,7 @@ extern void main_loop(void);
 extern int setup_vpn_connection(conn_list_t *);
 extern void terminate_connection(conn_list_t *);
 extern void flush_queues(conn_list_t*);
-extern int xrecv(conn_list_t *, void *);
+extern int xrecv(vpn_packet_t *);
 extern void add_queue(packet_queue_t **, void *, size_t);
 
 #endif /* __TINC_NET_H__ */

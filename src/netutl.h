@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.1 2000/06/25 15:22:16 guus Exp $
+    $Id: netutl.h,v 1.2.4.2 2000/10/11 10:35:17 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
@@ -24,14 +24,7 @@
 
 #include "net.h"
 
-extern conn_list_t *lookup_conn(ip_t);
-extern void free_conn_element(conn_list_t *);
-extern void free_conn_list(conn_list_t*);
-extern void prune_conn_list(void);
-extern conn_list_t *new_conn_list(void);
-extern void destroy_conn_list(void);
 extern char *hostlookup(unsigned long);
 extern ip_mask_t *strtoip(char*);
-extern void dump_conn_list(void);
 
 #endif /* __TINC_NETUTL_H__ */
