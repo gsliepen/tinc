@@ -35,7 +35,7 @@
 #include "netutl.h"
 #include "protocol.h"
 
-char buffer[MAXBUFSIZE];
+char buffer[MAXBUFSIZE+1];
 int buflen;
 
 int send_ack(conn_list_t *cl)
@@ -44,7 +44,7 @@ cp
   if(debug_lvl > 2)
     syslog(LOG_DEBUG, "Send ACK to %s", cl->hostname);
 
-  buflen = sprintf(buffer, "%d\n", ACK);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d\n", ACK);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -64,7 +64,7 @@ cp
     syslog(LOG_DEBUG, "Send TERMREQ to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx\n", TERMREQ, myself->vpn_ip);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx\n", TERMREQ, myself->vpn_ip);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -82,7 +82,7 @@ cp
     syslog(LOG_DEBUG, "Send TIMEOUT to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx\n", PINGTIMEOUT, myself->vpn_ip);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx\n", PINGTIMEOUT, myself->vpn_ip);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -100,7 +100,7 @@ cp
     syslog(LOG_DEBUG, "Sending delete host " IP_ADDR_S " to " IP_ADDR_S,
 	   IP_ADDR_V(new_host->vpn_ip), IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx\n", DEL_HOST, new_host->vpn_ip);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx\n", DEL_HOST, new_host->vpn_ip);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -117,7 +117,7 @@ cp
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "pinging " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d\n", PING);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d\n", PING);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -131,7 +131,7 @@ cp
 int send_pong(conn_list_t *cl)
 {
 cp
-  buflen = sprintf(buffer, "%d\n", PONG);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d\n", PONG);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -149,7 +149,7 @@ cp
     syslog(LOG_DEBUG, "Sending add host to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx %lx/%lx:%x\n", ADD_HOST, new_host->real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx %lx/%lx:%x\n", ADD_HOST, new_host->real_ip, new_host->vpn_ip, new_host->vpn_mask, new_host->port);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -167,7 +167,7 @@ cp
     syslog(LOG_DEBUG, "Sending KEY_CHANGED to " IP_ADDR_S,
 	   IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx\n", KEY_CHANGED, src->vpn_ip);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx\n", KEY_CHANGED, src->vpn_ip);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -195,7 +195,7 @@ cp
     syslog(LOG_DEBUG, "Send BASIC_INFO to " IP_ADDR_S,
 	   IP_ADDR_V(cl->real_ip));
 
-  buflen = sprintf(buffer, "%d %d %lx/%lx:%x\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %d %lx/%lx:%x\n", BASIC_INFO, PROT_CURRENT, myself->vpn_ip, myself->vpn_mask, myself->port);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -234,7 +234,7 @@ cp
     syslog(LOG_DEBUG, "Send PUBLIC_KEY %s to " IP_ADDR_S,
 	   my_public_key_base36, IP_ADDR_V(cl->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %s\n", PUBLIC_KEY, my_public_key_base36);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %s\n", PUBLIC_KEY, my_public_key_base36);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -248,7 +248,7 @@ cp
 int send_calculate(conn_list_t *cl, char *k)
 {
 cp
-  buflen = sprintf(buffer, "%d %s\n", CALCULATE, k);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %s\n", CALCULATE, k);
 
   if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
@@ -275,7 +275,7 @@ cp
     syslog(LOG_DEBUG, "Sending out request for public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx %lx\n", REQ_KEY, to, myself->vpn_ip);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx %lx\n", REQ_KEY, to, myself->vpn_ip);
 
   if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
     {
@@ -305,7 +305,7 @@ cp
     syslog(LOG_DEBUG, "Sending public key to " IP_ADDR_S,
 	   IP_ADDR_V(fw->nexthop->vpn_ip));
 
-  buflen = sprintf(buffer, "%d %lx %lx %d %s\n", ANS_KEY, to, myself->vpn_ip, my_key_expiry, my_public_key_base36);
+  buflen = snprintf(buffer, MAXBUFLEN, "%d %lx %lx %d %s\n", ANS_KEY, to, myself->vpn_ip, my_key_expiry, my_public_key_base36);
 
   if((write(fw->nexthop->meta_socket, buffer, buflen)) < 0)
     {

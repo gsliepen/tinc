@@ -112,7 +112,7 @@ typedef struct conn_list_t {
 				      valid key to be decrypted with) */
   enc_key_t *public_key;           /* the other party's public key */
   enc_key_t *key;                  /* encrypt with this key */
-  char buffer[MAXBUFSIZE];         /* metadata input buffer */
+  char buffer[MAXBUFSIZE+1];       /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int reqlen;                      /* length of first request in buffer */
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */
