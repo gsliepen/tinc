@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.76 2003/10/06 16:13:08 guus Exp $
+    $Id: process.c,v 1.1.2.77 2003/11/27 23:24:59 guus Exp $
 */
 
 #include "system.h"
@@ -257,8 +257,10 @@ static bool write_pidfile(void)
 	}
 
 	/* if it's locked, write-protected, or whatever */
-	if(!write_pid(pidfilename))
+	if(!write_pid(pidfilename)) {
+		fprintf(stderr, _("Could write pid file %s: %s\n"), pidfilename, strerror(errno));
 		return false;
+	}
 
 	return true;
 }
@@ -335,8 +337,10 @@ bool detach(void)
 
 		/* Now UPDATE the pid in the pidfile, because we changed it... */
 
-		if(!write_pid(pidfilename))
+		if(!write_pid(pidfilename)) {
+			fprintf(stderr, _("Could not write pidfile %s: %s\n"), pidfilename, strerror(errno));
 			return false;
+		}
 #else
 		if(!statushandle)
 			exit(install_service());
