@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.16 2003/08/08 19:49:47 guus Exp $
+    $Id: device.c,v 1.1.2.17 2003/10/08 11:37:20 guus Exp $
 */
 
 #include "system.h"
@@ -59,7 +59,7 @@ int sp[2];
 bool setup_device(void)
 {
 	HKEY key, key2;
-	int i;
+	int i, err;
 
 	char regpath[1024];
 	char adapterid[1024];
