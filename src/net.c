@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.128 2001/08/17 18:14:03 guus Exp $
+    $Id: net.c,v 1.35.4.129 2001/09/01 12:36:06 guus Exp $
 */
 
 #include "config.h"
@@ -96,7 +96,6 @@ int total_tap_out = 0;
 int total_socket_in = 0;
 int total_socket_out = 0;
 
-config_t *upstreamcfg;
 int seconds_till_retry = 5;
 
 int keylifetime = 0;
@@ -647,9 +646,13 @@ cp
 
   if((old = lookup_id(name)))
     {
-      if(debug_lvl >= DEBUG_CONNECTIONS)
-        syslog(LOG_NOTICE, _("We are already connected to %s."), name);
-      old->status.outgoing = 1;
+      if(!old->status.outgoing)
+        {
+          if(debug_lvl >= DEBUG_CONNECTIONS)
+            syslog(LOG_NOTICE, _("We are already connected to %s."), name);
+
+          old->status.outgoing = 1;
+        }
       return 0;
     }
     
@@ -960,47 +963,44 @@ cp
   return 0;
 }
 
+void randomized_alarm(int seconds)
+{
+  unsigned char r;
+  RAND_pseudo_bytes(&r, 1);
+  alarm((seconds * (int)r) / 128 + 1);
+}
+
 RETSIGTYPE
-sigalrm_handler(int a)
+try_outgoing_connections(int a)
 {
   config_t const *cfg;
+  int retry = 0;
 cp
-  cfg = get_config_val(upstreamcfg, config_connectto);
+  cfg = get_config_val(config, config_connectto);
 
-  if(!cfg)
+  while(cfg)
     {
-      if(upstreamcfg == config)
-      {
-        /* No upstream IP given, we're listen only. */
-        signal(SIGALRM, SIG_IGN);
-        return;
-      }
+      if(setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
+        retry = 1;
+      cfg = get_config_val(cfg, config_connectto); /* Or else we try the next ConnectTo line */
+    }
+
+  if(retry)
+    {
+      seconds_till_retry += 5;
+      if(seconds_till_retry > MAXTIMEOUT)    /* Don't wait more than MAXTIMEOUT seconds. */
+        seconds_till_retry = MAXTIMEOUT;
+
+      syslog(LOG_ERR, _("Failed to setup all outgoing connections, will retry in %d seconds"),
+        seconds_till_retry);
+  
+      /* Randomize timeout to avoid global synchronisation effects */
+      randomized_alarm(seconds_till_retry);
     }
   else
     {
-      /* We previously tried all the ConnectTo lines. Now wrap back to the first. */
-      cfg = get_config_val(config, config_connectto);
+      seconds_till_retry = 5;
     }
-    
-  while(cfg)
-    {
-      upstreamcfg = cfg->next;
-      if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
-        {
-          signal(SIGALRM, SIG_IGN);
-          return;
-        }
-      cfg = get_config_val(upstreamcfg, config_connectto); /* Or else we try the next ConnectTo line */
-    }
-
-  signal(SIGALRM, sigalrm_handler);
-  upstreamcfg = config;
-  seconds_till_retry += 5;
-  if(seconds_till_retry > MAXTIMEOUT)    /* Don't wait more than MAXTIMEOUT seconds. */
-    seconds_till_retry = MAXTIMEOUT;
-  syslog(LOG_ERR, _("Still failed to connect to other, will retry in %d seconds"),
-	 seconds_till_retry);
-  alarm(seconds_till_retry);
 cp
 }
 
@@ -1034,29 +1034,8 @@ cp
   if(setup_myself() < 0)
     return -1;
 
-  if(!(cfg = get_config_val(config, config_connectto)))
-    /* No upstream IP given, we're listen only. */
-    return 0;
-
-  while(cfg)
-    {
-      upstreamcfg = cfg->next;
-      if(!setup_outgoing_connection(cfg->data.ptr))   /* function returns 0 when there are no problems */
-        return 0;
-      cfg = get_config_val(upstreamcfg, config_connectto); /* Or else we try the next ConnectTo line */
-    }
-
-  if(do_detach)
-    {
-      signal(SIGALRM, sigalrm_handler);
-      upstreamcfg = config;
-      seconds_till_retry = MAXTIMEOUT;
-      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
-      alarm(seconds_till_retry);
-    }
-  else
-    return -1;
-
+  signal(SIGALRM, try_outgoing_connections);
+  alarm(5);
 cp
   return 0;
 }
@@ -1266,7 +1245,7 @@ cp
   if(cl->status.outgoing)
     {
       cl->status.outgoing = 0;
-      signal(SIGALRM, sigalrm_handler);
+      signal(SIGALRM, try_outgoing_connections);
       alarm(seconds_till_retry);
       syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
     }
