@@ -22,22 +22,6 @@
 
 #include "system.h"
 
-#ifdef HAVE_NET_ETHERNET_H
-#include <net/ethernet.h>
-#endif
-#ifdef HAVE_NET_IF_ARP_H
-#include <net/if_arp.h>
-#endif
-#ifdef HAVE_NETINET_IP_ICMP_H
-#include <netinet/ip_icmp.h>
-#endif
-#ifdef HAVE_NETINET_ICMP6_H
-#include <netinet/icmp6.h>
-#endif
-#ifdef HAVE_NETINET_IF_ETHER_H
-#include <netinet/if_ether.h>
-#endif
-
 #include "avl_tree.h"
 #include "connection.h"
 #include "ethernet.h"

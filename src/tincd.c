@@ -39,7 +39,7 @@
 #include <lzo1x.h>
 
 #include <getopt.h>
-#include <pidfile.h>
+#include "pidfile.h"
 
 #include "conf.h"
 #include "device.h"
