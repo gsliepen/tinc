@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.44 2002/04/19 14:06:40 guus Exp $
+dnl $Id: configure.in,v 1.13.2.45 2002/06/08 12:57:09 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -69,8 +69,9 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h limits.h sys/ioctl.h syslog.h unistd.h \
-sys/time.h malloc.h strings.h sys/file.h])
+AC_CHECK_HEADERS([fcntl.h limits.h malloc.h stdint.h strings.h syslog.h unistd.h \
+net/ethernet.h net/if.h netinet/ip.h netinet/tcp.h \
+sys/file.h sys/ioctl.h sys/param.h sys/time.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -95,8 +96,8 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([ftime socket select strtol strerror flock unsetenv \
-asprintf putenv strdup fcloseall daemon strsignal get_current_dir_name])
+AC_CHECK_FUNCS([asprintf daemon fcloseall flock ftime get_current_dir_name \
+putenv select strdup strerror strsignal strtol unsetenv])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.37 2002/06/07 11:14:05 wsl Exp $
+    $Id: netutl.c,v 1.12.4.38 2002/06/08 12:57:10 guus Exp $
 */
 
 #include "config.h"
@@ -27,7 +27,7 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef HAVE_NETBSD
+#ifndef HAVE_STDINT_H
  #include <stdint.h>
 #endif
 #include <string.h>
@@ -115,10 +115,8 @@ cp
       exit(0);
     }
 
-#ifdef HAVE_LINUX
   if((scopeid = strchr(address, '%')))
     *scopeid = '\0';  /* Descope. */
-#endif
 
   *addrstr = xstrdup(address);
   *portstr = xstrdup(port);
@@ -185,9 +183,11 @@ void sockaddrunmap(sockaddr_t *sa)
 
 /* Subnet mask handling */
 
-int maskcmp(char *a, char *b, int masklen, int len)
+int maskcmp(void *va, void *vb, int masklen, int len)
 {
   int i, m, result;
+  char *a = va;
+  char *b = vb;
 cp
   for(m = masklen, i = 0; m >= 8; m -= 8, i++)
     if((result = a[i] - b[i]))
@@ -199,9 +199,10 @@ cp
   return 0;
 }
 
-void mask(char *a, int masklen, int len)
+void mask(void *va, int masklen, int len)
 {
   int i;
+  char *a = va;
 cp
   i = masklen / 8;
   masklen %= 8;
@@ -213,9 +214,11 @@ cp
     a[i] = 0;
 }
 
-void maskcpy(char *a, char *b, int masklen, int len)
+void maskcpy(void *va, void *vb, int masklen, int len)
 {
   int i, m;
+  char *a = va;
+  char *b = vb;
 cp
   for(m = masklen, i = 0; m >= 8; m -= 8, i++)
     a[i] = b[i];
@@ -230,9 +233,10 @@ cp
     a[i] = 0;
 }
 
-int maskcheck(char *a, int masklen, int len)
+int maskcheck(void *va, int masklen, int len)
 {
   int i;
+  char *a = va;
 cp
   i = masklen / 8;
   masklen %= 8;

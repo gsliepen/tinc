@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.35 2002/04/26 18:13:00 zarq Exp $
+    $Id: subnet.c,v 1.1.2.36 2002/06/08 12:57:10 guus Exp $
 */
 
 #include "config.h"
@@ -176,7 +176,7 @@ subnet_t *str2net(char *subnetstr)
 {
   int i, l;
   subnet_t *subnet;
-  unsigned short int x[8];
+  uint16_t x[8];
 cp
   subnet = new_subnet();
 cp
@@ -323,14 +323,14 @@ cp
 	    break;
 	  }
 
-        if (!maskcmp((char *)address, (char *)&p->net.ipv4.address, p->net.ipv4.prefixlength, sizeof(ipv4_t)))
+        if (!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength, sizeof(ipv4_t)))
           break;
         else
           {
             /* Otherwise, see if there is a bigger enclosing subnet */
 
             subnet.net.ipv4.prefixlength = p->net.ipv4.prefixlength - 1;
-            maskcpy((char *)&subnet.net.ipv4.address, (char *)&p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t));
+            maskcpy(&subnet.net.ipv4.address, &p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t));
           }
       }
   } while (p);
@@ -360,14 +360,14 @@ cp
 	if(p->type != SUBNET_IPV6)
 	  return NULL;
 
-        if (!maskcmp((char *)address, (char *)&p->net.ipv6.address, p->net.ipv6.prefixlength, sizeof(ipv6_t)))
+        if (!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength, sizeof(ipv6_t)))
           break;
         else
           {
             /* Otherwise, see if there is a bigger enclosing subnet */
 
             subnet.net.ipv6.prefixlength = p->net.ipv6.prefixlength - 1;
-            maskcpy((char *)&subnet.net.ipv6.address, (char *)&p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t));
+            maskcpy(&subnet.net.ipv6.address, &p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t));
           }
       }
    } while (p);

@@ -17,11 +17,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.13 2002/03/19 22:48:25 guus Exp $
+    $Id: node.h,v 1.1.2.14 2002/06/08 12:57:10 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
+
+#ifdef HAVE_STDINT_H
+ #include <stdint.h>
+#endif
 
 #include <avl_tree.h>
 
@@ -67,8 +71,8 @@ typedef struct node_t {
 
   struct connection_t *connection; /* Connection associated with this node (if a direct connection exists) */
 
-  unsigned int sent_seqno;         /* Sequence number last sent to this node */
-  unsigned int received_seqno;     /* Sequence number last received from this node */
+  uint32_t sent_seqno;         /* Sequence number last sent to this node */
+  uint32_t received_seqno;     /* Sequence number last received from this node */
 } node_t;
 
 extern struct node_t *myself;

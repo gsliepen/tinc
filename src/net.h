@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.49 2002/03/27 15:01:36 guus Exp $
+    $Id: net.h,v 1.9.4.50 2002/06/08 12:57:09 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -27,6 +27,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+
+#ifdef HAVE_STDINT_H
+ #include <stdint.h>
+#endif
 
 #include "config.h"
 
@@ -46,12 +50,12 @@
 
 typedef struct mac_t
 {
-  unsigned char x[6];
+  uint8_t x[6];
 } mac_t;
 
 typedef struct ipv4_t
 {
-  unsigned char x[4];
+  uint8_t x[4];
 } ipv4_t;
 
 typedef struct ip_mask_t {
@@ -61,7 +65,7 @@ typedef struct ip_mask_t {
 
 typedef struct ipv6_t
 {
-  unsigned short x[8];
+  uint16_t x[8];
 } ipv6_t;
 
 typedef unsigned short port_t;
@@ -83,8 +87,8 @@ typedef union {
 typedef struct vpn_packet_t {
   length_t len;			/* the actual number of bytes in the `data' field */
   int priority;                 /* priority or TOS */
-  unsigned int seqno;	        /* 32 bits sequence number (network byte order of course) */
-  unsigned char data[MAXSIZE];
+  uint32_t seqno;	        /* 32 bits sequence number (network byte order of course) */
+  uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
 typedef struct queue_element_t {

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.58 2002/03/11 11:23:04 guus Exp $
+    $Id: tincd.c,v 1.10.4.59 2002/06/08 12:57:10 guus Exp $
 */
 
 #include "config.h"
@@ -338,7 +338,7 @@ main(int argc, char **argv, char **envp)
   if(show_help)
     usage(0);
 
-#ifdef HAVE_SOLARIS
+#ifndef LOG_PERROR
   openlog("tinc", LOG_CONS, LOG_DAEMON);        /* Catch all syslog() calls issued before detaching */
 #else
   openlog("tinc", LOG_PERROR, LOG_DAEMON);      /* Catch all syslog() calls issued before detaching */

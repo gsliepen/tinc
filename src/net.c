@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.171 2002/05/01 09:15:58 guus Exp $
+    $Id: net.c,v 1.35.4.172 2002/06/08 12:57:09 guus Exp $
 */
 
 #include "config.h"
@@ -26,8 +26,10 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#ifdef HAVE_LINUX
+#ifdef HAVE_NETINET_IP_H
  #include <netinet/ip.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
  #include <netinet/tcp.h>
 #endif
 #include <stdio.h>

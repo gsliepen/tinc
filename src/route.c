@@ -17,20 +17,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.39 2002/06/05 00:25:55 guus Exp $
+    $Id: route.c,v 1.1.2.40 2002/06/08 12:57:10 guus Exp $
 */
 
 #include "config.h"
 
-#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD) || defined(HAVE_NETBSD)
+#ifdef HAVE_SYS_PARAM_H
  #include <sys/param.h>
 #endif
 #include <sys/socket.h>
 #include <netinet/in.h>
-#if defined(HAVE_SOLARIS) || defined(HAVE_OPENBSD) || defined(HAVE_NETBSD)
+#ifdef HAVE_NET_IF_H
  #include <net/if.h>
- #define ETHER_ADDR_LEN 6
-#else
+#endif
+#ifdef HAVE_NET_ETHERNET_H
  #include <net/ethernet.h>
 #endif
 #include <netinet/ip6.h>
@@ -40,7 +40,7 @@
 #include <xalloc.h>
 #include <syslog.h>
 #include <string.h>
-#ifndef HAVE_NETBSD
+#ifdef HAVE_STDINT_H
  #include <stdint.h>
 #endif
 
@@ -54,6 +54,10 @@
 #include "device.h"
 
 #include "system.h"
+
+#ifndef ETHER_ADDR_LEN
+ #define ETHER_ADDR_LEN 6
+#endif
 
 int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
@@ -173,14 +177,14 @@ cp
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
           syslog(LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
-	    ntohs(*(short unsigned int *)&packet->data[38]),
-	    ntohs(*(short unsigned int *)&packet->data[40]),
-	    ntohs(*(short unsigned int *)&packet->data[42]),
-	    ntohs(*(short unsigned int *)&packet->data[44]),
-	    ntohs(*(short unsigned int *)&packet->data[46]),
-	    ntohs(*(short unsigned int *)&packet->data[48]),
-	    ntohs(*(short unsigned int *)&packet->data[50]),
-	    ntohs(*(short unsigned int *)&packet->data[52]));
+	    ntohs(*(uint16_t *)&packet->data[38]),
+	    ntohs(*(uint16_t *)&packet->data[40]),
+	    ntohs(*(uint16_t *)&packet->data[42]),
+	    ntohs(*(uint16_t *)&packet->data[44]),
+	    ntohs(*(uint16_t *)&packet->data[46]),
+	    ntohs(*(uint16_t *)&packet->data[48]),
+	    ntohs(*(uint16_t *)&packet->data[50]),
+	    ntohs(*(uint16_t *)&packet->data[52]));
         }
 
       return NULL;
@@ -189,9 +193,9 @@ cp
   return subnet->owner;  
 }
 
-unsigned short int inet_checksum(unsigned short int *data, int len, unsigned short int prevsum)
+uint16_t inet_checksum(uint16_t *data, int len, uint16_t prevsum)
 {
-  unsigned long int checksum = prevsum ^ 0xFFFF;
+  uint32_t checksum = prevsum ^ 0xFFFF;
 
   while(len--)
     checksum += ntohs(*data++);
@@ -208,7 +212,7 @@ void route_neighborsol(vpn_packet_t *packet)
   struct nd_neighbor_solicit *ns;
   struct nd_opt_hdr *opt;
   subnet_t *subnet;
-  short unsigned int checksum;
+  uint16_t checksum;
   
   struct {
     struct in6_addr ip6_src;      /* source address */
@@ -248,8 +252,8 @@ cp
   
   /* Generate checksum */
   
-  checksum = inet_checksum((unsigned short int *)&pseudo, sizeof(pseudo)/2, ~0);
-  checksum = inet_checksum((unsigned short int *)ns, sizeof(*ns)/2 + 4, checksum);
+  checksum = inet_checksum((uint16_t *)&pseudo, sizeof(pseudo)/2, ~0);
+  checksum = inet_checksum((uint16_t *)ns, sizeof(*ns)/2 + 4, checksum);
 
   if(checksum)
     {
@@ -305,8 +309,8 @@ cp
   
   /* Generate checksum */
   
-  checksum = inet_checksum((unsigned short int *)&pseudo, sizeof(pseudo)/2, ~0);
-  checksum = inet_checksum((unsigned short int *)ns, sizeof(*ns)/2 + 4, checksum);
+  checksum = inet_checksum((uint16_t *)&pseudo, sizeof(pseudo)/2, ~0);
+  checksum = inet_checksum((uint16_t *)ns, sizeof(*ns)/2 + 4, checksum);
 
   ns->nd_ns_hdr.icmp6_cksum = htons(checksum);
 
@@ -318,7 +322,7 @@ void route_arp(vpn_packet_t *packet)
 {
   struct ether_arp *arp;
   subnet_t *subnet;
-  unsigned char ipbuf[4];
+  uint8_t ipbuf[4];
 cp
   /* First, snatch the source address from the ARP packet */
 
@@ -335,8 +339,8 @@ cp
 
   if(ntohs(arp->arp_hrd) != ARPHRD_ETHER ||
      ntohs(arp->arp_pro) != ETHERTYPE_IP ||
-     (int) (arp->arp_hln) != ETHER_ADDR_LEN ||
-     (int) (arp->arp_pln) != 4 ||
+     arp->arp_hln != ETHER_ADDR_LEN ||
+     arp->arp_pln != 4 ||
      ntohs(arp->arp_op) != ARPOP_REQUEST )
     {
       if(debug_lvl > DEBUG_TRAFFIC)
@@ -383,7 +387,7 @@ cp
 
 void route_outgoing(vpn_packet_t *packet)
 {
-  unsigned short int type;
+  uint16_t type;
   node_t *n = NULL;
 cp
   /* FIXME: multicast? */
@@ -391,7 +395,7 @@ cp
   switch(routing_mode)
     {
       case RMODE_ROUTER:
-        type = ntohs(*((unsigned short*)(&packet->data[12])));
+        type = ntohs(*((uint16_t *)(&packet->data[12])));
         switch(type)
           {
             case 0x0800:
@@ -440,9 +444,9 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
       case RMODE_ROUTER:
         {
           node_t *n = NULL;
-	  unsigned short int type;
+	  uint16_t type;
 
-          type = ntohs(*((unsigned short*)(&packet->data[12])));
+          type = ntohs(*((uint16_t *)(&packet->data[12])));
           switch(type)
             {
               case 0x0800:
