@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.h,v 1.4 2002/04/13 10:45:56 zarq Exp $
+    $Id: logging.h,v 1.5 2002/04/13 10:50:48 zarq Exp $
 */
 
 #ifndef __TINC_LOGGING_H__
@@ -58,6 +58,14 @@ extern void tinc_syslog(int, char *, ...);
 
 #ifndef LOG_ERR /* Something from syslog.h */
 # define syslog tinc_syslog
+#define LOG_EMERG       0       /* system is unusable */
+#define LOG_ALERT       1       /* action must be taken immediately */
+#define LOG_CRIT        2       /* critical conditions */
+#define LOG_ERR         3       /* error conditions */
+#define LOG_WARNING     4       /* warning conditions */
+#define LOG_NOTICE      5       /* normal but significant condition */
+#define LOG_INFO        6       /* informational */
+#define LOG_DEBUG       7       /* debug-level messages */
 #endif
 
 #endif /* __TINC_LOGGING_H__ */
