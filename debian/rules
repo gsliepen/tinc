@@ -18,7 +18,8 @@ build-stamp:
 	    patch -Ns -p0 < `pwd`/../debian/po-Makefile.in.in.diff || true ;\
 	  fi ;\
 	)
-	./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
+	./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info \
+		--sysconfdir=/etc --localstatedir=/var
 	$(MAKE)
 
 	touch build-stamp
