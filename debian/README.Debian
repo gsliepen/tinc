@@ -1,7 +1,7 @@
 tinc for Debian
 ----------------------
 
-<possible notes regarding this package - if none, delete this file>
+The manual for tinc is also available as info pages, type `info tinc'
+to read it.
 
- -- Ivo Timmermans,,,
- <itimmermans@bigfoot.com>, Fri, 21 Apr 2000 17:07:50 +0200
+ -- Ivo Timmermans <itimmermans@bigfoot.com>, Fri, 21 Apr 2000 17:07:50 +0200
