@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.41 2002/06/08 13:46:07 guus Exp $
+    $Id: route.c,v 1.1.2.42 2002/06/08 14:08:57 guus Exp $
 */
 
 #include "config.h"
@@ -32,6 +32,9 @@
 #endif
 #ifdef HAVE_NET_ETHERNET_H
  #include <net/ethernet.h>
+#endif
+#ifdef HAVE_NETINET_IN_SYSTM_H
+ #include <netinet/in_systm.h>
 #endif
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>

@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.46 2002/06/08 13:46:06 guus Exp $
+dnl $Id: configure.in,v 1.13.2.47 2002/06/08 14:08:56 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -70,7 +70,7 @@ dnl Checks for libraries.
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h malloc.h stdint.h strings.h syslog.h unistd.h \
-net/ethernet.h net/if.h netinet/ip.h netinet/tcp.h \
+net/ethernet.h net/if.h netinet/in_systm.h netinet/ip.h netinet/tcp.h \
 sys/file.h sys/ioctl.h sys/param.h sys/time.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -88,7 +88,7 @@ AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
   ac_cv_type_socklen_t=yes,
   ac_cv_type_socklen_t=no)
 ])
-if test $ac_cv_type_socklen_t == yes; then
+if test $ac_cv_type_socklen_t = yes; then
   AC_DEFINE(HAVE_SOCKLEN_T)
 fi
 
