@@ -6,7 +6,7 @@ SUBDIRS =  m4 lib src doc po
 
 ACLOCAL_AMFLAGS = -I m4 
 
-EXTRA_DIST = config.rpath mkinstalldirs system.h COPYING.README depcomp
+EXTRA_DIST = config.rpath mkinstalldirs have.h system.h COPYING.README depcomp
 
 ChangeLog:
 	svn log > ChangeLog

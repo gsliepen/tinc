@@ -77,6 +77,10 @@
 #include <sys/param.h>
 #endif
 
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
    and FreeBSD wants these lines below the rest. */
 
@@ -90,6 +94,14 @@
 
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
+#endif
+
+#ifdef HAVE_NET_IF_TUN_H
+#include <net/if_tun.h>
+#endif
+
+#ifdef HAVE_NET_IF_TAP_H
+#include <net/if_tap.h>
 #endif
 
 #ifdef HAVE_NETINET_IN_SYSTM_H
