@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.45 2003/10/09 21:33:15 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -20,7 +20,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.45 2003/10/09 21:33:15 guus Exp $
+$Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -47,7 +47,7 @@ Copyright @copyright{} 1998-2003 Ivo Timmermans
 <ivo@@o2w.nl>, Guus Sliepen <guus@@sliepen.eu.org> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.45 2003/10/09 21:33:15 guus Exp $
+$Id: tinc.texi,v 1.8.4.46 2003/10/11 14:42:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -159,7 +159,7 @@ both the receiving and sending end, it has become largely
 runtime-configurable---in short, it has become a full-fledged
 professional package.
 
-@cindex Traditional VPNs
+@cindex traditional VPNs
 @cindex scalability
 Tinc also allows more than two sites to connect to eachother and form a single VPN.
 Traditionally VPNs are created by making tunnels, which only have two endpoints.
@@ -1525,6 +1525,7 @@ and look in the syslog to find out what the problems are.
 * Runtime options::
 * Solving problems::
 * Error messages::
+* Sending bug reports::
 @end menu
 
 
@@ -2134,7 +2135,7 @@ an attacker) in the beginning of the encrypted stream.
 
 @c ==================================================================
 @node       Encryption of network packets
-@subsection Encryption of network packet
+@subsection Encryption of network packets
 @cindex encryption
 
 A data packet can only be sent if the encryption key is known to both
@@ -2163,7 +2164,7 @@ the MACLength configuration variable.
 
 @c ==================================================================
 @node    Security issues
-@section Security issues
+@subsection Security issues
 
 In August 2000, we discovered the existence of a security hole in all versions
 of tinc up to and including 1.0pre2. This had to do with the way we exchanged
@@ -2306,13 +2307,13 @@ Adding routes to IPv6 subnets:
 
 
 @menu
-* Contact Information::
+* Contact information::
 * Authors::
 @end menu
 
 
 @c ==================================================================
-@node    Contact Information
+@node    Contact information
 @section Contact information
 
 @cindex website

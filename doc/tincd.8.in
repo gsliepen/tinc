@@ -130,7 +130,7 @@ Each level inherits all messages of the previous level:
 This will log a message indicating
 .Nm
 has started along with a version number.
-It will also any serious error.
+It will also log any serious error.
 .It 1
 This will log all connections that are made with other tinc daemons.
 .It 2
