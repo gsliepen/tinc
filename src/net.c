@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.109 2001/05/28 08:21:43 guus Exp $
+    $Id: net.c,v 1.35.4.110 2001/05/28 08:56:57 guus Exp $
 */
 
 #include "config.h"
@@ -26,7 +26,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#ifndef HAVE_FREEBSD
+#ifdef HAVE_LINUX
  #include <netinet/ip.h>
  #include <netinet/tcp.h>
 #endif
@@ -385,7 +385,7 @@ cp
   option = 1;
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
   setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
-#ifndef HAVE_FREEBSD
+#ifdef HAVE_LINUX
   setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
   option = IPTOS_LOWDELAY;
@@ -515,7 +515,7 @@ cp
 
   option = 1;
   setsockopt(cl->meta_socket, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
-#ifndef HAVE_FREEBSD
+#ifdef HAVE_LINUX
   setsockopt(cl->meta_socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
   option = IPTOS_LOWDELAY;
