@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.11 2002/03/18 22:47:20 guus Exp $
+    $Id: net_packet.c,v 1.1.2.12 2002/03/25 15:51:58 guus Exp $
 */
 
 #include "config.h"
@@ -214,6 +214,8 @@ cp
 
       if(!n->status.waitingforkey)
         send_req_key(n->nexthop->connection, myself, n);
+
+      n->status.waitingforkey = 1;
 
       return;
     }
