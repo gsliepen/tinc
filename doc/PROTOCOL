@@ -12,7 +12,7 @@ This is the protocol documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: PROTOCOL,v 1.1.2.5 2002/02/10 21:57:51 guus Exp $
+   $Id: PROTOCOL,v 1.1.2.6 2002/04/09 11:43:29 guus Exp $
 
 
 1.  Protocols used in tinc
@@ -78,7 +78,7 @@ origin	ADD_EDGE node1 12.23.34.45 655 node2 21.32.43.54 655 222 0
                     +------------------> name of node on one side of the edge
 
 origin	ADD_SUBNET node 192.168.1.0/24
-                     |         |     +--> masklength
+                     |         |     +--> prefixlength
                      |         +--------> IPv4 network address
                      +------------------> owner of this subnet
 --------------------------------------------------------------------------

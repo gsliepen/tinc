@@ -1,4 +1,4 @@
-.Dd 2002-02-06
+.Dd 2002-04-09
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans <itimmermans@bigfoot.com>
@@ -264,7 +264,7 @@ the above two options then are not necessary.
 Either the PEM format is used, or exactly one of the above two options must be specified
 in each host configuration file,
 if you want to be able to establish a connection with that host.
-.It Va Subnet Li = Ar address Ns Op Li / Ns Ar masklength
+.It Va Subnet Li = Ar address Ns Op Li / Ns Ar prefixlength
 The subnet which this tinc daemon will serve.
 .Nm tinc
 tries to look up which other daemon it should send a packet to by searching the appropriate subnet.
@@ -276,7 +276,7 @@ variables can be specified.
 .Pp
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
-or they can be a IPv4 or IPv6 network address with a masklength.
+or they can be a IPv4 or IPv6 network address with a prefixlength.
 Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.

@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.27 2002/03/27 15:26:29 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.27 2002/03/27 15:26:29 guus Exp $
+$Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.27 2002/03/27 15:26:29 guus Exp $
+$Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -951,7 +951,7 @@ in each host configuration file, if you want to be able to establish a
 connection with that host.
 
 @cindex Subnet
-@item Subnet = <address[/masklength]>
+@item Subnet = <address[/prefixlength]>
 The subnet which this tinc daemon will serve.
 tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
 If the packet matches a subnet,
@@ -960,7 +960,7 @@ Multiple subnet lines can be specified for each daemon.
 
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
-or they can be a IPv4 or IPv6 network address with a masklength.
+or they can be a IPv4 or IPv6 network address with a prefixlength.
 Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
@@ -970,7 +970,7 @@ IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
 @cindex CIDR notation
-masklength is the number of bits set to 1 in the netmask part; for
+prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
@@ -1403,8 +1403,8 @@ only, so keep an eye on it!
 @item Something is not configured right. Packets are being sent out to the
 virtual network device, but according to the Subnet directives in your host configuration
 file, those packets should go to your own host. Most common mistake is that
-you have a Subnet line in your host configuration file with a netmask which is
-just as large as the netmask of the virtual network interface. The latter should in almost all
+you have a Subnet line in your host configuration file with a prefix length which is
+just as large as the prefix of the virtual network interface. The latter should in almost all
 cases be larger. Rethink your configuration.
 Note that you will only see this message if you specified a debug
 level of 5 or higher!
@@ -1424,7 +1424,7 @@ Jan 1 12:00:00 host tinc.net[1234]: Trying to look up 0.0.192.168 in connection 
 @item Add the `ifconfig $INTERFACE -arp' to tinc-up.
 @end itemize
 
-@item Network address and subnet mask do not match!
+@item Network address and prefix length do not match!
 
 @itemize
 @item The Subnet field must contain a @emph{network} address.
@@ -1594,7 +1594,7 @@ origin	ADD_EDGE node1 12.23.34.45 655 node2 21.32.43.54 655 222 0
                     +------------------> name of node on one side of the edge
 
 origin	ADD_SUBNET node 192.168.1.0/24
-                     |         |     +--> masklength
+                     |         |     +--> prefixlength
                      |         +--------> IPv4 network address
                      +------------------> owner of this subnet
 --------------------------------------------------------------------------
