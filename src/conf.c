@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.8 2000/08/09 14:02:15 guus Exp $
+    $Id: conf.c,v 1.9.4.9 2000/09/06 11:49:03 guus Exp $
 */
 
 
@@ -214,7 +214,7 @@ read_config_file(const char *fname)
 cp
   if((fp = fopen (fname, "r")) == NULL)
     {
-      fprintf(stderr, _("Could not open %s: %s\n"), fname, sys_errlist[errno]);
+      fprintf(stderr, _("Could not open %s: %s\n"), fname, strerror(errno));
       return 1;
     }
 

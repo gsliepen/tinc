@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.7 2000/08/17 16:51:07 guus Exp $
+    $Id: netutl.c,v 1.12.4.8 2000/09/06 11:49:05 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,7 @@
 #include <utils.h>
 #include <xalloc.h>
 
+#include "errno.h"
 #include "conf.h"
 #include "encr.h"
 #include "net.h"
@@ -217,7 +218,7 @@ cp
 
   if(!(h = gethostbyname(p)))
     {
-      fprintf(stderr, _("Error looking up `%s': %s\n"), p, sys_errlist[h_errno]);
+      fprintf(stderr, _("Error looking up `%s': %s\n"), p, strerror(errno));
       return NULL;
     }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.26 2000/08/09 14:02:16 guus Exp $
+    $Id: net.c,v 1.35.4.27 2000/09/06 11:49:03 guus Exp $
 */
 
 #include "config.h"
@@ -934,7 +934,7 @@ cp
   if(x)
     {
       syslog(LOG_ERR, _("Incoming data socket error for %s (%s): %s"),
-             cl->vpn_hostname, cl->real_hostname, sys_errlist[x]);
+             cl->vpn_hostname, cl->real_hostname, strerror(x));
       return -1;
     }
 
@@ -1132,13 +1132,7 @@ cp
   if(x)
     {
       syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
-             cl->vpn_hostname, cl->real_hostname, sys_errlist[x]);
-      return -1;
-    }
-
-  if(cl->buflen >= MAXBUFSIZE)
-    {
-      syslog(LOG_ERR, _("Metadata read buffer overflow!"));
+             cl->vpn_hostname, cl->real_hostname, strerror(x));
       return -1;
     }
 
@@ -1233,6 +1227,12 @@ cp
         }
     }
 
+  if(cl->buflen >= MAXBUFSIZE)
+    {
+      syslog(LOG_ERR, _("Metadata read buffer overflow!"));
+      return -1;
+    }
+
   cl->last_ping_time = time(NULL);
   cl->want_ping = 0;
 cp  
@@ -1264,7 +1264,7 @@ cp
 	    */
 	    getsockopt(p->socket, SOL_SOCKET, SO_ERROR, &x, &l);
 	    syslog(LOG_ERR, _("Outgoing data socket error for %s (%s): %s"),
-                   p->vpn_hostname, p->real_hostname, sys_errlist[x]);
+                   p->vpn_hostname, p->real_hostname, strerror(x));
 	    terminate_connection(p);
 	    return;
 	  }  

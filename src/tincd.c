@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.8 2000/08/17 16:51:08 guus Exp $
+    $Id: tincd.c,v 1.10.4.9 2000/09/06 11:49:05 guus Exp $
 */
 
 #include "config.h"
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -454,10 +455,10 @@ RETSIGTYPE
 sighuh(int a)
 {
   if(cp_file)
-    syslog(LOG_NOTICE, _("Got unexpected signal %d after %s line %d"),
-	   a, cp_file, cp_line);
+    syslog(LOG_NOTICE, _("Got unexpected %s after %s line %d"),
+	   strsignal(a), cp_file, cp_line);
   else
-    syslog(LOG_NOTICE, _("Got unexpected signal %d"), a);
+    syslog(LOG_NOTICE, _("Got unexpected %s"), strsignal(a));
 }
 
 void
