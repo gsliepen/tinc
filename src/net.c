@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.149 2001/11/16 12:22:02 zarq Exp $
+    $Id: net.c,v 1.35.4.150 2001/11/16 17:38:39 zarq Exp $
 */
 
 #include "config.h"
@@ -84,6 +84,38 @@ int keyexpires = 0;
 int do_prune = 0;
 
 /* VPN packet I/O */
+
+char *hostlookup(struct sockaddr *addr, int numericonly)
+{
+  char *name;
+  struct hostent *host = NULL;
+  struct in_addr in;
+  config_t const *cfg;
+  int flags = 0;
+
+cp
+  if(numericonly
+     || ((cfg = get_config_val(config, resolve_dns)) == NULL
+	 || cfg->data.val != stupid_true))
+      flags |= NI_NUMERICHOST;
+
+  hostname = xmalloc(NI_MAXHOST);
+
+  if((r = getnameinfo(addr, sizeof(*addr), &hostname, NI_MAXHOST, NULL, 0, flags)) != 0)
+    {
+      free(hostname);
+      if(flags & NI_NUMERICHOST)
+	{
+	  syslog(LOG_ERR, _("Address conversion failed: %s"),
+		 gai_strerror(r));
+	  return NULL;
+	}
+      else
+	return hostlookup(addr, 1);
+    }
+cp
+  return hostname;
+}
 
 void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
@@ -160,12 +192,8 @@ cp
   EVP_EncryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len + sizeof(inpkt->salt));
   EVP_EncryptFinal(&ctx, outpkt.salt + outlen, &outpad);
   outlen += outpad;
-
-  to.sin_family = AF_INET;
-  to.sin_addr.s_addr = htonl(n->address);
-  to.sin_port = htons(n->port);
-
-  if((sendto(udp_socket, (char *) outpkt.salt, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
+  
+  if((sendto(udp_socket, (char *) outpkt.salt, outlen, 0, n->address->ai_addr, n->address->ai_addrlen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              n->name, n->hostname);
@@ -245,118 +273,191 @@ cp
 
 /* Setup sockets */
 
-int setup_listen_socket(int port)
+int setup_listen_socket(node_t *n)
 {
   int nfd, flags;
-  struct sockaddr_in a;
   int option;
   char *address;
-  ip_mask_t *ipmask;
+  int r;
+  struct addrinfo hints, *ai, *aitop;
+  int ipv6preferred;
 #ifdef HAVE_LINUX
   char *interface;
 #endif
+
 cp
-  if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+
+  if(!get_config_string(lookup_config(config_tree, "BindToAddress"), &address))
     {
-      syslog(LOG_ERR, _("Creating metasocket failed: %m"));
+      address = NULL;
+    }
+
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_family = AF_INET;
+  if(get_config_bool(lookup_config(config_tree, "IPv6Preferred"), &ipv6preferred))
+    {
+      if(ipv6preferred)
+	hints.ai_family = PF_UNSPEC;
+    }
+  if((r = getaddrinfo(address, n->port, &hints, &aitop)) != 0)
+    {
+      syslog(LOG_ERR, _("Looking up `%s' failed: %s\n"),
+	     address, gai_strerror(r));
       return -1;
     }
 
-  flags = fcntl(nfd, F_GETFL);
-  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
+  /* Try to create a listening socket for all alternatives we got from
+     getaddrinfo. */
+  for(ai = aitop; ai != NULL; ai = ai->ai_next)
     {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "fcntl");
-      return -1;
-    }
-
-  /* Optimize TCP settings */
-
-  option = 1;
-  setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-  setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+      if((nfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0)
+	{
+	  syslog(LOG_ERR, _("Creating metasocket failed: %m"));
+	  continue;
+	}
+      
+      flags = fcntl(nfd, F_GETFL);
+      if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
+	  close(nfd);
+	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
+		 "fcntl");
+	  continue;
+	}
+      
+      /* Optimize TCP settings */
+      
+      option = 1;
+      setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+      setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
 #ifdef HAVE_LINUX
-  setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
-
-  option = IPTOS_LOWDELAY;
-  setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
-
-  if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
-    if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
-      {
-        close(nfd);
-        syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
-        return -1;
-      }
+      setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+      
+      option = IPTOS_LOWDELAY;
+      setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
+      
+      if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
+	if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
+	  {
+	    close(nfd);
+	    syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
+	    continue;
+	  }
 #endif
 
-  memset(&a, 0, sizeof(a));
-  a.sin_family = AF_INET;
-  a.sin_addr.s_addr = htonl(INADDR_ANY);
-  a.sin_port = htons(port);
+      if(bind(nfd, ai->ai_addr, ai->ai_addrlen))
+	{
+	  close(nfd);
+	  syslog(LOG_ERR, _("Can't bind to %s port %d/tcp: %m"),
+		 ai->ai_canonname, n->port);
+	  continue;
+	}
+      
+      if(listen(nfd, 3))
+	{
+	  close(nfd);
+	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
+		 "listen");
+	  continue;
+	}
 
-  if(get_config_string(lookup_config(config_tree, "BindToAddress"), &address))
-    {
-      ipmask = strtoip(address);
-      if(ipmask)
-      {
-        a.sin_addr.s_addr = htonl(ipmask->address);
-        free(ipmask);
-      }
+      break; /* We have successfully bound to a socket */
     }
 
-  if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
+  if(ai == NULL) /* None of the alternatives succeeded */
     {
-      close(nfd);
-      syslog(LOG_ERR, _("Can't bind to port %hd/tcp: %m"), port);
-      return -1;
-    }
-
-  if(listen(nfd, 3))
-    {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "listen");
+      syslog(LOG_ERR, _("Failed to open a listening socket."));
       return -1;
     }
 cp
   return nfd;
 }
 
-int setup_vpn_in_socket(int port)
+int setup_vpn_in_socket(node_t *n)
 {
-  int nfd, flags;
-  struct sockaddr_in a;
   const int one = 1;
+  int nfd, flags;
+  int option;
+  char *address;
+  int r;
+  struct addrinfo hints, *ai, *aitop;
+  int ipv6preferred;
+#ifdef HAVE_LINUX
+  char *interface;
+#endif
+
 cp
-  if((nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+
+  if(!get_config_string(lookup_config(config_tree, "BindToAddress"), &address))
     {
-      close(nfd);
-      syslog(LOG_ERR, _("Creating socket failed: %m"));
+      address = NULL;
+    }
+
+  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_protocol = IPPROTO_UDP;
+  hints.ai_family = AF_INET;
+  if(get_config_bool(lookup_config(config_tree, "IPv6Preferred"), &ipv6preferred))
+    {
+      if(ipv6preferred)
+	hints.ai_family = PF_UNSPEC;
+    }
+  if((r = getaddrinfo(address, n->port, &hints, &aitop)) != 0)
+    {
+      syslog(LOG_ERR, _("Looking up `%s' failed: %s\n"),
+	     address, gai_strerror(r));
       return -1;
     }
 
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
-  flags = fcntl(nfd, F_GETFL);
-  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
+  /* Try to create a listening socket for all alternatives we got from
+     getaddrinfo. */
+  for(ai = aitop; ai != NULL; ai = ai->ai_next)
     {
-      close(nfd);
-      syslog(LOG_ERR, _("System call `%s' failed: %m"),
-	     "fcntl");
-      return -1;
+      if((nfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0)
+	{
+	  syslog(LOG_ERR, _("Creating metasocket failed: %m"));
+	  continue;
+	}
+      
+      flags = fcntl(nfd, F_GETFL);
+      if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
+	  close(nfd);
+	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
+		 "fcntl");
+	  continue;
+	}
+      
+      /* Optimize UDP settings */
+      
+      option = 1;
+      setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+#ifdef HAVE_LINUX
+      if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
+	if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
+	  {
+	    close(nfd);
+	    syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
+	    continue;
+	  }
+#endif
+
+      if(bind(nfd, ai->ai_addr, ai->ai_addrlen))
+	{
+	  close(nfd);
+	  syslog(LOG_ERR, _("Can't bind to %s port %d/tcp: %m"),
+		 ai->ai_canonname, n->port);
+	  continue;
+	}
+      
+      break; /* We have successfully bound to a socket */
     }
 
-  memset(&a, 0, sizeof(a));
-  a.sin_family = AF_INET;
-  a.sin_port = htons(port);
-  a.sin_addr.s_addr = htonl(INADDR_ANY);
-
-  if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
+  if(ai == NULL) /* None of the alternatives succeeded */
     {
-      close(nfd);
-      syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), port);
+      syslog(LOG_ERR, _("Failed to open a listening socket."));
       return -1;
     }
 cp
@@ -668,8 +769,8 @@ cp
       return -1;
     }
 */
-  if(!get_config_port(lookup_config(myself->connection->config_tree, "Port"), &myself->port))
-    myself->port = 655;
+  if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myself->port))
+    myself->port = "655";
 
   myself->connection->port = myself->port;
 
@@ -729,13 +830,13 @@ cp
 cp
   /* Open sockets */
   
-  if((tcp_socket = setup_listen_socket(myself->port)) < 0)
+  if((tcp_socket = setup_listen_socket(myself)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
       return -1;
     }
 
-  if((udp_socket = setup_vpn_in_socket(myself->port)) < 0)
+  if((udp_socket = setup_vpn_in_socket(myself)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening UDP socket!"));
       return -1;
@@ -856,9 +957,9 @@ cp
       return NULL;
     }
 
-  c->address = ntohl(ci.sin_addr.s_addr);
+  asprintf(&(c->address), " = ntohl(ci.sin_addr.s_addr);
   c->hostname = hostlookup(ci.sin_addr.s_addr);
-  c->port = htons(ci.sin_port);
+  asprintf(&(c->port), "%d", htons(ci.sin_port));
   c->socket = sfd;
   c->last_ping_time = time(NULL);
 
