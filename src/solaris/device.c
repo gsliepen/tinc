@@ -127,8 +127,21 @@ bool read_packet(vpn_packet_t *packet)
 		return false;
 	}
 
-	packet->data[12] = 0x08;
-	packet->data[13] = 0x00;
+	switch(packet->data[14] >> 4) {
+		case 4:
+			packet->data[12] = 0x08;
+			packet->data[13] = 0x00;
+			break;
+		case 6:
+			packet->data[12] = 0x86;
+			packet->data[13] = 0xDD;
+			break;
+		default:
+			ifdebug(TRAFFIC) logger(LOG_ERR,
+					   _ ("Unknown IP version %d while reading packet from %s %s"),
+					   packet->data[14] >> 4, device_info, device);
+			return false;
+	}
 
 	packet->len = lenin + 14;
 

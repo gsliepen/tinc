@@ -67,12 +67,15 @@ struct ip {
 #define IP_RF 0x8000
 #define IP_DF 0x4000
 #define IP_MF 0x2000
-#define IP_OFFMASK 0x1fff
 	uint8_t ip_ttl;
 	uint8_t ip_p;
 	uint16_t ip_sum;
 	struct in_addr ip_src, ip_dst;
 } __attribute__ ((__packed__));
+#endif
+
+#ifndef IP_OFFMASK
+#define IP_OFFMASK 0x1fff
 #endif
 
 #ifndef HAVE_STRUCT_ICMP
