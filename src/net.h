@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.43 2002/02/26 23:26:41 guus Exp $
+    $Id: net.h,v 1.9.4.44 2002/03/01 12:26:56 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -74,6 +74,7 @@ typedef union {
 
 typedef struct vpn_packet_t {
   length_t len;			/* the actual number of bytes in the `data' field */
+  int priority;                 /* priority or TOS */
   unsigned int seqno;	        /* 32 bits sequence number (network byte order of course) */
   unsigned char data[MAXSIZE];
 } vpn_packet_t;

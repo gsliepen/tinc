@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.24 2002/02/20 16:04:59 guus Exp $
+    $Id: route.c,v 1.1.2.25 2002/03/01 12:26:56 guus Exp $
 */
 
 #include "config.h"
@@ -51,6 +51,7 @@
 #include "system.h"
 
 int routing_mode = RMODE_ROUTER;
+int priorityinheritance = 0;
 subnet_t mymac;
 
 void learn_mac(mac_t *address)
@@ -107,6 +108,9 @@ node_t *route_ipv4(vpn_packet_t *packet)
 {
   subnet_t *subnet;
 cp
+  if(priorityinheritance)
+    packet->priority = packet->data[15];
+
   subnet = lookup_subnet_ipv4((ipv4_t *)&packet->data[30]);
 cp
   if(!subnet)
