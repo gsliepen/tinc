@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.23 2000/08/08 13:47:56 guus Exp $
+    $Id: net.c,v 1.35.4.24 2000/08/08 17:07:47 guus Exp $
 */
 
 #include "config.h"
@@ -139,6 +139,59 @@ cp
     syslog(LOG_ERR, _("Can't write to tap device: %m"));
   else
     total_tap_out += lenin;
+
+  cl->want_ping = 0;
+  cl->last_ping_time = time(NULL);
+cp
+  return 0;
+}
+
+int tcprecv(conn_list_t *cl, real_packet_t *rp)
+{
+  vpn_packet_t vp;
+  int lenin;
+  conn_list_t *f;
+cp
+  rp->data.len = ntohs(rp->data.len);
+  rp->len = ntohs(rp->len);
+  rp->from = ntohl(rp->from);
+
+  total_socket_in += rp->len;
+  
+  if(rp->len >= 0)
+    {
+      f = lookup_conn(rp->from);
+      if(!f)
+	{
+	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
+		 cl->vpn_hostname, cl->real_hostname, IP_ADDR_V(rp->from));
+	  return -1;
+	}
+
+      if(f->status.validkey)
+        {
+          do_decrypt(rp, &vp, cl->key);
+          add_mac_addresses(&vp);
+
+          if(debug_lvl > 3)
+            syslog(LOG_ERR, _("Receiving packet of %d bytes from %s (%s)"),
+                   rp->len, cl->vpn_hostname, cl->real_hostname);
+
+          if((lenin = write(tap_fd, &vp, vp.len + sizeof(vp.len))) < 0)
+            syslog(LOG_ERR, _("Can't write to tap device: %m"));
+          else
+            total_tap_out += lenin;
+        }
+      else
+	{
+          /* Can we add to queue? */
+	  if(!cl->status.waitingforkey)
+	    send_key_request(rp->from);
+	}
+
+      if(my_key_expiry <= time(NULL))
+	regenerate_keys();
+    }
 
   cl->want_ping = 0;
   cl->last_ping_time = time(NULL);
@@ -1092,53 +1145,71 @@ cp
 
   for(;;)
     {
-      cl->reqlen = 0;
-
-      for(i = oldlen; i < cl->buflen; i++)
+      if(cl->tcppacket)
         {
-          if(cl->buffer[i] == '\n')
+          if(cl->buflen >= cl->tcppacket)
             {
-              cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
-              cl->reqlen = i + 1;
-              break;
-            }
-        }
-
-      if(cl->reqlen)
-        {
-          if(debug_lvl > 2)
-            syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
-                         cl->vpn_hostname, cl->real_hostname, cl->buffer);
-          if(sscanf(cl->buffer, "%d", &request) == 1)
-            {
-              if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
-                {
-                  syslog(LOG_ERR, _("Unknown request from %s (%s)"),
-                         cl->vpn_hostname, cl->real_hostname);
-                  return -1;
-                }
-
-              if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
-                {
-                  syslog(LOG_ERR, _("Error while processing request from %s (%s)"),
-                         cl->vpn_hostname, cl->real_hostname);
-                  return -1;
-                }
+              tcprecv(cl, (real_packet_t *)cl->buffer);
+              cl->buflen -= cl->tcppacket;
+              memmove(cl->buffer, cl->buffer + cl->tcppacket, cl->buflen);
+              oldlen = 0;
+              cl->tcppacket=0;
             }
           else
             {
-              syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
-                         cl->vpn_hostname, cl->real_hostname);
-              return -1;
+              break;
             }
-
-          cl->buflen -= cl->reqlen;
-          memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
-          oldlen = 0;
         }
       else
         {
-          break;
+          cl->reqlen = 0;
+
+          for(i = oldlen; i < cl->buflen; i++)
+            {
+              if(cl->buffer[i] == '\n')
+                {
+                  cl->buffer[i] = 0;  /* replace end-of-line by end-of-string so we can use sscanf */
+                  cl->reqlen = i + 1;
+                  break;
+                }
+            }
+
+          if(cl->reqlen)
+            {
+              if(debug_lvl > 2)
+                syslog(LOG_DEBUG, _("Got request from %s (%s): %s"),
+                             cl->vpn_hostname, cl->real_hostname, cl->buffer);
+              if(sscanf(cl->buffer, "%d", &request) == 1)
+                {
+                  if((request < 0) || (request > 255) || (request_handlers[request] == NULL))
+                    {
+                      syslog(LOG_ERR, _("Unknown request from %s (%s)"),
+                             cl->vpn_hostname, cl->real_hostname);
+                      return -1;
+                    }
+
+                  if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
+                    {
+                      syslog(LOG_ERR, _("Error while processing request from %s (%s)"),
+                             cl->vpn_hostname, cl->real_hostname);
+                      return -1;
+                    }
+                }
+              else
+                {
+                  syslog(LOG_ERR, _("Bogus data received from %s (%s)"),
+                             cl->vpn_hostname, cl->real_hostname);
+                  return -1;
+                }
+
+              cl->buflen -= cl->reqlen;
+              memmove(cl->buffer, cl->buffer + cl->reqlen, cl->buflen);
+              oldlen = 0;
+            }
+          else
+            {
+              break;
+            }
         }
     }
 

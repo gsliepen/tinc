@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.8 2000/08/07 16:27:28 guus Exp $
+    $Id: net.h,v 1.9.4.9 2000/08/08 17:07:48 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -124,6 +124,7 @@ typedef struct conn_list_t {
   char buffer[MAXBUFSIZE+1];       /* metadata input buffer */
   int buflen;                      /* bytes read into buffer */
   int reqlen;                      /* length of first request in buffer */
+  int tcppacket;		   /* length of incoming TCP tunnelled packet */
   time_t last_ping_time;           /* last time we saw some activity from the other end */  
   int want_ping;                   /* 0 if there's no need to check for activity */
   struct conn_list_t *nexthop;     /* nearest meta-hop in this direction */

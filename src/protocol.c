@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.23 2000/08/08 13:47:57 guus Exp $
+    $Id: protocol.c,v 1.28.4.24 2000/08/08 17:07:48 guus Exp $
 */
 
 #include "config.h"
@@ -132,18 +132,17 @@ cp
 
   buflen = snprintf(buffer, MAXBUFSIZE, "%d %d\n", PACKET, len);
 
-  if((write(cl->meta_socket, buffer, buflen)) != buflen)
+  if((write(cl->meta_socket, buffer, buflen)) < 0)
     {
       syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
     }
-
-  if((write(cl->meta_socket, data, len)) != len)
+    
+  if((write(cl->meta_socket, data, len)) < 0)
     {
-      syslog(LOG_ERR, _("Sending PACKET data failed: %s:%d: %m"), __FILE__, __LINE__);
+      syslog(LOG_ERR, _("Send failed: %s:%d: %m"), __FILE__, __LINE__);
       return -1;
     }
-  
 cp
   return 0;
 }
@@ -668,9 +667,7 @@ cp
 
 int tcppacket_h(conn_list_t *cl)
 {
-  real_packet_t rp;
-  int len, count = 0, result;
-  conn_list_t *f;
+  int len;
 cp
   if(!cl->status.active)
     {
@@ -697,51 +694,7 @@ cp
     syslog(LOG_DEBUG, _("Got PACKET length %d from %s (%s)"), len,
               cl->vpn_hostname, cl->real_hostname);
 
-  /* Evil kludge comming up */
-  while(len)
-    {
-       if(debug_lvl > 3)
-         syslog(LOG_DEBUG, _("Direct read count=%d len=%d rp=%p socket=%d"), count, len, ((char *)&rp)+count, cl->meta_socket);
-
-       result=read(cl->meta_socket,((char *)&rp)+count,len);
-       if(result<0)
-         {
-           syslog(LOG_ERR, _("Error while receiving PACKET data from %s (%s): %m"),
-              cl->vpn_hostname, cl->real_hostname);
-           return -1;
-         }
-       count+=result;
-       len-=result;
-    }
-
-  total_socket_in += len;
-
-  rp.data.len = ntohs(rp.data.len);
-  rp.len = ntohs(rp.len);
-  rp.from = ntohl(rp.from);
-
-  if(rp.len >= 0)
-    {
-      f = lookup_conn(rp.from);
-      if(!f)
-	{
-	  syslog(LOG_ERR, _("Got packet from %s (%s) with unknown origin %d.%d.%d.%d?"),
-		 cl->vpn_hostname, cl->real_hostname, IP_ADDR_V(rp.from));
-	  return -1;
-	}
-
-      if(f->status.validkey)
-	xrecv(f, &rp);
-      else
-	{
-/*	  add_queue(&(f->rq), &rp, rp.len);  We can't do this since rp is on the stack */
-	  if(!cl->status.waitingforkey)
-	    send_key_request(rp.from);
-	}
-
-      if(my_key_expiry <= time(NULL))
-	regenerate_keys();
-    }
+  cl->tcppacket=len;
 cp
   return 0;
 }
