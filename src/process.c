@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.66 2003/08/08 17:17:13 guus Exp $
+    $Id: process.c,v 1.1.2.67 2003/08/08 19:43:47 guus Exp $
 */
 
 #include "system.h"
@@ -99,10 +99,8 @@ bool install_service(void) {
 
 	strncat(command, program_name, sizeof(command));
 	for(argp = g_argv + 1; *argp; argp++) {
-		space = strchr(*argp, " ");
-		strncat(command, " ", sizeof(command));
-		if(space)
-			strncat(command, "\"", sizeof(command));
+		space = strchr(*argp, ' ');
+		strncat(command, space?" \"":" ", sizeof(command));
 		strncat(command, *argp, sizeof(command));
 		if(space)
 			strncat(command, "\"", sizeof(command));
@@ -363,19 +361,21 @@ bool execute_script(const char *name, char **envp)
 
 	cp();
 
-	asprintf(&scriptname, "%s/%s", confbase, name);
+	asprintf(&scriptname, "\"%s/%s\"", confbase, name);
 
+#ifndef HAVE_MINGW
 	/* First check if there is a script */
 
 	if(stat(scriptname, &s))
 		return true;
 
+	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
+#endif
+
 	/* Set environment */
 	
 	while(*envp)
 		putenv(*envp++);
-
-	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 
 	status = system(scriptname);
 
@@ -383,6 +383,7 @@ bool execute_script(const char *name, char **envp)
 
 	/* Unset environment? */
 
+#ifdef WEXITSTATUS
 	if(status != -1) {
 		if(WIFEXITED(status)) {	/* Child exited by itself */
 			if(WEXITSTATUS(status)) {
@@ -404,6 +405,7 @@ bool execute_script(const char *name, char **envp)
 			   strerror(errno));
 		return false;
 	}
+#endif
 #endif
 	return true;
 }
