@@ -1,7 +1,7 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.9 2001/11/16 15:56:44 zarq Exp $
+    $Id: node.h,v 1.1.2.10 2002/02/10 21:57:54 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -33,22 +33,26 @@ typedef struct node_status_t {
   int validkey:1;                  /* 1 if we currently have a valid key for him */
   int waitingforkey:1;             /* 1 if we already sent out a request */
   int visited:1;                   /* 1 if this node has been visited by one of the graph algorithms */
-  int unused:28;
+  int reachable:1;                 /* 1 if this node is reachable in the graph */
+  int unused:27;
 } node_status_t;
 
 typedef struct node_t {
   char *name;                      /* name of this node */
   long int options;                /* options turned on for this node */
 
-  struct addrinfo *address;        /* his real (internet) ip to send UDP packets to */
-  char *port;                      /* string representation of the port number */
+  ipv4_t address;                  /* his real (internet) ip to send UDP packets to */
+  port_t port;                     /* port number of UDP connection */
   char *hostname;                  /* the hostname of its real ip */
 
   struct node_status_t status;
 
-  EVP_CIPHER *cipher;              /* Cipher type for UDP packets */ 
+  const EVP_CIPHER *cipher;        /* Cipher type for UDP packets */ 
   char *key;                       /* Cipher key and iv */
   int keylength;                   /* Cipher key and iv length*/
+
+  const EVP_MD *digest;            /* Digest type for MAC */
+  int maclength;                   /* Length of MAC */
 
   list_t *queue;                   /* Queue for packets awaiting to be encrypted */
 
@@ -60,10 +64,14 @@ typedef struct node_t {
   avl_tree_t *edge_tree;           /* Edges with this node as one of the endpoints */
 
   struct connection_t *connection; /* Connection associated with this node (if a direct connection exists) */
+
+  unsigned int sent_seqno;         /* Sequence number last sent to this node */
+  unsigned int received_seqno;     /* Sequence number last received from this node */
 } node_t;
 
 extern struct node_t *myself;
 extern avl_tree_t *node_tree;
+extern avl_tree_t *node_udp_tree;
 
 extern void init_nodes(void);
 extern void exit_nodes(void);
@@ -72,8 +80,7 @@ extern void free_node(node_t *n);
 extern void node_add(node_t *n);
 extern void node_del(node_t *n);
 extern node_t *lookup_node(char *);
-extern node_t *lookup_node_udp(struct addrinfo *);
+extern node_t *lookup_node_udp(ipv4_t, port_t);
 extern void dump_nodes(void);
-
 
 #endif /* __TINC_NODE_H__ */

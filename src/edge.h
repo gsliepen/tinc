@@ -1,7 +1,7 @@
 /*
     edge.h -- header for edge.c
-    Copyright (C) 2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h,v 1.1.2.4 2001/11/16 12:13:34 zarq Exp $
+    $Id: edge.h,v 1.1.2.5 2002/02/10 21:57:54 guus Exp $
 */
 
 #ifndef __TINC_EDGE_H__
@@ -28,18 +28,16 @@
 #include "node.h"
 #include "connection.h"
 
-/* I don't know if halfconnection_t is useful... */
-
 typedef struct halfconnection_t {
   struct node_t *node;             /* node associated with this end of the connection */
 
-  struct addrinfo *address;        /* real (internet) ip on this end of the meta connection */
-  char *hostname;                  /* the hostname of real ip */
+  ipv4_t address;                  /* real (internet) ip on this end of the meta connection */
+  port_t port;                     /* port number of this end of the meta connection */
 } halfconnection_t;
 
 typedef struct edge_t {
-  struct node_t *from;
-  struct node_t *to;
+  struct halfconnection_t from;
+  struct halfconnection_t to;
 
   long int options;                /* options turned on for this edge */
   int weight;                      /* weight of this edge */

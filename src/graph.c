@@ -1,7 +1,7 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.5 2001/10/31 12:50:24 guus Exp $
+    $Id: graph.c,v 1.1.2.6 2002/02/10 21:57:54 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -38,14 +38,24 @@
 
    For the SSSP algorithm Dijkstra's seems to be a nice choice. Currently a
    simple breadth-first search is presented here.
+
+   The SSSP algorithm will also be used to determine whether nodes are directly,
+   indirectly or not reachable from the source. It will also set the correct
+   destination address and port of a node if possible.
 */
 
 #include <syslog.h>
 #include "config.h"
 #include <string.h>
+#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
+ #include <sys/param.h>
+#endif
+#include <netinet/in.h>
 
 #include <avl_tree.h>
+#include <utils.h>
 
+#include "netutl.h"
 #include "node.h"
 #include "edge.h"
 #include "connection.h"
@@ -67,6 +77,11 @@ void mst_kruskal(void)
   int safe_edges = 0;
   int skipped;
 
+  /* Do we have something to do at all? */
+  
+  if(!edge_weight_tree->head)
+    return;
+
   /* Clear visited status on nodes */
 
   for(node = node_tree->head; node; node = node->next)
@@ -78,7 +93,7 @@ void mst_kruskal(void)
 
   /* Starting point */
   
-  ((edge_t *)edge_weight_tree->head->data)->from->status.visited = 1;
+  ((edge_t *)edge_weight_tree->head->data)->from.node->status.visited = 1;
 
   /* Clear MST status on connections */
 
@@ -95,14 +110,14 @@ void mst_kruskal(void)
       next = node->next;
       e = (edge_t *)node->data;
 
-      if(e->from->status.visited == e->to->status.visited)
+      if(e->from.node->status.visited == e->to.node->status.visited)
         {
           skipped = 1;
           continue;
         }
 
-      e->from->status.visited = 1;
-      e->to->status.visited = 1;
+      e->from.node->status.visited = 1;
+      e->to.node->status.visited = 1;
       if(e->connection)
         e->connection->status.mst = 1;
 
@@ -120,11 +135,12 @@ void mst_kruskal(void)
    Running time: O(E)
 */
 
-void sssp_bfs(int prune)
+void sssp_bfs(void)
 {
   avl_node_t *node, *from, *next, *to;
   edge_t *e;
-  node_t *n, *check;
+  node_t *n;
+  halfconnection_t to_hc, from_hc;
   avl_tree_t *todo_tree;
 
   todo_tree = avl_alloc_tree(NULL, NULL);
@@ -150,46 +166,82 @@ void sssp_bfs(int prune)
 
   while(todo_tree->head)
     {
-      for(from = todo_tree->head; from; from = next)
+      for(from = todo_tree->head; from; from = next)             /* "from" is the node from which we start */
         {
           next = from->next;
           n = (node_t *)from->data;
 
-          for(to = n->edge_tree->head; to; to = to->next)
+          for(to = n->edge_tree->head; to; to = to->next)        /* "to" is the edge connected to "from" */
             {
               e = (edge_t *)to->data;
 
-              if(e->from == n)
-                check = e->to;
+              if(e->from.node == n)                              /* "from_hc" is the halfconnection with .node == from */
+                to_hc = e->to, from_hc = e->from;
               else
-                check = e->from;
+                to_hc = e->from, from_hc = e->to;
 
-              if(!check->status.visited)
+              if(!to_hc.node->status.visited)
                 {
-                  check->status.visited = 1;
-                  check->nexthop = (n->nexthop == myself) ? check : n->nexthop;
-                  check->via = (e->options & OPTION_INDIRECT || n->via != n) ? n->via : check;
+                  to_hc.node->status.visited = 1;
+                  to_hc.node->nexthop = (n->nexthop == myself) ? to_hc.node : n->nexthop;
+                  to_hc.node->via = (e->options & OPTION_INDIRECT || n->via != n) ? n->via : to_hc.node;
+		  to_hc.node->options = e->options;
+                  if(to_hc.node->address != to_hc.address || to_hc.node->port != to_hc.port)
+		  {
+                    node = avl_unlink(node_udp_tree, to_hc.node);
+                    to_hc.node->address = to_hc.address;
+		    to_hc.node->port = to_hc.port;
+		    if(to_hc.node->hostname)
+		      free(to_hc.node->hostname);
+		    to_hc.node->hostname = hostlookup(htonl(to_hc.address));
+                    avl_insert_node(node_udp_tree, node);
+		  }
+		  to_hc.node->port = to_hc.port;
                   node = avl_alloc_node();
-                  node->data = check;
+                  node->data = to_hc.node;
                   avl_insert_before(todo_tree, from, node);
                 }
             }
 
-           avl_delete_node(todo_tree, from);
+          avl_delete_node(todo_tree, from);
         }
     }
 
   avl_free_tree(todo_tree);
   
-  /* Nodes we haven't visited are unreachable, prune them. */
+  /* Check reachability status. */
 
-  if(prune)
-    for(node = node_tree->head; node; node = next)
+  for(node = node_tree->head; node; node = next)
+    {
+      next = node->next;
+      n = (node_t *)node->data;
+
+      if(n->status.visited)
       {
-        next = node->next;
-        n = (node_t *)node->data;
-
-        if(n->status.visited == 0)
-          node_del(n);
+        if(!n->status.reachable)
+	{
+          if(debug_lvl >= DEBUG_TRAFFIC)
+            syslog(LOG_DEBUG, _("Node %s (%s) became reachable"), n->name, n->hostname);
+          n->status.reachable = 1;
+	}
       }
+      else
+      {
+        if(n->status.reachable)
+	{
+          if(debug_lvl >= DEBUG_TRAFFIC)
+            syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"), n->name, n->hostname);
+          n->status.reachable = 0;
+	  n->status.validkey = 0;
+	  n->status.waitingforkey = 0;
+	  n->sent_seqno = 0;
+	}
+      }
+    }
+}
+
+void graph(void)
+{
+  mst_kruskal();
+  sssp_bfs();
 }

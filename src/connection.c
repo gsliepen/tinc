@@ -1,7 +1,7 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2000-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.26 2001/11/16 12:20:44 zarq Exp $
+    $Id: connection.c,v 1.1.2.27 2002/02/10 21:57:53 guus Exp $
 */
 
 #include "config.h"
@@ -31,6 +31,7 @@
 #include <list.h>
 
 #include "net.h"	/* Don't ask. */
+#include "netutl.h"
 #include "config.h"
 #include "conf.h"
 #include <utils.h>
@@ -105,11 +106,12 @@ cp
 cp
 }
 
-connection_t *lookup_connection(struct addrinfo *address)
+connection_t *lookup_connection(ipv4_t address, port_t port)
 {
   connection_t c;
 cp
   c.address = address;
+  c.port = port;
 
   return avl_search(connection_tree, &c);
 }

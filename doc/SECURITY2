@@ -1,7 +1,7 @@
 This is the security documentation for tinc, a Virtual Private Network daemon.
 
-   Copyright 2001 Guus Sliepen <guus@sliepen.warande.net>,
-             2001 Wessel Dankers <wsl@nl.linux.org>
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+             2001-2002 Wessel Dankers <wsl@nl.linux.org>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this
@@ -12,7 +12,7 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: SECURITY2,v 1.1.2.1 2001/02/13 09:54:29 guus Exp $
+   $Id: SECURITY2,v 1.1.2.2 2002/02/10 21:57:51 guus Exp $
 
 Proposed new authentication scheme
 ----------------------------------
@@ -27,13 +27,11 @@ client  <attempts connection>
 
 server  <accepts connection>
 
-client  ID client 9 0
-              |   | +-> options
+client  ID client 12
               |   +---> version
               +-------> name of tinc daemon
 
-server  ID server 9 0
-              |   | +-> options
+server  ID server 12
               |   +---> version
               +-------> name of tinc daemon
 
@@ -64,6 +62,21 @@ client  CHAL_REPLY 816a86
 
 server  CHAL_REPLY 928ffe
                       +-> 160 bits SHA1 of H1
+
+After the correct challenge replies are recieved, both ends have proved
+their identity. Further information is exchanged.
+
+client  ACK 655 12.23.34.45 123 0
+             |       |       |  +-> options
+	     |       |       +----> estimated weight
+	     |       +------------> IP address of server as seen by client
+	     +--------------------> UDP port of client
+
+server  ACK 655 21.32.43.54 321 0
+             |       |       |  +-> options
+	     |       |       +----> estimated weight
+	     |       +------------> IP address of client as seen by server
+	     +--------------------> UDP port of server
 --------------------------------------------------------------------------
 
 This new scheme has several improvements, both in efficiency and security.
@@ -106,9 +119,6 @@ key.
 Fourth: the first thing that is send via the symmetric cipher encrypted
 connection is a totally random string, so that there is no known plaintext (for
 an attacker) in the beginning of the encrypted stream.
-
-
-An explicit ACK is no longer needed, the CHAL_REPLY serves as an ACK.
 
 Some things to be discussed:
 

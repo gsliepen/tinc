@@ -1,246 +1,322 @@
-.TH TINC 5 "Jan 2001" "tinc version 1.0pre4" "FSF"
-.SH NAME
-tinc.conf \- tinc daemon configuration
-.SH "DESCRIPTION"
-The files in the \fI/etc/tinc\fR directory contain runtime and
-security information for the \fBtincd\fR(8) daemon.
-.PP
-.SH "NETWORKS"
-It is perfectly ok for you to run more than one tinc daemon. However,
-in its default form, you will soon notice that you can't use two
-different configuration files without the \fI-c\fR option.
-
-We have thought of another way of dealing with this: network
-names. This means that you call \fBtincd\fR with the \fI-n\fR argument,
-which will assign a name to this daemon.
-
-The effect of this is that the daemon will set its configuration
-``root'' to \fI/etc/tinc/\fBnetname\fI/\fR, where \fBnetname\fR is your argument
-to the \fI-n\fR option. You'll notice that it appears in syslog as
-``tincd.\fBnetname\fR''.
-
-However, it is not strictly necessary that you call tinc with the -n
-option. In this case, the network name would just be empty, and it
-will be used as such. tinc now looks for files in \fI/etc/tinc/\fR,
-instead of \fI/etc/tinc/\fBnetname\fI/\fR; the configuration file should be
-\fI/etc/tinc/tinc.conf\fR, and the passphrases are now expected to be
-in \fI/etc/tinc/passphrases/\fR.
-
-But it is highly recommended that you use this feature of tinc,
-because it will be so much clearer whom your daemon talks to. Hence,
-we will assume that you use it.
-.PP
-.SH "NAMES"
-Each tinc daemon should have a name that is unique in the network which
-it will be part of. The name will be used by other tinc daemons for
-identification. The name has to be declared in the
-\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR file.
-
-To make things easy, choose something that will give unique and easy
-to rememebr names to your tinc daemon(s).
+.Dd 2002-02-06
+.Dt TINC.CONF 5
+.\" Manual page created by:
+.\" Ivo Timmermans <itimmermans@bigfoot.com>
+.\" Guus Sliepen <guus@sliepen.warande.net>
+.Sh NAME
+.Nm tinc.conf
+.Nd tinc daemon configuration
+.Sh DESCRIPTION
+The files in the
+.Pa /etc/tinc/
+directory contain runtime and security information for the tinc daemon.
+.Sh NETWORKS
+It is perfectly ok for you to run more than one tinc daemon.
+However, in its default form,
+you will soon notice that you can't use two different configuration files without the
+.Fl c
+option.
+.Pp
+We have thought of another way of dealing with this: network names.
+This means that you call
+.Nm
+with the
+.Fl n
+option, which will assign a name to this daemon.
+.Pp
+The effect of this is that the daemon will set its configuration root to
+.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa / ,
+where 
+.Ar NETNAME
+is your argument to the
+.Fl n
+option.
+You'll notice that messages appear in syslog as coming from
+.Nm tincd. Ns Ar NETNAME .
+.Pp
+However, it is not strictly necessary that you call tinc with the
+.Fl n
+option.
+In this case, the network name would just be empty,
+and it will be used as such.
+.Nm tinc
+now looks for files in
+.Pa /etc/tinc/ ,
+instead of 
+.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa / ;
+the configuration file should be
+.Pa /etc/tinc/tinc.conf ,
+and the host configuration files are now expected to be in
+.Pa /etc/tinc/hosts/ .
+.Pp
+But it is highly recommended that you use this feature of
+.Nm tinc ,
+because it will be so much clearer whom your daemon talks to.
+Hence, we will assume that you use it.
+.Sh NAMES
+Each tinc daemon should have a name that is unique in the network which it will be part of.
+The name will be used by other tinc daemons for identification.
+The name has to be declared in the
+.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
+file.
+.Pp
+To make things easy,
+choose something that will give unique and easy to remember names to your tinc daemon(s).
 You could try things like hostnames, owner surnames or location names.
-.PP
-.SH "PUBLIC/PRIVATE KEYS"
-You should use \fBtincd --generate-keys\fR to generate public/private
-keypairs. It will generate two keys. The private
-key should be stored in a separate file \fI/etc/tinc/\fBnetname\fI/rsa_key.priv\fR
-\-\- where \fBnetname\fR stands for the network (See under \fBNETWORKS\fR)
-above. The public key should be stored in
-the host configuration file \fI/etc/tinc/\fBnetname\fI/hosts/\fBname\fR \-\- where \fBname\fR stands
-for the name of the local tinc daemon (See \fBNAMES\fR).
-.PP
-.SH "SERVER CONFIGURATION"
+.Sh PUBLIC/PRIVATE KEYS
+You should use 
+.Ic tincd -K
+to generate public/private keypairs.
+It will generate two keys.
+The private key should be stored in a separate file
+.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv
+\-\- where 
+.Ar NETNAME
+stands for the network (see 
+.Sx NETWORKS )
+above.
+The public key should be stored in the host configuration file
+.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Va NAME
+\-\- where
+.Va NAME
+stands for the name of the local tinc daemon (see
+.Sx NAMES ) .
+.Sh SERVER CONFIGURATION
 The server configuration of the daemon is done in the file
-\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR.
-
-This file consists of comments (lines started with a \fB#\fR) or
-assignments in the form of
-.PP
-.Vb 1
-\&    \fIVariable \fB= \fIValue\fR.
-.Ve
-.PP
+.Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf .
+This file consists of comments (lines started with a
+.Li # )
+or assignments in the form of:
+.Pp
+.Va Variable Li = Ar Value .
+.Pp
 The variable names are case insensitive, and any spaces, tabs,
-newlines and carriage returns are ignored. \fINote\fR: it is not
-required that you put in the \fB=\fR sign, but doing so improves
-readability. If you leave it out, remember to replace it with at least
-one space character.
-.PP
-Here are all valid variables, listed in alphabetical order. The default
-value is given between parentheses.
-.TP
-\fBConnectTo\fR = <\fIname\fR>
-Specifies which host to connect to on startup. Multiple \fBConnectTo\fR variables
-may be specified, if connecting to the first one fails then tinc will try
-the next one, and so on. The names should be known to this tinc daemon
-(i.e., there should be a host configuration file for the name on the ConnectTo
+newlines and carriage returns are ignored.
+Note: it is not required that you put in the 
+.Li =
+sign, but doing so improves readability.
+If you leave it out, remember to replace it with at least one space character.
+.Pp
+Here are all valid variables, listed in alphabetical order.
+The default value is given between parentheses.
+.Bl -tag -width indent
+.It Va BindToInterface Li = Ar interface Bq experimental
+If your computer has more than one network interface,
+.Nm tinc
+will by default listen on all of them for incoming connections.
+It is possible to bind only to a single interface with this variable.
+.Pp
+This option may not work on all platforms.
+.It Va BindToIP Li = Ar address Bq experimental
+If your computer has more than one IP address on a single interface
+(for example if you are running virtual hosts),
+.Nm tinc
+will by default listen on all of them for incoming connections.
+It is possible to bind only to a single IP address with this variable.
+It is still possible to listen on several interfaces at the same time though,
+if they share the same IP address.
+.Pp
+This option may not work on all platforms.
+.It Va ConnectTo Li = Ar name
+Specifies which other tinc daemon to connect to on startup.
+Multiple
+.Va ConnectTo
+variables may be specified;
+if connecting to the first one fails then tinc will try the next one, and so on.
+The names should be known to this tinc daemon
+(i.e., there should be a host configuration file for the name on the
+.Va ConnectTo
 line).
-
-If you don't specify a host with \fBConnectTo\fR, tinc won't try to connect to other daemons at all,
+.Pp
+If you don't specify a host with
+.Va ConnectTo ,
+.Nm tinc
+won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
-.TP
-\fBHostnames\fR = <\fIyes|no\fR> (no)
+.It Va Device Li = Ar device Po /dev/tap0 or /dev/misc/net/tun Pc
+The virtual network device to use.
+.Nm tinc
+will automatically detect what kind of device it is.
+Note that you can only use one device per daemon.
+The info pages of the tinc package contain more information
+about configuring the virtual network device.
+.It Va Hostnames Li = yes | no Pq no
 This option selects whether IP addresses (both real and on the VPN) should
 be resolved. Since DNS lookups are blocking, it might affect tinc's
-efficiency, even stopping the daemon for a few seconds everytime it does
+efficiency, even stopping the daemon for a few seconds every time it does
 a lookup if your DNS server is not responding.
-
+.Pp
 This does not affect resolving hostnames to IP addresses from the
 host configuration files.
-.TP
-\fBInterface\fR = <\fIdevice\fR>
-If you have more than one network interface in your computer, tinc will
-by default listen on all of them for incoming connections.  It is
-possible to bind tinc to a single interface like eth0 or ppp0 with this
-variable.
-.TP
-\fBInterfaceIP\fR = <\fIlocal address\fR>
-If your computer has more than one IP address on a single interface (for
-example if you are running virtual hosts), tinc will by default listen
-on all of them for incoming connections.  It is possible to bind tinc to
-a single IP address with this variable.  It is still possible to listen
-on several interfaces at the same time though, if they share the same IP
-address.
-.TP
-\fBKeyExpire\fR = <\fIseconds\fR> (3600)
-This option controls the time the encryption keys used to encrypt the data
-are valid. It is common practice to change keys at regular intervals to
-make it even harder for crackers, even though it is thought to be nearly
-impossible to crack a single key.
-.TP
-\fBName\fR = <\fIname\fR> [required]
-This is the name which identifies this tinc daemon. It must be unique for
-the virtual private network this daemon will connect to.
-.TP
-\fBPingTimeout\fR = <\fIseconds\fR> (60)
-The number of seconds of inactivity that tinc will wait before sending a
-probe to the other end. If that other end doesn't answer within that
-same amount of seconds, the connection is terminated, and the others
-will be notified of this.
-.TP
-\fBPrivateKey\fR = <\fIkey\fR> [obsolete]
-The private RSA key of this tinc daemon. It will allow this tinc daemon to
-authenticate itself to other daemons.
-.TP
-\fBPrivateKeyFile\fR = <\fIfilename\fR> [recommended]
+.It Va Interface Li = Ar interface
+Defines the name of the interface corresponding to the virtual network device.
+Depending on the operating system and the type of device this may or may not actually set the name.
+Currently this option only affects the Linux tun/tap device.
+.It Va KeyExpire Li = Ar period Pq 3600
+This option controls the period the encryption keys used to encrypt the data are valid.
+It is common practice to change keys at regular intervals to make it even harder for crackers,
+even though it is thought to be nearly impossible to crack a single key.
+.It Va MaxTimeout Li = Ar period Pq 900
+This is the maximum delay before trying to reconnect to other tinc daemons.
+.It Va Mode Li = router | switch | hub Pq router
+This option selects the way packets are routed to other daemons.
+.Bl -tag -width indent
+.It router
+In this mode
+.Va Subnet
+variables in the host configuration files will be used to form a routing table.
+Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
+.It switch
+In this mode the MAC addresses of the packets on the VPN will be used to
+dynamically create a routing table just like a network switch does.
+Unicast, multicast and broadcast packets of every Ethernet protocol are supported in this mode
+at the cost of frequent broadcast ARP requests and routing table updates.
+.It hub
+In this mode every packet will be broadcast to the other daemons.
+.El
+.It Va Name Li = Ar name Bq required
+This is the name which identifies this tinc daemon.
+It must be unique for the virtual private network this daemon will connect to.
+.It Va PingTimeout Li = Ar period Pq 60
+The number of seconds of inactivity that
+.Nm tinc
+will wait before sending a probe to the other end.
+If that other end doesn't answer within that same amount of time,
+the connection is terminated,
+and the others will be notified of this.
+.It Va PrivateKey Li = Ar key Bq obsolete
+The private RSA key of this tinc daemon.
+It will allow this tinc daemon to authenticate itself to other daemons.
+.It Va PrivateKeyFile Li = Ar filename Bq recommended
 The file in which the private RSA key of this tinc daemon resides.
-
-Note that there must be exactly one of \fBPrivateKey\fR or \fBPrivateKeyFile\fR
+Note that there must be exactly one of
+.Va PrivateKey
+or
+.Va PrivateKeyFile
 specified in the configuration file.
-.TP
-\fBTapDevice\fR = <\fIdevice\fR> (/dev/tap0 or /dev/net/tun)
-The ethertap or tun/tap device to use. tinc will automatically detect what
-kind of tapdevice it is.
-Note that you can only use one device per
-daemon. The info pages of the tinc package contain more information
-about configuring an ethertap device for Linux.
-.PP
-.SH "HOST CONFIGURATION FILES"
-The host configuration files contain all information needed to establish a
-connection to those hosts. A host configuration file is also required for the
-local tinc daemon, it will use it to read in it's listen port, public key and
-subnets.
-
-The idea is that these files are ``portable''. You can safely mail your own host
-configuration file to someone else. That other person can then copy it to his
-own hosts directory, and now his tinc daemon will be able to connect to your
-tinc daemon. Since host configuration files only contain public keys, no secrets
-are revealed by sending out this information.
-.PP
-.TP
-\fBAddress\fR = <\fIIP address\fR> [recommended]
-The real address or hostname of this tinc daemon.
-.TP
-\fBIndirectData\fR = <\fIyes\fR|\fIno\fR> (no) [experimental]
-This option specifies whether other tinc daemons besides the one you
-specified with ConnectTo can make a direct connection to you.  This is
-especially useful if you are behind a firewall and it is impossible to
-make a connection from the outside to your tinc daemon.  Otherwise, it
-is best to leave this option out or set it to no.
-.TP
-\fBPort\fR = <\fIport number\fR> (655)
-The port on which this tinc daemon is listening for incoming connections.
-.TP
-\fBPublicKey\fR = <\fIkey\fR> [obsolete]
-The public RSA key of this tinc daemon. It will be used to cryptographically
-verify it's identity and to set up a secure connection.
-.TP
-\fBPublicKeyFile\fR = <\fIfilename\fR> [obsolete]
+.El
+.Sh HOST CONFIGURATION FILES
+The host configuration files contain all information needed
+to establish a connection to those hosts.
+A host configuration file is also required for the local tinc daemon,
+it will use it to read in it's listen port, public key and subnets.
+.Pp
+The idea is that these files are portable.
+You can safely mail your own host configuration file to someone else.
+That other person can then copy it to his own hosts directory,
+and now his tinc daemon will be able to connect to your tinc daemon.
+Since host configuration files only contain public keys,
+no secrets are revealed by sending out this information.
+.Bl -tag -width indent
+.It Va Address Li = Ar address Bq recommended
+The IP address or hostname of this tinc daemon on the real network.
+.It Va Cipher Li = Ar cipher Pq blowfish
+The symmetric cipher algorithm used to encrypt UDP packets.
+Any cipher supported by OpenSSL is recognised.
+Furthermore, specifying
+.Qq none
+will turn off packet encryption.
+.It Va Digest Li = Ar digest Pq sha1
+The digest algorithm used to authenticate UDP packets.
+Any digest supported by OpenSSL is recognised.
+Furthermore, specifying
+.Qq none
+will turn off packet authentication.
+.It Va IndirectData Li = yes | no Po no Pc Bq experimental
+This option specifies whether other tinc daemons besides the one you specified with
+.Va ConnectTo
+can make a direct connection to you.
+This is especially useful if you are behind a firewall
+and it is impossible to make a connection from the outside to your tinc daemon.
+Otherwise, it is best to leave this option out or set it to no.
+.It Va MACLength Li = Ar length Pq 4
+The length of the message authentication code used to authenticate UDP packets.
+Can be anything from
+.Qq 0
+up to the length of the digest produced by the digest algorithm.
+.It Va Port Li = Ar port Pq 655
+The port number on which this tinc daemon is listening for incoming connections.
+.It Va PublicKey Li = Ar key Bq obsolete
+The public RSA key of this tinc daemon.
+It will be used to cryptographically verify it's identity and to set up a secure connection.
+.It Va PublicKeyFile Li = Ar filename Bq obsolete
 The file in which the public RSA key of this tinc daemon resides.
-
-From version 1.0pre4 on tinc will store the public key directly into the
-host configuration file in PEM format, the above two options then are not
-necessary. Either the PEM format is used, or exactly
-one of the above two options must be specified
-in each host configuration file, if you want to be able to establish a
-connection with that host.
-.TP
-\fBSubnet\fR = <\fIaddress/masklength\fR>
-The subnet which this tinc daemon will serve. tinc tries to look up which other
-daemon it should send a packet to by searching the appropiate subnet. If the
-packet matches a subnet, it will be sent to the daemon who has this subnet in his
-host configuration file. Multiple subnet lines can be specified.
-
-At the moment, this directive is only used in the host configuration file of
-the local tinc daemon itself. In upcoming versions of tinc, it will be possible to
-restrict other hosts in which subnets they server.
-
-The subnets must be in a form like \fI192.168.1.0/24\fR, where 192.168.1.0 is the
-network address and 24 is the number of bits set in the netmask. Note that subnets
-like \fI192.168.1.1/24\fR are invalid! Read a networking howto/FAQ/guide if you
-don't understand this.
-.TP
-\fBTCPonly\fR = <\fIyes\fR|\fIno\fR> (no) [experimental]
-If this variable is set to yes, then the packets are tunnelled over a
-TCP connection instead of a UDP connection.  This is especially useful
-for those who want to run a tinc daemon from behind a masquerading
-firewall, or if UDP packet routing is disabled somehow. This is
-experimental code, try this at your own risk. It may not work at all.
+.Pp
+From version 1.0pre4 on
+.Nm tinc
+will store the public key directly into the host configuration file in PEM format,
+the above two options then are not necessary.
+Either the PEM format is used, or exactly one of the above two options must be specified
+in each host configuration file,
+if you want to be able to establish a connection with that host.
+.It Va Subnet Li = Ar address Ns Op Li / Ns Ar masklength
+The subnet which this tinc daemon will serve.
+.Nm tinc
+tries to look up which other daemon it should send a packet to by searching the appropriate subnet.
+If the packet matches a subnet,
+it will be sent to the daemon who has this subnet in his host configuration file.
+Multiple subnet lines can be specified.
+.Pp
+Subnets can either be single MAC, IPv4 or IPv6 addresses,
+in which case a subnet consisting of only that single address is assumed,
+or they can be a IPv4 or IPv6 network address with a masklength.
+For example, IPv4 subnets must be in a form like 192.168.1.0/24,
+where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
+Note that subnets like 192.168.1.1/24 are invalid!
+Read a networking HOWTO/FAQ/guide if you don't understand this.
+.It Va TCPOnly Li = yes | no Po no Pc Bq experimental
+If this variable is set to yes,
+then the packets are tunnelled over the TCP connection instead of a UDP connection.
+This is especially useful for those who want to run a tinc daemon
+from behind a masquerading firewall,
+or if UDP packet routing is disabled somehow.
+This is experimental code, try this at your own risk.
+It may not work at all.
 Setting this options also implicitly sets IndirectData.
-.SH "FILES"
-.TP
-\fI/etc/tinc/\fR
+.El
+.Sh FILES
+.Bl -tag -width indent
+.It Pa /etc/tinc/
 The top directory for configuration files.
-.TP
-\fI/etc/tinc/\fBnetname\fI/tinc.conf\fR
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 The default name of the server configuration file for net
-\fBnetname\fR.
-.TP
-\fI/etc/tinc/\fBnetname\fI/hosts/\fR
+.Ar NETNAME .
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 Host configuration files are kept in this directory.
-.TP
-\fI/etc/tinc/\fBnetname\fI/tinc-up\fR
-If an executable file with this name exists, it will be executed
-right after the tinc daemon has connected to the tap device. It can
-be used to ifconfig the network interface.
-
-If the tapdevice is a tun/tap device, the evironment variable
-\fB$IFNAME\fR will be set to the name of the network interface.
-.TP
-\fI/etc/tinc/\fBnetname\fI/tinc-down\fR
-If an executable file with this name exists, it will be executed
-right before the tinc daemon is going to close it's connection to the
-tap device.
-.PP
-.SH "SEE ALSO"
-\fBtincd\fR(8)
-.TP
-\fBhttp://tinc.nl.linux.org/\fR
-.TP
-\fBhttp://www.linuxdoc.org/LDP/nag2/\fR
-.PP
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
+If an executable file with this name exists,
+it will be executed right after the tinc daemon has connected to the virtual network device.
+It can be used to set up the corresponding network interface.
+.Pp
+The environment variable
+.Ev NETNAME
+will be passed to the executable.
+If specified with the
+.Va Interface
+configuration variable,
+or if the virtual network device is a Linux tun/tap device,
+the environment variable
+.Ev INTERFACE
+will be set to the name of the network interface.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
+If an executable file with this name exists,
+it will be executed right before the tinc daemon is going to close
+its connection to the virtual network device.
+The same environment variables will be passed as mentioned above.
+.El
+.Sh SEE ALSO
+.Xr tincd 8 ,
+.Pa http://tinc.nl.linux.org/ ,
+.Pa http://www.linuxdoc.org/LDP/nag2/ .
+.Pp
 The full documentation for
-.B tinc
-is maintained as a Texinfo manual.  If the
-.B info
-and
-.B tinc
-programs are properly installed at your site, the command
-.IP
-.B info tinc
-.PP
+.Nm tinc
+is maintained as a Texinfo manual.
+If the info and tinc programs are properly installed at your site, the command
+.Ic info tinc
 should give you access to the complete manual.
-.PP
-tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,
-and you are welcome to redistribute it under certain conditions;
+.Pp
+.Nm tinc
+comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it under certain conditions;
 see the file COPYING for details.

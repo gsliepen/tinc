@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.56 2001/11/16 22:40:26 zarq Exp $
+    $Id: tincd.c,v 1.10.4.57 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"
@@ -41,12 +41,14 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 
 #include <utils.h>
 #include <xalloc.h>
 
 #include "conf.h"
 #include "net.h"
+#include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
@@ -295,7 +297,7 @@ main(int argc, char **argv, char **envp)
   if(show_version)
     {
       printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE, VERSION, __DATE__, __TIME__, PROT_CURRENT);
-      printf(_("Copyright (C) 1998-2001 Ivo Timmermans, Guus Sliepen and others.\n"
+      printf(_("Copyright (C) 1998-2002 Ivo Timmermans, Guus Sliepen and others.\n"
 	       "See the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 	       "and you are welcome to redistribute it under certain conditions;\n"
@@ -327,6 +329,13 @@ main(int argc, char **argv, char **envp)
   /* Slllluuuuuuurrrrp! */
 cp
   RAND_load_file("/dev/urandom", 1024);
+
+#ifdef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
+  SSLeay_add_all_algorithms();
+#else
+  OpenSSL_add_all_algorithms();
+#endif
+
 cp
   if(generate_keys)
     {

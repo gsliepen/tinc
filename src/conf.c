@@ -1,8 +1,8 @@
 /*
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
-                  1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+                  1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 		  2000 Cris van Pelt <tribbel@arise.dhs.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.51 2001/11/16 22:31:41 zarq Exp $
+    $Id: conf.c,v 1.9.4.52 2002/02/10 21:57:53 guus Exp $
 */
 
 #include "config.h"
@@ -42,18 +42,16 @@
 #include <avl_tree.h>
 
 #include "conf.h"
+#include "netutl.h" /* for str2address */
 
 #include "system.h"
 
 avl_tree_t *config_tree;
 
 int debug_lvl = 0;
-int timeout = 0; /* seconds before timeout */
+int pingtimeout = 0;             /* seconds before timeout */
 char *confbase = NULL;           /* directory in which all config files are */
 char *netname = NULL;            /* name of the vpn network */
-
-/* Will be set if HUP signal is received. It will be processed when it is safe. */
-int sighup = 0;
 
 int config_compare(config_t *a, config_t *b)
 {
@@ -202,6 +200,41 @@ cp
   return 1;
 }
 
+int get_config_address(config_t *cfg, ipv4_t **result)
+{
+  ipv4_t *ip;
+cp
+  if(!cfg)
+    return 0;
+
+  ip = xmalloc(sizeof(*ip));
+  *ip = str2address(cfg->value);
+
+  if(ip)
+    {
+      *result = ip;
+      return 1;
+    }
+
+  syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"),
+         cfg->variable, cfg->file, cfg->line);
+  return 0;
+}
+
+int get_config_port(config_t *cfg, port_t *result)
+{
+cp
+  if(!cfg)
+    return 0;
+
+  if(sscanf(cfg->value, "%hu", result) == 1)
+    return 1;
+    
+  syslog(LOG_ERR, _("Port number expected for configuration variable %s in %s line %d"),
+         cfg->variable, cfg->file, cfg->line);
+  return 0;
+}
+
 int get_config_subnet(config_t *cfg, subnet_t **result)
 {
   subnet_t *subnet;
@@ -209,34 +242,27 @@ cp
   if(!cfg)
     return 0;
 
-#warning FIXME 
-/*   ip = strtoip(cfg->value); */
+  subnet = str2net(cfg->value);
 
-/*   if(!ip) */
-/*     { */
-/*       syslog(LOG_ERR, _("IP address expected for configuration variable %s in %s line %d"), */
-/*              cfg->variable, cfg->file, cfg->line); */
-/*       return 0; */
-/*     } */
+  if(!subnet)
+    {
+      syslog(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+             cfg->variable, cfg->file, cfg->line);
+      return 0;
+    }
   
   /* Teach newbies what subnets are... */
 
-/*   if((ip->address & ip->mask) != ip->address) */
-/*     { */
-/*       syslog(LOG_ERR, _("Network address and subnet mask for configuration variable %s in %s line %d"), */
-/*              cfg->variable, cfg->file, cfg->line); */
-/*       free(ip); */
-/*       return 0; */
-/*     } */
+  if(subnet->type == SUBNET_IPV4)
+    if((subnet->net.ipv4.address & subnet->net.ipv4.mask) != subnet->net.ipv4.address)
+      {
+	syslog(LOG_ERR, _("Network address and mask length do not match for configuration variable %s in %s line %d"),
+               cfg->variable, cfg->file, cfg->line);
+	free(subnet);
+	return 0;
+      }
 
-/*   subnet = new_subnet(); */
-/*   subnet->type = SUBNET_IP; */
-/*   subnet->net.ip.address = ip->address; */
-/*   subnet->net.ip.mask = ip->mask; */
-  
-/*   free(ip); */
-
-/*   *result = subnet; */
+  *result = subnet;
   
   return 1;
 }

@@ -1,7 +1,7 @@
 /*
     route.c -- routing
-    Copyright (C) 2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2000-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.21 2001/11/16 17:40:50 zarq Exp $
+    $Id: route.c,v 1.1.2.22 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"
 
-#ifdef HAVE_FREEBSD
+#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
  #include <sys/param.h>
 #endif
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifdef HAVE_SOLARIS
+#if defined(HAVE_SOLARIS) || defined(HAVE_OPENBSD)
  #include <net/if.h>
  #define ETHER_ADDR_LEN 6
 #else
@@ -66,7 +66,7 @@ cp
   if(!subnet || subnet->owner!=myself)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
-        syslog(LOG_INFO, _("Learned new MAC address %hhx:%hhx:%hhx:%hhx:%hhx:%hhx"),
+        syslog(LOG_INFO, _("Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"),
                address->x[0], address->x[1], address->x[2], address->x[3],  address->x[4], address->x[5]);
                
       subnet = new_subnet();
@@ -103,10 +103,26 @@ cp
     return NULL;
 }
 
+node_t *route_ipv4(vpn_packet_t *packet)
+{
+  ipv4_t dest;
+  subnet_t *subnet;
+cp
+#ifdef HAVE_SOLARIS
+  /* The other form gives bus errors on a SparcStation 20. */
+  dest = ((packet->data[30] * 0x100 + packet->data[31]) * 0x100 + packet->data[32]) * 0x100 + packet->data[33];
+#else
+  dest = ntohl(*((unsigned long*)(&packet->data[30])));
+#endif
+cp  
+  subnet = lookup_subnet_ipv4(&dest);
+cp
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
+          syslog(LOG_WARNING, _("Cannot route packet: unknown destination address %d.%d.%d.%d"),
+                 packet->data[30], packet->data[31], packet->data[32], packet->data[33]);
         }
 
       return NULL;
@@ -115,21 +131,25 @@ cp
   return subnet->owner;  
 }
 
-node_t *route_ip(vpn_packet_t *packet)
+node_t *route_ipv6(vpn_packet_t *packet)
 {
-  struct addrinfo *dest;
   subnet_t *subnet;
 cp
-#warning FIXME
-  memcpy(&dest, &packet->data[30], 0);
-
-  subnet = lookup_subnet_ip(&dest);
+  subnet = lookup_subnet_ipv6((ipv6_t *)&packet->data[38]);
 cp
   if(!subnet)
     {
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
-          syslog(LOG_WARNING, _("Cannot route packet: unknown IP destination address"));
+          syslog(LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
+	    ntohs(*(short unsigned int *)&packet->data[38]),
+	    ntohs(*(short unsigned int *)&packet->data[40]),
+	    ntohs(*(short unsigned int *)&packet->data[42]),
+	    ntohs(*(short unsigned int *)&packet->data[44]),
+	    ntohs(*(short unsigned int *)&packet->data[46]),
+	    ntohs(*(short unsigned int *)&packet->data[48]),
+	    ntohs(*(short unsigned int *)&packet->data[50]),
+	    ntohs(*(short unsigned int *)&packet->data[52]));
         }
 
       return NULL;
@@ -143,7 +163,7 @@ void route_arp(vpn_packet_t *packet)
   struct ether_arp *arp;
   subnet_t *subnet;
   unsigned char ipbuf[4];
-  struct addrinfo *dest;
+  ipv4_t dest;
 cp
   /* First, snatch the source address from the ARP packet */
 
@@ -172,9 +192,9 @@ cp
     }
 
   /* Check if the IP address exists on the VPN */
-#warning FIXME
+
   dest = ntohl(*((unsigned long*)(arp->arp_tpa)));
-  subnet = lookup_subnet_ip(&dest);
+  subnet = lookup_subnet_ipv4(&dest);
 
   if(!subnet)
     {

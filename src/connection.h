@@ -1,7 +1,7 @@
 /*
     connection.h -- header for connection.c
-    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2000-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.23 2001/11/16 12:01:48 zarq Exp $
+    $Id: connection.h,v 1.1.2.24 2002/02/10 21:57:53 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -46,30 +46,26 @@
 #include "node.h"
 #include "edge.h"
 
-#include <config.h>
-#include <dropin.h>
-
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
 
 typedef struct connection_status_t {
   int pinged:1;                    /* sent ping */
   int active:1;                    /* 1 if active.. */
-  int outgoing:1;                  /* I myself asked for this conn */
   int termreq:1;                   /* the termination of this connection was requested */
   int remove:1;                    /* Set to 1 if you want this connection removed */
   int timeout:1;                   /* 1 if gotten timeout */
   int encryptout:1;		   /* 1 if we can encrypt outgoing traffic */
   int decryptin:1;                 /* 1 if we have to decrypt incoming traffic */
   int mst:1;			   /* 1 if this connection is part of a minimum spanning tree */
-  int unused:17;
+  int unused:18;
 } connection_status_t;
 
 typedef struct connection_t {
   char *name;                      /* name he claims to have */
 
-  struct addrinfo *address;        /* his real (internet) ip */
-  char *port;                      /* port number of meta connection */
+  ipv4_t address;                  /* his real (internet) ip */
+  port_t port;                     /* port number of meta connection */
   char *hostname;                  /* the hostname of its real ip */
   int protocol_version;            /* used protocol */
 
@@ -78,9 +74,10 @@ typedef struct connection_t {
   struct connection_status_t status; /* status info */
   int estimated_weight;            /* estimation for the weight of the edge for this connection */
   struct timeval start;            /* time this connection was started, used for above estimation */
+  struct outgoing_t *outgoing;     /* used to keep track of outgoing connections */
 
   struct node_t *node;             /* node associated with the other end */
-  struct edge_t *edge;             /* edge associated with this connection */
+  struct edge_t *edge;         /* edge associated with this connection */
 
   RSA *rsa_key;                    /* his public/private key */
   EVP_CIPHER *incipher;            /* Cipher he will use to send data to us */
@@ -112,7 +109,7 @@ extern connection_t *new_connection(void);
 extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
-extern connection_t *lookup_connection(struct addrinfo *);
+extern connection_t *lookup_connection(ipv4_t, short unsigned int);
 extern void dump_connections(void);
 extern int read_connection_config(connection_t *);
 

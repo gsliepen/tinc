@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Solaris tun device
-    Copyright (C) 2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2001-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.3 2001/11/05 19:06:07 guus Exp $
+    $Id: device.c,v 1.1.2.4 2002/02/10 21:57:54 guus Exp $
 */
 
 
@@ -157,7 +157,7 @@ cp
 
   if(debug_lvl >= DEBUG_TRAFFIC)
     {
-      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), device_info, packet->len);
+      syslog(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len, device_info);
     }
 
   return 0;

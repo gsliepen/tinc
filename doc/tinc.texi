@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.18 2001/05/25 12:45:37 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.19 2002/02/10 21:57:51 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -7,17 +7,18 @@
 @c %**end of header
 
 @ifinfo
+@dircategory Networking tools
 @direntry
 * tinc: (tinc).              The tinc Manual.
 @end direntry
 
 This is the info manual for tinc, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2001 Ivo Timmermans
+Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.18 2001/05/25 12:45:37 guus Exp $
+$Id: tinc.texi,v 1.8.4.19 2002/02/10 21:57:51 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -38,11 +39,11 @@ permission notice identical to this one.
 @page
 @vskip 0pt plus 1filll
 @cindex copyright
-Copyright @copyright{} 1998-2001 Ivo Timmermans
+Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.18 2001/05/25 12:45:37 guus Exp $
+$Id: tinc.texi,v 1.8.4.19 2002/02/10 21:57:51 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -176,16 +177,14 @@ available too.
 @section Supported platforms
 
 @cindex platforms
-tinc has been verified to work under Linux, FreeBSD and Solaris, with
-various hardware architectures.  These are the three platforms
-that are supported by the universial TUN/TAP device driver, so if
-support for other operating systems is added to this driver, perhaps
-tinc will run on them as well.  Without this driver, tinc will most
+tinc has been verified to work under Linux, FreeBSD, OpenBSD and Solaris, with
+various hardware architectures.  These are some of the platforms
+that are supported by the universal tun/tap device driver or other virtual network device drivers.
+Without such a driver, tinc will most
 likely compile and run, but it will not be able to send or receive data
 packets.
 
 @cindex release
-The official release only truly supports Linux.
 For an up to date list of supported platforms, please check the list on
 our website:
 @uref{http://tinc.nl.linux.org/platforms.html}.
@@ -202,24 +201,32 @@ and arbitrary word length.  So in theory it should run on other
 processors that Linux runs on.  It has already been verified to run on
 alpha and sparc processors as well.
 
-tinc uses the ethertap device or the universal TUN/TAP driver. The former is provided in the standard kernel
-from version 2.1.60 up to 2.3.x, but has been replaced in favour of the TUN/TAP driver in kernel versions 2.4.0 and later.
+tinc uses the ethertap device or the universal tun/tap driver. The former is provided in the standard kernel
+from version 2.1.60 up to 2.3.x, but has been replaced in favour of the tun/tap driver in kernel versions 2.4.0 and later.
 
 
 @c ==================================================================
 @subsection FreeBSD
 
 @cindex FreeBSD
-tinc on FreeBSD relies on the universial TUN/TAP driver for its data
+tinc on FreeBSD relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
 as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
+
+
+@c ==================================================================
+@subsection OpenBSD
+
+@cindex OpenBSD
+tinc on OpenBSD relies on the tun driver for its data
+acquisition from the kernel. It has been verified to work under at least OpenBSD 2.9.
 
 
 @c ==================================================================
 @subsection Solaris
 
 @cindex Solaris
-tinc on Solaris relies on the universial TUN/TAP driver for its data
+tinc on Solaris relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
 as this driver.  These are: Solaris, 2.1.x.
 
@@ -278,6 +285,7 @@ you should read the @uref{http://howto.linuxberg.com/LDP/HOWTO/Kernel-HOWTO.html
 * Configuration of Linux kernels 2.1.60 up to 2.4.0::
 * Configuration of Linux kernels 2.4.0 and higher::
 * Configuration of FreeBSD kernels::
+* Configuration of OpenBSD kernels::
 * Configuration of Solaris kernels::
 @end menu
 
@@ -329,18 +337,18 @@ Here are the options you have to turn on when configuring a new kernel:
 Code maturity level options
 [*] Prompt for development and/or incomplete code/drivers
 Network device support
-<M> Universal TUN/TAP device driver support
+<M> Universal tun/tap device driver support
 @end example
 
 It's not necessary to compile this driver as a module, even if you are going to
 run more than one instance of tinc.
 
-If you have an early 2.4 kernel, you can choose both the TUN/TAP driver and the
+If you have an early 2.4 kernel, you can choose both the tun/tap driver and the
 `Ethertap network tap' device.  This latter is marked obsolete, and chances are
 that it won't even function correctly anymore.  Make sure you select the
-universal TUN/TAP driver.
+universal tun/tap driver.
 
-If you decide to build the TUN/TAP driver as a kernel module, add these lines
+If you decide to build the tun/tap driver as a kernel module, add these lines
 to @file{/etc/modules.conf}:
 
 @example
@@ -349,24 +357,35 @@ alias char-major-10-200 tun
 
 
 @c ==================================================================
-@node       Configuration of FreeBSD kernels, Configuration of Solaris kernels, Configuration of Linux kernels 2.4.0 and higher, Configuring the kernel
+@node       Configuration of FreeBSD kernels, Configuration of OpenBSD kernels, Configuration of Linux kernels 2.4.0 and higher, Configuring the kernel
 @subsection Configuration of FreeBSD kernels
 
 This section will contain information on how to configure your FreeBSD
-kernel to support the universal TUN/TAP device.  For 5.0 and 4.1
-systems, this is included in the kernel configuration, for earlier
-systems (4.0 and 3.x), you need to install the universal TUN/TAP driver
+kernel to support the universal tun/tap device.  For 4.1 and higher
+versions, this is included in the default kernel configuration, for earlier
+systems (4.0 and earlier), you need to install the universal tun/tap driver
 yourself.
 
 Unfortunately somebody still has to write the text.
 
 
 @c ==================================================================
-@node       Configuration of Solaris kernels,  , Configuration of FreeBSD kernels, Configuring the kernel
+@node       Configuration of OpenBSD kernels, Configuration of Solaris kernels, Configuration of FreeBSD kernels, Configuring the kernel
+@subsection Configuration of OpenBSD kernels
+
+This section will contain information on how to configure your OpenBSD
+kernel to support the tun device.  For 2.9 and 3.0 systems,
+this is included in the default kernel configuration.
+
+Unfortunately somebody still has to write the text.
+
+
+@c ==================================================================
+@node       Configuration of Solaris kernels,  , Configuration of OpenBSD kernels, Configuring the kernel
 @subsection Configuration of Solaris kernels
 
 This section will contain information on how to configure your Solaris
-kernel to support the universal TUN/TAP device.  You need to install
+kernel to support the universal tun/tap device.  You need to install
 this driver yourself.
 
 Unfortunately somebody still has to write the text.
@@ -451,11 +470,11 @@ all other requirements of the GPL are met.
 @node    Installation, Configuration, Preparations, Top
 @chapter Installation
 
-If you use Redhat or Debian, you may want to install one of the
+If you use Debian, you may want to install one of the
 precompiled packages for your system.  These packages are equipped with
 system startup scripts and sample configurations.
 
-If you don't run either of these systems, or you want to compile tinc
+If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
 @uref{http://tinc.nl.linux.org/download.html, download page}, which has
@@ -528,7 +547,7 @@ chown 0.0 /dev/tap@emph{N}
 
 There is a maximum of 16 ethertap devices.
 
-If you use the universal TUN/TAP driver, you have to create the
+If you use the universal tun/tap driver, you have to create the
 following device file (unless it already exist):
 
 @example
@@ -537,8 +556,8 @@ chown 0.0 /dev/tun
 @end example
 
 If you use Linux, and you run the new 2.4 kernel using the devfs filesystem,
-then the TUN/TAP device will probably be automatically generated as
-@file{/dev/net/tun}.
+then the tun/tap device will probably be automatically generated as
+@file{/dev/misc/net/tun}.
 
 Unlike the ethertap device, you do not need multiple device files if
 you are planning to run multiple tinc daemons.
@@ -617,7 +636,7 @@ A good resource on networking is the
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
-First, generate the configuration files (tinc.conf, your host configuration file, tinc-up and perhaps tinc-down).
+First, generate the configuration files (@file{tinc.conf}, your host configuration file, @file{tinc-up} and perhaps @file{tinc-down}).
 Then generate the keypairs.
 Finally, distribute the host configuration files.
 These steps are described in the subsections below.
@@ -717,8 +736,28 @@ required directives are given in @strong{bold}.
 @subsection Main configuration variables
 
 @table @asis
-@item @strong{ConnectTo = <name>}
+@cindex BindToInterface
+@item BindToInterface = <interface>
+If you have more than one network interface in your computer, tinc will
+by default listen on all of them for incoming connections.  It is
+possible to bind tinc to a single interface like eth0 or ppp0 with this
+variable.
+
+This option may not work on all platforms.
+
+@cindex BindToIP
+@item BindToIP = <address>
+If your computer has more than one IP address on a single interface (for
+example if you are running virtual hosts), tinc will by default listen
+on all of them for incoming connections.  It is possible to bind tinc to
+a single IP address with this variable.  It is still possible to listen
+on several interfaces at the same time though, if they share the same IP
+address.
+
+This option may not work on all platforms.
+
 @cindex ConnectTo
+@item @strong{ConnectTo = <name>}
 Specifies which host to connect to on startup.  Multiple ConnectTo
 variables may be specified, if connecting to the first one fails then
 tinc will try the next one, and so on.  It is possible to specify
@@ -729,8 +768,13 @@ If you don't specify a host with ConnectTo, regardless of whether a
 value for ConnectPort is given, tinc won't connect at all, and will
 instead just listen for incoming connections.
 
-@item Hostnames = <yes|no> (no)
+@cindex Device
+@item @strong{Device = <device>} (/dev/tap0 or /dev/misc/net/tun)
+The virtual network device to use.  Note that you can only use one device per
+daemon.  See also @ref{Device files}.
+
 @cindex Hostnames
+@item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
 should be resolved.  Since DNS lookups are blocking, it might affect
 tinc's efficiency, even stopping the daemon for a few seconds everytime
@@ -739,57 +783,68 @@ it does a lookup if your DNS server is not responding.
 This does not affect resolving hostnames to IP addresses from the
 configuration file.
 
-@item Interface = <device>
 @cindex Interface
-If you have more than one network interface in your computer, tinc will
-by default listen on all of them for incoming connections.  It is
-possible to bind tinc to a single interface like eth0 or ppp0 with this
-variable.
+@item Interface = <interface>
+Defines the name of the interface corresponding to the virtual network device.
+Depending on the operating system and the type of device this may or may not actually set the name.
+Currently this option only affects the Linux tun/tap device.
 
-@item InterfaceIP = <local address>
-@cindex InterfaceIP
-If your computer has more than one IP address on a single interface (for
-example if you are running virtual hosts), tinc will by default listen
-on all of them for incoming connections.  It is possible to bind tinc to
-a single IP address with this variable.  It is still possible to listen
-on several interfaces at the same time though, if they share the same IP
-address.
+@cindex Mode
+@item Mode = <router|switch|hub> (router)
+This option selects the way packets are routed to other daemons.
 
-@item KeyExpire = <seconds> (3600)
+@table @asis
+@cindex router
+@item router
+In this mode Subnet
+variables in the host configuration files will be used to form a routing table.
+Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
+
+@cindex switch
+@item switch
+In this mode the MAC addresses of the packets on the VPN will be used to
+dynamically create a routing table just like a network switch does.
+Unicast, multicast and broadcast packets of every ethernet protocol are supported in this mode
+at the cost of frequent broadcast ARP requests and routing table updates.
+
+@cindex hub
+@item hub
+In this mode every packet will be broadcast to the other daemons.
+@end table
+
 @cindex KeyExpire
+@item KeyExpire = <seconds> (3600)
 This option controls the time the encryption keys used to encrypt the data
 are valid.  It is common practice to change keys at regular intervals to
 make it even harder for crackers, even though it is thought to be nearly
 impossible to crack a single key.
 
-@item @strong{Name = <name>}
 @cindex Name
+@item @strong{Name = <name>}
 This is a symbolic name for this connection.  It can be anything
 
-@item PingTimeout = <seconds> (60)
 @cindex PingTimeout
+@item PingTimeout = <seconds> (60)
 The number of seconds of inactivity that tinc will wait before sending a
 probe to the other end.  If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
-@item PrivateKey = <key> [obsolete]
 @cindex PrivateKey
+@item PrivateKey = <key> [obsolete]
 This is the RSA private key for tinc. However, for safety reasons it is
 advised to store private keys of any kind in separate files. This prevents
 accidental eavesdropping if you are editting the configuration file.
 
-@item @strong{PrivateKeyFile = <path>} [recommended]
 @cindex PrivateKeyFile
+@item @strong{PrivateKeyFile = <path>} [recommended]
 This is the full path name of the RSA private key file that was
 generated by ``tincd --generate-keys''.  It must be a full path, not a
 relative directory.
 
-@item @strong{TapDevice = <device>} (/dev/tap0 or /dev/net/tun)
-@cindex TapDevice
-The ethertap device to use.  Note that you can only use one device per
-daemon.  The info pages of the tinc package contain more information
-about configuring an ethertap device for Linux.
+Note that there must be exactly one of PrivateKey
+or PrivateKeyFile
+specified in the configuration file.
 
 @end table
 
@@ -799,33 +854,50 @@ about configuring an ethertap device for Linux.
 @subsection Host configuration variables
 
 @table @asis
-@item @strong{Address = <IP address|hostname>} [recommended]
 @cindex Address
+@item @strong{Address = <IP address|hostname>} [recommended]
 This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 
-@item IndirectData = <yes|no> (no) [experimental]
+@cindex Cipher
+@item Cipher = <cipher> (blowfish)
+The symmetric cipher algorithm used to encrypt UDP packets.
+Any cipher supported by OpenSSL is recognized.
+
+@cindex Digest
+@item Digest = <digest> (sha1)
+The digest algorithm used to authenticate UDP packets.
+Any digest supported by OpenSSL is recognized.
+Furthermore, specifying "none" will turn off packet authentication.
+
 @cindex IndirectData
+@item IndirectData = <yes|no> (no) [experimental]
 This option specifies whether other tinc daemons besides the one you
 specified with ConnectTo can make a direct connection to you.  This is
 especially useful if you are behind a firewall and it is impossible to
 make a connection from the outside to your tinc daemon.  Otherwise, it
 is best to leave this option out or set it to no.
 
-@item Port = <port> (655)
+@cindex MACLength
+@item MACLength = <length> (4)
+The length of the message authentication code used to authenticate UDP packets.
+Can be anything from 0
+up to the length of the digest produced by the digest algorithm.
+
 @cindex Port
+@item Port = <port> (655)
 Connect to the upstream host (given with the ConnectTo directive) on
 port port.  port may be given in decimal (default), octal (when preceded
 by a single zero) o hexadecimal (prefixed with 0x).  port is the port
 number for both the UDP and the TCP (meta) connections.
 
-@item PublicKey = <key> [obsolete]
 @cindex PublicKey
+@item PublicKey = <key> [obsolete]
 This is the RSA public key for this host.
 
-@item PublicKeyFile = <path> [obsolete]
 @cindex PublicKeyFile
+@item PublicKeyFile = <path> [obsolete]
 This is the full path name of the RSA public key file that was generated
 by ``tincd --generate-keys''.  It must be a full path, not a relative
 directory.
@@ -838,22 +910,29 @@ necessary. Either the PEM format is used, or exactly
 in each host configuration file, if you want to be able to establish a
 connection with that host.
 
-@item Subnet = <IP address/maskbits>
 @cindex Subnet
-This is the subnet range of all IP addresses that will be accepted by
-the host that defines it.
+@item Subnet = <address[/masklength]>
+The subnet which this tinc daemon will serve.
+tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
+If the packet matches a subnet,
+it will be sent to the daemon who has this subnet in his host configuration file.
+Multiple subnet lines can be specified for each daemon.
 
-The range must be contained in the IP address range of the tap device,
-not the real IP address of the host running tincd.
+Subnets can either be single MAC, IPv4 or IPv6 addresses,
+in which case a subnet consisting of only that single address is assumed,
+or they can be a IPv4 or IPv6 network address with a masklength.
+For example, IPv4 subnets must be in a form like 192.168.1.0/24,
+where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
+Note that subnets like 192.168.1.1/24 are invalid!
 
 @cindex CIDR notation
-maskbits is the number of bits set to 1 in the netmask part; for
+masklength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
-@item TCPonly = <yes|no> (no) [experimental]
 @cindex TCPonly
+@item TCPonly = <yes|no> (no) [experimental]
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
@@ -874,7 +953,7 @@ Adapt the following example to create a basic configuration file:
 
 @example
 Name = @emph{yourname}
-TapDevice = @emph{/dev/tap0}
+Device = @emph{/dev/tap0}
 PrivateKeyFile = /etc/tinc/@emph{netname}/rsa_key.priv
 @end example
 
@@ -919,37 +998,39 @@ Just press enter to accept the defaults.
 @section Network interfaces
 
 Before tinc can start transmitting data over the tunnel, it must
-set up the ethertap network devices.
+set up the virtual network interface.
 
 First, decide which IP addresses you want to have associated with these
 devices, and what network mask they must have.
 
-tinc will open an ethertap device or TUN/TAP device, which will also
-create a network interface called `tap0', or `tap1', and so on if you are using
-the ethertap driver, or a network interface with the same name as netname
-if you are using the universal TUN/TAP driver.
+tinc will open a virtual network device (@file{/dev/tun}, @file{/dev/tap0} or similar),
+which will also create a network interface called something like `tun0', `tap0', or,
+if you are using the Linux tun/tap driver, the network interface will by default have the same name as the netname.
 
 @cindex tinc-up
-You can configure that device by putting ordinary ifconfig, route, and other commands
+You can configure the network interface by putting ordinary ifconfig, route, and other commands
 to a script named @file{/etc/tinc/netname/tinc-up}. When tinc starts, this script
 will be executed. When tinc exits, it will execute the script named
 @file{/etc/tinc/netname/tinc-down}, but normally you don't need to create that script.
 
-An example @file{tinc-up} script when using the TUN/TAP driver:
+An example @file{tinc-up} script:
 
 @example
 #!/bin/sh
-ifconfig $NETNAME hw ether fe:fd:00:00:00:00
-ifconfig $NETNAME @emph{xx}.@emph{xx}.@emph{xx}.@emph{xx} netmask @emph{mask}
-ifconfig $NETNAME -arp
+ifconfig $INTERFACE hw ether fe:fd:0:0:0:0
+ifconfig $INTERFACE 192.168.1.1 netmask 255.255.0.0
+ifconfig $INTERFACE -arp
 @end example
 
 @cindex MAC address
 @cindex hardware address
 The first line sets up the MAC address of the network interface.
-Due to the nature of how Ethernet and tinc work, it has to be set to fe:fd:00:00:00:00.
-(tinc versions prior to 1.0pre3 required that the MAC address matched the IP address.)
-You can use the environment variable $NETNAME to get the name of the interface.
+Due to the nature of how Ethernet and tinc work, it has to be set to fe:fd:0:0:0:0
+for tinc to work in it's normal mode.
+If you configured tinc to work in `switch' or `hub' mode, the hardware address should instead
+be set to a unique address instead of fe:fd:0:0:0:0.
+
+You can use the environment variable $INTERFACE to get the name of the interface.
 If you are using the ethertap driver however, you need to replace it with tap@emph{N},
 corresponding to the device file name.
 
@@ -964,7 +1045,8 @@ own subnet.
 
 @cindex arp
 The last line tells the kernel not to use ARP on that interface.
-Again this has to do with how Ethernet and tinc work. Don't forget to add this line.
+Again this has to do with how Ethernet and tinc work.
+Use this option only if you are running tinc under Linux and are using tinc's normal routing mode.
 
 
 @c ==================================================================
@@ -1010,7 +1092,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
 
-ifconfig tap0 hw ether fe:fd:00:00:00:00
+ifconfig tap0 hw ether fe:fd:0:0:0:0
 ifconfig tap0 10.1.54.1 netmask 255.0.0.0
 ifconfig tap0 -arp
 @end example
@@ -1020,7 +1102,7 @@ and in @file{/etc/tinc/company/tinc.conf}:
 @example
 Name = BranchA
 PrivateKey = /etc/tinc/company/rsa_key.priv
-TapDevice = /dev/tap0
+Device = /dev/tap0
 @end example
 
 On all hosts, /etc/tinc/company/hosts/BranchA contains:
@@ -1048,7 +1130,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
 
-ifconfig tap0 hw ether fe:fd:00:00:00:00
+ifconfig tap0 hw ether fe:fd:0:0:0:0
 ifconfig tap0 10.2.1.12 netmask 255.0.0.0
 ifconfig tap0 -arp
 @end example
@@ -1085,7 +1167,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
 
-ifconfig tap1 hw ether fe:fd:00:00:00:00
+ifconfig tap1 hw ether fe:fd:0:0:0:0
 ifconfig tap1 10.3.69.254 netmask 255.0.0.0
 ifconfig tap1 -arp
 @end example
@@ -1095,7 +1177,7 @@ and in @file{/etc/tinc/company/tinc.conf}:
 @example
 Name = BranchC
 ConnectTo = BranchA
-TapDevice = /dev/tap1
+Device = /dev/tap1
 @end example
 
 C already has another daemon that runs on port 655, so they have to
@@ -1133,13 +1215,13 @@ and in @file{/etc/tinc/company/tinc.conf}:
 @example
 Name = BranchD
 ConnectTo = BranchC
-TapDevice = /dev/net/tun
+Device = /dev/misc/net/tun
 PrivateKeyFile = /etc/tinc/company/rsa_key.priv
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
 port 2000. It knows the port number from the host configuration file.
-Also note that since D uses the TUN/TAP driver, the network interface
+Also note that since D uses the tun/tap driver, the network interface
 will not be called `tun' or `tap0' or something like that, but will
 have the same name as netname.
 
@@ -1211,32 +1293,18 @@ generated automatically, so may be more up-to-date.
 @cindex options
 @c from the manpage
 @table @samp
+@item --bypass-security
+Disables encryption and authentication.
+Only useful for debugging.
+
 @item -c, --config=PATH
 Read configuration options from the directory PATH.  The default is
 @file{/etc/tinc/netname/}.
 
 @cindex debug level
-@item -d
-Increase debug level.  The higher it gets, the more gets
+@item -d, --debug=LEVEL
+Set debug level to LEVEL.  The higher the debug level, the more gets
 logged.  Everything goes via syslog.
-
-0 is the default, only some basic information connection attempts get
-logged.  Setting it to 1 will log a bit more, still not very
-disturbing.  With two -d's tincd will log protocol information, which can
-get pretty noisy.  Three or more -d's will output every single packet
-that goes out or comes in, which probably generates more data than the
-packets themselves.
-
-@item -k, --kill
-Attempt to kill a running tincd and exit.  A TERM signal (15) gets sent
-to the daemon that his its PID in /var/run/tinc.pid.
-
-Because it kills only one tinc daemon, you should use -n here if you
-started it that way.  It will then read the PID from
-@file{/var/run/tinc.NETNAME.pid}.
-
-@item -n, --net=NETNAME
-Connect to net NETNAME.  @xref{Multiple networks}.
 
 @item -K, --generate-keys[=BITS]
 Generate public/private keypair of BITS length. If BITS is not specified,
@@ -1246,6 +1314,18 @@ in combination with -K). After that, tinc will quit.
 
 @item --help
 Display a short reminder of these runtime options and terminate.
+
+@item -k, --kill
+Attempt to kill a running tincd and exit.  A TERM signal (15) gets sent
+to the daemon that his its PID in @file{/var/run/tinc.NETNAME.pid}.
+Use it in conjunction with the -n option to make sure you kill the right tinc daemon.
+
+@item -n, --net=NETNAME
+Connect to net NETNAME.  @xref{Multiple networks}.
+
+@item -D, --no-detach
+Don't fork and detach.
+This will also disable the automatic restart mechanism for fatal errors.
 
 @item --version
 Output version information and exit.
@@ -1269,7 +1349,7 @@ only, so keep an eye on it!
 @item You forgot to compile `Netlink device emulation' in the kernel.
 @end itemize
 
-@item Can't write to /dev/net/tun: No such device
+@item Can't write to /dev/misc/net/tun: No such device
 
 @itemize
 @item You forgot to `modprobe tun'.
@@ -1280,10 +1360,10 @@ only, so keep an eye on it!
 
 @itemize
 @item Something is not configured right. Packets are being sent out to the
-tap device, but according to the Subnet directives in your host configuration
+virtual network device, but according to the Subnet directives in your host configuration
 file, those packets should go to your own host. Most common mistake is that
 you have a Subnet line in your host configuration file with a netmask which is
-just as large as the netmask of the tap device. The latter should in almost all
+just as large as the netmask of the virtual network interface. The latter should in almost all
 cases be larger. Rethink your configuration.
 Note that you will only see this message if you specified a debug
 level of 5 or higher!
@@ -1300,7 +1380,7 @@ Jan 1 12:00:00 host tinc.net[1234]: Read packet of length 46 from tap device
 Jan 1 12:00:00 host tinc.net[1234]: Trying to look up 0.0.192.168 in connection list failed!
 @end example
 @itemize
-@item Add the `ifconfig $NETNAME -arp' to tinc-up.
+@item Add the `ifconfig $INTERFACE -arp' to tinc-up.
 @end itemize
 
 @item Network address and subnet mask do not match!
@@ -1360,10 +1440,10 @@ computer over the existing Internet infrastructure.
 @node    The UDP tunnel, The meta-connection, The connection, The connection
 @subsection The UDP tunnel
 
-@cindex ethertap
+@cindex virtual network device
 @cindex frame type
 The data itself is read from a character device file, the so-called
-@emph{ethertap} device.  This device is associated with a network
+@emph{virtual network device}.  This device is associated with a network
 interface.  Any data sent to this interface can be read from the device,
 and any data written to the device gets sent from the interface.  Data to
 and from the device is formatted as if it were a normal Ethernet card,
@@ -1371,32 +1451,35 @@ so a frame is preceded by two MAC addresses and a @emph{frame type}
 field.
 
 So when tinc reads an Ethernet frame from the device, it determines its
-type.  Right now, tinc can only handle Internet Protocol version 4 (IPv4)
-frames, because it needs IP headers for routing.
-Plans to support other protocols and switching instead of routing are being made.
-(Some code for IPv6 routing and switching is already present but nonfunctional.)
-When tinc knows
-which type of frame it has read, it can also read the source and
-destination address from it.
+type. When tinc is in it's default routing mode, it can handle IPv4 and IPv6
+packets. Depending on the Subnet lines, it will send the packets off to their destination.
+In the `switch' and `hub' mode, tinc will use broadcasts and MAC address discovery
+to deduce the destination of the packets.
+Since the latter modes only depend on the link layer information,
+any protocol that runs over Ethernet is supported (for instance IPX and Appletalk).
 
-Now it is time that the frame gets encrypted.  Currently the only
-encryption algorithm available is blowfish.
+After the destination has been determined, a sequence number will be added to the packet.
+The packet will then be encrypted and a message authentication
+code will be appended.
 
 @cindex encapsulating
 @cindex UDP
-When the encryption is ready, time has come to actually transport the
+When that is done, time has come to actually transport the
 packet to the destination computer.  We do this by sending the packet
 over an UDP connection to the destination host.  This is called
 @emph{encapsulating}, the VPN packet (though now encrypted) is
 encapsulated in another IP datagram.
 
 When the destination receives this packet, the same thing happens, only
-in reverse.  So it does a decrypt on the contents of the UDP datagram,
-and it writes the decrypted information to its own ethertap device.
+in reverse.  So it checks the message authentication code, decrypts the contents of the UDP datagram,
+checks the sequence number
+and writes the decrypted information to its own virtual network device.
 
 To let the kernel on the receiving end accept the packet, the destination MAC
-address must match that of the tap interface. Because of the routing nature
-of tinc, ARP is not possible. tinc solves this by always overwriting the
+address must match that of the virtual network interface.
+If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC cannot be set
+by the sending daemons.
+tinc solves this by always overwriting the
 destination MAC address with fe:fd:0:0:0:0. That is also the reason why you must
 set the MAC address of your tap interface to that address.
 
@@ -1451,32 +1534,35 @@ daemon and to read and write requests by hand, provided that one
 understands the numeric codes sent.
 
 The authentication scheme is described in @ref{Authentication protocol}. After a
-succesful authentication, the server and the client will exchange all the
+successful authentication, the server and the client will exchange all the
 information about other tinc daemons and subnets they know of, so that both
 sides (and all the other tinc daemons behind them) have their information
 synchronised.
 
-@cindex ADD_HOST
+@cindex ADD_EDGE
 @cindex ADD_SUBNET
 @example
 daemon	message
 --------------------------------------------------------------------------
-origin	ADD_HOST daemon a329e18c:655 0
-                    |         |      +--> options
-                    |         +---------> real address:port
-                    +-------------------> name of new tinc daemon
-origin	ADD_SUBNET daemon 1,0a010100/ffffff00
-                      |   |     |       +--> netmask
-                      |   |     +----------> vpn IPv4 network address
-                      |   +----------------> subnet type (1=IPv4)
-                      +--------------------> owner of this subnet
+origin	ADD_EDGE node1 12.23.34.45 655 node2 21.32.43.54 655 222 0
+                    |       |       |  \___________________/  |  +-> options
+                    |       |       |             |           +----> weight
+		    |       |       |             +----------------> see below
+		    |       |       +--> UDP port
+		    |       +----------> real address
+                    +------------------> name of node on one side of the edge
+
+origin	ADD_SUBNET node 192.168.1.0/24
+                     |         |     +--> masklength
+                     |         +--------> IPv4 network address
+                     +------------------> owner of this subnet
 --------------------------------------------------------------------------
 @end example
 
-@cindex DEL_HOST
-@cindex DEL_SUBNET
-In case daemons leave the VPN, DEL_HOST and DEL_SUBNET messages with exactly
-the same syntax are sent to inform the other daemons of the departure.
+@cindex DEL_EDGE
+In case a connection between two daemons is closed or broken, DEL_EDGE messages
+are sent to inform the other daemons of that fact. Each daemon will calculate a
+new route to the the daemons, or mark them unreachable if there isn't any.
 
 The keys used to encrypt VPN packets are not sent out directly. This is
 because it would generate a lot of traffic on VPNs with many daemons, and
@@ -1484,7 +1570,7 @@ chances are that not every tinc daemon will ever send a packet to every
 other daemon. Instead, if a daemon needs a key it sends a request for it
 via the meta connection of the nearest hop in the direction of the
 destination. If any hop on the way has already learned the key, it will
-act as a proxy and forward it's copy back to the requestor.
+act as a proxy and forward its copy back to the requester.
 
 @cindex REQ_KEY
 @cindex ANS_KEY
@@ -1495,11 +1581,15 @@ daemon	message
 daemon	REQ_KEY origin destination
                    |       +--> name of the tinc daemon it wants the key from
                    +----------> name of the daemon that wants the key      
-daemon	ANS_KEY origin destination e4ae0b0a82d6e0078179b5290c62c7d0
-                   |       |       \______________________________/
-                   |       |                      +--> 128 bits key
+
+daemon	ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
+                   |       |       \______________/ |  |  +--> MAC length
+                   |       |               |        |  +-----> digest algorithm
+                   |       |               |        +--------> cipher algorithm
+                   |       |               +--> 128 bits key
                    |       +--> name of the daemon that wants the key
                    +----------> name of the daemon that uses this key
+
 daemon	KEY_CHANGED origin
                       +--> daemon that has changed it's packet key
 --------------------------------------------------------------------------
@@ -1518,12 +1608,8 @@ messages without any other traffic won't result in known plaintext.
 @example
 daemon	message
 --------------------------------------------------------------------------
-origin	PING 9e76
-             \__/
-               +--> 2 bytes of salt (random data)
-dest.	PONG 3b8d
-             \__/
-               +--> 2 bytes of salt (random data)
+origin	PING
+dest.	PONG
 --------------------------------------------------------------------------
 @end example
 
@@ -1546,9 +1632,8 @@ the tinc project after TINC.
 But in order to be ``immune'' to eavesdropping, you'll have to encrypt
 your data.  Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
 exactly that: encrypt.
-tinc uses blowfish encryption in CBC mode and a small amount of salt
-at the beginning of each packet to make sure eavesdroppers cannot get
-any information at all from the packets they can intercept.
+tinc uses blowfish encryption in CBC mode, sequence numbers and message authentication codes
+to make sure eavesdroppers cannot get and cannot change any information at all from the packets they can intercept.
 
 @menu
 * Authentication protocol::
@@ -1565,6 +1650,11 @@ A new scheme for authentication in tinc has been devised, which offers some
 improvements over the protocol used in 1.0pre2 and 1.0pre3. Explanation is
 below.
 
+@cindex ID
+@cindex META_KEY
+@cindex CHALLENGE
+@cindex CHAL_REPLY
+@cindex ACK
 @example
 daemon  message
 --------------------------------------------------------------------------
@@ -1572,15 +1662,13 @@ client  <attempts connection>
 
 server  <accepts connection>
 
-client  ID client 10 0
-              |    | +-> options
-              |    +---> version
-              +--------> name of tinc daemon
+client  ID client 12
+              |   +---> version
+              +-------> name of tinc daemon
 
-server  ID server 10 0
-              |    | +-> options
-              |    +---> version
-              +--------> name of tinc daemon
+server  ID server 12
+              |   +---> version
+              +-------> name of tinc daemon
 
 client  META_KEY 5f0823a93e35b69e...7086ec7866ce582b
                  \_________________________________/
@@ -1593,8 +1681,8 @@ server  META_KEY 6ab9c1640388f8f0...45d1a07f8a672630
                                      encrypted with client's public RSA key
 
 From now on:
- - the client will encrypt outgoing traffic using S1
- - the server will encrypt outgoing traffic using S2
+ - the client will symmetrically encrypt outgoing traffic using S1
+ - the server will symmetrically encrypt outgoing traffic using S2
 
 client  CHALLENGE da02add1817c1920989ba6ae2a49cecbda0
                   \_________________________________/
@@ -1609,6 +1697,21 @@ client  CHAL_REPLY 816a86
 
 server  CHAL_REPLY 928ffe
                       +-> 160 bits SHA1 of H1
+
+After the correct challenge replies are received, both ends have proved
+their identity. Further information is exchanged.
+
+client  ACK 655 12.23.34.45 123 0
+             |       |       |  +-> options
+	     |       |       +----> estimated weight
+	     |       +------------> IP address of server as seen by client
+	     +--------------------> UDP port of client
+
+server  ACK 655 21.32.43.54 321 0
+             |       |       |  +-> options
+	     |       |       +----> estimated weight
+	     |       +------------> IP address of client as seen by server
+	     +--------------------> UDP port of server
 --------------------------------------------------------------------------
 @end example
 
@@ -1662,35 +1765,26 @@ an attacker) in the beginning of the encrypted stream.
 A data packet can only be sent if the encryption key is known to both
 parties, and the connection is  activated. If the encryption key is not
 known, a request is sent to the destination using the meta connection
-to retreive it. The packet is stored in a queue while waiting for the
+to retrieve it. The packet is stored in a queue while waiting for the
 key to arrive.
 
 @cindex UDP
 The UDP packet containing the network packet from the VPN has the following layout:
 
 @example
-... | IP header | UDP header | salt | VPN packet | UDP trailer
-                             \___________________/
-                                       |
-                                       V
+... | IP header | UDP header | seqno | VPN packet | MAC | UDP trailer
+                             \___________________/\_____/
+                                       |             |
+                                       V             +---> digest algorithm
                          Encrypted with symmetric cipher
 @end example
 
-So, the entire UDP payload is encrypted using a symmetric cipher (blowfish in CBC mode).
-2 bytes of salt (random data) are added in front of the actual VPN packet,
-so that two VPN packets with (almost) the same content do not seem to be
-the same for eavesdroppers.
-2 bytes of salt may not seem much, but you can encrypt 65536 identical packets
-now without an attacker being able to see that they were identical.
-Given a MTU of 1500 this means 96 Megabyte of data.
-
-There is no @emph{extra} provision against replay attacks or alteration of packets.
-However, the VPN packets, normally UDP or TCP packets themselves, contain
-checksums and sequence numbers.
-Since those checksums and sequence numbers are encrypted,
-they automatically become @emph{cryptographically secure}.
-The kernel will handle any checksum errors and duplicate packets.
-
+So, the entire VPN packet is encrypted using a symmetric cipher. A 32 bits
+sequence number is added in front of the actual VPN packet, to act as a unique
+IV for each packet and to prevent replay attacks. A message authentication code
+is added to the UDP packet to prevent alteration of packets. By default the
+first 4 bytes of the digest are used for this, but this can be changed using
+the MACLength configuration variable.
 
 @c ==================================================================
 @node    About us, Concept Index, Technical information, Top

@@ -1,27 +1,5 @@
 TODO LIST
 
-Goals for 1.0 release:
+1.0:
 
-* Check Solaris port
-* Check FreeBSD port again (done)
-* Check TCPonly and IndirectData
-
-* Check different linux architectures (x86, alpha and sparc32 done)
-* Store private key in a separate file (done, 1 dec 2000)
-* Sanity checks on configuration directory (mostly done)
-* Use efficient tree algorithms instead of linked lists (done)
-* Reenable queues for delayed packets (done)
-* Merge documentation files (SECURITY, INSTALL, PROTOCOL) into tinc.texi (done)
-* Different authentication scheme (done)
-* Add randomness to packet headers and PING/PONG requests (done)
-
-Goals for future releases:
-
-* Compression
-* Routing by MAC/switching (allows for more than only IPv4) (done)
-* Broadcast/multicast (done)
-* Windowing, chaffing, scattering, background noise
-* ABC protocol (superscalabilty)
-* Proxy ARP (done)
-* Easy setup scripts (graphical?)
-* Threading
+* A nice, secure and stable release

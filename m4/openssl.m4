@@ -31,6 +31,14 @@ AC_DEFUN(tinc_OPENSSL,
 
   AC_CHECK_FUNCS(RAND_pseudo_bytes)
 
+  AC_CHECK_FUNC(OpenSSL_add_all_algorithms,
+    [],
+    AC_CHECK_FUNC(SSLeay_add_all_algorithms,
+      [AC_DEFINE(HAVE_SSLEAY_ADD_ALL_ALGORITHMS)],
+      [AC_MSG_ERROR("Missing required OpenSSL functionality!")]
+    )
+  )
+
   AC_CHECK_FUNC(dlopen,
     [],
     AC_CHECK_LIB(dl, dlopen,

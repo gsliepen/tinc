@@ -36,7 +36,6 @@
 /* Define to 1 if you have the stpcpy function.  */
 #undef HAVE_STPCPY
 
-
 /* For getopt */
 #if HAVE_STDLIB_H
 # define getopt system_getopt
@@ -68,5 +67,5 @@
 /* Define to 1 if checkpoint tracing is enabled */
 #undef ENABLE_TRACING
 
-/* Define to 1 if you have struct addrinfo */
-#undef HAVE_STRUCT_ADDRINFO
+/* Define to enable use of old SSLeay_add_all_algorithms() function */
+#undef HAVE_SSLEAY_ADD_ALL_ALGORITHMS

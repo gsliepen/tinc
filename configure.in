@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.38 2001/11/15 23:49:46 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.39 2002/02/10 21:57:51 guus Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -36,19 +36,19 @@ AC_CANONICAL_HOST
 case $host_os in
   *linux*)
     AC_DEFINE(HAVE_LINUX)
-    [ ln -sf linux/device.c src/device.c ]
+    [ rm -f src/device.c; ln -sf linux/device.c src/device.c ]
   ;;
   *freebsd*)
     AC_DEFINE(HAVE_FREEBSD)
-    [ ln -sf freebsd/device.c src/device.c ]
+    [ rm -f src/device.c; ln -sf freebsd/device.c src/device.c ]
   ;;
   *solaris*)
     AC_DEFINE(HAVE_SOLARIS)
-    [ ln -sf solaris/device.c src/device.c ]
+    [ rm -f src/device.c; ln -sf solaris/device.c src/device.c ]
   ;;
   *openbsd*)
     AC_DEFINE(HAVE_OPENBSD)
-    [ ln -sf openbsd/device.c src/device.c ]
+    [ rm -f src/device.c; ln -sf openbsd/device.c src/device.c ]
   ;;
 esac
 
@@ -68,28 +68,12 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-AC_CACHE_CHECK([for struct addrinfo], ac_cv_have_struct_addrinfo, [
-  AC_TRY_COMPILE(
-    [
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-    ],
-    [ struct addrinfo s; s.ai_flags = 0; ],
-    [ ac_cv_have_struct_addrinfo="yes" ],
-    [ ac_cv_have_struct_addrinfo="no" ]
-  )])
-if test "x$ac_cv_have_struct_addrinfo" = "xyes" ; then
-  AC_DEFINE(HAVE_STRUCT_ADDRINFO)
-fi
-
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([ftime socket select strtol strerror flock unsetenv \
-asprintf putenv strdup fcloseall daemon strsignal get_current_dir_name \
-getaddrinfo getnameinfo gai_strerror freeaddrinfo])
+asprintf putenv strdup fcloseall daemon strsignal get_current_dir_name])
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 
@@ -127,5 +111,6 @@ intl/Makefile
 lib/Makefile
 m4/Makefile
 po/Makefile.in
-redhat/Makefile
-debian/Makefile)
+po/POTFILES
+po/Makefile
+)

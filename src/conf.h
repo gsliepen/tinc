@@ -1,7 +1,7 @@
 /*
     conf.h -- header for conf.c
-    Copyright (C) 1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.30 2001/11/16 12:14:20 zarq Exp $
+    $Id: conf.h,v 1.6.4.31 2002/02/10 21:57:53 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -37,9 +37,8 @@ typedef struct config_t {
 extern avl_tree_t *config_tree;
 
 extern int debug_lvl;
-extern int timeout;
+extern int pingtimeout;
 extern int maxtimeout;
-extern int sighup;
 extern int bypass_security;
 extern char *confbase;
 extern char *netname;
@@ -53,7 +52,9 @@ extern config_t *lookup_config(avl_tree_t *, char *);
 extern config_t *lookup_config_next(avl_tree_t *, config_t *);
 extern int get_config_bool(config_t *, int *);
 extern int get_config_int(config_t *, int *);
+extern int get_config_port(config_t *, port_t *);
 extern int get_config_string(config_t *, char **);
+extern int get_config_address(config_t *, ipv4_t **);
 struct subnet_t; /* Needed for next line. */
 extern int get_config_subnet(config_t *, struct subnet_t **);
 

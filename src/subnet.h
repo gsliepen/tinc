@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.14 2001/11/16 12:10:54 zarq Exp $
+    $Id: subnet.h,v 1.1.2.15 2002/02/10 21:57:54 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -28,7 +28,8 @@
 enum
 {
   SUBNET_MAC = 0,
-  SUBNET_IP,
+  SUBNET_IPV4,
+  SUBNET_IPV6,
   SUBNET_TYPES				/* Guardian */
 };
 
@@ -37,11 +38,19 @@ typedef struct subnet_mac_t
   mac_t address;
 } subnet_mac_t;
 
-typedef struct subnet_ip_t
+typedef struct subnet_ipv4_t
 {
-  struct addrinfo *address;
-  struct addrinfo *mask;
-} subnet_ip_t;
+  ipv4_t address;
+  ipv4_t mask;
+  int masklength;
+} subnet_ipv4_t;
+
+typedef struct subnet_ipv6_t
+{
+  ipv6_t address;
+  ipv6_t mask;
+  int masklength;
+} subnet_ipv6_t;
 
 #include "node.h"
 
@@ -56,9 +65,9 @@ typedef struct subnet_t {
   union net
     {
       subnet_mac_t mac;
-      subnet_ip_t ip;
+      subnet_ipv4_t ipv4;
+      subnet_ipv6_t ipv6;
     } net;
-    
 } subnet_t;
 
 extern subnet_t *new_subnet(void);
@@ -73,7 +82,8 @@ extern char *net2str(subnet_t *);
 extern subnet_t *str2net(char *);
 extern subnet_t *lookup_subnet(struct node_t *, subnet_t *);
 extern subnet_t *lookup_subnet_mac(mac_t *);
-extern subnet_t *lookup_subnet_ip(struct addrinfo *);
+extern subnet_t *lookup_subnet_ipv4(ipv4_t *);
+extern subnet_t *lookup_subnet_ipv6(ipv6_t *);
 extern void dump_subnets(void);
 
 #endif /* __TINC_SUBNET_H__ */

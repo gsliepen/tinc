@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.151 2001/11/16 22:41:38 zarq Exp $
+    $Id: net.c,v 1.35.4.152 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"
@@ -49,6 +49,7 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/hmac.h>
 
 #ifndef HAVE_RAND_PSEUDO_BYTES
 #define RAND_pseudo_bytes RAND_bytes
@@ -63,12 +64,15 @@
 #include "connection.h"
 #include "meta.h"
 #include "net.h"
+#include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "graph.h"
 #include "process.h"
 #include "route.h"
 #include "device.h"
+#include "event.h"
 
 #include "system.h"
 
@@ -82,52 +86,59 @@ int keylifetime = 0;
 int keyexpires = 0;
 
 int do_prune = 0;
+int do_purge = 0;
+int sighup = 0;
+int sigalrm = 0;
+
+#define MAX_SEQNO 1073741824
 
 /* VPN packet I/O */
-
-char *hostlookup(struct sockaddr *addr, int numericonly)
-{
-  char *hostname;
-  int flags = 0;
-  int r;
-
-cp
-  if(numericonly
-     || (get_config_bool(lookup_config(config_tree, "ResolveDNS"), &r)
-	 || !r ))
-      flags |= NI_NUMERICHOST;
-
-  hostname = xmalloc(NI_MAXHOST);
-
-  if((r = getnameinfo(addr, sizeof(*addr), hostname, NI_MAXHOST, NULL, 0, flags)) != 0)
-    {
-      free(hostname);
-      if(flags & NI_NUMERICHOST)
-	{
-	  syslog(LOG_ERR, _("Address conversion failed: %s"),
-		 gai_strerror(r));
-	  return NULL;
-	}
-      else
-	return hostlookup(addr, 1);
-    }
-cp
-  return hostname;
-}
 
 void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
   vpn_packet_t outpkt;
   int outlen, outpad;
   EVP_CIPHER_CTX ctx;
+  char hmac[EVP_MAX_MD_SIZE];
 cp
+
+  if(myself->digest && myself->maclength)
+    {
+      inpkt->len -= myself->maclength;
+      HMAC(myself->digest, myself->key, myself->keylength, (char *)&inpkt->seqno, inpkt->len, hmac, NULL);
+      if(memcmp(hmac, (char *)&inpkt->seqno + inpkt->len, myself->maclength))
+	{
+	  syslog(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
+	  return;
+	}
+    }
+
   /* Decrypt the packet */
 
-  EVP_DecryptInit(&ctx, myself->cipher, myself->key, myself->key + myself->cipher->key_len);
-  EVP_DecryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len);
-  EVP_DecryptFinal(&ctx, outpkt.salt + outlen, &outpad);
-  outlen += outpad;
-  outpkt.len = outlen - sizeof(outpkt.salt);
+  if(myself->cipher)
+  {
+    EVP_DecryptInit(&ctx, myself->cipher, myself->key, myself->key + myself->cipher->key_len);
+    EVP_DecryptUpdate(&ctx, (char *)&outpkt.seqno, &outlen, (char *)&inpkt->seqno, inpkt->len);
+    EVP_DecryptFinal(&ctx, (char *)&outpkt.seqno + outlen, &outpad);
+    outlen += outpad;
+    outpkt.len = outlen - sizeof(outpkt.seqno);
+  }
+  else
+  {
+    memcpy((char *)&outpkt.seqno, (char *)&inpkt->seqno, inpkt->len);
+    outpkt.len = inpkt->len - sizeof(outpkt.seqno);
+  }
+
+  if (ntohl(outpkt.seqno) <= n->received_seqno)
+  {
+    syslog(LOG_DEBUG, _("Got late or replayed packet from %s (%s), seqno %d"), n->name, n->hostname, ntohl(*(unsigned int *)&outpkt.seqno));
+    return;
+  }
+  
+  n->received_seqno = ntohl(outpkt.seqno);
+
+  if(n->received_seqno > MAX_SEQNO)
+    keyexpires = 0;
 
   receive_packet(n, &outpkt);
 cp
@@ -159,6 +170,8 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
   vpn_packet_t outpkt;
   int outlen, outpad;
   EVP_CIPHER_CTX ctx;
+  struct sockaddr_in to;
+  socklen_t tolen = sizeof(to);
   vpn_packet_t *copy;
 cp
   if(!n->status.validkey)
@@ -182,14 +195,32 @@ cp
 
   /* Encrypt the packet. */
 
-  RAND_pseudo_bytes(inpkt->salt, sizeof(inpkt->salt));
+  inpkt->seqno = htonl(++(n->sent_seqno));
 
-  EVP_EncryptInit(&ctx, n->cipher, n->key, n->key + n->cipher->key_len);
-  EVP_EncryptUpdate(&ctx, outpkt.salt, &outlen, inpkt->salt, inpkt->len + sizeof(inpkt->salt));
-  EVP_EncryptFinal(&ctx, outpkt.salt + outlen, &outpad);
-  outlen += outpad;
-  
-  if((sendto(udp_socket, (char *) outpkt.salt, outlen, 0, n->address->ai_addr, n->address->ai_addrlen)) < 0)
+  if(n->cipher)
+  {
+    EVP_EncryptInit(&ctx, n->cipher, n->key, n->key + n->cipher->key_len);
+    EVP_EncryptUpdate(&ctx, (char *)&outpkt.seqno, &outlen, (char *)&inpkt->seqno, inpkt->len + sizeof(inpkt->seqno));
+    EVP_EncryptFinal(&ctx, (char *)&outpkt.seqno + outlen, &outpad);
+    outlen += outpad;
+  }
+  else
+  {
+    memcpy((char *)&outpkt.seqno, (char *)&inpkt->seqno, inpkt->len + sizeof(inpkt->seqno));
+    outlen = inpkt->len + sizeof(inpkt->seqno);
+  }
+
+  if(n->digest && n->maclength)
+    {
+      HMAC(n->digest, n->key, n->keylength, (char *)&outpkt.seqno, outlen, (char *)&outpkt.seqno + outlen, &outpad);
+      outlen += n->maclength;
+    }
+
+  to.sin_family = AF_INET;
+  to.sin_addr.s_addr = htonl(n->address);
+  to.sin_port = htons(n->port);
+
+  if((sendto(udp_socket, (char *)&outpkt.seqno, outlen, 0, (const struct sockaddr *)&to, tolen)) < 0)
     {
       syslog(LOG_ERR, _("Error sending packet to %s (%s): %m"),
              n->name, n->hostname);
@@ -203,6 +234,7 @@ cp
 */
 void send_packet(node_t *n, vpn_packet_t *packet)
 {
+  node_t *via;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
@@ -217,21 +249,31 @@ cp
 
       return;
     }
-
-  if(n->via != n && debug_lvl >= DEBUG_TRAFFIC)
-    syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),
-           n->name, n->via->name, n->via->hostname);
-
-  if((myself->options | n->via->options) & OPTION_TCPONLY)
+ 
+  if(!n->status.reachable)
     {
-      if(send_tcppacket(n->via->connection, packet))
-        terminate_connection(n->via->connection, 1);
+      if(debug_lvl >= DEBUG_TRAFFIC)
+	syslog(LOG_INFO, _("Node %s (%s) is not reachable"),
+	       n->name, n->hostname);
+      return;
+    }
+
+  via = (n->via == myself)?n->nexthop:n->via;
+
+  if(via != n && debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),
+           n->name, via->name, n->via->hostname);
+
+  if((myself->options | via->options) & OPTION_TCPONLY)
+    {
+      if(send_tcppacket(via->connection, packet))
+        terminate_connection(via->connection, 1);
     }
   else
-    send_udppacket(n->via, packet);
+    send_udppacket(via, packet);
 }
 
-/* Broadcast a packet to all active direct connections */
+/* Broadcast a packet using the minimum spanning tree */
 
 void broadcast_packet(node_t *from, vpn_packet_t *packet)
 {
@@ -245,7 +287,7 @@ cp
   for(node = connection_tree->head; node; node = node->next)
     {
       c = (connection_t *)node->data;
-      if(c->status.active && c != from->nexthop->connection)
+      if(c->status.active && c->status.mst && c != from->nexthop->connection)
         send_packet(c->node, packet);
     }
 cp
@@ -269,200 +311,142 @@ cp
 
 /* Setup sockets */
 
-int setup_listen_socket(node_t *n)
+int setup_listen_socket(port_t port)
 {
   int nfd, flags;
+  struct sockaddr_in a;
   int option;
-  char *address;
-  int r;
-  struct addrinfo hints, *ai, *aitop;
-  int ipv6preferred;
+  ipv4_t *address;
 #ifdef HAVE_LINUX
   char *interface;
 #endif
-
 cp
-
-  if(!get_config_string(lookup_config(config_tree, "BindToAddress"), &address))
+  if((nfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
-      address = NULL;
-    }
-
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = IPPROTO_TCP;
-  hints.ai_family = AF_INET;
-  if(get_config_bool(lookup_config(config_tree, "IPv6Preferred"), &ipv6preferred))
-    {
-      if(ipv6preferred)
-	hints.ai_family = PF_UNSPEC;
-    }
-  if((r = getaddrinfo(address, n->port, &hints, &aitop)) != 0)
-    {
-      syslog(LOG_ERR, _("Looking up `%s' failed: %s\n"),
-	     address, gai_strerror(r));
+      syslog(LOG_ERR, _("Creating metasocket failed: %m"));
       return -1;
     }
 
-  /* Try to create a listening socket for all alternatives we got from
-     getaddrinfo. */
-  for(ai = aitop; ai != NULL; ai = ai->ai_next)
+  flags = fcntl(nfd, F_GETFL);
+  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      if((nfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0)
-	{
-	  syslog(LOG_ERR, _("Creating metasocket failed: %m"));
-	  continue;
-	}
-      
-      flags = fcntl(nfd, F_GETFL);
-      if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
-	{
-	  close(nfd);
-	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
-		 "fcntl");
-	  continue;
-	}
-      
-      /* Optimize TCP settings */
-      
-      option = 1;
-      setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-      setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
-#ifdef HAVE_LINUX
-      setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
-      
-      option = IPTOS_LOWDELAY;
-      setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
-      
-      if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
-	if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
-	  {
-	    close(nfd);
-	    syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
-	    continue;
-	  }
-#endif
-
-      if(bind(nfd, ai->ai_addr, ai->ai_addrlen))
-	{
-	  close(nfd);
-	  syslog(LOG_ERR, _("Can't bind to %s port %s/tcp: %m"),
-		 ai->ai_canonname, n->port);
-	  continue;
-	}
-      
-      if(listen(nfd, 3))
-	{
-	  close(nfd);
-	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
-		 "listen");
-	  continue;
-	}
-
-      break; /* We have successfully bound to a socket */
+      close(nfd);
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fcntl");
+      return -1;
     }
 
-  if(ai == NULL) /* None of the alternatives succeeded */
+  /* Optimize TCP settings */
+
+  option = 1;
+  setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+  setsockopt(nfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
+#ifdef HAVE_LINUX
+  setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+
+  option = IPTOS_LOWDELAY;
+  setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
+
+  if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
+    if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
+      {
+        close(nfd);
+        syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
+        return -1;
+      }
+#endif
+
+  memset(&a, 0, sizeof(a));
+  a.sin_family = AF_INET;
+  a.sin_addr.s_addr = htonl(INADDR_ANY);
+  a.sin_port = htons(port);
+
+  if(get_config_address(lookup_config(config_tree, "BindToAddress"), &address))
     {
-      syslog(LOG_ERR, _("Failed to open a listening socket."));
+      a.sin_addr.s_addr = htonl(*address);
+      free(address);
+    }
+
+  if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
+    {
+      close(nfd);
+      syslog(LOG_ERR, _("Can't bind to port %hd/tcp: %m"), port);
+      return -1;
+    }
+
+  if(listen(nfd, 3))
+    {
+      close(nfd);
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "listen");
       return -1;
     }
 cp
   return nfd;
 }
 
-int setup_vpn_in_socket(node_t *n)
+int setup_vpn_in_socket(port_t port)
 {
-  const int one = 1;
   int nfd, flags;
-  int option;
-  char *address;
-  int r;
-  struct addrinfo hints, *ai, *aitop;
-  int ipv6preferred;
-#ifdef HAVE_LINUX
-  char *interface;
-#endif
-
+  struct sockaddr_in a;
+  const int one = 1;
 cp
-
-  if(!get_config_string(lookup_config(config_tree, "BindToAddress"), &address))
+  if((nfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
-      address = NULL;
-    }
-
-  hints.ai_socktype = SOCK_DGRAM;
-  hints.ai_protocol = IPPROTO_UDP;
-  hints.ai_family = AF_INET;
-  if(get_config_bool(lookup_config(config_tree, "IPv6Preferred"), &ipv6preferred))
-    {
-      if(ipv6preferred)
-	hints.ai_family = PF_UNSPEC;
-    }
-  if((r = getaddrinfo(address, n->port, &hints, &aitop)) != 0)
-    {
-      syslog(LOG_ERR, _("Looking up `%s' failed: %s\n"),
-	     address, gai_strerror(r));
+      close(nfd);
+      syslog(LOG_ERR, _("Creating socket failed: %m"));
       return -1;
     }
 
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
-  /* Try to create a listening socket for all alternatives we got from
-     getaddrinfo. */
-  for(ai = aitop; ai != NULL; ai = ai->ai_next)
+  flags = fcntl(nfd, F_GETFL);
+  if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      if((nfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0)
-	{
-	  syslog(LOG_ERR, _("Creating metasocket failed: %m"));
-	  continue;
-	}
-      
-      flags = fcntl(nfd, F_GETFL);
-      if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
-	{
-	  close(nfd);
-	  syslog(LOG_ERR, _("System call `%s' failed: %m"),
-		 "fcntl");
-	  continue;
-	}
-      
-      /* Optimize UDP settings */
-      
-      option = 1;
-      setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-#ifdef HAVE_LINUX
-      if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
-	if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)))
-	  {
-	    close(nfd);
-	    syslog(LOG_ERR, _("Can't bind to interface %s: %m"), interface);
-	    continue;
-	  }
-#endif
-
-      if(bind(nfd, ai->ai_addr, ai->ai_addrlen))
-	{
-	  close(nfd);
-	  syslog(LOG_ERR, _("Can't bind to %s port %s/tcp: %m"),
-		 ai->ai_canonname, n->port);
-	  continue;
-	}
-      
-      break; /* We have successfully bound to a socket */
+      close(nfd);
+      syslog(LOG_ERR, _("System call `%s' failed: %m"),
+	     "fcntl");
+      return -1;
     }
 
-  if(ai == NULL) /* None of the alternatives succeeded */
+  memset(&a, 0, sizeof(a));
+  a.sin_family = AF_INET;
+  a.sin_port = htons(port);
+  a.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  if(bind(nfd, (struct sockaddr *)&a, sizeof(struct sockaddr)))
     {
-      syslog(LOG_ERR, _("Failed to open a listening socket."));
+      close(nfd);
+      syslog(LOG_ERR, _("Can't bind to port %hd/udp: %m"), port);
       return -1;
     }
 cp
   return nfd;
 }
 
+void retry_outgoing(outgoing_t *outgoing)
+{
+  event_t *event;
+cp
+  outgoing->timeout += 5;
+  if(outgoing->timeout > maxtimeout)
+    outgoing->timeout = maxtimeout;
+
+  event = new_event();
+  event->handler = (event_handler_t)setup_outgoing_connection;
+  event->time = time(NULL) + outgoing->timeout;
+  event->data = outgoing;
+  event_add(event);
+
+  if(debug_lvl >= DEBUG_CONNECTIONS)
+    syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), outgoing->timeout);
+cp
+}
+
 int setup_outgoing_socket(connection_t *c)
 {
   int flags;
+  struct sockaddr_in a;
 cp
   if(debug_lvl >= DEBUG_CONNECTIONS)
     syslog(LOG_INFO, _("Trying to connect to %s (%s)"), c->name, c->hostname);
@@ -471,7 +455,7 @@ cp
 
   if(c->socket == -1)
     {
-      syslog(LOG_ERR, _("Creating socket for %s port %s failed: %m"),
+      syslog(LOG_ERR, _("Creating socket for %s port %d failed: %m"),
              c->hostname, c->port);
       return -1;
     }
@@ -506,10 +490,14 @@ cp
 
   /* Connect */
 
-  if(connect(c->socket, c->address->ai_addr, c->address->ai_addrlen) == -1)
+  a.sin_family = AF_INET;
+  a.sin_port = htons(c->port);
+  a.sin_addr.s_addr = htonl(c->address);
+
+  if(connect(c->socket, (struct sockaddr *)&a, sizeof(a)) == -1)
     {
       close(c->socket);
-      syslog(LOG_ERR, _("%s port %s: %m"), c->hostname, c->port);
+      syslog(LOG_ERR, _("%s port %hd: %m"), c->hostname, c->port);
       return -1;
     }
 
@@ -518,38 +506,37 @@ cp
   if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       close(c->socket);
-      syslog(LOG_ERR, _("fcntl for %s port %s: %m"),
+      syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
              c->hostname, c->port);
       return -1;
     }
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_INFO, _("Connected to %s port %s"),
+    syslog(LOG_INFO, _("Connected to %s port %hd"),
          c->hostname, c->port);
 cp
   return 0;
 }
 
-int setup_outgoing_connection(char *name)
+void setup_outgoing_connection(outgoing_t *outgoing)
 {
   connection_t *c;
   node_t *n;
-  struct addrinfo *ai, *aitop, hints;
-  int r, ipv6preferred;
-
+  struct hostent *h;
 cp
-  n = lookup_node(name);
+  n = lookup_node(outgoing->name);
   
   if(n)
     if(n->connection)
       {
         if(debug_lvl >= DEBUG_CONNECTIONS)       
-          syslog(LOG_INFO, _("Already connected to %s"), name);
-        return 0;
+          syslog(LOG_INFO, _("Already connected to %s"), outgoing->name);
+        n->connection->outgoing = outgoing;
+        return;
       }
 
   c = new_connection();
-  c->name = xstrdup(name);
+  c->name = xstrdup(outgoing->name);
 
   init_configuration(&c->config_tree);
   read_connection_config(c);
@@ -558,52 +545,40 @@ cp
     {
       syslog(LOG_ERR, _("No address specified for %s"), c->name);
       free_connection(c);
-      return -1;
+      free(outgoing->name);
+      free(outgoing);
+      return;
     }
 
-  if(!get_config_string(lookup_config(c->config_tree, "Port"), &c->port))
+  if(!get_config_port(lookup_config(c->config_tree, "Port"), &c->port))
+    c->port = 655;
+
+  if(!(h = gethostbyname(c->hostname)))
     {
-      syslog(LOG_ERR, _("No port specified for %s"), c->name);
+      syslog(LOG_ERR, _("Error looking up `%s': %m"), c->hostname);
       free_connection(c);
-      return -1;
+      retry_outgoing(outgoing);
+      return;
     }
 
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_family = AF_INET;
-  if(get_config_bool(lookup_config(c->config_tree, "IPv6Preferred"), &ipv6preferred))
+  c->address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
+  c->hostname = hostlookup(htonl(c->address));
+
+  if(setup_outgoing_socket(c) < 0)
     {
-      if(ipv6preferred)
-	hints.ai_family = PF_UNSPEC;
+      syslog(LOG_ERR, _("Could not set up a meta connection to %s (%s)"),
+             c->name, c->hostname);
+      retry_outgoing(outgoing);
+      return;
     }
 
-  if((r = getaddrinfo(c->hostname, c->port, &hints, &aitop)) != 0)
-    {
-      syslog(LOG_ERR, _("Looking up %s failed: %s\n"),
-	     c->hostname, gai_strerror(r));
-      return -1;
-    }
-
-  for(ai = aitop; ai != NULL; ai = ai->ai_next)
-    {
-      if(setup_outgoing_socket(c) < 0)
-	continue;
-    }
-
-  if(ai == NULL)
-    {
-      /* No connection alternative succeeded */
-      free_connection(c);
-      return -1;
-    }
-
-  c->status.outgoing = 1;
+  c->outgoing = outgoing;
   c->last_ping_time = time(NULL);
 
   connection_add(c);
 
   send_id(c);
 cp
-  return 0;
 }
 
 int read_rsa_public_key(connection_t *c)
@@ -714,7 +689,7 @@ int setup_myself(void)
 {
   config_t *cfg;
   subnet_t *subnet;
-  char *name, *mode;
+  char *name, *mode, *cipher, *digest;
   int choice;
 cp
   myself = new_node();
@@ -764,8 +739,8 @@ cp
       return -1;
     }
 */
-  if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myself->port))
-    myself->port = "655";
+  if(!get_config_port(lookup_config(myself->connection->config_tree, "Port"), &myself->port))
+    myself->port = 655;
 
   myself->connection->port = myself->port;
 
@@ -825,13 +800,13 @@ cp
 cp
   /* Open sockets */
   
-  if((tcp_socket = setup_listen_socket(myself)) < 0)
+  if((tcp_socket = setup_listen_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening TCP socket!"));
       return -1;
     }
 
-  if((udp_socket = setup_vpn_in_socket(myself)) < 0)
+  if((udp_socket = setup_vpn_in_socket(myself->port)) < 0)
     {
       syslog(LOG_ERR, _("Unable to set up a listening UDP socket!"));
       return -1;
@@ -839,9 +814,28 @@ cp
 cp
   /* Generate packet encryption key */
 
-  myself->cipher = EVP_bf_cbc();
+  if(get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
+    {
+      if(!strcasecmp(cipher, "none"))
+        {
+	  myself->cipher = NULL;
+	}
+      else
+        {
+	  if(!(myself->cipher = EVP_get_cipherbyname(cipher)))
+            {
+	      syslog(LOG_ERR, _("Unrecognized cipher type!"));
+	      return -1;
+	    }
+        }
+    }
+  else
+    myself->cipher = EVP_bf_cbc();
 
-  myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
+  if(myself->cipher)
+    myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
+  else
+    myself->keylength = 1;
 
   myself->key = (char *)xmalloc(myself->keylength);
   RAND_pseudo_bytes(myself->key, myself->keylength);
@@ -850,6 +844,45 @@ cp
     keylifetime = 3600;
 
   keyexpires = time(NULL) + keylifetime;
+
+  /* Check if we want to use message authentication codes... */
+
+  if(get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
+    {
+      if(!strcasecmp(digest, "none"))
+        {
+	  myself->digest = NULL;
+	}
+      else
+        {
+          if(!(myself->digest = EVP_get_digestbyname(digest)))
+	    {
+	      syslog(LOG_ERR, _("Unrecognized digest type!"));
+	      return -1;
+            }
+	}
+    }
+  else
+    myself->digest = EVP_sha1();
+
+  if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->maclength))
+    {
+      if(myself->digest)
+        {
+	  if(myself->maclength > myself->digest->md_size)
+            {
+	      syslog(LOG_ERR, _("MAC length exceeds size of digest!"));
+	      return -1;
+	    }
+	  else if (myself->maclength < 0)
+            {
+	      syslog(LOG_ERR, _("Bogus MAC length!"));
+	      return -1;
+	    }
+        }
+    }
+  else
+    myself->maclength = 4;
 cp
   /* Done */
 
@@ -858,7 +891,9 @@ cp
   myself->status.active = 1;
   node_add(myself);
 
-  syslog(LOG_NOTICE, _("Ready: listening on port %s"), myself->port);
+  graph();
+
+  syslog(LOG_NOTICE, _("Ready: listening on port %hd"), myself->port);
 cp
   return 0;
 }
@@ -873,16 +908,17 @@ cp
   init_subnets();
   init_nodes();
   init_edges();
+  init_events();
 
-  if(get_config_int(lookup_config(config_tree, "PingTimeout"), &timeout))
+  if(get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout))
     {
-      if(timeout < 1)
+      if(pingtimeout < 1)
         {
-          timeout = 86400;
+          pingtimeout = 86400;
         }
     }
   else
-    timeout = 60;
+    pingtimeout = 60;
 
   if(setup_device() < 0)
     return -1;
@@ -893,8 +929,7 @@ cp
   if(setup_myself() < 0)
     return -1;
 
-  signal(SIGALRM, try_outgoing_connections);
-  alarm(5);
+  try_outgoing_connections();
 cp
   return 0;
 }
@@ -911,15 +946,18 @@ cp
     {
       next = node->next;
       c = (connection_t *)node->data;
-      c->status.outgoing = 0;
+      if(c->outgoing)
+        free(c->outgoing->name), free(c->outgoing);
       terminate_connection(c, 0);
     }
 
-  terminate_connection(myself->connection, 0);
+  if(myself && myself->connection)
+    terminate_connection(myself->connection, 0);
 
   close(udp_socket);
   close(tcp_socket);
 
+  exit_events();
   exit_edges();
   exit_subnets();
   exit_nodes();
@@ -952,21 +990,14 @@ cp
       return NULL;
     }
 
-  c->address = sockaddr_to_addrinfo(ci);
-
-  c->hostname = xmalloc(INET6_ADDRSTRLEN);
-  if((inet_ntop(ci.sin_family, &(ci.sin_addr), c->hostname, INET6_ADDRSTRLEN)) == NULL)
-    {
-      syslog(LOG_ERR, _("Couldn't convert address to string: %m"));
-      free(c->hostname);
-      return NULL;
-    }
-  asprintf(&(c->port), "%d", htons(ci.sin_port));
+  c->address = ntohl(ci.sin_addr.s_addr);
+  c->hostname = hostlookup(ci.sin_addr.s_addr);
+  c->port = htons(ci.sin_port);
   c->socket = sfd;
   c->last_ping_time = time(NULL);
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_NOTICE, _("Connection from %s port %s"),
+    syslog(LOG_NOTICE, _("Connection from %s port %d"),
          c->hostname, c->port);
 
   c->allow_request = ID;
@@ -1021,24 +1052,84 @@ cp
       return;
     }
 
-  if((pkt.len = recvfrom(udp_socket, (char *) pkt.salt, MTU, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
+  if((pkt.len = recvfrom(udp_socket, (char *)&pkt.seqno, MAXSIZE, 0, (struct sockaddr *)&from, &fromlen)) <= 0)
     {
       syslog(LOG_ERR, _("Receiving packet failed: %m"));
       return;
     }
 
-  n = lookup_node_udp(sockaddr_to_addrinfo(&from));
+  n = lookup_node_udp(ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
 
   if(!n)
     {
-      syslog(LOG_WARNING, _("Received UDP packet on port %s from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
+      syslog(LOG_WARNING, _("Received UDP packet on port %hd from unknown source %x:%hd"), myself->port, ntohl(from.sin_addr.s_addr), ntohs(from.sin_port));
       return;
     }
+
 /*
   if(n->connection)
     n->connection->last_ping_time = time(NULL);
 */
   receive_udppacket(n, &pkt);
+cp
+}
+
+/* Purge edges and subnets of unreachable nodes. Use carefully. */
+
+void purge(void)
+{
+  avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext, *cnode;
+  node_t *n;
+  edge_t *e;
+  subnet_t *s;
+  connection_t *c;
+cp
+  if(debug_lvl >= DEBUG_PROTOCOL)
+    syslog(LOG_DEBUG, _("Purging unreachable nodes"));
+
+  for(nnode = node_tree->head; nnode; nnode = nnext)
+  {
+    nnext = nnode->next;
+    n = (node_t *)nnode->data;
+
+    if(!n->status.reachable)
+    {
+      if(debug_lvl >= DEBUG_SCARY_THINGS)
+        syslog(LOG_DEBUG, _("Purging node %s (%s)"), n->name, n->hostname);
+
+      for(snode = n->subnet_tree->head; snode; snode = snext)
+      {
+        snext = snode->next;
+	s = (subnet_t *)snode->data;
+	
+	for(cnode = connection_tree->head; cnode; cnode = cnode->next)
+	{
+	  c = (connection_t *)cnode->data;
+	  if(c->status.active)
+	    send_del_subnet(c, s);
+	}
+	
+	subnet_del(n, s);
+      }
+	
+      for(enode = n->edge_tree->head; enode; enode = enext)
+      {
+        enext = enode->next;
+	e = (edge_t *)enode->data;
+	
+	for(cnode = connection_tree->head; cnode; cnode = cnode->next)
+	{
+	  c = (connection_t *)cnode->data;
+	  if(c->status.active)
+	    send_del_edge(c, e);
+	}
+	
+	edge_del(e);
+      }
+
+      node_del(n);
+    }
+  }	
 cp
 }
 
@@ -1081,14 +1172,16 @@ cp
       edge_del(c->edge);
     }
 
+  /* Run MST and SSSP algorithms */
+  
+  graph();
+
   /* Check if this was our outgoing connection */
 
-  if(c->status.outgoing)
+  if(c->outgoing)
     {
-      c->status.outgoing = 0;
-      signal(SIGALRM, try_outgoing_connections);
-      alarm(seconds_till_retry);
-      syslog(LOG_NOTICE, _("Trying to re-establish outgoing connection in %d seconds"), seconds_till_retry);
+      retry_outgoing(c->outgoing);
+      c->outgoing = NULL;
     }
 
   /* Deactivate */
@@ -1120,7 +1213,7 @@ cp
     {
       next = node->next;
       c = (connection_t *)node->data;
-      if(c->last_ping_time + timeout < now)
+      if(c->last_ping_time + pingtimeout < now)
         {
           if(c->status.active)
             {
@@ -1180,71 +1273,27 @@ cp
   return 0;
 }
 
-void randomized_alarm(int seconds)
-{
-  unsigned char r;
-  RAND_pseudo_bytes(&r, 1);
-  alarm((seconds * (int)r) / 128 + 1);
-}
-
-/* This function is severely fucked up.
-   We want to redesign it so the following rules apply:
-   
-   - Try all ConnectTo's in a row:
-     - if a connect() fails, try next one immediately,
-     - if it works, wait 5 seconds or so.
-   - If none of them were succesful, increase delay and retry.
-   - If all were succesful, don't try anymore.
-*/
-
-RETSIGTYPE
-try_outgoing_connections(int a)
+void try_outgoing_connections(void)
 {
   static config_t *cfg = NULL;
-  static int retry = 0;
   char *name;
+  outgoing_t *outgoing;
 cp
-  if(!cfg)
-    cfg = lookup_config(config_tree, "ConnectTo");
-
-  if(!cfg)
-    return;
-
-  while(cfg)
+  for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg))
     {
       get_config_string(cfg, &name);
 
       if(check_id(name))
         {
           syslog(LOG_ERR, _("Invalid name for outgoing connection in %s line %d"), cfg->file, cfg->line);
+          free(name);
           continue;
         }
 
-      if(setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
-        retry = 1;
-
-      cfg = lookup_config_next(config_tree, cfg); /* Next time skip to next ConnectTo line */
+      outgoing = xmalloc_and_zero(sizeof(*outgoing));
+      outgoing->name = name;
+      setup_outgoing_connection(outgoing);
     }
-
-  get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout);
-
-  if(retry)
-    {
-      seconds_till_retry += 5;
-      if(seconds_till_retry > maxtimeout)    /* Don't wait more than MAXTIMEOUT seconds. */
-        seconds_till_retry = maxtimeout;
-
-      syslog(LOG_ERR, _("Failed to setup any outgoing connection, will retry in %d seconds"),
-        seconds_till_retry);
-  
-      /* Randomize timeout to avoid global synchronisation effects */
-      randomized_alarm(seconds_till_retry);
-    }
-  else
-    {
-      seconds_till_retry = 5;
-    }
-cp
 }
 
 /*
@@ -1292,6 +1341,9 @@ cp
       if(c->status.remove)
 	connection_del(c);
     }
+  
+  if(!connection_tree->head)
+    purge();
 cp
 }
 
@@ -1305,13 +1357,16 @@ void main_loop(void)
   int r;
   time_t last_ping_check;
   int t;
+  event_t *event;
   vpn_packet_t packet;
 cp
   last_ping_check = time(NULL);
 
+  srand(time(NULL));
+
   for(;;)
     {
-      tv.tv_sec = timeout;
+      tv.tv_sec = 1 + (rand() & 7); /* Approx. 5 seconds, randomized to prevent global synchronisation effects */
       tv.tv_usec = 0;
 
       if(do_prune)
@@ -1324,7 +1379,7 @@ cp
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
         {
-	  if(errno != EINTR) /* because of alarm */
+	  if(errno != EINTR) /* because of a signal */
             {
               syslog(LOG_ERR, _("Error while waiting for input: %m"));
               return;
@@ -1352,11 +1407,17 @@ cp
           continue;
         }
 
+      if(do_purge)
+        {
+	  purge();
+	  do_purge = 0;
+	}
+
       t = time(NULL);
 
       /* Let's check if everybody is still alive */
 
-      if(last_ping_check + timeout < t)
+      if(last_ping_check + pingtimeout < t)
 	{
 	  check_dead_connections();
           last_ping_check = time(NULL);
@@ -1374,6 +1435,25 @@ cp
             }
 	}
 
+      if(sigalrm)
+        {
+          syslog(LOG_INFO, _("Flushing event queue"));
+
+	  while(event_tree->head)
+	    {
+	      event = (event_t *)event_tree->head->data;
+	      event->handler(event->data);
+	      event_del(event);
+	    }
+	  sigalrm = 0;
+        }
+
+      while((event = get_expired_event()))
+        {
+	  event->handler(event->data);
+          free(event);
+	}
+
       if(r > 0)
         {
           check_network_activity(&fset);
@@ -1381,9 +1461,7 @@ cp
           /* local tap data */
           if(FD_ISSET(device_fd, &fset))
             {
-              if(read_packet(&packet))
-                return;
-              else
+              if(!read_packet(&packet))
                 route_outgoing(&packet);
             }
         }

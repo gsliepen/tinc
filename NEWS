@@ -1,4 +1,25 @@
-version 1.0pre4              Jan 17 2000
+version 1.0pre5              Feb  9 2002
+
+* Security enhancements:
+
+  * Added sequence number and optional message authentication code to
+    the packets.
+
+  * Configurable encryption cipher and digest algorithms.
+
+* More robust handling of dis- and reconnects.
+
+* Added a "switch" and a "hub" mode to allow bridging setups.
+
+* Preliminary support for routing of IPv6 packets.
+
+* Supports Linux, FreeBSD, OpenBSD and Solaris.
+
+
+It looks like this might be the last release before 1.0.
+
+
+version 1.0pre4              Jan 17 2001
 
 * Updated documentation; the documentation now reflects the
   configuration as it is.

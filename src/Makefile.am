@@ -1,14 +1,17 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.4.4.18 2001/11/16 12:16:28 zarq Exp $
+# $Id: Makefile.am,v 1.4.4.19 2002/02/10 21:57:52 guus Exp $
 
 sbin_PROGRAMS = tincd
 
-tincd_SOURCES = conf.c connection.c device.c edge.c graph.c meta.c net.c node.c process.c	\
-	protocol.c route.c subnet.c tincd.c
+EXTRA_DIST = linux/device.c freebsd/device.c openbsd/device.c solaris/device.c
+
+tincd_SOURCES = conf.c connection.c device.c edge.c event.c graph.c meta.c net.c netutl.c node.c process.c	\
+	protocol.c protocol_auth.c protocol_edge.c protocol_misc.c protocol_key.c protocol_subnet.c	\
+	route.c subnet.c tincd.c
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib -I$(top_srcdir)/intl
 
-noinst_HEADERS = conf.h connection.h device.h edge.h graph.h meta.h net.h node.h process.h	\
+noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h meta.h net.h netutl.h node.h process.h	\
 	protocol.h route.h subnet.h
 
 LIBS = @LIBS@ @INTLLIBS@

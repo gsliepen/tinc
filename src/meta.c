@@ -1,7 +1,7 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2000-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.21 2001/10/27 12:13:17 guus Exp $
+    $Id: meta.c,v 1.1.2.22 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"

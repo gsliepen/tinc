@@ -16,6 +16,7 @@ We would like to thank
  * Matias Carrasco (for the Spanish translation of the manual)
  * Jamie Briggs (for finding a lot of socket leaks)
  * Armijn Hemel (for being our very own PR manager)
+ * Jerome Etienne (for a thorough security analysis of tinc)
 
 for their help, support and ideas.  Thank you guys!
 

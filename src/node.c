@@ -1,7 +1,7 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.7 2001/11/16 17:39:38 zarq Exp $
+    $Id: node.c,v 1.1.2.8 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"
@@ -47,10 +47,13 @@ int node_udp_compare(node_t *a, node_t *b)
 {
   if(a->address < b->address)
     return -1;
-  else if (a->address > b->address)
+  if (a->address > b->address)
     return 1;
-  else
-    return a->port - b->port;
+  if (a->port < b->port)
+    return -1;
+  if (a->port > b->port)
+    return 1;
+  return (a->name && b->name)?strcmp(a->name, b->name):0;
 }
 
 void init_nodes(void)
@@ -140,11 +143,13 @@ cp
   return avl_search(node_tree, &n);
 }
 
-node_t *lookup_node_udp(struct addrinfo *address)
+node_t *lookup_node_udp(ipv4_t address, port_t port)
 {
   node_t n;
 cp
+  n.name = NULL;
   n.address = address;
+  n.port = port;
   return avl_search(node_udp_tree, &n);
 }
 
@@ -158,9 +163,9 @@ cp
   for(node = node_tree->head; node; node = node->next)
     {
       n = (node_t *)node->data;
-      syslog(LOG_DEBUG, _(" %s at %s port %s options %ld status %04x nexthop %s via %s"),
-             n->name, n->hostname, n->port, n->options,
-             n->status, n->nexthop->name, n->via->name);
+      syslog(LOG_DEBUG, _(" %s at %s port %hd cipher %d digest %d maclength %d options %ld status %04x nexthop %s via %s"),
+             n->name, n->hostname, n->port, n->cipher?n->cipher->nid:0, n->digest?n->digest->type:0, n->maclength, n->options,
+             n->status, n->nexthop?n->nexthop->name:"-", n->via?n->via->name:"-");
     }
     
   syslog(LOG_DEBUG, _("End of nodes."));

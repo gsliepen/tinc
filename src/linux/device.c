@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
-    Copyright (C) 2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2001-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.4 2001/10/31 12:50:24 guus Exp $
+    $Id: device.c,v 1.1.2.5 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"
@@ -63,7 +63,7 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-subnet_t mymac;
+extern subnet_t mymac;
 
 /*
   open the local ethertap device
@@ -158,9 +158,7 @@ cp
     }
   else /* ethertap */
     {
-      struct iovec vector[2] = {{&packet->len, 2}, {packet->data, MTU}};
-
-      if((lenin = readv(device_fd, vector, 2)) <= 0)
+      if((lenin = read(device_fd, packet->data - 2, MTU + 2)) <= 0)
         {
           syslog(LOG_ERR, _("Error while reading from %s %s: %m"), device_info, device);
           return -1;
@@ -197,9 +195,8 @@ cp
     }
   else/* ethertap */
     {
-      struct iovec vector[2] = {{&packet->len, 2}, {packet->data, MTU}};
-
-      if(writev(device_fd, vector, 2) < 0)
+      *(short int *)(packet->data - 2) = packet->len;
+      if(write(device_fd, packet->data - 2, packet->len + 2) < 0)
         {
           syslog(LOG_ERR, _("Can't write to %s %s: %m"), device_info, device);
           return -1;

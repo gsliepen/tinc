@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
-    Copyright (C) 1999-2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
+                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.32 2001/11/03 22:53:02 guus Exp $
+    $Id: process.c,v 1.1.2.33 2002/02/10 21:57:54 guus Exp $
 */
 
 #include "config.h"
@@ -58,6 +58,10 @@ extern char **g_argv;
 sigset_t emptysigset;
 
 static int saved_debug_lvl = 0;
+
+extern int sighup;
+extern int sigalrm;
+extern int do_purge;
 
 void memory_full(int size)
 {
@@ -342,6 +346,7 @@ sigsegv_handler(int a, siginfo_t *info, void *b)
       act.sa_mask = emptysigset;
       act.sa_flags = SA_SIGINFO;
       act.sa_sigaction = sigsegv_square;
+      sigaction(SIGSEGV, &act, NULL);
 
       close_network_connections();
       sleep(5);
@@ -351,7 +356,7 @@ sigsegv_handler(int a, siginfo_t *info, void *b)
   else
     {
       syslog(LOG_NOTICE, _("Not restarting."));
-      exit(0);
+      exit(1);
     }
 }
 
@@ -383,6 +388,14 @@ sigint_handler(int a, siginfo_t *info, void *b)
 }
 
 RETSIGTYPE
+sigalrm_handler(int a, siginfo_t *info, void *b)
+{
+  if(debug_lvl > DEBUG_NOTHING)
+    syslog(LOG_NOTICE, _("Got ALRM signal"));
+  sigalrm = 1;
+}
+
+RETSIGTYPE
 sigusr1_handler(int a, siginfo_t *info, void *b)
 {
   dump_connections();
@@ -395,6 +408,13 @@ sigusr2_handler(int a, siginfo_t *info, void *b)
   dump_nodes();
   dump_edges();
   dump_subnets();
+}
+
+RETSIGTYPE
+sigwinch_handler(int a, siginfo_t *info, void *b)
+{
+  extern int do_purge;
+  do_purge = 1;
 }
 
 RETSIGTYPE
@@ -427,7 +447,8 @@ struct {
   { SIGUSR1, sigusr1_handler },
   { SIGUSR2, sigusr2_handler },
   { SIGCHLD, ignore_signal_handler },
-  { SIGALRM, ignore_signal_handler },
+  { SIGALRM, sigalrm_handler },
+  { SIGWINCH, sigwinch_handler },
   { 0, NULL }
 };
 
@@ -447,7 +468,7 @@ setup_signals(void)
   for(i = 0; i < NSIG; i++) 
     {
       if(!do_detach)
-        act.sa_sigaction = SIG_DFL;
+        act.sa_sigaction = (void(*)(int, siginfo_t *, void *))SIG_DFL;
       else
         act.sa_sigaction = unexpected_signal_handler;
       sigaction(i, &act, NULL);
@@ -455,7 +476,7 @@ setup_signals(void)
 
   /* If we didn't detach, allow coredumps */
   if(!do_detach)
-    sighandlers[3].handler = SIG_DFL;
+    sighandlers[3].handler = (void(*)(int, siginfo_t *, void *))SIG_DFL;
 
   /* Then, for each known signal that we want to catch, assign a
      handler to the signal, with error checking this time. */

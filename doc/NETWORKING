@@ -1,7 +1,7 @@
 This is the network infrastructure documentation for tinc, a Virtual Private
 Network daemon.
 
-   Copyright 2001 Guus Sliepen <guus@sliepen.warande.net>
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this
@@ -12,7 +12,7 @@ Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: NETWORKING,v 1.1.2.1 2001/03/04 14:00:24 guus Exp $
+   $Id: NETWORKING,v 1.1.2.2 2002/02/10 21:57:51 guus Exp $
 
 1. Packet flow
 ==============
