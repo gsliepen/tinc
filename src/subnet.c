@@ -247,6 +247,11 @@ bool net2str(char *netstr, int len, const subnet_t *subnet)
 {
 	cp();
 
+	if(!netstr || !subnet) {
+		logger(LOG_ERR, _("net2str() was called with netstr=%p, subnet=%p!\n"), netstr, subnet);
+		return false;
+	}
+
 	switch (subnet->type) {
 		case SUBNET_MAC:
 			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx",
@@ -423,9 +428,6 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		if(net2str(netstr + 7, sizeof netstr - 7, subnet))
 			execute_script(name, envp);
 	}
-
-	net2str(netstr, sizeof netstr, subnet);
-	envp[6] = envp[7] = NULL;
 
 	for(i = 0; i < (owner != myself ? 6 : 4); i++)
 		free(envp[i]);
