@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.6.4.9 2000/09/14 14:34:38 zarq Exp $
+    $Id: conf.h,v 1.6.4.10 2000/10/11 13:42:52 guus Exp $
 */
 
 #ifndef __TINC_CONF_H__
@@ -37,22 +37,26 @@ typedef union data_t {
 } data_t;
 
 typedef enum which_t {
-  passphrasesdir = 1,
-  upstreamip,
-  upstreamport,
-  listenport,
-  myvpnip,
-  tapdevice,
-  allowconnect,
+  tincname = 1,
+  connectto,
   pingtimeout,
+  tapdevice,
+  privatekey,
   keyexpire,
-  vpnmask,
   resolve_dns,
-  indirectdata,
-  tcponly,
   interface,
   interfaceip,
-  tincname,
+  configuration
+  address,
+  port,
+  publickey,
+  subnet,
+  restricthosts,
+  restrictsubnets,
+  restrictaddress,
+  restrictport,
+  indirectdata,
+  tcponly,
 } which_t;
 
 typedef struct config_t {
@@ -61,6 +65,12 @@ typedef struct config_t {
   int argtype;
   data_t data;
 } config_t;
+
+typedef struct internal_config_t {
+  char *name;
+  enum which_t which;
+  int argtype;
+} internal_config_t;
 
 enum {
   stupid_false = 1,

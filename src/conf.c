@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.10 2000/09/14 14:34:38 zarq Exp $
+    $Id: conf.c,v 1.9.4.11 2000/10/11 13:42:52 guus Exp $
 */
 
 
@@ -48,33 +48,31 @@ char *configfilename = NULL;
 /* Will be set if HUP signal is received. It will be processed when it is safe. */
 int sighup = 0;
 
-typedef struct internal_config_t {
-  char *name;
-  enum which_t which;
-  int argtype;
-} internal_config_t;
-
 /*
   These are all the possible configurable values
 */
 static internal_config_t hazahaza[] = {
-  { "AllowConnect", allowconnect,   TYPE_BOOL },   /* Is not used anywhere. Remove? */
-  { "ConnectTo",    upstreamip,     TYPE_NAME },
-  { "ConnectPort",  upstreamport,   TYPE_INT },
-  { "ListenPort",   listenport,     TYPE_INT },
-  { "MyOwnVPNIP",   myvpnip,        TYPE_IP },
-  { "MyVirtualIP",  myvpnip,        TYPE_IP },   /* an alias */
-  { "Passphrases",  passphrasesdir, TYPE_NAME },
+/* Main configuration file keywords */
+  { "Name",         tincname,       TYPE_NAME },
+  { "ConnectTo",    connectto,      TYPE_NAME },
   { "PingTimeout",  pingtimeout,    TYPE_INT },
   { "TapDevice",    tapdevice,      TYPE_NAME },
+  { "PrivateKey",   privatekey,     TYPE_NAME },
   { "KeyExpire",    keyexpire,      TYPE_INT },
-  { "VpnMask",      vpnmask,        TYPE_IP },
   { "Hostnames",    resolve_dns,    TYPE_BOOL },
-  { "IndirectData", indirectdata,   TYPE_BOOL },
-  { "TCPonly",      tcponly,        TYPE_BOOL },
   { "Interface",    interface,      TYPE_NAME },
   { "InterfaceIP",  interfaceip,    TYPE_IP },
-  { "Name",         tincname,       TYPE_NAME },
+/* Host configuration file keywords */
+  { "Address",      address,        TYPE_NAME },
+  { "Port",         port,           TYPE_INT },
+  { "PublicKey",    publickey,      TYPE_NAME },
+  { "Subnet",       subnet,         TYPE_NAME },
+  { "RestrictHosts", restricthosts, TYPE_BOOL },
+  { "RestrictSubnets", restrictsubnets, TYPE_BOOL },
+  { "RestrictAddress", restrictaddress, TYPE_BOOL },
+  { "RestrictPort", restrictport,   TYPE_BOOL },
+  { "IndirectData", indirectdata,   TYPE_BOOL },
+  { "TCPonly",      tcponly,        TYPE_BOOL },
   { NULL, 0, 0 }
 };
 
@@ -136,33 +134,38 @@ cp
 }
 
 /*
-  Get variable from a section in a configfile. returns -1 on failure.
+  Parse a configuration file and put the results in the configuration tree
+  starting at *base.
 */
-int
-readconfig(const char *fname, FILE *fp)
+int read_config_file(config_t **base, const char *fname)
 {
-  char *line, *temp_buf;
+  int err;
+  FILE *fp;
+  char line[MAXBUFSIZE];	/* There really should not be any line longer than this... */
   char *p, *q;
-  int i, lineno = 0;
+  int i, err = -1, lineno = 0;
   config_t *cfg;
 cp
-  line = (char *)xmalloc(80 * sizeof(char));
-  temp_buf = (char *)xmalloc(80 * sizeof(char));
-	
+  if((fp = fopen (fname, "r")) == NULL)
+    {
+      return -1;
+    }
+
   for(;;)
     {
-      if(fgets(line, 80, fp) == NULL)
-	return 0;
-
-      while(!index(line, '\n'))
+      if(fgets(line, MAXBUFSIZE, fp) == NULL)
         {
-	  fgets(temp_buf, (strlen(line)+1) * 80, fp);
-	  if(!temp_buf)
-	    break;
-	  strcat(line, temp_buf);
-	  line = (char *)xrealloc(line, (strlen(line)+1) * sizeof(char));
-        }        
+          err = 0;
+          break;
+        }
+        
       lineno++;
+
+      if(!index(line, '\n'))
+        {
+          syslog(LOG_ERR, _("Line %d too long while reading config file %s"), lineno, fname);
+          break;
+        }        
 
       if((p = strtok(line, "\t\n\r =")) == NULL)
 	continue; /* no tokens on this line */
@@ -176,50 +179,31 @@ cp
 
       if(!hazahaza[i].name)
 	{
-	  fprintf(stderr, _("%s: %d: Invalid variable name `%s'.\n"),
-		  fname, lineno, p);
-	  return -1;
+	  syslog(LOG_ERR, _("Invalid variable name on line %d while reading config file %s"),
+		  lineno, fname);
+          break;
 	}
 
       if(((q = strtok(NULL, "\t\n\r =")) == NULL) || q[0] == '#')
 	{
-	  fprintf(stderr, _("%s: %d: No value given for `%s'.\n"),
-		  fname, lineno, hazahaza[i].name);
-	  return -1;
+	  fprintf(stderr, _("No value for variable on line %d while reading config file %s"),
+		  lineno, fname);
+	  break;
 	}
 
-      cfg = add_config_val(&config, hazahaza[i].argtype, q);
+      cfg = add_config_val(base, hazahaza[i].argtype, q);
       if(cfg == NULL)
 	{
-	  fprintf(stderr, _("%s: %d: Invalid value `%s' for variable `%s'.\n"),
-		  fname, lineno, q, hazahaza[i].name);
-	  return -1;
+	  fprintf(stderr, _("Invalid value for variable on line %d while reading config file %s"),
+		  lineno, fname);
+	  break;
 	}
 
       cfg->which = hazahaza[i].which;
       if(!config)
 	config = cfg;
     }
-cp
-  return 0;
-}
 
-/*
-  wrapper function for readconfig
-*/
-int
-read_config_file(const char *fname)
-{
-  int err;
-  FILE *fp;
-cp
-  if((fp = fopen (fname, "r")) == NULL)
-    {
-      fprintf(stderr, _("Could not open %s: %s\n"), fname, strerror(errno));
-      return 1;
-    }
-
-  err = readconfig(fname, fp);
   fclose (fp);
 cp
   return err;
@@ -228,10 +212,8 @@ cp
 /*
   Look up the value of the config option type
 */
-const config_t *
-get_config_val(which_t type)
+const config_t *get_config_val(config_t *p, which_t type)
 {
-  config_t *p;
 cp
   for(p = config; p != NULL; p = p->next)
     if(p->which == type)
@@ -245,10 +227,8 @@ cp
   Support for multiple config lines.
   Index is used to get a specific value, 0 being the first, 1 the second etc.
 */
-const config_t *
-get_next_config_val(which_t type, int index)
+const config_t *get_next_config_val(config_t *p, which_t type, int index)
 {
-  config_t *p;
 cp  
   for(p = config; p != NULL; p = p->next)
     if(p->which == type)
@@ -262,11 +242,11 @@ cp
 /*
   Remove the complete configuration tree.
 */
-void clear_config()
+void clear_config(config_t **base)
 {
   config_t *p, *next;
 cp
-  for(p = config; p != NULL; p = next)
+  for(p = *base; p != NULL; p = next)
     {
       next = p->next;
       if(p->data.ptr && (p->argtype == TYPE_NAME))
@@ -275,6 +255,6 @@ cp
         }
       free(p);
     }
-  config = NULL;
+  *base = NULL;
 cp
 }
