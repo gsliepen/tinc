@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.118 2001/07/04 08:41:36 guus Exp $
+    $Id: net.c,v 1.35.4.119 2001/07/15 14:21:12 guus Exp $
 */
 
 #include "config.h"
@@ -54,7 +54,15 @@
 #endif
 
 #ifdef HAVE_TUNTAP
-#include LINUX_IF_TUN_H
+ #ifdef HAVE_LINUX
+  #ifdef LINUX_IF_TUN_H
+   #include LINUX_IF_TUN_H
+  #else
+   #include <linux/if_tun.h>
+  #endif
+ #else
+  #include <net/if_tun.h>
+ #endif
 #endif
 
 #include <utils.h>

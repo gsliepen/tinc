@@ -16,7 +16,7 @@ AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
     if_tun_h="\"$kerneldir/include/linux/if_tun.h\"",
     [AC_TRY_COMPILE([#include <linux/if_tun.h>],
       [int a = IFF_TAP;],
-      if_tun_h="<linux/if_tun.h>",
+      if_tun_h="default",
       if_tun_h="no"
     )]
   )
@@ -30,8 +30,10 @@ AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
 
 if test $tinc_cv_linux_if_tun_h != none; then
   AC_DEFINE(HAVE_TUNTAP)
-  AC_DEFINE_UNQUOTED(LINUX_IF_TUN_H, $tinc_cv_linux_if_tun_h)
-  AC_SUBST(LINUX_IF_TUN_H)
+  if test $tinc_cv_linux_if_tun_h != default; then
+   AC_DEFINE_UNQUOTED(LINUX_IF_TUN_H, $tinc_cv_linux_if_tun_h)
+  fi
 fi
+AC_SUBST(LINUX_IF_TUN_H)
 AC_SUBST(HAVE_TUNTAP)
 ])
