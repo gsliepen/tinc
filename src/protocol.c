@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.55 2000/11/04 16:39:19 guus Exp $
+    $Id: protocol.c,v 1.28.4.56 2000/11/04 16:54:21 guus Exp $
 */
 
 #include "config.h"
@@ -1197,7 +1197,7 @@ cp
       return -1;
     }
 
-  /* Update origin's packet key */
+  /* Check correctness of packet key */
 
   keylength = strlen(pktkey);
 
@@ -1209,17 +1209,8 @@ cp
       return -1;
     }
 
-  if(from->cipher_pktkey)
-    free(from->cipher_pktkey);
+  /* Forward it if necessary */
 
-  keylength /= 2;
-  hex2bin(pktkey, pktkey, keylength);
-  pktkey[keylength] = '\0';
-  from->cipher_pktkey = pktkey;
-
-  from->status.validkey = 1;
-  from->status.waitingforkey = 0;
-    
   if(strcmp(to_id, myself->name))
     {
       if(!(to = lookup_id(to_id)))
@@ -1232,6 +1223,19 @@ cp
       send_ans_key(from, to, pktkey);
     }
 
+  /* Update our copy of the origin's packet key */
+
+  if(from->cipher_pktkey)
+    free(from->cipher_pktkey);
+
+  keylength /= 2;
+  hex2bin(pktkey, pktkey, keylength);
+  pktkey[keylength] = '\0';
+  from->cipher_pktkey = pktkey;
+
+  from->status.validkey = 1;
+  from->status.waitingforkey = 0;
+    
   free(from_id); free(to_id);
 cp
   return 0;
