@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.183 2003/01/17 00:37:18 guus Exp $
+    $Id: net.c,v 1.35.4.184 2003/04/03 11:43:17 guus Exp $
 */
 
 #include "config.h"
@@ -329,12 +329,13 @@ void main_loop(void)
 	fd_set fset;
 	struct timeval tv;
 	int r, maxfd;
-	time_t last_ping_check;
+	time_t last_ping_check, last_config_check;
 	event_t *event;
 
 	cp();
 
 	last_ping_check = now;
+	last_config_check = now;
 	srand(now);
 
 	for(;;) {
@@ -407,24 +408,46 @@ void main_loop(void)
 		}
 
 		if(sighup) {
+			connection_t *c;
+			avl_node_t *node;
+			char *fname;
+			struct stat s;
+			
 			sighup = 0;
-			close_network_connections();
+			
+			/* Reread our own configuration file */
+
 			exit_configuration(&config_tree);
-
-			syslog(LOG_INFO, _("Rereading configuration file and restarting in 5 seconds..."));
-			sleep(5);
-
 			init_configuration(&config_tree);
 
 			if(read_server_config()) {
-				syslog(LOG_ERR,
-					   _("Unable to reread configuration file, exitting."));
+				syslog(LOG_ERR, _("Unable to reread configuration file, exitting."));
 				exit(1);
 			}
 
-			if(setup_network_connections())
-				return;
+			/* Close connections to hosts that have a changed or deleted host config file */
+			
+			for(node = connection_tree->head; node; node = node->next) {
+				c = (connection_t *) node->data;
+				
+				if(c->outgoing) {
+					free(c->outgoing->name);
+					free(c->outgoing);
+					c->outgoing = NULL;
+				}
+				
+				asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+				if(stat(fname, &s) || s.st_mtime > last_config_check)
+					terminate_connection(c, c->status.active);
+				free(fname);
+			}
 
+			last_config_check = now;
+
+			/* Try to make outgoing connections */
+			
+			try_outgoing_connections();
+						
 			continue;
 		}
 	}
