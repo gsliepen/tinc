@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.26 2000/05/29 21:01:25 zarq Exp $
+    $Id: protocol.c,v 1.27 2000/05/29 23:40:05 guus Exp $
 */
 
 #include "config.h"
@@ -451,19 +451,21 @@ cp
   if(cl->status.outgoing)
     send_public_key(cl);
   else
-    send_ack(cl);
+    {
+      send_ack(cl);
 
-  /* Okay, before we active the connection, we check if there is another entry
-     in the connection list with the same vpn_ip. If so, it presumably is an
-     old connection that has timed out but we don't know it yet. Because our
-     conn_list entry is not active, lookup_conn will skip ourself. */
+      /* Okay, before we active the connection, we check if there is another entry
+         in the connection list with the same vpn_ip. If so, it presumably is an
+         old connection that has timed out but we don't know it yet. Because our
+         conn_list entry is not active, lookup_conn will skip ourself. */
 
-  while(old=lookup_conn(cl->vpn_ip)) 
-    terminate_connection(old);
+      while(old=lookup_conn(cl->vpn_ip)) 
+        terminate_connection(old);
 
-  cl->status.active = 1;
-  notify_others(cl, NULL, send_add_host);
-  notify_one(cl);
+      cl->status.active = 1;
+      notify_others(cl, NULL, send_add_host);
+      notify_one(cl);
+    }
 cp
   return 0;
 }
