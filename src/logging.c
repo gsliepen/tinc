@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.c,v 1.4 2002/04/13 11:07:12 zarq Exp $
+    $Id: logging.c,v 1.5 2002/04/13 18:01:58 zarq Exp $
 */
 
 #include "config.h"
@@ -74,7 +74,10 @@ void log_del_hook(log_function_t *fn)
 void log_default(int level, int priority, char *fmt, va_list ap)
 {
   if(debug_lvl >= level)
-    vfprintf(stderr, fmt, ap);
+    {
+      vfprintf(stderr, fmt, ap);
+      fprintf(stderr, "\n");
+    }
 }
 
 void log_syslog(int level, int priority, char *fmt, va_list ap)
