@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.c,v 1.1.2.12 2002/09/10 09:40:15 guus Exp $
+    $Id: avl_tree.c,v 1.1.2.13 2003/06/11 19:39:02 guus Exp $
 */
 
 #include <stdio.h>
@@ -519,7 +519,7 @@ void avl_insert_before(avl_tree_t *tree, avl_node_t *before,
 	before->prev = node;
 	before->left = node;
 
-	avl_rebalance(tree, before->parent);
+	avl_rebalance(tree, before);
 }
 
 void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node)
@@ -549,7 +549,7 @@ void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node)
 	after->next = node;
 	after->right = node;
 
-	avl_rebalance(tree, after->parent);
+	avl_rebalance(tree, after);
 }
 
 avl_node_t *avl_unlink(avl_tree_t *tree, void *data)
