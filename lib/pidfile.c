@@ -34,14 +34,14 @@
  * 0 is returned if either there's no pidfile, it's empty
  * or no pid can be read.
  */
-int read_pid (char *pidfile)
+pid_t read_pid (char *pidfile)
 {
   FILE *f;
-  int pid;
+  long pid;
 
   if (!(f=fopen(pidfile,"r")))
     return 0;
-  fscanf(f,"%d", &pid);
+  fscanf(f,"%ld", &pid);
   fclose(f);
   return pid;
 }
@@ -50,11 +50,11 @@ int read_pid (char *pidfile)
  *
  * Reads the pid using read_pid and looks up the pid in the process
  * table (using /proc) to determine if the process already exists. If
- * so 1 is returned, otherwise 0.
+ * so the pid is returned, otherwise 0.
  */
-int check_pid (char *pidfile)
+pid_t check_pid (char *pidfile)
 {
-  int pid = read_pid(pidfile);
+  pid_t pid = read_pid(pidfile);
 
   /* Amazing ! _I_ am already holding the pid file... */
   if ((!pid) || (pid == getpid ()))
@@ -68,7 +68,7 @@ int check_pid (char *pidfile)
   /* But... errno is usually changed only on error.. */
   errno = 0;
   if (kill(pid, 0) && errno == ESRCH)
-	  return(0);
+	  return 0;
 
   return pid;
 }
@@ -78,30 +78,26 @@ int check_pid (char *pidfile)
  * Writes the pid to the specified file. If that fails 0 is
  * returned, otherwise the pid.
  */
-int write_pid (char *pidfile)
+pid_t write_pid (char *pidfile)
 {
   FILE *f;
   int fd;
-  int pid;
+  pid_t pid;
 
   if ( ((fd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1)
        || ((f = fdopen(fd, "r+")) == NULL) ) {
-      fprintf(stderr, "Can't open or create %s.\n", pidfile);
       return 0;
   }
   
 #ifdef HAVE_FLOCK
   if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-      fscanf(f, "%d", &pid);
       fclose(f);
-      printf("Can't lock, lock is held by pid %d.\n", pid);
       return 0;
   }
 #endif
 
   pid = getpid();
-  if (!fprintf(f,"%d\n", pid)) {
-      printf("Can't write pid , %s.\n", strerror(errno));
+  if (!fprintf(f,"%ld\n", (long)pid)) {
       close(fd);
       return 0;
   }
@@ -109,7 +105,6 @@ int write_pid (char *pidfile)
 
 #ifdef HAVE_FLOCK
   if (flock(fd, LOCK_UN) == -1) {
-      printf("Can't unlock pidfile %s, %s.\n", pidfile, strerror(errno));
       close(fd);
       return 0;
   }

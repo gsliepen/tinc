@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.75 2003/08/22 15:07:57 guus Exp $
+    $Id: process.c,v 1.1.2.76 2003/10/06 16:13:08 guus Exp $
 */
 
 #include "system.h"
@@ -57,19 +57,6 @@ static void memory_full(int size)
 }
 
 /* Some functions the less gifted operating systems might lack... */
-
-#ifndef HAVE_FCLOSEALL
-static int fcloseall(void)
-{
-	fflush(stdin);
-	fflush(stdout);
-	fflush(stderr);
-	fclose(stdin);
-	fclose(stdout);
-	fclose(stderr);
-	return 0;
-}
-#endif
 
 #ifdef HAVE_MINGW
 extern char *identname;
@@ -254,7 +241,7 @@ bool init_service(void) {
 */
 static bool write_pidfile(void)
 {
-	int pid;
+	pid_t pid;
 
 	cp();
 
@@ -262,10 +249,10 @@ static bool write_pidfile(void)
 
 	if(pid) {
 		if(netname)
-			fprintf(stderr, _("A tincd is already running for net `%s' with pid %d.\n"),
-					netname, pid);
+			fprintf(stderr, _("A tincd is already running for net `%s' with pid %ld.\n"),
+					netname, (long)pid);
 		else
-			fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
+			fprintf(stderr, _("A tincd is already running with pid %ld.\n"), (long)pid);
 		return false;
 	}
 
@@ -283,7 +270,7 @@ static bool write_pidfile(void)
 bool kill_other(int signal)
 {
 #ifndef HAVE_MINGW
-	int pid;
+	pid_t pid;
 
 	cp();
 

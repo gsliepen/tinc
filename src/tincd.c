@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.88 2003/09/25 10:34:16 guus Exp $
+    $Id: tincd.c,v 1.10.4.89 2003/10/06 16:13:08 guus Exp $
 */
 
 #include "system.h"
@@ -39,6 +39,7 @@
 #include <lzo1x.h>
 
 #include <getopt.h>
+#include <pidfile.h>
 
 #include "conf.h"
 #include "device.h"
