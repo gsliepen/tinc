@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.28 2002/03/01 14:33:48 guus Exp $
+    $Id: route.c,v 1.1.2.29 2002/03/10 14:04:48 guus Exp $
 */
 
 #include "config.h"
@@ -254,7 +254,7 @@ cp
 void route_outgoing(vpn_packet_t *packet)
 {
   unsigned short int type;
-  node_t *n;
+  node_t *n = NULL;
 cp
   /* FIXME: multicast? */
 
@@ -304,9 +304,22 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
     {
       case RMODE_ROUTER:
         {
-          node_t *n;
+          node_t *n = NULL;
+	  unsigned short int type;
 
-          n = route_ipv4(packet);
+          type = ntohs(*((unsigned short*)(&packet->data[12])));
+          switch(type)
+            {
+              case 0x0800:
+        	n = route_ipv4(packet);
+        	break;
+              case 0x86DD:
+        	n = route_ipv6(packet);
+        	break;
+              default:
+                n = myself;
+		break;
+             }
 
           if(n)
             {
