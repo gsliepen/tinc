@@ -45,5 +45,8 @@
 # define strsignal(p) ""
 #endif
 
+/* Other functions */
+#include <dropin.h>
+
 #endif /* __TINC_SYSTEM_H__ */
 

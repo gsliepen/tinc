@@ -64,3 +64,6 @@
 
 /* Define to 1 if checkpoint tracing is enabled */
 #undef ENABLE_TRACING
+
+/* Define to 1 if scanf and friends understand %as */
+#undef HAVE_SCANF_AS

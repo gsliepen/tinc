@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.13.2.27 2000/11/29 00:33:15 zarq Exp $
+dnl $Id: configure.in,v 1.13.2.28 2000/11/29 01:37:50 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0pre4-cvs)
@@ -71,9 +71,6 @@ jm_FUNC_REALLOC
 AM_GNU_GETTEXT
 
 
-dnl Crypto stuff
-tinc_OPENSSL
-
 dnl Support for SunOS
 
 AC_CHECK_FUNC(socket, [], [
@@ -84,8 +81,11 @@ AC_CHECK_FUNC(gethostbyname, [], [
 ])
 
 
-dnl Check for TUN/TAP support in the kernel
+dnl These are defined in files in m4/
 tinc_TUNTAP
+tinc_OPENSSL
+tinc_SCANF_AS
+
 
 dnl Check if checkpoint tracing has to be enabled
 AC_ARG_ENABLE(tracing,
