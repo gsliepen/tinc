@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.133 2001/09/25 13:39:11 guus Exp $
+    $Id: net.c,v 1.35.4.134 2001/10/08 11:47:55 guus Exp $
 */
 
 #include "config.h"
@@ -230,7 +230,7 @@ cp
 */
 void send_packet(connection_t *cl, vpn_packet_t *packet)
 {
-  connection_t *hop;
+  connection_t *via;
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
@@ -255,28 +255,22 @@ cp
       return;
     }
 
-  if(myself->options & OPTION_TCPONLY)
+  if(cl->via == myself)
+    via = cl->nexthop;
+  else
+    via = cl->via;
+
+  if(via != cl && debug_lvl >= DEBUG_TRAFFIC)
+    syslog(LOG_ERR, _("Sending packet to %s via %s (%s)"),
+           cl->name, via->name, via->hostname);
+
+  if((myself->options | via->options) & OPTION_TCPONLY)
     {
-      if(send_tcppacket(cl->nexthop, packet))
-        terminate_connection(cl->nexthop, 1);
+      if(send_tcppacket(via, packet))
+        terminate_connection(via, 1);
     }
   else
-    {
-      if(myself->options & OPTION_INDIRECT)
-        send_udppacket(cl->nexthop, packet);
-      else
-        {
-          hop = cl;
-
-          while(hop->options & OPTION_INDIRECT)
-            if(hop->lastbutonehop == myself)
-              break;
-            else
-              hop = hop->lastbutonehop;
-
-          send_udppacket(hop, packet);
-        }
-    }
+    send_udppacket(via, packet);
 }
 
 /* Broadcast a packet to all active direct connections */
@@ -977,7 +971,8 @@ cp
   /* Done */
 
   myself->nexthop = myself;
-  myself->lastbutonehop = myself;
+  myself->prevhop = myself;
+  myself->via = myself;
   myself->status.active = 1;
   id_add(myself);
 

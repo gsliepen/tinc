@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.106 2001/09/24 14:12:00 guus Exp $
+    $Id: protocol.c,v 1.28.4.107 2001/10/08 11:47:55 guus Exp $
 */
 
 #include "config.h"
@@ -263,7 +263,7 @@ cp
 
   cl->allow_request = ALL;
   cl->nexthop = cl;
-  cl->lastbutonehop = myself;
+  cl->prevhop = myself;
   cl->cipher_pkttype = EVP_bf_cbc();
   cl->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
 
@@ -288,6 +288,11 @@ cp
       if(cfg->data.val == stupid_true)
         cl->options |= OPTION_TCPONLY;
     }
+
+  if((myself->options | cl->options) & OPTION_INDIRECT)
+    cl->via = myself;
+  else
+    cl->via = cl;
 
   /* Send him our subnets */
   
@@ -777,18 +782,18 @@ int send_add_host(connection_t *cl, connection_t *other)
 {
 cp
   return send_request(cl, "%d %s %lx:%d %lx %s", ADD_HOST,
-                      other->name, other->address, other->port, other->options, other->lastbutonehop->name);
+                      other->name, other->address, other->port, other->options, other->prevhop->name);
 }
 
 int add_host_h(connection_t *cl)
 {
   connection_t *old, *new, *p;
-  char name[MAX_STRING_SIZE], lastbutone[MAX_STRING_SIZE];
+  char name[MAX_STRING_SIZE], prevhop[MAX_STRING_SIZE];
   avl_node_t *node;
 cp
   new = new_connection();
 
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx "MAX_STRING, name, &new->address, &new->port, &new->options, lastbutone) != 5)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx "MAX_STRING, name, &new->address, &new->port, &new->options, prevhop) != 5)
     {
        syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s)"), cl->name, cl->hostname);
        return -1;
@@ -803,9 +808,9 @@ cp
       return -1;
     }
 
-  if(check_id(lastbutone))
+  if(check_id(prevhop))
     {
-      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid lastbutone name"), cl->name, cl->hostname);
+      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): invalid prevhop name"), cl->name, cl->hostname);
       free_connection(new);
       return -1;
     }
@@ -823,11 +828,11 @@ cp
 
   new->hostname = hostlookup(htonl(new->address));
 
-  new->lastbutonehop = lookup_id(lastbutone);
+  new->prevhop = lookup_id(prevhop);
   
-  if(!new->lastbutonehop)
+  if(!new->prevhop)
     {
-      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): unknown lastbutone"), cl->name, cl->hostname);
+      syslog(LOG_ERR, _("Got bad ADD_HOST from %s (%s): unknown prevhop"), cl->name, cl->hostname);
       free_connection(new);
       return -1;
     }
@@ -873,6 +878,11 @@ cp
   new->nexthop = cl;
   new->cipher_pkttype = EVP_bf_cbc();
   new->cipher_pktkeylength = cl->cipher_pkttype->key_len + cl->cipher_pkttype->iv_len;
+
+  if(new->options & OPTION_INDIRECT || new->prevhop->via != new->prevhop)
+    new->via = new->prevhop->via;
+  else
+    new->via = new;
 cp
   return 0;
 }
@@ -881,19 +891,19 @@ int send_del_host(connection_t *cl, connection_t *other)
 {
 cp
   return send_request(cl, "%d %s %lx:%d %lx %s", DEL_HOST,
-                      other->name, other->address, other->port, other->options, other->lastbutonehop->name);
+                      other->name, other->address, other->port, other->options, other->prevhop->name);
 }
 
 int del_host_h(connection_t *cl)
 {
-  char name[MAX_STRING_SIZE], lastbutone[MAX_STRING_SIZE];
+  char name[MAX_STRING_SIZE], prevhop[MAX_STRING_SIZE];
   ipv4_t address;
   port_t port;
   long int options;
   connection_t *old, *p;
   avl_node_t *node;
 cp
-  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx "MAX_STRING, name, &address, &port, &options, lastbutone) != 5)
+  if(sscanf(cl->buffer, "%*d "MAX_STRING" %lx:%hd %lx "MAX_STRING, name, &address, &port, &options, prevhop) != 5)
     {
       syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s)"),
              cl->name, cl->hostname);
@@ -908,9 +918,9 @@ cp
       return -1;
     }
 
-  if(check_id(lastbutone))
+  if(check_id(prevhop))
     {
-      syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s): invalid lastbutone name"), cl->name, cl->hostname);
+      syslog(LOG_ERR, _("Got bad DEL_HOST from %s (%s): invalid prevhop name"), cl->name, cl->hostname);
       return -1;
     }
 
@@ -934,7 +944,7 @@ cp
   
   /* Check if the rest matches */
   
-  if(address!=old->address || port!=old->port || options!=old->options || cl!=old->nexthop || strcmp(lastbutone, old->lastbutonehop->name))
+  if(address!=old->address || port!=old->port || options!=old->options || cl!=old->nexthop || strcmp(prevhop, old->prevhop->name))
     {
       syslog(LOG_WARNING, _("Got DEL_HOST from %s (%s) for %s which doesn't match"), cl->name, cl->hostname, old->name);
       return 0;

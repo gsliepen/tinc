@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.12 2001/09/24 14:11:59 guus Exp $
+    $Id: connection.h,v 1.1.2.13 2001/10/08 11:47:55 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -96,8 +96,9 @@ typedef struct connection_t {
   char *mychallenge;               /* challenge we received from him */
   char *hischallenge;              /* challenge we sent to him */
 
-  struct connection_t *nexthop;    /* nearest meta-hop in this direction */
-  struct connection_t *lastbutonehop; /* meta-hop closest to him */
+  struct connection_t *nexthop;    /* nearest meta-hop from us to him */
+  struct connection_t *prevhop;    /* nearest meta-hop from him to us */
+  struct connection_t *via;        /* next hop for UDP packets */
   
   avl_tree_t *subnet_tree;         /* Pointer to a tree of subnets belonging to this connection */
 
