@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.48 2001/11/16 00:13:08 zarq Exp $
+    $Id: conf.c,v 1.9.4.49 2001/11/16 12:17:03 zarq Exp $
 */
 
 #include "config.h"
@@ -42,7 +42,6 @@
 #include <avl_tree.h>
 
 #include "conf.h"
-#include "netutl.h" /* for strtoip */
 
 #include "system.h"
 

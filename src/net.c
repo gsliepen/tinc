@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.148 2001/11/05 19:09:08 guus Exp $
+    $Id: net.c,v 1.35.4.149 2001/11/16 12:22:02 zarq Exp $
 */
 
 #include "config.h"
@@ -63,7 +63,6 @@
 #include "connection.h"
 #include "meta.h"
 #include "net.h"
-#include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "subnet.h"
@@ -411,14 +410,10 @@ cp
 
   /* Connect */
 
-  a.sin_family = AF_INET;
-  a.sin_port = htons(c->port);
-  a.sin_addr.s_addr = htonl(c->address);
-
-  if(connect(c->socket, (struct sockaddr *)&a, sizeof(a)) == -1)
+  if(connect(c->socket, c->address->ai_addr, c->address->ai_addrlen) == -1)
     {
       close(c->socket);
-      syslog(LOG_ERR, _("%s port %hd: %m"), c->hostname, c->port);
+      syslog(LOG_ERR, _("%s port %s: %m"), c->hostname, c->port);
       return -1;
     }
 
@@ -427,13 +422,13 @@ cp
   if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
       close(c->socket);
-      syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
+      syslog(LOG_ERR, _("fcntl for %s port %s: %m"),
              c->hostname, c->port);
       return -1;
     }
 
   if(debug_lvl >= DEBUG_CONNECTIONS)
-    syslog(LOG_INFO, _("Connected to %s port %hd"),
+    syslog(LOG_INFO, _("Connected to %s port %s"),
          c->hostname, c->port);
 cp
   return 0;
@@ -443,7 +438,9 @@ int setup_outgoing_connection(char *name)
 {
   connection_t *c;
   node_t *n;
-  struct hostent *h;
+  struct addrinfo *ai, *aitop, hints;
+  int r, ipv6preferred;
+
 cp
   n = lookup_node(name);
   
@@ -468,27 +465,37 @@ cp
       return -1;
     }
 
-  if(!get_config_port(lookup_config(c->config_tree, "Port"), &c->port))
+  if(!get_config_string(lookup_config(c->config_tree, "Port"), &c->port))
     {
       syslog(LOG_ERR, _("No port specified for %s"), c->name);
       free_connection(c);
       return -1;
     }
 
-  if(!(h = gethostbyname(c->hostname)))
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_family = AF_INET;
+  if(get_config_bool(lookup_config(c->config_tree, "IPv6Preferred"), &ipv6preferred))
     {
-      syslog(LOG_ERR, _("Error looking up `%s': %m"), c->hostname);
-      free_connection(c);
+      if(ipv6preferred)
+	hints.ai_family = PF_UNSPEC;
+    }
+
+  if((r = getaddrinfo(c->hostname, c->port, &hints, &aitop)) != 0)
+    {
+      syslog(LOG_ERR, _("Looking up %s failed: %s\n"),
+	     c->hostname, gai_strerror(r));
       return -1;
     }
 
-  c->address = ntohl(*((ipv4_t*)(h->h_addr_list[0])));
-  c->hostname = hostlookup(htonl(c->address));
-
-  if(setup_outgoing_socket(c) < 0)
+  for(ai = aitop; ai != NULL; ai = ai->ai_next)
     {
-      syslog(LOG_ERR, _("Could not set up a meta connection to %s (%s)"),
-             c->name, c->hostname);
+      if(setup_outgoing_socket(c) < 0)
+	continue;
+    }
+
+  if(ai == NULL)
+    {
+      /* No connection alternative succeeded */
       free_connection(c);
       return -1;
     }
@@ -1103,7 +1110,6 @@ cp
   while(cfg)
     {
       get_config_string(cfg, &name);
-      cfg = lookup_config_next(config_tree, cfg);  /* Next time skip to next ConnectTo line */
 
       if(check_id(name))
         {
@@ -1114,6 +1120,7 @@ cp
       if(setup_outgoing_connection(name))   /* function returns 0 when there are no problems */
         retry = 1;
 
+      cfg = lookup_config_next(config._tree, cfg); /* Next time skip to next ConnectTo line */
     }
 
   get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout);
@@ -1124,7 +1131,7 @@ cp
       if(seconds_till_retry > maxtimeout)    /* Don't wait more than MAXTIMEOUT seconds. */
         seconds_till_retry = maxtimeout;
 
-      syslog(LOG_ERR, _("Failed to setup all outgoing connections, will retry in %d seconds"),
+      syslog(LOG_ERR, _("Failed to setup any outgoing connection, will retry in %d seconds"),
         seconds_till_retry);
   
       /* Randomize timeout to avoid global synchronisation effects */

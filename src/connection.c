@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.25 2001/11/16 12:02:17 zarq Exp $
+    $Id: connection.c,v 1.1.2.26 2001/11/16 12:20:44 zarq Exp $
 */
 
 #include "config.h"
@@ -31,7 +31,6 @@
 #include <list.h>
 
 #include "net.h"	/* Don't ask. */
-#include "netutl.h"
 #include "config.h"
 #include "conf.h"
 #include <utils.h>

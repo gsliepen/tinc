@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.4 2001/10/30 12:59:12 guus Exp $
+    $Id: edge.c,v 1.1.2.5 2001/11/16 12:21:49 zarq Exp $
 */
 
 #include "config.h"
@@ -30,7 +30,6 @@
 #include <list.h>
 
 #include "net.h"	/* Don't ask. */
-#include "netutl.h"
 #include "config.h"
 #include "conf.h"
 #include <utils.h>
