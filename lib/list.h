@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.h,v 1.1.2.10 2003/07/12 17:48:38 guus Exp $
+    $Id: list.h,v 1.1.2.11 2003/07/31 11:17:39 guus Exp $
 */
 
 #ifndef __TINC_LIST_H__
@@ -47,7 +47,7 @@ typedef struct list_t {
 
 /* (De)constructors */
 
-extern list_t *list_alloc(list_action_t) __attribute__ ((malloc));
+extern list_t *list_alloc(list_action_t) __attribute__ ((__malloc__));
 extern void list_free(list_t *);
 extern list_node_t *list_alloc_node(void);
 extern void list_free_node(list_t *, list_node_t *);
