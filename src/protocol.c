@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.25 2000/09/10 15:18:03 guus Exp $
+    $Id: protocol.c,v 1.28.4.26 2000/09/10 16:15:35 guus Exp $
 */
 
 #include "config.h"
@@ -339,17 +339,18 @@ cp
 
 int ack_h(conn_list_t *cl)
 {
+  conn_list_t old;
 cp
   /* Okay, before we active the connection, we check if there is another entry
      in the connection list with the same vpn_ip. If so, it presumably is an
      old connection that has timed out but we don't know it yet.
    */
 
-  while((old = lookup_conn(cl->vpn_ip))) 
+  while((old = lookup_id(cl->id))) 
     {
-      if(debug_lvl > 1)
+      if(debug_lvl > DEBUG_CONNECTIONS)
         syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
-        cl->vpn_hostname, old->real_hostname, cl->real_hostname);
+        cl->id, old->hostname, cl->hostname);
       old->status.active = 0;
       terminate_connection(old);
     }
@@ -378,21 +379,161 @@ cp
 
 /* Address and subnet information exchange */
 
+int send_add_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
+{
+cp
+  return send_meta(cl, "%d %s %d %s", ADD_SUBNET, other->id, subnet->type, net2str(subnet));
+}
+
+int add_subnet_h(conn_list_t *cl)
+{
+}
+
+int send_del_subnet(conn_list_t *cl, conn_list_t *other, subnet_t *subnet)
+{
+cp
+  return send_meta(cl, "%d %s %d %s", DEL_SUBNET, other->id, subnet->type, net2str(subnet));
+}
+
+int del_subnet_h(conn_list_t *cl)
+{
+}
+
 /* New and closed connections notification */
+
+int send_add_host(conn_list_t *cl, conn_list_t *other)
+{
+cp
+  return send_meta(cl, "%d %lx:%d", ADD_HOST, other->id, other->address, other->port);
+}
+
+int add_host_h(conn_list_t *cl)
+{
+}
+
+int send_del_host(conn_list_t *cl, conn_list_t *other)
+{
+cp
+  return send_meta(cl, "%d %lx:%d", DEL_HOST, other->id, other->address, other->port);
+}
+
+int del_host_h(conn_list_t *cl)
+{
+}
 
 /* Status and error notification routines */
 
 int send_status(conn_list_t *cl, int statusno, char *statusstring)
 {
 cp
+  if(!statusstring)
+    statusstring = status_text[statusno];
+cp
   return send_request(cl, "%d %d %s", STATUS, statusno, statusstring);
+}
+
+int status_h(conn_list_t *cl)
+{
+  int statusno;
+  char *statusstring;
+cp
+  if(sscanf(cl->buffer, "%*d %d %as", &statusno, &statusstring) != 2)
+    {
+       syslog(LOG_ERR, _("Got bad STATUS from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }
+
+  if(debug_lvl > DEBUG_STATUS)
+    {
+      syslog(LOG_NOTICE, _("Status message from %s (%s): %s: %s"), cl->id, cl->hostname, status_text[statusno], statusstring);
+    }
+
+cp
+  free(statusstring);
+  return 0;
 }
 
 int send_error(conn_list_t *cl, int errno, char *errstring)
 {
 cp
+  if(!errorstring)
+    errorstring = error_text[errno];
   return send_request(cl, "%d %d %s", ERROR, errno, errstring);
 }
+
+int error_h(conn_list_t *cl)
+{
+  int errno;
+  char *errorstring;
+cp
+  if(sscanf(cl->buffer, "%*d %d %as", &errno, &errorstring) != 2)
+    {
+       syslog(LOG_ERR, _("Got bad error from %s (%s)"), cl->id, cl->hostname);
+       return -1;
+    }
+
+  if(debug_lvl > DEBUG_error)
+    {
+      syslog(LOG_NOTICE, _("Error message from %s (%s): %s: %s"), cl->id, cl->hostname, error_text[errno], errorstring);
+    }
+
+cp
+  free(errorstring);
+  return 0;
+}
+
+int send_termreq(conn_list_t *cl)
+{
+}
+
+int termreq_h(conn_list_t *cl)
+{
+}
+
+/* Keepalive routines */
+
+int send_ping(conn_list_t *cl)
+{
+cp
+  return send_meta(cl, "%d", PING);
+}
+
+int ping_h(conn_list_t *cl)
+{
+}
+
+int send_pong(conn_list_t *cl)
+{
+cp
+  return send_meta(cl, "%d", PONG);
+}
+
+int pong_h(conn_list_t *cl)
+{
+}
+
+/* Key exchange */
+
+int send_req_key(conn_list_t *cl, conn_list_t *source)
+{
+cp
+  return send_meta(cl, "%d %s", REQ_KEY, source->id);
+}
+
+int req_key_h(conn_list_t *cl)
+{
+}
+
+int send_key(conn_list_t *cl)
+{
+}
+
+int key_h(conn_list_t *cl)
+{
+}
+
+
+
 
 /* Old routines */
 
@@ -1114,12 +1255,16 @@ cp
 
 /* "Complete overhaul". */
 
-int (*request_handlers[6])(conn_list_t*) = {
+int (*request_handlers[])(conn_list_t*) = {
   id_h, challenge_h, chal_reply_h, ack_h,
-  status_h, error_h,
+  status_h, error_h, termreq_h,
+  add_host_h, del_host_h,
+  ping_h, pong_h,
 };
 
-char (*request_name[6]) = {
+char (*request_name[]) = {
   "ID", "CHALLENGE", "CHAL_REPLY", "ACK",
-  "STATUS", "ERROR",
+  "STATUS", "ERROR", "TERMREQ",
+  "ADD_HOST", "DEL_HOST",
+  "PING", "PONG",
 };
