@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.67 2003/07/18 14:10:27 guus Exp $
+    $Id: conf.c,v 1.9.4.68 2003/07/22 20:55:19 guus Exp $
 */
 
 #include "system.h"
@@ -141,109 +141,109 @@ config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
 	return NULL;
 }
 
-int get_config_bool(config_t *cfg, int *result)
+bool get_config_bool(config_t *cfg, bool *result)
 {
 	cp();
 
 	if(!cfg)
-		return 0;
+		return false;
 
 	if(!strcasecmp(cfg->value, "yes")) {
-		*result = 1;
-		return 1;
+		*result = true;
+		return true;
 	} else if(!strcasecmp(cfg->value, "no")) {
-		*result = 0;
-		return 1;
+		*result = false;
+		return true;
 	}
 
 	logger(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
-	return 0;
+	return false;
 }
 
-int get_config_int(config_t *cfg, int *result)
+bool get_config_int(config_t *cfg, int *result)
 {
 	cp();
 
 	if(!cfg)
-		return 0;
+		return false;
 
 	if(sscanf(cfg->value, "%d", result) == 1)
-		return 1;
+		return true;
 
 	logger(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
-	return 0;
+	return false;
 }
 
-int get_config_string(config_t *cfg, char **result)
+bool get_config_string(config_t *cfg, char **result)
 {
 	cp();
 
 	if(!cfg)
-		return 0;
+		return false;
 
 	*result = xstrdup(cfg->value);
 
-	return 1;
+	return true;
 }
 
-int get_config_address(config_t *cfg, struct addrinfo **result)
+bool get_config_address(config_t *cfg, struct addrinfo **result)
 {
 	struct addrinfo *ai;
 
 	cp();
 
 	if(!cfg)
-		return 0;
+		return false;
 
 	ai = str2addrinfo(cfg->value, NULL, 0);
 
 	if(ai) {
 		*result = ai;
-		return 1;
+		return true;
 	}
 
 	logger(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
 		   cfg->variable, cfg->file, cfg->line);
 
-	return 0;
+	return false;
 }
 
-int get_config_subnet(config_t *cfg, subnet_t ** result)
+bool get_config_subnet(config_t *cfg, subnet_t ** result)
 {
 	subnet_t *subnet;
 
 	cp();
 
 	if(!cfg)
-		return 0;
+		return false;
 
 	subnet = str2net(cfg->value);
 
 	if(!subnet) {
 		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
-		return 0;
+		return false;
 	}
 
 	/* Teach newbies what subnets are... */
 
 	if(((subnet->type == SUBNET_IPV4)
-		&& maskcheck(&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
+		&& !maskcheck(&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
 		|| ((subnet->type == SUBNET_IPV6)
-		&& maskcheck(&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t)))) {
+		&& !maskcheck(&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t)))) {
 		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		free(subnet);
-		return 0;
+		return false;
 	}
 
 	*result = subnet;
 
-	return 1;
+	return true;
 }
 
 /*
@@ -325,7 +325,8 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	FILE *fp;
 	char *buffer, *line;
 	char *variable, *value;
-	int lineno = 0, ignore = 0;
+	int lineno = 0;
+	bool ignore = false;
 	config_t *cfg;
 	size_t bufsize;
 
@@ -366,7 +367,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 			continue;			/* comment: ignore */
 
 		if(!strcmp(variable, "-----BEGIN"))
-			ignore = 1;
+			ignore = true;
 
 		if(!ignore) {
 			value = strtok(NULL, "\t\n\r =");
@@ -387,7 +388,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 		}
 
 		if(!strcmp(variable, "-----END"))
-			ignore = 0;
+			ignore = false;
 	}
 
 	free(buffer);
@@ -396,7 +397,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	return err;
 }
 
-int read_server_config()
+bool read_server_config()
 {
 	char *fname;
 	int x;
@@ -412,10 +413,10 @@ int read_server_config()
 
 	free(fname);
 
-	return x;
+	return x == 0;
 }
 
-int is_safe_path(const char *file)
+bool is_safe_path(const char *file)
 {
 #if !(defined(HAVE_CYGWIN) || defined(HAVE_MINGW))
 	char *p;
@@ -426,7 +427,7 @@ int is_safe_path(const char *file)
 
 	if(*file != '/') {
 		logger(LOG_ERR, _("`%s' is not an absolute path"), file);
-		return 0;
+		return false;
 	}
 
 	p = strrchr(file, '/');
@@ -442,13 +443,13 @@ int is_safe_path(const char *file)
 check1:
 	if(lstat(f, &s) < 0) {
 		logger(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
-		return 0;
+		return false;
 	}
 
 	if(s.st_uid != geteuid()) {
 		logger(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 			   f, s.st_uid, geteuid());
-		return 0;
+		return false;
 	}
 
 	if(S_ISLNK(s.st_mode)) {
@@ -457,7 +458,7 @@ check1:
 		if(readlink(f, l, MAXBUFSIZE) < 0) {
 			logger(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
 				   strerror(errno));
-			return 0;
+			return false;
 		}
 
 		f = l;
@@ -470,16 +471,16 @@ check1:
 check2:
 	if(lstat(f, &s) < 0 && errno != ENOENT) {
 		logger(LOG_ERR, _("Couldn't stat `%s': %s"), f, strerror(errno));
-		return 0;
+		return false;
 	}
 
 	if(errno == ENOENT)
-		return 1;
+		return true;
 
 	if(s.st_uid != geteuid()) {
 		logger(LOG_ERR, _("`%s' is owned by UID %d instead of %d"),
 			   f, s.st_uid, geteuid());
-		return 0;
+		return false;
 	}
 
 	if(S_ISLNK(s.st_mode)) {
@@ -488,7 +489,7 @@ check2:
 		if(readlink(f, l, MAXBUFSIZE) < 0) {
 			logger(LOG_ERR, _("Unable to read symbolic link `%s': %s"), f,
 				   strerror(errno));
-			return 0;
+			return false;
 		}
 
 		f = l;
@@ -498,15 +499,14 @@ check2:
 	if(s.st_mode & 0007) {
 		/* Accessible by others */
 		logger(LOG_ERR, _("`%s' has unsecure permissions"), f);
-		return 0;
+		return false;
 	}
 #endif
 
-	return 1;
+	return true;
 }
 
-FILE *ask_and_safe_open(const char *filename, const char *what,
-						const char *mode)
+FILE *ask_and_safe_open(const char *filename, const char *what, bool safe, const char *mode)
 {
 	FILE *r;
 	char *directory;
@@ -562,12 +562,14 @@ FILE *ask_and_safe_open(const char *filename, const char *what,
 	}
 
 	/* Then check the file for nasty attacks */
-	if(!is_safe_path(fn)) {		/* Do not permit any directories that are readable or writeable by other users. */
-		fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
-				 "I will not create or overwrite this file.\n"), fn);
-		fclose(r);
-		free(fn);
-		return NULL;
+	if(safe) {
+		if(!is_safe_path(fn)) {		/* Do not permit any directories that are readable or writeable by other users. */
+			fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
+					 "I will not create or overwrite this file.\n"), fn);
+			fclose(r);
+			free(fn);
+			return NULL;
+		}
 	}
 
 	free(fn);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.4 2003/07/17 15:06:26 guus Exp $
+    $Id: logger.c,v 1.1.2.5 2003/07/22 20:55:19 guus Exp $
 */
 
 #include "system.h"
@@ -25,18 +25,20 @@
 #include "conf.h"
 #include "logger.h"
 
-int debug_level = DEBUG_NOTHING;
-static int logmode = LOGMODE_STDERR;
+debug_t debug_level = DEBUG_NOTHING;
+static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 extern char *logfilename;
 static FILE *logfile = NULL;
 static const char *logident = NULL;
 
-void openlogger(const char *ident, int mode) {
+void openlogger(const char *ident, logmode_t mode) {
 	logident = ident;
 	logmode = mode;
 	
 	switch(mode) {
+		case LOGMODE_NULL:
+			break;
 		case LOGMODE_STDERR:
 			logpid = getpid();
 			break;
@@ -58,6 +60,8 @@ void logger(int priority, const char *format, ...) {
 	va_start(ap, format);
 
 	switch(logmode) {
+		case LOGMODE_NULL:
+			break;
 		case LOGMODE_STDERR:
 			vfprintf(stderr, format, ap);
 			fprintf(stderr, "\n");
@@ -85,6 +89,9 @@ void logger(int priority, const char *format, ...) {
 
 void closelogger(void) {
 	switch(logmode) {
+		case LOGMODE_NULL:
+		case LOGMODE_STDERR:
+			break;
 		case LOGMODE_FILE:
 			fclose(logfile);
 			break;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.13 2003/07/21 14:47:43 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.14 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -33,9 +33,9 @@
 #include "utils.h"
 #include "xalloc.h"
 
-int send_add_subnet(connection_t *c, subnet_t *subnet)
+bool send_add_subnet(connection_t *c, subnet_t *subnet)
 {
-	int x;
+	bool x;
 	char *netstr;
 
 	cp();
@@ -48,7 +48,7 @@ int send_add_subnet(connection_t *c, subnet_t *subnet)
 	return x;
 }
 
-int add_subnet_h(connection_t *c)
+bool add_subnet_h(connection_t *c)
 {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
@@ -60,15 +60,15 @@ int add_subnet_h(connection_t *c)
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
 			   c->hostname);
-		return -1;
+		return false;
 	}
 
 	/* Check if owner name is a valid */
 
-	if(check_id(name)) {
+	if(!check_id(name)) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
 			   c->hostname, _("invalid name"));
-		return -1;
+		return false;
 	}
 
 	/* Check if subnet string is valid */
@@ -78,11 +78,11 @@ int add_subnet_h(connection_t *c)
 	if(!s) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
 			   c->hostname, _("invalid subnet string"));
-		return -1;
+		return false;
 	}
 
 	if(seen_request(c->buffer))
-		return 0;
+		return true;
 
 	/* Check if the owner of the new subnet is in the connection list */
 
@@ -98,7 +98,7 @@ int add_subnet_h(connection_t *c)
 
 	if(lookup_subnet(owner, s)) {
 		free_subnet(s);
-		return 0;
+		return true;
 	}
 
 	/* If we don't know this subnet, but we are the owner, retaliate with a DEL_SUBNET */
@@ -108,7 +108,7 @@ int add_subnet_h(connection_t *c)
 				   "ADD_SUBNET", c->name, c->hostname);
 		s->owner = myself;
 		send_del_subnet(c, s);
-		return 0;
+		return true;
 	}
 
 	/* If everything is correct, add the subnet to the list of the owner */
@@ -119,12 +119,12 @@ int add_subnet_h(connection_t *c)
 
 	forward_request(c);
 
-	return 0;
+	return true;
 }
 
-int send_del_subnet(connection_t *c, subnet_t *s)
+bool send_del_subnet(connection_t *c, subnet_t *s)
 {
-	int x;
+	bool x;
 	char *netstr;
 
 	cp();
@@ -138,7 +138,7 @@ int send_del_subnet(connection_t *c, subnet_t *s)
 	return x;
 }
 
-int del_subnet_h(connection_t *c)
+bool del_subnet_h(connection_t *c)
 {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
@@ -150,15 +150,15 @@ int del_subnet_h(connection_t *c)
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,
 			   c->hostname);
-		return -1;
+		return false;
 	}
 
 	/* Check if owner name is a valid */
 
-	if(check_id(name)) {
+	if(!check_id(name)) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
 			   c->hostname, _("invalid name"));
-		return -1;
+		return false;
 	}
 
 	/* Check if the owner of the new subnet is in the connection list */
@@ -168,7 +168,7 @@ int del_subnet_h(connection_t *c)
 	if(!owner) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
 				   "DEL_SUBNET", c->name, c->hostname, name);
-		return 0;
+		return true;
 	}
 
 	/* Check if subnet string is valid */
@@ -178,11 +178,11 @@ int del_subnet_h(connection_t *c)
 	if(!s) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
 			   c->hostname, _("invalid subnet string"));
-		return -1;
+		return false;
 	}
 
 	if(seen_request(c->buffer))
-		return 0;
+		return true;
 
 	/* If everything is correct, delete the subnet from the list of the owner */
 
@@ -195,7 +195,7 @@ int del_subnet_h(connection_t *c)
 	if(!find) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which does not appear in his subnet tree"),
 				   "DEL_SUBNET", c->name, c->hostname, name);
-		return 0;
+		return true;
 	}
 
 	/* If we are the owner of this subnet, retaliate with an ADD_SUBNET */
@@ -204,7 +204,7 @@ int del_subnet_h(connection_t *c)
 		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for ourself"),
 				   "DEL_SUBNET", c->name, c->hostname);
 		send_add_subnet(c, find);
-		return 0;
+		return true;
 	}
 
 	/* Tell the rest */
@@ -215,5 +215,5 @@ int del_subnet_h(connection_t *c)
 
 	subnet_del(owner, find);
 
-	return 0;
+	return true;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.36 2003/07/17 15:06:26 guus Exp $
+    $Id: meta.c,v 1.1.2.37 2003/07/22 20:55:19 guus Exp $
 */
 
 #include "system.h"
@@ -32,7 +32,7 @@
 #include "system.h"
 #include "utils.h"
 
-int send_meta(connection_t *c, char *buffer, int length)
+bool send_meta(connection_t *c, char *buffer, int length)
 {
 	char *bufp;
 	int outlen;
@@ -58,13 +58,13 @@ int send_meta(connection_t *c, char *buffer, int length)
 				continue;
 			logger(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
 				   c->hostname, strerror(errno));
-			return -1;
+			return false;
 		}
 		bufp += result;
 		length -= result;
 	}
 	
-	return 0;
+	return true;
 }
 
 void broadcast_meta(connection_t *from, char *buffer, int length)
@@ -82,13 +82,13 @@ void broadcast_meta(connection_t *from, char *buffer, int length)
 	}
 }
 
-int receive_meta(connection_t *c)
+bool receive_meta(connection_t *c)
 {
 	int x;
 	socklen_t l = sizeof(x);
 	int oldlen, i;
 	int lenin, reqlen;
-	int decrypted = 0;
+	bool decrypted = false;
 	char inbuf[MAXBUFSIZE];
 
 	cp();
@@ -96,13 +96,13 @@ int receive_meta(connection_t *c)
 	if(getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0) {
 		logger(LOG_ERR, _("This is a bug: %s:%d: %d:%s %s (%s)"), __FILE__,
 			   __LINE__, c->socket, strerror(errno), c->name, c->hostname);
-		return -1;
+		return false;
 	}
 
 	if(x) {
 		logger(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
 			   c->name, c->hostname, strerror(x));
-		return -1;
+		return false;
 	}
 
 	/* Strategy:
@@ -121,12 +121,12 @@ int receive_meta(connection_t *c)
 			ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 					   c->name, c->hostname);
 		} else if(errno == EINTR)
-			return 0;
+			return true;
 		else
 			logger(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
 				   c->name, c->hostname, strerror(errno));
 
-		return -1;
+		return false;
 	}
 
 	oldlen = c->buflen;
@@ -138,7 +138,7 @@ int receive_meta(connection_t *c)
 		if(c->status.decryptin && !decrypted) {
 			EVP_DecryptUpdate(c->inctx, inbuf, &lenin, c->buffer + oldlen, lenin);
 			memcpy(c->buffer + oldlen, inbuf, lenin);
-			decrypted = 1;
+			decrypted = true;
 		}
 
 		/* Are we receiving a TCPpacket? */
@@ -172,8 +172,8 @@ int receive_meta(connection_t *c)
 
 		if(reqlen) {
 			c->reqlen = reqlen;
-			if(receive_request(c))
-				return -1;
+			if(!receive_request(c))
+				return false;
 
 			c->buflen -= reqlen;
 			lenin -= reqlen;
@@ -188,10 +188,10 @@ int receive_meta(connection_t *c)
 	if(c->buflen >= MAXBUFSIZE) {
 		logger(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
 			   c->name, c->hostname);
-		return -1;
+		return false;
 	}
 
 	c->last_ping_time = now;
 
-	return 0;
+	return true;
 }

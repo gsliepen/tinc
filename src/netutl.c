@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.47 2003/07/17 15:06:26 guus Exp $
+    $Id: netutl.c,v 1.12.4.48 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-int hostnames = 0;
+bool hostnames = false;
 
 /*
   Turn a string into a struct addrinfo.
@@ -244,7 +244,7 @@ void maskcpy(void *va, void *vb, int masklen, int len)
 		a[i] = 0;
 }
 
-int maskcheck(void *va, int masklen, int len)
+bool maskcheck(void *va, int masklen, int len)
 {
 	int i;
 	char *a = va;
@@ -255,11 +255,11 @@ int maskcheck(void *va, int masklen, int len)
 	masklen %= 8;
 
 	if(masklen && a[i++] & (0xff >> masklen))
-		return -1;
+		return false;
 
 	for(; i < len; i++)
 		if(a[i] != 0)
-			return -2;
+			return false;
 
-	return 0;
+	return true;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.2.4.16 2003/07/17 15:06:26 guus Exp $
+    $Id: netutl.h,v 1.2.4.17 2003/07/22 20:55:20 guus Exp $
 */
 
 #ifndef __TINC_NETUTL_H__
@@ -25,7 +25,7 @@
 
 #include "net.h"
 
-extern int hostnames;
+extern bool hostnames;
 
 extern struct addrinfo *str2addrinfo(char *, char *, int);
 extern sockaddr_t str2sockaddr(char *, char *);
@@ -36,6 +36,6 @@ extern void sockaddrunmap(sockaddr_t *);
 extern int maskcmp(void *, void *, int, int);
 extern void maskcpy(void *, void *, int, int);
 extern void mask(void *, int, int);
-extern int maskcheck(void *, int, int);
+extern bool maskcheck(void *, int, int);
 
 #endif							/* __TINC_NETUTL_H__ */

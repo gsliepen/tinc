@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.26 2003/07/18 13:45:06 guus Exp $
+    $Id: graph.c,v 1.1.2.27 2003/07/22 20:55:19 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -69,7 +69,7 @@ void mst_kruskal(void)
 	connection_t *c;
 	int nodes = 0;
 	int safe_edges = 0;
-	int skipped;
+	bool skipped;
 
 	cp();
 	
@@ -77,7 +77,7 @@ void mst_kruskal(void)
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = (connection_t *) node->data;
-		c->status.mst = 0;
+		c->status.mst = false;
 	}
 
 	/* Do we have something to do at all? */
@@ -91,33 +91,33 @@ void mst_kruskal(void)
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = (node_t *) node->data;
-		n->status.visited = 0;
+		n->status.visited = false;
 		nodes++;
 	}
 
 	/* Starting point */
 
-	((edge_t *) edge_weight_tree->head->data)->from->status.visited = 1;
+	((edge_t *) edge_weight_tree->head->data)->from->status.visited = true;
 
 	/* Add safe edges */
 
-	for(skipped = 0, node = edge_weight_tree->head; node; node = next) {
+	for(skipped = false, node = edge_weight_tree->head; node; node = next) {
 		next = node->next;
 		e = (edge_t *) node->data;
 
 		if(!e->reverse || e->from->status.visited == e->to->status.visited) {
-			skipped = 1;
+			skipped = true;
 			continue;
 		}
 
-		e->from->status.visited = 1;
-		e->to->status.visited = 1;
+		e->from->status.visited = true;
+		e->to->status.visited = true;
 
 		if(e->connection)
-			e->connection->status.mst = 1;
+			e->connection->status.mst = true;
 
 		if(e->reverse->connection)
-			e->reverse->connection->status.mst = 1;
+			e->reverse->connection->status.mst = true;
 
 		safe_edges++;
 
@@ -125,7 +125,7 @@ void mst_kruskal(void)
 				   e->to->name, e->weight);
 
 		if(skipped) {
-			skipped = 0;
+			skipped = false;
 			next = edge_weight_tree->head;
 			continue;
 		}
@@ -145,7 +145,7 @@ void sssp_bfs(void)
 	edge_t *e;
 	node_t *n;
 	avl_tree_t *todo_tree;
-	int indirect;
+	bool indirect;
 	char *name;
 	char *address, *port;
 	char *envp[7];
@@ -159,14 +159,14 @@ void sssp_bfs(void)
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = (node_t *) node->data;
-		n->status.visited = 0;
-		n->status.indirect = 1;
+		n->status.visited = false;
+		n->status.indirect = true;
 	}
 
 	/* Begin with myself */
 
-	myself->status.visited = 1;
-	myself->status.indirect = 0;
+	myself->status.visited = true;
+	myself->status.indirect = false;
 	myself->nexthop = myself;
 	myself->via = myself;
 	node = avl_alloc_node();
@@ -212,7 +212,7 @@ void sssp_bfs(void)
 				   && (!e->to->status.indirect || indirect))
 					continue;
 
-				e->to->status.visited = 1;
+				e->to->status.visited = true;
 				e->to->status.indirect = indirect;
 				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
 				e->to->via = indirect ? n->via : e->to;
@@ -257,8 +257,8 @@ void sssp_bfs(void)
 					   n->name, n->hostname);
 			}
 
-			n->status.validkey = 0;
-			n->status.waitingforkey = 0;
+			n->status.validkey = false;
+			n->status.waitingforkey = false;
 
 			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			asprintf(&envp[1], "DEVICE=%s", device ? : "");

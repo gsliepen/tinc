@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.34 2003/07/17 15:06:26 guus Exp $
+    $Id: net_packet.c,v 1.1.2.35 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -239,7 +239,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		if(!n->status.waitingforkey)
 			send_req_key(n->nexthop->connection, myself, n);
 
-		n->status.waitingforkey = 1;
+		n->status.waitingforkey = true;
 
 		return;
 	}
@@ -350,8 +350,8 @@ void send_packet(node_t *n, vpn_packet_t *packet)
 			   n->name, via->name, n->via->hostname);
 
 	if((myself->options | via->options) & OPTION_TCPONLY) {
-		if(send_tcppacket(via->connection, packet))
-			terminate_connection(via->connection, 1);
+		if(!send_tcppacket(via->connection, packet))
+			terminate_connection(via->connection, true);
 	} else
 		send_udppacket(via, packet);
 }

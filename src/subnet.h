@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.21 2003/07/06 23:16:29 guus Exp $
+    $Id: subnet.h,v 1.1.2.22 2003/07/22 20:55:20 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -25,12 +25,12 @@
 
 #include "net.h"
 
-enum {
+typedef enum subnet_type_t {
 	SUBNET_MAC = 0,
 	SUBNET_IPV4,
 	SUBNET_IPV6,
 	SUBNET_TYPES				/* Guardian */
-};
+} subnet_type_t;
 
 typedef struct subnet_mac_t {
 	mac_t address;
@@ -53,7 +53,7 @@ typedef struct subnet_t {
 	struct node_t *owner;		/* the owner of this subnet */
 	struct node_t *uplink;		/* the uplink which we should send packets to for this subnet */
 
-	int type;					/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
 
 	/* And now for the actual subnet: */
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.40 2003/07/17 15:06:26 guus Exp $
+    $Id: connection.c,v 1.1.2.41 2003/07/22 20:55:19 guus Exp $
 */
 
 #include "system.h"
@@ -128,7 +128,7 @@ void dump_connections(void)
 	logger(LOG_DEBUG, _("End of connections."));
 }
 
-int read_connection_config(connection_t *c)
+bool read_connection_config(connection_t *c)
 {
 	char *fname;
 	int x;
@@ -139,5 +139,5 @@ int read_connection_config(connection_t *c)
 	x = read_config_file(c->config_tree, fname);
 	free(fname);
 
-	return x;
+	return x == 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h,v 1.9.4.65 2003/07/18 12:16:24 guus Exp $
+    $Id: net.h,v 1.9.4.66 2003/07/22 20:55:20 guus Exp $
 */
 
 #ifndef __TINC_NET_H__
@@ -54,7 +54,7 @@ typedef struct ipv6_t {
 
 typedef short length_t;
 
-typedef union {
+typedef union sockaddr_t {
 	struct sockaddr sa;
 	struct sockaddr_in in;
 	struct sockaddr_in6 in6;
@@ -87,6 +87,12 @@ typedef struct packet_queue_t {
 	queue_element_t *tail;
 } packet_queue_t;
 
+typedef struct listen_socket_t {
+	int tcp;
+	int udp;
+	sockaddr_t sa;
+} listen_socket_t;
+
 #include "conf.h"
 
 typedef struct outgoing_t {
@@ -97,12 +103,6 @@ typedef struct outgoing_t {
 	struct addrinfo *aip;
 } outgoing_t;
 
-typedef struct listen_socket_t {
-	int tcp;
-	int udp;
-	sockaddr_t sa;
-} listen_socket_t;
-
 extern int maxtimeout;
 extern int seconds_till_retry;
 extern int addressfamily;
@@ -111,8 +111,8 @@ extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keyexpires;
 extern int keylifetime;
-extern int do_prune;
-extern int do_purge;
+extern bool do_prune;
+extern bool do_purge;
 extern char *myport;
 extern time_t now;
 extern EVP_CIPHER_CTX packet_ctx;
@@ -125,19 +125,19 @@ extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(int);
 extern void finish_connecting(struct connection_t *);
 extern void do_outgoing_connection(struct connection_t *);
-extern int handle_new_meta_connection(int);
+extern bool handle_new_meta_connection(int);
 extern int setup_listen_socket(sockaddr_t *);
 extern int setup_vpn_in_socket(sockaddr_t *);
 extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, char *, int);
 extern void broadcast_packet(struct node_t *, vpn_packet_t *);
-extern int setup_network_connections(void);
+extern bool setup_network_connections(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
 extern void main_loop(void);
-extern void terminate_connection(struct connection_t *, int);
+extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
-extern int read_rsa_public_key(struct connection_t *);
+extern bool read_rsa_public_key(struct connection_t *);
 
 #endif							/* __TINC_NET_H__ */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.141 2003/07/17 15:06:26 guus Exp $
+    $Id: protocol.c,v 1.28.4.142 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -32,7 +32,7 @@
 
 /* Jumptable for the request handlers */
 
-static int (*request_handlers[])(connection_t *) = {
+static bool (*request_handlers[])(connection_t *) = {
 		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
 		status_h, error_h, termreq_h,
 		ping_h, pong_h,
@@ -53,21 +53,21 @@ static char (*request_name[]) = {
 
 static avl_tree_t *past_request_tree;
 
-int check_id(char *id)
+bool check_id(char *id)
 {
 	int i;
 
 	for(i = 0; i < strlen(id); i++)
 		if(!isalnum(id[i]) && id[i] != '_')
-			return -1;
+			return false;
 
-	return 0;
+	return true;
 }
 
 /* Generic request routines - takes care of logging and error
    detection as well */
 
-int send_request(connection_t *c, const char *format, ...)
+bool send_request(connection_t *c, const char *format, ...)
 {
 	va_list args;
 	char buffer[MAXBUFSIZE];
@@ -86,7 +86,7 @@ int send_request(connection_t *c, const char *format, ...)
 	if(len < 0 || len > MAXBUFSIZE - 1) {
 		logger(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
 			   c->name, c->hostname);
-		return -1;
+		return false;
 	}
 
 	ifdebug(PROTOCOL) {
@@ -101,16 +101,16 @@ int send_request(connection_t *c, const char *format, ...)
 
 	buffer[len++] = '\n';
 
-	if(c == broadcast)
-		return broadcast_meta(NULL, buffer, len);
-	else
+	if(c == broadcast) {
+		broadcast_meta(NULL, buffer, len);
+		return true;
+	} else
 		return send_meta(c, buffer, len);
 }
 
-int forward_request(connection_t *from)
+void forward_request(connection_t *from)
 {
 	int request;
-	cp();
 
 	cp();
 
@@ -127,10 +127,10 @@ int forward_request(connection_t *from)
 
 	from->buffer[from->reqlen - 1] = '\n';
 
-	return broadcast_meta(from, from->buffer, from->reqlen);
+	broadcast_meta(from, from->buffer, from->reqlen);
 }
 
-int receive_request(connection_t *c)
+bool receive_request(connection_t *c)
 {
 	int request;
 
@@ -145,7 +145,7 @@ int receive_request(connection_t *c)
 				logger(LOG_ERR, _("Unknown request from %s (%s)"),
 					   c->name, c->hostname);
 
-			return -1;
+			return false;
 		} else {
 			ifdebug(PROTOCOL) {
 				ifdebug(META)
@@ -161,23 +161,23 @@ int receive_request(connection_t *c)
 		if((c->allow_request != ALL) && (c->allow_request != request)) {
 			logger(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
 				   c->hostname);
-			return -1;
+			return false;
 		}
 
-		if(request_handlers[request] (c))
+		if(!request_handlers[request](c)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
-		{
+
 			logger(LOG_ERR, _("Error while processing %s from %s (%s)"),
 				   request_name[request], c->name, c->hostname);
-			return -1;
+			return false;
 		}
 	} else {
 		logger(LOG_ERR, _("Bogus data received from %s (%s)"),
 			   c->name, c->hostname);
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
 static int past_request_compare(past_request_t *a, past_request_t *b)
@@ -209,7 +209,7 @@ void exit_requests(void)
 	avl_delete_tree(past_request_tree);
 }
 
-int seen_request(char *request)
+bool seen_request(char *request)
 {
 	past_request_t p, *new;
 
@@ -219,13 +219,13 @@ int seen_request(char *request)
 
 	if(avl_search(past_request_tree, &p)) {
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
-		return 1;
+		return true;
 	} else {
 		new = (past_request_t *) xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
 		new->firstseen = now;
 		avl_insert(past_request_tree, new);
-		return 0;
+		return false;
 	}
 }
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.19 2003/07/17 15:06:26 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.20 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -32,9 +32,9 @@
 #include "utils.h"
 #include "xalloc.h"
 
-int mykeyused = 0;
+bool mykeyused = false;
 
-int send_key_changed(connection_t *c, node_t *n)
+bool send_key_changed(connection_t *c, node_t *n)
 {
 	cp();
 
@@ -43,12 +43,12 @@ int send_key_changed(connection_t *c, node_t *n)
 	 */
 
 	if(n == myself && !mykeyused)
-		return 0;
+		return true;
 
 	return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
 }
 
-int key_changed_h(connection_t *c)
+bool key_changed_h(connection_t *c)
 {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
@@ -58,38 +58,38 @@ int key_changed_h(connection_t *c)
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING, name) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
 			   c->name, c->hostname);
-		return -1;
+		return false;
 	}
 
 	if(seen_request(c->buffer))
-		return 0;
+		return true;
 
 	n = lookup_node(name);
 
 	if(!n) {
 		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"),
 			   "KEY_CHANGED", c->name, c->hostname, name);
-		return -1;
+		return false;
 	}
 
-	n->status.validkey = 0;
-	n->status.waitingforkey = 0;
+	n->status.validkey = false;
+	n->status.waitingforkey = false;
 
 	/* Tell the others */
 
 	forward_request(c);
 
-	return 0;
+	return true;
 }
 
-int send_req_key(connection_t *c, node_t *from, node_t *to)
+bool send_req_key(connection_t *c, node_t *from, node_t *to)
 {
 	cp();
 
 	return send_request(c, "%d %s %s", REQ_KEY, from->name, to->name);
 }
 
-int req_key_h(connection_t *c)
+bool req_key_h(connection_t *c)
 {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
@@ -100,7 +100,7 @@ int req_key_h(connection_t *c)
 	if(sscanf(c->buffer, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
 			   c->hostname);
-		return -1;
+		return false;
 	}
 
 	from = lookup_node(from_name);
@@ -108,7 +108,7 @@ int req_key_h(connection_t *c)
 	if(!from) {
 		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
 			   "REQ_KEY", c->name, c->hostname, from_name);
-		return -1;
+		return false;
 	}
 
 	to = lookup_node(to_name);
@@ -116,13 +116,13 @@ int req_key_h(connection_t *c)
 	if(!to) {
 		logger(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
 			   "REQ_KEY", c->name, c->hostname, to_name);
-		return -1;
+		return false;
 	}
 
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-		mykeyused = 1;
+		mykeyused = true;
 		from->received_seqno = 0;
 		memset(from->late, 0, sizeof(from->late));
 		send_ans_key(c, myself, from);
@@ -130,10 +130,10 @@ int req_key_h(connection_t *c)
 		send_req_key(to->nexthop->connection, from, to);
 	}
 
-	return 0;
+	return true;
 }
 
-int send_ans_key(connection_t *c, node_t *from, node_t *to)
+bool send_ans_key(connection_t *c, node_t *from, node_t *to)
 {
 	char key[MAX_STRING_SIZE];
 
@@ -149,7 +149,7 @@ int send_ans_key(connection_t *c, node_t *from, node_t *to)
 						from->compression);
 }
 
-int ans_key_h(connection_t *c)
+bool ans_key_h(connection_t *c)
 {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
@@ -164,7 +164,7 @@ int ans_key_h(connection_t *c)
 		&compression) != 7) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
 			   c->hostname);
-		return -1;
+		return false;
 	}
 
 	from = lookup_node(from_name);
@@ -172,7 +172,7 @@ int ans_key_h(connection_t *c)
 	if(!from) {
 		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
 			   "ANS_KEY", c->name, c->hostname, from_name);
-		return -1;
+		return false;
 	}
 
 	to = lookup_node(to_name);
@@ -180,7 +180,7 @@ int ans_key_h(connection_t *c)
 	if(!to) {
 		logger(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
 			   "ANS_KEY", c->name, c->hostname, to_name);
-		return -1;
+		return false;
 	}
 
 	/* Forward it if necessary */
@@ -199,8 +199,8 @@ int ans_key_h(connection_t *c)
 	hex2bin(from->key, from->key, from->keylength);
 	from->key[from->keylength] = '\0';
 
-	from->status.validkey = 1;
-	from->status.waitingforkey = 0;
+	from->status.validkey = true;
+	from->status.waitingforkey = false;
 	from->sent_seqno = 0;
 
 	/* Check and lookup cipher and digest algorithms */
@@ -211,13 +211,13 @@ int ans_key_h(connection_t *c)
 		if(!from->cipher) {
 			logger(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name,
 				   from->hostname);
-			return -1;
+			return false;
 		}
 
 		if(from->keylength != from->cipher->key_len + from->cipher->iv_len) {
 			logger(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name,
 				   from->hostname);
-			return -1;
+			return false;
 		}
 	} else {
 		from->cipher = NULL;
@@ -231,13 +231,13 @@ int ans_key_h(connection_t *c)
 		if(!from->digest) {
 			logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name,
 				   from->hostname);
-			return -1;
+			return false;
 		}
 
 		if(from->maclength > from->digest->md_size || from->maclength < 0) {
 			logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"),
 				   from->name, from->hostname);
-			return -1;
+			return false;
 		}
 	} else {
 		from->digest = NULL;
@@ -245,7 +245,7 @@ int ans_key_h(connection_t *c)
 
 	if(compression < 0 || compression > 11) {
 		logger(LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
-		return -1;
+		return false;
 	}
 	
 	from->compression = compression;
@@ -254,5 +254,5 @@ int ans_key_h(connection_t *c)
 
 	flush_queue(from);
 
-	return 0;
+	return true;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.19 2003/07/18 13:41:36 guus Exp $
+    $Id: device.c,v 1.1.2.20 2003/07/22 20:55:21 guus Exp $
 */
 
 #include "system.h"
@@ -39,14 +39,14 @@
 #include "route.h"
 #include "utils.h"
 
-enum {
+typedef enum device_type_t {
 	DEVICE_TYPE_ETHERTAP,
 	DEVICE_TYPE_TUN,
 	DEVICE_TYPE_TAP,
-};
+} device_type_t;
 
 int device_fd = -1;
-int device_type;
+device_type_t device_type;
 char *device;
 char *iface;
 char ifrname[IFNAMSIZ];
@@ -55,7 +55,7 @@ char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-int setup_device(void)
+bool setup_device(void)
 {
 	struct ifreq ifr;
 
@@ -74,7 +74,7 @@ int setup_device(void)
 
 	if(device_fd < 0) {
 		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
-		return -1;
+		return false;
 	}
 
 #ifdef HAVE_TUNTAP
@@ -105,7 +105,7 @@ int setup_device(void)
 #endif
 	{
 		if(routing_mode == RMODE_ROUTER)
-			overwrite_mac = 1;
+			overwrite_mac = true;
 		device_info = _("Linux ethertap device");
 		device_type = DEVICE_TYPE_ETHERTAP;
 		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
@@ -113,7 +113,7 @@ int setup_device(void)
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
 
-	return 0;
+	return true;
 }
 
 void close_device(void)
@@ -123,7 +123,7 @@ void close_device(void)
 	close(device_fd);
 }
 
-int read_packet(vpn_packet_t *packet)
+bool read_packet(vpn_packet_t *packet)
 {
 	int lenin;
 	
@@ -136,7 +136,7 @@ int read_packet(vpn_packet_t *packet)
 			if(lenin <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
 					   device_info, device, strerror(errno));
-				return -1;
+				return false;
 			}
 
 			packet->len = lenin + 10;
@@ -147,7 +147,7 @@ int read_packet(vpn_packet_t *packet)
 			if(lenin <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
 					   device_info, device, strerror(errno));
-				return -1;
+				return false;
 			}
 
 			packet->len = lenin;
@@ -158,7 +158,7 @@ int read_packet(vpn_packet_t *packet)
 			if(lenin <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
 					   device_info, device, strerror(errno));
-				return -1;
+				return false;
 			}
 
 			packet->len = lenin - 2;
@@ -170,10 +170,10 @@ int read_packet(vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 			   device_info);
 
-	return 0;
+	return true;
 }
 
-int write_packet(vpn_packet_t *packet)
+bool write_packet(vpn_packet_t *packet)
 {
 	cp();
 
@@ -186,14 +186,14 @@ int write_packet(vpn_packet_t *packet)
 			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
 				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 					   strerror(errno));
-				return -1;
+				return false;
 			}
 			break;
 		case DEVICE_TYPE_TAP:
 			if(write(device_fd, packet->data, packet->len) < 0) {
 				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 					   strerror(errno));
-				return -1;
+				return false;
 			}
 			break;
 		case DEVICE_TYPE_ETHERTAP:
@@ -202,14 +202,14 @@ int write_packet(vpn_packet_t *packet)
 			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
 				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
 					   strerror(errno));
-				return -1;
+				return false;
 			}
 			break;
 	}
 
 	device_total_out += packet->len;
 
-	return 0;
+	return true;
 }
 
 void dump_device_stats(void)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.56 2003/07/21 14:47:43 guus Exp $
+    $Id: process.c,v 1.1.2.57 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -35,20 +35,18 @@
 #include "xalloc.h"
 
 /* If zero, don't detach from the terminal. */
-int do_detach = 1;
+bool do_detach = true;
+bool sighup = false;
+bool sigalrm = false;
 
 extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
-extern int use_logfile;
+extern bool use_logfile;
 
 sigset_t emptysigset;
 
 static int saved_debug_level = -1;
-
-extern int sighup;
-extern int sigalrm;
-extern int do_purge;
 
 static void memory_full(int size)
 {
@@ -93,7 +91,7 @@ void cleanup_and_exit(int c)
 /*
   check for an existing tinc for this net, and write pid to pidfile
 */
-static int write_pidfile(void)
+static bool write_pidfile(void)
 {
 	int pid;
 
@@ -107,20 +105,20 @@ static int write_pidfile(void)
 					netname, pid);
 		else
 			fprintf(stderr, _("A tincd is already running with pid %d.\n"), pid);
-		return 1;
+		return false;
 	}
 
 	/* if it's locked, write-protected, or whatever */
 	if(!write_pid(pidfilename))
-		return 1;
+		return false;
 
-	return 0;
+	return true;
 }
 
 /*
   kill older tincd for this net
 */
-int kill_other(int signal)
+bool kill_other(int signal)
 {
 	int pid;
 
@@ -134,7 +132,7 @@ int kill_other(int signal)
 					netname);
 		else
 			fprintf(stderr, _("No other tincd is running.\n"));
-		return 1;
+		return false;
 	}
 
 	errno = 0;					/* No error, sometimes errno is only changed on error */
@@ -151,13 +149,13 @@ int kill_other(int signal)
 		remove_pid(pidfilename);
 	}
 
-	return 0;
+	return true;
 }
 
 /*
   Detach from current terminal, write pidfile, kill parent
 */
-int detach(void)
+bool detach(void)
 {
 	cp();
 
@@ -165,24 +163,24 @@ int detach(void)
 
 	/* First check if we can open a fresh new pidfile */
 
-	if(write_pidfile())
-		return -1;
+	if(!write_pidfile())
+		return false;
 
 	/* If we succeeded in doing that, detach */
 
 	closelogger();
 
 	if(do_detach) {
-		if(daemon(0, 0) < 0) {
+		if(daemon(0, 0)) {
 			fprintf(stderr, _("Couldn't detach from terminal: %s"),
 					strerror(errno));
-			return -1;
+			return false;
 		}
 
 		/* Now UPDATE the pid in the pidfile, because we changed it... */
 
 		if(!write_pid(pidfilename))
-			return -1;
+			return false;
 	}
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
@@ -192,7 +190,7 @@ int detach(void)
 
 	xalloc_fail_func = memory_full;
 
-	return 0;
+	return true;
 }
 
 /*
@@ -230,7 +228,7 @@ static void _execute_script(const char *scriptname, char **envp)
 /*
   Fork and execute the program pointed to by name.
 */
-int execute_script(const char *name, char **envp)
+bool execute_script(const char *name, char **envp)
 {
 	pid_t pid;
 	int status;
@@ -244,14 +242,14 @@ int execute_script(const char *name, char **envp)
 	/* First check if there is a script */
 
 	if(stat(scriptname, &s))
-		return 0;
+		return true;
 
 	pid = fork();
 
 	if(pid < 0) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "fork",
 			   strerror(errno));
-		return -1;
+		return false;
 	}
 
 	if(pid) {
@@ -264,26 +262,26 @@ int execute_script(const char *name, char **envp)
 				if(WEXITSTATUS(status)) {
 					logger(LOG_ERR, _("Process %d (%s) exited with non-zero status %d"),
 						   pid, name, WEXITSTATUS(status));
-					return -1;
+					return false;
 				} else
-					return 0;
+					return true;
 			} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
 				logger(LOG_ERR, _("Process %d (%s) was killed by signal %d (%s)"), pid,
 					   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
-				return -1;
+				return false;
 			} else {			/* Something strange happened */
 				logger(LOG_ERR, _("Process %d (%s) terminated abnormally"), pid,
 					   name);
-				return -1;
+				return false;
 			}
 		} else if (errno != EINTR) {
 			logger(LOG_ERR, _("System call `%s' failed: %s"), "waitpid",
 				   strerror(errno));
-			return -1;
+			return false;
 		}
 
 		/* Why do we get EINTR? */
-		return 0;
+		return true;
 	}
 
 	/* Child here */
@@ -344,7 +342,7 @@ static RETSIGTYPE fatal_signal_handler(int a)
 static RETSIGTYPE sighup_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got HUP signal"));
-	sighup = 1;
+	sighup = true;
 }
 
 static RETSIGTYPE sigint_handler(int a)
@@ -366,7 +364,7 @@ static RETSIGTYPE sigint_handler(int a)
 static RETSIGTYPE sigalrm_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got ALRM signal"));
-	sigalrm = 1;
+	sigalrm = true;
 }
 
 static RETSIGTYPE sigusr1_handler(int a)
@@ -384,8 +382,7 @@ static RETSIGTYPE sigusr2_handler(int a)
 
 static RETSIGTYPE sigwinch_handler(int a)
 {
-	extern int do_purge;
-	do_purge = 1;
+	do_purge = true;
 }
 
 static RETSIGTYPE unexpected_signal_handler(int a)
@@ -403,21 +400,20 @@ static struct {
 	int signal;
 	void (*handler)(int);
 } sighandlers[] = {
-	{
-	SIGHUP, sighup_handler}, {
-	SIGTERM, sigterm_handler}, {
-	SIGQUIT, sigquit_handler}, {
-	SIGSEGV, fatal_signal_handler}, {
-	SIGBUS, fatal_signal_handler}, {
-	SIGILL, fatal_signal_handler}, {
-	SIGPIPE, ignore_signal_handler}, {
-	SIGINT, sigint_handler}, {
-	SIGUSR1, sigusr1_handler}, {
-	SIGUSR2, sigusr2_handler}, {
-	SIGCHLD, ignore_signal_handler}, {
-	SIGALRM, sigalrm_handler}, {
-	SIGWINCH, sigwinch_handler}, {
-	0, NULL}
+	{SIGHUP, sighup_handler},
+	{SIGTERM, sigterm_handler},
+	{SIGQUIT, sigquit_handler},
+	{SIGSEGV, fatal_signal_handler},
+	{SIGBUS, fatal_signal_handler},
+	{SIGILL, fatal_signal_handler},
+	{SIGPIPE, ignore_signal_handler},
+	{SIGINT, sigint_handler},
+	{SIGUSR1, sigusr1_handler},
+	{SIGUSR2, sigusr2_handler},
+	{SIGCHLD, ignore_signal_handler},
+	{SIGALRM, sigalrm_handler},
+	{SIGWINCH, sigwinch_handler},
+	{0, NULL}
 };
 
 void setup_signals(void)

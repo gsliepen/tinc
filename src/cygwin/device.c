@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.9 2003/07/18 13:41:35 guus Exp $
+    $Id: device.c,v 1.1.2.10 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -84,7 +84,7 @@ HANDLE handle;
 pid_t reader_pid;
 int sp[2];
 
-int setup_device(void)
+bool setup_device(void)
 {
 	HKEY key, key2, adapterkey;
 	int i;
@@ -108,7 +108,7 @@ int setup_device(void)
 
 	if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, (OSTYPE > 4 ? NETCARD_REG_KEY_2000 : NETCARD_REG_KEY), 0, KEY_READ, &key)) {
 		logger(LOG_ERR, _("Unable to read registry"));
-		return -1;
+		return false;
 	}
 
 	for (i = 0; ; i++) {
@@ -120,7 +120,7 @@ int setup_device(void)
 
                 if(RegOpenKeyEx (key, adapterid, 0, KEY_READ, &adapterkey)) {
 			logger(LOG_ERR, _("Unable to read registry"));
-			return -1;
+			return false;
 		}
 
 		len = sizeof(productname);
@@ -146,7 +146,7 @@ skip:
 
 	if(!found) {
 		logger(LOG_ERR, _("No CIPE adapters found!"));
-		return -1;
+		return false;
 	}
 
 	/* Get adapter name */
@@ -166,14 +166,14 @@ skip:
 
 	if(socketpair(AF_UNIX, SOCK_DGRAM, PF_UNIX, sp)) {
 		logger(LOG_DEBUG, _("System call `%s' failed: %s"), "socketpair", strerror(errno));
-		return -1;
+		return false;
 	}
 
 	reader_pid = fork();
 
 	if(reader_pid == -1) {
 		logger(LOG_DEBUG, _("System call `%s' failed: %s"), "fork", strerror(errno));
-		return -1;
+		return false;
 	}
 
 	if(!reader_pid) {
@@ -213,7 +213,7 @@ skip:
 	
 	if(handle == INVALID_HANDLE_VALUE) {
 		logger(LOG_ERR, _("Could not open CIPE tap device for writing!"));
-		return -1;
+		return false;
 	}
 
 	device_fd = sp[0];
@@ -228,7 +228,7 @@ skip:
 	read(device_fd, &gelukt, 1);
 	if(gelukt != 1) {
 		logger(LOG_DEBUG, "Tap reader failed!");
-		return -1;
+		return false;
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
@@ -238,7 +238,7 @@ skip:
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
 
-	return 0;
+	return false;
 }
 
 void close_device(void)
@@ -252,7 +252,7 @@ void close_device(void)
 	kill(reader_pid, SIGKILL);
 }
 
-int read_packet(vpn_packet_t *packet)
+bool read_packet(vpn_packet_t *packet)
 {
 	int lenin;
 
@@ -261,7 +261,7 @@ int read_packet(vpn_packet_t *packet)
 	if((lenin = read(sp[0], packet->data, MTU)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
-		return -1;
+		return false;
 	}
 	
 	packet->len = lenin;
@@ -271,10 +271,10 @@ int read_packet(vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
 			   device_info);
 
-	return 0;
+	return true;
 }
 
-int write_packet(vpn_packet_t *packet)
+bool write_packet(vpn_packet_t *packet)
 {
 	int lenout;
 
@@ -285,12 +285,12 @@ int write_packet(vpn_packet_t *packet)
 
 	if(!WriteFile (handle, packet->data, packet->len, &lenout, NULL)) {
 		logger(LOG_ERR, "Error while writing to %s %s", device_info, device);
-		return -1;
+		return false;
 	}
 
 	device_total_out += packet->len;
 
-	return 0;
+	return true;
 }
 
 void dump_device_stats(void)

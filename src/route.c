@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.61 2003/07/18 12:21:03 guus Exp $
+    $Id: route.c,v 1.1.2.62 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -54,10 +54,10 @@
 #include "subnet.h"
 #include "utils.h"
 
-int routing_mode = RMODE_ROUTER;
-int priorityinheritance = 0;
+rmode_t routing_mode = RMODE_ROUTER;
+bool priorityinheritance = false;
 int macexpire = 600;
-int overwrite_mac = 0;
+bool overwrite_mac = false;
 mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
 
 /* RFC 1071 */
@@ -81,14 +81,14 @@ static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 	return ~checksum;
 }
 
-static int ratelimit(void) {
+static bool ratelimit(void) {
 	static time_t lasttime = 0;
 	
 	if(lasttime == now)
-		return 1;
+		return true;
 
 	lasttime = now;
-	return 0;
+	return false;
 }
 	
 static void learn_mac(mac_t *address)

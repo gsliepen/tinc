@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.29 2003/07/18 13:45:06 guus Exp $
+    $Id: net_socket.c,v 1.1.2.30 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -221,7 +221,7 @@ begin:
 		if(!c->outgoing->cfg) {
 			ifdebug(CONNECTIONS) logger(LOG_ERR, _("Could not set up a meta connection to %s"),
 					   c->name);
-			c->status.remove = 1;
+			c->status.remove = true;
 			retry_outgoing(c->outgoing);
 			return;
 		}
@@ -292,7 +292,7 @@ begin:
 
 	if(result == -1) {
 		if(errno == EINPROGRESS) {
-			c->status.connecting = 1;
+			c->status.connecting = true;
 			return;
 		}
 
@@ -357,7 +357,7 @@ void setup_outgoing_connection(outgoing_t *outgoing)
   accept a new tcp connect and create a
   new connection
 */
-int handle_new_meta_connection(int sock)
+bool handle_new_meta_connection(int sock)
 {
 	connection_t *c;
 	sockaddr_t sa;
@@ -370,7 +370,7 @@ int handle_new_meta_connection(int sock)
 	if(fd < 0) {
 		logger(LOG_ERR, _("Accepting a new connection failed: %s"),
 			   strerror(errno));
-		return -1;
+		return false;
 	}
 
 	sockaddrunmap(&sa);
@@ -393,7 +393,7 @@ int handle_new_meta_connection(int sock)
 	c->allow_request = ID;
 	send_id(c);
 
-	return 0;
+	return true;
 }
 
 void try_outgoing_connections(void)
@@ -408,7 +408,7 @@ void try_outgoing_connections(void)
 		cfg = lookup_config_next(config_tree, cfg)) {
 		get_config_string(cfg, &name);
 
-		if(check_id(name)) {
+		if(!check_id(name)) {
 			logger(LOG_ERR,
 				   _("Invalid name for outgoing connection in %s line %d"),
 				   cfg->file, cfg->line);

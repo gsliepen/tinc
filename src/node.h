@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.1.2.25 2003/07/17 15:06:26 guus Exp $
+    $Id: node.h,v 1.1.2.26 2003/07/22 20:55:20 guus Exp $
 */
 
 #ifndef __TINC_NODE_H__
@@ -45,7 +45,7 @@ typedef struct node_t {
 	sockaddr_t address;			/* his real (internet) ip to send UDP packets to */
 	char *hostname;				/* the hostname of its real ip */
 
-	struct node_status_t status;
+	node_status_t status;
 
 	const EVP_CIPHER *cipher;	/* Cipher type for UDP packets */
 	char *key;					/* Cipher key and iv */

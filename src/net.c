@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.191 2003/07/17 15:06:26 guus Exp $
+    $Id: net.c,v 1.35.4.192 2003/07/22 20:55:19 guus Exp $
 */
 
 #include "system.h"
@@ -40,9 +40,7 @@
 #include "route.h"
 #include "subnet.h"
 
-int do_purge = 0;
-int sighup = 0;
-int sigalrm = 0;
+bool do_purge = false;
 
 time_t now = 0;
 
@@ -134,11 +132,11 @@ static int build_fdset(fd_set * fs)
 /*
   Terminate a connection:
   - Close the socket
-  - Remove associated edge and tell other connections about it if report = 1
+  - Remove associated edge and tell other connections about it if report = true
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
-void terminate_connection(connection_t *c, int report)
+void terminate_connection(connection_t *c, bool report)
 {
 	cp();
 
@@ -148,8 +146,8 @@ void terminate_connection(connection_t *c, int report)
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
 			   c->name, c->hostname);
 
-	c->status.remove = 1;
-	c->status.active = 0;
+	c->status.remove = true;
+	c->status.active = false;
 
 	if(c->node)
 		c->node->connection = NULL;
@@ -200,8 +198,8 @@ static void check_dead_connections(void)
 				if(c->status.pinged) {
 					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING"),
 							   c->name, c->hostname);
-					c->status.timeout = 1;
-					terminate_connection(c, 1);
+					c->status.timeout = true;
+					terminate_connection(c, true);
 				} else {
 					send_ping(c);
 				}
@@ -214,7 +212,7 @@ static void check_dead_connections(void)
 				}
 				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
 						   c->name, c->hostname);
-				terminate_connection(c, 0);
+				terminate_connection(c, false);
 			}
 		}
 	}
@@ -235,7 +233,7 @@ static void check_network_activity(fd_set * f)
 	cp();
 
 	if(FD_ISSET(device_fd, f)) {
-		if(!read_packet(&packet))
+		if(read_packet(&packet))
 			route_outgoing(&packet);
 	}
 
@@ -247,7 +245,7 @@ static void check_network_activity(fd_set * f)
 
 		if(FD_ISSET(c->socket, f)) {
 			if(c->status.connecting) {
-				c->status.connecting = 0;
+				c->status.connecting = false;
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
 
 				if(!result)
@@ -262,7 +260,7 @@ static void check_network_activity(fd_set * f)
 				}
 			}
 
-			if(receive_meta(c) < 0) {
+			if(!receive_meta(c)) {
 				terminate_connection(c, c->status.active);
 				continue;
 			}
@@ -321,7 +319,7 @@ void main_loop(void)
 
 		if(do_purge) {
 			purge();
-			do_purge = 0;
+			do_purge = false;
 		}
 
 		/* Let's check if everybody is still alive */
@@ -361,7 +359,7 @@ void main_loop(void)
 				event->handler(event->data);
 				event_del(event);
 			}
-			sigalrm = 0;
+			sigalrm = false;
 		}
 
 		if(sighup) {
@@ -370,14 +368,14 @@ void main_loop(void)
 			char *fname;
 			struct stat s;
 			
-			sighup = 0;
+			sighup = false;
 			
 			/* Reread our own configuration file */
 
 			exit_configuration(&config_tree);
 			init_configuration(&config_tree);
 
-			if(read_server_config()) {
+			if(!read_server_config()) {
 				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
 				exit(1);
 			}

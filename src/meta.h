@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.h,v 1.1.2.9 2003/07/12 17:41:45 guus Exp $
+    $Id: meta.h,v 1.1.2.10 2003/07/22 20:55:19 guus Exp $
 */
 
 #ifndef __TINC_META_H__
@@ -25,8 +25,8 @@
 
 #include "connection.h"
 
-extern int send_meta(connection_t *, const char *, int);
-extern int broadcast_meta(connection_t *, const char *, int);
-extern int receive_meta(connection_t *);
+extern bool send_meta(struct connection_t *, const char *, int);
+extern bool broadcast_meta(struct connection_t *, const char *, int);
+extern bool receive_meta(struct connection_t *);
 
 #endif							/* __TINC_META_H__ */

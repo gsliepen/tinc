@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.75 2003/07/22 12:58:34 guus Exp $
+    $Id: tincd.c,v 1.10.4.76 2003/07/22 20:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -51,10 +51,10 @@
 char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
-int show_help = 0;
+bool show_help = false;
 
 /* If nonzero, print the version on standard output and exit.  */
-int show_version = 0;
+bool show_version = false;
 
 /* If nonzero, it will attempt to kill a running tincd and exit. */
 int kill_tincd = 0;
@@ -63,40 +63,39 @@ int kill_tincd = 0;
 int generate_keys = 0;
 
 /* If nonzero, use null ciphers and skip all key exchanges. */
-int bypass_security = 0;
+bool bypass_security = false;
 
 /* If nonzero, disable swapping for this process. */
-int do_mlock = 0;
+bool do_mlock = false;
 
 /* If nonzero, write log entries to a separate file. */
-int use_logfile = 0;
+bool use_logfile = false;
 
 char *identname = NULL;				/* program name for syslog */
 char *pidfilename = NULL;			/* pid file location */
 char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
-char **environment;				/* A pointer to the environment on
-								   startup */
+char **environment;				/* A pointer to the environment on startup */
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
 	{"kill", optional_argument, NULL, 'k'},
 	{"net", required_argument, NULL, 'n'},
-	{"help", no_argument, &show_help, 1},
-	{"version", no_argument, &show_version, 1},
-	{"no-detach", no_argument, &do_detach, 0},
+	{"help", no_argument, NULL, 1},
+	{"version", no_argument, NULL, 2},
+	{"no-detach", no_argument, NULL, 'D'},
 	{"generate-keys", optional_argument, NULL, 'K'},
 	{"debug", optional_argument, NULL, 'd'},
-	{"bypass-security", no_argument, &bypass_security, 1},
-	{"mlock", no_argument, &do_mlock, 1},
-	{"logfile", optional_argument, NULL, 'F'},
-	{"pidfile", required_argument, NULL, 'P'},
+	{"bypass-security", no_argument, NULL, 3},
+	{"mlock", no_argument, NULL, 'L'},
+	{"logfile", optional_argument, NULL, 4},
+	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
-static void usage(int status)
+static void usage(bool status)
 {
-	if(status != 0)
+	if(status)
 		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
 				program_name);
 	else {
@@ -133,11 +132,11 @@ static void parse_options(int argc, char **argv, char **envp)
 				break;
 
 			case 'D':				/* no detach */
-				do_detach = 0;
+				do_detach = false;
 				break;
 
 			case 'L':				/* no detach */
-				do_mlock = 1;
+				do_mlock = true;
 				break;
 
 			case 'd':				/* inc debug level */
@@ -171,7 +170,7 @@ static void parse_options(int argc, char **argv, char **envp)
 						if(!kill_tincd) {
 							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
 									optarg);
-							usage(1);
+							usage(true);
 						}
 					}
 				} else
@@ -189,7 +188,7 @@ static void parse_options(int argc, char **argv, char **envp)
 					if(generate_keys < 512) {
 						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
 								optarg);
-						usage(1);
+						usage(true);
 					}
 
 					generate_keys &= ~7;	/* Round it to bytes */
@@ -197,18 +196,30 @@ static void parse_options(int argc, char **argv, char **envp)
 					generate_keys = 1024;
 				break;
 
-			case 'F':				/* write log entries to a file */
-				use_logfile = 1;
+			case 1:					/* show help */
+				show_help = true;
+				break;
+
+			case 2:					/* show version */
+				show_version = true;
+				break;
+
+			case 3:					/* bypass security */
+				bypass_security = true;
+				break;
+
+			case 4:					/* write log entries to a file */
+				use_logfile = true;
 				if(optarg)
 					logfilename = xstrdup(optarg);
 				break;
 
-			case 'P':				/* write PID to a file */
+			case 5:					/* write PID to a file */
 				pidfilename = xstrdup(optarg);
 				break;
 
 			case '?':
-				usage(1);
+				usage(true);
 
 			default:
 				break;
@@ -257,7 +268,7 @@ static void indicator(int a, int b, void *p)
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-static int keygen(int bits)
+static bool keygen(int bits)
 {
 	RSA *rsa_key;
 	FILE *f;
@@ -269,34 +280,15 @@ static int keygen(int bits)
 
 	if(!rsa_key) {
 		fprintf(stderr, _("Error during key generation!\n"));
-		return -1;
+		return false;
 	} else
 		fprintf(stderr, _("Done.\n"));
 
-	get_config_string(lookup_config(config_tree, "Name"), &name);
-
-	if(name)
-		asprintf(&filename, "%s/hosts/%s", confbase, name);
-	else
-		asprintf(&filename, "%s/rsa_key.pub", confbase);
-
-	f = ask_and_safe_open(filename, _("public RSA key"), "a");
-
-	if(!f)
-		return -1;
-
-	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
-
-	PEM_write_RSAPublicKey(f, rsa_key);
-	fclose(f);
-	free(filename);
-
 	asprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_safe_open(filename, _("private RSA key"), "a");
+	f = ask_and_safe_open(filename, _("private RSA key"), true, "a");
 
 	if(!f)
-		return -1;
+		return false;
 
 	if(ftell(f))
 		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
@@ -305,7 +297,26 @@ static int keygen(int bits)
 	fclose(f);
 	free(filename);
 
-	return 0;
+	get_config_string(lookup_config(config_tree, "Name"), &name);
+
+	if(name)
+		asprintf(&filename, "%s/hosts/%s", confbase, name);
+	else
+		asprintf(&filename, "%s/rsa_key.pub", confbase);
+
+	f = ask_and_safe_open(filename, _("public RSA key"), false, "a");
+
+	if(!f)
+		return false;
+
+	if(ftell(f))
+		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
+
+	PEM_write_RSAPublicKey(f, rsa_key);
+	fclose(f);
+	free(filename);
+
+	return true;
 }
 
 /*
@@ -360,10 +371,10 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	if(show_help)
-		usage(0);
+		usage(false);
 
 	if(kill_tincd)
-		exit(kill_other(kill_tincd));
+		exit(!kill_other(kill_tincd));
 
 	openlogger("tinc", LOGMODE_STDERR);
 
@@ -393,10 +404,10 @@ int main(int argc, char **argv, char **envp)
 
 	if(generate_keys) {
 		read_server_config();
-		exit(keygen(generate_keys));
+		exit(!keygen(generate_keys));
 	}
 
-	if(read_server_config())
+	if(!read_server_config())
 		exit(1);
 
 	if(lzo_init() != LZO_E_OK) {
@@ -404,11 +415,11 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 	}
 
-	if(detach())
-		exit(0);
+	if(!detach())
+		exit(1);
 		
 	for(;;) {
-		if(!setup_network_connections()) {
+		if(setup_network_connections()) {
 			main_loop();
 			cleanup_and_exit(1);
 		}

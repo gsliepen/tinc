@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.9 2003/07/18 13:41:36 guus Exp $
+    $Id: device.c,v 1.1.2.10 2003/07/22 20:55:21 guus Exp $
 */
 
 #include "system.h"
@@ -30,14 +30,13 @@
 #define DEFAULT_DEVICE "/dev/tun0"
 
 int device_fd = -1;
-int device_type;
 char *device;
 char *iface;
 char *device_info;
 int device_total_in = 0;
 int device_total_out = 0;
 
-int setup_device(void)
+bool setup_device(void)
 {
 	cp();
 
@@ -49,14 +48,14 @@ int setup_device(void)
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
 		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
-		return -1;
+		return false;
 	}
 
 	device_info = _("MacOS/X tun device");
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
 
-	return 0;
+	return true;
 }
 
 void close_device(void)
@@ -66,7 +65,7 @@ void close_device(void)
 	close(device_fd);
 }
 
-int read_packet(vpn_packet_t *packet)
+bool read_packet(vpn_packet_t *packet)
 {
 	int lenin;
 
@@ -75,7 +74,7 @@ int read_packet(vpn_packet_t *packet)
 	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
-		return -1;
+		return false;
 	}
 
 	packet->data[12] = 0x08;
@@ -88,10 +87,10 @@ int read_packet(vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"),
 			   packet->len, device_info);
 
-	return 0;
+	return true;
 }
 
-int write_packet(vpn_packet_t *packet)
+bool write_packet(vpn_packet_t *packet)
 {
 	cp();
 
@@ -101,10 +100,12 @@ int write_packet(vpn_packet_t *packet)
 	if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
 		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info,
 			   device, strerror(errno));
-		return -1;
+		return false;
 	}
 
 	device_total_out += packet->len;
+
+	return true;
 }
 
 void dump_device_stats(void)

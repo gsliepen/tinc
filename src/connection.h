@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.1.2.34 2003/07/17 15:06:26 guus Exp $
+    $Id: connection.h,v 1.1.2.35 2003/07/22 20:55:19 guus Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -27,11 +27,6 @@
 #include <openssl/evp.h>
 
 #include "avl_tree.h"
-#include "conf.h"
-#include "edge.h"
-#include "list.h"
-#include "net.h"
-#include "node.h"
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
@@ -49,10 +44,15 @@ typedef struct connection_status_t {
 	int unused:18;
 } connection_status_t;
 
+#include "edge.h"
+#include "list.h"
+#include "net.h"
+#include "node.h"
+
 typedef struct connection_t {
 	char *name;					/* name he claims to have */
 
-	sockaddr_t address;			/* his real (internet) ip */
+	union sockaddr_t address;			/* his real (internet) ip */
 	char *hostname;				/* the hostname of its real ip */
 	int protocol_version;		/* used protocol */
 
@@ -105,6 +105,6 @@ extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
 extern void dump_connections(void);
-extern int read_connection_config(connection_t *);
+extern bool read_connection_config(connection_t *);
 
 #endif							/* __TINC_CONNECTION_H__ */
