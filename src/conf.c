@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.66 2003/07/17 15:06:26 guus Exp $
+    $Id: conf.c,v 1.9.4.67 2003/07/18 14:10:27 guus Exp $
 */
 
 #include "system.h"
@@ -417,6 +417,7 @@ int read_server_config()
 
 int is_safe_path(const char *file)
 {
+#if !(defined(HAVE_CYGWIN) || defined(HAVE_MINGW))
 	char *p;
 	const char *f;
 	char x;
@@ -499,6 +500,7 @@ check2:
 		logger(LOG_ERR, _("`%s' has unsecure permissions"), f);
 		return 0;
 	}
+#endif
 
 	return 1;
 }
