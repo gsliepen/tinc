@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.115 2001/06/21 16:16:31 guus Exp $
+    $Id: net.c,v 1.35.4.116 2001/06/21 16:37:47 guus Exp $
 */
 
 #include "config.h"
@@ -69,12 +69,9 @@
 # include <pem.h>
 #endif
 
-#warning oi1
 #ifdef HAVE_TUNTAP
-#warning oi2
 #include LINUX_IF_TUN_H
 #endif
-#warning oi3
 
 #include <utils.h>
 #include <xalloc.h>
