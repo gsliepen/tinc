@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.38 2002/03/24 16:22:59 guus Exp $
+    $Id: process.c,v 1.1.2.39 2002/03/26 12:00:38 guus Exp $
 */
 
 #include "config.h"
@@ -207,10 +207,9 @@ cp
   Execute the program name, with sane environment.  All output will be
   redirected to syslog.
 */
-void _execute_script(const char *name)  __attribute__ ((noreturn));
-void _execute_script(const char *name)
+void _execute_script(const char *scriptname)  __attribute__ ((noreturn));
+void _execute_script(const char *scriptname)
 {
-  char *scriptname;
   char *s;
 cp
 #ifdef HAVE_UNSETENV
@@ -239,8 +238,6 @@ cp
 
   chdir("/");
   
-  asprintf(&scriptname, "%s/%s", confbase, name);
-
   /* Close all file descriptors */
   closelog();		/* <- this means we cannot use syslog() here anymore! */
   fcloseall();
@@ -262,10 +259,13 @@ int execute_script(const char *name)
   pid_t pid;
   int status;
   struct stat s;
+  char *scriptname;
 cp
+  asprintf(&scriptname, "%s/%s", confbase, name);
+
   /* First check if there is a script */
 
-  if(stat(name, &s))
+  if(stat(scriptname, &s))
     return 0;
 
   if((pid = fork()) < 0)
@@ -278,6 +278,8 @@ cp
     {
       if(debug_lvl >= DEBUG_STATUS)
         syslog(LOG_INFO, _("Executing script %s"), name);
+
+      free(scriptname);
 
       if(waitpid(pid, &status, 0) == pid)
         {
@@ -312,7 +314,7 @@ cp
 cp
   /* Child here */
 
-  _execute_script(name);
+  _execute_script(scriptname);
 }
 
 
