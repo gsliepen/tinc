@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.119 2001/11/04 23:29:50 guus Exp $
+    $Id: protocol.c,v 1.28.4.120 2001/11/04 23:48:27 guus Exp $
 */
 
 #include "config.h"
@@ -729,7 +729,7 @@ cp
 
   owner = lookup_node(name);
 
-  if(!node)
+  if(!owner)
     {
       syslog(LOG_ERR, _("Got ADD_SUBNET from %s (%s) for %s which is not in our connection list"),
              c->name, c->hostname, name);
