@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.120 2001/11/04 23:48:27 guus Exp $
+    $Id: protocol.c,v 1.28.4.121 2001/11/16 17:39:59 zarq Exp $
 */
 
 #include "config.h"
@@ -50,7 +50,6 @@
 
 #include "conf.h"
 #include "net.h"
-#include "netutl.h"
 #include "protocol.h"
 #include "meta.h"
 #include "connection.h"
@@ -531,7 +530,6 @@ cp
 
 int ack_h(connection_t *c)
 {
-  port_t port;
   int weight;
   node_t *n;
   subnet_t *s;
