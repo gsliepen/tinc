@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.12 2002/03/22 11:43:48 guus Exp $
+    $Id: net_setup.c,v 1.1.2.13 2002/03/25 13:54:49 guus Exp $
 */
 
 #include "config.h"
@@ -464,6 +464,7 @@ cp
   myself->nexthop = myself;
   myself->via = myself;
   myself->status.active = 1;
+  myself->status.reachable = 1;
   node_add(myself);
 
   graph();
