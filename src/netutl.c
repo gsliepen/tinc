@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.24 2002/02/18 16:25:16 guus Exp $
+    $Id: netutl.c,v 1.12.4.25 2002/02/20 17:15:33 guus Exp $
 */
 
 #include "config.h"
@@ -165,7 +165,7 @@ int maskcmp(char *a, char *b, int masklen, int len)
 {
   int i, m, result;
 cp
-  for(m = masklen, i = 0; m > 8; m -= 8, i++)
+  for(m = masklen, i = 0; m >= 8; m -= 8, i++)
     if((result = a[i] - b[i]))
       return result;
 
@@ -193,7 +193,7 @@ void maskcpy(char *a, char *b, int masklen, int len)
 {
   int i, m;
 cp
-  for(m = masklen, i = 0; m > 8; m -= 8, i++)
+  for(m = masklen, i = 0; m >= 8; m -= 8, i++)
     a[i] = b[i];
 
   if(m)
