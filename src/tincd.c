@@ -19,6 +19,9 @@
 
 /*
  * $Log: tincd.c,v $
+ * Revision 1.6  2000/04/18 16:04:10  zarq
+ * Address for bugreports changed to tinc@nl.linux.org.
+ *
  * Revision 1.5  2000/04/17 16:23:29  zarq
  * Pass the requested size from xmalloc() and xrealloc() on to xalloc_fail_func()
  *
@@ -109,7 +112,7 @@ usage(int status)
 	     "  -t, --timeout=TIMEOUT Seconds to wait before giving a timeout.\n");
       printf("      --help            Display this help and exit.\n"
 	     "      --version         Output version information and exit.\n\n");
-      printf("Report bugs to zarq@iname.com.\n");
+      printf("Report bugs to tinc@nl.linux.org.\n");
     }
   exit(status);
 }
