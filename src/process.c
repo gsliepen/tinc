@@ -81,25 +81,25 @@ bool install_service(void) {
 	}
 
 	if(!strchr(program_name, '\\')) {
-		GetCurrentDirectory(sizeof(command) - 1, command + 1);
-		strncat(command, "\\", sizeof(command));
+		GetCurrentDirectory(sizeof command - 1, command + 1);
+		strncat(command, "\\", sizeof command - strlen(command));
 	}
 
-	strncat(command, program_name, sizeof(command));
+	strncat(command, program_name, sizeof command - strlen(command));
 
-	strncat(command, "\"", sizeof(command));
+	strncat(command, "\"", sizeof command - strlen(command));
 
 	for(argp = g_argv + 1; *argp; argp++) {
 		space = strchr(*argp, ' ');
-		strncat(command, " ", sizeof(command));
+		strncat(command, " ", sizeof command - strlen(command));
 		
 		if(space)
-			strncat(command, "\"", sizeof(command));
+			strncat(command, "\"", sizeof command - strlen(command));
 		
-		strncat(command, *argp, sizeof(command));
+		strncat(command, *argp, sizeof command - strlen(command));
 
 		if(space)
-			strncat(command, "\"", sizeof(command));
+			strncat(command, "\"", sizeof command - strlen(command));
 	}
 
 	service = CreateService(manager, identname, identname,
