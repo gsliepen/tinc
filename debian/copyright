@@ -3,7 +3,9 @@ Fri, 21 Apr 2000 17:07:50 +0200.
 
 It was downloaded from http://tinc.nl.linux.org/
 
-Upstream Author(s): Ivo Timmermans <itimmermans@bigfoot.com>
+Upstream Author(s):
+ Ivo Timmermans <itimmermans@bigfoot.com>
+ Guus Sliepen <guus@sliepen.warande.net>
 
 Copyright: GPL version 2. On Debian GNU/Linux systems, the complete
 text of the GNU General Public License can be found in
