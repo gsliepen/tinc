@@ -1,7 +1,7 @@
 dnl Check to find out whether function attributes are supported.
 dnl If they are not, #define them to be nothing.
 
-AC_DEFUN(tinc_ATTRIBUTE,
+AC_DEFUN([tinc_ATTRIBUTE],
 [
   AC_CACHE_CHECK([for working $1 attribute], tinc_cv_attribute_$1,
   [ 

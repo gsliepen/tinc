@@ -1,22 +1,28 @@
 dnl Check to find out whether the running kernel has support for TUN/TAP
 
-AC_DEFUN(tinc_TUNTAP,
+AC_DEFUN([tinc_TUNTAP],
 [
   AC_ARG_WITH(kernel,
-    AC_HELP_STRING([--with-kernel=DIR], [give the directory with kernel sources (default: /usr/src/linux)]),
+    AS_HELP_STRING([--with-kernel=DIR], [give the directory with kernel sources (default: /usr/src/linux)]),
     kerneldir="$withval",
     kerneldir="/usr/src/linux"
   )
   
   AC_CACHE_CHECK([for linux/if_tun.h], tinc_cv_linux_if_tun_h,
   [ 
-    AC_TRY_COMPILE([#include "$kerneldir/include/linux/if_tun.h"],
-      [int a = IFF_TAP;],
-      if_tun_h="\"$kerneldir/include/linux/if_tun.h\"",
-      [AC_TRY_COMPILE([#include <linux/if_tun.h>],
-        [int a = IFF_TAP;],
-        if_tun_h="default",
-        if_tun_h="no"
+    AC_COMPILE_IFELSE(
+      AC_LANG_PROGRAM([
+        #include "$kerneldir/include/linux/if_tun.h"
+	int a = IFF_TAP;
+      ]),
+      [if_tun_h="\"$kerneldir/include/linux/if_tun.h\""],
+      [AC_COMPILE_IFELSE(
+        AC_LANG_PROGRAM([
+	  #include <linux/if_tun.h>
+          int a = IFF_TAP;
+	]),
+        [if_tun_h="default"],
+        [if_tun_h="no"]
       )]
     )
   

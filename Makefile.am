@@ -8,9 +8,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = config.rpath mkinstalldirs system.h COPYING.README depcomp
 
-CVS_CREATED = ABOUT-NLS configure aclocal.m4 config.h.in config.guess \
+CVS_CREATED = ABOUT-NLS INSTALL COPYING configure aclocal.m4 config.h.in config.guess \
  config.sub install-sh ltconfig ltmain.sh missing mkinstalldirs \
- stamp-h.in m4/Makefile.am ChangeLog po/Makefile.in.in \
+ stamp-h.in ChangeLog po/Makefile.in.in \
  po/tinc.pot po/*.sed po/*.header po/*.sin po/Rules-quot \
  src/.libs intl depcomp
 

@@ -1,22 +1,22 @@
 dnl Check to find the zlib headers/libraries
 
-AC_DEFUN(tinc_ZLIB,
+AC_DEFUN([tinc_ZLIB],
 [
   AC_ARG_WITH(zlib,
-    AC_HELP_STRING([--with-zlib=DIR], [zlib base directory, or:]),
+    AS_HELP_STRING([--with-zlib=DIR], [zlib base directory, or:]),
     [zlib="$withval"
      CPPFLAGS="$CPPFLAGS -I$withval/include"
      LDFLAGS="$LDFLAGS -L$withval/lib"]
   )
 
   AC_ARG_WITH(zlib-include,
-    AC_HELP_STRING([--with-zlib-include=DIR], [zlib headers directory]),
+    AS_HELP_STRING([--with-zlib-include=DIR], [zlib headers directory]),
     [zlib_include="$withval"
      CPPFLAGS="$CPPFLAGS -I$withval"]
   )
 
   AC_ARG_WITH(zlib-lib,
-    AC_HELP_STRING([--with-zlib-lib=DIR], [zlib library directory]),
+    AS_HELP_STRING([--with-zlib-lib=DIR], [zlib library directory]),
     [zlib_lib="$withval"
      LDFLAGS="$LDFLAGS -L$withval"]
   )

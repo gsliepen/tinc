@@ -1,22 +1,22 @@
 dnl Check to find the OpenSSL headers/libraries
 
-AC_DEFUN(tinc_OPENSSL,
+AC_DEFUN([tinc_OPENSSL],
 [
   AC_ARG_WITH(openssl,
-    AC_HELP_STRING([--with-openssl=DIR], [OpenSSL base directory, or:]),
+    AS_HELP_STRING([--with-openssl=DIR], [OpenSSL base directory, or:]),
     [openssl="$withval"
      CPPFLAGS="$CPPFLAGS -I$withval/include"
      LDFLAGS="$LDFLAGS -L$withval/lib"]
   )
 
   AC_ARG_WITH(openssl-include,
-    AC_HELP_STRING([--with-openssl-include=DIR], [OpenSSL headers directory (without trailing /openssl)]),
+    AS_HELP_STRING([--with-openssl-include=DIR], [OpenSSL headers directory (without trailing /openssl)]),
     [openssl_include="$withval"
      CPPFLAGS="$CPPFLAGS -I$withval"]
   )
 
   AC_ARG_WITH(openssl-lib,
-    AC_HELP_STRING([--with-openssl-lib=DIR], [OpenSSL library directory]),
+    AS_HELP_STRING([--with-openssl-lib=DIR], [OpenSSL library directory]),
     [openssl_lib="$withval"
      LDFLAGS="$LDFLAGS -L$withval"]
   )
