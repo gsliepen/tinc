@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.2 2002/02/18 16:25:19 guus Exp $
+    $Id: device.c,v 1.1.2.3 2002/06/05 00:20:40 guus Exp $
 */
 
 #include "config.h"
@@ -102,11 +102,9 @@ cp
 int read_packet(vpn_packet_t *packet)
 {
   int lenin;
-  u_int32_t type;
-  struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, MTU - 14}};
 cp
 
-  if((lenin = readv(device_fd, vector, 2)) <= 0)
+  if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0)
     {
       syslog(LOG_ERR, _("Error while reading from %s %s: %s"), device_info, device, strerror(errno));
       return -1;
@@ -117,7 +115,7 @@ cp
   packet->data[12] = 0x08;
   packet->data[13] = 0x00;
 
-  packet->len = lenin + 10;
+  packet->len = lenin + 14;
 
   device_total_in += packet->len;
 
@@ -132,19 +130,12 @@ cp
 
 int write_packet(vpn_packet_t *packet)
 {
-  u_int32_t type = htonl(AF_INET);
-  struct iovec vector[2];
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
            packet->len, device_info);
 
-  vector[0].iov_base = &type;
-  vector[0].iov_len = sizeof(type);
-  vector[1].iov_base = packet->data + 14;
-  vector[1].iov_len = packet->len - 14;
-
-  if(writev(device_fd, vector, 2) < 0)
+  if(write(device_fd, packet->data + 14, packet->len - 14) < 0)
     {
       syslog(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
       return -1;
