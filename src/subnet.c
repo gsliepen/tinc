@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.30 2002/02/18 16:25:19 guus Exp $
+    $Id: subnet.c,v 1.1.2.31 2002/02/20 17:16:15 guus Exp $
 */
 
 #include "config.h"
@@ -41,6 +41,10 @@
 #include "netutl.h"
 
 #include "system.h"
+
+int cache_mac_valid = 0;
+int cache_ipv4_valid = 0;
+int cache_ipv6_valid = 0;
 
 /* lists type of subnet */
 
@@ -150,10 +154,19 @@ cp
 
 /* Adding and removing subnets */
 
+void cache_invalidate(void)
+{
+  cache_mac_valid = 0;
+  cache_ipv4_valid = 0;
+  cache_ipv6_valid = 0;
+}
+
 void subnet_add(node_t *n, subnet_t *subnet)
 {
 cp
   subnet->owner = n;
+
+  cache_invalidate();
 
   avl_insert(subnet_tree, subnet);
 cp
@@ -164,6 +177,8 @@ cp
 void subnet_del(node_t *n, subnet_t *subnet)
 {
 cp
+  cache_invalidate();
+
   avl_delete(n->subnet_tree, subnet);
 cp
   avl_delete(subnet_tree, subnet);
@@ -289,20 +304,27 @@ cp
 
 subnet_t *lookup_subnet_mac(mac_t *address)
 {
-  subnet_t subnet, *p;
+  static subnet_t subnet, *p;
 cp
+  if(cache_mac_valid && !memcmp(&subnet.net.mac.address, address, sizeof(mac_t)))
+    return p;
+
   subnet.type = SUBNET_MAC;
   memcpy(&subnet.net.mac.address, address, sizeof(mac_t));
 
   p = (subnet_t *)avl_search(subnet_tree, &subnet);
+  cache_mac_valid = 1;
 cp
   return p;
 }
 
 subnet_t *lookup_subnet_ipv4(ipv4_t *address)
 {
-  subnet_t subnet, *p;
+  static subnet_t subnet, *p;
 cp
+  if(cache_ipv4_valid && !memcmp(&subnet.net.ipv4.address, address, sizeof(ipv4_t)))
+    return p;
+
   subnet.type = SUBNET_IPV4;
   memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
   subnet.net.ipv4.masklength = 32;
@@ -318,7 +340,10 @@ cp
     if(p)
       {
 	if(p->type != SUBNET_IPV4)
-	  return NULL;
+	  {
+	    p = NULL;
+	    break;
+	  }
 
         if (!maskcmp((char *)address, (char *)&p->net.ipv4.address, p->net.ipv4.masklength, sizeof(ipv4_t)))
           break;
@@ -330,15 +355,21 @@ cp
             maskcpy((char *)&subnet.net.ipv4.address, (char *)&p->net.ipv4.address, subnet.net.ipv4.masklength, sizeof(ipv4_t));
           }
       }
-   } while (p);
+  } while (p);
    
-   return p;
+  memcpy(&subnet.net.ipv4.address, address, sizeof(ipv4_t));
+  cache_ipv4_valid = 1; 
+cp
+  return p;
 }
 
 subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 {
-  subnet_t subnet, *p;
+  static subnet_t subnet, *p;
 cp
+  if(cache_ipv6_valid && !memcmp(&subnet.net.ipv6.address, address, sizeof(ipv6_t)))
+    return p;
+
   subnet.type = SUBNET_IPV6;
   memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
   subnet.net.ipv6.masklength = 128;
@@ -369,6 +400,9 @@ cp
       }
    } while (p);
 
+  memcpy(&subnet.net.ipv6.address, address, sizeof(ipv6_t));
+  cache_ipv6_valid = 1; 
+cp   
   return p;
 }
 
