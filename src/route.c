@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.23 2002/02/18 16:25:19 guus Exp $
+    $Id: route.c,v 1.1.2.24 2002/02/20 16:04:59 guus Exp $
 */
 
 #include "config.h"
@@ -269,8 +269,22 @@ void route_incoming(node_t *source, vpn_packet_t *packet)
   switch(routing_mode)
     {
       case RMODE_ROUTER:
-        memcpy(packet->data, mymac.net.mac.address.x, 6);	/* Override destination address to make the kernel accept it */
-        write_packet(packet);
+        {
+          node_t *n;
+
+          n = route_ipv4(packet);
+
+          if(n)
+            {
+              if(n == myself)
+	        {
+                  memcpy(packet->data, mymac.net.mac.address.x, 6);
+                  write_packet(packet);
+		}
+              else
+                send_packet(n, packet);
+            }
+          }
         break;
       case RMODE_SWITCH:
         {
