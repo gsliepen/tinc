@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: rbl.c,v 1.1.2.6 2000/11/19 11:05:59 guus Exp $
+    $Id: rbl.c,v 1.1.2.7 2000/11/19 22:12:46 guus Exp $
 */
 
 #include <xalloc.h>
@@ -58,7 +58,7 @@ void free_rbltree(rbltree_t *tree)
 }
 
 /* Search closest match in the tree */
-rbl_t *rbl_search_closest(rbltree_t *tree, void *data)
+rbl_t *rbl_search_closest_rbl(rbltree_t *tree, void *data)
 {
   rbl_t *rbl, *next;
   int result;
@@ -82,8 +82,13 @@ rbl_t *rbl_search_closest(rbltree_t *tree, void *data)
   return rbl;
 }
 
+void *rbl_search_closest(rbltree_t *tree, void *data)
+{
+  return rbl_search_closest_rbl(tree, data)->data;
+}
+
 /* Search exact match or return NULL pointer */
-rbl_t *rbl_search(rbltree_t *tree, void *data)
+rbl_t *rbl_search_rbl(rbltree_t *tree, void *data)
 {
   rbl_t *rbl, *next;
   int result;
@@ -105,6 +110,18 @@ rbl_t *rbl_search(rbltree_t *tree, void *data)
     }
     
   return NULL;
+}
+
+void *rbl_search(rbltree_t *tree, void *data)
+{
+  rbl_t *rbl;
+
+  rbl = rbl_search_rbl(tree, data);
+
+  if(rbl)
+    return rbl->data;
+  else
+    return NULL;  
 }
 
 /* Red-black tree operations taken from Introduction to Algorithms,
@@ -171,7 +188,7 @@ rbl_t *rbl_insert_rbl(rbltree_t *tree, rbl_t *rbl)
   
   if(tree->top)
     {
-      closest = rbl_search_closest(tree, rbl->data);
+      closest = rbl_search_closest_rbl(tree, rbl->data);
       result = tree->compare(rbl->data, closest->data);
       if(result < 0)
         {
@@ -423,7 +440,7 @@ rbl_t *rbl_unlink(rbltree_t *tree, void *data)
 {
   rbl_t *rbl;
   
-  rbl = rbl_search(tree, data);
+  rbl = rbl_search_rbl(tree, data);
   
   if(rbl)
     return rbl_unlink_rbl(rbl);
@@ -457,10 +474,11 @@ rbl_unlink_rbltree_branch(rbl_t *rbl)
         rbl->parent->left = NULL;
       else
         rbl->parent->right = NULL;
+    }
 }
 
 /* Optimized unlinking for a complete tree */
-rbl_unlink_rbltree(rbltree_t *tree)
+void rbl_unlink_rbltree(rbltree_t *tree)
 {
   rbl_t *rbl, *next;
   
@@ -481,14 +499,14 @@ rbl_unlink_rbltree(rbltree_t *tree)
 }
 
 /* Optimized deletion for a complete tree */
-rbl_delete_rbltree(rbltree_t *tree)
+void rbl_delete_rbltree(rbltree_t *tree)
 {
   rbl_t *rbl, *next;
   
   for(rbl = tree->head; rbl; rbl = next)
     {
       next = rbl->next;
-      tree->delete(rbl->data)
+      tree->delete(rbl->data);
     }
 
   tree->top = NULL;
