@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.94 2001/01/13 16:36:21 guus Exp $
+    $Id: net.c,v 1.35.4.95 2001/02/25 16:04:00 guus Exp $
 */
 
 #include "config.h"
@@ -202,6 +202,7 @@ int send_packet(ip_t to, vpn_packet_t *packet)
 {
   connection_t *cl;
   subnet_t *subnet;
+  vpn_packet_t *copy;
 cp
   if((subnet = lookup_subnet_ipv4(&to)) == NULL)
     {
@@ -242,7 +243,13 @@ cp
 	syslog(LOG_INFO, _("No valid key known yet for %s (%s), queueing packet"),
 	       cl->name, cl->hostname);
 
-      list_insert_tail(cl->queue, packet);
+      /* Since packet is on the stack of handle_tap_input(),
+         we have to make a copy of it first. */
+
+      copy = xmalloc(sizeof(vpn_packet_t));
+      memcpy(copy, packet, sizeof(vpn_packet_t));
+
+      list_insert_tail(cl->queue, copy);
 
       if(!cl->status.waitingforkey)
 	send_req_key(myself, cl);			/* Keys should be sent to the host running the tincd */
@@ -260,7 +267,7 @@ cp
 void flush_queue(connection_t *cl)
 {
   list_node_t *node, *next;
-
+cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_INFO, _("Flushing queue for %s (%s)"), cl->name, cl->hostname);
   
@@ -270,6 +277,7 @@ void flush_queue(connection_t *cl)
       xsend(cl, (vpn_packet_t *)node->data);
       list_delete_node(cl->queue, node);
     }
+cp
 }
 
 /*
