@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # System startup script for tinc
-# $Id: init.d,v 1.8 2000/05/19 00:15:37 zarq Exp $
+# $Id: init.d,v 1.9 2000/05/19 01:17:32 zarq Exp $
 #
 # Based on Lubomir Bulej's Redhat init script.
 #
@@ -105,6 +105,9 @@ sub vpn_load {
     $BRD = join(".", unpack('C4', $ADR | ~$MSK));
 #    $NET = join(".", unpack('C4', $ADR & $MSK));
     $MAC = "fe:fd:" . join(":", map { sprintf "%02x", $_ } unpack('C4', $ADR));
+    $VPNMASK = pack('C4', split(/\./, $VPNMASK));
+    $VPNNET = join(".", unpack('C4', $ADR & $VPNMASK));
+    $VPNMASK = join(".", unpack('C4', $VPNMASK));
     $ADR = join(".", unpack('C4', $ADR));
     $MSK = join(".", unpack('C4', $MSK));
     
@@ -127,7 +130,7 @@ sub vpn_start {
     system("ifconfig $DEV $ADR netmask $MSK broadcast $BRD -arp");
     system("start-stop-daemon --start --quiet --pidfile /var/run/$NAME.$_[0].pid --exec $DAEMON -- -n $_[0] $EXTRA");
     if(defined($VPNMASK)) {
-	system("route add -net $ADR netmask $VPNMASK dev $DEV");
+	system("route add -net $VPNNET netmask $VPNMASK dev $DEV");
     }
 }
 
