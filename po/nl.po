@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-03-18 20:20+0100\n"
-"PO-Revision-Date: 2002-03-18 20:20+0100\n"
+"POT-Creation-Date: 2002-03-24 17:38+0100\n"
+"PO-Revision-Date: 2002-03-24 17:38+0100\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
 "MIME-Version: 1.0\n"
@@ -130,8 +130,8 @@ msgstr "Verbindingen:"
 
 #: src/connection.c:119
 #, c-format
-msgid " %s at %s options %ld socket %d status %04x"
-msgstr " %s op %s opties %ld socket %d status %04x"
+msgid " %s at %s options %lx socket %d status %04x"
+msgstr " %s op %s opties %lx socket %d status %04x"
 
 #: src/connection.c:123
 msgid "End of connections."
@@ -206,19 +206,19 @@ msgstr "Fout tijdens schrijven naar %s (%s): %s"
 msgid "Error while waiting for input: %s"
 msgstr "Fout tijdens wachten op invoer: %s"
 
-#: src/net.c:413
+#: src/net.c:416
 msgid "Regenerating symmetric key"
 msgstr "Hergenereren symmetrische sleutel"
 
-#: src/net.c:430
+#: src/net.c:433
 msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
-#: src/net.c:447
+#: src/net.c:450
 msgid "Rereading configuration file and restarting in 5 seconds..."
 msgstr "Herlezen configuratiebestand en herstarten na 5 seconden..."
 
-#: src/net.c:454
+#: src/net.c:457
 msgid "Unable to reread configuration file, exitting."
 msgstr "Kan configuratiebestand niet herlezen, beëindigen."
 
@@ -260,8 +260,8 @@ msgstr "Instellen prioriteit uitgaand pakket op %d"
 
 #. SO_PRIORITY doesn't seem to work
 #: src/net_packet.c:285 src/net_setup.c:483 src/net_socket.c:98
-#: src/net_socket.c:144 src/net_socket.c:171 src/process.c:265
-#: src/process.c:300
+#: src/net_socket.c:144 src/net_socket.c:171 src/process.c:273
+#: src/process.c:308
 #, c-format
 msgid "System call `%s' failed: %s"
 msgstr "Systeemaanroep `%s' mislukte: %s"
@@ -503,95 +503,104 @@ msgstr "Verbinding van %s"
 msgid "Invalid name for outgoing connection in %s line %d"
 msgstr "Ongeldige naam voor uitgaande verbinding in %s regel %d"
 
-#: src/netutl.c:69 src/netutl.c:92
+#: src/netutl.c:65 src/netutl.c:88
 #, c-format
 msgid "Error looking up %s port %s: %s\n"
 msgstr "Fout bij het opzoeken van %s poort %s: %s\n"
 
-#: src/netutl.c:113
+#: src/netutl.c:109
 #, c-format
 msgid "Error while translating addresses: %s"
 msgstr "Fout tijdens vertalen adressen: %s"
 
-#: src/netutl.c:138
+#: src/netutl.c:134
 #, c-format
 msgid "Error while looking up hostname: %s"
 msgstr "Fout bij het opzoeken van hostnaam: %s"
 
-#: src/netutl.c:141
+#: src/netutl.c:137
 #, c-format
 msgid "%s port %s"
 msgstr "%s poort %s"
 
-#: src/netutl.c:170
+#: src/netutl.c:166
 #, c-format
 msgid "sockaddrcmp() was called with unknown address family %d, exitting!"
 msgstr ""
 "sockaddrcmp() werd aangeroepen met onbekende adresfamilie %d, beëindigen!"
 
-#: src/protocol.c:74
+#: src/protocol.c:77
 #, c-format
 msgid "Output buffer overflow while sending request to %s (%s)"
 msgstr "Uitvoer buffer overvol tijdens zenden verzoek naar %s (%s)"
 
-#: src/protocol.c:82
+#: src/protocol.c:85
 #, c-format
 msgid "Sending %s to %s (%s): %s"
 msgstr "Verzending %s naar %s (%s): %s"
 
-#: src/protocol.c:84
+#: src/protocol.c:87
 #, c-format
 msgid "Sending %s to %s (%s)"
 msgstr "Verzending %s naar %s (%s)"
 
-#: src/protocol.c:101
+#: src/protocol.c:104
 #, c-format
 msgid "Unknown request from %s (%s): %s"
 msgstr "Onbekend verzoek van %s (%s): %s"
 
-#: src/protocol.c:104
+#: src/protocol.c:107
 #, c-format
 msgid "Unknown request from %s (%s)"
 msgstr "Onbekend verzoek van %s (%s)"
 
-#: src/protocol.c:114
+#: src/protocol.c:117
 #, c-format
 msgid "Got %s from %s (%s): %s"
 msgstr "Kreeg %s van %s (%s): %s"
 
-#: src/protocol.c:117
+#: src/protocol.c:120
 #, c-format
 msgid "Got %s from %s (%s)"
 msgstr "Kreeg %s van %s (%s)"
 
-#: src/protocol.c:124
+#: src/protocol.c:127
 #, c-format
 msgid "Unauthorized request from %s (%s)"
 msgstr "Niet toegestaan verzoek van %s (%s)"
 
-#: src/protocol.c:131
+#: src/protocol.c:134
 #, c-format
 msgid "Error while processing %s from %s (%s)"
 msgstr "Fout tijdens afhandelen %s van %s (%s)"
 
-#: src/protocol.c:138
+#: src/protocol.c:141
 #, c-format
 msgid "Bogus data received from %s (%s)"
 msgstr "Onzinnige data ontvangen van %s (%s)"
 
+#: src/protocol.c:187
+msgid "Already seen request"
+msgstr "Verzoek reeds gezien"
+
+#: src/protocol.c:218
+#, c-format
+msgid "Aging past requests: deleted %d, left %d\n"
+msgstr "Veroudering vorige verzoeken: %d gewist, %d overgebleven\n"
+
 #: src/protocol_auth.c:69 src/protocol_auth.c:224 src/protocol_auth.c:357
-#: src/protocol_auth.c:417 src/protocol_auth.c:530 src/protocol_edge.c:98
-#: src/protocol_edge.c:230 src/protocol_key.c:78 src/protocol_key.c:116
-#: src/protocol_key.c:184 src/protocol_misc.c:61 src/protocol_misc.c:91
-#: src/protocol_misc.c:172 src/protocol_subnet.c:71 src/protocol_subnet.c:160
+#: src/protocol_auth.c:417 src/protocol_auth.c:529 src/protocol_edge.c:98
+#: src/protocol_edge.c:231 src/protocol_key.c:80 src/protocol_key.c:128
+#: src/protocol_key.c:196 src/protocol_misc.c:61 src/protocol_misc.c:91
+#: src/protocol_misc.c:177 src/protocol_subnet.c:71 src/protocol_subnet.c:163
 #, c-format
 msgid "Got bad %s from %s (%s)"
 msgstr "Kreeg verkeerde %s van %s (%s)"
 
 #: src/protocol_auth.c:77 src/protocol_edge.c:106 src/protocol_edge.c:112
-#: src/protocol_edge.c:239 src/protocol_edge.c:245 src/protocol_subnet.c:79
-#: src/protocol_subnet.c:87 src/protocol_subnet.c:168
-#: src/protocol_subnet.c:186
+#: src/protocol_edge.c:240 src/protocol_edge.c:246 src/protocol_subnet.c:79
+#: src/protocol_subnet.c:87 src/protocol_subnet.c:171
+#: src/protocol_subnet.c:189
 #, c-format
 msgid "Got bad %s from %s (%s): %s"
 msgstr "Kreeg verkeerde %s van %s (%s): %s"
@@ -637,7 +646,7 @@ msgstr "Ontving willekeurige meta key (niet versleuteld): %s"
 msgid "%s (%s) uses unknown cipher!"
 msgstr "%s (%s) gebruikt onbekende cipher!"
 
-#: src/protocol_auth.c:296 src/protocol_key.c:255
+#: src/protocol_auth.c:296 src/protocol_key.c:267
 #, c-format
 msgid "Node %s (%s) uses unknown digest!"
 msgstr "Node %s (%s) gebruikt onbekende digest!"
@@ -660,60 +669,60 @@ msgstr "verkeerd antwoord op uitdaging"
 msgid "Expected challenge reply: %s"
 msgstr "Verwachtte antwoord op uitdaging: %s"
 
-#: src/protocol_auth.c:550
+#: src/protocol_auth.c:549
 #, c-format
 msgid "Established a second connection with %s (%s), closing old connection"
 msgstr "Tweede verbinding met %s (%s) gemaakt, oude verbinding wordt gesloten"
 
-#: src/protocol_auth.c:586
+#: src/protocol_auth.c:585
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Verbinding met %s (%s) geactiveerd"
 
-#: src/protocol_edge.c:106 src/protocol_edge.c:112 src/protocol_edge.c:239
-#: src/protocol_edge.c:245 src/protocol_subnet.c:79 src/protocol_subnet.c:168
+#: src/protocol_edge.c:106 src/protocol_edge.c:112 src/protocol_edge.c:240
+#: src/protocol_edge.c:246 src/protocol_subnet.c:79 src/protocol_subnet.c:171
 msgid "invalid name"
 msgstr "ongeldige naam"
 
-#: src/protocol_edge.c:157
+#: src/protocol_edge.c:160
 #, c-format
 msgid "Got %s from %s (%s) for ourself which does not match existing entry"
 msgstr ""
 "Kreeg %s van %s (%s) voor onszelf welke niet overeenkomt met reeds bekende"
 
-#: src/protocol_edge.c:164
+#: src/protocol_edge.c:167
 #, c-format
 msgid "Got %s from %s (%s) which does not match existing entry"
 msgstr "Kreeg %s van %s (%s) welke niet overeenkomt met reeds bekende"
 
-#: src/protocol_edge.c:174
+#: src/protocol_edge.c:177
 #, c-format
 msgid "Got %s from %s (%s) for ourself which does not exist"
 msgstr "Kreeg %s van %s (%s) voor onszelf welke niet bestaat"
 
-#: src/protocol_edge.c:256 src/protocol_edge.c:265 src/protocol_edge.c:276
+#: src/protocol_edge.c:260 src/protocol_edge.c:269 src/protocol_edge.c:280
 #, c-format
 msgid "Got %s from %s (%s) which does not appear in the edge tree"
 msgstr "Kreeg %s van %s (%s) welke niet voorkomt in de edge tree"
 
-#: src/protocol_edge.c:283 src/protocol_subnet.c:115 src/protocol_subnet.c:211
+#: src/protocol_edge.c:287 src/protocol_subnet.c:118 src/protocol_subnet.c:217
 #, c-format
 msgid "Got %s from %s (%s) for ourself"
 msgstr "Kreeg %s van %s (%s) voor onszelf"
 
-#: src/protocol_key.c:87
+#: src/protocol_key.c:92
 #, c-format
 msgid "Got %s from %s (%s) origin %s which does not exist"
 msgstr "Kreeg %s van %s (%s) herkomst %s welke niet bestaat"
 
-#: src/protocol_key.c:125 src/protocol_key.c:193
+#: src/protocol_key.c:137 src/protocol_key.c:205
 #, c-format
 msgid ""
 "Got %s from %s (%s) origin %s which does not exist in our connection list"
 msgstr ""
 "Kreeg %s van %s (%s) herkomst %s welke niet voorkomt in de verbindingslijst"
 
-#: src/protocol_key.c:134 src/protocol_key.c:202
+#: src/protocol_key.c:146 src/protocol_key.c:214
 #, c-format
 msgid ""
 "Got %s from %s (%s) destination %s which does not exist in our connection "
@@ -721,17 +730,17 @@ msgid ""
 msgstr ""
 "Kreeg %s van %s (%s) doel %s welke niet voorkomt in de verbindingslijst"
 
-#: src/protocol_key.c:234
+#: src/protocol_key.c:246
 #, c-format
 msgid "Node %s (%s) uses unknown cipher!"
 msgstr "Node %s (%s) gebruikt onbekende cipher!"
 
-#: src/protocol_key.c:239
+#: src/protocol_key.c:251
 #, c-format
 msgid "Node %s (%s) uses wrong keylength!"
 msgstr "Node %s (%s) gebruikt verkeerde lengte sleutel!"
 
-#: src/protocol_key.c:260
+#: src/protocol_key.c:272
 #, c-format
 msgid "Node %s (%s) uses bogus MAC length!"
 msgstr "Node %s (%s) gebruikt onzinnige MAC lengte!"
@@ -746,16 +755,16 @@ msgstr "Statusmelding van %s (%s): %s: %s"
 msgid "Error message from %s (%s): %s: %s"
 msgstr "Foutmelding van %s (%s): %s: %s"
 
-#: src/protocol_subnet.c:87 src/protocol_subnet.c:186
+#: src/protocol_subnet.c:87 src/protocol_subnet.c:189
 msgid "invalid subnet string"
 msgstr "ongeldige subnet string"
 
-#: src/protocol_subnet.c:177
+#: src/protocol_subnet.c:180
 #, c-format
 msgid "Got %s from %s (%s) for %s which is not in our node tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in de node boom"
 
-#: src/protocol_subnet.c:201
+#: src/protocol_subnet.c:207
 #, c-format
 msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in zijn subnet boom"
@@ -836,8 +845,9 @@ msgstr ""
 msgid ""
 "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, "
 "USR1, USR2, WINCH, INT or ALRM.\n"
-msgstr "Ongeldig argument `%s'; SIGNAAL moet een getal zijn of één van HUP, TERM, KILL, "
-"USR1, USR2, WINCH, INT of ALRM.\n"
+msgstr ""
+"Ongeldig argument `%s'; SIGNAAL moet een getal zijn of één van HUP, TERM, "
+"KILL, USR1, USR2, WINCH, INT of ALRM.\n"
 
 #: src/tincd.c:184
 #, c-format
@@ -912,118 +922,118 @@ msgstr "Onherstelbare fout"
 msgid "Restarting in %d seconds!"
 msgstr "Herstart in %d seconden!"
 
-#: src/process.c:363 src/tincd.c:396
+#: src/process.c:371 src/tincd.c:396
 msgid "Not restarting."
 msgstr "Geen herstart."
 
-#: src/process.c:68
+#: src/process.c:69
 #, c-format
 msgid "Memory exhausted (couldn't allocate %d bytes), exitting."
 msgstr "Geheugen uitgeput (kon geen %d bytes reserveren), beëindigen."
 
-#: src/process.c:98
+#: src/process.c:100
 msgid "Terminating"
 msgstr "Beëindigen"
 
-#: src/process.c:114
+#: src/process.c:116
 #, c-format
 msgid "A tincd is already running for net `%s' with pid %d.\n"
 msgstr "Een tincd draait al voor net `%s' met pid %d.\n"
 
-#: src/process.c:117
+#: src/process.c:119
 #, c-format
 msgid "A tincd is already running with pid %d.\n"
 msgstr "Een tincd draait al met pid %d.\n"
 
-#: src/process.c:138
+#: src/process.c:140
 #, c-format
 msgid "No other tincd is running for net `%s'.\n"
 msgstr "Geen andere tincd draait voor net `%s'.\n"
 
-#: src/process.c:140
+#: src/process.c:142
 msgid "No other tincd is running.\n"
 msgstr "Geen andere tincd draait.\n"
 
-#: src/process.c:149
+#: src/process.c:151
 #, c-format
 msgid "The tincd for net `%s' is no longer running. "
 msgstr "De tincd voor net `%s' draait niet meer. "
 
-#: src/process.c:151
+#: src/process.c:153
 msgid "The tincd is no longer running. "
 msgstr "De tincd draait niet meer. "
 
-#: src/process.c:153
+#: src/process.c:155
 msgid "Removing stale lock file.\n"
 msgstr "Verwijdering oud vergrendelingsbestand.\n"
 
-#: src/process.c:181
+#: src/process.c:183
 #, c-format
 msgid "Couldn't detach from terminal: %s"
 msgstr "Kon niet ontkoppelen van terminal: %s"
 
-#: src/process.c:194
+#: src/process.c:196
 #, c-format
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) start, debug niveau %d"
 
-#: src/process.c:197
+#: src/process.c:199
 #, c-format
 msgid "tincd %s starting"
 msgstr "tincd %s wordt gestart"
 
-#: src/process.c:272
+#: src/process.c:280
 #, c-format
 msgid "Executing script %s"
 msgstr "Uitvoeren script %s"
 
-#: src/process.c:280
+#: src/process.c:288
 #, c-format
 msgid "Process %d (%s) exited with non-zero status %d"
 msgstr "Proces %d (%s) beëindigde met status %d"
 
-#: src/process.c:288
+#: src/process.c:296
 #, c-format
 msgid "Process %d (%s) was killed by signal %d (%s)"
 msgstr "Proces %d (%s) was gestopt door signaal %d (%s)"
 
-#: src/process.c:294
+#: src/process.c:302
 #, c-format
 msgid "Process %d (%s) terminated abnormally"
 msgstr "Proces %d (%s) abnormaal beëindigd"
 
-#: src/process.c:319
+#: src/process.c:327
 msgid "Got TERM signal"
 msgstr "Kreeg TERM signaal"
 
-#: src/process.c:328
+#: src/process.c:336
 msgid "Got QUIT signal"
 msgstr "Kreeg QUIT signaal"
 
-#: src/process.c:335
+#: src/process.c:343
 #, c-format
 msgid "Got another fatal signal %d (%s): not restarting."
 msgstr "Kreeg nog een fataal signaal %s (%s): geen herstart."
 
-#: src/process.c:344
+#: src/process.c:352
 #, c-format
 msgid "Got fatal signal %d (%s)"
 msgstr "Kreeg fataal signaal %d (%s)"
 
-#: src/process.c:349
+#: src/process.c:357
 msgid "Trying to re-execute in 5 seconds..."
 msgstr "Poging tot herstarten over 5 seconden..."
 
-#: src/process.c:372
+#: src/process.c:380
 msgid "Got HUP signal"
 msgstr "Kreeg HUP signaal"
 
-#: src/process.c:381
+#: src/process.c:389
 #, c-format
 msgid "Reverting to old debug level (%d)"
 msgstr "Herstellen van oud debug niveau (%d)"
 
-#: src/process.c:388
+#: src/process.c:396
 #, c-format
 msgid ""
 "Temporarily setting debug level to 5.  Kill me with SIGINT again to go back "
@@ -1032,41 +1042,41 @@ msgstr ""
 "Tijdelijk instellen debug niveau op 5. Zend nog een SIGINT signaal om niveau "
 "%d te herstellen."
 
-#: src/process.c:399
+#: src/process.c:407
 msgid "Got ALRM signal"
 msgstr "Kreeg ALRM signaal"
 
-#: src/process.c:428
+#: src/process.c:436
 #, c-format
 msgid "Got unexpected signal %d (%s)"
 msgstr "Kreeg onverwacht signaal %d (%s)"
 
-#: src/process.c:437
+#: src/process.c:445
 #, c-format
 msgid "Ignored signal %d (%s)"
 msgstr "Signaal %d (%s) genegeerd"
 
-#: src/process.c:494
+#: src/process.c:502
 #, c-format
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
 
-#: src/route.c:77
+#: src/route.c:73
 #, c-format
 msgid "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx"
 msgstr "Nieuw MAC adres %hx:%hx:%hx:%hx:%hx:%hx geleerd"
 
-#: src/route.c:111
+#: src/route.c:107
 #, c-format
 msgid "MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"
 msgstr "MAC adres %hx:%hx:%hx:%hx:%hx:%hx verlopen"
 
-#: src/route.c:156
+#: src/route.c:152
 #, c-format
 msgid "Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: onbekend IPv4 doeladres %d.%d.%d.%d"
 
-#: src/route.c:176
+#: src/route.c:172
 #, c-format
 msgid ""
 "Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%"
@@ -1075,34 +1085,37 @@ msgstr ""
 "Kan pakket niet routeren: onbekend IPv6 doeladres %hx:%hx:%hx:%hx:%hx:%hx:%"
 "hx:%hx"
 
-#: src/route.c:237
+#: src/route.c:233
 msgid ""
 "Cannot route packet: received unknown type neighbor solicitation request"
-msgstr "Kan pakket niet routeren: ontvangst van onbekend type neighbor solicitation verzoek"
+msgstr ""
+"Kan pakket niet routeren: ontvangst van onbekend type neighbor solicitation "
+"verzoek"
 
-#: src/route.c:258
+#: src/route.c:254
 msgid "Cannot route packet: checksum error for neighbor solicitation request"
-msgstr "Kan pakket niet routeren: checksum fout voor neighbor solicitation verzoek"
+msgstr ""
+"Kan pakket niet routeren: checksum fout voor neighbor solicitation verzoek"
 
-#: src/route.c:270
+#: src/route.c:266
 #, c-format
 msgid ""
 "Cannot route packet: neighbor solicitation request for unknown address %hx:%"
 "hx:%hx:%hx:%hx:%hx:%hx:%hx"
 msgstr ""
-"Kan pakket niet routeren: neighbor solicitation verzoek voor onbekend adres "
-"%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"
+"Kan pakket niet routeren: neighbor solicitation verzoek voor onbekend adres %"
+"hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"
 
-#: src/route.c:345
+#: src/route.c:341
 msgid "Cannot route packet: received unknown type ARP request"
 msgstr "Kan pakket niet routeren: ontvangst van onbekend type ARP verzoek"
 
-#: src/route.c:358
+#: src/route.c:354
 #, c-format
 msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 
-#: src/route.c:415
+#: src/route.c:411
 #, c-format
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"
@@ -1114,10 +1127,10 @@ msgstr "Nodes:"
 #: src/node.c:166
 #, c-format
 msgid ""
-" %s at %s cipher %d digest %d maclength %d compression %d options %ld status "
+" %s at %s cipher %d digest %d maclength %d compression %d options %lx status "
 "%04x nexthop %s via %s"
 msgstr ""
-" %s op %s cipher %d digest %d maclengte %d compressie %d opties %ld status %"
+" %s op %s cipher %d digest %d maclengte %d compressie %d opties %lx status %"
 "04x nexthop %s via %s"
 
 #: src/node.c:171
@@ -1130,19 +1143,19 @@ msgstr "Edges:"
 
 #: src/edge.c:204
 #, c-format
-msgid " %s tcp at %s udp at %s - %s tcp at %s udp at %s options %ld weight %d"
-msgstr " %s tcp op %s udp op %s - %s tcp op %s udp op %s opties %ld gewicht %d"
+msgid " %s at %s - %s at %s options %lx weight %d"
+msgstr " %s op %s - %s op %s opties %lx gewicht %d"
 
 #: src/edge.c:214
 msgid "End of edges."
 msgstr "Einde van edges."
 
-#: src/graph.c:231
+#: src/graph.c:261
 #, c-format
 msgid "Node %s (%s) became reachable"
 msgstr "Node %s (%s) werd bereikbaar"
 
-#: src/graph.c:240
+#: src/graph.c:273
 #, c-format
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"
@@ -1166,49 +1179,49 @@ msgstr "Oud ioctl() verzoek was nodig voor %s"
 msgid "Linux ethertap device"
 msgstr "Linux ethertap apparaat"
 
-#: src/freebsd/device.c:87 src/linux/device.c:135 src/netbsd/device.c:90
+#: src/freebsd/device.c:87 src/linux/device.c:136 src/netbsd/device.c:90
 #: src/openbsd/device.c:90 src/solaris/device.c:132
 #, c-format
 msgid "%s is a %s"
 msgstr "%s is een %s"
 
-#: src/freebsd/device.c:108 src/linux/device.c:158 src/linux/device.c:168
+#: src/freebsd/device.c:108 src/linux/device.c:159 src/linux/device.c:169
 #: src/netbsd/device.c:111 src/openbsd/device.c:111 src/solaris/device.c:149
 #, c-format
 msgid "Error while reading from %s %s: %s"
 msgstr "Fout tijdens lezen van %s %s: %s"
 
-#: src/freebsd/device.c:117 src/linux/device.c:179 src/netbsd/device.c:126
+#: src/freebsd/device.c:117 src/linux/device.c:180 src/netbsd/device.c:126
 #: src/openbsd/device.c:126 src/solaris/device.c:164
 #, c-format
 msgid "Read packet of %d bytes from %s"
 msgstr "Pakket van %d bytes gelezen van %s"
 
-#: src/freebsd/device.c:128 src/linux/device.c:190 src/netbsd/device.c:139
+#: src/freebsd/device.c:128 src/linux/device.c:191 src/netbsd/device.c:139
 #: src/openbsd/device.c:139 src/solaris/device.c:175
 #, c-format
 msgid "Writing packet of %d bytes to %s"
 msgstr "Pakket van %d bytes geschreven naar %s"
 
-#: src/linux/device.c:197 src/linux/device.c:206 src/netbsd/device.c:149
+#: src/linux/device.c:198 src/linux/device.c:207 src/netbsd/device.c:149
 #: src/openbsd/device.c:149 src/solaris/device.c:180
 #, c-format
 msgid "Can't write to %s %s: %s"
 msgstr "Kan niet schrijven naar %s %s: %s"
 
-#: src/freebsd/device.c:144 src/linux/device.c:219 src/netbsd/device.c:160
+#: src/freebsd/device.c:144 src/linux/device.c:220 src/netbsd/device.c:160
 #: src/openbsd/device.c:160 src/solaris/device.c:192
 #, c-format
 msgid "Statistics for %s %s:"
 msgstr "Statistieken voor %s %s:"
 
-#: src/freebsd/device.c:145 src/linux/device.c:220 src/netbsd/device.c:161
+#: src/freebsd/device.c:145 src/linux/device.c:221 src/netbsd/device.c:161
 #: src/openbsd/device.c:161 src/solaris/device.c:193
 #, c-format
 msgid " total bytes in:  %10d"
 msgstr " totaal aantal bytes in:  %10d"
 
-#: src/freebsd/device.c:146 src/linux/device.c:221 src/netbsd/device.c:162
+#: src/freebsd/device.c:146 src/linux/device.c:222 src/netbsd/device.c:162
 #: src/openbsd/device.c:162 src/solaris/device.c:194
 #, c-format
 msgid " total bytes out: %10d"
