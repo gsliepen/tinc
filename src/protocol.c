@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.88 2001/05/24 21:29:09 guus Exp $
+    $Id: protocol.c,v 1.28.4.89 2001/05/24 21:52:26 guus Exp $
 */
 
 #include "config.h"
@@ -67,6 +67,8 @@
 #include "connection.h"
 
 #include "system.h"
+
+int mykeyused = 0;
 
 int check_id(char *id)
 {
@@ -1101,13 +1103,21 @@ int send_key_changed(connection_t *from, connection_t *cl)
   connection_t *p;
   avl_node_t *node;
 cp
-  for(node = connection_tree->head; node; node = node->next)
+  /* Only send this message if some other daemon requested our key previously.
+     This reduces unnecessary key_changed broadcasts.
+  */
+
+  if(mykeyused)
     {
-      p = (connection_t *)node->data;
-      if(p != cl && p->status.meta && p->status.active)
-        if(!(p->options & OPTION_INDIRECT) || from == myself)
-          send_request(p, "%d %s", KEY_CHANGED, from->name);
-    }
+      for(node = connection_tree->head; node; node = node->next)
+        {
+          p = (connection_t *)node->data;
+          if(p != cl && p->status.meta && p->status.active)
+            if(!(p->options & OPTION_INDIRECT) || from == myself)
+              send_request(p, "%d %s", KEY_CHANGED, from->name);
+        }
+    mykeyused = 0;
+  }
 cp
   return 0;
 }
@@ -1170,11 +1180,12 @@ cp
 
   /* Check if this key request is for us */
 
-  if(!strcmp(to_id, myself->name))
+  if(!strcmp(to_id, myself->name))	/* Yes, send our own key back */
     {
       bin2hex(myself->cipher_pktkey, pktkey, myself->cipher_pktkeylength);
       pktkey[myself->cipher_pktkeylength*2] = '\0';
       send_ans_key(myself, from, pktkey);
+      mykeyused = 1;
     }
   else
     {
