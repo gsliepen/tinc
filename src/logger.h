@@ -20,7 +20,7 @@ typedef enum logmode_t {
 	LOGMODE_SYSLOG
 } logmode_t;
 
-#ifndef HAVE_SYSLOG
+#ifndef HAVE_SYSLOG_H
 enum {
 	LOG_EMERG,
 	LOG_ALERT,

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.23 2003/07/24 12:08:15 guus Exp $
+    $Id: edge.c,v 1.1.2.24 2003/07/29 10:50:15 guus Exp $
 */
 
 #include "system.h"
@@ -123,7 +123,7 @@ void edge_del(edge_t *e)
 	avl_delete(edge_weight_tree, e);
 }
 
-edge_t *lookup_edge(const node_t *from, const node_t *to)
+edge_t *lookup_edge(node_t *from, node_t *to)
 {
 	edge_t v = {
 		.from = from,

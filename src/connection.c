@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.42 2003/07/24 12:08:15 guus Exp $
+    $Id: connection.c,v 1.1.2.43 2003/07/29 10:50:15 guus Exp $
 */
 
 #include "system.h"
@@ -122,7 +122,7 @@ void dump_connections(void)
 	for(node = connection_tree->head; node; node = node->next) {
 		c = (connection_t *) node->data;
 		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
-			   c->name, c->hostname, c->options, c->socket, c->status);
+			   c->name, c->hostname, c->options, c->socket, *(uint32_t *)&c->status);
 	}
 
 	logger(LOG_DEBUG, _("End of connections."));

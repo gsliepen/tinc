@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.41 2003/07/24 12:08:16 guus Exp $
+    $Id: protocol.h,v 1.5.4.42 2003/07/29 10:50:15 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -67,7 +67,7 @@ extern bool check_id(const char *);
 
 extern void init_requests(void);
 extern void exit_requests(void);
-extern bool seen_request(const char *);
+extern bool seen_request(char *);
 extern void age_past_requests(void);
 
 /* Requests */

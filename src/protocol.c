@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.143 2003/07/24 12:08:15 guus Exp $
+    $Id: protocol.c,v 1.28.4.144 2003/07/29 10:50:15 guus Exp $
 */
 
 #include "system.h"
@@ -207,7 +207,7 @@ void exit_requests(void)
 	avl_delete_tree(past_request_tree);
 }
 
-bool seen_request(const char *request)
+bool seen_request(char *request)
 {
 	past_request_t p = {
 		.request = request,

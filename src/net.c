@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.193 2003/07/23 22:17:31 guus Exp $
+    $Id: net.c,v 1.35.4.194 2003/07/29 10:50:15 guus Exp $
 */
 
 #include "system.h"
@@ -206,7 +206,7 @@ static void check_dead_connections(void)
 			} else {
 				if(c->status.remove) {
 					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
-						   c->name, c->hostname, c->status);
+						   c->name, c->hostname, *(uint32_t *)&c->status);
 					connection_del(c);
 					continue;
 				}

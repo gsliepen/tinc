@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.24 2003/07/24 12:08:15 guus Exp $
+    $Id: node.c,v 1.1.2.25 2003/07/29 10:50:15 guus Exp $
 */
 
 #include "system.h"
@@ -143,7 +143,7 @@ void node_del(node_t *n)
 	avl_delete(node_udp_tree, n);
 }
 
-node_t *lookup_node(const char *name)
+node_t *lookup_node(char *name)
 {
 	node_t n = {
 		.name = name,
@@ -180,7 +180,7 @@ void dump_nodes(void)
 		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
-			   n->options, n->status, n->nexthop ? n->nexthop->name : "-",
+			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-");
 	}
 

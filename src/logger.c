@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logger.c,v 1.1.2.6 2003/07/28 22:06:09 guus Exp $
+    $Id: logger.c,v 1.1.2.7 2003/07/29 10:50:15 guus Exp $
 */
 
 #include "system.h"
@@ -47,7 +47,7 @@ void openlogger(const char *ident, logmode_t mode) {
 				logmode = LOGMODE_NULL;
 			break;
 		case LOGMODE_SYSLOG:
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_SYSLOG_H
 			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
 			break;
 #endif
@@ -72,7 +72,7 @@ void logger(int priority, const char *format, ...) {
 			fprintf(logfile, "\n");
 			break;
 		case LOGMODE_SYSLOG:
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_SYSLOG_H
 #ifdef HAVE_VSYSLOG
 			vsyslog(priority, format, ap);
 #else
@@ -97,7 +97,7 @@ void closelogger(void) {
 			fclose(logfile);
 			break;
 		case LOGMODE_SYSLOG:
-#ifdef HAVE_SYSLOG
+#ifdef HAVE_SYSLOG_H
 			closelog();
 			break;
 #endif
