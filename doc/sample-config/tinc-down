@@ -1,0 +1,7 @@
+#!/bin/sh
+# This file closes down the tap device.
+# Note that if you use the universal tun/tap driver, you don't
+# need to do anything; once tinc quits the tap device is already
+# removed by the kernel.
+
+ifconfig tap0 down

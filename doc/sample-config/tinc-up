@@ -1,0 +1,14 @@
+#!/bin/sh
+# This file sets up the tap device.
+# It gives you the freedom to do anything you want with it.
+# Use the correct name for the tap device:
+# For ethertap this is tap0, tap1, tap2 etcetera,
+# but for the universal tun/tap device use $NETNAME.
+
+# Set hardware ethernet address (required!)
+ifconfig tap0 hw ether fe:fd:0:0:0:0
+
+# Give it the right ip and netmask. Remember, the subnet of the
+# tap device must be larger than that of the individual Subnets
+# as defined in the host configuration file!
+ifconfig tap0 192.168.1.1 netmask 255.255.0.0 -arp
