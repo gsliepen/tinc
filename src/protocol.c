@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.67 2000/11/25 13:33:33 guus Exp $
+    $Id: protocol.c,v 1.28.4.68 2000/11/30 23:18:21 zarq Exp $
 */
 
 #include "config.h"
@@ -255,8 +255,8 @@ cp
   if((cfg = get_config_val(cl->config, config_publickey)))
     {
       cl->rsa_key = RSA_new();
-      BN_hex2bn(&cl->rsa_key->n, cfg->data.ptr);
-      BN_hex2bn(&cl->rsa_key->e, "FFFF");
+      if(read_rsa_public_key(&(cl->rsa_key), cfg->data.ptr) < 0)
+	return -1;
     }
   else
     {

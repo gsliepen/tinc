@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.85 2000/11/30 22:48:48 zarq Exp $
+    $Id: net.c,v 1.35.4.86 2000/11/30 23:18:19 zarq Exp $
 */
 
 #include "config.h"
@@ -698,20 +698,40 @@ cp
   return 0;
 }
 
+int read_rsa_public_key(RSA **key, const char *file)
+{
+  FILE *fp;
+
+  if((fp = fopen(file, "r")) == NULL)
+    {
+      syslog(LOG_ERR, _("Error reading RSA public key file `%s': %m"),
+	     file);
+      return -1;
+    }
+  if(PEM_read_RSAPublicKey(fp, key, NULL, NULL) == NULL)
+    {
+      syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
+	     file);
+      return -1;
+    }
+
+  return 0;
+}
+
 int read_rsa_private_key(RSA **key, const char *file)
 {
   FILE *fp;
 
   if((fp = fopen(file, "r")) == NULL)
     {
-      syslog(LOG_ERR, _("Error reading RSA key file `%s': %m"),
+      syslog(LOG_ERR, _("Error reading RSA private key file `%s': %m"),
 	     file);
       return -1;
     }
   if(PEM_read_RSAPrivateKey(fp, key, NULL, NULL) == NULL)
     {
       syslog(LOG_ERR, _("Reading RSA private key file `%s' failed: %m"),
-	     cfg->data.ptr);
+	     file);
       return -1;
     }
 
@@ -771,15 +791,7 @@ cp
       return -1;
     }
 cp  
-  if(!(cfg = get_config_val(myself->config, config_publickey)))
-    {
-      syslog(LOG_ERR, _("Public key for tinc daemon required!"));
-      return -1;
-    }
-  else
-    {
-      BN_hex2bn(&myself->rsa_key->n, cfg->data.ptr);
-    }
+
 /*
   if(RSA_check_key(myself->rsa_key) != 1)
     {
