@@ -794,7 +794,7 @@ cp
   if(rp.len >= 0)
     {
       f = lookup_conn(rp.from);
-      if(debug_lvl > 2)
+      if(debug_lvl > 3)
 	syslog(LOG_DEBUG, "packet from " IP_ADDR_S " (len %d)",
 	       IP_ADDR_V(rp.from), rp.len);
       if(!f)
@@ -1061,10 +1061,10 @@ cp
   from = ntohl(*((unsigned long*)(&vp.data[26])));
   to = ntohl(*((unsigned long*)(&vp.data[30])));
 
-  if(debug_lvl > 2)
+  if(debug_lvl > 3)
     syslog(LOG_DEBUG, "An IP packet (%04x) for " IP_ADDR_S " from " IP_ADDR_S,
 	   ether_type, IP_ADDR_V(to), IP_ADDR_V(from));
-  if(debug_lvl > 3)
+  if(debug_lvl > 4)
     syslog(LOG_DEBUG, MAC_ADDR_S " to " MAC_ADDR_S,
 	   MAC_ADDR_V(vp.data[0]), MAC_ADDR_V(vp.data[6]));
   
