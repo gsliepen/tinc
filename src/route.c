@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.70 2003/12/12 19:52:25 guus Exp $
+    $Id: route.c,v 1.1.2.71 2003/12/13 21:50:26 guus Exp $
 */
 
 #include "system.h"
@@ -53,7 +53,6 @@
 rmode_t routing_mode = RMODE_ROUTER;
 bool priorityinheritance = false;
 int macexpire = 600;
-int multicastexpire = 375;
 bool overwrite_mac = false;
 mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
 
@@ -70,7 +69,7 @@ static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
 /* RFC 1071 */
 
-static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
+static __inline__ uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 {
 	uint16_t *p = data;
 	uint32_t checksum = prevsum ^ 0xFFFF;
@@ -89,7 +88,7 @@ static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 	return ~checksum;
 }
 
-static bool ratelimit(int frequency) {
+static __inline__ bool ratelimit(int frequency) {
 	static time_t lasttime = 0;
 	static int count = 0;
 	
@@ -104,7 +103,7 @@ static bool ratelimit(int frequency) {
 	return false;
 }
 
-static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
+static __inline__ bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 	if(packet->len < length) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Got too short packet from %s (%s)"), source->name, source->hostname);
 		return false;
@@ -112,7 +111,7 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 		return true;
 }
 	
-static void learn_mac(mac_t *address)
+static __inline__ void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
 	avl_node_t *node;
@@ -177,7 +176,7 @@ void age_subnets(void)
 	}
 }
 
-static void route_mac(node_t *source, vpn_packet_t *packet)
+static __inline__ void route_mac(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -274,7 +273,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	send_packet(source, packet);
 }
 
-static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
+static __inline__ void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -308,19 +307,12 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 	send_packet(subnet->owner, packet);
 }
 
-static void route_ipv4(node_t *source, vpn_packet_t *packet)
+static __inline__ void route_ipv4(node_t *source, vpn_packet_t *packet)
 {
 	cp();
 
 	if(!checklength(source, packet, ether_size + ip_size))
 		return;
-
-#if 0
-	if(packet->data[30] & 0xf0 == 0xe0) {
-		route_ipv4_multicast(source, packet);
-		return;
-	}
-#endif
 
 	route_ipv4_unicast(source, packet);
 }
@@ -401,7 +393,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	send_packet(source, packet);
 }
 
-static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
+static __inline__ void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -435,33 +427,6 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 	
 	send_packet(subnet->owner, packet);
 }
-
-#ifdef ENABLE_MULTICAST
-static void route_ipv6_multicast(node_t *source, vpn_packet_t *packet)
-{
-	avl_node_t *node;
-	subnet_t *subnet, search = {0};
-
-	cp();
-
-	search.type = SUBNET_IPV6;
-	search.net.ipv6.address = *(ipv6_t *)(packet->data + ether_size + ip6_size + icmp6_size);
-	search.net.ipv6.prefixlength = 128;
-	search.owner = NULL;
-
-	ifdebug(TRAFFIC) logger(LOG_INFO, _("Multicasting packet of %d bytes from %s (%s)"), packet->len, source->name, source->hostname);
-
-	for(node = avl_search_closest_smaller_node(myself->subnet_tree, &search); node; node = node->next) {
-		subnet = node->data;
-		
-		if(subnet->type != SUBNET_IPV6 || memcmp(&subnet->net.ipv6.address, packet->data + ether_size + ip6_size + icmp6_size, sizeof(ipv6_t)))
-			break;
-		
-		if(subnet->owner != source)
-			send_packet(subnet->owner, packet);
-	}
-}
-#endif
 
 /* RFC 2461 */
 
@@ -591,101 +556,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 	send_packet(source, packet);
 }
 
-/* RFC 2710 */
-
-#ifdef ENABLE_MULTICAST
-static void route_membershipreport(node_t *source, vpn_packet_t *packet)
-{
-	struct ip6_hdr ip6;
-	struct icmp6_hdr icmp6;
-	subnet_t *subnet, search = {0};
-	uint16_t checksum;
-
-	struct {
-		struct in6_addr ip6_src;	/* source address */
-		struct in6_addr ip6_dst;	/* destination address */
-		uint32_t length;
-		uint32_t next;
-	} pseudo;
-
-	cp();
-
-	if(!checklength(source, packet, ether_size + ip6_size + icmp6_size + sizeof(ipv6_t)))
-		return;
-	
-	if(source != myself) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Got membership report from %s (%s) while in router mode!"), source->name, source->hostname);
-		return;
-	}
-
-	/* Copy headers from packet to structs on the stack */
-
-	memcpy(&ip6, packet->data + ether_size, ip6_size);
-	memcpy(&icmp6, packet->data + ether_size + ip6_size + 8, icmp6_size);
-
-	/* Create pseudo header */
-
-	pseudo.ip6_src = ip6.ip6_src;
-	pseudo.ip6_dst = ip6.ip6_dst;
-	pseudo.length = htonl(icmp6_size + sizeof(ipv6_t));
-	pseudo.next = htonl(IPPROTO_ICMPV6);
-
-	/* Generate checksum */
-
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
-	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
-	checksum = inet_checksum(packet->data + ether_size + ip6_size + 8 + icmp6_size, sizeof(ipv6_t), checksum);
-
-	if(checksum) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: checksum error for membership report"));
-		return;
-	}
-
-	/* Check if the IPv6 address exists on the VPN */
-
-	search.type = SUBNET_IPV6;
-	search.net.ipv6.address = *(ipv6_t *)(packet->data + ether_size + ip6_size + 8 + icmp6_size);
-	search.net.ipv6.prefixlength = 128;
-	search.owner = myself;
-
-	subnet = avl_search(myself->subnet_tree, &search);
-
-	if(!subnet) {
-		avl_node_t *node;
-		connection_t *c;
-
-		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Learned new IPv6 multicast address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
-				ntohs(*(uint16_t *) &packet->data[70]),
-				ntohs(*(uint16_t *) &packet->data[72]),
-				ntohs(*(uint16_t *) &packet->data[74]),
-				ntohs(*(uint16_t *) &packet->data[76]),
-				ntohs(*(uint16_t *) &packet->data[78]),
-				ntohs(*(uint16_t *) &packet->data[80]),
-				ntohs(*(uint16_t *) &packet->data[82]),
-				ntohs(*(uint16_t *) &packet->data[84]));
-
-		subnet = new_subnet();
-		subnet->type = SUBNET_IPV6;
-		subnet->net.ipv6.address = *(ipv6_t *)(packet->data + ether_size + ip6_size + 8 + icmp6_size);
-		subnet->net.ipv6.prefixlength = 128;
-		subnet->expires = now + multicastexpire;
-		subnet_add(myself, subnet);
-
-		/* And tell all other tinc daemons it's ours */
-
-		for(node = connection_tree->head; node; node = node->next) {
-			c = node->data;
-			if(c->status.active)
-				send_add_subnet(c, subnet);
-		}
-	}
-
-	if(subnet->expires)
-		subnet->expires = now + multicastexpire;
-}
-#endif
-
-static void route_ipv6(node_t *source, vpn_packet_t *packet)
+static __inline__ void route_ipv6(node_t *source, vpn_packet_t *packet)
 {
 	cp();
 
@@ -696,20 +567,6 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet)
 		route_neighborsol(source, packet);
 		return;
 	}
-
-#ifdef ENABLE_MULTICAST 
-	if(packet->data[20] == IPPROTO_HOPOPTS && checklength(source, packet, ether_size + ip6_size + 8)
-			&& packet->data[54] == IPPROTO_ICMPV6 && checklength(source, packet, ether_size + ip6_size + 8 + icmp6_size)
-			&& packet->data[62] == ICMP6_MEMBERSHIP_REPORT) {
-		route_membershipreport(source, packet);
-		return;
-	}
-	
-	if(packet->data[38] == 0xff && packet->data[39] & 0x0c) {
-		route_ipv6_multicast(source, packet);
-		return;
-	}
-#endif
 
 	route_ipv6_unicast(source, packet);
 }
