@@ -14,6 +14,7 @@
 #include "ipv4.h"
 #include "ipv6.h"
 #include "fake-getaddrinfo.h"
+#include "xalloc.h"
 
 #ifndef HAVE_GAI_STRERROR
 char *gai_strerror(int ecode)
