@@ -25,3 +25,9 @@ cvs-clean: maintainer-clean
 
 deb:
 	dpkg-buildpackage -rfakeroot
+
+rpm: dist
+	cp $(distdir).tar.gz /usr/src/redhat/SOURCES/
+	cp redhat/tinc.spec /usr/src/redhat/SOURCES/
+	cd /usr/src/redhat/SOURCES/
+	rpm -bi tinc.spec
