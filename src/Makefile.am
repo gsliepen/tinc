@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.7 2002/04/11 20:18:02 zarq Exp $
+# $Id: Makefile.am,v 1.8 2002/04/13 11:14:50 zarq Exp $
 
 SUBDIRS = pokey
 
@@ -7,13 +7,13 @@ sbin_PROGRAMS = tincd
 
 EXTRA_DIST = linux/device.c freebsd/device.c openbsd/device.c solaris/device.c
 
-tincd_SOURCES = conf.c connection.c device.c edge.c event.c graph.c meta.c net.c net_packet.c net_setup.c	\
+tincd_SOURCES = conf.c connection.c device.c edge.c event.c graph.c logging.c meta.c net.c net_packet.c net_setup.c	\
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
 	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib -I$(top_srcdir)/intl
 
-noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h meta.h net.h netutl.h node.h process.h	\
+noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logging.h meta.h net.h netutl.h node.h process.h	\
 	protocol.h route.h subnet.h
 
 LIBS = @LIBS@ @INTLLIBS@
