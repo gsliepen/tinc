@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.201 2003/11/17 15:30:17 guus Exp $
+    $Id: net.c,v 1.35.4.202 2003/12/12 19:52:24 guus Exp $
 */
 
 #include "system.h"
@@ -270,7 +270,7 @@ static void check_network_activity(fd_set * f)
 
 	if(FD_ISSET(device_fd, f)) {
 		if(read_packet(&packet))
-			route_outgoing(&packet);
+			route(myself, &packet);
 	}
 
 	for(node = connection_tree->head; node; node = node->next) {
@@ -367,7 +367,7 @@ int main_loop(void)
 			last_ping_check = now;
 
 			if(routing_mode == RMODE_SWITCH)
-				age_mac();
+				age_subnets();
 
 			age_past_requests();
 

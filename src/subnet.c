@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.51 2003/11/17 15:30:18 guus Exp $
+    $Id: subnet.c,v 1.1.2.52 2003/12/12 19:52:25 guus Exp $
 */
 
 #include "system.h"
@@ -177,15 +177,12 @@ void subnet_del(node_t *n, subnet_t *subnet)
 
 /* Ascii representation of subnets */
 
-subnet_t *str2net(const char *subnetstr)
+bool str2net(subnet_t *subnet, const char *subnetstr)
 {
 	int i, l;
-	subnet_t *subnet;
 	uint16_t x[8];
 
 	cp();
-
-	subnet = new_subnet();
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d",
 			  &x[0], &x[1], &x[2], &x[3], &l) == 5) {
@@ -195,7 +192,7 @@ subnet_t *str2net(const char *subnetstr)
 		for(i = 0; i < 4; i++)
 			subnet->net.ipv4.address.x[i] = x[i];
 
-		return subnet;
+		return true;
 	}
 
 	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
@@ -207,7 +204,7 @@ subnet_t *str2net(const char *subnetstr)
 		for(i = 0; i < 8; i++)
 			subnet->net.ipv6.address.x[i] = htons(x[i]);
 
-		return subnet;
+		return true;
 	}
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu", &x[0], &x[1], &x[2], &x[3]) == 4) {
@@ -217,7 +214,7 @@ subnet_t *str2net(const char *subnetstr)
 		for(i = 0; i < 4; i++)
 			subnet->net.ipv4.address.x[i] = x[i];
 
-		return subnet;
+		return true;
 	}
 
 	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
@@ -228,7 +225,7 @@ subnet_t *str2net(const char *subnetstr)
 		for(i = 0; i < 8; i++)
 			subnet->net.ipv6.address.x[i] = htons(x[i]);
 
-		return subnet;
+		return true;
 	}
 
 	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx",
@@ -238,23 +235,19 @@ subnet_t *str2net(const char *subnetstr)
 		for(i = 0; i < 6; i++)
 			subnet->net.mac.address.x[i] = x[i];
 
-		return subnet;
+		return true;
 	}
 
-	free(subnet);
-
-	return NULL;
+	return false;
 }
 
-char *net2str(const subnet_t *subnet)
+bool net2str(char *netstr, int len, const subnet_t *subnet)
 {
-	char *netstr;
-
 	cp();
 
 	switch (subnet->type) {
 		case SUBNET_MAC:
-			asprintf(&netstr, "%hx:%hx:%hx:%hx:%hx:%hx",
+			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx",
 					 subnet->net.mac.address.x[0],
 					 subnet->net.mac.address.x[1],
 					 subnet->net.mac.address.x[2],
@@ -263,7 +256,7 @@ char *net2str(const subnet_t *subnet)
 			break;
 
 		case SUBNET_IPV4:
-			asprintf(&netstr, "%hu.%hu.%hu.%hu/%d",
+			snprintf(netstr, len, "%hu.%hu.%hu.%hu/%d",
 					 subnet->net.ipv4.address.x[0],
 					 subnet->net.ipv4.address.x[1],
 					 subnet->net.ipv4.address.x[2],
@@ -271,7 +264,7 @@ char *net2str(const subnet_t *subnet)
 			break;
 
 		case SUBNET_IPV6:
-			asprintf(&netstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
+			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
 					 ntohs(subnet->net.ipv6.address.x[0]),
 					 ntohs(subnet->net.ipv6.address.x[1]),
 					 ntohs(subnet->net.ipv6.address.x[2]),
@@ -394,7 +387,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 
 void dump_subnets(void)
 {
-	char *netstr;
+	char netstr[MAXNETSTR];
 	subnet_t *subnet;
 	avl_node_t *node;
 
@@ -404,9 +397,9 @@ void dump_subnets(void)
 
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = node->data;
-		netstr = net2str(subnet);
+		if(!net2str(netstr, sizeof netstr, subnet))
+			continue;
 		logger(LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
-		free(netstr);
 	}
 
 	logger(LOG_DEBUG, _("End of subnet list."));

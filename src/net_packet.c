@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.43 2003/10/11 12:16:12 guus Exp $
+    $Id: net_packet.c,v 1.1.2.44 2003/12/12 19:52:25 guus Exp $
 */
 
 #include "system.h"
@@ -104,7 +104,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
 			   packet->len, n->name, n->hostname);
 
-	route_incoming(n, packet);
+	route(n, packet);
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
@@ -242,8 +242,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 		/* Since packet is on the stack of handle_tap_input(), we have to make a copy of it first. */
 
-		copy = xmalloc(sizeof(vpn_packet_t));
-		memcpy(copy, inpkt, sizeof(vpn_packet_t));
+		*(copy = xmalloc(sizeof(*copy))) = *inpkt;
 
 		list_insert_tail(n->queue, copy);
 
@@ -344,13 +343,13 @@ void send_packet(const node_t *n, vpn_packet_t *packet)
 
 	cp();
 
-	ifdebug(TRAFFIC) logger(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
-			   packet->len, n->name, n->hostname);
-
 	if(n == myself) {
-		ifdebug(TRAFFIC) logger(LOG_NOTICE, _("Packet is looping back to us!"));
+		write_packet(packet);
 		return;
 	}
+
+	ifdebug(TRAFFIC) logger(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
+			   packet->len, n->name, n->hostname);
 
 	if(!n->status.reachable) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Node %s (%s) is not reachable"),

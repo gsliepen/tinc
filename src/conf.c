@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.76 2003/08/28 21:05:10 guus Exp $
+    $Id: conf.c,v 1.9.4.77 2003/12/12 19:52:24 guus Exp $
 */
 
 #include "system.h"
@@ -214,16 +214,14 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result)
 
 bool get_config_subnet(const config_t *cfg, subnet_t ** result)
 {
-	subnet_t *subnet;
+	subnet_t subnet = {0};
 
 	cp();
 
 	if(!cfg)
 		return false;
 
-	subnet = str2net(cfg->value);
-
-	if(!subnet) {
+	if(!str2net(&subnet, cfg->value)) {
 		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
@@ -231,17 +229,16 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result)
 
 	/* Teach newbies what subnets are... */
 
-	if(((subnet->type == SUBNET_IPV4)
-		&& !maskcheck(&subnet->net.ipv4.address, subnet->net.ipv4.prefixlength, sizeof(ipv4_t)))
-		|| ((subnet->type == SUBNET_IPV6)
-		&& !maskcheck(&subnet->net.ipv6.address, subnet->net.ipv6.prefixlength, sizeof(ipv6_t)))) {
+	if(((subnet.type == SUBNET_IPV4)
+		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t)))
+		|| ((subnet.type == SUBNET_IPV6)
+		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t)))) {
 		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
-		free(subnet);
 		return false;
 	}
 
-	*result = subnet;
+	*(*result = new_subnet()) = subnet;
 
 	return true;
 }

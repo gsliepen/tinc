@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.26 2003/11/17 15:30:18 guus Exp $
+    $Id: subnet.h,v 1.1.2.27 2003/12/12 19:52:25 guus Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -34,7 +34,6 @@ typedef enum subnet_type_t {
 
 typedef struct subnet_mac_t {
 	mac_t address;
-	time_t lastseen;
 } subnet_mac_t;
 
 typedef struct subnet_ipv4_t {
@@ -53,6 +52,7 @@ typedef struct subnet_t {
 	struct node_t *owner;		/* the owner of this subnet */
 
 	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+	time_t expires;			/* expiry time */
 
 	/* And now for the actual subnet: */
 
@@ -63,6 +63,8 @@ typedef struct subnet_t {
 	} net;
 } subnet_t;
 
+#define MAXNETSTR 64
+
 extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
 extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
 extern void free_subnet(subnet_t *);
@@ -72,8 +74,8 @@ extern avl_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
 extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
-extern char *net2str(const subnet_t *);
-extern subnet_t *str2net(const char *);
+extern bool net2str(char *, int, const subnet_t *);
+extern bool str2net(subnet_t *, const char *);
 extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
 extern subnet_t *lookup_subnet_mac(const mac_t *);
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.34 2003/10/06 14:41:45 guus Exp $
+    $Id: net_socket.c,v 1.1.2.35 2003/12/12 19:52:25 guus Exp $
 */
 
 #include "system.h"
@@ -255,8 +255,7 @@ begin:
 		goto begin;
 	}
 
-	memcpy(&c->address, c->outgoing->aip->ai_addr,
-		   c->outgoing->aip->ai_addrlen);
+	memcpy(&c->address, c->outgoing->aip->ai_addr, c->outgoing->aip->ai_addrlen);
 	c->outgoing->aip = c->outgoing->aip->ai_next;
 
 	if(c->hostname)
