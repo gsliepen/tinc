@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.16 2003/07/22 20:55:21 guus Exp $
+    $Id: device.c,v 1.1.2.17 2003/07/31 11:20:32 guus Exp $
 */
 
 
@@ -149,8 +149,8 @@ bool write_packet(vpn_packet_t *packet)
 			   packet->len, device_info);
 
 	if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
-		logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, packet->len,
-			   strerror(errno));
+		logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info,
+			   device, strerror(errno));
 		return false;
 	}
 
