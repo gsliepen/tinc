@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.68 2003/10/06 13:57:12 guus Exp $
+    $Id: route.c,v 1.1.2.69 2003/12/08 12:00:40 guus Exp $
 */
 
 #include "system.h"
@@ -438,6 +438,7 @@ static void route_neighborsol(vpn_packet_t *packet)
 	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 	checksum = inet_checksum(&opt, opt_size, checksum);
+	checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
 
 	if(checksum) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: checksum error for neighbor solicitation request"));
@@ -472,10 +473,10 @@ static void route_neighborsol(vpn_packet_t *packet)
 	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN);	/* copy destination address */
 	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;	/* mangle source address so it looks like it's not from us */
 
-	memcpy(&ip6.ip6_src, &ns.nd_ns_target, sizeof(ip6.ip6_src));	/* swap destination and source protocol address */
 	memcpy(&ip6.ip6_dst, &ip6.ip6_src, sizeof(ip6.ip6_dst));	/* ... */
+	memcpy(&ip6.ip6_src, &ns.nd_ns_target, sizeof(ip6.ip6_src));	/* swap destination and source protocol address */
 
-	memcpy(&opt + opt_size, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */
+	memcpy(packet->data + ether_size + ip6_size + ns_size + opt_size, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */
 
 	ns.nd_ns_cksum = 0;
 	ns.nd_ns_type = ND_NEIGHBOR_ADVERT;
@@ -494,6 +495,7 @@ static void route_neighborsol(vpn_packet_t *packet)
 	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 	checksum = inet_checksum(&opt, opt_size, checksum);
+	checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
 
 	ns.nd_ns_hdr.icmp6_cksum = checksum;
 
