@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.60 2002/06/21 10:11:34 guus Exp $
+    $Id: tincd.c,v 1.10.4.61 2002/07/16 13:12:49 guus Exp $
 */
 
 #include "config.h"
@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <string.h>
 #include <termios.h>
+#include <sys/mman.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -73,6 +74,9 @@ int generate_keys = 0;
 /* If nonzero, use null ciphers and skip all key exchanges. */
 int bypass_security = 0;
 
+/* If nonzero, disable swapping for this process. */
+int do_mlock = 0;
+
 char *identname;                 /* program name for syslog */
 char *pidfilename;               /* pid file location */
 char **g_argv;                   /* a copy of the cmdline arguments */
@@ -90,6 +94,7 @@ static struct option const long_options[] =
   { "generate-keys", optional_argument, NULL, 'K'},
   { "debug", optional_argument, NULL, 'd'},
   { "bypass-security", no_argument, &bypass_security, 1 },
+  { "mlock", no_argument, &do_mlock, 1},
   { NULL, 0, NULL, 0 }
 };
 
@@ -105,8 +110,9 @@ usage(int status)
                "  -D, --no-detach            Don't fork and detach.\n"
                "  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
                "  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
-               "  -n, --net=NETNAME          Connect to net NETNAME.\n"));
-      printf(_("  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
+               "  -n, --net=NETNAME          Connect to net NETNAME.\n"
+               "  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
+               "  -L, --mlock                Lock tinc into main memory.\n"
                "      --help                 Display this help and exit.\n"
                "      --version              Output version information and exit.\n\n"));
       printf(_("Report bugs to tinc@nl.linux.org.\n"));
@@ -120,7 +126,7 @@ parse_options(int argc, char **argv, char **envp)
   int r;
   int option_index = 0;
 
-  while((r = getopt_long(argc, argv, "c:Dd::k::n:K::", long_options, &option_index)) != EOF)
+  while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF)
     {
       switch(r)
         {
@@ -132,6 +138,9 @@ parse_options(int argc, char **argv, char **envp)
           break;
         case 'D': /* no detach */
           do_detach = 0;
+          break;
+        case 'L': /* no detach */
+          do_mlock = 1;
           break;
         case 'd': /* inc debug level */
           if(optarg)
@@ -344,6 +353,14 @@ main(int argc, char **argv, char **envp)
   openlog("tinc", LOG_PERROR, LOG_DAEMON);      /* Catch all syslog() calls issued before detaching */
 #endif
 
+  /* Lock all pages into memory if requested */
+  
+  if(do_mlock)
+    if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
+      syslog(LOG_ERR, _("System call `%s' failed: %s"), "mlockall", strerror(errno));
+      return -1;
+    }
+  
   g_argv = argv;
 
   make_names();
