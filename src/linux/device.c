@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.20 2003/07/22 20:55:21 guus Exp $
+    $Id: device.c,v 1.1.2.21 2003/08/28 21:05:11 guus Exp $
 */
 
 #include "system.h"
@@ -94,10 +94,10 @@ bool setup_device(void)
 	if(iface)
 		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
 
-	if(!ioctl(device_fd, TUNSETIFF, (void *) &ifr)) {
+	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		iface = ifrname;
-	} else if(!ioctl(device_fd, (('T' << 8) | 202), (void *) &ifr)) {
+	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
 		logger(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		iface = ifrname;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.43 2003/08/14 14:21:35 guus Exp $
+    $Id: net_setup.c,v 1.1.2.44 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -362,7 +362,7 @@ bool setup_myself(void)
 
 	myself->connection->outcipher = EVP_bf_ofb();
 
-	myself->key = (char *) xmalloc(myself->keylength);
+	myself->key = xmalloc(myself->keylength);
 	RAND_pseudo_bytes(myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
@@ -549,7 +549,7 @@ void close_network_connections(void)
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->outgoing)
 			free(c->outgoing->name), free(c->outgoing), c->outgoing = NULL;

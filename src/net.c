@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.199 2003/08/28 15:27:11 guus Exp $
+    $Id: net.c,v 1.35.4.200 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -63,7 +63,7 @@ static void purge(void)
 
 	for(nnode = node_tree->head; nnode; nnode = nnext) {
 		nnext = nnode->next;
-		n = (node_t *) nnode->data;
+		n = nnode->data;
 
 		if(!n->status.reachable) {
 			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
@@ -71,14 +71,14 @@ static void purge(void)
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
-				s = (subnet_t *) snode->data;
+				s = snode->data;
 				send_del_subnet(broadcast, s);
 				subnet_del(n, s);
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
 				enext = enode->next;
-				e = (edge_t *) enode->data;
+				e = enode->data;
 				send_del_edge(broadcast, e);
 				edge_del(e);
 			}
@@ -89,12 +89,12 @@ static void purge(void)
 
 	for(nnode = node_tree->head; nnode; nnode = nnext) {
 		nnext = nnode->next;
-		n = (node_t *) nnode->data;
+		n = nnode->data;
 
 		if(!n->status.reachable) {
 			for(enode = edge_weight_tree->head; enode; enode = enext) {
 				enext = enode->next;
-				e = (edge_t *) enode->data;
+				e = enode->data;
 
 				if(e->to == n)
 					break;
@@ -122,7 +122,7 @@ static int build_fdset(fd_set * fs)
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->status.remove) {
 			connection_del(c);
@@ -224,7 +224,7 @@ static void check_dead_connections(void)
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
@@ -271,7 +271,7 @@ static void check_network_activity(fd_set * f)
 	}
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->status.remove)
 			continue;
@@ -391,7 +391,7 @@ int main_loop(void)
 			logger(LOG_INFO, _("Flushing event queue"));
 
 			while(event_tree->head) {
-				event = (event_t *) event_tree->head->data;
+				event = event_tree->head->data;
 				event->handler(event->data);
 				event_del(event);
 			}
@@ -419,7 +419,7 @@ int main_loop(void)
 			/* Close connections to hosts that have a changed or deleted host config file */
 			
 			for(node = connection_tree->head; node; node = node->next) {
-				c = (connection_t *) node->data;
+				c = node->data;
 				
 				if(c->outgoing) {
 					free(c->outgoing->name);

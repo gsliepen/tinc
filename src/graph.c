@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.28 2003/08/22 11:18:42 guus Exp $
+    $Id: graph.c,v 1.1.2.29 2003/08/28 21:05:10 guus Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -76,7 +76,7 @@ void mst_kruskal(void)
 	/* Clear MST status on connections */
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 		c->status.mst = false;
 	}
 
@@ -90,7 +90,7 @@ void mst_kruskal(void)
 	/* Clear visited status on nodes */
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 		n->status.visited = false;
 		nodes++;
 	}
@@ -103,7 +103,7 @@ void mst_kruskal(void)
 
 	for(skipped = false, node = edge_weight_tree->head; node; node = next) {
 		next = node->next;
-		e = (edge_t *) node->data;
+		e = node->data;
 
 		if(!e->reverse || e->from->status.visited == e->to->status.visited) {
 			skipped = true;
@@ -158,7 +158,7 @@ void sssp_bfs(void)
 	/* Clear visited status on nodes */
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 		n->status.visited = false;
 		n->status.indirect = true;
 	}
@@ -178,10 +178,10 @@ void sssp_bfs(void)
 	while(todo_tree->head) {
 		for(from = todo_tree->head; from; from = next) {	/* "from" is the node from which we start */
 			next = from->next;
-			n = (node_t *) from->data;
+			n = from->data;
 
 			for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
-				e = (edge_t *) to->data;
+				e = to->data;
 
 				if(!e->reverse)
 					continue;
@@ -245,7 +245,7 @@ void sssp_bfs(void)
 
 	for(node = node_tree->head; node; node = next) {
 		next = node->next;
-		n = (node_t *) node->data;
+		n = node->data;
 
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;

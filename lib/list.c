@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.16 2003/07/17 15:06:25 guus Exp $
+    $Id: list.c,v 1.1.2.17 2003/08/28 21:05:09 guus Exp $
 */
 
 #include "system.h"
@@ -44,7 +44,7 @@ void list_free(list_t *list)
 
 list_node_t *list_alloc_node(void)
 {
-	return (list_node_t *)xmalloc_and_zero(sizeof(list_node_t));
+	return xmalloc_and_zero(sizeof(list_node_t));
 }
 
 void list_free_node(list_t *list, list_node_t *node)

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.c,v 1.1.2.26 2003/08/22 11:18:42 guus Exp $
+    $Id: edge.c,v 1.1.2.27 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -88,7 +88,7 @@ edge_t *new_edge(void)
 {
 	cp();
 
-	return (edge_t *) xmalloc_and_zero(sizeof(edge_t));
+	return xmalloc_and_zero(sizeof(edge_t));
 }
 
 void free_edge(edge_t *e)
@@ -148,9 +148,9 @@ void dump_edges(void)
 	logger(LOG_DEBUG, _("Edges:"));
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = (edge_t *) node2->data;
+			e = node2->data;
 			address = sockaddr2hostname(&e->address);
 			logger(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
 				   e->from->name, e->to->name, address, e->options, e->weight);

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.27 2003/08/22 11:18:42 guus Exp $
+    $Id: node.c,v 1.1.2.28 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -72,7 +72,7 @@ void exit_nodes(void)
 
 node_t *new_node(void)
 {
-	node_t *n = (node_t *) xmalloc_and_zero(sizeof(*n));
+	node_t *n = xmalloc_and_zero(sizeof(*n));
 
 	cp();
 
@@ -131,13 +131,13 @@ void node_del(node_t *n)
 
 	for(node = n->subnet_tree->head; node; node = next) {
 		next = node->next;
-		s = (subnet_t *) node->data;
+		s = node->data;
 		subnet_del(n, s);
 	}
 
 	for(node = n->edge_tree->head; node; node = next) {
 		next = node->next;
-		e = (edge_t *) node->data;
+		e = node->data;
 		edge_del(e);
 	}
 
@@ -178,7 +178,7 @@ void dump_nodes(void)
 	logger(LOG_DEBUG, _("Nodes:"));
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.49 2003/07/30 11:50:45 guus Exp $
+    $Id: subnet.c,v 1.1.2.50 2003/08/28 21:05:11 guus Exp $
 */
 
 #include "system.h"
@@ -145,7 +145,7 @@ subnet_t *new_subnet(void)
 {
 	cp();
 
-	return (subnet_t *) xmalloc_and_zero(sizeof(subnet_t));
+	return xmalloc_and_zero(sizeof(subnet_t));
 }
 
 void free_subnet(subnet_t *subnet)
@@ -313,7 +313,7 @@ subnet_t *lookup_subnet_mac(const mac_t *address)
 	subnet.net.mac.address = *address;
 	subnet.owner = NULL;
 
-	p = (subnet_t *) avl_search(subnet_tree, &subnet);
+	p = avl_search(subnet_tree, &subnet);
 
 	return p;
 }
@@ -332,7 +332,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 	do {
 		/* Go find subnet */
 
-		p = (subnet_t *) avl_search_closest_smaller(subnet_tree, &subnet);
+		p = avl_search_closest_smaller(subnet_tree, &subnet);
 
 		/* Check if the found subnet REALLY matches */
 
@@ -370,7 +370,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 	do {
 		/* Go find subnet */
 
-		p = (subnet_t *) avl_search_closest_smaller(subnet_tree, &subnet);
+		p = avl_search_closest_smaller(subnet_tree, &subnet);
 
 		/* Check if the found subnet REALLY matches */
 
@@ -403,7 +403,7 @@ void dump_subnets(void)
 	logger(LOG_DEBUG, _("Subnet list:"));
 
 	for(node = subnet_tree->head; node; node = node->next) {
-		subnet = (subnet_t *) node->data;
+		subnet = node->data;
 		netstr = net2str(subnet);
 		logger(LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
 		free(netstr);

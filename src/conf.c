@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.75 2003/08/08 22:11:54 guus Exp $
+    $Id: conf.c,v 1.9.4.76 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -73,7 +73,7 @@ config_t *new_config(void)
 {
 	cp();
 
-	return (config_t *) xmalloc_and_zero(sizeof(config_t));
+	return xmalloc_and_zero(sizeof(config_t));
 }
 
 void free_config(config_t *cfg)
@@ -131,7 +131,7 @@ config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg)
 
 	if(node) {
 		if(node->next) {
-			found = (config_t *) node->next->data;
+			found = node->next->data;
 
 			if(!strcasecmp(found->variable, cfg->variable))
 				return found;

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.25 2003/07/22 20:55:20 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.26 2003/08/28 21:05:11 guus Exp $
 */
 
 #include "system.h"
@@ -473,15 +473,15 @@ static void send_everything(connection_t *c)
 	/* Send all known subnets and edges */
 
 	for(node = node_tree->head; node; node = node->next) {
-		n = (node_t *) node->data;
+		n = node->data;
 
 		for(node2 = n->subnet_tree->head; node2; node2 = node2->next) {
-			s = (subnet_t *) node2->data;
+			s = node2->data;
 			send_add_subnet(c, s);
 		}
 
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = (edge_t *) node2->data;
+			e = node2->data;
 			send_add_edge(c, e);
 		}
 	}

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.39 2003/08/22 11:18:42 guus Exp $
+    $Id: net_packet.c,v 1.1.2.40 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -367,7 +367,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 			   packet->len, from->name, from->hostname);
 
 	for(node = connection_tree->head; node; node = node->next) {
-		c = (connection_t *) node->data;
+		c = node->data;
 
 		if(c->status.active && c->status.mst && c != from->nexthop->connection)
 			send_packet(c->node, packet);
@@ -384,7 +384,7 @@ void flush_queue(node_t *n)
 
 	for(node = n->queue->head; node; node = next) {
 		next = node->next;
-		send_udppacket(n, (vpn_packet_t *) node->data);
+		send_udppacket(n, node->data);
 		list_delete_node(n->queue, node);
 	}
 }

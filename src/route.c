@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.63 2003/07/31 13:18:34 guus Exp $
+    $Id: route.c,v 1.1.2.64 2003/08/28 21:05:11 guus Exp $
 */
 
 #include "system.h"
@@ -113,7 +113,7 @@ static void learn_mac(mac_t *address)
 		/* And tell all other tinc daemons it's our MAC */
 
 		for(node = connection_tree->head; node; node = node->next) {
-			c = (connection_t *) node->data;
+			c = node->data;
 			if(c->status.active)
 				send_add_subnet(c, subnet);
 		}
@@ -132,7 +132,7 @@ void age_mac(void)
 
 	for(node = myself->subnet_tree->head; node; node = next) {
 		next = node->next;
-		s = (subnet_t *) node->data;
+		s = node->data;
 		if(s->type == SUBNET_MAC && s->net.mac.lastseen && s->net.mac.lastseen + macexpire < now) {
 			ifdebug(TRAFFIC) logger(LOG_INFO, _("MAC address %hx:%hx:%hx:%hx:%hx:%hx expired"),
 					   s->net.mac.address.x[0], s->net.mac.address.x[1],
@@ -140,7 +140,7 @@ void age_mac(void)
 					   s->net.mac.address.x[4], s->net.mac.address.x[5]);
 
 			for(node2 = connection_tree->head; node2; node2 = node2->next) {
-				c = (connection_t *) node2->data;
+				c = node2->data;
 				if(c->status.active)
 					send_del_subnet(c, s);
 			}
@@ -240,7 +240,7 @@ static node_t *route_ipv4(vpn_packet_t *packet)
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
 
-	subnet = lookup_subnet_ipv4((ipv4_t *) & packet->data[30]);
+	subnet = lookup_subnet_ipv4((ipv4_t *) &packet->data[30]);
 
 	if(!subnet) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: unknown IPv4 destination address %d.%d.%d.%d"),
@@ -331,18 +331,18 @@ static node_t *route_ipv6(vpn_packet_t *packet)
 
 	cp();
 
-	subnet = lookup_subnet_ipv6((ipv6_t *) & packet->data[38]);
+	subnet = lookup_subnet_ipv6((ipv6_t *) &packet->data[38]);
 
 	if(!subnet) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
-				   ntohs(*(uint16_t *) & packet->data[38]),
-				   ntohs(*(uint16_t *) & packet->data[40]),
-				   ntohs(*(uint16_t *) & packet->data[42]),
-				   ntohs(*(uint16_t *) & packet->data[44]),
-				   ntohs(*(uint16_t *) & packet->data[46]),
-				   ntohs(*(uint16_t *) & packet->data[48]),
-				   ntohs(*(uint16_t *) & packet->data[50]),
-				   ntohs(*(uint16_t *) & packet->data[52]));
+				   ntohs(*(uint16_t *) &packet->data[38]),
+				   ntohs(*(uint16_t *) &packet->data[40]),
+				   ntohs(*(uint16_t *) &packet->data[42]),
+				   ntohs(*(uint16_t *) &packet->data[44]),
+				   ntohs(*(uint16_t *) &packet->data[46]),
+				   ntohs(*(uint16_t *) &packet->data[48]),
+				   ntohs(*(uint16_t *) &packet->data[50]),
+				   ntohs(*(uint16_t *) &packet->data[52]));
 		route_ipv6_unreachable(packet, ICMP6_DST_UNREACH_ADDR);
 
 		return NULL;
@@ -409,18 +409,18 @@ static void route_neighborsol(vpn_packet_t *packet)
 
 	/* Check if the IPv6 address exists on the VPN */
 
-	subnet = lookup_subnet_ipv6((ipv6_t *) & ns->nd_ns_target);
+	subnet = lookup_subnet_ipv6((ipv6_t *) &ns->nd_ns_target);
 
 	if(!subnet) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[0]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[1]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[2]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[3]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[4]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[5]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[6]),
-				   ntohs(((uint16_t *) & ns->nd_ns_target)[7]));
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[0]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[1]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[2]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[3]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[4]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[5]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[6]),
+				   ntohs(((uint16_t *) &ns->nd_ns_target)[7]));
 
 		return;
 	}

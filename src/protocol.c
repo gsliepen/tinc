@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.146 2003/08/03 12:38:43 guus Exp $
+    $Id: protocol.c,v 1.28.4.147 2003/08/28 21:05:10 guus Exp $
 */
 
 #include "system.h"
@@ -219,7 +219,7 @@ bool seen_request(char *request)
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
 		return true;
 	} else {
-		new = (past_request_t *) xmalloc(sizeof(*new));
+		new = xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
 		new->firstseen = now;
 		avl_insert(past_request_tree, new);
@@ -237,7 +237,7 @@ void age_past_requests(void)
 
 	for(node = past_request_tree->head; node; node = next) {
 		next = node->next;
-		p = (past_request_t *) node->data;
+		p = node->data;
 
 		if(p->firstseen + pingtimeout < now)
 			avl_delete_node(past_request_tree, node), deleted++;
