@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.15 2000/11/25 13:33:33 guus Exp $
+    $Id: process.c,v 1.1.2.16 2000/11/26 22:42:34 zarq Exp $
 */
 
 #include "config.h"
@@ -160,14 +160,17 @@ cp
   if(do_detach)
     {
       if(daemon(0, 0) < 0)
-        return -1;
+	{
+	  fprintf(stderr, _("Couldn't detach from terminal: %m"));
+	  return -1;
+	}
 
       /* Now UPDATE the pid in the pidfile, because we changed it... */
-
+      
       if(!write_pid(pidfilename))
-        return 1;
+        return -1;
     }
-
+  
   openlog(identname, LOG_CONS | LOG_PID, LOG_DAEMON);
 
   if(debug_lvl > DEBUG_NOTHING)
@@ -276,12 +279,13 @@ cp
   _execute_script(name);
 }
 
+
 /*
   Signal handlers.
 */
 
 RETSIGTYPE
-sigterm_handler(int a)
+sigterm_handler(int a, siginfo_t *info, void *)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got TERM signal"));
@@ -290,7 +294,7 @@ sigterm_handler(int a)
 }
 
 RETSIGTYPE
-sigquit_handler(int a)
+sigquit_handler(int a, siginfo_t *info, void *)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got QUIT signal"));
@@ -298,7 +302,7 @@ sigquit_handler(int a)
 }
 
 RETSIGTYPE
-sigsegv_square(int a)
+sigsegv_square(int a, siginfo_t *info, void *)
 {
   syslog(LOG_ERR, _("Got another SEGV signal: not restarting"));
   cp_trace();
@@ -306,7 +310,7 @@ sigsegv_square(int a)
 }
 
 RETSIGTYPE
-sigsegv_handler(int a)
+sigsegv_handler(int a, siginfo_t *info, void *)
 {
   syslog(LOG_ERR, _("Got SEGV signal"));
   cp_trace();
@@ -328,7 +332,7 @@ sigsegv_handler(int a)
 }
 
 RETSIGTYPE
-sighup_handler(int a)
+sighup_handler(int a, siginfo_t *info, void *)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got HUP signal"));
@@ -336,7 +340,7 @@ sighup_handler(int a)
 }
 
 RETSIGTYPE
-sigint_handler(int a)
+sigint_handler(int a, siginfo_t *info, void *)
 {
   if(debug_lvl > DEBUG_NOTHING)
     syslog(LOG_NOTICE, _("Got INT signal, exiting"));
@@ -344,44 +348,67 @@ sigint_handler(int a)
 }
 
 RETSIGTYPE
-sigusr1_handler(int a)
+sigusr1_handler(int a, siginfo_t *info, void *)
 {
   dump_connection_list();
 }
 
 RETSIGTYPE
-sigusr2_handler(int a)
+sigusr2_handler(int a, siginfo_t *info, void *)
 {
   dump_subnet_list();
 }
 
 RETSIGTYPE
-sighuh(int a)
+sighuh(int a, siginfo_t *info, void *)
 {
   syslog(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
   cp_trace();
 }
 
+struct {
+  int signal;
+  void (*handler)(int, siginfo_t *, void *);
+} sighandlers[] = {
+  { SIGHUP, sighup_handler },
+  { SIGTERM, sigterm_handler },
+  { SIGQUIT, sigquit_handler },
+  { SIGSEGV, sigsegv_handler },
+  { SIGPIPE, NULL },
+  { SIGINT, sigint_handler },
+  { SIGUSR1, sigusr1_handler },
+  { SIGUSR2, sigusr2_handler },
+  { SIGCHLD, NULL },
+  { 0, NULL }
+};
+
 void
 setup_signals(void)
 {
   int i;
+  sigset_t a;
+  struct sigaction act;
 
-  for(i=0;i<32;i++)
-    signal(i,sighuh);
+  sigemptyset(&a);
+  act.sa_handler = NULL;
+  act.sa_mask = a;
+  act.sa_flags = SA_SIGINFO;
 
-  if(signal(SIGTERM, SIG_IGN) != SIG_ERR)
-    signal(SIGTERM, sigterm_handler);
-  if(signal(SIGQUIT, SIG_IGN) != SIG_ERR)
-    signal(SIGQUIT, sigquit_handler);
-  if(signal(SIGSEGV, SIG_IGN) != SIG_ERR)
-    signal(SIGSEGV, sigsegv_handler);
-  if(signal(SIGHUP, SIG_IGN) != SIG_ERR)
-    signal(SIGHUP, sighup_handler);
-  signal(SIGPIPE, SIG_IGN);
-  if(signal(SIGINT, SIG_IGN) != SIG_ERR)
-    signal(SIGINT, sigint_handler);
-  signal(SIGUSR1, sigusr1_handler);
-  signal(SIGUSR2, sigusr2_handler);
-  signal(SIGCHLD, SIG_IGN);
+  /* Set a default signal handler for every signal, errors will be
+     ignored. */
+  for(i = 0; i < NSIG; i++) 
+    {
+      act.sa_sigaction = sighuh_handler;
+      sigaction(sighandlers[i].signal, &act, NULL);
+    }
+
+  /* Then, for each known signal that we want to catch, assign a
+     handler to the signal, with error checking this time. */
+  for(i = 0; sighandlers[i].signal; i++)
+    {
+      act.sa_sigaction = sighandlers[i].handler;
+      if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
+	fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %m\n"),
+		sighandlers[i].signal, strsignal(sighandlers[i].signal));
+    }
 }
