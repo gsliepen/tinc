@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.107 2001/10/08 11:47:55 guus Exp $
+    $Id: protocol.c,v 1.28.4.108 2001/10/08 15:37:14 guus Exp $
 */
 
 #include "config.h"
@@ -245,8 +245,8 @@ cp
           cl->status.outgoing = 1;
           old->status.outgoing = 0;
         }
+
       terminate_connection(old, 0);
-      return 0;
     }
     
   /* Also check if no other tinc daemon uses the same IP and port for UDP traffic */
