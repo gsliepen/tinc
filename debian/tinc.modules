@@ -1,0 +1,11 @@
+alias char-major-36 netlink_dev
+
+alias tap0 ethertap
+alias tap1 ethertap
+alias tap2 ethertap
+alias tap3 ethertap
+
+options tap0 -o tap0 -x unit=0
+options tap1 -o tap1 -x unit=1
+options tap2 -o tap2 -x unit=2
+options tap3 -o tap3 -x unit=3

@@ -62,6 +62,7 @@ binary-arch: build install
 	dh_installexamples
 	dh_installinit
 	dh_installmanpages
+	dh_installmodules
 	dh_installinfo
 	dh_installchangelogs ChangeLog
 	dh_link
