@@ -19,11 +19,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.26 2000/11/29 14:30:07 zarq Exp $
+    $Id: conf.c,v 1.9.4.27 2000/11/30 00:24:13 zarq Exp $
 */
 
 #include "config.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
@@ -31,6 +32,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <xalloc.h>
 #include <utils.h> /* for cp */
@@ -203,9 +207,7 @@ int read_config_file(config_t **base, const char *fname)
   config_t *cfg;
 cp
   if((fp = fopen (fname, "r")) == NULL)
-    {
-      return -1;
-    }
+    return -1;
 
   for(;;)
     {
@@ -311,7 +313,77 @@ cp
 cp
 }
 
-#define is_safe_file(p) 1
+int isadir(const char* f)
+{
+  struct stat s;
+
+  if(stat(f, &s) < 0)
+    {
+      fprintf(stderr, _("Couldn't stat `%s': %m\n"),
+	      f);
+      return -1;
+    }
+
+  return S_ISDIR(s.st_mode);
+}
+
+int is_safe_path(const char *file)
+{
+  char *p;
+  char *fn = xstrdup(file);
+  struct stat s;
+
+  p = strrchr(file, '/');
+  assert(p); /* p has to contain a / */
+  *p = '\0';
+  if(stat(file, &s) < 0)
+    {
+      fprintf(stderr, _("Couldn't stat `%s': %m\n"),
+	      file);
+      return 0;
+    }
+  if(s.st_uid != geteuid())
+    {
+      fprintf(stderr, _("`%s' is owned by UID %d instead of %d.\n"),
+	      file, s.st_uid, geteuid());
+      return 0;
+    }
+  if(S_ISLNK(s.st_mode))
+    {
+      fprintf(stderr, _("Warning: `%s' is a symlink\n"),
+	      file);
+      /* fixme: read the symlink and start again */
+    }
+
+  *p = '/';
+  if(stat(file, &s) < 0)
+    {
+      fprintf(stderr, _("Couldn't stat `%s': %m\n"),
+	      file);
+      return 0;
+    }
+  if(s.st_uid != geteuid())
+    {
+      fprintf(stderr, _("`%s' is owned by UID %d instead of %d.\n"),
+	      file, s.st_uid, geteuid());
+      return 0;
+    }
+  if(S_ISLNK(s.st_mode))
+    {
+      fprintf(stderr, _("Warning: `%s' is a symlink\n"),
+	      file);
+      /* fixme: read the symlink and start again */
+    }
+  if(s.st_mode & 0007)
+    {
+      /* Accessible by others */
+      fprintf(stderr, _("`%s' has unsecure permissions.\n"),
+	      file);
+      return 0;
+    }
+  
+  return 1;
+}
 
 FILE *ask_and_safe_open(const char* filename, const char* what)
 {
@@ -354,25 +426,45 @@ FILE *ask_and_safe_open(const char* filename, const char* what)
       p = xmalloc(len);
       snprintf(p, len, "%s/%s", directory, fn);
       free(fn);
+      free(directory);
       fn = p;
     }
 
-  if(!is_safe_file(fn))
+  if(isadir(fn) > 0) /* -1 is error */
     {
-      fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
-			"I will not create or overwrite this file.\n"),
-			fn);
-      return NULL;
+      char *p;
+
+      len = strlen(fn) + strlen(filename) + 2; /* 1 for the / */
+      p = xmalloc(len);
+      snprintf(p, len, "%s/%s", fn, filename);
+      free(fn);
+      fn = p;
     }
 
+  umask(0077); /* Disallow everything for group and other */
+  
+  /* Open it first to keep the inode busy */
   if((r = fopen(fn, "w")) == NULL)
     {
       fprintf(stderr, _("Error opening file `%s': %m\n"),
 	      fn);
+      free(fn);
+      return NULL;
+    }
+
+  /* Then check the file for nasty attacks */
+  if(!is_safe_path(fn))  /* Do not permit any directories that are
+                            readable or writeable by other users. */
+    {
+      fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
+			"I will not create or overwrite this file.\n"),
+			fn);
+      fclose(r);
+      free(fn);
+      return NULL;
     }
 
   free(fn);
-  free(directory);
   
   return r;
 }
