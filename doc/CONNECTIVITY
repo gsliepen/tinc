@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.5 2001/07/22 17:41:52 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.6 2001/07/23 22:06:22 guus Exp $
 
 1. Problem
 ==========
@@ -231,3 +231,99 @@ could let ADD_HOST(F,E) win.
     D receives ADD_HOST(C,F) from E, and notes that C is already known:
       since "F" > "B", D removes the ADD_HOST(C,B),
       closes the connection with C, in favour of the new one.
+
+Ok, time to forget this crap.
+
+1.2.2
+-----
+
+The problem with the current ADD/DEL_HOST technique is that each host only
+knows the general direction in which to send packets for the other hosts. It
+really doesn't know much about the true topology of the network, only about
+it's direct neighbours. With so little information each host cannot make a
+certain decision which it knows for sure all the others will decide too.
+
+Let's do something totally different. Instead of notifying every host of the
+addition of a new host, which is represented by a vertex in a graph, lets send
+out notifications of new connections, which are the edges in a graph. This is
+rather cheap, since our graphs are (almost) spanning trees, there is
+approximately one edge for each vertex in the graph, so we don't need to send
+more messages. Furthermore, an edge is characterized by two vertices, so we
+only send a fixed amount of extra information. The size/complexity of the
+problem therefore does not increase much.
+
+What is the advantage of notifying each vertex of new edges instead of new
+vertices? Well, all the vertices now know exactly which connections are made
+between each host. This was not known with the former schemes.
+
+Ok back to our problem:
+
+  A-----B-----C
+  
+  
+
+  D-----E-----F
+  
+Edges are undirected, and are characterised by the vertices it connects, sorted
+alphabetically, so the edges in the two graphs are:
+
+(A,B), (B,C), (D,E) and (E,F).
+
+So again we have that A wants to connect to D, and F wants to connect to C,
+both at the same time. The following loop will occur:
+
+  A-----B-----C
+  |           ^
+  |           |
+  v           |
+  D-----E-----F
+
+Instead of sending ADD_HOSTs, lets assume the hosts send ADD_EDGEs. So, after
+making the connections:
+
+  1 A sends ADD_EDGE(A,D) to B
+    A sends ADD_EDGE(A,B) to D
+    A sends ADD_EDGE(B,C) to D
+    D sends ADD_EDGE(A,D) to E
+    D sends ADD_EDGE(D,E) to A
+    D sends ADD_EDGE(E,F) to A
+    
+    C sends ADD_EDGE(C,F) to B
+    C sends ADD_EDGE(A,B) to F
+    C sends ADD_EDGE(B,C) to F
+    F sends ADD_EDGE(C,F) to E
+    F sends ADD_EDGE(D,E) to C
+    F sends ADD_EDGE(E,F) to C
+
+  2 B receives ADD_EDGE(A,D) from A:
+      B sends ADD_EDGE(A,D) to C
+    B receives ADD_EDGE(D,E) from A:
+      B sends ADD_EDGE(D,E) to C
+    B receives ADD_EDGE(E,F) from A:
+      B sends ADD_EDGE(E,F) to C
+    ...
+    
+    B receives ADD_EDGE(C,F) from C, notes that both C and F are already known,
+    but that the edge (C,F) was not known, so a loop has been created:
+      <resolve loop here>
+
+Ok, how to resolve the loop? Remeber, we want to do that in such a way that it
+is consistent with the way all the other hosts resolve the loop. Here is the
+things B does when it notices that a loop is going to be formed:
+
+  B performs a Breadth First Search from the first element of the list of all
+  known hosts sorted alfabetically, in this case A, and thereby finds a
+  spanning tree. (This might later be changed into a minimum spanning tree
+  alhorithm, but the key point here is that all hosts do this with exactly the
+  same starting parameters.) All known edges that are not in the spanning tree
+  are marked inactive.
+
+An edge marked inactive does not mean anything, unless this edge is connected
+to B itself. In that case, B will stop sending messages over that edge. B might
+consider closing this edge, but this is not really needed. Keeping it means no
+DEL_EDGE has to be sent for it, and if another edge is removed (which will
+quite certainly split the graph if it's a spanning tree), this edge might be
+reactivated, without the need of sending a new ADD_EDGE for it. On the other
+hand, we mustn't keep to many inactive edges, because we want to keep the
+number of known edges linear to the number of hosts (otherwise the size of the
+problem will grow quadratically).
