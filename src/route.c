@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.36 2002/03/15 15:50:14 guus Exp $
+    $Id: route.c,v 1.1.2.37 2002/03/19 00:08:23 guus Exp $
 */
 
 #include "config.h"
@@ -51,10 +51,6 @@
 #include "device.h"
 
 #include "system.h"
-
-#ifndef s6_addr16
-#define s6_addr16 __u6_addr.__u6_addr16
-#endif
 
 int routing_mode = RMODE_ROUTER;
 int priorityinheritance = 0;
@@ -268,8 +264,8 @@ cp
       if(debug_lvl >= DEBUG_TRAFFIC)
         {
           syslog(LOG_WARNING, _("Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
-                 ntohs(ns->nd_ns_target.s6_addr16[0]), ntohs(ns->nd_ns_target.s6_addr16[1]), ntohs(ns->nd_ns_target.s6_addr16[2]), ntohs(ns->nd_ns_target.s6_addr16[3]),
-                 ntohs(ns->nd_ns_target.s6_addr16[4]), ntohs(ns->nd_ns_target.s6_addr16[5]), ntohs(ns->nd_ns_target.s6_addr16[6]), ntohs(ns->nd_ns_target.s6_addr16[7]));
+                 ntohs(((uint16_t *)&ns->nd_ns_target)[0]), ntohs(((uint16_t *)&ns->nd_ns_target)[1]), ntohs(((uint16_t *)&ns->nd_ns_target)[2]), ntohs(((uint16_t *)&ns->nd_ns_target)[3]),
+                 ntohs(((uint16_t *)&ns->nd_ns_target)[4]), ntohs(((uint16_t *)&ns->nd_ns_target)[5]), ntohs(((uint16_t *)&ns->nd_ns_target)[6]), ntohs(((uint16_t *)&ns->nd_ns_target)[7]));
         }
 
       return;

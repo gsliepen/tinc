@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.32 2002/03/18 14:39:37 guus Exp $
+    $Id: netutl.c,v 1.12.4.33 2002/03/19 00:08:23 guus Exp $
 */
 
 #include "config.h"
@@ -42,10 +42,6 @@
 #include "netutl.h"
 
 #include "system.h"
-
-#ifndef s6_addr32
-#define s6_addr32 __u6_addr.__u6_addr32
-#endif
 
 int hostnames = 0;
 
@@ -179,7 +175,7 @@ void sockaddrunmap(sockaddr_t *sa)
 {
   if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr))
     {
-      sa->in.sin_addr.s_addr = sa->in6.sin6_addr.s6_addr32[3];
+      sa->in.sin_addr.s_addr = ((uint32_t *)&sa->in6.sin6_addr)[3];
       sa->in.sin_family = AF_INET;
     }
 }
