@@ -180,7 +180,7 @@ vpn_load () {
     NET=$(ipcalc --network $ADR $MSK | cut -d"=" -f2)
 
     # MAC address
-    MAC=$(printf "fe:fd:%0.2x:%0.2x:%0.2x:%0.2x" $(echo $ADR | { IFS=. ; read a b c d; echo $a $b $c $d }))
+    MAC=$(printf "fe:fd:%0.2x:%0.2x:%0.2x:%0.2x" $(echo $ADR | { IFS=. ; read a b c d; echo $a $b $c $d; }))
     
     # debugging 
     # echo >&2
