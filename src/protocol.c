@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.11 2000/06/27 20:10:48 guus Exp $
+    $Id: protocol.c,v 1.28.4.12 2000/06/27 20:55:12 guus Exp $
 */
 
 #include "config.h"
@@ -488,7 +488,7 @@ cp
          old connection that has timed out but we don't know it yet. Because our
          conn_list entry is not active, lookup_conn will skip ourself. */
 
-      while(old=lookup_conn(cl->vpn_ip)) 
+      while(old = lookup_conn(cl->vpn_ip)) 
         terminate_connection(old);
 
       cl->status.active = 1;
@@ -648,7 +648,7 @@ int add_host_h(conn_list_t *cl)
   ip_t vpn_mask;
   unsigned short port;
   int flags;
-  conn_list_t *ncn, *fw;
+  conn_list_t *ncn, *old;
 cp
   if(!cl->status.active)
     {
@@ -664,19 +664,9 @@ cp
        return -1;
     }  
 
-  /*
-    Suggestion of Hans Bayle
-  */
-  if((fw = lookup_conn(vpn_ip)))
-    {
-      if(fw->nexthop == cl)
-	notify_others(fw, cl, send_add_host);
-      else
-	syslog(LOG_DEBUG, _("Invalid ADD_HOST from " IP_ADDR_S " (%s)"),
-            IP_ADDR_V(cl->vpn_ip), cl->hostname);
-      return -1;
-    }
-
+  while(old = lookup_conn(vpn_ip))
+      terminate_connection(old);
+    
   ncn = new_conn_list();
   ncn->real_ip = real_ip;
   ncn->hostname = hostlookup(htonl(real_ip));
