@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c,v 1.1.2.10 2000/11/22 19:14:08 guus Exp $
+    $Id: process.c,v 1.1.2.11 2000/11/22 22:05:37 guus Exp $
 */
 
 #include "config.h"
@@ -31,7 +31,9 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <termios.h>
 
 #include <list.h>
 #include <pidfile.h>
@@ -68,6 +70,63 @@ void memory_full(int size)
   cp_trace();
   exit(1);
 }
+
+/* Some functions the less gifted operating systems might lack... */
+
+#ifndef HAVE_FCLOSEALL
+int fcloseall(void)
+{
+  fflush(stdin);
+  fflush(stdout);
+  fflush(stderr);
+  fclose(stdin);
+  fclose(stdout);
+  fclose(stderr);
+}
+#endif
+
+#ifndef HAVE_DAEMON
+int daemon(int nochdir, int noclose)
+{
+  pid_t pid;
+  int fd;
+  
+  ppid = getpid();
+
+  if((pid = fork()) < 0)
+    {
+      perror("fork");
+      return -1;
+    }
+  if(pid) /* parent process */
+    {
+      signal(SIGTERM, parent_exit);
+      sleep(600); /* wait 10 minutes */
+      exit(1);
+    }
+
+  if((fd = open("/dev/tty", O_RDWR)) >= 0)
+    {
+      if(ioctl(fd, TIOCNOTTY, NULL))
+        {
+          perror("ioctl");
+          return -1;
+        }
+      close(fd);
+    }
+
+  if(setsid() < 0)
+    return -1;
+
+  kill(ppid, SIGTERM);
+
+  if(!nochdir)
+    chdir("/");
+
+  if(!noclose)
+    fcloseall();
+}
+#endif
 
 /*
   Close network connections, and terminate neatly

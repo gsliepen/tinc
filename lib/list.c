@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.c,v 1.1.2.3 2000/11/20 22:13:00 guus Exp $
+    $Id: list.c,v 1.1.2.4 2000/11/22 22:05:36 guus Exp $
 */
 
 #include "config.h"
@@ -26,7 +26,6 @@
 #include <string.h>
 #include <syslog.h>
 
-#include <error.h>
 #include <list.h>
 #include <xalloc.h>
 
