@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.20 2001/06/05 16:09:55 guus Exp $
+    $Id: subnet.c,v 1.1.2.21 2001/06/05 18:07:14 guus Exp $
 */
 
 #include "config.h"
@@ -289,7 +289,7 @@ cp
             /* Otherwise, see if there is a bigger enclosing subnet */
 
             subnet.net.ipv4.mask = p->net.ipv4.mask << 1;
-            subnet.net.ipv4.address &= subnet.net.ipv4.mask;
+            subnet.net.ipv4.address = p->net.ipv4.address & subnet.net.ipv4.mask;
           }
       }
    } while (p);
