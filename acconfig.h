@@ -67,3 +67,6 @@
 
 /* Define to 1 if checkpoint tracing is enabled */
 #undef ENABLE_TRACING
+
+/* Define to 1 if you have struct addrinfo */
+#undef HAVE_STRUCT_ADDRINFO
