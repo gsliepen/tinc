@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.83 2001/02/27 16:37:28 guus Exp $
+    $Id: protocol.c,v 1.28.4.84 2001/03/02 11:25:56 guus Exp $
 */
 
 #include "config.h"
@@ -521,7 +521,17 @@ cp
 
   RAND_bytes(cl->cipher_outkey, len);
 
-  cl->cipher_outkey[0] &= 0x0F;	/* Make sure that the random data is smaller than the modulus of the RSA key */
+  /* The message we send must be smaller than the modulus of the RSA key.
+     By definition, for a key of k bits, the following formula holds:
+     
+       2^(k-1) <= modulus < 2^(k)
+     
+     Where ^ means "to the power of", not "xor".
+     This means that to be sure, we must choose our message < 2^(k-1).
+     This can be done by setting the most significant bit to zero.
+  */
+  
+  cl->cipher_outkey[0] &= 0x7F;
   
   if(debug_lvl >= DEBUG_SCARY_THINGS)
     {
@@ -530,9 +540,14 @@ cp
       syslog(LOG_DEBUG, _("Generated random meta key (unencrypted): %s"), buffer);
     }
 
-  /* Encrypt the random data */
+  /* Encrypt the random data
   
-  if(RSA_public_encrypt(len, cl->cipher_outkey, buffer, cl->rsa_key, RSA_NO_PADDING) != len)	/* NO_PADDING because the message size equals the RSA key size and it is totally random */
+     We do not use one of the PKCS padding schemes here.
+     This is allowed, because we encrypt a totally random string
+     with a length equal to that of the modulus of the RSA key.
+  */
+  
+  if(RSA_public_encrypt(len, cl->cipher_outkey, buffer, cl->rsa_key, RSA_NO_PADDING) != len)
     {
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), cl->name, cl->hostname);
       free(buffer);
