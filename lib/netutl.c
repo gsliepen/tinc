@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.15 2002/04/13 11:07:12 zarq Exp $
+    $Id: netutl.c,v 1.1 2002/04/28 12:46:25 zarq Exp $
 */
 
 #include "config.h"

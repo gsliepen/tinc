@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.4 2002/04/28 12:46:26 zarq Exp $
+    $Id: graph.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 /* We need to generate two trees from the graph:
@@ -45,9 +45,6 @@
 */
 
 #include "config.h"
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
  #include <sys/param.h>
@@ -55,13 +52,14 @@
 #include <netinet/in.h>
 
 #include <avl_tree.h>
+#include <hooks.h>
 #include <utils.h>
 
+#include "interface.h"
 #include "netutl.h"
 #include "node.h"
 #include "edge.h"
 #include "connection.h"
-#include "process.h"
 #include "logging.h"
 
 #include "system.h"
@@ -94,8 +92,8 @@ void mst_kruskal(void)
   if(!edge_weight_tree->head)
     return;
 
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    syslog(LOG_DEBUG, "Running Kruskal's algorithm:");
+  log(DEBUG_SCARY_THINGS, TLOG_DEBUG,
+      _("Running Kruskal's algorithm:"));
 
   /* Clear visited status on nodes */
 
@@ -156,7 +154,6 @@ void sssp_bfs(void)
   halfconnection_t to_hc, from_hc;
   avl_tree_t *todo_tree;
   int indirect;
-  char *name;
 
   todo_tree = avl_alloc_tree(NULL, NULL);
 
@@ -258,11 +255,9 @@ void sssp_bfs(void)
         if(!n->status.reachable)
 	{
           if(debug_lvl >= DEBUG_TRAFFIC)
-            syslog(LOG_DEBUG, _("Node %s (%s) became reachable"), n->name, n->hostname);
+            syslog(LOG_ERR, _("Node %s (%s) became reachable"), n->name, n->hostname);
           n->status.reachable = 1;
-	  asprintf(&name, "hosts/%s-up", n->name);
-	  execute_script(name);
-	  free(name);
+	  run_hooks("node-visible", n);
 	}
       }
       else
@@ -275,9 +270,7 @@ void sssp_bfs(void)
 	  n->status.validkey = 0;
 	  n->status.waitingforkey = 0;
 	  n->sent_seqno = 0;
-	  asprintf(&name, "hosts/%s-down", n->name);
-	  execute_script(name);
-	  free(name);
+          run_hooks("node-invisible", n);
 	}
       }
     }

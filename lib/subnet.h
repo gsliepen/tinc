@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.2 2002/04/09 15:26:01 zarq Exp $
+    $Id: subnet.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -67,6 +67,8 @@ typedef struct subnet_t {
       subnet_ipv4_t ipv4;
       subnet_ipv6_t ipv6;
     } net;
+
+  void *data;                           /* Interface details */
 } subnet_t;
 
 extern subnet_t *new_subnet(void);

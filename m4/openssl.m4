@@ -46,4 +46,6 @@ AC_DEFUN(tinc_OPENSSL,
       [AC_MSG_ERROR("OpenSSL depends on libdl.")]
     )
   )
+
+  found_openssl=1
 ])

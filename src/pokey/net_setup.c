@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.4 2002/04/28 12:46:26 zarq Exp $
+    $Id: net_setup.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -44,15 +44,9 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#ifdef USE_OPENSSL
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
-#endif
-
-#ifdef USE_GCRYPT
-#include <gcrypt.h>
-#endif
 
 #include <utils.h>
 #include <xalloc.h>
@@ -60,6 +54,7 @@
 #include <list.h>
 
 #include "conf.h"
+#include "interface.h"
 #include "connection.h"
 #include "meta.h"
 #include "net.h"
@@ -80,39 +75,23 @@ char *myport;
 
 int read_rsa_public_key(connection_t *c)
 {
-  char *key;
-#ifdef USE_OPENSSL
   FILE *fp;
   char *fname;
+  char *key;
 cp
   if(!c->rsa_key)
     c->rsa_key = RSA_new();
-#endif
-cp
-  
+
   /* First, check for simple PublicKey statement */
 
   if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key))
     {
-#ifdef USE_OPENSSL
       BN_hex2bn(&c->rsa_key->n, key);
       BN_hex2bn(&c->rsa_key->e, "FFFF");
-#endif
-#ifdef USE_GCRYPT
-      int rc = gcry_sexp_build(&c->rsa_key, NULL, "(public-key(rsa(n%s)(e%s)))",
-			       key, "FFFF");
-      if(!rc)
-	{
-	  syslog(LOG_ERR, _("gcry_sexp_build error: %d (%s)"),
-		 rc, gcry_strerror(-1));
-	  return -1;
-	}
-#endif
       free(key);
       return 0;
     }
 
-#ifdef USE_OPENSSL
   /* Else, check for PublicKeyFile statement and read it */
 
   if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
@@ -121,8 +100,9 @@ cp
         {
           if((fp = fopen(fname, "r")) == NULL)
             {
-              syslog(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
-                     fname, strerror(errno));
+              log(0, TLOG_ERROR,
+		  _("Error reading RSA public key file `%s': %s"),
+		  fname, strerror(errno));
               free(fname);
               return -1;
             }
@@ -162,44 +142,22 @@ cp
       syslog(LOG_ERR, _("No public key for %s specified!"), c->name);
       return -1;
     }
-#endif
-#ifdef USE_GCRYPT
-  syslog(LOG_ERR, _("Only PublicKey statements are supported when using gcrypt for now."));
-  return -1;
-#endif
 }
 
 int read_rsa_private_key(void)
 {
-#ifdef USE_OPENSSL
   FILE *fp;
-  char *fname;
-#endif
-  char *key;
+  char *fname, *key;
 cp
   if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key))
     {
-#ifdef USE_OPENSSL
       myself->connection->rsa_key = RSA_new();
       BN_hex2bn(&myself->connection->rsa_key->d, key);
       BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
-#endif
-#ifdef USE_GCRYPT
-      int rc = gcry_sexp_build(&myself->connection->rsa_key, NULL,
-			       "(public-key(rsa(n%s)(e%s)))",
-			       key, "FFFF");
-      if(!rc)
-	{
-	  syslog(LOG_ERR, _("gcry_sexp_build error: %d (%s)"),
-		 rc, gcry_strerror(-1));
-	  return -1;
-	}
-#endif
       free(key);
       return 0;
     }
 
-#ifdef USE_OPENSSL
   if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
     asprintf(&fname, "%s/rsa_key.priv", confbase);
 
@@ -226,11 +184,34 @@ cp
 
   free(fname);
   return -1;
-#endif
-#ifdef USE_GCRYPT
-  syslog(LOG_ERR, _("Only PrivateKey statements are supported when using gcrypt for now."));
-  return -1;
-#endif
+}
+
+int check_rsa_key(RSA *rsa_key)
+{
+  char *test1, *test2, *test3;
+cp
+  if(rsa_key->p && rsa_key->q)
+    {
+      if(RSA_check_key(rsa_key) != 1)
+          return -1;
+    }
+  else
+    {
+      test1 = xmalloc(RSA_size(rsa_key));
+      test2 = xmalloc(RSA_size(rsa_key));
+      test3 = xmalloc(RSA_size(rsa_key));
+
+      if(RSA_public_encrypt(RSA_size(rsa_key), test1, test2, rsa_key, RSA_NO_PADDING) != RSA_size(rsa_key))
+          return -1;
+
+      if(RSA_private_decrypt(RSA_size(rsa_key), test2, test3, rsa_key, RSA_NO_PADDING) != RSA_size(rsa_key))
+          return -1;
+
+      if(memcmp(test1, test3, RSA_size(rsa_key)))
+          return -1;
+    }
+cp
+  return 0;
 }
 
 /*
@@ -240,9 +221,8 @@ int setup_myself(void)
 {
   config_t *cfg;
   subnet_t *subnet;
-  char *name, *hostname, *mode, *afname, *cipher, *digest;
-  struct addrinfo hint, *ai, *aip;
-  int choice, err;
+  char *name, *mode, *afname, *cipher, *digest;
+  int choice;
 cp
   myself = new_node();
   myself->connection = new_connection();
@@ -283,6 +263,12 @@ cp
   if(read_rsa_public_key(myself->connection))
     return -1;
 cp
+
+  if(check_rsa_key(myself->connection->rsa_key))
+    {
+      syslog(LOG_ERR, _("Invalid public/private keypair!"));
+      return -1;
+    }
 
   if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
     asprintf(&myport, "655");
@@ -387,23 +373,11 @@ cp
     {
       if(!strcasecmp(cipher, "none"))
         {
-#ifdef USE_OPENSSL
           myself->cipher = NULL;
-#endif
-#ifdef USE_GCRYPT
-	  myself->cipher = gcry_cipher_open(GCRY_CIPHER_NONE, GCRY_CIPHER_MODE_NONE, 0);
-#endif
         }
       else
         {
-#ifdef USE_OPENSSL
           if(!(myself->cipher = EVP_get_cipherbyname(cipher)))
-#endif
-#ifdef USE_GCRYPT
-	  /* FIXME */
-	  myself->cipher = gcry_cipher_open(GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CBC, 0);
-	  if(0)
-#endif
             {
               syslog(LOG_ERR, _("Unrecognized cipher type!"));
               return -1;
@@ -411,42 +385,17 @@ cp
         }
     }
   else
-    {
-#ifdef USE_OPENSSL
-      myself->cipher = EVP_bf_cbc();
-#endif
-#ifdef USE_GCRYPT
-      myself->cipher = gcry_cipher_open(GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_CBC, 0);
-#endif
-    }
+    myself->cipher = EVP_bf_cbc();
 
-#ifdef USE_OPENSSL
   if(myself->cipher)
     myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
-#endif
-#ifdef USE_GCRYPT
-  if(myself->cipher)
-    myself->keylength = 16;  /* FIXME */
-#endif
   else
     myself->keylength = 1;
 
-#ifdef USE_OPENSSL
   myself->connection->outcipher = EVP_bf_ofb();
-#endif
-#ifdef USE_GCRYPT
-  /* FIXME: CHANGE this to something like aes - but openssl
-     compatibility mode for now */
-  myself->connection->outcipher = gcry_cipher_open(GCRY_CIPHER_BLOWFISH, GCRY_CIPHER_MODE_OFB, 0);
-#endif
 
-#ifdef USE_OPENSSL
   myself->key = (char *)xmalloc(myself->keylength);
   RAND_pseudo_bytes(myself->key, myself->keylength);
-#endif
-#ifdef USE_GCYRPT
-  myself->key = gcry_random_bytes(myself->keylength, GCRY_WEAK_RANDOM);
-#endif
 
   if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
     keylifetime = 3600;
@@ -459,22 +408,11 @@ cp
     {
       if(!strcasecmp(digest, "none"))
         {
-#ifdef USE_OPENSSL
           myself->digest = NULL;
-#endif
-#ifdef USE_GCRYPT
-	  myself->digest = gcry_md_open(GCRY_MD_NONE, GCRY_MD_FLAG_HMAC);
-#endif
         }
       else
         {
-#ifdef USE_OPENSSL
           if(!(myself->digest = EVP_get_digestbyname(digest)))
-#endif
-#ifdef USE_GCRYPT
-	  /* FIXME */
-	  if(!(myself->digest = gcry_md_open(GCRY_MD_SHA1, GCRY_MD_FLAG_HMAC)))
-#endif
             {
               syslog(LOG_ERR, _("Unrecognized digest type!"));
               return -1;
@@ -482,25 +420,14 @@ cp
         }
     }
   else
-#ifdef USE_OPENSSL
     myself->digest = EVP_sha1();
-#endif
-#ifdef USE_GCRYPT
-    myself->digest = gcry_md_open(GCRY_MD_SHA1, GCRY_MD_FLAG_HMAC);
-#endif
 
-#ifdef USE_OPENSSL
   myself->connection->outdigest = EVP_sha1();
-#endif
-#ifdef USE_GCRYPT
-  myself->connection->outdigest = gcry_md_open(GCRY_MD_SHA1, GCRY_MD_FLAG_HMAC);
-#endif
 
   if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->maclength))
     {
       if(myself->digest)
         {
-#ifdef USE_OPENSSL
           if(myself->maclength > myself->digest->md_size)
             {
               syslog(LOG_ERR, _("MAC length exceeds size of digest!"));
@@ -511,11 +438,6 @@ cp
               syslog(LOG_ERR, _("Bogus MAC length!"));
               return -1;
             }
-#endif
-#ifdef USE_GCRYPT
-	  /* FIXME */
-	  myself->maclength = 12;
-#endif
         }
     }
   else
@@ -543,55 +465,11 @@ cp
   myself->nexthop = myself;
   myself->via = myself;
   myself->status.active = 1;
-  myself->status.reachable = 1;
   node_add(myself);
 
   graph();
 
-cp
-  /* Open sockets */
-  
-  memset(&hint, 0, sizeof(hint));
-  
-  hint.ai_family = addressfamily;
-  hint.ai_socktype = SOCK_STREAM;
-  hint.ai_protocol = IPPROTO_TCP;
-  hint.ai_flags = AI_PASSIVE;
-
-  if((err = getaddrinfo(NULL, myport, &hint, &ai)) || !ai)
-    {
-      syslog(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(err));
-      return -1;
-    }
-
-  for(aip = ai; aip; aip = aip->ai_next)
-    {
-      if((listen_socket[listen_sockets].tcp = setup_listen_socket((sockaddr_t *)aip->ai_addr)) < 0)
-        continue;
-
-      if((listen_socket[listen_sockets].udp = setup_vpn_in_socket((sockaddr_t *)aip->ai_addr)) < 0)
-        continue;
-
-      if(debug_lvl >= DEBUG_CONNECTIONS)
-        {
-	  hostname = sockaddr2hostname((sockaddr_t *)aip->ai_addr);
-	  syslog(LOG_NOTICE, _("Listening on %s"), hostname);
-	  free(hostname);
-	}
-
-      listen_socket[listen_sockets].sa.sa = *aip->ai_addr;
-      listen_sockets++;
-    }
-
-  freeaddrinfo(ai);
-
-  if(listen_sockets)
-    syslog(LOG_NOTICE, _("Ready"));
-  else
-    {
-      syslog(LOG_ERR, _("Unable to create any listening socket!"));
-      return -1;
-    }
+  syslog(LOG_NOTICE, _("Ready"));
 cp
   return 0;
 }
@@ -620,12 +498,6 @@ cp
     }
   else
     pingtimeout = 60;
-
-  if(setup_device() < 0)
-    return -1;
-
-  /* Run tinc-up script to further initialize the tap interface */
-  execute_script("tinc-up");
 
   if(setup_myself() < 0)
     return -1;
@@ -669,9 +541,6 @@ cp
   exit_nodes();
   exit_connections();
 
-  execute_script("tinc-down");
-
-  close_device();
 cp
   return;
 }

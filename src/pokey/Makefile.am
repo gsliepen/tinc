@@ -1,18 +1,18 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.1 2002/04/13 11:24:25 zarq Exp $
+# $Id: Makefile.am,v 1.2 2002/04/28 12:46:26 zarq Exp $
 
 sbin_PROGRAMS = pokey
 
-pokey_SOURCES = conf.c connection.c edge.c event.c graph.c	\
-	interface.c meta.c net.c net_packet.c net_setup.c net_socket.c netutl.c	\
-	node.c process.c protocol.c protocol_auth.c protocol_edge.c	\
+pokey_SOURCES = event.c graph.c	\
+	interface.c logging.c meta.c net.c net_packet.c net_setup.c net_socket.c netutl.c	\
+	 process.c protocol.c protocol_auth.c protocol_edge.c	\
 	protocol_misc.c protocol_key.c protocol_subnet.c route.c	\
-	subnet.c pokey.c
+	 pokey.c
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir)/src -I/usr/include/gtk-1.2 -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/include/libglade-1.0 -I/usr/include/gnome-1.0 -I/usr/include/gnome-xml -I/usr/include/libglade-1.0 -I/usr/include/gnome-1.0 -DNEED_GNOMESUPPORT_H -I/usr/lib/gnome-libs/include -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/include/orbit-1.0 -I/usr/include/gtk-1.2 -I/usr/X11R6/include
 
-noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h meta.h net.h netutl.h node.h process.h	\
-	protocol.h route.h subnet.h
+noinst_HEADERS =  device.h event.h graph.h meta.h net.h netutl.h  process.h	\
+	protocol.h route.h 
 
 LIBS = @LIBS@ @INTLLIBS@
 

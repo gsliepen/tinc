@@ -17,19 +17,19 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.2 2002/04/09 15:26:01 zarq Exp $
+    $Id: subnet.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
 
 #include <stdio.h>
-#include <syslog.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 
+#include <hooks.h>
 #include <utils.h>
 #include <xalloc.h>
 #include <avl_tree.h>
@@ -39,6 +39,7 @@
 #include "node.h"
 #include "subnet.h"
 #include "netutl.h"
+#include "logging.h"
 
 #include "system.h"
 
@@ -158,6 +159,8 @@ cp
   avl_insert(subnet_tree, subnet);
 cp
   avl_insert(n->subnet_tree, subnet);
+
+  run_hooks("subnet-add", subnet);
 cp
 }
 
@@ -167,6 +170,8 @@ cp
   avl_delete(n->subnet_tree, subnet);
 cp
   avl_delete(subnet_tree, subnet);
+
+  run_hooks("subnet-del", subnet);
 cp
 }
 

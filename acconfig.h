@@ -75,3 +75,17 @@
 
 /* Define to enable use of old SSLeay_add_all_algorithms() function */
 #undef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
+
+/* Define to 1 if you want to include GCRYPT support */
+#undef USE_GCRYPT
+
+/* Define to 1 if you want to include OpenSSL support */
+#undef USE_OPENSSL
+
+#if defined(USE_GCRYPT) && defined(USE_OPENSSL)
+#  error You can only define one of USE_GCRYPT and USE_OPENSSL
+#endif
+
+#if !defined(USE_GCRYPT) && !defined(USE_OPENSSL)
+#  error You must define exactly one of USE_GCRYPT and USE_OPENSSL
+#endif

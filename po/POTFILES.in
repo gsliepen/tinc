@@ -31,3 +31,4 @@ src/freebsd/device.c
 src/solaris/device.c
 src/netbsd/device.c
 src/openbsd/device.c
+src/pokey/pokey.translatables

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.h,v 1.4 2002/04/09 15:26:00 zarq Exp $
+    $Id: netutl.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #ifndef __TINC_NETUTL_H__

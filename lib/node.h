@@ -17,11 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: node.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
+
+#include <gcrypt.h>
 
 #include <avl_tree.h>
 
@@ -47,11 +49,23 @@ typedef struct node_t {
 
   struct node_status_t status;
 
-  const EVP_CIPHER *cipher;        /* Cipher type for UDP packets */ 
+#ifdef USE_OPENSSL
+  const EVP_CIPHER *cipher;        /* Cipher type for UDP packets */
+#endif
+#ifdef USE_GCRYPT
+  GCRY_CIPHER_HD cipher;           /* Cipher type for UDP packets */
+#endif
+  
   char *key;                       /* Cipher key and iv */
   int keylength;                   /* Cipher key and iv length*/
 
+#ifdef USE_OPENSSL
   const EVP_MD *digest;            /* Digest type for MAC */
+#endif
+#ifdef USE_GCRYPT
+  GCRY_MD_HD digest;               /* Digest type for MAC */
+#endif
+  
   int maclength;                   /* Length of MAC */
 
   int compression;                 /* Compressionlevel, 0 = no compression */
@@ -69,6 +83,8 @@ typedef struct node_t {
 
   unsigned int sent_seqno;         /* Sequence number last sent to this node */
   unsigned int received_seqno;     /* Sequence number last received from this node */
+
+  void *data;                      /* Interface details */
 } node_t;
 
 extern struct node_t *myself;

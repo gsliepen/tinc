@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.4 2002/04/28 12:46:26 zarq Exp $
+    $Id: protocol_auth.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -32,21 +32,16 @@
 #include <xalloc.h>
 #include <avl_tree.h>
 
-#ifdef USE_OPENSSL
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
-#endif
-
-#ifdef USE_GCRYPT
-#include <gcrypt.h>
-#endif
 
 #ifndef HAVE_RAND_PSEUDO_BYTES
 #define RAND_pseudo_bytes RAND_bytes
 #endif
 
 #include "conf.h"
+#include "interface.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
@@ -72,7 +67,7 @@ int id_h(connection_t *c)
 cp
   if(sscanf(c->buffer, "%*d "MAX_STRING" %d", name, &c->protocol_version) != 2)
     {
-       syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name, c->hostname);
+      syslog(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name, c->hostname);
        return -1;
     }
 
@@ -148,7 +143,6 @@ int send_metakey(connection_t *c)
   char buffer[MAX_STRING_SIZE];
   int len, x;
 cp
-#ifdef USE_OPENSSL
   len = RSA_size(c->rsa_key);
 
   /* Allocate buffers for the meta key */
@@ -162,12 +156,6 @@ cp
   /* Copy random data to the buffer */
 
   RAND_bytes(c->outkey, len);
-#endif
-
-#ifdef USE_GCRYPT
-  len = 123; /* FIXME: RSA key length */
-  c->outkey = gcry_random_bytes(len, GCRY_WEAK_RANDOM);
-#endif
 
   /* The message we send must be smaller than the modulus of the RSA key.
      By definition, for a key of k bits, the following formula holds:
@@ -195,32 +183,25 @@ cp
      with a length equal to that of the modulus of the RSA key.
   */
 
-#ifdef USE_OPENSSL
   if(RSA_public_encrypt(len, c->outkey, buffer, c->rsa_key, RSA_NO_PADDING) != len)
     {
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
       return -1;
     }
-#endif
 cp
   /* Convert the encrypted random data to a hexadecimal formatted string */
 
-#ifdef USE_OPENSSL
   bin2hex(buffer, buffer, len);
-#endif
   buffer[len*2] = '\0';
 
   /* Send the meta key */
 
-#ifdef USE_OPENSSL
   x = send_request(c, "%d %d %d %d %d %s", METAKEY,
                    c->outcipher?c->outcipher->nid:0, c->outdigest?c->outdigest->type:0,
 		   c->outmaclength, c->outcompression, buffer);
-#endif
 
   /* Further outgoing requests are encrypted with the key we just generated */
 
-#ifdef USE_OPENSSL
   if(c->outcipher)
     {
       EVP_EncryptInit(c->outctx, c->outcipher,
@@ -229,7 +210,6 @@ cp
 
       c->status.encryptout = 1;
     }
-#endif
 cp
   return x;
 }
@@ -246,9 +226,7 @@ cp
        return -1;
     }
 cp
-#ifdef USE_OPENSSL
   len = RSA_size(myself->connection->rsa_key);
-#endif
 
   /* Check if the length of the meta key is all right */
 
@@ -263,24 +241,20 @@ cp
   if(!c->inkey)
     c->inkey = xmalloc(len);
 
-#ifdef USE_OPENSSL
   if(!c->inctx)
     c->inctx = xmalloc(sizeof(*c->inctx));
-#endif
 
   /* Convert the challenge from hexadecimal back to binary */
 cp
   hex2bin(buffer,buffer,len);
 
   /* Decrypt the meta key */
-cp
-#ifdef USE_OPENSSL
+cp  
   if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len)	/* See challenge() */
     {
       syslog(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
       return -1;
     }
-#endif
 
   if(debug_lvl >= DEBUG_SCARY_THINGS)
     {
@@ -295,7 +269,6 @@ cp
 
   if(cipher)
     {
-#ifdef USE_OPENSSL
       c->incipher = EVP_get_cipherbynid(cipher);
       if(!c->incipher)
 	{
@@ -308,7 +281,6 @@ cp
                       c->inkey + len - c->incipher->key_len - c->incipher->iv_len);
 
       c->status.decryptin = 1;
-#endif
     }
   else
     {
@@ -319,7 +291,6 @@ cp
 
   if(digest)
     {
-#ifdef USE_OPENSSL
       c->indigest = EVP_get_digestbynid(digest);
       if(!c->indigest)
 	{
@@ -332,7 +303,6 @@ cp
 	  syslog(LOG_ERR, _("%s (%s) uses bogus MAC length!"), c->name, c->hostname);
 	  return -1;
 	}
-#endif
     }
   else
     {
@@ -353,9 +323,7 @@ int send_challenge(connection_t *c)
 cp
   /* CHECKME: what is most reasonable value for len? */
 
-#ifdef USE_OPENSSL
   len = RSA_size(c->rsa_key);
-#endif
 
   /* Allocate buffers for the challenge */
 
@@ -364,9 +332,7 @@ cp
 cp
   /* Copy random data to the buffer */
 
-#ifdef USE_OPENSSL
   RAND_bytes(c->hischallenge, len);
-#endif
 
 cp
   /* Convert to hex */
@@ -393,9 +359,7 @@ cp
        return -1;
     }
 
-#ifdef USE_OPENSSL
   len = RSA_size(myself->connection->rsa_key);
-#endif
 
   /* Check if the length of the challenge is all right */
 
@@ -423,7 +387,6 @@ cp
 
 int send_chal_reply(connection_t *c)
 {
-#ifdef USE_OPENSSL
   char hash[EVP_MAX_MD_SIZE*2+1];
   EVP_MD_CTX ctx;
 cp
@@ -442,15 +405,10 @@ cp
 
 cp
   return send_request(c, "%d %s", CHAL_REPLY, hash);
-#endif
-#ifdef USE_GCRYPT
-  return 0;
-#endif
 }
 
 int chal_reply_h(connection_t *c)
 {
-#ifdef USE_OPENSSL
   char hishash[MAX_STRING_SIZE];
   char myhash[EVP_MAX_MD_SIZE];
   EVP_MD_CTX ctx;
@@ -496,8 +454,6 @@ cp
   /* Identity has now been positively verified.
      Send an acknowledgement with the rest of the information needed.
    */
-
-#endif
 
   c->allow_request = ACK;
 cp
@@ -590,8 +546,9 @@ cp
       if(n->connection)
         {
           /* Oh dear, we already have a connection to this node. */
-	  if(debug_lvl >= DEBUG_CONNECTIONS)
-            syslog(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"), n->name, n->hostname);
+	  log(DEBUG_CONNECTIONS, TLOG_DEBUG,
+	      _("Established a second connection with %s (%s), closing old connection"),
+	      n->name, n->hostname);
           terminate_connection(n->connection, 0);
         }
           
@@ -607,8 +564,10 @@ cp
   c->edge = new_edge();
 cp  
   c->edge->from.node = myself;
+//  c->edge->from.tcpaddress = str2sockaddr(address, port);
   c->edge->from.udpaddress = str2sockaddr(myaddress, myport);
   c->edge->to.node = n;
+//  c->edge->to.tcpaddress = c->address;
   sockaddr2str(&c->address, &hisaddress, &dummy);
   c->edge->to.udpaddress = str2sockaddr(hisaddress, hisport);
   free(hisaddress);

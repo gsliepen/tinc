@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: pokey.c,v 1.2 2002/04/13 11:21:01 zarq Exp $
+    $Id: pokey.c,v 1.3 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -323,16 +323,6 @@ main(int argc, char **argv, char **envp)
 
   gnome_init("Pokey", "0.0", 1, fake_argv);
 
-  glade_init();
-
-  xml = glade_xml_new("pokey.glade", "MainWindow");
-
-  if (!xml)
-    {
-      fprintf(stderr, _("Something bad happened while creating the interface.\n"));
-      exit(1);
-    }
-
   g_argv = argv;
 
   make_names();
@@ -356,7 +346,8 @@ cp
 
   if(init_interface())
     {
-      fprintf(stderr, _("Could not setup all necessary interface elements.\n"));
+      log(0, TLOG_ERROR,
+	  _("Could not setup all necessary interface elements.\n"));
       exit(1);
     }
   
@@ -365,9 +356,11 @@ cp
       main_loop();
       cleanup_and_exit(1);
     }
-      
-  log(0, LOG_ERR,
-      _("Unrecoverable error"));
+
+  log_add_hook(log_default);
+  
+  log(0, TLOG_ERROR,
+      _("Could not set up network connections"));
   cp_trace();
 
   return 1;

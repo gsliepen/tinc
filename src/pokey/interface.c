@@ -1,9 +1,35 @@
+/*
+    interface.c -- GTK+/GNOME interface functions
+    Copyright (C) 2002 Guus Sliepen <guus@sliepen.warande.net>,
+                  2002 Ivo Timmermans <ivo@o2w.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+    $Id: interface.c,v 1.4 2002/04/28 12:46:26 zarq Exp $
+*/
+
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+
+#define log mathlog
 #include <math.h>
+#undef log
 
 #include <gtk/gtk.h>
 #include <glade/glade.h>
@@ -14,10 +40,12 @@
 #include <libgnomeui/gnome-canvas-util.h>
 
 #include "node.h"
+#include "connection.h"
 #include "edge.h"
 #include "interface.h"
 #include "logging.h"
 
+#include <hooks.h>
 #include <xalloc.h>
 
 #include "system.h"
@@ -56,7 +84,7 @@ static int inited = 0;
 static int number_of_nodes = 0;
 
 static GtkWidget *nodetree;
-static GtkCTreeNode *subnets_ctn, *hosts_ctn, *conns_ctn;
+static GtkCTreeNode *hosts_ctn;
 
 static GnomeCanvasGroup *edge_group = NULL;
 
@@ -65,28 +93,34 @@ static int canvas_height;
 
 static GtkWidget *canvas = NULL;
 
+static int log_inited = 0;
+static int follow_log = 1;
+
+static int keep_drawing = 1;
+
+static GtkCList *connlist = NULL;
+
+static double canvas_zoom = 1.00;
+
+void if_node_add(const char *hooktype, va_list ap);
+void if_node_del(const char *hooktype, va_list ap);
+void if_subnet_add(const char *hooktype, va_list ap);
+void if_subnet_del(const char *hooktype, va_list ap);
+void if_edge_add(const char *hooktype, va_list ap);
+void if_edge_del(const char *hooktype, va_list ap);
+void if_node_visible(const char *hooktype, va_list ap);
+void if_node_invisible(const char *hooktype, va_list ap);
+
 GtkWidget *create_canvas(void)
 {
-  GtkWidget *w;
-
-  gtk_widget_push_visual(gdk_rgb_get_visual());
-  gtk_widget_push_colormap(gdk_rgb_get_cmap());
-  
-  canvas = gnome_canvas_new_aa();
-  
-  gtk_widget_pop_visual();
-  gtk_widget_pop_colormap();
-  
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(canvas), -00.0, -00.0, 700, 500);
-  
-  w = glade_xml_get_widget(xml, "scrolledwindow3");
-  if(!w)
+  canvas = glade_xml_get_widget(xml, "canvas1");
+  if(!canvas)
     {
-      fprintf(stderr, "Could not find widget `scrolledwindow3'\n");
+      fprintf(stderr, "Could not find widget `canvas1'\n");
       return NULL;
     }
-  gtk_container_add(GTK_CONTAINER(w), canvas);
-  gtk_widget_show_all(w);
+  
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(canvas), -00.0, -00.0, 700, 500);
 
   canvas_width = 300.0;
   canvas_height = 500.0;
@@ -103,7 +137,6 @@ void log_gtk(int level, int priority, char *fmt, va_list ap)
   char *p;
   struct tm *tm;
   time_t t;
-  static int inited = 0;
 
   if(!xml)
     return;
@@ -141,56 +174,383 @@ void log_gtk(int level, int priority, char *fmt, va_list ap)
   
   gtk_text_freeze(GTK_TEXT(w));
 
-  if(inited)
+  if(log_inited)
     gtk_text_insert(GTK_TEXT(w), NULL, NULL, NULL, "\n", 1);
 
   gtk_text_insert(GTK_TEXT(w), NULL, &timecolor, NULL, buffer2, strlen(buffer2));
   gtk_text_insert(GTK_TEXT(w), NULL, NULL, NULL, buffer1, len);
   gtk_text_thaw(GTK_TEXT(w));
 
-  inited = 1;
+  log_inited = 1;
+  if(follow_log)
+/*     gtk_text_set_point(GTK_TEXT(w), -1); */
+    gtk_editable_set_position(GTK_EDITABLE(w), gtk_text_get_length(GTK_TEXT(w)));
+}
+
+void if_hostinfoclosebutton_clicked(GtkWidget *w, gpointer data)
+{
+  gtk_widget_destroy(GTK_WIDGET(data));
+}
+
+void update_hostinfo_dialog(GladeXML *x, node_t *n)
+{
+  GtkWidget *w;
+  char s[100];
+  avl_node_t *avlnode;
+  char *l[1];
+
+  w = glade_xml_get_widget(x, "HostInfoNameEntry");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoNameEntry"); return; }
+  gtk_entry_set_text(GTK_ENTRY(w), n->name);
+
+  w = glade_xml_get_widget(x, "HostInfoHostnameEntry");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoHostnameEntry"); return; }
+  gtk_entry_set_text(GTK_ENTRY(w), n->hostname);
+
+  w = glade_xml_get_widget(x, "HostInfoPortEntry");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoPortEntry"); return; }
+/*   snprintf(s, sizeof(s)-1, "%hd", "0"); */
+  gtk_entry_set_text(GTK_ENTRY(w), "port");
+
+  w = glade_xml_get_widget(x, "HostInfoVersionEntry");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoVersionEntry"); return; }
+  gtk_entry_set_text(GTK_ENTRY(w), n->name);
+
+  w = glade_xml_get_widget(x, "HostInfoStatusEntry");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoStatusEntry"); return; }
+/*   snprintf(s, sizeof(s)-1, "%x", n->status); */
+  gtk_entry_set_text(GTK_ENTRY(w), "0");
+
+  w = glade_xml_get_widget(x, "HostInfoActiveCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoActiveCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.active);
+
+  w = glade_xml_get_widget(x, "HostInfoValidkeyCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoValidkeyCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.validkey);
+
+  w = glade_xml_get_widget(x, "HostInfoWaitingforkeyCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoWaitingforkeyCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.waitingforkey);
+
+  w = glade_xml_get_widget(x, "HostInfoVisitedCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoVisitedCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.visited);
+
+  w = glade_xml_get_widget(x, "HostInfoReachableCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoReachableCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.reachable);
+
+  w = glade_xml_get_widget(x, "HostInfoIndirectCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoIndirectCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.indirect);
+
+  w = glade_xml_get_widget(x, "HostInfoVisibleCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoVisibleCheckbutton"); return; }
+/*   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), n->status.visible); */
+
+  w = glade_xml_get_widget(x, "HostInfoTCPOnlyCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoTCPOnlyCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), (n->options & OPTION_TCPONLY) != 0);
+
+  w = glade_xml_get_widget(x, "HostInfoIndirectdataCheckbutton");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoIndirectdataCheckbutton"); return; }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), (n->options & OPTION_INDIRECT) != 0);
+
+/*   w = glade_xml_get_widget(x, "HostInfoWindow"); */
+/*   if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostInfoWindow"); return; } */
+/*   glade_xml_signal_connect_data(x, "on_HostInfoCloseButton_clicked", if_hostinfoclosebutton_clicked, (gpointer)w); */
+  w = glade_xml_get_widget(x, "HostConnectionsCList");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "HostConnectionsCList"); return; }
+  for(avlnode = n->edge_tree->head; avlnode; avlnode = avlnode->next)
+    {
+      if(((edge_t*)(avlnode->data))->to.node == n)
+	l[0] = ((edge_t*)(avlnode->data))->from.node->name;
+      else
+	l[0] = ((edge_t*)(avlnode->data))->to.node->name;
+      gtk_clist_append(GTK_CLIST(w), l);
+    }
+}
+
+void on_settings1_activate(GtkMenuItem *mi, gpointer data)
+{
+  GtkWidget *w;
+  GladeXML *x;
+  
+  x = glade_xml_new(INTERFACE_FILE, "PropertyBox");
+  if(x == NULL)
+    {
+      log(0, TLOG_ERROR,
+	  _("Could not find widget `%s'"),
+	  "PropertyBox");
+      return;
+    }
+  
+  w = glade_xml_get_widget(x, "PropertyBox");
+  if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "PropertyBox"); return; }
+  glade_xml_signal_autoconnect(x);
+}
+
+void on_logcontext_clear_activate(GtkMenuItem *mi, gpointer data)
+{
+  GtkWidget *l = glade_xml_get_widget(xml, "Messages");
+  if(!l) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "Messages"); return; }
+  gtk_editable_delete_text(GTK_EDITABLE(l), 0, -1); /* Delete from 0 to end of buffer */
+  log_inited = 0;
+}
+
+void on_logcontext_follow_activate(GtkMenuItem *mi, gpointer data)
+{
+  follow_log = !follow_log;
+}
+
+void on_messages_button_press_event(GtkWidget *w, GdkEventButton *event, gpointer data)
+{
+  GladeXML *x;
+  GtkWidget *menu;
+  
+  if (event->button == 3)
+    {
+      x = glade_xml_new(INTERFACE_FILE, "LogContextMenu");
+      if(x == NULL)
+	{
+	  log(0, TLOG_ERROR,
+	      _("Could not find widget `%s'"),
+	      "LogContextMenu");
+	  return;
+	}
+
+      menu = glade_xml_get_widget(x, "LogContextMenu");
+      if(!menu) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "LogContextMenu"); return; }
+      
+      glade_xml_signal_connect_data(x, "on_logcontext_clear_activate", on_logcontext_clear_activate, (gpointer)x);
+      glade_xml_signal_connect_data(x, "on_logcontext_follow_activate", on_logcontext_follow_activate, (gpointer)x);
+      w = glade_xml_get_widget(x, "LogContextFollow");
+      if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "LogContextFollow"); return; }
+      GTK_CHECK_MENU_ITEM(w)->active = follow_log;
+      gnome_popup_menu_do_popup_modal(menu, NULL, NULL, event, NULL);
+      gtk_widget_destroy(menu);
+    }
+}
+
+void on_canvascontext_shuffle_activate(GtkMenuItem *mi, gpointer data)
+{
+  avl_node_t *avlnode;
+  double newx, newy;
+  
+  for(avlnode = node_tree->head; avlnode; avlnode = avlnode->next)
+    {
+      newx = ((double)random()) / ((double)RAND_MAX) * 500.0;
+      newy = ((double)random()) / ((double)RAND_MAX) * 300.0;
+      ((struct if_node_data*)((node_t *)(avlnode->data))->data)->x = newx;
+      ((struct if_node_data*)((node_t *)(avlnode->data))->data)->y = newy;
+
+      if(!((struct if_node_data*)((node_t*)(avlnode->data)))->visible)
+	continue;
+      
+      x[((struct if_node_data*)((node_t*)(avlnode->data))->data)->id] = newx;
+      y[((struct if_node_data*)((node_t*)(avlnode->data))->data)->id] = newy;
+    }
+  inited = 0;
+  build_graph = 1;
+}
+
+void on_canvascontext_keep_drawing_activate(GtkMenuItem *mi, gpointer data)
+{
+  keep_drawing = !keep_drawing;
+}
+
+void on_canvascontext_minus50_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom *= 0.50;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), canvas_zoom);
+}
+
+void on_canvascontext_minus25_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom *= 0.75;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), canvas_zoom);
+}
+
+void on_canvascontext_minus10_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom *= 0.90;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), canvas_zoom);
+}
+
+void on_canvascontext_default_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom = 1.00;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), 1.00);
+}
+
+void on_canvascontext_plus10_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom *= 1.10;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), canvas_zoom);
+}
+
+void on_canvascontext_plus25_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom *= 1.25;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), canvas_zoom);
+}
+
+void on_canvascontext_plus50_activate(GtkMenuItem *mi, gpointer data)
+{
+  canvas_zoom *= 1.50;
+  gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(canvas), canvas_zoom);
+}
+
+void on_canvas_button_press_event(GtkWidget *w, GdkEventButton *event, gpointer data)
+{
+  GladeXML *x;
+  GtkWidget *menu;
+  
+  if (event->button == 3)
+    {
+      x = glade_xml_new(INTERFACE_FILE, "CanvasContextMenu");
+      if(x == NULL)
+	{
+	  log(0, TLOG_ERROR,
+	      _("Could not find widget `%s'"),
+	      "CanvasContextMenu");
+	  return;
+	}
+
+      menu = glade_xml_get_widget(x, "CanvasContextMenu");
+      if(!menu) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "CanvasContextMenu"); return; }
+      
+      glade_xml_signal_autoconnect(x);
+      glade_xml_signal_connect_data(x, "on_canvascontext_shuffle_activate", on_canvascontext_shuffle_activate, (gpointer)x);
+      glade_xml_signal_connect_data(x, "on_canvascontext_keep_drawing_activate", on_canvascontext_keep_drawing_activate, (gpointer)x);
+      w = glade_xml_get_widget(x, "CanvasContextKeepDrawing");
+      if(!w) { log(0, TLOG_ERROR, _("Couldn't find widget `%s'"), "CanvasContextKeepDrawing"); return; }
+      GTK_CHECK_MENU_ITEM(w)->active = keep_drawing;
+      gnome_popup_menu_do_popup_modal(menu, NULL, NULL, event, NULL);
+      gtk_widget_destroy(menu);
+    }
+}
+
+void on_nodetree_button_press_event(GtkWidget *w, GdkEventButton *event, gpointer data)
+{
+  GtkCTreeNode *node;
+  int row, col;
+  gpointer lt;
+  GladeXML *x;
+  
+  gtk_clist_get_selection_info(GTK_CLIST(w), event->x, event->y,
+                               &row, &col);
+
+  node = gtk_ctree_node_nth(GTK_CTREE(w), row);
+  if(node == NULL)
+    return;
+  lt = gtk_ctree_node_get_row_data(GTK_CTREE(w), node);
+  if(event->type == GDK_2BUTTON_PRESS && event->button == 1)
+    {
+      /* Double left click on an item */
+      if(lt == NULL)
+        /* this is only a branch, double click wil (un)expand. */
+        return;
+
+      if(GTK_CTREE_ROW(node)->parent == hosts_ctn)
+	{
+	  x = ((struct if_node_data*)(((node_t*)lt)->data))->hi_xml = glade_xml_new(INTERFACE_FILE, "HostInfoWindow");
+	  if(x == NULL)
+	    {
+	      log(0, TLOG_ERROR,
+		  _("Could not find widget `%s'"),
+		  "HostInfoWindow");
+	      return;
+	    }
+	  glade_xml_signal_autoconnect(x);
+	  update_hostinfo_dialog(x, (node_t*)lt);
+	}
+      else
+	{
+	  log(0, TLOG_ERROR,
+	      "WHERE did you click?!");
+	}
+      /* so now we have access to all the data we want. */
+/*       gldap_show_details(lt); */
+      return;
+    }
+/*   else */
+/*     if (event->button == 3) */
+/*       { */
+/*         GtkWidget *temp_menu; */
+/*         temp_menu = gnome_popup_menu_new(data); */
+/*         gnome_popup_menu_do_popup_modal(temp_menu, NULL, NULL, event, NULL); */
+/*         gtk_widget_destroy(temp_menu); */
+/*       } */
+}
+
+void on_exit1_activate(GtkMenuItem *mi, gpointer data)
+{
+  close_network_connections();
+  gtk_exit(0);
+}
+
+void on_info1_activate(GtkMenuItem *mi, gpointer data)
+{
+  GladeXML *x;
+  x = glade_xml_new(INTERFACE_FILE, "AboutWindow");
+  if(x == NULL)
+    {
+      log(0, TLOG_ERROR,
+	  _("Could not find widget `%s'"),
+	  "AboutWindow");
+      return;
+    }
 }
 
 int init_interface(void)
 {
   char *l[1];
 
+  glade_gnome_init();
+
+  xml = glade_xml_new("pokey.glade", "AppWindow");
+
   if(!xml)
-    return -1;
+    {
+      log(0, TLOG_ERROR,
+	  _("Something bad happened while creating the interface.\n"));
+      return -1;
+    }
 
   nodetree = glade_xml_get_widget(xml, "NodeTree");
   if(!nodetree)
     {
-      fprintf(stderr, _("Could not find widget `NodeTree'\n"));
+      log(0, TLOG_ERROR,
+	  _("Could not find widget `%s'"),
+	  "NodeTree");
       return -1;
     }
 
   gtk_clist_freeze(GTK_CLIST(nodetree));
-
   l[0] = _("Hosts");
   hosts_ctn = gtk_ctree_insert_node(GTK_CTREE(nodetree),
 			      NULL, NULL, l, 1,
 			      NULL, NULL, NULL, NULL,
 			      FALSE, TRUE);
-  l[0] = _("Subnets");
-  subnets_ctn = gtk_ctree_insert_node(GTK_CTREE(nodetree),
-			      NULL, NULL, l, 1,
-			      NULL, NULL, NULL, NULL,
-			      FALSE, TRUE);
-  l[0] = _("Connections");
-  conns_ctn = gtk_ctree_insert_node(GTK_CTREE(nodetree),
-			      NULL, NULL, l, 1,
-			      NULL, NULL, NULL, NULL,
-			      FALSE, TRUE);
-  
   gtk_clist_thaw(GTK_CLIST(nodetree));
 
   create_canvas();
 
-  gtk_signal_connect(GTK_OBJECT(nodetree), "button_press_event", if_nodetree_button_press_event, NULL);
+  glade_xml_signal_autoconnect(xml);
 
   log_add_hook(log_gtk);
   log_del_hook(log_default);
+
+  add_hook("node-add", if_node_add);
+  add_hook("node-del", if_node_del);
+  add_hook("subnet-add", if_subnet_add);
+  add_hook("subnet-del", if_subnet_del);
+  add_hook("edge-add", if_edge_add);
+  add_hook("edge-del", if_edge_del);
+  add_hook("node-visible", if_node_visible);
+  add_hook("node-invisible", if_node_invisible);
   
   return 0;
 }
@@ -241,10 +601,10 @@ static gint item_event(GnomeCanvasItem *item, GdkEvent *event, gpointer data)
       gnome_canvas_item_ungrab(item, event->button.time);
       dragging = FALSE;
       n = (node_t *)gtk_object_get_user_data(GTK_OBJECT(item));
-      n->x = item_x;
-      n->y = item_y;
-      x[n->id] = item_x;
-      y[n->id] = item_y;
+      ((struct if_node_data*)(n->data))->x = item_x;
+      ((struct if_node_data*)(n->data))->y = item_y;
+      x[((struct if_node_data*)(n->data))->id] = item_x;
+      y[((struct if_node_data*)(n->data))->id] = item_y;
       build_graph = 1;
       break;
 
@@ -270,7 +630,7 @@ void if_node_create(node_t *n)
 			"y1", -08.0,
 			"x2", 30.0,
 			"y2", 08.0,
-			"fill_color_rgba", 0x5f9ea0ff,
+			"fill_color_rgba", 0x5f9ea080,
 			"outline_color", "black",
 			"width_pixels", 0,
 			NULL);
@@ -285,47 +645,48 @@ void if_node_create(node_t *n)
 			"font", "-*-verdana-medium-r-*-*-10-*-*-*-*-*-iso8859-1",
 			NULL);
   
-  n->item = GNOME_CANVAS_ITEM(group);
-  n->x = n->y = 0.0;
+  ((struct if_node_data*)(n->data))->item = GNOME_CANVAS_ITEM(group);
+  ((struct if_node_data*)(n->data))->x = ((struct if_node_data*)(n->data))->y = 0.0;
   gtk_object_set_user_data(GTK_OBJECT(group), (gpointer)n);
   
-  gtk_signal_connect(GTK_OBJECT(n->item), "event", (GtkSignalFunc) item_event, NULL);
+  gtk_signal_connect(GTK_OBJECT(((struct if_node_data*)(n->data))->item), "event", (GtkSignalFunc) item_event, NULL);
 
-  gnome_canvas_item_hide(GNOME_CANVAS_ITEM(n->item));
+  gnome_canvas_item_hide(GNOME_CANVAS_ITEM(((struct if_node_data*)(n->data))->item));
 }
 
-void if_node_visible(node_t *n)
+void if_node_visible(const char *hooktype, va_list ap)
 {
   int i;
   avl_node_t *avlnode;
   double newx, newy;
+  node_t *n = va_arg(ap, node_t*);
   
-  if(!n->item)
+  if(!((struct if_node_data*)(n->data))->item)
     return;
 
-  if(n->status.visible)
+  if(((struct if_node_data*)(n->data))->visible)
     /* This node is already shown */
     return;
 
-  n->status.visible = 1;
+  ((struct if_node_data*)(n->data))->visible = 1;
 
   newx = 250.0 + 200.0 * sin(number_of_nodes / 10.0 * M_PI);
   newy = 150.0 - 100.0 * cos(number_of_nodes / 10.0 * M_PI);
-  gnome_canvas_item_move(GNOME_CANVAS_ITEM(n->item), newx - n->x, newy - n->y);
-  n->x = newx;
-  n->y = newy;
+  gnome_canvas_item_move(GNOME_CANVAS_ITEM(((struct if_node_data*)(n->data))->item), newx - ((struct if_node_data*)(n->data))->x, newy - ((struct if_node_data*)(n->data))->y);
+  ((struct if_node_data*)(n->data))->x = newx;
+  ((struct if_node_data*)(n->data))->y = newy;
   
   for(i = 0, avlnode = node_tree->head; avlnode; avlnode = avlnode->next, i++)
     {
-      if(!((node_t*)(avlnode->data))->status.visible)
+      if(!((struct if_node_data*)(((node_t*)(avlnode->data))->data))->visible)
 	continue;
       
       nodes[i] = (node_t *)(avlnode->data);
-      nodes[i]->id = i;
+      ((struct if_node_data*)(nodes[i]->data))->id = i;
     }
   number_of_nodes = i;
 
-  gnome_canvas_item_show(GNOME_CANVAS_ITEM(n->item));
+  gnome_canvas_item_show(GNOME_CANVAS_ITEM(((struct if_node_data*)(n->data))->item));
   gnome_canvas_update_now(GNOME_CANVAS(canvas));
 
   /* (Re)start calculations */
@@ -333,31 +694,32 @@ void if_node_visible(node_t *n)
   build_graph = 1;
 }
 
-void if_node_invisible(node_t *n)
+void if_node_invisible(const char *hooktype, va_list ap)
 {
   int i;
   avl_node_t *avlnode;
+  node_t *n = va_arg(ap, node_t*);
   
-  if(!n->item)
+  if(!((struct if_node_data*)(n->data))->item)
     return;
 
-  if(!n->status.visible)
+  if(!((struct if_node_data*)(n->data))->visible)
     /* This node is already invisible */
     return;
 
-  n->status.visible = 0;
+  ((struct if_node_data*)(n->data))->visible = 0;
 
   for(i = 0, avlnode = node_tree->head; avlnode; avlnode = avlnode->next, i++)
     {
-      if(!((node_t*)(avlnode->data))->status.visible)
+      if(!((struct if_node_data*)((node_t*)(avlnode->data))->data)->visible)
 	continue;
       
       nodes[i] = (node_t *)(avlnode->data);
-      nodes[i]->id = i;
+      ((struct if_node_data*)(nodes[i]->data))->id = i;
     }
   number_of_nodes = i;
   
-  gnome_canvas_item_hide(GNOME_CANVAS_ITEM(n->item));
+  gnome_canvas_item_hide(GNOME_CANVAS_ITEM(((struct if_node_data*)(n->data))->item));
   gnome_canvas_update_now(GNOME_CANVAS(canvas));
 
   /* (Re)start calculations */
@@ -365,57 +727,89 @@ void if_node_invisible(node_t *n)
   build_graph = 1;
 }
 
-GtkCTreeNode *if_node_add(node_t *n)
+void if_node_add(const char *hooktype, va_list ap)
 {
+  node_t *n = va_arg(ap, node_t*);
   char *l[1];
-  GtkCTreeNode *ctn;
+  struct if_node_data *nd;
 
   if(!xml)
-    return NULL;
+    return;
 
+  nd = xmalloc(sizeof(*nd));
   l[0] = n->name;
   gtk_clist_freeze(GTK_CLIST(nodetree));
-  n->host_ctn = gtk_ctree_insert_node(GTK_CTREE(nodetree),
-				      hosts_ctn, NULL, l, 1,
-				      NULL, NULL, NULL, NULL,
-				      FALSE, FALSE);
+  nd->ctn = gtk_ctree_insert_node(GTK_CTREE(nodetree),
+				  hosts_ctn, NULL, l, 1,
+				  NULL, NULL, NULL, NULL,
+				  FALSE, FALSE);
   gtk_clist_thaw(GTK_CLIST(nodetree));
+  gtk_ctree_node_set_row_data(GTK_CTREE(nodetree), nd->ctn, n);
+
+  n->data = (void*)nd;
 
   if_node_create(n);
-  if_node_visible(n);
-
-  return ctn;
+  if_node_visible(hooktype, ap);
 }
 
-void if_node_del(node_t *n)
+void if_node_del(const char *hooktype, va_list ap)
 {
-  gtk_clist_freeze(GTK_CLIST(nodetree));
-  if(n->host_ctn)
-    gtk_ctree_remove_node(GTK_CTREE(nodetree), n->host_ctn);
-  if(n->conn_ctn)
-    gtk_ctree_remove_node(GTK_CTREE(nodetree), n->conn_ctn);
-  if(n->subnet_ctn)
-    gtk_ctree_remove_node(GTK_CTREE(nodetree), n->subnet_ctn);
-  gtk_clist_thaw(GTK_CLIST(nodetree));
+  node_t *n = va_arg(ap, node_t*);
+  struct if_node_data *nd;
 
-  if_node_invisible(n);
+  nd = (struct if_node_data*)(n->data);
+  if(nd &&nd->ctn)
+    {
+      gtk_clist_freeze(GTK_CLIST(nodetree));
+      gtk_ctree_remove_node(GTK_CTREE(nodetree), nd->ctn);
+      gtk_clist_thaw(GTK_CLIST(nodetree));
+    }
+
+  if_node_invisible(hooktype, ap);
+
+  free(nd);
+  n->data = NULL;
 }
 
-void if_subnet_add(subnet_t *subnet)
+void if_subnet_add(const char *hooktype, va_list ap)
 {
   char *l[1];
-  
+  subnet_t *subnet = va_arg(ap, subnet_t*);
+  struct if_subnet_data *sd;
+  GtkCTreeNode *parent;
+
+  sd = xmalloc(sizeof(*sd));
   l[0] = net2str(subnet);
+  parent = subnet->owner->data ?
+    ((struct if_subnet_data*)(subnet->owner->data))->ctn
+      : NULL;
+
   gtk_clist_freeze(GTK_CLIST(nodetree));
-  gtk_ctree_insert_node(GTK_CTREE(nodetree),
-			subnets_ctn, NULL, l, 1,
-			NULL, NULL, NULL, NULL,
-			TRUE, FALSE);
+  sd->ctn = gtk_ctree_insert_node(GTK_CTREE(nodetree),
+				  parent, NULL, l, 1,
+				  NULL, NULL, NULL, NULL,
+				  TRUE, FALSE);
   gtk_clist_thaw(GTK_CLIST(nodetree));
+  gtk_ctree_node_set_row_data(GTK_CTREE(nodetree), sd->ctn, subnet);
+
+  subnet->data = (void*)sd;
 }
 
-void if_subnet_del(subnet_t *subnet)
+void if_subnet_del(const char *hooktype, va_list ap)
 {
+  subnet_t *subnet = va_arg(ap, subnet_t*);
+  struct if_subnet_data *sd;
+
+  sd = (struct if_subnet_data*)(subnet->data);
+  if(sd && sd->ctn)
+    {
+      gtk_clist_freeze(GTK_CLIST(nodetree));
+      gtk_ctree_remove_node(GTK_CTREE(nodetree), sd->ctn);
+      gtk_clist_thaw(GTK_CLIST(nodetree));
+    }
+  
+  free(sd);
+  subnet->data = NULL;
 }
 
 void redraw_edges(void)
@@ -424,6 +818,7 @@ void redraw_edges(void)
   GnomeCanvasPoints *points;
   avl_node_t *avlnode;
   edge_t *e;
+  struct if_node_data *fd, *td;
 
   if(edge_group)
     gtk_object_destroy(GTK_OBJECT(edge_group));
@@ -438,22 +833,24 @@ void redraw_edges(void)
   for(avlnode = edge_tree->head; avlnode; avlnode = avlnode->next)
     {
       e = (edge_t *)avlnode->data;
+      fd = (struct if_node_data*)(e->from.node->data);
+      td = (struct if_node_data*)(e->to.node->data);
 
-      if(!e->from.node->status.visible ||
-	 !e->to.node->status.visible)
-	/* We shouldn't draw this line */
-	continue;
+/*       if(!e->from.node->status.visible || */
+/* 	 !e->to.node->status.visible) */
+/* 	/\* We shouldn't draw this line *\/ */
+/* 	continue; */
       
       points = gnome_canvas_points_new(2);
       
-      points->coords[0] = e->from.node->x;
-      points->coords[1] = e->from.node->y;
-      points->coords[2] = e->to.node->x;
-      points->coords[3] = e->to.node->y;
+      points->coords[0] = fd->x;
+      points->coords[1] = fd->y;
+      points->coords[2] = td->x;
+      points->coords[3] = td->y;
       gnome_canvas_item_new(group,
 			    gnome_canvas_line_get_type(),
 			    "points", points,
-			    "fill_color_rgba", 0xe080c0ff,
+			    "fill_color_rgba", 0xe080c080,
 			    "width_pixels", 2,
 			    NULL);
       gnome_canvas_points_unref(points);
@@ -464,7 +861,7 @@ void redraw_edges(void)
   edge_group = group;
 }
 
-void if_edge_add(edge_t *e)
+void if_edge_add(const char *hooktype, va_list ap)
 {
   redraw_edges();
 
@@ -472,7 +869,7 @@ void if_edge_add(edge_t *e)
   build_graph = 1;
 }
 
-void if_edge_del(edge_t *e)
+void if_edge_del(const char *hooktype, va_list ap)
 {
   redraw_edges();
 
@@ -484,11 +881,11 @@ void if_move_node(node_t *n, double dx, double dy)
 {
   double newx, newy;
   
-  newx = n->x + dx;
-  newy = n->y + dy;
-  gnome_canvas_item_move(GNOME_CANVAS_ITEM(n->item), newx - n->x, newy - n->y);
-  n->x = newx;
-  n->y = newy;
+  newx = ((struct if_node_data*)(n->data))->x + dx;
+  newy = ((struct if_node_data*)(n->data))->y + dy;
+  gnome_canvas_item_move(GNOME_CANVAS_ITEM(((struct if_node_data*)(n->data))->item), newx - ((struct if_node_data*)(n->data))->x, newy - ((struct if_node_data*)(n->data))->y);
+  ((struct if_node_data*)(n->data))->x = newx;
+  ((struct if_node_data*)(n->data))->y = newy;
 }
 
 #define X_MARGIN 50.0
@@ -505,17 +902,17 @@ void set_zooming(void)
   minx = miny = maxx = maxy = 0.0;
   for(i = 0; i < number_of_nodes; i++)
     {
-      if(nodes[i]->x < minx)
-	minx = nodes[i]->x;
+      if(((struct if_node_data*)(nodes[i]->data))->x < minx)
+	minx = ((struct if_node_data*)(nodes[i]->data))->x;
       else
-	if(nodes[i]->x > maxx)
-	  maxx = nodes[i]->x;
+	if(((struct if_node_data*)(nodes[i]->data))->x > maxx)
+	  maxx = ((struct if_node_data*)(nodes[i]->data))->x;
 
-      if(nodes[i]->y < miny)
-	miny = nodes[i]->y;
+      if(((struct if_node_data*)(nodes[i]->data))->y < miny)
+	miny = ((struct if_node_data*)(nodes[i]->data))->y;
       else
-	if(nodes[i]->y > maxy)
-	  maxy = nodes[i]->y;
+	if(((struct if_node_data*)(nodes[i]->data))->y > maxy)
+	  maxy = ((struct if_node_data*)(nodes[i]->data))->y;
     }
 
   if(minx > ominx - X_MARGIN_BUFFER && ominx > minx)
@@ -595,15 +992,18 @@ void if_build_graph(void)
 {
   int i, j, p, max_i;
   double delta_m, max_delta_m;
-  double dx, dy, s, L, max_d, old_x, old_y;
+  double dx, dy, s, L, min_d, old_x, old_y;
   edge_t *e;
 
+  if(!keep_drawing)
+    return;
+  
   if(!inited)
     {
       for(i = 0; i < number_of_nodes; i++)
 	{
-	  x[i] = nodes[i]->x;
-	  y[i] = nodes[i]->y;
+	  x[i] = ((struct if_node_data*)(nodes[i]->data))->x;
+	  y[i] = ((struct if_node_data*)(nodes[i]->data))->y;
 	}
 
       /* Initialize Floyd */
@@ -645,19 +1045,19 @@ void if_build_graph(void)
 	    }
 	}
 
-      max_d = 0.0;
+      min_d = 0.0;
       for(i = 0; i < number_of_nodes; i++)
 	for(j = i + 1; j < number_of_nodes; j++)
-	  if(d[i][j] > max_d && d[i][j] < INFINITY)
-	    max_d = d[i][j];
+	  if(d[i][j] < min_d && d[i][j] > 0)
+	    min_d = d[i][j];
 
-      L = 300.0 / log(max_d);
+      L = 5.0 / sqrt(min_d + 1.0);
 
       for(i = 0; i < number_of_nodes; i++)
 	{
 	  for(j = i + 1; j < number_of_nodes; j++)
 	    {
-	      d[i][j] = d[j][i] = log(d[i][j]+1.0);
+	      d[i][j] = d[j][i] = sqrt(d[i][j]+1.0);
 	      l[i][j] = l[j][i] = L * d[i][j];
 	      k[i][j] = k[j][i] = K / (d[i][j] * d[i][j]);
 	    }
@@ -679,7 +1079,10 @@ void if_build_graph(void)
     }
 
   if(max_delta_m <= epsilon)
-    build_graph = 0;
+    {
+      fprintf(stderr, "Graph building is done; max_delta_m = %f\n", max_delta_m);
+      build_graph = 0;
+    }
   else
     {
       int iter = 0, maxiter = 20;

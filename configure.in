@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in,v 1.18 2002/04/11 20:17:33 zarq Exp $
+dnl $Id: configure.in,v 1.19 2002/04/28 12:46:25 zarq Exp $
 
 AC_INIT(src/tincd.c)
 AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
@@ -97,8 +97,53 @@ AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 tinc_TUNTAP
-tinc_OPENSSL
-tinc_ZLIB
+
+	use_gcrypt=0
+	use_openssl=0
+
+	AC_ARG_WITH(gcrypt,
+	[  --with-gcrypt           Use GCRYPT for all cryptographic functions],
+	[
+	  if test "x$withval" = "xyes" ; then
+	    use_gcrypt=1
+	  else
+	    use_gcrypt=0
+	  fi
+	],
+	[use_gcrypt=0])
+
+	AC_ARG_WITH(openssl,
+	[  --with-openssl          Use OpenSSL for all cryptographic functions],
+	[
+	  if test "x$withval" = "xyes" ; then
+	    use_openssl=1
+	  else
+	    use_openssl=0
+	  fi
+	],
+	[use_openssl=0])
+
+	if test \( $use_gcrypt -eq 0 -a $use_openssl -eq 0 \) \
+	     -o \( $use_gcrypt -eq 1 -a $use_openssl -eq 1 \) ; then
+	  cat << EOM
+Error: You must select exactly one of GCRYPT or OpenSSL.
+EOM
+	  echo use_openssl=$use_openssl, use_gcrypt=$use_gcrypt
+	  exit 1
+	fi
+
+	if test $use_gcrypt -eq 1 ; then
+	  AC_MSG_RESULT([Selecting GCRYPT for crypto])
+	  tinc_GCRYPT
+	  AC_DEFINE(USE_GCRYPT)
+	fi
+	if test $use_openssl -eq 1 ; then
+	  AC_MSG_RESULT([Selecting OpenSSL for crypto])
+	  tinc_OPENSSL
+	  AC_DEFINE(USE_OPENSSL)
+	fi
+
+	tinc_ZLIB
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,

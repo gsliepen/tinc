@@ -1,5 +1,5 @@
 ## Produce this file with automake to get Makefile.in
-# $Id: Makefile.am,v 1.9 2002/04/13 11:23:46 zarq Exp $
+# $Id: Makefile.am,v 1.10 2002/04/28 12:46:26 zarq Exp $
 
 SUBDIRS = pokey
 
@@ -7,19 +7,19 @@ sbin_PROGRAMS = tincd
 
 EXTRA_DIST = linux/device.c freebsd/device.c openbsd/device.c solaris/device.c
 
-tincd_SOURCES = conf.c connection.c device.c edge.c event.c graph.c logging.c meta.c net.c net_packet.c net_setup.c	\
-	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
-	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
+tincd_SOURCES = read_conf.c device.c event.c graph.c meta.c net_packet.c net_setup.c	\
+	net_socket.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
+	protocol_key.c protocol_subnet.c route.c tincd.c net.c
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib -I$(top_srcdir)/intl
 
-noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logging.h meta.h net.h netutl.h node.h process.h	\
-	protocol.h route.h subnet.h
+noinst_HEADERS = read_conf.h  device.h event.h graph.h  meta.h process.h	\
+	protocol.h route.h 
 
 LIBS = @LIBS@ @INTLLIBS@
 
 tincd_LDADD = \
-	$(top_builddir)/lib/libtinc.a
+	$(top_builddir)/lib/libtinc.a -lgcrypt
 
 localedir = $(datadir)/locale
 

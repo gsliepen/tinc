@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.h,v 1.2 2002/04/09 15:26:00 zarq Exp $
+    $Id: connection.h,v 1.1 2002/04/28 12:46:25 zarq Exp $
 */
 
 #ifndef __TINC_CONNECTION_H__
@@ -28,16 +28,22 @@
 #include <avl_tree.h>
 #include <list.h>
 
-#ifdef HAVE_OPENSSL_EVP_H
-# include <openssl/evp.h>
-#else
-# include <evp.h>
-#endif
+#ifdef USE_OPENSSL
+# ifdef HAVE_OPENSSL_EVP_H
+#  include <openssl/evp.h>
+# else
+#  include <evp.h>
+# endif
 
-#ifdef HAVE_OPENSSL_RSA_H
-# include <openssl/rsa.h>
-#else
-# include <rsa.h>
+# ifdef HAVE_OPENSSL_RSA_H
+#  include <openssl/rsa.h>
+# else
+#  include <rsa.h>
+# endif
+#endif /* USE_OPENSSL */
+
+#ifdef USE_GCRYPT
+# include <gcrypt.h>
 #endif
 
 #include "net.h"
@@ -79,17 +85,31 @@ typedef struct connection_t {
   struct node_t *node;             /* node associated with the other end */
   struct edge_t *edge;             /* edge associated with this connection */
 
+#ifdef USE_OPENSSL
   RSA *rsa_key;                    /* his public/private key */
   const EVP_CIPHER *incipher;      /* Cipher he will use to send data to us */
   const EVP_CIPHER *outcipher;     /* Cipher we will use to send data to him */
   EVP_CIPHER_CTX *inctx;           /* Context of encrypted meta data that will come from him to us */
   EVP_CIPHER_CTX *outctx;          /* Context of encrypted meta data that will be sent from us to him */
+  const EVP_MD *indigest;
+  const EVP_MD *outdigest;
+#endif
+
+#ifdef USE_GCRYPT
+  GCRY_SEXP rsa_key;
+  GCRY_CIPHER_HD incipher;
+  GCRY_CIPHER_HD outcipher;
+  GCRY_CIPHER_HD inctx;
+  GCRY_CIPHER_HD outctx;
+  GCRY_MD_HD indigest;
+  GCRY_MD_HD outdigest;
+  /* FIXME */
+#endif
+  
   char *inkey;                     /* His symmetric meta key + iv */
   char *outkey;                    /* Our symmetric meta key + iv */
   int inkeylength;                 /* Length of his key + iv */
   int outkeylength;                /* Length of our key + iv */
-  const EVP_MD *indigest;
-  const EVP_MD *outdigest;
   int inmaclength;
   int outmaclength;
   int incompression;

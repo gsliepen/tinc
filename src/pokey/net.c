@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.39 2002/04/28 12:46:26 zarq Exp $
+    $Id: net.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -46,12 +46,15 @@
 
 #include <openssl/rand.h>
 
+#include <gtk/gtk.h>
+
 #include <utils.h>
 #include <xalloc.h>
 #include <avl_tree.h>
 #include <list.h>
 
 #include "conf.h"
+#include "interface.h"
 #include "connection.h"
 #include "meta.h"
 #include "net.h"
@@ -68,11 +71,37 @@
 
 #include "system.h"
 
+int do_prune = 0;
 int do_purge = 0;
 int sighup = 0;
 int sigalrm = 0;
 
 time_t now = 0;
+
+/*
+  put all file descriptors in an fd_set array
+*/
+void build_fdset(fd_set *fs)
+{
+  avl_node_t *node;
+  connection_t *c;
+  int i;
+cp
+  FD_ZERO(fs);
+
+  for(node = connection_tree->head; node; node = node->next)
+    {
+      c = (connection_t *)node->data;
+      FD_SET(c->socket, fs);
+    }
+
+  for(i = 0; i < listen_sockets; i++)
+    {
+      FD_SET(listen_socket[i].tcp, fs);
+      FD_SET(listen_socket[i].udp, fs);
+    }
+cp
+}
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -84,8 +113,8 @@ void purge(void)
   subnet_t *s;
   connection_t *c;
 cp
-  if(debug_lvl >= DEBUG_PROTOCOL)
-    syslog(LOG_DEBUG, _("Purging unreachable nodes"));
+  log(DEBUG_PROTOCOL, TLOG_DEBUG,
+      _("Purging unreachable nodes"));
 
   for(nnode = node_tree->head; nnode; nnode = nnext)
   {
@@ -134,42 +163,6 @@ cp
 }
 
 /*
-  put all file descriptors in an fd_set array
-  While we're at it, purge stuff that needs to be removed.
-*/
-void build_fdset(fd_set *fs)
-{
-  avl_node_t *node, *next;
-  connection_t *c;
-  int i;
-cp
-  FD_ZERO(fs);
-
-  for(node = connection_tree->head; node; node = next)
-    {
-      next = node->next;
-      c = (connection_t *)node->data;
-
-      if(c->status.remove)
-        connection_del(c);
-      else
-        FD_SET(c->socket, fs);
-    }
-
-  if(!connection_tree->head)
-    purge();
-
-  for(i = 0; i < listen_sockets; i++)
-    {
-      FD_SET(listen_socket[i].tcp, fs);
-      FD_SET(listen_socket[i].udp, fs);
-    }
-
-  FD_SET(device_fd, fs);
-cp
-}
-
-/*
   Terminate a connection:
   - Close the socket
   - Remove associated edge and tell other connections about it if report = 1
@@ -189,10 +182,6 @@ cp
            c->name, c->hostname);
 
   c->status.remove = 1;
-  c->status.active = 0;
-
-  if(c->node)
-    c->node->connection = NULL;
 
   if(c->socket)
     close(c->socket);
@@ -223,6 +212,13 @@ cp
       retry_outgoing(c->outgoing);
       c->outgoing = NULL;
     }
+
+  /* Deactivate */
+
+  c->status.active = 0;
+  if(c->node)
+    c->node->connection = NULL;
+  do_prune = 1;
 cp
 }
 
@@ -282,12 +278,11 @@ void check_network_activity(fd_set *f)
   avl_node_t *node;
   int result, i;
   int len = sizeof(result);
-  vpn_packet_t packet;
 cp
-  if(FD_ISSET(device_fd, f))
+  for(i = 0; i < listen_sockets; i++)
     {
-      if(!read_packet(&packet))
-        route_outgoing(&packet);
+      if(FD_ISSET(listen_socket[i].tcp, f))
+	handle_new_meta_connection(listen_socket[i].tcp);
     }
 
   for(node = connection_tree->head; node; node = node->next)
@@ -295,7 +290,7 @@ cp
       c = (connection_t *)node->data;
 
       if(c->status.remove)
-        continue;
+        return;
 
       if(FD_ISSET(c->socket, f))
         {
@@ -317,18 +312,29 @@ cp
           if(receive_meta(c) < 0)
             {
               terminate_connection(c, c->status.active);
-              continue;
+              return;
             }
         }
     }
+cp
+}
 
-  for(i = 0; i < listen_sockets; i++)
+void prune_connections(void)
+{
+  connection_t *c;
+  avl_node_t *node, *next;
+cp
+  for(node = connection_tree->head; node; node = next)
     {
-      if(FD_ISSET(listen_socket[i].udp, f))
-	handle_incoming_vpn_data(listen_socket[i].udp);
-      if(FD_ISSET(listen_socket[i].tcp, f))
-	handle_new_meta_connection(listen_socket[i].tcp);
+      next = node->next;
+      c = (connection_t *)node->data;
+
+      if(c->status.remove)
+        connection_del(c);
     }
+
+  if(!connection_tree->head)
+    purge();
 cp
 }
 
@@ -351,25 +357,34 @@ cp
     {
       now = time(NULL);
 
-      tv.tv_sec = 1 + (rand() & 7); /* Approx. 5 seconds, randomized to prevent global synchronisation effects */
-      tv.tv_usec = 0;
+/*       tv.tv_sec = 1 + (rand() & 7); /\* Approx. 5 seconds, randomized to prevent global synchronisation effects *\/ */
+/*       tv.tv_usec = 0; */
+      tv.tv_sec = 0;
+      tv.tv_usec = 50000;
+
+      if(do_prune)
+        {
+          prune_connections();
+          do_prune = 0;
+        }
 
       build_fdset(&fset);
 
+      while(gtk_events_pending()) 
+	if(gtk_main_iteration() == FALSE)
+	  return;
+
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
         {
-          if(errno != EINTR && errno != EAGAIN)
+          if(errno != EINTR) /* because of a signal */
             {
               syslog(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
-              cp_trace();
-	      dump_connections();
               return;
             }
-
-	  continue;
         }
 
-      check_network_activity(&fset);
+      if(r > 0)
+        check_network_activity(&fset);
 
       if(do_purge)
         {
@@ -396,9 +411,7 @@ cp
               if(debug_lvl >= DEBUG_STATUS)
                 syslog(LOG_INFO, _("Regenerating symmetric key"));
 
-#ifdef USE_OPENSSL
               RAND_pseudo_bytes(myself->key, myself->keylength);
-#endif
               send_key_changed(myself->connection, myself);
               keyexpires = now + keylifetime;
             }
@@ -446,6 +459,9 @@ cp
 
           continue;
         }
+
+      if(build_graph)
+	if_build_graph();
     }
 cp
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: logging.h,v 1.7 2002/04/13 11:00:41 zarq Exp $
+    $Id: logging.h,v 1.1 2002/04/28 12:46:25 zarq Exp $
 */
 
 #ifndef __TINC_LOGGING_H__
@@ -67,6 +67,8 @@ extern void tinc_syslog(int, char *, ...);
 #define LOG_NOTICE      5       /* normal but significant condition */
 #define LOG_INFO        6       /* informational */
 #define LOG_DEBUG       7       /* debug-level messages */
+#else
+# warning dont include syslog!
 #endif
 
 #endif /* __TINC_LOGGING_H__ */

@@ -17,14 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.3 2002/04/28 12:46:26 zarq Exp $
+    $Id: protocol_key.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -34,6 +33,7 @@
 #include <avl_tree.h>
 
 #include "conf.h"
+#include "interface.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
@@ -41,6 +41,7 @@
 #include "connection.h"
 #include "node.h"
 #include "edge.h"
+#include "logging.h"
 
 #include "system.h"
 
@@ -179,14 +180,8 @@ cp
   bin2hex(from->key, key, from->keylength);
   key[from->keylength * 2] = '\0';
 cp
-#ifdef USE_OPENSSL
   return send_request(c, "%d %s %s %s %d %d %d %d", ANS_KEY,
                       from->name, to->name, key, from->cipher?from->cipher->nid:0, from->digest?from->digest->type:0, from->maclength, from->compression);
-#endif
-#ifdef USE_GCRYPT
-  return send_request(c, "%d %s %s %s %d %d %d %d", ANS_KEY,
-                      from->name, to->name, key, from->cipher?-1:0, from->digest?-1:0, from->maclength, from->compression);
-#endif
 }
 
 int ans_key_h(connection_t *c)
@@ -246,7 +241,6 @@ cp
 
   if(cipher)
     {
-#ifdef USE_OPENSSL
       from->cipher = EVP_get_cipherbynid(cipher);
       if(!from->cipher)
 	{
@@ -258,7 +252,6 @@ cp
 	  syslog(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name, from->hostname);
 	  return -1;
         }
-#endif
     }
   else
     {
@@ -269,7 +262,6 @@ cp
 
   if(digest)
     {
-#ifdef USE_OPENSSL
       from->digest = EVP_get_digestbynid(digest);
       if(!from->digest)
 	{
@@ -281,7 +273,6 @@ cp
 	  syslog(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
 	  return -1;
 	}
-#endif
     }
   else
     {
@@ -289,8 +280,6 @@ cp
     }
 
   from->compression = compression;
-  
-  flush_queue(from);
 cp
   return 0;
 }

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.4 2002/04/28 12:46:26 zarq Exp $
+    $Id: meta.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -35,6 +35,7 @@
 
 #include "net.h"
 #include "connection.h"
+#include "interface.h"
 #include "system.h"
 #include "protocol.h"
 #include "logging.h"
@@ -45,18 +46,13 @@ int send_meta(connection_t *c, char *buffer, int length)
   int outlen;
   char outbuf[MAXBUFSIZE];
 cp
-  if(debug_lvl >= DEBUG_META)
-    syslog(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
-           c->name, c->hostname);
+  log(DEBUG_META, TLOG_DEBUG,
+      _("Sending %d bytes of metadata to %s (%s)"),
+      length, c->name, c->hostname);
 
   if(c->status.encryptout)
     {
-#ifdef USE_OPENSSL
       EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
-#endif
-#ifdef USE_GCRYPT
-      outlen = gcry_cipher_encrypt(c->outctx, outbuf, sizeof(outbuf), buffer, length);
-#endif
       bufp = outbuf;
       length = outlen;
     }
@@ -145,35 +141,9 @@ cp
 
       if(c->status.decryptin && !decrypted)
         {
-#ifdef USE_OPENSSL
           EVP_DecryptUpdate(c->inctx, inbuf, &lenin, c->buffer + oldlen, lenin);
-#endif
-#ifdef USE_GCRYPT
-	  lenin = gcry_cipher_decrypt(c->inctx, inbuf, sizeof(inbuf), c->buffer + oldlen, lenin);
-#endif
           memcpy(c->buffer + oldlen, inbuf, lenin);
           decrypted = 1;
-        }
-
-      /* Are we receiving a TCPpacket? */
-
-      if(c->tcplen)
-        {
-          if(c->tcplen <= c->buflen)
-            {
-              receive_tcppacket(c, c->buffer, c->tcplen);
-
-              c->buflen -= c->tcplen;
-              lenin -= c->tcplen;
-              memmove(c->buffer, c->buffer + c->tcplen, c->buflen);
-              oldlen = 0;
-              c->tcplen = 0;
-              continue;
-            }
-          else
-            {
-              break;
-            }
         }
 
       /* Otherwise we are waiting for a request */

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.14 2002/04/13 11:07:12 zarq Exp $
+    $Id: tincd.c,v 1.15 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -37,10 +37,16 @@
 # include <sys/ioctl.h>
 #endif
 
+#ifdef USE_OPENSSL
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+#endif
+
+#ifdef USE_GCRYPT
+#include <gcrypt.h>
+#endif
 
 #include <utils.h>
 #include <xalloc.h>
@@ -231,6 +237,7 @@ void indicator(int a, int b, void *p)
   }
 }
 
+#ifdef USE_OPENSSL
 /*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
@@ -283,6 +290,7 @@ int keygen(int bits)
 
   return 0;
 }
+#endif
 
 /*
   Set all files and paths according to netname
@@ -347,6 +355,7 @@ main(int argc, char **argv, char **envp)
 
   /* Slllluuuuuuurrrrp! */
 cp
+#ifdef USE_OPENSSL
   RAND_load_file("/dev/urandom", 1024);
 
 #ifdef HAVE_SSLEAY_ADD_ALL_ALGORITHMS
@@ -361,6 +370,7 @@ cp
       read_server_config();
       exit(keygen(generate_keys));
     }
+#endif
 
   if(kill_tincd)
     exit(kill_other(kill_tincd));

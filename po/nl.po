@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-cvs\n"
-"POT-Creation-Date: 2002-04-09 13:41+0200\n"
+"POT-Creation-Date: 2002-04-14 21:41+0200\n"
 "PO-Revision-Date: 2002-03-27 16:59+0100\n"
 "Last-Translator: Guus Sliepen <guus@sliepen.warande.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -13,35 +13,35 @@ msgstr ""
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/conf.c:173
+#: src/conf.c:171
 #, c-format
 msgid "\"yes\" or \"no\" expected for configuration variable %s in %s line %d"
 msgstr ""
 "\"ja\" of \"nee\" verwacht voor configuratievariabele %s in %s regel %d"
 
-#: src/conf.c:188
+#: src/conf.c:186
 #, c-format
 msgid "Integer expected for configuration variable %s in %s line %d"
 msgstr "Geheel getal verwacht voor configuratievariabele %s in %s regel %d"
 
-#: src/conf.c:218
+#: src/conf.c:216
 #, c-format
 msgid ""
 "Hostname or IP address expected for configuration variable %s in %s line %d"
 msgstr ""
 "Hostnaam of IP adres verwacht voor configuratievariabele %s in %s regel %d"
 
-#: src/conf.c:235
+#: src/conf.c:233
 #, c-format
 msgid "Port number expected for configuration variable %s in %s line %d"
 msgstr "Poortnummer verwacht voor configuratievariabele %s in %s regel %d"
 
-#: src/conf.c:251
+#: src/conf.c:249
 #, c-format
 msgid "Subnet expected for configuration variable %s in %s line %d"
 msgstr "Subnet verwacht voor configuratievariabele %s in %s regel %d"
 
-#: src/conf.c:261
+#: src/conf.c:259
 #, c-format
 msgid ""
 "Network address and prefix length do not match for configuration variable %s "
@@ -50,71 +50,71 @@ msgstr ""
 "Netwerk adres en prefix lengte komen niet overeen bij configuratievariabele %"
 "s in %s regel %d"
 
-#: src/conf.c:369
+#: src/conf.c:367
 #, c-format
 msgid "Cannot open config file %s: %s"
 msgstr "Kan configuratie bestand %s niet openen: %s"
 
-#: src/conf.c:405
+#: src/conf.c:403
 #, c-format
 msgid "No value for variable `%s' on line %d while reading config file %s"
 msgstr ""
 "Geen waarde voor variabele `%s' op regel %d tijdens het lezen van "
 "configuratie bestand %s"
 
-#: src/conf.c:438
+#: src/conf.c:436
 #, c-format
 msgid "Failed to read `%s': %s"
 msgstr "Lezen van `%s' mislukte: %s"
 
-#: src/conf.c:465
+#: src/conf.c:463
 #, c-format
 msgid "`%s' is not an absolute path"
 msgstr "`%s' is geen absoluut pad"
 
-#: src/conf.c:481 src/conf.c:513
+#: src/conf.c:479 src/conf.c:511
 #, c-format
 msgid "Couldn't stat `%s': %s"
 msgstr "Kon `%s' niet statten: %s"
 
-#: src/conf.c:487 src/conf.c:522
+#: src/conf.c:485 src/conf.c:520
 #, c-format
 msgid "`%s' is owned by UID %d instead of %d"
 msgstr "`%s' is eigendom van UID %d in plaats van %d"
 
-#: src/conf.c:494 src/conf.c:529
+#: src/conf.c:492 src/conf.c:527
 #, c-format
 msgid "Warning: `%s' is a symlink"
 msgstr "Waarschuwing: `%s' is een symbolische link"
 
-#: src/conf.c:499 src/conf.c:534
+#: src/conf.c:497 src/conf.c:532
 #, c-format
 msgid "Unable to read symbolic link `%s': %s"
 msgstr "Kan symbolische link `%s' niet lezen: %s"
 
 #. Accessible by others
-#: src/conf.c:545
+#: src/conf.c:543
 #, c-format
 msgid "`%s' has unsecure permissions"
 msgstr "`%s' heeft onveilige permissies"
 
 #. Ask for a file and/or directory name.
-#: src/conf.c:570
+#: src/conf.c:568
 #, c-format
 msgid "Please enter a file to save %s to [%s]: "
 msgstr "Geef een bestand om de %s naar de schrijven [%s]: "
 
-#: src/conf.c:576
+#: src/conf.c:574
 #, c-format
 msgid "Error while reading stdin: %s\n"
 msgstr "Fout tijdens lezen van standaardinvoer: %s\n"
 
-#: src/conf.c:602
+#: src/conf.c:600
 #, c-format
 msgid "Error opening file `%s': %s\n"
 msgstr "Fout bij het openen van het bestand `%s': %s\n"
 
-#: src/conf.c:612
+#: src/conf.c:610
 #, c-format
 msgid ""
 "The file `%s' (or any of the leading directories) has unsafe permissions.\n"
@@ -260,8 +260,8 @@ msgstr "Instellen prioriteit uitgaand pakket op %d"
 
 #. SO_PRIORITY doesn't seem to work
 #: src/net_packet.c:290 src/net_setup.c:450 src/net_socket.c:98
-#: src/net_socket.c:144 src/net_socket.c:171 src/process.c:273
-#: src/process.c:310
+#: src/net_socket.c:144 src/net_socket.c:171 src/process.c:278
+#: src/process.c:315
 #, c-format
 msgid "System call `%s' failed: %s"
 msgstr "Systeemaanroep `%s' mislukte: %s"
@@ -499,27 +499,27 @@ msgstr "Verbinding van %s"
 msgid "Invalid name for outgoing connection in %s line %d"
 msgstr "Ongeldige naam voor uitgaande verbinding in %s regel %d"
 
-#: src/netutl.c:65 src/netutl.c:88
+#: src/netutl.c:66 src/netutl.c:89
 #, c-format
 msgid "Error looking up %s port %s: %s\n"
 msgstr "Fout bij het opzoeken van %s poort %s: %s\n"
 
-#: src/netutl.c:109
+#: src/netutl.c:110
 #, c-format
 msgid "Error while translating addresses: %s"
 msgstr "Fout tijdens vertalen adressen: %s"
 
-#: src/netutl.c:134
+#: src/netutl.c:135
 #, c-format
 msgid "Error while looking up hostname: %s"
 msgstr "Fout bij het opzoeken van hostnaam: %s"
 
-#: src/netutl.c:137
+#: src/netutl.c:138
 #, c-format
 msgid "%s port %s"
 msgstr "%s poort %s"
 
-#: src/netutl.c:166
+#: src/netutl.c:167
 #, c-format
 msgid "sockaddrcmp() was called with unknown address family %d, exitting!"
 msgstr ""
@@ -909,127 +909,127 @@ msgstr ""
 "en je bent welkom om het te distribueren onder bepaalde voorwaarden;\n"
 "zie het bestand COPYING voor details.\n"
 
-#: src/tincd.c:386
+#: src/tincd.c:382
 msgid "Unrecoverable error"
 msgstr "Onherstelbare fout"
 
-#: src/tincd.c:391
+#: src/tincd.c:387
 #, c-format
 msgid "Restarting in %d seconds!"
 msgstr "Herstart in %d seconden!"
 
-#: src/process.c:373 src/tincd.c:396
+#: src/process.c:378 src/tincd.c:392
 msgid "Not restarting."
 msgstr "Geen herstart."
 
-#: src/process.c:69
+#: src/process.c:71
 #, c-format
 msgid "Memory exhausted (couldn't allocate %d bytes), exitting."
 msgstr "Geheugen uitgeput (kon geen %d bytes reserveren), beëindigen."
 
-#: src/process.c:100
+#: src/process.c:103
 msgid "Terminating"
 msgstr "Beëindigen"
 
-#: src/process.c:116
+#: src/process.c:119
 #, c-format
 msgid "A tincd is already running for net `%s' with pid %d.\n"
 msgstr "Een tincd draait al voor net `%s' met pid %d.\n"
 
-#: src/process.c:119
+#: src/process.c:122
 #, c-format
 msgid "A tincd is already running with pid %d.\n"
 msgstr "Een tincd draait al met pid %d.\n"
 
-#: src/process.c:140
+#: src/process.c:143
 #, c-format
 msgid "No other tincd is running for net `%s'.\n"
 msgstr "Geen andere tincd draait voor net `%s'.\n"
 
-#: src/process.c:142
+#: src/process.c:145
 msgid "No other tincd is running.\n"
 msgstr "Geen andere tincd draait.\n"
 
-#: src/process.c:151
+#: src/process.c:154
 #, c-format
 msgid "The tincd for net `%s' is no longer running. "
 msgstr "De tincd voor net `%s' draait niet meer. "
 
-#: src/process.c:153
+#: src/process.c:156
 msgid "The tincd is no longer running. "
 msgstr "De tincd draait niet meer. "
 
-#: src/process.c:155
+#: src/process.c:158
 msgid "Removing stale lock file.\n"
 msgstr "Verwijdering oud vergrendelingsbestand.\n"
 
-#: src/process.c:183
+#: src/process.c:186
 #, c-format
 msgid "Couldn't detach from terminal: %s"
 msgstr "Kon niet ontkoppelen van terminal: %s"
 
-#: src/process.c:196
+#: src/process.c:201
 #, c-format
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) start, debug niveau %d"
 
-#: src/process.c:199
+#: src/process.c:204
 #, c-format
 msgid "tincd %s starting"
 msgstr "tincd %s wordt gestart"
 
-#: src/process.c:280
+#: src/process.c:285
 #, c-format
 msgid "Executing script %s"
 msgstr "Uitvoeren script %s"
 
-#: src/process.c:290
+#: src/process.c:295
 #, c-format
 msgid "Process %d (%s) exited with non-zero status %d"
 msgstr "Proces %d (%s) beëindigde met status %d"
 
-#: src/process.c:298
+#: src/process.c:303
 #, c-format
 msgid "Process %d (%s) was killed by signal %d (%s)"
 msgstr "Proces %d (%s) was gestopt door signaal %d (%s)"
 
-#: src/process.c:304
+#: src/process.c:309
 #, c-format
 msgid "Process %d (%s) terminated abnormally"
 msgstr "Proces %d (%s) abnormaal beëindigd"
 
-#: src/process.c:329
+#: src/process.c:334
 msgid "Got TERM signal"
 msgstr "Kreeg TERM signaal"
 
-#: src/process.c:338
+#: src/process.c:343
 msgid "Got QUIT signal"
 msgstr "Kreeg QUIT signaal"
 
-#: src/process.c:345
+#: src/process.c:350
 #, c-format
 msgid "Got another fatal signal %d (%s): not restarting."
 msgstr "Kreeg nog een fataal signaal %s (%s): geen herstart."
 
-#: src/process.c:354
+#: src/process.c:359
 #, c-format
 msgid "Got fatal signal %d (%s)"
 msgstr "Kreeg fataal signaal %d (%s)"
 
-#: src/process.c:359
+#: src/process.c:364
 msgid "Trying to re-execute in 5 seconds..."
 msgstr "Poging tot herstarten over 5 seconden..."
 
-#: src/process.c:382
+#: src/process.c:387
 msgid "Got HUP signal"
 msgstr "Kreeg HUP signaal"
 
-#: src/process.c:391
+#: src/process.c:396
 #, c-format
 msgid "Reverting to old debug level (%d)"
 msgstr "Herstellen van oud debug niveau (%d)"
 
-#: src/process.c:398
+#: src/process.c:403
 #, c-format
 msgid ""
 "Temporarily setting debug level to 5.  Kill me with SIGINT again to go back "
@@ -1038,21 +1038,21 @@ msgstr ""
 "Tijdelijk instellen debug niveau op 5. Zend nog een SIGINT signaal om niveau "
 "%d te herstellen."
 
-#: src/process.c:409
+#: src/process.c:414
 msgid "Got ALRM signal"
 msgstr "Kreeg ALRM signaal"
 
-#: src/process.c:438
+#: src/process.c:443
 #, c-format
 msgid "Got unexpected signal %d (%s)"
 msgstr "Kreeg onverwacht signaal %d (%s)"
 
-#: src/process.c:447
+#: src/process.c:452
 #, c-format
 msgid "Ignored signal %d (%s)"
 msgstr "Signaal %d (%s) genegeerd"
 
-#: src/process.c:504
+#: src/process.c:509
 #, c-format
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
@@ -1116,11 +1116,11 @@ msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 msgid "Cannot route packet: unknown type %hx"
 msgstr "Kan pakket niet routeren: onbekend type %hx"
 
-#: src/node.c:161
+#: src/node.c:160
 msgid "Nodes:"
 msgstr "Nodes:"
 
-#: src/node.c:166
+#: src/node.c:165
 #, c-format
 msgid ""
 " %s at %s cipher %d digest %d maclength %d compression %d options %lx status "
@@ -1129,7 +1129,7 @@ msgstr ""
 " %s op %s cipher %d digest %d maclengte %d compressie %d opties %lx status %"
 "04x nexthop %s via %s"
 
-#: src/node.c:171
+#: src/node.c:170
 msgid "End of nodes."
 msgstr "Einde van nodes."
 
@@ -1283,6 +1283,204 @@ msgstr "Onbekende adresfamilie tijdens lezen pakket van %s %s"
 #, c-format
 msgid "Unknown address family %d while writing packet to %s %s"
 msgstr "Onbekende adresfamilie tijdens schrijven pakket naar %s %s"
+
+#.
+#. * Vertaalbare teksten bestand gegenereerd door Glade.
+#. * Voeg dit bestand toe aan uw project's bestand POTFILES.in.
+#. * Compileer dit NIET als onderdeel van uw applicatie.
+#.
+#: src/pokey/pokey.translatables:7
+msgid "window1"
+msgstr ""
+
+#: src/pokey/pokey.translatables:8
+msgid "_Network"
+msgstr "_Netwerk"
+
+#: src/pokey/pokey.translatables:9
+msgid "_New network"
+msgstr "_Nieuw netwerk"
+
+#: src/pokey/pokey.translatables:10
+msgid "label1"
+msgstr ""
+
+#: src/pokey/pokey.translatables:11
+msgid "Information about host"
+msgstr "Informatie over computer"
+
+#: src/pokey/pokey.translatables:12 src/pokey/pokey.translatables:30
+msgid "Name"
+msgstr "Naam"
+
+#: src/pokey/pokey.translatables:13 src/pokey/pokey.translatables:31
+msgid "Hostname"
+msgstr "Hostnaam"
+
+#: src/pokey/pokey.translatables:14
+msgid "Port"
+msgstr "Poort"
+
+#: src/pokey/pokey.translatables:15
+msgid "Version"
+msgstr "Versie"
+
+#: src/pokey/pokey.translatables:16
+msgid "Status"
+msgstr "Status"
+
+#: src/pokey/pokey.translatables:17
+msgid "Only TCP packets"
+msgstr "Alleen TCP pakketten"
+
+#: src/pokey/pokey.translatables:18
+msgid "Send data indirectly"
+msgstr "Stuur data indirect"
+
+#: src/pokey/pokey.translatables:19
+msgid "Active"
+msgstr "Actief"
+
+#: src/pokey/pokey.translatables:20
+msgid "Valid key"
+msgstr "Geldige sleutel"
+
+#: src/pokey/pokey.translatables:21
+msgid "Waiting for key"
+msgstr "Wachten op sleutel"
+
+#: src/pokey/pokey.translatables:22
+msgid "Visited"
+msgstr "Bezocht"
+
+#: src/pokey/pokey.translatables:23
+msgid "Reachable"
+msgstr "Bereikbaar"
+
+#: src/pokey/pokey.translatables:24
+msgid "Indirect"
+msgstr "Indirect"
+
+#: src/pokey/pokey.translatables:25
+msgid "Visible"
+msgstr "Zichtbaar"
+
+#: src/pokey/pokey.translatables:26
+msgid "Force Key Regeneration"
+msgstr "Forceer Nieuwe Sleutel"
+
+#: src/pokey/pokey.translatables:27
+msgid "Host Info"
+msgstr "Host Informatie"
+
+#: src/pokey/pokey.translatables:28
+msgid "label5"
+msgstr ""
+
+#: src/pokey/pokey.translatables:29
+msgid "Information about connection"
+msgstr "Informatie over verbinding"
+
+#: src/pokey/pokey.translatables:32
+msgid "Protocol version"
+msgstr "Protocolversie"
+
+#: src/pokey/pokey.translatables:33
+msgid "Active since"
+msgstr "Actief sinds"
+
+#: src/pokey/pokey.translatables:34
+msgid "Options"
+msgstr "Opties"
+
+#: src/pokey/pokey.translatables:35
+msgid "label13"
+msgstr ""
+
+#: src/pokey/pokey.translatables:36
+msgid "Force Disconnect"
+msgstr "Forceer Ontkoppeling"
+
+#: src/pokey/pokey.translatables:37
+msgid "Force Reconnect"
+msgstr "Forceer Opnieuw Verbinden"
+
+#: src/pokey/pokey.translatables:38
+msgid "Force Connect"
+msgstr "Forceer Verbinding"
+
+#: src/pokey/pokey.translatables:39
+msgid "Connections"
+msgstr "Verbindingen"
+
+#: src/pokey/pokey.translatables:40
+msgid "label4"
+msgstr ""
+
+#: src/pokey/pokey.translatables:41
+msgid "Clear"
+msgstr "Leegmaken"
+
+#: src/pokey/pokey.translatables:42
+msgid "Follow"
+msgstr "Volgen"
+
+#: src/pokey/pokey.translatables:43
+msgid "Keep drawing"
+msgstr "Blijf tekenen"
+
+#: src/pokey/pokey.translatables:44
+msgid "Shuffle"
+msgstr "Willekeurig"
+
+#: src/pokey/pokey.translatables:45
+msgid "Zoom"
+msgstr "Zoomen"
+
+#: src/pokey/pokey.translatables:46
+#, c-format
+msgid "-50%"
+msgstr "-50%"
+
+#: src/pokey/pokey.translatables:47
+#, c-format
+msgid "-25%"
+msgstr "-25%"
+
+#: src/pokey/pokey.translatables:48
+#, c-format
+msgid "-10%"
+msgstr "-10%"
+
+#: src/pokey/pokey.translatables:49
+msgid "Default"
+msgstr "Standaard"
+
+#: src/pokey/pokey.translatables:50
+#, c-format
+msgid "+10%"
+msgstr "+10%"
+
+#: src/pokey/pokey.translatables:51
+#, c-format
+msgid "+25%"
+msgstr "+25%"
+
+#: src/pokey/pokey.translatables:52
+#, c-format
+msgid "+50%"
+msgstr "+50%"
+
+#: src/pokey/pokey.translatables:53
+msgid "Copyright 1998-2002"
+msgstr "Copyright 1998-2002"
+
+#: src/pokey/pokey.translatables:54
+msgid ""
+"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software, and you are "
+"welcome to distribute it under certain conditions; see the file COPYING for "
+"details."
+msgstr "tinc wordt gedistribueerd ZONDER ENIGE GARANTIE.  Dit is vrije programmatuur, en je bent welkom om het te distribueren onder bepaalde voorwaarden; zie het bestand COPYING voor details."
 
 #~ msgid "Invalid public/private keypair!"
 #~ msgstr "Ongeldig publiek/privé sleutelpaar!"

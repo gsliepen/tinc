@@ -17,12 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h,v 1.9 2002/04/13 10:04:46 zarq Exp $
+    $Id: conf.h,v 1.1 2002/04/28 12:46:25 zarq Exp $
 */
 
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -60,10 +61,5 @@ extern int get_config_string(config_t *, char **);
 extern int get_config_address(config_t *, struct addrinfo **);
 struct subnet_t; /* Needed for next line. */
 extern int get_config_subnet(config_t *, struct subnet_t **);
-
-extern int read_config_file(avl_tree_t *, const char *);
-extern int read_server_config(void);
-extern FILE *ask_and_safe_open(const char*, const char*, const char *);
-extern int is_safe_path(const char *);
 
 #endif /* __TINC_CONF_H__ */

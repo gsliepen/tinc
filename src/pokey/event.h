@@ -1,5 +1,5 @@
 /*
-    interface.h -- header for interface.c
+    event.h -- header for event.c
     Copyright (C) 2002 Guus Sliepen <guus@sliepen.warande.net>,
                   2002 Ivo Timmermans <itimmermans@bigfoot.com>
 
@@ -17,46 +17,32 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: interface.h,v 1.2 2002/04/28 12:46:26 zarq Exp $
+    $Id: event.h,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
-#ifndef __TINC_INTERFACE_H__
-#define __TINC_INTERFACE_H__
+#ifndef __TINC_EVENT_H__
+#define __TINC_EVENT_H__
 
-#include <gtk/gtk.h>
-#include <glade/glade.h>
-#include <libgnomeui/gnome-canvas.h>
+#include <time.h>
+#include <avl_tree.h>
 
-#include "node.h"
-#include "edge.h"
+avl_tree_t *event_tree;
 
-#define INTERFACE_FILE "pokey.glade"
+typedef void (*event_handler_t)(void *);
 
-typedef struct graph_t {
-  struct graph_t *attractors[20];
-  struct graph_t *repellors[20];
-  int nat;
-  int nrp;
-  node_t *node;
-} graph_t;
-
-struct if_subnet_data {
-  GnomeCanvasItem *item;           /* The gnome canvas item associated with the line */
-  GtkCTreeNode *ctn;
-};
-
-struct if_node_data {
-  double x, y;
-  int visible;
+typedef struct {
+  time_t time;
   int id;
-  GnomeCanvasItem *item;
-  GtkCTreeNode *ctn;
-  GladeXML *hi_xml;
-};
+  event_handler_t handler;
+  void *data;
+} event_t;
 
-extern int build_graph;
+extern void init_events(void);
+extern void exit_events(void);
+extern event_t *new_event(void);
+extern void free_event(event_t *);
+extern void event_add(event_t *);
+extern void event_del(event_t *);
+extern event_t *get_expired_event(void);
 
-void if_build_graph(void);
-int init_interface(void);
-
-#endif /* __TINC_INTERFACE_H__ */
+#endif /* __TINC_EVENT_H__ */

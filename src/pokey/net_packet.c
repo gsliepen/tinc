@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.4 2002/04/28 12:46:26 zarq Exp $
+    $Id: net_packet.c,v 1.1 2002/04/28 12:46:26 zarq Exp $
 */
 
 #include "config.h"
@@ -92,29 +92,15 @@ void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
   vpn_packet_t *outpkt = pkt[0];
   int outlen, outpad;
   long int complen = MTU + 12;
-  
-#ifdef USE_OPENSSL
   EVP_CIPHER_CTX ctx;
   char hmac[EVP_MAX_MD_SIZE];
-#endif
-#ifdef USE_GCRYPT
-  char *hmac;
-#endif
-  
 cp
   /* Check the message authentication code */
 
   if(myself->digest && myself->maclength)
     {
       inpkt->len -= myself->maclength;
-#ifdef USE_OPENSSL
       HMAC(myself->digest, myself->key, myself->keylength, (char *)&inpkt->seqno, inpkt->len, hmac, NULL);
-#endif
-#ifdef USE_GCRYPT
-      hmac = xmalloc(gcry_md_get_algo_dlen(0));  /* myself->digest type */
-      gcry_md_hash_buffer(0, hmac, (char *)&inpkt->seqno, inpkt->len);
-      /* FIXME */
-#endif
       if(memcmp(hmac, (char *)&inpkt->seqno + inpkt->len, myself->maclength))
         {
           if(debug_lvl >= DEBUG_TRAFFIC)
@@ -129,14 +115,9 @@ cp
   {
     outpkt = pkt[nextpkt++];
 
-#ifdef USE_OPENSSL
     EVP_DecryptInit(&ctx, myself->cipher, myself->key, myself->key + myself->cipher->key_len);
     EVP_DecryptUpdate(&ctx, (char *)&outpkt->seqno, &outlen, (char *)&inpkt->seqno, inpkt->len);
     EVP_DecryptFinal(&ctx, (char *)&outpkt->seqno + outlen, &outpad);
-#endif
-#ifdef USE_GCRYPT
-    /* FIXME */
-#endif
 
     outpkt->len = outlen + outpad;
     inpkt = outpkt;
@@ -195,8 +176,6 @@ void receive_packet(node_t *n, vpn_packet_t *packet)
 cp
   if(debug_lvl >= DEBUG_TRAFFIC)
     syslog(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"), packet->len, n->name, n->hostname);
-
-  route_incoming(n, packet);
 cp
 }
 
@@ -209,15 +188,11 @@ void send_udppacket(node_t *n, vpn_packet_t *inpkt)
   int origlen;
   int outlen, outpad;
   long int complen = MTU + 12;
+  EVP_CIPHER_CTX ctx;
   vpn_packet_t *copy;
   static int priority = 0;
   int origpriority;
   int sock;
-
-#ifdef USE_OPENSSL
-  EVP_CIPHER_CTX ctx;
-#endif
-  
 cp
   /* Make sure we have a valid key */
 
@@ -276,18 +251,9 @@ cp
   {
     outpkt = pkt[nextpkt++];
 
-#ifdef USE_OPENSSL
     EVP_EncryptInit(&ctx, n->cipher, n->key, n->key + n->cipher->key_len);
     EVP_EncryptUpdate(&ctx, (char *)&outpkt->seqno, &outlen, (char *)&inpkt->seqno, inpkt->len);
     EVP_EncryptFinal(&ctx, (char *)&outpkt->seqno + outlen, &outpad);
-#endif
-#ifdef USE_GCRYPT
-    gcry_cipher_ctl(n->cipher, GCRYCTL_SET_IV, n->key + n->keylength, n->keylength);
-    gcry_cipher_ctl(n->cipher, GCRYCTL_SET_KEY, n->key, n->keylength);
-    outlen = inpkt->len;
-    gcry_cipher_encrypt(n->cipher, (char *)&outpkt->seqno, outlen, (char *)&inpkt->seqno, inpkt->len);
-    /* FIXME */
-#endif
 
     outpkt->len = outlen + outpad;
     inpkt = outpkt;
@@ -297,18 +263,7 @@ cp
 
   if(n->digest && n->maclength)
     {
-#ifdef USE_OPENSSL
       HMAC(n->digest, n->key, n->keylength, (char *)&inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len, &outlen);
-#endif
-#ifdef USE_GCRYPT
-      char *hmac;
-      outlen = gcry_md_get_algo_dlen(0);
-      hmac = xmalloc(outlen);  /* myself->digest type */
-      gcry_md_ctl(n->digest, GCRYCTL_SET_KEY, n->key, n->keylength);
-      gcry_md_hash_buffer(0, hmac, (char *)&inpkt->seqno, inpkt->len);
-      memcpy((char *)&inpkt->seqno, hmac, outlen);
-      /* FIXME */
-#endif
       inpkt->len += n->maclength;
     }
 
