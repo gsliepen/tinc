@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.7 2002/03/01 14:09:31 guus Exp $
+    $Id: net_socket.c,v 1.1.2.8 2002/03/01 15:14:29 guus Exp $
 */
 
 #include "config.h"
@@ -81,7 +81,7 @@ int setup_listen_socket(sockaddr_t *sa)
   int nfd, flags;
   char *addrstr;
   int option;
-#ifdef HAVE_LINUX
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
   char *interface;
   struct ifreq ifr;
 #endif
@@ -104,14 +104,19 @@ cp
 
   option = 1;
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-#ifdef HAVE_LINUX
-  setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
 
+#if defined(SOL_TCP) && defined(TCP_NODELAY)
+  setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+#endif
+
+#if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
   option = IPTOS_LOWDELAY;
   setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
+#endif
 
   if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
     {
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
       memset(&ifr, 0, sizeof(ifr));
       strncpy(ifr.ifr_ifrn.ifrn_name, interface, IFNAMSIZ);
       if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)))
@@ -120,8 +125,10 @@ cp
           syslog(LOG_ERR, _("Can't bind to interface %s: %s"), interface, strerror(errno));
           return -1;
 	}
-    }
+#else
+      syslog(LOG_WARNING, _("BindToDevice not supported on this platform"));
 #endif
+    }
 
   if(bind(nfd, &sa->sa, SALEN(sa->sa)))
     {
@@ -147,7 +154,7 @@ int setup_vpn_in_socket(sockaddr_t *sa)
   int nfd, flags;
   char *addrstr;
   int option;
-#ifdef HAVE_LINUX
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
   char *interface;
   struct ifreq ifr;
 #endif
@@ -168,7 +175,8 @@ cp
 
   option = 1;
   setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-#ifdef HAVE_LINUX
+
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
   if(get_config_string(lookup_config(config_tree, "BindToInterface"), &interface))
     {
       memset(&ifr, 0, sizeof(ifr));

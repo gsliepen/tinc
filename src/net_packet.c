@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.7 2002/03/01 14:09:31 guus Exp $
+    $Id: net_packet.c,v 1.1.2.8 2002/03/01 15:14:29 guus Exp $
 */
 
 #include "config.h"
@@ -261,6 +261,7 @@ cp
 
   /* Send the packet */
 
+#if defined(SOL_IP) && defined(IP_TOS)
   if(priorityinheritance && origpriority != priority)
     {
       priority = origpriority;
@@ -269,6 +270,7 @@ cp
       if(setsockopt(udp_socket[0], SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
 	syslog(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", strerror(errno));
     }
+#endif
 
   if((sendto(udp_socket[0], (char *)&inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0)
     {

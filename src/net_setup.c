@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.8 2002/03/01 14:09:31 guus Exp $
+    $Id: net_setup.c,v 1.1.2.9 2002/03/01 15:14:29 guus Exp $
 */
 
 #include "config.h"
@@ -327,6 +327,10 @@ cp
     routing_mode = RMODE_ROUTER;
 
   get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
+#if !defined(SOL_IP) || !defined(IP_TOS)
+  if(priorityinheritance)
+    syslog(LOG_WARNING, _("PriorityInheritance not supported on this platform"));
+#endif
 
   if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
     macexpire= 600;
