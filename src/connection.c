@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.24 2001/10/30 16:34:32 guus Exp $
+    $Id: connection.c,v 1.1.2.25 2001/11/16 12:02:17 zarq Exp $
 */
 
 #include "config.h"
@@ -106,12 +106,11 @@ cp
 cp
 }
 
-connection_t *lookup_connection(ipv4_t address, short unsigned int port)
+connection_t *lookup_connection(struct addrinfo *address)
 {
   connection_t c;
 cp
   c.address = address;
-  c.port = port;
 
   return avl_search(connection_tree, &c);
 }
