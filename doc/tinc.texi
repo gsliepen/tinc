@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi,v 1.8.4.23 2002/03/01 14:25:10 guus Exp $
+@c $Id: tinc.texi,v 1.8.4.24 2002/03/25 15:01:32 guus Exp $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -18,7 +18,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.23 2002/03/01 14:25:10 guus Exp $
+$Id: tinc.texi,v 1.8.4.24 2002/03/25 15:01:32 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,7 +43,7 @@ Copyright @copyright{} 1998-2002 Ivo Timmermans
 <itimmermans@@bigfoot.com>, Guus Sliepen <guus@@sliepen.warande.net> and
 Wessel Dankers <wsl@@nl.linux.org>.
 
-$Id: tinc.texi,v 1.8.4.23 2002/03/01 14:25:10 guus Exp $
+$Id: tinc.texi,v 1.8.4.24 2002/03/25 15:01:32 guus Exp $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -221,6 +221,8 @@ as this driver.  These are: FreeBSD 3.x, 4.x, 5.x.
 tinc on OpenBSD relies on the tun driver for its data
 acquisition from the kernel. It has been verified to work under at least OpenBSD 2.9.
 
+Tunneling IPv6 packets may not work on OpenBSD.
+
 
 @c ==================================================================
 @subsection Solaris
@@ -228,7 +230,9 @@ acquisition from the kernel. It has been verified to work under at least OpenBSD
 @cindex Solaris
 tinc on Solaris relies on the universal tun/tap driver for its data
 acquisition from the kernel.  Therefore, tinc will work on the same platforms
-as this driver.  These are: Solaris, 2.1.x.
+as this driver.  These are: Solaris 8 (SunOS 5.8).
+
+IPv6 packets cannot be tunneled on Solaris.
 
 
 @c
@@ -385,8 +389,8 @@ Unfortunately somebody still has to write the text.
 @subsection Configuration of Solaris kernels
 
 This section will contain information on how to configure your Solaris
-kernel to support the universal tun/tap device.  You need to install
-this driver yourself.
+kernel to support the universal tun/tap device.  For Solaris 8 (SunOS 5.8),
+this is included in the default kernel configuration.
 
 Unfortunately somebody still has to write the text.
 
@@ -403,11 +407,12 @@ having installed it, configure will give you an error message, and stop.
 
 @menu
 * OpenSSL::
+* zlib::
 @end menu
 
 
 @c ==================================================================
-@node       OpenSSL,  , Libraries, Libraries
+@node       OpenSSL, zlib, Libraries, Libraries
 @subsection OpenSSL
 
 @cindex OpenSSL
@@ -455,6 +460,29 @@ that compiling, linking, and/or using OpenSSL is allowed.  You may
 provide binary packages linked to the OpenSSL libraries, provided that
 all other requirements of the GPL are met.
 @end quotation
+
+
+@c ==================================================================
+@node       zlib,  , OpenSSL, Libraries
+@subsection zlib
+
+@cindex zlib
+For the optional compression of UDP packets, tinc uses the functions provided
+by the zlib library.
+
+If this library is not installed, you wil get an error when configuring
+tinc for build.  Support for running tinc without having zlib
+installed @emph{may} be added in the future.
+
+You can use your operating system's package manager to install this if
+available.  Make sure you install the development AND runtime versions
+of this package.
+
+If you have to install zlib manually, you can get the source code
+from @url{http://www.gzip.org/zlib/}.  Instructions on how to configure,
+build and install this package are included within the package.  Please
+make sure you build development and runtime libraries (which is the
+default).
 
 
 @c
@@ -742,27 +770,12 @@ This option affects the address family of listening and outgoing sockets.
 If "any" is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
-Mixing IPv4 and IPv6 may not work as desired. 
-It's best to choose one address family
-and use that for all tinc daemons on the VPN.
-
 @cindex BindToInterface
 @item BindToInterface = <interface> [experimental]
 If you have more than one network interface in your computer, tinc will
 by default listen on all of them for incoming connections.  It is
 possible to bind tinc to a single interface like eth0 or ppp0 with this
 variable.
-
-This option may not work on all platforms.
-
-@cindex BindToIP
-@item BindToIP = <address> [experimental]
-If your computer has more than one IP address on a single interface (for
-example if you are running virtual hosts), tinc will by default listen
-on all of them for incoming connections.  It is possible to bind tinc to
-a single IP address with this variable.  It is still possible to listen
-on several interfaces at the same time though, if they share the same IP
-address.
 
 This option may not work on all platforms.
 
@@ -899,7 +912,7 @@ Any digest supported by OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet authentication.
 
 @cindex IndirectData
-@item IndirectData = <yes|no> (no) [experimental]
+@item IndirectData = <yes|no> (no)
 This option specifies whether other tinc daemons besides the one you
 specified with ConnectTo can make a direct connection to you.  This is
 especially useful if you are behind a firewall and it is impossible to
@@ -951,6 +964,9 @@ or they can be a IPv4 or IPv6 network address with a masklength.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
 Note that subnets like 192.168.1.1/24 are invalid!
+Read a networking HOWTO/FAQ/guide if you don't understand this.
+IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
+MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
 @cindex CIDR notation
 masklength is the number of bits set to 1 in the netmask part; for
@@ -1058,8 +1074,7 @@ If you configured tinc to work in `switch' or `hub' mode, the hardware address s
 be set to a unique address instead of fe:fd:0:0:0:0.
 
 You can use the environment variable $INTERFACE to get the name of the interface.
-If you are using the ethertap driver however, you need to replace it with tap@emph{N},
-corresponding to the device file name.
+However, this might not be reliable. If in doubt, use the name of the interface explicitly.
 
 @cindex ifconfig
 The next line gives the interface an IP address and a netmask.
@@ -1232,7 +1247,7 @@ In @file{/etc/tinc/company/tinc-up}:
 # Real interface of internal network:
 # ifconfig eth0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
 
-ifconfig company hw ether fe:fd:0a:04:03:20
+ifconfig company hw ether fe:fd:0:0:0:0
 ifconfig company 10.4.3.32 netmask 255.0.0.0
 ifconfig company -arp
 @end example
@@ -1342,9 +1357,8 @@ in combination with -K). After that, tinc will quit.
 @item --help
 Display a short reminder of these runtime options and terminate.
 
-@item -k, --kill
-Attempt to kill a running tincd and exit.  A TERM signal (15) gets sent
-to the daemon that his its PID in @file{/var/run/tinc.NETNAME.pid}.
+@item -k, --kill[=SIGNAL]
+Attempt to kill a running tincd (optionally with the specified SIGNAL instead of SIGTERM) and exit.
 Use it in conjunction with the -n option to make sure you kill the right tinc daemon.
 
 @item -n, --net=NETNAME

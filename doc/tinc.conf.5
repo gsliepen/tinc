@@ -106,24 +106,11 @@ If
 .Qq any
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
-.Pp
-Mixing IPv4 and IPv6 may not work as desired.
-It's best to choose one address family and use that for all tinc daemons on the VPN.
 .It Va BindToInterface Li = Ar interface Bq experimental
 If your computer has more than one network interface,
 .Nm tinc
 will by default listen on all of them for incoming connections.
 It is possible to bind only to a single interface with this variable.
-.Pp
-This option may not work on all platforms.
-.It Va BindToIP Li = Ar address Bq experimental
-If your computer has more than one IP address on a single interface
-(for example if you are running virtual hosts),
-.Nm tinc
-will by default listen on all of them for incoming connections.
-It is possible to bind only to a single IP address with this variable.
-It is still possible to listen on several interfaces at the same time though,
-if they share the same IP address.
 .Pp
 This option may not work on all platforms.
 .It Va ConnectTo Li = Ar name
@@ -250,7 +237,7 @@ Any digest supported by OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet authentication.
-.It Va IndirectData Li = yes | no Po no Pc Bq experimental
+.It Va IndirectData Li = yes | no Pq no
 This option specifies whether other tinc daemons besides the one you specified with
 .Va ConnectTo
 can make a direct connection to you.
@@ -297,7 +284,7 @@ Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
 IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
-.It Va TCPOnly Li = yes | no Po no Pc Bq experimental
+.It Va TCPOnly Li = yes | no Pq no
 If this variable is set to yes,
 then the packets are tunnelled over the TCP connection instead of a UDP connection.
 This is especially useful for those who want to run a tinc daemon

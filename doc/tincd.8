@@ -1,4 +1,4 @@
-.Dd 2002-02-07
+.Dd 2002-03-25
 .Dt TINCD 8
 .\" Manual page created by:
 .\" Ivo Timmermans <itimmermans@bigfoot.com>
@@ -55,7 +55,7 @@ Attempt to kill a running
 .Nm
 (optionally with the specified
 .Ar SIGNAL
-instead of SIGQUIT) and exit.
+instead of SIGTERM) and exit.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
 .Ar NETNAME .
@@ -130,6 +130,14 @@ Purpose is to cleanly shut down the virtual network device before it will be dea
 .It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/*
 The directory containing the host configuration files
 used to authenticate other tinc daemons.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -up
+Script which is executed as soon as host
+.Ar NAME
+becomes reachable.
+.It Pa /etc/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar NAME Ns Pa -down
+Script which is executed as soon as host
+.Ar NAME
+becomes unreachable.
 .It Pa /var/run/tinc. Ns Ar NETNAME Ns Pa .pid
 The PID of the currently running
 .Nm
@@ -137,12 +145,8 @@ is stored in this file.
 .El
 .Sh BUGS
 The
-.Va BindToInterface ,
-.Va BindToIP ,
-.Va IndirectData
-and
-.Va TCPOnly
-options may not work correctly.
+.Va BindToInterface
+option may not work correctly.
 .Pp
 .Sy The cryptography in tinc is not well tested yet. Use it at your own risk!
 .Pp
