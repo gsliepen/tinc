@@ -18,6 +18,9 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/* Created more dynamic storage for lines read from the config file. --
+	Cris van Pelt */
+
 #include "config.h"
 
 #include <ctype.h>
@@ -111,15 +114,27 @@ add_config_val(config_t **cfg, int argtype, char *val)
 int
 readconfig(const char *fname, FILE *fp)
 {
-  char line[81];
+  char *line, *temp_buf;
   char *p, *q;
   int i, lineno = 0;
   config_t *cfg;
 
+  line = (char *)xmalloc(80 * sizeof(char));
+  temp_buf = (char *)xmalloc(80 * sizeof(char));
+	
   for(;;)
     {
       if(fgets(line, 80, fp) == NULL)
 	return 0;
+
+      while(!index(line, '\n'))
+        {
+	  fgets(temp_buf, (strlen(line)+1) * 80, fp);
+	  if(!temp_buf)
+	    break;
+	  strcat(line, temp_buf);
+	  line = (char *)xrealloc(line, (strlen(line)+1) * sizeof(char));
+        }        
       lineno++;
 
       if((p = strtok(line, "\t\n\r =")) == NULL)

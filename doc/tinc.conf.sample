@@ -1,7 +1,6 @@
 # Sample tinc configuration file
 
 # This is a comment.
-# Lines can have a maximum of 80 characters.
 # Spaces and tabs are eliminated.
 # The = sign isn't strictly necessary any longer, though you may want
 # to leave it in as it improves readability :)
