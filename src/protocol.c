@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.48 2000/10/29 00:24:31 guus Exp $
+    $Id: protocol.c,v 1.28.4.49 2000/10/29 01:08:09 guus Exp $
 */
 
 #include "config.h"
@@ -110,6 +110,12 @@ cp
             syslog(LOG_DEBUG, _("Got %s from %s (%s)"),
 		   request_name[request], cl->name, cl->hostname);
 	}
+
+      if((cl->allow_request != ALL) && (cl->allow_request != request))
+        {
+          syslog(LOG_ERR, _("Unauthorized request from %s (%s)"), cl->name, cl->hostname);
+          return -1;
+        }
 
       if(request_handlers[request](cl))
 	/* Something went wrong. Probably scriptkiddies. Terminate. */
@@ -435,7 +441,8 @@ cp
 int send_ack(conn_list_t *cl)
 {
 cp
-  cl->allow_request = ACK;
+  if(cl->status.outgoing)
+    cl->allow_request = ACK;
 cp
   return send_request(cl, "%d", ACK);
 }
