@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.162 2002/03/11 11:23:04 guus Exp $
+    $Id: net.c,v 1.35.4.163 2002/03/11 11:45:12 guus Exp $
 */
 
 #include "config.h"
@@ -369,6 +369,12 @@ cp
       tv.tv_sec = 1 + (rand() & 7); /* Approx. 5 seconds, randomized to prevent global synchronisation effects */
       tv.tv_usec = 0;
 
+      if(do_prune)
+        {
+          prune_connections();
+          do_prune = 0;
+        }
+
       build_fdset(&fset);
 
       if((r = select(FD_SETSIZE, &fset, NULL, NULL, &tv)) < 0)
@@ -383,13 +389,7 @@ cp
       if(r > 0)
         check_network_activity(&fset);
 
-      if(do_prune)
-        {
-          prune_connections();
-          do_prune = 0;
-        }
-
-     if(do_purge)
+      if(do_purge)
         {
           purge();
           do_purge = 0;
