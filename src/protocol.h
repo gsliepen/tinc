@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.2 2000/06/25 15:22:16 guus Exp $
+    $Id: protocol.h,v 1.5.4.3 2000/06/29 17:09:08 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -72,6 +72,7 @@ extern int send_termreq(conn_list_t *);
 extern int send_timeout(conn_list_t *);
 extern int send_key_request(ip_t);
 extern void send_key_changed_all(void);
+extern int send_del_host(conn_list_t *, conn_list_t *);
 
 #endif /* __TINC_PROTOCOL_H__ */
 

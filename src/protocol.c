@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.15 2000/06/29 13:04:15 guus Exp $
+    $Id: protocol.c,v 1.28.4.16 2000/06/29 17:09:06 guus Exp $
 */
 
 #include "config.h"
@@ -419,6 +419,19 @@ cp
     }
   else
     {
+      /* First check if the host we connected to is already in our
+         connection list. If so, we are probably making a loop, which
+         is not desirable. It should not happen though.
+       */
+       
+      if(lookup_conn(cl->vpn_ip))
+        {
+          if(debug_lvl>0)
+            syslog(LOG_NOTICE, _("Uplink %s (%s) is already in our connection list, aborting connect"),
+              cl->vpn_hostname, cl->real_hostname);
+          return -1;
+        }
+        
       if(setup_vpn_connection(cl) < 0)
 	return -1;
       send_passphrase(cl);
@@ -471,7 +484,8 @@ cp
   if(verify_passphrase(cl, g_n))
     {
       /* intruder! */
-      syslog(LOG_ERR, _("Intruder: passphrase does not match!"));
+      syslog(LOG_ERR, _("Intruder from %s: passphrase for %s does not match!"),
+              cl->real_hostname, cl->vpn_hostname);
       return -1;
     }
 
@@ -483,12 +497,17 @@ cp
 
       /* Okay, before we active the connection, we check if there is another entry
          in the connection list with the same vpn_ip. If so, it presumably is an
-         old connection that has timed out but we don't know it yet. Because our
-         conn_list entry is not active, lookup_conn will skip ourself. */
+         old connection that has timed out but we don't know it yet.
+       */
 
       while(old = lookup_conn(cl->vpn_ip)) 
-        terminate_connection(old);
-
+        {
+          syslog(LOG_NOTICE, _("Removing old entry for %s at %s in favour of new connection from %s"),
+            cl->vpn_hostname, old->real_hostname, cl->real_hostname);
+          old->status.active = 0;
+          terminate_connection(old);
+        }
+        
       cl->status.active = 1;
 
       if(debug_lvl > 0)
@@ -537,11 +556,6 @@ cp
              cl->vpn_hostname, cl->real_hostname);
   
   cl->status.termreq = 1;
-
-  if(cl->status.active)
-    notify_others(cl, NULL, send_del_host);
-
-  cl->status.active = 0;
 
   terminate_connection(cl);
 cp
@@ -672,8 +686,24 @@ cp
        return -1;
     }  
 
-  while(old = lookup_conn(vpn_ip))
-      terminate_connection(old);
+  if(old = lookup_conn(vpn_ip))
+    {
+      if((real_ip==old->real_ip) && (vpn_mask==old->vpn_mask) && (port==old->port))
+        {
+          if(debug_lvl>1)
+            syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
+                   old->vpn_hostname, old->real_hostname, cl->vpn_hostname, cl->real_hostname);
+          goto skip_add_host;  /* One goto a day keeps the deeply nested if constructions away. */
+        }
+      else
+        {
+          if(debug_lvl>1)
+            syslog(LOG_NOTICE, _("Removing old entry for %s (%s)"),
+                   old->vpn_hostname, old->real_hostname);
+          old->status.active = 0;
+          terminate_connection(old);
+        }
+    }
     
   ncn = new_conn_list();
   ncn->real_ip = real_ip;
@@ -691,6 +721,8 @@ cp
   if(debug_lvl > 1)
     syslog(LOG_DEBUG, _("Got ADD_HOST for %s (%s) from %s (%s)"),
            ncn->vpn_hostname, ncn->real_hostname, cl->vpn_hostname, cl->real_hostname);
+
+skip_add_host:
 
   notify_others(ncn, cl, send_add_host);
 cp

@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0pre3\n"
-"POT-Creation-Date: 2000-06-29 14:53+0200\n"
+"POT-Creation-Date: 2000-06-29 18:49+0200\n"
 "PO-Revision-Date: 2000-05-31 20:14+02:00\n"
 "Last-Translator: Ivo Timmermans <itimmermans@bigfoot.com>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -268,7 +268,7 @@ msgstr "Aanmaak UDP socket mislukte: %m"
 msgid "Connecting to %s port %d failed: %m"
 msgstr "Verbinding naar %s poort %d mislukt: %m"
 
-#: src/net.c:754 src/net.c:841 src/net.c:1039
+#: src/net.c:754 src/net.c:841 src/net.c:1044
 #, c-format
 msgid "This is a bug: %s:%d: %d:%m"
 msgstr "Dit is een programmeerfout: %s:%d: %d:%m"
@@ -311,74 +311,74 @@ msgstr "Beëindigen verbinding met %s (%s)"
 msgid "Trying to re-establish outgoing connection in 5 seconds"
 msgstr "Poging tot herstellen van uitgaande verbinding over 5 seconden"
 
-#: src/net.c:978
+#: src/net.c:983
 #, c-format
 msgid "%s (%s) didn't respond to PING"
 msgstr "%s (%s) antwoordde niet op ping"
 
-#: src/net.c:1009
+#: src/net.c:1014
 #, c-format
 msgid "Accepting a new connection failed: %m"
 msgstr "Aanname van nieuwe verbinding is mislukt: %m"
 
-#: src/net.c:1017
+#: src/net.c:1022
 msgid "Closed attempted connection"
 msgstr "Aangenomen verbinding verbroken"
 
-#: src/net.c:1044
+#: src/net.c:1049
 #, c-format
 msgid "Metadata socket error: %s"
 msgstr "Fout op socket voor metaverkeer: %s"
 
-#: src/net.c:1050
+#: src/net.c:1055
 msgid "Metadata read buffer overflow!"
 msgstr "Metadata ontvangstbuffer overloop!"
 
-#: src/net.c:1060
+#: src/net.c:1065
 #, c-format
 msgid "Metadata socket read error: %m"
 msgstr "Fout op socket voor metaverkeer tijdens lezen: %m"
 
-#: src/net.c:1084
+#: src/net.c:1089
 #, c-format
 msgid "Got request from %s (%s): %s"
 msgstr "Ontving verzoek van %s (%s): %s"
 
-#: src/net.c:1090
+#: src/net.c:1095
 #, c-format
 msgid "Unknown request from %s (%s)"
 msgstr "Onbekend verzoek van %s (%s)"
 
-#: src/net.c:1097
+#: src/net.c:1102
 #, c-format
 msgid "Error while processing request from %s (%s)"
 msgstr "Fout tijdens afhandelen van verzoek van %s (%s)"
 
-#: src/net.c:1104
+#: src/net.c:1109
 #, c-format
 msgid "Bogus data received from %s (%s)"
 msgstr "Onzinnige data ontvangen van %s (%s)"
 
-#: src/net.c:1149
+#: src/net.c:1154
 #, c-format
-msgid "Outgoing data socket error: %s"
-msgstr "Fout op socket voor uitgaand verkeer: %s"
+msgid "Outgoing data socket error for %s (%s): %s"
+msgstr "Fout op socket voor uitgaand verkeer voor %s (%s): %s"
 
-#: src/net.c:1184
+#: src/net.c:1190
 #, c-format
 msgid "Error while reading from tapdevice: %m"
 msgstr "Fout tijdens lezen van tap-apparaatbestand tijdens lezen: %m"
 
-#: src/net.c:1194
+#: src/net.c:1200
 #, c-format
 msgid "Non-IP ethernet frame %04x from "
 msgstr "Niet-IP ethernet pakket %04x van "
 
-#: src/net.c:1202
+#: src/net.c:1208
 msgid "Dropping short packet"
 msgstr "Te kort pakket genegeerd"
 
-#: src/net.c:1241
+#: src/net.c:1247
 #, c-format
 msgid "Error while waiting for input: %m"
 msgstr "Fout tijdens wachten op invoer: %m"
@@ -396,7 +396,8 @@ msgstr "Verbindingslijst:"
 #, c-format
 msgid ""
 "%s netmask %d.%d.%d.%d at %s port %hd flags %d sockets %d, %d status %04x"
-msgstr "%s netmask %d.%d.%d.%d op %s vlaggen %hd sockets %d, %d status %04x"
+msgstr ""
+"%s netmask %d.%d.%d.%d op %s poort %hd vlaggen %hd sockets %d, %d status %04x"
 
 #: src/protocol.c:54
 #, c-format
@@ -416,7 +417,7 @@ msgstr "Verzending TERMREQ naar %s (%s)"
 #: src/protocol.c:80 src/protocol.c:98 src/protocol.c:116 src/protocol.c:134
 #: src/protocol.c:152 src/protocol.c:191 src/protocol.c:209 src/protocol.c:237
 #: src/protocol.c:258 src/protocol.c:276 src/protocol.c:319 src/protocol.c:349
-#: src/protocol.c:747 src/protocol.c:850
+#: src/protocol.c:779 src/protocol.c:882
 #, c-format
 msgid "Send failed: %s:%d: %m"
 msgstr "Verzenden mislukte: %s:%d: %m"
@@ -501,188 +502,211 @@ msgstr "Kreeg ongeldige BASIC_INFO van %s"
 msgid "Peer uses incompatible protocol version %d"
 msgstr "De ander gebruikt een niet-compatibel protocol versie %d"
 
-#: src/protocol.c:437
+#: src/protocol.c:430
+#, c-format
+msgid "Uplink %s (%s) is already in our connection list, aborting connect"
+msgstr ""
+
+#: src/protocol.c:450
 #, c-format
 msgid "Got bad PASSPHRASE from %s (%s)"
 msgstr "Kreeg ongeldige PASSPHRASE van %s (%s)"
 
-#: src/protocol.c:444
+#: src/protocol.c:457
 #, c-format
 msgid "Got PASSPHRASE from %s (%s)"
 msgstr "Kreeg PASSPHRASE van %s (%s)"
 
-#: src/protocol.c:462
+#: src/protocol.c:475
 #, c-format
 msgid "Got bad PUBLIC_KEY from %s (%s)"
 msgstr "Kreeg ongeldige PUBLIC_KEY van %s (%s)"
 
-#: src/protocol.c:468
+#: src/protocol.c:481
 #, c-format
 msgid "Got PUBLIC_KEY from %s (%s)"
 msgstr "Kreeg PUBLIC_KEY van %s (%s)"
 
 #. intruder!
-#: src/protocol.c:474
-msgid "Intruder: passphrase does not match!"
-msgstr "Indringer: wachwoord komt niet overeen!"
+#: src/protocol.c:487
+#, c-format
+msgid "Intruder from %s: passphrase for %s does not match!"
+msgstr "Indringer van %s: wachwoord voor %s komt niet overeen!"
 
-#: src/protocol.c:495 src/protocol.c:514
+#: src/protocol.c:505
+#, c-format
+msgid "Removing old entry for %s at %s in favour of new connection from %s"
+msgstr ""
+"Verwijdering oude verbinding voor %s op %s in voordeel van nieuwe verbinding "
+"van %s"
+
+#: src/protocol.c:514 src/protocol.c:533
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Verbinding met %s (%s) geactiveerd"
 
-#: src/protocol.c:509
+#: src/protocol.c:528
 #, c-format
 msgid "Got ACK from %s (%s)"
 msgstr "Kreeg ACK van  %s (%s)"
 
-#: src/protocol.c:530
+#: src/protocol.c:549
 #, c-format
 msgid "Got unauthorized TERMREQ from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde TERMREQ van %s (%s)"
 
-#: src/protocol.c:536
+#: src/protocol.c:555
 #, c-format
 msgid "Got TERMREQ from %s (%s)"
 msgstr "Kreeg TERMREQ van %s (%s)"
 
-#: src/protocol.c:556
+#: src/protocol.c:570
 #, c-format
 msgid "Got unauthorized TIMEOUT from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde TIMEOUT van %s (%s)"
 
-#: src/protocol.c:562
+#: src/protocol.c:576
 #, c-format
 msgid "Got TIMEOUT from %s (%s)"
 msgstr "Kreeg TIMEOUT van %s (%s)"
 
-#: src/protocol.c:578
+#: src/protocol.c:592
 #, c-format
 msgid "Got unauthorized DEL_HOST from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde DEL_HOST van %s (%s)"
 
-#: src/protocol.c:585
+#: src/protocol.c:599
 #, c-format
 msgid "Got bad DEL_HOST from %s (%s)"
 msgstr "Kreeg ongeldige DEL_HOST van %s (%s)"
 
-#: src/protocol.c:592
+#: src/protocol.c:606
 #, c-format
 msgid "Got DEL_HOST for %d.%d.%d.%d from %s (%s) which does not exist?"
 msgstr "Kreeg DEL_HOST voor %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:598
+#: src/protocol.c:612
 #, c-format
 msgid "Got DEL_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg DEL_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:616
+#: src/protocol.c:630
 #, c-format
 msgid "Got unauthorized PING from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde PING van %s (%s)"
 
-#: src/protocol.c:622
+#: src/protocol.c:636
 #, c-format
 msgid "Got PING from %s (%s)"
 msgstr "Kreeg PING van %s (%s)"
 
-#: src/protocol.c:638
+#: src/protocol.c:652
 #, c-format
 msgid "Got unauthorized PONG from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde PONG van %s (%s)"
 
-#: src/protocol.c:644
+#: src/protocol.c:658
 #, c-format
 msgid "Got PONG from %s (%s)"
 msgstr "Kreeg PONG van %s (%s)"
 
-#: src/protocol.c:663
+#: src/protocol.c:677
 #, c-format
 msgid "Got unauthorized ADD_HOST from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde ADD_HOST van %s (%s)"
 
-#: src/protocol.c:670
+#: src/protocol.c:684
 #, c-format
 msgid "Got bad ADD_HOST from %s (%s)"
 msgstr "Kreeg ongeldige ADD_HOST van %s (%s)"
 
-#: src/protocol.c:692
+#: src/protocol.c:694
+#, c-format
+msgid "Got duplicate ADD_HOST for %s (%s) from %s (%s)"
+msgstr "Kreeg een tweede ADD_HOST voor %s (%s) van %s (%s)"
+
+#: src/protocol.c:701
+#, c-format
+msgid "Removing old entry for %s (%s)"
+msgstr "Verwijdering oude verbinding voor %s (%s)"
+
+#: src/protocol.c:722
 #, c-format
 msgid "Got ADD_HOST for %s (%s) from %s (%s)"
 msgstr "Kreeg ADD_HOST voor %s (%s) van %s (%s)"
 
-#: src/protocol.c:708
+#: src/protocol.c:740
 #, c-format
 msgid "Got unauthorized REQ_KEY from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde REQ_KEY van %s (%s)"
 
-#: src/protocol.c:715
+#: src/protocol.c:747
 #, c-format
 msgid "Got bad REQ_KEY from %s (%s)"
 msgstr "Kreeg ongeldige REQ_KEY van %s (%s)"
 
-#: src/protocol.c:721
+#: src/protocol.c:753
 #, c-format
 msgid "Got REQ_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"
 msgstr "Kreeg REQ_KEY herkmonst %d.%d.%d.%d bestemming %d.%d.%d.%d van %s (%s)"
 
-#: src/protocol.c:734
+#: src/protocol.c:766
 #, c-format
 msgid "Attempting to forward REQ_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot doorsturen REQ_KEY naar %d.%d.%d.%d, die niet bestaat?"
 
-#: src/protocol.c:740
+#: src/protocol.c:772
 #, c-format
 msgid "Forwarding REQ_KEY to %s (%s)"
 msgstr "Doorsturen REQ_KEY naar %s (%s)"
 
-#: src/protocol.c:799
+#: src/protocol.c:831
 #, c-format
 msgid "Got unauthorized ANS_KEY from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde ANS_KEY van %s (%s)"
 
-#: src/protocol.c:806
+#: src/protocol.c:838
 #, c-format
 msgid "Got bad ANS_KEY from %s (%s)"
 msgstr "Kreeg ongeldige ANS_KEY van %s (%s)"
 
-#: src/protocol.c:812
+#: src/protocol.c:844
 #, c-format
 msgid "Got ANS_KEY origin %d.%d.%d.%d destination %d.%d.%d.%d from %s (%s)"
 msgstr "Kreeg ANS_KEY herkomst %d.%d.%d.%d bestemming %d.%d.%d.%d van %s (%s)"
 
-#: src/protocol.c:821
+#: src/protocol.c:853
 #, c-format
 msgid ""
 "Receiving ANS_KEY origin %d.%d.%d.%d from %s (%s), which does not exist?"
 msgstr "Kreeg ANS_KEY herkomst %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:837
+#: src/protocol.c:869
 #, c-format
 msgid "Attempting to forward ANS_KEY to %d.%d.%d.%d, which does not exist?"
 msgstr "Poging tot doorsturen ANS_KEY naar %d.%d.%d.%d, die niet besttaat?"
 
-#: src/protocol.c:843
+#: src/protocol.c:875
 #, c-format
 msgid "Forwarding ANS_KEY to %s (%s)"
 msgstr "Doorsturen ANS_KEY naar %s (%s)"
 
-#: src/protocol.c:864
+#: src/protocol.c:896
 #, c-format
 msgid "Got unauthorized KEY_CHANGED from %s (%s)"
 msgstr "Kreeg niet-geautoriseerde KEY_CHANGED van %s (%s)"
 
-#: src/protocol.c:871
+#: src/protocol.c:903
 #, c-format
 msgid "Got bad KEY_CHANGED from %s (%s)"
 msgstr "Kreeg ongeldige KEY_CHANGED van %s (%s)"
 
-#: src/protocol.c:880
+#: src/protocol.c:912
 #, c-format
 msgid "Got KEY_CHANGED origin %d.%d.%d.%d from %s (%s), which does not exist?"
 msgstr "Kreeg KEY_CHANGED herkomst %d.%d.%d.%d van %s (%s), die niet bestaat?"
 
-#: src/protocol.c:886
+#: src/protocol.c:918
 #, c-format
 msgid "Got KEY_CHANGED origin %s from %s (%s)"
 msgstr "Kreeg KEY_CHANGED herkomst %s van %s (%s)"
@@ -862,7 +886,3 @@ msgstr "Kreeg onverwacht signaal %d na %s regel %d"
 #, c-format
 msgid "Got unexpected signal %d"
 msgstr "Kreeg onverwacht signaal %d"
-
-#: src/tincd.c:493
-msgid "Got SIGCHLD: exitting immediately"
-msgstr "Kreeg SIGCHLD: directe beëindiging"

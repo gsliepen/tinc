@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.3 2000/06/28 14:34:40 guus Exp $
+    $Id: tincd.c,v 1.10.4.4 2000/06/29 17:09:08 guus Exp $
 */
 
 #include "config.h"
@@ -485,11 +485,10 @@ setup_signals(void)
     signal(SIGINT, sigint_handler);
   signal(SIGUSR1, sigusr1_handler);
   signal(SIGUSR2, sigusr2_handler);
-  signal(SIGCHLD, parent_exit);
+//  signal(SIGCHLD, parent_exit);
 }
 
 RETSIGTYPE parent_exit(int a)
 {
-  syslog(LOG_NOTICE, _("Got SIGCHLD: exitting immediately"));
   exit(0);
 }

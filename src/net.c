@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.13 2000/06/29 13:04:14 guus Exp $
+    $Id: net.c,v 1.35.4.14 2000/06/29 17:09:05 guus Exp $
 */
 
 #include "config.h"
@@ -921,32 +921,37 @@ cp
   
   cl->status.remove = 1;
 
-  /* If this cl isn't active, don't send any DEL_HOSTs and don't bother
-     checking for other lost connections. */
+  /* If this cl isn't active, don't send any DEL_HOSTs. */
   if(!cl->status.active)
     return;
     
   cl->status.active = 0;
-
+  notify_others(cl,NULL,send_del_host);
+  
 cp
   /* Find all connections that were lost because they were behind cl
      (the connection that was dropped). */
-  for(p = conn_list; p != NULL; p = p->next)
-    if(p->nexthop == cl)
+  if(cl->status.meta)
+    for(p = conn_list; p != NULL; p = p->next)
       {
-	p->status.active = 0;
-	p->status.remove = 1;
+        if(p->nexthop == cl)
+          {
+            if(p->status.active)
+              notify_others(p,cl,send_del_host);
+	    p->status.active = 0;
+	    p->status.remove = 1;
+          }
       }
-
+    
 cp 
   /* Then send a notification about all these connections to all hosts
-     that are still connected to us. */
+     that are still connected to us.
   for(p = conn_list; p != NULL; p = p->next)
     if(p->status.active && p->status.meta)
       for(q = conn_list; q != NULL; q = q->next)
 	if(q->status.remove)
 	  send_del_host(p, q);
-
+   */
 cp
 }
 
@@ -1146,7 +1151,8 @@ cp
 	      I've once got here when it said `No route to host'.
 	    */
 	    getsockopt(p->socket, SOL_SOCKET, SO_ERROR, &x, &l);
-	    syslog(LOG_ERR, _("Outgoing data socket error: %s"), sys_errlist[x]);
+	    syslog(LOG_ERR, _("Outgoing data socket error for %s (%s): %s"),
+                   p->vpn_hostname, p->real_hostname, sys_errlist[x]);
 	    terminate_connection(p);
 	    return;
 	  }  
