@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.32 2000/11/20 22:13:14 guus Exp $
+    $Id: tincd.c,v 1.10.4.33 2000/11/22 16:19:07 zarq Exp $
 */
 
 #include "config.h"
@@ -248,7 +248,7 @@ void make_names(void)
   if(netname)
     {
       if(!pidfilename)
-        asprintf(&pidfilename, "/var/run/tinc.%s.pid", netname);
+        asprintf(&pidfilename, LOCALSTATEDIR "/run/tinc.%s.pid", netname);
       if(!confbase)
         asprintf(&confbase, "%s/tinc/%s", CONFDIR, netname);
       else
@@ -259,7 +259,7 @@ void make_names(void)
   else
     {
       if(!pidfilename)
-        pidfilename = "/var/run/tinc.pid";
+        pidfilename = LOCALSTATEDIR "/run/tinc.pid";
       if(!confbase)
         asprintf(&confbase, "%s/tinc", CONFDIR);
       if(!identname)
