@@ -935,8 +935,8 @@ cp
 
   if(cl->buflen >= MAXBUFSIZE)
     {
-      syslog(LOG_ERR, "Metadata read buffer full! Discarding contents.");
-      cl->buflen = 0;
+      syslog(LOG_ERR, "Metadata read buffer overflow.");
+      return -1;
     }
 
   lenin = read(cl->meta_socket, cl->buffer, MAXBUFSIZE-cl->buflen);
@@ -971,17 +971,22 @@ cp
               if(request_handlers[request] == NULL)
                 {
                   syslog(LOG_ERR, "Unknown request: %s", cl->buffer);
-                  return 0;
+                  return -1;
                 }
 
               if(debug_lvl > 3)
                 syslog(LOG_DEBUG, "Got request: %s", cl->buffer);                             
 
-              request_handlers[request](cl);
+              if(request_handlers[request](cl))  /* Something went wrong. Probably scriptkiddies. Terminate. */
+                {
+                  syslog(LOG_ERR, "Error while processing request from IP_ADDR_S", IP_ADDR_V(cl->real_ip));
+                  return -1;
+                }
             }
           else
             {
-              syslog(LOG_ERR, "Bogus data received: %s", cl->buffer);
+              syslog(LOG_ERR, "Bogus data received.");
+              return -1;
             }
 
           cl->buflen -= cl->reqlen;

@@ -490,6 +490,7 @@ cp
 int timeout_h(conn_list_t *cl)
 {
 cp
+  if(!cl->status.active) return -1;
   syslog(LOG_NOTICE, IP_ADDR_S " says it's gotten a timeout from us", IP_ADDR_V(cl->vpn_ip));
   cl->status.termreq = 1;
   terminate_connection(cl);
@@ -502,6 +503,8 @@ int del_host_h(conn_list_t *cl)
   ip_t vpn_ip;
   conn_list_t *fw;
 cp
+  if(!cl->status.active) return -1;
+
   if(sscanf(cl->buffer, "%*d %lx", &vpn_ip) != 1)
     {
        syslog(LOG_ERR, "got bad DEL_HOST request: %s", cl->buffer);
@@ -530,6 +533,7 @@ cp
 int ping_h(conn_list_t *cl)
 {
 cp
+  if(!cl->status.active) return -1;
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "responding to ping from " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   cl->status.pinged = 0;
@@ -543,6 +547,7 @@ cp
 int pong_h(conn_list_t *cl)
 {
 cp
+  if(!cl->status.active) return -1;
   if(debug_lvl > 3)
     syslog(LOG_DEBUG, "ok, got pong from " IP_ADDR_S, IP_ADDR_V(cl->vpn_ip));
   cl->status.got_pong = 1;
@@ -558,6 +563,7 @@ int add_host_h(conn_list_t *cl)
   unsigned short port;
   conn_list_t *ncn, *fw;
 cp
+  if(!cl->status.active) return -1;
   if(sscanf(cl->buffer, "%*d %lx %lx/%lx:%hx", &real_ip, &vpn_ip, &vpn_mask, &port) != 4)
     {
        syslog(LOG_ERR, "got bad ADD_HOST request: %s", cl->buffer);
@@ -600,6 +606,7 @@ int req_key_h(conn_list_t *cl)
   ip_t from;
   conn_list_t *fw;
 cp
+  if(!cl->status.active) return -1;
   if(sscanf(cl->buffer, "%*d %lx %lx", &to, &from) != 2)
     {
        syslog(LOG_ERR, "got bad request: %s", cl->buffer);
@@ -683,6 +690,7 @@ int ans_key_h(conn_list_t *cl)
   char *key;
   conn_list_t *fw, *gk;
 cp
+  if(!cl->status.active) return -1;
   if(sscanf(cl->buffer, "%*d %lx %lx %d %as", &to, &from, &expiry, &key) != 4)
     {
        syslog(LOG_ERR, "got bad ANS_KEY request: %s", cl->buffer);
@@ -742,6 +750,7 @@ int key_changed_h(conn_list_t *cl)
   ip_t from;
   conn_list_t *ik;
 cp
+  if(!cl->status.active) return -1;
   if(sscanf(cl->buffer, "%*d %lx", &from) != 1)
     {
        syslog(LOG_ERR, "got bad ANS_KEY request: %s", cl->buffer);
