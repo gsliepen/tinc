@@ -4,7 +4,7 @@
 
 DIE=0
 
-srcdir="`pwd`"
+srcdir="`/bin/pwd`"
 
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
   echo
