@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.5 2002/09/09 21:24:31 guus Exp $
+    $Id: event.c,v 1.1.4.6 2002/09/09 22:32:30 guus Exp $
 */
 
 #include "config.h"
@@ -38,7 +38,7 @@ extern time_t now;
 
 int id;
 
-int event_compare(event_t * a, event_t * b)
+int event_compare(event_t *a, event_t *b)
 {
 	if(a->time > b->time)
 		return 1;
@@ -70,14 +70,14 @@ event_t *new_event(void)
 	return (event_t *) xmalloc_and_zero(sizeof(event_t));
 }
 
-void free_event(event_t * event)
+void free_event(event_t *event)
 {
 	cp();
 
 	free(event);
 }
 
-void event_add(event_t * event)
+void event_add(event_t *event)
 {
 	cp();
 
@@ -85,7 +85,7 @@ void event_add(event_t * event)
 	avl_insert(event_tree, event);
 }
 
-void event_del(event_t * event)
+void event_del(event_t *event)
 {
 	cp();
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_node.c,v 1.1.4.8 2002/09/09 21:25:02 guus Exp $
+    $Id: protocol_node.c,v 1.1.4.9 2002/09/09 22:33:08 guus Exp $
 */
 
 #include "config.h"
@@ -43,7 +43,7 @@
 
 #include "system.h"
 
-int send_add_node(connection_t * c, node_t * n)
+int send_add_node(connection_t *c, node_t *n)
 {
 	int x;
 	char *address, *port;
@@ -60,7 +60,7 @@ int send_add_node(connection_t * c, node_t * n)
 	return x;
 }
 
-int add_node_h(connection_t * c)
+int add_node_h(connection_t *c)
 {
 	connection_t *other;
 	node_t *n, *prevhop, *via;
@@ -178,13 +178,13 @@ int add_node_h(connection_t * c)
 	return 0;
 }
 
-int send_del_node(connection_t * c, node_t * n)
+int send_del_node(connection_t *c, node_t *n)
 {
 	cp();
 	return send_request(c, "%d %s %s", DEL_NODE, n->name, n->prevhop->name);
 }
 
-int del_node_h(connection_t * c)
+int del_node_h(connection_t *c)
 {
 	char name[MAX_STRING_SIZE];
 	char prevhopname[MAX_STRING_SIZE];

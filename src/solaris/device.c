@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.9 2002/09/09 21:25:28 guus Exp $
+    $Id: device.c,v 1.1.2.10 2002/09/09 22:33:31 guus Exp $
 */
 
 
@@ -136,7 +136,7 @@ void close_device(void)
 	cp close(device_fd);
 }
 
-int read_packet(vpn_packet_t * packet)
+int read_packet(vpn_packet_t *packet)
 {
 	int lenin;
 	cp if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
@@ -162,7 +162,7 @@ int read_packet(vpn_packet_t * packet)
 	return 0;
 cp}
 
-int write_packet(vpn_packet_t * packet)
+int write_packet(vpn_packet_t *packet)
 {
 	cp if(debug_lvl >= DEBUG_TRAFFIC)
 		syslog(LOG_DEBUG, _("Writing packet of %d bytes to %s"),

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_misc.c,v 1.1.4.6 2002/09/09 21:25:02 guus Exp $
+    $Id: protocol_misc.c,v 1.1.4.7 2002/09/09 22:33:04 guus Exp $
 */
 
 #include "config.h"
@@ -42,7 +42,7 @@
 
 /* Status and error notification routines */
 
-int send_status(connection_t * c, int statusno, char *statusstring)
+int send_status(connection_t *c, int statusno, char *statusstring)
 {
 	cp();
 
@@ -52,7 +52,7 @@ int send_status(connection_t * c, int statusno, char *statusstring)
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-int status_h(connection_t * c)
+int status_h(connection_t *c)
 {
 	int statusno;
 	char statusstring[MAX_STRING_SIZE];
@@ -73,7 +73,7 @@ int status_h(connection_t * c)
 	return 0;
 }
 
-int send_error(connection_t * c, int err, char *errstring)
+int send_error(connection_t *c, int err, char *errstring)
 {
 	cp();
 
@@ -83,7 +83,7 @@ int send_error(connection_t * c, int err, char *errstring)
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
 
-int error_h(connection_t * c)
+int error_h(connection_t *c)
 {
 	int err;
 	char errorstring[MAX_STRING_SIZE];
@@ -106,14 +106,14 @@ int error_h(connection_t * c)
 	return 0;
 }
 
-int send_termreq(connection_t * c)
+int send_termreq(connection_t *c)
 {
 	cp();
 
 	return send_request(c, "%d", TERMREQ);
 }
 
-int termreq_h(connection_t * c)
+int termreq_h(connection_t *c)
 {
 	cp();
 
@@ -122,7 +122,7 @@ int termreq_h(connection_t * c)
 	return 0;
 }
 
-int send_ping(connection_t * c)
+int send_ping(connection_t *c)
 {
 	cp();
 
@@ -132,21 +132,21 @@ int send_ping(connection_t * c)
 	return send_request(c, "%d", PING);
 }
 
-int ping_h(connection_t * c)
+int ping_h(connection_t *c)
 {
 	cp();
 
 	return send_pong(c);
 }
 
-int send_pong(connection_t * c)
+int send_pong(connection_t *c)
 {
 	cp();
 
 	return send_request(c, "%d", PONG);
 }
 
-int pong_h(connection_t * c)
+int pong_h(connection_t *c)
 {
 	cp();
 
@@ -162,7 +162,7 @@ int pong_h(connection_t * c)
 
 /* Sending and receiving packets via TCP */
 
-int send_tcppacket(connection_t * c, vpn_packet_t * packet)
+int send_tcppacket(connection_t *c, vpn_packet_t *packet)
 {
 	int x;
 
@@ -178,7 +178,7 @@ int send_tcppacket(connection_t * c, vpn_packet_t * packet)
 	return send_meta(c, packet->data, packet->len);
 }
 
-int tcppacket_h(connection_t * c)
+int tcppacket_h(connection_t *c)
 {
 	short int len;
 

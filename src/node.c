@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c,v 1.1.2.17 2002/09/09 21:24:41 guus Exp $
+    $Id: node.c,v 1.1.2.18 2002/09/09 22:32:49 guus Exp $
 */
 
 #include "config.h"
@@ -39,12 +39,12 @@ avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
 
 node_t *myself;
 
-int node_compare(node_t * a, node_t * b)
+int node_compare(node_t *a, node_t *b)
 {
 	return strcmp(a->name, b->name);
 }
 
-int node_udp_compare(node_t * a, node_t * b)
+int node_udp_compare(node_t *a, node_t *b)
 {
 	int result;
 
@@ -87,7 +87,7 @@ node_t *new_node(void)
 	return n;
 }
 
-void free_node(node_t * n)
+void free_node(node_t *n)
 {
 	cp();
 
@@ -112,7 +112,7 @@ void free_node(node_t * n)
 	free(n);
 }
 
-void node_add(node_t * n)
+void node_add(node_t *n)
 {
 	cp();
 
@@ -120,7 +120,7 @@ void node_add(node_t * n)
 	avl_insert(node_udp_tree, n);
 }
 
-void node_del(node_t * n)
+void node_del(node_t *n)
 {
 	avl_node_t *node, *next;
 	edge_t *e;
@@ -152,7 +152,7 @@ node_t *lookup_node(char *name)
 	return avl_search(node_tree, &n);
 }
 
-node_t *lookup_node_udp(sockaddr_t * sa)
+node_t *lookup_node_udp(sockaddr_t *sa)
 {
 	node_t n;
 	cp();

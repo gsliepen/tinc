@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c,v 1.12.4.43 2002/09/09 21:24:41 guus Exp $
+    $Id: netutl.c,v 1.12.4.44 2002/09/09 22:32:44 guus Exp $
 */
 
 #include "config.h"
@@ -107,7 +107,7 @@ sockaddr_t str2sockaddr(char *address, char *port)
 	return result;
 }
 
-void sockaddr2str(sockaddr_t * sa, char **addrstr, char **portstr)
+void sockaddr2str(sockaddr_t *sa, char **addrstr, char **portstr)
 {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
@@ -135,7 +135,7 @@ void sockaddr2str(sockaddr_t * sa, char **addrstr, char **portstr)
 	*portstr = xstrdup(port);
 }
 
-char *sockaddr2hostname(sockaddr_t * sa)
+char *sockaddr2hostname(sockaddr_t *sa)
 {
 	char *str;
 	char address[NI_MAXHOST] = "unknown";
@@ -156,7 +156,7 @@ char *sockaddr2hostname(sockaddr_t * sa)
 	return str;
 }
 
-int sockaddrcmp(sockaddr_t * a, sockaddr_t * b)
+int sockaddrcmp(sockaddr_t *a, sockaddr_t *b)
 {
 	int result;
 
@@ -196,7 +196,7 @@ int sockaddrcmp(sockaddr_t * a, sockaddr_t * b)
 	}
 }
 
-void sockaddrunmap(sockaddr_t * sa)
+void sockaddrunmap(sockaddr_t *sa)
 {
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];

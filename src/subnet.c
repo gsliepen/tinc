@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c,v 1.1.2.41 2002/09/09 21:25:10 guus Exp $
+    $Id: subnet.c,v 1.1.2.42 2002/09/09 22:33:21 guus Exp $
 */
 
 #include "config.h"
@@ -48,7 +48,7 @@ avl_tree_t *subnet_tree;
 
 /* Subnet comparison */
 
-int subnet_compare_mac(subnet_t * a, subnet_t * b)
+int subnet_compare_mac(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -60,7 +60,7 @@ int subnet_compare_mac(subnet_t * a, subnet_t * b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare_ipv4(subnet_t * a, subnet_t * b)
+int subnet_compare_ipv4(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -77,7 +77,7 @@ int subnet_compare_ipv4(subnet_t * a, subnet_t * b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare_ipv6(subnet_t * a, subnet_t * b)
+int subnet_compare_ipv6(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -94,7 +94,7 @@ int subnet_compare_ipv6(subnet_t * a, subnet_t * b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare(subnet_t * a, subnet_t * b)
+int subnet_compare(subnet_t *a, subnet_t *b)
 {
 	int result;
 
@@ -145,7 +145,7 @@ avl_tree_t *new_subnet_tree(void)
 	return avl_alloc_tree((avl_compare_t) subnet_compare, NULL);
 }
 
-void free_subnet_tree(avl_tree_t * subnet_tree)
+void free_subnet_tree(avl_tree_t *subnet_tree)
 {
 	cp();
 
@@ -161,7 +161,7 @@ subnet_t *new_subnet(void)
 	return (subnet_t *) xmalloc_and_zero(sizeof(subnet_t));
 }
 
-void free_subnet(subnet_t * subnet)
+void free_subnet(subnet_t *subnet)
 {
 	cp();
 
@@ -170,7 +170,7 @@ void free_subnet(subnet_t * subnet)
 
 /* Adding and removing subnets */
 
-void subnet_add(node_t * n, subnet_t * subnet)
+void subnet_add(node_t *n, subnet_t *subnet)
 {
 	cp();
 
@@ -180,7 +180,7 @@ void subnet_add(node_t * n, subnet_t * subnet)
 	avl_insert(n->subnet_tree, subnet);
 }
 
-void subnet_del(node_t * n, subnet_t * subnet)
+void subnet_del(node_t *n, subnet_t *subnet)
 {
 	cp();
 
@@ -259,7 +259,7 @@ subnet_t *str2net(char *subnetstr)
 	return NULL;
 }
 
-char *net2str(subnet_t * subnet)
+char *net2str(subnet_t *subnet)
 {
 	char *netstr;
 
@@ -309,14 +309,14 @@ char *net2str(subnet_t * subnet)
 
 /* Subnet lookup routines */
 
-subnet_t *lookup_subnet(node_t * owner, subnet_t * subnet)
+subnet_t *lookup_subnet(node_t *owner, subnet_t *subnet)
 {
 	cp();
 
 	return avl_search(owner->subnet_tree, subnet);
 }
 
-subnet_t *lookup_subnet_mac(mac_t * address)
+subnet_t *lookup_subnet_mac(mac_t *address)
 {
 	subnet_t subnet, *p;
 
@@ -331,7 +331,7 @@ subnet_t *lookup_subnet_mac(mac_t * address)
 	return p;
 }
 
-subnet_t *lookup_subnet_ipv4(ipv4_t * address)
+subnet_t *lookup_subnet_ipv4(ipv4_t *address)
 {
 	subnet_t subnet, *p;
 
@@ -369,7 +369,7 @@ subnet_t *lookup_subnet_ipv4(ipv4_t * address)
 	return p;
 }
 
-subnet_t *lookup_subnet_ipv6(ipv6_t * address)
+subnet_t *lookup_subnet_ipv6(ipv6_t *address)
 {
 	subnet_t subnet, *p;
 

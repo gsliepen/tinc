@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c,v 1.1.2.33 2002/09/09 21:24:31 guus Exp $
+    $Id: connection.c,v 1.1.2.34 2002/09/09 22:32:30 guus Exp $
 */
 
 #include "config.h"
@@ -43,7 +43,7 @@
 avl_tree_t *connection_tree;	/* Meta connections */
 connection_t *broadcast;
 
-int connection_compare(connection_t * a, connection_t * b)
+int connection_compare(connection_t *a, connection_t *b)
 {
 	return a - b;
 }
@@ -82,7 +82,7 @@ connection_t *new_connection(void)
 	return c;
 }
 
-void free_connection(connection_t * c)
+void free_connection(connection_t *c)
 {
 	cp();
 
@@ -104,14 +104,14 @@ void free_connection(connection_t * c)
 	free(c);
 }
 
-void connection_add(connection_t * c)
+void connection_add(connection_t *c)
 {
 	cp();
 
 	avl_insert(connection_tree, c);
 }
 
-void connection_del(connection_t * c)
+void connection_del(connection_t *c)
 {
 	cp();
 
@@ -136,7 +136,7 @@ void dump_connections(void)
 	syslog(LOG_DEBUG, _("End of connections."));
 }
 
-int read_connection_config(connection_t * c)
+int read_connection_config(connection_t *c)
 {
 	char *fname;
 	int x;

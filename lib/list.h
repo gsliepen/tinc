@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: list.h,v 1.1.2.7 2002/09/09 21:49:16 guus Exp $
+    $Id: list.h,v 1.1.2.8 2002/09/09 22:32:27 guus Exp $
 */
 
 #ifndef __TINC_LIST_H__
@@ -32,8 +32,8 @@ typedef struct list_node_t {
 	void *data;
 } list_node_t;
 
-typedef void (*list_action_t) (const void *);
-typedef void (*list_action_node_t) (const list_node_t *);
+typedef void (*list_action_t)(const void *);
+typedef void (*list_action_node_t)(const list_node_t *);
 
 typedef struct list_t {
 	list_node_t *head;

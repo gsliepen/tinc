@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_subnet.c,v 1.1.4.8 2002/09/09 21:25:02 guus Exp $
+    $Id: protocol_subnet.c,v 1.1.4.9 2002/09/09 22:33:13 guus Exp $
 */
 
 #include "config.h"
@@ -43,7 +43,7 @@
 
 #include "system.h"
 
-int send_add_subnet(connection_t * c, subnet_t * subnet)
+int send_add_subnet(connection_t *c, subnet_t *subnet)
 {
 	int x;
 	char *netstr;
@@ -58,7 +58,7 @@ int send_add_subnet(connection_t * c, subnet_t * subnet)
 	return x;
 }
 
-int add_subnet_h(connection_t * c)
+int add_subnet_h(connection_t *c)
 {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
@@ -133,7 +133,7 @@ int add_subnet_h(connection_t * c)
 	return 0;
 }
 
-int send_del_subnet(connection_t * c, subnet_t * s)
+int send_del_subnet(connection_t *c, subnet_t *s)
 {
 	int x;
 	char *netstr;
@@ -149,7 +149,7 @@ int send_del_subnet(connection_t * c, subnet_t * s)
 	return x;
 }
 
-int del_subnet_h(connection_t * c)
+int del_subnet_h(connection_t *c)
 {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];

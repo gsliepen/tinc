@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c,v 1.1.4.13 2002/09/09 21:24:56 guus Exp $
+    $Id: protocol_key.c,v 1.1.4.14 2002/09/09 22:33:03 guus Exp $
 */
 
 #include "config.h"
@@ -45,7 +45,7 @@
 
 int mykeyused = 0;
 
-int send_key_changed(connection_t * c, node_t * n)
+int send_key_changed(connection_t *c, node_t *n)
 {
 	cp();
 
@@ -59,7 +59,7 @@ int send_key_changed(connection_t * c, node_t * n)
 	return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
 }
 
-int key_changed_h(connection_t * c)
+int key_changed_h(connection_t *c)
 {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
@@ -93,14 +93,14 @@ int key_changed_h(connection_t * c)
 	return 0;
 }
 
-int send_req_key(connection_t * c, node_t * from, node_t * to)
+int send_req_key(connection_t *c, node_t *from, node_t *to)
 {
 	cp();
 
 	return send_request(c, "%d %s %s", REQ_KEY, from->name, to->name);
 }
 
-int req_key_h(connection_t * c)
+int req_key_h(connection_t *c)
 {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
@@ -143,7 +143,7 @@ int req_key_h(connection_t * c)
 	return 0;
 }
 
-int send_ans_key(connection_t * c, node_t * from, node_t * to)
+int send_ans_key(connection_t *c, node_t *from, node_t *to)
 {
 	char key[MAX_STRING_SIZE];
 
@@ -159,7 +159,7 @@ int send_ans_key(connection_t * c, node_t * from, node_t * to)
 						from->compression);
 }
 
-int ans_key_h(connection_t * c)
+int ans_key_h(connection_t *c)
 {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.45 2002/09/09 21:25:07 guus Exp $
+    $Id: route.c,v 1.1.2.46 2002/09/09 22:33:16 guus Exp $
 */
 
 #include "config.h"
@@ -67,7 +67,7 @@ int priorityinheritance = 0;
 int macexpire = 600;
 subnet_t mymac;
 
-void learn_mac(mac_t * address)
+void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
 	avl_node_t *node;
@@ -131,7 +131,7 @@ void age_mac(void)
 	}
 }
 
-node_t *route_mac(vpn_packet_t * packet)
+node_t *route_mac(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -139,11 +139,11 @@ node_t *route_mac(vpn_packet_t * packet)
 
 	/* Learn source address */
 
-	learn_mac((mac_t *) (&packet->data[6]));
+	learn_mac((mac_t *)(&packet->data[6]));
 
 	/* Lookup destination address */
 
-	subnet = lookup_subnet_mac((mac_t *) (&packet->data[0]));
+	subnet = lookup_subnet_mac((mac_t *)(&packet->data[0]));
 
 	if(subnet)
 		return subnet->owner;
@@ -151,7 +151,7 @@ node_t *route_mac(vpn_packet_t * packet)
 		return NULL;
 }
 
-node_t *route_ipv4(vpn_packet_t * packet)
+node_t *route_ipv4(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -175,7 +175,7 @@ node_t *route_ipv4(vpn_packet_t * packet)
 	return subnet->owner;
 }
 
-node_t *route_ipv6(vpn_packet_t * packet)
+node_t *route_ipv6(vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 
@@ -202,7 +202,7 @@ node_t *route_ipv6(vpn_packet_t * packet)
 	return subnet->owner;
 }
 
-uint16_t inet_checksum(uint16_t * data, int len, uint16_t prevsum)
+uint16_t inet_checksum(uint16_t *data, int len, uint16_t prevsum)
 {
 	uint32_t checksum = prevsum ^ 0xFFFF;
 
@@ -215,7 +215,7 @@ uint16_t inet_checksum(uint16_t * data, int len, uint16_t prevsum)
 	return checksum ^ 0xFFFF;
 }
 
-void route_neighborsol(vpn_packet_t * packet)
+void route_neighborsol(vpn_packet_t *packet)
 {
 	struct ip6_hdr *hdr;
 	struct nd_neighbor_solicit *ns;
@@ -232,9 +232,9 @@ void route_neighborsol(vpn_packet_t * packet)
 
 	cp();
 
-	hdr = (struct ip6_hdr *) (packet->data + 14);
-	ns = (struct nd_neighbor_solicit *) (packet->data + 14 + sizeof(*hdr));
-	opt = (struct nd_opt_hdr *) (packet->data + 14 + sizeof(*hdr) + sizeof(*ns));
+	hdr = (struct ip6_hdr *)(packet->data + 14);
+	ns = (struct nd_neighbor_solicit *)(packet->data + 14 + sizeof(*hdr));
+	opt = (struct nd_opt_hdr *)(packet->data + 14 + sizeof(*hdr) + sizeof(*ns));
 
 	/* First, snatch the source address from the neighbor solicitation packet */
 
@@ -330,7 +330,7 @@ void route_neighborsol(vpn_packet_t * packet)
 	write_packet(packet);
 }
 
-void route_arp(vpn_packet_t * packet)
+void route_arp(vpn_packet_t *packet)
 {
 	struct ether_arp *arp;
 	subnet_t *subnet;
@@ -347,7 +347,7 @@ void route_arp(vpn_packet_t * packet)
 	   Most of the code here is taken from choparp.c by Takamichi Tateoka (tree@mma.club.uec.ac.jp)
 	 */
 
-	arp = (struct ether_arp *) (packet->data + 14);
+	arp = (struct ether_arp *)(packet->data + 14);
 
 	/* Check if this is a valid ARP request */
 
@@ -392,7 +392,7 @@ void route_arp(vpn_packet_t * packet)
 	write_packet(packet);
 }
 
-void route_outgoing(vpn_packet_t * packet)
+void route_outgoing(vpn_packet_t *packet)
 {
 	uint16_t type;
 	node_t *n = NULL;
@@ -403,7 +403,7 @@ void route_outgoing(vpn_packet_t * packet)
 
 	switch (routing_mode) {
 		case RMODE_ROUTER:
-			type = ntohs(*((uint16_t *) (&packet->data[12])));
+			type = ntohs(*((uint16_t *)(&packet->data[12])));
 			switch (type) {
 				case 0x0800:
 					n = route_ipv4(packet);
@@ -444,7 +444,7 @@ void route_outgoing(vpn_packet_t * packet)
 	}
 }
 
-void route_incoming(node_t * source, vpn_packet_t * packet)
+void route_incoming(node_t *source, vpn_packet_t *packet)
 {
 	switch (routing_mode) {
 		case RMODE_ROUTER:
@@ -452,7 +452,7 @@ void route_incoming(node_t * source, vpn_packet_t * packet)
 				node_t *n = NULL;
 				uint16_t type;
 
-				type = ntohs(*((uint16_t *) (&packet->data[12])));
+				type = ntohs(*((uint16_t *)(&packet->data[12])));
 				switch (type) {
 					case 0x0800:
 						n = route_ipv4(packet);
@@ -481,7 +481,7 @@ void route_incoming(node_t * source, vpn_packet_t * packet)
 			{
 				subnet_t *subnet;
 
-				subnet = lookup_subnet_mac((mac_t *) (&packet->data[0]));
+				subnet = lookup_subnet_mac((mac_t *)(&packet->data[0]));
 
 				if(subnet) {
 					if(subnet->owner == myself)

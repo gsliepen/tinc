@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.10 2002/09/09 21:25:26 guus Exp $
+    $Id: device.c,v 1.1.2.11 2002/09/09 22:33:27 guus Exp $
 */
 
 #include "config.h"
@@ -93,7 +93,7 @@ void close_device(void)
 	cp close(device_fd);
 cp}
 
-int read_packet(vpn_packet_t * packet)
+int read_packet(vpn_packet_t *packet)
 {
 	int lenin;
 	u_int32_t type;
@@ -139,7 +139,7 @@ int read_packet(vpn_packet_t * packet)
 	return 0;
 cp}
 
-int write_packet(vpn_packet_t * packet)
+int write_packet(vpn_packet_t *packet)
 {
 	u_int32_t type;
 	struct iovec vector[2];

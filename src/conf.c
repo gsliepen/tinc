@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.59 2002/09/09 21:24:25 guus Exp $
+    $Id: conf.c,v 1.9.4.60 2002/09/09 22:32:30 guus Exp $
 */
 
 #include "config.h"
@@ -53,7 +53,7 @@ int pingtimeout = 0;			/* seconds before timeout */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
 
-int config_compare(config_t * a, config_t * b)
+int config_compare(config_t *a, config_t *b)
 {
 	int result;
 
@@ -92,7 +92,7 @@ config_t *new_config(void)
 	return (config_t *) xmalloc_and_zero(sizeof(config_t));
 }
 
-void free_config(config_t * cfg)
+void free_config(config_t *cfg)
 {
 	cp();
 
@@ -108,14 +108,14 @@ void free_config(config_t * cfg)
 	free(cfg);
 }
 
-void config_add(avl_tree_t * config_tree, config_t * cfg)
+void config_add(avl_tree_t *config_tree, config_t *cfg)
 {
 	cp();
 
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(avl_tree_t * config_tree, char *variable)
+config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 {
 	config_t cfg, *found;
 
@@ -136,7 +136,7 @@ config_t *lookup_config(avl_tree_t * config_tree, char *variable)
 	return found;
 }
 
-config_t *lookup_config_next(avl_tree_t * config_tree, config_t * cfg)
+config_t *lookup_config_next(avl_tree_t *config_tree, config_t *cfg)
 {
 	avl_node_t *node;
 	config_t *found;
@@ -157,7 +157,7 @@ config_t *lookup_config_next(avl_tree_t * config_tree, config_t * cfg)
 	return NULL;
 }
 
-int get_config_bool(config_t * cfg, int *result)
+int get_config_bool(config_t *cfg, int *result)
 {
 	cp();
 
@@ -178,7 +178,7 @@ int get_config_bool(config_t * cfg, int *result)
 	return 0;
 }
 
-int get_config_int(config_t * cfg, int *result)
+int get_config_int(config_t *cfg, int *result)
 {
 	cp();
 
@@ -194,7 +194,7 @@ int get_config_int(config_t * cfg, int *result)
 	return 0;
 }
 
-int get_config_string(config_t * cfg, char **result)
+int get_config_string(config_t *cfg, char **result)
 {
 	cp();
 
@@ -206,7 +206,7 @@ int get_config_string(config_t * cfg, char **result)
 	return 1;
 }
 
-int get_config_address(config_t * cfg, struct addrinfo **result)
+int get_config_address(config_t *cfg, struct addrinfo **result)
 {
 	struct addrinfo *ai;
 
@@ -228,7 +228,7 @@ int get_config_address(config_t * cfg, struct addrinfo **result)
 	return 0;
 }
 
-int get_config_port(config_t * cfg, port_t * result)
+int get_config_port(config_t *cfg, port_t *result)
 {
 	cp();
 
@@ -246,7 +246,7 @@ int get_config_port(config_t * cfg, port_t * result)
 	return 0;
 }
 
-int get_config_subnet(config_t * cfg, subnet_t ** result)
+int get_config_subnet(config_t *cfg, subnet_t ** result)
 {
 	subnet_t *subnet;
 
@@ -290,7 +290,7 @@ int get_config_subnet(config_t * cfg, subnet_t ** result)
   given, and buf needs to be expanded, the var pointed to by buflen
   will be increased.
 */
-char *readline(FILE * fp, char **buf, size_t * buflen)
+char *readline(FILE * fp, char **buf, size_t *buflen)
 {
 	char *newline = NULL;
 	char *p;
@@ -353,7 +353,7 @@ char *readline(FILE * fp, char **buf, size_t * buflen)
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-int read_config_file(avl_tree_t * config_tree, const char *fname)
+int read_config_file(avl_tree_t *config_tree, const char *fname)
 {
 	int err = -2;				/* Parse error */
 	FILE *fp;

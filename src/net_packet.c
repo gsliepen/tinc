@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.22 2002/09/09 21:24:41 guus Exp $
+    $Id: net_packet.c,v 1.1.2.23 2002/09/09 22:32:44 guus Exp $
 */
 
 #include "config.h"
@@ -85,7 +85,7 @@ int keyexpires = 0;
 
 /* VPN packet I/O */
 
-void receive_udppacket(node_t * n, vpn_packet_t * inpkt)
+void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
@@ -164,7 +164,7 @@ void receive_udppacket(node_t * n, vpn_packet_t * inpkt)
 	receive_packet(n, inpkt);
 }
 
-void receive_tcppacket(connection_t * c, char *buffer, int len)
+void receive_tcppacket(connection_t *c, char *buffer, int len)
 {
 	vpn_packet_t outpkt;
 
@@ -176,7 +176,7 @@ void receive_tcppacket(connection_t * c, char *buffer, int len)
 	receive_packet(c->node, &outpkt);
 }
 
-void receive_packet(node_t * n, vpn_packet_t * packet)
+void receive_packet(node_t *n, vpn_packet_t *packet)
 {
 	cp();
 
@@ -187,7 +187,7 @@ void receive_packet(node_t * n, vpn_packet_t * packet)
 	route_incoming(n, packet);
 }
 
-void send_udppacket(node_t * n, vpn_packet_t * inpkt)
+void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
@@ -313,7 +313,7 @@ void send_udppacket(node_t * n, vpn_packet_t * inpkt)
 /*
   send a packet to the given vpn ip.
 */
-void send_packet(node_t * n, vpn_packet_t * packet)
+void send_packet(node_t *n, vpn_packet_t *packet)
 {
 	node_t *via;
 
@@ -353,7 +353,7 @@ void send_packet(node_t * n, vpn_packet_t * packet)
 
 /* Broadcast a packet using the minimum spanning tree */
 
-void broadcast_packet(node_t * from, vpn_packet_t * packet)
+void broadcast_packet(node_t *from, vpn_packet_t *packet)
 {
 	avl_node_t *node;
 	connection_t *c;
@@ -372,7 +372,7 @@ void broadcast_packet(node_t * from, vpn_packet_t * packet)
 	}
 }
 
-void flush_queue(node_t * n)
+void flush_queue(node_t *n)
 {
 	list_node_t *node, *next;
 

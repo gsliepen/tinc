@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.12 2002/09/09 21:24:48 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.13 2002/09/09 22:33:02 guus Exp $
 */
 
 #include "config.h"
@@ -45,7 +45,7 @@
 
 #include "system.h"
 
-int send_add_edge(connection_t * c, edge_t * e)
+int send_add_edge(connection_t *c, edge_t *e)
 {
 	int x;
 	char *address, *port;
@@ -63,7 +63,7 @@ int send_add_edge(connection_t * c, edge_t * e)
 	return x;
 }
 
-int add_edge_h(connection_t * c)
+int add_edge_h(connection_t *c)
 {
 	edge_t *e;
 	node_t *from, *to;
@@ -174,7 +174,7 @@ int add_edge_h(connection_t * c)
 	return 0;
 }
 
-int send_del_edge(connection_t * c, edge_t * e)
+int send_del_edge(connection_t *c, edge_t *e)
 {
 	cp();
 
@@ -182,7 +182,7 @@ int send_del_edge(connection_t * c, edge_t * e)
 						e->from->name, e->to->name);
 }
 
-int del_edge_h(connection_t * c)
+int del_edge_h(connection_t *c)
 {
 	edge_t *e;
 	char from_name[MAX_STRING_SIZE];

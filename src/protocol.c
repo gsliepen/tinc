@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.136 2002/09/09 21:24:41 guus Exp $
+    $Id: protocol.c,v 1.28.4.137 2002/09/09 22:32:49 guus Exp $
 */
 
 #include "config.h"
@@ -57,7 +57,7 @@ int check_id(char *id)
 /* Generic request routines - takes care of logging and error
    detection as well */
 
-int send_request(connection_t * c, const char *format, ...)
+int send_request(connection_t *c, const char *format, ...)
 {
 	va_list args;
 	char buffer[MAXBUFSIZE];
@@ -97,7 +97,7 @@ int send_request(connection_t * c, const char *format, ...)
 		return send_meta(c, buffer, len);
 }
 
-int forward_request(connection_t * from)
+int forward_request(connection_t *from)
 {
 	int request;
 	cp();
@@ -120,7 +120,7 @@ int forward_request(connection_t * from)
 	return broadcast_meta(from, from->buffer, from->reqlen);
 }
 
-int receive_request(connection_t * c)
+int receive_request(connection_t *c)
 {
 	int request;
 
@@ -170,12 +170,12 @@ int receive_request(connection_t * c)
 	return 0;
 }
 
-int past_request_compare(past_request_t * a, past_request_t * b)
+int past_request_compare(past_request_t *a, past_request_t *b)
 {
 	return strcmp(a->request, b->request);
 }
 
-void free_past_request(past_request_t * r)
+void free_past_request(past_request_t *r)
 {
 	cp();
 
@@ -245,7 +245,7 @@ void age_past_requests(void)
 
 /* Jumptable for the request handlers */
 
-int (*request_handlers[]) (connection_t *) = {
+int (*request_handlers[])(connection_t *) = {
 		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
 		status_h, error_h, termreq_h,
 		ping_h, pong_h,

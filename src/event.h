@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.1.4.3 2002/09/09 21:24:34 guus Exp $
+    $Id: event.h,v 1.1.4.4 2002/09/09 22:32:36 guus Exp $
 */
 
 #ifndef __TINC_EVENT_H__
@@ -28,7 +28,7 @@
 
 avl_tree_t *event_tree;
 
-typedef void (*event_handler_t) (void *);
+typedef void (*event_handler_t)(void *);
 
 typedef struct {
 	time_t time;

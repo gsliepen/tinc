@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://tinc.nl.linux.org/) by
     Guus Sliepen <guus@sliepen.eu.org>.
 
-    $Id: avl_tree.h,v 1.1.2.6 2002/09/09 21:49:16 guus Exp $
+    $Id: avl_tree.h,v 1.1.2.7 2002/09/09 22:32:27 guus Exp $
 */
 
 
@@ -68,9 +68,9 @@ typedef struct avl_node_t {
 
 } avl_node_t;
 
-typedef int (*avl_compare_t) (const void *, const void *);
-typedef void (*avl_action_t) (const void *);
-typedef void (*avl_action_node_t) (const avl_node_t *);
+typedef int (*avl_compare_t)(const void *, const void *);
+typedef void (*avl_action_t)(const void *);
+typedef void (*avl_action_node_t)(const avl_node_t *);
 
 typedef struct avl_tree_t {
 
@@ -94,7 +94,7 @@ extern avl_tree_t *avl_alloc_tree(avl_compare_t, avl_action_t);
 extern void avl_free_tree(avl_tree_t *);
 
 extern avl_node_t *avl_alloc_node(void);
-extern void avl_free_node(avl_tree_t * tree, avl_node_t *);
+extern void avl_free_node(avl_tree_t *tree, avl_node_t *);
 
 /* Insertion and deletion */
 
@@ -106,7 +106,7 @@ extern void avl_insert_before(avl_tree_t *, avl_node_t *, avl_node_t *);
 extern void avl_insert_after(avl_tree_t *, avl_node_t *, avl_node_t *);
 
 extern avl_node_t *avl_unlink(avl_tree_t *, void *);
-extern void avl_unlink_node(avl_tree_t * tree, avl_node_t *);
+extern void avl_unlink_node(avl_tree_t *tree, avl_node_t *);
 extern void avl_delete(avl_tree_t *, void *);
 extern void avl_delete_node(avl_tree_t *, avl_node_t *);
 

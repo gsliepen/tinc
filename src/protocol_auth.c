@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c,v 1.1.4.16 2002/09/09 21:24:45 guus Exp $
+    $Id: protocol_auth.c,v 1.1.4.17 2002/09/09 22:32:59 guus Exp $
 */
 
 #include "config.h"
@@ -53,7 +53,7 @@
 
 #include "system.h"
 
-int send_id(connection_t * c)
+int send_id(connection_t *c)
 {
 	cp();
 
@@ -61,7 +61,7 @@ int send_id(connection_t * c)
 						myself->connection->protocol_version);
 }
 
-int id_h(connection_t * c)
+int id_h(connection_t *c)
 {
 	char name[MAX_STRING_SIZE];
 	int bla;
@@ -137,7 +137,7 @@ int id_h(connection_t * c)
 	return send_metakey(c);
 }
 
-int send_metakey(connection_t * c)
+int send_metakey(connection_t *c)
 {
 	char buffer[MAX_STRING_SIZE];
 	int len, x;
@@ -216,7 +216,7 @@ int send_metakey(connection_t * c)
 	return x;
 }
 
-int metakey_h(connection_t * c)
+int metakey_h(connection_t *c)
 {
 	char buffer[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
@@ -319,7 +319,7 @@ int metakey_h(connection_t * c)
 	return send_challenge(c);
 }
 
-int send_challenge(connection_t * c)
+int send_challenge(connection_t *c)
 {
 	char buffer[MAX_STRING_SIZE];
 	int len, x;
@@ -351,7 +351,7 @@ int send_challenge(connection_t * c)
 	return x;
 }
 
-int challenge_h(connection_t * c)
+int challenge_h(connection_t *c)
 {
 	char buffer[MAX_STRING_SIZE];
 	int len;
@@ -390,7 +390,7 @@ int challenge_h(connection_t * c)
 	return send_chal_reply(c);
 }
 
-int send_chal_reply(connection_t * c)
+int send_chal_reply(connection_t *c)
 {
 	char hash[EVP_MAX_MD_SIZE * 2 + 1];
 	EVP_MD_CTX ctx;
@@ -414,7 +414,7 @@ int send_chal_reply(connection_t * c)
 	return send_request(c, "%d %s", CHAL_REPLY, hash);
 }
 
-int chal_reply_h(connection_t * c)
+int chal_reply_h(connection_t *c)
 {
 	char hishash[MAX_STRING_SIZE];
 	char myhash[EVP_MAX_MD_SIZE];
@@ -470,7 +470,7 @@ int chal_reply_h(connection_t * c)
 	return send_ack(c);
 }
 
-int send_ack(connection_t * c)
+int send_ack(connection_t *c)
 {
 	/* ACK message contains rest of the information the other end needs
 	   to create node_t and edge_t structures. */
@@ -492,7 +492,7 @@ int send_ack(connection_t * c)
 	return x;
 }
 
-void send_everything(connection_t * c)
+void send_everything(connection_t *c)
 {
 	avl_node_t *node, *node2;
 	node_t *n;
@@ -516,7 +516,7 @@ void send_everything(connection_t * c)
 	}
 }
 
-int ack_h(connection_t * c)
+int ack_h(connection_t *c)
 {
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress, *dummy;

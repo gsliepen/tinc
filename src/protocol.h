@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.h,v 1.5.4.35 2002/09/09 21:24:42 guus Exp $
+    $Id: protocol.h,v 1.5.4.36 2002/09/09 22:32:55 guus Exp $
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -93,7 +93,7 @@ extern int send_tcppacket(connection_t *, vpn_packet_t *);
 
 /* Request handlers  */
 
-extern int (*request_handlers[]) (connection_t *);
+extern int (*request_handlers[])(connection_t *);
 
 extern int id_h(connection_t *);
 extern int metakey_h(connection_t *);

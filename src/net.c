@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.180 2002/09/09 21:24:34 guus Exp $
+    $Id: net.c,v 1.35.4.181 2002/09/09 22:32:39 guus Exp $
 */
 
 #include "config.h"
@@ -166,7 +166,7 @@ void build_fdset(fd_set * fs)
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
-void terminate_connection(connection_t * c, int report)
+void terminate_connection(connection_t *c, int report)
 {
 	cp();
 

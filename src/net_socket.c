@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c,v 1.1.2.20 2002/09/09 21:24:41 guus Exp $
+    $Id: net_socket.c,v 1.1.2.21 2002/09/09 22:32:44 guus Exp $
 */
 
 #include "config.h"
@@ -84,7 +84,7 @@ int listen_sockets;
 
 /* Setup sockets */
 
-int setup_listen_socket(sockaddr_t * sa)
+int setup_listen_socket(sockaddr_t *sa)
 {
 	int nfd, flags;
 	char *addrstr;
@@ -162,7 +162,7 @@ int setup_listen_socket(sockaddr_t * sa)
 	return nfd;
 }
 
-int setup_vpn_in_socket(sockaddr_t * sa)
+int setup_vpn_in_socket(sockaddr_t *sa)
 {
 	int nfd, flags;
 	char *addrstr;
@@ -219,7 +219,7 @@ int setup_vpn_in_socket(sockaddr_t * sa)
 	return nfd;
 }
 
-void retry_outgoing(outgoing_t * outgoing)
+void retry_outgoing(outgoing_t *outgoing)
 {
 	event_t *event;
 
@@ -242,7 +242,7 @@ void retry_outgoing(outgoing_t * outgoing)
 			   outgoing->timeout);
 }
 
-int setup_outgoing_socket(connection_t * c)
+int setup_outgoing_socket(connection_t *c)
 {
 	int option;
 
@@ -288,7 +288,7 @@ int setup_outgoing_socket(connection_t * c)
 }
 
 
-void finish_connecting(connection_t * c)
+void finish_connecting(connection_t *c)
 {
 	cp();
 
@@ -300,7 +300,7 @@ void finish_connecting(connection_t * c)
 	send_id(c);
 }
 
-void do_outgoing_connection(connection_t * c)
+void do_outgoing_connection(connection_t *c)
 {
 	char *address, *port;
 	int option, result, flags;
@@ -403,7 +403,7 @@ begin:
 	return;
 }
 
-void setup_outgoing_connection(outgoing_t * outgoing)
+void setup_outgoing_connection(outgoing_t *outgoing)
 {
 	connection_t *c;
 	node_t *n;

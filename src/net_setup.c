@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c,v 1.1.2.25 2002/09/09 21:24:41 guus Exp $
+    $Id: net_setup.c,v 1.1.2.26 2002/09/09 22:32:44 guus Exp $
 */
 
 #include "config.h"
@@ -77,7 +77,7 @@
 
 char *myport;
 
-int read_rsa_public_key(connection_t * c)
+int read_rsa_public_key(connection_t *c)
 {
 	FILE *fp;
 	char *fname;
