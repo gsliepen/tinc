@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.82 2003/08/03 09:08:52 guus Exp $
+    $Id: tincd.c,v 1.10.4.83 2003/08/03 09:55:20 guus Exp $
 */
 
 #include "system.h"
@@ -79,7 +79,7 @@ char *pidfilename = NULL;			/* pid file location */
 char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
 
-int exitstatus = 0;
+static int status;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -467,7 +467,6 @@ int main2(int argc, char **argv)
 
 	/* Start main loop. It only exits when tinc is killed. */
 
-	int status;
 	status = main_loop();
 
 	/* Shutdown properly. */
