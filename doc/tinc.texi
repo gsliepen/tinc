@@ -535,9 +535,10 @@ need to run tincd, but it must do a port forwarding of TCP&UDP on port
 655 (unless otherwise configured).
 
 In this example, it is assumed that eth0 is the interface that points to
-the inner LAN of the office, although this could also be the same as the interface
-that leads to the internet. The configuration of the real interface is also shown
-as a comment, to give you an idea of how these example host is set up.
+the inner LAN of the office, although this could also be the same as the
+interface that leads to the internet. The configuration of the real
+interface is also shown as a comment, to give you an idea of how these
+example host is set up.
 
 @subsubheading For A
 
@@ -629,17 +630,17 @@ A, B, C and D all generate a passphrase with genauth 2048, the output is
 stored in /etc/tinc/passphrases/local, except for C, where it should be
 /etc/tinc/A/passphrases/local.
 
-A stores a copy of B's passphrase in /etc/tinc/passphrases/10.2.0.0
+A stores a copy of B's passphrase in /etc/tinc/passphrases/10.2.1.12
 
-A stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.0.0
+A stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.69.254
 
-B stores a copy of A's passphrase in /etc/tinc/passphrases/10.1.0.0
+B stores a copy of A's passphrase in /etc/tinc/passphrases/10.1.54.1
 
-C stores a copy of A's passphrase in /etc/tinc/A/passphrases/10.1.0.0
+C stores a copy of A's passphrase in /etc/tinc/A/passphrases/10.1.54.1
 
-C stores a copy of D's passphrase in /etc/tinc/A/passphrases/10.4.0.0
+C stores a copy of D's passphrase in /etc/tinc/A/passphrases/10.4.3.32
 
-D stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.0.0
+D stores a copy of C's passphrase in /etc/tinc/passphrases/10.3.69.254
 
 @subsubheading Starting
 
