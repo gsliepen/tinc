@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.104 2001/08/17 18:14:04 guus Exp $
+    $Id: protocol.c,v 1.28.4.105 2001/09/01 12:02:39 guus Exp $
 */
 
 #include "config.h"
@@ -238,8 +238,8 @@ cp
   if((old = lookup_id(cl->name)))
     {
       if(debug_lvl >= DEBUG_CONNECTIONS)
-        syslog(LOG_NOTICE, _("Removing old connection for %s at %s in favour of new connection from %s"),
-               cl->name, old->hostname, cl->hostname);
+        syslog(LOG_NOTICE, _("Removing old connection for %s at %s in favour of new connection at %s"),
+               old->name, old->hostname, cl->hostname);
       if(old->status.outgoing)
         {
           cl->status.outgoing = 1;
@@ -615,10 +615,7 @@ int send_add_subnet(connection_t *cl, subnet_t *subnet)
   char *netstr;
   char *owner;
 cp
-  if((cl->options | myself->options | subnet->owner->options) & OPTION_INDIRECT)
-    owner = myself->name;
-  else
-    owner = subnet->owner->name;
+  owner = subnet->owner->name;
 
   x = send_request(cl, "%d %s %s", ADD_SUBNET,
                       owner, netstr = net2str(subnet));
@@ -698,10 +695,7 @@ int send_del_subnet(connection_t *cl, subnet_t *subnet)
   char *netstr;
   char *owner;
 cp
-  if(cl->options & OPTION_INDIRECT)
-    owner = myself->name;
-  else
-    owner = subnet->owner->name;
+  owner = subnet->owner->name;
 
   x = send_request(cl, "%d %s %s", DEL_SUBNET, owner, netstr = net2str(subnet));
   free(netstr);
@@ -781,11 +775,8 @@ cp
 int send_add_host(connection_t *cl, connection_t *other)
 {
 cp
-  if(!((cl->options | myself->options | other->options) & OPTION_INDIRECT))
-    return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
+  return send_request(cl, "%d %s %lx:%d %lx", ADD_HOST,
                       other->name, other->address, other->port, other->options);
-  else
-    return 0;
 }
 
 int add_host_h(connection_t *cl)
@@ -829,7 +820,7 @@ cp
 
   if((old = lookup_id(name)))
     {
-      if((new->address == old->address) && (new->port == old->port) && (cl == old->nexthop))
+      if((new->address == old->address) && (new->port == old->port) && (cl->nexthop == old->nexthop))
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
             syslog(LOG_NOTICE, _("Got duplicate ADD_HOST for %s (%s) from %s (%s)"),
@@ -840,8 +831,8 @@ cp
       else
         {
           if(debug_lvl >= DEBUG_CONNECTIONS)
-            syslog(LOG_NOTICE, _("Removing old entry for %s (%s) in favour of new connection"),
-                   old->name, old->hostname);
+            syslog(LOG_NOTICE, _("Removing old entry for %s (%s) from %s in favour of new connection from %s"),
+                   old->name, old->hostname, old->nexthop->name, cl->nexthop->name);
 
           terminate_connection(old, 0);
         }
@@ -873,11 +864,8 @@ cp
 int send_del_host(connection_t *cl, connection_t *other)
 {
 cp
-  if(!((cl->options | myself->options) & OPTION_INDIRECT))
-    return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
+  return send_request(cl, "%d %s %lx:%d %lx", DEL_HOST,
                       other->name, other->address, other->port, other->options);
-  else
-    return 0;
 }
 
 int del_host_h(connection_t *cl)
@@ -1081,8 +1069,7 @@ cp
     {
       p = (connection_t *)node->data;
       if(p != cl && p->status.active)
-        if(!(p->options & OPTION_INDIRECT) || from == myself)
-          send_request(p, "%d %s", KEY_CHANGED, from->name);
+        send_request(p, "%d %s", KEY_CHANGED, from->name);
     }
 cp
   return 0;
@@ -1110,8 +1097,7 @@ cp
   from->status.validkey = 0;
   from->status.waitingforkey = 0;
 
-  if(!(from->options | cl->options | myself->options) & OPTION_INDIRECT)
-    send_key_changed(from, cl);
+  send_key_changed(from, cl);
 cp
   return 0;
 }
