@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol.c,v 1.28.4.17 2000/06/29 19:47:03 guus Exp $
+    $Id: protocol.c,v 1.28.4.18 2000/06/30 12:41:06 guus Exp $
 */
 
 #include "config.h"
@@ -613,6 +613,15 @@ cp
       return 0;
     }
 
+  /* Connections lists are really messed up if this happens */
+  if(vpn_ip == myself->vpn_ip)
+    {
+      syslog(LOG_ERR, _("Warning: got DEL_HOST from %s (%s) for ourself, restarting"),
+               cl->vpn_hostname, cl->real_hostname);
+      sighup = 1;
+      return 0;
+    }
+
   if(debug_lvl > 1)
     syslog(LOG_DEBUG, _("Got DEL_HOST for %s (%s) from %s (%s)"),
            fw->vpn_hostname, fw->real_hostname, cl->vpn_hostname, cl->real_hostname);
@@ -708,6 +717,15 @@ cp
           old->status.active = 0;
           terminate_connection(old);
         }
+    }
+  
+  /* Connections lists are really messed up if this happens */
+  if(vpn_ip == myself->vpn_ip)
+    {
+      syslog(LOG_ERR, _("Warning: got ADD_HOST from %s (%s) for ourself, restarting"),
+               cl->vpn_hostname, cl->real_hostname);
+      sighup = 1;
+      return 0;
     }
     
   ncn = new_conn_list();

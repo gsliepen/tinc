@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.16 2000/06/30 11:45:14 guus Exp $
+    $Id: net.c,v 1.35.4.17 2000/06/30 12:41:05 guus Exp $
 */
 
 #include "config.h"
@@ -508,7 +508,8 @@ cp
   cl->meta_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if(cl->meta_socket == -1)
     {
-      syslog(LOG_ERR, _("Creating socket failed: %m"));
+      syslog(LOG_ERR, _("Creating socket for %s port %d failed: %m"),
+             cl->real_hostname, cl->port);
       return -1;
     }
 
@@ -525,7 +526,8 @@ cp
   flags = fcntl(cl->meta_socket, F_GETFL);
   if(fcntl(cl->meta_socket, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, _("fcntl: %m"));
+      syslog(LOG_ERR, _("fcntl for %s port %d: %m"),
+             cl->real_hostname, cl->port);
       return -1;
     }
 
@@ -751,7 +753,8 @@ cp
   flags = fcntl(nfd, F_GETFL);
   if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"), __FILE__, __LINE__, nfd);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, nfd,
+             cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
@@ -837,12 +840,14 @@ int handle_incoming_vpn_data(conn_list_t *cl)
 cp
   if(getsockopt(cl->socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"), __FILE__, __LINE__, cl->socket);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->socket,
+             cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, _("Incoming data socket error: %s"), sys_errlist[x]);
+      syslog(LOG_ERR, _("Incoming data socket error for %s (%s): %s"),
+             cl->vpn_hostname, cl->real_hostname, sys_errlist[x]);
       return -1;
     }
 
@@ -850,7 +855,7 @@ cp
   lenin = recvfrom(cl->socket, &rp, MTU, 0, NULL, NULL);
   if(lenin <= 0)
     {
-      syslog(LOG_ERR, _("Receiving packet from %s failed: %m"), cl->real_hostname);
+      syslog(LOG_ERR, _("Receiving packet from %s (%s) failed: %m"), cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
   total_socket_in += lenin;
@@ -1033,12 +1038,14 @@ int handle_incoming_meta_data(conn_list_t *cl)
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
     {
-      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m"), __FILE__, __LINE__, cl->meta_socket);
+      syslog(LOG_ERR, _("This is a bug: %s:%d: %d:%m %s (%s)"), __FILE__, __LINE__, cl->meta_socket,
+             cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
   if(x)
     {
-      syslog(LOG_ERR, _("Metadata socket error: %s"), sys_errlist[x]);
+      syslog(LOG_ERR, _("Metadata socket error for %s (%s): %s"),
+             cl->vpn_hostname, cl->real_hostname, sys_errlist[x]);
       return -1;
     }
 
@@ -1054,7 +1061,13 @@ cp
     {
       if(errno==EINTR)
         return 0;      
-      syslog(LOG_ERR, _("Metadata socket read error: %m"));
+      if(errno==0)
+        if(debug_lvl>0)
+          syslog(LOG_NOTICE, _("Connection closed by %s (%s)"),
+                 cl->vpn_hostname, cl->real_hostname);
+      else
+        syslog(LOG_ERR, _("Metadata socket read error for %s (%s): %m"),
+               cl->vpn_hostname, cl->real_hostname);
       return -1;
     }
 
@@ -1251,6 +1264,7 @@ cp
               syslog(LOG_ERR, _("Unable to reread configuration file, exiting"));
               exit(0);
             }
+          sleep(5);
           setup_network_connections();
           continue;
         }
