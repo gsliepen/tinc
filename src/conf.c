@@ -1,6 +1,6 @@
 /*
     conf.c -- configuration code
-    Copyright (C) 1998 Emphyrio,
+    Copyright (C) 1998 Robert van der Meulen
     Copyright (C) 1998,1999,2000 Ivo Timmermans <itimmermans@bigfoot.com>
                             2000 Guus Sliepen <guus@sliepen.warande.net>
 			    2000 Cris van Pelt <tribbel@arise.dhs.org>
@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.22 2000/11/20 19:12:11 guus Exp $
+    $Id: conf.c,v 1.9.4.23 2000/11/28 23:12:56 zarq Exp $
 */
 
 #include "config.h"
@@ -33,10 +33,10 @@
 #include <syslog.h>
 
 #include <xalloc.h>
+#include <utils.h> /* for cp */
 
 #include "conf.h"
 #include "netutl.h" /* for strtoip */
-#include <utils.h> /* for cp */
 
 #include "config.h"
 #include "system.h"
@@ -254,4 +254,48 @@ cp
     }
   *base = NULL;
 cp
+}
+
+#define is_safe_file(p) 1
+
+FILE *ask_and_safe_open(const char* filename)
+{
+  FILE *r;
+  char *directory;
+  char *fn;
+  int len;
+
+  if(!isatty(0))
+    {
+      /* Argh, they are running us from a script or something.  Write
+         the files to the current directory and let them burn in hell
+         for ever. */
+      directory = "."; /* get_current_directory */
+    }
+  else
+    {
+      directory = ".";
+    }
+
+  len = strlen(filename) + strlen(directory) + 2; /* 1 for the / */
+  fn = xmalloc(len);
+  snprintf(fn, len, "%s/%s", directory, filename);
+
+  if(!is_safe_file(fn))
+    {
+      fprintf(stderr, _("The file `%s' (or any of the leading directories) has unsafe permissions.\n"
+			"I will not create or overwrite this file.\n"),
+			fn);
+      return NULL;
+    }
+
+  if((r = fopen(fn, "w")) == NULL)
+    {
+      fprintf(stderr, _("Error opening file `%s': %m"),
+	      fn);
+    }
+
+  free(fn);
+  
+  return r;
 }

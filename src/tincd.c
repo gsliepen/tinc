@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c,v 1.10.4.35 2000/11/24 23:13:07 guus Exp $
+    $Id: tincd.c,v 1.10.4.36 2000/11/28 23:12:57 zarq Exp $
 */
 
 #include "config.h"
@@ -54,6 +54,12 @@
 # include <openssl/err.h>
 #else
 # include <err.h>
+#endif
+
+#ifdef HAVE_OPENSSL_PEM_H
+# include <openssl/pem.h>
+#else
+# include <pem.h>
 #endif
 
 
@@ -211,11 +217,14 @@ void indicator(int a, int b, void *p)
   }
 }
 
-/* Generate a public/private RSA keypair, and possibly store it into the configuration file. */
-
+/*
+  Generate a public/private RSA keypair, and ask for a file to store
+  them in.
+*/
 int keygen(int bits)
 {
   RSA *rsa_key;
+  FILE *f;
 
   fprintf(stderr, _("Generating %d bits keys:\n"), bits);
   rsa_key = RSA_generate_key(bits, 0xFFFF, indicator, NULL);
@@ -227,11 +236,16 @@ int keygen(int bits)
   else
     fprintf(stderr, _("Done.\n"));
 
-  fprintf(stderr, _("Please copy the private key to tinc.conf and the\npublic key to your host configuration file:\n\n"));
-  printf("PublicKey = %s\n", BN_bn2hex(rsa_key->n));
-  printf("PrivateKey = %s\n", BN_bn2hex(rsa_key->d));
+  if((f = ask_and_safe_open("rsa_key.pub")) == NULL)
+    return -1;
+  PEM_write_RSAPublicKey(f, rsa_key);
+  fclose(f);
   
-  fflush(stdin);
+  if((f = ask_and_safe_open("rsa_key.priv")) == NULL)
+    return -1;
+  PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
+  fclose(f);
+
   return 0;
 }
 

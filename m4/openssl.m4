@@ -41,12 +41,12 @@ if test "$tinc_cv_openssl_include" != "none given" ; then
 fi
 
 osi=found
-AC_CHECK_HEADERS(evp.h rsa.h rand.h err.h sha.h,
+AC_CHECK_HEADERS(evp.h rsa.h rand.h err.h sha.h pem.h,
 [], [osi=none; break])
 
 if test "$osi" = "none" ; then
   osi=found
-  AC_CHECK_HEADERS(openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h,
+  AC_CHECK_HEADERS(openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h,
   [], [osi=none; break])
 fi
 
