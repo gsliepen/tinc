@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_edge.c,v 1.1.4.14 2002/09/15 14:55:53 guus Exp $
+    $Id: protocol_edge.c,v 1.1.4.15 2002/09/24 11:43:34 guus Exp $
 */
 
 #include "config.h"
@@ -140,6 +140,7 @@ int add_edge_h(connection_t *c)
 					syslog(LOG_WARNING, _("Got %s from %s (%s) which does not match existing entry"),
 						   "ADD_EDGE", c->name, c->hostname);
 				edge_del(e);
+				graph();
 			}
 		} else
 			return 0;
