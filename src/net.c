@@ -109,27 +109,6 @@ cp
   return 0;
 }
 
-/*
-  write as many bytes as possible to the tap
-  device, possibly in multiple turns.
-*/
-int write_n(int fd, void *buf, size_t len)
-{
-  int r, done = 0;
-cp  
-  do
-    {
-      if((r = write(fd, buf, len)) < 0)
-	return -1;
-      len -= r;
-      buf += r;
-      done += r;
-    } while(len > 0);
-
-  return done;
-cp
-}
-
 int xrecv(conn_list_t *cl, void *packet)
 {
   vpn_packet_t vp;
