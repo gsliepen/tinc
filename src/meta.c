@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c,v 1.1.2.47 2003/10/11 14:18:52 guus Exp $
+    $Id: meta.c,v 1.1.2.48 2003/10/12 11:40:00 guus Exp $
 */
 
 #include "system.h"
@@ -150,7 +150,7 @@ bool receive_meta(connection_t *c)
 				receive_tcppacket(c, c->buffer, c->tcplen);
 
 				c->buflen -= c->tcplen;
-				lenin -= c->tcplen;
+				lenin -= c->tcplen - oldlen;
 				memmove(c->buffer, c->buffer + c->tcplen, c->buflen);
 				oldlen = 0;
 				c->tcplen = 0;
