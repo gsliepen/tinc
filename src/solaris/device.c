@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.1 2001/10/12 15:33:21 guus Exp $
+    $Id: device.c,v 1.1.2.2 2001/10/12 15:38:35 guus Exp $
 */
 
 #include <sys/sockio.h>
@@ -105,19 +105,6 @@ cp
 cp
   return 0;
 }
-
-#ifdef HAVE_SOLARIS
-  if((lenin = read(tap_fd, vp.data + 14, MTU)) <= 0)
-    {
-      syslog(LOG_ERR, _("Error while reading from tun device: %m"));
-      return;
-    }
-  memcpy(vp.data, mymac.net.mac.address.x, 6);
-  memcpy(vp.data + 6, mymac.net.mac.address.x, 6);
-  vp.data[12] = 0x08;
-  vp.data[13] = 0x00;
-  vp.len = lenin + 14;
-#else
 
 int read_packet(vpn_packet_t *packet)
 {
