@@ -1,4 +1,4 @@
-#!/bin/make -f
+#!/usr/bin/make -f
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
 
