@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.15 2003/08/02 21:33:18 guus Exp $
+    $Id: device.c,v 1.1.2.16 2003/08/08 19:49:47 guus Exp $
 */
 
 #include "system.h"
@@ -95,9 +95,12 @@ bool setup_device(void)
 			continue;
 
 		len = sizeof(adaptername);
-		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
+		err = RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
 		RegCloseKey(key2);
+
+		if(err)
+			continue;
 
 		if(device) {
 			if(!strcmp(device, adapterid)) {
@@ -153,7 +156,7 @@ bool setup_device(void)
 	device_handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
 	
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("Could not open Windows tap device for writing: %s"), winerror(GetLastError()));
+		logger(LOG_ERR, _("Could not open Windows tap device %s (%s) for writing: %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -162,7 +165,7 @@ bool setup_device(void)
 	/* Get MAC address from tap device */
 
 	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
-		logger(LOG_ERR, _("Could not get MAC address from Windows tap device: %s"), winerror(GetLastError()));
+		logger(LOG_ERR, _("Could not get MAC address from Windows tap device %s (%s): %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -191,7 +194,7 @@ bool setup_device(void)
 		device_handle = CreateFile(tapname, GENERIC_READ, FILE_SHARE_WRITE, 0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
 
 		if(device_handle == INVALID_HANDLE_VALUE) {
-			logger(LOG_ERR, _("Could not open Windows tap device for reading: %s"), winerror(GetLastError()));
+			logger(LOG_ERR, _("Could not open Windows tap device %s (%s) for reading: %s"), device, iface, winerror(GetLastError()));
 			buf[0] = 0;
 			write(sp[1], buf, 1);
 			exit(1);

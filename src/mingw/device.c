@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c,v 1.1.2.12 2003/08/08 17:20:12 guus Exp $
+    $Id: device.c,v 1.1.2.13 2003/08/08 19:49:47 guus Exp $
 */
 
 #include "system.h"
@@ -170,9 +170,12 @@ bool setup_device(void)
 			continue;
 
 		len = sizeof(adaptername);
-		RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
+		err = RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
 		RegCloseKey(key2);
+
+		if(err)
+			continue;
 
 		if(device) {
 			if(!strcmp(device, adapterid)) {
@@ -219,14 +222,14 @@ bool setup_device(void)
 	}
 	
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("%s (%s) is not a usable Windows tap device!"), device, iface);
+		logger(LOG_ERR, _("%s (%s) is not a usable Windows tap device: %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
 
 	/* Get MAC address from tap device */
 
 	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
-		logger(LOG_ERR, _("Could not get MAC address from Windows tap device!"));
+		logger(LOG_ERR, _("Could not get MAC address from Windows tap device %s (%s): %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
 
