@@ -12,7 +12,7 @@ maintain a stable network.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id: CONNECTIVITY,v 1.1.2.6 2001/07/23 22:06:22 guus Exp $
+   $Id: CONNECTIVITY,v 1.1.2.7 2001/07/24 08:51:36 guus Exp $
 
 1. Problem
 ==========
@@ -327,3 +327,28 @@ reactivated, without the need of sending a new ADD_EDGE for it. On the other
 hand, we mustn't keep to many inactive edges, because we want to keep the
 number of known edges linear to the number of hosts (otherwise the size of the
 problem will grow quadratically).
+
+So, since B didn't deactivate one of it's own edges, it forwards the
+ADD_EDGE(C,F) to A, which also does a BFS, and so on, until it reaches F. F of
+course also does a BFS, notes that is is one of it's own edges. It deactivates
+the edge (C,F), and consequently will not forward the ADD_EDGE(C,F) to C
+anymore. In the mean time, C got messages from B which will make C do the same.
+
+Ok, suppose a DEL_EDGE was sent, and it means an inactive edge has to be
+reactivated. The vertices connected by that edge must exchange their entire
+knowledge of edges again, because in the mean time other messages could have
+been sent, which were not properly forwarded. Take this example:
+
+  X     C-----D
+  |     |     |
+  |     |     |
+  v     |     |
+  A-----B- - -E
+
+The edge (B,E) is inactive. X is trying to make a new connection with A. A
+sends an ADD_EDGE(A,X) to B, which forwards it to C. At that time, the
+connection between C and D goes down, so C sends a DEL_EDGE(C,D) to B, and D
+sends a DEL_EDGE(C,D) to E. If we just allow (B,E) to be reactivated again
+without anything else, then E and D will never have received the ADD_EDGE(A,X).
+So, B and E have to exchange edges again, and propagate them to the hosts they
+already know.
