@@ -30,7 +30,7 @@ Copyright 1998,199,2000 Ivo Timmermans <itimmermans@@bigfoot.com>
 @titlepage
 @title tinc Manual
 @subtitle Setting up a Virtual Private Network with tinc
-@author Ivo Timmermans <itimmermans@@bigfoot.com>
+@author Ivo Timmermans <itimmermans@@bigfoot.com> and Guus Sliepen <guus@sliepen.warande.net>
 
 @page
 @vskip 0pt plus 1filll
@@ -100,7 +100,7 @@ more than just one way.
 Private networks can consist of a single stand-alone ethernet LAN. Or
 even two computers hooked up using a null-modem cable. In these cases,
 it is
-obvious that the network is @emph{private}, noone can access it from the
+obvious that the network is @emph{private}, no one can access it from the
 outside. But if your computers are linked to the internet, the network
 is not private anymore, unless one uses firewalls to block all private
 traffic. But then, there is no way to send private data to trusted
@@ -219,7 +219,9 @@ kernel.
 @subsubheading Device files
 
 First, you'll need the special device file(s) that form the interface
-between the kernel and the daemon.
+between the kernel and the daemon. If you are running the new 2.4 kernel and
+you are using the devfs filesystem, then the tap device will be automatically
+generated as @file{/dev/netlink/tap0}. Otherwise, you have to make it yourself:
 
 @example
 mknod -m 600 /dev/tap0 c 36 16
@@ -233,7 +235,8 @@ tincd as root.
 
 If you want to, you may also create more device files, which would be
 numbered 0...15, with minor device numbers 16...31. They all should be
-owned by root and have permission 600.
+owned by root and have permission 600. Under devfs, these files will
+be automatically generated.
 
 
 @subsubheading @file{/etc/networks}
@@ -245,6 +248,9 @@ symbolic name. For example:
 myvpn 10.0.0.0
 @end example
 
+This has nothing to do with the MyVPNIP configuration variable that will be
+discussed later, it is only to make the output of the route command more
+legible.
 
 @subsubheading @file{/etc/services}
 
@@ -288,15 +294,17 @@ use. It should be the same @emph{n} as the one you use for
 (0--ff). With previous versions of tincd, it didn't matter what they
 were. But newer kernels require properly set up ethernet addresses.
 In fact, the old behavior was wrong. It is required that the @emph{xx}s
-match MyOwnVPNIP.
+match the numbers of the IP address you will give to the tap device
+and to the MyOwnVPNIP configuration (which will be discussed later):
 
 @example
-ifconfig tap@emph{n} @emph{IP} netmask @emph{mask}
+ifconfig tap@emph{n} @emph{xx}.@emph{xx}.@emph{xx}.@emph{xx} netmask @emph{mask}
 @end example
 
 This will activate the device with an IP address @emph{IP} with network
-mask @emph{mask}.
-
+mask @emph{mask}. The netmask is the mask of the @emph{entire} VPN network,
+not just your own subnet. It is the same netmask you will have to specify
+with the VpnMask configuration variable.
 
 
 @c ==================================================================
@@ -395,31 +403,67 @@ out, remember to replace it with at least one space character.
 @node    Variables,  , Configuration file, Configuration file
 @subsection Variables
 
-Here are all valid variables, listed in alphabetical order:
+Here are all valid variables, listed in alphabetical order. The default
+value, required or optional is given between parentheses.
 
 @c straight from the manpage
 @table @asis
-@item ConnectPort = port
+@item ConnectPort = <port> (655)
 Connect to the upstream host (given with the ConnectTo directive) on
 port port. port may be given in decimal (default), octal (when preceded
 by a single zero) or hexadecimal (prefixed with 0x).  port is the port
 number for both the UDP and the TCP (meta) connections.
 
-@item ConnectTo = (IP address|hostname)
-Specifies which host to connect to on startup. If the ConnectPort
-variable is omitted, then tinc will try to connect to port 655.
+@item ConnectTo = <IP address|hostname> (optional)
+Specifies which host to connect to on startup. Multiple ConnectTo variables
+may be specified, if connecting to the first one fails then tinc will try
+the next one, and so on. It is possible to specify hostnames for dynamic IP
+addresses (like those given on dyndns.org), tinc will not cache the resolved
+IP address.
 
 If you don't specify a host with ConnectTo, regardless of whether a
 value for ConnectPort is given, tinc won't connect at all, and will
-instead just listen for incoming connections. Only the initiator of a
-tinc VPN should need this.
+instead just listen for incoming connections.
 
-@item ListenPort = port
+@item Hostnames = <yes|no> (no)
+This option selects whether IP addresses (both real and on the VPN) should
+be resolved. Since DNS lookups are blocking, it might affect tinc's
+efficiency, even stopping the daemon for a few seconds everytime it does
+a lookup if your DNS server is not responding.
+
+This does not affect resolving hostnames to IP addresses from the configuration
+file.
+
+@item IndirectData = <yes|no> (no)
+This option specifies whether other tinc daemons besides the one you
+specified with ConnectTo can make a direct connection to you. This is
+especially useful if you are behind a firewall and it is impossible
+to make a connection from the outside to your tinc daemon. Otherwise,
+it is best to leave this option out or set it to no.
+
+@item Interface = <device> (optional)
+If you have more than one network interface in your computer, tinc will by
+default listen on all of them for incoming connections. It is possible to
+bind tinc to a single interface like eth0 or ppp0 with this variable.
+
+@item InterfaceIP = <local address> (optional)
+If your computer has more than one IP address on a single interface (for example
+if you are running virtual hosts), tinc will by default listen on all of them for
+incoming connections. It is possible to bind tinc to a single IP address with
+this variable. It is still possible to listen on several interfaces at the same
+time though, if they share the same IP address.
+
+@item KeyExpire = <seconds> (3600)
+This option controls the time the encryption keys used to encrypt the data
+are valid. It is common practice to change keys at regular intervals to
+make it even harder for crackers, even though it is thought to be nearly
+impossible to crack a single key.
+
+@item ListenPort = <port> (655)
 Listen on local port port. The computer connecting to this daemon should
-use this number as the argument for his ConnectPort. Again, the
-default is 655.
+use this number as the argument for his ConnectPort.
 
-@item MyOwnVPNIP = local address[/maskbits]
+@item MyOwnVPNIP = <local address[/maskbits]> (required)
 The local address is the number that the daemon will propagate to
 other daemons on the network when it is identifying itself. Hence this
 will be the file name of the passphrase file that the other end expects
@@ -432,30 +476,38 @@ equal to the IP address (see the example).
 
 maskbits is the number of bits set to 1 in the netmask part.
 
-@item MyVirtualIP = local address[/maskbits]
+@item MyVirtualIP = <local address[/maskbits]>
 This is an alias for MyOwnVPNIP.
 
-@item Passphrases = directory
+@item Passphrases = <directory> (/etc/tinc/NETNAME/passphrases)
 The directory where tinc will look for passphrases when someone tries to
 connect. Please see the manpage for genauth(8) for more information
 about passphrases as used by tinc.
 
-@item PingTimeout = number
+@item PingTimeout = <seconds> (5)
 The number of seconds of inactivity that tinc will wait before sending a
 probe to the other end. If that other end doesn't answer within that
 same amount of seconds, the connection is terminated, and the others
 will be notified of this.
 
-@item TapDevice = device
+@item TapDevice = <device> (/dev/tap0)
 The ethertap device to use. Note that you can only use one device per
 daemon. The info pages of the tinc package contain more information
 about configuring an ethertap device for Linux.
 
-@item VpnMask = mask
+@item TCPonly = <yes|no> (no, experimental)
+If this variable is set to yes, then the packets are tunnelled over a TCP
+connection instead of a UDP connection. This is especially useful for those
+who want to run a tinc daemon from behind a masquerading firewall, or if
+UDP packet routing is disabled somehow. This is experimental code,
+try this at your own risk.
+
+@item VpnMask = <mask> (optional)
 The mask that defines the scope of the entire VPN. This option is not used
 by the tinc daemon itself, but can be used by startup scripts to configure
 the ethertap devices correctly.
 @end table
+
 
 
 @c ==================================================================
@@ -483,17 +535,18 @@ need to run tincd, but it must do a port forwarding of TCP&UDP on port
 655 (unless otherwise configured).
 
 In this example, it is assumed that eth0 is the interface that points to
-the inner LAN of the office. This could be the same as the interface
-that leads to the internet.
+the inner LAN of the office, although this could also be the same as the interface
+that leads to the internet. The configuration of the real interface is also shown
+as a comment, to give you an idea of how these example host is set up.
 
 @subsubheading For A
 
 @emph{A} would be configured like this:
 
 @example
+#ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
 ifconfig tap0 hw ether fe:fd:0a:01:36:01
 ifconfig tap0 10.1.54.1 netmask 255.0.0.0
-ifconfig eth0 10.1.54.1 netmask 255.255.0.0 broadcast 10.1.255.255
 @end example
 
 and in /etc/tinc/tinc.conf:
@@ -507,9 +560,9 @@ VpnMask = 255.0.0.0
 @subsubheading For B
 
 @example
+#ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
 ifconfig tap0 hw ether fe:fd:0a:02:01:0c
 ifconfig tap0 10.2.1.12 netmask 255.0.0.0
-ifconfig eth0 10.2.43.8 netmask 255.255.0.0 broadcast 10.2.255.255
 @end example
 
 and in /etc/tinc/tinc.conf:
@@ -528,30 +581,33 @@ connect to this node.
 @subsubheading For C
 
 @example
+#ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
 ifconfig tap0 hw ether fe:fd:0a:03:45:fe
 ifconfig tap0 10.3.69.254 netmask 255.0.0.0
-ifconfig eth0 10.3.69.254 netmask 255.255.0.0 broadcast 10.3.255.255
 @end example
 
 and in /etc/tinc/A/tinc.conf:
 
 @example
 MyVirtualIP = 10.3.69.254/16
+TapDevice = /dev/tap1
 ConnectTo = 1.2.3.4
 ListenPort = 2000
 VpnMask = 255.0.0.0
 @end example
 
 C already has another daemon that runs on port 655, so they have to
-reserve another port for tinc. They also use the netname to distinguish
+reserve another port for tinc. It can connect to other tinc daemons on
+the regular port though, so no ConnectPort variable is needed.
+They also use the netname to distinguish
 between the two. tinc is started with `tincd -n A'.
 
 @subsubheading For D
 
 @example
+#ifconfig tap0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
 ifconfig tap0 hw ether fe:fd:0a:04:03:20
 ifconfig tap0 10.4.3.32 netmask 255.0.0.0
-ifconfig tap0 10.4.3.32 netmask 255.255.0.0 broadcast 10.4.255.255
 @end example
 
 and in /etc/tinc/tinc.conf:
@@ -564,7 +620,8 @@ VpnMask=255.0.0.0
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
-port 2000. Hence they need to put in a ConnectPort.
+port 2000. Hence they need to put in a ConnectPort, but it doesn't need
+to have a different ListenPort.
 
 @subsubheading Authentication
 
@@ -810,16 +867,48 @@ This chapter is a mixture of ideas, reasoning and explanation, please
 don't take it too serious.
 
 @menu
+* Key Types::
 * Key Management::              
 * Authentication::              
 * Protection::                  
 @end menu
 
+@c ==================================================================
+@node    Key Types, Key Management, Security, Security
+@subsection Key Types
+@c FIXME: check if I'm not talking nonsense
+
+There are several types of encryption keys. Tinc uses two of them,
+symmetric private keypairs and public/private keypairs.
+
+Public/private keypairs are used in public key cryptography. It enables
+someone to send out a public key with which other people can encrypt their
+data. The encrypted data now can only be decrypted by the person who has
+the private key that matches the public key. So, a public key only allows
+@emph{other} people to send encrypted messages to you. This is very useful
+in setting up private communications channels. Just send out your public key
+and other people can talk to you in a secure way. But how can you know
+the other person is who he says he is?
+
+For authentication itself tinc uses symmetric private keypairs, referred
+to as a passphrase. The identity of each tinc daemon is defined by it's
+passphrase (like you can be identified by your social security number).
+Every tinc daemon that is allowed to connect to you has a copy of your
+passphrase (hence symmetrical).
+
+It would also be possible to use public/private keypairs for authentication,
+so that you could shout out your public key and don't need to keep it
+secret (like the passphrase you would have to send to someone else). Also,
+no one else has to know a private key from you.
+Both forms have their pros and cons, and at the moment tinc just uses passphrases
+(which are computationaly more efficient and perhaps in some way more
+secure).
 
 @c ==================================================================
-@node    Key Management, Authentication, Security, Security
+@node    Key Management, Authentication, Key Types, Security
 @subsection Key Management
 @c FIXME: recheck
+@c I did, it sounds sane :) [guus]
 
 @cindex Diffie-Hellman
 You can't just send a private encryption key to your peer, because
@@ -839,10 +928,6 @@ Both parties then generate a secret key. A generates a, and computes g^a
 mod p. This is then sent to B; while B computes g^b mod p, and transmits
 this to A, b being generated by B. Both a and b must be smaller than
 p-1.
-
-These private keys are generated upon startup, and they are not changed
-while the connection exists. A possible feature in the future is to
-dynamically change the keys, every hour for example.
 
 Both parties then calculate g^ab mod p = k. k is the new, shared, but
 still secret key.
@@ -864,17 +949,25 @@ system.
 We will let A transmit a passphrase that is also known to B encrypted
 with g^a, before A sends this to B. This way, B can check whether A is
 really A or just someone else.
+B will never receive the real passphrase though, because it was
+encrypted using public/private keypairs. This way there is no way an
+imposter could steal A's passphrase.
 
 @cindex passphrase
+@c ehrmz... but we only use 1024 bits passphrases ourselves? [guus]
 This passphrase should be 2304 bits for a symmetric encryption
 system. But since an asymmetric system is more secure, we could do with
 2048 bits. This only holds if the passphrase is very random. 
 
 These passphrases could be stored in a file that is non-readable by
-anyone else but root; e.g. @file{/etc/vpn/passphrases}.
+anyone else but root; e.g. @file{/etc/tinc/passphrases} with UID 0
+and permissions mode 700.
 
-The only thing that needs to be taken care of is how A announces its
-passphrase to B.
+The only thing that needs to be taken care of is how A can securely send
+a copy of it's passphrase to B if B doesn't have it yet. This could be
+done via mail with PGP, but you should be really convinced of the
+identity of the person who owns the email address you are sending this to.
+Swapping floppy disks in real life might be the best way to do this!
 
 
 @c ==================================================================
