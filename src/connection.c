@@ -44,7 +44,7 @@ void init_connections(void)
 {
 	cp();
 
-	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free);
+	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
 	broadcast = new_connection();
 	broadcast->name = xstrdup(_("everyone"));
 	broadcast->hostname = xstrdup(_("BROADCAST"));
