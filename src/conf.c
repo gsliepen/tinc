@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.69 2003/07/24 12:08:15 guus Exp $
+    $Id: conf.c,v 1.9.4.70 2003/08/02 15:27:24 guus Exp $
 */
 
 #include "system.h"
@@ -326,6 +326,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	char *buffer, *line;
 	char *variable, *value;
 	int lineno = 0;
+	int len;
 	bool ignore = false;
 	config_t *cfg;
 	size_t bufsize;
@@ -358,37 +359,45 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 
 		lineno++;
 
-		variable = strtok(line, "\t =");
+		if(*line == '#')
+			continue;
 
-		if(!variable)
-			continue;			/* no tokens on this line */
-
-		if(variable[0] == '#')
-			continue;			/* comment: ignore */
-
-		if(!strcmp(variable, "-----BEGIN"))
+		if(ignore) {
+			if(!strncmp(variable, "-----END", 8))
+				ignore = false;
+			continue;
+		}
+		
+		if(!strncmp(line, "-----BEGIN", 10)) {
 			ignore = true;
-
-		if(!ignore) {
-			value = strtok(NULL, "\t\n\r =");
-
-			if(!value || value[0] == '#') {
-				logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
-					   variable, lineno, fname);
-				break;
-			}
-
-			cfg = new_config();
-			cfg->variable = xstrdup(variable);
-			cfg->value = xstrdup(value);
-			cfg->file = xstrdup(fname);
-			cfg->line = lineno;
-
-			config_add(config_tree, cfg);
+			continue;
 		}
 
-		if(!strcmp(variable, "-----END"))
-			ignore = false;
+		variable = value = line;
+
+		len = strcspn(value, "\t =");
+		value += len;
+		value += strspn(value, "\t ");
+		if(*value == '=') {
+			value++;
+			value += strspn(value, "\t ");
+		}
+		variable[len] = '\0';
+
+		if(!*value) {
+			logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+				   variable, lineno, fname);
+			break;
+		}
+
+		logger(LOG_DEBUG, "%s=%s", variable, value);
+		cfg = new_config();
+		cfg->variable = xstrdup(variable);
+		cfg->value = xstrdup(value);
+		cfg->file = xstrdup(fname);
+		cfg->line = lineno;
+
+		config_add(config_tree, cfg);
 	}
 
 	free(buffer);
