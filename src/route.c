@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c,v 1.1.2.64 2003/08/28 21:05:11 guus Exp $
+    $Id: route.c,v 1.1.2.65 2003/09/23 20:59:01 guus Exp $
 */
 
 #include "system.h"
@@ -532,6 +532,11 @@ void route_outgoing(vpn_packet_t *packet)
 
 	cp();
 
+	if(packet->len < 64) {
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Read too short packet"));
+		return;
+	}
+
 	/* FIXME: multicast? */
 
 	switch (routing_mode) {
@@ -578,6 +583,12 @@ void route_outgoing(vpn_packet_t *packet)
 
 void route_incoming(node_t *source, vpn_packet_t *packet)
 {
+	if(packet->len < 64) {
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Got too short packet from %s (%s)"),
+					source->name, source->hostname);
+		return;
+	}
+
 	switch (routing_mode) {
 		case RMODE_ROUTER:
 			{

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c,v 1.1.2.40 2003/08/28 21:05:10 guus Exp $
+    $Id: net_packet.c,v 1.1.2.41 2003/09/23 20:59:01 guus Exp $
 */
 
 #include "system.h"
@@ -118,6 +118,14 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	cp();
 
+	/* Check packet length */
+
+	if(inpkt->len < sizeof(inpkt->seqno) + myself->maclength) {
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
+					n->name, n->hostname);
+		return;
+	}
+
 	/* Check the message authentication code */
 
 	if(myself->digest && myself->maclength) {
@@ -188,6 +196,9 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 		inpkt = outpkt;
 	}
+
+	if(n->connection)
+		n->connection->last_ping_time = now;
 
 	receive_packet(n, inpkt);
 }
@@ -401,7 +412,7 @@ void handle_incoming_vpn_data(int sock)
 
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
-	if(pkt.len <= 0) {
+	if(pkt.len < 0) {
 		logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
 		return;
 	}
@@ -417,9 +428,6 @@ void handle_incoming_vpn_data(int sock)
 		free(hostname);
 		return;
 	}
-
-	if(n->connection)
-		n->connection->last_ping_time = now;
 
 	receive_udppacket(n, &pkt);
 }
