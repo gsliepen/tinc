@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c,v 1.35.4.156 2002/02/18 16:25:16 guus Exp $
+    $Id: net.c,v 1.35.4.157 2002/02/20 16:04:07 guus Exp $
 */
 
 #include "config.h"
@@ -431,18 +431,20 @@ cp
 
       if(sighup)
         {
-          syslog(LOG_INFO, _("Rereading configuration file and restarting in 5 seconds"));
           sighup = 0;
           close_network_connections();
           exit_configuration(&config_tree);
+
+          syslog(LOG_INFO, _("Rereading configuration file and restarting in 5 seconds"));
+          sleep(5);
+
+          init_configuration(&config_tree);
 
           if(read_server_config())
             {
               syslog(LOG_ERR, _("Unable to reread configuration file, exiting"));
               exit(1);
             }
-
-          sleep(5);
 
           if(setup_network_connections())
             return;
