@@ -94,8 +94,8 @@ int xsend(conn_list_t *cl, void *packet)
 cp
   do_encrypt((vpn_packet_t*)packet, &rp, cl->key);
   rp.from = htonl(myself->vpn_ip);
-  rp.data->len = htons(rp.data->len);
-  rp.len = htons(rp.data->len);
+  rp.data.len = htons(rp.data.len);
+  rp.len = htons(rp.len);
 
   if(debug_lvl > 3)
     syslog(LOG_ERR, "Sent %d bytes to %lx", ntohs(rp.len), cl->vpn_ip);
@@ -111,15 +111,11 @@ cp
   return 0;
 }
 
-int xrecv(conn_list_t *cl, void *packet)
+int xrecv(conn_list_t *cl, real_packet_t *packet)
 {
   vpn_packet_t vp;
   int lenin;
 cp
-  packet->data->len = ntohs(packet->data->len);
-  packet->len = ntohs(packet->len);
-  packet->from = ntohl(packet->from);
-
   do_decrypt((real_packet_t*)packet, &vp, cl->key);
   add_mac_addresses(&vp);
 
@@ -777,6 +773,11 @@ cp
       return -1;
     }
   total_socket_in += lenin;
+
+  rp.data.len = ntohs(rp.data.len);
+  rp.len = ntohs(rp.len);
+  rp.from = ntohl(rp.from);
+
   if(rp.len >= 0)
     {
       f = lookup_conn(rp.from);
@@ -929,7 +930,7 @@ cp
 int handle_incoming_meta_data(conn_list_t *cl)
 {
   int x, l = sizeof(x);
-  int request, oldlen, p, i;
+  int request, oldlen, i;
   int lenin = 0;
 cp
   if(getsockopt(cl->meta_socket, SOL_SOCKET, SO_ERROR, &x, &l) < 0)
