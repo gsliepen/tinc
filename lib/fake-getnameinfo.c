@@ -20,27 +20,36 @@ int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t host
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 	struct hostent *hp;
+	int len;
 
-	if(serv)
-		snprintf(serv, sizeof(tmpserv), "%d", ntohs(sin->sin_port));
+	if(sa->sa_family != AF_INET)
+		return EAI_FAMILY;
 
-	if(!host)
+	if(serv && servlen) {
+		len = snprintf(serv, servlen, "%d", ntohs(sin->sin_port));
+		if(len < 0 || len >= servlen)
+			return EAI_MEMORY;
+	}
+
+	if(!host || !hostlen)
 		return 0;
 
 	if(flags & NI_NUMERICHOST) {
-		strncpy(host, inet_ntoa(sin->sin_addr), sizeof(host));
+		len = snprintf((host, hostlen, "%s", inet_ntoa(sin->sin_addr));
+		if(len < 0 || len >= hostlen)
+			return EAI_MEMORY;
 		return 0;
 	}
 
 	hp = gethostbyaddr((char *)&sin->sin_addr, sizeof(struct in_addr), AF_INET);
 	
-	if(!hp || !hp->h_name)
+	if(!hp || !hp->h_name || !hp->h_name[0])
 		return EAI_NODATA;
 	
-	if(strlen(hp->h_name) >= hostlen)
+	len = snprintf((host, hostlen, "%s", hp->h_name);
+	if(len < 0 || len >= hostlen)
 		return EAI_MEMORY;
 
-	strncpy(host, hp->h_name, hostlen);
 	return 0;
 }
 #endif /* !HAVE_GETNAMEINFO */

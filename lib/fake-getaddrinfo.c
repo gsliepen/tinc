@@ -23,6 +23,8 @@ char *gai_strerror(int ecode)
 			return "No address associated with hostname";
 		case EAI_MEMORY:
 			return "Memory allocation failure";
+		case EAI_FAMILY:
+			return "Address family not supported";
 		default:
 			return "Unknown error";
 	}
@@ -67,6 +69,9 @@ int getaddrinfo(const char *hostname, const char *servname, const struct addrinf
 	int i;
 	uint16_t port = 0;
 
+	if(hints && hints->ai_family != AF_INET && hints->ai_family != AF_UNSPEC)
+		return EAI_FAMILY;
+
 	if (servname)
 		port = htons(atoi(servname));
 
@@ -82,7 +87,7 @@ int getaddrinfo(const char *hostname, const char *servname, const struct addrinf
 	
 	hp = gethostbyname(hostname);
 
-	if(!hp || !hp->h_addr_list[0])
+	if(!hp || !hp->h_addr_list || !hp->h_addr_list[0])
 		return EAI_NODATA;
 
 	for (i = 0; hp->h_addr_list[i]; i++) {
