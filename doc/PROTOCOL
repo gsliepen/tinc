@@ -1,0 +1,129 @@
+This is the protocol documentation for tinc, a Virtual Private Network daemon.
+
+   Copyright 2000-2002 Guus Sliepen <guus@sliepen.warande.net>,
+             2000-2002 Ivo Timmmermans <itimmermans@bigfoot.com>
+
+   Permission is granted to make and distribute verbatim copies of
+   this documentation provided the copyright notice and this
+   permission notice are preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+   this documentation under the conditions for verbatim copying,
+   provided that the entire resulting derived work is distributed
+   under the terms of a permission notice identical to this one.
+
+   $Id: PROTOCOL,v 1.2 2002/04/12 08:25:01 guus Exp $
+
+
+1.  Protocols used in tinc
+-------------------------
+
+tinc uses several protocols to function correctly.  To enter the
+network of tinc daemons that make up the virtual private network, tinc
+makes TCP connections to other tinc daemons.  It uses the "meta
+protocol" for these connections.  To exchange packets on the virtual
+network, UDP connections are made and the "packet protocol" is used.
+Tinc also needs to exchange network packets with the kernel.  This is
+done using the ethertap device or the universal TUN/TAP device that
+can be found in various UNIX flavours.
+
+2.  Packet protocol
+------------------
+
+Normal packets are sent without any state information, so the layout
+is pretty basic.
+
+A data packet can only be sent if the encryption key, cipher and digest are
+known to both parties, and the connection is activated. If the encryption key
+is not known, a request is sent to the destination using the meta connection to
+retreive it.
+
+0   1   2   3   4   5   6   7   ...   97  98  99  100
+|     seqno     |         data        |     MAC       |
+\____________________________________/\_______________/
+                 |                           |
+  encrypted using symmetric cipher         digest
+
+The sequence number prevents replay attacks, the message authentication code
+prevents altered packets from being accepted.
+
+3.  Meta protocol
+----------------
+
+The meta protocol is used to tie all tinc daemons together, and
+exchange information about which tinc daemon serves which virtual
+subnet.
+
+The meta protocol consists of requests that can be sent to the other
+side.  Each request has a unique number and several parameters.  All
+requests are represented in the standard ASCII character set.  It is
+possible to use tools such as telnet or netcat to connect to a tinc
+daemon and to read and write requests by hand, provided that one
+understands the numeric codes sent.
+
+The authentication scheme is described in the SECURITY2 file. After a
+succesful authentication, the server and the client will exchange all the
+information about other tinc daemons and subnets they know of, so that both
+sides (and all the other tinc daemons behind them) have their information
+synchronised.
+
+daemon	message
+--------------------------------------------------------------------------
+origin	ADD_EDGE node1 12.23.34.45 655 node2 21.32.43.54 655 222 0
+                    |       |       |  \___________________/  |  +-> options
+                    |       |       |             |           +----> weight
+		    |       |       |             +----------------> see below
+		    |       |       +--> UDP port
+		    |       +----------> real address
+                    +------------------> name of node on one side of the edge
+
+origin	ADD_SUBNET node 192.168.1.0/24
+                     |         |     +--> prefixlength
+                     |         +--------> IPv4 network address
+                     +------------------> owner of this subnet
+--------------------------------------------------------------------------
+
+In case a connection between two daemons is closed or broken, DEL_EDGE messages
+are sent to inform the other daemons of that fact. Each daemon will calculate a
+new route to the the daemons, or mark them unreachable if there isn't any.
+
+The keys used to encrypt VPN packets are not sent out directly. This is
+because it would generate a lot of traffic on VPNs with many daemons, and
+chances are that not every tinc daemon will ever send a packet to every
+other daemon. Instead, if a daemon needs a key it sends a request for it
+via the meta connection of the nearest hop in the direction of the
+destination. If any hop on the way has already learned the key, it will
+act as a proxy and forward its copy back to the requestor.
+
+daemon	message
+--------------------------------------------------------------------------
+daemon	REQ_KEY origin destination
+                   |       +--> name of the tinc daemon it wants the key from
+                   +----------> name of the daemon that wants the key      
+
+daemon	ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
+                   |       |       \______________/ |  |  +--> MAC length
+                   |       |               |        |  +-----> digest algorithm
+                   |       |               |        +--------> cipher algorithm
+                   |       |               +--> 128 bits key
+                   |       +--> name of the daemon that wants the key
+                   +----------> name of the daemon that uses this key
+
+daemon	KEY_CHANGED origin
+                      +--> daemon that has changed it's packet key
+--------------------------------------------------------------------------
+
+There is also a mechanism to check if hosts are still alive. Since network
+failures or a crash can cause a daemon to be killed without properly
+shutting down the TCP connection, this is necessary to keep an up to date
+connection list. Pings are sent at regular intervals, except when there
+is also some other traffic.
+
+daemon	message
+--------------------------------------------------------------------------
+origin	PING
+dest.	PONG
+--------------------------------------------------------------------------
+
+This basically covers everything that is sent over the meta connection by
+tinc.

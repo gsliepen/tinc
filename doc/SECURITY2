@@ -1,0 +1,125 @@
+This is the security documentation for tinc, a Virtual Private Network daemon.
+
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
+             2001-2002 Wessel Dankers <wsl@nl.linux.org>
+
+   Permission is granted to make and distribute verbatim copies of
+   this documentation provided the copyright notice and this
+   permission notice are preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+   this documentation under the conditions for verbatim copying,
+   provided that the entire resulting derived work is distributed
+   under the terms of a permission notice identical to this one.
+
+   $Id: SECURITY2,v 1.2 2002/04/12 08:25:01 guus Exp $
+
+Proposed new authentication scheme
+----------------------------------
+
+A new scheme for authentication in tinc has been devised, which offers some
+improvements over the protocol used in 1.0pre2 and 1.0pre3. Explanation is
+below.
+
+daemon  message
+--------------------------------------------------------------------------
+client  <attempts connection>
+
+server  <accepts connection>
+
+client  ID client 12
+              |   +---> version
+              +-------> name of tinc daemon
+
+server  ID server 12
+              |   +---> version
+              +-------> name of tinc daemon
+
+client  META_KEY 5f0823a93e35b69e...7086ec7866ce582b
+                 \_________________________________/
+                                 +-> RSAKEYLEN bits totally random string S1,
+                                     encrypted with server's public RSA key
+
+server  META_KEY 6ab9c1640388f8f0...45d1a07f8a672630
+                 \_________________________________/
+                                 +-> RSAKEYLEN bits totally random string S2,
+                                     encrypted with client's public RSA key
+
+From now on:
+ - the client will symmetrically encrypt outgoing traffic using S1
+ - the server will symmetrically encrypt outgoing traffic using S2
+
+client  CHALLENGE da02add1817c1920989ba6ae2a49cecbda0
+                  \_________________________________/
+                                 +-> CHALLEN bits totally random string H1
+
+server  CHALLENGE 57fb4b2ccd70d6bb35a64c142f47e61d57f
+                  \_________________________________/
+                                 +-> CHALLEN bits totally random string H2
+
+client  CHAL_REPLY 816a86
+                      +-> 160 bits SHA1 of H2
+
+server  CHAL_REPLY 928ffe
+                      +-> 160 bits SHA1 of H1
+
+After the correct challenge replies are recieved, both ends have proved
+their identity. Further information is exchanged.
+
+client  ACK 655 12.23.34.45 123 0
+             |       |       |  +-> options
+	     |       |       +----> estimated weight
+	     |       +------------> IP address of server as seen by client
+	     +--------------------> UDP port of client
+
+server  ACK 655 21.32.43.54 321 0
+             |       |       |  +-> options
+	     |       |       +----> estimated weight
+	     |       +------------> IP address of client as seen by server
+	     +--------------------> UDP port of server
+--------------------------------------------------------------------------
+
+This new scheme has several improvements, both in efficiency and security.
+
+First of all, the server sends exactly the same kind of messages over the wire
+as the client. The previous versions of tinc first authenticated the client,
+and then the server. This scheme even allows both sides to send their messages
+simultaneously, there is no need to wait for the other to send something first.
+This means that any calculations that need to be done upon sending or receiving
+a message can also be done in parallel. This is especially important when doing
+RSA encryption/decryption. Given that these calculations are the main part of
+the CPU time spent for the authentication, speed is improved by a factor 2.
+
+Second, only one RSA encrypted message is sent instead of two. This reduces the
+amount of information attackers can see (and thus use for a crypto attack). It
+also improves speed by a factor two, making the total speedup a factor 4.
+
+Third, and most important:
+
+The symmetric cipher keys are exchanged first, the challenge is done
+afterwards. In the previous authentication scheme, because a man-in-the-middle
+could pass the challenge/chal_reply phase (by just copying the messages between
+the two real tinc daemons), but no information was exchanged that was really
+needed to read the rest of the messages, the challenge/chal_reply phase was of
+no real use. The man-in-the-middle was only stopped by the fact that only after
+the ACK messages were encrypted with the symmetric cipher. Potentially, it
+could even send it's own symmetric key to the server (if it knew the server's
+public key) and read some of the metadata the server would send it (it was
+impossible for the mitm to read actual network packets though). The new scheme
+however prevents this.
+
+This new scheme makes sure that first of all, symmetric keys are exchanged. The
+rest of the messages are then encrypted with the symmetric cipher. Then, each
+side can only read received messages if they have their private key. The
+challenge is there to let the other side know that the private key is really
+known, because a challenge reply can only be sent back if the challenge is
+decrypted correctly, and that can only be done with knowledge of the private
+key.
+
+Fourth: the first thing that is send via the symmetric cipher encrypted
+connection is a totally random string, so that there is no known plaintext (for
+an attacker) in the beginning of the encrypted stream.
+
+Some things to be discussed:
+
+ - What should CHALLEN be? Same as RSAKEYLEN? 256 bits? More/less?

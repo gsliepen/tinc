@@ -1,0 +1,83 @@
+This is the network infrastructure documentation for tinc, a Virtual Private
+Network daemon.
+
+   Copyright 2001-2002 Guus Sliepen <guus@sliepen.warande.net>
+
+   Permission is granted to make and distribute verbatim copies of
+   this documentation provided the copyright notice and this
+   permission notice are preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+   this documentation under the conditions for verbatim copying,
+   provided that the entire resulting derived work is distributed
+   under the terms of a permission notice identical to this one.
+
+   $Id: NETWORKING,v 1.2 2002/04/12 08:25:01 guus Exp $
+
+1. Packet flow
+==============
+
+There are two directions for packets. There are packets received from the tap
+device that have to be sent out to other tinc daemon, and there are packets
+that are received from other tinc daemons which have to be send to the tap
+device. The first direction will be called the outgoing direction, while the
+latter will be called the incoming direction.
+
+1.1 Outgoing flow
+-----------------
+
+        handle_tap_input()
+                |
+                |
+                V
+         route_outgoing()
+                |
+                |
+                V
+          send_packet()         ----
+          /           \        /    \
+         /             \      |   queue
+        V               V     V     /
+send_tcppacket()  send_udppacket()--
+
+Packets are read from the tap device by handle_tap_input(). The packets will be
+marked as coming from ourself, and are then handled by route_outgoing(). This
+function will determine the destination tinc daemon this packet has to be sent
+to, and in the future it may also determine if this packet has to be broadcast
+or multicast. route_outgoing() will call send_packet() (in case of
+broad/multicast several times). send_packet() will check the destination
+connection_t entry to see if it is a valid destination, and whether it has to
+be sent via TCP or UDP. It will then either call send_tcppacket() or
+send_udppacket(). Since a different key is used for UDP packets, which might
+not be available at that time, send_udppacket() might put the packet in a queue
+and send a REQ_KEY to the destination tinc daemon. If the key has been retrieved,
+the packet will be fed to send_udppacket() again.
+
+1.2 Incoming flow
+-----------------
+
+               handle_vpn_input()
+                        |
+                        |
+                        V
+tcppacket_h()  receive_udppacket()
+        \              /
+         \            /
+          V          V
+        receive_packet()
+               |
+               |
+               V
+        route_incoming()
+               |
+               |
+               V
+        accept_packet()
+
+Packets from other tinc daemons can be received by tcppacket_h(), for TCP
+packets, and receive_udppacket() via handle_vpn_input() for UDP packets.
+receive_packet() actually does not have to do much, except logging and calling
+route_incoming(), but it's there for symmetry with the scheme for the outgoing
+flow. route_incoming() will change the MAC header of the packet if necessary to
+let the kernel accept the packet after it has been sent to the tap device by
+accept_packet().
