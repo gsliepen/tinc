@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.9.4.53 2002/02/18 16:25:16 guus Exp $
+    $Id: conf.c,v 1.9.4.54 2002/03/24 17:14:01 guus Exp $
 */
 
 #include "config.h"
@@ -127,7 +127,7 @@ cp
   if(!found)
     return NULL;
 
-  if(strcmp(found->variable, variable))
+  if(strcasecmp(found->variable, variable))
     return NULL;
 
   return found;
@@ -145,7 +145,7 @@ cp
       if(node->next)
         {
           found = (config_t *)node->next->data;
-          if(!strcmp(found->variable, cfg->variable))
+          if(!strcasecmp(found->variable, cfg->variable))
             return found;
         }
     }
