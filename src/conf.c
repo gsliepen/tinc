@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c,v 1.11 2002/04/09 15:26:00 zarq Exp $
+    $Id: conf.c,v 1.12 2002/04/13 10:04:14 zarq Exp $
 */
 
 #include "config.h"
@@ -48,7 +48,6 @@
 
 avl_tree_t *config_tree;
 
-int debug_lvl = 0;
 int pingtimeout = 0;             /* seconds before timeout */
 char *confbase = NULL;           /* directory in which all config files are */
 char *netname = NULL;            /* name of the vpn network */
