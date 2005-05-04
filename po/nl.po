@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-svn\n"
 "Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
-"POT-Creation-Date: 2004-11-10 23:55+0100\n"
+"POT-Creation-Date: 2005-05-04 20:06+0200\n"
 "PO-Revision-Date: 2004-03-15 19:28+0100\n"
 "Last-Translator: Guus Sliepen <guus@tinc-vpn.org>\n"
 "Language-Team: Dutch <vertaling@tinc-vpn.org>\n"
@@ -268,7 +268,7 @@ msgstr "Fout tijdens versleutelen pakket naar %s (%s): %s"
 msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
-#: src/net_packet.c:392 src/net_setup.c:477 src/net_socket.c:73
+#: src/net_packet.c:392 src/net_setup.c:481 src/net_socket.c:73
 #: src/net_socket.c:124 src/net_socket.c:153 src/tincd.c:434 src/tincd.c:468
 #: src/process.c:198 src/process.c:231 src/process.c:428 src/bsd/device.c:93
 #: src/bsd/device.c:112 src/cygwin/device.c:140 src/cygwin/device.c:171
@@ -306,17 +306,17 @@ msgstr "Verzending pakket naar %s via %s (%s)"
 msgid "Broadcasting packet of %d bytes from %s (%s)"
 msgstr "Verspreiding pakket van %d bytes van %s (%s)"
 
-#: src/net_packet.c:474
+#: src/net_packet.c:480
 #, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr "Legen van wachtrij voor %s (%s)"
 
-#: src/net_packet.c:496
+#: src/net_packet.c:502
 #, c-format
 msgid "Receiving packet failed: %s"
 msgstr "Ontvangst pakket mislukt: %s"
 
-#: src/net_packet.c:506
+#: src/net_packet.c:512
 #, c-format
 msgid "Received UDP packet from unknown source %s"
 msgstr "Ontvangst UDP pakket van onbekende oorsprong %s"
@@ -397,7 +397,7 @@ msgstr "Ongeldige adresfamilie!"
 msgid "Unrecognized cipher type!"
 msgstr "Onbekend cipher type!"
 
-#: src/net_setup.c:383 src/protocol_auth.c:189
+#: src/net_setup.c:383 src/protocol_auth.c:192
 #, c-format
 msgid "Error during initialisation of cipher for %s (%s): %s"
 msgstr "Fout tijdens initialisatie van cipher voor %s (%s): %s"
@@ -418,16 +418,16 @@ msgstr "Onzinnige MAC lengte!"
 msgid "Bogus compression level!"
 msgstr "Onzinnig compressieniveau!"
 
-#: src/net_setup.c:499
+#: src/net_setup.c:503
 #, c-format
 msgid "Listening on %s"
 msgstr "Luisterend op %s"
 
-#: src/net_setup.c:510
+#: src/net_setup.c:514
 msgid "Ready"
 msgstr "Gereed"
 
-#: src/net_setup.c:512
+#: src/net_setup.c:516
 msgid "Unable to create any listening socket!"
 msgstr "Kon geen enkele luistersocket aanmaken!"
 
@@ -470,7 +470,7 @@ msgstr "Poging tot herstellen van uitgaande verbinding over %d seconden"
 msgid "Connected to %s (%s)"
 msgstr "Verbonden met %s (%s)"
 
-#: src/net_socket.c:249 src/net_socket.c:333 src/net_socket.c:444
+#: src/net_socket.c:249 src/net_socket.c:333 src/net_socket.c:445
 #, c-format
 msgid "fcntl for %s: %s"
 msgstr "fcntl voor %s: %s"
@@ -510,7 +510,7 @@ msgstr "Geen adres gespecificeerd voor %s"
 msgid "Accepting a new connection failed: %s"
 msgstr "Aanname van nieuwe verbinding is mislukt: %s"
 
-#: src/net_socket.c:437
+#: src/net_socket.c:438
 #, c-format
 msgid "Connection from %s"
 msgstr "Verbinding van %s"
@@ -615,19 +615,19 @@ msgstr "Verzoek reeds gezien"
 msgid "Aging past requests: deleted %d, left %d"
 msgstr "Veroudering vorige verzoeken: %d gewist, %d overgebleven"
 
-#: src/protocol_auth.c:58 src/protocol_auth.c:209 src/protocol_auth.c:338
-#: src/protocol_auth.c:405 src/protocol_auth.c:531 src/protocol_edge.c:73
+#: src/protocol_auth.c:58 src/protocol_auth.c:212 src/protocol_auth.c:341
+#: src/protocol_auth.c:408 src/protocol_auth.c:534 src/protocol_edge.c:73
 #: src/protocol_edge.c:188 src/protocol_key.c:62 src/protocol_key.c:105
 #: src/protocol_key.c:172 src/protocol_misc.c:54 src/protocol_misc.c:83
-#: src/protocol_misc.c:171 src/protocol_subnet.c:58 src/protocol_subnet.c:167
+#: src/protocol_misc.c:171 src/protocol_subnet.c:58 src/protocol_subnet.c:170
 #, c-format
 msgid "Got bad %s from %s (%s)"
 msgstr "Kreeg verkeerde %s van %s (%s)"
 
 #: src/protocol_auth.c:66 src/protocol_edge.c:81 src/protocol_edge.c:87
 #: src/protocol_edge.c:196 src/protocol_edge.c:202 src/protocol_subnet.c:66
-#: src/protocol_subnet.c:74 src/protocol_subnet.c:175
-#: src/protocol_subnet.c:196
+#: src/protocol_subnet.c:74 src/protocol_subnet.c:178
+#: src/protocol_subnet.c:199
 #, c-format
 msgid "Got bad %s from %s (%s): %s"
 msgstr "Kreeg verkeerde %s van %s (%s): %s"
@@ -637,92 +637,92 @@ msgstr "Kreeg verkeerde %s van %s (%s): %s"
 msgid "Peer %s is %s instead of %s"
 msgstr "Ander %s is %s in plaats van %s"
 
-#: src/protocol_auth.c:85
+#: src/protocol_auth.c:88
 #, c-format
 msgid "Peer %s (%s) uses incompatible version %d"
 msgstr "Ander %s (%s) gebruikt incompatibele versie %d"
 
-#: src/protocol_auth.c:101
+#: src/protocol_auth.c:104
 #, c-format
 msgid "Peer %s had unknown identity (%s)"
 msgstr "Ander %s heeft onbekende identiteit (%s)"
 
-#: src/protocol_auth.c:153
+#: src/protocol_auth.c:156
 #, c-format
 msgid "Generated random meta key (unencrypted): %s"
 msgstr "Willekeurige meta sleutel aangemaakt (niet versleuteld): %s"
 
-#: src/protocol_auth.c:165 src/protocol_auth.c:238
+#: src/protocol_auth.c:168 src/protocol_auth.c:241
 #, c-format
 msgid "Error during encryption of meta key for %s (%s)"
 msgstr "Fout tijdens versleutelen van meta key voor %s (%s)"
 
-#: src/protocol_auth.c:219 src/protocol_auth.c:348 src/protocol_auth.c:413
-#: src/protocol_auth.c:435
+#: src/protocol_auth.c:222 src/protocol_auth.c:351 src/protocol_auth.c:416
+#: src/protocol_auth.c:438
 #, c-format
 msgid "Possible intruder %s (%s): %s"
 msgstr "Mogelijke indringer %s (%s): %s"
 
-#: src/protocol_auth.c:246
+#: src/protocol_auth.c:249
 #, c-format
 msgid "Received random meta key (unencrypted): %s"
 msgstr "Ontving willekeurige meta key (niet versleuteld): %s"
 
-#: src/protocol_auth.c:257
+#: src/protocol_auth.c:260
 #, c-format
 msgid "%s (%s) uses unknown cipher!"
 msgstr "%s (%s) gebruikt onbekende cipher!"
 
-#: src/protocol_auth.c:265
+#: src/protocol_auth.c:268
 #, c-format
 msgid "Error during initialisation of cipher from %s (%s): %s"
 msgstr "Fout tijdens initalisatie van cipher van %s (%s): %s"
 
-#: src/protocol_auth.c:281 src/protocol_key.c:242
+#: src/protocol_auth.c:284 src/protocol_key.c:242
 #, c-format
 msgid "Node %s (%s) uses unknown digest!"
 msgstr "Node %s (%s) gebruikt onbekende digest!"
 
-#: src/protocol_auth.c:286
+#: src/protocol_auth.c:289
 #, c-format
 msgid "%s (%s) uses bogus MAC length!"
 msgstr "%s (%s) gebruikt onzinnige MAC lengte!"
 
-#: src/protocol_auth.c:381
+#: src/protocol_auth.c:384
 #, c-format
 msgid "Error during calculation of response for %s (%s): %s"
 msgstr "Fout tijdens berekenen van antwoord voor %s (%s): %s"
 
-#: src/protocol_auth.c:414
+#: src/protocol_auth.c:417
 msgid "wrong challenge reply length"
 msgstr "verkeerde lengte antwoord op uitdaging"
 
-#: src/protocol_auth.c:427
+#: src/protocol_auth.c:430
 #, c-format
 msgid "Error during calculation of response from %s (%s): %s"
 msgstr "Fout tijdens narekenen van antwoord van %s (%s): %s"
 
-#: src/protocol_auth.c:436
+#: src/protocol_auth.c:439
 msgid "wrong challenge reply"
 msgstr "verkeerd antwoord op uitdaging"
 
-#: src/protocol_auth.c:441
+#: src/protocol_auth.c:444
 #, c-format
 msgid "Expected challenge reply: %s"
 msgstr "Verwachtte antwoord op uitdaging: %s"
 
-#: src/protocol_auth.c:547
+#: src/protocol_auth.c:550
 #, c-format
 msgid "Established a second connection with %s (%s), closing old connection"
 msgstr "Tweede verbinding met %s (%s) gemaakt, oude verbinding wordt gesloten"
 
-#: src/protocol_auth.c:570
+#: src/protocol_auth.c:573
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr "Verbinding met %s (%s) geactiveerd"
 
 #: src/protocol_edge.c:82 src/protocol_edge.c:88 src/protocol_edge.c:197
-#: src/protocol_edge.c:203 src/protocol_subnet.c:67 src/protocol_subnet.c:176
+#: src/protocol_edge.c:203 src/protocol_subnet.c:67 src/protocol_subnet.c:179
 msgid "invalid name"
 msgstr "ongeldige naam"
 
@@ -747,7 +747,7 @@ msgstr "Kreeg %s van %s (%s) voor onszelf welke niet bestaat"
 msgid "Got %s from %s (%s) which does not appear in the edge tree"
 msgstr "Kreeg %s van %s (%s) welke niet voorkomt in de edge tree"
 
-#: src/protocol_edge.c:242 src/protocol_subnet.c:103 src/protocol_subnet.c:219
+#: src/protocol_edge.c:242 src/protocol_subnet.c:103 src/protocol_subnet.c:222
 #, c-format
 msgid "Got %s from %s (%s) for ourself"
 msgstr "Kreeg %s van %s (%s) voor onszelf"
@@ -807,41 +807,46 @@ msgstr "Statusmelding van %s (%s): %d: %s"
 msgid "Error message from %s (%s): %d: %s"
 msgstr "Foutmelding van %s (%s): %d: %s"
 
-#: src/protocol_subnet.c:75 src/protocol_subnet.c:197
+#: src/protocol_subnet.c:75 src/protocol_subnet.c:200
 msgid "invalid subnet string"
 msgstr "ongeldige subnet string"
 
-#: src/protocol_subnet.c:185
+#: src/protocol_subnet.c:188
 #, c-format
 msgid "Got %s from %s (%s) for %s which is not in our node tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in de node boom"
 
-#: src/protocol_subnet.c:211
+#: src/protocol_subnet.c:214
 #, c-format
 msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
 msgstr "Kreeg %s van %s (%s) voor %s welke niet voorkomt in zijn subnet boom"
 
-#: src/subnet.c:103
+#: src/subnet.c:105
 #, c-format
 msgid "subnet_compare() was called with unknown subnet type %d, exitting!"
 msgstr ""
 "subnet_compare() werd aangeroepen met onbekend subnet type %d, beëindigen!"
 
-#: src/subnet.c:281
+#: src/subnet.c:251
+#, c-format
+msgid "net2str() was called with netstr=%p, subnet=%p!\n"
+msgstr "net2str() werd aangeroepen met netstr=%p, subnet=%p!\n"
+
+#: src/subnet.c:288
 #, c-format
 msgid "net2str() was called with unknown subnet type %d, exiting!"
 msgstr "net2str() werd aangeroepen met onbekend subnet type %d, beëindigen!"
 
-#: src/subnet.c:396
+#: src/subnet.c:449
 msgid "Subnet list:"
 msgstr "Subnet lijst:"
 
-#: src/subnet.c:402
+#: src/subnet.c:455
 #, c-format
 msgid " %s owner %s"
 msgstr " %s eigenaar %s"
 
-#: src/subnet.c:405
+#: src/subnet.c:458
 msgid "End of subnet list."
 msgstr "Einde van subnet lijst."
 
@@ -958,14 +963,14 @@ msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 #: src/tincd.c:410
 #, c-format
 msgid ""
-"Copyright (C) 1998-2004 Ivo Timmermans, Guus Sliepen and others.\n"
+"Copyright (C) 1998-2005 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
 "\n"
 "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 "and you are welcome to redistribute it under certain conditions;\n"
 "see the file COPYING for details.\n"
 msgstr ""
-"Copyright (C) 1998-2004 Ivo Timmermans, Guus Sliepen en anderen.\n"
+"Copyright (C) 1998-2005 Ivo Timmermans, Guus Sliepen en anderen.\n"
 "Zie het bestand AUTHORS voor een volledige lijst.\n"
 "\n"
 "tinc wordt gedistribueerd ZONDER ENIGE GARANTIE.  Dit is vrije "
@@ -1273,11 +1278,11 @@ msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 msgid "Cannot route packet from %s (%s): unknown type %hx"
 msgstr "Kan pakket van %s (%s) niet routeren: onbekend type %hx"
 
-#: src/node.c:183
+#: src/node.c:181
 msgid "Nodes:"
 msgstr "Nodes:"
 
-#: src/node.c:187
+#: src/node.c:185
 #, c-format
 msgid ""
 " %s at %s cipher %d digest %d maclength %d compression %d options %lx status "
@@ -1286,7 +1291,7 @@ msgstr ""
 " %s op %s cipher %d digest %d maclengte %d compressie %d opties %lx status %"
 "04x nexthop %s via %s pmtu %d (min %d max %d)"
 
-#: src/node.c:194
+#: src/node.c:192
 msgid "End of nodes."
 msgstr "Einde van nodes."
 
@@ -1303,12 +1308,12 @@ msgstr " %s naar %s op %s opties %lx gewicht %d"
 msgid "End of edges."
 msgstr "Einde van edges."
 
-#: src/graph.c:263
+#: src/graph.c:261
 #, c-format
 msgid "Node %s (%s) became reachable"
 msgstr "Node %s (%s) werd bereikbaar"
 
-#: src/graph.c:266
+#: src/graph.c:265
 #, c-format
 msgid "Node %s (%s) became unreachable"
 msgstr "Node %s (%s) is niet meer bereikbaar"

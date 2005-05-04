@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
-    Copyright (C) 2001-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2001-2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2001-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2001-2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

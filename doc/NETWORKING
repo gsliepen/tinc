@@ -1,7 +1,7 @@
 This is the network infrastructure documentation for tinc, a Virtual Private
 Network daemon.
 
-   Copyright 2001-2004 Guus Sliepen <guus@tinc-vpn.org>
+   Copyright 2001-2005 Guus Sliepen <guus@tinc-vpn.org>
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this

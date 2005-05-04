@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
-    Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -407,7 +407,7 @@ int main(int argc, char **argv)
 	if(show_version) {
 		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2004 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf(_("Copyright (C) 1998-2005 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
