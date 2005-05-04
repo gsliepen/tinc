@@ -351,6 +351,11 @@ becomes reachable.
 This script is started when the tinc daemon with name
 .Ar HOST
 becomes unreachable.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /subnet-up
+This script is started when a Subnet becomes reachable.
+The Subnet and the node it belongs to are passed in environment variables.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /subnet-down
+This script is started when a Subnet becomes unreachable.
 .El
 .Pp
 The scripts are started without command line arguments, but can make use of certain environment variables.
@@ -375,10 +380,13 @@ This should be used for commands like
 .Pa ifconfig .
 .It Ev NODE
 When a host becomes (un)reachable, this is set to its name.
+If a subnet becomes (un)reachable, this is set to the owner of that subnet.
 .It Ev REMOTEADDRESS
 When a host becomes (un)reachable, this is set to its real address.
 .It Ev REMOTEPORT
 When a host becomes (un)reachable, this is set to the port number it uses for communication with other tinc daemons.
+.It Ev SUBNET
+When a subnet becomes (un)reachable, this is set to the subnet.
 .El
 .Sh FILES
 The most important files are:

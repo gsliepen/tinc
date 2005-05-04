@@ -1100,6 +1100,13 @@ This script is started when the tinc daemon with name @var{host} becomes reachab
 
 @item @value{sysconfdir}/tinc/@var{netname}/hosts/@var{host}-down
 This script is started when the tinc daemon with name @var{host} becomes unreachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/subnet-up
+This script is started when a Subnet becomes reachable.
+The Subnet and the node it belongs to are passed in environment variables.
+
+@item @value{sysconfdir}/tinc/@var{netname}/subnet-down
+This script is started when a Subnet becomes unreachable.
 @end table
 
 @cindex environment variables
@@ -1129,6 +1136,7 @@ This should be used for commands like ifconfig.
 @cindex NODE
 @item NODE
 When a host becomes (un)reachable, this is set to its name.
+If a subnet becomes (un)reachable, this is set to the owner of that subnet.
 
 @cindex REMOTEADDRESS
 @item REMOTEADDRESS
@@ -1138,6 +1146,11 @@ When a host becomes (un)reachable, this is set to its real address.
 @item REMOTEPORT
 When a host becomes (un)reachable,
 this is set to the port number it uses for communication with other tinc daemons.
+
+@cindex SUBNET
+@item SUBNET
+When a subnet becomes (un)reachable, this is set to the subnet.
+
 @end table
 
 
