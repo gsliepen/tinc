@@ -99,7 +99,7 @@ void config_add(avl_tree_t *config_tree, config_t *cfg)
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(const avl_tree_t *config_tree, char *variable)
+config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 {
 	config_t cfg, *found;
 
@@ -120,7 +120,7 @@ config_t *lookup_config(const avl_tree_t *config_tree, char *variable)
 	return found;
 }
 
-config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg)
+config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg)
 {
 	avl_node_t *node;
 	config_t *found;
