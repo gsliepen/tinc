@@ -76,8 +76,11 @@ bool id_h(connection_t *c)
 				   c->name);
 			return false;
 		}
-	} else
+	} else {
+		if(c->name)
+			free(c->name);
 		c->name = xstrdup(name);
+	}
 
 	/* Check if version matches */
 

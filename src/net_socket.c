@@ -424,6 +424,7 @@ bool handle_new_meta_connection(int sock)
 	sockaddrunmap(&sa);
 
 	c = new_connection();
+	c->name = NULL;
 	c->outcipher = myself->connection->outcipher;
 	c->outdigest = myself->connection->outdigest;
 	c->outmaclength = myself->connection->outmaclength;
@@ -462,8 +463,7 @@ void try_outgoing_connections(void)
 
 	cp();
 
-	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg;
-		cfg = lookup_config_next(config_tree, cfg)) {
+	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 		get_config_string(cfg, &name);
 
 		if(!check_id(name)) {
