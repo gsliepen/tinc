@@ -142,10 +142,11 @@ bool req_key_h(connection_t *c)
 
 bool send_ans_key(connection_t *c, const node_t *from, const node_t *to)
 {
-	char key[MAX_STRING_SIZE];
+	char *key;
 
 	cp();
 
+	key = alloca(2 * from->keylength + 1);
 	bin2hex(from->key, key, from->keylength);
 	key[from->keylength * 2] = '\0';
 

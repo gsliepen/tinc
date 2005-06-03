@@ -56,9 +56,12 @@ typedef struct past_request_t {
 
 extern bool tunnelserver;
 
-/* Maximum size of strings in a request */
+/* Maximum size of strings in a request.
+ * scanf terminates %2048s with a NUL character,
+ * but the NUL character can be written after the 2048th non-NUL character.
+ */
 
-#define MAX_STRING_SIZE 2048
+#define MAX_STRING_SIZE 2049
 #define MAX_STRING "%2048s"
 
 #include "edge.h"

@@ -118,7 +118,7 @@ bool id_h(connection_t *c)
 
 bool send_metakey(connection_t *c)
 {
-	char buffer[MAX_STRING_SIZE];
+	char *buffer;
 	int len;
 	bool x;
 
@@ -128,6 +128,8 @@ bool send_metakey(connection_t *c)
 
 	/* Allocate buffers for the meta key */
 
+	buffer = alloca(2 * len + 1);
+	
 	if(!c->outkey)
 		c->outkey = xmalloc(len);
 
@@ -302,7 +304,7 @@ bool metakey_h(connection_t *c)
 
 bool send_challenge(connection_t *c)
 {
-	char buffer[MAX_STRING_SIZE];
+	char *buffer;
 	int len;
 
 	cp();
@@ -312,6 +314,8 @@ bool send_challenge(connection_t *c)
 	len = RSA_size(c->rsa_key);
 
 	/* Allocate buffers for the challenge */
+
+	buffer = alloca(2 * len + 1);
 
 	if(!c->hischallenge)
 		c->hischallenge = xmalloc(len);
