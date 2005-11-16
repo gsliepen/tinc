@@ -21,7 +21,7 @@ AC_DEFUN([tinc_OPENSSL],
      LDFLAGS="$LDFLAGS -L$withval"]
   )
 
-  AC_CHECK_HEADERS(openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h,
+  AC_CHECK_HEADERS(openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h openssl/engine.h,
     [],
     [AC_MSG_ERROR([OpenSSL header files not found.]); break]
   )

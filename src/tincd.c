@@ -35,6 +35,7 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+#include <openssl/engine.h>
 
 #include <lzo1x.h>
 
@@ -447,6 +448,9 @@ int main(int argc, char **argv)
 	/* Slllluuuuuuurrrrp! */
 
 	RAND_load_file("/dev/urandom", 1024);
+
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 
 	OpenSSL_add_all_algorithms();
 
