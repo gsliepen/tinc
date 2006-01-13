@@ -509,6 +509,8 @@ end:
 #ifndef HAVE_MINGW
 	remove_pid(pidfilename);
 #endif
+
+	EVP_cleanup();
 	
 	return status;
 }
