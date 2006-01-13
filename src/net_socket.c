@@ -38,6 +38,11 @@
 #define EINPROGRESS WSAEINPROGRESS
 #endif
 
+/* Needed on Mac OS/X */
+#ifndef SOL_TCP
+#define SOL_TCP IPPROTO_TCP
+#endif
+
 int addressfamily = AF_UNSPEC;
 int maxtimeout = 900;
 int seconds_till_retry = 5;
@@ -47,6 +52,31 @@ listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
 
 /* Setup sockets */
+
+static void configure_tcp(connection_t *c)
+{
+	int option;
+
+#ifdef O_NONBLOCK
+	if(!blockingtcp) {
+		int flags = fcntl(c->socket, F_GETFL);
+
+		if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
+			logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
+		}
+	}
+#endif
+
+#if defined(SOL_TCP) && defined(TCP_NODELAY)
+	option = 1;
+	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+#endif
+
+#if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
+	option = IPTOS_LOWDELAY;
+	setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof(option));
+#endif
+}
 
 int setup_listen_socket(const sockaddr_t *sa)
 {
@@ -64,32 +94,10 @@ int setup_listen_socket(const sockaddr_t *sa)
 		return -1;
 	}
 
-#ifdef O_NONBLOCK
-	{
-		int flags = fcntl(nfd, F_GETFL);
-
-		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-			closesocket(nfd);
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
-				   strerror(errno));
-			return -1;
-		}
-	}
-#endif
-
 	/* Optimize TCP settings */
 
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-
-#if defined(SOL_TCP) && defined(TCP_NODELAY)
-	setsockopt(nfd, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
-#endif
-
-#if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
-	option = IPTOS_LOWDELAY;
-	setsockopt(nfd, SOL_IP, IP_TOS, &option, sizeof(option));
-#endif
 
 	if(get_config_string
 	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
@@ -237,19 +245,13 @@ void retry_outgoing(outgoing_t *outgoing)
 
 void finish_connecting(connection_t *c)
 {
+	int option;
+
 	cp();
 
 	ifdebug(CONNECTIONS) logger(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
 
-#ifdef O_NONBLOCK
-	if(blockingtcp) {
-		int flags = fcntl(c->socket, F_GETFL);
-
-		if(fcntl(c->socket, F_SETFL, flags & ~O_NONBLOCK) < 0) {
-			logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
-		}
-	}
-#endif
+	configure_tcp(c);
 
 	c->last_ping_time = now;
 
@@ -314,25 +316,7 @@ begin:
 
 	/* Optimize TCP settings */
 
-#if defined(SOL_TCP) && defined(TCP_NODELAY)
-	option = 1;
-	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
-#endif
-
-#if defined(SOL_IP) && defined(IP_TOS)
-	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof(option));
-#endif
-
-	/* Non-blocking */
-
-#ifdef O_NONBLOCK
-	flags = fcntl(c->socket, F_GETFL);
-
-	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-		logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
-	}
-#endif
+	configure_tcp(c);
 
 	/* Connect */
 
@@ -407,6 +391,7 @@ void setup_outgoing_connection(outgoing_t *outgoing)
 */
 bool handle_new_meta_connection(int sock)
 {
+	int option;
 	connection_t *c;
 	sockaddr_t sa;
 	int fd, len = sizeof(sa);
@@ -437,15 +422,7 @@ bool handle_new_meta_connection(int sock)
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection from %s"), c->hostname);
 
-#ifdef O_NONBLOCK
-	if(blockingtcp) {
-		int flags = fcntl(c->socket, F_GETFL);
-
-		if(fcntl(c->socket, F_SETFL, flags & ~O_NONBLOCK) < 0) {
-			logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
-		}
-	}
-#endif
+	configure_tcp(c);
 
 	connection_add(c);
 
