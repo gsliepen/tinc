@@ -112,7 +112,7 @@ static void purge(void)
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-static int build_fdset(fd_set * fs)
+static int build_fdset(fd_set *readset, fd_set *writeset)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
@@ -120,7 +120,8 @@ static int build_fdset(fd_set * fs)
 
 	cp();
 
-	FD_ZERO(fs);
+	FD_ZERO(readset);
+	FD_ZERO(writeset);
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
@@ -131,22 +132,24 @@ static int build_fdset(fd_set * fs)
 			if(!connection_tree->head)
 				purge();
 		} else {
-			FD_SET(c->socket, fs);
+			FD_SET(c->socket, readset);
+			if(c->outbuflen > 0)
+				FD_SET(c->socket, writeset);
 			if(c->socket > max)
 				max = c->socket;
 		}
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
-		FD_SET(listen_socket[i].tcp, fs);
+		FD_SET(listen_socket[i].tcp, readset);
 		if(listen_socket[i].tcp > max)
 			max = listen_socket[i].tcp;
-		FD_SET(listen_socket[i].udp, fs);
+		FD_SET(listen_socket[i].udp, readset);
 		if(listen_socket[i].udp > max)
 			max = listen_socket[i].udp;
 	}
 
-	FD_SET(device_fd, fs);
+	FD_SET(device_fd, readset);
 	if(device_fd > max)
 		max = device_fd;
 	
@@ -208,6 +211,12 @@ void terminate_connection(connection_t *c, bool report)
 		retry_outgoing(c->outgoing);
 		c->outgoing = NULL;
 	}
+
+	free(c->outbuf);
+	c->outbuf = NULL;
+	c->outbuflen = 0;
+	c->outbufsize = 0;
+	c->outbufstart = 0;
 }
 
 /*
@@ -232,11 +241,11 @@ static void check_dead_connections(void)
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING"),
-							   c->name, c->hostname);
+					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %d seconds"),
+							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
-				} else {
+				} else if(c->last_ping_time + pinginterval < now) {
 					send_ping(c);
 				}
 			} else {
@@ -257,6 +266,16 @@ static void check_dead_connections(void)
 				}
 			}
 		}
+
+		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
+			if(c->status.active) {
+				ifdebug(CONNECTIONS) logger(LOG_INFO,
+						_("%s (%s) could not flush for %d seconds (%d bytes remaining)"),
+						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
+				c->status.timeout = true;
+				terminate_connection(c, true);
+			}
+		}
 	}
 }
 
@@ -264,7 +283,7 @@ static void check_dead_connections(void)
   check all connections to see if anything
   happened on their sockets
 */
-static void check_network_activity(fd_set * f)
+static void check_network_activity(fd_set * readset, fd_set * writeset)
 {
 	connection_t *c;
 	avl_node_t *node;
@@ -274,18 +293,20 @@ static void check_network_activity(fd_set * f)
 
 	cp();
 
-	if(FD_ISSET(device_fd, f)) {
+	/* check input from kernel */
+	if(FD_ISSET(device_fd, readset)) {
 		if(read_packet(&packet))
 			route(myself, &packet);
 	}
 
+	/* check meta connections */
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
 		if(c->status.remove)
 			continue;
 
-		if(FD_ISSET(c->socket, f)) {
+		if(FD_ISSET(c->socket, readset)) {
 			if(c->status.connecting) {
 				c->status.connecting = false;
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
@@ -307,13 +328,20 @@ static void check_network_activity(fd_set * f)
 				continue;
 			}
 		}
+
+		if(FD_ISSET(c->socket, writeset)) {
+			if(!flush_meta(c)) {
+				terminate_connection(c, c->status.active);
+				continue;
+			}
+		}
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
-		if(FD_ISSET(listen_socket[i].udp, f))
+		if(FD_ISSET(listen_socket[i].udp, readset))
 			handle_incoming_vpn_data(listen_socket[i].udp);
 
-		if(FD_ISSET(listen_socket[i].tcp, f))
+		if(FD_ISSET(listen_socket[i].tcp, readset))
 			handle_new_meta_connection(listen_socket[i].tcp);
 	}
 }
@@ -323,7 +351,7 @@ static void check_network_activity(fd_set * f)
 */
 int main_loop(void)
 {
-	fd_set fset;
+	fd_set readset, writeset;
 	struct timeval tv;
 	int r, maxfd;
 	time_t last_ping_check, last_config_check;
@@ -344,9 +372,9 @@ int main_loop(void)
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		maxfd = build_fdset(&fset);
+		maxfd = build_fdset(&readset, &writeset);
 
-		r = select(maxfd + 1, &fset, NULL, NULL, &tv);
+		r = select(maxfd + 1, &readset, &writeset, NULL, &tv);
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
@@ -360,7 +388,7 @@ int main_loop(void)
 			continue;
 		}
 
-		check_network_activity(&fset);
+		check_network_activity(&readset, &writeset);
 
 		if(do_purge) {
 			purge();

@@ -31,6 +31,8 @@
 #include "protocol.h"
 #include "utils.h"
 
+int maxoutbufsize = 0;
+
 /* Status and error notification routines */
 
 bool send_status(connection_t *c, int statusno, const char *statusstring)
@@ -153,7 +155,10 @@ bool send_tcppacket(connection_t *c, vpn_packet_t *packet)
 {
 	cp();
 
-	/* Evil hack. */
+	/* If there already is a lot of data in the outbuf buffer, discard this packet. */
+
+	if(c->outbuflen > maxoutbufsize)
+		return true;
 
 	if(!send_request(c, "%d %hd", PACKET, packet->len))
 		return false;

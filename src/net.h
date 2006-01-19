@@ -114,10 +114,9 @@ typedef struct outgoing_t {
 	struct addrinfo *aip;
 } outgoing_t;
 
-extern int maxtimeout;
+extern int maxoutbufsize;
 extern int seconds_till_retry;
 extern int addressfamily;
-extern bool blockingtcp;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;

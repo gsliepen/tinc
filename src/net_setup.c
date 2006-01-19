@@ -286,8 +286,6 @@ bool setup_myself(void)
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
 		myself->options |= OPTION_TCPONLY;
 
-	get_config_bool(lookup_config(config_tree, "BlockingTCP"), &blockingtcp);
-
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
 
@@ -536,12 +534,20 @@ bool setup_network_connections(void)
 	init_events();
 	init_requests();
 
-	if(get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout)) {
-		if(pingtimeout < 1) {
-			pingtimeout = 86400;
+	if(get_config_int(lookup_config(config_tree, "PingInterval"), &pinginterval)) {
+		if(pinginterval < 1) {
+			pinginterval = 86400;
 		}
 	} else
-		pingtimeout = 60;
+		pinginterval = 60;
+
+	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout))
+		pingtimeout = 5;
+	if(pingtimeout < 1 || pingtimeout > pinginterval)
+		pingtimeout = pinginterval;
+
+	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
+		maxoutbufsize = 4 * MTU;
 
 	if(!setup_myself())
 		return false;

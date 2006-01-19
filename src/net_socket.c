@@ -46,7 +46,6 @@
 int addressfamily = AF_UNSPEC;
 int maxtimeout = 900;
 int seconds_till_retry = 5;
-bool blockingtcp = false;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
@@ -58,12 +57,10 @@ static void configure_tcp(connection_t *c)
 	int option;
 
 #ifdef O_NONBLOCK
-	if(!blockingtcp) {
-		int flags = fcntl(c->socket, F_GETFL);
+	int flags = fcntl(c->socket, F_GETFL);
 
-		if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-			logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
-		}
+	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
+		logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
 	}
 #endif
 

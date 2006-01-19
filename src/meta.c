@@ -35,9 +35,7 @@
 
 bool send_meta(connection_t *c, const char *buffer, int length)
 {
-	const char *bufp;
 	int outlen;
-	char outbuf[MAXBUFSIZE];
 	int result;
 
 	cp();
@@ -45,35 +43,73 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
+	if(!c->outbuflen)
+		c->last_flushed_time = now;
+
+	/* Find room in connection's buffer */
+	if(length + c->outbuflen > c->outbufsize) {
+		c->outbufsize = length + c->outbuflen;
+		c->outbuf = xrealloc(c->outbuf, c->outbufsize);
+	}
+
+	if(length + c->outbuflen + c->outbufstart > c->outbufsize) {
+		memmove(c->outbuf, c->outbuf + c->outbufstart, c->outbuflen);
+		c->outbufstart = 0;
+	}
+
+	/* Add our data to buffer */
 	if(c->status.encryptout) {
-		result = EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
-		if(!result || outlen != length) {
+		result = EVP_EncryptUpdate(c->outctx, c->outbuf + c->outbufstart + c->outbuflen,
+				&outlen, buffer, length);
+		if(!result || outlen < length) {
 			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
+		} else if(outlen > length) {
+			logger(LOG_EMERG, _("Encrypted data too long! Heap corrupted!"));
+			abort();
 		}
-		bufp = outbuf;
-		length = outlen;
-	} else
-		bufp = buffer;
+		c->outbuflen += outlen;
+	} else {
+		memcpy(c->outbuf + c->outbufstart + c->outbuflen, buffer, length);
+		c->outbuflen += length;
+	}
 
-	while(length) {
-		result = send(c->socket, bufp, length, 0);
+	return true;
+}
+
+bool flush_meta(connection_t *c)
+{
+	int result;
+	
+	ifdebug(META) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s)"),
+			 c->outbuflen, c->name, c->hostname);
+
+	while(c->outbuflen) {
+		result = send(c->socket, c->outbuf + c->outbufstart, c->outbuflen, 0);
 		if(result <= 0) {
 			if(!errno || errno == EPIPE) {
 				ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 						   c->name, c->hostname);
-			} else if(errno == EINTR)
+			} else if(errno == EINTR) {
 				continue;
-			else
-				logger(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
+			} else if(errno == EWOULDBLOCK) {
+				ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s) would block"),
+						c->outbuflen, c->name, c->hostname);
+				return true;
+			} else {
+				logger(LOG_ERR, _("Flushing meta data to %s (%s) failed: %s"), c->name,
 					   c->hostname, strerror(errno));
+			}
+
 			return false;
 		}
-		bufp += result;
-		length -= result;
+
+		c->outbufstart += result;
+		c->outbuflen -= result;
 	}
-	
+
+	c->outbufstart = 0; /* avoid unnecessary memmoves */
 	return true;
 }
 

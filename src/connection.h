@@ -91,7 +91,13 @@ typedef struct connection_t {
 	int tcplen;					/* length of incoming TCPpacket */
 	int allow_request;			/* defined if there's only one request possible */
 
-	time_t last_ping_time;		/* last time we saw some activity from the other end */
+	char *outbuf;				/* metadata output buffer */
+	int outbufstart;			/* index of first meaningful byte in output buffer */
+	int outbuflen;				/* number of meaningful bytes in output buffer */
+	int outbufsize;				/* number of bytes allocated to output buffer */
+
+	time_t last_ping_time;		/* last time we saw some activity from the other end or pinged them */
+	time_t last_flushed_time;	/* last time buffer was empty. Only meaningful if outbuflen > 0 */
 
 	avl_tree_t *config_tree;	/* Pointer to configuration tree belonging to him */
 } connection_t;

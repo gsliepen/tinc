@@ -841,15 +841,6 @@ variable.
 
 This option may not work on all platforms.
 
-@cindex BlockingTCP
-@item BlockingTCP = <yes|no> (no) [experimental]
-This options selects whether TCP connections, when established, should use blocking writes.
-When turned off, tinc will never block when a TCP connection becomes congested,
-but will have to terminate that connection instead.
-If turned on, tinc will not terminate connections but will block,
-thereby unable to process data to/from other connections.
-Turn this option on if you also use TCPOnly and tinc terminates connections frequently.
-
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.
@@ -933,12 +924,16 @@ This only has effect when Mode is set to "switch".
 @item Name = <@var{name}> [required]
 This is a symbolic name for this connection.  It can be anything
 
-@cindex PingTimeout
-@item PingTimeout = <@var{seconds}> (60)
+@cindex PingInterval
+@item PingInterval = <@var{seconds}> (60)
 The number of seconds of inactivity that tinc will wait before sending a
-probe to the other end.  If that other end doesn't answer within that
-same amount of seconds, the connection is terminated, and the others
-will be notified of this.
+probe to the other end.
+
+@cindex PingTimeout
+@item PingTimeout = <@var{seconds}> (5)
+The number of seconds to wait for a response to pings or to allow meta
+connections to block. If the other end doesn't respond within this time,
+the connection is terminated, and the others will be notified of this.
 
 @cindex PriorityInheritance
 @item PriorityInheritance = <yes|no> (no) [experimental]

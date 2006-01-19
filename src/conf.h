@@ -36,6 +36,7 @@ typedef struct config_t {
 
 extern avl_tree_t *config_tree;
 
+extern int pinginterval;
 extern int pingtimeout;
 extern int maxtimeout;
 extern bool bypass_security;

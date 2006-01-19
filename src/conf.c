@@ -33,7 +33,8 @@
 
 avl_tree_t *config_tree;
 
-int pingtimeout = 0;			/* seconds before timeout */
+int pinginterval = 0;			/* seconds between pings */
+int pingtimeout = 0;			/* seconds to wait for response */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
 
