@@ -588,18 +588,18 @@ void close_network_connections(void)
 		close(listen_socket[i].udp);
 	}
 
+	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	asprintf(&envp[1], "DEVICE=%s", device ? : "");
+	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	asprintf(&envp[3], "NAME=%s", myself->name);
+	envp[4] = NULL;
+
 	exit_requests();
 	exit_events();
 	exit_edges();
 	exit_subnets();
 	exit_nodes();
 	exit_connections();
-
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	execute_script("tinc-down", envp);
 
