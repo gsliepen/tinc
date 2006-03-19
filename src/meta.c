@@ -32,6 +32,7 @@
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
+#include "xalloc.h"
 
 bool send_meta(connection_t *c, const char *buffer, int length)
 {
