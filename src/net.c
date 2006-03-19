@@ -288,7 +288,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 	connection_t *c;
 	avl_node_t *node;
 	int result, i;
-	int len = sizeof(result);
+	socklen_t len = sizeof(result);
 	vpn_packet_t packet;
 
 	cp();
@@ -411,9 +411,9 @@ int main_loop(void)
 			if(keyexpires < now) {
 				ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
 
-				RAND_pseudo_bytes(myself->key, myself->keylength);
+				RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 				if(myself->cipher)
-					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len);
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
 			}

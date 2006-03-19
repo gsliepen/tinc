@@ -262,7 +262,7 @@ bool ans_key_h(connection_t *c)
 	from->compression = compression;
 
 	if(from->cipher)
-		if(!EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len)) {
+		if(!EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, (unsigned char *)from->key, (unsigned char *)from->key + from->cipher->key_len)) {
 			logger(LOG_ERR, _("Error during initialisation of key from %s (%s): %s"),
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;

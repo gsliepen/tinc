@@ -138,7 +138,7 @@ bool send_metakey(connection_t *c)
 	cp();
 	/* Copy random data to the buffer */
 
-	RAND_pseudo_bytes(c->outkey, len);
+	RAND_pseudo_bytes((unsigned char *)c->outkey, len);
 
 	/* The message we send must be smaller than the modulus of the RSA key.
 	   By definition, for a key of k bits, the following formula holds:
@@ -166,7 +166,7 @@ bool send_metakey(connection_t *c)
 	   with a length equal to that of the modulus of the RSA key.
 	 */
 
-	if(RSA_public_encrypt(len, c->outkey, buffer, c->rsa_key, RSA_NO_PADDING) != len) {
+	if(RSA_public_encrypt(len, (unsigned char *)c->outkey, (unsigned char *)buffer, c->rsa_key, RSA_NO_PADDING) != len) {
 		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return false;
@@ -188,8 +188,8 @@ bool send_metakey(connection_t *c)
 
 	if(c->outcipher) {
 		if(!EVP_EncryptInit(c->outctx, c->outcipher,
-					c->outkey + len - c->outcipher->key_len,
-					c->outkey + len - c->outcipher->key_len -
+					(unsigned char *)c->outkey + len - c->outcipher->key_len,
+					(unsigned char *)c->outkey + len - c->outcipher->key_len -
 					c->outcipher->iv_len)) {
 			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
@@ -239,7 +239,7 @@ bool metakey_h(connection_t *c)
 
 	/* Decrypt the meta key */
 
-	if(RSA_private_decrypt(len, buffer, c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
+	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
 		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return false;
@@ -264,8 +264,8 @@ bool metakey_h(connection_t *c)
 		}
 
 		if(!EVP_DecryptInit(c->inctx, c->incipher,
-					c->inkey + len - c->incipher->key_len,
-					c->inkey + len - c->incipher->key_len -
+					(unsigned char *)c->inkey + len - c->incipher->key_len,
+					(unsigned char *)c->inkey + len - c->incipher->key_len -
 					c->incipher->iv_len)) {
 			logger(LOG_ERR, _("Error during initialisation of cipher from %s (%s): %s"),
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
@@ -322,7 +322,7 @@ bool send_challenge(connection_t *c)
 
 	/* Copy random data to the buffer */
 
-	RAND_pseudo_bytes(c->hischallenge, len);
+	RAND_pseudo_bytes((unsigned char *)c->hischallenge, len);
 
 	/* Convert to hex */
 
@@ -384,7 +384,7 @@ bool send_chal_reply(connection_t *c)
 
 	if(!EVP_DigestInit(&ctx, c->indigest)
 			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
-			|| !EVP_DigestFinal(&ctx, hash, NULL)) {
+			|| !EVP_DigestFinal(&ctx, (unsigned char *)hash, NULL)) {
 		logger(LOG_ERR, _("Error during calculation of response for %s (%s): %s"),
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
@@ -430,7 +430,7 @@ bool chal_reply_h(connection_t *c)
 
 	if(!EVP_DigestInit(&ctx, c->outdigest)
 			|| !EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key))
-			|| !EVP_DigestFinal(&ctx, myhash, NULL)) {
+			|| !EVP_DigestFinal(&ctx, (unsigned char *)myhash, NULL)) {
 		logger(LOG_ERR, _("Error during calculation of response from %s (%s): %s"),
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;

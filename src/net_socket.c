@@ -391,7 +391,8 @@ bool handle_new_meta_connection(int sock)
 	int option;
 	connection_t *c;
 	sockaddr_t sa;
-	int fd, len = sizeof(sa);
+	int fd;
+	socklen_t len = sizeof(sa);
 
 	cp();
 

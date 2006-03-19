@@ -60,8 +60,8 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
-		result = EVP_EncryptUpdate(c->outctx, c->outbuf + c->outbufstart + c->outbuflen,
-				&outlen, buffer, length);
+		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)c->outbuf + c->outbufstart + c->outbuflen,
+				&outlen, (unsigned char *)buffer, length);
 		if(!result || outlen < length) {
 			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
@@ -169,7 +169,7 @@ bool receive_meta(connection_t *c)
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
-			result = EVP_DecryptUpdate(c->inctx, inbuf, &lenout, c->buffer + oldlen, lenin);
+			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &lenout, (unsigned char *)c->buffer + oldlen, lenin);
 			if(!result || lenout != lenin) {
 				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
 						c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));

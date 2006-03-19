@@ -174,7 +174,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int nextpkt = 0;
 	vpn_packet_t *outpkt = pkt[0];
 	int outlen, outpad;
-	char hmac[EVP_MAX_MD_SIZE];
+	unsigned char hmac[EVP_MAX_MD_SIZE];
 	int i;
 
 	cp();
@@ -192,7 +192,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->digest && myself->maclength) {
 		inpkt->len -= myself->maclength;
 		HMAC(myself->digest, myself->key, myself->keylength,
-			 (char *) &inpkt->seqno, inpkt->len, hmac, NULL);
+			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
 
 		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, myself->maclength)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
@@ -207,9 +207,9 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if(!EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
-					(char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_DecryptUpdate(&packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
+					(unsigned char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_DecryptFinal_ex(&packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
@@ -352,9 +352,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if(!EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
-					(char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_EncryptUpdate(&n->packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
+					(unsigned char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			goto end;
@@ -367,8 +367,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	/* Add the message authentication code */
 
 	if(n->digest && n->maclength) {
-		HMAC(n->digest, n->key, n->keylength, (char *) &inpkt->seqno,
-			 inpkt->len, (char *) &inpkt->seqno + inpkt->len, &outlen);
+		HMAC(n->digest, n->key, n->keylength, (unsigned char *) &inpkt->seqno,
+			 inpkt->len, (unsigned char *) &inpkt->seqno + inpkt->len, NULL);
 		inpkt->len += n->maclength;
 	}
 

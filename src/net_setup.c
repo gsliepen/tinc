@@ -368,7 +368,7 @@ bool setup_myself(void)
 	myself->connection->outcipher = EVP_bf_ofb();
 
 	myself->key = xmalloc(myself->keylength);
-	RAND_pseudo_bytes(myself->key, myself->keylength);
+	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
@@ -377,7 +377,7 @@ bool setup_myself(void)
 	
 	if(myself->cipher) {
 		EVP_CIPHER_CTX_init(&packet_ctx);
-		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len)) {
+		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
 			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
 					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
