@@ -257,7 +257,7 @@ void mask(void *va, int masklen, int len)
 	masklen %= 8;
 
 	if(masklen)
-		a[i++] &= (0x100 - (1 << masklen));
+		a[i++] &= (0x100 - (1 << (8 - masklen)));
 
 	for(; i < len; i++)
 		a[i] = 0;
@@ -275,7 +275,7 @@ void maskcpy(void *va, const void *vb, int masklen, int len)
 		a[i] = b[i];
 
 	if(m) {
-		a[i] = b[i] & (0x100 - (1 << m));
+		a[i] = b[i] & (0x100 - (1 << (8 - m)));
 		i++;
 	}
 
