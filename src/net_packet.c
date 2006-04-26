@@ -285,10 +285,11 @@ void receive_tcppacket(connection_t *c, char *buffer, int len)
 	receive_packet(c->node, &outpkt);
 }
 
-static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
+static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
+	vpn_packet_t *inpkt = origpkt;
 	int nextpkt = 0;
 	vpn_packet_t *outpkt;
 	int origlen;
@@ -404,7 +405,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	}
 
 end:
-	inpkt->len = origlen;
+	origpkt->len = origlen;
 }
 
 /*
@@ -457,11 +458,8 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
 
-	if(from != myself) {
-		if(overwrite_mac)
-			 memcpy(packet->data, mymac.x, ETH_ALEN);
-		write_packet(packet);
-	}
+	if(from != myself)
+		send_packet(myself, packet);
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
