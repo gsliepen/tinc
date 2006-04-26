@@ -1,6 +1,6 @@
 Main tinc authors:
 Guus Sliepen <guus@tinc-vpn.org>
-Ivo Timmermans <ivo@tinc-vpn.org>
+Ivo Timmermans (inactive)
 
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from

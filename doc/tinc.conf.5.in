@@ -1,7 +1,7 @@
 .Dd 2002-04-09
 .Dt TINC.CONF 5
 .\" Manual page created by:
-.\" Ivo Timmermans <ivo@tinc-vpn.org>
+.\" Ivo Timmermans
 .\" Guus Sliepen <guus@tinc-vpn.org>
 .Sh NAME
 .Nm tinc.conf

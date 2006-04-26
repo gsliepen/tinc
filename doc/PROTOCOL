@@ -1,7 +1,7 @@
 This is the protocol documentation for tinc, a Virtual Private Network daemon.
 
-   Copyright 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
-             2000-2005 Ivo Timmmermans <ivo@tinc-vpn.org>
+   Copyright 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+             2000-2005 Ivo Timmmermans
 
    Permission is granted to make and distribute verbatim copies of
    this documentation provided the copyright notice and this

@@ -1,7 +1,7 @@
 .Dd 2002-03-25
 .Dt TINCD 8
 .\" Manual page created by:
-.\" Ivo Timmermans <ivo@tinc-vpn.org>
+.\" Ivo Timmermans
 .\" Guus Sliepen <guus@tinc-vpn.org>
 .Sh NAME
 .Nm tincd
@@ -181,7 +181,7 @@ tinc comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it under certain conditions;
 see the file COPYING for details.
 .Sh AUTHORS
-.An "Ivo Timmermans" Aq ivo@tinc-vpn.org
+.An "Ivo Timmermans"
 .An "Guus Sliepen" Aq guus@tinc-vpn.org
 .Pp
 And thanks to many others for their contributions to tinc!

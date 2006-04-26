@@ -1,7 +1,7 @@
 /*
     utils.h -- header file for utils.c
     Copyright (C) 1999-2005 Ivo Timmermans <zarq@iname.com>
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

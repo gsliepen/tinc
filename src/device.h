@@ -1,7 +1,7 @@
 /*
     net.h -- generic header for device.c
     Copyright (C) 2001-2005 Ivo Timmermans <zarq@iname.com>
-                  2001-2005 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
