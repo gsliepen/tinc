@@ -78,7 +78,7 @@ sockaddr_t str2sockaddr(const char *address, const char *port)
 		return result;
 	}
 
-	result = *(sockaddr_t *) ai->ai_addr;
+	memcpy(&result, ai->ai_addr, ai->ai_addrlen);
 	freeaddrinfo(ai);
 
 	return result;

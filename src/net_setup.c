@@ -502,7 +502,7 @@ bool setup_myself(void)
 			free(hostname);
 		}
 
-		listen_socket[listen_sockets].sa.sa = *aip->ai_addr;
+		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
 		listen_sockets++;
 	}
 
