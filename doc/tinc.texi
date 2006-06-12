@@ -1096,6 +1096,12 @@ This script is started when the tinc daemon with name @var{host} becomes reachab
 @item @value{sysconfdir}/tinc/@var{netname}/hosts/@var{host}-down
 This script is started when the tinc daemon with name @var{host} becomes unreachable.
 
+@item @value{sysconfdir}/tinc/@var{netname}/host-up
+This script is started when any host becomes reachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/host-down
+This script is started when any host becomes unreachable.
+
 @item @value{sysconfdir}/tinc/@var{netname}/subnet-up
 This script is started when a Subnet becomes reachable.
 The Subnet and the node it belongs to are passed in environment variables.

@@ -283,6 +283,8 @@ void sssp_bfs(void)
 			asprintf(&envp[5], "REMOTEPORT=%s", port);
 			envp[6] = NULL;
 
+			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
+
 			asprintf(&name,
 					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
 					 n->name);

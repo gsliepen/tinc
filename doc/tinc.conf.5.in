@@ -346,6 +346,10 @@ becomes reachable.
 This script is started when the tinc daemon with name
 .Ar HOST
 becomes unreachable.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /host-up
+This script is started when any host becomes reachable.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /host-down
+This script is started when any host becomes unreachable.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /subnet-up
 This script is started when a Subnet becomes reachable.
 The Subnet and the node it belongs to are passed in environment variables.
