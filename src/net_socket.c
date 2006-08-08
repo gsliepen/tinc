@@ -386,7 +386,6 @@ void setup_outgoing_connection(outgoing_t *outgoing)
 */
 bool handle_new_meta_connection(int sock)
 {
-	int option;
 	connection_t *c;
 	sockaddr_t sa;
 	int fd;
