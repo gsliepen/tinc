@@ -29,14 +29,17 @@
 #include "list.h"
 #include "subnet.h"
 
-typedef struct node_status_t {
-	int active:1;				/* 1 if active.. */
-	int validkey:1;				/* 1 if we currently have a valid key for him */
-	int waitingforkey:1;			/* 1 if we already sent out a request */
-	int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
-	int reachable:1;			/* 1 if this node is reachable in the graph */
-	int indirect:1;				/* 1 if this node is not directly reachable by us */
-	int unused:26;
+typedef union node_status_t {
+	struct {
+		int active:1;				/* 1 if active.. */
+		int validkey:1;				/* 1 if we currently have a valid key for him */
+		int waitingforkey:1;			/* 1 if we already sent out a request */
+		int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
+		int reachable:1;			/* 1 if this node is reachable in the graph */
+		int indirect:1;				/* 1 if this node is not directly reachable by us */
+		int unused:26;
+	};
+	uint32_t value;
 } node_status_t;
 
 typedef struct node_t {

@@ -122,7 +122,7 @@ void dump_connections(void)
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"),
-			   c->name, c->hostname, c->options, c->socket, *(uint32_t *)&c->status,
+			   c->name, c->hostname, c->options, c->socket, c->status.value,
 			   c->outbufsize, c->outbufstart, c->outbuflen);
 	}
 

@@ -32,17 +32,20 @@
 #define OPTION_TCPONLY		0x0002
 #define OPTION_PMTU_DISCOVERY	0x0004
 
-typedef struct connection_status_t {
-	int pinged:1;				/* sent ping */
-	int active:1;				/* 1 if active.. */
-	int connecting:1;			/* 1 if we are waiting for a non-blocking connect() to finish */
-	int termreq:1;				/* the termination of this connection was requested */
-	int remove:1;				/* Set to 1 if you want this connection removed */
-	int timeout:1;				/* 1 if gotten timeout */
-	int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
-	int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
-	int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
-	int unused:23;
+typedef union connection_status_t {
+	struct {
+		int pinged:1;				/* sent ping */
+		int active:1;				/* 1 if active.. */
+		int connecting:1;			/* 1 if we are waiting for a non-blocking connect() to finish */
+		int termreq:1;				/* the termination of this connection was requested */
+		int remove:1;				/* Set to 1 if you want this connection removed */
+		int timeout:1;				/* 1 if gotten timeout */
+		int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
+		int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
+		int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
+		int unused:23;
+	};
+	uint32_t value;
 } connection_status_t;
 
 #include "edge.h"
@@ -59,7 +62,7 @@ typedef struct connection_t {
 
 	int socket;					/* socket used for this connection */
 	long int options;			/* options for this connection */
-	struct connection_status_t status;	/* status info */
+	connection_status_t status;	/* status info */
 	int estimated_weight;		/* estimation for the weight of the edge for this connection */
 	struct timeval start;		/* time this connection was started, used for above estimation */
 	struct outgoing_t *outgoing;	/* used to keep track of outgoing connections */
