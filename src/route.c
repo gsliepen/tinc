@@ -280,7 +280,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Length of packet (%d) doesn't match length in IPv4 header (%d)"), packet->len, ether_size + ip_size + todo);
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Length of packet (%d) doesn't match length in IPv4 header (%zd)"), packet->len, ether_size + ip_size + todo);
 		return;
 	}
 

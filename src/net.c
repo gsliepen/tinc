@@ -241,7 +241,7 @@ static void check_dead_connections(void)
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %d seconds"),
+					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"),
 							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
@@ -270,7 +270,7 @@ static void check_dead_connections(void)
 		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
 			if(c->status.active) {
 				ifdebug(CONNECTIONS) logger(LOG_INFO,
-						_("%s (%s) could not flush for %d seconds (%d bytes remaining)"),
+						_("%s (%s) could not flush for %ld seconds (%d bytes remaining)"),
 						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
 				c->status.timeout = true;
 				terminate_connection(c, true);
