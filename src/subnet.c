@@ -342,7 +342,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 				break;
 			}
 
-			if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength, sizeof(ipv4_t)))
+			if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength))
 				break;
 			else {
 				/* Otherwise, see if there is a bigger enclosing subnet */
@@ -378,7 +378,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 			if(p->type != SUBNET_IPV6)
 				return NULL;
 
-			if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength, sizeof(ipv6_t)))
+			if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength))
 				break;
 			else {
 				/* Otherwise, see if there is a bigger enclosing subnet */

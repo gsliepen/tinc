@@ -225,7 +225,7 @@ void sockaddrunmap(sockaddr_t *sa)
 
 /* Subnet mask handling */
 
-int maskcmp(const void *va, const void *vb, int masklen, int len)
+int maskcmp(const void *va, const void *vb, int masklen)
 {
 	int i, m, result;
 	const char *a = va;
