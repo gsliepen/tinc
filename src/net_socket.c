@@ -242,8 +242,6 @@ void retry_outgoing(outgoing_t *outgoing)
 
 void finish_connecting(connection_t *c)
 {
-	int option;
-
 	cp();
 
 	ifdebug(CONNECTIONS) logger(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
@@ -258,7 +256,7 @@ void finish_connecting(connection_t *c)
 void do_outgoing_connection(connection_t *c)
 {
 	char *address, *port;
-	int option, result, flags;
+	int result;
 
 	cp();
 
