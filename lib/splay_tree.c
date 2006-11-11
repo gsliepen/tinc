@@ -534,7 +534,7 @@ void splay_delete(splay_tree_t *tree, void *data) {
 void splay_delete_tree(splay_tree_t *tree) {
 	splay_node_t *node, *next;
 
-	for(node = tree->root; node; node = next) {
+	for(node = tree->head; node; node = next) {
 		next = node->next;
 		splay_free_node(tree, node);
 	}

@@ -656,7 +656,7 @@ void avl_delete_tree(avl_tree_t *tree)
 {
 	avl_node_t *node, *next;
 
-	for(node = tree->root; node; node = next) {
+	for(node = tree->head; node; node = next) {
 		next = node->next;
 		avl_free_node(tree, node);
 	}
