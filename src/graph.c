@@ -364,9 +364,10 @@ void dump_graph(void)
 
 	fprintf(file, "}\n");	
 	
-	fclose(file);
-
-	if(filename[0] != '|') {
+	if(filename[0] == '|') {
+		pclose(file);
+	} else {
+		fclose(file);
 		rename(tmpname, filename);
 		free(tmpname);
 	}
