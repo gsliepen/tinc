@@ -354,13 +354,15 @@ int main_loop(void)
 	fd_set readset, writeset;
 	struct timeval tv;
 	int r, maxfd;
-	time_t last_ping_check, last_config_check;
+	time_t last_ping_check, last_config_check, last_graph_dump;
 	event_t *event;
 
 	cp();
 
 	last_ping_check = now;
 	last_config_check = now;
+	last_graph_dump = now;
+	
 	srand(now);
 
 	running = true;
@@ -477,6 +479,13 @@ int main_loop(void)
 			/* Try to make outgoing connections */
 			
 			try_outgoing_connections();
+		}
+		
+		/* Dump graph if wanted every 60 seconds*/
+
+		if(last_graph_dump + 60 < now) {
+			dump_graph();
+			last_graph_dump = now;
 		}
 	}
 
