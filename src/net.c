@@ -424,7 +424,7 @@ int main_loop(void)
 
 		while((event = get_expired_event())) {
 			event->handler(event->data);
-			free(event);
+			free_event(event);
 		}
 
 		if(sigalrm) {

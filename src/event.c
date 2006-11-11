@@ -96,7 +96,7 @@ event_t *get_expired_event(void)
 		event = event_tree->head->data;
 
 		if(event->time < now) {
-			avl_delete(event_tree, event);
+			event_del(event);
 			return event;
 		}
 	}

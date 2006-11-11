@@ -93,12 +93,6 @@ void free_node(node_t *n)
 	if(n->queue)
 		list_delete_list(n->queue);
 
-	if(n->name)
-		free(n->name);
-
-	if(n->hostname)
-		free(n->hostname);
-
 	if(n->key)
 		free(n->key);
 
@@ -112,9 +106,17 @@ void free_node(node_t *n)
 
 	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
 
-	if(n->mtuevent)
+	if(n->mtuevent) {
 		event_del(n->mtuevent);
+		free_event(n->mtuevent);
+	}
 	
+	if(n->hostname)
+		free(n->hostname);
+
+	if(n->name)
+		free(n->name);
+
 	free(n);
 }
 

@@ -101,7 +101,7 @@ void send_mtu_probe(node_t *n)
 		send_udppacket(n, &packet);
 	}
 
-	n->mtuevent = xmalloc(sizeof(*n->mtuevent));
+	n->mtuevent = new_event();
 	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
 	n->mtuevent->data = n;
 	n->mtuevent->time = now + 1;

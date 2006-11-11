@@ -526,11 +526,11 @@ bool setup_network_connections(void)
 
 	now = time(NULL);
 
+	init_events();
 	init_connections();
 	init_subnets();
 	init_nodes();
 	init_edges();
-	init_events();
 	init_requests();
 
 	if(get_config_int(lookup_config(config_tree, "PingInterval"), &pinginterval)) {
@@ -594,11 +594,11 @@ void close_network_connections(void)
 	envp[4] = NULL;
 
 	exit_requests();
-	exit_events();
 	exit_edges();
 	exit_subnets();
 	exit_nodes();
 	exit_connections();
+	exit_events();
 
 	execute_script("tinc-down", envp);
 
