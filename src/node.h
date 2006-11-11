@@ -31,7 +31,7 @@
 
 typedef union node_status_t {
 	struct {
-		int active:1;				/* 1 if active.. */
+		int unused_active:1;			/* 1 if active (not used for nodes) */
 		int validkey:1;				/* 1 if we currently have a valid key for him */
 		int waitingforkey:1;			/* 1 if we already sent out a request */
 		int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */

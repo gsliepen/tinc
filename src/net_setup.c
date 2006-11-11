@@ -437,7 +437,6 @@ bool setup_myself(void)
 
 	myself->nexthop = myself;
 	myself->via = myself;
-	myself->status.active = true;
 	myself->status.reachable = true;
 	node_add(myself);
 
