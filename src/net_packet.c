@@ -29,7 +29,12 @@
 #include <openssl/hmac.h>
 
 #include <zlib.h>
+#ifdef HAVE_LZO_LZO1X_H
+#include <lzo/lzo1x.h>
+#endif
+#ifdef HAVE_LZO1X_H
 #include <lzo1x.h>
+#endif
 
 #include "avl_tree.h"
 #include "conf.h"
