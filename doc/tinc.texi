@@ -862,6 +862,16 @@ Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
 
+@cindex GraphDumpFile
+@item GraphDumpFile = <@var{filename}> [experimental]
+If this option is present,
+tinc will dump the current network graph to the file @var{filename}
+every minute, unless there were no changes to the graph.
+The file is in a format that can be read by graphviz tools.
+If @var{filename} starts with a pipe symbol |,
+then the rest of the filename is interpreted as a shell command
+that is executed, the graph is then sent to stdin.
+
 @cindex Hostnames
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
