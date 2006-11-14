@@ -1,3 +1,16 @@
+version 1.0.5                Nov 14 2006
+
+ * Lots of small fixes.
+
+ * Broadcast packets no longer grow in size with each hop. This should
+   fix switch mode (again).
+ 
+ * Generic host-up and host-down scripts.
+
+ * Optionally dump graph in graphviz format to a file or a script.
+
+ * Support LZO 2.0 and later.
+
 version 1.0.4                May  4 2005
 
  * Fix switch and hub modes.
