@@ -94,10 +94,12 @@ bool flush_meta(connection_t *c)
 						   c->name, c->hostname);
 			} else if(errno == EINTR) {
 				continue;
+#ifdef EWOULDBLOCK
 			} else if(errno == EWOULDBLOCK) {
 				ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s) would block"),
 						c->outbuflen, c->name, c->hostname);
 				return true;
+#endif
 			} else {
 				logger(LOG_ERR, _("Flushing meta data to %s (%s) failed: %s"), c->name,
 					   c->hostname, strerror(errno));
