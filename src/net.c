@@ -463,7 +463,8 @@ int main_loop(void)
 				
 				if(c->outgoing) {
 					free(c->outgoing->name);
-					freeaddrinfo(c->outgoing->ai);
+					if(c->outgoing->ai)
+						freeaddrinfo(c->outgoing->ai);
 					free(c->outgoing);
 					c->outgoing = NULL;
 				}

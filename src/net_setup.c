@@ -572,8 +572,14 @@ void close_network_connections(void)
 		next = node->next;
 		c = node->data;
 
-		if(c->outgoing)
-			free(c->outgoing->name), free(c->outgoing), c->outgoing = NULL;
+		if(c->outgoing) {
+			if(c->outgoing->ai)
+				freeaddrinfo(c->outgoing->ai);
+			free(c->outgoing->name);
+			free(c->outgoing);
+			c->outgoing = NULL;
+		}
+
 		terminate_connection(c, false);
 	}
 
