@@ -22,16 +22,21 @@ AC_DEFUN([tinc_LZO],
   )
 
   AC_CHECK_LIB(lzo2, lzo1x_1_compress,
-    [AC_CHECK_HEADERS(lzo/lzo1x.h,
-      [LIBS="$LIBS -llzo2"],
-      [AC_MSG_ERROR("lzo2 header files not found."); break]
-    )],
+    [LIBS="$LIBS -llzo2"],
     [AC_CHECK_LIB(lzo, lzo1x_1_compress,
-      [AC_CHECK_HEADERS(lzo1x.h,
-        [LIBS="$LIBS -llzo"],
-	[AC_MSG_ERROR("lzo1 header files not found."); break]
-      )],
+      [LIBS="$LIBS -llzo"],
       [AC_MSG_ERROR("lzo libraries not found."); break]
+    )]
+  )
+
+  AC_CHECK_HEADERS(lzo/lzo1x.h,
+    [AC_DEFINE(LZO1X_H, [<lzo/lzo1x.h>], [Location of lzo1x.h])],
+    [AC_CHECK_HEADERS(lzo2/lzo1x.h,
+      [AC_DEFINE(LZO1X_H, [<lzo2/lzo1x.h>], [Location of lzo1x.h])],
+      [AC_CHECK_HEADERS(lzo1x.h,
+        [AC_DEFINE(LZO1X_H, [<lzo1x.h>], [Location of lzo1x.h])],
+        [AC_MSG_ERROR("lzo header files not found."); break]
+      )]
     )]
   )
 ])

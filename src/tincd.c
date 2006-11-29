@@ -37,12 +37,7 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 
-#ifdef HAVE_LZO_LZO1X_H
-#include <lzo/lzo1x.h>
-#endif
-#ifdef HAVE_LZO1X_H
-#include <lzo1x.h>
-#endif
+#include LZO1X_H
 
 #include <getopt.h>
 #include "pidfile.h"
