@@ -101,7 +101,13 @@ void mst_kruskal(void)
 
 	/* Starting point */
 
-	((edge_t *) edge_weight_tree->head->data)->from->status.visited = true;
+	for(node = edge_weight_tree->head; node; node = next) {
+		e = node->data;
+		if(e->from->status.reachable) {
+			e->from->status.visited = true;
+			break;
+		}
+	}
 
 	/* Add safe edges */
 
@@ -307,8 +313,8 @@ void sssp_bfs(void)
 
 void graph(void)
 {
-	mst_kruskal();
 	sssp_bfs();
+	mst_kruskal();
 	graph_changed = true;
 }
 
