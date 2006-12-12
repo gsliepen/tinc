@@ -101,7 +101,7 @@ void mst_kruskal(void)
 
 	/* Starting point */
 
-	for(node = edge_weight_tree->head; node; node = next) {
+	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 		if(e->from->status.reachable) {
 			e->from->status.visited = true;
