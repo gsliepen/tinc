@@ -142,12 +142,6 @@ AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 
-case $host_os in
-  *linux*)
-    tinc_TUNTAP
-  ;;
-esac
-
 tinc_OPENSSL
 tinc_ZLIB
 tinc_LZO

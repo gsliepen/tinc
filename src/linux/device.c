@@ -22,16 +22,8 @@
 
 #include "system.h"
 
-#ifdef HAVE_TUNTAP
-#ifdef LINUX_IF_TUN_H
-#include LINUX_IF_TUN_H
-#else
 #include <linux/if_tun.h>
-#endif
 #define DEFAULT_DEVICE "/dev/net/tun"
-#else
-#define DEFAULT_DEVICE "/dev/tap0"
-#endif
 
 #include "conf.h"
 #include "logger.h"
