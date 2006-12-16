@@ -22,8 +22,12 @@
 
 #include "system.h"
 
+#ifdef HAVE_LINUX_IF_TUN_H
 #include <linux/if_tun.h>
 #define DEFAULT_DEVICE "/dev/net/tun"
+#else
+#define DEFAULT_DEVICE "/dev/tap0"
+#endif
 
 #include "conf.h"
 #include "logger.h"
@@ -57,7 +61,7 @@ bool setup_device(void)
 		device = DEFAULT_DEVICE;
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-#ifdef HAVE_TUNTAP
+#ifdef HAVE_LINUX_IF_TUN_H
 		iface = netname;
 #else
 		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
@@ -69,7 +73,7 @@ bool setup_device(void)
 		return false;
 	}
 
-#ifdef HAVE_TUNTAP
+#ifdef HAVE_LINUX_IF_TUN_H
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
 	memset(&ifr, 0, sizeof(ifr));
