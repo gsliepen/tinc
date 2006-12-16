@@ -22,7 +22,10 @@ sample-config.tar.gz: sample-config
 texi2html: tinc.texi
 	texi2html -split=chapter tinc.texi
 
-%.html: $(man_MANS)
+tincd.8.html: tincd.8
+	w3mman2html $< > $@
+
+tinc.conf.5.html: tinc.conf.5
 	w3mman2html $< > $@
 
 substitute = sed \
