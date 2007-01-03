@@ -45,16 +45,23 @@ static int device_total_out = 0;
 
 extern char *myport;
 
+static struct packetbuf {
+	uint8_t data[MTU];
+	length_t len;
+} *bufs;
+
+static int nbufs = 64;
+
 DWORD WINAPI tapreader(void *bla) {
 	int sock, err, status;
 	struct addrinfo *ai;
 	struct addrinfo hint = {
 		.ai_family = AF_UNSPEC,
-		.ai_socktype = SOCK_DGRAM,
-		.ai_protocol = IPPROTO_UDP,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
 		.ai_flags = 0,
 	};
-	char buf[MTU];
+	unsigned char bufno = 0;
 	long len;
 	OVERLAPPED overlapped;
 
@@ -67,7 +74,7 @@ DWORD WINAPI tapreader(void *bla) {
 		return -1;
 	}
 
-	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+	sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 
 	freeaddrinfo(ai);
 
@@ -92,7 +99,7 @@ DWORD WINAPI tapreader(void *bla) {
 		overlapped.OffsetHigh = 0;
 		ResetEvent(overlapped.hEvent);
 
-		status = ReadFile(device_handle, buf, sizeof(buf), &len, &overlapped);
+		status = ReadFile(device_handle, bufs[bufno].data, MTU, &len, &overlapped);
 
 		if(!status) {
 			if(GetLastError() == ERROR_IO_PENDING) {
@@ -106,8 +113,11 @@ DWORD WINAPI tapreader(void *bla) {
 			}
 		}
 
-		if(send(sock, buf, len, 0) <= 0)
+		bufs[bufno].len = len;
+		if(send(sock, &bufno, 1, 0) <= 0)
 			return -1;
+		if(++bufno >= nbufs)
+			bufno = 0;
 	}
 }
 
@@ -131,9 +141,9 @@ bool setup_device(void)
 	struct addrinfo *ai;
 	struct addrinfo hint = {
 		.ai_family = AF_UNSPEC,
-		.ai_socktype = SOCK_DGRAM,
-		.ai_protocol = IPPROTO_UDP,
-		.ai_flags = 0,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+		.ai_flags = AI_PASSIVE,
 	};
 
 	cp();
@@ -228,6 +238,16 @@ bool setup_device(void)
 		overwrite_mac = 1;
 	}
 
+	/* Set up ringbuffer */
+
+	get_config_int(lookup_config(config_tree, "RingBufferSize"), &nbufs);
+	if(nbufs <= 1)
+		nbufs = 1;
+	else if(nbufs > 256)
+		nbufs = 256;
+	
+	bufs = xmalloc_and_zero(nbufs * sizeof *bufs);
+
 	/* Create a listening socket */
 
 	err = getaddrinfo(NULL, myport, &hint, &ai);
@@ -237,7 +257,7 @@ bool setup_device(void)
 		return false;
 	}
 
-	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+	sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(sock < 0) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
@@ -295,17 +315,18 @@ void close_device(void)
 
 bool read_packet(vpn_packet_t *packet)
 {
-	int lenin;
+	unsigned char bufno;
 
 	cp();
 
-	if((lenin = recv(device_fd, packet->data, MTU, 0)) <= 0) {
+	if((recv(device_fd, &bufno, 1, 0)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return false;
 	}
 	
-	packet->len = lenin;
+	packet->len = bufs[bufno].len;
+	memcpy(packet->data, bufs[bufno].data, bufs[bufno].len);
 
 	device_total_in += packet->len;
 
