@@ -143,7 +143,7 @@ bool setup_device(void)
 		.ai_family = AF_UNSPEC,
 		.ai_socktype = SOCK_STREAM,
 		.ai_protocol = IPPROTO_TCP,
-		.ai_flags = AI_PASSIVE,
+		.ai_flags = 0,
 	};
 
 	cp();
