@@ -374,6 +374,9 @@ void dump_graph(void)
 		pclose(file);
 	} else {
 		fclose(file);
+#ifdef HAVE_MINGW
+		unlink(filename);
+#endif
 		rename(tmpname, filename);
 		free(tmpname);
 	}
