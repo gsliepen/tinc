@@ -1,3 +1,10 @@
+Version 1.0.7                Jan  5 2007
+
+ * Fixed a bug that caused slow network speeds on Windows.
+
+ * Fixed a bug that caused tinc unable to write packets to the tun device on
+   OpenBSD.
+
 Version 1.0.6                Dec 18 2006
 
  * More flexible detection of the LZO libraries when compiling.
