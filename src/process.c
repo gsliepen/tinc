@@ -379,8 +379,10 @@ bool execute_script(const char *name, char **envp)
 
 	/* First check if there is a script */
 
-	if(stat(scriptname + 1, &s))
+	if(stat(scriptname + 1, &s)) {
+		free(scriptname);
 		return true;
+	}
 
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 
