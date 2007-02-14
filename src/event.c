@@ -57,6 +57,28 @@ void exit_events(void)
 	avl_delete_tree(event_tree);
 }
 
+void flush_events(void)
+{
+	avl_tree_t *to_flush;
+	event_t *event;
+
+	/*
+	 * Events can be inserted from event handlers, so only flush events
+	 * already in the priority queue.
+	 */
+
+	cp();
+
+	to_flush = event_tree;
+	init_events();
+	while (to_flush->head) {
+		event = to_flush->head->data;
+		event->handler(event->data);
+		avl_delete(to_flush, event);
+	}
+	avl_delete_tree(to_flush);
+}
+
 event_t *new_event(void)
 {
 	cp();

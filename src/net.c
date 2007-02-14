@@ -429,12 +429,7 @@ int main_loop(void)
 
 		if(sigalrm) {
 			logger(LOG_INFO, _("Flushing event queue"));
-
-			while(event_tree->head) {
-				event = event_tree->head->data;
-				event->handler(event->data);
-				event_del(event);
-			}
+			flush_events();
 			sigalrm = false;
 		}
 

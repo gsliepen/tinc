@@ -38,6 +38,7 @@ typedef struct {
 
 extern void init_events(void);
 extern void exit_events(void);
+extern void flush_events(void);
 extern event_t *new_event(void) __attribute__ ((__malloc__));
 extern void free_event(event_t *);
 extern void event_add(event_t *);
