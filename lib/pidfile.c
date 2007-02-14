@@ -85,12 +85,11 @@ pid_t write_pid (char *pidfile)
   pid_t pid;
 
   if ((fd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1) {
-      close(fd);
       return 0;
   }
 
   if ((f = fdopen(fd, "r+")) == NULL) {
-      fclose(f);
+      close(fd);
       return 0;
   }
   
