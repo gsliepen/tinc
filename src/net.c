@@ -109,19 +109,16 @@ static void purge(void)
 }
 
 /*
-  put all file descriptors in an fd_set array
-  While we're at it, purge stuff that needs to be removed.
+  put all file descriptors into events
+  While we're at it, purge stuf that needs to be removed.
 */
-static int build_fdset(fd_set *readset, fd_set *writeset)
+static int build_fdset(void)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
 	int i, max = 0;
 
 	cp();
-
-	FD_ZERO(readset);
-	FD_ZERO(writeset);
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
@@ -132,28 +129,17 @@ static int build_fdset(fd_set *readset, fd_set *writeset)
 			if(!connection_tree->head)
 				purge();
 		} else {
-			FD_SET(c->socket, readset);
+			short events = EV_READ;
 			if(c->outbuflen > 0)
-				FD_SET(c->socket, writeset);
-			if(c->socket > max)
-				max = c->socket;
+				events |= EV_WRITE;
+			event_del(&c->ev);
+			event_set(&c->ev, c->socket, events,
+					  handle_meta_connection_data, c);
+			if (event_add(&c->ev, NULL) < 0)
+				return -1;
 		}
 	}
-
-	for(i = 0; i < listen_sockets; i++) {
-		FD_SET(listen_socket[i].tcp, readset);
-		if(listen_socket[i].tcp > max)
-			max = listen_socket[i].tcp;
-		FD_SET(listen_socket[i].udp, readset);
-		if(listen_socket[i].udp > max)
-			max = listen_socket[i].udp;
-	}
-
-	FD_SET(device_fd, readset);
-	if(device_fd > max)
-		max = device_fd;
-	
-	return max;
+	return 0;
 }
 
 /*
@@ -279,71 +265,47 @@ static void check_dead_connections(void)
 	}
 }
 
-/*
-  check all connections to see if anything
-  happened on their sockets
-*/
-static void check_network_activity(fd_set * readset, fd_set * writeset)
+void handle_meta_connection_data(int fd, short events, void *data)
 {
-	connection_t *c;
-	avl_node_t *node;
-	int result, i;
+	connection_t *c = data;
+	int result;
 	socklen_t len = sizeof(result);
-	vpn_packet_t packet;
 
-	cp();
+	if (c->status.remove)
+		return;
 
-	/* check input from kernel */
-	if(FD_ISSET(device_fd, readset)) {
-		if(read_packet(&packet))
-			route(myself, &packet);
-	}
+	if (events & EV_READ) {
+		if(c->status.connecting) {
+			c->status.connecting = false;
+			getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
 
-	/* check meta connections */
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
-
-		if(c->status.remove)
-			continue;
-
-		if(FD_ISSET(c->socket, readset)) {
-			if(c->status.connecting) {
-				c->status.connecting = false;
-				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
-
-				if(!result)
-					finish_connecting(c);
-				else {
-					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-							   _("Error while connecting to %s (%s): %s"),
-							   c->name, c->hostname, strerror(result));
-					closesocket(c->socket);
-					do_outgoing_connection(c);
-					continue;
-				}
-			}
-
-			if(!receive_meta(c)) {
-				terminate_connection(c, c->status.active);
-				continue;
+			if(!result)
+				finish_connecting(c);
+			else {
+				ifdebug(CONNECTIONS) logger(LOG_DEBUG,
+						   _("Error while connecting to %s (%s): %s"),
+						   c->name, c->hostname, strerror(result));
+				closesocket(c->socket);
+				do_outgoing_connection(c);
+				return;
 			}
 		}
 
-		if(FD_ISSET(c->socket, writeset)) {
-			if(!flush_meta(c)) {
-				terminate_connection(c, c->status.active);
-				continue;
-			}
+		if (!receive_meta(c)) {
+			terminate_connection(c, c->status.active);
+			return;
 		}
 	}
 
-	for(i = 0; i < listen_sockets; i++) {
-		if(FD_ISSET(listen_socket[i].udp, readset))
-			handle_incoming_vpn_data(listen_socket[i].udp);
-
-		if(FD_ISSET(listen_socket[i].tcp, readset))
-			handle_new_meta_connection(listen_socket[i].tcp);
+	if (events & EV_WRITE) {
+		if(!flush_meta(c)) {
+			terminate_connection(c, c->status.active);
+		}
 	}
+}
+
+static void dummy(int a, short b, void *c)
+{
 }
 
 /*
@@ -351,11 +313,11 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 */
 int main_loop(void)
 {
-	fd_set readset, writeset;
 	struct timeval tv;
-	int r, maxfd;
+	int r;
 	time_t last_ping_check, last_config_check, last_graph_dump;
 	tevent_t *event;
+	struct event timeout;
 
 	cp();
 
@@ -374,23 +336,30 @@ int main_loop(void)
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		maxfd = build_fdset(&readset, &writeset);
+		/* XXX: libevent transition: old timeout code in this loop */
+		timeout_set(&timeout, dummy, NULL);
+		timeout_add(&timeout, &tv);
 
-		r = select(maxfd + 1, &readset, &writeset, NULL, &tv);
-
+		r = build_fdset();
 		if(r < 0) {
-			if(errno != EINTR && errno != EAGAIN) {
-				logger(LOG_ERR, _("Error while waiting for input: %s"),
-					   strerror(errno));
-				cp_trace();
-				dump_connections();
-				return 1;
-			}
-
-			continue;
+			logger(LOG_ERR, _("Error building fdset: %s"), strerror(errno));
+			cp_trace();
+			dump_connections();
+			return 1;
 		}
 
-		check_network_activity(&readset, &writeset);
+		r = event_loop(EVLOOP_ONCE);
+		now = time(NULL);
+		if(r < 0) {
+			logger(LOG_ERR, _("Error while waiting for input: %s"),
+				   strerror(errno));
+			cp_trace();
+			dump_connections();
+			return 1;
+		}
+
+		/* XXX: more libevent transition */
+		timeout_del(&timeout);
 
 		if(do_purge) {
 			purge();

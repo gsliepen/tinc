@@ -484,7 +484,7 @@ void flush_queue(node_t *n)
 	}
 }
 
-void handle_incoming_vpn_data(int sock)
+void handle_incoming_vpn_data(int sock, short events, void *data)
 {
 	vpn_packet_t pkt;
 	char *hostname;
@@ -514,4 +514,12 @@ void handle_incoming_vpn_data(int sock)
 	}
 
 	receive_udppacket(n, &pkt);
+}
+
+void handle_device_data(int sock, short events, void *data)
+{
+	vpn_packet_t packet;
+
+	if(read_packet(&packet))
+		route(myself, &packet);
 }

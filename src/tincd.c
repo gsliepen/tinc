@@ -462,6 +462,11 @@ int main(int argc, char **argv)
 	if(!read_server_config())
 		return 1;
 
+	if(event_init() < 0) {
+		logger(LOG_ERR, _("Error initializing libevent!"));
+		return 1;
+	}
+
 	if(lzo_init() != LZO_E_OK) {
 		logger(LOG_ERR, _("Error initializing LZO compressor!"));
 		return 1;

@@ -384,7 +384,7 @@ void setup_outgoing_connection(outgoing_t *outgoing)
   accept a new tcp connect and create a
   new connection
 */
-bool handle_new_meta_connection(int sock)
+void handle_new_meta_connection(int sock, short events, void *data)
 {
 	connection_t *c;
 	sockaddr_t sa;
@@ -398,7 +398,6 @@ bool handle_new_meta_connection(int sock)
 	if(fd < 0) {
 		logger(LOG_ERR, _("Accepting a new connection failed: %s"),
 			   strerror(errno));
-		return false;
 	}
 
 	sockaddrunmap(&sa);
@@ -423,8 +422,6 @@ bool handle_new_meta_connection(int sock)
 
 	c->allow_request = ID;
 	send_id(c);
-
-	return true;
 }
 
 void try_outgoing_connections(void)

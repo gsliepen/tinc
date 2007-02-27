@@ -26,6 +26,8 @@
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 
+#include <event.h>
+
 #include "avl_tree.h"
 
 #define OPTION_INDIRECT		0x0001
@@ -60,6 +62,7 @@ typedef struct connection_t {
 	char *hostname;				/* the hostname of its real ip */
 	int protocol_version;		/* used protocol */
 
+	struct event ev;			/* events on this metadata connection */
 	int socket;					/* socket used for this connection */
 	long int options;			/* options for this connection */
 	connection_status_t status;	/* status info */

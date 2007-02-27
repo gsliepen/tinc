@@ -45,6 +45,7 @@
 #include "xalloc.h"
 
 char *myport;
+static struct event device_ev;
 
 bool read_rsa_public_key(connection_t *c)
 {
@@ -447,6 +448,14 @@ bool setup_myself(void)
 	if(!setup_device())
 		return false;
 
+	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST,
+			  handle_device_data, NULL);
+	if (event_add(&device_ev, NULL) < 0) {
+		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
+		close_device();
+		return false;
+	}
+
 	/* Run tinc-up script to further initialize the tap interface */
 	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	asprintf(&envp[1], "DEVICE=%s", device ? : "");
@@ -492,8 +501,33 @@ bool setup_myself(void)
 		listen_socket[listen_sockets].udp =
 			setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
 
-		if(listen_socket[listen_sockets].udp < 0)
+		if(listen_socket[listen_sockets].udp < 0) {
+			close(listen_socket[listen_sockets].tcp);
 			continue;
+		}
+
+		event_set(&listen_socket[listen_sockets].ev_tcp,
+				  listen_socket[listen_sockets].tcp,
+				  EV_READ|EV_PERSIST,
+				  handle_new_meta_connection, NULL);
+		if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
+			logger(LOG_WARNING, _("event_add failed: %s"), strerror(errno));
+			close(listen_socket[listen_sockets].tcp);
+			close(listen_socket[listen_sockets].udp);
+			continue;
+		}
+
+		event_set(&listen_socket[listen_sockets].ev_udp,
+				  listen_socket[listen_sockets].udp,
+				  EV_READ|EV_PERSIST,
+				  handle_incoming_vpn_data, NULL);
+		if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
+			logger(LOG_WARNING, _("event_add failed: %s"), strerror(errno));
+			close(listen_socket[listen_sockets].tcp);
+			close(listen_socket[listen_sockets].udp);
+			event_del(&listen_socket[listen_sockets].ev_tcp);
+			continue;
+		}
 
 		ifdebug(CONNECTIONS) {
 			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);

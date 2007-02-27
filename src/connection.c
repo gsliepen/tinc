@@ -70,6 +70,7 @@ connection_t *new_connection(void)
 		return NULL;
 
 	gettimeofday(&c->start, NULL);
+	event_set(&c->ev, -1, 0, NULL, NULL);
 
 	return c;
 }
@@ -78,20 +79,14 @@ void free_connection(connection_t *c)
 {
 	cp();
 
-	if(c->hostname)
+	if(c) {
 		free(c->hostname);
-
-	if(c->inkey)
 		free(c->inkey);
-
-	if(c->outkey)
 		free(c->outkey);
-
-	if(c->mychallenge)
 		free(c->mychallenge);
-
-	if(c->hischallenge)
 		free(c->hischallenge);
+		event_del(&c->ev);
+	}
 
 	free(c);
 }
