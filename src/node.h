@@ -25,7 +25,7 @@
 
 #include "avl_tree.h"
 #include "connection.h"
-#include "event.h"
+#include "tevent.h"
 #include "list.h"
 #include "subnet.h"
 
@@ -80,7 +80,7 @@ typedef struct node_t {
 	length_t minmtu;			/* Probed minimum MTU */
 	length_t maxmtu;			/* Probed maximum MTU */
 	int mtuprobes;				/* Number of probes */
-	event_t *mtuevent;			/* Probe event */
+	tevent_t *mtuevent;			/* Probe event */
 } node_t;
 
 extern struct node_t *myself;

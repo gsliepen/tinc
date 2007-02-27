@@ -25,7 +25,7 @@
 
 #include "avl_tree.h"
 
-extern avl_tree_t *event_tree;
+extern avl_tree_t *tevent_tree;
 
 typedef void (*event_handler_t)(void *);
 
@@ -34,15 +34,15 @@ typedef struct {
 	int id;
 	event_handler_t handler;
 	void *data;
-} event_t;
+} tevent_t;
 
-extern void init_events(void);
-extern void exit_events(void);
-extern void flush_events(void);
-extern event_t *new_event(void) __attribute__ ((__malloc__));
-extern void free_event(event_t *);
-extern void event_add(event_t *);
-extern void event_del(event_t *);
-extern event_t *get_expired_event(void);
+extern void init_tevents(void);
+extern void exit_tevents(void);
+extern void flush_tevents(void);
+extern tevent_t *new_tevent(void) __attribute__ ((__malloc__));
+extern void free_tevent(tevent_t *);
+extern void tevent_add(tevent_t *);
+extern void tevent_del(tevent_t *);
+extern tevent_t *get_expired_tevent(void);
 
 #endif							/* __TINC_EVENT_H__ */

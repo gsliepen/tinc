@@ -29,7 +29,7 @@
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
-#include "event.h"
+#include "tevent.h"
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
@@ -355,7 +355,7 @@ int main_loop(void)
 	struct timeval tv;
 	int r, maxfd;
 	time_t last_ping_check, last_config_check, last_graph_dump;
-	event_t *event;
+	tevent_t *event;
 
 	cp();
 

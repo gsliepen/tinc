@@ -23,16 +23,16 @@
 #include "system.h"
 
 #include "avl_tree.h"
-#include "event.h"
+#include "tevent.h"
 #include "utils.h"
 #include "xalloc.h"
 
-avl_tree_t *event_tree;
+avl_tree_t *tevent_tree;
 extern time_t now;
 
 int id;
 
-static int event_compare(const event_t *a, const event_t *b)
+static int tevent_compare(const tevent_t *a, const tevent_t *b)
 {
 	if(a->time > b->time)
 		return 1;
@@ -43,24 +43,24 @@ static int event_compare(const event_t *a, const event_t *b)
 	return a->id - b->id;
 }
 
-void init_events(void)
+void init_tevents(void)
 {
 	cp();
 
-	event_tree = avl_alloc_tree((avl_compare_t) event_compare, NULL);
+	tevent_tree = avl_alloc_tree((avl_compare_t) tevent_compare, NULL);
 }
 
-void exit_events(void)
+void exit_tevents(void)
 {
 	cp();
 
-	avl_delete_tree(event_tree);
+	avl_delete_tree(tevent_tree);
 }
 
-void flush_events(void)
+void flush_tevents(void)
 {
 	avl_tree_t *to_flush;
-	event_t *event;
+	tevent_t *event;
 
 	/*
 	 * Events can be inserted from event handlers, so only flush events
@@ -69,8 +69,8 @@ void flush_events(void)
 
 	cp();
 
-	to_flush = event_tree;
-	init_events();
+	to_flush = tevent_tree;
+	init_tevents();
 	while (to_flush->head) {
 		event = to_flush->head->data;
 		event->handler(event->data);
@@ -79,46 +79,46 @@ void flush_events(void)
 	avl_delete_tree(to_flush);
 }
 
-event_t *new_event(void)
+tevent_t *new_tevent(void)
 {
 	cp();
 
-	return xmalloc_and_zero(sizeof(event_t));
+	return xmalloc_and_zero(sizeof(tevent_t));
 }
 
-void free_event(event_t *event)
+void free_tevent(tevent_t *event)
 {
 	cp();
 
 	free(event);
 }
 
-void event_add(event_t *event)
+void tevent_add(tevent_t *event)
 {
 	cp();
 
 	event->id = ++id;
-	avl_insert(event_tree, event);
+	avl_insert(tevent_tree, event);
 }
 
-void event_del(event_t *event)
+void tevent_del(tevent_t *event)
 {
 	cp();
 
-	avl_delete(event_tree, event);
+	avl_delete(tevent_tree, event);
 }
 
-event_t *get_expired_event(void)
+tevent_t *get_expired_tevent(void)
 {
-	event_t *event;
+	tevent_t *event;
 
 	cp();
 
-	if(event_tree->head) {
-		event = event_tree->head->data;
+	if(tevent_tree->head) {
+		event = tevent_tree->head->data;
 
 		if(event->time < now) {
-			event_del(event);
+			tevent_del(event);
 			return event;
 		}
 	}

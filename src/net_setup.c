@@ -32,7 +32,7 @@
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
-#include "event.h"
+#include "tevent.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"

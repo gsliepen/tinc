@@ -36,7 +36,7 @@
 #include "connection.h"
 #include "device.h"
 #include "ethernet.h"
-#include "event.h"
+#include "tevent.h"
 #include "graph.h"
 #include "list.h"
 #include "logger.h"
@@ -96,11 +96,11 @@ void send_mtu_probe(node_t *n)
 		send_udppacket(n, &packet);
 	}
 
-	n->mtuevent = new_event();
+	n->mtuevent = new_tevent();
 	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
 	n->mtuevent->data = n;
 	n->mtuevent->time = now + 1;
-	event_add(n->mtuevent);
+	tevent_add(n->mtuevent);
 }
 
 void mtu_probe_h(node_t *n, vpn_packet_t *packet) {
