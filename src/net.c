@@ -422,14 +422,14 @@ int main_loop(void)
 		}
 
 
-		while((event = get_expired_event())) {
+		while((event = get_expired_tevent())) {
 			event->handler(event->data);
-			free_event(event);
+			free_tevent(event);
 		}
 
 		if(sigalrm) {
 			logger(LOG_INFO, _("Flushing event queue"));
-			flush_events();
+			flush_tevents();
 			sigalrm = false;
 		}
 

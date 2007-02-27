@@ -108,7 +108,7 @@ void free_node(node_t *n)
 
 	if(n->mtuevent) {
 		tevent_del(n->mtuevent);
-		free_event(n->mtuevent);
+		free_tevent(n->mtuevent);
 	}
 	
 	if(n->hostname)

@@ -526,7 +526,7 @@ bool setup_network_connections(void)
 
 	now = time(NULL);
 
-	init_events();
+	init_tevents();
 	init_connections();
 	init_subnets();
 	init_nodes();
@@ -604,7 +604,7 @@ void close_network_connections(void)
 	exit_subnets();
 	exit_nodes();
 	exit_connections();
-	exit_events();
+	exit_tevents();
 
 	execute_script("tinc-down", envp);
 
