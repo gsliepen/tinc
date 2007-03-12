@@ -79,15 +79,25 @@ void free_connection(connection_t *c)
 {
 	cp();
 
-	if(c) {
-		free(c->hostname);
-		free(c->inkey);
-		free(c->outkey);
-		free(c->mychallenge);
-		free(c->hischallenge);
-		event_del(&c->ev);
-	}
+	if(!c)
+		return;
 
+	if(c->hostname)
+		free(c->hostname);
+
+	if(c->inkey)
+		free(c->inkey);
+
+	if(c->outkey)
+		free(c->outkey);
+
+	if(c->mychallenge)
+		free(c->mychallenge);
+
+	if(c->hischallenge)
+		free(c->hischallenge);
+
+	event_del(&c->ev);
 	free(c);
 }
 
