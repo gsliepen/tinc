@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -424,7 +424,7 @@ bool handle_new_meta_connection(int sock)
 	sockaddrunmap(&sa);
 
 	c = new_connection();
-	c->name = NULL;
+	c->name = xstrdup("<unknown>");
 	c->outcipher = myself->connection->outcipher;
 	c->outdigest = myself->connection->outdigest;
 	c->outmaclength = myself->connection->outmaclength;

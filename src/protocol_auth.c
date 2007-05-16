@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -68,9 +68,9 @@ bool id_h(connection_t *c)
 		return false;
 	}
 
-	/* If we set c->name in advance, make sure we are connected to the right host */
+	/* If this is an outgoing connection, make sure we are connected to the right host */
 
-	if(c->name) {
+	if(c->outgoing) {
 		if(strcmp(c->name, name)) {
 			logger(LOG_ERR, _("Peer %s is %s instead of %s"), c->hostname, name,
 				   c->name);
