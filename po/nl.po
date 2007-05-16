@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-svn\n"
 "Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
-"POT-Creation-Date: 2007-01-05 14:14+0100\n"
-"PO-Revision-Date: 2007-01-05 14:14+0100\n"
+"POT-Creation-Date: 2007-05-16 16:39+0200\n"
+"PO-Revision-Date: 2007-05-16 16:40+0200\n"
 "Last-Translator: Guus Sliepen <guus@tinc-vpn.org>\n"
 "Language-Team: Dutch\n"
 "MIME-Version: 1.0\n"
@@ -90,16 +90,16 @@ msgstr "iedereen"
 msgid "BROADCAST"
 msgstr "BROADCAST"
 
-#: src/connection.c:120
+#: src/connection.c:123
 msgid "Connections:"
 msgstr "Verbindingen:"
 
-#: src/connection.c:124
+#: src/connection.c:127
 #, c-format
 msgid " %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"
 msgstr " %s op %s opties %lx socket %d status %04x outbuf %d/%d/%d"
 
-#: src/connection.c:129
+#: src/connection.c:132
 msgid "End of connections."
 msgstr "Einde van verbindingen."
 
@@ -206,7 +206,7 @@ msgstr "Hergenereren symmetrische sleutel"
 msgid "Flushing event queue"
 msgstr "Legen taakrij"
 
-#: src/net.c:455
+#: src/net.c:450
 msgid "Unable to reread configuration file, exitting."
 msgstr "Kan configuratiebestand niet herlezen, beëindigen."
 
@@ -287,9 +287,9 @@ msgstr "Fout tijdens versleutelen pakket naar %s (%s): %s"
 msgid "Setting outgoing packet priority to %d"
 msgstr "Instellen prioriteit uitgaand pakket op %d"
 
-#: src/net_packet.c:393 src/net_setup.c:478 src/net_socket.c:129
-#: src/net_socket.c:158 src/tincd.c:435 src/tincd.c:472 src/process.c:198
-#: src/process.c:231 src/process.c:428 src/bsd/device.c:93
+#: src/net_packet.c:393 src/net_setup.c:478 src/net_socket.c:135
+#: src/net_socket.c:164 src/tincd.c:435 src/tincd.c:472 src/process.c:198
+#: src/process.c:231 src/process.c:430 src/bsd/device.c:93
 #: src/bsd/device.c:112 src/cygwin/device.c:140 src/cygwin/device.c:171
 #: src/mingw/device.c:73 src/mingw/device.c:82 src/mingw/device.c:87
 #: src/mingw/device.c:256 src/mingw/device.c:263 src/mingw/device.c:268
@@ -455,86 +455,96 @@ msgstr "Kon geen enkele luistersocket aanmaken!"
 msgid "fcntl for %s: %s"
 msgstr "fcntl voor %s: %s"
 
-#: src/net_socket.c:90
+#: src/net_socket.c:69
+#, c-format
+msgid "ioctlsocket for %s: WSA error %d"
+msgstr "ioctlsocket voor %s: WSA fout %d"
+
+#: src/net_socket.c:96
 #, c-format
 msgid "Creating metasocket failed: %s"
 msgstr "Aanmaak van metasocket mislukt: %s"
 
-#: src/net_socket.c:109 src/net_socket.c:201
+#: src/net_socket.c:115 src/net_socket.c:217
 #, c-format
 msgid "Can't bind to interface %s: %s"
 msgstr "Kan niet aan interface %s binden: %s"
 
-#: src/net_socket.c:114
+#: src/net_socket.c:120
 msgid "BindToInterface not supported on this platform"
 msgstr "BindToInterface wordt niet ondersteund op dit platform"
 
-#: src/net_socket.c:121
+#: src/net_socket.c:127
 #, c-format
 msgid "Can't bind to %s/tcp: %s"
 msgstr "Kan niet aan %s/tcp binden: %s"
 
-#: src/net_socket.c:148
+#: src/net_socket.c:154
 #, c-format
 msgid "Creating UDP socket failed: %s"
 msgstr "Aanmaak UDP socket mislukte: %s"
 
-#: src/net_socket.c:212
+#: src/net_socket.c:174
+#, c-format
+msgid "Call to `%s' failed: WSA error %d"
+msgstr "Systeemaanroep `%s' mislukte: WSA fout %d"
+
+#: src/net_socket.c:228
 #, c-format
 msgid "Can't bind to %s/udp: %s"
 msgstr "Kan niet aan %s/udp binden: %s"
 
-#: src/net_socket.c:239
+#: src/net_socket.c:255
 #, c-format
 msgid "Trying to re-establish outgoing connection in %d seconds"
 msgstr "Poging tot herstellen van uitgaande verbinding over %d seconden"
 
-#: src/net_socket.c:247
+#: src/net_socket.c:263
 #, c-format
 msgid "Connected to %s (%s)"
 msgstr "Verbonden met %s (%s)"
 
-#: src/net_socket.c:266
+#: src/net_socket.c:282
 #, c-format
 msgid "Could not set up a meta connection to %s"
 msgstr "Kon geen metaverbinding aangaan met %s"
 
-#: src/net_socket.c:300
+#: src/net_socket.c:316
 #, c-format
 msgid "Trying to connect to %s (%s)"
 msgstr "Poging tot verbinden met %s (%s)"
 
-#: src/net_socket.c:306
+#: src/net_socket.c:322
 #, c-format
 msgid "Creating socket for %s failed: %s"
 msgstr "Aanmaken socket voor %s mislukt: %s"
 
-#: src/net_socket.c:328
+#: src/net_socket.c:348
 #, c-format
 msgid "%s: %s"
 msgstr "%s: %s"
 
-#: src/net_socket.c:349
+#: src/net_socket.c:369
 #, c-format
 msgid "Already connected to %s"
 msgstr "Reeds verbonden met %s"
 
-#: src/net_socket.c:368
+#: src/net_socket.c:388
 #, c-format
 msgid "No address specified for %s"
 msgstr "Geen adres gespecificeerd voor %s"
 
-#: src/net_socket.c:399
+#: src/net_socket.c:419
 #, c-format
 msgid "Accepting a new connection failed: %s"
 msgstr "Aanname van nieuwe verbinding is mislukt: %s"
 
-#: src/net_socket.c:418
+#: src/net_socket.c:438
 #, c-format
 msgid "Connection from %s"
 msgstr "Verbinding van %s"
 
-#: src/net_socket.c:443
+#: src/net_socket.c:463
 #, c-format
 msgid "Invalid name for outgoing connection in %s line %d"
 msgstr "Ongeldige naam voor uitgaande verbinding in %s regel %d"
@@ -1129,56 +1139,56 @@ msgstr "Kon pid bestand %s niet schrijven: %s\n"
 msgid "tincd %s (%s %s) starting, debug level %d"
 msgstr "tincd %s (%s %s) start, debug niveau %d"
 
-#: src/process.c:385
+#: src/process.c:387
 #, c-format
 msgid "Executing script %s"
 msgstr "Uitvoeren script %s"
 
-#: src/process.c:415
+#: src/process.c:417
 #, c-format
 msgid "Script %s exited with non-zero status %d"
 msgstr "Script %s beëindigde met status %d"
 
-#: src/process.c:420
+#: src/process.c:422
 #, c-format
 msgid "Script %s was killed by signal %d (%s)"
 msgstr "Script %s was gestopt door signaal %d (%s)"
 
-#: src/process.c:424
+#: src/process.c:426
 #, c-format
 msgid "Script %s terminated abnormally"
 msgstr "Script %s abnormaal beëindigd"
 
-#: src/process.c:444 src/process.c:453 src/process.c:494 src/process.c:500
-#: src/process.c:518
+#: src/process.c:446 src/process.c:455 src/process.c:496 src/process.c:502
+#: src/process.c:520
 #, c-format
 msgid "Got %s signal"
 msgstr "Kreeg %s signaal"
 
-#: src/process.c:462
+#: src/process.c:464
 #, c-format
 msgid "Got another fatal signal %d (%s): not restarting."
 msgstr "Kreeg nog een fataal signaal %d (%s): geen herstart."
 
-#: src/process.c:471
+#: src/process.c:473
 #, c-format
 msgid "Got fatal signal %d (%s)"
 msgstr "Kreeg fataal signaal %d (%s)"
 
-#: src/process.c:475
+#: src/process.c:477
 msgid "Trying to re-execute in 5 seconds..."
 msgstr "Poging tot herstarten over 5 seconden..."
 
-#: src/process.c:487
+#: src/process.c:489
 msgid "Not restarting."
 msgstr "Geen herstart."
 
-#: src/process.c:503
+#: src/process.c:505
 #, c-format
 msgid "Reverting to old debug level (%d)"
 msgstr "Herstellen van oud debug niveau (%d)"
 
-#: src/process.c:509
+#: src/process.c:511
 #, c-format
 msgid ""
 "Temporarily setting debug level to 5.  Kill me with SIGINT again to go back "
@@ -1187,17 +1197,17 @@ msgstr ""
 "Tijdelijk instellen debug niveau op 5. Zend nog een SIGINT signaal om niveau "
 "%d te herstellen."
 
-#: src/process.c:542
+#: src/process.c:544
 #, c-format
 msgid "Got unexpected signal %d (%s)"
 msgstr "Kreeg onverwacht signaal %d (%s)"
 
-#: src/process.c:548
+#: src/process.c:550
 #, c-format
 msgid "Ignored signal %d (%s)"
 msgstr "Signaal %d (%s) genegeerd"
 
-#: src/process.c:602
+#: src/process.c:604
 #, c-format
 msgid "Installing signal handler for signal %d (%s) failed: %s\n"
 msgstr "Installeren van signaal afhandelaar voor signaal %d (%s) faalde: %s\n"
