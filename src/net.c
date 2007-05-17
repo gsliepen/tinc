@@ -40,7 +40,6 @@
 #include "subnet.h"
 #include "xalloc.h"
 
-bool do_purge = false;
 volatile bool running = false;
 
 time_t now = 0;
@@ -293,13 +292,58 @@ static void dummy(int a, short b, void *c)
 {
 }
 
-void sighup_handler(int signal, short events, void *data) {
+static void sigterm_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	running = false;
+	event_loopexit(NULL);
+}
+
+static void sigint_handler(int signal, short events, void *data) {
+	static int saved_debug_level = -1;
+
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+
+	if(saved_debug_level != -1) {
+		logger(LOG_NOTICE, _("Reverting to old debug level (%d)"),
+			saved_debug_level);
+		debug_level = saved_debug_level;
+		saved_debug_level = -1;
+	} else {
+		logger(LOG_NOTICE,
+			_("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
+			debug_level);
+		saved_debug_level = debug_level;
+		debug_level = 5;
+	}
+}
+
+static void sigusr1_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	dump_connections();
+}
+
+static void sigusr2_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	dump_device_stats();
+	dump_nodes();
+	dump_edges();
+	dump_subnets();
+}
+
+static void sigwinch_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	purge();
+}
+
+static void sighup_handler(int signal, short events, void *data) {
 	connection_t *c;
 	avl_node_t *node;
 	char *fname;
 	struct stat s;
 	static time_t last_config_check = 0;
 	
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+
 	/* Reread our own configuration file */
 
 	exit_configuration(&config_tree);
@@ -347,11 +391,29 @@ int main_loop(void)
 	time_t last_ping_check;
 	struct event timeout;
 	struct event sighup_event;
+	struct event sigint_event;
+	struct event sigterm_event;
+	struct event sigquit_event;
+	struct event sigusr1_event;
+	struct event sigusr2_event;
+	struct event sigwinch_event;
 
 	cp();
 
 	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_event, NULL);
+	signal_set(&sigint_event, SIGINT, sigint_handler, NULL);
+	signal_add(&sigint_event, NULL);
+	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
+	signal_add(&sigterm_event, NULL);
+	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
+	signal_add(&sigquit_event, NULL);
+	signal_set(&sigusr1_event, SIGUSR1, sigusr1_handler, NULL);
+	signal_add(&sigusr1_event, NULL);
+	signal_set(&sigusr2_event, SIGUSR2, sigusr2_handler, NULL);
+	signal_add(&sigusr2_event, NULL);
+	signal_set(&sigwinch_event, SIGWINCH, sigwinch_handler, NULL);
+	signal_add(&sigwinch_event, NULL);
 
 	last_ping_check = now;
 	
@@ -391,11 +453,6 @@ int main_loop(void)
 		/* XXX: more libevent transition */
 		timeout_del(&timeout);
 
-		if(do_purge) {
-			purge();
-			do_purge = false;
-		}
-
 		/* Let's check if everybody is still alive */
 
 		if(last_ping_check + pingtimeout < now) {
@@ -428,6 +485,12 @@ int main_loop(void)
 	}
 
 	signal_del(&sighup_event);
+	signal_del(&sigint_event);
+	signal_del(&sigterm_event);
+	signal_del(&sigquit_event);
+	signal_del(&sigusr1_event);
+	signal_del(&sigusr2_event);
+	signal_del(&sigwinch_event);
 
 	return 0;
 }

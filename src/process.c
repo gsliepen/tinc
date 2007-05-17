@@ -440,24 +440,6 @@ bool execute_script(const char *name, char **envp)
 */
 
 #ifndef HAVE_MINGW
-static RETSIGTYPE sigterm_handler(int a)
-{
-	logger(LOG_NOTICE, _("Got %s signal"), "TERM");
-	if(running)
-		running = false;
-	else
-		exit(1);
-}
-
-static RETSIGTYPE sigquit_handler(int a)
-{
-	logger(LOG_NOTICE, _("Got %s signal"), "QUIT");
-	if(running)
-		running = false;
-	else
-		exit(1);
-}
-
 static RETSIGTYPE fatal_signal_square(int a)
 {
 	logger(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
@@ -490,48 +472,6 @@ static RETSIGTYPE fatal_signal_handler(int a)
 	}
 }
 
-static RETSIGTYPE sigint_handler(int a)
-{
-	logger(LOG_NOTICE, _("Got %s signal"), "INT");
-
-	if(saved_debug_level != -1) {
-		logger(LOG_NOTICE, _("Reverting to old debug level (%d)"),
-			saved_debug_level);
-		debug_level = saved_debug_level;
-		saved_debug_level = -1;
-	} else {
-		logger(LOG_NOTICE,
-			_("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
-			debug_level);
-		saved_debug_level = debug_level;
-		debug_level = 5;
-	}
-}
-
-static RETSIGTYPE sigalrm_handler(int a)
-{
-	logger(LOG_NOTICE, _("Got %s signal"), "ALRM");
-	sigalrm = true;
-}
-
-static RETSIGTYPE sigusr1_handler(int a)
-{
-	dump_connections();
-}
-
-static RETSIGTYPE sigusr2_handler(int a)
-{
-	dump_device_stats();
-	dump_nodes();
-	dump_edges();
-	dump_subnets();
-}
-
-static RETSIGTYPE sigwinch_handler(int a)
-{
-	do_purge = true;
-}
-
 static RETSIGTYPE unexpected_signal_handler(int a)
 {
 	logger(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
@@ -547,18 +487,11 @@ static struct {
 	int signal;
 	void (*handler)(int);
 } sighandlers[] = {
-	{SIGTERM, sigterm_handler},
-	{SIGQUIT, sigquit_handler},
 	{SIGSEGV, fatal_signal_handler},
 	{SIGBUS, fatal_signal_handler},
 	{SIGILL, fatal_signal_handler},
 	{SIGPIPE, ignore_signal_handler},
-	{SIGINT, sigint_handler},
-	{SIGUSR1, sigusr1_handler},
-	{SIGUSR2, sigusr2_handler},
 	{SIGCHLD, ignore_signal_handler},
-	{SIGALRM, sigalrm_handler},
-	{SIGWINCH, sigwinch_handler},
 	{0, NULL}
 };
 #endif
@@ -586,7 +519,7 @@ void setup_signals(void)
 
 	/* If we didn't detach, allow coredumps */
 	if(!do_detach)
-		sighandlers[2].handler = SIG_DFL;
+		sighandlers[0].handler = SIG_DFL;
 
 	/* Then, for each known signal that we want to catch, assign a
 	   handler to the signal, with error checking this time. */
