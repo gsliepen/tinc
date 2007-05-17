@@ -24,7 +24,6 @@
 #define __TINC_PROCESS_H__
 
 extern bool do_detach;
-extern bool sighup;
 extern bool sigalrm;
 
 extern void setup_signals(void);

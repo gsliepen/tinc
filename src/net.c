@@ -294,6 +294,50 @@ static void dummy(int a, short b, void *c)
 {
 }
 
+void sighup_handler(int signal, short events, void *data) {
+	connection_t *c;
+	avl_node_t *node;
+	char *fname;
+	struct stat s;
+	static time_t last_config_check = 0;
+	
+	/* Reread our own configuration file */
+
+	exit_configuration(&config_tree);
+	init_configuration(&config_tree);
+
+	if(!read_server_config()) {
+		logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
+		event_loopexit(NULL);
+		return;
+	}
+
+	/* Close connections to hosts that have a changed or deleted host config file */
+	
+	for(node = connection_tree->head; node; node = node->next) {
+		c = node->data;
+		
+		if(c->outgoing) {
+			free(c->outgoing->name);
+			if(c->outgoing->ai)
+				freeaddrinfo(c->outgoing->ai);
+			free(c->outgoing);
+			c->outgoing = NULL;
+		}
+		
+		asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+		if(stat(fname, &s) || s.st_mtime > last_config_check)
+			terminate_connection(c, c->status.active);
+		free(fname);
+	}
+
+	last_config_check = time(NULL);
+
+	/* Try to make outgoing connections */
+	
+	try_outgoing_connections();
+}
+
 /*
   this is where it all happens...
 */
@@ -301,14 +345,17 @@ int main_loop(void)
 {
 	struct timeval tv;
 	int r;
-	time_t last_ping_check, last_config_check;
+	time_t last_ping_check;
 	tevent_t *event;
 	struct event timeout;
+	struct event sighup_event;
 
 	cp();
 
+	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
+	signal_add(&sighup_event, NULL);
+
 	last_ping_check = now;
-	last_config_check = now;
 	
 	srand(now);
 
@@ -387,50 +434,9 @@ int main_loop(void)
 			sigalrm = false;
 		}
 
-		if(sighup) {
-			connection_t *c;
-			avl_node_t *node;
-			char *fname;
-			struct stat s;
-			
-			sighup = false;
-			
-			/* Reread our own configuration file */
-
-			exit_configuration(&config_tree);
-			init_configuration(&config_tree);
-
-			if(!read_server_config()) {
-				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
-				return 1;
-			}
-
-			/* Close connections to hosts that have a changed or deleted host config file */
-			
-			for(node = connection_tree->head; node; node = node->next) {
-				c = node->data;
-				
-				if(c->outgoing) {
-					free(c->outgoing->name);
-					if(c->outgoing->ai)
-						freeaddrinfo(c->outgoing->ai);
-					free(c->outgoing);
-					c->outgoing = NULL;
-				}
-				
-				asprintf(&fname, "%s/hosts/%s", confbase, c->name);
-				if(stat(fname, &s) || s.st_mtime > last_config_check)
-					terminate_connection(c, c->status.active);
-				free(fname);
-			}
-
-			last_config_check = now;
-
-			/* Try to make outgoing connections */
-			
-			try_outgoing_connections();
-		}
 	}
+
+	signal_del(&sighup_event);
 
 	return 0;
 }

@@ -36,7 +36,6 @@
 
 /* If zero, don't detach from the terminal. */
 bool do_detach = true;
-bool sighup = false;
 bool sigalrm = false;
 
 extern char *identname;
@@ -491,12 +490,6 @@ static RETSIGTYPE fatal_signal_handler(int a)
 	}
 }
 
-static RETSIGTYPE sighup_handler(int a)
-{
-	logger(LOG_NOTICE, _("Got %s signal"), "HUP");
-	sighup = true;
-}
-
 static RETSIGTYPE sigint_handler(int a)
 {
 	logger(LOG_NOTICE, _("Got %s signal"), "INT");
@@ -554,7 +547,6 @@ static struct {
 	int signal;
 	void (*handler)(int);
 } sighandlers[] = {
-	{SIGHUP, sighup_handler},
 	{SIGTERM, sigterm_handler},
 	{SIGQUIT, sigquit_handler},
 	{SIGSEGV, fatal_signal_handler},
@@ -594,7 +586,7 @@ void setup_signals(void)
 
 	/* If we didn't detach, allow coredumps */
 	if(!do_detach)
-		sighandlers[3].handler = SIG_DFL;
+		sighandlers[2].handler = SIG_DFL;
 
 	/* Then, for each known signal that we want to catch, assign a
 	   handler to the signal, with error checking this time. */
