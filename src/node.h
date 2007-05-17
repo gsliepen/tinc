@@ -25,7 +25,6 @@
 
 #include "avl_tree.h"
 #include "connection.h"
-#include "tevent.h"
 #include "list.h"
 #include "subnet.h"
 

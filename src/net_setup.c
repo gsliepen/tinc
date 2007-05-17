@@ -32,7 +32,6 @@
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
-#include "tevent.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"
@@ -565,7 +564,6 @@ bool setup_network_connections(void)
 
 	now = time(NULL);
 
-	init_tevents();
 	init_connections();
 	init_subnets();
 	init_nodes();
@@ -645,7 +643,6 @@ void close_network_connections(void)
 	exit_subnets();
 	exit_nodes();
 	exit_connections();
-	exit_tevents();
 
 	execute_script("tinc-down", envp);
 

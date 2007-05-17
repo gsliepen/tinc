@@ -29,7 +29,6 @@
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
-#include "tevent.h"
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
@@ -346,7 +345,6 @@ int main_loop(void)
 	struct timeval tv;
 	int r;
 	time_t last_ping_check;
-	tevent_t *event;
 	struct event timeout;
 	struct event sighup_event;
 
@@ -422,18 +420,11 @@ int main_loop(void)
 			}
 		}
 
-
-		while((event = get_expired_tevent())) {
-			event->handler(event->data);
-			free_tevent(event);
-		}
-
 		if(sigalrm) {
 			logger(LOG_INFO, _("Flushing event queue"));
-			flush_tevents();
+			// TODO: do this another way
 			sigalrm = false;
 		}
-
 	}
 
 	signal_del(&sighup_event);
