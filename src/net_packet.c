@@ -36,7 +36,6 @@
 #include "connection.h"
 #include "device.h"
 #include "ethernet.h"
-#include "tevent.h"
 #include "graph.h"
 #include "list.h"
 #include "logger.h"
@@ -61,15 +60,14 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 
 #define MAX_SEQNO 1073741824
 
-void send_mtu_probe(node_t *n)
-{
+static void send_mtu_probe_handler(int fd, short events, void *data) {
+	node_t *n = data;
 	vpn_packet_t packet;
 	int len, i;
 	
 	cp();
 
 	n->mtuprobes++;
-	n->mtuevent = NULL;
 
 	if(n->mtuprobes >= 10 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
@@ -96,11 +94,13 @@ void send_mtu_probe(node_t *n)
 		send_udppacket(n, &packet);
 	}
 
-	n->mtuevent = new_tevent();
-	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
-	n->mtuevent->data = n;
-	n->mtuevent->time = now + 1;
-	tevent_add(n->mtuevent);
+	event_add(&n->mtuevent, &(struct timeval){1, 0});
+}
+
+void send_mtu_probe(node_t *n) {
+	if(!n->mtuevent.ev_callback)
+		timeout_set(&n->mtuevent, send_mtu_probe_handler, n);
+	send_mtu_probe_handler(0, 0, n);
 }
 
 void mtu_probe_h(node_t *n, vpn_packet_t *packet) {

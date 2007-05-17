@@ -80,7 +80,7 @@ typedef struct node_t {
 	length_t minmtu;			/* Probed minimum MTU */
 	length_t maxmtu;			/* Probed maximum MTU */
 	int mtuprobes;				/* Number of probes */
-	tevent_t *mtuevent;			/* Probe event */
+	struct event mtuevent;			/* Probe event */
 } node_t;
 
 extern struct node_t *myself;
