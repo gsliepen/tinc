@@ -395,17 +395,16 @@ void setup_outgoing_connection(outgoing_t *outgoing)
 	c->outgoing = outgoing;
 	c->last_ping_time = now;
 
-	event_set(&c->ev, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_set(&c->outev, c->socket, EV_WRITE | EV_PERSIST, flush_meta, c);
-	if(event_add(&c->ev, NULL) < 0) {
-		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
-		connection_del(c);
-		return;
-	}
-		
 	connection_add(c);
 
 	do_outgoing_connection(c);
+
+	event_set(&c->ev, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_set(&c->outev, c->socket, EV_WRITE | EV_PERSIST, flush_meta, c);
+	if(event_add(&c->ev, NULL) < 0) {
+		logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+		abort();
+	}
 }
 
 /*
