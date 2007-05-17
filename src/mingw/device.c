@@ -76,17 +76,19 @@ DWORD WINAPI tapreader(void *bla) {
 
 	sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 
-	freeaddrinfo(ai);
-
 	if(sock < 0) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
+		freeaddrinfo(ai);
 		return -1;
 	}
 
 	if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "connect", strerror(errno));
+		freeaddrinfo(ai);
 		return -1;
 	}
+
+	freeaddrinfo(ai);
 
 	logger(LOG_DEBUG, _("Tap reader running"));
 

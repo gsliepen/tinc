@@ -1,3 +1,9 @@
+Version 1.0.8                May 16 2007
+
+ * Fixed some memory and resource leaks.
+
+ * Made network sockets non-blocking under Windows.
+
 Version 1.0.7                Jan  5 2007
 
  * Fixed a bug that caused slow network speeds on Windows.

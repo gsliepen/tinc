@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -61,6 +61,12 @@ static void configure_tcp(connection_t *c)
 
 	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
 		logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
+	}
+#elif defined(WIN32)
+	unsigned long arg = 1;
+
+	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
+		logger(LOG_ERR, _("ioctlsocket for %s: WSA error %d"), c->hostname, WSAGetLastError());
 	}
 #endif
 
@@ -157,6 +163,16 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 			closesocket(nfd);
 			logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
 				   strerror(errno));
+			return -1;
+		}
+	}
+#elif defined(WIN32)
+	{
+		unsigned long arg = 1;
+		if(ioctlsocket(nfd, FIONBIO, &arg) != 0) {
+			closesocket(nfd);
+			logger(LOG_ERR, _("Call to `%s' failed: WSA error %d"), "ioctlsocket",
+				WSAGetLastError());
 			return -1;
 		}
 	}
@@ -318,7 +334,11 @@ begin:
 	result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
 
 	if(result == -1) {
-		if(errno == EINPROGRESS) {
+		if(errno == EINPROGRESS
+#if defined(WIN32) && !defined(O_NONBLOCK)
+		   || WSAGetLastError() == WSAEWOULDBLOCK
+#endif
+		) {
 			c->status.connecting = true;
 			return;
 		}
@@ -403,7 +423,7 @@ void handle_new_meta_connection(int sock, short events, void *data)
 	sockaddrunmap(&sa);
 
 	c = new_connection();
-	c->name = NULL;
+	c->name = xstrdup("<unknown>");
 	c->outcipher = myself->connection->outcipher;
 	c->outdigest = myself->connection->outdigest;
 	c->outmaclength = myself->connection->outmaclength;
