@@ -25,7 +25,6 @@
 #include "avl_tree.h"
 #include "conf.h"
 #include "connection.h"
-#include "tevent.h"
 #include "logger.h"
 #include "meta.h"
 #include "net.h"
@@ -234,10 +233,11 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	return nfd;
 }
 
-void retry_outgoing(outgoing_t *outgoing)
-{
-	tevent_t *event;
+static void retry_outgoing_handler(int fd, short events, void *data) {
+	retry_outgoing(data);
+}
 
+void retry_outgoing(outgoing_t *outgoing) {
 	cp();
 
 	outgoing->timeout += 5;
@@ -245,11 +245,8 @@ void retry_outgoing(outgoing_t *outgoing)
 	if(outgoing->timeout > maxtimeout)
 		outgoing->timeout = maxtimeout;
 
-	event = new_tevent();
-	event->handler = (event_handler_t) setup_outgoing_connection;
-	event->time = now + outgoing->timeout;
-	event->data = outgoing;
-	tevent_add(event);
+	timeout_set(&outgoing->ev, retry_outgoing_handler, outgoing);
+	event_add(&outgoing->ev, &(struct timeval){outgoing->timeout, 0});
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE,
 			   _("Trying to re-establish outgoing connection in %d seconds"),
