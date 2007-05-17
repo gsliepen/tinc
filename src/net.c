@@ -267,7 +267,6 @@ void handle_meta_connection_data(int fd, short events, void *data)
 		return;
 
 	if(c->status.connecting) {
-		c->status.connecting = false;
 		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
 
 		if(!result)
@@ -276,6 +275,7 @@ void handle_meta_connection_data(int fd, short events, void *data)
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 					   _("Error while connecting to %s (%s): %s"),
 					   c->name, c->hostname, strerror(result));
+			c->status.connecting = false;
 			closesocket(c->socket);
 			do_outgoing_connection(c);
 			return;
@@ -381,6 +381,26 @@ static void sighup_handler(int signal, short events, void *data) {
 	try_outgoing_connections();
 }
 
+static void sigalrm_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+
+	connection_t *c;
+	avl_node_t *node;
+
+	for(node = connection_tree->head; node; node = node->next) {
+		c = node->data;
+		
+		if(c->outgoing && !c->node) {
+			if(timeout_initialized(&c->outgoing->ev))
+				event_del(&c->outgoing->ev);
+			if(c->status.connecting)
+				close(c->socket);
+			c->outgoing->timeout = 0;
+			do_outgoing_connection(c);
+		}
+	}
+}
+
 /*
   this is where it all happens...
 */
@@ -397,6 +417,7 @@ int main_loop(void)
 	struct event sigusr1_event;
 	struct event sigusr2_event;
 	struct event sigwinch_event;
+	struct event sigalrm_event;
 
 	cp();
 
@@ -414,6 +435,8 @@ int main_loop(void)
 	signal_add(&sigusr2_event, NULL);
 	signal_set(&sigwinch_event, SIGWINCH, sigwinch_handler, NULL);
 	signal_add(&sigwinch_event, NULL);
+	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
+	signal_add(&sigalrm_event, NULL);
 
 	last_ping_check = now;
 	
@@ -476,12 +499,6 @@ int main_loop(void)
 				keyexpires = now + keylifetime;
 			}
 		}
-
-		if(sigalrm) {
-			logger(LOG_INFO, _("Flushing event queue"));
-			// TODO: do this another way
-			sigalrm = false;
-		}
 	}
 
 	signal_del(&sighup_event);
@@ -491,6 +508,7 @@ int main_loop(void)
 	signal_del(&sigusr1_event);
 	signal_del(&sigusr2_event);
 	signal_del(&sigwinch_event);
+	signal_del(&sigalrm_event);
 
 	return 0;
 }

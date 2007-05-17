@@ -234,7 +234,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 }
 
 static void retry_outgoing_handler(int fd, short events, void *data) {
-	retry_outgoing(data);
+	do_outgoing_connection(data);
 }
 
 void retry_outgoing(outgoing_t *outgoing) {
@@ -262,6 +262,7 @@ void finish_connecting(connection_t *c)
 	configure_tcp(c);
 
 	c->last_ping_time = now;
+	c->status.connecting = false;
 
 	send_id(c);
 }
