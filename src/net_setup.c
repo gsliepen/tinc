@@ -537,6 +537,11 @@ bool setup_myself(void)
 
 		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
 		listen_sockets++;
+
+		if(listen_sockets >= MAXSOCKETS) {
+			logger(LOG_WARNING, _("Maximum of %d listening sockets reached"), MAXSOCKETS);
+			break;
+		}
 	}
 
 	freeaddrinfo(ai);
@@ -623,6 +628,8 @@ void close_network_connections(void)
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
+		event_del(&listen_socket[i].ev_tcp);
+		event_del(&listen_socket[i].ev_udp);
 		close(listen_socket[i].tcp);
 		close(listen_socket[i].udp);
 	}
