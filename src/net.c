@@ -485,8 +485,6 @@ int main_loop(void)
 			if(routing_mode == RMODE_SWITCH)
 				age_subnets();
 
-			age_past_requests();
-
 			/* Should we regenerate our key? */
 
 			if(keyexpires < now) {

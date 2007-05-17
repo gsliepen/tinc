@@ -79,7 +79,6 @@ extern bool check_id(const char *);
 extern void init_requests(void);
 extern void exit_requests(void);
 extern bool seen_request(char *);
-extern void age_past_requests(void);
 
 /* Requests */
 
