@@ -37,7 +37,7 @@
 #define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
 #define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
-#define MAXSOCKETS 128			/* Overkill... */
+#define MAXSOCKETS 8			/* Probably overkill... */
 
 #define MAXQUEUELENGTH 8		/* Maximum number of packats in a single queue */
 
