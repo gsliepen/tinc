@@ -208,6 +208,36 @@ bool read_rsa_private_key(void)
 	return true;
 }
 
+static struct event keyexpire_event;
+
+static void keyexpire_handler(int fd, short events, void *data) {
+	regenerate_key();
+}
+
+void regenerate_key() {
+	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
+
+	if(timeout_initialized(&keyexpire_event)) {
+		ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
+		event_del(&keyexpire_event);
+		send_key_changed(broadcast, myself);
+	} else {
+		timeout_set(&keyexpire_event, keyexpire_handler, NULL);
+	}
+
+	event_add(&keyexpire_event, &(struct timeval){keylifetime, 0});
+
+	if(myself->cipher) {
+		EVP_CIPHER_CTX_init(&packet_ctx);
+		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
+					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
+			abort();
+		}
+
+	}
+}
+
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
@@ -368,23 +398,11 @@ bool setup_myself(void)
 	myself->connection->outcipher = EVP_bf_ofb();
 
 	myself->key = xmalloc(myself->keylength);
-	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
-	keyexpires = now + keylifetime;
-	
-	if(myself->cipher) {
-		EVP_CIPHER_CTX_init(&packet_ctx);
-		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
-			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
-					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
-		}
-
-	}
-
+	regenerate_key();
 	/* Check if we want to use message authentication codes... */
 
 	if(get_config_string

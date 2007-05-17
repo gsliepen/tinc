@@ -400,17 +400,6 @@ static void sigalrm_handler(int signal, short events, void *data) {
 	}
 }
 
-static void keyexpire_handler(int fd, short events, void *event) {
-	ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
-
-	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
-	if(myself->cipher)
-			EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len);
-	send_key_changed(broadcast, myself);
-
-	event_add(event, &(struct timeval){keylifetime, 0});
-}
-
 /*
   this is where it all happens...
 */
@@ -428,7 +417,6 @@ int main_loop(void)
 	struct event sigusr2_event;
 	struct event sigwinch_event;
 	struct event sigalrm_event;
-	struct event keyexpire_event;
 
 	cp();
 
@@ -448,8 +436,6 @@ int main_loop(void)
 	signal_add(&sigwinch_event, NULL);
 	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
 	signal_add(&sigalrm_event, NULL);
-	timeout_set(&keyexpire_event, keyexpire_handler, &keyexpire_event);
-	event_add(&keyexpire_event, &(struct timeval){keylifetime, 0});
 
 	last_ping_check = now;
 	
@@ -505,7 +491,6 @@ int main_loop(void)
 	signal_del(&sigusr2_event);
 	signal_del(&sigwinch_event);
 	signal_del(&sigalrm_event);
-	event_del(&keyexpire_event);
 
 	return 0;
 }

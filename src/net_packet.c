@@ -52,7 +52,6 @@
 #endif
 
 int keylifetime = 0;
-int keyexpires = 0;
 EVP_CIPHER_CTX packet_ctx;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
@@ -248,7 +247,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		n->received_seqno = inpkt->seqno;
 			
 	if(n->received_seqno > MAX_SEQNO)
-		keyexpires = 0;
+		regenerate_key();
 
 	/* Decompress the packet */
 
