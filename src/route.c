@@ -51,6 +51,8 @@ static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
+static struct event age_subnets_event;
+
 /* RFC 1071 */
 
 static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
@@ -95,6 +97,42 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 		return true;
 }
 	
+static void age_subnets(int fd, short events, void *data)
+{
+	subnet_t *s;
+	connection_t *c;
+	avl_node_t *node, *next, *node2;
+	bool left = false;
+
+	cp();
+
+	for(node = myself->subnet_tree->head; node; node = next) {
+		next = node->next;
+		s = node->data;
+		if(s->expires && s->expires < now) {
+			ifdebug(TRAFFIC) {
+				char netstr[MAXNETSTR];
+				if(net2str(netstr, sizeof netstr, s))
+					logger(LOG_INFO, _("Subnet %s expired"), netstr);
+			}
+
+			for(node2 = connection_tree->head; node2; node2 = node2->next) {
+				c = node2->data;
+				if(c->status.active)
+					send_del_subnet(c, s);
+			}
+
+			subnet_del(myself, s);
+		} else {
+			if(s->expires)
+				left = true;
+		}
+	}
+
+	if(left)
+		event_add(&age_subnets_event, &(struct timeval){10, 0});
+}
+
 static void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
@@ -125,39 +163,14 @@ static void learn_mac(mac_t *address)
 			if(c->status.active)
 				send_add_subnet(c, subnet);
 		}
+
+		if(!timeout_initialized(&age_subnets_event))
+			timeout_set(&age_subnets_event, age_subnets, NULL);
+		event_add(&age_subnets_event, &(struct timeval){10, 0});
 	}
 
 	if(subnet->expires)
 		subnet->expires = now + macexpire;
-}
-
-void age_subnets(void)
-{
-	subnet_t *s;
-	connection_t *c;
-	avl_node_t *node, *next, *node2;
-
-	cp();
-
-	for(node = myself->subnet_tree->head; node; node = next) {
-		next = node->next;
-		s = node->data;
-		if(s->expires && s->expires < now) {
-			ifdebug(TRAFFIC) {
-				char netstr[MAXNETSTR];
-				if(net2str(netstr, sizeof netstr, s))
-					logger(LOG_INFO, _("Subnet %s expired"), netstr);
-			}
-
-			for(node2 = connection_tree->head; node2; node2 = node2->next) {
-				c = node2->data;
-				if(c->status.active)
-					send_del_subnet(c, s);
-			}
-
-			subnet_del(myself, s);
-		}
-	}
 }
 
 static void route_mac(node_t *source, vpn_packet_t *packet)

@@ -36,7 +36,6 @@
 #include "netutl.h"
 #include "process.h"
 #include "protocol.h"
-#include "route.h"
 #include "subnet.h"
 #include "xalloc.h"
 
@@ -481,9 +480,6 @@ int main_loop(void)
 		if(last_ping_check + pingtimeout < now) {
 			check_dead_connections();
 			last_ping_check = now;
-
-			if(routing_mode == RMODE_SWITCH)
-				age_subnets();
 
 			/* Should we regenerate our key? */
 
