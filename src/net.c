@@ -301,7 +301,7 @@ int main_loop(void)
 {
 	struct timeval tv;
 	int r;
-	time_t last_ping_check, last_config_check, last_graph_dump;
+	time_t last_ping_check, last_config_check;
 	tevent_t *event;
 	struct event timeout;
 
@@ -309,7 +309,6 @@ int main_loop(void)
 
 	last_ping_check = now;
 	last_config_check = now;
-	last_graph_dump = now;
 	
 	srand(now);
 
@@ -430,13 +429,6 @@ int main_loop(void)
 			/* Try to make outgoing connections */
 			
 			try_outgoing_connections();
-		}
-		
-		/* Dump graph if wanted every 60 seconds*/
-
-		if(last_graph_dump + 60 < now) {
-			dump_graph();
-			last_graph_dump = now;
 		}
 	}
 

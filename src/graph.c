@@ -58,8 +58,6 @@
 #include "subnet.h"
 #include "utils.h"
 
-static bool graph_changed = true;
-
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)
    Please note that sorting on weight is already done by add_edge().
@@ -311,22 +309,13 @@ void sssp_bfs(void)
 	}
 }
 
-void graph(void)
-{
-	sssp_bfs();
-	mst_kruskal();
-	graph_changed = true;
-}
-
-
-
 /* Dump nodes and edges to a graphviz file.
 	   
    The file can be converted to an image with
    dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
 */
 
-void dump_graph(void)
+static void dump_graph(int fd, short events, void *data)
 {
 	avl_node_t *node;
 	node_t *n;
@@ -334,10 +323,8 @@ void dump_graph(void)
 	char *filename = NULL, *tmpname = NULL;
 	FILE *file;
 	
-	if(!graph_changed || !get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
+	if(!get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
 		return;
-
-	graph_changed = false;
 
 	ifdebug(PROTOCOL) logger(LOG_NOTICE, "Dumping graph");
 	
@@ -380,4 +367,16 @@ void dump_graph(void)
 		rename(tmpname, filename);
 		free(tmpname);
 	}
+}
+
+void graph(void)
+{
+	static struct event ev;
+
+	sssp_bfs();
+	mst_kruskal();
+
+	if(!ev.ev_callback)
+		timeout_set(&ev, dump_graph, NULL);
+	event_add(&ev, &(struct timeval){5, 0});
 }
