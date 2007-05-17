@@ -395,6 +395,14 @@ void setup_outgoing_connection(outgoing_t *outgoing)
 	c->outgoing = outgoing;
 	c->last_ping_time = now;
 
+	event_set(&c->ev, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_set(&c->outev, c->socket, EV_WRITE | EV_PERSIST, flush_meta, c);
+	if(event_add(&c->ev, NULL) < 0) {
+		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
+		connection_del(c);
+		return;
+	}
+		
 	connection_add(c);
 
 	do_outgoing_connection(c);
@@ -416,8 +424,8 @@ void handle_new_meta_connection(int sock, short events, void *data)
 	fd = accept(sock, &sa.sa, &len);
 
 	if(fd < 0) {
-		logger(LOG_ERR, _("Accepting a new connection failed: %s"),
-			   strerror(errno));
+		logger(LOG_ERR, _("Accepting a new connection failed: %s"), strerror(errno));
+		return;
 	}
 
 	sockaddrunmap(&sa);
@@ -436,6 +444,14 @@ void handle_new_meta_connection(int sock, short events, void *data)
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection from %s"), c->hostname);
 
+	event_set(&c->ev, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_set(&c->outev, c->socket, EV_WRITE | EV_PERSIST, flush_meta, c);
+	if(event_add(&c->ev, NULL) < 0) {
+		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
+		connection_del(c);
+		return;
+	}
+		
 	configure_tcp(c);
 
 	connection_add(c);

@@ -44,8 +44,13 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
-	if(!c->outbuflen)
+	if(!c->outbuflen) {
 		c->last_flushed_time = now;
+		if(event_add(&c->outev, NULL) < 0) {
+			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+			abort();
+		}
+	}
 
 	/* Find room in connection's buffer */
 	if(length + c->outbuflen > c->outbufsize) {
@@ -79,8 +84,9 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 	return true;
 }
 
-bool flush_meta(connection_t *c)
+void flush_meta(int fd, short events, void *data)
 {
+	connection_t *c = data;
 	int result;
 	
 	ifdebug(META) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s)"),
@@ -98,22 +104,24 @@ bool flush_meta(connection_t *c)
 			} else if(errno == EWOULDBLOCK) {
 				ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s) would block"),
 						c->outbuflen, c->name, c->hostname);
-				return true;
+				return;
 #endif
 			} else {
 				logger(LOG_ERR, _("Flushing meta data to %s (%s) failed: %s"), c->name,
 					   c->hostname, strerror(errno));
 			}
 
-			return false;
+			terminate_connection(c, c->status.active);
+			return;
 		}
 
 		c->outbufstart += result;
 		c->outbuflen -= result;
 	}
 
+	event_del(&c->outev);
+
 	c->outbufstart = 0; /* avoid unnecessary memmoves */
-	return true;
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, int length)

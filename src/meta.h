@@ -27,7 +27,7 @@
 
 extern bool send_meta(struct connection_t *, const char *, int);
 extern void broadcast_meta(struct connection_t *, const char *, int);
-extern bool flush_meta(struct connection_t *);
+extern void flush_meta(int fd, short events, void *data);
 extern bool receive_meta(struct connection_t *);
 
 #endif							/* __TINC_META_H__ */

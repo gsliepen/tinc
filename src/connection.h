@@ -101,6 +101,7 @@ typedef struct connection_t {
 	int outbufstart;			/* index of first meaningful byte in output buffer */
 	int outbuflen;				/* number of meaningful bytes in output buffer */
 	int outbufsize;				/* number of bytes allocated to output buffer */
+	struct event outev;			/* events on this metadata connection */
 
 	time_t last_ping_time;		/* last time we saw some activity from the other end or pinged them */
 	time_t last_flushed_time;	/* last time buffer was empty. Only meaningful if outbuflen > 0 */

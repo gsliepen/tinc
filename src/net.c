@@ -128,17 +128,9 @@ static int build_fdset(void)
 			connection_del(c);
 			if(!connection_tree->head)
 				purge();
-		} else {
-			short events = EV_READ;
-			if(c->outbuflen > 0)
-				events |= EV_WRITE;
-			event_del(&c->ev);
-			event_set(&c->ev, c->socket, events,
-					  handle_meta_connection_data, c);
-			if (event_add(&c->ev, NULL) < 0)
-				return -1;
 		}
 	}
+
 	return 0;
 }
 
@@ -167,6 +159,8 @@ void terminate_connection(connection_t *c, bool report)
 
 	if(c->socket)
 		closesocket(c->socket);
+
+	event_del(&c->ev);
 
 	if(c->edge) {
 		if(report && !tunnelserver)
@@ -274,33 +268,25 @@ void handle_meta_connection_data(int fd, short events, void *data)
 	if (c->status.remove)
 		return;
 
-	if (events & EV_READ) {
-		if(c->status.connecting) {
-			c->status.connecting = false;
-			getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+	if(c->status.connecting) {
+		c->status.connecting = false;
+		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
 
-			if(!result)
-				finish_connecting(c);
-			else {
-				ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-						   _("Error while connecting to %s (%s): %s"),
-						   c->name, c->hostname, strerror(result));
-				closesocket(c->socket);
-				do_outgoing_connection(c);
-				return;
-			}
-		}
-
-		if (!receive_meta(c)) {
-			terminate_connection(c, c->status.active);
+		if(!result)
+			finish_connecting(c);
+		else {
+			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
+					   _("Error while connecting to %s (%s): %s"),
+					   c->name, c->hostname, strerror(result));
+			closesocket(c->socket);
+			do_outgoing_connection(c);
 			return;
 		}
 	}
 
-	if (events & EV_WRITE) {
-		if(!flush_meta(c)) {
-			terminate_connection(c, c->status.active);
-		}
+	if (!receive_meta(c)) {
+		terminate_connection(c, c->status.active);
+		return;
 	}
 }
 
