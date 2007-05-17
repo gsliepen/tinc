@@ -98,7 +98,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 }
 
 void send_mtu_probe(node_t *n) {
-	if(!n->mtuevent.ev_callback)
+	if(!timeout_initialized(&n->mtuevent))
 		timeout_set(&n->mtuevent, send_mtu_probe_handler, n);
 	send_mtu_probe_handler(0, 0, n);
 }

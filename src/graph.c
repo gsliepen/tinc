@@ -376,7 +376,7 @@ void graph(void)
 	sssp_bfs();
 	mst_kruskal();
 
-	if(!ev.ev_callback)
+	if(!timeout_initialized(&ev))
 		timeout_set(&ev, dump_graph, NULL);
 	event_add(&ev, &(struct timeval){5, 0});
 }
