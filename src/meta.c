@@ -137,7 +137,7 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 
 bool receive_meta(connection_t *c) {
 	int oldlen, i, result;
-	int lenin, lenout, reqlen;
+	int inlen, outlen, reqlen;
 	bool decrypted = false;
 	char inbuf[MAXBUFSIZE];
 
@@ -152,10 +152,10 @@ bool receive_meta(connection_t *c) {
 	   - If not, keep stuff in buffer and exit.
 	 */
 
-	lenin = recv(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen, 0);
+	inlen = recv(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen, 0);
 
-	if(lenin <= 0) {
-		if(!lenin || !errno) {
+	if(inlen <= 0) {
+		if(!inlen || !errno) {
 			ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 					   c->name, c->hostname);
 		} else if(errno == EINTR)
@@ -168,19 +168,19 @@ bool receive_meta(connection_t *c) {
 	}
 
 	oldlen = c->buflen;
-	c->buflen += lenin;
+	c->buflen += inlen;
 
-	while(lenin > 0) {
+	while(inlen > 0) {
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
-			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &lenout, (unsigned char *)c->buffer + oldlen, lenin);
-			if(!result || lenout != lenin) {
+			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &outlen, (unsigned char *)c->buffer + oldlen, inlen);
+			if(!result || outlen != inlen) {
 				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
 						c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 				return false;
 			}
-			memcpy(c->buffer + oldlen, inbuf, lenin);
+			memcpy(c->buffer + oldlen, inbuf, inlen);
 			decrypted = true;
 		}
 
@@ -191,7 +191,7 @@ bool receive_meta(connection_t *c) {
 				receive_tcppacket(c, c->buffer, c->tcplen);
 
 				c->buflen -= c->tcplen;
-				lenin -= c->tcplen - oldlen;
+				inlen -= c->tcplen - oldlen;
 				memmove(c->buffer, c->buffer + c->tcplen, c->buflen);
 				oldlen = 0;
 				c->tcplen = 0;
@@ -219,7 +219,7 @@ bool receive_meta(connection_t *c) {
 				return false;
 
 			c->buflen -= reqlen;
-			lenin -= reqlen - oldlen;
+			inlen -= reqlen - oldlen;
 			memmove(c->buffer, c->buffer + reqlen, c->buflen);
 			oldlen = 0;
 			continue;

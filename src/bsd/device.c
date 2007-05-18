@@ -142,13 +142,13 @@ void close_device(void) {
 }
 
 bool read_packet(vpn_packet_t *packet) {
-	int lenin;
+	int inlen;
 
 	cp();
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-			if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
+			if((inlen = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 					   device, strerror(errno));
 				return false;
@@ -170,14 +170,14 @@ bool read_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			packet->len = lenin + 14;
+			packet->len = inlen + 14;
 			break;
 
 		case DEVICE_TYPE_TUNIFHEAD: {
 			u_int32_t type;
 			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, MTU - 14}};
 
-			if((lenin = readv(device_fd, vector, 2)) <= 0) {
+			if((inlen = readv(device_fd, vector, 2)) <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 					   device, strerror(errno));
 				return false;
@@ -201,18 +201,18 @@ bool read_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			packet->len = lenin + 10;
+			packet->len = inlen + 10;
 			break;
 		}
 
 		case DEVICE_TYPE_TAP:
-			if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
+			if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 					   device, strerror(errno));
 				return false;
 			}
 
-			packet->len = lenin;
+			packet->len = inlen;
 			break;
 
 		default:

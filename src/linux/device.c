@@ -118,43 +118,43 @@ void close_device(void) {
 }
 
 bool read_packet(vpn_packet_t *packet) {
-	int lenin;
+	int inlen;
 	
 	cp();
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-			lenin = read(device_fd, packet->data + 10, MTU - 10);
+			inlen = read(device_fd, packet->data + 10, MTU - 10);
 
-			if(lenin <= 0) {
+			if(inlen <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
 					   device_info, device, strerror(errno));
 				return false;
 			}
 
-			packet->len = lenin + 10;
+			packet->len = inlen + 10;
 			break;
 		case DEVICE_TYPE_TAP:
-			lenin = read(device_fd, packet->data, MTU);
+			inlen = read(device_fd, packet->data, MTU);
 
-			if(lenin <= 0) {
+			if(inlen <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
 					   device_info, device, strerror(errno));
 				return false;
 			}
 
-			packet->len = lenin;
+			packet->len = inlen;
 			break;
 		case DEVICE_TYPE_ETHERTAP:
-			lenin = read(device_fd, packet->data - 2, MTU + 2);
+			inlen = read(device_fd, packet->data - 2, MTU + 2);
 
-			if(lenin <= 0) {
+			if(inlen <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
 					   device_info, device, strerror(errno));
 				return false;
 			}
 
-			packet->len = lenin - 2;
+			packet->len = inlen - 2;
 			break;
 	}
 

@@ -176,7 +176,7 @@ bool setup_device(void) {
 		   It passes everything it reads to the socket. */
 	
 		char buf[MTU];
-		long lenin;
+		long inlen;
 
 		CloseHandle(device_handle);
 
@@ -199,8 +199,8 @@ bool setup_device(void) {
 		/* Pass packets */
 
 		for(;;) {
-			ReadFile(device_handle, buf, MTU, &lenin, NULL);
-			write(sp[1], buf, lenin);
+			ReadFile(device_handle, buf, MTU, &inlen, NULL);
+			write(sp[1], buf, inlen);
 		}
 	}
 
@@ -228,17 +228,17 @@ void close_device(void) {
 }
 
 bool read_packet(vpn_packet_t *packet) {
-	int lenin;
+	int inlen;
 
 	cp();
 
-	if((lenin = read(sp[0], packet->data, MTU)) <= 0) {
+	if((inlen = read(sp[0], packet->data, MTU)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return false;
 	}
 	
-	packet->len = lenin;
+	packet->len = inlen;
 
 	device_total_in += packet->len;
 
@@ -249,14 +249,14 @@ bool read_packet(vpn_packet_t *packet) {
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	long lenout;
+	long outlen;
 
 	cp();
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(!WriteFile (device_handle, packet->data, packet->len, &lenout, NULL)) {
+	if(!WriteFile (device_handle, packet->data, packet->len, &outlen, NULL)) {
 		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, winerror(GetLastError()));
 		return false;
 	}

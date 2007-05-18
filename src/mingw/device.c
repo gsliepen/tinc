@@ -336,7 +336,7 @@ bool read_packet(vpn_packet_t *packet) {
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	long lenout;
+	long outlen;
 	OVERLAPPED overlapped = {0};
 
 	cp();
@@ -344,7 +344,7 @@ bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
-	if(!WriteFile(device_handle, packet->data, packet->len, &lenout, &overlapped)) {
+	if(!WriteFile(device_handle, packet->data, packet->len, &outlen, &overlapped)) {
 		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, winerror(GetLastError()));
 		return false;
 	}

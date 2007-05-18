@@ -91,17 +91,17 @@ void close_device(void) {
 }
 
 bool read_packet(vpn_packet_t *packet) {
-	int lenin;
+	int inlen;
 
 	cp();
 
-	if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
+	if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 			   device, strerror(errno));
 		return false;
 	}
 
-	packet->len = lenin;
+	packet->len = inlen;
 
 	device_total_in += packet->len;
 

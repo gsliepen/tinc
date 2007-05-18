@@ -172,7 +172,7 @@ void close_device(void) {
 }
 
 bool read_packet(vpn_packet_t *packet) {
-	int lenin;
+	int inlen;
 
 	cp();
 
@@ -202,7 +202,7 @@ bool read_packet(vpn_packet_t *packet) {
 		}
 
 		case 1: {
-			if((lenin = read(request_fd, &request, sizeof request)) != sizeof request) {
+			if((inlen = read(request_fd, &request, sizeof request)) != sizeof request) {
 				logger(LOG_ERR, _("Error while reading request from %s %s: %s"), device_info,
 					   device, strerror(errno));
 				running = false;
@@ -232,14 +232,14 @@ bool read_packet(vpn_packet_t *packet) {
 		}
 
 		case 2: {
-			if((lenin = read(data_fd, packet->data, MTU)) <= 0) {
+			if((inlen = read(data_fd, packet->data, MTU)) <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
 					   device, strerror(errno));
 				running = false;
 				return false;
 			}
 
-			packet->len = lenin;
+			packet->len = inlen;
 
 			device_total_in += packet->len;
 
