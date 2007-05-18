@@ -263,9 +263,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		inpkt = outpkt;
 	}
 
-	if(n->connection)
-		n->connection->last_ping_time = now;
-
 	if(!inpkt->data[12] && !inpkt->data[13])
 		mtu_probe_h(n, inpkt);
 	else

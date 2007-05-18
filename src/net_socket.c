@@ -261,7 +261,7 @@ void finish_connecting(connection_t *c)
 
 	configure_tcp(c);
 
-	c->last_ping_time = now;
+	c->last_ping_time = time(NULL);
 	c->status.connecting = false;
 
 	send_id(c);
@@ -391,7 +391,7 @@ void setup_outgoing_connection(outgoing_t *outgoing)
 	}
 
 	c->outgoing = outgoing;
-	c->last_ping_time = now;
+	c->last_ping_time = time(NULL);
 
 	connection_add(c);
 
@@ -437,7 +437,7 @@ void handle_new_meta_connection(int sock, short events, void *data)
 	c->address = sa;
 	c->hostname = sockaddr2hostname(&sa);
 	c->socket = fd;
-	c->last_ping_time = now;
+	c->last_ping_time = time(NULL);
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection from %s"), c->hostname);
 

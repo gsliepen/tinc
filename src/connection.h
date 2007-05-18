@@ -104,7 +104,6 @@ typedef struct connection_t {
 	struct event outev;			/* events on this metadata connection */
 
 	time_t last_ping_time;		/* last time we saw some activity from the other end or pinged them */
-	time_t last_flushed_time;	/* last time buffer was empty. Only meaningful if outbuflen > 0 */
 
 	avl_tree_t *config_tree;	/* Pointer to configuration tree belonging to him */
 } connection_t;

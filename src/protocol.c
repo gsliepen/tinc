@@ -211,7 +211,7 @@ bool seen_request(char *request)
 	} else {
 		new = xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
-		new->firstseen = now;
+		new->firstseen = time(NULL);
 		avl_insert(past_request_tree, new);
 		event_add(&past_request_event, &(struct timeval){10, 0});
 		return false;
@@ -223,6 +223,7 @@ void age_past_requests(int fd, short events, void *data)
 	avl_node_t *node, *next;
 	past_request_t *p;
 	int left = 0, deleted = 0;
+	time_t now = time(NULL);
 
 	cp();
 

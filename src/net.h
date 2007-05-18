@@ -128,7 +128,6 @@ extern int keylifetime;
 extern bool do_prune;
 extern bool do_purge;
 extern char *myport;
-extern time_t now;
 extern EVP_CIPHER_CTX packet_ctx;
 
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */

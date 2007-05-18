@@ -45,7 +45,6 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 			   c->name, c->hostname);
 
 	if(!c->outbuflen) {
-		c->last_flushed_time = now;
 		if(event_add(&c->outev, NULL) < 0) {
 			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
 			abort();
@@ -239,7 +238,7 @@ bool receive_meta(connection_t *c)
 		return false;
 	}
 
-	c->last_ping_time = now;
+	c->last_ping_time = time(NULL);
 
 	return true;
 }

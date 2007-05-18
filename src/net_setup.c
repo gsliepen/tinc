@@ -580,8 +580,6 @@ bool setup_network_connections(void)
 {
 	cp();
 
-	now = time(NULL);
-
 	init_connections();
 	init_subnets();
 	init_nodes();

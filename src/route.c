@@ -77,6 +77,7 @@ static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
 static bool ratelimit(int frequency) {
 	static time_t lasttime = 0;
 	static int count = 0;
+	time_t now = time(NULL);
 	
 	if(lasttime == now) {
 		if(++count > frequency)
@@ -103,6 +104,7 @@ static void age_subnets(int fd, short events, void *data)
 	connection_t *c;
 	avl_node_t *node, *next, *node2;
 	bool left = false;
+	time_t now = time(NULL);
 
 	cp();
 
@@ -152,7 +154,7 @@ static void learn_mac(mac_t *address)
 
 		subnet = new_subnet();
 		subnet->type = SUBNET_MAC;
-		subnet->expires = now + macexpire;
+		subnet->expires = time(NULL) + macexpire;
 		subnet->net.mac.address = *address;
 		subnet_add(myself, subnet);
 
@@ -167,10 +169,10 @@ static void learn_mac(mac_t *address)
 		if(!timeout_initialized(&age_subnets_event))
 			timeout_set(&age_subnets_event, age_subnets, NULL);
 		event_add(&age_subnets_event, &(struct timeval){10, 0});
+	} else {
+		if(subnet->expires)
+			subnet->expires = time(NULL) + macexpire;
 	}
-
-	if(subnet->expires)
-		subnet->expires = now + macexpire;
 }
 
 static void route_mac(node_t *source, vpn_packet_t *packet)

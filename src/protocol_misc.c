@@ -116,7 +116,7 @@ bool send_ping(connection_t *c)
 	cp();
 
 	c->status.pinged = true;
-	c->last_ping_time = now;
+	c->last_ping_time = time(NULL);
 
 	return send_request(c, "%d", PING);
 }

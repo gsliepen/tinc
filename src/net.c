@@ -41,8 +41,6 @@
 
 volatile bool running = false;
 
-time_t now = 0;
-
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 static void purge(void)
@@ -208,6 +206,7 @@ static void check_dead_connections(void)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
+	time_t now = time(NULL);
 
 	cp();
 
@@ -241,16 +240,6 @@ static void check_dead_connections(void)
 				} else {
 					terminate_connection(c, false);
 				}
-			}
-		}
-
-		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
-			if(c->status.active) {
-				ifdebug(CONNECTIONS) logger(LOG_INFO,
-						_("%s (%s) could not flush for %ld seconds (%d bytes remaining)"),
-						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
-				c->status.timeout = true;
-				terminate_connection(c, true);
 			}
 		}
 	}
@@ -437,16 +426,13 @@ int main_loop(void)
 	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
 	signal_add(&sigalrm_event, NULL);
 
-	last_ping_check = now;
+	last_ping_check = time(NULL);
 	
-	srand(now);
+	srand(time(NULL));
 
 	running = true;
 
 	while(running) {
-		now = time(NULL);
-
-	//	tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
@@ -463,7 +449,6 @@ int main_loop(void)
 		}
 
 		r = event_loop(EVLOOP_ONCE);
-		now = time(NULL);
 		if(r < 0) {
 			logger(LOG_ERR, _("Error while waiting for input: %s"),
 				   strerror(errno));
@@ -477,9 +462,9 @@ int main_loop(void)
 
 		/* Let's check if everybody is still alive */
 
-		if(last_ping_check + pingtimeout < now) {
+		if(last_ping_check + pingtimeout < time(NULL)) {
 			check_dead_connections();
-			last_ping_check = now;
+			last_ping_check = time(NULL);
 		}
 	}
 
