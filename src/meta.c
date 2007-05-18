@@ -25,7 +25,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "connection.h"
 #include "logger.h"
 #include "meta.h"
@@ -122,7 +122,7 @@ void flush_meta(int fd, short events, void *data) {
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
-	avl_node_t *node;
+	splay_node_t *node;
 	connection_t *c;
 
 	cp();

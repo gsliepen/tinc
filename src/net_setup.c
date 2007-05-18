@@ -28,7 +28,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -609,7 +609,7 @@ bool setup_network_connections(void) {
   close all open network connections
 */
 void close_network_connections(void) {
-	avl_node_t *node, *next;
+	splay_node_t *node, *next;
 	connection_t *c;
 	char *envp[5];
 	int i;

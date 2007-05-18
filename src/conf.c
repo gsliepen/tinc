@@ -24,14 +24,14 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "logger.h"
 #include "netutl.h"				/* for str2address */
 #include "utils.h"				/* for cp */
 #include "xalloc.h"
 
-avl_tree_t *config_tree;
+splay_tree_t *config_tree;
 
 int pinginterval = 0;			/* seconds between pings */
 int pingtimeout = 0;			/* seconds to wait for response */
@@ -54,16 +54,16 @@ static int config_compare(const config_t *a, const config_t *b) {
 		return strcmp(a->file, b->file);
 }
 
-void init_configuration(avl_tree_t ** config_tree) {
+void init_configuration(splay_tree_t ** config_tree) {
 	cp();
 
-	*config_tree = avl_alloc_tree((avl_compare_t) config_compare, (avl_action_t) free_config);
+	*config_tree = splay_alloc_tree((splay_compare_t) config_compare, (splay_action_t) free_config);
 }
 
-void exit_configuration(avl_tree_t ** config_tree) {
+void exit_configuration(splay_tree_t ** config_tree) {
 	cp();
 
-	avl_delete_tree(*config_tree);
+	splay_delete_tree(*config_tree);
 	*config_tree = NULL;
 }
 
@@ -88,13 +88,13 @@ void free_config(config_t *cfg) {
 	free(cfg);
 }
 
-void config_add(avl_tree_t *config_tree, config_t *cfg) {
+void config_add(splay_tree_t *config_tree, config_t *cfg) {
 	cp();
 
-	avl_insert(config_tree, cfg);
+	splay_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
+config_t *lookup_config(splay_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
 
 	cp();
@@ -103,7 +103,7 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	cfg.file = "";
 	cfg.line = 0;
 
-	found = avl_search_closest_greater(config_tree, &cfg);
+	found = splay_search_closest_greater(config_tree, &cfg);
 
 	if(!found)
 		return NULL;
@@ -114,13 +114,13 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	return found;
 }
 
-config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg) {
-	avl_node_t *node;
+config_t *lookup_config_next(splay_tree_t *config_tree, const config_t *cfg) {
+	splay_node_t *node;
 	config_t *found;
 
 	cp();
 
-	node = avl_search_node(config_tree, cfg);
+	node = splay_search_node(config_tree, cfg);
 
 	if(node) {
 		if(node->next) {
@@ -303,7 +303,7 @@ static char *readline(FILE * fp, char **buf, size_t *buflen) {
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-int read_config_file(avl_tree_t *config_tree, const char *fname) {
+int read_config_file(splay_tree_t *config_tree, const char *fname) {
 	int err = -2;				/* Parse error */
 	FILE *fp;
 	char *buffer, *line;

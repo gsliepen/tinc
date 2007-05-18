@@ -53,7 +53,7 @@ static char (*request_name[]) = {
 		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
 };
 
-static avl_tree_t *past_request_tree;
+static splay_tree_t *past_request_tree;
 
 bool check_id(const char *id) {
 	for(; *id; id++)
@@ -198,21 +198,21 @@ bool seen_request(char *request) {
 
 	p.request = request;
 
-	if(avl_search(past_request_tree, &p)) {
+	if(splay_search(past_request_tree, &p)) {
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
 		return true;
 	} else {
 		new = xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
 		new->firstseen = time(NULL);
-		avl_insert(past_request_tree, new);
+		splay_insert(past_request_tree, new);
 		event_add(&past_request_event, &(struct timeval){10, 0});
 		return false;
 	}
 }
 
 void age_past_requests(int fd, short events, void *data) {
-	avl_node_t *node, *next;
+	splay_node_t *node, *next;
 	past_request_t *p;
 	int left = 0, deleted = 0;
 	time_t now = time(NULL);
@@ -224,7 +224,7 @@ void age_past_requests(int fd, short events, void *data) {
 		p = node->data;
 
 		if(p->firstseen + pinginterval < now)
-			avl_delete_node(past_request_tree, node), deleted++;
+			splay_delete_node(past_request_tree, node), deleted++;
 		else
 			left++;
 	}
@@ -240,7 +240,7 @@ void age_past_requests(int fd, short events, void *data) {
 void init_requests(void) {
 	cp();
 
-	past_request_tree = avl_alloc_tree((avl_compare_t) past_request_compare, (avl_action_t) free_past_request);
+	past_request_tree = splay_alloc_tree((splay_compare_t) past_request_compare, (splay_action_t) free_past_request);
 
 	timeout_set(&past_request_event, age_past_requests, NULL);
 }
@@ -248,7 +248,7 @@ void init_requests(void) {
 void exit_requests(void) {
 	cp();
 
-	avl_delete_tree(past_request_tree);
+	splay_delete_tree(past_request_tree);
 
 	event_del(&past_request_event);
 }

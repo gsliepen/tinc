@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
@@ -30,8 +30,8 @@
 #include "utils.h"
 #include "xalloc.h"
 
-avl_tree_t *node_tree;			/* Known nodes, sorted by name */
-avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
+splay_tree_t *node_tree;			/* Known nodes, sorted by name */
+splay_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
 
 node_t *myself;
 
@@ -55,15 +55,15 @@ static int node_udp_compare(const node_t *a, const node_t *b) {
 void init_nodes(void) {
 	cp();
 
-	node_tree = avl_alloc_tree((avl_compare_t) node_compare, (avl_action_t) free_node);
-	node_udp_tree = avl_alloc_tree((avl_compare_t) node_udp_compare, NULL);
+	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
+	node_udp_tree = splay_alloc_tree((splay_compare_t) node_udp_compare, NULL);
 }
 
 void exit_nodes(void) {
 	cp();
 
-	avl_delete_tree(node_udp_tree);
-	avl_delete_tree(node_tree);
+	splay_delete_tree(node_udp_tree);
+	splay_delete_tree(node_tree);
 }
 
 node_t *new_node(void) {
@@ -114,11 +114,11 @@ void free_node(node_t *n) {
 void node_add(node_t *n) {
 	cp();
 
-	avl_insert(node_tree, n);
+	splay_insert(node_tree, n);
 }
 
 void node_del(node_t *n) {
-	avl_node_t *node, *next;
+	splay_node_t *node, *next;
 	edge_t *e;
 	subnet_t *s;
 
@@ -136,7 +136,7 @@ void node_del(node_t *n) {
 		edge_del(e);
 	}
 
-	avl_delete(node_tree, n);
+	splay_delete(node_tree, n);
 }
 
 node_t *lookup_node(char *name) {
@@ -146,7 +146,7 @@ node_t *lookup_node(char *name) {
 	
 	n.name = name;
 
-	return avl_search(node_tree, &n);
+	return splay_search(node_tree, &n);
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
@@ -157,11 +157,11 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 	n.address = *sa;
 	n.name = NULL;
 
-	return avl_search(node_udp_tree, &n);
+	return splay_search(node_udp_tree, &n);
 }
 
 void dump_nodes(void) {
-	avl_node_t *node;
+	splay_node_t *node;
 	node_t *n;
 
 	cp();

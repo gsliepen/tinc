@@ -28,7 +28,7 @@
 
 #include <event.h>
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
@@ -105,10 +105,10 @@ typedef struct connection_t {
 
 	time_t last_ping_time;		/* last time we saw some activity from the other end or pinged them */
 
-	avl_tree_t *config_tree;	/* Pointer to configuration tree belonging to him */
+	splay_tree_t *config_tree;	/* Pointer to configuration tree belonging to him */
 } connection_t;
 
-extern avl_tree_t *connection_tree;
+extern splay_tree_t *connection_tree;
 extern connection_t *broadcast;
 
 extern void init_connections(void);

@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "connection.h"
 #include "ethernet.h"
 #include "ipv4.h"
@@ -102,7 +102,7 @@ static void age_subnets(int fd, short events, void *data)
 {
 	subnet_t *s;
 	connection_t *c;
-	avl_node_t *node, *next, *node2;
+	splay_node_t *node, *next, *node2;
 	bool left = false;
 	time_t now = time(NULL);
 
@@ -138,7 +138,7 @@ static void age_subnets(int fd, short events, void *data)
 static void learn_mac(mac_t *address)
 {
 	subnet_t *subnet;
-	avl_node_t *node;
+	splay_node_t *node;
 	connection_t *c;
 
 	cp();

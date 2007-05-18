@@ -31,7 +31,7 @@
 #include <zlib.h>
 #include LZO1X_H
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -438,7 +438,7 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 /* Broadcast a packet using the minimum spanning tree */
 
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
-	avl_node_t *node;
+	splay_node_t *node;
 	connection_t *c;
 
 	cp();

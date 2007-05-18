@@ -25,7 +25,7 @@
 #include <openssl/rand.h>
 
 #include "utils.h"
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -42,7 +42,7 @@
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 static void purge(void) {
-	avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
+	splay_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
 	node_t *n;
 	edge_t *e;
 	subnet_t *s;
@@ -105,7 +105,7 @@ static void purge(void) {
   While we're at it, purge stuf that needs to be removed.
 */
 static int build_fdset(void) {
-	avl_node_t *node, *next;
+	splay_node_t *node, *next;
 	connection_t *c;
 	int i, max = 0;
 
@@ -198,7 +198,7 @@ void terminate_connection(connection_t *c, bool report) {
   and close the connection.
 */
 static void timeout_handler(int fd, short events, void *event) {
-	avl_node_t *node, *next;
+	splay_node_t *node, *next;
 	connection_t *c;
 	time_t now = time(NULL);
 
@@ -315,7 +315,7 @@ static void sigwinch_handler(int signal, short events, void *data) {
 
 static void sighup_handler(int signal, short events, void *data) {
 	connection_t *c;
-	avl_node_t *node;
+	splay_node_t *node;
 	char *fname;
 	struct stat s;
 	static time_t last_config_check = 0;
@@ -363,7 +363,7 @@ static void sigalrm_handler(int signal, short events, void *data) {
 	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
 
 	connection_t *c;
-	avl_node_t *node;
+	splay_node_t *node;
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;

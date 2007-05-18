@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "list.h"
 #include "logger.h"
@@ -32,7 +32,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-avl_tree_t *connection_tree;	/* Meta connections */
+splay_tree_t *connection_tree;	/* Meta connections */
 connection_t *broadcast;
 
 static int connection_compare(const connection_t *a, const connection_t *b) {
@@ -42,7 +42,7 @@ static int connection_compare(const connection_t *a, const connection_t *b) {
 void init_connections(void) {
 	cp();
 
-	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
+	connection_tree = splay_alloc_tree((splay_compare_t) connection_compare, (splay_action_t) free_connection);
 	broadcast = new_connection();
 	broadcast->name = xstrdup(_("everyone"));
 	broadcast->hostname = xstrdup(_("BROADCAST"));
@@ -51,7 +51,7 @@ void init_connections(void) {
 void exit_connections(void) {
 	cp();
 
-	avl_delete_tree(connection_tree);
+	splay_delete_tree(connection_tree);
 	free_connection(broadcast);
 }
 
@@ -102,17 +102,17 @@ void free_connection(connection_t *c) {
 void connection_add(connection_t *c) {
 	cp();
 
-	avl_insert(connection_tree, c);
+	splay_insert(connection_tree, c);
 }
 
 void connection_del(connection_t *c) {
 	cp();
 
-	avl_delete(connection_tree, c);
+	splay_delete(connection_tree, c);
 }
 
 void dump_connections(void) {
-	avl_node_t *node;
+	splay_node_t *node;
 	connection_t *c;
 
 	cp();

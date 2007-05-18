@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "logger.h"

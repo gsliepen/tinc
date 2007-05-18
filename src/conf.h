@@ -23,7 +23,7 @@
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 
 typedef struct config_t {
 	char *variable;
@@ -34,7 +34,7 @@ typedef struct config_t {
 
 #include "subnet.h"
 
-extern avl_tree_t *config_tree;
+extern splay_tree_t *config_tree;
 
 extern int pinginterval;
 extern int pingtimeout;
@@ -43,20 +43,20 @@ extern bool bypass_security;
 extern char *confbase;
 extern char *netname;
 
-extern void init_configuration(avl_tree_t **);
-extern void exit_configuration(avl_tree_t **);
+extern void init_configuration(splay_tree_t **);
+extern void exit_configuration(splay_tree_t **);
 extern config_t *new_config(void) __attribute__ ((__malloc__));
 extern void free_config(config_t *);
-extern void config_add(avl_tree_t *, config_t *);
-extern config_t *lookup_config(avl_tree_t *, char *);
-extern config_t *lookup_config_next(avl_tree_t *, const config_t *);
+extern void config_add(splay_tree_t *, config_t *);
+extern config_t *lookup_config(splay_tree_t *, char *);
+extern config_t *lookup_config_next(splay_tree_t *, const config_t *);
 extern bool get_config_bool(const config_t *, bool *);
 extern bool get_config_int(const config_t *, int *);
 extern bool get_config_string(const config_t *, char **);
 extern bool get_config_address(const config_t *, struct addrinfo **);
 extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
-extern int read_config_file(avl_tree_t *, const char *);
+extern int read_config_file(splay_tree_t *, const char *);
 extern bool read_server_config(void);
 extern FILE *ask_and_open(const char *, const char *, const char *);
 extern bool is_safe_path(const char *);

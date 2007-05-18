@@ -46,7 +46,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "config.h"
 #include "connection.h"
 #include "device.h"
@@ -64,7 +64,7 @@
 */
 
 void mst_kruskal(void) {
-	avl_node_t *node, *next;
+	splay_node_t *node, *next;
 	edge_t *e;
 	node_t *n;
 	connection_t *c;
@@ -147,7 +147,7 @@ void mst_kruskal(void) {
 */
 
 void sssp_bfs(void) {
-	avl_node_t *node, *next, *to;
+	splay_node_t *node, *next, *to;
 	edge_t *e;
 	node_t *n;
 	list_t *todo_list;
@@ -223,7 +223,7 @@ void sssp_bfs(void) {
 			e->to->options = e->options;
 
 			if(sockaddrcmp(&e->to->address, &e->address)) {
-				node = avl_unlink(node_udp_tree, e->to);
+				node = splay_unlink(node_udp_tree, e->to);
 				sockaddrfree(&e->to->address);
 				sockaddrcpy(&e->to->address, &e->address);
 
@@ -233,7 +233,7 @@ void sssp_bfs(void) {
 				e->to->hostname = sockaddr2hostname(&e->to->address);
 
 				if(node)
-					avl_insert_node(node_udp_tree, node);
+					splay_insert_node(node_udp_tree, node);
 
 				if(e->to->options & OPTION_PMTU_DISCOVERY) {
 					e->to->mtuprobes = 0;
@@ -265,11 +265,11 @@ void sssp_bfs(void) {
 			if(n->status.reachable) {
 				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
 					   n->name, n->hostname);
-				avl_insert(node_udp_tree, n);
+				splay_insert(node_udp_tree, n);
 			} else {
 				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
 					   n->name, n->hostname);
-				avl_delete(node_udp_tree, n);
+				splay_delete(node_udp_tree, n);
 			}
 
 			n->status.validkey = false;
@@ -314,7 +314,7 @@ void sssp_bfs(void) {
 */
 
 static void dump_graph(int fd, short events, void *data) {
-	avl_node_t *node;
+	splay_node_t *node;
 	node_t *n;
 	edge_t *e;
 	char *filename = NULL, *tmpname = NULL;

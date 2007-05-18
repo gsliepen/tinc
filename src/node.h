@@ -23,7 +23,7 @@
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "connection.h"
 #include "list.h"
 #include "subnet.h"
@@ -65,9 +65,9 @@ typedef struct node_t {
 	struct node_t *nexthop;			/* nearest node from us to him */
 	struct node_t *via;			/* next hop for UDP packets */
 
-	avl_tree_t *subnet_tree;		/* Pointer to a tree of subnets belonging to this node */
+	splay_tree_t *subnet_tree;		/* Pointer to a tree of subnets belonging to this node */
 
-	avl_tree_t *edge_tree;			/* Edges with this node as one of the endpoints */
+	splay_tree_t *edge_tree;			/* Edges with this node as one of the endpoints */
 
 	struct connection_t *connection;	/* Connection associated with this node (if a direct connection exists) */
 
@@ -83,8 +83,8 @@ typedef struct node_t {
 } node_t;
 
 extern struct node_t *myself;
-extern avl_tree_t *node_tree;
-extern avl_tree_t *node_udp_tree;
+extern splay_tree_t *node_tree;
+extern splay_tree_t *node_udp_tree;
 
 extern void init_nodes(void);
 extern void exit_nodes(void);

@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "device.h"
 #include "logger.h"
 #include "net.h"
@@ -35,7 +35,7 @@
 
 /* lists type of subnet */
 
-avl_tree_t *subnet_tree;
+splay_tree_t *subnet_tree;
 
 /* Subnet comparison */
 
@@ -117,28 +117,28 @@ void init_subnets(void)
 {
 	cp();
 
-	subnet_tree = avl_alloc_tree((avl_compare_t) subnet_compare, (avl_action_t) free_subnet);
+	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
 }
 
 void exit_subnets(void)
 {
 	cp();
 
-	avl_delete_tree(subnet_tree);
+	splay_delete_tree(subnet_tree);
 }
 
-avl_tree_t *new_subnet_tree(void)
+splay_tree_t *new_subnet_tree(void)
 {
 	cp();
 
-	return avl_alloc_tree((avl_compare_t) subnet_compare, NULL);
+	return splay_alloc_tree((splay_compare_t) subnet_compare, NULL);
 }
 
-void free_subnet_tree(avl_tree_t *subnet_tree)
+void free_subnet_tree(splay_tree_t *subnet_tree)
 {
 	cp();
 
-	avl_delete_tree(subnet_tree);
+	splay_delete_tree(subnet_tree);
 }
 
 /* Allocating and freeing space for subnets */
@@ -165,16 +165,16 @@ void subnet_add(node_t *n, subnet_t *subnet)
 
 	subnet->owner = n;
 
-	avl_insert(subnet_tree, subnet);
-	avl_insert(n->subnet_tree, subnet);
+	splay_insert(subnet_tree, subnet);
+	splay_insert(n->subnet_tree, subnet);
 }
 
 void subnet_del(node_t *n, subnet_t *subnet)
 {
 	cp();
 
-	avl_delete(n->subnet_tree, subnet);
-	avl_delete(subnet_tree, subnet);
+	splay_delete(n->subnet_tree, subnet);
+	splay_delete(subnet_tree, subnet);
 }
 
 /* Ascii representation of subnets */
@@ -300,7 +300,7 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet)
 {
 	cp();
 
-	return avl_search(owner->subnet_tree, subnet);
+	return splay_search(owner->subnet_tree, subnet);
 }
 
 subnet_t *lookup_subnet_mac(const mac_t *address)
@@ -313,7 +313,7 @@ subnet_t *lookup_subnet_mac(const mac_t *address)
 	subnet.net.mac.address = *address;
 	subnet.owner = NULL;
 
-	p = avl_search(subnet_tree, &subnet);
+	p = splay_search(subnet_tree, &subnet);
 
 	return p;
 }
@@ -332,7 +332,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 	do {
 		/* Go find subnet */
 
-		p = avl_search_closest_smaller(subnet_tree, &subnet);
+		p = splay_search_closest_smaller(subnet_tree, &subnet);
 
 		/* Check if the found subnet REALLY matches */
 
@@ -370,7 +370,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 	do {
 		/* Go find subnet */
 
-		p = avl_search_closest_smaller(subnet_tree, &subnet);
+		p = splay_search_closest_smaller(subnet_tree, &subnet);
 
 		/* Check if the found subnet REALLY matches */
 
@@ -393,7 +393,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 }
 
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
-	avl_node_t *node;
+	splay_node_t *node;
 	int i;
 	char *envp[8];
 	char netstr[MAXNETSTR + 7] = "SUBNET=";
@@ -442,7 +442,7 @@ void dump_subnets(void)
 {
 	char netstr[MAXNETSTR];
 	subnet_t *subnet;
-	avl_node_t *node;
+	splay_node_t *node;
 
 	cp();
 
