@@ -1,7 +1,6 @@
 /*
-    tincd.c -- the main file for tincd
-    Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+    tincctl.c -- Controlling a running tincd
+    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,34 +21,17 @@
 
 #include "system.h"
 
-/* Darwin (MacOS/X) needs the following definition... */
-#ifndef _P1003_1B_VISIBLE
-#define _P1003_1B_VISIBLE
-#endif
-
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
+#include <sys/un.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 
-#include LZO1X_H
-
 #include <getopt.h>
-#include "pidfile.h"
 
 #include "conf.h"
-#include "device.h"
-#include "logger.h"
-#include "net.h"
-#include "netutl.h"
-#include "process.h"
 #include "protocol.h"
-#include "utils.h"
 #include "xalloc.h"
 
 /* The name this program was run with. */
@@ -67,71 +49,57 @@ int kill_tincd = 0;
 /* If nonzero, generate public/private keypair for this host/net. */
 int generate_keys = 0;
 
-/* If nonzero, use null ciphers and skip all key exchanges. */
-bool bypass_security = false;
-
-/* If nonzero, disable swapping for this process. */
-bool do_mlock = false;
-
-/* If nonzero, write log entries to a separate file. */
-bool use_logfile = false;
-
 char *identname = NULL;				/* program name for syslog */
 char *pidfilename = NULL;			/* pid file location */
 char *controlfilename = NULL;			/* pid file location */
-char *logfilename = NULL;			/* log file location */
-char **g_argv;					/* a copy of the cmdline arguments */
+char *confbase = NULL;
+char *netname = NULL;
 
 static int status;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
-	{"kill", optional_argument, NULL, 'k'},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
-	{"no-detach", no_argument, NULL, 'D'},
-	{"generate-keys", optional_argument, NULL, 'K'},
-	{"debug", optional_argument, NULL, 'd'},
-	{"bypass-security", no_argument, NULL, 3},
-	{"mlock", no_argument, NULL, 'L'},
-	{"logfile", optional_argument, NULL, 4},
 	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
-#ifdef HAVE_MINGW
-static struct WSAData wsa_state;
-#endif
-
-static void usage(bool status)
-{
+static void usage(bool status) {
 	if(status)
 		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
 				program_name);
 	else {
-		printf(_("Usage: %s [option]...\n\n"), program_name);
-		printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
-				"  -D, --no-detach            Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
-				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
+		printf(_("Usage: %s [options] command\n\n"), program_name);
+		printf(_("Valid options are:\n"
+				"  -c, --config=DIR           Read configuration options from DIR.\n"
 				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
-				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
-				"  -L, --mlock                Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
 				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
 				"      --help                 Display this help and exit.\n"
-				"      --version              Output version information and exit.\n\n"));
+				"      --version              Output version information and exit.\n"
+				"Valid commands are:\n"
+				"  start                      Start tincd.\n"
+				"  stop                       Stop tincd.\n"
+				"  restart                    Restart tincd.\n"
+				"  reload                     Reload configuration of running tincd.\n"
+				"  genkey [bits]              Generate a new public/private keypair.\n"
+				"  dump                       Dump a list of one of the following things:\n"
+				"    nodes                    - all known nodes in the VPN\n"
+				"    edges                    - all known connections in the VPN\n"
+				"    subnets                  - all known subnets in the VPN\n"
+				"    connections              - all meta connections with ourself\n"
+				"    graph                    - graph of the VPN in dotty format\n"
+				"\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
 }
 
-static bool parse_options(int argc, char **argv)
-{
+static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -140,75 +108,8 @@ static bool parse_options(int argc, char **argv)
 				confbase = xstrdup(optarg);
 				break;
 
-			case 'D':				/* no detach */
-				do_detach = false;
-				break;
-
-			case 'L':				/* no detach */
-				do_mlock = true;
-				break;
-
-			case 'd':				/* inc debug level */
-				if(optarg)
-					debug_level = atoi(optarg);
-				else
-					debug_level++;
-				break;
-
-			case 'k':				/* kill old tincds */
-#ifndef HAVE_MINGW
-				if(optarg) {
-					if(!strcasecmp(optarg, "HUP"))
-						kill_tincd = SIGHUP;
-					else if(!strcasecmp(optarg, "TERM"))
-						kill_tincd = SIGTERM;
-					else if(!strcasecmp(optarg, "KILL"))
-						kill_tincd = SIGKILL;
-					else if(!strcasecmp(optarg, "USR1"))
-						kill_tincd = SIGUSR1;
-					else if(!strcasecmp(optarg, "USR2"))
-						kill_tincd = SIGUSR2;
-					else if(!strcasecmp(optarg, "WINCH"))
-						kill_tincd = SIGWINCH;
-					else if(!strcasecmp(optarg, "INT"))
-						kill_tincd = SIGINT;
-					else if(!strcasecmp(optarg, "ALRM"))
-						kill_tincd = SIGALRM;
-					else {
-						kill_tincd = atoi(optarg);
-
-						if(!kill_tincd) {
-							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
-									optarg);
-							usage(true);
-							return false;
-						}
-					}
-				} else
-					kill_tincd = SIGTERM;
-#else
-					kill_tincd = 1;
-#endif
-				break;
-
 			case 'n':				/* net name given */
 				netname = xstrdup(optarg);
-				break;
-
-			case 'K':				/* generate public/private keypair */
-				if(optarg) {
-					generate_keys = atoi(optarg);
-
-					if(generate_keys < 512) {
-						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
-								optarg);
-						usage(true);
-						return false;
-					}
-
-					generate_keys &= ~7;	/* Round it to bytes */
-				} else
-					generate_keys = 1024;
 				break;
 
 			case 1:					/* show help */
@@ -217,16 +118,6 @@ static bool parse_options(int argc, char **argv)
 
 			case 2:					/* show version */
 				show_version = true;
-				break;
-
-			case 3:					/* bypass security */
-				bypass_security = true;
-				break;
-
-			case 4:					/* write log entries to a file */
-				use_logfile = true;
-				if(optarg)
-					logfilename = xstrdup(optarg);
 				break;
 
 			case 5:					/* write PID to a file */
@@ -247,8 +138,7 @@ static bool parse_options(int argc, char **argv)
 
 /* This function prettyprints the key generation process */
 
-static void indicator(int a, int b, void *p)
-{
+static void indicator(int a, int b, void *p) {
 	switch (a) {
 		case 0:
 			fprintf(stderr, ".");
@@ -286,8 +176,7 @@ static void indicator(int a, int b, void *p)
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-static bool keygen(int bits)
-{
+static bool keygen(int bits) {
 	RSA *rsa_key;
 	FILE *f;
 	char *name = NULL;
@@ -320,8 +209,6 @@ static bool keygen(int bits)
 	fclose(f);
 	free(filename);
 
-	get_config_string(lookup_config(config_tree, "Name"), &name);
-
 	if(name)
 		asprintf(&filename, "%s/hosts/%s", confbase, name);
 	else
@@ -345,8 +232,7 @@ static bool keygen(int bits)
 /*
   Set all files and paths according to netname
 */
-static void make_names(void)
-{
+static void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
@@ -381,22 +267,20 @@ static void make_names(void)
 
 	asprintf(&controlfilename, LOCALSTATEDIR "/run/%s.control", identname);
 
-	if(!logfilename)
-		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
-
 	if(netname) {
 		if(!confbase)
 			asprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
-			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+			fprintf(stderr, _("Both netname and configuration directory given, using the latter...\n"));
 	} else {
 		if(!confbase)
 			asprintf(&confbase, CONFDIR "/tinc");
 	}
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
+	int fd;
+	struct sockaddr_un addr;
 	program_name = argv[0];
 
 	setlocale(LC_ALL, "");
@@ -425,101 +309,29 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if(kill_tincd)
-		return !kill_other(kill_tincd);
-
-	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
-
-	/* Lock all pages into memory if requested */
-
-	if(do_mlock)
-#ifdef HAVE_MLOCKALL
-		if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
-				   strerror(errno));
-#else
-	{
-		logger(LOG_ERR, _("mlockall() not supported on this platform!"));
-#endif
-		return -1;
-	}
-
-	g_argv = argv;
-
-	init_configuration(&config_tree);
-
-	/* Slllluuuuuuurrrrp! */
-
-	srand(time(NULL));
-	RAND_load_file("/dev/urandom", 1024);
-
-	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
-
-	OpenSSL_add_all_algorithms();
-
-	if(generate_keys) {
-		read_server_config();
-		return !keygen(generate_keys);
-	}
-
-	if(!read_server_config())
-		return 1;
-
-	if(event_init() < 0) {
-		logger(LOG_ERR, _("Error initializing libevent!"));
+	if(strlen(controlfilename) >= sizeof addr.sun_path) {
+		fprintf(stderr, _("Control socket filename too long!\n"));
 		return 1;
 	}
 
-	if(lzo_init() != LZO_E_OK) {
-		logger(LOG_ERR, _("Error initializing LZO compressor!"));
+	fd = socket(PF_UNIX, SOCK_STREAM, 0);
+	if(fd < 0) {
+		fprintf(stderr, _("Cannot create UNIX socket: %s\n"), strerror(errno));
 		return 1;
 	}
 
-#ifdef HAVE_MINGW
-	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", winerror(GetLastError()));
+	memset(&addr, 0, sizeof addr);
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, controlfilename, sizeof addr.sun_path - 1);
+
+	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
+		fprintf(stderr, _("Cannot connect to %s: %s\n"), controlfilename, strerror(errno));
 		return 1;
 	}
 
-	if(!do_detach || !init_service())
-		return main2(argc, argv);
-	else
-		return 1;
-}
+	printf("Connected to %s.\n", controlfilename);
 
-int main2(int argc, char **argv)
-{
-#endif
+	close(fd);
 
-	if(!detach())
-		return 1;
-		
-
-	/* Setup sockets and open device. */
-
-	if(!setup_network_connections())
-		goto end;
-
-	/* Start main loop. It only exits when tinc is killed. */
-
-	status = main_loop();
-
-	/* Shutdown properly. */
-
-	close_network_connections();
-
-	ifdebug(CONNECTIONS)
-		dump_device_stats();
-
-end:
-	logger(LOG_NOTICE, _("Terminating"));
-
-#ifndef HAVE_MINGW
-	remove_pid(pidfilename);
-#endif
-
-	EVP_cleanup();
-	
-	return status;
+	return 0;
 }

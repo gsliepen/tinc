@@ -31,6 +31,7 @@
 #include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
+#include "control.h"
 #include "device.h"
 #include "graph.h"
 #include "logger.h"
@@ -525,10 +526,8 @@ bool setup_myself(void) {
 				  EV_READ|EV_PERSIST,
 				  handle_new_meta_connection, NULL);
 		if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-			logger(LOG_WARNING, _("event_add failed: %s"), strerror(errno));
-			close(listen_socket[listen_sockets].tcp);
-			close(listen_socket[listen_sockets].udp);
-			continue;
+			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+			abort();
 		}
 
 		event_set(&listen_socket[listen_sockets].ev_udp,
@@ -536,11 +535,8 @@ bool setup_myself(void) {
 				  EV_READ|EV_PERSIST,
 				  handle_incoming_vpn_data, NULL);
 		if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-			logger(LOG_WARNING, _("event_add failed: %s"), strerror(errno));
-			close(listen_socket[listen_sockets].tcp);
-			close(listen_socket[listen_sockets].udp);
-			event_del(&listen_socket[listen_sockets].ev_tcp);
-			continue;
+			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+			abort();
 		}
 
 		ifdebug(CONNECTIONS) {
@@ -581,6 +577,7 @@ bool setup_network_connections(void) {
 	init_nodes();
 	init_edges();
 	init_requests();
+	init_control();
 
 	if(get_config_int(lookup_config(config_tree, "PingInterval"), &pinginterval)) {
 		if(pinginterval < 1) {
@@ -649,6 +646,7 @@ void close_network_connections(void) {
 	asprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
+	exit_control();
 	exit_requests();
 	exit_edges();
 	exit_subnets();
