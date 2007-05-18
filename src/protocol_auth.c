@@ -540,8 +540,17 @@ bool ack_h(connection_t *c) {
 	} else {
 		if(n->connection) {
 			/* Oh dear, we already have a connection to this node. */
-			ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"),
-					   n->name, n->hostname);
+			ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Established a second connection with %s (%s), closing old connection"), n->connection->name, n->connection->hostname);
+
+			if(n->connection->outgoing) {
+				if(c->outgoing)
+					logger(LOG_WARNING, _("Two outgoing connections to the same node!"));
+				else
+					c->outgoing = n->connection->outgoing;
+
+				n->connection->outgoing = NULL;
+			}
+
 			terminate_connection(n->connection, false);
 			/* Run graph algorithm to purge key and make sure up/down scripts are rerun with new IP addresses and stuff */
 			graph();
