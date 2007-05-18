@@ -447,6 +447,7 @@ int main(int argc, char **argv)
 
 	/* Slllluuuuuuurrrrp! */
 
+	srand(time(NULL));
 	RAND_load_file("/dev/urandom", 1024);
 
 	ENGINE_load_builtin_engines();

@@ -202,7 +202,7 @@ void terminate_connection(connection_t *c, bool report)
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void check_dead_connections(void)
+static void timeout_handler(int fd, short events, void *event)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
@@ -243,6 +243,8 @@ static void check_dead_connections(void)
 			}
 		}
 	}
+
+	event_add(event, &(struct timeval){pingtimeout, 0});
 }
 
 void handle_meta_connection_data(int fd, short events, void *data)
@@ -396,8 +398,7 @@ int main_loop(void)
 {
 	struct timeval tv;
 	int r;
-	time_t last_ping_check;
-	struct event timeout;
+	struct event timeout_event;
 	struct event sighup_event;
 	struct event sigint_event;
 	struct event sigterm_event;
@@ -409,6 +410,8 @@ int main_loop(void)
 
 	cp();
 
+	timeout_set(&timeout_event, timeout_handler, &timeout_event);
+	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
 	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_event, NULL);
 	signal_set(&sigint_event, SIGINT, sigint_handler, NULL);
@@ -426,46 +429,9 @@ int main_loop(void)
 	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
 	signal_add(&sigalrm_event, NULL);
 
-	last_ping_check = time(NULL);
-	
-	srand(time(NULL));
-
-	running = true;
-
-	while(running) {
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-
-		/* XXX: libevent transition: old timeout code in this loop */
-		timeout_set(&timeout, dummy, NULL);
-		timeout_add(&timeout, &tv);
-
-		r = build_fdset();
-		if(r < 0) {
-			logger(LOG_ERR, _("Error building fdset: %s"), strerror(errno));
-			cp_trace();
-			dump_connections();
-			return 1;
-		}
-
-		r = event_loop(EVLOOP_ONCE);
-		if(r < 0) {
-			logger(LOG_ERR, _("Error while waiting for input: %s"),
-				   strerror(errno));
-			cp_trace();
-			dump_connections();
-			return 1;
-		}
-
-		/* XXX: more libevent transition */
-		timeout_del(&timeout);
-
-		/* Let's check if everybody is still alive */
-
-		if(last_ping_check + pingtimeout < time(NULL)) {
-			check_dead_connections();
-			last_ping_check = time(NULL);
-		}
+	if(event_loop(0) < 0) {
+		logger(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
+		return 1;
 	}
 
 	signal_del(&sighup_event);
@@ -476,6 +442,7 @@ int main_loop(void)
 	signal_del(&sigusr2_event);
 	signal_del(&sigwinch_event);
 	signal_del(&sigalrm_event);
+	event_del(&timeout_event);
 
 	return 0;
 }
