@@ -39,8 +39,6 @@
 #include "subnet.h"
 #include "xalloc.h"
 
-volatile bool running = false;
-
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 static void purge(void)
@@ -278,13 +276,8 @@ void handle_meta_connection_data(int fd, short events, void *data)
 	}
 }
 
-static void dummy(int a, short b, void *c)
-{
-}
-
 static void sigterm_handler(int signal, short events, void *data) {
 	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
-	running = false;
 	event_loopexit(NULL);
 }
 

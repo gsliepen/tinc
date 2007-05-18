@@ -42,7 +42,6 @@ extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
 extern bool use_logfile;
-extern volatile bool running;
 
 sigset_t emptysigset;
 
@@ -164,19 +163,11 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
-	if(running) {
-		running = false;
-		status.dwWaitHint = 30000; 
-		status.dwCurrentState = SERVICE_STOP_PENDING; 
-		SetServiceStatus(statushandle, &status);
-		return NO_ERROR;
-	} else {
-		status.dwWaitHint = 0; 
-		status.dwCurrentState = SERVICE_STOPPED; 
-		SetServiceStatus(statushandle, &status);
-		exit(1);
-	}
-
+	event_loopexit(NULL);
+	status.dwWaitHint = 30000; 
+	status.dwCurrentState = SERVICE_STOP_PENDING; 
+	SetServiceStatus(statushandle, &status);
+	return NO_ERROR;
 }
 
 VOID WINAPI run_service(DWORD argc, LPTSTR* argv)
