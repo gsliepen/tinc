@@ -43,7 +43,7 @@ permission notice identical to this one.
 @cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2006 Ivo Timmermans,
+Copyright @copyright{} 1998-2007 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -389,6 +389,7 @@ having them installed, configure will give you an error message, and stop.
 * OpenSSL::
 * zlib::
 * lzo::
+* libevent::
 @end menu
 
 
@@ -496,6 +497,27 @@ of this package.
 
 If you have to install lzo manually, you can get the source code
 from @url{http://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
+build and install this package are included within the package.  Please
+make sure you build development and runtime libraries (which is the
+default).
+
+
+@c ==================================================================
+@node       libevent
+@subsection libevent
+
+@cindex libevent
+For the main event loop, tinc uses the libevent library.
+
+If this library is not installed, you wil get an error when configuring
+tinc for build.
+
+You can use your operating system's package manager to install this if
+available.  Make sure you install the development AND runtime versions
+of this package.
+
+If you have to install libevent manually, you can get the source code
+from @url{http://monkey.org/~provos/libevent/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
