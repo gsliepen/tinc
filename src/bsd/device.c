@@ -227,8 +227,7 @@ bool read_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet)
-{
+bool write_packet(vpn_packet_t *packet) {
 	cp();
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
@@ -289,8 +288,7 @@ bool write_packet(vpn_packet_t *packet)
 	return true;
 }
 
-void dump_device_stats(void)
-{
+void dump_device_stats(void) {
 	cp();
 
 	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);

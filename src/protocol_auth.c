@@ -40,16 +40,14 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_id(connection_t *c)
-{
+bool send_id(connection_t *c) {
 	cp();
 
 	return send_request(c, "%d %s %d", ID, myself->connection->name,
 						myself->connection->protocol_version);
 }
 
-bool id_h(connection_t *c)
-{
+bool id_h(connection_t *c) {
 	char name[MAX_STRING_SIZE];
 
 	cp();
@@ -116,8 +114,7 @@ bool id_h(connection_t *c)
 	return send_metakey(c);
 }
 
-bool send_metakey(connection_t *c)
-{
+bool send_metakey(connection_t *c) {
 	char *buffer;
 	int len;
 	bool x;
@@ -202,8 +199,7 @@ bool send_metakey(connection_t *c)
 	return x;
 }
 
-bool metakey_h(connection_t *c)
-{
+bool metakey_h(connection_t *c) {
 	char buffer[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	int len;
@@ -302,8 +298,7 @@ bool metakey_h(connection_t *c)
 	return send_challenge(c);
 }
 
-bool send_challenge(connection_t *c)
-{
+bool send_challenge(connection_t *c) {
 	char *buffer;
 	int len;
 
@@ -334,8 +329,7 @@ bool send_challenge(connection_t *c)
 	return send_request(c, "%d %s", CHALLENGE, buffer);
 }
 
-bool challenge_h(connection_t *c)
-{
+bool challenge_h(connection_t *c) {
 	char buffer[MAX_STRING_SIZE];
 	int len;
 
@@ -373,8 +367,7 @@ bool challenge_h(connection_t *c)
 	return send_chal_reply(c);
 }
 
-bool send_chal_reply(connection_t *c)
-{
+bool send_chal_reply(connection_t *c) {
 	char hash[EVP_MAX_MD_SIZE * 2 + 1];
 	EVP_MD_CTX ctx;
 
@@ -400,8 +393,7 @@ bool send_chal_reply(connection_t *c)
 	return send_request(c, "%d %s", CHAL_REPLY, hash);
 }
 
-bool chal_reply_h(connection_t *c)
-{
+bool chal_reply_h(connection_t *c) {
 	char hishash[MAX_STRING_SIZE];
 	char myhash[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
@@ -460,8 +452,7 @@ bool chal_reply_h(connection_t *c)
 	return send_ack(c);
 }
 
-bool send_ack(connection_t *c)
-{
+bool send_ack(connection_t *c) {
 	/* ACK message contains rest of the information the other end needs
 	   to create node_t and edge_t structures. */
 
@@ -491,8 +482,7 @@ bool send_ack(connection_t *c)
 	return send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
 }
 
-static void send_everything(connection_t *c)
-{
+static void send_everything(connection_t *c) {
 	avl_node_t *node, *node2;
 	node_t *n;
 	subnet_t *s;
@@ -524,8 +514,7 @@ static void send_everything(connection_t *c)
 	}
 }
 
-bool ack_h(connection_t *c)
-{
+bool ack_h(connection_t *c) {
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress, *dummy;
 	int weight, mtu;

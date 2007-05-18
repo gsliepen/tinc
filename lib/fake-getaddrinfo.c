@@ -17,8 +17,7 @@
 #include "xalloc.h"
 
 #ifndef HAVE_GAI_STRERROR
-char *gai_strerror(int ecode)
-{
+char *gai_strerror(int ecode) {
 	switch (ecode) {
 		case EAI_NODATA:
 			return "No address associated with hostname";
@@ -33,8 +32,7 @@ char *gai_strerror(int ecode)
 #endif /* !HAVE_GAI_STRERROR */
 
 #ifndef HAVE_FREEADDRINFO
-void freeaddrinfo(struct addrinfo *ai)
-{
+void freeaddrinfo(struct addrinfo *ai) {
 	struct addrinfo *next;
 
 	while(ai) {
@@ -46,8 +44,7 @@ void freeaddrinfo(struct addrinfo *ai)
 #endif /* !HAVE_FREEADDRINFO */
 
 #ifndef HAVE_GETADDRINFO
-static struct addrinfo *malloc_ai(uint16_t port, uint32_t addr)
-{
+static struct addrinfo *malloc_ai(uint16_t port, uint32_t addr) {
 	struct addrinfo *ai;
 
 	ai = xmalloc_and_zero(sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
@@ -62,8 +59,7 @@ static struct addrinfo *malloc_ai(uint16_t port, uint32_t addr)
 	return ai;
 }
 
-int getaddrinfo(const char *hostname, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
-{
+int getaddrinfo(const char *hostname, const char *servname, const struct addrinfo *hints, struct addrinfo **res) {
 	struct addrinfo *prev = NULL;
 	struct hostent *hp;
 	struct in_addr in = {0};

@@ -37,8 +37,7 @@
 
 bool mykeyused = false;
 
-bool send_key_changed(connection_t *c, const node_t *n)
-{
+bool send_key_changed(connection_t *c, const node_t *n) {
 	cp();
 
 	/* Only send this message if some other daemon requested our key previously.
@@ -51,8 +50,7 @@ bool send_key_changed(connection_t *c, const node_t *n)
 	return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
 }
 
-bool key_changed_h(connection_t *c)
-{
+bool key_changed_h(connection_t *c) {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
 
@@ -86,15 +84,13 @@ bool key_changed_h(connection_t *c)
 	return true;
 }
 
-bool send_req_key(connection_t *c, const node_t *from, const node_t *to)
-{
+bool send_req_key(connection_t *c, const node_t *from, const node_t *to) {
 	cp();
 
 	return send_request(c, "%d %s %s", REQ_KEY, from->name, to->name);
 }
 
-bool req_key_h(connection_t *c)
-{
+bool req_key_h(connection_t *c) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
@@ -140,8 +136,7 @@ bool req_key_h(connection_t *c)
 	return true;
 }
 
-bool send_ans_key(connection_t *c, const node_t *from, const node_t *to)
-{
+bool send_ans_key(connection_t *c, const node_t *from, const node_t *to) {
 	char *key;
 
 	cp();
@@ -157,8 +152,7 @@ bool send_ans_key(connection_t *c, const node_t *from, const node_t *to)
 						from->compression);
 }
 
-bool ans_key_h(connection_t *c)
-{
+bool ans_key_h(connection_t *c) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];

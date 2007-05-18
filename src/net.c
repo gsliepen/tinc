@@ -41,8 +41,7 @@
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
-static void purge(void)
-{
+static void purge(void) {
 	avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
 	node_t *n;
 	edge_t *e;
@@ -105,8 +104,7 @@ static void purge(void)
   put all file descriptors into events
   While we're at it, purge stuf that needs to be removed.
 */
-static int build_fdset(void)
-{
+static int build_fdset(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
 	int i, max = 0;
@@ -134,8 +132,7 @@ static int build_fdset(void)
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
-void terminate_connection(connection_t *c, bool report)
-{
+void terminate_connection(connection_t *c, bool report) {
 	cp();
 
 	if(c->status.remove)
@@ -200,8 +197,7 @@ void terminate_connection(connection_t *c, bool report)
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void timeout_handler(int fd, short events, void *event)
-{
+static void timeout_handler(int fd, short events, void *event) {
 	avl_node_t *node, *next;
 	connection_t *c;
 	time_t now = time(NULL);
@@ -245,8 +241,7 @@ static void timeout_handler(int fd, short events, void *event)
 	event_add(event, &(struct timeval){pingtimeout, 0});
 }
 
-void handle_meta_connection_data(int fd, short events, void *data)
-{
+void handle_meta_connection_data(int fd, short events, void *data) {
 	connection_t *c = data;
 	int result;
 	socklen_t len = sizeof(result);
@@ -387,8 +382,7 @@ static void sigalrm_handler(int signal, short events, void *data) {
 /*
   this is where it all happens...
 */
-int main_loop(void)
-{
+int main_loop(void) {
 	struct timeval tv;
 	int r;
 	struct event timeout_event;

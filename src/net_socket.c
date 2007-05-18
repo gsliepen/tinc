@@ -51,8 +51,7 @@ int listen_sockets;
 
 /* Setup sockets */
 
-static void configure_tcp(connection_t *c)
-{
+static void configure_tcp(connection_t *c) {
 	int option;
 
 #ifdef O_NONBLOCK
@@ -80,8 +79,7 @@ static void configure_tcp(connection_t *c)
 #endif
 }
 
-int setup_listen_socket(const sockaddr_t *sa)
-{
+int setup_listen_socket(const sockaddr_t *sa) {
 	int nfd;
 	char *addrstr;
 	int option;
@@ -139,8 +137,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 	return nfd;
 }
 
-int setup_vpn_in_socket(const sockaddr_t *sa)
-{
+int setup_vpn_in_socket(const sockaddr_t *sa) {
 	int nfd;
 	char *addrstr;
 	int option;
@@ -253,8 +250,7 @@ void retry_outgoing(outgoing_t *outgoing) {
 			   outgoing->timeout);
 }
 
-void finish_connecting(connection_t *c)
-{
+void finish_connecting(connection_t *c) {
 	cp();
 
 	ifdebug(CONNECTIONS) logger(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
@@ -267,8 +263,7 @@ void finish_connecting(connection_t *c)
 	send_id(c);
 }
 
-void do_outgoing_connection(connection_t *c)
-{
+void do_outgoing_connection(connection_t *c) {
 	char *address, *port;
 	int result;
 
@@ -353,8 +348,7 @@ begin:
 	return;
 }
 
-void setup_outgoing_connection(outgoing_t *outgoing)
-{
+void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;
 
@@ -409,8 +403,7 @@ void setup_outgoing_connection(outgoing_t *outgoing)
   accept a new tcp connect and create a
   new connection
 */
-void handle_new_meta_connection(int sock, short events, void *data)
-{
+void handle_new_meta_connection(int sock, short events, void *data) {
 	connection_t *c;
 	sockaddr_t sa;
 	int fd;
@@ -457,8 +450,7 @@ void handle_new_meta_connection(int sock, short events, void *data)
 	send_id(c);
 }
 
-void try_outgoing_connections(void)
-{
+void try_outgoing_connections(void) {
 	static config_t *cfg = NULL;
 	char *name;
 	outgoing_t *outgoing;

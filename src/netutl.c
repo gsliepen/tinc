@@ -34,8 +34,7 @@ bool hostnames = false;
   Turn a string into a struct addrinfo.
   Return NULL on failure.
 */
-struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype)
-{
+struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype) {
 	struct addrinfo *ai, hint = {0};
 	int err;
 
@@ -55,8 +54,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	return ai;
 }
 
-sockaddr_t str2sockaddr(const char *address, const char *port)
-{
+sockaddr_t str2sockaddr(const char *address, const char *port) {
 	struct addrinfo *ai, hint = {0};
 	sockaddr_t result;
 	int err;
@@ -84,8 +82,7 @@ sockaddr_t str2sockaddr(const char *address, const char *port)
 	return result;
 }
 
-void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
-{
+void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
 	char *scopeid;
@@ -118,8 +115,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
 	*portstr = xstrdup(port);
 }
 
-char *sockaddr2hostname(const sockaddr_t *sa)
-{
+char *sockaddr2hostname(const sockaddr_t *sa) {
 	char *str;
 	char address[NI_MAXHOST] = "unknown";
 	char port[NI_MAXSERV] = "unknown";
@@ -144,8 +140,7 @@ char *sockaddr2hostname(const sockaddr_t *sa)
 	return str;
 }
 
-int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
-{
+int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 	int result;
 
 	cp();
@@ -213,8 +208,7 @@ void sockaddrfree(sockaddr_t *a) {
 	}
 }
 	
-void sockaddrunmap(sockaddr_t *sa)
-{
+void sockaddrunmap(sockaddr_t *sa) {
 	cp();
 
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
@@ -225,8 +219,7 @@ void sockaddrunmap(sockaddr_t *sa)
 
 /* Subnet mask handling */
 
-int maskcmp(const void *va, const void *vb, int masklen)
-{
+int maskcmp(const void *va, const void *vb, int masklen) {
 	int i, m, result;
 	const char *a = va;
 	const char *b = vb;
@@ -246,8 +239,7 @@ int maskcmp(const void *va, const void *vb, int masklen)
 	return 0;
 }
 
-void mask(void *va, int masklen, int len)
-{
+void mask(void *va, int masklen, int len) {
 	int i;
 	char *a = va;
 
@@ -263,8 +255,7 @@ void mask(void *va, int masklen, int len)
 		a[i] = 0;
 }
 
-void maskcpy(void *va, const void *vb, int masklen, int len)
-{
+void maskcpy(void *va, const void *vb, int masklen, int len) {
 	int i, m;
 	char *a = va;
 	const char *b = vb;
@@ -283,8 +274,7 @@ void maskcpy(void *va, const void *vb, int masklen, int len)
 		a[i] = 0;
 }
 
-bool maskcheck(const void *va, int masklen, int len)
-{
+bool maskcheck(const void *va, int masklen, int len) {
 	int i;
 	const char *a = va;
 

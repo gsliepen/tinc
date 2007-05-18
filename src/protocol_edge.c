@@ -36,8 +36,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_add_edge(connection_t *c, const edge_t *e)
-{
+bool send_add_edge(connection_t *c, const edge_t *e) {
 	bool x;
 	char *address, *port;
 
@@ -54,8 +53,7 @@ bool send_add_edge(connection_t *c, const edge_t *e)
 	return x;
 }
 
-bool add_edge_h(connection_t *c)
-{
+bool add_edge_h(connection_t *c) {
 	edge_t *e;
 	node_t *from, *to;
 	char from_name[MAX_STRING_SIZE];
@@ -167,16 +165,14 @@ bool add_edge_h(connection_t *c)
 	return true;
 }
 
-bool send_del_edge(connection_t *c, const edge_t *e)
-{
+bool send_del_edge(connection_t *c, const edge_t *e) {
 	cp();
 
 	return send_request(c, "%d %lx %s %s", DEL_EDGE, random(),
 						e->from->name, e->to->name);
 }
 
-bool del_edge_h(connection_t *c)
-{
+bool del_edge_h(connection_t *c) {
 	edge_t *e;
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];

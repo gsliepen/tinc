@@ -34,8 +34,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_meta(connection_t *c, const char *buffer, int length)
-{
+bool send_meta(connection_t *c, const char *buffer, int length) {
 	int outlen;
 	int result;
 
@@ -83,8 +82,7 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 	return true;
 }
 
-void flush_meta(int fd, short events, void *data)
-{
+void flush_meta(int fd, short events, void *data) {
 	connection_t *c = data;
 	int result;
 	
@@ -123,8 +121,7 @@ void flush_meta(int fd, short events, void *data)
 	c->outbufstart = 0; /* avoid unnecessary memmoves */
 }
 
-void broadcast_meta(connection_t *from, const char *buffer, int length)
-{
+void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	avl_node_t *node;
 	connection_t *c;
 
@@ -138,8 +135,7 @@ void broadcast_meta(connection_t *from, const char *buffer, int length)
 	}
 }
 
-bool receive_meta(connection_t *c)
-{
+bool receive_meta(connection_t *c) {
 	int oldlen, i, result;
 	int lenin, lenout, reqlen;
 	bool decrypted = false;

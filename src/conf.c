@@ -38,8 +38,7 @@ int pingtimeout = 0;			/* seconds to wait for response */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
 
-static int config_compare(const config_t *a, const config_t *b)
-{
+static int config_compare(const config_t *a, const config_t *b) {
 	int result;
 
 	result = strcasecmp(a->variable, b->variable);
@@ -55,30 +54,26 @@ static int config_compare(const config_t *a, const config_t *b)
 		return strcmp(a->file, b->file);
 }
 
-void init_configuration(avl_tree_t ** config_tree)
-{
+void init_configuration(avl_tree_t ** config_tree) {
 	cp();
 
 	*config_tree = avl_alloc_tree((avl_compare_t) config_compare, (avl_action_t) free_config);
 }
 
-void exit_configuration(avl_tree_t ** config_tree)
-{
+void exit_configuration(avl_tree_t ** config_tree) {
 	cp();
 
 	avl_delete_tree(*config_tree);
 	*config_tree = NULL;
 }
 
-config_t *new_config(void)
-{
+config_t *new_config(void) {
 	cp();
 
 	return xmalloc_and_zero(sizeof(config_t));
 }
 
-void free_config(config_t *cfg)
-{
+void free_config(config_t *cfg) {
 	cp();
 
 	if(cfg->variable)
@@ -93,15 +88,13 @@ void free_config(config_t *cfg)
 	free(cfg);
 }
 
-void config_add(avl_tree_t *config_tree, config_t *cfg)
-{
+void config_add(avl_tree_t *config_tree, config_t *cfg) {
 	cp();
 
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(avl_tree_t *config_tree, char *variable)
-{
+config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
 
 	cp();
@@ -121,8 +114,7 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 	return found;
 }
 
-config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg)
-{
+config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg) {
 	avl_node_t *node;
 	config_t *found;
 
@@ -142,8 +134,7 @@ config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg)
 	return NULL;
 }
 
-bool get_config_bool(const config_t *cfg, bool *result)
-{
+bool get_config_bool(const config_t *cfg, bool *result) {
 	cp();
 
 	if(!cfg)
@@ -163,8 +154,7 @@ bool get_config_bool(const config_t *cfg, bool *result)
 	return false;
 }
 
-bool get_config_int(const config_t *cfg, int *result)
-{
+bool get_config_int(const config_t *cfg, int *result) {
 	cp();
 
 	if(!cfg)
@@ -179,8 +169,7 @@ bool get_config_int(const config_t *cfg, int *result)
 	return false;
 }
 
-bool get_config_string(const config_t *cfg, char **result)
-{
+bool get_config_string(const config_t *cfg, char **result) {
 	cp();
 
 	if(!cfg)
@@ -191,8 +180,7 @@ bool get_config_string(const config_t *cfg, char **result)
 	return true;
 }
 
-bool get_config_address(const config_t *cfg, struct addrinfo **result)
-{
+bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	struct addrinfo *ai;
 
 	cp();
@@ -213,8 +201,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result)
 	return false;
 }
 
-bool get_config_subnet(const config_t *cfg, subnet_t ** result)
-{
+bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 	subnet_t subnet = {0};
 
 	cp();
@@ -254,8 +241,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result)
   given, and buf needs to be expanded, the var pointed to by buflen
   will be increased.
 */
-static char *readline(FILE * fp, char **buf, size_t *buflen)
-{
+static char *readline(FILE * fp, char **buf, size_t *buflen) {
 	char *newline = NULL;
 	char *p;
 	char *line;					/* The array that contains everything that has been read so far */
@@ -317,8 +303,7 @@ static char *readline(FILE * fp, char **buf, size_t *buflen)
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-int read_config_file(avl_tree_t *config_tree, const char *fname)
-{
+int read_config_file(avl_tree_t *config_tree, const char *fname) {
 	int err = -2;				/* Parse error */
 	FILE *fp;
 	char *buffer, *line;
@@ -408,8 +393,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	return err;
 }
 
-bool read_server_config()
-{
+bool read_server_config() {
 	char *fname;
 	int x;
 
@@ -427,8 +411,7 @@ bool read_server_config()
 	return x == 0;
 }
 
-FILE *ask_and_open(const char *filename, const char *what, const char *mode)
-{
+FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 	FILE *r;
 	char *directory;
 	char *fn;

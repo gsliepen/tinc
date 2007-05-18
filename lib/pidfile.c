@@ -34,8 +34,7 @@
  * 0 is returned if either there's no pidfile, it's empty
  * or no pid can be read.
  */
-pid_t read_pid (char *pidfile)
-{
+pid_t read_pid (char *pidfile) {
   FILE *f;
   long pid;
 
@@ -52,8 +51,7 @@ pid_t read_pid (char *pidfile)
  * table (using /proc) to determine if the process already exists. If
  * so the pid is returned, otherwise 0.
  */
-pid_t check_pid (char *pidfile)
-{
+pid_t check_pid (char *pidfile) {
   pid_t pid = read_pid(pidfile);
 
   /* Amazing ! _I_ am already holding the pid file... */
@@ -78,8 +76,7 @@ pid_t check_pid (char *pidfile)
  * Writes the pid to the specified file. If that fails 0 is
  * returned, otherwise the pid.
  */
-pid_t write_pid (char *pidfile)
-{
+pid_t write_pid (char *pidfile) {
   FILE *f;
   int fd;
   pid_t pid;
@@ -123,8 +120,7 @@ pid_t write_pid (char *pidfile)
  * Remove the the specified file. The result from unlink(2)
  * is returned
  */
-int remove_pid (char *pidfile)
-{
+int remove_pid (char *pidfile) {
   return unlink (pidfile);
 }
 #endif

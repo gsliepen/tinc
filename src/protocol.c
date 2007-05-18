@@ -55,8 +55,7 @@ static char (*request_name[]) = {
 
 static avl_tree_t *past_request_tree;
 
-bool check_id(const char *id)
-{
+bool check_id(const char *id) {
 	for(; *id; id++)
 		if(!isalnum(*id) && *id != '_')
 			return false;
@@ -67,8 +66,7 @@ bool check_id(const char *id)
 /* Generic request routines - takes care of logging and error
    detection as well */
 
-bool send_request(connection_t *c, const char *format, ...)
-{
+bool send_request(connection_t *c, const char *format, ...) {
 	va_list args;
 	char buffer[MAXBUFSIZE];
 	int len, request;
@@ -108,8 +106,7 @@ bool send_request(connection_t *c, const char *format, ...)
 		return send_meta(c, buffer, len);
 }
 
-void forward_request(connection_t *from)
-{
+void forward_request(connection_t *from) {
 	int request;
 
 	cp();
@@ -130,8 +127,7 @@ void forward_request(connection_t *from)
 	broadcast_meta(from, from->buffer, from->reqlen);
 }
 
-bool receive_request(connection_t *c)
-{
+bool receive_request(connection_t *c) {
 	int request;
 
 	cp();
@@ -180,13 +176,11 @@ bool receive_request(connection_t *c)
 	return true;
 }
 
-static int past_request_compare(const past_request_t *a, const past_request_t *b)
-{
+static int past_request_compare(const past_request_t *a, const past_request_t *b) {
 	return strcmp(a->request, b->request);
 }
 
-static void free_past_request(past_request_t *r)
-{
+static void free_past_request(past_request_t *r) {
 	cp();
 
 	if(r->request)
@@ -197,8 +191,7 @@ static void free_past_request(past_request_t *r)
 
 static struct event past_request_event;
 
-bool seen_request(char *request)
-{
+bool seen_request(char *request) {
 	past_request_t *new, p = {0};
 
 	cp();
@@ -218,8 +211,7 @@ bool seen_request(char *request)
 	}
 }
 
-void age_past_requests(int fd, short events, void *data)
-{
+void age_past_requests(int fd, short events, void *data) {
 	avl_node_t *node, *next;
 	past_request_t *p;
 	int left = 0, deleted = 0;
@@ -245,8 +237,7 @@ void age_past_requests(int fd, short events, void *data)
 		event_add(&past_request_event, &(struct timeval){10, 0});
 }
 
-void init_requests(void)
-{
+void init_requests(void) {
 	cp();
 
 	past_request_tree = avl_alloc_tree((avl_compare_t) past_request_compare, (avl_action_t) free_past_request);
@@ -254,8 +245,7 @@ void init_requests(void)
 	timeout_set(&past_request_event, age_past_requests, NULL);
 }
 
-void exit_requests(void)
-{
+void exit_requests(void) {
 	cp();
 
 	avl_delete_tree(past_request_tree);

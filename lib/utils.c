@@ -31,8 +31,7 @@ volatile int cp_index = 0;
 
 char *hexadecimals = "0123456789ABCDEF";
 
-int charhex2bin(char c)
-{
+int charhex2bin(char c) {
 	if(isdigit(c))
 		return c - '0';
 	else
@@ -40,15 +39,13 @@ int charhex2bin(char c)
 }
 
 
-void hex2bin(char *src, char *dst, int length)
-{
+void hex2bin(char *src, char *dst, int length) {
 	int i;
 	for(i = 0; i < length; i++)
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 }
 
-void bin2hex(char *src, char *dst, int length)
-{
+void bin2hex(char *src, char *dst, int length) {
 	int i;
 	for(i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
@@ -57,8 +54,7 @@ void bin2hex(char *src, char *dst, int length)
 }
 
 #ifdef ENABLE_TRACING
-void cp_trace()
-{
+void cp_trace() {
 	logger(LOG_DEBUG, "Checkpoint trace: %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d <- %s:%d...",
 		   cp_file[(cp_index + 15) % 16], cp_line[(cp_index + 15) % 16],
 		   cp_file[(cp_index + 14) % 16], cp_line[(cp_index + 14) % 16],

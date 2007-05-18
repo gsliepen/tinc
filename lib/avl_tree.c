@@ -54,8 +54,7 @@
 #ifndef AVL_DEPTH
 static int lg(unsigned int u) __attribute__ ((__const__));
 
-static int lg(unsigned int u)
-{
+static int lg(unsigned int u) {
 	int r = 1;
 
 	if(!u)
@@ -90,8 +89,7 @@ static int lg(unsigned int u)
 
 /* Internal helper functions */
 
-static int avl_check_balance(const avl_node_t *node)
-{
+static int avl_check_balance(const avl_node_t *node) {
 #ifdef AVL_DEPTH
 	int d;
 
@@ -118,8 +116,7 @@ static int avl_check_balance(const avl_node_t *node)
 #endif
 }
 
-static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
-{
+static void avl_rebalance(avl_tree_t *tree, avl_node_t *node) {
 	avl_node_t *child;
 	avl_node_t *gchild;
 	avl_node_t *parent;
@@ -262,8 +259,7 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 
 /* (De)constructors */
 
-avl_tree_t *avl_alloc_tree(avl_compare_t compare, avl_action_t delete)
-{
+avl_tree_t *avl_alloc_tree(avl_compare_t compare, avl_action_t delete) {
 	avl_tree_t *tree;
 
 	tree = xmalloc_and_zero(sizeof(avl_tree_t));
@@ -273,18 +269,15 @@ avl_tree_t *avl_alloc_tree(avl_compare_t compare, avl_action_t delete)
 	return tree;
 }
 
-void avl_free_tree(avl_tree_t *tree)
-{
+void avl_free_tree(avl_tree_t *tree) {
 	free(tree);
 }
 
-avl_node_t *avl_alloc_node(void)
-{
+avl_node_t *avl_alloc_node(void) {
 	return xmalloc_and_zero(sizeof(avl_node_t));
 }
 
-void avl_free_node(avl_tree_t *tree, avl_node_t *node)
-{
+void avl_free_node(avl_tree_t *tree, avl_node_t *node) {
 	if(node->data && tree->delete)
 		tree->delete(node->data);
 
@@ -293,8 +286,7 @@ void avl_free_node(avl_tree_t *tree, avl_node_t *node)
 
 /* Searching */
 
-void *avl_search(const avl_tree_t *tree, const void *data)
-{
+void *avl_search(const avl_tree_t *tree, const void *data) {
 	avl_node_t *node;
 
 	node = avl_search_node(tree, data);
@@ -302,8 +294,7 @@ void *avl_search(const avl_tree_t *tree, const void *data)
 	return node ? node->data : NULL;
 }
 
-void *avl_search_closest(const avl_tree_t *tree, const void *data, int *result)
-{
+void *avl_search_closest(const avl_tree_t *tree, const void *data, int *result) {
 	avl_node_t *node;
 
 	node = avl_search_closest_node(tree, data, result);
@@ -311,8 +302,7 @@ void *avl_search_closest(const avl_tree_t *tree, const void *data, int *result)
 	return node ? node->data : NULL;
 }
 
-void *avl_search_closest_smaller(const avl_tree_t *tree, const void *data)
-{
+void *avl_search_closest_smaller(const avl_tree_t *tree, const void *data) {
 	avl_node_t *node;
 
 	node = avl_search_closest_smaller_node(tree, data);
@@ -320,8 +310,7 @@ void *avl_search_closest_smaller(const avl_tree_t *tree, const void *data)
 	return node ? node->data : NULL;
 }
 
-void *avl_search_closest_greater(const avl_tree_t *tree, const void *data)
-{
+void *avl_search_closest_greater(const avl_tree_t *tree, const void *data) {
 	avl_node_t *node;
 
 	node = avl_search_closest_greater_node(tree, data);
@@ -329,8 +318,7 @@ void *avl_search_closest_greater(const avl_tree_t *tree, const void *data)
 	return node ? node->data : NULL;
 }
 
-avl_node_t *avl_search_node(const avl_tree_t *tree, const void *data)
-{
+avl_node_t *avl_search_node(const avl_tree_t *tree, const void *data) {
 	avl_node_t *node;
 	int result;
 
@@ -340,8 +328,7 @@ avl_node_t *avl_search_node(const avl_tree_t *tree, const void *data)
 }
 
 avl_node_t *avl_search_closest_node(const avl_tree_t *tree, const void *data,
-									int *result)
-{
+									int *result) {
 	avl_node_t *node;
 	int c;
 
@@ -383,8 +370,7 @@ avl_node_t *avl_search_closest_node(const avl_tree_t *tree, const void *data,
 }
 
 avl_node_t *avl_search_closest_smaller_node(const avl_tree_t *tree,
-											const void *data)
-{
+											const void *data) {
 	avl_node_t *node;
 	int result;
 
@@ -397,8 +383,7 @@ avl_node_t *avl_search_closest_smaller_node(const avl_tree_t *tree,
 }
 
 avl_node_t *avl_search_closest_greater_node(const avl_tree_t *tree,
-											const void *data)
-{
+											const void *data) {
 	avl_node_t *node;
 	int result;
 
@@ -412,8 +397,7 @@ avl_node_t *avl_search_closest_greater_node(const avl_tree_t *tree,
 
 /* Insertion and deletion */
 
-avl_node_t *avl_insert(avl_tree_t *tree, void *data)
-{
+avl_node_t *avl_insert(avl_tree_t *tree, void *data) {
 	avl_node_t *closest, *new;
 	int result;
 
@@ -452,8 +436,7 @@ avl_node_t *avl_insert(avl_tree_t *tree, void *data)
 	return new;
 }
 
-avl_node_t *avl_insert_node(avl_tree_t *tree, avl_node_t *node)
-{
+avl_node_t *avl_insert_node(avl_tree_t *tree, avl_node_t *node) {
 	avl_node_t *closest;
 	int result;
 
@@ -486,15 +469,13 @@ avl_node_t *avl_insert_node(avl_tree_t *tree, avl_node_t *node)
 	return node;
 }
 
-void avl_insert_top(avl_tree_t *tree, avl_node_t *node)
-{
+void avl_insert_top(avl_tree_t *tree, avl_node_t *node) {
 	node->prev = node->next = node->parent = NULL;
 	tree->head = tree->tail = tree->root = node;
 }
 
 void avl_insert_before(avl_tree_t *tree, avl_node_t *before,
-					   avl_node_t *node)
-{
+					   avl_node_t *node) {
 	if(!before) {
 		if(tree->tail)
 			avl_insert_after(tree, tree->tail, node);
@@ -523,8 +504,7 @@ void avl_insert_before(avl_tree_t *tree, avl_node_t *before,
 	avl_rebalance(tree, before);
 }
 
-void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node)
-{
+void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node) {
 	if(!after) {
 		if(tree->head)
 			avl_insert_before(tree, tree->head, node);
@@ -553,8 +533,7 @@ void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node)
 	avl_rebalance(tree, after);
 }
 
-avl_node_t *avl_unlink(avl_tree_t *tree, void *data)
-{
+avl_node_t *avl_unlink(avl_tree_t *tree, void *data) {
 	avl_node_t *node;
 
 	node = avl_search_node(tree, data);
@@ -565,8 +544,7 @@ avl_node_t *avl_unlink(avl_tree_t *tree, void *data)
 	return node;
 }
 
-void avl_unlink_node(avl_tree_t *tree, avl_node_t *node)
-{
+void avl_unlink_node(avl_tree_t *tree, avl_node_t *node) {
 	avl_node_t *parent;
 	avl_node_t **superparent;
 	avl_node_t *subst, *left, *right;
@@ -634,14 +612,12 @@ void avl_unlink_node(avl_tree_t *tree, avl_node_t *node)
 #endif
 }
 
-void avl_delete_node(avl_tree_t *tree, avl_node_t *node)
-{
+void avl_delete_node(avl_tree_t *tree, avl_node_t *node) {
 	avl_unlink_node(tree, node);
 	avl_free_node(tree, node);
 }
 
-void avl_delete(avl_tree_t *tree, void *data)
-{
+void avl_delete(avl_tree_t *tree, void *data) {
 	avl_node_t *node;
 
 	node = avl_search_node(tree, data);
@@ -652,8 +628,7 @@ void avl_delete(avl_tree_t *tree, void *data)
 
 /* Fast tree cleanup */
 
-void avl_delete_tree(avl_tree_t *tree)
-{
+void avl_delete_tree(avl_tree_t *tree) {
 	avl_node_t *node, *next;
 
 	for(node = tree->head; node; node = next) {
@@ -666,8 +641,7 @@ void avl_delete_tree(avl_tree_t *tree)
 
 /* Tree walking */
 
-void avl_foreach(const avl_tree_t *tree, avl_action_t action)
-{
+void avl_foreach(const avl_tree_t *tree, avl_action_t action) {
 	avl_node_t *node, *next;
 
 	for(node = tree->head; node; node = next) {
@@ -676,8 +650,7 @@ void avl_foreach(const avl_tree_t *tree, avl_action_t action)
 	}
 }
 
-void avl_foreach_node(const avl_tree_t *tree, avl_action_t action)
-{
+void avl_foreach_node(const avl_tree_t *tree, avl_action_t action) {
 	avl_node_t *node, *next;
 
 	for(node = tree->head; node; node = next) {
@@ -689,13 +662,11 @@ void avl_foreach_node(const avl_tree_t *tree, avl_action_t action)
 /* Indexing */
 
 #ifdef AVL_COUNT
-unsigned int avl_count(const avl_tree_t *tree)
-{
+unsigned int avl_count(const avl_tree_t *tree) {
 	return AVL_NODE_COUNT(tree->root);
 }
 
-avl_node_t *avl_get_node(const avl_tree_t *tree, unsigned int index)
-{
+avl_node_t *avl_get_node(const avl_tree_t *tree, unsigned int index) {
 	avl_node_t *node;
 	unsigned int c;
 
@@ -717,8 +688,7 @@ avl_node_t *avl_get_node(const avl_tree_t *tree, unsigned int index)
 	return NULL;
 }
 
-unsigned int avl_index(const avl_node_t *node)
-{
+unsigned int avl_index(const avl_node_t *node) {
 	avl_node_t *next;
 	unsigned int index;
 
@@ -734,8 +704,7 @@ unsigned int avl_index(const avl_node_t *node)
 }
 #endif
 #ifdef AVL_DEPTH
-unsigned int avl_depth(const avl_tree_t *tree)
-{
+unsigned int avl_depth(const avl_tree_t *tree) {
 	return AVL_NODE_DEPTH(tree->root);
 }
 #endif

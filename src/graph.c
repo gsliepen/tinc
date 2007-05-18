@@ -63,8 +63,7 @@
    Please note that sorting on weight is already done by add_edge().
 */
 
-void mst_kruskal(void)
-{
+void mst_kruskal(void) {
 	avl_node_t *node, *next;
 	edge_t *e;
 	node_t *n;
@@ -147,8 +146,7 @@ void mst_kruskal(void)
    Running time: O(E)
 */
 
-void sssp_bfs(void)
-{
+void sssp_bfs(void) {
 	avl_node_t *node, *next, *to;
 	edge_t *e;
 	node_t *n;
@@ -315,8 +313,7 @@ void sssp_bfs(void)
    dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
 */
 
-static void dump_graph(int fd, short events, void *data)
-{
+static void dump_graph(int fd, short events, void *data) {
 	avl_node_t *node;
 	node_t *n;
 	edge_t *e;
@@ -369,8 +366,7 @@ static void dump_graph(int fd, short events, void *data)
 	}
 }
 
-void graph(void)
-{
+void graph(void) {
 	static struct event ev;
 
 	sssp_bfs();
