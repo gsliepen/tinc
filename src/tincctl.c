@@ -30,7 +30,6 @@
 
 #include <getopt.h>
 
-#include "conf.h"
 #include "protocol.h"
 #include "xalloc.h"
 
@@ -49,12 +48,10 @@ int kill_tincd = 0;
 /* If nonzero, generate public/private keypair for this host/net. */
 int generate_keys = 0;
 
-char *identname = NULL;				/* program name for syslog */
-char *controlsocketname = NULL;			/* pid file location */
-char *confbase = NULL;
+static char *identname = NULL;				/* program name for syslog */
+static char *controlsocketname = NULL;			/* pid file location */
 char *netname = NULL;
-
-static int status;
+char *confbase = NULL;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -83,7 +80,7 @@ static void usage(bool status) {
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
 				"  reload                     Reload configuration of running tincd.\n"
-				"  genkey [bits]              Generate a new public/private keypair.\n"
+				"  generate-keys [bits]       Generate a new public/private keypair.\n"
 				"  dump                       Dump a list of one of the following things:\n"
 				"    nodes                    - all known nodes in the VPN\n"
 				"    edges                    - all known connections in the VPN\n"
@@ -134,6 +131,59 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	return true;
+}
+
+FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
+	FILE *r;
+	char *directory;
+	char buf[PATH_MAX];
+	char buf2[PATH_MAX];
+	size_t len;
+
+	/* Check stdin and stdout */
+	if(isatty(0) && isatty(1)) {
+		/* Ask for a file and/or directory name. */
+		fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
+				what, filename);
+		fflush(stdout);
+
+		if(fgets(buf, sizeof buf, stdin) < 0) {
+			fprintf(stderr, _("Error while reading stdin: %s\n"),
+					strerror(errno));
+			return NULL;
+		}
+
+		len = strlen(buf);
+		if(len)
+			buf[--len] = 0;
+
+		if(len)
+			filename = buf;
+	}
+
+#ifdef HAVE_MINGW
+	if(filename[0] != '\\' && filename[0] != '/' && !strchr(filename, ':')) {
+#else
+	if(filename[0] != '/') {
+#endif
+		/* The directory is a relative path or a filename. */
+		directory = get_current_dir_name();
+		snprintf(buf2, sizeof buf2, "%s/%s", directory, filename);
+		filename = buf2;
+	}
+
+	umask(0077);				/* Disallow everything for group and other */
+
+	/* Open it first to keep the inode busy */
+
+	r = fopen(filename, mode);
+
+	if(!r) {
+		fprintf(stderr, _("Error opening file `%s': %s\n"), filename, strerror(errno));
+		return NULL;
+	}
+
+	return r;
 }
 
 /* This function prettyprints the key generation process */
@@ -305,6 +355,16 @@ int main(int argc, char **argv) {
 	if(show_help) {
 		usage(false);
 		return 0;
+	}
+
+	if(optind >= argc) {
+		fprintf(stderr, _("Not enough arguments.\n"));
+		usage(true);
+		return 1;
+	}
+
+	if(!strcasecmp(argv[optind], "generate-keys")) {
+		return !keygen(optind > argc ? atoi(argv[optind + 1]) : 1024);
 	}
 
 	if(strlen(controlsocketname) >= sizeof addr.sun_path) {

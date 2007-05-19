@@ -61,9 +61,6 @@ bool show_help = false;
 /* If nonzero, print the version on standard output and exit.  */
 bool show_version = false;
 
-/* If nonzero, generate public/private keypair for this host/net. */
-int generate_keys = 0;
-
 /* If nonzero, use null ciphers and skip all key exchanges. */
 bool bypass_security = false;
 
@@ -86,7 +83,6 @@ static struct option const long_options[] = {
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
 	{"no-detach", no_argument, NULL, 'D'},
-	{"generate-keys", optional_argument, NULL, 'K'},
 	{"debug", optional_argument, NULL, 'd'},
 	{"bypass-security", no_argument, NULL, 3},
 	{"mlock", no_argument, NULL, 'L'},
@@ -110,7 +106,6 @@ static void usage(bool status)
 				"  -D, --no-detach               Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
-				"  -K, --generate-keys[=BITS]    Generate public/private RSA keypair.\n"
 				"  -L, --mlock                   Lock tinc into main memory.\n"
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
 				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
@@ -125,7 +120,7 @@ static bool parse_options(int argc, char **argv)
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::n:K::", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -151,22 +146,6 @@ static bool parse_options(int argc, char **argv)
 
 			case 'n':				/* net name given */
 				netname = xstrdup(optarg);
-				break;
-
-			case 'K':				/* generate public/private keypair */
-				if(optarg) {
-					generate_keys = atoi(optarg);
-
-					if(generate_keys < 512) {
-						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
-								optarg);
-						usage(true);
-						return false;
-					}
-
-					generate_keys &= ~7;	/* Round it to bytes */
-				} else
-					generate_keys = 1024;
 				break;
 
 			case 1:					/* show help */
@@ -199,103 +178,6 @@ static bool parse_options(int argc, char **argv)
 				break;
 		}
 	}
-
-	return true;
-}
-
-/* This function prettyprints the key generation process */
-
-static void indicator(int a, int b, void *p)
-{
-	switch (a) {
-		case 0:
-			fprintf(stderr, ".");
-			break;
-
-		case 1:
-			fprintf(stderr, "+");
-			break;
-
-		case 2:
-			fprintf(stderr, "-");
-			break;
-
-		case 3:
-			switch (b) {
-				case 0:
-					fprintf(stderr, " p\n");
-					break;
-
-				case 1:
-					fprintf(stderr, " q\n");
-					break;
-
-				default:
-					fprintf(stderr, "?");
-			}
-			break;
-
-		default:
-			fprintf(stderr, "?");
-	}
-}
-
-/*
-  Generate a public/private RSA keypair, and ask for a file to store
-  them in.
-*/
-static bool keygen(int bits)
-{
-	RSA *rsa_key;
-	FILE *f;
-	char *name = NULL;
-	char *filename;
-
-	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
-	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
-
-	if(!rsa_key) {
-		fprintf(stderr, _("Error during key generation!\n"));
-		return false;
-	} else
-		fprintf(stderr, _("Done.\n"));
-
-	asprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(filename, _("private RSA key"), "a");
-
-	if(!f)
-		return false;
-  
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
-		
-	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
-
-	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
-	fclose(f);
-	free(filename);
-
-	get_config_string(lookup_config(config_tree, "Name"), &name);
-
-	if(name)
-		asprintf(&filename, "%s/hosts/%s", confbase, name);
-	else
-		asprintf(&filename, "%s/rsa_key.pub", confbase);
-
-	f = ask_and_open(filename, _("public RSA key"), "a");
-
-	if(!f)
-		return false;
-
-	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
-
-	PEM_write_RSAPublicKey(f, rsa_key);
-	fclose(f);
-	free(filename);
 
 	return true;
 }
@@ -418,11 +300,6 @@ int main(int argc, char **argv)
 	ENGINE_register_all_complete();
 
 	OpenSSL_add_all_algorithms();
-
-	if(generate_keys) {
-		read_server_config();
-		return !keygen(generate_keys);
-	}
 
 	if(!read_server_config())
 		return 1;
