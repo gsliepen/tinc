@@ -35,15 +35,33 @@ extern char *controlsocketname;
 static void handle_control_data(int fd, short events, void *event) {
 	char buf[MAXBUFSIZE];
 	size_t inlen;
+	char *p;
 
 	inlen = read(fd, buf, sizeof buf);
 
-	if(inlen <= 0) {
-		logger(LOG_DEBUG, _("Closing control socket"));
-		event_del(event);
-		splay_delete(control_socket_tree, event);
-		close(fd);
+	if(inlen <= 0)
+		goto close;
+
+	p = memchr(buf, '\n', sizeof buf);
+	if(!p || p - buf + 1 != inlen)
+		goto malformed;
+
+	*p = 0;
+
+	if(!strcasecmp(buf, "stop")) {
+		logger(LOG_NOTICE, _("Got stop command"));
+		event_loopexit(NULL);
+		return;
 	}
+
+malformed:
+	logger(LOG_DEBUG, _("Malformed control command received"));
+
+close:
+	logger(LOG_DEBUG, _("Closing control socket"));
+	event_del(event);
+	splay_delete(control_socket_tree, event);
+	close(fd);
 }
 
 static void handle_new_control_socket(int fd, short events, void *data) {

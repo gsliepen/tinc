@@ -80,6 +80,7 @@ static void usage(bool status) {
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
 				"  reload                     Reload configuration of running tincd.\n"
+				"  pid                        Show PID of currently running tincd.\n"
 				"  generate-keys [bits]       Generate a new public/private keypair.\n"
 				"  dump                       Dump a list of one of the following things:\n"
 				"    nodes                    - all known nodes in the VPN\n"
@@ -326,7 +327,7 @@ static void make_names(void) {
 	}
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[], char *envp[]) {
 	int fd;
 	struct sockaddr_un addr;
 	program_name = argv[0];
@@ -363,9 +364,20 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	// First handle commands that don't involve connecting to a running tinc daemon.
+
 	if(!strcasecmp(argv[optind], "generate-keys")) {
 		return !keygen(optind > argc ? atoi(argv[optind + 1]) : 1024);
 	}
+
+	if(!strcasecmp(argv[optind], "start")) {
+		argv[optind] = NULL;
+		execve("tincd", argv, envp);
+		fprintf(stderr, _("Could not start tincd: %s"), strerror(errno));
+		return 1;
+	}
+
+	// Now handle commands that do involve connecting to a running tinc daemon.
 
 	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
 		fprintf(stderr, _("Control socket filename too long!\n"));
@@ -387,8 +399,37 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	printf("Connected to %s.\n", controlsocketname);
+	struct ucred cred;
+	socklen_t credlen = sizeof cred;
 
+	if(getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &cred, &credlen) < 0) {
+		fprintf(stderr, _("Could not obtain PID: %s\n"), strerror(errno));
+		return 1;
+	}
+
+	if(!strcasecmp(argv[optind], "pid")) {
+		printf("%d\n", cred.pid);
+		return 0;
+	}
+
+	if(!strcasecmp(argv[optind], "stop")) {
+		write(fd, "stop\n", 5);
+		return 0;
+	}
+
+	if(!strcasecmp(argv[optind], "reload")) {
+		write(fd, "reload\n", 7);
+		return 0;
+	}
+	
+	if(!strcasecmp(argv[optind], "restart")) {
+		write(fd, "restart\n", 8);
+		return 0;
+	}
+
+	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);
+	usage(true);
+	
 	close(fd);
 
 	return 0;
