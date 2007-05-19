@@ -22,7 +22,7 @@
 #ifndef __TINC_CONTROL_H__
 #define __TINC_CONTROL_H__
 
-extern void init_control();
+extern bool init_control();
 extern void exit_control();
 
 #endif

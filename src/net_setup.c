@@ -577,7 +577,6 @@ bool setup_network_connections(void) {
 	init_nodes();
 	init_edges();
 	init_requests();
-	init_control();
 
 	if(get_config_int(lookup_config(config_tree, "PingInterval"), &pinginterval)) {
 		if(pinginterval < 1) {
@@ -646,7 +645,6 @@ void close_network_connections(void) {
 	asprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
-	exit_control();
 	exit_requests();
 	exit_edges();
 	exit_subnets();

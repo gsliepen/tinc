@@ -50,8 +50,7 @@ int kill_tincd = 0;
 int generate_keys = 0;
 
 char *identname = NULL;				/* program name for syslog */
-char *pidfilename = NULL;			/* pid file location */
-char *controlfilename = NULL;			/* pid file location */
+char *controlsocketname = NULL;			/* pid file location */
 char *confbase = NULL;
 char *netname = NULL;
 
@@ -62,7 +61,7 @@ static struct option const long_options[] = {
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
-	{"pidfile", required_argument, NULL, 5},
+	{"controlsocket", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
@@ -73,11 +72,12 @@ static void usage(bool status) {
 	else {
 		printf(_("Usage: %s [options] command\n\n"), program_name);
 		printf(_("Valid options are:\n"
-				"  -c, --config=DIR           Read configuration options from DIR.\n"
-				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
-				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
-				"      --help                 Display this help and exit.\n"
-				"      --version              Output version information and exit.\n"
+				"  -c, --config=DIR              Read configuration options from DIR.\n"
+				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
+				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
+				"      --help                    Display this help and exit.\n"
+				"      --version                 Output version information and exit.\n"
+				"\n"
 				"Valid commands are:\n"
 				"  start                      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
@@ -120,8 +120,8 @@ static bool parse_options(int argc, char **argv) {
 				show_version = true;
 				break;
 
-			case 5:					/* write PID to a file */
-				pidfilename = xstrdup(optarg);
+			case 5:					/* open control socket here */
+				controlsocketname = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -262,10 +262,8 @@ static void make_names(void) {
 	}
 #endif
 
-	if(!pidfilename)
-		asprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
-
-	asprintf(&controlfilename, LOCALSTATEDIR "/run/%s.control", identname);
+	if(!controlsocketname)
+		asprintf(&controlsocketname, LOCALSTATEDIR "/run/%s.control", identname);
 
 	if(netname) {
 		if(!confbase)
@@ -309,7 +307,7 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	if(strlen(controlfilename) >= sizeof addr.sun_path) {
+	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
 		fprintf(stderr, _("Control socket filename too long!\n"));
 		return 1;
 	}
@@ -322,14 +320,14 @@ int main(int argc, char **argv) {
 
 	memset(&addr, 0, sizeof addr);
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, controlfilename, sizeof addr.sun_path - 1);
+	strncpy(addr.sun_path, controlsocketname, sizeof addr.sun_path - 1);
 
 	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
-		fprintf(stderr, _("Cannot connect to %s: %s\n"), controlfilename, strerror(errno));
+		fprintf(stderr, _("Cannot connect to %s: %s\n"), controlsocketname, strerror(errno));
 		return 1;
 	}
 
-	printf("Connected to %s.\n", controlfilename);
+	printf("Connected to %s.\n", controlsocketname);
 
 	close(fd);
 

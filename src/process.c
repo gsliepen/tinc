@@ -24,11 +24,11 @@
 
 #include "conf.h"
 #include "connection.h"
+#include "control.h"
 #include "device.h"
 #include "edge.h"
 #include "logger.h"
 #include "node.h"
-#include "pidfile.h"
 #include "process.h"
 #include "subnet.h"
 #include "utils.h"
@@ -39,7 +39,6 @@ bool do_detach = true;
 bool sigalrm = false;
 
 extern char *identname;
-extern char *pidfilename;
 extern char **g_argv;
 extern bool use_logfile;
 
@@ -221,92 +220,15 @@ bool init_service(void) {
 }
 #endif
 
-#ifndef HAVE_MINGW
 /*
-  check for an existing tinc for this net, and write pid to pidfile
-*/
-static bool write_pidfile(void) {
-	pid_t pid;
-
-	cp();
-
-	pid = check_pid(pidfilename);
-
-	if(pid) {
-		if(netname)
-			fprintf(stderr, _("A tincd is already running for net `%s' with pid %ld.\n"),
-					netname, (long)pid);
-		else
-			fprintf(stderr, _("A tincd is already running with pid %ld.\n"), (long)pid);
-		return false;
-	}
-
-	/* if it's locked, write-protected, or whatever */
-	if(!write_pid(pidfilename)) {
-		fprintf(stderr, _("Could write pid file %s: %s\n"), pidfilename, strerror(errno));
-		return false;
-	}
-
-	return true;
-}
-#endif
-
-/*
-  kill older tincd for this net
-*/
-bool kill_other(int signal) {
-#ifndef HAVE_MINGW
-	pid_t pid;
-
-	cp();
-
-	pid = read_pid(pidfilename);
-
-	if(!pid) {
-		if(netname)
-			fprintf(stderr, _("No other tincd is running for net `%s'.\n"),
-					netname);
-		else
-			fprintf(stderr, _("No other tincd is running.\n"));
-		return false;
-	}
-
-	errno = 0;					/* No error, sometimes errno is only changed on error */
-
-	/* ESRCH is returned when no process with that pid is found */
-	if(kill(pid, signal) && errno == ESRCH) {
-		if(netname)
-			fprintf(stderr, _("The tincd for net `%s' is no longer running. "),
-					netname);
-		else
-			fprintf(stderr, _("The tincd is no longer running. "));
-
-		fprintf(stderr, _("Removing stale lock file.\n"));
-		remove_pid(pidfilename);
-	}
-
-	return true;
-#else
-	return remove_service();
-#endif
-}
-
-/*
-  Detach from current terminal, write pidfile, kill parent
+  Detach from current terminal
 */
 bool detach(void) {
 	cp();
 
 	setup_signals();
 
-	/* First check if we can open a fresh new pidfile */
-
 #ifndef HAVE_MINGW
-	if(!write_pidfile())
-		return false;
-
-	/* If we succeeded in doing that, detach */
-
 	closelogger();
 #endif
 
@@ -315,13 +237,6 @@ bool detach(void) {
 		if(daemon(0, 0)) {
 			fprintf(stderr, _("Couldn't detach from terminal: %s"),
 					strerror(errno));
-			return false;
-		}
-
-		/* Now UPDATE the pid in the pidfile, because we changed it... */
-
-		if(!write_pid(pidfilename)) {
-			fprintf(stderr, _("Could not write pid file %s: %s\n"), pidfilename, strerror(errno));
 			return false;
 		}
 #else
@@ -445,7 +360,7 @@ static RETSIGTYPE fatal_signal_handler(int a) {
 
 		close_network_connections();
 		sleep(5);
-		remove_pid(pidfilename);
+		exit_control();
 		execvp(g_argv[0], g_argv);
 	} else {
 		logger(LOG_NOTICE, _("Not restarting."));

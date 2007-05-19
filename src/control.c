@@ -30,7 +30,7 @@
 static int control_socket = -1;
 static struct event control_event;
 static splay_tree_t *control_socket_tree;
-extern char *controlfilename;
+extern char *controlsocketname;
 
 static void handle_control_data(int fd, short events, void *event) {
 	char buf[MAXBUFSIZE];
@@ -70,47 +70,67 @@ static int control_compare(const struct event *a, const struct event *b) {
 	return a < b ? -1 : a > b ? 1 : 0;
 }
 
-void init_control() {
+bool init_control() {
+	int result;
 	struct sockaddr_un addr;
 
-	control_socket_tree = splay_alloc_tree((splay_compare_t)control_compare, (splay_action_t)free);
-
-	if(strlen(controlfilename) >= sizeof addr.sun_path) {
+	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
 		logger(LOG_ERR, _("Control socket filename too long!"));
-		return;
+		return false;
 	}
 
 	memset(&addr, 0, sizeof addr);
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, controlfilename, sizeof addr.sun_path - 1);
+	strncpy(addr.sun_path, controlsocketname, sizeof addr.sun_path - 1);
 
 	control_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 
 	if(control_socket < 0) {
 		logger(LOG_ERR, _("Creating UNIX socket failed: %s"), strerror(errno));
-		return;
+		return false;
 	}
 
-	unlink(controlfilename);
-	if(bind(control_socket, (struct sockaddr *)&addr, sizeof addr) < 0) {
-		logger(LOG_ERR, _("Can't bind to %s: %s\n"), controlfilename, strerror(errno));
+	//unlink(controlsocketname);
+	result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
+	
+	if(result < 0 && errno == EADDRINUSE) {
+		result = connect(control_socket, (struct sockaddr *)&addr, sizeof addr);
+		if(result < 0) {
+			logger(LOG_WARNING, _("Removing old control socket."));
+			unlink(controlsocketname);
+			result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
+		} else {
+			close(control_socket);
+			if(netname)
+				logger(LOG_ERR, _("Another tincd is already running for net `%s'."), netname);
+			else
+				logger(LOG_ERR, _("Another tincd is already running."));
+			return false;
+		}
+	}
+
+	if(result < 0) {
+		logger(LOG_ERR, _("Can't bind to %s: %s\n"), controlsocketname, strerror(errno));
 		close(control_socket);
-		return;
+		return false;
 	}
 
 	if(listen(control_socket, 3) < 0) {
-		logger(LOG_ERR, _("Can't listen on %s: %s\n"), controlfilename, strerror(errno));
+		logger(LOG_ERR, _("Can't listen on %s: %s\n"), controlsocketname, strerror(errno));
 		close(control_socket);
-		return;
+		return false;
 	}
+
+	control_socket_tree = splay_alloc_tree((splay_compare_t)control_compare, (splay_action_t)free);
 
 	event_set(&control_event, control_socket, EV_READ | EV_PERSIST, handle_new_control_socket, NULL);
 	event_add(&control_event, NULL);
+
+	return true;
 }
 
 void exit_control() {
-	if(control_socket >= 0) {
-		event_del(&control_event);
-		close(control_socket);
-	}
+	event_del(&control_event);
+	close(control_socket);
+	unlink(controlsocketname);
 }

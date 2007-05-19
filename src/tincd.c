@@ -40,9 +40,9 @@
 #include LZO1X_H
 
 #include <getopt.h>
-#include "pidfile.h"
 
 #include "conf.h"
+#include "control.h"
 #include "device.h"
 #include "logger.h"
 #include "net.h"
@@ -61,9 +61,6 @@ bool show_help = false;
 /* If nonzero, print the version on standard output and exit.  */
 bool show_version = false;
 
-/* If nonzero, it will attempt to kill a running tincd and exit. */
-int kill_tincd = 0;
-
 /* If nonzero, generate public/private keypair for this host/net. */
 int generate_keys = 0;
 
@@ -77,8 +74,7 @@ bool do_mlock = false;
 bool use_logfile = false;
 
 char *identname = NULL;				/* program name for syslog */
-char *pidfilename = NULL;			/* pid file location */
-char *controlfilename = NULL;			/* pid file location */
+char *controlsocketname = NULL;			/* control socket location */
 char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
 
@@ -86,7 +82,6 @@ static int status;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
-	{"kill", optional_argument, NULL, 'k'},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
@@ -96,7 +91,7 @@ static struct option const long_options[] = {
 	{"bypass-security", no_argument, NULL, 3},
 	{"mlock", no_argument, NULL, 'L'},
 	{"logfile", optional_argument, NULL, 4},
-	{"pidfile", required_argument, NULL, 5},
+	{"controlsocket", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
@@ -111,17 +106,16 @@ static void usage(bool status)
 				program_name);
 	else {
 		printf(_("Usage: %s [option]...\n\n"), program_name);
-		printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
-				"  -D, --no-detach            Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
-				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
-				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
-				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
-				"  -L, --mlock                Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
-				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
-				"      --help                 Display this help and exit.\n"
-				"      --version              Output version information and exit.\n\n"));
+		printf(_("  -c, --config=DIR                     Read configuration options from DIR.\n"
+				"  -D, --no-detach               Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
+				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
+				"  -K, --generate-keys[=BITS]    Generate public/private RSA keypair.\n"
+				"  -L, --mlock                   Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
+				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
+				"      --help                    Display this help and exit.\n"
+				"      --version                 Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
 }
@@ -131,7 +125,7 @@ static bool parse_options(int argc, char **argv)
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::n:K::", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -153,42 +147,6 @@ static bool parse_options(int argc, char **argv)
 					debug_level = atoi(optarg);
 				else
 					debug_level++;
-				break;
-
-			case 'k':				/* kill old tincds */
-#ifndef HAVE_MINGW
-				if(optarg) {
-					if(!strcasecmp(optarg, "HUP"))
-						kill_tincd = SIGHUP;
-					else if(!strcasecmp(optarg, "TERM"))
-						kill_tincd = SIGTERM;
-					else if(!strcasecmp(optarg, "KILL"))
-						kill_tincd = SIGKILL;
-					else if(!strcasecmp(optarg, "USR1"))
-						kill_tincd = SIGUSR1;
-					else if(!strcasecmp(optarg, "USR2"))
-						kill_tincd = SIGUSR2;
-					else if(!strcasecmp(optarg, "WINCH"))
-						kill_tincd = SIGWINCH;
-					else if(!strcasecmp(optarg, "INT"))
-						kill_tincd = SIGINT;
-					else if(!strcasecmp(optarg, "ALRM"))
-						kill_tincd = SIGALRM;
-					else {
-						kill_tincd = atoi(optarg);
-
-						if(!kill_tincd) {
-							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
-									optarg);
-							usage(true);
-							return false;
-						}
-					}
-				} else
-					kill_tincd = SIGTERM;
-#else
-					kill_tincd = 1;
-#endif
 				break;
 
 			case 'n':				/* net name given */
@@ -229,8 +187,8 @@ static bool parse_options(int argc, char **argv)
 					logfilename = xstrdup(optarg);
 				break;
 
-			case 5:					/* write PID to a file */
-				pidfilename = xstrdup(optarg);
+			case 5:					/* open control socket here */
+				controlsocketname = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -376,10 +334,8 @@ static void make_names(void)
 	}
 #endif
 
-	if(!pidfilename)
-		asprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
-
-	asprintf(&controlfilename, LOCALSTATEDIR "/run/%s.control", identname);
+	if(!controlsocketname)
+		asprintf(&controlsocketname, LOCALSTATEDIR "/run/%s.control", identname);
 
 	if(!logfilename)
 		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
@@ -425,10 +381,15 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if(kill_tincd)
-		return !kill_other(kill_tincd);
-
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
+
+	if(!event_init()) {
+		logger(LOG_ERR, _("Error initializing libevent!"));
+		return 1;
+	}
+
+	if(!init_control())
+		return 1;
 
 	/* Lock all pages into memory if requested */
 
@@ -465,11 +426,6 @@ int main(int argc, char **argv)
 
 	if(!read_server_config())
 		return 1;
-
-	if(!event_init()) {
-		logger(LOG_ERR, _("Error initializing libevent!"));
-		return 1;
-	}
 
 	if(lzo_init() != LZO_E_OK) {
 		logger(LOG_ERR, _("Error initializing LZO compressor!"));
@@ -516,7 +472,7 @@ end:
 	logger(LOG_NOTICE, _("Terminating"));
 
 #ifndef HAVE_MINGW
-	remove_pid(pidfilename);
+	exit_control();
 #endif
 
 	EVP_cleanup();
