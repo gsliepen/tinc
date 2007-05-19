@@ -101,31 +101,6 @@ static void purge(void) {
 }
 
 /*
-  put all file descriptors into events
-  While we're at it, purge stuf that needs to be removed.
-*/
-static int build_fdset(void) {
-	splay_node_t *node, *next;
-	connection_t *c;
-	int i, max = 0;
-
-	cp();
-
-	for(node = connection_tree->head; node; node = next) {
-		next = node->next;
-		c = node->data;
-
-		if(c->status.remove) {
-			connection_del(c);
-			if(!connection_tree->head)
-				purge();
-		}
-	}
-
-	return 0;
-}
-
-/*
   Terminate a connection:
   - Close the socket
   - Remove associated edge and tell other connections about it if report = true
@@ -135,13 +110,9 @@ static int build_fdset(void) {
 void terminate_connection(connection_t *c, bool report) {
 	cp();
 
-	if(c->status.remove)
-		return;
-
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
 			   c->name, c->hostname);
 
-	c->status.remove = true;
 	c->status.active = false;
 
 	if(c->node)
@@ -175,18 +146,20 @@ void terminate_connection(connection_t *c, bool report) {
 		}
 	}
 
-	/* Check if this was our outgoing connection */
-
-	if(c->outgoing) {
-		retry_outgoing(c->outgoing);
-		c->outgoing = NULL;
-	}
-
 	free(c->outbuf);
 	c->outbuf = NULL;
 	c->outbuflen = 0;
 	c->outbufsize = 0;
 	c->outbufstart = 0;
+
+	/* Check if this was our outgoing connection */
+
+	if(c->outgoing) {
+		retry_outgoing(c->outgoing);
+		c->outgoing = NULL;
+	} else {
+		connection_del(c);
+	}
 }
 
 /*
@@ -215,16 +188,11 @@ static void timeout_handler(int fd, short events, void *event) {
 							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
+					continue;
 				} else if(c->last_ping_time + pinginterval < now) {
 					send_ping(c);
 				}
 			} else {
-				if(c->status.remove) {
-					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
-						   c->name, c->hostname, c->status.value);
-					connection_del(c);
-					continue;
-				}
 				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
 						   c->name, c->hostname);
 				if(c->status.connecting) {
@@ -233,6 +201,7 @@ static void timeout_handler(int fd, short events, void *event) {
 					do_outgoing_connection(c);
 				} else {
 					terminate_connection(c, false);
+					continue;
 				}
 			}
 		}
@@ -245,9 +214,6 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 	connection_t *c = data;
 	int result;
 	socklen_t len = sizeof(result);
-
-	if (c->status.remove)
-		return;
 
 	if(c->status.connecting) {
 		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
@@ -383,8 +349,6 @@ static void sigalrm_handler(int signal, short events, void *data) {
   this is where it all happens...
 */
 int main_loop(void) {
-	struct timeval tv;
-	int r;
 	struct event timeout_event;
 	struct event sighup_event;
 	struct event sigint_event;

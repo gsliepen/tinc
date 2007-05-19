@@ -274,7 +274,6 @@ begin:
 		if(!c->outgoing->cfg) {
 			ifdebug(CONNECTIONS) logger(LOG_ERR, _("Could not set up a meta connection to %s"),
 					   c->name);
-			c->status.remove = true;
 			retry_outgoing(c->outgoing);
 			return;
 		}

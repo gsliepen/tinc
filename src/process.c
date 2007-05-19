@@ -45,8 +45,6 @@ extern bool use_logfile;
 
 sigset_t emptysigset;
 
-static int saved_debug_level = -1;
-
 static void memory_full(int size) {
 	logger(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
 	cp_trace();

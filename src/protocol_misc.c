@@ -90,9 +90,7 @@ bool error_h(connection_t *c)
 	ifdebug(ERROR) logger(LOG_NOTICE, _("Error message from %s (%s): %d: %s"),
 			   c->name, c->hostname, err, errorstring);
 
-	terminate_connection(c, c->status.active);
-
-	return true;
+	return false;
 }
 
 bool send_termreq(connection_t *c)
@@ -106,9 +104,7 @@ bool termreq_h(connection_t *c)
 {
 	cp();
 
-	terminate_connection(c, c->status.active);
-
-	return true;
+	return false;
 }
 
 bool send_ping(connection_t *c)
