@@ -32,41 +32,35 @@ static struct event control_event;
 static splay_tree_t *control_socket_tree;
 extern char *controlsocketname;
 
-static void handle_control_data(int fd, short events, void *event) {
-	char buf[MAXBUFSIZE];
-	size_t inlen;
-	char *p;
-
-	inlen = read(fd, buf, sizeof buf);
-
-	if(inlen <= 0)
-		goto close;
-
-	p = memchr(buf, '\n', sizeof buf);
-	if(!p || p - buf + 1 != inlen)
-		goto malformed;
-
-	*p = 0;
-
-	if(!strcasecmp(buf, "stop")) {
+static void handle_control_data(struct bufferevent *event, void *data) {
+	char *line = evbuffer_readline(event->input);
+	if(!line)
+		return;
+	
+	if(!strcasecmp(line, "stop")) {
 		logger(LOG_NOTICE, _("Got stop command"));
 		event_loopexit(NULL);
 		return;
 	}
 
-malformed:
 	logger(LOG_DEBUG, _("Malformed control command received"));
-
-close:
-	logger(LOG_DEBUG, _("Closing control socket"));
-	event_del(event);
+	close(event->ev_read.ev_fd);
 	splay_delete(control_socket_tree, event);
-	close(fd);
+}
+
+static void handle_control_error(struct bufferevent *event, short what, void *data) {
+	if(what & EVBUFFER_EOF)
+		logger(LOG_DEBUG, _("Control socket connection closed by peer"));
+	else
+		logger(LOG_DEBUG, _("Error while reading from control socket: %s"), strerror(errno));
+
+	close(event->ev_read.ev_fd);
+	splay_delete(control_socket_tree, event);
 }
 
 static void handle_new_control_socket(int fd, short events, void *data) {
 	int newfd;
-	struct event *ev;
+	struct bufferevent *ev;
 
 	newfd = accept(fd, NULL, NULL);
 
@@ -76,9 +70,14 @@ static void handle_new_control_socket(int fd, short events, void *data) {
 		return;
 	}
 
-	ev = xmalloc(sizeof *ev);
-	event_set(ev, newfd, EV_READ | EV_PERSIST, handle_control_data, ev);
-	event_add(ev, NULL);
+	ev = bufferevent_new(newfd, handle_control_data, NULL, handle_control_error, NULL);
+	if(!ev) {
+		logger(LOG_ERR, _("Could not create bufferevent for new control connection: %s"), strerror(errno));
+		close(newfd);
+		return;
+	}
+
+	bufferevent_enable(ev, EV_READ);
 	splay_insert(control_socket_tree, ev);
 
 	logger(LOG_DEBUG, _("Control socket connection accepted"));
@@ -139,7 +138,7 @@ bool init_control() {
 		return false;
 	}
 
-	control_socket_tree = splay_alloc_tree((splay_compare_t)control_compare, (splay_action_t)free);
+	control_socket_tree = splay_alloc_tree((splay_compare_t)control_compare, (splay_action_t)bufferevent_free);
 
 	event_set(&control_event, control_socket, EV_READ | EV_PERSIST, handle_new_control_socket, NULL);
 	event_add(&control_event, NULL);
