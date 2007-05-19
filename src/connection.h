@@ -41,7 +41,7 @@ typedef union connection_status_t {
 		int connecting:1;			/* 1 if we are waiting for a non-blocking connect() to finish */
 		int termreq:1;				/* the termination of this connection was requested */
 		int remove_unused:1;				/* Set to 1 if you want this connection removed */
-		int timeout:1;				/* 1 if gotten timeout */
+		int timeout_unused:1;				/* 1 if gotten timeout */
 		int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
 		int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
 		int mst:1;				/* 1 if this connection is part of a minimum spanning tree */

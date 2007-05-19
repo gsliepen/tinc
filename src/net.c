@@ -154,12 +154,10 @@ void terminate_connection(connection_t *c, bool report) {
 
 	/* Check if this was our outgoing connection */
 
-	if(c->outgoing) {
+	if(c->outgoing)
 		retry_outgoing(c->outgoing);
-		c->outgoing = NULL;
-	} else {
-		connection_del(c);
-	}
+
+	connection_del(c);
 }
 
 /*
@@ -186,20 +184,20 @@ static void timeout_handler(int fd, short events, void *event) {
 				if(c->status.pinged) {
 					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"),
 							   c->name, c->hostname, now - c->last_ping_time);
-					c->status.timeout = true;
 					terminate_connection(c, true);
 					continue;
 				} else if(c->last_ping_time + pinginterval < now) {
 					send_ping(c);
 				}
 			} else {
-				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
-						   c->name, c->hostname);
 				if(c->status.connecting) {
+					ifdebug(CONNECTIONS)
+						logger(LOG_WARNING, _("Timeout while connecting to %s (%s)"), c->name, c->hostname);
 					c->status.connecting = false;
 					closesocket(c->socket);
 					do_outgoing_connection(c);
 				} else {
+					ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"), c->name, c->hostname);
 					terminate_connection(c, false);
 					continue;
 				}
@@ -216,6 +214,8 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 	socklen_t len = sizeof(result);
 
 	if(c->status.connecting) {
+		c->status.connecting = false;
+
 		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
 
 		if(!result)
@@ -224,7 +224,6 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 					   _("Error while connecting to %s (%s): %s"),
 					   c->name, c->hostname, strerror(result));
-			c->status.connecting = false;
 			closesocket(c->socket);
 			do_outgoing_connection(c);
 			return;

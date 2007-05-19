@@ -231,7 +231,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 }
 
 static void retry_outgoing_handler(int fd, short events, void *data) {
-	do_outgoing_connection(data);
+	setup_outgoing_connection(data);
 }
 
 void retry_outgoing(outgoing_t *outgoing) {
@@ -275,6 +275,8 @@ begin:
 			ifdebug(CONNECTIONS) logger(LOG_ERR, _("Could not set up a meta connection to %s"),
 					   c->name);
 			retry_outgoing(c->outgoing);
+			c->outgoing = NULL;
+			connection_del(c);
 			return;
 		}
 
