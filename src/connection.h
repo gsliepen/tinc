@@ -62,7 +62,6 @@ typedef struct connection_t {
 	char *hostname;				/* the hostname of its real ip */
 	int protocol_version;		/* used protocol */
 
-	struct event ev;			/* events on this metadata connection */
 	int socket;					/* socket used for this connection */
 	long int options;			/* options for this connection */
 	connection_status_t status;	/* status info */
@@ -91,17 +90,10 @@ typedef struct connection_t {
 	char *mychallenge;			/* challenge we received from him */
 	char *hischallenge;			/* challenge we sent to him */
 
-	char buffer[MAXBUFSIZE];	/* metadata input buffer */
-	int buflen;					/* bytes read into buffer */
-	int reqlen;					/* length of incoming request */
+	struct bufferevent *buffer;			/* buffer events on this metadata connection */
+	struct event inevent;				/* input event on this metadata connection */
 	int tcplen;					/* length of incoming TCPpacket */
 	int allow_request;			/* defined if there's only one request possible */
-
-	char *outbuf;				/* metadata output buffer */
-	int outbufstart;			/* index of first meaningful byte in output buffer */
-	int outbuflen;				/* number of meaningful bytes in output buffer */
-	int outbufsize;				/* number of bytes allocated to output buffer */
-	struct event outev;			/* events on this metadata connection */
 
 	time_t last_ping_time;		/* last time we saw some activity from the other end or pinged them */
 

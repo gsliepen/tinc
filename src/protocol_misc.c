@@ -45,14 +45,14 @@ bool send_status(connection_t *c, int statusno, const char *statusstring)
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-bool status_h(connection_t *c)
+bool status_h(connection_t *c, char *request)
 {
 	int statusno;
 	char statusstring[MAX_STRING_SIZE];
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
+	if(sscanf(request, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
 			   c->name, c->hostname);
 		return false;
@@ -74,14 +74,14 @@ bool send_error(connection_t *c, int err, const char *errstring)
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
 
-bool error_h(connection_t *c)
+bool error_h(connection_t *c, char *request)
 {
 	int err;
 	char errorstring[MAX_STRING_SIZE];
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
+	if(sscanf(request, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
 			   c->name, c->hostname);
 		return false;
@@ -100,7 +100,7 @@ bool send_termreq(connection_t *c)
 	return send_request(c, "%d", TERMREQ);
 }
 
-bool termreq_h(connection_t *c)
+bool termreq_h(connection_t *c, char *request)
 {
 	cp();
 
@@ -117,7 +117,7 @@ bool send_ping(connection_t *c)
 	return send_request(c, "%d", PING);
 }
 
-bool ping_h(connection_t *c)
+bool ping_h(connection_t *c, char *request)
 {
 	cp();
 
@@ -131,7 +131,7 @@ bool send_pong(connection_t *c)
 	return send_request(c, "%d", PONG);
 }
 
-bool pong_h(connection_t *c)
+bool pong_h(connection_t *c, char *request)
 {
 	cp();
 
@@ -153,7 +153,7 @@ bool send_tcppacket(connection_t *c, vpn_packet_t *packet)
 
 	/* If there already is a lot of data in the outbuf buffer, discard this packet. */
 
-	if(c->outbuflen > maxoutbufsize)
+	if(c->buffer->output->off > maxoutbufsize)
 		return true;
 
 	if(!send_request(c, "%d %hd", PACKET, packet->len))
@@ -162,13 +162,13 @@ bool send_tcppacket(connection_t *c, vpn_packet_t *packet)
 	return send_meta(c, (char *)packet->data, packet->len);
 }
 
-bool tcppacket_h(connection_t *c)
+bool tcppacket_h(connection_t *c, char *request)
 {
 	short int len;
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
+	if(sscanf(request, "%*d %hd", &len) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
 			   c->hostname);
 		return false;

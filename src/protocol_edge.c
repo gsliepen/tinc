@@ -53,7 +53,7 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 	return x;
 }
 
-bool add_edge_h(connection_t *c) {
+bool add_edge_h(connection_t *c, char *request) {
 	edge_t *e;
 	node_t *from, *to;
 	char from_name[MAX_STRING_SIZE];
@@ -66,7 +66,7 @@ bool add_edge_h(connection_t *c) {
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
+	if(sscanf(request, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
 			  from_name, to_name, to_address, to_port, &options, &weight) != 6) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_EDGE", c->name,
 			   c->hostname);
@@ -87,7 +87,7 @@ bool add_edge_h(connection_t *c) {
 		return false;
 	}
 
-	if(seen_request(c->buffer))
+	if(seen_request(request))
 		return true;
 
 	/* Lookup nodes */
@@ -156,7 +156,7 @@ bool add_edge_h(connection_t *c) {
 	/* Tell the rest about the new edge */
 
 	if(!tunnelserver)
-		forward_request(c);
+		forward_request(c, request);
 
 	/* Run MST before or after we tell the rest? */
 
@@ -172,7 +172,7 @@ bool send_del_edge(connection_t *c, const edge_t *e) {
 						e->from->name, e->to->name);
 }
 
-bool del_edge_h(connection_t *c) {
+bool del_edge_h(connection_t *c, char *request) {
 	edge_t *e;
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
@@ -180,7 +180,7 @@ bool del_edge_h(connection_t *c) {
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, from_name, to_name) != 2) {
+	if(sscanf(request, "%*d %*x "MAX_STRING" "MAX_STRING, from_name, to_name) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE", c->name,
 			   c->hostname);
 		return false;
@@ -200,7 +200,7 @@ bool del_edge_h(connection_t *c) {
 		return false;
 	}
 
-	if(seen_request(c->buffer))
+	if(seen_request(request))
 		return true;
 
 	/* Lookup nodes */
@@ -244,7 +244,7 @@ bool del_edge_h(connection_t *c) {
 	/* Tell the rest about the deleted edge */
 
 	if(!tunnelserver)
-		forward_request(c);
+		forward_request(c, request);
 
 	/* Delete the edge */
 

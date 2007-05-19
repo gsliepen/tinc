@@ -121,8 +121,6 @@ void terminate_connection(connection_t *c, bool report) {
 	if(c->socket)
 		closesocket(c->socket);
 
-	event_del(&c->ev);
-
 	if(c->edge) {
 		if(report && !tunnelserver)
 			send_del_edge(broadcast, c->edge);
@@ -145,12 +143,6 @@ void terminate_connection(connection_t *c, bool report) {
 			}
 		}
 	}
-
-	free(c->outbuf);
-	c->outbuf = NULL;
-	c->outbuflen = 0;
-	c->outbufsize = 0;
-	c->outbufstart = 0;
 
 	/* Check if this was our outgoing connection */
 

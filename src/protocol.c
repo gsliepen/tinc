@@ -34,7 +34,7 @@ bool tunnelserver = false;
 
 /* Jumptable for the request handlers */
 
-static bool (*request_handlers[])(connection_t *) = {
+static bool (*request_handlers[])(connection_t *, char *) = {
 		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
 		status_h, error_h, termreq_h,
 		ping_h, pong_h,
@@ -68,8 +68,8 @@ bool check_id(const char *id) {
 
 bool send_request(connection_t *c, const char *format, ...) {
 	va_list args;
-	char buffer[MAXBUFSIZE];
-	int len, request;
+	char request[MAXBUFSIZE];
+	int len;
 
 	cp();
 
@@ -78,7 +78,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 	   input buffer anyway */
 
 	va_start(args, format);
-	len = vsnprintf(buffer, MAXBUFSIZE, format, args);
+	len = vsnprintf(request, MAXBUFSIZE, format, args);
 	va_end(args);
 
 	if(len < 0 || len > MAXBUFSIZE - 1) {
@@ -88,55 +88,50 @@ bool send_request(connection_t *c, const char *format, ...) {
 	}
 
 	ifdebug(PROTOCOL) {
-		sscanf(buffer, "%d", &request);
 		ifdebug(META)
 			logger(LOG_DEBUG, _("Sending %s to %s (%s): %s"),
-				   request_name[request], c->name, c->hostname, buffer);
+				   request_name[atoi(request)], c->name, c->hostname, request);
 		else
-			logger(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
+			logger(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[atoi(request)],
 				   c->name, c->hostname);
 	}
 
-	buffer[len++] = '\n';
+	request[len++] = '\n';
 
 	if(c == broadcast) {
-		broadcast_meta(NULL, buffer, len);
+		broadcast_meta(NULL, request, len);
 		return true;
 	} else
-		return send_meta(c, buffer, len);
+		return send_meta(c, request, len);
 }
 
-void forward_request(connection_t *from) {
-	int request;
-
+void forward_request(connection_t *from, char *request) {
 	cp();
 
 	ifdebug(PROTOCOL) {
-		sscanf(from->buffer, "%d", &request);
 		ifdebug(META)
 			logger(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
-				   request_name[request], from->name, from->hostname,
-				   from->buffer);
+				   request_name[atoi(request)], from->name, from->hostname, request);
 		else
 			logger(LOG_DEBUG, _("Forwarding %s from %s (%s)"),
-				   request_name[request], from->name, from->hostname);
+				   request_name[atoi(request)], from->name, from->hostname);
 	}
 
-	from->buffer[from->reqlen - 1] = '\n';
-
-	broadcast_meta(from, from->buffer, from->reqlen);
+	int len = strlen(request);
+	request[len] = '\n';
+	broadcast_meta(from, request, len);
 }
 
-bool receive_request(connection_t *c) {
-	int request;
+bool receive_request(connection_t *c, char *request) {
+	int reqno = atoi(request);
 
 	cp();
 
-	if(sscanf(c->buffer, "%d", &request) == 1) {
-		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
+	if(reqno || *request == '0') {
+		if((reqno < 0) || (reqno >= LAST) || !request_handlers[reqno]) {
 			ifdebug(META)
 				logger(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
-					   c->name, c->hostname, c->buffer);
+					   c->name, c->hostname, request);
 			else
 				logger(LOG_ERR, _("Unknown request from %s (%s)"),
 					   c->name, c->hostname);
@@ -146,25 +141,24 @@ bool receive_request(connection_t *c) {
 			ifdebug(PROTOCOL) {
 				ifdebug(META)
 					logger(LOG_DEBUG, _("Got %s from %s (%s): %s"),
-						   request_name[request], c->name, c->hostname,
-						   c->buffer);
+						   request_name[reqno], c->name, c->hostname, request);
 				else
 					logger(LOG_DEBUG, _("Got %s from %s (%s)"),
-						   request_name[request], c->name, c->hostname);
+						   request_name[reqno], c->name, c->hostname);
 			}
 		}
 
-		if((c->allow_request != ALL) && (c->allow_request != request)) {
+		if((c->allow_request != ALL) && (c->allow_request != reqno)) {
 			logger(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
 				   c->hostname);
 			return false;
 		}
 
-		if(!request_handlers[request](c)) {
+		if(!request_handlers[reqno](c, request)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
 			logger(LOG_ERR, _("Error while processing %s from %s (%s)"),
-				   request_name[request], c->name, c->hostname);
+				   request_name[reqno], c->name, c->hostname);
 			return false;
 		}
 	} else {

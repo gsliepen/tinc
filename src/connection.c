@@ -56,19 +56,9 @@ void exit_connections(void) {
 }
 
 connection_t *new_connection(void) {
-	connection_t *c;
-
 	cp();
 
-	c = xmalloc_and_zero(sizeof(connection_t));
-
-	if(!c)
-		return NULL;
-
-	gettimeofday(&c->start, NULL);
-	event_set(&c->ev, -1, 0, NULL, NULL);
-
-	return c;
+	return xmalloc_and_zero(sizeof(connection_t));
 }
 
 void free_connection(connection_t *c) {
@@ -95,7 +85,12 @@ void free_connection(connection_t *c) {
 	if(c->hischallenge)
 		free(c->hischallenge);
 
-	event_del(&c->ev);
+	if(c->buffer)
+		bufferevent_free(c->buffer);
+	
+	if(event_initialized(&c->inevent))
+		event_del(&c->inevent);
+
 	free(c);
 }
 
@@ -121,9 +116,8 @@ void dump_connections(void) {
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
-		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"),
-			   c->name, c->hostname, c->options, c->socket, c->status.value,
-			   c->outbufsize, c->outbufstart, c->outbuflen);
+		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
+			   c->name, c->hostname, c->options, c->socket, c->status.value);
 	}
 
 	logger(LOG_DEBUG, _("End of connections."));

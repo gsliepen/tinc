@@ -45,7 +45,7 @@ bool send_add_subnet(connection_t *c, const subnet_t *subnet)
 	return send_request(c, "%d %lx %s %s", ADD_SUBNET, random(), subnet->owner->name, netstr);
 }
 
-bool add_subnet_h(connection_t *c)
+bool add_subnet_h(connection_t *c, char *request)
 {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
@@ -54,7 +54,7 @@ bool add_subnet_h(connection_t *c)
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
+	if(sscanf(request, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
 			   c->hostname);
 		return false;
@@ -76,7 +76,7 @@ bool add_subnet_h(connection_t *c)
 		return false;
 	}
 
-	if(seen_request(c->buffer))
+	if(seen_request(request))
 		return true;
 
 	/* Check if the owner of the new subnet is in the connection list */
@@ -140,7 +140,7 @@ bool add_subnet_h(connection_t *c)
 	/* Tell the rest */
 
 	if(!tunnelserver)
-		forward_request(c);
+		forward_request(c, request);
 
 	return true;
 }
@@ -157,7 +157,7 @@ bool send_del_subnet(connection_t *c, const subnet_t *s)
 	return send_request(c, "%d %lx %s %s", DEL_SUBNET, random(), s->owner->name, netstr);
 }
 
-bool del_subnet_h(connection_t *c)
+bool del_subnet_h(connection_t *c, char *request)
 {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
@@ -166,7 +166,7 @@ bool del_subnet_h(connection_t *c)
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
+	if(sscanf(request, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,
 			   c->hostname);
 		return false;
@@ -201,7 +201,7 @@ bool del_subnet_h(connection_t *c)
 		return false;
 	}
 
-	if(seen_request(c->buffer))
+	if(seen_request(request))
 		return true;
 
 	/* If everything is correct, delete the subnet from the list of the owner */
@@ -228,7 +228,7 @@ bool del_subnet_h(connection_t *c)
 	/* Tell the rest */
 
 	if(!tunnelserver)
-		forward_request(c);
+		forward_request(c, request);
 
 	/* Finally, delete it. */
 

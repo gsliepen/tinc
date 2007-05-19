@@ -47,12 +47,12 @@ bool send_id(connection_t *c) {
 						myself->connection->protocol_version);
 }
 
-bool id_h(connection_t *c) {
+bool id_h(connection_t *c, char *request) {
 	char name[MAX_STRING_SIZE];
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d " MAX_STRING " %d", name, &c->protocol_version) != 2) {
+	if(sscanf(request, "%*d " MAX_STRING " %d", name, &c->protocol_version) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name,
 			   c->hostname);
 		return false;
@@ -199,14 +199,14 @@ bool send_metakey(connection_t *c) {
 	return x;
 }
 
-bool metakey_h(connection_t *c) {
+bool metakey_h(connection_t *c, char *request) {
 	char buffer[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	int len;
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5) {
+	if(sscanf(request, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name,
 			   c->hostname);
 		return false;
@@ -329,13 +329,13 @@ bool send_challenge(connection_t *c) {
 	return send_request(c, "%d %s", CHALLENGE, buffer);
 }
 
-bool challenge_h(connection_t *c) {
+bool challenge_h(connection_t *c, char *request) {
 	char buffer[MAX_STRING_SIZE];
 	int len;
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d " MAX_STRING, buffer) != 1) {
+	if(sscanf(request, "%*d " MAX_STRING, buffer) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name,
 			   c->hostname);
 		return false;
@@ -393,14 +393,14 @@ bool send_chal_reply(connection_t *c) {
 	return send_request(c, "%d %s", CHAL_REPLY, hash);
 }
 
-bool chal_reply_h(connection_t *c) {
+bool chal_reply_h(connection_t *c, char *request) {
 	char hishash[MAX_STRING_SIZE];
 	char myhash[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d " MAX_STRING, hishash) != 1) {
+	if(sscanf(request, "%*d " MAX_STRING, hishash) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name,
 			   c->hostname);
 		return false;
@@ -514,7 +514,7 @@ static void send_everything(connection_t *c) {
 	}
 }
 
-bool ack_h(connection_t *c) {
+bool ack_h(connection_t *c, char *request) {
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress, *dummy;
 	int weight, mtu;
@@ -523,7 +523,7 @@ bool ack_h(connection_t *c) {
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
+	if(sscanf(request, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name,
 			   c->hostname);
 		return false;

@@ -50,19 +50,19 @@ bool send_key_changed(connection_t *c, const node_t *n) {
 	return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
 }
 
-bool key_changed_h(connection_t *c) {
+bool key_changed_h(connection_t *c, char *request) {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d %*x " MAX_STRING, name) != 1) {
+	if(sscanf(request, "%*d %*x " MAX_STRING, name) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
 			   c->name, c->hostname);
 		return false;
 	}
 
-	if(seen_request(c->buffer))
+	if(seen_request(request))
 		return true;
 
 	n = lookup_node(name);
@@ -79,7 +79,7 @@ bool key_changed_h(connection_t *c) {
 	/* Tell the others */
 
 	if(!tunnelserver)
-		forward_request(c);
+		forward_request(c, request);
 
 	return true;
 }
@@ -90,14 +90,14 @@ bool send_req_key(connection_t *c, const node_t *from, const node_t *to) {
 	return send_request(c, "%d %s %s", REQ_KEY, from->name, to->name);
 }
 
-bool req_key_h(connection_t *c) {
+bool req_key_h(connection_t *c, char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
+	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
 			   c->hostname);
 		return false;
@@ -152,7 +152,7 @@ bool send_ans_key(connection_t *c, const node_t *from, const node_t *to) {
 						from->compression);
 }
 
-bool ans_key_h(connection_t *c) {
+bool ans_key_h(connection_t *c, char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];
@@ -161,7 +161,7 @@ bool ans_key_h(connection_t *c) {
 
 	cp();
 
-	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression) != 7) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
@@ -191,7 +191,7 @@ bool ans_key_h(connection_t *c) {
 		if(tunnelserver)
 			return false;
 
-		return send_request(to->nexthop->connection, "%s", c->buffer);
+		return send_request(to->nexthop->connection, "%s", request);
 	}
 
 	/* Update our copy of the origin's packet key */

@@ -349,6 +349,16 @@ begin:
 	return;
 }
 
+void handle_meta_write(struct bufferevent *event, void *data) {
+	logger(LOG_EMERG, _("handle_meta_write() called"));
+}
+
+void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
+	connection_t *c = data;
+	logger(LOG_EMERG, _("handle_meta_connection_error() called: %d: %s"), what, strerror(errno));
+	terminate_connection(c, c->status.active);
+}
+
 void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;
@@ -392,12 +402,14 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	do_outgoing_connection(c);
 
-	event_set(&c->ev, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_set(&c->outev, c->socket, EV_WRITE | EV_PERSIST, flush_meta, c);
-	if(event_add(&c->ev, NULL) < 0) {
-		logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_add(&c->inevent, NULL);
+	c->buffer = bufferevent_new(c->socket, handle_meta_connection_data, handle_meta_write, handle_meta_connection_error, c);
+	if(!c->buffer) {
+		logger(LOG_EMERG, _("bufferevent_new() failed: %s"), strerror(errno));
 		abort();
 	}
+	bufferevent_disable(c->buffer, EV_READ);
 }
 
 /*
@@ -435,13 +447,14 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection from %s"), c->hostname);
 
-	event_set(&c->ev, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_set(&c->outev, c->socket, EV_WRITE | EV_PERSIST, flush_meta, c);
-	if(event_add(&c->ev, NULL) < 0) {
-		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
-		connection_del(c);
-		return;
+	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_add(&c->inevent, NULL);
+	c->buffer = bufferevent_new(c->socket, NULL, handle_meta_write, handle_meta_connection_error, c);
+	if(!c->buffer) {
+		logger(LOG_EMERG, _("bufferevent_new() failed: %s"), strerror(errno));
+		abort();
 	}
+	bufferevent_disable(c->buffer, EV_READ);
 		
 	configure_tcp(c);
 

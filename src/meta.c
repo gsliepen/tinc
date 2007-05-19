@@ -37,88 +37,32 @@
 bool send_meta(connection_t *c, const char *buffer, int length) {
 	int outlen;
 	int result;
-
 	cp();
 
 	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
-	if(!c->outbuflen) {
-		if(event_add(&c->outev, NULL) < 0) {
-			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
-			abort();
-		}
-	}
-
-	/* Find room in connection's buffer */
-	if(length + c->outbuflen > c->outbufsize) {
-		c->outbufsize = length + c->outbuflen;
-		c->outbuf = xrealloc(c->outbuf, c->outbufsize);
-	}
-
-	if(length + c->outbuflen + c->outbufstart > c->outbufsize) {
-		memmove(c->outbuf, c->outbuf + c->outbufstart, c->outbuflen);
-		c->outbufstart = 0;
-	}
-
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
-		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)c->outbuf + c->outbufstart + c->outbuflen,
-				&outlen, (unsigned char *)buffer, length);
-		if(!result || outlen < length) {
+		char outbuf[length];
+
+		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)outbuf, &outlen, (unsigned char *)buffer, length);
+		if(!result || outlen != length) {
 			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
-		} else if(outlen > length) {
-			logger(LOG_EMERG, _("Encrypted data too long! Heap corrupted!"));
-			abort();
 		}
-		c->outbuflen += outlen;
+		
+		logger(LOG_DEBUG, _("Encrypted write %p %p %p %d"), c, c->buffer, outbuf, length);
+		bufferevent_write(c->buffer, (void *)outbuf, length);
+		logger(LOG_DEBUG, _("Done."));
 	} else {
-		memcpy(c->outbuf + c->outbufstart + c->outbuflen, buffer, length);
-		c->outbuflen += length;
+		logger(LOG_DEBUG, _("Unencrypted write %p %p %p %d"), c, c->buffer, buffer, length);
+		bufferevent_write(c->buffer, (void *)buffer, length);
+		logger(LOG_DEBUG, _("Done."));
 	}
 
 	return true;
-}
-
-void flush_meta(int fd, short events, void *data) {
-	connection_t *c = data;
-	int result;
-	
-	ifdebug(META) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s)"),
-			 c->outbuflen, c->name, c->hostname);
-
-	while(c->outbuflen) {
-		result = send(c->socket, c->outbuf + c->outbufstart, c->outbuflen, 0);
-		if(result <= 0) {
-			if(!errno || errno == EPIPE) {
-				ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
-						   c->name, c->hostname);
-			} else if(errno == EINTR) {
-				continue;
-#ifdef EWOULDBLOCK
-			} else if(errno == EWOULDBLOCK) {
-				ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s) would block"),
-						c->outbuflen, c->name, c->hostname);
-				return;
-#endif
-			} else {
-				logger(LOG_ERR, _("Flushing meta data to %s (%s) failed: %s"), c->name,
-					   c->hostname, strerror(errno));
-			}
-
-			terminate_connection(c, c->status.active);
-			return;
-		}
-
-		c->outbufstart += result;
-		c->outbuflen -= result;
-	}
-
-	event_del(&c->outev);
-
-	c->outbufstart = 0; /* avoid unnecessary memmoves */
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
@@ -136,10 +80,9 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 }
 
 bool receive_meta(connection_t *c) {
-	int oldlen, i, result;
-	int inlen, outlen, reqlen;
-	bool decrypted = false;
+	int result, inlen, outlen;
 	char inbuf[MAXBUFSIZE];
+	char *bufp = inbuf, *endp;
 
 	cp();
 
@@ -152,87 +95,67 @@ bool receive_meta(connection_t *c) {
 	   - If not, keep stuff in buffer and exit.
 	 */
 
-	inlen = recv(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen, 0);
+	inlen = recv(c->socket, inbuf, sizeof inbuf, 0);
 
 	if(inlen <= 0) {
-		if(!inlen || !errno) {
-			ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
-					   c->name, c->hostname);
-		} else if(errno == EINTR)
-			return true;
-		else
-			logger(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
-				   c->name, c->hostname, strerror(errno));
-
+		logger(LOG_ERR, _("Receive callback called for %s (%s) but no data to receive: %s"), c->name, c->hostname, strerror(errno));
 		return false;
 	}
 
-	oldlen = c->buflen;
-	c->buflen += inlen;
+	do {
+		if(!c->status.decryptin) {
+			endp = memchr(bufp, '\n', inlen);
+			if(endp)
+				endp++;
+			else
+				endp = bufp + inlen;
 
-	while(inlen > 0) {
-		/* Decrypt */
+			logger(LOG_DEBUG, _("Received unencrypted %ld of %d bytes"), endp - bufp, inlen);
 
-		if(c->status.decryptin && !decrypted) {
-			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &outlen, (unsigned char *)c->buffer + oldlen, inlen);
+			evbuffer_add(c->buffer->input, bufp, endp - bufp);
+
+			inlen -= endp - bufp;
+			bufp = endp;
+		} else {
+			logger(LOG_DEBUG, _("Received encrypted %d bytes"), inlen);
+			evbuffer_expand(c->buffer->input, inlen);
+			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)c->buffer->input->buffer, &outlen, (unsigned char *)bufp, inlen);
 			if(!result || outlen != inlen) {
 				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
 						c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 				return false;
 			}
-			memcpy(c->buffer + oldlen, inbuf, inlen);
-			decrypted = true;
+			c->buffer->input->off += inlen;
+
+			inlen = 0;
 		}
 
-		/* Are we receiving a TCPpacket? */
+		while(c->buffer->input->off) {
+			/* Are we receiving a TCPpacket? */
 
-		if(c->tcplen) {
-			if(c->tcplen <= c->buflen) {
-				receive_tcppacket(c, c->buffer, c->tcplen);
+			if(c->tcplen) {
+				if(c->tcplen <= c->buffer->input->off) {
+					receive_tcppacket(c, (char *)c->buffer->input->buffer, c->tcplen);
+					evbuffer_drain(c->buffer->input, c->tcplen);
+					c->tcplen = 0;
+					continue;
+				} else {
+					break;
+				}
+			}
 
-				c->buflen -= c->tcplen;
-				inlen -= c->tcplen - oldlen;
-				memmove(c->buffer, c->buffer + c->tcplen, c->buflen);
-				oldlen = 0;
-				c->tcplen = 0;
+			/* Otherwise we are waiting for a request */
+
+			char *request = evbuffer_readline(c->buffer->input);
+			if(request) {
+				receive_request(c, request);
+				free(request);
 				continue;
 			} else {
 				break;
 			}
 		}
-
-		/* Otherwise we are waiting for a request */
-
-		reqlen = 0;
-
-		for(i = oldlen; i < c->buflen; i++) {
-			if(c->buffer[i] == '\n') {
-				c->buffer[i] = '\0';	/* replace end-of-line by end-of-string so we can use sscanf */
-				reqlen = i + 1;
-				break;
-			}
-		}
-
-		if(reqlen) {
-			c->reqlen = reqlen;
-			if(!receive_request(c))
-				return false;
-
-			c->buflen -= reqlen;
-			inlen -= reqlen - oldlen;
-			memmove(c->buffer, c->buffer + reqlen, c->buflen);
-			oldlen = 0;
-			continue;
-		} else {
-			break;
-		}
-	}
-
-	if(c->buflen >= MAXBUFSIZE) {
-		logger(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
-			   c->name, c->hostname);
-		return false;
-	}
+	} while(inlen);
 
 	c->last_ping_time = time(NULL);
 
