@@ -37,6 +37,7 @@
 #include "netutl.h"
 #include "node.h"
 #include "protocol.h"
+#include "rsa.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -116,12 +117,12 @@ bool id_h(connection_t *c, char *request) {
 
 bool send_metakey(connection_t *c) {
 	char *buffer;
-	int len;
+	unsigned int len;
 	bool x;
 
 	cp();
 
-	len = RSA_size(c->rsa_key);
+	len = get_rsa_size(&c->rsa_key);
 
 	/* Allocate buffers for the meta key */
 
@@ -163,7 +164,7 @@ bool send_metakey(connection_t *c) {
 	   with a length equal to that of the modulus of the RSA key.
 	 */
 
-	if(RSA_public_encrypt(len, (unsigned char *)c->outkey, (unsigned char *)buffer, c->rsa_key, RSA_NO_PADDING) != len) {
+	if(!rsa_public_encrypt(len, (unsigned char *)c->outkey, (unsigned char *)buffer, &c->rsa_key)) {
 		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return false;
@@ -212,7 +213,7 @@ bool metakey_h(connection_t *c, char *request) {
 		return false;
 	}
 
-	len = RSA_size(myself->connection->rsa_key);
+	len = get_rsa_size(&myself->connection->rsa_key);
 
 	/* Check if the length of the meta key is all right */
 
@@ -235,9 +236,8 @@ bool metakey_h(connection_t *c, char *request) {
 
 	/* Decrypt the meta key */
 
-	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
-		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
-			   c->name, c->hostname);
+	if(!rsa_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, &myself->connection->rsa_key)) {
+		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 
@@ -306,7 +306,7 @@ bool send_challenge(connection_t *c) {
 
 	/* CHECKME: what is most reasonable value for len? */
 
-	len = RSA_size(c->rsa_key);
+	len = get_rsa_size(&c->rsa_key);
 
 	/* Allocate buffers for the challenge */
 
@@ -341,7 +341,7 @@ bool challenge_h(connection_t *c, char *request) {
 		return false;
 	}
 
-	len = RSA_size(myself->connection->rsa_key);
+	len = get_rsa_size(&myself->connection->rsa_key);
 
 	/* Check if the length of the challenge is all right */
 
@@ -376,7 +376,7 @@ bool send_chal_reply(connection_t *c) {
 	/* Calculate the hash from the challenge we received */
 
 	if(!EVP_DigestInit(&ctx, c->indigest)
-			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
+			|| !EVP_DigestUpdate(&ctx, c->mychallenge, get_rsa_size(&myself->connection->rsa_key))
 			|| !EVP_DigestFinal(&ctx, (unsigned char *)hash, NULL)) {
 		logger(LOG_ERR, _("Error during calculation of response for %s (%s): %s"),
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
@@ -421,7 +421,7 @@ bool chal_reply_h(connection_t *c, char *request) {
 	/* Calculate the hash from the challenge we sent */
 
 	if(!EVP_DigestInit(&ctx, c->outdigest)
-			|| !EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key))
+			|| !EVP_DigestUpdate(&ctx, c->hischallenge, get_rsa_size(&c->rsa_key))
 			|| !EVP_DigestFinal(&ctx, (unsigned char *)myhash, NULL)) {
 		logger(LOG_ERR, _("Error during calculation of response from %s (%s): %s"),
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));

@@ -23,11 +23,12 @@
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
-#include <openssl/rsa.h>
+//#include <openssl/rsa.h>
 #include <openssl/evp.h>
 
 #include <event.h>
 
+#include "rsa.h"
 #include "splay_tree.h"
 
 #define OPTION_INDIRECT		0x0001
@@ -72,7 +73,8 @@ typedef struct connection_t {
 	struct node_t *node;		/* node associated with the other end */
 	struct edge_t *edge;		/* edge associated with this connection */
 
-	RSA *rsa_key;				/* his public/private key */
+	//RSA *rsa_key;				/* his public/private key */
+	struct rsa_key_t rsa_key;          /* his public/private key */
 	const EVP_CIPHER *incipher;	/* Cipher he will use to send data to us */
 	const EVP_CIPHER *outcipher;	/* Cipher we will use to send data to him */
 	EVP_CIPHER_CTX *inctx;		/* Context of encrypted meta data that will come from him to us */

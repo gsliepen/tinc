@@ -145,6 +145,7 @@ AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 
+AM_PATH_LIBGCRYPT([], [], [AC_MSG_ERROR([Libgcrypt not found.]); break])
 tinc_OPENSSL
 tinc_ZLIB
 tinc_LZO

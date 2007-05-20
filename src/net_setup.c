@@ -22,6 +22,8 @@
 
 #include "system.h"
 
+#include <gcrypt.h>
+
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
@@ -40,6 +42,7 @@
 #include "process.h"
 #include "protocol.h"
 #include "route.h"
+#include "rsa.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -50,124 +53,37 @@ static struct event device_ev;
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;
-	char *key;
+	bool result;
 
 	cp();
 
-	if(!c->rsa_key) {
-		c->rsa_key = RSA_new();
-//		RSA_blinding_on(c->rsa_key, NULL);
-	}
+	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
+		asprintf(&fname, "%s/hosts/%s", confbase, c->name);
 
-	/* First, check for simple PublicKey statement */
+	fp = fopen(fname, "r");
 
-	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
-		BN_hex2bn(&c->rsa_key->n, key);
-		BN_hex2bn(&c->rsa_key->e, "FFFF");
-		free(key);
-		return true;
-	}
-
-	/* Else, check for PublicKeyFile statement and read it */
-
-	if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname)) {
-		fp = fopen(fname, "r");
-
-		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
-				   fname, strerror(errno));
-			free(fname);
-			return false;
-		}
-
-		free(fname);
-		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
-		fclose(fp);
-
-		if(c->rsa_key)
-			return true;		/* Woohoo. */
-
-		/* If it fails, try PEM_read_RSA_PUBKEY. */
-		fp = fopen(fname, "r");
-
-		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
-				   fname, strerror(errno));
-			free(fname);
-			return false;
-		}
-
-		free(fname);
-		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-		fclose(fp);
-
-		if(c->rsa_key) {
-//				RSA_blinding_on(c->rsa_key, NULL);
-			return true;
-		}
-
-		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+	if(!fp) {
+		logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
 			   fname, strerror(errno));
+		free(fname);
 		return false;
 	}
 
-	/* Else, check if a harnessed public key is in the config file */
+	result = read_pem_rsa_public_key(fp, &c->rsa_key);
+	fclose(fp);
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	fp = fopen(fname, "r");
-
-	if(fp) {
-		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
-		fclose(fp);
-	}
-
+	if(!result) 
+		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"), fname, strerror(errno));
 	free(fname);
-
-	if(c->rsa_key)
-		return true;
-
-	/* Try again with PEM_read_RSA_PUBKEY. */
-
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	fp = fopen(fname, "r");
-
-	if(fp) {
-		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-//		RSA_blinding_on(c->rsa_key, NULL);
-		fclose(fp);
-	}
-
-	free(fname);
-
-	if(c->rsa_key)
-		return true;
-
-	logger(LOG_ERR, _("No public key for %s specified!"), c->name);
-
-	return false;
+	return result;
 }
 
-bool read_rsa_private_key(void) {
+bool read_rsa_private_key() {
 	FILE *fp;
-	char *fname, *key, *pubkey;
-	struct stat s;
+	char *fname;
+	bool result;
 
 	cp();
-
-	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
-		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
-			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
-			return false;
-		}
-		myself->connection->rsa_key = RSA_new();
-//		RSA_blinding_on(myself->connection->rsa_key, NULL);
-		BN_hex2bn(&myself->connection->rsa_key->d, key);
-		BN_hex2bn(&myself->connection->rsa_key->n, pubkey);
-		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
-		free(key);
-		free(pubkey);
-		return true;
-	}
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
 		asprintf(&fname, "%s/rsa_key.priv", confbase);
@@ -182,9 +98,10 @@ bool read_rsa_private_key(void) {
 	}
 
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+	struct stat s;
+
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"),
-				fname, strerror(errno));
+		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"), fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -193,18 +110,13 @@ bool read_rsa_private_key(void) {
 		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
 #endif
 
-	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
+	result = read_pem_rsa_private_key(fp, &myself->connection->rsa_key);
 	fclose(fp);
 
-	if(!myself->connection->rsa_key) {
-		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
-			   fname, strerror(errno));
-		free(fname);
-		return false;
-	}
-
+	if(!result) 
+		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"), fname, strerror(errno));
 	free(fname);
-	return true;
+	return result;
 }
 
 static struct event keyexpire_event;

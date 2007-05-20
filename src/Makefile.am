@@ -7,7 +7,7 @@ EXTRA_DIST = linux/device.c bsd/device.c solaris/device.c cygwin/device.c mingw/
 
 tincd_SOURCES = conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c	\
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
-	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
+	protocol_key.c protocol_subnet.c route.c rsa.c subnet.c tincd.c
 
 tincctl_SOURCES = tincctl.c
 
@@ -18,12 +18,13 @@ DEFAULT_INCLUDES =
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 
 noinst_HEADERS = conf.h connection.h control.h device.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
-	protocol.h route.h subnet.h
+	protocol.h route.h rsa.h subnet.h
 
 LIBS = @LIBS@ @LIBINTL@
 
 tincd_LDADD = \
-	$(top_builddir)/lib/libvpn.a
+	$(top_builddir)/lib/libvpn.a \
+	$(LIBGCRYPT_LIBS)
 
 tincctl_LDADD = \
 	$(top_builddir)/lib/libvpn.a
@@ -31,6 +32,7 @@ tincctl_LDADD = \
 localedir = $(datadir)/locale
 
 AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALEDIR=\"$(localedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+tinc_CPPFLAGS = $(LIBGCRYPT_CFLAGS)
 
 dist-hook:
 	rm -f `find . -type l`
