@@ -25,16 +25,16 @@
 #include <gcrypt.h>
 
 typedef struct digest {
-	enum gcry_md_algos algo;
+	int algo;
 	int nid;
 	uint16_t len;
 } digest_t;
 
-bool digest_open_by_name(struct digest_t *, const char *);
-bool digest_open_by_nid(struct digest_t *, int);
-bool digest_open_sha1(struct digest_t *);
-bool digest_create(struct digest_t *, void *indata, size_t inlen, void *outdata, size_t *outlen);
-bool digest_verify(struct digest_t *, void *indata, size_t inlen, void *digestdata, size_t digestlen);
-int digest_get_nid(struct digest_t *);
+bool digest_open_by_name(struct digest *, const char *);
+bool digest_open_by_nid(struct digest *, int);
+bool digest_open_sha1(struct digest *);
+bool digest_create(struct digest *, void *indata, size_t inlen, void *outdata);
+bool digest_verify(struct digest *, void *indata, size_t inlen, void *digestdata);
+int digest_get_nid(struct digest *);
 
 #endif

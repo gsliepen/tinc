@@ -22,12 +22,14 @@
 #include "system.h"
 
 #include "cipher.h"
+#include "logger.h"
+#include "xalloc.h"
 
 static struct {
-	const char *name,
-	enum gcry_cipher_algos algo,
-	enum gcry_cipher_modes mode,
-	int nid,
+	const char *name;
+	int algo;
+	int mode;
+	int nid;
 } ciphertable[] = {
 	{"none", GCRY_CIPHER_NONE, GCRY_CIPHER_MODE_NONE, 0},
 
@@ -52,7 +54,7 @@ static struct {
 	{NULL, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_OFB, 428},
 };
 
-static bool nametocipher(const char *name, enum gcry_cipher_algos *algo, enum gcry_cipher_modes *mode) {
+static bool nametocipher(const char *name, int *algo, int *mode) {
 	int i;
 
 	for(i = 0; i < sizeof ciphertable / sizeof *ciphertable; i++) {
@@ -66,7 +68,7 @@ static bool nametocipher(const char *name, enum gcry_cipher_algos *algo, enum gc
 	return false;
 }
 
-static bool nidtocipher(int nid, enum gcry_cipher_algos *algo, enum gcry_cipher_modes *mode) {
+static bool nidtocipher(int nid, int *algo, int *mode) {
 	int i;
 
 	for(i = 0; i < sizeof ciphertable / sizeof *ciphertable; i++) {
@@ -80,7 +82,7 @@ static bool nidtocipher(int nid, enum gcry_cipher_algos *algo, enum gcry_cipher_
 	return false;
 }
 
-static bool ciphertonid(enum gcry_cipher_algos algo, enum gcry_cipher_modes mode, int *nid) {
+static bool ciphertonid(int algo, int mode, int *nid) {
 	int i;
 
 	for(i = 0; i < sizeof ciphertable / sizeof *ciphertable; i++) {
@@ -97,7 +99,7 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	gcry_error_t err;
 
 	if(!ciphertonid(algo, mode, &cipher->nid)) {
-		logger(LOG_DEBUG< _("Cipher %d mode %d has no corresponding nid!"), algo, mode);
+		logger(LOG_DEBUG, _("Cipher %d mode %d has no corresponding nid!"), algo, mode);
 		return false;
 	}
 
@@ -107,11 +109,11 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	}
 
 	cipher->keylen = gcry_cipher_get_algo_keylen(algo);
-	if(mode == GCRY_MODE_ECB || mode == GCRY_MODE_CBC)
+	if(mode == GCRY_CIPHER_MODE_ECB || mode == GCRY_CIPHER_MODE_CBC)
 		cipher->blklen = gcry_cipher_get_algo_blklen(algo);
 	else
 		cipher->blklen = 0;
-	cipher->key = xmalloc(cipher->keylen, cipher->blklen);
+	cipher->key = xmalloc(cipher->keylen + cipher->blklen);
 
 	return true;
 }
@@ -158,7 +160,7 @@ bool cipher_regenerate_key(cipher_t *cipher) {
 	gcry_create_nonce(cipher->key, cipher->keylen + cipher->blklen);
 
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
-	gcry_cipher_setiv(cipher->handle, cipher->key + keylen, cipher->blklen);
+	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 
 	return true;
 }
@@ -169,9 +171,10 @@ bool cipher_add_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *ou
 	if(cipher->blklen == 1) {
 		*outlen = inlen;
 		return true;
+	}
 
 	reqlen = ((inlen + 1) / cipher->blklen) * cipher->blklen;
-	if(reqlen > outlen)
+	if(reqlen > *outlen)
 		return false;
 
 	// add padding
@@ -200,7 +203,7 @@ bool cipher_remove_padding(cipher_t *cipher, void *indata, size_t inlen, size_t 
 bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen) {
 	gcry_error_t err;
 
-	if((err = gcry_cipher_encrypt(cipher->handle, oudata, inlen, indata, inlen))) {
+	if((err = gcry_cipher_encrypt(cipher->handle, outdata, inlen, indata, inlen))) {
 		logger(LOG_ERR, _("Error while encrypting"));
 		return false;
 	}
@@ -211,7 +214,7 @@ bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata,
 bool cipher_decrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen) {
 	gcry_error_t err;
 
-	if((err = gcry_cipher_decrypt(cipher->handle, oudata, inlen, indata, inlen))) {
+	if((err = gcry_cipher_decrypt(cipher->handle, outdata, inlen, indata, inlen))) {
 		logger(LOG_ERR, _("Error while encrypting"));
 		return false;
 	}
@@ -221,7 +224,7 @@ bool cipher_decrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata,
 
 void cipher_reset(cipher_t *cipher) {
 	gcry_cipher_reset(cipher->handle);
-	gcry_cipher_setiv(cipher->handle, cipher->key + keylen, cipher->blklen);
+	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 }
 
 int cipher_get_nid(cipher_t *cipher) {

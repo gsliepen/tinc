@@ -22,11 +22,12 @@
 #include "system.h"
 
 #include "digest.h"
+#include "logger.h"
 
 static struct {
-	const char *name,
-	enum gcry_md_algos algo,
-	int nid,
+	const char *name;
+	int algo;
+	int nid;
 } digesttable[] = {
 	{"none", GCRY_MD_NONE, 0},
 	{"sha1", GCRY_MD_SHA1, 64},
@@ -35,7 +36,20 @@ static struct {
 	{"sha512", GCRY_MD_SHA512, 674},
 };
 
-static bool nidtodigest(int nid, enum gcry_md_algos *algo) {
+static bool nametodigest(const char *name, int *algo) {
+	int i;
+
+	for(i = 0; i < sizeof digesttable / sizeof *digesttable; i++) {
+		if(digesttable[i].name && !strcasecmp(name, digesttable[i].name)) {
+			*algo = digesttable[i].algo;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool nidtodigest(int nid, int *algo) {
 	int i;
 
 	for(i = 0; i < sizeof digesttable / sizeof *digesttable; i++) {
@@ -48,7 +62,7 @@ static bool nidtodigest(int nid, enum gcry_md_algos *algo) {
 	return false;
 }
 
-static bool digesttonid(enum gcry_md_algos algo, int *nid) {
+static bool digesttonid(int algo, int *nid) {
 	int i;
 
 	for(i = 0; i < sizeof digesttable / sizeof *digesttable; i++) {
@@ -63,7 +77,7 @@ static bool digesttonid(enum gcry_md_algos algo, int *nid) {
 
 static bool digest_open(digest_t *digest, int algo) {
 	if(!digesttonid(algo, &digest->nid)) {
-		logger(LOG_DEBUG< _("Digest %d has no corresponding nid!"), algo);
+		logger(LOG_DEBUG, _("Digest %d has no corresponding nid!"), algo);
 		return false;
 	}
 
@@ -91,7 +105,7 @@ bool digest_open_by_nid(digest_t *digest, int nid) {
 		return false;
 	}
 
-	return digest_open(digest, algo, mode);
+	return digest_open(digest, algo);
 }
 
 bool digest_open_sha1(digest_t *digest) {
@@ -102,26 +116,14 @@ void digest_close(digest_t *digest) {
 }
 
 bool digest_create(digest_t *digest, void *indata, size_t inlen, void *outdata) {
-	gcry_error_t err;
-
-	if((err = gcry_md_hash_buffer(digest->algo, outdata, indata, inlen))) {
-		logger(LOG_ERR, _("Error while creating digest!"));
-		return false;
-	}
-
-	*outlen = digest->len;
+	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
 	return true;
 }
 
 bool digest_verify(digest_t *digest, void *indata, size_t inlen, void *cmpdata) {
-	gcry_error_t err;
 	char outdata[digest->len];
 
-	if((err = gcry_md_hash_buffer(digest->algo, outdata, indata, inlen))) {
-		logger(LOG_ERR, _("Error while creating digest!"));
-		return false;
-	}
-
+	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
 	return !memcmp(indata, outdata, digest->len);
 }
 
