@@ -127,7 +127,14 @@ bool digest_verify(digest_t *digest, void *indata, size_t inlen, void *cmpdata) 
 	return !memcmp(indata, outdata, digest->len);
 }
 
-int digest_get_nid(digest_t *digest) {
+int digest_get_nid(const digest_t *digest) {
 	return digest->nid;
 }
 
+size_t digest_length(const digest_t *digest) {
+	return digest->len;
+}
+
+bool digest_active(const digest_t *digest) {
+	return digest->algo != GCRY_MD_NONE;
+}

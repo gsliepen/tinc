@@ -33,8 +33,11 @@ typedef struct digest {
 bool digest_open_by_name(struct digest *, const char *);
 bool digest_open_by_nid(struct digest *, int);
 bool digest_open_sha1(struct digest *);
+void digest_close(struct digest *);
 bool digest_create(struct digest *, void *indata, size_t inlen, void *outdata);
 bool digest_verify(struct digest *, void *indata, size_t inlen, void *digestdata);
-int digest_get_nid(struct digest *);
+int digest_get_nid(const struct digest *);
+size_t digest_length(const struct digest *);
+bool digest_active(const struct digest *);
 
 #endif

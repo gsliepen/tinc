@@ -156,6 +156,23 @@ void cipher_close(cipher_t *cipher) {
 	}
 }
 
+size_t cipher_keylength(const cipher_t *cipher) {
+	return cipher->keylen + cipher->blklen;
+}
+
+void cipher_get_key(const cipher_t *cipher, void *key) {
+	memcpy(key, cipher->key, cipher->keylen + cipher->blklen);
+}
+
+bool cipher_set_key(cipher_t *cipher, void *key) {
+	memcpy(cipher->key, key, cipher->keylen + cipher->blklen);
+
+	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
+	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
+
+	return true;
+}
+
 bool cipher_regenerate_key(cipher_t *cipher) {
 	gcry_create_nonce(cipher->key, cipher->keylen + cipher->blklen);
 
@@ -227,7 +244,10 @@ void cipher_reset(cipher_t *cipher) {
 	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 }
 
-int cipher_get_nid(cipher_t *cipher) {
+int cipher_get_nid(const cipher_t *cipher) {
 	return cipher->nid;
 }
 
+bool cipher_active(const cipher_t *cipher) {
+	return cipher->nid != 0;
+}

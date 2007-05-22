@@ -32,13 +32,18 @@ typedef struct cipher {
 	uint16_t blklen;
 } cipher_t;
 
-bool cipher_open_by_name(struct cipher *, const char *);
-bool cipher_open_by_nid(struct cipher *, int);
-bool cipher_open_blowfish_ofb(struct cipher *);
-void cipher_close(struct cipher *);
-bool cipher_regenerate_key(struct cipher *);
-bool cipher_encrypt(struct cipher *, void *indata, size_t inlen, void *outdata, size_t *outlen);
-bool cipher_decrypt(struct cipher *, void *indata, size_t inlen, void *outdata, size_t *outlen);
-int cipher_get_nid(struct cipher *);
+extern bool cipher_open_by_name(struct cipher *, const char *);
+extern bool cipher_open_by_nid(struct cipher *, int);
+extern bool cipher_open_blowfish_ofb(struct cipher *);
+extern void cipher_close(struct cipher *);
+extern size_t cipher_keylength(const struct cipher *);
+extern void cipher_get_key(const struct cipher *, void *);
+extern bool cipher_set_key(struct cipher *, void *);
+extern bool cipher_regenerate_key(struct cipher *);
+extern void cipher_reset(struct cipher *);
+extern bool cipher_encrypt(struct cipher *, void *indata, size_t inlen, void *outdata, size_t *outlen);
+extern bool cipher_decrypt(struct cipher *, void *indata, size_t inlen, void *outdata, size_t *outlen);
+extern int cipher_get_nid(const struct cipher *);
+extern bool cipher_active(const struct cipher *);
 
 #endif
