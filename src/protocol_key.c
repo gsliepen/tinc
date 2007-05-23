@@ -22,10 +22,8 @@
 
 #include "system.h"
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
-
 #include "splay_tree.h"
+#include "cipher.h"
 #include "connection.h"
 #include "logger.h"
 #include "net.h"
@@ -35,7 +33,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool mykeyused = false;
+static bool mykeyused = false;
 
 bool send_key_changed(connection_t *c, const node_t *n) {
 	cp();
@@ -137,18 +135,19 @@ bool req_key_h(connection_t *c, char *request) {
 }
 
 bool send_ans_key(connection_t *c, const node_t *from, const node_t *to) {
-	char *key;
+	size_t keylen = cipher_keylength(&from->cipher);
+	char key[keylen];
 
 	cp();
 
-	key = alloca(2 * from->keylength + 1);
-	bin2hex(from->key, key, from->keylength);
-	key[from->keylength * 2] = '\0';
+	cipher_get_key(&from->cipher, key);
+	bin2hex(key, key, keylen);
+	key[keylen * 2] = '\0';
 
 	return send_request(c, "%d %s %s %s %d %d %d %d", ANS_KEY,
 						from->name, to->name, key,
-						from->cipher ? from->cipher->nid : 0,
-						from->digest ? from->digest->type : 0, from->maclength,
+						cipher_get_nid(&from->cipher),
+						digest_get_nid(&from->digest), from->maclength,
 						from->compression);
 }
 
@@ -194,58 +193,28 @@ bool ans_key_h(connection_t *c, char *request) {
 		return send_request(to->nexthop->connection, "%s", request);
 	}
 
-	/* Update our copy of the origin's packet key */
-
-	if(from->key)
-		free(from->key);
-
-	from->key = xstrdup(key);
-	from->keylength = strlen(key) / 2;
-	hex2bin(from->key, from->key, from->keylength);
-	from->key[from->keylength] = '\0';
-
-	from->status.validkey = true;
-	from->status.waitingforkey = false;
-	from->sent_seqno = 0;
-
 	/* Check and lookup cipher and digest algorithms */
 
-	if(cipher) {
-		from->cipher = EVP_get_cipherbynid(cipher);
+	if(!cipher_open_by_nid(&from->cipher, cipher)) {
+		logger(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name, from->hostname);
+		return false;
+	}
 
-		if(!from->cipher) {
-			logger(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name,
-				   from->hostname);
-			return false;
-		}
-
-		if(from->keylength != from->cipher->key_len + from->cipher->iv_len) {
-			logger(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name,
-				   from->hostname);
-			return false;
-		}
-	} else {
-		from->cipher = NULL;
+	if(strlen(key) / 2 != cipher_keylength(&from->cipher)) {
+		logger(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name, from->hostname);
+		return false;
 	}
 
 	from->maclength = maclength;
 
-	if(digest) {
-		from->digest = EVP_get_digestbynid(digest);
+	if(!digest_open_by_nid(&from->digest, digest)) {
+		logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name, from->hostname);
+		return false;
+	}
 
-		if(!from->digest) {
-			logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name,
-				   from->hostname);
-			return false;
-		}
-
-		if(from->maclength > from->digest->md_size || from->maclength < 0) {
-			logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"),
-				   from->name, from->hostname);
-			return false;
-		}
-	} else {
-		from->digest = NULL;
+	if(from->maclength > digest_length(&from->digest) || from->maclength < 0) {
+		logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
+		return false;
 	}
 
 	if(compression < 0 || compression > 11) {
@@ -255,12 +224,14 @@ bool ans_key_h(connection_t *c, char *request) {
 	
 	from->compression = compression;
 
-	if(from->cipher)
-		if(!EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, (unsigned char *)from->key, (unsigned char *)from->key + from->cipher->key_len)) {
-			logger(LOG_ERR, _("Error during initialisation of key from %s (%s): %s"),
-					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
-		}
+	/* Update our copy of the origin's packet key */
+
+	hex2bin(key, key, cipher_keylength(&from->cipher));
+	cipher_set_key(&from->cipher, key, false);
+
+	from->status.validkey = true;
+	from->status.waitingforkey = false;
+	from->sent_seqno = 0;
 
 	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
 		send_mtu_probe(from);

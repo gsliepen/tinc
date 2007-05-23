@@ -104,7 +104,7 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	}
 
 	if((err = gcry_cipher_open(&cipher->handle, algo, mode, 0))) {
-		logger(LOG_DEBUG, _("Unable to intialise cipher %d mode %d!"), algo, mode);
+		logger(LOG_DEBUG, _("Unable to intialise cipher %d mode %d: %s"), algo, mode, gcry_strerror(err));
 		return false;
 	}
 
@@ -164,7 +164,7 @@ void cipher_get_key(const cipher_t *cipher, void *key) {
 	memcpy(key, cipher->key, cipher->keylen + cipher->blklen);
 }
 
-bool cipher_set_key(cipher_t *cipher, void *key) {
+bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 	memcpy(cipher->key, key, cipher->keylen + cipher->blklen);
 
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
@@ -173,7 +173,17 @@ bool cipher_set_key(cipher_t *cipher, void *key) {
 	return true;
 }
 
-bool cipher_regenerate_key(cipher_t *cipher) {
+bool cipher_set_key(cipher_t *cipher, void *key, size_t len, bool encrypt) {
+	memcpy(cipher->key, key + len - cipher->keylen, cipher->keylen + cipher->blklen);
+	memcpy(cipher->key + cipher->keylen, key + len - cipher->keylen - cipher->blklen, cipher->blklen);
+
+	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
+	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
+
+	return true;
+}
+
+bool cipher_regenerate_key(cipher_t *cipher, bool encrypt) {
 	gcry_create_nonce(cipher->key, cipher->keylen + cipher->blklen);
 
 	gcry_cipher_setkey(cipher->handle, cipher->key, cipher->keylen);
@@ -182,7 +192,7 @@ bool cipher_regenerate_key(cipher_t *cipher) {
 	return true;
 }
 
-bool cipher_add_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *outlen) {
+static bool cipher_add_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *outlen) {
 	size_t reqlen;
 
 	if(cipher->blklen == 1) {
@@ -200,7 +210,7 @@ bool cipher_add_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *ou
 	return true;
 }
 
-bool cipher_remove_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *outlen) {
+static bool cipher_remove_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *outlen) {
 	size_t origlen;
 
 	if(cipher->blklen == 1) {
@@ -217,31 +227,30 @@ bool cipher_remove_padding(cipher_t *cipher, void *indata, size_t inlen, size_t 
 	return true;
 }
 
-bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen) {
+bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
+
+	// To be fixed
 
 	if((err = gcry_cipher_encrypt(cipher->handle, outdata, inlen, indata, inlen))) {
-		logger(LOG_ERR, _("Error while encrypting"));
+		logger(LOG_ERR, _("Error while encrypting: %s"), gcry_strerror(err));
 		return false;
 	}
 
 	return true;
 }
 
-bool cipher_decrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen) {
+bool cipher_decrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
 
+	// To be fixed
+
 	if((err = gcry_cipher_decrypt(cipher->handle, outdata, inlen, indata, inlen))) {
-		logger(LOG_ERR, _("Error while encrypting"));
+		logger(LOG_ERR, _("Error while decrypting: %s"), gcry_strerror(err));
 		return false;
 	}
 
 	return true;
-}
-
-void cipher_reset(cipher_t *cipher) {
-	gcry_cipher_reset(cipher->handle);
-	gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 }
 
 int cipher_get_nid(const cipher_t *cipher) {

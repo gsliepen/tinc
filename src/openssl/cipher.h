@@ -22,28 +22,28 @@
 #ifndef __TINC_CIPHER_H__
 #define __TINC_CIPHER_H__
 
-#include <gcrypt.h>
+#include <openssl/evp.h>
 
 typedef struct cipher {
-	gcry_cipher_hd_t handle;
+	EVP_CIPHER_CTX ctx;
+	const EVP_CIPHER *cipher;
 	char *key;
-	int nid;
 	uint16_t keylen;
 	uint16_t blklen;
 } cipher_t;
 
-extern bool cipher_open_by_name(struct cipher *, const char *);
-extern bool cipher_open_by_nid(struct cipher *, int);
-extern bool cipher_open_blowfish_ofb(struct cipher *);
-extern void cipher_close(struct cipher *);
-extern size_t cipher_keylength(const struct cipher *);
-extern void cipher_get_key(const struct cipher *, void *);
-extern bool cipher_set_key(struct cipher *, void *);
-extern bool cipher_regenerate_key(struct cipher *);
-extern void cipher_reset(struct cipher *);
-extern bool cipher_encrypt(struct cipher *, void *indata, size_t inlen, void *outdata, size_t *outlen);
-extern bool cipher_decrypt(struct cipher *, void *indata, size_t inlen, void *outdata, size_t *outlen);
-extern int cipher_get_nid(const struct cipher *);
-extern bool cipher_active(const struct cipher *);
+extern bool cipher_open_by_name(cipher_t *, const char *);
+extern bool cipher_open_by_nid(cipher_t *, int);
+extern bool cipher_open_blowfish_ofb(cipher_t *);
+extern void cipher_close(cipher_t *);
+extern size_t cipher_keylength(const cipher_t *);
+extern void cipher_get_key(const cipher_t *, void *);
+extern bool cipher_set_key(cipher_t *, void *, bool);
+extern bool cipher_set_key_from_rsa(cipher_t *, void *, size_t, bool);
+extern bool cipher_regenerate_key(cipher_t *, bool);
+extern bool cipher_encrypt(cipher_t *, void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
+extern bool cipher_decrypt(cipher_t *, void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
+extern int cipher_get_nid(const cipher_t *);
+extern bool cipher_active(const cipher_t *);
 
 #endif

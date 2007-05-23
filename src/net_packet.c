@@ -22,18 +22,15 @@
 
 #include "system.h"
 
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/hmac.h>
-
 #include <zlib.h>
 #include LZO1X_H
 
 #include "splay_tree.h"
+#include "cipher.h"
 #include "conf.h"
 #include "connection.h"
+#include "crypto.h"
+#include "digest.h"
 #include "device.h"
 #include "ethernet.h"
 #include "graph.h"
@@ -52,7 +49,6 @@
 #endif
 
 int keylifetime = 0;
-EVP_CIPHER_CTX packet_ctx;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
 static void send_udppacket(node_t *, vpn_packet_t *);
@@ -85,7 +81,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 			len = 64;
 		
 		memset(packet.data, 0, 14);
-		RAND_pseudo_bytes(packet.data + 14, len - 14);
+		randomize(packet.data + 14, len - 14);
 		packet.len = len;
 
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending MTU probe length %d to %s (%s)"), len, n->name, n->hostname);
@@ -168,15 +164,14 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
 	vpn_packet_t *outpkt = pkt[0];
-	int outlen, outpad;
-	unsigned char hmac[EVP_MAX_MD_SIZE];
+	size_t outlen;
 	int i;
 
 	cp();
 
 	/* Check packet length */
 
-	if(inpkt->len < sizeof(inpkt->seqno) + myself->maclength) {
+	if(inpkt->len < sizeof(inpkt->seqno) + digest_length(&myself->digest)) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
 					n->name, n->hostname);
 		return;
@@ -184,33 +179,23 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check the message authentication code */
 
-	if(myself->digest && myself->maclength) {
-		inpkt->len -= myself->maclength;
-		HMAC(myself->digest, myself->key, myself->keylength,
-			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
-
-		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, myself->maclength)) {
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
-					   n->name, n->hostname);
-			return;
-		}
+	if(digest_active(&myself->digest) && !digest_verify(&myself->digest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len)) {
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
+		return;
 	}
 
 	/* Decrypt the packet */
 
-	if(myself->cipher) {
+	if(cipher_active(&myself->cipher)) {
 		outpkt = pkt[nextpkt++];
+		outlen = MAXSIZE;
 
-		if(!EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_DecryptUpdate(&packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
-					(unsigned char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_DecryptFinal_ex(&packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
-						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
+		if(!cipher_decrypt(&myself->cipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s)"), n->name, n->hostname);
 			return;
 		}
 		
-		outpkt->len = outlen + outpad;
+		outpkt->len = outlen;
 		inpkt = outpkt;
 	}
 
@@ -283,7 +268,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	int nextpkt = 0;
 	vpn_packet_t *outpkt;
 	int origlen;
-	int outlen, outpad;
+	size_t outlen;
 	vpn_packet_t *copy;
 	static int priority = 0;
 	int origpriority;
@@ -339,28 +324,24 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Encrypt the packet */
 
-	if(n->cipher) {
+	if(cipher_active(&n->cipher)) {
 		outpkt = pkt[nextpkt++];
+		outlen = MAXSIZE;
 
-		if(!EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_EncryptUpdate(&n->packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
-					(unsigned char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
-			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
-						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
+		if(!cipher_encrypt(&n->cipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s)"), n->name, n->hostname);
 			goto end;
 		}
 
-		outpkt->len = outlen + outpad;
+		outpkt->len = outlen;
 		inpkt = outpkt;
 	}
 
 	/* Add the message authentication code */
 
-	if(n->digest && n->maclength) {
-		HMAC(n->digest, n->key, n->keylength, (unsigned char *) &inpkt->seqno,
-			 inpkt->len, (unsigned char *) &inpkt->seqno + inpkt->len, NULL);
-		inpkt->len += n->maclength;
+	if(digest_active(&n->digest)) {
+		digest_create(&n->digest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);
+		inpkt->len += digest_length(&n->digest);
 	}
 
 	/* Determine which socket we have to use */

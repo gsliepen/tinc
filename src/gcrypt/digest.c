@@ -115,16 +115,16 @@ bool digest_open_sha1(digest_t *digest) {
 void digest_close(digest_t *digest) {
 }
 
-bool digest_create(digest_t *digest, void *indata, size_t inlen, void *outdata) {
+bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {
 	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
 	return true;
 }
 
-bool digest_verify(digest_t *digest, void *indata, size_t inlen, void *cmpdata) {
+bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
 	char outdata[digest->len];
 
 	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
-	return !memcmp(indata, outdata, digest->len);
+	return !memcmp(cmpdata, outdata, digest->len);
 }
 
 int digest_get_nid(const digest_t *digest) {

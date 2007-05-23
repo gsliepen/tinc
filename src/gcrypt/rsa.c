@@ -184,9 +184,34 @@ static bool ber_read_mpi(unsigned char **p, size_t *buflen, gcry_mpi_t *mpi) {
 	return mpi ? !err : true;
 }
 
+bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e) {
+	gcry_error_t err = 0;
+
+	err = gcry_mpi_scan(&rsa->n, GCRY_FMT_HEX, n, 0, NULL)
+		?: gcry_mpi_scan(&rsa->e, GCRY_FMT_HEX, n, 0, NULL);
+
+	if(err) {
+		logger(LOG_ERR, _("Error while reading RSA public key: %s"), gcry_strerror(errno));
+		return false;
+	}
+}
+
+bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d) {
+	gcry_error_t err = 0;
+
+	err = gcry_mpi_scan(&rsa->n, GCRY_FMT_HEX, n, 0, NULL)
+		?: gcry_mpi_scan(&rsa->e, GCRY_FMT_HEX, n, 0, NULL)
+		?: gcry_mpi_scan(&rsa->d, GCRY_FMT_HEX, n, 0, NULL);
+
+	if(err) {
+		logger(LOG_ERR, _("Error while reading RSA public key: %s"), gcry_strerror(errno));
+		return false;
+	}
+}
+
 // Read PEM RSA keys
 
-bool read_pem_rsa_public_key(FILE *fp, rsa_key_t *key) {
+bool read_pem_rsa_public_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf[8096], *derp = derbuf;
 	size_t derlen;
 
@@ -196,8 +221,8 @@ bool read_pem_rsa_public_key(FILE *fp, rsa_key_t *key) {
 	}
 
 	if(!ber_read_sequence(&derp, &derlen, NULL)
-			|| !ber_read_mpi(&derp, &derlen, &key->n)
-			|| !ber_read_mpi(&derp, &derlen, &key->e)
+			|| !ber_read_mpi(&derp, &derlen, &rsa->n)
+			|| !ber_read_mpi(&derp, &derlen, &rsa->e)
 			|| derlen) {
 		logger(LOG_ERR, _("Error while decoding RSA public key"));
 		return NULL;
@@ -206,7 +231,7 @@ bool read_pem_rsa_public_key(FILE *fp, rsa_key_t *key) {
 	return true;
 }
 
-bool read_pem_rsa_private_key(FILE *fp, rsa_key_t *key) {
+bool read_pem_rsa_private_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf[8096], *derp = derbuf;
 	size_t derlen;
 
@@ -217,9 +242,9 @@ bool read_pem_rsa_private_key(FILE *fp, rsa_key_t *key) {
 
 	if(!ber_read_sequence(&derp, &derlen, NULL)
 			|| !ber_read_mpi(&derp, &derlen, NULL)
-			|| !ber_read_mpi(&derp, &derlen, &key->n)
-			|| !ber_read_mpi(&derp, &derlen, &key->e)
-			|| !ber_read_mpi(&derp, &derlen, &key->d)
+			|| !ber_read_mpi(&derp, &derlen, &rsa->n)
+			|| !ber_read_mpi(&derp, &derlen, &rsa->e)
+			|| !ber_read_mpi(&derp, &derlen, &rsa->d)
 			|| !ber_read_mpi(&derp, &derlen, NULL) // p
 			|| !ber_read_mpi(&derp, &derlen, NULL) // q
 			|| !ber_read_mpi(&derp, &derlen, NULL)
@@ -233,8 +258,8 @@ bool read_pem_rsa_private_key(FILE *fp, rsa_key_t *key) {
 	return true;
 }
 
-unsigned int get_rsa_size(rsa_key_t *key) {
-	return (gcry_mpi_get_nbits(key->n) + 7) / 8;
+size_t rsa_size(rsa_t *rsa) {
+	return (gcry_mpi_get_nbits(rsa->n) + 7) / 8;
 }
 
 /* Well, libgcrypt has functions to handle RSA keys, but they suck.
@@ -244,24 +269,24 @@ unsigned int get_rsa_size(rsa_key_t *key) {
 // TODO: get rid of this macro, properly clean up gcry_ structures after use
 #define check(foo) { gcry_error_t err = (foo); if(err) {logger(LOG_ERR, "gcrypt error %s/%s at %s:%d\n", gcry_strsource(err), gcry_strerror(err), __FILE__, __LINE__); return false; }}
 
-bool rsa_public_encrypt(size_t len, void *in, void *out, rsa_key_t *key) {
+bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;
 	check(gcry_mpi_scan(&inmpi, GCRYMPI_FMT_USG, in, len, NULL));
 
 	gcry_mpi_t outmpi = gcry_mpi_new(len * 8);
-	gcry_mpi_powm(outmpi, inmpi, key->e, key->n);
+	gcry_mpi_powm(outmpi, inmpi, rsa->e, rsa->n);
 
 	check(gcry_mpi_print(GCRYMPI_FMT_USG, out,len, NULL, outmpi));
 
 	return true;
 }
 
-bool rsa_private_decrypt(size_t len, void *in, void *out, rsa_key_t *key) {
+bool rsa_public_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;
 	check(gcry_mpi_scan(&inmpi, GCRYMPI_FMT_USG, in, len, NULL));
 
 	gcry_mpi_t outmpi = gcry_mpi_new(len * 8);
-	gcry_mpi_powm(outmpi, inmpi, key->d, key->n);
+	gcry_mpi_powm(outmpi, inmpi, rsa->d, rsa->n);
 
 	check(gcry_mpi_print(GCRYMPI_FMT_USG, out,len, NULL, outmpi));
 

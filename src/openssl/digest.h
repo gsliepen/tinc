@@ -22,22 +22,20 @@
 #ifndef __TINC_DIGEST_H__
 #define __TINC_DIGEST_H__
 
-#include <gcrypt.h>
+#include <openssl/evp.h>
 
 typedef struct digest {
-	int algo;
-	int nid;
-	uint16_t len;
+	const EVP_MD *digest;
 } digest_t;
 
-bool digest_open_by_name(struct digest *, const char *);
-bool digest_open_by_nid(struct digest *, int);
-bool digest_open_sha1(struct digest *);
-void digest_close(struct digest *);
-bool digest_create(struct digest *, void *indata, size_t inlen, void *outdata);
-bool digest_verify(struct digest *, void *indata, size_t inlen, void *digestdata);
-int digest_get_nid(const struct digest *);
-size_t digest_length(const struct digest *);
-bool digest_active(const struct digest *);
+extern bool digest_open_by_name(struct digest *, const char *);
+extern bool digest_open_by_nid(struct digest *, int);
+extern bool digest_open_sha1(struct digest *);
+extern void digest_close(struct digest *);
+extern bool digest_create(struct digest *, void *indata, size_t inlen, void *outdata);
+extern bool digest_verify(struct digest *, void *indata, size_t inlen, void *digestdata);
+extern int digest_get_nid(const struct digest *);
+extern size_t digest_length(const struct digest *);
+extern bool digest_active(const struct digest *);
 
 #endif

@@ -22,19 +22,13 @@
 
 #include "system.h"
 
-#include <gcrypt.h>
-
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-
 #include "splay_tree.h"
+#include "cipher.h"
 #include "conf.h"
 #include "connection.h"
 #include "control.h"
 #include "device.h"
+#include "digest.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"
@@ -53,9 +47,20 @@ static struct event device_ev;
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;
+	char *n;
 	bool result;
 
 	cp();
+
+	/* First, check for simple PublicKey statement */
+
+	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &n)) {
+		result = rsa_set_hex_public_key(&c->rsa, n, "FFFF");
+		free(n);
+		return result;
+	}
+
+	/* Else, check for PublicKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
 		asprintf(&fname, "%s/hosts/%s", confbase, c->name);
@@ -69,7 +74,7 @@ bool read_rsa_public_key(connection_t *c) {
 		return false;
 	}
 
-	result = read_pem_rsa_public_key(fp, &c->rsa_key);
+	result = rsa_read_pem_public_key(&c->rsa, fp);
 	fclose(fp);
 
 	if(!result) 
@@ -81,9 +86,26 @@ bool read_rsa_public_key(connection_t *c) {
 bool read_rsa_private_key() {
 	FILE *fp;
 	char *fname;
+	char *n, *d;
 	bool result;
 
 	cp();
+
+	/* First, check for simple PrivateKey statement */
+
+	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &d)) {
+		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &n)) {
+			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
+			free(d);
+			return false;
+		}
+		result = rsa_set_hex_private_key(&myself->connection->rsa, n, "FFFF", d);
+		free(n);
+		free(d);
+		return true;
+	}
+
+	/* Else, check for PrivateKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
 		asprintf(&fname, "%s/rsa_key.priv", confbase);
@@ -110,7 +132,7 @@ bool read_rsa_private_key() {
 		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
 #endif
 
-	result = read_pem_rsa_private_key(fp, &myself->connection->rsa_key);
+	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
 	fclose(fp);
 
 	if(!result) 
@@ -126,10 +148,14 @@ static void keyexpire_handler(int fd, short events, void *data) {
 }
 
 void regenerate_key() {
-	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
+	ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
+
+	if(!cipher_regenerate_key(&myself->cipher, true)) {
+		logger(LOG_ERR, _("Error regenerating key!"));
+		abort();
+	}
 
 	if(timeout_initialized(&keyexpire_event)) {
-		ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
 		event_del(&keyexpire_event);
 		send_key_changed(broadcast, myself);
 	} else {
@@ -137,16 +163,6 @@ void regenerate_key() {
 	}
 
 	event_add(&keyexpire_event, &(struct timeval){keylifetime, 0});
-
-	if(myself->cipher) {
-		EVP_CIPHER_CTX_init(&packet_ctx);
-		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
-			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
-					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
-			abort();
-		}
-
-	}
 }
 
 /*
@@ -285,73 +301,44 @@ bool setup_myself(void) {
 
 	/* Generate packet encryption key */
 
-	if(get_config_string
-	   (lookup_config(myself->connection->config_tree, "Cipher"), &cipher)) {
-		if(!strcasecmp(cipher, "none")) {
-			myself->cipher = NULL;
-		} else {
-			myself->cipher = EVP_get_cipherbyname(cipher);
+	if(!get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
+		cipher = xstrdup("blowfish");
 
-			if(!myself->cipher) {
-				logger(LOG_ERR, _("Unrecognized cipher type!"));
-				return false;
-			}
-		}
-	} else
-		myself->cipher = EVP_bf_cbc();
-
-	if(myself->cipher)
-		myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
-	else
-		myself->keylength = 1;
-
-	myself->connection->outcipher = EVP_bf_ofb();
-
-	myself->key = xmalloc(myself->keylength);
+	if(!cipher_open_by_name(&myself->cipher, cipher)) {
+		logger(LOG_ERR, _("Unrecognized cipher type!"));
+		return false;
+	}
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
 	regenerate_key();
+
 	/* Check if we want to use message authentication codes... */
 
-	if(get_config_string
-	   (lookup_config(myself->connection->config_tree, "Digest"), &digest)) {
-		if(!strcasecmp(digest, "none")) {
-			myself->digest = NULL;
-		} else {
-			myself->digest = EVP_get_digestbyname(digest);
+	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
+		digest = xstrdup("sha1");
 
-			if(!myself->digest) {
-				logger(LOG_ERR, _("Unrecognized digest type!"));
-				return false;
-			}
+	if(!digest_open_by_name(&myself->digest, digest)) {
+		logger(LOG_ERR, _("Unrecognized digest type!"));
+		return false;
+	}
+
+	if(!get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->maclength))
+
+	if(digest_active(&myself->digest)) {
+		if(myself->maclength > digest_length(&myself->digest)) {
+			logger(LOG_ERR, _("MAC length exceeds size of digest!"));
+			return false;
+		} else if(myself->maclength < 0) {
+			logger(LOG_ERR, _("Bogus MAC length!"));
+			return false;
 		}
-	} else
-		myself->digest = EVP_sha1();
-
-	myself->connection->outdigest = EVP_sha1();
-
-	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"),
-		&myself->maclength)) {
-		if(myself->digest) {
-			if(myself->maclength > myself->digest->md_size) {
-				logger(LOG_ERR, _("MAC length exceeds size of digest!"));
-				return false;
-			} else if(myself->maclength < 0) {
-				logger(LOG_ERR, _("Bogus MAC length!"));
-				return false;
-			}
-		}
-	} else
-		myself->maclength = 4;
-
-	myself->connection->outmaclength = 0;
+	}
 
 	/* Compression */
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"),
-		&myself->compression)) {
+	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->compression)) {
 		if(myself->compression < 0 || myself->compression > 11) {
 			logger(LOG_ERR, _("Bogus compression level!"));
 			return false;
@@ -375,8 +362,8 @@ bool setup_myself(void) {
 	if(!setup_device())
 		return false;
 
-	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST,
-			  handle_device_data, NULL);
+	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
+
 	if (event_add(&device_ev, NULL) < 0) {
 		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
 		close_device();

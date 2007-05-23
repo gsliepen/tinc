@@ -145,10 +145,20 @@ AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 
-AM_PATH_LIBGCRYPT([], [], [AC_MSG_ERROR([Libgcrypt not found.]); break])
+AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
+
+AM_PATH_LIBGCRYPT([], [], [])
 tinc_OPENSSL
 tinc_ZLIB
 tinc_LZO
+
+if test "$with_libgcrypt" = yes; then
+	AC_MSG_ERROR([Libgcrypt support not fully implemented yet.]);
+	break;
+else
+    	ln -sf openssl/crypto.c openssl/crypto.h openssl/cipher.c openssl/cipher.h openssl/digest.c openssl/digest.h openssl/rsa.c openssl/rsa.h src/
+fi
+	
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
