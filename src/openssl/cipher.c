@@ -131,7 +131,7 @@ bool cipher_regenerate_key(cipher_t *cipher, bool encrypt) {
 	return false;
 }
 
-bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
+bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	if(oneshot) {
 		int len = *outlen, pad;
 		if(EVP_EncryptInit_ex(&cipher->ctx, NULL, NULL, NULL, NULL)
@@ -152,7 +152,7 @@ bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata,
 	return false;
 }
 
-bool cipher_decrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
+bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	if(oneshot) {
 		int len = *outlen, pad;
 		if(EVP_DecryptInit_ex(&cipher->ctx, NULL, NULL, NULL, NULL)

@@ -227,7 +227,7 @@ static bool cipher_remove_padding(cipher_t *cipher, void *indata, size_t inlen, 
 	return true;
 }
 
-bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
+bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
 
 	// To be fixed
@@ -240,7 +240,7 @@ bool cipher_encrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata,
 	return true;
 }
 
-bool cipher_decrypt(cipher_t *cipher, void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
+bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
 
 	// To be fixed

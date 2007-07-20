@@ -41,8 +41,8 @@ extern void cipher_get_key(const cipher_t *, void *);
 extern bool cipher_set_key(cipher_t *, void *, bool);
 extern bool cipher_set_key_from_rsa(cipher_t *, void *, size_t, bool);
 extern bool cipher_regenerate_key(cipher_t *, bool);
-extern bool cipher_encrypt(cipher_t *, void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
-extern bool cipher_decrypt(cipher_t *, void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
+extern bool cipher_encrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
+extern bool cipher_decrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
 extern int cipher_get_nid(const cipher_t *);
 extern bool cipher_active(const cipher_t *);
 
