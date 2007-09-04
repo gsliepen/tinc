@@ -97,7 +97,7 @@ static void usage(bool status)
 				program_name);
 	else {
 		printf(_("Usage: %s [option]...\n\n"), program_name);
-		printf(_("  -c, --config=DIR                     Read configuration options from DIR.\n"
+		printf(_(	"  -c, --config=DIR              Read configuration options from DIR.\n"
 				"  -D, --no-detach               Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
