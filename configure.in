@@ -147,15 +147,14 @@ dnl These are defined in files in m4/
 
 AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
 
-AM_PATH_LIBGCRYPT([], [], [])
-tinc_OPENSSL
 tinc_ZLIB
 tinc_LZO
 
 if test "$with_libgcrypt" = yes; then
-	AC_MSG_ERROR([Libgcrypt support not fully implemented yet.]);
-	break;
+	AM_PATH_LIBGCRYPT([], [], [])
+    	ln -sf gcrypt/crypto.c gcrypt/crypto.h gcrypt/cipher.c gcrypt/cipher.h gcrypt/digest.c gcrypt/digest.h gcrypt/rsa.c gcrypt/rsa.h src/
 else
+	tinc_OPENSSL
     	ln -sf openssl/crypto.c openssl/crypto.h openssl/cipher.c openssl/cipher.h openssl/digest.c openssl/digest.h openssl/rsa.c openssl/rsa.h src/
 fi
 	
