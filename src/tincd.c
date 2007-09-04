@@ -104,6 +104,7 @@ static void usage(bool status)
 				"  -L, --mlock                   Lock tinc into main memory.\n"
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
 				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
+				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));

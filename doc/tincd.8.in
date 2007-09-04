@@ -8,16 +8,13 @@
 .Nd tinc VPN daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdDkKnL
+.Op Fl cdDKnL
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -no-detach
 .Op Fl -debug Ns Op = Ns Ar LEVEL
-.Op Fl -kill Ns Op = Ns Ar SIGNAL
 .Op Fl -net Ns = Ns Ar NETNAME
-.Op Fl -generate-keys Ns Op = Ns Ar BITS
 .Op Fl -mlock
 .Op Fl -logfile Ns Op = Ns Ar FILE
-.Op Fl -pidfile Ns = Ns Ar FILE
 .Op Fl -bypass-security
 .Op Fl -help
 .Op Fl -version
@@ -51,24 +48,9 @@ If not mentioned otherwise, this will show log messages on the standard error ou
 Increase debug level or set it to
 .Ar LEVEL
 (see below).
-.It Fl k, -kill Ns Op = Ns Ar SIGNAL
-Attempt to kill a running
-.Nm
-(optionally with the specified
-.Ar SIGNAL
-instead of SIGTERM) and exit.
-Under Windows (not Cygwin) the optional argument is ignored,
-the service will always be stopped and removed.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
 .Ar NETNAME .
-.It Fl K, -generate-keys Ns Op = Ns Ar BITS
-Generate public/private RSA keypair and exit.
-If
-.Ar BITS
-is omitted, the default length will be 1024 bits.
-When saving keys to existing files, tinc will not delete the old keys,
-you have to remove them manually.
 .It Fl L, -mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
@@ -78,12 +60,13 @@ If
 .Ar FILE
 is omitted, the default is
 .Pa @localstatedir@/log/tinc. Ns Ar NETNAME Ns Pa .log.
-.It Fl -pidfile Ns = Ns Ar FILE
-Write PID to
+.It Fl -controlsocket Ns = Ns Ar FILENAME
+Open control socket at
+.Ar FILENAME .
+If
 .Ar FILE
-instead of
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
-Under Windows this option will be ignored.
+is omitted, the default is
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .control.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
@@ -167,6 +150,7 @@ If you find any bugs, report them to tinc@tinc-vpn.org.
 .Sh TODO
 A lot, especially security auditing.
 .Sh SEE ALSO
+.Xr tincctl 8 ,
 .Xr tinc.conf 5 ,
 .Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.cabal.org/ .
