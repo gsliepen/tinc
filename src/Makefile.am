@@ -20,7 +20,7 @@ INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 noinst_HEADERS = cipher.h conf.h connection.h control.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
 	protocol.h route.h rsa.h subnet.h
 
-LIBS = @LIBS@ @LIBINTL@
+LIBS = @LIBS@ @LIBGCRYPT_LIBS@ @LIBINTL@
 
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a

@@ -30,14 +30,14 @@ typedef struct digest {
 	uint16_t len;
 } digest_t;
 
-static bool digest_open_by_name(struct digest *, const char *);
-static bool digest_open_by_nid(struct digest *, int);
-static bool digest_open_sha1(struct digest *);
-static void digest_close(struct digest *);
-static bool digest_create(struct digest *, const void *indata, size_t inlen, void *outdata);
-static bool digest_verify(struct digest *, const void *indata, size_t inlen, const void *digestdata);
-static int digest_get_nid(const struct digest *);
-static size_t digest_length(const struct digest *);
-static bool digest_active(const struct digest *);
+extern bool digest_open_by_name(struct digest *, const char *);
+extern bool digest_open_by_nid(struct digest *, int);
+extern bool digest_open_sha1(struct digest *);
+extern void digest_close(struct digest *);
+extern bool digest_create(struct digest *, const void *indata, size_t inlen, void *outdata);
+extern bool digest_verify(struct digest *, const void *indata, size_t inlen, const void *digestdata);
+extern int digest_get_nid(const struct digest *);
+extern size_t digest_length(const struct digest *);
+extern bool digest_active(const struct digest *);
 
 #endif

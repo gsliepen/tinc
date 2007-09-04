@@ -82,7 +82,7 @@ static bool pem_decode(FILE *fp, const char *header, uint8_t *buf, size_t size, 
 			continue;
 
 		for(i = 0; line[i] >= ' '; i++) {
-			if(line[i] >= 128 || line[i] < 0 || b64d[(int)line[i]] == 0xff)
+			if((signed char)line[i] < 0 || b64d[(int)line[i]] == 0xff)
 				break;
 			word |= b64d[(int)line[i]] << shift;
 			shift -= 6;
@@ -187,31 +187,35 @@ static bool ber_read_mpi(unsigned char **p, size_t *buflen, gcry_mpi_t *mpi) {
 bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e) {
 	gcry_error_t err = 0;
 
-	err = gcry_mpi_scan(&rsa->n, GCRY_FMT_HEX, n, 0, NULL)
-		?: gcry_mpi_scan(&rsa->e, GCRY_FMT_HEX, n, 0, NULL);
+	err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL)
+		?: gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, n, 0, NULL);
 
 	if(err) {
 		logger(LOG_ERR, _("Error while reading RSA public key: %s"), gcry_strerror(errno));
 		return false;
 	}
+
+	return true;
 }
 
 bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d) {
 	gcry_error_t err = 0;
 
-	err = gcry_mpi_scan(&rsa->n, GCRY_FMT_HEX, n, 0, NULL)
-		?: gcry_mpi_scan(&rsa->e, GCRY_FMT_HEX, n, 0, NULL)
-		?: gcry_mpi_scan(&rsa->d, GCRY_FMT_HEX, n, 0, NULL);
+	err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL)
+		?: gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, n, 0, NULL)
+		?: gcry_mpi_scan(&rsa->d, GCRYMPI_FMT_HEX, n, 0, NULL);
 
 	if(err) {
 		logger(LOG_ERR, _("Error while reading RSA public key: %s"), gcry_strerror(errno));
 		return false;
 	}
+
+	return true;
 }
 
 // Read PEM RSA keys
 
-bool read_pem_rsa_public_key(rsa_t *rsa, FILE *fp) {
+bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf[8096], *derp = derbuf;
 	size_t derlen;
 
@@ -231,7 +235,7 @@ bool read_pem_rsa_public_key(rsa_t *rsa, FILE *fp) {
 	return true;
 }
 
-bool read_pem_rsa_private_key(rsa_t *rsa, FILE *fp) {
+bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf[8096], *derp = derbuf;
 	size_t derlen;
 
@@ -281,7 +285,7 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	return true;
 }
 
-bool rsa_public_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
+bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;
 	check(gcry_mpi_scan(&inmpi, GCRYMPI_FMT_USG, in, len, NULL));
 

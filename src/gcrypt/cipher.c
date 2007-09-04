@@ -173,7 +173,7 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 	return true;
 }
 
-bool cipher_set_key(cipher_t *cipher, void *key, size_t len, bool encrypt) {
+bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encrypt) {
 	memcpy(cipher->key, key + len - cipher->keylen, cipher->keylen + cipher->blklen);
 	memcpy(cipher->key + cipher->keylen, key + len - cipher->keylen - cipher->blklen, cipher->blklen);
 
