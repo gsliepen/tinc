@@ -40,6 +40,8 @@
 bool send_id(connection_t *c) {
 	cp();
 
+	gettimeofday(&c->start, NULL);
+
 	return send_request(c, "%d %s %d", ID, myself->connection->name,
 						myself->connection->protocol_version);
 }
