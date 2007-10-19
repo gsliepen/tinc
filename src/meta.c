@@ -106,9 +106,9 @@ bool receive_meta(connection_t *c) {
 			bufp = endp;
 		} else {
 			size_t outlen = inlen;
-			evbuffer_expand(c->buffer->input, inlen);
+			evbuffer_expand(c->buffer->input, c->buffer->input->off + inlen);
 
-			if(!cipher_decrypt(&c->incipher, bufp, inlen, c->buffer->input->buffer, &outlen, false) || inlen != outlen) {
+			if(!cipher_decrypt(&c->incipher, bufp, inlen, c->buffer->input->buffer + c->buffer->input->off, &outlen, false) || inlen != outlen) {
 				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s)"), c->name, c->hostname);
 				return false;
 			}
