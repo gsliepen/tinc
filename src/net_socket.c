@@ -349,8 +349,13 @@ begin:
 	return;
 }
 
+void handle_meta_read(struct bufferevent *event, void *data) {
+	logger(LOG_EMERG, _("handle_meta_read() called"));
+	abort();
+}
+
 void handle_meta_write(struct bufferevent *event, void *data) {
-	logger(LOG_EMERG, _("handle_meta_write() called"));
+	logger(LOG_DEBUG, _("handle_meta_write() called"));
 }
 
 void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
@@ -404,7 +409,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
 	event_add(&c->inevent, NULL);
-	c->buffer = bufferevent_new(c->socket, handle_meta_connection_data, handle_meta_write, handle_meta_connection_error, c);
+	c->buffer = bufferevent_new(c->socket, handle_meta_read, handle_meta_write, handle_meta_connection_error, c);
 	if(!c->buffer) {
 		logger(LOG_EMERG, _("bufferevent_new() failed: %s"), strerror(errno));
 		abort();
