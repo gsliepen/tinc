@@ -335,6 +335,7 @@ bool chal_reply_h(connection_t *c, char *request) {
 	 */
 
 	free(c->hischallenge);
+	c->hischallenge = NULL;
 	c->allow_request = ACK;
 
 	return send_ack(c);
