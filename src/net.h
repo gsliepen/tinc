@@ -126,7 +126,6 @@ extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keylifetime;
 extern bool do_prune;
-extern bool do_purge;
 extern char *myport;
 extern EVP_CIPHER_CTX packet_ctx;
 
@@ -156,6 +155,7 @@ extern void send_mtu_probe(struct node_t *);
 extern void handle_device_data(int, short, void *);
 extern void handle_meta_connection_data(int, short, void *);
 extern void regenerate_key();
+extern void purge(void);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

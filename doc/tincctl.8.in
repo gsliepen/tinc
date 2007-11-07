@@ -76,6 +76,8 @@ Dump a list of all meta connections with ourself.
 Dump a graph of the VPN in
 .Xr dotty 1
 format.
+.It purge
+Purges all information remembered about unreachable nodes.
 .El
 .Sh BUGS
 The "start", "restart", and "reload" commands are not yet implemented.

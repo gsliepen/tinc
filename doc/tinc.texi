@@ -1569,9 +1569,6 @@ New outgoing connections specified in @file{tinc.conf} will be made.
 Temporarily increases debug level to 5.
 Send this signal again to revert to the original level.
 
-@item WINCH
-Purges all information remembered about unreachable nodes.
-
 @end table
 
 @c ==================================================================
@@ -1853,6 +1850,9 @@ Dump a list of all meta connections with ourself.
 
 @item dump graph
 Dump a graph of the VPN in dotty format.
+
+@item purge
+Purges all information remembered about unreachable nodes.
 
 @end table
 

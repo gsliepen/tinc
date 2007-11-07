@@ -98,8 +98,6 @@ will be made.
 .It INT
 Temporarily increases debug level to 5.
 Send this signal again to revert to the original level.
-.It WINCH
-Purges all information remembered about unreachable nodes.
 .El
 .Sh DEBUG LEVELS
 The tinc daemon can send a lot of messages to the syslog.

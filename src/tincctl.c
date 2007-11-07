@@ -89,6 +89,7 @@ static void usage(bool status) {
 				"    subnets                  - all known subnets in the VPN\n"
 				"    connections              - all meta connections with ourself\n"
 				"    graph                    - graph of the VPN in dotty format\n"
+				"  purge                      Purge unreachable nodes\n"
 				"\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
@@ -576,6 +577,10 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, _("Unknown dump type '%s'.\n"), argv[optind+1]);
 		usage(true);
 		return 1;
+	}
+
+	if(!strcasecmp(argv[optind], "purge")) {
+		return send_ctl_request_cooked(fd, REQ_PURGE, NULL, 0) != -1;
 	}
 
 	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);

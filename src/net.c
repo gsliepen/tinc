@@ -41,7 +41,7 @@
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
-static void purge(void) {
+void purge(void) {
 	splay_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
 	node_t *n;
 	edge_t *e;
@@ -252,11 +252,6 @@ static void sigint_handler(int signal, short events, void *data) {
 	}
 }
 
-static void sigwinch_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
-	purge();
-}
-
 static void sighup_handler(int signal, short events, void *data) {
 	connection_t *c;
 	splay_node_t *node, *next;
@@ -333,7 +328,6 @@ int main_loop(void) {
 	struct event sigint_event;
 	struct event sigterm_event;
 	struct event sigquit_event;
-	struct event sigwinch_event;
 	struct event sigalrm_event;
 
 	cp();
@@ -348,8 +342,6 @@ int main_loop(void) {
 	signal_add(&sigterm_event, NULL);
 	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
 	signal_add(&sigquit_event, NULL);
-	signal_set(&sigwinch_event, SIGWINCH, sigwinch_handler, NULL);
-	signal_add(&sigwinch_event, NULL);
 	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
 	signal_add(&sigalrm_event, NULL);
 
@@ -362,7 +354,6 @@ int main_loop(void) {
 	signal_del(&sigint_event);
 	signal_del(&sigterm_event);
 	signal_del(&sigquit_event);
-	signal_del(&sigwinch_event);
 	signal_del(&sigalrm_event);
 	event_del(&timeout_event);
 
