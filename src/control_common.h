@@ -33,6 +33,7 @@ enum request_type {
 	REQ_DUMP_GRAPH,
 	REQ_PURGE,
 	REQ_SET_DEBUG,
+	REQ_RETRY,
 };
 
 #define TINC_CTL_VERSION_CURRENT 0

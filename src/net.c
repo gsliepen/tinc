@@ -280,9 +280,7 @@ static void sighup_handler(int signal, short events, void *data) {
 	try_outgoing_connections();
 }
 
-static void sigalrm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
-
+void retry(void) {
 	connection_t *c;
 	splay_node_t *node;
 
@@ -308,7 +306,6 @@ int main_loop(void) {
 	struct event sighup_event;
 	struct event sigterm_event;
 	struct event sigquit_event;
-	struct event sigalrm_event;
 
 	cp();
 
@@ -320,8 +317,6 @@ int main_loop(void) {
 	signal_add(&sigterm_event, NULL);
 	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
 	signal_add(&sigquit_event, NULL);
-	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
-	signal_add(&sigalrm_event, NULL);
 
 	if(event_loop(0) < 0) {
 		logger(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
@@ -331,7 +326,6 @@ int main_loop(void) {
 	signal_del(&sighup_event);
 	signal_del(&sigterm_event);
 	signal_del(&sigquit_event);
-	signal_del(&sigalrm_event);
 	event_del(&timeout_event);
 
 	return 0;

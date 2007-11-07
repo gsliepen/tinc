@@ -156,6 +156,7 @@ extern void handle_device_data(int, short, void *);
 extern void handle_meta_connection_data(int, short, void *);
 extern void regenerate_key();
 extern void purge(void);
+extern void retry(void);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

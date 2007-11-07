@@ -1553,13 +1553,6 @@ You can also send the following signals to a running tincd process:
 @c from the manpage
 @table @samp
 
-@item ALRM
-Forces tinc to try to connect to all uplinks immediately.
-Usually tinc attempts to do this itself,
-but increases the time it waits between the attempts each time it failed,
-and if tinc didn't succeed to connect to an uplink the first time after it started,
-it defaults to the maximum time of 15 minutes.
-
 @item HUP
 Partially rereads configuration files.
 Connections to hosts whose host config file are removed are closed.
@@ -1852,6 +1845,13 @@ Purges all information remembered about unreachable nodes.
 
 @item debug @var{level}
 Sets debug level to @var{level}.
+
+@item retry
+Forces tinc to try to connect to all uplinks immediately.
+Usually tinc attempts to do this itself,
+but increases the time it waits between the attempts each time it failed,
+and if tinc didn't succeed to connect to an uplink the first time after it started,
+it defaults to the maximum time of 15 minutes.
 
 @end table
 

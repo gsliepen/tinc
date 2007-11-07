@@ -77,18 +77,6 @@ Output version information and exit.
 .El
 .Sh SIGNALS
 .Bl -tag -width indent
-.It ALRM
-Forces
-.Nm
-to try to connect to all uplinks immediately.
-Usually
-.Nm
-attempts to do this itself,
-but increases the time it waits between the attempts each time it failed,
-and if
-.Nm
-didn't succeed to connect to an uplink the first time after it started,
-it defaults to the maximum time of 15 minutes.
 .It HUP
 Partially rereads configuration files.
 Connections to hosts whose host config file are removed are closed.

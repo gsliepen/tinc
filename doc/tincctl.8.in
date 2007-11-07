@@ -81,6 +81,18 @@ Purges all information remembered about unreachable nodes.
 .It debug Ar N
 Sets debug level to
 .Ar N .
+.It retry
+Forces
+.Xr tincd 8
+to try to connect to all uplinks immediately.
+Usually
+.Xr tincd 8
+attempts to do this itself,
+but increases the time it waits between the attempts each time it failed,
+and if
+.Xr tincd 8
+didn't succeed to connect to an uplink the first time after it started,
+it defaults to the maximum time of 15 minutes.
 .El
 .Sh BUGS
 The "start", "restart", and "reload" commands are not yet implemented.

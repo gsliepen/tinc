@@ -124,6 +124,12 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 		goto respond;
 	}
 
+	if(req.type == REQ_RETRY) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "retry");
+		retry();
+		goto respond;
+	}
+
 	logger(LOG_DEBUG, _("Malformed control command received"));
 	res.res_errno = EINVAL;
 
