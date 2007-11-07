@@ -233,25 +233,6 @@ static void sigterm_handler(int signal, short events, void *data) {
 	event_loopexit(NULL);
 }
 
-static void sigint_handler(int signal, short events, void *data) {
-	static int saved_debug_level = -1;
-
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
-
-	if(saved_debug_level != -1) {
-		logger(LOG_NOTICE, _("Reverting to old debug level (%d)"),
-			saved_debug_level);
-		debug_level = saved_debug_level;
-		saved_debug_level = -1;
-	} else {
-		logger(LOG_NOTICE,
-			_("Temporarily setting debug level to 5.  Kill me with SIGINT again to go back to level %d."),
-			debug_level);
-		saved_debug_level = debug_level;
-		debug_level = 5;
-	}
-}
-
 static void sighup_handler(int signal, short events, void *data) {
 	connection_t *c;
 	splay_node_t *node, *next;
@@ -325,7 +306,6 @@ static void sigalrm_handler(int signal, short events, void *data) {
 int main_loop(void) {
 	struct event timeout_event;
 	struct event sighup_event;
-	struct event sigint_event;
 	struct event sigterm_event;
 	struct event sigquit_event;
 	struct event sigalrm_event;
@@ -336,8 +316,6 @@ int main_loop(void) {
 	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
 	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_event, NULL);
-	signal_set(&sigint_event, SIGINT, sigint_handler, NULL);
-	signal_add(&sigint_event, NULL);
 	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
 	signal_add(&sigterm_event, NULL);
 	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
@@ -351,7 +329,6 @@ int main_loop(void) {
 	}
 
 	signal_del(&sighup_event);
-	signal_del(&sigint_event);
 	signal_del(&sigterm_event);
 	signal_del(&sigquit_event);
 	signal_del(&sigalrm_event);

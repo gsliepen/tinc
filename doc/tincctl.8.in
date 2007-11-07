@@ -78,6 +78,9 @@ Dump a graph of the VPN in
 format.
 .It purge
 Purges all information remembered about unreachable nodes.
+.It debug Ar N
+Sets debug level to
+.Ar N .
 .El
 .Sh BUGS
 The "start", "restart", and "reload" commands are not yet implemented.

@@ -1565,10 +1565,6 @@ Partially rereads configuration files.
 Connections to hosts whose host config file are removed are closed.
 New outgoing connections specified in @file{tinc.conf} will be made.
 
-@item INT
-Temporarily increases debug level to 5.
-Send this signal again to revert to the original level.
-
 @end table
 
 @c ==================================================================
@@ -1853,6 +1849,9 @@ Dump a graph of the VPN in dotty format.
 
 @item purge
 Purges all information remembered about unreachable nodes.
+
+@item debug @var{level}
+Sets debug level to @var{level}.
 
 @end table
 

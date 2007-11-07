@@ -95,9 +95,6 @@ Connections to hosts whose host config file are removed are closed.
 New outgoing connections specified in
 .Pa tinc.conf
 will be made.
-.It INT
-Temporarily increases debug level to 5.
-Send this signal again to revert to the original level.
 .El
 .Sh DEBUG LEVELS
 The tinc daemon can send a lot of messages to the syslog.

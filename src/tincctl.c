@@ -90,6 +90,7 @@ static void usage(bool status) {
 				"    connections              - all meta connections with ourself\n"
 				"    graph                    - graph of the VPN in dotty format\n"
 				"  purge                      Purge unreachable nodes\n"
+				"  debug N                    Set debug level\n"
 				"\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
@@ -581,6 +582,18 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	if(!strcasecmp(argv[optind], "purge")) {
 		return send_ctl_request_cooked(fd, REQ_PURGE, NULL, 0) != -1;
+	}
+
+	if(!strcasecmp(argv[optind], "debug")) {
+		int debuglevel;
+
+		if(argc != optind + 2) {
+			fprintf(stderr, "Invalid arguments.\n");
+			return 1;
+		}
+		debuglevel = atoi(argv[optind+1]);
+		return send_ctl_request_cooked(fd, REQ_SET_DEBUG, &debuglevel,
+									   sizeof(debuglevel)) != -1;
 	}
 
 	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);

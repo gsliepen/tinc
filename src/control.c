@@ -38,6 +38,7 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	size_t size;
 	tinc_ctl_request_t res;
 	struct evbuffer *res_data = NULL;
+	void *req_data;
 
 	if(EVBUFFER_LENGTH(event->input) < sizeof(tinc_ctl_request_t))
 		return;
@@ -47,6 +48,7 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 
 	if(EVBUFFER_LENGTH(event->input) < req.length)
 		return;
+	req_data = EVBUFFER_DATA(event->input) + sizeof(tinc_ctl_request_t);
 
 	if(req.length < sizeof(tinc_ctl_request_t))
 		goto failure;
@@ -100,6 +102,25 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	if(req.type == REQ_PURGE) {
 		logger(LOG_NOTICE, _("Got '%s' command"), "purge");
 		purge();
+		goto respond;
+	}
+
+	if(req.type == REQ_SET_DEBUG) {
+		debug_t new_debug_level;
+
+		logger(LOG_NOTICE, _("Got '%s' command"), "debug");
+		if(req.length != sizeof(req) + sizeof debug_level)
+			res.res_errno = EINVAL;
+		else {
+			memcpy(&new_debug_level, req_data, sizeof(debug_t));
+			logger(LOG_NOTICE, _("Changing debug level from %d to %d"),
+				   debug_level, new_debug_level);
+			if(evbuffer_add_printf(res_data,
+								   _("Changing debug level from %d to %d\n"),
+								   debug_level, new_debug_level) == -1)
+				res.res_errno = errno;
+			debug_level = new_debug_level;
+		}
 		goto respond;
 	}
 
