@@ -272,7 +272,7 @@ static void sigwinch_handler(int signal, short events, void *data) {
 
 static void sighup_handler(int signal, short events, void *data) {
 	connection_t *c;
-	splay_node_t *node;
+	splay_node_t *node, *next;
 	char *fname;
 	struct stat s;
 	static time_t last_config_check = 0;
@@ -292,8 +292,9 @@ static void sighup_handler(int signal, short events, void *data) {
 
 	/* Close connections to hosts that have a changed or deleted host config file */
 	
-	for(node = connection_tree->head; node; node = node->next) {
+	for(node = connection_tree->head; node; node = next) {
 		c = node->data;
+		next = node->next;
 		
 		if(c->outgoing) {
 			free(c->outgoing->name);
