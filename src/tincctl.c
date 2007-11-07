@@ -335,13 +335,13 @@ static void make_names(void) {
 static int fullread(int fd, void *data, size_t datalen) {
 	int rv, len = 0;
 
-	while (len < datalen) {
+	while(len < datalen) {
 		rv = read(fd, data + len, datalen - len);
 		if(rv == -1 && errno == EINTR)
 			continue;
-		else if (rv == -1)
+		else if(rv == -1)
 			return rv;
-		else if (rv == 0) {
+		else if(rv == 0) {
 			errno = ENODATA;
 			return -1;
 		}
@@ -386,7 +386,7 @@ static int send_ctl_request(int fd, enum request_type type,
 	}
 
 	if(req.length > sizeof req) {
-		if (indata_p == NULL) {
+		if(indata_p == NULL) {
 			errno = EINVAL;
 			return -1;
 		}
@@ -551,7 +551,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	if(!strcasecmp(argv[optind], "dump")) {
-		if (argc < optind + 2) {
+		if(argc < optind + 2) {
 			fprintf(stderr, _("Not enough arguments.\n"));
 			usage(true);
 			return 1;

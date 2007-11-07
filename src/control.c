@@ -58,7 +58,7 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	res.id = req.id;
 
 	res_data = evbuffer_new();
-	if (res_data == NULL) {
+	if(res_data == NULL) {
 		res.res_errno = ENOMEM;
 		goto respond;
 	}
