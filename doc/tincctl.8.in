@@ -1,0 +1,104 @@
+.Dd 2007-07-20
+.Dt TINCCTL 8
+.\" Manual page created by:
+.\" Scott Lamb
+.Sh NAME
+.Nm tincctl
+.Nd tinc VPN control
+.Sh SYNOPSIS
+.Nm
+.Op Fl cn
+.Op Fl -config Ns = Ns Ar DIR
+.Op Fl -net Ns = Ns Ar NETNAME
+.Op Fl -controlsocket Ns = Ns Ar FILENAME
+.Op Fl -help
+.Op Fl -version
+.Ar COMMAND
+.Sh DESCRIPTION
+This is the control program of tinc, a secure virtual private network (VPN)
+project.
+.Nm
+communicates with
+.Xr tincd 8
+to alter and inspect the running VPN's state.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl n, -net Ns = Ns Ar NETNAME
+Communicate with tincd(8) connected with
+.Ar NETNAME .
+.It Fl -controlsocket Ns = Ns Ar FILENAME
+Open control socket at
+.Ar FILENAME .
+If unspecified, the default is
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .control.
+.It Fl -help
+Display short list of options.
+.It Fl -version
+Output version information and exit.
+.El
+.Sh COMMANDS
+.zZ
+.Bl -tag -width indent
+.It start
+Start
+.Xr tincd 8 .
+.It stop
+Stop
+.Xr tincd 8 .
+.It restart
+Restart
+.Xr tincd 8 .
+.It reload
+Partially rereads configuration files. Connections to hosts whose host
+config files are removed are closed. New outgoing connections specified
+in
+.Xr tinc.conf 5
+will be made.
+.It pid
+Shows the PID of the currently running
+.Xr tincd 8 .
+.It generate-keys Op bits
+Generate public/private RSA keypair and exit.
+If
+.Ar bits
+is omitted, the default length will be 1024 bits.
+When saving keys to existing files, tinc will not delete the old keys;
+you have to remove them manually.
+.It dump nodes
+Dump a list of all known nodes in the VPN.
+.It dump edges
+Dump a list of all known connections in the VPN.
+.It dump subnets
+Dump a list of all known subnets in the VPN.
+.It dump connections
+Dump a list of all meta connections with ourself.
+.It dump graph
+Dump a graph of the VPN in
+.Xr dotty 1
+format.
+.El
+.Sh BUGS
+The "start", "restart", "reload", and "dump" commands are not yet implemented.
+.Pp
+If you find any bugs, report them to tinc@tinc-vpn.org.
+.Sh SEE ALSO
+.Xr tincd 8 ,
+.Xr tinc.conf 5 ,
+.Xr dotty 1 ,
+.Pa http://www.tinc-vpn.org/ ,
+.Pa http://www.cabal.org/ .
+.Pp
+The full documentation for tinc is maintained as a Texinfo manual.
+If the info and tinc programs are properly installed at your site,
+the command
+.Ic info tinc
+should give you access to the complete manual.
+.Pp
+tinc comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it under certain conditions;
+see the file COPYING for details.
+.Sh AUTHORS
+.An "Ivo Timmermans"
+.An "Guus Sliepen" Aq guus@tinc-vpn.org
+.Pp
+And thanks to many others for their contributions to tinc!
