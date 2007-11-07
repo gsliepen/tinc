@@ -22,13 +22,17 @@
 
 #include "system.h"
 
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
 #include "splay_tree.h"
-#include "cipher.h"
 #include "conf.h"
 #include "connection.h"
 #include "control.h"
 #include "device.h"
-#include "digest.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"
@@ -36,7 +40,6 @@
 #include "process.h"
 #include "protocol.h"
 #include "route.h"
-#include "rsa.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -47,65 +50,124 @@ static struct event device_ev;
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;
-	char *n;
-	bool result;
+	char *key;
 
 	cp();
 
+	if(!c->rsa_key) {
+		c->rsa_key = RSA_new();
+//		RSA_blinding_on(c->rsa_key, NULL);
+	}
+
 	/* First, check for simple PublicKey statement */
 
-	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &n)) {
-		result = rsa_set_hex_public_key(&c->rsa, n, "FFFF");
-		free(n);
-		return result;
+	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
+		BN_hex2bn(&c->rsa_key->n, key);
+		BN_hex2bn(&c->rsa_key->e, "FFFF");
+		free(key);
+		return true;
 	}
 
 	/* Else, check for PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
-		asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname)) {
+		fp = fopen(fname, "r");
 
-	fp = fopen(fname, "r");
+		if(!fp) {
+			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+				   fname, strerror(errno));
+			free(fname);
+			return false;
+		}
 
-	if(!fp) {
-		logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
-			   fname, strerror(errno));
 		free(fname);
+		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+		fclose(fp);
+
+		if(c->rsa_key)
+			return true;		/* Woohoo. */
+
+		/* If it fails, try PEM_read_RSA_PUBKEY. */
+		fp = fopen(fname, "r");
+
+		if(!fp) {
+			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+				   fname, strerror(errno));
+			free(fname);
+			return false;
+		}
+
+		free(fname);
+		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+		fclose(fp);
+
+		if(c->rsa_key) {
+//				RSA_blinding_on(c->rsa_key, NULL);
+			return true;
+		}
+
+		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+			   fname, strerror(errno));
 		return false;
 	}
 
-	result = rsa_read_pem_public_key(&c->rsa, fp);
-	fclose(fp);
+	/* Else, check if a harnessed public key is in the config file */
 
-	if(!result) 
-		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"), fname, strerror(errno));
+	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	fp = fopen(fname, "r");
+
+	if(fp) {
+		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+		fclose(fp);
+	}
+
 	free(fname);
-	return result;
+
+	if(c->rsa_key)
+		return true;
+
+	/* Try again with PEM_read_RSA_PUBKEY. */
+
+	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	fp = fopen(fname, "r");
+
+	if(fp) {
+		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+//		RSA_blinding_on(c->rsa_key, NULL);
+		fclose(fp);
+	}
+
+	free(fname);
+
+	if(c->rsa_key)
+		return true;
+
+	logger(LOG_ERR, _("No public key for %s specified!"), c->name);
+
+	return false;
 }
 
-bool read_rsa_private_key() {
+bool read_rsa_private_key(void) {
 	FILE *fp;
-	char *fname;
-	char *n, *d;
-	bool result;
+	char *fname, *key, *pubkey;
+	struct stat s;
 
 	cp();
 
-	/* First, check for simple PrivateKey statement */
-
-	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &d)) {
-		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &n)) {
+	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
+		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
 			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
-			free(d);
 			return false;
 		}
-		result = rsa_set_hex_private_key(&myself->connection->rsa, n, "FFFF", d);
-		free(n);
-		free(d);
+		myself->connection->rsa_key = RSA_new();
+//		RSA_blinding_on(myself->connection->rsa_key, NULL);
+		BN_hex2bn(&myself->connection->rsa_key->d, key);
+		BN_hex2bn(&myself->connection->rsa_key->n, pubkey);
+		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
+		free(key);
+		free(pubkey);
 		return true;
 	}
-
-	/* Else, check for PrivateKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
 		asprintf(&fname, "%s/rsa_key.priv", confbase);
@@ -120,10 +182,9 @@ bool read_rsa_private_key() {
 	}
 
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
-	struct stat s;
-
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"), fname, strerror(errno));
+		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"),
+				fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -132,13 +193,18 @@ bool read_rsa_private_key() {
 		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
 #endif
 
-	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
+	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
 	fclose(fp);
 
-	if(!result) 
-		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"), fname, strerror(errno));
+	if(!myself->connection->rsa_key) {
+		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
+			   fname, strerror(errno));
+		free(fname);
+		return false;
+	}
+
 	free(fname);
-	return result;
+	return true;
 }
 
 static struct event keyexpire_event;
@@ -148,14 +214,10 @@ static void keyexpire_handler(int fd, short events, void *data) {
 }
 
 void regenerate_key() {
-	ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
-
-	if(!cipher_regenerate_key(&myself->cipher, true)) {
-		logger(LOG_ERR, _("Error regenerating key!"));
-		abort();
-	}
+	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 
 	if(timeout_initialized(&keyexpire_event)) {
+		ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
 		event_del(&keyexpire_event);
 		send_key_changed(broadcast, myself);
 	} else {
@@ -163,6 +225,16 @@ void regenerate_key() {
 	}
 
 	event_add(&keyexpire_event, &(struct timeval){keylifetime, 0});
+
+	if(myself->cipher) {
+		EVP_CIPHER_CTX_init(&packet_ctx);
+		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
+			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
+					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
+			abort();
+		}
+
+	}
 }
 
 /*
@@ -301,44 +373,73 @@ bool setup_myself(void) {
 
 	/* Generate packet encryption key */
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
-		cipher = xstrdup("blowfish");
+	if(get_config_string
+	   (lookup_config(myself->connection->config_tree, "Cipher"), &cipher)) {
+		if(!strcasecmp(cipher, "none")) {
+			myself->cipher = NULL;
+		} else {
+			myself->cipher = EVP_get_cipherbyname(cipher);
 
-	if(!cipher_open_by_name(&myself->cipher, cipher)) {
-		logger(LOG_ERR, _("Unrecognized cipher type!"));
-		return false;
-	}
+			if(!myself->cipher) {
+				logger(LOG_ERR, _("Unrecognized cipher type!"));
+				return false;
+			}
+		}
+	} else
+		myself->cipher = EVP_bf_cbc();
+
+	if(myself->cipher)
+		myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
+	else
+		myself->keylength = 1;
+
+	myself->connection->outcipher = EVP_bf_ofb();
+
+	myself->key = xmalloc(myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
 	regenerate_key();
-
 	/* Check if we want to use message authentication codes... */
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
-		digest = xstrdup("sha1");
+	if(get_config_string
+	   (lookup_config(myself->connection->config_tree, "Digest"), &digest)) {
+		if(!strcasecmp(digest, "none")) {
+			myself->digest = NULL;
+		} else {
+			myself->digest = EVP_get_digestbyname(digest);
 
-	if(!digest_open_by_name(&myself->digest, digest)) {
-		logger(LOG_ERR, _("Unrecognized digest type!"));
-		return false;
-	}
-
-	if(!get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->maclength))
-
-	if(digest_active(&myself->digest)) {
-		if(myself->maclength > digest_length(&myself->digest)) {
-			logger(LOG_ERR, _("MAC length exceeds size of digest!"));
-			return false;
-		} else if(myself->maclength < 0) {
-			logger(LOG_ERR, _("Bogus MAC length!"));
-			return false;
+			if(!myself->digest) {
+				logger(LOG_ERR, _("Unrecognized digest type!"));
+				return false;
+			}
 		}
-	}
+	} else
+		myself->digest = EVP_sha1();
+
+	myself->connection->outdigest = EVP_sha1();
+
+	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"),
+		&myself->maclength)) {
+		if(myself->digest) {
+			if(myself->maclength > myself->digest->md_size) {
+				logger(LOG_ERR, _("MAC length exceeds size of digest!"));
+				return false;
+			} else if(myself->maclength < 0) {
+				logger(LOG_ERR, _("Bogus MAC length!"));
+				return false;
+			}
+		}
+	} else
+		myself->maclength = 4;
+
+	myself->connection->outmaclength = 0;
 
 	/* Compression */
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->compression)) {
+	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"),
+		&myself->compression)) {
 		if(myself->compression < 0 || myself->compression > 11) {
 			logger(LOG_ERR, _("Bogus compression level!"));
 			return false;
@@ -362,8 +463,8 @@ bool setup_myself(void) {
 	if(!setup_device())
 		return false;
 
-	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
-
+	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST,
+			  handle_device_data, NULL);
 	if (event_add(&device_ev, NULL) < 0) {
 		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
 		close_device();

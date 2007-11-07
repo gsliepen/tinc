@@ -24,9 +24,7 @@
 #define __TINC_NODE_H__
 
 #include "splay_tree.h"
-#include "cipher.h"
 #include "connection.h"
-#include "digest.h"
 #include "list.h"
 #include "subnet.h"
 
@@ -52,9 +50,13 @@ typedef struct node_t {
 
 	node_status_t status;
 
-	cipher_t cipher;                        /* Cipher for UDP packets */
-	digest_t digest;                        /* Digest for UDP packets */	
-	int maclength;				/* Portion of digest to use */
+	const EVP_CIPHER *cipher;		/* Cipher type for UDP packets */
+	char *key;				/* Cipher key and iv */
+	int keylength;				/* Cipher key and iv length */
+	EVP_CIPHER_CTX packet_ctx;		/* Cipher context */
+	
+	const EVP_MD *digest;			/* Digest type for MAC */
+	int maclength;				/* Length of MAC */
 
 	int compression;			/* Compressionlevel, 0 = no compression */
 

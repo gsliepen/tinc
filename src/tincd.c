@@ -31,13 +31,18 @@
 #include <sys/mman.h>
 #endif
 
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
+#include <openssl/engine.h>
+
 #include LZO1X_H
 
 #include <getopt.h>
 
 #include "conf.h"
 #include "control.h"
-#include "crypto.h"
 #include "device.h"
 #include "logger.h"
 #include "net.h"
@@ -290,7 +295,12 @@ int main(int argc, char **argv)
 	/* Slllluuuuuuurrrrp! */
 
 	srand(time(NULL));
-	crypto_init();
+	RAND_load_file("/dev/urandom", 1024);
+
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
+
+	OpenSSL_add_all_algorithms();
 
 	if(!read_server_config())
 		return 1;
@@ -343,7 +353,7 @@ end:
 	exit_control();
 #endif
 
-	crypto_exit();
-
+	EVP_cleanup();
+	
 	return status;
 }

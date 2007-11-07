@@ -23,11 +23,11 @@
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+
 #include <event.h>
 
-#include "cipher.h"
-#include "digest.h"
-#include "rsa.h"
 #include "splay_tree.h"
 
 #define OPTION_INDIRECT		0x0001
@@ -72,18 +72,23 @@ typedef struct connection_t {
 	struct node_t *node;		/* node associated with the other end */
 	struct edge_t *edge;		/* edge associated with this connection */
 
-	rsa_t rsa;			/* his public/private key */
-	cipher_t incipher;		/* Cipher he will use to send data to us */
-	cipher_t outcipher;		/* Cipher we will use to send data to him */
-	digest_t indigest;
-	digest_t outdigest;
-
+	RSA *rsa_key;				/* his public/private key */
+	const EVP_CIPHER *incipher;	/* Cipher he will use to send data to us */
+	const EVP_CIPHER *outcipher;	/* Cipher we will use to send data to him */
+	EVP_CIPHER_CTX *inctx;		/* Context of encrypted meta data that will come from him to us */
+	EVP_CIPHER_CTX *outctx;		/* Context of encrypted meta data that will be sent from us to him */
+	char *inkey;				/* His symmetric meta key + iv */
+	char *outkey;				/* Our symmetric meta key + iv */
+	int inkeylength;			/* Length of his key + iv */
+	int outkeylength;			/* Length of our key + iv */
+	const EVP_MD *indigest;
+	const EVP_MD *outdigest;
 	int inmaclength;
 	int outmaclength;
 	int incompression;
 	int outcompression;
-
-	char *hischallenge;		/* The challenge we sent to him */
+	char *mychallenge;			/* challenge we received from him */
+	char *hischallenge;			/* challenge we sent to him */
 
 	struct bufferevent *buffer;			/* buffer events on this metadata connection */
 	struct event inevent;				/* input event on this metadata connection */

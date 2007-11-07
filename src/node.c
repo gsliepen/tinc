@@ -74,6 +74,7 @@ node_t *new_node(void) {
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	n->queue = list_alloc((list_action_t) free);
+	EVP_CIPHER_CTX_init(&n->packet_ctx);
 	n->mtu = MTU;
 	n->maxmtu = MTU;
 
@@ -86,6 +87,9 @@ void free_node(node_t *n) {
 	if(n->queue)
 		list_delete_list(n->queue);
 
+	if(n->key)
+		free(n->key);
+
 	if(n->subnet_tree)
 		free_subnet_tree(n->subnet_tree);
 
@@ -94,8 +98,7 @@ void free_node(node_t *n) {
 
 	sockaddrfree(&n->address);
 
-	cipher_close(&n->cipher);
-	digest_close(&n->digest);
+	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
 
 	event_del(&n->mtuevent);
 	
@@ -168,8 +171,8 @@ void dump_nodes(void) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)"),
-			   n->name, n->hostname, cipher_get_nid(&n->cipher),
-			   digest_get_nid(&n->digest), n->maclength, n->compression,
+			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
+			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}
