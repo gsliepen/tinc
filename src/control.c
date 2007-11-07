@@ -24,6 +24,7 @@
 #include "system.h"
 #include "conf.h"
 #include "control.h"
+#include "control_common.h"
 #include "logger.h"
 #include "xalloc.h"
 
@@ -33,17 +34,58 @@ static splay_tree_t *control_socket_tree;
 extern char *controlsocketname;
 
 static void handle_control_data(struct bufferevent *event, void *data) {
-	char *line = evbuffer_readline(event->input);
-	if(!line)
+	tinc_ctl_request_t req;
+	size_t size;
+	tinc_ctl_request_t res;
+	struct evbuffer *res_data = NULL;
+
+	if(EVBUFFER_LENGTH(event->input) < sizeof(tinc_ctl_request_t))
 		return;
-	
-	if(!strcasecmp(line, "stop")) {
+
+	/* Copy the structure to ensure alignment */
+	memcpy(&req, EVBUFFER_DATA(event->input), sizeof(tinc_ctl_request_t));
+
+	if(EVBUFFER_LENGTH(event->input) < req.length)
+		return;
+
+	if(req.length < sizeof(tinc_ctl_request_t))
+		goto failure;
+
+	memset(&res, 0, sizeof res);
+	res.type = req.type;
+	res.id = req.id;
+
+	res_data = evbuffer_new();
+	if (res_data == NULL) {
+		res.res_errno = ENOMEM;
+		goto respond;
+	}
+
+	if(req.type == REQ_STOP) {
 		logger(LOG_NOTICE, _("Got stop command"));
 		event_loopexit(NULL);
-		return;
+		goto respond;
 	}
 
 	logger(LOG_DEBUG, _("Malformed control command received"));
+	res.res_errno = EINVAL;
+
+respond:
+	res.length = (sizeof res)
+				 + ((res_data == NULL) ? 0 : EVBUFFER_LENGTH(res_data));
+	evbuffer_drain(event->input, req.length);
+	if(bufferevent_write(event, &res, sizeof res) == -1)
+		goto failure;
+	if(res_data != NULL) {
+		if(bufferevent_write_buffer(event, res_data) == -1)
+			goto failure;
+		evbuffer_free(res_data);
+	}
+	return;
+
+failure:
+	logger(LOG_INFO, _("Closing control socket on error"));
+	evbuffer_free(res_data);
 	close(event->ev_read.ev_fd);
 	splay_delete(control_socket_tree, event);
 }
@@ -61,6 +103,7 @@ static void handle_control_error(struct bufferevent *event, short what, void *da
 static void handle_new_control_socket(int fd, short events, void *data) {
 	int newfd;
 	struct bufferevent *ev;
+	tinc_ctl_greeting_t greeting;
 
 	newfd = accept(fd, NULL, NULL);
 
@@ -73,6 +116,17 @@ static void handle_new_control_socket(int fd, short events, void *data) {
 	ev = bufferevent_new(newfd, handle_control_data, NULL, handle_control_error, NULL);
 	if(!ev) {
 		logger(LOG_ERR, _("Could not create bufferevent for new control connection: %s"), strerror(errno));
+		close(newfd);
+		return;
+	}
+
+	memset(&greeting, 0, sizeof greeting);
+	greeting.version = TINC_CTL_VERSION_CURRENT;
+	if(bufferevent_write(ev, &greeting, sizeof greeting) == -1) {
+		logger(LOG_ERR,
+			   _("Cannot send greeting for new control connection: %s"),
+			   strerror(errno));
+		bufferevent_free(ev);
 		close(newfd);
 		return;
 	}

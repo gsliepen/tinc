@@ -30,8 +30,9 @@
 
 #include <getopt.h>
 
-#include "protocol.h"
 #include "xalloc.h"
+#include "protocol.h"
+#include "control_common.h"
 
 /* The name this program was run with. */
 char *program_name = NULL;
@@ -327,9 +328,118 @@ static void make_names(void) {
 	}
 }
 
+static int fullread(int fd, void *data, size_t datalen) {
+	int rv, len = 0;
+
+	while (len < datalen) {
+		rv = read(fd, data + len, datalen - len);
+		if(rv == -1 && errno == EINTR)
+			continue;
+		else if (rv == -1)
+			return rv;
+		else if (rv == 0) {
+			errno = ENODATA;
+			return -1;
+		}
+		len += rv;
+	}
+	return 0;
+}
+
+/*
+   Send a request (raw)
+*/
+static int send_ctl_request(int fd, enum request_type type,
+						   void const *outdata, size_t outdatalen,
+						   int *res_errno_p, void **indata_p,
+						   size_t *indatalen_p) {
+	tinc_ctl_request_t req;
+	int rv;
+	struct iovec vector[2] = {
+		{&req, sizeof(req)},
+		{(void*) outdata, outdatalen}
+	};
+	void *indata;
+
+	if(res_errno_p == NULL)
+		return -1;
+
+	memset(&req, 0, sizeof req);
+	req.length = sizeof req + outdatalen;
+	req.type = type;
+	req.res_errno = 0;
+
+	while((rv = writev(fd, vector, 2)) == -1 && errno == EINTR) ;
+	if(rv != req.length)
+		return -1;
+
+	if(fullread(fd, &req, sizeof req) == -1)
+		return -1;
+
+	if(req.length < sizeof req) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if(req.length > sizeof req) {
+		if (indata_p == NULL) {
+			errno = EINVAL;
+			return -1;
+		}
+
+		indata = xmalloc(req.length - sizeof req);
+
+		if(fullread(fd, indata, req.length - sizeof req) == -1) {
+			free(indata);
+			return -1;
+		}
+
+		*indata_p = indata;
+		if(indatalen_p != NULL)
+			*indatalen_p = req.length - sizeof req;
+	}
+
+	*res_errno_p = req.res_errno;
+
+	return 0;
+}
+
+/*
+   Send a request (with printfs)
+*/
+static int send_ctl_request_cooked(int fd, enum request_type type,
+								   void const *outdata, size_t outdatalen)
+{
+	int res_errno = -1;
+	char *buf = NULL;
+	size_t buflen = 0;
+
+	if(send_ctl_request(fd, type, outdata, outdatalen, &res_errno,
+						(void**) &buf, &buflen)) {
+		fprintf(stderr, _("Error sending request: %s\n"), strerror(errno));
+		return -1;
+	}
+
+	if(buf != NULL) {
+		printf("%*s", buflen, buf);
+		free(buf);
+	}
+
+	if(res_errno != 0) {
+		fprintf(stderr, _("Server reported error: %s\n"), strerror(res_errno));
+		return -1;
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[], char *envp[]) {
-	int fd;
 	struct sockaddr_un addr;
+	int fd;
+	int len;
+	tinc_ctl_greeting_t greeting;
+	tinc_ctl_request_t req;
+
 	program_name = argv[0];
 
 	setlocale(LC_ALL, "");
@@ -399,6 +509,18 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
+	if(fullread(fd, &greeting, sizeof greeting) == -1) {
+		fprintf(stderr, _("Cannot read greeting from control socket: %s\n"),
+				strerror(errno));
+		return 1;
+	}
+
+	if(greeting.version != TINC_CTL_VERSION_CURRENT) {
+		fprintf(stderr, _("Version mismatch: server %d, client %d\n"),
+				greeting.version, TINC_CTL_VERSION_CURRENT);
+		return 1;
+	}
+
 	struct ucred cred;
 	socklen_t credlen = sizeof cred;
 
@@ -413,18 +535,15 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	if(!strcasecmp(argv[optind], "stop")) {
-		write(fd, "stop\n", 5);
-		return 0;
+		return send_ctl_request_cooked(fd, REQ_STOP, NULL, 0) != -1;
 	}
 
 	if(!strcasecmp(argv[optind], "reload")) {
-		write(fd, "reload\n", 7);
-		return 0;
+		return send_ctl_request_cooked(fd, REQ_RELOAD, NULL, 0) != -1;
 	}
 	
 	if(!strcasecmp(argv[optind], "restart")) {
-		write(fd, "restart\n", 8);
-		return 0;
+		return send_ctl_request_cooked(fd, REQ_RESTART, NULL, 0) != -1;
 	}
 
 	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);
