@@ -93,9 +93,15 @@ and if
 .Xr tincd 8
 didn't succeed to connect to an uplink the first time after it started,
 it defaults to the maximum time of 15 minutes.
+.It reload
+Partially rereads configuration files.
+Connections to hosts whose host config files are removed are closed.
+New outgoing connections specified in
+.Pa tinc.conf
+will be made.
 .El
 .Sh BUGS
-The "start", "restart", and "reload" commands are not yet implemented.
+The "start" and "restart" commands are not yet implemented.
 .Pp
 If you find any bugs, report them to tinc@tinc-vpn.org.
 .Sh SEE ALSO

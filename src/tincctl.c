@@ -92,6 +92,7 @@ static void usage(bool status) {
 				"  purge                      Purge unreachable nodes\n"
 				"  debug N                    Set debug level\n"
 				"  retry                      Retry all outgoing connections\n"
+				"  reload                     Partial reload of configuration\n"
 				"\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
@@ -599,6 +600,10 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	if(!strcasecmp(argv[optind], "retry")) {
 		return send_ctl_request_cooked(fd, REQ_RETRY, NULL, 0) != -1;
+	}
+
+	if(!strcasecmp(argv[optind], "reload")) {
+		return send_ctl_request_cooked(fd, REQ_RELOAD, NULL, 0) != -1;
 	}
 
 	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);

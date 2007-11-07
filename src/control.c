@@ -130,6 +130,12 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 		goto respond;
 	}
 
+	if(req.type == REQ_RELOAD) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "reload");
+		res.res_errno = reload_configuration();
+		goto respond;
+	}
+
 	logger(LOG_DEBUG, _("Malformed control command received"));
 	res.res_errno = EINVAL;
 

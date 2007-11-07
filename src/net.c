@@ -234,13 +234,16 @@ static void sigterm_handler(int signal, short events, void *data) {
 }
 
 static void sighup_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	reload_configuration();
+}
+
+int reload_configuration(void) {
 	connection_t *c;
 	splay_node_t *node, *next;
 	char *fname;
 	struct stat s;
 	static time_t last_config_check = 0;
-	
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
 
 	/* Reread our own configuration file */
 
@@ -250,7 +253,7 @@ static void sighup_handler(int signal, short events, void *data) {
 	if(!read_server_config()) {
 		logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
 		event_loopexit(NULL);
-		return;
+		return EINVAL;
 	}
 
 	/* Close connections to hosts that have a changed or deleted host config file */
@@ -278,6 +281,8 @@ static void sighup_handler(int signal, short events, void *data) {
 	/* Try to make outgoing connections */
 	
 	try_outgoing_connections();
+
+	return 0;
 }
 
 void retry(void) {
