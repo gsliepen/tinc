@@ -147,18 +147,6 @@ instead of
 .Va Device .
 The info pages of the tinc package contain more information
 about configuring the virtual network device.
-.It Va GraphDumpFile Li = Ar filename Bq experimental
-If this option is present,
-.Nm tinc
-will dump the current network graph to the file
-.Ar filename
-every minute, unless there were no changes to the graph.
-The file is in a format that can be read by graphviz tools.
-If
-.Ar filename
-starts with a pipe symbol |,
-then the rest of the filename is interpreted as a shell command
-that is executed, the graph is then sent to stdin.
 .It Va Hostnames Li = yes | no Pq no
 This option selects whether IP addresses (both real and on the VPN) should
 be resolved. Since DNS lookups are blocking, it might affect tinc's

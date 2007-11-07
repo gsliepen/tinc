@@ -94,6 +94,6 @@ extern void node_add(node_t *);
 extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
-extern void dump_nodes(void);
+extern int dump_nodes(struct evbuffer *);
 
 #endif							/* __TINC_NODE_H__ */

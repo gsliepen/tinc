@@ -51,6 +51,6 @@ extern void free_edge_tree(splay_tree_t *);
 extern void edge_add(edge_t *);
 extern void edge_del(edge_t *);
 extern edge_t *lookup_edge(struct node_t *, struct node_t *);
-extern void dump_edges(void);
+extern int dump_edges(struct evbuffer *);
 
 #endif							/* __TINC_EDGE_H__ */

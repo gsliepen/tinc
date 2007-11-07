@@ -252,19 +252,6 @@ static void sigint_handler(int signal, short events, void *data) {
 	}
 }
 
-static void sigusr1_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
-	dump_connections();
-}
-
-static void sigusr2_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
-	dump_device_stats();
-	dump_nodes();
-	dump_edges();
-	dump_subnets();
-}
-
 static void sigwinch_handler(int signal, short events, void *data) {
 	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
 	purge();
@@ -346,8 +333,6 @@ int main_loop(void) {
 	struct event sigint_event;
 	struct event sigterm_event;
 	struct event sigquit_event;
-	struct event sigusr1_event;
-	struct event sigusr2_event;
 	struct event sigwinch_event;
 	struct event sigalrm_event;
 
@@ -363,10 +348,6 @@ int main_loop(void) {
 	signal_add(&sigterm_event, NULL);
 	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
 	signal_add(&sigquit_event, NULL);
-	signal_set(&sigusr1_event, SIGUSR1, sigusr1_handler, NULL);
-	signal_add(&sigusr1_event, NULL);
-	signal_set(&sigusr2_event, SIGUSR2, sigusr2_handler, NULL);
-	signal_add(&sigusr2_event, NULL);
 	signal_set(&sigwinch_event, SIGWINCH, sigwinch_handler, NULL);
 	signal_add(&sigwinch_event, NULL);
 	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
@@ -381,8 +362,6 @@ int main_loop(void) {
 	signal_del(&sigint_event);
 	signal_del(&sigterm_event);
 	signal_del(&sigquit_event);
-	signal_del(&sigusr1_event);
-	signal_del(&sigusr2_event);
 	signal_del(&sigwinch_event);
 	signal_del(&sigalrm_event);
 	event_del(&timeout_event);

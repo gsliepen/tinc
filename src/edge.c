@@ -125,7 +125,7 @@ edge_t *lookup_edge(node_t *from, node_t *to) {
 	return splay_search(from->edge_tree, &v);
 }
 
-void dump_edges(void) {
+int dump_edges(struct evbuffer *out) {
 	splay_node_t *node, *node2;
 	node_t *n;
 	edge_t *e;
@@ -133,18 +133,21 @@ void dump_edges(void) {
 
 	cp();
 
-	logger(LOG_DEBUG, _("Edges:"));
-
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
-			logger(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
-				   e->from->name, e->to->name, address, e->options, e->weight);
+			if(evbuffer_add_printf(out,
+								   _(" %s to %s at %s options %lx weight %d\n"),
+								   e->from->name, e->to->name, address,
+								   e->options, e->weight) == -1) {
+				free(address);
+				return errno;
+			}
 			free(address);
 		}
 	}
 
-	logger(LOG_DEBUG, _("End of edges."));
+	return 0;
 }

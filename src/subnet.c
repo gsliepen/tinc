@@ -438,7 +438,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	}
 }
 
-void dump_subnets(void)
+int dump_subnets(struct evbuffer *out)
 {
 	char netstr[MAXNETSTR];
 	subnet_t *subnet;
@@ -446,14 +446,14 @@ void dump_subnets(void)
 
 	cp();
 
-	logger(LOG_DEBUG, _("Subnet list:"));
-
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
-		logger(LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
+		if(evbuffer_add_printf(out, _(" %s owner %s\n"),
+							   netstr, subnet->owner->name) == -1)
+			return errno;
 	}
 
-	logger(LOG_DEBUG, _("End of subnet list."));
+	return 0;
 }

@@ -546,6 +546,38 @@ int main(int argc, char *argv[], char *envp[]) {
 		return send_ctl_request_cooked(fd, REQ_RESTART, NULL, 0) != -1;
 	}
 
+	if(!strcasecmp(argv[optind], "dump")) {
+		if (argc < optind + 2) {
+			fprintf(stderr, _("Not enough arguments.\n"));
+			usage(true);
+			return 1;
+		}
+
+		if(!strcasecmp(argv[optind+1], "nodes")) {
+			return send_ctl_request_cooked(fd, REQ_DUMP_NODES, NULL, 0) != -1;
+		}
+
+		if(!strcasecmp(argv[optind+1], "edges")) {
+			return send_ctl_request_cooked(fd, REQ_DUMP_EDGES, NULL, 0) != -1;
+		}
+
+		if(!strcasecmp(argv[optind+1], "subnets")) {
+			return send_ctl_request_cooked(fd, REQ_DUMP_SUBNETS, NULL, 0) != -1;
+		}
+
+		if(!strcasecmp(argv[optind+1], "connections")) {
+			return send_ctl_request_cooked(fd, REQ_DUMP_CONNECTIONS, NULL, 0) != -1;
+		}
+
+		if(!strcasecmp(argv[optind+1], "graph")) {
+			return send_ctl_request_cooked(fd, REQ_DUMP_GRAPH, NULL, 0) != -1;
+		}
+
+		fprintf(stderr, _("Unknown dump type '%s'.\n"), argv[optind+1]);
+		usage(true);
+		return 1;
+	}
+
 	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);
 	usage(true);
 	

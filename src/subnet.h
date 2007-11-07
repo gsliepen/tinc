@@ -81,6 +81,6 @@ extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
 extern subnet_t *lookup_subnet_mac(const mac_t *);
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
-extern void dump_subnets(void);
+extern int dump_subnets(struct evbuffer *);
 
 #endif							/* __TINC_SUBNET_H__ */

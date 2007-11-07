@@ -160,22 +160,21 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 	return splay_search(node_udp_tree, &n);
 }
 
-void dump_nodes(void) {
+int dump_nodes(struct evbuffer *out) {
 	splay_node_t *node;
 	node_t *n;
 
 	cp();
 
-	logger(LOG_DEBUG, _("Nodes:"));
-
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)"),
+		if(evbuffer_add_printf(out, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)\n"),
 			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
 			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
+			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu) == -1)
+			return errno;
 	}
 
-	logger(LOG_DEBUG, _("End of nodes."));
+	return 0;
 }

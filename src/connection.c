@@ -106,21 +106,22 @@ void connection_del(connection_t *c) {
 	splay_delete(connection_tree, c);
 }
 
-void dump_connections(void) {
+int dump_connections(struct evbuffer *out) {
 	splay_node_t *node;
 	connection_t *c;
 
 	cp();
 
-	logger(LOG_DEBUG, _("Connections:"));
-
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
-		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
-			   c->name, c->hostname, c->options, c->socket, c->status.value);
+		if(evbuffer_add_printf(out,
+							   _(" %s at %s options %lx socket %d status %04x\n"),
+							   c->name, c->hostname, c->options, c->socket,
+							   c->status.value) == -1)
+			return errno;
 	}
 
-	logger(LOG_DEBUG, _("End of connections."));
+	return 0;
 }
 
 bool read_connection_config(connection_t *c) {

@@ -62,8 +62,38 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	}
 
 	if(req.type == REQ_STOP) {
-		logger(LOG_NOTICE, _("Got stop command"));
+		logger(LOG_NOTICE, _("Got '%s' command"), "stop");
 		event_loopexit(NULL);
+		goto respond;
+	}
+
+	if(req.type == REQ_DUMP_NODES) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "dump nodes");
+		res.res_errno = dump_nodes(res_data);
+		goto respond;
+	}
+
+	if(req.type == REQ_DUMP_EDGES) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "dump edges");
+		res.res_errno = dump_edges(res_data);
+		goto respond;
+	}
+
+	if(req.type == REQ_DUMP_SUBNETS) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "dump subnets");
+		res.res_errno = dump_subnets(res_data);
+		goto respond;
+	}
+
+	if(req.type == REQ_DUMP_CONNECTIONS) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "dump connections");
+		res.res_errno = dump_connections(res_data);
+		goto respond;
+	}
+
+	if(req.type == REQ_DUMP_GRAPH) {
+		logger(LOG_NOTICE, _("Got '%s' command"), "dump graph");
+		res.res_errno = dump_graph(res_data);
 		goto respond;
 	}
 

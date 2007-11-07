@@ -313,66 +313,37 @@ void sssp_bfs(void) {
    dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
 */
 
-static void dump_graph(int fd, short events, void *data) {
+int dump_graph(struct evbuffer *out) {
 	splay_node_t *node;
 	node_t *n;
 	edge_t *e;
-	char *filename = NULL, *tmpname = NULL;
-	FILE *file;
-	
-	if(!get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
-		return;
 
-	ifdebug(PROTOCOL) logger(LOG_NOTICE, "Dumping graph");
-	
-	if(filename[0] == '|') {
-		file = popen(filename + 1, "w");
-	} else {
-		asprintf(&tmpname, "%s.new", filename);
-		file = fopen(tmpname, "w");
-	}
-
-	if(!file) {
-		logger(LOG_ERR, "Unable to open graph dump file %s: %s", filename, strerror(errno));
-		free(tmpname);
-		return;
-	}
-
-	fprintf(file, "digraph {\n");
+	if(evbuffer_add_printf(out, "digraph {\n") == -1)
+		return errno;
 	
 	/* dump all nodes first */
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		fprintf(file, "	%s [label = \"%s\"];\n", n->name, n->name);
+		if(evbuffer_add_printf(out, "	%s [label = \"%s\"];\n",
+							   n->name, n->name) == -1)
+			return errno;
 	}
 
 	/* now dump all edges */
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
-		fprintf(file, "	%s -> %s;\n", e->from->name, e->to->name);
+		if(evbuffer_add_printf(out, "	%s -> %s;\n",
+							   e->from->name, e->to->name) == -1)
+			return errno;
 	}
 
-	fprintf(file, "}\n");	
-	
-	if(filename[0] == '|') {
-		pclose(file);
-	} else {
-		fclose(file);
-#ifdef HAVE_MINGW
-		unlink(filename);
-#endif
-		rename(tmpname, filename);
-		free(tmpname);
-	}
+	if(evbuffer_add_printf(out, "}\n") == -1)
+		return errno;
+
+	return 0;
 }
 
 void graph(void) {
-	static struct event ev;
-
 	sssp_bfs();
 	mst_kruskal();
-
-	if(!timeout_initialized(&ev))
-		timeout_set(&ev, dump_graph, NULL);
-	event_add(&ev, &(struct timeval){5, 0});
 }

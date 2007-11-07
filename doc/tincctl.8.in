@@ -78,7 +78,7 @@ Dump a graph of the VPN in
 format.
 .El
 .Sh BUGS
-The "start", "restart", "reload", and "dump" commands are not yet implemented.
+The "start", "restart", and "reload" commands are not yet implemented.
 .Pp
 If you find any bugs, report them to tinc@tinc-vpn.org.
 .Sh SEE ALSO
