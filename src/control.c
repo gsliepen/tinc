@@ -191,6 +191,7 @@ static void handle_new_control_socket(int fd, short events, void *data) {
 
 	memset(&greeting, 0, sizeof greeting);
 	greeting.version = TINC_CTL_VERSION_CURRENT;
+	greeting.pid = getpid();
 	if(bufferevent_write(ev, &greeting, sizeof greeting) == -1) {
 		logger(LOG_ERR,
 			   _("Cannot send greeting for new control connection: %s"),
@@ -213,10 +214,11 @@ static int control_compare(const struct event *a, const struct event *b) {
 bool init_control() {
 	int result;
 	struct sockaddr_un addr;
+	char *lastslash;
 
 	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
 		logger(LOG_ERR, _("Control socket filename too long!"));
-		return false;
+		goto bail;
 	}
 
 	memset(&addr, 0, sizeof addr);
@@ -227,12 +229,43 @@ bool init_control() {
 
 	if(control_socket < 0) {
 		logger(LOG_ERR, _("Creating UNIX socket failed: %s"), strerror(errno));
-		return false;
+		goto bail;
 	}
 
-	//unlink(controlsocketname);
+	/*
+	 * Restrict connections to our control socket by ensuring the parent
+	 * directory can be traversed only by root. Note this is not totally
+	 * race-free unless all ancestors are writable only by trusted users,
+	 * which we don't verify.
+	 */
+
+	struct stat statbuf;
+	lastslash = strrchr(controlsocketname, '/');
+	if(lastslash != NULL) {
+		*lastslash = 0; /* temporarily change controlsocketname to be dir */
+		if(mkdir(controlsocketname, 0700) < 0 && errno != EEXIST) {
+			logger(LOG_ERR, _("Unable to create control socket directory %s: %s"), controlsocketname, strerror(errno));
+			*lastslash = '/';
+			goto bail;
+		}
+
+		result = stat(controlsocketname, &statbuf);
+		*lastslash = '/';
+	} else
+		result = stat(".", &statbuf);
+
+	if(result < 0) {
+		logger(LOG_ERR, _("Examining control socket directory failed: %s"), strerror(errno));
+		goto bail;
+	}
+
+	if(statbuf.st_uid != 0 || (statbuf.st_mode & S_IXOTH) != 0 || (statbuf.st_gid != 0 && (statbuf.st_mode & S_IXGRP)) != 0) {
+		logger(LOG_ERR, _("Control socket directory ownership/permissions insecure."));
+		goto bail;
+	}
+
 	result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
-	
+
 	if(result < 0 && errno == EADDRINUSE) {
 		result = connect(control_socket, (struct sockaddr *)&addr, sizeof addr);
 		if(result < 0) {
@@ -240,33 +273,36 @@ bool init_control() {
 			unlink(controlsocketname);
 			result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
 		} else {
-			close(control_socket);
 			if(netname)
 				logger(LOG_ERR, _("Another tincd is already running for net `%s'."), netname);
 			else
 				logger(LOG_ERR, _("Another tincd is already running."));
-			return false;
+			goto bail;
 		}
 	}
 
 	if(result < 0) {
-		logger(LOG_ERR, _("Can't bind to %s: %s\n"), controlsocketname, strerror(errno));
-		close(control_socket);
-		return false;
+		logger(LOG_ERR, _("Can't bind to %s: %s"), controlsocketname, strerror(errno));
+		goto bail;
 	}
 
 	if(listen(control_socket, 3) < 0) {
-		logger(LOG_ERR, _("Can't listen on %s: %s\n"), controlsocketname, strerror(errno));
-		close(control_socket);
-		return false;
+		logger(LOG_ERR, _("Can't listen on %s: %s"), controlsocketname, strerror(errno));
+		goto bail;
 	}
 
 	control_socket_tree = splay_alloc_tree((splay_compare_t)control_compare, (splay_action_t)bufferevent_free);
 
 	event_set(&control_event, control_socket, EV_READ | EV_PERSIST, handle_new_control_socket, NULL);
 	event_add(&control_event, NULL);
-
 	return true;
+
+bail:
+	if(control_socket != -1) {
+		close(control_socket);
+		control_socket = -1;
+	}
+	return false;
 }
 
 void exit_control() {

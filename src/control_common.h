@@ -41,6 +41,7 @@ enum request_type {
 /* This greeting is sent by the server on socket open. */
 typedef struct tinc_ctl_greeting_t {
 	int version;
+	pid_t pid;
 } tinc_ctl_greeting_t;
 
 /* A single request or response header. */

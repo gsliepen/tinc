@@ -218,7 +218,7 @@ static void make_names(void)
 #endif
 
 	if(!controlsocketname)
-		asprintf(&controlsocketname, LOCALSTATEDIR "/run/%s.control", identname);
+		asprintf(&controlsocketname, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
 
 	if(!logfilename)
 		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);

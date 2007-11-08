@@ -319,7 +319,7 @@ static void make_names(void) {
 #endif
 
 	if(!controlsocketname)
-		asprintf(&controlsocketname, LOCALSTATEDIR "/run/%s.control", identname);
+		asprintf(&controlsocketname, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
 
 	if(netname) {
 		if(!confbase)
@@ -439,10 +439,11 @@ static int send_ctl_request_cooked(int fd, enum request_type type,
 
 int main(int argc, char *argv[], char *envp[]) {
 	struct sockaddr_un addr;
-	int fd;
-	int len;
 	tinc_ctl_greeting_t greeting;
 	tinc_ctl_request_t req;
+	int fd;
+	int len;
+	int result;
 
 	program_name = argv[0];
 
@@ -491,7 +492,32 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
-	// Now handle commands that do involve connecting to a running tinc daemon.
+	/*
+	 * Now handle commands that do involve connecting to a running tinc daemon.
+	 * Authenticate the server by ensuring the parent directory can be
+	 * traversed only by root. Note this is not totally race-free unless all
+	 * ancestors are writable only by trusted users, which we don't verify.
+	 */
+
+	struct stat statbuf;
+	char *lastslash = strrchr(controlsocketname, '/');
+	if(lastslash != NULL) {
+		/* control socket is not in cwd; stat its parent */
+		*lastslash = 0;
+		result = stat(controlsocketname, &statbuf);
+		*lastslash = '/';
+	} else
+		result = stat(".", &statbuf);
+
+	if(result < 0) {
+		fprintf(stderr, _("Unable to check control socket directory permissions: %s\n"), strerror(errno));
+		return 1;
+	}
+
+	if(statbuf.st_uid != 0 || (statbuf.st_mode & S_IXOTH) != 0 || (statbuf.st_gid != 0 && (statbuf.st_mode & S_IXGRP)) != 0) {
+		fprintf(stderr, _("Insecure permissions on control socket directory\n"));
+		return 1;
+	}
 
 	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
 		fprintf(stderr, _("Control socket filename too long!\n"));
@@ -525,16 +551,8 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
-	struct ucred cred;
-	socklen_t credlen = sizeof cred;
-
-	if(getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &cred, &credlen) < 0) {
-		fprintf(stderr, _("Could not obtain PID: %s\n"), strerror(errno));
-		return 1;
-	}
-
 	if(!strcasecmp(argv[optind], "pid")) {
-		printf("%d\n", cred.pid);
+		printf("%d\n", greeting.pid);
 		return 0;
 	}
 
