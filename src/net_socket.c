@@ -300,7 +300,8 @@ begin:
 	}
 
 	if(!c->outgoing->aip) {
-		freeaddrinfo(c->outgoing->ai);
+		if(c->outgoing->ai)
+			freeaddrinfo(c->outgoing->ai);
 		c->outgoing->ai = NULL;
 		goto begin;
 	}
