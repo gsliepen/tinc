@@ -240,7 +240,7 @@ bool metakey_h(connection_t *c)
 	/* Decrypt the meta key */
 
 	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
-		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
+		logger(LOG_ERR, _("Error during decryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return false;
 	}
