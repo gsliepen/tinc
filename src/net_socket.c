@@ -355,7 +355,7 @@ void handle_meta_read(struct bufferevent *event, void *data) {
 }
 
 void handle_meta_write(struct bufferevent *event, void *data) {
-	logger(LOG_DEBUG, _("handle_meta_write() called"));
+	ifdebug(META) logger(LOG_DEBUG, _("handle_meta_write() called"));
 }
 
 void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {

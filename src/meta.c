@@ -53,13 +53,13 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 			return false;
 		}
 		
-		logger(LOG_DEBUG, _("Encrypted write %p %p %p %d"), c, c->buffer, outbuf, length);
+		ifdebug(META) logger(LOG_DEBUG, _("Encrypted write %p %p %p %d"), c, c->buffer, outbuf, length);
 		bufferevent_write(c->buffer, (void *)outbuf, length);
-		logger(LOG_DEBUG, _("Done."));
+		ifdebug(META) logger(LOG_DEBUG, _("Done."));
 	} else {
-		logger(LOG_DEBUG, _("Unencrypted write %p %p %p %d"), c, c->buffer, buffer, length);
+		ifdebug(META) logger(LOG_DEBUG, _("Unencrypted write %p %p %p %d"), c, c->buffer, buffer, length);
 		bufferevent_write(c->buffer, (void *)buffer, length);
-		logger(LOG_DEBUG, _("Done."));
+		ifdebug(META) logger(LOG_DEBUG, _("Done."));
 	}
 
 	return true;
@@ -115,7 +115,7 @@ bool receive_meta(connection_t *c) {
 			inlen -= endp - bufp;
 			bufp = endp;
 		} else {
-			logger(LOG_DEBUG, _("Received encrypted %d bytes"), inlen);
+			ifdebug(META) logger(LOG_DEBUG, _("Received encrypted %d bytes"), inlen);
 			evbuffer_expand(c->buffer->input, c->buffer->input->off + inlen);
 			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)c->buffer->input->buffer + c->buffer->input->off, &outlen, (unsigned char *)bufp, inlen);
 			if(!result || outlen != inlen) {
