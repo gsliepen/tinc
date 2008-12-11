@@ -59,7 +59,7 @@
 #include "utils.h"
 
 /* Implementation of Kruskal's algorithm.
-   Running time: O(EN)
+   Running time: O(E)
    Please note that sorting on weight is already done by add_edge().
 */
 
@@ -68,9 +68,6 @@ void mst_kruskal(void) {
 	edge_t *e;
 	node_t *n;
 	connection_t *c;
-	int nodes = 0;
-	int safe_edges = 0;
-	bool skipped;
 
 	cp();
 	
@@ -81,11 +78,6 @@ void mst_kruskal(void) {
 		c->status.mst = false;
 	}
 
-	/* Do we have something to do at all? */
-
-	if(!edge_weight_tree->head)
-		return;
-
 	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Kruskal's algorithm:");
 
 	/* Clear visited status on nodes */
@@ -93,29 +85,16 @@ void mst_kruskal(void) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		n->status.visited = false;
-		nodes++;
-	}
-
-	/* Starting point */
-
-	for(node = edge_weight_tree->head; node; node = node->next) {
-		e = node->data;
-		if(e->from->status.reachable) {
-			e->from->status.visited = true;
-			break;
-		}
 	}
 
 	/* Add safe edges */
 
-	for(skipped = false, node = edge_weight_tree->head; node; node = next) {
+	for(node = edge_weight_tree->head; node; node = next) {
 		next = node->next;
 		e = node->data;
 
-		if(!e->reverse || e->from->status.visited == e->to->status.visited) {
-			skipped = true;
+		if(!e->reverse || (e->from->status.visited && e->to->status.visited))
 			continue;
-		}
 
 		e->from->status.visited = true;
 		e->to->status.visited = true;
@@ -126,20 +105,135 @@ void mst_kruskal(void) {
 		if(e->reverse->connection)
 			e->reverse->connection->status.mst = true;
 
-		safe_edges++;
-
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
 				   e->to->name, e->weight);
+	}
+}
 
-		if(skipped) {
-			skipped = false;
-			next = edge_weight_tree->head;
-			continue;
+/* Implementation of Dijkstra's algorithm.
+   Running time: O(N^2)
+*/
+
+void sssp_dijkstra(void) {
+	splay_node_t *node, *to;
+	edge_t *e;
+	node_t *n, *m;
+	list_t *todo_list;
+	list_node_t *lnode, *nnode;
+	bool indirect;
+
+	cp();
+
+	todo_list = list_alloc(NULL);
+
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Dijkstra's algorithm:");
+
+	/* Clear visited status on nodes */
+
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
+		n->status.visited = false;
+		n->status.indirect = true;
+		n->distance = -1;
+	}
+
+	/* Begin with myself */
+
+	myself->status.indirect = false;
+	myself->nexthop = myself;
+	myself->via = myself;
+	myself->distance = 0;
+	list_insert_head(todo_list, myself);
+
+	/* Loop while todo_list is filled */
+
+	while(todo_list->head) {
+		n = NULL;
+		nnode = NULL;
+
+		/* Select node from todo_list with smallest distance */
+
+		for(lnode = todo_list->head; lnode; lnode = lnode->next) {
+			m = lnode->data;
+			if(!n || m->status.indirect < n->status.indirect || m->distance < n->distance) {
+				n = m;
+				nnode = lnode;
+			}
+		}
+
+		/* Mark this node as visited and remove it from the todo_list */
+
+		n->status.visited = true;
+		list_unlink_node(todo_list, nnode);
+
+		/* Update distance of neighbours and add them to the todo_list */
+
+		for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
+			e = to->data;
+
+			if(e->to->status.visited || !e->reverse)
+				continue;
+
+			/* Situation:
+
+				   /
+				  /
+			   ----->(n)---e-->(e->to)
+				  \
+				   \
+
+			   Where e is an edge, (n) and (e->to) are nodes.
+			   n->address is set to the e->address of the edge left of n to n.
+			   We are currently examining the edge e right of n from n:
+
+			   - If e->reverse->address != n->address, then e->to is probably
+			     not reachable for the nodes left of n. We do as if the indirectdata
+			     flag is set on edge e.
+			   - If edge e provides for better reachability of e->to, update e->to.
+			 */
+
+			if(e->to->distance < 0)
+				list_insert_tail(todo_list, e->to);
+
+			indirect = n->status.indirect || e->options & OPTION_INDIRECT || ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
+
+			if(e->to->distance >= 0 && (!e->to->status.indirect || indirect) && e->to->distance <= n->distance + e->weight)
+				continue;
+
+			e->to->distance = n->distance + e->weight;
+			e->to->status.indirect = indirect;
+			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+			e->to->via = indirect ? n->via : e->to;
+			e->to->options = e->options;
+
+			if(sockaddrcmp(&e->to->address, &e->address)) {
+				node = splay_unlink(node_udp_tree, e->to);
+				sockaddrfree(&e->to->address);
+				sockaddrcpy(&e->to->address, &e->address);
+
+				if(e->to->hostname)
+					free(e->to->hostname);
+
+				e->to->hostname = sockaddr2hostname(&e->to->address);
+
+				if(node)
+					splay_insert_node(node_udp_tree, node);
+
+				if(e->to->options & OPTION_PMTU_DISCOVERY) {
+					e->to->mtuprobes = 0;
+					e->to->minmtu = 0;
+					e->to->maxmtu = MTU;
+					if(e->to->status.validkey)
+						send_mtu_probe(e->to);
+				}
+			}
+
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Updating edge %s - %s weight %d distance %d", e->from->name,
+					   e->to->name, e->weight, e->to->distance);
 		}
 	}
 
-	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
-			   safe_edges);
+	list_free(todo_list);
 }
 
 /* Implementation of a simple breadth-first search algorithm.
@@ -147,16 +241,12 @@ void mst_kruskal(void) {
 */
 
 void sssp_bfs(void) {
-	splay_node_t *node, *next, *to;
+	splay_node_t *node, *to;
 	edge_t *e;
 	node_t *n;
 	list_t *todo_list;
 	list_node_t *from, *todonext;
 	bool indirect;
-	char *name;
-	char *address, *port;
-	char *envp[7];
-	int i;
 
 	cp();
 
@@ -252,6 +342,15 @@ void sssp_bfs(void) {
 	}
 
 	list_free(todo_list);
+}
+
+void check_reachability() {
+	splay_node_t *node, *next;
+	node_t *n;
+	char *name;
+	char *address, *port;
+	char *envp[7];
+	int i;
 
 	/* Check reachability status. */
 
@@ -344,6 +443,7 @@ int dump_graph(struct evbuffer *out) {
 }
 
 void graph(void) {
-	sssp_bfs();
+	sssp_dijkstra();
+	check_reachability();
 	mst_kruskal();
 }

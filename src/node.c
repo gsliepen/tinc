@@ -165,11 +165,11 @@ int dump_nodes(struct evbuffer *out) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		if(evbuffer_add_printf(out, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)\n"),
+		if(evbuffer_add_printf(out, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n"),
 			   n->name, n->hostname, cipher_get_nid(&n->cipher),
 			   digest_get_nid(&n->digest), n->maclength, n->compression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu) == -1)
+			   n->via ? n->via->name : "-", n->distance, n->mtu, n->minmtu, n->maxmtu) == -1)
 			return errno;
 	}
 

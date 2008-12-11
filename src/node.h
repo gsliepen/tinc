@@ -60,6 +60,7 @@ typedef struct node_t {
 
 	list_t *queue;				/* Queue for packets awaiting to be encrypted */
 
+	int distance;
 	struct node_t *nexthop;			/* nearest node from us to him */
 	struct node_t *via;			/* next hop for UDP packets */
 
