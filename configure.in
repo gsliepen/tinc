@@ -5,6 +5,7 @@ dnl $Id$
 AC_PREREQ(2.59)
 AC_INIT
 AC_CONFIG_SRCDIR([src/tincd.c])
+AC_GNU_SOURCE
 AM_INIT_AUTOMAKE(tinc, 1.1-cvs)
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
@@ -12,10 +13,6 @@ AM_MAINTAINER_MODE
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.14.1)
 
-# Enable GNU extensions.
-# Define this here, not in acconfig's @TOP@ section, since definitions
-# in the latter don't make it into the configure-time tests.
-AC_GNU_SOURCE
 AC_DEFINE([__USE_BSD], 1, [Enable BSD extensions])
 
 ALL_LINGUAS="nl"
@@ -151,7 +148,7 @@ tinc_ZLIB
 tinc_LZO
 
 if test "$with_libgcrypt" = yes; then
-	AM_PATH_LIBGCRYPT([], [], [])
+	AM_PATH_LIBGCRYPT([1.4.0], [], [])
     	ln -sf gcrypt/crypto.c gcrypt/crypto.h gcrypt/cipher.c gcrypt/cipher.h gcrypt/digest.c gcrypt/digest.h gcrypt/rsa.c gcrypt/rsa.h src/
 else
 	tinc_OPENSSL
