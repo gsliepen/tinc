@@ -99,6 +99,11 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
 
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+	if(sa->sa.sa_family == AF_INET6)
+		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
+
 	if(get_config_string
 	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
@@ -176,6 +181,11 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
+
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+	if(sa->sa.sa_family == AF_INET6)
+		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
 
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
 	{
@@ -319,6 +329,12 @@ begin:
 
 		goto begin;
 	}
+
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+	int option = 1;
+	if(c->address.sa.sa_family == AF_INET6)
+		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
 
 	/* Optimize TCP settings */
 
