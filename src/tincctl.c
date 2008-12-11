@@ -440,9 +440,7 @@ static int send_ctl_request_cooked(int fd, enum request_type type,
 int main(int argc, char *argv[], char *envp[]) {
 	struct sockaddr_un addr;
 	tinc_ctl_greeting_t greeting;
-	tinc_ctl_request_t req;
 	int fd;
-	int len;
 	int result;
 
 	program_name = argv[0];

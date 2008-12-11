@@ -25,6 +25,7 @@
 #include "conf.h"
 #include "control.h"
 #include "control_common.h"
+#include "graph.h"
 #include "logger.h"
 #include "xalloc.h"
 
@@ -35,7 +36,6 @@ extern char *controlsocketname;
 
 static void handle_control_data(struct bufferevent *event, void *data) {
 	tinc_ctl_request_t req;
-	size_t size;
 	tinc_ctl_request_t res;
 	struct evbuffer *res_data = NULL;
 	void *req_data;
