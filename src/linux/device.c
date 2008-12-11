@@ -75,7 +75,7 @@ bool setup_device(void) {
 #ifdef HAVE_LINUX_IF_TUN_H
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
-	memset(&ifr, 0, sizeof(ifr));
+	memset(&ifr, 0, sizeof ifr);
 	if(routing_mode == RMODE_ROUTER) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;

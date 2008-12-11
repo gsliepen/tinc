@@ -203,7 +203,7 @@ static void timeout_handler(int fd, short events, void *event) {
 void handle_meta_connection_data(int fd, short events, void *data) {
 	connection_t *c = data;
 	int result;
-	socklen_t len = sizeof(result);
+	socklen_t len = sizeof result;
 
 	if(c->status.connecting) {
 		c->status.connecting = false;

@@ -40,17 +40,17 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	struct evbuffer *res_data = NULL;
 	void *req_data;
 
-	if(EVBUFFER_LENGTH(event->input) < sizeof(tinc_ctl_request_t))
+	if(EVBUFFER_LENGTH(event->input) < sizeof req)
 		return;
 
 	/* Copy the structure to ensure alignment */
-	memcpy(&req, EVBUFFER_DATA(event->input), sizeof(tinc_ctl_request_t));
+	memcpy(&req, EVBUFFER_DATA(event->input), sizeof req);
 
 	if(EVBUFFER_LENGTH(event->input) < req.length)
 		return;
-	req_data = EVBUFFER_DATA(event->input) + sizeof(tinc_ctl_request_t);
+	req_data = EVBUFFER_DATA(event->input) + sizeof req;
 
-	if(req.length < sizeof(tinc_ctl_request_t))
+	if(req.length < sizeof req)
 		goto failure;
 
 	memset(&res, 0, sizeof res);
@@ -109,10 +109,10 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 		debug_t new_debug_level;
 
 		logger(LOG_NOTICE, _("Got '%s' command"), "debug");
-		if(req.length != sizeof(req) + sizeof debug_level)
+		if(req.length != sizeof req + sizeof debug_level)
 			res.res_errno = EINVAL;
 		else {
-			memcpy(&new_debug_level, req_data, sizeof(debug_t));
+			memcpy(&new_debug_level, req_data, sizeof new_debug_level);
 			logger(LOG_NOTICE, _("Changing debug level from %d to %d"),
 				   debug_level, new_debug_level);
 			if(evbuffer_add_printf(res_data,

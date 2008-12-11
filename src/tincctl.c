@@ -292,7 +292,7 @@ static void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
-	long len = sizeof(installdir);
+	long len = sizeof installdir;
 #endif
 
 	if(netname)
@@ -360,7 +360,7 @@ static int send_ctl_request(int fd, enum request_type type,
 	tinc_ctl_request_t req;
 	int rv;
 	struct iovec vector[2] = {
-		{&req, sizeof(req)},
+		{&req, sizeof req},
 		{(void*) outdata, outdatalen}
 	};
 	void *indata;
@@ -611,7 +611,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 		debuglevel = atoi(argv[optind+1]);
 		return send_ctl_request_cooked(fd, REQ_SET_DEBUG, &debuglevel,
-									   sizeof(debuglevel)) != -1;
+									   sizeof debuglevel) != -1;
 	}
 
 	if(!strcasecmp(argv[optind], "retry")) {

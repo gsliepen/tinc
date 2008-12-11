@@ -122,7 +122,7 @@ bool req_key_h(connection_t *c, char *request) {
 	if(to == myself) {			/* Yes, send our own key back */
 		mykeyused = true;
 		from->received_seqno = 0;
-		memset(from->late, 0, sizeof(from->late));
+		memset(from->late, 0, sizeof from->late);
 		send_ans_key(c, myself, from);
 	} else {
 		if(tunnelserver)

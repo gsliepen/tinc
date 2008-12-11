@@ -196,7 +196,7 @@ bool seen_request(char *request) {
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
 		return true;
 	} else {
-		new = xmalloc(sizeof(*new));
+		new = xmalloc(sizeof *new);
 		new->request = xstrdup(request);
 		new->firstseen = time(NULL);
 		splay_insert(past_request_tree, new);

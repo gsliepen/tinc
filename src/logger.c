@@ -88,7 +88,7 @@ void logger(int priority, const char *format, ...) {
 			{
 				char message[4096];
 				char *messages[] = {message};
-				vsnprintf(message, sizeof(message), format, ap);
+				vsnprintf(message, sizeof message, format, ap);
 				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
 			}
 #else
@@ -98,7 +98,7 @@ void logger(int priority, const char *format, ...) {
 #else
 			{
 				char message[4096];
-				vsnprintf(message, sizeof(message), format, ap);
+				vsnprintf(message, sizeof message, format, ap);
 				syslog(priority, "%s", message);
 			}
 #endif

@@ -160,18 +160,18 @@ bool setup_device(void) {
 	}
 
 	for (i = 0; ; i++) {
-		len = sizeof(adapterid);
+		len = sizeof adapterid;
 		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
 			break;
 
 		/* Find out more about this adapter */
 
-		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
+		snprintf(regpath, sizeof regpath, "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
                 if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
 			continue;
 
-		len = sizeof(adaptername);
+		len = sizeof adaptername;
 		err = RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
 		RegCloseKey(key2);
@@ -195,7 +195,7 @@ bool setup_device(void) {
 				continue;
 		}
 
-		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
+		snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
 		if(device_handle != INVALID_HANDLE_VALUE) {
 			found = true;
@@ -219,7 +219,7 @@ bool setup_device(void) {
 	/* Try to open the corresponding tap device */
 
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
+		snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
 	}
 	
@@ -230,7 +230,7 @@ bool setup_device(void) {
 
 	/* Get MAC address from tap device */
 
-	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
+	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof mymac.x, mymac.x, sizeof mymac.x, &len, 0)) {
 		logger(LOG_ERR, _("Could not get MAC address from Windows tap device %s (%s): %s"), device, iface, winerror(GetLastError()));
 		return false;
 	}
@@ -298,7 +298,7 @@ bool setup_device(void) {
 	/* Set media status for newer TAP-Win32 devices */
 
 	status = true;
-	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof(status), &len, NULL);
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
 
 	device_info = _("Windows tap device");
 

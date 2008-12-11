@@ -60,7 +60,7 @@ bool setup_device(void) {
 		return false;
 	}
 
-	memset(&ifr, 0, sizeof(ifr));
+	memset(&ifr, 0, sizeof ifr);
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);
@@ -69,12 +69,12 @@ bool setup_device(void) {
 		return false;
 	}
 
-	memset(&sa, '0', sizeof(sa));
+	memset(&sa, '0', sizeof sa);
 	sa.sll_family = AF_PACKET;
 	sa.sll_protocol = htons(ETH_P_ALL);
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
-	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof(sa))) {
+	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof sa)) {
 		logger(LOG_ERR, _("Could not bind %s to %s: %s"), device, iface, strerror(errno));
 		return false;
 	}

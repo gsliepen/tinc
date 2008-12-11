@@ -96,7 +96,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 		return;
 	}
 
-	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
+	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof address, port, sizeof port, NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
 		logger(LOG_ERR, _("Error while translating addresses: %s"),
@@ -128,7 +128,7 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 		return str;
 	}
 
-	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
+	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof address, port, sizeof port,
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
 		logger(LOG_ERR, _("Error while looking up hostname: %s"),
@@ -163,20 +163,20 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 			return strcmp(a->unknown.port, b->unknown.port);
 
 		case AF_INET:
-			result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+			result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof a->in.sin_addr);
 
 			if(result)
 				return result;
 
-			return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof(a->in.sin_port));
+			return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof a->in.sin_port);
 
 		case AF_INET6:
-			result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+			result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof a->in6.sin6_addr);
 
 			if(result)
 				return result;
 
-			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
+			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof a->in6.sin6_port);
 
 		default:
 			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),

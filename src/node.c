@@ -67,7 +67,7 @@ void exit_nodes(void) {
 }
 
 node_t *new_node(void) {
-	node_t *n = xmalloc_and_zero(sizeof(*n));
+	node_t *n = xmalloc_and_zero(sizeof *n);
 
 	cp();
 

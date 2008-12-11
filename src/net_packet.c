@@ -171,7 +171,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check packet length */
 
-	if(inpkt->len < sizeof(inpkt->seqno) + digest_length(&myself->digest)) {
+	if(inpkt->len < sizeof inpkt->seqno + digest_length(&myself->digest)) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
 					n->name, n->hostname);
 		return;
@@ -201,28 +201,28 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check the sequence number */
 
-	inpkt->len -= sizeof(inpkt->seqno);
+	inpkt->len -= sizeof inpkt->seqno;
 	inpkt->seqno = ntohl(inpkt->seqno);
 
 	if(inpkt->seqno != n->received_seqno + 1) {
-		if(inpkt->seqno >= n->received_seqno + sizeof(n->late) * 8) {
+		if(inpkt->seqno >= n->received_seqno + sizeof n->late * 8) {
 			logger(LOG_WARNING, _("Lost %d packets from %s (%s)"),
 					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
 			
-			memset(n->late, 0, sizeof(n->late));
+			memset(n->late, 0, sizeof n->late);
 		} else if (inpkt->seqno <= n->received_seqno) {
-			if((n->received_seqno >= sizeof(n->late) * 8 && inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8) || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
+			if((n->received_seqno >= sizeof n->late * 8 && inpkt->seqno <= n->received_seqno - sizeof n->late * 8) || !(n->late[(inpkt->seqno / 8) % sizeof n->late] & (1 << inpkt->seqno % 8))) {
 				logger(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
 					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
 				return;
 			}
 		} else {
 			for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
-				n->late[(i / 8) % sizeof(n->late)] |= 1 << i % 8;
+				n->late[(i / 8) % sizeof n->late] |= 1 << i % 8;
 		}
 	}
 	
-	n->late[(inpkt->seqno / 8) % sizeof(n->late)] &= ~(1 << inpkt->seqno % 8);
+	n->late[(inpkt->seqno / 8) % sizeof n->late] &= ~(1 << inpkt->seqno % 8);
 
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;
@@ -285,7 +285,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 		/* Since packet is on the stack of handle_tap_input(), we have to make a copy of it first. */
 
-		*(copy = xmalloc(sizeof(*copy))) = *inpkt;
+		*(copy = xmalloc(sizeof *copy)) = *inpkt;
 
 		list_insert_tail(n->queue, copy);
 
@@ -320,7 +320,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add sequence number */
 
 	inpkt->seqno = htonl(++(n->sent_seqno));
-	inpkt->len += sizeof(inpkt->seqno);
+	inpkt->len += sizeof inpkt->seqno;
 
 	/* Encrypt the packet */
 
@@ -360,7 +360,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	   && listen_socket[sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Setting outgoing packet priority to %d"), priority);
-		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
+		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof priority))	/* SO_PRIORITY doesn't seem to work */
 			logger(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", strerror(errno));
 	}
 #endif
@@ -456,7 +456,7 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 	vpn_packet_t pkt;
 	char *hostname;
 	sockaddr_t from;
-	socklen_t fromlen = sizeof(from);
+	socklen_t fromlen = sizeof from;
 	node_t *n;
 
 	cp();

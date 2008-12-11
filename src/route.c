@@ -457,7 +457,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 	/* Generate checksum */
 	
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
 	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
 	checksum = inet_checksum(packet->data + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
 
@@ -575,7 +575,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 	checksum = inet_checksum(&opt, opt_size, checksum);
 	checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
@@ -632,7 +632,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 	checksum = inet_checksum(&opt, opt_size, checksum);
 	checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
@@ -693,7 +693,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet)
 	/* Check if this is a valid ARP request */
 
 	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP ||
-	   arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof(addr) || ntohs(arp.arp_op) != ARPOP_REQUEST) {
+	   arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof addr || ntohs(arp.arp_op) != ARPOP_REQUEST) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: received unknown type ARP request"));
 		return;
 	}
@@ -717,9 +717,9 @@ static void route_arp(node_t *source, vpn_packet_t *packet)
 	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN);	/* copy destination address */
 	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;	/* mangle source address so it looks like it's not from us */
 
-	memcpy(&addr, arp.arp_tpa, sizeof(addr));	/* save protocol addr */
-	memcpy(arp.arp_tpa, arp.arp_spa, sizeof(addr));	/* swap destination and source protocol address */
-	memcpy(arp.arp_spa, &addr, sizeof(addr));	/* ... */
+	memcpy(&addr, arp.arp_tpa, sizeof addr);	/* save protocol addr */
+	memcpy(arp.arp_tpa, arp.arp_spa, sizeof addr);	/* swap destination and source protocol address */
+	memcpy(arp.arp_spa, &addr, sizeof addr);	/* ... */
 
 	memcpy(arp.arp_tha, arp.arp_sha, ETH_ALEN);	/* set target hard/proto addr */
 	memcpy(arp.arp_sha, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */

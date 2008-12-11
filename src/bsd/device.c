@@ -175,7 +175,7 @@ bool read_packet(vpn_packet_t *packet) {
 
 		case DEVICE_TYPE_TUNIFHEAD: {
 			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, MTU - 14}};
+			struct iovec vector[2] = {{&type, sizeof type}, {packet->data + 14, MTU - 14}};
 
 			if((inlen = readv(device_fd, vector, 2)) <= 0) {
 				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
@@ -244,7 +244,7 @@ bool write_packet(vpn_packet_t *packet) {
 
 		case DEVICE_TYPE_TUNIFHEAD: {
 			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, packet->len - 14}};
+			struct iovec vector[2] = {{&type, sizeof type}, {packet->data + 14, packet->len - 14}};
 			int af;
 			
 			af = (packet->data[12] << 8) + packet->data[13];

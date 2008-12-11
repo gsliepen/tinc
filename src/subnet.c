@@ -43,7 +43,7 @@ static int subnet_compare_mac(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
-	result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(mac_t));
+	result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof a->net.mac.address);
 
 	if(result || !a->owner || !b->owner)
 		return result;
@@ -55,7 +55,7 @@ static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
-	result = memcmp(&a->net.ipv4.address, &b->net.ipv4.address, sizeof(ipv4_t));
+	result = memcmp(&a->net.ipv4.address, &b->net.ipv4.address, sizeof a->net.ipv4.address);
 
 	if(result)
 		return result;
@@ -72,7 +72,7 @@ static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b)
 {
 	int result;
 
-	result = memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
+	result = memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof a->net.ipv6.address);
 
 	if(result)
 		return result;
@@ -368,7 +368,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 				subnet.net.ipv4.prefixlength = p->net.ipv4.prefixlength - 1;
 				if(subnet.net.ipv4.prefixlength < 0 || subnet.net.ipv4.prefixlength > 32)
 					return NULL;
-				maskcpy(&subnet.net.ipv4.address, &p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t));
+				maskcpy(&subnet.net.ipv4.address, &p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof subnet.net.ipv4.address);
 			}
 		}
 	} while(p);
@@ -406,7 +406,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 				subnet.net.ipv6.prefixlength = p->net.ipv6.prefixlength - 1;
 				if(subnet.net.ipv6.prefixlength < 0 || subnet.net.ipv6.prefixlength > 128)
 					return NULL;
-				maskcpy(&subnet.net.ipv6.address, &p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t));
+				maskcpy(&subnet.net.ipv6.address, &p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof subnet.net.ipv6.address);
 			}
 		}
 	} while(p);

@@ -186,7 +186,7 @@ static void make_names(void)
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
-	long len = sizeof(installdir);
+	long len = sizeof installdir;
 #endif
 
 	if(netname)

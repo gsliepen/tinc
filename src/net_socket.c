@@ -70,12 +70,12 @@ static void configure_tcp(connection_t *c) {
 
 #if defined(SOL_TCP) && defined(TCP_NODELAY)
 	option = 1;
-	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof option);
 #endif
 
 #if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof(option));
+	setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof option);
 #endif
 }
 
@@ -97,17 +97,17 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	/* Optimize TCP settings */
 
 	option = 1;
-	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
 
 	if(get_config_string
 	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		struct ifreq ifr;
 
-		memset(&ifr, 0, sizeof(ifr));
+		memset(&ifr, 0, sizeof ifr);
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
-		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
+		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof ifr)) {
 			closesocket(nfd);
 			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 				   strerror(errno));
@@ -175,7 +175,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #endif
 
 	option = 1;
-	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
 
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
 	{
@@ -183,7 +183,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
 			option = IP_PMTUDISC_DO;
-			setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option));
+			setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof option);
 		}
 	}
 #endif
@@ -194,7 +194,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
 			option = IPV6_PMTUDISC_DO;
-			setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
+			setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof option);
 		}
 	}
 #endif
@@ -205,10 +205,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		struct ifreq ifr;
 
 		if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
-			memset(&ifr, 0, sizeof(ifr));
+			memset(&ifr, 0, sizeof ifr);
 			strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
-			if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
+			if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof ifr)) {
 				closesocket(nfd);
 				logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
 					   strerror(errno));
@@ -426,7 +426,7 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 	connection_t *c;
 	sockaddr_t sa;
 	int fd;
-	socklen_t len = sizeof(sa);
+	socklen_t len = sizeof sa;
 
 	cp();
 
@@ -488,7 +488,7 @@ void try_outgoing_connections(void) {
 			continue;
 		}
 
-		outgoing = xmalloc_and_zero(sizeof(*outgoing));
+		outgoing = xmalloc_and_zero(sizeof *outgoing);
 		outgoing->name = name;
 		setup_outgoing_connection(outgoing);
 	}

@@ -218,9 +218,9 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 	/* Teach newbies what subnets are... */
 
 	if(((subnet.type == SUBNET_IPV4)
-		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t)))
+		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof subnet.net.ipv4.address))
 		|| ((subnet.type == SUBNET_IPV6)
-		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t)))) {
+		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof subnet.net.ipv6.address))) {
 		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
