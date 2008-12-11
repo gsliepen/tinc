@@ -23,6 +23,7 @@
 #include "system.h"
 
 #include "splay_tree.h"
+#include "cipher.h"
 #include "conf.h"
 #include "list.h"
 #include "logger.h"
@@ -73,14 +74,8 @@ void free_connection(connection_t *c) {
 	if(c->hostname)
 		free(c->hostname);
 
-	if(c->inkey)
-		free(c->inkey);
-
-	if(c->outkey)
-		free(c->outkey);
-
-	if(c->mychallenge)
-		free(c->mychallenge);
+	cipher_close(&c->incipher);
+	cipher_close(&c->outcipher);
 
 	if(c->hischallenge)
 		free(c->hischallenge);

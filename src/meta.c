@@ -22,10 +22,8 @@
 
 #include "system.h"
 
-#include <openssl/err.h>
-#include <openssl/evp.h>
-
 #include "splay_tree.h"
+#include "cipher.h"
 #include "connection.h"
 #include "logger.h"
 #include "meta.h"
@@ -35,8 +33,6 @@
 #include "xalloc.h"
 
 bool send_meta(connection_t *c, const char *buffer, int length) {
-	int outlen;
-	int result;
 	cp();
 
 	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
@@ -45,11 +41,11 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
 		char outbuf[length];
+		size_t outlen = length;
 
-		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)outbuf, &outlen, (unsigned char *)buffer, length);
-		if(!result || outlen != length) {
-			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
-					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+		if(!cipher_encrypt(&c->outcipher, buffer, length, outbuf, &outlen, false) || outlen != length) {
+			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s)"),
+					c->name, c->hostname);
 			return false;
 		}
 		
@@ -80,7 +76,7 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 }
 
 bool receive_meta(connection_t *c) {
-	int result, inlen, outlen;
+	size_t inlen;
 	char inbuf[MAXBUFSIZE];
 	char *bufp = inbuf, *endp;
 
@@ -115,12 +111,13 @@ bool receive_meta(connection_t *c) {
 			inlen -= endp - bufp;
 			bufp = endp;
 		} else {
+			size_t outlen = inlen;
 			ifdebug(META) logger(LOG_DEBUG, _("Received encrypted %d bytes"), inlen);
 			evbuffer_expand(c->buffer->input, c->buffer->input->off + inlen);
-			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)c->buffer->input->buffer + c->buffer->input->off, &outlen, (unsigned char *)bufp, inlen);
-			if(!result || outlen != inlen) {
-				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
-					   c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
+
+			if(!cipher_decrypt(&c->incipher, bufp, inlen, c->buffer->input->buffer + c->buffer->input->off, &outlen, false) || inlen != outlen) {
+				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s)"),
+					   c->name, c->hostname);
 				return false;
 			}
 			c->buffer->input->off += inlen;
@@ -146,8 +143,10 @@ bool receive_meta(connection_t *c) {
 
 			char *request = evbuffer_readline(c->buffer->input);
 			if(request) {
-				receive_request(c, request);
+				bool result = receive_request(c, request);
 				free(request);
+				if(!result)
+					return false;
 				continue;
 			} else {
 				break;
