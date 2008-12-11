@@ -328,15 +328,15 @@ int read_config_file(splay_tree_t *config_tree, const char *fname) {
 	buffer = xmalloc(bufsize);
 
 	for(;;) {
+		if(feof(fp)) {
+			err = 0;
+			break;
+		}
+
 		line = readline(fp, &buffer, &bufsize);
 
 		if(!line) {
 			err = -1;
-			break;
-		}
-
-		if(feof(fp)) {
-			err = 0;
 			break;
 		}
 

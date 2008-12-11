@@ -148,6 +148,9 @@ bool remove_service(void) {
 
 DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	switch(request) {
+		case SERVICE_CONTROL_INTERROGATE:
+			SetServiceStatus(statushandle, &status);
+			return NO_ERROR;
 		case SERVICE_CONTROL_STOP:
 			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_STOP");
 			break;

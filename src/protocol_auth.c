@@ -207,7 +207,7 @@ bool metakey_h(connection_t *c, char *request) {
 	/* Decrypt the meta key */
 
 	if(!rsa_private_decrypt(&myself->connection->rsa, enckey, len, key)) {
-		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"), c->name, c->hostname);
+		logger(LOG_ERR, _("Error during decryption of meta key for %s (%s)"), c->name, c->hostname);
 		return false;
 	}
 

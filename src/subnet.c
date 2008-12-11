@@ -188,11 +188,17 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d",
 			  &x[0], &x[1], &x[2], &x[3], &l) == 5) {
+		if(l < 0 || l > 32)
+			return false;
+
 		subnet->type = SUBNET_IPV4;
 		subnet->net.ipv4.prefixlength = l;
 
-		for(i = 0; i < 4; i++)
+		for(i = 0; i < 4; i++) {
+			if(x[i] > 255)
+				return false;
 			subnet->net.ipv4.address.x[i] = x[i];
+		}
 
 		return true;
 	}
@@ -200,6 +206,9 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
 			  &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7],
 			  &l) == 9) {
+		if(l < 0 || l > 128)
+			return false;
+
 		subnet->type = SUBNET_IPV6;
 		subnet->net.ipv6.prefixlength = l;
 
@@ -210,17 +219,26 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 	}
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu", &x[0], &x[1], &x[2], &x[3]) == 4) {
+		if(l < 0 || l > 32)
+			return false;
+
 		subnet->type = SUBNET_IPV4;
 		subnet->net.ipv4.prefixlength = 32;
 
-		for(i = 0; i < 4; i++)
+		for(i = 0; i < 4; i++) {
+			if(x[i] > 255)
+				return false;
 			subnet->net.ipv4.address.x[i] = x[i];
+		}
 
 		return true;
 	}
 
 	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
 			  &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7]) == 8) {
+		if(l < 0 || l > 128)
+			return false;
+
 		subnet->type = SUBNET_IPV6;
 		subnet->net.ipv6.prefixlength = 128;
 
@@ -348,6 +366,8 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 				/* Otherwise, see if there is a bigger enclosing subnet */
 
 				subnet.net.ipv4.prefixlength = p->net.ipv4.prefixlength - 1;
+				if(subnet.net.ipv4.prefixlength < 0 || subnet.net.ipv4.prefixlength > 32)
+					return NULL;
 				maskcpy(&subnet.net.ipv4.address, &p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t));
 			}
 		}
@@ -384,6 +404,8 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 				/* Otherwise, see if there is a bigger enclosing subnet */
 
 				subnet.net.ipv6.prefixlength = p->net.ipv6.prefixlength - 1;
+				if(subnet.net.ipv6.prefixlength < 0 || subnet.net.ipv6.prefixlength > 128)
+					return NULL;
 				maskcpy(&subnet.net.ipv6.address, &p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t));
 			}
 		}

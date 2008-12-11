@@ -128,6 +128,12 @@ bool req_key_h(connection_t *c, char *request) {
 		if(tunnelserver)
 			return false;
 
+		if(!to->status.reachable) {
+			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+				"REQ_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
+
 		send_req_key(to->nexthop->connection, from, to);
 	}
 
@@ -189,6 +195,12 @@ bool ans_key_h(connection_t *c, char *request) {
 	if(to != myself) {
 		if(tunnelserver)
 			return false;
+
+		if(!to->status.reachable) {
+			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+				   "ANS_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
 
 		return send_request(to->nexthop->connection, "%s", request);
 	}
