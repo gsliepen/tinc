@@ -487,7 +487,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	if(!strcasecmp(argv[optind], "start")) {
 		argv[optind] = NULL;
-		execve("tincd", argv, envp);
+		execve(SBINDIR "/tincd", argv, envp);
 		fprintf(stderr, _("Could not start tincd: %s"), strerror(errno));
 		return 1;
 	}
