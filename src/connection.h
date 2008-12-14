@@ -23,8 +23,6 @@
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
-#include <event.h>
-
 #include "cipher.h"
 #include "digest.h"
 #include "rsa.h"

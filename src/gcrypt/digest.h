@@ -24,6 +24,8 @@
 
 #include <gcrypt.h>
 
+#define DIGEST_MAX_SIZE 64
+
 typedef struct digest {
 	int algo;
 	int nid;

@@ -26,7 +26,7 @@
 #include "logger.h"
 #include "rsa.h"
 
-// Base64 encoding/decoding tables
+// Base64 decoding table
 
 static const uint8_t b64d[128] = {
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -52,8 +52,6 @@ static const uint8_t b64d[128] = {
   0x31, 0x32, 0x33, 0xff, 0xff, 0xff,
   0xff, 0xff
 };
-
-static const char b64e[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 // PEM encoding/decoding functions
 

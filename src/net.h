@@ -23,10 +23,9 @@
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
 
-#include <openssl/evp.h>
-#include <event.h>
-
 #include "ipv6.h"
+#include "cipher.h"
+#include "digest.h"
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9018				/* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
@@ -34,7 +33,7 @@
 #define MTU 1518				/* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #endif
 
-#define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
+#define MAXSIZE (MTU + 4 + CIPHER_MAX_BLOCK_SIZE + DIGEST_MAX_SIZE + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
 #define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
 #define MAXSOCKETS 8			/* Probably overkill... */
@@ -127,7 +126,6 @@ extern int listen_sockets;
 extern int keylifetime;
 extern bool do_prune;
 extern char *myport;
-extern EVP_CIPHER_CTX packet_ctx;
 
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"

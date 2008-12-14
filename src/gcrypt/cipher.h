@@ -24,6 +24,10 @@
 
 #include <gcrypt.h>
 
+#define CIPHER_MAX_BLOCK_SIZE 32
+#define CIPHER_MAX_IV_SIZE 16
+#define CIPHER_MAX_KEY_SIZE 32
+
 typedef struct cipher {
 	gcry_cipher_hd_t handle;
 	char *key;

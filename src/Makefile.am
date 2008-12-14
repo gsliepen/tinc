@@ -9,7 +9,7 @@ tincd_SOURCES = cipher.c conf.c connection.c control.c crypto.c digest.c edge.c 
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
 	protocol_key.c protocol_subnet.c route.c rsa.c subnet.c tincd.c
 
-tincctl_SOURCES = tincctl.c
+tincctl_SOURCES = tincctl.c rsagen.c
 
 nodist_tincd_SOURCES = device.c
 
@@ -18,7 +18,7 @@ DEFAULT_INCLUDES =
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 
 noinst_HEADERS = cipher.h conf.h connection.h control.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
-	protocol.h route.h rsa.h subnet.h
+	protocol.h route.h rsa.h rsagen.h subnet.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@ @LIBINTL@
 

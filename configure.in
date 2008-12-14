@@ -91,7 +91,7 @@ dnl We do this in multiple stages, because unlike Linux all the other operating 
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/socket.h sys/time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h])
-AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h],
+AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h time.h],
   [], [], [#include "have.h"]
 )
 AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
@@ -119,7 +119,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_ALLOCA
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system unsetenv vsyslog writev],
+AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system time unsetenv vsyslog writev],
   [], [], [#include "have.h"]
 )
 AC_FUNC_MALLOC
@@ -149,10 +149,10 @@ tinc_LZO
 
 if test "$with_libgcrypt" = yes; then
 	AM_PATH_LIBGCRYPT([1.4.0], [], [])
-    	ln -sf gcrypt/crypto.c gcrypt/crypto.h gcrypt/cipher.c gcrypt/cipher.h gcrypt/digest.c gcrypt/digest.h gcrypt/rsa.c gcrypt/rsa.h src/
+    	ln -sf gcrypt/cipher.c gcrypt/cipher.h gcrypt/crypto.c gcrypt/crypto.h gcrypt/digest.c gcrypt/digest.h gcrypt/rsa.c gcrypt/rsa.h gcrypt/rsagen.c gcrypt/rsagen.h src/
 else
 	tinc_OPENSSL
-    	ln -sf openssl/crypto.c openssl/crypto.h openssl/cipher.c openssl/cipher.h openssl/digest.c openssl/digest.h openssl/rsa.c openssl/rsa.h src/
+    	ln -sf openssl/cipher.c openssl/cipher.h openssl/crypto.c openssl/crypto.h openssl/digest.c openssl/digest.h openssl/rsa.c openssl/rsa.h openssl/rsagen.c openssl/rsagen.h src/
 fi
 	
 

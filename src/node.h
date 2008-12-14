@@ -23,6 +23,8 @@
 #ifndef __TINC_NODE_H__
 #define __TINC_NODE_H__
 
+#include <event.h>
+
 #include "splay_tree.h"
 #include "cipher.h"
 #include "connection.h"

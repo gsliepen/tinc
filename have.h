@@ -57,6 +57,10 @@
 #include <sys/time.h>
 #endif
 
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -163,6 +167,10 @@
 #ifdef HAVE_MINGW
 #include <windows.h>
 #include <winsock2.h>
+#endif
+
+#ifdef HAVE_LIBEVENT
+#include <event.h>
 #endif
 
 #endif /* __TINC_SYSTEM_H__ */

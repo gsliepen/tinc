@@ -22,17 +22,12 @@
 #include "system.h"
 
 #include <sys/un.h>
-#include <openssl/rand.h>
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-#include <openssl/engine.h>
-
 #include <getopt.h>
 
 #include "xalloc.h"
 #include "protocol.h"
 #include "control_common.h"
+#include "rsagen.h"
 
 /* The name this program was run with. */
 char *program_name = NULL;
@@ -192,56 +187,19 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 	return r;
 }
 
-/* This function prettyprints the key generation process */
-
-static void indicator(int a, int b, void *p) {
-	switch (a) {
-		case 0:
-			fprintf(stderr, ".");
-			break;
-
-		case 1:
-			fprintf(stderr, "+");
-			break;
-
-		case 2:
-			fprintf(stderr, "-");
-			break;
-
-		case 3:
-			switch (b) {
-				case 0:
-					fprintf(stderr, " p\n");
-					break;
-
-				case 1:
-					fprintf(stderr, " q\n");
-					break;
-
-				default:
-					fprintf(stderr, "?");
-			}
-			break;
-
-		default:
-			fprintf(stderr, "?");
-	}
-}
-
 /*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
 static bool keygen(int bits) {
-	RSA *rsa_key;
+	rsa_t key;
 	FILE *f;
 	char *name = NULL;
 	char *filename;
 
 	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
-	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
 
-	if(!rsa_key) {
+	if(!rsa_generate(&key, bits, 0x10001)) {
 		fprintf(stderr, _("Error during key generation!\n"));
 		return false;
 	} else
@@ -261,7 +219,8 @@ static bool keygen(int bits) {
 	if(ftell(f))
 		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
 
-	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
+	rsa_write_pem_private_key(&key, f);
+
 	fclose(f);
 	free(filename);
 
@@ -278,7 +237,8 @@ static bool keygen(int bits) {
 	if(ftell(f))
 		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
 
-	PEM_write_RSAPublicKey(f, rsa_key);
+	rsa_write_pem_public_key(&key, f);
+
 	fclose(f);
 	free(filename);
 
@@ -425,7 +385,7 @@ static int send_ctl_request_cooked(int fd, enum request_type type,
 	}
 
 	if(buf != NULL) {
-		printf("%*s", buflen, buf);
+		printf("%*s", (int)buflen, buf);
 		free(buf);
 	}
 

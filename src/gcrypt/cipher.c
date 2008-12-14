@@ -55,7 +55,7 @@ static struct {
 };
 
 static bool nametocipher(const char *name, int *algo, int *mode) {
-	int i;
+	size_t i;
 
 	for(i = 0; i < sizeof ciphertable / sizeof *ciphertable; i++) {
 		if(ciphertable[i].name && !strcasecmp(name, ciphertable[i].name)) {
@@ -69,7 +69,7 @@ static bool nametocipher(const char *name, int *algo, int *mode) {
 }
 
 static bool nidtocipher(int nid, int *algo, int *mode) {
-	int i;
+	size_t i;
 
 	for(i = 0; i < sizeof ciphertable / sizeof *ciphertable; i++) {
 		if(nid == ciphertable[i].nid) {
@@ -83,7 +83,7 @@ static bool nidtocipher(int nid, int *algo, int *mode) {
 }
 
 static bool ciphertonid(int algo, int mode, int *nid) {
-	int i;
+	size_t i;
 
 	for(i = 0; i < sizeof ciphertable / sizeof *ciphertable; i++) {
 		if(algo == ciphertable[i].algo && mode == ciphertable[i].mode) {

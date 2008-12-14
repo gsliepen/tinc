@@ -24,6 +24,10 @@
 
 #include <openssl/evp.h>
 
+#define CIPHER_MAX_BLOCK_SIZE EVP_MAX_BLOCK_LENGTH
+#define CIPHER_MAX_KEY_SIZE EVP_MAX_KEY_LENGTH
+#define CIPHER_MAX_IV_SIZE EVP_MAX_IV_LENGTH
+
 typedef struct cipher {
 	EVP_CIPHER_CTX ctx;
 	const EVP_CIPHER *cipher;

@@ -24,6 +24,8 @@
 
 #include <openssl/evp.h>
 
+#define DIGEST_MAX_SIZE EVP_MAX_MD_SIZE
+
 typedef struct digest {
 	const EVP_MD *digest;
 } digest_t;
