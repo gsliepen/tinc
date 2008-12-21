@@ -78,7 +78,7 @@ bool setup_device(void) {
 			return false;
 		}
 	} else {
-		if(strstr(device, "tap"))
+		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER)
 			device_type = DEVICE_TYPE_TAP;
 	}
 
