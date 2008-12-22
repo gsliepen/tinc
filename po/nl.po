@@ -1,13 +1,13 @@
 # Dutch messages for tinc
-# Copyright (C) 1999-2007 Ivo Timmermans, Guus Sliepen.
+# Copyright (C) 1999-2008 Ivo Timmermans, Guus Sliepen.
 # Ivo Timmermans <ivo@tinc-vpn.org>, 1999-2006.
-# Guus Sliepen <guus@tinc-vpn.org>, 2000-2007.
+# Guus Sliepen <guus@tinc-vpn.org>, 2000-2008.
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-svn\n"
 "Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
 "POT-Creation-Date: 2008-12-22 20:42+0100\n"
-"PO-Revision-Date: 2007-05-16 16:40+0200\n"
+"PO-Revision-Date: 2008-12-22 20:45+0100\n"
 "Last-Translator: Guus Sliepen <guus@tinc-vpn.org>\n"
 "Language-Team: Dutch\n"
 "MIME-Version: 1.0\n"
