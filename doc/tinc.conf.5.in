@@ -1,21 +1,25 @@
-.Dd 2002-04-09
+.Dd 2008-12-22
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans
 .\" Guus Sliepen <guus@tinc-vpn.org>
+
 .Sh NAME
 .Nm tinc.conf
 .Nd tinc daemon configuration
+
 .Sh DESCRIPTION
 The files in the
 .Pa @sysconfdir@/tinc/
 directory contain runtime and security information for the tinc daemon.
+
 .Sh NETWORKS
 It is perfectly ok for you to run more than one tinc daemon.
 However, in its default form,
 you will soon notice that you can't use two different configuration files without the
 .Fl c
 option.
+
 .Pp
 We have thought of another way of dealing with this: network names.
 This means that you call
@@ -23,6 +27,7 @@ This means that you call
 with the
 .Fl n
 option, which will assign a name to this daemon.
+
 .Pp
 The effect of this is that the daemon will set its configuration root to
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa / ,
@@ -33,6 +38,7 @@ is your argument to the
 option.
 You'll notice that messages appear in syslog as coming from
 .Nm tincd. Ns Ar NETNAME .
+
 .Pp
 However, it is not strictly necessary that you call tinc with the
 .Fl n
@@ -48,21 +54,25 @@ the configuration file should be
 .Pa @sysconfdir@/tinc/tinc.conf ,
 and the host configuration files are now expected to be in
 .Pa @sysconfdir@/tinc/hosts/ .
+
 .Pp
 But it is highly recommended that you use this feature of
 .Nm tinc ,
 because it will be so much clearer whom your daemon talks to.
 Hence, we will assume that you use it.
+
 .Sh NAMES
 Each tinc daemon should have a name that is unique in the network which it will be part of.
 The name will be used by other tinc daemons for identification.
 The name has to be declared in the
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 file.
+
 .Pp
 To make things easy,
 choose something that will give unique and easy to remember names to your tinc daemon(s).
 You could try things like hostnames, owner surnames or location names.
+
 .Sh PUBLIC/PRIVATE KEYS
 You should use 
 .Ic tincd -K
@@ -81,14 +91,17 @@ The public key should be stored in the host configuration file
 .Va NAME
 stands for the name of the local tinc daemon (see
 .Sx NAMES ) .
+
 .Sh SERVER CONFIGURATION
 The server configuration of the daemon is done in the file
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf .
 This file consists of comments (lines started with a
 .Li # )
 or assignments in the form of:
+
 .Pp
 .Va Variable Li = Ar Value .
+
 .Pp
 The variable names are case insensitive, and any spaces, tabs,
 newlines and carriage returns are ignored.
@@ -96,30 +109,37 @@ Note: it is not required that you put in the
 .Li =
 sign, but doing so improves readability.
 If you leave it out, remember to replace it with at least one space character.
+
 .Pp
 Here are all valid variables, listed in alphabetical order.
 The default value is given between parentheses.
 .Bl -tag -width indent
+
 .It Va AddressFamily Li = ipv4 | ipv6 | any Pq any
 This option affects the address family of listening and outgoing sockets.
 If
 .Qq any
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
+
 .It Va BindToAddress Li = Ar address Bq experimental
 If your computer has more than one IPv4 or IPv6 address,
 .Nm tinc
 will by default listen on all of them for incoming connections.
 It is possible to bind only to a single address with this variable.
+
 .Pp
 This option may not work on all platforms.
+
 .It Va BindToInterface Li = Ar interface Bq experimental
 If your computer has more than one network interface,
 .Nm tinc
 will by default listen on all of them for incoming connections.
 It is possible to bind only to a single interface with this variable.
+
 .Pp
 This option may not work on all platforms.
+
 .It Va ConnectTo Li = Ar name
 Specifies which other tinc daemon to connect to on startup.
 Multiple
@@ -130,12 +150,14 @@ The names should be known to this tinc daemon
 (i.e., there should be a host configuration file for the name on the
 .Va ConnectTo
 line).
+
 .Pp
 If you don't specify a host with
 .Va ConnectTo ,
 .Nm tinc
 won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
+
 .It Va Device Li = Ar device Po Pa /dev/tap0 , Pa /dev/net/tun No or other depending on platform Pc
 The virtual network device to use.
 .Nm tinc
@@ -147,6 +169,36 @@ instead of
 .Va Device .
 The info pages of the tinc package contain more information
 about configuring the virtual network device.
+
+.It Va DeviceType Li = tun | tunnohead | tunifhead | tap Po only supported on BSD platforms Pc
+The type of the virtual network device.
+Tinc will normally automatically select the right type, and this option should not be used.
+However, in case tinc does not seem to correctly interpret packets received from the virtual network device,
+using this option might help.
+.Bl -tag -width indent
+
+.It tun
+Set type to tun.
+Depending on the platform, this can either be with or without an address family header (see below).
+
+.It tunnohead
+Set type to tun without an address family header.
+Tinc will expect packets read from the virtual network device to start with an IP header.
+On some platforms IPv6 packets cannot be read from or written to the device in this mode.
+
+.It tunifhead
+Set type to tun with an address family header.
+Tinc will expect packets read from the virtual network device
+to start with a four byte header containing the address family,
+followed by an IP header.
+This mode should support both IPv4 and IPv6 packets.
+
+.It tap
+Set type to tap.
+Tinc will expect packets read from the virtual network device
+to start with an Ethernet header.
+.El
+
 .It Va GraphDumpFile Li = Ar filename Bq experimental
 If this option is present,
 .Nm tinc
@@ -159,14 +211,17 @@ If
 starts with a pipe symbol |,
 then the rest of the filename is interpreted as a shell command
 that is executed, the graph is then sent to stdin.
+
 .It Va Hostnames Li = yes | no Pq no
 This option selects whether IP addresses (both real and on the VPN) should
 be resolved. Since DNS lookups are blocking, it might affect tinc's
 efficiency, even stopping the daemon for a few seconds every time it does
 a lookup if your DNS server is not responding.
+
 .Pp
 This does not affect resolving hostnames to IP addresses from the
 host configuration files.
+
 .It Va Interface Li = Ar interface
 Defines the name of the interface corresponding to the virtual network device.
 Depending on the operating system and the type of device this may or may not actually set the name of the interface.
@@ -174,58 +229,73 @@ Under Windows, this variable is used to select which network interface will be u
 If you specified a
 .Va Device ,
 this variable is almost always already correctly set.
+
 .It Va KeyExpire Li = Ar seconds Pq 3600
 This option controls the period the encryption keys used to encrypt the data are valid.
 It is common practice to change keys at regular intervals to make it even harder for crackers,
 even though it is thought to be nearly impossible to crack a single key.
+
 .It Va MACExpire Li = Ar seconds Pq 600
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when
 .Va Mode
 is set to
 .Qq switch .
+
 .It Va MaxTimeout Li = Ar seconds Pq 900
 This is the maximum delay before trying to reconnect to other tinc daemons.
+
 .It Va Mode Li = router | switch | hub Pq router
 This option selects the way packets are routed to other daemons.
 .Bl -tag -width indent
+
 .It router
 In this mode
 .Va Subnet
 variables in the host configuration files will be used to form a routing table.
 Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
+
 .Pp
 This is the default mode, and unless you really know you need another mode, don't change it.
+
 .It switch
 In this mode the MAC addresses of the packets on the VPN will be used to
 dynamically create a routing table just like an Ethernet switch does.
 Unicast, multicast and broadcast packets of every protocol that runs over Ethernet are supported in this mode
 at the cost of frequent broadcast ARP requests and routing table updates.
+
 .Pp
 This mode is primarily useful if you want to bridge Ethernet segments.
+
 .It hub
 This mode is almost the same as the switch mode, but instead
 every packet will be broadcast to the other daemons
 while no routing table is managed.
 .El
+
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.
 It must be unique for the virtual private network this daemon will connect to.
+
 .It Va PingInterval Li = Ar seconds Pq 60
 The number of seconds of inactivity that
 .Nm tinc
 will wait before sending a probe to the other end.
+
 .It Va PingTimeout Li = Ar seconds Pq 5
 The number of seconds to wait for a response to pings or to allow meta
 connections to block. If the other end doesn't respond within this time,
 the connection is terminated,
 and the others will be notified of this.
+
 .It Va PriorityInheritance Li = yes | no Po no Pc Bq experimental
 When this option is enabled the value of the TOS field of tunneled IPv4 packets
 will be inherited by the UDP packets that are sent out.
+
 .It Va PrivateKey Li = Ar key Bq obsolete
 The private RSA key of this tinc daemon.
 It will allow this tinc daemon to authenticate itself to other daemons.
+
 .It Va PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv Pc
 The file in which the private RSA key of this tinc daemon resides.
 Note that there must be exactly one of
@@ -233,17 +303,20 @@ Note that there must be exactly one of
 or
 .Va PrivateKeyFile
 specified in the configuration file.
+
 .It Va TunnelServer Li = yes | no Po no Pc Bq experimental
 When this option is enabled tinc will no longer forward information between other tinc daemons,
 and will only allow nodes and subnets on the VPN which are present in the
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 directory.
 .El
+
 .Sh HOST CONFIGURATION FILES
 The host configuration files contain all information needed
 to establish a connection to those hosts.
 A host configuration file is also required for the local tinc daemon,
 it will use it to read in it's listen port, public key and subnets.
+
 .Pp
 The idea is that these files are portable.
 You can safely mail your own host configuration file to someone else.
@@ -252,6 +325,7 @@ and now his tinc daemon will be able to connect to your tinc daemon.
 Since host configuration files only contain public keys,
 no secrets are revealed by sending out this information.
 .Bl -tag -width indent
+
 .It Va Address Li = Ar address Bq recommended
 The IP address or hostname of this tinc daemon on the real network.
 This will only be used when trying to make an outgoing connection to this tinc daemon.
@@ -259,6 +333,7 @@ Multiple
 .Va Address
 variables can be specified, in which case each address will be tried until a working
 connection has been established.
+
 .It Va Cipher Li = Ar cipher Pq blowfish
 The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by OpenSSL is recognised.
@@ -266,16 +341,19 @@ Furthermore, specifying
 .Qq none
 will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
+
 .It Va Compression Li = Ar level Pq 0
 This option sets the level of compression used for UDP packets.
 Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 10 (fast lzo) and 11 (best lzo).
+
 .It Va Digest Li = Ar digest Pq sha1
 The digest algorithm used to authenticate UDP packets.
 Any digest supported by OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet authentication.
+
 .It Va IndirectData Li = yes | no Pq no
 This option specifies whether other tinc daemons besides the one you specified with
 .Va ConnectTo
@@ -283,23 +361,30 @@ can make a direct connection to you.
 This is especially useful if you are behind a firewall
 and it is impossible to make a connection from the outside to your tinc daemon.
 Otherwise, it is best to leave this option out or set it to no.
+
 .It Va MACLength Li = Ar length Pq 4
 The length of the message authentication code used to authenticate UDP packets.
 Can be anything from
 .Qq 0
 up to the length of the digest produced by the digest algorithm.
-.It Va PMTU Li = Ar mtu Po 1514 Pc Bq experimental
+
+.It Va PMTU Li = Ar mtu Po 1514 Pc
 This option controls the initial path MTU to this node.
-.It Va PMTUDiscovery Li = yes | no Po no Pc Bq experimental
+
+.It Va PMTUDiscovery Li = yes | no Po yes Pc
 When this option is enabled, tinc will try to discover the path MTU to this node.
 After the path MTU has been discovered, it will be enforced on the VPN.
+
 .It Va Port Li = Ar port Pq 655
 The port number on which this tinc daemon is listening for incoming connections.
+
 .It Va PublicKey Li = Ar key Bq obsolete
 The public RSA key of this tinc daemon.
 It will be used to cryptographically verify it's identity and to set up a secure connection.
+
 .It Va PublicKeyFile Li = Ar filename Bq obsolete
 The file in which the public RSA key of this tinc daemon resides.
+
 .Pp
 From version 1.0pre4 on
 .Nm tinc
@@ -308,6 +393,7 @@ the above two options then are not necessary.
 Either the PEM format is used, or exactly one of the above two options must be specified
 in each host configuration file,
 if you want to be able to establish a connection with that host.
+
 .It Va Subnet Li = Ar address Ns Op Li / Ns Ar prefixlength
 The subnet which this tinc daemon will serve.
 .Nm tinc
@@ -317,6 +403,7 @@ it will be sent to the daemon who has this subnet in his host configuration file
 Multiple
 .Va Subnet
 variables can be specified.
+
 .Pp
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
@@ -328,6 +415,7 @@ Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
 IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
+
 .It Va TCPOnly Li = yes | no Pq no
 If this variable is set to yes,
 then the packets are tunnelled over the TCP connection instead of a UDP connection.
@@ -336,38 +424,48 @@ from behind a masquerading firewall,
 or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
 .El
+
 .Sh SCRIPTS
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
 Under Windows (not Cygwin), the scripts should have the extension
 .Pa .bat .
 .Bl -tag -width indent
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 This is the most important script.
 If it is present it will be executed right after the tinc daemon has been started and has connected to the virtual network device.
 It should be used to set up the corresponding network interface,
 but can also be used to start other things.
 Under Windows you can use the Network Connections control panel instead of creating this script.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 This script is started right before the tinc daemon quits.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar HOST Ns Pa -up
 This script is started when the tinc daemon with name
 .Ar HOST
 becomes reachable.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar HOST Ns Pa -down
 This script is started when the tinc daemon with name
 .Ar HOST
 becomes unreachable.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /host-up
 This script is started when any host becomes reachable.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /host-down
 This script is started when any host becomes unreachable.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /subnet-up
 This script is started when a Subnet becomes reachable.
 The Subnet and the node it belongs to are passed in environment variables.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /subnet-down
 This script is started when a Subnet becomes unreachable.
 .El
+
 .Pp
 The scripts are started without command line arguments, but can make use of certain environment variables.
 Under UNIX like operating systems the names of environment variables must be preceded by a
@@ -379,49 +477,65 @@ files, they have to be put between
 .Li %
 signs.
 .Bl -tag -width indent
+
 .It Ev NETNAME
 If a netname was specified, this environment variable contains it.
+
 .It Ev NAME
 Contains the name of this tinc daemon.
+
 .It Ev DEVICE
 Contains the name of the virtual network device that tinc uses.
+
 .It Ev INTERFACE
 Contains the name of the virtual network interface that tinc uses.
 This should be used for commands like
 .Pa ifconfig .
+
 .It Ev NODE
 When a host becomes (un)reachable, this is set to its name.
 If a subnet becomes (un)reachable, this is set to the owner of that subnet.
+
 .It Ev REMOTEADDRESS
 When a host becomes (un)reachable, this is set to its real address.
+
 .It Ev REMOTEPORT
 When a host becomes (un)reachable, this is set to the port number it uses for communication with other tinc daemons.
+
 .It Ev SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
 .El
+
 .Sh FILES
 The most important files are:
 .Bl -tag -width indent
+
 .It Pa @sysconfdir@/tinc/
 The top directory for configuration files.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 The default name of the server configuration file for net
 .Ar NETNAME .
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 Host configuration files are kept in this directory.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 If an executable file with this name exists,
 it will be executed right after the tinc daemon has connected to the virtual network device.
 It can be used to set up the corresponding network interface.
+
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 If an executable file with this name exists,
 it will be executed right before the tinc daemon is going to close
 its connection to the virtual network device.
 .El
+
 .Sh SEE ALSO
 .Xr tincd 8 ,
 .Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.linuxdoc.org/LDP/nag2/ .
+
 .Pp
 The full documentation for
 .Nm tinc
@@ -429,6 +543,7 @@ is maintained as a Texinfo manual.
 If the info and tinc programs are properly installed at your site, the command
 .Ic info tinc
 should give you access to the complete manual.
+
 .Pp
 .Nm tinc
 comes with ABSOLUTELY NO WARRANTY.
