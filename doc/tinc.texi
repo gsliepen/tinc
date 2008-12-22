@@ -16,7 +16,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2006 Ivo Timmermans,
+Copyright @copyright{} 1998-2008 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -225,8 +225,7 @@ support tinc.
 @section Configuring the kernel
 
 @menu
-* Configuration of Linux kernels 2.1.60 up to 2.4.0::
-* Configuration of Linux kernels 2.4.0 and higher::
+* Configuration of Linux kernels::
 * Configuration of FreeBSD kernels::
 * Configuration of OpenBSD kernels::
 * Configuration of NetBSD kernels::
@@ -237,51 +236,11 @@ support tinc.
 
 
 @c ==================================================================
-@node       Configuration of Linux kernels 2.1.60 up to 2.4.0
-@subsection Configuration of Linux kernels 2.1.60 up to 2.4.0
-
-@cindex ethertap
-For kernels up to 2.4.0, you need a kernel that supports the ethertap device.
-Most distributions come with kernels that already support this.
-If not, here are the options you have to turn on when configuring a new kernel:
-
-@example
-Code maturity level options
-[*] Prompt for development and/or incomplete code/drivers
-Networking options
-[*] Kernel/User netlink socket
-<M> Netlink device emulation
-Network device support
-<M> Ethertap network tap
-@end example
-
-If you want to run more than one instance of tinc or other programs that use
-the ethertap, you have to compile the ethertap driver as a module, otherwise
-you can also choose to compile it directly into the kernel.
-
-If you decide to build any of these as dynamic kernel modules, it's a good idea
-to add these lines to @file{/etc/modules.conf}:
-
-@example
-alias char-major-36 netlink_dev
-alias tap0 ethertap
-options tap0 -o tap0 unit=0
-alias tap1 ethertap
-options tap1 -o tap1 unit=1
-...
-alias tap@emph{N} ethertap
-options tap@emph{N} -o tap@emph{N} unit=@emph{N}
-@end example
-
-Add as much alias/options lines as necessary.
-
-
-@c ==================================================================
-@node       Configuration of Linux kernels 2.4.0 and higher
-@subsection Configuration of Linux kernels 2.4.0 and higher
+@node       Configuration of Linux kernels
+@subsection Configuration of Linux kernels
 
 @cindex Universal tun/tap
-For kernels 2.4.0 and higher, you need a kernel that supports the Universal tun/tap device.
+For tinc to work, you need a kernel that supports the Universal tun/tap device.
 Most distributions come with kernels that already support this.
 Here are the options you have to turn on when configuring a new kernel:
 
@@ -294,11 +253,6 @@ Network device support
 
 It's not necessary to compile this driver as a module, even if you are going to
 run more than one instance of tinc.
-
-If you have an early 2.4 kernel, you can choose both the tun/tap driver and the
-`Ethertap network tap' device.  This latter is marked obsolete, and chances are
-that it won't even function correctly anymore.  Make sure you select the
-universal tun/tap driver.
 
 If you decide to build the tun/tap driver as a kernel module, add these lines
 to @file{/etc/modules.conf}:
@@ -323,9 +277,9 @@ Using tap devices is recommended.
 For OpenBSD version 2.9 and higher,
 the tun driver is included in the default kernel configuration.
 There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
-which adds a tap device to OpenBSD.
-This should work with tinc.
-
+which adds a tap device to OpenBSD which should work with tinc,
+but with recent versions of OpenBSD,
+a tun device can act as a tap device by setting the link0 option with ifconfig.
 
 @c ==================================================================
 @node       Configuration of NetBSD kernels
@@ -609,39 +563,15 @@ files on your system.
 @subsection Device files
 
 @cindex device files
-First, you'll need the special device file(s) that form the interface
-between the kernel and the daemon.
+Most operating systems nowadays come with the necessary device files by default,
+or they have a mechanism to create them on demand.
 
-The permissions for these files have to be such that only the super user
-may read/write to this file.  You'd want this, because otherwise
-eavesdropping would become a bit too easy.  This does, however, imply
-that you'd have to run tincd as root.
-
-If you use Linux and have a kernel version prior to 2.4.0, you have to make the
-ethertap devices:
+If you use Linux and do not have udev installed,
+you may need to create the following device file if it does not exist:
 
 @example
-mknod -m 600 /dev/tap0 c 36 16
-mknod -m 600 /dev/tap1 c 36 17
-...
-mknod -m 600 /dev/tap@emph{N} c 36 @emph{N+16}
+mknod -m 600 /dev/net/tun c 10 200
 @end example
-
-There is a maximum of 16 ethertap devices.
-
-If you use the universal tun/tap driver, you have to create the
-following device file (unless it already exist):
-
-@example
-mknod -m 600 /dev/tun c 10 200
-@end example
-
-If you use Linux, and you run the new 2.4 kernel using the devfs filesystem,
-then the tun/tap device will probably be automatically generated as
-@file{/dev/net/tun}.
-
-Unlike the ethertap device, you do not need multiple device files if
-you are planning to run multiple tinc daemons.
 
 
 @c ==================================================================
@@ -862,6 +792,38 @@ Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
 
+@cindex DeviceType
+@item DeviceType = <tun|tunnohead|tunifhead|tap> (only supported on BSD platforms)
+The type of the virtual network device.
+Tinc will normally automatically select the right type, and this option should not be used.
+However, in case tinc does not seem to correctly interpret packets received from the virtual network device,
+using this option might help.
+
+@table @asis
+@item tun
+Set type to tun.
+Depending on the platform, this can either be with or without an address family header (see below).
+
+@cindex tunnohead
+@item tunnohead
+Set type to tun without an address family header.
+Tinc will expect packets read from the virtual network device to start with an IP header.
+On some platforms IPv6 packets cannot be read from or written to the device in this mode.
+
+@cindex tunifhead
+@item tunifhead
+Set type to tun with an address family header.
+Tinc will expect packets read from the virtual network device
+to start with a four byte header containing the address family,
+followed by an IP header.
+This mode should support both IPv4 and IPv6 packets.
+
+@item tap
+Set type to tap.
+Tinc will expect packets read from the virtual network device
+to start with an Ethernet header.
+@end table
+
 @cindex GraphDumpFile
 @item GraphDumpFile = <@var{filename}> [experimental]
 If this option is present,
@@ -932,7 +894,8 @@ This only has effect when Mode is set to "switch".
 
 @cindex Name
 @item Name = <@var{name}> [required]
-This is a symbolic name for this connection.  It can be anything
+This is a symbolic name for this connection.
+The name should consist only of alfanumeric and underscore characters (a-z, A-Z, 0-9 and _).
 
 @cindex PingInterval
 @item PingInterval = <@var{seconds}> (60)
@@ -1019,6 +982,15 @@ The length of the message authentication code used to authenticate UDP packets.
 Can be anything from 0
 up to the length of the digest produced by the digest algorithm.
 
+@cindex PMTU
+@item PMTU = <@var{mtu}> (1514)
+This option controls the initial path MTU to this node.
+
+@cindex PMTUDiscovery
+@item PMTUDiscovery = <yes|no> (yes)
+When this option is enabled, tinc will try to discover the path MTU to this node.
+After the path MTU has been discovered, it will be enforced on the VPN.
+
 @cindex Port
 @item Port = <@var{port}> (655)
 This is the port this tinc daemon listens on.
@@ -1068,7 +1040,7 @@ example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
 @cindex TCPonly
-@item TCPonly = <yes|no> (no) [experimental]
+@item TCPonly = <yes|no> (no)
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
