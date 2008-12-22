@@ -42,7 +42,7 @@ char *iface;
 char *device_info;
 static int device_total_in = 0;
 static int device_total_out = 0;
-#ifdef HAVE_OPENBSD
+#if defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
