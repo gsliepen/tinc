@@ -483,7 +483,7 @@ bool send_ack(connection_t *c)
 	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
 		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 
-	if((get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) && choice) || myself->options & OPTION_PMTU_DISCOVERY)
+	if((!get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) || choice) || myself->options & OPTION_PMTU_DISCOVERY)
 		c->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);

@@ -195,7 +195,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	{
 		bool choice;
 
-		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
+		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice) {
 			option = IP_PMTUDISC_DO;
 			setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option));
 		}
@@ -206,7 +206,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	{
 		bool choice;
 
-		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
+		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice) {
 			option = IPV6_PMTUDISC_DO;
 			setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
 		}
