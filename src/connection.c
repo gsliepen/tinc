@@ -90,11 +90,30 @@ void free_connection(connection_t *c)
 	if(c->outkey)
 		free(c->outkey);
 
+	if(c->inctx) {
+		EVP_CIPHER_CTX_cleanup(c->inctx);
+		free(c->inctx);
+	}
+
+	if(c->outctx) {
+		EVP_CIPHER_CTX_cleanup(c->outctx);
+		free(c->outctx);
+	}
+
 	if(c->mychallenge)
 		free(c->mychallenge);
 
 	if(c->hischallenge)
 		free(c->hischallenge);
+
+	if(c->config_tree)
+		exit_configuration(&c->config_tree);
+
+	if(c->outbuf)
+		free(c->outbuf);
+
+	if(c->rsa_key)
+		RSA_free(c->rsa_key);
 
 	free(c);
 }

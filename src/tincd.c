@@ -510,7 +510,19 @@ end:
 	remove_pid(pidfilename);
 #endif
 
+	if (identname) free(identname);
+	if (netname) free(netname);
+	if (pidfilename) free(pidfilename);
+	if (logfilename) free(logfilename);
+	if (myport) free(myport);
+	if (device) free(device);
+	if (confbase) free(confbase);
+
 	EVP_cleanup();
+	ENGINE_cleanup();
+	CRYPTO_cleanup_all_ex_data();
+	ERR_remove_state(0);
+	ERR_free_strings();
 	
 	return status;
 }
