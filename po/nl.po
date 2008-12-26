@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-svn\n"
 "Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
-"POT-Creation-Date: 2008-12-22 20:42+0100\n"
-"PO-Revision-Date: 2008-12-22 20:45+0100\n"
+"POT-Creation-Date: 2008-12-24 11:43+0100\n"
+"PO-Revision-Date: 2008-12-24 11:45+0100\n"
 "Last-Translator: Guus Sliepen <guus@tinc-vpn.org>\n"
 "Language-Team: Dutch\n"
 "MIME-Version: 1.0\n"
@@ -90,16 +90,16 @@ msgstr "iedereen"
 msgid "BROADCAST"
 msgstr "BROADCAST"
 
-#: src/connection.c:123
+#: src/connection.c:142
 msgid "Connections:"
 msgstr "Verbindingen:"
 
-#: src/connection.c:127
+#: src/connection.c:146
 #, c-format
 msgid " %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"
 msgstr " %s op %s opties %lx socket %d status %04x outbuf %d/%d/%d"
 
-#: src/connection.c:132
+#: src/connection.c:151
 msgid "End of connections."
 msgstr "Einde van verbindingen."
 
@@ -1002,14 +1002,14 @@ msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 #: src/tincd.c:411
 #, c-format
 msgid ""
-"Copyright (C) 1998-2007 Ivo Timmermans, Guus Sliepen and others.\n"
+"Copyright (C) 1998-2008 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
 "\n"
 "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 "and you are welcome to redistribute it under certain conditions;\n"
 "see the file COPYING for details.\n"
 msgstr ""
-"Copyright (C) 1998-2007 Ivo Timmermans, Guus Sliepen en anderen.\n"
+"Copyright (C) 1998-2008 Ivo Timmermans, Guus Sliepen en anderen.\n"
 "Zie het bestand AUTHORS voor een volledige lijst.\n"
 "\n"
 "tinc wordt gedistribueerd ZONDER ENIGE GARANTIE.  Dit is vrije "
@@ -1232,7 +1232,7 @@ msgstr "Nieuw MAC adres %hx:%hx:%hx:%hx:%hx:%hx geleerd"
 msgid "Subnet %s expired"
 msgstr "Subnet %s is verlopen"
 
-#: src/route.c:190 src/route.c:345 src/route.c:489
+#: src/route.c:190 src/route.c:345 src/route.c:496
 #, c-format
 msgid "Packet looping back to %s (%s)!"
 msgstr "Pakket komt terug naar %s (%s)!"
@@ -1256,12 +1256,12 @@ msgid ""
 msgstr ""
 "Kan pakket van %s (%s) niet routeren: onbekend IPv4 doeladres %d.%d.%d.%d"
 
-#: src/route.c:358 src/route.c:499
+#: src/route.c:358 src/route.c:506
 #, c-format
 msgid "Packet for %s (%s) length %d larger than MTU %d"
 msgstr "Packet voor %s (%s) lengte %d groter dan MTU %d"
 
-#: src/route.c:473
+#: src/route.c:480
 #, c-format
 msgid ""
 "Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:%"
@@ -1270,26 +1270,26 @@ msgstr ""
 "Kan pakket van %s (%s) niet routeren: onbekend IPv6 doeladres %hx:%hx:%hx:%"
 "hx:%hx:%hx:%hx:%hx"
 
-#: src/route.c:531
+#: src/route.c:538
 #, c-format
 msgid "Got neighbor solicitation request from %s (%s) while in router mode!"
 msgstr ""
 "Kreeg neighbor solicitation request van %s (%s) terwijl we in router mode "
 "werken!"
 
-#: src/route.c:550
+#: src/route.c:557
 msgid ""
 "Cannot route packet: received unknown type neighbor solicitation request"
 msgstr ""
 "Kan pakket niet routeren: ontvangst van onbekend type neighbor solicitation "
 "verzoek"
 
-#: src/route.c:569
+#: src/route.c:576
 msgid "Cannot route packet: checksum error for neighbor solicitation request"
 msgstr ""
 "Kan pakket niet routeren: checksum fout voor neighbor solicitation verzoek"
 
-#: src/route.c:578
+#: src/route.c:585
 #, c-format
 msgid ""
 "Cannot route packet: neighbor solicitation request for unknown address %hx:%"
@@ -1298,21 +1298,21 @@ msgstr ""
 "Kan pakket niet routeren: neighbor solicitation verzoek voor onbekend adres %"
 "hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"
 
-#: src/route.c:665
+#: src/route.c:675
 #, c-format
 msgid "Got ARP request from %s (%s) while in router mode!"
 msgstr "Kreeg ARP request van %s (%s) terwijl we in router mode werken!"
 
-#: src/route.c:682
+#: src/route.c:692
 msgid "Cannot route packet: received unknown type ARP request"
 msgstr "Kan pakket niet routeren: ontvangst van onbekend type ARP verzoek"
 
-#: src/route.c:691
+#: src/route.c:701
 #, c-format
 msgid "Cannot route packet: ARP request for unknown address %d.%d.%d.%d"
 msgstr "Kan pakket niet routeren: ARP verzoek voor onbekend adres %d.%d.%d.%d"
 
-#: src/route.c:747
+#: src/route.c:757
 #, c-format
 msgid "Cannot route packet from %s (%s): unknown type %hx"
 msgstr "Kan pakket van %s (%s) niet routeren: onbekend type %hx"

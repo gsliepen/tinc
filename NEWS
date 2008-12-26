@@ -1,3 +1,20 @@
+Version 1.0.9                Dec 26 2008
+
+ * Fixed tinc as a service under Windows 2003.
+
+ * Fixed reading configuration files that do not end with a newline.
+
+ * Fixed crashes in situations where hostnames could not be resolved or hosts
+   would disconnect at the same time as session keys were exchanged.
+
+ * Improved default settings of tun and tap devices on BSD platforms.
+
+ * Make IPv6 sockets bind only to IPv6 on Linux.
+
+ * Enable path MTU discovery by default.
+
+ * Fixed a memory leak that occured when connections were closed.
+
 Version 1.0.8                May 16 2007
 
  * Fixed some memory and resource leaks.
