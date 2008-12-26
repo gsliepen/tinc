@@ -376,7 +376,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet)
 	if(!checklength(source, packet, ether_size + ip_size))
 		return;
 
-	if(packet->data[30] & 0xf0 == 0xe0 ||
+	if(((packet->data[30] & 0xf0) == 0xe0) ||
 			packet->data[30] == 255 &&
 			packet->data[31] == 255 &&
 			packet->data[32] == 255 &&
