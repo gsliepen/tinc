@@ -295,8 +295,10 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 
 	/* check input from kernel */
 	if(FD_ISSET(device_fd, readset)) {
-		if(read_packet(&packet))
+		if(read_packet(&packet)) {
+			packet.priority = 0;
 			route(myself, &packet);
+		}
 	}
 
 	/* check meta connections */

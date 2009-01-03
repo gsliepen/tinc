@@ -61,8 +61,6 @@ typedef struct node_t {
 
 	int compression;			/* Compressionlevel, 0 = no compression */
 
-	list_t *queue;				/* Queue for packets awaiting to be encrypted */
-
 	struct node_t *nexthop;			/* nearest node from us to him */
 	struct node_t *via;			/* next hop for UDP packets */
 

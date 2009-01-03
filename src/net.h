@@ -38,8 +38,6 @@
 
 #define MAXSOCKETS 128			/* Overkill... */
 
-#define MAXQUEUELENGTH 8		/* Maximum number of packats in a single queue */
-
 typedef struct mac_t {
 	uint8_t x[6];
 } mac_t;

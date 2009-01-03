@@ -78,7 +78,6 @@ node_t *new_node(void)
 
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
-	n->queue = list_alloc((list_action_t) free);
 	EVP_CIPHER_CTX_init(&n->packet_ctx);
 	n->mtu = MTU;
 	n->maxmtu = MTU;
@@ -89,9 +88,6 @@ node_t *new_node(void)
 void free_node(node_t *n)
 {
 	cp();
-
-	if(n->queue)
-		list_delete_list(n->queue);
 
 	if(n->key)
 		free(n->key);

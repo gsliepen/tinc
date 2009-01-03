@@ -516,6 +516,7 @@ end:
 	if (logfilename) free(logfilename);
 	if (myport) free(myport);
 	if (device) free(device);
+	if (iface) free(iface);
 	if (confbase) free(confbase);
 
 	EVP_cleanup();

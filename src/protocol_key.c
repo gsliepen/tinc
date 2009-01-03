@@ -283,7 +283,5 @@ bool ans_key_h(connection_t *c)
 	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
 		send_mtu_probe(from);
 
-	flush_queue(from);
-
 	return true;
 }
