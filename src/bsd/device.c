@@ -27,6 +27,7 @@
 #include "net.h"
 #include "route.h"
 #include "utils.h"
+#include "xalloc.h"
 
 #define DEFAULT_DEVICE "/dev/tun0"
 
@@ -37,9 +38,9 @@ typedef enum device_type {
 } device_type_t;
 
 int device_fd = -1;
-char *device;
-char *iface;
-char *device_info;
+char *device = NULL;
+char *iface = NULL;
+static char *device_info = NULL;
 static int device_total_in = 0;
 static int device_total_out = 0;
 #if defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
@@ -54,10 +55,10 @@ bool setup_device(void) {
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = DEFAULT_DEVICE;
+		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
 		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));

@@ -29,12 +29,13 @@
 #include "logger.h"
 #include "utils.h"
 #include "route.h"
+#include "xalloc.h"
 
 int device_fd = -1;
 char *device;
 char *iface;
-char ifrname[IFNAMSIZ];
-char *device_info;
+static char ifrname[IFNAMSIZ];
+static char *device_info;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
@@ -46,12 +47,11 @@ bool setup_device(void)
 
 	cp();
 
-	if(!get_config_string
-		  (lookup_config(config_tree, "Interface"), &iface))
-		iface = "eth0";
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = xstrdup("eth0");
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = iface;
+		device = xstrdup(iface);
 
 	device_info = _("raw socket");
 

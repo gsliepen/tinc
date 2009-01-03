@@ -34,6 +34,7 @@
 #include "net.h"
 #include "route.h"
 #include "utils.h"
+#include "xalloc.h"
 
 typedef enum device_type_t {
 	DEVICE_TYPE_ETHERTAP,
@@ -45,8 +46,8 @@ int device_fd = -1;
 static device_type_t device_type;
 char *device;
 char *iface;
-char ifrname[IFNAMSIZ];
-char *device_info;
+static char ifrname[IFNAMSIZ];
+static char *device_info;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
@@ -58,13 +59,13 @@ bool setup_device(void)
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = DEFAULT_DEVICE;
+		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 #ifdef HAVE_LINUX_IF_TUN_H
-		iface = netname;
+		iface = xstrdup(netname);
 #else
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 #endif
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 

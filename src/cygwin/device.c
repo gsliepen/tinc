@@ -38,7 +38,7 @@ int device_fd = -1;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
-char *device_info = NULL;
+static char *device_info = NULL;
 
 static int device_total_in = 0;
 static int device_total_out = 0;

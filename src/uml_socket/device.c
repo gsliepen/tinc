@@ -36,9 +36,9 @@ static int request_fd = -1;
 static int data_fd = -1;
 static int write_fd = -1;
 static int state = 0;
-char *device;
+char *device = NULL;
 char *iface = NULL;
-char *device_info;
+static char *device_info;
 
 extern char *identname;
 extern bool running;
