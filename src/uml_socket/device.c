@@ -171,6 +171,9 @@ void close_device(void)
 		close(write_fd);
 
 	unlink(device);
+
+	free(device);
+	if(iface) free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet)

@@ -392,6 +392,14 @@ static void make_names(void)
 	}
 }
 
+static void free_names() {
+	if (identname) free(identname);
+	if (netname) free(netname);
+	if (pidfilename) free(pidfilename);
+	if (logfilename) free(logfilename);
+	if (confbase) free(confbase);
+}
+
 int main(int argc, char **argv)
 {
 	program_name = argv[0];
@@ -498,10 +506,10 @@ int main2(int argc, char **argv)
 
 	/* Shutdown properly. */
 
-	close_network_connections();
-
 	ifdebug(CONNECTIONS)
 		dump_device_stats();
+
+	close_network_connections();
 
 end:
 	logger(LOG_NOTICE, _("Terminating"));
@@ -510,20 +518,14 @@ end:
 	remove_pid(pidfilename);
 #endif
 
-	if (identname) free(identname);
-	if (netname) free(netname);
-	if (pidfilename) free(pidfilename);
-	if (logfilename) free(logfilename);
-	if (myport) free(myport);
-	if (device) free(device);
-	if (iface) free(iface);
-	if (confbase) free(confbase);
-
 	EVP_cleanup();
 	ENGINE_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
 	ERR_free_strings();
+
+	exit_configuration(&config_tree);
+	free_names();
 	
 	return status;
 }

@@ -608,6 +608,8 @@ void close_network_connections(void)
 
 	execute_script("tinc-down", envp);
 
+	if(myport) free(myport);
+
 	for(i = 0; i < 4; i++)
 		free(envp[i]);
 

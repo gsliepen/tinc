@@ -44,8 +44,8 @@ typedef enum device_type_t {
 
 int device_fd = -1;
 static device_type_t device_type;
-char *device;
-char *iface;
+char *device = NULL;
+char *iface = NULL;
 static char ifrname[IFNAMSIZ];
 static char *device_info;
 
@@ -93,11 +93,13 @@ bool setup_device(void)
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		iface = ifrname;
+		if(iface) free(iface);
+		iface = xstrdup(ifrname);
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
 		logger(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		iface = ifrname;
+		if(iface) free(iface);
+		iface = xstrdup(ifrname);
 	} else
 #endif
 	{
@@ -105,7 +107,9 @@ bool setup_device(void)
 			overwrite_mac = true;
 		device_info = _("Linux ethertap device");
 		device_type = DEVICE_TYPE_ETHERTAP;
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		if(iface)
+			free(iface);
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 	}
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
@@ -118,6 +122,9 @@ void close_device(void)
 	cp();
 	
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet)

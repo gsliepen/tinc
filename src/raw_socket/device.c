@@ -32,8 +32,8 @@
 #include "xalloc.h"
 
 int device_fd = -1;
-char *device;
-char *iface;
+char *device = NULL;
+char *iface = NULL;
 static char ifrname[IFNAMSIZ];
 static char *device_info;
 
@@ -90,6 +90,9 @@ void close_device(void)
 	cp();
 
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet)

@@ -227,6 +227,9 @@ void close_device(void)
 	CloseHandle(device_handle);
 
 	kill(reader_pid, SIGKILL);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet)

@@ -140,6 +140,9 @@ void close_device(void) {
 	cp();
 
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {

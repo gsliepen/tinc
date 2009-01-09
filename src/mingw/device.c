@@ -313,6 +313,9 @@ void close_device(void)
 	cp();
 
 	CloseHandle(device_handle);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet)
