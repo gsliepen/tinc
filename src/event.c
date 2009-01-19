@@ -47,7 +47,7 @@ void init_events(void)
 {
 	cp();
 
-	event_tree = avl_alloc_tree((avl_compare_t) event_compare, NULL);
+	event_tree = avl_alloc_tree((avl_compare_t) event_compare, (avl_action_t) free_event);
 }
 
 void exit_events(void)
@@ -57,26 +57,32 @@ void exit_events(void)
 	avl_delete_tree(event_tree);
 }
 
-void flush_events(void)
+void expire_events(void)
 {
-	avl_tree_t *to_flush;
+	avl_node_t *node;
 	event_t *event;
+	time_t diff;
 
 	/*
-	 * Events can be inserted from event handlers, so only flush events
-	 * already in the priority queue.
+	 * Make all events appear expired by substracting the difference between
+         * the expiration time of the last event and the current time.
 	 */
 
 	cp();
 
-	to_flush = event_tree;
-	init_events();
-	while (to_flush->head) {
-		event = to_flush->head->data;
-		event->handler(event->data);
-		avl_delete(to_flush, event);
+	if(!event_tree->tail)
+		return;
+
+	event = event_tree->tail->data;
+	if(event->time < now)
+		return;
+
+	diff = 1 + event->time - now;
+	
+	for(node = event_tree->head; node; node = node->next) {
+		event = node->data;
+		event->time -= diff;
 	}
-	avl_delete_tree(to_flush);
 }
 
 event_t *new_event(void)
@@ -118,7 +124,7 @@ event_t *get_expired_event(void)
 		event = event_tree->head->data;
 
 		if(event->time < now) {
-			event_del(event);
+			avl_unlink_node(event_tree, event_tree->head);
 			return event;
 		}
 	}

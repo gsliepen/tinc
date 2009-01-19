@@ -423,16 +423,15 @@ int main_loop(void)
 			}
 		}
 
+		if(sigalrm) {
+			logger(LOG_INFO, _("Flushing event queue"));
+			expire_events();
+			sigalrm = false;
+		}
 
 		while((event = get_expired_event())) {
 			event->handler(event->data);
 			free_event(event);
-		}
-
-		if(sigalrm) {
-			logger(LOG_INFO, _("Flushing event queue"));
-			flush_events();
-			sigalrm = false;
 		}
 
 		if(sighup) {
