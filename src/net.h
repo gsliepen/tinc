@@ -85,17 +85,6 @@ typedef struct vpn_packet_t {
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
-typedef struct queue_element_t {
-	void *packet;
-	struct queue_element_t *prev;
-	struct queue_element_t *next;
-} queue_element_t;
-
-typedef struct packet_queue_t {
-	queue_element_t *head;
-	queue_element_t *tail;
-} packet_queue_t;
-
 typedef struct listen_socket_t {
 	int tcp;
 	int udp;
