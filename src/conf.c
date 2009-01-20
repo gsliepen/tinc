@@ -301,6 +301,8 @@ static char *readline(FILE * fp, char **buf, size_t *buflen)
 			size = newsize;
 		} else {
 			*newline = '\0';	/* kill newline */
+			if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
+				newline[-1] = '\0';
 			break;				/* yay */
 		}
 	}
