@@ -102,10 +102,8 @@ void free_node(node_t *n)
 
 	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
 
-	if(n->mtuevent) {
+	if(n->mtuevent)
 		event_del(n->mtuevent);
-		free_event(n->mtuevent);
-	}
 	
 	if(n->hostname)
 		free(n->hostname);

@@ -457,14 +457,6 @@ int main_loop(void)
 			for(node = connection_tree->head; node; node = node->next) {
 				c = node->data;
 				
-				if(c->outgoing) {
-					free(c->outgoing->name);
-					if(c->outgoing->ai)
-						freeaddrinfo(c->outgoing->ai);
-					free(c->outgoing);
-					c->outgoing = NULL;
-				}
-				
 				asprintf(&fname, "%s/hosts/%s", confbase, c->name);
 				if(stat(fname, &s) || s.st_mtime > last_config_check)
 					terminate_connection(c, c->status.active);

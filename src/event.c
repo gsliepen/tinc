@@ -124,7 +124,9 @@ event_t *get_expired_event(void)
 		event = event_tree->head->data;
 
 		if(event->time < now) {
-			avl_unlink_node(event_tree, event_tree->head);
+			avl_node_t *node = event_tree->head;
+			avl_unlink_node(event_tree, node);
+			free(node);
 			return event;
 		}
 	}

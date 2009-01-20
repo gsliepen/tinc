@@ -103,6 +103,7 @@ typedef struct listen_socket_t {
 } listen_socket_t;
 
 #include "conf.h"
+#include "list.h"
 
 typedef struct outgoing_t {
 	char *name;
@@ -111,6 +112,8 @@ typedef struct outgoing_t {
 	struct addrinfo *ai;
 	struct addrinfo *aip;
 } outgoing_t;
+
+extern list_t *outgoing_list;
 
 extern int maxoutbufsize;
 extern int seconds_till_retry;

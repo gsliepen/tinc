@@ -49,6 +49,7 @@ int seconds_till_retry = 5;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
+list_t *outgoing_list = NULL;
 
 /* Setup sockets */
 
@@ -404,8 +405,6 @@ void setup_outgoing_connection(outgoing_t *outgoing)
 	if(!outgoing->cfg) {
 		logger(LOG_ERR, _("No address specified for %s"), c->name);
 		free_connection(c);
-		free(outgoing->name);
-		free(outgoing);
 		return;
 	}
 
@@ -464,14 +463,37 @@ bool handle_new_meta_connection(int sock)
 	return true;
 }
 
+void free_outgoing(outgoing_t *outgoing) {
+	if(outgoing->ai)
+		freeaddrinfo(outgoing->ai);
+
+	if(outgoing->name)
+		free(outgoing->name);
+
+	free(outgoing);
+}
+
 void try_outgoing_connections(void)
 {
 	static config_t *cfg = NULL;
 	char *name;
 	outgoing_t *outgoing;
-
+	connection_t *c;
+	avl_node_t *node;
+	
 	cp();
 
+	if(outgoing_list) {
+		for(node = connection_tree->head; node; node = node->next) {
+			c = node->data;
+			c->outgoing = NULL;
+		}
+
+		list_delete_list(outgoing_list);
+	}
+
+	outgoing_list = list_alloc((list_action_t)free_outgoing);
+			
 	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 		get_config_string(cfg, &name);
 
@@ -485,6 +507,7 @@ void try_outgoing_connections(void)
 
 		outgoing = xmalloc_and_zero(sizeof(*outgoing));
 		outgoing->name = name;
+		list_insert_tail(outgoing_list, outgoing);
 		setup_outgoing_connection(outgoing);
 	}
 }

@@ -571,17 +571,11 @@ void close_network_connections(void)
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
-
-		if(c->outgoing) {
-			if(c->outgoing->ai)
-				freeaddrinfo(c->outgoing->ai);
-			free(c->outgoing->name);
-			free(c->outgoing);
-			c->outgoing = NULL;
-		}
-
+		c->outgoing = false;
 		terminate_connection(c, false);
 	}
+
+	list_delete_list(outgoing_list);
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
