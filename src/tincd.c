@@ -292,6 +292,18 @@ static bool keygen(int bits)
 	char *name = NULL;
 	char *filename;
 
+	get_config_string(lookup_config(config_tree, "Name"), &name);
+
+	if(name) {
+		if(!check_id(name)) {
+			fprintf(stderr, _("Invalid name for myself!\n"));
+			return false;
+		}
+		asprintf(&filename, "%s/hosts/%s", confbase, name);
+		free(name);
+	} else
+		asprintf(&filename, "%s/rsa_key.pub", confbase);
+
 	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
 	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
 
@@ -318,13 +330,6 @@ static bool keygen(int bits)
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
 	free(filename);
-
-	get_config_string(lookup_config(config_tree, "Name"), &name);
-
-	if(name)
-		asprintf(&filename, "%s/hosts/%s", confbase, name);
-	else
-		asprintf(&filename, "%s/rsa_key.pub", confbase);
 
 	f = ask_and_open(filename, _("public RSA key"), "a");
 
