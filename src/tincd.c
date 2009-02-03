@@ -294,15 +294,10 @@ static bool keygen(int bits)
 
 	get_config_string(lookup_config(config_tree, "Name"), &name);
 
-	if(name) {
-		if(!check_id(name)) {
-			fprintf(stderr, _("Invalid name for myself!\n"));
-			return false;
-		}
-		asprintf(&filename, "%s/hosts/%s", confbase, name);
-		free(name);
-	} else
-		asprintf(&filename, "%s/rsa_key.pub", confbase);
+	if(name && !check_id(name)) {
+		fprintf(stderr, _("Invalid name for myself!\n"));
+		return false;
+	}
 
 	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
 	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
@@ -314,34 +309,41 @@ static bool keygen(int bits)
 		fprintf(stderr, _("Done.\n"));
 
 	asprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(filename, _("private RSA key"), "a");
+	f = ask_and_open(filename, _("private RSA key"));
 
 	if(!f)
 		return false;
+
+	if(disable_old_keys(f))
+		fprintf(stderr, _("Warning: old key(s) found and disabled.\n"));
   
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
 	fchmod(fileno(f), 0600);
 #endif
 		
-	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
-
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
 	free(filename);
 
-	f = ask_and_open(filename, _("public RSA key"), "a");
+	if(name)
+		asprintf(&filename, "%s/hosts/%s", confbase, name);
+	else
+		asprintf(&filename, "%s/rsa_key.pub", confbase);
+
+	f = ask_and_open(filename, _("public RSA key"));
 
 	if(!f)
 		return false;
 
-	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
+	if(disable_old_keys(f))
+		fprintf(stderr, _("Warning: old key(s) found and disabled.\n"));
 
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
 	free(filename);
+	if(name)
+		free(name);
 
 	return true;
 }

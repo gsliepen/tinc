@@ -58,7 +58,8 @@ extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
 extern int read_config_file(avl_tree_t *, const char *);
 extern bool read_server_config(void);
-extern FILE *ask_and_open(const char *, const char *, const char *);
+extern FILE *ask_and_open(const char *, const char *);
 extern bool is_safe_path(const char *);
+extern bool disable_old_keys(FILE *);
 
 #endif							/* __TINC_CONF_H__ */

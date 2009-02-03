@@ -429,7 +429,7 @@ bool read_server_config()
 	return x == 0;
 }
 
-FILE *ask_and_open(const char *filename, const char *what, const char *mode)
+FILE *ask_and_open(const char *filename, const char *what)
 {
 	FILE *r;
 	char *directory;
@@ -479,7 +479,7 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 
 	/* Open it first to keep the inode busy */
 
-	r = fopen(fn, mode);
+	r = fopen(fn, "r+") ?: fopen(fn, "w+");
 
 	if(!r) {
 		fprintf(stderr, _("Error opening file `%s': %s\n"),
@@ -491,4 +491,35 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 	free(fn);
 
 	return r;
+}
+
+bool disable_old_keys(FILE *f) {
+	char buf[100];
+	long pos;
+	bool disabled = false;
+
+	rewind(f);
+	pos = ftell(f);
+
+	while(fgets(buf, sizeof buf, f)) {
+		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
+			buf[11] = 'O';
+			buf[12] = 'L';
+			buf[13] = 'D';
+			fseek(f, pos, SEEK_SET);
+			fputs(buf, f);
+			disabled = true;
+		}
+		else if(!strncmp(buf, "-----END RSA", 12)) {	
+			buf[ 9] = 'O';
+			buf[10] = 'L';
+			buf[11] = 'D';
+			fseek(f, pos, SEEK_SET);
+			fputs(buf, f);
+			disabled = true;
+		}
+		pos = ftell(f);
+	}
+
+	return disabled;
 }
