@@ -83,14 +83,18 @@ bool add_subnet_h(connection_t *c)
 
 	owner = lookup_node(name);
 
+	if(tunnelserver && owner != myself && owner != c->node) {
+		/* in case of tunnelserver, ignore indirect subnet registrations */
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Ignoring indirect %s from %s (%s) for %s"),
+				   "ADD_SUBNET", c->name, c->hostname, subnetstr);
+		return true;
+	}
+
 	if(!owner) {
 		owner = new_node();
 		owner->name = xstrdup(name);
 		node_add(owner);
 	}
-
-	if(tunnelserver && owner != myself && owner != c->node)
-		return false;
 
 	/* Check if we already know this subnet */
 
