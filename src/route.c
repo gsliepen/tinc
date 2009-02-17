@@ -521,6 +521,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 	struct nd_opt_hdr opt;
 	subnet_t *subnet;
 	uint16_t checksum;
+	bool has_opt;
 
 	struct {
 		struct in6_addr ip6_src;	/* source address */
@@ -531,8 +532,10 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	cp();
 
-	if(!checklength(source, packet, ether_size + ip6_size + ns_size + opt_size + ETH_ALEN))
+	if(!checklength(source, packet, ether_size + ip6_size + ns_size))
 		return;
+	
+	has_opt = packet->len >= ether_size + ip6_size + ns_size + opt_size + ETH_ALEN;
 	
 	if(source != myself) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Got neighbor solicitation request from %s (%s) while in router mode!"), source->name, source->hostname);
@@ -543,7 +546,8 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	memcpy(&ip6, packet->data + ether_size, ip6_size);
 	memcpy(&ns, packet->data + ether_size + ip6_size, ns_size);
-	memcpy(&opt, packet->data + ether_size + ip6_size + ns_size, opt_size);
+	if(has_opt)
+		memcpy(&opt, packet->data + ether_size + ip6_size + ns_size, opt_size);
 
 	/* First, snatch the source address from the neighbor solicitation packet */
 
@@ -553,7 +557,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 	/* Check if this is a valid neighbor solicitation request */
 
 	if(ns.nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT ||
-	   opt.nd_opt_type != ND_OPT_SOURCE_LINKADDR) {
+	   (has_opt && opt.nd_opt_type != ND_OPT_SOURCE_LINKADDR)) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: received unknown type neighbor solicitation request"));
 		return;
 	}
@@ -562,15 +566,20 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	pseudo.ip6_src = ip6.ip6_src;
 	pseudo.ip6_dst = ip6.ip6_dst;
-	pseudo.length = htonl(ns_size + opt_size + ETH_ALEN);
+	if(has_opt)
+		pseudo.length = htonl(ns_size + opt_size + ETH_ALEN);
+	else
+		pseudo.length = htonl(ns_size);
 	pseudo.next = htonl(IPPROTO_ICMPV6);
 
 	/* Generate checksum */
 
 	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
-	checksum = inet_checksum(&opt, opt_size, checksum);
-	checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
+	if(has_opt) {
+		checksum = inet_checksum(&opt, opt_size, checksum);
+		checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
+	}
 
 	if(checksum) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet: checksum error for neighbor solicitation request"));
@@ -608,7 +617,8 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 	ip6.ip6_dst = ip6.ip6_src;			/* swap destination and source protocoll address */
 	ip6.ip6_src = ns.nd_ns_target;
 
-	memcpy(packet->data + ether_size + ip6_size + ns_size + opt_size, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */
+	if(has_opt)
+		memcpy(packet->data + ether_size + ip6_size + ns_size + opt_size, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */
 
 	ns.nd_ns_cksum = 0;
 	ns.nd_ns_type = ND_NEIGHBOR_ADVERT;
@@ -619,15 +629,20 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	pseudo.ip6_src = ip6.ip6_src;
 	pseudo.ip6_dst = ip6.ip6_dst;
-	pseudo.length = htonl(ns_size + opt_size + ETH_ALEN);
+	if(has_opt)
+		pseudo.length = htonl(ns_size + opt_size + ETH_ALEN);
+	else
+		pseudo.length = htonl(ns_size);
 	pseudo.next = htonl(IPPROTO_ICMPV6);
 
 	/* Generate checksum */
 
 	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
-	checksum = inet_checksum(&opt, opt_size, checksum);
-	checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
+	if(has_opt) {
+		checksum = inet_checksum(&opt, opt_size, checksum);
+		checksum = inet_checksum(packet->data + ether_size + ip6_size + ns_size + opt_size, ETH_ALEN, checksum);
+	}
 
 	ns.nd_ns_hdr.icmp6_cksum = checksum;
 
@@ -635,7 +650,8 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 
 	memcpy(packet->data + ether_size, &ip6, ip6_size);
 	memcpy(packet->data + ether_size + ip6_size, &ns, ns_size);
-	memcpy(packet->data + ether_size + ip6_size + ns_size, &opt, opt_size);
+	if(has_opt)
+		memcpy(packet->data + ether_size + ip6_size + ns_size, &opt, opt_size);
 
 	send_packet(source, packet);
 }
