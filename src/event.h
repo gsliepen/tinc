@@ -1,6 +1,6 @@
 /*
     event.h -- header for event.c
-    Copyright (C) 2002-2007 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2002-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2002-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
