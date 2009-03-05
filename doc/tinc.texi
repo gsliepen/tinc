@@ -1015,7 +1015,7 @@ in each host configuration file, if you want to be able to establish a
 connection with that host.
 
 @cindex Subnet
-@item Subnet = <@var{address}[/@var{prefixlength}]>
+@item Subnet = <@var{address}[/@var{prefixlength}[#@var{weight}]]>
 The subnet which this tinc daemon will serve.
 Tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
 If the packet matches a subnet,
@@ -1038,6 +1038,12 @@ Prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
+
+A Subnet can be given a weight to indicate its priority over identical Subnets
+owned by different nodes. The default weight is 10. Lower values indicate
+higher priority. Packets will be sent to the node with the highest priority,
+unless that node is not reachable, in which case the node with the next highest
+priority will be tried, and so on.
 
 @cindex TCPonly
 @item TCPonly = <yes|no> (no)

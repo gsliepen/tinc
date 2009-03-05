@@ -313,6 +313,7 @@ void sssp_bfs(void)
 
 void graph(void)
 {
+	subnet_cache_flush();
 	sssp_bfs();
 	mst_kruskal();
 	graph_changed = true;

@@ -394,7 +394,7 @@ Either the PEM format is used, or exactly one of the above two options must be s
 in each host configuration file,
 if you want to be able to establish a connection with that host.
 
-.It Va Subnet Li = Ar address Ns Op Li / Ns Ar prefixlength
+.It Va Subnet Li = Ar address Ns Op Li / Ns Ar prefixlength Ns Op Li # Ns Ar weight
 The subnet which this tinc daemon will serve.
 .Nm tinc
 tries to look up which other daemon it should send a packet to by searching the appropriate subnet.
@@ -415,6 +415,13 @@ Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
 IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
+
+.Pp
+A Subnet can be given a weight to indicate its priority over identical Subnets
+owned by different nodes.  The default weight is 10. Lower values indicate
+higher priority. Packets will be sent to the node with the highest priority,
+unless that node is not reachable, in which case the node with the next highest
+priority will be tried, and so on.
 
 .It Va TCPOnly Li = yes | no Pq no
 If this variable is set to yes,
