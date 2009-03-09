@@ -483,7 +483,7 @@ bool send_ack(connection_t *c)
 	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
 		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 
-	if((!get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) || choice) && (myself->options & OPTION_PMTU_DISCOVERY))
+	if(myself->options & OPTION_PMTU_DISCOVERY)
 		c->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
@@ -561,6 +561,10 @@ bool ack_h(connection_t *c)
 
 	n->connection = c;
 	c->node = n;
+	if(!(c->options & options & OPTION_PMTU_DISCOVERY)) {
+		c->options &= ~OPTION_PMTU_DISCOVERY;
+		options &= ~OPTION_PMTU_DISCOVERY;
+	}
 	c->options |= options;
 
 	if(get_config_int(lookup_config(c->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
