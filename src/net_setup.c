@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -242,9 +242,6 @@ bool setup_myself(void) {
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
 		myself->options |= OPTION_TCPONLY;
 
-	if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice)
-		myself->options |= OPTION_PMTU_DISCOVERY;
-
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
 
@@ -264,6 +261,10 @@ bool setup_myself(void) {
 		free(mode);
 	} else
 		routing_mode = RMODE_ROUTER;
+
+	if(routing_mode == RMODE_ROUTER)
+		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice)
+			myself->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
@@ -490,7 +491,7 @@ bool setup_network_connections(void) {
 		pingtimeout = pinginterval;
 
 	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
-		maxoutbufsize = 4 * MTU;
+		maxoutbufsize = 10 * MTU;
 
 	if(!setup_myself())
 		return false;
@@ -514,21 +515,16 @@ void close_network_connections(void) {
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
-
-		if(c->outgoing) {
-			if(c->outgoing->ai)
-				freeaddrinfo(c->outgoing->ai);
-			free(c->outgoing->name);
-			free(c->outgoing);
-			c->outgoing = NULL;
-		}
-
+		c->outgoing = false;
 		terminate_connection(c, false);
 	}
+
+	list_delete_list(outgoing_list);
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
 		terminate_connection(myself->connection, false);
+		free_connection(myself->connection);
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
@@ -551,6 +547,8 @@ void close_network_connections(void) {
 	exit_connections();
 
 	execute_script("tinc-down", envp);
+
+	if(myport) free(myport);
 
 	for(i = 0; i < 4; i++)
 		free(envp[i]);

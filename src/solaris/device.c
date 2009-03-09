@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Solaris tun device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,13 +31,14 @@
 #include "logger.h"
 #include "net.h"
 #include "utils.h"
+#include "xalloc.h"
 
 #define DEFAULT_DEVICE "/dev/tun"
 
 int device_fd = -1;
 char *device = NULL;
 char *iface = NULL;
-char *device_info = NULL;
+static char *device_info = NULL;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
@@ -50,7 +51,7 @@ bool setup_device(void) {
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = DEFAULT_DEVICE;
+		device = xstrdup(DEFAULT_DEVICE);
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
 		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
@@ -111,6 +112,9 @@ void close_device(void) {
 	cp();
 
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {

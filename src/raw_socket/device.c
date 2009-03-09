@@ -1,7 +1,7 @@
 /*
     device.c -- raw socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,12 +29,13 @@
 #include "logger.h"
 #include "utils.h"
 #include "route.h"
+#include "xalloc.h"
 
 int device_fd = -1;
-char *device;
-char *iface;
-char ifrname[IFNAMSIZ];
-char *device_info;
+char *device = NULL;
+char *iface = NULL;
+static char ifrname[IFNAMSIZ];
+static char *device_info;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
@@ -45,12 +46,11 @@ bool setup_device(void) {
 
 	cp();
 
-	if(!get_config_string
-		  (lookup_config(config_tree, "Interface"), &iface))
-		iface = "eth0";
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = xstrdup("eth0");
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = iface;
+		device = xstrdup(iface);
 
 	device_info = _("raw socket");
 
@@ -88,6 +88,9 @@ void close_device(void) {
 	cp();
 
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {

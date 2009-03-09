@@ -9,10 +9,7 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = config.rpath mkinstalldirs have.h system.h COPYING.README depcomp
 
 ChangeLog:
-	svn log > ChangeLog
-
-svn-clean: maintainer-clean
-	svn status --no-ignore | sed -n 's/^[?I] \+//p' | tr '\012' '\0' | xargs -r0 rm -rf
+	git log > ChangeLog
 
 deb:
 	dpkg-buildpackage -rfakeroot

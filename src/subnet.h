@@ -1,6 +1,6 @@
 /*
     subnet.h -- header for subnet.c
-    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@ typedef struct subnet_t {
 
 	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
 	time_t expires;			/* expiry time */
+	int weight;			/* weight (higher value is higher priority) */
 
 	/* And now for the actual subnet: */
 
@@ -82,5 +83,6 @@ extern subnet_t *lookup_subnet_mac(const mac_t *);
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern int dump_subnets(struct evbuffer *);
+extern void subnet_cache_flush(void);
 
 #endif							/* __TINC_SUBNET_H__ */

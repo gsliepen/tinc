@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -83,6 +83,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
+		packet.priority = 0;
 
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending MTU probe length %d to %s (%s)"), len, n->name, n->hostname);
 
@@ -244,6 +245,8 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		inpkt = outpkt;
 	}
 
+	inpkt->priority = 0;
+
 	if(!inpkt->data[12] && !inpkt->data[13])
 		mtu_probe_h(n, inpkt);
 	else
@@ -256,6 +259,10 @@ void receive_tcppacket(connection_t *c, char *buffer, int len) {
 	cp();
 
 	outpkt.len = len;
+	if(c->options & OPTION_TCPONLY)
+		outpkt.priority = 0;
+	else
+		outpkt.priority = -1;
 	memcpy(outpkt.data, buffer, len);
 
 	receive_packet(c->node, &outpkt);
@@ -269,7 +276,6 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *outpkt;
 	int origlen;
 	size_t outlen;
-	vpn_packet_t *copy;
 	static int priority = 0;
 	int origpriority;
 	int sock;
@@ -280,24 +286,25 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(!n->status.validkey) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				   _("No valid key known yet for %s (%s), queueing packet"),
+				   _("No valid key known yet for %s (%s), forwarding via TCP"),
 				   n->name, n->hostname);
-
-		/* Since packet is on the stack of handle_tap_input(), we have to make a copy of it first. */
-
-		*(copy = xmalloc(sizeof *copy)) = *inpkt;
-
-		list_insert_tail(n->queue, copy);
-
-		if(n->queue->count > MAXQUEUELENGTH)
-			list_delete_head(n->queue);
 
 		if(!n->status.waitingforkey)
 			send_req_key(n->nexthop->connection, myself, n);
 
 		n->status.waitingforkey = true;
 
+		send_tcppacket(n->nexthop->connection, origpkt);
+
 		return;
+	}
+
+	if(!n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
+		ifdebug(TRAFFIC) logger(LOG_INFO,
+				_("No minimum MTU established yet for %s (%s), forwarding via TCP"),
+				n->name, n->hostname);
+
+		send_tcppacket(n->nexthop->connection, origpkt);
 	}
 
 	origlen = inpkt->len;
@@ -403,13 +410,13 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 		return;
 	}
 
-	via = (n->via == myself) ? n->nexthop : n->via;
+	via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
 	if(via != n)
-		ifdebug(TRAFFIC) logger(LOG_ERR, _("Sending packet to %s via %s (%s)"),
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending packet to %s via %s (%s)"),
 			   n->name, via->name, n->via->hostname);
 
-	if((myself->options | via->options) & OPTION_TCPONLY) {
+	if(packet->priority == -1 || ((myself->options | via->options) & OPTION_TCPONLY)) {
 		if(!send_tcppacket(via->connection, packet))
 			terminate_connection(via->connection, true);
 	} else
@@ -438,21 +445,8 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	}
 }
 
-void flush_queue(node_t *n) {
-	list_node_t *node, *next;
-
-	cp();
-
-	ifdebug(TRAFFIC) logger(LOG_INFO, _("Flushing queue for %s (%s)"), n->name, n->hostname);
-
-	for(node = n->queue->head; node; node = next) {
-		next = node->next;
-		send_udppacket(n, node->data);
-		list_delete_node(n->queue, node);
-	}
-}
-
-void handle_incoming_vpn_data(int sock, short events, void *data) {
+void handle_incoming_vpn_data(int sock, short events, void *data)
+{
 	vpn_packet_t pkt;
 	char *hostname;
 	sockaddr_t from;

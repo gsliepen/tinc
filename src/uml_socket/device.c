@@ -1,7 +1,7 @@
 /*
     device.c -- UML network socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,9 +36,9 @@ static int request_fd = -1;
 static int data_fd = -1;
 static int write_fd = -1;
 static int state = 0;
-char *device;
+char *device = NULL;
 char *iface = NULL;
-char *device_info;
+static char *device_info;
 
 extern char *identname;
 extern bool running;
@@ -169,6 +169,9 @@ void close_device(void) {
 		close(write_fd);
 
 	unlink(device);
+
+	free(device);
+	if(iface) free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {

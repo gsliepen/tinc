@@ -1,6 +1,6 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -59,8 +59,6 @@ typedef struct node_t {
 	int maclength;				/* Portion of digest to use */
 
 	int compression;			/* Compressionlevel, 0 = no compression */
-
-	list_t *queue;				/* Queue for packets awaiting to be encrypted */
 
 	int distance;
 	struct node_t *nexthop;			/* nearest node from us to him */

@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "net.h"
 #include "route.h"
 #include "utils.h"
+#include "xalloc.h"
 
 #define DEFAULT_DEVICE "/dev/tun0"
 
@@ -37,12 +38,12 @@ typedef enum device_type {
 } device_type_t;
 
 int device_fd = -1;
-char *device;
-char *iface;
-char *device_info;
+char *device = NULL;
+char *iface = NULL;
+static char *device_info = NULL;
 static int device_total_in = 0;
 static int device_total_out = 0;
-#ifdef HAVE_OPENBSD
+#if defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
@@ -54,10 +55,10 @@ bool setup_device(void) {
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = DEFAULT_DEVICE;
+		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
 		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
@@ -78,7 +79,7 @@ bool setup_device(void) {
 			return false;
 		}
 	} else {
-		if(strstr(device, "tap"))
+		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER)
 			device_type = DEVICE_TYPE_TAP;
 	}
 
@@ -139,6 +140,9 @@ void close_device(void) {
 	cp();
 
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {

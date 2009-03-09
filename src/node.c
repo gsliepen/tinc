@@ -1,6 +1,6 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,6 @@ node_t *new_node(void) {
 
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
-	n->queue = list_alloc((list_action_t) free);
 	n->mtu = MTU;
 	n->maxmtu = MTU;
 
@@ -82,9 +81,6 @@ node_t *new_node(void) {
 
 void free_node(node_t *n) {
 	cp();
-
-	if(n->queue)
-		list_delete_list(n->queue);
 
 	if(n->subnet_tree)
 		free_subnet_tree(n->subnet_tree);

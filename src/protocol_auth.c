@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -363,7 +363,7 @@ bool send_ack(connection_t *c) {
 	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
 		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 
-	if((get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) && choice) || myself->options & OPTION_PMTU_DISCOVERY)
+	if(myself->options & OPTION_PMTU_DISCOVERY)
 		c->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
@@ -448,6 +448,10 @@ bool ack_h(connection_t *c, char *request) {
 
 	n->connection = c;
 	c->node = n;
+	if(!(c->options & options & OPTION_PMTU_DISCOVERY)) {
+		c->options &= ~OPTION_PMTU_DISCOVERY;
+		options &= ~OPTION_PMTU_DISCOVERY;
+	}
 	c->options |= options;
 
 	if(get_config_int(lookup_config(c->config_tree, "PMTU"), &mtu) && mtu < n->mtu)

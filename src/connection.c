@@ -80,6 +80,9 @@ void free_connection(connection_t *c) {
 	if(c->hischallenge)
 		free(c->hischallenge);
 
+	if(c->config_tree)
+		exit_configuration(&c->config_tree);
+
 	if(c->buffer)
 		bufferevent_free(c->buffer);
 	
@@ -110,9 +113,9 @@ int dump_connections(struct evbuffer *out) {
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		if(evbuffer_add_printf(out,
-							   _(" %s at %s options %lx socket %d status %04x\n"),
-							   c->name, c->hostname, c->options, c->socket,
-							   c->status.value) == -1)
+				   _(" %s at %s options %lx socket %d status %04x\n"),
+				   c->name, c->hostname, c->options, c->socket,
+				   c->status.value) == -1)
 			return errno;
 	}
 

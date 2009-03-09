@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ int device_fd = 0;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
-char *device_info = NULL;
+static char *device_info = NULL;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
@@ -52,7 +52,7 @@ static struct packetbuf {
 
 static int nbufs = 64;
 
-DWORD WINAPI tapreader(void *bla) {
+static DWORD WINAPI tapreader(void *bla) {
 	int sock, err, status;
 	struct addrinfo *ai;
 	struct addrinfo hint = {
@@ -311,6 +311,9 @@ void close_device(void) {
 	cp();
 
 	CloseHandle(device_handle);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {

@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -229,6 +229,14 @@ static void make_names(void)
 	}
 }
 
+static void free_names() {
+	if (identname) free(identname);
+	if (netname) free(netname);
+	if (controlsocketname) free(controlsocketname);
+	if (logfilename) free(logfilename);
+	if (confbase) free(confbase);
+}
+
 int main(int argc, char **argv)
 {
 	program_name = argv[0];
@@ -245,7 +253,7 @@ int main(int argc, char **argv)
 	if(show_version) {
 		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2007 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf(_("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -331,10 +339,10 @@ int main2(int argc, char **argv)
 
 	/* Shutdown properly. */
 
-	close_network_connections();
-
 	ifdebug(CONNECTIONS)
 		dump_device_stats();
+
+	close_network_connections();
 
 end:
 	logger(LOG_NOTICE, _("Terminating"));

@@ -1,7 +1,7 @@
 /*
     net.h -- header for net.c
     Copyright (C) 1998-2005 Ivo Timmermans <zarq@iname.com>
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,8 +37,6 @@
 #define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
 #define MAXSOCKETS 8			/* Probably overkill... */
-
-#define MAXQUEUELENGTH 8		/* Maximum number of packats in a single queue */
 
 typedef struct mac_t {
 	uint8_t x[6];
@@ -87,17 +85,6 @@ typedef struct vpn_packet_t {
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
-typedef struct queue_element_t {
-	void *packet;
-	struct queue_element_t *prev;
-	struct queue_element_t *next;
-} queue_element_t;
-
-typedef struct packet_queue_t {
-	queue_element_t *head;
-	queue_element_t *tail;
-} packet_queue_t;
-
 typedef struct listen_socket_t {
 	struct event ev_tcp;
 	struct event ev_udp;
@@ -107,6 +94,7 @@ typedef struct listen_socket_t {
 } listen_socket_t;
 
 #include "conf.h"
+#include "list.h"
 
 typedef struct outgoing_t {
 	char *name;
@@ -116,6 +104,8 @@ typedef struct outgoing_t {
 	struct addrinfo *aip;
 	struct event ev;
 } outgoing_t;
+
+extern list_t *outgoing_list;
 
 extern int maxoutbufsize;
 extern int seconds_till_retry;

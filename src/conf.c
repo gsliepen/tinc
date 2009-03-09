@@ -2,7 +2,7 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 		  2000 Cris van Pelt
 
     This program is free software; you can redistribute it and/or modify
@@ -287,6 +287,8 @@ static char *readline(FILE * fp, char **buf, size_t *buflen) {
 			size = newsize;
 		} else {
 			*newline = '\0';	/* kill newline */
+			if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
+				newline[-1] = '\0';
 			break;				/* yay */
 		}
 	}

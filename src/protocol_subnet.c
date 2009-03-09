@@ -1,7 +1,7 @@
 /*
     protocol_subnet.c -- handle the meta-protocol, subnets
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -83,14 +83,18 @@ bool add_subnet_h(connection_t *c, char *request)
 
 	owner = lookup_node(name);
 
+	if(tunnelserver && owner != myself && owner != c->node) {
+		/* in case of tunnelserver, ignore indirect subnet registrations */
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Ignoring indirect %s from %s (%s) for %s"),
+				   "ADD_SUBNET", c->name, c->hostname, subnetstr);
+		return true;
+	}
+
 	if(!owner) {
 		owner = new_node();
 		owner->name = xstrdup(name);
 		node_add(owner);
 	}
-
-	if(tunnelserver && owner != myself && owner != c->node)
-		return false;
 
 	/* Check if we already know this subnet */
 

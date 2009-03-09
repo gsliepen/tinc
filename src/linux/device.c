@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include "net.h"
 #include "route.h"
 #include "utils.h"
+#include "xalloc.h"
 
 typedef enum device_type_t {
 	DEVICE_TYPE_ETHERTAP,
@@ -43,10 +44,10 @@ typedef enum device_type_t {
 
 int device_fd = -1;
 static device_type_t device_type;
-char *device;
-char *iface;
-char ifrname[IFNAMSIZ];
-char *device_info;
+char *device = NULL;
+char *iface = NULL;
+static char ifrname[IFNAMSIZ];
+static char *device_info;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
@@ -57,13 +58,13 @@ bool setup_device(void) {
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = DEFAULT_DEVICE;
+		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 #ifdef HAVE_LINUX_IF_TUN_H
-		iface = netname;
+		iface = xstrdup(netname);
 #else
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 #endif
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
@@ -91,11 +92,13 @@ bool setup_device(void) {
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		iface = ifrname;
+		if(iface) free(iface);
+		iface = xstrdup(ifrname);
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
 		logger(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		iface = ifrname;
+		if(iface) free(iface);
+		iface = xstrdup(ifrname);
 	} else
 #endif
 	{
@@ -103,7 +106,9 @@ bool setup_device(void) {
 			overwrite_mac = true;
 		device_info = _("Linux ethertap device");
 		device_type = DEVICE_TYPE_ETHERTAP;
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		if(iface)
+			free(iface);
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 	}
 
 	logger(LOG_INFO, _("%s is a %s"), device, device_info);
@@ -115,6 +120,9 @@ void close_device(void) {
 	cp();
 	
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
 bool read_packet(vpn_packet_t *packet) {
