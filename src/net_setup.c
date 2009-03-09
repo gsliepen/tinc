@@ -547,7 +547,7 @@ bool setup_network_connections(void)
 		pingtimeout = pinginterval;
 
 	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
-		maxoutbufsize = 4 * MTU;
+		maxoutbufsize = 10 * MTU;
 
 	if(!setup_myself())
 		return false;
