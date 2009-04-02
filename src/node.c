@@ -42,16 +42,7 @@ static int node_compare(const node_t *a, const node_t *b)
 
 static int node_udp_compare(const node_t *a, const node_t *b)
 {
-	int result;
-
-	cp();
-
-	result = sockaddrcmp(&a->address, &b->address);
-
-	if(result)
-		return result;
-
-	return (a->name && b->name) ? strcmp(a->name, b->name) : 0;
+       return sockaddrcmp(&a->address, &b->address);
 }
 
 void init_nodes(void)
@@ -78,7 +69,8 @@ node_t *new_node(void)
 
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
-	EVP_CIPHER_CTX_init(&n->packet_ctx);
+	EVP_CIPHER_CTX_init(&n->inctx);
+	EVP_CIPHER_CTX_init(&n->outctx);
 	n->mtu = MTU;
 	n->maxmtu = MTU;
 
@@ -89,8 +81,11 @@ void free_node(node_t *n)
 {
 	cp();
 
-	if(n->key)
-		free(n->key);
+	if(n->inkey)
+		free(n->inkey);
+
+	if(n->outkey)
+		free(n->outkey);
 
 	if(n->subnet_tree)
 		free_subnet_tree(n->subnet_tree);
@@ -100,7 +95,8 @@ void free_node(node_t *n)
 
 	sockaddrfree(&n->address);
 
-	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
+	EVP_CIPHER_CTX_cleanup(&n->inctx);
+	EVP_CIPHER_CTX_cleanup(&n->outctx);
 
 	if(n->mtuevent)
 		event_del(n->mtuevent);
@@ -142,6 +138,7 @@ void node_del(node_t *n)
 	}
 
 	avl_delete(node_tree, n);
+	avl_delete(node_udp_tree, n);
 }
 
 node_t *lookup_node(char *name)
@@ -167,6 +164,25 @@ node_t *lookup_node_udp(const sockaddr_t *sa)
 	return avl_search(node_udp_tree, &n);
 }
 
+void update_node_udp(node_t *n, const sockaddr_t *sa)
+{
+	avl_delete(node_udp_tree, n);
+
+	if(n->hostname)
+		free(n->hostname);
+
+	if(sa) {
+		n->address = *sa;
+		n->hostname = sockaddr2hostname(&n->address);
+		avl_delete(node_udp_tree, n);
+		avl_insert(node_udp_tree, n);
+		logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
+	} else {
+		memset(&n->address, 0, sizeof n->address);
+		logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
+	}
+}
+
 void dump_nodes(void)
 {
 	avl_node_t *node;
@@ -179,8 +195,8 @@ void dump_nodes(void)
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)"),
-			   n->name, n->hostname, n->cipher ? n->cipher->nid : 0,
-			   n->digest ? n->digest->type : 0, n->maclength, n->compression,
+			   n->name, n->hostname, n->outcipher ? n->outcipher->nid : 0,
+			   n->outdigest ? n->outdigest->type : 0, n->outmaclength, n->outcompression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}

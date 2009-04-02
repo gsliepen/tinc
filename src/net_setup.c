@@ -349,88 +349,72 @@ bool setup_myself(void)
 	if(get_config_string
 	   (lookup_config(myself->connection->config_tree, "Cipher"), &cipher)) {
 		if(!strcasecmp(cipher, "none")) {
-			myself->cipher = NULL;
+			myself->incipher = NULL;
 		} else {
-			myself->cipher = EVP_get_cipherbyname(cipher);
+			myself->incipher = EVP_get_cipherbyname(cipher);
 
-			if(!myself->cipher) {
+			if(!myself->incipher) {
 				logger(LOG_ERR, _("Unrecognized cipher type!"));
 				return false;
 			}
 		}
 	} else
-		myself->cipher = EVP_bf_cbc();
+		myself->incipher = EVP_bf_cbc();
 
-	if(myself->cipher)
-		myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
+	if(myself->incipher)
+		myself->inkeylength = myself->incipher->key_len + myself->incipher->iv_len;
 	else
-		myself->keylength = 1;
+		myself->inkeylength = 1;
 
 	myself->connection->outcipher = EVP_bf_ofb();
-
-	myself->key = xmalloc(myself->keylength);
-	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
 	keyexpires = now + keylifetime;
 	
-	if(myself->cipher) {
-		EVP_CIPHER_CTX_init(&packet_ctx);
-		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
-			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
-					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
-		}
-
-	}
-
 	/* Check if we want to use message authentication codes... */
 
-	if(get_config_string
-	   (lookup_config(myself->connection->config_tree, "Digest"), &digest)) {
+	if(get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest)) {
 		if(!strcasecmp(digest, "none")) {
-			myself->digest = NULL;
+			myself->indigest = NULL;
 		} else {
-			myself->digest = EVP_get_digestbyname(digest);
+			myself->indigest = EVP_get_digestbyname(digest);
 
-			if(!myself->digest) {
+			if(!myself->indigest) {
 				logger(LOG_ERR, _("Unrecognized digest type!"));
 				return false;
 			}
 		}
 	} else
-		myself->digest = EVP_sha1();
+		myself->indigest = EVP_sha1();
 
 	myself->connection->outdigest = EVP_sha1();
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"),
-		&myself->maclength)) {
-		if(myself->digest) {
-			if(myself->maclength > myself->digest->md_size) {
+	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->inmaclength)) {
+		if(myself->indigest) {
+			if(myself->inmaclength > myself->indigest->md_size) {
 				logger(LOG_ERR, _("MAC length exceeds size of digest!"));
 				return false;
-			} else if(myself->maclength < 0) {
+			} else if(myself->inmaclength < 0) {
 				logger(LOG_ERR, _("Bogus MAC length!"));
 				return false;
 			}
 		}
 	} else
-		myself->maclength = 4;
+		myself->inmaclength = 4;
 
 	myself->connection->outmaclength = 0;
 
 	/* Compression */
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"),
-		&myself->compression)) {
-		if(myself->compression < 0 || myself->compression > 11) {
+	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->incompression)) {
+		if(myself->incompression < 0 || myself->incompression > 11) {
 			logger(LOG_ERR, _("Bogus compression level!"));
 			return false;
 		}
 	} else
-		myself->compression = 0;
+		myself->incompression = 0;
 
 	myself->connection->outcompression = 0;
 

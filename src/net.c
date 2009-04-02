@@ -414,11 +414,19 @@ int main_loop(void)
 			/* Should we regenerate our key? */
 
 			if(keyexpires < now) {
-				ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
+				avl_node_t *node;
+				node_t *n;
 
-				RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
-				if(myself->cipher)
-					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len);
+				ifdebug(STATUS) logger(LOG_INFO, _("Expiring symmetric keys"));
+
+				for(node = node_tree->head; node; node = node->next) {
+					n = node->data;
+					if(n->inkey) {
+						free(n->inkey);
+						n->inkey = NULL;
+					}
+				}
+
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
 			}

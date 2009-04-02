@@ -168,6 +168,18 @@ static void receive_packet(node_t *n, vpn_packet_t *packet)
 	route(n, packet);
 }
 
+static bool try_mac(const node_t *n, const vpn_packet_t *inpkt)
+{
+	unsigned char hmac[EVP_MAX_MD_SIZE];
+
+	if(!n->indigest || !n->inmaclength || !n->inkey || inpkt->len < sizeof inpkt->seqno + n->inmaclength)
+		return false;
+
+	HMAC(n->indigest, n->inkey, n->inkeylength, (unsigned char *) &inpkt->seqno, inpkt->len - n->inmaclength, (unsigned char *)hmac, NULL);
+
+	return !memcmp(hmac, (char *) &inpkt->seqno + inpkt->len - n->inmaclength, n->inmaclength);
+}
+
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 {
 	vpn_packet_t pkt1, pkt2;
@@ -180,9 +192,15 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	cp();
 
+	if(!n->inkey) {
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got packet from %s (%s) but he hasn't got our key yet"),
+					n->name, n->hostname);
+		return;
+	}
+
 	/* Check packet length */
 
-	if(inpkt->len < sizeof(inpkt->seqno) + myself->maclength) {
+	if(inpkt->len < sizeof(inpkt->seqno) + n->inmaclength) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
 					n->name, n->hostname);
 		return;
@@ -190,12 +208,12 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	/* Check the message authentication code */
 
-	if(myself->digest && myself->maclength) {
-		inpkt->len -= myself->maclength;
-		HMAC(myself->digest, myself->key, myself->keylength,
+	if(n->indigest && n->inmaclength) {
+		inpkt->len -= n->inmaclength;
+		HMAC(n->indigest, n->inkey, n->inkeylength,
 			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
 
-		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, myself->maclength)) {
+		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, n->inmaclength)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
 					   n->name, n->hostname);
 			return;
@@ -204,13 +222,13 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	/* Decrypt the packet */
 
-	if(myself->cipher) {
+	if(n->incipher) {
 		outpkt = pkt[nextpkt++];
 
-		if(!EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_DecryptUpdate(&packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
+		if(!EVP_DecryptInit_ex(&n->inctx, NULL, NULL, NULL, NULL)
+				|| !EVP_DecryptUpdate(&n->inctx, (unsigned char *) &outpkt->seqno, &outlen,
 					(unsigned char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_DecryptFinal_ex(&packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_DecryptFinal_ex(&n->inctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
@@ -253,10 +271,10 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	/* Decompress the packet */
 
-	if(myself->compression) {
+	if(n->incompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, myself->compression)) < 0) {
+		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
 				  		 n->name, n->hostname);
 			return;
@@ -315,7 +333,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 				   n->name, n->hostname);
 
 		if(!n->status.waitingforkey)
-			send_req_key(n->nexthop->connection, myself, n);
+			send_req_key(n);
 
 		n->status.waitingforkey = true;
 
@@ -330,6 +348,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 				n->name, n->hostname);
 
 		send_tcppacket(n->nexthop->connection, origpkt);
+
+		return;
 	}
 
 	origlen = inpkt->len;
@@ -337,10 +357,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 
 	/* Compress the packet */
 
-	if(n->compression) {
+	if(n->outcompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->compression)) < 0) {
+		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->outcompression)) < 0) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while compressing packet to %s (%s)"),
 				   n->name, n->hostname);
 			return;
@@ -356,13 +376,13 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 
 	/* Encrypt the packet */
 
-	if(n->cipher) {
+	if(n->outcipher) {
 		outpkt = pkt[nextpkt++];
 
-		if(!EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_EncryptUpdate(&n->packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
+		if(!EVP_EncryptInit_ex(&n->outctx, NULL, NULL, NULL, NULL)
+				|| !EVP_EncryptUpdate(&n->outctx, (unsigned char *) &outpkt->seqno, &outlen,
 					(unsigned char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_EncryptFinal_ex(&n->outctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			goto end;
@@ -374,10 +394,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 
 	/* Add the message authentication code */
 
-	if(n->digest && n->maclength) {
-		HMAC(n->digest, n->key, n->keylength, (unsigned char *) &inpkt->seqno,
+	if(n->outdigest && n->outmaclength) {
+		HMAC(n->outdigest, n->outkey, n->outkeylength, (unsigned char *) &inpkt->seqno,
 			 inpkt->len, (unsigned char *) &inpkt->seqno + inpkt->len, NULL);
-		inpkt->len += n->maclength;
+		inpkt->len += n->outmaclength;
 	}
 
 	/* Determine which socket we have to use */
@@ -476,6 +496,30 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 	}
 }
 
+static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
+	avl_node_t *node;
+	edge_t *e;
+	node_t *n = NULL;
+
+	for(node = edge_weight_tree->head; node; node = node->next) {
+		e = node->data;
+
+		if(sockaddrcmp_noport(from, &e->address))
+			continue;
+
+		if(!n)
+			n = e->to;
+
+		if(!try_mac(e->to, pkt))
+			continue;
+
+		n = e->to;
+		break;
+	}
+
+	return n;
+}
+
 void handle_incoming_vpn_data(int sock)
 {
 	vpn_packet_t pkt;
@@ -498,11 +542,15 @@ void handle_incoming_vpn_data(int sock)
 	n = lookup_node_udp(&from);
 
 	if(!n) {
-		hostname = sockaddr2hostname(&from);
-		logger(LOG_WARNING, _("Received UDP packet from unknown source %s"),
-			   hostname);
-		free(hostname);
-		return;
+		n = try_harder(&from, &pkt);
+		if(n)
+			update_node_udp(n, &from);
+		else {
+			hostname = sockaddr2hostname(&from);
+			logger(LOG_WARNING, _("Received UDP packet from unknown source %s"), hostname);
+			free(hostname);
+			return;
+		}
 	}
 
 	receive_udppacket(n, &pkt);

@@ -51,15 +51,24 @@ typedef struct node_t {
 
 	node_status_t status;
 
-	const EVP_CIPHER *cipher;		/* Cipher type for UDP packets */
-	char *key;				/* Cipher key and iv */
-	int keylength;				/* Cipher key and iv length */
-	EVP_CIPHER_CTX packet_ctx;		/* Cipher context */
+	const EVP_CIPHER *incipher;		/* Cipher type for UDP packets received from him */
+	char *inkey;				/* Cipher key and iv */
+	int inkeylength;			/* Cipher key and iv length */
+	EVP_CIPHER_CTX inctx;			/* Cipher context */
 	
-	const EVP_MD *digest;			/* Digest type for MAC */
-	int maclength;				/* Length of MAC */
+	const EVP_CIPHER *outcipher;		/* Cipher type for UDP packets sent to him*/
+	char *outkey;				/* Cipher key and iv */
+	int outkeylength;			/* Cipher key and iv length */
+	EVP_CIPHER_CTX outctx;			/* Cipher context */
+	
+	const EVP_MD *indigest;			/* Digest type for MAC of packets received from him */
+	int inmaclength;			/* Length of MAC */
 
-	int compression;			/* Compressionlevel, 0 = no compression */
+	const EVP_MD *outdigest;		/* Digest type for MAC of packets sent to him*/
+	int outmaclength;			/* Length of MAC */
+
+	int incompression;			/* Compressionlevel, 0 = no compression */
+	int outcompression;			/* Compressionlevel, 0 = no compression */
 
 	struct node_t *nexthop;			/* nearest node from us to him */
 	struct node_t *via;			/* next hop for UDP packets */
@@ -93,6 +102,7 @@ extern void node_add(node_t *);
 extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
+extern void update_node_udp(node_t *, const sockaddr_t *);
 extern void dump_nodes(void);
 
 #endif							/* __TINC_NODE_H__ */
