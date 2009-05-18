@@ -37,7 +37,7 @@
 pid_t read_pid (char *pidfile)
 {
   FILE *f;
-  long pid;
+  long pid = 0;
 
   if (!(f=fopen(pidfile,"r")))
     return 0;
