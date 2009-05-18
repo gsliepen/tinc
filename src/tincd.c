@@ -160,8 +160,13 @@ static bool parse_options(int argc, char **argv)
 				break;
 
 			case 'L':				/* no detach */
+#ifndef HAVE_MLOCKALL
+				logger(LOG_ERR, _("mlockall() not supported on this platform!"));
+				return false;
+#else
 				do_mlock = true;
 				break;
+#endif
 
 			case 'd':				/* inc debug level */
 				if(optarg)
@@ -511,20 +516,6 @@ int main(int argc, char **argv)
 
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
-	/* Lock all pages into memory if requested */
-
-	if(do_mlock)
-#ifdef HAVE_MLOCKALL
-		if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
-				   strerror(errno));
-#else
-	{
-		logger(LOG_ERR, _("mlockall() not supported on this platform!"));
-#endif
-		return -1;
-	}
-
 	g_argv = argv;
 
 	init_configuration(&config_tree);
@@ -569,6 +560,17 @@ int main2(int argc, char **argv)
 
 	if(!detach())
 		return 1;
+
+#ifdef HAVE_MLOCKALL
+	/* Lock all pages into memory if requested.
+	 * This has to be done after daemon()/fork() so it works for child.
+	 * No need to do that in parent as it's very short-lived. */
+	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+		   strerror(errno));
+		return 1;
+	}
+#endif
 
 	/* Setup sockets and open device. */
 
