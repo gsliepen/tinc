@@ -314,7 +314,7 @@ bool setup_myself(void)
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, _("PriorityInheritance not supported on this platform"));
+		logger(LOG_WARNING, _("%s not supported on this platform"), "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))

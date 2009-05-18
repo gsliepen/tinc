@@ -123,7 +123,7 @@ int setup_listen_socket(const sockaddr_t *sa)
 			return -1;
 		}
 #else
-		logger(LOG_WARNING, _("BindToInterface not supported on this platform"));
+		logger(LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
 #endif
 	}
 

@@ -161,8 +161,7 @@ static bool parse_options(int argc, char **argv)
 
 			case 'L':				/* no detach */
 #ifndef HAVE_MLOCKALL
-			/*	logger(LOG_ERR, _("%s not supported on this platform"), "mlockall()"); */
-				logger(LOG_ERR, _("mlockall() not supported on this platform!"));
+				logger(LOG_ERR, _("%s not supported on this platform"), "mlockall()");
 				return false;
 #else
 				do_mlock = true;
