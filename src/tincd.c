@@ -161,6 +161,7 @@ static bool parse_options(int argc, char **argv)
 
 			case 'L':				/* no detach */
 #ifndef HAVE_MLOCKALL
+			/*	logger(LOG_ERR, _("%s not supported on this platform"), "mlockall()"); */
 				logger(LOG_ERR, _("mlockall() not supported on this platform!"));
 				return false;
 #else
@@ -457,7 +458,8 @@ static bool drop_privs() {
 		uid = pw->pw_uid;
 		if (initgroups(switchuser, pw->pw_gid) != 0 ||
 		    setgid(pw->pw_gid) != 0) {
-			logger(LOG_ERR, _("%s failed"), "initgroups()");
+			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			       "initgroups", strerror(errno));
 			return false;
 		}
 		endgrent();
@@ -466,7 +468,8 @@ static bool drop_privs() {
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
 		if (chroot(confbase) != 0 || chdir("/") != 0) {
-			logger(LOG_ERR, _("%s failed"), "chroot()");
+			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			       "chroot", strerror(errno));
 			return false;
 		}
 		free(confbase);
@@ -474,7 +477,8 @@ static bool drop_privs() {
 	}
 	if (switchuser)
 		if (setuid(uid) != 0) {
-			logger(LOG_ERR, _("%s failed"), "setuid()");
+			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			       "setuid", strerror(errno));
 			return false;
 		}
 #endif
