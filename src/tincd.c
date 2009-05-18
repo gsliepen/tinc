@@ -465,7 +465,7 @@ static bool drop_privs() {
 	}
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
-		if (chroot(confbase) != 0 || chdir(".") != 0) {
+		if (chroot(confbase) != 0 || chdir("/") != 0) {
 			logger(LOG_ERR, _("%s failed"), "chroot()");
 			return false;
 		}
