@@ -8,7 +8,7 @@
 .Nd tinc VPN daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdDkKnL
+.Op Fl cdDkKnLRU
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -no-detach
 .Op Fl -debug Ns Op = Ns Ar LEVEL
@@ -19,6 +19,8 @@
 .Op Fl -logfile Ns Op = Ns Ar FILE
 .Op Fl -pidfile Ns = Ns Ar FILE
 .Op Fl -bypass-security
+.Op Fl -chroot
+.Op Fl -user Ns = Ns Ar USER
 .Op Fl -help
 .Op Fl -version
 .Sh DESCRIPTION
@@ -87,6 +89,14 @@ Under Windows this option will be ignored.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
+.It Fl -chroot
+With this option tinc chroots into the directory where network
+config is located (@sysconfdir@/tinc/NETNAME if -n option is used,
+or to the directory specified with -c option) after initialization.
+.It Fl -user Ns = Ns Ar USER
+setuid to the specified
+.Ar USER
+after initialization.
 .It Fl -help
 Display short list of options.
 .It Fl -version

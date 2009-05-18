@@ -39,6 +39,12 @@
 
 #include LZO1X_H
 
+#ifndef HAVE_MINGW
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
+#endif
+
 #include <getopt.h>
 #include "pidfile.h"
 
@@ -73,6 +79,12 @@ bool bypass_security = false;
 /* If nonzero, disable swapping for this process. */
 bool do_mlock = false;
 
+/* If nonzero, chroot to netdir after startup. */
+static bool do_chroot = false;
+
+/* If !NULL, do setuid to given user after startup */
+static const char *switchuser = NULL;
+
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
@@ -94,6 +106,8 @@ static struct option const long_options[] = {
 	{"debug", optional_argument, NULL, 'd'},
 	{"bypass-security", no_argument, NULL, 3},
 	{"mlock", no_argument, NULL, 'L'},
+	{"chroot", no_argument, NULL, 'R'},
+	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
 	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
@@ -119,6 +133,8 @@ static void usage(bool status)
 				"  -L, --mlock                Lock tinc into main memory.\n"
 				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
 				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
+				"  -R, --chroot               chroot to NET dir at startup.\n"
+				"  -U, --user=USER            setuid to given USER at startup.\n"
 				"      --help                 Display this help and exit.\n"
 				"      --version              Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
@@ -130,7 +146,7 @@ static bool parse_options(int argc, char **argv)
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -208,6 +224,14 @@ static bool parse_options(int argc, char **argv)
 					generate_keys &= ~7;	/* Round it to bytes */
 				} else
 					generate_keys = 1024;
+				break;
+
+			case 'R':				/* chroot to NETNAME dir */
+				do_chroot = true;
+				break;
+
+			case 'U':				/* setuid to USER */
+				switchuser = optarg;
 				break;
 
 			case 1:					/* show help */
@@ -407,6 +431,51 @@ static void free_names() {
 	if (confbase) free(confbase);
 }
 
+static bool drop_privs() {
+#ifdef HAVE_MINGW
+	if (switchuser) {
+		logger(LOG_ERR, _("%s not supported on this platform"), "-U");
+		return false;
+	}
+	if (do_chroot) {
+		logger(LOG_ERR, _("%s not supported on this platform"), "-R");
+		return false;
+	}
+#else
+	uid_t uid = 0;
+	if (switchuser) {
+		struct passwd *pw = getpwnam(switchuser);
+		if (!pw) {
+			logger(LOG_ERR, _("unknown user `%s'"), switchuser);
+			return false;
+		}
+		uid = pw->pw_uid;
+		if (initgroups(switchuser, pw->pw_gid) != 0 ||
+		    setgid(pw->pw_gid) != 0) {
+			logger(LOG_ERR, _("%s failed"), "initgroups()");
+			return false;
+		}
+		endgrent();
+		endpwent();
+	}
+	if (do_chroot) {
+		tzset();	/* for proper timestamps in logs */
+		if (chroot(confbase) != 0 || chdir(".") != 0) {
+			logger(LOG_ERR, _("%s failed"), "chroot()");
+			return false;
+		}
+		free(confbase);
+		confbase = xstrdup("");
+	}
+	if (switchuser)
+		if (setuid(uid) != 0) {
+			logger(LOG_ERR, _("%s failed"), "setuid()");
+			return false;
+		}
+#endif
+	return true;
+}
+
 int main(int argc, char **argv)
 {
 	program_name = argv[0];
@@ -506,6 +575,10 @@ int main2(int argc, char **argv)
 	if(!setup_network())
 		goto end;
 
+	/* drop privileges */
+	if (!drop_privs())
+		goto end;
+
 	/* Initiate all outgoing connections. */
 
 	try_outgoing_connections();
@@ -536,6 +609,6 @@ end:
 
 	exit_configuration(&config_tree);
 	free_names();
-	
+
 	return status;
 }

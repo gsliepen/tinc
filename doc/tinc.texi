@@ -1511,6 +1511,23 @@ Write PID to @var{file} instead of @file{@value{localstatedir}/run/tinc.@var{net
 Disables encryption and authentication.
 Only useful for debugging.
 
+@item -R, --chroot
+Change process root directory to the directory where the config file is
+located (@file{@value{sysconfdir}/tinc/@var{netname}/} as determined by
+-n/--net option or as given by -c/--config option), for added security.
+The chroot is performed after all the initialization is done, after
+writing pid files and opening network sockets.
+
+Note that this option alone does not do any good without -U/--user, below.
+
+Note also that tinc can't run scripts anymore (such as tinc-down or host-up),
+unless it's setup to be runnable inside chroot environment.
+
+@item -U, --user=@var{user}
+Switch to the given @var{user} after initialization, at the same time as
+chroot is performed (see --chroot above).  With this option tinc drops
+privileges, for added security.
+
 @item --help
 Display a short reminder of these runtime options and terminate.
 
