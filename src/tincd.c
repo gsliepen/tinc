@@ -500,12 +500,15 @@ int main2(int argc, char **argv)
 
 	if(!detach())
 		return 1;
-		
 
 	/* Setup sockets and open device. */
 
-	if(!setup_network_connections())
+	if(!setup_network())
 		goto end;
+
+	/* Initiate all outgoing connections. */
+
+	try_outgoing_connections();
 
 	/* Start main loop. It only exits when tinc is killed. */
 

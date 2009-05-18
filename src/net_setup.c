@@ -503,9 +503,9 @@ bool setup_myself(void)
 }
 
 /*
-  setup all initial network connections
+  initialize network
 */
-bool setup_network_connections(void)
+bool setup_network(void)
 {
 	cp();
 
@@ -535,8 +535,6 @@ bool setup_network_connections(void)
 
 	if(!setup_myself())
 		return false;
-
-	try_outgoing_connections();
 
 	return true;
 }
