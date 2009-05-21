@@ -545,12 +545,14 @@ void handle_incoming_vpn_data(int sock)
 		n = try_harder(&from, &pkt);
 		if(n)
 			update_node_udp(n, &from);
-		else {
+		else ifdebug(PROTOCOL) {
 			hostname = sockaddr2hostname(&from);
 			logger(LOG_WARNING, _("Received UDP packet from unknown source %s"), hostname);
 			free(hostname);
 			return;
 		}
+		else
+			return;
 	}
 
 	receive_udppacket(n, &pkt);
