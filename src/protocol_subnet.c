@@ -127,8 +127,11 @@ bool add_subnet_h(connection_t *c)
 			free_subnet(allowed);
 		}
 
-		if(!cfg)
+		if(!cfg) {
+			logger(LOG_WARNING, _("Unauthorized %s from %s (%s) for %s"),
+				"ADD_SUBNET", c->name, c->hostname, subnetstr);
 			return false;
+		}
 
 		free_subnet(allowed);
 	}
