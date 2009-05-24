@@ -307,7 +307,7 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @subsection Configuration of Darwin (MacOS/X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://www-user.rhrk.uni-kl.de/~nissler/tuntap/},
+Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices,
 and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
 The former driver is recommended.
