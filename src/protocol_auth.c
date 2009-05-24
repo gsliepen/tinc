@@ -130,8 +130,7 @@ bool send_metakey(connection_t *c)
 
 	buffer = alloca(2 * len + 1);
 	
-	if(!c->outkey)
-		c->outkey = xmalloc(len);
+	c->outkey = xrealloc(c->outkey, len);
 
 	if(!c->outctx)
 		c->outctx = xmalloc_and_zero(sizeof(*c->outctx));
@@ -227,8 +226,7 @@ bool metakey_h(connection_t *c)
 
 	/* Allocate buffers for the meta key */
 
-	if(!c->inkey)
-		c->inkey = xmalloc(len);
+	c->inkey = xrealloc(c->inkey, len);
 
 	if(!c->inctx)
 		c->inctx = xmalloc_and_zero(sizeof(*c->inctx));
@@ -317,8 +315,7 @@ bool send_challenge(connection_t *c)
 
 	buffer = alloca(2 * len + 1);
 
-	if(!c->hischallenge)
-		c->hischallenge = xmalloc(len);
+	c->hischallenge = xrealloc(c->hischallenge, len);
 
 	/* Copy random data to the buffer */
 
@@ -359,8 +356,7 @@ bool challenge_h(connection_t *c)
 
 	/* Allocate buffers for the challenge */
 
-	if(!c->mychallenge)
-		c->mychallenge = xmalloc(len);
+	c->mychallenge = xrealloc(c->mychallenge, len);
 
 	/* Convert the challenge from hexadecimal back to binary */
 
