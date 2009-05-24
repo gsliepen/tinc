@@ -127,9 +127,6 @@ bool req_key_h(connection_t *c)
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-		mykeyused = true;
-		from->received_seqno = 0;
-		memset(from->late, 0, sizeof(from->late));
 		send_ans_key(from);
 	} else {
 		if(tunnelserver)
@@ -153,18 +150,26 @@ bool send_ans_key(node_t *to)
 
 	cp();
 
-	if(!to->inkey) {
-		to->incipher = myself->incipher;
-		to->inkeylength = myself->inkeylength;
-		to->indigest = myself->indigest;
-		to->incompression = myself->incompression;
-		to->inkey = xmalloc(to->inkeylength);
+	// Set key parameters
+	to->incipher = myself->incipher;
+	to->inkeylength = myself->inkeylength;
+	to->indigest = myself->indigest;
+	to->incompression = myself->incompression;
 
-		RAND_pseudo_bytes((unsigned char *)to->inkey, to->inkeylength);
-		if(to->incipher)
-			EVP_DecryptInit_ex(&packet_ctx, to->incipher, NULL, (unsigned char *)to->inkey, (unsigned char *)to->inkey + to->incipher->key_len);
-	}
+	// Allocate memory for key
+	to->inkey = xrealloc(to->inkey, to->inkeylength);
 
+	// Create a new key
+	RAND_pseudo_bytes((unsigned char *)to->inkey, to->inkeylength);
+	if(to->incipher)
+		EVP_DecryptInit_ex(&to->inctx, to->incipher, NULL, (unsigned char *)to->inkey, (unsigned char *)to->inkey + to->incipher->key_len);
+
+	// Reset sequence number and late packet window
+	mykeyused = true;
+	to->received_seqno = 0;
+	memset(to->late, 0, sizeof(to->late));
+
+	// Convert to hexadecimal and send
 	key = alloca(2 * to->inkeylength + 1);
 	bin2hex(to->inkey, key, to->inkeylength);
 	key[to->outkeylength * 2] = '\0';
@@ -226,19 +231,13 @@ bool ans_key_h(connection_t *c)
 	}
 
 	/* Update our copy of the origin's packet key */
-
-	if(from->outkey)
-		free(from->outkey);
+	from->outkey = xrealloc(from->outkey, strlen(key) / 2);
 
 	from->outkey = xstrdup(key);
 	from->outkeylength = strlen(key) / 2;
-	hex2bin(from->outkey, from->outkey, from->outkeylength);
-	from->outkey[from->outkeylength] = '\0';
+	hex2bin(key, from->outkey, from->outkeylength);
 
-	from->status.validkey = true;
 	from->status.waitingforkey = false;
-	from->sent_seqno = 0;
-
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
@@ -292,6 +291,9 @@ bool ans_key_h(connection_t *c)
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
 		}
+
+	from->status.validkey = true;
+	from->sent_seqno = 0;
 
 	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
 		send_mtu_probe(from);

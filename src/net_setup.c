@@ -588,8 +588,6 @@ void close_network_connections(void)
 
 	if(myport) free(myport);
 
-	EVP_CIPHER_CTX_cleanup(&packet_ctx);
-
 	for(i = 0; i < 4; i++)
 		free(envp[i]);
 
