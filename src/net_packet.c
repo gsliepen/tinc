@@ -342,7 +342,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 		return;
 	}
 
-	if(!n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
+	if(n->options & OPTION_PMTU_DISCOVERY && !n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
 				_("No minimum MTU established yet for %s (%s), forwarding via TCP"),
 				n->name, n->hostname);
