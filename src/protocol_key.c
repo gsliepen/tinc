@@ -172,7 +172,7 @@ bool send_ans_key(node_t *to)
 	// Convert to hexadecimal and send
 	key = alloca(2 * to->inkeylength + 1);
 	bin2hex(to->inkey, key, to->inkeylength);
-	key[to->outkeylength * 2] = '\0';
+	key[to->inkeylength * 2] = '\0';
 
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 			myself->name, to->name, key,
