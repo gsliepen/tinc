@@ -32,6 +32,7 @@ extern sockaddr_t str2sockaddr(const char *, const char *);
 extern void sockaddr2str(const sockaddr_t *, char **, char **);
 extern char *sockaddr2hostname(const sockaddr_t *);
 extern int sockaddrcmp(const sockaddr_t *, const sockaddr_t *);
+extern int sockaddrcmp_noport(const sockaddr_t *, const sockaddr_t *);
 extern void sockaddrunmap(sockaddr_t *);
 extern void sockaddrfree(sockaddr_t *);
 extern void sockaddrcpy(sockaddr_t *, const sockaddr_t *);
