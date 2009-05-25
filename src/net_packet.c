@@ -103,15 +103,15 @@ void send_mtu_probe(node_t *n)
 	event_add(n->mtuevent);
 }
 
-void mtu_probe_h(node_t *n, vpn_packet_t *packet) {
+void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Got MTU probe length %d from %s (%s)"), packet->len, n->name, n->hostname);
 
 	if(!packet->data[0]) {
 		packet->data[0] = 1;
 		send_packet(n, packet);
 	} else {
-		if(n->minmtu < packet->len)
-			n->minmtu = packet->len;
+		if(n->minmtu < len)
+			n->minmtu = len;
 	}
 }
 
@@ -270,6 +270,8 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	/* Decompress the packet */
 
+	length_t origlen = inpkt->len;
+
 	if(n->incompression) {
 		outpkt = pkt[nextpkt++];
 
@@ -280,6 +282,8 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		}
 
 		inpkt = outpkt;
+
+		origlen -= MTU/64 + 20;
 	}
 
 	inpkt->priority = 0;
@@ -288,7 +292,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		n->connection->last_ping_time = now;
 
 	if(!inpkt->data[12] && !inpkt->data[13])
-		mtu_probe_h(n, inpkt);
+		mtu_probe_h(n, inpkt, origlen);
 	else
 		receive_packet(n, inpkt);
 }
