@@ -488,8 +488,14 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
 
-	if(from != myself)
+	if(from != myself) {
 		send_packet(myself, packet);
+
+		// In TunnelServer mode, do not forward broadcast packets.
+                // The MST might not be valid and create loops.
+		if(tunnelserver)
+			return;
+	}
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
