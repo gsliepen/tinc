@@ -29,7 +29,7 @@ volatile char (*cp_file[]) = {"?", "?", "?", "?", "?", "?", "?", "?", "?", "?", 
 volatile int cp_index = 0;
 #endif
 
-char *hexadecimals = "0123456789ABCDEF";
+const char hexadecimals[] = "0123456789ABCDEF";
 
 int charhex2bin(char c)
 {
@@ -85,7 +85,7 @@ void cp_trace()
 #include <w32api/windows.h>
 #endif
 
-char *winerror(int err) {
+const char *winerror(int err) {
 	static char buf[1024], *newline;
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,

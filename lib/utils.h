@@ -39,7 +39,7 @@ extern void hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
 
 #ifdef HAVE_MINGW
-extern char *winerror(int);
+extern const char *winerror(int);
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
 #endif
 
