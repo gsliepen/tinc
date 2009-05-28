@@ -929,6 +929,11 @@ Note that there must be exactly one of PrivateKey
 or PrivateKeyFile
 specified in the configuration file.
 
+@cindex ProcessPriority
+@item ProcessPriority = <low|normal|high>
+When this option is used the priority of the tincd process will be adjusted.
+Increasing the priority may help to reduce latency and packet loss on the VPN.
+
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
 When this option is enabled tinc will no longer forward information between other tinc daemons,

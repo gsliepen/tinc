@@ -580,6 +580,35 @@ int main2(int argc, char **argv)
 	if(!setup_network())
 		goto end;
 
+        /* Change process priority */
+
+        char *priority = 0;
+
+        if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+                if(!strcasecmp(priority, "Normal")) {
+#ifdef HAVE_MINGW
+                        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+#else
+                        nice(0);
+#endif
+                } else if(!strcasecmp(priority, "Low")) {
+#ifdef HAVE_MINGW
+                        SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
+#else
+                        nice(10);
+#endif
+                } else if(!strcasecmp(priority, "High")) {
+#ifdef HAVE_MINGW
+                        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+#else
+                        nice(-10);
+#endif
+                } else {
+                        logger(LOG_ERR, _("Invalid priority `%s`!"), priority);
+                        goto end;
+                }
+        }
+
 	/* drop privileges */
 	if (!drop_privs())
 		goto end;
