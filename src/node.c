@@ -90,8 +90,10 @@ void free_node(node_t *n) {
 
 	sockaddrfree(&n->address);
 
-	cipher_close(&n->cipher);
-	digest_close(&n->digest);
+	cipher_close(&n->incipher);
+	digest_close(&n->indigest);
+	cipher_close(&n->outcipher);
+	digest_close(&n->outdigest);
 
 	event_del(&n->mtuevent);
 	
@@ -130,6 +132,7 @@ void node_del(node_t *n) {
 	}
 
 	splay_delete(node_tree, n);
+	splay_delete(node_udp_tree, n);
 }
 
 node_t *lookup_node(char *name) {
@@ -153,6 +156,25 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 	return splay_search(node_udp_tree, &n);
 }
 
+void update_node_udp(node_t *n, const sockaddr_t *sa)
+{
+	splay_delete(node_udp_tree, n);
+
+	if(n->hostname)
+		free(n->hostname);
+
+	if(sa) {
+		n->address = *sa;
+		n->hostname = sockaddr2hostname(&n->address);
+		splay_delete(node_udp_tree, n);
+		splay_insert(node_udp_tree, n);
+		logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
+	} else {
+		memset(&n->address, 0, sizeof n->address);
+		logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
+	}
+}
+
 int dump_nodes(struct evbuffer *out) {
 	splay_node_t *node;
 	node_t *n;
@@ -162,8 +184,8 @@ int dump_nodes(struct evbuffer *out) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		if(evbuffer_add_printf(out, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n"),
-			   n->name, n->hostname, cipher_get_nid(&n->cipher),
-			   digest_get_nid(&n->digest), n->maclength, n->compression,
+			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
+			   digest_get_nid(&n->outdigest), n->outmaclength, n->outcompression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->distance, n->mtu, n->minmtu, n->maxmtu) == -1)
 			return errno;

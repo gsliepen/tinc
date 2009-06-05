@@ -304,6 +304,10 @@ or
 .Va PrivateKeyFile
 specified in the configuration file.
 
+.It Va ProcessPriority Li = low | normal | high
+When this option is used the priority of the tincd process will be adjusted.
+Increasing the priority may help to reduce latency and packet loss on the VPN.
+
 .It Va TunnelServer Li = yes | no Po no Pc Bq experimental
 When this option is enabled tinc will no longer forward information between other tinc daemons,
 and will only allow nodes and subnets on the VPN which are present in the

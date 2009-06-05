@@ -62,7 +62,8 @@ bool setup_device(void) {
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 #ifdef HAVE_LINUX_IF_TUN_H
-		iface = xstrdup(netname);
+		if (netname != NULL)
+			iface = xstrdup(netname);
 #else
 		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 #endif

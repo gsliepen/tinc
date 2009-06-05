@@ -308,7 +308,7 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @subsection Configuration of Darwin (MacOS/X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://www-user.rhrk.uni-kl.de/~nissler/tuntap/},
+Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices,
 and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
 The former driver is recommended.
@@ -952,6 +952,11 @@ Note that there must be exactly one of PrivateKey
 or PrivateKeyFile
 specified in the configuration file.
 
+@cindex ProcessPriority
+@item ProcessPriority = <low|normal|high>
+When this option is used the priority of the tincd process will be adjusted.
+Increasing the priority may help to reduce latency and packet loss on the VPN.
+
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
 When this option is enabled tinc will no longer forward information between other tinc daemons,
@@ -1522,6 +1527,23 @@ If @var{file} is omitted, the default is @file{@value{localstatedir}/log/tinc.@v
 @item --bypass-security
 Disables encryption and authentication.
 Only useful for debugging.
+
+@item -R, --chroot
+Change process root directory to the directory where the config file is
+located (@file{@value{sysconfdir}/tinc/@var{netname}/} as determined by
+-n/--net option or as given by -c/--config option), for added security.
+The chroot is performed after all the initialization is done, after
+writing pid files and opening network sockets.
+
+Note that this option alone does not do any good without -U/--user, below.
+
+Note also that tinc can't run scripts anymore (such as tinc-down or host-up),
+unless it's setup to be runnable inside chroot environment.
+
+@item -U, --user=@var{user}
+Switch to the given @var{user} after initialization, at the same time as
+chroot is performed (see --chroot above).  With this option tinc drops
+privileges, for added security.
 
 @item --help
 Display a short reminder of these runtime options and terminate.

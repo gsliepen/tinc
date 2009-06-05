@@ -49,6 +49,7 @@
 #endif
 
 int keylifetime = 0;
+int keyexpires = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 
 static void send_udppacket(node_t *, vpn_packet_t *);
@@ -99,15 +100,15 @@ void send_mtu_probe(node_t *n) {
 	send_mtu_probe_handler(0, 0, n);
 }
 
-void mtu_probe_h(node_t *n, vpn_packet_t *packet) {
+void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Got MTU probe length %d from %s (%s)"), packet->len, n->name, n->hostname);
 
 	if(!packet->data[0]) {
 		packet->data[0] = 1;
 		send_packet(n, packet);
 	} else {
-		if(n->minmtu < packet->len)
-			n->minmtu = packet->len;
+		if(n->minmtu < len)
+			n->minmtu = len;
 	}
 }
 
@@ -160,7 +161,16 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 	route(n, packet);
 }
 
-static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
+static bool try_mac(node_t *n, const vpn_packet_t *inpkt)
+{
+	if(!digest_active(&n->indigest) || !n->inmaclength || inpkt->len < sizeof inpkt->seqno + n->inmaclength)
+		return false;
+
+	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);
+}
+
+static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
+{
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
@@ -170,9 +180,15 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	cp();
 
+	if(!cipher_active(&n->incipher)) {
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got packet from %s (%s) but he hasn't got our key yet"),
+					n->name, n->hostname);
+		return;
+	}
+
 	/* Check packet length */
 
-	if(inpkt->len < sizeof inpkt->seqno + digest_length(&myself->digest)) {
+	if(inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest)) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
 					n->name, n->hostname);
 		return;
@@ -180,18 +196,18 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check the message authentication code */
 
-	if(digest_active(&myself->digest) && !digest_verify(&myself->digest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len)) {
+	if(digest_active(&n->indigest) && !digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len)) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
 		return;
 	}
 
 	/* Decrypt the packet */
 
-	if(cipher_active(&myself->cipher)) {
+	if(cipher_active(&n->incipher)) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_decrypt(&myself->cipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_decrypt(&n->incipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s)"), n->name, n->hostname);
 			return;
 		}
@@ -233,22 +249,26 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Decompress the packet */
 
-	if(myself->compression) {
+	length_t origlen = inpkt->len;
+
+	if(n->incompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, myself->compression)) < 0) {
+		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
 				  		 n->name, n->hostname);
 			return;
 		}
 
 		inpkt = outpkt;
+
+		origlen -= MTU/64 + 20;
 	}
 
 	inpkt->priority = 0;
 
 	if(!inpkt->data[12] && !inpkt->data[13])
-		mtu_probe_h(n, inpkt);
+		mtu_probe_h(n, inpkt, origlen);
 	else
 		receive_packet(n, inpkt);
 }
@@ -290,7 +310,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				   n->name, n->hostname);
 
 		if(!n->status.waitingforkey)
-			send_req_key(n->nexthop->connection, myself, n);
+			send_req_key(n);
 
 		n->status.waitingforkey = true;
 
@@ -299,12 +319,14 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		return;
 	}
 
-	if(!n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
+	if(n->options & OPTION_PMTU_DISCOVERY && !n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
 				_("No minimum MTU established yet for %s (%s), forwarding via TCP"),
 				n->name, n->hostname);
 
 		send_tcppacket(n->nexthop->connection, origpkt);
+
+		return;
 	}
 
 	origlen = inpkt->len;
@@ -312,10 +334,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Compress the packet */
 
-	if(n->compression) {
+	if(n->outcompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->compression)) < 0) {
+		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->outcompression)) < 0) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while compressing packet to %s (%s)"),
 				   n->name, n->hostname);
 			return;
@@ -331,11 +353,11 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Encrypt the packet */
 
-	if(cipher_active(&n->cipher)) {
+	if(cipher_active(&n->outcipher)) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_encrypt(&n->cipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_encrypt(&n->outcipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s)"), n->name, n->hostname);
 			goto end;
 		}
@@ -346,9 +368,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Add the message authentication code */
 
-	if(digest_active(&n->digest)) {
-		digest_create(&n->digest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);
-		inpkt->len += digest_length(&n->digest);
+	if(digest_active(&n->outdigest)) {
+		digest_create(&n->outdigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);
+		inpkt->len += digest_length(&n->outdigest);
 	}
 
 	/* Determine which socket we have to use */
@@ -434,8 +456,14 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
 
-	if(from != myself)
+	if(from != myself) {
 		send_packet(myself, packet);
+
+		// In TunnelServer mode, do not forward broadcast packets.
+                // The MST might not be valid and create loops.
+		if(tunnelserver)
+			return;
+	}
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
@@ -443,6 +471,30 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 		if(c->status.active && c->status.mst && c != from->nexthop->connection)
 			send_packet(c->node, packet);
 	}
+}
+
+static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
+	splay_node_t *node;
+	edge_t *e;
+	node_t *n = NULL;
+
+	for(node = edge_weight_tree->head; node; node = node->next) {
+		e = node->data;
+
+		if(sockaddrcmp_noport(from, &e->address))
+			continue;
+
+		if(!n)
+			n = e->to;
+
+		if(!try_mac(e->to, pkt))
+			continue;
+
+		n = e->to;
+		break;
+	}
+
+	return n;
 }
 
 void handle_incoming_vpn_data(int sock, short events, void *data)
@@ -467,11 +519,17 @@ void handle_incoming_vpn_data(int sock, short events, void *data)
 	n = lookup_node_udp(&from);
 
 	if(!n) {
-		hostname = sockaddr2hostname(&from);
-		logger(LOG_WARNING, _("Received UDP packet from unknown source %s"),
-			   hostname);
-		free(hostname);
-		return;
+		n = try_harder(&from, &pkt);
+		if(n)
+			update_node_udp(n, &from);
+		else ifdebug(PROTOCOL) {
+			hostname = sockaddr2hostname(&from);
+			logger(LOG_WARNING, _("Received UDP packet from unknown source %s"), hostname);
+			free(hostname);
+			return;
+		}
+		else
+			return;
 	}
 
 	receive_udppacket(n, &pkt);

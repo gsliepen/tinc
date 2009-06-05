@@ -33,6 +33,12 @@
 
 #include LZO1X_H
 
+#ifndef HAVE_MINGW
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
+#endif
+
 #include <getopt.h>
 
 #include "conf.h"
@@ -62,6 +68,12 @@ bool bypass_security = false;
 /* If nonzero, disable swapping for this process. */
 bool do_mlock = false;
 
+/* If nonzero, chroot to netdir after startup. */
+static bool do_chroot = false;
+
+/* If !NULL, do setuid to given user after startup */
+static const char *switchuser = NULL;
+
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
@@ -81,6 +93,8 @@ static struct option const long_options[] = {
 	{"debug", optional_argument, NULL, 'd'},
 	{"bypass-security", no_argument, NULL, 3},
 	{"mlock", no_argument, NULL, 'L'},
+	{"chroot", no_argument, NULL, 'R'},
+	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
 	{"controlsocket", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
@@ -105,7 +119,8 @@ static void usage(bool status)
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
 				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
-				"      --help                    Display this help and exit.\n"
+				"  -R, --chroot                  chroot to NET dir at startup.\n"
+				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n\n"));
 		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
 	}
@@ -116,7 +131,7 @@ static bool parse_options(int argc, char **argv)
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::n:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::n:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -130,8 +145,13 @@ static bool parse_options(int argc, char **argv)
 				break;
 
 			case 'L':				/* no detach */
+#ifndef HAVE_MLOCKALL
+				logger(LOG_ERR, _("%s not supported on this platform"), "mlockall()");
+				return false;
+#else
 				do_mlock = true;
 				break;
+#endif
 
 			case 'd':				/* inc debug level */
 				if(optarg)
@@ -142,6 +162,14 @@ static bool parse_options(int argc, char **argv)
 
 			case 'n':				/* net name given */
 				netname = xstrdup(optarg);
+				break;
+
+			case 'R':				/* chroot to NETNAME dir */
+				do_chroot = true;
+				break;
+
+			case 'U':				/* setuid to USER */
+				switchuser = optarg;
 				break;
 
 			case 1:					/* show help */
@@ -237,6 +265,63 @@ static void free_names() {
 	if (confbase) free(confbase);
 }
 
+static bool drop_privs() {
+#ifdef HAVE_MINGW
+	if (switchuser) {
+		logger(LOG_ERR, _("%s not supported on this platform"), "-U");
+		return false;
+	}
+	if (do_chroot) {
+		logger(LOG_ERR, _("%s not supported on this platform"), "-R");
+		return false;
+	}
+#else
+	uid_t uid = 0;
+	if (switchuser) {
+		struct passwd *pw = getpwnam(switchuser);
+		if (!pw) {
+			logger(LOG_ERR, _("unknown user `%s'"), switchuser);
+			return false;
+		}
+		uid = pw->pw_uid;
+		if (initgroups(switchuser, pw->pw_gid) != 0 ||
+		    setgid(pw->pw_gid) != 0) {
+			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			       "initgroups", strerror(errno));
+			return false;
+		}
+		endgrent();
+		endpwent();
+	}
+	if (do_chroot) {
+		tzset();	/* for proper timestamps in logs */
+		if (chroot(confbase) != 0 || chdir("/") != 0) {
+			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			       "chroot", strerror(errno));
+			return false;
+		}
+		free(confbase);
+		confbase = xstrdup("");
+	}
+	if (switchuser)
+		if (setuid(uid) != 0) {
+			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			       "setuid", strerror(errno));
+			return false;
+		}
+#endif
+	return true;
+}
+
+#ifdef HAVE_MINGW
+# define setpriority(level) SetPriorityClass(GetCurrentProcess(), level);
+#else
+# define NORMAL_PRIORITY_CLASS 0
+# define BELOW_NORMAL_PRIORITY_CLASS 10
+# define HIGH_PRIORITY_CLASS -10
+# define setpriority(level) nice(level)
+#endif
+
 int main(int argc, char **argv)
 {
 	program_name = argv[0];
@@ -277,20 +362,6 @@ int main(int argc, char **argv)
 	if(!init_control())
 		return 1;
 
-	/* Lock all pages into memory if requested */
-
-	if(do_mlock)
-#ifdef HAVE_MLOCKALL
-		if(mlockall(MCL_CURRENT | MCL_FUTURE)) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
-				   strerror(errno));
-#else
-	{
-		logger(LOG_ERR, _("mlockall() not supported on this platform!"));
-#endif
-		return -1;
-	}
-
 	g_argv = argv;
 
 	init_configuration(&config_tree);
@@ -326,11 +397,46 @@ int main2(int argc, char **argv)
 
 	if(!detach())
 		return 1;
-		
+
+#ifdef HAVE_MLOCKALL
+	/* Lock all pages into memory if requested.
+	 * This has to be done after daemon()/fork() so it works for child.
+	 * No need to do that in parent as it's very short-lived. */
+	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
+		logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+		   strerror(errno));
+		return 1;
+	}
+#endif
 
 	/* Setup sockets and open device. */
 
-	if(!setup_network_connections())
+	if(!setup_network())
+		goto end;
+
+	/* Initiate all outgoing connections. */
+
+	try_outgoing_connections();
+
+	/* Change process priority */
+
+        char *priority = 0;
+
+        if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+                if(!strcasecmp(priority, "Normal"))
+                        setpriority(NORMAL_PRIORITY_CLASS);
+                else if(!strcasecmp(priority, "Low"))
+                        setpriority(BELOW_NORMAL_PRIORITY_CLASS);
+                else if(!strcasecmp(priority, "High"))
+                        setpriority(HIGH_PRIORITY_CLASS);
+                else {
+                        logger(LOG_ERR, _("Invalid priority `%s`!"), priority);
+                        goto end;
+                }
+        }
+
+	/* drop privileges */
+	if (!drop_privs())
 		goto end;
 
 	/* Start main loop. It only exits when tinc is killed. */
@@ -352,6 +458,9 @@ end:
 #endif
 
 	crypto_exit();
+
+	exit_configuration(&config_tree);
+	free_names();
 
 	return status;
 }

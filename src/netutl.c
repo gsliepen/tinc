@@ -140,7 +140,41 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	return str;
 }
 
-int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
+int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b)
+{
+	int result;
+
+	cp();
+
+	result = a->sa.sa_family - b->sa.sa_family;
+
+	if(result)
+		return result;
+
+	switch (a->sa.sa_family) {
+		case AF_UNSPEC:
+			return 0;
+
+		case AF_UNKNOWN:
+			return strcmp(a->unknown.address, b->unknown.address);
+
+		case AF_INET:
+			return memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+
+		case AF_INET6:
+			return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+
+		default:
+			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+				   a->sa.sa_family);
+			cp_trace();
+			raise(SIGFPE);
+			exit(0);
+	}
+}
+
+int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
+{
 	int result;
 
 	cp();

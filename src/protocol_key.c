@@ -25,6 +25,7 @@
 #include "splay_tree.h"
 #include "cipher.h"
 #include "connection.h"
+#include "crypto.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
@@ -35,17 +36,17 @@
 
 static bool mykeyused = false;
 
-bool send_key_changed(connection_t *c, const node_t *n) {
+bool send_key_changed() {
 	cp();
 
 	/* Only send this message if some other daemon requested our key previously.
 	   This reduces unnecessary key_changed broadcasts.
 	 */
 
-	if(n == myself && !mykeyused)
+	if(!mykeyused)
 		return true;
 
-	return send_request(c, "%d %lx %s", KEY_CHANGED, random(), n->name);
+	return send_request(broadcast, "%d %lx %s", KEY_CHANGED, random(), myself->name);
 }
 
 bool key_changed_h(connection_t *c, char *request) {
@@ -82,10 +83,10 @@ bool key_changed_h(connection_t *c, char *request) {
 	return true;
 }
 
-bool send_req_key(connection_t *c, const node_t *from, const node_t *to) {
+bool send_req_key(node_t *to) {
 	cp();
 
-	return send_request(c, "%d %s %s", REQ_KEY, from->name, to->name);
+	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
 }
 
 bool req_key_h(connection_t *c, char *request) {
@@ -120,10 +121,8 @@ bool req_key_h(connection_t *c, char *request) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-		mykeyused = true;
-		from->received_seqno = 0;
-		memset(from->late, 0, sizeof from->late);
-		send_ans_key(c, myself, from);
+
+		send_ans_key(from);
 	} else {
 		if(tunnelserver)
 			return false;
@@ -134,27 +133,39 @@ bool req_key_h(connection_t *c, char *request) {
 			return true;
 		}
 
-		send_req_key(to->nexthop->connection, from, to);
+		send_request(to->nexthop->connection, "%s", request);
 	}
 
 	return true;
 }
 
-bool send_ans_key(connection_t *c, const node_t *from, const node_t *to) {
-	size_t keylen = cipher_keylength(&from->cipher);
+bool send_ans_key(node_t *to) {
+	size_t keylen = cipher_keylength(&myself->incipher);
 	char key[keylen * 2 + 1];
 
 	cp();
 
-	cipher_get_key(&from->cipher, key);
+	cipher_open_by_nid(&to->incipher, cipher_get_nid(&myself->incipher));
+	digest_open_by_nid(&to->indigest, digest_get_nid(&myself->indigest));
+	to->inmaclength = myself->inmaclength;
+	to->incompression = myself->incompression;
+
+	randomize(key, keylen);
+	cipher_set_key(&to->incipher, key, true);
+
 	bin2hex(key, key, keylen);
 	key[keylen * 2] = '\0';
 
-	return send_request(c, "%d %s %s %s %d %d %d %d", ANS_KEY,
-						from->name, to->name, key,
-						cipher_get_nid(&from->cipher),
-						digest_get_nid(&from->digest), from->maclength,
-						from->compression);
+	// Reset sequence number and late packet window
+	mykeyused = true;
+	to->received_seqno = 0;
+	memset(to->late, 0, sizeof(to->late));
+
+	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
+						myself->name, to->name, key,
+						cipher_get_nid(&to->incipher),
+						digest_get_nid(&to->indigest), to->inmaclength,
+						to->incompression);
 }
 
 bool ans_key_h(connection_t *c, char *request) {
@@ -207,24 +218,24 @@ bool ans_key_h(connection_t *c, char *request) {
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!cipher_open_by_nid(&from->cipher, cipher)) {
+	if(!cipher_open_by_nid(&from->outcipher, cipher)) {
 		logger(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name, from->hostname);
 		return false;
 	}
 
-	if(strlen(key) / 2 != cipher_keylength(&from->cipher)) {
+	if(strlen(key) / 2 != cipher_keylength(&from->outcipher)) {
 		logger(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name, from->hostname);
 		return false;
 	}
 
-	from->maclength = maclength;
+	from->outmaclength = maclength;
 
-	if(!digest_open_by_nid(&from->digest, digest)) {
+	if(!digest_open_by_nid(&from->outdigest, digest)) {
 		logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name, from->hostname);
 		return false;
 	}
 
-	if(from->maclength > digest_length(&from->digest) || from->maclength < 0) {
+	if(from->outmaclength > digest_length(&from->outdigest) || from->outmaclength < 0) {
 		logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
 		return false;
 	}
@@ -234,12 +245,12 @@ bool ans_key_h(connection_t *c, char *request) {
 		return false;
 	}
 	
-	from->compression = compression;
+	from->outcompression = compression;
 
 	/* Update our copy of the origin's packet key */
 
-	hex2bin(key, key, cipher_keylength(&from->cipher));
-	cipher_set_key(&from->cipher, key, false);
+	hex2bin(key, key, cipher_keylength(&from->outcipher));
+	cipher_set_key(&from->outcipher, key, false);
 
 	from->status.validkey = true;
 	from->status.waitingforkey = false;

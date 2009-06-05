@@ -54,11 +54,16 @@ typedef struct node_t {
 
 	node_status_t status;
 
-	cipher_t cipher;                        /* Cipher for UDP packets */
-	digest_t digest;                        /* Digest for UDP packets */	
-	int maclength;				/* Portion of digest to use */
+	cipher_t incipher;                        /* Cipher for UDP packets */
+	digest_t indigest;                        /* Digest for UDP packets */	
+	int inmaclength;				/* Portion of digest to use */
 
-	int compression;			/* Compressionlevel, 0 = no compression */
+	cipher_t outcipher;                        /* Cipher for UDP packets */
+	digest_t outdigest;                        /* Digest for UDP packets */	
+	int outmaclength;				/* Portion of digest to use */
+
+	int incompression;			/* Compressionlevel, 0 = no compression */
+	int outcompression;			/* Compressionlevel, 0 = no compression */
 
 	int distance;
 	struct node_t *nexthop;			/* nearest node from us to him */
@@ -94,5 +99,6 @@ extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
 extern int dump_nodes(struct evbuffer *);
+extern void update_node_udp(node_t *, const sockaddr_t *);
 
 #endif							/* __TINC_NODE_H__ */

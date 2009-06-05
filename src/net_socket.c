@@ -33,6 +33,8 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#include <assert.h>
+
 #ifdef WSAEINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
 #endif
@@ -80,7 +82,95 @@ static void configure_tcp(connection_t *c) {
 #endif
 }
 
-int setup_listen_socket(const sockaddr_t *sa) {
+static bool bind_to_interface(int sd) { /* {{{ */
+	char *iface;
+
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
+	struct ifreq ifr;
+	int status;
+#endif /* defined(SOL_SOCKET) && defined(SO_BINDTODEVICE) */
+
+	if(!get_config_string (lookup_config (config_tree, "BindToInterface"), &iface))
+		return true;
+
+#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+	ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
+
+	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
+	if(status) {
+		logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
+				strerror(errno));
+		return false;
+	}
+#else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
+	logger(LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
+#endif
+
+	return true;
+} /* }}} bool bind_to_interface */
+
+static bool bind_to_address(connection_t *c) { /* {{{ */
+	char *node;
+	struct addrinfo *ai_list;
+	struct addrinfo *ai_ptr;
+	struct addrinfo ai_hints;
+	int status;
+
+	assert(c != NULL);
+	assert(c->socket >= 0);
+
+	node = NULL;
+	if(!get_config_string(lookup_config(config_tree, "BindToAddress"),
+				&node))
+		return true;
+
+	assert(node != NULL);
+
+	memset(&ai_hints, 0, sizeof(ai_hints));
+	ai_hints.ai_family = c->address.sa.sa_family;
+	/* We're called from `do_outgoing_connection' only. */
+	ai_hints.ai_socktype = SOCK_STREAM;
+	ai_hints.ai_protocol = IPPROTO_TCP;
+
+	ai_list = NULL;
+
+	status = getaddrinfo(node, /* service = */ NULL,
+			&ai_hints, &ai_list);
+	if(status) {
+		free(node);
+		logger(LOG_WARNING, _("Error looking up %s port %s: %s"),
+				node, _("any"), gai_strerror(status));
+		return false;
+	}
+	assert(ai_list != NULL);
+
+	status = -1;
+	for(ai_ptr = ai_list; ai_ptr != NULL; ai_ptr = ai_ptr->ai_next) {
+		status = bind(c->socket,
+				ai_list->ai_addr, ai_list->ai_addrlen);
+		if(!status)
+			break;
+	}
+
+
+	if(status) {
+		logger(LOG_ERR, _("Can't bind to %s/tcp: %s"), node,
+				strerror(errno));
+	} else ifdebug(CONNECTIONS) {
+		logger(LOG_DEBUG, "Successfully bound outgoing "
+				"TCP socket to %s", node);
+	}
+
+	free(node);
+	freeaddrinfo(ai_list);
+
+	return status ? false : true;
+} /* }}} bool bind_to_address */
+
+int setup_listen_socket(const sockaddr_t *sa)
+{
 	int nfd;
 	char *addrstr;
 	int option;
@@ -120,7 +210,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 			return -1;
 		}
 #else
-		logger(LOG_WARNING, _("BindToInterface not supported on this platform"));
+		logger(LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
 #endif
 	}
 
@@ -202,24 +292,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	}
 #endif
 
-#if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
-	{
-		char *iface;
-		struct ifreq ifr;
-
-		if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
-			memset(&ifr, 0, sizeof ifr);
-			strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
-
-			if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof ifr)) {
-				closesocket(nfd);
-				logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
-					   strerror(errno));
-				return -1;
-			}
-		}
+	if (!bind_to_interface(nfd)) {
+		closesocket(nfd);
+		return -1;
 	}
-#endif
 
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
@@ -231,7 +307,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	}
 
 	return nfd;
-}
+} /* int setup_vpn_in_socket */
 
 static void retry_outgoing_handler(int fd, short events, void *data) {
 	setup_outgoing_connection(data);
@@ -328,6 +404,9 @@ begin:
 	if(c->address.sa.sa_family == AF_INET6)
 		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
 #endif
+
+	bind_to_interface(c->socket);
+	bind_to_address(c);
 
 	/* Optimize TCP settings */
 

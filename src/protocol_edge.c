@@ -93,6 +93,17 @@ bool add_edge_h(connection_t *c, char *request) {
 	/* Lookup nodes */
 
 	from = lookup_node(from_name);
+	to = lookup_node(to_name);
+
+	if(tunnelserver &&
+	   from != myself && from != c->node &&
+	   to != myself && to != c->node) {
+		/* ignore indirect edge registrations for tunnelserver */
+		ifdebug(PROTOCOL) logger(LOG_WARNING,
+		   _("Ignoring indirect %s from %s (%s)"),
+		   "ADD_EDGE", c->name, c->hostname);
+		return true;
+	}
 
 	if(!from) {
 		from = new_node();
@@ -100,16 +111,12 @@ bool add_edge_h(connection_t *c, char *request) {
 		node_add(from);
 	}
 
-	to = lookup_node(to_name);
-
 	if(!to) {
 		to = new_node();
 		to->name = xstrdup(to_name);
 		node_add(to);
 	}
 
-	if(tunnelserver && from != myself && from != c->node && to != myself && to != c->node)
-		return false;
 
 	/* Convert addresses */
 
@@ -206,6 +213,17 @@ bool del_edge_h(connection_t *c, char *request) {
 	/* Lookup nodes */
 
 	from = lookup_node(from_name);
+	to = lookup_node(to_name);
+
+	if(tunnelserver &&
+	   from != myself && from != c->node &&
+	   to != myself && to != c->node) {
+		/* ignore indirect edge registrations for tunnelserver */
+		ifdebug(PROTOCOL) logger(LOG_WARNING,
+		   _("Ignoring indirect %s from %s (%s)"),
+		   "DEL_EDGE", c->name, c->hostname);
+		return true;
+	}
 
 	if(!from) {
 		ifdebug(PROTOCOL) logger(LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
@@ -213,16 +231,11 @@ bool del_edge_h(connection_t *c, char *request) {
 		return true;
 	}
 
-	to = lookup_node(to_name);
-
 	if(!to) {
 		ifdebug(PROTOCOL) logger(LOG_ERR, _("Got %s from %s (%s) which does not appear in the edge tree"),
 				   "DEL_EDGE", c->name, c->hostname);
 		return true;
 	}
-
-	if(tunnelserver && from != myself && from != c->node && to != myself && to != c->node)
-		return false;
 
 	/* Check if edge exists */
 

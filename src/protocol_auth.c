@@ -243,7 +243,7 @@ bool send_challenge(connection_t *c) {
 	cp();
 
 	if(!c->hischallenge)
-		c->hischallenge = xmalloc(len);
+		c->hischallenge = xrealloc(c->hischallenge, len);
 
 	/* Copy random data to the buffer */
 

@@ -60,7 +60,7 @@ bool add_subnet_h(connection_t *c, char *request)
 		return false;
 	}
 
-	/* Check if owner name is a valid */
+	/* Check if owner name is valid */
 
 	if(!check_id(name)) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "ADD_SUBNET", c->name,
@@ -127,8 +127,11 @@ bool add_subnet_h(connection_t *c, char *request)
 			free_subnet(allowed);
 		}
 
-		if(!cfg)
+		if(!cfg) {
+			logger(LOG_WARNING, _("Unauthorized %s from %s (%s) for %s"),
+				"ADD_SUBNET", c->name, c->hostname, subnetstr);
 			return false;
+		}
 
 		free_subnet(allowed);
 	}
@@ -176,26 +179,13 @@ bool del_subnet_h(connection_t *c, char *request)
 		return false;
 	}
 
-	/* Check if owner name is a valid */
+	/* Check if owner name is valid */
 
 	if(!check_id(name)) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s): %s"), "DEL_SUBNET", c->name,
 			   c->hostname, _("invalid name"));
 		return false;
 	}
-
-	/* Check if the owner of the new subnet is in the connection list */
-
-	owner = lookup_node(name);
-
-	if(!owner) {
-		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
-				   "DEL_SUBNET", c->name, c->hostname, name);
-		return true;
-	}
-
-	if(tunnelserver && owner != myself && owner != c->node)
-		return false;
 
 	/* Check if subnet string is valid */
 
@@ -207,6 +197,23 @@ bool del_subnet_h(connection_t *c, char *request)
 
 	if(seen_request(request))
 		return true;
+
+	/* Check if the owner of the subnet being deleted is in the connection list */
+
+	owner = lookup_node(name);
+
+	if(tunnelserver && owner != myself && owner != c->node) {
+		/* in case of tunnelserver, ignore indirect subnet deletion */
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Ignoring indirect %s from %s (%s) for %s"),
+                                  "DEL_SUBNET", c->name, c->hostname, subnetstr);
+		return true;
+	}
+
+	if(!owner) {
+		ifdebug(PROTOCOL) logger(LOG_WARNING, _("Got %s from %s (%s) for %s which is not in our node tree"),
+				   "DEL_SUBNET", c->name, c->hostname, name);
+		return true;
+	}
 
 	/* If everything is correct, delete the subnet from the list of the owner */
 

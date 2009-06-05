@@ -148,14 +148,8 @@ static void keyexpire_handler(int fd, short events, void *data) {
 }
 
 void regenerate_key() {
-	ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
-
-	if(!cipher_regenerate_key(&myself->cipher, true)) {
-		logger(LOG_ERR, _("Error regenerating key!"));
-		abort();
-	}
-
 	if(timeout_initialized(&keyexpire_event)) {
+		ifdebug(STATUS) logger(LOG_INFO, _("Expiring symmetric keys"));
 		event_del(&keyexpire_event);
 		send_key_changed(broadcast, myself);
 	} else {
@@ -270,7 +264,7 @@ bool setup_myself(void) {
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, _("PriorityInheritance not supported on this platform"));
+		logger(LOG_WARNING, _("%s not supported on this platform"), "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -305,7 +299,7 @@ bool setup_myself(void) {
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
 		cipher = xstrdup("blowfish");
 
-	if(!cipher_open_by_name(&myself->cipher, cipher)) {
+	if(!cipher_open_by_name(&myself->incipher, cipher)) {
 		logger(LOG_ERR, _("Unrecognized cipher type!"));
 		return false;
 	}
@@ -320,18 +314,18 @@ bool setup_myself(void) {
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
 		digest = xstrdup("sha1");
 
-	if(!digest_open_by_name(&myself->digest, digest)) {
+	if(!digest_open_by_name(&myself->indigest, digest)) {
 		logger(LOG_ERR, _("Unrecognized digest type!"));
 		return false;
 	}
 
-	if(!get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->maclength))
+	if(!get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->inmaclength))
 
-	if(digest_active(&myself->digest)) {
-		if(myself->maclength > digest_length(&myself->digest)) {
+	if(digest_active(&myself->indigest)) {
+		if(myself->inmaclength > digest_length(&myself->indigest)) {
 			logger(LOG_ERR, _("MAC length exceeds size of digest!"));
 			return false;
-		} else if(myself->maclength < 0) {
+		} else if(myself->inmaclength < 0) {
 			logger(LOG_ERR, _("Bogus MAC length!"));
 			return false;
 		}
@@ -339,13 +333,13 @@ bool setup_myself(void) {
 
 	/* Compression */
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->compression)) {
-		if(myself->compression < 0 || myself->compression > 11) {
+	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->incompression)) {
+		if(myself->incompression < 0 || myself->incompression > 11) {
 			logger(LOG_ERR, _("Bogus compression level!"));
 			return false;
 		}
 	} else
-		myself->compression = 0;
+		myself->incompression = 0;
 
 	myself->connection->outcompression = 0;
 
@@ -467,9 +461,10 @@ bool setup_myself(void) {
 }
 
 /*
-  setup all initial network connections
+  initialize network
 */
-bool setup_network_connections(void) {
+bool setup_network(void)
+{
 	cp();
 
 	init_connections();
@@ -495,8 +490,6 @@ bool setup_network_connections(void) {
 
 	if(!setup_myself())
 		return false;
-
-	try_outgoing_connections();
 
 	return true;
 }
