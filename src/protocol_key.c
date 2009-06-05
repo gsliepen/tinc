@@ -154,6 +154,7 @@ bool send_ans_key(node_t *to)
 	to->incipher = myself->incipher;
 	to->inkeylength = myself->inkeylength;
 	to->indigest = myself->indigest;
+	to->inmaclength = myself->inmaclength;
 	to->incompression = myself->incompression;
 
 	// Allocate memory for key
