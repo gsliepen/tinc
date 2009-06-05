@@ -589,7 +589,11 @@ int main2(int argc, char **argv)
 	if(!setup_network())
 		goto end;
 
-        /* Change process priority */
+	/* Initiate all outgoing connections. */
+
+	try_outgoing_connections();
+
+	/* Change process priority */
 
         char *priority = 0;
 
@@ -609,10 +613,6 @@ int main2(int argc, char **argv)
 	/* drop privileges */
 	if (!drop_privs())
 		goto end;
-
-	/* Initiate all outgoing connections. */
-
-	try_outgoing_connections();
 
 	/* Start main loop. It only exits when tinc is killed. */
 
