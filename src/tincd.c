@@ -484,6 +484,15 @@ static bool drop_privs() {
 	return true;
 }
 
+#ifdef HAVE_MINGW
+# define setpriority(level) SetPriorityClass(GetCurrentProcess(), level);
+#else
+# define NORMAL_PRIORITY_CLASS 0
+# define BELOW_NORMAL_PRIORITY_CLASS 10
+# define HIGH_PRIORITY_CLASS -10
+# define setpriority(level) nice(level)
+#endif
+
 int main(int argc, char **argv)
 {
 	program_name = argv[0];
@@ -585,25 +594,13 @@ int main2(int argc, char **argv)
         char *priority = 0;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal")) {
-#ifdef HAVE_MINGW
-                        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-#else
-                        nice(0);
-#endif
-                } else if(!strcasecmp(priority, "Low")) {
-#ifdef HAVE_MINGW
-                        SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
-#else
-                        nice(10);
-#endif
-                } else if(!strcasecmp(priority, "High")) {
-#ifdef HAVE_MINGW
-                        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-#else
-                        nice(-10);
-#endif
-                } else {
+                if(!strcasecmp(priority, "Normal"))
+                        setpriority(NORMAL_PRIORITY_CLASS);
+                else if(!strcasecmp(priority, "Low"))
+                        setpriority(BELOW_NORMAL_PRIORITY_CLASS);
+                else if(!strcasecmp(priority, "High"))
+                        setpriority(HIGH_PRIORITY_CLASS);
+                else {
                         logger(LOG_ERR, _("Invalid priority `%s`!"), priority);
                         goto end;
                 }
