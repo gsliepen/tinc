@@ -166,7 +166,7 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt)
 	if(!digest_active(&n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest))
 		return false;
 
-	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);
+	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len);
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
@@ -196,7 +196,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 
 	/* Check the message authentication code */
 
-	if(digest_active(&n->indigest) && !digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len)) {
+	if(digest_active(&n->indigest) && !digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"), n->name, n->hostname);
 		return;
 	}
@@ -369,7 +369,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add the message authentication code */
 
 	if(digest_active(&n->outdigest)) {
-		digest_create(&n->outdigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);
+		digest_create(&n->outdigest, &inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len);
 		inpkt->len += digest_length(&n->outdigest);
 	}
 
