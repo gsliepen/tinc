@@ -56,11 +56,9 @@ typedef struct node_t {
 
 	cipher_t incipher;                        /* Cipher for UDP packets */
 	digest_t indigest;                        /* Digest for UDP packets */	
-	int inmaclength;				/* Portion of digest to use */
 
 	cipher_t outcipher;                        /* Cipher for UDP packets */
 	digest_t outdigest;                        /* Digest for UDP packets */	
-	int outmaclength;				/* Portion of digest to use */
 
 	int incompression;			/* Compressionlevel, 0 = no compression */
 	int outcompression;			/* Compressionlevel, 0 = no compression */

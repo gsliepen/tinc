@@ -163,7 +163,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 
 static bool try_mac(node_t *n, const vpn_packet_t *inpkt)
 {
-	if(!digest_active(&n->indigest) || !n->inmaclength || inpkt->len < sizeof inpkt->seqno + n->inmaclength)
+	if(!digest_active(&n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest))
 		return false;
 
 	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len);

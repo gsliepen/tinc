@@ -146,8 +146,7 @@ bool send_ans_key(node_t *to) {
 	cp();
 
 	cipher_open_by_nid(&to->incipher, cipher_get_nid(&myself->incipher));
-	digest_open_by_nid(&to->indigest, digest_get_nid(&myself->indigest));
-	to->inmaclength = myself->inmaclength;
+	digest_open_by_nid(&to->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
 	to->incompression = myself->incompression;
 
 	randomize(key, keylen);
@@ -164,7 +163,8 @@ bool send_ans_key(node_t *to) {
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 						myself->name, to->name, key,
 						cipher_get_nid(&to->incipher),
-						digest_get_nid(&to->indigest), to->inmaclength,
+						digest_get_nid(&to->indigest),
+						digest_length(&to->indigest),
 						to->incompression);
 }
 
@@ -228,14 +228,12 @@ bool ans_key_h(connection_t *c, char *request) {
 		return false;
 	}
 
-	from->outmaclength = maclength;
-
-	if(!digest_open_by_nid(&from->outdigest, digest)) {
+	if(!digest_open_by_nid(&from->outdigest, digest, maclength)) {
 		logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name, from->hostname);
 		return false;
 	}
 
-	if(from->outmaclength > digest_length(&from->outdigest) || from->outmaclength < 0) {
+	if(maclength != digest_length(&from->outdigest)) {
 		logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
 		return false;
 	}

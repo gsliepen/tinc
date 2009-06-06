@@ -314,21 +314,17 @@ bool setup_myself(void) {
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
 		digest = xstrdup("sha1");
 
-	if(!digest_open_by_name(&myself->indigest, digest)) {
-		logger(LOG_ERR, _("Unrecognized digest type!"));
+	int maclength = 4;
+	get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &maclength);
+
+	if(maclength < 0) {
+		logger(LOG_ERR, _("Bogus MAC length!"));
 		return false;
 	}
 
-	if(!get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->inmaclength))
-
-	if(digest_active(&myself->indigest)) {
-		if(myself->inmaclength > digest_length(&myself->indigest)) {
-			logger(LOG_ERR, _("MAC length exceeds size of digest!"));
-			return false;
-		} else if(myself->inmaclength < 0) {
-			logger(LOG_ERR, _("Bogus MAC length!"));
-			return false;
-		}
+	if(!digest_open_by_name(&myself->indigest, digest, maclength)) {
+		logger(LOG_ERR, _("Unrecognized digest type!"));
+		return false;
 	}
 
 	/* Compression */

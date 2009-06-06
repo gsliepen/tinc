@@ -124,7 +124,7 @@ bool send_metakey(connection_t *c) {
 	if(!cipher_open_blowfish_ofb(&c->outcipher))
 		return false;
 	
-	if(!digest_open_sha1(&c->outdigest))
+	if(!digest_open_sha1(&c->outdigest, -1))
 		return false;
 
 	/* Create a random key */
@@ -224,7 +224,7 @@ bool metakey_h(connection_t *c, char *request) {
 		return false;
 	}
 
-	if(!digest_open_by_nid(&c->indigest, digest)) {
+	if(!digest_open_by_nid(&c->indigest, digest, -1)) {
 		logger(LOG_ERR, _("Error during initialisation of digest from %s (%s)"), c->name, c->hostname);
 		return false;
 	}

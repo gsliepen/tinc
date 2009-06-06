@@ -26,26 +26,43 @@
 #include "digest.h"
 #include "logger.h"
 
-bool digest_open_by_name(digest_t *digest, const char *name) {
+static void set_maclength(digest_t *digest, int maclength) {
+	int digestlen = EVP_MD_size(digest->digest);
+
+	if(maclength > digestlen || maclength < 0)
+		digest->maclength = digestlen;
+	else
+		digest->maclength = maclength;
+}
+
+bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
 	digest->digest = EVP_get_digestbyname(name);
-	if(digest->digest)
-		return true;
 
-	logger(LOG_DEBUG, _("Unknown digest name '%s'!"), name);
-	return false;
+	if(!digest->digest) {
+		logger(LOG_DEBUG, _("Unknown digest name '%s'!"), name);
+		return false;
+	}
+
+	set_maclength(digest, maclength);
+	return true;
 }
 
-bool digest_open_by_nid(digest_t *digest, int nid) {
+bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
 	digest->digest = EVP_get_digestbynid(nid);
-	if(digest->digest)
-		return true;
 
-	logger(LOG_DEBUG, _("Unknown digest nid %d!"), nid);
-	return false;
+	if(!digest->digest) {
+		logger(LOG_DEBUG, _("Unknown digest nid %d!"), nid);
+		return false;
+	}
+
+	set_maclength(digest, maclength);
+	return true;
 }
 
-bool digest_open_sha1(digest_t *digest) {
+bool digest_open_sha1(digest_t *digest, int maclength) {
 	digest->digest = EVP_sha1();
+
+	set_maclength(digest, maclength);
 	return true;
 }
 
@@ -53,22 +70,27 @@ void digest_close(digest_t *digest) {
 }
 
 bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {
+	size_t len = EVP_MD_size(digest->digest);
+	unsigned char tmpdata[len];
+
 	EVP_MD_CTX ctx;
 
-	if(EVP_DigestInit(&ctx, digest->digest)
-			&& EVP_DigestUpdate(&ctx, indata, inlen)
-			&& EVP_DigestFinal(&ctx, outdata, NULL))
-		return true;
-	
-	logger(LOG_DEBUG, _("Error creating digest: %s"), ERR_error_string(ERR_get_error(), NULL));
-	return false;
+	if(!EVP_DigestInit(&ctx, digest->digest)
+			|| !EVP_DigestUpdate(&ctx, indata, inlen)
+			|| !EVP_DigestFinal(&ctx, tmpdata, NULL)) {
+		logger(LOG_DEBUG, _("Error creating digest: %s"), ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
+
+	memcpy(outdata, tmpdata, digest->maclength);
+	return true;
 }
 
 bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
 	size_t len = EVP_MD_size(digest->digest);
-	char outdata[len];
+	unsigned char outdata[len];
 
-	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, len);
+	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, digest->maclength);
 }
 
 int digest_get_nid(const digest_t *digest) {
@@ -76,7 +98,7 @@ int digest_get_nid(const digest_t *digest) {
 }
 
 size_t digest_length(const digest_t *digest) {
-	return EVP_MD_size(digest->digest);
+	return digest->maclength;
 }
 
 bool digest_active(const digest_t *digest) {

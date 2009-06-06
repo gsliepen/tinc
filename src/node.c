@@ -185,7 +185,7 @@ int dump_nodes(struct evbuffer *out) {
 		n = node->data;
 		if(evbuffer_add_printf(out, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n"),
 			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
-			   digest_get_nid(&n->outdigest), n->outmaclength, n->outcompression,
+			   digest_get_nid(&n->outdigest), digest_length(&n->outdigest), n->outcompression,
 			   n->options, *(uint32_t *)&n->status, n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->distance, n->mtu, n->minmtu, n->maxmtu) == -1)
 			return errno;

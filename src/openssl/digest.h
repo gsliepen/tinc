@@ -28,11 +28,12 @@
 
 typedef struct digest {
 	const EVP_MD *digest;
+	int maclength;
 } digest_t;
 
-extern bool digest_open_by_name(struct digest *, const char *);
-extern bool digest_open_by_nid(struct digest *, int);
-extern bool digest_open_sha1(struct digest *);
+extern bool digest_open_by_name(struct digest *, const char *name, int maclength);
+extern bool digest_open_by_nid(struct digest *, int nid, int maclength);
+extern bool digest_open_sha1(struct digest *, int maclength);
 extern void digest_close(struct digest *);
 extern bool digest_create(struct digest *, const void *indata, size_t inlen, void *outdata);
 extern bool digest_verify(struct digest *, const void *indata, size_t inlen, const void *digestdata);
