@@ -264,6 +264,11 @@ void sssp_bfs(void)
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
+			if(n->mtuevent) {
+				event_del(n->mtuevent);
+				n->mtuevent = NULL;
+			}
+
 			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			asprintf(&envp[1], "DEVICE=%s", device ? : "");
 			asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
