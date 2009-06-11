@@ -70,6 +70,11 @@ void send_mtu_probe(node_t *n)
 	n->mtuprobes++;
 	n->mtuevent = NULL;
 
+	if(!n->status.reachable) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Trying to send MTU probe to unreachable node %s (%s)"), n->name, n->hostname);
+		return;
+	}
+
 	if(n->mtuprobes >= 10 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
 		return;
@@ -327,6 +332,11 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 	int sock;
 
 	cp();
+
+	if(!n->status.reachable) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Trying to send UDP packet to unreachable node %s (%s)"), n->name, n->hostname);
+		return;
+	}
 
 	/* Make sure we have a valid key */
 

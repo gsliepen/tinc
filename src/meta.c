@@ -41,6 +41,11 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 
 	cp();
 
+	if(!c) {
+		logger(LOG_ERR, _("send_meta() called with NULL pointer!"));
+		abort();
+	}
+
 	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
