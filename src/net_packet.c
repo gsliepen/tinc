@@ -552,7 +552,8 @@ void handle_incoming_vpn_data(int sock)
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len < 0) {
-		logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
+		if(errno != EAGAIN && errno != EINTR)
+			logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
 		return;
 	}
 
