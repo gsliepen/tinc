@@ -71,7 +71,7 @@ void send_mtu_probe(node_t *n)
 	n->mtuevent = NULL;
 
 	if(!n->status.reachable) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Trying to send MTU probe to unreachable node %s (%s)"), n->name, n->hostname);
+		logger(LOG_DEBUG, _("Trying to send MTU probe to unreachable node %s (%s)"), n->name, n->hostname);
 		return;
 	}
 

@@ -176,10 +176,11 @@ void update_node_udp(node_t *n, const sockaddr_t *sa)
 		n->hostname = sockaddr2hostname(&n->address);
 		avl_delete(node_udp_tree, n);
 		avl_insert(node_udp_tree, n);
-		logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
+		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
 		memset(&n->address, 0, sizeof n->address);
-		logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
+		n->hostname = 0;
+		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
 	}
 }
 
