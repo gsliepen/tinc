@@ -466,7 +466,7 @@ int main_loop(void)
 			for(node = connection_tree->head; node; node = node->next) {
 				c = node->data;
 				
-				asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+				xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 				if(stat(fname, &s) || s.st_mtime > last_config_check)
 					terminate_connection(c, c->status.active);
 				free(fname);

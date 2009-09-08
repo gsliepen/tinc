@@ -417,7 +417,7 @@ bool read_server_config()
 
 	cp();
 
-	asprintf(&fname, "%s/tinc.conf", confbase);
+	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */
@@ -469,7 +469,7 @@ FILE *ask_and_open(const char *filename, const char *what)
 		char *p;
 
 		directory = get_current_dir_name();
-		asprintf(&p, "%s/%s", directory, fn);
+		xasprintf(&p, "%s/%s", directory, fn);
 		free(fn);
 		free(directory);
 		fn = p;

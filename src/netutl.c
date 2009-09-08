@@ -128,7 +128,7 @@ char *sockaddr2hostname(const sockaddr_t *sa)
 	cp();
 
 	if(sa->sa.sa_family == AF_UNKNOWN) {
-		asprintf(&str, _("%s port %s"), sa->unknown.address, sa->unknown.port);
+		xasprintf(&str, _("%s port %s"), sa->unknown.address, sa->unknown.port);
 		return str;
 	}
 
@@ -139,7 +139,7 @@ char *sockaddr2hostname(const sockaddr_t *sa)
 			   gai_strerror(err));
 	}
 
-	asprintf(&str, _("%s port %s"), address, port);
+	xasprintf(&str, _("%s port %s"), address, port);
 
 	return str;
 }

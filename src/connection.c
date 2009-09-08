@@ -158,7 +158,7 @@ bool read_connection_config(connection_t *c)
 
 	cp();
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);
 	free(fname);
 

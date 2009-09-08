@@ -337,7 +337,7 @@ static bool keygen(int bits)
 	} else
 		fprintf(stderr, _("Done.\n"));
 
-	asprintf(&filename, "%s/rsa_key.priv", confbase);
+	xasprintf(&filename, "%s/rsa_key.priv", confbase);
 	f = ask_and_open(filename, _("private RSA key"));
 
 	if(!f)
@@ -356,9 +356,9 @@ static bool keygen(int bits)
 	free(filename);
 
 	if(name)
-		asprintf(&filename, "%s/hosts/%s", confbase, name);
+		xasprintf(&filename, "%s/hosts/%s", confbase, name);
 	else
-		asprintf(&filename, "%s/rsa_key.pub", confbase);
+		xasprintf(&filename, "%s/rsa_key.pub", confbase);
 
 	f = ask_and_open(filename, _("public RSA key"));
 
@@ -389,7 +389,7 @@ static void make_names(void)
 #endif
 
 	if(netname)
-		asprintf(&identname, "tinc.%s", netname);
+		xasprintf(&identname, "tinc.%s", netname);
 	else
 		identname = xstrdup("tinc");
 
@@ -397,12 +397,12 @@ static void make_names(void)
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
 			if(!logfilename)
-				asprintf(&logfilename, "%s/log/%s.log", identname);
+				xasprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
 				if(netname)
-					asprintf(&confbase, "%s/%s", installdir, netname);
+					xasprintf(&confbase, "%s/%s", installdir, netname);
 				else
-					asprintf(&confbase, "%s", installdir);
+					xasprintf(&confbase, "%s", installdir);
 			}
 		}
 		RegCloseKey(key);
@@ -412,19 +412,19 @@ static void make_names(void)
 #endif
 
 	if(!pidfilename)
-		asprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+		xasprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
 
 	if(!logfilename)
-		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
 
 	if(netname) {
 		if(!confbase)
-			asprintf(&confbase, CONFDIR "/tinc/%s", netname);
+			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
 			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
 	} else {
 		if(!confbase)
-			asprintf(&confbase, CONFDIR "/tinc");
+			xasprintf(&confbase, CONFDIR "/tinc");
 	}
 }
 

@@ -371,9 +371,9 @@ bool execute_script(const char *name, char **envp)
 	cp();
 
 #ifndef HAVE_MINGW
-	len = asprintf(&scriptname, "\"%s/%s\"", confbase, name);
+	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
 #else
-	len = asprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
+	len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
 #endif
 	if(len < 0)
 		return false;

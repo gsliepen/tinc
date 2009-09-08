@@ -113,7 +113,7 @@ bool read_rsa_public_key(connection_t *c)
 
 	/* Else, check if a harnessed public key is in the config file */
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
 	if(fp) {
@@ -128,7 +128,7 @@ bool read_rsa_public_key(connection_t *c)
 
 	/* Try again with PEM_read_RSA_PUBKEY. */
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
 	if(fp) {
@@ -171,7 +171,7 @@ bool read_rsa_private_key(void)
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
-		asprintf(&fname, "%s/rsa_key.priv", confbase);
+		xasprintf(&fname, "%s/rsa_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -228,8 +228,8 @@ bool setup_myself(void)
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	asprintf(&myself->hostname, _("MYSELF"));
-	asprintf(&myself->connection->hostname, _("MYSELF"));
+	xasprintf(&myself->hostname, _("MYSELF"));
+	xasprintf(&myself->connection->hostname, _("MYSELF"));
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
@@ -257,7 +257,7 @@ bool setup_myself(void)
 		return false;
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
-		asprintf(&myport, "655");
+		xasprintf(&myport, "655");
 
 	/* Read in all the subnets specified in the host configuration file */
 
@@ -433,10 +433,10 @@ bool setup_myself(void)
 		return false;
 
 	/* Run tinc-up script to further initialize the tap interface */
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
 	execute_script("tinc-up", envp);
@@ -571,10 +571,10 @@ void close_network_connections(void)
 		close(listen_socket[i].udp);
 	}
 
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
 	exit_requests();
