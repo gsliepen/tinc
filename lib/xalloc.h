@@ -24,3 +24,6 @@ void *xcalloc PARAMS ((size_t n, size_t s));
 void *xrealloc PARAMS ((void *p, size_t n)) __attribute__ ((__malloc__));
 
 char *xstrdup PARAMS ((const char *s)) __attribute__ ((__malloc__));
+
+extern int xasprintf(char **strp, const char *fmt, ...);
+extern int xvasprintf(char **strp, const char *fmt, va_list ap);

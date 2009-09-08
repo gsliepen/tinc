@@ -36,6 +36,7 @@ extern char *get_current_dir_name(void);
 
 #ifndef HAVE_ASPRINTF
 extern int asprintf(char **, const char *, ...);
+extern int vasprintf(char **, const char *, va_list ap);
 #endif
 
 #ifndef HAVE_GETNAMEINFO

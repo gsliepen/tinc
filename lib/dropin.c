@@ -125,27 +125,36 @@ char *get_current_dir_name(void)
 #endif
 
 #ifndef HAVE_ASPRINTF
-int asprintf(char **buf, const char *fmt, ...)
+int asprintf(char **buf, const char *fmt, ...) {
+	int result;
+	va_list ap;
+	va_start(ap, fmt);
+	result = vasprintf(buf, fmt, ap);
+	va_end(ap);
+	return result;
+}
+
+int vasprintf(char **buf, const char *fmt, va_list ap) {
 {
 	int status;
-	va_list ap;
+	va_list aq;
 	int len;
 
 	len = 4096;
 	*buf = xmalloc(len);
 
-	va_start(ap, fmt);
-	status = vsnprintf(*buf, len, fmt, ap);
-	va_end(ap);
+	va_copy(aq, ap);
+	status = vsnprintf(*buf, len, fmt, aq);
+	va_end(aq);
 
 	if(status >= 0)
 		*buf = xrealloc(*buf, status + 1);
 
 	if(status > len - 1) {
 		len = status;
-		va_start(ap, fmt);
-		status = vsnprintf(*buf, len, fmt, ap);
-		va_end(ap);
+		va_copy(aq, ap);
+		status = vsnprintf(*buf, len, fmt, aq);
+		va_end(aq);
 	}
 
 	return status;
