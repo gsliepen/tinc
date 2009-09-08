@@ -587,7 +587,7 @@ void setup_signals(void)
 
 	/* Set a default signal handler for every signal, errors will be
 	   ignored. */
-	for(i = 0; i < NSIG; i++) {
+	for(i = 1; i < NSIG; i++) {
 		if(!do_detach)
 			act.sa_handler = SIG_DFL;
 		else
