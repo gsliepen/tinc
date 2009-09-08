@@ -37,11 +37,12 @@
 pid_t read_pid (char *pidfile)
 {
   FILE *f;
-  long pid = 0;
+  long pid;
 
   if (!(f=fopen(pidfile,"r")))
     return 0;
-  fscanf(f,"%ld", &pid);
+  if(fscanf(f,"%ld", &pid) != 1)
+    pid = 0;
   fclose(f);
   return pid;
 }
