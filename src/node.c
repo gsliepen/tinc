@@ -137,8 +137,8 @@ void node_del(node_t *n)
 		edge_del(e);
 	}
 
-	avl_delete(node_tree, n);
 	avl_delete(node_udp_tree, n);
+	avl_delete(node_tree, n);
 }
 
 node_t *lookup_node(char *name)
