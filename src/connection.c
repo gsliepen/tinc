@@ -37,7 +37,7 @@ connection_t *broadcast;
 
 static int connection_compare(const connection_t *a, const connection_t *b)
 {
-	return (void *)a - (void *)b;
+	return a - b;
 }
 
 void init_connections(void)
@@ -144,7 +144,7 @@ void dump_connections(void)
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"),
-			   c->name, c->hostname, c->options, c->socket, c->status.value,
+			   c->name, c->hostname, c->options, c->socket, *(uint32_t *)&c->status,
 			   c->outbufsize, c->outbufstart, c->outbuflen);
 	}
 
