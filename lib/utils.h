@@ -43,4 +43,6 @@ extern const char *winerror(int);
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
 #endif
 
+extern unsigned int bitfield_to_int(void *bitfield, size_t size);
+
 #endif							/* __TINC_UTILS_H__ */
