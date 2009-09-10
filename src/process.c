@@ -380,12 +380,14 @@ bool execute_script(const char *name, char **envp)
 
 	scriptname[len - 1] = '\0';
 
+#ifndef HAVE_TUNEMU
 	/* First check if there is a script */
 
 	if(stat(scriptname + 1, &s)) {
 		free(scriptname);
 		return true;
 	}
+#endif
 
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 
