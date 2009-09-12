@@ -476,9 +476,12 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	avl_node_t *node;
 	int i;
-	char *envp[8];
-	char netstr[MAXNETSTR + 7] = "SUBNET=";
+	char *envp[9] = {0};
+	char netstr[MAXNETSTR];
 	char *name, *address, *port;
+	char empty[] = "";
+
+	// Prepare environment variables to be passed to the script
 
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
@@ -487,13 +490,9 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 
 	if(owner != myself) {
 		sockaddr2str(&owner->address, &address, &port);
-		xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
-		xasprintf(&envp[5], "REMOTEPORT=%s", port);
-		envp[6] = netstr;
-		envp[7] = NULL;
-	} else {
-		envp[4] = netstr;
-		envp[5] = NULL;
+		// 4 and 5 are reserved for SUBNET and WEIGHT
+		xasprintf(&envp[6], "REMOTEADDRESS=%s", address);
+		xasprintf(&envp[7], "REMOTEPORT=%s", port);
 	}
 
 	name = up ? "subnet-up" : "subnet-down";
@@ -501,22 +500,44 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	if(!subnet) {
 		for(node = owner->subnet_tree->head; node; node = node->next) {
 			subnet = node->data;
-			if(!net2str(netstr + 7, sizeof netstr - 7, subnet))
+			if(!net2str(netstr, sizeof netstr, subnet))
 				continue;
+			// Strip the weight from the subnet, and put it in its own environment variable
+			char *weight = strchr(netstr + 7, '#');
+			if(weight)
+				*weight++ = 0;
+			else
+				weight = empty;
+
+			// Prepare the SUBNET and WEIGHT variables
+			if(envp[4])
+				free(envp[4]);
+			if(envp[5])
+				free(envp[5]);
+			xasprintf(&envp[4], "SUBNET=%s", netstr);
+			xasprintf(&envp[5], "WEIGHT=%s", weight);
+
 			execute_script(name, envp);
 		}
 	} else {
-		if(net2str(netstr + 7, sizeof netstr - 7, subnet))
+		if(net2str(netstr + 7, sizeof netstr - 7, subnet)) {
+			// Strip the weight from the subnet, and put it in its own environment variable
+			char *weight = strchr(netstr + 7, '#');
+			if(weight)
+				*weight++ = 0;
+			else
+				weight = empty;
+
+			// Prepare the SUBNET and WEIGHT variables
+			xasprintf(&envp[4], "SUBNET=%s", netstr);
+			xasprintf(&envp[5], "WEIGHT=%s", weight);
+
 			execute_script(name, envp);
+		}
 	}
 
-	for(i = 0; i < (owner != myself ? 6 : 4); i++)
+	for(i = 0; envp[i] && i < 9; i++)
 		free(envp[i]);
-
-	if(owner != myself) {
-		free(address);
-		free(port);
-	}
 }
 
 void dump_subnets(void)
