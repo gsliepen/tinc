@@ -94,6 +94,13 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 	} else
 		return true;
 }
+
+static void swap_mac_addresses(vpn_packet_t *packet) {
+	mac_t tmp;
+	memcpy(&tmp, &packet->data[0], sizeof tmp);
+	memcpy(&packet->data[0], &packet->data[6], sizeof tmp);
+	memcpy(&packet->data[6], &tmp, sizeof tmp);
+}
 	
 static void learn_mac(mac_t *address)
 {
@@ -160,40 +167,6 @@ void age_subnets(void)
 	}
 }
 
-static void route_mac(node_t *source, vpn_packet_t *packet)
-{
-	subnet_t *subnet;
-	mac_t dest;
-
-	cp();
-
-
-	/* Learn source address */
-
-	if(source == myself) {
-		mac_t src;
-		memcpy(&src, &packet->data[6], sizeof src);
-		learn_mac(&src);
-	}
-
-	/* Lookup destination address */
-
-	memcpy(&dest, &packet->data[0], sizeof dest);
-	subnet = lookup_subnet_mac(&dest);
-
-	if(!subnet) {
-		broadcast_packet(source, packet);
-		return;
-	}
-
-	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Packet looping back to %s (%s)!"), source->name, source->hostname);
-		return;
-	}
-
-	send_packet(subnet->owner, packet);
-}
-
 /* RFC 792 */
 
 static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code)
@@ -209,6 +182,10 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 		return;
 	
 	cp();
+
+	/* Swap Ethernet source and destination addresses */
+
+	swap_mac_addresses(packet);
 
 	/* Copy headers from packet into properly aligned structs on the stack */
 
@@ -405,6 +382,10 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 		return;
 	
 	cp();
+
+	/* Swap Ethernet source and destination addresses */
+
+	swap_mac_addresses(packet);
 
 	/* Copy headers from packet to structs on the stack */
 
@@ -743,6 +724,64 @@ static void route_arp(node_t *source, vpn_packet_t *packet)
 	send_packet(source, packet);
 }
 
+static void route_mac(node_t *source, vpn_packet_t *packet)
+{
+	subnet_t *subnet;
+	mac_t dest;
+
+	cp();
+
+
+	/* Learn source address */
+
+	if(source == myself) {
+		mac_t src;
+		memcpy(&src, &packet->data[6], sizeof src);
+		learn_mac(&src);
+	}
+
+	/* Lookup destination address */
+
+	memcpy(&dest, &packet->data[0], sizeof dest);
+	subnet = lookup_subnet_mac(&dest);
+
+	if(!subnet) {
+		broadcast_packet(source, packet);
+		return;
+	}
+
+	if(subnet->owner == source) {
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Packet looping back to %s (%s)!"), source->name, source->hostname);
+		return;
+	}
+
+	// Handle packets larger than PMTU
+
+	node_t *via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+	
+	if(via && packet->len > via->mtu && via != myself) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Packet for %s (%s) length %d larger than MTU %d"), subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		uint16_t type = packet->data[12] << 8 | packet->data[13];
+		if(type == ETH_P_IP) {
+			if(packet->data[20] & 0x40) {
+				packet->len = via->mtu;
+				route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
+			} else {
+				fragment_ipv4_packet(via, packet);
+			}
+		} else if(type == ETH_P_IPV6) {
+			packet->len = via->mtu;
+			route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
+		} else
+			ifdebug(TRAFFIC) logger(LOG_INFO, _("Large packet of unhandled type %hx dropped"), type);
+
+		return;
+	}
+
+	send_packet(subnet->owner, packet);
+}
+
+
 void route(node_t *source, vpn_packet_t *packet)
 {
 	cp();
@@ -753,9 +792,8 @@ void route(node_t *source, vpn_packet_t *packet)
 	switch (routing_mode) {
 		case RMODE_ROUTER:
 			{
-				uint16_t type;
+				uint16_t type = packet->data[12] << 8 | packet->data[13];
 
-				type = ntohs(*((uint16_t *)(&packet->data[12])));
 				switch (type) {
 					case ETH_P_ARP:
 						route_arp(source, packet);
