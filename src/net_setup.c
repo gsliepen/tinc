@@ -306,9 +306,12 @@ bool setup_myself(void)
 	} else
 		routing_mode = RMODE_ROUTER;
 
-	if(routing_mode == RMODE_ROUTER)
-		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice)
-			myself->options |= OPTION_PMTU_DISCOVERY;
+	// Enable PMTUDiscovery by default if we are in router mode.
+
+	choice = routing_mode == RMODE_ROUTER;
+	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
+	if(choice)	
+		myself->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
