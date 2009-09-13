@@ -37,7 +37,7 @@ connection_t *broadcast;
 
 static int connection_compare(const connection_t *a, const connection_t *b)
 {
-	return a - b;
+	return a < b ? -1 : a == b ? 0 : 1;
 }
 
 void init_connections(void)
