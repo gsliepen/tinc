@@ -174,7 +174,6 @@ void update_node_udp(node_t *n, const sockaddr_t *sa)
 	if(sa) {
 		n->address = *sa;
 		n->hostname = sockaddr2hostname(&n->address);
-		avl_delete(node_udp_tree, n);
 		avl_insert(node_udp_tree, n);
 		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
