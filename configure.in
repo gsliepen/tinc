@@ -82,6 +82,11 @@ AC_ARG_ENABLE(tunemu,
   ]
 )
 
+AC_ARG_WITH(windows2000,
+  AS_HELP_STRING([--with-windows2000], [compile with support for Windows 2000. This disables support for tunneling over existing IPv6 networks.]),
+  [AC_DEFINE(WITH_WINDOWS2000, 1, [Compile with support for Windows 2000])]
+)
+
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
 
 AC_CACHE_SAVE
@@ -143,7 +148,7 @@ AC_CHECK_FUNC(gethostbyname, [], [
   AC_CHECK_LIB(nsl, gethostbyname)
 ])
 
-AC_CHECK_FUNCS([freeaddrinfo gai_strerror getaddrinfo getnameinfo inet_aton],
+AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
   [], [], [#include "have.h"]
 )
 

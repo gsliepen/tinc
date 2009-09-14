@@ -14,7 +14,7 @@
 #include "fake-getnameinfo.h"
 #include "fake-getaddrinfo.h"
 
-#ifndef HAVE_GETNAMEINFO
+#if !HAVE_DECL_GETNAMEINFO
 
 int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t hostlen, char *serv, size_t servlen, int flags)
 {

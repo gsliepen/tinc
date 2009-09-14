@@ -16,7 +16,7 @@
 #include "fake-getaddrinfo.h"
 #include "xalloc.h"
 
-#ifndef HAVE_GAI_STRERROR
+#if !HAVE_DECL_GAI_STRERROR
 char *gai_strerror(int ecode)
 {
 	switch (ecode) {
@@ -32,7 +32,7 @@ char *gai_strerror(int ecode)
 }    
 #endif /* !HAVE_GAI_STRERROR */
 
-#ifndef HAVE_FREEADDRINFO
+#if !HAVE_DECL_FREEADDRINFO
 void freeaddrinfo(struct addrinfo *ai)
 {
 	struct addrinfo *next;
@@ -45,7 +45,7 @@ void freeaddrinfo(struct addrinfo *ai)
 }
 #endif /* !HAVE_FREEADDRINFO */
 
-#ifndef HAVE_GETADDRINFO
+#if !HAVE_DECL_GETADDRINFO
 static struct addrinfo *malloc_ai(uint16_t port, uint32_t addr)
 {
 	struct addrinfo *ai;

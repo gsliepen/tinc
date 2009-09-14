@@ -3,7 +3,7 @@
 #ifndef _FAKE_GETNAMEINFO_H
 #define _FAKE_GETNAMEINFO_H
 
-#ifndef HAVE_GETNAMEINFO
+#if !HAVE_DECL_GETNAMEINFO
 int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, 
                 size_t hostlen, char *serv, size_t servlen, int flags);
 #endif /* !HAVE_GETNAMEINFO */

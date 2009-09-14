@@ -39,11 +39,6 @@ extern int asprintf(char **, const char *, ...);
 extern int vasprintf(char **, const char *, va_list ap);
 #endif
 
-#ifndef HAVE_GETNAMEINFO
-extern int getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
-					   size_t hostlen, char *serv, size_t servlen, int flags);
-#endif
-
 #ifndef HAVE_GETTIMEOFDAY
 extern int gettimeofday(struct timeval *, void *);
 #endif
