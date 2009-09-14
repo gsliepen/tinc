@@ -43,8 +43,4 @@ extern int vasprintf(char **, const char *, va_list ap);
 extern int gettimeofday(struct timeval *, void *);
 #endif
 
-#ifndef HAVE_RANDOM
-extern long int random(void);
-#endif
-
 #endif							/* __DROPIN_H__ */

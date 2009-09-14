@@ -168,15 +168,3 @@ int gettimeofday(struct timeval *tv, void *tz) {
 	return 0;
 }
 #endif
-
-#ifndef HAVE_RANDOM
-#include <openssl/rand.h>
-
-long int random(void) {
-	long int x;
-	
-	RAND_pseudo_bytes((unsigned char *)&x, sizeof(x));
-
-	return x;
-}
-#endif
