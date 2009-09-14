@@ -366,7 +366,6 @@ int main_loop(void)
 	last_graph_dump = now;
 	
 	srand(now);
-	srand48(now);
 
 	running = true;
 
