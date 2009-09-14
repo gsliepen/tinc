@@ -87,7 +87,7 @@ void send_mtu_probe(node_t *n)
 			return;
 		}
 
-		len = n->minmtu + 1 + random() % (n->maxmtu - n->minmtu);
+		len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
 		if(len < 64)
 			len = 64;
 		
