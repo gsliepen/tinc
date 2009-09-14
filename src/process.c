@@ -364,7 +364,6 @@ bool execute_script(const char *name, char **envp)
 {
 #ifdef HAVE_SYSTEM
 	int status, len;
-	struct stat s;
 	char *scriptname, *p;
 	int i;
 
@@ -383,7 +382,7 @@ bool execute_script(const char *name, char **envp)
 #ifndef HAVE_TUNEMU
 	/* First check if there is a script */
 
-	if(stat(scriptname + 1, &s)) {
+	if(access(scriptname + 1, F_OK)) {
 		free(scriptname);
 		return true;
 	}
