@@ -229,7 +229,7 @@ static bool parse_options(int argc, char **argv)
 
 					generate_keys &= ~7;	/* Round it to bytes */
 				} else
-					generate_keys = 1024;
+					generate_keys = 2048;
 				break;
 
 			case 'R':				/* chroot to NETNAME dir */
