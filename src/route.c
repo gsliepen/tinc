@@ -769,13 +769,12 @@ static void route_mac(node_t *source, vpn_packet_t *packet)
 			} else {
 				fragment_ipv4_packet(via, packet);
 			}
+			return;
 		} else if(type == ETH_P_IPV6) {
 			packet->len = via->mtu;
 			route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
-		} else
-			ifdebug(TRAFFIC) logger(LOG_INFO, _("Large packet of unhandled type %hx dropped"), type);
-
-		return;
+			return;
+		}
 	}
 
 	send_packet(subnet->owner, packet);
