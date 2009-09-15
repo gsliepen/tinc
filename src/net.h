@@ -143,6 +143,8 @@ extern void send_mtu_probe(struct node_t *);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)
+#else
+extern CRITICAL_SECTION mutex;
 #endif
 
 #endif							/* __TINC_NET_H__ */

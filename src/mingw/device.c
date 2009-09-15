@@ -34,7 +34,7 @@
 
 #include "mingw/common.h"
 
-int device_fd = 0;
+int device_fd = -1;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
@@ -45,63 +45,24 @@ static int device_total_out = 0;
 
 extern char *myport;
 
-static struct packetbuf {
-	uint8_t data[MTU];
-	length_t len;
-} *bufs;
-
-static int nbufs = 64;
-
 static DWORD WINAPI tapreader(void *bla) {
-	int sock, err, status;
-	struct addrinfo *ai;
-	struct addrinfo hint = {
-		.ai_family = AF_UNSPEC,
-		.ai_socktype = SOCK_STREAM,
-		.ai_protocol = IPPROTO_TCP,
-		.ai_flags = 0,
-	};
-	unsigned char bufno = 0;
+	int status;
 	long len;
 	OVERLAPPED overlapped;
-
-	/* Open a socket to the parent process */
-
-	err = getaddrinfo(NULL, myport, &hint, &ai);
-
-	if(err || !ai) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(errno));
-		return -1;
-	}
-
-	sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
-
-	if(sock < 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
-		freeaddrinfo(ai);
-		return -1;
-	}
-
-	if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "connect", strerror(errno));
-		freeaddrinfo(ai);
-		return -1;
-	}
-
-	freeaddrinfo(ai);
+	vpn_packet_t packet;
 
 	logger(LOG_DEBUG, _("Tap reader running"));
 
 	/* Read from tap device and send to parent */
 
 	overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	
+
 	for(;;) {
 		overlapped.Offset = 0;
 		overlapped.OffsetHigh = 0;
 		ResetEvent(overlapped.hEvent);
 
-		status = ReadFile(device_handle, bufs[bufno].data, MTU, &len, &overlapped);
+		status = ReadFile(device_handle, packet.data, MTU, &len, &overlapped);
 
 		if(!status) {
 			if(GetLastError() == ERROR_IO_PENDING) {
@@ -115,11 +76,11 @@ static DWORD WINAPI tapreader(void *bla) {
 			}
 		}
 
-		bufs[bufno].len = len;
-		if(send(sock, &bufno, 1, 0) <= 0)
-			return -1;
-		if(++bufno >= nbufs)
-			bufno = 0;
+		EnterCriticalSection(&mutex);
+		packet.len = len;
+		packet.priority = 0;
+		route(myself, &packet);
+		LeaveCriticalSection(&mutex);
 	}
 }
 
@@ -240,44 +201,6 @@ bool setup_device(void)
 		overwrite_mac = 1;
 	}
 
-	/* Set up ringbuffer */
-
-	get_config_int(lookup_config(config_tree, "RingBufferSize"), &nbufs);
-	if(nbufs <= 1)
-		nbufs = 1;
-	else if(nbufs > 256)
-		nbufs = 256;
-	
-	bufs = xmalloc_and_zero(nbufs * sizeof *bufs);
-
-	/* Create a listening socket */
-
-	err = getaddrinfo(NULL, myport, &hint, &ai);
-
-	if(err || !ai) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo", gai_strerror(errno));
-		return false;
-	}
-
-	sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
-
-	if(sock < 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
-		return false;
-	}
-
-	if(bind(sock, ai->ai_addr, ai->ai_addrlen)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "bind", strerror(errno));
-		return false;
-	}
-
-	freeaddrinfo(ai);
-
-	if(listen(sock, 1)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "listen", strerror(errno));
-		return false;
-	}
-
 	/* Start the tap reader */
 
 	thread = CreateThread(NULL, 0, tapreader, NULL, 0, NULL);
@@ -286,15 +209,6 @@ bool setup_device(void)
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "CreateThread", winerror(GetLastError()));
 		return false;
 	}
-
-	/* Wait for the tap reader to connect back to us */
-
-	if((device_fd = accept(sock, NULL, 0)) == -1) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "accept", strerror(errno));
-		return false;
-	}
-
-	closesocket(sock);
 
 	/* Set media status for newer TAP-Win32 devices */
 
@@ -320,25 +234,7 @@ void close_device(void)
 
 bool read_packet(vpn_packet_t *packet)
 {
-	unsigned char bufno;
-
-	cp();
-
-	if((recv(device_fd, &bufno, 1, 0)) <= 0) {
-		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
-			   device, strerror(errno));
-		return false;
-	}
-	
-	packet->len = bufs[bufno].len;
-	memcpy(packet->data, bufs[bufno].data, bufs[bufno].len);
-
-	device_total_in += packet->len;
-
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
-			   device_info);
-
-	return true;
+	return false;
 }
 
 bool write_packet(vpn_packet_t *packet)

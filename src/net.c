@@ -149,7 +149,8 @@ static int build_fdset(fd_set *readset, fd_set *writeset)
 			max = listen_socket[i].udp;
 	}
 
-	FD_SET(device_fd, readset);
+	if(device_fd >= 0)
+		FD_SET(device_fd, readset);
 	if(device_fd > max)
 		max = device_fd;
 	
@@ -294,7 +295,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 	cp();
 
 	/* check input from kernel */
-	if(FD_ISSET(device_fd, readset)) {
+	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
 		if(read_packet(&packet)) {
 			packet.priority = 0;
 			route(myself, &packet);
@@ -378,7 +379,13 @@ int main_loop(void)
 
 		maxfd = build_fdset(&readset, &writeset);
 
+#ifdef HAVE_MINGW
+		LeaveCriticalSection(&mutex);
+#endif
 		r = select(maxfd + 1, &readset, &writeset, NULL, &tv);
+#ifdef HAVE_MINGW
+		EnterCriticalSection(&mutex);
+#endif
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
