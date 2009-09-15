@@ -362,14 +362,14 @@ bool setup_myself(void)
 			}
 		}
 	} else
-		myself->incipher = EVP_bf_cbc();
+		myself->incipher = EVP_aes_256_cbc();
 
 	if(myself->incipher)
 		myself->inkeylength = myself->incipher->key_len + myself->incipher->iv_len;
 	else
 		myself->inkeylength = 1;
 
-	myself->connection->outcipher = EVP_bf_ofb();
+	myself->connection->outcipher = EVP_aes_256_ofb();
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
@@ -390,9 +390,9 @@ bool setup_myself(void)
 			}
 		}
 	} else
-		myself->indigest = EVP_sha1();
+		myself->indigest = EVP_sha256();
 
-	myself->connection->outdigest = EVP_sha1();
+	myself->connection->outdigest = EVP_sha256();
 
 	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->inmaclength)) {
 		if(myself->indigest) {
