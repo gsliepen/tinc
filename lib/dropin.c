@@ -135,7 +135,6 @@ int asprintf(char **buf, const char *fmt, ...) {
 }
 
 int vasprintf(char **buf, const char *fmt, va_list ap) {
-{
 	int status;
 	va_list aq;
 	int len;
