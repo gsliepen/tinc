@@ -160,7 +160,7 @@ bool send_ans_key(node_t *to) {
 	to->received_seqno = 0;
 	memset(to->late, 0, sizeof(to->late));
 
-	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
+	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %zu %d", ANS_KEY,
 						myself->name, to->name, key,
 						cipher_get_nid(&to->incipher),
 						digest_get_nid(&to->indigest),
