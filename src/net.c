@@ -270,7 +270,7 @@ int reload_configuration(void) {
 			c->outgoing = NULL;
 		}
 		
-		asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 		if(stat(fname, &s) || s.st_mtime > last_config_check)
 			terminate_connection(c, c->status.active);
 		free(fname);

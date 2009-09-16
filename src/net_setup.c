@@ -63,7 +63,7 @@ bool read_rsa_public_key(connection_t *c) {
 	/* Else, check for PublicKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
-		asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 
 	fp = fopen(fname, "r");
 
