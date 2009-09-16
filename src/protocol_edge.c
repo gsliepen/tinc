@@ -44,7 +44,7 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 
 	sockaddr2str(&e->address, &address, &port);
 
-	x = send_request(c, "%d %lx %s %s %s %s %lx %d", ADD_EDGE, random(),
+	x = send_request(c, "%d %x %s %s %s %s %lx %d", ADD_EDGE, rand(),
 					 e->from->name, e->to->name, address, port,
 					 e->options, e->weight);
 	free(address);
@@ -175,7 +175,7 @@ bool add_edge_h(connection_t *c, char *request) {
 bool send_del_edge(connection_t *c, const edge_t *e) {
 	cp();
 
-	return send_request(c, "%d %lx %s %s", DEL_EDGE, random(),
+	return send_request(c, "%d %x %s %s", DEL_EDGE, rand(),
 						e->from->name, e->to->name);
 }
 

@@ -73,7 +73,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 
 	cp();
 
-	/* Use vsnprintf instead of vasprintf: faster, no memory
+	/* Use vsnprintf instead of vxasprintf: faster, no memory
 	   fragmentation, cleanup is automatic, and there is a limit on the
 	   input buffer anyway */
 

@@ -362,7 +362,7 @@ begin:
 		get_config_string(c->outgoing->cfg, &address);
 
 		if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
-			asprintf(&port, "655");
+			xasprintf(&port, "655");
 
 		c->outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
 		free(address);

@@ -46,7 +46,7 @@ bool send_key_changed() {
 	if(!mykeyused)
 		return true;
 
-	return send_request(broadcast, "%d %lx %s", KEY_CHANGED, random(), myself->name);
+	return send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 }
 
 bool key_changed_h(connection_t *c, char *request) {

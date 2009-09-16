@@ -261,28 +261,29 @@ bool detach(void) {
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
 	int status, len;
-	struct stat s;
 	char *scriptname, *p;
 	int i;
 
 	cp();
 
 #ifndef HAVE_MINGW
-	len = asprintf(&scriptname, "\"%s/%s\"", confbase, name);
+	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
 #else
-	len = asprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
+	len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
 #endif
 	if(len < 0)
 		return false;
 
 	scriptname[len - 1] = '\0';
 
+#ifndef HAVE_TUNEMU
 	/* First check if there is a script */
 
-	if(stat(scriptname + 1, &s)) {
+	if(access(scriptname + 1, F_OK)) {
 		free(scriptname);
 		return true;
 	}
+#endif
 
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 
@@ -405,7 +406,7 @@ void setup_signals(void) {
 
 	/* Set a default signal handler for every signal, errors will be
 	   ignored. */
-	for(i = 0; i < NSIG; i++) {
+	for(i = 1; i < NSIG; i++) {
 		if(!do_detach)
 			act.sa_handler = SIG_DFL;
 		else

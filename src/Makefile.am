@@ -11,6 +11,10 @@ tincd_SOURCES = cipher.c conf.c connection.c control.c crypto.c digest.c edge.c 
 
 tincctl_SOURCES = tincctl.c rsagen.c
 
+if TUNEMU
+tincd_SOURCES += bsd/tunemu.c
+endif
+
 nodist_tincd_SOURCES = device.c
 
 DEFAULT_INCLUDES =
@@ -18,9 +22,13 @@ DEFAULT_INCLUDES =
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 
 noinst_HEADERS = cipher.h conf.h connection.h control.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
-	protocol.h route.h rsa.h rsagen.h subnet.h
+	protocol.h route.h rsa.h rsagen.h subnet.h bsd/tunemu.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@ @LIBINTL@
+
+if TUNEMU
+LIBS += -lpcap
+endif
 
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a

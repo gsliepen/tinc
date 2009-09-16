@@ -70,7 +70,7 @@ bool setup_device(void) {
 	cp();
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		asprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
+		xasprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 

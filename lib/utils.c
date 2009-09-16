@@ -96,3 +96,10 @@ const char *winerror(int err) {
 }
 #endif
 
+unsigned int bitfield_to_int(void *bitfield, size_t size) {
+	unsigned int value = 0;
+	if(size > sizeof value)
+		size = sizeof value;
+	memcpy(&value, bitfield, size);
+	return value;
+}

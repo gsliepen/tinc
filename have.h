@@ -31,6 +31,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#ifdef HAVE_MINGW
+#ifdef WITH_WINDOWS2000
+#define WINVER Windows2000
+#else
+#define WINVER WindowsXP
+#endif
+#include <w32api.h>
+#include <windows.h>
+#include <ws2tcpip.h>
+#endif
+
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif
@@ -162,15 +173,6 @@
 
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef HAVE_MINGW
-#include <windows.h>
-#include <winsock2.h>
-#endif
-
-#ifdef HAVE_LIBEVENT
-#include <event.h>
 #endif
 
 #endif /* __TINC_SYSTEM_H__ */

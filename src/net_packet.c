@@ -65,6 +65,11 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 
 	n->mtuprobes++;
 
+	if(!n->status.reachable) {
+		logger(LOG_DEBUG, _("Trying to send MTU probe to unreachable node %s (%s)"), n->name, n->hostname);
+		return;
+	}
+
 	if(n->mtuprobes >= 10 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
 		return;
@@ -77,7 +82,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 			return;
 		}
 
-		len = n->minmtu + 1 + random() % (n->maxmtu - n->minmtu);
+		len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
 		if(len < 64)
 			len = 64;
 		
@@ -302,6 +307,11 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	cp();
 
+	if(!n->status.reachable) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, _("Trying to send UDP packet to unreachable node %s (%s)"), n->name, n->hostname);
+		return;
+	}
+
 	/* Make sure we have a valid key */
 
 	if(!n->status.validkey) {
@@ -319,9 +329,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		return;
 	}
 
-	if(n->options & OPTION_PMTU_DISCOVERY && !n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
+	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				_("No minimum MTU established yet for %s (%s), forwarding via TCP"),
+				_("Packet for %s (%s) larger than minimum MTU, forwarding via TCP"),
 				n->name, n->hostname);
 
 		send_tcppacket(n->nexthop->connection, origpkt);
@@ -510,7 +520,8 @@ void handle_incoming_vpn_data(int sock, short events, void *data)
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len < 0) {
-		logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
+		if(errno != EAGAIN && errno != EINTR)
+			logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
 		return;
 	}
 

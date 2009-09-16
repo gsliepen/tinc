@@ -32,8 +32,7 @@
 #define OPTION_TCPONLY		0x0002
 #define OPTION_PMTU_DISCOVERY	0x0004
 
-typedef union connection_status_t {
-	struct {
+typedef struct connection_status_t {
 		int pinged:1;				/* sent ping */
 		int active:1;				/* 1 if active.. */
 		int connecting:1;			/* 1 if we are waiting for a non-blocking connect() to finish */
@@ -44,8 +43,6 @@ typedef union connection_status_t {
 		int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
 		int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
 		int unused:23;
-	};
-	uint32_t value;
 } connection_status_t;
 
 #include "edge.h"

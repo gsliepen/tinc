@@ -108,7 +108,7 @@ bool read_rsa_private_key() {
 	/* Else, check for PrivateKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
-		asprintf(&fname, "%s/rsa_key.priv", confbase);
+		xasprintf(&fname, "%s/rsa_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -178,8 +178,8 @@ bool setup_myself(void) {
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	asprintf(&myself->hostname, _("MYSELF"));
-	asprintf(&myself->connection->hostname, _("MYSELF"));
+	xasprintf(&myself->hostname, _("MYSELF"));
+	xasprintf(&myself->connection->hostname, _("MYSELF"));
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
@@ -207,7 +207,7 @@ bool setup_myself(void) {
 		return false;
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
-		asprintf(&myport, "655");
+		xasprintf(&myport, "655");
 
 	/* Read in all the subnets specified in the host configuration file */
 
@@ -256,9 +256,12 @@ bool setup_myself(void) {
 	} else
 		routing_mode = RMODE_ROUTER;
 
-	if(routing_mode == RMODE_ROUTER)
-		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice)
-			myself->options |= OPTION_PMTU_DISCOVERY;
+	// Enable PMTUDiscovery by default if we are in router mode.
+
+	choice = routing_mode == RMODE_ROUTER;
+	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
+	if(choice)	
+		myself->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
@@ -297,7 +300,7 @@ bool setup_myself(void) {
 	/* Generate packet encryption key */
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
-		cipher = xstrdup("blowfish");
+		cipher = xstrdup("aes256");
 
 	if(!cipher_open_by_name(&myself->incipher, cipher)) {
 		logger(LOG_ERR, _("Unrecognized cipher type!"));
@@ -312,7 +315,7 @@ bool setup_myself(void) {
 	/* Check if we want to use message authentication codes... */
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
-		digest = xstrdup("sha1");
+		digest = xstrdup("sha256");
 
 	int maclength = 4;
 	get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &maclength);
@@ -362,10 +365,10 @@ bool setup_myself(void) {
 	}
 
 	/* Run tinc-up script to further initialize the tap interface */
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
 	execute_script("tinc-up", envp);
@@ -523,10 +526,10 @@ void close_network_connections(void) {
 		close(listen_socket[i].udp);
 	}
 
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
 	exit_requests();

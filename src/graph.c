@@ -57,6 +57,7 @@
 #include "process.h"
 #include "subnet.h"
 #include "utils.h"
+#include "xalloc.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(E)
@@ -359,18 +360,20 @@ void check_reachability() {
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
-			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-			asprintf(&envp[1], "DEVICE=%s", device ? : "");
-			asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-			asprintf(&envp[3], "NODE=%s", n->name);
+			event_del(&n->mtuevent);
+
+			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+			xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+			xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+			xasprintf(&envp[3], "NODE=%s", n->name);
 			sockaddr2str(&n->address, &address, &port);
-			asprintf(&envp[4], "REMOTEADDRESS=%s", address);
-			asprintf(&envp[5], "REMOTEPORT=%s", port);
+			xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
+			xasprintf(&envp[5], "REMOTEPORT=%s", port);
 			envp[6] = NULL;
 
 			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
 
-			asprintf(&name,
+			xasprintf(&name,
 					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
 					 n->name);
 			execute_script(name, envp);

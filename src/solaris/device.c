@@ -99,7 +99,7 @@ bool setup_device(void) {
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		asprintf(&iface, "tun%d", ppa);
+		xasprintf(&iface, "tun%d", ppa);
 
 	device_info = _("Solaris tun device");
 

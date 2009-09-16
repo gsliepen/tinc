@@ -22,6 +22,8 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <errno.h>
 
 #if STDC_HEADERS
 # include <stdlib.h>
@@ -138,3 +140,21 @@ xcalloc (n, s)
 }
 
 #endif /* NOT_USED */
+
+int xasprintf(char **strp, const char *fmt, ...) {
+	int result;
+	va_list ap;
+	va_start(ap, fmt);
+	result = xvasprintf(strp, fmt, ap);
+	va_end(ap);
+	return result;
+}
+
+int xvasprintf(char **strp, const char *fmt, va_list ap) {
+	int result = vasprintf(strp, fmt, ap);
+	if(result < 0) {
+		fprintf(stderr, "vasprintf() failed: %s\n", strerror(errno));
+  		exit(xalloc_exit_failure);
+	}
+	return result;
+}

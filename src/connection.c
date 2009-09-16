@@ -37,7 +37,7 @@ splay_tree_t *connection_tree;	/* Meta connections */
 connection_t *broadcast;
 
 static int connection_compare(const connection_t *a, const connection_t *b) {
-	return (void *)a - (void *)b;
+	return a < b ? -1 : a == b ? 0 : 1;
 }
 
 void init_connections(void) {
@@ -115,7 +115,7 @@ int dump_connections(struct evbuffer *out) {
 		if(evbuffer_add_printf(out,
 				   _(" %s at %s options %lx socket %d status %04x\n"),
 				   c->name, c->hostname, c->options, c->socket,
-				   c->status.value) == -1)
+				   bitfield_to_int(&c->status, sizeof c->status)) == -1)
 			return errno;
 	}
 
@@ -128,7 +128,7 @@ bool read_connection_config(connection_t *c) {
 
 	cp();
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);
 	free(fname);
 

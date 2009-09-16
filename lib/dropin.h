@@ -36,19 +36,11 @@ extern char *get_current_dir_name(void);
 
 #ifndef HAVE_ASPRINTF
 extern int asprintf(char **, const char *, ...);
-#endif
-
-#ifndef HAVE_GETNAMEINFO
-extern int getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
-					   size_t hostlen, char *serv, size_t servlen, int flags);
+extern int vasprintf(char **, const char *, va_list ap);
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
 extern int gettimeofday(struct timeval *, void *);
-#endif
-
-#ifndef HAVE_RANDOM
-extern long int random(void);
 #endif
 
 #endif							/* __DROPIN_H__ */

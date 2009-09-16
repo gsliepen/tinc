@@ -401,7 +401,7 @@ bool read_server_config() {
 
 	cp();
 
-	asprintf(&fname, "%s/tinc.conf", confbase);
+	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */

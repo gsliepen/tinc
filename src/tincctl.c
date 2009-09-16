@@ -440,7 +440,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	// First handle commands that don't involve connecting to a running tinc daemon.
 
 	if(!strcasecmp(argv[optind], "generate-keys")) {
-		return !keygen(optind > argc ? atoi(argv[optind + 1]) : 1024);
+		return !keygen(optind > argc ? atoi(argv[optind + 1]) : 2048);
 	}
 
 	if(!strcasecmp(argv[optind], "start")) {

@@ -102,6 +102,7 @@ static struct option const long_options[] = {
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
+CRITICAL_SECTION mutex;
 #endif
 
 static void usage(bool status)
@@ -218,7 +219,7 @@ static void make_names(void)
 #endif
 
 	if(netname)
-		asprintf(&identname, "tinc.%s", netname);
+		xasprintf(&identname, "tinc.%s", netname);
 	else
 		identname = xstrdup("tinc");
 
@@ -226,12 +227,12 @@ static void make_names(void)
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
 			if(!logfilename)
-				asprintf(&logfilename, "%s/log/%s.log", identname);
+				xasprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
 				if(netname)
-					asprintf(&confbase, "%s/%s", installdir, netname);
+					xasprintf(&confbase, "%s/%s", installdir, netname);
 				else
-					asprintf(&confbase, "%s", installdir);
+					xasprintf(&confbase, "%s", installdir);
 			}
 		}
 		RegCloseKey(key);
@@ -241,19 +242,19 @@ static void make_names(void)
 #endif
 
 	if(!controlsocketname)
-		asprintf(&controlsocketname, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
+		xasprintf(&controlsocketname, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
 
 	if(!logfilename)
-		asprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
 
 	if(netname) {
 		if(!confbase)
-			asprintf(&confbase, CONFDIR "/tinc/%s", netname);
+			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
 			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
 	} else {
 		if(!confbase)
-			asprintf(&confbase, CONFDIR "/tinc");
+			xasprintf(&confbase, CONFDIR "/tinc");
 	}
 }
 
@@ -314,7 +315,7 @@ static bool drop_privs() {
 }
 
 #ifdef HAVE_MINGW
-# define setpriority(level) SetPriorityClass(GetCurrentProcess(), level);
+# define setpriority(level) SetPriorityClass(GetCurrentProcess(), level)
 #else
 # define NORMAL_PRIORITY_CLASS 0
 # define BELOW_NORMAL_PRIORITY_CLASS 10
@@ -393,6 +394,8 @@ int main(int argc, char **argv)
 
 int main2(int argc, char **argv)
 {
+	InitializeCriticalSection(&mutex);
+	EnterCriticalSection(&mutex);
 #endif
 
 	if(!detach())
