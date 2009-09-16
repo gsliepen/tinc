@@ -95,11 +95,6 @@ if test -d /sw/lib ; then
   LIBS="$LIBS -L/sw/lib"
 fi
 
-dnl Checks for libraries.
-
-AC_CHECK_LIB(event, event_init,
-  [], [AC_MSG_ERROR(libevent is required)])
-
 dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
@@ -158,6 +153,7 @@ dnl These are defined in files in m4/
 
 AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
 
+tinc_LIBEVENT
 tinc_ZLIB
 tinc_LZO
 
