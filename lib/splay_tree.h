@@ -15,8 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: splay_tree.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 

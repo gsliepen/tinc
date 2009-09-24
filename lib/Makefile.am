@@ -1,5 +1,4 @@
 ## Process this file with automake to produce Makefile.in
-# $Id$
 
 noinst_LIBRARIES = libvpn.a
 
