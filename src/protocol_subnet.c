@@ -32,8 +32,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_add_subnet(connection_t *c, const subnet_t *subnet)
-{
+bool send_add_subnet(connection_t *c, const subnet_t *subnet) {
 	char netstr[MAXNETSTR];
 
 	cp();
@@ -44,8 +43,7 @@ bool send_add_subnet(connection_t *c, const subnet_t *subnet)
 	return send_request(c, "%d %x %s %s", ADD_SUBNET, rand(), subnet->owner->name, netstr);
 }
 
-bool add_subnet_h(connection_t *c)
-{
+bool add_subnet_h(connection_t *c) {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
@@ -151,8 +149,7 @@ bool add_subnet_h(connection_t *c)
 	return true;
 }
 
-bool send_del_subnet(connection_t *c, const subnet_t *s)
-{
+bool send_del_subnet(connection_t *c, const subnet_t *s) {
 	char netstr[MAXNETSTR];
 
 	cp();
@@ -163,8 +160,7 @@ bool send_del_subnet(connection_t *c, const subnet_t *s)
 	return send_request(c, "%d %x %s %s", DEL_SUBNET, rand(), s->owner->name, netstr);
 }
 
-bool del_subnet_h(connection_t *c)
-{
+bool del_subnet_h(connection_t *c) {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;

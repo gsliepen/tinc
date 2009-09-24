@@ -55,8 +55,7 @@ static struct request {
 
 static struct sockaddr_un data_sun;
 
-bool setup_device(void)
-{
+bool setup_device(void) {
 	struct sockaddr_un listen_sun;
 	static const int one = 1;
 	struct {
@@ -152,8 +151,7 @@ bool setup_device(void)
 	return true;
 }
 
-void close_device(void)
-{
+void close_device(void) {
 	cp();
 
 	if(listen_fd >= 0)
@@ -174,8 +172,7 @@ void close_device(void)
 	if(iface) free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet)
-{
+bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	cp();
@@ -255,8 +252,7 @@ bool read_packet(vpn_packet_t *packet)
 	}
 }
 
-bool write_packet(vpn_packet_t *packet)
-{
+bool write_packet(vpn_packet_t *packet) {
 	cp();
 
 	if(state != 2) {
@@ -282,8 +278,7 @@ bool write_packet(vpn_packet_t *packet)
 	return true;
 }
 
-void dump_device_stats(void)
-{
+void dump_device_stats(void) {
 	cp();
 
 	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);

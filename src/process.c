@@ -47,8 +47,7 @@ sigset_t emptysigset;
 
 static int saved_debug_level = -1;
 
-static void memory_full(int size)
-{
+static void memory_full(int size) {
 	logger(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
 	cp_trace();
 	exit(1);
@@ -181,8 +180,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 
 }
 
-VOID WINAPI run_service(DWORD argc, LPTSTR* argv)
-{
+VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 	int err = 1;
 	extern int main2(int argc, char **argv);
 
@@ -240,8 +238,7 @@ bool init_service(void) {
 /*
   check for an existing tinc for this net, and write pid to pidfile
 */
-static bool write_pidfile(void)
-{
+static bool write_pidfile(void) {
 	pid_t pid;
 
 	cp();
@@ -270,8 +267,7 @@ static bool write_pidfile(void)
 /*
   kill older tincd for this net
 */
-bool kill_other(int signal)
-{
+bool kill_other(int signal) {
 #ifndef HAVE_MINGW
 	pid_t pid;
 
@@ -311,8 +307,7 @@ bool kill_other(int signal)
 /*
   Detach from current terminal, write pidfile, kill parent
 */
-bool detach(void)
-{
+bool detach(void) {
 	cp();
 
 	setup_signals();
@@ -358,8 +353,7 @@ bool detach(void)
 	return true;
 }
 
-bool execute_script(const char *name, char **envp)
-{
+bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
 	int status, len;
 	char *scriptname, *p;
@@ -443,8 +437,7 @@ bool execute_script(const char *name, char **envp)
 */
 
 #ifndef HAVE_MINGW
-static RETSIGTYPE sigterm_handler(int a)
-{
+static RETSIGTYPE sigterm_handler(int a) {
 	logger(LOG_NOTICE, _("Got %s signal"), "TERM");
 	if(running)
 		running = false;
@@ -452,8 +445,7 @@ static RETSIGTYPE sigterm_handler(int a)
 		exit(1);
 }
 
-static RETSIGTYPE sigquit_handler(int a)
-{
+static RETSIGTYPE sigquit_handler(int a) {
 	logger(LOG_NOTICE, _("Got %s signal"), "QUIT");
 	if(running)
 		running = false;
@@ -461,16 +453,14 @@ static RETSIGTYPE sigquit_handler(int a)
 		exit(1);
 }
 
-static RETSIGTYPE fatal_signal_square(int a)
-{
+static RETSIGTYPE fatal_signal_square(int a) {
 	logger(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
 		   strsignal(a));
 	cp_trace();
 	exit(1);
 }
 
-static RETSIGTYPE fatal_signal_handler(int a)
-{
+static RETSIGTYPE fatal_signal_handler(int a) {
 	struct sigaction act;
 	logger(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
 	cp_trace();
@@ -493,14 +483,12 @@ static RETSIGTYPE fatal_signal_handler(int a)
 	}
 }
 
-static RETSIGTYPE sighup_handler(int a)
-{
+static RETSIGTYPE sighup_handler(int a) {
 	logger(LOG_NOTICE, _("Got %s signal"), "HUP");
 	sighup = true;
 }
 
-static RETSIGTYPE sigint_handler(int a)
-{
+static RETSIGTYPE sigint_handler(int a) {
 	logger(LOG_NOTICE, _("Got %s signal"), "INT");
 
 	if(saved_debug_level != -1) {
@@ -517,38 +505,32 @@ static RETSIGTYPE sigint_handler(int a)
 	}
 }
 
-static RETSIGTYPE sigalrm_handler(int a)
-{
+static RETSIGTYPE sigalrm_handler(int a) {
 	logger(LOG_NOTICE, _("Got %s signal"), "ALRM");
 	sigalrm = true;
 }
 
-static RETSIGTYPE sigusr1_handler(int a)
-{
+static RETSIGTYPE sigusr1_handler(int a) {
 	dump_connections();
 }
 
-static RETSIGTYPE sigusr2_handler(int a)
-{
+static RETSIGTYPE sigusr2_handler(int a) {
 	dump_device_stats();
 	dump_nodes();
 	dump_edges();
 	dump_subnets();
 }
 
-static RETSIGTYPE sigwinch_handler(int a)
-{
+static RETSIGTYPE sigwinch_handler(int a) {
 	do_purge = true;
 }
 
-static RETSIGTYPE unexpected_signal_handler(int a)
-{
+static RETSIGTYPE unexpected_signal_handler(int a) {
 	logger(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
 	cp_trace();
 }
 
-static RETSIGTYPE ignore_signal_handler(int a)
-{
+static RETSIGTYPE ignore_signal_handler(int a) {
 	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
 }
 
@@ -573,8 +555,7 @@ static struct {
 };
 #endif
 
-void setup_signals(void)
-{
+void setup_signals(void) {
 #ifndef HAVE_MINGW
 	int i;
 	struct sigaction act;

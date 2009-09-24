@@ -44,8 +44,7 @@ static int device_total_out = 0;
 static pid_t reader_pid;
 static int sp[2];
 
-bool setup_device(void)
-{
+bool setup_device(void) {
 	HKEY key, key2;
 	int i, err;
 
@@ -216,8 +215,7 @@ bool setup_device(void)
 	return true;
 }
 
-void close_device(void)
-{
+void close_device(void) {
 	cp();
 
 	close(sp[0]);
@@ -230,8 +228,7 @@ void close_device(void)
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet)
-{
+bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	cp();
@@ -252,8 +249,7 @@ bool read_packet(vpn_packet_t *packet)
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet)
-{
+bool write_packet(vpn_packet_t *packet) {
 	long lenout;
 
 	cp();
@@ -271,8 +267,7 @@ bool write_packet(vpn_packet_t *packet)
 	return true;
 }
 
-void dump_device_stats(void)
-{
+void dump_device_stats(void) {
 	cp();
 
 	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);

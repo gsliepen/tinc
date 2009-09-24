@@ -117,8 +117,7 @@ static struct WSAData wsa_state;
 CRITICAL_SECTION mutex;
 #endif
 
-static void usage(bool status)
-{
+static void usage(bool status) {
 	if(status)
 		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
 				program_name);
@@ -141,8 +140,7 @@ static void usage(bool status)
 	}
 }
 
-static bool parse_options(int argc, char **argv)
-{
+static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
@@ -275,8 +273,7 @@ static bool parse_options(int argc, char **argv)
 
 /* This function prettyprints the key generation process */
 
-static void indicator(int a, int b, void *p)
-{
+static void indicator(int a, int b, void *p) {
 	switch (a) {
 		case 0:
 			fprintf(stderr, ".");
@@ -314,8 +311,7 @@ static void indicator(int a, int b, void *p)
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-static bool keygen(int bits)
-{
+static bool keygen(int bits) {
 	RSA *rsa_key;
 	FILE *f;
 	char *name = NULL;
@@ -380,8 +376,7 @@ static bool keygen(int bits)
 /*
   Set all files and paths according to netname
 */
-static void make_names(void)
-{
+static void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
@@ -493,8 +488,7 @@ static bool drop_privs() {
 # define setpriority(level) nice(level)
 #endif
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	program_name = argv[0];
 
 	setlocale(LC_ALL, "");
@@ -566,8 +560,7 @@ int main(int argc, char **argv)
 		return 1;
 }
 
-int main2(int argc, char **argv)
-{
+int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif

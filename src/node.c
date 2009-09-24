@@ -33,34 +33,29 @@ avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
 
 node_t *myself;
 
-static int node_compare(const node_t *a, const node_t *b)
-{
+static int node_compare(const node_t *a, const node_t *b) {
 	return strcmp(a->name, b->name);
 }
 
-static int node_udp_compare(const node_t *a, const node_t *b)
-{
+static int node_udp_compare(const node_t *a, const node_t *b) {
        return sockaddrcmp(&a->address, &b->address);
 }
 
-void init_nodes(void)
-{
+void init_nodes(void) {
 	cp();
 
 	node_tree = avl_alloc_tree((avl_compare_t) node_compare, (avl_action_t) free_node);
 	node_udp_tree = avl_alloc_tree((avl_compare_t) node_udp_compare, NULL);
 }
 
-void exit_nodes(void)
-{
+void exit_nodes(void) {
 	cp();
 
 	avl_delete_tree(node_udp_tree);
 	avl_delete_tree(node_tree);
 }
 
-node_t *new_node(void)
-{
+node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof(*n));
 
 	cp();
@@ -75,8 +70,7 @@ node_t *new_node(void)
 	return n;
 }
 
-void free_node(node_t *n)
-{
+void free_node(node_t *n) {
 	cp();
 
 	if(n->inkey)
@@ -108,15 +102,13 @@ void free_node(node_t *n)
 	free(n);
 }
 
-void node_add(node_t *n)
-{
+void node_add(node_t *n) {
 	cp();
 
 	avl_insert(node_tree, n);
 }
 
-void node_del(node_t *n)
-{
+void node_del(node_t *n) {
 	avl_node_t *node, *next;
 	edge_t *e;
 	subnet_t *s;
@@ -139,8 +131,7 @@ void node_del(node_t *n)
 	avl_delete(node_tree, n);
 }
 
-node_t *lookup_node(char *name)
-{
+node_t *lookup_node(char *name) {
 	node_t n = {0};
 
 	cp();
@@ -150,8 +141,7 @@ node_t *lookup_node(char *name)
 	return avl_search(node_tree, &n);
 }
 
-node_t *lookup_node_udp(const sockaddr_t *sa)
-{
+node_t *lookup_node_udp(const sockaddr_t *sa) {
 	node_t n = {0};
 
 	cp();
@@ -162,8 +152,7 @@ node_t *lookup_node_udp(const sockaddr_t *sa)
 	return avl_search(node_udp_tree, &n);
 }
 
-void update_node_udp(node_t *n, const sockaddr_t *sa)
-{
+void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	avl_delete(node_udp_tree, n);
 
 	if(n->hostname)
@@ -181,8 +170,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa)
 	}
 }
 
-void dump_nodes(void)
-{
+void dump_nodes(void) {
 	avl_node_t *node;
 	node_t *n;
 

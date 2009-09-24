@@ -46,8 +46,7 @@ time_t now = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
-static void purge(void)
-{
+static void purge(void) {
 	avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
 	node_t *n;
 	edge_t *e;
@@ -110,8 +109,7 @@ static void purge(void)
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-static int build_fdset(fd_set *readset, fd_set *writeset)
-{
+static int build_fdset(fd_set *readset, fd_set *writeset) {
 	avl_node_t *node, *next;
 	connection_t *c;
 	int i, max = 0;
@@ -162,8 +160,7 @@ static int build_fdset(fd_set *readset, fd_set *writeset)
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
-void terminate_connection(connection_t *c, bool report)
-{
+void terminate_connection(connection_t *c, bool report) {
 	cp();
 
 	if(c->status.remove)
@@ -226,8 +223,7 @@ void terminate_connection(connection_t *c, bool report)
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void check_dead_connections(void)
-{
+static void check_dead_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
 
@@ -282,8 +278,7 @@ static void check_dead_connections(void)
   check all connections to see if anything
   happened on their sockets
 */
-static void check_network_activity(fd_set * readset, fd_set * writeset)
-{
+static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	connection_t *c;
 	avl_node_t *node;
 	int result, i;
@@ -350,8 +345,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 /*
   this is where it all happens...
 */
-int main_loop(void)
-{
+int main_loop(void) {
 	fd_set readset, writeset;
 	struct timeval tv;
 	int r, maxfd;

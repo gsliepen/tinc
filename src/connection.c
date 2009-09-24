@@ -33,13 +33,11 @@
 avl_tree_t *connection_tree;	/* Meta connections */
 connection_t *broadcast;
 
-static int connection_compare(const connection_t *a, const connection_t *b)
-{
+static int connection_compare(const connection_t *a, const connection_t *b) {
 	return a < b ? -1 : a == b ? 0 : 1;
 }
 
-void init_connections(void)
-{
+void init_connections(void) {
 	cp();
 
 	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
@@ -48,16 +46,14 @@ void init_connections(void)
 	broadcast->hostname = xstrdup(_("BROADCAST"));
 }
 
-void exit_connections(void)
-{
+void exit_connections(void) {
 	cp();
 
 	avl_delete_tree(connection_tree);
 	free_connection(broadcast);
 }
 
-connection_t *new_connection(void)
-{
+connection_t *new_connection(void) {
 	connection_t *c;
 
 	cp();
@@ -72,8 +68,7 @@ connection_t *new_connection(void)
 	return c;
 }
 
-void free_connection(connection_t *c)
-{
+void free_connection(connection_t *c) {
 	cp();
 
 	if(c->name)
@@ -116,22 +111,19 @@ void free_connection(connection_t *c)
 	free(c);
 }
 
-void connection_add(connection_t *c)
-{
+void connection_add(connection_t *c) {
 	cp();
 
 	avl_insert(connection_tree, c);
 }
 
-void connection_del(connection_t *c)
-{
+void connection_del(connection_t *c) {
 	cp();
 
 	avl_delete(connection_tree, c);
 }
 
-void dump_connections(void)
-{
+void dump_connections(void) {
 	avl_node_t *node;
 	connection_t *c;
 
@@ -149,8 +141,7 @@ void dump_connections(void)
 	logger(LOG_DEBUG, _("End of connections."));
 }
 
-bool read_connection_config(connection_t *c)
-{
+bool read_connection_config(connection_t *c) {
 	char *fname;
 	int x;
 

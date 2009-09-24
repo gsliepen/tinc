@@ -51,8 +51,7 @@ static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
 /* RFC 1071 */
 
-static uint16_t inet_checksum(void *data, int len, uint16_t prevsum)
-{
+static uint16_t inet_checksum(void *data, int len, uint16_t prevsum) {
 	uint16_t *p = data;
 	uint32_t checksum = prevsum ^ 0xFFFF;
 
@@ -100,8 +99,7 @@ static void swap_mac_addresses(vpn_packet_t *packet) {
 	memcpy(&packet->data[6], &tmp, sizeof tmp);
 }
 	
-static void learn_mac(mac_t *address)
-{
+static void learn_mac(mac_t *address) {
 	subnet_t *subnet;
 	avl_node_t *node;
 	connection_t *c;
@@ -136,8 +134,7 @@ static void learn_mac(mac_t *address)
 		subnet->expires = now + macexpire;
 }
 
-void age_subnets(void)
-{
+void age_subnets(void) {
 	subnet_t *s;
 	connection_t *c;
 	avl_node_t *node, *next, *node2;
@@ -167,8 +164,7 @@ void age_subnets(void)
 
 /* RFC 792 */
 
-static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code)
-{
+static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code) {
 	struct ip ip = {0};
 	struct icmp icmp = {0};
 	
@@ -293,8 +289,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	}	
 }
 
-static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
-{
+static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	subnet_t *subnet;
 	node_t *via;
 	ipv4_t dest;
@@ -344,8 +339,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 	send_packet(subnet->owner, packet);
 }
 
-static void route_ipv4(node_t *source, vpn_packet_t *packet)
-{
+static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	cp();
 
 	if(!checklength(source, packet, ether_size + ip_size))
@@ -363,8 +357,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet)
 
 /* RFC 2463 */
 
-static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code)
-{
+static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code) {
 	struct ip6_hdr ip6;
 	struct icmp6_hdr icmp6 = {0};
 	uint16_t checksum;	
@@ -444,8 +437,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	send_packet(source, packet);
 }
 
-static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
-{
+static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	subnet_t *subnet;
 	node_t *via;
 	ipv6_t dest;
@@ -493,8 +485,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 
 /* RFC 2461 */
 
-static void route_neighborsol(node_t *source, vpn_packet_t *packet)
-{
+static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	struct ip6_hdr ip6;
 	struct nd_neighbor_solicit ns;
 	struct nd_opt_hdr opt;
@@ -635,8 +626,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet)
 	send_packet(source, packet);
 }
 
-static void route_ipv6(node_t *source, vpn_packet_t *packet)
-{
+static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	cp();
 
 	if(!checklength(source, packet, ether_size + ip6_size))
@@ -655,8 +645,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet)
 
 /* RFC 826 */
 
-static void route_arp(node_t *source, vpn_packet_t *packet)
-{
+static void route_arp(node_t *source, vpn_packet_t *packet) {
 	struct ether_arp arp;
 	subnet_t *subnet;
 	struct in_addr addr;
@@ -722,8 +711,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet)
 	send_packet(source, packet);
 }
 
-static void route_mac(node_t *source, vpn_packet_t *packet)
-{
+static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet_t *subnet;
 	mac_t dest;
 
@@ -779,8 +767,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet)
 }
 
 
-void route(node_t *source, vpn_packet_t *packet)
-{
+void route(node_t *source, vpn_packet_t *packet) {
 	cp();
 
 	if(!checklength(source, packet, ether_size))

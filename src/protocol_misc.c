@@ -33,8 +33,7 @@ int maxoutbufsize = 0;
 
 /* Status and error notification routines */
 
-bool send_status(connection_t *c, int statusno, const char *statusstring)
-{
+bool send_status(connection_t *c, int statusno, const char *statusstring) {
 	cp();
 
 	if(!statusstring)
@@ -43,8 +42,7 @@ bool send_status(connection_t *c, int statusno, const char *statusstring)
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-bool status_h(connection_t *c)
-{
+bool status_h(connection_t *c) {
 	int statusno;
 	char statusstring[MAX_STRING_SIZE];
 
@@ -62,8 +60,7 @@ bool status_h(connection_t *c)
 	return true;
 }
 
-bool send_error(connection_t *c, int err, const char *errstring)
-{
+bool send_error(connection_t *c, int err, const char *errstring) {
 	cp();
 
 	if(!errstring)
@@ -72,8 +69,7 @@ bool send_error(connection_t *c, int err, const char *errstring)
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
 
-bool error_h(connection_t *c)
-{
+bool error_h(connection_t *c) {
 	int err;
 	char errorstring[MAX_STRING_SIZE];
 
@@ -93,15 +89,13 @@ bool error_h(connection_t *c)
 	return true;
 }
 
-bool send_termreq(connection_t *c)
-{
+bool send_termreq(connection_t *c) {
 	cp();
 
 	return send_request(c, "%d", TERMREQ);
 }
 
-bool termreq_h(connection_t *c)
-{
+bool termreq_h(connection_t *c) {
 	cp();
 
 	terminate_connection(c, c->status.active);
@@ -109,8 +103,7 @@ bool termreq_h(connection_t *c)
 	return true;
 }
 
-bool send_ping(connection_t *c)
-{
+bool send_ping(connection_t *c) {
 	cp();
 
 	c->status.pinged = true;
@@ -119,22 +112,19 @@ bool send_ping(connection_t *c)
 	return send_request(c, "%d", PING);
 }
 
-bool ping_h(connection_t *c)
-{
+bool ping_h(connection_t *c) {
 	cp();
 
 	return send_pong(c);
 }
 
-bool send_pong(connection_t *c)
-{
+bool send_pong(connection_t *c) {
 	cp();
 
 	return send_request(c, "%d", PONG);
 }
 
-bool pong_h(connection_t *c)
-{
+bool pong_h(connection_t *c) {
 	cp();
 
 	c->status.pinged = false;
@@ -149,8 +139,7 @@ bool pong_h(connection_t *c)
 
 /* Sending and receiving packets via TCP */
 
-bool send_tcppacket(connection_t *c, vpn_packet_t *packet)
-{
+bool send_tcppacket(connection_t *c, vpn_packet_t *packet) {
 	cp();
 
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
@@ -165,8 +154,7 @@ bool send_tcppacket(connection_t *c, vpn_packet_t *packet)
 	return send_meta(c, (char *)packet->data, packet->len);
 }
 
-bool tcppacket_h(connection_t *c)
-{
+bool tcppacket_h(connection_t *c) {
 	short int len;
 
 	cp();

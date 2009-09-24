@@ -36,8 +36,7 @@
   Unless the argument noclose is non-zero, daemon() will redirect
   standard input, standard output and standard error to /dev/null.
 */
-int daemon(int nochdir, int noclose)
-{
+int daemon(int nochdir, int noclose) {
 #ifdef HAVE_FORK
 	pid_t pid;
 	int fd;
@@ -95,8 +94,7 @@ int daemon(int nochdir, int noclose)
   current directory name.  If the environment variable PWD is set, and
   its value is correct, then that value will be returned.
 */
-char *get_current_dir_name(void)
-{
+char *get_current_dir_name(void) {
 	size_t size;
 	char *buf;
 	char *r;

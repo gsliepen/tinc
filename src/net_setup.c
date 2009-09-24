@@ -44,8 +44,7 @@
 
 char *myport;
 
-bool read_rsa_public_key(connection_t *c)
-{
+bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;
 	char *key;
@@ -145,8 +144,7 @@ bool read_rsa_public_key(connection_t *c)
 	return false;
 }
 
-bool read_rsa_private_key(void)
-{
+bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname, *key, *pubkey;
 	struct stat s;
@@ -209,8 +207,7 @@ bool read_rsa_private_key(void)
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
-bool setup_myself(void)
-{
+bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
 	char *name, *hostname, *mode, *afname, *cipher, *digest;
@@ -506,8 +503,7 @@ bool setup_myself(void)
 /*
   initialize network
 */
-bool setup_network(void)
-{
+bool setup_network(void) {
 	cp();
 
 	now = time(NULL);
@@ -543,8 +539,7 @@ bool setup_network(void)
 /*
   close all open network connections
 */
-void close_network_connections(void)
-{
+void close_network_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
 	char *envp[5];

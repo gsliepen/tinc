@@ -38,8 +38,7 @@ static char *device_info;
 static int device_total_in = 0;
 static int device_total_out = 0;
 
-bool setup_device(void)
-{
+bool setup_device(void) {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
 
@@ -83,8 +82,7 @@ bool setup_device(void)
 	return true;
 }
 
-void close_device(void)
-{
+void close_device(void) {
 	cp();
 
 	close(device_fd);
@@ -93,8 +91,7 @@ void close_device(void)
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet)
-{
+bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	cp();
@@ -115,8 +112,7 @@ bool read_packet(vpn_packet_t *packet)
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet)
-{
+bool write_packet(vpn_packet_t *packet) {
 	cp();
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
@@ -133,8 +129,7 @@ bool write_packet(vpn_packet_t *packet)
 	return true;
 }
 
-void dump_device_stats(void)
-{
+void dump_device_stats(void) {
 	cp();
 
 	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);

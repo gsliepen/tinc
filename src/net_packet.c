@@ -58,8 +58,7 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 
 #define MAX_SEQNO 1073741824
 
-void send_mtu_probe(node_t *n)
-{
+void send_mtu_probe(node_t *n) {
 	vpn_packet_t packet;
 	int len, i;
 	
@@ -118,8 +117,7 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	}
 }
 
-static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
-{
+static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
 	if(level == 10) {
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
@@ -139,8 +137,7 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 	return -1;
 }
 
-static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level)
-{
+static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
 	if(level > 9) {
 		lzo_uint lzolen = MAXSIZE;
 		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
@@ -160,8 +157,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 
 /* VPN packet I/O */
 
-static void receive_packet(node_t *n, vpn_packet_t *packet)
-{
+static void receive_packet(node_t *n, vpn_packet_t *packet) {
 	cp();
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
@@ -170,8 +166,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet)
 	route(n, packet);
 }
 
-static bool try_mac(const node_t *n, const vpn_packet_t *inpkt)
-{
+static bool try_mac(const node_t *n, const vpn_packet_t *inpkt) {
 	unsigned char hmac[EVP_MAX_MD_SIZE];
 
 	if(!n->indigest || !n->inmaclength || !n->inkey || inpkt->len < sizeof inpkt->seqno + n->inmaclength)
@@ -182,8 +177,7 @@ static bool try_mac(const node_t *n, const vpn_packet_t *inpkt)
 	return !memcmp(hmac, (char *) &inpkt->seqno + inpkt->len - n->inmaclength, n->inmaclength);
 }
 
-static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
-{
+static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
@@ -300,8 +294,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		receive_packet(n, inpkt);
 }
 
-void receive_tcppacket(connection_t *c, char *buffer, int len)
-{
+void receive_tcppacket(connection_t *c, char *buffer, int len) {
 	vpn_packet_t outpkt;
 
 	cp();
@@ -316,8 +309,7 @@ void receive_tcppacket(connection_t *c, char *buffer, int len)
 	receive_packet(c->node, &outpkt);
 }
 
-static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
-{
+static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	vpn_packet_t *inpkt = origpkt;
@@ -449,8 +441,7 @@ end:
 /*
   send a packet to the given vpn ip.
 */
-void send_packet(const node_t *n, vpn_packet_t *packet)
-{
+void send_packet(const node_t *n, vpn_packet_t *packet) {
 	node_t *via;
 
 	cp();
@@ -486,8 +477,7 @@ void send_packet(const node_t *n, vpn_packet_t *packet)
 
 /* Broadcast a packet using the minimum spanning tree */
 
-void broadcast_packet(const node_t *from, vpn_packet_t *packet)
-{
+void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	avl_node_t *node;
 	connection_t *c;
 
@@ -537,8 +527,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	return n;
 }
 
-void handle_incoming_vpn_data(int sock)
-{
+void handle_incoming_vpn_data(int sock) {
 	vpn_packet_t pkt;
 	char *hostname;
 	sockaddr_t from;
