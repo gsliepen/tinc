@@ -21,7 +21,7 @@ INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
 	protocol.h route.h subnet.h bsd/tunemu.h
 
-LIBS = @LIBS@ @LIBINTL@
+LIBS = @LIBS@
 
 if TUNEMU
 LIBS += -lpcap

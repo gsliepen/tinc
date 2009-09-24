@@ -78,7 +78,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 	va_end(args);
 
 	if(len < 0 || len > MAXBUFSIZE - 1) {
-		logger(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
+		logger(LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
 			   c->name, c->hostname);
 		return false;
 	}
@@ -86,10 +86,10 @@ bool send_request(connection_t *c, const char *format, ...) {
 	ifdebug(PROTOCOL) {
 		sscanf(buffer, "%d", &request);
 		ifdebug(META)
-			logger(LOG_DEBUG, _("Sending %s to %s (%s): %s"),
+			logger(LOG_DEBUG, "Sending %s to %s (%s): %s",
 				   request_name[request], c->name, c->hostname, buffer);
 		else
-			logger(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[request],
+			logger(LOG_DEBUG, "Sending %s to %s (%s)", request_name[request],
 				   c->name, c->hostname);
 	}
 
@@ -108,11 +108,11 @@ void forward_request(connection_t *from) {
 	ifdebug(PROTOCOL) {
 		sscanf(from->buffer, "%d", &request);
 		ifdebug(META)
-			logger(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
+			logger(LOG_DEBUG, "Forwarding %s from %s (%s): %s",
 				   request_name[request], from->name, from->hostname,
 				   from->buffer);
 		else
-			logger(LOG_DEBUG, _("Forwarding %s from %s (%s)"),
+			logger(LOG_DEBUG, "Forwarding %s from %s (%s)",
 				   request_name[request], from->name, from->hostname);
 	}
 
@@ -127,27 +127,27 @@ bool receive_request(connection_t *c) {
 	if(sscanf(c->buffer, "%d", &request) == 1) {
 		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
 			ifdebug(META)
-				logger(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
+				logger(LOG_DEBUG, "Unknown request from %s (%s): %s",
 					   c->name, c->hostname, c->buffer);
 			else
-				logger(LOG_ERR, _("Unknown request from %s (%s)"),
+				logger(LOG_ERR, "Unknown request from %s (%s)",
 					   c->name, c->hostname);
 
 			return false;
 		} else {
 			ifdebug(PROTOCOL) {
 				ifdebug(META)
-					logger(LOG_DEBUG, _("Got %s from %s (%s): %s"),
+					logger(LOG_DEBUG, "Got %s from %s (%s): %s",
 						   request_name[request], c->name, c->hostname,
 						   c->buffer);
 				else
-					logger(LOG_DEBUG, _("Got %s from %s (%s)"),
+					logger(LOG_DEBUG, "Got %s from %s (%s)",
 						   request_name[request], c->name, c->hostname);
 			}
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != request)) {
-			logger(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
+			logger(LOG_ERR, "Unauthorized request from %s (%s)", c->name,
 				   c->hostname);
 			return false;
 		}
@@ -155,12 +155,12 @@ bool receive_request(connection_t *c) {
 		if(!request_handlers[request](c)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
-			logger(LOG_ERR, _("Error while processing %s from %s (%s)"),
+			logger(LOG_ERR, "Error while processing %s from %s (%s)",
 				   request_name[request], c->name, c->hostname);
 			return false;
 		}
 	} else {
-		logger(LOG_ERR, _("Bogus data received from %s (%s)"),
+		logger(LOG_ERR, "Bogus data received from %s (%s)",
 			   c->name, c->hostname);
 		return false;
 	}
@@ -193,7 +193,7 @@ bool seen_request(char *request) {
 	p.request = request;
 
 	if(avl_search(past_request_tree, &p)) {
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Already seen request");
 		return true;
 	} else {
 		new = xmalloc(sizeof(*new));
@@ -220,6 +220,6 @@ void age_past_requests(void) {
 	}
 
 	if(left || deleted)
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Aging past requests: deleted %d, left %d"),
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Aging past requests: deleted %d, left %d",
 			   deleted, left);
 }

@@ -69,7 +69,7 @@ bool read_rsa_public_key(connection_t *c) {
 		fp = fopen(fname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
 				   fname, strerror(errno));
 			free(fname);
 			return false;
@@ -86,7 +86,7 @@ bool read_rsa_public_key(connection_t *c) {
 		fp = fopen(fname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
 				   fname, strerror(errno));
 			free(fname);
 			return false;
@@ -101,7 +101,7 @@ bool read_rsa_public_key(connection_t *c) {
 			return true;
 		}
 
-		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s",
 			   fname, strerror(errno));
 		return false;
 	}
@@ -137,7 +137,7 @@ bool read_rsa_public_key(connection_t *c) {
 	if(c->rsa_key)
 		return true;
 
-	logger(LOG_ERR, _("No public key for %s specified!"), c->name);
+	logger(LOG_ERR, "No public key for %s specified!", c->name);
 
 	return false;
 }
@@ -149,7 +149,7 @@ bool read_rsa_private_key(void) {
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
-			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
+			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
 		myself->connection->rsa_key = RSA_new();
@@ -168,7 +168,7 @@ bool read_rsa_private_key(void) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
+		logger(LOG_ERR, "Error reading RSA private key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -176,21 +176,21 @@ bool read_rsa_private_key(void) {
 
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"),
+		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'",
 				fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
+		logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
 	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
 	fclose(fp);
 
 	if(!myself->connection->rsa_key) {
-		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
+		logger(LOG_ERR, "Reading RSA private key file `%s' failed: %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -217,19 +217,19 @@ bool setup_myself(void) {
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	xasprintf(&myself->hostname, _("MYSELF"));
-	xasprintf(&myself->connection->hostname, _("MYSELF"));
+	xasprintf(&myself->hostname, "MYSELF");
+	xasprintf(&myself->connection->hostname, "MYSELF");
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
 
 	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
-		logger(LOG_ERR, _("Name for tinc daemon required!"));
+		logger(LOG_ERR, "Name for tinc daemon required!");
 		return false;
 	}
 
 	if(!check_id(name)) {
-		logger(LOG_ERR, _("Invalid name for myself!"));
+		logger(LOG_ERR, "Invalid name for myself!");
 		free(name);
 		return false;
 	}
@@ -238,7 +238,7 @@ bool setup_myself(void) {
 	myself->connection->name = xstrdup(name);
 
 	if(!read_connection_config(myself->connection)) {
-		logger(LOG_ERR, _("Cannot open host configuration file for myself!"));
+		logger(LOG_ERR, "Cannot open host configuration file for myself!");
 		return false;
 	}
 
@@ -288,7 +288,7 @@ bool setup_myself(void) {
 		else if(!strcasecmp(mode, "hub"))
 			routing_mode = RMODE_HUB;
 		else {
-			logger(LOG_ERR, _("Invalid routing mode!"));
+			logger(LOG_ERR, "Invalid routing mode!");
 			return false;
 		}
 		free(mode);
@@ -306,7 +306,7 @@ bool setup_myself(void) {
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, _("%s not supported on this platform"), "PriorityInheritance");
+		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -314,7 +314,7 @@ bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
-			logger(LOG_ERR, _("Bogus maximum timeout!"));
+			logger(LOG_ERR, "Bogus maximum timeout!");
 			return false;
 		}
 	} else
@@ -328,7 +328,7 @@ bool setup_myself(void) {
 		else if(!strcasecmp(afname, "any"))
 			addressfamily = AF_UNSPEC;
 		else {
-			logger(LOG_ERR, _("Invalid address family!"));
+			logger(LOG_ERR, "Invalid address family!");
 			return false;
 		}
 		free(afname);
@@ -346,7 +346,7 @@ bool setup_myself(void) {
 			myself->incipher = EVP_get_cipherbyname(cipher);
 
 			if(!myself->incipher) {
-				logger(LOG_ERR, _("Unrecognized cipher type!"));
+				logger(LOG_ERR, "Unrecognized cipher type!");
 				return false;
 			}
 		}
@@ -374,7 +374,7 @@ bool setup_myself(void) {
 			myself->indigest = EVP_get_digestbyname(digest);
 
 			if(!myself->indigest) {
-				logger(LOG_ERR, _("Unrecognized digest type!"));
+				logger(LOG_ERR, "Unrecognized digest type!");
 				return false;
 			}
 		}
@@ -386,10 +386,10 @@ bool setup_myself(void) {
 	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->inmaclength)) {
 		if(myself->indigest) {
 			if(myself->inmaclength > myself->indigest->md_size) {
-				logger(LOG_ERR, _("MAC length exceeds size of digest!"));
+				logger(LOG_ERR, "MAC length exceeds size of digest!");
 				return false;
 			} else if(myself->inmaclength < 0) {
-				logger(LOG_ERR, _("Bogus MAC length!"));
+				logger(LOG_ERR, "Bogus MAC length!");
 				return false;
 			}
 		}
@@ -402,7 +402,7 @@ bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->incompression)) {
 		if(myself->incompression < 0 || myself->incompression > 11) {
-			logger(LOG_ERR, _("Bogus compression level!"));
+			logger(LOG_ERR, "Bogus compression level!");
 			return false;
 		}
 	} else
@@ -452,7 +452,7 @@ bool setup_myself(void) {
 	err = getaddrinfo(address, myport, &hint, &ai);
 
 	if(err || !ai) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo",
+		logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
 			   gai_strerror(err));
 		return false;
 	}
@@ -474,7 +474,7 @@ bool setup_myself(void) {
 
 		ifdebug(CONNECTIONS) {
 			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(LOG_NOTICE, _("Listening on %s"), hostname);
+			logger(LOG_NOTICE, "Listening on %s", hostname);
 			free(hostname);
 		}
 
@@ -485,9 +485,9 @@ bool setup_myself(void) {
 	freeaddrinfo(ai);
 
 	if(listen_sockets)
-		logger(LOG_NOTICE, _("Ready"));
+		logger(LOG_NOTICE, "Ready");
 	else {
-		logger(LOG_ERR, _("Unable to create any listening socket!"));
+		logger(LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
 

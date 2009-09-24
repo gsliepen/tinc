@@ -61,13 +61,13 @@ static void configure_tcp(connection_t *c) {
 	int flags = fcntl(c->socket, F_GETFL);
 
 	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-		logger(LOG_ERR, _("fcntl for %s: %s"), c->hostname, strerror(errno));
+		logger(LOG_ERR, "fcntl for %s: %s", c->hostname, strerror(errno));
 	}
 #elif defined(WIN32)
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(LOG_ERR, _("ioctlsocket for %s: WSA error %d"), c->hostname, WSAGetLastError());
+		logger(LOG_ERR, "ioctlsocket for %s: WSA error %d", c->hostname, WSAGetLastError());
 	}
 #endif
 
@@ -100,12 +100,12 @@ static bool bind_to_interface(int sd) {
 
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
 	if(status) {
-		logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
+		logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
 				strerror(errno));
 		return false;
 	}
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
-	logger(LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
+	logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
 
 	return true;
@@ -140,8 +140,8 @@ static bool bind_to_address(connection_t *c) {
 			&ai_hints, &ai_list);
 	if(status) {
 		free(node);
-		logger(LOG_WARNING, _("Error looking up %s port %s: %s"),
-				node, _("any"), gai_strerror(status));
+		logger(LOG_WARNING, "Error looking up %s port %s: %s",
+				node, "any", gai_strerror(status));
 		return false;
 	}
 	assert(ai_list != NULL);
@@ -156,7 +156,7 @@ static bool bind_to_address(connection_t *c) {
 
 
 	if(status) {
-		logger(LOG_ERR, _("Can't bind to %s/tcp: %s"), node,
+		logger(LOG_ERR, "Can't bind to %s/tcp: %s", node,
 				strerror(errno));
 	} else ifdebug(CONNECTIONS) {
 		logger(LOG_DEBUG, "Successfully bound outgoing "
@@ -178,7 +178,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(nfd < 0) {
-		ifdebug(STATUS) logger(LOG_ERR, _("Creating metasocket failed: %s"), strerror(errno));
+		ifdebug(STATUS) logger(LOG_ERR, "Creating metasocket failed: %s", strerror(errno));
 		return -1;
 	}
 
@@ -202,19 +202,19 @@ int setup_listen_socket(const sockaddr_t *sa) {
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
 			closesocket(nfd);
-			logger(LOG_ERR, _("Can't bind to interface %s: %s"), iface,
+			logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
 				   strerror(errno));
 			return -1;
 		}
 #else
-		logger(LOG_WARNING, _("%s not supported on this platform"), "BindToInterface");
+		logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
 	}
 
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
-		logger(LOG_ERR, _("Can't bind to %s/tcp: %s"), addrstr,
+		logger(LOG_ERR, "Can't bind to %s/tcp: %s", addrstr,
 			   strerror(errno));
 		free(addrstr);
 		return -1;
@@ -222,7 +222,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 
 	if(listen(nfd, 3)) {
 		closesocket(nfd);
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "listen",
+		logger(LOG_ERR, "System call `%s' failed: %s", "listen",
 			   strerror(errno));
 		return -1;
 	}
@@ -238,7 +238,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 
 	if(nfd < 0) {
-		logger(LOG_ERR, _("Creating UDP socket failed: %s"), strerror(errno));
+		logger(LOG_ERR, "Creating UDP socket failed: %s", strerror(errno));
 		return -1;
 	}
 
@@ -248,7 +248,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
 			closesocket(nfd);
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl",
+			logger(LOG_ERR, "System call `%s' failed: %s", "fcntl",
 				   strerror(errno));
 			return -1;
 		}
@@ -258,7 +258,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		unsigned long arg = 1;
 		if(ioctlsocket(nfd, FIONBIO, &arg) != 0) {
 			closesocket(nfd);
-			logger(LOG_ERR, _("Call to `%s' failed: WSA error %d"), "ioctlsocket",
+			logger(LOG_ERR, "Call to `%s' failed: WSA error %d", "ioctlsocket",
 				WSAGetLastError());
 			return -1;
 		}
@@ -295,7 +295,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
-		logger(LOG_ERR, _("Can't bind to %s/udp: %s"), addrstr,
+		logger(LOG_ERR, "Can't bind to %s/udp: %s", addrstr,
 			   strerror(errno));
 		free(addrstr);
 		return -1;
@@ -319,12 +319,12 @@ void retry_outgoing(outgoing_t *outgoing) {
 	event_add(event);
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE,
-			   _("Trying to re-establish outgoing connection in %d seconds"),
+			   "Trying to re-establish outgoing connection in %d seconds",
 			   outgoing->timeout);
 }
 
 void finish_connecting(connection_t *c) {
-	ifdebug(CONNECTIONS) logger(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
+	ifdebug(CONNECTIONS) logger(LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
 	configure_tcp(c);
 
@@ -340,7 +340,7 @@ void do_outgoing_connection(connection_t *c) {
 begin:
 	if(!c->outgoing->ai) {
 		if(!c->outgoing->cfg) {
-			ifdebug(CONNECTIONS) logger(LOG_ERR, _("Could not set up a meta connection to %s"),
+			ifdebug(CONNECTIONS) logger(LOG_ERR, "Could not set up a meta connection to %s",
 					   c->name);
 			c->status.remove = true;
 			retry_outgoing(c->outgoing);
@@ -375,13 +375,13 @@ begin:
 
 	c->hostname = sockaddr2hostname(&c->address);
 
-	ifdebug(CONNECTIONS) logger(LOG_INFO, _("Trying to connect to %s (%s)"), c->name,
+	ifdebug(CONNECTIONS) logger(LOG_INFO, "Trying to connect to %s (%s)", c->name,
 			   c->hostname);
 
 	c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(c->socket == -1) {
-		ifdebug(CONNECTIONS) logger(LOG_ERR, _("Creating socket for %s failed: %s"), c->hostname,
+		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname,
 				   strerror(errno));
 
 		goto begin;
@@ -416,7 +416,7 @@ begin:
 
 		closesocket(c->socket);
 
-		ifdebug(CONNECTIONS) logger(LOG_ERR, _("%s: %s"), c->hostname, strerror(errno));
+		ifdebug(CONNECTIONS) logger(LOG_ERR, "%s: %s", c->hostname, strerror(errno));
 
 		goto begin;
 	}
@@ -434,7 +434,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	if(n)
 		if(n->connection) {
-			ifdebug(CONNECTIONS) logger(LOG_INFO, _("Already connected to %s"), outgoing->name);
+			ifdebug(CONNECTIONS) logger(LOG_INFO, "Already connected to %s", outgoing->name);
 
 			n->connection->outgoing = outgoing;
 			return;
@@ -453,7 +453,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	outgoing->cfg = lookup_config(c->config_tree, "Address");
 
 	if(!outgoing->cfg) {
-		logger(LOG_ERR, _("No address specified for %s"), c->name);
+		logger(LOG_ERR, "No address specified for %s", c->name);
 		free_connection(c);
 		return;
 	}
@@ -479,7 +479,7 @@ bool handle_new_meta_connection(int sock) {
 	fd = accept(sock, &sa.sa, &len);
 
 	if(fd < 0) {
-		logger(LOG_ERR, _("Accepting a new connection failed: %s"),
+		logger(LOG_ERR, "Accepting a new connection failed: %s",
 			   strerror(errno));
 		return false;
 	}
@@ -498,7 +498,7 @@ bool handle_new_meta_connection(int sock) {
 	c->socket = fd;
 	c->last_ping_time = now;
 
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection from %s"), c->hostname);
+	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection from %s", c->hostname);
 
 	configure_tcp(c);
 
@@ -543,7 +543,7 @@ void try_outgoing_connections(void) {
 
 		if(!check_id(name)) {
 			logger(LOG_ERR,
-				   _("Invalid name for outgoing connection in %s line %d"),
+				   "Invalid name for outgoing connection in %s line %d",
 				   cfg->file, cfg->line);
 			free(name);
 			continue;

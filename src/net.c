@@ -52,7 +52,7 @@ static void purge(void) {
 	edge_t *e;
 	subnet_t *s;
 
-	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
+	ifdebug(PROTOCOL) logger(LOG_DEBUG, "Purging unreachable nodes");
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
@@ -61,7 +61,7 @@ static void purge(void) {
 		n = nnode->data;
 
 		if(!n->status.reachable) {
-			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Purging node %s (%s)", n->name,
 					   n->hostname);
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
@@ -160,7 +160,7 @@ void terminate_connection(connection_t *c, bool report) {
 	if(c->status.remove)
 		return;
 
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
+	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Closing connection with %s (%s)",
 			   c->name, c->hostname);
 
 	c->status.remove = true;
@@ -228,7 +228,7 @@ static void check_dead_connections(void) {
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"),
+					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
 							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
@@ -237,12 +237,12 @@ static void check_dead_connections(void) {
 				}
 			} else {
 				if(c->status.remove) {
-					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
+					logger(LOG_WARNING, "Old connection_t for %s (%s) status %04x still lingering, deleting...",
 						   c->name, c->hostname, bitfield_to_int(&c->status, sizeof c->status));
 					connection_del(c);
 					continue;
 				}
-				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
+				ifdebug(CONNECTIONS) logger(LOG_WARNING, "Timeout from %s (%s) during authentication",
 						   c->name, c->hostname);
 				if(c->status.connecting) {
 					c->status.connecting = false;
@@ -257,7 +257,7 @@ static void check_dead_connections(void) {
 		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
 			if(c->status.active) {
 				ifdebug(CONNECTIONS) logger(LOG_INFO,
-						_("%s (%s) could not flush for %ld seconds (%d bytes remaining)"),
+						"%s (%s) could not flush for %ld seconds (%d bytes remaining)",
 						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
 				c->status.timeout = true;
 				terminate_connection(c, true);
@@ -301,7 +301,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 					finish_connecting(c);
 				else {
 					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-							   _("Error while connecting to %s (%s): %s"),
+							   "Error while connecting to %s (%s): %s",
 							   c->name, c->hostname, strerror(result));
 					closesocket(c->socket);
 					do_outgoing_connection(c);
@@ -369,7 +369,7 @@ int main_loop(void) {
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
-				logger(LOG_ERR, _("Error while waiting for input: %s"),
+				logger(LOG_ERR, "Error while waiting for input: %s",
 					   strerror(errno));
 				dump_connections();
 				return 1;
@@ -402,7 +402,7 @@ int main_loop(void) {
 				avl_node_t *node;
 				node_t *n;
 
-				ifdebug(STATUS) logger(LOG_INFO, _("Expiring symmetric keys"));
+				ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
 
 				for(node = node_tree->head; node; node = node->next) {
 					n = node->data;
@@ -418,7 +418,7 @@ int main_loop(void) {
 		}
 
 		if(sigalrm) {
-			logger(LOG_INFO, _("Flushing event queue"));
+			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
 			sigalrm = false;
 		}
@@ -442,7 +442,7 @@ int main_loop(void) {
 			init_configuration(&config_tree);
 
 			if(!read_server_config()) {
-				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
+				logger(LOG_ERR, "Unable to reread configuration file, exitting.");
 				return 1;
 			}
 

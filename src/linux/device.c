@@ -66,7 +66,7 @@ bool setup_device(void) {
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
 	if(device_fd < 0) {
-		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
 
@@ -77,11 +77,11 @@ bool setup_device(void) {
 	if(routing_mode == RMODE_ROUTER) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;
-		device_info = _("Linux tun/tap device (tun mode)");
+		device_info = "Linux tun/tap device (tun mode)";
 	} else {
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		device_type = DEVICE_TYPE_TAP;
-		device_info = _("Linux tun/tap device (tap mode)");
+		device_info = "Linux tun/tap device (tap mode)";
 	}
 
 	if(iface)
@@ -92,7 +92,7 @@ bool setup_device(void) {
 		if(iface) free(iface);
 		iface = xstrdup(ifrname);
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
-		logger(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
+		logger(LOG_WARNING, "Old ioctl() request was needed for %s", device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		if(iface) free(iface);
 		iface = xstrdup(ifrname);
@@ -101,14 +101,14 @@ bool setup_device(void) {
 	{
 		if(routing_mode == RMODE_ROUTER)
 			overwrite_mac = true;
-		device_info = _("Linux ethertap device");
+		device_info = "Linux ethertap device";
 		device_type = DEVICE_TYPE_ETHERTAP;
 		if(iface)
 			free(iface);
 		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 	}
 
-	logger(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
@@ -128,7 +128,7 @@ bool read_packet(vpn_packet_t *packet) {
 			lenin = read(device_fd, packet->data + 10, MTU - 10);
 
 			if(lenin <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
+				logger(LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -139,7 +139,7 @@ bool read_packet(vpn_packet_t *packet) {
 			lenin = read(device_fd, packet->data, MTU);
 
 			if(lenin <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
+				logger(LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -150,7 +150,7 @@ bool read_packet(vpn_packet_t *packet) {
 			lenin = read(device_fd, packet->data - 2, MTU + 2);
 
 			if(lenin <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
+				logger(LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -161,28 +161,28 @@ bool read_packet(vpn_packet_t *packet) {
 
 	device_total_in += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
 	return true;
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			packet->data[10] = packet->data[11] = 0;
 			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
-				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
 			break;
 		case DEVICE_TYPE_TAP:
 			if(write(device_fd, packet->data, packet->len) < 0) {
-				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
@@ -191,7 +191,7 @@ bool write_packet(vpn_packet_t *packet) {
 			*(short int *)(packet->data - 2) = packet->len;
 
 			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
-				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
@@ -204,7 +204,7 @@ bool write_packet(vpn_packet_t *packet) {
 }
 
 void dump_device_stats(void) {
-	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
 }

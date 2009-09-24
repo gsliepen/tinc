@@ -40,8 +40,8 @@ static int connection_compare(const connection_t *a, const connection_t *b) {
 void init_connections(void) {
 	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
 	broadcast = new_connection();
-	broadcast->name = xstrdup(_("everyone"));
-	broadcast->hostname = xstrdup(_("BROADCAST"));
+	broadcast->name = xstrdup("everyone");
+	broadcast->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
@@ -115,16 +115,16 @@ void dump_connections(void) {
 	avl_node_t *node;
 	connection_t *c;
 
-	logger(LOG_DEBUG, _("Connections:"));
+	logger(LOG_DEBUG, "Connections:");
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
-		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"),
+		logger(LOG_DEBUG, " %s at %s options %lx socket %d status %04x outbuf %d/%d/%d",
 			   c->name, c->hostname, c->options, c->socket, bitfield_to_int(&c->status, sizeof c->status),
 			   c->outbufsize, c->outbufstart, c->outbuflen);
 	}
 
-	logger(LOG_DEBUG, _("End of connections."));
+	logger(LOG_DEBUG, "End of connections.");
 }
 
 bool read_connection_config(connection_t *c) {

@@ -57,7 +57,7 @@ const char *winerror(int err) {
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
-		strncpy(buf, _("(unable to format errormessage)"), sizeof(buf));
+		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
 	};
 
 	if((newline = strchr(buf, '\r')))

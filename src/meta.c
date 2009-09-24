@@ -37,11 +37,11 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	int result;
 
 	if(!c) {
-		logger(LOG_ERR, _("send_meta() called with NULL pointer!"));
+		logger(LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
+	ifdebug(META) logger(LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
 			   c->name, c->hostname);
 
 	if(!c->outbuflen)
@@ -63,11 +63,11 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)c->outbuf + c->outbufstart + c->outbuflen,
 				&outlen, (unsigned char *)buffer, length);
 		if(!result || outlen < length) {
-			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
+			logger(LOG_ERR, "Error while encrypting metadata to %s (%s): %s",
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
 		} else if(outlen > length) {
-			logger(LOG_EMERG, _("Encrypted data too long! Heap corrupted!"));
+			logger(LOG_EMERG, "Encrypted data too long! Heap corrupted!");
 			abort();
 		}
 		c->outbuflen += outlen;
@@ -82,25 +82,25 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 bool flush_meta(connection_t *c) {
 	int result;
 	
-	ifdebug(META) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s)"),
+	ifdebug(META) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s)",
 			 c->outbuflen, c->name, c->hostname);
 
 	while(c->outbuflen) {
 		result = send(c->socket, c->outbuf + c->outbufstart, c->outbuflen, 0);
 		if(result <= 0) {
 			if(!errno || errno == EPIPE) {
-				ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
+				ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
 						   c->name, c->hostname);
 			} else if(errno == EINTR) {
 				continue;
 #ifdef EWOULDBLOCK
 			} else if(errno == EWOULDBLOCK) {
-				ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s) would block"),
+				ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
 						c->outbuflen, c->name, c->hostname);
 				return true;
 #endif
 			} else {
-				logger(LOG_ERR, _("Flushing meta data to %s (%s) failed: %s"), c->name,
+				logger(LOG_ERR, "Flushing meta data to %s (%s) failed: %s", c->name,
 					   c->hostname, strerror(errno));
 			}
 
@@ -146,12 +146,12 @@ bool receive_meta(connection_t *c) {
 
 	if(lenin <= 0) {
 		if(!lenin || !errno) {
-			ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
+			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
 					   c->name, c->hostname);
 		} else if(errno == EINTR)
 			return true;
 		else
-			logger(LOG_ERR, _("Metadata socket read error for %s (%s): %s"),
+			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
 				   c->name, c->hostname, strerror(errno));
 
 		return false;
@@ -166,7 +166,7 @@ bool receive_meta(connection_t *c) {
 		if(c->status.decryptin && !decrypted) {
 			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &lenout, (unsigned char *)c->buffer + oldlen, lenin);
 			if(!result || lenout != lenin) {
-				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
+				logger(LOG_ERR, "Error while decrypting metadata from %s (%s): %s",
 						c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 				return false;
 			}
@@ -219,7 +219,7 @@ bool receive_meta(connection_t *c) {
 	}
 
 	if(c->buflen >= MAXBUFSIZE) {
-		logger(LOG_ERR, _("Metadata read buffer overflow for %s (%s)"),
+		logger(LOG_ERR, "Metadata read buffer overflow for %s (%s)",
 			   c->name, c->hostname);
 		return false;
 	}

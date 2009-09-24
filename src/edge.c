@@ -111,18 +111,18 @@ void dump_edges(void) {
 	edge_t *e;
 	char *address;
 
-	logger(LOG_DEBUG, _("Edges:"));
+	logger(LOG_DEBUG, "Edges:");
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
-			logger(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
+			logger(LOG_DEBUG, " %s to %s at %s options %lx weight %d",
 				   e->from->name, e->to->name, address, e->options, e->weight);
 			free(address);
 		}
 	}
 
-	logger(LOG_DEBUG, _("End of edges."));
+	logger(LOG_DEBUG, "End of edges.");
 }

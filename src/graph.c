@@ -241,10 +241,10 @@ void sssp_bfs(void) {
 			n->status.reachable = !n->status.reachable;
 
 			if(n->status.reachable) {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became reachable",
 					   n->name, n->hostname);
 			} else {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became unreachable",
 					   n->name, n->hostname);
 			}
 

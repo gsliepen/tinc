@@ -45,12 +45,12 @@ bool status_h(connection_t *c) {
 	char statusstring[MAX_STRING_SIZE];
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
 			   c->name, c->hostname);
 		return false;
 	}
 
-	ifdebug(STATUS) logger(LOG_NOTICE, _("Status message from %s (%s): %d: %s"),
+	ifdebug(STATUS) logger(LOG_NOTICE, "Status message from %s (%s): %d: %s",
 			   c->name, c->hostname, statusno, statusstring);
 
 	return true;
@@ -68,12 +68,12 @@ bool error_h(connection_t *c) {
 	char errorstring[MAX_STRING_SIZE];
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
 			   c->name, c->hostname);
 		return false;
 	}
 
-	ifdebug(ERROR) logger(LOG_NOTICE, _("Error message from %s (%s): %d: %s"),
+	ifdebug(ERROR) logger(LOG_NOTICE, "Error message from %s (%s): %d: %s",
 			   c->name, c->hostname, err, errorstring);
 
 	terminate_connection(c, c->status.active);
@@ -136,7 +136,7 @@ bool tcppacket_h(connection_t *c) {
 	short int len;
 
 	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
 			   c->hostname);
 		return false;
 	}

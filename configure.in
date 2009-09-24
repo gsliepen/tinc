@@ -7,9 +7,6 @@ AM_INIT_AUTOMAKE(tinc, 1.0-cvs)
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.14.1)
-
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
 # in the latter don't make it into the configure-time tests.
@@ -27,7 +24,7 @@ AC_PROG_RANLIB
 
 dnl Check and set OS
 
-#AC_CANONICAL_HOST
+AC_CANONICAL_HOST
 
 case $host_os in
   *linux*)
@@ -166,6 +163,6 @@ AC_ARG_ENABLE(jumbograms,
 
 AC_SUBST(INCLUDES)
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile lib/Makefile po/Makefile.in m4/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile lib/Makefile m4/Makefile])
 
 AC_OUTPUT

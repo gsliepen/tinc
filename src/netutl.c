@@ -42,7 +42,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(LOG_WARNING, _("Error looking up %s port %s: %s"), address,
+		logger(LOG_WARNING, "Error looking up %s port %s: %s", address,
 				   service, gai_strerror(err));
 		return NULL;
 	}
@@ -91,7 +91,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
-		logger(LOG_ERR, _("Error while translating addresses: %s"),
+		logger(LOG_ERR, "Error while translating addresses: %s",
 			   gai_strerror(err));
 		raise(SIGFPE);
 		exit(0);
@@ -113,18 +113,18 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	int err;
 
 	if(sa->sa.sa_family == AF_UNKNOWN) {
-		xasprintf(&str, _("%s port %s"), sa->unknown.address, sa->unknown.port);
+		xasprintf(&str, "%s port %s", sa->unknown.address, sa->unknown.port);
 		return str;
 	}
 
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
-		logger(LOG_ERR, _("Error while looking up hostname: %s"),
+		logger(LOG_ERR, "Error while looking up hostname: %s",
 			   gai_strerror(err));
 	}
 
-	xasprintf(&str, _("%s port %s"), address, port);
+	xasprintf(&str, "%s port %s", address, port);
 
 	return str;
 }
@@ -151,7 +151,7 @@ int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 			return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
 
 		default:
-			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
 			raise(SIGFPE);
 			exit(0);
@@ -195,7 +195,7 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
 
 		default:
-			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
 			raise(SIGFPE);
 			exit(0);

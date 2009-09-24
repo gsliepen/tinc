@@ -50,7 +50,7 @@ bool setup_device(void) {
 		device = xstrdup(DEFAULT_DEVICE);
 
 	if((device_fd = open(device, O_RDWR | O_NONBLOCK)) < 0) {
-		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
 
@@ -62,44 +62,44 @@ bool setup_device(void) {
 	ppa = atoi(ptr);
 
 	if((ip_fd = open("/dev/ip", O_RDWR, 0)) < 0) {
-		logger(LOG_ERR, _("Could not open /dev/ip: %s"), strerror(errno));
+		logger(LOG_ERR, "Could not open /dev/ip: %s", strerror(errno));
 		return false;
 	}
 
 	/* Assign a new PPA and get its unit number. */
 	if((ppa = ioctl(device_fd, TUNNEWPPA, ppa)) < 0) {
-		logger(LOG_ERR, _("Can't assign new interface: %s"), strerror(errno));
+		logger(LOG_ERR, "Can't assign new interface: %s", strerror(errno));
 		return false;
 	}
 
 	if((if_fd = open(device, O_RDWR, 0)) < 0) {
-		logger(LOG_ERR, _("Could not open %s twice: %s"), device,
+		logger(LOG_ERR, "Could not open %s twice: %s", device,
 			   strerror(errno));
 		return false;
 	}
 
 	if(ioctl(if_fd, I_PUSH, "ip") < 0) {
-		logger(LOG_ERR, _("Can't push IP module: %s"), strerror(errno));
+		logger(LOG_ERR, "Can't push IP module: %s", strerror(errno));
 		return false;
 	}
 
 	/* Assign ppa according to the unit number returned by tun device */
 	if(ioctl(if_fd, IF_UNITSEL, (char *) &ppa) < 0) {
-		logger(LOG_ERR, _("Can't set PPA %d: %s"), ppa, strerror(errno));
+		logger(LOG_ERR, "Can't set PPA %d: %s", ppa, strerror(errno));
 		return false;
 	}
 
 	if(ioctl(ip_fd, I_LINK, if_fd) < 0) {
-		logger(LOG_ERR, _("Can't link TUN device to IP: %s"), strerror(errno));
+		logger(LOG_ERR, "Can't link TUN device to IP: %s", strerror(errno));
 		return false;
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 		xasprintf(&iface, "tun%d", ppa);
 
-	device_info = _("Solaris tun device");
+	device_info = "Solaris tun device";
 
-	logger(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
@@ -115,7 +115,7 @@ bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
-		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
 	}
@@ -140,18 +140,18 @@ bool read_packet(vpn_packet_t *packet) {
 
 	device_total_in += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
 	return true;
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
-		logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info,
+		logger(LOG_ERR, "Can't write to %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
 	}
@@ -162,7 +162,7 @@ bool write_packet(vpn_packet_t *packet) {
 }
 
 void dump_device_stats(void) {
-	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
 }

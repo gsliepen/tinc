@@ -52,7 +52,7 @@ bool key_changed_h(connection_t *c) {
 	node_t *n;
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING, name) != 1) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "KEY_CHANGED",
 			   c->name, c->hostname);
 		return false;
 	}
@@ -63,7 +63,7 @@ bool key_changed_h(connection_t *c) {
 	n = lookup_node(name);
 
 	if(!n) {
-		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"),
+		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
 			   "KEY_CHANGED", c->name, c->hostname, name);
 		return false;
 	}
@@ -89,7 +89,7 @@ bool req_key_h(connection_t *c) {
 	node_t *from, *to;
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -97,7 +97,7 @@ bool req_key_h(connection_t *c) {
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, from_name);
 		return false;
 	}
@@ -105,7 +105,7 @@ bool req_key_h(connection_t *c) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, to_name);
 		return false;
 	}
@@ -119,7 +119,7 @@ bool req_key_h(connection_t *c) {
 			return false;
 
 		if(!to->status.reachable) {
-			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"REQ_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
@@ -175,7 +175,7 @@ bool ans_key_h(connection_t *c) {
 	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression) != 7) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -183,7 +183,7 @@ bool ans_key_h(connection_t *c) {
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, from_name);
 		return false;
 	}
@@ -191,7 +191,7 @@ bool ans_key_h(connection_t *c) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, to_name);
 		return false;
 	}
@@ -203,7 +203,7 @@ bool ans_key_h(connection_t *c) {
 			return false;
 
 		if(!to->status.reachable) {
-			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"ANS_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
@@ -225,13 +225,13 @@ bool ans_key_h(connection_t *c) {
 		from->outcipher = EVP_get_cipherbynid(cipher);
 
 		if(!from->outcipher) {
-			logger(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name,
+			logger(LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name,
 				   from->hostname);
 			return false;
 		}
 
 		if(from->outkeylength != from->outcipher->key_len + from->outcipher->iv_len) {
-			logger(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name,
+			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name,
 				   from->hostname);
 			return false;
 		}
@@ -245,13 +245,13 @@ bool ans_key_h(connection_t *c) {
 		from->outdigest = EVP_get_digestbynid(digest);
 
 		if(!from->outdigest) {
-			logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name,
+			logger(LOG_ERR, "Node %s (%s) uses unknown digest!", from->name,
 				   from->hostname);
 			return false;
 		}
 
 		if(from->outmaclength > from->outdigest->md_size || from->outmaclength < 0) {
-			logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"),
+			logger(LOG_ERR, "Node %s (%s) uses bogus MAC length!",
 				   from->name, from->hostname);
 			return false;
 		}
@@ -260,7 +260,7 @@ bool ans_key_h(connection_t *c) {
 	}
 
 	if(compression < 0 || compression > 11) {
-		logger(LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
 		return false;
 	}
 	
@@ -268,7 +268,7 @@ bool ans_key_h(connection_t *c) {
 
 	if(from->outcipher)
 		if(!EVP_EncryptInit_ex(&from->outctx, from->outcipher, NULL, (unsigned char *)from->outkey, (unsigned char *)from->outkey + from->outcipher->key_len)) {
-			logger(LOG_ERR, _("Error during initialisation of key from %s (%s): %s"),
+			logger(LOG_ERR, "Error during initialisation of key from %s (%s): %s",
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
 		}

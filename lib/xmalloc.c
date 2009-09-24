@@ -34,7 +34,6 @@ void *realloc ();
 void free ();
 #endif
 
-#include "gettext.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE
@@ -53,7 +52,7 @@ void *xrealloc (void *p, size_t n);
 int xalloc_exit_failure = EXIT_FAILURE;
 
 /* FIXME: describe */
-char *const xalloc_msg_memory_exhausted = N_("Memory exhausted");
+char *const xalloc_msg_memory_exhausted = "Memory exhausted";
 
 /* FIXME: describe */
 void (*xalloc_fail_func) (int) = 0;

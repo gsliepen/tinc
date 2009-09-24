@@ -119,11 +119,11 @@ CRITICAL_SECTION mutex;
 
 static void usage(bool status) {
 	if(status)
-		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
+		fprintf(stderr, "Try `%s --help\' for more information.\n",
 				program_name);
 	else {
-		printf(_("Usage: %s [option]...\n\n"), program_name);
-		printf(_("  -c, --config=DIR           Read configuration options from DIR.\n"
+		printf("Usage: %s [option]...\n\n", program_name);
+		printf("  -c, --config=DIR           Read configuration options from DIR.\n"
 				"  -D, --no-detach            Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
 				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
@@ -135,8 +135,8 @@ static void usage(bool status) {
 				"  -R, --chroot               chroot to NET dir at startup.\n"
 				"  -U, --user=USER            setuid to given USER at startup.\n"
 				"      --help                 Display this help and exit.\n"
-				"      --version              Output version information and exit.\n\n"));
-		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
+				"      --version              Output version information and exit.\n\n");
+		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
 
@@ -159,7 +159,7 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'L':				/* no detach */
 #ifndef HAVE_MLOCKALL
-				logger(LOG_ERR, _("%s not supported on this platform"), "mlockall()");
+				logger(LOG_ERR, "%s not supported on this platform", "mlockall()");
 				return false;
 #else
 				do_mlock = true;
@@ -196,7 +196,7 @@ static bool parse_options(int argc, char **argv) {
 						kill_tincd = atoi(optarg);
 
 						if(!kill_tincd) {
-							fprintf(stderr, _("Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n"),
+							fprintf(stderr, "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n",
 									optarg);
 							usage(true);
 							return false;
@@ -218,7 +218,7 @@ static bool parse_options(int argc, char **argv) {
 					generate_keys = atoi(optarg);
 
 					if(generate_keys < 512) {
-						fprintf(stderr, _("Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n"),
+						fprintf(stderr, "Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n",
 								optarg);
 						usage(true);
 						return false;
@@ -320,27 +320,27 @@ static bool keygen(int bits) {
 	get_config_string(lookup_config(config_tree, "Name"), &name);
 
 	if(name && !check_id(name)) {
-		fprintf(stderr, _("Invalid name for myself!\n"));
+		fprintf(stderr, "Invalid name for myself!\n");
 		return false;
 	}
 
-	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
+	fprintf(stderr, "Generating %d bits keys:\n", bits);
 	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
 
 	if(!rsa_key) {
-		fprintf(stderr, _("Error during key generation!\n"));
+		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
-		fprintf(stderr, _("Done.\n"));
+		fprintf(stderr, "Done.\n");
 
 	xasprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(filename, _("private RSA key"));
+	f = ask_and_open(filename, "private RSA key");
 
 	if(!f)
 		return false;
 
 	if(disable_old_keys(f))
-		fprintf(stderr, _("Warning: old key(s) found and disabled.\n"));
+		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
   
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
@@ -356,13 +356,13 @@ static bool keygen(int bits) {
 	else
 		xasprintf(&filename, "%s/rsa_key.pub", confbase);
 
-	f = ask_and_open(filename, _("public RSA key"));
+	f = ask_and_open(filename, "public RSA key");
 
 	if(!f)
 		return false;
 
 	if(disable_old_keys(f))
-		fprintf(stderr, _("Warning: old key(s) found and disabled.\n"));
+		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
 
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
@@ -416,7 +416,7 @@ static void make_names(void) {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
-			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+			logger(LOG_INFO, "Both netname and configuration directory given, using the latter...");
 	} else {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc");
@@ -434,11 +434,11 @@ static void free_names() {
 static bool drop_privs() {
 #ifdef HAVE_MINGW
 	if (switchuser) {
-		logger(LOG_ERR, _("%s not supported on this platform"), "-U");
+		logger(LOG_ERR, "%s not supported on this platform", "-U");
 		return false;
 	}
 	if (do_chroot) {
-		logger(LOG_ERR, _("%s not supported on this platform"), "-R");
+		logger(LOG_ERR, "%s not supported on this platform", "-R");
 		return false;
 	}
 #else
@@ -446,13 +446,13 @@ static bool drop_privs() {
 	if (switchuser) {
 		struct passwd *pw = getpwnam(switchuser);
 		if (!pw) {
-			logger(LOG_ERR, _("unknown user `%s'"), switchuser);
+			logger(LOG_ERR, "unknown user `%s'", switchuser);
 			return false;
 		}
 		uid = pw->pw_uid;
 		if (initgroups(switchuser, pw->pw_gid) != 0 ||
 		    setgid(pw->pw_gid) != 0) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
 			return false;
 		}
@@ -462,7 +462,7 @@ static bool drop_privs() {
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
 		if (chroot(confbase) != 0 || chdir("/") != 0) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "chroot", strerror(errno));
 			return false;
 		}
@@ -471,7 +471,7 @@ static bool drop_privs() {
 	}
 	if (switchuser)
 		if (setuid(uid) != 0) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "setuid", strerror(errno));
 			return false;
 		}
@@ -491,23 +491,19 @@ static bool drop_privs() {
 int main(int argc, char **argv) {
 	program_name = argv[0];
 
-	setlocale(LC_ALL, "");
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
-
 	if(!parse_options(argc, argv))
 		return 1;
 	
 	make_names();
 
 	if(show_version) {
-		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
+		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
-				"see the file COPYING for details.\n"));
+				"see the file COPYING for details.\n");
 
 		return 0;
 	}
@@ -544,13 +540,13 @@ int main(int argc, char **argv) {
 		return 1;
 
 	if(lzo_init() != LZO_E_OK) {
-		logger(LOG_ERR, _("Error initializing LZO compressor!"));
+		logger(LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", winerror(GetLastError()));
+		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
 
@@ -573,7 +569,7 @@ int main2(int argc, char **argv) {
 	 * This has to be done after daemon()/fork() so it works for child.
 	 * No need to do that in parent as it's very short-lived. */
 	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+		logger(LOG_ERR, "System call `%s' failed: %s", "mlockall",
 		   strerror(errno));
 		return 1;
 	}
@@ -600,7 +596,7 @@ int main2(int argc, char **argv) {
                 else if(!strcasecmp(priority, "High"))
                         setpriority(HIGH_PRIORITY_CLASS);
                 else {
-                        logger(LOG_ERR, _("Invalid priority `%s`!"), priority);
+                        logger(LOG_ERR, "Invalid priority `%s`!", priority);
                         goto end;
                 }
         }
@@ -621,7 +617,7 @@ int main2(int argc, char **argv) {
 	close_network_connections();
 
 end:
-	logger(LOG_NOTICE, _("Terminating"));
+	logger(LOG_NOTICE, "Terminating");
 
 #ifndef HAVE_MINGW
 	remove_pid(pidfilename);

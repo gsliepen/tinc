@@ -130,7 +130,7 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 		return true;
 	}
 
-	logger(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -143,7 +143,7 @@ bool get_config_int(const config_t *cfg, int *result) {
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return true;
 
-	logger(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -171,7 +171,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 		return true;
 	}
 
-	logger(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -184,7 +184,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		return false;
 
 	if(!str2net(&subnet, cfg->value)) {
-		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -195,7 +195,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t)))
 		|| ((subnet.type == SUBNET_IPV6)
 		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t)))) {
-		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -293,7 +293,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Cannot open config file %s: %s"), fname,
+		logger(LOG_ERR, "Cannot open config file %s: %s", fname,
 			   strerror(errno));
 		return -3;
 	}
@@ -347,7 +347,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname) {
 
 	
 		if(!*value) {
-			logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+			logger(LOG_ERR, "No value for variable `%s' on line %d while reading config file %s",
 				   variable, lineno, fname);
 			break;
 		}
@@ -375,7 +375,7 @@ bool read_server_config() {
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */
-		logger(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
+		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
 	free(fname);
@@ -396,14 +396,14 @@ FILE *ask_and_open(const char *filename, const char *what) {
 		fn = xstrdup(filename);
 	} else {
 		/* Ask for a file and/or directory name. */
-		fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
+		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
 				what, filename);
 		fflush(stdout);
 
 		fn = readline(stdin, NULL, NULL);
 
 		if(!fn) {
-			fprintf(stderr, _("Error while reading stdin: %s\n"),
+			fprintf(stderr, "Error while reading stdin: %s\n",
 					strerror(errno));
 			return NULL;
 		}
@@ -435,7 +435,7 @@ FILE *ask_and_open(const char *filename, const char *what) {
 	r = fopen(fn, "r+") ?: fopen(fn, "w+");
 
 	if(!r) {
-		fprintf(stderr, _("Error opening file `%s': %s\n"),
+		fprintf(stderr, "Error opening file `%s': %s\n",
 				fn, strerror(errno));
 		free(fn);
 		return NULL;

@@ -158,16 +158,16 @@ void dump_nodes(void) {
 	avl_node_t *node;
 	node_t *n;
 
-	logger(LOG_DEBUG, _("Nodes:"));
+	logger(LOG_DEBUG, "Nodes:");
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		logger(LOG_DEBUG, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)"),
+		logger(LOG_DEBUG, " %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)",
 			   n->name, n->hostname, n->outcipher ? n->outcipher->nid : 0,
 			   n->outdigest ? n->outdigest->type : 0, n->outmaclength, n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}
 
-	logger(LOG_DEBUG, _("End of nodes."));
+	logger(LOG_DEBUG, "End of nodes.");
 }

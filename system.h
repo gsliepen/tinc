@@ -31,10 +31,6 @@ typedef int bool;
 #define false 0
 #endif
 
-/* Include localisation support */
-
-#include "gettext.h"
-
 #ifndef HAVE_STRSIGNAL
 # define strsignal(p) ""
 #endif

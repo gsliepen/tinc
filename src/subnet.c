@@ -128,7 +128,7 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 	case SUBNET_IPV6:
 		return subnet_compare_ipv6(a, b);
 	default:
-		logger(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
+		logger(LOG_ERR, "subnet_compare() was called with unknown subnet type %d, exitting!",
 			   a->type);
 		exit(0);
 	}
@@ -267,7 +267,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 
 bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
-		logger(LOG_ERR, _("net2str() was called with netstr=%p, subnet=%p!\n"), netstr, subnet);
+		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!\n", netstr, subnet);
 		return false;
 	}
 
@@ -309,7 +309,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 
 		default:
 			logger(LOG_ERR,
-				   _("net2str() was called with unknown subnet type %d, exiting!"),
+				   "net2str() was called with unknown subnet type %d, exiting!",
 				   subnet->type);
 			exit(0);
 	}
@@ -495,14 +495,14 @@ void dump_subnets(void) {
 	subnet_t *subnet;
 	avl_node_t *node;
 
-	logger(LOG_DEBUG, _("Subnet list:"));
+	logger(LOG_DEBUG, "Subnet list:");
 
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
-		logger(LOG_DEBUG, _(" %s owner %s"), netstr, subnet->owner->name);
+		logger(LOG_DEBUG, " %s owner %s", netstr, subnet->owner->name);
 	}
 
-	logger(LOG_DEBUG, _("End of subnet list."));
+	logger(LOG_DEBUG, "End of subnet list.");
 }

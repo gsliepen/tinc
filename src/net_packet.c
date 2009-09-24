@@ -66,19 +66,19 @@ void send_mtu_probe(node_t *n) {
 	n->mtuevent = NULL;
 
 	if(!n->status.reachable) {
-		logger(LOG_DEBUG, _("Trying to send MTU probe to unreachable node %s (%s)"), n->name, n->hostname);
+		logger(LOG_DEBUG, "Trying to send MTU probe to unreachable node %s (%s)", n->name, n->hostname);
 		return;
 	}
 
 	if(n->mtuprobes >= 10 && !n->minmtu) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("No response to MTU probes from %s (%s)"), n->name, n->hostname);
+		ifdebug(TRAFFIC) logger(LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
 		return;
 	}
 
 	for(i = 0; i < 3; i++) {
 		if(n->mtuprobes >= 30 || n->minmtu >= n->maxmtu) {
 			n->mtu = n->minmtu;
-			ifdebug(TRAFFIC) logger(LOG_INFO, _("Fixing MTU of %s (%s) to %d after %d probes"), n->name, n->hostname, n->mtu, n->mtuprobes);
+			ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
 			return;
 		}
 
@@ -91,7 +91,7 @@ void send_mtu_probe(node_t *n) {
 		packet.len = len;
 		packet.priority = 0;
 
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending MTU probe length %d to %s (%s)"), len, n->name, n->hostname);
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
 
 		send_udppacket(n, &packet);
 	}
@@ -104,7 +104,7 @@ void send_mtu_probe(node_t *n) {
 }
 
 void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
-	ifdebug(TRAFFIC) logger(LOG_INFO, _("Got MTU probe length %d from %s (%s)"), packet->len, n->name, n->hostname);
+	ifdebug(TRAFFIC) logger(LOG_INFO, "Got MTU probe length %d from %s (%s)", packet->len, n->name, n->hostname);
 
 	if(!packet->data[0]) {
 		packet->data[0] = 1;
@@ -156,7 +156,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 /* VPN packet I/O */
 
 static void receive_packet(node_t *n, vpn_packet_t *packet) {
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Received packet of %d bytes from %s (%s)",
 			   packet->len, n->name, n->hostname);
 
 	route(n, packet);
@@ -183,7 +183,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	int i;
 
 	if(!n->inkey) {
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got packet from %s (%s) but he hasn't got our key yet"),
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet",
 					n->name, n->hostname);
 		return;
 	}
@@ -191,7 +191,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	/* Check packet length */
 
 	if(inpkt->len < sizeof(inpkt->seqno) + n->inmaclength) {
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got too short packet from %s (%s)"),
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got too short packet from %s (%s)",
 					n->name, n->hostname);
 		return;
 	}
@@ -204,7 +204,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
 
 		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, n->inmaclength)) {
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got unauthenticated packet from %s (%s)",
 					   n->name, n->hostname);
 			return;
 		}
@@ -219,7 +219,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 				|| !EVP_DecryptUpdate(&n->inctx, (unsigned char *) &outpkt->seqno, &outlen,
 					(unsigned char *) &inpkt->seqno, inpkt->len)
 				|| !EVP_DecryptFinal_ex(&n->inctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Error decrypting packet from %s (%s): %s",
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
 		}
@@ -235,13 +235,13 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	if(inpkt->seqno != n->received_seqno + 1) {
 		if(inpkt->seqno >= n->received_seqno + sizeof(n->late) * 8) {
-			logger(LOG_WARNING, _("Lost %d packets from %s (%s)"),
+			logger(LOG_WARNING, "Lost %d packets from %s (%s)",
 					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
 			
 			memset(n->late, 0, sizeof(n->late));
 		} else if (inpkt->seqno <= n->received_seqno) {
 			if((n->received_seqno >= sizeof(n->late) * 8 && inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8) || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
-				logger(LOG_WARNING, _("Got late or replayed packet from %s (%s), seqno %d, last received %d"),
+				logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
 					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
 				return;
 			}
@@ -267,7 +267,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
-			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while uncompressing packet from %s (%s)"),
+			ifdebug(TRAFFIC) logger(LOG_ERR, "Error while uncompressing packet from %s (%s)",
 				  		 n->name, n->hostname);
 			return;
 		}
@@ -314,7 +314,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	int sock;
 
 	if(!n->status.reachable) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Trying to send UDP packet to unreachable node %s (%s)"), n->name, n->hostname);
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
 		return;
 	}
 
@@ -322,7 +322,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(!n->status.validkey) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				   _("No valid key known yet for %s (%s), forwarding via TCP"),
+				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
 		if(!n->status.waitingforkey)
@@ -337,7 +337,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				_("Packet for %s (%s) larger than minimum MTU, forwarding via TCP"),
+				"Packet for %s (%s) larger than minimum MTU, forwarding via TCP",
 				n->name, n->hostname);
 
 		send_tcppacket(n->nexthop->connection, origpkt);
@@ -354,7 +354,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->outcompression)) < 0) {
-			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while compressing packet to %s (%s)"),
+			ifdebug(TRAFFIC) logger(LOG_ERR, "Error while compressing packet to %s (%s)",
 				   n->name, n->hostname);
 			return;
 		}
@@ -376,7 +376,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				|| !EVP_EncryptUpdate(&n->outctx, (unsigned char *) &outpkt->seqno, &outlen,
 					(unsigned char *) &inpkt->seqno, inpkt->len)
 				|| !EVP_EncryptFinal_ex(&n->outctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
-			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
+			ifdebug(TRAFFIC) logger(LOG_ERR, "Error while encrypting packet to %s (%s): %s",
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			goto end;
 		}
@@ -408,9 +408,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(priorityinheritance && origpriority != priority
 	   && listen_socket[sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Setting outgoing packet priority to %d"), priority);
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
 		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "setsockopt", strerror(errno));
+			logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 	}
 #endif
 
@@ -421,7 +421,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
 		} else
-			logger(LOG_ERR, _("Error sending packet to %s (%s): %s"), n->name, n->hostname, strerror(errno));
+			logger(LOG_ERR, "Error sending packet to %s (%s): %s", n->name, n->hostname, strerror(errno));
 	}
 
 end:
@@ -441,11 +441,11 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 		return;
 	}
 
-	ifdebug(TRAFFIC) logger(LOG_ERR, _("Sending packet of %d bytes to %s (%s)"),
+	ifdebug(TRAFFIC) logger(LOG_ERR, "Sending packet of %d bytes to %s (%s)",
 			   packet->len, n->name, n->hostname);
 
 	if(!n->status.reachable) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Node %s (%s) is not reachable"),
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Node %s (%s) is not reachable",
 				   n->name, n->hostname);
 		return;
 	}
@@ -453,7 +453,7 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 	via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
 	if(via != n)
-		ifdebug(TRAFFIC) logger(LOG_INFO, _("Sending packet to %s via %s (%s)"),
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Sending packet to %s via %s (%s)",
 			   n->name, via->name, n->via->hostname);
 
 	if(packet->priority == -1 || ((myself->options | via->options) & OPTION_TCPONLY)) {
@@ -469,7 +469,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	avl_node_t *node;
 	connection_t *c;
 
-	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
+	ifdebug(TRAFFIC) logger(LOG_INFO, "Broadcasting packet of %d bytes from %s (%s)",
 			   packet->len, from->name, from->hostname);
 
 	if(from != myself) {
@@ -524,7 +524,7 @@ void handle_incoming_vpn_data(int sock) {
 
 	if(pkt.len < 0) {
 		if(errno != EAGAIN && errno != EINTR)
-			logger(LOG_ERR, _("Receiving packet failed: %s"), strerror(errno));
+			logger(LOG_ERR, "Receiving packet failed: %s", strerror(errno));
 		return;
 	}
 
@@ -538,7 +538,7 @@ void handle_incoming_vpn_data(int sock) {
 			update_node_udp(n, &from);
 		else ifdebug(PROTOCOL) {
 			hostname = sockaddr2hostname(&from);
-			logger(LOG_WARNING, _("Received UDP packet from unknown source %s"), hostname);
+			logger(LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
 			free(hostname);
 			return;
 		}
