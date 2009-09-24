@@ -2358,7 +2358,7 @@ and join channel #tinc.
 @section Authors
 
 @table @asis
-@item Ivo Timmermans (zarq) (@email{ivo@@tinc-vpn.org})
+@item Ivo Timmermans (zarq)
 @item Guus Sliepen (guus) (@email{guus@@tinc-vpn.org})
 @end table
 
