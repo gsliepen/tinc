@@ -104,8 +104,6 @@ static void learn_mac(mac_t *address) {
 	avl_node_t *node;
 	connection_t *c;
 
-	cp();
-
 	subnet = lookup_subnet_mac(address);
 
 	/* If we don't know this MAC address yet, store it */
@@ -138,8 +136,6 @@ void age_subnets(void) {
 	subnet_t *s;
 	connection_t *c;
 	avl_node_t *node, *next, *node2;
-
-	cp();
 
 	for(node = myself->subnet_tree->head; node; node = next) {
 		next = node->next;
@@ -175,8 +171,6 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	if(ratelimit(3))
 		return;
 	
-	cp();
-
 	/* Swap Ethernet source and destination addresses */
 
 	swap_mac_addresses(packet);
@@ -246,8 +240,6 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	uint8_t *offset;
 	uint16_t ip_off, origf;
 	
-	cp();
-
 	memcpy(&ip, packet->data + ether_size, ip_size);
 	fragment.priority = packet->priority;
 
@@ -294,8 +286,6 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv4_t dest;
 
-	cp();
-
 	memcpy(&dest, &packet->data[30], sizeof dest);
 	subnet = lookup_subnet_ipv4(&dest);
 
@@ -340,8 +330,6 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 }
 
 static void route_ipv4(node_t *source, vpn_packet_t *packet) {
-	cp();
-
 	if(!checklength(source, packet, ether_size + ip_size))
 		return;
 
@@ -372,8 +360,6 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	if(ratelimit(3))
 		return;
 	
-	cp();
-
 	/* Swap Ethernet source and destination addresses */
 
 	swap_mac_addresses(packet);
@@ -442,8 +428,6 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv6_t dest;
 
-	cp();
-
 	memcpy(&dest, &packet->data[38], sizeof dest);
 	subnet = lookup_subnet_ipv6(&dest);
 
@@ -499,8 +483,6 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 		uint32_t length;
 		uint32_t next;
 	} pseudo;
-
-	cp();
 
 	if(!checklength(source, packet, ether_size + ip6_size + ns_size))
 		return;
@@ -627,8 +609,6 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 }
 
 static void route_ipv6(node_t *source, vpn_packet_t *packet) {
-	cp();
-
 	if(!checklength(source, packet, ether_size + ip6_size))
 		return;
 
@@ -649,8 +629,6 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	struct ether_arp arp;
 	subnet_t *subnet;
 	struct in_addr addr;
-
-	cp();
 
 	if(!checklength(source, packet, ether_size + arp_size))
 		return;
@@ -715,9 +693,6 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet_t *subnet;
 	mac_t dest;
 
-	cp();
-
-
 	/* Learn source address */
 
 	if(source == myself) {
@@ -766,10 +741,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	send_packet(subnet->owner, packet);
 }
 
-
 void route(node_t *source, vpn_packet_t *packet) {
-	cp();
-
 	if(!checklength(source, packet, ether_size))
 		return;
 

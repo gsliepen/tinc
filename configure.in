@@ -164,12 +164,6 @@ AC_ARG_ENABLE(jumbograms,
   [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ]
 )
 
-dnl Check if checkpoint tracing has to be enabled
-AC_ARG_ENABLE(tracing,
-  AS_HELP_STRING([--enable-tracing], [enable checkpoint tracing (debugging only)]),
-  [ AC_DEFINE(ENABLE_TRACING, 1, [Checkpoint tracing]) ]
-)
-
 AC_SUBST(INCLUDES)
 
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile lib/Makefile po/Makefile.in m4/Makefile])

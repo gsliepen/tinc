@@ -42,23 +42,17 @@ static int node_udp_compare(const node_t *a, const node_t *b) {
 }
 
 void init_nodes(void) {
-	cp();
-
 	node_tree = avl_alloc_tree((avl_compare_t) node_compare, (avl_action_t) free_node);
 	node_udp_tree = avl_alloc_tree((avl_compare_t) node_udp_compare, NULL);
 }
 
 void exit_nodes(void) {
-	cp();
-
 	avl_delete_tree(node_udp_tree);
 	avl_delete_tree(node_tree);
 }
 
 node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof(*n));
-
-	cp();
 
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
@@ -71,8 +65,6 @@ node_t *new_node(void) {
 }
 
 void free_node(node_t *n) {
-	cp();
-
 	if(n->inkey)
 		free(n->inkey);
 
@@ -103,8 +95,6 @@ void free_node(node_t *n) {
 }
 
 void node_add(node_t *n) {
-	cp();
-
 	avl_insert(node_tree, n);
 }
 
@@ -112,8 +102,6 @@ void node_del(node_t *n) {
 	avl_node_t *node, *next;
 	edge_t *e;
 	subnet_t *s;
-
-	cp();
 
 	for(node = n->subnet_tree->head; node; node = next) {
 		next = node->next;
@@ -134,8 +122,6 @@ void node_del(node_t *n) {
 node_t *lookup_node(char *name) {
 	node_t n = {0};
 
-	cp();
-	
 	n.name = name;
 
 	return avl_search(node_tree, &n);
@@ -143,8 +129,6 @@ node_t *lookup_node(char *name) {
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
 	node_t n = {0};
-
-	cp();
 
 	n.address = *sa;
 	n.name = NULL;
@@ -173,8 +157,6 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 void dump_nodes(void) {
 	avl_node_t *node;
 	node_t *n;
-
-	cp();
 
 	logger(LOG_DEBUG, _("Nodes:"));
 

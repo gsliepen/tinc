@@ -53,27 +53,19 @@ static int config_compare(const config_t *a, const config_t *b) {
 }
 
 void init_configuration(avl_tree_t ** config_tree) {
-	cp();
-
 	*config_tree = avl_alloc_tree((avl_compare_t) config_compare, (avl_action_t) free_config);
 }
 
 void exit_configuration(avl_tree_t ** config_tree) {
-	cp();
-
 	avl_delete_tree(*config_tree);
 	*config_tree = NULL;
 }
 
 config_t *new_config(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(config_t));
 }
 
 void free_config(config_t *cfg) {
-	cp();
-
 	if(cfg->variable)
 		free(cfg->variable);
 
@@ -87,15 +79,11 @@ void free_config(config_t *cfg) {
 }
 
 void config_add(avl_tree_t *config_tree, config_t *cfg) {
-	cp();
-
 	avl_insert(config_tree, cfg);
 }
 
 config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
-
-	cp();
 
 	cfg.variable = variable;
 	cfg.file = "";
@@ -116,8 +104,6 @@ config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg) {
 	avl_node_t *node;
 	config_t *found;
 
-	cp();
-
 	node = avl_search_node(config_tree, cfg);
 
 	if(node) {
@@ -133,8 +119,6 @@ config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg) {
 }
 
 bool get_config_bool(const config_t *cfg, bool *result) {
-	cp();
-
 	if(!cfg)
 		return false;
 
@@ -153,8 +137,6 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 }
 
 bool get_config_int(const config_t *cfg, int *result) {
-	cp();
-
 	if(!cfg)
 		return false;
 
@@ -168,8 +150,6 @@ bool get_config_int(const config_t *cfg, int *result) {
 }
 
 bool get_config_string(const config_t *cfg, char **result) {
-	cp();
-
 	if(!cfg)
 		return false;
 
@@ -180,8 +160,6 @@ bool get_config_string(const config_t *cfg, char **result) {
 
 bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	struct addrinfo *ai;
-
-	cp();
 
 	if(!cfg)
 		return false;
@@ -201,8 +179,6 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 
 bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 	subnet_t subnet = {0};
-
-	cp();
 
 	if(!cfg)
 		return false;
@@ -314,8 +290,6 @@ int read_config_file(avl_tree_t *config_tree, const char *fname) {
 	config_t *cfg;
 	size_t bufsize;
 
-	cp();
-
 	fp = fopen(fname, "r");
 
 	if(!fp) {
@@ -396,8 +370,6 @@ int read_config_file(avl_tree_t *config_tree, const char *fname) {
 bool read_server_config() {
 	char *fname;
 	int x;
-
-	cp();
 
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);

@@ -39,16 +39,12 @@
 #include "xalloc.h"
 
 bool send_id(connection_t *c) {
-	cp();
-
 	return send_request(c, "%d %s %d", ID, myself->connection->name,
 						myself->connection->protocol_version);
 }
 
 bool id_h(connection_t *c) {
 	char name[MAX_STRING_SIZE];
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING " %d", name, &c->protocol_version) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ID", c->name,
@@ -117,8 +113,6 @@ bool send_metakey(connection_t *c) {
 	int len;
 	bool x;
 
-	cp();
-
 	len = RSA_size(c->rsa_key);
 
 	/* Allocate buffers for the meta key */
@@ -129,7 +123,7 @@ bool send_metakey(connection_t *c) {
 
 	if(!c->outctx)
 		c->outctx = xmalloc_and_zero(sizeof(*c->outctx));
-	cp();
+
 	/* Copy random data to the buffer */
 
 	RAND_pseudo_bytes((unsigned char *)c->outkey, len);
@@ -200,8 +194,6 @@ bool metakey_h(connection_t *c) {
 	char buffer[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	int len;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, buffer) != 5) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "METAKEY", c->name,
@@ -298,8 +290,6 @@ bool send_challenge(connection_t *c) {
 	char *buffer;
 	int len;
 
-	cp();
-
 	/* CHECKME: what is most reasonable value for len? */
 
 	len = RSA_size(c->rsa_key);
@@ -327,8 +317,6 @@ bool send_challenge(connection_t *c) {
 bool challenge_h(connection_t *c) {
 	char buffer[MAX_STRING_SIZE];
 	int len;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING, buffer) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "CHALLENGE", c->name,
@@ -365,8 +353,6 @@ bool send_chal_reply(connection_t *c) {
 	char hash[EVP_MAX_MD_SIZE * 2 + 1];
 	EVP_MD_CTX ctx;
 
-	cp();
-
 	/* Calculate the hash from the challenge we received */
 
 	if(!EVP_DigestInit(&ctx, c->indigest)
@@ -391,8 +377,6 @@ bool chal_reply_h(connection_t *c) {
 	char hishash[MAX_STRING_SIZE];
 	char myhash[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING, hishash) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "CHAL_REPLY", c->name,
@@ -452,8 +436,6 @@ bool send_ack(connection_t *c) {
 
 	struct timeval now;
 	bool choice;
-
-	cp();
 
 	/* Estimate weight */
 
@@ -515,8 +497,6 @@ bool ack_h(connection_t *c) {
 	long int options;
 	node_t *n;
 
-	cp();
-
 	if(sscanf(c->buffer, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ACK", c->name,
 			   c->hostname);
@@ -571,7 +551,6 @@ bool ack_h(connection_t *c) {
 	/* Create an edge_t for this connection */
 
 	c->edge = new_edge();
-	cp();
 	c->edge->from = myself;
 	c->edge->to = n;
 	sockaddr2str(&c->address, &hisaddress, &dummy);

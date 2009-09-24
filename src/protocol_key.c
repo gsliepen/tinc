@@ -37,8 +37,6 @@
 bool mykeyused = false;
 
 bool send_key_changed() {
-	cp();
-
 	/* Only send this message if some other daemon requested our key previously.
 	   This reduces unnecessary key_changed broadcasts.
 	 */
@@ -52,8 +50,6 @@ bool send_key_changed() {
 bool key_changed_h(connection_t *c) {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING, name) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
@@ -84,8 +80,6 @@ bool key_changed_h(connection_t *c) {
 }
 
 bool send_req_key(node_t *to) {
-	cp();
-
 	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
 }
 
@@ -93,8 +87,6 @@ bool req_key_h(connection_t *c) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
@@ -141,8 +133,6 @@ bool req_key_h(connection_t *c) {
 bool send_ans_key(node_t *to) {
 	char *key;
 
-	cp();
-
 	// Set key parameters
 	to->incipher = myself->incipher;
 	to->inkeylength = myself->inkeylength;
@@ -181,8 +171,6 @@ bool ans_key_h(connection_t *c) {
 	char key[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	node_t *from, *to;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
 		from_name, to_name, key, &cipher, &digest, &maclength,

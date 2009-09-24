@@ -34,8 +34,6 @@ int maxoutbufsize = 0;
 /* Status and error notification routines */
 
 bool send_status(connection_t *c, int statusno, const char *statusstring) {
-	cp();
-
 	if(!statusstring)
 		statusstring = "Status";
 
@@ -45,8 +43,6 @@ bool send_status(connection_t *c, int statusno, const char *statusstring) {
 bool status_h(connection_t *c) {
 	int statusno;
 	char statusstring[MAX_STRING_SIZE];
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "STATUS",
@@ -61,8 +57,6 @@ bool status_h(connection_t *c) {
 }
 
 bool send_error(connection_t *c, int err, const char *errstring) {
-	cp();
-
 	if(!errstring)
 		errstring = "Error";
 
@@ -72,8 +66,6 @@ bool send_error(connection_t *c, int err, const char *errstring) {
 bool error_h(connection_t *c) {
 	int err;
 	char errorstring[MAX_STRING_SIZE];
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ERROR",
@@ -90,22 +82,16 @@ bool error_h(connection_t *c) {
 }
 
 bool send_termreq(connection_t *c) {
-	cp();
-
 	return send_request(c, "%d", TERMREQ);
 }
 
 bool termreq_h(connection_t *c) {
-	cp();
-
 	terminate_connection(c, c->status.active);
 
 	return true;
 }
 
 bool send_ping(connection_t *c) {
-	cp();
-
 	c->status.pinged = true;
 	c->last_ping_time = now;
 
@@ -113,20 +99,14 @@ bool send_ping(connection_t *c) {
 }
 
 bool ping_h(connection_t *c) {
-	cp();
-
 	return send_pong(c);
 }
 
 bool send_pong(connection_t *c) {
-	cp();
-
 	return send_request(c, "%d", PONG);
 }
 
 bool pong_h(connection_t *c) {
-	cp();
-
 	c->status.pinged = false;
 
 	/* Succesful connection, reset timeout if this is an outgoing connection. */
@@ -140,8 +120,6 @@ bool pong_h(connection_t *c) {
 /* Sending and receiving packets via TCP */
 
 bool send_tcppacket(connection_t *c, vpn_packet_t *packet) {
-	cp();
-
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
            We use a very simple Random Early Drop algorithm. */
 
@@ -156,8 +134,6 @@ bool send_tcppacket(connection_t *c, vpn_packet_t *packet) {
 
 bool tcppacket_h(connection_t *c) {
 	short int len;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "PACKET", c->name,

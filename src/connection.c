@@ -38,8 +38,6 @@ static int connection_compare(const connection_t *a, const connection_t *b) {
 }
 
 void init_connections(void) {
-	cp();
-
 	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
 	broadcast = new_connection();
 	broadcast->name = xstrdup(_("everyone"));
@@ -47,16 +45,12 @@ void init_connections(void) {
 }
 
 void exit_connections(void) {
-	cp();
-
 	avl_delete_tree(connection_tree);
 	free_connection(broadcast);
 }
 
 connection_t *new_connection(void) {
 	connection_t *c;
-
-	cp();
 
 	c = xmalloc_and_zero(sizeof(connection_t));
 
@@ -69,8 +63,6 @@ connection_t *new_connection(void) {
 }
 
 void free_connection(connection_t *c) {
-	cp();
-
 	if(c->name)
 		free(c->name);
 
@@ -112,22 +104,16 @@ void free_connection(connection_t *c) {
 }
 
 void connection_add(connection_t *c) {
-	cp();
-
 	avl_insert(connection_tree, c);
 }
 
 void connection_del(connection_t *c) {
-	cp();
-
 	avl_delete(connection_tree, c);
 }
 
 void dump_connections(void) {
 	avl_node_t *node;
 	connection_t *c;
-
-	cp();
 
 	logger(LOG_DEBUG, _("Connections:"));
 
@@ -144,8 +130,6 @@ void dump_connections(void) {
 bool read_connection_config(connection_t *c) {
 	char *fname;
 	int x;
-
-	cp();
 
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);

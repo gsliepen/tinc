@@ -52,8 +52,6 @@ static void purge(void) {
 	edge_t *e;
 	subnet_t *s;
 
-	cp();
-
 	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
@@ -114,8 +112,6 @@ static int build_fdset(fd_set *readset, fd_set *writeset) {
 	connection_t *c;
 	int i, max = 0;
 
-	cp();
-
 	FD_ZERO(readset);
 	FD_ZERO(writeset);
 
@@ -161,8 +157,6 @@ static int build_fdset(fd_set *readset, fd_set *writeset) {
   - Deactivate the host
 */
 void terminate_connection(connection_t *c, bool report) {
-	cp();
-
 	if(c->status.remove)
 		return;
 
@@ -227,8 +221,6 @@ static void check_dead_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
 
-	cp();
-
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
@@ -284,8 +276,6 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	int result, i;
 	socklen_t len = sizeof(result);
 	vpn_packet_t packet;
-
-	cp();
 
 	/* check input from kernel */
 	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
@@ -352,8 +342,6 @@ int main_loop(void) {
 	time_t last_ping_check, last_config_check, last_graph_dump;
 	event_t *event;
 
-	cp();
-
 	last_ping_check = now;
 	last_config_check = now;
 	last_graph_dump = now;
@@ -383,7 +371,6 @@ int main_loop(void) {
 			if(errno != EINTR && errno != EAGAIN) {
 				logger(LOG_ERR, _("Error while waiting for input: %s"),
 					   strerror(errno));
-				cp_trace();
 				dump_connections();
 				return 1;
 			}

@@ -35,8 +35,6 @@
 bool send_add_subnet(connection_t *c, const subnet_t *subnet) {
 	char netstr[MAXNETSTR];
 
-	cp();
-
 	if(!net2str(netstr, sizeof netstr, subnet))
 		return false;
 
@@ -48,8 +46,6 @@ bool add_subnet_h(connection_t *c) {
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
 	subnet_t s = {0}, *new;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ADD_SUBNET", c->name,
@@ -152,8 +148,6 @@ bool add_subnet_h(connection_t *c) {
 bool send_del_subnet(connection_t *c, const subnet_t *s) {
 	char netstr[MAXNETSTR];
 
-	cp();
-
 	if(!net2str(netstr, sizeof netstr, s))
 		return false;
 
@@ -165,8 +159,6 @@ bool del_subnet_h(connection_t *c) {
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
 	subnet_t s = {0}, *find;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_SUBNET", c->name,

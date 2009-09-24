@@ -36,8 +36,6 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	int outlen;
 	int result;
 
-	cp();
-
 	if(!c) {
 		logger(LOG_ERR, _("send_meta() called with NULL pointer!"));
 		abort();
@@ -121,8 +119,6 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	avl_node_t *node;
 	connection_t *c;
 
-	cp();
-
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
@@ -136,8 +132,6 @@ bool receive_meta(connection_t *c) {
 	int lenin, lenout, reqlen;
 	bool decrypted = false;
 	char inbuf[MAXBUFSIZE];
-
-	cp();
 
 	/* Strategy:
 	   - Read as much as possible from the TCP socket in one go.

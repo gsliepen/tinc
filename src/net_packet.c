@@ -62,8 +62,6 @@ void send_mtu_probe(node_t *n) {
 	vpn_packet_t packet;
 	int len, i;
 	
-	cp();
-
 	n->mtuprobes++;
 	n->mtuevent = NULL;
 
@@ -158,8 +156,6 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 /* VPN packet I/O */
 
 static void receive_packet(node_t *n, vpn_packet_t *packet) {
-	cp();
-
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Received packet of %d bytes from %s (%s)"),
 			   packet->len, n->name, n->hostname);
 
@@ -185,8 +181,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	int outlen, outpad;
 	unsigned char hmac[EVP_MAX_MD_SIZE];
 	int i;
-
-	cp();
 
 	if(!n->inkey) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got packet from %s (%s) but he hasn't got our key yet"),
@@ -297,8 +291,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 void receive_tcppacket(connection_t *c, char *buffer, int len) {
 	vpn_packet_t outpkt;
 
-	cp();
-
 	outpkt.len = len;
 	if(c->options & OPTION_TCPONLY)
 		outpkt.priority = 0;
@@ -320,8 +312,6 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	static int priority = 0;
 	int origpriority;
 	int sock;
-
-	cp();
 
 	if(!n->status.reachable) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, _("Trying to send UDP packet to unreachable node %s (%s)"), n->name, n->hostname);
@@ -444,8 +434,6 @@ end:
 void send_packet(const node_t *n, vpn_packet_t *packet) {
 	node_t *via;
 
-	cp();
-
 	if(n == myself) {
 		if(overwrite_mac)
 			 memcpy(packet->data, mymac.x, ETH_ALEN);
@@ -480,8 +468,6 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	avl_node_t *node;
 	connection_t *c;
-
-	cp();
 
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
@@ -533,8 +519,6 @@ void handle_incoming_vpn_data(int sock) {
 	sockaddr_t from;
 	socklen_t fromlen = sizeof(from);
 	node_t *n;
-
-	cp();
 
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 

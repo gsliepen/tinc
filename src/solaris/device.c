@@ -46,8 +46,6 @@ bool setup_device(void) {
 	int ppa;
 	char *ptr;
 
-	cp();
-
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		device = xstrdup(DEFAULT_DEVICE);
 
@@ -107,8 +105,6 @@ bool setup_device(void) {
 }
 
 void close_device(void) {
-	cp();
-
 	close(device_fd);
 
 	free(device);
@@ -117,8 +113,6 @@ void close_device(void) {
 
 bool read_packet(vpn_packet_t *packet) {
 	int lenin;
-
-	cp();
 
 	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
 		logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
@@ -153,8 +147,6 @@ bool read_packet(vpn_packet_t *packet) {
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	cp();
-
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
 			   packet->len, device_info);
 
@@ -170,8 +162,6 @@ bool write_packet(vpn_packet_t *packet) {
 }
 
 void dump_device_stats(void) {
-	cp();
-
 	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
 	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
 	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);

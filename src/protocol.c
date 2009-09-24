@@ -69,8 +69,6 @@ bool send_request(connection_t *c, const char *format, ...) {
 	char buffer[MAXBUFSIZE];
 	int len, request;
 
-	cp();
-
 	/* Use vsnprintf instead of vxasprintf: faster, no memory
 	   fragmentation, cleanup is automatic, and there is a limit on the
 	   input buffer anyway */
@@ -107,8 +105,6 @@ bool send_request(connection_t *c, const char *format, ...) {
 void forward_request(connection_t *from) {
 	int request;
 
-	cp();
-
 	ifdebug(PROTOCOL) {
 		sscanf(from->buffer, "%d", &request);
 		ifdebug(META)
@@ -127,8 +123,6 @@ void forward_request(connection_t *from) {
 
 bool receive_request(connection_t *c) {
 	int request;
-
-	cp();
 
 	if(sscanf(c->buffer, "%d", &request) == 1) {
 		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
@@ -179,8 +173,6 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 }
 
 static void free_past_request(past_request_t *r) {
-	cp();
-
 	if(r->request)
 		free(r->request);
 
@@ -188,21 +180,15 @@ static void free_past_request(past_request_t *r) {
 }
 
 void init_requests(void) {
-	cp();
-
 	past_request_tree = avl_alloc_tree((avl_compare_t) past_request_compare, (avl_action_t) free_past_request);
 }
 
 void exit_requests(void) {
-	cp();
-
 	avl_delete_tree(past_request_tree);
 }
 
 bool seen_request(char *request) {
 	past_request_t *new, p = {0};
-
-	cp();
 
 	p.request = request;
 
@@ -222,8 +208,6 @@ void age_past_requests(void) {
 	avl_node_t *node, *next;
 	past_request_t *p;
 	int left = 0, deleted = 0;
-
-	cp();
 
 	for(node = past_request_tree->head; node; node = next) {
 		next = node->next;

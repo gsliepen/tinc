@@ -130,7 +130,6 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 	default:
 		logger(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
 			   a->type);
-		cp_trace();
 		exit(0);
 	}
 
@@ -140,50 +139,36 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 /* Initialising trees */
 
 void init_subnets(void) {
-	cp();
-
 	subnet_tree = avl_alloc_tree((avl_compare_t) subnet_compare, (avl_action_t) free_subnet);
 
 	subnet_cache_flush();
 }
 
 void exit_subnets(void) {
-	cp();
-
 	avl_delete_tree(subnet_tree);
 }
 
 avl_tree_t *new_subnet_tree(void) {
-	cp();
-
 	return avl_alloc_tree((avl_compare_t) subnet_compare, NULL);
 }
 
 void free_subnet_tree(avl_tree_t *subnet_tree) {
-	cp();
-
 	avl_delete_tree(subnet_tree);
 }
 
 /* Allocating and freeing space for subnets */
 
 subnet_t *new_subnet(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(subnet_t));
 }
 
 void free_subnet(subnet_t *subnet) {
-	cp();
-
 	free(subnet);
 }
 
 /* Adding and removing subnets */
 
 void subnet_add(node_t *n, subnet_t *subnet) {
-	cp();
-
 	subnet->owner = n;
 
 	avl_insert(subnet_tree, subnet);
@@ -193,8 +178,6 @@ void subnet_add(node_t *n, subnet_t *subnet) {
 }
 
 void subnet_del(node_t *n, subnet_t *subnet) {
-	cp();
-
 	avl_delete(n->subnet_tree, subnet);
 	avl_delete(subnet_tree, subnet);
 
@@ -207,8 +190,6 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 	int i, l;
 	uint16_t x[8];
 	int weight = 10;
-
-	cp();
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d#%d",
 			  &x[0], &x[1], &x[2], &x[3], &l, &weight) >= 5) {
@@ -285,8 +266,6 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 }
 
 bool net2str(char *netstr, int len, const subnet_t *subnet) {
-	cp();
-
 	if(!netstr || !subnet) {
 		logger(LOG_ERR, _("net2str() was called with netstr=%p, subnet=%p!\n"), netstr, subnet);
 		return false;
@@ -332,7 +311,6 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 			logger(LOG_ERR,
 				   _("net2str() was called with unknown subnet type %d, exiting!"),
 				   subnet->type);
-			cp_trace();
 			exit(0);
 	}
 
@@ -342,15 +320,11 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 /* Subnet lookup routines */
 
 subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
-	cp();
-
 	return avl_search(owner->subnet_tree, subnet);
 }
 
 subnet_t *lookup_subnet_mac(const mac_t *address) {
 	subnet_t *p, subnet = {0};
-
-	cp();
 
 	subnet.type = SUBNET_MAC;
 	subnet.net.mac.address = *address;
@@ -365,8 +339,6 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	subnet_t *p, *r = NULL, subnet = {0};
 	avl_node_t *n;
 	int i;
-
-	cp();
 
 	// Check if this address is cached
 
@@ -411,8 +383,6 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	subnet_t *p, *r = NULL, subnet = {0};
 	avl_node_t *n;
 	int i;
-
-	cp();
 
 	// Check if this address is cached
 
@@ -524,8 +494,6 @@ void dump_subnets(void) {
 	char netstr[MAXNETSTR];
 	subnet_t *subnet;
 	avl_node_t *node;
-
-	cp();
 
 	logger(LOG_DEBUG, _("Subnet list:"));
 

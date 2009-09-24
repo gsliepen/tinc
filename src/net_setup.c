@@ -49,8 +49,6 @@ bool read_rsa_public_key(connection_t *c) {
 	char *fname;
 	char *key;
 
-	cp();
-
 	if(!c->rsa_key) {
 		c->rsa_key = RSA_new();
 //		RSA_blinding_on(c->rsa_key, NULL);
@@ -149,8 +147,6 @@ bool read_rsa_private_key(void) {
 	char *fname, *key, *pubkey;
 	struct stat s;
 
-	cp();
-
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
 			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
@@ -216,8 +212,6 @@ bool setup_myself(void) {
 	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
 	int i, err;
-
-	cp();
 
 	myself = new_node();
 	myself->connection = new_connection();
@@ -504,8 +498,6 @@ bool setup_myself(void) {
   initialize network
 */
 bool setup_network(void) {
-	cp();
-
 	now = time(NULL);
 
 	init_events();
@@ -544,8 +536,6 @@ void close_network_connections(void) {
 	connection_t *c;
 	char *envp[5];
 	int i;
-
-	cp();
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;

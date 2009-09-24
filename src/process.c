@@ -49,7 +49,6 @@ static int saved_debug_level = -1;
 
 static void memory_full(int size) {
 	logger(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
-	cp_trace();
 	exit(1);
 }
 
@@ -241,8 +240,6 @@ bool init_service(void) {
 static bool write_pidfile(void) {
 	pid_t pid;
 
-	cp();
-
 	pid = check_pid(pidfilename);
 
 	if(pid) {
@@ -270,8 +267,6 @@ static bool write_pidfile(void) {
 bool kill_other(int signal) {
 #ifndef HAVE_MINGW
 	pid_t pid;
-
-	cp();
 
 	pid = read_pid(pidfilename);
 
@@ -308,8 +303,6 @@ bool kill_other(int signal) {
   Detach from current terminal, write pidfile, kill parent
 */
 bool detach(void) {
-	cp();
-
 	setup_signals();
 
 	/* First check if we can open a fresh new pidfile */
@@ -358,8 +351,6 @@ bool execute_script(const char *name, char **envp) {
 	int status, len;
 	char *scriptname, *p;
 	int i;
-
-	cp();
 
 #ifndef HAVE_MINGW
 	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
@@ -456,14 +447,12 @@ static RETSIGTYPE sigquit_handler(int a) {
 static RETSIGTYPE fatal_signal_square(int a) {
 	logger(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
 		   strsignal(a));
-	cp_trace();
 	exit(1);
 }
 
 static RETSIGTYPE fatal_signal_handler(int a) {
 	struct sigaction act;
 	logger(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
-	cp_trace();
 
 	if(do_detach) {
 		logger(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
@@ -527,7 +516,6 @@ static RETSIGTYPE sigwinch_handler(int a) {
 
 static RETSIGTYPE unexpected_signal_handler(int a) {
 	logger(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
-	cp_trace();
 }
 
 static RETSIGTYPE ignore_signal_handler(int a) {

@@ -41,14 +41,10 @@ static int event_compare(const event_t *a, const event_t *b) {
 }
 
 void init_events(void) {
-	cp();
-
 	event_tree = avl_alloc_tree((avl_compare_t) event_compare, (avl_action_t) free_event);
 }
 
 void exit_events(void) {
-	cp();
-
 	avl_delete_tree(event_tree);
 }
 
@@ -61,8 +57,6 @@ void expire_events(void) {
 	 * Make all events appear expired by substracting the difference between
          * the expiration time of the last event and the current time.
 	 */
-
-	cp();
 
 	if(!event_tree->tail)
 		return;
@@ -80,34 +74,24 @@ void expire_events(void) {
 }
 
 event_t *new_event(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(event_t));
 }
 
 void free_event(event_t *event) {
-	cp();
-
 	free(event);
 }
 
 void event_add(event_t *event) {
-	cp();
-
 	event->id = ++id;
 	avl_insert(event_tree, event);
 }
 
 void event_del(event_t *event) {
-	cp();
-
 	avl_delete(event_tree, event);
 }
 
 event_t *get_expired_event(void) {
 	event_t *event;
-
-	cp();
 
 	if(event_tree->head) {
 		event = event_tree->head->data;

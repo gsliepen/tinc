@@ -51,48 +51,34 @@ static int edge_weight_compare(const edge_t *a, const edge_t *b) {
 }
 
 void init_edges(void) {
-	cp();
-
 	edge_weight_tree = avl_alloc_tree((avl_compare_t) edge_weight_compare, NULL);
 }
 
 avl_tree_t *new_edge_tree(void) {
-	cp();
-
 	return avl_alloc_tree((avl_compare_t) edge_compare, (avl_action_t) free_edge);
 }
 
 void free_edge_tree(avl_tree_t *edge_tree) {
-	cp();
-
 	avl_delete_tree(edge_tree);
 }
 
 void exit_edges(void) {
-	cp();
-
 	avl_delete_tree(edge_weight_tree);
 }
 
 /* Creation and deletion of connection elements */
 
 edge_t *new_edge(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(edge_t));
 }
 
 void free_edge(edge_t *e) {
-	cp();
-	
 	sockaddrfree(&e->address);
 
 	free(e);
 }
 
 void edge_add(edge_t *e) {
-	cp();
-
 	avl_insert(edge_weight_tree, e);
 	avl_insert(e->from->edge_tree, e);
 
@@ -103,8 +89,6 @@ void edge_add(edge_t *e) {
 }
 
 void edge_del(edge_t *e) {
-	cp();
-
 	if(e->reverse)
 		e->reverse->reverse = NULL;
 
@@ -115,8 +99,6 @@ void edge_del(edge_t *e) {
 edge_t *lookup_edge(node_t *from, node_t *to) {
 	edge_t v;
 	
-	cp();
-
 	v.from = from;
 	v.to = to;
 
@@ -128,8 +110,6 @@ void dump_edges(void) {
 	node_t *n;
 	edge_t *e;
 	char *address;
-
-	cp();
 
 	logger(LOG_DEBUG, _("Edges:"));
 

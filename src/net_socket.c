@@ -175,8 +175,6 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	int option;
 	char *iface;
 
-	cp();
-
 	nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(nfd < 0) {
@@ -236,8 +234,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	int nfd;
 	char *addrstr;
 	int option;
-
-	cp();
 
 	nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -311,8 +307,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 void retry_outgoing(outgoing_t *outgoing) {
 	event_t *event;
 
-	cp();
-
 	outgoing->timeout += 5;
 
 	if(outgoing->timeout > maxtimeout)
@@ -330,8 +324,6 @@ void retry_outgoing(outgoing_t *outgoing) {
 }
 
 void finish_connecting(connection_t *c) {
-	cp();
-
 	ifdebug(CONNECTIONS) logger(LOG_INFO, _("Connected to %s (%s)"), c->name, c->hostname);
 
 	configure_tcp(c);
@@ -344,8 +336,6 @@ void finish_connecting(connection_t *c) {
 void do_outgoing_connection(connection_t *c) {
 	char *address, *port;
 	int result;
-
-	cp();
 
 begin:
 	if(!c->outgoing->ai) {
@@ -440,8 +430,6 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;
 
-	cp();
-
 	n = lookup_node(outgoing->name);
 
 	if(n)
@@ -487,8 +475,6 @@ bool handle_new_meta_connection(int sock) {
 	sockaddr_t sa;
 	int fd;
 	socklen_t len = sizeof(sa);
-
-	cp();
 
 	fd = accept(sock, &sa.sa, &len);
 
@@ -541,8 +527,6 @@ void try_outgoing_connections(void) {
 	connection_t *c;
 	avl_node_t *node;
 	
-	cp();
-
 	if(outgoing_list) {
 		for(node = connection_tree->head; node; node = node->next) {
 			c = node->data;

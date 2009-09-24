@@ -65,8 +65,6 @@ bool setup_device(void) {
 	} name;
 	struct timeval tv;
 
-	cp();
-
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		xasprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
 
@@ -152,8 +150,6 @@ bool setup_device(void) {
 }
 
 void close_device(void) {
-	cp();
-
 	if(listen_fd >= 0)
 		close(listen_fd);
 
@@ -174,8 +170,6 @@ void close_device(void) {
 
 bool read_packet(vpn_packet_t *packet) {
 	int lenin;
-
-	cp();
 
 	switch(state) {
 		case 0: {
@@ -253,8 +247,6 @@ bool read_packet(vpn_packet_t *packet) {
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	cp();
-
 	if(state != 2) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Dropping packet of %d bytes to %s: not connected to UML yet"),
 				packet->len, device_info);
@@ -279,8 +271,6 @@ bool write_packet(vpn_packet_t *packet) {
 }
 
 void dump_device_stats(void) {
-	cp();
-
 	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
 	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
 	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);

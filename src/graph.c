@@ -73,8 +73,6 @@ void mst_kruskal(void) {
 	int safe_edges = 0;
 	bool skipped;
 
-	cp();
-	
 	/* Clear MST status on connections */
 
 	for(node = connection_tree->head; node; node = node->next) {
@@ -158,8 +156,6 @@ void sssp_bfs(void) {
 	char *address, *port;
 	char *envp[7];
 	int i;
-
-	cp();
 
 	todo_list = list_alloc(NULL);
 

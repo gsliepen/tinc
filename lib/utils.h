@@ -21,20 +21,6 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
-#ifdef ENABLE_TRACING
-extern volatile int cp_line[];
-extern volatile char *cp_file[];
-extern volatile int cp_index;
-extern void cp_trace(void);
-
-#define cp() { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 16; }
-#define ecp() { fprintf(stderr, "Explicit checkpoint in %s line %d\n", __FILE__, __LINE__); }
-#else
-#define cp()
-#define ecp()
-#define cp_trace()
-#endif
-
 extern void hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
 

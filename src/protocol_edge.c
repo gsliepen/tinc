@@ -39,8 +39,6 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 	bool x;
 	char *address, *port;
 
-	cp();
-
 	sockaddr2str(&e->address, &address, &port);
 
 	x = send_request(c, "%d %x %s %s %s %s %lx %d", ADD_EDGE, rand(),
@@ -62,8 +60,6 @@ bool add_edge_h(connection_t *c) {
 	sockaddr_t address;
 	long int options;
 	int weight;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
 			  from_name, to_name, to_address, to_port, &options, &weight) != 6) {
@@ -172,8 +168,6 @@ bool add_edge_h(connection_t *c) {
 }
 
 bool send_del_edge(connection_t *c, const edge_t *e) {
-	cp();
-
 	return send_request(c, "%d %x %s %s", DEL_EDGE, rand(),
 						e->from->name, e->to->name);
 }
@@ -183,8 +177,6 @@ bool del_edge_h(connection_t *c) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
-
-	cp();
 
 	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, from_name, to_name) != 2) {
 		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "DEL_EDGE", c->name,
