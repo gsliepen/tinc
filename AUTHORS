@@ -5,6 +5,9 @@ Main tinc authors:
 Significant contributions from:
 - Michael Tokarev <mjt@tls.msk.ru>
 - Florian Forster <octo@verplant.org>
+- Grzegorz Dymarek <gregd72002@googlemail.com>
+- Max Rijevski <maksuf@gmail.com>
+- Scott Lamb <slamb@slamb.org>
 
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from

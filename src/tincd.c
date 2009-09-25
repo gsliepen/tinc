@@ -2,6 +2,7 @@
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
                   2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
 
     This program is free software; you can redistribute it and/or modify

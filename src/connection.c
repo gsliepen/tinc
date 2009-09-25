@@ -2,6 +2,7 @@
     connection.c -- connection list management
     Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
+                  2008      Max Rijevski <maksuf@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

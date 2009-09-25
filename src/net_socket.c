@@ -2,6 +2,7 @@
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
     This program is free software; you can redistribute it and/or modify
