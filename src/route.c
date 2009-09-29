@@ -136,8 +136,7 @@ static void age_subnets(int fd, short events, void *data) {
 		event_add(&age_subnets_event, &(struct timeval){10, 0});
 }
 
-static void learn_mac(mac_t *address)
-{
+static void learn_mac(mac_t *address) {
 	subnet_t *subnet;
 	splay_node_t *node;
 	connection_t *c;

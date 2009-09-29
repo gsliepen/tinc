@@ -39,7 +39,7 @@ bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
 	digest->digest = EVP_get_digestbyname(name);
 
 	if(!digest->digest) {
-		logger(LOG_DEBUG, _("Unknown digest name '%s'!"), name);
+		logger(LOG_DEBUG, "Unknown digest name '%s'!", name);
 		return false;
 	}
 
@@ -51,7 +51,7 @@ bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
 	digest->digest = EVP_get_digestbynid(nid);
 
 	if(!digest->digest) {
-		logger(LOG_DEBUG, _("Unknown digest nid %d!"), nid);
+		logger(LOG_DEBUG, "Unknown digest nid %d!", nid);
 		return false;
 	}
 
@@ -78,7 +78,7 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 	if(!EVP_DigestInit(&ctx, digest->digest)
 			|| !EVP_DigestUpdate(&ctx, indata, inlen)
 			|| !EVP_DigestFinal(&ctx, tmpdata, NULL)) {
-		logger(LOG_DEBUG, _("Error creating digest: %s"), ERR_error_string(ERR_get_error(), NULL));
+		logger(LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 

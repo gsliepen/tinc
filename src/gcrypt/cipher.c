@@ -99,12 +99,12 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	gcry_error_t err;
 
 	if(!ciphertonid(algo, mode, &cipher->nid)) {
-		logger(LOG_DEBUG, _("Cipher %d mode %d has no corresponding nid!"), algo, mode);
+		logger(LOG_DEBUG, "Cipher %d mode %d has no corresponding nid!", algo, mode);
 		return false;
 	}
 
 	if((err = gcry_cipher_open(&cipher->handle, algo, mode, 0))) {
-		logger(LOG_DEBUG, _("Unable to intialise cipher %d mode %d: %s"), algo, mode, gcry_strerror(err));
+		logger(LOG_DEBUG, "Unable to intialise cipher %d mode %d: %s", algo, mode, gcry_strerror(err));
 		return false;
 	}
 
@@ -122,7 +122,7 @@ bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	int algo, mode;
 
 	if(!nametocipher(name, &algo, &mode)) {
-		logger(LOG_DEBUG, _("Unknown cipher name '%s'!"), name);
+		logger(LOG_DEBUG, "Unknown cipher name '%s'!", name);
 		return false;
 	}
 
@@ -133,7 +133,7 @@ bool cipher_open_by_nid(cipher_t *cipher, int nid) {
 	int algo, mode;
 
 	if(!nidtocipher(nid, &algo, &mode)) {
-		logger(LOG_DEBUG, _("Unknown cipher ID %d!"), nid);
+		logger(LOG_DEBUG, "Unknown cipher ID %d!", nid);
 		return false;
 	}
 
@@ -233,7 +233,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	// To be fixed
 
 	if((err = gcry_cipher_encrypt(cipher->handle, outdata, inlen, indata, inlen))) {
-		logger(LOG_ERR, _("Error while encrypting: %s"), gcry_strerror(err));
+		logger(LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
 		return false;
 	}
 
@@ -246,7 +246,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	// To be fixed
 
 	if((err = gcry_cipher_decrypt(cipher->handle, outdata, inlen, indata, inlen))) {
-		logger(LOG_ERR, _("Error while decrypting: %s"), gcry_strerror(err));
+		logger(LOG_ERR, "Error while decrypting: %s", gcry_strerror(err));
 		return false;
 	}
 

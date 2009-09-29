@@ -77,7 +77,7 @@ static bool digesttonid(int algo, int *nid) {
 
 static bool digest_open(digest_t *digest, int algo) {
 	if(!digesttonid(algo, &digest->nid)) {
-		logger(LOG_DEBUG, _("Digest %d has no corresponding nid!"), algo);
+		logger(LOG_DEBUG, "Digest %d has no corresponding nid!", algo);
 		return false;
 	}
 
@@ -90,7 +90,7 @@ bool digest_open_by_name(digest_t *digest, const char *name) {
 	int algo;
 
 	if(!nametodigest(name, &algo)) {
-		logger(LOG_DEBUG, _("Unknown digest name '%s'!"), name);
+		logger(LOG_DEBUG, "Unknown digest name '%s'!", name);
 		return false;
 	}
 
@@ -101,7 +101,7 @@ bool digest_open_by_nid(digest_t *digest, int nid) {
 	int algo;
 
 	if(!nidtodigest(nid, &algo)) {
-		logger(LOG_DEBUG, _("Unknown digest ID %d!"), nid);
+		logger(LOG_DEBUG, "Unknown digest ID %d!", nid);
 		return false;
 	}
 

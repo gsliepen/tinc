@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,11 +60,11 @@ static struct option const long_options[] = {
 
 static void usage(bool status) {
 	if(status)
-		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
+		fprintf(stderr, "Try `%s --help\' for more information.\n",
 				program_name);
 	else {
-		printf(_("Usage: %s [options] command\n\n"), program_name);
-		printf(_("Valid options are:\n"
+		printf("Usage: %s [options] command\n\n", program_name);
+		printf("Valid options are:\n"
 				"  -c, --config=DIR              Read configuration options from DIR.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
 				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
@@ -88,8 +88,8 @@ static void usage(bool status) {
 				"  debug N                    Set debug level\n"
 				"  retry                      Retry all outgoing connections\n"
 				"  reload                     Partial reload of configuration\n"
-				"\n"));
-		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
+				"\n");
+		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
 
@@ -144,12 +144,12 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 	/* Check stdin and stdout */
 	if(isatty(0) && isatty(1)) {
 		/* Ask for a file and/or directory name. */
-		fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
+		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
 				what, filename);
 		fflush(stdout);
 
 		if(fgets(buf, sizeof buf, stdin) < 0) {
-			fprintf(stderr, _("Error while reading stdin: %s\n"),
+			fprintf(stderr, "Error while reading stdin: %s\n",
 					strerror(errno));
 			return NULL;
 		}
@@ -180,7 +180,7 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 	r = fopen(filename, mode);
 
 	if(!r) {
-		fprintf(stderr, _("Error opening file `%s': %s\n"), filename, strerror(errno));
+		fprintf(stderr, "Error opening file `%s': %s\n", filename, strerror(errno));
 		return NULL;
 	}
 
@@ -197,16 +197,16 @@ static bool keygen(int bits) {
 	char *name = NULL;
 	char *filename;
 
-	fprintf(stderr, _("Generating %d bits keys:\n"), bits);
+	fprintf(stderr, "Generating %d bits keys:\n", bits);
 
 	if(!rsa_generate(&key, bits, 0x10001)) {
-		fprintf(stderr, _("Error during key generation!\n"));
+		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
-		fprintf(stderr, _("Done.\n"));
+		fprintf(stderr, "Done.\n");
 
 	xasprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(filename, _("private RSA key"), "a");
+	f = ask_and_open(filename, "private RSA key", "a");
 
 	if(!f)
 		return false;
@@ -217,7 +217,7 @@ static bool keygen(int bits) {
 #endif
 		
 	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
+		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
 
 	rsa_write_pem_private_key(&key, f);
 
@@ -229,13 +229,13 @@ static bool keygen(int bits) {
 	else
 		xasprintf(&filename, "%s/rsa_key.pub", confbase);
 
-	f = ask_and_open(filename, _("public RSA key"), "a");
+	f = ask_and_open(filename, "public RSA key", "a");
 
 	if(!f)
 		return false;
 
 	if(ftell(f))
-		fprintf(stderr, _("Appending key to existing contents.\nMake sure only one key is stored in the file.\n"));
+		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
 
 	rsa_write_pem_public_key(&key, f);
 
@@ -285,7 +285,7 @@ static void make_names(void) {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
-			fprintf(stderr, _("Both netname and configuration directory given, using the latter...\n"));
+			fprintf(stderr, "Both netname and configuration directory given, using the latter...\n");
 	} else {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc");
@@ -371,16 +371,14 @@ static int send_ctl_request(int fd, enum request_type type,
 /*
    Send a request (with printfs)
 */
-static int send_ctl_request_cooked(int fd, enum request_type type,
-								   void const *outdata, size_t outdatalen)
-{
+static int send_ctl_request_cooked(int fd, enum request_type type, void const *outdata, size_t outdatalen) {
 	int res_errno = -1;
 	char *buf = NULL;
 	size_t buflen = 0;
 
 	if(send_ctl_request(fd, type, outdata, outdatalen, &res_errno,
 						(void**) &buf, &buflen)) {
-		fprintf(stderr, _("Error sending request: %s\n"), strerror(errno));
+		fprintf(stderr, "Error sending request: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -390,7 +388,7 @@ static int send_ctl_request_cooked(int fd, enum request_type type,
 	}
 
 	if(res_errno != 0) {
-		fprintf(stderr, _("Server reported error: %s\n"), strerror(res_errno));
+		fprintf(stderr, "Server reported error: %s\n", strerror(res_errno));
 		return -1;
 	}
 
@@ -405,23 +403,19 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	program_name = argv[0];
 
-	setlocale(LC_ALL, "");
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
-
 	if(!parse_options(argc, argv))
 		return 1;
 	
 	make_names();
 
 	if(show_version) {
-		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
+		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2007 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
-				"see the file COPYING for details.\n"));
+				"see the file COPYING for details.\n");
 
 		return 0;
 	}
@@ -432,7 +426,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	if(optind >= argc) {
-		fprintf(stderr, _("Not enough arguments.\n"));
+		fprintf(stderr, "Not enough arguments.\n");
 		usage(true);
 		return 1;
 	}
@@ -446,7 +440,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	if(!strcasecmp(argv[optind], "start")) {
 		argv[optind] = NULL;
 		execve(SBINDIR "/tincd", argv, envp);
-		fprintf(stderr, _("Could not start tincd: %s"), strerror(errno));
+		fprintf(stderr, "Could not start tincd: %s", strerror(errno));
 		return 1;
 	}
 
@@ -468,23 +462,23 @@ int main(int argc, char *argv[], char *envp[]) {
 		result = stat(".", &statbuf);
 
 	if(result < 0) {
-		fprintf(stderr, _("Unable to check control socket directory permissions: %s\n"), strerror(errno));
+		fprintf(stderr, "Unable to check control socket directory permissions: %s\n", strerror(errno));
 		return 1;
 	}
 
 	if(statbuf.st_uid != 0 || (statbuf.st_mode & S_IXOTH) != 0 || (statbuf.st_gid != 0 && (statbuf.st_mode & S_IXGRP)) != 0) {
-		fprintf(stderr, _("Insecure permissions on control socket directory\n"));
+		fprintf(stderr, "Insecure permissions on control socket directory\n");
 		return 1;
 	}
 
 	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
-		fprintf(stderr, _("Control socket filename too long!\n"));
+		fprintf(stderr, "Control socket filename too long!\n");
 		return 1;
 	}
 
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if(fd < 0) {
-		fprintf(stderr, _("Cannot create UNIX socket: %s\n"), strerror(errno));
+		fprintf(stderr, "Cannot create UNIX socket: %s\n", strerror(errno));
 		return 1;
 	}
 
@@ -493,18 +487,18 @@ int main(int argc, char *argv[], char *envp[]) {
 	strncpy(addr.sun_path, controlsocketname, sizeof addr.sun_path - 1);
 
 	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
-		fprintf(stderr, _("Cannot connect to %s: %s\n"), controlsocketname, strerror(errno));
+		fprintf(stderr, "Cannot connect to %s: %s\n", controlsocketname, strerror(errno));
 		return 1;
 	}
 
 	if(fullread(fd, &greeting, sizeof greeting) == -1) {
-		fprintf(stderr, _("Cannot read greeting from control socket: %s\n"),
+		fprintf(stderr, "Cannot read greeting from control socket: %s\n",
 				strerror(errno));
 		return 1;
 	}
 
 	if(greeting.version != TINC_CTL_VERSION_CURRENT) {
-		fprintf(stderr, _("Version mismatch: server %d, client %d\n"),
+		fprintf(stderr, "Version mismatch: server %d, client %d\n",
 				greeting.version, TINC_CTL_VERSION_CURRENT);
 		return 1;
 	}
@@ -528,7 +522,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	if(!strcasecmp(argv[optind], "dump")) {
 		if(argc < optind + 2) {
-			fprintf(stderr, _("Not enough arguments.\n"));
+			fprintf(stderr, "Not enough arguments.\n");
 			usage(true);
 			return 1;
 		}
@@ -553,7 +547,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			return send_ctl_request_cooked(fd, REQ_DUMP_GRAPH, NULL, 0) != -1;
 		}
 
-		fprintf(stderr, _("Unknown dump type '%s'.\n"), argv[optind+1]);
+		fprintf(stderr, "Unknown dump type '%s'.\n", argv[optind+1]);
 		usage(true);
 		return 1;
 	}
@@ -582,7 +576,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		return send_ctl_request_cooked(fd, REQ_RELOAD, NULL, 0) != -1;
 	}
 
-	fprintf(stderr, _("Unknown command `%s'.\n"), argv[optind]);
+	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);
 	usage(true);
 	
 	close(fd);

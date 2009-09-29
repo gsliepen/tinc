@@ -64,43 +64,43 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	}
 
 	if(req.type == REQ_STOP) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "stop");
+		logger(LOG_NOTICE, "Got '%s' command", "stop");
 		event_loopexit(NULL);
 		goto respond;
 	}
 
 	if(req.type == REQ_DUMP_NODES) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "dump nodes");
+		logger(LOG_NOTICE, "Got '%s' command", "dump nodes");
 		res.res_errno = dump_nodes(res_data);
 		goto respond;
 	}
 
 	if(req.type == REQ_DUMP_EDGES) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "dump edges");
+		logger(LOG_NOTICE, "Got '%s' command", "dump edges");
 		res.res_errno = dump_edges(res_data);
 		goto respond;
 	}
 
 	if(req.type == REQ_DUMP_SUBNETS) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "dump subnets");
+		logger(LOG_NOTICE, "Got '%s' command", "dump subnets");
 		res.res_errno = dump_subnets(res_data);
 		goto respond;
 	}
 
 	if(req.type == REQ_DUMP_CONNECTIONS) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "dump connections");
+		logger(LOG_NOTICE, "Got '%s' command", "dump connections");
 		res.res_errno = dump_connections(res_data);
 		goto respond;
 	}
 
 	if(req.type == REQ_DUMP_GRAPH) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "dump graph");
+		logger(LOG_NOTICE, "Got '%s' command", "dump graph");
 		res.res_errno = dump_graph(res_data);
 		goto respond;
 	}
 
 	if(req.type == REQ_PURGE) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "purge");
+		logger(LOG_NOTICE, "Got '%s' command", "purge");
 		purge();
 		goto respond;
 	}
@@ -108,15 +108,15 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	if(req.type == REQ_SET_DEBUG) {
 		debug_t new_debug_level;
 
-		logger(LOG_NOTICE, _("Got '%s' command"), "debug");
+		logger(LOG_NOTICE, "Got '%s' command", "debug");
 		if(req.length != sizeof req + sizeof debug_level)
 			res.res_errno = EINVAL;
 		else {
 			memcpy(&new_debug_level, req_data, sizeof new_debug_level);
-			logger(LOG_NOTICE, _("Changing debug level from %d to %d"),
+			logger(LOG_NOTICE, "Changing debug level from %d to %d",
 				   debug_level, new_debug_level);
 			if(evbuffer_add_printf(res_data,
-								   _("Changing debug level from %d to %d\n"),
+								   "Changing debug level from %d to %d\n",
 								   debug_level, new_debug_level) == -1)
 				res.res_errno = errno;
 			debug_level = new_debug_level;
@@ -125,18 +125,18 @@ static void handle_control_data(struct bufferevent *event, void *data) {
 	}
 
 	if(req.type == REQ_RETRY) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "retry");
+		logger(LOG_NOTICE, "Got '%s' command", "retry");
 		retry();
 		goto respond;
 	}
 
 	if(req.type == REQ_RELOAD) {
-		logger(LOG_NOTICE, _("Got '%s' command"), "reload");
+		logger(LOG_NOTICE, "Got '%s' command", "reload");
 		res.res_errno = reload_configuration();
 		goto respond;
 	}
 
-	logger(LOG_DEBUG, _("Malformed control command received"));
+	logger(LOG_DEBUG, "Malformed control command received");
 	res.res_errno = EINVAL;
 
 respond:
@@ -153,7 +153,7 @@ respond:
 	return;
 
 failure:
-	logger(LOG_INFO, _("Closing control socket on error"));
+	logger(LOG_INFO, "Closing control socket on error");
 	evbuffer_free(res_data);
 	close(event->ev_read.ev_fd);
 	splay_delete(control_socket_tree, event);
@@ -161,9 +161,9 @@ failure:
 
 static void handle_control_error(struct bufferevent *event, short what, void *data) {
 	if(what & EVBUFFER_EOF)
-		logger(LOG_DEBUG, _("Control socket connection closed by peer"));
+		logger(LOG_DEBUG, "Control socket connection closed by peer");
 	else
-		logger(LOG_DEBUG, _("Error while reading from control socket: %s"), strerror(errno));
+		logger(LOG_DEBUG, "Error while reading from control socket: %s", strerror(errno));
 
 	close(event->ev_read.ev_fd);
 	splay_delete(control_socket_tree, event);
@@ -177,14 +177,14 @@ static void handle_new_control_socket(int fd, short events, void *data) {
 	newfd = accept(fd, NULL, NULL);
 
 	if(newfd < 0) {
-		logger(LOG_ERR, _("Accepting a new connection failed: %s"), strerror(errno));
+		logger(LOG_ERR, "Accepting a new connection failed: %s", strerror(errno));
 		event_del(&control_event);
 		return;
 	}
 
 	ev = bufferevent_new(newfd, handle_control_data, NULL, handle_control_error, NULL);
 	if(!ev) {
-		logger(LOG_ERR, _("Could not create bufferevent for new control connection: %s"), strerror(errno));
+		logger(LOG_ERR, "Could not create bufferevent for new control connection: %s", strerror(errno));
 		close(newfd);
 		return;
 	}
@@ -194,7 +194,7 @@ static void handle_new_control_socket(int fd, short events, void *data) {
 	greeting.pid = getpid();
 	if(bufferevent_write(ev, &greeting, sizeof greeting) == -1) {
 		logger(LOG_ERR,
-			   _("Cannot send greeting for new control connection: %s"),
+			   "Cannot send greeting for new control connection: %s",
 			   strerror(errno));
 		bufferevent_free(ev);
 		close(newfd);
@@ -204,7 +204,7 @@ static void handle_new_control_socket(int fd, short events, void *data) {
 	bufferevent_enable(ev, EV_READ);
 	splay_insert(control_socket_tree, ev);
 
-	logger(LOG_DEBUG, _("Control socket connection accepted"));
+	logger(LOG_DEBUG, "Control socket connection accepted");
 }
 
 static int control_compare(const struct event *a, const struct event *b) {
@@ -217,7 +217,7 @@ bool init_control() {
 	char *lastslash;
 
 	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
-		logger(LOG_ERR, _("Control socket filename too long!"));
+		logger(LOG_ERR, "Control socket filename too long!");
 		goto bail;
 	}
 
@@ -228,7 +228,7 @@ bool init_control() {
 	control_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 
 	if(control_socket < 0) {
-		logger(LOG_ERR, _("Creating UNIX socket failed: %s"), strerror(errno));
+		logger(LOG_ERR, "Creating UNIX socket failed: %s", strerror(errno));
 		goto bail;
 	}
 
@@ -244,7 +244,7 @@ bool init_control() {
 	if(lastslash != NULL) {
 		*lastslash = 0; /* temporarily change controlsocketname to be dir */
 		if(mkdir(controlsocketname, 0700) < 0 && errno != EEXIST) {
-			logger(LOG_ERR, _("Unable to create control socket directory %s: %s"), controlsocketname, strerror(errno));
+			logger(LOG_ERR, "Unable to create control socket directory %s: %s", controlsocketname, strerror(errno));
 			*lastslash = '/';
 			goto bail;
 		}
@@ -255,12 +255,12 @@ bool init_control() {
 		result = stat(".", &statbuf);
 
 	if(result < 0) {
-		logger(LOG_ERR, _("Examining control socket directory failed: %s"), strerror(errno));
+		logger(LOG_ERR, "Examining control socket directory failed: %s", strerror(errno));
 		goto bail;
 	}
 
 	if(statbuf.st_uid != 0 || (statbuf.st_mode & S_IXOTH) != 0 || (statbuf.st_gid != 0 && (statbuf.st_mode & S_IXGRP)) != 0) {
-		logger(LOG_ERR, _("Control socket directory ownership/permissions insecure."));
+		logger(LOG_ERR, "Control socket directory ownership/permissions insecure.");
 		goto bail;
 	}
 
@@ -269,25 +269,25 @@ bool init_control() {
 	if(result < 0 && errno == EADDRINUSE) {
 		result = connect(control_socket, (struct sockaddr *)&addr, sizeof addr);
 		if(result < 0) {
-			logger(LOG_WARNING, _("Removing old control socket."));
+			logger(LOG_WARNING, "Removing old control socket.");
 			unlink(controlsocketname);
 			result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
 		} else {
 			if(netname)
-				logger(LOG_ERR, _("Another tincd is already running for net `%s'."), netname);
+				logger(LOG_ERR, "Another tincd is already running for net `%s'.", netname);
 			else
-				logger(LOG_ERR, _("Another tincd is already running."));
+				logger(LOG_ERR, "Another tincd is already running.");
 			goto bail;
 		}
 	}
 
 	if(result < 0) {
-		logger(LOG_ERR, _("Can't bind to %s: %s"), controlsocketname, strerror(errno));
+		logger(LOG_ERR, "Can't bind to %s: %s", controlsocketname, strerror(errno));
 		goto bail;
 	}
 
 	if(listen(control_socket, 3) < 0) {
-		logger(LOG_ERR, _("Can't listen on %s: %s"), controlsocketname, strerror(errno));
+		logger(LOG_ERR, "Can't listen on %s: %s", controlsocketname, strerror(errno));
 		goto bail;
 	}
 

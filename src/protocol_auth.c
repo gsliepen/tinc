@@ -297,7 +297,7 @@ bool chal_reply_h(connection_t *c, char *request) {
 	/* Check if the length of the hash is all right */
 
 	if(strlen(hishash) != digest_length(&c->outdigest) * 2) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, _("wrong challenge reply length"));
+		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
 
@@ -308,7 +308,7 @@ bool chal_reply_h(connection_t *c, char *request) {
 	/* Verify the hash */
 
 	if(!digest_verify(&c->outdigest, c->hischallenge, rsa_size(&c->rsa), hishash)) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, _("wrong challenge reply"));
+		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}
 
