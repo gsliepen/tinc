@@ -1,7 +1,8 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2007 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
+                  2008      Max Rijevski <maksuf@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -41,30 +40,22 @@ static int connection_compare(const connection_t *a, const connection_t *b) {
 }
 
 void init_connections(void) {
-	cp();
-
 	connection_tree = splay_alloc_tree((splay_compare_t) connection_compare, (splay_action_t) free_connection);
 	broadcast = new_connection();
-	broadcast->name = xstrdup(_("everyone"));
-	broadcast->hostname = xstrdup(_("BROADCAST"));
+	broadcast->name = xstrdup("everyone");
+	broadcast->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
-	cp();
-
 	splay_delete_tree(connection_tree);
 	free_connection(broadcast);
 }
 
 connection_t *new_connection(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(connection_t));
 }
 
 void free_connection(connection_t *c) {
-	cp();
-
 	if(!c)
 		return;
 
@@ -93,14 +84,10 @@ void free_connection(connection_t *c) {
 }
 
 void connection_add(connection_t *c) {
-	cp();
-
 	splay_insert(connection_tree, c);
 }
 
 void connection_del(connection_t *c) {
-	cp();
-
 	splay_delete(connection_tree, c);
 }
 
@@ -108,12 +95,10 @@ int dump_connections(struct evbuffer *out) {
 	splay_node_t *node;
 	connection_t *c;
 
-	cp();
-
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		if(evbuffer_add_printf(out,
-				   _(" %s at %s options %lx socket %d status %04x\n"),
+				   " %s at %s options %lx socket %d status %04x\n",
 				   c->name, c->hostname, c->options, c->socket,
 				   bitfield_to_int(&c->status, sizeof c->status)) == -1)
 			return errno;
@@ -125,8 +110,6 @@ int dump_connections(struct evbuffer *out) {
 bool read_connection_config(connection_t *c) {
 	char *fname;
 	int x;
-
-	cp();
 
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);

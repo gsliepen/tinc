@@ -4,6 +4,39 @@ Version 1.1-cvs              Work in progress
 
  * Use splay trees instead of AVL trees.
 
+Version 1.0.10               not yet released
+
+ * Fixed potential crashes during shutdown and (in rare conditions) when other
+   nodes disconnected from the VPN.
+
+ * Improved NAT handling: tinc now copes with mangled port numbers, and will
+   automatically fall back to TCP if direct UDP connection between nodes is not
+   possible.
+
+ * Allow configuration files with CRLF line endings to be read on UNIX.
+
+ * Disable old RSA keys when generating new ones.
+
+ * Many fixes in the path MTU discovery code.
+
+ * Tinc can now drop privileges and/or chroot itself.
+
+ * The TunnelServer code now just ignores information from clients instead of
+   disconnecting them.
+
+ * Improved performance on Windows by using the new ProcessPriority option and
+   by making the handling of packets received from the TAP-Win32 adapter more
+   efficient.
+
+ * Code cleanups: tinc now follows the C99 standard, copyright headers have
+   been updated to include patch authors, checkpoint tracing and localisation
+   features have been removed.
+
+ * Support for (jailbroken) iPhone and iPod Touch has been added.
+
+ Thanks to Florian Forster, Grzegorz Dymarek and especially Michael Tokarev for
+ their contributions to this version of tinc.
+
 Version 1.0.9                Dec 26 2008
 
  * Fixed tinc as a service under Windows 2003.
@@ -21,11 +54,15 @@ Version 1.0.9                Dec 26 2008
 
  * Fixed a memory leak that occured when connections were closed.
 
+ Thanks to Max Rijevski for his contributions to this version of tinc.
+
 Version 1.0.8                May 16 2007
 
  * Fixed some memory and resource leaks.
 
  * Made network sockets non-blocking under Windows.
+
+ Thanks to Scott Lamb and "dnk" for their contributions to this version of tinc.
 
 Version 1.0.7                Jan  5 2007
 
@@ -53,6 +90,8 @@ version 1.0.5                Nov 14 2006
  * Optionally dump graph in graphviz format to a file or a script.
 
  * Support LZO 2.0 and later.
+
+ Thanks to Scott Lamb for his contributions to this version of tinc.
 
 version 1.0.4                May  4 2005
 

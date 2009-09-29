@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -37,8 +35,6 @@
 static bool mykeyused = false;
 
 bool send_key_changed() {
-	cp();
-
 	/* Only send this message if some other daemon requested our key previously.
 	   This reduces unnecessary key_changed broadcasts.
 	 */
@@ -53,10 +49,8 @@ bool key_changed_h(connection_t *c, char *request) {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
 
-	cp();
-
 	if(sscanf(request, "%*d %*x " MAX_STRING, name) != 1) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "KEY_CHANGED",
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "KEY_CHANGED",
 			   c->name, c->hostname);
 		return false;
 	}
@@ -67,7 +61,7 @@ bool key_changed_h(connection_t *c, char *request) {
 	n = lookup_node(name);
 
 	if(!n) {
-		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist"),
+		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
 			   "KEY_CHANGED", c->name, c->hostname, name);
 		return false;
 	}
@@ -84,8 +78,6 @@ bool key_changed_h(connection_t *c, char *request) {
 }
 
 bool send_req_key(node_t *to) {
-	cp();
-
 	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
 }
 
@@ -94,10 +86,8 @@ bool req_key_h(connection_t *c, char *request) {
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
 
-	cp();
-
 	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "REQ_KEY", c->name,
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -105,7 +95,7 @@ bool req_key_h(connection_t *c, char *request) {
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, from_name);
 		return false;
 	}
@@ -113,7 +103,7 @@ bool req_key_h(connection_t *c, char *request) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, to_name);
 		return false;
 	}
@@ -128,7 +118,7 @@ bool req_key_h(connection_t *c, char *request) {
 			return false;
 
 		if(!to->status.reachable) {
-			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"REQ_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
@@ -142,8 +132,6 @@ bool req_key_h(connection_t *c, char *request) {
 bool send_ans_key(node_t *to) {
 	size_t keylen = cipher_keylength(&myself->incipher);
 	char key[keylen * 2 + 1];
-
-	cp();
 
 	cipher_open_by_nid(&to->incipher, cipher_get_nid(&myself->incipher));
 	digest_open_by_nid(&to->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
@@ -175,12 +163,10 @@ bool ans_key_h(connection_t *c, char *request) {
 	int cipher, digest, maclength, compression;
 	node_t *from, *to;
 
-	cp();
-
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression) != 7) {
-		logger(LOG_ERR, _("Got bad %s from %s (%s)"), "ANS_KEY", c->name,
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -188,7 +174,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(LOG_ERR, _("Got %s from %s (%s) origin %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, from_name);
 		return false;
 	}
@@ -196,7 +182,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(LOG_ERR, _("Got %s from %s (%s) destination %s which does not exist in our connection list"),
+		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, to_name);
 		return false;
 	}
@@ -208,7 +194,7 @@ bool ans_key_h(connection_t *c, char *request) {
 			return false;
 
 		if(!to->status.reachable) {
-			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				   "ANS_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
@@ -219,27 +205,27 @@ bool ans_key_h(connection_t *c, char *request) {
 	/* Check and lookup cipher and digest algorithms */
 
 	if(!cipher_open_by_nid(&from->outcipher, cipher)) {
-		logger(LOG_ERR, _("Node %s (%s) uses unknown cipher!"), from->name, from->hostname);
+		logger(LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
 		return false;
 	}
 
 	if(strlen(key) / 2 != cipher_keylength(&from->outcipher)) {
-		logger(LOG_ERR, _("Node %s (%s) uses wrong keylength!"), from->name, from->hostname);
+		logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
 		return false;
 	}
 
 	if(!digest_open_by_nid(&from->outdigest, digest, maclength)) {
-		logger(LOG_ERR, _("Node %s (%s) uses unknown digest!"), from->name, from->hostname);
+		logger(LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
 		return false;
 	}
 
 	if(maclength != digest_length(&from->outdigest)) {
-		logger(LOG_ERR, _("Node %s (%s) uses bogus MAC length!"), from->name, from->hostname);
+		logger(LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
 		return false;
 	}
 
 	if(compression < 0 || compression > 11) {
-		logger(LOG_ERR, _("Node %s (%s) uses bogus compression level!"), from->name, from->hostname);
+		logger(LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
 		return false;
 	}
 	

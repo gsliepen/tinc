@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -45,8 +43,7 @@ extern bool use_logfile;
 sigset_t emptysigset;
 
 static void memory_full(int size) {
-	logger(LOG_ERR, _("Memory exhausted (couldn't allocate %d bytes), exitting."), size);
-	cp_trace();
+	logger(LOG_ERR, "Memory exhausted (couldn't allocate %d bytes), exitting.", size);
 	exit(1);
 }
 
@@ -70,7 +67,7 @@ bool install_service(void) {
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!manager) {
-		logger(LOG_ERR, _("Could not open service manager: %s"), winerror(GetLastError()));
+		logger(LOG_ERR, "Could not open service manager: %s", winerror(GetLastError()));
 		return false;
 	}
 
@@ -101,18 +98,18 @@ bool install_service(void) {
 			command, NULL, NULL, NULL, NULL, NULL);
 	
 	if(!service) {
-		logger(LOG_ERR, _("Could not create %s service: %s"), identname, winerror(GetLastError()));
+		logger(LOG_ERR, "Could not create %s service: %s", identname, winerror(GetLastError()));
 		return false;
 	}
 
 	ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
 
-	logger(LOG_INFO, _("%s service installed"), identname);
+	logger(LOG_INFO, "%s service installed", identname);
 
 	if(!StartService(service, 0, NULL))
-		logger(LOG_WARNING, _("Could not start %s service: %s"), identname, winerror(GetLastError()));
+		logger(LOG_WARNING, "Could not start %s service: %s", identname, winerror(GetLastError()));
 	else
-		logger(LOG_INFO, _("%s service started"), identname);
+		logger(LOG_INFO, "%s service started", identname);
 
 	return true;
 }
@@ -120,28 +117,28 @@ bool install_service(void) {
 bool remove_service(void) {
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!manager) {
-		logger(LOG_ERR, _("Could not open service manager: %s"), winerror(GetLastError()));
+		logger(LOG_ERR, "Could not open service manager: %s", winerror(GetLastError()));
 		return false;
 	}
 
 	service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
 
 	if(!service) {
-		logger(LOG_ERR, _("Could not open %s service: %s"), identname, winerror(GetLastError()));
+		logger(LOG_ERR, "Could not open %s service: %s", identname, winerror(GetLastError()));
 		return false;
 	}
 
 	if(!ControlService(service, SERVICE_CONTROL_STOP, &status))
-		logger(LOG_ERR, _("Could not stop %s service: %s"), identname, winerror(GetLastError()));
+		logger(LOG_ERR, "Could not stop %s service: %s", identname, winerror(GetLastError()));
 	else
-		logger(LOG_INFO, _("%s service stopped"), identname);
+		logger(LOG_INFO, "%s service stopped", identname);
 
 	if(!DeleteService(service)) {
-		logger(LOG_ERR, _("Could not remove %s service: %s"), identname, winerror(GetLastError()));
+		logger(LOG_ERR, "Could not remove %s service: %s", identname, winerror(GetLastError()));
 		return false;
 	}
 
-	logger(LOG_INFO, _("%s service removed"), identname);
+	logger(LOG_INFO, "%s service removed", identname);
 
 	return true;
 }
@@ -152,13 +149,13 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			SetServiceStatus(statushandle, &status);
 			return NO_ERROR;
 		case SERVICE_CONTROL_STOP:
-			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_STOP");
+			logger(LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_STOP");
 			break;
 		case SERVICE_CONTROL_SHUTDOWN:
-			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_SHUTDOWN");
+			logger(LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_SHUTDOWN");
 			break;
 		default:
-			logger(LOG_WARNING, _("Got unexpected request %d"), request);
+			logger(LOG_WARNING, "Got unexpected request %d", request);
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
@@ -183,7 +180,7 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 	statushandle = RegisterServiceCtrlHandlerEx(identname, controlhandler, NULL); 
 
 	if (!statushandle) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
+		logger(LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
 		err = 1;
 	} else {
 		status.dwWaitHint = 30000; 
@@ -216,7 +213,7 @@ bool init_service(void) {
 			return false;
 		}
 		else
-			logger(LOG_ERR, _("System call `%s' failed: %s"), "StartServiceCtrlDispatcher", winerror(GetLastError()));
+			logger(LOG_ERR, "System call `%s' failed: %s", "StartServiceCtrlDispatcher", winerror(GetLastError()));
 	}
 
 	return true;
@@ -227,8 +224,6 @@ bool init_service(void) {
   Detach from current terminal
 */
 bool detach(void) {
-	cp();
-
 	setup_signals();
 
 #ifndef HAVE_MINGW
@@ -238,7 +233,7 @@ bool detach(void) {
 	if(do_detach) {
 #ifndef HAVE_MINGW
 		if(daemon(0, 0)) {
-			fprintf(stderr, _("Couldn't detach from terminal: %s"),
+			fprintf(stderr, "Couldn't detach from terminal: %s",
 					strerror(errno));
 			return false;
 		}
@@ -250,7 +245,7 @@ bool detach(void) {
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
-	logger(LOG_NOTICE, _("tincd %s (%s %s) starting, debug level %d"),
+	logger(LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
 			   VERSION, __DATE__, __TIME__, debug_level);
 
 	xalloc_fail_func = memory_full;
@@ -263,8 +258,6 @@ bool execute_script(const char *name, char **envp) {
 	int status, len;
 	char *scriptname, *p;
 	int i;
-
-	cp();
 
 #ifndef HAVE_MINGW
 	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
@@ -285,7 +278,7 @@ bool execute_script(const char *name, char **envp) {
 	}
 #endif
 
-	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
+	ifdebug(STATUS) logger(LOG_INFO, "Executing script %s", name);
 
 #ifdef HAVE_PUTENV
 	/* Set environment */
@@ -315,20 +308,20 @@ bool execute_script(const char *name, char **envp) {
 	if(status != -1) {
 		if(WIFEXITED(status)) {	/* Child exited by itself */
 			if(WEXITSTATUS(status)) {
-				logger(LOG_ERR, _("Script %s exited with non-zero status %d"),
+				logger(LOG_ERR, "Script %s exited with non-zero status %d",
 					   name, WEXITSTATUS(status));
 				return false;
 			}
 		} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
-			logger(LOG_ERR, _("Script %s was killed by signal %d (%s)"),
+			logger(LOG_ERR, "Script %s was killed by signal %d (%s)",
 				   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 			return false;
 		} else {			/* Something strange happened */
-			logger(LOG_ERR, _("Script %s terminated abnormally"), name);
+			logger(LOG_ERR, "Script %s terminated abnormally", name);
 			return false;
 		}
 	} else {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "system", strerror(errno));
+		logger(LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
 		return false;
 	}
 #endif
@@ -343,19 +336,17 @@ bool execute_script(const char *name, char **envp) {
 
 #ifndef HAVE_MINGW
 static RETSIGTYPE fatal_signal_square(int a) {
-	logger(LOG_ERR, _("Got another fatal signal %d (%s): not restarting."), a,
+	logger(LOG_ERR, "Got another fatal signal %d (%s): not restarting.", a,
 		   strsignal(a));
-	cp_trace();
 	exit(1);
 }
 
 static RETSIGTYPE fatal_signal_handler(int a) {
 	struct sigaction act;
-	logger(LOG_ERR, _("Got fatal signal %d (%s)"), a, strsignal(a));
-	cp_trace();
+	logger(LOG_ERR, "Got fatal signal %d (%s)", a, strsignal(a));
 
 	if(do_detach) {
-		logger(LOG_NOTICE, _("Trying to re-execute in 5 seconds..."));
+		logger(LOG_NOTICE, "Trying to re-execute in 5 seconds...");
 
 		act.sa_handler = fatal_signal_square;
 		act.sa_mask = emptysigset;
@@ -367,18 +358,17 @@ static RETSIGTYPE fatal_signal_handler(int a) {
 		exit_control();
 		execvp(g_argv[0], g_argv);
 	} else {
-		logger(LOG_NOTICE, _("Not restarting."));
+		logger(LOG_NOTICE, "Not restarting.");
 		exit(1);
 	}
 }
 
 static RETSIGTYPE unexpected_signal_handler(int a) {
-	logger(LOG_WARNING, _("Got unexpected signal %d (%s)"), a, strsignal(a));
-	cp_trace();
+	logger(LOG_WARNING, "Got unexpected signal %d (%s)", a, strsignal(a));
 }
 
 static RETSIGTYPE ignore_signal_handler(int a) {
-	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Ignored signal %d (%s)"), a, strsignal(a));
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Ignored signal %d (%s)", a, strsignal(a));
 }
 
 static struct {
@@ -423,7 +413,7 @@ void setup_signals(void) {
 	for(i = 0; sighandlers[i].signal; i++) {
 		act.sa_handler = sighandlers[i].handler;
 		if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
-			fprintf(stderr, _("Installing signal handler for signal %d (%s) failed: %s\n"),
+			fprintf(stderr, "Installing signal handler for signal %d (%s) failed: %s\n",
 					sighandlers[i].signal, strsignal(sighandlers[i].signal),
 					strerror(errno));
 	}

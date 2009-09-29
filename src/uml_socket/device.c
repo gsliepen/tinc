@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: device.c 1374 2004-03-21 14:21:22Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -67,17 +65,15 @@ bool setup_device(void) {
 	} name;
 	struct timeval tv;
 
-	cp();
-
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		xasprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
-	device_info = _("UML network socket");
+	device_info = "UML network socket";
 
 	if((write_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
-		logger(LOG_ERR, _("Could not open write %s: %s"), device_info, strerror(errno));
+		logger(LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));
 		running = false;
 		return false;
 	}
@@ -85,13 +81,13 @@ bool setup_device(void) {
 	setsockopt(write_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(write_fd, F_SETFL, O_NONBLOCK) < 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl", strerror(errno));
+		logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 		running = false;
 		return false;
 	}
 
 	if((data_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
-		logger(LOG_ERR, _("Could not open data %s: %s"), device_info, strerror(errno));
+		logger(LOG_ERR, "Could not open data %s: %s", device_info, strerror(errno));
 		running = false;
 		return false;
 	}
@@ -99,7 +95,7 @@ bool setup_device(void) {
 	setsockopt(data_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(data_fd, F_SETFL, O_NONBLOCK) < 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl", strerror(errno));
+		logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 		running = false;
 		return false;
 	}
@@ -112,13 +108,13 @@ bool setup_device(void) {
 	memcpy(&data_sun.sun_path, &name, sizeof name);
 	
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof data_sun) < 0) {
-		logger(LOG_ERR, _("Could not bind data %s: %s"), device_info, strerror(errno));
+		logger(LOG_ERR, "Could not bind data %s: %s", device_info, strerror(errno));
 		running = false;
 		return false;
 	}
 
 	if((listen_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-		logger(LOG_ERR, _("Could not open %s: %s"), device_info,
+		logger(LOG_ERR, "Could not open %s: %s", device_info,
 			   strerror(errno));
 		return false;
 	}
@@ -126,26 +122,26 @@ bool setup_device(void) {
 	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl", strerror(errno));
+		logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 		return false;
 	}
 
 	listen_sun.sun_family = AF_UNIX;
 	strncpy(listen_sun.sun_path, device, sizeof listen_sun.sun_path);
 	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof listen_sun) < 0) {
-		logger(LOG_ERR, _("Could not bind %s to %s: %s"), device_info, device, strerror(errno));
+		logger(LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
 		return false;
 	}
 
 	if(listen(listen_fd, 1) < 0) {
-		logger(LOG_ERR, _("Could not listen on %s %s: %s"), device_info, device, strerror(errno));
+		logger(LOG_ERR, "Could not listen on %s %s: %s", device_info, device, strerror(errno));
 		return false;
 	}
 
 	device_fd = listen_fd;
 	state = 0;
 
-	logger(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	if(routing_mode == RMODE_ROUTER)
 		overwrite_mac = true;
@@ -154,8 +150,6 @@ bool setup_device(void) {
 }
 
 void close_device(void) {
-	cp();
-
 	if(listen_fd >= 0)
 		close(listen_fd);
 
@@ -177,8 +171,6 @@ void close_device(void) {
 bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
-	cp();
-
 	switch(state) {
 		case 0: {
 			struct sockaddr sa;
@@ -186,12 +178,12 @@ bool read_packet(vpn_packet_t *packet) {
 
 			request_fd = accept(listen_fd, &sa, &salen);
 			if(request_fd < 0) {
-				logger(LOG_ERR, _("Could not accept connection to %s %s: %s"), device_info, device, strerror(errno));
+				logger(LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
 
 			if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
-				logger(LOG_ERR, _("System call `%s' failed: %s"), "fcntl", strerror(errno));
+				logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 				running = false;
 				return false;
 			}
@@ -206,21 +198,21 @@ bool read_packet(vpn_packet_t *packet) {
 
 		case 1: {
 			if((inlen = read(request_fd, &request, sizeof request)) != sizeof request) {
-				logger(LOG_ERR, _("Error while reading request from %s %s: %s"), device_info,
+				logger(LOG_ERR, "Error while reading request from %s %s: %s", device_info,
 					   device, strerror(errno));
 				running = false;
 				return false;
 			}
 
 			if(request.magic != 0xfeedface || request.version != 3 || request.type != REQ_NEW_CONTROL) {
-				logger(LOG_ERR, _("Unknown magic %x, version %d, request type %d from %s %s"),
+				logger(LOG_ERR, "Unknown magic %x, version %d, request type %d from %s %s",
 						request.magic, request.version, request.type, device_info, device);
 				running = false;
 				return false;
 			}
 
 			if(connect(write_fd, &request.sock, sizeof request.sock) < 0) {
-				logger(LOG_ERR, _("Could not bind write %s: %s"), device_info, strerror(errno));
+				logger(LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
 				running = false;
 				return false;
 			}
@@ -228,7 +220,7 @@ bool read_packet(vpn_packet_t *packet) {
 			write(request_fd, &data_sun, sizeof data_sun);
 			device_fd = data_fd;
 
-			logger(LOG_INFO, _("Connection with UML established"));
+			logger(LOG_INFO, "Connection with UML established");
 
 			state = 2;
 			return false;
@@ -236,7 +228,7 @@ bool read_packet(vpn_packet_t *packet) {
 
 		case 2: {
 			if((inlen = read(data_fd, packet->data, MTU)) <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				running = false;
 				return false;
@@ -246,7 +238,7 @@ bool read_packet(vpn_packet_t *packet) {
 
 			device_total_in += packet->len;
 
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 					   device_info);
 
 			return true;
@@ -255,20 +247,18 @@ bool read_packet(vpn_packet_t *packet) {
 }
 
 bool write_packet(vpn_packet_t *packet) {
-	cp();
-
 	if(state != 2) {
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Dropping packet of %d bytes to %s: not connected to UML yet"),
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Dropping packet of %d bytes to %s: not connected to UML yet",
 				packet->len, device_info);
 		return false;
 	}
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	if(write(write_fd, packet->data, packet->len) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
-			logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device, strerror(errno));
+			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			running = false;
 		}
 
@@ -281,9 +271,7 @@ bool write_packet(vpn_packet_t *packet) {
 }
 
 void dump_device_stats(void) {
-	cp();
-
-	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
 }

@@ -2,6 +2,7 @@
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -50,8 +49,6 @@ bool read_rsa_public_key(connection_t *c) {
 	char *n;
 	bool result;
 
-	cp();
-
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &n)) {
@@ -68,7 +65,7 @@ bool read_rsa_public_key(connection_t *c) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -78,7 +75,7 @@ bool read_rsa_public_key(connection_t *c) {
 	fclose(fp);
 
 	if(!result) 
-		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"), fname, strerror(errno));
+		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -89,13 +86,11 @@ bool read_rsa_private_key() {
 	char *n, *d;
 	bool result;
 
-	cp();
-
 	/* First, check for simple PrivateKey statement */
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &d)) {
 		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &n)) {
-			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
+			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			free(d);
 			return false;
 		}
@@ -113,7 +108,7 @@ bool read_rsa_private_key() {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
+		logger(LOG_ERR, "Error reading RSA private key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -123,20 +118,20 @@ bool read_rsa_private_key() {
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"), fname, strerror(errno));
+		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
+		logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
 	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
 	fclose(fp);
 
 	if(!result) 
-		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"), fname, strerror(errno));
+		logger(LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -149,7 +144,7 @@ static void keyexpire_handler(int fd, short events, void *data) {
 
 void regenerate_key() {
 	if(timeout_initialized(&keyexpire_event)) {
-		ifdebug(STATUS) logger(LOG_INFO, _("Expiring symmetric keys"));
+		ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
 		event_del(&keyexpire_event);
 		send_key_changed(broadcast, myself);
 	} else {
@@ -172,25 +167,23 @@ bool setup_myself(void) {
 	bool choice;
 	int i, err;
 
-	cp();
-
 	myself = new_node();
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	xasprintf(&myself->hostname, _("MYSELF"));
-	xasprintf(&myself->connection->hostname, _("MYSELF"));
+	xasprintf(&myself->hostname, "MYSELF");
+	xasprintf(&myself->connection->hostname, "MYSELF");
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
 
 	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
-		logger(LOG_ERR, _("Name for tinc daemon required!"));
+		logger(LOG_ERR, "Name for tinc daemon required!");
 		return false;
 	}
 
 	if(!check_id(name)) {
-		logger(LOG_ERR, _("Invalid name for myself!"));
+		logger(LOG_ERR, "Invalid name for myself!");
 		free(name);
 		return false;
 	}
@@ -199,7 +192,7 @@ bool setup_myself(void) {
 	myself->connection->name = xstrdup(name);
 
 	if(!read_connection_config(myself->connection)) {
-		logger(LOG_ERR, _("Cannot open host configuration file for myself!"));
+		logger(LOG_ERR, "Cannot open host configuration file for myself!");
 		return false;
 	}
 
@@ -249,7 +242,7 @@ bool setup_myself(void) {
 		else if(!strcasecmp(mode, "hub"))
 			routing_mode = RMODE_HUB;
 		else {
-			logger(LOG_ERR, _("Invalid routing mode!"));
+			logger(LOG_ERR, "Invalid routing mode!");
 			return false;
 		}
 		free(mode);
@@ -267,7 +260,7 @@ bool setup_myself(void) {
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, _("%s not supported on this platform"), "PriorityInheritance");
+		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -275,7 +268,7 @@ bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
-			logger(LOG_ERR, _("Bogus maximum timeout!"));
+			logger(LOG_ERR, "Bogus maximum timeout!");
 			return false;
 		}
 	} else
@@ -289,7 +282,7 @@ bool setup_myself(void) {
 		else if(!strcasecmp(afname, "any"))
 			addressfamily = AF_UNSPEC;
 		else {
-			logger(LOG_ERR, _("Invalid address family!"));
+			logger(LOG_ERR, "Invalid address family!");
 			return false;
 		}
 		free(afname);
@@ -303,7 +296,7 @@ bool setup_myself(void) {
 		cipher = xstrdup("aes256");
 
 	if(!cipher_open_by_name(&myself->incipher, cipher)) {
-		logger(LOG_ERR, _("Unrecognized cipher type!"));
+		logger(LOG_ERR, "Unrecognized cipher type!");
 		return false;
 	}
 
@@ -321,12 +314,12 @@ bool setup_myself(void) {
 	get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &maclength);
 
 	if(maclength < 0) {
-		logger(LOG_ERR, _("Bogus MAC length!"));
+		logger(LOG_ERR, "Bogus MAC length!");
 		return false;
 	}
 
 	if(!digest_open_by_name(&myself->indigest, digest, maclength)) {
-		logger(LOG_ERR, _("Unrecognized digest type!"));
+		logger(LOG_ERR, "Unrecognized digest type!");
 		return false;
 	}
 
@@ -334,7 +327,7 @@ bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->incompression)) {
 		if(myself->incompression < 0 || myself->incompression > 11) {
-			logger(LOG_ERR, _("Bogus compression level!"));
+			logger(LOG_ERR, "Bogus compression level!");
 			return false;
 		}
 	} else
@@ -359,7 +352,7 @@ bool setup_myself(void) {
 	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
 
 	if (event_add(&device_ev, NULL) < 0) {
-		logger(LOG_ERR, _("event_add failed: %s"), strerror(errno));
+		logger(LOG_ERR, "event_add failed: %s", strerror(errno));
 		close_device();
 		return false;
 	}
@@ -392,7 +385,7 @@ bool setup_myself(void) {
 	err = getaddrinfo(address, myport, &hint, &ai);
 
 	if(err || !ai) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo",
+		logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
 			   gai_strerror(err));
 		return false;
 	}
@@ -419,7 +412,7 @@ bool setup_myself(void) {
 				  EV_READ|EV_PERSIST,
 				  handle_new_meta_connection, NULL);
 		if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+			logger(LOG_EMERG, "event_add failed: %s", strerror(errno));
 			abort();
 		}
 
@@ -428,13 +421,13 @@ bool setup_myself(void) {
 				  EV_READ|EV_PERSIST,
 				  handle_incoming_vpn_data, NULL);
 		if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-			logger(LOG_EMERG, _("event_add failed: %s"), strerror(errno));
+			logger(LOG_EMERG, "event_add failed: %s", strerror(errno));
 			abort();
 		}
 
 		ifdebug(CONNECTIONS) {
 			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(LOG_NOTICE, _("Listening on %s"), hostname);
+			logger(LOG_NOTICE, "Listening on %s", hostname);
 			free(hostname);
 		}
 
@@ -442,7 +435,7 @@ bool setup_myself(void) {
 		listen_sockets++;
 
 		if(listen_sockets >= MAXSOCKETS) {
-			logger(LOG_WARNING, _("Maximum of %d listening sockets reached"), MAXSOCKETS);
+			logger(LOG_WARNING, "Maximum of %d listening sockets reached", MAXSOCKETS);
 			break;
 		}
 	}
@@ -450,9 +443,9 @@ bool setup_myself(void) {
 	freeaddrinfo(ai);
 
 	if(listen_sockets)
-		logger(LOG_NOTICE, _("Ready"));
+		logger(LOG_NOTICE, "Ready");
 	else {
-		logger(LOG_ERR, _("Unable to create any listening socket!"));
+		logger(LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
 
@@ -462,10 +455,7 @@ bool setup_myself(void) {
 /*
   initialize network
 */
-bool setup_network(void)
-{
-	cp();
-
+bool setup_network(void) {
 	init_connections();
 	init_subnets();
 	init_nodes();
@@ -501,8 +491,6 @@ void close_network_connections(void) {
 	connection_t *c;
 	char *envp[5];
 	int i;
-
-	cp();
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;

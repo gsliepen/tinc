@@ -2,6 +2,8 @@
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
                   2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2008      Max Rijevski <maksuf@gmail.com>
+                  2009      Michael Tokarev <mjt@tls.msk.ru>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +15,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -105,14 +105,13 @@ static struct WSAData wsa_state;
 CRITICAL_SECTION mutex;
 #endif
 
-static void usage(bool status)
-{
+static void usage(bool status) {
 	if(status)
-		fprintf(stderr, _("Try `%s --help\' for more information.\n"),
+		fprintf(stderr, "Try `%s --help\' for more information.\n",
 				program_name);
 	else {
-		printf(_("Usage: %s [option]...\n\n"), program_name);
-		printf(_(	"  -c, --config=DIR              Read configuration options from DIR.\n"
+		printf("Usage: %s [option]...\n\n", program_name);
+		printf(	"  -c, --config=DIR              Read configuration options from DIR.\n"
 				"  -D, --no-detach               Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
@@ -122,13 +121,12 @@ static void usage(bool status)
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"  -R, --chroot                  chroot to NET dir at startup.\n"
 				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
-				"      --version                 Output version information and exit.\n\n"));
-		printf(_("Report bugs to tinc@tinc-vpn.org.\n"));
+				"      --version                 Output version information and exit.\n\n");
+		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
 
-static bool parse_options(int argc, char **argv)
-{
+static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
@@ -147,7 +145,7 @@ static bool parse_options(int argc, char **argv)
 
 			case 'L':				/* no detach */
 #ifndef HAVE_MLOCKALL
-				logger(LOG_ERR, _("%s not supported on this platform"), "mlockall()");
+				logger(LOG_ERR, "%s not supported on this platform", "mlockall()");
 				return false;
 #else
 				do_mlock = true;
@@ -210,8 +208,7 @@ static bool parse_options(int argc, char **argv)
 /*
   Set all files and paths according to netname
 */
-static void make_names(void)
-{
+static void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
@@ -251,7 +248,7 @@ static void make_names(void)
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
-			logger(LOG_INFO, _("Both netname and configuration directory given, using the latter..."));
+			logger(LOG_INFO, "Both netname and configuration directory given, using the latter...");
 	} else {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc");
@@ -269,11 +266,11 @@ static void free_names() {
 static bool drop_privs() {
 #ifdef HAVE_MINGW
 	if (switchuser) {
-		logger(LOG_ERR, _("%s not supported on this platform"), "-U");
+		logger(LOG_ERR, "%s not supported on this platform", "-U");
 		return false;
 	}
 	if (do_chroot) {
-		logger(LOG_ERR, _("%s not supported on this platform"), "-R");
+		logger(LOG_ERR, "%s not supported on this platform", "-R");
 		return false;
 	}
 #else
@@ -281,13 +278,13 @@ static bool drop_privs() {
 	if (switchuser) {
 		struct passwd *pw = getpwnam(switchuser);
 		if (!pw) {
-			logger(LOG_ERR, _("unknown user `%s'"), switchuser);
+			logger(LOG_ERR, "unknown user `%s'", switchuser);
 			return false;
 		}
 		uid = pw->pw_uid;
 		if (initgroups(switchuser, pw->pw_gid) != 0 ||
 		    setgid(pw->pw_gid) != 0) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
 			return false;
 		}
@@ -297,7 +294,7 @@ static bool drop_privs() {
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
 		if (chroot(confbase) != 0 || chdir("/") != 0) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "chroot", strerror(errno));
 			return false;
 		}
@@ -306,7 +303,7 @@ static bool drop_privs() {
 	}
 	if (switchuser)
 		if (setuid(uid) != 0) {
-			logger(LOG_ERR, _("System call `%s' failed: %s"),
+			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "setuid", strerror(errno));
 			return false;
 		}
@@ -323,13 +320,8 @@ static bool drop_privs() {
 # define setpriority(level) nice(level)
 #endif
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	program_name = argv[0];
-
-	setlocale(LC_ALL, "");
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
 
 	if(!parse_options(argc, argv))
 		return 1;
@@ -337,13 +329,13 @@ int main(int argc, char **argv)
 	make_names();
 
 	if(show_version) {
-		printf(_("%s version %s (built %s %s, protocol %d)\n"), PACKAGE,
+		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf(_("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
-				"see the file COPYING for details.\n"));
+				"see the file COPYING for details.\n");
 
 		return 0;
 	}
@@ -356,7 +348,7 @@ int main(int argc, char **argv)
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
 	if(!event_init()) {
-		logger(LOG_ERR, _("Error initializing libevent!"));
+		logger(LOG_ERR, "Error initializing libevent!");
 		return 1;
 	}
 
@@ -376,13 +368,13 @@ int main(int argc, char **argv)
 		return 1;
 
 	if(lzo_init() != LZO_E_OK) {
-		logger(LOG_ERR, _("Error initializing LZO compressor!"));
+		logger(LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "WSAStartup", winerror(GetLastError()));
+		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
 
@@ -392,8 +384,7 @@ int main(int argc, char **argv)
 		return 1;
 }
 
-int main2(int argc, char **argv)
-{
+int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
@@ -406,7 +397,7 @@ int main2(int argc, char **argv)
 	 * This has to be done after daemon()/fork() so it works for child.
 	 * No need to do that in parent as it's very short-lived. */
 	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "mlockall",
+		logger(LOG_ERR, "System call `%s' failed: %s", "mlockall",
 		   strerror(errno));
 		return 1;
 	}
@@ -433,7 +424,7 @@ int main2(int argc, char **argv)
                 else if(!strcasecmp(priority, "High"))
                         setpriority(HIGH_PRIORITY_CLASS);
                 else {
-                        logger(LOG_ERR, _("Invalid priority `%s`!"), priority);
+                        logger(LOG_ERR, "Invalid priority `%s`!", priority);
                         goto end;
                 }
         }
@@ -454,7 +445,7 @@ int main2(int argc, char **argv)
 	close_network_connections();
 
 end:
-	logger(LOG_NOTICE, _("Terminating"));
+	logger(LOG_NOTICE, "Terminating");
 
 #ifndef HAVE_MINGW
 	exit_control();

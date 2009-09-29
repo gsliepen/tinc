@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -38,15 +36,13 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	struct addrinfo *ai, hint = {0};
 	int err;
 
-	cp();
-
 	hint.ai_family = addressfamily;
 	hint.ai_socktype = socktype;
 
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(LOG_WARNING, _("Error looking up %s port %s: %s"), address,
+		logger(LOG_WARNING, "Error looking up %s port %s: %s", address,
 				   service, gai_strerror(err));
 		return NULL;
 	}
@@ -58,8 +54,6 @@ sockaddr_t str2sockaddr(const char *address, const char *port) {
 	struct addrinfo *ai, hint = {0};
 	sockaddr_t result;
 	int err;
-
-	cp();
 
 	hint.ai_family = AF_UNSPEC;
 	hint.ai_flags = AI_NUMERICHOST;
@@ -88,8 +82,6 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	char *scopeid;
 	int err;
 
-	cp();
-
 	if(sa->sa.sa_family == AF_UNKNOWN) {
 		*addrstr = xstrdup(sa->unknown.address);
 		*portstr = xstrdup(sa->unknown.port);
@@ -99,9 +91,8 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof address, port, sizeof port, NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
-		logger(LOG_ERR, _("Error while translating addresses: %s"),
+		logger(LOG_ERR, "Error while translating addresses: %s",
 			   gai_strerror(err));
-		cp_trace();
 		raise(SIGFPE);
 		exit(0);
 	}
@@ -121,30 +112,25 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	char port[NI_MAXSERV] = "unknown";
 	int err;
 
-	cp();
-
 	if(sa->sa.sa_family == AF_UNKNOWN) {
-		xasprintf(&str, _("%s port %s"), sa->unknown.address, sa->unknown.port);
+		xasprintf(&str, "%s port %s", sa->unknown.address, sa->unknown.port);
 		return str;
 	}
 
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof address, port, sizeof port,
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
-		logger(LOG_ERR, _("Error while looking up hostname: %s"),
+		logger(LOG_ERR, "Error while looking up hostname: %s",
 			   gai_strerror(err));
 	}
 
-	xasprintf(&str, _("%s port %s"), address, port);
+	xasprintf(&str, "%s port %s", address, port);
 
 	return str;
 }
 
-int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b)
-{
+int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 	int result;
-
-	cp();
 
 	result = a->sa.sa_family - b->sa.sa_family;
 
@@ -165,19 +151,15 @@ int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b)
 			return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
 
 		default:
-			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
-			cp_trace();
 			raise(SIGFPE);
 			exit(0);
 	}
 }
 
-int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
-{
+int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 	int result;
-
-	cp();
 
 	result = a->sa.sa_family - b->sa.sa_family;
 
@@ -213,17 +195,14 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
 			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof a->in6.sin6_port);
 
 		default:
-			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
-			cp_trace();
 			raise(SIGFPE);
 			exit(0);
 	}
 }
 
 void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
-	cp();
-
 	if(b->sa.sa_family != AF_UNKNOWN) {
 		*a = *b;
 	} else {
@@ -234,8 +213,6 @@ void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
 }
 
 void sockaddrfree(sockaddr_t *a) {
-	cp();
-
 	if(a->sa.sa_family == AF_UNKNOWN) {
 		free(a->unknown.address);
 		free(a->unknown.port);
@@ -243,8 +220,6 @@ void sockaddrfree(sockaddr_t *a) {
 }
 	
 void sockaddrunmap(sockaddr_t *sa) {
-	cp();
-
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
 		sa->in.sin_family = AF_INET;
@@ -257,8 +232,6 @@ int maskcmp(const void *va, const void *vb, int masklen) {
 	int i, m, result;
 	const char *a = va;
 	const char *b = vb;
-
-	cp();
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
 		result = a[i] - b[i];
@@ -277,8 +250,6 @@ void mask(void *va, int masklen, int len) {
 	int i;
 	char *a = va;
 
-	cp();
-
 	i = masklen / 8;
 	masklen %= 8;
 
@@ -293,8 +264,6 @@ void maskcpy(void *va, const void *vb, int masklen, int len) {
 	int i, m;
 	char *a = va;
 	const char *b = vb;
-
-	cp();
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++)
 		a[i] = b[i];
@@ -311,8 +280,6 @@ void maskcpy(void *va, const void *vb, int masklen, int len) {
 bool maskcheck(const void *va, int masklen, int len) {
 	int i;
 	const char *a = va;
-
-	cp();
 
 	i = masklen / 8;
 	masklen %= 8;

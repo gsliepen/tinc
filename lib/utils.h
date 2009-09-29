@@ -1,7 +1,7 @@
 /*
     utils.h -- header file for utils.c
-    Copyright (C) 1999-2005 Ivo Timmermans <zarq@iname.com>
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1999-2005 Ivo Timmermans
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,27 +13,13 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
-
-#ifdef ENABLE_TRACING
-extern volatile int cp_line[];
-extern volatile char *cp_file[];
-extern volatile int cp_index;
-extern void cp_trace(void);
-
-#define cp() { cp_line[cp_index] = __LINE__; cp_file[cp_index] = __FILE__; cp_index++; cp_index %= 16; }
-#define ecp() { fprintf(stderr, "Explicit checkpoint in %s line %d\n", __FILE__, __LINE__); }
-#else
-#define cp()
-#define ecp()
-#define cp_trace()
-#endif
 
 extern void hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);

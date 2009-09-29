@@ -2,6 +2,7 @@
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -47,9 +46,7 @@ void purge(void) {
 	edge_t *e;
 	subnet_t *s;
 
-	cp();
-
-	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
+	ifdebug(PROTOCOL) logger(LOG_DEBUG, "Purging unreachable nodes");
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
@@ -58,7 +55,7 @@ void purge(void) {
 		n = nnode->data;
 
 		if(!n->status.reachable) {
-			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Purging node %s (%s)", n->name,
 					   n->hostname);
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
@@ -108,9 +105,7 @@ void purge(void) {
   - Deactivate the host
 */
 void terminate_connection(connection_t *c, bool report) {
-	cp();
-
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
+	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Closing connection with %s (%s)",
 			   c->name, c->hostname);
 
 	c->status.active = false;
@@ -165,8 +160,6 @@ static void timeout_handler(int fd, short events, void *event) {
 	connection_t *c;
 	time_t now = time(NULL);
 
-	cp();
-
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
@@ -174,7 +167,7 @@ static void timeout_handler(int fd, short events, void *event) {
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"),
+					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
 							   c->name, c->hostname, now - c->last_ping_time);
 					terminate_connection(c, true);
 					continue;
@@ -184,12 +177,12 @@ static void timeout_handler(int fd, short events, void *event) {
 			} else {
 				if(c->status.connecting) {
 					ifdebug(CONNECTIONS)
-						logger(LOG_WARNING, _("Timeout while connecting to %s (%s)"), c->name, c->hostname);
+						logger(LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
 					c->status.connecting = false;
 					closesocket(c->socket);
 					do_outgoing_connection(c);
 				} else {
-					ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"), c->name, c->hostname);
+					ifdebug(CONNECTIONS) logger(LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
 					terminate_connection(c, false);
 					continue;
 				}
@@ -214,7 +207,7 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 			finish_connecting(c);
 		else {
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-					   _("Error while connecting to %s (%s): %s"),
+					   "Error while connecting to %s (%s): %s",
 					   c->name, c->hostname, strerror(result));
 			closesocket(c->socket);
 			do_outgoing_connection(c);
@@ -229,12 +222,12 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 }
 
 static void sigterm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
 	event_loopexit(NULL);
 }
 
 static void sighup_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, _("Got %s signal"), strsignal(signal));
+	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
 	reload_configuration();
 }
 
@@ -251,7 +244,7 @@ int reload_configuration(void) {
 	init_configuration(&config_tree);
 
 	if(!read_server_config()) {
-		logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
+		logger(LOG_ERR, "Unable to reread configuration file, exitting.");
 		event_loopexit(NULL);
 		return EINVAL;
 	}
@@ -312,8 +305,6 @@ int main_loop(void) {
 	struct event sigterm_event;
 	struct event sigquit_event;
 
-	cp();
-
 	timeout_set(&timeout_event, timeout_handler, &timeout_event);
 	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
 	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
@@ -324,7 +315,7 @@ int main_loop(void) {
 	signal_add(&sigquit_event, NULL);
 
 	if(event_loop(0) < 0) {
-		logger(LOG_ERR, _("Error while waiting for input: %s"), strerror(errno));
+		logger(LOG_ERR, "Error while waiting for input: %s", strerror(errno));
 		return 1;
 	}
 

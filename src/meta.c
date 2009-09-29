@@ -1,7 +1,8 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
+                  2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -33,14 +32,12 @@
 #include "xalloc.h"
 
 bool send_meta(connection_t *c, const char *buffer, int length) {
-	cp();
-
 	if(!c) {
-		logger(LOG_ERR, _("send_meta() called with NULL pointer!"));
+		logger(LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
+	ifdebug(META) logger(LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
 			   c->name, c->hostname);
 
 	/* Add our data to buffer */
@@ -49,18 +46,18 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 		size_t outlen = length;
 
 		if(!cipher_encrypt(&c->outcipher, buffer, length, outbuf, &outlen, false) || outlen != length) {
-			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s)"),
+			logger(LOG_ERR, "Error while encrypting metadata to %s (%s)",
 					c->name, c->hostname);
 			return false;
 		}
 		
-		ifdebug(META) logger(LOG_DEBUG, _("Encrypted write %p %p %p %d"), c, c->buffer, outbuf, length);
+		ifdebug(META) logger(LOG_DEBUG, "Encrypted write %p %p %p %d", c, c->buffer, outbuf, length);
 		bufferevent_write(c->buffer, (void *)outbuf, length);
-		ifdebug(META) logger(LOG_DEBUG, _("Done."));
+		ifdebug(META) logger(LOG_DEBUG, "Done.");
 	} else {
-		ifdebug(META) logger(LOG_DEBUG, _("Unencrypted write %p %p %p %d"), c, c->buffer, buffer, length);
+		ifdebug(META) logger(LOG_DEBUG, "Unencrypted write %p %p %p %d", c, c->buffer, buffer, length);
 		bufferevent_write(c->buffer, (void *)buffer, length);
-		ifdebug(META) logger(LOG_DEBUG, _("Done."));
+		ifdebug(META) logger(LOG_DEBUG, "Done.");
 	}
 
 	return true;
@@ -69,8 +66,6 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	splay_node_t *node;
 	connection_t *c;
-
-	cp();
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
@@ -85,8 +80,6 @@ bool receive_meta(connection_t *c) {
 	char inbuf[MAXBUFSIZE];
 	char *bufp = inbuf, *endp;
 
-	cp();
-
 	/* Strategy:
 	   - Read as much as possible from the TCP socket in one go.
 	   - Decrypt it.
@@ -99,7 +92,7 @@ bool receive_meta(connection_t *c) {
 	inlen = recv(c->socket, inbuf, sizeof inbuf, 0);
 
 	if(inlen <= 0) {
-		logger(LOG_ERR, _("Receive callback called for %s (%s) but no data to receive: %s"), c->name, c->hostname, strerror(errno));
+		logger(LOG_ERR, "Receive callback called for %s (%s) but no data to receive: %s", c->name, c->hostname, strerror(errno));
 		return false;
 	}
 
@@ -117,11 +110,11 @@ bool receive_meta(connection_t *c) {
 			bufp = endp;
 		} else {
 			size_t outlen = inlen;
-			ifdebug(META) logger(LOG_DEBUG, _("Received encrypted %zu bytes"), inlen);
+			ifdebug(META) logger(LOG_DEBUG, "Received encrypted %zu bytes", inlen);
 			evbuffer_expand(c->buffer->input, c->buffer->input->off + inlen);
 
 			if(!cipher_decrypt(&c->incipher, bufp, inlen, c->buffer->input->buffer + c->buffer->input->off, &outlen, false) || inlen != outlen) {
-				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s)"),
+				logger(LOG_ERR, "Error while decrypting metadata from %s (%s)",
 					   c->name, c->hostname);
 				return false;
 			}

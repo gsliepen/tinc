@@ -1,8 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id$
-
-AC_PREREQ(2.59)
+AC_PREREQ(2.61)
 AC_INIT
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
@@ -10,9 +8,10 @@ AM_INIT_AUTOMAKE(tinc, 1.1-cvs)
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.14.1)
-
+# Enable GNU extensions.
+# Define this here, not in acconfig's @TOP@ section, since definitions
+# in the latter don't make it into the configure-time tests.
+AC_GNU_SOURCE
 AC_DEFINE([__USE_BSD], 1, [Enable BSD extensions])
 
 ALL_LINGUAS="nl"
@@ -26,7 +25,7 @@ AC_PROG_RANLIB
 
 dnl Check and set OS
 
-#AC_CANONICAL_HOST
+AC_CANONICAL_HOST
 
 case $host_os in
   *linux*)
@@ -172,14 +171,8 @@ AC_ARG_ENABLE(jumbograms,
   [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ]
 )
 
-dnl Check if checkpoint tracing has to be enabled
-AC_ARG_ENABLE(tracing,
-  AS_HELP_STRING([--enable-tracing], [enable checkpoint tracing (debugging only)]),
-  [ AC_DEFINE(ENABLE_TRACING, 1, [Checkpoint tracing]) ]
-)
-
 AC_SUBST(INCLUDES)
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile lib/Makefile po/Makefile.in m4/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile lib/Makefile m4/Makefile])
 
 AC_OUTPUT

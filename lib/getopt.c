@@ -19,10 +19,10 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
-USA.  */
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
 
 /* This tells Alpha OSF/1 not to define a getopt prototype in <stdio.h>.
    Ditto for AIX 3.2 and <stdlib.h>.  */
@@ -669,7 +669,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
       if (ambig && !exact)
 	{
 	  if (opterr)
-	    fprintf (stderr, _("%s: option `%s' is ambiguous\n"),
+	    fprintf (stderr, "%s: option `%s' is ambiguous\n",
 		     argv[0], argv[optind]);
 	  nextchar += strlen (nextchar);
 	  optind++;
@@ -693,12 +693,12 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 		   if (argv[optind - 1][1] == '-')
 		    /* --option */
 		    fprintf (stderr,
-		     _("%s: option `--%s' doesn't allow an argument\n"),
+		     "%s: option `--%s' doesn't allow an argument\n",
 		     argv[0], pfound->name);
 		   else
 		    /* +option or -option */
 		    fprintf (stderr,
-		     _("%s: option `%c%s' doesn't allow an argument\n"),
+		     "%s: option `%c%s' doesn't allow an argument\n",
 		     argv[0], argv[optind - 1][0], pfound->name);
 
 		  nextchar += strlen (nextchar);
@@ -715,7 +715,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 		{
 		  if (opterr)
 		    fprintf (stderr,
-			   _("%s: option `%s' requires an argument\n"),
+			   "%s: option `%s' requires an argument\n",
 			   argv[0], argv[optind - 1]);
 		  nextchar += strlen (nextchar);
 		  optopt = pfound->val;
@@ -744,11 +744,11 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	    {
 	      if (argv[optind][1] == '-')
 		/* --option */
-		fprintf (stderr, _("%s: unrecognized option `--%s'\n"),
+		fprintf (stderr, "%s: unrecognized option `--%s'\n",
 			 argv[0], nextchar);
 	      else
 		/* +option or -option */
-		fprintf (stderr, _("%s: unrecognized option `%c%s'\n"),
+		fprintf (stderr, "%s: unrecognized option `%c%s'\n",
 			 argv[0], argv[optind][0], nextchar);
 	    }
 	  nextchar = (char *) "";
@@ -774,10 +774,10 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	  {
 	    if (posixly_correct)
 	      /* 1003.2 specifies the format of this message.  */
-	      fprintf (stderr, _("%s: illegal option -- %c\n"),
+	      fprintf (stderr, "%s: illegal option -- %c\n",
 		       argv[0], c);
 	    else
-	      fprintf (stderr, _("%s: invalid option -- %c\n"),
+	      fprintf (stderr, "%s: invalid option -- %c\n",
 		       argv[0], c);
 	  }
 	optopt = c;
@@ -807,7 +807,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	    if (opterr)
 	      {
 		/* 1003.2 specifies the format of this message.  */
-		fprintf (stderr, _("%s: option requires an argument -- %c\n"),
+		fprintf (stderr, "%s: option requires an argument -- %c\n",
 			 argv[0], c);
 	      }
 	    optopt = c;
@@ -854,7 +854,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	if (ambig && !exact)
 	  {
 	    if (opterr)
-	      fprintf (stderr, _("%s: option `-W %s' is ambiguous\n"),
+	      fprintf (stderr, "%s: option `-W %s' is ambiguous\n",
 		       argv[0], argv[optind]);
 	    nextchar += strlen (nextchar);
 	    optind++;
@@ -872,8 +872,8 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 		else
 		  {
 		    if (opterr)
-		      fprintf (stderr, _("\
-%s: option `-W %s' doesn't allow an argument\n"),
+		      fprintf (stderr,
+			       "%s: option `-W %s' doesn't allow an argument\n",
 			       argv[0], pfound->name);
 
 		    nextchar += strlen (nextchar);
@@ -888,7 +888,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 		  {
 		    if (opterr)
 		      fprintf (stderr,
-			       _("%s: option `%s' requires an argument\n"),
+			       "%s: option `%s' requires an argument\n",
 			       argv[0], argv[optind - 1]);
 		    nextchar += strlen (nextchar);
 		    return optstring[0] == ':' ? ':' : '?';
@@ -937,7 +937,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 		  {
 		    /* 1003.2 specifies the format of this message.  */
 		    fprintf (stderr,
-			   _("%s: option requires an argument -- %c\n"),
+			   "%s: option requires an argument -- %c\n",
 			   argv[0], c);
 		  }
 		optopt = c;

@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -53,48 +51,34 @@ static int edge_weight_compare(const edge_t *a, const edge_t *b) {
 }
 
 void init_edges(void) {
-	cp();
-
 	edge_weight_tree = splay_alloc_tree((splay_compare_t) edge_weight_compare, NULL);
 }
 
 splay_tree_t *new_edge_tree(void) {
-	cp();
-
 	return splay_alloc_tree((splay_compare_t) edge_compare, (splay_action_t) free_edge);
 }
 
 void free_edge_tree(splay_tree_t *edge_tree) {
-	cp();
-
 	splay_delete_tree(edge_tree);
 }
 
 void exit_edges(void) {
-	cp();
-
 	splay_delete_tree(edge_weight_tree);
 }
 
 /* Creation and deletion of connection elements */
 
 edge_t *new_edge(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(edge_t));
 }
 
 void free_edge(edge_t *e) {
-	cp();
-	
 	sockaddrfree(&e->address);
 
 	free(e);
 }
 
 void edge_add(edge_t *e) {
-	cp();
-
 	splay_insert(edge_weight_tree, e);
 	splay_insert(e->from->edge_tree, e);
 
@@ -105,8 +89,6 @@ void edge_add(edge_t *e) {
 }
 
 void edge_del(edge_t *e) {
-	cp();
-
 	if(e->reverse)
 		e->reverse->reverse = NULL;
 
@@ -117,8 +99,6 @@ void edge_del(edge_t *e) {
 edge_t *lookup_edge(node_t *from, node_t *to) {
 	edge_t v;
 	
-	cp();
-
 	v.from = from;
 	v.to = to;
 
@@ -131,15 +111,13 @@ int dump_edges(struct evbuffer *out) {
 	edge_t *e;
 	char *address;
 
-	cp();
-
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
 			if(evbuffer_add_printf(out,
-								   _(" %s to %s at %s options %lx weight %d\n"),
+								   " %s to %s at %s options %lx weight %d\n",
 								   e->from->name, e->to->name, address,
 								   e->options, e->weight) == -1) {
 				free(address);

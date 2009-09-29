@@ -1,5 +1,4 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id$
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -19,8 +18,6 @@ This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual P
 Copyright @copyright{} 1998-2009 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
-
-$Id$
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -46,8 +43,6 @@ This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual P
 Copyright @copyright{} 1998-2009 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
-
-$Id$
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -2459,7 +2454,7 @@ and join channel #tinc.
 @section Authors
 
 @table @asis
-@item Ivo Timmermans (zarq) (@email{ivo@@tinc-vpn.org})
+@item Ivo Timmermans (zarq)
 @item Guus Sliepen (guus) (@email{guus@@tinc-vpn.org})
 @end table
 

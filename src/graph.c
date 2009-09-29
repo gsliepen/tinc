@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 /* We need to generate two trees from the graph:
@@ -70,8 +68,6 @@ void mst_kruskal(void) {
 	node_t *n;
 	connection_t *c;
 
-	cp();
-	
 	/* Clear MST status on connections */
 
 	for(node = connection_tree->head; node; node = node->next) {
@@ -122,8 +118,6 @@ void sssp_dijkstra(void) {
 	list_t *todo_list;
 	list_node_t *lnode, *nnode;
 	bool indirect;
-
-	cp();
 
 	todo_list = list_alloc(NULL);
 
@@ -249,8 +243,6 @@ void sssp_bfs(void) {
 	list_node_t *from, *todonext;
 	bool indirect;
 
-	cp();
-
 	todo_list = list_alloc(NULL);
 
 	/* Clear visited status on nodes */
@@ -344,10 +336,10 @@ void check_reachability() {
 			n->status.reachable = !n->status.reachable;
 
 			if(n->status.reachable) {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became reachable",
 					   n->name, n->hostname);
 			} else {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became unreachable",
 					   n->name, n->hostname);
 			}
 

@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -56,8 +54,7 @@ void subnet_cache_flush() {
 
 /* Subnet comparison */
 
-static int subnet_compare_mac(const subnet_t *a, const subnet_t *b)
-{
+static int subnet_compare_mac(const subnet_t *a, const subnet_t *b) {
 	int result;
 
 	result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof a->net.mac.address);
@@ -73,8 +70,7 @@ static int subnet_compare_mac(const subnet_t *a, const subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b)
-{
+static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b) {
 	int result;
 
 	result = b->net.ipv4.prefixlength - a->net.ipv4.prefixlength;
@@ -95,8 +91,7 @@ static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b)
-{
+static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b) {
 	int result;
 
 	result = b->net.ipv6.prefixlength - a->net.ipv6.prefixlength;
@@ -117,8 +112,7 @@ static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b)
 	return strcmp(a->owner->name, b->owner->name);
 }
 
-int subnet_compare(const subnet_t *a, const subnet_t *b)
-{
+int subnet_compare(const subnet_t *a, const subnet_t *b) {
 	int result;
 
 	result = a->type - b->type;
@@ -134,9 +128,8 @@ int subnet_compare(const subnet_t *a, const subnet_t *b)
 	case SUBNET_IPV6:
 		return subnet_compare_ipv6(a, b);
 	default:
-		logger(LOG_ERR, _("subnet_compare() was called with unknown subnet type %d, exitting!"),
+		logger(LOG_ERR, "subnet_compare() was called with unknown subnet type %d, exitting!",
 			   a->type);
-		cp_trace();
 		exit(0);
 	}
 
@@ -145,58 +138,37 @@ int subnet_compare(const subnet_t *a, const subnet_t *b)
 
 /* Initialising trees */
 
-void init_subnets(void)
-{
-	cp();
-
+void init_subnets(void) {
 	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
 
 	subnet_cache_flush();
 }
 
-void exit_subnets(void)
-{
-	cp();
-
+void exit_subnets(void) {
 	splay_delete_tree(subnet_tree);
 }
 
-splay_tree_t *new_subnet_tree(void)
-{
-	cp();
-
+splay_tree_t *new_subnet_tree(void) {
 	return splay_alloc_tree((splay_compare_t) subnet_compare, NULL);
 }
 
-void free_subnet_tree(splay_tree_t *subnet_tree)
-{
-	cp();
-
+void free_subnet_tree(splay_tree_t *subnet_tree) {
 	splay_delete_tree(subnet_tree);
 }
 
 /* Allocating and freeing space for subnets */
 
-subnet_t *new_subnet(void)
-{
-	cp();
-
+subnet_t *new_subnet(void) {
 	return xmalloc_and_zero(sizeof(subnet_t));
 }
 
-void free_subnet(subnet_t *subnet)
-{
-	cp();
-
+void free_subnet(subnet_t *subnet) {
 	free(subnet);
 }
 
 /* Adding and removing subnets */
 
-void subnet_add(node_t *n, subnet_t *subnet)
-{
-	cp();
-
+void subnet_add(node_t *n, subnet_t *subnet) {
 	subnet->owner = n;
 
 	splay_insert(subnet_tree, subnet);
@@ -205,10 +177,7 @@ void subnet_add(node_t *n, subnet_t *subnet)
 	subnet_cache_flush();
 }
 
-void subnet_del(node_t *n, subnet_t *subnet)
-{
-	cp();
-
+void subnet_del(node_t *n, subnet_t *subnet) {
 	splay_delete(n->subnet_tree, subnet);
 	splay_delete(subnet_tree, subnet);
 
@@ -217,13 +186,10 @@ void subnet_del(node_t *n, subnet_t *subnet)
 
 /* Ascii representation of subnets */
 
-bool str2net(subnet_t *subnet, const char *subnetstr)
-{
+bool str2net(subnet_t *subnet, const char *subnetstr) {
 	int i, l;
 	uint16_t x[8];
 	int weight = 10;
-
-	cp();
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d#%d",
 			  &x[0], &x[1], &x[2], &x[3], &l, &weight) >= 5) {
@@ -299,12 +265,9 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 	return false;
 }
 
-bool net2str(char *netstr, int len, const subnet_t *subnet)
-{
-	cp();
-
+bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
-		logger(LOG_ERR, _("net2str() was called with netstr=%p, subnet=%p!\n"), netstr, subnet);
+		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!\n", netstr, subnet);
 		return false;
 	}
 
@@ -346,9 +309,8 @@ bool net2str(char *netstr, int len, const subnet_t *subnet)
 
 		default:
 			logger(LOG_ERR,
-				   _("net2str() was called with unknown subnet type %d, exiting!"),
+				   "net2str() was called with unknown subnet type %d, exiting!",
 				   subnet->type);
-			cp_trace();
 			exit(0);
 	}
 
@@ -357,18 +319,12 @@ bool net2str(char *netstr, int len, const subnet_t *subnet)
 
 /* Subnet lookup routines */
 
-subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet)
-{
-	cp();
-
+subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 	return splay_search(owner->subnet_tree, subnet);
 }
 
-subnet_t *lookup_subnet_mac(const mac_t *address)
-{
+subnet_t *lookup_subnet_mac(const mac_t *address) {
 	subnet_t *p, subnet = {0};
-
-	cp();
 
 	subnet.type = SUBNET_MAC;
 	subnet.net.mac.address = *address;
@@ -379,13 +335,10 @@ subnet_t *lookup_subnet_mac(const mac_t *address)
 	return p;
 }
 
-subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
-{
+subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	subnet_t *p, *r = NULL, subnet = {0};
 	splay_node_t *n;
 	int i;
-
-	cp();
 
 	// Check if this address is cached
 
@@ -426,13 +379,10 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 	return r;
 }
 
-subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
-{
+subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	subnet_t *p, *r = NULL, subnet = {0};
 	splay_node_t *n;
 	int i;
-
-	cp();
 
 	// Check if this address is cached
 
@@ -540,19 +490,16 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		free(envp[i]);
 }
 
-int dump_subnets(struct evbuffer *out)
-{
+int dump_subnets(struct evbuffer *out) {
 	char netstr[MAXNETSTR];
 	subnet_t *subnet;
 	splay_node_t *node;
-
-	cp();
 
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
-		if(evbuffer_add_printf(out, _(" %s owner %s\n"),
+		if(evbuffer_add_printf(out, " %s owner %s\n",
 							   netstr, subnet->owner->name) == -1)
 			return errno;
 	}

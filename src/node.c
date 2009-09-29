@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -42,8 +40,6 @@ static int node_compare(const node_t *a, const node_t *b) {
 static int node_udp_compare(const node_t *a, const node_t *b) {
 	int result;
 
-	cp();
-
 	result = sockaddrcmp(&a->address, &b->address);
 
 	if(result)
@@ -53,23 +49,17 @@ static int node_udp_compare(const node_t *a, const node_t *b) {
 }
 
 void init_nodes(void) {
-	cp();
-
 	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
 	node_udp_tree = splay_alloc_tree((splay_compare_t) node_udp_compare, NULL);
 }
 
 void exit_nodes(void) {
-	cp();
-
 	splay_delete_tree(node_udp_tree);
 	splay_delete_tree(node_tree);
 }
 
 node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof *n);
-
-	cp();
 
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
@@ -80,8 +70,6 @@ node_t *new_node(void) {
 }
 
 void free_node(node_t *n) {
-	cp();
-
 	if(n->subnet_tree)
 		free_subnet_tree(n->subnet_tree);
 
@@ -107,8 +95,6 @@ void free_node(node_t *n) {
 }
 
 void node_add(node_t *n) {
-	cp();
-
 	splay_insert(node_tree, n);
 }
 
@@ -116,8 +102,6 @@ void node_del(node_t *n) {
 	splay_node_t *node, *next;
 	edge_t *e;
 	subnet_t *s;
-
-	cp();
 
 	for(node = n->subnet_tree->head; node; node = next) {
 		next = node->next;
@@ -138,8 +122,6 @@ void node_del(node_t *n) {
 node_t *lookup_node(char *name) {
 	node_t n = {0};
 
-	cp();
-	
 	n.name = name;
 
 	return splay_search(node_tree, &n);
@@ -148,16 +130,13 @@ node_t *lookup_node(char *name) {
 node_t *lookup_node_udp(const sockaddr_t *sa) {
 	node_t n = {0};
 
-	cp();
-
 	n.address = *sa;
 	n.name = NULL;
 
 	return splay_search(node_udp_tree, &n);
 }
 
-void update_node_udp(node_t *n, const sockaddr_t *sa)
-{
+void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	splay_delete(node_udp_tree, n);
 
 	if(n->hostname)
@@ -179,11 +158,9 @@ int dump_nodes(struct evbuffer *out) {
 	splay_node_t *node;
 	node_t *n;
 
-	cp();
-
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		if(evbuffer_add_printf(out, _(" %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n"),
+		if(evbuffer_add_printf(out, " %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n",
 			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",

@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -51,7 +49,7 @@ static DWORD WINAPI tapreader(void *bla) {
 	OVERLAPPED overlapped;
 	vpn_packet_t packet;
 
-	logger(LOG_DEBUG, _("Tap reader running"));
+	logger(LOG_DEBUG, "Tap reader running");
 
 	/* Read from tap device and send to parent */
 
@@ -70,7 +68,7 @@ static DWORD WINAPI tapreader(void *bla) {
 				if(!GetOverlappedResult(device_handle, &overlapped, &len, FALSE))
 					continue;
 			} else {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"), device_info,
+				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return -1;
 			}
@@ -108,15 +106,13 @@ bool setup_device(void) {
 		.ai_flags = 0,
 	};
 
-	cp();
-
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
 	/* Open registry and look for network adapters */
 
 	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, NETWORK_CONNECTIONS_KEY, 0, KEY_READ, &key)) {
-		logger(LOG_ERR, _("Unable to read registry: %s"), winerror(GetLastError()));
+		logger(LOG_ERR, "Unable to read registry: %s", winerror(GetLastError()));
 		return false;
 	}
 
@@ -167,7 +163,7 @@ bool setup_device(void) {
 	RegCloseKey(key);
 
 	if(!found) {
-		logger(LOG_ERR, _("No Windows tap device found!"));
+		logger(LOG_ERR, "No Windows tap device found!");
 		return false;
 	}
 
@@ -185,14 +181,14 @@ bool setup_device(void) {
 	}
 	
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, _("%s (%s) is not a usable Windows tap device: %s"), device, iface, winerror(GetLastError()));
+		logger(LOG_ERR, "%s (%s) is not a usable Windows tap device: %s", device, iface, winerror(GetLastError()));
 		return false;
 	}
 
 	/* Get MAC address from tap device */
 
 	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof mymac.x, mymac.x, sizeof mymac.x, &len, 0)) {
-		logger(LOG_ERR, _("Could not get MAC address from Windows tap device %s (%s): %s"), device, iface, winerror(GetLastError()));
+		logger(LOG_ERR, "Could not get MAC address from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -205,7 +201,7 @@ bool setup_device(void) {
 	thread = CreateThread(NULL, 0, tapreader, NULL, 0, NULL);
 
 	if(!thread) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "CreateThread", winerror(GetLastError()));
+		logger(LOG_ERR, "System call `%s' failed: %s", "CreateThread", winerror(GetLastError()));
 		return false;
 	}
 
@@ -214,16 +210,14 @@ bool setup_device(void) {
 	status = true;
 	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
 
-	device_info = _("Windows tap device");
+	device_info = "Windows tap device";
 
-	logger(LOG_INFO, _("%s (%s) is a %s"), device, iface, device_info);
+	logger(LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 
 	return true;
 }
 
 void close_device(void) {
-	cp();
-
 	CloseHandle(device_handle);
 
 	free(device);
@@ -238,13 +232,11 @@ bool write_packet(vpn_packet_t *packet) {
 	long outlen;
 	OVERLAPPED overlapped = {0};
 
-	cp();
-
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	if(!WriteFile(device_handle, packet->data, packet->len, &outlen, &overlapped)) {
-		logger(LOG_ERR, _("Error while writing to %s %s: %s"), device_info, device, winerror(GetLastError()));
+		logger(LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}
 
@@ -254,9 +246,7 @@ bool write_packet(vpn_packet_t *packet) {
 }
 
 void dump_device_stats(void) {
-	cp();
-
-	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
 }

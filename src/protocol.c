@@ -1,7 +1,7 @@
 /*
     protocol.c -- handle the meta-protocol, basic functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -71,8 +69,6 @@ bool send_request(connection_t *c, const char *format, ...) {
 	char request[MAXBUFSIZE];
 	int len;
 
-	cp();
-
 	/* Use vsnprintf instead of vxasprintf: faster, no memory
 	   fragmentation, cleanup is automatic, and there is a limit on the
 	   input buffer anyway */
@@ -82,17 +78,17 @@ bool send_request(connection_t *c, const char *format, ...) {
 	va_end(args);
 
 	if(len < 0 || len > MAXBUFSIZE - 1) {
-		logger(LOG_ERR, _("Output buffer overflow while sending request to %s (%s)"),
+		logger(LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
 			   c->name, c->hostname);
 		return false;
 	}
 
 	ifdebug(PROTOCOL) {
 		ifdebug(META)
-			logger(LOG_DEBUG, _("Sending %s to %s (%s): %s"),
+			logger(LOG_DEBUG, "Sending %s to %s (%s): %s",
 				   request_name[atoi(request)], c->name, c->hostname, request);
 		else
-			logger(LOG_DEBUG, _("Sending %s to %s (%s)"), request_name[atoi(request)],
+			logger(LOG_DEBUG, "Sending %s to %s (%s)", request_name[atoi(request)],
 				   c->name, c->hostname);
 	}
 
@@ -106,14 +102,12 @@ bool send_request(connection_t *c, const char *format, ...) {
 }
 
 void forward_request(connection_t *from, char *request) {
-	cp();
-
 	ifdebug(PROTOCOL) {
 		ifdebug(META)
-			logger(LOG_DEBUG, _("Forwarding %s from %s (%s): %s"),
+			logger(LOG_DEBUG, "Forwarding %s from %s (%s): %s",
 				   request_name[atoi(request)], from->name, from->hostname, request);
 		else
-			logger(LOG_DEBUG, _("Forwarding %s from %s (%s)"),
+			logger(LOG_DEBUG, "Forwarding %s from %s (%s)",
 				   request_name[atoi(request)], from->name, from->hostname);
 	}
 
@@ -125,31 +119,29 @@ void forward_request(connection_t *from, char *request) {
 bool receive_request(connection_t *c, char *request) {
 	int reqno = atoi(request);
 
-	cp();
-
 	if(reqno || *request == '0') {
 		if((reqno < 0) || (reqno >= LAST) || !request_handlers[reqno]) {
 			ifdebug(META)
-				logger(LOG_DEBUG, _("Unknown request from %s (%s): %s"),
+				logger(LOG_DEBUG, "Unknown request from %s (%s): %s",
 					   c->name, c->hostname, request);
 			else
-				logger(LOG_ERR, _("Unknown request from %s (%s)"),
+				logger(LOG_ERR, "Unknown request from %s (%s)",
 					   c->name, c->hostname);
 
 			return false;
 		} else {
 			ifdebug(PROTOCOL) {
 				ifdebug(META)
-					logger(LOG_DEBUG, _("Got %s from %s (%s): %s"),
+					logger(LOG_DEBUG, "Got %s from %s (%s): %s",
 						   request_name[reqno], c->name, c->hostname, request);
 				else
-					logger(LOG_DEBUG, _("Got %s from %s (%s)"),
+					logger(LOG_DEBUG, "Got %s from %s (%s)",
 						   request_name[reqno], c->name, c->hostname);
 			}
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != reqno)) {
-			logger(LOG_ERR, _("Unauthorized request from %s (%s)"), c->name,
+			logger(LOG_ERR, "Unauthorized request from %s (%s)", c->name,
 				   c->hostname);
 			return false;
 		}
@@ -157,12 +149,12 @@ bool receive_request(connection_t *c, char *request) {
 		if(!request_handlers[reqno](c, request)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
-			logger(LOG_ERR, _("Error while processing %s from %s (%s)"),
+			logger(LOG_ERR, "Error while processing %s from %s (%s)",
 				   request_name[reqno], c->name, c->hostname);
 			return false;
 		}
 	} else {
-		logger(LOG_ERR, _("Bogus data received from %s (%s)"),
+		logger(LOG_ERR, "Bogus data received from %s (%s)",
 			   c->name, c->hostname);
 		return false;
 	}
@@ -175,8 +167,6 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 }
 
 static void free_past_request(past_request_t *r) {
-	cp();
-
 	if(r->request)
 		free(r->request);
 
@@ -188,12 +178,10 @@ static struct event past_request_event;
 bool seen_request(char *request) {
 	past_request_t *new, p = {0};
 
-	cp();
-
 	p.request = request;
 
 	if(splay_search(past_request_tree, &p)) {
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Already seen request"));
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Already seen request");
 		return true;
 	} else {
 		new = xmalloc(sizeof *new);
@@ -211,8 +199,6 @@ void age_past_requests(int fd, short events, void *data) {
 	int left = 0, deleted = 0;
 	time_t now = time(NULL);
 
-	cp();
-
 	for(node = past_request_tree->head; node; node = next) {
 		next = node->next;
 		p = node->data;
@@ -224,7 +210,7 @@ void age_past_requests(int fd, short events, void *data) {
 	}
 
 	if(left || deleted)
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Aging past requests: deleted %d, left %d"),
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Aging past requests: deleted %d, left %d",
 			   deleted, left);
 
 	if(left)
@@ -232,16 +218,12 @@ void age_past_requests(int fd, short events, void *data) {
 }
 
 void init_requests(void) {
-	cp();
-
 	past_request_tree = splay_alloc_tree((splay_compare_t) past_request_compare, (splay_action_t) free_past_request);
 
 	timeout_set(&past_request_event, age_past_requests, NULL);
 }
 
 void exit_requests(void) {
-	cp();
-
 	splay_delete_tree(past_request_tree);
 
 	event_del(&past_request_event);

@@ -1,10 +1,20 @@
 Main tinc authors:
-Guus Sliepen <guus@tinc-vpn.org>
-Ivo Timmermans (inactive)
+- Guus Sliepen <guus@tinc-vpn.org>
+- Ivo Timmermans (inactive)
+
+Significant contributions from:
+- Michael Tokarev <mjt@tls.msk.ru>
+- Florian Forster <octo@verplant.org>
+- Grzegorz Dymarek <gregd72002@googlemail.com>
+- Max Rijevski <maksuf@gmail.com>
+- Scott Lamb <slamb@slamb.org>
 
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from
  the syslog 1.3 sources.
+
+* src/bsd/tunemu.c and tunemu.h are by Friedrich Schöller
+  <friedrich.schoeller@gmail.com>
 
 Also some of the macro files in the directory m4, and their
 accompanying files in lib, were taken from GNU fileutils.

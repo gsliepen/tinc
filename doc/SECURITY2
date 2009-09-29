@@ -12,8 +12,6 @@ This is the security documentation for tinc, a Virtual Private Network daemon.
    provided that the entire resulting derived work is distributed
    under the terms of a permission notice identical to this one.
 
-   $Id$
-
 Proposed new authentication scheme
 ----------------------------------
 

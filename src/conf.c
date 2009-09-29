@@ -15,11 +15,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id$
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -55,27 +53,19 @@ static int config_compare(const config_t *a, const config_t *b) {
 }
 
 void init_configuration(splay_tree_t ** config_tree) {
-	cp();
-
 	*config_tree = splay_alloc_tree((splay_compare_t) config_compare, (splay_action_t) free_config);
 }
 
 void exit_configuration(splay_tree_t ** config_tree) {
-	cp();
-
 	splay_delete_tree(*config_tree);
 	*config_tree = NULL;
 }
 
 config_t *new_config(void) {
-	cp();
-
 	return xmalloc_and_zero(sizeof(config_t));
 }
 
 void free_config(config_t *cfg) {
-	cp();
-
 	if(cfg->variable)
 		free(cfg->variable);
 
@@ -89,15 +79,11 @@ void free_config(config_t *cfg) {
 }
 
 void config_add(splay_tree_t *config_tree, config_t *cfg) {
-	cp();
-
 	splay_insert(config_tree, cfg);
 }
 
 config_t *lookup_config(splay_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
-
-	cp();
 
 	cfg.variable = variable;
 	cfg.file = "";
@@ -118,8 +104,6 @@ config_t *lookup_config_next(splay_tree_t *config_tree, const config_t *cfg) {
 	splay_node_t *node;
 	config_t *found;
 
-	cp();
-
 	node = splay_search_node(config_tree, cfg);
 
 	if(node) {
@@ -135,8 +119,6 @@ config_t *lookup_config_next(splay_tree_t *config_tree, const config_t *cfg) {
 }
 
 bool get_config_bool(const config_t *cfg, bool *result) {
-	cp();
-
 	if(!cfg)
 		return false;
 
@@ -148,30 +130,26 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 		return true;
 	}
 
-	logger(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
 bool get_config_int(const config_t *cfg, int *result) {
-	cp();
-
 	if(!cfg)
 		return false;
 
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return true;
 
-	logger(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
 bool get_config_string(const config_t *cfg, char **result) {
-	cp();
-
 	if(!cfg)
 		return false;
 
@@ -183,8 +161,6 @@ bool get_config_string(const config_t *cfg, char **result) {
 bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	struct addrinfo *ai;
 
-	cp();
-
 	if(!cfg)
 		return false;
 
@@ -195,7 +171,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 		return true;
 	}
 
-	logger(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -204,13 +180,11 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 	subnet_t subnet = {0};
 
-	cp();
-
 	if(!cfg)
 		return false;
 
 	if(!str2net(&subnet, cfg->value)) {
-		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -221,7 +195,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof subnet.net.ipv4.address))
 		|| ((subnet.type == SUBNET_IPV6)
 		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof subnet.net.ipv6.address))) {
-		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -316,12 +290,10 @@ int read_config_file(splay_tree_t *config_tree, const char *fname) {
 	config_t *cfg;
 	size_t bufsize;
 
-	cp();
-
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Cannot open config file %s: %s"), fname,
+		logger(LOG_ERR, "Cannot open config file %s: %s", fname,
 			   strerror(errno));
 		return -3;
 	}
@@ -375,7 +347,7 @@ int read_config_file(splay_tree_t *config_tree, const char *fname) {
 
 	
 		if(!*value) {
-			logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+			logger(LOG_ERR, "No value for variable `%s' on line %d while reading config file %s",
 				   variable, lineno, fname);
 			break;
 		}
@@ -399,13 +371,11 @@ bool read_server_config() {
 	char *fname;
 	int x;
 
-	cp();
-
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */
-		logger(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
+		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
 	free(fname);
