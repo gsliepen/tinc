@@ -209,7 +209,7 @@ bool read_packet(vpn_packet_t *packet) {
 					break;
 				default:
 					ifdebug(TRAFFIC) logger(LOG_ERR,
-							   _ ("Unknown IP version %d while reading packet from %s %s"),
+							   "Unknown IP version %d while reading packet from %s %s",
 							   packet->data[14] >> 4, device_info, device);
 					return false;
 			}
@@ -240,7 +240,7 @@ bool read_packet(vpn_packet_t *packet) {
 
 				default:
 					ifdebug(TRAFFIC) logger(LOG_ERR,
-							   _ ("Unknown address family %x while reading packet from %s %s"),
+							   "Unknown address family %x while reading packet from %s %s",
 							   ntohl(type), device_info, device);
 					return false;
 			}
