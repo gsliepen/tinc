@@ -112,7 +112,7 @@ bool add_subnet_h(connection_t *c) {
 
 		for(cfg = lookup_config(c->config_tree, "Subnet"); cfg; cfg = lookup_config_next(c->config_tree, cfg)) {
 			if(!get_config_subnet(cfg, &allowed))
-				return false;
+				continue;
 
 			if(!subnet_compare(&s, allowed))
 				break;
@@ -121,9 +121,9 @@ bool add_subnet_h(connection_t *c) {
 		}
 
 		if(!cfg) {
-			logger(LOG_WARNING, "Unauthorized %s from %s (%s) for %s",
-				"ADD_SUBNET", c->name, c->hostname, subnetstr);
-			return false;
+			logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+					"ADD_SUBNET", c->name, c->hostname, subnetstr);
+			return true;
 		}
 
 		free_subnet(allowed);
