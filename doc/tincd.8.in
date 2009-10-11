@@ -68,7 +68,7 @@ Connect to net
 Generate public/private RSA keypair and exit.
 If
 .Ar BITS
-is omitted, the default length will be 1024 bits.
+is omitted, the default length will be 2048 bits.
 When saving keys to existing files, tinc will not delete the old keys,
 you have to remove them manually.
 .It Fl L, -mlock

@@ -1038,6 +1038,7 @@ example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
+@cindex Subnet weight
 A Subnet can be given a weight to indicate its priority over identical Subnets
 owned by different nodes. The default weight is 10. Lower values indicate
 higher priority. Packets will be sent to the node with the highest priority,
@@ -1045,12 +1046,15 @@ unless that node is not reachable, in which case the node with the next highest
 priority will be tried, and so on.
 
 @cindex TCPonly
-@item TCPonly = <yes|no> (no)
+@item TCPonly = <yes|no> (no) [deprecated]
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
 firewall, or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
+
+Since version 1.0.10, tinc will automatically detect whether communication via
+UDP is possible or not.
 @end table
 
 
@@ -1138,6 +1142,10 @@ this is set to the port number it uses for communication with other tinc daemons
 @cindex SUBNET
 @item SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
+
+@cindex WEIGHT
+@item SUBNET
+When a subnet becomes (un)reachable, this is set to the subnet weight.
 
 @end table
 
@@ -1491,7 +1499,7 @@ Use configuration for net @var{netname}. @xref{Multiple networks}.
 
 @item -K, --generate-keys[=@var{bits}]
 Generate public/private keypair of @var{bits} length. If @var{bits} is not specified,
-1024 is the default. tinc will ask where you want to store the files,
+2048 is the default. tinc will ask where you want to store the files,
 but will default to the configuration directory (you can use the -c or -n option
 in combination with -K). After that, tinc will quit.
 
@@ -1633,7 +1641,7 @@ Do you have a firewall or a NAT device (a masquerading firewall or perhaps an AD
 If so, check that it allows TCP and UDP traffic on port 655.
 If it masquerades and the host running tinc is behind it, make sure that it forwards TCP and UDP traffic to port 655 to the host running tinc.
 You can add @samp{TCPOnly = yes} to your host config file to force tinc to only use a single TCP connection,
-this works through most firewalls and NATs.
+this works through most firewalls and NATs. Since version 1.0.10, tinc will automatically fall back to TCP if direct communication via UDP is not possible.
 
 @end itemize
 
@@ -1732,8 +1740,6 @@ or if that is not the case, try changing the prefix length into /32.
 
 @itemize
 @item If you see this only sporadically, it is harmless and caused by a node sending packets using an old key.
-@item If you see this often and another node is not reachable anymore, then a NAT (masquerading firewall) is changing the source address of UDP packets.
-You can add @samp{TCPOnly = yes} to host configuration files to force all VPN traffic to go over a TCP connection.
 @end itemize
 
 @item Got bad/bogus/unauthorized REQUEST from foo (1.2.3.4 port 12345)

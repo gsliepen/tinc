@@ -427,13 +427,17 @@ higher priority. Packets will be sent to the node with the highest priority,
 unless that node is not reachable, in which case the node with the next highest
 priority will be tried, and so on.
 
-.It Va TCPOnly Li = yes | no Pq no
+.It Va TCPOnly Li = yes | no Pq no Bq obsolete
 If this variable is set to yes,
 then the packets are tunnelled over the TCP connection instead of a UDP connection.
 This is especially useful for those who want to run a tinc daemon
 from behind a masquerading firewall,
 or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
+
+.Pp
+Since version 1.0.10, tinc will automatically detect whether communication via
+UDP is possible or not.
 .El
 
 .Sh SCRIPTS
@@ -515,6 +519,10 @@ When a host becomes (un)reachable, this is set to the port number it uses for co
 
 .It Ev SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
+.El
+
+.It Ev WEIGHT
+When a subnet becomes (un)reachable, this is set to the subnet weight.
 .El
 
 .Sh FILES
