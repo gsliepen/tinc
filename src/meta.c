@@ -225,7 +225,5 @@ bool receive_meta(connection_t *c) {
 		return false;
 	}
 
-	c->last_ping_time = now;
-
 	return true;
 }

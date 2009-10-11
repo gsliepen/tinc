@@ -58,31 +58,57 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 
 #define MAX_SEQNO 1073741824
 
+// mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
+// mtuprobes ==    31: sleep pinginterval seconds
+// mtuprobes ==    32: send 1 burst, sleep pingtimeout second
+// mtuprobes ==    33: no response from other side, restart PMTU discovery process
+
 void send_mtu_probe(node_t *n) {
 	vpn_packet_t packet;
 	int len, i;
+	int timeout = 1;
 	
 	n->mtuprobes++;
 	n->mtuevent = NULL;
 
-	if(!n->status.reachable) {
+	if(!n->status.reachable || !n->status.validkey) {
 		logger(LOG_DEBUG, "Trying to send MTU probe to unreachable node %s (%s)", n->name, n->hostname);
+		n->mtuprobes = 0;
 		return;
+	}
+
+	if(n->mtuprobes > 32) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
+		n->mtuprobes = 1;
+		n->minmtu = 0;
+		n->maxmtu = MTU;
 	}
 
 	if(n->mtuprobes >= 10 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
+		n->mtuprobes = 0;
 		return;
 	}
 
-	for(i = 0; i < 3; i++) {
-		if(n->mtuprobes >= 30 || n->minmtu >= n->maxmtu) {
-			n->mtu = n->minmtu;
-			ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
-			return;
-		}
+	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
+		n->mtu = n->minmtu;
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
+		n->mtuprobes = 31;
+	}
 
-		len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+	if(n->mtuprobes == 31) {
+		timeout = pinginterval;
+		goto end;
+	} else if(n->mtuprobes == 32) {
+		timeout = pingtimeout;
+	}
+
+	for(i = 0; i < 3; i++) {
+		if(n->maxmtu <= n->minmtu)
+			len = n->maxmtu;
+		else
+			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+
 		if(len < 64)
 			len = 64;
 		
@@ -96,10 +122,11 @@ void send_mtu_probe(node_t *n) {
 		send_udppacket(n, &packet);
 	}
 
+end:
 	n->mtuevent = new_event();
 	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
 	n->mtuevent->data = n;
-	n->mtuevent->time = now + 1;
+	n->mtuevent->time = now + timeout;
 	event_add(n->mtuevent);
 }
 
@@ -110,8 +137,12 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		packet->data[0] = 1;
 		send_packet(n, packet);
 	} else {
+		if(len > n->maxmtu)
+			len = n->maxmtu;
 		if(n->minmtu < len)
 			n->minmtu = len;
+		if(n->mtuprobes > 30)
+			n->mtuprobes = 30;
 	}
 }
 
@@ -278,9 +309,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	}
 
 	inpkt->priority = 0;
-
-	if(n->connection)
-		n->connection->last_ping_time = now;
 
 	if(!inpkt->data[12] && !inpkt->data[13])
 		mtu_probe_h(n, inpkt, origlen);
