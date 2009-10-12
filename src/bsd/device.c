@@ -279,7 +279,6 @@ bool read_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s",
 			   packet->len, device_info);
 
-	logger(LOG_INFO, "E:fd_read");
 	return true;
 }
 
