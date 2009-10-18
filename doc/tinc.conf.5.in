@@ -519,7 +519,6 @@ When a host becomes (un)reachable, this is set to the port number it uses for co
 
 .It Ev SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
-.El
 
 .It Ev WEIGHT
 When a subnet becomes (un)reachable, this is set to the subnet weight.

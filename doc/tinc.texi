@@ -1144,7 +1144,7 @@ this is set to the port number it uses for communication with other tinc daemons
 When a subnet becomes (un)reachable, this is set to the subnet.
 
 @cindex WEIGHT
-@item SUBNET
+@item WEIGHT
 When a subnet becomes (un)reachable, this is set to the subnet weight.
 
 @end table
