@@ -1,7 +1,7 @@
-This is the README file for tinc version 1.0.9. Installation
+This is the README file for tinc version 1.0.10. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2008 by:
+tinc is Copyright (C) 1998-2009 by:
 
 Ivo Timmermans,
 Guus Sliepen <guus@tinc-vpn.org>,
@@ -55,7 +55,7 @@ should be changed into "Device", and "Device" should be changed into
 Compatibility
 -------------
 
-Version 1.0.9 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.0.10 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
 
@@ -115,8 +115,7 @@ Support for routing IPv6 packets has been added. Just add Subnet lines with
 IPv6 addresses (without using :: abbreviations) and use ifconfig or ip (from
 the iproute package) to give the virtual network interface corresponding IPv6
 addresses. tinc does not provide autoconfiguration for IPv6 hosts, if you need
-it use radvd or zebra. Tunneling IPv6 packets only works on Linux, FreeBSD,
-Windows and possibly OpenBSD.
+it use radvd or zebra.
 
 It is also possible to make tunnels to other tinc daemons over IPv6 networks,
 if the operating system supports IPv6.  tinc will automatically use both IPv6
