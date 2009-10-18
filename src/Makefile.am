@@ -30,9 +30,7 @@ endif
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a
 
-localedir = $(datadir)/locale
-
-AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALEDIR=\"$(localedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
 
 dist-hook:
 	rm -f `find . -type l`
