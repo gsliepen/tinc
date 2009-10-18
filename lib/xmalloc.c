@@ -34,6 +34,7 @@ void *realloc ();
 void free ();
 #endif
 
+#include "dropin.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE
