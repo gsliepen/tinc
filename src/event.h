@@ -27,7 +27,7 @@ extern avl_tree_t *event_tree;
 
 typedef void (*event_handler_t)(void *);
 
-typedef struct {
+typedef struct event {
 	time_t time;
 	int id;
 	event_handler_t handler;

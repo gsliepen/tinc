@@ -306,18 +306,18 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 } /* int setup_vpn_in_socket */
 
 void retry_outgoing(outgoing_t *outgoing) {
-	event_t *event;
-
 	outgoing->timeout += 5;
 
 	if(outgoing->timeout > maxtimeout)
 		outgoing->timeout = maxtimeout;
 
-	event = new_event();
-	event->handler = (event_handler_t) setup_outgoing_connection;
-	event->time = now + outgoing->timeout;
-	event->data = outgoing;
-	event_add(event);
+	if(outgoing->event)
+		event_del(outgoing->event);
+	outgoing->event = new_event();
+	outgoing->event->handler = (event_handler_t) setup_outgoing_connection;
+	outgoing->event->time = now + outgoing->timeout;
+	outgoing->event->data = outgoing;
+	event_add(outgoing->event);
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE,
 			   "Trying to re-establish outgoing connection in %d seconds",
@@ -338,6 +338,11 @@ void do_outgoing_connection(connection_t *c) {
 	char *address, *port;
 	int result;
 
+	if(!c->outgoing) {
+		logger(LOG_ERR, "do_outgoing_connection() for %s called without c->outgoing", c->name);
+		abort();
+	}
+
 begin:
 	if(!c->outgoing->ai) {
 		if(!c->outgoing->cfg) {
@@ -345,6 +350,7 @@ begin:
 					   c->name);
 			c->status.remove = true;
 			retry_outgoing(c->outgoing);
+			c->outgoing = NULL;
 			return;
 		}
 
@@ -430,6 +436,8 @@ begin:
 void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;
+
+	outgoing->event = NULL;
 
 	n = lookup_node(outgoing->name);
 
@@ -525,18 +533,7 @@ void try_outgoing_connections(void) {
 	static config_t *cfg = NULL;
 	char *name;
 	outgoing_t *outgoing;
-	connection_t *c;
-	avl_node_t *node;
 	
-	if(outgoing_list) {
-		for(node = connection_tree->head; node; node = node->next) {
-			c = node->data;
-			c->outgoing = NULL;
-		}
-
-		list_delete_list(outgoing_list);
-	}
-
 	outgoing_list = list_alloc((list_action_t)free_outgoing);
 			
 	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {

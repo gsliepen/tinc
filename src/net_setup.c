@@ -541,8 +541,15 @@ void close_network_connections(void) {
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
-		c->outgoing = false;
+		c->outgoing = NULL;
 		terminate_connection(c, false);
+	}
+
+	for(list_node_t *node = outgoing_list->head; node; node = node->next) {
+		outgoing_t *outgoing = node->data;
+
+		if(outgoing->event)
+			event_del(outgoing->event);
 	}
 
 	list_delete_list(outgoing_list);

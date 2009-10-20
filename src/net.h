@@ -98,6 +98,7 @@ typedef struct outgoing_t {
 	struct config_t *cfg;
 	struct addrinfo *ai;
 	struct addrinfo *aip;
+	struct event *event;
 } outgoing_t;
 
 extern list_t *outgoing_list;
