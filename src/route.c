@@ -117,6 +117,7 @@ static void learn_mac(mac_t *address) {
 		subnet->type = SUBNET_MAC;
 		subnet->expires = now + macexpire;
 		subnet->net.mac.address = *address;
+		subnet->weight = 10;
 		subnet_add(myself, subnet);
 
 		/* And tell all other tinc daemons it's our MAC */

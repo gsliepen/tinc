@@ -47,9 +47,15 @@ static subnet_t *cache_ipv6_subnet[2];
 static bool cache_ipv6_valid[2];
 static int cache_ipv6_slot;
 
+static mac_t cache_mac_address[2];
+static subnet_t *cache_mac_subnet[2];
+static bool cache_mac_valid[2];
+static int cache_mac_slot;
+
 void subnet_cache_flush() {
 	cache_ipv4_valid[0] = cache_ipv4_valid[1] = false;
 	cache_ipv6_valid[0] = cache_ipv6_valid[1] = false;
+	cache_mac_valid[0] = cache_mac_valid[1] = false;
 }
 
 /* Subnet comparison */
@@ -324,15 +330,46 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 }
 
 subnet_t *lookup_subnet_mac(const mac_t *address) {
-	subnet_t *p, subnet = {0};
+	subnet_t *p, *r = NULL, subnet = {0};
+	avl_node_t *n;
+	int i;
+
+	// Check if this address is cached
+
+	for(i = 0; i < 2; i++) {
+		if(!cache_mac_valid[i])
+			continue;
+		if(!memcmp(address, &cache_mac_address[i], sizeof *address))
+			return cache_mac_subnet[i];
+	}
+
+	// Search all subnets for a matching one
 
 	subnet.type = SUBNET_MAC;
 	subnet.net.mac.address = *address;
 	subnet.owner = NULL;
 
-	p = avl_search(subnet_tree, &subnet);
+	for(n = subnet_tree->head; n; n = n->next) {
+		p = n->data;
+		
+		if(!p || p->type != subnet.type)
+			continue;
 
-	return p;
+		if(!memcmp(address, &p->net.mac.address, sizeof *address)) {
+			r = p;
+			if(p->owner->status.reachable)
+				break;
+		}
+	}
+
+	// Cache the result
+
+	cache_mac_slot = !cache_mac_slot;
+	memcpy(&cache_mac_address[cache_mac_slot], address, sizeof *address);
+	cache_mac_subnet[cache_mac_slot] = r;
+	cache_mac_valid[cache_mac_slot] = true;
+
+	return r;
 }
 
 subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
