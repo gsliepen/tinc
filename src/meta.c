@@ -94,15 +94,13 @@ bool flush_meta(connection_t *c) {
 						   c->name, c->hostname);
 			} else if(errno == EINTR) {
 				continue;
-#ifdef EWOULDBLOCK
-			} else if(errno == EWOULDBLOCK) {
+			} else if(sockwouldblock(sockerrno)) {
 				ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
 						c->outbuflen, c->name, c->hostname);
 				return true;
-#endif
 			} else {
 				logger(LOG_ERR, "Flushing meta data to %s (%s) failed: %s", c->name,
-					   c->hostname, strerror(errno));
+					   c->hostname, sockstrerror(sockerrno));
 			}
 
 			return false;
@@ -149,11 +147,11 @@ bool receive_meta(connection_t *c) {
 		if(!lenin || !errno) {
 			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
 					   c->name, c->hostname);
-		} else if(errno == EINTR)
+		} else if(sockwouldblock(sockerrno))
 			return true;
 		else
 			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
-				   c->name, c->hostname, strerror(errno));
+				   c->name, c->hostname, sockstrerror(sockerrno));
 
 		return false;
 	}

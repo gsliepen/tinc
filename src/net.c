@@ -303,7 +303,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 				else {
 					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 							   "Error while connecting to %s (%s): %s",
-							   c->name, c->hostname, strerror(result));
+							   c->name, c->hostname, sockstrerror(result));
 					closesocket(c->socket);
 					do_outgoing_connection(c);
 					continue;
@@ -369,9 +369,8 @@ int main_loop(void) {
 #endif
 
 		if(r < 0) {
-			if(errno != EINTR && errno != EAGAIN) {
-				logger(LOG_ERR, "Error while waiting for input: %s",
-					   strerror(errno));
+			if(!sockwouldblock(sockerrno)) {
+				logger(LOG_ERR, "Error while waiting for input: %s", sockstrerror(sockerrno));
 				dump_connections();
 				return 1;
 			}

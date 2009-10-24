@@ -36,10 +36,6 @@
 
 #include <assert.h>
 
-#ifdef WSAEINPROGRESS
-#define EINPROGRESS WSAEINPROGRESS
-#endif
-
 /* Needed on Mac OS/X */
 #ifndef SOL_TCP
 #define SOL_TCP IPPROTO_TCP
@@ -68,7 +64,7 @@ static void configure_tcp(connection_t *c) {
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(LOG_ERR, "ioctlsocket for %s: WSA error %d", c->hostname, WSAGetLastError());
+		logger(LOG_ERR, "ioctlsocket for %s: %d", c->hostname, sockstrerror(sockerrno));
 	}
 #endif
 
@@ -157,8 +153,7 @@ static bool bind_to_address(connection_t *c) {
 
 
 	if(status) {
-		logger(LOG_ERR, "Can't bind to %s/tcp: %s", node,
-				strerror(errno));
+		logger(LOG_ERR, "Can't bind to %s/tcp: %s", node, sockstrerror(sockerrno));
 	} else ifdebug(CONNECTIONS) {
 		logger(LOG_DEBUG, "Successfully bound outgoing "
 				"TCP socket to %s", node);
@@ -179,7 +174,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	nfd = socket(sa->sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(nfd < 0) {
-		ifdebug(STATUS) logger(LOG_ERR, "Creating metasocket failed: %s", strerror(errno));
+		ifdebug(STATUS) logger(LOG_ERR, "Creating metasocket failed: %s", sockstrerror(sockerrno));
 		return -1;
 	}
 
@@ -204,7 +199,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
 			closesocket(nfd);
 			logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
-				   strerror(errno));
+				   strerror(sockerrno));
 			return -1;
 		}
 #else
@@ -215,16 +210,14 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
-		logger(LOG_ERR, "Can't bind to %s/tcp: %s", addrstr,
-			   strerror(errno));
+		logger(LOG_ERR, "Can't bind to %s/tcp: %s", addrstr, sockstrerror(sockerrno));
 		free(addrstr);
 		return -1;
 	}
 
 	if(listen(nfd, 3)) {
 		closesocket(nfd);
-		logger(LOG_ERR, "System call `%s' failed: %s", "listen",
-			   strerror(errno));
+		logger(LOG_ERR, "System call `%s' failed: %s", "listen", sockstrerror(sockerrno));
 		return -1;
 	}
 
@@ -239,7 +232,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	nfd = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 
 	if(nfd < 0) {
-		logger(LOG_ERR, "Creating UDP socket failed: %s", strerror(errno));
+		logger(LOG_ERR, "Creating UDP socket failed: %s", sockstrerror(sockerrno));
 		return -1;
 	}
 
@@ -259,8 +252,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		unsigned long arg = 1;
 		if(ioctlsocket(nfd, FIONBIO, &arg) != 0) {
 			closesocket(nfd);
-			logger(LOG_ERR, "Call to `%s' failed: WSA error %d", "ioctlsocket",
-				WSAGetLastError());
+			logger(LOG_ERR, "Call to `%s' failed: %s", "ioctlsocket", sockstrerror(sockerrno));
 			return -1;
 		}
 	}
@@ -301,8 +293,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	if(bind(nfd, &sa->sa, SALEN(sa->sa))) {
 		closesocket(nfd);
 		addrstr = sockaddr2hostname(sa);
-		logger(LOG_ERR, "Can't bind to %s/udp: %s", addrstr,
-			   strerror(errno));
+		logger(LOG_ERR, "Can't bind to %s/udp: %s", addrstr, sockstrerror(sockerrno));
 		free(addrstr);
 		return -1;
 	}
@@ -393,9 +384,7 @@ begin:
 	c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 
 	if(c->socket == -1) {
-		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname,
-				   strerror(errno));
-
+		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
 		goto begin;
 	}
 
@@ -417,18 +406,14 @@ begin:
 	result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
 
 	if(result == -1) {
-		if(errno == EINPROGRESS
-#if defined(WIN32) && !defined(O_NONBLOCK)
-		   || WSAGetLastError() == WSAEWOULDBLOCK
-#endif
-		) {
+		if(sockinprogress(sockerrno)) {
 			c->status.connecting = true;
 			return;
 		}
 
 		closesocket(c->socket);
 
-		ifdebug(CONNECTIONS) logger(LOG_ERR, "%s: %s", c->hostname, strerror(errno));
+		ifdebug(CONNECTIONS) logger(LOG_ERR, "%s: %s", c->hostname, sockstrerror(sockerrno));
 
 		goto begin;
 	}
@@ -493,8 +478,7 @@ bool handle_new_meta_connection(int sock) {
 	fd = accept(sock, &sa.sa, &len);
 
 	if(fd < 0) {
-		logger(LOG_ERR, "Accepting a new connection failed: %s",
-			   strerror(errno));
+		logger(LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
 		return false;
 	}
 

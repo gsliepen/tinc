@@ -46,18 +46,6 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#ifdef HAVE_MINGW
-#include <winerror.h>
-#define EMSGSIZE WSAEMSGSIZE
-#define EAGAIN WSATRY_AGAIN
-#define EINTR WSAEINTR
-#define sockstrerror(x) winerror(x)
-#define sockerrno WSAGetLastError()
-#else
-#define sockstrerror(x) strerror(x)
-#define sockerrno errno
-#endif
-
 int keylifetime = 0;
 int keyexpires = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
@@ -457,8 +445,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		if(sockerrno == EMSGSIZE) {
+	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa)) < 0 && !sockwouldblock(sockerrno)) {
+		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
 			if(n->mtu >= origlen)
@@ -570,7 +558,7 @@ void handle_incoming_vpn_data(int sock) {
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len < 0) {
-		if(sockerrno != EAGAIN && sockerrno != EINTR)
+		if(!sockwouldblock(sockerrno))
 			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
 		return;
 	}
