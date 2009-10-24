@@ -135,7 +135,7 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 	if(!packet->data[0]) {
 		packet->data[0] = 1;
-		send_packet(n, packet);
+		send_udppacket(n, packet);
 	} else {
 		if(len > n->maxmtu)
 			len = n->maxmtu;
