@@ -162,7 +162,7 @@ void dump_nodes(void) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		logger(LOG_DEBUG, " %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s pmtu %d (min %d max %d)",
+		logger(LOG_DEBUG, " %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s pmtu %d (min %d max %d)",
 			   n->name, n->hostname, n->outcipher ? n->outcipher->nid : 0,
 			   n->outdigest ? n->outdigest->type : 0, n->outmaclength, n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",

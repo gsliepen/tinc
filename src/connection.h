@@ -56,7 +56,7 @@ typedef struct connection_t {
 	int protocol_version;		/* used protocol */
 
 	int socket;					/* socket used for this connection */
-	long int options;			/* options for this connection */
+	uint32_t options;			/* options for this connection */
 	connection_status_t status;	/* status info */
 	int estimated_weight;		/* estimation for the weight of the edge for this connection */
 	struct timeval start;		/* time this connection was started, used for above estimation */

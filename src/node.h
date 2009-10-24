@@ -39,7 +39,7 @@ typedef struct node_status_t {
 
 typedef struct node_t {
 	char *name;				/* name of this node */
-	long int options;			/* options turned on for this node */
+	uint32_t options;			/* options turned on for this node */
 
 	sockaddr_t address;			/* his real (internet) ip to send UDP packets to */
 	char *hostname;				/* the hostname of its real ip */

@@ -31,7 +31,7 @@ typedef struct edge_t {
 	struct node_t *to;
 	sockaddr_t address;
 
-	long int options;			/* options turned on for this edge */
+	uint32_t options;			/* options turned on for this edge */
 	int weight;					/* weight of this edge */
 
 	struct connection_t *connection;	/* connection associated with this edge, if available */
