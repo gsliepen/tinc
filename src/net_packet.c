@@ -91,6 +91,10 @@ void send_mtu_probe(node_t *n) {
 	}
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
+		if(n->minmtu > n->maxmtu)
+			n->minmtu = n->maxmtu;
+		else
+			n->maxmtu = n->minmtu;
 		n->mtu = n->minmtu;
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
 		n->mtuprobes = 31;
