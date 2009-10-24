@@ -369,10 +369,13 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				"Packet for %s (%s) larger than minimum MTU, forwarding via TCP",
-				n->name, n->hostname);
+				"Packet for %s (%s) larger than minimum MTU, forwarding via %s",
+				n->name, n->hostname, n != n->nexthop ? n->nexthop->name : "TCP");
 
-		send_tcppacket(n->nexthop->connection, origpkt);
+		if(n != n->nexthop)
+			send_packet(n->nexthop, origpkt);
+		else
+			send_tcppacket(n->nexthop->connection, origpkt);
 
 		return;
 	}
