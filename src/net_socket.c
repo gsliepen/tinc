@@ -279,6 +279,11 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = IP_PMTUDISC_DO;
 		setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option));
 	}
+#elif defined(IPPROTO_IP) && defined(IP_DONTFRAGMENT)
+	if(myself->options & OPTION_PMTU_DISCOVERY) {
+		option = 1;
+		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, &option, sizeof(option));
+	}
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
