@@ -521,12 +521,16 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	avl_node_t *node;
 	edge_t *e;
 	node_t *n = NULL;
+	static time_t last_hard_try = 0;
 
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 
-		if(sockaddrcmp_noport(from, &e->address))
-			continue;
+		if(sockaddrcmp_noport(from, &e->address)) {
+			if(last_hard_try == now)
+				continue;
+			last_hard_try = now;
+		}
 
 		if(!n)
 			n = e->to;
