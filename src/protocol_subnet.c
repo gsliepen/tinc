@@ -45,7 +45,7 @@ bool add_subnet_h(connection_t *c) {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
-	subnet_t s = {0}, *new;
+	subnet_t s = {0}, *new, *old;
 
 	if(sscanf(c->buffer, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ADD_SUBNET", c->name,
@@ -141,6 +141,11 @@ bool add_subnet_h(connection_t *c) {
 
 	if(!tunnelserver)
 		forward_request(c);
+
+	/* Fast handoff of roaming MAC addresses */
+
+	if(s.type == SUBNET_MAC && owner != myself && (old = lookup_subnet(myself, &s)) && old->expires)
+		old->expires = now;
 
 	return true;
 }
