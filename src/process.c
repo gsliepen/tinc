@@ -103,13 +103,18 @@ bool install_service(void) {
 			command, NULL, NULL, NULL, NULL, NULL);
 	
 	if(!service) {
-		logger(LOG_ERR, "Could not create %s service: %s", identname, winerror(GetLastError()));
-		return false;
+		DWORD lasterror = GetLastError();
+		logger(LOG_ERR, "Could not create %s service: %s", identname, winerror(lasterror));
+		if(lasterror != ERROR_SERVICE_EXISTS)
+			return false;
 	}
 
-	ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
-
-	logger(LOG_INFO, "%s service installed", identname);
+	if(service) {
+		ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
+		logger(LOG_INFO, "%s service installed", identname);
+	} else {
+		service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
+	}
 
 	if(!StartService(service, 0, NULL))
 		logger(LOG_WARNING, "Could not start %s service: %s", identname, winerror(GetLastError()));
