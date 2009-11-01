@@ -1,6 +1,19 @@
-Version 1.0.11               Not released yet.
+Version 1.0.11               Nov  1 2009
 
  * Fixed potential crash when the HUP signal is sent.
+
+ * Fixes handling of weighted Subnets in switch and hub modes, preventing
+   unnecessary broadcasts.
+
+ * Works around a MinGW bug that caused packets to Windows nodes to always be
+   sent via TCP.
+
+ * Improvements to the PMTU discovery code, especially on Windows.
+
+ * Use UDP again in certain cases where 1.0.10 was too conservative and fell
+   back to TCP unnecessarily.
+
+ * Allow fast roaming of hosts to other nodes in a switched VPN.
 
 Version 1.0.10               Oct 18 2009
 
