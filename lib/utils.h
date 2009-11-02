@@ -27,6 +27,17 @@ extern void bin2hex(char *src, char *dst, int length);
 #ifdef HAVE_MINGW
 extern const char *winerror(int);
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
+#define sockerrno WSAGetLastError()
+#define sockstrerror(x) winerror(x)
+#define sockwouldblock(x) ((x) == WSAEWOULDBLOCK || (x) == WSAEINTR)
+#define sockmsgsize(x) ((x) == WSAEMSGSIZE)
+#define sockinprogress(x) ((x) == WSAEINPROGRESS || (x) == WSAEWOULDBLOCK)
+#else
+#define sockerrno errno
+#define sockstrerror(x) strerror(x)
+#define sockwouldblock(x) ((x) == EWOULDBLOCK || (x) == EINTR)
+#define sockmsgsize(x) ((x) == EMSGSIZE)
+#define sockinprogress(x) ((x) == EINPROGRESS)
 #endif
 
 extern unsigned int bitfield_to_int(void *bitfield, size_t size);

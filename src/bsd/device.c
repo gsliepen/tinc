@@ -150,6 +150,17 @@ bool setup_device(void) {
 			if(routing_mode == RMODE_ROUTER)
 				overwrite_mac = true;
 			device_info = "Generic BSD tap device";
+#ifdef TAPGIFNAME
+			{
+				struct ifreq ifr;
+				if(ioctl(device_fd, TAPGIFNAME, (void*)&ifr) == 0) {
+					if(iface)
+						free(iface);
+					iface = xstrdup(ifr.ifr_name);
+				}
+			}
+			
+#endif
 			break;
 #ifdef HAVE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
@@ -209,7 +220,7 @@ bool read_packet(vpn_packet_t *packet) {
 					break;
 				default:
 					ifdebug(TRAFFIC) logger(LOG_ERR,
-							   _ ("Unknown IP version %d while reading packet from %s %s"),
+							   "Unknown IP version %d while reading packet from %s %s",
 							   packet->data[14] >> 4, device_info, device);
 					return false;
 			}
@@ -240,7 +251,7 @@ bool read_packet(vpn_packet_t *packet) {
 
 				default:
 					ifdebug(TRAFFIC) logger(LOG_ERR,
-							   _ ("Unknown address family %x while reading packet from %s %s"),
+							   "Unknown address family %x while reading packet from %s %s",
 							   ntohl(type), device_info, device);
 					return false;
 			}
@@ -268,7 +279,6 @@ bool read_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s",
 			   packet->len, device_info);
 
-	logger(LOG_INFO, "E:fd_read");
 	return true;
 }
 

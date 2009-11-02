@@ -6,7 +6,7 @@ SUBDIRS =  m4 lib src doc
 
 ACLOCAL_AMFLAGS = -I m4 
 
-EXTRA_DIST = config.rpath mkinstalldirs have.h system.h COPYING.README depcomp
+EXTRA_DIST = have.h system.h COPYING.README
 
 ChangeLog:
 	git log > ChangeLog

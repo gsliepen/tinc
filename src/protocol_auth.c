@@ -348,7 +348,7 @@ bool send_ack(connection_t *c) {
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
 
-	return send_request(c, "%d %s %d %lx", ACK, myport, c->estimated_weight, c->options);
+	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, c->options);
 }
 
 static void send_everything(connection_t *c) {
@@ -387,10 +387,10 @@ bool ack_h(connection_t *c, char *request) {
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress, *dummy;
 	int weight, mtu;
-	long int options;
+	uint32_t options;
 	node_t *n;
 
-	if(sscanf(request, "%*d " MAX_STRING " %d %lx", hisport, &weight, &options) != 3) {
+	if(sscanf(request, "%*d " MAX_STRING " %d %x", hisport, &weight, &options) != 3) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name,
 			   c->hostname);
 		return false;

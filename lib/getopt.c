@@ -85,8 +85,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define getpid() GetCurrentProcessId()
 #endif
 
-#include "gettext.h"
-
 /* This version of `getopt' appears to the caller like standard Unix `getopt'
    but it behaves differently for the user, since it allows the user
    to intersperse the options with the other arguments.

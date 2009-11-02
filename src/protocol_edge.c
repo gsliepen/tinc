@@ -41,7 +41,7 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 
 	sockaddr2str(&e->address, &address, &port);
 
-	x = send_request(c, "%d %x %s %s %s %s %lx %d", ADD_EDGE, rand(),
+	x = send_request(c, "%d %x %s %s %s %s %x %d", ADD_EDGE, rand(),
 					 e->from->name, e->to->name, address, port,
 					 e->options, e->weight);
 	free(address);
@@ -58,10 +58,10 @@ bool add_edge_h(connection_t *c, char *request) {
 	char to_address[MAX_STRING_SIZE];
 	char to_port[MAX_STRING_SIZE];
 	sockaddr_t address;
-	long int options;
+	uint32_t options;
 	int weight;
 
-	if(sscanf(request, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %lx %d",
+	if(sscanf(request, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %x %d",
 			  from_name, to_name, to_address, to_port, &options, &weight) != 6) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ADD_EDGE", c->name,
 			   c->hostname);
@@ -70,13 +70,7 @@ bool add_edge_h(connection_t *c, char *request) {
 
 	/* Check if names are valid */
 
-	if(!check_id(from_name)) {
-		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ADD_EDGE", c->name,
-			   c->hostname, "invalid name");
-		return false;
-	}
-
-	if(!check_id(to_name)) {
+	if(!check_id(from_name) || !check_id(to_name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ADD_EDGE", c->name,
 			   c->hostname, "invalid name");
 		return false;
@@ -186,13 +180,7 @@ bool del_edge_h(connection_t *c, char *request) {
 
 	/* Check if names are valid */
 
-	if(!check_id(from_name)) {
-		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "DEL_EDGE", c->name,
-			   c->hostname, "invalid name");
-		return false;
-	}
-
-	if(!check_id(to_name)) {
+	if(!check_id(from_name) || !check_id(to_name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "DEL_EDGE", c->name,
 			   c->hostname, "invalid name");
 		return false;

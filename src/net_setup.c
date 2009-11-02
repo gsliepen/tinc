@@ -293,7 +293,7 @@ bool setup_myself(void) {
 	/* Generate packet encryption key */
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
-		cipher = xstrdup("aes256");
+		cipher = xstrdup("blowfish");
 
 	if(!cipher_open_by_name(&myself->incipher, cipher)) {
 		logger(LOG_ERR, "Unrecognized cipher type!");
@@ -308,7 +308,7 @@ bool setup_myself(void) {
 	/* Check if we want to use message authentication codes... */
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
-		digest = xstrdup("sha256");
+		digest = xstrdup("sha1");
 
 	int maclength = 4;
 	get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &maclength);

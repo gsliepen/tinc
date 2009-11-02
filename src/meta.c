@@ -92,7 +92,14 @@ bool receive_meta(connection_t *c) {
 	inlen = recv(c->socket, inbuf, sizeof inbuf, 0);
 
 	if(inlen <= 0) {
-		logger(LOG_ERR, "Receive callback called for %s (%s) but no data to receive: %s", c->name, c->hostname, strerror(errno));
+		if(!inlen || !errno) {
+			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
+					   c->name, c->hostname);
+		} else if(sockwouldblock(sockerrno))
+			return true;
+		else
+			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
+				   c->name, c->hostname, sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -151,8 +158,6 @@ bool receive_meta(connection_t *c) {
 			}
 		}
 	} while(inlen);
-
-	c->last_ping_time = time(NULL);
 
 	return true;
 }

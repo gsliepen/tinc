@@ -45,7 +45,7 @@ bool add_subnet_h(connection_t *c, char *request) {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
-	subnet_t s = {0}, *new;
+	subnet_t s = {0}, *new, *old;
 
 	if(sscanf(request, "%*d %*x " MAX_STRING " " MAX_STRING, name, subnetstr) != 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ADD_SUBNET", c->name,
@@ -112,7 +112,7 @@ bool add_subnet_h(connection_t *c, char *request) {
 
 		for(cfg = lookup_config(c->config_tree, "Subnet"); cfg; cfg = lookup_config_next(c->config_tree, cfg)) {
 			if(!get_config_subnet(cfg, &allowed))
-				return false;
+				continue;
 
 			if(!subnet_compare(&s, allowed))
 				break;
@@ -121,9 +121,9 @@ bool add_subnet_h(connection_t *c, char *request) {
 		}
 
 		if(!cfg) {
-			logger(LOG_WARNING, "Unauthorized %s from %s (%s) for %s",
-				"ADD_SUBNET", c->name, c->hostname, subnetstr);
-			return false;
+			logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+					"ADD_SUBNET", c->name, c->hostname, subnetstr);
+			return true;
 		}
 
 		free_subnet(allowed);
@@ -141,6 +141,11 @@ bool add_subnet_h(connection_t *c, char *request) {
 
 	if(!tunnelserver)
 		forward_request(c, request);
+
+	/* Fast handoff of roaming MAC addresses */
+
+	if(s.type == SUBNET_MAC && owner != myself && (old = lookup_subnet(myself, &s)) && old->expires)
+		old->expires = 1;
 
 	return true;
 }

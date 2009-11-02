@@ -131,7 +131,7 @@ bool read_packet(vpn_packet_t *packet) {
 			break;
 		default:
 			ifdebug(TRAFFIC) logger(LOG_ERR,
-					   _ ("Unknown IP version %d while reading packet from %s %s"),
+					   "Unknown IP version %d while reading packet from %s %s",
 					   packet->data[14] >> 4, device_info, device);
 			return false;
 	}

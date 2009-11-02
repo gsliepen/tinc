@@ -208,7 +208,7 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 		else {
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 					   "Error while connecting to %s (%s): %s",
-					   c->name, c->hostname, strerror(result));
+					   c->name, c->hostname, sockstrerror(result));
 			closesocket(c->socket);
 			do_outgoing_connection(c);
 			return;

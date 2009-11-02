@@ -4,20 +4,39 @@ Version 1.1-cvs              Work in progress
 
  * Use splay trees instead of AVL trees.
 
-Version 1.0.10               not yet released
+Version 1.0.11               Nov  1 2009
+
+ * Fixed potential crash when the HUP signal is sent.
+
+ * Fixes handling of weighted Subnets in switch and hub modes, preventing
+   unnecessary broadcasts.
+
+ * Works around a MinGW bug that caused packets to Windows nodes to always be
+   sent via TCP.
+
+ * Improvements to the PMTU discovery code, especially on Windows.
+
+ * Use UDP again in certain cases where 1.0.10 was too conservative and fell
+   back to TCP unnecessarily.
+
+ * Allow fast roaming of hosts to other nodes in a switched VPN.
+
+Version 1.0.10               Oct 18 2009
 
  * Fixed potential crashes during shutdown and (in rare conditions) when other
    nodes disconnected from the VPN.
 
  * Improved NAT handling: tinc now copes with mangled port numbers, and will
    automatically fall back to TCP if direct UDP connection between nodes is not
-   possible.
+   possible. The TCPOnly option should not have to be used anymore.
 
  * Allow configuration files with CRLF line endings to be read on UNIX.
 
- * Disable old RSA keys when generating new ones.
+ * Disable old RSA keys when generating new ones, and raise the default size of
+   new RSA keys to 2048 bits.
 
- * Many fixes in the path MTU discovery code.
+ * Many fixes in the path MTU discovery code, especially when Compression is
+   being used.
 
  * Tinc can now drop privileges and/or chroot itself.
 

@@ -42,10 +42,6 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#ifdef WSAEMSGSIZE
-#define EMSGSIZE WSAEMSGSIZE
-#endif
-
 int keylifetime = 0;
 int keyexpires = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
@@ -54,31 +50,61 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 
 #define MAX_SEQNO 1073741824
 
+// mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
+// mtuprobes ==    31: sleep pinginterval seconds
+// mtuprobes ==    32: send 1 burst, sleep pingtimeout second
+// mtuprobes ==    33: no response from other side, restart PMTU discovery process
+
 static void send_mtu_probe_handler(int fd, short events, void *data) {
 	node_t *n = data;
 	vpn_packet_t packet;
 	int len, i;
+	int timeout = 1;
 	
 	n->mtuprobes++;
 
-	if(!n->status.reachable) {
-		logger(LOG_DEBUG, "Trying to send MTU probe to unreachable node %s (%s)", n->name, n->hostname);
+	if(!n->status.reachable || !n->status.validkey) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
+		n->mtuprobes = 0;
 		return;
+	}
+
+	if(n->mtuprobes > 32) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
+		n->mtuprobes = 1;
+		n->minmtu = 0;
+		n->maxmtu = MTU;
 	}
 
 	if(n->mtuprobes >= 10 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
+		n->mtuprobes = 0;
 		return;
 	}
 
-	for(i = 0; i < 3; i++) {
-		if(n->mtuprobes >= 30 || n->minmtu >= n->maxmtu) {
-			n->mtu = n->minmtu;
-			ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
-			return;
-		}
+	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
+		if(n->minmtu > n->maxmtu)
+			n->minmtu = n->maxmtu;
+		else
+			n->maxmtu = n->minmtu;
+		n->mtu = n->minmtu;
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
+		n->mtuprobes = 31;
+	}
 
-		len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+	if(n->mtuprobes == 31) {
+		timeout = pinginterval;
+		goto end;
+	} else if(n->mtuprobes == 32) {
+		timeout = pingtimeout;
+	}
+
+	for(i = 0; i < 3; i++) {
+		if(n->maxmtu <= n->minmtu)
+			len = n->maxmtu;
+		else
+			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+
 		if(len < 64)
 			len = 64;
 		
@@ -92,7 +118,8 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		send_udppacket(n, &packet);
 	}
 
-	event_add(&n->mtuevent, &(struct timeval){1, 0});
+end:
+	event_add(&n->mtuevent, &(struct timeval){timeout, 0});
 }
 
 void send_mtu_probe(node_t *n) {
@@ -106,10 +133,14 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 	if(!packet->data[0]) {
 		packet->data[0] = 1;
-		send_packet(n, packet);
+		send_udppacket(n, packet);
 	} else {
+		if(len > n->maxmtu)
+			len = n->maxmtu;
 		if(n->minmtu < len)
 			n->minmtu = len;
+		if(n->mtuprobes > 30)
+			n->mtuprobes = 30;
 	}
 }
 
@@ -317,10 +348,13 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				"Packet for %s (%s) larger than minimum MTU, forwarding via TCP",
-				n->name, n->hostname);
+				"Packet for %s (%s) larger than minimum MTU, forwarding via %s",
+				n->name, n->hostname, n != n->nexthop ? n->nexthop->name : "TCP");
 
-		send_tcppacket(n->nexthop->connection, origpkt);
+		if(n != n->nexthop)
+			send_packet(n->nexthop, origpkt);
+		else
+			send_tcppacket(n->nexthop->connection, origpkt);
 
 		return;
 	}
@@ -390,14 +424,14 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		if(errno == EMSGSIZE) {
+	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa)) < 0 && !sockwouldblock(sockerrno)) {
+		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
 		} else
-			logger(LOG_ERR, "Error sending packet to %s (%s): %s", n->name, n->hostname, strerror(errno));
+			logger(LOG_ERR, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
 	}
 
 end:
@@ -469,12 +503,17 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	splay_node_t *node;
 	edge_t *e;
 	node_t *n = NULL;
+	static time_t last_hard_try = 0;
+	time_t now = time(NULL);
 
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 
-		if(sockaddrcmp_noport(from, &e->address))
-			continue;
+		if(sockaddrcmp_noport(from, &e->address)) {
+			if(last_hard_try == now)
+				continue;
+			last_hard_try = now;
+		}
 
 		if(!n)
 			n = e->to;
@@ -499,8 +538,8 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len < 0) {
-		if(errno != EAGAIN && errno != EINTR)
-			logger(LOG_ERR, "Receiving packet failed: %s", strerror(errno));
+		if(!sockwouldblock(sockerrno))
+			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
 		return;
 	}
 
