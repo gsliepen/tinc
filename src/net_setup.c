@@ -349,12 +349,14 @@ bool setup_myself(void) {
 	if(!setup_device())
 		return false;
 
-	event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
+	if(device_fd >= 0) {
+		event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
 
-	if (event_add(&device_ev, NULL) < 0) {
-		logger(LOG_ERR, "event_add failed: %s", strerror(errno));
-		close_device();
-		return false;
+		if (event_add(&device_ev, NULL) < 0) {
+			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+			close_device();
+			return false;
+		}
 	}
 
 	/* Run tinc-up script to further initialize the tap interface */
