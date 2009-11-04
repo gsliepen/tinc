@@ -160,7 +160,7 @@ int dump_nodes(struct evbuffer *out) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		if(evbuffer_add_printf(out, " %s at %s cipher %d digest %d maclength %d compression %d options %lx status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n",
+		if(evbuffer_add_printf(out, " %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n",
 			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",

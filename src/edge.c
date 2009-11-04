@@ -117,7 +117,7 @@ int dump_edges(struct evbuffer *out) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
 			if(evbuffer_add_printf(out,
-								   " %s to %s at %s options %lx weight %d\n",
+								   " %s to %s at %s options %x weight %d\n",
 								   e->from->name, e->to->name, address,
 								   e->options, e->weight) == -1) {
 				free(address);

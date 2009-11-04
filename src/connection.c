@@ -98,7 +98,7 @@ int dump_connections(struct evbuffer *out) {
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		if(evbuffer_add_printf(out,
-				   " %s at %s options %lx socket %d status %04x\n",
+				   " %s at %s options %x socket %d status %04x\n",
 				   c->name, c->hostname, c->options, c->socket,
 				   bitfield_to_int(&c->status, sizeof c->status)) == -1)
 			return errno;
