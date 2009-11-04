@@ -73,18 +73,25 @@ static bool digesttonid(int algo, int *nid) {
 	return false;
 }
 
-static bool digest_open(digest_t *digest, int algo) {
+static bool digest_open(digest_t *digest, int algo, int maclength) {
 	if(!digesttonid(algo, &digest->nid)) {
 		logger(LOG_DEBUG, "Digest %d has no corresponding nid!", algo);
 		return false;
 	}
 
-	digest->len = gcry_md_get_algo_dlen(algo);
+	unsigned int len = gcry_md_get_algo_dlen(algo);
+
+	if(maclength > len || maclength < 0)
+		digest->maclength = len;
+	else
+		digest->maclength = maclength;
+	
+	digest->algo = algo;
 
 	return true;
 }
 
-bool digest_open_by_name(digest_t *digest, const char *name) {
+bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
 	int algo;
 
 	if(!nametodigest(name, &algo)) {
@@ -92,10 +99,10 @@ bool digest_open_by_name(digest_t *digest, const char *name) {
 		return false;
 	}
 
-	return digest_open(digest, algo);
+	return digest_open(digest, algo, maclength);
 }
 
-bool digest_open_by_nid(digest_t *digest, int nid) {
+bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
 	int algo;
 
 	if(!nidtodigest(nid, &algo)) {
@@ -103,26 +110,32 @@ bool digest_open_by_nid(digest_t *digest, int nid) {
 		return false;
 	}
 
-	return digest_open(digest, algo);
+	return digest_open(digest, algo, maclength);
 }
 
-bool digest_open_sha1(digest_t *digest) {
-	return digest_open(digest, GCRY_MD_SHA1);
+bool digest_open_sha1(digest_t *digest, int maclength) {
+	return digest_open(digest, GCRY_MD_SHA1, maclength);
 }
 
 void digest_close(digest_t *digest) {
 }
 
 bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {
-	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
+	unsigned int len = gcry_md_get_algo_dlen(digest->algo);
+	char tmpdata[len];
+
+	gcry_md_hash_buffer(digest->algo, tmpdata, indata, inlen);
+	memcpy(outdata, tmpdata, digest->maclength);
+
 	return true;
 }
 
 bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
-	char outdata[digest->len];
+	unsigned int len = gcry_md_get_algo_dlen(digest->algo);
+	char outdata[len];
 
 	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
-	return !memcmp(cmpdata, outdata, digest->len);
+	return !memcmp(cmpdata, outdata, digest->maclength);
 }
 
 int digest_get_nid(const digest_t *digest) {
@@ -130,7 +143,7 @@ int digest_get_nid(const digest_t *digest) {
 }
 
 size_t digest_length(const digest_t *digest) {
-	return digest->len;
+	return digest->maclength;
 }
 
 bool digest_active(const digest_t *digest) {
