@@ -32,6 +32,7 @@ typedef struct cipher {
 	int nid;
 	uint16_t keylen;
 	uint16_t blklen;
+	bool padding;
 } cipher_t;
 
 extern bool cipher_open_by_name(struct cipher *, const char *);

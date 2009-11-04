@@ -107,11 +107,9 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	}
 
 	cipher->keylen = gcry_cipher_get_algo_keylen(algo);
-	if(mode == GCRY_CIPHER_MODE_ECB || mode == GCRY_CIPHER_MODE_CBC)
-		cipher->blklen = gcry_cipher_get_algo_blklen(algo);
-	else
-		cipher->blklen = 0;
+	cipher->blklen = gcry_cipher_get_algo_blklen(algo);
 	cipher->key = xmalloc(cipher->keylen + cipher->blklen);
+	cipher->padding = mode == GCRY_CIPHER_MODE_ECB || mode == GCRY_CIPHER_MODE_CBC;
 
 	return true;
 }
@@ -190,62 +188,67 @@ bool cipher_regenerate_key(cipher_t *cipher, bool encrypt) {
 	return true;
 }
 
-static bool cipher_add_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *outlen) {
-	size_t reqlen;
-
-	if(cipher->blklen == 1) {
-		*outlen = inlen;
-		return true;
-	}
-
-	reqlen = ((inlen + 1) / cipher->blklen) * cipher->blklen;
-	if(reqlen > *outlen)
-		return false;
-
-	// add padding
-
-	*outlen = reqlen;
-	return true;
-}
-
-static bool cipher_remove_padding(cipher_t *cipher, void *indata, size_t inlen, size_t *outlen) {
-	size_t origlen;
-
-	if(cipher->blklen == 1) {
-		*outlen = inlen;
-		return true;
-	}
-
-	if(inlen % cipher->blklen)
-		return false;
-
-	// check and remove padding
-
-	*outlen = origlen;
-	return true;
-}
-
 bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
+	uint8_t pad[cipher->blklen];
 
-	// To be fixed
+	if(cipher->padding) {
+		if(!oneshot)
+			return false;
 
-	if((err = gcry_cipher_encrypt(cipher->handle, outdata, inlen, indata, inlen))) {
+		size_t reqlen = ((inlen + 1) / cipher->blklen) * cipher->blklen;
+		uint8_t padbyte = reqlen - inlen;
+		inlen = reqlen - cipher->blklen;
+
+		for(int i = 0; i < cipher->blklen; i++)
+			if(i < cipher->blklen - padbyte)
+				pad[i] = ((uint8_t *)indata)[inlen + i];
+			else
+				pad[i] = padbyte;
+	}
+	
+	if((err = gcry_cipher_encrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
 		logger(LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
 		return false;
 	}
 
+	if(cipher->padding) {
+		if((err = gcry_cipher_encrypt(cipher->handle, outdata + inlen, cipher->blklen, pad, cipher->blklen))) {
+			logger(LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
+			return false;
+		}
+
+		inlen += cipher->blklen;
+	}
+
+	*outlen = inlen;
 	return true;
 }
 
 bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
 
-	// To be fixed
-
-	if((err = gcry_cipher_decrypt(cipher->handle, outdata, inlen, indata, inlen))) {
+	if((err = gcry_cipher_decrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
 		logger(LOG_ERR, "Error while decrypting: %s", gcry_strerror(err));
 		return false;
+	}
+
+	if(cipher->padding) {
+		if(!oneshot)
+			return false;
+
+		uint8_t padbyte = ((uint8_t *)outdata)[inlen - 1];
+
+		if(padbyte == 0 || padbyte > cipher->blklen || padbyte > inlen)
+			return false;
+
+		size_t origlen = inlen - padbyte;
+
+		for(int i = inlen - 1; i >= origlen; i--)
+			if(((uint8_t *)indata)[i] != padbyte)
+				return false;
+
+		*outlen = origlen;
 	}
 
 	return true;
