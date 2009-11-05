@@ -32,12 +32,14 @@ extern const char *winerror(int);
 #define sockwouldblock(x) ((x) == WSAEWOULDBLOCK || (x) == WSAEINTR)
 #define sockmsgsize(x) ((x) == WSAEMSGSIZE)
 #define sockinprogress(x) ((x) == WSAEINPROGRESS || (x) == WSAEWOULDBLOCK)
+#define sockinuse(x) ((x) == WSAEADDRINUSE)
 #else
 #define sockerrno errno
 #define sockstrerror(x) strerror(x)
 #define sockwouldblock(x) ((x) == EWOULDBLOCK || (x) == EINTR)
 #define sockmsgsize(x) ((x) == EMSGSIZE)
 #define sockinprogress(x) ((x) == EINPROGRESS)
+#define sockinuse(x) ((x) == EADDRINUSE)
 #endif
 
 extern unsigned int bitfield_to_int(void *bitfield, size_t size);

@@ -307,12 +307,19 @@ int main_loop(void) {
 
 	timeout_set(&timeout_event, timeout_handler, &timeout_event);
 	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
+
+#ifdef SIGHUP
 	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_event, NULL);
+#endif
+#ifdef SIGTERM
 	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
 	signal_add(&sigterm_event, NULL);
+#endif
+#ifdef SIGQUIT
 	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
 	signal_add(&sigquit_event, NULL);
+#endif
 
 	if(event_loop(0) < 0) {
 		logger(LOG_ERR, "Error while waiting for input: %s", strerror(errno));

@@ -100,6 +100,10 @@
 #include <sys/uio.h>
 #endif
 
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
    and FreeBSD wants these lines below the rest. */
 

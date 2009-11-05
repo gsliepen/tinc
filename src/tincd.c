@@ -345,6 +345,13 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
+#ifdef HAVE_MINGW
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
+		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		return 1;
+	}
+#endif
+
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
 	if(!event_init()) {
@@ -373,11 +380,6 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef HAVE_MINGW
-	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
-		return 1;
-	}
-
 	if(!do_detach || !init_service())
 		return main2(argc, argv);
 	else

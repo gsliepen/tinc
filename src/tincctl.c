@@ -19,13 +19,13 @@
 
 #include "system.h"
 
-#include <sys/un.h>
 #include <getopt.h>
 
 #include "xalloc.h"
 #include "protocol.h"
 #include "control_common.h"
 #include "rsagen.h"
+#include "utils.h"
 
 /* The name this program was run with. */
 char *program_name = NULL;
@@ -46,6 +46,10 @@ static char *identname = NULL;				/* program name for syslog */
 static char *controlsocketname = NULL;			/* pid file location */
 char *netname = NULL;
 char *confbase = NULL;
+
+#ifdef HAVE_MINGW
+static struct WSAData wsa_state;
+#endif
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -261,8 +265,6 @@ static void make_names(void) {
 #ifdef HAVE_MINGW
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
-			if(!logfilename)
-				xasprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
 				if(netname)
 					xasprintf(&confbase, "%s/%s", installdir, netname);
@@ -300,7 +302,11 @@ static int fullread(int fd, void *data, size_t datalen) {
 		else if(rv == -1)
 			return rv;
 		else if(rv == 0) {
+#ifdef HAVE_MINGW
+			errno = 0;
+#else
 			errno = ENODATA;
+#endif
 			return -1;
 		}
 		len += rv;
@@ -317,23 +323,29 @@ static int send_ctl_request(int fd, enum request_type type,
 						   size_t *indatalen_p) {
 	tinc_ctl_request_t req;
 	int rv;
-	struct iovec vector[2] = {
-		{&req, sizeof req},
-		{(void*) outdata, outdatalen}
-	};
 	void *indata;
-
-	if(res_errno_p == NULL)
-		return -1;
 
 	memset(&req, 0, sizeof req);
 	req.length = sizeof req + outdatalen;
 	req.type = type;
 	req.res_errno = 0;
 
+#ifdef HAVE_MINGW
+	if(send(fd, (void *)&req, sizeof req, 0) != sizeof req || send(fd, outdata, outdatalen, 0) != outdatalen)
+		return -1;
+#else
+	struct iovec vector[2] = {
+		{&req, sizeof req},
+		{(void*) outdata, outdatalen}
+	};
+
+	if(res_errno_p == NULL)
+		return -1;
+
 	while((rv = writev(fd, vector, 2)) == -1 && errno == EINTR) ;
 	if(rv != req.length)
 		return -1;
+#endif
 
 	if(fullread(fd, &req, sizeof req) == -1)
 		return -1;
@@ -394,7 +406,6 @@ static int send_ctl_request_cooked(int fd, enum request_type type, void const *o
 }
 
 int main(int argc, char *argv[], char *envp[]) {
-	struct sockaddr_un addr;
 	tinc_ctl_greeting_t greeting;
 	int fd;
 	int result;
@@ -449,6 +460,33 @@ int main(int argc, char *argv[], char *envp[]) {
 	 * ancestors are writable only by trusted users, which we don't verify.
 	 */
 
+#ifdef HAVE_MINGW
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
+		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		return 1;
+	}
+
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof addr);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(0x7f000001);
+	addr.sin_port = htons(55555);
+
+	fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(fd < 0) {
+		fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
+		return 1;
+	}
+
+	fprintf(stderr, "Got socket %d\n", fd);
+
+	unsigned long arg = 0;
+
+	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
+		fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
+	}
+#else
+	struct sockaddr_un addr;
 	struct stat statbuf;
 	char *lastslash = strrchr(controlsocketname, '/');
 	if(lastslash != NULL) {
@@ -483,15 +521,19 @@ int main(int argc, char *argv[], char *envp[]) {
 	memset(&addr, 0, sizeof addr);
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, controlsocketname, sizeof addr.sun_path - 1);
+#endif
 
 	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
-		fprintf(stderr, "Cannot connect to %s: %s\n", controlsocketname, strerror(errno));
+			
+		fprintf(stderr, "Cannot connect to %s: %s\n", controlsocketname, sockstrerror(sockerrno));
 		return 1;
 	}
 
+	fprintf(stderr, "Connected!\n");
+
 	if(fullread(fd, &greeting, sizeof greeting) == -1) {
 		fprintf(stderr, "Cannot read greeting from control socket: %s\n",
-				strerror(errno));
+				sockstrerror(sockerrno));
 		return 1;
 	}
 

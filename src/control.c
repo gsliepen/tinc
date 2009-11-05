@@ -17,14 +17,13 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <sys/un.h>
-
 #include "system.h"
 #include "conf.h"
 #include "control.h"
 #include "control_common.h"
 #include "graph.h"
 #include "logger.h"
+#include "utils.h"
 #include "xalloc.h"
 
 static int control_socket = -1;
@@ -211,6 +210,16 @@ static int control_compare(const struct event *a, const struct event *b) {
 
 bool init_control() {
 	int result;
+
+#ifdef HAVE_MINGW
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof addr);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(0x7f000001);
+	addr.sin_port = htons(55555);
+
+	control_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#else
 	struct sockaddr_un addr;
 	char *lastslash;
 
@@ -261,16 +270,20 @@ bool init_control() {
 		logger(LOG_ERR, "Control socket directory ownership/permissions insecure.");
 		goto bail;
 	}
+#endif
 
 	result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
 
-	if(result < 0 && errno == EADDRINUSE) {
+	if(result < 0 && sockinuse(sockerrno)) {
 		result = connect(control_socket, (struct sockaddr *)&addr, sizeof addr);
+#ifndef HAVE_MINGW
 		if(result < 0) {
 			logger(LOG_WARNING, "Removing old control socket.");
 			unlink(controlsocketname);
 			result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
-		} else {
+		} else
+#endif
+		{
 			if(netname)
 				logger(LOG_ERR, "Another tincd is already running for net `%s'.", netname);
 			else
@@ -297,7 +310,7 @@ bool init_control() {
 
 bail:
 	if(control_socket != -1) {
-		close(control_socket);
+		closesocket(control_socket);
 		control_socket = -1;
 	}
 	return false;
@@ -305,6 +318,6 @@ bail:
 
 void exit_control() {
 	event_del(&control_event);
-	close(control_socket);
+	closesocket(control_socket);
 	unlink(controlsocketname);
 }
