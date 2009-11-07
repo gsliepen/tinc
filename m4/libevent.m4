@@ -27,7 +27,7 @@ AC_DEFUN([tinc_LIBEVENT],
   )
 
   AC_CHECK_LIB(event, event_init,
-    [LIBS="$LIBS -levent"],
+    [LIBS="-levent $LIBS"],
     [AC_MSG_ERROR("libevent libraries not found.")]
   )
 ])

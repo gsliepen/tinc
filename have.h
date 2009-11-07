@@ -37,6 +37,7 @@
 #else
 #define WINVER WindowsXP
 #endif
+#define WIN32_LEAN_AND_MEAN
 #include <w32api.h>
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -177,6 +178,10 @@
 
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
+#endif
+
+#ifdef HAVE_EVENT_H
+#include <event.h>
 #endif
 
 #endif /* __TINC_SYSTEM_H__ */
