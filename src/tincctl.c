@@ -296,7 +296,7 @@ static int fullread(int fd, void *data, size_t datalen) {
 	int rv, len = 0;
 
 	while(len < datalen) {
-		rv = read(fd, data + len, datalen - len);
+		rv = recv(fd, data + len, datalen - len, 0);
 		if(rv == -1 && errno == EINTR)
 			continue;
 		else if(rv == -1)
@@ -478,8 +478,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
-	fprintf(stderr, "Got socket %d\n", fd);
-
 	unsigned long arg = 0;
 
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
@@ -528,8 +526,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "Cannot connect to %s: %s\n", controlsocketname, sockstrerror(sockerrno));
 		return 1;
 	}
-
-	fprintf(stderr, "Connected!\n");
 
 	if(fullread(fd, &greeting, sizeof greeting) == -1) {
 		fprintf(stderr, "Cannot read greeting from control socket: %s\n",

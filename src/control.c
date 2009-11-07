@@ -217,8 +217,15 @@ bool init_control() {
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(0x7f000001);
 	addr.sin_port = htons(55555);
+	int option = 1;
 
 	control_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(control_socket < 0) {
+		logger(LOG_ERR, "Creating control socket failed: %s", sockstrerror(sockerrno));
+		goto bail;
+	}
+
+	setsockopt(control_socket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
 #else
 	struct sockaddr_un addr;
 	char *lastslash;
@@ -275,8 +282,8 @@ bool init_control() {
 	result = bind(control_socket, (struct sockaddr *)&addr, sizeof addr);
 
 	if(result < 0 && sockinuse(sockerrno)) {
-		result = connect(control_socket, (struct sockaddr *)&addr, sizeof addr);
 #ifndef HAVE_MINGW
+		result = connect(control_socket, (struct sockaddr *)&addr, sizeof addr);
 		if(result < 0) {
 			logger(LOG_WARNING, "Removing old control socket.");
 			unlink(controlsocketname);
