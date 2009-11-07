@@ -38,7 +38,7 @@ static bool (*request_handlers[])(connection_t *, char *) = {
 		ping_h, pong_h,
 		add_subnet_h, del_subnet_h,
 		add_edge_h, del_edge_h,
-		key_changed_h, req_key_h, ans_key_h, tcppacket_h,
+		key_changed_h, req_key_h, ans_key_h, tcppacket_h, control_h,
 };
 
 /* Request names */
@@ -48,7 +48,7 @@ static char (*request_name[]) = {
 		"STATUS", "ERROR", "TERMREQ",
 		"PING", "PONG",
 		"ADD_SUBNET", "DEL_SUBNET",
-		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
+		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET", "CONTROL",
 };
 
 static splay_tree_t *past_request_tree;

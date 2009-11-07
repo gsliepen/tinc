@@ -382,44 +382,8 @@ void check_reachability() {
 	}
 }
 
-/* Dump nodes and edges to a graphviz file.
-	   
-   The file can be converted to an image with
-   dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
-*/
-
-int dump_graph(struct evbuffer *out) {
-	splay_node_t *node;
-	node_t *n;
-	edge_t *e;
-
-	if(evbuffer_add_printf(out, "digraph {\n") == -1)
-		return errno;
-	
-	/* dump all nodes first */
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-		if(evbuffer_add_printf(out, "	%s [label = \"%s\"];\n",
-							   n->name, n->name) == -1)
-			return errno;
-	}
-
-	/* now dump all edges */
-	for(node = edge_weight_tree->head; node; node = node->next) {
-		e = node->data;
-		if(evbuffer_add_printf(out, "	%s -> %s;\n",
-							   e->from->name, e->to->name) == -1)
-			return errno;
-	}
-
-	if(evbuffer_add_printf(out, "}\n") == -1)
-		return errno;
-
-	return 0;
-}
-
 void graph(void) {
-    subnet_cache_flush();
+	subnet_cache_flush();
 	sssp_dijkstra();
 	check_reachability();
 	mst_kruskal();

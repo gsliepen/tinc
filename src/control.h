@@ -22,5 +22,6 @@
 
 extern bool init_control();
 extern void exit_control();
+extern char controlcookie[];
 
 #endif

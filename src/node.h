@@ -89,7 +89,7 @@ extern void node_add(node_t *);
 extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
-extern int dump_nodes(struct evbuffer *);
+extern bool dump_nodes(struct connection_t *);
 extern void update_node_udp(node_t *, const sockaddr_t *);
 
 #endif							/* __TINC_NODE_H__ */

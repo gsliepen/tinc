@@ -80,7 +80,7 @@ extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
 extern subnet_t *lookup_subnet_mac(const mac_t *);
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
-extern int dump_subnets(struct evbuffer *);
+extern bool dump_subnets(struct connection_t *);
 extern void subnet_cache_flush(void);
 
 #endif							/* __TINC_SUBNET_H__ */

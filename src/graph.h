@@ -24,6 +24,5 @@
 extern void graph(void);
 extern void mst_kruskal(void);
 extern void sssp_bfs(void);
-extern int dump_graph(struct evbuffer *);
 
 #endif /* __TINC_GRAPH_H__ */

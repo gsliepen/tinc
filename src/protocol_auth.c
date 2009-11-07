@@ -23,6 +23,8 @@
 #include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
+#include "control.h"
+#include "control_common.h"
 #include "crypto.h"
 #include "edge.h"
 #include "graph.h"
@@ -49,6 +51,15 @@ bool id_h(connection_t *c, char *request) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
 			   c->hostname);
 		return false;
+	}
+
+	/* Check if this is a control connection */
+
+	if(name[0] == '^' && !strcmp(name + 1, controlcookie)) {
+		c->status.control = true;
+		c->allow_request = CONTROL;
+		c->last_ping_time = time(NULL) + 3600;
+		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
 	}
 
 	/* Check if identity is a valid name */

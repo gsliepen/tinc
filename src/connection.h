@@ -40,7 +40,8 @@ typedef struct connection_status_t {
 		int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
 		int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
 		int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
-		int unused:23;
+		int control:1;
+		int unused:22;
 } connection_status_t;
 
 #include "edge.h"
@@ -97,7 +98,7 @@ extern connection_t *new_connection(void) __attribute__ ((__malloc__));
 extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
-extern int dump_connections(struct evbuffer *);
+extern bool dump_connections(struct connection_t *);
 extern bool read_connection_config(connection_t *);
 
 #endif							/* __TINC_CONNECTION_H__ */

@@ -24,6 +24,7 @@
 #include "splay_tree.h"
 #include "cipher.h"
 #include "conf.h"
+#include "control_common.h"
 #include "list.h"
 #include "logger.h"
 #include "net.h"				/* Don't ask. */
@@ -91,20 +92,19 @@ void connection_del(connection_t *c) {
 	splay_delete(connection_tree, c);
 }
 
-int dump_connections(struct evbuffer *out) {
+bool dump_connections(connection_t *cdump) {
 	splay_node_t *node;
 	connection_t *c;
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
-		if(evbuffer_add_printf(out,
-				   " %s at %s options %x socket %d status %04x\n",
-				   c->name, c->hostname, c->options, c->socket,
-				   bitfield_to_int(&c->status, sizeof c->status)) == -1)
-			return errno;
+		send_request(cdump, "%d %d %s at %s options %x socket %d status %04x",
+				CONTROL, REQ_DUMP_CONNECTIONS,
+				c->name, c->hostname, c->options, c->socket,
+				bitfield_to_int(&c->status, sizeof c->status));
 	}
 
-	return 0;
+	return send_request(cdump, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);
 }
 
 bool read_connection_config(connection_t *c) {

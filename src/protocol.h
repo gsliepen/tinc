@@ -44,6 +44,7 @@ typedef enum request_t {
 	ADD_EDGE, DEL_EDGE,
 	KEY_CHANGED, REQ_KEY, ANS_KEY,
 	PACKET,
+	CONTROL,
 	LAST						/* Guardian for the highest request number */
 } request_t;
 
@@ -119,5 +120,6 @@ extern bool key_changed_h(struct connection_t *, char *);
 extern bool req_key_h(struct connection_t *, char *);
 extern bool ans_key_h(struct connection_t *, char *);
 extern bool tcppacket_h(struct connection_t *, char *);
+extern bool control_h(struct connection_t *, char *);
 
 #endif							/* __TINC_PROTOCOL_H__ */

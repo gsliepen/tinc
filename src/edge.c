@@ -21,6 +21,7 @@
 #include "system.h"
 
 #include "splay_tree.h"
+#include "control_common.h"
 #include "edge.h"
 #include "logger.h"
 #include "netutl.h"
@@ -105,7 +106,7 @@ edge_t *lookup_edge(node_t *from, node_t *to) {
 	return splay_search(from->edge_tree, &v);
 }
 
-int dump_edges(struct evbuffer *out) {
+bool dump_edges(connection_t *c) {
 	splay_node_t *node, *node2;
 	node_t *n;
 	edge_t *e;
@@ -116,16 +117,13 @@ int dump_edges(struct evbuffer *out) {
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
-			if(evbuffer_add_printf(out,
-								   " %s to %s at %s options %x weight %d\n",
-								   e->from->name, e->to->name, address,
-								   e->options, e->weight) == -1) {
-				free(address);
-				return errno;
-			}
+			send_request(c, "%d %d %s to %s at %s options %x weight %d",
+					CONTROL, REQ_DUMP_EDGES,
+					e->from->name, e->to->name, address,
+					e->options, e->weight);
 			free(address);
 		}
 	}
 
-	return 0;
+	return send_request(c, "%d %d", CONTROL, REQ_DUMP_EDGES);
 }

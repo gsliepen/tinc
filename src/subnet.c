@@ -21,6 +21,7 @@
 #include "system.h"
 
 #include "splay_tree.h"
+#include "control_common.h"
 #include "device.h"
 #include "logger.h"
 #include "net.h"
@@ -273,7 +274,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 
 bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
-		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!\n", netstr, subnet);
+		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", netstr, subnet);
 		return false;
 	}
 
@@ -527,7 +528,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		free(envp[i]);
 }
 
-int dump_subnets(struct evbuffer *out) {
+bool dump_subnets(connection_t *c) {
 	char netstr[MAXNETSTR];
 	subnet_t *subnet;
 	splay_node_t *node;
@@ -536,10 +537,10 @@ int dump_subnets(struct evbuffer *out) {
 		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
-		if(evbuffer_add_printf(out, " %s owner %s\n",
-							   netstr, subnet->owner->name) == -1)
-			return errno;
+		send_request(c, "%d %d %s owner %s",
+				CONTROL, REQ_DUMP_SUBNETS,
+				netstr, subnet->owner->name);
 	}
 
-	return 0;
+	return send_request(c, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
 }

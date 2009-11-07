@@ -42,8 +42,10 @@ int kill_tincd = 0;
 /* If nonzero, generate public/private keypair for this host/net. */
 int generate_keys = 0;
 
+static char *name = NULL;
 static char *identname = NULL;				/* program name for syslog */
-static char *controlsocketname = NULL;			/* pid file location */
+static char *controlcookiename = NULL;			/* cookie file location */
+static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
 
@@ -69,7 +71,7 @@ static void usage(bool status) {
 		printf("Valid options are:\n"
 				"  -c, --config=DIR              Read configuration options from DIR.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
-				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
+				"      --controlcookie=FILENAME  Read control socket from FILENAME.\n"
 				"      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n"
 				"\n"
@@ -121,7 +123,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 5:					/* open control socket here */
-				controlsocketname = xstrdup(optarg);
+				controlcookiename = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -196,7 +198,6 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 static bool keygen(int bits) {
 	rsa_t key;
 	FILE *f;
-	char *name = NULL;
 	char *filename;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
@@ -272,14 +273,16 @@ static void make_names(void) {
 					xasprintf(&confbase, "%s", installdir);
 			}
 		}
+		if(!controlcookiename)
+			xasprintf(&controlcookiename, "%s/cookie", confbase);
 		RegCloseKey(key);
 		if(*installdir)
 			return;
 	}
 #endif
 
-	if(!controlsocketname)
-		xasprintf(&controlsocketname, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
+	if(!controlcookiename)
+		xasprintf(&controlcookiename, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
 
 	if(netname) {
 		if(!confbase)
@@ -292,123 +295,67 @@ static void make_names(void) {
 	}
 }
 
-static int fullread(int fd, void *data, size_t datalen) {
-	int rv, len = 0;
+static bool recvline(int fd, char *line, size_t len) {
+	static char buffer[4096];
+	static size_t blen = 0;
+	char *newline = NULL;
 
-	while(len < datalen) {
-		rv = recv(fd, data + len, datalen - len, 0);
-		if(rv == -1 && errno == EINTR)
+	while(!(newline = memchr(buffer, '\n', blen))) {
+		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
+		if(result == -1 && errno == EINTR)
 			continue;
-		else if(rv == -1)
-			return rv;
-		else if(rv == 0) {
-#ifdef HAVE_MINGW
-			errno = 0;
-#else
-			errno = ENODATA;
-#endif
-			return -1;
-		}
-		len += rv;
+		else if(result <= 0)
+			return false;
+		blen += result;
 	}
-	return 0;
+
+	if(newline - buffer >= len)
+		return false;
+
+	len = newline - buffer;
+
+	memcpy(line, buffer, len);
+	line[len] = 0;
+	memmove(buffer, newline + 1, blen - len - 1);
+	blen -= len + 1;
+
+	return true;
 }
 
-/*
-   Send a request (raw)
-*/
-static int send_ctl_request(int fd, enum request_type type,
-						   void const *outdata, size_t outdatalen,
-						   int *res_errno_p, void **indata_p,
-						   size_t *indatalen_p) {
-	tinc_ctl_request_t req;
-	int rv;
-	void *indata;
+static bool sendline(int fd, char *format, ...) {
+	static char buffer[4096];
+	char *p = buffer;
+	size_t blen = 0;
+	va_list ap;
 
-	memset(&req, 0, sizeof req);
-	req.length = sizeof req + outdatalen;
-	req.type = type;
-	req.res_errno = 0;
+	va_start(ap, format);
+	blen = vsnprintf(buffer, sizeof buffer, format, ap);
+	va_end(ap);
 
-#ifdef HAVE_MINGW
-	if(send(fd, (void *)&req, sizeof req, 0) != sizeof req || send(fd, outdata, outdatalen, 0) != outdatalen)
-		return -1;
-#else
-	struct iovec vector[2] = {
-		{&req, sizeof req},
-		{(void*) outdata, outdatalen}
-	};
+	if(blen < 0 || blen >= sizeof buffer)
+		return false;
 
-	if(res_errno_p == NULL)
-		return -1;
+	buffer[blen] = '\n';
+	blen++;
 
-	while((rv = writev(fd, vector, 2)) == -1 && errno == EINTR) ;
-	if(rv != req.length)
-		return -1;
-#endif
-
-	if(fullread(fd, &req, sizeof req) == -1)
-		return -1;
-
-	if(req.length < sizeof req) {
-		errno = EINVAL;
-		return -1;
+	while(blen) {
+		int result = send(fd, p, blen, 0);
+		if(result == -1 && errno == EINTR)
+			continue;
+		else if(result <= 0);
+			return false;
+		p += result;
+		blen -= result;
 	}
 
-	if(req.length > sizeof req) {
-		if(indata_p == NULL) {
-			errno = EINVAL;
-			return -1;
-		}
-
-		indata = xmalloc(req.length - sizeof req);
-
-		if(fullread(fd, indata, req.length - sizeof req) == -1) {
-			free(indata);
-			return -1;
-		}
-
-		*indata_p = indata;
-		if(indatalen_p != NULL)
-			*indatalen_p = req.length - sizeof req;
-	}
-
-	*res_errno_p = req.res_errno;
-
-	return 0;
-}
-
-/*
-   Send a request (with printfs)
-*/
-static int send_ctl_request_cooked(int fd, enum request_type type, void const *outdata, size_t outdatalen) {
-	int res_errno = -1;
-	char *buf = NULL;
-	size_t buflen = 0;
-
-	if(send_ctl_request(fd, type, outdata, outdatalen, &res_errno,
-						(void**) &buf, &buflen)) {
-		fprintf(stderr, "Error sending request: %s\n", strerror(errno));
-		return -1;
-	}
-
-	if(buf != NULL) {
-		printf("%*s", (int)buflen, buf);
-		free(buf);
-	}
-
-	if(res_errno != 0) {
-		fprintf(stderr, "Server reported error: %s\n", strerror(res_errno));
-		return -1;
-	}
-
-	return 0;
+	return true;	
 }
 
 int main(int argc, char *argv[], char *envp[]) {
-	tinc_ctl_greeting_t greeting;
 	int fd;
 	int result;
+	int port;
+	int pid;
 
 	program_name = argv[0];
 
@@ -460,17 +407,28 @@ int main(int argc, char *argv[], char *envp[]) {
 	 * ancestors are writable only by trusted users, which we don't verify.
 	 */
 
+	FILE *f = fopen(controlcookiename, "r");
+	if(!f) {
+		fprintf(stderr, "Could not open control socket cookie file %s: %s\n", controlcookiename, strerror(errno));
+		return 1;
+	}
+	if(fscanf(f, "%1024s %d %d", controlcookie, &port, &pid) != 3) {
+		fprintf(stderr, "Could not parse control socket cookie file %s\n", controlcookiename);
+		return 1;
+	}
+
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
 		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
+#endif
 
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(0x7f000001);
-	addr.sin_port = htons(55555);
+	addr.sin_port = htons(port);
 
 	fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(fd < 0) {
@@ -483,77 +441,69 @@ int main(int argc, char *argv[], char *envp[]) {
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
 		fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
 	}
-#else
-	struct sockaddr_un addr;
-	struct stat statbuf;
-	char *lastslash = strrchr(controlsocketname, '/');
-	if(lastslash != NULL) {
-		/* control socket is not in cwd; stat its parent */
-		*lastslash = 0;
-		result = stat(controlsocketname, &statbuf);
-		*lastslash = '/';
-	} else
-		result = stat(".", &statbuf);
-
-	if(result < 0) {
-		fprintf(stderr, "Unable to check control socket directory permissions: %s\n", strerror(errno));
-		return 1;
-	}
-
-	if(statbuf.st_uid != 0 || (statbuf.st_mode & S_IXOTH) != 0 || (statbuf.st_gid != 0 && (statbuf.st_mode & S_IXGRP)) != 0) {
-		fprintf(stderr, "Insecure permissions on control socket directory\n");
-		return 1;
-	}
-
-	if(strlen(controlsocketname) >= sizeof addr.sun_path) {
-		fprintf(stderr, "Control socket filename too long!\n");
-		return 1;
-	}
-
-	fd = socket(PF_UNIX, SOCK_STREAM, 0);
-	if(fd < 0) {
-		fprintf(stderr, "Cannot create UNIX socket: %s\n", strerror(errno));
-		return 1;
-	}
-
-	memset(&addr, 0, sizeof addr);
-	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, controlsocketname, sizeof addr.sun_path - 1);
-#endif
 
 	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
 			
-		fprintf(stderr, "Cannot connect to %s: %s\n", controlsocketname, sockstrerror(sockerrno));
+		fprintf(stderr, "Cannot connect to %s: %s\n", controlcookiename, sockstrerror(sockerrno));
 		return 1;
 	}
 
-	if(fullread(fd, &greeting, sizeof greeting) == -1) {
+	char line[4096];
+	char data[4096];
+	int code, version, req;
+
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %s %d", &code, data, &version) != 3 || code != 0) {
 		fprintf(stderr, "Cannot read greeting from control socket: %s\n",
 				sockstrerror(sockerrno));
 		return 1;
 	}
 
-	if(greeting.version != TINC_CTL_VERSION_CURRENT) {
-		fprintf(stderr, "Version mismatch: server %d, client %d\n",
-				greeting.version, TINC_CTL_VERSION_CURRENT);
+	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
+	
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
+		fprintf(stderr, "Could not fully establish control socket connection\n");
 		return 1;
 	}
 
 	if(!strcasecmp(argv[optind], "pid")) {
-		printf("%d\n", greeting.pid);
+		printf("%d\n", pid);
 		return 0;
 	}
 
 	if(!strcasecmp(argv[optind], "stop")) {
-		return send_ctl_request_cooked(fd, REQ_STOP, NULL, 0) != -1;
+		sendline(fd, "%d %d", CONTROL, REQ_STOP);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
+			fprintf(stderr, "Could not stop tinc daemon\n");
+			return 1;
+		}
+		return 0;
 	}
 
 	if(!strcasecmp(argv[optind], "reload")) {
-		return send_ctl_request_cooked(fd, REQ_RELOAD, NULL, 0) != -1;
+		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RELOAD || result) {
+			fprintf(stderr, "Could not reload tinc daemon\n");
+			return 1;
+		}
+		return 0;
 	}
-	
+
 	if(!strcasecmp(argv[optind], "restart")) {
-		return send_ctl_request_cooked(fd, REQ_RESTART, NULL, 0) != -1;
+		sendline(fd, "%d %d", CONTROL, REQ_RESTART);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RESTART || result) {
+			fprintf(stderr, "Could not restart tinc daemon\n");
+			return 1;
+		}
+		return 0;
+	}
+
+	if(!strcasecmp(argv[optind], "retry")) {
+		sendline(fd, "%d %d", CONTROL, REQ_RETRY);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RETRY || result) {
+			fprintf(stderr, "Could not retry outgoing connections\n");
+			return 1;
+		}
+		return 0;
 	}
 
 	if(!strcasecmp(argv[optind], "dump")) {
@@ -563,53 +513,84 @@ int main(int argc, char *argv[], char *envp[]) {
 			return 1;
 		}
 
-		if(!strcasecmp(argv[optind+1], "nodes")) {
-			return send_ctl_request_cooked(fd, REQ_DUMP_NODES, NULL, 0) != -1;
+		bool do_graph = false;
+		int dumps = 1;
+
+		if(!strcasecmp(argv[optind+1], "nodes"))
+			sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
+		else if(!strcasecmp(argv[optind+1], "edges"))
+			sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
+		else if(!strcasecmp(argv[optind+1], "subnets"))
+			sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
+		else if(!strcasecmp(argv[optind+1], "connections"))
+			sendline(fd, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);
+		else if(!strcasecmp(argv[optind+1], "graph")) {
+			sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
+			sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
+			do_graph = true;
+			dumps = 2;
+			printf("digraph {\n");
+		} else {
+			fprintf(stderr, "Unknown dump type '%s'.\n", argv[optind+1]);
+			usage(true);
+			return 1;
 		}
 
-		if(!strcasecmp(argv[optind+1], "edges")) {
-			return send_ctl_request_cooked(fd, REQ_DUMP_EDGES, NULL, 0) != -1;
+		while(recvline(fd, line, sizeof line)) {
+			char node1[4096], node2[4096];
+			int n = sscanf(line, "%d %d %s to %s", &code, &req, &node1, &node2);
+			if(n == 2) {
+				if(do_graph && req == REQ_DUMP_NODES)
+					continue;
+				else {
+					if(do_graph)
+						printf("}\n");
+					return 0;
+				}
+			}
+			if(n < 2)
+				break;
+
+			if(!do_graph)
+				printf("%s\n", line + 5);
+			else {
+				if(req == REQ_DUMP_NODES)
+					printf(" %s [label = \"%s\"];\n", node1, node1);
+				else
+					printf(" %s -> %s;\n", node1, node2);
+			}
 		}
 
-		if(!strcasecmp(argv[optind+1], "subnets")) {
-			return send_ctl_request_cooked(fd, REQ_DUMP_SUBNETS, NULL, 0) != -1;
-		}
-
-		if(!strcasecmp(argv[optind+1], "connections")) {
-			return send_ctl_request_cooked(fd, REQ_DUMP_CONNECTIONS, NULL, 0) != -1;
-		}
-
-		if(!strcasecmp(argv[optind+1], "graph")) {
-			return send_ctl_request_cooked(fd, REQ_DUMP_GRAPH, NULL, 0) != -1;
-		}
-
-		fprintf(stderr, "Unknown dump type '%s'.\n", argv[optind+1]);
-		usage(true);
+		fprintf(stderr, "Error receiving dump\n");
 		return 1;
 	}
 
 	if(!strcasecmp(argv[optind], "purge")) {
-		return send_ctl_request_cooked(fd, REQ_PURGE, NULL, 0) != -1;
+		sendline(fd, "%d %d", CONTROL, REQ_PURGE);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_PURGE || result) {
+			fprintf(stderr, "Could not purge tinc daemon\n");
+			return 1;
+		}
+		return 0;
 	}
 
 	if(!strcasecmp(argv[optind], "debug")) {
-		int debuglevel;
+		int debuglevel, origlevel;
 
 		if(argc != optind + 2) {
 			fprintf(stderr, "Invalid arguments.\n");
 			return 1;
 		}
 		debuglevel = atoi(argv[optind+1]);
-		return send_ctl_request_cooked(fd, REQ_SET_DEBUG, &debuglevel,
-									   sizeof debuglevel) != -1;
-	}
 
-	if(!strcasecmp(argv[optind], "retry")) {
-		return send_ctl_request_cooked(fd, REQ_RETRY, NULL, 0) != -1;
-	}
+		sendline(fd, "%d %d %d", CONTROL, REQ_SET_DEBUG, debuglevel);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
+			fprintf(stderr, "Could not purge tinc daemon\n");
+			return 1;
+		}
 
-	if(!strcasecmp(argv[optind], "reload")) {
-		return send_ctl_request_cooked(fd, REQ_RELOAD, NULL, 0) != -1;
+		fprintf(stderr, "Old level %d, new level %d\n", origlevel, debuglevel);
+		return 0;
 	}
 
 	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);

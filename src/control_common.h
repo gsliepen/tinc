@@ -20,8 +20,11 @@
 #ifndef __TINC_CONTROL_PROTOCOL_H__
 #define __TINC_CONTROL_PROTOCOL_H__
 
+#include "protocol.h"
+
 enum request_type {
-	REQ_STOP,
+	REQ_INVALID = -1,
+	REQ_STOP = 0,
 	REQ_RELOAD,
 	REQ_RESTART,
 	REQ_DUMP_NODES,
@@ -35,19 +38,5 @@ enum request_type {
 };
 
 #define TINC_CTL_VERSION_CURRENT 0
-
-/* This greeting is sent by the server on socket open. */
-typedef struct tinc_ctl_greeting_t {
-	int version;
-	pid_t pid;
-} tinc_ctl_greeting_t;
-
-/* A single request or response header. */
-typedef struct tinc_ctl_request_t {
-	size_t length; /* total length, including the header */
-	enum request_type type;
-	int id;
-	int res_errno; /* used only for responses */
-} tinc_ctl_request_t;
 
 #endif

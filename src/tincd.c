@@ -78,8 +78,8 @@ static const char *switchuser = NULL;
 bool use_logfile = false;
 
 char *identname = NULL;				/* program name for syslog */
-char *controlsocketname = NULL;			/* control socket location */
 char *logfilename = NULL;			/* log file location */
+char *controlcookiename = NULL;
 char **g_argv;					/* a copy of the cmdline arguments */
 
 static int status;
@@ -96,7 +96,7 @@ static struct option const long_options[] = {
 	{"chroot", no_argument, NULL, 'R'},
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
-	{"controlsocket", required_argument, NULL, 5},
+	{"controlcookie", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
@@ -117,7 +117,7 @@ static void usage(bool status) {
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
 				"  -L, --mlock                   Lock tinc into main memory.\n"
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
-				"      --controlsocket=FILENAME  Open control socket at FILENAME.\n"
+				"      --controlcookie=FILENAME  Write control socket cookie to FILENAME.\n"
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"  -R, --chroot                  chroot to NET dir at startup.\n"
 				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
@@ -190,7 +190,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 5:					/* open control socket here */
-				controlsocketname = xstrdup(optarg);
+				controlcookiename = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -231,15 +231,14 @@ static void make_names(void) {
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
+			if(!controlcookiename)
+				xasprintf(&controlcookiename, "%s/cookie", confbase);
 		}
 		RegCloseKey(key);
 		if(*installdir)
 			return;
 	}
 #endif
-
-	if(!controlsocketname)
-		xasprintf(&controlsocketname, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
 
 	if(!logfilename)
 		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
@@ -258,7 +257,7 @@ static void make_names(void) {
 static void free_names() {
 	if (identname) free(identname);
 	if (netname) free(netname);
-	if (controlsocketname) free(controlsocketname);
+	if (controlcookiename) free(controlcookiename);
 	if (logfilename) free(logfilename);
 	if (confbase) free(confbase);
 }
@@ -359,9 +358,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	if(!init_control())
-		return 1;
-
 	g_argv = argv;
 
 	init_configuration(&config_tree);
@@ -410,6 +406,9 @@ int main2(int argc, char **argv) {
 	if(!setup_network())
 		goto end;
 
+	if(!init_control())
+		return 1;
+
 	/* Initiate all outgoing connections. */
 
 	try_outgoing_connections();
@@ -449,9 +448,7 @@ int main2(int argc, char **argv) {
 end:
 	logger(LOG_NOTICE, "Terminating");
 
-#ifndef HAVE_MINGW
 	exit_control();
-#endif
 
 	crypto_exit();
 
