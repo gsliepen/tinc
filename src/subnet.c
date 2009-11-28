@@ -330,7 +330,7 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 }
 
 subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
-	subnet_t *p, *r = NULL, subnet = {0};
+	subnet_t *p, *r = NULL;
 	avl_node_t *n;
 	int i;
 
@@ -346,10 +346,6 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 	}
 
 	// Search all subnets for a matching one
-
-	subnet.type = SUBNET_MAC;
-	subnet.net.mac.address = *address;
-	subnet.owner = NULL;
 
 	for(n = owner ? owner->subnet_tree->head : subnet_tree->head; n; n = n->next) {
 		p = n->data;
@@ -375,7 +371,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 }
 
 subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
-	subnet_t *p, *r = NULL, subnet = {0};
+	subnet_t *p, *r = NULL;
 	avl_node_t *n;
 	int i;
 
@@ -390,15 +386,10 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Search all subnets for a matching one
 
-	subnet.type = SUBNET_IPV4;
-	subnet.net.ipv4.address = *address;
-	subnet.net.ipv4.prefixlength = 32;
-	subnet.owner = NULL;
-
 	for(n = subnet_tree->head; n; n = n->next) {
 		p = n->data;
 		
-		if(!p || p->type != subnet.type)
+		if(!p || p->type != SUBNET_IPV4)
 			continue;
 
 		if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength)) {
@@ -419,7 +410,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 }
 
 subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
-	subnet_t *p, *r = NULL, subnet = {0};
+	subnet_t *p, *r = NULL;
 	avl_node_t *n;
 	int i;
 
@@ -434,15 +425,10 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Search all subnets for a matching one
 
-	subnet.type = SUBNET_IPV6;
-	subnet.net.ipv6.address = *address;
-	subnet.net.ipv6.prefixlength = 128;
-	subnet.owner = NULL;
-
 	for(n = subnet_tree->head; n; n = n->next) {
 		p = n->data;
 		
-		if(!p || p->type != subnet.type)
+		if(!p || p->type != SUBNET_IPV6)
 			continue;
 
 		if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength)) {
