@@ -329,7 +329,7 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 	return avl_search(owner->subnet_tree, subnet);
 }
 
-subnet_t *lookup_subnet_mac(const mac_t *address) {
+subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 	subnet_t *p, *r = NULL, subnet = {0};
 	avl_node_t *n;
 	int i;
@@ -338,6 +338,8 @@ subnet_t *lookup_subnet_mac(const mac_t *address) {
 
 	for(i = 0; i < 2; i++) {
 		if(!cache_mac_valid[i])
+			continue;
+		if(owner && cache_mac_subnet[i] && cache_mac_subnet[i]->owner != owner)
 			continue;
 		if(!memcmp(address, &cache_mac_address[i], sizeof *address))
 			return cache_mac_subnet[i];
@@ -349,10 +351,10 @@ subnet_t *lookup_subnet_mac(const mac_t *address) {
 	subnet.net.mac.address = *address;
 	subnet.owner = NULL;
 
-	for(n = subnet_tree->head; n; n = n->next) {
+	for(n = owner ? owner->subnet_tree->head : subnet_tree->head; n; n = n->next) {
 		p = n->data;
 		
-		if(!p || p->type != subnet.type)
+		if(!p || p->type != SUBNET_MAC)
 			continue;
 
 		if(!memcmp(address, &p->net.mac.address, sizeof *address)) {

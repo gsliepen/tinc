@@ -77,7 +77,7 @@ extern void subnet_update(struct node_t *, subnet_t *, bool);
 extern bool net2str(char *, int, const subnet_t *);
 extern bool str2net(subnet_t *, const char *);
 extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
-extern subnet_t *lookup_subnet_mac(const mac_t *);
+extern subnet_t *lookup_subnet_mac(const struct node_t *, const mac_t *);
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern void dump_subnets(void);

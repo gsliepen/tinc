@@ -104,7 +104,7 @@ static void learn_mac(mac_t *address) {
 	avl_node_t *node;
 	connection_t *c;
 
-	subnet = lookup_subnet_mac(address);
+	subnet = lookup_subnet_mac(myself, address);
 
 	/* If we don't know this MAC address yet, store it */
 
@@ -705,7 +705,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	/* Lookup destination address */
 
 	memcpy(&dest, &packet->data[0], sizeof dest);
-	subnet = lookup_subnet_mac(&dest);
+	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet) {
 		broadcast_packet(source, packet);
