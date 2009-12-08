@@ -286,6 +286,9 @@ void sssp_bfs(void) {
 				free(envp[i]);
 
 			subnet_update(n, NULL, n->status.reachable);
+
+			if(!n->status.reachable)
+				update_node_udp(n, NULL);
 		}
 	}
 }
