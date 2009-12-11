@@ -436,11 +436,13 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
+#ifdef HAVE_MINGW
 	unsigned long arg = 0;
 
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
 		fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
 	}
+#endif
 
 	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
 			
