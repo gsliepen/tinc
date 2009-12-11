@@ -243,6 +243,9 @@ static void make_names(void) {
 	if(!logfilename)
 		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
 
+	if(!controlcookiename)
+		xasprintf(&controlcookiename, LOCALSTATEDIR "/run/%s.cookie", identname);
+
 	if(netname) {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);

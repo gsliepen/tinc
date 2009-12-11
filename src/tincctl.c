@@ -58,7 +58,7 @@ static struct option const long_options[] = {
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
-	{"controlsocket", required_argument, NULL, 5},
+	{"controlcookie", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
@@ -282,7 +282,7 @@ static void make_names(void) {
 #endif
 
 	if(!controlcookiename)
-		xasprintf(&controlcookiename, "%s/run/%s.control/socket", LOCALSTATEDIR, identname);
+		xasprintf(&controlcookiename, "%s/run/%s.cookie", LOCALSTATEDIR, identname);
 
 	if(netname) {
 		if(!confbase)
@@ -540,7 +540,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		while(recvline(fd, line, sizeof line)) {
 			char node1[4096], node2[4096];
-			int n = sscanf(line, "%d %d %s to %s", &code, &req, &node1, &node2);
+			int n = sscanf(line, "%d %d %s to %s", &code, &req, node1, node2);
 			if(n == 2) {
 				if(do_graph && req == REQ_DUMP_NODES)
 					continue;
@@ -586,7 +586,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		debuglevel = atoi(argv[optind+1]);
 
 		sendline(fd, "%d %d %d", CONTROL, REQ_SET_DEBUG, debuglevel);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &origlevel) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
 			fprintf(stderr, "Could not purge tinc daemon\n");
 			return 1;
 		}

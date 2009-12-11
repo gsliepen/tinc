@@ -161,7 +161,7 @@ bool dump_nodes(connection_t *c) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		send_request(c, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)", CONTROL, REQ_DUMP_NODES,
+		send_request(c, "%d %d %s at %s cipher %d digest %d maclength %zd compression %d options %x status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)", CONTROL, REQ_DUMP_NODES,
 			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",

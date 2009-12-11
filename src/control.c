@@ -28,9 +28,6 @@
 #include "utils.h"
 #include "xalloc.h"
 
-static int control_socket = -1;
-static struct event control_event;
-static splay_tree_t *control_socket_tree;
 char controlcookie[65];
 extern char *controlcookiename;
 
@@ -112,7 +109,7 @@ bool init_control() {
 	}
 
 #ifdef HAVE_FCHMOD
-	fchmod(f, 0600);
+	fchmod(fileno(f), 0600);
 #else
 	chmod(controlcookiename, 0600);
 #endif
