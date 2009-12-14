@@ -21,8 +21,6 @@
 
 #include "system.h"
 
-#include <openssl/rand.h>
-
 #include "utils.h"
 #include "splay_tree.h"
 #include "conf.h"
