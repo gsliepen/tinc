@@ -2,7 +2,7 @@
 
 sbin_PROGRAMS = tincd tincctl
 
-EXTRA_DIST = linux/device.c bsd/device.c solaris/device.c cygwin/device.c mingw/device.c mingw/common.h raw_socket/device.c uml_socket/device.c
+EXTRA_DIST = linux bsd solaris cygwin mingw raw_socket uml_socket openssl gcrypt
 
 tincd_SOURCES = cipher.c conf.c connection.c control.c crypto.c digest.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c	\
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
@@ -20,7 +20,7 @@ DEFAULT_INCLUDES =
 
 INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
 
-noinst_HEADERS = cipher.h conf.h connection.h control.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
+noinst_HEADERS = cipher.h conf.h connection.h control.h control_common.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
 	protocol.h route.h rsa.h rsagen.h subnet.h bsd/tunemu.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
