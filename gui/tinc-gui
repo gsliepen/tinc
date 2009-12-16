@@ -1,0 +1,317 @@
+#!/usr/bin/python
+
+import wx
+import sys
+import Tinc
+from wx.lib.mixins.listctrl import ColumnSorterMixin
+from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+
+del sys.argv[0]
+net = None
+controlcookie = None
+
+while len(sys.argv) >= 2:
+	if sys.argv[0] in ('-n', '--net'):
+		net = sys.argv[1]
+	elif sys.argv[0] in ('--controlcookie'):
+		controlcookie = sys.argv[1]
+	else:
+		print('Unknown option ' + sys.argv[0])
+		sys.exit(1)
+
+	del sys.argv[0]
+	del sys.argv[0]
+
+vpn = Tinc.VPN(net, controlcookie)
+vpn.connect()
+
+class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
+    def __init__(self, parent, style):
+        wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+	ListCtrlAutoWidthMixin.__init__(self)
+        ColumnSorterMixin.__init__(self, 14)
+
+    def GetListCtrl(self):
+        return self
+
+
+class SettingsPage(wx.Panel):
+	def OnDebugLevel(self, event):
+		vpn.debug(self.debug.GetValue())
+
+	def __init__(self, parent, id):
+		wx.Panel.__init__(self, parent, id)
+		grid = wx.FlexGridSizer(cols = 2)
+		grid.AddGrowableCol(0, 1)
+
+		namelabel = wx.StaticText(self, -1, 'Name:')
+		self.name = wx.TextCtrl(self, -1, vpn.name)
+		grid.Add(namelabel)
+		grid.Add(self.name)
+
+		portlabel = wx.StaticText(self, -1, 'Port:')
+		self.port = wx.TextCtrl(self, -1, vpn.port)
+		grid.Add(portlabel)
+		grid.Add(self.port)
+
+		debuglabel = wx.StaticText(self, -1, 'Debug level:')
+		self.debug = wx.SpinCtrl(self, min = 0, max = 5, initial = vpn.debug())
+		self.debug.Bind(wx.EVT_SPINCTRL, self.OnDebugLevel)
+		grid.Add(debuglabel)
+		grid.Add(self.debug)
+
+		modelabel = wx.StaticText(self, -1, 'Mode:')
+		self.mode = wx.ComboBox(self, -1, style = wx.CB_READONLY, value = 'Router', choices = ['Router', 'Switch', 'Hub'])
+		grid.Add(modelabel)
+		grid.Add(self.mode)
+
+		self.SetSizer(grid)
+
+class ConnectionsPage(wx.Panel):
+	def __init__(self, parent, id):
+		wx.Panel.__init__(self, parent, id)
+		self.list = wx.ListCtrl(self, id, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+		self.list.InsertColumn(0, 'Name')
+		self.list.InsertColumn(1, 'Address')
+		self.list.InsertColumn(2, 'Port')
+		self.list.InsertColumn(3, 'Options')
+		self.list.InsertColumn(4, 'Weight')
+
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		hbox.Add(self.list, 1, wx.EXPAND)
+		self.SetSizer(hbox)
+		self.refresh()
+
+	class ContextMenu(wx.Menu):
+		def __init__(self, item):
+			wx.Menu.__init__(self)
+
+			self.item = item
+
+			disconnect = wx.MenuItem(self, -1, 'Disconnect')
+			self.AppendItem(disconnect)
+			self.Bind(wx.EVT_MENU, self.OnDisconnect, id=disconnect.GetId())
+
+		def OnDisconnect(self, event):
+			print('Disconnecting ' + self.item[0])
+			vpn.disconnect(self.item[0])
+
+	def OnContext(self, event):
+		print('Context menu!')
+		i = event.GetIndex()
+		print(i)
+		self.PopupMenu(self.ContextMenu(self.list.itemDataMap[event.GetIndex()]), event.GetPosition())
+
+	def refresh(self):
+		self.list.itemDataMap = {}
+		i = 0
+
+		for key, connection in vpn.connections.items():
+			if self.list.ItemCount <= i:
+				self.list.InsertStringItem(i, connection.name)
+			else:
+				self.list.SetStringItem(i, 0, connection.name)
+			self.list.SetStringItem(i, 1, connection.address)
+			self.list.SetStringItem(i, 2, connection.port)
+			self.list.SetStringItem(i, 3, str(connection.options))
+			self.list.SetStringItem(i, 4, str(connection.weight))
+			self.list.itemDataMap[i] = (connection.name, connection.address, connection.port, connection.options, connection.weight)
+			self.list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnContext)
+			i += 1
+
+		while self.list.ItemCount > i:
+			self.list.DeleteItem(self.list.ItemCount - 1)
+
+
+class NodesPage(wx.Panel):
+	def __init__(self, parent, id):
+		wx.Panel.__init__(self, parent, id)
+		self.list = SuperListCtrl(self, id)
+		self.list.InsertColumn( 0, 'Name')
+		self.list.InsertColumn( 1, 'Address')
+		self.list.InsertColumn( 2, 'Port')
+		self.list.InsertColumn( 3, 'Cipher')
+		self.list.InsertColumn( 4, 'Digest')
+		self.list.InsertColumn( 5, 'MACLength')
+		self.list.InsertColumn( 6, 'Compression')
+		self.list.InsertColumn( 7, 'Options')
+		self.list.InsertColumn( 8, 'Status')
+		self.list.InsertColumn( 9, 'Nexthop')
+		self.list.InsertColumn(10, 'Via')
+		self.list.InsertColumn(11, 'Distance')
+		self.list.InsertColumn(12, 'PMTU')
+		self.list.InsertColumn(13, 'Min MTU')
+		self.list.InsertColumn(14, 'Max MTU')
+
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		hbox.Add(self.list, 1, wx.EXPAND)
+		self.SetSizer(hbox)
+		self.refresh()
+
+	def refresh(self):
+		self.list.itemDataMap = {}
+		i = 0
+
+		for key, node in vpn.nodes.items():
+			if self.list.ItemCount <= i:
+				self.list.InsertStringItem(i, node.name)
+			else:
+				self.list.SetStringItem(i,  0, node.name)
+			self.list.SetStringItem(i,  1, node.address)
+			self.list.SetStringItem(i,  2, node.port)
+			self.list.SetStringItem(i,  3, str(node.cipher))
+			self.list.SetStringItem(i,  4, str(node.digest))
+			self.list.SetStringItem(i,  5, str(node.maclength))
+			self.list.SetStringItem(i,  6, str(node.compression))
+			self.list.SetStringItem(i,  7, str(node.options))
+			self.list.SetStringItem(i,  8, str(node.status))
+			self.list.SetStringItem(i,  9, node.nexthop)
+			self.list.SetStringItem(i, 10, node.via)
+			self.list.SetStringItem(i, 11, str(node.distance))
+			self.list.SetStringItem(i, 12, str(node.pmtu))
+			self.list.SetStringItem(i, 13, str(node.minmtu))
+			self.list.SetStringItem(i, 14, str(node.maxmtu))
+			self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength, node.compression, node.options, node.status, node.nexthop, node.via, node.distance, node.pmtu, node.minmtu, node.maxmtu)
+			self.list.SetItemData(i, i)
+			i += 1
+
+		while self.list.ItemCount > i:
+			self.list.DeleteItem(self.list.ItemCount - 1)
+
+class EdgesPage(wx.Panel):
+	def __init__(self, parent, id):
+		wx.Panel.__init__(self, parent, id)
+		self.list = wx.ListCtrl(self, id, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+		self.list.InsertColumn(0, 'From')
+		self.list.InsertColumn(1, 'To')
+		self.list.InsertColumn(2, 'Address')
+		self.list.InsertColumn(3, 'Port')
+		self.list.InsertColumn(4, 'Options')
+		self.list.InsertColumn(5, 'Weight')
+
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		hbox.Add(self.list, 1, wx.EXPAND)
+		self.SetSizer(hbox)
+		self.refresh()
+
+	def refresh(self):
+		self.list.itemDataMap = {}
+		i = 0
+
+		for key, edge in vpn.edges.items():
+			if self.list.ItemCount <= i:
+				self.list.InsertStringItem(i, edge.fr)
+			else:
+				self.list.SetStringItem(i, 0, edge.fr)
+			self.list.SetStringItem(i, 1, edge.to)
+			self.list.SetStringItem(i, 2, edge.address)
+			self.list.SetStringItem(i, 3, edge.port)
+			self.list.SetStringItem(i, 4, str(edge.options))
+			self.list.SetStringItem(i, 5, str(edge.weight))
+			self.list.itemDataMap[i] = (edge.fr, edge.to, edge.address, edge.port, edge.options, edge.weight)
+			i += 1
+
+		while self.list.ItemCount > i:
+			self.list.DeleteItem(self.list.ItemCount - 1)
+
+class SubnetsPage(wx.Panel):
+	def __init__(self, parent, id):
+		wx.Panel.__init__(self, parent, id)
+		self.list = SuperListCtrl(self, id)
+		self.list.InsertColumn(0, 'Subnet', wx.LIST_FORMAT_RIGHT)
+		self.list.InsertColumn(1, 'Weight', wx.LIST_FORMAT_RIGHT)
+		self.list.InsertColumn(2, 'Owner')
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		hbox.Add(self.list, 1, wx.EXPAND)
+		self.SetSizer(hbox)
+		self.refresh()
+
+	def refresh(self):
+		self.list.itemDataMap = {}
+		i = 0
+
+		for key, subnet in vpn.subnets.items():
+			if self.list.ItemCount <= i:
+				self.list.InsertStringItem(i, subnet.address + '/' + subnet.prefixlen)
+			else:
+				self.list.SetStringItem(i, 0, subnet.address + '/' + subnet.prefixlen)
+			self.list.SetStringItem(i, 1, subnet.weight)
+			self.list.SetStringItem(i, 2, subnet.owner)
+			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
+			i = i + 1
+
+		while self.list.ItemCount > i:
+			self.list.DeleteItem(self.list.ItemCount - 1)
+
+class StatusPage(wx.Panel):
+	def __init__(self, parent, id):
+		wx.Panel.__init__(self, parent, id)
+
+class GraphPage(wx.Window):
+	def __init__(self, parent, id):
+		wx.Window.__init__(self, parent, id)
+
+class NetPage(wx.Notebook):
+	def __init__(self, parent, id):
+		wx.Notebook.__init__(self, parent)
+		self.settings = SettingsPage(self, id)
+		self.connections = ConnectionsPage(self, id)
+		self.nodes = NodesPage(self, id)
+		self.edges = EdgesPage(self, id)
+		self.subnets = SubnetsPage(self, id)
+		self.graph = GraphPage(self, id)
+		self.status = StatusPage(self, id)
+
+		self.AddPage(self.settings, 'Settings')
+		#self.AddPage(self.status, 'Status')
+		self.AddPage(self.connections, 'Connections')
+		self.AddPage(self.nodes, 'Nodes')
+		self.AddPage(self.edges, 'Edges')
+		self.AddPage(self.subnets, 'Subnets')
+		#self.AddPage(self.graph, 'Graph')
+		
+
+class MainWindow(wx.Frame):
+	def OnQuit(self, event):
+		self.Close(True)
+
+	def OnTimer(self, event):
+		vpn.refresh()
+		self.np.nodes.refresh()
+		self.np.subnets.refresh()
+		self.np.edges.refresh()
+		self.np.connections.refresh()
+
+	def __init__(self, parent, id, title):
+		wx.Frame.__init__(self, parent, id, title)
+
+		menubar = wx.MenuBar()
+		file = wx.Menu()
+		file.Append(1, '&Quit\tCtrl-X', 'Quit tinc GUI')
+		menubar.Append(file, '&File')
+
+		#nb = wx.Notebook(self, -1)
+		#nb.SetPadding((0, 0))
+		self.np = NetPage(self, -1)
+		#nb.AddPage(np, 'VPN')
+		
+		self.timer = wx.Timer(self, -1)
+		self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
+		self.timer.Start(1000)
+		self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
+		self.SetMenuBar(menubar)
+		self.Show()
+
+app = wx.App()
+mw = MainWindow(None, -1, 'Tinc GUI')
+
+#def OnTaskBarIcon(event):
+#	mw.Raise()
+#
+#icon = wx.Icon("tincgui.ico", wx.BITMAP_TYPE_PNG)
+#taskbaricon = wx.TaskBarIcon()
+#taskbaricon.SetIcon(icon, 'Tinc GUI')
+#wx.EVT_TASKBAR_RIGHT_UP(taskbaricon, OnTaskBarIcon)
+
+app.MainLoop()
+vpn.close()
