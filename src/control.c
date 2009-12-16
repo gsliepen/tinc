@@ -92,6 +92,27 @@ bool control_h(connection_t *c, char *request) {
 			int result = reload_configuration();
 			return control_return(c, REQ_RELOAD, result);
 
+		case REQ_DISCONNECT: {
+			char name[MAX_STRING_SIZE];
+			connection_t *other;
+			splay_node_t *node, *next;
+			bool found = false;
+
+			if(sscanf(request, "%*d %*d " MAX_STRING, name) != 1)
+				return control_return(c, REQ_DISCONNECT, -1);
+
+			for(node = connection_tree->head; node; node = next) {
+				next = node->next;
+				other = node->data;
+				if(strcmp(other->name, name))
+					continue;
+				terminate_connection(other, other->status.active);
+				found = true;
+			}
+
+			return control_return(c, REQ_DISCONNECT, found ? 0 : -2);
+		}
+
 		default:
 			return send_request(c, "%d %d", CONTROL, REQ_INVALID);
 	}

@@ -35,6 +35,8 @@ enum request_type {
 	REQ_PURGE,
 	REQ_SET_DEBUG,
 	REQ_RETRY,
+	REQ_CONNECT,
+	REQ_DISCONNECT,
 };
 
 #define TINC_CTL_VERSION_CURRENT 0

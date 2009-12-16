@@ -92,6 +92,7 @@ static void usage(bool status) {
 				"  debug N                    Set debug level\n"
 				"  retry                      Retry all outgoing connections\n"
 				"  reload                     Partial reload of configuration\n"
+				"  disconnect NODE            Close meta connection with NODE\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -592,6 +593,36 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		fprintf(stderr, "Old level %d, new level %d\n", origlevel, debuglevel);
+		return 0;
+	}
+
+	if(!strcasecmp(argv[optind], "connect")) {
+		if(argc != optind + 2) {
+			fprintf(stderr, "Invalid arguments.\n");
+			return 1;
+		}
+		char *name = argv[optind + 1];
+
+		sendline(fd, "%d %d %s", CONTROL, REQ_CONNECT, name);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_CONNECT || result) {
+			fprintf(stderr, "Could not connect to %s\n", name);
+			return 1;
+		}
+		return 0;
+	}
+
+	if(!strcasecmp(argv[optind], "disconnect")) {
+		if(argc != optind + 2) {
+			fprintf(stderr, "Invalid arguments.\n");
+			return 1;
+		}
+		char *name = argv[optind + 1];
+
+		sendline(fd, "%d %d %s", CONTROL, REQ_DISCONNECT, name);
+		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_DISCONNECT || result) {
+			fprintf(stderr, "Could not disconnect %s\n", name);
+			return 1;
+		}
 		return 0;
 	}
 
