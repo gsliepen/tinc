@@ -87,6 +87,7 @@ static bool digest_open(digest_t *digest, int algo, int maclength) {
 		digest->maclength = maclength;
 	
 	digest->algo = algo;
+	digest->hmac = NULL;
 
 	return true;
 }
@@ -118,24 +119,45 @@ bool digest_open_sha1(digest_t *digest, int maclength) {
 }
 
 void digest_close(digest_t *digest) {
+	if(digest->hmac)
+		gcry_md_close(digest->hmac);
+	digest->hmac = NULL;
+}
+
+bool digest_set_key(digest_t *digest, const void *key, size_t len) {
+	if(!digest->hmac)
+		gcry_md_open(&digest->hmac, digest->algo, GCRY_MD_FLAG_HMAC);
+	if(!digest->hmac)
+		return false;
+
+	return !gcry_md_setkey(digest->hmac, key, len);
 }
 
 bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {
 	unsigned int len = gcry_md_get_algo_dlen(digest->algo);
-	char tmpdata[len];
 
-	gcry_md_hash_buffer(digest->algo, tmpdata, indata, inlen);
-	memcpy(outdata, tmpdata, digest->maclength);
+	if(digest->hmac) {
+		char *tmpdata;
+		gcry_md_reset(digest->hmac);
+		gcry_md_write(digest->hmac, indata, inlen);
+		tmpdata = gcry_md_read(digest->hmac, digest->algo);
+		if(!tmpdata)
+			return false;
+		memcpy(outdata, tmpdata, digest->maclength);
+	} else {
+		char tmpdata[len];
+		gcry_md_hash_buffer(digest->algo, tmpdata, indata, inlen);
+		memcpy(outdata, tmpdata, digest->maclength);
+	}
 
 	return true;
 }
 
 bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const void *cmpdata) {
-	unsigned int len = gcry_md_get_algo_dlen(digest->algo);
+	unsigned int len = digest->maclength;
 	char outdata[len];
 
-	gcry_md_hash_buffer(digest->algo, outdata, indata, inlen);
-	return !memcmp(cmpdata, outdata, digest->maclength);
+	return digest_create(digest, indata, inlen, outdata) && !memcmp(cmpdata, outdata, len);
 }
 
 int digest_get_nid(const digest_t *digest) {

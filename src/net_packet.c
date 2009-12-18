@@ -195,7 +195,7 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(!digest_active(&n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest))
 		return false;
 
-	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len);
+	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len - n->indigest.maclength, (const char *)&inpkt->seqno + inpkt->len - n->indigest.maclength);
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -222,11 +222,13 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check the message authentication code */
 
-	if(digest_active(&n->indigest) && !digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
-		return;
+	if(digest_active(&n->indigest)) {
+		inpkt->len -= n->indigest.maclength;
+ 		if(!digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
+			return;
+		}
 	}
-
 	/* Decrypt the packet */
 
 	if(cipher_active(&n->incipher)) {
@@ -501,31 +503,28 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 
 static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	splay_node_t *node;
-	edge_t *e;
-	node_t *n = NULL;
+	node_t *n, *found = NULL;
 	static time_t last_hard_try = 0;
 	time_t now = time(NULL);
 
-	for(node = edge_weight_tree->head; node; node = node->next) {
-		e = node->data;
+	if(last_hard_try == now)
+		return NULL;
+	else
+		last_hard_try = now;
 
-		if(sockaddrcmp_noport(from, &e->address)) {
-			if(last_hard_try == now)
-				continue;
-			last_hard_try = now;
-		}
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
 
-		if(!n)
-			n = e->to;
-
-		if(!try_mac(e->to, pkt))
+		if(n == myself || !digest_active(&n->indigest))
 			continue;
 
-		n = e->to;
-		break;
+		if(try_mac(n, pkt)) {
+			found = n;
+			break;
+		}
 	}
 
-	return n;
+	return found;
 }
 
 void handle_incoming_vpn_data(int sock, short events, void *data) {

@@ -139,6 +139,7 @@ bool send_ans_key(node_t *to) {
 
 	randomize(key, keylen);
 	cipher_set_key(&to->incipher, key, true);
+	digest_set_key(&to->indigest, key, keylen);
 
 	bin2hex(key, key, keylen);
 	key[keylen * 2] = '\0';
@@ -160,7 +161,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];
-	int cipher, digest, maclength, compression;
+	int cipher, digest, maclength, compression, keylen;
 	node_t *from, *to;
 
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
@@ -209,7 +210,9 @@ bool ans_key_h(connection_t *c, char *request) {
 		return false;
 	}
 
-	if(strlen(key) / 2 != cipher_keylength(&from->outcipher)) {
+	keylen = strlen(key) / 2;
+
+	if(keylen != cipher_keylength(&from->outcipher)) {
 		logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
 		return false;
 	}
@@ -233,8 +236,9 @@ bool ans_key_h(connection_t *c, char *request) {
 
 	/* Update our copy of the origin's packet key */
 
-	hex2bin(key, key, cipher_keylength(&from->outcipher));
+	hex2bin(key, key, keylen);
 	cipher_set_key(&from->outcipher, key, false);
+	digest_set_key(&from->outdigest, key, keylen);
 
 	from->status.validkey = true;
 	from->status.waitingforkey = false;

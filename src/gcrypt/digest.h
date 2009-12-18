@@ -28,6 +28,7 @@ typedef struct digest {
 	int algo;
 	int nid;
 	int maclength;
+	gcry_md_hd_t hmac;
 } digest_t;
 
 extern bool digest_open_by_name(struct digest *, const char *name, int maclength);
@@ -36,6 +37,7 @@ extern bool digest_open_sha1(struct digest *, int maclength);
 extern void digest_close(struct digest *);
 extern bool digest_create(struct digest *, const void *indata, size_t inlen, void *outdata);
 extern bool digest_verify(struct digest *, const void *indata, size_t inlen, const void *digestdata);
+extern bool digest_set_key(struct digest *, const void *key, size_t len);
 extern int digest_get_nid(const struct digest *);
 extern size_t digest_length(const struct digest *);
 extern bool digest_active(const struct digest *);
