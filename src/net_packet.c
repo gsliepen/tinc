@@ -533,14 +533,17 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 	sockaddr_t from;
 	socklen_t fromlen = sizeof from;
 	node_t *n;
+	int len;
 
-	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
-	if(pkt.len < 0) {
+	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
 			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
 		return;
 	}
+
+	pkt.len = len;
 
 	sockaddrunmap(&from);		/* Some braindead IPv6 implementations do stupid things. */
 
