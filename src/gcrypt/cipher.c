@@ -196,7 +196,13 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		if(!oneshot)
 			return false;
 
-		size_t reqlen = ((inlen + 8) / cipher->blklen) * cipher->blklen;
+		size_t reqlen = ((inlen + cipher->blklen) / cipher->blklen) * cipher->blklen;
+
+		if(*outlen < reqlen) {
+			logger(LOG_ERR, "Error while encrypting: not enough room for padding");
+			return false;
+		}
+
 		uint8_t padbyte = reqlen - inlen;
 		inlen = reqlen - cipher->blklen;
 
@@ -259,7 +265,8 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 			}
 
 		*outlen = origlen;
-	}
+	} else
+		*outlen = inlen;
 
 	return true;
 }
