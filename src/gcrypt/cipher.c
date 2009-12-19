@@ -207,6 +207,9 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 				pad[i] = padbyte;
 	}
 	
+	if(oneshot)
+		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
+
 	if((err = gcry_cipher_encrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
 		logger(LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
 		return false;
@@ -227,6 +230,9 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 
 bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
+
+	if(oneshot)
+		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 
 	if((err = gcry_cipher_decrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
 		logger(LOG_ERR, "Error while decrypting: %s", gcry_strerror(err));
