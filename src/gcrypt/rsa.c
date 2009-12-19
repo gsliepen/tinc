@@ -184,7 +184,7 @@ bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e) {
 	gcry_error_t err = 0;
 
 	err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL)
-		?: gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, n, 0, NULL);
+		?: gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL);
 
 	if(err) {
 		logger(LOG_ERR, "Error while reading RSA public key: %s", gcry_strerror(errno));
@@ -198,8 +198,8 @@ bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d) {
 	gcry_error_t err = 0;
 
 	err = gcry_mpi_scan(&rsa->n, GCRYMPI_FMT_HEX, n, 0, NULL)
-		?: gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, n, 0, NULL)
-		?: gcry_mpi_scan(&rsa->d, GCRYMPI_FMT_HEX, n, 0, NULL);
+		?: gcry_mpi_scan(&rsa->e, GCRYMPI_FMT_HEX, e, 0, NULL)
+		?: gcry_mpi_scan(&rsa->d, GCRYMPI_FMT_HEX, d, 0, NULL);
 
 	if(err) {
 		logger(LOG_ERR, "Error while reading RSA public key: %s", gcry_strerror(errno));
