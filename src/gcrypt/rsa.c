@@ -276,6 +276,10 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_t outmpi = gcry_mpi_new(len * 8);
 	gcry_mpi_powm(outmpi, inmpi, rsa->e, rsa->n);
 
+	int pad = len - (gcry_mpi_get_nbits(outmpi) + 7) / 8;
+	while(pad--)
+		*(char *)out++ = 0;
+
 	check(gcry_mpi_print(GCRYMPI_FMT_USG, out,len, NULL, outmpi));
 
 	return true;
@@ -287,6 +291,10 @@ bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 
 	gcry_mpi_t outmpi = gcry_mpi_new(len * 8);
 	gcry_mpi_powm(outmpi, inmpi, rsa->d, rsa->n);
+
+	int pad = len - (gcry_mpi_get_nbits(outmpi) + 7) / 8;
+	while(pad--)
+		*(char *)out++ = 0;
 
 	check(gcry_mpi_print(GCRYMPI_FMT_USG, out,len, NULL, outmpi));
 
