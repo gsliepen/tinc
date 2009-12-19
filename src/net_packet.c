@@ -515,7 +515,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 
-		if(n == myself || !digest_active(&n->indigest))
+		if(n == myself || !n->status.reachable || !digest_active(&n->indigest))
 			continue;
 
 		if(try_mac(n, pkt)) {
