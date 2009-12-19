@@ -196,7 +196,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		if(!oneshot)
 			return false;
 
-		size_t reqlen = ((inlen + 1) / cipher->blklen) * cipher->blklen;
+		size_t reqlen = ((inlen + 8) / cipher->blklen) * cipher->blklen;
 		uint8_t padbyte = reqlen - inlen;
 		inlen = reqlen - cipher->blklen;
 
@@ -239,14 +239,18 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 
 		uint8_t padbyte = ((uint8_t *)outdata)[inlen - 1];
 
-		if(padbyte == 0 || padbyte > cipher->blklen || padbyte > inlen)
+		if(padbyte == 0 || padbyte > cipher->blklen || padbyte > inlen) {
+			logger(LOG_ERR, "Error while decrypting: invalid padding");
 			return false;
+		}
 
 		size_t origlen = inlen - padbyte;
 
 		for(int i = inlen - 1; i >= origlen; i--)
-			if(((uint8_t *)indata)[i] != padbyte)
+			if(((uint8_t *)outdata)[i] != padbyte) {
+				logger(LOG_ERR, "Error while decrypting: invalid padding");
 				return false;
+			}
 
 		*outlen = origlen;
 	}
