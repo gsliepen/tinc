@@ -218,8 +218,8 @@ bool setup_myself(void) {
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	xasprintf(&myself->hostname, "MYSELF");
-	xasprintf(&myself->connection->hostname, "MYSELF");
+	myself->hostname = xstrdup("MYSELF");
+	myself->connection->hostname = xstrdup("MYSELF");
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
@@ -247,7 +247,7 @@ bool setup_myself(void) {
 		return false;
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
-		xasprintf(&myport, "655");
+		myport = xstrdup("655");
 
 	/* Read in all the subnets specified in the host configuration file */
 
