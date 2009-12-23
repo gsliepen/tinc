@@ -48,6 +48,7 @@ static const size_t ip6_size = sizeof(struct ip6_hdr);
 static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 /* RFC 1071 */
 
@@ -315,10 +316,10 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(via && packet->len > via->mtu && via != myself) {
+	if(via && packet->len > max(via->mtu, 590) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
-			packet->len = via->mtu;
+			packet->len = max(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
 			fragment_ipv4_packet(via, packet);
@@ -458,9 +459,9 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(via && packet->len > via->mtu && via != myself) {
+	if(via && packet->len > max(via->mtu, 1294) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
-		packet->len = via->mtu;
+		packet->len = max(via->mtu, 1294);
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}
@@ -724,7 +725,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	if(via && packet->len > via->mtu && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		uint16_t type = packet->data[12] << 8 | packet->data[13];
-		if(type == ETH_P_IP) {
+		if(type == ETH_P_IP && packet->len > 590) {
 			if(packet->data[20] & 0x40) {
 				packet->len = via->mtu;
 				route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
@@ -732,7 +733,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 				fragment_ipv4_packet(via, packet);
 			}
 			return;
-		} else if(type == ETH_P_IPV6) {
+		} else if(type == ETH_P_IPV6 && packet->len > 1294) {
 			packet->len = via->mtu;
 			route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 			return;
