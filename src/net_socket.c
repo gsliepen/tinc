@@ -331,7 +331,7 @@ void finish_connecting(connection_t *c) {
 }
 
 void do_outgoing_connection(connection_t *c) {
-	char *address, *port;
+	char *address, *port, *space;
 	int result;
 
 	if(!c->outgoing) {
@@ -352,8 +352,14 @@ begin:
 
 		get_config_string(c->outgoing->cfg, &address);
 
-		if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
-			xasprintf(&port, "655");
+		space = strchr(address, ' ');
+		if(space) {
+			port = xstrdup(space + 1);
+			*space = 0;
+		} else {
+			if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
+				port = xstrdup("655");
+		}
 
 		c->outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
 		free(address);

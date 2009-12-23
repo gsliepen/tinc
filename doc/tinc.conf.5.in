@@ -330,9 +330,10 @@ Since host configuration files only contain public keys,
 no secrets are revealed by sending out this information.
 .Bl -tag -width indent
 
-.It Va Address Li = Ar address Bq recommended
+.It Va Address Li = Ar address Oo port Oc Bq recommended
 The IP address or hostname of this tinc daemon on the real network.
 This will only be used when trying to make an outgoing connection to this tinc daemon.
+Optionally, a port can be specified to use for this address.
 Multiple
 .Va Address
 variables can be specified, in which case each address will be tried until a working
@@ -380,7 +381,10 @@ When this option is enabled, tinc will try to discover the path MTU to this node
 After the path MTU has been discovered, it will be enforced on the VPN.
 
 .It Va Port Li = Ar port Pq 655
-The port number on which this tinc daemon is listening for incoming connections.
+The port number on which this tinc daemon is listening for incoming connections,
+which is used if no port number is specified in an
+.Va Address
+statement.
 
 .It Va PublicKey Li = Ar key Bq obsolete
 The public RSA key of this tinc daemon.
