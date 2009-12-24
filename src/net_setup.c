@@ -246,7 +246,8 @@ bool setup_myself(void) {
 	if(!read_rsa_private_key())
 		return false;
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)
+			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
 		myport = xstrdup("655");
 
 	/* Read in all the subnets specified in the host configuration file */
@@ -296,11 +297,10 @@ bool setup_myself(void) {
 	} else
 		routing_mode = RMODE_ROUTER;
 
-	// Enable PMTUDiscovery by default if we are in router mode.
-
-	choice = routing_mode == RMODE_ROUTER;
+	choice = true;
 	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
-	if(choice)	
+	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
+	if(choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
