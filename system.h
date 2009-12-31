@@ -37,7 +37,7 @@ typedef int bool;
 
 /* Other functions */
 
-#include "dropin.h"
+#include "src/dropin.h"
 
 #ifndef HAVE_SOCKLEN_T
 typedef int socklen_t;
