@@ -418,8 +418,13 @@ int main_loop(void) {
 		}
 
 		if(sigalrm) {
+			avl_node_t *node;
 			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
+			for(node = connection_tree->head; node; node = node->next) {
+				connection_t *c = node->data;
+				send_ping(c);
+			}
 			sigalrm = false;
 		}
 
