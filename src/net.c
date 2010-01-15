@@ -374,11 +374,10 @@ int main_loop(void) {
 				dump_connections();
 				return 1;
 			}
-
-			continue;
 		}
 
-		check_network_activity(&readset, &writeset);
+		if(r > 0)
+			check_network_activity(&readset, &writeset);
 
 		if(do_purge) {
 			purge();
