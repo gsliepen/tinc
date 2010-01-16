@@ -93,49 +93,67 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 		return true;
 }
 
-void clamp_mss(node_t *source, node_t *via, vpn_packet_t *packet) {
-	int i;
-	int len = ((packet->data[46] >> 4) - 5) * 4;
+static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *packet) {
+	if(!via || via == myself)
+		return;
 
+	/* Find TCP header */
+	int start = 0;
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	if(type == ETH_P_IP && packet->data[23] == 6)
+		start = 14 + (packet->data[14] & 0xf) * 4;
+	else if(type == ETH_P_IPV6 && packet->data[20] == 6)
+		start = 14 + 40;
+
+	if(!start || packet->len <= start + 20)
+		return;
+
+	/* Use data offset field to calculate length of options field */
+	int len = ((packet->data[start + 12] >> 4) - 5) * 4;
+
+	/* Search for MSS option header */
 	for(int i = 0; i < len;) {
-		if(packet->data[54 + i] == 0)
+		if(packet->data[start + 20 + i] == 0)
 			break;
 
-		if(packet->data[54 + i] == 1) {
+		if(packet->data[start + 20 + i] == 1) {
 			i++;
 			continue;
 		}
 
-		if(i > len - 2 || i > len - packet->data[55 + i])
+		if(i > len - 2 || i > len - packet->data[start + 21 + i])
 			break;
 
-		if(packet->data[54 + i] != 2) {
-			if(packet->data[55 + i] < 2)
+		if(packet->data[start + 20 + i] != 2) {
+			if(packet->data[start + 21 + i] < 2)
 				break;
-			i += packet->data[55 + i];
+			i += packet->data[start + 21 + i];
 			continue;
 		}
 
-		if(packet->data[55] != 4)
+		if(packet->data[start + 21] != 4)
 			break;
 
-		uint16_t oldmss = packet->data[56 + i] << 8 | packet->data[57 + i];
-		uint16_t newmss = via->mtu - 54;
-		uint16_t csum = packet->data[50] << 8 | packet->data[51];
+		/* Found it */
+		uint16_t oldmss = packet->data[start + 22 + i] << 8 | packet->data[start + 23 + i];
+		uint16_t newmss = via->mtu - start - 20;
+		uint16_t csum = packet->data[start + 16] << 8 | packet->data[start + 17];
 
 		if(oldmss <= newmss)
 			break;
 		
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
 
-		packet->data[56 + i] = newmss >> 8;
-		packet->data[57 + i] = newmss & 0xff;
+		/* Update the MSS value and the checksum */
+		packet->data[start + 22 + i] = newmss >> 8;
+		packet->data[start + 23 + i] = newmss & 0xff;
 		csum ^= 0xffff;
 		csum -= oldmss;
 		csum += newmss;
 		csum ^= 0xffff;
-		packet->data[50] = csum >> 8;
-		packet->data[51] = csum & 0xff;
+		packet->data[start + 16] = csum >> 8;
+		packet->data[start + 17] = csum & 0xff;
 		break;
 	}
 }
@@ -375,8 +393,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
-	if(via && via != myself && packet->data[23] == 6 && packet->len >= 58 && (packet->data[46] >> 4) > 5)
-		clamp_mss(source, via, packet);
+	clamp_mss(source, via, packet);
  
 	send_packet(subnet->owner, packet);
 }
@@ -516,6 +533,8 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
+	clamp_mss(source, via, packet);
+ 
 	send_packet(subnet->owner, packet);
 }
 
@@ -790,8 +809,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 		}
 	}
 
-	if(via && via != myself && (packet->data[12] << 8 | packet->data[13]) == ETH_P_IP && packet->len >= 58 && packet->data[23] == 6 && (packet->data[46] >> 4) > 5)
-		clamp_mss(source, via, packet);
+	clamp_mss(source, via, packet);
  
 	send_packet(subnet->owner, packet);
 }
