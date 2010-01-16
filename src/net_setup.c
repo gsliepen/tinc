@@ -303,6 +303,12 @@ bool setup_myself(void) {
 	if(choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
 
+	choice = true;
+	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
+	get_config_bool(lookup_config(myself->connection->config_tree, "ClampMSS"), &choice);
+	if(choice)
+		myself->options |= OPTION_CLAMP_MSS;
+
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
 #if !defined(SOL_IP) || !defined(IP_TOS)

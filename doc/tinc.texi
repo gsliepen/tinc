@@ -956,6 +956,12 @@ Any cipher supported by OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
 
+@cindex ClampMSS
+@item ClampMSS = <yes|no> (yes)
+This option specifies whether tinc should clamp the maximum segment size (MSS)
+of TCP packets to the path MTU. This helps in situations where ICMP
+Fragmentation Needed or Packet too Big messages are dropped by firewalls.
+
 @cindex Compression
 @item Compression = <@var{level}> (0)
 This option sets the level of compression used for UDP packets.

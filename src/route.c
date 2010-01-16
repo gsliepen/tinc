@@ -94,7 +94,7 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 }
 
 static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *packet) {
-	if(!via || via == myself)
+	if(!via || via == myself || !(via->options & OPTION_CLAMP_MSS))
 		return;
 
 	/* Find TCP header */
@@ -111,6 +111,9 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 
 	/* Use data offset field to calculate length of options field */
 	int len = ((packet->data[start + 12] >> 4) - 5) * 4;
+
+	if(packet->len < start + 20 + len)
+		return;
 
 	/* Search for MSS option header */
 	for(int i = 0; i < len;) {

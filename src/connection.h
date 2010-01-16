@@ -29,6 +29,7 @@
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
 #define OPTION_PMTU_DISCOVERY	0x0004
+#define OPTION_CLAMP_MSS	0x0008
 
 typedef struct connection_status_t {
 	int pinged:1;				/* sent ping */

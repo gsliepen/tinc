@@ -453,6 +453,11 @@ bool send_ack(connection_t *c) {
 	if(myself->options & OPTION_PMTU_DISCOVERY)
 		c->options |= OPTION_PMTU_DISCOVERY;
 
+	choice = myself->options & OPTION_CLAMP_MSS;
+	get_config_bool(lookup_config(c->config_tree, "ClampMSS"), &choice);
+	if(choice)
+		c->options |= OPTION_CLAMP_MSS;
+
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
 
 	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, c->options);
@@ -496,6 +501,7 @@ bool ack_h(connection_t *c) {
 	int weight, mtu;
 	uint32_t options;
 	node_t *n;
+	bool choice;
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING " %d %x", hisport, &weight, &options) != 3) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name,
@@ -535,6 +541,13 @@ bool ack_h(connection_t *c) {
 
 	if(get_config_int(lookup_config(myself->connection->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
 		n->mtu = mtu;
+
+	if(get_config_bool(lookup_config(c->config_tree, "ClampMSS"), &choice)) {
+		if(choice)
+			c->options |= OPTION_CLAMP_MSS;
+		else
+			c->options &= ~OPTION_CLAMP_MSS;
+	}
 
 	/* Activate this connection */
 
