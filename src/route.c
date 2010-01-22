@@ -188,6 +188,7 @@ static void learn_mac(mac_t *address) {
 		subnet->net.mac.address = *address;
 		subnet->weight = 10;
 		subnet_add(myself, subnet);
+		subnet_update(myself, subnet, true);
 
 		/* And tell all other tinc daemons it's our MAC */
 
@@ -223,6 +224,7 @@ void age_subnets(void) {
 					send_del_subnet(c, s);
 			}
 
+			subnet_update(myself, s, false);
 			subnet_del(myself, s);
 		}
 	}
