@@ -57,6 +57,11 @@ bool key_changed_h(connection_t *c) {
 		return false;
 	}
 
+	if(!check_id(name)) {
+		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "KEY_CHANGED", c->name, c->hostname, "invalid name");
+		return false;
+	}
+
 	if(seen_request(c->buffer))
 		return true;
 
@@ -65,11 +70,11 @@ bool key_changed_h(connection_t *c) {
 	if(!n) {
 		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
 			   "KEY_CHANGED", c->name, c->hostname, name);
-		return false;
+		return true;
 	}
 
 	n->status.validkey = false;
-	n->status.waitingforkey = false;
+	n->last_req_key = 0;
 
 	/* Tell the others */
 
@@ -94,12 +99,17 @@ bool req_key_h(connection_t *c) {
 		return false;
 	}
 
+	if(!check_id(from_name) || !check_id(to_name)) {
+		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", c->name, c->hostname, "invalid name");
+		return false;
+	}
+
 	from = lookup_node(from_name);
 
 	if(!from) {
 		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, from_name);
-		return false;
+		return true;
 	}
 
 	to = lookup_node(to_name);
@@ -107,7 +117,7 @@ bool req_key_h(connection_t *c) {
 	if(!to) {
 		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, to_name);
-		return false;
+		return true;
 	}
 
 	/* Check if this key request is for us */
@@ -116,7 +126,7 @@ bool req_key_h(connection_t *c) {
 		send_ans_key(from);
 	} else {
 		if(tunnelserver)
-			return false;
+			return true;
 
 		if(!to->status.reachable) {
 			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
@@ -180,12 +190,17 @@ bool ans_key_h(connection_t *c) {
 		return false;
 	}
 
+	if(!check_id(from_name) || !check_id(to_name)) {
+		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_KEY", c->name, c->hostname, "invalid name");
+		return false;
+	}
+
 	from = lookup_node(from_name);
 
 	if(!from) {
 		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, from_name);
-		return false;
+		return true;
 	}
 
 	to = lookup_node(to_name);
@@ -193,14 +208,14 @@ bool ans_key_h(connection_t *c) {
 	if(!to) {
 		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, to_name);
-		return false;
+		return true;
 	}
 
 	/* Forward it if necessary */
 
 	if(to != myself) {
 		if(tunnelserver)
-			return false;
+			return true;
 
 		if(!to->status.reachable) {
 			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
@@ -218,7 +233,6 @@ bool ans_key_h(connection_t *c) {
 	from->outkeylength = strlen(key) / 2;
 	hex2bin(key, from->outkey, from->outkeylength);
 
-	from->status.waitingforkey = false;
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
@@ -227,13 +241,13 @@ bool ans_key_h(connection_t *c) {
 		if(!from->outcipher) {
 			logger(LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name,
 				   from->hostname);
-			return false;
+			return true;
 		}
 
 		if(from->outkeylength != from->outcipher->key_len + from->outcipher->iv_len) {
 			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name,
 				   from->hostname);
-			return false;
+			return true;
 		}
 	} else {
 		from->outcipher = NULL;
@@ -247,13 +261,13 @@ bool ans_key_h(connection_t *c) {
 		if(!from->outdigest) {
 			logger(LOG_ERR, "Node %s (%s) uses unknown digest!", from->name,
 				   from->hostname);
-			return false;
+			return true;
 		}
 
 		if(from->outmaclength > from->outdigest->md_size || from->outmaclength < 0) {
 			logger(LOG_ERR, "Node %s (%s) uses bogus MAC length!",
 				   from->name, from->hostname);
-			return false;
+			return true;
 		}
 	} else {
 		from->outdigest = NULL;
@@ -261,7 +275,7 @@ bool ans_key_h(connection_t *c) {
 
 	if(compression < 0 || compression > 11) {
 		logger(LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		return false;
+		return true;
 	}
 	
 	from->outcompression = compression;
@@ -270,7 +284,7 @@ bool ans_key_h(connection_t *c) {
 		if(!EVP_EncryptInit_ex(&from->outctx, from->outcipher, NULL, (unsigned char *)from->outkey, (unsigned char *)from->outkey + from->outcipher->key_len)) {
 			logger(LOG_ERR, "Error during initialisation of key from %s (%s): %s",
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
+			return true;
 		}
 
 	from->status.validkey = true;

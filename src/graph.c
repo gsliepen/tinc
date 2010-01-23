@@ -251,7 +251,7 @@ void sssp_bfs(void) {
 			/* TODO: only clear status.validkey if node is unreachable? */
 
 			n->status.validkey = false;
-			n->status.waitingforkey = false;
+			n->last_req_key = 0;
 
 			n->maxmtu = MTU;
 			n->minmtu = 0;

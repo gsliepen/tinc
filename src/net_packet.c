@@ -353,10 +353,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
-		if(!n->status.waitingforkey)
+		if(n->last_req_key + 10 < now) {
 			send_req_key(n);
-
-		n->status.waitingforkey = true;
+			n->last_req_key = now;
+		}
 
 		send_tcppacket(n->nexthop->connection, origpkt);
 
