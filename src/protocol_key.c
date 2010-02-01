@@ -179,12 +179,14 @@ bool ans_key_h(connection_t *c) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];
+	char address[MAX_STRING_SIZE] = "";
+	char port[MAX_STRING_SIZE] = "";
 	int cipher, digest, maclength, compression;
 	node_t *from, *to;
 
-	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
+	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
 		from_name, to_name, key, &cipher, &digest, &maclength,
-		&compression) != 7) {
+		&compression, address, port) < 7) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
 			   c->hostname);
 		return false;
@@ -220,6 +222,16 @@ bool ans_key_h(connection_t *c) {
 		if(!to->status.reachable) {
 			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"ANS_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
+
+		if(!*address) {
+			char *address, *port;
+			ifdebug(PROTOCOL) logger(LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
+			sockaddr2str(&from->address, &address, &port);
+			send_request(to->nexthop->connection, "%s %s %s", c->buffer, address, port);
+			free(address);
+			free(port);
 			return true;
 		}
 
@@ -289,6 +301,12 @@ bool ans_key_h(connection_t *c) {
 
 	from->status.validkey = true;
 	from->sent_seqno = 0;
+
+	if(*address && *port) {
+		ifdebug(PROTOCOL) logger(LOG_DEBUG, "Using reflexive UDP address from %s: %s port %s", from->name, address, port);
+		sockaddr_t sa = str2sockaddr(address, port);
+		update_node_udp(from, &sa);
+	}
 
 	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
 		send_mtu_probe(from);
