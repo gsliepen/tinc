@@ -261,9 +261,13 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
-#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
+
+#if defined(IP_DONTFRAG) && !defined(IP_DONTFRAGMENT)
+#define IP_DONTFRAGMENT IP_DONTFRAG
 #endif
 
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
@@ -276,6 +280,8 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, &option, sizeof(option));
 	}
+#else
+#warning No way to disable IPv4 fragmentation
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
@@ -283,6 +289,13 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = IPV6_PMTUDISC_DO;
 		setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
 	}
+#elif defined(IPPROTO_IPV6) && defined(IPV6_DONTFRAG)
+	if(myself->options & OPTION_PMTU_DISCOVERY) {
+		option = 1;
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, &option, sizeof(option));
+	}
+#else
+#warning No way to disable IPv6 fragmentation
 #endif
 
 	if (!bind_to_interface(nfd)) {
