@@ -53,6 +53,7 @@
 #include "netutl.h"
 #include "node.h"
 #include "process.h"
+#include "protocol.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -289,6 +290,8 @@ void sssp_bfs(void) {
 
 			if(!n->status.reachable)
 				update_node_udp(n, NULL);
+			else if(n->connection)
+				send_ans_key(n);
 		}
 	}
 }
