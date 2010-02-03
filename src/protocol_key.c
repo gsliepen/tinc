@@ -36,15 +36,19 @@
 
 bool mykeyused = false;
 
-bool send_key_changed() {
-	/* Only send this message if some other daemon requested our key previously.
-	   This reduces unnecessary key_changed broadcasts.
-	 */
+void send_key_changed() {
+	avl_node_t *node;
+	connection_t *c;
 
-	if(!mykeyused)
-		return true;
+	send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 
-	return send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
+	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
+
+	for(node = connection_tree->head; node; node = node->next) {
+		c = node->data;
+		if(c->status.active && c->node && c->node->status.reachable)
+			send_ans_key(c->node);
+	}
 }
 
 bool key_changed_h(connection_t *c) {
