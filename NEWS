@@ -1,3 +1,18 @@
+Version 1.0.12               Feb  3 2010
+
+ * Really allow fast roaming of hosts to other nodes in a switched VPN.
+
+ * Fixes missing or incorrect environment variables when calling host-up/down
+   and subnet-up/down scripts in some cases.
+
+ * Allow port to be specified in Address statements.
+
+ * Clamp MSS of TCP packets to the discovered path MTU.
+
+ * Let two nodes behind NAT learn each others current UDP address and port via
+   a third node, potentially allowing direct communications in a similar way to
+   STUN.
+
 Version 1.0.11               Nov  1 2009
 
  * Fixed potential crash when the HUP signal is sent.
