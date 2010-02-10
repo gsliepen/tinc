@@ -26,7 +26,9 @@
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
 
+#ifdef HAVE_ZLIB
 #include <zlib.h>
+#endif
 
 #ifdef HAVE_LZO
 #include LZO1X_H
@@ -152,7 +154,10 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 }
 
 static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	if(level == 10) {
+	if(level == 0) {
+		memcpy(dest, source, len);
+		return len;
+	} else if(level == 10) {
 #ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
@@ -161,10 +166,12 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 		return -1;
 #endif
 	} else if(level < 10) {
+#ifdef HAVE_ZLIB
 		unsigned long destlen = MAXSIZE;
 		if(compress2(dest, &destlen, source, len, level) == Z_OK)
 			return destlen;
 		else
+#endif
 			return -1;
 	} else {
 #ifdef HAVE_LZO
@@ -180,7 +187,10 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 }
 
 static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	if(level > 9) {
+	if(level == 0) {
+		memcpy(dest, source, len);
+		return len;
+	} else if(level > 9) {
 #ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
@@ -188,14 +198,17 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 		else
 #endif
 			return -1;
-	} else {
+	}
+#ifdef HAVE_ZLIB
+	else {
 		unsigned long destlen = MAXSIZE;
 		if(uncompress(dest, &destlen, source, len) == Z_OK)
 			return destlen;
 		else
 			return -1;
 	}
-	
+#endif
+
 	return -1;
 }
 
