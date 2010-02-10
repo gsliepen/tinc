@@ -37,7 +37,9 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 
+#ifdef HAVE_LZO
 #include LZO1X_H
+#endif
 
 #ifndef HAVE_MINGW
 #include <pwd.h>
@@ -540,10 +542,12 @@ int main(int argc, char **argv) {
 	if(!read_server_config())
 		return 1;
 
+#ifdef HAVE_LZO
 	if(lzo_init() != LZO_E_OK) {
 		logger(LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
+#endif
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {

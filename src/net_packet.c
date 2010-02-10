@@ -27,7 +27,10 @@
 #include <openssl/hmac.h>
 
 #include <zlib.h>
+
+#ifdef HAVE_LZO
 #include LZO1X_H
+#endif
 
 #include "avl_tree.h"
 #include "conf.h"
@@ -48,7 +51,9 @@
 
 int keylifetime = 0;
 int keyexpires = 0;
+#ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
+#endif
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
@@ -148,9 +153,13 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
 	if(level == 10) {
+#ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
+#else
+		return -1;
+#endif
 	} else if(level < 10) {
 		unsigned long destlen = MAXSIZE;
 		if(compress2(dest, &destlen, source, len, level) == Z_OK)
@@ -158,9 +167,13 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 		else
 			return -1;
 	} else {
+#ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
+#else
+		return -1;
+#endif
 	}
 	
 	return -1;
@@ -168,10 +181,12 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 
 static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
 	if(level > 9) {
+#ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
 			return lzolen;
 		else
+#endif
 			return -1;
 	} else {
 		unsigned long destlen = MAXSIZE;
