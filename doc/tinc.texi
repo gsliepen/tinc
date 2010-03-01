@@ -928,11 +928,18 @@ specified in the configuration file.
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
+@cindex StrictSubnets
+@item StrictSubnets <yes|no> (no) [experimental]
+When this option is enabled tinc will only use Subnet statements which are
+present in the host config files in the local
+@file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
 When this option is enabled tinc will no longer forward information between other tinc daemons,
-and will only allow nodes and subnets on the VPN which are present in the
+and will only allow connections with nodes for which host config files are present in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+Setting this options also implicitly sets StrictSubnets.
 
 @end table
 

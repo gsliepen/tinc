@@ -29,6 +29,7 @@
 #include "xalloc.h"
 
 bool tunnelserver = false;
+bool strictsubnets = false;
 
 /* Jumptable for the request handlers */
 

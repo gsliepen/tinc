@@ -339,7 +339,9 @@ bool setup_myself(void) {
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
 
+	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	strictsubnets |= tunnelserver;
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
 		if(!strcasecmp(mode, "router"))
@@ -485,7 +487,7 @@ bool setup_myself(void) {
 
 	graph();
 
-	if(tunnelserver)
+	if(strictsubnets)
 		load_all_subnets();
 
 	/* Open device */

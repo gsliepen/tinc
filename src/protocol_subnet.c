@@ -112,6 +112,13 @@ bool add_subnet_h(connection_t *c) {
 		return true;
 	}
 
+	/* Ignore if strictsubnets is true, but forward it to others */
+
+	if(strictsubnets) {
+		forward_request(c);
+		return true;
+	}
+
 	/* If everything is correct, add the subnet to the list of the owner */
 
 	*(new = new_subnet()) = s;
@@ -198,6 +205,8 @@ bool del_subnet_h(connection_t *c) {
 	if(!find) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for %s which does not appear in his subnet tree",
 				   "DEL_SUBNET", c->name, c->hostname, name);
+		if(strictsubnets)
+			forward_request(c);
 		return true;
 	}
 
@@ -216,6 +225,8 @@ bool del_subnet_h(connection_t *c) {
 	/* Tell the rest */
 
 	forward_request(c);
+	if(strictsubnets)
+		return true;
 
 	/* Finally, delete it. */
 

@@ -68,7 +68,7 @@ static void purge(void) {
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
-				if(!tunnelserver)
+				if(!strictsubnets)
 					send_del_subnet(broadcast, s);
 				subnet_del(n, s);
 			}
