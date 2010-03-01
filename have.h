@@ -96,6 +96,10 @@
 #include <sys/uio.h>
 #endif
 
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+
 /* SunOS really wants sys/socket.h BEFORE net/if.h,
    and FreeBSD wants these lines below the rest. */
 
