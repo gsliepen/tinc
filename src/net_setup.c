@@ -202,6 +202,65 @@ bool read_rsa_private_key(void) {
 }
 
 /*
+  Read Subnets from all host config files
+*/
+static void load_all_subnets(void) {
+	DIR *dir;
+	struct dirent *ent;
+	char *dname;
+	char *fname;
+	avl_tree_t *config_tree;
+	config_t *cfg;
+	subnet_t *s;
+	node_t *n;
+	bool result;
+
+	xasprintf(&dname, "%s/hosts", confbase);
+	dir = opendir(dname);
+	if(!dir) {
+		logger(LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
+		free(dname);
+		return;
+	}
+
+	while((ent = readdir(dir))) {
+		if(!check_id(ent->d_name))
+			continue;
+
+		n = lookup_node(ent->d_name);
+		if(n)
+			continue;
+
+		#ifdef _DIRENT_HAVE_D_TYPE
+		//if(ent->d_type != DT_REG)
+		//	continue;
+		#endif
+
+		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
+		init_configuration(&config_tree);
+		result = read_config_file(config_tree, fname);
+		free(fname);
+		if(!result)
+			continue;
+
+		n = new_node();
+		n->name = xstrdup(ent->d_name);
+		node_add(n);
+
+		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			if(!get_config_subnet(cfg, &s))
+				continue;
+
+			subnet_add(n, s);
+		}
+
+		exit_configuration(&config_tree);
+	}
+
+	closedir(dir);
+}
+
+/*
   Configure node_t myself and set up the local sockets (listen only)
 */
 bool setup_myself(void) {
@@ -425,6 +484,9 @@ bool setup_myself(void) {
 	node_add(myself);
 
 	graph();
+
+	if(tunnelserver)
+		load_all_subnets();
 
 	/* Open device */
 

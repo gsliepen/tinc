@@ -104,29 +104,12 @@ bool add_subnet_h(connection_t *c) {
 		return true;
 	}
 
-	/* In tunnel server mode, check if the subnet matches one in the config file of this node */
+	/* In tunnel server mode, we should already know all allowed subnets */
 
 	if(tunnelserver) {
-		config_t *cfg;
-		subnet_t *allowed;
-
-		for(cfg = lookup_config(c->config_tree, "Subnet"); cfg; cfg = lookup_config_next(c->config_tree, cfg)) {
-			if(!get_config_subnet(cfg, &allowed))
-				continue;
-
-			if(!subnet_compare(&s, allowed))
-				break;
-
-			free_subnet(allowed);
-		}
-
-		if(!cfg) {
-			logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
-					"ADD_SUBNET", c->name, c->hostname, subnetstr);
-			return true;
-		}
-
-		free_subnet(allowed);
+		logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+				"ADD_SUBNET", c->name, c->hostname, subnetstr);
+		return true;
 	}
 
 	/* If everything is correct, add the subnet to the list of the owner */
@@ -139,8 +122,7 @@ bool add_subnet_h(connection_t *c) {
 
 	/* Tell the rest */
 
-	if(!tunnelserver)
-		forward_request(c);
+	forward_request(c);
 
 	/* Fast handoff of roaming MAC addresses */
 
@@ -228,10 +210,12 @@ bool del_subnet_h(connection_t *c) {
 		return true;
 	}
 
+	if(tunnelserver)
+		return true;
+
 	/* Tell the rest */
 
-	if(!tunnelserver)
-		forward_request(c);
+	forward_request(c);
 
 	/* Finally, delete it. */
 
