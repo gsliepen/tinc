@@ -818,6 +818,26 @@ Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.
 @end table
 
+@cindex Forwarding
+@item Forwarding = <off|internal|kernel> (internal)
+This option selects the way indirect packets are forwarded.
+
+@table @asis
+@item off
+Incoming packets that are not meant for the local node,
+but which should be forwarded to another node, are dropped.
+
+@item internal
+Incoming packets that are meant for another node are forwarded by tinc internally.
+
+This is the default mode, and unless you really know you need another forwarding mode, don't change it.
+
+@item kernel
+Incoming packets are always sent to the TUN/TAP device, even if the packets are not for the local node.
+This is less efficient, but allows the kernel to apply its routing and firewall rules on them,
+and can also help debugging.
+@end table
+
 @cindex GraphDumpFile
 @item GraphDumpFile = <@var{filename}> [experimental]
 If this option is present,

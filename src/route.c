@@ -33,6 +33,7 @@
 #include "utils.h"
 
 rmode_t routing_mode = RMODE_ROUTER;
+fmode_t forwarding_mode = FMODE_INTERNAL;
 bool priorityinheritance = false;
 int macexpire = 600;
 bool overwrite_mac = false;
@@ -383,7 +384,10 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable)
-		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+
+	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
+		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
@@ -531,7 +535,10 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable)
-		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+
+	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
+		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
@@ -796,6 +803,9 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
+	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
+		return;
+
 	// Handle packets larger than PMTU
 
 	node_t *via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
@@ -824,6 +834,11 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 }
 
 void route(node_t *source, vpn_packet_t *packet) {
+	if(forwarding_mode == FMODE_KERNEL) {
+		send_packet(myself, packet);
+		return;
+	}
+
 	if(!checklength(source, packet, ether_size))
 		return;
 

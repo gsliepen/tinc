@@ -355,8 +355,21 @@ bool setup_myself(void) {
 			return false;
 		}
 		free(mode);
-	} else
-		routing_mode = RMODE_ROUTER;
+	}
+
+	if(get_config_string(lookup_config(config_tree, "Forwarding"), &mode)) {
+		if(!strcasecmp(mode, "off"))
+			routing_mode = FMODE_OFF;
+		else if(!strcasecmp(mode, "internal"))
+			routing_mode = FMODE_INTERNAL;
+		else if(!strcasecmp(mode, "kernel"))
+			routing_mode = FMODE_KERNEL;
+		else {
+			logger(LOG_ERR, "Invalid forwarding mode!");
+			return false;
+		}
+		free(mode);
+	}
 
 	choice = true;
 	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
