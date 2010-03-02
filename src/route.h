@@ -38,6 +38,7 @@ typedef enum fmode_t {
 
 extern rmode_t routing_mode;
 extern fmode_t forwarding_mode;
+extern bool directonly;
 extern bool overwrite_mac;
 extern bool priorityinheritance;
 extern int macexpire;
