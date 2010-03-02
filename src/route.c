@@ -844,7 +844,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 }
 
 void route(node_t *source, vpn_packet_t *packet) {
-	if(forwarding_mode == FMODE_KERNEL) {
+	if(forwarding_mode == FMODE_KERNEL && source != myself) {
 		send_packet(myself, packet);
 		return;
 	}
