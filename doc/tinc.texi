@@ -1371,8 +1371,8 @@ ConnectTo = BranchA
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
-same as on the tap0 device.  Also, ConnectTo is given so that no-one can
-connect to this node.
+same as on the tap0 device.  Also, ConnectTo is given so that this node will
+always try to connect to BranchA.
 
 On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchB}:
 
