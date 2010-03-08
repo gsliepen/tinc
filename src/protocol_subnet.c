@@ -115,6 +115,8 @@ bool add_subnet_h(connection_t *c) {
 	/* Ignore if strictsubnets is true, but forward it to others */
 
 	if(strictsubnets) {
+		logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+				"ADD_SUBNET", c->name, c->hostname, subnetstr);
 		forward_request(c);
 		return true;
 	}
