@@ -68,9 +68,9 @@ static void purge(void) {
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
+				send_del_subnet(broadcast, s);
 				if(!strictsubnets)
-					send_del_subnet(broadcast, s);
-				subnet_del(n, s);
+					subnet_del(n, s);
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
@@ -98,7 +98,8 @@ static void purge(void) {
 					break;
 			}
 
-			if(!enode)
+			if(!enode && (!strictsubnets || !n->subnet_tree->head))
+				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
 	}
