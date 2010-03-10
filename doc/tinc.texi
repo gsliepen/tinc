@@ -1348,7 +1348,7 @@ Address = 1.2.3.4
 
 Note that the IP addresses of eth0 and tap0 are the same.
 This is quite possible, if you make sure that the netmasks of the interfaces are different.
-It is in fact recommended to give give both real internal network interfaces and tap interfaces the same IP address,
+It is in fact recommended to give both real internal network interfaces and tap interfaces the same IP address,
 since that will make things a lot easier to remember and set up.
 
 
