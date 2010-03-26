@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -59,9 +59,9 @@ void purge(void) {
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
-				if(!tunnelserver)
-					send_del_subnet(broadcast, s);
-				subnet_del(n, s);
+				send_del_subnet(broadcast, s);
+				if(!strictsubnets)
+					subnet_del(n, s);
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
@@ -89,7 +89,8 @@ void purge(void) {
 					break;
 			}
 
-			if(!enode)
+			if(!enode && (!strictsubnets || !n->subnet_tree->head))
+				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
 	}

@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,8 +20,19 @@
 
 #include "system.h"
 
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/hmac.h>
+
+#ifdef HAVE_ZLIB
 #include <zlib.h>
+#endif
+
+#ifdef HAVE_LZO
 #include LZO1X_H
+#endif
 
 #include "splay_tree.h"
 #include "cipher.h"
@@ -44,7 +55,9 @@
 
 int keylifetime = 0;
 int keyexpires = 0;
+#ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
+#endif
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
@@ -145,40 +158,61 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 }
 
 static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	if(level == 10) {
+	if(level == 0) {
+		memcpy(dest, source, len);
+		return len;
+	} else if(level == 10) {
+#ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
+#else
+		return -1;
+#endif
 	} else if(level < 10) {
+#ifdef HAVE_ZLIB
 		unsigned long destlen = MAXSIZE;
 		if(compress2(dest, &destlen, source, len, level) == Z_OK)
 			return destlen;
 		else
+#endif
 			return -1;
 	} else {
+#ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
+#else
+		return -1;
+#endif
 	}
 	
 	return -1;
 }
 
 static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	if(level > 9) {
+	if(level == 0) {
+		memcpy(dest, source, len);
+		return len;
+	} else if(level > 9) {
+#ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
 			return lzolen;
 		else
+#endif
 			return -1;
-	} else {
+	}
+#ifdef HAVE_ZLIB
+	else {
 		unsigned long destlen = MAXSIZE;
 		if(uncompress(dest, &destlen, source, len) == Z_OK)
 			return destlen;
 		else
 			return -1;
 	}
-	
+#endif
+
 	return -1;
 }
 
@@ -338,10 +372,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
-		if(!n->status.waitingforkey)
+		if(n->last_req_key + 10 < now) {
 			send_req_key(n);
-
-		n->status.waitingforkey = true;
+			n->last_req_key = now;
+		}
 
 		send_tcppacket(n->nexthop->connection, origpkt);
 

@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2010 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -479,7 +479,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 			if(!net2str(netstr, sizeof netstr, subnet))
 				continue;
 			// Strip the weight from the subnet, and put it in its own environment variable
-			char *weight = strchr(netstr + 7, '#');
+			char *weight = strchr(netstr, '#');
 			if(weight)
 				*weight++ = 0;
 			else
@@ -496,9 +496,9 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 			execute_script(name, envp);
 		}
 	} else {
-		if(net2str(netstr + 7, sizeof netstr - 7, subnet)) {
+		if(net2str(netstr, sizeof netstr, subnet)) {
 			// Strip the weight from the subnet, and put it in its own environment variable
-			char *weight = strchr(netstr + 7, '#');
+			char *weight = strchr(netstr, '#');
 			if(weight)
 				*weight++ = 0;
 			else

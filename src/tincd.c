@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
 
@@ -31,7 +31,15 @@
 #include <sys/mman.h>
 #endif
 
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
+#include <openssl/engine.h>
+
+#ifdef HAVE_LZO
 #include LZO1X_H
+#endif
 
 #ifndef HAVE_MINGW
 #include <pwd.h>
@@ -333,7 +341,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2010 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -373,10 +381,12 @@ int main(int argc, char **argv) {
 	if(!read_server_config())
 		return 1;
 
+#ifdef HAVE_LZO
 	if(lzo_init() != LZO_E_OK) {
 		logger(LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
+#endif
 
 #ifdef HAVE_MINGW
 	if(!do_detach || !init_service())

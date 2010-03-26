@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2010 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@
 #include "netutl.h"
 #include "node.h"
 #include "process.h"
+#include "protocol.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -346,7 +347,7 @@ void check_reachability() {
 			/* TODO: only clear status.validkey if node is unreachable? */
 
 			n->status.validkey = false;
-			n->status.waitingforkey = false;
+			n->last_req_key = 0;
 
 			n->maxmtu = MTU;
 			n->minmtu = 0;
@@ -381,6 +382,8 @@ void check_reachability() {
 
 			if(!n->status.reachable)
 				update_node_udp(n, NULL);
+			else if(n->connection)
+				send_ans_key(n);
 		}
 	}
 }

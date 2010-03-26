@@ -1,4 +1,4 @@
-.Dd 2009-03-05
+.Dd 2010-01-16
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -199,6 +199,32 @@ Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.
 .El
 
+.It Va DirectOnly Li = yes | no Pq no
+When this option is enabled, packets that cannot be sent directly to the destination node,
+but which would have to be forwarded by an intermediate node, are dropped instead.
+When combined with the IndirectData option,
+packets for nodes for which we do not have a meta connection with are also dropped.
+
+.It Va Forwarding Li = off | internal | kernel Pq internal
+This option selects the way indirect packets are forwarded.
+.Bl -tag -width indent
+
+.It off
+Incoming packets that are not meant for the local node,
+but which should be forwarded to another node, are dropped.
+
+.It internal
+Incoming packets that are meant for another node are forwarded by tinc internally.
+
+.Pp
+This is the default mode, and unless you really know you need another forwarding mode, don't change it.
+
+.It kernel
+Incoming packets are always sent to the TUN/TAP device, even if the packets are not for the local node.
+This is less efficient, but allows the kernel to apply its routing and firewall rules on them,
+and can also help debugging.
+.El
+
 .It Va GraphDumpFile Li = Ar filename Bq experimental
 If this option is present,
 .Nm tinc
@@ -308,11 +334,18 @@ specified in the configuration file.
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
-.It Va TunnelServer Li = yes | no Po no Pc Bq experimental
-When this option is enabled tinc will no longer forward information between other tinc daemons,
-and will only allow nodes and subnets on the VPN which are present in the
+.It Va StrictSubnets Li = yes | no Po no Pc Bq experimental
+When this option is enabled tinc will only use Subnet statements which are
+present in the host config files in the local
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 directory.
+
+.It Va TunnelServer Li = yes | no Po no Pc Bq experimental
+When this option is enabled tinc will no longer forward information between other tinc daemons,
+and will only allow connections with nodes for which host config files are present in the local
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
+directory.
+Setting this options also implicitly sets StrictSubnets.
 .El
 
 .Sh HOST CONFIGURATION FILES
@@ -330,9 +363,10 @@ Since host configuration files only contain public keys,
 no secrets are revealed by sending out this information.
 .Bl -tag -width indent
 
-.It Va Address Li = Ar address Bq recommended
+.It Va Address Li = Ar address Oo port Oc Bq recommended
 The IP address or hostname of this tinc daemon on the real network.
 This will only be used when trying to make an outgoing connection to this tinc daemon.
+Optionally, a port can be specified to use for this address.
 Multiple
 .Va Address
 variables can be specified, in which case each address will be tried until a working
@@ -345,6 +379,11 @@ Furthermore, specifying
 .Qq none
 will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
+
+.It Va ClampMSS Li = yes | no Pq yes
+This option specifies whether tinc should clamp the maximum segment size (MSS)
+of TCP packets to the path MTU. This helps in situations where ICMP
+Fragmentation Needed or Packet too Big messages are dropped by firewalls.
 
 .It Va Compression Li = Ar level Pq 0
 This option sets the level of compression used for UDP packets.
@@ -380,7 +419,10 @@ When this option is enabled, tinc will try to discover the path MTU to this node
 After the path MTU has been discovered, it will be enforced on the VPN.
 
 .It Va Port Li = Ar port Pq 655
-The port number on which this tinc daemon is listening for incoming connections.
+The port number on which this tinc daemon is listening for incoming connections,
+which is used if no port number is specified in an
+.Va Address
+statement.
 
 .It Va PublicKey Li = Ar key Bq obsolete
 The public RSA key of this tinc daemon.

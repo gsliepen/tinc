@@ -1,6 +1,6 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2010 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 typedef struct node_status_t {
 	int unused_active:1;			/* 1 if active (not used for nodes) */
 	int validkey:1;				/* 1 if we currently have a valid key for him */
-	int waitingforkey:1;			/* 1 if we already sent out a request */
+	int unused_waitingforkey:1;		/* 1 if we already sent out a request */
 	int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
 	int reachable:1;			/* 1 if this node is reachable in the graph */
 	int indirect:1;				/* 1 if this node is not directly reachable by us */
@@ -46,6 +46,7 @@ typedef struct node_t {
 	char *hostname;				/* the hostname of its real ip */
 
 	node_status_t status;
+	time_t last_req_key;
 
 	cipher_t incipher;                        /* Cipher for UDP packets */
 	digest_t indigest;                        /* Digest for UDP packets */	

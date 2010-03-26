@@ -30,7 +30,15 @@ typedef enum rmode_t {
 	RMODE_ROUTER,
 } rmode_t;
 
+typedef enum fmode_t {
+	FMODE_OFF = 0,
+	FMODE_INTERNAL,
+	FMODE_KERNEL,
+} fmode_t;
+
 extern rmode_t routing_mode;
+extern fmode_t forwarding_mode;
+extern bool directonly;
 extern bool overwrite_mac;
 extern bool priorityinheritance;
 extern int macexpire;

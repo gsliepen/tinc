@@ -104,29 +104,21 @@ bool add_subnet_h(connection_t *c, char *request) {
 		return true;
 	}
 
-	/* In tunnel server mode, check if the subnet matches one in the config file of this node */
+	/* In tunnel server mode, we should already know all allowed subnets */
 
 	if(tunnelserver) {
-		config_t *cfg;
-		subnet_t *allowed;
+		logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+				"ADD_SUBNET", c->name, c->hostname, subnetstr);
+		return true;
+	}
 
-		for(cfg = lookup_config(c->config_tree, "Subnet"); cfg; cfg = lookup_config_next(c->config_tree, cfg)) {
-			if(!get_config_subnet(cfg, &allowed))
-				continue;
+	/* Ignore if strictsubnets is true, but forward it to others */
 
-			if(!subnet_compare(&s, allowed))
-				break;
-
-			free_subnet(allowed);
-		}
-
-		if(!cfg) {
-			logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
-					"ADD_SUBNET", c->name, c->hostname, subnetstr);
-			return true;
-		}
-
-		free_subnet(allowed);
+	if(strictsubnets) {
+		logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
+				"ADD_SUBNET", c->name, c->hostname, subnetstr);
+		forward_request(c);
+		return true;
 	}
 
 	/* If everything is correct, add the subnet to the list of the owner */
@@ -216,6 +208,8 @@ bool del_subnet_h(connection_t *c, char *request) {
 	if(!find) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for %s which does not appear in his subnet tree",
 				   "DEL_SUBNET", c->name, c->hostname, name);
+		if(strictsubnets)
+			forward_request(c);
 		return true;
 	}
 
@@ -228,10 +222,15 @@ bool del_subnet_h(connection_t *c, char *request) {
 		return true;
 	}
 
+	if(tunnelserver)
+		return true;
+
 	/* Tell the rest */
 
 	if(!tunnelserver)
 		forward_request(c, request);
+	if(strictsubnets)
+		return true;
 
 	/* Finally, delete it. */
 

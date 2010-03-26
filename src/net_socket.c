@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -260,9 +260,13 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof option);
 
-#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
+
+#if defined(IP_DONTFRAG) && !defined(IP_DONTFRAGMENT)
+#define IP_DONTFRAGMENT IP_DONTFRAG
 #endif
 
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
@@ -275,6 +279,8 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, &option, sizeof(option));
 	}
+#else
+#warning No way to disable IPv4 fragmentation
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
@@ -282,6 +288,13 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = IPV6_PMTUDISC_DO;
 		setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
 	}
+#elif defined(IPPROTO_IPV6) && defined(IPV6_DONTFRAG)
+	if(myself->options & OPTION_PMTU_DISCOVERY) {
+		option = 1;
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, &option, sizeof(option));
+	}
+#else
+#warning No way to disable IPv6 fragmentation
 #endif
 
 	if (!bind_to_interface(nfd)) {
@@ -330,7 +343,7 @@ void finish_connecting(connection_t *c) {
 }
 
 void do_outgoing_connection(connection_t *c) {
-	char *address, *port;
+	char *address, *port, *space;
 	int result;
 
 	if(!c->outgoing) {
@@ -351,8 +364,14 @@ begin:
 
 		get_config_string(c->outgoing->cfg, &address);
 
-		if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
-			xasprintf(&port, "655");
+		space = strchr(address, ' ');
+		if(space) {
+			port = xstrdup(space + 1);
+			*space = 0;
+		} else {
+			if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
+				port = xstrdup("655");
+		}
 
 		c->outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
 		free(address);

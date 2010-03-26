@@ -26,6 +26,7 @@
 #include "conf.h"
 #include "logger.h"
 #include "netutl.h"				/* for str2address */
+#include "protocol.h"
 #include "utils.h"				/* for cp */
 #include "xalloc.h"
 
@@ -206,73 +207,30 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 }
 
 /*
-  Read exactly one line and strip the trailing newline if any.  If the
-  file was on EOF, return NULL. Otherwise, return all the data in a
-  dynamically allocated buffer.
-
-  If line is non-NULL, it will be used as an initial buffer, to avoid
-  unnecessary mallocing each time this function is called.  If buf is
-  given, and buf needs to be expanded, the var pointed to by buflen
-  will be increased.
+  Read exactly one line and strip the trailing newline if any.
 */
-static char *readline(FILE * fp, char **buf, size_t *buflen) {
+static char *readline(FILE * fp, char *buf, size_t buflen) {
 	char *newline = NULL;
 	char *p;
-	char *line;					/* The array that contains everything that has been read so far */
-	char *idx;					/* Read into this pointer, which points to an offset within line */
-	size_t size, newsize;		/* The size of the current array pointed to by line */
-	size_t maxlen;				/* Maximum number of characters that may be read with fgets.  This is newsize - oldsize. */
 
 	if(feof(fp))
 		return NULL;
 
-	if(buf && buflen) {
-		size = *buflen;
-		line = *buf;
-	} else {
-		size = 100;
-		line = xmalloc(size);
-	}
+	p = fgets(buf, buflen, fp);
 
-	maxlen = size;
-	idx = line;
-	*idx = 0;
+	if(!p)
+		return NULL;
 
-	for(;;) {
-		errno = 0;
-		p = fgets(idx, maxlen, fp);
+	newline = strchr(p, '\n');
 
-		if(!p) {				/* EOF or error */
-			if(feof(fp))
-				break;
+	if(!newline)
+		return NULL;
 
-			/* otherwise: error; let the calling function print an error message if applicable */
-			free(line);
-			return NULL;
-		}
+	*newline = '\0';	/* kill newline */
+	if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
+		newline[-1] = '\0';
 
-		newline = strchr(p, '\n');
-
-		if(!newline) {			/* We haven't yet read everything to the end of the line */
-			newsize = size << 1;
-			line = xrealloc(line, newsize);
-			idx = &line[size - 1];
-			maxlen = newsize - size + 1;
-			size = newsize;
-		} else {
-			*newline = '\0';	/* kill newline */
-			if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
-				newline[-1] = '\0';
-			break;				/* yay */
-		}
-	}
-
-	if(buf && buflen) {
-		*buflen = size;
-		*buf = line;
-	}
-
-	return line;
+	return buf;
 }
 
 /*
@@ -282,35 +240,28 @@ static char *readline(FILE * fp, char **buf, size_t *buflen) {
 int read_config_file(splay_tree_t *config_tree, const char *fname) {
 	int err = -2;				/* Parse error */
 	FILE *fp;
-	char *buffer, *line;
+	char buffer[MAX_STRING_SIZE];
+	char *line;
 	char *variable, *value, *eol;
 	int lineno = 0;
 	int len;
 	bool ignore = false;
 	config_t *cfg;
-	size_t bufsize;
+	bool result = false;
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Cannot open config file %s: %s", fname,
-			   strerror(errno));
-		return -3;
+		logger(LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		return false;
 	}
 
-	bufsize = 100;
-	buffer = xmalloc(bufsize);
-
 	for(;;) {
-		if(feof(fp)) {
-			err = 0;
-			break;
-		}
-
-		line = readline(fp, &buffer, &bufsize);
+		line = readline(fp, buffer, sizeof buffer);
 
 		if(!line) {
-			err = -1;
+			if(feof(fp))
+				result = true;
 			break;
 		}
 
@@ -361,24 +312,114 @@ int read_config_file(splay_tree_t *config_tree, const char *fname) {
 		config_add(config_tree, cfg);
 	}
 
-	free(buffer);
 	fclose(fp);
 
-	return err;
+	return result;
 }
 
 bool read_server_config() {
 	char *fname;
-	int x;
+	bool x;
 
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
-	if(x == -1) {				/* System error: complain */
+	if(!x) {				/* System error: complain */
 		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
 	free(fname);
 
-	return x == 0;
+	return x;
+}
+
+FILE *ask_and_open(const char *filename, const char *what) {
+	FILE *r;
+	char *directory;
+	char line[PATH_MAX];
+	const char *fn;
+
+	/* Check stdin and stdout */
+	if(!isatty(0) || !isatty(1)) {
+		/* Argh, they are running us from a script or something.  Write
+		   the files to the current directory and let them burn in hell
+		   for ever. */
+		fn = filename;
+	} else {
+		/* Ask for a file and/or directory name. */
+		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
+				what, filename);
+		fflush(stdout);
+
+		fn = readline(stdin, line, sizeof line);
+
+		if(!fn) {
+			fprintf(stderr, "Error while reading stdin: %s\n",
+					strerror(errno));
+			return NULL;
+		}
+
+		if(!strlen(fn))
+			/* User just pressed enter. */
+			fn = filename;
+	}
+
+#ifdef HAVE_MINGW
+	if(fn[0] != '\\' && fn[0] != '/' && !strchr(fn, ':')) {
+#else
+	if(fn[0] != '/') {
+#endif
+		/* The directory is a relative path or a filename. */
+		char *p;
+
+		directory = get_current_dir_name();
+		xasprintf(&p, "%s/%s", directory, fn);
+		free(directory);
+		fn = p;
+	}
+
+	umask(0077);				/* Disallow everything for group and other */
+
+	/* Open it first to keep the inode busy */
+
+	r = fopen(fn, "r+") ?: fopen(fn, "w+");
+
+	if(!r) {
+		fprintf(stderr, "Error opening file `%s': %s\n",
+				fn, strerror(errno));
+		return NULL;
+	}
+
+	return r;
+}
+
+bool disable_old_keys(FILE *f) {
+	char buf[100];
+	long pos;
+	bool disabled = false;
+
+	rewind(f);
+	pos = ftell(f);
+
+	while(fgets(buf, sizeof buf, f)) {
+		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
+			buf[11] = 'O';
+			buf[12] = 'L';
+			buf[13] = 'D';
+			fseek(f, pos, SEEK_SET);
+			fputs(buf, f);
+			disabled = true;
+		}
+		else if(!strncmp(buf, "-----END RSA", 12)) {	
+			buf[ 9] = 'O';
+			buf[10] = 'L';
+			buf[11] = 'D';
+			fseek(f, pos, SEEK_SET);
+			fputs(buf, f);
+			disabled = true;
+		}
+		pos = ftell(f);
+	}
+
+	return disabled;
 }

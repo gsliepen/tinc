@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -155,6 +155,65 @@ void regenerate_key() {
 }
 
 /*
+  Read Subnets from all host config files
+*/
+static void load_all_subnets(void) {
+	DIR *dir;
+	struct dirent *ent;
+	char *dname;
+	char *fname;
+	avl_tree_t *config_tree;
+	config_t *cfg;
+	subnet_t *s;
+	node_t *n;
+	bool result;
+
+	xasprintf(&dname, "%s/hosts", confbase);
+	dir = opendir(dname);
+	if(!dir) {
+		logger(LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
+		free(dname);
+		return;
+	}
+
+	while((ent = readdir(dir))) {
+		if(!check_id(ent->d_name))
+			continue;
+
+		n = lookup_node(ent->d_name);
+		if(n)
+			continue;
+
+		#ifdef _DIRENT_HAVE_D_TYPE
+		//if(ent->d_type != DT_REG)
+		//	continue;
+		#endif
+
+		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
+		init_configuration(&config_tree);
+		result = read_config_file(config_tree, fname);
+		free(fname);
+		if(!result)
+			continue;
+
+		n = new_node();
+		n->name = xstrdup(ent->d_name);
+		node_add(n);
+
+		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			if(!get_config_subnet(cfg, &s))
+				continue;
+
+			subnet_add(n, s);
+		}
+
+		exit_configuration(&config_tree);
+	}
+
+	closedir(dir);
+}
+
+/*
   Configure node_t myself and set up the local sockets (listen only)
 */
 bool setup_myself(void) {
@@ -171,8 +230,8 @@ bool setup_myself(void) {
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	xasprintf(&myself->hostname, "MYSELF");
-	xasprintf(&myself->connection->hostname, "MYSELF");
+	myself->hostname = xstrdup("MYSELF");
+	myself->connection->hostname = xstrdup("MYSELF");
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
@@ -199,8 +258,9 @@ bool setup_myself(void) {
 	if(!read_rsa_private_key())
 		return false;
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
-		xasprintf(&myport, "655");
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)
+			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
+		myport = xstrdup("655");
 
 	/* Read in all the subnets specified in the host configuration file */
 
@@ -232,7 +292,10 @@ bool setup_myself(void) {
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
 
+	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
+	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	strictsubnets |= tunnelserver;
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
 		if(!strcasecmp(mode, "router"))
@@ -246,15 +309,33 @@ bool setup_myself(void) {
 			return false;
 		}
 		free(mode);
-	} else
-		routing_mode = RMODE_ROUTER;
+	}
 
-	// Enable PMTUDiscovery by default if we are in router mode.
+	if(get_config_string(lookup_config(config_tree, "Forwarding"), &mode)) {
+		if(!strcasecmp(mode, "off"))
+			forwarding_mode = FMODE_OFF;
+		else if(!strcasecmp(mode, "internal"))
+			forwarding_mode = FMODE_INTERNAL;
+		else if(!strcasecmp(mode, "kernel"))
+			forwarding_mode = FMODE_KERNEL;
+		else {
+			logger(LOG_ERR, "Invalid forwarding mode!");
+			return false;
+		}
+		free(mode);
+	}
 
-	choice = routing_mode == RMODE_ROUTER;
+	choice = true;
 	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
-	if(choice)	
+	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
+	if(choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
+
+	choice = true;
+	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
+	get_config_bool(lookup_config(myself->connection->config_tree, "ClampMSS"), &choice);
+	if(choice)
+		myself->options |= OPTION_CLAMP_MSS;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
@@ -343,6 +424,9 @@ bool setup_myself(void) {
 	node_add(myself);
 
 	graph();
+
+	if(strictsubnets)
+		load_all_subnets();
 
 	/* Open device */
 

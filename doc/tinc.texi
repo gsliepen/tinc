@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2009 Ivo Timmermans,
+Copyright @copyright{} 1998-2010 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -40,7 +40,7 @@ permission notice identical to this one.
 @cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2009 Ivo Timmermans,
+Copyright @copyright{} 1998-2010 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -842,6 +842,33 @@ Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.
 @end table
 
+@cindex DirectOnly
+@item DirectOnly = <yes|no> (no)
+When this option is enabled, packets that cannot be sent directly to the destination node,
+but which would have to be forwarded by an intermediate node, are dropped instead.
+When combined with the IndirectData option,
+packets for nodes for which we do not have a meta connection with are also dropped.
+
+@cindex Forwarding
+@item Forwarding = <off|internal|kernel> (internal)
+This option selects the way indirect packets are forwarded.
+
+@table @asis
+@item off
+Incoming packets that are not meant for the local node,
+but which should be forwarded to another node, are dropped.
+
+@item internal
+Incoming packets that are meant for another node are forwarded by tinc internally.
+
+This is the default mode, and unless you really know you need another forwarding mode, don't change it.
+
+@item kernel
+Incoming packets are always sent to the TUN/TAP device, even if the packets are not for the local node.
+This is less efficient, but allows the kernel to apply its routing and firewall rules on them,
+and can also help debugging.
+@end table
+
 @cindex GraphDumpFile
 @item GraphDumpFile = <@var{filename}> [experimental]
 If this option is present,
@@ -952,11 +979,18 @@ specified in the configuration file.
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
+@cindex StrictSubnets
+@item StrictSubnets <yes|no> (no) [experimental]
+When this option is enabled tinc will only use Subnet statements which are
+present in the host config files in the local
+@file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
 When this option is enabled tinc will no longer forward information between other tinc daemons,
-and will only allow nodes and subnets on the VPN which are present in the
+and will only allow connections with nodes for which host config files are present in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+Setting this options also implicitly sets StrictSubnets.
 
 @end table
 
@@ -967,10 +1001,11 @@ and will only allow nodes and subnets on the VPN which are present in the
 
 @table @asis
 @cindex Address
-@item Address = <@var{IP address}|@var{hostname}> [recommended]
+@item Address = <@var{IP address}|@var{hostname}> [<port>] [recommended]
 This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
+If no port is specified, the default Port is used.
 
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)
@@ -978,6 +1013,12 @@ The symmetric cipher algorithm used to encrypt UDP packets.
 Any cipher supported by OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
+
+@cindex ClampMSS
+@item ClampMSS = <yes|no> (yes)
+This option specifies whether tinc should clamp the maximum segment size (MSS)
+of TCP packets to the path MTU. This helps in situations where ICMP
+Fragmentation Needed or Packet too Big messages are dropped by firewalls.
 
 @cindex Compression
 @item Compression = <@var{level}> (0)
@@ -1323,7 +1364,7 @@ Address = 1.2.3.4
 
 Note that the IP addresses of eth0 and tap0 are the same.
 This is quite possible, if you make sure that the netmasks of the interfaces are different.
-It is in fact recommended to give give both real internal network interfaces and tap interfaces the same IP address,
+It is in fact recommended to give both real internal network interfaces and tap interfaces the same IP address,
 since that will make things a lot easier to remember and set up.
 
 
@@ -1346,8 +1387,8 @@ ConnectTo = BranchA
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
-same as on the tap0 device.  Also, ConnectTo is given so that no-one can
-connect to this node.
+same as on the tap0 device.  Also, ConnectTo is given so that this node will
+always try to connect to BranchA.
 
 On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchB}:
 

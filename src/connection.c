@@ -109,11 +109,11 @@ bool dump_connections(connection_t *cdump) {
 
 bool read_connection_config(connection_t *c) {
 	char *fname;
-	int x;
+	bool x;
 
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);
 	free(fname);
 
-	return x == 0;
+	return x;
 }
