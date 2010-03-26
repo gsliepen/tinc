@@ -498,7 +498,7 @@ bool setup_myself(void) {
 				  EV_READ|EV_PERSIST,
 				  handle_new_meta_connection, NULL);
 		if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-			logger(LOG_EMERG, "event_add failed: %s", strerror(errno));
+			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
 			abort();
 		}
 
@@ -507,7 +507,7 @@ bool setup_myself(void) {
 				  EV_READ|EV_PERSIST,
 				  handle_incoming_vpn_data, NULL);
 		if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-			logger(LOG_EMERG, "event_add failed: %s", strerror(errno));
+			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
 			abort();
 		}
 

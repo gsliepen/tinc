@@ -442,7 +442,7 @@ begin:
 }
 
 void handle_meta_read(struct bufferevent *event, void *data) {
-	logger(LOG_EMERG, "handle_meta_read() called");
+	logger(LOG_ERR, "handle_meta_read() called");
 	abort();
 }
 
@@ -452,7 +452,7 @@ void handle_meta_write(struct bufferevent *event, void *data) {
 
 void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
 	connection_t *c = data;
-	logger(LOG_EMERG, "handle_meta_connection_error() called: %d: %s", what, strerror(errno));
+	logger(LOG_ERR, "handle_meta_connection_error() called: %d: %s", what, strerror(errno));
 	terminate_connection(c, c->status.active);
 }
 
@@ -501,7 +501,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	event_add(&c->inevent, NULL);
 	c->buffer = bufferevent_new(c->socket, handle_meta_read, handle_meta_write, handle_meta_connection_error, c);
 	if(!c->buffer) {
-		logger(LOG_EMERG, "bufferevent_new() failed: %s", strerror(errno));
+		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
 		abort();
 	}
 	bufferevent_disable(c->buffer, EV_READ);
@@ -544,7 +544,7 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 	event_add(&c->inevent, NULL);
 	c->buffer = bufferevent_new(c->socket, NULL, handle_meta_write, handle_meta_connection_error, c);
 	if(!c->buffer) {
-		logger(LOG_EMERG, "bufferevent_new() failed: %s", strerror(errno));
+		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
 		abort();
 	}
 	bufferevent_disable(c->buffer, EV_READ);
