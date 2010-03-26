@@ -162,7 +162,7 @@ static void load_all_subnets(void) {
 	struct dirent *ent;
 	char *dname;
 	char *fname;
-	avl_tree_t *config_tree;
+	splay_tree_t *config_tree;
 	config_t *cfg;
 	subnet_t *s;
 	node_t *n;

@@ -35,7 +35,7 @@
 static bool mykeyused = false;
 
 void send_key_changed() {
-	avl_node_t *node;
+	splay_node_t *node;
 	connection_t *c;
 
 	send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
@@ -257,7 +257,6 @@ bool ans_key_h(connection_t *c, char *request) {
 	digest_set_key(&from->outdigest, key, keylen);
 
 	from->status.validkey = true;
-	from->status.waitingforkey = false;
 	from->sent_seqno = 0;
 
 	if(*address && *port) {

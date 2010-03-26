@@ -368,6 +368,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Make sure we have a valid key */
 
 	if(!n->status.validkey) {
+		time_t now = time(NULL);
+
 		ifdebug(TRAFFIC) logger(LOG_INFO,
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);

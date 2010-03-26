@@ -333,66 +333,6 @@ bool read_server_config() {
 	return x;
 }
 
-FILE *ask_and_open(const char *filename, const char *what) {
-	FILE *r;
-	char *directory;
-	char line[PATH_MAX];
-	const char *fn;
-
-	/* Check stdin and stdout */
-	if(!isatty(0) || !isatty(1)) {
-		/* Argh, they are running us from a script or something.  Write
-		   the files to the current directory and let them burn in hell
-		   for ever. */
-		fn = filename;
-	} else {
-		/* Ask for a file and/or directory name. */
-		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
-				what, filename);
-		fflush(stdout);
-
-		fn = readline(stdin, line, sizeof line);
-
-		if(!fn) {
-			fprintf(stderr, "Error while reading stdin: %s\n",
-					strerror(errno));
-			return NULL;
-		}
-
-		if(!strlen(fn))
-			/* User just pressed enter. */
-			fn = filename;
-	}
-
-#ifdef HAVE_MINGW
-	if(fn[0] != '\\' && fn[0] != '/' && !strchr(fn, ':')) {
-#else
-	if(fn[0] != '/') {
-#endif
-		/* The directory is a relative path or a filename. */
-		char *p;
-
-		directory = get_current_dir_name();
-		xasprintf(&p, "%s/%s", directory, fn);
-		free(directory);
-		fn = p;
-	}
-
-	umask(0077);				/* Disallow everything for group and other */
-
-	/* Open it first to keep the inode busy */
-
-	r = fopen(fn, "r+") ?: fopen(fn, "w+");
-
-	if(!r) {
-		fprintf(stderr, "Error opening file `%s': %s\n",
-				fn, strerror(errno));
-		return NULL;
-	}
-
-	return r;
-}
-
 bool disable_old_keys(FILE *f) {
 	char buf[100];
 	long pos;

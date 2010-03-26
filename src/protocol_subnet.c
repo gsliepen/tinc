@@ -117,7 +117,7 @@ bool add_subnet_h(connection_t *c, char *request) {
 	if(strictsubnets) {
 		logger(LOG_WARNING, "Ignoring unauthorized %s from %s (%s): %s",
 				"ADD_SUBNET", c->name, c->hostname, subnetstr);
-		forward_request(c);
+		forward_request(c, request);
 		return true;
 	}
 
@@ -209,7 +209,7 @@ bool del_subnet_h(connection_t *c, char *request) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for %s which does not appear in his subnet tree",
 				   "DEL_SUBNET", c->name, c->hostname, name);
 		if(strictsubnets)
-			forward_request(c);
+			forward_request(c, request);
 		return true;
 	}
 
