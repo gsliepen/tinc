@@ -103,6 +103,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 }
 
 void forward_request(connection_t *from, char *request) {
+	/* Note: request is not zero terminated anymore after a call to this function! */
 	ifdebug(PROTOCOL) {
 		ifdebug(META)
 			logger(LOG_DEBUG, "Forwarding %s from %s (%s): %s",
@@ -113,7 +114,7 @@ void forward_request(connection_t *from, char *request) {
 	}
 
 	int len = strlen(request);
-	request[len] = '\n';
+	request[len++] = '\n';
 	broadcast_meta(from, request, len);
 }
 
