@@ -309,6 +309,16 @@ bool setup_myself(void) {
 			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
 		myport = xstrdup("655");
 
+	if(!atoi(myport)) {
+		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
+		sockaddr_t sa;
+		if(!ai || !ai->ai_addr)
+			return false;
+		free(myport);
+		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+		sockaddr2str(&sa, NULL, &myport);
+	}
+
 	/* Read in all the subnets specified in the host configuration file */
 
 	cfg = lookup_config(myself->connection->config_tree, "Subnet");

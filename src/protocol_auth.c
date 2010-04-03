@@ -497,7 +497,7 @@ static void send_everything(connection_t *c) {
 
 bool ack_h(connection_t *c) {
 	char hisport[MAX_STRING_SIZE];
-	char *hisaddress, *dummy;
+	char *hisaddress;
 	int weight, mtu;
 	uint32_t options;
 	node_t *n;
@@ -566,10 +566,9 @@ bool ack_h(connection_t *c) {
 	c->edge = new_edge();
 	c->edge->from = myself;
 	c->edge->to = n;
-	sockaddr2str(&c->address, &hisaddress, &dummy);
+	sockaddr2str(&c->address, &hisaddress, NULL);
 	c->edge->address = str2sockaddr(hisaddress, hisport);
 	free(hisaddress);
-	free(dummy);
 	c->edge->weight = (weight + c->estimated_weight) / 2;
 	c->edge->connection = c;
 	c->edge->options = c->options;

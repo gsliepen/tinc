@@ -102,8 +102,10 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	if(scopeid)
 		*scopeid = '\0';		/* Descope. */
 
-	*addrstr = xstrdup(address);
-	*portstr = xstrdup(port);
+	if(addrstr)
+		*addrstr = xstrdup(address);
+	if(portstr)
+		*portstr = xstrdup(port);
 }
 
 char *sockaddr2hostname(const sockaddr_t *sa) {
