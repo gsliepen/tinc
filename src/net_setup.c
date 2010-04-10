@@ -204,14 +204,14 @@ bool read_rsa_private_key(void) {
 /*
   Read Subnets from all host config files
 */
-static void load_all_subnets(void) {
+void load_all_subnets(void) {
 	DIR *dir;
 	struct dirent *ent;
 	char *dname;
 	char *fname;
 	avl_tree_t *config_tree;
 	config_t *cfg;
-	subnet_t *s;
+	subnet_t *s, *s2;
 	node_t *n;
 	bool result;
 
@@ -251,7 +251,11 @@ static void load_all_subnets(void) {
 			if(!get_config_subnet(cfg, &s))
 				continue;
 
-			subnet_add(n, s);
+			if((s2 = lookup_subnet(n, s))) {
+				s2->expires = -1;
+			} else {
+				subnet_add(n, s);
+			}
 		}
 
 		exit_configuration(&config_tree);

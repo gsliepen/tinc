@@ -139,6 +139,7 @@ extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
 extern bool read_rsa_public_key(struct connection_t *);
 extern void send_mtu_probe(struct node_t *);
+extern void load_all_subnets();
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

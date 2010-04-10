@@ -64,6 +64,8 @@ typedef struct subnet_t {
 
 #define MAXNETSTR 64
 
+extern avl_tree_t *subnet_tree;
+
 extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
 extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
 extern void free_subnet(subnet_t *);
