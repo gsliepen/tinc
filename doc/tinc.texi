@@ -819,14 +819,14 @@ to start with an Ethernet header.
 @end table
 
 @cindex DirectOnly
-@item DirectOnly = <yes|no> (no)
+@item DirectOnly = <yes|no> (no) [experimental]
 When this option is enabled, packets that cannot be sent directly to the destination node,
 but which would have to be forwarded by an intermediate node, are dropped instead.
 When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
 
 @cindex Forwarding
-@item Forwarding = <off|internal|kernel> (internal)
+@item Forwarding = <off|internal|kernel> (internal) [experimental]
 This option selects the way indirect packets are forwarded.
 
 @table @asis
