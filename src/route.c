@@ -50,7 +50,7 @@ static const size_t ip6_size = sizeof(struct ip6_hdr);
 static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
-#define max(a, b) ((a) > (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 /* RFC 1071 */
 
@@ -398,10 +398,10 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	if(directonly && subnet->owner != via)
 		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
-	if(via && packet->len > max(via->mtu, 590) && via != myself) {
+	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
-			packet->len = max(via->mtu, 590);
+			packet->len = MAX(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
 			fragment_ipv4_packet(via, packet);
@@ -549,9 +549,9 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	if(directonly && subnet->owner != via)
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
-	if(via && packet->len > max(via->mtu, 1294) && via != myself) {
+	if(via && packet->len > MAX(via->mtu, 1294) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
-		packet->len = max(via->mtu, 1294);
+		packet->len = MAX(via->mtu, 1294);
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}
