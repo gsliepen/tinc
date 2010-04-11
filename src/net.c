@@ -506,11 +506,15 @@ int main_loop(void) {
 					subnet = node->data;
 					if(subnet->expires == 1) {
 						send_del_subnet(broadcast, subnet);
+						if(subnet->owner->status.reachable)
+							subnet_update(subnet->owner, subnet, false);
 						subnet_del(subnet->owner, subnet);
 					} else if(subnet->expires == -1) {
 						subnet->expires = 0;
 					} else {
 						send_add_subnet(broadcast, subnet);
+						if(subnet->owner->status.reachable)
+							subnet_update(subnet->owner, subnet, true);
 					}
 				}
 			}
