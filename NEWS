@@ -1,3 +1,15 @@
+Version 1.0.13               Apr 11 2010
+
+ * Allow building tinc without LZO and/or Zlib.
+
+ * Clamp MSS of TCP packets in both directions.
+
+ * Experimental StrictSubnets, Forwarding and DirectOnly options,
+   giving more control over information and packets received from/sent to other
+   nodes.
+
+ * Ensure tinc never sends symbolic names for ports over the wire.
+
 Version 1.0.12               Feb  3 2010
 
  * Really allow fast roaming of hosts to other nodes in a switched VPN.
