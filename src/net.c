@@ -508,8 +508,9 @@ int main_loop(void) {
 						send_del_subnet(broadcast, subnet);
 						subnet_del(subnet->owner, subnet);
 					} else if(subnet->expires == -1) {
-						send_add_subnet(broadcast, subnet);
 						subnet->expires = 0;
+					} else {
+						send_add_subnet(broadcast, subnet);
 					}
 				}
 			}

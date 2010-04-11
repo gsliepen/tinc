@@ -228,9 +228,6 @@ void load_all_subnets(void) {
 			continue;
 
 		n = lookup_node(ent->d_name);
-		if(n)
-			continue;
-
 		#ifdef _DIRENT_HAVE_D_TYPE
 		//if(ent->d_type != DT_REG)
 		//	continue;
@@ -243,9 +240,11 @@ void load_all_subnets(void) {
 		if(!result)
 			continue;
 
-		n = new_node();
-		n->name = xstrdup(ent->d_name);
-		node_add(n);
+		if(!n) {
+			n = new_node();
+			n->name = xstrdup(ent->d_name);
+			node_add(n);
+		}
 
 		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 			if(!get_config_subnet(cfg, &s))
