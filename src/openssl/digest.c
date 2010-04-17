@@ -74,6 +74,7 @@ bool digest_set_key(digest_t *digest, const void *key, size_t len) {
 	digest->key = xrealloc(digest->key, len);
 	memcpy(digest->key, key, len);
 	digest->keylength = len;
+	return true;
 }
 
 void digest_close(digest_t *digest) {
