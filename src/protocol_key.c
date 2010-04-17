@@ -175,7 +175,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	int cipher, digest, maclength, compression, keylen;
 	node_t *from, *to;
 
-	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression, address, port) < 7) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
@@ -213,6 +213,16 @@ bool ans_key_h(connection_t *c, char *request) {
 		if(!to->status.reachable) {
 			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				   "ANS_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
+
+		if(!*address) {
+			char *address, *port;
+			ifdebug(PROTOCOL) logger(LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
+			sockaddr2str(&from->address, &address, &port);
+			send_request(to->nexthop->connection, "%s %s %s", request, address, port);
+			free(address);
+			free(port);
 			return true;
 		}
 
