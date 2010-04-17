@@ -56,7 +56,7 @@ class Edge:
 		self.to = args[2]
 		self.address = args[4]
 		self.port = args[6]
-		self.options = int(args[8])
+		self.options = int(args[8], 16)
 		self.weight = int(args[10])
 
 class Subnet:
