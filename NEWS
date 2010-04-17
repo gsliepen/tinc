@@ -1,3 +1,7 @@
+Version 1.0.14               not released yet
+
+ * Fixed reading configuration files that do not end with a newline. Again.
+
 Version 1.0.13               Apr 11 2010
 
  * Allow building tinc without LZO and/or Zlib.
