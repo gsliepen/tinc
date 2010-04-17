@@ -4,6 +4,22 @@ Version 1.1-cvs              Work in progress
 
  * Use splay trees instead of AVL trees.
 
+Version 1.0.14               not released yet
+
+ * Fixed reading configuration files that do not end with a newline. Again.
+
+Version 1.0.13               Apr 11 2010
+
+ * Allow building tinc without LZO and/or Zlib.
+
+ * Clamp MSS of TCP packets in both directions.
+
+ * Experimental StrictSubnets, Forwarding and DirectOnly options,
+   giving more control over information and packets received from/sent to other
+   nodes.
+
+ * Ensure tinc never sends symbolic names for ports over the wire.
+
 Version 1.0.12               Feb  3 2010
 
  * Really allow fast roaming of hosts to other nodes in a switched VPN.

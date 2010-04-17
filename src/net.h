@@ -144,6 +144,7 @@ extern void regenerate_key();
 extern void purge(void);
 extern void retry(void);
 extern int reload_configuration(void);
+extern void load_all_subnets();
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

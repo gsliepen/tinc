@@ -45,6 +45,10 @@
 #define ICMP_NET_UNREACH 0
 #endif
 
+#ifndef ICMP_NET_ANO
+#define ICMP_NET_ANO 9
+#endif
+
 #ifndef IP_MSS
 #define       IP_MSS          576
 #endif

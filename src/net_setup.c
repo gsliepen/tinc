@@ -157,14 +157,14 @@ void regenerate_key() {
 /*
   Read Subnets from all host config files
 */
-static void load_all_subnets(void) {
+void load_all_subnets(void) {
 	DIR *dir;
 	struct dirent *ent;
 	char *dname;
 	char *fname;
 	splay_tree_t *config_tree;
 	config_t *cfg;
-	subnet_t *s;
+	subnet_t *s, *s2;
 	node_t *n;
 	bool result;
 
@@ -181,9 +181,6 @@ static void load_all_subnets(void) {
 			continue;
 
 		n = lookup_node(ent->d_name);
-		if(n)
-			continue;
-
 		#ifdef _DIRENT_HAVE_D_TYPE
 		//if(ent->d_type != DT_REG)
 		//	continue;
@@ -196,15 +193,21 @@ static void load_all_subnets(void) {
 		if(!result)
 			continue;
 
-		n = new_node();
-		n->name = xstrdup(ent->d_name);
-		node_add(n);
+		if(!n) {
+			n = new_node();
+			n->name = xstrdup(ent->d_name);
+			node_add(n);
+		}
 
 		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 			if(!get_config_subnet(cfg, &s))
 				continue;
 
-			subnet_add(n, s);
+			if((s2 = lookup_subnet(n, s))) {
+				s2->expires = -1;
+			} else {
+				subnet_add(n, s);
+			}
 		}
 
 		exit_configuration(&config_tree);
@@ -261,6 +264,16 @@ bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)
 			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
 		myport = xstrdup("655");
+
+	if(!atoi(myport)) {
+		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
+		sockaddr_t sa;
+		if(!ai || !ai->ai_addr)
+			return false;
+		free(myport);
+		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+		sockaddr2str(&sa, NULL, &myport);
+	}
 
 	/* Read in all the subnets specified in the host configuration file */
 

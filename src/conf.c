@@ -224,7 +224,7 @@ static char *readline(FILE * fp, char *buf, size_t buflen) {
 	newline = strchr(p, '\n');
 
 	if(!newline)
-		return NULL;
+		return buf;
 
 	*newline = '\0';	/* kill newline */
 	if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
@@ -238,7 +238,6 @@ static char *readline(FILE * fp, char *buf, size_t buflen) {
   starting at *base.
 */
 int read_config_file(splay_tree_t *config_tree, const char *fname) {
-	int err = -2;				/* Parse error */
 	FILE *fp;
 	char buffer[MAX_STRING_SIZE];
 	char *line;
