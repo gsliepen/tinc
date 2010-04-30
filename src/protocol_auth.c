@@ -261,7 +261,7 @@ bool send_challenge(connection_t *c) {
 bool challenge_h(connection_t *c, char *request) {
 	char buffer[MAX_STRING_SIZE];
 	size_t len = rsa_size(&myself->connection->rsa);
-	size_t digestlen = digest_length(&c->outdigest);
+	size_t digestlen = digest_length(&c->indigest);
 	char digest[digestlen];
 
 	if(sscanf(request, "%*d " MAX_STRING, buffer) != 1) {
