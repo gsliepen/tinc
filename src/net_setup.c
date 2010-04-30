@@ -465,7 +465,7 @@ bool setup_myself(void) {
 
 	execute_script("tinc-up", envp);
 
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < 4; i++)
 		free(envp[i]);
 
 	/* Run subnet-up scripts for our own subnets */
