@@ -21,6 +21,14 @@
 #ifndef __TINC_HAVE_H__
 #define __TINC_HAVE_H__
 
+#ifdef HAVE_MINGW
+#ifdef WITH_WINDOWS2000
+#define WINVER Windows2000
+#else
+#define WINVER WindowsXP
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -32,11 +40,6 @@
 #include <unistd.h>
 
 #ifdef HAVE_MINGW
-#ifdef WITH_WINDOWS2000
-#define WINVER Windows2000
-#else
-#define WINVER WindowsXP
-#endif
 #include <w32api.h>
 #include <windows.h>
 #include <ws2tcpip.h>
