@@ -85,7 +85,7 @@ void logger(int priority, const char *format, ...) {
 #ifdef HAVE_MINGW
 			{
 				char message[4096];
-				char *messages[] = {message};
+				const char *messages[] = {message};
 				vsnprintf(message, sizeof(message), format, ap);
 				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
 			}

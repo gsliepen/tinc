@@ -70,12 +70,12 @@ static void configure_tcp(connection_t *c) {
 
 #if defined(SOL_TCP) && defined(TCP_NODELAY)
 	option = 1;
-	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, &option, sizeof(option));
+	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, (void *)&option, sizeof(option));
 #endif
 
 #if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, SOL_IP, IP_TOS, &option, sizeof(option));
+	setsockopt(c->socket, SOL_IP, IP_TOS, (void *)&option, sizeof(option));
 #endif
 }
 
@@ -95,7 +95,7 @@ static bool bind_to_interface(int sd) {
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 	ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
 
-	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr));
+	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
 	if(status) {
 		logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
 				strerror(errno));
@@ -181,11 +181,11 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	/* Optimize TCP settings */
 
 	option = 1;
-	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
 
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
 	if(get_config_string
@@ -196,7 +196,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
-		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr))) {
+		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr))) {
 			closesocket(nfd);
 			logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
 				   strerror(sockerrno));
@@ -259,11 +259,11 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #endif
 
 	option = 1;
-	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, &option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
 #if defined(IP_DONTFRAG) && !defined(IP_DONTFRAGMENT)
@@ -273,12 +273,12 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = IP_PMTUDISC_DO;
-		setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option));
+		setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, (void *)&option, sizeof(option));
 	}
 #elif defined(IPPROTO_IP) && defined(IP_DONTFRAGMENT)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = 1;
-		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, &option, sizeof(option));
+		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, (void *)&option, sizeof(option));
 	}
 #else
 #warning No way to disable IPv4 fragmentation
@@ -287,12 +287,12 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = IPV6_PMTUDISC_DO;
-		setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
+		setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, (void *)&option, sizeof(option));
 	}
 #elif defined(IPPROTO_IPV6) && defined(IPV6_DONTFRAG)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = 1;
-		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, &option, sizeof(option));
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
 	}
 #else
 #warning No way to disable IPv6 fragmentation
@@ -410,7 +410,7 @@ begin:
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
 	int option = 1;
 	if(c->address.sa.sa_family == AF_INET6)
-		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
 	bind_to_interface(c->socket);

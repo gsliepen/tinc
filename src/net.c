@@ -297,7 +297,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 		if(FD_ISSET(c->socket, readset)) {
 			if(c->status.connecting) {
 				c->status.connecting = false;
-				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
 
 				if(!result)
 					finish_connecting(c);

@@ -43,7 +43,9 @@ extern char **g_argv;
 extern bool use_logfile;
 extern volatile bool running;
 
+#ifndef HAVE_MINGW
 sigset_t emptysigset;
+#endif
 
 static int saved_debug_level = -1;
 

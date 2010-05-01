@@ -30,4 +30,8 @@ extern bool execute_script(const char *, char **);
 extern bool detach(void);
 extern bool kill_other(int);
 
+#ifdef HAVE_MINGW
+extern bool init_service(void);
+#endif
+
 #endif							/* __TINC_PROCESS_H__ */
