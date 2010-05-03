@@ -595,13 +595,25 @@ int main2(int argc, char **argv) {
         char *priority = 0;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal"))
-                        setpriority(NORMAL_PRIORITY_CLASS);
-                else if(!strcasecmp(priority, "Low"))
-                        setpriority(BELOW_NORMAL_PRIORITY_CLASS);
-                else if(!strcasecmp(priority, "High"))
-                        setpriority(HIGH_PRIORITY_CLASS);
-                else {
+                if(!strcasecmp(priority, "Normal")) {
+                        if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
+                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else if(!strcasecmp(priority, "Low")) {
+                        if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
+                                       logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else if(!strcasecmp(priority, "High")) {
+                        if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
+                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else {
                         logger(LOG_ERR, "Invalid priority `%s`!", priority);
                         goto end;
                 }
