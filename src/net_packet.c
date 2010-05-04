@@ -365,7 +365,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *outpkt;
 	int origlen;
 	int outlen, outpad;
+#if defined(SOL_IP) && defined(IP_TOS)
 	static int priority = 0;
+#endif
 	int origpriority;
 	int sock;
 
