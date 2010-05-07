@@ -61,7 +61,7 @@ bool setup_device(void) {
 		if (netname != NULL)
 			iface = xstrdup(netname);
 #else
-		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
+		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 #endif
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
@@ -105,7 +105,7 @@ bool setup_device(void) {
 		device_type = DEVICE_TYPE_ETHERTAP;
 		if(iface)
 			free(iface);
-		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
+		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 	}
 
 	logger(LOG_INFO, "%s is a %s", device, device_info);

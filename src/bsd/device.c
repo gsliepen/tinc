@@ -64,7 +64,7 @@ bool setup_device(void) {
 		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
+		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
