@@ -44,6 +44,8 @@ bool do_purge = false;
 volatile bool running = false;
 
 time_t now = 0;
+int contradicting_add_edge = 0;
+int contradicting_del_edge = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -414,6 +416,19 @@ int main_loop(void) {
 
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
+			}
+
+			if(contradicting_del_edge && contradicting_add_edge) {
+				logger(LOG_WARNING, "Possible node with same Name as us!");
+
+				if(rand() % 3 == 0) {
+					logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
+					running = false;
+					break;
+				}
+
+				contradicting_add_edge = 0;
+				contradicting_del_edge = 0;
 			}
 		}
 

@@ -133,6 +133,7 @@ bool add_edge_h(connection_t *c) {
 	} else if(from == myself) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for ourself which does not exist",
 				   "ADD_EDGE", c->name, c->hostname);
+		contradicting_add_edge++;
 		e = new_edge();
 		e->from = from;
 		e->to = to;
@@ -229,6 +230,7 @@ bool del_edge_h(connection_t *c) {
 	if(e->from == myself) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for ourself",
 				   "DEL_EDGE", c->name, c->hostname);
+		contradicting_del_edge++;
 		send_add_edge(c, e);	/* Send back a correction */
 		return true;
 	}

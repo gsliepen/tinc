@@ -115,6 +115,8 @@ extern bool do_prune;
 extern bool do_purge;
 extern char *myport;
 extern time_t now;
+extern int contradicting_add_edge;
+extern int contradicting_del_edge;
 
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"
