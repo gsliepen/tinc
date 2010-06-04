@@ -229,7 +229,7 @@ bool ans_key_h(connection_t *c) {
 			return true;
 		}
 
-		if(!*address) {
+		if(!*address && from->address.sa.sa_family != AF_UNSPEC) {
 			char *address, *port;
 			ifdebug(PROTOCOL) logger(LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
 			sockaddr2str(&from->address, &address, &port);
