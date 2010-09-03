@@ -136,6 +136,7 @@ static void usage(bool status) {
 				"  -L, --mlock                Lock tinc into main memory.\n"
 				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
 				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
+				"  -o [HOST.]KEY=VALUE        Set global/host configuration value.\n"
 				"  -R, --chroot               chroot to NET dir at startup.\n"
 				"  -U, --user=USER            setuid to given USER at startup.\n"
 				"      --help                 Display this help and exit.\n"
@@ -145,10 +146,14 @@ static void usage(bool status) {
 }
 
 static bool parse_options(int argc, char **argv) {
+	config_t *cfg;
 	int r;
 	int option_index = 0;
+	int lineno = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::RU:", long_options, &option_index)) != EOF) {
+	cmdline_conf = list_alloc((list_action_t)free_config);
+
+	while((r = getopt_long(argc, argv, "c:DLd::k::n:o:K::RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -215,6 +220,13 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'n':				/* net name given */
 				netname = xstrdup(optarg);
+				break;
+
+			case 'o':				/* option */
+				cfg = parse_config_line(optarg, NULL, ++lineno);
+				if (!cfg)
+					return false;
+				list_insert_tail(cmdline_conf, cfg);
 				break;
 
 			case 'K':				/* generate public/private keypair */

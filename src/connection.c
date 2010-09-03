@@ -129,8 +129,23 @@ void dump_connections(void) {
 }
 
 bool read_connection_config(connection_t *c) {
+	list_node_t *node, *next;
+	size_t name_len = strlen(c->name);
 	char *fname;
 	bool x;
+
+	for(node = cmdline_conf->tail; node; node = next) {
+		config_t *cfg = (config_t *)node->data;
+		next = node->prev;
+		if (!strncmp(c->name, cfg->variable, name_len) && cfg->variable[name_len] == '.') {
+			config_t *new_cfg = new_config();
+			new_cfg->variable = xstrdup(cfg->variable + name_len + 1);
+			new_cfg->value = xstrdup(cfg->value);
+			new_cfg->file = NULL;
+			new_cfg->line = cfg->line;
+			config_add(c->config_tree, new_cfg);
+		}
+	}
 
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);

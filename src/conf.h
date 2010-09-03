@@ -22,6 +22,7 @@
 #define __TINC_CONF_H__
 
 #include "avl_tree.h"
+#include "list.h"
 
 typedef struct config_t {
 	char *variable;
@@ -40,6 +41,7 @@ extern int maxtimeout;
 extern bool bypass_security;
 extern char *confbase;
 extern char *netname;
+extern list_t *cmdline_conf;
 
 extern void init_configuration(avl_tree_t **);
 extern void exit_configuration(avl_tree_t **);
@@ -54,6 +56,7 @@ extern bool get_config_string(const config_t *, char **);
 extern bool get_config_address(const config_t *, struct addrinfo **);
 extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
+extern config_t *parse_config_line(char *, const char *, int);
 extern bool read_config_file(avl_tree_t *, const char *);
 extern bool read_server_config(void);
 extern FILE *ask_and_open(const char *, const char *);

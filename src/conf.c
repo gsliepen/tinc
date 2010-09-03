@@ -36,6 +36,8 @@ int pinginterval = 0;			/* seconds between pings */
 int pingtimeout = 0;			/* seconds to wait for response */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
+list_t *cmdline_conf = NULL;	/* global/host configuration values given at the command line */
+
 
 static int config_compare(const config_t *a, const config_t *b) {
 	int result;
@@ -45,12 +47,17 @@ static int config_compare(const config_t *a, const config_t *b) {
 	if(result)
 		return result;
 
+	/* give priority to command line options */
+	result = !b->file - !a->file;
+	if (result)
+		return result;
+
 	result = a->line - b->line;
 
 	if(result)
 		return result;
 	else
-		return strcmp(a->file, b->file);
+		return a->file ? strcmp(a->file, b->file) : 0;
 }
 
 void init_configuration(avl_tree_t ** config_tree) {
@@ -87,7 +94,7 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
 
 	cfg.variable = variable;
-	cfg.file = "";
+	cfg.file = NULL;
 	cfg.line = 0;
 
 	found = avl_search_closest_greater(config_tree, &cfg);
@@ -233,6 +240,45 @@ static char *readline(FILE * fp, char *buf, size_t buflen) {
 	return buf;
 }
 
+config_t *parse_config_line(char *line, const char *fname, int lineno) {
+	config_t *cfg;
+	int len;
+	char *variable, *value, *eol;
+	variable = value = line;
+
+	eol = line + strlen(line);
+	while(strchr("\t ", *--eol))
+		*eol = '\0';
+
+	len = strcspn(value, "\t =");
+	value += len;
+	value += strspn(value, "\t ");
+	if(*value == '=') {
+		value++;
+		value += strspn(value, "\t ");
+	}
+	variable[len] = '\0';
+
+	if(!*value) {
+		const char err[] = "No value for variable";
+		if (fname)
+			logger(LOG_ERR, "%s `%s' on line %d while reading config file %s",
+				err, variable, lineno, fname);
+		else
+			logger(LOG_ERR, "%s `%s' in command line option %d",
+				err, variable, lineno);
+		return NULL;
+	}
+
+	cfg = new_config();
+	cfg->variable = xstrdup(variable);
+	cfg->value = xstrdup(value);
+	cfg->file = fname ? xstrdup(fname) : NULL;
+	cfg->line = lineno;
+
+	return cfg;
+}
+
 /*
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
@@ -241,9 +287,7 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 	FILE *fp;
 	char buffer[MAX_STRING_SIZE];
 	char *line;
-	char *variable, *value, *eol;
 	int lineno = 0;
-	int len;
 	bool ignore = false;
 	config_t *cfg;
 	bool result = false;
@@ -280,34 +324,9 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 			continue;
 		}
 
-		variable = value = line;
-
-		eol = line + strlen(line);
-		while(strchr("\t ", *--eol))
-			*eol = '\0';
-
-		len = strcspn(value, "\t =");
-		value += len;
-		value += strspn(value, "\t ");
-		if(*value == '=') {
-			value++;
-			value += strspn(value, "\t ");
-		}
-		variable[len] = '\0';
-
-	
-		if(!*value) {
-			logger(LOG_ERR, "No value for variable `%s' on line %d while reading config file %s",
-				   variable, lineno, fname);
+		cfg = parse_config_line(line, fname, lineno);
+		if (!cfg)
 			break;
-		}
-
-		cfg = new_config();
-		cfg->variable = xstrdup(variable);
-		cfg->value = xstrdup(value);
-		cfg->file = xstrdup(fname);
-		cfg->line = lineno;
-
 		config_add(config_tree, cfg);
 	}
 
@@ -317,8 +336,19 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 }
 
 bool read_server_config() {
+	list_node_t *node, *next;
 	char *fname;
 	bool x;
+
+	for(node = cmdline_conf->tail; node; node = next) {
+		config_t *cfg = (config_t *)node->data;
+		next = node->prev;
+		if (!strchr(cfg->variable, '.')) {
+			config_add(config_tree, cfg);
+			node->data = NULL;
+			list_unlink_node(cmdline_conf, node);
+		}
+	}
 
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
