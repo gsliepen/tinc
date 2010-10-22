@@ -365,6 +365,7 @@ static bool keygen(int bits) {
 	fchmod(fileno(f), 0600);
 #endif
 		
+	fputc('\n', f);
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
 	free(filename);
@@ -382,6 +383,7 @@ static bool keygen(int bits) {
 	if(disable_old_keys(f))
 		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
 
+	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
 	free(filename);
