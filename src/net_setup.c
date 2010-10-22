@@ -300,6 +300,7 @@ bool setup_myself(void) {
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
 	xasprintf(&fname, "%s/hosts/%s", confbase, name);
+	read_config_options(config_tree, name);
 	read_config_file(config_tree, fname);
 	free(fname);
 

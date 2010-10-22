@@ -23,6 +23,7 @@
 #include "system.h"
 
 #include "avl_tree.h"
+#include "connection.h"
 #include "conf.h"
 #include "logger.h"
 #include "netutl.h"				/* for str2address */
@@ -335,20 +336,32 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 	return result;
 }
 
+void read_config_options(avl_tree_t *config_tree, const char *prefix) {
+	list_node_t *node, *next;
+	size_t prefix_len = strlen(prefix);
+
+	for(node = cmdline_conf->tail; node; node = next) {
+		config_t *cfg = (config_t *)node->data;
+		next = node->prev;
+
+		if(!prefix && strchr(cfg->variable, '.'))
+			continue;
+
+		if(prefix && (strncmp(prefix, cfg->variable, prefix_len) || cfg->variable[prefix_len] != '.'))
+			continue;
+
+		config_add(config_tree, cfg);
+		node->data = NULL;
+		list_unlink_node(cmdline_conf, node);
+	}
+}
+
 bool read_server_config() {
 	list_node_t *node, *next;
 	char *fname;
 	bool x;
 
-	for(node = cmdline_conf->tail; node; node = next) {
-		config_t *cfg = (config_t *)node->data;
-		next = node->prev;
-		if (!strchr(cfg->variable, '.')) {
-			config_add(config_tree, cfg);
-			node->data = NULL;
-			list_unlink_node(cmdline_conf, node);
-		}
-	}
+	read_config_options(config_tree, NULL);
 
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
@@ -357,6 +370,21 @@ bool read_server_config() {
 		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
+	free(fname);
+
+	return x;
+}
+
+bool read_connection_config(connection_t *c) {
+	list_node_t *node, *next;
+	size_t name_len = strlen(c->name);
+	char *fname;
+	bool x;
+
+	read_config_options(c->config_tree, c->name);
+
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	x = read_config_file(c->config_tree, fname);
 	free(fname);
 
 	return x;

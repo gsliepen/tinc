@@ -58,7 +58,9 @@ extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
 extern config_t *parse_config_line(char *, const char *, int);
 extern bool read_config_file(avl_tree_t *, const char *);
+extern void read_config_options(avl_tree_t *, const char *);
 extern bool read_server_config(void);
+extern bool read_connection_config(struct connection_t *);
 extern FILE *ask_and_open(const char *, const char *);
 extern bool is_safe_path(const char *);
 extern bool disable_old_keys(FILE *);

@@ -111,6 +111,5 @@ extern void free_connection(connection_t *);
 extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
 extern void dump_connections(void);
-extern bool read_connection_config(connection_t *);
 
 #endif							/* __TINC_CONNECTION_H__ */
