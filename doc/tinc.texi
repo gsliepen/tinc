@@ -725,6 +725,13 @@ and carriage returns are ignored.  Note: it is not required that you put
 in the `=' sign, but doing so improves readability.  If you leave it
 out, remember to replace it with at least one space character.
 
+The server configuration is complemented with host specific configuration (see
+the next section). Although all host configuration options for the local node
+listed in this document can also be put in
+@file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf}, it is recommended to
+put host specific configuration options in the host configuration file, as this
+makes it easy to exchange with other nodes.
+
 In this section all valid variables are listed in alphabetical order.
 The default value is given between parentheses,
 other comments are between square brackets.

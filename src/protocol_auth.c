@@ -539,7 +539,7 @@ bool ack_h(connection_t *c) {
 	if(get_config_int(lookup_config(c->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
 		n->mtu = mtu;
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "PMTU"), &mtu) && mtu < n->mtu)
+	if(get_config_int(lookup_config(config_tree, "PMTU"), &mtu) && mtu < n->mtu)
 		n->mtu = mtu;
 
 	if(get_config_bool(lookup_config(c->config_tree, "ClampMSS"), &choice)) {

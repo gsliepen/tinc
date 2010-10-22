@@ -111,6 +111,13 @@ sign, but doing so improves readability.
 If you leave it out, remember to replace it with at least one space character.
 
 .Pp
+The server configuration is complemented with host specific configuration (see the next section).
+Although all configuration options for the local host listed in this document can also be put in
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf ,
+it is recommended to put host specific configuration options in the host configuration file,
+as this makes it easy to exchange with other nodes.
+
+.Pp
 Here are all valid variables, listed in alphabetical order.
 The default value is given between parentheses.
 .Bl -tag -width indent
