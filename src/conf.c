@@ -459,24 +459,33 @@ bool disable_old_keys(FILE *f) {
 	rewind(f);
 	pos = ftell(f);
 
+	if(pos < 0)
+		return false;
+
 	while(fgets(buf, sizeof buf, f)) {
 		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
 			buf[11] = 'O';
 			buf[12] = 'L';
 			buf[13] = 'D';
-			fseek(f, pos, SEEK_SET);
-			fputs(buf, f);
+			if(fseek(f, pos, SEEK_SET))
+				break;
+			if(fputs(buf, f) <= 0)
+				break;
 			disabled = true;
 		}
 		else if(!strncmp(buf, "-----END RSA", 12)) {	
 			buf[ 9] = 'O';
 			buf[10] = 'L';
 			buf[11] = 'D';
-			fseek(f, pos, SEEK_SET);
-			fputs(buf, f);
+			if(fseek(f, pos, SEEK_SET))
+				break;
+			if(fputs(buf, f) <= 0)
+				break;
 			disabled = true;
 		}
 		pos = ftell(f);
+		if(pos < 0)
+			break;
 	}
 
 	return disabled;
