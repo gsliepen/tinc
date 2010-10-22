@@ -358,7 +358,6 @@ void read_config_options(avl_tree_t *config_tree, const char *prefix) {
 }
 
 bool read_server_config() {
-	list_node_t *node, *next;
 	char *fname;
 	bool x;
 
@@ -377,8 +376,6 @@ bool read_server_config() {
 }
 
 bool read_connection_config(connection_t *c) {
-	list_node_t *node, *next;
-	size_t name_len = strlen(c->name);
 	char *fname;
 	bool x;
 
