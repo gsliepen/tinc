@@ -5,6 +5,7 @@
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
+                  2010      Timothy Redaelli <timothy@redaelli.eu>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
