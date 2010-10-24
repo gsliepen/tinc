@@ -221,7 +221,9 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 'n':				/* net name given */
-				netname = xstrdup(optarg);
+				/* netname "." is special: a "top-level name" */
+				netname = strcmp(optarg, ".") != 0 ?
+						xstrdup(optarg) : NULL;
 				break;
 
 			case 'o':				/* option */
