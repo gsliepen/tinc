@@ -280,12 +280,21 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	int result, i;
 	socklen_t len = sizeof(result);
 	vpn_packet_t packet;
+	int errors = 0;
 
 	/* check input from kernel */
 	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
 		if(read_packet(&packet)) {
+			errors = 0;
 			packet.priority = 0;
 			route(myself, &packet);
+		} else {
+			usleep(errors * 50000);
+			errors++;
+			if(errors > 10) {
+				logger(LOG_ERR, "Too many errors from %s, exiting!", device);
+				running = false;
+			}
 		}
 	}
 
