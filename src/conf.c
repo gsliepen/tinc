@@ -339,7 +339,7 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 
 void read_config_options(avl_tree_t *config_tree, const char *prefix) {
 	list_node_t *node, *next;
-	size_t prefix_len = strlen(prefix);
+	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
 	for(node = cmdline_conf->tail; node; node = next) {
 		config_t *cfg = (config_t *)node->data;
