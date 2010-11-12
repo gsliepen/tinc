@@ -29,7 +29,7 @@ AC_DEFUN([tinc_OPENSSL],
 case $host_os in
   *mingw*)
     AC_CHECK_LIB(crypto, SHA1_version,
-      [LIBS="$LIBS -lcrypto -lgdi32"],
+      [LIBS="$LIBS -lcrypto -lgdi32 -lcrypt32"],
       [AC_MSG_ERROR([OpenSSL libraries not found.])]
     )
   ;;

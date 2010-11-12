@@ -38,8 +38,8 @@ char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
 
-static int device_total_in = 0;
-static int device_total_out = 0;
+static uint64_t device_total_in = 0;
+static uint64_t device_total_out = 0;
 
 static pid_t reader_pid;
 static int sp[2];
@@ -261,6 +261,6 @@ bool write_packet(vpn_packet_t *packet) {
 
 void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
+	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }

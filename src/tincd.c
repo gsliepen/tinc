@@ -4,6 +4,8 @@
                   2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
+                  2010      Julien Muchembled <jm@jmuchemb.eu>
+                  2010      Timothy Redaelli <timothy@redaelli.eu>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,6 +113,7 @@ static struct option const long_options[] = {
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
 CRITICAL_SECTION mutex;
+int main2(int argc, char **argv);
 #endif
 
 static void usage(bool status) {
@@ -127,6 +130,7 @@ static void usage(bool status) {
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
 				"      --controlcookie=FILENAME  Write control socket cookie to FILENAME.\n"
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
+				"  -o [HOST.]KEY=VALUE           Set global/host configuration value.\n"
 				"  -R, --chroot                  chroot to NET dir at startup.\n"
 				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n\n");
@@ -135,10 +139,14 @@ static void usage(bool status) {
 }
 
 static bool parse_options(int argc, char **argv) {
+	config_t *cfg;
 	int r;
 	int option_index = 0;
+	int lineno = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::n:RU:", long_options, &option_index)) != EOF) {
+	cmdline_conf = list_alloc((list_action_t)free_config);
+
+	while((r = getopt_long(argc, argv, "c:DLd::n:o:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -168,7 +176,16 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 'n':				/* net name given */
-				netname = xstrdup(optarg);
+				/* netname "." is special: a "top-level name" */
+				netname = strcmp(optarg, ".") != 0 ?
+						xstrdup(optarg) : NULL;
+				break;
+
+			case 'o':				/* option */
+				cfg = parse_config_line(optarg, NULL, ++lineno);
+				if (!cfg)
+					return false;
+				list_insert_tail(cmdline_conf, cfg);
 				break;
 
 			case 'R':				/* chroot to NETNAME dir */
@@ -431,13 +448,25 @@ int main2(int argc, char **argv) {
         char *priority = 0;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal"))
-                        setpriority(NORMAL_PRIORITY_CLASS);
-                else if(!strcasecmp(priority, "Low"))
-                        setpriority(BELOW_NORMAL_PRIORITY_CLASS);
-                else if(!strcasecmp(priority, "High"))
-                        setpriority(HIGH_PRIORITY_CLASS);
-                else {
+                if(!strcasecmp(priority, "Normal")) {
+                        if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
+                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else if(!strcasecmp(priority, "Low")) {
+                        if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
+                                       logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else if(!strcasecmp(priority, "High")) {
+                        if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
+                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else {
                         logger(LOG_ERR, "Invalid priority `%s`!", priority);
                         goto end;
                 }

@@ -36,6 +36,9 @@
 #include "subnet.h"
 #include "xalloc.h"
 
+int contradicting_add_edge = 0;
+int contradicting_del_edge = 0;
+
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 void purge(void) {
@@ -189,6 +192,19 @@ static void timeout_handler(int fd, short events, void *event) {
 		}
 	}
 
+	if(contradicting_del_edge && contradicting_add_edge) {
+		logger(LOG_WARNING, "Possible node with same Name as us!");
+
+		if(rand() % 3 == 0) {
+			logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
+			event_loopexit(NULL);
+			return;
+		}
+
+		contradicting_add_edge = 0;
+		contradicting_del_edge = 0;
+	}
+
 	event_add(event, &(struct timeval){pingtimeout, 0});
 }
 
@@ -274,6 +290,7 @@ int reload_configuration(void) {
 
 	if(strictsubnets) {
 		subnet_t *subnet;
+
 
 		for(node = subnet_tree->head; node; node = node->next) {
 			subnet = node->data;

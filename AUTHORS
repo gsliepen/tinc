@@ -8,6 +8,8 @@ Significant contributions from:
 - Grzegorz Dymarek <gregd72002@googlemail.com>
 - Max Rijevski <maksuf@gmail.com>
 - Scott Lamb <slamb@slamb.org>
+- Julien Muchembled <jm@jmuchemb.eu>
+- Timothy Redaelli <timothy@redaelli.eu>
 
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from

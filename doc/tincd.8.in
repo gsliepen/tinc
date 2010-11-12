@@ -72,11 +72,11 @@ is omitted, the default is
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
-.It Fl -chroot
+.It Fl R, -chroot
 With this option tinc chroots into the directory where network
 config is located (@sysconfdir@/tinc/NETNAME if -n option is used,
 or to the directory specified with -c option) after initialization.
-.It Fl -user Ns = Ns Ar USER
+.It Fl U, -user Ns = Ns Ar USER
 setuid to the specified
 .Ar USER
 after initialization.

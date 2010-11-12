@@ -22,6 +22,7 @@
 #define __TINC_CONF_H__
 
 #include "splay_tree.h"
+#include "list.h"
 
 typedef struct config_t {
 	char *variable;
@@ -40,6 +41,7 @@ extern int maxtimeout;
 extern bool bypass_security;
 extern char *confbase;
 extern char *netname;
+extern list_t *cmdline_conf;
 
 extern void init_configuration(splay_tree_t **);
 extern void exit_configuration(splay_tree_t **);
@@ -54,8 +56,11 @@ extern bool get_config_string(const config_t *, char **);
 extern bool get_config_address(const config_t *, struct addrinfo **);
 extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
-extern int read_config_file(splay_tree_t *, const char *);
+extern config_t *parse_config_line(char *, const char *, int);
+extern bool read_config_file(splay_tree_t *, const char *);
+extern void read_config_options(splay_tree_t *, const char *);
 extern bool read_server_config(void);
+extern bool read_connection_config(struct connection_t *);
 extern FILE *ask_and_open(const char *, const char *, const char *);
 extern bool is_safe_path(const char *);
 extern bool disable_old_keys(FILE *);

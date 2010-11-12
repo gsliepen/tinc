@@ -114,6 +114,8 @@ extern int listen_sockets;
 extern int keylifetime;
 extern bool do_prune;
 extern char *myport;
+extern int contradicting_add_edge;
+extern int contradicting_del_edge;
 
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"

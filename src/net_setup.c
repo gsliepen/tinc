@@ -89,7 +89,7 @@ bool read_rsa_private_key() {
 	/* First, check for simple PrivateKey statement */
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &d)) {
-		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &n)) {
+		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &n)) {
 			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			free(d);
 			return false;
@@ -223,6 +223,7 @@ bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
 	char *name, *hostname, *mode, *afname, *cipher, *digest;
+	char *fname = NULL;
 	char *address = NULL;
 	char *envp[5];
 	struct addrinfo *ai, *aip, hint = {0};
@@ -231,7 +232,6 @@ bool setup_myself(void) {
 
 	myself = new_node();
 	myself->connection = new_connection();
-	init_configuration(&myself->connection->config_tree);
 
 	myself->hostname = xstrdup("MYSELF");
 	myself->connection->hostname = xstrdup("MYSELF");
@@ -252,17 +252,15 @@ bool setup_myself(void) {
 
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
-
-	if(!read_connection_config(myself->connection)) {
-		logger(LOG_ERR, "Cannot open host configuration file for myself!");
-		return false;
-	}
+	xasprintf(&fname, "%s/hosts/%s", confbase, name);
+	read_config_options(config_tree, name);
+	read_config_file(config_tree, fname);
+	free(fname);
 
 	if(!read_rsa_private_key())
 		return false;
 
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)
-			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
 		myport = xstrdup("655");
 
 	if(!atoi(myport)) {
@@ -277,7 +275,7 @@ bool setup_myself(void) {
 
 	/* Read in all the subnets specified in the host configuration file */
 
-	cfg = lookup_config(myself->connection->config_tree, "Subnet");
+	cfg = lookup_config(config_tree, "Subnet");
 
 	while(cfg) {
 		if(!get_config_subnet(cfg, &subnet))
@@ -285,7 +283,7 @@ bool setup_myself(void) {
 
 		subnet_add(myself, subnet);
 
-		cfg = lookup_config_next(myself->connection->config_tree, cfg);
+		cfg = lookup_config_next(config_tree, cfg);
 	}
 
 	/* Check some options */
@@ -294,12 +292,6 @@ bool setup_myself(void) {
 		myself->options |= OPTION_INDIRECT;
 
 	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice)
-		myself->options |= OPTION_TCPONLY;
-
-	if(get_config_bool(lookup_config(myself->connection->config_tree, "IndirectData"), &choice) && choice)
-		myself->options |= OPTION_INDIRECT;
-
-	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
 		myself->options |= OPTION_TCPONLY;
 
 	if(myself->options & OPTION_TCPONLY)
@@ -339,14 +331,12 @@ bool setup_myself(void) {
 	}
 
 	choice = true;
-	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
 	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
 	if(choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
 
 	choice = true;
 	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
-	get_config_bool(lookup_config(myself->connection->config_tree, "ClampMSS"), &choice);
 	if(choice)
 		myself->options |= OPTION_CLAMP_MSS;
 
@@ -386,7 +376,7 @@ bool setup_myself(void) {
 
 	/* Generate packet encryption key */
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Cipher"), &cipher))
+	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
 		cipher = xstrdup("blowfish");
 
 	if(!cipher_open_by_name(&myself->incipher, cipher)) {
@@ -405,7 +395,7 @@ bool setup_myself(void) {
 		digest = xstrdup("sha1");
 
 	int maclength = 4;
-	get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &maclength);
+	get_config_int(lookup_config(config_tree, "MACLength"), &maclength);
 
 	if(maclength < 0) {
 		logger(LOG_ERR, "Bogus MAC length!");
@@ -419,7 +409,7 @@ bool setup_myself(void) {
 
 	/* Compression */
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->incompression)) {
+	if(get_config_int(lookup_config(config_tree, "Compression"), &myself->incompression)) {
 		if(myself->incompression < 0 || myself->incompression > 11) {
 			logger(LOG_ERR, "Bogus compression level!");
 			return false;

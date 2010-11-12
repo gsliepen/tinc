@@ -106,14 +106,3 @@ bool dump_connections(connection_t *cdump) {
 
 	return send_request(cdump, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);
 }
-
-bool read_connection_config(connection_t *c) {
-	char *fname;
-	bool x;
-
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	x = read_config_file(c->config_tree, fname);
-	free(fname);
-
-	return x;
-}

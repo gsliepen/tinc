@@ -44,6 +44,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <stdio.h>
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 /* Comment out all this code if we are using the GNU C Library, and are not
    actually compiling the library itself.  This code is part of the GNU C
    Library, but also included in many other GNU distributions.  Compiling
@@ -688,16 +692,18 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	      else
 		{
 		  if (opterr)
-		   if (argv[optind - 1][1] == '-')
-		    /* --option */
-		    fprintf (stderr,
-		     "%s: option `--%s' doesn't allow an argument\n",
-		     argv[0], pfound->name);
-		   else
-		    /* +option or -option */
-		    fprintf (stderr,
-		     "%s: option `%c%s' doesn't allow an argument\n",
-		     argv[0], argv[optind - 1][0], pfound->name);
+		    {
+		     if (argv[optind - 1][1] == '-')
+		      /* --option */
+		      fprintf (stderr,
+		       "%s: option `--%s' doesn't allow an argument\n",
+		       argv[0], pfound->name);
+		     else
+		      /* +option or -option */
+		      fprintf (stderr,
+		       "%s: option `%c%s' doesn't allow an argument\n",
+		       argv[0], argv[optind - 1][0], pfound->name);
+		    }
 
 		  nextchar += strlen (nextchar);
 

@@ -40,7 +40,9 @@ extern char *identname;
 extern char **g_argv;
 extern bool use_logfile;
 
+#ifndef HAVE_MINGW
 sigset_t emptysigset;
+#endif
 
 static void memory_full(int size) {
 	logger(LOG_ERR, "Memory exhausted (couldn't allocate %d bytes), exitting.", size);
