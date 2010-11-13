@@ -405,6 +405,20 @@ bool setup_myself(void) {
 	} else
 		maxtimeout = 900;
 
+	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
+		if(udp_rcvbuf <= 0) {
+			logger(LOG_ERR, "UDPRcvBuf cannot be negative!");
+			return false;
+		}
+	}
+
+	if(get_config_int(lookup_config(config_tree, "UDPSndBuf"), &udp_sndbuf)) {
+		if(udp_sndbuf <= 0) {
+			logger(LOG_ERR, "UDPSndBuf cannot be negative!");
+			return false;
+		}
+	}
+
 	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
 		if(!strcasecmp(afname, "IPv4"))
 			addressfamily = AF_INET;

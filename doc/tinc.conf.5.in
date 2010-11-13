@@ -356,6 +356,14 @@ and will only allow connections with nodes for which host config files are prese
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 directory.
 Setting this options also implicitly sets StrictSubnets.
+
+.It Va UDPRcvBuf Li = Ar bytes Pq OS default
+Sets the socket receive buffer size for the UDP socket, in bytes.
+If unset, the default buffer size will be used by the operating system.
+
+.It Va UDPSndBuf Li = Ar bytes Pq OS default
+Sets the socket send buffer size for the UDP socket, in bytes.
+If unset, the default buffer size will be used by the operating system.
 .El
 
 .Sh HOST CONFIGURATION FILES
