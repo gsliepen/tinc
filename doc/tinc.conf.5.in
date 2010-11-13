@@ -255,6 +255,9 @@ a lookup if your DNS server is not responding.
 This does not affect resolving hostnames to IP addresses from the
 host configuration files.
 
+.It Va IffOneQueue Li = yes | no Po no Pc Bq experimental
+(Linux only) Set IFF_ONE_QUEUE flag on TUN/TAP devices.
+
 .It Va Interface Li = Ar interface
 Defines the name of the interface corresponding to the virtual network device.
 Depending on the operating system and the type of device this may or may not actually set the name of the interface.
