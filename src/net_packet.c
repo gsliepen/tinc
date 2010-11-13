@@ -60,6 +60,8 @@ static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
+unsigned replaywin = 16;
+
 #define MAX_SEQNO 1073741824
 
 // mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
@@ -293,25 +295,27 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	inpkt->len -= sizeof(inpkt->seqno);
 	inpkt->seqno = ntohl(inpkt->seqno);
 
-	if(inpkt->seqno != n->received_seqno + 1) {
-		if(inpkt->seqno >= n->received_seqno + sizeof(n->late) * 8) {
-			logger(LOG_WARNING, "Lost %d packets from %s (%s)",
-					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
-			
-			memset(n->late, 0, sizeof(n->late));
-		} else if (inpkt->seqno <= n->received_seqno) {
-			if((n->received_seqno >= sizeof(n->late) * 8 && inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8) || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
-				logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
-					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
-				return;
+	if(replaywin) {
+		if(inpkt->seqno != n->received_seqno + 1) {
+			if(inpkt->seqno >= n->received_seqno + replaywin * 8) {
+				logger(LOG_WARNING, "Lost %d packets from %s (%s)",
+					   	inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
+				
+				memset(n->late, 0, replaywin);
+			} else if (inpkt->seqno <= n->received_seqno) {
+				if((n->received_seqno >= replaywin * 8 && inpkt->seqno <= n->received_seqno - replaywin * 8) || !(n->late[(inpkt->seqno / 8) % replaywin] & (1 << inpkt->seqno % 8))) {
+					logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
+					   	n->name, n->hostname, inpkt->seqno, n->received_seqno);
+					return;
+				}
+			} else {
+				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
+					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 			}
-		} else {
-			for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
-				n->late[(i / 8) % sizeof(n->late)] |= 1 << i % 8;
 		}
-	}
 	
-	n->late[(inpkt->seqno / 8) % sizeof(n->late)] &= ~(1 << inpkt->seqno % 8);
+		n->late[(inpkt->seqno / 8) % replaywin] &= ~(1 << inpkt->seqno % 8);
+	}
 
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;

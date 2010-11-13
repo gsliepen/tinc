@@ -276,6 +276,7 @@ bool setup_myself(void) {
 	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
 	int i, err;
+	int replaywin_int;
 
 	myself = new_node();
 	myself->connection = new_connection();
@@ -417,6 +418,14 @@ bool setup_myself(void) {
 			logger(LOG_ERR, "UDPSndBuf cannot be negative!");
 			return false;
 		}
+	}
+
+	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {
+		if(replaywin_int < 0) {
+			logger(LOG_ERR, "ReplayWindow cannot be negative!");
+			return false;
+		}
+		replaywin = (unsigned)replaywin_int;
 	}
 
 	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {

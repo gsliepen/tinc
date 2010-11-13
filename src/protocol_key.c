@@ -163,7 +163,7 @@ bool send_ans_key(node_t *to) {
 	// Reset sequence number and late packet window
 	mykeyused = true;
 	to->received_seqno = 0;
-	memset(to->late, 0, sizeof(to->late));
+	if(replaywin) memset(to->late, 0, replaywin);
 
 	// Convert to hexadecimal and send
 	char key[2 * to->inkeylength + 1];

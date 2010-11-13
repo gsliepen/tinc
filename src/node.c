@@ -54,6 +54,7 @@ void exit_nodes(void) {
 node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof(*n));
 
+	if(replaywin) n->late = xmalloc_and_zero(replaywin);
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	EVP_CIPHER_CTX_init(&n->inctx);
