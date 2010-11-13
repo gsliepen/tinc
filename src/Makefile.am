@@ -11,7 +11,7 @@ tincd_SOURCES = \
 	protocol_key.c protocol_subnet.c route.c rsa.c subnet.c tincd.c
 
 tincctl_SOURCES = \
-	xmalloc.c utils.c getopt.c getopt1.c \
+	xmalloc.c utils.c getopt.c getopt1.c dropin.c \
 	tincctl.c rsagen.c
 
 if TUNEMU
