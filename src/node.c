@@ -92,6 +92,9 @@ void free_node(node_t *n) {
 	if(n->name)
 		free(n->name);
 
+	if(n->late)
+		free(n->late);
+
 	free(n);
 }
 
