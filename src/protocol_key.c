@@ -145,8 +145,6 @@ bool req_key_h(connection_t *c) {
 }
 
 bool send_ans_key(node_t *to) {
-	char *key;
-
 	// Set key parameters
 	to->incipher = myself->incipher;
 	to->inkeylength = myself->inkeylength;
@@ -168,7 +166,7 @@ bool send_ans_key(node_t *to) {
 	memset(to->late, 0, sizeof(to->late));
 
 	// Convert to hexadecimal and send
-	key = alloca(2 * to->inkeylength + 1);
+	char key[2 * to->inkeylength + 1];
 	bin2hex(to->inkey, key, to->inkeylength);
 	key[to->inkeylength * 2] = '\0';
 

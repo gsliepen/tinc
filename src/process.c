@@ -397,7 +397,7 @@ bool execute_script(const char *name, char **envp) {
 	for(i = 0; envp[i]; i++) {
 		char *e = strchr(envp[i], '=');
 		if(e) {
-			p = alloca(e - envp[i] + 1);
+			p[e - envp[i] + 1];
 			strncpy(p, envp[i], e - envp[i]);
 			p[e - envp[i]] = '\0';
 			putenv(p);
