@@ -356,7 +356,7 @@ bool detach(void) {
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
 	int status, len;
-	char *scriptname, *p;
+	char *scriptname;
 	int i;
 
 #ifndef HAVE_MINGW
@@ -397,7 +397,7 @@ bool execute_script(const char *name, char **envp) {
 	for(i = 0; envp[i]; i++) {
 		char *e = strchr(envp[i], '=');
 		if(e) {
-			p[e - envp[i] + 1];
+			char p[e - envp[i] + 1];
 			strncpy(p, envp[i], e - envp[i]);
 			p[e - envp[i]] = '\0';
 			putenv(p);
