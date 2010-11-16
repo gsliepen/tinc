@@ -3,6 +3,7 @@
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
+                  2010      Brandon Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
