@@ -69,7 +69,8 @@ typedef struct node_t {
 
 	uint32_t sent_seqno;			/* Sequence number last sent to this node */
 	uint32_t received_seqno;		/* Sequence number last received from this node */
-	unsigned char late[16];			/* Bitfield marking late packets */
+	uint32_t farfuture;			/* Packets in a row that have arrived from the far future */
+	unsigned char* late;			/* Bitfield marking late packets */
 
 	length_t mtu;				/* Maximum size of packets to send to this node */
 	length_t minmtu;			/* Probed minimum MTU */

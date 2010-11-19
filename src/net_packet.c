@@ -3,6 +3,7 @@
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
+                  2010      Brandon Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -61,6 +62,8 @@ static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999
 #endif
 
 static void send_udppacket(node_t *, vpn_packet_t *);
+
+unsigned replaywin = 16;
 
 #define MAX_SEQNO 1073741824
 
@@ -284,25 +287,32 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	inpkt->len -= sizeof inpkt->seqno;
 	inpkt->seqno = ntohl(inpkt->seqno);
 
-	if(inpkt->seqno != n->received_seqno + 1) {
-		if(inpkt->seqno >= n->received_seqno + sizeof n->late * 8) {
-			logger(LOG_WARNING, "Lost %d packets from %s (%s)",
-					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
-			
-			memset(n->late, 0, sizeof n->late);
-		} else if (inpkt->seqno <= n->received_seqno) {
-			if((n->received_seqno >= sizeof n->late * 8 && inpkt->seqno <= n->received_seqno - sizeof n->late * 8) || !(n->late[(inpkt->seqno / 8) % sizeof n->late] & (1 << inpkt->seqno % 8))) {
-				logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
-					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
-				return;
+	if(replaywin) {
+		if(inpkt->seqno != n->received_seqno + 1) {
+			if(inpkt->seqno >= n->received_seqno + replaywin * 8) {
+				if(n->farfuture++ < replaywin >> 2) {
+					logger(LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
+						n->name, n->hostname, inpkt->seqno - n->received_seqno - 1, n->farfuture);
+					return;
+				}
+				logger(LOG_WARNING, "Lost %d packets from %s (%s)",
+					   	inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
+				memset(n->late, 0, replaywin);
+			} else if (inpkt->seqno <= n->received_seqno) {
+				if((n->received_seqno >= replaywin * 8 && inpkt->seqno <= n->received_seqno - replaywin * 8) || !(n->late[(inpkt->seqno / 8) % replaywin] & (1 << inpkt->seqno % 8))) {
+					logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
+					   	n->name, n->hostname, inpkt->seqno, n->received_seqno);
+					return;
+				}
+			} else {
+				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
+					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 			}
-		} else {
-			for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
-				n->late[(i / 8) % sizeof n->late] |= 1 << i % 8;
 		}
+
+		n->farfuture = 0;
+		n->late[(inpkt->seqno / 8) % replaywin] &= ~(1 << inpkt->seqno % 8);
 	}
-	
-	n->late[(inpkt->seqno / 8) % sizeof n->late] &= ~(1 << inpkt->seqno % 8);
 
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;

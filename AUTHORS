@@ -10,6 +10,7 @@ Significant contributions from:
 - Scott Lamb <slamb@slamb.org>
 - Julien Muchembled <jm@jmuchemb.eu>
 - Timothy Redaelli <timothy@redaelli.eu>
+- Brandon Black <blblack@gmail.com>
 
 These files are from other sources:
  * lib/pidfile.h and lib/pidfile.c are by Martin Schulze, taken from

@@ -62,6 +62,7 @@ void exit_nodes(void) {
 node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof *n);
 
+	if(replaywin) n->late = xmalloc_and_zero(replaywin);
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	n->mtu = MTU;
@@ -91,6 +92,9 @@ void free_node(node_t *n) {
 
 	if(n->name)
 		free(n->name);
+
+	if(n->late)
+		free(n->late);
 
 	free(n);
 }

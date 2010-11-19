@@ -3,6 +3,7 @@
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
+                  2010      Brandon Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -229,6 +230,7 @@ bool setup_myself(void) {
 	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
 	int i, err;
+	int replaywin_int;
 
 	myself = new_node();
 	myself->connection = new_connection();
@@ -357,6 +359,28 @@ bool setup_myself(void) {
 		}
 	} else
 		maxtimeout = 900;
+
+	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
+		if(udp_rcvbuf <= 0) {
+			logger(LOG_ERR, "UDPRcvBuf cannot be negative!");
+			return false;
+		}
+	}
+
+	if(get_config_int(lookup_config(config_tree, "UDPSndBuf"), &udp_sndbuf)) {
+		if(udp_sndbuf <= 0) {
+			logger(LOG_ERR, "UDPSndBuf cannot be negative!");
+			return false;
+		}
+	}
+
+	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {
+		if(replaywin_int < 0) {
+			logger(LOG_ERR, "ReplayWindow cannot be negative!");
+			return false;
+		}
+		replaywin = (unsigned)replaywin_int;
+	}
 
 	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
 		if(!strcasecmp(afname, "IPv4"))

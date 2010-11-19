@@ -108,10 +108,13 @@ extern list_t *outgoing_list;
 extern int maxoutbufsize;
 extern int seconds_till_retry;
 extern int addressfamily;
+extern unsigned replaywin;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keylifetime;
+extern int udp_rcvbuf;
+extern int udp_sndbuf;
 extern bool do_prune;
 extern char *myport;
 extern int contradicting_add_edge;

@@ -52,6 +52,7 @@ static uint64_t device_total_out = 0;
 
 bool setup_device(void) {
 	struct ifreq ifr;
+	bool t1q = false;
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		device = xstrdup(DEFAULT_DEVICE);
@@ -83,6 +84,12 @@ bool setup_device(void) {
 		device_type = DEVICE_TYPE_TAP;
 		device_info = "Linux tun/tap device (tap mode)";
 	}
+
+#ifdef IFF_ONE_QUEUE
+	/* Set IFF_ONE_QUEUE flag... */
+	if(get_config_bool(lookup_config(config_tree, "IffOneQueue"), &t1q) && t1q)
+		ifr.ifr_flags |= IFF_ONE_QUEUE;
+#endif
 
 	if(iface)
 		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
