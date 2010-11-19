@@ -415,7 +415,7 @@ bool setup_myself(void) {
 
 	/* Check if we want to use message authentication codes... */
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest))
+	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
 		digest = xstrdup("sha1");
 
 	int maclength = 4;
