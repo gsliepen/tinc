@@ -41,7 +41,7 @@ pid_t read_pid (char *pidfile)
 
   if (!(f=fopen(pidfile,"r")))
     return 0;
-  if(fscanf(f,"%ld", &pid) != 1)
+  if(fscanf(f,"%20ld", &pid) != 1)
     pid = 0;
   fclose(f);
   return pid;
