@@ -199,9 +199,8 @@ bool read_packet(vpn_packet_t *packet) {
 			if(device_type == DEVICE_TYPE_TUNEMU)
 				lenin = tunemu_read(device_fd, packet->data + 14, MTU - 14);
 			else
-#else
-				lenin = read(device_fd, packet->data + 14, MTU - 14);
 #endif
+				lenin = read(device_fd, packet->data + 14, MTU - 14);
 
 			if(lenin <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
