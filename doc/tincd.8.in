@@ -64,6 +64,14 @@ the service will always be stopped and removed.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
 .Ar NETNAME .
+This will let tinc read all configuration files from
+.Pa @sysconfdir@/tinc/ Ar NETNAME .
+Specifying
+.Li .
+for
+.Ar NETNAME
+is the same as not specifying any
+.Ar NETNAME .
 .It Fl K, -generate-keys Ns Op = Ns Ar BITS
 Generate public/private RSA keypair and exit.
 If
