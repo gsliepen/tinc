@@ -85,16 +85,21 @@ void send_mtu_probe(node_t *n) {
 	}
 
 	if(n->mtuprobes > 32) {
+		if(!n->minmtu) {
+			n->mtuprobes = 31;
+			timeout = pinginterval;
+			goto end;
+		}
+
 		ifdebug(TRAFFIC) logger(LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
 		n->mtuprobes = 1;
 		n->minmtu = 0;
 		n->maxmtu = MTU;
 	}
 
-	if(n->mtuprobes >= 10 && !n->minmtu) {
+	if(n->mtuprobes >= 10 && n->mtuprobes < 32 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
-		n->mtuprobes = 0;
-		return;
+		n->mtuprobes = 31;
 	}
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
@@ -148,12 +153,17 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		packet->data[0] = 1;
 		send_udppacket(n, packet);
 	} else {
+		if(n->mtuprobes > 30) {
+			if(n->minmtu)
+				n->mtuprobes = 30;
+			else
+				n->mtuprobes = 1;
+		}
+
 		if(len > n->maxmtu)
 			len = n->maxmtu;
 		if(n->minmtu < len)
 			n->minmtu = len;
-		if(n->mtuprobes > 30)
-			n->mtuprobes = 30;
 	}
 }
 
