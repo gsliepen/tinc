@@ -95,16 +95,8 @@ bool setup_device(void) {
 
 	bool found = false;
 
-	int sock, err;
+	int err;
 	HANDLE thread;
-
-	struct addrinfo *ai;
-	struct addrinfo hint = {
-		.ai_family = AF_UNSPEC,
-		.ai_socktype = SOCK_STREAM,
-		.ai_protocol = IPPROTO_TCP,
-		.ai_flags = 0,
-	};
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
