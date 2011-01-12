@@ -41,7 +41,7 @@ extern int vasprintf(char **, const char *, va_list ap);
 extern int gettimeofday(struct timeval *, void *);
 #endif
 
-#ifdef HAVE_MINGW
+#ifndef HAVE_USLEEP
 extern int usleep(long);
 #endif
 
