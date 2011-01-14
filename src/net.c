@@ -220,14 +220,18 @@ void handle_meta_connection_data(void *data) {
 
 		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
 
-		if(!result)
+		if(!result) {
+			mutex_lock(&mutex);
 			finish_connecting(c);
-		else {
+			mutex_unlock(&mutex);
+		} else {
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
 					   "Error while connecting to %s (%s): %s",
 					   c->name, c->hostname, sockstrerror(result));
 			closesocket(c->socket);
+			mutex_lock(&mutex);
 			do_outgoing_connection(c);
+			mutex_unlock(&mutex);
 			return;
 		}
 	}
@@ -235,7 +239,7 @@ void handle_meta_connection_data(void *data) {
 	while(true) {
 		if (!receive_meta(c)) {
 			terminate_connection(c, c->status.active);
-			return;
+			break;
 		}
 	}
 }
@@ -368,7 +372,10 @@ int main_loop(void) {
 #endif
 
 	while(true) {
-		usleep(1000);
+		mutex_unlock(&mutex);
+		usleep(1000000);
+		mutex_lock(&mutex);
+
 		struct event *event;
 		while((event = get_expired_event())) {
 			event->handler(event->data);

@@ -77,7 +77,9 @@ static bool process_meta(connection_t *c, char *reqbuf, int *len) {
 			if(c->tcplen > *len)
 				break;
 
+			mutex_lock(&mutex);
 			receive_tcppacket(c, reqbuf, c->tcplen);
+			mutex_unlock(&mutex);
 
 			memmove(reqbuf, reqbuf, *len - c->tcplen);
 			*len -= c->tcplen;
@@ -88,7 +90,11 @@ static bool process_meta(connection_t *c, char *reqbuf, int *len) {
 			else
 				*end++ = 0;
 
-			if(!receive_request(c, reqbuf))
+			mutex_lock(&mutex);
+			bool success = receive_request(c, reqbuf);
+			mutex_unlock(&mutex);
+
+			if(!success)
 				return false;
 
 			memmove(reqbuf, end, *len - (end - reqbuf));

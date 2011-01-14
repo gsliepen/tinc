@@ -498,6 +498,7 @@ void handle_new_meta_connection(void *data) {
 
 		configure_tcp(c);
 
+		mutex_lock(&mutex);
 		connection_add(c);
 
 		c->allow_request = ID;
@@ -507,6 +508,7 @@ void handle_new_meta_connection(void *data) {
 			logger(LOG_ERR, "create_thread() failed: %s", strerror(errno));
 			abort();
 		}
+		mutex_unlock(&mutex);
 	}
 }
 

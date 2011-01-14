@@ -38,12 +38,17 @@ static inline void thread_destroy(thread_t *tid) {
 static inline void mutex_create(mutex_t *mutex) {
 	pthread_mutex_init(mutex, NULL);
 }
+#if 1
+#define mutex_lock(m) logger(LOG_DEBUG, "mutex_lock() at " __FILE__ " line %d", __LINE__); pthread_mutex_lock(m)
+#define mutex_unlock(m) logger(LOG_DEBUG, "mutex_unlock() at " __FILE__ " line %d", __LINE__); pthread_mutex_unlock(m)
+#else
 static inline void mutex_lock(mutex_t *mutex) {
 	pthread_mutex_lock(mutex);
 }
 static inline void mutex_unlock(mutex_t *mutex) {
 	pthread_mutex_unlock(mutex);
 }
+#endif
 #endif
 
 #endif

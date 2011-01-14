@@ -61,7 +61,9 @@ static void read_thread(void *arg) {
 
 	while(true) {
 		if(read_packet(&packet)) {
+			mutex_lock(&mutex);
 			route(myself, &packet);
+			mutex_unlock(&mutex);
 		} else {
 			if(errno == EAGAIN || errno == EINTR) {
 				errno = 0;

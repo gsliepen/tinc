@@ -110,6 +110,8 @@ static struct option const long_options[] = {
 	{NULL, 0, NULL, 0}
 };
 
+mutex_t mutex;
+
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
 CRITICAL_SECTION mutex;
@@ -383,6 +385,8 @@ int main(int argc, char **argv) {
 
 	g_argv = argv;
 
+	mutex_create(&mutex);
+	mutex_lock(&mutex);
 	init_events();
 	init_configuration(&config_tree);
 

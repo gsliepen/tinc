@@ -599,23 +599,26 @@ void handle_incoming_vpn_data(void *arg) {
 
 		sockaddrunmap(&from);		/* Some braindead IPv6 implementations do stupid things. */
 
+		mutex_lock(&mutex);
 		n = lookup_node_udp(&from);
 
 		if(!n) {
 			n = try_harder(&from, &pkt);
 			if(n)
 				update_node_udp(n, &from);
-			else ifdebug(PROTOCOL) {
+		}
+
+		if(n) {
+			receive_udppacket(n, &pkt);
+		} else {
+			ifdebug(PROTOCOL) {
 				hostname = sockaddr2hostname(&from);
 				logger(LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
 				free(hostname);
-				continue;
 			}
-			else
-				continue;
 		}
 
-		receive_udppacket(n, &pkt);
+		mutex_unlock(&mutex);
 	}
 }
 

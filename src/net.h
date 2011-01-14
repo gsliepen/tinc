@@ -155,8 +155,8 @@ extern void load_all_subnets();
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)
-#else
-extern CRITICAL_SECTION mutex;
 #endif
+
+extern mutex_t mutex;
 
 #endif							/* __TINC_NET_H__ */
