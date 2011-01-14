@@ -24,6 +24,7 @@
 #include "ipv6.h"
 #include "cipher.h"
 #include "digest.h"
+#include "threads.h"
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9018				/* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
@@ -88,6 +89,7 @@ typedef struct listen_socket_t {
 	struct event ev_udp;
 	int tcp;
 	int udp;
+	thread_t udp_thread;
 	sockaddr_t sa;
 } listen_socket_t;
 
@@ -125,7 +127,7 @@ extern int contradicting_del_edge;
 #include "node.h"
 
 extern void retry_outgoing(outgoing_t *);
-extern void handle_incoming_vpn_data(int, short, void *);
+extern void handle_incoming_vpn_data(void *);
 extern void finish_connecting(struct connection_t *);
 extern void do_outgoing_connection(struct connection_t *);
 extern void handle_new_meta_connection(int, short, void *);

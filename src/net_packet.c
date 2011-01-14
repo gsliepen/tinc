@@ -576,7 +576,8 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	return found;
 }
 
-void handle_incoming_vpn_data(int sock, short events, void *data) {
+void handle_incoming_vpn_data(void *arg) {
+	listen_socket_t *l = arg;
 	vpn_packet_t pkt;
 	char *hostname;
 	sockaddr_t from;
@@ -584,35 +585,39 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 	node_t *n;
 	int len;
 
-	len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	while(true) {
+		len = recvfrom(l->udp, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
-	if(len <= 0 || len > MAXSIZE) {
-		if(!sockwouldblock(sockerrno))
-			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
-		return;
-	}
-
-	pkt.len = len;
-
-	sockaddrunmap(&from);		/* Some braindead IPv6 implementations do stupid things. */
-
-	n = lookup_node_udp(&from);
-
-	if(!n) {
-		n = try_harder(&from, &pkt);
-		if(n)
-			update_node_udp(n, &from);
-		else ifdebug(PROTOCOL) {
-			hostname = sockaddr2hostname(&from);
-			logger(LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
-			free(hostname);
-			return;
+		if(len <= 0 || len > MAXSIZE) {
+			if(!sockwouldblock(sockerrno)) {
+				logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
+				return;
+			}
+			continue;
 		}
-		else
-			return;
-	}
 
-	receive_udppacket(n, &pkt);
+		pkt.len = len;
+
+		sockaddrunmap(&from);		/* Some braindead IPv6 implementations do stupid things. */
+
+		n = lookup_node_udp(&from);
+
+		if(!n) {
+			n = try_harder(&from, &pkt);
+			if(n)
+				update_node_udp(n, &from);
+			else ifdebug(PROTOCOL) {
+				hostname = sockaddr2hostname(&from);
+				logger(LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
+				free(hostname);
+				continue;
+			}
+			else
+				continue;
+		}
+
+		receive_udppacket(n, &pkt);
+	}
 }
 
 void handle_device_data(int sock, short events, void *data) {

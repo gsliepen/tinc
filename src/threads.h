@@ -1,11 +1,6 @@
 #ifndef __THREADS_H__
 #define __THREADS_H__
 
-typedef struct event {
-	int foo;
-} event_t;
-	
-
 #ifdef HAVE_MINGW
 typedef HANDLE thread_t;
 typedef CRITICAL_SECTION mutex_t;
@@ -33,11 +28,11 @@ static inline void mutex_unlock(mutex_t *mutex) {
 typedef pthread_t thread_t;
 typedef pthread_mutex_t mutex_t;
 
-static inline void thread_create(thread_t *tid, void (*func)(void *), void *arg) {
+static inline bool thread_create(thread_t *tid, void (*func)(void *), void *arg) {
 	return !pthread_create(tid, NULL, (void *(*)(void *))func, arg);
 }
 static inline void thread_destroy(thread_t *tid) {
-	pthread_join(tid);
+	pthread_join(*tid, NULL);
 }
 static inline void mutex_create(mutex_t *mutex) {
 	pthread_mutex_init(mutex, NULL);

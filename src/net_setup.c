@@ -529,12 +529,8 @@ bool setup_myself(void) {
 			abort();
 		}
 
-		event_set(&listen_socket[listen_sockets].ev_udp,
-				  listen_socket[listen_sockets].udp,
-				  EV_READ|EV_PERSIST,
-				  handle_incoming_vpn_data, NULL);
-		if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+		if(!thread_create(&listen_socket[listen_sockets].udp_thread, handle_incoming_vpn_data, &listen_socket[listen_sockets])) {
+			logger(LOG_ERR, "thread_create failed: %s", strerror(errno));
 			abort();
 		}
 
@@ -625,6 +621,7 @@ void close_network_connections(void) {
 		event_del(&listen_socket[i].ev_udp);
 		close(listen_socket[i].tcp);
 		close(listen_socket[i].udp);
+		thread_destroy(&listen_socket[i].udp_thread);
 	}
 
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");

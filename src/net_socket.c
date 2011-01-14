@@ -237,28 +237,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		return -1;
 	}
 
-#ifdef O_NONBLOCK
-	{
-		int flags = fcntl(nfd, F_GETFL);
-
-		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
-			closesocket(nfd);
-			logger(LOG_ERR, "System call `%s' failed: %s", "fcntl",
-				   strerror(errno));
-			return -1;
-		}
-	}
-#elif defined(WIN32)
-	{
-		unsigned long arg = 1;
-		if(ioctlsocket(nfd, FIONBIO, &arg) != 0) {
-			closesocket(nfd);
-			logger(LOG_ERR, "Call to `%s' failed: %s", "ioctlsocket", sockstrerror(sockerrno));
-			return -1;
-		}
-	}
-#endif
-
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof option);
 
