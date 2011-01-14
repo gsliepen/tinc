@@ -78,8 +78,8 @@ void free_connection(connection_t *c) {
 	if(c->buffer)
 		bufferevent_free(c->buffer);
 	
-	if(event_initialized(&c->inevent))
-		event_del(&c->inevent);
+	if(c->thread)
+		thread_destroy(&c->thread);
 
 	free(c);
 }

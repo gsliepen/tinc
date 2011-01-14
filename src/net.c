@@ -208,7 +208,7 @@ static void timeout_handler(int fd, short events, void *event) {
 	event_add(event, &(struct timeval){pingtimeout, 0});
 }
 
-void handle_meta_connection_data(int fd, short events, void *data) {
+void handle_meta_connection_data(void *data) {
 	connection_t *c = data;
 	int result;
 	socklen_t len = sizeof result;
@@ -230,9 +230,11 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 		}
 	}
 
-	if (!receive_meta(c)) {
-		terminate_connection(c, c->status.active);
-		return;
+	while(true) {
+		if (!receive_meta(c)) {
+			terminate_connection(c, c->status.active);
+			return;
+		}
 	}
 }
 

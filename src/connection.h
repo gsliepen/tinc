@@ -81,7 +81,7 @@ typedef struct connection_t {
 	char *hischallenge;		/* The challenge we sent to him */
 
 	struct bufferevent *buffer;			/* buffer events on this metadata connection */
-	struct event inevent;				/* input event on this metadata connection */
+	thread_t thread;
 	int tcplen;					/* length of incoming TCPpacket */
 	int allow_request;			/* defined if there's only one request possible */
 

@@ -55,20 +55,6 @@ list_t *outgoing_list = NULL;
 static void configure_tcp(connection_t *c) {
 	int option;
 
-#ifdef O_NONBLOCK
-	int flags = fcntl(c->socket, F_GETFL);
-
-	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-		logger(LOG_ERR, "fcntl for %s: %s", c->hostname, strerror(errno));
-	}
-#elif defined(WIN32)
-	unsigned long arg = 1;
-
-	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(LOG_ERR, "ioctlsocket for %s: %d", c->hostname, sockstrerror(sockerrno));
-	}
-#endif
-
 #if defined(SOL_TCP) && defined(TCP_NODELAY)
 	option = 1;
 	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, (void *)&option, sizeof option);
@@ -483,14 +469,17 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	do_outgoing_connection(c);
 
-	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_add(&c->inevent, NULL);
 	c->buffer = bufferevent_new(c->socket, handle_meta_read, handle_meta_write, handle_meta_connection_error, c);
 	if(!c->buffer) {
 		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
 		abort();
 	}
 	bufferevent_disable(c->buffer, EV_READ);
+
+	if(!thread_create(&c->thread, handle_meta_connection_data, c)) {
+		logger(LOG_ERR, "create_thread() failed: %s", strerror(errno));
+		abort();
+	}
 }
 
 /*
@@ -526,8 +515,6 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection from %s", c->hostname);
 
-	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_add(&c->inevent, NULL);
 	c->buffer = bufferevent_new(c->socket, NULL, handle_meta_write, handle_meta_connection_error, c);
 	if(!c->buffer) {
 		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
@@ -541,6 +528,11 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 
 	c->allow_request = ID;
 	send_id(c);
+
+	if(!thread_create(&c->thread, handle_meta_connection_data, c)) {
+		logger(LOG_ERR, "create_thread() failed: %s", strerror(errno));
+		abort();
+	}
 }
 
 void free_outgoing(outgoing_t *outgoing) {

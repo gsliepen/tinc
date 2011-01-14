@@ -146,7 +146,7 @@ extern void flush_queue(struct node_t *);
 extern bool read_rsa_public_key(struct connection_t *);
 extern void send_mtu_probe(struct node_t *);
 extern void handle_device_data(int, short, void *);
-extern void handle_meta_connection_data(int, short, void *);
+extern void handle_meta_connection_data(void *);
 extern void regenerate_key();
 extern void purge(void);
 extern void retry(void);

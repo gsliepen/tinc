@@ -52,11 +52,11 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 		}
 		
 		ifdebug(META) logger(LOG_DEBUG, "Encrypted write %p %p %p %d", c, c->buffer, outbuf, length);
-		bufferevent_write(c->buffer, (void *)outbuf, length);
+		write(c->socket, outbuf, length);
 		ifdebug(META) logger(LOG_DEBUG, "Done.");
 	} else {
 		ifdebug(META) logger(LOG_DEBUG, "Unencrypted write %p %p %p %d", c, c->buffer, buffer, length);
-		bufferevent_write(c->buffer, (void *)buffer, length);
+		write(c->socket, buffer, length);
 		ifdebug(META) logger(LOG_DEBUG, "Done.");
 	}
 
