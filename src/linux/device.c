@@ -28,9 +28,11 @@
 #endif
 
 #include "conf.h"
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 #include "route.h"
+#include "threads.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -41,6 +43,7 @@ typedef enum device_type_t {
 } device_type_t;
 
 int device_fd = -1;
+int fd = -1;
 static device_type_t device_type;
 char *device = NULL;
 char *iface = NULL;
@@ -49,6 +52,26 @@ static char *device_info;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
+
+thread_t thread;
+
+static void read_thread(void *arg) {
+	static vpn_packet_t packet;
+	errno = 0;
+
+	while(true) {
+		if(read_packet(&packet)) {
+			route(myself, &packet);
+		} else {
+			if(errno == EAGAIN || errno == EINTR) {
+				errno = 0;
+				continue;
+			}
+
+			return;
+		}
+	}	
+}
 
 bool setup_device(void) {
 	struct ifreq ifr;
@@ -64,9 +87,9 @@ bool setup_device(void) {
 #else
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 #endif
-	device_fd = open(device, O_RDWR | O_NONBLOCK);
+	fd = open(device, O_RDWR);
 
-	if(device_fd < 0) {
+	if(fd < 0) {
 		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
@@ -94,11 +117,11 @@ bool setup_device(void) {
 	if(iface)
 		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
 
-	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
+	if(!ioctl(fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		if(iface) free(iface);
 		iface = xstrdup(ifrname);
-	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
+	} else if(!ioctl(fd, (('T' << 8) | 202), &ifr)) {
 		logger(LOG_WARNING, "Old ioctl() request was needed for %s", device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		if(iface) free(iface);
@@ -117,11 +140,12 @@ bool setup_device(void) {
 
 	logger(LOG_INFO, "%s is a %s", device, device_info);
 
-	return true;
+	return thread_create(&thread, read_thread, NULL);
 }
 
 void close_device(void) {
-	close(device_fd);
+	close(fd);
+	thread_destroy(&thread);
 
 	free(device);
 	free(iface);
@@ -132,7 +156,7 @@ bool read_packet(vpn_packet_t *packet) {
 	
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-			inlen = read(device_fd, packet->data + 10, MTU - 10);
+			inlen = read(fd, packet->data + 10, MTU - 10);
 
 			if(inlen <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s",
@@ -143,7 +167,7 @@ bool read_packet(vpn_packet_t *packet) {
 			packet->len = inlen + 10;
 			break;
 		case DEVICE_TYPE_TAP:
-			inlen = read(device_fd, packet->data, MTU);
+			inlen = read(fd, packet->data, MTU);
 
 			if(inlen <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s",
@@ -154,7 +178,7 @@ bool read_packet(vpn_packet_t *packet) {
 			packet->len = inlen;
 			break;
 		case DEVICE_TYPE_ETHERTAP:
-			inlen = read(device_fd, packet->data - 2, MTU + 2);
+			inlen = read(fd, packet->data - 2, MTU + 2);
 
 			if(inlen <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s",
@@ -181,14 +205,14 @@ bool write_packet(vpn_packet_t *packet) {
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			packet->data[10] = packet->data[11] = 0;
-			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
+			if(write(fd, packet->data + 10, packet->len - 10) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
 			break;
 		case DEVICE_TYPE_TAP:
-			if(write(device_fd, packet->data, packet->len) < 0) {
+			if(write(fd, packet->data, packet->len) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
@@ -197,7 +221,7 @@ bool write_packet(vpn_packet_t *packet) {
 		case DEVICE_TYPE_ETHERTAP:
 			*(short int *)(packet->data - 2) = packet->len;
 
-			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
+			if(write(fd, packet->data - 2, packet->len + 2) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
