@@ -5,7 +5,7 @@ sbin_PROGRAMS = tincd tincctl
 EXTRA_DIST = linux bsd solaris cygwin mingw raw_socket uml_socket openssl gcrypt
 
 tincd_SOURCES = \
-	xmalloc.c utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
+	xmalloc.c utils.c event.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
 	cipher.c conf.c connection.c control.c crypto.c digest.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
 	protocol_key.c protocol_subnet.c route.c rsa.c subnet.c tincd.c
@@ -25,7 +25,7 @@ DEFAULT_INCLUDES =
 INCLUDES = @INCLUDES@ -I$(top_builddir)
 
 noinst_HEADERS = \
-	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
+	xalloc.h utils.h event.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	cipher.h conf.h connection.h control.h control_common.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h \
 	protocol.h route.h rsa.h rsagen.h subnet.h bsd/tunemu.h
 

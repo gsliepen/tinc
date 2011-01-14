@@ -187,8 +187,4 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef HAVE_EVENT_H
-#include <event.h>
-#endif
-
 #endif /* __TINC_SYSTEM_H__ */

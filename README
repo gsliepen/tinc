@@ -78,9 +78,6 @@ Since 1.0, the lzo library is also used for optional compression. You need this
 library whether or not you plan to enable compression. You can find it at
 http://www.oberhumer.com/opensource/lzo/.
 
-Since 1.1, the libevent library is used for the main event loop. You can find
-it at http://monkey.org/~provos/libevent/.
-
 In order to compile tinc, you will need a GNU C compiler environment.
 
 
