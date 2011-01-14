@@ -368,7 +368,7 @@ int main_loop(void) {
 #endif
 
 	while(true) {
-		sleep(1);
+		usleep(1000);
 		struct event *event;
 		while((event = get_expired_event())) {
 			event->handler(event->data);
