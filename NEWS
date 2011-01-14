@@ -1,8 +1,10 @@
 Version 1.1-cvs              Work in progress
 
- * Use libevent to handle I/O events and timeouts.
-
  * Use splay trees instead of AVL trees.
+
+ * Control a running tinc daemon with tincctl.
+
+ * Use threads.
 
 Version 1.0.14               not released yet
 
