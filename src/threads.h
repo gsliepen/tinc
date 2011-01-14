@@ -32,6 +32,7 @@ static inline bool thread_create(thread_t *tid, void (*func)(void *), void *arg)
 	return !pthread_create(tid, NULL, (void *(*)(void *))func, arg);
 }
 static inline void thread_destroy(thread_t *tid) {
+	pthread_cancel(*tid);
 	pthread_join(*tid, NULL);
 }
 static inline void mutex_create(mutex_t *mutex) {

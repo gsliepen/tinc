@@ -589,11 +589,8 @@ void handle_incoming_vpn_data(void *arg) {
 		len = recvfrom(l->udp, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 		if(len <= 0 || len > MAXSIZE) {
-			if(!sockwouldblock(sockerrno)) {
-				logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
-				return;
-			}
-			continue;
+			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
+			return;
 		}
 
 		pkt.len = len;
