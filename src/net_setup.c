@@ -520,12 +520,10 @@ bool setup_myself(void) {
 			continue;
 		}
 
-		event_set(&listen_socket[listen_sockets].ev_tcp,
-				  listen_socket[listen_sockets].tcp,
-				  EV_READ|EV_PERSIST,
-				  handle_new_meta_connection, NULL);
-		if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
+
+		if(!thread_create(&listen_socket[listen_sockets].tcp_thread, handle_new_meta_connection, &listen_socket[listen_sockets])) {
+			logger(LOG_ERR, "thread_create failed: %s", strerror(errno));
 			abort();
 		}
 
@@ -540,7 +538,6 @@ bool setup_myself(void) {
 			free(hostname);
 		}
 
-		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
 		listen_sockets++;
 
 		if(listen_sockets >= MAXSOCKETS) {
@@ -617,10 +614,9 @@ void close_network_connections(void) {
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
-		event_del(&listen_socket[i].ev_tcp);
-		event_del(&listen_socket[i].ev_udp);
 		close(listen_socket[i].tcp);
 		close(listen_socket[i].udp);
+		thread_destroy(&listen_socket[i].tcp_thread);
 		thread_destroy(&listen_socket[i].udp_thread);
 	}
 

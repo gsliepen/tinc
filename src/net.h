@@ -85,10 +85,9 @@ typedef struct vpn_packet_t {
 } vpn_packet_t;
 
 typedef struct listen_socket_t {
-	struct event ev_tcp;
-	struct event ev_udp;
 	int tcp;
 	int udp;
+	thread_t tcp_thread;
 	thread_t udp_thread;
 	sockaddr_t sa;
 } listen_socket_t;
@@ -130,7 +129,7 @@ extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(void *);
 extern void finish_connecting(struct connection_t *);
 extern void do_outgoing_connection(struct connection_t *);
-extern void handle_new_meta_connection(int, short, void *);
+extern void handle_new_meta_connection(void *);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(const struct node_t *, vpn_packet_t *);
