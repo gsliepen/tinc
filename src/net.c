@@ -157,7 +157,8 @@ void terminate_connection(connection_t *c, bool report) {
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void timeout_handler(int fd, short events, void *event) {
+static void timeout_handler(void *arg) {
+	event_t *event = arg;
 	splay_node_t *node, *next;
 	connection_t *c;
 	time_t now = time(NULL);
@@ -197,7 +198,7 @@ static void timeout_handler(int fd, short events, void *event) {
 
 		if(rand() % 3 == 0) {
 			logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
-			event_loopexit(NULL);
+			abort();
 			return;
 		}
 
@@ -205,7 +206,8 @@ static void timeout_handler(int fd, short events, void *event) {
 		contradicting_del_edge = 0;
 	}
 
-	event_add(event, &(struct timeval){pingtimeout, 0});
+	event->time = now + pingtimeout;
+	event_add(event);
 }
 
 void handle_meta_connection_data(void *data) {
@@ -240,7 +242,7 @@ void handle_meta_connection_data(void *data) {
 
 static void sigterm_handler(int signal, short events, void *data) {
 	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
-	event_loopexit(NULL);
+	exit(0);
 }
 
 static void sighup_handler(int signal, short events, void *data) {
@@ -262,7 +264,7 @@ int reload_configuration(void) {
 
 	if(!read_server_config()) {
 		logger(LOG_ERR, "Unable to reread configuration file, exitting.");
-		event_loopexit(NULL);
+		abort();
 		return EINVAL;
 	}
 
@@ -334,8 +336,7 @@ void retry(void) {
 		c = node->data;
 		
 		if(c->outgoing && !c->node) {
-			if(timeout_initialized(&c->outgoing->ev))
-				event_del(&c->outgoing->ev);
+			event_del(&c->outgoing->ev);
 			if(c->status.connecting)
 				close(c->socket);
 			c->outgoing->timeout = 0;
@@ -349,34 +350,31 @@ void retry(void) {
 */
 int main_loop(void) {
 	struct event timeout_event;
-	struct event sighup_event;
-	struct event sigterm_event;
-	struct event sigquit_event;
 
-	timeout_set(&timeout_event, timeout_handler, &timeout_event);
-	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
+	timeout_event.time = time(NULL) + pingtimeout;
+	timeout_event.handler = timeout_handler;
+	timeout_event.data = &timeout_event;
+
+	event_add(&timeout_event);
 
 #ifdef SIGHUP
-	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
-	signal_add(&sighup_event, NULL);
+	signal(SIGHUP, sighup_handler);
 #endif
 #ifdef SIGTERM
-	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
-	signal_add(&sigterm_event, NULL);
+	signal(SIGTERM, sigterm_handler);
 #endif
 #ifdef SIGQUIT
-	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
-	signal_add(&sigquit_event, NULL);
+	signal(SIGQUIT, sigterm_handler);
 #endif
 
-	if(event_loop(0) < 0) {
-		logger(LOG_ERR, "Error while waiting for input: %s", strerror(errno));
-		return 1;
+	while(true) {
+		sleep(1);
+		struct event *event;
+		while((event = get_expired_event())) {
+			event->handler(event->data);
+		}
 	}
 
-	signal_del(&sighup_event);
-	signal_del(&sigterm_event);
-	signal_del(&sigquit_event);
 	event_del(&timeout_event);
 
 	return 0;

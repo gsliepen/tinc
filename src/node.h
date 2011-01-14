@@ -25,6 +25,7 @@
 #include "cipher.h"
 #include "connection.h"
 #include "digest.h"
+#include "event.h"
 #include "list.h"
 #include "subnet.h"
 

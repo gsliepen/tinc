@@ -21,6 +21,7 @@
 #ifndef __TINC_NET_H__
 #define __TINC_NET_H__
 
+#include "event.h"
 #include "ipv6.h"
 #include "cipher.h"
 #include "digest.h"

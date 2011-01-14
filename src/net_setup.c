@@ -139,20 +139,17 @@ bool read_rsa_private_key() {
 
 static struct event keyexpire_event;
 
-static void keyexpire_handler(int fd, short events, void *data) {
+static void keyexpire_handler(void *data) {
 	regenerate_key();
 }
 
 void regenerate_key() {
-	if(timeout_initialized(&keyexpire_event)) {
-		ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
-		event_del(&keyexpire_event);
-		send_key_changed(broadcast, myself);
-	} else {
-		timeout_set(&keyexpire_event, keyexpire_handler, NULL);
-	}
-
-	event_add(&keyexpire_event, &(struct timeval){keylifetime, 0});
+	ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
+	event_del(&keyexpire_event);
+	send_key_changed(broadcast, myself);
+	keyexpire_event.time = time(NULL) + keylifetime;
+	keyexpire_event.handler = keyexpire_handler;
+	event_add(&keyexpire_event);
 }
 
 /*
@@ -459,16 +456,6 @@ bool setup_myself(void) {
 
 	if(!setup_device())
 		return false;
-
-	if(device_fd >= 0) {
-		event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
-
-		if (event_add(&device_ev, NULL) < 0) {
-			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
-			close_device();
-			return false;
-		}
-	}
 
 	/* Run tinc-up script to further initialize the tap interface */
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");

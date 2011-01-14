@@ -72,7 +72,7 @@ unsigned replaywin = 16;
 // mtuprobes ==    32: send 1 burst, sleep pingtimeout second
 // mtuprobes ==    33: no response from other side, restart PMTU discovery process
 
-static void send_mtu_probe_handler(int fd, short events, void *data) {
+static void send_mtu_probe_handler(void *data) {
 	node_t *n = data;
 	vpn_packet_t packet;
 	int len, i;
@@ -136,13 +136,15 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 	}
 
 end:
-	event_add(&n->mtuevent, &(struct timeval){timeout, 0});
+	n->mtuevent.time = time(NULL) + timeout;
+	event_add(&n->mtuevent);
 }
 
 void send_mtu_probe(node_t *n) {
-	if(!timeout_initialized(&n->mtuevent))
-		timeout_set(&n->mtuevent, send_mtu_probe_handler, n);
-	send_mtu_probe_handler(0, 0, n);
+	event_del(&n->mtuevent);
+	n->mtuevent.handler = send_mtu_probe_handler;
+	n->mtuevent.data = n;
+	send_mtu_probe_handler(n);
 }
 
 void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {

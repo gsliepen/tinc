@@ -285,7 +285,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	return nfd;
 } /* int setup_vpn_in_socket */
 
-static void retry_outgoing_handler(int fd, short events, void *data) {
+static void retry_outgoing_handler(void *data) {
 	setup_outgoing_connection(data);
 }
 
@@ -295,8 +295,9 @@ void retry_outgoing(outgoing_t *outgoing) {
 	if(outgoing->timeout > maxtimeout)
 		outgoing->timeout = maxtimeout;
 
-	timeout_set(&outgoing->ev, retry_outgoing_handler, outgoing);
-	event_add(&outgoing->ev, &(struct timeval){outgoing->timeout, 0});
+	outgoing->ev.handler = retry_outgoing_handler;
+	outgoing->ev.time = time(NULL) + outgoing->timeout;
+	event_add(&outgoing->ev);
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE,
 			   "Trying to re-establish outgoing connection in %d seconds",

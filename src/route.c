@@ -180,7 +180,7 @@ static void swap_mac_addresses(vpn_packet_t *packet) {
 	memcpy(&packet->data[6], &tmp, sizeof tmp);
 }
 	
-static void age_subnets(int fd, short events, void *data) {
+static void age_subnets(void *data) {
 	subnet_t *s;
 	connection_t *c;
 	splay_node_t *node, *next, *node2;
@@ -210,8 +210,10 @@ static void age_subnets(int fd, short events, void *data) {
 		}
 	}
 
-	if(left)
-		event_add(&age_subnets_event, &(struct timeval){10, 0});
+	if(left) {
+		age_subnets_event.time = time(NULL) + 10;
+		event_add(&age_subnets_event);
+	}
 }
 
 static void learn_mac(mac_t *address) {
@@ -244,9 +246,9 @@ static void learn_mac(mac_t *address) {
 				send_add_subnet(c, subnet);
 		}
 
-		if(!timeout_initialized(&age_subnets_event))
-			timeout_set(&age_subnets_event, age_subnets, NULL);
-		event_add(&age_subnets_event, &(struct timeval){10, 0});
+		age_subnets_event.handler = age_subnets;
+		age_subnets_event.time = time(NULL) + 10;
+		event_add(&age_subnets_event);
 	} else {
 		if(subnet->expires)
 			subnet->expires = time(NULL) + macexpire;

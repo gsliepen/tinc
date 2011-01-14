@@ -381,13 +381,9 @@ int main(int argc, char **argv) {
 
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
-	if(!event_init()) {
-		logger(LOG_ERR, "Error initializing libevent!");
-		return 1;
-	}
-
 	g_argv = argv;
 
+	init_events();
 	init_configuration(&config_tree);
 
 	/* Slllluuuuuuurrrrp! */
@@ -495,6 +491,7 @@ end:
 	crypto_exit();
 
 	exit_configuration(&config_tree);
+	exit_events();
 	free_names();
 
 	return status;

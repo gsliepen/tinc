@@ -190,12 +190,13 @@ bool seen_request(char *request) {
 		new->request = xstrdup(request);
 		new->firstseen = time(NULL);
 		splay_insert(past_request_tree, new);
-		event_add(&past_request_event, &(struct timeval){10, 0});
+		past_request_event.time = time(NULL) + 10;
+		event_add(&past_request_event);
 		return false;
 	}
 }
 
-void age_past_requests(int fd, short events, void *data) {
+void age_past_requests(void *data) {
 	splay_node_t *node, *next;
 	past_request_t *p;
 	int left = 0, deleted = 0;
@@ -215,14 +216,16 @@ void age_past_requests(int fd, short events, void *data) {
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Aging past requests: deleted %d, left %d",
 			   deleted, left);
 
-	if(left)
-		event_add(&past_request_event, &(struct timeval){10, 0});
+	if(left) {
+		past_request_event.time = time(NULL) + 10;
+		event_add(&past_request_event);
+	}
 }
 
 void init_requests(void) {
 	past_request_tree = splay_alloc_tree((splay_compare_t) past_request_compare, (splay_action_t) free_past_request);
 
-	timeout_set(&past_request_event, age_past_requests, NULL);
+	past_request_event.handler = age_past_requests;
 }
 
 void exit_requests(void) {
