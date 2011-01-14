@@ -413,21 +413,6 @@ begin:
 	return;
 }
 
-void handle_meta_read(struct bufferevent *event, void *data) {
-	logger(LOG_ERR, "handle_meta_read() called");
-	abort();
-}
-
-void handle_meta_write(struct bufferevent *event, void *data) {
-	ifdebug(META) logger(LOG_DEBUG, "handle_meta_write() called");
-}
-
-void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
-	connection_t *c = data;
-	logger(LOG_ERR, "handle_meta_connection_error() called: %d: %s", what, strerror(errno));
-	terminate_connection(c, c->status.active);
-}
-
 void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;
@@ -469,13 +454,6 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	do_outgoing_connection(c);
 
-	c->buffer = bufferevent_new(c->socket, handle_meta_read, handle_meta_write, handle_meta_connection_error, c);
-	if(!c->buffer) {
-		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
-		abort();
-	}
-	bufferevent_disable(c->buffer, EV_READ);
-
 	if(!thread_create(&c->thread, handle_meta_connection_data, c)) {
 		logger(LOG_ERR, "create_thread() failed: %s", strerror(errno));
 		abort();
@@ -515,13 +493,6 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection from %s", c->hostname);
 
-	c->buffer = bufferevent_new(c->socket, NULL, handle_meta_write, handle_meta_connection_error, c);
-	if(!c->buffer) {
-		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
-		abort();
-	}
-	bufferevent_disable(c->buffer, EV_READ);
-		
 	configure_tcp(c);
 
 	connection_add(c);

@@ -51,13 +51,9 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 			return false;
 		}
 		
-		ifdebug(META) logger(LOG_DEBUG, "Encrypted write %p %p %p %d", c, c->buffer, outbuf, length);
 		write(c->socket, outbuf, length);
-		ifdebug(META) logger(LOG_DEBUG, "Done.");
 	} else {
-		ifdebug(META) logger(LOG_DEBUG, "Unencrypted write %p %p %p %d", c, c->buffer, buffer, length);
 		write(c->socket, buffer, length);
-		ifdebug(META) logger(LOG_DEBUG, "Done.");
 	}
 
 	return true;
@@ -75,89 +71,92 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	}
 }
 
+static bool process_meta(connection_t *c, char *reqbuf, int *len) {
+	while(*len) {
+		if(c->tcplen) {
+			if(c->tcplen > *len)
+				break;
+
+			receive_tcppacket(c, reqbuf, c->tcplen);
+
+			memmove(reqbuf, reqbuf, *len - c->tcplen);
+			*len -= c->tcplen;
+		} else {
+			char *end = memchr(reqbuf, '\n', *len);
+			if(!end)
+				break;
+			else
+				*end++ = 0;
+
+			if(!receive_request(c, reqbuf))
+				return false;
+
+			memmove(reqbuf, end, *len - (end - reqbuf));
+			*len -= end - reqbuf;
+		}
+	}
+
+	return true;
+}
+			
 bool receive_meta(connection_t *c) {
 	int inlen;
+	int reqlen = 0;
 	char inbuf[MAXBUFSIZE];
-	char *bufp = inbuf, *endp;
+	char reqbuf[MAXBUFSIZE];
 
 	/* Strategy:
 	   - Read as much as possible from the TCP socket in one go.
-	   - Decrypt it.
-	   - Check if a full request is in the input buffer.
-	   - If yes, process request and remove it from the buffer,
-	   then check again.
-	   - If not, keep stuff in buffer and exit.
+	   - Decrypt it if necessary.
+	   - Check if a full request is in the request buffer.
+	   - If yes, process request and remove it from the buffer, then check again.
+	   - If not, try to read more.
 	 */
 
-	inlen = recv(c->socket, inbuf, sizeof inbuf, 0);
+	while(true) {
+		inlen = recv(c->socket, inbuf, sizeof inbuf - reqlen, 0);
 
-	if(inlen <= 0) {
-		if(!inlen || !errno) {
-			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
-					   c->name, c->hostname);
-		} else if(sockwouldblock(sockerrno))
-			return true;
-		else
-			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
-				   c->name, c->hostname, sockstrerror(sockerrno));
-		return false;
-	}
-
-	do {
-		if(!c->status.decryptin) {
-			endp = memchr(bufp, '\n', inlen);
-			if(endp)
-				endp++;
-			else
-				endp = bufp + inlen;
-
-			evbuffer_add(c->buffer->input, bufp, endp - bufp);
-
-			inlen -= endp - bufp;
-			bufp = endp;
-		} else {
-			size_t outlen = inlen;
-			ifdebug(META) logger(LOG_DEBUG, "Received encrypted %d bytes", inlen);
-			evbuffer_expand(c->buffer->input, c->buffer->input->off + inlen);
-
-			if(!cipher_decrypt(&c->incipher, bufp, inlen, c->buffer->input->buffer + c->buffer->input->off, &outlen, false) || inlen != outlen) {
-				logger(LOG_ERR, "Error while decrypting metadata from %s (%s)",
-					   c->name, c->hostname);
-				return false;
-			}
-			c->buffer->input->off += inlen;
-
-			inlen = 0;
-		}
-
-		while(c->buffer->input->off) {
-			/* Are we receiving a TCPpacket? */
-
-			if(c->tcplen) {
-				if(c->tcplen <= c->buffer->input->off) {
-					receive_tcppacket(c, (char *)c->buffer->input->buffer, c->tcplen);
-					evbuffer_drain(c->buffer->input, c->tcplen);
-					c->tcplen = 0;
-					continue;
-				} else {
-					break;
-				}
-			}
-
-			/* Otherwise we are waiting for a request */
-
-			char *request = evbuffer_readline(c->buffer->input);
-			if(request) {
-				bool result = receive_request(c, request);
-				free(request);
-				if(!result)
-					return false;
+		if(inlen <= 0) {
+			if(!inlen || !errno) {
+				ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
+						   c->name, c->hostname);
+			} else if(sockwouldblock(sockerrno))
 				continue;
+			else
+				logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
+					   c->name, c->hostname, sockstrerror(sockerrno));
+			return false;
+		}
+
+		while(inlen) {
+			if(!c->status.decryptin) {
+				char *end = memchr(inbuf, '\n', inlen);
+				if(!end)
+					end = inbuf + inlen;
+				else
+					end++;
+				memcpy(reqbuf + reqlen, inbuf, end - inbuf);
+				reqlen += end - inbuf;
+
+				if(!process_meta(c, reqbuf, &reqlen))
+					return false;
+
+				memmove(inbuf, end, inlen - (end - inbuf));
+				inlen -= end - inbuf;
 			} else {
-				break;
+				size_t outlen = inlen;
+
+				if(!cipher_decrypt(&c->incipher, inbuf, inlen, reqbuf + reqlen, &outlen, false) || inlen != outlen) {
+					logger(LOG_ERR, "Error while decrypting metadata from %s (%s)", c->name, c->hostname);
+					return false;
+				}
+
+				reqlen += inlen;
+				inlen = 0;
+
+				if(!process_meta(c, reqbuf, &reqlen))
+					return false;
 			}
 		}
-	} while(inlen);
-
-	return true;
+	}
 }

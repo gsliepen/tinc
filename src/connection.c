@@ -75,9 +75,6 @@ void free_connection(connection_t *c) {
 	if(c->config_tree)
 		exit_configuration(&c->config_tree);
 
-	if(c->buffer)
-		bufferevent_free(c->buffer);
-	
 	if(c->thread)
 		thread_destroy(&c->thread);
 
