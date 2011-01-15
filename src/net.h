@@ -158,5 +158,6 @@ extern void load_all_subnets();
 #endif
 
 extern mutex_t mutex;
+extern bool running;
 
 #endif							/* __TINC_NET_H__ */

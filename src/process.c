@@ -342,6 +342,14 @@ bool execute_script(const char *name, char **envp) {
 */
 
 #ifndef HAVE_MINGW
+static RETSIGTYPE sigterm_handler(int a) {
+	logger(LOG_NOTICE, "Got %s signal", "TERM");
+	if(running)
+		running = false;
+	else
+		exit(1);
+}
+
 static RETSIGTYPE fatal_signal_square(int a) {
 	logger(LOG_ERR, "Got another fatal signal %d (%s): not restarting.", a,
 		   strsignal(a));
@@ -382,11 +390,15 @@ static struct {
 	int signal;
 	void (*handler)(int);
 } sighandlers[] = {
+	{SIGTERM, sigterm_handler},
+	{SIGQUIT, sigterm_handler},
+	{SIGINT, sigterm_handler},
 	{SIGSEGV, fatal_signal_handler},
 	{SIGBUS, fatal_signal_handler},
 	{SIGILL, fatal_signal_handler},
 	{SIGPIPE, ignore_signal_handler},
 	{SIGCHLD, ignore_signal_handler},
+	{SIGALRM, ignore_signal_handler},
 	{0, NULL}
 };
 #endif

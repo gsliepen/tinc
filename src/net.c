@@ -38,6 +38,7 @@
 
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
+bool running = true;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -244,16 +245,6 @@ void handle_meta_connection_data(void *data) {
 	}
 }
 
-static void sigterm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
-	exit(0);
-}
-
-static void sighup_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
-	reload_configuration();
-}
-
 int reload_configuration(void) {
 	connection_t *c;
 	splay_node_t *node, *next;
@@ -361,15 +352,6 @@ int main_loop(void) {
 
 	event_add(&timeout_event);
 
-#ifdef SIGHUP
-	signal(SIGHUP, sighup_handler);
-#endif
-#ifdef SIGTERM
-	signal(SIGTERM, sigterm_handler);
-#endif
-#ifdef SIGQUIT
-	signal(SIGQUIT, sigterm_handler);
-#endif
 
 	while(true) {
 		mutex_unlock(&mutex);

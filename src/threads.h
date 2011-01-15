@@ -29,7 +29,14 @@ typedef pthread_t thread_t;
 typedef pthread_mutex_t mutex_t;
 
 static inline bool thread_create(thread_t *tid, void (*func)(void *), void *arg) {
-	return !pthread_create(tid, NULL, (void *(*)(void *))func, arg);
+	bool result;
+
+	sigset_t old, block;
+	sigfillset(&block);
+	pthread_sigmask(SIG_SETMASK, &block, &old);
+	result = pthread_create(tid, NULL, (void *(*)(void *))func, arg);
+	pthread_sigmask(SIG_SETMASK, &old, NULL);
+	return !result;
 }
 static inline void thread_destroy(thread_t *tid) {
 	pthread_cancel(*tid);
