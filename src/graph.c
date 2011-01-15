@@ -160,7 +160,7 @@ void sssp_dijkstra(void) {
 		/* Mark this node as visited and remove it from the todo_list */
 
 		n->status.visited = true;
-		list_unlink_node(todo_list, nnode);
+		list_delete_node(todo_list, nnode);
 
 		/* Update distance of neighbours and add them to the todo_list */
 
