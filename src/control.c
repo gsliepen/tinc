@@ -54,7 +54,7 @@ bool control_h(connection_t *c, char *request) {
 
 	switch (type) {
 		case REQ_STOP:
-			abort();
+			running = false;
 			return control_ok(c, REQ_STOP);
 
 		case REQ_DUMP_NODES:

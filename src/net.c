@@ -199,7 +199,7 @@ static void timeout_handler(void *arg) {
 
 		if(rand() % 3 == 0) {
 			logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
-			abort();
+			running = false;
 			return;
 		}
 
@@ -259,7 +259,7 @@ int reload_configuration(void) {
 
 	if(!read_server_config()) {
 		logger(LOG_ERR, "Unable to reread configuration file, exitting.");
-		abort();
+		running = false;
 		return EINVAL;
 	}
 
@@ -352,8 +352,7 @@ int main_loop(void) {
 
 	event_add(&timeout_event);
 
-
-	while(true) {
+	while(running) {
 		mutex_unlock(&mutex);
 		usleep(1000000);
 		mutex_lock(&mutex);

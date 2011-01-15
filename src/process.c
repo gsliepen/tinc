@@ -166,7 +166,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
-	abort();
+	running = false;
 	status.dwWaitHint = 30000; 
 	status.dwCurrentState = SERVICE_STOP_PENDING; 
 	SetServiceStatus(statushandle, &status);
