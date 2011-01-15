@@ -392,25 +392,7 @@ begin:
 
 	configure_tcp(c);
 
-	/* Connect */
-
-	result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
-
-	if(result == -1) {
-		if(sockinprogress(sockerrno)) {
-			c->status.connecting = true;
-			return;
-		}
-
-		closesocket(c->socket);
-
-		ifdebug(CONNECTIONS) logger(LOG_ERR, "%s: %s", c->hostname, sockstrerror(sockerrno));
-
-		goto begin;
-	}
-
-	finish_connecting(c);
-
+	c->status.connecting = true;
 	return;
 }
 

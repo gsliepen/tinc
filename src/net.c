@@ -216,13 +216,12 @@ void handle_meta_connection_data(void *data) {
 	int result;
 	socklen_t len = sizeof result;
 
-	if(c->status.connecting) {
-		c->status.connecting = false;
-
-		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+	while(c->status.connecting) {
+		result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
 
 		if(!result) {
 			mutex_lock(&mutex);
+			c->status.connecting = false;
 			finish_connecting(c);
 			mutex_unlock(&mutex);
 		} else {
@@ -230,10 +229,10 @@ void handle_meta_connection_data(void *data) {
 					   "Error while connecting to %s (%s): %s",
 					   c->name, c->hostname, sockstrerror(result));
 			closesocket(c->socket);
+			c->status.connecting = false;
 			mutex_lock(&mutex);
 			do_outgoing_connection(c);
 			mutex_unlock(&mutex);
-			return;
 		}
 	}
 
