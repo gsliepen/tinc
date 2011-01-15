@@ -226,6 +226,8 @@ void init_requests(void) {
 	past_request_tree = splay_alloc_tree((splay_compare_t) past_request_compare, (splay_action_t) free_past_request);
 
 	past_request_event.handler = age_past_requests;
+	past_request_event.time = time(NULL) + 10;
+	event_add(&past_request_event);
 }
 
 void exit_requests(void) {
