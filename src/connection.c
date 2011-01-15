@@ -78,6 +78,9 @@ void free_connection(connection_t *c) {
 	if(c->thread)
 		thread_destroy(&c->thread);
 
+	if(c->rsa)
+		rsa_free(c->rsa);
+
 	free(c);
 }
 

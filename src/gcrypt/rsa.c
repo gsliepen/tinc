@@ -300,3 +300,9 @@ bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 
 	return true;
 }
+
+void rsa_free(rsa_t *rsa) {
+	gcry_mpi_release(rsa->n);
+	gcry_mpi_release(rsa->e);
+	gcry_mpi_release(rsa->d);
+}

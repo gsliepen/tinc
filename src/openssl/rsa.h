@@ -31,5 +31,6 @@ extern bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp);
 extern size_t rsa_size(rsa_t *rsa);
 extern bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t inlen, void *out);
 extern bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t inlen, void *out);
+extern void rsa_free(rsa_t *rsa);
 
 #endif
