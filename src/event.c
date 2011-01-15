@@ -40,7 +40,7 @@ static int event_compare(const event_t *a, const event_t *b) {
 }
 
 void init_events(void) {
-	event_tree = splay_alloc_tree((splay_compare_t) event_compare, (splay_action_t) free_event);
+	event_tree = splay_alloc_tree((splay_compare_t) event_compare, NULL);
 }
 
 void exit_events(void) {
