@@ -119,7 +119,7 @@ computers on the other end of the Internet.
 This problem can be solved by using @emph{virtual} networks.  Virtual
 networks can live on top of other networks, but they use encapsulation to
 keep using their private address space so they do not interfere with
-the Internet.  Mostly, virtual networks appear like a singe LAN, even though
+the Internet.  Mostly, virtual networks appear like a single LAN, even though
 they can span the entire world.  But virtual networks can't be secured
 by using firewalls, because the traffic that flows through it has to go
 through the Internet, where other people can look at it.
