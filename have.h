@@ -95,6 +95,10 @@
 #include <sys/param.h>
 #endif
 
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
@@ -126,8 +130,16 @@
 #include <net/if_tun.h>
 #endif
 
+#ifdef HAVE_NET_TUN_IF_TUN_H
+#include <net/tun/if_tun.h>
+#endif
+
 #ifdef HAVE_NET_IF_TAP_H
 #include <net/if_tap.h>
+#endif
+
+#ifdef HAVE_NET_TAP_IF_TAP_H
+#include <net/tap/if_tap.h>
 #endif
 
 #ifdef HAVE_NETINET_IN_SYSTM_H

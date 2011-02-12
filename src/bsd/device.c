@@ -51,7 +51,7 @@ static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 #if defined(TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
-#elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
+#elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
