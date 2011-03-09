@@ -199,16 +199,12 @@ void sssp_bfs(void) {
 			   n->address is set to the e->address of the edge left of n to n.
 			   We are currently examining the edge e right of n from n:
 
-			   - If e->reverse->address != n->address, then e->to is probably
-			     not reachable for the nodes left of n. We do as if the indirectdata
-			     flag is set on edge e.
 			   - If edge e provides for better reachability of e->to, update
 			     e->to and (re)add it to the todo_list to (re)examine the reachability
 			     of nodes behind it.
 			 */
 
-			indirect = n->status.indirect || e->options & OPTION_INDIRECT
-				|| ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
+			indirect = n->status.indirect || e->options & OPTION_INDIRECT;
 
 			if(e->to->status.visited
 			   && (!e->to->status.indirect || indirect))
