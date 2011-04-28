@@ -342,18 +342,29 @@ void read_config_options(avl_tree_t *config_tree, const char *prefix) {
 	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
 	for(node = cmdline_conf->tail; node; node = next) {
-		config_t *cfg = (config_t *)node->data;
+		config_t *orig_cfg, *cfg = (config_t *)node->data;
 		next = node->prev;
 
-		if(!prefix && strchr(cfg->variable, '.'))
-			continue;
-
-		if(prefix && (strncmp(prefix, cfg->variable, prefix_len) || cfg->variable[prefix_len] != '.'))
-			continue;
-
+		if(!prefix) {
+			if(strchr(cfg->variable, '.'))
+				continue;
+			node->data = NULL;
+			list_unlink_node(cmdline_conf, node);
+		} else {
+			if(strncmp(prefix, cfg->variable, prefix_len) ||
+			   cfg->variable[prefix_len] != '.')
+				continue;
+			/* Because host configuration is parsed again when
+			   reconnecting, nodes must not be freed when a prefix
+			   is given. */
+			orig_cfg = cfg;
+			cfg = new_config();
+			cfg->variable = xstrdup(orig_cfg->variable + prefix_len + 1);
+			cfg->value = xstrdup(orig_cfg->value);
+			cfg->file = NULL;
+			cfg->line = orig_cfg->line;
+		}
 		config_add(config_tree, cfg);
-		node->data = NULL;
-		list_unlink_node(cmdline_conf, node);
 	}
 }
 
