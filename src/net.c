@@ -427,7 +427,7 @@ int main_loop(void) {
 				keyexpires = now + keylifetime;
 			}
 
-			if(contradicting_del_edge && contradicting_add_edge) {
+			if(contradicting_del_edge > 10 && contradicting_add_edge > 10) {
 				logger(LOG_WARNING, "Possible node with same Name as us!");
 
 				if(rand() % 3 == 0) {
