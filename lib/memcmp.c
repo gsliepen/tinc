@@ -23,6 +23,10 @@
 # include "config.h"
 #endif
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #undef	__ptr_t
 #if defined __cplusplus || (defined __STDC__ && __STDC__)
 # define __ptr_t	void *
