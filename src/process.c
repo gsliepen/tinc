@@ -546,6 +546,7 @@ static struct {
 	{SIGCHLD, ignore_signal_handler},
 	{SIGALRM, sigalrm_handler},
 	{SIGWINCH, sigwinch_handler},
+	{SIGABRT, SIG_DFL},
 	{0, NULL}
 };
 #endif

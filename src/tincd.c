@@ -203,6 +203,8 @@ static bool parse_options(int argc, char **argv) {
 						kill_tincd = SIGINT;
 					else if(!strcasecmp(optarg, "ALRM"))
 						kill_tincd = SIGALRM;
+					else if(!strcasecmp(optarg, "ABRT"))
+						kill_tincd = SIGABRT;
 					else {
 						kill_tincd = atoi(optarg);
 
