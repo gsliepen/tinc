@@ -1,4 +1,4 @@
-Version 1.0.14               not released yet
+Version 1.0.14               May  8 2011
 
  * Fixed reading configuration files that do not end with a newline. Again.
 
@@ -9,6 +9,15 @@ Version 1.0.14               not released yet
  * Configurable replay window, UDP send and receive buffers for performance tuning.
 
  * Try harder to get UDP communication back after falling back to TCP.
+
+ * Initial support for attaching tinc to a VDE switch.
+
+ * DragonFly BSD support.
+
+ * Allow linking with OpenSSL 1.0.0.
+
+ Thanks to Brandon Black, Julien Muchembled, Michael Tokarev, Rumko and Timothy
+ Redaelli for their contributions to this version of tinc.
 
 Version 1.0.13               Apr 11 2010
 
