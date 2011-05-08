@@ -67,7 +67,7 @@ case $host_os in
   *mingw*)
     AC_DEFINE(HAVE_MINGW, 1, [MinGW])
     [ rm -f src/device.c; cp -f src/mingw/device.c src/device.c ]
-    LIBS="$LIBS -lws2_32"
+    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32"
   ;;
   *)
     AC_MSG_ERROR("Unknown operating system.")
