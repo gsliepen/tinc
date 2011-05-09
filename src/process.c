@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -387,6 +387,7 @@ static struct {
 	{SIGILL, fatal_signal_handler},
 	{SIGPIPE, ignore_signal_handler},
 	{SIGCHLD, ignore_signal_handler},
+	{SIGABRT, SIG_DFL},
 	{0, NULL}
 };
 #endif

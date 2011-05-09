@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -95,16 +95,8 @@ bool setup_device(void) {
 
 	bool found = false;
 
-	int sock, err;
+	int err;
 	HANDLE thread;
-
-	struct addrinfo *ai;
-	struct addrinfo hint = {
-		.ai_family = AF_UNSPEC,
-		.ai_socktype = SOCK_STREAM,
-		.ai_protocol = IPPROTO_TCP,
-		.ai_flags = 0,
-	};
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);

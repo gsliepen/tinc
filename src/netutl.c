@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -93,8 +93,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	if(err) {
 		logger(LOG_ERR, "Error while translating addresses: %s",
 			   gai_strerror(err));
-		raise(SIGFPE);
-		exit(0);
+		abort();
 	}
 
 	scopeid = strchr(address, '%');
@@ -155,8 +154,7 @@ int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 		default:
 			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
-			raise(SIGFPE);
-			exit(0);
+			abort();
 	}
 }
 
@@ -199,8 +197,7 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 		default:
 			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
-			raise(SIGFPE);
-			exit(0);
+			abort();
 	}
 }
 

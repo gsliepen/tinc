@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -87,16 +87,21 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 	}
 
 	if(n->mtuprobes > 32) {
+		if(!n->minmtu) {
+			n->mtuprobes = 31;
+			timeout = pinginterval;
+			goto end;
+		}
+
 		ifdebug(TRAFFIC) logger(LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
 		n->mtuprobes = 1;
 		n->minmtu = 0;
 		n->maxmtu = MTU;
 	}
 
-	if(n->mtuprobes >= 10 && !n->minmtu) {
+	if(n->mtuprobes >= 10 && n->mtuprobes < 32 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
-		n->mtuprobes = 0;
-		return;
+		n->mtuprobes = 31;
 	}
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
@@ -152,12 +157,17 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		packet->data[0] = 1;
 		send_udppacket(n, packet);
 	} else {
+		if(n->mtuprobes > 30) {
+			if(n->minmtu)
+				n->mtuprobes = 30;
+			else
+				n->mtuprobes = 1;
+		}
+
 		if(len > n->maxmtu)
 			len = n->maxmtu;
 		if(n->minmtu < len)
 			n->minmtu = len;
-		if(n->mtuprobes > 30)
-			n->mtuprobes = 30;
 	}
 }
 
@@ -552,7 +562,9 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 
 static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	splay_node_t *node;
-	node_t *n, *found = NULL;
+	edge_t *e;
+	node_t *n = NULL;
+	bool hard = false;
 	static time_t last_hard_try = 0;
 	time_t now = time(NULL);
 
@@ -561,19 +573,29 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	else
 		last_hard_try = now;
 
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
+	for(node = edge_weight_tree->head; node; node = node->next) {
+		e = node->data;
 
-		if(n == myself || !n->status.reachable || !digest_active(&n->indigest))
+		if(e->to == myself)
 			continue;
 
-		if(try_mac(n, pkt)) {
-			found = n;
-			break;
+		if(sockaddrcmp_noport(from, &e->address)) {
+			if(last_hard_try == now)
+				continue;
+			hard = true;
 		}
+
+		if(!try_mac(e->to, pkt))
+			continue;
+
+		n = e->to;
+		break;
 	}
 
-	return found;
+	if(hard)
+		last_hard_try = now;
+
+	return n;
 }
 
 void handle_incoming_vpn_data(int sock, short events, void *data) {

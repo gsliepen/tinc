@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2010 Ivo Timmermans,
+Copyright @copyright{} 1998-2011 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -40,7 +40,7 @@ permission notice identical to this one.
 @cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2010 Ivo Timmermans,
+Copyright @copyright{} 1998-2011 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -121,7 +121,7 @@ computers on the other end of the Internet.
 This problem can be solved by using @emph{virtual} networks.  Virtual
 networks can live on top of other networks, but they use encapsulation to
 keep using their private address space so they do not interfere with
-the Internet.  Mostly, virtual networks appear like a singe LAN, even though
+the Internet.  Mostly, virtual networks appear like a single LAN, even though
 they can span the entire world.  But virtual networks can't be secured
 by using firewalls, because the traffic that flows through it has to go
 through the Internet, where other people can look at it.
@@ -986,6 +986,18 @@ specified in the configuration file.
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
+@cindex ReplayWindow
+@item ReplayWindow = <bytes> (16)
+This is the size of the replay tracking window for each remote node, in bytes.
+The window is a bitfield which tracks 1 packet per bit, so for example
+the default setting of 16 will track up to 128 packets in the window. In high
+bandwidth scenarios, setting this to a higher value can reduce packet loss from
+the interaction of replay tracking with underlying real packet loss and/or
+reordering. Setting this to zero will disable replay tracking completely and
+pass all traffic, but leaves tinc vulnerable to replay-based attacks on your
+traffic.
+
+
 @cindex StrictSubnets
 @item StrictSubnets <yes|no> (no) [experimental]
 When this option is enabled tinc will only use Subnet statements which are
@@ -998,6 +1010,16 @@ When this option is enabled tinc will no longer forward information between othe
 and will only allow connections with nodes for which host config files are present in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
 Setting this options also implicitly sets StrictSubnets.
+
+@cindex UDPRcvBuf
+@item UDPRcvBuf = <bytes> (OS default)
+Sets the socket receive buffer size for the UDP socket, in bytes.
+If unset, the default buffer size will be used by the operating system.
+
+@cindex UDPSndBuf
+@item UDPSndBuf = <bytes> Pq OS default
+Sets the socket send buffer size for the UDP socket, in bytes.
+If unset, the default buffer size will be used by the operating system.
 
 @end table
 
@@ -1553,7 +1575,11 @@ Set debug level to @var{level}.  The higher the debug level, the more gets
 logged.  Everything goes via syslog.
 
 @item -n, --net=@var{netname}
-Use configuration for net @var{netname}. @xref{Multiple networks}.
+Use configuration for net @var{netname}.
+This will let tinc read all configuration files from
+@file{@value{sysconfdir}/tinc/@var{netname}/}.
+Specifying . for @var{netname} is the same as not specifying any @var{netname}.
+@xref{Multiple networks}.
 
 @item --controlsocket=@var{filename}
 Open control socket at @var{filename}. If unspecified, the default is

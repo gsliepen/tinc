@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Solaris tun device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #define DEFAULT_DEVICE "/dev/tun"
 
 int device_fd = -1;
+int ip_fd = -1, if_fd = -1;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
@@ -42,7 +43,6 @@ static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
 bool setup_device(void) {
-	int ip_fd = -1, if_fd = -1;
 	int ppa;
 	char *ptr;
 
@@ -105,6 +105,8 @@ bool setup_device(void) {
 }
 
 void close_device(void) {
+	close(if_fd);
+	close(ip_fd);
 	close(device_fd);
 
 	free(device);

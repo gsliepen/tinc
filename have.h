@@ -1,7 +1,7 @@
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2003-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2003-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,6 +100,10 @@
 #include <sys/param.h>
 #endif
 
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
@@ -135,8 +139,16 @@
 #include <net/if_tun.h>
 #endif
 
+#ifdef HAVE_NET_TUN_IF_TUN_H
+#include <net/tun/if_tun.h>
+#endif
+
 #ifdef HAVE_NET_IF_TAP_H
 #include <net/if_tap.h>
+#endif
+
+#ifdef HAVE_NET_TAP_IF_TAP_H
+#include <net/tap/if_tap.h>
 #endif
 
 #ifdef HAVE_NETINET_IN_SYSTM_H

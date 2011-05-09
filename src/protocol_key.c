@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -275,7 +275,7 @@ bool ans_key_h(connection_t *c, char *request) {
 		update_node_udp(from, &sa);
 	}
 
-	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
+	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuevent)
 		send_mtu_probe(from);
 
 	return true;

@@ -26,19 +26,15 @@ AC_DEFUN([tinc_OPENSSL],
     [AC_MSG_ERROR([OpenSSL header files not found.]); break]
   )
 
+  AC_CHECK_LIB(crypto, EVP_EncryptInit_ex,
+    [LIBS="-lcrypto $LIBS"],
+    [AC_MSG_ERROR([OpenSSL libraries not found.])]
+  )
+
 case $host_os in
   *mingw*)
-    AC_CHECK_LIB(crypto, SHA1_version,
-      [LIBS="$LIBS -lcrypto -lgdi32 -lcrypt32"],
-      [AC_MSG_ERROR([OpenSSL libraries not found.])]
-    )
   ;;
   *)
-    AC_CHECK_LIB(crypto, SHA1_version,
-      [LIBS="$LIBS -lcrypto"],
-      [AC_MSG_ERROR([OpenSSL libraries not found.])]
-    )
-
     AC_CHECK_FUNC(dlopen,
       [],
       [AC_CHECK_LIB(dl, dlopen,

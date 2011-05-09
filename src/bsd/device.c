@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 #if defined(TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
-#elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
+#elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
@@ -199,9 +199,8 @@ bool read_packet(vpn_packet_t *packet) {
 			if(device_type == DEVICE_TYPE_TUNEMU)
 				inlen = tunemu_read(device_fd, packet->data + 14, MTU - 14);
 			else
-#else
-				inlen = read(device_fd, packet->data + 14, MTU - 14);
 #endif
+				inlen = read(device_fd, packet->data + 14, MTU - 14);
 
 			if(inlen <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,

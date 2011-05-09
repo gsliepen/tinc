@@ -1,6 +1,6 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2011 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -142,6 +142,11 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 }
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
+	if(n == myself) {
+		logger(LOG_WARNING, "Trying to update UDP address of myself!\n");
+		return;
+	}
+
 	splay_delete(node_udp_tree, n);
 
 	if(n->hostname)

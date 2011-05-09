@@ -1,4 +1,4 @@
-.Dd 2009-05-18
+.Dd 2011-01-02
 .Dt TINCD 8
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -52,6 +52,14 @@ Increase debug level or set it to
 (see below).
 .It Fl n, -net Ns = Ns Ar NETNAME
 Connect to net
+.Ar NETNAME .
+This will let tinc read all configuration files from
+.Pa @sysconfdir@/tinc/ Ar NETNAME .
+Specifying
+.Li .
+for
+.Ar NETNAME
+is the same as not specifying any
 .Ar NETNAME .
 .It Fl L, -mlock
 Lock tinc into main memory.
