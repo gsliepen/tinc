@@ -2,6 +2,20 @@ dnl Check to find the OpenSSL headers/libraries
 
 AC_DEFUN([tinc_OPENSSL],
 [
+  case $host_os in
+    *mingw*)
+    ;;
+    *)
+      AC_CHECK_FUNC(dlopen,
+        [],
+        [AC_CHECK_LIB(dl, dlopen,
+          [LIBS="$LIBS -ldl"],
+          [AC_MSG_ERROR([OpenSSL depends on libdl.]); break]
+        )]
+      )
+    ;;
+  esac
+
   AC_ARG_WITH(openssl,
     AS_HELP_STRING([--with-openssl=DIR], [OpenSSL base directory, or:]),
     [openssl="$withval"
@@ -30,20 +44,6 @@ AC_DEFUN([tinc_OPENSSL],
     [LIBS="-lcrypto $LIBS"],
     [AC_MSG_ERROR([OpenSSL libraries not found.])]
   )
-
-case $host_os in
-  *mingw*)
-  ;;
-  *)
-    AC_CHECK_FUNC(dlopen,
-      [],
-      [AC_CHECK_LIB(dl, dlopen,
-        [LIBS="$LIBS -ldl"],
-        [AC_MSG_ERROR([OpenSSL depends on libdl.]); break]
-      )]
-    )
-  ;;
-esac
 
   AC_CHECK_FUNCS([RAND_pseudo_bytes EVP_EncryptInit_ex], ,
     [AC_MSG_ERROR([Missing OpenSSL functionality, make sure you have installed the latest version.]); break],

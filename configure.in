@@ -153,9 +153,9 @@ AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 
-tinc_OPENSSL
 tinc_ZLIB
 tinc_LZO
+tinc_OPENSSL
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
