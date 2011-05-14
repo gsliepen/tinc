@@ -275,7 +275,7 @@ bool ans_key_h(connection_t *c, char *request) {
 		update_node_udp(from, &sa);
 	}
 
-	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuevent)
+	if(from->options & OPTION_PMTU_DISCOVERY && !event_initialized(&from->mtuevent))
 		send_mtu_probe(from);
 
 	return true;
