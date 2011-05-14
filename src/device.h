@@ -25,8 +25,12 @@
 
 extern int device_fd;
 extern char *device;
-
 extern char *iface;
+
+extern uint64_t device_in_packets;
+extern uint64_t device_in_bytes;
+extern uint64_t device_out_packets;
+extern uint64_t device_out_bytes;
 
 extern bool setup_device(void);
 extern void close_device(void);

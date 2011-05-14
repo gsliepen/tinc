@@ -47,8 +47,10 @@ char *iface = NULL;
 static char ifrname[IFNAMSIZ];
 static char *device_info;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
+uint64_t device_in_packets = 0;
+uint64_t device_in_bytes = 0;
+uint64_t device_out_packets = 0;
+uint64_t device_out_bytes = 0;
 
 bool setup_device(void) {
 	struct ifreq ifr;
@@ -166,7 +168,8 @@ bool read_packet(vpn_packet_t *packet) {
 			break;
 	}
 
-	device_total_in += packet->len;
+	device_in_packets++;
+	device_in_bytes += packet->len;
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
@@ -205,13 +208,14 @@ bool write_packet(vpn_packet_t *packet) {
 			break;
 	}
 
-	device_total_out += packet->len;
+	device_out_packets++;
+	device_out_bytes += packet->len;
 
 	return true;
 }
 
 void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_in_bytes);
+	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_out_bytes);
 }

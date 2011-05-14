@@ -77,6 +77,11 @@ typedef struct node_t {
 	length_t maxmtu;			/* Probed maximum MTU */
 	int mtuprobes;				/* Number of probes */
 	struct event mtuevent;			/* Probe event */
+
+	uint64_t in_packets;
+	uint64_t in_bytes;
+	uint64_t out_packets;
+	uint64_t out_bytes;
 } node_t;
 
 extern struct node_t *myself;

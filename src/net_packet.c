@@ -236,6 +236,9 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Received packet of %d bytes from %s (%s)",
 			   packet->len, n->name, n->hostname);
 
+	n->in_packets++;
+	n->in_bytes += packet->len;
+
 	route(n, packet);
 }
 
@@ -502,12 +505,14 @@ end:
 /*
   send a packet to the given vpn ip.
 */
-void send_packet(const node_t *n, vpn_packet_t *packet) {
+void send_packet(node_t *n, vpn_packet_t *packet) {
 	node_t *via;
 
 	if(n == myself) {
 		if(overwrite_mac)
 			 memcpy(packet->data, mymac.x, ETH_ALEN);
+		n->out_packets++;
+		n->out_bytes += packet->len;
 		write_packet(packet);
 		return;
 	}
@@ -520,6 +525,9 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 				   n->name, n->hostname);
 		return;
 	}
+
+	n->out_packets++;
+	n->out_bytes += packet->len;
 
 	via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
@@ -640,6 +648,9 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 void handle_device_data(int sock, short events, void *data) {
 	vpn_packet_t packet;
 
-	if(read_packet(&packet))
+	if(read_packet(&packet)) {
+		myself->in_packets++;
+		myself->in_bytes += packet.len;
 		route(myself, &packet);
+	}
 }

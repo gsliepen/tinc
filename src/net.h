@@ -131,7 +131,7 @@ extern void do_outgoing_connection(struct connection_t *);
 extern void handle_new_meta_connection(int, short, void *);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
-extern void send_packet(const struct node_t *, vpn_packet_t *);
+extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern bool setup_network(void);
