@@ -45,20 +45,17 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 		char outbuf[length];
 		size_t outlen = length;
 
-		if(!cipher_encrypt(&c->outcipher, buffer, length, outbuf, &outlen, false) || outlen != length) {
+		if(!cipher_encrypt(&c->outcipher, outbuf, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
 			logger(LOG_ERR, "Error while encrypting metadata to %s (%s)",
 					c->name, c->hostname);
 			return false;
 		}
-		
-		ifdebug(META) logger(LOG_DEBUG, "Encrypted write %p %p %p %d", c, c->buffer, outbuf, length);
-		bufferevent_write(c->buffer, (void *)outbuf, length);
-		ifdebug(META) logger(LOG_DEBUG, "Done.");
+
 	} else {
-		ifdebug(META) logger(LOG_DEBUG, "Unencrypted write %p %p %p %d", c, c->buffer, buffer, length);
-		bufferevent_write(c->buffer, (void *)buffer, length);
-		ifdebug(META) logger(LOG_DEBUG, "Done.");
+		buffer_add(&c->outbuf, buffer, length);
 	}
+
+	event_add(&c->outevent, NULL);
 
 	return true;
 }
@@ -76,7 +73,7 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 }
 
 bool receive_meta(connection_t *c) {
-	int inlen;
+	int inlen, reqlen;
 	char inbuf[MAXBUFSIZE];
 	char *bufp = inbuf, *endp;
 
@@ -89,7 +86,7 @@ bool receive_meta(connection_t *c) {
 	   - If not, keep stuff in buffer and exit.
 	 */
 
-	inlen = recv(c->socket, inbuf, sizeof inbuf, 0);
+	inlen = recv(c->socket, inbuf, sizeof inbuf - c->inbuf.len, 0);
 
 	if(inlen <= 0) {
 		if(!inlen || !errno) {
@@ -111,33 +108,30 @@ bool receive_meta(connection_t *c) {
 			else
 				endp = bufp + inlen;
 
-			evbuffer_add(c->buffer->input, bufp, endp - bufp);
+			buffer_add(&c->inbuf, bufp, endp - bufp);
 
 			inlen -= endp - bufp;
 			bufp = endp;
 		} else {
 			size_t outlen = inlen;
 			ifdebug(META) logger(LOG_DEBUG, "Received encrypted %d bytes", inlen);
-			evbuffer_expand(c->buffer->input, c->buffer->input->off + inlen);
 
-			if(!cipher_decrypt(&c->incipher, bufp, inlen, c->buffer->input->buffer + c->buffer->input->off, &outlen, false) || inlen != outlen) {
+			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
 				logger(LOG_ERR, "Error while decrypting metadata from %s (%s)",
 					   c->name, c->hostname);
 				return false;
 			}
-			c->buffer->input->off += inlen;
 
 			inlen = 0;
 		}
 
-		while(c->buffer->input->off) {
+		while(c->inbuf.len) {
 			/* Are we receiving a TCPpacket? */
 
 			if(c->tcplen) {
-				if(c->tcplen <= c->buffer->input->off) {
-					receive_tcppacket(c, (char *)c->buffer->input->buffer, c->tcplen);
-					evbuffer_drain(c->buffer->input, c->tcplen);
-					c->tcplen = 0;
+				char *tcpbuffer = buffer_read(&c->inbuf, c->tcplen);
+				if(tcpbuffer) {
+					receive_tcppacket(c, tcpbuffer, c->tcplen);
 					continue;
 				} else {
 					break;
@@ -146,10 +140,9 @@ bool receive_meta(connection_t *c) {
 
 			/* Otherwise we are waiting for a request */
 
-			char *request = evbuffer_readline(c->buffer->input);
+			char *request = buffer_readline(&c->inbuf);
 			if(request) {
 				bool result = receive_request(c, request);
-				free(request);
 				if(!result)
 					return false;
 				continue;

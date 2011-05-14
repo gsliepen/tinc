@@ -449,13 +449,21 @@ begin:
 	return;
 }
 
-void handle_meta_read(struct bufferevent *event, void *data) {
-	logger(LOG_ERR, "handle_meta_read() called");
-	abort();
-}
-
-void handle_meta_write(struct bufferevent *event, void *data) {
+void handle_meta_write(int sock, short events, void *data) {
 	ifdebug(META) logger(LOG_DEBUG, "handle_meta_write() called");
+
+	connection_t *c = data;
+
+	size_t outlen = write(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset);
+	if(outlen <= 0) {
+		logger(LOG_ERR, "Onoes, outlen = %zd (%s)", outlen, strerror(errno));
+		terminate_connection(c, c->status.active);
+		return;
+	}
+
+	buffer_read(&c->outbuf, outlen);
+	if(!c->outbuf.len)
+		event_del(&c->outevent);
 }
 
 void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
@@ -506,13 +514,8 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	do_outgoing_connection(c);
 
 	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
 	event_add(&c->inevent, NULL);
-	c->buffer = bufferevent_new(c->socket, handle_meta_read, handle_meta_write, handle_meta_connection_error, c);
-	if(!c->buffer) {
-		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
-		abort();
-	}
-	bufferevent_disable(c->buffer, EV_READ);
 }
 
 /*
@@ -549,13 +552,8 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection from %s", c->hostname);
 
 	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
 	event_add(&c->inevent, NULL);
-	c->buffer = bufferevent_new(c->socket, NULL, handle_meta_write, handle_meta_connection_error, c);
-	if(!c->buffer) {
-		logger(LOG_ERR, "bufferevent_new() failed: %s", strerror(errno));
-		abort();
-	}
-	bufferevent_disable(c->buffer, EV_READ);
 		
 	configure_tcp(c);
 

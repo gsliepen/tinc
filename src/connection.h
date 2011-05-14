@@ -21,6 +21,7 @@
 #ifndef __TINC_CONNECTION_H__
 #define __TINC_CONNECTION_H__
 
+#include "buffer.h"
 #include "cipher.h"
 #include "digest.h"
 #include "rsa.h"
@@ -80,8 +81,10 @@ typedef struct connection_t {
 
 	char *hischallenge;		/* The challenge we sent to him */
 
-	struct bufferevent *buffer;			/* buffer events on this metadata connection */
+	struct buffer_t inbuf;
+	struct buffer_t outbuf;
 	struct event inevent;				/* input event on this metadata connection */
+	struct event outevent;				/* output event on this metadata connection */
 	int tcplen;					/* length of incoming TCPpacket */
 	int allow_request;			/* defined if there's only one request possible */
 

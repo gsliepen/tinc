@@ -119,7 +119,7 @@ bool send_tcppacket(connection_t *c, vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
            We use a very simple Random Early Drop algorithm. */
 
-	if(2.0 * c->buffer->output->off / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
+	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
 		return true;
 
 	if(!send_request(c, "%d %hd", PACKET, packet->len))
