@@ -42,10 +42,9 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
-		char outbuf[length];
 		size_t outlen = length;
 
-		if(!cipher_encrypt(&c->outcipher, outbuf, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
+		if(!cipher_encrypt(&c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
 			logger(LOG_ERR, "Error while encrypting metadata to %s (%s)",
 					c->name, c->hostname);
 			return false;
@@ -151,6 +150,8 @@ bool receive_meta(connection_t *c) {
 			}
 		}
 	} while(inlen);
+
+	buffer_compact(&c->inbuf);
 
 	return true;
 }

@@ -8,6 +8,7 @@ typedef struct buffer_t {
 	int offset;
 } buffer_t;
 
+extern void buffer_compact(buffer_t *buffer);
 extern char *buffer_prepare(buffer_t *buffer, int size);
 extern char *buffer_add(buffer_t *buffer, const char *data, int size);
 extern char *buffer_readline(buffer_t *buffer);

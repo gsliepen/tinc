@@ -22,6 +22,14 @@
 #include "buffer.h"
 #include "xalloc.h"
 
+void buffer_compact(buffer_t *buffer) {
+	if(buffer->offset / 7 > buffer->len / 8) {
+		memmove(buffer->data, buffer->data + buffer->offset, buffer->len - buffer->offset);
+		buffer->len -= buffer->offset;
+		buffer->offset = 0;
+	}
+}
+
 // Make sure we can add size bytes to the buffer, and return a pointer to the start of those bytes.
 
 char *buffer_prepare(buffer_t *buffer, int size) {
@@ -41,8 +49,11 @@ char *buffer_prepare(buffer_t *buffer, int size) {
 		}
 	}
 
+	char *start = buffer->data + buffer->len;
+
 	buffer->len += size;
-	return buffer->data + buffer->offset;
+
+	return start;
 }
 
 // Copy data into the buffer.
@@ -61,8 +72,6 @@ static char *buffer_consume(buffer_t *buffer, int size) {
 	if(buffer->offset >= buffer->len) {
 		buffer->offset = 0;
 		buffer->len = 0;
-	} else {
-		buffer->offset += size;
 	}
 
 	return start;
@@ -76,7 +85,7 @@ char *buffer_readline(buffer_t *buffer) {
 	if(!newline)
 		return NULL;
 
-	int len = newline + 1 - buffer->data + buffer->offset;
+	int len = newline + 1 - (buffer->data + buffer->offset);
 	*newline = 0;
 	return buffer_consume(buffer, len);
 }
