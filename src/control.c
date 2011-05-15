@@ -113,6 +113,9 @@ bool control_h(connection_t *c, char *request) {
 			return control_return(c, REQ_DISCONNECT, found ? 0 : -2);
 		}
 
+		case REQ_DUMP_TRAFFIC:
+			return dump_traffic(c);
+
 		default:
 			return send_request(c, "%d %d", CONTROL, REQ_INVALID);
 	}

@@ -179,3 +179,16 @@ bool dump_nodes(connection_t *c) {
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_NODES);
 }
+
+bool dump_traffic(connection_t *c) {
+	splay_node_t *node;
+	node_t *n;
+
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
+		send_request(c, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_TRAFFIC,
+			   n->name, n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
+	}
+
+	return send_request(c, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
+}
