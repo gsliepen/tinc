@@ -12,7 +12,7 @@ tincd_SOURCES = \
 
 tincctl_SOURCES = \
 	xmalloc.c utils.c getopt.c getopt1.c dropin.c \
-	tincctl.c rsagen.c
+	list.c tincctl.c rsagen.c
 
 if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
