@@ -154,6 +154,7 @@ dnl These are defined in files in m4/
 
 AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
 
+tinc_CURSES
 tinc_LIBEVENT
 tinc_ZLIB
 tinc_LZO
