@@ -18,6 +18,11 @@ if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
 endif
 
+if CURSES
+tincctl_SOURCES += top.c
+tincctl_LDADD = $(CURSES_LIBS)
+endif
+
 nodist_tincd_SOURCES = device.c
 
 DEFAULT_INCLUDES =

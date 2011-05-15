@@ -6,6 +6,7 @@ AC_DEFUN([tinc_CURSES],
     AS_HELP_STRING([--disable-curses], [disable curses support]))
   AS_IF([test "x$enable_curses" != "xno"], [
   AC_DEFINE(HAVE_CURSES, 1, [have curses support])
+    curses=true
     AC_ARG_WITH(curses,
       AS_HELP_STRING([--with-curses=DIR], [curses base directory, or:]),
       [curses="$withval"
@@ -31,8 +32,11 @@ AC_DEFUN([tinc_CURSES],
     )
 
     AC_CHECK_LIB(curses, initscr,
-      [LIBS="$LIBS -lcurses"],
+      [CURSES_LIBS="-lcurses"],
       [AC_MSG_ERROR("curses libraries not found.")]
     )
   ])
+
+  AC_SUBST(CURSES_LIBS)
+  AM_CONDITIONAL(CURSES, test "$curses" = true)
 ])

@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2009 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
 #include "control_common.h"
 #include "rsagen.h"
 #include "utils.h"
+#include "tincctl.h"
+#include "top.h"
 
 /* The name this program was run with. */
 char *program_name = NULL;
@@ -93,6 +95,9 @@ static void usage(bool status) {
 				"  retry                      Retry all outgoing connections\n"
 				"  reload                     Partial reload of configuration\n"
 				"  disconnect NODE            Close meta connection with NODE\n"
+#ifdef HAVE_CURSES
+				"  top                        Show real-time statistics\n"
+#endif
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -296,7 +301,7 @@ static void make_names(void) {
 	}
 }
 
-static bool recvline(int fd, char *line, size_t len) {
+bool recvline(int fd, char *line, size_t len) {
 	static char buffer[4096];
 	static size_t blen = 0;
 	char *newline = NULL;
@@ -323,7 +328,7 @@ static bool recvline(int fd, char *line, size_t len) {
 	return true;
 }
 
-static bool sendline(int fd, char *format, ...) {
+bool sendline(int fd, char *format, ...) {
 	static char buffer[4096];
 	char *p = buffer;
 	size_t blen = 0;
@@ -625,6 +630,13 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 		return 0;
 	}
+
+#ifdef HAVE_CURSES
+	if(!strcasecmp(argv[optind], "top")) {
+		top(fd);
+		return 0;
+	}
+#endif
 
 	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);
 	usage(true);
