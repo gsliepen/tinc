@@ -91,6 +91,26 @@ list_node_t *list_insert_tail(list_t *list, void *data) {
 	return node;
 }
 
+list_node_t *list_insert_after(list_t *list, list_node_t *after, void *data) {
+	list_node_t *node;
+
+	node = list_alloc_node();
+
+	node->data = data;
+	node->next = after->next;
+	node->prev = after;
+	after->next = node;
+
+	if(node->next)
+		node->next->prev = node;
+	else
+		list->tail = node;
+
+	list->count++;
+
+	return node;
+}
+
 void list_unlink_node(list_t *list, list_node_t *node) {
 	if(node->prev)
 		node->prev->next = node->next;
