@@ -72,7 +72,7 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 }
 
 bool receive_meta(connection_t *c) {
-	int inlen, reqlen;
+	int inlen;
 	char inbuf[MAXBUFSIZE];
 	char *bufp = inbuf, *endp;
 

@@ -522,7 +522,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		bool do_graph = false;
-		int dumps = 1;
 
 		if(!strcasecmp(argv[optind+1], "nodes"))
 			sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
@@ -536,7 +535,6 @@ int main(int argc, char *argv[], char *envp[]) {
 			sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
 			sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
 			do_graph = true;
-			dumps = 2;
 			printf("digraph {\n");
 		} else {
 			fprintf(stderr, "Unknown dump type '%s'.\n", argv[optind+1]);
