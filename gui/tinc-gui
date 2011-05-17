@@ -107,7 +107,7 @@ class ConnectionsPage(wx.Panel):
 		i = 0
 
 		for key, connection in vpn.connections.items():
-			if self.list.ItemCount <= i:
+			if self.list.GetItemCount() <= i:
 				self.list.InsertStringItem(i, connection.name)
 			else:
 				self.list.SetStringItem(i, 0, connection.name)
@@ -119,8 +119,8 @@ class ConnectionsPage(wx.Panel):
 			self.list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnContext)
 			i += 1
 
-		while self.list.ItemCount > i:
-			self.list.DeleteItem(self.list.ItemCount - 1)
+		while self.list.GetItemCount() > i:
+			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
 
 class NodesPage(wx.Panel):
@@ -153,7 +153,7 @@ class NodesPage(wx.Panel):
 		i = 0
 
 		for key, node in vpn.nodes.items():
-			if self.list.ItemCount <= i:
+			if self.list.GetItemCount() <= i:
 				self.list.InsertStringItem(i, node.name)
 			else:
 				self.list.SetStringItem(i,  0, node.name)
@@ -175,8 +175,8 @@ class NodesPage(wx.Panel):
 			self.list.SetItemData(i, i)
 			i += 1
 
-		while self.list.ItemCount > i:
-			self.list.DeleteItem(self.list.ItemCount - 1)
+		while self.list.GetItemCount() > i:
+			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
 class EdgesPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -199,7 +199,7 @@ class EdgesPage(wx.Panel):
 		i = 0
 
 		for key, edge in vpn.edges.items():
-			if self.list.ItemCount <= i:
+			if self.list.GetItemCount() <= i:
 				self.list.InsertStringItem(i, edge.fr)
 			else:
 				self.list.SetStringItem(i, 0, edge.fr)
@@ -211,8 +211,8 @@ class EdgesPage(wx.Panel):
 			self.list.itemDataMap[i] = (edge.fr, edge.to, edge.address, edge.port, edge.options, edge.weight)
 			i += 1
 
-		while self.list.ItemCount > i:
-			self.list.DeleteItem(self.list.ItemCount - 1)
+		while self.list.GetItemCount() > i:
+			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
 class SubnetsPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -231,7 +231,7 @@ class SubnetsPage(wx.Panel):
 		i = 0
 
 		for key, subnet in vpn.subnets.items():
-			if self.list.ItemCount <= i:
+			if self.list.GetItemCount() <= i:
 				self.list.InsertStringItem(i, subnet.address + '/' + subnet.prefixlen)
 			else:
 				self.list.SetStringItem(i, 0, subnet.address + '/' + subnet.prefixlen)
@@ -240,8 +240,8 @@ class SubnetsPage(wx.Panel):
 			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
 			i = i + 1
 
-		while self.list.ItemCount > i:
-			self.list.DeleteItem(self.list.ItemCount - 1)
+		while self.list.GetItemCount() > i:
+			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
 class StatusPage(wx.Panel):
 	def __init__(self, parent, id):
