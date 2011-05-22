@@ -85,6 +85,13 @@ bool receive_meta(connection_t *c) {
 	   - If not, keep stuff in buffer and exit.
 	 */
 
+	buffer_compact(&c->inbuf);
+
+	if(sizeof inbuf <= c->inbuf.len) {
+		logger(LOG_ERR, "Input buffer full for %s (%s)\n");
+		return false;
+	}
+
 	inlen = recv(c->socket, inbuf, sizeof inbuf - c->inbuf.len, 0);
 
 	if(inlen <= 0) {
@@ -150,8 +157,6 @@ bool receive_meta(connection_t *c) {
 			}
 		}
 	} while(inlen);
-
-	buffer_compact(&c->inbuf);
 
 	return true;
 }
