@@ -22,8 +22,8 @@
 #include "buffer.h"
 #include "xalloc.h"
 
-void buffer_compact(buffer_t *buffer) {
-	if(buffer->offset / 7 > buffer->len / 8) {
+void buffer_compact(buffer_t *buffer, int maxsize) {
+	if(buffer->len >= maxsize || buffer->offset / 7 > buffer->len / 8) {
 		memmove(buffer->data, buffer->data + buffer->offset, buffer->len - buffer->offset);
 		buffer->len -= buffer->offset;
 		buffer->offset = 0;
