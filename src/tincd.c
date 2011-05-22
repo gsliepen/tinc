@@ -504,7 +504,7 @@ static bool drop_privs() {
 }
 
 #ifdef HAVE_MINGW
-# define setpriority(level) SetPriorityClass(GetCurrentProcess(), (level))
+# define setpriority(level) !SetPriorityClass(GetCurrentProcess(), (level))
 #else
 # define NORMAL_PRIORITY_CLASS 0
 # define BELOW_NORMAL_PRIORITY_CLASS 10
