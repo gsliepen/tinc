@@ -349,7 +349,8 @@ void check_reachability() {
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
-			event_del(&n->mtuevent);
+			if(timeout_initialized(&n->mtuevent))
+				event_del(&n->mtuevent);
 
 			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			xasprintf(&envp[1], "DEVICE=%s", device ? : "");

@@ -228,5 +228,6 @@ void init_requests(void) {
 void exit_requests(void) {
 	splay_delete_tree(past_request_tree);
 
-	event_del(&past_request_event);
+	if(timeout_initialized(&past_request_event))
+		event_del(&past_request_event);
 }

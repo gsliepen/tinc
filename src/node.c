@@ -85,7 +85,8 @@ void free_node(node_t *n) {
 	cipher_close(&n->outcipher);
 	digest_close(&n->outdigest);
 
-	event_del(&n->mtuevent);
+	if(timeout_initialized(&n->mtuevent))
+		event_del(&n->mtuevent);
 	
 	if(n->hostname)
 		free(n->hostname);

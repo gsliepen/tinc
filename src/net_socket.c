@@ -462,7 +462,7 @@ void handle_meta_write(int sock, short events, void *data) {
 	}
 
 	buffer_read(&c->outbuf, outlen);
-	if(!c->outbuf.len)
+	if(!c->outbuf.len && event_initialized(&c->outevent))
 		event_del(&c->outevent);
 }
 
@@ -476,7 +476,8 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;
 
-	event_del(&outgoing->ev);
+	if(event_initialized(&outgoing->ev))
+		event_del(&outgoing->ev);
 
 	n = lookup_node(outgoing->name);
 

@@ -375,7 +375,9 @@ int main_loop(void) {
 	signal_del(&sighup_event);
 	signal_del(&sigterm_event);
 	signal_del(&sigquit_event);
-	event_del(&timeout_event);
+
+	if(timeout_initialized(&timeout_event))
+		event_del(&timeout_event);
 
 	return 0;
 }
