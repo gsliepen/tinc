@@ -22,10 +22,12 @@
 
 #include "splay_tree.h"
 #include "connection.h"
+#include "control_common.h"
 #include "ethernet.h"
 #include "ipv4.h"
 #include "ipv6.h"
 #include "logger.h"
+#include "meta.h"
 #include "net.h"
 #include "protocol.h"
 #include "route.h"
@@ -39,6 +41,7 @@ bool priorityinheritance = false;
 int macexpire = 600;
 bool overwrite_mac = false;
 mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
+bool pcap = false;
 
 /* Sizes of various headers */
 
@@ -860,7 +863,23 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	send_packet(subnet->owner, packet);
 }
 
+static void send_pcap(vpn_packet_t *packet) {
+	pcap = false;
+	for(splay_node_t *node = connection_tree->head; node; node = node->next) {
+		connection_t *c = node->data;
+		if(!c->status.pcap)
+			continue;
+		else
+			pcap = true;
+		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, packet->len))
+			send_meta(c, (char *)packet->data, packet->len);
+	}
+}
+
 void route(node_t *source, vpn_packet_t *packet) {
+	if(pcap)
+		send_pcap(packet);
+
 	if(forwarding_mode == FMODE_KERNEL && source != myself) {
 		send_packet(myself, packet);
 		return;

@@ -43,7 +43,8 @@ typedef struct connection_status_t {
 		int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
 		int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
 		int control:1;
-		int unused:22;
+		int pcap:1;
+		int unused:21;
 } connection_status_t;
 
 #include "edge.h"

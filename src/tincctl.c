@@ -98,6 +98,7 @@ static void usage(bool status) {
 #ifdef HAVE_CURSES
 				"  top                        Show real-time statistics\n"
 #endif
+				"  pcap                       Dump traffic in pcap format\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -301,9 +302,10 @@ static void make_names(void) {
 	}
 }
 
+static char buffer[4096];
+static size_t blen = 0;
+
 bool recvline(int fd, char *line, size_t len) {
-	static char buffer[4096];
-	static size_t blen = 0;
 	char *newline = NULL;
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
@@ -324,6 +326,23 @@ bool recvline(int fd, char *line, size_t len) {
 	line[len] = 0;
 	memmove(buffer, newline + 1, blen - len - 1);
 	blen -= len + 1;
+
+	return true;
+}
+
+bool recvdata(int fd, char *data, size_t len) {
+	while(blen < len) {
+		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
+		if(result == -1 && errno == EINTR)
+			continue;
+		else if(result <= 0)
+			return false;
+		blen += result;
+	}
+
+	memcpy(data, buffer, len);
+	memmove(buffer, buffer + len, blen - len);
+	blen -= len;
 
 	return true;
 }
@@ -355,6 +374,57 @@ bool sendline(int fd, char *format, ...) {
 	}
 
 	return true;	
+}
+
+void pcap(int fd, FILE *out) {
+	sendline(fd, "%d %d", CONTROL, REQ_PCAP);
+	char data[9018];
+
+	struct {
+		uint32_t magic;
+		uint16_t major;
+		uint16_t minor;
+		uint32_t tz_offset;
+		uint32_t tz_accuracy;
+		uint32_t snaplen;
+		uint32_t ll_type;
+	} header = {
+		0xa1b2c3d4,
+		2, 4,
+		0, 0,
+		sizeof data,
+		1,
+	};
+
+	struct {
+		uint32_t tv_sec;
+		uint32_t tv_usec;
+		uint32_t len;
+		uint32_t origlen;
+	} packet;
+
+	struct timeval tv;
+
+	fwrite(&header, sizeof header, 1, out);
+	fflush(out);
+
+	char line[32];
+	while(recvline(fd, line, sizeof line)) {
+		int code, req, len;
+		int n = sscanf(line, "%d %d %d", &code, &req, &len);
+		gettimeofday(&tv, NULL);
+		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || len > sizeof data)
+			break;
+		if(!recvdata(fd, data, len))
+			break;
+		packet.tv_sec = tv.tv_sec;
+		packet.tv_usec = tv.tv_usec;
+		packet.len = len;
+		packet.origlen = len;
+		fwrite(&packet, sizeof packet, 1, out);
+		fwrite(data, len, 1, out);
+		fflush(out);
+	}
 }
 
 int main(int argc, char *argv[], char *envp[]) {
@@ -635,6 +705,11 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 0;
 	}
 #endif
+
+	if(!strcasecmp(argv[optind], "pcap")) {
+		pcap(fd, stdout);
+		return 0;
+	}
 
 	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);
 	usage(true);

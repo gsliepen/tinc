@@ -24,7 +24,11 @@
 #include "control_common.h"
 #include "graph.h"
 #include "logger.h"
+#include "meta.h"
+#include "net.h"
 #include "protocol.h"
+#include "route.h"
+#include "splay_tree.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -115,6 +119,11 @@ bool control_h(connection_t *c, char *request) {
 
 		case REQ_DUMP_TRAFFIC:
 			return dump_traffic(c);
+
+		case REQ_PCAP:
+			c->status.pcap = true;
+			pcap = true;
+			return true;
 
 		default:
 			return send_request(c, "%d %d", CONTROL, REQ_INVALID);
