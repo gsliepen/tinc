@@ -88,7 +88,7 @@ bool receive_meta(connection_t *c) {
 	buffer_compact(&c->inbuf, MAXBUFSIZE);
 
 	if(sizeof inbuf <= c->inbuf.len) {
-		logger(LOG_ERR, "Input buffer full for %s (%s)\n", c, c->hostname);
+		logger(LOG_ERR, "Input buffer full for %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
