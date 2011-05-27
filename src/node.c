@@ -144,7 +144,7 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	if(n == myself) {
-		logger(LOG_WARNING, "Trying to update UDP address of myself!\n");
+		logger(LOG_WARNING, "Trying to update UDP address of myself!");
 		return;
 	}
 

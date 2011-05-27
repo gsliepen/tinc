@@ -267,7 +267,7 @@ size_t rsa_size(rsa_t *rsa) {
  */
 
 // TODO: get rid of this macro, properly clean up gcry_ structures after use
-#define check(foo) { gcry_error_t err = (foo); if(err) {logger(LOG_ERR, "gcrypt error %s/%s at %s:%d\n", gcry_strsource(err), gcry_strerror(err), __FILE__, __LINE__); return false; }}
+#define check(foo) { gcry_error_t err = (foo); if(err) {logger(LOG_ERR, "gcrypt error %s/%s at %s:%d", gcry_strsource(err), gcry_strerror(err), __FILE__, __LINE__); return false; }}
 
 bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	gcry_mpi_t inmpi;
