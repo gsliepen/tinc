@@ -64,19 +64,19 @@
 #include "xalloc.h"
 
 /* The name this program was run with. */
-char *program_name = NULL;
+static char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
-bool show_help = false;
+static bool show_help = false;
 
 /* If nonzero, print the version on standard output and exit.  */
-bool show_version = false;
+static bool show_version = false;
 
 /* If nonzero, use null ciphers and skip all key exchanges. */
 bool bypass_security = false;
 
 /* If nonzero, disable swapping for this process. */
-bool do_mlock = false;
+static bool do_mlock = false;
 
 /* If nonzero, chroot to netdir after startup. */
 static bool do_chroot = false;

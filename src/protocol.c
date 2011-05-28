@@ -195,7 +195,7 @@ bool seen_request(char *request) {
 	}
 }
 
-void age_past_requests(int fd, short events, void *data) {
+static void age_past_requests(int fd, short events, void *data) {
 	splay_node_t *node, *next;
 	past_request_t *p;
 	int left = 0, deleted = 0;

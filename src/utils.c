@@ -23,9 +23,9 @@
 #include "../src/logger.h"
 #include "utils.h"
 
-const char hexadecimals[] = "0123456789ABCDEF";
+static const char hexadecimals[] = "0123456789ABCDEF";
 
-int charhex2bin(char c) {
+static int charhex2bin(char c) {
 	if(isdigit(c))
 		return c - '0';
 	else

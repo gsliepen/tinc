@@ -41,7 +41,7 @@ extern char **g_argv;
 extern bool use_logfile;
 
 #ifndef HAVE_MINGW
-sigset_t emptysigset;
+static sigset_t emptysigset;
 #endif
 
 static void memory_full(int size) {

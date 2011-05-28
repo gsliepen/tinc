@@ -30,19 +30,19 @@
 #include "top.h"
 
 /* The name this program was run with. */
-char *program_name = NULL;
+static char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
-bool show_help = false;
+static bool show_help = false;
 
 /* If nonzero, print the version on standard output and exit.  */
-bool show_version = false;
+static bool show_version = false;
 
 /* If nonzero, it will attempt to kill a running tincd and exit. */
-int kill_tincd = 0;
+static int kill_tincd = 0;
 
 /* If nonzero, generate public/private keypair for this host/net. */
-int generate_keys = 0;
+static int generate_keys = 0;
 
 static char *name = NULL;
 static char *identname = NULL;				/* program name for syslog */

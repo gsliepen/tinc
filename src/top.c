@@ -40,7 +40,7 @@ typedef struct nodestats_t {
 	bool known;
 } nodestats_t;
 
-const char *const sortname[] = {
+static const char *const sortname[] = {
 	"name",
 	"in pkts",
 	"in bytes",
@@ -50,8 +50,8 @@ const char *const sortname[] = {
 	"tot bytes",
 };
 
-int sortmode = 0;
-bool cumulative = false;
+static int sortmode = 0;
+static bool cumulative = false;
 
 static list_t node_list;
 static struct timeval now, prev, diff;

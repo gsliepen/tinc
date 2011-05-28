@@ -56,7 +56,7 @@
 #include "xalloc.h"
 
 int keylifetime = 0;
-int keyexpires = 0;
+static int keyexpires = 0;
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
@@ -150,7 +150,7 @@ void send_mtu_probe(node_t *n) {
 	send_mtu_probe_handler(0, 0, n);
 }
 
-void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
+static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	ifdebug(TRAFFIC) logger(LOG_INFO, "Got MTU probe length %d from %s (%s)", packet->len, n->name, n->hostname);
 
 	if(!packet->data[0]) {

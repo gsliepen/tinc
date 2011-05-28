@@ -449,7 +449,7 @@ begin:
 	return;
 }
 
-void handle_meta_write(int sock, short events, void *data) {
+static void handle_meta_write(int sock, short events, void *data) {
 	ifdebug(META) logger(LOG_DEBUG, "handle_meta_write() called");
 
 	connection_t *c = data;
@@ -466,7 +466,7 @@ void handle_meta_write(int sock, short events, void *data) {
 		event_del(&c->outevent);
 }
 
-void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
+static void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
 	connection_t *c = data;
 	logger(LOG_ERR, "handle_meta_connection_error() called: %d: %s", what, strerror(errno));
 	terminate_connection(c, c->status.active);
@@ -564,7 +564,7 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 	send_id(c);
 }
 
-void free_outgoing(outgoing_t *outgoing) {
+static void free_outgoing(outgoing_t *outgoing) {
 	if(outgoing->ai)
 		freeaddrinfo(outgoing->ai);
 

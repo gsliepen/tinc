@@ -57,6 +57,7 @@
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "graph.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(E)
@@ -112,7 +113,7 @@ void mst_kruskal(void) {
    Running time: O(N^2)
 */
 
-void sssp_dijkstra(void) {
+static void sssp_dijkstra(void) {
 	splay_node_t *node, *to;
 	edge_t *e;
 	node_t *n, *m;
@@ -315,7 +316,7 @@ void sssp_bfs(void) {
 	list_free(todo_list);
 }
 
-void check_reachability() {
+static void check_reachability() {
 	splay_node_t *node, *next;
 	node_t *n;
 	char *name;
