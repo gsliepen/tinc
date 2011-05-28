@@ -33,18 +33,18 @@
 #define OPTION_CLAMP_MSS	0x0008
 
 typedef struct connection_status_t {
-		int pinged:1;				/* sent ping */
-		int active:1;				/* 1 if active.. */
-		int connecting:1;			/* 1 if we are waiting for a non-blocking connect() to finish */
-		int termreq:1;				/* the termination of this connection was requested */
-		int remove_unused:1;				/* Set to 1 if you want this connection removed */
-		int timeout_unused:1;				/* 1 if gotten timeout */
-		int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
-		int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
-		int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
-		int control:1;
-		int pcap:1;
-		int unused:21;
+		unsigned int pinged:1;			/* sent ping */
+		unsigned int active:1;			/* 1 if active.. */
+		unsigned int connecting:1;		/* 1 if we are waiting for a non-blocking connect() to finish */
+		unsigned int termreq:1;			/* the termination of this connection was requested */
+		unsigned int remove_unused:1;		/* Set to 1 if you want this connection removed */
+		unsigned int timeout_unused:1;		/* 1 if gotten timeout */
+		unsigned int encryptout:1;		/* 1 if we can encrypt outgoing traffic */
+		unsigned int decryptin:1;		/* 1 if we have to decrypt incoming traffic */
+		unsigned int mst:1;			/* 1 if this connection is part of a minimum spanning tree */
+		unsigned int control:1;
+		unsigned int pcap:1;
+		unsigned int unused:21;
 } connection_status_t;
 
 #include "edge.h"
