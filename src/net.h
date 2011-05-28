@@ -121,6 +121,8 @@ extern time_t now;
 extern int contradicting_add_edge;
 extern int contradicting_del_edge;
 
+extern volatile bool running;
+
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"
 #include "node.h"
@@ -133,7 +135,7 @@ extern bool handle_new_meta_connection(int);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(const struct node_t *, vpn_packet_t *);
-extern void receive_tcppacket(struct connection_t *, char *, int);
+extern void receive_tcppacket(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern bool setup_network(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
@@ -144,7 +146,7 @@ extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
 extern bool read_rsa_public_key(struct connection_t *);
 extern void send_mtu_probe(struct node_t *);
-extern void load_all_subnets();
+extern void load_all_subnets(void);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

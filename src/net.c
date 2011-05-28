@@ -423,7 +423,7 @@ int main_loop(void) {
 					}
 				}
 
-				send_key_changed(broadcast, myself);
+				send_key_changed();
 				keyexpires = now + keylifetime;
 			}
 

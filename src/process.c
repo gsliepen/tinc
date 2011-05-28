@@ -25,6 +25,7 @@
 #include "device.h"
 #include "edge.h"
 #include "logger.h"
+#include "net.h"
 #include "node.h"
 #include "pidfile.h"
 #include "process.h"
@@ -41,10 +42,9 @@ extern char *identname;
 extern char *pidfilename;
 extern char **g_argv;
 extern bool use_logfile;
-extern volatile bool running;
 
 #ifndef HAVE_MINGW
-sigset_t emptysigset;
+static sigset_t emptysigset;
 #endif
 
 static int saved_debug_level = -1;

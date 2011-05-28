@@ -26,6 +26,7 @@
 #include <net/if_tun.h>
 
 #include "conf.h"
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 #include "utils.h"

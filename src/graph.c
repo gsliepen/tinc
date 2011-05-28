@@ -49,6 +49,7 @@
 #include "connection.h"
 #include "device.h"
 #include "edge.h"
+#include "graph.h"
 #include "logger.h"
 #include "netutl.h"
 #include "node.h"
@@ -65,7 +66,7 @@ static bool graph_changed = true;
    Please note that sorting on weight is already done by add_edge().
 */
 
-void mst_kruskal(void) {
+static void mst_kruskal(void) {
 	avl_node_t *node, *next;
 	edge_t *e;
 	node_t *n;
@@ -146,7 +147,7 @@ void mst_kruskal(void) {
    Running time: O(E)
 */
 
-void sssp_bfs(void) {
+static void sssp_bfs(void) {
 	avl_node_t *node, *next, *to;
 	edge_t *e;
 	node_t *n;

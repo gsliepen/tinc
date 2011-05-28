@@ -23,9 +23,9 @@
 #include "../src/logger.h"
 #include "utils.h"
 
-const char hexadecimals[] = "0123456789ABCDEF";
+static const char hexadecimals[] = "0123456789ABCDEF";
 
-int charhex2bin(char c) {
+static int charhex2bin(char c) {
 	if(isdigit(c))
 		return c - '0';
 	else
@@ -67,7 +67,7 @@ const char *winerror(int err) {
 }
 #endif
 
-unsigned int bitfield_to_int(void *bitfield, size_t size) {
+unsigned int bitfield_to_int(const void *bitfield, size_t size) {
 	unsigned int value = 0;
 	if(size > sizeof value)
 		size = sizeof value;

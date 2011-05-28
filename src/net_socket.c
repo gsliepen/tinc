@@ -535,7 +535,7 @@ bool handle_new_meta_connection(int sock) {
 	return true;
 }
 
-void free_outgoing(outgoing_t *outgoing) {
+static void free_outgoing(outgoing_t *outgoing) {
 	if(outgoing->ai)
 		freeaddrinfo(outgoing->ai);
 

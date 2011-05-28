@@ -23,6 +23,7 @@
 #include <sys/un.h>
 
 #include "conf.h"
+#include "device.h"
 #include "net.h"
 #include "logger.h"
 #include "utils.h"

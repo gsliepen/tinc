@@ -34,9 +34,9 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool mykeyused = false;
+static bool mykeyused = false;
 
-void send_key_changed() {
+void send_key_changed(void) {
 	avl_node_t *node;
 	connection_t *c;
 

@@ -28,6 +28,7 @@
 #endif
 
 #include "conf.h"
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 #include "route.h"

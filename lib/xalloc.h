@@ -16,7 +16,7 @@ extern int xalloc_exit_failure;
 extern char *const xalloc_msg_memory_exhausted;
 
 /* FIXME: describe */
-extern void (*xalloc_fail_func) ();
+extern void (*xalloc_fail_func) (int);
 
 void *xmalloc PARAMS ((size_t n)) __attribute__ ((__malloc__));
 void *xmalloc_and_zero PARAMS ((size_t n)) __attribute__ ((__malloc__));

@@ -144,7 +144,7 @@ bool read_rsa_public_key(connection_t *c) {
 	return false;
 }
 
-bool read_rsa_private_key(void) {
+static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname, *key, *pubkey;
 	struct stat s;
@@ -267,7 +267,7 @@ void load_all_subnets(void) {
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
-bool setup_myself(void) {
+static bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
 	char *name, *hostname, *mode, *afname, *cipher, *digest;

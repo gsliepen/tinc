@@ -22,8 +22,6 @@
 #define __TINC_GRAPH_H__
 
 extern void graph(void);
-extern void mst_kruskal(void);
-extern void sssp_bfs(void);
 extern void dump_graph(void);
 
 #endif /* __TINC_GRAPH_H__ */

@@ -365,7 +365,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		receive_packet(n, inpkt);
 }
 
-void receive_tcppacket(connection_t *c, char *buffer, int len) {
+void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
 
 	outpkt.len = len;

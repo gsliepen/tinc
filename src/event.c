@@ -28,7 +28,7 @@
 avl_tree_t *event_tree;
 extern time_t now;
 
-int id;
+static int id;
 
 static int event_compare(const event_t *a, const event_t *b) {
 	if(a->time > b->time)

@@ -56,7 +56,7 @@ int xalloc_exit_failure = EXIT_FAILURE;
 char *const xalloc_msg_memory_exhausted = "Memory exhausted";
 
 /* FIXME: describe */
-void (*xalloc_fail_func) (int) = 0;
+void (*xalloc_fail_func) (int) = NULL;
 
 static void
 xalloc_fail (int size)
@@ -70,13 +70,12 @@ xalloc_fail (int size)
 /* Allocate N bytes of memory dynamically, with error checking.  */
 
 void *
-xmalloc (n)
-     size_t n;
+xmalloc (size_t n)
 {
   void *p;
 
   p = malloc (n);
-  if (p == 0)
+  if (p == NULL)
     xalloc_fail ((int)n);
   return p;
 }
@@ -84,13 +83,12 @@ xmalloc (n)
 /* Allocate N bytes of memory dynamically, and set it all to zero. */
 
 void *
-xmalloc_and_zero (n)
-     size_t n;
+xmalloc_and_zero (size_t n)
 {
   void *p;
 
   p = malloc (n);
-  if (p == 0)
+  if (p == NULL)
     xalloc_fail ((int)n);
   memset (p, '\0', n);
   return p;
@@ -101,12 +99,10 @@ xmalloc_and_zero (n)
    If P is NULL, run xmalloc.  */
 
 void *
-xrealloc (p, n)
-     void *p;
-     size_t n;
+xrealloc (void *p, size_t n)
 {
   p = realloc (p, n);
-  if (p == 0)
+  if (p == NULL)
     xalloc_fail (n);
   return p;
 }
@@ -134,7 +130,7 @@ xcalloc (n, s)
   void *p;
 
   p = calloc (n, s);
-  if (p == 0)
+  if (p == NULL)
     xalloc_fail ();
   return p;
 }

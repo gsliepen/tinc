@@ -28,13 +28,13 @@
 #include "subnet.h"
 
 typedef struct node_status_t {
-	int unused_active:1;			/* 1 if active (not used for nodes) */
-	int validkey:1;				/* 1 if we currently have a valid key for him */
-	int unused_waitingforkey:1;		/* 1 if we already sent out a request */
-	int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
-	int reachable:1;			/* 1 if this node is reachable in the graph */
-	int indirect:1;				/* 1 if this node is not directly reachable by us */
-	int unused:26;
+	unsigned int unused_active:1;			/* 1 if active (not used for nodes) */
+	unsigned int validkey:1;				/* 1 if we currently have a valid key for him */
+	unsigned int unused_waitingforkey:1;		/* 1 if we already sent out a request */
+	unsigned int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
+	unsigned int reachable:1;			/* 1 if this node is reachable in the graph */
+	unsigned int indirect:1;				/* 1 if this node is not directly reachable by us */
+	unsigned int unused:26;
 } node_status_t;
 
 typedef struct node_t {

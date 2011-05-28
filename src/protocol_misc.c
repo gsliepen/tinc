@@ -119,7 +119,7 @@ bool pong_h(connection_t *c) {
 
 /* Sending and receiving packets via TCP */
 
-bool send_tcppacket(connection_t *c, vpn_packet_t *packet) {
+bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
            We use a very simple Random Early Drop algorithm. */
 
