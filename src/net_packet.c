@@ -43,7 +43,6 @@
 #include "ethernet.h"
 #include "event.h"
 #include "graph.h"
-#include "list.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"

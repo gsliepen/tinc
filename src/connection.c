@@ -23,10 +23,7 @@
 
 #include "avl_tree.h"
 #include "conf.h"
-#include "list.h"
 #include "logger.h"
-#include "net.h"				/* Don't ask. */
-#include "netutl.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"

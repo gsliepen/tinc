@@ -24,7 +24,6 @@
 #include "avl_tree.h"
 #include "connection.h"
 #include "event.h"
-#include "list.h"
 #include "subnet.h"
 
 typedef struct node_status_t {

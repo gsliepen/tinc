@@ -45,7 +45,6 @@ typedef struct connection_status_t {
 } connection_status_t;
 
 #include "edge.h"
-#include "list.h"
 #include "net.h"
 #include "node.h"
 
