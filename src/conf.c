@@ -188,7 +188,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 }
 
 bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
-	subnet_t subnet = {0};
+	subnet_t subnet = {NULL};
 
 	if(!cfg)
 		return false;

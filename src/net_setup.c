@@ -608,7 +608,7 @@ void close_network_connections(void) {
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
-		c->outgoing = false;
+		c->outgoing = NULL;
 		terminate_connection(c, false);
 	}
 

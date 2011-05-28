@@ -445,7 +445,7 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-        char *priority = 0;
+        char *priority = NULL;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
                 if(!strcasecmp(priority, "Normal")) {

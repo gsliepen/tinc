@@ -101,7 +101,7 @@ char *buffer_read(buffer_t *buffer, int size) {
 
 void buffer_clear(buffer_t *buffer) {
 	free(buffer->data);
-	buffer->data = 0;
+	buffer->data = NULL;
 	buffer->maxlen = 0;
 	buffer->len = 0;
 	buffer->offset = 0;

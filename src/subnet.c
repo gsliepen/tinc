@@ -452,7 +452,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	splay_node_t *node;
 	int i;
-	char *envp[9] = {0};
+	char *envp[9] = {NULL};
 	char netstr[MAXNETSTR];
 	char *name, *address, *port;
 	char empty[] = "";

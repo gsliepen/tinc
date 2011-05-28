@@ -178,7 +178,7 @@ static void free_past_request(past_request_t *r) {
 static struct event past_request_event;
 
 bool seen_request(char *request) {
-	past_request_t *new, p = {0};
+	past_request_t *new, p = {NULL};
 
 	p.request = request;
 

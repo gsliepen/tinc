@@ -126,7 +126,7 @@ void node_del(node_t *n) {
 }
 
 node_t *lookup_node(char *name) {
-	node_t n = {0};
+	node_t n = {NULL};
 
 	n.name = name;
 
@@ -134,7 +134,7 @@ node_t *lookup_node(char *name) {
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
-	node_t n = {0};
+	node_t n = {NULL};
 
 	n.address = *sa;
 	n.name = NULL;
@@ -160,7 +160,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
 		memset(&n->address, 0, sizeof n->address);
-		n->hostname = 0;
+		n->hostname = NULL;
 		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
 	}
 }
