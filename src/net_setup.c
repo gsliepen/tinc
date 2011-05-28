@@ -147,7 +147,7 @@ void regenerate_key() {
 	if(timeout_initialized(&keyexpire_event)) {
 		ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
 		event_del(&keyexpire_event);
-		send_key_changed(broadcast, myself);
+		send_key_changed();
 	} else {
 		timeout_set(&keyexpire_event, keyexpire_handler, NULL);
 	}
