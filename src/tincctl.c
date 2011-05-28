@@ -159,7 +159,7 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 				what, filename);
 		fflush(stdout);
 
-		if(fgets(buf, sizeof buf, stdin) < 0) {
+		if(fgets(buf, sizeof buf, stdin) == NULL) {
 			fprintf(stderr, "Error while reading stdin: %s\n",
 					strerror(errno));
 			return NULL;
