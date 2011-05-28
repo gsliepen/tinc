@@ -130,7 +130,7 @@ bool control_h(connection_t *c, char *request) {
 	}
 }
 
-bool init_control() {
+bool init_control(void) {
 	randomize(controlcookie, sizeof controlcookie / 2);
 	bin2hex(controlcookie, controlcookie, sizeof controlcookie / 2);
 	controlcookie[sizeof controlcookie - 1] = 0;
@@ -153,6 +153,6 @@ bool init_control() {
 	return true;
 }
 
-void exit_control() {
+void exit_control(void) {
 	unlink(controlcookiename);
 }

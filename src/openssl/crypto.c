@@ -25,7 +25,7 @@
 
 #include "crypto.h"
 
-void crypto_init() {
+void crypto_init(void) {
         RAND_load_file("/dev/urandom", 1024);
 
         ENGINE_load_builtin_engines();
@@ -34,7 +34,7 @@ void crypto_init() {
         OpenSSL_add_all_algorithms();
 }
 
-void crypto_exit() {
+void crypto_exit(void) {
 	EVP_cleanup();
 }
 

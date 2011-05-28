@@ -128,7 +128,7 @@ static void update(int fd) {
 	}
 }
 
-static void redraw() {
+static void redraw(void) {
 	erase();
 
 	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-8s  %s", netname, node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");

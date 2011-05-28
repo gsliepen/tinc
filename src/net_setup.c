@@ -143,7 +143,7 @@ static void keyexpire_handler(int fd, short events, void *data) {
 	regenerate_key();
 }
 
-void regenerate_key() {
+void regenerate_key(void) {
 	if(timeout_initialized(&keyexpire_event)) {
 		ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
 		event_del(&keyexpire_event);

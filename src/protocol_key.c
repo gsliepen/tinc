@@ -34,7 +34,7 @@
 
 static bool mykeyused = false;
 
-void send_key_changed() {
+void send_key_changed(void) {
 	splay_node_t *node;
 	connection_t *c;
 

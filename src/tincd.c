@@ -282,7 +282,7 @@ static void make_names(void) {
 	}
 }
 
-static void free_names() {
+static void free_names(void) {
 	if (identname) free(identname);
 	if (netname) free(netname);
 	if (controlcookiename) free(controlcookiename);
@@ -290,7 +290,7 @@ static void free_names() {
 	if (confbase) free(confbase);
 }
 
-static bool drop_privs() {
+static bool drop_privs(void) {
 #ifdef HAVE_MINGW
 	if (switchuser) {
 		logger(LOG_ERR, "%s not supported on this platform", "-U");

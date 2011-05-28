@@ -316,7 +316,7 @@ void sssp_bfs(void) {
 	list_free(todo_list);
 }
 
-static void check_reachability() {
+static void check_reachability(void) {
 	splay_node_t *node, *next;
 	node_t *n;
 	char *name;

@@ -53,7 +53,7 @@ static subnet_t *cache_mac_subnet[2];
 static bool cache_mac_valid[2];
 static int cache_mac_slot;
 
-void subnet_cache_flush() {
+void subnet_cache_flush(void) {
 	cache_ipv4_valid[0] = cache_ipv4_valid[1] = false;
 	cache_ipv6_valid[0] = cache_ipv6_valid[1] = false;
 	cache_mac_valid[0] = cache_mac_valid[1] = false;

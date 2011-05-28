@@ -70,8 +70,7 @@ xalloc_fail (int size)
 /* Allocate N bytes of memory dynamically, with error checking.  */
 
 void *
-xmalloc (n)
-     size_t n;
+xmalloc (size_t n)
 {
   void *p;
 
@@ -84,8 +83,7 @@ xmalloc (n)
 /* Allocate N bytes of memory dynamically, and set it all to zero. */
 
 void *
-xmalloc_and_zero (n)
-     size_t n;
+xmalloc_and_zero (size_t n)
 {
   void *p;
 
@@ -101,9 +99,7 @@ xmalloc_and_zero (n)
    If P is NULL, run xmalloc.  */
 
 void *
-xrealloc (p, n)
-     void *p;
-     size_t n;
+xrealloc (void *p, size_t n)
 {
   p = realloc (p, n);
   if (p == 0)

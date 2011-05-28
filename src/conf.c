@@ -368,7 +368,7 @@ void read_config_options(splay_tree_t *config_tree, const char *prefix) {
 	}
 }
 
-bool read_server_config() {
+bool read_server_config(void) {
 	char *fname;
 	bool x;
 
