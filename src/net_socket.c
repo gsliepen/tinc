@@ -350,7 +350,7 @@ void finish_connecting(connection_t *c) {
 	send_id(c);
 }
 
-void do_outgoing_connection(connection_t *c) {
+bool do_outgoing_connection(connection_t *c) {
 	char *address, *port, *space;
 	int result;
 
@@ -367,7 +367,7 @@ begin:
 			retry_outgoing(c->outgoing);
 			c->outgoing = NULL;
 			connection_del(c);
-			return;
+			return false;
 		}
 
 		get_config_string(c->outgoing->cfg, &address);
@@ -434,7 +434,7 @@ begin:
 	if(result == -1) {
 		if(sockinprogress(sockerrno)) {
 			c->status.connecting = true;
-			return;
+			return true;
 		}
 
 		closesocket(c->socket);
@@ -446,7 +446,7 @@ begin:
 
 	finish_connecting(c);
 
-	return;
+	return true;
 }
 
 static void handle_meta_write(int sock, short events, void *data) {
@@ -512,11 +512,11 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	connection_add(c);
 
-	do_outgoing_connection(c);
-
-	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
-	event_add(&c->inevent, NULL);
+	if (do_outgoing_connection(c)) {
+		event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+		event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
+		event_add(&c->inevent, NULL);
+	}
 }
 
 /*

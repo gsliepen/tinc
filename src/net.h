@@ -127,7 +127,7 @@ extern int contradicting_del_edge;
 extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(int, short, void *);
 extern void finish_connecting(struct connection_t *);
-extern void do_outgoing_connection(struct connection_t *);
+extern bool do_outgoing_connection(struct connection_t *);
 extern void handle_new_meta_connection(int, short, void *);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
