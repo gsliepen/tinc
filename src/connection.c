@@ -81,6 +81,9 @@ void free_connection(connection_t *c) {
 	if(event_initialized(&c->inevent))
 		event_del(&c->inevent);
 
+	if(event_initialized(&c->outevent))
+		event_del(&c->outevent);
+
 	free(c);
 }
 
