@@ -137,9 +137,9 @@ static bool bind_to_address(connection_t *c) {
 	status = getaddrinfo(node, /* service = */ NULL,
 			&ai_hints, &ai_list);
 	if(status) {
-		free(node);
 		logger(LOG_WARNING, "Error looking up %s port %s: %s",
 				node, "any", gai_strerror(status));
+		free(node);
 		return false;
 	}
 	assert(ai_list != NULL);
