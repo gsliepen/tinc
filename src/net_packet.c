@@ -648,6 +648,8 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 void handle_device_data(int sock, short events, void *data) {
 	vpn_packet_t packet;
 
+	packet.priority = 0;
+
 	if(read_packet(&packet)) {
 		myself->in_packets++;
 		myself->in_bytes += packet.len;
