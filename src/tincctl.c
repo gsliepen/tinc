@@ -535,8 +535,7 @@ int main(int argc, char *argv[], char *envp[]) {
 #endif
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
-			
-		fprintf(stderr, "Cannot connect to %s: %s\n", controlcookiename, sockstrerror(sockerrno));
+		fprintf(stderr, "Cannot connect to %s port %s: %s\n", host ?: "localhost", port, sockstrerror(sockerrno));
 		return 1;
 	}
 
