@@ -237,7 +237,7 @@ void top(int fd) {
 			case 's': {
 				timeout(-1);
 				float input = delay * 1e-3;
-				printw("Change delay from %.1fs to: ", input);
+				mvprintw(1, 0, "Change delay from %.1fs to: ", input);
 				scanw("%f", &input);
 				if(input < 0.1)
 					input = 0.1;
