@@ -50,6 +50,7 @@ static char *controlcookiename = NULL;			/* cookie file location */
 static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
+static char *host = NULL;
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
@@ -57,6 +58,7 @@ static struct WSAData wsa_state;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
+	{"host", required_argument, NULL, 'h'},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
@@ -108,13 +110,17 @@ static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:n:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:n:h:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
 
 			case 'c':				/* config file */
 				confbase = xstrdup(optarg);
+				break;
+
+			case 'h':				/* alternative host to connect to */
+				host = xstrdup(optarg);
 				break;
 
 			case 'n':				/* net name given */
@@ -430,7 +436,7 @@ void pcap(int fd, FILE *out) {
 int main(int argc, char *argv[], char *envp[]) {
 	int fd;
 	int result;
-	int port;
+	char port[128];
 	int pid;
 
 	program_name = argv[0];
@@ -488,7 +494,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "Could not open control socket cookie file %s: %s\n", controlcookiename, strerror(errno));
 		return 1;
 	}
-	if(fscanf(f, "%1024s %d %d", controlcookie, &port, &pid) != 3) {
+	if(fscanf(f, "%1024s %128s %d", controlcookie, port, &pid) != 3) {
 		fprintf(stderr, "Could not parse control socket cookie file %s\n", controlcookiename);
 		return 1;
 	}
@@ -500,13 +506,21 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 #endif
 
-	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof addr);
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(0x7f000001);
-	addr.sin_port = htons(port);
+	struct addrinfo hints = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+		.ai_flags = 0,
+	};
 
-	fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	struct addrinfo *res = NULL;
+
+	if(getaddrinfo(host, port, &hints, &res) || !res) {
+		fprintf(stderr, "Cannot resolve %s port %s: %s", host ?: "localhost", port, strerror(errno));
+		return 1;
+	}
+
+	fd = socket(res->ai_family, SOCK_STREAM, IPPROTO_TCP);
 	if(fd < 0) {
 		fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
 		return 1;
@@ -520,11 +534,13 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 #endif
 
-	if(connect(fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
+	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
 			
 		fprintf(stderr, "Cannot connect to %s: %s\n", controlcookiename, sockstrerror(sockerrno));
 		return 1;
 	}
+
+	freeaddrinfo(res);
 
 	char line[4096];
 	char data[4096];
