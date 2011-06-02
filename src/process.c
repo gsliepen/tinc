@@ -222,9 +222,10 @@ bool init_service(void) {
   Detach from current terminal
 */
 bool detach(void) {
-	setup_signals();
-
 #ifndef HAVE_MINGW
+	signal(SIGALRM, SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
+
 	closelogger();
 #endif
 
@@ -323,41 +324,4 @@ bool execute_script(const char *name, char **envp) {
 #endif
 #endif
 	return true;
-}
-
-
-/*
-  Signal handlers.
-*/
-
-#ifndef HAVE_MINGW
-static RETSIGTYPE ignore_signal_handler(int a) {
-	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Ignored signal %d (%s)", a, strsignal(a));
-}
-
-static struct {
-	int signal;
-	void (*handler)(int);
-} sighandlers[] = {
-	{SIGPIPE, ignore_signal_handler},
-	{SIGCHLD, ignore_signal_handler},
-	{0, NULL}
-};
-#endif
-
-void setup_signals(void) {
-#ifndef HAVE_MINGW
-	int i;
-	struct sigaction act = {{NULL}};
-
-	sigemptyset(&act.sa_mask);
-
-	for(i = 0; sighandlers[i].signal; i++) {
-		act.sa_handler = sighandlers[i].handler;
-		if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
-			fprintf(stderr, "Installing signal handler for signal %d (%s) failed: %s\n",
-					sighandlers[i].signal, strsignal(sighandlers[i].signal),
-					strerror(errno));
-	}
-#endif
 }
