@@ -57,6 +57,7 @@ static list_t node_list;
 static struct timeval now, prev, diff;
 static int delay = 1000;
 static bool running = true;
+static bool changed = true;
 
 static void update(int fd) {
 	sendline(fd, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
@@ -136,10 +137,15 @@ static void redraw(void) {
 	mvprintw(2, 0, "Node                IN pkts   IN bytes   OUT pkts  OUT bytes");
 	chgat(-1, A_REVERSE, 0, NULL);
 
-	nodestats_t *sorted[node_list.count];
-	int n = 0;
-	for(list_node_t *i = node_list.head; i; i = i->next)
-		sorted[n++] = i->data;
+	static nodestats_t **sorted = 0;
+	static int n = 0;
+	if(changed) {
+		n = 0;
+		sorted = xrealloc(sorted, node_list.count * sizeof *sorted);
+		for(list_node_t *i = node_list.head; i; i = i->next)
+			sorted[n++] = i->data;
+		changed = false;
+	}
 	
 	int cmpfloat(float a, float b) {
 		if(a < b)
@@ -200,8 +206,7 @@ static void redraw(void) {
 
 	qsort(sorted, n, sizeof *sorted, sortfunc);
 
-	int row = 3;
-	for(int i = 0; i < n; i++, row++) {
+	for(int i = 0, row = 3; i < n; i++, row++) {
 		nodestats_t *node = sorted[i];
 		if(node->known)
 			if(node->in_packets_rate || node->out_packets_rate)
