@@ -5,13 +5,13 @@ sbin_PROGRAMS = tincd tincctl
 EXTRA_DIST = linux bsd solaris cygwin mingw raw_socket uml_socket openssl gcrypt
 
 tincd_SOURCES = \
-	xmalloc.c utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
+	utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
 	buffer.c cipher.c conf.c connection.c control.c crypto.c digest.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
 	protocol_key.c protocol_subnet.c route.c rsa.c subnet.c tincd.c
 
 tincctl_SOURCES = \
-	xmalloc.c utils.c getopt.c getopt1.c dropin.c \
+	utils.c getopt.c getopt1.c dropin.c \
 	list.c tincctl.c rsagen.c
 
 if TUNEMU

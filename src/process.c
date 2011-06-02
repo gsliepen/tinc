@@ -251,8 +251,6 @@ bool detach(void) {
 	logger(LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
 			   VERSION, __DATE__, __TIME__, debug_level);
 
-	xalloc_fail_func = memory_full;
-
 	return true;
 }
 
