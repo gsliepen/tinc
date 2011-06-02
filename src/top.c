@@ -58,6 +58,8 @@ static struct timeval now, prev, diff;
 static int delay = 1000;
 static bool running = true;
 static bool changed = true;
+static const char *unit = "bytes";
+static float scale = 1;
 
 static void update(int fd) {
 	sendline(fd, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
@@ -134,7 +136,7 @@ static void redraw(void) {
 
 	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-8s  %s", netname, node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
 	attrset(A_REVERSE);
-	mvprintw(2, 0, "Node                IN pkts   IN bytes   OUT pkts  OUT bytes");
+	mvprintw(2, 0, "Node                IN pkts   IN %s   OUT pkts  OUT %s", unit, unit);
 	chgat(-1, A_REVERSE, 0, NULL);
 
 	static nodestats_t **sorted = 0;
@@ -217,11 +219,11 @@ static void redraw(void) {
 			attrset(A_DIM);
 
 		if(cumulative)
-			mvprintw(row, 0, "%-16s %'10"PRIu64" %'10"PRIu64" %'10"PRIu64" %'10"PRIu64,
-					node->name, node->in_packets, node->in_bytes, node->out_packets, node->out_bytes);
+			mvprintw(row, 0, "%-16s %'10"PRIu64" %'10.0f %'10"PRIu64" %'10.0f",
+					node->name, node->in_packets, node->in_bytes * scale, node->out_packets, node->out_bytes * scale);
 		else
 			mvprintw(row, 0, "%-16s %'10.0f %'10.0f %'10.0f %'10.0f",
-					node->name, node->in_packets_rate, node->in_bytes_rate, node->out_packets_rate, node->out_bytes_rate);
+					node->name, node->in_packets_rate, node->in_bytes_rate * scale, node->out_packets_rate, node->out_bytes_rate * scale);
 	}
 
 	attrset(A_NORMAL);
@@ -273,6 +275,22 @@ void top(int fd) {
 				  break;
 			case 'T':
 				  sortmode = 5;
+				  break;
+			case 'b':
+				  unit = "bytes";
+				  scale = 1;
+				  break;
+			case 'k':
+				  unit = "kbyte";
+				  scale = 1e-3;
+				  break;
+			case 'M':
+				  unit = "Mbyte";
+				  scale = 1e-6;
+				  break;
+			case 'G':
+				  unit = "Gbyte";
+				  scale = 1e-9;
 				  break;
 			case 'q':
 			case 27:
