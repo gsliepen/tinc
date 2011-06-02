@@ -40,10 +40,6 @@ extern char *identname;
 extern char **g_argv;
 extern bool use_logfile;
 
-#ifndef HAVE_MINGW
-static sigset_t emptysigset;
-#endif
-
 static void memory_full(int size) {
 	logger(LOG_ERR, "Memory exhausted (couldn't allocate %d bytes), exitting.", size);
 	exit(1);
@@ -342,38 +338,6 @@ bool execute_script(const char *name, char **envp) {
 */
 
 #ifndef HAVE_MINGW
-static RETSIGTYPE fatal_signal_square(int a) {
-	logger(LOG_ERR, "Got another fatal signal %d (%s): not restarting.", a,
-		   strsignal(a));
-	exit(1);
-}
-
-static RETSIGTYPE fatal_signal_handler(int a) {
-	struct sigaction act;
-	logger(LOG_ERR, "Got fatal signal %d (%s)", a, strsignal(a));
-
-	if(do_detach) {
-		logger(LOG_NOTICE, "Trying to re-execute in 5 seconds...");
-
-		act.sa_handler = fatal_signal_square;
-		act.sa_mask = emptysigset;
-		act.sa_flags = 0;
-		sigaction(SIGSEGV, &act, NULL);
-
-		close_network_connections();
-		sleep(5);
-		exit_control();
-		execvp(g_argv[0], g_argv);
-	} else {
-		logger(LOG_NOTICE, "Not restarting.");
-		exit(1);
-	}
-}
-
-static RETSIGTYPE unexpected_signal_handler(int a) {
-	logger(LOG_WARNING, "Got unexpected signal %d (%s)", a, strsignal(a));
-}
-
 static RETSIGTYPE ignore_signal_handler(int a) {
 	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Ignored signal %d (%s)", a, strsignal(a));
 }
@@ -382,12 +346,8 @@ static struct {
 	int signal;
 	void (*handler)(int);
 } sighandlers[] = {
-	{SIGSEGV, fatal_signal_handler},
-	{SIGBUS, fatal_signal_handler},
-	{SIGILL, fatal_signal_handler},
 	{SIGPIPE, ignore_signal_handler},
 	{SIGCHLD, ignore_signal_handler},
-	{SIGABRT, SIG_DFL},
 	{0, NULL}
 };
 #endif
@@ -395,29 +355,10 @@ static struct {
 void setup_signals(void) {
 #ifndef HAVE_MINGW
 	int i;
-	struct sigaction act;
+	struct sigaction act = {NULL};
 
-	sigemptyset(&emptysigset);
-	act.sa_handler = NULL;
-	act.sa_mask = emptysigset;
-	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 
-	/* Set a default signal handler for every signal, errors will be
-	   ignored. */
-	for(i = 1; i < NSIG; i++) {
-		if(!do_detach)
-			act.sa_handler = SIG_DFL;
-		else
-			act.sa_handler = unexpected_signal_handler;
-		sigaction(i, &act, NULL);
-	}
-
-	/* If we didn't detach, allow coredumps */
-	if(!do_detach)
-		sighandlers[0].handler = SIG_DFL;
-
-	/* Then, for each known signal that we want to catch, assign a
-	   handler to the signal, with error checking this time. */
 	for(i = 0; sighandlers[i].signal; i++) {
 		act.sa_handler = sighandlers[i].handler;
 		if(sigaction(sighandlers[i].signal, &act, NULL) < 0)
