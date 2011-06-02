@@ -137,8 +137,8 @@ bool receive_meta(connection_t *c) {
 			if(c->tcplen) {
 				char *tcpbuffer = buffer_read(&c->inbuf, c->tcplen);
 				if(tcpbuffer) {
-					c->tcplen = 0;
 					receive_tcppacket(c, tcpbuffer, c->tcplen);
+					c->tcplen = 0;
 					continue;
 				} else {
 					break;
