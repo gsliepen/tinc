@@ -64,7 +64,7 @@
 #include "xalloc.h"
 
 /* The name this program was run with. */
-static char *program_name = NULL;
+char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
