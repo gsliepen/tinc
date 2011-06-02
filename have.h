@@ -58,10 +58,6 @@
 #include <inttypes.h>
 #endif
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 /* Include system specific headers */
 
 #ifdef HAVE_SYSLOG_H
