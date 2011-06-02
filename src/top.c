@@ -108,7 +108,9 @@ static void update(int fd) {
 			} else {
 				found = xmalloc_and_zero(sizeof *found);
 				found->name = xstrdup(name);
-				list_insert_after(&node_list, i, found);
+				fprintf(stderr, "Inserting %s before %s\n", found->name, node->name);
+				list_insert_before(&node_list, i, found);
+				changed = true;
 				break;
 			}
 		}
@@ -117,6 +119,7 @@ static void update(int fd) {
 			found = xmalloc_and_zero(sizeof *found);
 			found->name = xstrdup(name);
 			list_insert_tail(&node_list, found);
+			changed = true;
 		}
 
 		found->known = true;

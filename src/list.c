@@ -111,6 +111,26 @@ list_node_t *list_insert_after(list_t *list, list_node_t *after, void *data) {
 	return node;
 }
 
+list_node_t *list_insert_before(list_t *list, list_node_t *before, void *data) {
+	list_node_t *node;
+
+	node = list_alloc_node();
+
+	node->data = data;
+	node->next = before;
+	node->prev = before->prev;
+	before->prev = node;
+
+	if(node->prev)
+		node->prev->next = node;
+	else
+		list->head = node;
+
+	list->count++;
+
+	return node;
+}
+
 void list_unlink_node(list_t *list, list_node_t *node) {
 	if(node->prev)
 		node->prev->next = node->next;

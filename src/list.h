@@ -55,6 +55,7 @@ extern void list_free_node(list_t *, list_node_t *);
 extern list_node_t *list_insert_head(list_t *, void *);
 extern list_node_t *list_insert_tail(list_t *, void *);
 extern list_node_t *list_insert_after(list_t *, list_node_t *, void *);
+extern list_node_t *list_insert_before(list_t *, list_node_t *, void *);
 
 extern void list_unlink_node(list_t *, list_node_t *);
 extern void list_delete_node(list_t *, list_node_t *);
