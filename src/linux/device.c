@@ -20,12 +20,8 @@
 
 #include "system.h"
 
-#ifdef HAVE_LINUX_IF_TUN_H
 #include <linux/if_tun.h>
 #define DEFAULT_DEVICE "/dev/net/tun"
-#else
-#define DEFAULT_DEVICE "/dev/tap0"
-#endif
 
 #include "conf.h"
 #include "logger.h"
@@ -36,7 +32,6 @@
 #include "device.h"
 
 typedef enum device_type_t {
-	DEVICE_TYPE_ETHERTAP,
 	DEVICE_TYPE_TUN,
 	DEVICE_TYPE_TAP,
 } device_type_t;
@@ -54,9 +49,6 @@ uint64_t device_out_packets = 0;
 uint64_t device_out_bytes = 0;
 
 bool setup_device(void) {
-	struct ifreq ifr;
-	bool t1q = false;
-
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
 		device = xstrdup(DEFAULT_DEVICE);
 
@@ -74,10 +66,8 @@ bool setup_device(void) {
 		return false;
 	}
 
-#ifdef HAVE_LINUX_IF_TUN_H
-	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
+	struct ifreq ifr = {{{0}}};
 
-	memset(&ifr, 0, sizeof ifr);
 	if(routing_mode == RMODE_ROUTER) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;
@@ -90,6 +80,8 @@ bool setup_device(void) {
 
 #ifdef IFF_ONE_QUEUE
 	/* Set IFF_ONE_QUEUE flag... */
+
+	bool t1q = false;
 	if(get_config_bool(lookup_config(config_tree, "IffOneQueue"), &t1q) && t1q)
 		ifr.ifr_flags |= IFF_ONE_QUEUE;
 #endif
@@ -106,16 +98,6 @@ bool setup_device(void) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		if(iface) free(iface);
 		iface = xstrdup(ifrname);
-	} else
-#endif
-	{
-		if(routing_mode == RMODE_ROUTER)
-			overwrite_mac = true;
-		device_info = "Linux ethertap device";
-		device_type = DEVICE_TYPE_ETHERTAP;
-		if(iface)
-			free(iface);
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 	}
 
 	logger(LOG_INFO, "%s is a %s", device, device_info);
@@ -156,17 +138,8 @@ bool read_packet(vpn_packet_t *packet) {
 
 			packet->len = inlen;
 			break;
-		case DEVICE_TYPE_ETHERTAP:
-			inlen = read(device_fd, packet->data - 2, MTU + 2);
-
-			if(inlen <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s",
-					   device_info, device, strerror(errno));
-				return false;
-			}
-
-			packet->len = inlen - 2;
-			break;
+		default:
+			abort();
 	}
 
 	device_in_packets++;
@@ -198,15 +171,8 @@ bool write_packet(vpn_packet_t *packet) {
 				return false;
 			}
 			break;
-		case DEVICE_TYPE_ETHERTAP:
-			*(short int *)(packet->data - 2) = packet->len;
-
-			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
-				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-					   strerror(errno));
-				return false;
-			}
-			break;
+		default:
+			abort();
 	}
 
 	device_out_packets++;
