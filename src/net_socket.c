@@ -454,7 +454,7 @@ static void handle_meta_write(int sock, short events, void *data) {
 
 	connection_t *c = data;
 
-	size_t outlen = write(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset);
+	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
 	if(outlen <= 0) {
 		logger(LOG_ERR, "Onoes, outlen = %zd (%s)", outlen, strerror(errno));
 		terminate_connection(c, c->status.active);
