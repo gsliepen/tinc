@@ -56,7 +56,6 @@
 #include "xalloc.h"
 
 int keylifetime = 0;
-static int keyexpires = 0;
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
@@ -255,7 +254,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	int nextpkt = 0;
 	vpn_packet_t *outpkt = pkt[0];
 	size_t outlen;
-	int i;
 
 	if(!cipher_active(&n->incipher)) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet",
@@ -318,7 +316,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 					return;
 				}
 			} else {
-				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
+				for(int i = n->received_seqno + 1; i < inpkt->seqno; i++)
 					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 			}
 		}
@@ -378,12 +376,12 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *inpkt = origpkt;
 	int nextpkt = 0;
 	vpn_packet_t *outpkt;
-	int origlen;
+	int origlen = origpkt->len;
 	size_t outlen;
 #if defined(SOL_IP) && defined(IP_TOS)
 	static int priority = 0;
+	int origpriority = origpkt->priority;
 #endif
-	int origpriority;
 	int sock;
 
 	if(!n->status.reachable) {
@@ -422,9 +420,6 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 		return;
 	}
-
-	origlen = inpkt->len;
-	origpriority = inpkt->priority;
 
 	/* Compress the packet */
 

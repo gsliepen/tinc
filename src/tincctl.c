@@ -150,7 +150,6 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 	char *directory;
 	char buf[PATH_MAX];
 	char buf2[PATH_MAX];
-	size_t len;
 
 	/* Check stdin and stdout */
 	if(isatty(0) && isatty(1)) {
@@ -165,7 +164,7 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 			return NULL;
 		}
 
-		len = strlen(buf);
+		size_t len = strlen(buf);
 		if(len)
 			buf[--len] = 0;
 
@@ -488,7 +487,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "Could not open control socket cookie file %s: %s\n", controlcookiename, strerror(errno));
 		return 1;
 	}
-	if(fscanf(f, "%1024s %128s %d", controlcookie, port, &pid) != 3) {
+	if(fscanf(f, "%1024s %128s %20d", controlcookie, port, &pid) != 3) {
 		fprintf(stderr, "Could not parse control socket cookie file %s\n", controlcookiename);
 		return 1;
 	}
