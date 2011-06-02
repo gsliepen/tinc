@@ -466,12 +466,6 @@ static void handle_meta_write(int sock, short events, void *data) {
 		event_del(&c->outevent);
 }
 
-static void handle_meta_connection_error(struct bufferevent *event, short what, void *data) {
-	connection_t *c = data;
-	logger(LOG_ERR, "handle_meta_connection_error() called: %d: %s", what, strerror(errno));
-	terminate_connection(c, c->status.active);
-}
-
 void setup_outgoing_connection(outgoing_t *outgoing) {
 	connection_t *c;
 	node_t *n;

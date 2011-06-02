@@ -38,12 +38,6 @@ static bool show_help = false;
 /* If nonzero, print the version on standard output and exit.  */
 static bool show_version = false;
 
-/* If nonzero, it will attempt to kill a running tincd and exit. */
-static int kill_tincd = 0;
-
-/* If nonzero, generate public/private keypair for this host/net. */
-static int generate_keys = 0;
-
 static char *name = NULL;
 static char *identname = NULL;				/* program name for syslog */
 static char *controlcookiename = NULL;			/* cookie file location */

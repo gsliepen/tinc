@@ -40,11 +40,6 @@ extern char *identname;
 extern char **g_argv;
 extern bool use_logfile;
 
-static void memory_full(int size) {
-	logger(LOG_ERR, "Memory exhausted (couldn't allocate %d bytes), exitting.", size);
-	exit(1);
-}
-
 /* Some functions the less gifted operating systems might lack... */
 
 #ifdef HAVE_MINGW
@@ -353,7 +348,7 @@ static struct {
 void setup_signals(void) {
 #ifndef HAVE_MINGW
 	int i;
-	struct sigaction act = {NULL};
+	struct sigaction act = {{NULL}};
 
 	sigemptyset(&act.sa_mask);
 
