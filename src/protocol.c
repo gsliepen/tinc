@@ -214,7 +214,7 @@ void age_past_requests(void) {
 		next = node->next;
 		p = node->data;
 
-		if(p->firstseen + pinginterval < now)
+		if(p->firstseen + pinginterval <= now)
 			avl_delete_node(past_request_tree, node), deleted++;
 		else
 			left++;

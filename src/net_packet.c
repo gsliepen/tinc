@@ -403,7 +403,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
-		if(n->last_req_key + 10 < now) {
+		if(n->last_req_key + 10 <= now) {
 			send_req_key(n);
 			n->last_req_key = now;
 		}

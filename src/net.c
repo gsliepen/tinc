@@ -42,6 +42,9 @@
 
 bool do_purge = false;
 volatile bool running = false;
+#ifdef HAVE_PSELECT
+bool graph_dump = false;
+#endif
 
 time_t now = 0;
 int contradicting_add_edge = 0;
@@ -229,14 +232,14 @@ static void check_dead_connections(void) {
 		next = node->next;
 		c = node->data;
 
-		if(c->last_ping_time + pingtimeout < now) {
+		if(c->last_ping_time + pingtimeout <= now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
 					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
 							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
-				} else if(c->last_ping_time + pinginterval < now) {
+				} else if(c->last_ping_time + pinginterval <= now) {
 					send_ping(c);
 				}
 			} else {
@@ -258,7 +261,7 @@ static void check_dead_connections(void) {
 			}
 		}
 
-		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
+		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout <= now) {
 			if(c->status.active) {
 				ifdebug(CONNECTIONS) logger(LOG_INFO,
 						"%s (%s) could not flush for %ld seconds (%d bytes remaining)",
@@ -350,7 +353,13 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 */
 int main_loop(void) {
 	fd_set readset, writeset;
+#ifdef HAVE_PSELECT
+	struct timespec tv;
+	sigset_t omask, block_mask;
+	time_t next_event;
+#else
 	struct timeval tv;
+#endif
 	int r, maxfd;
 	time_t last_ping_check, last_config_check, last_graph_dump;
 	event_t *event;
@@ -361,21 +370,48 @@ int main_loop(void) {
 	
 	srand(now);
 
+#ifdef HAVE_PSELECT
+	if(lookup_config(config_tree, "GraphDumpFile"))
+		graph_dump = true;
+	/* Block SIGHUP & SIGALRM */
+	sigemptyset(&block_mask);
+	sigaddset(&block_mask, SIGHUP);
+	sigaddset(&block_mask, SIGALRM);
+	sigprocmask(SIG_BLOCK, &block_mask, &omask);
+#endif
+
 	running = true;
 
 	while(running) {
-		now = time(NULL);
+#ifdef HAVE_PSELECT
+		next_event = last_ping_check + pingtimeout;
+		if(graph_dump && next_event > last_graph_dump + 60)
+			next_event = last_graph_dump + 60;
 
-	//	tv.tv_sec = 1 + (rand() & 7);	/* Approx. 5 seconds, randomized to prevent global synchronisation effects */
+		if((event = peek_next_event()) && next_event > event->time)
+			next_event = event->time;
+
+		if(next_event <= now)
+			tv.tv_sec = 0;
+		else
+			tv.tv_sec = next_event - now;
+		tv.tv_nsec = 0;
+#else
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
+#endif
 
 		maxfd = build_fdset(&readset, &writeset);
 
 #ifdef HAVE_MINGW
 		LeaveCriticalSection(&mutex);
 #endif
+#ifdef HAVE_PSELECT
+		r = pselect(maxfd + 1, &readset, &writeset, NULL, &tv, &omask);
+#else
 		r = select(maxfd + 1, &readset, &writeset, NULL, &tv);
+#endif
+		now = time(NULL);
 #ifdef HAVE_MINGW
 		EnterCriticalSection(&mutex);
 #endif
@@ -398,7 +434,7 @@ int main_loop(void) {
 
 		/* Let's check if everybody is still alive */
 
-		if(last_ping_check + pingtimeout < now) {
+		if(last_ping_check + pingtimeout <= now) {
 			check_dead_connections();
 			last_ping_check = now;
 
@@ -409,7 +445,7 @@ int main_loop(void) {
 
 			/* Should we regenerate our key? */
 
-			if(keyexpires < now) {
+			if(keyexpires <= now) {
 				avl_node_t *node;
 				node_t *n;
 
@@ -550,11 +586,16 @@ int main_loop(void) {
 		
 		/* Dump graph if wanted every 60 seconds*/
 
-		if(last_graph_dump + 60 < now) {
+		if(last_graph_dump + 60 <= now) {
 			dump_graph();
 			last_graph_dump = now;
 		}
 	}
+
+#ifdef HAVE_PSELECT
+	/* Restore SIGHUP & SIGALARM mask */
+	sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif
 
 	return 0;
 }

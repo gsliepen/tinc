@@ -42,5 +42,6 @@ extern void free_event(event_t *);
 extern void event_add(event_t *);
 extern void event_del(event_t *);
 extern event_t *get_expired_event(void);
+extern event_t *peek_next_event(void);
 
 #endif							/* __TINC_EVENT_H__ */

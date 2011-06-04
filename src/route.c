@@ -220,7 +220,7 @@ void age_subnets(void) {
 	for(node = myself->subnet_tree->head; node; node = next) {
 		next = node->next;
 		s = node->data;
-		if(s->expires && s->expires < now) {
+		if(s->expires && s->expires <= now) {
 			ifdebug(TRAFFIC) {
 				char netstr[MAXNETSTR];
 				if(net2str(netstr, sizeof netstr, s))
