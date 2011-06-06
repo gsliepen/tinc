@@ -244,6 +244,7 @@ static void sigterm_handler(int signal, short events, void *data) {
 
 static void sighup_handler(int signal, short events, void *data) {
 	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	reopenlogger();
 	reload_configuration();
 }
 
