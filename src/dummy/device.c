@@ -19,6 +19,7 @@
 
 #include "system.h"
 
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 

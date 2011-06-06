@@ -96,10 +96,10 @@ extern bool send_add_subnet(struct connection_t *, const struct subnet_t *);
 extern bool send_del_subnet(struct connection_t *, const struct subnet_t *);
 extern bool send_add_edge(struct connection_t *, const struct edge_t *);
 extern bool send_del_edge(struct connection_t *, const struct edge_t *);
-extern void send_key_changed();
+extern void send_key_changed(void);
 extern bool send_req_key(struct node_t *);
 extern bool send_ans_key(struct node_t *);
-extern bool send_tcppacket(struct connection_t *, struct vpn_packet_t *);
+extern bool send_tcppacket(struct connection_t *, const struct vpn_packet_t *);
 
 /* Request handlers  */
 

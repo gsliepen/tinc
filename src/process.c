@@ -26,6 +26,7 @@
 #include "device.h"
 #include "edge.h"
 #include "logger.h"
+#include "net.h"
 #include "node.h"
 #include "process.h"
 #include "subnet.h"

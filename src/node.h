@@ -25,7 +25,6 @@
 #include "cipher.h"
 #include "connection.h"
 #include "digest.h"
-#include "list.h"
 #include "subnet.h"
 
 typedef struct node_status_t {

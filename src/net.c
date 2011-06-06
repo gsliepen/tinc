@@ -3,6 +3,7 @@
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
+		  2011      Loïc Grenié <loic.grenie@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -166,14 +167,14 @@ static void timeout_handler(int fd, short events, void *event) {
 		next = node->next;
 		c = node->data;
 
-		if(c->last_ping_time + pingtimeout < now) {
+		if(c->last_ping_time + pingtimeout <= now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
 					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
 							   c->name, c->hostname, now - c->last_ping_time);
 					terminate_connection(c, true);
 					continue;
-				} else if(c->last_ping_time + pinginterval < now) {
+				} else if(c->last_ping_time + pinginterval <= now) {
 					send_ping(c);
 				}
 			} else {

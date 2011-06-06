@@ -101,6 +101,19 @@ Connections to hosts whose host config file are removed are closed.
 New outgoing connections specified in
 .Pa tinc.conf
 will be made.
+If the
+.Fl -logfile
+option is used, this will also close and reopen the log file,
+useful when log rotation is used.
+.It INT
+Temporarily increases debug level to 5.
+Send this signal again to revert to the original level.
+.It USR1
+Dumps the connection list to syslog.
+.It USR2
+Dumps virtual network device statistics, all known nodes, edges and subnets to syslog.
+.It WINCH
+Purges all information remembered about unreachable nodes.
 .El
 .Sh DEBUG LEVELS
 The tinc daemon can send a lot of messages to the syslog.

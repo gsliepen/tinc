@@ -49,6 +49,7 @@
 #include "connection.h"
 #include "device.h"
 #include "edge.h"
+#include "graph.h"
 #include "logger.h"
 #include "netutl.h"
 #include "node.h"
@@ -183,9 +184,6 @@ static void sssp_dijkstra(void) {
 			   n->address is set to the e->address of the edge left of n to n.
 			   We are currently examining the edge e right of n from n:
 
-			   - If e->reverse->address != n->address, then e->to is probably
-			     not reachable for the nodes left of n. We do as if the indirectdata
-			     flag is set on edge e.
 			   - If edge e provides for better reachability of e->to, update e->to.
 			 */
 
@@ -203,27 +201,8 @@ static void sssp_dijkstra(void) {
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
 
-			if(sockaddrcmp(&e->to->address, &e->address)) {
-				node = splay_unlink(node_udp_tree, e->to);
-				sockaddrfree(&e->to->address);
-				sockaddrcpy(&e->to->address, &e->address);
-
-				if(e->to->hostname)
-					free(e->to->hostname);
-
-				e->to->hostname = sockaddr2hostname(&e->to->address);
-
-				if(node)
-					splay_insert_node(node_udp_tree, node);
-
-				if(e->to->options & OPTION_PMTU_DISCOVERY) {
-					e->to->mtuprobes = 0;
-					e->to->minmtu = 0;
-					e->to->maxmtu = MTU;
-					if(e->to->status.validkey)
-						send_mtu_probe(e->to);
-				}
-			}
+			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
+				update_node_udp(e->to, &e->address);
 
 			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Updating edge %s - %s weight %d distance %d", e->from->name,
 					   e->to->name, e->weight, e->to->distance);

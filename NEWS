@@ -4,6 +4,8 @@ Version 1.1-cvs              Work in progress
 
  * Use splay trees instead of AVL trees.
 
+ * Fix ProcessPriority option under Windows.
+
 Version 1.0.14               May  8 2011
 
  * Fixed reading configuration files that do not end with a newline. Again.

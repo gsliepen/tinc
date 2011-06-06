@@ -44,14 +44,18 @@ void openlogger(const char *ident, logmode_t mode) {
 		case LOGMODE_FILE:
 			logpid = getpid();
 			logfile = fopen(logfilename, "a");
-			if(!logfile)
+			if(!logfile) {
+				fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
 				logmode = LOGMODE_NULL;
+			}
 			break;
 		case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
 			loghandle = RegisterEventSource(NULL, logident);
-			if(!loghandle)
+			if(!loghandle) {
+				fprintf(stderr, "Could not open log handle!");
 				logmode = LOGMODE_NULL;
+			}
 			break;
 #else
 #ifdef HAVE_SYSLOG_H
@@ -64,8 +68,24 @@ void openlogger(const char *ident, logmode_t mode) {
 	}
 }
 
+void reopenlogger() {
+	if(logmode != LOGMODE_FILE)
+		return;
+
+	fflush(logfile);
+	FILE *newfile = fopen(logfilename, "a");
+	if(!newfile) {
+		logger(LOG_ERR, "Unable to reopen log file %s: %s\n", logfilename, strerror(errno));
+		return;
+	}
+	fclose(logfile);
+	logfile = newfile;
+}
+
 void logger(int priority, const char *format, ...) {
 	va_list ap;
+	char timestr[32] = "";
+	time_t now;
 
 	va_start(ap, format);
 
@@ -76,7 +96,9 @@ void logger(int priority, const char *format, ...) {
 			fflush(stderr);
 			break;
 		case LOGMODE_FILE:
-			fprintf(logfile, "%ld %s[%ld]: ", time(NULL), logident, (long)logpid);
+			now = time(NULL);
+			strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
+			fprintf(logfile, "%s %s[%ld]: ", timestr, logident, (long)logpid);
 			vfprintf(logfile, format, ap);
 			fprintf(logfile, "\n");
 			fflush(logfile);

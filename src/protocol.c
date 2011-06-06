@@ -205,7 +205,7 @@ static void age_past_requests(int fd, short events, void *data) {
 		next = node->next;
 		p = node->data;
 
-		if(p->firstseen + pinginterval < now)
+		if(p->firstseen + pinginterval <= now)
 			splay_delete_node(past_request_tree, node), deleted++;
 		else
 			left++;

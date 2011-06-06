@@ -132,7 +132,7 @@ extern void handle_new_meta_connection(int, short, void *);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(struct node_t *, vpn_packet_t *);
-extern void receive_tcppacket(struct connection_t *, char *, int);
+extern void receive_tcppacket(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern bool setup_network(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
@@ -145,11 +145,11 @@ extern bool read_rsa_public_key(struct connection_t *);
 extern void send_mtu_probe(struct node_t *);
 extern void handle_device_data(int, short, void *);
 extern void handle_meta_connection_data(int, short, void *);
-extern void regenerate_key();
+extern void regenerate_key(void);
 extern void purge(void);
 extern void retry(void);
 extern int reload_configuration(void);
-extern void load_all_subnets();
+extern void load_all_subnets(void);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

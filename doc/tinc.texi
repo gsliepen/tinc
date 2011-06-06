@@ -1636,6 +1636,8 @@ You can also send the following signals to a running tincd process:
 Partially rereads configuration files.
 Connections to hosts whose host config file are removed are closed.
 New outgoing connections specified in @file{tinc.conf} will be made.
+If the --logfile option is used, this will also close and reopen the log file,
+useful when log rotation is used.
 
 @end table
 
