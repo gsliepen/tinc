@@ -47,6 +47,7 @@ enum {
 
 extern debug_t debug_level;
 extern void openlogger(const char *, logmode_t);
+extern void reopenlogger(void);
 extern void logger(int, const char *, ...) __attribute__ ((__format__(printf, 2, 3)));
 extern void closelogger(void);
 

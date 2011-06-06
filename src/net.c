@@ -501,6 +501,8 @@ int main_loop(void) {
 			struct stat s;
 			
 			sighup = false;
+
+			reopenlogger();
 			
 			/* Reread our own configuration file */
 
