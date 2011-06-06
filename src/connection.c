@@ -67,7 +67,9 @@ void free_connection(connection_t *c) {
 		free(c->hostname);
 
 	cipher_close(&c->incipher);
+	digest_close(&c->indigest);
 	cipher_close(&c->outcipher);
+	digest_close(&c->outdigest);
 
 	if(c->hischallenge)
 		free(c->hischallenge);
