@@ -157,7 +157,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		n->address = *sa;
 		n->hostname = sockaddr2hostname(&n->address);
 		splay_insert(node_udp_tree, n);
-		logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
+		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
 		memset(&n->address, 0, sizeof n->address);
 		n->hostname = NULL;
