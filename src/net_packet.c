@@ -81,7 +81,6 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 	if(!n->status.reachable || !n->status.validkey) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
 		n->mtuprobes = 0;
-		event_del(&n->mtuevent);
 		return;
 	}
 
