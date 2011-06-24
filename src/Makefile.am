@@ -12,16 +12,13 @@ tincd_SOURCES = \
 
 tincctl_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
-	list.c tincctl.c rsagen.c
+	list.c tincctl.c rsagen.c top.c
 
 if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
 endif
 
-if CURSES
-tincctl_SOURCES += top.c
 tincctl_LDADD = $(CURSES_LIBS)
-endif
 
 nodist_tincd_SOURCES = device.c
 
@@ -32,7 +29,7 @@ INCLUDES = @INCLUDES@ -I$(top_builddir)
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h cipher.h conf.h connection.h control.h control_common.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h rsa.h rsagen.h subnet.h bsd/tunemu.h
+	protocol.h route.h rsa.h rsagen.h subnet.h top.h bsd/tunemu.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 

@@ -38,5 +38,4 @@ AC_DEFUN([tinc_CURSES],
   ])
 
   AC_SUBST(CURSES_LIBS)
-  AM_CONDITIONAL(CURSES, test "$curses" = true)
 ])

@@ -19,6 +19,8 @@
 
 #include "system.h"
 
+#ifdef HAVE_CURSES
+
 #include <curses.h>
 
 #include "control_common.h"
@@ -310,3 +312,5 @@ void top(int fd) {
 
 	endwin();
 }
+
+#endif
