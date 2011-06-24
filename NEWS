@@ -1,6 +1,10 @@
-Version 1.0.15               not released yet
+Version 1.0.15               June 24 2011
 
- * Fix ProcessPriority option under Windows.
+ * Improved logging to file.
+
+ * Reduced amount of process wakeups on platforms which support pselect().
+
+ * Fixed ProcessPriority option under Windows.
 
 Version 1.0.14               May  8 2011
 
