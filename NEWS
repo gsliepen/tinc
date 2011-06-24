@@ -4,7 +4,13 @@ Version 1.1-cvs              Work in progress
 
  * Use splay trees instead of AVL trees.
 
- * Fix ProcessPriority option under Windows.
+Version 1.0.15               June 24 2011
+
+ * Improved logging to file.
+
+ * Reduced amount of process wakeups on platforms which support pselect().
+
+ * Fixed ProcessPriority option under Windows.
 
 Version 1.0.14               May  8 2011
 
