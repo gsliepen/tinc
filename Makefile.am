@@ -2,11 +2,11 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS =  m4 src doc
+SUBDIRS =  m4 src doc gui
 
 ACLOCAL_AMFLAGS = -I m4 
 
-EXTRA_DIST = have.h system.h COPYING.README gui
+EXTRA_DIST = have.h system.h COPYING.README
 
 ChangeLog:
 	git log > ChangeLog
