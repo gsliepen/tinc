@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "meta.h"
 #include "net.h"
+#include "netutl.h"
 #include "protocol.h"
 #include "route.h"
 #include "splay_tree.h"
@@ -146,8 +147,20 @@ bool init_control(void) {
 #else
 	chmod(pidfilename, 0600);
 #endif
+	// Get the address and port of the first listening socket
 
-	fprintf(f, "%s %s %d\n", controlcookie, myport, getpid());
+	char *localhost = NULL;
+	sockaddr_t sa;
+	socklen_t len = sizeof sa;
+
+	if(getsockname(listen_socket[0].tcp, (struct sockaddr *)&sa, &len))
+		xasprintf(&localhost, "127.0.0.1 port %d", myport);
+	else
+		localhost = sockaddr2hostname(&sa);
+
+	fprintf(f, "%d %s %s\n", (int)getpid(), controlcookie, localhost);
+
+	free(localhost);
 	fclose(f);
 
 	return true;

@@ -44,7 +44,6 @@ static char *pidfilename = NULL;			/* pid file location */
 static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
-static char *host = NULL;
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
@@ -52,7 +51,6 @@ static struct WSAData wsa_state;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
-	{"host", required_argument, NULL, 'h'},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
@@ -104,17 +102,13 @@ static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:n:h:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
 
 			case 'c':				/* config file */
 				confbase = xstrdup(optarg);
-				break;
-
-			case 'h':				/* alternative host to connect to */
-				host = xstrdup(optarg);
 				break;
 
 			case 'n':				/* net name given */
@@ -429,6 +423,7 @@ void pcap(int fd, FILE *out) {
 int main(int argc, char *argv[], char *envp[]) {
 	int fd;
 	int result;
+	char host[128];
 	char port[128];
 	int pid;
 
@@ -487,7 +482,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
 		return 1;
 	}
-	if(fscanf(f, "%1024s %128s %20d", controlcookie, port, &pid) != 3) {
+	if(fscanf(f, "%20d %1024s %128s port %128s", &pid, controlcookie, host, port) != 4) {
 		fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
 		return 1;
 	}
