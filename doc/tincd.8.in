@@ -98,6 +98,18 @@ Output version information and exit.
 .El
 .Sh SIGNALS
 .Bl -tag -width indent
+.It ALRM
+Forces
+.Nm
+to try to connect to all uplinks immediately.
+Usually
+.Nm
+attempts to do this itself,
+but increases the time it waits between the attempts each time it failed,
+and if
+.Nm
+didn't succeed to connect to an uplink the first time after it started,
+it defaults to the maximum time of 15 minutes.
 .It HUP
 Partially rereads configuration files.
 Connections to hosts whose host config file are removed are closed.
@@ -108,15 +120,6 @@ If the
 .Fl -logfile
 option is used, this will also close and reopen the log file,
 useful when log rotation is used.
-.It INT
-Temporarily increases debug level to 5.
-Send this signal again to revert to the original level.
-.It USR1
-Dumps the connection list to syslog.
-.It USR2
-Dumps virtual network device statistics, all known nodes, edges and subnets to syslog.
-.It WINCH
-Purges all information remembered about unreachable nodes.
 .El
 .Sh DEBUG LEVELS
 The tinc daemon can send a lot of messages to the syslog.

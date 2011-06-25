@@ -224,7 +224,6 @@ bool init_service(void) {
 */
 bool detach(void) {
 #ifndef HAVE_MINGW
-	signal(SIGALRM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 	signal(SIGUSR2, SIG_IGN);

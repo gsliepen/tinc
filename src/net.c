@@ -248,6 +248,11 @@ static void sighup_handler(int signal, short events, void *data) {
 	reload_configuration();
 }
 
+static void sigalrm_handler(int signal, short events, void *data) {
+	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	retry();
+}
+
 int reload_configuration(void) {
 	connection_t *c;
 	splay_node_t *node, *next;
@@ -349,24 +354,24 @@ void retry(void) {
 */
 int main_loop(void) {
 	struct event timeout_event;
-	struct event sighup_event;
-	struct event sigterm_event;
-	struct event sigquit_event;
 
 	timeout_set(&timeout_event, timeout_handler, &timeout_event);
 	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
 
-#ifdef SIGHUP
+#ifndef HAVE_MINGW
+	struct event sighup_event;
+	struct event sigterm_event;
+	struct event sigquit_event;
+	struct event sigalrm_event;
+
 	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_event, NULL);
-#endif
-#ifdef SIGTERM
 	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
 	signal_add(&sigterm_event, NULL);
-#endif
-#ifdef SIGQUIT
 	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
 	signal_add(&sigquit_event, NULL);
+	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
+	signal_add(&sigalrm_event, NULL);
 #endif
 
 	if(event_loop(0) < 0) {
@@ -374,12 +379,14 @@ int main_loop(void) {
 		return 1;
 	}
 
+#ifndef HAVE_MINGW
 	signal_del(&sighup_event);
 	signal_del(&sigterm_event);
 	signal_del(&sigquit_event);
+	signal_del(&sigalrm_event);
+#endif
 
-	if(timeout_initialized(&timeout_event))
-		event_del(&timeout_event);
+	event_del(&timeout_event);
 
 	return 0;
 }
