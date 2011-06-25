@@ -31,6 +31,7 @@
 
 typedef struct nodestats_t {
 	char *name;
+	int i;
 	uint64_t in_packets;
 	uint64_t in_bytes;
 	uint64_t out_packets;
@@ -142,7 +143,7 @@ static void update(int fd) {
 static void redraw(void) {
 	erase();
 
-	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-8s  %s", netname ?: "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
+	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s", netname ?: "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
 	attrset(A_REVERSE);
 	mvprintw(2, 0, "Node                IN pkts   IN %s   OUT pkts  OUT %s", unit, unit);
 	chgat(-1, A_REVERSE, 0, NULL);
@@ -156,6 +157,9 @@ static void redraw(void) {
 			sorted[n++] = i->data;
 		changed = false;
 	}
+
+	for(int i = 0; i < n; i++)
+		sorted[i]->i = i;
 	
 	int cmpfloat(float a, float b) {
 		if(a < b)
@@ -181,36 +185,36 @@ static void redraw(void) {
 		switch(sortmode) {
 			case 1:
 				if(cumulative)
-					return -cmpu64(na->in_packets, nb->in_packets);
+					return -cmpu64(na->in_packets, nb->in_packets) ?: na->i - nb->i;
 				else
-					return -cmpfloat(na->in_packets_rate, nb->in_packets_rate);
+					return -cmpfloat(na->in_packets_rate, nb->in_packets_rate) ?: na->i - nb->i;
 			case 2:
 				if(cumulative)
-					return -cmpu64(na->in_bytes, nb->in_bytes);
+					return -cmpu64(na->in_bytes, nb->in_bytes) ?: na->i - nb->i;
 				else
-					return -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate);
+					return -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate) ?: na->i - nb->i;
 			case 3:
 				if(cumulative)
-					return -cmpu64(na->out_packets, nb->out_packets);
+					return -cmpu64(na->out_packets, nb->out_packets) ?: na->i - nb->i;
 				else
-					return -cmpfloat(na->out_packets_rate, nb->out_packets_rate);
+					return -cmpfloat(na->out_packets_rate, nb->out_packets_rate) ?: na->i - nb->i;
 			case 4:
 				if(cumulative)
-					return -cmpu64(na->out_bytes, nb->out_bytes);
+					return -cmpu64(na->out_bytes, nb->out_bytes) ?: na->i - nb->i;
 				else
-					return -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate);
+					return -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate) ?: na->i - nb->i;
 			case 5:
 				if(cumulative)
-					return -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets);
+					return -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets) ?: na->i - nb->i;
 				else
-					return -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate);
+					return -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate) ?: na->i - nb->i;
 			case 6:
 				if(cumulative)
-					return -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes);
+					return -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes) ?: na->i - nb->i;
 				else
-					return -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate);
+					return -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate) ?: na->i - nb->i;
 			default:
-				return strcmp(na->name, nb->name);
+				return strcmp(na->name, nb->name) ?: na->i - nb->i;
 		}
 	}
 
