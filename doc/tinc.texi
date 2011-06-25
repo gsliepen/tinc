@@ -37,7 +37,6 @@ permission notice identical to this one.
 
 @page
 @vskip 0pt plus 1filll
-@cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
 Copyright @copyright{} 1998-2011 Ivo Timmermans,
@@ -55,7 +54,7 @@ permission notice identical to this one.
 
 @end titlepage
 
-@ifinfo
+@ifnottex
 @c ==================================================================
 @node Top
 @top Top
@@ -72,7 +71,7 @@ permission notice identical to this one.
 * About us::
 * Concept Index::               All used terms explained
 @end menu
-@end ifinfo
+@end ifnottex
 
 @c ==================================================================
 @node    Introduction
