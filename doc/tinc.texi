@@ -1581,9 +1581,10 @@ This will let tinc read all configuration files from
 Specifying . for @var{netname} is the same as not specifying any @var{netname}.
 @xref{Multiple networks}.
 
-@item --controlsocket=@var{filename}
-Open control socket at @var{filename}. If unspecified, the default is
-@file{@value{localstatedir}/run/tinc.@var{netname}.control}.
+@item --controlcookie=@var{filename}
+Store a cookie in @var{filename} which allows tincctl to authenticate.
+If unspecified, the default is
+@file{@value{localstatedir}/run/tinc.@var{netname}.cookie}.
 
 @item -L, --mlock
 Lock tinc into main memory.
@@ -1837,7 +1838,7 @@ Be sure to include the following information in your bugreport:
 @node    Controlling tinc
 @chapter Controlling tinc
 
-You can control and inspect a running @samp{tincd} through the @samp{tincctl}
+You can control and inspect a running tincd through the tincctl
 command. A quick example:
 
 @example
@@ -1847,6 +1848,8 @@ tincctl -n @var{netname} reload
 @menu
 * tincctl runtime options::
 * tincctl commands::
+* tincctl examples::
+* tincctl top::
 @end menu
 
 
@@ -1863,9 +1866,10 @@ Read configuration options from the directory @var{path}.  The default is
 @item -n, --net=@var{netname}
 Use configuration for net @var{netname}. @xref{Multiple networks}.
 
-@item --controlsocket=@var{filename}
-Open control socket at @var{filename}. If unspecified, the default is
-@file{@value{localstatedir}/run/tinc.@var{netname}.control}.
+@item --controlcookie=@var{filename}
+Use the cookie from @var{filename} to authenticate with a running tinc daemon.
+If unspecified, the default is
+@file{@value{localstatedir}/run/tinc.@var{netname}.cookie}.
 
 @item --help
 Display a short reminder of runtime options and commands, then terminate.
@@ -1933,6 +1937,91 @@ Usually tinc attempts to do this itself,
 but increases the time it waits between the attempts each time it failed,
 and if tinc didn't succeed to connect to an uplink the first time after it started,
 it defaults to the maximum time of 15 minutes.
+
+@item disconnect @var{node}
+Closes the meta connection with the given @var{node}.
+
+@item top
+If tincctl is compiled with libcurses support, this will display live traffic statistics for all the known nodes,
+similar to the UNIX top command.
+See below for more information.
+
+@item pcap
+Dump VPN traffic going through the local tinc node in pcap-savefile format to standard output,
+from where it can be redirected to a file or piped through a program that can parse it directly,
+such as tcpdump.
+
+@end table
+
+@c ==================================================================
+@node    tincctl examples
+@section tincctl examples
+
+Examples of some commands:
+
+@example
+tincctl -n vpn dump graph | circo -Txlib
+tincctl -n vpn pcap | tcpdump -r -
+tincctl -n vpn top
+@end example
+
+@c ==================================================================
+@node    tincctl top
+@section tincctl top
+
+The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.
+It displays a list of all the known nodes in the left-most column,
+and the amount of bytes and packets read from and sent to each node in the other columns.
+By default, the information is updated every second.
+The behaviour of the top command can be changed using the following keys:
+
+@table @key
+
+@item s
+Change the interval between updates.
+After pressing the @key{s} key, enter the desired interval in seconds, followed by enter.
+Fractional seconds are honored.
+Intervals lower than 0.1 seconds are not allowed.
+
+@item c
+Toggle between displaying current traffic rates (in packets and bytes per second)
+and cummulative traffic (total packets and bytes since the tinc daemon started).
+
+@item n
+Sort the list of nodes by name.
+
+@item i
+Sort the list of nodes by incoming amount of bytes.
+
+@item I
+Sort the list of nodes by incoming amount of packets.
+
+@item o
+Sort the list of nodes by outgoing amount of bytes.
+
+@item O
+Sort the list of nodes by outgoing amount of packets.
+
+@item t
+Sort the list of nodes by sum of incoming and outgoing amount of bytes.
+
+@item T
+Sort the list of nodes by sum of incoming and outgoing amount of packets.
+
+@item b
+Show amount of traffic in bytes.
+
+@item k
+Show amount of traffic in kilobytes.
+
+@item M
+Show amount of traffic in megabytes.
+
+@item G
+Show amount of traffic in gigabytes.
+
+@item q, ESC
+Quit.
 
 @end table
 

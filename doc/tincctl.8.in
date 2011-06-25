@@ -1,4 +1,4 @@
-.Dd 2007-07-20
+.Dd 2011-06-25
 .Dt TINCCTL 8
 .\" Manual page created by:
 .\" Scott Lamb
@@ -10,7 +10,7 @@
 .Op Fl cn
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -net Ns = Ns Ar NETNAME
-.Op Fl -controlsocket Ns = Ns Ar FILENAME
+.Op Fl -controlcookie Ns = Ns Ar FILENAME
 .Op Fl -help
 .Op Fl -version
 .Ar COMMAND
@@ -26,11 +26,12 @@ to alter and inspect the running VPN's state.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Communicate with tincd(8) connected with
 .Ar NETNAME .
-.It Fl -controlsocket Ns = Ns Ar FILENAME
-Open control socket at
-.Ar FILENAME .
+.It Fl -controlcookie Ns = Ns Ar FILENAME
+Use the cookie from
+.Ar FILENAME
+to authenticate with a running tinc daemon.
 If unspecified, the default is
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .control.
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .cookie.
 .It Fl -help
 Display short list of options.
 .It Fl -version
@@ -93,21 +94,83 @@ and if
 .Xr tincd 8
 didn't succeed to connect to an uplink the first time after it started,
 it defaults to the maximum time of 15 minutes.
-.It reload
-Partially rereads configuration files.
-Connections to hosts whose host config files are removed are closed.
-New outgoing connections specified in
-.Pa tinc.conf
-will be made.
+.It disconnect Ar NODE
+Closes the meta connection with the given
+.Ar NODE .
+.It top
+If
+.Nm
+is compiled with libcurses support, this will display live traffic statistics
+for all the known nodes, similar to the UNIX
+.Xr top 1
+command.
+See below for more information.
+.It pcap
+Dump VPN traffic going through the local tinc node in
+.Xr pcap-savefile 5
+format to standard output,
+from where it can be redirected to a file or piped through a program that can parse it directly,
+such as
+.Xr tcpdump 8 .
+.El
+.Sh EXAMPLES
+Examples of some commands:
+.Bd -literal -offset indent
+tincctl -n vpn dump graph | circo -Txlib
+tincctl -n vpn pcap | tcpdump -r -
+tincctl -n vpn top
+.Ed
+.Sh TOP
+The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.
+It displays a list of all the known nodes in the left-most column,
+and the amount of bytes and packets read from and sent to each node in the other columns.
+By default, the information is updated every second.
+The behaviour of the top command can be changed using the following keys:
+.Bl -tag
+.It Ic s
+Change the interval between updates.
+After pressing the
+.Ic s
+key, enter the desired interval in seconds, followed by enter.
+Fractional seconds are honored.
+Intervals lower than 0.1 seconds are not allowed.
+.It Ic c
+Toggle between displaying current traffic rates (in packets and bytes per second)
+and cummulative traffic (total packets and bytes since the tinc daemon started).
+.It Ic n
+Sort the list of nodes by name.
+.It Ic i
+Sort the list of nodes by incoming amount of bytes.
+.It Ic I
+Sort the list of nodes by incoming amount of packets.
+.It Ic o
+Sort the list of nodes by outgoing amount of bytes.
+.It Ic O
+Sort the list of nodes by outgoing amount of packets.
+.It Ic t
+Sort the list of nodes by sum of incoming and outgoing amount of bytes.
+.It Ic T
+Sort the list of nodes by sum of incoming and outgoing amount of packets.
+.It Ic b
+Show amount of traffic in bytes.
+.It Ic k
+Show amount of traffic in kilobytes.
+.It Ic M
+Show amount of traffic in megabytes.
+.It Ic G
+Show amount of traffic in gigabytes.
+.It Ic q , ESC
+Quit.
 .El
 .Sh BUGS
-The "start" and "restart" commands are not yet implemented.
-.Pp
 If you find any bugs, report them to tinc@tinc-vpn.org.
 .Sh SEE ALSO
 .Xr tincd 8 ,
 .Xr tinc.conf 5 ,
 .Xr dotty 1 ,
+.Xr pcap-savefile 7 ,
+.Xr tcpdump 8 ,
+.Xr top 1 ,
 .Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.cabal.org/ .
 .Pp

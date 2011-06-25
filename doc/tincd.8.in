@@ -1,4 +1,4 @@
-.Dd 2011-01-02
+.Dd 2011-06-25
 .Dt TINCD 8
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -70,13 +70,16 @@ If
 .Ar FILE
 is omitted, the default is
 .Pa @localstatedir@/log/tinc. Ns Ar NETNAME Ns Pa .log.
-.It Fl -controlsocket Ns = Ns Ar FILENAME
-Open control socket at
-.Ar FILENAME .
+.It Fl -controlcookie Ns = Ns Ar FILENAME
+Store a cookie in
+.Ar FILENAME
+which allows
+.Xr tincctl 8
+to authenticate.
 If
 .Ar FILE
 is omitted, the default is
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .control.
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .cookie.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
