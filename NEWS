@@ -12,6 +12,9 @@ Version 1.1pre1              June 25 2011
 
  * Use splay trees instead of AVL trees to manage internal datastructures.
 
+ Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
+ version of tinc.
+
 Version 1.0.15               June 24 2011
 
  * Improved logging to file.
@@ -19,6 +22,8 @@ Version 1.0.15               June 24 2011
  * Reduced amount of process wakeups on platforms which support pselect().
 
  * Fixed ProcessPriority option under Windows.
+
+  Thanks to Loïc Grenié for his contribution to this version of tinc.
 
 Version 1.0.14               May  8 2011
 
