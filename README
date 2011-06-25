@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.1-cvs. Installation
+This is the README file for tinc version 1.1pre1. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2011 by:
@@ -13,6 +13,17 @@ This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version. See the file COPYING for more details.
+
+
+This is a pre-release
+---------------------
+
+Please note that this is NOT a stable release. Until version 1.1.0 is released,
+please use one of the 1.0.x versions if you need a stable version of tinc.
+
+Although tinc 1.1 will be protocol compatible with tinc 1.0.x, the
+functionality of the tincctl program may still change, and the control socket
+protocol is not fixed yet.
 
 
 Security statement
@@ -45,41 +56,30 @@ prove the security of any cryptographic product. If you wish to review
 tinc or give us feedback, you are stronly encouraged to do so.
 
 
-Changes to configuration file format since 1.0pre5
---------------------------------------------------
-
-Some configuration variables have different names now. Most notably "TapDevice"
-should be changed into "Device", and "Device" should be changed into
-"BindToDevice".
-
 Compatibility
 -------------
 
-Version 1.1-cvs is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.1pre1 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
 
 Requirements
 ------------
 
-Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you
-need to install this library first; grab it from
-http://www.openssl.org/.  You will need version 0.9.7 or later.  If
-this library is not installed on you system, configure will fail.  The
-manual in doc/tinc.texi contains more detailed information on how to
-install this library.
+Either OpenSSL (http://www.openssl.org/) or libgcrypt
+(http://www.gnupg.org/download/#libgcrypt).
 
-Since 1.0pre6, the zlib library is used for optional compression. You can
-find it at http://www.gzip.org/zlib/. Because of a possible exploit in
-earlier versions we recommend that you download version 1.1.4 or later.
+The zlib library is used for optional compression. You can find it at
+http://www.gzip.org/zlib/.
 
-Since 1.0, the lzo library is also used for optional compression. You can
-find it at http://www.oberhumer.com/opensource/lzo/.
+The lzo library is also used for optional compression. You can find it at
+http://www.oberhumer.com/opensource/lzo/.
 
 Since 1.1, the libevent library is used for the main event loop. You can find
 it at http://monkey.org/~provos/libevent/.
 
-In order to compile tinc, you will need a GNU C compiler environment.
+In order to compile tinc, you will need a GNU C compiler environment. Please
+ensure you have the latest stable versions of all the required libraries.
 
 
 Features

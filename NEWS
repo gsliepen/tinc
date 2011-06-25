@@ -1,8 +1,16 @@
-Version 1.1-cvs              Work in progress
+Version 1.1pre1              June 25 2011
+
+ * Control interface allows control of a running tinc daemon. Used by:
+   * tincctl, a commandline utility
+   * tinc-gui, a preliminary GUI implemented in Python/wxWidgets
+
+ * Code cleanups and reorganization. 
+
+ * Repleacable cryptography backend, currently supports OpenSSL and libgcrypt.
 
  * Use libevent to handle I/O events and timeouts.
 
- * Use splay trees instead of AVL trees.
+ * Use splay trees instead of AVL trees to manage internal datastructures.
 
 Version 1.0.15               June 24 2011
 
