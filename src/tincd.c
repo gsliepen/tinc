@@ -92,7 +92,7 @@ char *logfilename = NULL;			/* log file location */
 char *controlcookiename = NULL;
 char **g_argv;					/* a copy of the cmdline arguments */
 
-static int status;
+static int status = 1;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -434,10 +434,10 @@ int main2(int argc, char **argv) {
 	/* Setup sockets and open device. */
 
 	if(!setup_network())
-		goto end;
+		goto end_nonet;
 
 	if(!init_control())
-		return 1;
+		goto end_nonet;
 
 	/* Initiate all outgoing connections. */
 
@@ -488,9 +488,10 @@ int main2(int argc, char **argv) {
 	close_network_connections();
 
 end:
-	logger(LOG_NOTICE, "Terminating");
-
 	exit_control();
+
+end_nonet:
+	logger(LOG_NOTICE, "Terminating");
 
 	crypto_exit();
 
