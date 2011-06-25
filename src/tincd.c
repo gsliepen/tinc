@@ -89,7 +89,7 @@ bool use_logfile = false;
 
 char *identname = NULL;				/* program name for syslog */
 char *logfilename = NULL;			/* log file location */
-char *controlcookiename = NULL;
+char *pidfilename = NULL;
 char **g_argv;					/* a copy of the cmdline arguments */
 
 static int status = 1;
@@ -106,7 +106,7 @@ static struct option const long_options[] = {
 	{"chroot", no_argument, NULL, 'R'},
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
-	{"controlcookie", required_argument, NULL, 5},
+	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
@@ -122,18 +122,18 @@ static void usage(bool status) {
 				program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
-		printf(	"  -c, --config=DIR              Read configuration options from DIR.\n"
-				"  -D, --no-detach               Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
-				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
-				"  -L, --mlock                   Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
-				"      --controlcookie=FILENAME  Write control socket cookie to FILENAME.\n"
-				"      --bypass-security         Disables meta protocol security, for debugging.\n"
-				"  -o [HOST.]KEY=VALUE           Set global/host configuration value.\n"
-				"  -R, --chroot                  chroot to NET dir at startup.\n"
-				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
-				"      --version                 Output version information and exit.\n\n");
+		printf(	"  -c, --config=DIR          Read configuration options from DIR.\n"
+				"  -D, --no-detach           Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]       Increase debug level or set it to LEVEL.\n"
+				"  -n, --net=NETNAME         Connect to net NETNAME.\n"
+				"  -L, --mlock               Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]  Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME    Write PID and control socket cookie to FILENAME.\n"
+				"      --bypass-security     Disables meta protocol security, for debugging.\n"
+				"  -o [HOST.]KEY=VALUE       Set global/host configuration value.\n"
+				"  -R, --chroot              chroot to NET dir at startup.\n"
+				"  -U, --user=USER           setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
+				"      --version             Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
@@ -215,7 +215,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 5:					/* open control socket here */
-				controlcookiename = xstrdup(optarg);
+				pidfilename = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -256,8 +256,8 @@ static void make_names(void) {
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
-			if(!controlcookiename)
-				xasprintf(&controlcookiename, "%s/cookie", confbase);
+			if(!pidfilename)
+				xasprintf(&pidfilename, "%s/pid", confbase);
 		}
 		RegCloseKey(key);
 		if(*installdir)
@@ -268,8 +268,8 @@ static void make_names(void) {
 	if(!logfilename)
 		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
 
-	if(!controlcookiename)
-		xasprintf(&controlcookiename, LOCALSTATEDIR "/run/%s.cookie", identname);
+	if(!pidfilename)
+		xasprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
 
 	if(netname) {
 		if(!confbase)
@@ -285,7 +285,7 @@ static void make_names(void) {
 static void free_names(void) {
 	if (identname) free(identname);
 	if (netname) free(netname);
-	if (controlcookiename) free(controlcookiename);
+	if (pidfilename) free(pidfilename);
 	if (logfilename) free(logfilename);
 	if (confbase) free(confbase);
 }

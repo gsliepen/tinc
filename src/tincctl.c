@@ -40,7 +40,7 @@ static bool show_version = false;
 
 static char *name = NULL;
 static char *identname = NULL;				/* program name for syslog */
-static char *controlcookiename = NULL;			/* cookie file location */
+static char *pidfilename = NULL;			/* pid file location */
 static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
@@ -56,7 +56,7 @@ static struct option const long_options[] = {
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
-	{"controlcookie", required_argument, NULL, 5},
+	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
 
@@ -67,11 +67,11 @@ static void usage(bool status) {
 	else {
 		printf("Usage: %s [options] command\n\n", program_name);
 		printf("Valid options are:\n"
-				"  -c, --config=DIR              Read configuration options from DIR.\n"
-				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
-				"      --controlcookie=FILENAME  Read control socket from FILENAME.\n"
-				"      --help                    Display this help and exit.\n"
-				"      --version                 Output version information and exit.\n"
+				"  -c, --config=DIR        Read configuration options from DIR.\n"
+				"  -n, --net=NETNAME       Connect to net NETNAME.\n"
+				"      --pidfile=FILENAME  Read control cookie from FILENAME.\n"
+				"      --help              Display this help and exit.\n"
+				"      --version           Output version information and exit.\n"
 				"\n"
 				"Valid commands are:\n"
 				"  start                      Start tincd.\n"
@@ -130,7 +130,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 5:					/* open control socket here */
-				controlcookiename = xstrdup(optarg);
+				pidfilename = xstrdup(optarg);
 				break;
 
 			case '?':
@@ -279,16 +279,16 @@ static void make_names(void) {
 					xasprintf(&confbase, "%s", installdir);
 			}
 		}
-		if(!controlcookiename)
-			xasprintf(&controlcookiename, "%s/cookie", confbase);
+		if(!pidfilename)
+			xasprintf(&pidfilename, "%s/pid", confbase);
 		RegCloseKey(key);
 		if(*installdir)
 			return;
 	}
 #endif
 
-	if(!controlcookiename)
-		xasprintf(&controlcookiename, "%s/run/%s.cookie", LOCALSTATEDIR, identname);
+	if(!pidfilename)
+		xasprintf(&pidfilename, "%s/run/%s.pid", LOCALSTATEDIR, identname);
 
 	if(netname) {
 		if(!confbase)
@@ -482,13 +482,13 @@ int main(int argc, char *argv[], char *envp[]) {
 	 * ancestors are writable only by trusted users, which we don't verify.
 	 */
 
-	FILE *f = fopen(controlcookiename, "r");
+	FILE *f = fopen(pidfilename, "r");
 	if(!f) {
-		fprintf(stderr, "Could not open control socket cookie file %s: %s\n", controlcookiename, strerror(errno));
+		fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
 		return 1;
 	}
 	if(fscanf(f, "%1024s %128s %20d", controlcookie, port, &pid) != 3) {
-		fprintf(stderr, "Could not parse control socket cookie file %s\n", controlcookiename);
+		fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
 		return 1;
 	}
 

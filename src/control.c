@@ -33,7 +33,7 @@
 #include "xalloc.h"
 
 char controlcookie[65];
-extern char *controlcookiename;
+extern char *pidfilename;
 
 static bool control_return(connection_t *c, int type, int error) {
 	return send_request(c, "%d %d %d", CONTROL, type, error);
@@ -135,16 +135,16 @@ bool init_control(void) {
 	bin2hex(controlcookie, controlcookie, sizeof controlcookie / 2);
 	controlcookie[sizeof controlcookie - 1] = 0;
 
-	FILE *f = fopen(controlcookiename, "w");
+	FILE *f = fopen(pidfilename, "w");
 	if(!f) {
-		logger(LOG_ERR, "Cannot write control socket cookie file %s: %s", controlcookiename, strerror(errno));
+		logger(LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
 		return false;
 	}
 
 #ifdef HAVE_FCHMOD
 	fchmod(fileno(f), 0600);
 #else
-	chmod(controlcookiename, 0600);
+	chmod(pidfilename, 0600);
 #endif
 
 	fprintf(f, "%s %s %d\n", controlcookie, myport, getpid());
@@ -154,5 +154,5 @@ bool init_control(void) {
 }
 
 void exit_control(void) {
-	unlink(controlcookiename);
+	unlink(pidfilename);
 }
