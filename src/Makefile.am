@@ -6,21 +6,25 @@ EXTRA_DIST = linux bsd solaris cygwin mingw raw_socket uml_socket openssl gcrypt
 
 tincd_SOURCES = \
 	utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
-	buffer.c cipher.c conf.c connection.c control.c crypto.c digest.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
+	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
-	protocol_key.c protocol_subnet.c route.c rsa.c subnet.c tincd.c
+	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
+
+nodist_tincd_SOURCES = \
+	device.c cipher.c crypto.c digest.c rsa.c		     
 
 tincctl_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
-	list.c tincctl.c rsagen.c top.c
+	list.c tincctl.c top.c
+
+nodist_tincctl_SOURCES = \
+	rsagen.c
 
 if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
 endif
 
 tincctl_LDADD = $(CURSES_LIBS)
-
-nodist_tincd_SOURCES = device.c
 
 DEFAULT_INCLUDES =
 
@@ -29,7 +33,7 @@ INCLUDES = @INCLUDES@ -I$(top_builddir)
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h cipher.h conf.h connection.h control.h control_common.h crypto.h device.h digest.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h rsa.h rsagen.h subnet.h top.h bsd/tunemu.h
+	protocol.h route.h rsa.h rsagen.h subnet.h tincctl.h top.h bsd/tunemu.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 
