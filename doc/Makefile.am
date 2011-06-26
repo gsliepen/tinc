@@ -2,11 +2,11 @@
 
 info_TEXINFOS = tinc.texi
 
-man_MANS = tincd.8 tincctl.8 tinc.conf.5
+man_MANS = tincd.8 tincctl.8 tinc.conf.5 tinc-gui.8
 
-EXTRA_DIST = tincinclude.texi.in tincd.8.in tincctl.8.in tinc.conf.5.in sample-config.tar.gz
+EXTRA_DIST = tincinclude.texi.in tincd.8.in tincctl.8.in tinc.conf.5.in tinc-gui.8.in sample-config.tar.gz
 
-CLEANFILES = *.html tinc.info tincd.8 tincctl.8 tinc.conf.5 tincinclude.texi
+CLEANFILES = *.html tinc.info tincd.8 tincctl.8 tinc.conf.5 tinc-gui.8 tincinclude.texi
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -28,6 +28,9 @@ tincd.8.html: tincd.8
 tincctl.8.html: tincctl.8
 	w3mman2html $< > $@
 
+tinc-gui.8.html: tinc-gui.8
+	w3mman2html $< > $@
+
 tinc.conf.5.html: tinc.conf.5
 	w3mman2html $< > $@
 
@@ -38,15 +41,18 @@ substitute = sed \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 tincd.8: tincd.8.in
-	$(substitute) tincd.8.in > tincd.8
+	$(substitute) $< > $@
 
 tincctl.8: tincctl.8.in
-	$(substitute) tincctl.8.in > tincctl.8
+	$(substitute) $< > $@
+
+tinc-gui.8: tinc-gui.8.in
+	$(substitute) $< > $@
 
 tinc.conf.5: tinc.conf.5.in
-	$(substitute) tinc.conf.5.in > tinc.conf.5
+	$(substitute) $< > $@
 
 tincinclude.texi: tincinclude.texi.in
-	$(substitute) tincinclude.texi.in > tincinclude.texi
+	$(substitute) $< > $@
 	
 tinc.texi: tincinclude.texi
