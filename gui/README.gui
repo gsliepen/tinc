@@ -5,10 +5,10 @@ tincctl, you can start the gui:
 tincd -n vpn
 tinc-gui -n vpn
 
-If the GUI cannot find the controlcookie (for example if it is not in
+If the GUI cannot find the pid file (for example if it is not in
 /var/run), you can specify its location manually:
 
-tinc-gui --controlcookie /usr/local/var/run/tinc.vpn.cookie
+tinc-gui --pidfile /usr/local/var/run/tinc.vpn.pid
 
 The following things sort of work:
 

@@ -96,22 +96,22 @@ class Connection:
 
 class VPN:
 	confdir = '/etc/tinc'
-	cookiedir = '/var/run/'
+	piddir = '/var/run/'
 
 	def connect(self):
-		f = open(self.cookiefile)
-		cookie = string.split(f.readline())
+		f = open(self.pidfile)
+		info = string.split(f.readline())
 		f.close()
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect(('127.0.0.1', int(cookie[1])))
+		s.connect((info[2], int(info[4])))
 		self.sf = s.makefile()
 		s.close()
 		hello = string.split(self.sf.readline())
 		self.name = hello[1]
-		self.sf.write('0 ^' + cookie[0] + ' 17\r\n')
+		self.sf.write('0 ^' + info[1] + ' 17\r\n')
 		self.sf.flush()
 		resp = string.split(self.sf.readline())
-		self.port = cookie[1]
+		self.port = info[4]
 		self.nodes = {}
 		self.edges = {}
 		self.subnets = {}
@@ -203,7 +203,7 @@ class VPN:
 		resp = string.split(self.sf.readline())
 		return int(resp[2])
 
-	def __init__(self, netname = None, controlcookie = None):
+	def __init__(self, netname = None, pidfile = None):
 		self.tincconf = VPN.confdir + '/'
 
 		if netname:
@@ -212,33 +212,46 @@ class VPN:
 
 		self.tincconf += 'tinc.conf'
 
-		if controlcookie is not None:
-			self.cookiefile = controlcookie
+		if pidfile is not None:
+			self.pidfile = pidfile
 		else:
-			self.cookiefile = VPN.cookiedir + 'tinc.'
+			self.pidfile = VPN.piddir + 'tinc.'
 			if netname:
-				self.cookiefile += netname + '.'
-			self.cookiefile += 'cookie'
+				self.pidfile += netname + '.'
+			self.pidfile += 'pid'
 
 # GUI starts here
 
+argv0 = sys.argv[0]
 del sys.argv[0]
 net = None
-controlcookie = None
+pidfile = None
 
-while len(sys.argv) >= 2:
+def usage(exitcode = 0):
+	print('Usage: ' + argv0 + ' [options]')
+	print('\nValid options are:')
+	print('  -n, --net=NETNAME       Connect to net NETNAME.')
+	print('      --pidfile=FILENAME  Read control cookie from FILENAME.')
+	print('      --help              Display this help and exit.')
+	print('\nReport bugs to tinc@tinc-vpn.org.')
+	sys.exit(exitcode)
+
+while len(sys.argv):
 	if sys.argv[0] in ('-n', '--net'):
-		net = sys.argv[1]
-	elif sys.argv[0] in ('--controlcookie'):
-		controlcookie = sys.argv[1]
+		del sys.argv[0]
+		net = sys.argv[0]
+	elif sys.argv[0] in ('--pidfile'):
+		del sys.argv[0]
+		pidfile = sys.argv[0]
+	elif sys.argv[0] in ('--help'):
+		usage(0)
 	else:
-		print('Unknown option ' + sys.argv[0])
-		sys.exit(1)
+		print(argv0 + ': unrecognized option \'' + sys.argv[0] + '\'')
+		usage(1)
 
 	del sys.argv[0]
-	del sys.argv[0]
 
-vpn = VPN(net, controlcookie)
+vpn = VPN(net, pidfile)
 vpn.connect()
 
 class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
