@@ -1580,10 +1580,10 @@ This will let tinc read all configuration files from
 Specifying . for @var{netname} is the same as not specifying any @var{netname}.
 @xref{Multiple networks}.
 
-@item --controlcookie=@var{filename}
+@item --pidfile=@var{filename}
 Store a cookie in @var{filename} which allows tincctl to authenticate.
 If unspecified, the default is
-@file{@value{localstatedir}/run/tinc.@var{netname}.cookie}.
+@file{@value{localstatedir}/run/tinc.@var{netname}.pid}.
 
 @item -L, --mlock
 Lock tinc into main memory.
@@ -1872,10 +1872,10 @@ Read configuration options from the directory @var{path}.  The default is
 @item -n, --net=@var{netname}
 Use configuration for net @var{netname}. @xref{Multiple networks}.
 
-@item --controlcookie=@var{filename}
+@item --pidfile=@var{filename}
 Use the cookie from @var{filename} to authenticate with a running tinc daemon.
 If unspecified, the default is
-@file{@value{localstatedir}/run/tinc.@var{netname}.cookie}.
+@file{@value{localstatedir}/run/tinc.@var{netname}.pid}.
 
 @item --help
 Display a short reminder of runtime options and commands, then terminate.

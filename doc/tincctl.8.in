@@ -10,7 +10,7 @@
 .Op Fl cn
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -net Ns = Ns Ar NETNAME
-.Op Fl -controlcookie Ns = Ns Ar FILENAME
+.Op Fl -pidfile Ns = Ns Ar FILENAME
 .Op Fl -help
 .Op Fl -version
 .Ar COMMAND
@@ -26,12 +26,12 @@ to alter and inspect the running VPN's state.
 .It Fl n, -net Ns = Ns Ar NETNAME
 Communicate with tincd(8) connected with
 .Ar NETNAME .
-.It Fl -controlcookie Ns = Ns Ar FILENAME
+.It Fl -pidfile Ns = Ns Ar FILENAME
 Use the cookie from
 .Ar FILENAME
 to authenticate with a running tinc daemon.
 If unspecified, the default is
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .cookie.
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
 .It Fl -help
 Display short list of options.
 .It Fl -version

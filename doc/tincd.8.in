@@ -70,7 +70,7 @@ If
 .Ar FILE
 is omitted, the default is
 .Pa @localstatedir@/log/tinc. Ns Ar NETNAME Ns Pa .log.
-.It Fl -controlcookie Ns = Ns Ar FILENAME
+.It Fl -pidfile Ns = Ns Ar FILENAME
 Store a cookie in
 .Ar FILENAME
 which allows
@@ -79,7 +79,7 @@ to authenticate.
 If
 .Ar FILE
 is omitted, the default is
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .cookie.
+.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
 Only useful for debugging.
