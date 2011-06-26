@@ -28,12 +28,6 @@ ACK = 4
 CONTROL = 18
 
 class Node:
-	def __init__(self):
-		print('New node')
-
-	def __exit__(self):
-		print('Deleting node ' + self.name)
-
 	def parse(self, args):
 		self.name = args[0]
 		self.address = args[2]
@@ -322,13 +316,10 @@ class ConnectionsPage(wx.Panel):
 			self.Bind(wx.EVT_MENU, self.OnDisconnect, id=disconnect.GetId())
 
 		def OnDisconnect(self, event):
-			print('Disconnecting ' + self.item[0])
 			vpn.disconnect(self.item[0])
 
 	def OnContext(self, event):
-		print('Context menu!')
 		i = event.GetIndex()
-		print(i)
 		self.PopupMenu(self.ContextMenu(self.list.itemDataMap[event.GetIndex()]), event.GetPosition())
 
 	def refresh(self):
