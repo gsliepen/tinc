@@ -305,7 +305,6 @@ void top(int fd) {
 				  scale = 1e-9;
 				  break;
 			case 'q':
-			case 27:
 			case KEY_BREAK:
 				running = false;
 				break;

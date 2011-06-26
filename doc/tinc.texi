@@ -2026,7 +2026,7 @@ Show amount of traffic in megabytes.
 @item G
 Show amount of traffic in gigabytes.
 
-@item q, ESC
+@item q
 Quit.
 
 @end table

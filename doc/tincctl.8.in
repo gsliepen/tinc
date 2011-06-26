@@ -159,7 +159,7 @@ Show amount of traffic in kilobytes.
 Show amount of traffic in megabytes.
 .It Ic G
 Show amount of traffic in gigabytes.
-.It Ic q , ESC
+.It Ic q
 Quit.
 .El
 .Sh BUGS
