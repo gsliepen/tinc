@@ -34,12 +34,16 @@ static int charhex2bin(char c) {
 }
 
 static int charb64decode(char c) {
-	if(c > 'a')
+	if(c >= 'a')
 		return c - 'a' + 26;
-	else if(c > 'A')
+	else if(c >= 'A')
 		return c - 'A';
+	else if(c >= '0') 
+		return c - '0' + 52;
+	else if(c == '+')
+		return 62;
 	else
-		return c - '0';
+		return 63;
 }
 
 void hex2bin(char *src, char *dst, int length) {
@@ -58,11 +62,11 @@ void bin2hex(char *src, char *dst, int length) {
 
 int b64decode(const char *src, char *dst, int length) {
 	uint32_t triplet = 0;
-	unsigned char *udst;
+	unsigned char *udst = dst;
 
 	for(int i = 0; i < length; i++) {
-		triplet |= charb64decode(src[i]) << (6 * (i % 4));
-		if((i % 4) == 3) {
+		triplet |= charb64decode(src[i]) << (6 * (i & 3));
+		if((i & 3) == 3) {
 			udst[0] = triplet & 0xff; triplet >>= 8;
 			udst[1] = triplet & 0xff; triplet >>= 8;
 			udst[2] = triplet;
@@ -70,11 +74,11 @@ int b64decode(const char *src, char *dst, int length) {
 			udst += 3;
 		}
 	}
-	if((length % 4) == 3) {
+	if((length & 3) == 3) {
 		udst[0] = triplet & 0xff; triplet >>= 8;
 		udst[1] = triplet & 0xff;
 		return length / 4 * 3 + 2;
-	} else if((length % 4) == 2) {
+	} else if((length & 3) == 2) {
 		udst[0] = triplet & 0xff;
 		return length / 4 * 3 + 1;
 	} else {
