@@ -24,6 +24,7 @@
 #include "xalloc.h"
 #include "protocol.h"
 #include "control_common.h"
+#include "ecdsagen.h"
 #include "rsagen.h"
 #include "utils.h"
 #include "tincctl.h"
@@ -77,7 +78,9 @@ static void usage(bool status) {
 				"  restart                    Restart tincd.\n"
 				"  reload                     Reload configuration of running tincd.\n"
 				"  pid                        Show PID of currently running tincd.\n"
-				"  generate-keys [bits]       Generate a new public/private keypair.\n"
+				"  generate-keys [bits]       Generate new RSA and ECDSA public/private keypairs.\n"
+				"  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
+				"  generate-ecdsa-keys        Generate a new ECDSA public/private keypair.\n"
 				"  dump                       Dump a list of one of the following things:\n"
 				"    nodes                    - all known nodes in the VPN\n"
 				"    edges                    - all known connections in the VPN\n"
@@ -192,10 +195,69 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 }
 
 /*
+  Generate a public/private ECDSA keypair, and ask for a file to store
+  them in.
+*/
+static bool ecdsa_keygen() {
+	ecdsa_t key;
+	FILE *f;
+	char *filename;
+
+	fprintf(stderr, "Generating ECDSA keypair:\n");
+
+	if(!ecdsa_generate(&key)) {
+		fprintf(stderr, "Error during key generation!\n");
+		return false;
+	} else
+		fprintf(stderr, "Done.\n");
+
+	xasprintf(&filename, "%s/ecdsa_key.priv", confbase);
+	f = ask_and_open(filename, "private ECDSA key", "a");
+
+	if(!f)
+		return false;
+  
+#ifdef HAVE_FCHMOD
+	/* Make it unreadable for others. */
+	fchmod(fileno(f), 0600);
+#endif
+		
+	if(ftell(f))
+		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
+
+	ecdsa_write_pem_private_key(&key, f);
+
+	fclose(f);
+	free(filename);
+
+	if(name)
+		xasprintf(&filename, "%s/hosts/%s", confbase, name);
+	else
+		xasprintf(&filename, "%s/ecdsa_key.pub", confbase);
+
+	f = ask_and_open(filename, "public ECDSA key", "a");
+
+	if(!f)
+		return false;
+
+	if(ftell(f))
+		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
+
+	char *pubkey = ecdsa_get_base64_public_key(&key);
+	fprintf(f, "ECDSAPublicKey = %s\n", pubkey);
+	free(pubkey);
+
+	fclose(f);
+	free(filename);
+
+	return true;
+}
+
+/*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-static bool keygen(int bits) {
+static bool rsa_keygen(int bits) {
 	rsa_t key;
 	FILE *f;
 	char *filename;
@@ -459,8 +521,16 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// First handle commands that don't involve connecting to a running tinc daemon.
 
+	if(!strcasecmp(argv[optind], "generate-rsa-keys")) {
+		return !rsa_keygen(optind > argc ? atoi(argv[optind + 1]) : 2048);
+	}
+
+	if(!strcasecmp(argv[optind], "generate-ecdsa-keys")) {
+		return !ecdsa_keygen();
+	}
+
 	if(!strcasecmp(argv[optind], "generate-keys")) {
-		return !keygen(optind > argc ? atoi(argv[optind + 1]) : 2048);
+		return !(rsa_keygen(optind > argc ? atoi(argv[optind + 1]) : 2048) && ecdsa_keygen());
 	}
 
 	if(!strcasecmp(argv[optind], "start")) {

@@ -11,14 +11,14 @@ tincd_SOURCES = \
 	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
 
 nodist_tincd_SOURCES = \
-	device.c cipher.c crypto.c ecdh.c ecdsagen.c digest.c prf.c rsa.c
+	device.c cipher.c crypto.c ecdh.c digest.c prf.c rsa.c
 
 tincctl_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
 	list.c tincctl.c top.c
 
 nodist_tincctl_SOURCES = \
-	rsagen.c
+	ecdsagen.c rsagen.c
 
 if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
