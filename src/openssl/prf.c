@@ -22,14 +22,14 @@
 #include "digest.h"
 #include "prf.h"
 
-/* Generate key material from a master secret and a seed, based on RFC 2246.
+/* Generate key material from a master secret and a seed, based on RFC 4346 section 5.
    We use SHA512 and Whirlpool instead of MD5 and SHA1.
  */
 
 static bool prf_xor(int nid, char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
 	digest_t digest;
 	
-	if(!digest_open_by_nid(&digest, nid, 0))
+	if(!digest_open_by_nid(&digest, nid, -1))
 		return false;
 
 	if(!digest_set_key(&digest, secret, secretlen))

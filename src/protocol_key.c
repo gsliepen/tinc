@@ -29,6 +29,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
+#include "prf.h"
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -311,24 +312,26 @@ bool ans_key_h(connection_t *c, char *request) {
 
 		/* Update our crypto end */
 
-		char *mykey;
 		size_t mykeylen = cipher_keylength(&myself->incipher);
 		keylen = cipher_keylength(&from->outcipher);
 
-		if(ECDH_SHARED_SIZE < mykeylen) {
-			logger(LOG_ERR, "ECDH key too short for cipher of MYSELF!");
-			return false;
-		}
-
+		char *mykey;
+		char *seed = NULL;
+		
 		if(strcmp(myself->name, from->name) < 0) {
 			logger(LOG_DEBUG, "Using left half of shared secret");
-			mykey = shared;
-			memcpy(key, shared + ECDH_SHARED_SIZE - keylen, keylen);
+			mykey = key;
+			xasprintf(&seed, "tinc key expansion %s %s", myself->name, from->name);
 		} else {
 			logger(LOG_DEBUG, "Using right half of shared secret");
-			mykey = shared + ECDH_SHARED_SIZE - mykeylen;
-			memcpy(key, shared, keylen);
+			mykey = key + keylen;
+			xasprintf(&seed, "tinc key expansion %s %s", from->name, myself->name);
 		}
+
+		if(!prf(shared, ECDH_SHARED_SIZE, seed, strlen(seed), key, keylen + mykeylen))
+			return false;
+
+		free(seed);
 
 		cipher_open_by_nid(&from->incipher, cipher_get_nid(&myself->incipher));
 		digest_open_by_nid(&from->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
@@ -343,17 +346,8 @@ bool ans_key_h(connection_t *c, char *request) {
 		if(replaywin)
 			memset(from->late, 0, replaywin);
 
-		bin2hex(shared, hex, ECDH_SHARED_SIZE);
-		hex[ECDH_SHARED_SIZE * 2] = 0;
-		logger(LOG_DEBUG, "Shared secret was %s", hex);
-
-		bin2hex(mykey, hex, mykeylen);
-		hex[mykeylen * 2] = 0;
-		logger(LOG_DEBUG, "My part is: %s (%d)", hex, mykeylen);
-
-		bin2hex(key, hex, keylen);
-		hex[keylen * 2] = 0;
-		logger(LOG_DEBUG, "His part is: %s (%d)", hex, keylen);
+		if(strcmp(myself->name, from->name) < 0)
+			memmove(key, key + mykeylen, keylen);
 	} else {
 		keylen = strlen(key) / 2;
 		hex2bin(key, key, keylen);
