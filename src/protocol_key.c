@@ -279,11 +279,8 @@ bool ans_key_h(connection_t *c, char *request) {
 	from->outcompression = compression;
 
 	/* ECDH or old-style key exchange? */
-	/* TODO: look at SSH and TLS to see how they derive cipher and HMAC keys from shared secret properly */
 	
 	if(!strncmp(key, "ECDH:", 5)) {
-		logger(LOG_DEBUG, "Got ECDH key from %s", from->name);
-
 		keylen = (strlen(key) - 5) / 2;
 
 		if(keylen != ECDH_SIZE) {
@@ -297,7 +294,6 @@ bool ans_key_h(connection_t *c, char *request) {
 		}
 
 		if(!from->ecdh) {
-			logger(LOG_DEBUG, "Woops, we didn't generate our public key yet");
 			from->status.ecdh = true;
 			if(!send_ans_key(from))
 				return false;
@@ -313,22 +309,23 @@ bool ans_key_h(connection_t *c, char *request) {
 		/* Update our crypto end */
 
 		size_t mykeylen = cipher_keylength(&myself->incipher);
-		keylen = cipher_keylength(&from->outcipher);
+		size_t hiskeylen = cipher_keylength(&from->outcipher);
 
 		char *mykey;
-		char *seed = NULL;
+		char *hiskey;
+		char *seed;
 		
 		if(strcmp(myself->name, from->name) < 0) {
-			logger(LOG_DEBUG, "Using left half of shared secret");
 			mykey = key;
-			xasprintf(&seed, "tinc key expansion %s %s", myself->name, from->name);
+			hiskey = key + mykeylen * 2;
+			xasprintf(&seed, "tinc UDP key expansion %s %s", myself->name, from->name);
 		} else {
-			logger(LOG_DEBUG, "Using right half of shared secret");
-			mykey = key + keylen;
-			xasprintf(&seed, "tinc key expansion %s %s", from->name, myself->name);
+			mykey = key + hiskeylen * 2;
+			hiskey = key;
+			xasprintf(&seed, "tinc UDP key expansion %s %s", from->name, myself->name);
 		}
 
-		if(!prf(shared, ECDH_SHARED_SIZE, seed, strlen(seed), key, keylen + mykeylen))
+		if(!prf(shared, ECDH_SHARED_SIZE, seed, strlen(seed), key, hiskeylen * 2 + mykeylen * 2))
 			return false;
 
 		free(seed);
@@ -338,7 +335,10 @@ bool ans_key_h(connection_t *c, char *request) {
 		from->incompression = myself->incompression;
 
 		cipher_set_key(&from->incipher, mykey, true);
-		digest_set_key(&from->indigest, mykey, mykeylen);
+		digest_set_key(&from->indigest, mykey + mykeylen, mykeylen);
+
+		cipher_set_key(&from->outcipher, hiskey, false);
+		digest_set_key(&from->outdigest, hiskey + hiskeylen, hiskeylen);
 
 		// Reset sequence number and late packet window
 		mykeyused = true;
@@ -347,21 +347,21 @@ bool ans_key_h(connection_t *c, char *request) {
 			memset(from->late, 0, replaywin);
 
 		if(strcmp(myself->name, from->name) < 0)
-			memmove(key, key + mykeylen, keylen);
+			memmove(key, key + mykeylen * 2, hiskeylen * 2);
 	} else {
 		keylen = strlen(key) / 2;
 		hex2bin(key, key, keylen);
+
+		if(keylen != cipher_keylength(&from->outcipher)) {
+			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
+			return false;
+		}
+
+		/* Update our copy of the origin's packet key */
+
+		cipher_set_key(&from->outcipher, key, false);
+		digest_set_key(&from->outdigest, key, keylen);
 	}
-
-	/* Update our copy of the origin's packet key */
-
-	if(keylen != cipher_keylength(&from->outcipher)) {
-		logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
-		return false;
-	}
-
-	cipher_set_key(&from->outcipher, key, false);
-	digest_set_key(&from->outdigest, key, keylen);
 
 	from->status.validkey = true;
 	from->sent_seqno = 0;
