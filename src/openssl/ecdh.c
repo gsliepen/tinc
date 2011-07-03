@@ -28,10 +28,6 @@
 #include "ecdh.h"
 #include "logger.h"
 
-EC_GROUP *secp256k1 = NULL;
-EC_GROUP *secp384r1 = NULL;
-EC_GROUP *secp521r1 = NULL;
-
 // TODO: proper KDF
 static void *kdf(const void *in, size_t inlen, void *out, size_t *outlen) {
 	memcpy(out, in, inlen);
@@ -40,9 +36,6 @@ static void *kdf(const void *in, size_t inlen, void *out, size_t *outlen) {
 }
 
 bool ecdh_generate_public(ecdh_t *ecdh, void *pubkey) {
-	if(!secp521r1)
-		secp521r1 = EC_GROUP_new_by_curve_name(NID_secp521r1);
-
 	*ecdh = EC_KEY_new_by_curve_name(NID_secp521r1);
 	if(!EC_KEY_generate_key(*ecdh)) {
 		logger(LOG_ERR, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
@@ -55,7 +48,7 @@ bool ecdh_generate_public(ecdh_t *ecdh, void *pubkey) {
 		abort();
 	}
 
-	size_t result = EC_POINT_point2oct(secp521r1, point, POINT_CONVERSION_COMPRESSED, pubkey, ECDH_SIZE, NULL);
+	size_t result = EC_POINT_point2oct(EC_KEY_get0_group(*ecdh), point, POINT_CONVERSION_COMPRESSED, pubkey, ECDH_SIZE, NULL);
 	if(!result) {
 		logger(LOG_ERR, "Converting EC_POINT to binary failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		abort();
@@ -65,9 +58,9 @@ bool ecdh_generate_public(ecdh_t *ecdh, void *pubkey) {
 }
 
 bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
-	EC_POINT *point = EC_POINT_new(secp521r1);
+	EC_POINT *point = EC_POINT_new(EC_KEY_get0_group(*ecdh));
 
-	int result = EC_POINT_oct2point(secp521r1, point, pubkey, ECDH_SIZE, NULL);
+	int result = EC_POINT_oct2point(EC_KEY_get0_group(*ecdh), point, pubkey, ECDH_SIZE, NULL);
 	if(!point) {
 		logger(LOG_ERR, "Converting binary to EC_POINT failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		abort();
