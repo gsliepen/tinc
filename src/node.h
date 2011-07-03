@@ -25,6 +25,7 @@
 #include "cipher.h"
 #include "connection.h"
 #include "digest.h"
+#include "ecdh.h"
 #include "subnet.h"
 
 typedef struct node_status_t {
@@ -34,7 +35,8 @@ typedef struct node_status_t {
 	unsigned int visited:1;			/* 1 if this node has been visited by one of the graph algorithms */
 	unsigned int reachable:1;		/* 1 if this node is reachable in the graph */
 	unsigned int indirect:1;		/* 1 if this node is not directly reachable by us */
-	unsigned int unused:26;
+	unsigned int ecdh:1;			/* 1 if this node supports ECDH key exchange */
+	unsigned int unused:25;
 } node_status_t;
 
 typedef struct node_t {
@@ -46,6 +48,8 @@ typedef struct node_t {
 
 	node_status_t status;
 	time_t last_req_key;
+
+	ecdh_t ecdh;				/* State for ECDH key exchange */
 
 	cipher_t incipher;                        /* Cipher for UDP packets */
 	digest_t indigest;                        /* Digest for UDP packets */	

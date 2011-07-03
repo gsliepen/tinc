@@ -23,6 +23,7 @@
 #include <openssl/ecdh.h>
 
 #define ECDH_SIZE 67
+#define ECDH_SHARED_SIZE 66
 
 typedef EC_KEY *ecdh_t;
 

@@ -24,6 +24,7 @@
 #include "cipher.h"
 #include "connection.h"
 #include "crypto.h"
+#include "ecdh.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
@@ -82,15 +83,16 @@ bool key_changed_h(connection_t *c, char *request) {
 }
 
 bool send_req_key(node_t *to) {
-	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
+	return send_request(to->nexthop->connection, "%d %s %s 1", REQ_KEY, myself->name, to->name);
 }
 
 bool req_key_h(connection_t *c, char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
+	int kx_version = 0;
 
-	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING, from_name, to_name) != 2) {
+	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING " %d", from_name, to_name, &kx_version) < 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
 			   c->hostname);
 		return false;
@@ -120,7 +122,10 @@ bool req_key_h(connection_t *c, char *request) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-
+		if(kx_version > 0) {
+			logger(LOG_DEBUG, "Got ECDH key request from %s", from->name);
+			from->status.ecdh = true;
+		}
 		send_ans_key(from);
 	} else {
 		if(tunnelserver)
@@ -138,7 +143,26 @@ bool req_key_h(connection_t *c, char *request) {
 	return true;
 }
 
+bool send_ans_key_ecdh(node_t *to) {
+	char key[ECDH_SIZE * 2 + 1];
+
+	ecdh_generate_public(&to->ecdh, key);
+
+	bin2hex(key, key, ECDH_SIZE);
+	key[ECDH_SIZE * 2] = '\0';
+
+	return send_request(to->nexthop->connection, "%d %s %s ECDH:%s %d %d %zu %d", ANS_KEY,
+						myself->name, to->name, key,
+						cipher_get_nid(&myself->incipher),
+						digest_get_nid(&myself->indigest),
+						digest_length(&myself->indigest),
+						myself->incompression);
+}
+
 bool send_ans_key(node_t *to) {
+	if(to->status.ecdh)
+		return send_ans_key_ecdh(to);
+
 	size_t keylen = cipher_keylength(&myself->incipher);
 	char key[keylen * 2 + 1];
 
@@ -175,7 +199,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	int cipher, digest, maclength, compression, keylen;
 	node_t *from, *to;
 
-	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING" %d",
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression, address, port) < 7) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
@@ -236,13 +260,6 @@ bool ans_key_h(connection_t *c, char *request) {
 		return false;
 	}
 
-	keylen = strlen(key) / 2;
-
-	if(keylen != cipher_keylength(&from->outcipher)) {
-		logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
-		return false;
-	}
-
 	if(!digest_open_by_nid(&from->outdigest, digest, maclength)) {
 		logger(LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
 		return false;
@@ -257,12 +274,98 @@ bool ans_key_h(connection_t *c, char *request) {
 		logger(LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
 		return true;
 	}
-	
+
 	from->outcompression = compression;
+
+	/* ECDH or old-style key exchange? */
+	/* TODO: look at SSH and TLS to see how they derive cipher and HMAC keys from shared secret properly */
+	
+	if(!strncmp(key, "ECDH:", 5)) {
+		logger(LOG_DEBUG, "Got ECDH key from %s", from->name);
+
+		keylen = (strlen(key) - 5) / 2;
+
+		if(keylen != ECDH_SIZE) {
+			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
+			return false;
+		}
+
+		if(ECDH_SHARED_SIZE < cipher_keylength(&from->outcipher)) {
+			logger(LOG_ERR, "ECDH key too short for cipher of %s!", from->name);
+			return false;
+		}
+
+		if(!from->ecdh) {
+			logger(LOG_DEBUG, "Woops, we didn't generate our public key yet");
+			from->status.ecdh = true;
+			if(!send_ans_key(from))
+				return false;
+		}
+
+		char shared[ECDH_SHARED_SIZE * 2 + 1];
+		char hex[ECDH_SHARED_SIZE * 2 + 1];
+		hex2bin(key + 5, key + 5, keylen);
+
+		if(!ecdh_compute_shared(&from->ecdh, key + 5, shared))
+			return false;
+
+		/* Update our crypto end */
+
+		char *mykey;
+		size_t mykeylen = cipher_keylength(&myself->incipher);
+		keylen = cipher_keylength(&from->outcipher);
+
+		if(ECDH_SHARED_SIZE < mykeylen) {
+			logger(LOG_ERR, "ECDH key too short for cipher of MYSELF!");
+			return false;
+		}
+
+		if(strcmp(myself->name, from->name) < 0) {
+			logger(LOG_DEBUG, "Using left half of shared secret");
+			mykey = shared;
+			memcpy(key, shared + ECDH_SHARED_SIZE - keylen, keylen);
+		} else {
+			logger(LOG_DEBUG, "Using right half of shared secret");
+			mykey = shared + ECDH_SHARED_SIZE - mykeylen;
+			memcpy(key, shared, keylen);
+		}
+
+		cipher_open_by_nid(&from->incipher, cipher_get_nid(&myself->incipher));
+		digest_open_by_nid(&from->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
+		from->incompression = myself->incompression;
+
+		cipher_set_key(&from->incipher, mykey, true);
+		digest_set_key(&from->indigest, mykey, mykeylen);
+
+		// Reset sequence number and late packet window
+		mykeyused = true;
+		from->received_seqno = 0;
+		if(replaywin)
+			memset(from->late, 0, replaywin);
+
+		bin2hex(shared, hex, ECDH_SHARED_SIZE);
+		hex[ECDH_SHARED_SIZE * 2] = 0;
+		logger(LOG_DEBUG, "Shared secret was %s", hex);
+
+		bin2hex(mykey, hex, mykeylen);
+		hex[mykeylen * 2] = 0;
+		logger(LOG_DEBUG, "My part is: %s (%d)", hex, mykeylen);
+
+		bin2hex(key, hex, keylen);
+		hex[keylen * 2] = 0;
+		logger(LOG_DEBUG, "His part is: %s (%d)", hex, keylen);
+	} else {
+		keylen = strlen(key) / 2;
+		hex2bin(key, key, keylen);
+	}
 
 	/* Update our copy of the origin's packet key */
 
-	hex2bin(key, key, keylen);
+	if(keylen != cipher_keylength(&from->outcipher)) {
+		logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
+		return false;
+	}
+
 	cipher_set_key(&from->outcipher, key, false);
 	digest_set_key(&from->outdigest, key, keylen);
 
