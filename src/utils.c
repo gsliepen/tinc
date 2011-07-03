@@ -24,6 +24,7 @@
 #include "utils.h"
 
 static const char hexadecimals[] = "0123456789ABCDEF";
+static const char base64imals[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int charhex2bin(char c) {
 	if(isdigit(c))
@@ -32,6 +33,14 @@ static int charhex2bin(char c) {
 		return toupper(c) - 'A' + 10;
 }
 
+static int charb64decode(char c) {
+	if(c > 'a')
+		return c - 'a' + 26;
+	else if(c > 'A')
+		return c - 'A';
+	else
+		return c - '0';
+}
 
 void hex2bin(char *src, char *dst, int length) {
 	int i;
@@ -45,6 +54,65 @@ void bin2hex(char *src, char *dst, int length) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
+}
+
+int b64decode(const char *src, char *dst, int length) {
+	uint32_t triplet = 0;
+	unsigned char *udst;
+
+	for(int i = 0; i < length; i++) {
+		triplet |= charb64decode(src[i]) << (6 * (i % 4));
+		if((i % 4) == 3) {
+			udst[0] = triplet & 0xff; triplet >>= 8;
+			udst[1] = triplet & 0xff; triplet >>= 8;
+			udst[2] = triplet;
+			triplet = 0;
+			udst += 3;
+		}
+	}
+	if((length % 4) == 3) {
+		udst[0] = triplet & 0xff; triplet >>= 8;
+		udst[1] = triplet & 0xff;
+		return length / 4 * 3 + 2;
+	} else if((length % 4) == 2) {
+		udst[0] = triplet & 0xff;
+		return length / 4 * 3 + 1;
+	} else {
+		return length / 4 * 3;
+	}
+}
+
+int b64encode(const char *src, char *dst, int length) {
+	uint32_t triplet;
+	const unsigned char *usrc = src;
+	int origlen = length;
+
+	while(length > 0) {
+		if(length >= 3) {
+			triplet = usrc[0] | usrc[1] << 8 | usrc[2] << 16;
+			dst[0] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[1] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[2] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[3] = base64imals[triplet];
+			dst += 4; usrc += 3; length -= 3;
+		} else if(length >=2) {
+			triplet = usrc[0] | usrc[1] << 8;
+			dst[0] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[1] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[2] = base64imals[triplet];
+			dst[3] = 0;
+			return origlen / 3 * 4 + 3;
+		} else {
+			triplet = usrc[0];
+			dst[0] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[1] = base64imals[triplet];
+			dst[2] = 0;
+			return origlen / 3 * 4 + 2;
+		}
+	}
+
+	*dst = 0;
+	return origlen / 4 * 3;
 }
 
 #if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
