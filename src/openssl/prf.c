@@ -71,6 +71,6 @@ bool prf(char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, 
 
 	memset(out, 0, outlen);
 
-	return prf_xor(NID_sha512, secret, secretlen / 2, seed, seedlen, out, outlen)
-		&& prf_xor(NID_whirlpool, secret, secretlen / 2, seed, seedlen, out, outlen);
+	return prf_xor(NID_sha512, secret, (secretlen + 1) / 2, seed, seedlen, out, outlen)
+		&& prf_xor(NID_whirlpool, secret + secretlen / 2, (secretlen + 1) / 2, seed, seedlen, out, outlen);
 }
