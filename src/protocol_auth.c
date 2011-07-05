@@ -40,14 +40,14 @@
 bool send_id(connection_t *c) {
 	gettimeofday(&c->start, NULL);
 
-	return send_request(c, "%d %s %d", ID, myself->connection->name,
-						myself->connection->protocol_version);
+	return send_request(c, "%d %s %d.%d", ID, myself->connection->name,
+						myself->connection->protocol_major, myself->connection->protocol_minor);
 }
 
 bool id_h(connection_t *c, char *request) {
 	char name[MAX_STRING_SIZE];
 
-	if(sscanf(request, "%*d " MAX_STRING " %d", name, &c->protocol_version) != 2) {
+	if(sscanf(request, "%*d " MAX_STRING " %d.%d", name, &c->protocol_major, &c->protocol_minor) < 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
 			   c->hostname);
 		return false;
@@ -86,9 +86,9 @@ bool id_h(connection_t *c, char *request) {
 
 	/* Check if version matches */
 
-	if(c->protocol_version != myself->connection->protocol_version) {
-		logger(LOG_ERR, "Peer %s (%s) uses incompatible version %d",
-			   c->name, c->hostname, c->protocol_version);
+	if(c->protocol_major != myself->connection->protocol_major) {
+		logger(LOG_ERR, "Peer %s (%s) uses incompatible version %d.%d",
+			   c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
 	}
 

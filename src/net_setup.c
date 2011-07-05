@@ -239,7 +239,8 @@ static bool setup_myself(void) {
 	myself->connection->hostname = xstrdup("MYSELF");
 
 	myself->connection->options = 0;
-	myself->connection->protocol_version = PROT_CURRENT;
+	myself->connection->protocol_major = PROT_MAJOR;
+	myself->connection->protocol_minor = PROT_MINOR;
 
 	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
 		logger(LOG_ERR, "Name for tinc daemon required!");

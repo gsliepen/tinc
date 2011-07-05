@@ -21,11 +21,10 @@
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
-/* Protocol version. Different versions are incompatible,
-   incompatible version have different protocols.
- */
+/* Protocol version. Different major versions are incompatible. */
 
-#define PROT_CURRENT 17
+#define PROT_MAJOR 17
+#define PROT_MINOR 0
 
 /* Silly Windows */
 

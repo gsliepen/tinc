@@ -56,7 +56,8 @@ typedef struct connection_t {
 
 	union sockaddr_t address;			/* his real (internet) ip */
 	char *hostname;				/* the hostname of its real ip */
-	int protocol_version;		/* used protocol */
+	int protocol_major;		/* used protocol */
+	int protocol_minor;		/* used protocol */
 
 	int socket;					/* socket used for this connection */
 	uint32_t options;			/* options for this connection */
