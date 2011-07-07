@@ -47,6 +47,8 @@ typedef struct connection_status_t {
 		unsigned int unused:21;
 } connection_status_t;
 
+#include "ecdh.h"
+#include "ecdsa.h"
 #include "edge.h"
 #include "net.h"
 #include "node.h"
@@ -69,7 +71,9 @@ typedef struct connection_t {
 	struct node_t *node;		/* node associated with the other end */
 	struct edge_t *edge;		/* edge associated with this connection */
 
-	rsa_t rsa;			/* his public/private key */
+	rsa_t rsa;			/* his public RSA key */
+	ecdsa_t ecdsa;			/* his public ECDSA key */
+	ecdsa_t ecdh;			/* state for ECDH key exchange */
 	cipher_t incipher;		/* Cipher he will use to send data to us */
 	cipher_t outcipher;		/* Cipher we will use to send data to him */
 	digest_t indigest;

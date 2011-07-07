@@ -29,6 +29,7 @@
 #include "control.h"
 #include "device.h"
 #include "digest.h"
+#include "ecdsa.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"
@@ -43,6 +44,43 @@
 
 char *myport;
 static struct event device_ev;
+
+bool read_ecdsa_public_key(connection_t *c) {
+	FILE *fp;
+	char *fname;
+	char *p;
+	bool result;
+
+	/* First, check for simple ECDSAPublicKey statement */
+
+	if(get_config_string(lookup_config(c->config_tree, "ECDSAPublicKey"), &p)) {
+		result = ecdsa_set_base64_public_key(&c->ecdsa, p);
+		free(p);
+		return result;
+	}
+
+	/* Else, check for ECDSAPublicKeyFile statement and read it */
+
+	if(!get_config_string(lookup_config(c->config_tree, "ECDSAPublicKeyFile"), &fname))
+		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+
+	fp = fopen(fname, "r");
+
+	if(!fp) {
+		logger(LOG_ERR, "Error reading ECDSA public key file `%s': %s",
+			   fname, strerror(errno));
+		free(fname);
+		return false;
+	}
+
+	result = ecdsa_read_pem_public_key(&c->ecdsa, fp);
+	fclose(fp);
+
+	if(!result) 
+		logger(LOG_ERR, "Reading ECDSA public key file `%s' failed: %s", fname, strerror(errno));
+	free(fname);
+	return result;
+}
 
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
@@ -77,6 +115,47 @@ bool read_rsa_public_key(connection_t *c) {
 
 	if(!result) 
 		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
+	free(fname);
+	return result;
+}
+
+static bool read_ecdsa_private_key(void) {
+	FILE *fp;
+	char *fname;
+	bool result;
+
+	/* Check for PrivateKeyFile statement and read it */
+
+	if(!get_config_string(lookup_config(config_tree, "ECDSAPrivateKeyFile"), &fname))
+		xasprintf(&fname, "%s/ecdsa_key.priv", confbase);
+
+	fp = fopen(fname, "r");
+
+	if(!fp) {
+		logger(LOG_ERR, "Error reading ECDSA private key file `%s': %s",
+			   fname, strerror(errno));
+		free(fname);
+		return false;
+	}
+
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+	struct stat s;
+
+	if(fstat(fileno(fp), &s)) {
+		logger(LOG_ERR, "Could not stat ECDSA private key file `%s': %s'", fname, strerror(errno));
+		free(fname);
+		return false;
+	}
+
+	if(s.st_mode & ~0100700)
+		logger(LOG_WARNING, "Warning: insecure file permissions for ECDSA private key file `%s'!", fname);
+#endif
+
+	result = ecdsa_read_pem_private_key(&myself->connection->ecdsa, fp);
+	fclose(fp);
+
+	if(!result) 
+		logger(LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -259,6 +338,9 @@ static bool setup_myself(void) {
 	read_config_options(config_tree, name);
 	read_config_file(config_tree, fname);
 	free(fname);
+
+	if(!read_ecdsa_private_key())
+		return false;
 
 	if(!read_rsa_private_key())
 		return false;
