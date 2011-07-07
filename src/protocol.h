@@ -24,7 +24,7 @@
 /* Protocol version. Different major versions are incompatible. */
 
 #define PROT_MAJOR 17
-#define PROT_MINOR 1
+#define PROT_MINOR 2
 
 /* Silly Windows */
 
@@ -83,6 +83,7 @@ extern bool seen_request(char *);
 
 extern bool send_id(struct connection_t *);
 extern bool send_metakey(struct connection_t *);
+extern bool send_metakey_ec(struct connection_t *);
 extern bool send_challenge(struct connection_t *);
 extern bool send_chal_reply(struct connection_t *);
 extern bool send_ack(struct connection_t *);

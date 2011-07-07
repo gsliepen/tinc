@@ -25,13 +25,16 @@
 #include "connection.h"
 #include "control.h"
 #include "control_common.h"
+#include "cipher.h"
 #include "crypto.h"
+#include "digest.h"
 #include "edge.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
+#include "prf.h"
 #include "protocol.h"
 #include "rsa.h"
 #include "utils.h"
@@ -109,13 +112,40 @@ bool id_h(connection_t *c, char *request) {
 		}
 	}
 
-	if(!read_rsa_public_key(c)) {
-		return false;
-	}
-
 	c->allow_request = METAKEY;
 
-	return send_metakey(c);
+	if(c->protocol_minor >= 2)
+		return send_metakey_ec(c);
+	else
+		return send_metakey(c);
+}
+
+bool send_metakey_ec(connection_t *c) {
+	if(!read_ecdsa_public_key(c))
+		return false;
+
+	logger(LOG_DEBUG, "Sending ECDH metakey to %s", c->name);
+
+	size_t siglen = ecdsa_size(&myself->connection->ecdsa);
+
+	char key[ECDH_SIZE];
+	char sig[siglen];
+
+	// TODO: include nonce? Use relevant parts of SSH or TLS protocol
+
+	if(!ecdh_generate_public(&c->ecdh, key))
+		return false;
+
+	if(!ecdsa_sign(&myself->connection->ecdsa, key, ECDH_SIZE, sig))
+		return false;
+
+	char out[MAX_STRING_SIZE];
+
+	bin2hex(key, out, ECDH_SIZE);
+	bin2hex(sig, out + ECDH_SIZE * 2, siglen);
+	out[(ECDH_SIZE + siglen) * 2] = 0;
+	
+	bool result = send_request(c, "%d %s", METAKEY, out);
 }
 
 bool send_metakey(connection_t *c) {
@@ -123,6 +153,9 @@ bool send_metakey(connection_t *c) {
 	char key[len];
 	char enckey[len];
 	char hexkey[2 * len + 1];
+
+	if(!read_rsa_public_key(c))
+		return false;
 
 	if(!cipher_open_blowfish_ofb(&c->outcipher))
 		return false;
@@ -182,7 +215,91 @@ bool send_metakey(connection_t *c) {
 	return result;
 }
 
+static bool metakey_ec_h(connection_t *c, const char *request) {
+	size_t siglen = ecdsa_size(&c->ecdsa);
+	char in[MAX_STRING_SIZE];
+	char key[MAX_STRING_SIZE];
+	char sig[siglen];
+
+	logger(LOG_DEBUG, "Got ECDH metakey from %s", c->name);
+
+	if(sscanf(request, "%*d " MAX_STRING, in) != 1) {
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
+		return false;
+	}
+
+	if(strlen(in) != (ECDH_SIZE + siglen) * 2) {
+		logger(LOG_ERR, "Possible intruder %s (%s): %s %d != %d", c->name, c->hostname, "wrong keylength", strlen(in) / 2, (ECDH_SIZE + siglen));
+		return false;
+	}
+
+	hex2bin(in, key, ECDH_SIZE);
+	hex2bin(in + ECDH_SIZE * 2, sig, siglen);
+
+	if(!ecdsa_verify(&c->ecdsa, key, ECDH_SIZE, sig)) {
+		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "invalid ECDSA signature");
+		return false;
+	}
+
+	char shared[ECDH_SHARED_SIZE * 2 + 1];
+
+	if(!ecdh_compute_shared(&c->ecdh, key, shared))
+		return false;
+
+	/* Update our crypto end */
+
+	if(!cipher_open_by_name(&c->incipher, "aes-256-ofb"))
+		return false;
+	if(!digest_open_by_name(&c->indigest, "sha512", -1))
+		return false;
+	if(!cipher_open_by_name(&c->outcipher, "aes-256-ofb"))
+		return false;
+	if(!digest_open_by_name(&c->outdigest, "sha512", -1))
+		return false;
+
+	size_t mykeylen = cipher_keylength(&c->incipher);
+	size_t hiskeylen = cipher_keylength(&c->outcipher);
+
+	char *mykey;
+	char *hiskey;
+	char *seed;
+	
+	if(strcmp(myself->name, c->name) < 0) {
+		mykey = key;
+		hiskey = key + mykeylen * 2;
+		xasprintf(&seed, "tinc TCP key expansion %s %s", myself->name, c->name);
+	} else {
+		mykey = key + hiskeylen * 2;
+		hiskey = key;
+		xasprintf(&seed, "tinc TCP key expansion %s %s", c->name, myself->name);
+	}
+
+	if(!prf(shared, ECDH_SHARED_SIZE, seed, strlen(seed), key, hiskeylen * 2 + mykeylen * 2))
+		return false;
+
+	free(seed);
+
+	bin2hex(shared, shared, ECDH_SHARED_SIZE);
+	shared[ECDH_SHARED_SIZE * 2] = 0;
+	logger(LOG_DEBUG, "Shared secret is %s", shared);
+
+	cipher_set_key(&c->incipher, mykey, true);
+	digest_set_key(&c->indigest, mykey + mykeylen, mykeylen);
+
+	cipher_set_key(&c->outcipher, hiskey, false);
+	digest_set_key(&c->outdigest, hiskey + hiskeylen, hiskeylen);
+
+	c->status.decryptin = true;
+	c->status.encryptout = true;
+	c->allow_request = CHALLENGE;
+
+	return send_challenge(c);
+}
+
 bool metakey_h(connection_t *c, char *request) {
+	if(c->protocol_minor >= 2)
+		return metakey_ec_h(c, request);
+
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	size_t len = rsa_size(&myself->connection->rsa);
@@ -238,7 +355,7 @@ bool metakey_h(connection_t *c, char *request) {
 }
 
 bool send_challenge(connection_t *c) {
-	size_t len = rsa_size(&c->rsa);
+	size_t len = c->protocol_minor >= 2 ? ECDH_SIZE : rsa_size(&c->rsa);
 	char buffer[len * 2 + 1];
 
 	if(!c->hischallenge)
@@ -260,7 +377,7 @@ bool send_challenge(connection_t *c) {
 
 bool challenge_h(connection_t *c, char *request) {
 	char buffer[MAX_STRING_SIZE];
-	size_t len = rsa_size(&myself->connection->rsa);
+	size_t len = c->protocol_minor >= 2 ? ECDH_SIZE : rsa_size(&myself->connection->rsa);
 	size_t digestlen = digest_length(&c->indigest);
 	char digest[digestlen];
 
@@ -318,7 +435,7 @@ bool chal_reply_h(connection_t *c, char *request) {
 
 	/* Verify the hash */
 
-	if(!digest_verify(&c->outdigest, c->hischallenge, rsa_size(&c->rsa), hishash)) {
+	if(!digest_verify(&c->outdigest, c->hischallenge, c->protocol_minor >= 2 ? ECDH_SIZE : rsa_size(&c->rsa), hishash)) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}
