@@ -70,13 +70,17 @@ size_t ecdsa_size(ecdsa_t *ecdsa) {
 	return ECDSA_size(*ecdsa);
 }
 
-// TODO: hash first, standardise output format?
+// TODO: standardise output format?
 
 bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t len, void *sig) {
 	unsigned int siglen = ECDSA_size(*ecdsa);
+
+	char hash[SHA512_DIGEST_LENGTH];
+	SHA512(in, len, hash);
+
 	memset(sig, 0, siglen);
 
-	if(!ECDSA_sign(0, in, len, sig, &siglen, *ecdsa)) {
+	if(!ECDSA_sign(0, hash, sizeof hash, sig, &siglen, *ecdsa)) {
 		logger(LOG_DEBUG, "ECDSA_sign() failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
@@ -91,7 +95,10 @@ bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t len, void *sig) {
 bool ecdsa_verify(ecdsa_t *ecdsa, const void *in, size_t len, const void *sig) {
 	unsigned int siglen = ECDSA_size(*ecdsa);
 
-	if(!ECDSA_verify(0, in, len, sig, siglen, *ecdsa)) {
+	char hash[SHA512_DIGEST_LENGTH];
+	SHA512(in, len, hash);
+
+	if(!ECDSA_verify(0, hash, sizeof hash, sig, siglen, *ecdsa)) {
 		logger(LOG_DEBUG, "ECDSA_verify() failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
