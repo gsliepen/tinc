@@ -400,6 +400,24 @@ bool read_connection_config(connection_t *c) {
 	return x;
 }
 
+bool append_connection_config(const connection_t *c, const char *key, const char *value) {
+	char *fname;
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+
+	FILE *fp = fopen(fname, "a");
+
+	if(!fp) {
+		logger(LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+	} else {
+		fprintf(fp, "\n# The following line was automatically added by tinc\n%s = %s\n", key, value);
+		fclose(fp);
+	}
+
+	free(fname);
+
+	return fp;
+}
+
 bool disable_old_keys(FILE *f) {
 	char buf[100];
 	long pos;

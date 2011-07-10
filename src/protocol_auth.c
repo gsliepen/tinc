@@ -43,8 +43,12 @@
 bool send_id(connection_t *c) {
 	gettimeofday(&c->start, NULL);
 
+	int minor = myself->connection->protocol_minor;
+	if(c->config_tree && !read_ecdsa_public_key(c))
+		minor = 1;
+
 	return send_request(c, "%d %s %d.%d", ID, myself->connection->name,
-						myself->connection->protocol_major, myself->connection->protocol_minor);
+						myself->connection->protocol_major, minor);
 }
 
 bool id_h(connection_t *c, char *request) {
@@ -110,6 +114,13 @@ bool id_h(connection_t *c, char *request) {
 				   c->name);
 			return false;
 		}
+
+		if(c->protocol_minor >= 2)
+			if(!read_ecdsa_public_key(c))
+				return false;
+	} else {
+		if(!ecdsa_active(&c->ecdsa))
+			c->protocol_minor = 1;
 	}
 
 	c->allow_request = METAKEY;
@@ -121,9 +132,6 @@ bool id_h(connection_t *c, char *request) {
 }
 
 bool send_metakey_ec(connection_t *c) {
-	if(!read_ecdsa_public_key(c))
-		return false;
-
 	logger(LOG_DEBUG, "Sending ECDH metakey to %s", c->name);
 
 	size_t siglen = ecdsa_size(&myself->connection->ecdsa);
@@ -149,11 +157,6 @@ bool send_metakey_ec(connection_t *c) {
 }
 
 bool send_metakey(connection_t *c) {
-	size_t len = rsa_size(&c->rsa);
-	char key[len];
-	char enckey[len];
-	char hexkey[2 * len + 1];
-
 	if(!read_rsa_public_key(c))
 		return false;
 
@@ -162,6 +165,11 @@ bool send_metakey(connection_t *c) {
 	
 	if(!digest_open_sha1(&c->outdigest, -1))
 		return false;
+
+	size_t len = rsa_size(&c->rsa);
+	char key[len];
+	char enckey[len];
+	char hexkey[2 * len + 1];
 
 	/* Create a random key */
 
@@ -451,7 +459,24 @@ bool chal_reply_h(connection_t *c, char *request) {
 	return send_ack(c);
 }
 
+static bool send_upgrade(connection_t *c) {
+	/* Special case when protocol_minor is 1: the other end is ECDSA capable,
+	 * but doesn't know our key yet. So send it now. */
+
+	char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
+
+	if(!pubkey)
+		return false;
+
+	bool result = send_request(c, "%d %s", ACK, pubkey);
+	free(pubkey);
+	return result;
+}
+
 bool send_ack(connection_t *c) {
+	if(c->protocol_minor == 1)
+		return send_upgrade(c);
+
 	/* ACK message contains rest of the information the other end needs
 	   to create node_t and edge_t structures. */
 
@@ -516,7 +541,29 @@ static void send_everything(connection_t *c) {
 	}
 }
 
+static bool upgrade_h(connection_t *c, char *request) {
+	char pubkey[MAX_STRING_SIZE];
+
+	if(sscanf(request, "%*d " MAX_STRING, pubkey) != 1) {
+		logger(LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name, c->hostname);
+		return false;
+	}
+
+	if(ecdsa_active(&c->ecdsa) || read_ecdsa_public_key(c)) {
+		logger(LOG_INFO, "Already have ECDSA public key from %s (%s), not upgrading.", c->name, c->hostname);
+		return false;
+	}
+
+	logger(LOG_INFO, "Got ECDSA public key from %s (%s), upgrading!", c->name, c->hostname);
+	append_connection_config(c, "ECDSAPublicKey", pubkey);
+	c->allow_request = TERMREQ;
+	return send_termreq(c);
+}
+
 bool ack_h(connection_t *c, char *request) {
+	if(c->protocol_minor == 1)
+		return upgrade_h(c, request);
+
 	char hisport[MAX_STRING_SIZE];
 	char *hisaddress;
 	int weight, mtu;

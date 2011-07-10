@@ -25,6 +25,7 @@
 typedef EC_KEY *ecdsa_t;
 
 extern bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p);
+extern char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa);
 extern bool ecdsa_read_pem_public_key(ecdsa_t *ecdsa, FILE *fp);
 extern bool ecdsa_read_pem_private_key(ecdsa_t *ecdsa, FILE *fp);
 extern size_t ecdsa_size(ecdsa_t *ecdsa);

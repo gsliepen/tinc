@@ -26,8 +26,8 @@
 #include "ecdsa.h"
 #include "utils.h"
 
-// Set ECDSA keys
-
+// Get and set ECDSA keys
+//
 bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 	*ecdsa = EC_KEY_new_by_curve_name(NID_secp521r1);
 
@@ -42,6 +42,18 @@ bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 	}
 
 	return true;
+}
+
+char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa) {
+	unsigned char *pubkey = NULL;
+	int len = i2o_ECPublicKey(*ecdsa, &pubkey);
+
+	char *base64 = malloc(len * 4 / 3 + 5);
+	b64encode(pubkey, base64, len);
+
+	free(pubkey);
+
+	return base64;
 }
 
 // Read PEM ECDSA keys
