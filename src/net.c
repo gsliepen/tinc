@@ -116,9 +116,6 @@ void terminate_connection(connection_t *c, bool report) {
 	if(c->node)
 		c->node->connection = NULL;
 
-	if(c->socket)
-		closesocket(c->socket);
-
 	if(c->edge) {
 		if(report && !tunnelserver)
 			send_del_edge(broadcast, c->edge);

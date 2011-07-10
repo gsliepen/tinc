@@ -87,6 +87,9 @@ void free_connection(connection_t *c) {
 	if(event_initialized(&c->outevent))
 		event_del(&c->outevent);
 
+	if(c->socket > 0)
+		closesocket(c->socket);
+
 	free(c);
 }
 
