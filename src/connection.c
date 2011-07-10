@@ -69,6 +69,9 @@ void free_connection(connection_t *c) {
 	cipher_close(&c->outcipher);
 	digest_close(&c->outdigest);
 
+	ecdsa_free(&c->ecdsa);
+	rsa_free(&c->rsa);
+
 	if(c->hischallenge)
 		free(c->hischallenge);
 

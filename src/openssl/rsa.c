@@ -88,3 +88,14 @@ bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	logger(LOG_ERR, "Unable to perform RSA decryption: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;	
 }
+
+bool rsa_active(rsa_t *rsa) {
+	return *rsa;
+}
+
+void rsa_free(rsa_t *rsa) {
+	if(*rsa) {
+		RSA_free(*rsa);
+		*rsa = NULL;
+	}
+}

@@ -30,5 +30,7 @@ extern bool ecdsa_read_pem_private_key(ecdsa_t *ecdsa, FILE *fp);
 extern size_t ecdsa_size(ecdsa_t *ecdsa);
 extern bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t inlen, void *out);
 extern bool ecdsa_verify(ecdsa_t *ecdsa, const void *in, size_t inlen, const void *out);
+extern bool ecdsa_active(ecdsa_t *ecdsa);
+extern void ecdsa_free(ecdsa_t *ecdsa);
 
 #endif

@@ -105,3 +105,14 @@ bool ecdsa_verify(ecdsa_t *ecdsa, const void *in, size_t len, const void *sig) {
 
 	return true;
 }
+
+bool ecdsa_active(ecdsa_t *ecdsa) {
+	return *ecdsa;
+}
+
+void ecdsa_free(ecdsa_t *ecdsa) {
+	if(*ecdsa) {
+		EC_KEY_free(*ecdsa);
+		*ecdsa = NULL;
+	}
+}
