@@ -43,12 +43,16 @@
 bool send_id(connection_t *c) {
 	gettimeofday(&c->start, NULL);
 
-	int minor = myself->connection->protocol_minor;
-	if(c->config_tree && !read_ecdsa_public_key(c))
-		minor = 1;
+	int minor = 0;
 
-	return send_request(c, "%d %s %d.%d", ID, myself->connection->name,
-						myself->connection->protocol_major, minor);
+	if(experimental) {
+		if(c->config_tree && !read_ecdsa_public_key(c))
+			minor = 1;
+		else
+			minor = myself->connection->protocol_minor;
+	}
+
+	return send_request(c, "%d %s %d.%d", ID, myself->connection->name, myself->connection->protocol_major, minor);
 }
 
 bool id_h(connection_t *c, char *request) {
@@ -115,13 +119,16 @@ bool id_h(connection_t *c, char *request) {
 			return false;
 		}
 
-		if(c->protocol_minor >= 2)
+		if(experimental && c->protocol_minor >= 2)
 			if(!read_ecdsa_public_key(c))
 				return false;
 	} else {
 		if(!ecdsa_active(&c->ecdsa))
 			c->protocol_minor = 1;
 	}
+
+	if(!experimental)
+		c->protocol_minor = 0;
 
 	c->allow_request = METAKEY;
 

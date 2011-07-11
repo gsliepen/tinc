@@ -84,7 +84,7 @@ bool key_changed_h(connection_t *c, char *request) {
 }
 
 bool send_req_key(node_t *to) {
-	return send_request(to->nexthop->connection, "%d %s %s 1", REQ_KEY, myself->name, to->name);
+	return send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, experimental ? 1 : 0);
 }
 
 bool req_key_h(connection_t *c, char *request) {
@@ -123,7 +123,7 @@ bool req_key_h(connection_t *c, char *request) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-		if(kx_version > 0) {
+		if(experimental && kx_version >= 1) {
 			logger(LOG_DEBUG, "Got ECDH key request from %s", from->name);
 			from->status.ecdh = true;
 		}
@@ -161,7 +161,7 @@ bool send_ans_key_ecdh(node_t *to) {
 }
 
 bool send_ans_key(node_t *to) {
-	if(to->status.ecdh)
+	if(experimental && to->status.ecdh)
 		return send_ans_key_ecdh(to);
 
 	size_t keylen = cipher_keylength(&myself->incipher);
@@ -280,7 +280,7 @@ bool ans_key_h(connection_t *c, char *request) {
 
 	/* ECDH or old-style key exchange? */
 	
-	if(!strncmp(key, "ECDH:", 5)) {
+	if(experimental && !strncmp(key, "ECDH:", 5)) {
 		keylen = (strlen(key) - 5) / 2;
 
 		if(keylen != ECDH_SIZE) {

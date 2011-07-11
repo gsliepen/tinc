@@ -157,10 +157,10 @@ tinc_LZO
 
 if test "$with_libgcrypt" = yes; then
 	AM_PATH_LIBGCRYPT([1.4.0], [], [])
-    	ln -sf gcrypt/cipher.c gcrypt/cipher.h gcrypt/crypto.c gcrypt/crypto.h gcrypt/digest.c gcrypt/digest.h gcrypt/rsa.c gcrypt/rsa.h gcrypt/rsagen.c gcrypt/rsagen.h src/
+    	ln -sf gcrypt/*.c gcrypt/*.h src/
 else
 	tinc_OPENSSL
-    	ln -sf openssl/cipher.c openssl/cipher.h openssl/crypto.c openssl/crypto.h openssl/digest.c openssl/digest.h openssl/rsa.c openssl/rsa.h openssl/rsagen.c openssl/rsagen.h src/
+    	ln -sf openssl/*.c openssl/*.h src/
 fi
 	
 

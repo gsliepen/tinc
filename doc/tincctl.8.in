@@ -59,10 +59,14 @@ will be made.
 Shows the PID of the currently running
 .Xr tincd 8 .
 .It generate-keys Op bits
+Generate both RSA and ECDSA keypairs (see below) and exit.
+.It generate-ecdsa-keys
+Generate public/private ECDSA keypair and exit.
+.It generate-rsa-keys Op bits
 Generate public/private RSA keypair and exit.
 If
 .Ar bits
-is omitted, the default length will be 1024 bits.
+is omitted, the default length will be 2048 bits.
 When saving keys to existing files, tinc will not delete the old keys;
 you have to remove them manually.
 .It dump nodes

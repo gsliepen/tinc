@@ -54,6 +54,7 @@ typedef struct past_request_t {
 
 extern bool tunnelserver;
 extern bool strictsubnets;
+extern bool experimental;
 
 /* Maximum size of strings in a request.
  * scanf terminates %2048s with a NUL character,

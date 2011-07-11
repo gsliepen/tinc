@@ -30,6 +30,7 @@
 
 bool tunnelserver = false;
 bool strictsubnets = false;
+bool experimental = false;
 
 /* Jumptable for the request handlers */
 
