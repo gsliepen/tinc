@@ -134,7 +134,6 @@ bool control_h(connection_t *c, char *request) {
 bool init_control(void) {
 	randomize(controlcookie, sizeof controlcookie / 2);
 	bin2hex(controlcookie, controlcookie, sizeof controlcookie / 2);
-	controlcookie[sizeof controlcookie - 1] = 0;
 
 	FILE *f = fopen(pidfilename, "w");
 	if(!f) {

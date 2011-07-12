@@ -143,24 +143,19 @@ bool send_metakey_ec(connection_t *c) {
 
 	size_t siglen = ecdsa_size(&myself->connection->ecdsa);
 
-	char key[ECDH_SIZE];
-	char sig[siglen];
+	char key[(ECDH_SIZE + siglen) * 2 + 1];
 
 	// TODO: include nonce? Use relevant parts of SSH or TLS protocol
 
 	if(!ecdh_generate_public(&c->ecdh, key))
 		return false;
 
-	if(!ecdsa_sign(&myself->connection->ecdsa, key, ECDH_SIZE, sig))
+	if(!ecdsa_sign(&myself->connection->ecdsa, key, ECDH_SIZE, key + ECDH_SIZE))
 		return false;
 
-	char out[MAX_STRING_SIZE];
-
-	bin2hex(key, out, ECDH_SIZE);
-	bin2hex(sig, out + ECDH_SIZE * 2, siglen);
-	out[(ECDH_SIZE + siglen) * 2] = 0;
+	b64encode(key, key, ECDH_SIZE + siglen);
 	
-	bool result = send_request(c, "%d %s", METAKEY, out);
+	bool result = send_request(c, "%d %s", METAKEY, key);
 }
 
 bool send_metakey(connection_t *c) {
@@ -198,7 +193,6 @@ bool send_metakey(connection_t *c) {
 
 	ifdebug(SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
-		hexkey[len * 2] = '\0';
 		logger(LOG_DEBUG, "Generated random meta key (unencrypted): %s", hexkey);
 	}
 
@@ -217,7 +211,6 @@ bool send_metakey(connection_t *c) {
 	/* Convert the encrypted random data to a hexadecimal formatted string */
 
 	bin2hex(enckey, hexkey, len);
-	hexkey[len * 2] = '\0';
 
 	/* Send the meta key */
 
@@ -232,31 +225,29 @@ bool send_metakey(connection_t *c) {
 
 static bool metakey_ec_h(connection_t *c, const char *request) {
 	size_t siglen = ecdsa_size(&c->ecdsa);
-	char in[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];
 	char sig[siglen];
 
 	logger(LOG_DEBUG, "Got ECDH metakey from %s", c->name);
 
-	if(sscanf(request, "%*d " MAX_STRING, in) != 1) {
+	if(sscanf(request, "%*d " MAX_STRING, key) != 1) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
 		return false;
 	}
 
-	if(strlen(in) != (ECDH_SIZE + siglen) * 2) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s %d != %d", c->name, c->hostname, "wrong keylength", strlen(in) / 2, (ECDH_SIZE + siglen));
+	int inlen = b64decode(key, key, sizeof key);
+
+	if(inlen != (ECDH_SIZE + siglen)) {
+		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
 		return false;
 	}
 
-	hex2bin(in, key, ECDH_SIZE);
-	hex2bin(in + ECDH_SIZE * 2, sig, siglen);
-
-	if(!ecdsa_verify(&c->ecdsa, key, ECDH_SIZE, sig)) {
+	if(!ecdsa_verify(&c->ecdsa, key, ECDH_SIZE, key + ECDH_SIZE)) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "invalid ECDSA signature");
 		return false;
 	}
 
-	char shared[ECDH_SHARED_SIZE * 2 + 1];
+	char shared[ECDH_SHARED_SIZE];
 
 	if(!ecdh_compute_shared(&c->ecdh, key, shared))
 		return false;
@@ -294,10 +285,6 @@ static bool metakey_ec_h(connection_t *c, const char *request) {
 
 	free(seed);
 
-	bin2hex(shared, shared, ECDH_SHARED_SIZE);
-	shared[ECDH_SHARED_SIZE * 2] = 0;
-	logger(LOG_DEBUG, "Shared secret is %s", shared);
-
 	cipher_set_key(&c->incipher, mykey, true);
 	digest_set_key(&c->indigest, mykey + mykeylen, mykeylen);
 
@@ -326,16 +313,16 @@ bool metakey_h(connection_t *c, char *request) {
 		return false;
 	}
 
+	/* Convert the challenge from hexadecimal back to binary */
+
+	int inlen = hex2bin(hexkey, enckey, sizeof enckey);
+
 	/* Check if the length of the meta key is all right */
 
-	if(strlen(hexkey) != len * 2) {
+	if(inlen != len) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
 		return false;
 	}
-
-	/* Convert the challenge from hexadecimal back to binary */
-
-	hex2bin(hexkey, enckey, len);
 
 	/* Decrypt the meta key */
 
@@ -346,7 +333,6 @@ bool metakey_h(connection_t *c, char *request) {
 
 	ifdebug(SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
-		hexkey[len * 2] = '\0';
 		logger(LOG_DEBUG, "Received random meta key (unencrypted): %s", hexkey);
 	}
 
@@ -383,7 +369,6 @@ bool send_challenge(connection_t *c) {
 	/* Convert to hex */
 
 	bin2hex(c->hischallenge, buffer, len);
-	buffer[len * 2] = '\0';
 
 	/* Send the challenge */
 
@@ -401,16 +386,16 @@ bool challenge_h(connection_t *c, char *request) {
 		return false;
 	}
 
+	/* Convert the challenge from hexadecimal back to binary */
+
+	int inlen = hex2bin(buffer, buffer, sizeof buffer);
+
 	/* Check if the length of the challenge is all right */
 
-	if(strlen(buffer) != len * 2) {
+	if(inlen != len) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge length");
 		return false;
 	}
-
-	/* Convert the challenge from hexadecimal back to binary */
-
-	hex2bin(buffer, buffer, len);
 
 	c->allow_request = CHAL_REPLY;
 
@@ -421,7 +406,6 @@ bool challenge_h(connection_t *c, char *request) {
 	/* Convert the hash to a hexadecimal formatted string */
 
 	bin2hex(digest, buffer, digestlen);
-	buffer[digestlen * 2] = '\0';
 
 	/* Send the reply */
 
@@ -437,16 +421,17 @@ bool chal_reply_h(connection_t *c, char *request) {
 		return false;
 	}
 
+	/* Convert the hash to binary format */
+
+	int inlen = hex2bin(hishash, hishash, sizeof hishash);
+
 	/* Check if the length of the hash is all right */
 
-	if(strlen(hishash) != digest_length(&c->outdigest) * 2) {
+	if(inlen != digest_length(&c->outdigest)) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
 
-	/* Convert the hash to binary format */
-
-	hex2bin(hishash, hishash, digest_length(&c->outdigest));
 
 	/* Verify the hash */
 

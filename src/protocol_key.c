@@ -149,8 +149,7 @@ bool send_ans_key_ecdh(node_t *to) {
 
 	ecdh_generate_public(&to->ecdh, key);
 
-	bin2hex(key, key, ECDH_SIZE);
-	key[ECDH_SIZE * 2] = '\0';
+	b64encode(key, key, ECDH_SIZE);
 
 	return send_request(to->nexthop->connection, "%d %s %s ECDH:%s %d %d %zu %d", ANS_KEY,
 						myself->name, to->name, key,
@@ -176,7 +175,6 @@ bool send_ans_key(node_t *to) {
 	digest_set_key(&to->indigest, key, keylen);
 
 	bin2hex(key, key, keylen);
-	key[keylen * 2] = '\0';
 
 	// Reset sequence number and late packet window
 	mykeyused = true;
@@ -281,7 +279,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	/* ECDH or old-style key exchange? */
 	
 	if(experimental && !strncmp(key, "ECDH:", 5)) {
-		keylen = (strlen(key) - 5) / 2;
+		int keylen = b64decode(key + 5, key + 5, sizeof key - 5);
 
 		if(keylen != ECDH_SIZE) {
 			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
@@ -300,8 +298,6 @@ bool ans_key_h(connection_t *c, char *request) {
 		}
 
 		char shared[ECDH_SHARED_SIZE * 2 + 1];
-		char hex[ECDH_SHARED_SIZE * 2 + 1];
-		hex2bin(key + 5, key + 5, keylen);
 
 		if(!ecdh_compute_shared(&from->ecdh, key + 5, shared))
 			return false;
@@ -349,8 +345,7 @@ bool ans_key_h(connection_t *c, char *request) {
 		if(strcmp(myself->name, from->name) < 0)
 			memmove(key, key + mykeylen * 2, hiskeylen * 2);
 	} else {
-		keylen = strlen(key) / 2;
-		hex2bin(key, key, keylen);
+		keylen = hex2bin(key, key, sizeof key);
 
 		if(keylen != cipher_keylength(&from->outcipher)) {
 			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
