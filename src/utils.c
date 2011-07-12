@@ -46,25 +46,29 @@ static int charb64decode(char c) {
 		return 63;
 }
 
-void hex2bin(char *src, char *dst, int length) {
+int hex2bin(char *src, char *dst, int length) {
 	int i;
-	for(i = 0; i < length; i++)
+	for(i = 0; i < length && src[i * 2] && src[i * 2 + 1]; i++)
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
+	return i;
 }
 
-void bin2hex(char *src, char *dst, int length) {
+int bin2hex(char *src, char *dst, int length) {
 	int i;
 	for(i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
+	dst[length * 2] = 0;
+	return length * 2;
 }
 
-int b64decode(const char *src, char *dst, int length) {
+int b64decode(char *src, char *dst, int length) {
+	int i;
 	uint32_t triplet = 0;
 	unsigned char *udst = dst;
 
-	for(int i = 0; i < length; i++) {
+	for(i = 0; i < length / 3 * 4 && src[i]; i++) {
 		triplet |= charb64decode(src[i]) << (6 * (i & 3));
 		if((i & 3) == 3) {
 			udst[0] = triplet & 0xff; triplet >>= 8;
@@ -74,49 +78,57 @@ int b64decode(const char *src, char *dst, int length) {
 			udst += 3;
 		}
 	}
-	if((length & 3) == 3) {
+	if((i & 3) == 3) {
 		udst[0] = triplet & 0xff; triplet >>= 8;
 		udst[1] = triplet & 0xff;
-		return length / 4 * 3 + 2;
-	} else if((length & 3) == 2) {
+		return i / 4 * 3 + 2;
+	} else if((i & 3) == 2) {
 		udst[0] = triplet & 0xff;
-		return length / 4 * 3 + 1;
+		return i / 4 * 3 + 1;
 	} else {
-		return length / 4 * 3;
+		return i / 4 * 3;
 	}
 }
 
-int b64encode(const char *src, char *dst, int length) {
+int b64encode(char *src, char *dst, int length) {
 	uint32_t triplet;
 	const unsigned char *usrc = src;
-	int origlen = length;
+	int si = length / 3 * 3;
+	int di = length / 3 * 4;
 
-	while(length > 0) {
-		if(length >= 3) {
-			triplet = usrc[0] | usrc[1] << 8 | usrc[2] << 16;
-			dst[0] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[1] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[2] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[3] = base64imals[triplet];
-			dst += 4; usrc += 3; length -= 3;
-		} else if(length >=2) {
-			triplet = usrc[0] | usrc[1] << 8;
-			dst[0] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[1] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[2] = base64imals[triplet];
-			dst[3] = 0;
-			return origlen / 3 * 4 + 3;
-		} else {
-			triplet = usrc[0];
-			dst[0] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[1] = base64imals[triplet];
-			dst[2] = 0;
-			return origlen / 3 * 4 + 2;
-		}
+	switch(length % 3) {
+		case 2:	
+			triplet = usrc[si] | usrc[si + 1] << 8;
+			dst[di] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[di + 1] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[di + 2] = base64imals[triplet];
+			dst[di + 3] = 0;
+			length = di + 2;
+			break;
+		case 1:
+			triplet = usrc[si];
+			dst[di] = base64imals[triplet & 63]; triplet >>= 6;
+			dst[di + 1] = base64imals[triplet];
+			dst[di + 2] = 0;
+			length = di + 1;
+			break;
+		default:
+			dst[di] = 0;
+			length = di;
+			break;
 	}
 
-	*dst = 0;
-	return origlen / 4 * 3;
+	while(si > 0) {
+		di -= 4;
+		si -= 3;
+		triplet = usrc[si] | usrc[si + 1] << 8 | usrc[si + 2] << 16;
+		dst[di] = base64imals[triplet & 63]; triplet >>= 6;
+		dst[di + 1] = base64imals[triplet & 63]; triplet >>= 6;
+		dst[di + 2] = base64imals[triplet & 63]; triplet >>= 6;
+		dst[di + 3] = base64imals[triplet];
+	}
+
+	return length;
 }
 
 #if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
