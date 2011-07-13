@@ -27,11 +27,6 @@
 #include "xalloc.h"
 
 static bool cipher_open(cipher_t *cipher) {
-	cipher->keylen = cipher->cipher->key_len;
-	cipher->blklen = cipher->cipher->iv_len;
-
-	cipher->key = xmalloc(cipher->keylen + cipher->blklen);
-
 	EVP_CIPHER_CTX_init(&cipher->ctx);
 
 	return true;
@@ -43,7 +38,7 @@ bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	if(cipher->cipher)
 		return cipher_open(cipher);
 
-	logger(LOG_DEBUG, "Unknown cipher name '%s'!", name);
+	logger(LOG_ERR, "Unknown cipher name '%s'!", name);
 	return false;
 }
 
@@ -53,7 +48,7 @@ bool cipher_open_by_nid(cipher_t *cipher, int nid) {
 	if(cipher->cipher)
 		return cipher_open(cipher);
 
-	logger(LOG_DEBUG, "Unknown cipher nid %d!", nid);
+	logger(LOG_ERR, "Unknown cipher nid %d!", nid);
 	return false;
 }
 
@@ -64,29 +59,19 @@ bool cipher_open_blowfish_ofb(cipher_t *cipher) {
 
 void cipher_close(cipher_t *cipher) {
 	EVP_CIPHER_CTX_cleanup(&cipher->ctx);
-
-	if(cipher->key) {
-		free(cipher->key);
-		cipher->key = NULL;
-	}
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {
-	return cipher->keylen + cipher->blklen;
-}
-
-void cipher_get_key(const cipher_t *cipher, void *key) {
-	memcpy(key, cipher->key, cipher->keylen + cipher->blklen);
+	return cipher->cipher->key_len + cipher->cipher->iv_len;
 }
 
 bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
-	memcpy(cipher->key, key, cipher->keylen + cipher->blklen);
 	bool result;
 
 	if(encrypt)
-		result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)cipher->key, (unsigned char *)cipher->key + cipher->keylen);
+		result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, (unsigned char *)key + cipher->cipher->key_len);
 	else
-		result = EVP_DecryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)cipher->key, (unsigned char *)cipher->key + cipher->keylen);
+		result = EVP_DecryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, (unsigned char *)key + cipher->cipher->key_len);
 
 	if(result)
 		return true;
@@ -96,14 +81,12 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 }
 
 bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encrypt) {
-	memcpy(cipher->key, key + len - (size_t)cipher->keylen, cipher->keylen);
-	memcpy(cipher->key + cipher->keylen, key + len - (size_t)cipher->keylen - (size_t)cipher->blklen, cipher->blklen);
 	bool result;
 
 	if(encrypt)
-		result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)cipher->key, (unsigned char *)cipher->key + cipher->keylen);
+		result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key + len - cipher->cipher->key_len, (unsigned char *)key + len - cipher->cipher->iv_len - cipher->cipher->key_len);
 	else
-		result = EVP_DecryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)cipher->key, (unsigned char *)cipher->key + cipher->keylen);
+		result = EVP_DecryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key + len - cipher->cipher->key_len, (unsigned char *)key + len - cipher->cipher->iv_len - cipher->cipher->key_len);
 
 	if(result)
 		return true;
@@ -112,34 +95,17 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 	return false;
 }
 
-bool cipher_regenerate_key(cipher_t *cipher, bool encrypt) {
-	bool result;
-
-	RAND_pseudo_bytes((unsigned char *)cipher->key, cipher->keylen + cipher->blklen);
-
-	if(encrypt)
-		result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)cipher->key, (unsigned char *)cipher->key + cipher->keylen);
-	else
-		result = EVP_DecryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)cipher->key, (unsigned char *)cipher->key + cipher->keylen);
-
-	if(result)
-		return true;
-	
-	logger(LOG_ERR, "Error while regenerating key: %s", ERR_error_string(ERR_get_error(), NULL));
-	return false;
-}
-
 bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	if(oneshot) {
-		int len = *outlen, pad;
+		int len, pad;
 		if(EVP_EncryptInit_ex(&cipher->ctx, NULL, NULL, NULL, NULL)
-				&&EVP_EncryptUpdate(&cipher->ctx, outdata, &len, indata, inlen)
-				&& EVP_EncryptFinal(&cipher->ctx, outdata + len, &pad)) {
+				&& EVP_EncryptUpdate(&cipher->ctx, (unsigned char *)outdata, &len, indata, inlen)
+				&& EVP_EncryptFinal(&cipher->ctx, (unsigned char *)outdata + len, &pad)) {
 			*outlen = len + pad;
 			return true;
 		}
 	} else {
-		int len = *outlen;
+		int len;
 		if(EVP_EncryptUpdate(&cipher->ctx, outdata, &len, indata, inlen)) {
 			*outlen = len;
 			return true;
@@ -152,22 +118,22 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 
 bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	if(oneshot) {
-		int len = *outlen, pad;
+		int len, pad;
 		if(EVP_DecryptInit_ex(&cipher->ctx, NULL, NULL, NULL, NULL)
-				&& EVP_DecryptUpdate(&cipher->ctx, outdata, &len, indata, inlen)
-				&& EVP_DecryptFinal(&cipher->ctx, outdata + len, &pad)) {
+				&& EVP_DecryptUpdate(&cipher->ctx, (unsigned char *)outdata, &len, indata, inlen)
+				&& EVP_DecryptFinal(&cipher->ctx, (unsigned char *)outdata + len, &pad)) {
 			*outlen = len + pad;
 			return true;
 		}
 	} else {
-		int len = *outlen;
+		int len;
 		if(EVP_EncryptUpdate(&cipher->ctx, outdata, &len, indata, inlen)) {
 			*outlen = len;
 			return true;
 		}
 	}
 
-	logger(LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(LOG_ERR, "Error while decrypting: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
