@@ -198,7 +198,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	int cipher, digest, maclength, compression, keylen;
 	node_t *from, *to;
 
-	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING" %d",
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression, address, port) < 7) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,

@@ -405,14 +405,14 @@ bool recvdata(int fd, char *data, size_t len) {
 bool sendline(int fd, char *format, ...) {
 	static char buffer[4096];
 	char *p = buffer;
-	size_t blen = 0;
+	int blen = 0;
 	va_list ap;
 
 	va_start(ap, format);
 	blen = vsnprintf(buffer, sizeof buffer, format, ap);
 	va_end(ap);
 
-	if(blen < 0 || blen >= sizeof buffer)
+	if(blen < 1 || blen >= sizeof buffer)
 		return false;
 
 	buffer[blen] = '\n';
@@ -422,7 +422,7 @@ bool sendline(int fd, char *format, ...) {
 		int result = send(fd, p, blen, 0);
 		if(result == -1 && errno == EINTR)
 			continue;
-		else if(result <= 0);
+		else if(result <= 0)
 			return false;
 		p += result;
 		blen -= result;
@@ -574,7 +574,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	struct addrinfo *res = NULL;
 
 	if(getaddrinfo(host, port, &hints, &res) || !res) {
-		fprintf(stderr, "Cannot resolve %s port %s: %s", host ?: "localhost", port, strerror(errno));
+		fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, strerror(errno));
 		return 1;
 	}
 
@@ -593,7 +593,7 @@ int main(int argc, char *argv[], char *envp[]) {
 #endif
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
-		fprintf(stderr, "Cannot connect to %s port %s: %s\n", host ?: "localhost", port, sockstrerror(sockerrno));
+		fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
 		return 1;
 	}
 

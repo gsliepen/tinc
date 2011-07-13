@@ -155,7 +155,7 @@ bool send_metakey_ec(connection_t *c) {
 
 	b64encode(key, key, ECDH_SIZE + siglen);
 	
-	bool result = send_request(c, "%d %s", METAKEY, key);
+	return send_request(c, "%d %s", METAKEY, key);
 }
 
 bool send_metakey(connection_t *c) {
