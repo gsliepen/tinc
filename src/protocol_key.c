@@ -171,7 +171,7 @@ bool send_ans_key(node_t *to) {
 	to->incompression = myself->incompression;
 
 	randomize(key, keylen);
-	cipher_set_key(&to->incipher, key, true);
+	cipher_set_key(&to->incipher, key, false);
 	digest_set_key(&to->indigest, key, keylen);
 
 	bin2hex(key, key, keylen);
@@ -330,10 +330,10 @@ bool ans_key_h(connection_t *c, char *request) {
 		digest_open_by_nid(&from->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
 		from->incompression = myself->incompression;
 
-		cipher_set_key(&from->incipher, mykey, true);
+		cipher_set_key(&from->incipher, mykey, false);
 		digest_set_key(&from->indigest, mykey + mykeylen, mykeylen);
 
-		cipher_set_key(&from->outcipher, hiskey, false);
+		cipher_set_key(&from->outcipher, hiskey, true);
 		digest_set_key(&from->outdigest, hiskey + hiskeylen, hiskeylen);
 
 		// Reset sequence number and late packet window
@@ -354,7 +354,7 @@ bool ans_key_h(connection_t *c, char *request) {
 
 		/* Update our copy of the origin's packet key */
 
-		cipher_set_key(&from->outcipher, key, false);
+		cipher_set_key(&from->outcipher, key, true);
 		digest_set_key(&from->outdigest, key, keylen);
 	}
 

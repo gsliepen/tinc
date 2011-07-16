@@ -285,10 +285,10 @@ static bool metakey_ec_h(connection_t *c, const char *request) {
 
 	free(seed);
 
-	cipher_set_key(&c->incipher, mykey, true);
+	cipher_set_key(&c->incipher, mykey, false);
 	digest_set_key(&c->indigest, mykey + mykeylen, mykeylen);
 
-	cipher_set_key(&c->outcipher, hiskey, false);
+	cipher_set_key(&c->outcipher, hiskey, true);
 	digest_set_key(&c->outdigest, hiskey + hiskeylen, hiskeylen);
 
 	c->status.decryptin = true;
