@@ -29,5 +29,6 @@ typedef EC_KEY *ecdh_t;
 
 extern bool ecdh_generate_public(ecdh_t *ecdh, void *pubkey);
 extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared);
+extern void ecdh_free(ecdh_t *ecdh);
 
 #endif

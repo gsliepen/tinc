@@ -45,6 +45,53 @@
 char *myport;
 static struct event device_ev;
 
+bool node_read_ecdsa_public_key(node_t *n) {
+	if(ecdsa_active(&n->ecdsa))
+		return true;
+
+	splay_tree_t *config_tree;
+	FILE *fp;
+	char *fname;
+	char *p;
+	bool result = false;
+
+	xasprintf(&fname, "%s/hosts/%s", confbase, n->name);
+
+	init_configuration(&config_tree);
+	if(!read_config_file(config_tree, fname))
+		goto exit;
+
+	/* First, check for simple ECDSAPublicKey statement */
+
+	if(get_config_string(lookup_config(config_tree, "ECDSAPublicKey"), &p)) {
+		result = ecdsa_set_base64_public_key(&n->ecdsa, p);
+		free(p);
+		goto exit;
+	}
+
+	/* Else, check for ECDSAPublicKeyFile statement and read it */
+
+	free(fname);
+
+	if(!get_config_string(lookup_config(config_tree, "ECDSAPublicKeyFile"), &fname))
+		xasprintf(&fname, "%s/hosts/%s", confbase, n->name);
+
+	fp = fopen(fname, "r");
+
+	if(!fp) {
+		logger(LOG_ERR, "Error reading ECDSA public key file `%s': %s", fname, strerror(errno));
+		goto exit;
+	}
+
+	result = ecdsa_read_pem_public_key(&n->ecdsa, fp);
+	fclose(fp);
+
+exit:
+	exit_configuration(&config_tree);
+	free(fname);
+	return result;
+}
+
 bool read_ecdsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;

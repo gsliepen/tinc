@@ -547,7 +547,7 @@ static bool upgrade_h(connection_t *c, char *request) {
 	}
 
 	logger(LOG_INFO, "Got ECDSA public key from %s (%s), upgrading!", c->name, c->hostname);
-	append_connection_config(c, "ECDSAPublicKey", pubkey);
+	append_config_file(c->name, "ECDSAPublicKey", pubkey);
 	c->allow_request = TERMREQ;
 	return send_termreq(c);
 }

@@ -49,6 +49,7 @@ typedef struct node_t {
 	node_status_t status;
 	time_t last_req_key;
 
+	ecdsa_t ecdsa;				/* His public ECDSA key */
 	ecdh_t ecdh;				/* State for ECDH key exchange */
 
 	cipher_t incipher;                        /* Cipher for UDP packets */

@@ -145,18 +145,31 @@ bool req_key_h(connection_t *c, char *request) {
 }
 
 bool send_ans_key_ecdh(node_t *to) {
-	char key[ECDH_SIZE * 2 + 1];
+	int siglen = ecdsa_size(&myself->connection->ecdsa);
+	char key[(ECDH_SIZE + siglen) * 2 + 1];
 
-	ecdh_generate_public(&to->ecdh, key);
+	if(!ecdh_generate_public(&to->ecdh, key))
+		return false;
 
-	b64encode(key, key, ECDH_SIZE);
+	if(!ecdsa_sign(&myself->connection->ecdsa, key, ECDH_SIZE, key + ECDH_SIZE))
+		return false;
 
-	return send_request(to->nexthop->connection, "%d %s %s ECDH:%s %d %d %zu %d", ANS_KEY,
-						myself->name, to->name, key,
+	b64encode(key, key, ECDH_SIZE + siglen);
+
+	char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
+
+	if(!pubkey)
+		return false;
+
+	int result = send_request(to->nexthop->connection, "%d %s %s ECDH:%s:%s %d %d %zu %d", ANS_KEY,
+						myself->name, to->name, key, pubkey,
 						cipher_get_nid(&myself->incipher),
 						digest_get_nid(&myself->indigest),
 						digest_length(&myself->indigest),
 						myself->incompression);
+
+	free(pubkey);
+	return result;
 }
 
 bool send_ans_key(node_t *to) {
@@ -279,28 +292,53 @@ bool ans_key_h(connection_t *c, char *request) {
 	/* ECDH or old-style key exchange? */
 	
 	if(experimental && !strncmp(key, "ECDH:", 5)) {
+		char *pubkey = strchr(key + 5, ':');
+		if(pubkey)
+			*pubkey++ = 0;
+			
+		/* Check if we already have an ECDSA public key for this node.
+		 * If not, use the one from the key exchange, and store it. */
+
+		if(!node_read_ecdsa_public_key(from)) {
+			if(!pubkey) {
+				logger(LOG_ERR, "No ECDSA public key known for %s (%s), cannot verify ECDH key exchange!", from->name, from->hostname);
+				return true;
+			}
+
+			if(!ecdsa_set_base64_public_key(&from->ecdsa, pubkey))
+				return true;
+
+			append_config_file(from->name, "ECDSAPublicKey", pubkey);
+		}
+
+		int siglen = ecdsa_size(&from->ecdsa);
 		int keylen = b64decode(key + 5, key + 5, sizeof key - 5);
 
-		if(keylen != ECDH_SIZE) {
-			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
-			return false;
+		if(keylen != ECDH_SIZE + siglen) {
+			logger(LOG_ERR, "Node %s (%s) uses wrong keylength! %d != %d", from->name, from->hostname, keylen, ECDH_SIZE + siglen);
+			return true;
 		}
 
 		if(ECDH_SHARED_SIZE < cipher_keylength(&from->outcipher)) {
 			logger(LOG_ERR, "ECDH key too short for cipher of %s!", from->name);
-			return false;
+			return true;
+		}
+
+		if(!ecdsa_verify(&from->ecdsa, key + 5, ECDH_SIZE, key + 5 + ECDH_SIZE)) {
+			logger(LOG_ERR, "Possible intruder %s (%s): %s", from->name, from->hostname, "invalid ECDSA signature");
+			return true;
 		}
 
 		if(!from->ecdh) {
 			from->status.ecdh = true;
 			if(!send_ans_key(from))
-				return false;
+				return true;
 		}
 
 		char shared[ECDH_SHARED_SIZE * 2 + 1];
 
 		if(!ecdh_compute_shared(&from->ecdh, key + 5, shared))
-			return false;
+			return true;
 
 		/* Update our crypto end */
 
@@ -322,7 +360,7 @@ bool ans_key_h(connection_t *c, char *request) {
 		}
 
 		if(!prf(shared, ECDH_SHARED_SIZE, seed, strlen(seed), key, hiskeylen * 2 + mykeylen * 2))
-			return false;
+			return true;
 
 		free(seed);
 
@@ -349,7 +387,7 @@ bool ans_key_h(connection_t *c, char *request) {
 
 		if(keylen != cipher_keylength(&from->outcipher)) {
 			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
-			return false;
+			return true;
 		}
 
 		/* Update our copy of the origin's packet key */

@@ -141,6 +141,7 @@ extern void close_network_connections(void);
 extern int main_loop(void);
 extern void terminate_connection(struct connection_t *, bool);
 extern void flush_queue(struct node_t *);
+extern bool node_read_ecdsa_public_key(struct node_t *);
 extern bool read_ecdsa_public_key(struct connection_t *);
 extern bool read_rsa_public_key(struct connection_t *);
 extern void send_mtu_probe(struct node_t *);

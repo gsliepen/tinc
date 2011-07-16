@@ -400,9 +400,9 @@ bool read_connection_config(connection_t *c) {
 	return x;
 }
 
-bool append_connection_config(const connection_t *c, const char *key, const char *value) {
+bool append_config_file(const char *name, const char *key, const char *value) {
 	char *fname;
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, name);
 
 	FILE *fp = fopen(fname, "a");
 

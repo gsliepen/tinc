@@ -61,7 +61,7 @@ extern bool read_config_file(splay_tree_t *, const char *);
 extern void read_config_options(splay_tree_t *, const char *);
 extern bool read_server_config(void);
 extern bool read_connection_config(struct connection_t *);
-extern bool append_connection_config(const struct connection_t *, const char *, const char *);
+extern bool append_config_file(const char *, const char *, const char *);
 extern FILE *ask_and_open(const char *, const char *, const char *);
 extern bool is_safe_path(const char *);
 extern bool disable_old_keys(FILE *);

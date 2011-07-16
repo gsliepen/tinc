@@ -75,3 +75,10 @@ bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
 
 	return true;
 }
+
+void ecdh_free(ecdh_t *ecdh) {
+	if(*ecdh) {
+		EC_KEY_free(*ecdh);
+		*ecdh = NULL;
+	}
+}
