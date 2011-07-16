@@ -165,7 +165,7 @@ int gettimeofday(struct timeval *tv, void *tz) {
 #endif
 
 #ifndef HAVE_USLEEP
-int usleep(long usec) {
+int usleep(long long usec) {
 	struct timeval tv = {usec / 1000000, (usec / 1000) % 1000};
 	select(0, NULL, NULL, NULL, &tv);
 	return 0;
