@@ -855,6 +855,21 @@ but which would have to be forwarded by an intermediate node, are dropped instea
 When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
 
+@cindex ECDSAPrivateKeyFile
+@item ECDSAPrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/ecdsa_key.priv})
+The file in which the private ECDSA key of this tinc daemon resides.
+This is only used if ExperimentalProtocol is enabled.
+
+@cindex ExperimentalProtocol
+@item ExperimentalProtocol = <yes|no> (no) [experimental]
+When this option is enabled, experimental protocol enhancements will be used.
+Ephemeral ECDH will be used for key exchanges,
+and ECDSA will be used instead of RSA for authentication.
+When enabled, an ECDSA key must have been generated before with
+@samp{tincctl generate-ecdsa-keys}.
+The experimental protocol may change at any time,
+and there is no guarantee that tinc will run stable when it is used.
+
 @cindex Forwarding
 @item Forwarding = <off|internal|kernel> (internal) [experimental]
 This option selects the way indirect packets are forwarded.
