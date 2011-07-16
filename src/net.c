@@ -50,6 +50,7 @@ bool graph_dump = false;
 time_t now = 0;
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
+static int sleeptime = 10;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -464,18 +465,25 @@ int main_loop(void) {
 				keyexpires = now + keylifetime;
 			}
 
-			if(contradicting_del_edge > 10 && contradicting_add_edge > 10) {
-				logger(LOG_WARNING, "Possible node with same Name as us!");
+			/* Detect ADD_EDGE/DEL_EDGE storms that are caused when
+			 * two tinc daemons with the same name are on the VPN.
+			 * If so, sleep a while. If this happens multiple times
+			 * in a row, sleep longer. */
 
-				if(rand() % 3 == 0) {
-					logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
-					running = false;
-					break;
-				}
-
-				contradicting_add_edge = 0;
-				contradicting_del_edge = 0;
+			if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
+				logger(LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
+				sleep(sleeptime);
+				sleeptime *= 2;
+				if(sleeptime < 0)
+					sleeptime = 3600;
+			} else {
+				sleeptime /= 2;
+				if(sleeptime < 10)
+					sleeptime = 10;
 			}
+
+			contradicting_add_edge = 0;
+			contradicting_del_edge = 0;
 		}
 
 		if(sigalrm) {
