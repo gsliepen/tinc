@@ -39,6 +39,7 @@
 
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
+static int sleeptime = 10;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -190,18 +191,20 @@ static void timeout_handler(int fd, short events, void *event) {
 		}
 	}
 
-	if(contradicting_del_edge && contradicting_add_edge) {
-		logger(LOG_WARNING, "Possible node with same Name as us!");
-
-		if(rand() % 3 == 0) {
-			logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
-			event_loopexit(NULL);
-			return;
-		}
-
-		contradicting_add_edge = 0;
-		contradicting_del_edge = 0;
+	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
+		logger(LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
+		sleep(sleeptime);
+		sleeptime *= 2;
+		if(sleeptime < 0)
+			sleeptime = 3600;
+	} else {
+		sleeptime /= 2;
+		if(sleeptime < 10)
+			sleeptime = 10;
 	}
+
+	contradicting_add_edge = 0;
+	contradicting_del_edge = 0;
 
 	event_add(event, &(struct timeval){pingtimeout, 0});
 }
