@@ -46,14 +46,14 @@ static int charb64decode(char c) {
 		return 63;
 }
 
-int hex2bin(char *src, char *dst, int length) {
+int hex2bin(const char *src, char *dst, int length) {
 	int i;
 	for(i = 0; i < length && src[i * 2] && src[i * 2 + 1]; i++)
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 	return i;
 }
 
-int bin2hex(char *src, char *dst, int length) {
+int bin2hex(const char *src, char *dst, int length) {
 	int i;
 	for(i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
@@ -63,7 +63,7 @@ int bin2hex(char *src, char *dst, int length) {
 	return length * 2;
 }
 
-int b64decode(char *src, char *dst, int length) {
+int b64decode(const char *src, char *dst, int length) {
 	int i;
 	uint32_t triplet = 0;
 	unsigned char *udst = dst;
@@ -90,7 +90,7 @@ int b64decode(char *src, char *dst, int length) {
 	}
 }
 
-int b64encode(char *src, char *dst, int length) {
+int b64encode(const char *src, char *dst, int length) {
 	uint32_t triplet;
 	const unsigned char *usrc = src;
 	int si = length / 3 * 3;
