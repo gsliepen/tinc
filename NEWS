@@ -1,3 +1,16 @@
+Version 1.1pre2              Juli 17 2011
+
+ * .cookie files are renamed to .pid files, which are compatible with 1.0.x.
+
+ * Experimental protocol enhancements that can be enabled with the option
+   ExperimentalProtocol = yes:
+
+   * Ephemeral ECDH key exchange will be used for both the meta protocol and
+     UDP session keys.
+   * Key exchanges are signed with ECDSA.
+   * ECDSA public keys are automatically exchanged after RSA authentication if
+     nodes do not know each other's ECDSA public key yet.
+
 Version 1.1pre1              June 25 2011
 
  * Control interface allows control of a running tinc daemon. Used by:
