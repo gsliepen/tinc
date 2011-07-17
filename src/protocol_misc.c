@@ -129,7 +129,7 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	if(!send_request(c, "%d %hd", PACKET, packet->len))
 		return false;
 
-	return send_meta(c, (char *)packet->data, packet->len);
+	return send_meta(c, (char *)packet->data, packet->len) && flush_meta(c);
 }
 
 bool tcppacket_h(connection_t *c) {
