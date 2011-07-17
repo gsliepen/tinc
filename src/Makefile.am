@@ -32,8 +32,11 @@ INCLUDES = @INCLUDES@ -I$(top_builddir)
 
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
-	buffer.h cipher.h conf.h connection.h control.h control_common.h crypto.h device.h digest.h ecdh.h ecdsa.h ecdsagen.h edge.h graph.h logger.h meta.h net.h netutl.h node.h prf.h process.h \
-	protocol.h route.h rsa.h rsagen.h subnet.h tincctl.h top.h bsd/tunemu.h
+	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h \
+	protocol.h route.h subnet.h tincctl.h top.h bsd/tunemu.h
+
+nodist_noinst_HEADERS = \
+	cipher.h crypto.h ecdh.h ecdsa.h digest.h prf.h rsa.h ecdsagen.h rsagen.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 
