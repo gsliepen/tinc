@@ -504,7 +504,7 @@ static bool remove_service(void) {
 	if(!ControlService(service, SERVICE_CONTROL_STOP, &status))
 		fprintf(stderr, "Could not stop %s service: %s\n", identname, winerror(GetLastError()));
 	else
-		fprintf(stderr, "%s service stopped", identname);
+		fprintf(stderr, "%s service stopped\n", identname);
 
 	if(!DeleteService(service)) {
 		fprintf(stderr, "Could not remove %s service: %s\n", identname, winerror(GetLastError()));
