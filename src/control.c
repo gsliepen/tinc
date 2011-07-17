@@ -152,10 +152,22 @@ bool init_control(void) {
 	sockaddr_t sa;
 	socklen_t len = sizeof sa;
 
-	if(getsockname(listen_socket[0].tcp, (struct sockaddr *)&sa, &len))
+	// Make sure we have a valid address, and map 0.0.0.0 and :: to 127.0.0.1 and ::1.
+
+	if(getsockname(listen_socket[0].tcp, (struct sockaddr *)&sa, &len)) {
 		xasprintf(&localhost, "127.0.0.1 port %d", myport);
-	else
+	} else {
+		if(sa.sa.sa_family == AF_INET) {
+			if(sa.in.sin_addr.s_addr == 0)
+				sa.in.sin_addr.s_addr = htonl(0x7f000001);
+		} else if(sa.sa.sa_family == AF_INET6) {
+			static const uint8_t zero[16] = {0};
+			if(!memcmp(sa.in6.sin6_addr.s6_addr, zero, sizeof zero))
+				sa.in6.sin6_addr.s6_addr[15] = 1;
+		}
+
 		localhost = sockaddr2hostname(&sa);
+	}
 
 	fprintf(f, "%d %s %s\n", (int)getpid(), controlcookie, localhost);
 
