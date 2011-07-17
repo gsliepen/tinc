@@ -53,7 +53,7 @@ static SC_HANDLE service = NULL;
 static SERVICE_STATUS status = {0};
 static SERVICE_STATUS_HANDLE statushandle = 0;
 
-bool install_service(void) {
+static bool install_service(void) {
 	char command[4096] = "\"";
 	char **argp;
 	bool space;
@@ -109,35 +109,6 @@ bool install_service(void) {
 		logger(LOG_WARNING, "Could not start %s service: %s", identname, winerror(GetLastError()));
 	else
 		logger(LOG_INFO, "%s service started", identname);
-
-	return true;
-}
-
-bool remove_service(void) {
-	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-	if(!manager) {
-		logger(LOG_ERR, "Could not open service manager: %s", winerror(GetLastError()));
-		return false;
-	}
-
-	service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
-
-	if(!service) {
-		logger(LOG_ERR, "Could not open %s service: %s", identname, winerror(GetLastError()));
-		return false;
-	}
-
-	if(!ControlService(service, SERVICE_CONTROL_STOP, &status))
-		logger(LOG_ERR, "Could not stop %s service: %s", identname, winerror(GetLastError()));
-	else
-		logger(LOG_INFO, "%s service stopped", identname);
-
-	if(!DeleteService(service)) {
-		logger(LOG_ERR, "Could not remove %s service: %s", identname, winerror(GetLastError()));
-		return false;
-	}
-
-	logger(LOG_INFO, "%s service removed", identname);
 
 	return true;
 }

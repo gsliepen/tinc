@@ -482,6 +482,41 @@ void pcap(int fd, FILE *out) {
 	}
 }
 
+#ifdef HAVE_MINGW
+static bool remove_service(void) {
+	SC_HANDLE manager = NULL;
+	SC_HANDLE service = NULL;
+	SERVICE_STATUS status = {0};
+
+	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if(!manager) {
+		fprintf(stderr, "Could not open service manager: %s\n", winerror(GetLastError()));
+		return false;
+	}
+
+	service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
+
+	if(!service) {
+		fprintf(stderr, "Could not open %s service: %s\n", identname, winerror(GetLastError()));
+		return false;
+	}
+
+	if(!ControlService(service, SERVICE_CONTROL_STOP, &status))
+		fprintf(stderr, "Could not stop %s service: %s\n", identname, winerror(GetLastError()));
+	else
+		fprintf(stderr, "%s service stopped", identname);
+
+	if(!DeleteService(service)) {
+		fprintf(stderr, "Could not remove %s service: %s\n", identname, winerror(GetLastError()));
+		return false;
+	}
+
+	fprintf(stderr, "%s service removed\n", identname);
+
+	return true;
+}
+#endif
+
 int main(int argc, char *argv[], char *envp[]) {
 	int fd;
 	int result;
@@ -622,11 +657,16 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	if(!strcasecmp(argv[optind], "stop")) {
+#ifndef HAVE_MINGW
 		sendline(fd, "%d %d", CONTROL, REQ_STOP);
 		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
 			fprintf(stderr, "Could not stop tinc daemon\n");
 			return 1;
 		}
+#else
+		if(!remove_service())
+			return 1;
+#endif
 		return 0;
 	}
 
