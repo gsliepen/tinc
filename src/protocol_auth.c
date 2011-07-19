@@ -110,6 +110,9 @@ bool id_h(connection_t *c, char *request) {
 		return send_ack(c);
 	}
 
+	if(!experimental)
+		c->protocol_minor = 0;
+
 	if(!c->config_tree) {
 		init_configuration(&c->config_tree);
 
@@ -123,12 +126,9 @@ bool id_h(connection_t *c, char *request) {
 			if(!read_ecdsa_public_key(c))
 				return false;
 	} else {
-		if(!ecdsa_active(&c->ecdsa))
+		if(c->protocol_minor && !ecdsa_active(&c->ecdsa))
 			c->protocol_minor = 1;
 	}
-
-	if(!experimental)
-		c->protocol_minor = 0;
 
 	c->allow_request = METAKEY;
 
