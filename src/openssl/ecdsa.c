@@ -38,7 +38,7 @@ bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 
 	if(!o2i_ECPublicKey(ecdsa, &ppubkey, len)) {
 		logger(LOG_DEBUG, "o2i_ECPublicKey failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		abort();
+		return false;
 	}
 
 	return true;

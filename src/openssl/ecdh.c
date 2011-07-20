@@ -32,19 +32,19 @@ bool ecdh_generate_public(ecdh_t *ecdh, void *pubkey) {
 	*ecdh = EC_KEY_new_by_curve_name(NID_secp521r1);
 	if(!EC_KEY_generate_key(*ecdh)) {
 		logger(LOG_ERR, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		abort();
+		return false;
 	}
 	
 	const EC_POINT *point = EC_KEY_get0_public_key(*ecdh);
 	if(!point) {
 		logger(LOG_ERR, "Getting public key failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		abort();
+		return false;
 	}
 
 	size_t result = EC_POINT_point2oct(EC_KEY_get0_group(*ecdh), point, POINT_CONVERSION_COMPRESSED, pubkey, ECDH_SIZE, NULL);
 	if(!result) {
 		logger(LOG_ERR, "Converting EC_POINT to binary failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		abort();
+		return false;
 	}
 
 	return true;
@@ -54,13 +54,13 @@ bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
 	EC_POINT *point = EC_POINT_new(EC_KEY_get0_group(*ecdh));
 	if(!point) {
 		logger(LOG_ERR, "EC_POINT_new() failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		abort();
+		return false;
 	}
 
 	int result = EC_POINT_oct2point(EC_KEY_get0_group(*ecdh), point, pubkey, ECDH_SIZE, NULL);
 	if(!result) {
 		logger(LOG_ERR, "Converting binary to EC_POINT failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		abort();
+		return false;
 	}
 
 	result = ECDH_compute_key(shared, ECDH_SIZE, point, *ecdh, NULL);
