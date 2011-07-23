@@ -472,7 +472,7 @@ int main_loop(void) {
 
 			if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
 				logger(LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
-				sleep(sleeptime);
+				usleep(sleeptime * 1000000LL);
 				sleeptime *= 2;
 				if(sleeptime < 0)
 					sleeptime = 3600;

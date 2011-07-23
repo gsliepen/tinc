@@ -42,7 +42,7 @@ extern int gettimeofday(struct timeval *, void *);
 #endif
 
 #ifndef HAVE_USLEEP
-extern int usleep(long);
+extern int usleep(long long);
 #endif
 
 #endif							/* __DROPIN_H__ */
