@@ -1,3 +1,10 @@
+Version 1.0.16               July 23 2011
+
+ * Fixed a performance issue with TCP communication under Windows.
+
+ * Fixed code that, during network outages, would cause tinc to exit when it
+   thought two nodes with identical Names were on the VPN.
+
 Version 1.0.15               June 24 2011
 
  * Improved logging to file.
