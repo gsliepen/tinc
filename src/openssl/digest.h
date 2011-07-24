@@ -39,6 +39,7 @@ extern bool digest_create(struct digest *, const void *indata, size_t inlen, voi
 extern bool digest_verify(struct digest *, const void *indata, size_t inlen, const void *digestdata);
 extern bool digest_set_key(struct digest *, const void *key, size_t len);
 extern int digest_get_nid(const struct digest *);
+extern size_t digest_keylength(const struct digest *);
 extern size_t digest_length(const struct digest *);
 extern bool digest_active(const struct digest *);
 

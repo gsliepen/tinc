@@ -1,6 +1,6 @@
 ## Produce this file with automake to get Makefile.in
 
-sbin_PROGRAMS = tincd tincctl
+sbin_PROGRAMS = tincd tincctl sptps_test
 
 EXTRA_DIST = linux bsd solaris cygwin mingw raw_socket uml_socket openssl gcrypt
 
@@ -19,6 +19,10 @@ tincctl_SOURCES = \
 
 nodist_tincctl_SOURCES = \
 	ecdsagen.c rsagen.c
+
+sptps_test_SOURCES = \
+	logger.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c \
+	sptps.c sptps_test.c
 
 if TUNEMU
 tincd_SOURCES += bsd/tunemu.c

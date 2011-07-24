@@ -20,6 +20,6 @@
 #ifndef __TINC_PRF_H__
 #define __TINC_PRF_H__
 
-extern bool prf(char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen);
+extern bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen);
 
 #endif

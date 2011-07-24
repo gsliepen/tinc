@@ -26,7 +26,7 @@
    We use SHA512 and Whirlpool instead of MD5 and SHA1.
  */
 
-static bool prf_xor(int nid, char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
+static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
 	digest_t digest;
 	
 	if(!digest_open_by_nid(&digest, nid, -1))
@@ -65,7 +65,7 @@ static bool prf_xor(int nid, char *secret, size_t secretlen, char *seed, size_t 
 	return true;
 }
 
-bool prf(char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
+bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
 	/* Split secret in half, generate outlen bits with two different hash algorithms,
 	   and XOR the results. */
 

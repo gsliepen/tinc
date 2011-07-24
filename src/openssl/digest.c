@@ -115,6 +115,10 @@ int digest_get_nid(const digest_t *digest) {
 	return digest->digest ? digest->digest->type : 0;
 }
 
+size_t digest_keylength(const digest_t *digest) {
+	return digest->digest->md_size;
+}
+
 size_t digest_length(const digest_t *digest) {
 	return digest->maclength;
 }
