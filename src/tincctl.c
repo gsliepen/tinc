@@ -568,9 +568,26 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	if(!strcasecmp(argv[optind], "start")) {
-		argv[optind] = NULL;
-		execve(SBINDIR "/tincd", argv, envp);
-		fprintf(stderr, "Could not start tincd: %s", strerror(errno));
+		int i, j;
+		char *c;
+		char *slash = strrchr(argv[0], '/');
+#ifdef HAVE_MINGW
+		if ((c = strrchr(argv[0], '\\')) > slash)
+			slash = c;
+#endif
+		if (slash++) {
+			c = xmalloc((slash - argv[0]) + sizeof("tincd"));
+			sprintf(c, "%.*stincd", slash - argv[0], argv[0]);
+		}
+		else
+			c = "tincd";
+		argv[0] = c;
+		for(i = j = 1; argv[i]; ++i)
+			if (i != optind && strcmp(argv[i], "--") != 0)
+				argv[j++] = argv[i];
+		argv[j] = NULL;
+		execve(c, argv, envp);
+		fprintf(stderr, "Could not start %s: %s\n", c, strerror(errno));
 		return 1;
 	}
 
