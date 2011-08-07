@@ -516,7 +516,7 @@ static bool remove_service(void) {
 }
 #endif
 
-int main(int argc, char *argv[], char *envp[]) {
+int main(int argc, char *argv[]) {
 	int fd;
 	int result;
 	char host[128];
@@ -586,7 +586,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			if (i != optind && strcmp(argv[i], "--") != 0)
 				argv[j++] = argv[i];
 		argv[j] = NULL;
-		execve(c, argv, envp);
+		execvp(c, argv);
 		fprintf(stderr, "Could not start %s: %s\n", c, strerror(errno));
 		return 1;
 	}
