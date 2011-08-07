@@ -76,7 +76,7 @@ static void usage(bool status) {
 				"  start                      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
-				"  reload                     Reload configuration of running tincd.\n"
+				"  reload                     Partially reload configuration of running tincd.\n"
 				"  pid                        Show PID of currently running tincd.\n"
 				"  generate-keys [bits]       Generate new RSA and ECDSA public/private keypairs.\n"
 				"  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
@@ -90,7 +90,6 @@ static void usage(bool status) {
 				"  purge                      Purge unreachable nodes\n"
 				"  debug N                    Set debug level\n"
 				"  retry                      Retry all outgoing connections\n"
-				"  reload                     Partial reload of configuration\n"
 				"  disconnect NODE            Close meta connection with NODE\n"
 #ifdef HAVE_CURSES
 				"  top                        Show real-time statistics\n"
