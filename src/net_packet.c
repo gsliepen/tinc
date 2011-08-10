@@ -570,11 +570,6 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	static time_t last_hard_try = 0;
 	time_t now = time(NULL);
 
-	if(last_hard_try == now)
-		return NULL;
-	else
-		last_hard_try = now;
-
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 
