@@ -116,7 +116,7 @@ bool read_rsa_public_key(connection_t *c) {
 	if(!fp) {
 		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
 		free(fname);
-		return;
+		return false;
 	}
 
 	c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
@@ -134,7 +134,7 @@ bool read_rsa_public_key(connection_t *c) {
 	if(!fp) {
 		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
 		free(fname);
-		return;
+		return false;
 	}
 
 	c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
