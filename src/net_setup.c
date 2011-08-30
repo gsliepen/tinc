@@ -113,11 +113,14 @@ bool read_rsa_public_key(connection_t *c) {
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
-	if(fp) {
-		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
-		fclose(fp);
+	if(!fp) {
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
+		free(fname);
+		return;
 	}
 
+	c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+	fclose(fp);
 	free(fname);
 
 	if(c->rsa_key)
@@ -128,12 +131,15 @@ bool read_rsa_public_key(connection_t *c) {
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
-	if(fp) {
-		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-//		RSA_blinding_on(c->rsa_key, NULL);
-		fclose(fp);
+	if(!fp) {
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
+		free(fname);
+		return;
 	}
 
+	c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+//	RSA_blinding_on(c->rsa_key, NULL);
+	fclose(fp);
 	free(fname);
 
 	if(c->rsa_key)
