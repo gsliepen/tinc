@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 
 	while(true) {
-		char buf[4095];
+		char buf[65535] = "";
 
 		struct pollfd fds[2];
 		fds[0].fd = 0;
@@ -139,7 +139,12 @@ int main(int argc, char *argv[]) {
 			}
 			if(len == 0)
 				break;
-			if(!send_record(&s, 0, buf, len))
+			if(buf[0] == '^')
+				send_record(&s, SPTPS_HANDSHAKE, NULL, 0);
+			else if(buf[0] == '$')
+				force_kex(&s);
+			else
+			if(!send_record(&s, buf[0] == '!' ? 1 : 0, buf, buf[0] == '\n' ? 0 : buf[0] == '*' ? sizeof buf : len))
 				return 1;
 		}
 
