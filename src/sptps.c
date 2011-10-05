@@ -30,12 +30,34 @@
 char *logfilename;
 #include "utils.c"
 
+/*
+   Nonce MUST be exchanged first (done)
+   Signatures MUST be done over both nonces, to guarantee the signature is fresh
+   Otherwise: if ECDHE key of one side is compromised, it can be reused!
+
+   Add explicit tag to beginning of structure to distinguish the client and server when signing. (done)
+
+   Sign all handshake messages up to ECDHE kex with long-term public keys. (done)
+
+   HMACed KEX finished message to prevent downgrade attacks and prove you have the right key material (done by virtue of ECDSA over the whole ECDHE exchange?)
+
+   Explicit close message needs to be added.
+
+   Maybe do add some alert messages to give helpful error messages? Not more than TLS sends.
+
+   Use counter mode instead of OFB.
+
+   Make sure ECC operations are fixed time (aka prevent side-channel attacks).
+*/
+
+// Log an error message.
 static bool error(sptps_t *s, int s_errno, const char *msg) {
 	fprintf(stderr, "SPTPS error: %s\n", msg);
 	errno = s_errno;
 	return false;
 }
 
+// Send a record (private version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
 	char plaintext[len + 23];
 	char ciphertext[len + 19];
@@ -51,7 +73,7 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 	// Add plaintext (TODO: avoid unnecessary copy)
 	memcpy(plaintext + 7, data, len);
 
-	if(s->state) {
+	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
 		if(!digest_create(&s->outdigest, plaintext, len + 7, plaintext + 7 + len))
 			return false;
@@ -66,46 +88,66 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 	}
 }
 
+// Send an application record.
 bool send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
 	// Sanity checks: application cannot send data before handshake is finished,
 	// and only record types 0..127 are allowed.
-	if(!s->state)
+	if(!s->outstate)
 		return error(s, EINVAL, "Handshake phase not finished yet");
 
-	if(type & 128)
+	if(type >= SPTPS_HANDSHAKE)
 		return error(s, EINVAL, "Invalid application record type");
 
 	return send_record_priv(s, type, data, len);
 }
 
+// Send a Key EXchange record, containing a random nonce and an ECDHE public key.
 static bool send_kex(sptps_t *s) {
 	size_t keylen = ECDH_SIZE;
-	size_t siglen = ecdsa_size(&s->mykey);
-	char data[32 + keylen + siglen];
 
-	// Create a random nonce.
-	s->myrandom = realloc(s->myrandom, 32);
-	if(!s->myrandom)
+	// Make room for our KEX message, which we will keep around since send_sig() needs it.
+	s->mykex = realloc(s->mykex, 1 + 32 + keylen);
+	if(!s->mykex)
 		return error(s, errno, strerror(errno));
 
-	randomize(s->myrandom, 32);
-	memcpy(data, s->myrandom, 32);
+	// Set version byte to zero.
+	s->mykex[0] = SPTPS_VERSION;
+
+	// Create a random nonce.
+	randomize(s->mykex + 1, 32);
 
 	// Create a new ECDH public key.
-	if(!ecdh_generate_public(&s->ecdh, data + 32))
+	if(!ecdh_generate_public(&s->ecdh, s->mykex + 1 + 32))
 		return false;
 
-	// Sign the former.
-	if(!ecdsa_sign(&s->mykey, data, 32 + keylen, data + 32 + keylen))
-		return false;
-
-	// Send the handshake record.
-	return send_record_priv(s, 128, data, sizeof data);
+	return send_record_priv(s, SPTPS_HANDSHAKE, s->mykex, 1 + 32 + keylen);
 }
 
-static bool generate_key_material(sptps_t *s, const char *shared, size_t len, const char *hisrandom) {
+// Send a SIGnature record, containing an ECDSA signature over both KEX records.
+static bool send_sig(sptps_t *s) {
+	size_t keylen = ECDH_SIZE;
+	size_t siglen = ecdsa_size(&s->mykey);
+
+	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
+	char msg[(1 + 32 + keylen) * 2 + 1];
+	char sig[siglen];
+
+	msg[0] = s->initiator;
+	memcpy(msg + 1, s->mykex, 1 + 32 + keylen);
+	memcpy(msg + 2 + 32 + keylen, s->hiskex, 1 + 32 + keylen);
+
+	// Sign the result.
+	if(!ecdsa_sign(&s->mykey, msg, sizeof msg, sig))
+		return false;
+
+	// Send the SIG exchange record.
+	return send_record_priv(s, SPTPS_HANDSHAKE, sig, sizeof sig);
+}
+
+// Generate key material from the shared secret created from the ECDHE key exchange.
+static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	// Initialise cipher and digest structures if necessary
-	if(!s->state) {
+	if(!s->outstate) {
 		bool result
 			=  cipher_open_by_name(&s->incipher, "aes-256-ofb")
 			&& cipher_open_by_name(&s->outcipher, "aes-256-ofb")
@@ -126,11 +168,11 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len, co
 	char seed[s->labellen + 64 + 13];
 	strcpy(seed, "key expansion");
 	if(s->initiator) {
-		memcpy(seed + 13, hisrandom, 32);
-		memcpy(seed + 45, s->myrandom, 32);
+		memcpy(seed + 13, s->mykex + 1, 32);
+		memcpy(seed + 45, s->hiskex + 1, 32);
 	} else {
-		memcpy(seed + 13, s->myrandom, 32);
-		memcpy(seed + 45, hisrandom, 32);
+		memcpy(seed + 13, s->hiskex + 1, 32);
+		memcpy(seed + 45, s->mykex + 1, 32);
 	}
 	memcpy(seed + 78, s->label, s->labellen);
 
@@ -141,10 +183,12 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len, co
 	return true;
 }
 
+// Send an ACKnowledgement record.
 static bool send_ack(sptps_t *s) {
-	return send_record_priv(s, 128, "", 0);
+	return send_record_priv(s, SPTPS_HANDSHAKE, "", 0);
 }
 
+// Receive an ACKnowledgement record.
 static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 	if(len)
 		return false;
@@ -153,33 +197,58 @@ static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 	return error(s, ENOSYS, "receive_ack() not completely implemented yet");
 }
 
+// Receive a Key EXchange record, respond by sending a SIG record.
 static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
+	// Verify length of the HELLO record
+	if(len != 1 + 32 + ECDH_SIZE)
+		return error(s, EIO, "Invalid KEX record length");
+
+	// Ignore version number for now.
+
+	// Make a copy of the KEX message, send_sig() and receive_sig() need it
+	s->hiskex = realloc(s->hiskex, len);
+	if(!s->hiskex)
+		return error(s, errno, strerror(errno));
+
+	memcpy(s->hiskex, data, len);
+
+	return send_sig(s);
+}
+
+// Receive a SIGnature record, verify it, if it passed, compute the shared secret and calculate the session keys.
+static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	size_t keylen = ECDH_SIZE;
 	size_t siglen = ecdsa_size(&s->hiskey);
 
 	// Verify length of KEX record.
-	if(len != 32 + keylen + siglen)
+	if(len != siglen)
 		return error(s, EIO, "Invalid KEX record length");
 
+	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
+	char msg[(1 + 32 + keylen) * 2 + 1];
+
+	msg[0] = !s->initiator;
+	memcpy(msg + 1, s->hiskex, 1 + 32 + keylen);
+	memcpy(msg + 2 + 32 + keylen, s->mykex, 1 + 32 + keylen);
+
 	// Verify signature.
-	if(!ecdsa_verify(&s->hiskey, data, 32 + keylen, data + 32 + keylen))
+	if(!ecdsa_verify(&s->hiskey, msg, sizeof msg, data))
 		return false;
 
 	// Compute shared secret.
 	char shared[ECDH_SHARED_SIZE];
-	if(!ecdh_compute_shared(&s->ecdh, data + 32, shared))
+	if(!ecdh_compute_shared(&s->ecdh, s->hiskex + 1 + 32, shared))
 		return false;
 
 	// Generate key material from shared secret.
-	if(!generate_key_material(s, shared, sizeof shared, data))
+	if(!generate_key_material(s, shared, sizeof shared))
 		return false;
 
 	// Send cipher change record if necessary
-	if(s->state)
-		if(!send_ack(s))
-			return false;
+	//if(s->outstate && !send_ack(s))
+	//	return false;
 
-	// TODO: set cipher/digest keys
+	// TODO: only set new keys after ACK has been set/received
 	if(s->initiator) {
 		bool result
 			=  cipher_set_key(&s->incipher, s->key, false)
@@ -198,39 +267,56 @@ static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
 			return false;
 	}
 
+	s->outstate = true;
+	s->instate = true;
+
 	return true;
 }
 
+// Force another Key EXchange (for testing purposes).
+bool force_kex(sptps_t *s) {
+	if(!s->outstate || s->state != SPTPS_SECONDARY_KEX)
+		return error(s, EINVAL, "Cannot force KEX in current state");
+
+	s->state = SPTPS_KEX;
+	return send_kex(s);
+}
+
+// Receive a handshake record.
 static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 	// Only a few states to deal with handshaking.
+	fprintf(stderr, "Received handshake message, current state %d\n", s->state);
 	switch(s->state) {
-		case 0:
-			// We have sent our public ECDH key, we expect our peer to sent one as well.
-			if(!receive_kex(s, data, len))
-				return false;
-			s->state = 1;
-			return true;
-		case 1:
-			// We receive a secondary key exchange request, first respond by sending our own public ECDH key.
+		case SPTPS_SECONDARY_KEX:
+			// We receive a secondary KEX request, first respond by sending our own.
 			if(!send_kex(s))
 				return false;
-		case 2:
-			// If we already sent our secondary public ECDH key, we expect the peer to send his.
+		case SPTPS_KEX:
+			// We have sent our KEX request, we expect our peer to sent one as well.
 			if(!receive_kex(s, data, len))
 				return false;
-			s->state = 3;
+			s->state = SPTPS_SIG;
 			return true;
-		case 3:
-			// We expect an empty handshake message to indicate transition to the new keys.
+		case SPTPS_SIG:
+			// If we already sent our secondary public ECDH key, we expect the peer to send his.
+			if(!receive_sig(s, data, len))
+				return false;
+			// s->state = SPTPS_ACK;
+			s->state = SPTPS_SECONDARY_KEX;
+			return true;
+		case SPTPS_ACK:
+			// We expect a handshake message to indicate transition to the new keys.
 			if(!receive_ack(s, data, len))
 				return false;
-			s->state = 1;
+			s->state = SPTPS_SECONDARY_KEX;
 			return true;
+		// TODO: split ACK into a VERify and ACK?
 		default:
 			return error(s, EIO, "Invalid session state");
 	}
 }
 
+// Receive incoming data. Check if it contains a complete record, if so, handle it.
 bool receive_data(sptps_t *s, const char *data, size_t len) {
 	while(len) {
 		// First read the 2 length bytes.
@@ -239,7 +325,7 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 			if(toread > len)
 				toread = len;
 
-			if(s->state) {
+			if(s->instate) {
 				if(!cipher_decrypt(&s->incipher, data, toread, s->inbuf + s->buflen, NULL, false))
 					return false;
 			} else {
@@ -275,11 +361,11 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 		uint16_t reclen;
 		memcpy(&reclen, s->inbuf + 4, 2);
 		reclen = htons(reclen);
-		size_t toread = reclen + (s->state ? 23UL : 7UL) - s->buflen;
+		size_t toread = reclen + (s->instate ? 23UL : 7UL) - s->buflen;
 		if(toread > len)
 			toread = len;
 
-		if(s->state) {
+		if(s->instate) {
 			if(!cipher_decrypt(&s->incipher, data, toread, s->inbuf + s->buflen, NULL, false))
 				return false;
 		} else {
@@ -291,21 +377,21 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 		data += toread;
 
 		// If we don't have a whole record, exit.
-		if(s->buflen < reclen + (s->state ? 23UL : 7UL))
+		if(s->buflen < reclen + (s->instate ? 23UL : 7UL))
 			return true;
 
 		// Check HMAC.
-		if(s->state)
+		if(s->instate)
 			if(!digest_verify(&s->indigest, s->inbuf, reclen + 7UL, s->inbuf + reclen + 7UL))
 				error(s, EIO, "Invalid HMAC");
 
 		uint8_t type = s->inbuf[6];
 
 		// Handle record.
-		if(type < 128) {
+		if(type < SPTPS_HANDSHAKE) {
 			if(!s->receive_record(s->handle, type, s->inbuf + 7, reclen))
 				return false;
-		} else if(type == 128) {
+		} else if(type == SPTPS_HANDSHAKE) {
 			if(!receive_handshake(s, s->inbuf + 7, reclen))
 				return false;
 		} else {
@@ -318,6 +404,7 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 	return true;
 }
 
+// Start a SPTPS session.
 bool start_sptps(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
 	// Initialise struct sptps
 	memset(s, 0, sizeof *s);
@@ -344,14 +431,17 @@ bool start_sptps(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_
 	s->receive_record = receive_record;
 
 	// Do first KEX immediately
+	s->state = SPTPS_KEX;
 	return send_kex(s);
 }
 
+// Stop a SPTPS session.
 bool stop_sptps(sptps_t *s) {
 	// Clean up any resources.
 	ecdh_free(&s->ecdh);
 	free(s->inbuf);
-	free(s->myrandom);
+	free(s->mykex);
+	free(s->hiskex);
 	free(s->key);
 	free(s->label);
 	return true;

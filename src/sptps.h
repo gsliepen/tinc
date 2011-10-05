@@ -24,10 +24,13 @@
 #include "ecdh.h"
 #include "ecdsa.h"
 
-#define STATE_FIRST_KEX 0 // Waiting for peer's ECDHE pubkey
-#define STATE_NORMAL 1
-#define STATE_WAIT_KEX 2 // Waiting for peer's ECDHE pubkey
-#define STATE_WAIT_ACK 3 // Waiting for peer's acknowledgement of pubkey reception
+#define SPTPS_KEX 0
+#define SPTPS_SECONDARY_KEX 1 // Waiting for peer's ECDHE pubkey
+#define SPTPS_SIG 2 // Waiting for peer's ECDHE pubkey
+#define SPTPS_ACK 3 // Waiting for peer's acknowledgement of pubkey reception
+
+#define SPTPS_HANDSHAKE 128
+#define SPTPS_VERSION 128
 
 typedef bool (*send_data_t)(void *handle, const char *data, size_t len);
 typedef bool (*receive_record_t)(void *handle, uint8_t type, const char *data, uint16_t len);
@@ -39,10 +42,12 @@ typedef struct sptps {
 	char *inbuf;
 	size_t buflen;
 
+	bool instate;
 	cipher_t incipher;
 	digest_t indigest;
 	uint32_t inseqno;
 
+	bool outstate;
 	cipher_t outcipher;
 	digest_t outdigest;
 	uint32_t outseqno;
@@ -51,7 +56,8 @@ typedef struct sptps {
 	ecdsa_t hiskey;
 	ecdh_t ecdh;
 
-	char *myrandom;
+	char *mykex;
+	char *hiskex;
 	char *key;
 	char *label;
 	size_t labellen;
@@ -65,3 +71,4 @@ extern bool start_sptps(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey,
 extern bool stop_sptps(sptps_t *s);
 extern bool send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
 extern bool receive_data(sptps_t *s, const char *data, size_t len);
+extern bool force_kex(sptps_t *s);
