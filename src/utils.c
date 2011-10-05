@@ -66,7 +66,7 @@ int bin2hex(const char *src, char *dst, int length) {
 int b64decode(const char *src, char *dst, int length) {
 	int i;
 	uint32_t triplet = 0;
-	unsigned char *udst = dst;
+	unsigned char *udst = (unsigned char *)dst;
 
 	for(i = 0; i < length / 3 * 4 && src[i]; i++) {
 		triplet |= charb64decode(src[i]) << (6 * (i & 3));
@@ -92,7 +92,7 @@ int b64decode(const char *src, char *dst, int length) {
 
 int b64encode(const char *src, char *dst, int length) {
 	uint32_t triplet;
-	const unsigned char *usrc = src;
+	const unsigned char *usrc = (unsigned char *)src;
 	int si = length / 3 * 3;
 	int di = length / 3 * 4;
 
