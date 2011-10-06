@@ -26,6 +26,12 @@
 #include "logger.h"
 #include "xalloc.h"
 
+typedef struct cipher_counter {
+	unsigned char counter[EVP_MAX_IV_LENGTH];
+	unsigned char block[EVP_MAX_IV_LENGTH];
+	int n;
+} cipher_counter_t;
+
 static bool cipher_open(cipher_t *cipher) {
 	EVP_CIPHER_CTX_init(&cipher->ctx);
 
@@ -59,10 +65,14 @@ bool cipher_open_blowfish_ofb(cipher_t *cipher) {
 
 void cipher_close(cipher_t *cipher) {
 	EVP_CIPHER_CTX_cleanup(&cipher->ctx);
+	if(cipher->counter) {
+		free(cipher->counter);
+		cipher->counter = 0;
+	}
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {
-	return cipher->cipher->key_len + cipher->cipher->iv_len;
+	return cipher->cipher->key_len + cipher->cipher->block_size;
 }
 
 bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
@@ -94,6 +104,57 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 	logger(LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
+
+bool cipher_set_counter_key(cipher_t *cipher, void *key) {
+	int result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, NULL);
+	if(!result) {
+		logger(LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
+
+	if(!cipher->counter)
+		cipher->counter = xmalloc_and_zero(sizeof *cipher->counter);
+	else
+		cipher->counter->n = 0;
+
+	memcpy(cipher->counter->counter, (unsigned char *)key + cipher->cipher->key_len, cipher->cipher->block_size);
+
+	return true;
+}
+
+bool cipher_counter_xor(cipher_t *cipher, const void *indata, size_t inlen, void *outdata) {
+	if(!cipher->counter) {
+		logger(LOG_ERR, "Counter not initialized");
+		return false;
+	}
+
+	const unsigned char *in = indata;
+	unsigned char *out = outdata;
+
+	while(inlen--) {
+		// Encrypt the new counter value if we need it 
+		if(!cipher->counter->n) {
+			int len;
+			if(!EVP_EncryptUpdate(&cipher->ctx, cipher->counter->block, &len, cipher->counter->counter, cipher->cipher->block_size)) {
+				logger(LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+				return false;
+			}
+
+			// Increase the counter value
+			for(int i = 0; i < cipher->cipher->block_size; i++)
+				if(++cipher->counter->counter[i])
+					break;
+		}
+
+		*out++ = *in++ ^ cipher->counter->counter[cipher->counter->n++];
+
+		if(cipher->counter->n >= cipher->cipher->block_size)
+			cipher->counter->n = 0;
+	}
+
+	return true;
+}
+
 
 bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	if(oneshot) {

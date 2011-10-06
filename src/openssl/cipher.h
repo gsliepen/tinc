@@ -29,6 +29,7 @@
 typedef struct cipher {
 	EVP_CIPHER_CTX ctx;
 	const EVP_CIPHER *cipher;
+	struct cipher_counter *counter;
 } cipher_t;
 
 extern bool cipher_open_by_name(cipher_t *, const char *);
@@ -38,8 +39,10 @@ extern void cipher_close(cipher_t *);
 extern size_t cipher_keylength(const cipher_t *);
 extern bool cipher_set_key(cipher_t *, void *, bool);
 extern bool cipher_set_key_from_rsa(cipher_t *, void *, size_t, bool);
+extern bool cipher_set_counter_key(cipher_t *, void *);
 extern bool cipher_encrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
 extern bool cipher_decrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
+extern bool cipher_counter_xor(cipher_t *, const void *indata, size_t inlen, void *outdata);
 extern int cipher_get_nid(const cipher_t *);
 extern bool cipher_active(const cipher_t *);
 
