@@ -24,13 +24,18 @@
 #include "ecdh.h"
 #include "ecdsa.h"
 
-#define SPTPS_KEX 0
-#define SPTPS_SECONDARY_KEX 1 // Waiting for peer's ECDHE pubkey
-#define SPTPS_SIG 2 // Waiting for peer's ECDHE pubkey
-#define SPTPS_ACK 3 // Waiting for peer's acknowledgement of pubkey reception
+#define SPTPS_VERSION 0
 
-#define SPTPS_HANDSHAKE 128
-#define SPTPS_VERSION 128
+// Record types
+#define SPTPS_HANDSHAKE 128   // Key exchange and authentication
+#define SPTPS_ALERT 129       // Warning or error messages
+#define SPTPS_CLOSE 130       // Application closed the connection
+
+// Key exchange states
+#define SPTPS_KEX 0           // Waiting for the first Key EXchange record
+#define SPTPS_SECONDARY_KEX 1 // Ready to receive a secondary Key EXchange record
+#define SPTPS_SIG 2           // Waiting for a SIGnature record
+#define SPTPS_ACK 3           // Waiting for an ACKnowledgement record
 
 typedef bool (*send_data_t)(void *handle, const char *data, size_t len);
 typedef bool (*receive_record_t)(void *handle, uint8_t type, const char *data, uint16_t len);

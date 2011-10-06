@@ -191,10 +191,27 @@ static bool send_ack(sptps_t *s) {
 // Receive an ACKnowledgement record.
 static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 	if(len)
-		return false;
+		return error(s, EIO, "Invalid ACK record length");
 
-	// TODO: set cipher/digest keys
-	return error(s, ENOSYS, "receive_ack() not completely implemented yet");
+	if(s->initiator) {
+		bool result
+			= cipher_set_counter_key(&s->incipher, s->key)
+			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->incipher), digest_keylength(&s->indigest));
+		if(!result)
+			return false;
+	} else {
+		bool result
+			= cipher_set_counter_key(&s->incipher, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest))
+			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest) + cipher_keylength(&s->incipher), digest_keylength(&s->indigest));
+		if(!result)
+			return false;
+	}
+
+	free(s->key);
+	s->key = NULL;
+	s->instate = true;
+
+	return true;
 }
 
 // Receive a Key EXchange record, respond by sending a SIG record.
@@ -244,31 +261,32 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	if(!generate_key_material(s, shared, sizeof shared))
 		return false;
 
-	// Send cipher change record if necessary
-	//if(s->outstate && !send_ack(s))
-	//	return false;
+	free(s->mykex);
+	free(s->hiskex);
+
+	s->mykex = NULL;
+	s->hiskex = NULL;
+
+	// Send cipher change record
+	if(!send_ack(s))
+		return false;
 
 	// TODO: only set new keys after ACK has been set/received
 	if(s->initiator) {
 		bool result
-			=  cipher_set_counter_key(&s->incipher, s->key)
-			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->incipher), digest_keylength(&s->indigest))
-			&& cipher_set_counter_key(&s->outcipher, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest))
+			= cipher_set_counter_key(&s->outcipher, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest))
 			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest) + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest));
 		if(!result)
 			return false;
 	} else {
 		bool result
 			=  cipher_set_counter_key(&s->outcipher, s->key)
-			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest))
-			&& cipher_set_counter_key(&s->incipher, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest))
-			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest) + cipher_keylength(&s->incipher), digest_keylength(&s->indigest));
+			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest));
 		if(!result)
 			return false;
 	}
 
 	s->outstate = true;
-	s->instate = true;
 
 	return true;
 }
@@ -302,7 +320,7 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 			if(!receive_sig(s, data, len))
 				return false;
 			// s->state = SPTPS_ACK;
-			s->state = SPTPS_SECONDARY_KEX;
+			s->state = SPTPS_ACK;
 			return true;
 		case SPTPS_ACK:
 			// We expect a handshake message to indicate transition to the new keys.
@@ -389,6 +407,8 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 
 		// Handle record.
 		if(type < SPTPS_HANDSHAKE) {
+			if(!s->instate)
+				return error(s, EIO, "Application record received before handshake finished");
 			if(!s->receive_record(s->handle, type, s->inbuf + 7, reclen))
 				return false;
 		} else if(type == SPTPS_HANDSHAKE) {
