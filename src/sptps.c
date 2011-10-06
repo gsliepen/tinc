@@ -45,7 +45,7 @@ char *logfilename;
 
    Maybe do add some alert messages to give helpful error messages? Not more than TLS sends.
 
-   Use counter mode instead of OFB.
+   Use counter mode instead of OFB. (done)
 
    Make sure ECC operations are fixed time (aka prevent side-channel attacks).
 */
@@ -78,7 +78,7 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 		if(!digest_create(&s->outdigest, plaintext, len + 7, plaintext + 7 + len))
 			return false;
 
-		if(!cipher_encrypt(&s->outcipher, plaintext + 4, sizeof ciphertext, ciphertext, NULL, false))
+		if(!cipher_counter_xor(&s->outcipher, plaintext + 4, sizeof ciphertext, ciphertext))
 			return false;
 
 		return s->send_data(s->handle, ciphertext, len + 19);
@@ -149,8 +149,8 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	// Initialise cipher and digest structures if necessary
 	if(!s->outstate) {
 		bool result
-			=  cipher_open_by_name(&s->incipher, "aes-256-ofb")
-			&& cipher_open_by_name(&s->outcipher, "aes-256-ofb")
+			=  cipher_open_by_name(&s->incipher, "aes-256-ecb")
+			&& cipher_open_by_name(&s->outcipher, "aes-256-ecb")
 			&& digest_open_by_name(&s->indigest, "sha256", 16)
 			&& digest_open_by_name(&s->outdigest, "sha256", 16);
 		if(!result)
@@ -251,17 +251,17 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	// TODO: only set new keys after ACK has been set/received
 	if(s->initiator) {
 		bool result
-			=  cipher_set_key(&s->incipher, s->key, false)
+			=  cipher_set_counter_key(&s->incipher, s->key)
 			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->incipher), digest_keylength(&s->indigest))
-			&& cipher_set_key(&s->outcipher, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest), true)
+			&& cipher_set_counter_key(&s->outcipher, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest))
 			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest) + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest));
 		if(!result)
 			return false;
 	} else {
 		bool result
-			=  cipher_set_key(&s->outcipher, s->key, true)
+			=  cipher_set_counter_key(&s->outcipher, s->key)
 			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest))
-			&& cipher_set_key(&s->incipher, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest), false)
+			&& cipher_set_counter_key(&s->incipher, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest))
 			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest) + cipher_keylength(&s->incipher), digest_keylength(&s->indigest));
 		if(!result)
 			return false;
@@ -326,7 +326,7 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 				toread = len;
 
 			if(s->instate) {
-				if(!cipher_decrypt(&s->incipher, data, toread, s->inbuf + s->buflen, NULL, false))
+				if(!cipher_counter_xor(&s->incipher, data, toread, s->inbuf + s->buflen))
 					return false;
 			} else {
 				memcpy(s->inbuf + s->buflen, data, toread);
@@ -366,7 +366,7 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 			toread = len;
 
 		if(s->instate) {
-			if(!cipher_decrypt(&s->incipher, data, toread, s->inbuf + s->buflen, NULL, false))
+			if(!cipher_counter_xor(&s->incipher, data, toread, s->inbuf + s->buflen))
 				return false;
 		} else {
 			memcpy(s->inbuf + s->buflen, data, toread);
