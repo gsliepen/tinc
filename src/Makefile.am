@@ -2,7 +2,7 @@
 
 sbin_PROGRAMS = tincd
 
-EXTRA_DIST = linux/device.c bsd/device.c solaris/device.c cygwin/device.c mingw/device.c mingw/common.h raw_socket/device.c uml_socket/device.c
+EXTRA_DIST = linux/device.c bsd/device.c solaris/device.c cygwin/device.c mingw/device.c mingw/common.h raw_socket/device.c uml_socket/device.c vde/device.c
 
 tincd_SOURCES = conf.c connection.c edge.c event.c graph.c logger.c meta.c net.c net_packet.c net_setup.c	\
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
