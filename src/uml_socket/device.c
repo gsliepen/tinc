@@ -28,6 +28,7 @@
 #include "logger.h"
 #include "utils.h"
 #include "route.h"
+#include "xalloc.h"
 
 int device_fd = -1;
 static int listen_fd = -1;
@@ -40,7 +41,7 @@ char *iface = NULL;
 static char *device_info;
 
 extern char *identname;
-extern bool running;
+extern volatile bool running;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
@@ -175,7 +176,7 @@ bool read_packet(vpn_packet_t *packet) {
 	switch(state) {
 		case 0: {
 			struct sockaddr sa;
-			int salen = sizeof sa;
+			socklen_t salen = sizeof sa;
 
 			request_fd = accept(listen_fd, &sa, &salen);
 			if(request_fd < 0) {
@@ -244,6 +245,10 @@ bool read_packet(vpn_packet_t *packet) {
 
 			return true;
 		}
+
+		default:
+			logger(LOG_ERR, "Invalid value for state variable in " __FILE__);
+			abort();
 	}
 }
 

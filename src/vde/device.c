@@ -39,7 +39,7 @@ char *iface = NULL;
 static char *device_info;
 
 extern char *identname;
-extern bool running;
+extern volatile bool running;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
