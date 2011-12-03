@@ -242,8 +242,6 @@ bool ans_key_h(connection_t *c) {
 
 	/* Update our copy of the origin's packet key */
 	from->outkey = xrealloc(from->outkey, strlen(key) / 2);
-
-	from->outkey = xstrdup(key);
 	from->outkeylength = strlen(key) / 2;
 	hex2bin(key, from->outkey, from->outkeylength);
 

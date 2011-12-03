@@ -468,6 +468,8 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		// 4 and 5 are reserved for SUBNET and WEIGHT
 		xasprintf(&envp[6], "REMOTEADDRESS=%s", address);
 		xasprintf(&envp[7], "REMOTEPORT=%s", port);
+		free(port);
+		free(address);
 	}
 
 	name = up ? "subnet-up" : "subnet-down";

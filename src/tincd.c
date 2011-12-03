@@ -612,7 +612,7 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-        char *priority = 0;
+        char *priority = NULL;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
                 if(!strcasecmp(priority, "Normal")) {
@@ -661,6 +661,8 @@ end:
 	remove_pid(pidfilename);
 #endif
 
+	free(priority);
+
 	EVP_cleanup();
 	ENGINE_cleanup();
 	CRYPTO_cleanup_all_ex_data();
@@ -668,6 +670,7 @@ end:
 	ERR_free_strings();
 
 	exit_configuration(&config_tree);
+	list_free(cmdline_conf);
 	free_names();
 
 	return status;
