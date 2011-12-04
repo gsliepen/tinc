@@ -83,7 +83,7 @@ static DWORD WINAPI tapreader(void *bla) {
 	}
 }
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	HKEY key, key2;
 	int i;
 
@@ -210,18 +210,18 @@ bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	CloseHandle(device_handle);
 
 	free(device);
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	return false;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	long lenout;
 	OVERLAPPED overlapped = {0};
 
@@ -238,8 +238,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t os_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

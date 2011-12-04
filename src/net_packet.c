@@ -518,7 +518,7 @@ void send_packet(const node_t *n, vpn_packet_t *packet) {
 	if(n == myself) {
 		if(overwrite_mac)
 			 memcpy(packet->data, mymac.x, ETH_ALEN);
-		write_packet(packet);
+		devops.write(packet);
 		return;
 	}
 

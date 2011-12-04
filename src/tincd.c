@@ -650,7 +650,7 @@ int main2(int argc, char **argv) {
 	/* Shutdown properly. */
 
 	ifdebug(CONNECTIONS)
-		dump_device_stats();
+		devops.dump_stats();
 
 	close_network_connections();
 

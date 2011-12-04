@@ -177,30 +177,65 @@ instead of
 The info pages of the tinc package contain more information
 about configuring the virtual network device.
 
-.It Va DeviceType Li = tun | tunnohead | tunifhead | tap Po only supported on BSD platforms Pc
+.It Va DeviceType Li = Ar type Pq platform dependent
 The type of the virtual network device.
-Tinc will normally automatically select the right type, and this option should not be used.
-However, in case tinc does not seem to correctly interpret packets received from the virtual network device,
-using this option might help.
+Tinc will normally automatically select the right type of tun/tap interface, and this option should not be used.
+However, this option can be used to select one of the special interface types, if support for them is compiled in.
 .Bl -tag -width indent
 
-.It tun
+.It dummy
+Use a dummy interface.
+No packets are ever read or written to a virtual network device.
+Useful for testing, or when setting up a node that only forwards packets for other nodes.
+
+.It raw_socket
+Open a raw socket, and bind it to a pre-existing
+.Va Interface
+(eth0 by default).
+All packets are read from this interface.
+Packets received for the local node are written to the raw socket.
+However, at least on Linux, the operating system does not process IP packets destined for the local host.
+
+.It uml Pq not compiled in by default
+Create a UNIX socket with the filename specified by
+.Va Device ,
+or
+.Pa @localstatedir@/run/ Ns Ar NETNAME Ns Pa .umlsocket
+if not specified.
+.Nm tinc
+will wait for a User Mode Linux instance to connect to this socket.
+
+.It vde Pq not compiled in by default
+Uses the libvdeplug library to connect to a Virtual Distributed Ethernet switch,
+using the UNIX socket specified by
+.Va Device ,
+or
+.Pa @localstatedir@/run/vde.ctl
+if not specified.
+.El
+
+Also, in case tinc does not seem to correctly interpret packets received from the virtual network device,
+it can be used to change the way packets are interpreted:
+
+.Bl -tag -width indent
+
+.It tun Pq BSD only
 Set type to tun.
 Depending on the platform, this can either be with or without an address family header (see below).
 
-.It tunnohead
+.It tunnohead Pq BSD only
 Set type to tun without an address family header.
 Tinc will expect packets read from the virtual network device to start with an IP header.
 On some platforms IPv6 packets cannot be read from or written to the device in this mode.
 
-.It tunifhead
+.It tunifhead Pq BSD only
 Set type to tun with an address family header.
 Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
 
-.It tap
+.It tap Pq BSD only
 Set type to tap.
 Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.

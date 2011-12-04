@@ -29,13 +29,10 @@
 #include "route.h"
 #include "xalloc.h"
 
-int device_fd = -1;
 static struct vdepluglib plug;
 static struct vdeconn *conn = NULL;
 static int port = 0;
 static char *group = NULL;
-char *device = NULL;
-char *iface = NULL;
 static char *device_info;
 
 extern char *identname;
@@ -44,7 +41,7 @@ extern volatile bool running;
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	libvdeplug_dynopen(plug);
 
 	if(!plug.dl_handle) {
@@ -85,7 +82,7 @@ bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	if(conn)
 		plug.vde_close(conn);
 
@@ -97,7 +94,7 @@ void close_device(void) {
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int lenin = plug.vde_recv(conn, packet->data, MTU, 0);
 	if(lenin <= 0) {
 		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
@@ -112,7 +109,7 @@ bool read_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	if(plug.vde_send(conn, packet->data, packet->len, 0) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
 			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
@@ -127,8 +124,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t vde_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

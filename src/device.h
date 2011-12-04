@@ -1,7 +1,7 @@
 /*
-    net.h -- generic header for device.c
+    device.h -- generic header for device.c
     Copyright (C) 2001-2005 Ivo Timmermans
-                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,10 +28,19 @@ extern char *device;
 
 extern char *iface;
 
-extern bool setup_device(void);
-extern void close_device(void);
-extern bool read_packet(struct vpn_packet_t *);
-extern bool write_packet(struct vpn_packet_t *);
-extern void dump_device_stats(void);
+typedef struct devops_t {
+	bool (*setup)(void);
+	void (*close)(void);
+	bool (*read)(struct vpn_packet_t *);
+	bool (*write)(struct vpn_packet_t *);
+	void (*dump_stats)(void);
+} devops_t;
+
+extern const devops_t os_devops;
+extern const devops_t dummy_devops;
+extern const devops_t raw_socket_devops;
+extern const devops_t uml_devops;
+extern const devops_t vde_devops;
+extern devops_t devops;
 
 #endif							/* __TINC_DEVICE_H__ */

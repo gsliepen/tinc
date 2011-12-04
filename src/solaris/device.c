@@ -35,7 +35,7 @@
 #define DEFAULT_DEVICE "/dev/tun"
 
 int device_fd = -1;
-int ip_fd = -1, if_fd = -1;
+static int ip_fd = -1, if_fd = -1;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
@@ -43,7 +43,7 @@ static char *device_info = NULL;
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	int ppa;
 	char *ptr;
 
@@ -105,7 +105,7 @@ bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	close(if_fd);
 	close(ip_fd);
 	close(device_fd);
@@ -114,7 +114,7 @@ void close_device(void) {
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	if((lenin = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
@@ -149,7 +149,7 @@ bool read_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
@@ -164,8 +164,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t os_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

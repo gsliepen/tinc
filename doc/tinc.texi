@@ -794,32 +794,64 @@ Note that you can only use one device per daemon.
 See also @ref{Device files}.
 
 @cindex DeviceType
-@item DeviceType = <tun|tunnohead|tunifhead|tap> (only supported on BSD platforms)
+@item DeviceType = <@var{type}> (platform dependent)
 The type of the virtual network device.
-Tinc will normally automatically select the right type, and this option should not be used.
-However, in case tinc does not seem to correctly interpret packets received from the virtual network device,
-using this option might help.
+Tinc will normally automatically select the right type of tun/tap interface, and this option should not be used.
+However, this option can be used to select one of the special interface types, if support for them is compiled in.
 
 @table @asis
-@item tun
+@cindex dummy
+@item dummy
+Use a dummy interface.
+No packets are ever read or written to a virtual network device.
+Useful for testing, or when setting up a node that only forwards packets for other nodes.
+
+@cindex raw_socket
+@item raw_socket
+Open a raw socket, and bind it to a pre-existing
+@var{Interface} (eth0 by default).
+All packets are read from this interface.
+Packets received for the local node are written to the raw socket.
+However, at least on Linux, the operating system does not process IP packets destined for the local host.
+
+@cindex UML
+@item uml (not compiled in by default)
+Create a UNIX socket with the filename specified by
+@var{Device}, or @file{@value{localstatedir}/run/@var{netname}.umlsocket}
+if not specified.
+Tinc will wait for a User Mode Linux instance to connect to this socket.
+
+@cindex VDE
+@item vde (not compiled in by default)
+Uses the libvdeplug library to connect to a Virtual Distributed Ethernet switch,
+using the UNIX socket specified by
+@var{Device}, or @file{@value{localstatedir}/run/vde.ctl}
+if not specified.
+@end table
+
+Also, in case tinc does not seem to correctly interpret packets received from the virtual network device,
+it can be used to change the way packets are interpreted:
+
+@table @asis
+@item tun (BSD only)
 Set type to tun.
 Depending on the platform, this can either be with or without an address family header (see below).
 
 @cindex tunnohead
-@item tunnohead
+@item tunnohead (BSD only)
 Set type to tun without an address family header.
 Tinc will expect packets read from the virtual network device to start with an IP header.
 On some platforms IPv6 packets cannot be read from or written to the device in this mode.
 
 @cindex tunifhead
-@item tunifhead
+@item tunifhead (BSD only)
 Set type to tun with an address family header.
 Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
 
-@item tap
+@item tap (BSD only)
 Set type to tap.
 Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.

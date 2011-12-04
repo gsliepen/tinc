@@ -289,7 +289,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 
 	/* check input from kernel */
 	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
-		if(read_packet(&packet)) {
+		if(devops.read(&packet)) {
 			errors = 0;
 			packet.priority = 0;
 			route(myself, &packet);

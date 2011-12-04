@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -45,6 +45,7 @@
 #include "xalloc.h"
 
 char *myport;
+devops_t devops;
 
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
@@ -276,7 +277,7 @@ void load_all_subnets(void) {
 static bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
-	char *name, *hostname, *mode, *afname, *cipher, *digest;
+	char *name, *hostname, *mode, *afname, *cipher, *digest, *type;
 	char *fname = NULL;
 	char *address = NULL;
 	char *envp[5];
@@ -539,7 +540,28 @@ static bool setup_myself(void) {
 
 	/* Open device */
 
-	if(!setup_device())
+	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+		if(!strcasecmp(type, "dummy"))
+			devops = dummy_devops;
+		else if(!strcasecmp(type, "raw_socket"))
+			devops = raw_socket_devops;
+#ifdef ENABLE_UML
+		else if(!strcasecmp(type, "uml"))
+			devops = uml_devops;
+#endif
+#ifdef ENABLE_VDE
+		else if(!strcasecmp(type, "vde"))
+			devops = vde_devops;
+#endif
+		else {
+			logger(LOG_ERR, "Unknown device type %s!", type);
+			return false;
+		}
+	} else {
+		devops = os_devops;
+	}
+
+	if(!devops.setup())
 		return false;
 
 	/* Run tinc-up script to further initialize the tap interface */
@@ -702,7 +724,7 @@ void close_network_connections(void) {
 	for(i = 0; i < 4; i++)
 		free(envp[i]);
 
-	close_device();
+	devops.close();
 
 	return;
 }

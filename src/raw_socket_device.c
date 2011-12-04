@@ -1,7 +1,7 @@
 /*
     device.c -- raw socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,16 +30,12 @@
 #include "route.h"
 #include "xalloc.h"
 
-int device_fd = -1;
-char *device = NULL;
-char *iface = NULL;
-static char ifrname[IFNAMSIZ];
 static char *device_info;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
 
@@ -81,14 +77,14 @@ bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	close(device_fd);
 
 	free(device);
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
@@ -107,7 +103,7 @@ bool read_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
@@ -122,8 +118,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t raw_socket_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

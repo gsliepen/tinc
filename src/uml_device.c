@@ -1,7 +1,7 @@
 /*
     device.c -- UML network socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,14 +30,11 @@
 #include "route.h"
 #include "xalloc.h"
 
-int device_fd = -1;
 static int listen_fd = -1;
 static int request_fd = -1;
 static int data_fd = -1;
 static int write_fd = -1;
 static int state = 0;
-char *device = NULL;
-char *iface = NULL;
 static char *device_info;
 
 extern char *identname;
@@ -57,7 +54,7 @@ static struct request {
 
 static struct sockaddr_un data_sun;
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	struct sockaddr_un listen_sun;
 	static const int one = 1;
 	struct {
@@ -170,7 +167,7 @@ void close_device(void) {
 	if(iface) free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
 	switch(state) {
@@ -252,7 +249,7 @@ bool read_packet(vpn_packet_t *packet) {
 	}
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	if(state != 2) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Dropping packet of %d bytes to %s: not connected to UML yet",
 				packet->len, device_info);
@@ -276,8 +273,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t uml_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};
