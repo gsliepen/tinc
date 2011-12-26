@@ -226,7 +226,6 @@ bool send_metakey(connection_t *c) {
 static bool metakey_ec_h(connection_t *c, const char *request) {
 	size_t siglen = ecdsa_size(&c->ecdsa);
 	char key[MAX_STRING_SIZE];
-	char sig[siglen];
 
 	logger(LOG_DEBUG, "Got ECDH metakey from %s", c->name);
 

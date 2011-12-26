@@ -34,7 +34,7 @@ bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 	int len = strlen(p);
 	unsigned char pubkey[len / 4 * 3 + 3];
 	const unsigned char *ppubkey = pubkey;
-	len = b64decode(p, pubkey, len);
+	len = b64decode(p, (char *)pubkey, len);
 
 	if(!o2i_ECPublicKey(ecdsa, &ppubkey, len)) {
 		logger(LOG_DEBUG, "o2i_ECPublicKey failed: %s", ERR_error_string(ERR_get_error(), NULL));
@@ -49,7 +49,7 @@ char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa) {
 	int len = i2o_ECPublicKey(*ecdsa, &pubkey);
 
 	char *base64 = malloc(len * 4 / 3 + 5);
-	b64encode(pubkey, base64, len);
+	b64encode((char *)pubkey, base64, len);
 
 	free(pubkey);
 
@@ -87,7 +87,7 @@ size_t ecdsa_size(ecdsa_t *ecdsa) {
 bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t len, void *sig) {
 	unsigned int siglen = ECDSA_size(*ecdsa);
 
-	char hash[SHA512_DIGEST_LENGTH];
+	unsigned char hash[SHA512_DIGEST_LENGTH];
 	SHA512(in, len, hash);
 
 	memset(sig, 0, siglen);
@@ -107,7 +107,7 @@ bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t len, void *sig) {
 bool ecdsa_verify(ecdsa_t *ecdsa, const void *in, size_t len, const void *sig) {
 	unsigned int siglen = ECDSA_size(*ecdsa);
 
-	char hash[SHA512_DIGEST_LENGTH];
+	unsigned char hash[SHA512_DIGEST_LENGTH];
 	SHA512(in, len, hash);
 
 	if(!ECDSA_verify(0, hash, sizeof hash, sig, siglen, *ecdsa)) {

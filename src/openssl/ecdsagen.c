@@ -67,7 +67,7 @@ char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa) {
 	int len = i2o_ECPublicKey(*ecdsa, &pubkey);
 
 	char *base64 = malloc(len * 4 / 3 + 5);
-	b64encode(pubkey, base64, len);
+	b64encode((char *)pubkey, base64, len);
 
 	free(pubkey);
 

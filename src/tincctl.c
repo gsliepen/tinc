@@ -577,7 +577,7 @@ int main(int argc, char *argv[]) {
 #endif
 		if (slash++) {
 			c = xmalloc((slash - argv[0]) + sizeof("tincd"));
-			sprintf(c, "%.*stincd", slash - argv[0], argv[0]);
+			sprintf(c, "%.*stincd", (int)(slash - argv[0]), argv[0]);
 		}
 		else
 			c = "tincd";
