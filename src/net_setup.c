@@ -547,9 +547,6 @@ static bool setup_myself(void) {
 
 	/* Check if we want to use message authentication codes... */
 
-	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
-		digest = xstrdup("sha1");
-
 	int maclength = 4;
 	get_config_int(lookup_config(config_tree, "MACLength"), &maclength);
 
@@ -557,6 +554,9 @@ static bool setup_myself(void) {
 		logger(LOG_ERR, "Bogus MAC length!");
 		return false;
 	}
+
+	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
+		digest = xstrdup("sha1");
 
 	if(!digest_open_by_name(&myself->indigest, digest, maclength)) {
 		logger(LOG_ERR, "Unrecognized digest type!");

@@ -493,9 +493,12 @@ end:
 end_nonet:
 	logger(LOG_NOTICE, "Terminating");
 
+	free(priority);
+
 	crypto_exit();
 
 	exit_configuration(&config_tree);
+	free(cmdline_conf);
 	free_names();
 
 	return status;
