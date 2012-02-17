@@ -582,47 +582,54 @@ static bool setup_myself(void) {
 
 	/* Open sockets */
 
-	get_config_string(lookup_config(config_tree, "BindToAddress"), &address);
+	cfg = lookup_config(config_tree, "BindToAddress");
 
-	hint.ai_family = addressfamily;
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_protocol = IPPROTO_TCP;
-	hint.ai_flags = AI_PASSIVE;
+	do {
+		get_config_string(cfg, &address);
+		if(cfg)
+			cfg = lookup_config_next(config_tree, cfg);
 
-	err = getaddrinfo(address, myport, &hint, &ai);
+		hint.ai_family = addressfamily;
+		hint.ai_socktype = SOCK_STREAM;
+		hint.ai_protocol = IPPROTO_TCP;
+		hint.ai_flags = AI_PASSIVE;
 
-	if(err || !ai) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
-			   gai_strerror(err));
-		return false;
-	}
+		err = getaddrinfo(address, myport, &hint, &ai);
+		free(address);
 
-	listen_sockets = 0;
-
-	for(aip = ai; aip; aip = aip->ai_next) {
-		listen_socket[listen_sockets].tcp =
-			setup_listen_socket((sockaddr_t *) aip->ai_addr);
-
-		if(listen_socket[listen_sockets].tcp < 0)
-			continue;
-
-		listen_socket[listen_sockets].udp =
-			setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
-
-		if(listen_socket[listen_sockets].udp < 0)
-			continue;
-
-		ifdebug(CONNECTIONS) {
-			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(LOG_NOTICE, "Listening on %s", hostname);
-			free(hostname);
+		if(err || !ai) {
+			logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
+				   gai_strerror(err));
+			return false;
 		}
 
-		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
-		listen_sockets++;
-	}
+		listen_sockets = 0;
 
-	freeaddrinfo(ai);
+		for(aip = ai; aip; aip = aip->ai_next) {
+			listen_socket[listen_sockets].tcp =
+				setup_listen_socket((sockaddr_t *) aip->ai_addr);
+
+			if(listen_socket[listen_sockets].tcp < 0)
+				continue;
+
+			listen_socket[listen_sockets].udp =
+				setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+
+			if(listen_socket[listen_sockets].udp < 0)
+				continue;
+
+			ifdebug(CONNECTIONS) {
+				hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
+				logger(LOG_NOTICE, "Listening on %s", hostname);
+				free(hostname);
+			}
+
+			memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
+			listen_sockets++;
+		}
+
+		freeaddrinfo(ai);
+	} while(cfg);
 
 	if(listen_sockets)
 		logger(LOG_NOTICE, "Ready");

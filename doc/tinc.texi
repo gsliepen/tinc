@@ -759,7 +759,8 @@ both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 @item BindToAddress = <@var{address}> [experimental]
 If your computer has more than one IPv4 or IPv6 address, tinc
 will by default listen on all of them for incoming connections.
-It is possible to bind only to a single address with this variable.
+Multiple BindToAddress variables may be specified,
+in which case listening sockets for each specified address are made.
 
 This option may not work on all platforms.
 
