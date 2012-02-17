@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -180,6 +180,10 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		return -1;
 	}
 
+#ifdef FD_CLOEXEC
+	fcntl(nfd, F_SETFD, FD_CLOEXEC);
+#endif
+
 	/* Optimize TCP settings */
 
 	option = 1;
@@ -237,6 +241,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		logger(LOG_ERR, "Creating UDP socket failed: %s", sockstrerror(sockerrno));
 		return -1;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(nfd, F_SETFD, FD_CLOEXEC);
+#endif
 
 #ifdef O_NONBLOCK
 	{
@@ -409,6 +417,10 @@ begin:
 			   c->hostname);
 
 	c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
+
+#ifdef FD_CLOEXEC
+	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
+#endif
 
 	if(c->socket == -1) {
 		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));

@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -71,6 +71,10 @@ static bool setup_device(void) {
 		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 #ifdef HAVE_LINUX_IF_TUN_H
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */

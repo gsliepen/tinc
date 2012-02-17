@@ -1,6 +1,6 @@
 /*
     device.c -- VDE plug
-    Copyright (C) 2011 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,6 +73,10 @@ static bool setup_device(void) {
 	}
 
 	device_fd = plug.vde_datafd(conn);
+
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	logger(LOG_INFO, "%s is a %s", device, device_info);
 

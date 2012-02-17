@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Solaris tun device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,6 +55,10 @@ static bool setup_device(void) {
 		return false;
 	}
 
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
+
 	ppa = 0;
 
 	ptr = device;
@@ -67,6 +71,10 @@ static bool setup_device(void) {
 		return false;
 	}
 
+#ifdef FD_CLOEXEC
+	fcntl(ip_fd, F_SETFD, FD_CLOEXEC);
+#endif
+
 	/* Assign a new PPA and get its unit number. */
 	if((ppa = ioctl(device_fd, TUNNEWPPA, ppa)) < 0) {
 		logger(LOG_ERR, "Can't assign new interface: %s", strerror(errno));
@@ -78,6 +86,10 @@ static bool setup_device(void) {
 			   strerror(errno));
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(if_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	if(ioctl(if_fd, I_PUSH, "ip") < 0) {
 		logger(LOG_ERR, "Can't push IP module: %s", strerror(errno));

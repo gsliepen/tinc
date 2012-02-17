@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -105,6 +105,10 @@ static bool setup_device(void) {
 		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	switch(device_type) {
 		default:

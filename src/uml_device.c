@@ -1,7 +1,7 @@
 /*
     device.c -- UML network socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,6 +77,10 @@ static bool setup_device(void) {
 		return false;
 	}
 
+#ifdef FD_CLOEXEC
+	fcntl(write_fd, F_SETFD, FD_CLOEXEC);
+#endif
+
 	setsockopt(write_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(write_fd, F_SETFL, O_NONBLOCK) < 0) {
@@ -90,6 +94,10 @@ static bool setup_device(void) {
 		running = false;
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(data_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	setsockopt(data_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
@@ -117,6 +125,10 @@ static bool setup_device(void) {
 			   strerror(errno));
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
@@ -180,6 +192,10 @@ static bool read_packet(vpn_packet_t *packet) {
 				logger(LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
+
+#ifdef FD_CLOEXEC
+			fcntl(request_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 			if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
 				logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
