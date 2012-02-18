@@ -40,6 +40,7 @@ typedef struct node_t {
 	char *name;				/* name of this node */
 	uint32_t options;			/* options turned on for this node */
 
+	int sock;				/* Socket to use for outgoing UDP packets */
 	sockaddr_t address;			/* his real (internet) ip to send UDP packets to */
 	char *hostname;				/* the hostname of its real ip */
 

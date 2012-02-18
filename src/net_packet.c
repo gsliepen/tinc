@@ -389,7 +389,6 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	static int priority = 0;
 #endif
 	int origpriority;
-	int sock;
 
 	if(!n->status.reachable) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
@@ -476,26 +475,28 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Determine which socket we have to use */
 
-	for(sock = 0; sock < listen_sockets; sock++)
-		if(n->address.sa.sa_family == listen_socket[sock].sa.sa.sa_family)
-			break;
-
-	if(sock >= listen_sockets)
-		sock = 0;				/* If none is available, just use the first and hope for the best. */
+	if(n->address.sa.sa_family != listen_socket[n->sock].sa.sa.sa_family) {
+		for(int sock = 0; sock < listen_sockets; sock++) {
+			if(n->address.sa.sa_family == listen_socket[sock].sa.sa.sa_family) {
+				n->sock = sock;
+				break;
+			}
+		}
+	}
 
 	/* Send the packet */
 
 #if defined(SOL_IP) && defined(IP_TOS)
 	if(priorityinheritance && origpriority != priority
-	   && listen_socket[sock].sa.sa.sa_family == AF_INET) {
+	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
+		if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
 			logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[n->sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -634,6 +635,8 @@ void handle_incoming_vpn_data(int sock) {
 		else
 			return;
 	}
+
+	n->sock = sock;
 
 	receive_udppacket(n, &pkt);
 }
