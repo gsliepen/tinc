@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -540,6 +540,8 @@ static bool setup_myself(void) {
 
 	/* Open device */
 
+	devops = os_devops;
+
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "dummy"))
 			devops = dummy_devops;
@@ -553,12 +555,6 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(type, "vde"))
 			devops = vde_devops;
 #endif
-		else {
-			logger(LOG_ERR, "Unknown device type %s!", type);
-			return false;
-		}
-	} else {
-		devops = os_devops;
 	}
 
 	if(!devops.setup())
