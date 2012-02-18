@@ -219,23 +219,23 @@ it can be used to change the way packets are interpreted:
 
 .Bl -tag -width indent
 
-.It tun Pq BSD only
+.It tun Pq BSD and Linux
 Set type to tun.
 Depending on the platform, this can either be with or without an address family header (see below).
 
-.It tunnohead Pq BSD only
+.It tunnohead Pq BSD
 Set type to tun without an address family header.
 Tinc will expect packets read from the virtual network device to start with an IP header.
 On some platforms IPv6 packets cannot be read from or written to the device in this mode.
 
-.It tunifhead Pq BSD only
+.It tunifhead Pq BSD
 Set type to tun with an address family header.
 Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
 
-.It tap Pq BSD only
+.It tap Pq BSD and Linux
 Set type to tap.
 Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.

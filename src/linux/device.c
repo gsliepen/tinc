@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ int device_fd = -1;
 static device_type_t device_type;
 char *device = NULL;
 char *iface = NULL;
+static char *type = NULL;
 static char ifrname[IFNAMSIZ];
 static char *device_info;
 
@@ -76,7 +77,15 @@ static bool setup_device(void) {
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
 	memset(&ifr, 0, sizeof(ifr));
-	if(routing_mode == RMODE_ROUTER) {
+
+	get_config_string(lookup_config(config_tree, "DeviceType"), &type);
+
+	if(type && strcasecmp(type, "tun") && strcasecmp(type, "tap")) {
+		logger(LOG_ERR, "Unknown device type %s!", type);
+		return false;
+	}
+
+	if((type && !strcasecmp(type, "tun")) || (!type && routing_mode == RMODE_ROUTER)) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;
 		device_info = "Linux tun/tap device (tun mode)";
@@ -124,6 +133,7 @@ static bool setup_device(void) {
 static void close_device(void) {
 	close(device_fd);
 
+	free(type);
 	free(device);
 	free(iface);
 }
