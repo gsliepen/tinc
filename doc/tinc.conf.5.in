@@ -150,6 +150,9 @@ It is possible to bind only to a single interface with this variable.
 .Pp
 This option may not work on all platforms.
 
+.It Va Broadcast Li = yes | no Po yes Pc Bq experimental
+When disabled, tinc will drop all broadcast and multicast packets, in both router and switch mode.
+
 .It Va ConnectTo Li = Ar name
 Specifies which other tinc daemon to connect to on startup.
 Multiple

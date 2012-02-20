@@ -773,6 +773,10 @@ variable.
 
 This option may not work on all platforms.
 
+@cindex Broadcast
+@item Broadcast = <yes | no> (yes) [experimental]
+When disabled, tinc will drop all broadcast and multicast packets, in both router and switch mode.
+
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.

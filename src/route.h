@@ -41,6 +41,7 @@ extern fmode_t forwarding_mode;
 extern bool decrement_ttl;
 extern bool directonly;
 extern bool overwrite_mac;
+extern bool broadcast;
 extern bool priorityinheritance;
 extern int macexpire;
 

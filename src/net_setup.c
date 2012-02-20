@@ -397,8 +397,8 @@ static bool setup_myself(void) {
 		myself->options |= OPTION_CLAMP_MSS;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
-
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+	get_config_bool(lookup_config(config_tree, "Broadcast"), &broadcast);
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
