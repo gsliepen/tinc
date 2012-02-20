@@ -34,8 +34,6 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#include <assert.h>
-
 /* Needed on Mac OS/X */
 #ifndef SOL_TCP
 #define SOL_TCP IPPROTO_TCP
@@ -108,63 +106,6 @@ static bool bind_to_interface(int sd) {
 #endif
 
 	return true;
-}
-
-static bool bind_to_address(connection_t *c) {
-	char *node;
-	struct addrinfo *ai_list;
-	struct addrinfo *ai_ptr;
-	struct addrinfo ai_hints;
-	int status;
-
-	assert(c != NULL);
-	assert(c->socket >= 0);
-
-	node = NULL;
-	if(!get_config_string(lookup_config(config_tree, "BindToAddress"),
-				&node))
-		return true;
-
-	assert(node != NULL);
-
-	memset(&ai_hints, 0, sizeof(ai_hints));
-	ai_hints.ai_family = c->address.sa.sa_family;
-	/* We're called from `do_outgoing_connection' only. */
-	ai_hints.ai_socktype = SOCK_STREAM;
-	ai_hints.ai_protocol = IPPROTO_TCP;
-
-	ai_list = NULL;
-
-	status = getaddrinfo(node, /* service = */ NULL,
-			&ai_hints, &ai_list);
-	if(status) {
-		free(node);
-		logger(LOG_WARNING, "Error looking up %s port %s: %s",
-				node, "any", gai_strerror(status));
-		return false;
-	}
-	assert(ai_list != NULL);
-
-	status = -1;
-	for(ai_ptr = ai_list; ai_ptr != NULL; ai_ptr = ai_ptr->ai_next) {
-		status = bind(c->socket,
-				ai_list->ai_addr, ai_list->ai_addrlen);
-		if(!status)
-			break;
-	}
-
-
-	if(status) {
-		logger(LOG_ERR, "Can't bind to %s/tcp: %s", node, sockstrerror(sockerrno));
-	} else ifdebug(CONNECTIONS) {
-		logger(LOG_DEBUG, "Successfully bound outgoing "
-				"TCP socket to %s", node);
-	}
-
-	free(node);
-	freeaddrinfo(ai_list);
-
-	return status ? false : true;
 }
 
 int setup_listen_socket(const sockaddr_t *sa) {
@@ -434,7 +375,6 @@ begin:
 #endif
 
 	bind_to_interface(c->socket);
-	bind_to_address(c);
 
 	/* Optimize TCP settings */
 
