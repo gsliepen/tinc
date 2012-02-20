@@ -75,7 +75,7 @@ static void purge(void) {
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
-				send_del_subnet(broadcast, s);
+				send_del_subnet(everyone, s);
 				if(!strictsubnets)
 					subnet_del(n, s);
 			}
@@ -84,7 +84,7 @@ static void purge(void) {
 				enext = enode->next;
 				e = enode->data;
 				if(!tunnelserver)
-					send_del_edge(broadcast, e);
+					send_del_edge(everyone, e);
 				edge_del(e);
 			}
 		}
@@ -183,7 +183,7 @@ void terminate_connection(connection_t *c, bool report) {
 
 	if(c->edge) {
 		if(report && !tunnelserver)
-			send_del_edge(broadcast, c->edge);
+			send_del_edge(everyone, c->edge);
 
 		edge_del(c->edge);
 
@@ -198,7 +198,7 @@ void terminate_connection(connection_t *c, bool report) {
 			e = lookup_edge(c->node, myself);
 			if(e) {
 				if(!tunnelserver)
-					send_del_edge(broadcast, e);
+					send_del_edge(everyone, e);
 				edge_del(e);
 			}
 		}
@@ -576,14 +576,14 @@ int main_loop(void) {
 					next = node->next;
 					subnet = node->data;
 					if(subnet->expires == 1) {
-						send_del_subnet(broadcast, subnet);
+						send_del_subnet(everyone, subnet);
 						if(subnet->owner->status.reachable)
 							subnet_update(subnet->owner, subnet, false);
 						subnet_del(subnet->owner, subnet);
 					} else if(subnet->expires == -1) {
 						subnet->expires = 0;
 					} else {
-						send_add_subnet(broadcast, subnet);
+						send_add_subnet(everyone, subnet);
 						if(subnet->owner->status.reachable)
 							subnet_update(subnet->owner, subnet, true);
 					}

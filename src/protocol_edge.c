@@ -254,7 +254,7 @@ bool del_edge_h(connection_t *c) {
 		e = lookup_edge(to, myself);
 		if(e) {
 			if(!tunnelserver)
-				send_del_edge(broadcast, e);
+				send_del_edge(everyone, e);
 			edge_del(e);
 		}
 	}

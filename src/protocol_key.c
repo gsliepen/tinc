@@ -40,7 +40,7 @@ void send_key_changed(void) {
 	avl_node_t *node;
 	connection_t *c;
 
-	send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
+	send_request(everyone, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
