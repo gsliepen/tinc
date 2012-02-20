@@ -20,7 +20,9 @@
 
 #include "system.h"
 
+#ifdef HAVE_NETPACKET_PACKET_H
 #include <netpacket/packet.h>
+#endif
 
 #include "conf.h"
 #include "device.h"
@@ -35,6 +37,7 @@ static char *device_info;
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
+#if defined(PF_SOCKET) && defined(ETH_P_ALL) && defined(AF_PACKET)
 static bool setup_device(void) {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
@@ -135,3 +138,19 @@ const devops_t raw_socket_devops = {
 	.write = write_packet,
 	.dump_stats = dump_device_stats,
 };
+
+#else
+
+static bool not_supported(void) {
+	logger(LOG_ERR, "Raw socket device not supported on this platform");
+	return false;
+}
+
+const devops_t raw_socket_devops = {
+	.setup = not_supported,
+	.close = NULL,
+	.read = NULL,
+	.write = NULL,
+	.dump_stats = NULL,
+};
+#endif
