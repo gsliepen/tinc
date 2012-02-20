@@ -398,6 +398,8 @@ static bool setup_myself(void) {
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
+	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
 		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");

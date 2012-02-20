@@ -34,6 +34,7 @@
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
+bool decrement_ttl = true;
 bool directonly = false;
 bool priorityinheritance = false;
 int macexpire = 600;
@@ -846,6 +847,50 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	send_packet(subnet->owner, packet);
 }
 
+static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	switch (type) {
+		case ETH_P_IP:
+			if(!checklength(source, packet, 14 + 32))
+				return false;
+
+			if(packet->data[22] < 1) {
+				route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+				return false;
+			}
+
+			uint16_t old = packet->data[22] << 8 | packet->data[23];
+			packet->data[22]--;
+			uint16_t new = packet->data[22] << 8 | packet->data[23];
+
+			uint32_t checksum = packet->data[24] << 8 | packet->data[25];
+			checksum += old + (~new & 0xFFFF);
+			while(checksum >> 16)
+				checksum = (checksum & 0xFFFF) + (checksum >> 16);
+			packet->data[24] = checksum >> 8;
+			packet->data[25] = checksum & 0xff;
+
+			return true;
+
+		case ETH_P_IPV6:
+			if(!checklength(source, packet, 14 + 40))
+				return false;
+
+			if(packet->data[21] < 1) {
+				route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+				return false;
+			}
+
+			packet->data[21]--;
+
+			return true;
+
+		default:
+			return true;
+	}
+}
+
 void route(node_t *source, vpn_packet_t *packet) {
 	if(forwarding_mode == FMODE_KERNEL && source != myself) {
 		send_packet(myself, packet);
@@ -854,6 +899,10 @@ void route(node_t *source, vpn_packet_t *packet) {
 
 	if(!checklength(source, packet, ether_size))
 		return;
+
+	if(decrement_ttl && source != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
 
 	switch (routing_mode) {
 		case RMODE_ROUTER:

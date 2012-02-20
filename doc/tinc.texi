@@ -785,6 +785,13 @@ If you don't specify a host with ConnectTo,
 tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
+@cindex DecrementTTL
+@item DecrementTTL = <yes | no> (yes)
+When enabled, tinc will decrement the Time To Live field in IPv4 packets, or the Hop Limit field in IPv6 packets,
+before forwarding a received packet to the virtual network device or to another node,
+and will drop packets that have a TTL value of zero,
+in which case it will send an ICMP Time Exceeded packet back.
+
 @cindex Device
 @item Device = <@var{device}> (@file{/dev/tap0}, @file{/dev/net/tun} or other depending on platform)
 The virtual network device to use.
