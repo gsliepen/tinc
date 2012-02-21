@@ -97,10 +97,6 @@ bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t len, void *sig) {
 		return false;
 	}
 
-	if(siglen != ECDSA_size(*ecdsa)) {
-		logger(LOG_ERR, "Signature length %d != %d", siglen, ECDSA_size(*ecdsa));
-	}
-
 	return true;
 }
 
