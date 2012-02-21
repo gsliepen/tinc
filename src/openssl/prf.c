@@ -23,7 +23,7 @@
 #include "prf.h"
 
 /* Generate key material from a master secret and a seed, based on RFC 4346 section 5.
-   We use SHA512 and Whirlpool instead of MD5 and SHA1.
+   We use SHA512 instead of MD5 and SHA1.
  */
 
 static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
@@ -66,11 +66,8 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 }
 
 bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
-	/* Split secret in half, generate outlen bits with two different hash algorithms,
-	   and XOR the results. */
-
+	/* This construction allows us to easily switch back to a scheme where the PRF is calculated using two different digest algorithms. */
 	memset(out, 0, outlen);
 
-	return prf_xor(NID_sha512, secret, (secretlen + 1) / 2, seed, seedlen, out, outlen)
-		&& prf_xor(NID_whirlpool, secret + secretlen / 2, (secretlen + 1) / 2, seed, seedlen, out, outlen);
+	return prf_xor(NID_sha512, secret, secretlen, seed, seedlen, out, outlen);
 }
