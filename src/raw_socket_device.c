@@ -32,12 +32,12 @@
 #include "route.h"
 #include "xalloc.h"
 
+#if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET)
 static char *device_info;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
-#if defined(PF_SOCKET) && defined(ETH_P_ALL) && defined(AF_PACKET)
 static bool setup_device(void) {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
