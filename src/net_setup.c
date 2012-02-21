@@ -580,6 +580,7 @@ static bool setup_myself(void) {
 
 	/* Open sockets */
 
+	listen_sockets = 0;
 	cfg = lookup_config(config_tree, "BindToAddress");
 
 	do {
@@ -601,9 +602,12 @@ static bool setup_myself(void) {
 			return false;
 		}
 
-		listen_sockets = 0;
-
 		for(aip = ai; aip; aip = aip->ai_next) {
+			if(listen_sockets >= MAXSOCKETS) {
+				logger(LOG_ERR, "Too many listening sockets");
+				return false;
+			}
+
 			listen_socket[listen_sockets].tcp =
 				setup_listen_socket((sockaddr_t *) aip->ai_addr);
 
