@@ -1621,6 +1621,12 @@ Generate public/private keypair of @var{bits} length. If @var{bits} is not speci
 but will default to the configuration directory (you can use the -c or -n option
 in combination with -K). After that, tinc will quit.
 
+@item -o, --option=[@var{HOST}.]@var{KEY}=@var{VALUE}
+Without specifying a @var{HOST}, this will set server configuration variable @var{KEY} to @var{VALUE}.
+If specified as @var{HOST}.@var{KEY}=@var{VALUE},
+this will set the host configuration variable @var{KEY} of the host named @var{HOST} to @var{VALUE}.
+This option can be used more than once to specify multiple configuration variables.
+
 @item -L, --mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.

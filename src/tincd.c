@@ -114,6 +114,7 @@ static struct option const long_options[] = {
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
 	{"pidfile", required_argument, NULL, 5},
+	{"option", required_argument, NULL, 'o'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -129,20 +130,20 @@ static void usage(bool status) {
 				program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
-		printf("  -c, --config=DIR           Read configuration options from DIR.\n"
-				"  -D, --no-detach            Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
-				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
-				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
-				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
-				"  -L, --mlock                Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
-				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
-				"  -o [HOST.]KEY=VALUE        Set global/host configuration value.\n"
-				"  -R, --chroot               chroot to NET dir at startup.\n"
-				"  -U, --user=USER            setuid to given USER at startup.\n"
-				"      --help                 Display this help and exit.\n"
-				"      --version              Output version information and exit.\n\n");
+		printf("  -c, --config=DIR               Read configuration options from DIR.\n"
+				"  -D, --no-detach                Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]            Increase debug level or set it to LEVEL.\n"
+				"  -k, --kill[=SIGNAL]            Attempt to kill a running tincd and exit.\n"
+				"  -n, --net=NETNAME              Connect to net NETNAME.\n"
+				"  -K, --generate-keys[=BITS]     Generate public/private RSA keypair.\n"
+				"  -L, --mlock                    Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]       Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME         Write PID to FILENAME.\n"
+				"  -o, --option=[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+				"  -R, --chroot                   chroot to NET dir at startup.\n"
+				"  -U, --user=USER                setuid to given USER at startup.\n"
+				"      --help                     Display this help and exit.\n"
+				"      --version                  Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }

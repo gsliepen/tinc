@@ -8,13 +8,14 @@
 .Nd tinc VPN daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdDkKnLRU
+.Op Fl cdDkKnoLRU
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -no-detach
 .Op Fl -debug Ns Op = Ns Ar LEVEL
 .Op Fl -kill Ns Op = Ns Ar SIGNAL
 .Op Fl -net Ns = Ns Ar NETNAME
 .Op Fl -generate-keys Ns Op = Ns Ar BITS
+.Op Fl -option Ns = Ns Ar [HOST.]KEY=VALUE
 .Op Fl -mlock
 .Op Fl -logfile Ns Op = Ns Ar FILE
 .Op Fl -pidfile Ns = Ns Ar FILE
@@ -79,6 +80,22 @@ If
 is omitted, the default length will be 2048 bits.
 When saving keys to existing files, tinc will not delete the old keys,
 you have to remove them manually.
+.It Fl o, -option Ns = Ns Ar [HOST.]KEY=VALUE
+Without specifying a
+.Ar HOST ,
+this will set server configuration variable
+.Ar KEY 
+to
+.Ar VALUE .
+If specified as
+.Ar HOST.KEY=VALUE ,
+this will set the host configuration variable 
+.Ar KEY
+of the host named
+.Ar HOST
+to
+.Ar VALUE .
+This option can be used more than once to specify multiple configuration variables.
 .It Fl L, -mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
