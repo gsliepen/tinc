@@ -586,6 +586,7 @@ int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
+        char *priority = NULL;
 
 	if(!detach())
 		return 1;
@@ -611,8 +612,6 @@ int main2(int argc, char **argv) {
 	try_outgoing_connections();
 
 	/* Change process priority */
-
-        char *priority = NULL;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
                 if(!strcasecmp(priority, "Normal")) {
