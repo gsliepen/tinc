@@ -343,7 +343,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 
 	for(i = 0; i < listen_sockets; i++) {
 		if(FD_ISSET(listen_socket[i].udp, readset))
-			handle_incoming_vpn_data(listen_socket[i].udp);
+			handle_incoming_vpn_data(i);
 
 		if(FD_ISSET(listen_socket[i].tcp, readset))
 			handle_new_meta_connection(listen_socket[i].tcp);

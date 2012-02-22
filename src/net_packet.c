@@ -610,7 +610,7 @@ void handle_incoming_vpn_data(int sock) {
 	socklen_t fromlen = sizeof(from);
 	node_t *n;
 
-	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	pkt.len = recvfrom(listen_socket[sock].udp, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len < 0) {
 		if(!sockwouldblock(sockerrno))
