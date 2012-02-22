@@ -174,6 +174,7 @@ static void sssp_bfs(void) {
 	myself->status.visited = true;
 	myself->status.indirect = false;
 	myself->nexthop = myself;
+	myself->prevedge = NULL;
 	myself->via = myself;
 	list_insert_head(todo_list, myself);
 
@@ -214,6 +215,7 @@ static void sssp_bfs(void) {
 			e->to->status.visited = true;
 			e->to->status.indirect = indirect;
 			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+			e->to->prevedge = e;
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
 

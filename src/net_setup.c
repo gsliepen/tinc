@@ -356,6 +356,7 @@ static bool setup_myself(void) {
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
 	strictsubnets |= tunnelserver;
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {

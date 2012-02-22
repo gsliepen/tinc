@@ -67,6 +67,7 @@ typedef struct node_t {
 	int outcompression;			/* Compressionlevel, 0 = no compression */
 
 	struct node_t *nexthop;			/* nearest node from us to him */
+	struct edge_t *prevedge;		/* nearest node from him to us */
 	struct node_t *via;			/* next hop for UDP packets */
 
 	avl_tree_t *subnet_tree;		/* Pointer to a tree of subnets belonging to this node */

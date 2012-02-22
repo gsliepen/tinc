@@ -320,6 +320,18 @@ This option controls the period the encryption keys used to encrypt the data are
 It is common practice to change keys at regular intervals to make it even harder for crackers,
 even though it is thought to be nearly impossible to crack a single key.
 
+.It Va LocalDiscovery Li = yes | no Po no Pc Bq experimental
+When enabled,
+.Nm tinc
+will try to detect peers that are on the same local network.
+This will allow direct communication using LAN addresses, even if both peers are behind a NAT
+and they only ConnectTo a third node outside the NAT,
+which normally would prevent the peers from learning each other's LAN address.
+
+.Pp
+Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
+This feature may not work in all possible situations.
+
 .It Va MACExpire Li = Ar seconds Pq 600
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when
