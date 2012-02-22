@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 static device_type_t device_type = DEVICE_TYPE_TUN;
 #endif
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	char *type;
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
@@ -105,6 +105,10 @@ bool setup_device(void) {
 		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	switch(device_type) {
 		default:
@@ -175,7 +179,7 @@ bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	switch(device_type) {
 #ifdef HAVE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
@@ -190,7 +194,7 @@ void close_device(void) {
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
 	switch(device_type) {
@@ -282,7 +286,7 @@ bool read_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
@@ -351,8 +355,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t os_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

@@ -651,7 +651,7 @@ bool ack_h(connection_t *c, char *request) {
 	if(tunnelserver)
 		send_add_edge(c, c->edge);
 	else
-		send_add_edge(broadcast, c->edge);
+		send_add_edge(everyone, c->edge);
 
 	/* Run MST and SSSP algorithms */
 

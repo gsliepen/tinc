@@ -1,7 +1,7 @@
 /*
     device.c -- UML network socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,19 +28,17 @@
 #include "logger.h"
 #include "utils.h"
 #include "route.h"
+#include "xalloc.h"
 
-int device_fd = -1;
 static int listen_fd = -1;
 static int request_fd = -1;
 static int data_fd = -1;
 static int write_fd = -1;
 static int state = 0;
-char *device = NULL;
-char *iface = NULL;
 static char *device_info;
 
 extern char *identname;
-extern bool running;
+extern volatile bool running;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
@@ -56,7 +54,7 @@ static struct request {
 
 static struct sockaddr_un data_sun;
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	struct sockaddr_un listen_sun;
 	static const int one = 1;
 	struct {
@@ -79,6 +77,10 @@ bool setup_device(void) {
 		return false;
 	}
 
+#ifdef FD_CLOEXEC
+	fcntl(write_fd, F_SETFD, FD_CLOEXEC);
+#endif
+
 	setsockopt(write_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(write_fd, F_SETFL, O_NONBLOCK) < 0) {
@@ -92,6 +94,10 @@ bool setup_device(void) {
 		running = false;
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(data_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	setsockopt(data_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
@@ -119,6 +125,10 @@ bool setup_device(void) {
 			   strerror(errno));
 		return false;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
@@ -169,19 +179,23 @@ void close_device(void) {
 	if(iface) free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
 	switch(state) {
 		case 0: {
 			struct sockaddr sa;
-			int salen = sizeof sa;
+			socklen_t salen = sizeof sa;
 
 			request_fd = accept(listen_fd, &sa, &salen);
 			if(request_fd < 0) {
 				logger(LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
+
+#ifdef FD_CLOEXEC
+			fcntl(request_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
 			if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
 				logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
@@ -244,10 +258,14 @@ bool read_packet(vpn_packet_t *packet) {
 
 			return true;
 		}
+
+		default:
+			logger(LOG_ERR, "Invalid value for state variable in " __FILE__);
+			abort();
 	}
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	if(state != 2) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Dropping packet of %d bytes to %s: not connected to UML yet",
 				packet->len, device_info);
@@ -271,8 +289,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t uml_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

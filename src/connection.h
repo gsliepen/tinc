@@ -99,7 +99,7 @@ typedef struct connection_t {
 } connection_t;
 
 extern splay_tree_t *connection_tree;
-extern connection_t *broadcast;
+extern connection_t *everyone;
 
 extern void init_connections(void);
 extern void exit_connections(void);

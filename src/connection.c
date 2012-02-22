@@ -32,7 +32,7 @@
 #include "xalloc.h"
 
 splay_tree_t *connection_tree;	/* Meta connections */
-connection_t *broadcast;
+connection_t *everyone;
 
 static int connection_compare(const connection_t *a, const connection_t *b) {
 	return a < b ? -1 : a == b ? 0 : 1;
@@ -40,14 +40,14 @@ static int connection_compare(const connection_t *a, const connection_t *b) {
 
 void init_connections(void) {
 	connection_tree = splay_alloc_tree((splay_compare_t) connection_compare, (splay_action_t) free_connection);
-	broadcast = new_connection();
-	broadcast->name = xstrdup("everyone");
-	broadcast->hostname = xstrdup("BROADCAST");
+	everyone = new_connection();
+	everyone->name = xstrdup("everyone");
+	everyone->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
 	splay_delete_tree(connection_tree);
-	free_connection(broadcast);
+	free_connection(everyone);
 }
 
 connection_t *new_connection(void) {

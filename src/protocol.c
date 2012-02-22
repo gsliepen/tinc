@@ -96,7 +96,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 
 	request[len++] = '\n';
 
-	if(c == broadcast) {
+	if(c == everyone) {
 		broadcast_meta(NULL, request, len);
 		return true;
 	} else

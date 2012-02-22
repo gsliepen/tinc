@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -44,6 +44,7 @@
 
 char *myport;
 static struct event device_ev;
+devops_t devops;
 
 bool node_read_ecdsa_public_key(node_t *n) {
 	if(ecdsa_active(&n->ecdsa))
@@ -151,8 +152,7 @@ bool read_rsa_public_key(connection_t *c) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
-			   fname, strerror(errno));
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -179,8 +179,7 @@ static bool read_ecdsa_private_key(void) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading ECDSA private key file `%s': %s",
-			   fname, strerror(errno));
+		logger(LOG_ERR, "Error reading ECDSA private key file `%s': %s", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -349,7 +348,7 @@ void load_all_subnets(void) {
 static bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
-	char *name, *hostname, *mode, *afname, *cipher, *digest;
+	char *name, *hostname, *mode, *afname, *cipher, *digest, *type;
 	char *fname = NULL;
 	char *address = NULL;
 	char *envp[5];
@@ -475,6 +474,8 @@ static bool setup_myself(void) {
 		myself->options |= OPTION_CLAMP_MSS;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
+	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+	get_config_bool(lookup_config(config_tree, "Broadcast"), &broadcast);
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
@@ -589,7 +590,24 @@ static bool setup_myself(void) {
 
 	/* Open device */
 
-	if(!setup_device())
+	devops = os_devops;
+
+	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+		if(!strcasecmp(type, "dummy"))
+			devops = dummy_devops;
+		else if(!strcasecmp(type, "raw_socket"))
+			devops = raw_socket_devops;
+#ifdef ENABLE_UML
+		else if(!strcasecmp(type, "uml"))
+			devops = uml_devops;
+#endif
+#ifdef ENABLE_VDE
+		else if(!strcasecmp(type, "vde"))
+			devops = vde_devops;
+#endif
+	}
+
+	if(!devops.setup())
 		return false;
 
 	if(device_fd >= 0) {
@@ -597,7 +615,7 @@ static bool setup_myself(void) {
 
 		if (event_add(&device_ev, NULL) < 0) {
 			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
-			close_device();
+			devops.close();
 			return false;
 		}
 	}
@@ -620,72 +638,78 @@ static bool setup_myself(void) {
 
 	/* Open sockets */
 
-	get_config_string(lookup_config(config_tree, "BindToAddress"), &address);
-
-	hint.ai_family = addressfamily;
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_protocol = IPPROTO_TCP;
-	hint.ai_flags = AI_PASSIVE;
-
-	err = getaddrinfo(address, myport, &hint, &ai);
-
-	if(err || !ai) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
-			   gai_strerror(err));
-		return false;
-	}
-
 	listen_sockets = 0;
+	cfg = lookup_config(config_tree, "BindToAddress");
 
-	for(aip = ai; aip; aip = aip->ai_next) {
-		listen_socket[listen_sockets].tcp =
-			setup_listen_socket((sockaddr_t *) aip->ai_addr);
+	do {
+		get_config_string(cfg, &address);
+		if(cfg)
+			cfg = lookup_config_next(config_tree, cfg);
 
-		if(listen_socket[listen_sockets].tcp < 0)
-			continue;
+		hint.ai_family = addressfamily;
+		hint.ai_socktype = SOCK_STREAM;
+		hint.ai_protocol = IPPROTO_TCP;
+		hint.ai_flags = AI_PASSIVE;
 
-		listen_socket[listen_sockets].udp =
-			setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+		err = getaddrinfo(address, myport, &hint, &ai);
+		free(address);
 
-		if(listen_socket[listen_sockets].udp < 0) {
-			close(listen_socket[listen_sockets].tcp);
-			continue;
+		if(err || !ai) {
+			logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
+				   gai_strerror(err));
+			return false;
 		}
 
-		event_set(&listen_socket[listen_sockets].ev_tcp,
-				  listen_socket[listen_sockets].tcp,
-				  EV_READ|EV_PERSIST,
-				  handle_new_meta_connection, NULL);
-		if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
-			abort();
+		for(aip = ai; aip; aip = aip->ai_next) {
+			if(listen_sockets >= MAXSOCKETS) {
+				logger(LOG_ERR, "Too many listening sockets");
+				return false;
+			}
+
+			listen_socket[listen_sockets].tcp =
+				setup_listen_socket((sockaddr_t *) aip->ai_addr);
+
+			if(listen_socket[listen_sockets].tcp < 0)
+				continue;
+
+			listen_socket[listen_sockets].udp =
+				setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+
+			if(listen_socket[listen_sockets].udp < 0) {
+				close(listen_socket[listen_sockets].tcp);
+				continue;
+			}
+
+			event_set(&listen_socket[listen_sockets].ev_tcp,
+					  listen_socket[listen_sockets].tcp,
+					  EV_READ|EV_PERSIST,
+					  handle_new_meta_connection, NULL);
+			if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
+				logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+				abort();
+			}
+
+			event_set(&listen_socket[listen_sockets].ev_udp,
+					  listen_socket[listen_sockets].udp,
+					  EV_READ|EV_PERSIST,
+					  handle_incoming_vpn_data, (void *)(intptr_t)listen_sockets);
+			if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
+				logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+				abort();
+			}
+
+			ifdebug(CONNECTIONS) {
+				hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
+				logger(LOG_NOTICE, "Listening on %s", hostname);
+				free(hostname);
+			}
+
+			memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
+			listen_sockets++;
 		}
 
-		event_set(&listen_socket[listen_sockets].ev_udp,
-				  listen_socket[listen_sockets].udp,
-				  EV_READ|EV_PERSIST,
-				  handle_incoming_vpn_data, NULL);
-		if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
-			abort();
-		}
-
-		ifdebug(CONNECTIONS) {
-			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(LOG_NOTICE, "Listening on %s", hostname);
-			free(hostname);
-		}
-
-		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
-		listen_sockets++;
-
-		if(listen_sockets >= MAXSOCKETS) {
-			logger(LOG_WARNING, "Maximum of %d listening sockets reached", MAXSOCKETS);
-			break;
-		}
-	}
-
-	freeaddrinfo(ai);
+		freeaddrinfo(ai);
+	} while(cfg);
 
 	if(listen_sockets)
 		logger(LOG_NOTICE, "Ready");
@@ -778,7 +802,7 @@ void close_network_connections(void) {
 	for(i = 0; i < 4; i++)
 		free(envp[i]);
 
-	close_device();
+	devops.close();
 
 	return;
 }

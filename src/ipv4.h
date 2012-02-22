@@ -41,6 +41,14 @@
 #define ICMP_NET_UNKNOWN 6
 #endif
 
+#ifndef ICMP_TIME_EXCEEDED
+#define ICMP_TIME_EXCEEDED 11
+#endif
+
+#ifndef ICMP_EXC_TTL
+#define ICMP_EXC_TTL 0
+#endif
+
 #ifndef ICMP_NET_UNREACH
 #define ICMP_NET_UNREACH 0
 #endif

@@ -782,7 +782,8 @@ both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 @item BindToAddress = <@var{address}> [experimental]
 If your computer has more than one IPv4 or IPv6 address, tinc
 will by default listen on all of them for incoming connections.
-It is possible to bind only to a single address with this variable.
+Multiple BindToAddress variables may be specified,
+in which case listening sockets for each specified address are made.
 
 This option may not work on all platforms.
 
@@ -794,6 +795,10 @@ possible to bind tinc to a single interface like eth0 or ppp0 with this
 variable.
 
 This option may not work on all platforms.
+
+@cindex Broadcast
+@item Broadcast = <yes | no> (yes) [experimental]
+When disabled, tinc will drop all broadcast and multicast packets, in both router and switch mode.
 
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
@@ -807,6 +812,13 @@ If you don't specify a host with ConnectTo,
 tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
+@cindex DecrementTTL
+@item DecrementTTL = <yes | no> (yes)
+When enabled, tinc will decrement the Time To Live field in IPv4 packets, or the Hop Limit field in IPv6 packets,
+before forwarding a received packet to the virtual network device or to another node,
+and will drop packets that have a TTL value of zero,
+in which case it will send an ICMP Time Exceeded packet back.
+
 @cindex Device
 @item Device = <@var{device}> (@file{/dev/tap0}, @file{/dev/net/tun} or other depending on platform)
 The virtual network device to use.
@@ -817,32 +829,64 @@ Note that you can only use one device per daemon.
 See also @ref{Device files}.
 
 @cindex DeviceType
-@item DeviceType = <tun|tunnohead|tunifhead|tap> (only supported on BSD platforms)
+@item DeviceType = <@var{type}> (platform dependent)
 The type of the virtual network device.
-Tinc will normally automatically select the right type, and this option should not be used.
-However, in case tinc does not seem to correctly interpret packets received from the virtual network device,
-using this option might help.
+Tinc will normally automatically select the right type of tun/tap interface, and this option should not be used.
+However, this option can be used to select one of the special interface types, if support for them is compiled in.
 
 @table @asis
-@item tun
+@cindex dummy
+@item dummy
+Use a dummy interface.
+No packets are ever read or written to a virtual network device.
+Useful for testing, or when setting up a node that only forwards packets for other nodes.
+
+@cindex raw_socket
+@item raw_socket
+Open a raw socket, and bind it to a pre-existing
+@var{Interface} (eth0 by default).
+All packets are read from this interface.
+Packets received for the local node are written to the raw socket.
+However, at least on Linux, the operating system does not process IP packets destined for the local host.
+
+@cindex UML
+@item uml (not compiled in by default)
+Create a UNIX socket with the filename specified by
+@var{Device}, or @file{@value{localstatedir}/run/@var{netname}.umlsocket}
+if not specified.
+Tinc will wait for a User Mode Linux instance to connect to this socket.
+
+@cindex VDE
+@item vde (not compiled in by default)
+Uses the libvdeplug library to connect to a Virtual Distributed Ethernet switch,
+using the UNIX socket specified by
+@var{Device}, or @file{@value{localstatedir}/run/vde.ctl}
+if not specified.
+@end table
+
+Also, in case tinc does not seem to correctly interpret packets received from the virtual network device,
+it can be used to change the way packets are interpreted:
+
+@table @asis
+@item tun (BSD and Linux)
 Set type to tun.
 Depending on the platform, this can either be with or without an address family header (see below).
 
 @cindex tunnohead
-@item tunnohead
+@item tunnohead (BSD)
 Set type to tun without an address family header.
 Tinc will expect packets read from the virtual network device to start with an IP header.
 On some platforms IPv6 packets cannot be read from or written to the device in this mode.
 
 @cindex tunifhead
-@item tunifhead
+@item tunifhead (BSD)
 Set type to tun with an address family header.
 Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
 
-@item tap
+@item tap (BSD and Linux)
 Set type to tap.
 Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.
@@ -1599,6 +1643,12 @@ Specifying . for @var{netname} is the same as not specifying any @var{netname}.
 Store a cookie in @var{filename} which allows tincctl to authenticate.
 If unspecified, the default is
 @file{@value{localstatedir}/run/tinc.@var{netname}.pid}.
+
+@item -o, --option=[@var{HOST}.]@var{KEY}=@var{VALUE}
+Without specifying a @var{HOST}, this will set server configuration variable @var{KEY} to @var{VALUE}.
+If specified as @var{HOST}.@var{KEY}=@var{VALUE},
+this will set the host configuration variable @var{KEY} of the host named @var{HOST} to @var{VALUE}.
+This option can be used more than once to specify multiple configuration variables.
 
 @item -L, --mlock
 Lock tinc into main memory.

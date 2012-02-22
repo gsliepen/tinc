@@ -107,6 +107,7 @@ static struct option const long_options[] = {
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
 	{"pidfile", required_argument, NULL, 5},
+	{"option", required_argument, NULL, 'o'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -122,18 +123,18 @@ static void usage(bool status) {
 				program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
-		printf(	"  -c, --config=DIR          Read configuration options from DIR.\n"
-				"  -D, --no-detach           Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]       Increase debug level or set it to LEVEL.\n"
-				"  -n, --net=NETNAME         Connect to net NETNAME.\n"
-				"  -L, --mlock               Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]  Write log entries to a logfile.\n"
-				"      --pidfile=FILENAME    Write PID and control socket cookie to FILENAME.\n"
-				"      --bypass-security     Disables meta protocol security, for debugging.\n"
-				"  -o [HOST.]KEY=VALUE       Set global/host configuration value.\n"
-				"  -R, --chroot              chroot to NET dir at startup.\n"
-				"  -U, --user=USER           setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
-				"      --version             Output version information and exit.\n\n");
+		printf(	"  -c, --config=DIR              Read configuration options from DIR.\n"
+				"  -D, --no-detach               Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
+				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
+				"  -L, --mlock                   Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
+				"      --bypass-security         Disables meta protocol security, for debugging.\n"
+				"  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+				"  -R, --chroot                  chroot to NET dir at startup.\n"
+				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
+				"      --version                 Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
@@ -416,6 +417,7 @@ int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
+        char *priority = NULL;
 
 	if(!detach())
 		return 1;
@@ -444,8 +446,6 @@ int main2(int argc, char **argv) {
 	try_outgoing_connections();
 
 	/* Change process priority */
-
-        char *priority = NULL;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
                 if(!strcasecmp(priority, "Normal")) {
@@ -483,7 +483,7 @@ int main2(int argc, char **argv) {
 	/* Shutdown properly. */
 
 	ifdebug(CONNECTIONS)
-		dump_device_stats();
+		devops.dump_stats();
 
 	close_network_connections();
 

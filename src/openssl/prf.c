@@ -19,6 +19,8 @@
 
 #include "system.h"
 
+#include <openssl/obj_mac.h>
+
 #include "digest.h"
 #include "prf.h"
 
