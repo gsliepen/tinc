@@ -210,6 +210,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof option);
+	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof option);
 
 	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf)))
 		logger(LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, strerror(errno));

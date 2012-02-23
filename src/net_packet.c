@@ -62,13 +62,21 @@ static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999
 static void send_udppacket(node_t *, vpn_packet_t *);
 
 unsigned replaywin = 16;
+bool localdiscovery = false;
 
 #define MAX_SEQNO 1073741824
 
-// mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
-// mtuprobes ==    31: sleep pinginterval seconds
-// mtuprobes ==    32: send 1 burst, sleep pingtimeout second
-// mtuprobes ==    33: no response from other side, restart PMTU discovery process
+/* mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
+   mtuprobes ==    31: sleep pinginterval seconds
+   mtuprobes ==    32: send 1 burst, sleep pingtimeout second
+   mtuprobes ==    33: no response from other side, restart PMTU discovery process
+
+   Probes are sent in batches of three, with random sizes between the lower and
+   upper boundaries for the MTU thus far discovered.
+
+   In case local discovery is enabled, a fourth packet is added to each batch,
+   which will be broadcast to the local network.
+*/
 
 static void send_mtu_probe_handler(int fd, short events, void *data) {
 	node_t *n = data;
@@ -119,7 +127,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		timeout = pingtimeout;
 	}
 
-	for(i = 0; i < 3; i++) {
+	for(i = 0; i < 3 + localdiscovery; i++) {
 		if(n->maxmtu <= n->minmtu)
 			len = n->maxmtu;
 		else
@@ -131,7 +139,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
-		packet.priority = 0;
+		packet.priority = i < 3 ? 0 : -1;
 
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
 
@@ -473,6 +481,29 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Send the packet */
 
+	struct sockaddr *sa;
+	socklen_t sl;
+	int sock;
+
+	/* Overloaded use of priority field: -1 means local broadcast */
+
+	if(origpriority == -1 && n->prevedge) {
+		struct sockaddr_in in;
+		in.sin_family = AF_INET;
+		in.sin_addr.s_addr = -1;
+		in.sin_port = n->prevedge->address.in.sin_port;
+		sa = (struct sockaddr *)&in;
+		sl = sizeof in;
+		sock = 0;
+	} else {
+		if(origpriority == -1)
+			origpriority = 0;
+
+		sa = &(n->address.sa);
+		sl = SALEN(n->address.sa);
+		sock = n->sock;
+	}
+
 #if defined(SOL_IP) && defined(IP_TOS)
 	if(priorityinheritance && origpriority != priority
 	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
@@ -483,7 +514,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if(sendto(listen_socket[n->sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, sa, sl) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -593,6 +624,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	if(hard)
 		last_hard_try = now;
 
+	last_hard_try = now;
 	return n;
 }
 

@@ -961,6 +961,16 @@ Depending on the operating system and the type of device this may or may not act
 Under Windows, this variable is used to select which network interface will be used.
 If you specified a Device, this variable is almost always already correctly set.
 
+@cindex LocalDiscovery
+@item LocalDiscovery = <yes | no> (no) [experimental]
+When enabled, tinc will try to detect peers that are on the same local network.
+This will allow direct communication using LAN addresses, even if both peers are behind a NAT
+and they only ConnectTo a third node outside the NAT,
+which normally would prevent the peers from learning each other's LAN address.
+
+Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
+This feature may not work in all possible situations.
+
 @cindex Mode
 @item Mode = <router|switch|hub> (router)
 This option selects the way packets are routed to other daemons.
