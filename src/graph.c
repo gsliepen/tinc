@@ -65,7 +65,7 @@
    Please note that sorting on weight is already done by add_edge().
 */
 
-void mst_kruskal(void) {
+static void mst_kruskal(void) {
 	splay_node_t *node, *next;
 	edge_t *e;
 	node_t *n;
@@ -216,7 +216,7 @@ static void sssp_dijkstra(void) {
    Running time: O(E)
 */
 
-void sssp_bfs(void) {
+static void sssp_bfs(void) {
 	splay_node_t *node, *to;
 	edge_t *e;
 	node_t *n;
@@ -369,7 +369,7 @@ static void check_reachability(void) {
 
 void graph(void) {
 	subnet_cache_flush();
-	sssp_dijkstra();
+	sssp_bfs();
 	check_reachability();
 	mst_kruskal();
 }
