@@ -400,6 +400,11 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		packet->priority = packet->data[15];
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+
+	if(via == source) {
+		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
 	
 	if(directonly && subnet->owner != via)
 		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
@@ -551,6 +556,11 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+	
+	if(via == source) {
+		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
 	
 	if(directonly && subnet->owner != via)
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
