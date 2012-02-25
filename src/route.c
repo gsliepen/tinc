@@ -88,13 +88,14 @@ static bool ratelimit(int frequency) {
 	time_t now = time(NULL);
 	
 	if(lasttime == now) {
-		if(++count > frequency)
+		if(count >= frequency)
 			return true;
 	} else {
 		lasttime = now;
 		count = 0;
 	}
 
+	count++;
 	return false;
 }
 
@@ -416,6 +417,11 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		packet->priority = packet->data[15];
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+
+	if(via == source) {
+		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
 	
 	if(directonly && subnet->owner != via)
 		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
@@ -567,6 +573,11 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+	
+	if(via == source) {
+		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
 	
 	if(directonly && subnet->owner != via)
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
@@ -888,7 +899,8 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 				return false;
 
 			if(packet->data[22] < 1) {
-				route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+				if(packet->data[25] != IPPROTO_ICMP || packet->data[46] != ICMP_TIME_EXCEEDED)
+					route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
 				return false;
 			}
 
@@ -910,7 +922,8 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 				return false;
 
 			if(packet->data[21] < 1) {
-				route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+				if(packet->data[20] != IPPROTO_ICMPV6 || packet->data[54] != ICMP6_TIME_EXCEEDED)
+					route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
 				return false;
 			}
 
