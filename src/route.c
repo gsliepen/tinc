@@ -82,13 +82,14 @@ static bool ratelimit(int frequency) {
 	static int count = 0;
 	
 	if(lasttime == now) {
-		if(++count > frequency)
+		if(count >= frequency)
 			return true;
 	} else {
 		lasttime = now;
 		count = 0;
 	}
 
+	count++;
 	return false;
 }
 
@@ -858,7 +859,8 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 				return false;
 
 			if(packet->data[22] < 1) {
-				route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+				if(packet->data[25] != IPPROTO_ICMP || packet->data[46] != ICMP_TIME_EXCEEDED)
+					route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
 				return false;
 			}
 
@@ -880,7 +882,8 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 				return false;
 
 			if(packet->data[21] < 1) {
-				route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+				if(packet->data[20] != IPPROTO_ICMPV6 || packet->data[54] != ICMP6_TIME_EXCEEDED)
+					route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
 				return false;
 			}
 
