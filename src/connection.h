@@ -26,6 +26,7 @@
 #include "digest.h"
 #include "rsa.h"
 #include "splay_tree.h"
+#include "sptps.h"
 
 #define OPTION_INDIRECT		0x0001
 #define OPTION_TCPONLY		0x0002
@@ -73,11 +74,11 @@ typedef struct connection_t {
 
 	rsa_t rsa;			/* his public RSA key */
 	ecdsa_t ecdsa;			/* his public ECDSA key */
-	ecdsa_t ecdh;			/* state for ECDH key exchange */
 	cipher_t incipher;		/* Cipher he will use to send data to us */
 	cipher_t outcipher;		/* Cipher we will use to send data to him */
 	digest_t indigest;
 	digest_t outdigest;
+	sptps_t sptps;
 
 	int inmaclength;
 	int outmaclength;

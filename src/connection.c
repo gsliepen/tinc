@@ -69,7 +69,7 @@ void free_connection(connection_t *c) {
 	cipher_close(&c->outcipher);
 	digest_close(&c->outdigest);
 
-	ecdh_free(&c->ecdh);
+	stop_sptps(&c->sptps);
 	ecdsa_free(&c->ecdsa);
 	rsa_free(&c->rsa);
 

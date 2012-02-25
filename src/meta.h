@@ -24,6 +24,8 @@
 #include "connection.h"
 
 extern bool send_meta(struct connection_t *, const char *, int);
+extern bool send_meta_sptps(void *, const char *, size_t);
+extern bool receive_meta_sptps(void *, uint8_t, const char *, uint16_t);
 extern void broadcast_meta(struct connection_t *, const char *, int);
 extern bool receive_meta(struct connection_t *);
 

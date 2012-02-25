@@ -17,6 +17,9 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#ifndef __SPTPS_H__
+#define __SPTPS_H__
+
 #include "system.h"
 
 #include "cipher.h"
@@ -78,3 +81,5 @@ extern bool stop_sptps(sptps_t *s);
 extern bool send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
 extern bool receive_data(sptps_t *s, const char *data, size_t len);
 extern bool force_kex(sptps_t *s);
+
+#endif

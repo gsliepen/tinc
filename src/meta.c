@@ -31,6 +31,22 @@
 #include "utils.h"
 #include "xalloc.h"
 
+bool send_meta_sptps(void *handle, const char *buffer, size_t length) {
+	connection_t *c = handle;
+
+	if(!c) {
+		logger(LOG_ERR, "send_meta_sptps() called with NULL pointer!");
+		abort();
+	}
+
+	logger(LOG_DEBUG, "send_meta_sptps(%s, %p, %zu)", c->name, buffer, length);
+
+	buffer_add(&c->outbuf, buffer, length);
+	event_add(&c->outevent, NULL);
+
+	return true;
+}
+
 bool send_meta(connection_t *c, const char *buffer, int length) {
 	if(!c) {
 		logger(LOG_ERR, "send_meta() called with NULL pointer!");
@@ -39,6 +55,9 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 
 	ifdebug(META) logger(LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
 			   c->name, c->hostname);
+
+	if(c->protocol_minor >= 2)
+		return send_record(&c->sptps, 0, buffer, length);
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
@@ -69,6 +88,41 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 		if(c != from && c->status.active)
 			send_meta(c, buffer, length);
 	}
+}
+
+bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t length) {
+	connection_t *c = handle;
+
+	if(!c) {
+		logger(LOG_ERR, "receive_meta_sptps() called with NULL pointer!");
+		abort();
+	}
+
+	logger(LOG_DEBUG, "receive_meta_sptps(%s, %d, %p, %hu)", c->name, type, data, length);
+
+	if(type == SPTPS_HANDSHAKE) {
+		if(c->allow_request == ACK)
+			return send_ack(c);
+		else
+			return true;
+	}
+
+	if(!data)
+		return true;
+
+	/* Are we receiving a TCPpacket? */
+
+	if(c->tcplen) {
+		if(length != c->tcplen)
+			return false;
+		receive_tcppacket(c, data, length);
+		c->tcplen = 0;
+		return true;
+	}
+
+	/* Otherwise we are waiting for a request */
+
+	return receive_request(c, data);
 }
 
 bool receive_meta(connection_t *c) {
@@ -107,6 +161,11 @@ bool receive_meta(connection_t *c) {
 	}
 
 	do {
+		if(c->protocol_minor >= 2) {
+			logger(LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
+			return receive_data(&c->sptps, bufp, inlen);
+		}
+
 		if(!c->status.decryptin) {
 			endp = memchr(bufp, '\n', inlen);
 			if(endp)

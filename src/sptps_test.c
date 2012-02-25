@@ -25,6 +25,7 @@
 #include "sptps.h"
 #include "utils.h"
 
+char *logfilename;
 ecdsa_t mykey, hiskey;
 
 static bool send_data(void *handle, const char *data, size_t len) {

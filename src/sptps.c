@@ -27,9 +27,6 @@
 #include "prf.h"
 #include "sptps.h"
 
-char *logfilename;
-#include "utils.c"
-
 /*
    Nonce MUST be exchanged first (done)
    Signatures MUST be done over both nonces, to guarantee the signature is fresh
@@ -60,7 +57,6 @@ static bool error(sptps_t *s, int s_errno, const char *msg) {
 // Send a record (private version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
 	char buffer[len + 23UL];
-	//char ciphertext[len + 19];
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = htonl(s->outseqno++);
@@ -326,6 +322,7 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 			// We expect a handshake message to indicate transition to the new keys.
 			if(!receive_ack(s, data, len))
 				return false;
+			s->receive_record(s->handle, SPTPS_HANDSHAKE, NULL, 0);
 			s->state = SPTPS_SECONDARY_KEX;
 			return true;
 		// TODO: split ACK into a VERify and ACK?
