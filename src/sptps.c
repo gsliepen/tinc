@@ -59,32 +59,32 @@ static bool error(sptps_t *s, int s_errno, const char *msg) {
 
 // Send a record (private version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
-	char plaintext[len + 23];
-	char ciphertext[len + 19];
+	char buffer[len + 23UL];
+	//char ciphertext[len + 19];
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = htonl(s->outseqno++);
 	uint16_t netlen = htons(len);
 
-	memcpy(plaintext, &seqno, 4);
-	memcpy(plaintext + 4, &netlen, 2);
-	plaintext[6] = type;
+	memcpy(buffer, &seqno, 4);
+	memcpy(buffer + 4, &netlen, 2);
+	buffer[6] = type;
 
 	// Add plaintext (TODO: avoid unnecessary copy)
-	memcpy(plaintext + 7, data, len);
+	memcpy(buffer + 7, data, len);
 
 	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
-		if(!digest_create(&s->outdigest, plaintext, len + 7, plaintext + 7 + len))
+		if(!cipher_counter_xor(&s->outcipher, buffer + 4, len + 3UL, buffer + 4))
 			return false;
 
-		if(!cipher_counter_xor(&s->outcipher, plaintext + 4, sizeof ciphertext, ciphertext))
+		if(!digest_create(&s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
 			return false;
 
-		return s->send_data(s->handle, ciphertext, len + 19);
+		return s->send_data(s->handle, buffer + 4, len + 19UL);
 	} else {
 		// Otherwise send as plaintext
-		return s->send_data(s->handle, plaintext + 4, len + 3);
+		return s->send_data(s->handle, buffer + 4, len + 3UL);
 	}
 }
 
@@ -343,26 +343,29 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 			if(toread > len)
 				toread = len;
 
-			if(s->instate) {
-				if(!cipher_counter_xor(&s->incipher, data, toread, s->inbuf + s->buflen))
-					return false;
-			} else {
-				memcpy(s->inbuf + s->buflen, data, toread);
-			}
+			memcpy(s->inbuf + s->buflen, data, toread);
 
 			s->buflen += toread;
 			len -= toread;
 			data += toread;
-
+		
 			// Exit early if we don't have the full length.
 			if(s->buflen < 6)
 				return true;
 
+			// Decrypt the length bytes
+
+			if(s->instate) {
+				if(!cipher_counter_xor(&s->incipher, s->inbuf + 4, 2, &s->reclen))
+					return false;
+			} else {
+				memcpy(&s->reclen, s->inbuf + 4, 2);
+			}
+
+			s->reclen = ntohs(s->reclen);
+
 			// If we have the length bytes, ensure our buffer can hold the whole request.
-			uint16_t reclen;
-			memcpy(&reclen, s->inbuf + 4, 2);
-			reclen = htons(reclen);
-			s->inbuf = realloc(s->inbuf, reclen + 23UL);
+			s->inbuf = realloc(s->inbuf, s->reclen + 23UL);
 			if(!s->inbuf)
 				return error(s, errno, strerror(errno));
 
@@ -376,43 +379,40 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 		}
 
 		// Read up to the end of the record.
-		uint16_t reclen;
-		memcpy(&reclen, s->inbuf + 4, 2);
-		reclen = htons(reclen);
-		size_t toread = reclen + (s->instate ? 23UL : 7UL) - s->buflen;
+		size_t toread = s->reclen + (s->instate ? 23UL : 7UL) - s->buflen;
 		if(toread > len)
 			toread = len;
 
-		if(s->instate) {
-			if(!cipher_counter_xor(&s->incipher, data, toread, s->inbuf + s->buflen))
-				return false;
-		} else {
-			memcpy(s->inbuf + s->buflen, data, toread);
-		}
-
+		memcpy(s->inbuf + s->buflen, data, toread);
 		s->buflen += toread;
 		len -= toread;
 		data += toread;
 
 		// If we don't have a whole record, exit.
-		if(s->buflen < reclen + (s->instate ? 23UL : 7UL))
+		if(s->buflen < s->reclen + (s->instate ? 23UL : 7UL))
 			return true;
 
-		// Check HMAC.
-		if(s->instate)
-			if(!digest_verify(&s->indigest, s->inbuf, reclen + 7UL, s->inbuf + reclen + 7UL))
-				error(s, EIO, "Invalid HMAC");
+		// Check HMAC and decrypt.
+		if(s->instate) {
+			if(!digest_verify(&s->indigest, s->inbuf, s->reclen + 7UL, s->inbuf + s->reclen + 7UL))
+				return error(s, EIO, "Invalid HMAC");
+
+			if(!cipher_counter_xor(&s->incipher, s->inbuf + 6UL, s->reclen + 1UL, s->inbuf + 6UL))
+				return false;
+		}
+
+		// Append a NULL byte for safety.
+		s->inbuf[s->reclen + 7UL] = 0;
 
 		uint8_t type = s->inbuf[6];
 
-		// Handle record.
 		if(type < SPTPS_HANDSHAKE) {
 			if(!s->instate)
 				return error(s, EIO, "Application record received before handshake finished");
-			if(!s->receive_record(s->handle, type, s->inbuf + 7, reclen))
+			if(!s->receive_record(s->handle, type, s->inbuf + 7, s->reclen))
 				return false;
 		} else if(type == SPTPS_HANDSHAKE) {
-			if(!receive_handshake(s, s->inbuf + 7, reclen))
+			if(!receive_handshake(s, s->inbuf + 7, s->reclen))
 				return false;
 		} else {
 			return error(s, EIO, "Invalid record type");

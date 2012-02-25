@@ -46,6 +46,7 @@ typedef struct sptps {
 
 	char *inbuf;
 	size_t buflen;
+	uint16_t reclen;
 
 	bool instate;
 	cipher_t incipher;
