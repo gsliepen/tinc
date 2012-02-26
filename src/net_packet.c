@@ -139,7 +139,10 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
-		packet.priority = i < 3 ? 0 : -1;
+		if(i >= 3 && n->mtuprobes <= 10)
+			packet.priority = -1;
+		else
+			packet.priority = 0;
 
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
 
