@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "Keys loaded\n");
 
 	sptps_t s;
-	if(!start_sptps(&s, &sock, initiator, mykey, hiskey, "sptps_test", 10, send_data, receive_record))
+	if(!sptps_start(&s, &sock, initiator, mykey, hiskey, "sptps_test", 10, send_data, receive_record))
 		return 1;
 
 	while(true) {
@@ -141,11 +141,11 @@ int main(int argc, char *argv[]) {
 			if(len == 0)
 				break;
 			if(buf[0] == '^')
-				send_record(&s, SPTPS_HANDSHAKE, NULL, 0);
+				sptps_send_record(&s, SPTPS_HANDSHAKE, NULL, 0);
 			else if(buf[0] == '$')
-				force_kex(&s);
+				sptps_force_kex(&s);
 			else
-			if(!send_record(&s, buf[0] == '!' ? 1 : 0, buf, buf[0] == '\n' ? 0 : buf[0] == '*' ? sizeof buf : len))
+			if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, buf[0] == '\n' ? 0 : buf[0] == '*' ? sizeof buf : len))
 				return 1;
 		}
 
@@ -162,10 +162,13 @@ int main(int argc, char *argv[]) {
 			char hex[len * 2 + 1];
 			bin2hex(buf, hex, len);
 			fprintf(stderr, "Received %zd bytes of data:\n%s\n", len, hex);
-			if(!receive_data(&s, buf, len))
+			if(!sptps_receive_data(&s, buf, len))
 				return 1;
 		}
 	}
+
+	if(!sptps_stop(&s))
+		return 1;
 
 	return 0;
 }

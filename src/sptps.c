@@ -85,7 +85,7 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 }
 
 // Send an application record.
-bool send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
+bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
 	// Sanity checks: application cannot send data before handshake is finished,
 	// and only record types 0..127 are allowed.
 	if(!s->outstate)
@@ -288,7 +288,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 }
 
 // Force another Key EXchange (for testing purposes).
-bool force_kex(sptps_t *s) {
+bool sptps_force_kex(sptps_t *s) {
 	if(!s->outstate || s->state != SPTPS_SECONDARY_KEX)
 		return error(s, EINVAL, "Cannot force KEX in current state");
 
@@ -332,7 +332,7 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 }
 
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
-bool receive_data(sptps_t *s, const char *data, size_t len) {
+bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 	while(len) {
 		// First read the 2 length bytes.
 		if(s->buflen < 6) {
@@ -422,7 +422,7 @@ bool receive_data(sptps_t *s, const char *data, size_t len) {
 }
 
 // Start a SPTPS session.
-bool start_sptps(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
+bool sptps_start(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
 	// Initialise struct sptps
 	memset(s, 0, sizeof *s);
 
@@ -453,7 +453,7 @@ bool start_sptps(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_
 }
 
 // Stop a SPTPS session.
-bool stop_sptps(sptps_t *s) {
+bool sptps_stop(sptps_t *s) {
 	// Clean up any resources.
 	ecdh_free(&s->ecdh);
 	free(s->inbuf);

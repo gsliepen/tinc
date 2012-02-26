@@ -144,7 +144,7 @@ bool id_h(connection_t *c, char *request) {
 		else
 			snprintf(label, sizeof label, "tinc TCP key expansion %s %s", c->name, myself->name);
 
-		return start_sptps(&c->sptps, c, c->outgoing, myself->connection->ecdsa, c->ecdsa, label, sizeof label, send_meta_sptps, receive_meta_sptps);
+		return sptps_start(&c->sptps, c, c->outgoing, myself->connection->ecdsa, c->ecdsa, label, sizeof label, send_meta_sptps, receive_meta_sptps);
 	} else {
 		return send_metakey(c);
 	}

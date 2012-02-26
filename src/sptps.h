@@ -76,10 +76,10 @@ typedef struct sptps {
 	receive_record_t receive_record;
 } sptps_t;
 
-extern bool start_sptps(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
-extern bool stop_sptps(sptps_t *s);
-extern bool send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
-extern bool receive_data(sptps_t *s, const char *data, size_t len);
-extern bool force_kex(sptps_t *s);
+extern bool sptps_start(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
+extern bool sptps_stop(sptps_t *s);
+extern bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
+extern bool sptps_receive_data(sptps_t *s, const char *data, size_t len);
+extern bool sptps_force_kex(sptps_t *s);
 
 #endif

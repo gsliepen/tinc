@@ -57,7 +57,7 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 			   c->name, c->hostname);
 
 	if(c->protocol_minor >= 2)
-		return send_record(&c->sptps, 0, buffer, length);
+		return sptps_send_record(&c->sptps, 0, buffer, length);
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
@@ -163,7 +163,7 @@ bool receive_meta(connection_t *c) {
 	do {
 		if(c->protocol_minor >= 2) {
 			logger(LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
-			return receive_data(&c->sptps, bufp, inlen);
+			return sptps_receive_data(&c->sptps, bufp, inlen);
 		}
 
 		if(!c->status.decryptin) {
