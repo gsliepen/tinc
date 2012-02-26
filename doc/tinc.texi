@@ -1928,6 +1928,7 @@ tincctl -n @var{netname} reload
 
 @menu
 * tincctl runtime options::
+* tincctl environment variables::
 * tincctl commands::
 * tincctl examples::
 * tincctl top::
@@ -1960,6 +1961,16 @@ Output version information and exit.
 
 @end table
 
+@c ==================================================================
+@node    tincctl environment variables
+@section tincctl environment variables
+
+@table @env
+@cindex NETNAME
+@item NETNAME
+If no netname is specified on the command line with the @option{-n} option,
+the value of this environment variable is used.
+@end table
 
 @c ==================================================================
 @node    tincctl commands

@@ -138,6 +138,12 @@ static bool parse_options(int argc, char **argv) {
 		}
 	}
 
+	if(!netname) {
+		netname = getenv("NETNAME");
+		if(netname)
+			netname = xstrdup(netname);
+	}
+
 	return true;
 }
 

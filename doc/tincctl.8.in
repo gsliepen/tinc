@@ -37,6 +37,13 @@ Display short list of options.
 .It Fl -version
 Output version information and exit.
 .El
+.Sh ENVIRONMENT VARIABLES
+.Bl -tag -width indent
+.It Ev NETNAME
+If no netname is specified on the command line with the
+.Fl n
+option, the value of this environment variable is used.
+.El
 .Sh COMMANDS
 .zZ
 .Bl -tag -width indent
