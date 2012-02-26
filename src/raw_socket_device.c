@@ -51,7 +51,7 @@ static bool setup_device(void) {
 	device_info = "raw socket";
 
 	if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
-		logger(LOG_ERR, "Could not open %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device_info,
 			   strerror(errno));
 		return false;
 	}
@@ -65,7 +65,7 @@ static bool setup_device(void) {
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);
-		logger(LOG_ERR, "Can't find interface %s: %s", iface,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Can't find interface %s: %s", iface,
 			   strerror(errno));
 		return false;
 	}
@@ -76,11 +76,11 @@ static bool setup_device(void) {
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
 	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof sa)) {
-		logger(LOG_ERR, "Could not bind %s to %s: %s", device, iface, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device, iface, strerror(errno));
 		return false;
 	}
 
-	logger(LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
@@ -96,7 +96,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
 	if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
-		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
 	}
@@ -105,18 +105,18 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	device_total_in += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	if(write(device_fd, packet->data, packet->len) < 0) {
-		logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			   strerror(errno));
 		return false;
 	}
@@ -127,9 +127,9 @@ static bool write_packet(vpn_packet_t *packet) {
 }
 
 static void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t raw_socket_devops = {
@@ -143,7 +143,7 @@ const devops_t raw_socket_devops = {
 #else
 
 static bool not_supported(void) {
-	logger(LOG_ERR, "Raw socket device not supported on this platform");
+	logger(DEBUG_ALWAYS, LOG_ERR, "Raw socket device not supported on this platform");
 	return false;
 }
 

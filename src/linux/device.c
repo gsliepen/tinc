@@ -64,7 +64,7 @@ static bool setup_device(void) {
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
 	if(device_fd < 0) {
-		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
 
@@ -77,7 +77,7 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(config_tree, "DeviceType"), &type);
 
 	if(type && strcasecmp(type, "tun") && strcasecmp(type, "tap")) {
-		logger(LOG_ERR, "Unknown device type %s!", type);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown device type %s!", type);
 		return false;
 	}
 
@@ -107,13 +107,13 @@ static bool setup_device(void) {
 		if(iface) free(iface);
 		iface = xstrdup(ifrname);
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
-		logger(LOG_WARNING, "Old ioctl() request was needed for %s", device);
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Old ioctl() request was needed for %s", device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		if(iface) free(iface);
 		iface = xstrdup(ifrname);
 	}
 
-	logger(LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
@@ -134,7 +134,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			inlen = read(device_fd, packet->data + 10, MTU - 10);
 
 			if(inlen <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s",
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -145,7 +145,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			inlen = read(device_fd, packet->data, MTU);
 
 			if(inlen <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s",
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -159,28 +159,28 @@ static bool read_packet(vpn_packet_t *packet) {
 	device_in_packets++;
 	device_in_bytes += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			packet->data[10] = packet->data[11] = 0;
 			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
-				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
 			break;
 		case DEVICE_TYPE_TAP:
 			if(write(device_fd, packet->data, packet->len) < 0) {
-				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
@@ -196,9 +196,9 @@ static bool write_packet(vpn_packet_t *packet) {
 }
 
 static void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_in_bytes);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_out_bytes);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_in_bytes);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_out_bytes);
 }
 
 const devops_t os_devops = {

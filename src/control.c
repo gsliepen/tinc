@@ -1,6 +1,6 @@
 /*
     control.c -- Control socket handling.
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,12 +48,12 @@ bool control_h(connection_t *c, char *request) {
 	int type;
 
 	if(!c->status.control || c->allow_request != CONTROL) {
-		logger(LOG_ERR, "Unauthorized control request from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unauthorized control request from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
 	if(sscanf(request, "%*d %d", &type) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "CONTROL", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CONTROL", c->name, c->hostname);
 		return false;
 	}
 
@@ -93,7 +93,7 @@ bool control_h(connection_t *c, char *request) {
 			return control_ok(c, REQ_RETRY);
 
 		case REQ_RELOAD:
-			logger(LOG_NOTICE, "Got '%s' command", "reload");
+			logger(DEBUG_ALWAYS, LOG_NOTICE, "Got '%s' command", "reload");
 			int result = reload_configuration();
 			return control_return(c, REQ_RELOAD, result);
 
@@ -122,8 +122,15 @@ bool control_h(connection_t *c, char *request) {
 			return dump_traffic(c);
 
 		case REQ_PCAP:
+			sscanf(request, "%*d %*d %d", &c->outmaclength);
 			c->status.pcap = true;
 			pcap = true;
+			return true;
+
+		case REQ_LOG:
+			sscanf(request, "%*d %*d %d", &c->outcompression);
+			c->status.log = true;
+			logcontrol = true;
 			return true;
 
 		default:
@@ -137,7 +144,7 @@ bool init_control(void) {
 
 	FILE *f = fopen(pidfilename, "w");
 	if(!f) {
-		logger(LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
 		return false;
 	}
 

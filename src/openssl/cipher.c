@@ -44,7 +44,7 @@ bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	if(cipher->cipher)
 		return cipher_open(cipher);
 
-	logger(LOG_ERR, "Unknown cipher name '%s'!", name);
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher name '%s'!", name);
 	return false;
 }
 
@@ -54,7 +54,7 @@ bool cipher_open_by_nid(cipher_t *cipher, int nid) {
 	if(cipher->cipher)
 		return cipher_open(cipher);
 
-	logger(LOG_ERR, "Unknown cipher nid %d!", nid);
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher nid %d!", nid);
 	return false;
 }
 
@@ -86,7 +86,7 @@ bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 	if(result)
 		return true;
 
-	logger(LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -101,14 +101,14 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 	if(result)
 		return true;
 
-	logger(LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
 bool cipher_set_counter_key(cipher_t *cipher, void *key) {
 	int result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, NULL);
 	if(!result) {
-		logger(LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while setting key: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
@@ -124,7 +124,7 @@ bool cipher_set_counter_key(cipher_t *cipher, void *key) {
 
 bool cipher_counter_xor(cipher_t *cipher, const void *indata, size_t inlen, void *outdata) {
 	if(!cipher->counter) {
-		logger(LOG_ERR, "Counter not initialized");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Counter not initialized");
 		return false;
 	}
 
@@ -136,7 +136,7 @@ bool cipher_counter_xor(cipher_t *cipher, const void *indata, size_t inlen, void
 		if(!cipher->counter->n) {
 			int len;
 			if(!EVP_EncryptUpdate(&cipher->ctx, cipher->counter->block, &len, cipher->counter->counter, cipher->cipher->block_size)) {
-				logger(LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
 				return false;
 			}
 
@@ -173,7 +173,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		}
 	}
 
-	logger(LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -194,7 +194,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		}
 	}
 
-	logger(LOG_ERR, "Error while decrypting: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 

@@ -81,7 +81,7 @@ static bool setup_device(void) {
 		else if(!strcasecmp(type, "tap"))
 			device_type = DEVICE_TYPE_TAP;
 		else {
-			logger(LOG_ERR, "Unknown device type %s!", type);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown device type %s!", type);
 			return false;
 		}
 	} else {
@@ -102,7 +102,7 @@ static bool setup_device(void) {
 	}
 
 	if(device_fd < 0) {
-		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
 
@@ -118,7 +118,7 @@ static bool setup_device(void) {
 		{	
 			const int zero = 0;
 			if(ioctl(device_fd, TUNSIFHEAD, &zero, sizeof zero) == -1) {
-				logger(LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
 				return false;
 			}
 		}
@@ -137,7 +137,7 @@ static bool setup_device(void) {
 		{
 			const int one = 1;
 			if(ioctl(device_fd, TUNSIFHEAD, &one, sizeof one) == -1) {
-				logger(LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
 				return false;
 			}
 		}
@@ -174,7 +174,7 @@ static bool setup_device(void) {
 #endif
 	}
 
-	logger(LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
@@ -208,7 +208,7 @@ static bool read_packet(vpn_packet_t *packet) {
 				inlen = read(device_fd, packet->data + 14, MTU - 14);
 
 			if(inlen <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
@@ -223,7 +223,7 @@ static bool read_packet(vpn_packet_t *packet) {
 					packet->data[13] = 0xDD;
 					break;
 				default:
-					ifdebug(TRAFFIC) logger(LOG_ERR,
+					logger(DEBUG_TRAFFIC, LOG_ERR,
 							   "Unknown IP version %d while reading packet from %s %s",
 							   packet->data[14] >> 4, device_info, device);
 					return false;
@@ -237,7 +237,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			struct iovec vector[2] = {{&type, sizeof type}, {packet->data + 14, MTU - 14}};
 
 			if((inlen = readv(device_fd, vector, 2)) <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
@@ -254,7 +254,7 @@ static bool read_packet(vpn_packet_t *packet) {
 					break;
 
 				default:
-					ifdebug(TRAFFIC) logger(LOG_ERR,
+					logger(DEBUG_TRAFFIC, LOG_ERR,
 							   "Unknown address family %x while reading packet from %s %s",
 							   ntohl(type), device_info, device);
 					return false;
@@ -266,7 +266,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 		case DEVICE_TYPE_TAP:
 			if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
@@ -280,20 +280,20 @@ static bool read_packet(vpn_packet_t *packet) {
 		
 	device_total_in += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s",
 			   packet->len, device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
-				logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
@@ -314,14 +314,14 @@ static bool write_packet(vpn_packet_t *packet) {
 					type = htonl(AF_INET6);
 					break;
 				default:
-					ifdebug(TRAFFIC) logger(LOG_ERR,
+					logger(DEBUG_TRAFFIC, LOG_ERR,
 							   "Unknown address family %x while writing packet to %s %s",
 							   af, device_info, device);
 					return false;
 			}
 
 			if(writev(device_fd, vector, 2) < 0) {
-				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
@@ -330,7 +330,7 @@ static bool write_packet(vpn_packet_t *packet) {
 			
 		case DEVICE_TYPE_TAP:
 			if(write(device_fd, packet->data, packet->len) < 0) {
-				logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
@@ -339,7 +339,7 @@ static bool write_packet(vpn_packet_t *packet) {
 #ifdef HAVE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
 			if(tunemu_write(device_fd, packet->data + 14, packet->len - 14) < 0) {
-				logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
@@ -356,9 +356,9 @@ static bool write_packet(vpn_packet_t *packet) {
 }
 
 static void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t os_devops = {

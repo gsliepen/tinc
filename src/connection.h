@@ -1,6 +1,6 @@
 /*
     connection.h -- header for connection.c
-    Copyright (C) 2000-2010 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@ typedef struct connection_status_t {
 		unsigned int encryptout:1;		/* 1 if we can encrypt outgoing traffic */
 		unsigned int decryptin:1;		/* 1 if we have to decrypt incoming traffic */
 		unsigned int mst:1;			/* 1 if this connection is part of a minimum spanning tree */
-		unsigned int control:1;
-		unsigned int pcap:1;
-		unsigned int unused:21;
+		unsigned int control:1;			/* 1 if this is a control connection */
+		unsigned int pcap:1;			/* 1 if this is a control connection requesting packet capture */
+		unsigned int log:1;			/* 1 if this is a control connection requesting log dump */
+		unsigned int unused:20;
 } connection_status_t;
 
 #include "ecdh.h"

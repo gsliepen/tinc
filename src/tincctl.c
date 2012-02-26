@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2011 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -94,7 +94,8 @@ static void usage(bool status) {
 #ifdef HAVE_CURSES
 				"  top                        Show real-time statistics\n"
 #endif
-				"  pcap                       Dump traffic in pcap format\n"
+				"  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
+				"  log [level]                Dump log output [up to the specified level]\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -147,7 +148,7 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
-FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
+static FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
 	FILE *r;
 	char *directory;
 	char buf[PATH_MAX];
@@ -390,7 +391,7 @@ bool recvline(int fd, char *line, size_t len) {
 	return true;
 }
 
-bool recvdata(int fd, char *data, size_t len) {
+static bool recvdata(int fd, char *data, size_t len) {
 	while(blen < len) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
 		if(result == -1 && errno == EINTR)
@@ -436,8 +437,8 @@ bool sendline(int fd, char *format, ...) {
 	return true;	
 }
 
-void pcap(int fd, FILE *out) {
-	sendline(fd, "%d %d", CONTROL, REQ_PCAP);
+static void pcap(int fd, FILE *out, int snaplen) {
+	sendline(fd, "%d %d %d", CONTROL, REQ_PCAP, snaplen);
 	char data[9018];
 
 	struct {
@@ -452,7 +453,7 @@ void pcap(int fd, FILE *out) {
 		0xa1b2c3d4,
 		2, 4,
 		0, 0,
-		sizeof data,
+		snaplen ?: sizeof data,
 		1,
 	};
 
@@ -483,6 +484,24 @@ void pcap(int fd, FILE *out) {
 		packet.origlen = len;
 		fwrite(&packet, sizeof packet, 1, out);
 		fwrite(data, len, 1, out);
+		fflush(out);
+	}
+}
+
+static void logcontrol(int fd, FILE *out, int level) {
+	sendline(fd, "%d %d %d", CONTROL, REQ_LOG, level);
+	char data[1024];
+	char line[32];
+
+	while(recvline(fd, line, sizeof line)) {
+		int code, req, len;
+		int n = sscanf(line, "%d %d %d", &code, &req, &len);
+		if(n != 3 || code != CONTROL || req != REQ_LOG || len < 0 || len > sizeof data)
+			break;
+		if(!recvdata(fd, data, len))
+			break;
+		fwrite(data, len, 1, out);
+		fputc('\n', out);
 		fflush(out);
 	}
 }
@@ -539,7 +558,7 @@ int main(int argc, char *argv[]) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_MAJOR, PROT_MINOR);
-		printf("Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -562,7 +581,7 @@ int main(int argc, char *argv[]) {
 	// First handle commands that don't involve connecting to a running tinc daemon.
 
 	if(!strcasecmp(argv[optind], "generate-rsa-keys")) {
-		return !rsa_keygen(optind > argc ? atoi(argv[optind + 1]) : 2048);
+		return !rsa_keygen(optind < argc - 1 ? atoi(argv[optind + 1]) : 2048);
 	}
 
 	if(!strcasecmp(argv[optind], "generate-ecdsa-keys")) {
@@ -570,7 +589,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if(!strcasecmp(argv[optind], "generate-keys")) {
-		return !(rsa_keygen(optind > argc ? atoi(argv[optind + 1]) : 2048) && ecdsa_keygen());
+		return !(rsa_keygen(optind < argc - 1 ? atoi(argv[optind + 1]) : 2048) && ecdsa_keygen());
 	}
 
 	if(!strcasecmp(argv[optind], "start")) {
@@ -842,7 +861,12 @@ int main(int argc, char *argv[]) {
 #endif
 
 	if(!strcasecmp(argv[optind], "pcap")) {
-		pcap(fd, stdout);
+		pcap(fd, stdout, optind < argc - 1 ? atoi(argv[optind + 1]) : 0);
+		return 0;
+	}
+
+	if(!strcasecmp(argv[optind], "log")) {
+		logcontrol(fd, stdout, optind < argc - 1 ? atoi(argv[optind + 1]) : -1);
 		return 0;
 	}
 

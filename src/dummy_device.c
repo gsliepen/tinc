@@ -31,7 +31,7 @@ static uint64_t device_total_out = 0;
 static bool setup_device(void) {
 	device = "dummy";
 	iface = "dummy";
-	logger(LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 	return true;
 }
 
@@ -48,9 +48,9 @@ static bool write_packet(vpn_packet_t *packet) {
 }
 
 static void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t dummy_devops = {

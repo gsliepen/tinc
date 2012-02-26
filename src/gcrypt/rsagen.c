@@ -164,12 +164,12 @@ bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp) {
 	if(!ber_write_mpi(&derp1, &derlen1, &rsa->n)
 			|| !ber_write_mpi(&derp1, &derlen1, &rsa->e)
 			|| !ber_write_sequence(&derp2, &derlen2, derbuf1, derlen1)) {
-		logger(LOG_ERR, "Error while encoding RSA public key");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encoding RSA public key");
 		return false;
 	}
 
 	if(!pem_encode(fp, "RSA PUBLIC KEY", derbuf2, derlen2)) {
-		logger(LOG_ERR, "Unable to write RSA public key: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write RSA public key: %s", strerror(errno));
 		return false;
 	}
 
@@ -193,12 +193,12 @@ bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
 			|| ber_write_mpi(&derp1, &derlen1, &exp1)
 			|| ber_write_mpi(&derp1, &derlen1, &exp2)
 			|| ber_write_mpi(&derp1, &derlen1, &coeff))
-		logger(LOG_ERR, "Error while encoding RSA private key");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encoding RSA private key");
 		return false;
 	}
 
 	if(!pem_encode(fp, "RSA PRIVATE KEY", derbuf2, derlen2)) {
-		logger(LOG_ERR, "Unable to write RSA private key: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write RSA private key: %s", strerror(errno));
 		return false;
 	}
 

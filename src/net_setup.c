@@ -80,7 +80,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading ECDSA public key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA public key file `%s': %s", fname, strerror(errno));
 		goto exit;
 	}
 
@@ -115,7 +115,7 @@ bool read_ecdsa_public_key(connection_t *c) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading ECDSA public key file `%s': %s",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA public key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -125,7 +125,7 @@ bool read_ecdsa_public_key(connection_t *c) {
 	fclose(fp);
 
 	if(!result) 
-		logger(LOG_ERR, "Reading ECDSA public key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA public key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -152,7 +152,7 @@ bool read_rsa_public_key(connection_t *c) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -161,7 +161,7 @@ bool read_rsa_public_key(connection_t *c) {
 	fclose(fp);
 
 	if(!result) 
-		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -179,7 +179,7 @@ static bool read_ecdsa_private_key(void) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading ECDSA private key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA private key file `%s': %s", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -188,20 +188,20 @@ static bool read_ecdsa_private_key(void) {
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, "Could not stat ECDSA private key file `%s': %s'", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat ECDSA private key file `%s': %s'", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, "Warning: insecure file permissions for ECDSA private key file `%s'!", fname);
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for ECDSA private key file `%s'!", fname);
 #endif
 
 	result = ecdsa_read_pem_private_key(&myself->connection->ecdsa, fp);
 	fclose(fp);
 
 	if(!result) 
-		logger(LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -216,7 +216,7 @@ static bool read_rsa_private_key(void) {
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &d)) {
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &n)) {
-			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "PrivateKey used but no PublicKey found!");
 			free(d);
 			return false;
 		}
@@ -234,7 +234,7 @@ static bool read_rsa_private_key(void) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA private key file `%s': %s",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA private key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -244,20 +244,20 @@ static bool read_rsa_private_key(void) {
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
 	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
 	fclose(fp);
 
 	if(!result) 
-		logger(LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
 }
@@ -270,7 +270,7 @@ static void keyexpire_handler(int fd, short events, void *data) {
 
 void regenerate_key(void) {
 	if(timeout_initialized(&keyexpire_event)) {
-		ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
+		logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
 		event_del(&keyexpire_event);
 		send_key_changed();
 	} else {
@@ -297,7 +297,7 @@ void load_all_subnets(void) {
 	xasprintf(&dname, "%s/hosts", confbase);
 	dir = opendir(dname);
 	if(!dir) {
-		logger(LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
 		free(dname);
 		return;
 	}
@@ -368,12 +368,12 @@ static bool setup_myself(void) {
 	myself->connection->protocol_minor = PROT_MINOR;
 
 	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
-		logger(LOG_ERR, "Name for tinc daemon required!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
 		return false;
 	}
 
 	if(!check_id(name)) {
-		logger(LOG_ERR, "Invalid name for myself!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid name for myself!");
 		free(name);
 		return false;
 	}
@@ -444,7 +444,7 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(mode, "hub"))
 			routing_mode = RMODE_HUB;
 		else {
-			logger(LOG_ERR, "Invalid routing mode!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid routing mode!");
 			return false;
 		}
 		free(mode);
@@ -458,7 +458,7 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(mode, "kernel"))
 			forwarding_mode = FMODE_KERNEL;
 		else {
-			logger(LOG_ERR, "Invalid forwarding mode!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid forwarding mode!");
 			return false;
 		}
 		free(mode);
@@ -480,7 +480,7 @@ static bool setup_myself(void) {
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
+		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -488,7 +488,7 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
-			logger(LOG_ERR, "Bogus maximum timeout!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus maximum timeout!");
 			return false;
 		}
 	} else
@@ -496,21 +496,21 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {
-			logger(LOG_ERR, "UDPRcvBuf cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "UDPRcvBuf cannot be negative!");
 			return false;
 		}
 	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPSndBuf"), &udp_sndbuf)) {
 		if(udp_sndbuf <= 0) {
-			logger(LOG_ERR, "UDPSndBuf cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "UDPSndBuf cannot be negative!");
 			return false;
 		}
 	}
 
 	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {
 		if(replaywin_int < 0) {
-			logger(LOG_ERR, "ReplayWindow cannot be negative!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "ReplayWindow cannot be negative!");
 			return false;
 		}
 		replaywin = (unsigned)replaywin_int;
@@ -524,7 +524,7 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(afname, "any"))
 			addressfamily = AF_UNSPEC;
 		else {
-			logger(LOG_ERR, "Invalid address family!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address family!");
 			return false;
 		}
 		free(afname);
@@ -538,7 +538,7 @@ static bool setup_myself(void) {
 		cipher = xstrdup("blowfish");
 
 	if(!cipher_open_by_name(&myself->incipher, cipher)) {
-		logger(LOG_ERR, "Unrecognized cipher type!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
 		return false;
 	}
 
@@ -553,7 +553,7 @@ static bool setup_myself(void) {
 	get_config_int(lookup_config(config_tree, "MACLength"), &maclength);
 
 	if(maclength < 0) {
-		logger(LOG_ERR, "Bogus MAC length!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Bogus MAC length!");
 		return false;
 	}
 
@@ -561,7 +561,7 @@ static bool setup_myself(void) {
 		digest = xstrdup("sha1");
 
 	if(!digest_open_by_name(&myself->indigest, digest, maclength)) {
-		logger(LOG_ERR, "Unrecognized digest type!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
 		return false;
 	}
 
@@ -569,7 +569,7 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(config_tree, "Compression"), &myself->incompression)) {
 		if(myself->incompression < 0 || myself->incompression > 11) {
-			logger(LOG_ERR, "Bogus compression level!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
 			return false;
 		}
 	} else
@@ -615,7 +615,7 @@ static bool setup_myself(void) {
 		event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
 
 		if (event_add(&device_ev, NULL) < 0) {
-			logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
 			devops.close();
 			return false;
 		}
@@ -656,14 +656,14 @@ static bool setup_myself(void) {
 		free(address);
 
 		if(err || !ai) {
-			logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
 				   gai_strerror(err));
 			return false;
 		}
 
 		for(aip = ai; aip; aip = aip->ai_next) {
 			if(listen_sockets >= MAXSOCKETS) {
-				logger(LOG_ERR, "Too many listening sockets");
+				logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
 				return false;
 			}
 
@@ -686,7 +686,7 @@ static bool setup_myself(void) {
 					  EV_READ|EV_PERSIST,
 					  handle_new_meta_connection, NULL);
 			if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-				logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
 				abort();
 			}
 
@@ -695,13 +695,13 @@ static bool setup_myself(void) {
 					  EV_READ|EV_PERSIST,
 					  handle_incoming_vpn_data, (void *)(intptr_t)listen_sockets);
 			if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-				logger(LOG_ERR, "event_add failed: %s", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
 				abort();
 			}
 
-			ifdebug(CONNECTIONS) {
+			if(debug_level >= DEBUG_CONNECTIONS) {
 				hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-				logger(LOG_NOTICE, "Listening on %s", hostname);
+				logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
 				free(hostname);
 			}
 
@@ -713,9 +713,9 @@ static bool setup_myself(void) {
 	} while(cfg);
 
 	if(listen_sockets)
-		logger(LOG_NOTICE, "Ready");
+		logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
 	else {
-		logger(LOG_ERR, "Unable to create any listening socket!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
 

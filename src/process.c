@@ -61,7 +61,7 @@ static bool install_service(void) {
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if(!manager) {
-		logger(LOG_ERR, "Could not open service manager: %s", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open service manager: %s", winerror(GetLastError()));
 		return false;
 	}
 
@@ -93,22 +93,22 @@ static bool install_service(void) {
 	
 	if(!service) {
 		DWORD lasterror = GetLastError();
-		logger(LOG_ERR, "Could not create %s service: %s", identname, winerror(lasterror));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create %s service: %s", identname, winerror(lasterror));
 		if(lasterror != ERROR_SERVICE_EXISTS)
 			return false;
 	}
 
 	if(service) {
 		ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
-		logger(LOG_INFO, "%s service installed", identname);
+		logger(DEBUG_ALWAYS, LOG_INFO, "%s service installed", identname);
 	} else {
 		service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
 	}
 
 	if(!StartService(service, 0, NULL))
-		logger(LOG_WARNING, "Could not start %s service: %s", identname, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not start %s service: %s", identname, winerror(GetLastError()));
 	else
-		logger(LOG_INFO, "%s service started", identname);
+		logger(DEBUG_ALWAYS, LOG_INFO, "%s service started", identname);
 
 	return true;
 }
@@ -119,13 +119,13 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			SetServiceStatus(statushandle, &status);
 			return NO_ERROR;
 		case SERVICE_CONTROL_STOP:
-			logger(LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_STOP");
+			logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_STOP");
 			break;
 		case SERVICE_CONTROL_SHUTDOWN:
-			logger(LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_SHUTDOWN");
+			logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_SHUTDOWN");
 			break;
 		default:
-			logger(LOG_WARNING, "Got unexpected request %d", request);
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Got unexpected request %d", request);
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
@@ -150,7 +150,7 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 	statushandle = RegisterServiceCtrlHandlerEx(identname, controlhandler, NULL); 
 
 	if (!statushandle) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
 		err = 1;
 	} else {
 		status.dwWaitHint = 30000; 
@@ -183,7 +183,7 @@ bool init_service(void) {
 			return false;
 		}
 		else
-			logger(LOG_ERR, "System call `%s' failed: %s", "StartServiceCtrlDispatcher", winerror(GetLastError()));
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "StartServiceCtrlDispatcher", winerror(GetLastError()));
 	}
 
 	return true;
@@ -218,7 +218,7 @@ bool detach(void) {
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
-	logger(LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
 			   VERSION, __DATE__, __TIME__, debug_level);
 
 	return true;
@@ -249,7 +249,7 @@ bool execute_script(const char *name, char **envp) {
 	}
 #endif
 
-	ifdebug(STATUS) logger(LOG_INFO, "Executing script %s", name);
+	logger(DEBUG_STATUS, LOG_INFO, "Executing script %s", name);
 
 #ifdef HAVE_PUTENV
 	/* Set environment */
@@ -279,20 +279,20 @@ bool execute_script(const char *name, char **envp) {
 	if(status != -1) {
 		if(WIFEXITED(status)) {	/* Child exited by itself */
 			if(WEXITSTATUS(status)) {
-				logger(LOG_ERR, "Script %s exited with non-zero status %d",
+				logger(DEBUG_ALWAYS, LOG_ERR, "Script %s exited with non-zero status %d",
 					   name, WEXITSTATUS(status));
 				return false;
 			}
 		} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
-			logger(LOG_ERR, "Script %s was killed by signal %d (%s)",
+			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s was killed by signal %d (%s)",
 				   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 			return false;
 		} else {			/* Something strange happened */
-			logger(LOG_ERR, "Script %s terminated abnormally", name);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s terminated abnormally", name);
 			return false;
 		}
 	} else {
-		logger(LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
 		return false;
 	}
 #endif

@@ -21,7 +21,10 @@
 #include "system.h"
 
 #include "conf.h"
+#include "meta.h"
 #include "logger.h"
+#include "connection.h"
+#include "control_common.h"
 
 debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
@@ -32,6 +35,7 @@ static FILE *logfile = NULL;
 static HANDLE loghandle = NULL;
 #endif
 static const char *logident = NULL;
+bool logcontrol = false;
 
 void openlogger(const char *ident, logmode_t mode) {
 	logident = ident;
@@ -75,61 +79,76 @@ void reopenlogger() {
 	fflush(logfile);
 	FILE *newfile = fopen(logfilename, "a");
 	if(!newfile) {
-		logger(LOG_ERR, "Unable to reopen log file %s: %s\n", logfilename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reopen log file %s: %s\n", logfilename, strerror(errno));
 		return;
 	}
 	fclose(logfile);
 	logfile = newfile;
 }
 
-void logger(int priority, const char *format, ...) {
+void logger(int level, int priority, const char *format, ...) {
 	va_list ap;
 	char timestr[32] = "";
+	char message[1024] = "";
 	time_t now;
+	static bool suppress = false;
+
+	// Bail out early if there is nothing to do.
+	if(suppress)
+		return;
+
+	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL))
+		return;
 
 	va_start(ap, format);
+	vsnprintf(message, sizeof message, format, ap);
+	va_end(ap);
 
-	switch(logmode) {
-		case LOGMODE_STDERR:
-			vfprintf(stderr, format, ap);
-			fprintf(stderr, "\n");
-			fflush(stderr);
-			break;
-		case LOGMODE_FILE:
-			now = time(NULL);
-			strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
-			fprintf(logfile, "%s %s[%ld]: ", timestr, logident, (long)logpid);
-			vfprintf(logfile, format, ap);
-			fprintf(logfile, "\n");
-			fflush(logfile);
-			break;
-		case LOGMODE_SYSLOG:
+	if(level <= debug_level) {
+		switch(logmode) {
+			case LOGMODE_STDERR:
+				fprintf(stderr, "%s\n", message);
+				fflush(stderr);
+				break;
+			case LOGMODE_FILE:
+				now = time(NULL);
+				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
+				fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
+				fflush(logfile);
+				break;
+			case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			{
-				char message[4096];
-				const char *messages[] = {message};
-				vsnprintf(message, sizeof message, format, ap);
-				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
-			}
+				{
+					const char *messages[] = {message};
+					ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
+				}
 #else
 #ifdef HAVE_SYSLOG_H
-#ifdef HAVE_VSYSLOG
-			vsyslog(priority, format, ap);
-#else
-			{
-				char message[4096];
-				vsnprintf(message, sizeof message, format, ap);
 				syslog(priority, "%s", message);
-			}
-#endif
-			break;
 #endif
 #endif
-		case LOGMODE_NULL:
-			break;
+				break;
+			case LOGMODE_NULL:
+				break;
+		}
 	}
 
-	va_end(ap);
+	if(logcontrol) {
+		suppress = true;
+		logcontrol = false;
+		for(splay_node_t *node = connection_tree->head; node; node = node->next) {
+			connection_t *c = node->data;
+			if(!c->status.log)
+				continue;
+			logcontrol = true;
+			if(level > (c->outcompression >= 0 ? c->outcompression : debug_level))
+				continue;
+			int len = strlen(message);
+			if(send_request(c, "%d %d %d", CONTROL, REQ_LOG, len))
+				send_meta(c, message, len);
+		}
+		suppress = false;
+	}
 }
 
 void closelogger(void) {

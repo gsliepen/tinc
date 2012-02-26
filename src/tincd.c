@@ -162,7 +162,7 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'L':				/* no detach */
 #ifndef HAVE_MLOCKALL
-				logger(LOG_ERR, "%s not supported on this platform", "mlockall()");
+				logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "mlockall()");
 				return false;
 #else
 				do_mlock = true;
@@ -276,7 +276,7 @@ static void make_names(void) {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
 		else
-			logger(LOG_INFO, "Both netname and configuration directory given, using the latter...");
+			logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
 	} else {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc");
@@ -294,11 +294,11 @@ static void free_names(void) {
 static bool drop_privs(void) {
 #ifdef HAVE_MINGW
 	if (switchuser) {
-		logger(LOG_ERR, "%s not supported on this platform", "-U");
+		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-U");
 		return false;
 	}
 	if (do_chroot) {
-		logger(LOG_ERR, "%s not supported on this platform", "-R");
+		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-R");
 		return false;
 	}
 #else
@@ -306,13 +306,13 @@ static bool drop_privs(void) {
 	if (switchuser) {
 		struct passwd *pw = getpwnam(switchuser);
 		if (!pw) {
-			logger(LOG_ERR, "unknown user `%s'", switchuser);
+			logger(DEBUG_ALWAYS, LOG_ERR, "unknown user `%s'", switchuser);
 			return false;
 		}
 		uid = pw->pw_uid;
 		if (initgroups(switchuser, pw->pw_gid) != 0 ||
 		    setgid(pw->pw_gid) != 0) {
-			logger(LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
 			return false;
 		}
@@ -322,7 +322,7 @@ static bool drop_privs(void) {
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
 		if (chroot(confbase) != 0 || chdir("/") != 0) {
-			logger(LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "chroot", strerror(errno));
 			return false;
 		}
@@ -331,7 +331,7 @@ static bool drop_privs(void) {
 	}
 	if (switchuser)
 		if (setuid(uid) != 0) {
-			logger(LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "setuid", strerror(errno));
 			return false;
 		}
@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
 #endif
@@ -383,7 +383,7 @@ int main(int argc, char **argv) {
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
 	if(!event_init()) {
-		logger(LOG_ERR, "Error initializing libevent!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing libevent!");
 		return 1;
 	}
 
@@ -401,7 +401,7 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_LZO
 	if(lzo_init() != LZO_E_OK) {
-		logger(LOG_ERR, "Error initializing LZO compressor!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
 #endif
@@ -427,7 +427,7 @@ int main2(int argc, char **argv) {
 	 * This has to be done after daemon()/fork() so it works for child.
 	 * No need to do that in parent as it's very short-lived. */
 	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "mlockall",
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "mlockall",
 		   strerror(errno));
 		return 1;
 	}
@@ -450,24 +450,24 @@ int main2(int argc, char **argv) {
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
                 if(!strcasecmp(priority, "Normal")) {
                         if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
-                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
                                        "setpriority", strerror(errno));
                                 goto end;
                         }
                 } else if(!strcasecmp(priority, "Low")) {
                         if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
-                                       logger(LOG_ERR, "System call `%s' failed: %s",
+                                       logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
                                        "setpriority", strerror(errno));
                                 goto end;
                         }
                 } else if(!strcasecmp(priority, "High")) {
                         if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
-                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
                                        "setpriority", strerror(errno));
                                 goto end;
                         }
                 } else {
-                        logger(LOG_ERR, "Invalid priority `%s`!", priority);
+                        logger(DEBUG_ALWAYS, LOG_ERR, "Invalid priority `%s`!", priority);
                         goto end;
                 }
         }
@@ -482,7 +482,7 @@ int main2(int argc, char **argv) {
 
 	/* Shutdown properly. */
 
-	ifdebug(CONNECTIONS)
+	if(debug_level >= DEBUG_CONNECTIONS)
 		devops.dump_stats();
 
 	close_network_connections();
@@ -491,7 +491,7 @@ end:
 	exit_control();
 
 end_nonet:
-	logger(LOG_NOTICE, "Terminating");
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Terminating");
 
 	free(priority);
 

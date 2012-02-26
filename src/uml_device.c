@@ -72,7 +72,7 @@ static bool setup_device(void) {
 	device_info = "UML network socket";
 
 	if((write_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
-		logger(LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));
 		running = false;
 		return false;
 	}
@@ -84,13 +84,13 @@ static bool setup_device(void) {
 	setsockopt(write_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(write_fd, F_SETFL, O_NONBLOCK) < 0) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 		running = false;
 		return false;
 	}
 
 	if((data_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
-		logger(LOG_ERR, "Could not open data %s: %s", device_info, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open data %s: %s", device_info, strerror(errno));
 		running = false;
 		return false;
 	}
@@ -102,7 +102,7 @@ static bool setup_device(void) {
 	setsockopt(data_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(data_fd, F_SETFL, O_NONBLOCK) < 0) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 		running = false;
 		return false;
 	}
@@ -115,13 +115,13 @@ static bool setup_device(void) {
 	memcpy(&data_sun.sun_path, &name, sizeof name);
 	
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof data_sun) < 0) {
-		logger(LOG_ERR, "Could not bind data %s: %s", device_info, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind data %s: %s", device_info, strerror(errno));
 		running = false;
 		return false;
 	}
 
 	if((listen_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-		logger(LOG_ERR, "Could not open %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device_info,
 			   strerror(errno));
 		return false;
 	}
@@ -133,26 +133,26 @@ static bool setup_device(void) {
 	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
 	if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 		return false;
 	}
 
 	listen_sun.sun_family = AF_UNIX;
 	strncpy(listen_sun.sun_path, device, sizeof listen_sun.sun_path);
 	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof listen_sun) < 0) {
-		logger(LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
 		return false;
 	}
 
 	if(listen(listen_fd, 1) < 0) {
-		logger(LOG_ERR, "Could not listen on %s %s: %s", device_info, device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on %s %s: %s", device_info, device, strerror(errno));
 		return false;
 	}
 
 	device_fd = listen_fd;
 	state = 0;
 
-	logger(LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	if(routing_mode == RMODE_ROUTER)
 		overwrite_mac = true;
@@ -189,7 +189,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 			request_fd = accept(listen_fd, &sa, &salen);
 			if(request_fd < 0) {
-				logger(LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
 
@@ -198,7 +198,7 @@ static bool read_packet(vpn_packet_t *packet) {
 #endif
 
 			if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
-				logger(LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
 				running = false;
 				return false;
 			}
@@ -213,21 +213,21 @@ static bool read_packet(vpn_packet_t *packet) {
 
 		case 1: {
 			if((inlen = read(request_fd, &request, sizeof request)) != sizeof request) {
-				logger(LOG_ERR, "Error while reading request from %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
 					   device, strerror(errno));
 				running = false;
 				return false;
 			}
 
 			if(request.magic != 0xfeedface || request.version != 3 || request.type != REQ_NEW_CONTROL) {
-				logger(LOG_ERR, "Unknown magic %x, version %d, request type %d from %s %s",
+				logger(DEBUG_ALWAYS, LOG_ERR, "Unknown magic %x, version %d, request type %d from %s %s",
 						request.magic, request.version, request.type, device_info, device);
 				running = false;
 				return false;
 			}
 
 			if(connect(write_fd, &request.sock, sizeof request.sock) < 0) {
-				logger(LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
 				running = false;
 				return false;
 			}
@@ -235,7 +235,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			write(request_fd, &data_sun, sizeof data_sun);
 			device_fd = data_fd;
 
-			logger(LOG_INFO, "Connection with UML established");
+			logger(DEBUG_ALWAYS, LOG_INFO, "Connection with UML established");
 
 			state = 2;
 			return false;
@@ -243,7 +243,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 		case 2: {
 			if((inlen = read(data_fd, packet->data, MTU)) <= 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				running = false;
 				return false;
@@ -253,31 +253,31 @@ static bool read_packet(vpn_packet_t *packet) {
 
 			device_total_in += packet->len;
 
-			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 					   device_info);
 
 			return true;
 		}
 
 		default:
-			logger(LOG_ERR, "Invalid value for state variable in " __FILE__);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid value for state variable in " __FILE__);
 			abort();
 	}
 }
 
 static bool write_packet(vpn_packet_t *packet) {
 	if(state != 2) {
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Dropping packet of %d bytes to %s: not connected to UML yet",
+		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Dropping packet of %d bytes to %s: not connected to UML yet",
 				packet->len, device_info);
 		return false;
 	}
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	if(write(write_fd, packet->data, packet->len) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			running = false;
 		}
 
@@ -290,9 +290,9 @@ static bool write_packet(vpn_packet_t *packet) {
 }
 
 static void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t uml_devops = {

@@ -45,7 +45,7 @@ static bool setup_device(void) {
 	libvdeplug_dynopen(plug);
 
 	if(!plug.dl_handle) {
-		logger(LOG_ERR, "Could not open libvdeplug library!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open libvdeplug library!");
 		return false;
 	}
 
@@ -68,7 +68,7 @@ static bool setup_device(void) {
 
 	conn = plug.vde_open(device, identname, &args);
 	if(!conn) {
-		logger(LOG_ERR, "Could not open VDE socket %s", device);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open VDE socket %s", device);
 		return false;
 	}
 
@@ -78,7 +78,7 @@ static bool setup_device(void) {
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	logger(LOG_INFO, "%s is a %s", device, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	if(routing_mode == RMODE_ROUTER)
 		overwrite_mac = true;
@@ -101,14 +101,14 @@ static void close_device(void) {
 static bool read_packet(vpn_packet_t *packet) {
 	int lenin = plug.vde_recv(conn, packet->data, MTU, 0);
 	if(lenin <= 0) {
-		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 		running = false;
 		return false;
 	}
 
 	packet->len = lenin;
 	device_total_in += packet->len;
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len, device_info);
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len, device_info);
 
 	return true;
 }
@@ -116,7 +116,7 @@ static bool read_packet(vpn_packet_t *packet) {
 static bool write_packet(vpn_packet_t *packet) {
 	if(plug.vde_send(conn, packet->data, packet->len, 0) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
-			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			running = false;
 		}
 
@@ -129,9 +129,9 @@ static bool write_packet(vpn_packet_t *packet) {
 }
 
 static void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t vde_devops = {

@@ -80,19 +80,12 @@ bool send_request(connection_t *c, const char *format, ...) {
 	va_end(args);
 
 	if(len < 0 || len > MAXBUFSIZE - 1) {
-		logger(LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
 			   c->name, c->hostname);
 		return false;
 	}
 
-	ifdebug(PROTOCOL) {
-		ifdebug(META)
-			logger(LOG_DEBUG, "Sending %s to %s (%s): %s",
-				   request_name[atoi(request)], c->name, c->hostname, request);
-		else
-			logger(LOG_DEBUG, "Sending %s to %s (%s)", request_name[atoi(request)],
-				   c->name, c->hostname);
-	}
+	logger(DEBUG_META, LOG_DEBUG, "Sending %s to %s (%s): %s", request_name[atoi(request)], c->name, c->hostname, request);
 
 	request[len++] = '\n';
 
@@ -105,14 +98,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 
 void forward_request(connection_t *from, char *request) {
 	/* Note: request is not zero terminated anymore after a call to this function! */
-	ifdebug(PROTOCOL) {
-		ifdebug(META)
-			logger(LOG_DEBUG, "Forwarding %s from %s (%s): %s",
-				   request_name[atoi(request)], from->name, from->hostname, request);
-		else
-			logger(LOG_DEBUG, "Forwarding %s from %s (%s)",
-				   request_name[atoi(request)], from->name, from->hostname);
-	}
+	logger(DEBUG_META, LOG_DEBUG, "Forwarding %s from %s (%s): %s", request_name[atoi(request)], from->name, from->hostname, request);
 
 	int len = strlen(request);
 	request[len++] = '\n';
@@ -124,41 +110,25 @@ bool receive_request(connection_t *c, char *request) {
 
 	if(reqno || *request == '0') {
 		if((reqno < 0) || (reqno >= LAST) || !request_handlers[reqno]) {
-			ifdebug(META)
-				logger(LOG_DEBUG, "Unknown request from %s (%s): %s",
-					   c->name, c->hostname, request);
-			else
-				logger(LOG_ERR, "Unknown request from %s (%s)",
-					   c->name, c->hostname);
-
+			logger(DEBUG_META, LOG_DEBUG, "Unknown request from %s (%s): %s", c->name, c->hostname, request);
 			return false;
 		} else {
-			ifdebug(PROTOCOL) {
-				ifdebug(META)
-					logger(LOG_DEBUG, "Got %s from %s (%s): %s",
-						   request_name[reqno], c->name, c->hostname, request);
-				else
-					logger(LOG_DEBUG, "Got %s from %s (%s)",
-						   request_name[reqno], c->name, c->hostname);
-			}
+			logger(DEBUG_META, LOG_DEBUG, "Got %s from %s (%s): %s", request_name[reqno], c->name, c->hostname, request);
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != reqno)) {
-			logger(LOG_ERR, "Unauthorized request from %s (%s)", c->name,
-				   c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unauthorized request from %s (%s)", c->name, c->hostname);
 			return false;
 		}
 
 		if(!request_handlers[reqno](c, request)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
-			logger(LOG_ERR, "Error while processing %s from %s (%s)",
-				   request_name[reqno], c->name, c->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", request_name[reqno], c->name, c->hostname);
 			return false;
 		}
 	} else {
-		logger(LOG_ERR, "Bogus data received from %s (%s)",
-			   c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Bogus data received from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
@@ -184,7 +154,7 @@ bool seen_request(char *request) {
 	p.request = request;
 
 	if(splay_search(past_request_tree, &p)) {
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Already seen request");
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Already seen request");
 		return true;
 	} else {
 		new = xmalloc(sizeof *new);
@@ -213,7 +183,7 @@ static void age_past_requests(int fd, short events, void *data) {
 	}
 
 	if(left || deleted)
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Aging past requests: deleted %d, left %d",
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Aging past requests: deleted %d, left %d",
 			   deleted, left);
 
 	if(left)

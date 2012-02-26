@@ -97,12 +97,12 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	gcry_error_t err;
 
 	if(!ciphertonid(algo, mode, &cipher->nid)) {
-		logger(LOG_DEBUG, "Cipher %d mode %d has no corresponding nid!", algo, mode);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Cipher %d mode %d has no corresponding nid!", algo, mode);
 		return false;
 	}
 
 	if((err = gcry_cipher_open(&cipher->handle, algo, mode, 0))) {
-		logger(LOG_DEBUG, "Unable to intialise cipher %d mode %d: %s", algo, mode, gcry_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unable to intialise cipher %d mode %d: %s", algo, mode, gcry_strerror(err));
 		return false;
 	}
 
@@ -118,7 +118,7 @@ bool cipher_open_by_name(cipher_t *cipher, const char *name) {
 	int algo, mode;
 
 	if(!nametocipher(name, &algo, &mode)) {
-		logger(LOG_DEBUG, "Unknown cipher name '%s'!", name);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown cipher name '%s'!", name);
 		return false;
 	}
 
@@ -129,7 +129,7 @@ bool cipher_open_by_nid(cipher_t *cipher, int nid) {
 	int algo, mode;
 
 	if(!nidtocipher(nid, &algo, &mode)) {
-		logger(LOG_DEBUG, "Unknown cipher ID %d!", nid);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown cipher ID %d!", nid);
 		return false;
 	}
 
@@ -199,7 +199,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		size_t reqlen = ((inlen + cipher->blklen) / cipher->blklen) * cipher->blklen;
 
 		if(*outlen < reqlen) {
-			logger(LOG_ERR, "Error while encrypting: not enough room for padding");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: not enough room for padding");
 			return false;
 		}
 
@@ -217,13 +217,13 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 
 	if((err = gcry_cipher_encrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
-		logger(LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
 		return false;
 	}
 
 	if(cipher->padding) {
 		if((err = gcry_cipher_encrypt(cipher->handle, outdata + inlen, cipher->blklen, pad, cipher->blklen))) {
-			logger(LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
 			return false;
 		}
 
@@ -241,7 +241,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 
 	if((err = gcry_cipher_decrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
-		logger(LOG_ERR, "Error while decrypting: %s", gcry_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: %s", gcry_strerror(err));
 		return false;
 	}
 
@@ -252,7 +252,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		uint8_t padbyte = ((uint8_t *)outdata)[inlen - 1];
 
 		if(padbyte == 0 || padbyte > cipher->blklen || padbyte > inlen) {
-			logger(LOG_ERR, "Error while decrypting: invalid padding");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: invalid padding");
 			return false;
 		}
 
@@ -260,7 +260,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 
 		for(int i = inlen - 1; i >= origlen; i--)
 			if(((uint8_t *)outdata)[i] != padbyte) {
-				logger(LOG_ERR, "Error while decrypting: invalid padding");
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: invalid padding");
 				return false;
 			}
 

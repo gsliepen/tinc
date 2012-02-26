@@ -49,7 +49,7 @@ void purge(void) {
 	edge_t *e;
 	subnet_t *s;
 
-	ifdebug(PROTOCOL) logger(LOG_DEBUG, "Purging unreachable nodes");
+	logger(DEBUG_PROTOCOL, LOG_DEBUG, "Purging unreachable nodes");
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
@@ -58,8 +58,7 @@ void purge(void) {
 		n = nnode->data;
 
 		if(!n->status.reachable) {
-			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Purging node %s (%s)", n->name,
-					   n->hostname);
+			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Purging node %s (%s)", n->name, n->hostname);
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
@@ -109,7 +108,7 @@ void purge(void) {
   - Deactivate the host
 */
 void terminate_connection(connection_t *c, bool report) {
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Closing connection with %s (%s)",
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)",
 			   c->name, c->hostname);
 
 	c->status.active = false;
@@ -171,7 +170,7 @@ static void timeout_handler(int fd, short events, void *event) {
 		if(c->last_ping_time + pingtimeout <= now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
 							   c->name, c->hostname, now - c->last_ping_time);
 					terminate_connection(c, true);
 					continue;
@@ -180,13 +179,12 @@ static void timeout_handler(int fd, short events, void *event) {
 				}
 			} else {
 				if(c->status.connecting) {
-					ifdebug(CONNECTIONS)
-						logger(LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
+					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
 					c->status.connecting = false;
 					closesocket(c->socket);
 					do_outgoing_connection(c);
 				} else {
-					ifdebug(CONNECTIONS) logger(LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
+					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
 					terminate_connection(c, false);
 					continue;
 				}
@@ -195,7 +193,7 @@ static void timeout_handler(int fd, short events, void *event) {
 	}
 
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
-		logger(LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
 		usleep(sleeptime * 1000000LL);
 		sleeptime *= 2;
 		if(sleeptime < 0)
@@ -225,7 +223,7 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 		if(!result)
 			finish_connecting(c);
 		else {
-			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG,
 					   "Error while connecting to %s (%s): %s",
 					   c->name, c->hostname, sockstrerror(result));
 			closesocket(c->socket);
@@ -241,18 +239,18 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 }
 
 static void sigterm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
 	event_loopexit(NULL);
 }
 
 static void sighup_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
 	reopenlogger();
 	reload_configuration();
 }
 
 static void sigalrm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
 	retry();
 }
 
@@ -269,7 +267,7 @@ int reload_configuration(void) {
 	init_configuration(&config_tree);
 
 	if(!read_server_config()) {
-		logger(LOG_ERR, "Unable to reread configuration file, exitting.");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file, exitting.");
 		event_loopexit(NULL);
 		return EINVAL;
 	}
@@ -381,7 +379,7 @@ int main_loop(void) {
 #endif
 
 	if(event_loop(0) < 0) {
-		logger(LOG_ERR, "Error while waiting for input: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", strerror(errno));
 		return 1;
 	}
 

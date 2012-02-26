@@ -56,7 +56,7 @@ bool key_changed_h(connection_t *c, char *request) {
 	node_t *n;
 
 	if(sscanf(request, "%*d %*x " MAX_STRING, name) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "KEY_CHANGED",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "KEY_CHANGED",
 			   c->name, c->hostname);
 		return false;
 	}
@@ -67,7 +67,7 @@ bool key_changed_h(connection_t *c, char *request) {
 	n = lookup_node(name);
 
 	if(!n) {
-		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
 			   "KEY_CHANGED", c->name, c->hostname, name);
 		return true;
 	}
@@ -94,20 +94,20 @@ bool req_key_h(connection_t *c, char *request) {
 	int kx_version = 0;
 
 	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING " %d", from_name, to_name, &kx_version) < 2) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
 			   c->hostname);
 		return false;
 	}
 
 	if(!check_id(from_name) || !check_id(to_name)) {
-		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", c->name, c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", c->name, c->hostname, "invalid name");
 		return false;
 	}
 
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, from_name);
 		return true;
 	}
@@ -115,7 +115,7 @@ bool req_key_h(connection_t *c, char *request) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, to_name);
 		return true;
 	}
@@ -124,7 +124,7 @@ bool req_key_h(connection_t *c, char *request) {
 
 	if(to == myself) {			/* Yes, send our own key back */
 		if(experimental && kx_version >= 1) {
-			logger(LOG_DEBUG, "Got ECDH key request from %s", from->name);
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "Got ECDH key request from %s", from->name);
 			from->status.ecdh = true;
 		}
 		send_ans_key(from);
@@ -133,7 +133,7 @@ bool req_key_h(connection_t *c, char *request) {
 			return true;
 
 		if(!to->status.reachable) {
-			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"REQ_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
@@ -214,20 +214,20 @@ bool ans_key_h(connection_t *c, char *request) {
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
 		from_name, to_name, key, &cipher, &digest, &maclength,
 		&compression, address, port) < 7) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
 			   c->hostname);
 		return false;
 	}
 
 	if(!check_id(from_name) || !check_id(to_name)) {
-		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_KEY", c->name, c->hostname, "invalid name");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_KEY", c->name, c->hostname, "invalid name");
 		return false;
 	}
 
 	from = lookup_node(from_name);
 
 	if(!from) {
-		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, from_name);
 		return true;
 	}
@@ -235,7 +235,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	to = lookup_node(to_name);
 
 	if(!to) {
-		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, to_name);
 		return true;
 	}
@@ -247,14 +247,14 @@ bool ans_key_h(connection_t *c, char *request) {
 			return true;
 
 		if(!to->status.reachable) {
-			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				   "ANS_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
 
 		if(!*address && from->address.sa.sa_family != AF_UNSPEC) {
 			char *address, *port;
-			ifdebug(PROTOCOL) logger(LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
+			logger(DEBUG_PROTOCOL, LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
 			sockaddr2str(&from->address, &address, &port);
 			send_request(to->nexthop->connection, "%s %s %s", request, address, port);
 			free(address);
@@ -268,22 +268,22 @@ bool ans_key_h(connection_t *c, char *request) {
 	/* Check and lookup cipher and digest algorithms */
 
 	if(!cipher_open_by_nid(&from->outcipher, cipher)) {
-		logger(LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
 		return false;
 	}
 
 	if(!digest_open_by_nid(&from->outdigest, digest, maclength)) {
-		logger(LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
 		return false;
 	}
 
 	if(maclength != digest_length(&from->outdigest)) {
-		logger(LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
 		return false;
 	}
 
 	if(compression < 0 || compression > 11) {
-		logger(LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
 		return true;
 	}
 
@@ -301,7 +301,7 @@ bool ans_key_h(connection_t *c, char *request) {
 
 		if(!node_read_ecdsa_public_key(from)) {
 			if(!pubkey) {
-				logger(LOG_ERR, "No ECDSA public key known for %s (%s), cannot verify ECDH key exchange!", from->name, from->hostname);
+				logger(DEBUG_ALWAYS, LOG_ERR, "No ECDSA public key known for %s (%s), cannot verify ECDH key exchange!", from->name, from->hostname);
 				return true;
 			}
 
@@ -315,17 +315,17 @@ bool ans_key_h(connection_t *c, char *request) {
 		int keylen = b64decode(key + 5, key + 5, sizeof key - 5);
 
 		if(keylen != ECDH_SIZE + siglen) {
-			logger(LOG_ERR, "Node %s (%s) uses wrong keylength! %d != %d", from->name, from->hostname, keylen, ECDH_SIZE + siglen);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength! %d != %d", from->name, from->hostname, keylen, ECDH_SIZE + siglen);
 			return true;
 		}
 
 		if(ECDH_SHARED_SIZE < cipher_keylength(&from->outcipher)) {
-			logger(LOG_ERR, "ECDH key too short for cipher of %s!", from->name);
+			logger(DEBUG_ALWAYS, LOG_ERR, "ECDH key too short for cipher of %s!", from->name);
 			return true;
 		}
 
 		if(!ecdsa_verify(&from->ecdsa, key + 5, ECDH_SIZE, key + 5 + ECDH_SIZE)) {
-			logger(LOG_ERR, "Possible intruder %s (%s): %s", from->name, from->hostname, "invalid ECDSA signature");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", from->name, from->hostname, "invalid ECDSA signature");
 			return true;
 		}
 
@@ -386,7 +386,7 @@ bool ans_key_h(connection_t *c, char *request) {
 		keylen = hex2bin(key, key, sizeof key);
 
 		if(keylen != cipher_keylength(&from->outcipher)) {
-			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
 			return true;
 		}
 
@@ -400,7 +400,7 @@ bool ans_key_h(connection_t *c, char *request) {
 	from->sent_seqno = 0;
 
 	if(*address && *port) {
-		ifdebug(PROTOCOL) logger(LOG_DEBUG, "Using reflexive UDP address from %s: %s port %s", from->name, address, port);
+		logger(DEBUG_PROTOCOL, LOG_DEBUG, "Using reflexive UDP address from %s: %s port %s", from->name, address, port);
 		sockaddr_t sa = str2sockaddr(address, port);
 		update_node_udp(from, &sa);
 	}

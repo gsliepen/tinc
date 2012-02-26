@@ -147,7 +147,7 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	if(n == myself) {
-		logger(LOG_WARNING, "Trying to update UDP address of myself!");
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Trying to update UDP address of myself!");
 		return;
 	}
 
@@ -160,11 +160,11 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		n->address = *sa;
 		n->hostname = sockaddr2hostname(&n->address);
 		splay_insert(node_udp_tree, n);
-		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
+		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
 		memset(&n->address, 0, sizeof n->address);
 		n->hostname = NULL;
-		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
+		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s cleared", n->name);
 	}
 }
 

@@ -2023,6 +2023,10 @@ Purges all information remembered about unreachable nodes.
 @item debug @var{level}
 Sets debug level to @var{level}.
 
+@item log [@var{level}]
+Capture log messages from a running tinc daemon.
+An optional debug level can be given that will be applied only for log messages sent to tincctl.
+
 @item retry
 Forces tinc to try to connect to all uplinks immediately.
 Usually tinc attempts to do this itself,

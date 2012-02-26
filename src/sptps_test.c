@@ -25,7 +25,12 @@
 #include "sptps.h"
 #include "utils.h"
 
+// Symbols necessary to link with logger.o
 char *logfilename;
+char *connection_tree;
+char *send_request;
+char *send_meta;
+
 ecdsa_t mykey, hiskey;
 
 static bool send_data(void *handle, const char *data, size_t len) {

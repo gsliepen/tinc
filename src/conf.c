@@ -141,7 +141,7 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 		return true;
 	}
 
-	logger(LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -154,7 +154,7 @@ bool get_config_int(const config_t *cfg, int *result) {
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return true;
 
-	logger(LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -182,7 +182,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 		return true;
 	}
 
-	logger(LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -195,7 +195,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		return false;
 
 	if(!str2net(&subnet, cfg->value)) {
-		logger(LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -206,7 +206,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof subnet.net.ipv4.address))
 		|| ((subnet.type == SUBNET_IPV6)
 		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof subnet.net.ipv6.address))) {
-		logger(LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -265,10 +265,10 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
 	if(!*value) {
 		const char err[] = "No value for variable";
 		if (fname)
-			logger(LOG_ERR, "%s `%s' on line %d while reading config file %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' on line %d while reading config file %s",
 				err, variable, lineno, fname);
 		else
-			logger(LOG_ERR, "%s `%s' in command line option %d",
+			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' in command line option %d",
 				err, variable, lineno);
 		return NULL;
 	}
@@ -298,7 +298,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
 		return false;
 	}
 
@@ -379,7 +379,7 @@ bool read_server_config(void) {
 	x = read_config_file(config_tree, fname);
 
 	if(!x) {				/* System error: complain */
-		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
 	free(fname);
@@ -407,7 +407,7 @@ bool append_config_file(const char *name, const char *key, const char *value) {
 	FILE *fp = fopen(fname, "a");
 
 	if(!fp) {
-		logger(LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
 	} else {
 		fprintf(fp, "\n# The following line was automatically added by tinc\n%s = %s\n", key, value);
 		fclose(fp);

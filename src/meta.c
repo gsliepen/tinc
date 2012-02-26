@@ -35,11 +35,11 @@ bool send_meta_sptps(void *handle, const char *buffer, size_t length) {
 	connection_t *c = handle;
 
 	if(!c) {
-		logger(LOG_ERR, "send_meta_sptps() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta_sptps() called with NULL pointer!");
 		abort();
 	}
 
-	logger(LOG_DEBUG, "send_meta_sptps(%s, %p, %zu)", c->name, buffer, length);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "send_meta_sptps(%s, %p, %zu)", c->name, buffer, length);
 
 	buffer_add(&c->outbuf, buffer, length);
 	event_add(&c->outevent, NULL);
@@ -49,11 +49,11 @@ bool send_meta_sptps(void *handle, const char *buffer, size_t length) {
 
 bool send_meta(connection_t *c, const char *buffer, int length) {
 	if(!c) {
-		logger(LOG_ERR, "send_meta() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	ifdebug(META) logger(LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
+	logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
 			   c->name, c->hostname);
 
 	if(c->protocol_minor >= 2)
@@ -64,7 +64,7 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 		size_t outlen = length;
 
 		if(!cipher_encrypt(&c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
-			logger(LOG_ERR, "Error while encrypting metadata to %s (%s)",
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting metadata to %s (%s)",
 					c->name, c->hostname);
 			return false;
 		}
@@ -94,11 +94,11 @@ bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t l
 	connection_t *c = handle;
 
 	if(!c) {
-		logger(LOG_ERR, "receive_meta_sptps() called with NULL pointer!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "receive_meta_sptps() called with NULL pointer!");
 		abort();
 	}
 
-	logger(LOG_DEBUG, "receive_meta_sptps(%s, %d, %p, %hu)", c->name, type, data, length);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "receive_meta_sptps(%s, %d, %p, %hu)", c->name, type, data, length);
 
 	if(type == SPTPS_HANDSHAKE) {
 		if(c->allow_request == ACK)
@@ -142,7 +142,7 @@ bool receive_meta(connection_t *c) {
 	buffer_compact(&c->inbuf, MAXBUFSIZE);
 
 	if(sizeof inbuf <= c->inbuf.len) {
-		logger(LOG_ERR, "Input buffer full for %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Input buffer full for %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
@@ -150,19 +150,19 @@ bool receive_meta(connection_t *c) {
 
 	if(inlen <= 0) {
 		if(!inlen || !errno) {
-			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)",
 					   c->name, c->hostname);
 		} else if(sockwouldblock(sockerrno))
 			return true;
 		else
-			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "Metadata socket read error for %s (%s): %s",
 				   c->name, c->hostname, sockstrerror(sockerrno));
 		return false;
 	}
 
 	do {
 		if(c->protocol_minor >= 2) {
-			logger(LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
 			return sptps_receive_data(&c->sptps, bufp, inlen);
 		}
 
@@ -179,10 +179,10 @@ bool receive_meta(connection_t *c) {
 			bufp = endp;
 		} else {
 			size_t outlen = inlen;
-			ifdebug(META) logger(LOG_DEBUG, "Received encrypted %d bytes", inlen);
+			logger(DEBUG_META, LOG_DEBUG, "Received encrypted %d bytes", inlen);
 
 			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
-				logger(LOG_ERR, "Error while decrypting metadata from %s (%s)",
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
 					   c->name, c->hostname);
 				return false;
 			}

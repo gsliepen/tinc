@@ -101,7 +101,7 @@ static bool ratelimit(int frequency) {
 
 static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 	if(packet->len < length) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Got too short packet from %s (%s)", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Got too short packet from %s (%s)", source->name, source->hostname);
 		return false;
 	} else
 		return true;
@@ -164,7 +164,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		if(oldmss <= newmss)
 			break;
 		
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
 
 		/* Update the MSS value and the checksum */
 		packet->data[start + 22 + i] = newmss >> 8;
@@ -197,10 +197,10 @@ static void age_subnets(int fd, short events, void *data) {
 		next = node->next;
 		s = node->data;
 		if(s->expires && s->expires < now) {
-			ifdebug(TRAFFIC) {
+			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
 				if(net2str(netstr, sizeof netstr, s))
-					logger(LOG_INFO, "Subnet %s expired", netstr);
+					logger(DEBUG_TRAFFIC, LOG_INFO, "Subnet %s expired", netstr);
 			}
 
 			for(node2 = connection_tree->head; node2; node2 = node2->next) {
@@ -230,7 +230,7 @@ static void learn_mac(mac_t *address) {
 	/* If we don't know this MAC address yet, store it */
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx",
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx",
 				   address->x[0], address->x[1], address->x[2], address->x[3],
 				   address->x[4], address->x[5]);
 
@@ -350,11 +350,11 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
 		return;
 	}
 
-	ifdebug(TRAFFIC) logger(LOG_INFO, "Fragmenting packet of %d bytes to %s (%s)", packet->len, dest->name, dest->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Fragmenting packet of %d bytes to %s (%s)", packet->len, dest->name, dest->hostname);
 
 	offset = packet->data + ether_size + ip_size;
 	maxlen = (dest->mtu - ether_size - ip_size) & ~0x7;
@@ -391,7 +391,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv4(&dest);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv4 destination address %d.%d.%d.%d",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv4 destination address %d.%d.%d.%d",
 				source->name, source->hostname,
 				dest.x[0],
 				dest.x[1],
@@ -403,7 +403,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 	
 	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
 		return;
 	}
 
@@ -419,7 +419,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 
 	if(via == source) {
-		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
 		return;
 	}
 	
@@ -427,7 +427,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
 	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
 			packet->len = MAX(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
@@ -546,7 +546,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv6(&dest);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
 				source->name, source->hostname,
 				ntohs(dest.x[0]),
 				ntohs(dest.x[1]),
@@ -562,7 +562,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
 		return;
 	}
 
@@ -575,7 +575,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
 	if(via == source) {
-		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
 		return;
 	}
 	
@@ -583,7 +583,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	if(via && packet->len > MAX(via->mtu, 1294) && via != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		packet->len = MAX(via->mtu, 1294);
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
@@ -617,7 +617,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	has_opt = packet->len >= ether_size + ip6_size + ns_size + opt_size + ETH_ALEN;
 	
 	if(source != myself) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Got neighbor solicitation request from %s (%s) while in router mode!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Got neighbor solicitation request from %s (%s) while in router mode!", source->name, source->hostname);
 		return;
 	}
 
@@ -637,7 +637,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	if(ns.nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT ||
 	   (has_opt && opt.nd_opt_type != ND_OPT_SOURCE_LINKADDR)) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: received unknown type neighbor solicitation request");
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: received unknown type neighbor solicitation request");
 		return;
 	}
 
@@ -661,7 +661,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(checksum) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: checksum error for neighbor solicitation request");
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: checksum error for neighbor solicitation request");
 		return;
 	}
 
@@ -670,7 +670,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv6((ipv6_t *) &ns.nd_ns_target);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
 				   ntohs(((uint16_t *) &ns.nd_ns_target)[0]),
 				   ntohs(((uint16_t *) &ns.nd_ns_target)[1]),
 				   ntohs(((uint16_t *) &ns.nd_ns_target)[2]),
@@ -761,7 +761,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 		return;
 
 	if(source != myself) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Got ARP request from %s (%s) while in router mode!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Got ARP request from %s (%s) while in router mode!", source->name, source->hostname);
 		return;
 	}
 
@@ -778,7 +778,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 
 	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP ||
 	   arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof addr || ntohs(arp.arp_op) != ARPOP_REQUEST) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: received unknown type ARP request");
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: received unknown type ARP request");
 		return;
 	}
 
@@ -787,7 +787,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv4((ipv4_t *) &arp.arp_tpa);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: ARP request for unknown address %d.%d.%d.%d",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: ARP request for unknown address %d.%d.%d.%d",
 				   arp.arp_tpa[0], arp.arp_tpa[1], arp.arp_tpa[2],
 				   arp.arp_tpa[3]);
 		return;
@@ -840,7 +840,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
 		return;
 	}
 
@@ -855,7 +855,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 		return;
 	
 	if(via && packet->len > via->mtu && via != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		uint16_t type = packet->data[12] << 8 | packet->data[13];
 		if(type == ETH_P_IP && packet->len > 590) {
 			if(packet->data[20] & 0x40) {
@@ -883,10 +883,14 @@ static void send_pcap(vpn_packet_t *packet) {
 		connection_t *c = node->data;
 		if(!c->status.pcap)
 			continue;
-		else
-			pcap = true;
-		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, packet->len))
-			send_meta(c, (char *)packet->data, packet->len);
+
+		pcap = true;
+		int len = packet->len;
+		if(c->outmaclength && c->outmaclength < len)
+			len = c->outmaclength;
+
+		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, len))
+			send_meta(c, (char *)packet->data, len);
 	}
 }
 
@@ -971,7 +975,7 @@ void route(node_t *source, vpn_packet_t *packet) {
 						break;
 
 					default:
-						ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet from %s (%s): unknown type %hx", source->name, source->hostname, type);
+						logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet from %s (%s): unknown type %hx", source->name, source->hostname, type);
 						break;
 				}
 			}

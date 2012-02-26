@@ -78,7 +78,7 @@ static void mst_kruskal(void) {
 		c->status.mst = false;
 	}
 
-	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Kruskal's algorithm:");
+	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Kruskal's algorithm:");
 
 	/* Clear visited status on nodes */
 
@@ -105,7 +105,7 @@ static void mst_kruskal(void) {
 		if(e->reverse->connection)
 			e->reverse->connection->status.mst = true;
 
-		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
 				   e->to->name, e->weight);
 	}
 }
@@ -124,7 +124,7 @@ static void sssp_dijkstra(void) {
 
 	todo_list = list_alloc(NULL);
 
-	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Dijkstra's algorithm:");
+	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Dijkstra's algorithm:");
 
 	/* Clear visited status on nodes */
 
@@ -204,7 +204,7 @@ static void sssp_dijkstra(void) {
 			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
 				update_node_udp(e->to, &e->address);
 
-			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Updating edge %s - %s weight %d distance %d", e->from->name,
+			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Updating edge %s - %s weight %d distance %d", e->from->name,
 					   e->to->name, e->weight, e->to->distance);
 		}
 	}
@@ -315,10 +315,10 @@ static void check_reachability(void) {
 			n->status.reachable = !n->status.reachable;
 
 			if(n->status.reachable) {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became reachable",
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became reachable",
 					   n->name, n->hostname);
 			} else {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became unreachable",
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became unreachable",
 					   n->name, n->hostname);
 			}
 

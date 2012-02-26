@@ -37,7 +37,7 @@ bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 	len = b64decode(p, (char *)pubkey, len);
 
 	if(!o2i_ECPublicKey(ecdsa, &ppubkey, len)) {
-		logger(LOG_DEBUG, "o2i_ECPublicKey failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "o2i_ECPublicKey failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
@@ -64,7 +64,7 @@ bool ecdsa_read_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
 	if(*ecdsa)
 		return true;
 
-	logger(LOG_ERR, "Unable to read ECDSA public key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read ECDSA public key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -74,7 +74,7 @@ bool ecdsa_read_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
 	if(*ecdsa)
 		return true;
 	
-	logger(LOG_ERR, "Unable to read ECDSA private key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read ECDSA private key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -93,7 +93,7 @@ bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t len, void *sig) {
 	memset(sig, 0, siglen);
 
 	if(!ECDSA_sign(0, hash, sizeof hash, sig, &siglen, *ecdsa)) {
-		logger(LOG_DEBUG, "ECDSA_sign() failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "ECDSA_sign() failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
@@ -107,7 +107,7 @@ bool ecdsa_verify(ecdsa_t *ecdsa, const void *in, size_t len, const void *sig) {
 	SHA512(in, len, hash);
 
 	if(!ECDSA_verify(0, hash, sizeof hash, sig, siglen, *ecdsa)) {
-		logger(LOG_DEBUG, "ECDSA_verify() failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "ECDSA_verify() failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
