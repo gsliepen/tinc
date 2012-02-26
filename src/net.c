@@ -165,6 +165,9 @@ static void timeout_handler(int fd, short events, void *event) {
 		next = node->next;
 		c = node->data;
 
+		if(c->status.control)
+			continue;
+
 		if(c->last_ping_time + pingtimeout <= now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
@@ -276,6 +279,9 @@ int reload_configuration(void) {
 	for(node = connection_tree->head; node; node = next) {
 		c = node->data;
 		next = node->next;
+
+		if(c->status.control)
+			continue;
 		
 		if(c->outgoing) {
 			free(c->outgoing->name);
