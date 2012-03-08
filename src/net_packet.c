@@ -524,7 +524,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
 		} else
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
+			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
 	}
 
 end:

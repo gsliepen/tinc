@@ -292,7 +292,6 @@ void load_all_subnets(void) {
 	config_t *cfg;
 	subnet_t *s, *s2;
 	node_t *n;
-	bool result;
 
 	xasprintf(&dname, "%s/hosts", confbase);
 	dir = opendir(dname);
@@ -314,10 +313,9 @@ void load_all_subnets(void) {
 
 		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
 		init_configuration(&config_tree);
-		result = read_config_file(config_tree, fname);
+		read_config_options(config_tree, ent->d_name);
+		read_config_file(config_tree, fname);
 		free(fname);
-		if(!result)
-			continue;
 
 		if(!n) {
 			n = new_node();
