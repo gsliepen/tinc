@@ -400,6 +400,70 @@ bool read_connection_config(connection_t *c) {
 	return x;
 }
 
+static void disable_old_keys(const char *filename) {
+	char tmpfile[PATH_MAX] = "";
+	char buf[1024];
+	bool disabled = false;
+	FILE *r, *w;
+
+	r = fopen(filename, "r");
+	if(!r)
+		return;
+
+	snprintf(tmpfile, sizeof tmpfile, "%s.tmp", filename);
+
+	w = fopen(tmpfile, "w");
+
+	while(fgets(buf, sizeof buf, r)) {
+		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
+			buf[11] = 'O';
+			buf[12] = 'L';
+			buf[13] = 'D';
+			disabled = true;
+		}
+		else if(!strncmp(buf, "-----END RSA", 12)) {	
+			buf[ 9] = 'O';
+			buf[10] = 'L';
+			buf[11] = 'D';
+			disabled = true;
+		}
+		if(w && fputs(buf, w) < 0) {
+			disabled = false;
+			break;
+		}
+	}
+
+	if(w)
+		fclose(w);
+	fclose(r);
+
+	if(!w && disabled) {
+		fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
+		return;
+	}
+
+	if(disabled) {
+#ifdef HAVE_MINGW
+		// We cannot atomically replace files on Windows.
+		char bakfile[PATH_MAX] = "";
+		snprintf(bakfile, sizeof bakfile, "%s.bak", filename);
+		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
+			rename(bakfile, filename);
+#else
+		if(rename(tmpfile, filename)) {
+#endif
+			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
+		} else  {
+#ifdef HAVE_MINGW
+			unlink(bakfile);
+#endif
+			fprintf(stderr, "Warning: old key(s) found and disabled.\n");
+		}
+	}
+
+	unlink(tmpfile);
+}
+
 FILE *ask_and_open(const char *filename, const char *what) {
 	FILE *r;
 	char *directory;
@@ -447,9 +511,11 @@ FILE *ask_and_open(const char *filename, const char *what) {
 
 	umask(0077);				/* Disallow everything for group and other */
 
+	disable_old_keys(fn);
+
 	/* Open it first to keep the inode busy */
 
-	r = fopen(fn, "r+") ?: fopen(fn, "w+");
+	r = fopen(fn, "a");
 
 	if(!r) {
 		fprintf(stderr, "Error opening file `%s': %s\n",
@@ -460,42 +526,4 @@ FILE *ask_and_open(const char *filename, const char *what) {
 	return r;
 }
 
-bool disable_old_keys(FILE *f) {
-	char buf[100];
-	long pos;
-	bool disabled = false;
 
-	rewind(f);
-	pos = ftell(f);
-
-	if(pos < 0)
-		return false;
-
-	while(fgets(buf, sizeof buf, f)) {
-		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
-			buf[11] = 'O';
-			buf[12] = 'L';
-			buf[13] = 'D';
-			if(fseek(f, pos, SEEK_SET))
-				break;
-			if(fputs(buf, f) <= 0)
-				break;
-			disabled = true;
-		}
-		else if(!strncmp(buf, "-----END RSA", 12)) {	
-			buf[ 9] = 'O';
-			buf[10] = 'L';
-			buf[11] = 'D';
-			if(fseek(f, pos, SEEK_SET))
-				break;
-			if(fputs(buf, f) <= 0)
-				break;
-			disabled = true;
-		}
-		pos = ftell(f);
-		if(pos < 0)
-			break;
-	}
-
-	return disabled;
-}

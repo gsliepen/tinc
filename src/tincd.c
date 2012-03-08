@@ -362,9 +362,6 @@ static bool keygen(int bits) {
 	if(!f)
 		return false;
 
-	if(disable_old_keys(f))
-		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
-  
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
 	fchmod(fileno(f), 0600);
@@ -384,9 +381,6 @@ static bool keygen(int bits) {
 
 	if(!f)
 		return false;
-
-	if(disable_old_keys(f))
-		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
 
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);

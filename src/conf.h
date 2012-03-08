@@ -63,6 +63,5 @@ extern bool read_server_config(void);
 extern bool read_connection_config(struct connection_t *);
 extern FILE *ask_and_open(const char *, const char *);
 extern bool is_safe_path(const char *);
-extern bool disable_old_keys(FILE *);
 
 #endif							/* __TINC_CONF_H__ */
