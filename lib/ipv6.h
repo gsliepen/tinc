@@ -95,8 +95,10 @@ struct icmp6_hdr {
 #define ICMP6_DST_UNREACH_NOROUTE 0
 #define ICMP6_DST_UNREACH 1
 #define ICMP6_PACKET_TOO_BIG 2
+#define ICMP6_TIME_EXCEEDED 3
 #define ICMP6_DST_UNREACH_ADMIN 1
 #define ICMP6_DST_UNREACH_ADDR 3
+#define ICMP6_TIME_EXCEED_TRANSIT 0
 #define ND_NEIGHBOR_SOLICIT 135
 #define ND_NEIGHBOR_ADVERT 136
 #define icmp6_data32 icmp6_dataun.icmp6_un_data32
