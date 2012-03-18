@@ -51,9 +51,16 @@ static bool receive_record(void *handle, uint8_t type, const char *data, uint16_
 
 int main(int argc, char *argv[]) {
 	bool initiator = false;
+	bool datagram = false;
 
-	if(argc < 3) {
-		fprintf(stderr, "Usage: %s my_ecdsa_key_file his_ecdsa_key_file [host] port\n", argv[0]);
+	if(argc > 1 && !strcmp(argv[1], "-d")) {
+		datagram = true;
+		argc--;
+		argv++;
+	}
+
+	if(argc < 4) {
+		fprintf(stderr, "Usage: %s [-d] my_ecdsa_key_file his_ecdsa_key_file [host] port\n", argv[0]);
 		return 1;
 	}
 
@@ -123,7 +130,7 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "Keys loaded\n");
 
 	sptps_t s;
-	if(!sptps_start(&s, &sock, initiator, mykey, hiskey, "sptps_test", 10, send_data, receive_record))
+	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record))
 		return 1;
 
 	while(true) {

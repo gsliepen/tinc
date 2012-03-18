@@ -45,6 +45,7 @@ typedef bool (*receive_record_t)(void *handle, uint8_t type, const char *data, u
 
 typedef struct sptps {
 	bool initiator;
+	bool datagram;
 	int state;
 
 	char *inbuf;
@@ -76,7 +77,7 @@ typedef struct sptps {
 	receive_record_t receive_record;
 } sptps_t;
 
-extern bool sptps_start(sptps_t *s, void *handle, bool initiator, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
+extern bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
 extern bool sptps_stop(sptps_t *s);
 extern bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
 extern bool sptps_receive_data(sptps_t *s, const char *data, size_t len);
