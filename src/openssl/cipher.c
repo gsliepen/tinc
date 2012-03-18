@@ -105,6 +105,19 @@ bool cipher_set_key_from_rsa(cipher_t *cipher, void *key, size_t len, bool encry
 	return false;
 }
 
+bool cipher_set_counter(cipher_t *cipher, const void *counter, size_t len) {
+	if(len > cipher->cipher->block_size - 4) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Counter too long");
+		abort();
+	}
+
+	memcpy(cipher->counter->counter + cipher->cipher->block_size - len, counter, len);
+	memset(cipher->counter->counter, 0, 4);
+	cipher->counter->n = 0;
+
+	return true;
+}
+
 bool cipher_set_counter_key(cipher_t *cipher, void *key) {
 	int result = EVP_EncryptInit_ex(&cipher->ctx, cipher->cipher, NULL, (unsigned char *)key, NULL);
 	if(!result) {

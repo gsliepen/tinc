@@ -39,6 +39,7 @@ extern void cipher_close(cipher_t *);
 extern size_t cipher_keylength(const cipher_t *);
 extern bool cipher_set_key(cipher_t *, void *, bool);
 extern bool cipher_set_key_from_rsa(cipher_t *, void *, size_t, bool);
+extern bool cipher_set_counter(cipher_t *, const void *, size_t);
 extern bool cipher_set_counter_key(cipher_t *, void *);
 extern bool cipher_encrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
 extern bool cipher_decrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool);
