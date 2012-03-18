@@ -159,13 +159,14 @@ static bool send_sig(sptps_t *s) {
 	size_t keylen = ECDH_SIZE;
 	size_t siglen = ecdsa_size(&s->mykey);
 
-	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
-	char msg[(1 + 32 + keylen) * 2 + 1];
+	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator, plus label
+	char msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
 	char sig[siglen];
 
 	msg[0] = s->initiator;
 	memcpy(msg + 1, s->mykex, 1 + 32 + keylen);
-	memcpy(msg + 2 + 32 + keylen, s->hiskex, 1 + 32 + keylen);
+	memcpy(msg + 1 + 33 + keylen, s->hiskex, 1 + 32 + keylen);
+	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Sign the result.
 	if(!ecdsa_sign(&s->mykey, msg, sizeof msg, sig))
@@ -275,11 +276,12 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 		return error(s, EIO, "Invalid KEX record length");
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
-	char msg[(1 + 32 + keylen) * 2 + 1];
+	char msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
 
 	msg[0] = !s->initiator;
 	memcpy(msg + 1, s->hiskex, 1 + 32 + keylen);
-	memcpy(msg + 2 + 32 + keylen, s->mykex, 1 + 32 + keylen);
+	memcpy(msg + 1 + 33 + keylen, s->mykex, 1 + 32 + keylen);
+	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Verify signature.
 	if(!ecdsa_verify(&s->hiskey, msg, sizeof msg, data))
