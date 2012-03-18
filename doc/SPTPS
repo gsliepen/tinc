@@ -1,0 +1,169 @@
+Simple Peer-to-Peer Security
+----------------------------
+
+SPTPS is a protocol that, like TLS, aims to provide a secure transport layer
+for applications. However, it is specifically aimed at peer-to-peer
+applications. Specifically, peers have each other's credentials beforehand,
+they need not negotiate certificates. Also, the security parameters of the
+application is also known beforehand, so they need not negotiate cipher suites.
+Only one cipher suite is available, and only one authentication method is used.
+This not only greatly simplifies the protocol, it also gets rid of an entire
+class of attacks and possible programming mistakes.
+
+SPTPS can be used both on top of reliable stream protocols such as TCP or on
+top of datagram protocols such as UDP.
+
+Stream record layer
+-------------------
+
+A record consists of these fields:
+
+- uint32_t seqno (network byte order)
+- uint16_t length (network byte order)
+- uint8_t type
+- opaque data[length]
+- opaque hmac[HMAC_SIZE] (HMAC over all preceding fields)
+
+Remarks:
+
+- The seqno field is never sent to the peer, but is included in the calculation
+  of the HMAC.
+- At the start of the session, the HMAC field does not appear until after the
+  SIGnature records have been exchanged.
+- After the authentication phase, the type and data fields are encrypted before
+  the HMAC is calculated.
+
+Message type:
+
+- 0..127 represent application records. The meaning of the value is application
+  specific.
+- 128 is a handshake record.
+- 129..255 are reserved and never to be used for application records.
+
+Datagram record layer
+---------------------
+
+A record consists of these fields:
+
+- uint16_t length (network byte order)
+- uint32_t seqno (network byte order)
+- uint8_t type
+- opaque data[length]
+- opaque hmac[HMAC_SIZE] (HMAC over all preceding fields)
+
+Remarks:
+
+- The length field is never sent to the peer, but is included in the calculation
+  of the HMAC.
+- The rest is the same as the stream record layer.
+
+Authentication protocol
+-----------------------
+
+The authentication consists of an exchange of Key EXchange, SIGnature and
+ACKnowledge messages, transmitted using type 128 records.
+
+Overview:
+
+Initiator   Responder
+---------------------
+KEX ->
+            <- KEX
+SIG ->
+            <- SIG
+
+...encrypt and HMAC using session keys from now on...
+
+App ->
+            <- App 
+...
+            ...
+
+...key renegotiation starts here...
+
+KEX ->
+            <- KEX
+SIG ->
+            <- SIG
+ACK ->
+            <- ACK
+
+...encrypt and HMAC using new session keys from now on...
+
+App ->
+            <- App 
+...
+            ...
+---------------------
+
+Note that the responder does not need to wait before it receives the first KEX
+message, it can immediately send its own once it has accepted an incoming
+connection.
+
+Key EXchange message:
+
+- uint8_t kex_version (always 0 in this version of SPTPS)
+- opaque nonce[32] (random number)
+- opaque ecdh_key[ECDH_SIZE]
+
+SIGnature message:
+
+- opaque ecdsa_signature[ECDSA_SIZE]
+
+ACKnowledge message:
+
+- empty (only sent after key renegotiation)
+
+Remarks:
+
+- At the start, both peers generate a random nonce and an Elliptic Curve public
+  key and send it to the other in the KEX message.
+- After receiving the other's KEX message, both KEX messages are concatenated
+  (see below), and the result is signed using ECDSA. The result is sent to the
+  other.
+- After receiving the other's SIG message, the signature is verified. If it is
+  correct, the shared secret is calculated from the public keys exchanged in the
+  KEX message using the Elliptic Curve Diffie-Helman algorithm.
+- The shared secret key is expanded using a PRF. Both nonces and an application
+  specific label are also used as input for the PRF.
+- An ACK message is sent only when doing key renegotiation, and is sent using
+  the old encryption keys.
+- The expanded key is used to key the encryption and HMAC algorithms.
+
+The signature is calculated over this string:
+
+- uint8_t initiator (0 = local peer, 1 = remote peer is initiator)
+- opaque remote_kex_message[1 + 32 + ECDH_SIZE]
+- opaque local_kex_message[1 + 32 + ECDH_SIZE]
+
+The PRF is calculated as follows:
+
+- A HMAC using SHA512 is used, the shared secret is used as the key.
+- For each block of 64 bytes, a HMAC is calculated. For block n: hmac[n] =
+  HMAC_SHA512(hmac[n - 1] + seed)
+- For the first block (n = 1), hmac[0] is given by HMAC_SHA512(zeroes + seed),
+  where zeroes is a block of 64 zero bytes.
+
+The seed is as follows:
+
+- const char[13] "key expansion"
+- opaque responder_nonce[32]
+- opaque initiator_nonce[32]
+- opaque label[label_length]
+
+The expanded key is used as follows:
+
+- opaque responder_cipher_key[CIPHER_KEYSIZE]
+- opaque responder_digest_key[DIGEST_KEYSIZE]
+- opaque initiator_cipher_key[CIPHER_KEYSIZE]
+- opaque initiator_digest_key[DIGEST_KEYSIZE]
+
+Where initiator_cipher_key is the key used by session initiator to encrypt
+messages sent to the responder.
+
+TODO:
+-----
+
+- Document format of ECDH public key, ECDSA signature
+- Document how CTR mode is used
+- Refer to TLS RFCs where appropriate
