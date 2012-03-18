@@ -301,7 +301,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	s->hiskex = NULL;
 
 	// Send cipher change record
-	if(!send_ack(s))
+	if(s->outstate && !send_ack(s))
 		return false;
 
 	// TODO: only set new keys after ACK has been set/received
@@ -318,8 +318,6 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 		if(!result)
 			return false;
 	}
-
-	s->outstate = true;
 
 	return true;
 }
@@ -352,7 +350,16 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 			// If we already sent our secondary public ECDH key, we expect the peer to send his.
 			if(!receive_sig(s, data, len))
 				return false;
-			s->state = SPTPS_ACK;
+			if(s->outstate)
+				s->state = SPTPS_ACK;
+			else {
+				s->outstate = true;
+				if(!receive_ack(s, NULL, 0))
+					return false;
+				s->receive_record(s->handle, SPTPS_HANDSHAKE, NULL, 0);
+				s->state = SPTPS_SECONDARY_KEX;
+			}
+
 			return true;
 		case SPTPS_ACK:
 			// We expect a handshake message to indicate transition to the new keys.
