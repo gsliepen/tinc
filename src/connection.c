@@ -60,43 +60,53 @@ connection_t *new_connection(void) {
 	return c;
 }
 
-void free_connection(connection_t *c) {
-	if(c->name)
-		free(c->name);
+void free_connection_partially(connection_t *c) {
+	free(c->inkey);
+	free(c->outkey);
+	free(c->mychallenge);
+	free(c->hischallenge);
+	free(c->outbuf);
 
-	if(c->hostname)
-		free(c->hostname);
+	c->inkey = NULL;
+	c->outkey = NULL;
+	c->mychallenge = NULL;
+	c->hischallenge = NULL;
+	c->outbuf = NULL;
 
-	if(c->inkey)
-		free(c->inkey);
-
-	if(c->outkey)
-		free(c->outkey);
+	c->buflen = 0;
+	c->reqlen = 0;
+	c->tcplen = 0;
+	c->allow_request = 0;
+	c->outbuflen = 0;
+	c->outbufsize = 0;
+	c->outbufstart = 0;
 
 	if(c->inctx) {
 		EVP_CIPHER_CTX_cleanup(c->inctx);
 		free(c->inctx);
+		c->inctx = NULL;
 	}
 
 	if(c->outctx) {
 		EVP_CIPHER_CTX_cleanup(c->outctx);
 		free(c->outctx);
+		c->outctx = NULL;
 	}
 
-	if(c->mychallenge)
-		free(c->mychallenge);
+	if(c->rsa_key) {
+		RSA_free(c->rsa_key);
+		c->rsa_key = NULL;
+	}
+}
 
-	if(c->hischallenge)
-		free(c->hischallenge);
+void free_connection(connection_t *c) {
+	free_connection_partially(c);
+
+	free(c->name);
+	free(c->hostname);
 
 	if(c->config_tree)
 		exit_configuration(&c->config_tree);
-
-	if(c->outbuf)
-		free(c->outbuf);
-
-	if(c->rsa_key)
-		RSA_free(c->rsa_key);
 
 	free(c);
 }

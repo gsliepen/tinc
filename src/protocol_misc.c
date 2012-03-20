@@ -111,8 +111,14 @@ bool pong_h(connection_t *c) {
 
 	/* Succesful connection, reset timeout if this is an outgoing connection. */
 
-	if(c->outgoing)
+	if(c->outgoing) {
 		c->outgoing->timeout = 0;
+		c->outgoing->cfg = NULL;
+		if(c->outgoing->ai)
+			freeaddrinfo(c->outgoing->ai);
+		c->outgoing->ai = NULL;
+		c->outgoing->aip = NULL;
+	}
 
 	return true;
 }

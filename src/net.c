@@ -204,18 +204,14 @@ void terminate_connection(connection_t *c, bool report) {
 		}
 	}
 
+	free_connection_partially(c);
+
 	/* Check if this was our outgoing connection */
 
 	if(c->outgoing) {
-		retry_outgoing(c->outgoing);
-		c->outgoing = NULL;
+		c->status.remove = false;
+		do_outgoing_connection(c);	
 	}
-
-	free(c->outbuf);
-	c->outbuf = NULL;
-	c->outbuflen = 0;
-	c->outbufsize = 0;
-	c->outbufstart = 0;
 }
 
 /*
