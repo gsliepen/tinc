@@ -39,6 +39,7 @@ typedef struct devops_t {
 extern const devops_t os_devops;
 extern const devops_t dummy_devops;
 extern const devops_t raw_socket_devops;
+extern const devops_t multicast_devops;
 extern const devops_t uml_devops;
 extern const devops_t vde_devops;
 extern devops_t devops;

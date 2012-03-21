@@ -219,6 +219,16 @@ All packets are read from this interface.
 Packets received for the local node are written to the raw socket.
 However, at least on Linux, the operating system does not process IP packets destined for the local host.
 
+.It multicast
+Open a multicast UDP socket and bind it to the address and port (separated by spaces) and optionally a TTL value specified using
+.Va Device .
+Packets are read from and written to this multicast socket.
+This can be used to connect to UML, QEMU or KVM instances listening on the same multicast address.
+Do NOT connect multiple
+.Nm tinc 
+daemons to the same multicast address, this will very likely cause routing loops.
+Also note that this can cause decrypted VPN packets to be sent out on a real network if misconfigured.
+
 .It uml Pq not compiled in by default
 Create a UNIX socket with the filename specified by
 .Va Device ,

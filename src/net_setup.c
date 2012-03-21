@@ -548,6 +548,8 @@ static bool setup_myself(void) {
 			devops = dummy_devops;
 		else if(!strcasecmp(type, "raw_socket"))
 			devops = raw_socket_devops;
+		else if(!strcasecmp(type, "multicast"))
+			devops = multicast_devops;
 #ifdef ENABLE_UML
 		else if(!strcasecmp(type, "uml"))
 			devops = uml_devops;
