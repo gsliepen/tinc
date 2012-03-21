@@ -756,11 +756,15 @@ If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
 @cindex BindToAddress
-@item BindToAddress = <@var{address}> [experimental]
+@item BindToAddress = <@var{address}> [<@var{port}>] [experimental]
 If your computer has more than one IPv4 or IPv6 address, tinc
 will by default listen on all of them for incoming connections.
 Multiple BindToAddress variables may be specified,
 in which case listening sockets for each specified address are made.
+
+If no @var{port} is specified, the socket will be bound to the port specified by the Port option,
+or to port 655 if neither is given.
+To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
 
 This option may not work on all platforms.
 
