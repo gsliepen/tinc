@@ -34,7 +34,7 @@
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
-bool decrement_ttl = true;
+bool decrement_ttl = false;
 bool directonly = false;
 bool priorityinheritance = false;
 int macexpire = 600;
