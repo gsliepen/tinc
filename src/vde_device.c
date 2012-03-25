@@ -99,7 +99,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int lenin = plug.vde_recv(conn, packet->data, MTU, 0);
+	int lenin = (ssize_t)plug.vde_recv(conn, packet->data, MTU, 0);
 	if(lenin <= 0) {
 		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 		running = false;
