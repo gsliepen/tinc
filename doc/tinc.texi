@@ -2404,7 +2404,6 @@ For IPv4 addresses:
 @tab @code{netsh interface ip set address} @var{interface} @code{static} @var{address} @var{netmask}
 @end multitable
 
-
 For IPv6 addresses:
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
@@ -2426,6 +2425,22 @@ For IPv6 addresses:
 @tab @code{netsh interface ipv6 add address} @var{interface} @code{static} @var{address}/@var{prefixlength}
 @end multitable
 
+On some platforms, when running tinc in switch mode, the VPN interface must be set to tap mode with an ifconfig command:
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item OpenBSD
+@tab @code{ifconfig} @var{interface} @code{link0}
+@end multitable
+
+On Linux, it is possible to create a persistent tun/tap interface which will
+continue to exist even if tinc quit, although this is normally not required.
+It can be useful to set up a tun/tap interface owned by a non-root user, so
+tinc can be started without needing any root privileges at all.
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item Linux
+@tab @code{ip tuntap add dev} @var{interface} @code{mode} @var{tun|tap} @code{user} @var{username}
+@end multitable
 
 @c ==================================================================
 @node    Routes
