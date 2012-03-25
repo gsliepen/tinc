@@ -268,6 +268,78 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		return true;
 	}
 
+	// IPv6 short form
+	if(strstr(subnetstr, "::")) {
+		const char *p;
+		char *q;
+		int colons = 0;
+
+		// Count number of colons
+		for(p = subnetstr; *p; p++)
+			if(*p == ':')
+				colons++;
+
+		if(colons > 7)
+			return false;
+
+		// Scan numbers before the double colon
+		p = subnetstr;
+		for(i = 0; i < colons; i++) {
+			if(*p == ':')
+				break;
+			x[i] = strtoul(p, &q, 0x10);
+			if(!q || p == q || *q != ':')
+				return false;
+			p = ++q;
+		}
+
+		p++;
+		colons -= i;
+		if(!i) {
+			p++;
+			colons--;
+		}
+
+		if(!*p || *p == '/' || *p == '#')
+			colons--;
+
+		// Fill in the blanks
+		for(; i < 8 - colons; i++)
+			x[i] = 0;
+
+		// Scan the remaining numbers
+		for(; i < 8; i++) {
+			x[i] = strtoul(p, &q, 0x10);
+			if(!q || p == q)
+				return false;
+			if(i == 7) {
+				p = q;
+				break;
+			}
+			if(*q != ':')
+				return false;
+			p = ++q;
+		}
+
+		l = 128;
+		if(*p == '/')
+			sscanf(p, "/%d#%d", &l, &weight);
+		else if(*p == '#')
+			sscanf(p, "#%d", &weight);
+
+		if(l < 0 || l > 128)
+			return false;
+
+		subnet->type = SUBNET_IPV6;
+		subnet->net.ipv6.prefixlength = l;
+		subnet->weight = weight;
+
+		for(i = 0; i < 8; i++)
+			subnet->net.ipv6.address.x[i] = htons(x[i]);
+
+		return true;
+	}
+
 	return false;
 }
 

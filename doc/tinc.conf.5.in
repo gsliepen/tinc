@@ -564,12 +564,11 @@ variables can be specified.
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
 or they can be a IPv4 or IPv6 network address with a prefixlength.
-Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
 Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
-IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
+IPv6 subnets are notated like fec0:0:0:1::/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
 .Pp
