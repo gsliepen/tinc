@@ -92,6 +92,7 @@ static bool setup_device(void) {
 	}
 
 	switch(ai->ai_family) {
+#ifdef IP_ADD_MEMBERSHIP
 		case AF_INET: {
 			struct ip_mreq mreq;
 			struct sockaddr_in in;
@@ -103,10 +104,16 @@ static bool setup_device(void) {
 				closesocket(device_fd);
 				return false;
 			}
+#ifdef IP_MULTICAST_LOOP
 			setsockopt(device_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &one, sizeof one);
+#endif
+#ifdef IP_MULTICAST_TTL
 			setsockopt(device_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof ttl);
+#endif
 		} break;
+#endif
 
+#ifdef IPV6_JOIN_GROUP
 		case AF_INET6: {
 			struct ipv6_mreq mreq;
 			struct sockaddr_in6 in6;
@@ -118,9 +125,14 @@ static bool setup_device(void) {
 				closesocket(device_fd);
 				return false;
 			}
+#ifdef IPV6_MULTICAST_LOOP
 			setsockopt(device_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &one, sizeof one);
+#endif
+#ifdef IPV6_MULTICAST_HOPS
 			setsockopt(device_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof ttl);
+#endif
 		} break;
+#endif
 	
 		default:
 			logger(LOG_ERR, "Multicast for address family %hx unsupported", ai->ai_family);
