@@ -119,7 +119,7 @@ static bool setup_device(void) {
 			struct sockaddr_in6 in6;
 			memcpy(&in6, ai->ai_addr, sizeof in6);
 			memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof mreq.ipv6mr_multiaddr);
-			mreq.ipv6mr_interface = 0;
+			mreq.ipv6mr_interface = in6.sin6_scope_id;
 			if(setsockopt(device_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof mreq)) {
 				logger(LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
 				closesocket(device_fd);
