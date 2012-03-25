@@ -180,7 +180,7 @@ If you don't specify a host with
 won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
-.It Va DecrementTTL Li = yes | no Po no Pc
+.It Va DecrementTTL Li = yes | no Po no Pc Bq experimental
 When enabled,
 .Nm tinc
 will decrement the Time To Live field in IPv4 packets, or the Hop Limit field in IPv6 packets,
