@@ -1,7 +1,7 @@
 /*
     protocol_misc.c -- handle the meta-protocol, miscellaneous functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,8 +107,14 @@ bool pong_h(connection_t *c, char *request) {
 
 	/* Succesful connection, reset timeout if this is an outgoing connection. */
 
-	if(c->outgoing)
+	if(c->outgoing) {
 		c->outgoing->timeout = 0;
+		c->outgoing->cfg = NULL;
+		if(c->outgoing->ai)
+			freeaddrinfo(c->outgoing->ai);
+		c->outgoing->ai = NULL;
+		c->outgoing->aip = NULL;
+	}
 
 	return true;
 }

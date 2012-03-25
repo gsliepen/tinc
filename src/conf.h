@@ -1,7 +1,7 @@
 /*
     conf.h -- header for conf.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,6 +62,5 @@ extern void read_config_options(splay_tree_t *, const char *);
 extern bool read_server_config(void);
 extern bool read_connection_config(struct connection_t *);
 extern bool append_config_file(const char *, const char *, const char *);
-extern bool disable_old_keys(FILE *);
 
 #endif							/* __TINC_CONF_H__ */

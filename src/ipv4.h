@@ -1,7 +1,7 @@
 /*
     ipv4.h -- missing IPv4 related definitions
     Copyright (C) 2005 Ivo Timmermans
-                  2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2006-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

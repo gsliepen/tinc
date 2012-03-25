@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 		  2011      Loïc Grenié <loic.grenie@gmail.com>
 
@@ -139,12 +139,13 @@ void terminate_connection(connection_t *c, bool report) {
 		}
 	}
 
+	free_connection_partially(c);
+
 	/* Check if this was our outgoing connection */
 
-	if(c->outgoing)
-		retry_outgoing(c->outgoing);
-
-	connection_del(c);
+	if(c->outgoing) {
+		do_outgoing_connection(c);	
+	}
 }
 
 /*
@@ -171,7 +172,7 @@ static void timeout_handler(int fd, short events, void *event) {
 			if(c->status.active) {
 				if(c->status.pinged) {
 					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
-							   c->name, c->hostname, now - c->last_ping_time);
+							   c->name, c->hostname, (long)now - c->last_ping_time);
 					terminate_connection(c, true);
 					continue;
 				} else if(c->last_ping_time + pinginterval <= now) {

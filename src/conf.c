@@ -2,7 +2,7 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
 		  2000 Cris van Pelt
 
@@ -413,47 +413,8 @@ bool append_config_file(const char *name, const char *key, const char *value) {
 		fclose(fp);
 	}
 
+
 	free(fname);
 
 	return fp;
-}
-
-bool disable_old_keys(FILE *f) {
-	char buf[100];
-	long pos;
-	bool disabled = false;
-
-	rewind(f);
-	pos = ftell(f);
-
-	if(pos < 0)
-		return false;
-
-	while(fgets(buf, sizeof buf, f)) {
-		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
-			buf[11] = 'O';
-			buf[12] = 'L';
-			buf[13] = 'D';
-			if(fseek(f, pos, SEEK_SET))
-				break;
-			if(fputs(buf, f) <= 0)
-				break;
-			disabled = true;
-		}
-		else if(!strncmp(buf, "-----END RSA", 12)) {	
-			buf[ 9] = 'O';
-			buf[10] = 'L';
-			buf[11] = 'D';
-			if(fseek(f, pos, SEEK_SET))
-				break;
-			if(fputs(buf, f) <= 0)
-				break;
-			disabled = true;
-		}
-		pos = ftell(f);
-		if(pos < 0)
-			break;
-	}
-
-	return disabled;
 }

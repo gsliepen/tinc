@@ -28,6 +28,32 @@ Version 1.1pre1              June 25 2011
  Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
  version of tinc.
 
+Version 1.0.18               March 25 2012
+
+ * Fixed IPv6 in switch mode by turning off DecrementTTL by default.
+
+ * Allow a port number to be specified in BindToAddress, which also allows tinc
+   to listen on multiple ports.
+
+ * Add support for multicast communication with UML/QEMU/KVM.
+
+Version 1.0.17               March 10 2012
+
+ * The DeviceType option can now be used to select dummy, raw socket, UML and
+   VDE devices without needing to recompile tinc.
+
+ * Allow multiple BindToAddress statements.
+
+ * Decrement TTL value of IPv4 and IPv6 packets.
+
+ * Add LocalDiscovery option allowing tinc to detect peers that are behind the
+   same NAT.
+
+ * Accept Subnets passed with the -o option when StrictSubnets = yes.
+
+ * Disabling old RSA keys when generating new ones now also works properly on
+   Windows.
+
 Version 1.0.16               July 23 2011
 
  * Fixed a performance issue with TCP communication under Windows.

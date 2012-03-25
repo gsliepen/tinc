@@ -129,7 +129,7 @@ If
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
 
-.It Va BindToAddress Li = Ar address Bq experimental
+.It Va BindToAddress Li = Ar address Oo Ar port Oc Bq experimental
 If your computer has more than one IPv4 or IPv6 address,
 .Nm tinc
 will by default listen on all of them for incoming connections.
@@ -137,7 +137,16 @@ Multiple
 .Va BindToAddress
 variables may be specified,
 in which case listening sockets for each specified address are made.
-
+.Pp
+If no
+.Ar port
+is specified, the socket will be bound to the port specified by the
+.Va Port
+option, or to port 655 if neither is given.
+To only bind to a specific port but not to a specific address, use
+.Li *
+for the
+.Ar address .
 .Pp
 This option may not work on all platforms.
 
@@ -171,13 +180,15 @@ If you don't specify a host with
 won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
-.It Va DecrementTTL Li = yes | no Po yes Pc
+.It Va DecrementTTL Li = yes | no Po no Pc Bq experimental
 When enabled,
 .Nm tinc
 will decrement the Time To Live field in IPv4 packets, or the Hop Limit field in IPv6 packets,
 before forwarding a received packet to the virtual network device or to another node,
 and will drop packets that have a TTL value of zero,
 in which case it will send an ICMP Time Exceeded packet back.
+.Pp
+Do not use this option if you use switch mode and want to use IPv6.
 
 .It Va Device Li = Ar device Po Pa /dev/tap0 , Pa /dev/net/tun No or other depending on platform Pc
 The virtual network device to use.
@@ -209,6 +220,16 @@ Open a raw socket, and bind it to a pre-existing
 All packets are read from this interface.
 Packets received for the local node are written to the raw socket.
 However, at least on Linux, the operating system does not process IP packets destined for the local host.
+
+.It multicast
+Open a multicast UDP socket and bind it to the address and port (separated by spaces) and optionally a TTL value specified using
+.Va Device .
+Packets are read from and written to this multicast socket.
+This can be used to connect to UML, QEMU or KVM instances listening on the same multicast address.
+Do NOT connect multiple
+.Nm tinc 
+daemons to the same multicast address, this will very likely cause routing loops.
+Also note that this can cause decrypted VPN packets to be sent out on a real network if misconfigured.
 
 .It uml Pq not compiled in by default
 Create a UNIX socket with the filename specified by
@@ -467,7 +488,7 @@ Since host configuration files only contain public keys,
 no secrets are revealed by sending out this information.
 .Bl -tag -width indent
 
-.It Va Address Li = Ar address Oo port Oc Bq recommended
+.It Va Address Li = Ar address Oo Ar port Oc Bq recommended
 The IP address or hostname of this tinc daemon on the real network.
 This will only be used when trying to make an outgoing connection to this tinc daemon.
 Optionally, a port can be specified to use for this address.
@@ -558,12 +579,11 @@ variables can be specified.
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
 or they can be a IPv4 or IPv6 network address with a prefixlength.
-Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
 Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
-IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
+IPv6 subnets are notated like fec0:0:0:1::/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
 .Pp

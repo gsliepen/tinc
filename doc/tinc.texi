@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2011 Ivo Timmermans,
+Copyright @copyright{} 1998-2012 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -39,7 +39,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2011 Ivo Timmermans,
+Copyright @copyright{} 1998-2012 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -779,11 +779,15 @@ If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
 @cindex BindToAddress
-@item BindToAddress = <@var{address}> [experimental]
+@item BindToAddress = <@var{address}> [<@var{port}>] [experimental]
 If your computer has more than one IPv4 or IPv6 address, tinc
 will by default listen on all of them for incoming connections.
 Multiple BindToAddress variables may be specified,
 in which case listening sockets for each specified address are made.
+
+If no @var{port} is specified, the socket will be bound to the port specified by the Port option,
+or to port 655 if neither is given.
+To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
 
 This option may not work on all platforms.
 
@@ -813,11 +817,13 @@ tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
 @cindex DecrementTTL
-@item DecrementTTL = <yes | no> (yes)
+@item DecrementTTL = <yes | no> (no) [experimental]
 When enabled, tinc will decrement the Time To Live field in IPv4 packets, or the Hop Limit field in IPv6 packets,
 before forwarding a received packet to the virtual network device or to another node,
 and will drop packets that have a TTL value of zero,
 in which case it will send an ICMP Time Exceeded packet back.
+
+Do not use this option if you use switch mode and want to use IPv6.
 
 @cindex Device
 @item Device = <@var{device}> (@file{/dev/tap0}, @file{/dev/net/tun} or other depending on platform)
@@ -848,6 +854,14 @@ Open a raw socket, and bind it to a pre-existing
 All packets are read from this interface.
 Packets received for the local node are written to the raw socket.
 However, at least on Linux, the operating system does not process IP packets destined for the local host.
+
+@cindex multicast
+@item multicast
+Open a multicast UDP socket and bind it to the address and port (separated by spaces) and optionally a TTL value specified using @var{Device}.
+Packets are read from and written to this multicast socket.
+This can be used to connect to UML, QEMU or KVM instances listening on the same multicast address.
+Do NOT connect multiple tinc daemons to the same multicast address, this will very likely cause routing loops.
+Also note that this can cause decrypted VPN packets to be sent out on a real network if misconfigured.
 
 @cindex UML
 @item uml (not compiled in by default)
@@ -1186,12 +1200,11 @@ Multiple subnet lines can be specified for each daemon.
 Subnets can either be single MAC, IPv4 or IPv6 addresses,
 in which case a subnet consisting of only that single address is assumed,
 or they can be a IPv4 or IPv6 network address with a prefixlength.
-Shorthand notations are not supported.
 For example, IPv4 subnets must be in a form like 192.168.1.0/24,
 where 192.168.1.0 is the network address and 24 is the number of bits set in the netmask.
 Note that subnets like 192.168.1.1/24 are invalid!
 Read a networking HOWTO/FAQ/guide if you don't understand this.
-IPv6 subnets are notated like fec0:0:0:1:0:0:0:0/64.
+IPv6 subnets are notated like fec0:0:0:1::/64.
 MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
 @cindex CIDR notation
@@ -2606,7 +2619,6 @@ For IPv4 addresses:
 @tab @code{netsh interface ip set address} @var{interface} @code{static} @var{address} @var{netmask}
 @end multitable
 
-
 For IPv6 addresses:
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
@@ -2628,6 +2640,22 @@ For IPv6 addresses:
 @tab @code{netsh interface ipv6 add address} @var{interface} @code{static} @var{address}/@var{prefixlength}
 @end multitable
 
+On some platforms, when running tinc in switch mode, the VPN interface must be set to tap mode with an ifconfig command:
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item OpenBSD
+@tab @code{ifconfig} @var{interface} @code{link0}
+@end multitable
+
+On Linux, it is possible to create a persistent tun/tap interface which will
+continue to exist even if tinc quit, although this is normally not required.
+It can be useful to set up a tun/tap interface owned by a non-root user, so
+tinc can be started without needing any root privileges at all.
+
+@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@item Linux
+@tab @code{ip tuntap add dev} @var{interface} @code{mode} @var{tun|tap} @code{user} @var{username}
+@end multitable
 
 @c ==================================================================
 @node    Routes

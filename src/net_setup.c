@@ -596,6 +596,8 @@ static bool setup_myself(void) {
 			devops = dummy_devops;
 		else if(!strcasecmp(type, "raw_socket"))
 			devops = raw_socket_devops;
+		else if(!strcasecmp(type, "multicast"))
+			devops = multicast_devops;
 #ifdef ENABLE_UML
 		else if(!strcasecmp(type, "uml"))
 			devops = uml_devops;
@@ -645,12 +647,25 @@ static bool setup_myself(void) {
 		if(cfg)
 			cfg = lookup_config_next(config_tree, cfg);
 
+		char *port = myport;
+
+		if(address) {
+			char *space = strchr(address, ' ');
+			if(space) {
+				*space++ = 0;
+				port = space;
+			}
+
+			if(!strcmp(address, "*"))
+				*address = 0;
+		}
+
 		hint.ai_family = addressfamily;
 		hint.ai_socktype = SOCK_STREAM;
 		hint.ai_protocol = IPPROTO_TCP;
 		hint.ai_flags = AI_PASSIVE;
 
-		err = getaddrinfo(address, myport, &hint, &ai);
+		err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
 		free(address);
 
 		if(err || !ai) {

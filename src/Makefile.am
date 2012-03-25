@@ -9,7 +9,7 @@ tincd_SOURCES = \
 	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
 	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c tincd.c \
-	dummy_device.c raw_socket_device.c
+	dummy_device.c raw_socket_device.c multicast_device.c
 	
 if UML
 tincd_SOURCES += uml_device.c

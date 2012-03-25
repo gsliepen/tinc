@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
-bool decrement_ttl = true;
+bool decrement_ttl = false;
 bool directonly = false;
 bool priorityinheritance = false;
 int macexpire = 600;

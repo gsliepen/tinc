@@ -1,6 +1,6 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2008      Max Rijevski <maksuf@gmail.com>
 
@@ -54,16 +54,7 @@ connection_t *new_connection(void) {
 	return xmalloc_and_zero(sizeof(connection_t));
 }
 
-void free_connection(connection_t *c) {
-	if(!c)
-		return;
-
-	if(c->name)
-		free(c->name);
-
-	if(c->hostname)
-		free(c->hostname);
-
+void free_connection_partially(connection_t *c) {
 	cipher_close(&c->incipher);
 	digest_close(&c->indigest);
 	cipher_close(&c->outcipher);
@@ -76,9 +67,6 @@ void free_connection(connection_t *c) {
 	if(c->hischallenge)
 		free(c->hischallenge);
 
-	if(c->config_tree)
-		exit_configuration(&c->config_tree);
-
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
 	
@@ -90,6 +78,21 @@ void free_connection(connection_t *c) {
 
 	if(c->socket > 0)
 		closesocket(c->socket);
+
+	c->socket = -1;
+}
+
+void free_connection(connection_t *c) {
+	if(!c)
+		return;
+
+	free_connection_partially(c);
+
+	free(c->name);
+	free(c->hostname);
+
+	if(c->config_tree)
+		exit_configuration(&c->config_tree);
 
 	free(c);
 }
