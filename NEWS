@@ -1,3 +1,12 @@
+Version 1.0.18               March 25 2012
+
+ * Fixed IPv6 in switch mode by turning off DecrementTTL by default.
+
+ * Allow a port number to be specified in BindToAddress, which also allows tinc
+   to listen on multiple ports.
+
+ * Add support for multicast communication with UML/QEMU/KVM.
+
 Version 1.0.17               March 10 2012
 
  * The DeviceType option can now be used to select dummy, raw socket, UML and

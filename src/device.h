@@ -1,7 +1,7 @@
 /*
     device.h -- generic header for device.c
     Copyright (C) 2001-2005 Ivo Timmermans
-                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
