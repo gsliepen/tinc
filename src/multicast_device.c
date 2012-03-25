@@ -35,7 +35,7 @@ static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
 static struct addrinfo *ai = NULL;
-static mac_t ignore_src = {0};
+static mac_t ignore_src = {{0}};
 
 static bool setup_device(void) {
 	char *host;
