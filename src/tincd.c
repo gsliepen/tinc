@@ -539,6 +539,12 @@ int main(int argc, char **argv) {
 
 	g_argv = argv;
 
+	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid())
+		do_detach = false;
+#ifdef HAVE_UNSETENV
+	unsetenv("LISTEN_PID");
+#endif
+
 	init_configuration(&config_tree);
 
 	/* Slllluuuuuuurrrrp! */
