@@ -75,7 +75,7 @@ void reopenlogger() {
 	fflush(logfile);
 	FILE *newfile = fopen(logfilename, "a");
 	if(!newfile) {
-		logger(LOG_ERR, "Unable to reopen log file %s: %s\n", logfilename, strerror(errno));
+		logger(LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
 		return;
 	}
 	fclose(logfile);
