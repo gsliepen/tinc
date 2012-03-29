@@ -138,6 +138,7 @@ extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(const struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
+extern char *get_name(void);
 extern bool setup_network(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);

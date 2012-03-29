@@ -394,6 +394,19 @@ while no routing table is managed.
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.
 It must be unique for the virtual private network this daemon will connect to.
+The Name may only consist of alphanumeric and underscore characters.
+
+If 
+.Va Name
+starts with a
+.Li $ ,
+then the contents of the environment variable that follows will be used.
+In that case, invalid characters will be converted to underscores.
+If
+.Va Name
+is
+.Li $HOST ,
+but no such environment variable exist, the hostname will be read using the gethostnname() system call.
 
 .It Va PingInterval Li = Ar seconds Pq 60
 The number of seconds of inactivity that

@@ -269,6 +269,44 @@ void load_all_subnets(void) {
 	closedir(dir);
 }
 
+char *get_name(void) {
+	char *name = NULL;
+
+	get_config_string(lookup_config(config_tree, "Name"), &name);
+
+	if(!name)
+		return NULL;
+
+	if(*name == '$') {
+		char *envname = getenv(name + 1);
+		if(!envname) {
+			if(strcmp(name + 1, "HOST")) {
+				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
+				return false;
+			}
+			envname = alloca(32);
+			if(gethostname(envname, 32)) {
+				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
+				return false;
+			}
+			envname[31] = 0;
+		}
+		free(name);
+		name = xstrdup(envname);
+		for(char *c = name; *c; c++)
+			if(!isalnum(*c))
+				*c = '_';
+	}
+
+	if(!check_id(name)) {
+		logger(LOG_ERR, "Invalid name for myself!");
+		free(name);
+		return false;
+	}
+
+	return name;
+}
+
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
@@ -293,14 +331,8 @@ static bool setup_myself(void) {
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
 
-	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
+	if(!(name = get_name())) {
 		logger(LOG_ERR, "Name for tinc daemon required!");
-		return false;
-	}
-
-	if(!check_id(name)) {
-		logger(LOG_ERR, "Invalid name for myself!");
-		free(name);
 		return false;
 	}
 
