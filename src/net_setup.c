@@ -124,8 +124,8 @@ bool read_ecdsa_public_key(connection_t *c) {
 	result = ecdsa_read_pem_public_key(&c->ecdsa, fp);
 	fclose(fp);
 
-	if(!result) 
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA public key file `%s' failed: %s", fname, strerror(errno));
+	if(!result)
+		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing ECDSA public key file `%s' failed.", fname);
 	free(fname);
 	return result;
 }
