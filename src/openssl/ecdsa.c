@@ -30,7 +30,11 @@
 //
 bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 	*ecdsa = EC_KEY_new_by_curve_name(NID_secp521r1);
-
+	if(!*ecdsa) {
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "EC_KEY_new_by_curve_name failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		return false;
+	}
+	
 	int len = strlen(p);
 	unsigned char pubkey[len / 4 * 3 + 3];
 	const unsigned char *ppubkey = pubkey;
