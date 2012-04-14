@@ -576,9 +576,14 @@ bool sptps_stop(sptps_t *s) {
 	// Clean up any resources.
 	ecdh_free(&s->ecdh);
 	free(s->inbuf);
+	s->inbuf = NULL;
 	free(s->mykex);
+	s->mykex = NULL;
 	free(s->hiskex);
+	s->hiskex = NULL;
 	free(s->key);
+	s->key = NULL;
 	free(s->label);
+	s->label = NULL;
 	return true;
 }
