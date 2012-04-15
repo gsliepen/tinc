@@ -46,8 +46,7 @@ When the ExperimentalProtocol option is used, tinc is still compatible with
 Requirements
 ------------
 
-Either OpenSSL (http://www.openssl.org/) or libgcrypt
-(http://www.gnupg.org/download/#libgcrypt).
+OpenSSL (http://www.openssl.org/) version 1.0.0 or later.
 
 The zlib library is used for optional compression. You can find it at
 http://www.gzip.org/zlib/.
