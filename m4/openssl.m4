@@ -35,7 +35,7 @@ AC_DEFUN([tinc_OPENSSL],
      LDFLAGS="$LDFLAGS -L$withval"]
   )
 
-  AC_CHECK_HEADERS(openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h openssl/engine.h,
+  AC_CHECK_HEADERS([openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h openssl/engine.h openssl/ecdh.h openssl/ec.h],
     [],
     [AC_MSG_ERROR([OpenSSL header files not found.]); break]
   )
@@ -45,7 +45,7 @@ AC_DEFUN([tinc_OPENSSL],
     [AC_MSG_ERROR([OpenSSL libraries not found.])]
   )
 
-  AC_CHECK_FUNCS([RAND_pseudo_bytes EVP_EncryptInit_ex], ,
+  AC_CHECK_FUNCS([RAND_pseudo_bytes EVP_EncryptInit_ex ECDH_compute_key ECDSA_verify], ,
     [AC_MSG_ERROR([Missing OpenSSL functionality, make sure you have installed the latest version.]); break],
   )
 
