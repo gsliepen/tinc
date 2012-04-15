@@ -36,12 +36,18 @@ typedef enum fmode_t {
 	FMODE_KERNEL,
 } fmode_t;
 
+typedef enum bmode_t {
+	BMODE_NONE = 0,
+	BMODE_MST,
+	BMODE_DIRECT,
+} bmode_t;
+
 extern rmode_t routing_mode;
 extern fmode_t forwarding_mode;
+extern bmode_t broadcast_mode;
 extern bool decrement_ttl;
 extern bool directonly;
 extern bool overwrite_mac;
-extern bool broadcast;
 extern bool priorityinheritance;
 extern int macexpire;
 

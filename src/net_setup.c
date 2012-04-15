@@ -429,7 +429,19 @@ static bool setup_myself(void) {
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
-	get_config_bool(lookup_config(config_tree, "Broadcast"), &broadcast);
+	if(get_config_string(lookup_config(config_tree, "Broadcast"), &mode)) {
+		if(!strcasecmp(mode, "no"))
+			broadcast_mode = BMODE_NONE;
+		else if(!strcasecmp(mode, "yes") || !strcasecmp(mode, "mst"))
+			broadcast_mode = BMODE_MST;
+		else if(!strcasecmp(mode, "direct"))
+			broadcast_mode = BMODE_DIRECT;
+		else {
+			logger(LOG_ERR, "Invalid broadcast mode!");
+			return false;
+		}
+		free(mode);
+	}
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)

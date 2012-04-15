@@ -778,8 +778,23 @@ variable.
 This option may not work on all platforms.
 
 @cindex Broadcast
-@item Broadcast = <yes | no> (yes) [experimental]
-When disabled, tinc will drop all broadcast and multicast packets, in both router and switch mode.
+@item Broadcast = <no | mst | direct> (mst) [experimental]
+This option selects the way broadcast packets are sent to other daemons.
+@emph{NOTE: all nodes in a VPN must use the same Broadcast mode, otherwise routing loops can form.}
+
+@table @asis
+@item no
+Broadcast packets are never sent to other nodes.
+
+@item mst
+Broadcast packets are sent and forwarded via the VPN's Minimum Spanning Tree.
+This ensures broadcast packets reach all nodes.
+
+@item direct
+Broadcast packets are sent directly to all nodes that can be reached directly.
+Broadcast packets received from other nodes are never forwarded.
+If the IndirectData option is also set, broadcast packets will only be sent to nodes which we have a meta connection to.
+@end table
 
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>

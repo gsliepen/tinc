@@ -159,8 +159,25 @@ It is possible to bind only to a single interface with this variable.
 .Pp
 This option may not work on all platforms.
 
-.It Va Broadcast Li = yes | no Po yes Pc Bq experimental
-When disabled, tinc will drop all broadcast and multicast packets, in both router and switch mode.
+.It Va Broadcast Li = no | mst | direct Po mst Pc Bq experimental
+This option selects the way broadcast packets are sent to other daemons.
+NOTE: all nodes in a VPN must use the same
+.Va Broadcast
+mode, otherwise routing loops can form.
+
+.Bl -tag -width indent
+.It no
+Broadcast packets are never sent to other nodes.
+
+.It mst
+Broadcast packets are sent and forwarded via the VPN's Minimum Spanning Tree.
+This ensures broadcast packets reach all nodes.
+
+.It direct
+Broadcast packets are sent directly to all nodes that can be reached directly.
+Broadcast packets received from other nodes are never forwarded.
+If the IndirectData option is also set, broadcast packets will only be sent to nodes which we have a meta connection to.
+.El
 
 .It Va ConnectTo Li = Ar name
 Specifies which other tinc daemon to connect to on startup.
