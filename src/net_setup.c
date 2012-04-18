@@ -47,6 +47,12 @@
 char *myport;
 devops_t devops;
 
+char *proxyhost;
+char *proxyport;
+char *proxyuser;
+char *proxypass;
+proxytype_t proxytype;
+
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;
@@ -316,6 +322,8 @@ static bool setup_myself(void) {
 	char *name, *hostname, *mode, *afname, *cipher, *digest, *type;
 	char *fname = NULL;
 	char *address = NULL;
+	char *proxy = NULL;
+	char *space;
 	char *envp[5];
 	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
@@ -357,6 +365,68 @@ static bool setup_myself(void) {
 		free(myport);
 		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
 		sockaddr2str(&sa, NULL, &myport);
+	}
+
+	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
+	if(proxy) {
+		if((space = strchr(proxy, ' ')))
+			*space++ = 0;
+
+		if(!strcasecmp(proxy, "none")) {
+			proxytype = PROXY_NONE;
+		} else if(!strcasecmp(proxy, "socks4")) {
+			proxytype = PROXY_SOCKS4;
+		} else if(!strcasecmp(proxy, "socks4a")) {
+			proxytype = PROXY_SOCKS4A;
+		} else if(!strcasecmp(proxy, "socks5")) {
+			proxytype = PROXY_SOCKS5;
+		} else if(!strcasecmp(proxy, "http")) {
+			proxytype = PROXY_HTTP;
+		} else if(!strcasecmp(proxy, "exec")) {
+			proxytype = PROXY_EXEC;
+		} else {
+			logger(LOG_ERR, "Unknown proxy type %s!", proxy);
+			return false;
+		}
+
+		switch(proxytype) {
+			case PROXY_NONE:
+			default:
+				break;
+
+			case PROXY_EXEC:
+				if(!space || !*space) {
+					logger(LOG_ERR, "Argument expected for proxy type exec!");
+					return false;
+				}
+				proxyhost =  xstrdup(space);
+				break;
+
+			case PROXY_SOCKS4:
+			case PROXY_SOCKS4A:
+			case PROXY_SOCKS5:
+			case PROXY_HTTP:
+				proxyhost = space;
+				if(space && (space = strchr(space, ' ')))
+					*space++ = 0, proxyport = space;
+				if(space && (space = strchr(space, ' ')))
+					*space++ = 0, proxyuser = space;
+				if(space && (space = strchr(space, ' ')))
+					*space++ = 0, proxypass = space;
+				if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
+					logger(LOG_ERR, "Host and port argument expected for proxy!");
+					return false;
+				}
+				proxyhost = xstrdup(proxyhost);
+				proxyport = xstrdup(proxyport);
+				if(proxyuser && *proxyuser)
+					proxyuser = xstrdup(proxyuser);
+				if(proxypass && *proxypass)
+					proxyuser = xstrdup(proxypass);
+				break;
+		}
+
+		free(proxy);
 	}
 
 	/* Read in all the subnets specified in the host configuration file */

@@ -177,7 +177,15 @@ bool receive_meta(connection_t *c) {
 
 		if(c->tcplen) {
 			if(c->tcplen <= c->buflen) {
-				receive_tcppacket(c, c->buffer, c->tcplen);
+				if(proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
+					if(c->buffer[0] == 0 && c->buffer[1] == 0x5a) {
+						logger(LOG_DEBUG, "Proxy request granted");
+					} else {
+						logger(LOG_ERR, "Proxy request rejected");
+						return false;
+					}
+				} else 
+					receive_tcppacket(c, c->buffer, c->tcplen);
 
 				c->buflen -= c->tcplen;
 				lenin -= c->tcplen - oldlen;

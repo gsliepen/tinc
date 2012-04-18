@@ -68,7 +68,7 @@ bool check_id(const char *id) {
 bool send_request(connection_t *c, const char *format, ...) {
 	va_list args;
 	char buffer[MAXBUFSIZE];
-	int len, request;
+	int len, request = 0;
 
 	/* Use vsnprintf instead of vxasprintf: faster, no memory
 	   fragmentation, cleanup is automatic, and there is a limit on the
@@ -124,6 +124,20 @@ void forward_request(connection_t *from) {
 
 bool receive_request(connection_t *c) {
 	int request;
+
+	if(proxytype == PROXY_HTTP && c->allow_request == ID) {
+		if(!c->buffer[0] || c->buffer[0] == '\r')
+			return true;
+		if(!strncasecmp(c->buffer, "HTTP/1.1 ", 9)) {
+			if(!strncmp(c->buffer + 9, "200", 3)) {
+				logger(LOG_DEBUG, "Proxy request granted");
+				return true;
+			} else {
+				logger(LOG_DEBUG, "Proxy request rejected: %s", c->buffer + 9);
+				return false;
+			}
+		}
+	}
 
 	if(sscanf(c->buffer, "%d", &request) == 1) {
 		if((request < 0) || (request >= LAST) || !request_handlers[request]) {

@@ -31,6 +31,7 @@
 #include "edge.h"
 #include "graph.h"
 #include "logger.h"
+#include "meta.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
@@ -38,7 +39,49 @@
 #include "utils.h"
 #include "xalloc.h"
 
+static bool send_proxyrequest(connection_t *c) {
+	switch(proxytype) {
+		case PROXY_HTTP: {
+			char *host;
+			char *port;
+
+			sockaddr2str(&c->address, &host, &port);
+			send_request(c, "CONNECT %s:%s HTTP/1.1\r\n\r", host, port);
+			free(host);
+			free(port);
+			return true;
+		}
+		case PROXY_SOCKS4: {
+			if(c->address.sa.sa_family != AF_INET) {
+				logger(LOG_ERR, "Cannot connect to an IPv6 host through a SOCKS 4 proxy!");
+				return false;
+			}
+			char s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
+			s4req[0] = 4;
+			s4req[1] = 1;
+			memcpy(s4req + 2, &c->address.in.sin_port, 2);
+			memcpy(s4req + 4, &c->address.in.sin_addr, 4);
+			if(proxyuser)
+				strcpy(s4req + 8, proxyuser);
+			s4req[sizeof s4req - 1] = 0;
+			c->tcplen = 8;
+			return send_meta(c, s4req, sizeof s4req);
+		}
+		case PROXY_SOCKS4A:
+		case PROXY_SOCKS5:
+			logger(LOG_ERR, "Proxy type not implemented yet");
+			return false;
+		default:
+			logger(LOG_ERR, "Unknown proxy type");
+			return false;
+	}
+}
+
 bool send_id(connection_t *c) {
+	if(proxytype)
+		if(!send_proxyrequest(c))
+			return false;
+
 	return send_request(c, "%d %s %d", ID, myself->connection->name,
 						myself->connection->protocol_version);
 }

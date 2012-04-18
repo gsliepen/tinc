@@ -303,6 +303,7 @@ void finish_connecting(connection_t *c) {
 
 void do_outgoing_connection(connection_t *c) {
 	char *address, *port, *space;
+	struct addrinfo *proxyai;
 	int result;
 
 	if(!c->outgoing) {
@@ -358,16 +359,24 @@ begin:
 	ifdebug(CONNECTIONS) logger(LOG_INFO, "Trying to connect to %s (%s)", c->name,
 			   c->hostname);
 
-	c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-
-#ifdef FD_CLOEXEC
-	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
-#endif
+	if(!proxytype) {
+		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
+	} else {
+		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
+		if(!proxyai)
+			goto begin;
+		ifdebug(CONNECTIONS) logger(LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
+		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+	}
 
 	if(c->socket == -1) {
 		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
 		goto begin;
 	}
+
+#ifdef FD_CLOEXEC
+	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
+#endif
 
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
 	int option = 1;
@@ -379,11 +388,16 @@ begin:
 
 	/* Optimize TCP settings */
 
-	configure_tcp(c);
+//	configure_tcp(c);
 
 	/* Connect */
 
-	result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
+	if(!proxytype) {
+		result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
+	} else {
+		result = connect(c->socket, proxyai->ai_addr, proxyai->ai_addrlen);
+		freeaddrinfo(proxyai);
+	}
 
 	if(result == -1) {
 		if(sockinprogress(sockerrno)) {
