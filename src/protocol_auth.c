@@ -117,6 +117,8 @@ static bool send_proxyrequest(connection_t *c) {
 		case PROXY_SOCKS4A:
 			logger(LOG_ERR, "Proxy type not implemented yet");
 			return false;
+		case PROXY_EXEC:
+			return true;
 		default:
 			logger(LOG_ERR, "Unknown proxy type");
 			return false;

@@ -294,11 +294,60 @@ void retry_outgoing(outgoing_t *outgoing) {
 void finish_connecting(connection_t *c) {
 	ifdebug(CONNECTIONS) logger(LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
-	configure_tcp(c);
+	if(proxytype != PROXY_EXEC)
+		configure_tcp(c);
 
 	c->last_ping_time = now;
 
 	send_id(c);
+}
+
+static void do_outgoing_pipe(connection_t *c, char *command) {
+#ifndef HAVE_MINGW
+	int fd[2];
+
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
+		logger(LOG_ERR, "Could not create socketpair: %s\n", strerror(errno));
+		return;
+	}
+
+	if(fork()) {
+		c->socket = fd[0];
+		close(fd[1]);
+		logger(LOG_DEBUG, "Using proxy %s", command);
+		return;
+	}
+
+	close(0);
+	close(1);
+	close(fd[0]);
+	dup2(fd[1], 0);
+	dup2(fd[1], 1);
+	close(fd[1]);
+
+	// Other filedescriptors should be closed automatically by CLOEXEC
+
+	char *host = NULL;
+	char *port = NULL;
+
+	sockaddr2str(&c->address, &host, &port);
+	setenv("REMOTEADDRESS", host, true);
+	setenv("REMOTEPORT", port, true);
+	setenv("NODE", c->name, true);
+	setenv("NAME", myself->name, true);
+	if(netname)
+		setenv("NETNAME", netname, true);
+
+	int result = system(command);
+	if(result < 0)
+		logger(LOG_ERR, "Could not execute %s: %s\n", command, strerror(errno));
+	else if(result)
+		logger(LOG_ERR, "%s exited with non-zero status %d", command, result);
+	exit(result);
+#else
+	logger(LOG_ERR, "Proxy type exec not supported on this platform!");
+	return false;
+#endif
 }
 
 void do_outgoing_connection(connection_t *c) {
@@ -361,7 +410,10 @@ begin:
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-	} else {
+		configure_tcp(c);
+	} if(proxytype == PROXY_EXEC) {
+		do_outgoing_pipe(c, proxyhost);
+	}  else {
 		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
 		if(!proxyai)
 			goto begin;
@@ -378,22 +430,22 @@ begin:
 	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
 #endif
 
+	if(proxytype != PROXY_EXEC) {
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
-	int option = 1;
-	if(c->address.sa.sa_family == AF_INET6)
-		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+		int option = 1;
+		if(c->address.sa.sa_family == AF_INET6)
+			setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
-	bind_to_interface(c->socket);
-
-	/* Optimize TCP settings */
-
-//	configure_tcp(c);
+		bind_to_interface(c->socket);
+	}
 
 	/* Connect */
 
 	if(!proxytype) {
 		result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
+	} else if(proxytype == PROXY_EXEC) {
+		result = 0;
 	} else {
 		result = connect(c->socket, proxyai->ai_addr, proxyai->ai_addrlen);
 		freeaddrinfo(proxyai);
