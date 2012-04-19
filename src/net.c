@@ -121,6 +121,7 @@ void terminate_connection(connection_t *c, bool report) {
 			send_del_edge(everyone, c->edge);
 
 		edge_del(c->edge);
+		c->edge = NULL;
 
 		/* Run MST and SSSP algorithms */
 
