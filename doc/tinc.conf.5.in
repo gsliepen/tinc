@@ -456,24 +456,38 @@ specified in the configuration file.
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
-.It Va Proxy Li = Ar type Ar address Ar port Oo Ar username Oc Bq experimental
-Use the proxy at the given
-.Ar address
-and
-.Ar port
-when making outgoing connections.
+.It Va Proxy Li = socks4 | socks5 | http | exec Ar ... Bq experimental
+Use a proxy when making outgoing connections.
 The following proxy types are currently supported:
 .Bl -tag -width indent
-.It socks4
+.It socks4 Ar address Ar port Op Ar username
 Connects to the proxy using the SOCKS version 4 protocol.
 Optionally, a
 .Ar username
 can be supplied which will be passed on to the proxy server.
-
-.It http
+Only IPv4 connections can be proxied using SOCKS 4.
+.It socks5 Ar address Ar port Op Ar username Ar password
+Connect to the proxy using the SOCKS version 5 protocol.
+If a
+.Ar username
+and
+.Ar password
+are given, basic username/password authentication will be used,
+otherwise no authentication will be used.
+.It http Ar address Ar port
 Connects to the proxy and sends a HTTP CONNECT request.
+.It exec Ar command
+Executes the given
+.Ar command
+which should set up the outgoing connection.
+The environment variables
+.Ev NAME ,
+.Ev NODE ,
+.Ev REMOTEADDRES
+and
+.Ev REMOTEPORT
+are available.
 .El
-No authentication methods are currently supported.
 
 .It Va ReplayWindow Li = Ar bytes Pq 16
 vhis is the size of the replay tracking window for each remote node, in bytes.
