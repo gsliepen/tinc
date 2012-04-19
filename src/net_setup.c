@@ -422,7 +422,7 @@ static bool setup_myself(void) {
 				if(proxyuser && *proxyuser)
 					proxyuser = xstrdup(proxyuser);
 				if(proxypass && *proxypass)
-					proxyuser = xstrdup(proxypass);
+					proxypass = xstrdup(proxypass);
 				break;
 		}
 
