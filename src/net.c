@@ -113,7 +113,7 @@ void terminate_connection(connection_t *c, bool report) {
 
 	c->status.active = false;
 
-	if(c->node)
+	if(c->node && c->node->connection == c)
 		c->node->connection = NULL;
 
 	if(c->edge) {
