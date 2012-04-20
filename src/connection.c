@@ -64,8 +64,10 @@ void free_connection_partially(connection_t *c) {
 	ecdsa_free(&c->ecdsa);
 	rsa_free(&c->rsa);
 
-	if(c->hischallenge)
+	if(c->hischallenge) {
 		free(c->hischallenge);
+		c->hischallenge = NULL;
+	}
 
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
