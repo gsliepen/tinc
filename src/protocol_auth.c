@@ -72,6 +72,10 @@ bool id_h(connection_t *c, char *request) {
 		c->status.control = true;
 		c->allow_request = CONTROL;
 		c->last_ping_time = time(NULL) + 3600;
+
+	        free(c->name);
+                c->name = xstrdup("<control>");
+
 		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
 	}
 
