@@ -145,8 +145,10 @@ void terminate_connection(connection_t *c, bool report) {
 	/* Check if this was our outgoing connection */
 
 	if(c->outgoing) {
-		do_outgoing_connection(c);	
-	}
+		do_outgoing_connection(c);
+	} else {
+	        connection_del(c);
+        }
 }
 
 /*
