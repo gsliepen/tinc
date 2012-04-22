@@ -39,7 +39,7 @@ bool send_meta_sptps(void *handle, const char *buffer, size_t length) {
 		abort();
 	}
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "send_meta_sptps(%s, %p, %zu)", c->name, buffer, length);
+	logger(DEBUG_META, LOG_DEBUG, "send_meta_sptps(%s, %p, %zu)", c->name, buffer, length);
 
 	buffer_add(&c->outbuf, buffer, length);
 	event_add(&c->outevent, NULL);
@@ -98,7 +98,7 @@ bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t l
 		abort();
 	}
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "receive_meta_sptps(%s, %d, %p, %hu)", c->name, type, data, length);
+	logger(DEBUG_META, LOG_DEBUG, "receive_meta_sptps(%s, %d, %p, %hu)", c->name, type, data, length);
 
 	if(type == SPTPS_HANDSHAKE) {
 		if(c->allow_request == ACK)
@@ -162,7 +162,7 @@ bool receive_meta(connection_t *c) {
 
 	do {
 		if(c->protocol_minor >= 2) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
+			logger(DEBUG_META, LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
 			return sptps_receive_data(&c->sptps, bufp, inlen);
 		}
 
