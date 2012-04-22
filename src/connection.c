@@ -82,6 +82,10 @@ void free_connection_partially(connection_t *c) {
 		closesocket(c->socket);
 
 	c->socket = -1;
+
+	c->protocol_major = 0;
+	c->protocol_minor = 0;
+	c->allow_request = 0;
 }
 
 void free_connection(connection_t *c) {
