@@ -53,15 +53,17 @@ void bin2hex(char *src, char *dst, int length) {
 #endif
 
 const char *winerror(int err) {
-	static char buf[1024], *newline;
+	static char buf[1024], *ptr;
+
+	ptr = buf + sprintf(buf, "(%d) ", err);
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
-		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
+	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), ptr, sizeof(buf) - (ptr - buf), NULL)) {
+		strcpy(ptr, "(unable to format errormessage)");
 	};
 
-	if((newline = strchr(buf, '\r')))
-		*newline = '\0';
+	if((ptr = strchr(buf, '\r')))
+		*ptr = '\0';
 
 	return buf;
 }
