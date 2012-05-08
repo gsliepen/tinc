@@ -40,7 +40,7 @@ bool send_status(connection_t *c, int statusno, const char *statusstring) {
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-bool status_h(connection_t *c, char *request) {
+bool status_h(connection_t *c, const char *request) {
 	int statusno;
 	char statusstring[MAX_STRING_SIZE];
 
@@ -63,7 +63,7 @@ bool send_error(connection_t *c, int err, const char *errstring) {
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
 
-bool error_h(connection_t *c, char *request) {
+bool error_h(connection_t *c, const char *request) {
 	int err;
 	char errorstring[MAX_STRING_SIZE];
 
@@ -83,7 +83,7 @@ bool send_termreq(connection_t *c) {
 	return send_request(c, "%d", TERMREQ);
 }
 
-bool termreq_h(connection_t *c, char *request) {
+bool termreq_h(connection_t *c, const char *request) {
 	return false;
 }
 
@@ -94,7 +94,7 @@ bool send_ping(connection_t *c) {
 	return send_request(c, "%d", PING);
 }
 
-bool ping_h(connection_t *c, char *request) {
+bool ping_h(connection_t *c, const char *request) {
 	return send_pong(c);
 }
 
@@ -102,7 +102,7 @@ bool send_pong(connection_t *c) {
 	return send_request(c, "%d", PONG);
 }
 
-bool pong_h(connection_t *c, char *request) {
+bool pong_h(connection_t *c, const char *request) {
 	c->status.pinged = false;
 
 	/* Succesful connection, reset timeout if this is an outgoing connection. */
@@ -134,7 +134,7 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	return send_meta(c, (char *)packet->data, packet->len);
 }
 
-bool tcppacket_h(connection_t *c, char *request) {
+bool tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
 	if(sscanf(request, "%*d %hd", &len) != 1) {

@@ -48,7 +48,7 @@ typedef enum request_t {
 } request_t;
 
 typedef struct past_request_t {
-	char *request;
+	const char *request;
 	time_t firstseen;
 } past_request_t;
 
@@ -72,13 +72,13 @@ extern bool experimental;
 /* Basic functions */
 
 extern bool send_request(struct connection_t *, const char *, ...) __attribute__ ((__format__(printf, 2, 3)));
-extern void forward_request(struct connection_t *, char *);
-extern bool receive_request(struct connection_t *, char *);
+extern void forward_request(struct connection_t *, const char *);
+extern bool receive_request(struct connection_t *, const char *);
 extern bool check_id(const char *);
 
 extern void init_requests(void);
 extern void exit_requests(void);
-extern bool seen_request(char *);
+extern bool seen_request(const char *);
 
 /* Requests */
 
@@ -89,7 +89,7 @@ extern bool send_challenge(struct connection_t *);
 extern bool send_chal_reply(struct connection_t *);
 extern bool send_ack(struct connection_t *);
 extern bool send_status(struct connection_t *, int, const char *);
-extern bool send_error(struct connection_t *, int,const  char *);
+extern bool send_error(struct connection_t *, int, const  char *);
 extern bool send_termreq(struct connection_t *);
 extern bool send_ping(struct connection_t *);
 extern bool send_pong(struct connection_t *);
@@ -104,24 +104,24 @@ extern bool send_tcppacket(struct connection_t *, const struct vpn_packet_t *);
 
 /* Request handlers  */
 
-extern bool id_h(struct connection_t *, char *);
-extern bool metakey_h(struct connection_t *, char *);
-extern bool challenge_h(struct connection_t *, char *);
-extern bool chal_reply_h(struct connection_t *, char *);
-extern bool ack_h(struct connection_t *, char *);
-extern bool status_h(struct connection_t *, char *);
-extern bool error_h(struct connection_t *, char *);
-extern bool termreq_h(struct connection_t *, char *);
-extern bool ping_h(struct connection_t *, char *);
-extern bool pong_h(struct connection_t *, char *);
-extern bool add_subnet_h(struct connection_t *, char *);
-extern bool del_subnet_h(struct connection_t *, char *);
-extern bool add_edge_h(struct connection_t *, char *);
-extern bool del_edge_h(struct connection_t *, char *);
-extern bool key_changed_h(struct connection_t *, char *);
-extern bool req_key_h(struct connection_t *, char *);
-extern bool ans_key_h(struct connection_t *, char *);
-extern bool tcppacket_h(struct connection_t *, char *);
-extern bool control_h(struct connection_t *, char *);
+extern bool id_h(struct connection_t *, const char *);
+extern bool metakey_h(struct connection_t *, const char *);
+extern bool challenge_h(struct connection_t *, const char *);
+extern bool chal_reply_h(struct connection_t *, const char *);
+extern bool ack_h(struct connection_t *, const char *);
+extern bool status_h(struct connection_t *, const char *);
+extern bool error_h(struct connection_t *, const char *);
+extern bool termreq_h(struct connection_t *, const char *);
+extern bool ping_h(struct connection_t *, const char *);
+extern bool pong_h(struct connection_t *, const char *);
+extern bool add_subnet_h(struct connection_t *, const char *);
+extern bool del_subnet_h(struct connection_t *, const char *);
+extern bool add_edge_h(struct connection_t *, const char *);
+extern bool del_edge_h(struct connection_t *, const char *);
+extern bool key_changed_h(struct connection_t *, const char *);
+extern bool req_key_h(struct connection_t *, const char *);
+extern bool ans_key_h(struct connection_t *, const char *);
+extern bool tcppacket_h(struct connection_t *, const char *);
+extern bool control_h(struct connection_t *, const char *);
 
 #endif							/* __TINC_PROTOCOL_H__ */

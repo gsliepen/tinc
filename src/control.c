@@ -44,7 +44,7 @@ static bool control_ok(connection_t *c, int type) {
 	return control_return(c, type, 0);
 }
 
-bool control_h(connection_t *c, char *request) {
+bool control_h(connection_t *c, const char *request) {
 	int type;
 
 	if(!c->status.control || c->allow_request != CONTROL) {

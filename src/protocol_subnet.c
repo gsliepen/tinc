@@ -41,7 +41,7 @@ bool send_add_subnet(connection_t *c, const subnet_t *subnet) {
 	return send_request(c, "%d %x %s %s", ADD_SUBNET, rand(), subnet->owner->name, netstr);
 }
 
-bool add_subnet_h(connection_t *c, char *request) {
+bool add_subnet_h(connection_t *c, const char *request) {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;
@@ -151,7 +151,7 @@ bool send_del_subnet(connection_t *c, const subnet_t *s) {
 	return send_request(c, "%d %x %s %s", DEL_SUBNET, rand(), s->owner->name, netstr);
 }
 
-bool del_subnet_h(connection_t *c, char *request) {
+bool del_subnet_h(connection_t *c, const char *request) {
 	char subnetstr[MAX_STRING_SIZE];
 	char name[MAX_STRING_SIZE];
 	node_t *owner;

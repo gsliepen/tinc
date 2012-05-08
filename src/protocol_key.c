@@ -51,7 +51,7 @@ void send_key_changed(void) {
 	}
 }
 
-bool key_changed_h(connection_t *c, char *request) {
+bool key_changed_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 	node_t *n;
 
@@ -87,7 +87,7 @@ bool send_req_key(node_t *to) {
 	return send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, experimental ? 1 : 0);
 }
 
-bool req_key_h(connection_t *c, char *request) {
+bool req_key_h(connection_t *c, const char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
@@ -202,7 +202,7 @@ bool send_ans_key(node_t *to) {
 						to->incompression);
 }
 
-bool ans_key_h(connection_t *c, char *request) {
+bool ans_key_h(connection_t *c, const char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];

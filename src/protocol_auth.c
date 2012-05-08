@@ -57,7 +57,7 @@ bool send_id(connection_t *c) {
 	return send_request(c, "%d %s %d.%d", ID, myself->connection->name, myself->connection->protocol_major, minor);
 }
 
-bool id_h(connection_t *c, char *request) {
+bool id_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING " %d.%d", name, &c->protocol_major, &c->protocol_minor) < 2) {
@@ -219,7 +219,7 @@ bool send_metakey(connection_t *c) {
 	return result;
 }
 
-bool metakey_h(connection_t *c, char *request) {
+bool metakey_h(connection_t *c, const char *request) {
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	size_t len = rsa_size(&myself->connection->rsa);
@@ -293,7 +293,7 @@ bool send_challenge(connection_t *c) {
 	return send_request(c, "%d %s", CHALLENGE, buffer);
 }
 
-bool challenge_h(connection_t *c, char *request) {
+bool challenge_h(connection_t *c, const char *request) {
 	char buffer[MAX_STRING_SIZE];
 	size_t len = rsa_size(&myself->connection->rsa);
 	size_t digestlen = digest_length(&c->indigest);
@@ -330,7 +330,7 @@ bool challenge_h(connection_t *c, char *request) {
 	return send_request(c, "%d %s", CHAL_REPLY, buffer);
 }
 
-bool chal_reply_h(connection_t *c, char *request) {
+bool chal_reply_h(connection_t *c, const char *request) {
 	char hishash[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, hishash) != 1) {
@@ -451,7 +451,7 @@ static void send_everything(connection_t *c) {
 	}
 }
 
-static bool upgrade_h(connection_t *c, char *request) {
+static bool upgrade_h(connection_t *c, const char *request) {
 	char pubkey[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, pubkey) != 1) {
@@ -470,7 +470,7 @@ static bool upgrade_h(connection_t *c, char *request) {
 	return send_termreq(c);
 }
 
-bool ack_h(connection_t *c, char *request) {
+bool ack_h(connection_t *c, const char *request) {
 	if(c->protocol_minor == 1)
 		return upgrade_h(c, request);
 

@@ -34,7 +34,7 @@ bool experimental = false;
 
 /* Jumptable for the request handlers */
 
-static bool (*request_handlers[])(connection_t *, char *) = {
+static bool (*request_handlers[])(connection_t *, const char *) = {
 		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
 		status_h, error_h, termreq_h,
 		ping_h, pong_h,
@@ -96,16 +96,18 @@ bool send_request(connection_t *c, const char *format, ...) {
 		return send_meta(c, request, len);
 }
 
-void forward_request(connection_t *from, char *request) {
-	/* Note: request is not zero terminated anymore after a call to this function! */
+void forward_request(connection_t *from, const char *request) {
 	logger(DEBUG_META, LOG_DEBUG, "Forwarding %s from %s (%s): %s", request_name[atoi(request)], from->name, from->hostname, request);
 
+	// Create a temporary newline-terminated copy of the request
 	int len = strlen(request);
-	request[len++] = '\n';
-	broadcast_meta(from, request, len);
+	char tmp[len + 1];
+	memcpy(tmp, request, len);
+	tmp[len] = '\n';
+	broadcast_meta(from, tmp, len);
 }
 
-bool receive_request(connection_t *c, char *request) {
+bool receive_request(connection_t *c, const char *request) {
 	int reqno = atoi(request);
 
 	if(reqno || *request == '0') {
@@ -141,14 +143,14 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 
 static void free_past_request(past_request_t *r) {
 	if(r->request)
-		free(r->request);
+		free((char *)r->request);
 
 	free(r);
 }
 
 static struct event past_request_event;
 
-bool seen_request(char *request) {
+bool seen_request(const char *request) {
 	past_request_t *new, p = {NULL};
 
 	p.request = request;

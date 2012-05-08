@@ -50,7 +50,7 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 	return x;
 }
 
-bool add_edge_h(connection_t *c, char *request) {
+bool add_edge_h(connection_t *c, const char *request) {
 	edge_t *e;
 	node_t *from, *to;
 	char from_name[MAX_STRING_SIZE];
@@ -167,7 +167,7 @@ bool send_del_edge(connection_t *c, const edge_t *e) {
 						e->from->name, e->to->name);
 }
 
-bool del_edge_h(connection_t *c, char *request) {
+bool del_edge_h(connection_t *c, const char *request) {
 	edge_t *e;
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
