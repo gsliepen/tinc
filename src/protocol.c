@@ -104,7 +104,7 @@ void forward_request(connection_t *from, const char *request) {
 	char tmp[len + 1];
 	memcpy(tmp, request, len);
 	tmp[len] = '\n';
-	broadcast_meta(from, tmp, len);
+	broadcast_meta(from, tmp, sizeof tmp);
 }
 
 bool receive_request(connection_t *c, const char *request) {
