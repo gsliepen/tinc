@@ -352,7 +352,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 
 void do_outgoing_connection(connection_t *c) {
 	char *address, *port, *space;
-	struct addrinfo *proxyai;
+	struct addrinfo *proxyai = NULL;
 	int result;
 
 	if(!c->outgoing) {

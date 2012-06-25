@@ -210,7 +210,7 @@ static bool write_packet(vpn_packet_t *packet) {
 			}
 			break;
 		case DEVICE_TYPE_ETHERTAP:
-			*(short int *)(packet->data - 2) = packet->len;
+			memcpy(packet->data - 2, &packet->len, 2);
 
 			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
