@@ -346,7 +346,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	exit(result);
 #else
 	logger(LOG_ERR, "Proxy type exec not supported on this platform!");
-	return false;
+	return;
 #endif
 }
 
@@ -411,9 +411,9 @@ begin:
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 		configure_tcp(c);
-	} if(proxytype == PROXY_EXEC) {
+	} else if(proxytype == PROXY_EXEC) {
 		do_outgoing_pipe(c, proxyhost);
-	}  else {
+	} else {
 		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
 		if(!proxyai)
 			goto begin;
