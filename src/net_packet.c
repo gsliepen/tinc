@@ -622,7 +622,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 				n = node->data;
 
 				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
-					send_packet(c->node, packet);
+					send_packet(n, packet);
 			}
 			break;
 
