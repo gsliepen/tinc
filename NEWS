@@ -1,3 +1,14 @@
+Version 1.0.19               June 25 2012
+
+ * Allow :: notation in IPv6 Subnets.
+
+ * Add support for systemd style socket activation.
+
+ * Allow environment variables to be used for the Name option.
+
+ * Add basic support for SOCKS proxies, HTTP proxies, and proxying through an
+   external command.
+
 Version 1.0.18               March 25 2012
 
  * Fixed IPv6 in switch mode by turning off DecrementTTL by default.
