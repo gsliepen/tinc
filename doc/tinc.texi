@@ -801,8 +801,23 @@ variable.
 This option may not work on all platforms.
 
 @cindex Broadcast
-@item Broadcast = <yes | no> (yes) [experimental]
-When disabled, tinc will drop all broadcast and multicast packets, in both router and switch mode.
+@item Broadcast = <no | mst | direct> (mst) [experimental]
+This option selects the way broadcast packets are sent to other daemons.
+@emph{NOTE: all nodes in a VPN must use the same Broadcast mode, otherwise routing loops can form.}
+
+@table @asis
+@item no
+Broadcast packets are never sent to other nodes.
+
+@item mst
+Broadcast packets are sent and forwarded via the VPN's Minimum Spanning Tree.
+This ensures broadcast packets reach all nodes.
+
+@item direct
+Broadcast packets are sent directly to all nodes that can be reached directly.
+Broadcast packets received from other nodes are never forwarded.
+If the IndirectData option is also set, broadcast packets will only be sent to nodes which we have a meta connection to.
+@end table
 
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
@@ -1031,6 +1046,11 @@ This only has effect when Mode is set to "switch".
 This is a symbolic name for this connection.
 The name should consist only of alfanumeric and underscore characters (a-z, A-Z, 0-9 and _).
 
+If Name starts with a $, then the contents of the environment variable that follows will be used.
+In that case, invalid characters will be converted to underscores.
+If Name is $HOST, but no such environment variable exist,
+the hostname will be read using the gethostnname() system call.
+
 @cindex PingInterval
 @item PingInterval = <@var{seconds}> (60)
 The number of seconds of inactivity that tinc will wait before sending a
@@ -1067,6 +1087,33 @@ specified in the configuration file.
 @item ProcessPriority = <low|normal|high>
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
+
+@cindex Proxy
+@item Proxy = socks4 | socks4 | http | exec @var{...} [experimental]
+Use a proxy when making outgoing connections.
+The following proxy types are currently supported:
+
+@table @asis
+@cindex socks4
+@item socks4 <@var{address}> <@var{port}> [<@var{username}>]
+Connects to the proxy using the SOCKS version 4 protocol.
+Optionally, a @var{username} can be supplied which will be passed on to the proxy server.
+
+@cindex socks5
+@item socks4 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
+Connect to the proxy using the SOCKS version 5 protocol.
+If a @var{username} and @var{password} are given, basic username/password authentication will be used,
+otherwise no authentication will be used.
+
+@cindex http
+@item http <@var{address}> <@var{port}>
+Connects to the proxy and sends a HTTP CONNECT request.
+
+@cindex exec
+@item exec <@var{command}>
+Executes the given command which should set up the outgoing connection.
+The environment variables @env{NAME}, @env{NODE}, @env{REMOTEADDRES} and @env{REMOTEPORT} are available.
+@end table
 
 @cindex ReplayWindow
 @item ReplayWindow = <bytes> (16)

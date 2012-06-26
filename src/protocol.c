@@ -108,6 +108,20 @@ void forward_request(connection_t *from, const char *request) {
 }
 
 bool receive_request(connection_t *c, const char *request) {
+	if(proxytype == PROXY_HTTP && c->allow_request == ID) {
+		if(!request[0] || request[0] == '\r')
+			return true;
+		if(!strncasecmp(request, "HTTP/1.1 ", 9)) {
+			if(!strncmp(request + 9, "200", 3)) {
+				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
+				return true;
+			} else {
+				logger(DEBUG_ALWAYS, LOG_DEBUG, "Proxy request rejected: %s", request + 9);
+				return false;
+			}
+		}
+	}
+
 	int reqno = atoi(request);
 
 	if(reqno || *request == '0') {

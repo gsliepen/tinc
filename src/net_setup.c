@@ -46,6 +46,12 @@ char *myport;
 static struct event device_ev;
 devops_t devops;
 
+char *proxyhost;
+char *proxyport;
+char *proxyuser;
+char *proxypass;
+proxytype_t proxytype;
+
 bool node_read_ecdsa_public_key(node_t *n) {
 	if(ecdsa_active(&n->ecdsa))
 		return true;
@@ -340,6 +346,44 @@ void load_all_subnets(void) {
 	closedir(dir);
 }
 
+char *get_name(void) {
+	char *name = NULL;
+
+	get_config_string(lookup_config(config_tree, "Name"), &name);
+
+	if(!name)
+		return NULL;
+
+	if(*name == '$') {
+		char *envname = getenv(name + 1);
+		if(!envname) {
+			if(strcmp(name + 1, "HOST")) {
+				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
+				return false;
+			}
+			envname = alloca(32);
+			if(gethostname(envname, 32)) {
+				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
+				return false;
+			}
+			envname[31] = 0;
+		}
+		free(name);
+		name = xstrdup(envname);
+		for(char *c = name; *c; c++)
+			if(!isalnum(*c))
+				*c = '_';
+	}
+
+	if(!check_id(name)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid name for myself!");
+		free(name);
+		return false;
+	}
+
+	return name;
+}
+
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
@@ -349,6 +393,8 @@ static bool setup_myself(void) {
 	char *name, *hostname, *mode, *afname, *cipher, *digest, *type;
 	char *fname = NULL;
 	char *address = NULL;
+	char *proxy = NULL;
+	char *space;
 	char *envp[5];
 	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
@@ -365,14 +411,8 @@ static bool setup_myself(void) {
 	myself->connection->protocol_major = PROT_MAJOR;
 	myself->connection->protocol_minor = PROT_MINOR;
 
-	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
+	if(!(name = get_name())) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
-		return false;
-	}
-
-	if(!check_id(name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid name for myself!");
-		free(name);
 		return false;
 	}
 
@@ -402,6 +442,68 @@ static bool setup_myself(void) {
 		free(myport);
 		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
 		sockaddr2str(&sa, NULL, &myport);
+	}
+
+	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
+	if(proxy) {
+		if((space = strchr(proxy, ' ')))
+			*space++ = 0;
+
+		if(!strcasecmp(proxy, "none")) {
+			proxytype = PROXY_NONE;
+		} else if(!strcasecmp(proxy, "socks4")) {
+			proxytype = PROXY_SOCKS4;
+		} else if(!strcasecmp(proxy, "socks4a")) {
+			proxytype = PROXY_SOCKS4A;
+		} else if(!strcasecmp(proxy, "socks5")) {
+			proxytype = PROXY_SOCKS5;
+		} else if(!strcasecmp(proxy, "http")) {
+			proxytype = PROXY_HTTP;
+		} else if(!strcasecmp(proxy, "exec")) {
+			proxytype = PROXY_EXEC;
+		} else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type %s!", proxy);
+			return false;
+		}
+
+		switch(proxytype) {
+			case PROXY_NONE:
+			default:
+				break;
+
+			case PROXY_EXEC:
+				if(!space || !*space) {
+					logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
+					return false;
+				}
+				proxyhost =  xstrdup(space);
+				break;
+
+			case PROXY_SOCKS4:
+			case PROXY_SOCKS4A:
+			case PROXY_SOCKS5:
+			case PROXY_HTTP:
+				proxyhost = space;
+				if(space && (space = strchr(space, ' ')))
+					*space++ = 0, proxyport = space;
+				if(space && (space = strchr(space, ' ')))
+					*space++ = 0, proxyuser = space;
+				if(space && (space = strchr(space, ' ')))
+					*space++ = 0, proxypass = space;
+				if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
+					logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
+					return false;
+				}
+				proxyhost = xstrdup(proxyhost);
+				proxyport = xstrdup(proxyport);
+				if(proxyuser && *proxyuser)
+					proxyuser = xstrdup(proxyuser);
+				if(proxypass && *proxypass)
+					proxypass = xstrdup(proxypass);
+				break;
+		}
+
+		free(proxy);
 	}
 
 	/* Read in all the subnets specified in the host configuration file */
@@ -474,7 +576,19 @@ static bool setup_myself(void) {
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
-	get_config_bool(lookup_config(config_tree, "Broadcast"), &broadcast);
+	if(get_config_string(lookup_config(config_tree, "Broadcast"), &mode)) {
+		if(!strcasecmp(mode, "no"))
+			broadcast_mode = BMODE_NONE;
+		else if(!strcasecmp(mode, "yes") || !strcasecmp(mode, "mst"))
+			broadcast_mode = BMODE_MST;
+		else if(!strcasecmp(mode, "direct"))
+			broadcast_mode = BMODE_DIRECT;
+		else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid broadcast mode!");
+			return false;
+		}
+		free(mode);
+	}
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)

@@ -137,15 +137,17 @@ int b64encode(const char *src, char *dst, int length) {
 #endif
 
 const char *winerror(int err) {
-	static char buf[1024], *newline;
+	static char buf[1024], *ptr;
+
+	ptr = buf + sprintf(buf, "(%d) ", err);
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
+	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
 		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
 	};
 
-	if((newline = strchr(buf, '\r')))
-		*newline = '\0';
+	if((ptr = strchr(buf, '\r')))
+		*ptr = '\0';
 
 	return buf;
 }

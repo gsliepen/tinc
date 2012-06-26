@@ -576,24 +576,50 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	splay_node_t *node;
 	connection_t *c;
+	node_t *n;
+
+	// Always give ourself a copy of the packet.
+	if(from != myself)
+		send_packet(myself, packet);
+
+	// In TunnelServer mode, do not forward broadcast packets.
+        // The MST might not be valid and create loops.
+	if(tunnelserver || broadcast_mode == BMODE_NONE)
+		return;
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Broadcasting packet of %d bytes from %s (%s)",
 			   packet->len, from->name, from->hostname);
 
-	if(from != myself) {
-		send_packet(myself, packet);
+	switch(broadcast_mode) {
+		// In MST mode, broadcast packets travel via the Minimum Spanning Tree.
+		// This guarantees all nodes receive the broadcast packet, and
+		// usually distributes the sending of broadcast packets over all nodes.
+		case BMODE_MST:
+			for(node = connection_tree->head; node; node = node->next) {
+				c = node->data;
 
-		// In TunnelServer mode, do not forward broadcast packets.
-                // The MST might not be valid and create loops.
-		if(tunnelserver)
-			return;
-	}
+				if(c->status.active && c->status.mst && c != from->nexthop->connection)
+					send_packet(c->node, packet);
+			}
+			break;
 
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
+		// In direct mode, we send copies to each node we know of.
+	        // However, this only reaches nodes that can be reached in a single hop.
+		// We don't have enough information to forward broadcast packets in this case.
+		case BMODE_DIRECT:
+			if(from != myself)
+				break;
 
-		if(c->status.active && c->status.mst && c != from->nexthop->connection)
-			send_packet(c->node, packet);
+			for(node = node_udp_tree->head; node; node = node->next) {
+				n = node->data;
+
+				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
+					send_packet(n, packet);
+			}
+			break;
+
+		default:
+			break;
 	}
 }
 

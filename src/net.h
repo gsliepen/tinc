@@ -121,6 +121,20 @@ extern char *myport;
 extern int contradicting_add_edge;
 extern int contradicting_del_edge;
 
+extern char *proxyhost;
+extern char *proxyport;
+extern char *proxyuser;
+extern char *proxypass;
+typedef enum proxytype_t {
+	PROXY_NONE = 0,
+	PROXY_SOCKS4,
+	PROXY_SOCKS4A,
+	PROXY_SOCKS5,
+	PROXY_HTTP,
+	PROXY_EXEC,
+} proxytype_t;
+extern proxytype_t proxytype;
+
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"
 #include "node.h"
@@ -135,6 +149,7 @@ extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
+extern char *get_name(void);
 extern bool setup_network(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);

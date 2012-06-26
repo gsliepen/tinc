@@ -196,7 +196,15 @@ bool receive_meta(connection_t *c) {
 			if(c->tcplen) {
 				char *tcpbuffer = buffer_read(&c->inbuf, c->tcplen);
 				if(tcpbuffer) {
-					receive_tcppacket(c, tcpbuffer, c->tcplen);
+					if(proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
+						if(tcpbuffer[0] == 0 && tcpbuffer[1] == 0x5a) {
+							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
+						} else {
+							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected");
+							return false;
+						}
+					} else 
+						receive_tcppacket(c, tcpbuffer, c->tcplen);
 					c->tcplen = 0;
 					continue;
 				} else {

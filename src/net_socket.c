@@ -292,7 +292,8 @@ void retry_outgoing(outgoing_t *outgoing) {
 void finish_connecting(connection_t *c) {
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
-	configure_tcp(c);
+	if(proxytype != PROXY_EXEC)
+		configure_tcp(c);
 
 	c->last_ping_time = time(NULL);
 	c->status.connecting = false;
@@ -300,8 +301,57 @@ void finish_connecting(connection_t *c) {
 	send_id(c);
 }
 
+static void do_outgoing_pipe(connection_t *c, char *command) {
+#ifndef HAVE_MINGW
+	int fd[2];
+
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s\n", strerror(errno));
+		return;
+	}
+
+	if(fork()) {
+		c->socket = fd[0];
+		close(fd[1]);
+		logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Using proxy %s", command);
+		return;
+	}
+
+	close(0);
+	close(1);
+	close(fd[0]);
+	dup2(fd[1], 0);
+	dup2(fd[1], 1);
+	close(fd[1]);
+
+	// Other filedescriptors should be closed automatically by CLOEXEC
+
+	char *host = NULL;
+	char *port = NULL;
+
+	sockaddr2str(&c->address, &host, &port);
+	setenv("REMOTEADDRESS", host, true);
+	setenv("REMOTEPORT", port, true);
+	setenv("NODE", c->name, true);
+	setenv("NAME", myself->name, true);
+	if(netname)
+		setenv("NETNAME", netname, true);
+
+	int result = system(command);
+	if(result < 0)
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not execute %s: %s\n", command, strerror(errno));
+	else if(result)
+		logger(DEBUG_ALWAYS, LOG_ERR, "%s exited with non-zero status %d", command, result);
+	exit(result);
+#else
+	logger(DEBUG_ALWAYS, LOG_ERR, "Proxy type exec not supported on this platform!");
+	return;
+#endif
+}
+
 bool do_outgoing_connection(connection_t *c) {
 	char *address, *port, *space;
+	struct addrinfo *proxyai = NULL;
 	int result;
 
 	if(!c->outgoing) {
@@ -357,32 +407,48 @@ begin:
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", c->name,
 			   c->hostname);
 
-	c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-
-#ifdef FD_CLOEXEC
-	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
-#endif
+	if(!proxytype) {
+		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
+		configure_tcp(c);
+	} else if(proxytype == PROXY_EXEC) {
+		do_outgoing_pipe(c, proxyhost);
+	} else {
+		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
+		if(!proxyai)
+			goto begin;
+		logger(DEBUG_CONNECTIONS, LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
+		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+	}
 
 	if(c->socket == -1) {
 		logger(DEBUG_CONNECTIONS, LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
 		goto begin;
 	}
 
-#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
-	int option = 1;
-	if(c->address.sa.sa_family == AF_INET6)
-		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+#ifdef FD_CLOEXEC
+	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
 #endif
 
-	bind_to_interface(c->socket);
+	if(proxytype != PROXY_EXEC) {
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+		int option = 1;
+		if(c->address.sa.sa_family == AF_INET6)
+			setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+#endif
 
-	/* Optimize TCP settings */
-
-	configure_tcp(c);
+		bind_to_interface(c->socket);
+	}
 
 	/* Connect */
 
-	result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
+	if(!proxytype) {
+		result = connect(c->socket, &c->address.sa, SALEN(c->address.sa));
+	} else if(proxytype == PROXY_EXEC) {
+		result = 0;
+	} else {
+		result = connect(c->socket, proxyai->ai_addr, proxyai->ai_addrlen);
+		freeaddrinfo(proxyai);
+	}
 
 	if(result == -1) {
 		if(sockinprogress(sockerrno)) {
