@@ -341,9 +341,10 @@ int reload_configuration(void) {
 
 void retry(void) {
 	connection_t *c;
-	splay_node_t *node;
+	splay_node_t *node, *next;
 
-	for(node = connection_tree->head; node; node = node->next) {
+	for(node = connection_tree->head; node; node = next) {
+		next = node->next;
 		c = node->data;
 		
 		if(c->outgoing && !c->node) {
