@@ -261,7 +261,7 @@ alias char-major-10-200 tun
 @subsection Configuration of FreeBSD kernels
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in the default kernel configuration.
-Using tap devices is recommended.
+The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}. 
 
 
 @c ==================================================================
@@ -274,6 +274,7 @@ There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
 which adds a tap device to OpenBSD which should work with tinc,
 but with recent versions of OpenBSD,
 a tun device can act as a tap device by setting the link0 option with ifconfig.
+
 
 @c ==================================================================
 @node       Configuration of NetBSD kernels
