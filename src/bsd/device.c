@@ -33,7 +33,12 @@
 #include "bsd/tunemu.h"
 #endif
 
-#define DEFAULT_DEVICE "/dev/tun0"
+#define DEFAULT_TUN_DEVICE "/dev/tun0"
+#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD)
+#define DEFAULT_TAP_DEVICE "/dev/tap0"
+#else
+#define DEFAULT_TAP_DEVICE "/dev/tun0"
+#endif
 
 typedef enum device_type {
 	DEVICE_TYPE_TUN,
@@ -61,8 +66,12 @@ static device_type_t device_type = DEVICE_TYPE_TUN;
 static bool setup_device(void) {
 	char *type;
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = xstrdup(DEFAULT_DEVICE);
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+		if(routing_mode == RMODE_ROUTER)
+			device = xstrdup(DEFAULT_TUN_DEVICE);
+		else
+			device = xstrdup(DEFAULT_TAP_DEVICE);
+	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
