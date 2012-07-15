@@ -24,7 +24,7 @@ nodist_tincd_SOURCES = \
 
 tincctl_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
-	list.c tincctl.c top.c
+	info.c list.c subnet_parse.c tincctl.c top.c
 
 nodist_tincctl_SOURCES = \
 	ecdsagen.c rsagen.c

@@ -101,6 +101,7 @@ If
 is omitted, the default length will be 2048 bits.
 When saving keys to existing files, tinc will not delete the old keys;
 you have to remove them manually.
+
 .It dump nodes
 Dump a list of all known nodes in the VPN.
 .It dump edges
@@ -113,6 +114,9 @@ Dump a list of all meta connections with ourself.
 Dump a graph of the VPN in
 .Xr dotty 1
 format.
+.It info Ar node | subnet | address
+Show information about a particular node, subnet or address.
+If an address is given, any matching subnet will be shown.
 .It purge
 Purges all information remembered about unreachable nodes.
 .It debug Ar N

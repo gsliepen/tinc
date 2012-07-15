@@ -25,6 +25,7 @@
 #include "protocol.h"
 #include "control_common.h"
 #include "ecdsagen.h"
+#include "info.h"
 #include "rsagen.h"
 #include "utils.h"
 #include "tincctl.h"
@@ -120,6 +121,7 @@ static void usage(bool status) {
 				"    subnets                  - all known subnets in the VPN\n"
 				"    connections              - all meta connections with ourself\n"
 				"    graph                    - graph of the VPN in dotty format\n"
+				"  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
 				"  purge                      Purge unreachable nodes\n"
 				"  debug N                    Set debug level\n"
 				"  retry                      Retry all outgoing connections\n"
@@ -1286,6 +1288,18 @@ static int cmd_version(int argc, char *argv[]) {
 	return 0;
 }
 
+static int cmd_info(int argc, char *argv[]) {
+	if(argc != 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	if(!connect_tincd())
+		return 1;
+
+	return info(fd, argv[1]);
+}
+
 static const char *conffiles[] = {
 	"tinc.conf",
 	"tinc-up",
@@ -1374,6 +1388,7 @@ static const struct {
 	{"generate-ecdsa-keys", cmd_generate_ecdsa_keys},
 	{"help", cmd_help},
 	{"version", cmd_version},
+	{"info", cmd_info},
 	{"edit", cmd_edit},
 	{NULL, NULL},
 };
