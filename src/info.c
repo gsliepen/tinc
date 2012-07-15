@@ -164,8 +164,10 @@ static int info_node(int fd, const char *item) {
 static int info_subnet(int fd, const char *item) {
 	subnet_t subnet, find;
 
-	if(!str2net(&find, item))
+	if(!str2net(&find, item)) {
+		fprintf(stderr, "Could not parse subnet or address '%s'.\n", item);
 		return 1;
+	}
 
 	bool address = !strchr(item, '/');
 	bool weight = strchr(item, '#');
