@@ -33,6 +33,13 @@ void logger(int level, int priority, const char *format, ...) {
         va_end(ap);
 }
 
+static char *strip_weight(char *netstr) {
+	int len = strlen(netstr);
+	if(len >= 3 && !strcmp(netstr + len - 3, "#10"))
+		netstr[len - 3] = 0;
+	return netstr;
+}
+
 static int info_node(int fd, const char *item) {
 	// Check the list of nodes
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_NODES, item);
@@ -154,7 +161,7 @@ static int info_node(int fd, const char *item) {
 			return 1;
 		}
 		if(!strcmp(from, item))
-			printf(" %s", subnet);
+			printf(" %s", strip_weight(subnet));
 	}
 	printf("\n");
 
@@ -224,7 +231,7 @@ static int info_subnet(int fd, const char *item) {
 		}
 
 		found = true;
-		printf("Subnet: %s\n", netstr);
+		printf("Subnet: %s\n", strip_weight(netstr));
 		printf("Owner:  %s\n", owner);
 	}
 
