@@ -655,6 +655,9 @@ static bool connect_tincd() {
 static int cmd_start(int argc, char *argv[]) {
 	int i, j;
 	char *c;
+
+	argc += optind;
+	argv -= optind;
 	char *slash = strrchr(argv[0], '/');
 
 #ifdef HAVE_MINGW
