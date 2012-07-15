@@ -2044,6 +2044,18 @@ the value of this environment variable is used.
 Create initial configuration files and RSA and ECDSA keypairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
+@item config [set] @var{variable} @var{value}
+Set configuration variable @var{variable} to the given @var{value}.
+All previously existing configuration variables with the same name are removed.
+To set a variable for a specific host, use the notation @var{host}.@var{variable}.
+
+@item config add @var{variable} @var{value}
+As above, but without removing any previously existing configuration variables.
+
+@item config del @var{variable} [@var{value}]
+Remove configuration variables with the same name and @var{value}.
+If no @var{value} is given, all configuration variables with the same name will be removed.
+
 @item start
 Start @samp{tincd}.
 
@@ -2124,6 +2136,15 @@ Examples of some commands:
 tincctl -n vpn dump graph | circo -Txlib
 tincctl -n vpn pcap | tcpdump -r -
 tincctl -n vpn top
+@end example
+
+Example of configuring tinc using tincctl:
+
+@example
+tincctl -n vpn init foo
+tincctl -n vpn config Subnet 192.168.1.0/24
+tincctl -n vpn config bar.Address bar.example.com
+tincctl -n vpn config ConnectTo bar
 @end example
 
 @c ==================================================================

@@ -45,6 +45,8 @@ static char *pidfilename = NULL;			/* pid file location */
 static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
+static char *tinc_conf = NULL;
+static char *hosts_dir = NULL;
 
 // Horrible global variables...
 static int pid = 0;
@@ -92,6 +94,10 @@ static void usage(bool status) {
 				"\n"
 				"Valid commands are:\n"
 				"  init [name]                Create initial configuration files.\n"
+				"  config                     Change configuration:\n"
+				"    [set] VARIABLE VALUE     - set VARIABLE to VALUE\n"
+				"    add VARIABLE VALUE       - add VARIABLE with the given VALUE\n"
+				"    del VARIABLE [VALUE]     - remove VARIABLE [only ones with watching VALUE]\n"
 				"  start                      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
@@ -363,9 +369,9 @@ static void make_names(void) {
 		if(!pidfilename)
 			xasprintf(&pidfilename, "%s/pid", confbase);
 		RegCloseKey(key);
-		if(*installdir)
-			return;
 	}
+
+	if(!*installdir) {
 #endif
 
 	if(!pidfilename)
@@ -380,6 +386,13 @@ static void make_names(void) {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR "/tinc");
 	}
+
+#ifdef HAVE_MINGW
+	}
+#endif
+
+	xasprintf(&tinc_conf, "%s/tinc.conf", confbase);
+	xasprintf(&hosts_dir, "%s/hosts", confbase);
 }
 
 static char buffer[4096];
@@ -886,15 +899,265 @@ static int cmd_pid(int argc, char *argv[]) {
 	return 0;
 }
 
+static int rstrip(char *value) {
+	int len = strlen(value);
+	while(len && strchr("\t\r\n ", value[len - 1]))
+		value[--len] = 0;
+	return len;
+}
+
+static char *get_my_name() {
+	FILE *f = fopen(tinc_conf, "r");
+	if(!f) {
+		fprintf(stderr, "Could not open %s: %s\n", tinc_conf, strerror(errno));
+		return NULL;
+	}
+
+	char buf[4096];
+	char *value;
+	while(fgets(buf, sizeof buf, f)) {
+		int len = strcspn(buf, "\t =");
+		value = buf + len;
+		value += strspn(value, "\t ");
+		if(*value == '=') {
+			value++;
+			value += strspn(value, "\t ");
+		}
+		if(!rstrip(value))
+			continue;
+		buf[len] = 0;
+		if(strcasecmp(buf, "Name"))
+			continue;
+		if(*value) {
+			fclose(f);
+			return strdup(value);
+		}
+	}
+
+	fclose(f);
+	fprintf(stderr, "Could not find Name in %s.\n", tinc_conf);
+	return NULL;
+}
+
+static char *hostvariables[] = {
+	"Address",
+	"Port",
+	"PublicKey",
+	"Subnet",
+	NULL,
+};
+
+static int cmd_config(int argc, char *argv[]) {
+	if(argc < 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	int action = 0;
+	if(!strcasecmp(argv[1], "add")) {
+		argv++, argc--, action = 1;
+	} else if(!strcasecmp(argv[1], "del")) {
+		argv++, argc--, action = -1;
+	} else if(!strcasecmp(argv[1], "replace") || !strcasecmp(argv[1], "set") || !strcasecmp(argv[1], "change")) {
+		argv++, argc--, action = 0;
+	}
+
+	if(argc < 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	// Concatenate the rest of the command line
+	strncpy(line, argv[1], sizeof line - 1);
+	for(int i = 2; i < argc; i++) {
+		strncat(line, " ", sizeof line - 1 - strlen(line));
+		strncat(line, argv[i], sizeof line - 1 - strlen(line));
+	}
+
+	// Liberal parsing into node name, variable name and value.
+	char *node = NULL;
+	char *variable;
+	char *value;
+	int len;
+
+        len = strcspn(line, "\t =");
+        value = line + len;
+        value += strspn(value, "\t ");
+        if(*value == '=') {
+                value++;
+                value += strspn(value, "\t ");
+        }
+        line[len] = '\0';
+	variable = strchr(line, '.');
+	if(variable) {
+		node = line;
+		*variable++ = 0;
+	} else {
+		variable = line;
+	}
+
+	if(!*variable) {
+		fprintf(stderr, "No variable given.\n");
+		return 1;
+	}
+
+	if(action >= 0 && !*value) {
+		fprintf(stderr, "No value for variable given.\n");
+		return 1;
+	}
+
+	// Should this go into our own host config file?
+	if(!node) {
+		for(int i = 0; hostvariables[i]; i++) {
+			if(!strcasecmp(hostvariables[i], variable)) {
+				node = get_my_name();
+				if(!node)
+					return 1;
+				break;
+			}
+		}
+	}
+
+	// Open the right configuration file.
+	char *filename;
+	if(node)
+		xasprintf(&filename, "%s/%s", hosts_dir, node);
+	else
+		filename = tinc_conf;
+
+	FILE *f = fopen(filename, "r");
+	if(!f) {
+		if(action < 0 || errno != ENOENT) {
+			fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
+			return 1;
+		}
+
+		// If it doesn't exist, create it.
+		f = fopen(filename, "a+");
+		if(!f) {
+			fprintf(stderr, "Could not create configuration file %s: %s\n", filename, strerror(errno));
+			return 1;
+		} else {
+			fprintf(stderr, "Created configuration file %s.\n", filename);
+		}
+	}
+
+	char *tmpfile;
+	xasprintf(&tmpfile, "%s.config.tmp", filename);
+	FILE *tf = fopen(tmpfile, "w");
+	if(!tf) {
+		fprintf(stderr, "Could not open temporary file %s: %s\n", tmpfile, strerror(errno));
+		return 1;
+	}
+
+	// Copy the file, making modifications on the fly.
+	char buf1[4096];
+	char buf2[4096];
+	bool set = false;
+	bool removed = false;
+
+	while(fgets(buf1, sizeof buf1, f)) {
+		buf1[sizeof buf1 - 1] = 0;
+		strcpy(buf2, buf1);
+
+		// Parse line in a simple way
+		char *bvalue;
+		int len;
+
+		len = strcspn(buf2, "\t =");
+		bvalue = buf2 + len;
+		bvalue += strspn(bvalue, "\t ");
+		if(*bvalue == '=') {
+			bvalue++;
+			bvalue += strspn(bvalue, "\t ");
+		}
+		rstrip(bvalue);
+		buf2[len] = '\0';
+
+		// Did it match?
+		if(!strcasecmp(buf2, variable)) {
+			// Del
+			if(action < 0) {
+				if(!*value || !strcasecmp(bvalue, value)) {
+					removed = true;
+					continue;
+				}
+			// Set
+			} else if(action == 0) {
+				// Already set? Delete the rest...
+				if(set)
+					continue;
+				// Otherwise, replace.
+				if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
+					fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
+					return 1;
+				}
+				set = true;
+				continue;
+			}
+		}
+
+		// Copy original line...
+		if(fputs(buf1, tf) < 0) {
+			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
+			return 1;
+		}
+	}
+
+	// Make sure we read everything...
+	if(ferror(f) || !feof(f)) {
+		fprintf(stderr, "Error while reading from configuration file %s: %s\n", filename, strerror(errno));
+		return 1;
+	}
+
+	if(fclose(f)) {
+		fprintf(stderr, "Error closing configuration file %s: %s\n", filename, strerror(errno));
+		return 1;
+	}
+
+	// Add new variable if necessary.
+	if(action > 0 || (action == 0 && !set)) {
+		if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
+			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
+			return 1;
+		}
+	}
+
+	// Make sure we wrote everything...
+	if(fclose(tf)) {
+		fprintf(stderr, "Error closing temporary file %s: %s\n", tmpfile, strerror(errno));
+		return 1;
+	}
+
+	// Could we find what we had to remove?
+	if(action < 0 && !removed) {
+		remove(tmpfile);
+		fprintf(stderr, "No configuration variables deleted.\n");
+		return *value;
+	}
+
+	// Replace the configuration file with the new one
+#ifdef HAVE_MINGW
+	if(remove(filename)) {
+		fprintf(stderr, "Error replacing file %s: %s\n", filename, strerror(errno));
+		return 1;
+	}
+#endif
+	if(rename(tmpfile, filename)) {
+		fprintf(stderr, "Error renaming temporary file %s to configuration file %s: %s\n", tmpfile, filename, strerror(errno));
+		return 1;
+	}
+
+	return 0;
+}
+
 static int cmd_init(int argc, char *argv[]) {
-	char *tinc_conf = NULL;
-	xasprintf(&tinc_conf, "%s/tinc.conf", confbase);
-	if(!access(confbase, F_OK)) {
+	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
 		return 1;
 	}
 
-	if(optind >= argc - 1) {
+	if(argc < 2) {
 		if(isatty(0) && isatty(1)) {
 			char buf[1024];
 			fprintf(stdout, "Enter the Name you want your tinc node to have: ");
@@ -903,9 +1166,7 @@ static int cmd_init(int argc, char *argv[]) {
 				fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 				return 1;
 			}
-			int len = strlen(buf);
-			if(len)
-				buf[--len] = 0;
+			int len = rstrip(buf);
 			if(!len) {
 				fprintf(stderr, "No name given!\n");
 				return 1;
@@ -916,7 +1177,7 @@ static int cmd_init(int argc, char *argv[]) {
 			return 1;
 		}
 	} else {
-		name = strdup(argv[optind + 1]);
+		name = strdup(argv[1]);
 		if(!*name) {
 			fprintf(stderr, "No Name given!\n");
 			return 1;
@@ -1004,6 +1265,7 @@ static const struct {
 	{"pcap", cmd_pcap},
 	{"log", cmd_log},
 	{"pid", cmd_pid},
+	{"config", cmd_config},
 	{"init", cmd_init},
 	{"generate-keys", cmd_generate_keys},
 	{"generate-rsa-keys", cmd_generate_rsa_keys},

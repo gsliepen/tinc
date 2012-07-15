@@ -52,6 +52,22 @@ Create initial configuration files and RSA and ECDSA keypairs with default lengt
 If no
 .Ar name
 for this node is given, it will be asked for.
+.It config Oo set Oc Ar variable Ar value
+Set configuration variable
+.Ar variable
+to the given
+.Ar value .
+All previously existing configuration variables with the same name are removed.
+To set a variable for a specific host, use the notation
+.Ar host Ns Li . Ns Ar variable .
+.It config add Ar variable Ar value
+As above, but without removing any previously existing configuration variables.
+.It config del Ar variable Op Ar value
+Remove configuration variables with the same name and
+.Ar value .
+If no
+.Ar value
+is given, all configuration variables with the same name will be removed.
 .It start
 Start
 .Xr tincd 8 .
@@ -139,7 +155,15 @@ Examples of some commands:
 tincctl -n vpn dump graph | circo -Txlib
 tincctl -n vpn pcap | tcpdump -r -
 tincctl -n vpn top
+.Pp
 .Ed
+Example of configuring tinc using
+.Nm :
+.Bd -literal -offset indent
+tincctl -n vpn init foo
+tincctl -n vpn config Subnet 192.168.1.0/24
+tincctl -n vpn config bar.Address bar.example.com
+tincctl -n vpn config ConnectTo bar
 .Sh TOP
 The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.
 It displays a list of all the known nodes in the left-most column,
