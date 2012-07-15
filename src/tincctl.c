@@ -734,6 +734,9 @@ static int cmd_dump(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(!connect_tincd())
+		return 1;
+
 	bool do_graph = false;
 
 	if(!strcasecmp(argv[1], "nodes"))
@@ -753,9 +756,6 @@ static int cmd_dump(int argc, char *argv[]) {
 		usage(true);
 		return 1;
 	}
-
-	if(!connect_tincd())
-		return 1;
 
 	if(do_graph)
 		printf("digraph {\n");
