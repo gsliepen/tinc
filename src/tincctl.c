@@ -62,10 +62,18 @@ static struct WSAData wsa_state;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
+	{"debug", optional_argument, NULL, 0},
+	{"no-detach", no_argument, NULL, 0},
+	{"mlock", no_argument, NULL, 0},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
 	{"pidfile", required_argument, NULL, 5},
+	{"logfile", required_argument, NULL, 0},
+	{"bypass-security", no_argument, NULL, 0},
+	{"chroot", no_argument, NULL, 0},
+	{"user", required_argument, NULL, 0},
+	{"option", required_argument, NULL, 0},
 	{NULL, 0, NULL, 0}
 };
 
@@ -98,7 +106,7 @@ static void usage(bool status) {
 				"    [set] VARIABLE VALUE     - set VARIABLE to VALUE\n"
 				"    add VARIABLE VALUE       - add VARIABLE with the given VALUE\n"
 				"    del VARIABLE [VALUE]     - remove VARIABLE [only ones with watching VALUE]\n"
-				"  start                      Start tincd.\n"
+				"  start [tincd options]      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
 				"  reload                     Partially reload configuration of running tincd.\n"
@@ -130,7 +138,7 @@ static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:n:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:n:Dd::Lo:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;

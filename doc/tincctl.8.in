@@ -71,9 +71,10 @@ is given, all configuration variables with the same name will be removed.
 .It edit Ar filename
 Start an editor for the given configuration file.
 You do not need to specify the full path to the file.
-.It start
+.It start Op tincd options
 Start
-.Xr tincd 8 .
+.Xr tincd 8 ,
+optionally with the given extra options.
 .It stop
 Stop
 .Xr tincd 8 .

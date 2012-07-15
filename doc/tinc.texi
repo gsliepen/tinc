@@ -2060,8 +2060,8 @@ If no @var{value} is given, all configuration variables with the same name will 
 Start an editor for the given configuration file.
 You do not need to specify the full path to the file.
 
-@item start
-Start @samp{tincd}.
+@item start [tincd options]
+Start @samp{tincd}, optionally with the given extra options.
 
 @item stop
 Stop @samp{tincd}.
