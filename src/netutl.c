@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -224,72 +224,4 @@ void sockaddrunmap(sockaddr_t *sa) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
 		sa->in.sin_family = AF_INET;
 	}
-}
-
-/* Subnet mask handling */
-
-int maskcmp(const void *va, const void *vb, int masklen) {
-	int i, m, result;
-	const char *a = va;
-	const char *b = vb;
-
-	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
-		result = a[i] - b[i];
-		if(result)
-			return result;
-	}
-
-	if(m)
-		return (a[i] & (0x100 - (1 << (8 - m)))) -
-			(b[i] & (0x100 - (1 << (8 - m))));
-
-	return 0;
-}
-
-void mask(void *va, int masklen, int len) {
-	int i;
-	char *a = va;
-
-	i = masklen / 8;
-	masklen %= 8;
-
-	if(masklen)
-		a[i++] &= (0x100 - (1 << (8 - masklen)));
-
-	for(; i < len; i++)
-		a[i] = 0;
-}
-
-void maskcpy(void *va, const void *vb, int masklen, int len) {
-	int i, m;
-	char *a = va;
-	const char *b = vb;
-
-	for(m = masklen, i = 0; m >= 8; m -= 8, i++)
-		a[i] = b[i];
-
-	if(m) {
-		a[i] = b[i] & (0x100 - (1 << (8 - m)));
-		i++;
-	}
-
-	for(; i < len; i++)
-		a[i] = 0;
-}
-
-bool maskcheck(const void *va, int masklen, int len) {
-	int i;
-	const char *a = va;
-
-	i = masklen / 8;
-	masklen %= 8;
-
-	if(masklen && a[i++] & (0xff >> masklen))
-		return false;
-
-	for(; i < len; i++)
-		if(a[i] != 0)
-			return false;
-
-	return true;
 }

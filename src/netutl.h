@@ -1,7 +1,7 @@
 /*
     netutl.h -- header file for netutl.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,9 +34,5 @@ extern int sockaddrcmp_noport(const sockaddr_t *, const sockaddr_t *);
 extern void sockaddrunmap(sockaddr_t *);
 extern void sockaddrfree(sockaddr_t *);
 extern void sockaddrcpy(sockaddr_t *, const sockaddr_t *);
-extern int maskcmp(const void *, const void *, int);
-extern void maskcpy(void *, const void *, int, int);
-extern void mask(void *, int, int);
-extern bool maskcheck(const void *, int, int);
 
 #endif							/* __TINC_NETUTL_H__ */

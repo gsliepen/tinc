@@ -8,7 +8,7 @@ tincd_SOURCES = \
 	utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
 	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
-	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c tincd.c \
+	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c tincd.c \
 	dummy_device.c raw_socket_device.c multicast_device.c
 	
 if UML
