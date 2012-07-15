@@ -2056,6 +2056,10 @@ As above, but without removing any previously existing configuration variables.
 Remove configuration variables with the same name and @var{value}.
 If no @var{value} is given, all configuration variables with the same name will be removed.
 
+@item edit @var{filename}
+Start an editor for the given configuration file.
+You do not need to specify the full path to the file.
+
 @item start
 Start @samp{tincd}.
 

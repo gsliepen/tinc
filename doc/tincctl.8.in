@@ -68,6 +68,9 @@ Remove configuration variables with the same name and
 If no
 .Ar value
 is given, all configuration variables with the same name will be removed.
+.It edit Ar filename
+Start an editor for the given configuration file.
+You do not need to specify the full path to the file.
 .It start
 Start
 .Xr tincd 8 .

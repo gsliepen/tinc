@@ -1269,6 +1269,59 @@ static int cmd_version(int argc, char *argv[]) {
 	return 0;
 }
 
+static const char *conffiles[] = {
+	"tinc.conf",
+	"tinc-up",
+	"tinc-down",
+	"subnet-up",
+	"subnet-down",
+	"host-up",
+	"host-down",
+	NULL,
+};
+
+static int cmd_edit(int argc, char *argv[]) {
+	if(argc != 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	char *filename = NULL;
+
+	if(strncmp(argv[1], "hosts/", 6)) {
+		for(int i = 0; conffiles[i]; i++) {
+			if(!strcmp(argv[1], conffiles[i])) {
+				xasprintf(&filename, "%s/%s", confbase, argv[1]);
+				break;
+			}
+		}
+	} else {
+		argv[1] += 6;
+	}
+
+	if(!filename) {
+		xasprintf(&filename, "%s/%s", hosts_dir, argv[1]);
+		char *dash = strchr(argv[1], '-');
+		if(dash) {
+			*dash++ = 0;
+			if((strcmp(dash, "up") && strcmp(dash, "down")) || !check_id(argv[1])) {
+				fprintf(stderr, "Invalid configuration filename.\n");
+				return 1;
+			}
+		}
+	}
+
+#ifndef HAVE_MINGW
+	char *editor = getenv("VISUAL") ?: getenv("EDITOR") ?: "vi";
+#else
+	char *editor = "edit"
+#endif
+
+	char *command;
+	xasprintf(&command, "\"%s\" \"%s\"", editor, filename);
+	return system(command);
+}
+
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
@@ -1294,6 +1347,7 @@ static const struct {
 	{"generate-ecdsa-keys", cmd_generate_ecdsa_keys},
 	{"help", cmd_help},
 	{"version", cmd_version},
+	{"edit", cmd_edit},
 	{NULL, NULL},
 };
 
