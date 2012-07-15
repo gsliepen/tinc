@@ -46,6 +46,14 @@ static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
 
+// Horrible global variables...
+static int pid = 0;
+static int fd = -1;
+static char line[4096];
+static int code;
+static int req;
+static int result;
+
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
 #endif
@@ -58,6 +66,16 @@ static struct option const long_options[] = {
 	{"pidfile", required_argument, NULL, 5},
 	{NULL, 0, NULL, 0}
 };
+
+static void version(void) {
+	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
+		   VERSION, __DATE__, __TIME__, PROT_MAJOR, PROT_MINOR);
+	printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
+			"See the AUTHORS file for a complete list.\n\n"
+			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+			"and you are welcome to redistribute it under certain conditions;\n"
+			"see the file COPYING for details.\n");
+}
 
 static void usage(bool status) {
 	if(status)
@@ -542,179 +560,28 @@ static bool remove_service(void) {
 }
 #endif
 
-int main(int argc, char *argv[]) {
-	int fd;
-	int result;
-	char host[128];
-	char port[128];
-	int pid;
-
-	program_name = argv[0];
-
-	if(!parse_options(argc, argv))
-		return 1;
-	
-	make_names();
-
-	if(show_version) {
-		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
-			   VERSION, __DATE__, __TIME__, PROT_MAJOR, PROT_MINOR);
-		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
-				"See the AUTHORS file for a complete list.\n\n"
-				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-				"and you are welcome to redistribute it under certain conditions;\n"
-				"see the file COPYING for details.\n");
-
-		return 0;
-	}
-
-	if(show_help) {
-		usage(false);
-		return 0;
-	}
-
-	if(optind >= argc) {
-		fprintf(stderr, "Not enough arguments.\n");
-		usage(true);
-		return 1;
-	}
-
-	// First handle commands that don't involve connecting to a running tinc daemon.
-
-	if(!strcasecmp(argv[optind], "generate-rsa-keys")) {
-		return !rsa_keygen(optind < argc - 1 ? atoi(argv[optind + 1]) : 2048);
-	}
-
-	if(!strcasecmp(argv[optind], "generate-ecdsa-keys")) {
-		return !ecdsa_keygen();
-	}
-
-	if(!strcasecmp(argv[optind], "generate-keys")) {
-		return !(rsa_keygen(optind < argc - 1 ? atoi(argv[optind + 1]) : 2048) && ecdsa_keygen());
-	}
-
-	if(!strcasecmp(argv[optind], "start")) {
-		int i, j;
-		char *c;
-		char *slash = strrchr(argv[0], '/');
-#ifdef HAVE_MINGW
-		if ((c = strrchr(argv[0], '\\')) > slash)
-			slash = c;
-#endif
-		if (slash++) {
-			c = xmalloc((slash - argv[0]) + sizeof("tincd"));
-			sprintf(c, "%.*stincd", (int)(slash - argv[0]), argv[0]);
-		}
-		else
-			c = "tincd";
-		argv[0] = c;
-		for(i = j = 1; argv[i]; ++i)
-			if (i != optind && strcmp(argv[i], "--") != 0)
-				argv[j++] = argv[i];
-		argv[j] = NULL;
-		execvp(c, argv);
-		fprintf(stderr, "Could not start %s: %s\n", c, strerror(errno));
-		return 1;
-	}
-
-	if(!strcasecmp(argv[optind], "init")) {
-		char *filename = NULL;
-		xasprintf(&filename, "%s/tinc.conf", confbase);
-		if(!access(confbase, F_OK)) {
-			fprintf(stderr, "Configuration file %s already exists!\n", filename);
-			return 1;
-		}
-
-		if(optind >= argc - 1) {
-			if(isatty(0) && isatty(1)) {
-				char buf[1024];
-				fprintf(stdout, "Enter the Name you want your tinc node to have: ");
-				fflush(stdout);
-				if(!fgets(buf, sizeof buf, stdin)) {
-					fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
-					return 1;
-				}
-				int len = strlen(buf);
-				if(len)
-					buf[--len] = 0;
-				if(!len) {
-					fprintf(stderr, "No name given!\n");
-					return 1;
-				}
-				name = strdup(buf);
-			} else {
-				fprintf(stderr, "No Name given!\n");
-				return 1;
-			}
-		} else {
-			name = strdup(argv[optind + 1]);
-			if(!*name) {
-				fprintf(stderr, "No Name given!\n");
-				return 1;
-			}
-		}
-
-		for(int i = 0; i < strlen(name); i++) {
-			if(!isalnum(name[i]) && name[i] != '_') {
-				fprintf(stderr, "Invalid Name! Only a-z, A-Z, 0-9 and _ are allowed characters.\n");
-				return 1;
-			}
-		}
-
-		if(mkdir(CONFDIR, 0755) && errno != EEXIST) {
-			fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
-			return 1;
-		}
-
-		if(mkdir(confbase, 0755) && errno != EEXIST) {
-			fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
-			return 1;
-		}
-
-		char *filename2 = NULL;
-		xasprintf(&filename2, "%s/hosts", confbase);
-		if(mkdir(filename2, 0755) && errno != EEXIST) {
-			fprintf(stderr, "Could not create directory %s: %s\n", filename, strerror(errno));
-			return 1;
-		}
-
-		FILE *f = fopen(filename, "w");
-		if(!f) {
-			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
-			return 1;
-		}
-
-		fprintf(f, "Name = %s\n", name);
-		fclose(f);
-
-		fclose(stdin);
-		if(!rsa_keygen(2048) || !ecdsa_keygen())
-			return false;
-
+static bool connect_tincd() {
+	if(fd >= 0)
 		return true;
-	}
-
-	/*
-	 * Now handle commands that do involve connecting to a running tinc daemon.
-	 * Authenticate the server by ensuring the parent directory can be
-	 * traversed only by root. Note this is not totally race-free unless all
-	 * ancestors are writable only by trusted users, which we don't verify.
-	 */
 
 	FILE *f = fopen(pidfilename, "r");
 	if(!f) {
 		fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
-		return 1;
+		return false;
 	}
+
+	char host[128];
+	char port[128];
+
 	if(fscanf(f, "%20d %1024s %128s port %128s", &pid, controlcookie, host, port) != 4) {
 		fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
-		return 1;
+		return false;
 	}
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
 		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
-		return 1;
+		return false;
 	}
 #endif
 
@@ -729,13 +596,13 @@ int main(int argc, char *argv[]) {
 
 	if(getaddrinfo(host, port, &hints, &res) || !res) {
 		fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, strerror(errno));
-		return 1;
+		return false;
 	}
 
 	fd = socket(res->ai_family, SOCK_STREAM, IPPROTO_TCP);
 	if(fd < 0) {
 		fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
-		return 1;
+		return false;
 	}
 
 #ifdef HAVE_MINGW
@@ -748,210 +615,434 @@ int main(int argc, char *argv[]) {
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
 		fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
-		return 1;
+		return false;
 	}
 
 	freeaddrinfo(res);
 
-	char line[4096];
 	char data[4096];
-	int code, version, req;
+	int version;
 
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %s %d", &code, data, &version) != 3 || code != 0) {
-		fprintf(stderr, "Cannot read greeting from control socket: %s\n",
-				sockstrerror(sockerrno));
-		return 1;
+		fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
+		return false;
 	}
 
 	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
 	
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
 		fprintf(stderr, "Could not fully establish control socket connection\n");
-		return 1;
+		return false;
 	}
 
-	if(!strcasecmp(argv[optind], "pid")) {
-		printf("%d\n", pid);
-		return 0;
-	}
+	return true;
+}
 
-	if(!strcasecmp(argv[optind], "stop")) {
+
+static int cmd_start(int argc, char *argv[]) {
+	int i, j;
+	char *c;
+	char *slash = strrchr(argv[0], '/');
+
+#ifdef HAVE_MINGW
+	if ((c = strrchr(argv[0], '\\')) > slash)
+		slash = c;
+#endif
+
+	if (slash++) {
+		c = xmalloc((slash - argv[0]) + sizeof("tincd"));
+		sprintf(c, "%.*stincd", (int)(slash - argv[0]), argv[0]);
+	}
+	else
+		c = "tincd";
+
+	argv[0] = c;
+
+	for(i = j = 1; argv[i]; ++i)
+		if (i != optind && strcmp(argv[i], "--") != 0)
+			argv[j++] = argv[i];
+
+	argv[j] = NULL;
+	execvp(c, argv);
+	fprintf(stderr, "Could not start %s: %s\n", c, strerror(errno));
+	return 1;
+}
+
+static int cmd_stop(int argc, char *argv[]) {
 #ifndef HAVE_MINGW
-		sendline(fd, "%d %d", CONTROL, REQ_STOP);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
-			fprintf(stderr, "Could not stop tinc daemon\n");
-			return 1;
-		}
+	if(!connect_tincd())
+		return 1;
+
+	sendline(fd, "%d %d", CONTROL, REQ_STOP);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
+		fprintf(stderr, "Could not stop tinc daemon.\n");
+		return 1;
+	}
 #else
-		if(!remove_service())
-			return 1;
+	if(!remove_service())
+		return 1;
 #endif
-		return 0;
-	}
+	return 0;
+}
 
-	if(!strcasecmp(argv[optind], "reload")) {
-		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RELOAD || result) {
-			fprintf(stderr, "Could not reload tinc daemon\n");
-			return 1;
-		}
-		return 0;
-	}
+static int cmd_restart(int argc, char *argv[]) {
+	return cmd_stop(argc, argv) ?: cmd_start(argc, argv);
+}
 
-	if(!strcasecmp(argv[optind], "restart")) {
-		sendline(fd, "%d %d", CONTROL, REQ_RESTART);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RESTART || result) {
-			fprintf(stderr, "Could not restart tinc daemon\n");
-			return 1;
-		}
-		return 0;
-	}
+static int cmd_reload(int argc, char *argv[]) {
+	if(!connect_tincd())
+		return 1;
 
-	if(!strcasecmp(argv[optind], "retry")) {
-		sendline(fd, "%d %d", CONTROL, REQ_RETRY);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RETRY || result) {
-			fprintf(stderr, "Could not retry outgoing connections\n");
-			return 1;
-		}
-		return 0;
-	}
-
-	if(!strcasecmp(argv[optind], "dump")) {
-		if(argc < optind + 2) {
-			fprintf(stderr, "Not enough arguments.\n");
-			usage(true);
-			return 1;
-		}
-
-		bool do_graph = false;
-
-		if(!strcasecmp(argv[optind+1], "nodes"))
-			sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
-		else if(!strcasecmp(argv[optind+1], "edges"))
-			sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
-		else if(!strcasecmp(argv[optind+1], "subnets"))
-			sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
-		else if(!strcasecmp(argv[optind+1], "connections"))
-			sendline(fd, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);
-		else if(!strcasecmp(argv[optind+1], "graph")) {
-			sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
-			sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
-			do_graph = true;
-			printf("digraph {\n");
-		} else {
-			fprintf(stderr, "Unknown dump type '%s'.\n", argv[optind+1]);
-			usage(true);
-			return 1;
-		}
-
-		while(recvline(fd, line, sizeof line)) {
-			char node1[4096], node2[4096];
-			int n = sscanf(line, "%d %d %s to %s", &code, &req, node1, node2);
-			if(n == 2) {
-				if(do_graph && req == REQ_DUMP_NODES)
-					continue;
-				else {
-					if(do_graph)
-						printf("}\n");
-					return 0;
-				}
-			}
-			if(n < 2)
-				break;
-
-			if(!do_graph)
-				printf("%s\n", line + 5);
-			else {
-				if(req == REQ_DUMP_NODES)
-					printf(" %s [label = \"%s\"];\n", node1, node1);
-				else
-					printf(" %s -> %s;\n", node1, node2);
-			}
-		}
-
-		fprintf(stderr, "Error receiving dump\n");
+	sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RELOAD || result) {
+		fprintf(stderr, "Could not reload configuration.\n");
 		return 1;
 	}
 
-	if(!strcasecmp(argv[optind], "purge")) {
-		sendline(fd, "%d %d", CONTROL, REQ_PURGE);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_PURGE || result) {
-			fprintf(stderr, "Could not purge tinc daemon\n");
-			return 1;
-		}
-		return 0;
+	return 0;
+
+}
+
+static int cmd_dump(int argc, char *argv[]) {
+	if(argc != 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		usage(true);
+		return 1;
 	}
 
-	if(!strcasecmp(argv[optind], "debug")) {
-		int debuglevel, origlevel;
+	bool do_graph = false;
 
-		if(argc != optind + 2) {
-			fprintf(stderr, "Invalid arguments.\n");
-			return 1;
-		}
-		debuglevel = atoi(argv[optind+1]);
-
-		sendline(fd, "%d %d %d", CONTROL, REQ_SET_DEBUG, debuglevel);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &origlevel) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
-			fprintf(stderr, "Could not purge tinc daemon\n");
-			return 1;
-		}
-
-		fprintf(stderr, "Old level %d, new level %d\n", origlevel, debuglevel);
-		return 0;
+	if(!strcasecmp(argv[1], "nodes"))
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
+	else if(!strcasecmp(argv[1], "edges"))
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
+	else if(!strcasecmp(argv[1], "subnets"))
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
+	else if(!strcasecmp(argv[1], "connections"))
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);
+	else if(!strcasecmp(argv[1], "graph")) {
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
+		do_graph = true;
+	} else {
+		fprintf(stderr, "Unknown dump type '%s'.\n", argv[1]);
+		usage(true);
+		return 1;
 	}
 
-	if(!strcasecmp(argv[optind], "connect")) {
-		if(argc != optind + 2) {
-			fprintf(stderr, "Invalid arguments.\n");
-			return 1;
-		}
-		char *name = argv[optind + 1];
+	if(!connect_tincd())
+		return 1;
 
-		sendline(fd, "%d %d %s", CONTROL, REQ_CONNECT, name);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_CONNECT || result) {
-			fprintf(stderr, "Could not connect to %s\n", name);
-			return 1;
+	if(do_graph)
+		printf("digraph {\n");
+
+	while(recvline(fd, line, sizeof line)) {
+		char node1[4096], node2[4096];
+		int n = sscanf(line, "%d %d %s to %s", &code, &req, node1, node2);
+		if(n == 2) {
+			if(do_graph && req == REQ_DUMP_NODES)
+				continue;
+			else {
+				if(do_graph)
+					printf("}\n");
+				return 0;
+			}
 		}
-		return 0;
+		if(n < 2)
+			break;
+
+		if(!do_graph)
+			printf("%s\n", line + 5);
+		else {
+			if(req == REQ_DUMP_NODES)
+				printf(" %s [label = \"%s\"];\n", node1, node1);
+			else
+				printf(" %s -> %s;\n", node1, node2);
+		}
 	}
 
-	if(!strcasecmp(argv[optind], "disconnect")) {
-		if(argc != optind + 2) {
-			fprintf(stderr, "Invalid arguments.\n");
-			return 1;
-		}
-		char *name = argv[optind + 1];
+	fprintf(stderr, "Error receiving dump.\n");
+	return 1;
+}
 
-		sendline(fd, "%d %d %s", CONTROL, REQ_DISCONNECT, name);
-		if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_DISCONNECT || result) {
-			fprintf(stderr, "Could not disconnect %s\n", name);
-			return 1;
-		}
-		return 0;
+static int cmd_purge(int argc, char *argv[]) {
+	if(!connect_tincd())
+		return 1;
+
+	sendline(fd, "%d %d", CONTROL, REQ_PURGE);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_PURGE || result) {
+		fprintf(stderr, "Could not purge old information.\n");
+		return 1;
 	}
 
+	return 0;
+}
+
+static int cmd_debug(int argc, char *argv[]) {
+	if(argc != 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	if(!connect_tincd())
+		return 1;
+
+	int debuglevel = atoi(argv[1]);
+	int origlevel;
+
+	sendline(fd, "%d %d %d", CONTROL, REQ_SET_DEBUG, debuglevel);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &origlevel) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
+		fprintf(stderr, "Could not set debug level.\n");
+		return 1;
+	}
+
+	fprintf(stderr, "Old level %d, new level %d.\n", origlevel, debuglevel);
+	return 0;
+}
+
+static int cmd_retry(int argc, char *argv[]) {
+	if(!connect_tincd())
+		return 1;
+
+	sendline(fd, "%d %d", CONTROL, REQ_RETRY);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RETRY || result) {
+		fprintf(stderr, "Could not retry outgoing connections.\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static int cmd_connect(int argc, char *argv[]) {
+	if(argc != 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	if(!connect_tincd())
+		return 1;
+
+	sendline(fd, "%d %d %s", CONTROL, REQ_CONNECT, argv[1]);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_CONNECT || result) {
+		fprintf(stderr, "Could not connect to %s.\n", argv[1]);
+		return 1;
+	}
+
+	return 0;
+}
+
+static int cmd_disconnect(int argc, char *argv[]) {
+	if(argc != 2) {
+		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	if(!connect_tincd())
+		return 1;
+
+	sendline(fd, "%d %d %s", CONTROL, REQ_DISCONNECT, argv[1]);
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_DISCONNECT || result) {
+		fprintf(stderr, "Could not disconnect %s.\n", argv[1]);
+		return 1;
+	}
+
+	return 0;
+}
+
+static int cmd_top(int argc, char *argv[]) {
 #ifdef HAVE_CURSES
-	if(!strcasecmp(argv[optind], "top")) {
-		top(fd);
-		return 0;
-	}
+	if(!connect_tincd())
+		return 1;
+
+	top(fd);
+	return 0;
+#else
+	fprintf(stderr, "This version of tincctl was compiled without support for the curses library.\n");
+	return 1;
 #endif
+}
 
-	if(!strcasecmp(argv[optind], "pcap")) {
-		pcap(fd, stdout, optind < argc - 1 ? atoi(argv[optind + 1]) : 0);
+static int cmd_pcap(int argc, char *argv[]) {
+	if(!connect_tincd())
+		return 1;
+
+	pcap(fd, stdout, argc > 1 ? atoi(argv[1]) : 0);
+	return 0;
+}
+
+static int cmd_log(int argc, char *argv[]) {
+	if(!connect_tincd())
+		return 1;
+
+	logcontrol(fd, stdout, argc > 1 ? atoi(argv[1]) : -1);
+	return 0;
+}
+
+static int cmd_pid(int argc, char *argv[]) {
+	if(!connect_tincd())
+		return 1;
+
+	printf("%d\n", pid);
+	return 0;
+}
+
+static int cmd_init(int argc, char *argv[]) {
+	char *tinc_conf = NULL;
+	xasprintf(&tinc_conf, "%s/tinc.conf", confbase);
+	if(!access(confbase, F_OK)) {
+		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
+		return 1;
+	}
+
+	if(optind >= argc - 1) {
+		if(isatty(0) && isatty(1)) {
+			char buf[1024];
+			fprintf(stdout, "Enter the Name you want your tinc node to have: ");
+			fflush(stdout);
+			if(!fgets(buf, sizeof buf, stdin)) {
+				fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
+				return 1;
+			}
+			int len = strlen(buf);
+			if(len)
+				buf[--len] = 0;
+			if(!len) {
+				fprintf(stderr, "No name given!\n");
+				return 1;
+			}
+			name = strdup(buf);
+		} else {
+			fprintf(stderr, "No Name given!\n");
+			return 1;
+		}
+	} else {
+		name = strdup(argv[optind + 1]);
+		if(!*name) {
+			fprintf(stderr, "No Name given!\n");
+			return 1;
+		}
+	}
+
+	for(int i = 0; i < strlen(name); i++) {
+		if(!isalnum(name[i]) && name[i] != '_') {
+			fprintf(stderr, "Invalid Name! Only a-z, A-Z, 0-9 and _ are allowed characters.\n");
+			return 1;
+		}
+	}
+
+	if(mkdir(CONFDIR, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
+		return 1;
+	}
+
+	if(mkdir(confbase, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
+		return 1;
+	}
+
+	char *hosts_dir = NULL;
+	xasprintf(&hosts_dir, "%s/hosts", confbase);
+	if(mkdir(hosts_dir, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
+		return 1;
+	}
+
+	FILE *f = fopen(tinc_conf, "w");
+	if(!f) {
+		fprintf(stderr, "Could not create file %s: %s\n", tinc_conf, strerror(errno));
+		return 1;
+	}
+
+	fprintf(f, "Name = %s\n", name);
+	fclose(f);
+
+	fclose(stdin);
+	if(!rsa_keygen(2048) || !ecdsa_keygen())
+		return false;
+
+	return true;
+
+}
+
+static int cmd_generate_keys(int argc, char *argv[]) {
+	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048) && ecdsa_keygen());
+}
+
+static int cmd_generate_rsa_keys(int argc, char *argv[]) {
+	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048);
+}
+
+static int cmd_generate_ecdsa_keys(int argc, char *argv[]) {
+	return !ecdsa_keygen();
+}
+
+static int cmd_help(int argc, char *argv[]) {
+	usage(false);
+	return 0;
+}
+
+static int cmd_version(int argc, char *argv[]) {
+	version();
+	return 0;
+}
+
+static const struct {
+	const char *command;
+	int (*function)(int argc, char *argv[]);
+} commands[] = {
+	{"start", cmd_start},
+	{"stop", cmd_stop},
+	{"restart", cmd_restart},
+	{"reload", cmd_reload},
+	{"dump", cmd_dump},
+	{"purge", cmd_purge},
+	{"debug", cmd_debug},
+	{"retry", cmd_retry},
+	{"connect", cmd_connect},
+	{"disconnect", cmd_disconnect},
+	{"top", cmd_top},
+	{"pcap", cmd_pcap},
+	{"log", cmd_log},
+	{"pid", cmd_pid},
+	{"init", cmd_init},
+	{"generate-keys", cmd_generate_keys},
+	{"generate-rsa-keys", cmd_generate_rsa_keys},
+	{"generate-ecdsa-keys", cmd_generate_ecdsa_keys},
+	{"help", cmd_help},
+	{"version", cmd_version},
+	{NULL, NULL},
+};
+
+int main(int argc, char *argv[]) {
+	program_name = argv[0];
+
+	if(!parse_options(argc, argv))
+		return 1;
+	
+	make_names();
+
+	if(show_version) {
+		version();
 		return 0;
 	}
 
-	if(!strcasecmp(argv[optind], "log")) {
-		logcontrol(fd, stdout, optind < argc - 1 ? atoi(argv[optind + 1]) : -1);
+	if(show_help) {
+		usage(false);
 		return 0;
+	}
+
+	if(optind >= argc) {
+		fprintf(stderr, "No command given.\n");
+		usage(true);
+		return 1;
+	}
+
+	for(int i = 0; commands[i].command; i++) {
+		if(!strcasecmp(argv[optind], commands[i].command))
+			return commands[i].function(argc - optind, argv + optind);
 	}
 
 	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);
 	usage(true);
-	
-	close(fd);
-
-	return 0;
+	return 1;
 }
