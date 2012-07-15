@@ -1163,6 +1163,12 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
+	// Silently try notifying a running tincd of changes.
+	fclose(stderr);
+
+	if(connect_tincd())
+		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+
 	return 0;
 }
 
@@ -1319,7 +1325,17 @@ static int cmd_edit(int argc, char *argv[]) {
 
 	char *command;
 	xasprintf(&command, "\"%s\" \"%s\"", editor, filename);
-	return system(command);
+	int result = system(command);
+	if(result)
+		return result;
+
+	// Silently try notifying a running tincd of changes.
+	fclose(stderr);
+
+	if(connect_tincd())
+		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+
+	return 0;
 }
 
 static const struct {
