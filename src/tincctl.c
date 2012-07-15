@@ -832,6 +832,11 @@ static int cmd_connect(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(!check_id(argv[2])) {
+		fprintf(stderr, "Invalid name for node.\n");
+		return 1;
+	}
+
 	if(!connect_tincd())
 		return 1;
 
@@ -847,6 +852,11 @@ static int cmd_connect(int argc, char *argv[]) {
 static int cmd_disconnect(int argc, char *argv[]) {
 	if(argc != 2) {
 		fprintf(stderr, "Invalid number of arguments.\n");
+		return 1;
+	}
+
+	if(!check_id(argv[2])) {
+		fprintf(stderr, "Invalid name for node.\n");
 		return 1;
 	}
 
@@ -1018,6 +1028,11 @@ static int cmd_config(int argc, char *argv[]) {
 		}
 	}
 
+	if(node && !check_id(node)) {
+		fprintf(stderr, "Invalid name for node.\n");
+		return 1;
+	}
+
 	// Open the right configuration file.
 	char *filename;
 	if(node)
@@ -1151,6 +1166,15 @@ static int cmd_config(int argc, char *argv[]) {
 	return 0;
 }
 
+bool check_id(const char *name) {
+	for(int i = 0; i < strlen(name); i++) {
+		if(!isalnum(name[i]) && name[i] != '_')
+			return false;
+	}
+
+	return true;
+}
+
 static int cmd_init(int argc, char *argv[]) {
 	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
@@ -1184,11 +1208,9 @@ static int cmd_init(int argc, char *argv[]) {
 		}
 	}
 
-	for(int i = 0; i < strlen(name); i++) {
-		if(!isalnum(name[i]) && name[i] != '_') {
-			fprintf(stderr, "Invalid Name! Only a-z, A-Z, 0-9 and _ are allowed characters.\n");
-			return 1;
-		}
+	if(!check_id(name)) {
+		fprintf(stderr, "Invalid Name! Only a-z, A-Z, 0-9 and _ are allowed characters.\n");
+		return 1;
 	}
 
 	if(mkdir(CONFDIR, 0755) && errno != EEXIST) {
