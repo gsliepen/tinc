@@ -73,6 +73,7 @@ static void usage(bool status) {
 				"      --version           Output version information and exit.\n"
 				"\n"
 				"Valid commands are:\n"
+				"  init [name]                Create initial configuration files.\n"
 				"  start                      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
@@ -614,6 +615,83 @@ int main(int argc, char *argv[]) {
 		execvp(c, argv);
 		fprintf(stderr, "Could not start %s: %s\n", c, strerror(errno));
 		return 1;
+	}
+
+	if(!strcasecmp(argv[optind], "init")) {
+		char *filename = NULL;
+		xasprintf(&filename, "%s/tinc.conf", confbase);
+		if(!access(confbase, F_OK)) {
+			fprintf(stderr, "Configuration file %s already exists!\n", filename);
+			return 1;
+		}
+
+		if(optind >= argc - 1) {
+			if(isatty(0) && isatty(1)) {
+				char buf[1024];
+				fprintf(stdout, "Enter the Name you want your tinc node to have: ");
+				fflush(stdout);
+				if(!fgets(buf, sizeof buf, stdin)) {
+					fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
+					return 1;
+				}
+				int len = strlen(buf);
+				if(len)
+					buf[--len] = 0;
+				if(!len) {
+					fprintf(stderr, "No name given!\n");
+					return 1;
+				}
+				name = strdup(buf);
+			} else {
+				fprintf(stderr, "No Name given!\n");
+				return 1;
+			}
+		} else {
+			name = strdup(argv[optind + 1]);
+			if(!*name) {
+				fprintf(stderr, "No Name given!\n");
+				return 1;
+			}
+		}
+
+		for(int i = 0; i < strlen(name); i++) {
+			if(!isalnum(name[i]) && name[i] != '_') {
+				fprintf(stderr, "Invalid Name! Only a-z, A-Z, 0-9 and _ are allowed characters.\n");
+				return 1;
+			}
+		}
+
+		if(mkdir(CONFDIR, 0755) && errno != EEXIST) {
+			fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
+			return 1;
+		}
+
+		if(mkdir(confbase, 0755) && errno != EEXIST) {
+			fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
+			return 1;
+		}
+
+		char *filename2 = NULL;
+		xasprintf(&filename2, "%s/hosts", confbase);
+		if(mkdir(filename2, 0755) && errno != EEXIST) {
+			fprintf(stderr, "Could not create directory %s: %s\n", filename, strerror(errno));
+			return 1;
+		}
+
+		FILE *f = fopen(filename, "w");
+		if(!f) {
+			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
+			return 1;
+		}
+
+		fprintf(f, "Name = %s\n", name);
+		fclose(f);
+
+		fclose(stdin);
+		if(!rsa_keygen(2048) || !ecdsa_keygen())
+			return false;
+
+		return true;
 	}
 
 	/*

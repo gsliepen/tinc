@@ -2040,6 +2040,10 @@ the value of this environment variable is used.
 @c from the manpage
 @table @code
 
+@item init [@var{name}]
+Create initial configuration files and RSA and ECDSA keypairs with default length.
+If no @var{name} for this node is given, it will be asked for.
+
 @item start
 Start @samp{tincd}.
 

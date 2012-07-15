@@ -47,6 +47,11 @@ option, the value of this environment variable is used.
 .Sh COMMANDS
 .zZ
 .Bl -tag -width indent
+.It init Op Ar name
+Create initial configuration files and RSA and ECDSA keypairs with default length.
+If no
+.Ar name
+for this node is given, it will be asked for.
 .It start
 Start
 .Xr tincd 8 .
