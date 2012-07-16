@@ -1383,8 +1383,10 @@ static int export(const char *name, FILE *out) {
 
 	fprintf(out, "Name = %s\n", name);
 	char buf[4096];
-	while(fgets(buf, sizeof buf, in))
-		fputs(buf, out);
+	while(fgets(buf, sizeof buf, in)) {
+		if(strcspn(buf, "\t =") != 4 || strncasecmp(buf, "Name", 4))
+			fputs(buf, out);
+	}
 
 	if(ferror(in)) {
 		fprintf(stderr, "Error while reading configuration file %s: %s\n", filename, strerror(errno));
