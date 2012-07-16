@@ -71,6 +71,15 @@ is given, all configuration variables with the same name will be removed.
 .It edit Ar filename
 Start an editor for the given configuration file.
 You do not need to specify the full path to the file.
+.It export
+Export the host configuration file of the local node to standard output.
+.It export-all
+Export all host configuration files to standard output.
+.It import Op Fl -force
+Import host configuration file(s) from standard input.
+Already existing host configuration files are not overwritten unless the option
+.Fl -force
+is used.
 .It start Op tincd options
 Start
 .Xr tincd 8 ,
@@ -172,6 +181,7 @@ tincctl -n vpn init foo
 tincctl -n vpn config Subnet 192.168.1.0/24
 tincctl -n vpn config bar.Address bar.example.com
 tincctl -n vpn config ConnectTo bar
+tincctl -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@example.com
 .Sh TOP
 The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.
 It displays a list of all the known nodes in the left-most column,

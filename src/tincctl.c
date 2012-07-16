@@ -56,6 +56,7 @@ static char line[4096];
 static int code;
 static int req;
 static int result;
+static bool force = false;
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
@@ -75,6 +76,7 @@ static struct option const long_options[] = {
 	{"chroot", no_argument, NULL, 0},
 	{"user", required_argument, NULL, 0},
 	{"option", required_argument, NULL, 0},
+	{"force", no_argument, NULL, 6},
 	{NULL, 0, NULL, 0}
 };
 
@@ -131,6 +133,9 @@ static void usage(bool status) {
 #endif
 				"  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
 				"  log [level]                Dump log output [up to the specified level]\n"
+				"  export                     Export host configuration of local node to standard output\n"
+				"  export-all                 Export all host configuration files to standard output\n"
+				"  import [--force]           Import host configuration file(s) from standard input\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -163,6 +168,10 @@ static bool parse_options(int argc, char **argv) {
 
 			case 5:					/* open control socket here */
 				pidfilename = xstrdup(optarg);
+				break;
+
+			case 6:
+				force = true;
 				break;
 
 			case '?':
@@ -1363,6 +1372,131 @@ static int cmd_edit(int argc, char *argv[]) {
 	return 0;
 }
 
+static int export(const char *name, FILE *out) {
+	char *filename;
+	xasprintf(&filename, "%s/%s", hosts_dir, name);
+	FILE *in = fopen(filename, "r");
+	if(!in) {
+		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
+		return 1;
+	}
+
+	fprintf(out, "Name = %s\n", name);
+	char buf[4096];
+	while(fgets(buf, sizeof buf, in))
+		fputs(buf, out);
+
+	if(ferror(in)) {
+		fprintf(stderr, "Error while reading configuration file %s: %s\n", filename, strerror(errno));
+		return 1;
+	}
+
+	fclose(in);
+	return 0;
+}
+
+static int cmd_export(int argc, char *argv[]) {
+	char *name = get_my_name();
+	if(!name)
+		return 1;
+
+	return export(name, stdout);
+}
+
+static int cmd_export_all(int argc, char *argv[]) {
+	DIR *dir = opendir(hosts_dir);
+	if(!dir) {
+		fprintf(stderr, "Could not open host configuration directory %s: %s\n", hosts_dir, strerror(errno));
+		return 1;
+	}
+
+	bool first = true;
+	int result = 0;
+	struct dirent *ent;
+
+	while((ent = readdir(dir))) {
+		if(!check_id(ent->d_name))
+			continue;
+
+		if(first)
+			first = false;
+		else
+			printf("#---------------------------------------------------------------#\n");
+
+		result |= export(ent->d_name, stdout);
+	}
+
+	closedir(dir);
+	return result;
+}
+
+static int cmd_import(int argc, char *argv[]) {
+	FILE *in = stdin;
+	FILE *out = NULL;
+
+	char buf[4096];
+	char name[4096];
+	char *filename;
+	int count = 0;
+	bool firstline = true;
+
+	while(fgets(buf, sizeof buf, in)) {
+		if(sscanf(buf, "Name = %s", name) == 1) {
+			if(!check_id(name)) {
+				fprintf(stderr, "Invalid Name in input!\n");
+				return 1;
+			}
+
+			if(out)
+				fclose(out);
+
+			free(filename);
+			xasprintf(&filename, "%s/%s", hosts_dir, name);
+
+			if(!force && !access(filename, F_OK)) {
+				fprintf(stderr, "Host configuration file %s already exists, skipping.\n", filename);
+				out = NULL;
+				continue;
+			}
+
+			out = fopen(filename, "w");
+			if(!out) {
+				fprintf(stderr, "Error creating configuration file %s: %s\n", filename, strerror(errno));
+				return 1;
+			}
+
+			count++;
+			firstline = false;
+			continue;
+		} else if(firstline) {
+			fprintf(stderr, "Junk at the beginning of the input, ignoring.\n");
+			firstline = false;
+		}
+
+
+		if(!strcmp(buf, "#---------------------------------------------------------------#\n"))
+			continue;
+
+		if(out) {
+			if(fputs(buf, out) < 0) {
+				fprintf(stderr, "Error writing to host configuration file %s: %s\n", filename, strerror(errno));
+				return 1;
+			}
+		}
+	}
+
+	if(out)
+		fclose(out);
+
+	if(count) {
+		fprintf(stderr, "Imported %d host configuration files.\n", count);
+		return 0;
+	} else {
+		fprintf(stderr, "No host configuration files imported.\n");
+		return 1;
+	}
+}
+
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
@@ -1390,6 +1524,9 @@ static const struct {
 	{"version", cmd_version},
 	{"info", cmd_info},
 	{"edit", cmd_edit},
+	{"export", cmd_export},
+	{"export-all", cmd_export_all},
+	{"import", cmd_import},
 	{NULL, NULL},
 };
 

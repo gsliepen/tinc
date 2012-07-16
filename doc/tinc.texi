@@ -2060,6 +2060,16 @@ If no @var{value} is given, all configuration variables with the same name will 
 Start an editor for the given configuration file.
 You do not need to specify the full path to the file.
 
+@item export
+Export the host configuration file of the local node to standard output.
+
+@item export-all
+Export all host configuration files to standard output.
+
+@item import [--force]
+Import host configuration file(s) from standard input.
+Already existing host configuration files are not overwritten unless the option --force is used.
+
 @item start [tincd options]
 Start @samp{tincd}, optionally with the given extra options.
 
@@ -2153,6 +2163,7 @@ tincctl -n vpn init foo
 tincctl -n vpn config Subnet 192.168.1.0/24
 tincctl -n vpn config bar.Address bar.example.com
 tincctl -n vpn config ConnectTo bar
+tincctl -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@@example.com
 @end example
 
 @c ==================================================================
