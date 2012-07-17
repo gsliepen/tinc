@@ -24,7 +24,7 @@
 /* Protocol version. Different major versions are incompatible. */
 
 #define PROT_MAJOR 17
-#define PROT_MINOR 2
+#define PROT_MINOR 2 /* Should not exceed 255! */
 
 /* Silly Windows */
 

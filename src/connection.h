@@ -32,6 +32,7 @@
 #define OPTION_TCPONLY		0x0002
 #define OPTION_PMTU_DISCOVERY	0x0004
 #define OPTION_CLAMP_MSS	0x0008
+#define OPTION_VERSION(x) ((x) >> 24) /* Top 8 bits are for protocol minor version */
 
 typedef struct connection_status_t {
 		unsigned int pinged:1;			/* sent ping */

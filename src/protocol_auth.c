@@ -506,7 +506,7 @@ bool send_ack(connection_t *c) {
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
 
-	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, c->options);
+	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, (c->options & 0xffffff) | (PROT_MINOR << 24));
 }
 
 static void send_everything(connection_t *c) {

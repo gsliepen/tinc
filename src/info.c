@@ -117,6 +117,7 @@ static int info_node(int fd, const char *item) {
 	if(options & OPTION_CLAMP_MSS)
 		printf(" clamp_mss");
 	printf("\n");
+	printf("Protocol:     %d.%d\n", PROT_MAJOR, OPTION_VERSION(options));
 	printf("Reachability: ");
 	if(!*port)
 		printf("can reach itself\n");

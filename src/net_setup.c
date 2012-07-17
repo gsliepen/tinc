@@ -411,6 +411,8 @@ static bool setup_myself(void) {
 	myself->connection->protocol_major = PROT_MAJOR;
 	myself->connection->protocol_minor = PROT_MINOR;
 
+	myself->options |= PROT_MINOR << 24;
+
 	if(!(name = get_name())) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
 		return false;
