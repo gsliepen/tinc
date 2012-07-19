@@ -84,16 +84,54 @@ bool key_changed_h(connection_t *c, const char *request) {
 }
 
 bool send_req_key(node_t *to) {
-	return send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, experimental ? 1 : 0);
+	if(experimental && OPTION_VERSION(to->options) >= 2) {
+		if(!node_read_ecdsa_public_key(to))
+			send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, REQ_PUBKEY);
+	}
+	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
+}
+
+/* REQ_KEY is overloaded to allow arbitrary requests to be routed between two nodes. */
+
+static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, int reqno) {
+	switch(reqno) {
+		case REQ_PUBKEY: {
+			char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
+			send_request(from->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, from->name, ANS_PUBKEY, pubkey);
+			free(pubkey);
+			return true;
+		}
+
+		case ANS_PUBKEY: {
+			if(node_read_ecdsa_public_key(from)) {
+				logger(DEBUG_ALWAYS, LOG_WARNING, "Got ANS_PUBKEY from %s (%s) even though we already have his pubkey", from->name, from->hostname);
+				return true;
+			}
+
+			char pubkey[4096];
+			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, pubkey) != 1 || !ecdsa_set_base64_public_key(&from->ecdsa, pubkey)) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_PUBKEY", from->name, from->hostname, "invalid pubkey");
+				return true;
+			}
+
+			logger(DEBUG_ALWAYS, LOG_INFO, "Learned ECDSA public key from %s (%s)", from->name, from->hostname);
+			append_config_file(from->name, "ECDSAPublicKey", pubkey);
+			return true;
+		}
+
+		default:
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown extended REQ_KEY request from %s (%s): %s", from->name, from->hostname, request);
+			return true;
+	}
 }
 
 bool req_key_h(connection_t *c, const char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
-	int kx_version = 0;
+	int reqno = 0;
 
-	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING " %d", from_name, to_name, &kx_version) < 2) {
+	if(sscanf(request, "%*d " MAX_STRING " " MAX_STRING " %d", from_name, to_name, &reqno) < 2) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "REQ_KEY", c->name,
 			   c->hostname);
 		return false;
@@ -123,10 +161,9 @@ bool req_key_h(connection_t *c, const char *request) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-		if(experimental && kx_version >= 1) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "Got ECDH key request from %s", from->name);
-			from->status.ecdh = true;
-		}
+		if(experimental && reqno)
+			return req_key_ext_h(c, request, from, reqno);
+
 		send_ans_key(from);
 	} else {
 		if(tunnelserver)
@@ -156,24 +193,18 @@ bool send_ans_key_ecdh(node_t *to) {
 
 	b64encode(key, key, ECDH_SIZE + siglen);
 
-	char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
-
-	if(!pubkey)
-		return false;
-
-	int result = send_request(to->nexthop->connection, "%d %s %s ECDH:%s:%s %d %d %zu %d", ANS_KEY,
-						myself->name, to->name, key, pubkey,
+	int result = send_request(to->nexthop->connection, "%d %s %s %s %d %d %zu %d", ANS_KEY,
+						myself->name, to->name, key,
 						cipher_get_nid(&myself->incipher),
 						digest_get_nid(&myself->indigest),
 						digest_length(&myself->indigest),
 						myself->incompression);
 
-	free(pubkey);
 	return result;
 }
 
 bool send_ans_key(node_t *to) {
-	if(experimental && to->status.ecdh)
+	if(experimental && OPTION_VERSION(to->options) >= 2)
 		return send_ans_key_ecdh(to);
 
 	size_t keylen = cipher_keylength(&myself->incipher);
@@ -291,28 +322,16 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* ECDH or old-style key exchange? */
 	
-	if(experimental && !strncmp(key, "ECDH:", 5)) {
-		char *pubkey = strchr(key + 5, ':');
-		if(pubkey)
-			*pubkey++ = 0;
-			
-		/* Check if we already have an ECDSA public key for this node.
-		 * If not, use the one from the key exchange, and store it. */
+	if(experimental && OPTION_VERSION(from->options) >= 2) {
+		/* Check if we already have an ECDSA public key for this node. */
 
 		if(!node_read_ecdsa_public_key(from)) {
-			if(!pubkey) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "No ECDSA public key known for %s (%s), cannot verify ECDH key exchange!", from->name, from->hostname);
-				return true;
-			}
-
-			if(!ecdsa_set_base64_public_key(&from->ecdsa, pubkey))
-				return true;
-
-			append_config_file(from->name, "ECDSAPublicKey", pubkey);
+			logger(DEBUG_ALWAYS, LOG_ERR, "No ECDSA public key known for %s (%s), cannot verify ECDH key exchange!", from->name, from->hostname);
+			return true;
 		}
 
 		int siglen = ecdsa_size(&from->ecdsa);
-		int keylen = b64decode(key + 5, key + 5, sizeof key - 5);
+		int keylen = b64decode(key, key, sizeof key);
 
 		if(keylen != ECDH_SIZE + siglen) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength! %d != %d", from->name, from->hostname, keylen, ECDH_SIZE + siglen);
@@ -324,20 +343,19 @@ bool ans_key_h(connection_t *c, const char *request) {
 			return true;
 		}
 
-		if(!ecdsa_verify(&from->ecdsa, key + 5, ECDH_SIZE, key + 5 + ECDH_SIZE)) {
+		if(!ecdsa_verify(&from->ecdsa, key, ECDH_SIZE, key + ECDH_SIZE)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", from->name, from->hostname, "invalid ECDSA signature");
 			return true;
 		}
 
 		if(!from->ecdh) {
-			from->status.ecdh = true;
-			if(!send_ans_key(from))
+			if(!send_ans_key_ecdh(from))
 				return true;
 		}
 
 		char shared[ECDH_SHARED_SIZE * 2 + 1];
 
-		if(!ecdh_compute_shared(&from->ecdh, key + 5, shared))
+		if(!ecdh_compute_shared(&from->ecdh, key, shared))
 			return true;
 
 		/* Update our crypto end */

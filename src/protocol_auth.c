@@ -626,9 +626,6 @@ bool ack_h(connection_t *c, const char *request) {
 			c->options &= ~OPTION_CLAMP_MSS;
 	}
 
-	if(c->protocol_minor > 0)
-		c->node->status.ecdh = true;
-
 	/* Activate this connection */
 
 	c->allow_request = ALL;

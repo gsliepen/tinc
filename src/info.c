@@ -104,8 +104,6 @@ static int info_node(int fd, const char *item) {
 		printf(" reachable");
 	if(status.indirect)
 		printf(" indirect");
-	if(status.ecdh)
-		printf(" ecdh");
 	printf("\n");
 	printf("Options:     ");
 	if(options & OPTION_INDIRECT)

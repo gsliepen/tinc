@@ -43,7 +43,9 @@ typedef enum request_t {
 	ADD_EDGE, DEL_EDGE,
 	KEY_CHANGED, REQ_KEY, ANS_KEY,
 	PACKET,
+	/* Tinc 1.1 requests */
 	CONTROL,
+	REQ_PUBKEY, ANS_PUBKEY,
 	LAST						/* Guardian for the highest request number */
 } request_t;
 
