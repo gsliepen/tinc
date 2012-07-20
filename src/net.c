@@ -276,6 +276,16 @@ int reload_configuration(void) {
 		return EINVAL;
 	}
 
+	read_config_options(config_tree, NULL);
+
+        xasprintf(&fname, "%s/hosts/%s", confbase, myself->name);
+        read_config_file(config_tree, fname);
+	free(fname);	
+
+	/* Parse some options that are allowed to be changed while tinc is running */
+
+	setup_myself_reloadable();
+
 	/* Close connections to hosts that have a changed or deleted host config file */
 	
 	for(node = connection_tree->head; node; node = next) {
@@ -306,7 +316,6 @@ int reload_configuration(void) {
 	if(strictsubnets) {
 		subnet_t *subnet;
 
-
 		for(node = subnet_tree->head; node; node = node->next) {
 			subnet = node->data;
 			subnet->expires = 1;
@@ -328,6 +337,48 @@ int reload_configuration(void) {
 				send_add_subnet(everyone, subnet);
 				if(subnet->owner->status.reachable)
 					subnet_update(subnet->owner, subnet, true);
+			}
+		}
+	} else { /* Only read our own subnets back in */
+		subnet_t *subnet, *s2;
+
+		for(node = myself->subnet_tree->head; node; node = node->next) {
+			subnet_t *subnet = node->data;
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "subnet %p expires %d\n", subnet, subnet->expires);
+			if(!subnet->expires)
+				subnet->expires = 1;
+		}
+
+		config_t *cfg = lookup_config(config_tree, "Subnet");
+
+		while(cfg) {
+			if(!get_config_subnet(cfg, &subnet))
+				continue;
+
+			if((s2 = lookup_subnet(myself, subnet))) {
+				logger(DEBUG_ALWAYS, LOG_DEBUG, "read subnet that already exists: %p expires %d\n", s2, s2->expires);
+				if(s2->expires == 1)
+					s2->expires = 0;
+
+				free_subnet(subnet);
+			} else {
+				logger(DEBUG_ALWAYS, LOG_DEBUG, "read new subnet %p", subnet);
+				subnet_add(myself, subnet);
+				send_add_subnet(everyone, subnet);
+				subnet_update(myself, subnet, true);
+			}
+
+			cfg = lookup_config_next(config_tree, cfg);
+		}
+
+		for(node = myself->subnet_tree->head; node; node = next) {
+			next = node->next;
+			subnet_t *subnet = node->data;
+			if(subnet->expires == 1) {
+				logger(DEBUG_ALWAYS, LOG_DEBUG, "removed subnet %p", subnet);
+				send_del_subnet(everyone, subnet);
+				subnet_update(myself, subnet, false);
+				subnet_del(myself, subnet);
 			}
 		}
 	}
