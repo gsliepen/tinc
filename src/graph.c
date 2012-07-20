@@ -232,6 +232,7 @@ static void sssp_bfs(void) {
 		n = node->data;
 		n->status.visited = false;
 		n->status.indirect = true;
+		n->distance = -1;
 	}
 
 	/* Begin with myself */
@@ -241,12 +242,15 @@ static void sssp_bfs(void) {
 	myself->nexthop = myself;
 	myself->prevedge = NULL;
 	myself->via = myself;
+	myself->distance = 0;
 	list_insert_head(todo_list, myself);
 
 	/* Loop while todo_list is filled */
 
 	for(from = todo_list->head; from; from = todonext) {	/* "from" is the node from which we start */
 		n = from->data;
+		if(n->distance < 0)
+			abort();
 
 		for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
 			e = to->data;
@@ -274,7 +278,8 @@ static void sssp_bfs(void) {
 			indirect = n->status.indirect || e->options & OPTION_INDIRECT;
 
 			if(e->to->status.visited
-			   && (!e->to->status.indirect || indirect))
+			   && (!e->to->status.indirect || indirect)
+			   && (e->to->distance != n->distance + 1 || e->weight >= e->to->prevedge->weight))
 				continue;
 
 			e->to->status.visited = true;
@@ -283,6 +288,7 @@ static void sssp_bfs(void) {
 			e->to->prevedge = e;
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
+			e->to->distance = n->distance + 1;
 
 			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
 				update_node_udp(e->to, &e->address);
