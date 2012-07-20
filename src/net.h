@@ -150,6 +150,7 @@ extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern char *get_name(void);
+extern bool setup_myself_reloadable(void);
 extern bool setup_network(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);

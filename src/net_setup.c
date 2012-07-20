@@ -384,67 +384,12 @@ char *get_name(void) {
 	return name;
 }
 
-/*
-  Configure node_t myself and set up the local sockets (listen only)
-*/
-static bool setup_myself(void) {
-	config_t *cfg;
-	subnet_t *subnet;
-	char *name, *hostname, *mode, *afname, *cipher, *digest, *type;
-	char *fname = NULL;
-	char *address = NULL;
+bool setup_myself_reloadable(void) {
 	char *proxy = NULL;
+	char *mode = NULL;
+	char *afname = NULL;
 	char *space;
-	char *envp[5];
-	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
-	int i, err;
-	int replaywin_int;
-
-	myself = new_node();
-	myself->connection = new_connection();
-
-	myself->hostname = xstrdup("MYSELF");
-	myself->connection->hostname = xstrdup("MYSELF");
-
-	myself->connection->options = 0;
-	myself->connection->protocol_major = PROT_MAJOR;
-	myself->connection->protocol_minor = PROT_MINOR;
-
-	myself->options |= PROT_MINOR << 24;
-
-	if(!(name = get_name())) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
-		return false;
-	}
-
-	myself->name = name;
-	myself->connection->name = xstrdup(name);
-	xasprintf(&fname, "%s/hosts/%s", confbase, name);
-	read_config_options(config_tree, name);
-	read_config_file(config_tree, fname);
-	free(fname);
-
-	get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental);
-
-	if(experimental && !read_ecdsa_private_key())
-		return false;
-
-	if(!read_rsa_private_key())
-		return false;
-
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
-		myport = xstrdup("655");
-
-	if(!atoi(myport)) {
-		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
-		sockaddr_t sa;
-		if(!ai || !ai->ai_addr)
-			return false;
-		free(myport);
-		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
-		sockaddr2str(&sa, NULL, &myport);
-	}
 
 	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
 	if(proxy) {
@@ -508,21 +453,6 @@ static bool setup_myself(void) {
 		free(proxy);
 	}
 
-	/* Read in all the subnets specified in the host configuration file */
-
-	cfg = lookup_config(config_tree, "Subnet");
-
-	while(cfg) {
-		if(!get_config_subnet(cfg, &subnet))
-			return false;
-
-		subnet_add(myself, subnet);
-
-		cfg = lookup_config_next(config_tree, cfg);
-	}
-
-	/* Check some options */
-
 	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice)
 		myself->options |= OPTION_INDIRECT;
 
@@ -533,11 +463,8 @@ static bool setup_myself(void) {
 		myself->options |= OPTION_INDIRECT;
 
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
-	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
-	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
-	strictsubnets |= tunnelserver;
-
+	
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
 		if(!strcasecmp(mode, "router"))
 			routing_mode = RMODE_ROUTER;
@@ -608,6 +535,111 @@ static bool setup_myself(void) {
 	} else
 		maxtimeout = 900;
 
+	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
+		if(!strcasecmp(afname, "IPv4"))
+			addressfamily = AF_INET;
+		else if(!strcasecmp(afname, "IPv6"))
+			addressfamily = AF_INET6;
+		else if(!strcasecmp(afname, "any"))
+			addressfamily = AF_UNSPEC;
+		else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address family!");
+			return false;
+		}
+		free(afname);
+	}
+
+	get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
+
+	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
+		keylifetime = 3600;
+
+	return true;
+}
+
+/*
+  Configure node_t myself and set up the local sockets (listen only)
+*/
+static bool setup_myself(void) {
+	config_t *cfg;
+	subnet_t *subnet;
+	char *name, *hostname, *cipher, *digest, *type;
+	char *fname = NULL;
+	char *address = NULL;
+	char *envp[5];
+	struct addrinfo *ai, *aip, hint = {0};
+	int i, err;
+	int replaywin_int;
+
+	myself = new_node();
+	myself->connection = new_connection();
+
+	myself->hostname = xstrdup("MYSELF");
+	myself->connection->hostname = xstrdup("MYSELF");
+
+	myself->connection->options = 0;
+	myself->connection->protocol_major = PROT_MAJOR;
+	myself->connection->protocol_minor = PROT_MINOR;
+
+	myself->options |= PROT_MINOR << 24;
+
+	if(!(name = get_name())) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
+		return false;
+	}
+
+	myself->name = name;
+	myself->connection->name = xstrdup(name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, name);
+	read_config_options(config_tree, name);
+	read_config_file(config_tree, fname);
+	free(fname);
+
+	get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental);
+
+	if(experimental && !read_ecdsa_private_key())
+		return false;
+
+	if(!read_rsa_private_key())
+		return false;
+
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
+		myport = xstrdup("655");
+
+	if(!atoi(myport)) {
+		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
+		sockaddr_t sa;
+		if(!ai || !ai->ai_addr)
+			return false;
+		free(myport);
+		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+		sockaddr2str(&sa, NULL, &myport);
+	}
+
+	/* Read in all the subnets specified in the host configuration file */
+
+	cfg = lookup_config(config_tree, "Subnet");
+
+	while(cfg) {
+		if(!get_config_subnet(cfg, &subnet))
+			return false;
+
+		subnet_add(myself, subnet);
+
+		cfg = lookup_config_next(config_tree, cfg);
+	}
+
+	/* Check some options */
+
+	if(!setup_myself_reloadable())
+		return false;
+
+	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
+	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	strictsubnets |= tunnelserver;
+
+
+
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPRcvBuf cannot be negative!");
@@ -630,22 +662,6 @@ static bool setup_myself(void) {
 		replaywin = (unsigned)replaywin_int;
 	}
 
-	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
-		if(!strcasecmp(afname, "IPv4"))
-			addressfamily = AF_INET;
-		else if(!strcasecmp(afname, "IPv6"))
-			addressfamily = AF_INET6;
-		else if(!strcasecmp(afname, "any"))
-			addressfamily = AF_UNSPEC;
-		else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address family!");
-			return false;
-		}
-		free(afname);
-	}
-
-	get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
-
 	/* Generate packet encryption key */
 
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
@@ -655,9 +671,6 @@ static bool setup_myself(void) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
 		return false;
 	}
-
-	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
-		keylifetime = 3600;
 
 	regenerate_key();
 
