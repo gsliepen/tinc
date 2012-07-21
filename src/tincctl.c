@@ -973,12 +973,65 @@ static char *get_my_name() {
 	return NULL;
 }
 
-static char *hostvariables[] = {
-	"Address",
-	"Port",
-	"PublicKey",
-	"Subnet",
-	NULL,
+#define VAR_SERVER 1    /* Should be in tinc.conf */
+#define VAR_HOST 2      /* Can be in host config file */
+#define VAR_MULTIPLE 4  /* Multiple statements allowed */
+#define VAR_OBSOLETE 8  /* Should not be used anymore */
+
+static struct {
+	const char *name;
+	int type;
+} const variables[] = {
+	/* Server configuration */
+	{"AddressFamily", VAR_SERVER},
+	{"BindToAddress", VAR_SERVER | VAR_MULTIPLE},
+	{"BindToInterface", VAR_SERVER},
+	{"Broadcast", VAR_SERVER},
+	{"ConnectTo", VAR_SERVER | VAR_MULTIPLE},
+	{"DecrementTTL", VAR_SERVER},
+	{"Device", VAR_SERVER},
+	{"DeviceType", VAR_SERVER},
+	{"DirectOnly", VAR_SERVER},
+	{"ECDSAPrivateKeyFile", VAR_SERVER},
+	{"ExperimentalProtocol", VAR_SERVER},
+	{"Forwarding", VAR_SERVER},
+	{"GraphDumpFile", VAR_SERVER},
+	{"Hostnames", VAR_SERVER},
+	{"IffOneQueue", VAR_SERVER},
+	{"Interface", VAR_SERVER},
+	{"KeyExpire", VAR_SERVER},
+	{"LocalDiscovery", VAR_SERVER},
+	{"MACExpire", VAR_SERVER},
+	{"MaxTimeout", VAR_SERVER},
+	{"Mode", VAR_SERVER},
+	{"Name", VAR_SERVER},
+	{"PingInterval", VAR_SERVER},
+	{"PingTimeout", VAR_SERVER},
+	{"PriorityInheritance", VAR_SERVER},
+	{"PrivateKey", VAR_SERVER | VAR_OBSOLETE},
+	{"PrivateKeyFile", VAR_SERVER},
+	{"ProcessPriority", VAR_SERVER},
+	{"ReplayWindow", VAR_SERVER},
+	{"StrictSubnets", VAR_SERVER},
+	{"TunnelServer", VAR_SERVER},
+	{"UDPRcvBuf", VAR_SERVER},
+	{"UDPSndBuf", VAR_SERVER},
+	/* Host configuration */
+	{"Address", VAR_HOST | VAR_MULTIPLE},
+	{"Cipher", VAR_SERVER | VAR_HOST},
+	{"ClampMSS", VAR_SERVER | VAR_HOST},
+	{"Compression", VAR_SERVER | VAR_HOST},
+	{"Digest", VAR_SERVER | VAR_HOST},
+	{"IndirectData", VAR_SERVER | VAR_HOST},
+	{"MACLength", VAR_SERVER | VAR_HOST},
+	{"PMTU", VAR_SERVER | VAR_HOST},
+	{"PMTUDiscovery", VAR_SERVER | VAR_HOST},
+	{"Port", VAR_HOST},
+	{"PublicKey", VAR_SERVER | VAR_HOST | VAR_OBSOLETE},
+	{"PublicKeyFile", VAR_SERVER | VAR_HOST | VAR_OBSOLETE},
+	{"Subnet", VAR_HOST | VAR_MULTIPLE},
+	{"TCPOnly", VAR_SERVER | VAR_HOST},
+	{NULL, 0}
 };
 
 static int cmd_config(int argc, char *argv[]) {
@@ -1040,21 +1093,61 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// Should this go into our own host config file?
-	if(!node) {
-		for(int i = 0; hostvariables[i]; i++) {
-			if(!strcasecmp(hostvariables[i], variable)) {
-				node = get_my_name();
-				if(!node)
-					return 1;
-				break;
+	/* Some simple checks. */
+	bool found = false;
+
+	for(int i = 0; variables[i].name; i++) {
+		if(strcasecmp(variables[i].name, variable))
+			continue;
+
+		found = true;
+		variable = (char *)variables[i].name;
+
+		/* Discourage use of obsolete variables. */
+
+		if(variables[i].type & VAR_OBSOLETE && action >= 0) {
+			if(force) {
+				fprintf(stderr, "Warning: %s is an obsolete variable!\n", variable);
+			} else {
+				fprintf(stderr, "%s is an obsolete variable! Use --force to use it anyway.\n", variable);
+				return 1;
 			}
 		}
+
+		/* Don't put server variables in host config files */
+
+		if(node && !(variables[i].type & VAR_HOST) && action >= 0) {
+			if(force) {
+				fprintf(stderr, "Warning: %s is not a host configuration variable!\n", variable);
+			} else {
+				fprintf(stderr, "%s is not a host configuration variable! Use --force to use it anyway.\n", variable);
+				return 1;
+			}
+		}
+
+		/* Should this go into our own host config file? */
+
+		if(!node && !(variables[i].type & VAR_SERVER)) {
+			node = get_my_name();
+			if(!node)
+				return 1;
+		}
+
+		break;
 	}
 
 	if(node && !check_id(node)) {
 		fprintf(stderr, "Invalid name for node.\n");
 		return 1;
+	}
+
+	if(!found && action >= 0) {
+		if(force) {
+			fprintf(stderr, "Warning: %s is not a known configuration variable!\n", variable);
+		} else {
+			fprintf(stderr, "%s: is not a known configuration variable! Use --force to use it anyway.\n", variable);
+			return 1;
+		}
 	}
 
 	// Open the right configuration file.
