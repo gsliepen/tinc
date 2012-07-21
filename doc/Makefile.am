@@ -23,16 +23,16 @@ texi2html: tinc.texi
 	texi2html -split=chapter tinc.texi
 
 tincd.8.html: tincd.8
-	w3mman2html $< > $@
+	w3mman2html $? > $@
 
 tincctl.8.html: tincctl.8
-	w3mman2html $< > $@
+	w3mman2html $? > $@
 
 tinc-gui.8.html: tinc-gui.8
-	w3mman2html $< > $@
+	w3mman2html $? > $@
 
 tinc.conf.5.html: tinc.conf.5
-	w3mman2html $< > $@
+	w3mman2html $? > $@
 
 substitute = sed \
 	-e s,'@PACKAGE\@',"$(PACKAGE)",g \
@@ -41,18 +41,18 @@ substitute = sed \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 tincd.8: tincd.8.in
-	$(substitute) $< > $@
+	$(substitute) $? > $@
 
 tincctl.8: tincctl.8.in
-	$(substitute) $< > $@
+	$(substitute) $? > $@
 
 tinc-gui.8: tinc-gui.8.in
-	$(substitute) $< > $@
+	$(substitute) $? > $@
 
 tinc.conf.5: tinc.conf.5.in
-	$(substitute) $< > $@
+	$(substitute) $? > $@
 
 tincinclude.texi: tincinclude.texi.in
-	$(substitute) $< > $@
+	$(substitute) $? > $@
 	
 tinc.texi: tincinclude.texi
