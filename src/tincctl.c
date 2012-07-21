@@ -187,11 +187,15 @@ static bool parse_options(int argc, char **argv) {
 		}
 	}
 
-	if(!netname) {
-		netname = getenv("NETNAME");
-		if(netname)
-			netname = xstrdup(netname);
-	}
+        if(!netname && (netname = getenv("NETNAME")))
+                netname = xstrdup(netname);
+
+        /* netname "." is special: a "top-level name" */
+
+        if(!strcmp(netname, ".")) {
+                free(netname);
+                netname = NULL;
+        }
 
 	return true;
 }

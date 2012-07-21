@@ -177,9 +177,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 'n':				/* net name given */
-				/* netname "." is special: a "top-level name" */
-				netname = strcmp(optarg, ".") != 0 ?
-						xstrdup(optarg) : NULL;
+				netname = xstrdup(optarg);
 				break;
 
 			case 'o':				/* option */
@@ -226,6 +224,16 @@ static bool parse_options(int argc, char **argv) {
 			default:
 				break;
 		}
+	}
+
+	if(!netname && (netname = getenv("NETNAME")))
+		netname = xstrdup(netname);
+
+	/* netname "." is special: a "top-level name" */
+
+	if(!strcmp(netname, ".")) {
+		free(netname);
+		netname = NULL;
 	}
 
 	return true;
