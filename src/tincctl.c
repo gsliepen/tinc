@@ -47,6 +47,7 @@ static bool show_version = false;
 static char *name = NULL;
 static char *identname = NULL;				/* program name for syslog */
 static char *pidfilename = NULL;			/* pid file location */
+static char *confdir = NULL;
 static char controlcookie[1024];
 char *netname = NULL;
 char *confbase = NULL;
@@ -400,6 +401,7 @@ static void make_names(void) {
 
 	if(!*installdir) {
 #endif
+	confdir = xstrdup(CONFDIR);
 
 	if(!pidfilename)
 		xasprintf(&pidfilename, "%s/run/%s.pid", LOCALSTATEDIR, identname);
@@ -415,7 +417,8 @@ static void make_names(void) {
 	}
 
 #ifdef HAVE_MINGW
-	}
+	} else
+		confdir = xstrdup(installdir);
 #endif
 
 	xasprintf(&tinc_conf, "%s/tinc.conf", confbase);
@@ -1348,7 +1351,7 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(mkdir(CONFDIR, 0755) && errno != EEXIST) {
+	if(mkdir(confdir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
 		return 1;
 	}
