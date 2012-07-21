@@ -1194,7 +1194,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 	while(fgets(buf1, sizeof buf1, f)) {
 		buf1[sizeof buf1 - 1] = 0;
-		strcpy(buf2, buf1);
+		strncpy(buf2, buf1, sizeof buf2);
 
 		// Parse line in a simple way
 		char *bvalue;

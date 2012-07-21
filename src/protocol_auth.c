@@ -65,7 +65,7 @@ static bool send_proxyrequest(connection_t *c) {
 			memcpy(s4req + 2, &c->address.in.sin_port, 2);
 			memcpy(s4req + 4, &c->address.in.sin_addr, 4);
 			if(proxyuser)
-				strcpy(s4req + 8, proxyuser);
+				memcpy(s4req + 8, proxyuser, strlen(proxyuser));
 			s4req[sizeof s4req - 1] = 0;
 			c->tcplen = 8;
 			return send_meta(c, s4req, sizeof s4req);
