@@ -192,7 +192,7 @@ static bool parse_options(int argc, char **argv) {
 
         /* netname "." is special: a "top-level name" */
 
-        if(!strcmp(netname, ".")) {
+        if(netname && !strcmp(netname, ".")) {
                 free(netname);
                 netname = NULL;
         }
