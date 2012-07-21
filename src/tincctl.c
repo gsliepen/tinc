@@ -31,6 +31,10 @@
 #include "tincctl.h"
 #include "top.h"
 
+#ifdef HAVE_MINGW
+#define mkdir(a, b) mkdir(a)
+#endif
+
 /* The name this program was run with. */
 static char *program_name = NULL;
 
@@ -1354,7 +1358,7 @@ static int cmd_edit(int argc, char *argv[]) {
 #ifndef HAVE_MINGW
 	char *editor = getenv("VISUAL") ?: getenv("EDITOR") ?: "vi";
 #else
-	char *editor = "edit"
+	char *editor = "edit";
 #endif
 
 	char *command;

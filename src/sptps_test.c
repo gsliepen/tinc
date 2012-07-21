@@ -18,7 +18,6 @@
 */
 
 #include "system.h"
-#include "poll.h"
 
 #include "crypto.h"
 #include "ecdsa.h"
@@ -36,7 +35,7 @@ ecdsa_t mykey, hiskey;
 static bool send_data(void *handle, const char *data, size_t len) {
 	char hex[len * 2 + 1];
 	bin2hex(data, hex, len);
-	fprintf(stderr, "Sending %zu bytes of data:\n%s\n", len, hex);
+	fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);
 	const int *sock = handle;
 	if(send(*sock, data, len, 0) != len)
 		return false;
@@ -66,6 +65,12 @@ int main(int argc, char *argv[]) {
 
 	if(argc > 4)
 		initiator = true;
+
+#ifdef HAVE_MINGW
+	static struct WSAData wsa_state;
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state))
+		return 1;
+#endif
 
 	struct addrinfo *ai, hint;
 	memset(&hint, 0, sizeof hint);
@@ -136,15 +141,16 @@ int main(int argc, char *argv[]) {
 	while(true) {
 		char buf[65535] = "";
 
-		struct pollfd fds[2];
-		fds[0].fd = 0;
-		fds[0].events = POLLIN;
-		fds[1].fd = sock;
-		fds[1].events = POLLIN;
-		if(poll(fds, 2, -1) < 0)
+		fd_set fds;
+		FD_ZERO(&fds);
+#ifndef HAVE_MINGW
+		FD_SET(0, &fds);
+#endif
+		FD_SET(sock, &fds);
+		if(select(sock + 1, &fds, NULL, NULL, NULL) <= 0)
 			return 1;
 
-		if(fds[0].revents) {
+		if(FD_ISSET(0, &fds)) {
 			ssize_t len = read(0, buf, sizeof buf);
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
@@ -163,7 +169,7 @@ int main(int argc, char *argv[]) {
 				return 1;
 		}
 
-		if(fds[1].revents) {
+		if(FD_ISSET(sock, &fds)) {
 			ssize_t len = recv(sock, buf, sizeof buf, 0);
 			if(len < 0) {
 				fprintf(stderr, "Could not read from socket: %s\n", strerror(errno));
@@ -175,7 +181,7 @@ int main(int argc, char *argv[]) {
 			}
 			char hex[len * 2 + 1];
 			bin2hex(buf, hex, len);
-			fprintf(stderr, "Received %zd bytes of data:\n%s\n", len, hex);
+			fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
 			if(!sptps_receive_data(&s, buf, len))
 				return 1;
 		}

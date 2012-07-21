@@ -39,7 +39,7 @@ bool send_meta_sptps(void *handle, const char *buffer, size_t length) {
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "send_meta_sptps(%s, %p, %zu)", c->name, buffer, length);
+	logger(DEBUG_META, LOG_DEBUG, "send_meta_sptps(%s, %p, %d)", c->name, buffer, (int)length);
 
 	buffer_add(&c->outbuf, buffer, length);
 	event_add(&c->outevent, NULL);

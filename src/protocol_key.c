@@ -193,11 +193,11 @@ bool send_ans_key_ecdh(node_t *to) {
 
 	b64encode(key, key, ECDH_SIZE + siglen);
 
-	int result = send_request(to->nexthop->connection, "%d %s %s %s %d %d %zu %d", ANS_KEY,
+	int result = send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 						myself->name, to->name, key,
 						cipher_get_nid(&myself->incipher),
 						digest_get_nid(&myself->indigest),
-						digest_length(&myself->indigest),
+						(int)digest_length(&myself->indigest),
 						myself->incompression);
 
 	return result;
@@ -225,11 +225,11 @@ bool send_ans_key(node_t *to) {
 	to->received_seqno = 0;
 	if(replaywin) memset(to->late, 0, replaywin);
 
-	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %zu %d", ANS_KEY,
+	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 						myself->name, to->name, key,
 						cipher_get_nid(&to->incipher),
 						digest_get_nid(&to->indigest),
-						digest_length(&to->indigest),
+						(int)digest_length(&to->indigest),
 						to->incompression);
 }
 
