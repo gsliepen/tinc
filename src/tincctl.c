@@ -235,7 +235,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 #endif
 		/* The directory is a relative path or a filename. */
 		directory = get_current_dir_name();
-		snprintf(buf2, sizeof buf2, "%s/%s", directory, filename);
+		snprintf(buf2, sizeof buf2, "%s" SLASH "%s", directory, filename);
 		filename = buf2;
 	}
 
@@ -270,7 +270,7 @@ static bool ecdsa_keygen() {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&filename, "%s/ecdsa_key.priv", confbase);
+	xasprintf(&filename, "%s" SLASH "ecdsa_key.priv", confbase);
 	f = ask_and_open(filename, "private ECDSA key", "a");
 
 	if(!f)
@@ -290,9 +290,9 @@ static bool ecdsa_keygen() {
 	free(filename);
 
 	if(name)
-		xasprintf(&filename, "%s/hosts/%s", confbase, name);
+		xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	else
-		xasprintf(&filename, "%s/ecdsa_key.pub", confbase);
+		xasprintf(&filename, "%s" SLASH "ecdsa_key.pub", confbase);
 
 	f = ask_and_open(filename, "public ECDSA key", "a");
 
@@ -329,7 +329,7 @@ static bool rsa_keygen(int bits) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&filename, "%s/rsa_key.priv", confbase);
+	xasprintf(&filename, "%s" SLASH "rsa_key.priv", confbase);
 	f = ask_and_open(filename, "private RSA key", "a");
 
 	if(!f)
@@ -349,9 +349,9 @@ static bool rsa_keygen(int bits) {
 	free(filename);
 
 	if(name)
-		xasprintf(&filename, "%s/hosts/%s", confbase, name);
+		xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	else
-		xasprintf(&filename, "%s/rsa_key.pub", confbase);
+		xasprintf(&filename, "%s" SLASH "rsa_key.pub", confbase);
 
 	f = ask_and_open(filename, "public RSA key", "a");
 
@@ -389,13 +389,13 @@ static void make_names(void) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
 			if(!confbase) {
 				if(netname)
-					xasprintf(&confbase, "%s/%s", installdir, netname);
+					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
 		}
 		if(!pidfilename)
-			xasprintf(&pidfilename, "%s/pid", confbase);
+			xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
 		RegCloseKey(key);
 	}
 
@@ -404,16 +404,16 @@ static void make_names(void) {
 	confdir = xstrdup(CONFDIR);
 
 	if(!pidfilename)
-		xasprintf(&pidfilename, "%s/run/%s.pid", LOCALSTATEDIR, identname);
+		xasprintf(&pidfilename, "%s" SLASH "run" SLASH "%s.pid", LOCALSTATEDIR, identname);
 
 	if(netname) {
 		if(!confbase)
-			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
+			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
 		else
 			fprintf(stderr, "Both netname and configuration directory given, using the latter...\n");
 	} else {
 		if(!confbase)
-			xasprintf(&confbase, CONFDIR "/tinc");
+			xasprintf(&confbase, CONFDIR SLASH "tinc");
 	}
 
 #ifdef HAVE_MINGW
@@ -421,8 +421,8 @@ static void make_names(void) {
 		confdir = xstrdup(installdir);
 #endif
 
-	xasprintf(&tinc_conf, "%s/tinc.conf", confbase);
-	xasprintf(&hosts_dir, "%s/hosts", confbase);
+	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
+	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 }
 
 static char buffer[4096];
@@ -1160,7 +1160,7 @@ static int cmd_config(int argc, char *argv[]) {
 	// Open the right configuration file.
 	char *filename;
 	if(node)
-		xasprintf(&filename, "%s/%s", hosts_dir, node);
+		xasprintf(&filename, "%s" SLASH "%s", hosts_dir, node);
 	else
 		filename = tinc_conf;
 
@@ -1362,7 +1362,7 @@ static int cmd_init(int argc, char *argv[]) {
 	}
 
 	char *hosts_dir = NULL;
-	xasprintf(&hosts_dir, "%s/hosts", confbase);
+	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 	if(mkdir(hosts_dir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
 		return 1;
@@ -1438,10 +1438,10 @@ static int cmd_edit(int argc, char *argv[]) {
 
 	char *filename = NULL;
 
-	if(strncmp(argv[1], "hosts/", 6)) {
+	if(strncmp(argv[1], "hosts" SLASH, 6)) {
 		for(int i = 0; conffiles[i]; i++) {
 			if(!strcmp(argv[1], conffiles[i])) {
-				xasprintf(&filename, "%s/%s", confbase, argv[1]);
+				xasprintf(&filename, "%s" SLASH "%s", confbase, argv[1]);
 				break;
 			}
 		}
@@ -1450,7 +1450,7 @@ static int cmd_edit(int argc, char *argv[]) {
 	}
 
 	if(!filename) {
-		xasprintf(&filename, "%s/%s", hosts_dir, argv[1]);
+		xasprintf(&filename, "%s" SLASH "%s", hosts_dir, argv[1]);
 		char *dash = strchr(argv[1], '-');
 		if(dash) {
 			*dash++ = 0;
@@ -1484,7 +1484,7 @@ static int cmd_edit(int argc, char *argv[]) {
 
 static int export(const char *name, FILE *out) {
 	char *filename;
-	xasprintf(&filename, "%s/%s", hosts_dir, name);
+	xasprintf(&filename, "%s" SLASH "%s", hosts_dir, name);
 	FILE *in = fopen(filename, "r");
 	if(!in) {
 		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
@@ -1563,7 +1563,7 @@ static int cmd_import(int argc, char *argv[]) {
 				fclose(out);
 
 			free(filename);
-			xasprintf(&filename, "%s/%s", hosts_dir, name);
+			xasprintf(&filename, "%s" SLASH "%s", hosts_dir, name);
 
 			if(!force && !access(filename, F_OK)) {
 				fprintf(stderr, "Host configuration file %s already exists, skipping.\n", filename);

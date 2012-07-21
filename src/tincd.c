@@ -258,15 +258,15 @@ static void make_names(void) {
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
 			if(!logfilename)
-				xasprintf(&logfilename, "%s/log/%s.log", identname);
+				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", identname);
 			if(!confbase) {
 				if(netname)
-					xasprintf(&confbase, "%s/%s", installdir, netname);
+					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
 			if(!pidfilename)
-				xasprintf(&pidfilename, "%s/pid", confbase);
+				xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
 		}
 		RegCloseKey(key);
 		if(*installdir)
@@ -275,19 +275,19 @@ static void make_names(void) {
 #endif
 
 	if(!logfilename)
-		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+		xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
 
 	if(!pidfilename)
-		xasprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
 
 	if(netname) {
 		if(!confbase)
-			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
+			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
 		else
 			logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
 	} else {
 		if(!confbase)
-			xasprintf(&confbase, CONFDIR "/tinc");
+			xasprintf(&confbase, CONFDIR SLASH "tinc");
 	}
 }
 

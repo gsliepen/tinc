@@ -373,7 +373,7 @@ bool read_server_config(void) {
 
 	read_config_options(config_tree, NULL);
 
-	xasprintf(&fname, "%s/tinc.conf", confbase);
+	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
 	if(!x) {				/* System error: complain */
@@ -391,7 +391,7 @@ bool read_connection_config(connection_t *c) {
 
 	read_config_options(c->config_tree, c->name);
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);
 	free(fname);
 
@@ -400,7 +400,7 @@ bool read_connection_config(connection_t *c) {
 
 bool append_config_file(const char *name, const char *key, const char *value) {
 	char *fname;
-	xasprintf(&fname, "%s/hosts/%s", confbase, name);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 
 	FILE *fp = fopen(fname, "a");
 

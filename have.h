@@ -200,4 +200,10 @@
 #include <event.h>
 #endif
 
+#ifdef HAVE_MINGW
+#define SLASH "\\"
+#else
+#define SLASH "/"
+#endif
+
 #endif /* __TINC_SYSTEM_H__ */

@@ -231,9 +231,9 @@ bool execute_script(const char *name, char **envp) {
 	int i;
 
 #ifndef HAVE_MINGW
-	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
+	len = xasprintf(&scriptname, "\"%s" SLASH "%s\"", confbase, name);
 #else
-	len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
+	len = xasprintf(&scriptname, "\"%s" SLASH "%s.bat\"", confbase, name);
 #endif
 	if(len < 0)
 		return false;

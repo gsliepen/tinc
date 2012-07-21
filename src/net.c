@@ -278,7 +278,7 @@ int reload_configuration(void) {
 
 	read_config_options(config_tree, NULL);
 
-        xasprintf(&fname, "%s/hosts/%s", confbase, myself->name);
+        xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
         read_config_file(config_tree, fname);
 	free(fname);	
 
@@ -303,7 +303,7 @@ int reload_configuration(void) {
 			c->outgoing = NULL;
 		}
 		
-		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 		if(stat(fname, &s) || s.st_mtime > last_config_check)
 			terminate_connection(c, c->status.active);
 		free(fname);

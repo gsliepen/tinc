@@ -62,7 +62,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	char *p;
 	bool result = false;
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, n->name);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
 	init_configuration(&config_tree);
 	if(!read_config_file(config_tree, fname))
@@ -81,7 +81,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	free(fname);
 
 	if(!get_config_string(lookup_config(config_tree, "ECDSAPublicKeyFile"), &fname))
-		xasprintf(&fname, "%s/hosts/%s", confbase, n->name);
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
 	fp = fopen(fname, "r");
 
@@ -116,7 +116,7 @@ bool read_ecdsa_public_key(connection_t *c) {
 	/* Else, check for ECDSAPublicKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(c->config_tree, "ECDSAPublicKeyFile"), &fname))
-		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 
 	fp = fopen(fname, "r");
 
@@ -153,7 +153,7 @@ bool read_rsa_public_key(connection_t *c) {
 	/* Else, check for PublicKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
-		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 
 	fp = fopen(fname, "r");
 
@@ -180,7 +180,7 @@ static bool read_ecdsa_private_key(void) {
 	/* Check for PrivateKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(config_tree, "ECDSAPrivateKeyFile"), &fname))
-		xasprintf(&fname, "%s/ecdsa_key.priv", confbase);
+		xasprintf(&fname, "%s" SLASH "ecdsa_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -235,7 +235,7 @@ static bool read_rsa_private_key(void) {
 	/* Else, check for PrivateKeyFile statement and read it */
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
-		xasprintf(&fname, "%s/rsa_key.priv", confbase);
+		xasprintf(&fname, "%s" SLASH "rsa_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -299,7 +299,7 @@ void load_all_subnets(void) {
 	subnet_t *s, *s2;
 	node_t *n;
 
-	xasprintf(&dname, "%s/hosts", confbase);
+	xasprintf(&dname, "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
 	if(!dir) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
@@ -317,7 +317,7 @@ void load_all_subnets(void) {
 		//	continue;
 		#endif
 
-		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
 		init_configuration(&config_tree);
 		read_config_options(config_tree, ent->d_name);
 		read_config_file(config_tree, fname);
@@ -590,7 +590,7 @@ static bool setup_myself(void) {
 
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
-	xasprintf(&fname, "%s/hosts/%s", confbase, name);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	read_config_options(config_tree, name);
 	read_config_file(config_tree, fname);
 	free(fname);
