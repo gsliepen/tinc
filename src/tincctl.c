@@ -1234,6 +1234,14 @@ static int cmd_config(int argc, char *argv[]) {
 			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 			return 1;
 		}
+
+		// Add newline if it is missing...
+		if(*buf1 && buf1[strlen(buf1) - 1] != '\n') {
+			if(fputc('\n', tf) < 0) {
+				fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
+				return 1;
+			}
+		}
 	}
 
 	// Make sure we read everything...
