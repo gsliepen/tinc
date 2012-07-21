@@ -212,7 +212,7 @@ bool detach(void) {
 		}
 #else
 		if(!statushandle)
-			exit(install_service());
+			exit(!install_service());
 #endif
 	}
 
