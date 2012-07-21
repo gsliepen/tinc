@@ -1461,14 +1461,12 @@ static int cmd_edit(int argc, char *argv[]) {
 		}
 	}
 
-#ifndef HAVE_MINGW
-	char *editor = getenv("VISUAL") ?: getenv("EDITOR") ?: "vi";
-#else
-	char *editor = "edit";
-#endif
-
 	char *command;
-	xasprintf(&command, "\"%s\" \"%s\"", editor, filename);
+#ifndef HAVE_MINGW
+	xasprintf(&command, "\"%s\" \"%s\"", getenv("VISUAL") ?: getenv("EDITOR") ?: "vi", filename);
+#else
+	xasprintf(&command, "edit \"%s\"", filename);
+#endif
 	int result = system(command);
 	if(result)
 		return result;
