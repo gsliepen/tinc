@@ -688,10 +688,8 @@ static int cmd_start(int argc, char *argv[]) {
 		slash = c;
 #endif
 
-	if (slash++) {
-		c = xmalloc((slash - argv[0]) + sizeof("tincd"));
-		sprintf(c, "%.*stincd", (int)(slash - argv[0]), argv[0]);
-	}
+	if (slash++)
+		xasprintf(&c, "%.*stincd", (int)(slash - argv[0]), argv[0]);
 	else
 		c = "tincd";
 

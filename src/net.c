@@ -344,7 +344,7 @@ int reload_configuration(void) {
 
 		for(node = myself->subnet_tree->head; node; node = node->next) {
 			subnet_t *subnet = node->data;
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "subnet %p expires %d\n", subnet, subnet->expires);
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "subnet %p expires %d\n", subnet, (int)subnet->expires);
 			if(!subnet->expires)
 				subnet->expires = 1;
 		}
@@ -356,7 +356,7 @@ int reload_configuration(void) {
 				continue;
 
 			if((s2 = lookup_subnet(myself, subnet))) {
-				logger(DEBUG_ALWAYS, LOG_DEBUG, "read subnet that already exists: %p expires %d\n", s2, s2->expires);
+				logger(DEBUG_ALWAYS, LOG_DEBUG, "read subnet that already exists: %p expires %d\n", s2, (int)s2->expires);
 				if(s2->expires == 1)
 					s2->expires = 0;
 

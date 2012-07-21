@@ -83,10 +83,10 @@ static bool send_proxyrequest(connection_t *c) {
 				s5req[i++] = 2;
 				s5req[i++] = 1;
 				s5req[i++] = strlen(proxyuser);
-				strcpy(s5req + i, proxyuser);
+				memcpy(s5req + i, proxyuser, strlen(proxyuser));
 				i += strlen(proxyuser);
 				s5req[i++] = strlen(proxypass);
-				strcpy(s5req + i, proxypass);
+				memcpy(s5req + i, proxypass, strlen(proxypass));
 				i += strlen(proxypass);
 				c->tcplen += 2;
 			} else {
