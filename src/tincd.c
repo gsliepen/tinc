@@ -382,11 +382,6 @@ int main(int argc, char **argv) {
 
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
-	if(!event_init()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing libevent!");
-		return 1;
-	}
-
 	g_argv = argv;
 
 	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid())
@@ -438,6 +433,11 @@ int main2(int argc, char **argv) {
 		return 1;
 	}
 #endif
+
+	if(!event_init()) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing libevent!");
+		return 1;
+	}
 
 	/* Setup sockets and open device. */
 
