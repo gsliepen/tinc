@@ -1,11 +1,33 @@
 #!/usr/bin/python
 
+# tinc-gui -- GUI for controlling a running tincd
+# Copyright (C) 2009-2012 Guus Sliepen <guus@tinc-vpn.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import string
 import socket
 import wx
 import sys
+import os
+import platform
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+
+if platform.system == 'Windows':
+	import _winreg
 
 # Classes to interface with a running tinc daemon
 
@@ -198,27 +220,38 @@ class VPN:
 		return int(resp[2])
 
 	def __init__(self, netname = None, pidfile = None):
-		self.tincconf = VPN.confdir + '/'
+		if platform.system == 'Windows':
+			try:
+				reg = _winreg.ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+				key = _winreg.OpenKey(reg, "SOFTWARE\\tinc")
+				VPN.confdir = _winreg.QueryValue(key, None)
+			except WindowsError:
+				pass
 
 		if netname:
 			self.netname = netname
-			self.tincconf += netname + '/'
+			self.confbase = os.path.join(VPN.confdir, netname)
+		else:
+			self.confbase = VPN.confdir
 
-		self.tincconf += 'tinc.conf'
+		self.tincconf = os.path.join(self.confbase, 'tinc.conf')
 
-		if pidfile is not None:
+		if pidfile != None:
 			self.pidfile = pidfile
 		else:
-			self.pidfile = VPN.piddir + 'tinc.'
-			if netname:
-				self.pidfile += netname + '.'
-			self.pidfile += 'pid'
+			if platform.system == 'Windows':
+				self.pidfile = os.path.join(self.confbase, 'pid')
+			else:
+				if netname:
+					self.pidfile = os.path.join(VPN.piddir, 'tinc.' + netname + '.pid')
+				else:
+					self.pidfile = os.path.join(VPN.piddir, 'tinc.pid')
 
 # GUI starts here
 
 argv0 = sys.argv[0]
 del sys.argv[0]
-net = None
+netname = None
 pidfile = None
 
 def usage(exitcode = 0):
@@ -230,10 +263,10 @@ def usage(exitcode = 0):
 	print('\nReport bugs to tinc@tinc-vpn.org.')
 	sys.exit(exitcode)
 
-while len(sys.argv):
+while sys.argv:
 	if sys.argv[0] in ('-n', '--net'):
 		del sys.argv[0]
-		net = sys.argv[0]
+		netname = sys.argv[0]
 	elif sys.argv[0] in ('--pidfile'):
 		del sys.argv[0]
 		pidfile = sys.argv[0]
@@ -245,7 +278,13 @@ while len(sys.argv):
 
 	del sys.argv[0]
 
-vpn = VPN(net, pidfile)
+if netname == None:
+	netname = os.getenv("NETNAME")
+
+if netname == ".":
+	netname = None
+
+vpn = VPN(netname, pidfile)
 vpn.connect()
 
 class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
@@ -493,7 +532,7 @@ class NetPage(wx.Notebook):
 
 class MainWindow(wx.Frame):
 	def OnQuit(self, event):
-		self.Close(True)
+		app.ExitMainLoop()
 
 	def OnTimer(self, event):
 		vpn.refresh()
