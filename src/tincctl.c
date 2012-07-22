@@ -1361,8 +1361,6 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char *hosts_dir = NULL;
-	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 	if(mkdir(hosts_dir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
 		return 1;
@@ -1379,9 +1377,24 @@ static int cmd_init(int argc, char *argv[]) {
 
 	fclose(stdin);
 	if(!rsa_keygen(2048) || !ecdsa_keygen())
-		return false;
+		return 1;
 
-	return true;
+#ifndef HAVE_MINGW
+	char *filename;
+	xasprintf(&filename, "%s" SLASH "tinc-up", confbase);
+	if(access(filename, F_OK)) {
+		FILE *f = fopen(filename, "w");
+		if(!f) {
+			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
+			return 1;
+		}
+		fchmod(fileno(f), 0755);
+		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
+		fclose(f);
+	}
+#endif
+
+	return 0;
 
 }
 
