@@ -944,7 +944,7 @@ tinc's efficiency, even stopping the daemon for a few seconds everytime
 it does a lookup if your DNS server is not responding.
 
 This does not affect resolving hostnames to IP addresses from the
-configuration file.
+configuration file, but whether hostnames should be resolved while logging.
 
 @cindex Interface
 @item Interface = <@var{interface}>
