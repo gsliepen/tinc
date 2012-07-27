@@ -340,7 +340,7 @@ a lookup if your DNS server is not responding.
 
 .Pp
 This does not affect resolving hostnames to IP addresses from the
-host configuration files.
+host configuration files, but whether hostnames should be resolved while logging.
 
 .It Va IffOneQueue Li = yes | no Po no Pc Bq experimental
 (Linux only) Set IFF_ONE_QUEUE flag on TUN/TAP devices.
