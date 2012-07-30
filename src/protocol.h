@@ -46,6 +46,7 @@ typedef enum request_t {
 	/* Tinc 1.1 requests */
 	CONTROL,
 	REQ_PUBKEY, ANS_PUBKEY,
+	REQ_SPTPS,
 	LAST						/* Guardian for the highest request number */
 } request_t;
 

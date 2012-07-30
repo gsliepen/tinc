@@ -263,10 +263,16 @@ static void check_reachability(void) {
 
 			subnet_update(n, NULL, n->status.reachable);
 
-			if(!n->status.reachable)
+			if(!n->status.reachable) {
 				update_node_udp(n, NULL);
-			else if(n->connection)
-				send_ans_key(n);
+			} else if(n->connection) {
+				if(experimental && OPTION_VERSION(n->options) >= 2) {
+					if(n->connection->outgoing)
+						send_req_key(n);
+				} else {
+					send_ans_key(n);
+				}
+			}
 		}
 	}
 }

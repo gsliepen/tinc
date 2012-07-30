@@ -32,7 +32,7 @@ char *send_meta;
 
 ecdsa_t mykey, hiskey;
 
-static bool send_data(void *handle, const char *data, size_t len) {
+static bool send_data(void *handle, uint8_t type, const char *data, size_t len) {
 	char hex[len * 2 + 1];
 	bin2hex(data, hex, len);
 	fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);

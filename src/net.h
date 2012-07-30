@@ -83,6 +83,18 @@ typedef struct vpn_packet_t {
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
+/* Packet types when using SPTPS */
+
+#define PKT_COMPRESSED 1
+#define PKT_MAC 2
+#define PKT_PROBE 4
+
+typedef enum packet_type_t {
+	PACKET_NORMAL,
+	PACKET_COMPRESSED,
+	PACKET_PROBE
+} packet_type_t;
+
 typedef struct listen_socket_t {
 	struct event ev_tcp;
 	struct event ev_udp;
@@ -146,6 +158,8 @@ extern bool do_outgoing_connection(struct connection_t *);
 extern void handle_new_meta_connection(int, short, void *);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
+extern bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len);
+extern bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t len);
 extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);

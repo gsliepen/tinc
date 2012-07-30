@@ -25,7 +25,6 @@
 #include "cipher.h"
 #include "connection.h"
 #include "digest.h"
-#include "ecdh.h"
 #include "subnet.h"
 
 typedef struct node_status_t {
@@ -50,7 +49,7 @@ typedef struct node_t {
 	time_t last_req_key;
 
 	ecdsa_t ecdsa;				/* His public ECDSA key */
-	ecdh_t ecdh;				/* State for ECDH key exchange */
+	sptps_t sptps;
 
 	cipher_t incipher;                        /* Cipher for UDP packets */
 	digest_t indigest;                        /* Digest for UDP packets */	

@@ -31,7 +31,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_meta_sptps(void *handle, const char *buffer, size_t length) {
+bool send_meta_sptps(void *handle, uint8_t type, const char *buffer, size_t length) {
 	connection_t *c = handle;
 
 	if(!c) {

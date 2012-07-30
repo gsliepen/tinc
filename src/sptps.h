@@ -40,7 +40,7 @@
 #define SPTPS_SIG 2           // Waiting for a SIGnature record
 #define SPTPS_ACK 3           // Waiting for an ACKnowledgement record
 
-typedef bool (*send_data_t)(void *handle, const char *data, size_t len);
+typedef bool (*send_data_t)(void *handle, uint8_t type, const char *data, size_t len);
 typedef bool (*receive_record_t)(void *handle, uint8_t type, const char *data, uint16_t len);
 
 typedef struct sptps {

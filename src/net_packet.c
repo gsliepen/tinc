@@ -265,6 +265,11 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t *outpkt = pkt[0];
 	size_t outlen;
 
+	if(experimental && OPTION_VERSION(n->options) >= 2) {
+		sptps_receive_data(&n->sptps, (char *)inpkt->data - 4, inpkt->len);
+		return;
+	}
+
 	if(!cipher_active(&n->incipher)) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet",
 					n->name, n->hostname);
@@ -430,6 +435,14 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		return;
 	}
 
+	if(experimental && OPTION_VERSION(n->options) >= 2) {
+		uint8_t type = 0;
+		if(!(inpkt->data[12] | inpkt->data[13]))
+			type = PKT_PROBE;
+		sptps_send_record(&n->sptps, type, (char *)inpkt->data, inpkt->len);
+		return;
+	}
+
 	/* Compress the packet */
 
 	if(n->outcompression) {
@@ -529,6 +542,75 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 end:
 	origpkt->len = origlen;
+}
+
+bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
+	node_t *to = handle;
+
+	if(type >= SPTPS_HANDSHAKE) {
+		char buf[len * 4 / 3 + 5];
+		b64encode(data, buf, len);
+		if(!to->status.validkey)
+			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 -1", ANS_KEY, myself->name, to->name, buf);
+		else
+			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_SPTPS, buf);
+	}
+
+	/* Send the packet */
+
+	struct sockaddr *sa;
+	socklen_t sl;
+	int sock;
+
+	sa = &(to->address.sa);
+	sl = SALEN(to->address.sa);
+	sock = to->sock;
+
+	if(sendto(listen_socket[sock].udp, data, len, 0, sa, sl) < 0 && !sockwouldblock(sockerrno)) {
+		if(sockmsgsize(sockerrno)) {
+			if(to->maxmtu >= len)
+				to->maxmtu = len - 1;
+			if(to->mtu >= len)
+				to->mtu = len - 1;
+		} else {
+			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", to->name, to->hostname, sockstrerror(sockerrno));
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t len) {
+	node_t *from = handle;
+
+	if(type == SPTPS_HANDSHAKE) {
+		from->status.validkey = true;
+		logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) succesful", from->name, from->hostname);
+		return true;
+	}
+
+	if(len > MTU) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Packet from %s (%s) larger than maximum supported size (%d > %d)", from->name, from->hostname, len, MTU);
+		return false;
+	}
+
+	vpn_packet_t inpkt;
+	inpkt.len = len;
+	memcpy(inpkt.data, data, len);
+
+	if(type == PKT_PROBE) {
+		mtu_probe_h(from, &inpkt, len);
+		return true;
+
+	}
+	if(type != 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unexpected SPTPS record type %d len %d from %s (%s)", type, len, from->name, from->hostname);
+		return false;
+	}
+
+	receive_packet(from, &inpkt);
+	return true;
 }
 
 /*

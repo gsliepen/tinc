@@ -85,8 +85,8 @@ void free_node(node_t *n) {
 	cipher_close(&n->outcipher);
 	digest_close(&n->outdigest);
 
-	ecdh_free(&n->ecdh);
 	ecdsa_free(&n->ecdsa);
+	sptps_stop(&n->sptps);
 
 	if(timeout_initialized(&n->mtuevent))
 		event_del(&n->mtuevent);

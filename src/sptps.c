@@ -78,10 +78,10 @@ static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const char *data
 		if(!digest_create(&s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
 			return false;
 
-		return s->send_data(s->handle, buffer + 2, len + 21UL);
+		return s->send_data(s->handle, type, buffer + 2, len + 21UL);
 	} else {
 		// Otherwise send as plaintext
-		return s->send_data(s->handle, buffer + 2, len + 5UL);
+		return s->send_data(s->handle, type, buffer + 2, len + 5UL);
 	}
 }
 // Send a record (private version, accepts all record types, handles encryption and authentication).
@@ -110,10 +110,10 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 		if(!digest_create(&s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
 			return false;
 
-		return s->send_data(s->handle, buffer + 4, len + 19UL);
+		return s->send_data(s->handle, type, buffer + 4, len + 19UL);
 	} else {
 		// Otherwise send as plaintext
-		return s->send_data(s->handle, buffer + 4, len + 3UL);
+		return s->send_data(s->handle, type, buffer + 4, len + 3UL);
 	}
 }
 
@@ -437,6 +437,9 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		if(!s->instate)
 			return error(s, EIO, "Application record received before handshake finished");
 		if(!s->receive_record(s->handle, type, buffer + 7, len - 21))
+			return false;
+	} else if(type == SPTPS_HANDSHAKE) {
+		if(!receive_handshake(s, buffer + 7, len - 21))
 			return false;
 	} else {
 		return error(s, EIO, "Invalid record type");
