@@ -82,5 +82,6 @@ extern bool sptps_stop(sptps_t *s);
 extern bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
 extern bool sptps_receive_data(sptps_t *s, const char *data, size_t len);
 extern bool sptps_force_kex(sptps_t *s);
+extern bool sptps_verify_datagram(sptps_t *s, const char *data, size_t len);
 
 #endif

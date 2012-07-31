@@ -376,6 +376,20 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 	}
 }
 
+// Check datagram for valid HMAC
+bool sptps_verify_datagram(sptps_t *s, const char *data, size_t len) {
+	if(!s->instate || len < 21)
+		return false;
+
+	char buffer[len + 23];
+	uint16_t netlen = htons(len - 21);
+
+	memcpy(buffer, &netlen, 2);
+	memcpy(buffer + 2, data, len);
+
+	return digest_verify(&s->indigest, buffer, len - 14, buffer + len - 14);
+}
+
 // Receive incoming data, datagram version.
 static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len) {
 	if(len < (s->instate ? 21 : 5))
