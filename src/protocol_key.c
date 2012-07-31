@@ -47,7 +47,7 @@ void send_key_changed(void) {
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		if(c->status.active && c->node && c->node->status.reachable) {
-			if(!experimental || OPTION_VERSION(c->node->options) < 2)
+			if(!c->node->status.sptps)
 				send_ans_key(c->node);
 		}
 	}
@@ -57,7 +57,7 @@ void send_key_changed(void) {
 	if(experimental) {
 		for(node = node_tree->head; node; node = node->next) {
 			node_t *n = node->data;
-			if(n->status.reachable && n->status.validkey && OPTION_VERSION(n->options) >= 2)
+			if(n->status.reachable && n->status.validkey && n->status.sptps)
 				sptps_force_kex(&n->sptps);
 		}
 	}
@@ -84,7 +84,7 @@ bool key_changed_h(connection_t *c, const char *request) {
 		return true;
 	}
 
-	if(OPTION_VERSION(n->options) < 2) {
+	if(!n->status.sptps) {
 		n->status.validkey = false;
 		n->last_req_key = 0;
 	}
@@ -106,7 +106,7 @@ static bool send_initial_sptps_data(void *handle, uint8_t type, const char *data
 }
 
 bool send_req_key(node_t *to) {
-	if(experimental && OPTION_VERSION(to->options) >= 2) {
+	if(to->status.sptps) {
 		if(!node_read_ecdsa_public_key(to)) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "No ECDSA key known for %s (%s)", to->name, to->hostname);
 			send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, REQ_PUBKEY);
@@ -213,10 +213,12 @@ bool req_key_h(connection_t *c, const char *request) {
 
 	/* Check if this key request is for us */
 
-	if(to == myself) {			/* Yes, send our own key back */
+	if(to == myself) {			/* Yes */
+		/* Is this an extended REQ_KEY message? */
 		if(experimental && reqno)
 			return req_key_ext_h(c, request, from, reqno);
 
+		/* No, just send our key back */
 		send_ans_key(from);
 	} else {
 		if(tunnelserver)
@@ -235,7 +237,7 @@ bool req_key_h(connection_t *c, const char *request) {
 }
 
 bool send_ans_key(node_t *to) {
-	if(experimental && OPTION_VERSION(to->options) >= 2)
+	if(to->status.sptps)
 		abort();
 
 	size_t keylen = cipher_keylength(&myself->incipher);
@@ -329,7 +331,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* SPTPS or old-style key exchange? */
 
-	if(experimental && OPTION_VERSION(from->options) >= 2) {
+	if(from->status.sptps) {
 		char buf[strlen(key)];
 		int len = b64decode(key, buf, strlen(key));
 

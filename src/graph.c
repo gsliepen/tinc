@@ -226,6 +226,9 @@ static void check_reachability(void) {
 					   n->name, n->hostname);
 			}
 
+			if(experimental && OPTION_VERSION(n->options) >= 2)
+				n->status.sptps = true;
+
 			/* TODO: only clear status.validkey if node is unreachable? */
 
 			n->status.validkey = false;
@@ -266,7 +269,7 @@ static void check_reachability(void) {
 			if(!n->status.reachable) {
 				update_node_udp(n, NULL);
 			} else if(n->connection) {
-				if(experimental && OPTION_VERSION(n->options) >= 2) {
+				if(n->status.sptps) {
 					if(n->connection->outgoing)
 						send_req_key(n);
 				} else {

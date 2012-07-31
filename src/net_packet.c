@@ -252,7 +252,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 }
 
 static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
-	if(experimental && OPTION_VERSION(n->options) >= 2)
+	if(n->status.sptps)
 		return sptps_verify_datagram(&n->sptps, (char *)inpkt->data - 4, inpkt->len);
 
 	if(!digest_active(&n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest))
@@ -268,7 +268,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t *outpkt = pkt[0];
 	size_t outlen;
 
-	if(experimental && OPTION_VERSION(n->options) >= 2) {
+	if(n->status.sptps) {
 		sptps_receive_data(&n->sptps, (char *)inpkt->data - 4, inpkt->len);
 		return;
 	}
@@ -438,7 +438,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		return;
 	}
 
-	if(experimental && OPTION_VERSION(n->options) >= 2) {
+	if(n->status.sptps) {
 		uint8_t type = 0;
 		if(!(inpkt->data[12] | inpkt->data[13]))
 			type = PKT_PROBE;

@@ -34,7 +34,8 @@ typedef struct node_status_t {
 	unsigned int visited:1;			/* 1 if this node has been visited by one of the graph algorithms */
 	unsigned int reachable:1;		/* 1 if this node is reachable in the graph */
 	unsigned int indirect:1;		/* 1 if this node is not directly reachable by us */
-	unsigned int unused:26;
+	unsigned int sptps:1;                   /* 1 if this node supports SPTPS */
+	unsigned int unused:25;
 } node_status_t;
 
 typedef struct node_t {
