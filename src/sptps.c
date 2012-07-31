@@ -1,6 +1,7 @@
 /*
     sptps.c -- Simple Peer-to-Peer Security
-    Copyright (C) 2011 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>,
+                  2010      Brandon L. Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +27,8 @@
 #include "ecdsa.h"
 #include "prf.h"
 #include "sptps.h"
+
+unsigned int sptps_replaywin = 16;
 
 /*
    Nonce MUST be exchanged first (done)
@@ -415,15 +418,42 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		return receive_handshake(s, data + 5, len - 5);
 	}
 
-	if(seqno < s->inseqno) {
-		fprintf(stderr, "Received late or replayed packet: %d < %d\n", seqno, s->inseqno);
-		return true;
+	// Replay protection using a sliding window of configurable size.
+	// s->inseqno is expected sequence number
+	// seqno is received sequence number
+	// s->late[] is a circular buffer, a 1 bit means a packet has not been received yet
+	// The circular buffer contains bits for sequence numbers from s->inseqno - s->replaywin * 8 to (but excluding) s->inseqno.
+	if(s->replaywin) {
+		if(seqno != s->inseqno) {
+			if(seqno >= s->inseqno + s->replaywin * 8) {
+				// Prevent packets that jump far ahead of the queue from causing many others to be dropped.
+				if(s->farfuture++ < s->replaywin >> 2) {
+					fprintf(stderr, "Packet is %d seqs in the future, dropped (%u)\n", seqno - s->inseqno, s->farfuture);
+					return false;
+				}
+				// Unless we have seen lots of them, in which case we consider the others lost.
+				fprintf(stderr, "Lost %d packets\n", seqno - s->inseqno);
+				memset(s->late, 0, s->replaywin);
+			} else if (seqno < s->inseqno) {
+				// If the sequence number is farther in the past than the bitmap goes, or if the packet was already received, drop it.
+				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8))) {
+					fprintf(stderr, "Received late or replayed packet, seqno %d, last received %d", seqno, s->inseqno);
+					return false;
+				}
+			} else {
+				// We missed some packets. Mark them in the bitmap as being late.
+				for(int i = s->inseqno; i < seqno; i++)
+					s->late[(i / 8) % s->replaywin] |= 1 << i % 8;
+			}
+		}
+
+		// Mark the current packet as not being late.
+		s->late[(seqno / 8) % s->replaywin] &= ~(1 << seqno % 8);
+		s->farfuture = 0;
 	}
 
 	if(seqno > s->inseqno)
-		fprintf(stderr, "Missed %d packets\n", seqno - s->inseqno);
-
-	s->inseqno = seqno + 1;
+		s->inseqno = seqno + 1;
 
 	uint16_t netlen = htons(len - 21);
 
@@ -461,6 +491,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 	return true;
 }
+
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
 bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 	if(s->datagram)
@@ -564,6 +595,12 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 	s->datagram = datagram;
 	s->mykey = mykey;
 	s->hiskey = hiskey;
+	s->replaywin = sptps_replaywin;
+	if(s->replaywin) {
+		s->late = malloc(s->replaywin);
+		if(!s->late)
+			return error(s, errno, strerror(errno));
+	}
 
 	s->label = malloc(labellen);
 	if(!s->label)
@@ -602,5 +639,7 @@ bool sptps_stop(sptps_t *s) {
 	s->key = NULL;
 	free(s->label);
 	s->label = NULL;
+	free(s->late);
+	s->late = NULL;
 	return true;
 }
