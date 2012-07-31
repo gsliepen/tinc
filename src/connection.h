@@ -50,7 +50,6 @@ typedef struct connection_status_t {
 		unsigned int unused:20;
 } connection_status_t;
 
-#include "ecdh.h"
 #include "ecdsa.h"
 #include "edge.h"
 #include "net.h"
