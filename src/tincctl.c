@@ -714,8 +714,16 @@ static int cmd_start(int argc, char *argv[]) {
 
 static int cmd_stop(int argc, char *argv[]) {
 #ifndef HAVE_MINGW
-	if(!connect_tincd())
+	if(!connect_tincd()) {
+		if(pid) {
+			if(kill(pid, SIGTERM)) 
+				return 1;
+			fprintf(stderr, "Sent TERM signal to process with PID %u.\n", pid);
+			return 0;
+		}
+
 		return 1;
+	}
 
 	sendline(fd, "%d %d", CONTROL, REQ_STOP);
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
