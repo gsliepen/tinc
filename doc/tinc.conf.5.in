@@ -14,22 +14,12 @@ The files in the
 directory contain runtime and security information for the tinc daemon.
 
 .Sh NETWORKS
-It is perfectly ok for you to run more than one tinc daemon.
-However, in its default form,
-you will soon notice that you can't use two different configuration files without the
-.Fl c
-option.
-
-.Pp
-We have thought of another way of dealing with this: network names.
-This means that you call
-.Nm
-with the
+To distinguish multiple instances of tinc running on one computer,
+you can use the
 .Fl n
-option, which will assign a name to this daemon.
-
+option to assign a network name to each tinc daemon.
 .Pp
-The effect of this is that the daemon will set its configuration root to
+The effect of this option is that the daemon will set its configuration root to
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa / ,
 where 
 .Ar NETNAME
@@ -37,14 +27,14 @@ is your argument to the
 .Fl n
 option.
 You'll notice that messages appear in syslog as coming from
-.Nm tincd. Ns Ar NETNAME .
-
+.Nm tincd. Ns Ar NETNAME ,
+and on Linux, unless specified otherwise, the name of the virtual network interface will be the same as the network name.
 .Pp
-However, it is not strictly necessary that you call tinc with the
+It is recommended that you use network names even if you run only one instance of tinc.
+However, you can choose not to use the
 .Fl n
 option.
-In this case, the network name would just be empty,
-and it will be used as such.
+In this case, the network name would just be empty, and
 .Nm tinc
 now looks for files in
 .Pa @sysconfdir@/tinc/ ,
@@ -54,12 +44,6 @@ the configuration file should be
 .Pa @sysconfdir@/tinc/tinc.conf ,
 and the host configuration files are now expected to be in
 .Pa @sysconfdir@/tinc/hosts/ .
-
-.Pp
-But it is highly recommended that you use this feature of
-.Nm tinc ,
-because it will be so much clearer whom your daemon talks to.
-Hence, we will assume that you use it.
 
 .Sh NAMES
 Each tinc daemon should have a name that is unique in the network which it will be part of.
@@ -72,25 +56,38 @@ file.
 To make things easy,
 choose something that will give unique and easy to remember names to your tinc daemon(s).
 You could try things like hostnames, owner surnames or location names.
+However, you are only allowed to use alphanumerical characters (a-z, A-Z, and 0-9) and underscores (_) in the name.
+
+.Sh INITIAL CONFIGURATION
+If you have not configured tinc yet, you can easily create a basic configuration using the following command:
+.Bd -literal -offset indent
+.Nm tincctl Fl n Ar NETNAME Li init Ar NAME
+.Ed
+
+.Pp
+You can further change the configuration as needed either by manually editing the configuration files,
+or by using
+.Xr tincctl 8 .
 
 .Sh PUBLIC/PRIVATE KEYS
-You should use 
-.Ic tincd -K
-to generate public/private keypairs.
-It will generate two keys.
-The private key should be stored in a separate file
-.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv
-\-\- where 
-.Ar NETNAME
-stands for the network (see 
-.Sx NETWORKS )
-above.
-The public key should be stored in the host configuration file
-.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Va NAME
-\-\- where
-.Va NAME
-stands for the name of the local tinc daemon (see
-.Sx NAMES ) .
+The
+.Nm tincctl Li init
+command will have generated both RSA and ECDSA public/private keypairs.
+The private keys should be stored in files named
+.Pa rsa_key.priv
+and
+.Pa ecdsa_key.priv
+in the directory
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /
+The public keys should be stored in the host configuration file
+.Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Va NAME .
+
+The RSA keys are used for backwards compatibility with tinc version 1.0.
+If you are upgrading from version 1.0 to 1.1, you can keep the old configuration files,
+but you will need to create ECDSA keys using the following command:
+.Bd -literal -offset indent
+.Nm tincctl Fl n Ar NETNAME Li generate-ecdsa-keys
+.Ed
 
 .Sh SERVER CONFIGURATION
 The server configuration of the daemon is done in the file
@@ -118,6 +115,11 @@ it is recommended to put host specific configuration options in the host configu
 as this makes it easy to exchange with other nodes.
 
 .Pp
+You can edit the config file manually, but it is recommended that you use
+.Xr tincctl 8
+to change configuration variables for you.
+
+.Pp
 Here are all valid variables, listed in alphabetical order.
 The default value is given between parentheses.
 .Bl -tag -width indent
@@ -129,7 +131,7 @@ If
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
 
-.It Va BindToAddress Li = Ar address Oo Ar port Oc Bq experimental
+.It Va BindToAddress Li = Ar address Oo Ar port
 If your computer has more than one IPv4 or IPv6 address,
 .Nm tinc
 will by default listen on all of them for incoming connections.
@@ -147,8 +149,6 @@ To only bind to a specific port but not to a specific address, use
 .Li *
 for the
 .Ar address .
-.Pp
-This option may not work on all platforms.
 
 .It Va BindToInterface Li = Ar interface Bq experimental
 If your computer has more than one network interface,
@@ -158,6 +158,8 @@ It is possible to bind only to a single interface with this variable.
 
 .Pp
 This option may not work on all platforms.
+Also, on some platforms it will not actually bind to an interface,
+but rather to the address that the interface has at the moment a socket is created.
 
 .It Va Broadcast Li = no | mst | direct Po mst Pc Bq experimental
 This option selects the way broadcast packets are sent to other daemons.
@@ -334,7 +336,7 @@ This is less efficient, but allows the kernel to apply its routing and firewall 
 and can also help debugging.
 .El
 
-.It Va GraphDumpFile Li = Ar filename Bq experimental
+.It Va GraphDumpFile Li = Ar filename
 If this option is present,
 .Nm tinc
 will dump the current network graph to the file
@@ -373,7 +375,7 @@ This option controls the period the encryption keys used to encrypt the data are
 It is common practice to change keys at regular intervals to make it even harder for crackers,
 even though it is thought to be nearly impossible to crack a single key.
 
-.It Va LocalDiscovery Li = yes | no Po no Pc Bq experimental
+.It Va LocalDiscovery Li = yes | no Pq no
 When enabled,
 .Nm tinc
 will try to detect peers that are on the same local network.
@@ -468,7 +470,9 @@ or
 specified in the configuration file.
 
 .It Va ProcessPriority Li = low | normal | high
-When this option is used the priority of the tincd process will be adjusted.
+When this option is used the priority of the 
+.Nm tincd
+process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
 .It Va Proxy Li = socks4 | socks5 | http | exec Ar ... Bq experimental
@@ -753,6 +757,10 @@ When a subnet becomes (un)reachable, this is set to the subnet.
 When a subnet becomes (un)reachable, this is set to the subnet weight.
 .El
 
+.Pp
+Do not forget that under UNIX operating systems, you have to make the scripts executable, using the command
+.Nm chmod Li a+x Pa script .
+
 .Sh FILES
 The most important files are:
 .Bl -tag -width indent
@@ -780,6 +788,7 @@ its connection to the virtual network device.
 
 .Sh SEE ALSO
 .Xr tincd 8 ,
+.Xr tincctl 8 ,
 .Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.linuxdoc.org/LDP/nag2/ .
 

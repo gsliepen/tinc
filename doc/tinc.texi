@@ -639,7 +639,6 @@ tinc            655/udp    TINC
 * Multiple networks::
 * How connections work::
 * Configuration files::
-* Generating keypairs::
 * Network interfaces::
 * Example configuration::
 @end menu
@@ -666,9 +665,15 @@ A good resource on networking is the
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
-First, generate the configuration files (@file{tinc.conf}, your host configuration file, @file{tinc-up} and perhaps @file{tinc-down}).
-Then generate the keypairs.
-Finally, distribute the host configuration files.
+First, create the initial configuration files and public/private keypairs using the following command:
+@example
+tincctl -n @var{NETNAME} init @var{NAME}
+@end example
+Second, use @samp{tincctl -n @var{NETNAME} config ...} to further configure tinc.
+Finally, export your host configuration file using @samp{tincctl -n @var{NETNAME} export} and send it to those
+people or computers you want tinc to connect to.
+They should send you their host configuration file back, which you can import using @samp{tincctl -n @var{NETNAME} import}.
+
 These steps are described in the subsections below.
 
 
@@ -678,30 +683,29 @@ These steps are described in the subsections below.
 
 @cindex multiple networks
 @cindex netname
+
 In order to allow you to run more than one tinc daemon on one computer,
 for instance if your computer is part of more than one VPN,
 you can assign a @var{netname} to your VPN.
 It is not required if you only run one tinc daemon,
-it doesn't even have to be the same on all the sites of your VPN,
+it doesn't even have to be the same on all the nodes of your VPN,
 but it is recommended that you choose one anyway.
 
 We will asume you use a netname throughout this document.
-This means that you call tincd with the -n argument,
-which will assign a netname to this daemon.
+This means that you call tincctl with the -n argument,
+which will specify the netname.
 
-The effect of this is that the daemon will set its configuration
-root to @file{@value{sysconfdir}/tinc/@var{netname}/}, where @var{netname} is your argument to the -n
-option.  You'll notice that it appears in syslog as @file{tinc.@var{netname}}.
+The effect of this option is that tinc will set its configuration
+root to @file{@value{sysconfdir}/tinc/@var{netname}/}, where @var{netname} is your argument to the -n option.
+You will also notice that log messages it appears in syslog as coming from @file{tinc.@var{netname}},
+and on Linux, unless specified otherwise, the name of the virtual network interface will be the same as the network name.
 
 However, it is not strictly necessary that you call tinc with the -n
-option.  In this case, the network name would just be empty, and it will
-be used as such.  tinc now looks for files in @file{@value{sysconfdir}/tinc/}, instead of
-@file{@value{sysconfdir}/tinc/@var{netname}/}; the configuration file should be @file{@value{sysconfdir}/tinc/tinc.conf},
-and the host configuration files are now expected to be in @file{@value{sysconfdir}/tinc/hosts/}.
-
-But it is highly recommended that you use this feature of tinc, because
-it will be so much clearer whom your daemon talks to.  Hence, we will
-assume that you use it.
+option. If you don not use it, the network name will just be empty, and
+tinc will look for files in @file{@value{sysconfdir}/tinc/} instead of
+@file{@value{sysconfdir}/tinc/@var{netname}/};
+the configuration file will then be @file{@value{sysconfdir}/tinc/tinc.conf},
+and the host configuration files are expected to be in @file{@value{sysconfdir}/tinc/hosts/}.
 
 
 @c ==================================================================
@@ -727,6 +731,25 @@ There is no real distinction between a server and a client in tinc.
 If you wish, you can view a tinc daemon without a `ConnectTo' value as a server,
 and one which does specify such a value as a client.
 It does not matter if two tinc daemons have a `ConnectTo' value pointing to each other however.
+
+Connections specified using `ConnectTo' are so-called meta-connections.
+Tinc daemons exchange information about all other daemon they know about via these meta-connections.
+After learning about all the daemons in the VPN,
+tinc will create other connections as necessary in order to communicate with them.
+For example, if there are three daemons named A, B and C, and A has @samp{ConnectTo = B} in its tinc.conf file,
+and C has @samp{ConnectTo = B} in its tinc.conf file, then A will learn about C from B,
+and will be able to exchange VPN packets with C without the need to have @samp{ConnectTo = C} in its tinc.conf file.
+
+It could be that some daemons are located behind a Network Address Translation (NAT) device, or behind a firewall.
+In the above scenario with three daemons, if A and C are behind a NAT,
+B will automatically help A and C punch holes through their NAT,
+in a way similar to the STUN protocol, so that A and C can still communicate with each other directly.
+It is not always possible to do this however, and firewalls might also prevent direct communication.
+In that case, VPN packets between A and C will be forwarded by B.
+
+In effect, all nodes in the VPN will be able to talk to each other, as long as
+their is a path of meta-connections between them, and whenever possible, two
+nodes will communicate with each other directly.
 
 
 @c ==================================================================
@@ -756,7 +779,10 @@ listed in this document can also be put in
 put host specific configuration options in the host configuration file, as this
 makes it easy to exchange with other nodes.
 
-In this section all valid variables are listed in alphabetical order.
+You can edit the config file manually, but it is recommended that you use
+tincctl to change configuration variables for you.
+
+In the following two subsections all valid variables are listed in alphabetical order.
 The default value is given between parentheses,
 other comments are between square brackets.
 
@@ -780,7 +806,7 @@ If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
 @cindex BindToAddress
-@item BindToAddress = <@var{address}> [<@var{port}>] [experimental]
+@item BindToAddress = <@var{address}> [<@var{port}>]
 If your computer has more than one IPv4 or IPv6 address, tinc
 will by default listen on all of them for incoming connections.
 Multiple BindToAddress variables may be specified,
@@ -790,8 +816,6 @@ If no @var{port} is specified, the socket will be bound to the port specified by
 or to port 655 if neither is given.
 To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
 
-This option may not work on all platforms.
-
 @cindex BindToInterface
 @item BindToInterface = <@var{interface}> [experimental]
 If you have more than one network interface in your computer, tinc will
@@ -800,6 +824,8 @@ possible to bind tinc to a single interface like eth0 or ppp0 with this
 variable.
 
 This option may not work on all platforms.
+Also, on some platforms it will not actually bind to an interface,
+but rather to the address that the interface has at the moment a socket is created.
 
 @cindex Broadcast
 @item Broadcast = <no | mst | direct> (mst) [experimental]
@@ -965,7 +991,7 @@ and can also help debugging.
 @end table
 
 @cindex GraphDumpFile
-@item GraphDumpFile = <@var{filename}> [experimental]
+@item GraphDumpFile = <@var{filename}>
 If this option is present,
 tinc will dump the current network graph to the file @var{filename}
 every minute, unless there were no changes to the graph.
@@ -992,7 +1018,7 @@ Under Windows, this variable is used to select which network interface will be u
 If you specified a Device, this variable is almost always already correctly set.
 
 @cindex LocalDiscovery
-@item LocalDiscovery = <yes | no> (no) [experimental]
+@item LocalDiscovery = <yes | no> (no)
 When enabled, tinc will try to detect peers that are on the same local network.
 This will allow direct communication using LAN addresses, even if both peers are behind a NAT
 and they only ConnectTo a third node outside the NAT,
@@ -1369,50 +1395,115 @@ When a subnet becomes (un)reachable, this is set to the subnet.
 @node       How to configure
 @subsection How to configure
 
-@subsubheading Step 1.  Creating the main configuration file
+@subsubheading Step 1.  Creating initial configuration files.
 
-The main configuration file will be called @file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf}.
-Adapt the following example to create a basic configuration file:
-
-@example
-Name = @var{yourname}
-Device = @file{/dev/tap0}
-@end example
-
-Then, if you know to which other tinc daemon(s) yours is going to connect,
-add `ConnectTo' values.
-
-@subsubheading Step 2.  Creating your host configuration file
-
-If you added a line containing `Name = yourname' in the main configuarion file,
-you will need to create a host configuration file @file{@value{sysconfdir}/tinc/@var{netname}/hosts/yourname}.
-Adapt the following example to create a host configuration file:
+The initial directory structure, configuration files and public/private keypairs are created using the following command:
 
 @example
-Address = your.real.hostname.org
-Subnet = 192.168.1.0/24
+tincctl -n @var{netname} init @var{name}
 @end example
 
-You can also use an IP address instead of a hostname.
-The `Subnet' specifies the address range that is local for @emph{your part of the VPN only}.
-If you have multiple address ranges you can specify more than one `Subnet'.
-You might also need to add a `Port' if you want your tinc daemon to run on a different port number than the default (655).
-
-
-@c ==================================================================
-@node    Generating keypairs
-@section Generating keypairs
-
-@cindex key generation
-Now that you have already created the main configuration file and your host configuration file,
-you can easily create a public/private keypair by entering the following command:
+(You will need to run this as root, or use "sudo".)
+This will create the configuration directory @file{@value{sysconfdir}/tinc/@var{netname}.},
+and inside it will create another directory named @file{hosts/}.
+In the configuration directory, it will create the file @file{tinc.conf} with the following contents:
 
 @example
-tincctl -n @var{netname} generate-keys
+Name = @var{name}
 @end example
 
-Tinc will generate a public and a private key and ask you where to put them.
-Just press enter to accept the defaults.
+It will also create private RSA and ECDSA keys, which will be stored in the files @file{rsa_key.priv} and @file{ecdsa_key.priv}.
+It will also create a host configuration file @file{hosts/@var{name}},
+which will contain the corresponding public RSA and ECDSA keys.
+
+Finally, on UNIX operating systems, it will create an executable script @file{tinc-up},
+which will initially not do anything except warning that you should edit it.
+
+@subsubheading Step 2.  Modifying the initial configuration.
+
+Unless you want to use tinc in switch mode,
+you should now configure which range of addresses you will use on the VPN.
+Let's assume you will be part of a VPN which uses the address range 192.168.0.0/16,
+and you yourself have a smaller portion of that range: 192.168.2.0/24.
+Then you should run the following command:
+
+@example
+tincctl -n @var{netname} config add subnet 192.168.2.0/24
+@end example
+
+This will add a Subnet statement to your host configuration file.
+Try opening the file @file{@value{sysconfdir}/tinc/@var{netname}/hosts/@var{name}} in an editor.
+You should now see a file containing the public RSA and ECDSA keys (which looks like a bunch of random characters),
+and the following line at the bottom:
+
+@example
+Subnet = 192.168.2.0/24
+@end example
+
+If you will use more than one address range, you can add more Subnets.
+For example, if you also use the IPv6 subnet fec0:0:0:2::/64, you can add it as well:
+
+@example
+tincctl -n @var{netname} config add subnet fec0:0:0:2::/24
+@end example
+
+This will add another line to the file @file{hosts/@var{name}}.
+If you make a mistake, you can undo it by simply using @samp{config del} instead of @samp{config add}.
+
+If you want other tinc daemons to create meta-connections to your daemon,
+you should add your public IP address or hostname to your host configuration file.
+For example, if your hostname is foo.example.org, run:
+
+@example
+tincctl -n @var{netname} config add address foo.example.org
+@end example
+
+If you already know to which daemons your daemon should make meta-connections,
+you should configure that now as well.
+Suppose you want to connect to a daemon named "bar", run:
+
+@example
+tincctl -n @var{netname} config add connectto bar
+@end example
+
+Note that you specify the Name of the other daemon here, not an IP address or hostname!
+When you start tinc, and it tries to make a connection to "bar",
+it will look for a host configuration file named @file{hosts/bar},
+and will read Address statements and public keys from that file.
+
+@subsubheading Step 2.  Exchanging configuration files.
+
+If your daemon has a ConnectTo = bar statement in its @file{tinc.conf} file,
+or if bar has a ConnectTo your daemon, then you both need each other's host configuration files.
+You should send @file{hosts/@var{name}} to bar, and bar should send you his file which you should move to @file{hosts/bar}.
+If you are on a UNIX platform, you can easily send an email containing the necessary information using the following command
+(assuming the owner of bar has the email address bar@@example.org):
+
+@example
+tincctl -n @var{netname} export | mail -s "My config file" bar@@example.org
+@end example
+
+If the owner of bar does the same to send his host configuration file to you,
+you can probably pipe his email through the following command,
+or you can just start this command in a terminal and copy&paste the email:
+
+@example
+tincctl -n @var{netname} import
+@end example
+
+If you are the owner of bar yourself, and you have SSH access to that computer,
+you can also swap the host configuration files using the following commands:
+
+@example
+tincctl -n @var{netname} export | ssh bar.example.org tincctl -n @var{netname} import
+ssh bar.example.org tincctl -n @var{netname} export | tincctl -n @var{netname} import
+@end example
+
+You should repeat this for all nodes you ConnectTo, or which ConnectTo you.
+However, remember that you do not need to ConnectTo all nodes in the VPN;
+it is only necessary to create one or a few meta-connections,
+after the connections are made tinc will learn about all the other nodes in the VPN,
+and will automatically make other connections as necessary.
 
 
 @c ==================================================================
@@ -1435,21 +1526,31 @@ You can configure the network interface by putting ordinary ifconfig, route, and
 to a script named @file{@value{sysconfdir}/tinc/@var{netname}/tinc-up}.
 When tinc starts, this script will be executed. When tinc exits, it will execute the script named
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc-down}, but normally you don't need to create that script.
+You can manually open the script in an editor, or use the following command:
 
-An example @file{tinc-up} script:
+@example
+tincctl -n @var{netname} edit tinc-up
+@end example
+
+An example @file{tinc-up} script, that would be appropriate for the scenario in the previous section, is:
 
 @example
 #!/bin/sh
-ifconfig $INTERFACE 192.168.1.1 netmask 255.255.0.0
+ifconfig $INTERFACE 192.168.2.1 netmask 255.255.0.0
+ip addr add fec0:0:0:2::/48 dev $INTERFACE
 @end example
 
-This script gives the interface an IP address and a netmask.
-The kernel will also automatically add a route to this interface, so normally you don't need
+The first command gives the interface an IPv4 address and a netmask.
+The kernel will also automatically add an IPv4 route to this interface, so normally you don't need
 to add route commands to the @file{tinc-up} script.
 The kernel will also bring the interface up after this command.
 @cindex netmask
 The netmask is the mask of the @emph{entire} VPN network, not just your
 own subnet.
+The second command gives the interface an IPv6 address and netmask,
+which will also automatically add an IPv6 route.
+If you only want to use "ip addr" commands on Linux, don't forget that it doesn't bring the interface up, unlike ifconfig,
+so you need to add @samp{ip link set $INTERFACE up} in that case.
 
 The exact syntax of the ifconfig and route commands differs from platform to platform.
 You can look up the commands for setting addresses and adding routes in @ref{Platform specific information},
@@ -1489,6 +1590,9 @@ the real interface is also shown as a comment, to give you an idea of
 how these example host is set up. All branches use the netname `company'
 for this particular VPN.
 
+Each branch is set up using the @samp{tincctl init} and @samp{tincctl config} commands,
+here we just show the end results:
+
 @subsubheading For Branch A
 
 @emph{BranchA} would be configured like this:
@@ -1496,6 +1600,8 @@ for this particular VPN.
 In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
+#!/bin/sh
+
 # Real interface of internal network:
 # ifconfig eth0 10.1.54.1 netmask 255.255.0.0
 
@@ -1506,7 +1612,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchA
-Device = /dev/tap0
 @end example
 
 On all hosts, @file{@value{sysconfdir}/tinc/company/hosts/BranchA} contains:
@@ -1520,9 +1625,9 @@ Address = 1.2.3.4
 -----END RSA PUBLIC KEY-----
 @end example
 
-Note that the IP addresses of eth0 and tap0 are the same.
+Note that the IP addresses of eth0 and the VPN interface are the same.
 This is quite possible, if you make sure that the netmasks of the interfaces are different.
-It is in fact recommended to give both real internal network interfaces and tap interfaces the same IP address,
+It is in fact recommended to give both real internal network interfaces and VPN interfaces the same IP address,
 since that will make things a lot easier to remember and set up.
 
 
@@ -1531,6 +1636,8 @@ since that will make things a lot easier to remember and set up.
 In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
+#!/bin/sh
+
 # Real interface of internal network:
 # ifconfig eth0 10.2.43.8 netmask 255.255.0.0
 
@@ -1545,7 +1652,7 @@ ConnectTo = BranchA
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
-same as on the tap0 device.  Also, ConnectTo is given so that this node will
+same as on the VPN interface.  Also, ConnectTo is given so that this node will
 always try to connect to BranchA.
 
 On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchB}:
@@ -1565,6 +1672,8 @@ Address = 2.3.4.5
 In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
+#!/bin/sh
+
 # Real interface of internal network:
 # ifconfig eth0 10.3.69.254 netmask 255.255.0.0
 
@@ -1576,7 +1685,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 @example
 Name = BranchC
 ConnectTo = BranchA
-Device = /dev/tap1
 @end example
 
 C already has another daemon that runs on port 655, so they have to
@@ -1601,6 +1709,8 @@ Port = 2000
 In @file{@value{sysconfdir}/tinc/company/tinc-up}:
 
 @example
+#!/bin/sh
+
 # Real interface of internal network:
 # ifconfig eth0 10.4.3.32 netmask 255.255.0.0
 
@@ -1612,14 +1722,10 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 @example
 Name = BranchD
 ConnectTo = BranchC
-Device = /dev/net/tun
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
 port 2000. It knows the port number from the host configuration file.
-Also note that since D uses the tun/tap driver, the network interface
-will not be called `tun' or `tap0' or something like that, but will
-have the same name as netname.
 
 On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchD}:
 
@@ -1634,16 +1740,11 @@ Address = 4.5.6.7
 
 @subsubheading Key files
 
-A, B, C and D all have generated a public/private keypair with the following command:
+A, B, C and D all have their own public/private keypairs:
 
-@example
-tincctl -n company generate-keys
-@end example
-
-The private key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
-the public key is put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
-During key generation, tinc automatically guesses the right filenames based on the -n option and
-the Name directive in the @file{tinc.conf} file (if it is available).
+The private RSA key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
+the private ECDSA key is stored in @file{@value{sysconfdir}/tinc/company/ecdsa_key.priv},
+and the public RSA and ECDSA keys are put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
 
 @subsubheading Starting
 
@@ -1660,7 +1761,7 @@ their daemons, tinc will try connecting until they are available.
 If everything else is done, you can start tinc by typing the following command:
 
 @example
-tincd -n @var{netname}
+tincctl -n @var{netname} start
 @end example
 
 @cindex daemon
