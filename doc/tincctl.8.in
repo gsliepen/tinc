@@ -52,6 +52,11 @@ Create initial configuration files and RSA and ECDSA keypairs with default lengt
 If no
 .Ar name
 for this node is given, it will be asked for.
+.It config Oo get Oc Ar variable
+Print the current value of configuration variable
+.Ar variable .
+If more than one variable with the same name exists,
+the value of each of them will be printed on a separate line.
 .It config Oo set Oc Ar variable Ar value
 Set configuration variable
 .Ar variable

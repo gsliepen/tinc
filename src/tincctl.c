@@ -111,6 +111,7 @@ static void usage(bool status) {
 				"Valid commands are:\n"
 				"  init [name]                Create initial configuration files.\n"
 				"  config                     Change configuration:\n"
+				"    [get] VARIABLE           - print current value of VARIABLE\n"
 				"    [set] VARIABLE VALUE     - set VARIABLE to VALUE\n"
 				"    add VARIABLE VALUE       - add VARIABLE with the given VALUE\n"
 				"    del VARIABLE [VALUE]     - remove VARIABLE [only ones with watching VALUE]\n"
@@ -942,7 +943,7 @@ static int cmd_log(int argc, char *argv[]) {
 }
 
 static int cmd_pid(int argc, char *argv[]) {
-	if(!connect_tincd())
+	if(!connect_tincd() && !pid)
 		return 1;
 
 	printf("%d\n", pid);
@@ -1056,8 +1057,10 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
-	int action = 0;
-	if(!strcasecmp(argv[1], "add")) {
+	int action = -2;
+	if(!strcasecmp(argv[1], "get")) {
+		argv++, argc--;
+	} else if(!strcasecmp(argv[1], "add")) {
 		argv++, argc--, action = 1;
 	} else if(!strcasecmp(argv[1], "del")) {
 		argv++, argc--, action = -1;
@@ -1109,6 +1112,9 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(action < -1 && *value)
+		action = 0;
+
 	/* Some simple checks. */
 	bool found = false;
 
@@ -1157,8 +1163,8 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!found && action >= 0) {
-		if(force) {
+	if(!found) {
+		if(force || action < 0) {
 			fprintf(stderr, "Warning: %s is not a known configuration variable!\n", variable);
 		} else {
 			fprintf(stderr, "%s: is not a known configuration variable! Use --force to use it anyway.\n", variable);
@@ -1190,19 +1196,24 @@ static int cmd_config(int argc, char *argv[]) {
 		}
 	}
 
-	char *tmpfile;
-	xasprintf(&tmpfile, "%s.config.tmp", filename);
-	FILE *tf = fopen(tmpfile, "w");
-	if(!tf) {
-		fprintf(stderr, "Could not open temporary file %s: %s\n", tmpfile, strerror(errno));
-		return 1;
+	char *tmpfile = NULL;
+	FILE *tf = NULL;
+
+	if(action >= -1) {
+		xasprintf(&tmpfile, "%s.config.tmp", filename);
+		tf = fopen(tmpfile, "w");
+		if(!tf) {
+			fprintf(stderr, "Could not open temporary file %s: %s\n", tmpfile, strerror(errno));
+			return 1;
+		}
 	}
 
-	// Copy the file, making modifications on the fly.
+	// Copy the file, making modifications on the fly, unless we are just getting a value.
 	char buf1[4096];
 	char buf2[4096];
 	bool set = false;
 	bool removed = false;
+	found = false;
 
 	while(fgets(buf1, sizeof buf1, f)) {
 		buf1[sizeof buf1 - 1] = 0;
@@ -1224,8 +1235,12 @@ static int cmd_config(int argc, char *argv[]) {
 
 		// Did it match?
 		if(!strcasecmp(buf2, variable)) {
+			// Get
+			if(action < -1) {
+				found = true;
+				printf("%s\n", bvalue);
 			// Del
-			if(action < 0) {
+			} else if(action == -1) {
 				if(!*value || !strcasecmp(bvalue, value)) {
 					removed = true;
 					continue;
@@ -1245,17 +1260,19 @@ static int cmd_config(int argc, char *argv[]) {
 			}
 		}
 
-		// Copy original line...
-		if(fputs(buf1, tf) < 0) {
-			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
-			return 1;
-		}
-
-		// Add newline if it is missing...
-		if(*buf1 && buf1[strlen(buf1) - 1] != '\n') {
-			if(fputc('\n', tf) < 0) {
+		if(action >= -1) {
+			// Copy original line...
+			if(fputs(buf1, tf) < 0) {
 				fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 				return 1;
+			}
+
+			// Add newline if it is missing...
+			if(*buf1 && buf1[strlen(buf1) - 1] != '\n') {
+				if(fputc('\n', tf) < 0) {
+					fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
+					return 1;
+				}
 			}
 		}
 	}
@@ -1277,6 +1294,12 @@ static int cmd_config(int argc, char *argv[]) {
 			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 			return 1;
 		}
+	}
+
+	if(action < -1) {
+		if(!found)
+			fprintf(stderr, "No matching configuration variables found.\n");
+		return 0;
 	}
 
 	// Make sure we wrote everything...

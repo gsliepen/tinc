@@ -2044,6 +2044,11 @@ the value of this environment variable is used.
 Create initial configuration files and RSA and ECDSA keypairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
+@item config [get] @var{variable}
+Print the current value of configuration variable @var{variable}.
+If more than one variable with the same name exists,
+the value of each of them will be printed on a separate line.
+
 @item config [set] @var{variable} @var{value}
 Set configuration variable @var{variable} to the given @var{value}.
 All previously existing configuration variables with the same name are removed.
