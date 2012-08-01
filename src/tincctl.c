@@ -194,10 +194,15 @@ static bool parse_options(int argc, char **argv) {
 
         /* netname "." is special: a "top-level name" */
 
-        if(netname && !strcmp(netname, ".")) {
+        if(netname && (!*netname || !strcmp(netname, "."))) {
                 free(netname);
                 netname = NULL;
         }
+
+	if(netname && (strpbrk(netname, "\\/") || *netname == '.')) {
+		fprintf(stderr, "Invalid character in netname!\n");
+		return false;
+	}
 
 	return true;
 }
@@ -1344,6 +1349,9 @@ static int cmd_config(int argc, char *argv[]) {
 }
 
 bool check_id(const char *name) {
+	if(!name || !*name)
+		return false;
+
 	for(int i = 0; i < strlen(name); i++) {
 		if(!isalnum(name[i]) && name[i] != '_')
 			return false;
