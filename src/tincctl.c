@@ -738,7 +738,8 @@ static int cmd_stop(int argc, char *argv[]) {
 }
 
 static int cmd_restart(int argc, char *argv[]) {
-	return cmd_stop(argc, argv) ?: cmd_start(argc, argv);
+	cmd_stop(argc, argv);
+	return cmd_start(argc, argv);
 }
 
 static int cmd_reload(int argc, char *argv[]) {
