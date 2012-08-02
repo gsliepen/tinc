@@ -116,6 +116,7 @@ bool send_req_key(node_t *to) {
 		snprintf(label, sizeof label, "tinc UDP key expansion %s %s", myself->name, to->name);
 		sptps_stop(&to->sptps);
 		to->status.validkey = false;
+		to->incompression = myself->incompression;
 		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof label, send_initial_sptps_data, receive_sptps_record); 
 	}
 
@@ -333,6 +334,13 @@ bool ans_key_h(connection_t *c, const char *request) {
 		return send_request(to->nexthop->connection, "%s", request);
 	}
 
+	if(compression < 0 || compression > 11) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		return true;
+	}
+
+	from->outcompression = compression;
+
 	/* SPTPS or old-style key exchange? */
 
 	if(from->status.sptps) {
@@ -372,13 +380,6 @@ bool ans_key_h(connection_t *c, const char *request) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
 		return false;
 	}
-
-	if(compression < 0 || compression > 11) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		return true;
-	}
-
-	from->outcompression = compression;
 
 	/* Process key */
 

@@ -253,7 +253,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 
 static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(n->status.sptps)
-		return sptps_verify_datagram(&n->sptps, (char *)inpkt->data - 4, inpkt->len);
+		return sptps_verify_datagram(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
 
 	if(!digest_active(&n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest))
 		return false;
@@ -269,7 +269,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	size_t outlen;
 
 	if(n->status.sptps) {
-		sptps_receive_data(&n->sptps, (char *)inpkt->data - 4, inpkt->len);
+		sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
 		return;
 	}
 
@@ -388,6 +388,42 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	receive_packet(c->node, &outpkt);
 }
 
+static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
+	if(n->status.sptps) {
+		uint8_t type = 0;
+		int offset = 0;
+
+		if(!(origpkt->data[12] | origpkt->data[13])) {
+			sptps_send_record(&n->sptps, PKT_PROBE, (char *)origpkt->data, origpkt->len);
+			return;
+		}
+
+		if(routing_mode == RMODE_ROUTER)
+			offset = 14;
+		else
+			type = PKT_MAC;
+
+		if(origpkt->len < offset)
+			return;
+
+		vpn_packet_t outpkt;
+
+		if(n->outcompression) {
+			int len = compress_packet(outpkt.data + offset, origpkt->data + offset, origpkt->len - offset, n->outcompression);
+			if(len < 0) {
+				logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)", n->name, n->hostname);
+			} else if(len < origpkt->len - offset) {
+				outpkt.len = len + offset;
+				origpkt = &outpkt;
+				type |= PKT_COMPRESSED;
+			}
+		}
+
+		sptps_send_record(&n->sptps, type, (char *)origpkt->data + offset, origpkt->len - offset);
+		return;
+	}
+}
+
 static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
@@ -405,6 +441,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
 		return;
 	}
+
+	if(n->status.sptps)
+		return send_sptps_packet(n, origpkt);
 
 	/* Make sure we have a valid key */
 
@@ -435,14 +474,6 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		else
 			send_tcppacket(n->nexthop->connection, origpkt);
 
-		return;
-	}
-
-	if(n->status.sptps) {
-		uint8_t type = 0;
-		if(!(inpkt->data[12] | inpkt->data[13]))
-			type = PKT_PROBE;
-		sptps_send_record(&n->sptps, type, (char *)inpkt->data, inpkt->len);
 		return;
 	}
 
@@ -550,11 +581,11 @@ end:
 bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 	node_t *to = handle;
 
-	if(type >= SPTPS_HANDSHAKE) {
+	if(type >= SPTPS_HANDSHAKE || ((myself->options | to->options) & OPTION_TCPONLY)) {
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
 		if(!to->status.validkey)
-			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 -1", ANS_KEY, myself->name, to->name, buf);
+			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, myself->name, to->name, buf, myself->incompression);
 		else
 			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_SPTPS, buf);
 	}
@@ -599,17 +630,32 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 	}
 
 	vpn_packet_t inpkt;
-	inpkt.len = len;
-	memcpy(inpkt.data, data, len);
 
 	if(type == PKT_PROBE) {
+		inpkt.len = len;
+		memcpy(inpkt.data, data, len);
 		mtu_probe_h(from, &inpkt, len);
 		return true;
-
 	}
-	if(type != 0) {
+
+	if(type & ~(PKT_COMPRESSED | PKT_MAC)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unexpected SPTPS record type %d len %d from %s (%s)", type, len, from->name, from->hostname);
 		return false;
+	}
+
+	int offset = (type & PKT_MAC) ? 0 : 14;
+	if(type & PKT_COMPRESSED) {
+		len = uncompress_packet(inpkt.data + offset, (const uint8_t *)data, len, from->incompression);
+		if(len < 0) {
+			return false;
+		} else {
+			inpkt.len = len + offset;
+		}
+		if(inpkt.len > MAXSIZE)
+			abort();
+	} else {
+		memcpy(inpkt.data + offset, data, len);
+		inpkt.len = len + offset;
 	}
 
 	receive_packet(from, &inpkt);
@@ -642,6 +688,11 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 
 	n->out_packets++;
 	n->out_bytes += packet->len;
+
+	if(n->status.sptps) {
+		send_sptps_packet(n, packet);
+		return;
+	}
 
 	via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
