@@ -114,6 +114,8 @@ bool send_req_key(node_t *to) {
 		}
                 char label[25 + strlen(myself->name) + strlen(to->name)];
 		snprintf(label, sizeof label, "tinc UDP key expansion %s %s", myself->name, to->name);
+		sptps_stop(&to->sptps);
+		to->status.validkey = false;
 		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof label, send_initial_sptps_data, receive_sptps_record); 
 	}
 
@@ -167,6 +169,8 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 
 			char label[25 + strlen(from->name) + strlen(myself->name)];
 			snprintf(label, sizeof label, "tinc UDP key expansion %s %s", from->name, myself->name);
+			sptps_stop(&from->sptps);
+			from->status.validkey = false;
 			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data, receive_sptps_record); 
 			sptps_receive_data(&from->sptps, buf, len);
 			return true;
