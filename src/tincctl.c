@@ -21,6 +21,11 @@
 
 #include <getopt.h>
 
+#ifdef HAVE_READLINE
+#include "readline/readline.h"
+#include "readline/history.h"
+#endif
+
 #include "xalloc.h"
 #include "protocol.h"
 #include "control_common.h"
@@ -34,6 +39,7 @@
 #ifdef HAVE_MINGW
 #define mkdir(a, b) mkdir(a)
 #endif
+
 
 /* The name this program was run with. */
 static char *program_name = NULL;
@@ -62,6 +68,7 @@ static int code;
 static int req;
 static int result;
 static bool force = false;
+static bool tty = true;
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
@@ -207,14 +214,14 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
-static FILE *ask_and_open(const char *filename, const char *what, const char *mode) {
+static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask) {
 	FILE *r;
 	char *directory;
 	char buf[PATH_MAX];
 	char buf2[PATH_MAX];
 
 	/* Check stdin and stdout */
-	if(isatty(0) && isatty(1)) {
+	if(ask && tty) {
 		/* Ask for a file and/or directory name. */
 		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
 				what, filename);
@@ -263,7 +270,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
   Generate a public/private ECDSA keypair, and ask for a file to store
   them in.
 */
-static bool ecdsa_keygen() {
+static bool ecdsa_keygen(bool ask) {
 	ecdsa_t key;
 	FILE *f;
 	char *filename;
@@ -277,7 +284,7 @@ static bool ecdsa_keygen() {
 		fprintf(stderr, "Done.\n");
 
 	xasprintf(&filename, "%s" SLASH "ecdsa_key.priv", confbase);
-	f = ask_and_open(filename, "private ECDSA key", "a");
+	f = ask_and_open(filename, "private ECDSA key", "a", ask);
 
 	if(!f)
 		return false;
@@ -300,7 +307,7 @@ static bool ecdsa_keygen() {
 	else
 		xasprintf(&filename, "%s" SLASH "ecdsa_key.pub", confbase);
 
-	f = ask_and_open(filename, "public ECDSA key", "a");
+	f = ask_and_open(filename, "public ECDSA key", "a", ask);
 
 	if(!f)
 		return false;
@@ -322,7 +329,7 @@ static bool ecdsa_keygen() {
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
-static bool rsa_keygen(int bits) {
+static bool rsa_keygen(int bits, bool ask) {
 	rsa_t key;
 	FILE *f;
 	char *filename;
@@ -336,7 +343,7 @@ static bool rsa_keygen(int bits) {
 		fprintf(stderr, "Done.\n");
 
 	xasprintf(&filename, "%s" SLASH "rsa_key.priv", confbase);
-	f = ask_and_open(filename, "private RSA key", "a");
+	f = ask_and_open(filename, "private RSA key", "a", ask);
 
 	if(!f)
 		return false;
@@ -359,7 +366,7 @@ static bool rsa_keygen(int bits) {
 	else
 		xasprintf(&filename, "%s" SLASH "rsa_key.pub", confbase);
 
-	f = ask_and_open(filename, "public RSA key", "a");
+	f = ask_and_open(filename, "public RSA key", "a", ask);
 
 	if(!f)
 		return false;
@@ -609,13 +616,14 @@ static bool remove_service(void) {
 }
 #endif
 
-static bool connect_tincd() {
+static bool connect_tincd(bool verbose) {
 	if(fd >= 0)
 		return true;
 
 	FILE *f = fopen(pidfilename, "r");
 	if(!f) {
-		fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
+		if(verbose)
+			fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
 		return false;
 	}
 
@@ -623,13 +631,18 @@ static bool connect_tincd() {
 	char port[128];
 
 	if(fscanf(f, "%20d %1024s %128s port %128s", &pid, controlcookie, host, port) != 4) {
-		fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
+		if(verbose)
+			fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
+		fclose(f);
 		return false;
 	}
 
+	fclose(f);
+
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		if(verbose)
+			fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return false;
 	}
 #endif
@@ -644,13 +657,15 @@ static bool connect_tincd() {
 	struct addrinfo *res = NULL;
 
 	if(getaddrinfo(host, port, &hints, &res) || !res) {
-		fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, strerror(errno));
+		if(verbose)
+			fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, strerror(errno));
 		return false;
 	}
 
 	fd = socket(res->ai_family, SOCK_STREAM, IPPROTO_TCP);
 	if(fd < 0) {
-		fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
+		if(verbose)
+			fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -658,12 +673,14 @@ static bool connect_tincd() {
 	unsigned long arg = 0;
 
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
-		fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
+		if(verbose)
+			fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
 	}
 #endif
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
-		fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
+		if(verbose)
+			fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -673,14 +690,16 @@ static bool connect_tincd() {
 	int version;
 
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %s %d", &code, data, &version) != 3 || code != 0) {
-		fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
+		if(verbose)
+			fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
 		return false;
 	}
 
 	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
 	
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
-		fprintf(stderr, "Could not fully establish control socket connection\n");
+		if(verbose)
+			fprintf(stderr, "Could not fully establish control socket connection\n");
 		return false;
 	}
 
@@ -720,7 +739,7 @@ static int cmd_start(int argc, char *argv[]) {
 
 static int cmd_stop(int argc, char *argv[]) {
 #ifndef HAVE_MINGW
-	if(!connect_tincd()) {
+	if(!connect_tincd(true)) {
 		if(pid) {
 			if(kill(pid, SIGTERM)) 
 				return 1;
@@ -749,7 +768,7 @@ static int cmd_restart(int argc, char *argv[]) {
 }
 
 static int cmd_reload(int argc, char *argv[]) {
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
@@ -769,7 +788,7 @@ static int cmd_dump(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	bool do_graph = false;
@@ -825,7 +844,7 @@ static int cmd_dump(int argc, char *argv[]) {
 }
 
 static int cmd_purge(int argc, char *argv[]) {
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	sendline(fd, "%d %d", CONTROL, REQ_PURGE);
@@ -843,7 +862,7 @@ static int cmd_debug(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	int debuglevel = atoi(argv[1]);
@@ -860,7 +879,7 @@ static int cmd_debug(int argc, char *argv[]) {
 }
 
 static int cmd_retry(int argc, char *argv[]) {
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	sendline(fd, "%d %d", CONTROL, REQ_RETRY);
@@ -883,7 +902,7 @@ static int cmd_connect(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_CONNECT, argv[1]);
@@ -906,7 +925,7 @@ static int cmd_disconnect(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_DISCONNECT, argv[1]);
@@ -920,7 +939,7 @@ static int cmd_disconnect(int argc, char *argv[]) {
 
 static int cmd_top(int argc, char *argv[]) {
 #ifdef HAVE_CURSES
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	top(fd);
@@ -932,7 +951,7 @@ static int cmd_top(int argc, char *argv[]) {
 }
 
 static int cmd_pcap(int argc, char *argv[]) {
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	pcap(fd, stdout, argc > 1 ? atoi(argv[1]) : 0);
@@ -940,7 +959,7 @@ static int cmd_pcap(int argc, char *argv[]) {
 }
 
 static int cmd_log(int argc, char *argv[]) {
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	logcontrol(fd, stdout, argc > 1 ? atoi(argv[1]) : -1);
@@ -948,7 +967,7 @@ static int cmd_log(int argc, char *argv[]) {
 }
 
 static int cmd_pid(int argc, char *argv[]) {
-	if(!connect_tincd() && !pid)
+	if(!connect_tincd(true) && !pid)
 		return 1;
 
 	printf("%d\n", pid);
@@ -1216,6 +1235,7 @@ static int cmd_config(int argc, char *argv[]) {
 		tf = fopen(tmpfile, "w");
 		if(!tf) {
 			fprintf(stderr, "Could not open temporary file %s: %s\n", tmpfile, strerror(errno));
+			fclose(f);
 			return 1;
 		}
 	}
@@ -1340,9 +1360,7 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Silently try notifying a running tincd of changes.
-	fclose(stderr);
-
-	if(connect_tincd())
+	if(connect_tincd(false))
 		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
 
 	return 0;
@@ -1367,7 +1385,7 @@ static int cmd_init(int argc, char *argv[]) {
 	}
 
 	if(argc < 2) {
-		if(isatty(0) && isatty(1)) {
+		if(tty) {
 			char buf[1024];
 			fprintf(stdout, "Enter the Name you want your tinc node to have: ");
 			fflush(stdout);
@@ -1422,8 +1440,7 @@ static int cmd_init(int argc, char *argv[]) {
 	fprintf(f, "Name = %s\n", name);
 	fclose(f);
 
-	fclose(stdin);
-	if(!rsa_keygen(2048) || !ecdsa_keygen())
+	if(!rsa_keygen(2048, false) || !ecdsa_keygen(false))
 		return 1;
 
 #ifndef HAVE_MINGW
@@ -1446,15 +1463,15 @@ static int cmd_init(int argc, char *argv[]) {
 }
 
 static int cmd_generate_keys(int argc, char *argv[]) {
-	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048) && ecdsa_keygen());
+	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true) && ecdsa_keygen(true));
 }
 
 static int cmd_generate_rsa_keys(int argc, char *argv[]) {
-	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048);
+	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true);
 }
 
 static int cmd_generate_ecdsa_keys(int argc, char *argv[]) {
-	return !ecdsa_keygen();
+	return !ecdsa_keygen(true);
 }
 
 static int cmd_help(int argc, char *argv[]) {
@@ -1473,7 +1490,7 @@ static int cmd_info(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd())
+	if(!connect_tincd(true))
 		return 1;
 
 	return info(fd, argv[1]);
@@ -1532,9 +1549,7 @@ static int cmd_edit(int argc, char *argv[]) {
 		return result;
 
 	// Silently try notifying a running tincd of changes.
-	fclose(stderr);
-
-	if(connect_tincd())
+	if(connect_tincd(false))
 		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
 
 	return 0;
@@ -1558,6 +1573,7 @@ static int export(const char *name, FILE *out) {
 
 	if(ferror(in)) {
 		fprintf(stderr, "Error while reading configuration file %s: %s\n", filename, strerror(errno));
+		fclose(in);
 		return 1;
 	}
 
@@ -1700,6 +1716,149 @@ static const struct {
 	{NULL, NULL},
 };
 
+#ifdef HAVE_READLINE
+static char *complete_command(const char *text, int state) {
+	static int i;
+
+	if(!state)
+		i = 0;
+	else
+		i++;
+
+	while(commands[i].command) {
+		if(!strncasecmp(commands[i].command, text, strlen(text)))
+			return xstrdup(commands[i].command);
+		i++;
+	}
+
+	return NULL;
+}
+
+static char *complete_dump(const char *text, int state) {
+	const char *matches[] = {"nodes", "edges", "subnets", "connections", "graph", NULL};
+	static int i;
+
+	if(!state)
+		i = 0;
+	else
+		i++;
+
+	while(matches[i]) {
+		if(!strncasecmp(matches[i], text, strlen(text)))
+			return xstrdup(matches[i]);
+		i++;
+	}
+
+	return NULL;
+}
+
+static char **completion (const char *text, int start, int end) {
+	char **matches = NULL;
+
+	if(!start)
+		matches = rl_completion_matches(text, complete_command);
+	else if(!strncasecmp(rl_line_buffer, "dump ", 5))
+		matches = rl_completion_matches(text, complete_dump);
+
+	return matches;
+}
+#endif
+
+static int cmd_shell(int argc, char *argv[]) {
+	char *prompt;
+	xasprintf(&prompt, "%s> ", identname);
+	int result = 0;
+	char buf[4096];
+	char *line = NULL;
+	int maxargs = argc + 16;
+	char **nargv = xmalloc(maxargs * sizeof *nargv);
+	optind = argc;
+
+	for(int i = 0; i < argc; i++)
+		nargv[i] = argv[i];
+
+#ifdef HAVE_READLINE
+	rl_readline_name = "tinc";
+	rl_attempted_completion_function = completion;
+	rl_filename_completion_desired = 0;
+	char *copy = NULL;
+#endif
+
+	while(true) {
+#ifdef HAVE_READLINE
+		if(tty) {
+			free(copy);
+			free(line);
+			line = readline(prompt);
+			if(line)
+				copy = xstrdup(line);
+		} else {
+			line = fgets(buf, sizeof buf, stdin);
+		}
+#else
+		if(tty)
+			fputs(stdout, prompt);
+
+		line = fgets(buf, sizeof buf, stdin);
+#endif
+
+		if(!line)
+			break;
+
+		/* Ignore comments */
+
+		if(*line == '#')
+			continue;
+
+		/* Split */
+
+		int nargc = argc;
+		char *p = line + strspn(line, " \t\n");
+		char *next = strtok(p, " \t\n");
+
+		while(p && *p) {
+			if(nargc >= maxargs) {
+				fprintf(stderr, "next %p '%s', p %p '%s'\n", next, next, p, p);
+				abort();
+				maxargs *= 2;
+				nargv = xrealloc(nargv, maxargs * sizeof *nargv);
+			}
+
+			nargv[nargc++] = p;
+			p = next;
+			next = strtok(NULL, " \t\n");
+		}
+
+		if(nargc == argc)
+			continue;
+
+		bool found = false;
+
+		for(int i = 0; commands[i].command; i++) {
+			if(!strcasecmp(nargv[argc], commands[i].command)) {
+				result |= commands[i].function(nargc - argc - 1, nargv + argc + 1);
+				found = true;
+				break;
+			}
+		}
+
+#ifdef HAVE_READLINE
+		if(found)
+			add_history(copy);
+#endif
+
+		if(!found) {
+			fprintf(stderr, "Unknown command `%s'.\n", nargv[argc]);
+			result |= 1;
+		}
+	}
+
+	if(tty)
+		printf("\n");
+	return result;
+}
+
+
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
 
@@ -1718,11 +1877,10 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	if(optind >= argc) {
-		fprintf(stderr, "No command given.\n");
-		usage(true);
-		return 1;
-	}
+	tty = isatty(0) && isatty(1);
+
+	if(optind >= argc)
+		return cmd_shell(argc, argv);
 
 	for(int i = 0; commands[i].command; i++) {
 		if(!strcasecmp(argv[optind], commands[i].command))
