@@ -59,7 +59,6 @@ static bool cumulative = false;
 static list_t node_list;
 static struct timeval now, prev, diff;
 static int delay = 1000;
-static bool running = true;
 static bool changed = true;
 static const char *unit = "bytes";
 static float scale = 1;
@@ -247,6 +246,7 @@ static void redraw(void) {
 void top(int fd) {
 	initscr();
 	timeout(delay);
+	bool running = true;
 
 	while(running) {
 		update(fd);
