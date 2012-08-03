@@ -1752,6 +1752,88 @@ static char *complete_dump(const char *text, int state) {
 	return NULL;
 }
 
+static char *complete_config(const char *text, int state) {
+	const char *sub[] = {"get", "set", "add", "del"};
+	static int i;
+	if(!state) {
+		i = 0;
+		if(!strchr(rl_line_buffer + 7, ' '))
+			i = -4;
+		else {
+			bool found = false;
+			for(int i = 0; i < 4; i++) {
+				if(!strncasecmp(rl_line_buffer + 7, sub[i], strlen(sub[i])) && rl_line_buffer[7 + strlen(sub[i])] == ' ') {
+					found = true;
+					break;
+				}
+			}
+			if(!found)
+				return NULL;
+		}
+	} else {
+		i++;
+	}
+
+	while(i < 0 || variables[i].name) {
+		if(i < 0 && !strncasecmp(sub[i + 4], text, strlen(text)))
+			return xstrdup(sub[i + 4]);
+		if(i >= 0) {
+			char *dot = strchr(text, '.');
+			if(dot) {
+				if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
+					char *match;
+					xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
+					return match;
+				}
+			} else {
+				if(!strncasecmp(variables[i].name, text, strlen(text)))
+					return xstrdup(variables[i].name);
+			}
+		}
+		i++;
+	}
+
+	return NULL;
+}
+
+static char *complete_info(const char *text, int state) {
+	static int i;
+	if(!state) {
+		i = 0;
+		if(!connect_tincd(false))
+			return NULL;
+		// Check the list of nodes
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
+	}
+
+	while(recvline(fd, line, sizeof line)) {
+		char item[4096];
+		int n = sscanf(line, "%d %d %s", &code, &req, item);
+		if(n == 2) {
+			i++;
+			if(i >= 2)
+				break;
+			else
+				continue;
+		}
+
+		if(n != 3) {
+			fprintf(stderr, "Unable to parse dump from tincd, n = %d, i = %d.\n", n, i);
+			break;
+		}
+
+		if(!strncmp(item, text, strlen(text)))
+			return xstrdup(strip_weight(item));
+	}
+
+	return NULL;
+}
+
+static char *complete_nothing(const char *text, int state) {
+	return NULL;
+}
+
 static char **completion (const char *text, int start, int end) {
 	char **matches = NULL;
 
@@ -1759,6 +1841,10 @@ static char **completion (const char *text, int start, int end) {
 		matches = rl_completion_matches(text, complete_command);
 	else if(!strncasecmp(rl_line_buffer, "dump ", 5))
 		matches = rl_completion_matches(text, complete_dump);
+	else if(!strncasecmp(rl_line_buffer, "config ", 7))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "info ", 5))
+		matches = rl_completion_matches(text, complete_info);
 
 	return matches;
 }
@@ -1779,6 +1865,7 @@ static int cmd_shell(int argc, char *argv[]) {
 
 #ifdef HAVE_READLINE
 	rl_readline_name = "tinc";
+	rl_completion_entry_function = complete_nothing;
 	rl_attempted_completion_function = completion;
 	rl_filename_completion_desired = 0;
 	char *copy = NULL;
@@ -1789,6 +1876,7 @@ static int cmd_shell(int argc, char *argv[]) {
 		if(tty) {
 			free(copy);
 			free(line);
+			rl_basic_word_break_characters = "\t\n ";
 			line = readline(prompt);
 			if(line)
 				copy = xstrdup(line);

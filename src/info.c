@@ -33,7 +33,7 @@ void logger(int level, int priority, const char *format, ...) {
         va_end(ap);
 }
 
-static char *strip_weight(char *netstr) {
+char *strip_weight(char *netstr) {
 	int len = strlen(netstr);
 	if(len >= 3 && !strcmp(netstr + len - 3, "#10"))
 		netstr[len - 3] = 0;

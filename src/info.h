@@ -21,6 +21,7 @@
 #define __TINC_INFO_H__
 
 extern int info(int fd, const char *item);
+extern char *strip_weight(char *);
 
 #endif
 
