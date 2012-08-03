@@ -44,6 +44,9 @@
 /* The name this program was run with. */
 static char *program_name = NULL;
 
+static char **orig_argv;
+static int orig_argc;
+
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
 
@@ -708,33 +711,57 @@ static bool connect_tincd(bool verbose) {
 
 
 static int cmd_start(int argc, char *argv[]) {
-	int i, j;
-	char *c;
+	if(connect_tincd(false)) {
+		if(netname)
+			fprintf(stderr, "A tincd is already running for net `%s' with pid %d.\n", netname, pid);
+		else
+			fprintf(stderr, "A tincd is already running with pid %d.\n", pid);
+		return 0;
+	}
 
-	argc += optind;
-	argv -= optind;
-	char *slash = strrchr(argv[0], '/');
+	char *c;
+	char *slash = strrchr(program_name, '/');
 
 #ifdef HAVE_MINGW
-	if ((c = strrchr(argv[0], '\\')) > slash)
+	if ((c = strrchr(program_name, '\\')) > slash)
 		slash = c;
 #endif
 
 	if (slash++)
-		xasprintf(&c, "%.*stincd", (int)(slash - argv[0]), argv[0]);
+		xasprintf(&c, "%.*stincd", (int)(slash - program_name), program_name);
 	else
 		c = "tincd";
 
-	argv[0] = c;
+	int nargc = 0;
+	char **nargv = xmalloc_and_zero((orig_argc + argc) * sizeof *nargv);
 
-	for(i = j = 1; argv[i]; ++i)
-		if (i != optind && strcmp(argv[i], "--") != 0)
-			argv[j++] = argv[i];
+	for(int i = 0; i < orig_argc; i++)
+		nargv[nargc++] = orig_argv[i];
+	for(int i = 1; i < argc; i++)
+		nargv[nargc++] = argv[i];
 
-	argv[j] = NULL;
-	execvp(c, argv);
-	fprintf(stderr, "Could not start %s: %s\n", c, strerror(errno));
+#ifdef HAVE_MINGW
+	execvp(c, nargv);
+	fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
 	return 1;
+#else
+	pid_t pid = fork();
+	if(pid == -1) {
+		fprintf(stderr, "Could not fork: %s\n", strerror(errno));
+		return 1;
+	}
+
+	if(!pid)
+		exit(execvp(c, nargv));
+	
+	int status = -1;
+	if(waitpid(pid, &status, 0) != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
+		fprintf(stderr, "Error starting %s\n", c);
+		return 1;
+	}
+
+	return 0;
+#endif
 }
 
 static int cmd_stop(int argc, char *argv[]) {
@@ -759,6 +786,10 @@ static int cmd_stop(int argc, char *argv[]) {
 	if(!remove_service())
 		return 1;
 #endif
+	close(fd);
+	pid = 0;
+	fd = -1;
+
 	return 0;
 }
 
@@ -1949,6 +1980,8 @@ static int cmd_shell(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
+	orig_argv = argv;
+	orig_argc = argc;
 
 	if(!parse_options(argc, argv))
 		return 1;
