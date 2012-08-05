@@ -1951,6 +1951,9 @@ static int cmd_shell(int argc, char *argv[]) {
 		if(nargc == argc)
 			continue;
 
+		if(!strcasecmp(nargv[argc], "exit") || !strcasecmp(nargv[argc], "quit"))
+			return result;
+
 		bool found = false;
 
 		for(int i = 0; commands[i].command; i++) {
@@ -1962,7 +1965,7 @@ static int cmd_shell(int argc, char *argv[]) {
 		}
 
 #ifdef HAVE_READLINE
-		if(found)
+		if(tty && found)
 			add_history(copy);
 #endif
 
