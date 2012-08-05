@@ -1916,7 +1916,7 @@ static int cmd_shell(int argc, char *argv[]) {
 		}
 #else
 		if(tty)
-			fputs(stdout, prompt);
+			fputs(prompt, stdout);
 
 		line = fgets(buf, sizeof buf, stdin);
 #endif
