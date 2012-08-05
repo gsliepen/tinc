@@ -1,0 +1,83 @@
+_tinc() {
+	local cur prev opts confvars commands nets
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+	opts="-c -d -D -K -n -o -L -R -U --config --no-detach --debug --net --option --mlock --logfile --pidfile --chroot --user --help --version"
+	confvars="Address AddressFamily BindToAddress BindToInterface Broadcast Cipher ClampMSS Compression ConnectTo DecrementTTL Device DeviceType Digest DirectOnly ECDSAPrivateKeyFile ECDSAPublicKey ECDSAPublicKeyFile ExperimentalProtocol Forwarding GraphDumpFile Hostnames IffOneQueue IndirectData Interface KeyExpire LocalDiscovery MACExpire MACLength MaxOutputBufferSize MaxTimeout Mode Name PMTU PMTUDiscovery PingInterval PingTimeout Port PriorityInheritance PrivateKeyFile ProcessPriority Proxy PublicKeyFile ReplayWindow StrictSubnets Subnet TCPOnly TunnelServer UDPRcvBuf UDPSndBuf VDEGroup VDEPort Weight"
+	commands="config connect debug disconnect dump edit export export-all generate-ecdsa-keys generate-keys generate-rsa-keys help import info init log pcap pid purge reload restart retry start stop top version"
+
+	case ${prev} in
+		-c|--config)
+        	compopt -o dirnames 2>/dev/null
+		return 0
+		;;
+		-n|--net)
+		nets=""
+		pushd /etc/tinc >/dev/null 2>/dev/null
+		for dir in *; do
+			if [[ -f "$dir/tinc.conf" ]]; then
+				nets="$nets $dir"
+			fi
+		done
+		popd >/dev/null 2>/dev/null
+		COMPREPLY=( $(compgen -W "${nets}" -- ${cur}) )
+		return 0
+		;;
+		-o|--option)
+		compopt -o nospace
+		COMPREPLY=( $(compgen -W "${confvars}" -- ${cur}) )
+		if [[ ${#COMPREPLY[*]} == 1 ]] ; then
+			COMPREPLY=$COMPREPLY=
+		fi
+		return 0
+		;;
+		-U|--user)
+		COMPREPLY=( $(compgen -u ${cur}) )
+		return 0
+		;;
+		--logfile|--pidfile)
+        	compopt -o filenames 2>/dev/null
+		COMPREPLY=( $(compgen -f ${cur}) )
+		return 0
+	esac
+	if [[ ${cur} == -* ]] ; then
+		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+		return 0
+	fi
+	if [[ $1 == "d" ]]; then
+		if [[ -z ${cur} ]] ; then 
+			COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+		fi
+		return 0
+	fi
+	COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+	case $prev in
+		config)
+		COMPREPLY=( $(compgen -W "get set add del ${confvars}" -- ${cur}) )
+		return 0
+		;;
+		get|set|add|del)
+		COMPREPLY=( $(compgen -W "${confvars}" -- ${cur}) )
+		;;
+		dump)
+		COMPREPLY=( $(compgen -W "nodes edges subnets connections graph" -- ${cur}) )
+		return 0
+		;;
+	esac
+	if [[ -z ${cur} ]] ; then 
+		COMPREPLY=( $(compgen -W "${opts} ${commands}" -- ${cur}) )
+	fi
+	return 0
+}
+
+_tincd() {
+	_tinc d;
+}
+
+_tincctl() {
+	_tinc ctl;
+}
+
+complete -F _tincd tincd
+complete -F _tincctl tincctl
