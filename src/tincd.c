@@ -467,8 +467,9 @@ static bool drop_privs() {
 			       "initgroups", strerror(errno));
 			return false;
 		}
-		endgrent();
-		endpwent();
+        // Not supported in android NDK
+		//endgrent();
+		//endpwent();
 	}
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
