@@ -376,6 +376,16 @@ bool execute_script(const char *name, char **envp) {
 		free(scriptname);
 		return true;
 	}
+    else
+    {
+        // Ugly hard-code allowing execution of scripts on android without execution flag (such as on /sdcard)
+        free(scriptname);
+        len = xasprintf(&scriptname, "/system/bin/sh \"%s/%s\"", confbase, name);
+        if(len < 0)
+        {
+            return false;
+        }
+    }
 #endif
 
 	ifdebug(STATUS) logger(LOG_INFO, "Executing script %s", name);
