@@ -643,6 +643,14 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 		return false;
 	}
 
+	/* Check if we have the headers we need */
+	if(routing_mode != RMODE_ROUTER && !(type & PKT_MAC)) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Received packet from %s (%s) without MAC header (maybe Mode is not set correctly)", from->name, from->hostname);
+		return false;
+	} else if(routing_mode == RMODE_ROUTER && (type & PKT_MAC)) {
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Received packet from %s (%s) with MAC header (maybe Mode is not set correctly)", from->name, from->hostname);
+	}
+
 	int offset = (type & PKT_MAC) ? 0 : 14;
 	if(type & PKT_COMPRESSED) {
 		len = uncompress_packet(inpkt.data + offset, (const uint8_t *)data, len, from->incompression);
@@ -656,6 +664,25 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 	} else {
 		memcpy(inpkt.data + offset, data, len);
 		inpkt.len = len + offset;
+	}
+
+	/* Generate the Ethernet packet type if necessary */
+	if(offset) {
+		switch(inpkt.data[14] >> 4) {
+			case 4:
+				inpkt.data[12] = 0x08;
+				inpkt.data[13] = 0x00;
+				break;
+			case 6:
+				inpkt.data[12] = 0x86;
+				inpkt.data[13] = 0xDD;
+				break;
+			default:
+				logger(DEBUG_TRAFFIC, LOG_ERR,
+						   "Unknown IP version %d while reading packet from %s (%s)",
+						   inpkt.data[14] >> 4, from->name, from->hostname);
+				return false;
+		}
 	}
 
 	receive_packet(from, &inpkt);
