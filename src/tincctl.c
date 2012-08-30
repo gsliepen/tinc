@@ -928,7 +928,7 @@ static int cmd_connect(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!check_id(argv[2])) {
+	if(!check_id(argv[1])) {
 		fprintf(stderr, "Invalid name for node.\n");
 		return 1;
 	}
@@ -951,7 +951,7 @@ static int cmd_disconnect(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!check_id(argv[2])) {
+	if(!check_id(argv[1])) {
 		fprintf(stderr, "Invalid name for node.\n");
 		return 1;
 	}
