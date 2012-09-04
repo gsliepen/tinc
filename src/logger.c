@@ -88,6 +88,7 @@ void reopenlogger() {
 
 void logger(int level, int priority, const char *format, ...) {
 	va_list ap;
+	int len;
 	char timestr[32] = "";
 	char message[1024] = "";
 	time_t now;
@@ -101,8 +102,11 @@ void logger(int level, int priority, const char *format, ...) {
 		return;
 
 	va_start(ap, format);
-	vsnprintf(message, sizeof message, format, ap);
+	len = vsnprintf(message, sizeof message, format, ap);
 	va_end(ap);
+
+	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
+		message[len - 1] = 0;
 
 	if(level <= debug_level) {
 		switch(logmode) {

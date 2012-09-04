@@ -306,7 +306,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	int fd[2];
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s\n", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s", strerror(errno));
 		return;
 	}
 
@@ -339,7 +339,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 
 	int result = system(command);
 	if(result < 0)
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not execute %s: %s\n", command, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not execute %s: %s", command, strerror(errno));
 	else if(result)
 		logger(DEBUG_ALWAYS, LOG_ERR, "%s exited with non-zero status %d", command, result);
 	exit(result);
