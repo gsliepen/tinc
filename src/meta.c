@@ -39,8 +39,6 @@ bool send_meta_sptps(void *handle, uint8_t type, const char *buffer, size_t leng
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "send_meta_sptps(%s, %p, %d)", c->name, buffer, (int)length);
-
 	buffer_add(&c->outbuf, buffer, length);
 	event_add(&c->outevent, NULL);
 
@@ -97,8 +95,6 @@ bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t l
 		logger(DEBUG_ALWAYS, LOG_ERR, "receive_meta_sptps() called with NULL pointer!");
 		abort();
 	}
-
-	logger(DEBUG_META, LOG_DEBUG, "receive_meta_sptps(%s, %d, %p, %hu)", c->name, type, data, length);
 
 	if(type == SPTPS_HANDSHAKE) {
 		if(c->allow_request == ACK)
@@ -161,10 +157,8 @@ bool receive_meta(connection_t *c) {
 	}
 
 	do {
-		if(c->protocol_minor >= 2) {
-			logger(DEBUG_META, LOG_DEBUG, "Receiving %d bytes of SPTPS data", inlen);
+		if(c->protocol_minor >= 2)
 			return sptps_receive_data(&c->sptps, bufp, inlen);
-		}
 
 		if(!c->status.decryptin) {
 			endp = memchr(bufp, '\n', inlen);
@@ -179,7 +173,6 @@ bool receive_meta(connection_t *c) {
 			bufp = endp;
 		} else {
 			size_t outlen = inlen;
-			logger(DEBUG_META, LOG_DEBUG, "Received encrypted %d bytes", inlen);
 
 			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
