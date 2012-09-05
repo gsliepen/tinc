@@ -21,16 +21,17 @@
 #include "system.h"
 
 #include "control_common.h"
-#include "splay_tree.h"
+#include "hash.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
+#include "splay_tree.h"
 #include "utils.h"
 #include "xalloc.h"
 
 splay_tree_t *node_tree;			/* Known nodes, sorted by name */
-splay_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
+static hash_t *node_udp_cache;
 
 node_t *myself;
 
@@ -38,24 +39,13 @@ static int node_compare(const node_t *a, const node_t *b) {
 	return strcmp(a->name, b->name);
 }
 
-static int node_udp_compare(const node_t *a, const node_t *b) {
-	int result;
-
-	result = sockaddrcmp(&a->address, &b->address);
-
-	if(result)
-		return result;
-
-	return (a->name && b->name) ? strcmp(a->name, b->name) : 0;
-}
-
 void init_nodes(void) {
 	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
-	node_udp_tree = splay_alloc_tree((splay_compare_t) node_udp_compare, NULL);
+	node_udp_cache = hash_alloc(0x100, sizeof(sockaddr_t));
 }
 
 void exit_nodes(void) {
-	splay_delete_tree(node_udp_tree);
+	hash_free(node_udp_cache);
 	splay_delete_tree(node_tree);
 }
 
@@ -124,7 +114,6 @@ void node_del(node_t *n) {
 		edge_del(e);
 	}
 
-	splay_delete(node_udp_tree, n);
 	splay_delete(node_tree, n);
 }
 
@@ -137,12 +126,7 @@ node_t *lookup_node(char *name) {
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
-	node_t n = {NULL};
-
-	n.address = *sa;
-	n.name = NULL;
-
-	return splay_search(node_udp_tree, &n);
+	return hash_search(node_udp_cache, sa);
 }
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
@@ -151,15 +135,15 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		return;
 	}
 
-	splay_delete(node_udp_tree, n);
-
 	if(n->hostname)
 		free(n->hostname);
 
+	hash_insert(node_udp_cache, &n->address, NULL);
+
 	if(sa) {
 		n->address = *sa;
+		hash_insert(node_udp_cache, sa, n);
 		n->hostname = sockaddr2hostname(&n->address);
-		splay_insert(node_udp_tree, n);
 		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
 		memset(&n->address, 0, sizeof n->address);

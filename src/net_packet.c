@@ -773,7 +773,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 			if(from != myself)
 				break;
 
-			for(node = node_udp_tree->head; node; node = node->next) {
+			for(node = node_tree->head; node; node = node->next) {
 				n = node->data;
 
 				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
@@ -823,7 +823,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 void handle_incoming_vpn_data(int sock, short events, void *data) {
 	vpn_packet_t pkt;
 	char *hostname;
-	sockaddr_t from;
+	sockaddr_t from = {{0}};
 	socklen_t fromlen = sizeof from;
 	node_t *n;
 	int len;

@@ -91,7 +91,6 @@ typedef struct node_t {
 
 extern struct node_t *myself;
 extern splay_tree_t *node_tree;
-extern splay_tree_t *node_udp_tree;
 
 extern void init_nodes(void);
 extern void exit_nodes(void);
