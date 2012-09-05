@@ -23,6 +23,7 @@
 #include "splay_tree.h"
 #include "control_common.h"
 #include "device.h"
+#include "hash.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
@@ -38,25 +39,14 @@ splay_tree_t *subnet_tree;
 
 /* Subnet lookup cache */
 
-static ipv4_t cache_ipv4_address[2];
-static subnet_t *cache_ipv4_subnet[2];
-static bool cache_ipv4_valid[2];
-static int cache_ipv4_slot;
-
-static ipv6_t cache_ipv6_address[2];
-static subnet_t *cache_ipv6_subnet[2];
-static bool cache_ipv6_valid[2];
-static int cache_ipv6_slot;
-
-static mac_t cache_mac_address[2];
-static subnet_t *cache_mac_subnet[2];
-static bool cache_mac_valid[2];
-static int cache_mac_slot;
+hash_t *ipv4_cache;
+hash_t *ipv6_cache;
+hash_t *mac_cache;
 
 void subnet_cache_flush(void) {
-	cache_ipv4_valid[0] = cache_ipv4_valid[1] = false;
-	cache_ipv6_valid[0] = cache_ipv6_valid[1] = false;
-	cache_mac_valid[0] = cache_mac_valid[1] = false;
+	hash_clear(ipv4_cache);
+	hash_clear(ipv6_cache);
+	hash_clear(mac_cache);
 }
 
 /* Initialising trees */
@@ -64,11 +54,17 @@ void subnet_cache_flush(void) {
 void init_subnets(void) {
 	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
 
-	subnet_cache_flush();
+	ipv4_cache = hash_alloc(0x100, sizeof(ipv4_t));
+	ipv6_cache = hash_alloc(0x100, sizeof(ipv6_t));
+	mac_cache = hash_alloc(0x100, sizeof(mac_t));
 }
 
 void exit_subnets(void) {
 	splay_delete_tree(subnet_tree);
+
+	hash_free(ipv4_cache);
+	hash_free(ipv6_cache);
+	hash_free(mac_cache);
 }
 
 splay_tree_t *new_subnet_tree(void) {
@@ -116,18 +112,11 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 	subnet_t *p, *r = NULL;
 	splay_node_t *n;
-	int i;
 
 	// Check if this address is cached
 
-	for(i = 0; i < 2; i++) {
-		if(!cache_mac_valid[i])
-			continue;
-		if(owner && cache_mac_subnet[i] && cache_mac_subnet[i]->owner != owner)
-			continue;
-		if(!memcmp(address, &cache_mac_address[i], sizeof *address))
-			return cache_mac_subnet[i];
-	}
+	if((r = hash_search(mac_cache, address)))
+		return r;
 
 	// Search all subnets for a matching one
 
@@ -146,10 +135,8 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Cache the result
 
-	cache_mac_slot = !cache_mac_slot;
-	memcpy(&cache_mac_address[cache_mac_slot], address, sizeof *address);
-	cache_mac_subnet[cache_mac_slot] = r;
-	cache_mac_valid[cache_mac_slot] = true;
+	if(r)
+		hash_insert(mac_cache, address, r);
 
 	return r;
 }
@@ -157,16 +144,11 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	subnet_t *p, *r = NULL;
 	splay_node_t *n;
-	int i;
 
 	// Check if this address is cached
 
-	for(i = 0; i < 2; i++) {
-		if(!cache_ipv4_valid[i])
-			continue;
-		if(!memcmp(address, &cache_ipv4_address[i], sizeof *address))
-			return cache_ipv4_subnet[i];
-	}
+	if((r = hash_search(ipv4_cache, address)))
+		return r;
 
 	// Search all subnets for a matching one
 
@@ -185,10 +167,8 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Cache the result
 
-	cache_ipv4_slot = !cache_ipv4_slot;
-	memcpy(&cache_ipv4_address[cache_ipv4_slot], address, sizeof *address);
-	cache_ipv4_subnet[cache_ipv4_slot] = r;
-	cache_ipv4_valid[cache_ipv4_slot] = true;
+	if(r)
+		hash_insert(ipv4_cache, address, r);
 
 	return r;
 }
@@ -196,16 +176,11 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	subnet_t *p, *r = NULL;
 	splay_node_t *n;
-	int i;
 
 	// Check if this address is cached
 
-	for(i = 0; i < 2; i++) {
-		if(!cache_ipv6_valid[i])
-			continue;
-		if(!memcmp(address, &cache_ipv6_address[i], sizeof *address))
-			return cache_ipv6_subnet[i];
-	}
+	if((r = hash_search(ipv6_cache, address)))
+		return r;
 
 	// Search all subnets for a matching one
 
@@ -224,10 +199,8 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Cache the result
 
-	cache_ipv6_slot = !cache_ipv6_slot;
-	memcpy(&cache_ipv6_address[cache_ipv6_slot], address, sizeof *address);
-	cache_ipv6_subnet[cache_ipv6_slot] = r;
-	cache_ipv6_valid[cache_ipv6_slot] = true;
+	if(r)
+		hash_insert(ipv6_cache, address, r);
 
 	return r;
 }
