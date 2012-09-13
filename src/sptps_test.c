@@ -25,10 +25,9 @@
 #include "utils.h"
 
 // Symbols necessary to link with logger.o
-char *logfilename;
-char *connection_tree;
-char *send_request;
-char *send_meta;
+bool send_request(void *c, const char *msg, ...) { return false; }
+struct splay_tree_t *connection_tree = NULL;
+bool send_meta(void *c, const char *msg , int len) { return false; }
 
 ecdsa_t mykey, hiskey;
 
