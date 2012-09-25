@@ -131,7 +131,7 @@ If
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
 
-.It Va BindToAddress Li = Ar address Oo Ar port
+.It Va BindToAddress Li = Ar address Op Ar port
 If your computer has more than one IPv4 or IPv6 address,
 .Nm tinc
 will by default listen on all of them for incoming connections.
