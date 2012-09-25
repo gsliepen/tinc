@@ -55,12 +55,9 @@ static bool setup_device(void) {
 		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-#ifdef HAVE_LINUX_IF_TUN_H
-		if (netname != NULL)
+		if(netname)
 			iface = xstrdup(netname);
-#else
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
-#endif
+
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
 	if(device_fd < 0) {
@@ -104,12 +101,7 @@ static bool setup_device(void) {
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		if(iface) free(iface);
-		iface = xstrdup(ifrname);
-	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Old ioctl() request was needed for %s", device);
-		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		if(iface) free(iface);
+		free(iface);
 		iface = xstrdup(ifrname);
 	}
 
