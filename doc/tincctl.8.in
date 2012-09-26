@@ -124,7 +124,7 @@ Dump a list of all known connections in the VPN.
 Dump a list of all known subnets in the VPN.
 .It dump connections
 Dump a list of all meta connections with ourself.
-.It dump graph
+.It dump graph | digraph
 Dump a graph of the VPN in
 .Xr dotty 1
 format.

@@ -2211,7 +2211,7 @@ Dump a list of all known subnets in the VPN.
 @item dump connections
 Dump a list of all meta connections with ourself.
 
-@item dump graph
+@item dump graph | digraph
 Dump a graph of the VPN in dotty format.
 
 @item info @var{node} | @var{subnet} | @var{address}
