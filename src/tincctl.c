@@ -138,7 +138,7 @@ static void usage(bool status) {
 				"    edges                    - all known connections in the VPN\n"
 				"    subnets                  - all known subnets in the VPN\n"
 				"    connections              - all meta connections with ourself\n"
-				"    graph                    - graph of the VPN in dotty format\n"
+				"    [di]graph                - graph of the VPN in dotty format\n"
 				"  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
 				"  purge                      Purge unreachable nodes\n"
 				"  debug N                    Set debug level\n"
@@ -822,7 +822,7 @@ static int cmd_dump(int argc, char *argv[]) {
 	if(!connect_tincd(true))
 		return 1;
 
-	bool do_graph = false;
+	int do_graph = 0;
 
 	if(!strcasecmp(argv[1], "nodes"))
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
@@ -835,14 +835,20 @@ static int cmd_dump(int argc, char *argv[]) {
 	else if(!strcasecmp(argv[1], "graph")) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
-		do_graph = true;
+		do_graph = 1;
+	} else if(!strcasecmp(argv[1], "digraph")) {
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
+		sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
+		do_graph = 2;
 	} else {
 		fprintf(stderr, "Unknown dump type '%s'.\n", argv[1]);
 		usage(true);
 		return 1;
 	}
 
-	if(do_graph)
+	if(do_graph == 1)
+		printf("graph {\n");
+	else if(do_graph == 2)
 		printf("digraph {\n");
 
 	while(recvline(fd, line, sizeof line)) {
@@ -919,8 +925,12 @@ static int cmd_dump(int argc, char *argv[]) {
 		} else {
 			if(req == REQ_DUMP_NODES)
 				printf(" %s [label = \"%s\"];\n", node1, node1);
-			else
-				printf(" %s -> %s;\n", node1, node2);
+			else {
+				if(do_graph == 1 && strcmp(node1, node2) > 0)
+					printf(" %s -- %s;\n", node1, node2);
+				else if(do_graph == 2)
+					printf(" %s -> %s;\n", node1, node2);
+			}
 		}
 	}
 
