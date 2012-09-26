@@ -59,18 +59,19 @@ static int info_node(int fd, const char *item) {
        	short int pmtu, minmtu, maxmtu;
 	unsigned int options;
 	node_status_t status;
+	long int last_state_change;
 
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)", &code, &req, node, host, port, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu);
+		int n = sscanf(line, "%d %d %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd) %ld", &code, &req, node, host, port, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
 		if(n == 2)
 			break;
 
-		if(n != 17) {
+		if(n != 18) {
 			*port = 0;
-			n = sscanf(line, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)", &code, &req, node, host, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu);
+			n = sscanf(line, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd) %ld", &code, &req, node, host, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
-			if(n != 16) {
+			if(n != 17) {
 				fprintf(stderr, "Unable to parse node dump from tincd.\n");
 				return 1;
 			}
@@ -95,6 +96,16 @@ static int info_node(int fd, const char *item) {
 	printf("Node:         %s\n", item);
 	if(*port)
 		printf("Address:      %s port %s\n", host, port);
+
+	char timestr[32] = "never";
+	if(last_state_change)
+		strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&last_state_change));
+
+	if(status.reachable)
+		printf("Online since: %s\n", timestr);
+	else
+		printf("Last seen:    %s\n", timestr);
+
 	printf("Status:      ");
 	if(status.validkey)
 		printf(" validkey");
@@ -107,6 +118,7 @@ static int info_node(int fd, const char *item) {
 	if(status.sptps)
 		printf(" sptps");
 	printf("\n");
+
 	printf("Options:     ");
 	if(options & OPTION_INDIRECT)
 		printf(" indirect");
@@ -119,7 +131,7 @@ static int info_node(int fd, const char *item) {
 	printf("\n");
 	printf("Protocol:     %d.%d\n", PROT_MAJOR, OPTION_VERSION(options));
 	printf("Reachability: ");
-	if(!*port)
+	if(!strcmp(host, "MYSELF"))
 		printf("can reach itself\n");
 	else if(!status.reachable)
 		printf("unreachable\n");

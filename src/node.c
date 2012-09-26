@@ -135,20 +135,14 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		return;
 	}
 
-	if(n->hostname)
-		free(n->hostname);
-
 	hash_insert(node_udp_cache, &n->address, NULL);
 
 	if(sa) {
 		n->address = *sa;
 		hash_insert(node_udp_cache, sa, n);
+		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
 		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
-	} else {
-		memset(&n->address, 0, sizeof n->address);
-		n->hostname = NULL;
-		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s cleared", n->name);
 	}
 }
 
@@ -158,11 +152,11 @@ bool dump_nodes(connection_t *c) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		send_request(c, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)", CONTROL, REQ_DUMP_NODES,
+		send_request(c, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd) %ld", CONTROL, REQ_DUMP_NODES,
 			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), (int)digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu);
+			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
 	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_NODES);

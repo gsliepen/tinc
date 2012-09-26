@@ -797,7 +797,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 
-		if(e->to == myself)
+		if(!e->to->status.reachable || e->to == myself)
 			continue;
 
 		if(sockaddrcmp_noport(from, &e->address)) {

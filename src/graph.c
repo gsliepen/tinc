@@ -188,7 +188,8 @@ static void sssp_bfs(void) {
 			e->to->options = e->options;
 			e->to->distance = n->distance + 1;
 
-			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
+			if(!e->to->status.reachable || (e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
+)
 				update_node_udp(e->to, &e->address);
 
 			list_insert_tail(todo_list, e->to);
@@ -217,6 +218,7 @@ static void check_reachability(void) {
 
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
+			n->last_state_change = time(NULL);
 
 			if(n->status.reachable) {
 				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became reachable",

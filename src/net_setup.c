@@ -709,6 +709,7 @@ static bool setup_myself(void) {
 	myself->nexthop = myself;
 	myself->via = myself;
 	myself->status.reachable = true;
+	myself->last_state_change = time(NULL);
 	myself->status.sptps = experimental;
 	node_add(myself);
 

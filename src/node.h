@@ -47,6 +47,7 @@ typedef struct node_t {
 	char *hostname;				/* the hostname of its real ip */
 
 	node_status_t status;
+	time_t last_state_change;
 	time_t last_req_key;
 
 	ecdsa_t ecdsa;				/* His public ECDSA key */
