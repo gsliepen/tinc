@@ -117,7 +117,7 @@ bool dump_edges(connection_t *c) {
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
-			send_request(c, "%d %d %s to %s at %s options %x weight %d",
+			send_request(c, "%d %d %s %s %s %x %d",
 					CONTROL, REQ_DUMP_EDGES,
 					e->from->name, e->to->name, address,
 					e->options, e->weight);

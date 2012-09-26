@@ -62,19 +62,14 @@ static int info_node(int fd, const char *item) {
 	long int last_state_change;
 
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd) %ld", &code, &req, node, host, port, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
+		int n = sscanf(line, "%d %d %s %s port %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", &code, &req, node, host, port, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
 		if(n == 2)
 			break;
 
 		if(n != 18) {
-			*port = 0;
-			n = sscanf(line, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd) %ld", &code, &req, node, host, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
-
-			if(n != 17) {
-				fprintf(stderr, "Unable to parse node dump from tincd.\n");
-				return 1;
-			}
+			fprintf(stderr, "Unable to parse node dump from tincd.\n");
+			return 1;
 		}
 
 		if(!strcmp(node, item)) {
@@ -94,8 +89,7 @@ static int info_node(int fd, const char *item) {
 	}
 	
 	printf("Node:         %s\n", item);
-	if(*port)
-		printf("Address:      %s port %s\n", host, port);
+	printf("Address:      %s port %s\n", host, port);
 
 	char timestr[32] = "never";
 	if(last_state_change)
@@ -150,7 +144,7 @@ static int info_node(int fd, const char *item) {
 	printf("Edges:       ");
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_EDGES, item);
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s to %s", &code, &req, from, to);
+		int n = sscanf(line, "%d %d %s %s", &code, &req, from, to);
 		if(n == 2)
 			break;
 		if(n != 4) {
@@ -166,7 +160,7 @@ static int info_node(int fd, const char *item) {
 	printf("Subnets:     ");
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s owner %s", &code, &req, subnet, from);
+		int n = sscanf(line, "%d %d %s %s", &code, &req, subnet, from);
 		if(n == 2)
 			break;
 		if(n != 4) {
@@ -201,7 +195,7 @@ static int info_subnet(int fd, const char *item) {
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s owner %s", &code, &req, netstr, owner);
+		int n = sscanf(line, "%d %d %s %s", &code, &req, netstr, owner);
 		if(n == 2)
 			break;
 

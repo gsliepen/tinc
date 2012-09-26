@@ -152,8 +152,8 @@ bool dump_nodes(connection_t *c) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		send_request(c, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd) %ld", CONTROL, REQ_DUMP_NODES,
-			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
+		send_request(c, "%d %d %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
+			   n->name, n->hostname ?: "unknown port unknown", cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), (int)digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);

@@ -847,7 +847,7 @@ static int cmd_dump(int argc, char *argv[]) {
 
 	while(recvline(fd, line, sizeof line)) {
 		char node1[4096], node2[4096];
-		int n = sscanf(line, "%d %d %s to %s", &code, &req, node1, node2);
+		int n = sscanf(line, "%d %d %s %s", &code, &req, node1, node2);
 		if(n == 2) {
 			if(do_graph && req == REQ_DUMP_NODES)
 				continue;
@@ -860,9 +860,63 @@ static int cmd_dump(int argc, char *argv[]) {
 		if(n < 2)
 			break;
 
-		if(!do_graph)
-			printf("%s\n", line + 5);
-		else {
+		if(!do_graph) {
+			char node[4096];
+			char from[4096];
+			char to[4096];
+			char subnet[4096];
+			char host[4096];
+			char port[4096];
+			char via[4096];
+			char nexthop[4096];
+			int cipher, digest, maclength, compression, distance, socket, weight;
+			short int pmtu, minmtu, maxmtu;
+			unsigned int options, status;
+			long int last_state_change;
+
+			switch(req) {
+				case REQ_DUMP_NODES: {
+					int n = sscanf(line, "%*d %*d %s %s port %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", node, host, port, &cipher, &digest, &maclength, &compression, &options, &status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
+					if(n != 16) {
+						fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
+						return 1;
+					}
+					printf("%s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)\n",
+							node, host, port, cipher, digest, maclength, compression, options, status, nexthop, via, distance, pmtu, minmtu, maxmtu);
+				} break;
+
+				case REQ_DUMP_EDGES: {
+					int n = sscanf(line, "%*d %*d %s %s %s port %s %x %d", from, to, host, port, &options, &weight);
+					if(n != 6) {
+						fprintf(stderr, "Unable to parse edge dump from tincd.\n");
+						return 1;
+					}
+					printf("%s to %s at %s port %s options %x weight %d\n", from, to, host, port, options, weight);
+				} break;
+
+				case REQ_DUMP_SUBNETS: {
+					int n = sscanf(line, "%*d %*d %s %s", subnet, node);
+					if(n != 2) {
+						fprintf(stderr, "Unable to parse subnet dump from tincd.\n");
+						return 1;
+					}
+					printf("%s owner %s\n", strip_weight(subnet), node);
+				} break;
+
+				case REQ_DUMP_CONNECTIONS: {
+					int n = sscanf(line, "%*d %*d %s %s port %s %x %d %x", node, host, port, &options, &socket, &status);
+					if(n != 6) {
+						fprintf(stderr, "Unable to parse connection dump from tincd.\n");
+						return 1;
+					}
+					printf("%s at %s port %s options %x socket %d status %x\n", node, host, port, options, socket, status);
+				} break;
+
+				default:
+					fprintf(stderr, "Unable to parse dump from tincd.\n");
+					return 1;
+			}
+		} else {
 			if(req == REQ_DUMP_NODES)
 				printf(" %s [label = \"%s\"];\n", node1, node1);
 			else

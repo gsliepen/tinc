@@ -117,7 +117,7 @@ bool dump_connections(connection_t *cdump) {
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
-		send_request(cdump, "%d %d %s at %s options %x socket %d status %04x",
+		send_request(cdump, "%d %d %s %s %x %d %x",
 				CONTROL, REQ_DUMP_CONNECTIONS,
 				c->name, c->hostname, c->options, c->socket,
 				bitfield_to_int(&c->status, sizeof c->status));

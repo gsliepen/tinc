@@ -574,8 +574,11 @@ static bool setup_myself(void) {
 	myself = new_node();
 	myself->connection = new_connection();
 
-	myself->hostname = xstrdup("MYSELF");
-	myself->connection->hostname = xstrdup("MYSELF");
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
+		myport = xstrdup("655");
+
+	xasprintf(&myself->hostname, "MYSELF port %s", myport);
+	myself->connection->hostname = xstrdup(myself->hostname);
 
 	myself->connection->options = 0;
 	myself->connection->protocol_major = PROT_MAJOR;
@@ -602,9 +605,6 @@ static bool setup_myself(void) {
 
 	if(!read_rsa_private_key())
 		return false;
-
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
-		myport = xstrdup("655");
 
 	if(!atoi(myport)) {
 		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);

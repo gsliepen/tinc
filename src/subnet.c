@@ -283,7 +283,7 @@ bool dump_subnets(connection_t *c) {
 		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
-		send_request(c, "%d %d %s owner %s",
+		send_request(c, "%d %d %s %s",
 				CONTROL, REQ_DUMP_SUBNETS,
 				netstr, subnet->owner->name);
 	}
