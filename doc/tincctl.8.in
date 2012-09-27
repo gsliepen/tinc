@@ -235,7 +235,7 @@ If you find any bugs, report them to tinc@tinc-vpn.org.
 .Xr tincd 8 ,
 .Xr tinc.conf 5 ,
 .Xr dotty 1 ,
-.Xr pcap-savefile 7 ,
+.Xr pcap-savefile 5 ,
 .Xr tcpdump 8 ,
 .Xr top 1 ,
 .Pa http://www.tinc-vpn.org/ ,

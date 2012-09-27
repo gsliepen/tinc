@@ -187,7 +187,7 @@ packets.
 @cindex release
 For an up to date list of supported platforms, please check the list on
 our website:
-@uref{http://www.tinc-vpn.org/platforms}.
+@uref{http://www.tinc-vpn.org/platforms/}.
 
 @c
 @c
@@ -467,7 +467,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install libevent manually, you can get the source code
-from @url{http://monkey.org/~provos/libevent/}.  Instructions on how to configure,
+from @url{http://libevent.org/}. Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
@@ -493,7 +493,7 @@ system startup scripts and sample configurations.
 If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
-@uref{http://www.tinc-vpn.org/download, download page}, which has
+@uref{http://www.tinc-vpn.org/download/, download page}, which has
 the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
@@ -534,7 +534,7 @@ The documentation that comes along with your distribution will tell you how to d
 
 In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
 from @uref{http://developer.apple.com/tools/macosxtools.html} and
-a recent version of Fink from @uref{http://fink.sourceforge.net/}.
+a recent version of Fink from @uref{http://www.finkproject.org/}.
 
 After installation use fink to download and install the following packages:
 autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
@@ -661,7 +661,7 @@ you will not find the answers in this documentation.
 Make sure you have an adequate understanding of networks in general.
 @cindex Network Administrators Guide
 A good resource on networking is the
-@uref{http://www.linuxdoc.org/LDP/nag2/, Linux Network Administrators Guide}.
+@uref{http://www.tldp.org/LDP/nag2/, Linux Network Administrators Guide}.
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
@@ -1285,7 +1285,7 @@ MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 Prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
-@uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
+@uref{http://www.ietf.org/rfc/rfc1519.txt, RFC1519}
 
 A Subnet can be given a weight to indicate its priority over identical Subnets
 owned by different nodes. The default weight is 10. Lower values indicate
