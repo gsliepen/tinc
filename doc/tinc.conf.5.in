@@ -766,7 +766,7 @@ its connection to the virtual network device.
 .Sh SEE ALSO
 .Xr tincd 8 ,
 .Pa http://www.tinc-vpn.org/ ,
-.Pa http://www.linuxdoc.org/LDP/nag2/ .
+.Pa http://www.tldp.org/LDP/nag2/ .
 
 .Pp
 The full documentation for
