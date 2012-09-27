@@ -217,6 +217,83 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
+static void disable_old_keys(const char *filename, const char *what) {
+	char tmpfile[PATH_MAX] = "";
+	char buf[1024];
+	bool disabled = false;
+	bool block = false;
+	bool error = false;
+	FILE *r, *w;
+
+	r = fopen(filename, "r");
+	if(!r)
+		return;
+
+	snprintf(tmpfile, sizeof tmpfile, "%s.tmp", filename);
+
+	w = fopen(tmpfile, "w");
+
+	while(fgets(buf, sizeof buf, r)) {
+		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
+			if((strstr(buf, " EC ") && strstr(what, "ECDSA")) || (strstr(buf, " RSA ") && strstr(what, "RSA"))) {
+				disabled = true;
+				block = true;
+			}
+		}
+
+		bool ecdsapubkey = !strncasecmp(buf, "ECDSAPublicKey", 14) && strchr(" \t=", buf[14]) && strstr(what, "ECDSA");
+
+		if(ecdsapubkey)
+			disabled = true;
+
+		if(w) {
+			if(block || ecdsapubkey)
+				fputc('#', w);
+			if(fputs(buf, w) < 0) {
+				error = true;
+				break;
+			}
+		}
+
+		if(block && !strncmp(buf, "-----END ", 9))
+			block = false;
+	}
+
+	if(w)
+		if(fclose(w) < 0)
+			error = true;
+	if(ferror(r) || fclose(r) < 0)
+		error = true;
+
+	if(disabled) {
+		if(!w || error) {
+			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
+			if(w)
+				unlink(tmpfile);
+			return;
+		}
+
+#ifdef HAVE_MINGW
+		// We cannot atomically replace files on Windows.
+		char bakfile[PATH_MAX] = "";
+		snprintf(bakfile, sizeof bakfile, "%s.bak", filename);
+		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
+			rename(bakfile, filename);
+#else
+		if(rename(tmpfile, filename)) {
+#endif
+			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
+		} else  {
+#ifdef HAVE_MINGW
+			unlink(bakfile);
+#endif
+			fprintf(stderr, "Warning: old key(s) found and disabled.\n");
+		}
+	}
+
+	unlink(tmpfile);
+}
+
 static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask) {
 	FILE *r;
 	char *directory;
@@ -256,6 +333,8 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	}
 
 	umask(0077);				/* Disallow everything for group and other */
+
+	disable_old_keys(filename, what);
 
 	/* Open it first to keep the inode busy */
 
@@ -297,9 +376,6 @@ static bool ecdsa_keygen(bool ask) {
 	fchmod(fileno(f), 0600);
 #endif
 		
-	if(ftell(f))
-		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
-
 	ecdsa_write_pem_private_key(&key, f);
 
 	fclose(f);
@@ -314,9 +390,6 @@ static bool ecdsa_keygen(bool ask) {
 
 	if(!f)
 		return false;
-
-	if(ftell(f))
-		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
 
 	char *pubkey = ecdsa_get_base64_public_key(&key);
 	fprintf(f, "ECDSAPublicKey = %s\n", pubkey);
@@ -356,9 +429,6 @@ static bool rsa_keygen(int bits, bool ask) {
 	fchmod(fileno(f), 0600);
 #endif
 		
-	if(ftell(f))
-		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
-
 	rsa_write_pem_private_key(&key, f);
 
 	fclose(f);
@@ -373,9 +443,6 @@ static bool rsa_keygen(int bits, bool ask) {
 
 	if(!f)
 		return false;
-
-	if(ftell(f))
-		fprintf(stderr, "Appending key to existing contents.\nMake sure only one key is stored in the file.\n");
 
 	rsa_write_pem_public_key(&key, f);
 
