@@ -687,8 +687,19 @@ static bool remove_service(void) {
 #endif
 
 static bool connect_tincd(bool verbose) {
-	if(fd >= 0)
-		return true;
+	if(fd >= 0) {
+		fd_set r;
+		FD_ZERO(&r);
+		FD_SET(fd, &r);
+		struct timeval tv = {0, 0};
+		if(select(fd + 1, &r, NULL, NULL, &tv)) {
+			fprintf(stderr, "Previous connection to tincd lost, reconnecting.\n");
+			close(fd);
+			fd = -1;
+		} else {
+			return true;
+		}
+	}
 
 	FILE *f = fopen(pidfilename, "r");
 	if(!f) {
@@ -751,6 +762,8 @@ static bool connect_tincd(bool verbose) {
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
 		if(verbose)
 			fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
+		close(fd);
+		fd = -1;
 		return false;
 	}
 
@@ -762,6 +775,8 @@ static bool connect_tincd(bool verbose) {
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %s %d", &code, data, &version) != 3 || code != 0) {
 		if(verbose)
 			fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
+		close(fd);
+		fd = -1;
 		return false;
 	}
 
@@ -770,6 +785,8 @@ static bool connect_tincd(bool verbose) {
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
 		if(verbose)
 			fprintf(stderr, "Could not fully establish control socket connection\n");
+		close(fd);
+		fd = -1;
 		return false;
 	}
 
