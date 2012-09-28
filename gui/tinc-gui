@@ -287,7 +287,7 @@ class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
     def __init__(self, parent, style):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
 	ListCtrlAutoWidthMixin.__init__(self)
-        ColumnSorterMixin.__init__(self, 14)
+        ColumnSorterMixin.__init__(self, 16)
 
     def GetListCtrl(self):
         return self
@@ -300,12 +300,12 @@ class SettingsPage(wx.Panel):
 	def __init__(self, parent, id):
 		wx.Panel.__init__(self, parent, id)
 		grid = wx.FlexGridSizer(cols = 2)
-		grid.AddGrowableCol(0, 1)
+		grid.AddGrowableCol(1, 1)
 
 		namelabel = wx.StaticText(self, -1, 'Name:')
 		self.name = wx.TextCtrl(self, -1, vpn.name)
 		grid.Add(namelabel)
-		grid.Add(self.name)
+		grid.Add(self.name, 1, wx.EXPAND)
 
 		portlabel = wx.StaticText(self, -1, 'Port:')
 		self.port = wx.TextCtrl(self, -1, vpn.port)
@@ -328,7 +328,7 @@ class SettingsPage(wx.Panel):
 class ConnectionsPage(wx.Panel):
 	def __init__(self, parent, id):
 		wx.Panel.__init__(self, parent, id)
-		self.list = wx.ListCtrl(self, id, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+		self.list = SuperListCtrl(self, id)
 		self.list.InsertColumn(0, 'Name')
 		self.list.InsertColumn(1, 'Address')
 		self.list.InsertColumn(2, 'Port')
@@ -358,6 +358,7 @@ class ConnectionsPage(wx.Panel):
 		self.PopupMenu(self.ContextMenu(self.list.itemDataMap[event.GetIndex()]), event.GetPosition())
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -372,11 +373,13 @@ class ConnectionsPage(wx.Panel):
 			self.list.SetStringItem(i, 4, str(connection.weight))
 			self.list.itemDataMap[i] = (connection.name, connection.address, connection.port, connection.options, connection.weight)
 			self.list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnContext)
+			self.list.SetItemData(i, i)
 			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
+		self.list.SortListItems(sortstate[0], sortstate[1])
 
 class NodesPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -405,6 +408,7 @@ class NodesPage(wx.Panel):
 		self.refresh()
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -432,17 +436,19 @@ class NodesPage(wx.Panel):
 			else:
 				since = "never"
 			self.list.SetStringItem(i, 15, since)
-			self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength, node.compression, node.options, node.status, node.nexthop, node.via, node.distance, node.pmtu, node.minmtu, node.maxmtu)
+			self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength, node.compression, node.options, node.status, node.nexthop, node.via, node.distance, node.pmtu, node.minmtu, node.maxmtu, since)
 			self.list.SetItemData(i, i)
 			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
+		self.list.SortListItems(sortstate[0], sortstate[1])
+
 class EdgesPage(wx.Panel):
 	def __init__(self, parent, id):
 		wx.Panel.__init__(self, parent, id)
-		self.list = wx.ListCtrl(self, id, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+		self.list = SuperListCtrl(self, id)
 		self.list.InsertColumn(0, 'From')
 		self.list.InsertColumn(1, 'To')
 		self.list.InsertColumn(2, 'Address')
@@ -456,6 +462,7 @@ class EdgesPage(wx.Panel):
 		self.refresh()
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -470,10 +477,13 @@ class EdgesPage(wx.Panel):
 			self.list.SetStringItem(i, 4, format(edge.options, "x"))
 			self.list.SetStringItem(i, 5, str(edge.weight))
 			self.list.itemDataMap[i] = (edge.fr, edge.to, edge.address, edge.port, edge.options, edge.weight)
+			self.list.SetItemData(i, i)
 			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
+
+		self.list.SortListItems(sortstate[0], sortstate[1])
 
 class SubnetsPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -488,6 +498,7 @@ class SubnetsPage(wx.Panel):
 		self.refresh()
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -499,10 +510,13 @@ class SubnetsPage(wx.Panel):
 			self.list.SetStringItem(i, 1, subnet.weight)
 			self.list.SetStringItem(i, 2, subnet.owner)
 			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
-			i = i + 1
+			self.list.SetItemData(i, i)
+			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
+
+		self.list.SortListItems(sortstate[0], sortstate[1])
 
 class StatusPage(wx.Panel):
 	def __init__(self, parent, id):
