@@ -576,6 +576,9 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 }
 
 static void free_outgoing(outgoing_t *outgoing) {
+	if(event_initialized(&outgoing->ev))
+		event_del(&outgoing->ev);
+
 	if(outgoing->ai)
 		freeaddrinfo(outgoing->ai);
 
@@ -590,8 +593,19 @@ void try_outgoing_connections(void) {
 	char *name;
 	outgoing_t *outgoing;
 	
-	outgoing_list = list_alloc((list_action_t)free_outgoing);
-			
+	/* If there is no outgoing list yet, create one. Otherwise, mark all outgoings as deleted. */
+
+	if(!outgoing_list) {
+		outgoing_list = list_alloc((list_action_t)free_outgoing);
+	} else {
+		for(list_node_t *i = outgoing_list->head; i; i = i->next) {
+			outgoing = i->data;
+			outgoing->timeout = -1;
+		}
+	}
+
+	/* Make sure there is one outgoing_t in the list for each ConnectTo. */
+
 	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 		get_config_string(cfg, &name);
 
@@ -603,9 +617,42 @@ void try_outgoing_connections(void) {
 			continue;
 		}
 
-		outgoing = xmalloc_and_zero(sizeof *outgoing);
-		outgoing->name = name;
-		list_insert_tail(outgoing_list, outgoing);
-		setup_outgoing_connection(outgoing);
+		bool found = false;
+
+		for(list_node_t *i = outgoing_list->head; i; i = i->next) {
+			outgoing = i->data;
+			if(!strcmp(outgoing->name, name)) {
+				found = true;
+				outgoing->timeout = 0;
+				break;
+			}
+		}
+
+		if(!found) {
+			outgoing = xmalloc_and_zero(sizeof *outgoing);
+			outgoing->name = name;
+			list_insert_tail(outgoing_list, outgoing);
+			setup_outgoing_connection(outgoing);
+		}
+	}
+
+	/* Terminate any connections whose outgoing_t is to be deleted. */
+
+	for(splay_node_t *n = connection_tree->head, *next; n; n = next) {
+		next = n->next;
+		connection_t *c = n->data;
+		if(c->outgoing && c->outgoing->timeout == -1) {
+			c->outgoing = NULL;
+			terminate_connection(c, c->status.active);
+		}
+	}
+
+	/* Delete outgoing_ts for which there is no ConnectTo. */
+
+	for(list_node_t *i = outgoing_list->head, *next; i; i = next) {
+		next = i->next;
+		outgoing = i->data;
+		if(outgoing->timeout == -1)
+			list_delete_node(outgoing_list, i);
 	}
 }

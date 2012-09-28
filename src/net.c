@@ -40,6 +40,7 @@
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
 static int sleeptime = 10;
+time_t last_config_check = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -263,7 +264,6 @@ int reload_configuration(void) {
 	splay_node_t *node, *next;
 	char *fname;
 	struct stat s;
-	static time_t last_config_check = 0;
 
 	/* Reread our own configuration file */
 
@@ -285,31 +285,6 @@ int reload_configuration(void) {
 	/* Parse some options that are allowed to be changed while tinc is running */
 
 	setup_myself_reloadable();
-
-	/* Close connections to hosts that have a changed or deleted host config file */
-	
-	for(node = connection_tree->head; node; node = next) {
-		c = node->data;
-		next = node->next;
-
-		if(c->status.control)
-			continue;
-		
-		if(c->outgoing) {
-			free(c->outgoing->name);
-			if(c->outgoing->ai)
-				freeaddrinfo(c->outgoing->ai);
-			free(c->outgoing);
-			c->outgoing = NULL;
-		}
-		
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
-		if(stat(fname, &s) || s.st_mtime > last_config_check)
-			terminate_connection(c, c->status.active);
-		free(fname);
-	}
-
-	last_config_check = time(NULL);
 
 	/* If StrictSubnet is set, expire deleted Subnets and read new ones in */
 
@@ -386,6 +361,25 @@ int reload_configuration(void) {
 	/* Try to make outgoing connections */
 	
 	try_outgoing_connections();
+
+	/* Close connections to hosts that have a changed or deleted host config file */
+
+	for(node = connection_tree->head; node; node = next) {
+		c = node->data;
+		next = node->next;
+
+		if(c->status.control)
+			continue;
+
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+		if(stat(fname, &s) || s.st_mtime > last_config_check) {
+			fprintf(stderr, "ZOMG %ld > %ld\n", s.st_mtime, last_config_check);
+			terminate_connection(c, c->status.active);
+		}
+		free(fname);
+	}
+
+	last_config_check = time(NULL);
 
 	return 0;
 }

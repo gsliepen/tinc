@@ -916,6 +916,8 @@ static bool setup_myself(void) {
 		return false;
 	}
 
+	last_config_check = time(NULL);
+
 	return true;
 }
 
