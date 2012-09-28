@@ -108,7 +108,7 @@ static bool send_initial_sptps_data(void *handle, uint8_t type, const char *data
 bool send_req_key(node_t *to) {
 	if(to->status.sptps) {
 		if(!node_read_ecdsa_public_key(to)) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "No ECDSA key known for %s (%s)", to->name, to->hostname);
+			logger(DEBUG_PROTOCOL, LOG_DEBUG, "No ECDSA key known for %s (%s)", to->name, to->hostname);
 			send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, REQ_PUBKEY);
 			return true;
 		}
@@ -136,7 +136,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 
 		case ANS_PUBKEY: {
 			if(node_read_ecdsa_public_key(from)) {
-				logger(DEBUG_ALWAYS, LOG_WARNING, "Got ANS_PUBKEY from %s (%s) even though we already have his pubkey", from->name, from->hostname);
+				logger(DEBUG_PROTOCOL, LOG_WARNING, "Got ANS_PUBKEY from %s (%s) even though we already have his pubkey", from->name, from->hostname);
 				return true;
 			}
 
@@ -146,14 +146,14 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 				return true;
 			}
 
-			logger(DEBUG_ALWAYS, LOG_INFO, "Learned ECDSA public key from %s (%s)", from->name, from->hostname);
+			logger(DEBUG_PROTOCOL, LOG_INFO, "Learned ECDSA public key from %s (%s)", from->name, from->hostname);
 			append_config_file(from->name, "ECDSAPublicKey", pubkey);
 			return true;
 		}
 
 		case REQ_KEY: {
 			if(!node_read_ecdsa_public_key(from)) {
-				logger(DEBUG_ALWAYS, LOG_DEBUG, "No ECDSA key known for %s (%s)", from->name, from->hostname);
+				logger(DEBUG_PROTOCOL, LOG_DEBUG, "No ECDSA key known for %s (%s)", from->name, from->hostname);
 				send_request(from->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, from->name, REQ_PUBKEY);
 				return true;
 			}
@@ -230,7 +230,7 @@ bool req_key_h(connection_t *c, const char *request) {
 			return true;
 
 		if(!to->status.reachable) {
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
+			logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"REQ_KEY", c->name, c->hostname, to_name);
 			return true;
 		}
