@@ -308,7 +308,10 @@ bool metakey_h(connection_t *c) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	hex2bin(buffer, buffer, len);
+	if(!hex2bin(buffer, buffer, len)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "METAKEY", c->name, c->hostname, "invalid key");
+		return false;
+	}
 
 	/* Decrypt the meta key */
 
@@ -426,7 +429,10 @@ bool challenge_h(connection_t *c) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	hex2bin(buffer, c->mychallenge, len);
+	if(!hex2bin(buffer, c->mychallenge, len)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "CHALLENGE", c->name, c->hostname, "invalid challenge");
+		return false;
+	}
 
 	c->allow_request = CHAL_REPLY;
 
@@ -480,7 +486,10 @@ bool chal_reply_h(connection_t *c) {
 
 	/* Convert the hash to binary format */
 
-	hex2bin(hishash, hishash, c->outdigest->md_size);
+	if(!hex2bin(hishash, hishash, c->outdigest->md_size)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "CHAL_REPLY", c->name, c->hostname, "invalid hash");
+		return false;
+	}
 
 	/* Calculate the hash from the challenge we sent */
 

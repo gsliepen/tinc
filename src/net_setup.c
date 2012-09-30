@@ -66,7 +66,10 @@ bool read_rsa_public_key(connection_t *c) {
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
-		BN_hex2bn(&c->rsa_key->n, key);
+		if(BN_hex2bn(&c->rsa_key->n, key) != strlen(key)) {
+			logger(LOG_ERR, "Invalid PublicKey for %s!", c->name);
+			return false;
+		}
 		BN_hex2bn(&c->rsa_key->e, "FFFF");
 		free(key);
 		return true;
@@ -169,8 +172,14 @@ static bool read_rsa_private_key(void) {
 		}
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
-		BN_hex2bn(&myself->connection->rsa_key->d, key);
-		BN_hex2bn(&myself->connection->rsa_key->n, pubkey);
+		if(BN_hex2bn(&myself->connection->rsa_key->d, key) != strlen(key)) {
+			logger(LOG_ERR, "Invalid PrivateKey for myself!");
+			return false;
+		}
+		if(BN_hex2bn(&myself->connection->rsa_key->n, pubkey) != strlen(pubkey)) {
+			logger(LOG_ERR, "Invalid PublicKey for myself!");
+			return false;
+		}
 		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		free(key);
 		free(pubkey);

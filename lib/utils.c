@@ -32,11 +32,13 @@ static int charhex2bin(char c) {
 		return toupper(c) - 'A' + 10;
 }
 
-
-void hex2bin(char *src, char *dst, int length) {
-	int i;
-	for(i = 0; i < length; i++)
+bool hex2bin(char *src, char *dst, int length) {
+	for(int i = 0; i < length; i++) {
+		if(!isxdigit(src[i * 2]) || !isxdigit(src[i * 2 + 1]))
+			return false;
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
+	}
+	return true;
 }
 
 void bin2hex(char *src, char *dst, int length) {

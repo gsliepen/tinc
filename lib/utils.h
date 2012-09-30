@@ -21,7 +21,7 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
-extern void hex2bin(char *src, char *dst, int length);
+extern bool hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
 
 #ifdef HAVE_MINGW

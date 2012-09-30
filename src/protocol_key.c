@@ -240,10 +240,16 @@ bool ans_key_h(connection_t *c) {
 		return send_request(to->nexthop->connection, "%s", c->buffer);
 	}
 
+	/* Don't use key material until every check has passed. */
+	from->status.validkey = false;
+
 	/* Update our copy of the origin's packet key */
 	from->outkey = xrealloc(from->outkey, strlen(key) / 2);
 	from->outkeylength = strlen(key) / 2;
-	hex2bin(key, from->outkey, from->outkeylength);
+	if(!hex2bin(key, from->outkey, from->outkeylength)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "ANS_KEY", from->name, from->hostname, "invalid key");
+		return true;
+	}
 
 	/* Check and lookup cipher and digest algorithms */
 
