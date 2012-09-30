@@ -244,7 +244,7 @@ bool send_metakey(connection_t *c) {
 	 */
 
 	if(RSA_public_encrypt(len, (unsigned char *)c->outkey, (unsigned char *)buffer, c->rsa_key, RSA_NO_PADDING) != len) {
-		logger(LOG_ERR, "Error during encryption of meta key for %s (%s) %s",
+		logger(LOG_ERR, "Error during encryption of meta key for %s (%s): %s",
 			   c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
@@ -313,7 +313,7 @@ bool metakey_h(connection_t *c) {
 	/* Decrypt the meta key */
 
 	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
-		logger(LOG_ERR, "Error during decryption of meta key for %s (%s) %s",
+		logger(LOG_ERR, "Error during decryption of meta key for %s (%s): %s",
 			   c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
