@@ -571,11 +571,22 @@ static bool setup_myself(void) {
 	int i, err;
 	int replaywin_int;
 
+	if(!(name = get_name())) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
+		return false;
+	}
+
 	myself = new_node();
 	myself->connection = new_connection();
+	myself->name = name;
+	myself->connection->name = xstrdup(name);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	read_config_options(config_tree, name);
+	read_config_file(config_tree, fname);
+	free(fname);
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
-		myport = xstrdup("655");
+		abort(); //myport = xstrdup("655");
 
 	xasprintf(&myself->hostname, "MYSELF port %s", myport);
 	myself->connection->hostname = xstrdup(myself->hostname);
@@ -585,18 +596,6 @@ static bool setup_myself(void) {
 	myself->connection->protocol_minor = PROT_MINOR;
 
 	myself->options |= PROT_MINOR << 24;
-
-	if(!(name = get_name())) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
-		return false;
-	}
-
-	myself->name = name;
-	myself->connection->name = xstrdup(name);
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
-	read_config_options(config_tree, name);
-	read_config_file(config_tree, fname);
-	free(fname);
 
 	get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental);
 
