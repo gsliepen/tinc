@@ -48,7 +48,7 @@ static int charb64decode(char c) {
 
 int hex2bin(const char *src, char *dst, int length) {
 	int i;
-	for(i = 0; i < length && src[i * 2] && src[i * 2 + 1]; i++)
+	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++)
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 	return i;
 }

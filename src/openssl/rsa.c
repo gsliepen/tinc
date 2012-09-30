@@ -29,16 +29,21 @@
 
 bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e) {
 	*rsa = RSA_new();
-	BN_hex2bn(&(*rsa)->n, n);
-	BN_hex2bn(&(*rsa)->e, e);
+	if(BN_hex2bn(&(*rsa)->n, n) != strlen(n))
+		return false;
+	if(BN_hex2bn(&(*rsa)->e, e) != strlen(e))
+		return false;
 	return true;
 }
 
 bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d) {
 	*rsa = RSA_new();
-	BN_hex2bn(&(*rsa)->n, n);
-	BN_hex2bn(&(*rsa)->e, e);
-	BN_hex2bn(&(*rsa)->d, d);
+	if(BN_hex2bn(&(*rsa)->n, n) != strlen(n))
+		return false;
+	if(BN_hex2bn(&(*rsa)->e, e) != strlen(e))
+		return false;
+	if(BN_hex2bn(&(*rsa)->d, d) != strlen(d))
+		return false;
 	return true;
 }
 

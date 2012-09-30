@@ -229,6 +229,7 @@ bool execute_script(const char *name, char **envp) {
 	int status, len;
 	char *scriptname;
 	int i;
+	char *interpreter = NULL;
 
 #ifndef HAVE_MINGW
 	len = xasprintf(&scriptname, "\"%s" SLASH "%s\"", confbase, name);
@@ -249,7 +250,18 @@ bool execute_script(const char *name, char **envp) {
 	}
 #endif
 
+	// Custom scripts interpreter
+	if(get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &interpreter)) {
+		// Force custom scripts interpreter allowing execution of scripts on android without execution flag (such as on /sdcard)
+		free(scriptname);
+		len = xasprintf(&scriptname, "%s \"%s/%s\"", interpreter, confbase, name);
+		free(interpreter);
+		if(len < 0)
+			return false;
+	}
+
 	logger(DEBUG_STATUS, LOG_INFO, "Executing script %s", name);
+
 
 #ifdef HAVE_PUTENV
 	/* Set environment */

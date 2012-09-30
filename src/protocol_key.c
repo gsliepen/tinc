@@ -334,6 +334,9 @@ bool ans_key_h(connection_t *c, const char *request) {
 		return send_request(to->nexthop->connection, "%s", request);
 	}
 
+	/* Don't use key material until every check has passed. */
+	from->status.validkey = false;
+
 	if(compression < 0 || compression > 11) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
 		return true;

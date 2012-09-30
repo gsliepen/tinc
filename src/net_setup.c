@@ -229,7 +229,7 @@ static bool read_rsa_private_key(void) {
 		result = rsa_set_hex_private_key(&myself->connection->rsa, n, "FFFF", d);
 		free(n);
 		free(d);
-		return true;
+		return result;
 	}
 
 	/* Else, check for PrivateKeyFile statement and read it */
