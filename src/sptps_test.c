@@ -28,6 +28,7 @@
 bool send_request(void *c, const char *msg, ...) { return false; }
 struct splay_tree_t *connection_tree = NULL;
 bool send_meta(void *c, const char *msg , int len) { return false; }
+char *logfilename = NULL;
 
 ecdsa_t mykey, hiskey;
 
