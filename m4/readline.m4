@@ -33,7 +33,8 @@ AC_DEFUN([tinc_READLINE],
 
     AC_CHECK_LIB(readline, readline,
       [READLINE_LIBS="-lreadline"],
-      [AC_MSG_ERROR("readline library not found.")]
+      [AC_MSG_ERROR("readline library not found.")],
+      [$CURSES_LIBS]
     )
   ])
 

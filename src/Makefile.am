@@ -37,7 +37,7 @@ if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
 endif
 
-tincctl_LDADD = $(CURSES_LIBS) $(READLINE_LIBS)
+tincctl_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 
 DEFAULT_INCLUDES =
 
