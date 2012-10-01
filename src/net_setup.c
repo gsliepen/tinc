@@ -586,7 +586,7 @@ static bool setup_myself(void) {
 	free(fname);
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
-		abort(); //myport = xstrdup("655");
+		myport = xstrdup("655");
 
 	xasprintf(&myself->hostname, "MYSELF port %s", myport);
 	myself->connection->hostname = xstrdup(myself->hostname);
