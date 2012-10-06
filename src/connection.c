@@ -73,6 +73,15 @@ void free_connection_partially(connection_t *c) {
 	c->hischallenge = NULL;
 	c->outbuf = NULL;
 
+	c->status.pinged = false;
+	c->status.active = false;
+	c->status.connecting = false;
+	c->status.timeout = false;
+	c->status.encryptout = false;
+	c->status.decryptin = false;
+	c->status.mst = false;
+
+	c->options = 0;
 	c->buflen = 0;
 	c->reqlen = 0;
 	c->tcplen = 0;
@@ -80,6 +89,8 @@ void free_connection_partially(connection_t *c) {
 	c->outbuflen = 0;
 	c->outbufsize = 0;
 	c->outbufstart = 0;
+	c->last_ping_time = 0;
+	c->last_flushed_time = 0;
 
 	if(c->inctx) {
 		EVP_CIPHER_CTX_cleanup(c->inctx);
