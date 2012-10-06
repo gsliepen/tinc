@@ -83,9 +83,21 @@ void free_connection_partially(connection_t *c) {
 
 	c->socket = -1;
 
+	c->options = 0;
+	c->status.pinged = false;
+	c->status.connecting = false;
+	c->status.encryptout = false;
+	c->status.decryptin = false;
+	c->status.mst = false;
+	c->status.control = false;
+	c->status.pcap = false;
+	c->status.log = false;
+
 	c->protocol_major = 0;
 	c->protocol_minor = 0;
 	c->allow_request = 0;
+	c->tcplen = 0;
+	c->last_ping_time = 0;
 }
 
 void free_connection(connection_t *c) {

@@ -38,7 +38,7 @@ typedef struct connection_status_t {
 		unsigned int pinged:1;			/* sent ping */
 		unsigned int active:1;			/* 1 if active.. */
 		unsigned int connecting:1;		/* 1 if we are waiting for a non-blocking connect() to finish */
-		unsigned int termreq:1;			/* the termination of this connection was requested */
+		unsigned int unused_termreq:1;		/* the termination of this connection was requested */
 		unsigned int remove_unused:1;		/* Set to 1 if you want this connection removed */
 		unsigned int timeout_unused:1;		/* 1 if gotten timeout */
 		unsigned int encryptout:1;		/* 1 if we can encrypt outgoing traffic */
