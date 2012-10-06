@@ -817,9 +817,10 @@ static int cmd_start(int argc, char *argv[]) {
 		c = "tincd";
 
 	int nargc = 0;
-	char **nargv = xmalloc_and_zero((orig_argc + argc) * sizeof *nargv);
+	char **nargv = xmalloc_and_zero((optind + argc) * sizeof *nargv);
 
-	for(int i = 0; i < orig_argc; i++)
+	nargv[nargc++] = c;
+	for(int i = 1; i < optind; i++)
 		nargv[nargc++] = orig_argv[i];
 	for(int i = 1; i < argc; i++)
 		nargv[nargc++] = argv[i];
@@ -852,9 +853,13 @@ static int cmd_stop(int argc, char *argv[]) {
 #ifndef HAVE_MINGW
 	if(!connect_tincd(true)) {
 		if(pid) {
-			if(kill(pid, SIGTERM)) 
+			if(kill(pid, SIGTERM)) {
+				fprintf(stderr, "Could not send TERM signal to process with PID %u: %s\n", pid, strerror(errno));
 				return 1;
+			}
+
 			fprintf(stderr, "Sent TERM signal to process with PID %u.\n", pid);
+			waitpid(pid, NULL, 0);
 			return 0;
 		}
 
@@ -866,6 +871,12 @@ static int cmd_stop(int argc, char *argv[]) {
 		fprintf(stderr, "Could not stop tinc daemon.\n");
 		return 1;
 	}
+
+	// Wait for tincd to close the connection...
+	fd_set r;
+	FD_ZERO(&r);
+	FD_SET(fd, &r);
+	select(fd + 1, &r, NULL, NULL, NULL);
 #else
 	if(!remove_service())
 		return 1;
@@ -2037,7 +2048,6 @@ static int cmd_shell(int argc, char *argv[]) {
 	char *line = NULL;
 	int maxargs = argc + 16;
 	char **nargv = xmalloc(maxargs * sizeof *nargv);
-	optind = argc;
 
 	for(int i = 0; i < argc; i++)
 		nargv[i] = argv[i];
