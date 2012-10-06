@@ -963,6 +963,9 @@ void close_network_connections(void) {
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
+		/* Keep control connections open until the end, so they know when we really terminated */
+		if(c->status.control)
+			c->socket = -1;
 		c->outgoing = NULL;
 		terminate_connection(c, false);
 	}
