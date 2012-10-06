@@ -209,7 +209,7 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 		memcpy(seed + 13, s->hiskex + 1, 32);
 		memcpy(seed + 45, s->mykex + 1, 32);
 	}
-	memcpy(seed + 78, s->label, s->labellen);
+	memcpy(seed + 77, s->label, s->labellen);
 
 	// Use PRF to generate the key material
 	if(!prf(shared, len, seed, s->labellen + 64 + 13, s->key, keylen))
