@@ -148,6 +148,9 @@ typedef enum proxytype_t {
 } proxytype_t;
 extern proxytype_t proxytype;
 
+extern char *scriptinterpreter;
+extern char *scriptextension;
+
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"
 #include "node.h"

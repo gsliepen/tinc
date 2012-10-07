@@ -411,8 +411,7 @@ bool append_config_file(const char *name, const char *key, const char *value) {
 		fclose(fp);
 	}
 
-
 	free(fname);
 
-	return fp;
+	return fp != NULL;
 }

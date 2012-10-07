@@ -52,20 +52,23 @@ char *proxyuser;
 char *proxypass;
 proxytype_t proxytype;
 
+char *scriptinterpreter;
+char *scriptextension;
+
 bool node_read_ecdsa_public_key(node_t *n) {
 	if(ecdsa_active(&n->ecdsa))
 		return true;
 
 	splay_tree_t *config_tree;
 	FILE *fp;
-	char *fname;
+	char *pubname = NULL, *hcfname = NULL;
 	char *p;
 	bool result = false;
 
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
+	xasprintf(&hcfname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
 	init_configuration(&config_tree);
-	if(!read_config_file(config_tree, fname))
+	if(!read_config_file(config_tree, hcfname))
 		goto exit;
 
 	/* First, check for simple ECDSAPublicKey statement */
@@ -78,15 +81,13 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 	/* Else, check for ECDSAPublicKeyFile statement and read it */
 
-	free(fname);
+	if(!get_config_string(lookup_config(config_tree, "ECDSAPublicKeyFile"), &pubname))
+		xasprintf(&pubname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
-	if(!get_config_string(lookup_config(config_tree, "ECDSAPublicKeyFile"), &fname))
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
-
-	fp = fopen(fname, "r");
+	fp = fopen(pubname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA public key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA public key file `%s': %s", pubname, strerror(errno));
 		goto exit;
 	}
 
@@ -95,7 +96,8 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 exit:
 	exit_configuration(&config_tree);
-	free(fname);
+	free(hcfname);
+	free(pubname);
 	return result;
 }
 
@@ -386,10 +388,25 @@ char *get_name(void) {
 
 bool setup_myself_reloadable(void) {
 	char *proxy = NULL;
-	char *mode = NULL;
+	char *rmode = NULL;
+	char *fmode = NULL;
+	char *bmode = NULL;
 	char *afname = NULL;
 	char *space;
 	bool choice;
+
+	free(scriptinterpreter);
+	scriptinterpreter = NULL;
+	get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &scriptinterpreter);
+
+	
+	free(scriptextension);
+	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension))
+#ifdef HAVE_MINGW
+		scriptextension = xstrdup(".bat");
+#else
+		scriptextension = xstrdup("");
+#endif
 
 	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
 	if(proxy) {
@@ -465,32 +482,32 @@ bool setup_myself_reloadable(void) {
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
 	
-	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
-		if(!strcasecmp(mode, "router"))
+	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
+		if(!strcasecmp(rmode, "router"))
 			routing_mode = RMODE_ROUTER;
-		else if(!strcasecmp(mode, "switch"))
+		else if(!strcasecmp(rmode, "switch"))
 			routing_mode = RMODE_SWITCH;
-		else if(!strcasecmp(mode, "hub"))
+		else if(!strcasecmp(rmode, "hub"))
 			routing_mode = RMODE_HUB;
 		else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid routing mode!");
 			return false;
 		}
-		free(mode);
+		free(rmode);
 	}
 
-	if(get_config_string(lookup_config(config_tree, "Forwarding"), &mode)) {
-		if(!strcasecmp(mode, "off"))
+	if(get_config_string(lookup_config(config_tree, "Forwarding"), &fmode)) {
+		if(!strcasecmp(fmode, "off"))
 			forwarding_mode = FMODE_OFF;
-		else if(!strcasecmp(mode, "internal"))
+		else if(!strcasecmp(fmode, "internal"))
 			forwarding_mode = FMODE_INTERNAL;
-		else if(!strcasecmp(mode, "kernel"))
+		else if(!strcasecmp(fmode, "kernel"))
 			forwarding_mode = FMODE_KERNEL;
 		else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid forwarding mode!");
 			return false;
 		}
-		free(mode);
+		free(fmode);
 	}
 
 	choice = true;
@@ -505,18 +522,18 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
-	if(get_config_string(lookup_config(config_tree, "Broadcast"), &mode)) {
-		if(!strcasecmp(mode, "no"))
+	if(get_config_string(lookup_config(config_tree, "Broadcast"), &bmode)) {
+		if(!strcasecmp(bmode, "no"))
 			broadcast_mode = BMODE_NONE;
-		else if(!strcasecmp(mode, "yes") || !strcasecmp(mode, "mst"))
+		else if(!strcasecmp(bmode, "yes") || !strcasecmp(bmode, "mst"))
 			broadcast_mode = BMODE_MST;
-		else if(!strcasecmp(mode, "direct"))
+		else if(!strcasecmp(bmode, "direct"))
 			broadcast_mode = BMODE_DIRECT;
 		else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid broadcast mode!");
 			return false;
 		}
-		free(mode);
+		free(bmode);
 	}
 
 #if !defined(SOL_IP) || !defined(IP_TOS)

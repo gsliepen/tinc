@@ -355,7 +355,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 static bool ecdsa_keygen(bool ask) {
 	ecdsa_t key;
 	FILE *f;
-	char *filename;
+	char *pubname, *privname;
 
 	fprintf(stderr, "Generating ECDSA keypair:\n");
 
@@ -365,8 +365,9 @@ static bool ecdsa_keygen(bool ask) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&filename, "%s" SLASH "ecdsa_key.priv", confbase);
-	f = ask_and_open(filename, "private ECDSA key", "a", ask);
+	xasprintf(&privname, "%s" SLASH "ecdsa_key.priv", confbase);
+	f = ask_and_open(privname, "private ECDSA key", "a", ask);
+	free(privname);
 
 	if(!f)
 		return false;
@@ -379,14 +380,14 @@ static bool ecdsa_keygen(bool ask) {
 	ecdsa_write_pem_private_key(&key, f);
 
 	fclose(f);
-	free(filename);
 
 	if(name)
-		xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+		xasprintf(&pubname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	else
-		xasprintf(&filename, "%s" SLASH "ecdsa_key.pub", confbase);
+		xasprintf(&pubname, "%s" SLASH "ecdsa_key.pub", confbase);
 
-	f = ask_and_open(filename, "public ECDSA key", "a", ask);
+	f = ask_and_open(pubname, "public ECDSA key", "a", ask);
+	free(pubname);
 
 	if(!f)
 		return false;
@@ -396,7 +397,6 @@ static bool ecdsa_keygen(bool ask) {
 	free(pubkey);
 
 	fclose(f);
-	free(filename);
 
 	return true;
 }
@@ -408,7 +408,7 @@ static bool ecdsa_keygen(bool ask) {
 static bool rsa_keygen(int bits, bool ask) {
 	rsa_t key;
 	FILE *f;
-	char *filename;
+	char *pubname, *privname;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 
@@ -418,8 +418,9 @@ static bool rsa_keygen(int bits, bool ask) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&filename, "%s" SLASH "rsa_key.priv", confbase);
-	f = ask_and_open(filename, "private RSA key", "a", ask);
+	xasprintf(&privname, "%s" SLASH "rsa_key.priv", confbase);
+	f = ask_and_open(privname, "private RSA key", "a", ask);
+	free(privname);
 
 	if(!f)
 		return false;
@@ -432,14 +433,14 @@ static bool rsa_keygen(int bits, bool ask) {
 	rsa_write_pem_private_key(&key, f);
 
 	fclose(f);
-	free(filename);
 
 	if(name)
-		xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+		xasprintf(&pubname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	else
-		xasprintf(&filename, "%s" SLASH "rsa_key.pub", confbase);
+		xasprintf(&pubname, "%s" SLASH "rsa_key.pub", confbase);
 
-	f = ask_and_open(filename, "public RSA key", "a", ask);
+	f = ask_and_open(pubname, "public RSA key", "a", ask);
+	free(pubname);
 
 	if(!f)
 		return false;
@@ -447,7 +448,6 @@ static bool rsa_keygen(int bits, bool ask) {
 	rsa_write_pem_public_key(&key, f);
 
 	fclose(f);
-	free(filename);
 
 	return true;
 }
@@ -833,12 +833,15 @@ static int cmd_start(int argc, char *argv[]) {
 	pid_t pid = fork();
 	if(pid == -1) {
 		fprintf(stderr, "Could not fork: %s\n", strerror(errno));
+		free(nargv);
 		return 1;
 	}
 
 	if(!pid)
 		exit(execvp(c, nargv));
 	
+	free(nargv);
+
 	int status = -1;
 	if(waitpid(pid, &status, 0) != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
 		fprintf(stderr, "Error starting %s\n", c);
@@ -1226,7 +1229,7 @@ static struct {
 	{"ECDSAPrivateKeyFile", VAR_SERVER},
 	{"ExperimentalProtocol", VAR_SERVER},
 	{"Forwarding", VAR_SERVER},
-	{"GraphDumpFile", VAR_SERVER},
+	{"GraphDumpFile", VAR_SERVER | VAR_OBSOLETE},
 	{"Hostnames", VAR_SERVER},
 	{"IffOneQueue", VAR_SERVER},
 	{"Interface", VAR_SERVER},
@@ -1245,6 +1248,8 @@ static struct {
 	{"ProcessPriority", VAR_SERVER},
 	{"Proxy", VAR_SERVER},
 	{"ReplayWindow", VAR_SERVER},
+	{"ScriptsExtension", VAR_SERVER},
+	{"ScriptsInterpreter", VAR_SERVER},
 	{"StrictSubnets", VAR_SERVER},
 	{"TunnelServer", VAR_SERVER},
 	{"UDPRcvBuf", VAR_SERVER},
@@ -2132,6 +2137,8 @@ static int cmd_shell(int argc, char *argv[]) {
 			result |= 1;
 		}
 	}
+
+	free(nargv);
 
 	if(tty)
 		printf("\n");

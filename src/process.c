@@ -226,58 +226,40 @@ bool detach(void) {
 
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
-	int status, len;
 	char *scriptname;
-	int i;
-	char *interpreter = NULL;
+	char *command;
 
-#ifndef HAVE_MINGW
-	len = xasprintf(&scriptname, "\"%s" SLASH "%s\"", confbase, name);
-#else
-	len = xasprintf(&scriptname, "\"%s" SLASH "%s.bat\"", confbase, name);
-#endif
-	if(len < 0)
-		return false;
+	xasprintf(&scriptname, "%s" SLASH "%s%s", confbase, name, scriptextension);
 
-	scriptname[len - 1] = '\0';
-
-#ifndef HAVE_TUNEMU
 	/* First check if there is a script */
 
-	if(access(scriptname + 1, F_OK)) {
+	if(access(scriptname, F_OK)) {
 		free(scriptname);
 		return true;
-	}
-#endif
-
-	// Custom scripts interpreter
-	if(get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &interpreter)) {
-		// Force custom scripts interpreter allowing execution of scripts on android without execution flag (such as on /sdcard)
-		free(scriptname);
-		len = xasprintf(&scriptname, "%s \"%s/%s\"", interpreter, confbase, name);
-		free(interpreter);
-		if(len < 0)
-			return false;
 	}
 
 	logger(DEBUG_STATUS, LOG_INFO, "Executing script %s", name);
 
-
 #ifdef HAVE_PUTENV
 	/* Set environment */
 	
-	for(i = 0; envp[i]; i++)
+	for(int i = 0; envp[i]; i++)
 		putenv(envp[i]);
 #endif
 
-	scriptname[len - 1] = '\"';
-	status = system(scriptname);
+	if(scriptinterpreter)
+		xasprintf(&command, "%s \"%s\"", scriptinterpreter, scriptname);
+	else
+		xasprintf(&command, "\"%s\"", scriptname);
 
+	int status = system(command);
+
+	free(command);
 	free(scriptname);
 
 	/* Unset environment */
 
-	for(i = 0; envp[i]; i++) {
+	for(int i = 0; envp[i]; i++) {
 		char *e = strchr(envp[i], '=');
 		if(e) {
 			char p[e - envp[i] + 1];
