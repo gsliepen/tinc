@@ -473,7 +473,15 @@ static void handle_meta_write(int sock, short events, void *data) {
 
 	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
 	if(outlen <= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Onoes, outlen = %d (%s)", (int)outlen, strerror(errno));
+		if(!errno || errno == EPIPE) {
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)", c->name, c->hostname);
+		} else if(sockwouldblock(sockerrno)) {
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Sending %d bytes to %s (%s) would block", c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
+			return;
+		} else {
+			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, strerror(errno));
+		}
+
 		terminate_connection(c, c->status.active);
 		return;
 	}
