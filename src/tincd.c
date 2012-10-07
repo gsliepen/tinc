@@ -338,7 +338,7 @@ static bool keygen(int bits) {
 	RSA *rsa_key;
 	FILE *f;
 	char *name = get_name();
-	char *filename;
+	char *pubname, *privname;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
@@ -349,8 +349,9 @@ static bool keygen(int bits) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(filename, "private RSA key");
+	xasprintf(&privname, "%s/rsa_key.priv", confbase);
+	f = ask_and_open(privname, "private RSA key");
+	free(privname);
 
 	if(!f)
 		return false;
@@ -363,14 +364,14 @@ static bool keygen(int bits) {
 	fputc('\n', f);
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
-	free(filename);
 
 	if(name)
-		xasprintf(&filename, "%s/hosts/%s", confbase, name);
+		xasprintf(&pubname, "%s/hosts/%s", confbase, name);
 	else
-		xasprintf(&filename, "%s/rsa_key.pub", confbase);
+		xasprintf(&pubname, "%s/rsa_key.pub", confbase);
 
-	f = ask_and_open(filename, "public RSA key");
+	f = ask_and_open(pubname, "public RSA key");
+	free(pubname);
 
 	if(!f)
 		return false;
@@ -378,7 +379,6 @@ static bool keygen(int bits) {
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
-	free(filename);
 	free(name);
 
 	return true;

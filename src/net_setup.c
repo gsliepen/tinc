@@ -55,7 +55,8 @@ proxytype_t proxytype;
 
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
-	char *fname;
+	char *pubname;
+	char *hcfname;
 	char *key;
 
 	if(!c->rsa_key) {
@@ -77,80 +78,79 @@ bool read_rsa_public_key(connection_t *c) {
 
 	/* Else, check for PublicKeyFile statement and read it */
 
-	if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname)) {
-		fp = fopen(fname, "r");
+	if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &pubname)) {
+		fp = fopen(pubname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
-				   fname, strerror(errno));
-			free(fname);
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s", pubname, strerror(errno));
+			free(pubname);
 			return false;
 		}
 
-		free(fname);
 		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
 		fclose(fp);
 
-		if(c->rsa_key)
+		if(c->rsa_key) {
+			free(pubname);
 			return true;		/* Woohoo. */
+		}
 
 		/* If it fails, try PEM_read_RSA_PUBKEY. */
-		fp = fopen(fname, "r");
+		fp = fopen(pubname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
-				   fname, strerror(errno));
-			free(fname);
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s", pubname, strerror(errno));
+			free(pubname);
 			return false;
 		}
 
-		free(fname);
 		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 		fclose(fp);
 
 		if(c->rsa_key) {
 //				RSA_blinding_on(c->rsa_key, NULL);
+			free(pubname);
 			return true;
 		}
 
-		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s",
-			   fname, strerror(errno));
+		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s", pubname, strerror(errno));
+		free(pubname);
 		return false;
 	}
 
 	/* Else, check if a harnessed public key is in the config file */
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	fp = fopen(fname, "r");
+	xasprintf(&hcfname, "%s/hosts/%s", confbase, c->name);
+	fp = fopen(hcfname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
-		free(fname);
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", hcfname, strerror(errno));
+		free(hcfname);
 		return false;
 	}
 
 	c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
 	fclose(fp);
-	free(fname);
 
-	if(c->rsa_key)
+	if(c->rsa_key) {
+		free(hcfname);
 		return true;
+	}
 
 	/* Try again with PEM_read_RSA_PUBKEY. */
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	fp = fopen(fname, "r");
+	fp = fopen(hcfname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
-		free(fname);
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", hcfname, strerror(errno));
+		free(hcfname);
 		return false;
 	}
 
+	free(hcfname);
 	c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 //	RSA_blinding_on(c->rsa_key, NULL);
 	fclose(fp);
-	free(fname);
 
 	if(c->rsa_key)
 		return true;

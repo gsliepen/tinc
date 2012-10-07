@@ -315,7 +315,7 @@ void dump_graph(void) {
 	node_t *n;
 	edge_t *e;
 	char *filename = NULL, *tmpname = NULL;
-	FILE *file;
+	FILE *file, *pipe;
 	
 	if(!graph_changed || !get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
 		return;
@@ -325,7 +325,7 @@ void dump_graph(void) {
 	ifdebug(PROTOCOL) logger(LOG_NOTICE, "Dumping graph");
 	
 	if(filename[0] == '|') {
-		file = popen(filename + 1, "w");
+		file = pipe = popen(filename + 1, "w");
 	} else {
 		xasprintf(&tmpname, "%s.new", filename);
 		file = fopen(tmpname, "w");
@@ -354,7 +354,7 @@ void dump_graph(void) {
 	fprintf(file, "}\n");	
 	
 	if(filename[0] == '|') {
-		pclose(file);
+		pclose(pipe);
 	} else {
 		fclose(file);
 #ifdef HAVE_MINGW
