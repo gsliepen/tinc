@@ -349,63 +349,78 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 #endif
 }
 
-bool do_outgoing_connection(connection_t *c) {
+static void handle_meta_write(int sock, short events, void *data) {
+	connection_t *c = data;
+
+	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
+	if(outlen <= 0) {
+		if(!errno || errno == EPIPE) {
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)", c->name, c->hostname);
+		} else if(sockwouldblock(sockerrno)) {
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Sending %d bytes to %s (%s) would block", c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
+			return;
+		} else {
+			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, strerror(errno));
+		}
+
+		terminate_connection(c, c->status.active);
+		return;
+	}
+
+	buffer_read(&c->outbuf, outlen);
+	if(!c->outbuf.len && event_initialized(&c->outevent))
+		event_del(&c->outevent);
+}
+
+
+bool do_outgoing_connection(outgoing_t *outgoing) {
 	char *address, *port, *space;
 	struct addrinfo *proxyai = NULL;
 	int result;
 
-	if(!c->outgoing) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "do_outgoing_connection() for %s called without c->outgoing", c->name);
-		abort();
-	}
-
 begin:
-	if(!c->outgoing->ai) {
-		if(!c->outgoing->cfg) {
-			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s",
-					   c->name);
-			retry_outgoing(c->outgoing);
-			c->outgoing = NULL;
-			connection_del(c);
+	if(!outgoing->ai) {
+		if(!outgoing->cfg) {
+			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->name);
+			retry_outgoing(outgoing);
 			return false;
 		}
 
-		get_config_string(c->outgoing->cfg, &address);
+		get_config_string(outgoing->cfg, &address);
 
 		space = strchr(address, ' ');
 		if(space) {
 			port = xstrdup(space + 1);
 			*space = 0;
 		} else {
-			if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
+			if(!get_config_string(lookup_config(outgoing->config_tree, "Port"), &port))
 				port = xstrdup("655");
 		}
 
-		c->outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
+		outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
 		free(address);
 		free(port);
 
-		c->outgoing->aip = c->outgoing->ai;
-		c->outgoing->cfg = lookup_config_next(c->config_tree, c->outgoing->cfg);
+		outgoing->aip = outgoing->ai;
+		outgoing->cfg = lookup_config_next(outgoing->config_tree, outgoing->cfg);
 	}
 
-	if(!c->outgoing->aip) {
-		if(c->outgoing->ai)
-			freeaddrinfo(c->outgoing->ai);
-		c->outgoing->ai = NULL;
+	if(!outgoing->aip) {
+		if(outgoing->ai)
+			freeaddrinfo(outgoing->ai);
+		outgoing->ai = NULL;
 		goto begin;
 	}
 
-	memcpy(&c->address, c->outgoing->aip->ai_addr, c->outgoing->aip->ai_addrlen);
-	c->outgoing->aip = c->outgoing->aip->ai_next;
+	connection_t *c = new_connection();
+	c->outgoing = outgoing;
 
-	if(c->hostname)
-		free(c->hostname);
+	memcpy(&c->address, outgoing->aip->ai_addr, outgoing->aip->ai_addrlen);
+	outgoing->aip = outgoing->aip->ai_next;
 
 	c->hostname = sockaddr2hostname(&c->address);
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", c->name,
-			   c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", outgoing->name, c->hostname);
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
@@ -414,14 +429,17 @@ begin:
 		do_outgoing_pipe(c, proxyhost);
 	} else {
 		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
-		if(!proxyai)
+		if(!proxyai) {
+			free_connection(c);
 			goto begin;
+		}
 		logger(DEBUG_CONNECTIONS, LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 	}
 
 	if(c->socket == -1) {
 		logger(DEBUG_CONNECTIONS, LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
+		free_connection(c);
 		goto begin;
 	}
 
@@ -450,92 +468,55 @@ begin:
 		freeaddrinfo(proxyai);
 	}
 
-	if(result == -1) {
-		if(sockinprogress(sockerrno)) {
-			c->status.connecting = true;
-			return true;
-		}
-
-		closesocket(c->socket);
-
-		logger(DEBUG_CONNECTIONS, LOG_ERR, "%s: %s", c->hostname, sockstrerror(sockerrno));
+	if(result == -1 && !sockinprogress(sockerrno)) {
+		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not connect to %s (%s): %s", outgoing->name, c->hostname, sockstrerror(sockerrno));
+		free_connection(c);
 
 		goto begin;
 	}
 
-	finish_connecting(c);
+	/* Now that there is a working socket, fill in the rest and register this connection. */
 
-	return true;
-}
-
-static void handle_meta_write(int sock, short events, void *data) {
-	connection_t *c = data;
-
-	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
-	if(outlen <= 0) {
-		if(!errno || errno == EPIPE) {
-			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)", c->name, c->hostname);
-		} else if(sockwouldblock(sockerrno)) {
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Sending %d bytes to %s (%s) would block", c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
-			return;
-		} else {
-			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, strerror(errno));
-		}
-
-		terminate_connection(c, c->status.active);
-		return;
-	}
-
-	buffer_read(&c->outbuf, outlen);
-	if(!c->outbuf.len && event_initialized(&c->outevent))
-		event_del(&c->outevent);
-}
-
-void setup_outgoing_connection(outgoing_t *outgoing) {
-	connection_t *c;
-	node_t *n;
-
-	if(event_initialized(&outgoing->ev))
-		event_del(&outgoing->ev);
-
-	n = lookup_node(outgoing->name);
-
-	if(n)
-		if(n->connection) {
-			logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", outgoing->name);
-
-			n->connection->outgoing = outgoing;
-			return;
-		}
-
-	c = new_connection();
+	c->status.connecting = true;
 	c->name = xstrdup(outgoing->name);
 	c->outcipher = myself->connection->outcipher;
 	c->outdigest = myself->connection->outdigest;
 	c->outmaclength = myself->connection->outmaclength;
 	c->outcompression = myself->connection->outcompression;
-
-	init_configuration(&c->config_tree);
-	read_connection_config(c);
-
-	outgoing->cfg = lookup_config(c->config_tree, "Address");
-
-	if(!outgoing->cfg) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "No address specified for %s", c->name);
-		free_connection(c);
-		return;
-	}
-
-	c->outgoing = outgoing;
 	c->last_ping_time = time(NULL);
 
 	connection_add(c);
 
-	if (do_outgoing_connection(c)) {
-		event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-		event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
-		event_add(&c->inevent, NULL);
+	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
+	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
+	event_add(&c->inevent, NULL);
+
+	return true;
+}
+
+void setup_outgoing_connection(outgoing_t *outgoing) {
+	if(event_initialized(&outgoing->ev))
+		event_del(&outgoing->ev);
+
+	node_t *n = lookup_node(outgoing->name);
+
+	if(n && n->connection) {
+		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", outgoing->name);
+
+		n->connection->outgoing = outgoing;
+		return;
 	}
+
+	init_configuration(&outgoing->config_tree);
+	read_host_config(outgoing->config_tree, outgoing->name);
+	outgoing->cfg = lookup_config(outgoing->config_tree, "Address");
+
+	if(!outgoing->cfg) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "No address specified for %s", outgoing->name);
+		return;
+	}
+
+	do_outgoing_connection(outgoing);
 }
 
 /*
@@ -651,6 +632,7 @@ void try_outgoing_connections(void) {
 		connection_t *c = n->data;
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
+			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
 			terminate_connection(c, c->status.active);
 		}
 	}

@@ -54,7 +54,10 @@ connection_t *new_connection(void) {
 	return xmalloc_and_zero(sizeof(connection_t));
 }
 
-void free_connection_partially(connection_t *c) {
+void free_connection(connection_t *c) {
+	if(!c)
+		return;
+
 	cipher_close(&c->incipher);
 	digest_close(&c->indigest);
 	cipher_close(&c->outcipher);
@@ -64,10 +67,7 @@ void free_connection_partially(connection_t *c) {
 	ecdsa_free(&c->ecdsa);
 	rsa_free(&c->rsa);
 
-	if(c->hischallenge) {
-		free(c->hischallenge);
-		c->hischallenge = NULL;
-	}
+	free(c->hischallenge);
 
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
@@ -80,31 +80,6 @@ void free_connection_partially(connection_t *c) {
 
 	if(c->socket > 0)
 		closesocket(c->socket);
-
-	c->socket = -1;
-
-	c->options = 0;
-	c->status.pinged = false;
-	c->status.connecting = false;
-	c->status.encryptout = false;
-	c->status.decryptin = false;
-	c->status.mst = false;
-	c->status.control = false;
-	c->status.pcap = false;
-	c->status.log = false;
-
-	c->protocol_major = 0;
-	c->protocol_minor = 0;
-	c->allow_request = 0;
-	c->tcplen = 0;
-	c->last_ping_time = 0;
-}
-
-void free_connection(connection_t *c) {
-	if(!c)
-		return;
-
-	free_connection_partially(c);
 
 	free(c->name);
 	free(c->hostname);

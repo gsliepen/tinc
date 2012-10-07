@@ -385,14 +385,14 @@ bool read_server_config(void) {
 	return x;
 }
 
-bool read_connection_config(connection_t *c) {
+bool read_host_config(splay_tree_t *config_tree, const char *name) {
 	char *fname;
 	bool x;
 
-	read_config_options(c->config_tree, c->name);
+	read_config_options(config_tree, name);
 
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
-	x = read_config_file(c->config_tree, fname);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	x = read_config_file(config_tree, fname);
 	free(fname);
 
 	return x;

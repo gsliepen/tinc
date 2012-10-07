@@ -60,7 +60,7 @@ extern config_t *parse_config_line(char *, const char *, int);
 extern bool read_config_file(splay_tree_t *, const char *);
 extern void read_config_options(splay_tree_t *, const char *);
 extern bool read_server_config(void);
-extern bool read_connection_config(struct connection_t *);
+extern bool read_host_config(splay_tree_t *, const char *);
 extern bool append_config_file(const char *, const char *, const char *);
 
 #endif							/* __TINC_CONF_H__ */

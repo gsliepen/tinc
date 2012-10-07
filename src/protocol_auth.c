@@ -212,9 +212,8 @@ bool id_h(connection_t *c, const char *request) {
 	if(!c->config_tree) {
 		init_configuration(&c->config_tree);
 
-		if(!read_connection_config(c)) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname,
-				   c->name);
+		if(!read_host_config(c->config_tree, c->name)) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname, c->name);
 			return false;
 		}
 

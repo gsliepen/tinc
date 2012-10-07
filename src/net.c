@@ -103,14 +103,13 @@ void purge(void) {
 
 /*
   Terminate a connection:
-  - Close the socket
-  - Remove associated edge and tell other connections about it if report = true
+  - Mark it as inactive
+  - Remove the edge representing this connection
+  - Kill it with fire
   - Check if we need to retry making an outgoing connection
-  - Deactivate the host
 */
 void terminate_connection(connection_t *c, bool report) {
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)",
-			   c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)", c->name, c->hostname);
 
 	c->status.active = false;
 
@@ -141,15 +140,13 @@ void terminate_connection(connection_t *c, bool report) {
 		}
 	}
 
-	free_connection_partially(c);
+	outgoing_t *outgoing = c->outgoing;
+	connection_del(c);
 
 	/* Check if this was our outgoing connection */
 
-	if(c->outgoing) {
-		do_outgoing_connection(c);
-	} else {
-	        connection_del(c);
-        }
+	if(outgoing)
+		do_outgoing_connection(outgoing);
 }
 
 /*
@@ -175,25 +172,20 @@ static void timeout_handler(int fd, short events, void *event) {
 		if(c->last_ping_time + pingtimeout <= now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
-							   c->name, c->hostname, (long)now - c->last_ping_time);
-					terminate_connection(c, true);
-					continue;
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now - c->last_ping_time);
 				} else if(c->last_ping_time + pinginterval <= now) {
 					send_ping(c);
-				}
-			} else {
-				if(c->status.connecting) {
-					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
-					c->status.connecting = false;
-					closesocket(c->socket);
-					do_outgoing_connection(c);
+					continue;
 				} else {
-					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
-					terminate_connection(c, false);
 					continue;
 				}
+			} else {
+				if(c->status.connecting)
+					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
+				else
+					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
 			}
+			terminate_connection(c, c->status.active);
 		}
 	}
 
@@ -228,11 +220,8 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 		if(!result)
 			finish_connecting(c);
 		else {
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG,
-					   "Error while connecting to %s (%s): %s",
-					   c->name, c->hostname, sockstrerror(result));
-			closesocket(c->socket);
-			do_outgoing_connection(c);
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
+			terminate_connection(c, false);
 			return;
 		}
 	}
@@ -369,7 +358,7 @@ int reload_configuration(void) {
 
 		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 		if(stat(fname, &s) || s.st_mtime > last_config_check) {
-			fprintf(stderr, "ZOMG %ld > %ld\n", s.st_mtime, last_config_check);
+			logger(DEBUG_CONNECTIONS, LOG_INFO, "Host config file of %s has been changed", c->name);
 			terminate_connection(c, c->status.active);
 		}
 		free(fname);
@@ -394,7 +383,7 @@ void retry(void) {
 			if(c->status.connecting)
 				close(c->socket);
 			c->outgoing->timeout = 0;
-			do_outgoing_connection(c);
+			terminate_connection(c, c->status.active);
 		}
 	}
 }

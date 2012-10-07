@@ -109,6 +109,7 @@ typedef struct listen_socket_t {
 typedef struct outgoing_t {
 	char *name;
 	int timeout;
+	splay_tree_t *config_tree;
 	struct config_t *cfg;
 	struct addrinfo *ai;
 	struct addrinfo *aip;
@@ -158,7 +159,7 @@ extern char *scriptextension;
 extern void retry_outgoing(outgoing_t *);
 extern void handle_incoming_vpn_data(int, short, void *);
 extern void finish_connecting(struct connection_t *);
-extern bool do_outgoing_connection(struct connection_t *);
+extern bool do_outgoing_connection(struct outgoing_t *);
 extern void handle_new_meta_connection(int, short, void *);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
