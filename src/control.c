@@ -100,13 +100,12 @@ bool control_h(connection_t *c, const char *request) {
 		case REQ_DISCONNECT: {
 			char name[MAX_STRING_SIZE];
 			connection_t *other;
-			splay_node_t *node, *next;
 			bool found = false;
 
 			if(sscanf(request, "%*d %*d " MAX_STRING, name) != 1)
 				return control_return(c, REQ_DISCONNECT, -1);
 
-			for(node = connection_tree->head; node; node = next) {
+			for(list_node_t *node = connection_list->head, *next; node; node = next) {
 				next = node->next;
 				other = node->data;
 				if(strcmp(other->name, name))

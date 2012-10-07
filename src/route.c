@@ -20,7 +20,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "connection.h"
 #include "control_common.h"
 #include "ethernet.h"
@@ -187,15 +186,12 @@ static void swap_mac_addresses(vpn_packet_t *packet) {
 }
 	
 static void age_subnets(int fd, short events, void *data) {
-	subnet_t *s;
-	connection_t *c;
-	splay_node_t *node, *next, *node2;
 	bool left = false;
 	time_t now = time(NULL);
 
-	for(node = myself->subnet_tree->head; node; node = next) {
+	for(splay_node_t *node = myself->subnet_tree->head, *next; node; node = next) {
 		next = node->next;
-		s = node->data;
+		subnet_t *s = node->data;
 		if(s->expires && s->expires < now) {
 			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
@@ -203,8 +199,9 @@ static void age_subnets(int fd, short events, void *data) {
 					logger(DEBUG_TRAFFIC, LOG_INFO, "Subnet %s expired", netstr);
 			}
 
-			for(node2 = connection_tree->head; node2; node2 = node2->next) {
-				c = node2->data;
+			for(list_node_t *node = connection_list->head, *next; node; node = next) {
+				next = node->next;
+				connection_t *c = node->data;
 				if(c->status.active)
 					send_del_subnet(c, s);
 			}
@@ -221,11 +218,7 @@ static void age_subnets(int fd, short events, void *data) {
 }
 
 static void learn_mac(mac_t *address) {
-	subnet_t *subnet;
-	splay_node_t *node;
-	connection_t *c;
-
-	subnet = lookup_subnet_mac(myself, address);
+	subnet_t *subnet = lookup_subnet_mac(myself, address);
 
 	/* If we don't know this MAC address yet, store it */
 
@@ -244,8 +237,9 @@ static void learn_mac(mac_t *address) {
 
 		/* And tell all other tinc daemons it's our MAC */
 
-		for(node = connection_tree->head; node; node = node->next) {
-			c = node->data;
+		for(list_node_t *node = connection_list->head, *next; node; node = next) {
+			next = node->next;
+			connection_t *c = node->data;
 			if(c->status.active)
 				send_add_subnet(c, subnet);
 		}
@@ -878,7 +872,8 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 static void send_pcap(vpn_packet_t *packet) {
 	pcap = false;
-	for(splay_node_t *node = connection_tree->head; node; node = node->next) {
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+		next = node->next;
 		connection_t *c = node->data;
 		if(!c->status.pcap)
 			continue;

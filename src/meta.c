@@ -21,7 +21,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "cipher.h"
 #include "connection.h"
 #include "logger.h"
@@ -77,11 +76,9 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
-	splay_node_t *node;
-	connection_t *c;
-
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+		next = node->next;
+		connection_t *c = node->data;
 
 		if(c != from && c->status.active)
 			send_meta(c, buffer, length);

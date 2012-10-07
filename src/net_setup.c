@@ -22,7 +22,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "cipher.h"
 #include "conf.h"
 #include "connection.h"
@@ -972,14 +971,9 @@ bool setup_network(void) {
   close all open network connections
 */
 void close_network_connections(void) {
-	splay_node_t *node, *next;
-	connection_t *c;
-	char *envp[5];
-	int i;
-
-	for(node = connection_tree->head; node; node = next) {
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
 		next = node->next;
-		c = node->data;
+		connection_t *c = node->data;
 		/* Keep control connections open until the end, so they know when we really terminated */
 		if(c->status.control)
 			c->socket = -1;
@@ -995,13 +989,14 @@ void close_network_connections(void) {
 		free_connection(myself->connection);
 	}
 
-	for(i = 0; i < listen_sockets; i++) {
+	for(int i = 0; i < listen_sockets; i++) {
 		event_del(&listen_socket[i].ev_tcp);
 		event_del(&listen_socket[i].ev_udp);
 		close(listen_socket[i].tcp);
 		close(listen_socket[i].udp);
 	}
 
+	char *envp[5];
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
@@ -1018,7 +1013,7 @@ void close_network_connections(void) {
 
 	if(myport) free(myport);
 
-	for(i = 0; i < 4; i++)
+	for(int i = 0; i < 4; i++)
 		free(envp[i]);
 
 	devops.close();

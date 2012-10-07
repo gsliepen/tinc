@@ -36,7 +36,6 @@
 #include LZO1X_H
 #endif
 
-#include "splay_tree.h"
 #include "cipher.h"
 #include "conf.h"
 #include "connection.h"
@@ -750,10 +749,6 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 /* Broadcast a packet using the minimum spanning tree */
 
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
-	splay_node_t *node;
-	connection_t *c;
-	node_t *n;
-
 	// Always give ourself a copy of the packet.
 	if(from != myself)
 		send_packet(myself, packet);
@@ -771,8 +766,9 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 		// This guarantees all nodes receive the broadcast packet, and
 		// usually distributes the sending of broadcast packets over all nodes.
 		case BMODE_MST:
-			for(node = connection_tree->head; node; node = node->next) {
-				c = node->data;
+			for(list_node_t *node = connection_list->head, *next; node; node = next) {
+				next = node->next;
+				connection_t *c = node->data;
 
 				if(c->status.active && c->status.mst && c != from->nexthop->connection)
 					send_packet(c->node, packet);
@@ -786,8 +782,8 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 			if(from != myself)
 				break;
 
-			for(node = node_tree->head; node; node = node->next) {
-				n = node->data;
+			for(splay_node_t *node = node_tree->head; node; node = node->next) {
+				node_t *n = node->data;
 
 				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
 					send_packet(n, packet);

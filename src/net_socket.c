@@ -22,7 +22,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "logger.h"
@@ -627,9 +626,9 @@ void try_outgoing_connections(void) {
 
 	/* Terminate any connections whose outgoing_t is to be deleted. */
 
-	for(splay_node_t *n = connection_tree->head, *next; n; n = next) {
-		next = n->next;
-		connection_t *c = n->data;
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+		next = node->next;
+		connection_t *c = node->data;
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
@@ -639,10 +638,10 @@ void try_outgoing_connections(void) {
 
 	/* Delete outgoing_ts for which there is no ConnectTo. */
 
-	for(list_node_t *i = outgoing_list->head, *next; i; i = next) {
-		next = i->next;
-		outgoing = i->data;
+	for(list_node_t *node = outgoing_list->head, *next; node; node = next) {
+		next = node->next;
+		outgoing = node->data;
 		if(outgoing->timeout == -1)
-			list_delete_node(outgoing_list, i);
+			list_delete_node(outgoing_list, node);
 	}
 }

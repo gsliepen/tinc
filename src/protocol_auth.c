@@ -20,7 +20,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "control.h"

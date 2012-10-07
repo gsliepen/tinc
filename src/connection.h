@@ -25,7 +25,7 @@
 #include "cipher.h"
 #include "digest.h"
 #include "rsa.h"
-#include "splay_tree.h"
+#include "list.h"
 #include "sptps.h"
 
 #define OPTION_INDIRECT		0x0001
@@ -100,7 +100,7 @@ typedef struct connection_t {
 	splay_tree_t *config_tree;	/* Pointer to configuration tree belonging to him */
 } connection_t;
 
-extern splay_tree_t *connection_tree;
+extern list_t *connection_list;
 extern connection_t *everyone;
 
 extern void init_connections(void);

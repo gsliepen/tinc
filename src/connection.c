@@ -21,7 +21,7 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
+#include "list.h"
 #include "cipher.h"
 #include "conf.h"
 #include "control_common.h"
@@ -31,22 +31,18 @@
 #include "utils.h"
 #include "xalloc.h"
 
-splay_tree_t *connection_tree;	/* Meta connections */
+list_t *connection_list;	/* Meta connections */
 connection_t *everyone;
 
-static int connection_compare(const connection_t *a, const connection_t *b) {
-	return a < b ? -1 : a == b ? 0 : 1;
-}
-
 void init_connections(void) {
-	connection_tree = splay_alloc_tree((splay_compare_t) connection_compare, (splay_action_t) free_connection);
+	connection_list = list_alloc((list_action_t) free_connection);
 	everyone = new_connection();
 	everyone->name = xstrdup("everyone");
 	everyone->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
-	splay_delete_tree(connection_tree);
+	list_delete_list(connection_list);
 	free_connection(everyone);
 }
 
@@ -91,19 +87,22 @@ void free_connection(connection_t *c) {
 }
 
 void connection_add(connection_t *c) {
-	splay_insert(connection_tree, c);
+	list_insert_tail(connection_list, c);
 }
 
 void connection_del(connection_t *c) {
-	splay_delete(connection_tree, c);
+	for(list_node_t *node = connection_list->head; node; node = node->next) {
+		if(node->data == c) {
+			list_delete_node(connection_list, node);
+			return;
+		}
+	}
 }
 
 bool dump_connections(connection_t *cdump) {
-	splay_node_t *node;
-	connection_t *c;
-
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+		next = node->next;
+		connection_t *c = node->data;
 		send_request(cdump, "%d %d %s %s %x %d %x",
 				CONTROL, REQ_DUMP_CONNECTIONS,
 				c->name, c->hostname, c->options, c->socket,

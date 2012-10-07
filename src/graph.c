@@ -44,12 +44,12 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "config.h"
 #include "connection.h"
 #include "device.h"
 #include "edge.h"
 #include "graph.h"
+#include "list.h"
 #include "logger.h"
 #include "netutl.h"
 #include "node.h"
@@ -66,15 +66,10 @@
 */
 
 static void mst_kruskal(void) {
-	splay_node_t *node, *next;
-	edge_t *e;
-	node_t *n;
-	connection_t *c;
-
 	/* Clear MST status on connections */
 
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
+	for(list_node_t *node = connection_list->head; node; node = node->next) {
+		connection_t *c = node->data;
 		c->status.mst = false;
 	}
 
@@ -82,16 +77,16 @@ static void mst_kruskal(void) {
 
 	/* Clear visited status on nodes */
 
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
+	for(splay_node_t *node = node_tree->head; node; node = node->next) {
+		node_t *n = node->data;
 		n->status.visited = false;
 	}
 
 	/* Add safe edges */
 
-	for(node = edge_weight_tree->head; node; node = next) {
+	for(splay_node_t *node = edge_weight_tree->head, *next; node; node = next) {
 		next = node->next;
-		e = node->data;
+		edge_t *e = node->data;
 
 		if(!e->reverse || (e->from->status.visited && e->to->status.visited))
 			continue;

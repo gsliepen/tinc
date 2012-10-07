@@ -140,7 +140,8 @@ void logger(int level, int priority, const char *format, ...) {
 	if(logcontrol) {
 		suppress = true;
 		logcontrol = false;
-		for(splay_node_t *node = connection_tree->head; node; node = node->next) {
+		for(list_node_t *node = connection_list->head, *next; node; node = next) {
+			next = node->next;
 			connection_t *c = node->data;
 			if(!c->status.log)
 				continue;

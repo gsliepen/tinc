@@ -23,7 +23,6 @@
 #include "system.h"
 
 #include "utils.h"
-#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -158,13 +157,11 @@ void terminate_connection(connection_t *c, bool report) {
   and close the connection.
 */
 static void timeout_handler(int fd, short events, void *event) {
-	splay_node_t *node, *next;
-	connection_t *c;
 	time_t now = time(NULL);
 
-	for(node = connection_tree->head; node; node = next) {
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
 		next = node->next;
-		c = node->data;
+		connection_t *c = node->data;
 
 		if(c->status.control)
 			continue;
@@ -249,10 +246,7 @@ static void sigalrm_handler(int signal, short events, void *data) {
 }
 
 int reload_configuration(void) {
-	connection_t *c;
-	splay_node_t *node, *next;
 	char *fname;
-	struct stat s;
 
 	/* Reread our own configuration file */
 
@@ -278,18 +272,16 @@ int reload_configuration(void) {
 	/* If StrictSubnet is set, expire deleted Subnets and read new ones in */
 
 	if(strictsubnets) {
-		subnet_t *subnet;
-
-		for(node = subnet_tree->head; node; node = node->next) {
-			subnet = node->data;
+		for(splay_node_t *node = subnet_tree->head; node; node = node->next) {
+			subnet_t *subnet = node->data;
 			subnet->expires = 1;
 		}
 
 		load_all_subnets();
 
-		for(node = subnet_tree->head; node; node = next) {
+		for(splay_node_t *node = subnet_tree->head, *next; node; node = next) {
 			next = node->next;
-			subnet = node->data;
+			subnet_t *subnet = node->data;
 			if(subnet->expires == 1) {
 				send_del_subnet(everyone, subnet);
 				if(subnet->owner->status.reachable)
@@ -304,9 +296,7 @@ int reload_configuration(void) {
 			}
 		}
 	} else { /* Only read our own subnets back in */
-		subnet_t *subnet, *s2;
-
-		for(node = myself->subnet_tree->head; node; node = node->next) {
+		for(splay_node_t *node = myself->subnet_tree->head; node; node = node->next) {
 			subnet_t *subnet = node->data;
 			if(!subnet->expires)
 				subnet->expires = 1;
@@ -315,6 +305,8 @@ int reload_configuration(void) {
 		config_t *cfg = lookup_config(config_tree, "Subnet");
 
 		while(cfg) {
+			subnet_t *subnet, *s2;
+
 			if(!get_config_subnet(cfg, &subnet))
 				continue;
 
@@ -332,7 +324,7 @@ int reload_configuration(void) {
 			cfg = lookup_config_next(config_tree, cfg);
 		}
 
-		for(node = myself->subnet_tree->head; node; node = next) {
+		for(splay_node_t *node = myself->subnet_tree->head, *next; node; node = next) {
 			next = node->next;
 			subnet_t *subnet = node->data;
 			if(subnet->expires == 1) {
@@ -349,14 +341,15 @@ int reload_configuration(void) {
 
 	/* Close connections to hosts that have a changed or deleted host config file */
 
-	for(node = connection_tree->head; node; node = next) {
-		c = node->data;
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+		connection_t *c = node->data;
 		next = node->next;
 
 		if(c->status.control)
 			continue;
 
 		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+		struct stat s;
 		if(stat(fname, &s) || s.st_mtime > last_config_check) {
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "Host config file of %s has been changed", c->name);
 			terminate_connection(c, c->status.active);
@@ -370,12 +363,9 @@ int reload_configuration(void) {
 }
 
 void retry(void) {
-	connection_t *c;
-	splay_node_t *node, *next;
-
-	for(node = connection_tree->head; node; node = next) {
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
 		next = node->next;
-		c = node->data;
+		connection_t *c = node->data;
 		
 		if(c->outgoing && !c->node) {
 			if(timeout_initialized(&c->outgoing->ev))

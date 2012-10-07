@@ -20,7 +20,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "cipher.h"
 #include "connection.h"
 #include "crypto.h"
@@ -37,15 +36,13 @@
 static bool mykeyused = false;
 
 void send_key_changed(void) {
-	splay_node_t *node;
-	connection_t *c;
-
 	send_request(everyone, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
+	for(list_node_t *node = connection_list->head, *next; node; node = next) {
+		next = node->next;
+		connection_t *c = node->data;
 		if(c->status.active && c->node && c->node->status.reachable) {
 			if(!c->node->status.sptps)
 				send_ans_key(c->node);
@@ -55,7 +52,7 @@ void send_key_changed(void) {
 	/* Force key exchange for connections using SPTPS */
 
 	if(experimental) {
-		for(node = node_tree->head; node; node = node->next) {
+		for(splay_node_t *node = node_tree->head; node; node = node->next) {
 			node_t *n = node->data;
 			if(n->status.reachable && n->status.validkey && n->status.sptps)
 				sptps_force_kex(&n->sptps);

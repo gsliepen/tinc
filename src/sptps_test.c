@@ -26,7 +26,7 @@
 
 // Symbols necessary to link with logger.o
 bool send_request(void *c, const char *msg, ...) { return false; }
-struct splay_tree_t *connection_tree = NULL;
+struct list_t *connection_list = NULL;
 bool send_meta(void *c, const char *msg , int len) { return false; }
 char *logfilename = NULL;
 
