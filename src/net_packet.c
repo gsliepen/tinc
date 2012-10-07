@@ -389,39 +389,48 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 }
 
 static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
-	if(n->status.sptps) {
-		uint8_t type = 0;
-		int offset = 0;
-
-		if(!(origpkt->data[12] | origpkt->data[13])) {
-			sptps_send_record(&n->sptps, PKT_PROBE, (char *)origpkt->data, origpkt->len);
-			return;
+	if(!n->status.validkey) {
+		logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
+		if(!n->status.waitingforkey)
+			send_req_key(n);
+		else if(n->last_req_key + 10 < time(NULL)) {
+			sptps_stop(&n->sptps);
+			n->status.waitingforkey = false;
+			send_req_key(n);
 		}
+	}
 
-		if(routing_mode == RMODE_ROUTER)
-			offset = 14;
-		else
-			type = PKT_MAC;
+	uint8_t type = 0;
+	int offset = 0;
 
-		if(origpkt->len < offset)
-			return;
-
-		vpn_packet_t outpkt;
-
-		if(n->outcompression) {
-			int len = compress_packet(outpkt.data + offset, origpkt->data + offset, origpkt->len - offset, n->outcompression);
-			if(len < 0) {
-				logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)", n->name, n->hostname);
-			} else if(len < origpkt->len - offset) {
-				outpkt.len = len + offset;
-				origpkt = &outpkt;
-				type |= PKT_COMPRESSED;
-			}
-		}
-
-		sptps_send_record(&n->sptps, type, (char *)origpkt->data + offset, origpkt->len - offset);
+	if(!(origpkt->data[12] | origpkt->data[13])) {
+		sptps_send_record(&n->sptps, PKT_PROBE, (char *)origpkt->data, origpkt->len);
 		return;
 	}
+
+	if(routing_mode == RMODE_ROUTER)
+		offset = 14;
+	else
+		type = PKT_MAC;
+
+	if(origpkt->len < offset)
+		return;
+
+	vpn_packet_t outpkt;
+
+	if(n->outcompression) {
+		int len = compress_packet(outpkt.data + offset, origpkt->data + offset, origpkt->len - offset, n->outcompression);
+		if(len < 0) {
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)", n->name, n->hostname);
+		} else if(len < origpkt->len - offset) {
+			outpkt.len = len + offset;
+			origpkt = &outpkt;
+			type |= PKT_COMPRESSED;
+		}
+	}
+
+	sptps_send_record(&n->sptps, type, (char *)origpkt->data + offset, origpkt->len - offset);
+	return;
 }
 
 static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
@@ -620,6 +629,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 
 	if(type == SPTPS_HANDSHAKE) {
 		from->status.validkey = true;
+		from->status.waitingforkey = false;
 		logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) succesful", from->name, from->hostname);
 		return true;
 	}

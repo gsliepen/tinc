@@ -234,6 +234,10 @@ static void check_reachability(void) {
 			/* TODO: only clear status.validkey if node is unreachable? */
 
 			n->status.validkey = false;
+			if(n->status.sptps) {
+				sptps_stop(&n->sptps);
+				n->status.waitingforkey = false;
+			}
 			n->last_req_key = 0;
 
 			n->maxmtu = MTU;
