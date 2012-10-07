@@ -194,7 +194,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		subnet->net.ipv4.prefixlength = l;
 		subnet->weight = weight;
 
-		for(i = 0; i < 4; i++) {
+		for(int i = 0; i < 4; i++) {
 			if(x[i] > 255)
 				return false;
 			subnet->net.ipv4.address.x[i] = x[i];

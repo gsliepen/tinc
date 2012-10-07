@@ -577,24 +577,19 @@ static void free_outgoing(outgoing_t *outgoing) {
 }
 
 void try_outgoing_connections(void) {
-	static config_t *cfg = NULL;
-	char *name;
-	outgoing_t *outgoing;
-	
 	/* If there is no outgoing list yet, create one. Otherwise, mark all outgoings as deleted. */
 
 	if(!outgoing_list) {
 		outgoing_list = list_alloc((list_action_t)free_outgoing);
 	} else {
-		for(list_node_t *i = outgoing_list->head; i; i = i->next) {
-			outgoing = i->data;
+		for list_each(outgoing_t, outgoing, outgoing_list)
 			outgoing->timeout = -1;
-		}
 	}
 
 	/* Make sure there is one outgoing_t in the list for each ConnectTo. */
 
-	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+	for(config_t *cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		char *name;
 		get_config_string(cfg, &name);
 
 		if(!check_id(name)) {
@@ -607,8 +602,7 @@ void try_outgoing_connections(void) {
 
 		bool found = false;
 
-		for(list_node_t *i = outgoing_list->head; i; i = i->next) {
-			outgoing = i->data;
+		for list_each(outgoing_t, outgoing, outgoing_list) {
 			if(!strcmp(outgoing->name, name)) {
 				found = true;
 				outgoing->timeout = 0;
@@ -617,7 +611,7 @@ void try_outgoing_connections(void) {
 		}
 
 		if(!found) {
-			outgoing = xmalloc_and_zero(sizeof *outgoing);
+			outgoing_t *outgoing = xmalloc_and_zero(sizeof *outgoing);
 			outgoing->name = name;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing);
@@ -626,9 +620,7 @@ void try_outgoing_connections(void) {
 
 	/* Terminate any connections whose outgoing_t is to be deleted. */
 
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
+	for list_each(connection_t, c, connection_list) {
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
@@ -638,10 +630,7 @@ void try_outgoing_connections(void) {
 
 	/* Delete outgoing_ts for which there is no ConnectTo. */
 
-	for(list_node_t *node = outgoing_list->head, *next; node; node = next) {
-		next = node->next;
-		outgoing = node->data;
+	for list_each(outgoing_t, outgoing, outgoing_list)
 		if(outgoing->timeout == -1)
 			list_delete_node(outgoing_list, node);
-	}
 }

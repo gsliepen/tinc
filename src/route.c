@@ -189,9 +189,7 @@ static void age_subnets(int fd, short events, void *data) {
 	bool left = false;
 	time_t now = time(NULL);
 
-	for(splay_node_t *node = myself->subnet_tree->head, *next; node; node = next) {
-		next = node->next;
-		subnet_t *s = node->data;
+	for splay_each(subnet_t, s, myself->subnet_tree) {
 		if(s->expires && s->expires < now) {
 			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
@@ -199,12 +197,9 @@ static void age_subnets(int fd, short events, void *data) {
 					logger(DEBUG_TRAFFIC, LOG_INFO, "Subnet %s expired", netstr);
 			}
 
-			for(list_node_t *node = connection_list->head, *next; node; node = next) {
-				next = node->next;
-				connection_t *c = node->data;
+			for list_each(connection_t, c, connection_list)
 				if(c->status.active)
 					send_del_subnet(c, s);
-			}
 
 			subnet_del(myself, s);
 		} else {
@@ -237,12 +232,9 @@ static void learn_mac(mac_t *address) {
 
 		/* And tell all other tinc daemons it's our MAC */
 
-		for(list_node_t *node = connection_list->head, *next; node; node = next) {
-			next = node->next;
-			connection_t *c = node->data;
+		for list_each(connection_t, c, connection_list)
 			if(c->status.active)
 				send_add_subnet(c, subnet);
-		}
 
 		if(!timeout_initialized(&age_subnets_event))
 			timeout_set(&age_subnets_event, age_subnets, NULL);
@@ -872,9 +864,8 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 static void send_pcap(vpn_packet_t *packet) {
 	pcap = false;
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
+
+	for list_each(connection_t, c, connection_list) {
 		if(!c->status.pcap)
 			continue;
 

@@ -54,8 +54,7 @@ int hex2bin(const char *src, char *dst, int length) {
 }
 
 int bin2hex(const char *src, char *dst, int length) {
-	int i;
-	for(i = length - 1; i >= 0; i--) {
+	for(int i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}

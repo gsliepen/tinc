@@ -98,21 +98,11 @@ void node_add(node_t *n) {
 }
 
 void node_del(node_t *n) {
-	splay_node_t *node, *next;
-	edge_t *e;
-	subnet_t *s;
-
-	for(node = n->subnet_tree->head; node; node = next) {
-		next = node->next;
-		s = node->data;
+	for splay_each(subnet_t, s, n->subnet_tree)
 		subnet_del(n, s);
-	}
 
-	for(node = n->edge_tree->head; node; node = next) {
-		next = node->next;
-		e = node->data;
+	for splay_each(edge_t, e, n->edge_tree)
 		edge_del(e);
-	}
 
 	splay_delete(node_tree, n);
 }
@@ -147,30 +137,20 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 }
 
 bool dump_nodes(connection_t *c) {
-	splay_node_t *node;
-	node_t *n;
-
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
+	for splay_each(node_t, n, node_tree)
 		send_request(c, "%d %d %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
 			   n->name, n->hostname ?: "unknown port unknown", cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), (int)digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
-	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_NODES);
 }
 
 bool dump_traffic(connection_t *c) {
-	splay_node_t *node;
-	node_t *n;
-
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
+	for splay_each(node_t, n, node_tree)
 		send_request(c, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_TRAFFIC,
 			   n->name, n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
-	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
 }

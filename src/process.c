@@ -55,8 +55,6 @@ static SERVICE_STATUS_HANDLE statushandle = 0;
 
 static bool install_service(void) {
 	char command[4096] = "\"";
-	char **argp;
-	bool space;
 	SERVICE_DESCRIPTION description = {"Virtual Private Network daemon"};
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
@@ -74,8 +72,8 @@ static bool install_service(void) {
 
 	strncat(command, "\"", sizeof command - strlen(command));
 
-	for(argp = g_argv + 1; *argp; argp++) {
-		space = strchr(*argp, ' ');
+	for(char **argp = g_argv + 1; *argp; argp++) {
+		char &space = strchr(*argp, ' ');
 		strncat(command, " ", sizeof command - strlen(command));
 		
 		if(space)

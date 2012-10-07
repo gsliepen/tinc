@@ -76,13 +76,9 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
-
+	for list_each(connection_t, c, connection_list)
 		if(c != from && c->status.active)
 			send_meta(c, buffer, length);
-	}
 }
 
 bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t length) {

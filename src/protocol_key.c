@@ -40,23 +40,16 @@ void send_key_changed(void) {
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
-		if(c->status.active && c->node && c->node->status.reachable) {
-			if(!c->node->status.sptps)
-				send_ans_key(c->node);
-		}
-	}
+	for list_each(connection_t, c, connection_list)
+		if(c->status.active && c->node && c->node->status.reachable && !c->node->status.sptps)
+			send_ans_key(c->node);
 
 	/* Force key exchange for connections using SPTPS */
 
 	if(experimental) {
-		for(splay_node_t *node = node_tree->head; node; node = node->next) {
-			node_t *n = node->data;
+		for splay_each(node_t, n, node_tree)
 			if(n->status.reachable && n->status.validkey && n->status.sptps)
 				sptps_force_kex(&n->sptps);
-		}
 	}
 }
 

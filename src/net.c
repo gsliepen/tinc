@@ -44,33 +44,21 @@ time_t last_config_check = 0;
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 void purge(void) {
-	splay_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
-	node_t *n;
-	edge_t *e;
-	subnet_t *s;
-
 	logger(DEBUG_PROTOCOL, LOG_DEBUG, "Purging unreachable nodes");
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
-	for(nnode = node_tree->head; nnode; nnode = nnext) {
-		nnext = nnode->next;
-		n = nnode->data;
-
+	for splay_each(node_t, n, node_tree) {
 		if(!n->status.reachable) {
 			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Purging node %s (%s)", n->name, n->hostname);
 
-			for(snode = n->subnet_tree->head; snode; snode = snext) {
-				snext = snode->next;
-				s = snode->data;
+			for splay_each(subnet_t, s, n->subnet_tree) {
 				send_del_subnet(everyone, s);
 				if(!strictsubnets)
 					subnet_del(n, s);
 			}
 
-			for(enode = n->edge_tree->head; enode; enode = enext) {
-				enext = enode->next;
-				e = enode->data;
+			for splay_each(edge_t, e, n->edge_tree) {
 				if(!tunnelserver)
 					send_del_edge(everyone, e);
 				edge_del(e);
@@ -80,20 +68,13 @@ void purge(void) {
 
 	/* Check if anyone else claims to have an edge to an unreachable node. If not, delete node. */
 
-	for(nnode = node_tree->head; nnode; nnode = nnext) {
-		nnext = nnode->next;
-		n = nnode->data;
-
+	for splay_each(node_t, n, node_tree) {
 		if(!n->status.reachable) {
-			for(enode = edge_weight_tree->head; enode; enode = enext) {
-				enext = enode->next;
-				e = enode->data;
-
+			for splay_each(edge_t, e, edge_weight_tree)
 				if(e->to == n)
-					break;
-			}
+					return;
 
-			if(!enode && (!strictsubnets || !n->subnet_tree->head))
+			if(!strictsubnets || !n->subnet_tree->head)
 				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
@@ -159,10 +140,7 @@ void terminate_connection(connection_t *c, bool report) {
 static void timeout_handler(int fd, short events, void *event) {
 	time_t now = time(NULL);
 
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
-
+	for list_each(connection_t, c, connection_list) {
 		if(c->status.control)
 			continue;
 
@@ -272,16 +250,12 @@ int reload_configuration(void) {
 	/* If StrictSubnet is set, expire deleted Subnets and read new ones in */
 
 	if(strictsubnets) {
-		for(splay_node_t *node = subnet_tree->head; node; node = node->next) {
-			subnet_t *subnet = node->data;
+		for splay_each(subnet_t, subnet, subnet_tree)
 			subnet->expires = 1;
-		}
 
 		load_all_subnets();
 
-		for(splay_node_t *node = subnet_tree->head, *next; node; node = next) {
-			next = node->next;
-			subnet_t *subnet = node->data;
+		for splay_each(subnet_t, subnet, subnet_tree) {
 			if(subnet->expires == 1) {
 				send_del_subnet(everyone, subnet);
 				if(subnet->owner->status.reachable)
@@ -296,11 +270,9 @@ int reload_configuration(void) {
 			}
 		}
 	} else { /* Only read our own subnets back in */
-		for(splay_node_t *node = myself->subnet_tree->head; node; node = node->next) {
-			subnet_t *subnet = node->data;
+		for splay_each(subnet_t, subnet, myself->subnet_tree)
 			if(!subnet->expires)
 				subnet->expires = 1;
-		}
 
 		config_t *cfg = lookup_config(config_tree, "Subnet");
 
@@ -324,9 +296,7 @@ int reload_configuration(void) {
 			cfg = lookup_config_next(config_tree, cfg);
 		}
 
-		for(splay_node_t *node = myself->subnet_tree->head, *next; node; node = next) {
-			next = node->next;
-			subnet_t *subnet = node->data;
+		for splay_each(subnet_t, subnet, myself->subnet_tree) {
 			if(subnet->expires == 1) {
 				send_del_subnet(everyone, subnet);
 				subnet_update(myself, subnet, false);
@@ -341,10 +311,7 @@ int reload_configuration(void) {
 
 	/* Close connections to hosts that have a changed or deleted host config file */
 
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		connection_t *c = node->data;
-		next = node->next;
-
+	for list_each(connection_t, c, connection_list) {
 		if(c->status.control)
 			continue;
 
@@ -363,10 +330,7 @@ int reload_configuration(void) {
 }
 
 void retry(void) {
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
-		
+	for list_each(connection_t, c, connection_list) {
 		if(c->outgoing && !c->node) {
 			if(timeout_initialized(&c->outgoing->ev))
 				event_del(&c->outgoing->ev);

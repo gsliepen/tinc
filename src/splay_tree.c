@@ -530,9 +530,7 @@ void splay_delete(splay_tree_t *tree, void *data) {
 /* Fast tree cleanup */
 
 void splay_delete_tree(splay_tree_t *tree) {
-	splay_node_t *node, *next;
-
-	for(node = tree->head; node; node = next) {
+	for(splay_node_t *node = tree->head, *next; node; node = next) {
 		next = node->next;
 		splay_free_node(tree, node);
 	}
@@ -543,18 +541,14 @@ void splay_delete_tree(splay_tree_t *tree) {
 /* Tree walking */
 
 void splay_foreach(const splay_tree_t *tree, splay_action_t action) {
-	splay_node_t *node, *next;
-
-	for(node = tree->head; node; node = next) {
+	for(splay_node_t *node = tree->head, *next; node; node = next) {
 		next = node->next;
 		action(node->data);
 	}
 }
 
 void splay_foreach_node(const splay_tree_t *tree, splay_action_t action) {
-	splay_node_t *node, *next;
-
-	for(node = tree->head; node; node = next) {
+	for(splay_node_t *node = tree->head, *next; node; node = next) {
 		next = node->next;
 		action(node);
 	}

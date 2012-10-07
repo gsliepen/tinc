@@ -186,15 +186,10 @@ bool seen_request(const char *request) {
 }
 
 static void age_past_requests(int fd, short events, void *data) {
-	splay_node_t *node, *next;
-	past_request_t *p;
 	int left = 0, deleted = 0;
 	time_t now = time(NULL);
 
-	for(node = past_request_tree->head; node; node = next) {
-		next = node->next;
-		p = node->data;
-
+	for splay_each(past_request_t, p, past_request_tree) {
 		if(p->firstseen + pinginterval <= now)
 			splay_delete_node(past_request_tree, node), deleted++;
 		else

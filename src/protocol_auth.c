@@ -508,34 +508,21 @@ bool send_ack(connection_t *c) {
 }
 
 static void send_everything(connection_t *c) {
-	splay_node_t *node, *node2;
-	node_t *n;
-	subnet_t *s;
-	edge_t *e;
-
 	/* Send all known subnets and edges */
 
 	if(tunnelserver) {
-		for(node = myself->subnet_tree->head; node; node = node->next) {
-			s = node->data;
+		for splay_each(subnet_t, s, myself->subnet_tree)
 			send_add_subnet(c, s);
-		}
 
 		return;
 	}
 
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-
-		for(node2 = n->subnet_tree->head; node2; node2 = node2->next) {
-			s = node2->data;
+	for splay_each(node_t, n, node_tree) {
+		for splay_each(subnet_t, s, n->subnet_tree)
 			send_add_subnet(c, s);
-		}
 
-		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = node2->data;
+		for splay_each(edge_t, e, n->edge_tree)
 			send_add_edge(c, e);
-		}
 	}
 }
 

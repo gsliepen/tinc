@@ -79,8 +79,6 @@ bool localdiscovery = false;
 
 static void send_mtu_probe_handler(int fd, short events, void *data) {
 	node_t *n = data;
-	vpn_packet_t packet;
-	int len, i;
 	int timeout = 1;
 	
 	n->mtuprobes++;
@@ -126,7 +124,9 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		timeout = pingtimeout;
 	}
 
-	for(i = 0; i < 3 + localdiscovery; i++) {
+	for(int i = 0; i < 3 + localdiscovery; i++) {
+		int len;
+
 		if(n->maxmtu <= n->minmtu)
 			len = n->maxmtu;
 		else
@@ -135,6 +135,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		if(len < 64)
 			len = 64;
 		
+		vpn_packet_t packet;
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
@@ -766,13 +767,9 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 		// This guarantees all nodes receive the broadcast packet, and
 		// usually distributes the sending of broadcast packets over all nodes.
 		case BMODE_MST:
-			for(list_node_t *node = connection_list->head, *next; node; node = next) {
-				next = node->next;
-				connection_t *c = node->data;
-
+			for list_each(connection_t, c, connection_list)
 				if(c->status.active && c->status.mst && c != from->nexthop->connection)
 					send_packet(c->node, packet);
-			}
 			break;
 
 		// In direct mode, we send copies to each node we know of.
@@ -782,12 +779,9 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 			if(from != myself)
 				break;
 
-			for(splay_node_t *node = node_tree->head; node; node = node->next) {
-				node_t *n = node->data;
-
+			for splay_each(node_t, n, node_tree)
 				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
 					send_packet(n, packet);
-			}
 			break;
 
 		default:
@@ -803,9 +797,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	static time_t last_hard_try = 0;
 	time_t now = time(NULL);
 
-	for(node = edge_weight_tree->head; node; node = node->next) {
-		e = node->data;
-
+	for splay_each(edge_t, e, edge_weight_tree) {
 		if(!e->to->status.reachable || e->to == myself)
 			continue;
 

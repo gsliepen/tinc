@@ -91,7 +91,7 @@ void connection_add(connection_t *c) {
 }
 
 void connection_del(connection_t *c) {
-	for(list_node_t *node = connection_list->head; node; node = node->next) {
+	for list_each(connection_t, c, connection_list) {
 		if(node->data == c) {
 			list_delete_node(connection_list, node);
 			return;
@@ -100,9 +100,7 @@ void connection_del(connection_t *c) {
 }
 
 bool dump_connections(connection_t *cdump) {
-	for(list_node_t *node = connection_list->head, *next; node; node = next) {
-		next = node->next;
-		connection_t *c = node->data;
+	for list_each(connection_t, c, connection_list) {
 		send_request(cdump, "%d %d %s %s %x %d %x",
 				CONTROL, REQ_DUMP_CONNECTIONS,
 				c->name, c->hostname, c->options, c->socket,

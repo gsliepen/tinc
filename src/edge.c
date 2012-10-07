@@ -107,16 +107,9 @@ edge_t *lookup_edge(node_t *from, node_t *to) {
 }
 
 bool dump_edges(connection_t *c) {
-	splay_node_t *node, *node2;
-	node_t *n;
-	edge_t *e;
-	char *address;
-
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = node2->data;
-			address = sockaddr2hostname(&e->address);
+	for splay_each(node_t, n, node_tree) {
+		for splay_each(edge_t, e, n->edge_tree) {
+			char *address = sockaddr2hostname(&e->address);
 			send_request(c, "%d %d %s %s %s %x %d",
 					CONTROL, REQ_DUMP_EDGES,
 					e->from->name, e->to->name, address,

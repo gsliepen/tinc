@@ -110,8 +110,7 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 }
 
 subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
-	subnet_t *p, *r = NULL;
-	splay_node_t *n;
+	subnet_t *r = NULL;
 
 	// Check if this address is cached
 
@@ -120,9 +119,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Search all subnets for a matching one
 
-	for(n = owner ? owner->subnet_tree->head : subnet_tree->head; n; n = n->next) {
-		p = n->data;
-		
+	for splay_each(subnet_t, p, owner ? owner->subnet_tree : subnet_tree) {
 		if(!p || p->type != SUBNET_MAC)
 			continue;
 
@@ -142,8 +139,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 }
 
 subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
-	subnet_t *p, *r = NULL;
-	splay_node_t *n;
+	subnet_t *r = NULL;
 
 	// Check if this address is cached
 
@@ -152,9 +148,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Search all subnets for a matching one
 
-	for(n = subnet_tree->head; n; n = n->next) {
-		p = n->data;
-		
+	for splay_each(subnet_t, p, subnet_tree) {
 		if(!p || p->type != SUBNET_IPV4)
 			continue;
 
@@ -174,8 +168,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 }
 
 subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
-	subnet_t *p, *r = NULL;
-	splay_node_t *n;
+	subnet_t *r = NULL;
 
 	// Check if this address is cached
 
@@ -184,9 +177,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Search all subnets for a matching one
 
-	for(n = subnet_tree->head; n; n = n->next) {
-		p = n->data;
-		
+	for splay_each(subnet_t, p, subnet_tree) {
 		if(!p || p->type != SUBNET_IPV6)
 			continue;
 
@@ -206,15 +197,13 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 }
 
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
-	splay_node_t *node;
-	int i;
-	char *envp[9] = {NULL};
 	char netstr[MAXNETSTR];
 	char *name, *address, *port;
 	char empty[] = "";
 
 	// Prepare environment variables to be passed to the script
 
+	char *envp[9] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
@@ -232,10 +221,10 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	name = up ? "subnet-up" : "subnet-down";
 
 	if(!subnet) {
-		for(node = owner->subnet_tree->head; node; node = node->next) {
-			subnet = node->data;
+		for splay_each(subnet_t, subnet, owner->subnet_tree) {
 			if(!net2str(netstr, sizeof netstr, subnet))
 				continue;
+
 			// Strip the weight from the subnet, and put it in its own environment variable
 			char *weight = strchr(netstr, '#');
 			if(weight)
@@ -270,19 +259,17 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		}
 	}
 
-	for(i = 0; envp[i] && i < 8; i++)
+	for(int i = 0; envp[i] && i < 8; i++)
 		free(envp[i]);
 }
 
 bool dump_subnets(connection_t *c) {
-	char netstr[MAXNETSTR];
-	subnet_t *subnet;
-	splay_node_t *node;
+	for splay_each(subnet_t, subnet, subnet_tree) {
+		char netstr[MAXNETSTR];
 
-	for(node = subnet_tree->head; node; node = node->next) {
-		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
+
 		send_request(c, "%d %d %s %s",
 				CONTROL, REQ_DUMP_SUBNETS,
 				netstr, subnet->owner->name);

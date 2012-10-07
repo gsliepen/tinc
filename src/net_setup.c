@@ -294,11 +294,6 @@ void load_all_subnets(void) {
 	DIR *dir;
 	struct dirent *ent;
 	char *dname;
-	char *fname;
-	splay_tree_t *config_tree;
-	config_t *cfg;
-	subnet_t *s, *s2;
-	node_t *n;
 
 	xasprintf(&dname, "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
@@ -312,13 +307,16 @@ void load_all_subnets(void) {
 		if(!check_id(ent->d_name))
 			continue;
 
-		n = lookup_node(ent->d_name);
+		node_t *n = lookup_node(ent->d_name);
 		#ifdef _DIRENT_HAVE_D_TYPE
 		//if(ent->d_type != DT_REG)
 		//	continue;
 		#endif
 
+		char *fname;
 		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
+
+		splay_tree_t *config_tree;
 		init_configuration(&config_tree);
 		read_config_options(config_tree, ent->d_name);
 		read_config_file(config_tree, fname);
@@ -330,7 +328,9 @@ void load_all_subnets(void) {
 			node_add(n);
 		}
 
-		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			subnet_t *s, *s2;
+
 			if(!get_config_subnet(cfg, &s))
 				continue;
 
@@ -577,15 +577,9 @@ bool setup_myself_reloadable(void) {
   Configure node_t myself and set up the local sockets (listen only)
 */
 static bool setup_myself(void) {
-	config_t *cfg;
-	subnet_t *subnet;
 	char *name, *hostname, *cipher, *digest, *type;
 	char *fname = NULL;
 	char *address = NULL;
-	char *envp[5];
-	struct addrinfo *ai, *aip, hint = {0};
-	int i, err;
-	int replaywin_int;
 
 	if(!(name = get_name())) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
@@ -633,15 +627,13 @@ static bool setup_myself(void) {
 
 	/* Read in all the subnets specified in the host configuration file */
 
-	cfg = lookup_config(config_tree, "Subnet");
+	for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		subnet_t *subnet;
 
-	while(cfg) {
 		if(!get_config_subnet(cfg, &subnet))
 			return false;
 
 		subnet_add(myself, subnet);
-
-		cfg = lookup_config_next(config_tree, cfg);
 	}
 
 	/* Check some options */
@@ -669,6 +661,7 @@ static bool setup_myself(void) {
 		}
 	}
 
+	int replaywin_int;
 	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {
 		if(replaywin_int < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "ReplayWindow cannot be negative!");
@@ -768,6 +761,7 @@ static bool setup_myself(void) {
 	}
 
 	/* Run tinc-up script to further initialize the tap interface */
+	char *envp[5];
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
@@ -776,7 +770,7 @@ static bool setup_myself(void) {
 
 	execute_script("tinc-up", envp);
 
-	for(i = 0; i < 4; i++)
+	for(int i = 0; i < 4; i++)
 		free(envp[i]);
 
 	/* Run subnet-up scripts for our own subnets */
@@ -799,7 +793,7 @@ static bool setup_myself(void) {
 			return false;
 		}
 
-		for(i = 0; i < listen_sockets; i++) {
+		for(int i = 0; i < listen_sockets; i++) {
 			salen = sizeof sa;
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(errno));
@@ -838,7 +832,7 @@ static bool setup_myself(void) {
 		}
 	} else {
 		listen_sockets = 0;
-		cfg = lookup_config(config_tree, "BindToAddress");
+		config_t *cfg = lookup_config(config_tree, "BindToAddress");
 
 		do {
 			get_config_string(cfg, &address);
@@ -858,12 +852,13 @@ static bool setup_myself(void) {
 					*address = 0;
 			}
 
+			struct addrinfo *ai, hint = {0};
 			hint.ai_family = addressfamily;
 			hint.ai_socktype = SOCK_STREAM;
 			hint.ai_protocol = IPPROTO_TCP;
 			hint.ai_flags = AI_PASSIVE;
 
-			err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
+			int err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
 			free(address);
 
 			if(err || !ai) {
@@ -872,7 +867,7 @@ static bool setup_myself(void) {
 				return false;
 			}
 
-			for(aip = ai; aip; aip = aip->ai_next) {
+			for(struct addrinfo *aip = ai; aip; aip = aip->ai_next) {
 				if(listen_sockets >= MAXSOCKETS) {
 					logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
 					return false;

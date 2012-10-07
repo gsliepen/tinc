@@ -26,9 +26,7 @@
 /* (De)constructors */
 
 list_t *list_alloc(list_action_t delete) {
-	list_t *list;
-
-	list = xmalloc_and_zero(sizeof(list_t));
+	list_t *list = xmalloc_and_zero(sizeof(list_t));
 	list->delete = delete;
 
 	return list;
@@ -52,9 +50,7 @@ void list_free_node(list_t *list, list_node_t *node) {
 /* Insertion and deletion */
 
 list_node_t *list_insert_head(list_t *list, void *data) {
-	list_node_t *node;
-
-	node = list_alloc_node();
+	list_node_t *node = list_alloc_node();
 
 	node->data = data;
 	node->prev = NULL;
@@ -72,9 +68,7 @@ list_node_t *list_insert_head(list_t *list, void *data) {
 }
 
 list_node_t *list_insert_tail(list_t *list, void *data) {
-	list_node_t *node;
-
-	node = list_alloc_node();
+	list_node_t *node = list_alloc_node();
 
 	node->data = data;
 	node->next = NULL;
@@ -92,9 +86,7 @@ list_node_t *list_insert_tail(list_t *list, void *data) {
 }
 
 list_node_t *list_insert_after(list_t *list, list_node_t *after, void *data) {
-	list_node_t *node;
-
-	node = list_alloc_node();
+	list_node_t *node = list_alloc_node();
 
 	node->data = data;
 	node->next = after->next;
@@ -177,12 +169,8 @@ void *list_get_tail(list_t *list) {
 /* Fast list deletion */
 
 void list_delete_list(list_t *list) {
-	list_node_t *node, *next;
-
-	for(node = list->head; node; node = next) {
-		next = node->next;
+	for(list_node_t *node = list->head, *next; next = node->next, node; node = next)
 		list_free_node(list, node);
-	}
 
 	list_free(list);
 }
@@ -190,20 +178,12 @@ void list_delete_list(list_t *list) {
 /* Traversing */
 
 void list_foreach_node(list_t *list, list_action_node_t action) {
-	list_node_t *node, *next;
-
-	for(node = list->head; node; node = next) {
-		next = node->next;
+	for(list_node_t *node = list->head, *next; next = node->next, node; node = next)
 		action(node);
-	}
 }
 
 void list_foreach(list_t *list, list_action_t action) {
-	list_node_t *node, *next;
-
-	for(node = list->head; node; node = next) {
-		next = node->next;
+	for(list_node_t *node = list->head, *next; next = node->next, node; node = next)
 		if(node->data)
 			action(node->data);
-	}
 }

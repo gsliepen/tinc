@@ -68,26 +68,19 @@
 static void mst_kruskal(void) {
 	/* Clear MST status on connections */
 
-	for(list_node_t *node = connection_list->head; node; node = node->next) {
-		connection_t *c = node->data;
+	for list_each(connection_t, c, connection_list)
 		c->status.mst = false;
-	}
 
 	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Kruskal's algorithm:");
 
 	/* Clear visited status on nodes */
 
-	for(splay_node_t *node = node_tree->head; node; node = node->next) {
-		node_t *n = node->data;
+	for splay_each(node_t, n, node_tree)
 		n->status.visited = false;
-	}
 
 	/* Add safe edges */
 
-	for(splay_node_t *node = edge_weight_tree->head, *next; node; node = next) {
-		next = node->next;
-		edge_t *e = node->data;
-
+	for splay_each(edge_t, e, edge_weight_tree) {
 		if(!e->reverse || (e->from->status.visited && e->to->status.visited))
 			continue;
 
@@ -110,19 +103,11 @@ static void mst_kruskal(void) {
 */
 
 static void sssp_bfs(void) {
-	splay_node_t *node, *to;
-	edge_t *e;
-	node_t *n;
-	list_t *todo_list;
-	list_node_t *from, *todonext;
-	bool indirect;
-
-	todo_list = list_alloc(NULL);
+	list_t *todo_list = list_alloc(NULL);
 
 	/* Clear visited status on nodes */
 
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
+	for splay_each(node_t, n, node_tree) {
 		n->status.visited = false;
 		n->status.indirect = true;
 		n->distance = -1;
@@ -140,14 +125,13 @@ static void sssp_bfs(void) {
 
 	/* Loop while todo_list is filled */
 
-	for(from = todo_list->head; from; from = todonext) {	/* "from" is the node from which we start */
-		n = from->data;
+	for list_each(node_t, n, todo_list) {			/* "n" is the node from which we start */
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Examining edges from %s", n->name);
+
 		if(n->distance < 0)
 			abort();
 
-		for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
-			e = to->data;
-
+		for splay_each(edge_t, e, n->edge_tree) {	/* "e" is the edge connected to "from" */
 			if(!e->reverse)
 				continue;
 
@@ -168,7 +152,7 @@ static void sssp_bfs(void) {
 			     of nodes behind it.
 			 */
 
-			indirect = n->status.indirect || e->options & OPTION_INDIRECT;
+			bool indirect = n->status.indirect || e->options & OPTION_INDIRECT;
 
 			if(e->to->status.visited
 			   && (!e->to->status.indirect || indirect)
@@ -183,34 +167,23 @@ static void sssp_bfs(void) {
 			e->to->options = e->options;
 			e->to->distance = n->distance + 1;
 
-			if(!e->to->status.reachable || (e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
-)
+			if(!e->to->status.reachable || (e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN))
 				update_node_udp(e->to, &e->address);
 
 			list_insert_tail(todo_list, e->to);
 		}
 
-		todonext = from->next;
-		list_delete_node(todo_list, from);
+		next = node->next; /* Because the list_insert_tail() above could have added something extra for us! */
+		list_delete_node(todo_list, node);
 	}
 
 	list_free(todo_list);
 }
 
 static void check_reachability(void) {
-	splay_node_t *node, *next;
-	node_t *n;
-	char *name;
-	char *address, *port;
-	char *envp[7];
-	int i;
-
 	/* Check reachability status. */
 
-	for(node = node_tree->head; node; node = next) {
-		next = node->next;
-		n = node->data;
-
+	for splay_each(node_t, n, node_tree) {
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
 			n->last_state_change = time(NULL);
@@ -242,6 +215,11 @@ static void check_reachability(void) {
 			if(timeout_initialized(&n->mtuevent))
 				event_del(&n->mtuevent);
 
+			char *name;
+			char *address;
+			char *port;
+			char *envp[7];
+
 			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 			xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
@@ -253,16 +231,14 @@ static void check_reachability(void) {
 
 			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
 
-			xasprintf(&name,
-					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
-					 n->name);
+			xasprintf(&name, n->status.reachable ? "hosts/%s-up" : "hosts/%s-down", n->name);
 			execute_script(name, envp);
 
 			free(name);
 			free(address);
 			free(port);
 
-			for(i = 0; i < 6; i++)
+			for(int i = 0; i < 6; i++)
 				free(envp[i]);
 
 			subnet_update(n, NULL, n->status.reachable);
