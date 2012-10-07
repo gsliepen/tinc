@@ -398,6 +398,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 			n->status.waitingforkey = false;
 			send_req_key(n);
 		}
+		return;
 	}
 
 	uint8_t type = 0;
@@ -590,13 +591,15 @@ end:
 bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 	node_t *to = handle;
 
-	if(type >= SPTPS_HANDSHAKE || ((myself->options | to->options) & OPTION_TCPONLY)) {
+	if(type >= SPTPS_HANDSHAKE
+			|| ((myself->options | to->options) & OPTION_TCPONLY)
+			|| (type != PKT_PROBE && len > to->minmtu)) {
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
 		if(!to->status.validkey)
 			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, myself->name, to->name, buf, myself->incompression);
 		else
-			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_SPTPS, buf);
+			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, type >= SPTPS_HANDSHAKE ? REQ_SPTPS : REQ_PACKET, buf);
 	}
 
 	/* Send the packet */

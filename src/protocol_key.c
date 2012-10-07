@@ -181,6 +181,22 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			return true;
 		}
 
+		case REQ_PACKET: {
+			if(!from->status.validkey) {
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Got REQ_PACKET from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
+				return true;
+			}
+
+			char buf[MAX_STRING_SIZE];
+			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", from->name, from->hostname, "invalid SPTPS data");
+				return true;
+			}
+			int len = b64decode(buf, buf, strlen(buf));
+			sptps_receive_data(&from->sptps, buf, len);
+			return true;
+		}
+
 		default:
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown extended REQ_KEY request from %s (%s): %s", from->name, from->hostname, request);
 			return true;

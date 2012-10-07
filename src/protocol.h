@@ -47,6 +47,7 @@ typedef enum request_t {
 	CONTROL,
 	REQ_PUBKEY, ANS_PUBKEY,
 	REQ_SPTPS,
+	REQ_PACKET,
 	LAST						/* Guardian for the highest request number */
 } request_t;
 
