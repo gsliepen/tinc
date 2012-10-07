@@ -339,7 +339,6 @@ bool sptps_force_kex(sptps_t *s) {
 // Receive a handshake record.
 static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 	// Only a few states to deal with handshaking.
-	fprintf(stderr, "Received handshake message, current state %d\n", s->state);
 	switch(s->state) {
 		case SPTPS_SECONDARY_KEX:
 			// We receive a secondary KEX request, first respond by sending our own.
