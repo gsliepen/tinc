@@ -155,6 +155,7 @@ static bool read_packet(vpn_packet_t *packet) {
 				return false;
 			}
 
+			memset(packet->data, 0, 12);
 			packet->len = lenin + 10;
 			break;
 		case DEVICE_TYPE_TAP:

@@ -151,6 +151,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			return false;
 	}
 
+	memset(packet->data, 0, 12);
 	packet->len = lenin + 14;
 
 	device_total_in += packet->len;
