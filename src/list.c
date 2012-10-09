@@ -150,6 +150,12 @@ void list_delete_tail(list_t *list) {
 	list_delete_node(list, list->tail);
 }
 
+void list_delete(list_t *list, const void *data) {
+	for(list_node_t *node = list->head, *next; next = node ? node->next : NULL, node; node = next)
+		if(node->data == data)
+			list_delete_node(list, node);
+}
+
 /* Head/tail lookup */
 
 void *list_get_head(list_t *list) {
@@ -169,7 +175,7 @@ void *list_get_tail(list_t *list) {
 /* Fast list deletion */
 
 void list_delete_list(list_t *list) {
-	for(list_node_t *node = list->head, *next; next = node->next, node; node = next)
+	for(list_node_t *node = list->head, *next; next = node ? node->next : NULL, node; node = next)
 		list_free_node(list, node);
 
 	list_free(list);
@@ -178,12 +184,12 @@ void list_delete_list(list_t *list) {
 /* Traversing */
 
 void list_foreach_node(list_t *list, list_action_node_t action) {
-	for(list_node_t *node = list->head, *next; next = node->next, node; node = next)
+	for(list_node_t *node = list->head, *next; next = node ? node->next : NULL, node; node = next)
 		action(node);
 }
 
 void list_foreach(list_t *list, list_action_t action) {
-	for(list_node_t *node = list->head, *next; next = node->next, node; node = next)
+	for(list_node_t *node = list->head, *next; next = node ? node->next : NULL, node; node = next)
 		if(node->data)
 			action(node->data);
 }

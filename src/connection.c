@@ -91,12 +91,7 @@ void connection_add(connection_t *c) {
 }
 
 void connection_del(connection_t *c) {
-	for list_each(connection_t, c, connection_list) {
-		if(node->data == c) {
-			list_delete_node(connection_list, node);
-			return;
-		}
-	}
+	list_delete(connection_list, c);
 }
 
 bool dump_connections(connection_t *cdump) {
