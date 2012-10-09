@@ -24,6 +24,7 @@
 
 #include "conf.h"
 #include "connection.h"
+#include "list.h"
 #include "logger.h"
 #include "meta.h"
 #include "net.h"

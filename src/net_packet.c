@@ -790,8 +790,6 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 }
 
 static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
-	splay_node_t *node;
-	edge_t *e;
 	node_t *n = NULL;
 	bool hard = false;
 	static time_t last_hard_try = 0;

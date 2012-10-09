@@ -29,7 +29,6 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "route.h"
-#include "splay_tree.h"
 #include "utils.h"
 #include "xalloc.h"
 
