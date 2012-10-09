@@ -258,6 +258,9 @@ bool send_ans_key(node_t *to) {
 	size_t keylen = cipher_keylength(&myself->incipher);
 	char key[keylen * 2 + 1];
 
+	cipher_close(&to->incipher);
+	digest_close(&to->indigest);
+
 	cipher_open_by_nid(&to->incipher, cipher_get_nid(&myself->incipher));
 	digest_open_by_nid(&to->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
 	to->incompression = myself->incompression;
@@ -345,6 +348,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 	}
 
 	/* Don't use key material until every check has passed. */
+	cipher_close(&from->outcipher);
+	digest_close(&from->outdigest);
 	from->status.validkey = false;
 
 	if(compression < 0 || compression > 11) {

@@ -680,6 +680,8 @@ static bool setup_myself(void) {
 		return false;
 	}
 
+	free(cipher);
+
 	regenerate_key();
 
 	/* Check if we want to use message authentication codes... */
@@ -699,6 +701,8 @@ static bool setup_myself(void) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
 		return false;
 	}
+
+	free(digest);
 
 	/* Compression */
 

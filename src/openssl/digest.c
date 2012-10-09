@@ -78,8 +78,7 @@ bool digest_set_key(digest_t *digest, const void *key, size_t len) {
 }
 
 void digest_close(digest_t *digest) {
-	if(digest->key)
-		free(digest->key);
+	free(digest->key);
 	digest->key = NULL;
 }
 

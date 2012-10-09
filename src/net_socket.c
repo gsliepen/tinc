@@ -571,6 +571,9 @@ static void free_outgoing(outgoing_t *outgoing) {
 	if(outgoing->ai)
 		freeaddrinfo(outgoing->ai);
 
+	if(outgoing->config_tree)
+		exit_configuration(&outgoing->config_tree);
+
 	if(outgoing->name)
 		free(outgoing->name);
 

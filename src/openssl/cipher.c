@@ -65,10 +65,8 @@ bool cipher_open_blowfish_ofb(cipher_t *cipher) {
 
 void cipher_close(cipher_t *cipher) {
 	EVP_CIPHER_CTX_cleanup(&cipher->ctx);
-	if(cipher->counter) {
-		free(cipher->counter);
-		cipher->counter = 0;
-	}
+	free(cipher->counter);
+	cipher->counter = NULL;
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {

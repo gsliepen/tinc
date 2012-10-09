@@ -627,18 +627,17 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 // Stop a SPTPS session.
 bool sptps_stop(sptps_t *s) {
 	// Clean up any resources.
+	cipher_close(&s->incipher);
+	cipher_close(&s->outcipher);
+	digest_close(&s->indigest);
+	digest_close(&s->outdigest);
 	ecdh_free(&s->ecdh);
 	free(s->inbuf);
-	s->inbuf = NULL;
 	free(s->mykex);
-	s->mykex = NULL;
 	free(s->hiskex);
-	s->hiskex = NULL;
 	free(s->key);
-	s->key = NULL;
 	free(s->label);
-	s->label = NULL;
 	free(s->late);
-	s->late = NULL;
+	memset(s, 0, sizeof *s);
 	return true;
 }
