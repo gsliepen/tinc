@@ -100,7 +100,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	scopeid = strchr(address, '%');
 
 	if(scopeid)
-		*scopeid = '\0';		/* Descope. */
+		*scopeid = '\0'; /* Descope. */
 
 	if(addrstr)
 		*addrstr = xstrdup(address);
@@ -218,7 +218,7 @@ void sockaddrfree(sockaddr_t *a) {
 		free(a->unknown.port);
 	}
 }
-	
+
 void sockaddrunmap(sockaddr_t *sa) {
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];

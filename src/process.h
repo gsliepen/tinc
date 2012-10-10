@@ -33,4 +33,4 @@ extern bool kill_other(int);
 extern bool init_service(void);
 #endif
 
-#endif							/* __TINC_PROCESS_H__ */
+#endif /* __TINC_PROCESS_H__ */

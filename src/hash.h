@@ -38,4 +38,4 @@ extern void *hash_search_or_insert(hash_t *, const void *key, const void *value)
 extern void hash_clear(hash_t *);
 extern void hash_resize(hash_t *, size_t n);
 
-#endif							/* __TINC_HASH_H__ */
+#endif /* __TINC_HASH_H__ */

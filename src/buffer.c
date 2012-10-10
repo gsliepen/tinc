@@ -57,7 +57,7 @@ char *buffer_prepare(buffer_t *buffer, int size) {
 }
 
 // Copy data into the buffer.
-			
+
 void buffer_add(buffer_t *buffer, const char *data, int size) {
 	memcpy(buffer_prepare(buffer, size), data, size);
 }

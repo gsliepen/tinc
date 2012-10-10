@@ -30,7 +30,7 @@
 
 static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
 	digest_t digest;
-	
+
 	if(!digest_open_by_nid(&digest, nid, -1))
 		return false;
 

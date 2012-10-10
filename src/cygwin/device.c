@@ -77,7 +77,7 @@ static bool setup_device(void) {
 
 		snprintf(regpath, sizeof regpath, "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
-                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
 			continue;
 
 		len = sizeof adaptername;
@@ -127,7 +127,7 @@ static bool setup_device(void) {
 		iface = xstrdup(adaptername);
 
 	snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
-	
+
 	/* Now we are going to open this device twice: once for reading and once for writing.
 	   We do this because apparently it isn't possible to check for activity in the select() loop.
 	   Furthermore I don't really know how to do it the "Windows" way. */
@@ -138,9 +138,9 @@ static bool setup_device(void) {
 	}
 
 	/* The parent opens the tap device for writing. */
-	
+
 	device_handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
-	
+
 	if(device_handle == INVALID_HANDLE_VALUE) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open Windows tap device %s (%s) for writing: %s", device, iface, winerror(GetLastError()));
 		return false;
@@ -171,7 +171,7 @@ static bool setup_device(void) {
 	if(!reader_pid) {
 		/* The child opens the tap device for reading, blocking.
 		   It passes everything it reads to the socket. */
-	
+
 		char buf[MTU];
 		long inlen;
 
@@ -233,7 +233,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			   device, strerror(errno));
 		return false;
 	}
-	
+
 	packet->len = inlen;
 
 	device_total_in += packet->len;

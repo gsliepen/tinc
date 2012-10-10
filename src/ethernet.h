@@ -54,17 +54,17 @@ struct arphdr {
 	uint16_t ar_hrd;
 	uint16_t ar_pro;
 	uint8_t ar_hln;
-	uint8_t ar_pln; 
-	uint16_t ar_op; 
+	uint8_t ar_pln;
+	uint16_t ar_op;
 } __attribute__ ((__packed__));
 
-#define ARPOP_REQUEST 1 
-#define ARPOP_REPLY 2 
-#define ARPOP_RREQUEST 3 
-#define ARPOP_RREPLY 4 
-#define ARPOP_InREQUEST 8 
-#define ARPOP_InREPLY 9 
-#define ARPOP_NAK 10 
+#define ARPOP_REQUEST 1
+#define ARPOP_REPLY 2
+#define ARPOP_RREQUEST 3
+#define ARPOP_RREPLY 4
+#define ARPOP_InREQUEST 8
+#define ARPOP_InREPLY 9
+#define ARPOP_NAK 10
 #endif
 
 #ifndef HAVE_STRUCT_ETHER_ARP

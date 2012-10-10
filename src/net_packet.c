@@ -80,7 +80,7 @@ bool localdiscovery = false;
 static void send_mtu_probe_handler(int fd, short events, void *data) {
 	node_t *n = data;
 	int timeout = 1;
-	
+
 	n->mtuprobes++;
 
 	if(!n->status.reachable || !n->status.validkey) {
@@ -135,7 +135,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 
 		if(len < 64)
 			len = 64;
-		
+
 		vpn_packet_t packet;
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
@@ -212,7 +212,7 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 		return -1;
 #endif
 	}
-	
+
 	return -1;
 }
 
@@ -294,7 +294,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	if(digest_active(&n->indigest)) {
 		inpkt->len -= n->indigest.maclength;
- 		if(!digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
+		if(!digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
 			return;
 		}
@@ -309,7 +309,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Error decrypting packet from %s (%s)", n->name, n->hostname);
 			return;
 		}
-		
+
 		outpkt->len = outlen;
 		inpkt = outpkt;
 	}
@@ -328,12 +328,12 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 					return;
 				}
 				logger(DEBUG_ALWAYS, LOG_WARNING, "Lost %d packets from %s (%s)",
-					   	inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
+						inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
 				memset(n->late, 0, replaywin);
 			} else if (inpkt->seqno <= n->received_seqno) {
 				if((n->received_seqno >= replaywin * 8 && inpkt->seqno <= n->received_seqno - replaywin * 8) || !(n->late[(inpkt->seqno / 8) % replaywin] & (1 << inpkt->seqno % 8))) {
 					logger(DEBUG_ALWAYS, LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
-					   	n->name, n->hostname, inpkt->seqno, n->received_seqno);
+						n->name, n->hostname, inpkt->seqno, n->received_seqno);
 					return;
 				}
 			} else {
@@ -348,7 +348,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;
-			
+
 	if(n->received_seqno > MAX_SEQNO)
 		regenerate_key();
 
@@ -361,7 +361,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
-				  		 n->name, n->hostname);
+						 n->name, n->hostname);
 			return;
 		}
 
@@ -607,7 +607,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
+		if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
 			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 	}
 #endif
@@ -795,7 +795,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 		send_packet(myself, packet);
 
 	// In TunnelServer mode, do not forward broadcast packets.
-        // The MST might not be valid and create loops.
+	// The MST might not be valid and create loops.
 	if(tunnelserver || broadcast_mode == BMODE_NONE)
 		return;
 
@@ -813,7 +813,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 			break;
 
 		// In direct mode, we send copies to each node we know of.
-	        // However, this only reaches nodes that can be reached in a single hop.
+		// However, this only reaches nodes that can be reached in a single hop.
 		// We don't have enough information to forward broadcast packets in this case.
 		case BMODE_DIRECT:
 			if(from != myself)
@@ -877,7 +877,7 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 
 	pkt.len = len;
 
-	sockaddrunmap(&from);		/* Some braindead IPv6 implementations do stupid things. */
+	sockaddrunmap(&from); /* Some braindead IPv6 implementations do stupid things. */
 
 	n = lookup_node_udp(&from);
 

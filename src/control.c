@@ -63,7 +63,7 @@ bool control_h(connection_t *c, const char *request) {
 
 		case REQ_DUMP_NODES:
 			return dump_nodes(c);
-			
+
 		case REQ_DUMP_EDGES:
 			return dump_edges(c);
 

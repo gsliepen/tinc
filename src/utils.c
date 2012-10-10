@@ -38,7 +38,7 @@ static int charb64decode(char c) {
 		return c - 'a' + 26;
 	else if(c >= 'A')
 		return c - 'A';
-	else if(c >= '0') 
+	else if(c >= '0')
 		return c - '0' + 52;
 	else if(c == '+')
 		return 62;
@@ -96,7 +96,7 @@ int b64encode(const char *src, char *dst, int length) {
 	int di = length / 3 * 4;
 
 	switch(length % 3) {
-		case 2:	
+		case 2:
 			triplet = usrc[si] | usrc[si + 1] << 8;
 			dst[di] = base64imals[triplet & 63]; triplet >>= 6;
 			dst[di + 1] = base64imals[triplet & 63]; triplet >>= 6;
@@ -141,7 +141,7 @@ const char *winerror(int err) {
 	ptr = buf + sprintf(buf, "(%d) ", err);
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
+		NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
 		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
 	};
 

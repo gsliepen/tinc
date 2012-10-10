@@ -41,10 +41,10 @@ int getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t host
 	}
 
 	hp = gethostbyaddr((char *)&sin->sin_addr, sizeof(struct in_addr), AF_INET);
-	
+
 	if(!hp || !hp->h_name || !hp->h_name[0])
 		return EAI_NODATA;
-	
+
 	len = snprintf(host, hostlen, "%s", hp->h_name);
 	if(len < 0 || len >= hostlen)
 		return EAI_MEMORY;

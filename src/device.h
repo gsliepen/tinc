@@ -48,4 +48,4 @@ extern const devops_t uml_devops;
 extern const devops_t vde_devops;
 extern devops_t devops;
 
-#endif							/* __TINC_DEVICE_H__ */
+#endif /* __TINC_DEVICE_H__ */

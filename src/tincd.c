@@ -87,10 +87,10 @@ static const char *switchuser = NULL;
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
-char *identname = NULL;				/* program name for syslog */
-char *logfilename = NULL;			/* log file location */
+char *identname = NULL;         /* program name for syslog */
+char *logfilename = NULL;       /* log file location */
 char *pidfilename = NULL;
-char **g_argv;					/* a copy of the cmdline arguments */
+char **g_argv;                  /* a copy of the cmdline arguments */
 
 static int status = 1;
 
@@ -123,7 +123,7 @@ static void usage(bool status) {
 				program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
-		printf(	"  -c, --config=DIR              Read configuration options from DIR.\n"
+		printf( "  -c, --config=DIR              Read configuration options from DIR.\n"
 				"  -D, --no-detach               Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
@@ -133,7 +133,7 @@ static void usage(bool status) {
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
 				"  -R, --chroot                  chroot to NET dir at startup.\n"
-				"  -U, --user=USER               setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
+				"  -U, --user=USER               setuid to given USER at startup.\n"                            "      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -149,18 +149,18 @@ static bool parse_options(int argc, char **argv) {
 
 	while((r = getopt_long(argc, argv, "c:DLd::n:o:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
-			case 0:				/* long option */
+			case 0:   /* long option */
 				break;
 
-			case 'c':				/* config file */
+			case 'c': /* config file */
 				confbase = xstrdup(optarg);
 				break;
 
-			case 'D':				/* no detach */
+			case 'D': /* no detach */
 				do_detach = false;
 				break;
 
-			case 'L':				/* no detach */
+			case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
 				logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "mlockall()");
 				return false;
@@ -169,55 +169,55 @@ static bool parse_options(int argc, char **argv) {
 				break;
 #endif
 
-			case 'd':				/* inc debug level */
+			case 'd': /* inc debug level */
 				if(optarg)
 					debug_level = atoi(optarg);
 				else
 					debug_level++;
 				break;
 
-			case 'n':				/* net name given */
+			case 'n': /* net name given */
 				netname = xstrdup(optarg);
 				break;
 
-			case 'o':				/* option */
+			case 'o': /* option */
 				cfg = parse_config_line(optarg, NULL, ++lineno);
 				if (!cfg)
 					return false;
 				list_insert_tail(cmdline_conf, cfg);
 				break;
 
-			case 'R':				/* chroot to NETNAME dir */
+			case 'R': /* chroot to NETNAME dir */
 				do_chroot = true;
 				break;
 
-			case 'U':				/* setuid to USER */
+			case 'U': /* setuid to USER */
 				switchuser = optarg;
 				break;
 
-			case 1:					/* show help */
+			case 1:   /* show help */
 				show_help = true;
 				break;
 
-			case 2:					/* show version */
+			case 2:   /* show version */
 				show_version = true;
 				break;
 
-			case 3:					/* bypass security */
+			case 3:   /* bypass security */
 				bypass_security = true;
 				break;
 
-			case 4:					/* write log entries to a file */
+			case 4:   /* write log entries to a file */
 				use_logfile = true;
 				if(optarg)
 					logfilename = xstrdup(optarg);
 				break;
 
-			case 5:					/* open control socket here */
+			case 5:   /* open control socket here */
 				pidfilename = xstrdup(optarg);
 				break;
 
-			case '?':
+			case '?': /* wrong options */
 				usage(true);
 				return false;
 
@@ -336,7 +336,7 @@ static bool drop_privs(void) {
 #endif
 	}
 	if (do_chroot) {
-		tzset();	/* for proper timestamps in logs */
+		tzset();        /* for proper timestamps in logs */
 		if (chroot(confbase) != 0 || chdir("/") != 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "chroot", strerror(errno));
@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
 
 	if(!parse_options(argc, argv))
 		return 1;
-	
+
 	make_names();
 
 	if(show_version) {
@@ -434,7 +434,7 @@ int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
-        char *priority = NULL;
+	char *priority = NULL;
 
 	if(!detach())
 		return 1;
@@ -469,30 +469,27 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-        if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal")) {
-                        if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
-                                logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else if(!strcasecmp(priority, "Low")) {
-                        if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
-                                       logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else if(!strcasecmp(priority, "High")) {
-                        if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
-                                logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else {
-                        logger(DEBUG_ALWAYS, LOG_ERR, "Invalid priority `%s`!", priority);
-                        goto end;
-                }
-        }
+	if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+		if(!strcasecmp(priority, "Normal")) {
+			if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				goto end;
+			}
+		} else if(!strcasecmp(priority, "Low")) {
+			if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
+				       logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				goto end;
+			}
+		} else if(!strcasecmp(priority, "High")) {
+			if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				goto end;
+			}
+		} else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid priority `%s`!", priority);
+			goto end;
+		}
+	}
 
 	/* drop privileges */
 	if (!drop_privs())

@@ -113,7 +113,7 @@ static bool setup_device(void) {
 	name.usecs = tv.tv_usec;
 	data_sun.sun_family = AF_UNIX;
 	memcpy(&data_sun.sun_path, &name, sizeof name);
-	
+
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof data_sun) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind data %s: %s", device_info, strerror(errno));
 		running = false;

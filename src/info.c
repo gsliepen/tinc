@@ -28,9 +28,9 @@
 
 void logger(int level, int priority, const char *format, ...) {
 	va_list ap;
-        va_start(ap, format);
-        vfprintf(stderr, format, ap);
-        va_end(ap);
+	va_start(ap, format);
+	vfprintf(stderr, format, ap);
+	va_end(ap);
 }
 
 char *strip_weight(char *netstr) {
@@ -56,7 +56,7 @@ static int info_node(int fd, const char *item) {
 	char via[4096];
 	char nexthop[4096];
 	int code, req, cipher, digest, maclength, compression, distance;
-       	short int pmtu, minmtu, maxmtu;
+	short int pmtu, minmtu, maxmtu;
 	unsigned int options;
 	node_status_t status;
 	long int last_state_change;
@@ -87,7 +87,7 @@ static int info_node(int fd, const char *item) {
 		if(sscanf(line, "%d %d %s", &code, &req, node) == 2)
 			break;
 	}
-	
+
 	printf("Node:         %s\n", item);
 	printf("Address:      %s port %s\n", host, port);
 

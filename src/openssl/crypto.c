@@ -26,12 +26,12 @@
 #include "crypto.h"
 
 void crypto_init(void) {
-        RAND_load_file("/dev/urandom", 1024);
+	RAND_load_file("/dev/urandom", 1024);
 
-        ENGINE_load_builtin_engines();
-        ENGINE_register_all_complete();
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 
-        OpenSSL_add_all_algorithms();
+	OpenSSL_add_all_algorithms();
 }
 
 void crypto_exit(void) {

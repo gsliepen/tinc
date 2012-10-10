@@ -102,14 +102,14 @@ bool send_req_key(node_t *to) {
 			send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, REQ_PUBKEY);
 			return true;
 		}
-                char label[25 + strlen(myself->name) + strlen(to->name)];
+		char label[25 + strlen(myself->name) + strlen(to->name)];
 		snprintf(label, sizeof label, "tinc UDP key expansion %s %s", myself->name, to->name);
 		sptps_stop(&to->sptps);
 		to->status.validkey = false;
 		to->status.waitingforkey = true;
 		to->last_req_key = time(NULL);
 		to->incompression = myself->incompression;
-		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof label, send_initial_sptps_data, receive_sptps_record); 
+		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof label, send_initial_sptps_data, receive_sptps_record);
 	}
 
 	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
@@ -166,7 +166,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			from->status.validkey = false;
 			from->status.waitingforkey = true;
 			from->last_req_key = time(NULL);
-			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data, receive_sptps_record); 
+			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data, receive_sptps_record);
 			sptps_receive_data(&from->sptps, buf, len);
 			return true;
 		}
@@ -228,7 +228,7 @@ bool req_key_h(connection_t *c, const char *request) {
 
 	/* Check if this key request is for us */
 
-	if(to == myself) {			/* Yes */
+	if(to == myself) {                      /* Yes */
 		/* Is this an extended REQ_KEY message? */
 		if(experimental && reqno)
 			return req_key_ext_h(c, request, from, reqno);
@@ -288,8 +288,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];
-        char address[MAX_STRING_SIZE] = "";
-        char port[MAX_STRING_SIZE] = "";
+	char address[MAX_STRING_SIZE] = "";
+	char port[MAX_STRING_SIZE] = "";
 	int cipher, digest, maclength, compression, keylen;
 	node_t *from, *to;
 

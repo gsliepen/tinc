@@ -40,7 +40,7 @@ bool logcontrol = false;
 void openlogger(const char *ident, logmode_t mode) {
 	logident = ident;
 	logmode = mode;
-	
+
 	switch(mode) {
 		case LOGMODE_STDERR:
 			logpid = getpid();

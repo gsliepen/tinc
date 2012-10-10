@@ -148,7 +148,7 @@ static size_t ber_read_len(unsigned char **p, size_t *buflen) {
 		return *(*p)++;
 	}
 }
-	
+
 
 static bool ber_read_sequence(unsigned char **p, size_t *buflen, size_t *result) {
 	int tag = ber_read_id(p, buflen);
@@ -173,7 +173,7 @@ static bool ber_read_mpi(unsigned char **p, size_t *buflen, gcry_mpi_t *mpi) {
 
 	if(mpi)
 		err = gcry_mpi_scan(mpi, GCRYMPI_FMT_USG, *p, len, NULL);
-	
+
 	*p += len;
 	*buflen -= len;
 

@@ -230,7 +230,7 @@ bool del_edge_h(connection_t *c, const char *request) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself",
 				   "DEL_EDGE", c->name, c->hostname);
 		contradicting_del_edge++;
-		send_add_edge(c, e);	/* Send back a correction */
+		send_add_edge(c, e);    /* Send back a correction */
 		return true;
 	}
 

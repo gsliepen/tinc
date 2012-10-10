@@ -1,20 +1,20 @@
 /*
  *  tunemu - Tun device emulation for Darwin
  *  Copyright (C) 2009 Friedrich Schöller <friedrich.schoeller@gmail.com>
- *  
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  */
 
 #include "tunemu.h"
@@ -36,18 +36,18 @@
 
 #define PPPPROTO_CTL 1
 
-#define PPP_IP		0x21
-#define PPP_IPV6	0x57
+#define PPP_IP          0x21
+#define PPP_IPV6        0x57
 
 #define SC_LOOP_TRAFFIC 0x00000200
 
-#define PPPIOCNEWUNIT	_IOWR('t', 62, int)
-#define	PPPIOCSFLAGS	_IOW('t', 89, int)
-#define PPPIOCSNPMODE	_IOW('t', 75, struct npioctl)
-#define PPPIOCATTCHAN	_IOW('t', 56, int)
-#define PPPIOCGCHAN		_IOR('t', 55, int)
-#define PPPIOCCONNECT	_IOW('t', 58, int)
-#define	PPPIOCGUNIT		_IOR('t', 86, int)
+#define PPPIOCNEWUNIT   _IOWR('t', 62, int)
+#define PPPIOCSFLAGS    _IOW('t', 89, int)
+#define PPPIOCSNPMODE   _IOW('t', 75, struct npioctl)
+#define PPPIOCATTCHAN   _IOW('t', 56, int)
+#define PPPIOCGCHAN     _IOR('t', 55, int)
+#define PPPIOCCONNECT   _IOW('t', 58, int)
+#define PPPIOCGUNIT     _IOR('t', 86, int)
 
 struct sockaddr_ppp
 {

@@ -27,7 +27,7 @@ typedef enum subnet_type_t {
 	SUBNET_MAC = 0,
 	SUBNET_IPV4,
 	SUBNET_IPV6,
-	SUBNET_TYPES				/* Guardian */
+	SUBNET_TYPES            /* Guardian */
 } subnet_type_t;
 
 typedef struct subnet_mac_t {
@@ -47,11 +47,11 @@ typedef struct subnet_ipv6_t {
 #include "node.h"
 
 typedef struct subnet_t {
-	struct node_t *owner;		/* the owner of this subnet */
+	struct node_t *owner;   /* the owner of this subnet */
 
-	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
-	time_t expires;			/* expiry time */
-	int weight;			/* weight (higher value is higher priority) */
+	subnet_type_t type;     /* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+	time_t expires;         /* expiry time */
+	int weight;             /* weight (higher value is higher priority) */
 
 	/* And now for the actual subnet: */
 
@@ -89,4 +89,4 @@ extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern bool dump_subnets(struct connection_t *);
 extern void subnet_cache_flush(void);
 
-#endif							/* __TINC_SUBNET_H__ */
+#endif /* __TINC_SUBNET_H__ */

@@ -189,7 +189,7 @@ bool receive_meta(connection_t *c) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected");
 							return false;
 						}
-					} else 
+					} else
 						receive_tcppacket(c, tcpbuffer, c->tcplen);
 					c->tcplen = 0;
 					continue;

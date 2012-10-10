@@ -31,7 +31,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-list_t *connection_list;	/* Meta connections */
+list_t *connection_list;
 connection_t *everyone;
 
 void init_connections(void) {
@@ -67,7 +67,7 @@ void free_connection(connection_t *c) {
 
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
-	
+
 	if(event_initialized(&c->inevent))
 		event_del(&c->inevent);
 

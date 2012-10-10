@@ -35,7 +35,7 @@
 /* Request numbers */
 
 typedef enum request_t {
-	ALL = -1,					/* Guardian for allow_request */
+	ALL = -1,                                       /* Guardian for allow_request */
 	ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
 	STATUS, ERROR, TERMREQ,
 	PING, PONG,
@@ -48,7 +48,7 @@ typedef enum request_t {
 	REQ_PUBKEY, ANS_PUBKEY,
 	REQ_SPTPS,
 	REQ_PACKET,
-	LAST						/* Guardian for the highest request number */
+	LAST                                            /* Guardian for the highest request number */
 } request_t;
 
 typedef struct past_request_t {
@@ -128,4 +128,4 @@ extern bool ans_key_h(struct connection_t *, const char *);
 extern bool tcppacket_h(struct connection_t *, const char *);
 extern bool control_h(struct connection_t *, const char *);
 
-#endif							/* __TINC_PROTOCOL_H__ */
+#endif /* __TINC_PROTOCOL_H__ */

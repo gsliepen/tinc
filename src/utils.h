@@ -47,4 +47,4 @@ extern const char *winerror(int);
 
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
 
-#endif							/* __TINC_UTILS_H__ */
+#endif /* __TINC_UTILS_H__ */

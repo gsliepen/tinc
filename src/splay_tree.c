@@ -44,10 +44,10 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				rightbottom->left = child;
 				child->parent = rightbottom;
 				rightbottom = child;
-				
+
 				if((root->left = child->right))
 					child->right->parent = root;
-				
+
 				child->right = root;
 				root->parent = child;
 
@@ -74,7 +74,7 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				rightbottom->left = root;
 				root->parent = rightbottom;
 				rightbottom = root;
-				
+
 				root->left = NULL;
 				child->parent = NULL;
 
@@ -88,10 +88,10 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				leftbottom->right = child;
 				child->parent = leftbottom;
 				leftbottom = child;
-				
+
 				if((root->right = child->left))
 					child->left->parent = root;
-				
+
 				child->left = root;
 				root->parent = child;
 
@@ -158,14 +158,14 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 
 	return tree->root;
 }
-			
+
 static void splay_bottom_up(splay_tree_t *tree, splay_node_t *node) {
 	splay_node_t *parent, *grandparent, *greatgrandparent;
 
 	while((parent = node->parent)) {
 		if(!(grandparent = parent->parent)) { /* zig */
 			if(node == parent->left) {
-				if((parent->left = node->right))				
+				if((parent->left = node->right))
 					parent->left->parent = parent;
 				node->right = parent;
 			} else {
@@ -326,7 +326,7 @@ splay_node_t *splay_search_closest_node_nosplay(const splay_tree_t *tree, const 
 		} else if(c > 0) {
 			if(node->right)
 				node = node->right;
-			else 
+			else
 				break;
 		} else {
 			break;
@@ -384,12 +384,12 @@ splay_node_t *splay_insert(splay_tree_t *tree, void *data) {
 
 		new = splay_alloc_node();
 		new->data = data;
-		
+
 		if(result < 0)
 			splay_insert_before(tree, closest, new);
 		else
 			splay_insert_after(tree, closest, new);
-	}			
+	}
 
 	return new;
 }
@@ -402,7 +402,7 @@ splay_node_t *splay_insert_node(splay_tree_t *tree, splay_node_t *node) {
 		splay_insert_top(tree, node);
 	else {
 		closest = splay_search_closest_node(tree, node->data, &result);
-		
+
 		if(!result)
 			return NULL;
 

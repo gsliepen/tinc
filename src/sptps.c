@@ -508,7 +508,7 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 			s->buflen += toread;
 			len -= toread;
 			data += toread;
-		
+
 			// Exit early if we don't have the full length.
 			if(s->buflen < 6)
 				return true;

@@ -25,7 +25,7 @@
 #ifndef HAVE_DAEMON
 /*
   Replacement for the daemon() function.
-  
+
   The daemon() function is for programs wishing to detach themselves
   from the controlling terminal and run in the background as system
   daemons.
@@ -104,14 +104,14 @@ char *get_current_dir_name(void) {
 	size = 100;
 	buf = xmalloc(size);
 
-	errno = 0;					/* Success */
+	errno = 0;                                      /* Success */
 	r = getcwd(buf, size);
 
 	/* getcwd returns NULL and sets errno to ERANGE if the bufferspace
 	   is insufficient to contain the entire working directory.  */
 	while(r == NULL && errno == ERANGE) {
 		free(buf);
-		size <<= 1;				/* double the size */
+		size <<= 1;                             /* double the size */
 		buf = xmalloc(size);
 		r = getcwd(buf, size);
 	}

@@ -167,7 +167,7 @@ bool read_rsa_public_key(connection_t *c) {
 	result = rsa_read_pem_public_key(&c->rsa, fp);
 	fclose(fp);
 
-	if(!result) 
+	if(!result)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
@@ -207,7 +207,7 @@ static bool read_ecdsa_private_key(void) {
 	result = ecdsa_read_pem_private_key(&myself->connection->ecdsa, fp);
 	fclose(fp);
 
-	if(!result) 
+	if(!result)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
@@ -263,7 +263,7 @@ static bool read_rsa_private_key(void) {
 	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
 	fclose(fp);
 
-	if(!result) 
+	if(!result)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
 	return result;
@@ -398,7 +398,7 @@ bool setup_myself_reloadable(void) {
 	scriptinterpreter = NULL;
 	get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &scriptinterpreter);
 
-	
+
 	free(scriptextension);
 	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension))
 #ifdef HAVE_MINGW
@@ -480,7 +480,7 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
-	
+
 	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
 		if(!strcasecmp(rmode, "router"))
 			routing_mode = RMODE_ROUTER;
@@ -807,7 +807,7 @@ static bool setup_myself(void) {
 			listen_socket[i].tcp = i + 3;
 
 #ifdef FD_CLOEXEC
-		        fcntl(i + 3, F_SETFD, FD_CLOEXEC);
+			fcntl(i + 3, F_SETFD, FD_CLOEXEC);
 #endif
 
 			listen_socket[i].udp = setup_vpn_in_socket(&sa);

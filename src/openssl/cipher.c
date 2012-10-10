@@ -143,7 +143,7 @@ bool cipher_counter_xor(cipher_t *cipher, const void *indata, size_t inlen, void
 	unsigned char *out = outdata;
 
 	while(inlen--) {
-		// Encrypt the new counter value if we need it 
+		// Encrypt the new counter value if we need it
 		if(!cipher->counter->n) {
 			int len;
 			if(!EVP_EncryptUpdate(&cipher->ctx, cipher->counter->block, &len, cipher->counter->counter, cipher->cipher->block_size)) {

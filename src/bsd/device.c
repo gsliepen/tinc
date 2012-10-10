@@ -78,7 +78,7 @@ static bool setup_device(void) {
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
-			/* use default */;	
+			/* use default */;
 #ifdef HAVE_TUNEMU
 		else if(!strcasecmp(type, "tunemu"))
 			device_type = DEVICE_TYPE_TUNEMU;
@@ -102,7 +102,7 @@ static bool setup_device(void) {
 #ifdef HAVE_TUNEMU
 		case DEVICE_TYPE_TUNEMU: {
 			char dynamic_name[256] = "";
-        		device_fd = tunemu_open(dynamic_name);
+			device_fd = tunemu_open(dynamic_name);
 		}
 			break;
 #endif
@@ -124,7 +124,7 @@ static bool setup_device(void) {
 			device_type = DEVICE_TYPE_TUN;
 		case DEVICE_TYPE_TUN:
 #ifdef TUNSIFHEAD
-		{	
+		{
 			const int zero = 0;
 			if(ioctl(device_fd, TUNSIFHEAD, &zero, sizeof zero) == -1) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
@@ -173,12 +173,12 @@ static bool setup_device(void) {
 					iface = xstrdup(ifr.ifr_name);
 				}
 			}
-			
+
 #endif
 			break;
 #ifdef HAVE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
-        		device_info = "BSD tunemu device";
+			device_info = "BSD tunemu device";
 			break;
 #endif
 	}
@@ -288,7 +288,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		default:
 			return false;
 	}
-		
+
 	device_total_in += packet->len;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s",
@@ -314,7 +314,7 @@ static bool write_packet(vpn_packet_t *packet) {
 			u_int32_t type;
 			struct iovec vector[2] = {{&type, sizeof type}, {packet->data + 14, packet->len - 14}};
 			int af;
-			
+
 			af = (packet->data[12] << 8) + packet->data[13];
 
 			switch (af) {
@@ -338,7 +338,7 @@ static bool write_packet(vpn_packet_t *packet) {
 			}
 			break;
 		}
-			
+
 		case DEVICE_TYPE_TAP:
 			if(write(device_fd, packet->data, packet->len) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,

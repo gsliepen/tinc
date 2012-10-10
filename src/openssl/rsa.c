@@ -54,7 +54,7 @@ bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp) {
 
 	if(*rsa)
 		return true;
-	
+
 	*rsa = PEM_read_RSA_PUBKEY(fp, rsa, NULL, NULL);
 
 	if(*rsa)
@@ -69,7 +69,7 @@ bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp) {
 
 	if(*rsa)
 		return true;
-	
+
 	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA private key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
@@ -83,7 +83,7 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 		return true;
 
 	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to perform RSA encryption: %s", ERR_error_string(ERR_get_error(), NULL));
-	return false;	
+	return false;
 }
 
 bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
@@ -91,7 +91,7 @@ bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 		return true;
 
 	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to perform RSA decryption: %s", ERR_error_string(ERR_get_error(), NULL));
-	return false;	
+	return false;
 }
 
 bool rsa_active(rsa_t *rsa) {

@@ -4,7 +4,7 @@
                   1998-2005 Ivo Timmermans
                   2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-		  2000 Cris van Pelt
+                  2000 Cris van Pelt
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,18 +28,18 @@
 #include "conf.h"
 #include "list.h"
 #include "logger.h"
-#include "netutl.h"				/* for str2address */
+#include "netutl.h"             /* for str2address */
 #include "protocol.h"
-#include "utils.h"				/* for cp */
+#include "utils.h"              /* for cp */
 #include "xalloc.h"
 
 splay_tree_t *config_tree;
 
-int pinginterval = 0;			/* seconds between pings */
-int pingtimeout = 0;			/* seconds to wait for response */
-char *confbase = NULL;			/* directory in which all config files are */
-char *netname = NULL;			/* name of the vpn network */
-list_t *cmdline_conf = NULL;	/* global/host configuration values given at the command line */
+int pinginterval = 0;           /* seconds between pings */
+int pingtimeout = 0;            /* seconds to wait for response */
+char *confbase = NULL;          /* directory in which all config files are */
+char *netname = NULL;           /* name of the vpn network */
+list_t *cmdline_conf = NULL;    /* global/host configuration values given at the command line */
 
 
 static int config_compare(const config_t *a, const config_t *b) {
@@ -236,8 +236,9 @@ static char *readline(FILE * fp, char *buf, size_t buflen) {
 	if(!newline)
 		return buf;
 
-	*newline = '\0';	/* kill newline */
-	if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
+	/* kill newline and carriage return if necessary */
+	*newline = '\0';
+	if(newline > p && newline[-1] == '\r')
 		newline[-1] = '\0';
 
 	return buf;
@@ -321,7 +322,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 				ignore = false;
 			continue;
 		}
-		
+
 		if(!strncmp(line, "-----BEGIN", 10)) {
 			ignore = true;
 			continue;
@@ -376,9 +377,8 @@ bool read_server_config(void) {
 	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
-	if(!x) {				/* System error: complain */
+	if(!x)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
-	}
 
 	free(fname);
 

@@ -123,7 +123,7 @@ bool pong_h(connection_t *c, const char *request) {
 
 bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
-           We use a very simple Random Early Drop algorithm. */
+	   We use a very simple Random Early Drop algorithm. */
 
 	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
 		return true;

@@ -212,7 +212,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 			else
 				pad[i] = padbyte;
 	}
-	
+
 	if(oneshot)
 		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
 

@@ -85,7 +85,7 @@ static bool digest_open(digest_t *digest, int algo, int maclength) {
 		digest->maclength = len;
 	else
 		digest->maclength = maclength;
-	
+
 	digest->algo = algo;
 	digest->hmac = NULL;
 

@@ -118,7 +118,7 @@ static bool setup_device(void) {
 
 		snprintf(regpath, sizeof regpath, "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
-                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
 			continue;
 
 		len = sizeof adaptername;
@@ -172,7 +172,7 @@ static bool setup_device(void) {
 		snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
 	}
-	
+
 	if(device_handle == INVALID_HANDLE_VALUE) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "%s (%s) is not a usable Windows tap device: %s", device, iface, winerror(GetLastError()));
 		return false;

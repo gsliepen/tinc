@@ -156,7 +156,7 @@ static void redraw(void) {
 
 	for(int i = 0; i < n; i++)
 		sorted[i]->i = i;
-	
+
 	int cmpfloat(float a, float b) {
 		if(a < b)
 			return -1;

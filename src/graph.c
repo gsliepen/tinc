@@ -125,13 +125,13 @@ static void sssp_bfs(void) {
 
 	/* Loop while todo_list is filled */
 
-	for list_each(node_t, n, todo_list) {			/* "n" is the node from which we start */
+	for list_each(node_t, n, todo_list) {                   /* "n" is the node from which we start */
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Examining edges from %s", n->name);
 
 		if(n->distance < 0)
 			abort();
 
-		for splay_each(edge_t, e, n->edge_tree) {	/* "e" is the edge connected to "from" */
+		for splay_each(edge_t, e, n->edge_tree) {       /* "e" is the edge connected to "from" */
 			if(!e->reverse)
 				continue;
 

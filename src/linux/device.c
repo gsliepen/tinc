@@ -120,7 +120,7 @@ static void close_device(void) {
 
 static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
-	
+
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			inlen = read(device_fd, packet->data + 10, MTU - 10);

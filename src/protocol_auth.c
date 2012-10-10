@@ -162,8 +162,8 @@ bool id_h(connection_t *c, const char *request) {
 		c->allow_request = CONTROL;
 		c->last_ping_time = time(NULL) + 3600;
 
-	        free(c->name);
-                c->name = xstrdup("<control>");
+		free(c->name);
+		c->name = xstrdup("<control>");
 
 		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
 	}
@@ -248,7 +248,7 @@ bool send_metakey(connection_t *c) {
 
 	if(!cipher_open_blowfish_ofb(&c->outcipher))
 		return false;
-	
+
 	if(!digest_open_sha1(&c->outdigest, -1))
 		return false;
 
@@ -302,7 +302,7 @@ bool send_metakey(connection_t *c) {
 			 cipher_get_nid(&c->outcipher),
 			 digest_get_nid(&c->outdigest), c->outmaclength,
 			 c->outcompression, hexkey);
-	
+
 	c->status.encryptout = true;
 	return result;
 }

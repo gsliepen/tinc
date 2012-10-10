@@ -72,7 +72,7 @@ struct ip {
 #endif
 	uint8_t ip_tos;
 	uint16_t ip_len;
-	uint16_t ip_id; 
+	uint16_t ip_id;
 	uint16_t ip_off;
 #define IP_RF 0x8000
 #define IP_DF 0x4000

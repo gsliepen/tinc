@@ -30,7 +30,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-splay_tree_t *node_tree;			/* Known nodes, sorted by name */
+splay_tree_t *node_tree;
 static hash_t *node_udp_cache;
 
 node_t *myself;
@@ -80,7 +80,7 @@ void free_node(node_t *n) {
 
 	if(timeout_initialized(&n->mtuevent))
 		event_del(&n->mtuevent);
-	
+
 	if(n->hostname)
 		free(n->hostname);
 

@@ -41,7 +41,7 @@ bool ecdh_generate_public(ecdh_t *ecdh, void *pubkey) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
-	
+
 	const EC_POINT *point = EC_KEY_get0_public_key(*ecdh);
 	if(!point) {
 		EC_KEY_free(*ecdh);

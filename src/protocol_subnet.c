@@ -189,7 +189,7 @@ bool del_subnet_h(connection_t *c, const char *request) {
 	if(tunnelserver && owner != myself && owner != c->node) {
 		/* in case of tunnelserver, ignore indirect subnet deletion */
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "Ignoring indirect %s from %s (%s) for %s",
-                                  "DEL_SUBNET", c->name, c->hostname, subnetstr);
+				  "DEL_SUBNET", c->name, c->hostname, subnetstr);
 		return true;
 	}
 

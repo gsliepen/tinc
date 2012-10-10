@@ -555,7 +555,7 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
 	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
 	event_add(&c->inevent, NULL);
-		
+
 	configure_tcp(c);
 
 	connection_add(c);

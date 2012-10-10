@@ -3,7 +3,7 @@
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
-		  2011      Loïc Grenié <loic.grenie@gmail.com>
+                  2011      Loïc Grenié <loic.grenie@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -239,9 +239,9 @@ int reload_configuration(void) {
 
 	read_config_options(config_tree, NULL);
 
-        xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
-        read_config_file(config_tree, fname);
-	free(fname);	
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
+	read_config_file(config_tree, fname);
+	free(fname);
 
 	/* Parse some options that are allowed to be changed while tinc is running */
 
@@ -306,7 +306,7 @@ int reload_configuration(void) {
 	}
 
 	/* Try to make outgoing connections */
-	
+
 	try_outgoing_connections();
 
 	/* Close connections to hosts that have a changed or deleted host config file */

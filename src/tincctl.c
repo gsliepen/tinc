@@ -54,8 +54,8 @@ static bool show_help = false;
 static bool show_version = false;
 
 static char *name = NULL;
-static char *identname = NULL;				/* program name for syslog */
-static char *pidfilename = NULL;			/* pid file location */
+static char *identname = NULL;          /* program name for syslog */
+static char *pidfilename = NULL;        /* pid file location */
 static char *confdir = NULL;
 static char controlcookie[1024];
 char *netname = NULL;
@@ -163,34 +163,34 @@ static bool parse_options(int argc, char **argv) {
 
 	while((r = getopt_long(argc, argv, "c:n:Dd::Lo:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
-			case 0:				/* long option */
+			case 0:   /* long option */
 				break;
 
-			case 'c':				/* config file */
+			case 'c': /* config file */
 				confbase = xstrdup(optarg);
 				break;
 
-			case 'n':				/* net name given */
+			case 'n': /* net name given */
 				netname = xstrdup(optarg);
 				break;
 
-			case 1:					/* show help */
+			case 1:   /* show help */
 				show_help = true;
 				break;
 
-			case 2:					/* show version */
+			case 2:   /* show version */
 				show_version = true;
 				break;
 
-			case 5:					/* open control socket here */
+			case 5:   /* open control socket here */
 				pidfilename = xstrdup(optarg);
 				break;
 
-			case 6:
+			case 6:   /* force */
 				force = true;
 				break;
 
-			case '?':
+			case '?': /* wrong options */
 				usage(true);
 				return false;
 
@@ -199,15 +199,15 @@ static bool parse_options(int argc, char **argv) {
 		}
 	}
 
-        if(!netname && (netname = getenv("NETNAME")))
-                netname = xstrdup(netname);
+	if(!netname && (netname = getenv("NETNAME")))
+		netname = xstrdup(netname);
 
-        /* netname "." is special: a "top-level name" */
+	/* netname "." is special: a "top-level name" */
 
-        if(netname && (!*netname || !strcmp(netname, "."))) {
-                free(netname);
-                netname = NULL;
-        }
+	if(netname && (!*netname || !strcmp(netname, "."))) {
+		free(netname);
+		netname = NULL;
+	}
 
 	if(netname && (strpbrk(netname, "\\/") || *netname == '.')) {
 		fprintf(stderr, "Invalid character in netname!\n");
@@ -332,7 +332,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 		filename = buf2;
 	}
 
-	umask(0077);				/* Disallow everything for group and other */
+	umask(0077); /* Disallow everything for group and other */
 
 	disable_old_keys(filename, what);
 
@@ -371,12 +371,12 @@ static bool ecdsa_keygen(bool ask) {
 
 	if(!f)
 		return false;
-  
+
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
 	fchmod(fileno(f), 0600);
 #endif
-		
+
 	ecdsa_write_pem_private_key(&key, f);
 
 	fclose(f);
@@ -424,12 +424,12 @@ static bool rsa_keygen(int bits, bool ask) {
 
 	if(!f)
 		return false;
-  
+
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
 	fchmod(fileno(f), 0600);
 #endif
-		
+
 	rsa_write_pem_private_key(&key, f);
 
 	fclose(f);
@@ -579,7 +579,7 @@ bool sendline(int fd, char *format, ...) {
 		blen -= result;
 	}
 
-	return true;	
+	return true;
 }
 
 static void pcap(int fd, FILE *out, int snaplen) {
@@ -781,7 +781,7 @@ static bool connect_tincd(bool verbose) {
 	}
 
 	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
-	
+
 	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
 		if(verbose)
 			fprintf(stderr, "Could not fully establish control socket connection\n");
@@ -839,7 +839,7 @@ static int cmd_start(int argc, char *argv[]) {
 
 	if(!pid)
 		exit(execvp(c, nargv));
-	
+
 	free(nargv);
 
 	int status = -1;
@@ -1312,14 +1312,14 @@ static int cmd_config(int argc, char *argv[]) {
 	char *value;
 	int len;
 
-        len = strcspn(line, "\t =");
-        value = line + len;
-        value += strspn(value, "\t ");
-        if(*value == '=') {
-                value++;
-                value += strspn(value, "\t ");
-        }
-        line[len] = '\0';
+	len = strcspn(line, "\t =");
+	value = line + len;
+	value += strspn(value, "\t ");
+	if(*value == '=') {
+		value++;
+		value += strspn(value, "\t ");
+	}
+	line[len] = '\0';
 	variable = strchr(line, '.');
 	if(variable) {
 		node = line;
@@ -2153,7 +2153,7 @@ int main(int argc, char *argv[]) {
 
 	if(!parse_options(argc, argv))
 		return 1;
-	
+
 	make_names();
 
 	if(show_version) {

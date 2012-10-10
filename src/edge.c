@@ -29,7 +29,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-splay_tree_t *edge_weight_tree;	/* Tree with all edges, sorted on weight */
+splay_tree_t *edge_weight_tree;
 
 static int edge_compare(const edge_t *a, const edge_t *b) {
 	return strcmp(a->to->name, b->to->name);
@@ -99,7 +99,7 @@ void edge_del(edge_t *e) {
 
 edge_t *lookup_edge(node_t *from, node_t *to) {
 	edge_t v;
-	
+
 	v.from = from;
 	v.to = to;
 

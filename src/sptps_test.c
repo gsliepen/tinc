@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 	hint.ai_socktype = SOCK_STREAM;
 	hint.ai_protocol = IPPROTO_TCP;
 	hint.ai_flags = initiator ? 0 : AI_PASSIVE;
-	
+
 	if(getaddrinfo(initiator ? argv[3] : NULL, initiator ? argv[4] : argv[3], &hint, &ai) || !ai) {
 		fprintf(stderr, "getaddrinfo() failed: %s\n", strerror(errno));
 		return 1;

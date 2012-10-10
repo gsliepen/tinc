@@ -75,10 +75,10 @@ static bool install_service(void) {
 	for(char **argp = g_argv + 1; *argp; argp++) {
 		char &space = strchr(*argp, ' ');
 		strncat(command, " ", sizeof command - strlen(command));
-		
+
 		if(space)
 			strncat(command, "\"", sizeof command - strlen(command));
-		
+
 		strncat(command, *argp, sizeof command - strlen(command));
 
 		if(space)
@@ -88,7 +88,7 @@ static bool install_service(void) {
 	service = CreateService(manager, identname, identname,
 			SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
 			command, NULL, NULL, NULL, NULL, NULL);
-	
+
 	if(!service) {
 		DWORD lasterror = GetLastError();
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create %s service: %s", identname, winerror(lasterror));
@@ -128,8 +128,8 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	}
 
 	event_loopexit(NULL);
-	status.dwWaitHint = 30000; 
-	status.dwCurrentState = SERVICE_STOP_PENDING; 
+	status.dwWaitHint = 30000;
+	status.dwCurrentState = SERVICE_STOP_PENDING;
 	SetServiceStatus(statushandle, &status);
 	return NO_ERROR;
 }
@@ -139,31 +139,31 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 	extern int main2(int argc, char **argv);
 
 
-	status.dwServiceType = SERVICE_WIN32; 
+	status.dwServiceType = SERVICE_WIN32;
 	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
-	status.dwWin32ExitCode = 0; 
-	status.dwServiceSpecificExitCode = 0; 
-	status.dwCheckPoint = 0; 
+	status.dwWin32ExitCode = 0;
+	status.dwServiceSpecificExitCode = 0;
+	status.dwCheckPoint = 0;
 
-	statushandle = RegisterServiceCtrlHandlerEx(identname, controlhandler, NULL); 
+	statushandle = RegisterServiceCtrlHandlerEx(identname, controlhandler, NULL);
 
 	if (!statushandle) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
 		err = 1;
 	} else {
-		status.dwWaitHint = 30000; 
-		status.dwCurrentState = SERVICE_START_PENDING; 
+		status.dwWaitHint = 30000;
+		status.dwCurrentState = SERVICE_START_PENDING;
 		SetServiceStatus(statushandle, &status);
 
-		status.dwWaitHint = 0; 
+		status.dwWaitHint = 0;
 		status.dwCurrentState = SERVICE_RUNNING;
 		SetServiceStatus(statushandle, &status);
 
 		err = main2(argc, argv);
 
 		status.dwWaitHint = 0;
-		status.dwCurrentState = SERVICE_STOPPED; 
-		//status.dwWin32ExitCode = err; 
+		status.dwCurrentState = SERVICE_STOPPED;
+		//status.dwWin32ExitCode = err;
 		SetServiceStatus(statushandle, &status);
 	}
 
@@ -240,7 +240,7 @@ bool execute_script(const char *name, char **envp) {
 
 #ifdef HAVE_PUTENV
 	/* Set environment */
-	
+
 	for(int i = 0; envp[i]; i++)
 		putenv(envp[i]);
 #endif
@@ -269,17 +269,17 @@ bool execute_script(const char *name, char **envp) {
 
 #ifdef WEXITSTATUS
 	if(status != -1) {
-		if(WIFEXITED(status)) {	/* Child exited by itself */
+		if(WIFEXITED(status)) {          /* Child exited by itself */
 			if(WEXITSTATUS(status)) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Script %s exited with non-zero status %d",
 					   name, WEXITSTATUS(status));
 				return false;
 			}
-		} else if(WIFSIGNALED(status)) {	/* Child was killed by a signal */
+		} else if(WIFSIGNALED(status)) { /* Child was killed by a signal */
 			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s was killed by signal %d (%s)",
 				   name, WTERMSIG(status), strsignal(WTERMSIG(status)));
 			return false;
-		} else {			/* Something strange happened */
+		} else {                         /* Something strange happened */
 			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s terminated abnormally", name);
 			return false;
 		}

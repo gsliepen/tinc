@@ -34,7 +34,7 @@ bool ecdsa_set_base64_public_key(ecdsa_t *ecdsa, const char *p) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "EC_KEY_new_by_curve_name failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
-	
+
 	int len = strlen(p);
 	unsigned char pubkey[len / 4 * 3 + 3];
 	const unsigned char *ppubkey = pubkey;
@@ -77,7 +77,7 @@ bool ecdsa_read_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
 
 	if(*ecdsa)
 		return true;
-	
+
 	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read ECDSA private key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }

@@ -81,4 +81,4 @@ extern void list_foreach_node(list_t *, list_action_node_t);
 
 #define list_each(type, item, list) (type *item = (type *)1; item; item = NULL) for(list_node_t *node = (list)->head, *next; item = node ? node->data : NULL, next = node ? node->next : NULL, node; node = next)
 
-#endif							/* __TINC_LIST_H__ */
+#endif /* __TINC_LIST_H__ */

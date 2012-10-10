@@ -29,4 +29,4 @@ extern bool receive_meta_sptps(void *, uint8_t, const char *, uint16_t);
 extern void broadcast_meta(struct connection_t *, const char *, int);
 extern bool receive_meta(struct connection_t *);
 
-#endif							/* __TINC_META_H__ */
+#endif /* __TINC_META_H__ */

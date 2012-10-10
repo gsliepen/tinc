@@ -104,7 +104,7 @@ static int subnet_compare_mac(const subnet_t *a, const subnet_t *b) {
 
 	if(result)
 		return result;
-	
+
 	result = a->weight - b->weight;
 
 	if(result || !a->owner || !b->owner)
@@ -125,7 +125,7 @@ static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b) {
 
 	if(result)
 		return result;
-	
+
 	result = a->weight - b->weight;
 
 	if(result || !a->owner || !b->owner)
@@ -141,12 +141,12 @@ static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b) {
 
 	if(result)
 		return result;
-	
+
 	result = memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
 
 	if(result)
 		return result;
-	
+
 	result = a->weight - b->weight;
 
 	if(result || !a->owner || !b->owner)
