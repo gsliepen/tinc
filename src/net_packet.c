@@ -97,6 +97,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 		}
 
 		logger(DEBUG_TRAFFIC, LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
+		n->status.udp_confirmed = false;
 		n->mtuprobes = 1;
 		n->minmtu = 0;
 		n->maxmtu = MTU;
@@ -166,6 +167,8 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		packet->data[0] = 1;
 		send_udppacket(n, packet);
 	} else {
+		n->status.udp_confirmed = true;
+
 		if(n->mtuprobes > 30) {
 			if(n->minmtu)
 				n->mtuprobes = 30;
@@ -528,41 +531,76 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		inpkt->len += digest_length(&n->outdigest);
 	}
 
-	/* Determine which socket we have to use */
-
-	if(n->address.sa.sa_family != listen_socket[n->sock].sa.sa.sa_family) {
-		for(int sock = 0; sock < listen_sockets; sock++) {
-			if(n->address.sa.sa_family == listen_socket[sock].sa.sa.sa_family) {
-				n->sock = sock;
-				break;
-			}
-		}
-	}
-
 	/* Send the packet */
 
-	struct sockaddr *sa;
-	socklen_t sl;
+	sockaddr_t *sa;
 	int sock;
 
 	/* Overloaded use of priority field: -1 means local broadcast */
 
 	if(origpriority == -1 && n->prevedge) {
-		struct sockaddr_in in;
-		in.sin_family = AF_INET;
-		in.sin_addr.s_addr = -1;
-		in.sin_port = n->prevedge->address.in.sin_port;
-		sa = (struct sockaddr *)&in;
-		sl = sizeof in;
+		sockaddr_t broadcast;
+		broadcast.in.sin_family = AF_INET;
+		broadcast.in.sin_addr.s_addr = -1;
+		broadcast.in.sin_port = n->prevedge->address.in.sin_port;
+		sa = &broadcast;
 		sock = 0;
 	} else {
 		if(origpriority == -1)
 			origpriority = 0;
 
-		sa = &(n->address.sa);
-		sl = SALEN(n->address.sa);
-		sock = n->sock;
+		if(n->status.udp_confirmed) {
+			/* Address of this node is confirmed, so use it. */
+			sa = &n->address;
+			sock = n->sock;
+		} else {
+			/* Otherwise, go through the list of known addresses of
+			   this node. The first address we try is always the
+			   one in n->address; that could be set to the node's
+			   reflexive UDP address discovered during key
+			   exchange. The other known addresses are those found
+			   in edges to this node. */
+
+			static unsigned int i;
+			int j = 0;
+			edge_t *candidate = NULL;
+
+			if(i) {
+				for splay_each(edge_t, e, edge_weight_tree) {
+					if(e->to != n)
+						continue;
+					j++;
+					if(!candidate || j == i)
+						candidate = e;
+				}
+			}
+
+			if(!candidate) {
+				sa = &n->address;
+				sock = n->sock;
+			} else {
+				sa = &candidate->address;
+				sock = rand() % listen_sockets;
+			}
+
+			if(i++)
+				if(i > j)
+					i = 0;
+		}
 	}
+
+	/* Determine which socket we have to use */
+
+	if(sa->sa.sa_family != listen_socket[sock].sa.sa.sa_family)
+		for(sock = 0; sock < listen_sockets; sock++)
+			if(sa->sa.sa_family == listen_socket[sock].sa.sa.sa_family)
+				break;
+
+	if(sock >= listen_sockets)
+		sock = 0;
+
+	if(!n->status.udp_confirmed)
+		n->sock = sock;
 
 #if defined(SOL_IP) && defined(IP_TOS)
 	if(priorityinheritance && origpriority != priority
@@ -574,7 +612,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, sa, sl) < 0 && !sockwouldblock(sockerrno)) {
+	socklen_t sl = SALEN(n->address.sa);
+
+	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, sl) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;

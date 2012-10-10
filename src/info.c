@@ -111,6 +111,8 @@ static int info_node(int fd, const char *item) {
 		printf(" indirect");
 	if(status.sptps)
 		printf(" sptps");
+	if(status.udp_confirmed)
+		printf(" udp_confirmed");
 	printf("\n");
 
 	printf("Options:     ");
