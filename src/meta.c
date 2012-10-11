@@ -109,6 +109,11 @@ bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t l
 		return true;
 	}
 
+	/* Change newline to null byte, just like non-SPTPS requests */
+
+	if(data[length - 1] == '\n')
+		((char *)data)[length - 1] = 0;
+
 	/* Otherwise we are waiting for a request */
 
 	return receive_request(c, data);
