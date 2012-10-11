@@ -287,10 +287,13 @@ static void sssp_bfs(void) {
 
 			subnet_update(n, NULL, n->status.reachable);
 
-			if(!n->status.reachable)
+			if(!n->status.reachable) {
 				update_node_udp(n, NULL);
-			else if(n->connection)
+				memset(&n->status, 0, sizeof n->status);
+				n->options = 0;
+			} else if(n->connection) {
 				send_ans_key(n);
+			}
 		}
 	}
 }
