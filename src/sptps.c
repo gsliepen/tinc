@@ -436,7 +436,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 			} else if (seqno < s->inseqno) {
 				// If the sequence number is farther in the past than the bitmap goes, or if the packet was already received, drop it.
 				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8))) {
-					fprintf(stderr, "Received late or replayed packet, seqno %d, last received %d", seqno, s->inseqno);
+					fprintf(stderr, "Received late or replayed packet, seqno %d, last received %d\n", seqno, s->inseqno);
 					return false;
 				}
 			} else {
