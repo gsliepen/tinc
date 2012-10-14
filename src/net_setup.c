@@ -668,6 +668,7 @@ static bool setup_myself(void) {
 			return false;
 		}
 		replaywin = (unsigned)replaywin_int;
+		sptps_replaywin = replaywin;
 	}
 
 	/* Generate packet encryption key */
