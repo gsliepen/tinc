@@ -1,4 +1,28 @@
-Version 1.1pre2              Juli 17 2011
+Version 1.1pre3              October 14 2012
+
+ * New experimental protocol:
+   * Uses 521 bit ECDSA keys for authentication.
+   * Uses AES-256-CTR and HMAC-SHA256.
+   * Always provides perfect forward secrecy.
+   * Used for both meta-connections and VPN packets.
+   * VPN packets are encrypted end-to-end.
+
+ * Many improvements to tincctl:
+   * "config" command shows/adds/changes configuration variables.
+   * "export" and "import" commands help exchange configuration files.
+   * "init" command sets up initial configuration files.
+   * "info" command shows details about a node, subnet or address.
+   * "log" command shows live log messages.
+   * Without a command it acts as a shell, with history and TAB completion.
+   * Improved starting/stopping tincd.
+   * Improved graph output.
+
+ * When trying to directly send UDP packets to a node for which multiple
+   addresses are known, all of them are tried.
+
+ * Many small fixes, code cleanups and documentation updates.
+
+Version 1.1pre2              July 17 2011
 
  * .cookie files are renamed to .pid files, which are compatible with 1.0.x.
 

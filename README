@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.1pre2. Installation
+This is the README file for tinc version 1.1pre3. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2012 by:
@@ -29,81 +29,66 @@ protocol is not fixed yet.
 Security statement
 ------------------
 
-This version uses an experimental and unfinished cryptographic protocol. Use
-it at your own risk.
+This version uses an experimental and unfinished cryptographic protocol. Use it
+at your own risk.
 
 
 Compatibility
 -------------
 
-Version 1.1pre2 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.1pre3 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
 When the ExperimentalProtocol option is used, tinc is still compatible with
-1.0.X and 1.1pre2 itself, but not with any other 1.1preX version.
+1.0.X and 1.1pre3 itself, but not with any other 1.1preX version.
 
 
 Requirements
 ------------
 
-OpenSSL (http://www.openssl.org/) version 1.0.0 or later.
-
-The zlib library is used for optional compression. You can find it at
-http://www.gzip.org/zlib/.
-
-The lzo library is also used for optional compression. You can find it at
-http://www.oberhumer.com/opensource/lzo/.
-
-Since 1.1, the libevent library is used for the main event loop. You can find
-it at http://monkey.org/~provos/libevent/.
-
 In order to compile tinc, you will need a GNU C compiler environment. Please
-ensure you have the latest stable versions of all the required libraries.
+ensure you have the latest stable versions of all the required libraries:
+
+- OpenSSL (http://www.openssl.org/) version 1.0.0 or later.
+- Libevent (http://monkey.org/~provos/libevent/)
+
+The following libraries are used by default, but can be disabled if necessary:
+
+- zlib (http://www.gzip.org/zlib/)
+- lzo (http://www.oberhumer.com/opensource/lzo/)
+- ncurses (http://invisible-island.net/ncurses/)
+- readline (ftp://ftp.gnu.org/pub/gnu/readline/)
 
 
 Features
 --------
 
-This version of tinc supports multiple virtual networks at once. To
-use this feature, you may supply a netname via the -n or --net
-options. The standard locations for the config files will then be
-/etc/tinc/<net>/.
+Tinc is a peer-to-peer VPN daemon that supports VPNs with an arbitrary number
+of nodes. Instead of configuring tunnels, you give tinc the location and
+public key of a few nodes in the VPN. After making the initial connections to
+those nodes, tinc will learn about all other nodes on the VPN, and will make
+connections automatically. When direct connections are not possible, data will
+be forwarded by intermediate nodes.
 
-tincd regenerates its encryption key pairs. It does this on the first
-activity after the keys have expired. This period is adjustable in the
-configuration file, and the default time is 3600 seconds (one hour).
+By default, nodes authenticate each other using 2048 bit RSA (or 521 bit
+ECDSA*) keys. Traffic is encrypted using Blowfish in CBC mode (or AES-256 in
+CTR mode*), authenticated using HMAC-SHA1 (or HMAC-SHA-256*), and is protected
+against replay attacks.
 
-This version supports multiple subnets at once. They are also sorted
-on subnet mask size. This means that it is possible to have
-overlapping subnets on the VPN, as long as their subnet mask sizes
-differ.
+*) When using the ExperimentalProtocol option.
 
-Since pre5, tinc can operate in several routing modes. The default mode,
-"router", works exactly like the older version, and uses Subnet lines to
-determine the destination of packets. The other two modes, "switch" and "hub",
-allow the tinc daemons to work together like a single network switch or hub.
-This is useful for bridging networks. The latter modes only work properly on
-Linux, FreeBSD and Windows.
+Tinc fully supports IPv6.
 
-The algorithms used for encryption and generating message authentication codes
-can now be changed in the configuration files. All cipher and digest algorithms
-supported by OpenSSL can be used. Useful ciphers are "blowfish" (default),
-"bf-ofb", "des", "des3", etcetera. Useful digests are "sha1" (default), "md5",
-etcetera.
-
-Support for routing IPv6 packets has been added. Just add Subnet lines with
-IPv6 addresses (without using :: abbreviations) and use ifconfig or ip (from
-the iproute package) to give the virtual network interface corresponding IPv6
-addresses. tinc does not provide autoconfiguration for IPv6 hosts, if you need
-it use radvd or zebra.
-
-It is also possible to make tunnels to other tinc daemons over IPv6 networks,
-if the operating system supports IPv6.  tinc will automatically use both IPv6
-and IPv4 when available, but this can be changed by adding the option
-"AddressFamily = ipv4" or "AddressFamily = ipv6" to the tinc.conf file.
+Tinc can operate in several routing modes. In the default mode, "router", every
+node is associated with one or more IPv4 and/or IPv6 Subnets. The other two
+modes, "switch" and "hub", let the tinc daemons work together to form a virtual
+Ethernet network switch or hub.
 
 Normally, when started tinc will detach and run in the background. In a native
 Windows environment this means tinc will intall itself as a service, which will
 restart after reboots.  To prevent tinc from detaching or running as a service,
 use the -D option.
 
+The status of the VPN can be queried using the "tincctl" tool, which connects
+to a running tinc daemon via a control connection. The same tool also makes it
+easy to start and stop tinc, and to change its configuration.
