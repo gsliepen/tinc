@@ -2213,6 +2213,9 @@ Dump a list of all meta connections with ourself.
 
 @item dump graph | digraph
 Dump a graph of the VPN in dotty format.
+Nodes are colored according to their reachability:
+red nodes are unreachable, orange nodes are indirectly reachable, green nodes are directly reachable.
+Black nodes are either directly or indirectly reachable, but direct reachability has not been tried yet.
 
 @item info @var{node} | @var{subnet} | @var{address}
 Show information about a particular @var{node}, @var{subnet} or @var{address}.

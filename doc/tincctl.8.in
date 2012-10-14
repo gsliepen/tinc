@@ -128,6 +128,9 @@ Dump a list of all meta connections with ourself.
 Dump a graph of the VPN in
 .Xr dotty 1
 format.
+Nodes are colored according to their reachability:
+red nodes are unreachable, orange nodes are indirectly reachable, green nodes are directly reachable.
+Black nodes are either directly or indirectly reachable, but direct reachability has not been tried yet.
 .It info Ar node | subnet | address
 Show information about a particular node, subnet or address.
 If an address is given, any matching subnet will be shown.
