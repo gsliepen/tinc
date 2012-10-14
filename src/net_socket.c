@@ -63,7 +63,7 @@ static void configure_tcp(connection_t *c) {
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "ioctlsocket for %s: %d", c->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "ioctlsocket for %s: %s", c->hostname, sockstrerror(sockerrno));
 	}
 #endif
 

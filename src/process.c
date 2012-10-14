@@ -123,7 +123,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_SHUTDOWN");
 			break;
 		default:
-			logger(DEBUG_ALWAYS, LOG_WARNING, "Got unexpected request %d", request);
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Got unexpected request %d", (int)request);
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
@@ -135,9 +135,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 }
 
 VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
-	int err = 1;
 	extern int main2(int argc, char **argv);
-
 
 	status.dwServiceType = SERVICE_WIN32;
 	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
@@ -149,7 +147,6 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 
 	if (!statushandle) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
-		err = 1;
 	} else {
 		status.dwWaitHint = 30000;
 		status.dwCurrentState = SERVICE_START_PENDING;
@@ -159,11 +156,10 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 		status.dwCurrentState = SERVICE_RUNNING;
 		SetServiceStatus(statushandle, &status);
 
-		err = main2(argc, argv);
+		main2(argc, argv);
 
 		status.dwWaitHint = 0;
 		status.dwCurrentState = SERVICE_STOPPED;
-		//status.dwWin32ExitCode = err;
 		SetServiceStatus(statushandle, &status);
 	}
 
