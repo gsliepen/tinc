@@ -674,9 +674,11 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 	node_t *from = handle;
 
 	if(type == SPTPS_HANDSHAKE) {
-		from->status.validkey = true;
-		from->status.waitingforkey = false;
-		logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) succesful", from->name, from->hostname);
+		if(!from->status.validkey) {
+			from->status.validkey = true;
+			from->status.waitingforkey = false;
+			logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) succesful", from->name, from->hostname);
+		}
 		return true;
 	}
 
