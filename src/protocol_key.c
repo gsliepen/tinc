@@ -102,6 +102,10 @@ bool send_req_key(node_t *to) {
 			send_request(to->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, to->name, REQ_PUBKEY);
 			return true;
 		}
+
+		if(to->sptps.label)
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "send_req_key(%s) called while sptps->label != NULL!", to->name);
+
 		char label[25 + strlen(myself->name) + strlen(to->name)];
 		snprintf(label, sizeof label, "tinc UDP key expansion %s %s", myself->name, to->name);
 		sptps_stop(&to->sptps);
@@ -149,16 +153,16 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 				send_request(from->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, from->name, REQ_PUBKEY);
 				return true;
 			}
-		}
 
-		case REQ_SPTPS: {
+			if(from->sptps.label)
+				logger(DEBUG_ALWAYS, LOG_DEBUG, "Got REQ_KEY from %s while we already started a SPTPS session!", from->name);
+
 			char buf[MAX_STRING_SIZE];
 			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", from->name, from->hostname, "invalid SPTPS data");
+				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS_START", from->name, from->hostname, "invalid SPTPS data");
 				return true;
 			}
 			int len = b64decode(buf, buf, strlen(buf));
-
 
 			char label[25 + strlen(from->name) + strlen(myself->name)];
 			snprintf(label, sizeof label, "tinc UDP key expansion %s %s", from->name, myself->name);
@@ -171,15 +175,15 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			return true;
 		}
 
-		case REQ_PACKET: {
+		case REQ_SPTPS: {
 			if(!from->status.validkey) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Got REQ_PACKET from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Got REQ_SPTPS from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
 				return true;
 			}
 
 			char buf[MAX_STRING_SIZE];
 			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", from->name, from->hostname, "invalid SPTPS data");
+				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS", from->name, from->hostname, "invalid SPTPS data");
 				return true;
 			}
 			int len = b64decode(buf, buf, strlen(buf));

@@ -397,6 +397,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 		if(!n->status.waitingforkey)
 			send_req_key(n);
 		else if(n->last_req_key + 10 < time(NULL)) {
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
 			sptps_stop(&n->sptps);
 			n->status.waitingforkey = false;
 			send_req_key(n);
@@ -631,18 +632,20 @@ end:
 bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 	node_t *to = handle;
 
-	if(type >= SPTPS_HANDSHAKE
-			|| ((myself->options | to->options) & OPTION_TCPONLY)
-			|| (type != PKT_PROBE && len > to->minmtu)) {
+	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, or this packet is larger than the MTU. */
+
+	if(type >= SPTPS_HANDSHAKE || ((myself->options | to->options) & OPTION_TCPONLY) || (type != PKT_PROBE && len > to->minmtu)) {
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
+		/* If no valid key is known yet, send the packets using ANS_KEY requests,
+		   to ensure we get to learn the reflexive UDP address. */
 		if(!to->status.validkey)
 			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, myself->name, to->name, buf, myself->incompression);
 		else
-			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, type >= SPTPS_HANDSHAKE ? REQ_SPTPS : REQ_PACKET, buf);
+			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_SPTPS, buf);
 	}
 
-	/* Send the packet */
+	/* Otherwise, send the packet via UDP */
 
 	struct sockaddr *sa;
 	socklen_t sl;
