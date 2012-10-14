@@ -359,12 +359,12 @@ char *get_name(void) {
 		char *envname = getenv(name + 1);
 		if(!envname) {
 			if(strcmp(name + 1, "HOST")) {
-				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
+				logger(DEBUG_ALWAYS, LOG_ERR, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				return false;
 			}
 			envname = alloca(32);
 			if(gethostname(envname, 32)) {
-				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", strerror(errno));
 				return false;
 			}
 			envname[31] = 0;

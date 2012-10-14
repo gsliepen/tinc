@@ -204,8 +204,7 @@ bool detach(void) {
 	if(do_detach) {
 #ifndef HAVE_MINGW
 		if(daemon(0, 0)) {
-			fprintf(stderr, "Couldn't detach from terminal: %s",
-					strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, "Couldn't detach from terminal: %s", strerror(errno));
 			return false;
 		}
 #else

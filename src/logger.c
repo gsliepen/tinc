@@ -25,6 +25,7 @@
 #include "logger.h"
 #include "connection.h"
 #include "control_common.h"
+#include "sptps.h"
 
 debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
@@ -37,60 +38,9 @@ static HANDLE loghandle = NULL;
 static const char *logident = NULL;
 bool logcontrol = false;
 
-void openlogger(const char *ident, logmode_t mode) {
-	logident = ident;
-	logmode = mode;
 
-	switch(mode) {
-		case LOGMODE_STDERR:
-			logpid = getpid();
-			break;
-		case LOGMODE_FILE:
-			logpid = getpid();
-			logfile = fopen(logfilename, "a");
-			if(!logfile) {
-				fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
-				logmode = LOGMODE_NULL;
-			}
-			break;
-		case LOGMODE_SYSLOG:
-#ifdef HAVE_MINGW
-			loghandle = RegisterEventSource(NULL, logident);
-			if(!loghandle) {
-				fprintf(stderr, "Could not open log handle!");
-				logmode = LOGMODE_NULL;
-			}
-			break;
-#else
-#ifdef HAVE_SYSLOG_H
-			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
-			break;
-#endif
-#endif
-		case LOGMODE_NULL:
-			break;
-	}
-}
-
-void reopenlogger() {
-	if(logmode != LOGMODE_FILE)
-		return;
-
-	fflush(logfile);
-	FILE *newfile = fopen(logfilename, "a");
-	if(!newfile) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
-		return;
-	}
-	fclose(logfile);
-	logfile = newfile;
-}
-
-void logger(int level, int priority, const char *format, ...) {
-	va_list ap;
-	int len;
+static void real_logger(int level, int priority, const char *message) {
 	char timestr[32] = "";
-	char message[1024] = "";
 	time_t now;
 	static bool suppress = false;
 
@@ -100,13 +50,6 @@ void logger(int level, int priority, const char *format, ...) {
 
 	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL))
 		return;
-
-	va_start(ap, format);
-	len = vsnprintf(message, sizeof message, format, ap);
-	va_end(ap);
-
-	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
-		message[len - 1] = 0;
 
 	if(level <= debug_level) {
 		switch(logmode) {
@@ -153,6 +96,84 @@ void logger(int level, int priority, const char *format, ...) {
 		suppress = false;
 	}
 }
+
+void logger(int level, int priority, const char *format, ...) {
+	va_list ap;
+	char message[1024] = "";
+
+	va_start(ap, format);
+	int len = vsnprintf(message, sizeof message, format, ap);
+	va_end(ap);
+
+	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
+		message[len - 1] = 0;
+
+	real_logger(level, priority, message);
+}
+
+static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
+	char message[1024] = "";
+	int len = vsnprintf(message, sizeof message, format, ap);
+	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
+		message[len - 1] = 0;
+
+	real_logger(DEBUG_ALWAYS, LOG_ERR, message);
+}
+
+void openlogger(const char *ident, logmode_t mode) {
+	logident = ident;
+	logmode = mode;
+
+	switch(mode) {
+		case LOGMODE_STDERR:
+			logpid = getpid();
+			break;
+		case LOGMODE_FILE:
+			logpid = getpid();
+			logfile = fopen(logfilename, "a");
+			if(!logfile) {
+				fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
+				logmode = LOGMODE_NULL;
+			}
+			break;
+		case LOGMODE_SYSLOG:
+#ifdef HAVE_MINGW
+			loghandle = RegisterEventSource(NULL, logident);
+			if(!loghandle) {
+				fprintf(stderr, "Could not open log handle!");
+				logmode = LOGMODE_NULL;
+			}
+			break;
+#else
+#ifdef HAVE_SYSLOG_H
+			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
+			break;
+#endif
+#endif
+		case LOGMODE_NULL:
+			break;
+	}
+
+	if(logmode != LOGMODE_NULL)
+		sptps_log = sptps_logger;
+	else
+		sptps_log = sptps_log_quiet;
+}
+
+void reopenlogger() {
+	if(logmode != LOGMODE_FILE)
+		return;
+
+	fflush(logfile);
+	FILE *newfile = fopen(logfilename, "a");
+	if(!newfile) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
+		return;
+	}
+	fclose(logfile);
+	logfile = newfile;
+}
+
 
 void closelogger(void) {
 	switch(logmode) {

@@ -25,6 +25,7 @@
 #include "digest.h"
 #include "ecdh.h"
 #include "ecdsa.h"
+#include "logger.h"
 #include "prf.h"
 #include "sptps.h"
 
@@ -50,11 +51,34 @@ unsigned int sptps_replaywin = 16;
    Make sure ECC operations are fixed time (aka prevent side-channel attacks).
 */
 
+void sptps_log_quiet(sptps_t *s, int s_errno, const char *format, va_list ap) {
+}
+
+void sptps_log_stderr(sptps_t *s, int s_errno, const char *format, va_list ap) {
+	vfprintf(stderr, format, ap);
+	fputc('\n', stderr);
+}
+
+void (*sptps_log)(sptps_t *s, int s_errno, const char *format, va_list ap) = sptps_log_stderr;
+
 // Log an error message.
-static bool error(sptps_t *s, int s_errno, const char *msg) {
-	fprintf(stderr, "SPTPS error: %s\n", msg);
+static bool error(sptps_t *s, int s_errno, const char *format, ...) {
+	if(format) {
+		va_list ap;
+		va_start(ap, format);
+		sptps_log(s, s_errno, format, ap);
+		va_end(ap);
+	}
+
 	errno = s_errno;
 	return false;
+}
+
+static void warning(sptps_t *s, const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+	sptps_log(s, 0, format, ap);
+	va_end(ap);
 }
 
 // Send a record (datagram version, accepts all record types, handles encryption and authentication).
@@ -402,10 +426,8 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	seqno = ntohl(seqno);
 
 	if(!s->instate) {
-		if(seqno != s->inseqno) {
-			fprintf(stderr, "Received invalid packet seqno: %d != %d\n", seqno, s->inseqno);
-			return error(s, EIO, "Invalid packet seqno");
-		}
+		if(seqno != s->inseqno)
+			return error(s, EIO, "Invalid packet seqno: %d != %d", seqno, s->inseqno);
 
 		s->inseqno = seqno + 1;
 
@@ -426,19 +448,16 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		if(seqno != s->inseqno) {
 			if(seqno >= s->inseqno + s->replaywin * 8) {
 				// Prevent packets that jump far ahead of the queue from causing many others to be dropped.
-				if(s->farfuture++ < s->replaywin >> 2) {
-					fprintf(stderr, "Packet is %d seqs in the future, dropped (%u)\n", seqno - s->inseqno, s->farfuture);
-					return false;
-				}
+				if(s->farfuture++ < s->replaywin >> 2)
+					return error(s, EIO, "Packet is %d seqs in the future, dropped (%u)\n", seqno - s->inseqno, s->farfuture);
+
 				// Unless we have seen lots of them, in which case we consider the others lost.
-				fprintf(stderr, "Lost %d packets\n", seqno - s->inseqno);
+				warning(s, "Lost %d packets\n", seqno - s->inseqno);
 				memset(s->late, 0, s->replaywin);
 			} else if (seqno < s->inseqno) {
 				// If the sequence number is farther in the past than the bitmap goes, or if the packet was already received, drop it.
-				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8))) {
-					fprintf(stderr, "Received late or replayed packet, seqno %d, last received %d\n", seqno, s->inseqno);
-					return false;
-				}
+				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8)))
+					return error(s, EIO, "Received late or replayed packet, seqno %d, last received %d\n", seqno, s->inseqno);
 			} else {
 				// We missed some packets. Mark them in the bitmap as being late.
 				for(int i = s->inseqno; i < seqno; i++)

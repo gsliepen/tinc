@@ -81,6 +81,9 @@ typedef struct sptps {
 } sptps_t;
 
 extern unsigned int sptps_replaywin;
+extern void sptps_log_quiet(sptps_t *s, int s_errno, const char *format, va_list ap);
+extern void sptps_log_stderr(sptps_t *s, int s_errno, const char *format, va_list ap);
+extern void (*sptps_log)(sptps_t *s, int s_errno, const char *format, va_list ap);
 extern bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
 extern bool sptps_stop(sptps_t *s);
 extern bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
