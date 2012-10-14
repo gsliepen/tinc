@@ -73,7 +73,7 @@ static bool install_service(void) {
 	strncat(command, "\"", sizeof command - strlen(command));
 
 	for(char **argp = g_argv + 1; *argp; argp++) {
-		char &space = strchr(*argp, ' ');
+		char *space = strchr(*argp, ' ');
 		strncat(command, " ", sizeof command - strlen(command));
 
 		if(space)
