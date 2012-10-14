@@ -1,6 +1,6 @@
 /*
     digest.h -- header file digest.c
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

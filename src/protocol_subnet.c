@@ -1,7 +1,7 @@
 /*
     protocol_subnet.c -- handle the meta-protocol, subnets
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
 
     This program is free software; you can redistribute it and/or modify

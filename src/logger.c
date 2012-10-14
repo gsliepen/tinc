@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
