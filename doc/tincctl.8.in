@@ -45,7 +45,6 @@ If no netname is specified on the command line with the
 option, the value of this environment variable is used.
 .El
 .Sh COMMANDS
-.zZ
 .Bl -tag -width indent
 .It init Op Ar name
 Create initial configuration files and RSA and ECDSA keypairs with default length.
@@ -115,7 +114,6 @@ If
 is omitted, the default length will be 2048 bits.
 When saving keys to existing files, tinc will not delete the old keys;
 you have to remove them manually.
-
 .It dump nodes
 Dump a list of all known nodes in the VPN.
 .It dump edges
@@ -190,6 +188,7 @@ tincctl -n vpn config Subnet 192.168.1.0/24
 tincctl -n vpn config bar.Address bar.example.com
 tincctl -n vpn config ConnectTo bar
 tincctl -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@example.com
+.Ed
 .Sh TOP
 The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.
 It displays a list of all the known nodes in the left-most column,
