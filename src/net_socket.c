@@ -282,7 +282,7 @@ void retry_outgoing(outgoing_t *outgoing) {
 		outgoing->timeout = maxtimeout;
 
 	timeout_set(&outgoing->ev, retry_outgoing_handler, outgoing);
-	event_add(&outgoing->ev, &(struct timeval){outgoing->timeout, 0});
+	event_add(&outgoing->ev, &(struct timeval){outgoing->timeout, rand() % 100000});
 
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE,
 			   "Trying to re-establish outgoing connection in %d seconds",

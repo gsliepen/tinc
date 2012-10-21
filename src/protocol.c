@@ -180,7 +180,7 @@ bool seen_request(const char *request) {
 		new->request = xstrdup(request);
 		new->firstseen = time(NULL);
 		splay_insert(past_request_tree, new);
-		event_add(&past_request_event, &(struct timeval){10, 0});
+		event_add(&past_request_event, &(struct timeval){10, rand() % 100000});
 		return false;
 	}
 }
@@ -201,7 +201,7 @@ static void age_past_requests(int fd, short events, void *data) {
 			   deleted, left);
 
 	if(left)
-		event_add(&past_request_event, &(struct timeval){10, 0});
+		event_add(&past_request_event, &(struct timeval){10, rand() % 100000});
 }
 
 void init_requests(void) {

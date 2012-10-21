@@ -285,7 +285,7 @@ void regenerate_key(void) {
 		timeout_set(&keyexpire_event, keyexpire_handler, NULL);
 	}
 
-	event_add(&keyexpire_event, &(struct timeval){keylifetime, 0});
+	event_add(&keyexpire_event, &(struct timeval){keylifetime, rand() % 100000});
 }
 
 /*

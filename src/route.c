@@ -209,7 +209,7 @@ static void age_subnets(int fd, short events, void *data) {
 	}
 
 	if(left)
-		event_add(&age_subnets_event, &(struct timeval){10, 0});
+		event_add(&age_subnets_event, &(struct timeval){10, rand() % 100000});
 }
 
 static void learn_mac(mac_t *address) {
@@ -238,7 +238,7 @@ static void learn_mac(mac_t *address) {
 
 		if(!timeout_initialized(&age_subnets_event))
 			timeout_set(&age_subnets_event, age_subnets, NULL);
-		event_add(&age_subnets_event, &(struct timeval){10, 0});
+		event_add(&age_subnets_event, &(struct timeval){10, rand() % 100000});
 	} else {
 		if(subnet->expires)
 			subnet->expires = time(NULL) + macexpire;

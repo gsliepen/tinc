@@ -164,7 +164,7 @@ static void timeout_handler(int fd, short events, void *event) {
 		}
 	}
 
-	event_add(event, &(struct timeval){pingtimeout, 0});
+	event_add(event, &(struct timeval){pingtimeout, rand() % 100000});
 }
 
 static void periodic_handler(int fd, short events, void *event) {
@@ -278,7 +278,7 @@ static void periodic_handler(int fd, short events, void *event) {
 		}
 	}
 
-	event_add(event, &(struct timeval){5, 0});
+	event_add(event, &(struct timeval){5, rand() % 100000});
 }
 
 void handle_meta_connection_data(int fd, short events, void *data) {
@@ -449,10 +449,10 @@ int main_loop(void) {
 	struct event periodic_event;
 
 	timeout_set(&timeout_event, timeout_handler, &timeout_event);
-	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
+	event_add(&timeout_event, &(struct timeval){pingtimeout, rand() % 100000});
 
 	timeout_set(&periodic_event, periodic_handler, &periodic_event);
-	event_add(&periodic_event, &(struct timeval){5, 0});
+	event_add(&periodic_event, &(struct timeval){5, rand() % 100000});
 
 #ifndef HAVE_MINGW
 	struct event sighup_event;

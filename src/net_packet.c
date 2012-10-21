@@ -151,7 +151,7 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 	}
 
 end:
-	event_add(&n->mtuevent, &(struct timeval){timeout, 0});
+	event_add(&n->mtuevent, &(struct timeval){timeout, rand() % 100000});
 }
 
 void send_mtu_probe(node_t *n) {
