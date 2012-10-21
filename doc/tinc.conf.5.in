@@ -114,6 +114,15 @@ If
 .Qq any
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
+.It Va AutoConnect Li = Ar count Po 0 Pc Bq experimental
+If set to a non-zero value,
+.Nm
+will try to only have
+.Ar count
+meta connections to other nodes,
+by automatically making or breaking connections to known nodes.
+Higher values increase redundancy but also increase meta data overhead.
+When using this option, a good value is 3.
 .It Va BindToAddress Li = Ar address Op Ar port
 If your computer has more than one IPv4 or IPv6 address,
 .Nm tinc

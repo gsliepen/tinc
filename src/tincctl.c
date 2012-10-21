@@ -1233,6 +1233,7 @@ static struct {
 } const variables[] = {
 	/* Server configuration */
 	{"AddressFamily", VAR_SERVER},
+	{"AutoConnect", VAR_SERVER},
 	{"BindToAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"BindToInterface", VAR_SERVER},
 	{"Broadcast", VAR_SERVER},

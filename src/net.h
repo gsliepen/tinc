@@ -134,6 +134,7 @@ extern int udp_rcvbuf;
 extern int udp_sndbuf;
 extern bool do_prune;
 extern char *myport;
+extern int autoconnect;
 extern int contradicting_add_edge;
 extern int contradicting_del_edge;
 extern time_t last_config_check;
@@ -190,6 +191,7 @@ extern void purge(void);
 extern void retry(void);
 extern int reload_configuration(void);
 extern void load_all_subnets(void);
+extern void load_all_nodes(void);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

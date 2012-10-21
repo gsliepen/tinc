@@ -50,6 +50,7 @@ char *proxyport;
 char *proxyuser;
 char *proxypass;
 proxytype_t proxytype;
+int autoconnect;
 
 char *scriptinterpreter;
 char *scriptextension;
@@ -347,6 +348,36 @@ void load_all_subnets(void) {
 	closedir(dir);
 }
 
+void load_all_nodes(void) {
+	DIR *dir;
+	struct dirent *ent;
+	char *dname;
+
+	xasprintf(&dname, "%s" SLASH "hosts", confbase);
+	dir = opendir(dname);
+	if(!dir) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
+		free(dname);
+		return;
+	}
+
+	while((ent = readdir(dir))) {
+		if(!check_id(ent->d_name))
+			continue;
+
+		node_t *n = lookup_node(ent->d_name);
+		if(n)
+			continue;
+
+		n = new_node();
+		n->name = xstrdup(ent->d_name);
+		node_add(n);
+	}
+
+	closedir(dir);
+}
+
+
 char *get_name(void) {
 	char *name = NULL;
 
@@ -570,6 +601,8 @@ bool setup_myself_reloadable(void) {
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
+	get_config_int(lookup_config(config_tree, "AutoConnect"), &autoconnect);
+
 	return true;
 }
 
@@ -730,6 +763,8 @@ static bool setup_myself(void) {
 
 	if(strictsubnets)
 		load_all_subnets();
+	else if(autoconnect)
+		load_all_nodes();
 
 	/* Open device */
 

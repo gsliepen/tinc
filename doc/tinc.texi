@@ -805,6 +805,14 @@ This option affects the address family of listening and outgoing sockets.
 If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
+@cindex AutoConnect
+@item AutoConnect = <count> (0) [experimental]
+If set to a non-zero value,
+tinc will try to only have count meta connections to other nodes,
+by automatically making or breaking connections to known nodes.
+Higher values increase redundancy but also increase meta data overhead.
+When using this option, a good value is 3.
+
 @cindex BindToAddress
 @item BindToAddress = <@var{address}> [<@var{port}>]
 If your computer has more than one IPv4 or IPv6 address, tinc

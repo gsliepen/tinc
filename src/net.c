@@ -74,7 +74,7 @@ void purge(void) {
 				if(e->to == n)
 					return;
 
-			if(!strictsubnets || !n->subnet_tree->head)
+			if(!autoconnect && (!strictsubnets || !n->subnet_tree->head))
 				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
@@ -164,6 +164,15 @@ static void timeout_handler(int fd, short events, void *event) {
 		}
 	}
 
+	event_add(event, &(struct timeval){pingtimeout, 0});
+}
+
+static void periodic_handler(int fd, short events, void *event) {
+	/* Check if there are too many contradicting ADD_EDGE and DEL_EDGE messages.
+	   This usually only happens when another node has the same Name as this node.
+	   If so, sleep for a short while to prevent a storm of contradicting messages.
+	*/
+
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
 		usleep(sleeptime * 1000000LL);
@@ -179,7 +188,97 @@ static void timeout_handler(int fd, short events, void *event) {
 	contradicting_add_edge = 0;
 	contradicting_del_edge = 0;
 
-	event_add(event, &(struct timeval){pingtimeout, 0});
+	/* If AutoConnect is set, check if we need to make or break connections. */
+
+	if(autoconnect && node_tree->count > 1) {
+		/* Count number of active connections */
+		int nc = 0;
+		for list_each(connection_t, c, connection_list) {
+			if(c->status.active && !c->status.control)
+				nc++;
+		}
+
+		if(nc < autoconnect) {
+			/* Not enough active connections, try to add one.
+			   Choose a random node, if we don't have a connection to it,
+			   and we are not already trying to make one, create an
+			   outgoing connection to this node.
+			*/
+			int r = rand() % node_tree->count;
+			int i = 0;
+
+			for splay_each(node_t, n, node_tree) {
+				if(i++ != r)
+					continue;
+
+				if(n->connection)
+					break;
+
+				bool found = false;
+
+				for list_each(outgoing_t, outgoing, outgoing_list) {
+					if(!strcmp(outgoing->name, n->name)) {
+						found = true;
+						break;
+					}
+				}
+
+				if(!found) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
+					outgoing_t *outgoing = xmalloc_and_zero(sizeof *outgoing);
+					outgoing->name = xstrdup(n->name);
+					list_insert_tail(outgoing_list, outgoing);
+					setup_outgoing_connection(outgoing);
+				}
+				break;
+			}
+		} else if(nc > autoconnect) {
+			/* Too many active connections, try to remove one.
+			   Choose a random outgoing connection to a node
+			   that has at least one other connection.
+			*/
+			int r = rand() % nc;
+			int i = 0;
+
+			for list_each(connection_t, c, connection_list) {
+				if(!c->status.active || c->status.control)
+					continue;
+
+				if(i++ != r)
+					continue;
+
+				if(!c->outgoing || !c->node || c->node->edge_tree->count < 2)
+					break;
+
+				logger(DEBUG_CONNECTIONS, LOG_INFO, "Autodisconnecting from %s", c->name);
+				list_delete(outgoing_list, c->outgoing);
+				c->outgoing = NULL;
+				terminate_connection(c, c->status.active);
+				break;
+			}
+		}
+
+		if(nc >= autoconnect) {
+			/* If we have enough active connections,
+			   remove any pending outgoing connections.
+			*/
+			for list_each(outgoing_t, o, outgoing_list) {
+				bool found = false;
+				for list_each(connection_t, c, connection_list) {
+					if(c->outgoing == o) {
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "Cancelled outgoing connection to %s", o->name);
+					list_delete_node(outgoing_list, node);
+				}
+			}
+		}
+	}
+
+	event_add(event, &(struct timeval){5, 0});
 }
 
 void handle_meta_connection_data(int fd, short events, void *data) {
@@ -347,9 +446,13 @@ void retry(void) {
 */
 int main_loop(void) {
 	struct event timeout_event;
+	struct event periodic_event;
 
 	timeout_set(&timeout_event, timeout_handler, &timeout_event);
 	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
+
+	timeout_set(&periodic_event, periodic_handler, &periodic_event);
+	event_add(&periodic_event, &(struct timeval){5, 0});
 
 #ifndef HAVE_MINGW
 	struct event sighup_event;
