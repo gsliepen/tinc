@@ -418,6 +418,7 @@ splay_node_t *splay_insert_node(splay_tree_t *tree, splay_node_t *node) {
 void splay_insert_top(splay_tree_t *tree, splay_node_t *node) {
 	node->prev = node->next = node->left = node->right = node->parent = NULL;
 	tree->head = tree->tail = tree->root = node;
+	tree->count++;
 }
 
 void splay_insert_before(splay_tree_t *tree, splay_node_t *before, splay_node_t *node) {
@@ -446,6 +447,7 @@ void splay_insert_before(splay_tree_t *tree, splay_node_t *before, splay_node_t 
 
 	node->parent = NULL;
 	tree->root = node;
+	tree->count++;
 }
 
 void splay_insert_after(splay_tree_t *tree, splay_node_t *after, splay_node_t *node) {
@@ -474,6 +476,7 @@ void splay_insert_after(splay_tree_t *tree, splay_node_t *after, splay_node_t *n
 
 	node->parent = NULL;
 	tree->root = node;
+	tree->count++;
 }
 
 splay_node_t *splay_unlink(splay_tree_t *tree, void *data) {
@@ -511,6 +514,8 @@ void splay_unlink_node(splay_tree_t *tree, splay_node_t *node) {
 	} else {
 		tree->root = NULL;
 	}
+
+	tree->count--;
 }
 
 void splay_delete_node(splay_tree_t *tree, splay_node_t *node) {
