@@ -57,7 +57,7 @@ static char *name = NULL;
 static char *identname = NULL;          /* program name for syslog */
 static char *pidfilename = NULL;        /* pid file location */
 static char *confdir = NULL;
-static char controlcookie[1024];
+static char controlcookie[1025];
 char *netname = NULL;
 char *confbase = NULL;
 static char *tinc_conf = NULL;
@@ -708,8 +708,8 @@ static bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-	char host[128];
-	char port[128];
+	char host[129];
+	char port[129];
 
 	if(fscanf(f, "%20d %1024s %128s port %128s", &pid, controlcookie, host, port) != 4) {
 		if(verbose)
