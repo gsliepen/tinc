@@ -299,7 +299,7 @@ char *get_name(void) {
 				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				return false;
 			}
-			envname = alloca(32);
+			char envname[32];
 			if(gethostname(envname, 32)) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
 				return false;
