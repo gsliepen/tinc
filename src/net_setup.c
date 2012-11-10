@@ -393,7 +393,7 @@ char *get_name(void) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				return false;
 			}
-			envname = alloca(32);
+			char envname[32];
 			if(gethostname(envname, 32)) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", strerror(errno));
 				return false;
