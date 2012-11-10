@@ -115,15 +115,22 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		mtu = via->mtu;
 
 	/* Find TCP header */
-	int start = 0;
+	int start = ether_size;
 	uint16_t type = packet->data[12] << 8 | packet->data[13];
 
-	if(type == ETH_P_IP && packet->data[23] == 6)
-		start = 14 + (packet->data[14] & 0xf) * 4;
-	else if(type == ETH_P_IPV6 && packet->data[20] == 6)
-		start = 14 + 40;
+	if(type == ETH_P_8021Q) {
+		start += 4;
+		type = packet->data[16] << 8 | packet->data[17];
+	}
 
-	if(!start || packet->len <= start + 20)
+	if(type == ETH_P_IP && packet->data[start + 9] == 6)
+		start += (packet->data[start] & 0xf) * 4;
+	else if(type == ETH_P_IPV6 && packet->data[start + 6] == 6)
+		start += 40;
+	else
+		return;
+
+	if(packet->len <= start + 20)
 		return;
 
 	/* Use data offset field to calculate length of options field */
@@ -247,7 +254,7 @@ static void learn_mac(mac_t *address) {
 
 /* RFC 792 */
 
-static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code) {
+static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_t ether_size, uint8_t type, uint8_t code) {
 	struct ip ip = {0};
 	struct icmp icmp = {0};
 
@@ -320,7 +327,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 /* RFC 791 */
 
-static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
+static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t ether_size) {
 	struct ip ip;
 	vpn_packet_t fragment;
 	int len, maxlen, todo;
@@ -384,7 +391,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 				dest.x[2],
 				dest.x[3]);
 
-		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN);
+		route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN);
 		return;
 	}
 
@@ -394,10 +401,10 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable)
-		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
-		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
@@ -410,15 +417,15 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(directonly && subnet->owner != via)
-		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
 	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
 			packet->len = MAX(via->mtu, 590);
-			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
+			route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
-			fragment_ipv4_packet(via, packet);
+			fragment_ipv4_packet(via, packet, ether_size);
 		}
 
 		return;
@@ -445,7 +452,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 
 /* RFC 2463 */
 
-static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code) {
+static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_t ether_size, uint8_t type, uint8_t code) {
 	struct ip6_hdr ip6;
 	struct icmp6_hdr icmp6 = {0};
 	uint16_t checksum;
@@ -543,7 +550,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 				ntohs(dest.x[6]),
 				ntohs(dest.x[7]));
 
-		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR);
+		route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR);
 		return;
 	}
 
@@ -553,10 +560,10 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable)
-		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
-		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 
@@ -566,12 +573,12 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(directonly && subnet->owner != via)
-		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	if(via && packet->len > MAX(via->mtu, 1294) && via != myself) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		packet->len = MAX(via->mtu, 1294);
-		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
+		route_ipv6_unreachable(source, packet, ether_size, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}
 
@@ -842,17 +849,24 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	if(via && packet->len > via->mtu && via != myself) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		uint16_t type = packet->data[12] << 8 | packet->data[13];
-		if(type == ETH_P_IP && packet->len > 590) {
-			if(packet->data[20] & 0x40) {
+		length_t ethlen = 14;
+
+		if(type == ETH_P_8021Q) {
+			type = packet->data[16] << 8 | packet->data[17];
+			ethlen += 4;
+		}
+
+		if(type == ETH_P_IP && packet->len > 576 + ethlen) {
+			if(packet->data[6 + ethlen] & 0x40) {
 				packet->len = via->mtu;
-				route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
+				route_ipv4_unreachable(source, packet, ethlen, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 			} else {
-				fragment_ipv4_packet(via, packet);
+				fragment_ipv4_packet(via, packet, ethlen);
 			}
 			return;
-		} else if(type == ETH_P_IPV6 && packet->len > 1294) {
+		} else if(type == ETH_P_IPV6 && packet->len > 1280 + ethlen) {
 			packet->len = via->mtu;
-			route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
+			route_ipv6_unreachable(source, packet, ethlen, ICMP6_PACKET_TOO_BIG, 0);
 			return;
 		}
 	}
@@ -881,42 +895,48 @@ static void send_pcap(vpn_packet_t *packet) {
 
 static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 	uint16_t type = packet->data[12] << 8 | packet->data[13];
+	length_t ethlen = ether_size;
+
+	if(type == ETH_P_8021Q) {
+		type = packet->data[16] << 8 | packet->data[17];
+		ethlen += 4;
+	}
 
 	switch (type) {
 		case ETH_P_IP:
-			if(!checklength(source, packet, 14 + 32))
+			if(!checklength(source, packet, ethlen + ip_size))
 				return false;
 
-			if(packet->data[22] < 1) {
-				if(packet->data[25] != IPPROTO_ICMP || packet->data[46] != ICMP_TIME_EXCEEDED)
-					route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+			if(packet->data[ethlen + 8] < 1) {
+				if(packet->data[ethlen + 11] != IPPROTO_ICMP || packet->data[ethlen + 32] != ICMP_TIME_EXCEEDED)
+					route_ipv4_unreachable(source, packet, ethlen, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
 				return false;
 			}
 
-			uint16_t old = packet->data[22] << 8 | packet->data[23];
-			packet->data[22]--;
-			uint16_t new = packet->data[22] << 8 | packet->data[23];
+			uint16_t old = packet->data[ethlen + 8] << 8 | packet->data[ethlen + 9];
+			packet->data[ethlen + 8]--;
+			uint16_t new = packet->data[ethlen + 8] << 8 | packet->data[ethlen + 9];
 
-			uint32_t checksum = packet->data[24] << 8 | packet->data[25];
+			uint32_t checksum = packet->data[ethlen + 10] << 8 | packet->data[ethlen + 11];
 			checksum += old + (~new & 0xFFFF);
 			while(checksum >> 16)
 				checksum = (checksum & 0xFFFF) + (checksum >> 16);
-			packet->data[24] = checksum >> 8;
-			packet->data[25] = checksum & 0xff;
+			packet->data[ethlen + 10] = checksum >> 8;
+			packet->data[ethlen + 11] = checksum & 0xff;
 
 			return true;
 
 		case ETH_P_IPV6:
-			if(!checklength(source, packet, 14 + 40))
+			if(!checklength(source, packet, ethlen + ip6_size))
 				return false;
 
-			if(packet->data[21] < 1) {
-				if(packet->data[20] != IPPROTO_ICMPV6 || packet->data[54] != ICMP6_TIME_EXCEEDED)
-					route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+			if(packet->data[ethlen + 7] < 1) {
+				if(packet->data[ethlen + 6] != IPPROTO_ICMPV6 || packet->data[ethlen + 40] != ICMP6_TIME_EXCEEDED)
+					route_ipv6_unreachable(source, packet, ethlen, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
 				return false;
 			}
 
-			packet->data[21]--;
+			packet->data[ethlen + 7]--;
 
 			return true;
 

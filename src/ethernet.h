@@ -41,6 +41,10 @@
 #define ETH_P_IPV6 0x86DD
 #endif
 
+#ifndef ETH_P_8021Q
+#define ETH_P_8021Q 0x8100
+#endif
+
 #ifndef HAVE_STRUCT_ETHER_HEADER
 struct ether_header {
 	uint8_t ether_dhost[ETH_ALEN];
