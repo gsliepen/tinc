@@ -506,7 +506,7 @@ of this package.
 @node       libreadline
 @subsection libreadline
 
-@cindex libevent
+@cindex libreadline
 For the "tincctl" command's shell functionality, tinc uses the readline library.
 
 If this library is not installed, you wil get an error when running the
