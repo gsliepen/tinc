@@ -350,7 +350,7 @@ For all cryptography-related functions, tinc uses the functions provided
 by the OpenSSL library.
 
 If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having OpenSSL
+tinc for build.  Support for running tinc with other cryptographic libraries
 installed @emph{may} be added in the future.
 
 You can use your operating system's package manager to install this if
@@ -413,9 +413,11 @@ Markus F.X.J. Oberhumer
 For the optional compression of UDP packets, tinc uses the functions provided
 by the zlib library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having zlib
-installed @emph{may} be added in the future.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install the zlib library, or disable support
+for zlib compression by using the "--disable-zlib" option when running the
+configure script. Note that if you disable support for zlib, the resulting
+binary will not work correctly on VPNs where zlib compression is used.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
@@ -433,11 +435,13 @@ default).
 @subsection lzo
 
 @cindex lzo
-Another form of compression is offered using the lzo library.
+Another form of compression is offered using the LZO library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having lzo
-installed @emph{may} be added in the future.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install the LZO library, or disable support
+for LZO compression by using the "--disable-lzo" option when running the
+configure script. Note that if you disable support for LZO, the resulting
+binary will not work correctly on VPNs where LZO compression is used.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
