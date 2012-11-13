@@ -541,11 +541,21 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Overloaded use of priority field: -1 means local broadcast */
 
 	if(origpriority == -1 && n->prevedge) {
-		broadcast.in.sin_family = AF_INET;
-		broadcast.in.sin_addr.s_addr = -1;
-		broadcast.in.sin_port = n->prevedge->address.in.sin_port;
+		sock = rand() % listen_sockets;
+		memset(&broadcast, 0, sizeof broadcast);
+		if(listen_socket[sock].sa.sa.sa_family == AF_INET6) {
+			broadcast.in6.sin6_family = AF_INET6;
+			broadcast.in6.sin6_addr.s6_addr[0x0] = 0xff;
+			broadcast.in6.sin6_addr.s6_addr[0x1] = 0x02;
+			broadcast.in6.sin6_addr.s6_addr[0xf] = 0x01;
+			broadcast.in6.sin6_port = n->prevedge->address.in.sin_port;
+			broadcast.in6.sin6_scope_id = listen_socket[sock].sa.in6.sin6_scope_id;
+		} else {
+			broadcast.in.sin_family = AF_INET;
+			broadcast.in.sin_addr.s_addr = -1;
+			broadcast.in.sin_port = n->prevedge->address.in.sin_port;
+		}
 		sa = &broadcast;
-		sock = 0;
 	} else {
 		if(origpriority == -1)
 			origpriority = 0;
