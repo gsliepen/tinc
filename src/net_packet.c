@@ -500,16 +500,16 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	struct sockaddr *sa;
 	socklen_t sl;
 	int sock;
+	sockaddr_t broadcast;
 
 	/* Overloaded use of priority field: -1 means local broadcast */
 
 	if(origpriority == -1 && n->prevedge) {
-		struct sockaddr_in in;
-		in.sin_family = AF_INET;
-		in.sin_addr.s_addr = -1;
-		in.sin_port = n->prevedge->address.in.sin_port;
-		sa = (struct sockaddr *)&in;
-		sl = sizeof in;
+		broadcast.in.sin_family = AF_INET;
+		broadcast.in.sin_addr.s_addr = -1;
+		broadcast.in.sin_port = n->prevedge->address.in.sin_port;
+		sa = &broadcast.sa;
+		sl = sizeof broadcast.in;
 		sock = 0;
 	} else {
 		if(origpriority == -1)
