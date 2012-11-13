@@ -536,11 +536,11 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	sockaddr_t *sa;
 	int sock;
+	sockaddr_t broadcast;
 
 	/* Overloaded use of priority field: -1 means local broadcast */
 
 	if(origpriority == -1 && n->prevedge) {
-		sockaddr_t broadcast;
 		broadcast.in.sin_family = AF_INET;
 		broadcast.in.sin_addr.s_addr = -1;
 		broadcast.in.sin_port = n->prevedge->address.in.sin_port;
