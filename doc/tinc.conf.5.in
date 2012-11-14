@@ -380,11 +380,6 @@ The private RSA key of this tinc daemon.
 It will allow this tinc daemon to authenticate itself to other daemons.
 .It Va PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv Pc
 The file in which the private RSA key of this tinc daemon resides.
-Note that there must be exactly one of
-.Va PrivateKey
-or
-.Va PrivateKeyFile
-specified in the configuration file.
 .It Va ProcessPriority Li = low | normal | high
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
