@@ -450,6 +450,10 @@ int main2(int argc, char **argv) {
 	}
 #endif
 
+#ifdef HAVE_DARWIN
+	setenv("EVENT_NOKQUEUE", "1", 0);
+#endif
+
 	if(!event_init()) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing libevent!");
 		return 1;
