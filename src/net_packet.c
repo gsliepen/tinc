@@ -438,6 +438,80 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	return;
 }
 
+static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+	/* Latest guess */
+	*sa = &n->address;
+	*sock = n->sock;
+
+	/* If the UDP address is confirmed, use it. */
+	if(n->status.udp_confirmed)
+		return;
+
+	/* Otherwise, go through the list of known addresses of
+	   this node. The first address we try is always the
+	   one in n->address; that could be set to the node's
+	   reflexive UDP address discovered during key
+	   exchange. The other known addresses are those found
+	   in edges to this node. */
+
+
+	int i = 0;
+	int j = rand() % n->edge_tree->count;
+	edge_t *candidate = NULL;
+
+	for splay_each(edge_t, e, edge_weight_tree) {
+		if(e->to != n)
+			continue;
+		i++;
+		if(!candidate || i == j)
+			candidate = e;
+	}
+
+	if(candidate) {
+		*sa = &candidate->address;
+		*sock = rand() % listen_sockets;
+	}
+
+	/* Make sure we have a suitable socket for the chosen address */
+	if(listen_socket[*sock].sa.sa.sa_family != (*sa)->sa.sa_family) {
+		for(int i = 0; i < listen_sockets; i++) {
+			if(listen_socket[i].sa.sa.sa_family == (*sa)->sa.sa_family) {
+				*sock = i;
+				break;
+			}
+		}
+	}
+}
+
+static void choose_broadcast_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+	static sockaddr_t broadcast_ipv4 = {
+		.in = {
+			.sin_family = AF_INET,
+			.sin_addr.s_addr = -1,
+		}
+	};
+
+	static sockaddr_t broadcast_ipv6 = {
+		.in6 = {
+			.sin6_family = AF_INET6,
+			.sin6_addr.s6_addr[0x0] = 0xff,
+			.sin6_addr.s6_addr[0x1] = 0x02,
+			.sin6_addr.s6_addr[0xf] = 0x01,
+		}
+	};
+
+	*sock = rand() % listen_sockets;
+
+	if(listen_socket[*sock].sa.sa.sa_family == AF_INET6) {
+		broadcast_ipv6.in6.sin6_port = n->prevedge->address.in.sin_port;
+		broadcast_ipv6.in6.sin6_scope_id = listen_socket[*sock].sa.in6.sin6_scope_id;
+		*sa = &broadcast_ipv6;
+	} else {
+		broadcast_ipv4.in.sin_port = n->prevedge->address.in.sin_port;
+		*sa = &broadcast_ipv4;
+	}
+}
+
 static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
@@ -534,84 +608,15 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Send the packet */
 
-	sockaddr_t *sa;
+	const sockaddr_t *sa;
 	int sock;
-	sockaddr_t broadcast;
 
 	/* Overloaded use of priority field: -1 means local broadcast */
 
-	if(origpriority == -1 && n->prevedge) {
-		sock = rand() % listen_sockets;
-		memset(&broadcast, 0, sizeof broadcast);
-		if(listen_socket[sock].sa.sa.sa_family == AF_INET6) {
-			broadcast.in6.sin6_family = AF_INET6;
-			broadcast.in6.sin6_addr.s6_addr[0x0] = 0xff;
-			broadcast.in6.sin6_addr.s6_addr[0x1] = 0x02;
-			broadcast.in6.sin6_addr.s6_addr[0xf] = 0x01;
-			broadcast.in6.sin6_port = n->prevedge->address.in.sin_port;
-			broadcast.in6.sin6_scope_id = listen_socket[sock].sa.in6.sin6_scope_id;
-		} else {
-			broadcast.in.sin_family = AF_INET;
-			broadcast.in.sin_addr.s_addr = -1;
-			broadcast.in.sin_port = n->prevedge->address.in.sin_port;
-		}
-		sa = &broadcast;
-	} else {
-		if(origpriority == -1)
-			origpriority = 0;
-
-		if(n->status.udp_confirmed) {
-			/* Address of this node is confirmed, so use it. */
-			sa = &n->address;
-			sock = n->sock;
-		} else {
-			/* Otherwise, go through the list of known addresses of
-			   this node. The first address we try is always the
-			   one in n->address; that could be set to the node's
-			   reflexive UDP address discovered during key
-			   exchange. The other known addresses are those found
-			   in edges to this node. */
-
-			static unsigned int i;
-			int j = 0;
-			edge_t *candidate = NULL;
-
-			if(i) {
-				for splay_each(edge_t, e, edge_weight_tree) {
-					if(e->to != n)
-						continue;
-					j++;
-					if(!candidate || j == i)
-						candidate = e;
-				}
-			}
-
-			if(!candidate) {
-				sa = &n->address;
-				sock = n->sock;
-			} else {
-				sa = &candidate->address;
-				sock = rand() % listen_sockets;
-			}
-
-			if(i++)
-				if(i > j)
-					i = 0;
-		}
-	}
-
-	/* Determine which socket we have to use */
-
-	if(sa->sa.sa_family != listen_socket[sock].sa.sa.sa_family)
-		for(sock = 0; sock < listen_sockets; sock++)
-			if(sa->sa.sa_family == listen_socket[sock].sa.sa.sa_family)
-				break;
-
-	if(sock >= listen_sockets)
-		sock = 0;
-
-	if(!n->status.udp_confirmed)
-		n->sock = sock;
+	if(origpriority == -1 && n->prevedge)
+		choose_broadcast_address(n, &sa, &sock);
+	else
+		choose_udp_address(n, &sa, &sock);
 
 #if defined(SOL_IP) && defined(IP_TOS)
 	if(priorityinheritance && origpriority != priority
@@ -623,9 +628,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	socklen_t sl = SALEN(n->address.sa);
-
-	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, sl) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -657,15 +660,12 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 
 	/* Otherwise, send the packet via UDP */
 
-	struct sockaddr *sa;
-	socklen_t sl;
+	const sockaddr_t *sa;
 	int sock;
 
-	sa = &(to->address.sa);
-	sl = SALEN(to->address.sa);
-	sock = to->sock;
+	choose_udp_address(to, &sa, &sock);
 
-	if(sendto(listen_socket[sock].udp, data, len, 0, sa, sl) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(to->maxmtu >= len)
 				to->maxmtu = len - 1;
