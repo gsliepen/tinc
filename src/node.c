@@ -129,6 +129,13 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 
 	if(sa) {
 		n->address = *sa;
+		n->sock = 0;
+		for(int i = 0; i < listen_sockets; i++) {
+			if(listen_socket[i].sa.sa.sa_family == sa->sa.sa_family) {
+				n->sock = i;
+				break;
+			}
+		}
 		hash_insert(node_udp_cache, sa, n);
 		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
