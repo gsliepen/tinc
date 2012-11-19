@@ -164,10 +164,25 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Got MTU probe length %d from %s (%s)", packet->len, n->name, n->hostname);
 
 	if(!packet->data[0]) {
+		/* It's a probe request, send back a reply */
+
 		packet->data[0] = 1;
-		send_udppacket(n, packet);
-	} else {
+
+		/* Temporarily set udp_confirmed, so that the reply is sent
+		   back exactly the way it came in. */
+
+		bool udp_confirmed = n->status.udp_confirmed;
 		n->status.udp_confirmed = true;
+		send_udppacket(n, packet);
+		n->status.udp_confirmed = udp_confirmed;
+	} else {
+		/* It's a valid reply: now we know bidirectional communication
+		   is possible using the address and socket that the reply
+		   packet used. */
+
+		n->status.udp_confirmed = true;
+
+		/* If we haven't established the PMTU yet, restart the discovery process. */
 
 		if(n->mtuprobes > 30) {
 			if(n->minmtu)
@@ -175,6 +190,8 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			else
 				n->mtuprobes = 1;
 		}
+
+		/* If applicable, raise the minimum supported MTU */
 
 		if(len > n->maxmtu)
 			len = n->maxmtu;
