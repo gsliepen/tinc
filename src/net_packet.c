@@ -447,24 +447,28 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock
 	if(n->status.udp_confirmed)
 		return;
 
-	/* Otherwise, go through the list of known addresses of
-	   this node. The first address we try is always the
-	   one in n->address; that could be set to the node's
-	   reflexive UDP address discovered during key
-	   exchange. The other known addresses are those found
-	   in edges to this node. */
+	/* Send every third packet to n->address; that could be set
+	   to the node's reflexive UDP address discovered during key
+	   exchange. */
 
+	static int x = 0;
+	if(++x >= 3) {
+		x = 0;
+		return;
+	}
+
+	/* Otherwise, address are found in edges to this node.
+	   So we pick a random edge and a random socket. */
 
 	int i = 0;
 	int j = rand() % n->edge_tree->count;
 	edge_t *candidate = NULL;
 
-	for splay_each(edge_t, e, edge_weight_tree) {
-		if(e->to != n)
-			continue;
-		i++;
-		if(!candidate || i == j)
-			candidate = e;
+	for splay_each(edge_t, e, n->edge_tree) {
+		if(i++ == j) {
+			candidate = e->reverse;
+			break;
+		}
 	}
 
 	if(candidate) {
