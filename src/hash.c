@@ -55,7 +55,7 @@ hash_t *hash_alloc(size_t n, size_t size) {
 	hash_t *hash = xmalloc_and_zero(sizeof *hash);
 	hash->n = n;
 	hash->size = size;
-	hash->keys = xmalloc(hash->n * hash->size);
+	hash->keys = xmalloc_and_zero(hash->n * hash->size);
 	hash->values = xmalloc_and_zero(hash->n * sizeof *hash->values);
 	return hash;
 }
@@ -100,6 +100,8 @@ void hash_clear(hash_t *hash) {
 void hash_resize(hash_t *hash, size_t n) {
 	hash->keys = xrealloc(hash->keys, n * hash->size);
 	hash->values = xrealloc(hash->values, n * sizeof *hash->values);
-	if(n > hash->n)
+	if(n > hash->n) {
+		memset(hash->keys + hash->n * hash->size, 0, (n - hash->n) * hash->size);
 		memset(hash->values + hash->n, 0, (n - hash->n) * sizeof *hash->values);
+	}
 }
