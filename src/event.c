@@ -182,7 +182,7 @@ bool event_loop(void) {
 			timeout_t *timeout = timeout_tree.head->data;
 			timersub(&timeout->tv, &now, &diff);
 
-			if(diff.tv_sec <= 0) {
+			if(diff.tv_sec < 0) {
 				timeout->cb(timeout->data);
 				if(timercmp(&timeout->tv, &now, <))
 					timeout_del(timeout);
