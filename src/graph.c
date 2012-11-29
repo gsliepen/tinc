@@ -213,8 +213,7 @@ static void check_reachability(void) {
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
-			if(timeout_initialized(&n->mtuevent))
-				event_del(&n->mtuevent);
+			timeout_del(&n->mtutimeout);
 
 			char *name;
 			char *address;

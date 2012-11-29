@@ -39,7 +39,7 @@ bool send_meta_sptps(void *handle, uint8_t type, const char *buffer, size_t leng
 	}
 
 	buffer_add(&c->outbuf, buffer, length);
-	event_add(&c->outevent, NULL);
+	io_set(&c->io, IO_READ | IO_WRITE);
 
 	return true;
 }
@@ -65,12 +65,11 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 					c->name, c->hostname);
 			return false;
 		}
-
 	} else {
 		buffer_add(&c->outbuf, buffer, length);
 	}
 
-	event_add(&c->outevent, NULL);
+	io_set(&c->io, IO_READ | IO_WRITE);
 
 	return true;
 }

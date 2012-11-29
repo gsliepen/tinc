@@ -62,6 +62,7 @@ char *netname = NULL;
 char *confbase = NULL;
 static char *tinc_conf = NULL;
 static char *hosts_dir = NULL;
+struct timeval now;
 
 // Horrible global variables...
 static int pid = 0;

@@ -77,7 +77,7 @@ bool localdiscovery = false;
    which will be broadcast to the local network.
 */
 
-static void send_mtu_probe_handler(int fd, short events, void *data) {
+static void send_mtu_probe_handler(void *data) {
 	node_t *n = data;
 	int timeout = 1;
 
@@ -151,13 +151,12 @@ static void send_mtu_probe_handler(int fd, short events, void *data) {
 	}
 
 end:
-	event_add(&n->mtuevent, &(struct timeval){timeout, rand() % 100000});
+	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
 }
 
 void send_mtu_probe(node_t *n) {
-	if(!timeout_initialized(&n->mtuevent))
-		timeout_set(&n->mtuevent, send_mtu_probe_handler, n);
-	send_mtu_probe_handler(0, 0, n);
+	timeout_add(&n->mtutimeout, send_mtu_probe_handler, n, &(struct timeval){1, 0});
+	send_mtu_probe_handler(n);
 }
 
 static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
@@ -557,15 +556,13 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Make sure we have a valid key */
 
 	if(!n->status.validkey) {
-		time_t now = time(NULL);
-
 		logger(DEBUG_TRAFFIC, LOG_INFO,
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
-		if(n->last_req_key + 10 <= now) {
+		if(n->last_req_key + 10 <= now.tv_sec) {
 			send_req_key(n);
-			n->last_req_key = now;
+			n->last_req_key = now.tv_sec;
 		}
 
 		send_tcppacket(n->nexthop->connection, origpkt);
@@ -644,12 +641,12 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
+		if(setsockopt(listen_socket[n->sock].udp.fd, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
 			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -686,7 +683,7 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 
 	choose_udp_address(to, &sa, &sock);
 
-	if(sendto(listen_socket[sock].udp, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(to->maxmtu >= len)
 				to->maxmtu = len - 1;
@@ -869,14 +866,13 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	node_t *n = NULL;
 	bool hard = false;
 	static time_t last_hard_try = 0;
-	time_t now = time(NULL);
 
 	for splay_each(edge_t, e, edge_weight_tree) {
 		if(!e->to->status.reachable || e->to == myself)
 			continue;
 
 		if(sockaddrcmp_noport(from, &e->address)) {
-			if(last_hard_try == now)
+			if(last_hard_try == now.tv_sec)
 				continue;
 			hard = true;
 		}
@@ -889,13 +885,14 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	}
 
 	if(hard)
-		last_hard_try = now;
+		last_hard_try = now.tv_sec;
 
-	last_hard_try = now;
+	last_hard_try = now.tv_sec;
 	return n;
 }
 
-void handle_incoming_vpn_data(int sock, short events, void *data) {
+void handle_incoming_vpn_data(void *data, int flags) {
+	listen_socket_t *ls = data;
 	vpn_packet_t pkt;
 	char *hostname;
 	sockaddr_t from = {{0}};
@@ -903,7 +900,7 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 	node_t *n;
 	int len;
 
-	len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(ls->udp.fd, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -931,12 +928,12 @@ void handle_incoming_vpn_data(int sock, short events, void *data) {
 			return;
 	}
 
-	n->sock = (intptr_t)data;
+	n->sock = ls - listen_socket;
 
 	receive_udppacket(n, &pkt);
 }
 
-void handle_device_data(int sock, short events, void *data) {
+void handle_device_data(void *data, int flags) {
 	vpn_packet_t packet;
 
 	packet.priority = 0;

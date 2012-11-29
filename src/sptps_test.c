@@ -29,6 +29,7 @@ bool send_request(void *c, const char *msg, ...) { return false; }
 struct list_t *connection_list = NULL;
 bool send_meta(void *c, const char *msg , int len) { return false; }
 char *logfilename = NULL;
+struct timeval now;
 
 ecdsa_t mykey, hiskey;
 

@@ -196,10 +196,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef HAVE_EVENT_H
-#include <event.h>
-#endif
-
 #ifdef HAVE_MINGW
 #define SLASH "\\"
 #else

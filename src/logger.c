@@ -41,7 +41,6 @@ bool logcontrol = false;
 
 static void real_logger(int level, int priority, const char *message) {
 	char timestr[32] = "";
-	time_t now;
 	static bool suppress = false;
 
 	// Bail out early if there is nothing to do.
@@ -58,8 +57,9 @@ static void real_logger(int level, int priority, const char *message) {
 				fflush(stderr);
 				break;
 			case LOGMODE_FILE:
-				now = time(NULL);
-				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
+				if(!now.tv_sec)
+					gettimeofday(&now, NULL);
+				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now.tv_sec));
 				fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
 				fflush(logfile);
 				break;

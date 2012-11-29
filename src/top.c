@@ -57,7 +57,7 @@ static int sortmode = 0;
 static bool cumulative = false;
 
 static list_t node_list;
-static struct timeval now, prev, diff;
+static struct timeval cur, prev, diff;
 static int delay = 1000;
 static bool changed = true;
 static const char *unit = "bytes";
@@ -69,10 +69,10 @@ static float scale = 1;
 
 static void update(int fd) {
 	sendline(fd, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
-	gettimeofday(&now, NULL);
+	gettimeofday(&cur, NULL);
 
-	timersub(&now, &prev, &diff);
-	prev = now;
+	timersub(&cur, &prev, &diff);
+	prev = cur;
 	float interval = diff.tv_sec + diff.tv_usec * 1e-6;
 
 	char line[4096];

@@ -42,7 +42,7 @@
 #include "xalloc.h"
 
 char *myport;
-static struct event device_ev;
+static io_t device_io;
 devops_t devops;
 
 char *proxyhost;
@@ -270,22 +270,16 @@ static bool read_rsa_private_key(void) {
 	return result;
 }
 
-static struct event keyexpire_event;
+static timeout_t keyexpire_timeout;
 
-static void keyexpire_handler(int fd, short events, void *data) {
+static void keyexpire_handler(void *data) {
 	regenerate_key();
+	timeout_set(data, &(struct timeval){keylifetime, rand() % 100000});
 }
 
 void regenerate_key(void) {
-	if(timeout_initialized(&keyexpire_event)) {
-		logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
-		event_del(&keyexpire_event);
-		send_key_changed();
-	} else {
-		timeout_set(&keyexpire_event, keyexpire_handler, NULL);
-	}
-
-	event_add(&keyexpire_event, &(struct timeval){keylifetime, rand() % 100000});
+	logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
+	send_key_changed();
 }
 
 /*
@@ -716,7 +710,8 @@ static bool setup_myself(void) {
 
 	free(cipher);
 
-	regenerate_key();
+	send_key_changed();
+	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval){keylifetime, rand() % 100000});
 
 	/* Check if we want to use message authentication codes... */
 
@@ -790,15 +785,8 @@ static bool setup_myself(void) {
 	if(!devops.setup())
 		return false;
 
-	if(device_fd >= 0) {
-		event_set(&device_ev, device_fd, EV_READ|EV_PERSIST, handle_device_data, NULL);
-
-		if (event_add(&device_ev, NULL) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
-			devops.close();
-			return false;
-		}
-	}
+	if(device_fd >= 0)
+		io_add(&device_io, handle_device_data, NULL, device_fd, IO_READ);
 
 	/* Run tinc-up script to further initialize the tap interface */
 	char *envp[5];
@@ -840,27 +828,16 @@ static bool setup_myself(void) {
 				return false;
 			}
 
-			listen_socket[i].tcp = i + 3;
-
 #ifdef FD_CLOEXEC
 			fcntl(i + 3, F_SETFD, FD_CLOEXEC);
 #endif
 
-			listen_socket[i].udp = setup_vpn_in_socket(&sa);
-			if(listen_socket[i].udp < 0)
+			int udp_fd = setup_vpn_in_socket(&sa);
+			if(udp_fd < 0)
 				return false;
 
-			event_set(&listen_socket[i].ev_tcp, listen_socket[i].tcp, EV_READ|EV_PERSIST, handle_new_meta_connection, NULL);
-			if(event_add(&listen_socket[i].ev_tcp, NULL) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
-				abort();
-			}
-
-			event_set(&listen_socket[i].ev_udp, listen_socket[i].udp, EV_READ|EV_PERSIST, handle_incoming_vpn_data, (void *)(intptr_t)listen_sockets);
-			if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
-				abort();
-			}
+			io_add(&listen_socket[i].tcp, (io_cb_t)handle_new_meta_connection, &listen_socket[i], i + 3, IO_READ);
+			io_add(&listen_socket[i].udp, (io_cb_t)handle_incoming_vpn_data, &listen_socket[i], udp_fd, IO_READ);
 
 			if(debug_level >= DEBUG_CONNECTIONS) {
 				hostname = sockaddr2hostname(&sa);
@@ -913,37 +890,20 @@ static bool setup_myself(void) {
 					return false;
 				}
 
-				listen_socket[listen_sockets].tcp =
-					setup_listen_socket((sockaddr_t *) aip->ai_addr);
+				int tcp_fd = setup_listen_socket((sockaddr_t *) aip->ai_addr);
 
-				if(listen_socket[listen_sockets].tcp < 0)
+				if(tcp_fd < 0)
 					continue;
 
-				listen_socket[listen_sockets].udp =
-					setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+				int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
 
-				if(listen_socket[listen_sockets].udp < 0) {
-					close(listen_socket[listen_sockets].tcp);
+				if(tcp_fd < 0) {
+					close(tcp_fd);
 					continue;
 				}
 
-				event_set(&listen_socket[listen_sockets].ev_tcp,
-						  listen_socket[listen_sockets].tcp,
-						  EV_READ|EV_PERSIST,
-						  handle_new_meta_connection, NULL);
-				if(event_add(&listen_socket[listen_sockets].ev_tcp, NULL) < 0) {
-					logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
-					abort();
-				}
-
-				event_set(&listen_socket[listen_sockets].ev_udp,
-						  listen_socket[listen_sockets].udp,
-						  EV_READ|EV_PERSIST,
-						  handle_incoming_vpn_data, (void *)(intptr_t)listen_sockets);
-				if(event_add(&listen_socket[listen_sockets].ev_udp, NULL) < 0) {
-					logger(DEBUG_ALWAYS, LOG_ERR, "event_add failed: %s", strerror(errno));
-					abort();
-				}
+				io_add(&listen_socket[listen_sockets].tcp, handle_new_meta_connection, &listen_socket[listen_sockets], tcp_fd, IO_READ);
+				io_add(&listen_socket[listen_sockets].udp, handle_incoming_vpn_data, &listen_socket[listen_sockets], udp_fd, IO_READ);
 
 				if(debug_level >= DEBUG_CONNECTIONS) {
 					hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
@@ -1025,10 +985,10 @@ void close_network_connections(void) {
 	}
 
 	for(int i = 0; i < listen_sockets; i++) {
-		event_del(&listen_socket[i].ev_tcp);
-		event_del(&listen_socket[i].ev_udp);
-		close(listen_socket[i].tcp);
-		close(listen_socket[i].udp);
+		io_del(&listen_socket[i].tcp);
+		io_del(&listen_socket[i].udp);
+		close(listen_socket[i].tcp.fd);
+		close(listen_socket[i].udp.fd);
 	}
 
 	char *envp[5];

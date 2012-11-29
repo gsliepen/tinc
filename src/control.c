@@ -58,7 +58,7 @@ bool control_h(connection_t *c, const char *request) {
 
 	switch (type) {
 		case REQ_STOP:
-			event_loopexit(NULL);
+			event_exit();
 			return control_ok(c, REQ_STOP);
 
 		case REQ_DUMP_NODES:
@@ -156,7 +156,7 @@ bool init_control(void) {
 
 	// Make sure we have a valid address, and map 0.0.0.0 and :: to 127.0.0.1 and ::1.
 
-	if(getsockname(listen_socket[0].tcp, (struct sockaddr *)&sa, &len)) {
+	if(getsockname(listen_socket[0].tcp.fd, (struct sockaddr *)&sa, &len)) {
 		xasprintf(&localhost, "127.0.0.1 port %d", myport);
 	} else {
 		if(sa.sa.sa_family == AF_INET) {

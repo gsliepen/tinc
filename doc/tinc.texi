@@ -339,7 +339,6 @@ having them installed, configure will give you an error message, and stop.
 * OpenSSL::
 * zlib::
 * lzo::
-* libevent::
 * libcurses::
 * libreadline::
 @end menu
@@ -453,27 +452,6 @@ of this package.
 
 If you have to install lzo manually, you can get the source code
 from @url{http://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
-build and install this package are included within the package.  Please
-make sure you build development and runtime libraries (which is the
-default).
-
-
-@c ==================================================================
-@node       libevent
-@subsection libevent
-
-@cindex libevent
-For the main event loop, tinc uses the libevent library.
-
-If this library is not installed, you wil get an error when configuring
-tinc for build.
-
-You can use your operating system's package manager to install this if
-available.  Make sure you install the development AND runtime versions
-of this package.
-
-If you have to install libevent manually, you can get the source code
-from @url{http://libevent.org/}. Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).

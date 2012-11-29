@@ -8,7 +8,7 @@ tincd_SOURCES = \
 	utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c hash.c \
 	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
-	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c tincd.c \
+	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c event.c tincd.c \
 	dummy_device.c raw_socket_device.c multicast_device.c
 	
 if UML
@@ -46,7 +46,7 @@ INCLUDES = @INCLUDES@ -I$(top_builddir)
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h info.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h subnet.h sptps.h tincctl.h top.h bsd/tunemu.h hash.h
+	protocol.h route.h subnet.h sptps.h tincctl.h top.h bsd/tunemu.h hash.h event.h
 
 nodist_noinst_HEADERS = \
 	cipher.h crypto.h ecdh.h ecdsa.h digest.h prf.h rsa.h ecdsagen.h rsagen.h

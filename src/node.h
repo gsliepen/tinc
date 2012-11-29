@@ -25,6 +25,7 @@
 #include "cipher.h"
 #include "connection.h"
 #include "digest.h"
+#include "event.h"
 #include "subnet.h"
 
 typedef struct node_status_t {
@@ -83,7 +84,7 @@ typedef struct node_t {
 	length_t minmtu;                        /* Probed minimum MTU */
 	length_t maxmtu;                        /* Probed maximum MTU */
 	int mtuprobes;                          /* Number of probes */
-	struct event mtuevent;                  /* Probe event */
+	timeout_t mtutimeout;                   /* Probe event */
 
 	uint64_t in_packets;
 	uint64_t in_bytes;

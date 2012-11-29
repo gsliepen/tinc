@@ -271,7 +271,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	return nfd;
 } /* int setup_vpn_in_socket */
 
-static void retry_outgoing_handler(int fd, short events, void *data) {
+static void retry_outgoing_handler(void *data) {
 	setup_outgoing_connection(data);
 }
 
@@ -281,12 +281,9 @@ void retry_outgoing(outgoing_t *outgoing) {
 	if(outgoing->timeout > maxtimeout)
 		outgoing->timeout = maxtimeout;
 
-	timeout_set(&outgoing->ev, retry_outgoing_handler, outgoing);
-	event_add(&outgoing->ev, &(struct timeval){outgoing->timeout, rand() % 100000});
+	timeout_add(&outgoing->ev, retry_outgoing_handler, outgoing, &(struct timeval){outgoing->timeout, rand() % 100000});
 
-	logger(DEBUG_CONNECTIONS, LOG_NOTICE,
-			   "Trying to re-establish outgoing connection in %d seconds",
-			   outgoing->timeout);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Trying to re-establish outgoing connection in %d seconds", outgoing->timeout);
 }
 
 void finish_connecting(connection_t *c) {
@@ -349,9 +346,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 #endif
 }
 
-static void handle_meta_write(int sock, short events, void *data) {
-	connection_t *c = data;
-
+static void handle_meta_write(connection_t *c) {
 	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
 	if(outlen <= 0) {
 		if(!errno || errno == EPIPE) {
@@ -368,10 +363,16 @@ static void handle_meta_write(int sock, short events, void *data) {
 	}
 
 	buffer_read(&c->outbuf, outlen);
-	if(!c->outbuf.len && event_initialized(&c->outevent))
-		event_del(&c->outevent);
+	if(!c->outbuf.len)
+		io_set(&c->io, IO_READ);
 }
 
+static void handle_meta_io(void *data, int flags) {
+	if(flags & IO_WRITE)
+		handle_meta_write(data);
+	else
+		handle_meta_connection_data(data);
+}
 
 bool do_outgoing_connection(outgoing_t *outgoing) {
 	char *address, *port, *space;
@@ -487,16 +488,13 @@ begin:
 
 	connection_add(c);
 
-	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
-	event_add(&c->inevent, NULL);
+	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
 
 	return true;
 }
 
 void setup_outgoing_connection(outgoing_t *outgoing) {
-	if(event_initialized(&outgoing->ev))
-		event_del(&outgoing->ev);
+	timeout_del(&outgoing->ev);
 
 	node_t *n = lookup_node(outgoing->name);
 
@@ -523,13 +521,14 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
   accept a new tcp connect and create a
   new connection
 */
-void handle_new_meta_connection(int sock, short events, void *data) {
+void handle_new_meta_connection(void *data, int flags) {
+	listen_socket_t *l = data;
 	connection_t *c;
 	sockaddr_t sa;
 	int fd;
 	socklen_t len = sizeof sa;
 
-	fd = accept(sock, &sa.sa, &len);
+	fd = accept(l->tcp.fd, &sa.sa, &len);
 
 	if(fd < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
@@ -552,9 +551,7 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
 
-	event_set(&c->inevent, c->socket, EV_READ | EV_PERSIST, handle_meta_connection_data, c);
-	event_set(&c->outevent, c->socket, EV_WRITE | EV_PERSIST, handle_meta_write, c);
-	event_add(&c->inevent, NULL);
+	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
 
 	configure_tcp(c);
 
@@ -565,8 +562,7 @@ void handle_new_meta_connection(int sock, short events, void *data) {
 }
 
 static void free_outgoing(outgoing_t *outgoing) {
-	if(event_initialized(&outgoing->ev))
-		event_del(&outgoing->ev);
+	timeout_del(&outgoing->ev);
 
 	if(outgoing->ai)
 		freeaddrinfo(outgoing->ai);

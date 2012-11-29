@@ -68,11 +68,7 @@ void free_connection(connection_t *c) {
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
 
-	if(event_initialized(&c->inevent))
-		event_del(&c->inevent);
-
-	if(event_initialized(&c->outevent))
-		event_del(&c->outevent);
+	io_del(&c->io);
 
 	if(c->socket > 0)
 		closesocket(c->socket);

@@ -137,18 +137,16 @@ void terminate_connection(connection_t *c, bool report) {
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void timeout_handler(int fd, short events, void *event) {
-	time_t now = time(NULL);
-
+static void timeout_handler(void *data) {
 	for list_each(connection_t, c, connection_list) {
 		if(c->status.control)
 			continue;
 
-		if(c->last_ping_time + pingtimeout <= now) {
+		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now - c->last_ping_time);
-				} else if(c->last_ping_time + pinginterval <= now) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
+				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
 					send_ping(c);
 					continue;
 				} else {
@@ -164,10 +162,10 @@ static void timeout_handler(int fd, short events, void *event) {
 		}
 	}
 
-	event_add(event, &(struct timeval){pingtimeout, rand() % 100000});
+	timeout_set(data, &(struct timeval){pingtimeout, rand() % 100000});
 }
 
-static void periodic_handler(int fd, short events, void *event) {
+static void periodic_handler(void *data) {
 	/* Check if there are too many contradicting ADD_EDGE and DEL_EDGE messages.
 	   This usually only happens when another node has the same Name as this node.
 	   If so, sleep for a short while to prevent a storm of contradicting messages.
@@ -278,11 +276,10 @@ static void periodic_handler(int fd, short events, void *event) {
 		}
 	}
 
-	event_add(event, &(struct timeval){5, rand() % 100000});
+	timeout_set(data, &(struct timeval){5, rand() % 100000});
 }
 
-void handle_meta_connection_data(int fd, short events, void *data) {
-	connection_t *c = data;
+void handle_meta_connection_data(connection_t *c) {
 	int result;
 	socklen_t len = sizeof result;
 
@@ -306,19 +303,19 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 	}
 }
 
-static void sigterm_handler(int signal, short events, void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
-	event_loopexit(NULL);
+static void sigterm_handler(void *data) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
+	event_exit();
 }
 
-static void sighup_handler(int signal, short events, void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
+static void sighup_handler(void *data) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	reopenlogger();
 	reload_configuration();
 }
 
-static void sigalrm_handler(int signal, short events, void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
+static void sigalrm_handler(void *data) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	retry();
 }
 
@@ -332,7 +329,7 @@ int reload_configuration(void) {
 
 	if(!read_server_config()) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file, exitting.");
-		event_loopexit(NULL);
+		event_exit();
 		return EINVAL;
 	}
 
@@ -431,8 +428,7 @@ int reload_configuration(void) {
 void retry(void) {
 	for list_each(connection_t, c, connection_list) {
 		if(c->outgoing && !c->node) {
-			if(timeout_initialized(&c->outgoing->ev))
-				event_del(&c->outgoing->ev);
+			timeout_del(&c->outgoing->ev);
 			if(c->status.connecting)
 				close(c->socket);
 			c->outgoing->timeout = 0;
@@ -445,44 +441,38 @@ void retry(void) {
   this is where it all happens...
 */
 int main_loop(void) {
-	struct event timeout_event;
-	struct event periodic_event;
+	timeout_t pingtimer = {{0}};
+	timeout_t periodictimer = {{0}};
 
-	timeout_set(&timeout_event, timeout_handler, &timeout_event);
-	event_add(&timeout_event, &(struct timeval){pingtimeout, rand() % 100000});
-
-	timeout_set(&periodic_event, periodic_handler, &periodic_event);
-	event_add(&periodic_event, &(struct timeval){5, rand() % 100000});
+	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
+	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){pingtimeout, rand() % 100000});
 
 #ifndef HAVE_MINGW
-	struct event sighup_event;
-	struct event sigterm_event;
-	struct event sigquit_event;
-	struct event sigalrm_event;
+	signal_t sighup = {0};
+	signal_t sigterm = {0};
+	signal_t sigquit = {0};
+	signal_t sigalrm = {0};
 
-	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
-	signal_add(&sighup_event, NULL);
-	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
-	signal_add(&sigterm_event, NULL);
-	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
-	signal_add(&sigquit_event, NULL);
-	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
-	signal_add(&sigalrm_event, NULL);
+	signal_add(&sighup, sighup_handler, &sighup, SIGHUP);
+	signal_add(&sigterm, sigterm_handler, &sigterm, SIGTERM);
+	signal_add(&sigquit, sigterm_handler, &sigquit, SIGQUIT);
+	signal_add(&sigalrm, sigalrm_handler, &sigalrm, SIGALRM);
 #endif
 
-	if(event_loop(0) < 0) {
+	if(!event_loop()) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", strerror(errno));
 		return 1;
 	}
 
 #ifndef HAVE_MINGW
-	signal_del(&sighup_event);
-	signal_del(&sigterm_event);
-	signal_del(&sigquit_event);
-	signal_del(&sigalrm_event);
+	signal_del(&sighup);
+	signal_del(&sigalrm);
+	signal_del(&sigquit);
+	signal_del(&sigterm);
 #endif
 
-	event_del(&timeout_event);
+	timeout_del(&periodictimer);
+	timeout_del(&pingtimer);
 
 	return 0;
 }

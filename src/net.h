@@ -24,6 +24,7 @@
 #include "ipv6.h"
 #include "cipher.h"
 #include "digest.h"
+#include "event.h"
 
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9018        /* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
@@ -99,10 +100,8 @@ typedef enum packet_type_t {
 } packet_type_t;
 
 typedef struct listen_socket_t {
-	struct event ev_tcp;
-	struct event ev_udp;
-	int tcp;
-	int udp;
+	io_t tcp;
+	io_t udp;
 	sockaddr_t sa;
 } listen_socket_t;
 
@@ -116,7 +115,7 @@ typedef struct outgoing_t {
 	struct config_t *cfg;
 	struct addrinfo *ai;
 	struct addrinfo *aip;
-	struct event ev;
+	timeout_t ev;
 } outgoing_t;
 
 extern list_t *outgoing_list;
@@ -161,10 +160,10 @@ extern char *scriptextension;
 #include "node.h"
 
 extern void retry_outgoing(outgoing_t *);
-extern void handle_incoming_vpn_data(int, short, void *);
+extern void handle_incoming_vpn_data(void *, int);
 extern void finish_connecting(struct connection_t *);
 extern bool do_outgoing_connection(struct outgoing_t *);
-extern void handle_new_meta_connection(int, short, void *);
+extern void handle_new_meta_connection(void *, int);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
 extern bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len);
@@ -184,8 +183,8 @@ extern bool node_read_ecdsa_public_key(struct node_t *);
 extern bool read_ecdsa_public_key(struct connection_t *);
 extern bool read_rsa_public_key(struct connection_t *);
 extern void send_mtu_probe(struct node_t *);
-extern void handle_device_data(int, short, void *);
-extern void handle_meta_connection_data(int, short, void *);
+extern void handle_device_data(void *, int);
+extern void handle_meta_connection_data(struct connection_t *);
 extern void regenerate_key(void);
 extern void purge(void);
 extern void retry(void);

@@ -183,7 +183,6 @@ AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcry
 
 tinc_CURSES
 tinc_READLINE
-tinc_LIBEVENT
 tinc_ZLIB
 tinc_LZO
 

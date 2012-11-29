@@ -78,8 +78,7 @@ void free_node(node_t *n) {
 	ecdsa_free(&n->ecdsa);
 	sptps_stop(&n->sptps);
 
-	if(timeout_initialized(&n->mtuevent))
-		event_del(&n->mtuevent);
+	timeout_del(&n->mtutimeout);
 
 	if(n->hostname)
 		free(n->hostname);

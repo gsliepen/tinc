@@ -59,7 +59,7 @@ static const size_t opt_size = sizeof(struct nd_opt_hdr);
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-static struct event age_subnets_event;
+static timeout_t age_subnets_timeout;
 
 /* RFC 1071 */
 
@@ -84,13 +84,12 @@ static uint16_t inet_checksum(void *data, int len, uint16_t prevsum) {
 static bool ratelimit(int frequency) {
 	static time_t lasttime = 0;
 	static int count = 0;
-	time_t now = time(NULL);
 
-	if(lasttime == now) {
+	if(lasttime == now.tv_sec) {
 		if(count >= frequency)
 			return true;
 	} else {
-		lasttime = now;
+		lasttime = now.tv_sec;
 		count = 0;
 	}
 
@@ -192,12 +191,11 @@ static void swap_mac_addresses(vpn_packet_t *packet) {
 	memcpy(&packet->data[6], &tmp, sizeof tmp);
 }
 
-static void age_subnets(int fd, short events, void *data) {
+static void age_subnets(void *data) {
 	bool left = false;
-	time_t now = time(NULL);
 
 	for splay_each(subnet_t, s, myself->subnet_tree) {
-		if(s->expires && s->expires < now) {
+		if(s->expires && s->expires < now.tv_sec) {
 			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
 				if(net2str(netstr, sizeof netstr, s))
@@ -216,7 +214,7 @@ static void age_subnets(int fd, short events, void *data) {
 	}
 
 	if(left)
-		event_add(&age_subnets_event, &(struct timeval){10, rand() % 100000});
+		timeout_set(&age_subnets_timeout, &(struct timeval){10, rand() % 100000});
 }
 
 static void learn_mac(mac_t *address) {
@@ -243,9 +241,7 @@ static void learn_mac(mac_t *address) {
 			if(c->status.active)
 				send_add_subnet(c, subnet);
 
-		if(!timeout_initialized(&age_subnets_event))
-			timeout_set(&age_subnets_event, age_subnets, NULL);
-		event_add(&age_subnets_event, &(struct timeval){10, rand() % 100000});
+		timeout_add(&age_subnets_timeout, age_subnets, NULL, &(struct timeval){10, rand() % 100000});
 	} else {
 		if(subnet->expires)
 			subnet->expires = time(NULL) + macexpire;

@@ -50,7 +50,6 @@ In order to compile tinc, you will need a GNU C compiler environment. Please
 ensure you have the latest stable versions of all the required libraries:
 
 - OpenSSL (http://www.openssl.org/) version 1.0.0 or later.
-- Libevent (http://monkey.org/~provos/libevent/)
 
 The following libraries are used by default, but can be disabled if necessary:
 
