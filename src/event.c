@@ -36,7 +36,7 @@ static int io_compare(const io_t *a, const io_t *b) {
 static int timeout_compare(const timeout_t *a, const timeout_t *b) {
 	struct timeval diff;
 	timersub(&a->tv, &b->tv, &diff);
-	return diff.tv_sec ?: diff.tv_usec;
+	return diff.tv_sec ?: diff.tv_usec ?: a < b ? -1 : a > b ? 1 : 0;
 }
 
 static int signal_compare(const signal_t *a, const signal_t *b) {
