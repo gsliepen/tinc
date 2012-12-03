@@ -25,6 +25,7 @@
 #include "control.h"
 #include "device.h"
 #include "edge.h"
+#include "event.h"
 #include "logger.h"
 #include "net.h"
 #include "node.h"
