@@ -135,7 +135,7 @@ static void usage(bool status) {
 				"  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
 				"  generate-ecdsa-keys        Generate a new ECDSA public/private keypair.\n"
 				"  dump                       Dump a list of one of the following things:\n"
-				"    nodes                    - all known nodes in the VPN\n"
+				"    [reachable] nodes        - all known nodes in the VPN\n"
 				"    edges                    - all known connections in the VPN\n"
 				"    subnets                  - all known subnets in the VPN\n"
 				"    connections              - all meta connections with ourself\n"
@@ -912,6 +912,19 @@ static int cmd_reload(int argc, char *argv[]) {
 }
 
 static int cmd_dump(int argc, char *argv[]) {
+	bool only_reachable = false;
+
+	if(argc > 2 && !strcasecmp(argv[1], "reachable")) {
+		if(strcasecmp(argv[2], "nodes")) {
+			fprintf(stderr, "`reachable' only supported for nodes.\n");
+			usage(true);
+			return 1;
+		}
+		only_reachable = true;
+		argv++;
+		argc--;
+	}
+
 	if(argc != 2) {
 		fprintf(stderr, "Invalid number of arguments.\n");
 		usage(true);
@@ -986,8 +999,10 @@ static int cmd_dump(int argc, char *argv[]) {
 					fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
 					return 1;
 				}
+
+				memcpy(&status, &status_int, sizeof status);
+
 				if(do_graph) {
-					memcpy(&status, &status_int, sizeof status);
 					const char *color = "black";
 					if(!strcmp(host, "MYSELF"))
 						color = "green";
@@ -1001,6 +1016,8 @@ static int cmd_dump(int argc, char *argv[]) {
 						color = "green";
 					printf(" %s [label = \"%s\", color = \"%s\"%s];\n", node, node, color, strcmp(host, "MYSELF") ? "" : ", style = \"filled\"");
 				} else {
+					if(only_reachable && !status.reachable)
+						continue;
 					printf("%s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)\n",
 							node, host, port, cipher, digest, maclength, compression, options, status_int, nexthop, via, distance, pmtu, minmtu, maxmtu);
 				}
@@ -1947,7 +1964,7 @@ static char *complete_command(const char *text, int state) {
 }
 
 static char *complete_dump(const char *text, int state) {
-	const char *matches[] = {"nodes", "edges", "subnets", "connections", "graph", NULL};
+	const char *matches[] = {"reachable", "nodes", "edges", "subnets", "connections", "graph", NULL};
 	static int i;
 
 	if(!state)

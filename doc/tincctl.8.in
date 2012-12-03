@@ -114,8 +114,9 @@ If
 is omitted, the default length will be 2048 bits.
 When saving keys to existing files, tinc will not delete the old keys;
 you have to remove them manually.
-.It dump nodes
+.It dump [reachable] nodes
 Dump a list of all known nodes in the VPN.
+If the keyword reachable is used, only lists reachable nodes.
 .It dump edges
 Dump a list of all known connections in the VPN.
 .It dump subnets

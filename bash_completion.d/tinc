@@ -60,8 +60,8 @@ _tinc() {
 		get|set|add|del)
 		COMPREPLY=( $(compgen -W "${confvars}" -- ${cur}) )
 		;;
-		dump)
-		COMPREPLY=( $(compgen -W "nodes edges subnets connections graph" -- ${cur}) )
+		dump|reachable)
+		COMPREPLY=( $(compgen -W "reachable nodes edges subnets connections graph" -- ${cur}) )
 		return 0
 		;;
 	esac
