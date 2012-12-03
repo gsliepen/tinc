@@ -36,7 +36,19 @@ static int io_compare(const io_t *a, const io_t *b) {
 static int timeout_compare(const timeout_t *a, const timeout_t *b) {
 	struct timeval diff;
 	timersub(&a->tv, &b->tv, &diff);
-	return diff.tv_sec ?: diff.tv_usec ?: a < b ? -1 : a > b ? 1 : 0;
+	if(diff.tv_sec < 0)
+		return -1;
+	if(diff.tv_sec > 0)
+		return 1;
+	if(diff.tv_usec < 0)
+		return -1;
+	if(diff.tv_usec > 0)
+		return 1;
+	if(a < b)
+		return -1;
+	if(a > b)
+		return 1;
+	return 0;
 }
 
 static int signal_compare(const signal_t *a, const signal_t *b) {
@@ -58,7 +70,8 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 
 	io_set(io, flags);
 
-	splay_insert_node(&io_tree, &io->node);
+	if(!splay_insert_node(&io_tree, &io->node))
+		abort();
 }
 
 void io_set(io_t *io, int flags) {
@@ -86,9 +99,6 @@ void io_del(io_t *io) {
 }
 
 void timeout_add(timeout_t *timeout, timeout_cb_t cb, void *data, struct timeval *tv) {
-	if(timeout->cb)
-		return;
-
 	timeout->cb = cb;
 	timeout->data = data;
 	timeout->node.data = timeout;
@@ -97,7 +107,7 @@ void timeout_add(timeout_t *timeout, timeout_cb_t cb, void *data, struct timeval
 }
 
 void timeout_set(timeout_t *timeout, struct timeval *tv) {
-	if(timeout->tv.tv_sec)
+	if(timerisset(&timeout->tv))
 		splay_unlink_node(&timeout_tree, &timeout->node);
 
 	if(!now.tv_sec)
@@ -105,7 +115,8 @@ void timeout_set(timeout_t *timeout, struct timeval *tv) {
 
 	timeradd(&now, tv, &timeout->tv);
 
-	splay_insert_node(&timeout_tree, &timeout->node);
+	if(!splay_insert_node(&timeout_tree, &timeout->node))
+		abort();
 }
 
 void timeout_del(timeout_t *timeout) {
@@ -113,7 +124,8 @@ void timeout_del(timeout_t *timeout) {
 		return;
 
 	splay_unlink_node(&timeout_tree, &timeout->node);
-	timeout->cb = NULL;
+	timeout->cb = 0;
+	timeout->tv = (struct timeval){0, 0};
 }
 
 #ifndef HAVE_MINGW
@@ -154,7 +166,8 @@ void signal_add(signal_t *sig, signal_cb_t cb, void *data, int signum) {
 
 	signal(sig->signum, signal_handler);
 
-	splay_insert_node(&signal_tree, &sig->node);
+	if(!splay_insert_node(&signal_tree, &sig->node))
+		abort();
 }
 
 void signal_del(signal_t *sig) {
