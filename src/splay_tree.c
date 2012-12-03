@@ -398,6 +398,8 @@ splay_node_t *splay_insert_node(splay_tree_t *tree, splay_node_t *node) {
 	splay_node_t *closest;
 	int result;
 
+	node->left = node->right = node->parent = node->next = node->prev = NULL;
+
 	if(!tree->root)
 		splay_insert_top(tree, node);
 	else {
