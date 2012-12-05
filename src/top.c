@@ -136,6 +136,63 @@ static void update(int fd) {
 	}
 }
 
+static int cmpfloat(float a, float b) {
+	if(a < b)
+		return -1;
+	else if(a > b)
+		return 1;
+	else
+		return 0;
+}
+
+static int cmpu64(uint64_t a, uint64_t b) {
+	if(a < b)
+		return -1;
+	else if(a > b)
+		return 1;
+	else
+		return 0;
+}
+
+static int sortfunc(const void *a, const void *b) {
+	const nodestats_t *na = *(const nodestats_t **)a;
+	const nodestats_t *nb = *(const nodestats_t **)b;
+	switch(sortmode) {
+		case 1:
+			if(cumulative)
+				return -cmpu64(na->in_packets, nb->in_packets) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_packets_rate, nb->in_packets_rate) ?: na->i - nb->i;
+		case 2:
+			if(cumulative)
+				return -cmpu64(na->in_bytes, nb->in_bytes) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate) ?: na->i - nb->i;
+		case 3:
+			if(cumulative)
+				return -cmpu64(na->out_packets, nb->out_packets) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->out_packets_rate, nb->out_packets_rate) ?: na->i - nb->i;
+		case 4:
+			if(cumulative)
+				return -cmpu64(na->out_bytes, nb->out_bytes) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate) ?: na->i - nb->i;
+		case 5:
+			if(cumulative)
+				return -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate) ?: na->i - nb->i;
+		case 6:
+			if(cumulative)
+				return -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate) ?: na->i - nb->i;
+		default:
+			return strcmp(na->name, nb->name) ?: na->i - nb->i;
+	}
+}
+
 static void redraw(void) {
 	erase();
 
@@ -156,63 +213,6 @@ static void redraw(void) {
 
 	for(int i = 0; i < n; i++)
 		sorted[i]->i = i;
-
-	int cmpfloat(float a, float b) {
-		if(a < b)
-			return -1;
-		else if(a > b)
-			return 1;
-		else
-			return 0;
-	}
-
-	int cmpu64(uint64_t a, uint64_t b) {
-		if(a < b)
-			return -1;
-		else if(a > b)
-			return 1;
-		else
-			return 0;
-	}
-
-	int sortfunc(const void *a, const void *b) {
-		const nodestats_t *na = *(const nodestats_t **)a;
-		const nodestats_t *nb = *(const nodestats_t **)b;
-		switch(sortmode) {
-			case 1:
-				if(cumulative)
-					return -cmpu64(na->in_packets, nb->in_packets) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_packets_rate, nb->in_packets_rate) ?: na->i - nb->i;
-			case 2:
-				if(cumulative)
-					return -cmpu64(na->in_bytes, nb->in_bytes) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate) ?: na->i - nb->i;
-			case 3:
-				if(cumulative)
-					return -cmpu64(na->out_packets, nb->out_packets) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->out_packets_rate, nb->out_packets_rate) ?: na->i - nb->i;
-			case 4:
-				if(cumulative)
-					return -cmpu64(na->out_bytes, nb->out_bytes) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate) ?: na->i - nb->i;
-			case 5:
-				if(cumulative)
-					return -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate) ?: na->i - nb->i;
-			case 6:
-				if(cumulative)
-					return -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate) ?: na->i - nb->i;
-			default:
-				return strcmp(na->name, nb->name) ?: na->i - nb->i;
-		}
-	}
 
 	qsort(sorted, n, sizeof *sorted, sortfunc);
 
