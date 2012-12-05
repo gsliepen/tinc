@@ -60,8 +60,10 @@ static list_t node_list;
 static struct timeval cur, prev, diff;
 static int delay = 1000;
 static bool changed = true;
-static const char *unit = "bytes";
-static float scale = 1;
+static const char *bunit = "bytes";
+static float bscale = 1;
+static const char *punit = "pkts";
+static float pscale = 1;
 
 #ifndef timersub
 #define timersub(a, b, c) do {(c)->tv_sec = (a)->tv_sec - (b)->tv_sec; (c)->tv_usec = (a)->tv_usec = (b)->tv_usec;} while(0)
@@ -198,7 +200,7 @@ static void redraw(void) {
 
 	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s", netname ?: "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
 	attrset(A_REVERSE);
-	mvprintw(2, 0, "Node                IN pkts   IN %s   OUT pkts  OUT %s", unit, unit);
+	mvprintw(2, 0, "Node                IN %s   IN %s   OUT %s  OUT %s", punit, bunit, punit, bunit);
 	chgat(-1, A_REVERSE, 0, NULL);
 
 	static nodestats_t **sorted = 0;
@@ -228,10 +230,10 @@ static void redraw(void) {
 
 		if(cumulative)
 			mvprintw(row, 0, "%-16s %10"PRIu64" %10.0f %10"PRIu64" %10.0f",
-					node->name, node->in_packets, node->in_bytes * scale, node->out_packets, node->out_bytes * scale);
+					node->name, node->in_packets * pscale, node->in_bytes * bscale, node->out_packets * pscale, node->out_bytes * bscale);
 		else
 			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
-					node->name, node->in_packets_rate, node->in_bytes_rate * scale, node->out_packets_rate, node->out_bytes_rate * scale);
+					node->name, node->in_packets_rate * pscale, node->in_bytes_rate * bscale, node->out_packets_rate * pscale, node->out_bytes_rate * bscale);
 	}
 
 	attrset(A_NORMAL);
@@ -286,20 +288,28 @@ void top(int fd) {
 				  sortmode = 5;
 				  break;
 			case 'b':
-				  unit = "bytes";
-				  scale = 1;
+				  bunit = "bytes";
+				  bscale = 1;
+				  punit = "pkts";
+				  pscale = 1;
 				  break;
 			case 'k':
-				  unit = "kbyte";
-				  scale = 1e-3;
+				  bunit = "kbyte";
+				  bscale = 1e-3;
+				  punit = "pkts";
+				  pscale = 1;
 				  break;
 			case 'M':
-				  unit = "Mbyte";
-				  scale = 1e-6;
+				  bunit = "Mbyte";
+				  bscale = 1e-6;
+				  punit = "kpkt";
+				  pscale = 1e-3;
 				  break;
 			case 'G':
-				  unit = "Gbyte";
-				  scale = 1e-9;
+				  bunit = "Gbyte";
+				  bscale = 1e-9;
+				  punit = "Mpkt";
+				  pscale = 1e-6;
 				  break;
 			case 'q':
 			case KEY_BREAK:
