@@ -59,7 +59,8 @@ static void real_logger(int level, int priority, const char *message) {
 			case LOGMODE_FILE:
 				if(!now.tv_sec)
 					gettimeofday(&now, NULL);
-				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now.tv_sec));
+				time_t now_sec = now.tv_sec;
+				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now_sec));
 				fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
 				fflush(logfile);
 				break;
