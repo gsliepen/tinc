@@ -4,7 +4,7 @@ AC_PREREQ(2.61)
 AC_INIT
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE(tinc, 1.1pre3)
+AM_INIT_AUTOMAKE(tinc, 1.1pre4)
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
@@ -179,7 +179,7 @@ AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
 
-AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
+dnl AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
 
 tinc_CURSES
 tinc_READLINE
