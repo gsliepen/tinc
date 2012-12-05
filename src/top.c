@@ -264,53 +264,53 @@ void top(int fd) {
 				break;
 			}
 			case 'c':
-				  cumulative = !cumulative;
-				  break;
+				cumulative = !cumulative;
+				break;
 			case 'n':
-				  sortmode = 0;
-				  break;
+				sortmode = 0;
+				break;
 			case 'i':
-				  sortmode = 2;
-				  break;
+				sortmode = 2;
+				break;
 			case 'I':
-				  sortmode = 1;
-				  break;
+				sortmode = 1;
+				break;
 			case 'o':
-				  sortmode = 4;
-				  break;
+				sortmode = 4;
+				break;
 			case 'O':
-				  sortmode = 3;
-				  break;
+				sortmode = 3;
+				break;
 			case 't':
-				  sortmode = 6;
-				  break;
+				sortmode = 6;
+				break;
 			case 'T':
-				  sortmode = 5;
-				  break;
+				sortmode = 5;
+				break;
 			case 'b':
-				  bunit = "bytes";
-				  bscale = 1;
-				  punit = "pkts";
-				  pscale = 1;
-				  break;
+				bunit = "bytes";
+				bscale = 1;
+				punit = "pkts";
+				pscale = 1;
+				break;
 			case 'k':
-				  bunit = "kbyte";
-				  bscale = 1e-3;
-				  punit = "pkts";
-				  pscale = 1;
-				  break;
+				bunit = "kbyte";
+				bscale = 1e-3;
+				punit = "pkts";
+				pscale = 1;
+				break;
 			case 'M':
-				  bunit = "Mbyte";
-				  bscale = 1e-6;
-				  punit = "kpkt";
-				  pscale = 1e-3;
-				  break;
+				bunit = "Mbyte";
+				bscale = 1e-6;
+				punit = "kpkt";
+				pscale = 1e-3;
+				break;
 			case 'G':
-				  bunit = "Gbyte";
-				  bscale = 1e-9;
-				  punit = "Mpkt";
-				  pscale = 1e-6;
-				  break;
+				bunit = "Gbyte";
+				bscale = 1e-9;
+				punit = "Mpkt";
+				pscale = 1e-6;
+				break;
 			case 'q':
 			case KEY_BREAK:
 				running = false;
