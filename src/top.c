@@ -229,7 +229,7 @@ static void redraw(void) {
 			attrset(A_DIM);
 
 		if(cumulative)
-			mvprintw(row, 0, "%-16s %10"PRIu64" %10.0f %10"PRIu64" %10.0f",
+			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
 					node->name, node->in_packets * pscale, node->in_bytes * bscale, node->out_packets * pscale, node->out_bytes * bscale);
 		else
 			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",

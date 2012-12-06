@@ -206,7 +206,7 @@ Fractional seconds are honored.
 Intervals lower than 0.1 seconds are not allowed.
 .It Ic c
 Toggle between displaying current traffic rates (in packets and bytes per second)
-and cummulative traffic (total packets and bytes since the tinc daemon started).
+and cumulative traffic (total packets and bytes since the tinc daemon started).
 .It Ic n
 Sort the list of nodes by name.
 .It Ic i
