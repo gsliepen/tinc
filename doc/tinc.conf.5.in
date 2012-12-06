@@ -343,7 +343,7 @@ This option selects the way packets are routed to other daemons.
 In this mode
 .Va Subnet
 variables in the host configuration files will be used to form a routing table.
-Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
+Only packets of routable protocols (IPv4 and IPv6) are supported in this mode.
 .Pp
 This is the default mode, and unless you really know you need another mode, don't change it.
 .It switch
@@ -497,12 +497,9 @@ Furthermore, specifying
 .Qq none
 will turn off packet authentication.
 .It Va IndirectData Li = yes | no Pq no
-This option specifies whether other tinc daemons besides the one you specified with
-.Va ConnectTo
-can make a direct connection to you.
-This is especially useful if you are behind a firewall
-and it is impossible to make a connection from the outside to your tinc daemon.
-Otherwise, it is best to leave this option out or set it to no.
+When set to yes, other nodes which do not already have a meta connection to you
+will not try to establish direct communication with you.
+It is best to leave this option out or set it to no.
 .It Va MACLength Li = Ar length Pq 4
 The length of the message authentication code used to authenticate UDP packets.
 Can be anything from
