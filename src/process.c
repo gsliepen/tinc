@@ -370,14 +370,12 @@ bool execute_script(const char *name, char **envp) {
 
 	scriptname[len - 1] = '\0';
 
-#ifndef HAVE_TUNEMU
 	/* First check if there is a script */
 
 	if(access(scriptname + 1, F_OK)) {
 		free(scriptname);
 		return true;
 	}
-#endif
 
 	// Custom scripts interpreter
 	if(get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &interpreter)) {
