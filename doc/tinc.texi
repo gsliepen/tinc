@@ -1103,7 +1103,7 @@ The name should consist only of alfanumeric and underscore characters (a-z, A-Z,
 If Name starts with a $, then the contents of the environment variable that follows will be used.
 In that case, invalid characters will be converted to underscores.
 If Name is $HOST, but no such environment variable exist,
-the hostname will be read using the gethostnname() system call.
+the hostname will be read using the gethostname() system call.
 
 @cindex PingInterval
 @item PingInterval = <@var{seconds}> (60)
