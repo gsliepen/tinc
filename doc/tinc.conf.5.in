@@ -361,7 +361,7 @@ while no routing table is managed.
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.
 It must be unique for the virtual private network this daemon will connect to.
-The Name may only consist of alphanumeric and underscore characters.
+The Name may only consist of alphanumeric and underscore characters (a-z, A-Z, 0-9 and _), and is case sensitive.
 If 
 .Va Name
 starts with a
