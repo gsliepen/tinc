@@ -854,6 +854,11 @@ static int cmd_start(int argc, char *argv[]) {
 }
 
 static int cmd_stop(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 #ifndef HAVE_MINGW
 	if(!connect_tincd(true)) {
 		if(pid) {
@@ -898,6 +903,11 @@ static int cmd_restart(int argc, char *argv[]) {
 }
 
 static int cmd_reload(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1070,6 +1080,11 @@ static int cmd_dump(int argc, char *argv[]) {
 }
 
 static int cmd_purge(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1105,6 +1120,11 @@ static int cmd_debug(int argc, char *argv[]) {
 }
 
 static int cmd_retry(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1164,6 +1184,11 @@ static int cmd_disconnect(int argc, char *argv[]) {
 }
 
 static int cmd_top(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 #ifdef HAVE_CURSES
 	if(!connect_tincd(true))
 		return 1;
@@ -1177,6 +1202,11 @@ static int cmd_top(int argc, char *argv[]) {
 }
 
 static int cmd_pcap(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1185,6 +1215,11 @@ static int cmd_pcap(int argc, char *argv[]) {
 }
 
 static int cmd_log(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1193,6 +1228,11 @@ static int cmd_log(int argc, char *argv[]) {
 }
 
 static int cmd_pid(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true) && !pid)
 		return 1;
 
@@ -1613,7 +1653,10 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(argc < 2) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	} else if(argc < 2) {
 		if(tty) {
 			char buf[1024];
 			fprintf(stdout, "Enter the Name you want your tinc node to have: ");
@@ -1692,14 +1735,29 @@ static int cmd_init(int argc, char *argv[]) {
 }
 
 static int cmd_generate_keys(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true) && ecdsa_keygen(true));
 }
 
 static int cmd_generate_rsa_keys(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true);
 }
 
 static int cmd_generate_ecdsa_keys(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	return !ecdsa_keygen(true);
 }
 
@@ -1709,6 +1767,11 @@ static int cmd_help(int argc, char *argv[]) {
 }
 
 static int cmd_version(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	version();
 	return 0;
 }
@@ -1811,6 +1874,11 @@ static int export(const char *name, FILE *out) {
 }
 
 static int cmd_export(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	char *name = get_my_name();
 	if(!name)
 		return 1;
@@ -1819,6 +1887,11 @@ static int cmd_export(int argc, char *argv[]) {
 }
 
 static int cmd_export_all(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	DIR *dir = opendir(hosts_dir);
 	if(!dir) {
 		fprintf(stderr, "Could not open host configuration directory %s: %s\n", hosts_dir, strerror(errno));
@@ -1846,6 +1919,11 @@ static int cmd_export_all(int argc, char *argv[]) {
 }
 
 static int cmd_import(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	FILE *in = stdin;
 	FILE *out = NULL;
 
