@@ -1847,6 +1847,8 @@ This option can be used more than once to specify multiple configuration variabl
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
 
+This option is not supported on all platforms.
+
 @item --logfile[=@var{file}]
 Write log entries to a file instead of to the system logging facility.
 If @var{file} is omitted, the default is @file{@value{localstatedir}/log/tinc.@var{netname}.log}.
@@ -1867,10 +1869,13 @@ Note that this option alone does not do any good without -U/--user, below.
 Note also that tinc can't run scripts anymore (such as tinc-down or host-up),
 unless it's setup to be runnable inside chroot environment.
 
+This option is not supported on all platforms.
 @item -U, --user=@var{user}
 Switch to the given @var{user} after initialization, at the same time as
 chroot is performed (see --chroot above).  With this option tinc drops
 privileges, for added security.
+
+This option is not supported on all platforms.
 
 @item --help
 Display a short reminder of these runtime options and terminate.

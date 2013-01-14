@@ -81,6 +81,7 @@ This option can be used more than once to specify multiple configuration variabl
 .It Fl L, -mlock
 Lock tinc into main memory.
 This will prevent sensitive data like shared private keys to be written to the system swap files/partitions.
+This option is not supported on all platforms.
 .It Fl -logfile Ns Op = Ns Ar FILE
 Write log entries to a file instead of to the system logging facility.
 If
@@ -104,10 +105,12 @@ Only useful for debugging.
 With this option tinc chroots into the directory where network
 config is located (@sysconfdir@/tinc/NETNAME if -n option is used,
 or to the directory specified with -c option) after initialization.
+This option is not supported on all platforms.
 .It Fl U, -user Ns = Ns Ar USER
 setuid to the specified
 .Ar USER
 after initialization.
+This option is not supported on all platforms.
 .It Fl -help
 Display short list of options.
 .It Fl -version
