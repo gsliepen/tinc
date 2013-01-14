@@ -127,13 +127,18 @@ static void usage(bool status) {
 				"  -D, --no-detach               Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
+#ifdef HAVE_MLOCKALL
 				"  -L, --mlock                   Lock tinc into main memory.\n"
+#endif
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
 				"      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+#ifndef HAVE_MINGW
 				"  -R, --chroot                  chroot to NET dir at startup.\n"
-				"  -U, --user=USER               setuid to given USER at startup.\n"                            "      --help                    Display this help and exit.\n"
+				"  -U, --user=USER               setuid to given USER at startup.\n"
+#endif
+				"      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -162,7 +167,7 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
-				logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "mlockall()");
+				logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
 				return false;
 #else
 				do_mlock = true;
@@ -187,6 +192,12 @@ static bool parse_options(int argc, char **argv) {
 				list_insert_tail(cmdline_conf, cfg);
 				break;
 
+#ifdef HAVE_MINGW
+			case 'R':
+			case 'U':
+				logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
+				return false;
+#else
 			case 'R': /* chroot to NETNAME dir */
 				do_chroot = true;
 				break;
@@ -194,6 +205,7 @@ static bool parse_options(int argc, char **argv) {
 			case 'U': /* setuid to USER */
 				switchuser = optarg;
 				break;
+#endif
 
 			case 1:   /* show help */
 				show_help = true;
@@ -306,14 +318,7 @@ static void free_names(void) {
 
 static bool drop_privs(void) {
 #ifdef HAVE_MINGW
-	if (switchuser) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-U");
-		return false;
-	}
-	if (do_chroot) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-R");
-		return false;
-	}
+	return false;
 #else
 	uid_t uid = 0;
 	if (switchuser) {
