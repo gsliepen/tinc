@@ -1857,6 +1857,8 @@ static int cmd_import(int argc, char *argv[]) {
 
 	while(fgets(buf, sizeof buf, in)) {
 		if(sscanf(buf, "Name = %s", name) == 1) {
+			firstline = false;
+
 			if(!check_id(name)) {
 				fprintf(stderr, "Invalid Name in input!\n");
 				return 1;
@@ -1881,7 +1883,6 @@ static int cmd_import(int argc, char *argv[]) {
 			}
 
 			count++;
-			firstline = false;
 			continue;
 		} else if(firstline) {
 			fprintf(stderr, "Junk at the beginning of the input, ignoring.\n");
