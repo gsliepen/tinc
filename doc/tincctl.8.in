@@ -86,6 +86,10 @@ export command from standard input.
 Already existing host configuration files are not overwritten unless the option
 .Fl -force
 is used.
+.It exchange Op Fl -force
+The same as export followed by import.
+.It exchange-all Op Fl -force
+The same as export-all followed by import.
 .It start Op tincd options
 Start
 .Xr tincd 8 ,

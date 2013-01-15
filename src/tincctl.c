@@ -153,6 +153,8 @@ static void usage(bool status) {
 				"  export                     Export host configuration of local node to standard output\n"
 				"  export-all                 Export all host configuration files to standard output\n"
 				"  import [--force]           Import host configuration file(s) from standard input\n"
+				"  exchange [--force]         Same as export followed by import\n"
+				"  exchange-all [--force]     Same as export-all followed by import\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -1883,7 +1885,10 @@ static int cmd_export(int argc, char *argv[]) {
 	if(!name)
 		return 1;
 
-	return export(name, stdout);
+	int result = export(name, stdout);
+	if(!tty)
+		fclose(stdout);
+	return result;
 }
 
 static int cmd_export_all(int argc, char *argv[]) {
@@ -1915,6 +1920,8 @@ static int cmd_export_all(int argc, char *argv[]) {
 	}
 
 	closedir(dir);
+	if(!tty)
+		fclose(stdout);
 	return result;
 }
 
@@ -1929,7 +1936,7 @@ static int cmd_import(int argc, char *argv[]) {
 
 	char buf[4096];
 	char name[4096];
-	char *filename;
+	char *filename = NULL;
 	int count = 0;
 	bool firstline = true;
 
@@ -1991,6 +1998,14 @@ static int cmd_import(int argc, char *argv[]) {
 	}
 }
 
+static int cmd_exchange(int argc, char *argv[]) {
+	return cmd_export(argc, argv) ?: cmd_import(argc, argv);
+}
+
+static int cmd_exchange_all(int argc, char *argv[]) {
+	return cmd_export_all(argc, argv) ?: cmd_import(argc, argv);
+}
+
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
@@ -2021,6 +2036,8 @@ static const struct {
 	{"export", cmd_export},
 	{"export-all", cmd_export_all},
 	{"import", cmd_import},
+	{"exchange", cmd_exchange},
+	{"exchange-all", cmd_exchange_all},
 	{NULL, NULL},
 };
 
