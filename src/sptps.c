@@ -486,6 +486,10 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	if(seqno > s->inseqno)
 		s->inseqno = seqno + 1;
 
+	if(!s->inseqno)
+		s->received = 0;
+	else
+		s->received++;
 
 	// Decrypt.
 	cipher_set_counter(&s->incipher, &seqno, sizeof seqno);

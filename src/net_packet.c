@@ -365,6 +365,8 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;
 
+	n->received++;
+
 	if(n->received_seqno > MAX_SEQNO)
 		regenerate_key();
 

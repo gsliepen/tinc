@@ -56,6 +56,7 @@ typedef struct sptps {
 	cipher_t incipher;
 	digest_t indigest;
 	uint32_t inseqno;
+	uint32_t received;
 	unsigned int replaywin;
 	unsigned int farfuture;
 	char *late;

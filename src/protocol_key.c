@@ -278,6 +278,7 @@ bool send_ans_key(node_t *to) {
 	// Reset sequence number and late packet window
 	mykeyused = true;
 	to->received_seqno = 0;
+	to->received = 0;
 	if(replaywin) memset(to->late, 0, replaywin);
 
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
