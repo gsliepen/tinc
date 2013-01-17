@@ -128,6 +128,7 @@ extern bool localdiscovery;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
+extern io_t unix_socket;
 extern int keylifetime;
 extern int udp_rcvbuf;
 extern int udp_sndbuf;
@@ -164,6 +165,7 @@ extern void handle_incoming_vpn_data(void *, int);
 extern void finish_connecting(struct connection_t *);
 extern bool do_outgoing_connection(struct outgoing_t *);
 extern void handle_new_meta_connection(void *, int);
+extern void handle_new_unix_connection(void *, int);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
 extern bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len);

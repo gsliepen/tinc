@@ -27,6 +27,7 @@ char *netname = NULL;
 char *confdir = NULL;           /* base configuration directory */
 char *confbase = NULL;          /* base configuration directory for this instance of tinc */
 char *identname = NULL;         /* program name for syslog */
+char *unixsocketname = NULL;    /* UNIX socket location */
 char *logfilename = NULL;       /* log file location */
 char *pidfilename = NULL;
 char *program_name = NULL;
@@ -73,6 +74,9 @@ void make_names(void) {
 	if(!pidfilename)
 		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
 
+	if(!unixsocketname)
+		xasprintf(&unixsocketname, LOCALSTATEDIR SLASH "run" SLASH "%s.socket", identname);
+
 	if(netname) {
 		if(!confbase)
 			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
@@ -87,6 +91,7 @@ void make_names(void) {
 void free_names(void) {
 	free(identname);
 	free(netname);
+	free(unixsocketname);
 	free(pidfilename);
 	free(logfilename);
 	free(confbase);

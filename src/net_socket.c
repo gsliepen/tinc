@@ -24,6 +24,7 @@
 
 #include "conf.h"
 #include "connection.h"
+#include "control_common.h"
 #include "list.h"
 #include "logger.h"
 #include "meta.h"
@@ -47,6 +48,9 @@ int udp_sndbuf = 0;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
+#ifndef HAVE_MINGW
+io_t unix_socket;
+#endif
 list_t *outgoing_list = NULL;
 
 /* Setup sockets */
@@ -561,6 +565,45 @@ void handle_new_meta_connection(void *data, int flags) {
 	c->allow_request = ID;
 	send_id(c);
 }
+
+#ifndef HAVE_MINGW
+/*
+  accept a new UNIX socket connection
+*/
+void handle_new_unix_connection(void *data, int flags) {
+	io_t *io = data;
+	connection_t *c;
+	sockaddr_t sa;
+	int fd;
+	socklen_t len = sizeof sa;
+
+	fd = accept(io->fd, &sa.sa, &len);
+
+	if(fd < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
+		return;
+	}
+
+	sockaddrunmap(&sa);
+
+	c = new_connection();
+	c->name = xstrdup("<control>");
+	c->address = sa;
+	c->hostname = xstrdup("localhost port unix");
+	c->socket = fd;
+	c->last_ping_time = time(NULL);
+
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
+
+	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
+
+	connection_add(c);
+
+	c->allow_request = ID;
+
+	send_id(c);
+}
+#endif
 
 static void free_outgoing(outgoing_t *outgoing) {
 	timeout_del(&outgoing->ev);

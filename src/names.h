@@ -25,6 +25,7 @@ extern char *confdir;
 extern char *confbase;
 extern char *netname;
 extern char *identname;
+extern char *unixsocketname;
 extern char *logfilename;
 extern char *pidfilename;
 extern char *program_name;

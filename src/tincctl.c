@@ -666,6 +666,26 @@ static bool connect_tincd(bool verbose) {
 	}
 #endif
 
+#ifndef HAVE_MINGW
+	struct sockaddr_un sa;
+	sa.sun_family = AF_UNIX;
+	strncpy(sa.sun_path, unixsocketname, sizeof sa.sun_path);
+
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if(fd < 0) {
+		if(verbose)
+			fprintf(stderr, "Cannot create UNIX socket: %s\n", sockstrerror(sockerrno));
+		return false;
+	}
+
+	if(connect(fd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+		if(verbose)
+			fprintf(stderr, "Cannot connect to UNIX socket %s: %s\n", unixsocketname, sockstrerror(sockerrno));
+		close(fd);
+		fd = -1;
+		return false;
+	}
+#else
 	struct addrinfo hints = {
 		.ai_family = AF_UNSPEC,
 		.ai_socktype = SOCK_STREAM,
@@ -706,6 +726,7 @@ static bool connect_tincd(bool verbose) {
 	}
 
 	freeaddrinfo(res);
+#endif
 
 	char data[4096];
 	int version;
