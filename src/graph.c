@@ -61,7 +61,7 @@
 #include "graph.h"
 
 /* Implementation of Kruskal's algorithm.
-   Running time: O(E)
+   Running time: O(EN)
    Please note that sorting on weight is already done by add_edge().
 */
 
@@ -78,11 +78,24 @@ static void mst_kruskal(void) {
 	for splay_each(node_t, n, node_tree)
 		n->status.visited = false;
 
-	/* Add safe edges */
+	/* Starting point */
 
 	for splay_each(edge_t, e, edge_weight_tree) {
-		if(!e->reverse || (e->from->status.visited && e->to->status.visited))
+		if(e->from->status.reachable) {
+			e->from->status.visited = true;
+			break;
+		}
+	}
+
+	/* Add safe edges */
+
+	bool skipped = false;
+
+	for splay_each(edge_t, e, edge_weight_tree) {
+		if(!e->reverse || (e->from->status.visited == e->to->status.visited)) {
+			skipped = true;
 			continue;
+		}
 
 		e->from->status.visited = true;
 		e->to->status.visited = true;
@@ -93,8 +106,12 @@ static void mst_kruskal(void) {
 		if(e->reverse->connection)
 			e->reverse->connection->status.mst = true;
 
-		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
-				   e->to->name, e->weight);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name, e->to->name, e->weight);
+
+		if(skipped) {
+			skipped = false;
+			next = edge_weight_tree->head;
+		}
 	}
 }
 
