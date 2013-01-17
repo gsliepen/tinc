@@ -48,6 +48,8 @@ typedef struct node_t {
 	sockaddr_t address;                     /* his real (internet) ip to send UDP packets to */
 	char *hostname;                         /* the hostname of its real ip */
 
+	struct node_t *disjoint_set;            /* Pointer to the parent node in the disjoint set (used in Kruskal's algorithm) */
+
 	node_status_t status;
 	time_t last_state_change;
 	time_t last_req_key;

@@ -60,6 +60,16 @@
 #include "xalloc.h"
 #include "graph.h"
 
+/* Find which set node n belongs to in the disjoint-set structure. */
+static struct node_t* disjoint_set_find(struct node_t *n) {
+	while (n->disjoint_set != n) {
+		struct node_t *parent = n->disjoint_set;
+		n->disjoint_set = parent->disjoint_set;
+		n = parent;
+	}
+	return n;
+}
+
 /* Implementation of Kruskal's algorithm.
    Running time: O(E)
    Please note that sorting on weight is already done by add_edge().
@@ -73,19 +83,24 @@ static void mst_kruskal(void) {
 
 	logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Running Kruskal's algorithm:");
 
-	/* Clear visited status on nodes */
-
+	/* Initialize each node as an independent set */
 	for splay_each(node_t, n, node_tree)
-		n->status.visited = false;
+		n->disjoint_set = n;
 
 	/* Add safe edges */
-
 	for splay_each(edge_t, e, edge_weight_tree) {
-		if(!e->reverse || (e->from->status.visited && e->to->status.visited))
+		if(!e->reverse)
 			continue;
 
-		e->from->status.visited = true;
-		e->to->status.visited = true;
+		struct node_t *from_set = disjoint_set_find(e->from);
+		struct node_t *to_set = disjoint_set_find(e->to);
+
+		/* e->from and e->to are already connected in MST */
+		if(from_set == to_set)
+			continue;
+
+		/* Merge two sets in the disjoint-set structure */
+		from_set->disjoint_set = to_set;
 
 		if(e->connection)
 			e->connection->status.mst = true;
