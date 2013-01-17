@@ -9,7 +9,7 @@ tincd_SOURCES = \
 	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
 	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c event.c tincd.c \
-	dummy_device.c raw_socket_device.c multicast_device.c
+	dummy_device.c raw_socket_device.c multicast_device.c names.c
 	
 if UML
 tincd_SOURCES += uml_device.c
@@ -24,7 +24,7 @@ nodist_tincd_SOURCES = \
 
 tincctl_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
-	info.c list.c subnet_parse.c tincctl.c top.c
+	info.c list.c subnet_parse.c tincctl.c top.c names.c
 
 nodist_tincctl_SOURCES = \
 	ecdsagen.c rsagen.c

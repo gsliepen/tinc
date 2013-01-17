@@ -24,6 +24,7 @@
 
 #include "conf.h"
 #include "device.h"
+#include "names.h"
 #include "net.h"
 #include "logger.h"
 #include "utils.h"
@@ -37,7 +38,6 @@ static int write_fd = -1;
 static int state = 0;
 static char *device_info;
 
-extern char *identname;
 extern volatile bool running;
 
 static uint64_t device_total_in = 0;

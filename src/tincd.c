@@ -56,15 +56,13 @@
 #include "crypto.h"
 #include "device.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
-
-/* The name this program was run with. */
-char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -87,9 +85,6 @@ static const char *switchuser = NULL;
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
-char *identname = NULL;         /* program name for syslog */
-char *logfilename = NULL;       /* log file location */
-char *pidfilename = NULL;
 char **g_argv;                  /* a copy of the cmdline arguments */
 
 static int status = 1;
@@ -254,66 +249,6 @@ static bool parse_options(int argc, char **argv) {
 	}
 
 	return true;
-}
-
-/*
-  Set all files and paths according to netname
-*/
-static void make_names(void) {
-#ifdef HAVE_MINGW
-	HKEY key;
-	char installdir[1024] = "";
-	long len = sizeof installdir;
-#endif
-
-	if(netname)
-		xasprintf(&identname, "tinc.%s", netname);
-	else
-		identname = xstrdup("tinc");
-
-#ifdef HAVE_MINGW
-	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
-			if(!logfilename)
-				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", identname);
-			if(!confbase) {
-				if(netname)
-					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
-				else
-					xasprintf(&confbase, "%s", installdir);
-			}
-			if(!pidfilename)
-				xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
-		}
-		RegCloseKey(key);
-		if(*installdir)
-			return;
-	}
-#endif
-
-	if(!logfilename)
-		xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
-
-	if(!pidfilename)
-		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
-
-	if(netname) {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
-		else
-			logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
-	} else {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc");
-	}
-}
-
-static void free_names(void) {
-	if (identname) free(identname);
-	if (netname) free(netname);
-	if (pidfilename) free(pidfilename);
-	if (logfilename) free(logfilename);
-	if (confbase) free(confbase);
 }
 
 static bool drop_privs(void) {

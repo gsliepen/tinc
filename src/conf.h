@@ -39,8 +39,6 @@ extern int pinginterval;
 extern int pingtimeout;
 extern int maxtimeout;
 extern bool bypass_security;
-extern char *confbase;
-extern char *netname;
 extern list_t *cmdline_conf;
 
 extern void init_configuration(splay_tree_t **);

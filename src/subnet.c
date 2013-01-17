@@ -25,6 +25,7 @@
 #include "device.h"
 #include "hash.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"

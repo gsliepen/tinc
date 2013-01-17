@@ -31,6 +31,7 @@
 #include "control_common.h"
 #include "ecdsagen.h"
 #include "info.h"
+#include "names.h"
 #include "rsagen.h"
 #include "utils.h"
 #include "tincctl.h"
@@ -39,10 +40,6 @@
 #ifdef HAVE_MINGW
 #define mkdir(a, b) mkdir(a)
 #endif
-
-
-/* The name this program was run with. */
-static char *program_name = NULL;
 
 static char **orig_argv;
 static int orig_argc;
@@ -54,12 +51,7 @@ static bool show_help = false;
 static bool show_version = false;
 
 static char *name = NULL;
-static char *identname = NULL;          /* program name for syslog */
-static char *pidfilename = NULL;        /* pid file location */
-static char *confdir = NULL;
 static char controlcookie[1025];
-char *netname = NULL;
-char *confbase = NULL;
 static char *tinc_conf = NULL;
 static char *hosts_dir = NULL;
 struct timeval now;
@@ -107,10 +99,9 @@ static void version(void) {
 }
 
 static void usage(bool status) {
-	if(status)
-		fprintf(stderr, "Try `%s --help\' for more information.\n",
-				program_name);
-	else {
+	if(status) {
+		fprintf(stderr, "Try `%s --help\' for more information.\n", program_name);
+	} else {
 		printf("Usage: %s [options] command\n\n", program_name);
 		printf("Valid options are:\n"
 				"  -c, --config=DIR        Read configuration options from DIR.\n"
@@ -453,62 +444,6 @@ static bool rsa_keygen(int bits, bool ask) {
 	fclose(f);
 
 	return true;
-}
-
-/*
-  Set all files and paths according to netname
-*/
-static void make_names(void) {
-#ifdef HAVE_MINGW
-	HKEY key;
-	char installdir[1024] = "";
-	long len = sizeof installdir;
-#endif
-
-	if(netname)
-		xasprintf(&identname, "tinc.%s", netname);
-	else
-		identname = xstrdup("tinc");
-
-#ifdef HAVE_MINGW
-	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
-			if(!confbase) {
-				if(netname)
-					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
-				else
-					xasprintf(&confbase, "%s", installdir);
-			}
-		}
-		if(!pidfilename)
-			xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
-		RegCloseKey(key);
-	}
-
-	if(!*installdir) {
-#endif
-	confdir = xstrdup(CONFDIR);
-
-	if(!pidfilename)
-		xasprintf(&pidfilename, "%s" SLASH "run" SLASH "%s.pid", LOCALSTATEDIR, identname);
-
-	if(netname) {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
-		else
-			fprintf(stderr, "Both netname and configuration directory given, using the latter...\n");
-	} else {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc");
-	}
-
-#ifdef HAVE_MINGW
-	} else
-		confdir = xstrdup(installdir);
-#endif
-
-	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
-	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 }
 
 static char buffer[4096];
@@ -2285,6 +2220,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 
 	make_names();
+	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
+	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 
 	if(show_version) {
 		version();

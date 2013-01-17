@@ -31,6 +31,7 @@
 #include "ecdsa.h"
 #include "graph.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"

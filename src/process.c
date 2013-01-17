@@ -27,6 +27,7 @@
 #include "edge.h"
 #include "event.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "node.h"
 #include "process.h"
@@ -38,17 +39,12 @@
 bool do_detach = true;
 bool sigalrm = false;
 
-extern char *identname;
 extern char **g_argv;
 extern bool use_logfile;
 
 /* Some functions the less gifted operating systems might lack... */
 
 #ifdef HAVE_MINGW
-extern char *identname;
-extern char *program_name;
-extern char **g_argv;
-
 static SC_HANDLE manager = NULL;
 static SC_HANDLE service = NULL;
 static SERVICE_STATUS status = {0};

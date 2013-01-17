@@ -23,6 +23,7 @@
 
 #include "conf.h"
 #include "device.h"
+#include "names.h"
 #include "net.h"
 #include "logger.h"
 #include "utils.h"
@@ -35,7 +36,6 @@ static int port = 0;
 static char *group = NULL;
 static char *device_info;
 
-extern char *identname;
 extern volatile bool running;
 
 static uint64_t device_total_in = 0;

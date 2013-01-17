@@ -22,6 +22,7 @@
 
 #include "conf.h"
 #include "meta.h"
+#include "names.h"
 #include "logger.h"
 #include "connection.h"
 #include "control_common.h"
@@ -30,7 +31,6 @@
 debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
-extern char *logfilename;
 static FILE *logfile = NULL;
 #ifdef HAVE_MINGW
 static HANDLE loghandle = NULL;

@@ -28,6 +28,7 @@
 #include "conf.h"
 #include "list.h"
 #include "logger.h"
+#include "names.h"
 #include "netutl.h"             /* for str2address */
 #include "protocol.h"
 #include "utils.h"              /* for cp */
@@ -37,10 +38,7 @@ splay_tree_t *config_tree;
 
 int pinginterval = 0;           /* seconds between pings */
 int pingtimeout = 0;            /* seconds to wait for response */
-char *confbase = NULL;          /* directory in which all config files are */
-char *netname = NULL;           /* name of the vpn network */
 list_t *cmdline_conf = NULL;    /* global/host configuration values given at the command line */
-
 
 static int config_compare(const config_t *a, const config_t *b) {
 	int result;

@@ -25,6 +25,7 @@
 
 #include "control_common.h"
 #include "list.h"
+#include "names.h"
 #include "tincctl.h"
 #include "top.h"
 #include "xalloc.h"
