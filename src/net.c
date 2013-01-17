@@ -451,11 +451,13 @@ int main_loop(void) {
 	signal_t sighup = {0};
 	signal_t sigterm = {0};
 	signal_t sigquit = {0};
+	signal_t sigint = {0};
 	signal_t sigalrm = {0};
 
 	signal_add(&sighup, sighup_handler, &sighup, SIGHUP);
 	signal_add(&sigterm, sigterm_handler, &sigterm, SIGTERM);
 	signal_add(&sigquit, sigterm_handler, &sigquit, SIGQUIT);
+	signal_add(&sigint, sigterm_handler, &sigint, SIGINT);
 	signal_add(&sigalrm, sigalrm_handler, &sigalrm, SIGALRM);
 #endif
 
