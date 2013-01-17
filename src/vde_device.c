@@ -36,8 +36,6 @@ static int port = 0;
 static char *group = NULL;
 static char *device_info;
 
-extern volatile bool running;
-
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
@@ -102,7 +100,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	int lenin = (ssize_t)plug.vde_recv(conn, packet->data, MTU, 0);
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
-		running = false;
+		event_exit();
 		return false;
 	}
 
@@ -117,7 +115,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	if((ssize_t)plug.vde_send(conn, packet->data, packet->len, 0) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
-			running = false;
+			event_exit();
 		}
 
 		return false;

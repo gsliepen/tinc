@@ -38,8 +38,6 @@ static int write_fd = -1;
 static int state = 0;
 static char *device_info;
 
-extern volatile bool running;
-
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
@@ -73,7 +71,7 @@ static bool setup_device(void) {
 
 	if((write_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));
-		running = false;
+		event_exit();
 		return false;
 	}
 
@@ -85,13 +83,13 @@ static bool setup_device(void) {
 
 	if(fcntl(write_fd, F_SETFL, O_NONBLOCK) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
-		running = false;
+		event_exit();
 		return false;
 	}
 
 	if((data_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open data %s: %s", device_info, strerror(errno));
-		running = false;
+		event_exit();
 		return false;
 	}
 
@@ -103,7 +101,7 @@ static bool setup_device(void) {
 
 	if(fcntl(data_fd, F_SETFL, O_NONBLOCK) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
-		running = false;
+		event_exit();
 		return false;
 	}
 
@@ -116,7 +114,7 @@ static bool setup_device(void) {
 
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof data_sun) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind data %s: %s", device_info, strerror(errno));
-		running = false;
+		event_exit();
 		return false;
 	}
 
@@ -199,7 +197,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 			if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
-				running = false;
+				event_exit();
 				return false;
 			}
 
@@ -215,20 +213,20 @@ static bool read_packet(vpn_packet_t *packet) {
 			if((inlen = read(request_fd, &request, sizeof request)) != sizeof request) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
 					   device, strerror(errno));
-				running = false;
+				event_exit();
 				return false;
 			}
 
 			if(request.magic != 0xfeedface || request.version != 3 || request.type != REQ_NEW_CONTROL) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Unknown magic %x, version %d, request type %d from %s %s",
 						request.magic, request.version, request.type, device_info, device);
-				running = false;
+				event_exit();
 				return false;
 			}
 
 			if(connect(write_fd, &request.sock, sizeof request.sock) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
-				running = false;
+				event_exit();
 				return false;
 			}
 
@@ -245,7 +243,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			if((inlen = read(data_fd, packet->data, MTU)) <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
-				running = false;
+				event_exit();
 				return false;
 			}
 
@@ -278,7 +276,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	if(write(write_fd, packet->data, packet->len) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
-			running = false;
+			event_exit();
 		}
 
 		return false;
