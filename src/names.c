@@ -66,7 +66,7 @@ void make_names(void) {
 	}
 #endif
 	if(!confdir)
-		confdir = xstrdup(CONFDIR);
+		confdir = xstrdup(CONFDIR SLASH "tinc");
 
 	if(!logfilename)
 		xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
