@@ -835,6 +835,11 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return;
 
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	if(priorityinheritance && type == ETH_P_IP && packet->len >= ether_size + ip_size)
+		packet->priority = packet->data[15];
+
 	// Handle packets larger than PMTU
 
 	node_t *via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
@@ -844,7 +849,6 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(via && packet->len > via->mtu && via != myself) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
-		uint16_t type = packet->data[12] << 8 | packet->data[13];
 		length_t ethlen = 14;
 
 		if(type == ETH_P_8021Q) {
