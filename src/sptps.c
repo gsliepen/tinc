@@ -1,6 +1,6 @@
 /*
     sptps.c -- Simple Peer-to-Peer Security
-    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2010      Brandon L. Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify

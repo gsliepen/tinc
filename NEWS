@@ -1,3 +1,18 @@
+Version 1.1pre5              January 20 2013
+
+ * Fixed long delays and possible hangs on Windows.
+
+ * Fixed support for the tunemu device on iOS, the UML and VDE devices.
+
+ * Small improvements to the documentation and error messages.
+
+ * Fixed broadcast packets not reaching the whole VPN.
+
+ * Tincctl now connects via a UNIX socket to the tincd on platforms that
+   support this.
+
+ * The PriorityInheritance option now also works in switch mode.
+
 Version 1.1pre4              December  5 2012
 
  * Added the "AutoConnect" option which will let tinc automatically select
