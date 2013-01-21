@@ -447,8 +447,6 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	memcpy(buffer, &netlen, 2);
 	memcpy(buffer + 2, data, len);
 
-	memcpy(&seqno, buffer + 2, 4);
-
 	if(!digest_verify(&s->indigest, buffer, len - 14, buffer + len - 14))
 		return error(s, EIO, "Invalid HMAC");
 
@@ -492,6 +490,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		s->received++;
 
 	// Decrypt.
+	memcpy(&seqno, buffer + 2, 4);
 	cipher_set_counter(&s->incipher, &seqno, sizeof seqno);
 	if(!cipher_counter_xor(&s->incipher, buffer + 6, len - 4, buffer + 6))
 		return false;
