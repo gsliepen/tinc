@@ -158,8 +158,18 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 
 #ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *tv, void *tz) {
+#ifdef HAVE_MINGW
+	FILETIME ft;
+	GetSystemTimeAsFileTime(&ft);
+	uint64_t lt = (uint64_t)ft.dwLowDateTime | ((uint64_t)ft.dwHighDateTime << 32);
+	lt -= 116444736000000000ULL;
+	tv->tv_sec = lt / 10000000;
+	tv->tv_usec = (lt / 10) % 1000000;
+#else
+#warning No high resolution time source!
 	tv->tv_sec = time(NULL);
 	tv->tv_usec = 0;
+#endif
 	return 0;
 }
 #endif
