@@ -33,12 +33,6 @@
 #include <sys/mman.h>
 #endif
 
-#include <openssl/rand.h>
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-#include <openssl/engine.h>
-
 #ifdef HAVE_LZO
 #include LZO1X_H
 #endif

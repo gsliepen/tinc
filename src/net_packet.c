@@ -22,12 +22,6 @@
 
 #include "system.h"
 
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/hmac.h>
-
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif
