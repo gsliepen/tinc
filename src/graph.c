@@ -318,7 +318,7 @@ void dump_graph(void) {
 	node_t *n;
 	edge_t *e;
 	char *filename = NULL, *tmpname = NULL;
-	FILE *file, *pipe;
+	FILE *file, *pipe = NULL;
 	
 	if(!graph_changed || !get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
 		return;
@@ -356,7 +356,7 @@ void dump_graph(void) {
 
 	fprintf(file, "}\n");	
 	
-	if(filename[0] == '|') {
+	if(pipe) {
 		pclose(pipe);
 	} else {
 		fclose(file);
