@@ -246,9 +246,7 @@ static bool parse_options(int argc, char **argv) {
 }
 
 static bool drop_privs(void) {
-#ifdef HAVE_MINGW
-	return false;
-#else
+#ifndef HAVE_MINGW
 	uid_t uid = 0;
 	if (switchuser) {
 		struct passwd *pw = getpwnam(switchuser);
