@@ -281,23 +281,6 @@ static void periodic_handler(void *data) {
 }
 
 void handle_meta_connection_data(connection_t *c) {
-	int result;
-	socklen_t len = sizeof result;
-
-	if(c->status.connecting) {
-		c->status.connecting = false;
-
-		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
-
-		if(!result)
-			finish_connecting(c);
-		else {
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
-			terminate_connection(c, false);
-			return;
-		}
-	}
-
 	if (!receive_meta(c)) {
 		terminate_connection(c, c->status.active);
 		return;

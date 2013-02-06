@@ -373,10 +373,28 @@ static void handle_meta_write(connection_t *c) {
 }
 
 static void handle_meta_io(void *data, int flags) {
+	connection_t *c = data;
+
+	if(c->status.connecting) {
+		c->status.connecting = false;
+
+		int result;
+		socklen_t len = sizeof result;
+		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+
+		if(!result)
+			finish_connecting(c);
+		else {
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
+			terminate_connection(c, false);
+			return;
+		}
+	}
+
 	if(flags & IO_WRITE)
-		handle_meta_write(data);
+		handle_meta_write(c);
 	else
-		handle_meta_connection_data(data);
+		handle_meta_connection_data(c);
 }
 
 bool do_outgoing_connection(outgoing_t *outgoing) {
@@ -493,7 +511,7 @@ begin:
 
 	connection_add(c);
 
-	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
+	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ|IO_WRITE);
 
 	return true;
 }
