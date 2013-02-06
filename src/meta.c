@@ -177,15 +177,45 @@ bool receive_meta(connection_t *c) {
 
 		if(c->tcplen) {
 			if(c->tcplen <= c->buflen) {
-				if(proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
-					if(c->buffer[0] == 0 && c->buffer[1] == 0x5a) {
-						logger(LOG_DEBUG, "Proxy request granted");
+				if(!c->node) {
+					if(proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
+						if(c->buffer[0] == 0 && c->buffer[1] == 0x5a) {
+							logger(LOG_DEBUG, "Proxy request granted");
+						} else {
+							logger(LOG_ERR, "Proxy request rejected");
+							return false;
+						}
+					} else if(proxytype == PROXY_SOCKS5 && c->allow_request == ID) {
+						if(c->buffer[0] != 5) {
+							logger(LOG_ERR, "Invalid response from proxy server");
+							return false;
+						}
+						if(c->buffer[1] == 0xff) {
+							logger(LOG_ERR, "Proxy request rejected: unsuitable authentication method");
+							return false;
+						}
+						if(c->buffer[2] != 5) {
+							logger(LOG_ERR, "Invalid response from proxy server");
+							return false;
+						}
+						if(c->buffer[3] == 0) {
+							logger(LOG_DEBUG, "Proxy request granted");
+						} else {
+							logger(LOG_DEBUG, "Proxy request rejected");
+							return false;
+						}
 					} else {
-						logger(LOG_ERR, "Proxy request rejected");
+						logger(LOG_ERR, "c->tcplen set but c->node is NULL!");
+						abort();
+					}
+				} else {
+					if(c->allow_request == ALL) {
+						receive_tcppacket(c, c->buffer, c->tcplen);
+					} else {
+						logger(LOG_ERR, "Got unauthorized TCP packet from %s (%s)", c->name, c->hostname);
 						return false;
 					}
-				} else 
-					receive_tcppacket(c, c->buffer, c->tcplen);
+				}
 
 				c->buflen -= c->tcplen;
 				lenin -= c->tcplen - oldlen;
