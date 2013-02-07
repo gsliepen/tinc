@@ -111,7 +111,7 @@ void forward_request(connection_t *from, const char *request) {
 }
 
 bool receive_request(connection_t *c, const char *request) {
-	if(proxytype == PROXY_HTTP && c->allow_request == ID) {
+	if(c->outgoing && proxytype == PROXY_HTTP && c->allow_request == ID) {
 		if(!request[0] || request[0] == '\r')
 			return true;
 		if(!strncasecmp(request, "HTTP/1.1 ", 9)) {

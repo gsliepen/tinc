@@ -139,7 +139,7 @@ bool send_id(connection_t *c) {
 			minor = myself->connection->protocol_minor;
 	}
 
-	if(proxytype)
+	if(proxytype && c->outgoing)
 		if(!send_proxyrequest(c))
 			return false;
 

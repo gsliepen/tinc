@@ -189,14 +189,14 @@ bool receive_meta(connection_t *c) {
 					break;
 
 				if(!c->node) {
-					if(proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
+					if(c->outgoing && proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
 						if(tcpbuffer[0] == 0 && tcpbuffer[1] == 0x5a) {
 							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
 						} else {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected");
 							return false;
 						}
-					} else if(proxytype == PROXY_SOCKS5 && c->allow_request == ID) {
+					} else if(c->outgoing && proxytype == PROXY_SOCKS5 && c->allow_request == ID) {
 						if(tcpbuffer[0] != 5) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
 							return false;
