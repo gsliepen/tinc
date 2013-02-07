@@ -74,8 +74,15 @@ void make_names(void) {
 	if(!pidfilename)
 		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
 
-	if(!unixsocketname)
-		xasprintf(&unixsocketname, LOCALSTATEDIR SLASH "run" SLASH "%s.socket", identname);
+	if(!unixsocketname) {
+		int len = strlen(pidfilename);
+		unixsocketname = xmalloc(len + 8);
+		strcpy(unixsocketname, pidfilename);
+		if(len > 4 && !strcmp(pidfilename + len - 4, ".pid"))
+			strcpy(unixsocketname + len - 4, ".socket");
+		else
+			strcpy(unixsocketname + len, ".socket");
+	}
 
 	if(netname) {
 		if(!confbase)
