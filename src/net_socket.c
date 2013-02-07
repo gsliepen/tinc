@@ -294,9 +294,6 @@ void retry_outgoing(outgoing_t *outgoing) {
 void finish_connecting(connection_t *c) {
 	ifdebug(CONNECTIONS) logger(LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
-	if(proxytype != PROXY_EXEC)
-		configure_tcp(c);
-
 	c->last_ping_time = now;
 
 	send_id(c);
@@ -419,6 +416,7 @@ begin:
 			goto begin;
 		ifdebug(CONNECTIONS) logger(LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+		configure_tcp(c);
 	}
 
 	if(c->socket == -1) {

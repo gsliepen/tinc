@@ -126,7 +126,7 @@ static bool send_proxyrequest(connection_t *c) {
 }
 
 bool send_id(connection_t *c) {
-	if(proxytype)
+	if(proxytype && c->outgoing)
 		if(!send_proxyrequest(c))
 			return false;
 
