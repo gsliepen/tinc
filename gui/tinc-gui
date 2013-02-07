@@ -111,11 +111,28 @@ class VPN:
 	piddir = '/var/run/'
 
 	def connect(self):
+		# read the pidfile
 		f = open(self.pidfile)
 		info = string.split(f.readline())
 		f.close()
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect((info[2], int(info[4])))
+
+		# check if there is a UNIX socket as well
+		if self.pidfile.endswith(".pid"):
+			unixfile = self.pidfile.replace(".pid", ".socket");
+		else:
+			unixfile = self.pidfile + ".socket";
+
+		if os.path.exists(unixfile):
+			# use it if it exists
+			print(unixfile + " exists!");
+			s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+			s.connect(unixfile)
+		else:
+			# otherwise connect via TCP
+			print(unixfile + " does not exist.");
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			s.connect((info[2], int(info[4])))
+
 		self.sf = s.makefile()
 		s.close()
 		hello = string.split(self.sf.readline())
