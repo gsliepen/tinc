@@ -834,16 +834,10 @@ static int cmd_stop(int argc, char *argv[]) {
 	}
 
 	sendline(fd, "%d %d", CONTROL, REQ_STOP);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
-		fprintf(stderr, "Could not stop tinc daemon.\n");
-		return 1;
-	}
 
-	// Wait for tincd to close the connection...
-	fd_set r;
-	FD_ZERO(&r);
-	FD_SET(fd, &r);
-	select(fd + 1, &r, NULL, NULL, NULL);
+	while(recvline(fd, line, sizeof line)) {
+		// Wait for tincd to close the connection...
+	}
 #else
 	if(!remove_service())
 		return 1;
