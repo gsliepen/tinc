@@ -52,13 +52,8 @@ static int timeout_compare(const timeout_t *a, const timeout_t *b) {
 	return 0;
 }
 
-static int signal_compare(const signal_t *a, const signal_t *b) {
-	return a->signum - b->signum;
-}
-
 static splay_tree_t io_tree = {.compare = (splay_compare_t)io_compare};
 static splay_tree_t timeout_tree = {.compare = (splay_compare_t)timeout_compare};
-static splay_tree_t signal_tree = {.compare = (splay_compare_t)signal_compare};
 
 void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 	if(io->cb)
@@ -130,8 +125,13 @@ void timeout_del(timeout_t *timeout) {
 }
 
 #ifndef HAVE_MINGW
+static int signal_compare(const signal_t *a, const signal_t *b) {
+	return a->signum - b->signum;
+}
+
 static io_t signalio;
 static int pipefd[2] = {-1, -1};
+static splay_tree_t signal_tree = {.compare = (splay_compare_t)signal_compare};
 
 static void signal_handler(int signum) {
 	unsigned char num = signum;

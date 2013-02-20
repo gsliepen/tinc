@@ -47,7 +47,7 @@ extern char *myport;
 
 static DWORD WINAPI tapreader(void *bla) {
 	int status;
-	long len;
+	DWORD len;
 	OVERLAPPED overlapped;
 	vpn_packet_t packet;
 
@@ -62,7 +62,7 @@ static DWORD WINAPI tapreader(void *bla) {
 		overlapped.OffsetHigh = 0;
 		ResetEvent(overlapped.hEvent);
 
-		status = ReadFile(device_handle, packet.data, MTU, &len, &overlapped);
+		status = ReadFile(device_handle, (void *)packet.data, MTU, &len, &overlapped);
 
 		if(!status) {
 			if(GetLastError() == ERROR_IO_PENDING) {
@@ -92,7 +92,7 @@ static bool setup_device(void) {
 	char adapterid[1024];
 	char adaptername[1024];
 	char tapname[1024];
-	long len;
+	DWORD len;
 	unsigned long status;
 
 	bool found = false;
@@ -123,7 +123,7 @@ static bool setup_device(void) {
 			continue;
 
 		len = sizeof adaptername;
-		err = RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
+		err = RegQueryValueEx(key2, "Name", 0, 0, (LPBYTE)adaptername, &len);
 
 		RegCloseKey(key2);
 
@@ -223,7 +223,7 @@ static bool read_packet(vpn_packet_t *packet) {
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	long outlen;
+	DWORD outlen;
 	OVERLAPPED overlapped = {0};
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",

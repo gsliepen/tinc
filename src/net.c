@@ -287,6 +287,7 @@ void handle_meta_connection_data(connection_t *c) {
 	}
 }
 
+#ifndef HAVE_MINGW
 static void sigterm_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	event_exit();
@@ -302,6 +303,7 @@ static void sigalrm_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	retry();
 }
+#endif
 
 int reload_configuration(void) {
 	char *fname;

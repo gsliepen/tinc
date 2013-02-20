@@ -259,8 +259,8 @@ bool execute_script(const char *name, char **envp) {
 		}
 	}
 
-#ifdef WEXITSTATUS
 	if(status != -1) {
+#ifdef WEXITSTATUS
 		if(WIFEXITED(status)) {          /* Child exited by itself */
 			if(WEXITSTATUS(status)) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Script %s exited with non-zero status %d",
@@ -275,11 +275,11 @@ bool execute_script(const char *name, char **envp) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s terminated abnormally", name);
 			return false;
 		}
+#endif
 	} else {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
 		return false;
 	}
-#endif
 #endif
 	return true;
 }

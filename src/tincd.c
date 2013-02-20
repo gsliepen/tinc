@@ -67,14 +67,18 @@ static bool show_version = false;
 /* If nonzero, use null ciphers and skip all key exchanges. */
 bool bypass_security = false;
 
+#ifdef HAVE_MLOCKALL
 /* If nonzero, disable swapping for this process. */
 static bool do_mlock = false;
+#endif
 
+#ifndef HAVE_MINGW
 /* If nonzero, chroot to netdir after startup. */
 static bool do_chroot = false;
 
 /* If !NULL, do setuid to given user after startup */
 static const char *switchuser = NULL;
+#endif
 
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;

@@ -39,7 +39,7 @@ void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
-	long len = sizeof installdir;
+	DWORD len = sizeof installdir;
 #endif
 
 	if(netname)
@@ -49,7 +49,7 @@ void make_names(void) {
 
 #ifdef HAVE_MINGW
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
+		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			confdir = xstrdup(installdir);
 			if(!logfilename)
 				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", installdir, identname);

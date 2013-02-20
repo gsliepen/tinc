@@ -377,7 +377,7 @@ static void handle_meta_io(void *data, int flags) {
 
 		int result;
 		socklen_t len = sizeof result;
-		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
 
 		if(!result)
 			finish_connecting(c);
