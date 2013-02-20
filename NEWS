@@ -1,3 +1,13 @@
+Version 1.1pre6              February 20 2013
+
+ * Fixed tincd exitting immediately on Windows.
+
+ * Detect PMTU increases.
+
+ * Fixed crashes when using a SOCKS5 proxy.
+
+ * Fixed control connection when using a proxy.
+
 Version 1.1pre5              January 20 2013
 
  * Fixed long delays and possible hangs on Windows.
