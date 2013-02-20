@@ -1838,6 +1838,8 @@ static int cmd_export(int argc, char *argv[]) {
 	int result = export(name, stdout);
 	if(!tty)
 		fclose(stdout);
+
+	free(name);
 	return result;
 }
 
