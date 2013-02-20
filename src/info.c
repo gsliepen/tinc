@@ -58,11 +58,15 @@ static int info_node(int fd, const char *item) {
 	int code, req, cipher, digest, maclength, compression, distance;
 	short int pmtu, minmtu, maxmtu;
 	unsigned int options;
+	union {
+		node_status_t bits;
+		uint32_t raw;
+	} status_union;
 	node_status_t status;
 	long int last_state_change;
 
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s %s port %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", &code, &req, node, host, port, &cipher, &digest, &maclength, &compression, &options, (unsigned *)&status, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
+		int n = sscanf(line, "%d %d %s %s port %s %d %d %d %d %x %"PRIx32" %s %s %d %hd %hd %hd %ld", &code, &req, node, host, port, &cipher, &digest, &maclength, &compression, &options, &status_union.raw, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
 		if(n == 2)
 			break;
@@ -92,8 +96,12 @@ static int info_node(int fd, const char *item) {
 	printf("Address:      %s port %s\n", host, port);
 
 	char timestr[32] = "never";
+	time_t lsc_time = last_state_change;
+
 	if(last_state_change)
-		strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&last_state_change));
+		strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&lsc_time));
+
+	status = status_union.bits;
 
 	if(status.reachable)
 		printf("Online since: %s\n", timestr);

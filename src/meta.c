@@ -201,7 +201,7 @@ bool receive_meta(connection_t *c) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
 							return false;
 						}
-						if(tcpbuffer[1] == 0xff) {
+						if(tcpbuffer[1] == (char)0xff) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected: unsuitable authentication method");
 							return false;
 						}
