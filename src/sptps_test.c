@@ -77,8 +77,8 @@ int main(int argc, char *argv[]) {
 	memset(&hint, 0, sizeof hint);
 
 	hint.ai_family = AF_UNSPEC;
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_protocol = IPPROTO_TCP;
+	hint.ai_socktype = datagram ? SOCK_DGRAM : SOCK_STREAM;
+	hint.ai_protocol = datagram ? IPPROTO_UDP : IPPROTO_TCP;
 	hint.ai_flags = initiator ? 0 : AI_PASSIVE;
 
 	if(getaddrinfo(initiator ? argv[3] : NULL, initiator ? argv[4] : argv[3], &hint, &ai) || !ai) {
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	int sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+	int sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 	if(sock < 0) {
 		fprintf(stderr, "Could not create socket: %s\n", strerror(errno));
 		return 1;
@@ -106,16 +106,35 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Could not bind socket: %s\n", strerror(errno));
 			return 1;
 		}
-		if(listen(sock, 1)) {
-			fprintf(stderr, "Could not listen on socket: %s\n", strerror(errno));
-			return 1;
-		}
-		fprintf(stderr, "Listening...\n");
 
-		sock = accept(sock, NULL, NULL);
-		if(sock < 0) {
-			fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
-			return 1;
+		if(!datagram) {
+			if(listen(sock, 1)) {
+				fprintf(stderr, "Could not listen on socket: %s\n", strerror(errno));
+				return 1;
+			}
+			fprintf(stderr, "Listening...\n");
+
+			sock = accept(sock, NULL, NULL);
+			if(sock < 0) {
+				fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
+				return 1;
+			}
+		} else {
+			fprintf(stderr, "Listening...\n");
+
+			char buf[65536];
+			struct sockaddr addr;
+			socklen_t addrlen = sizeof addr;
+
+			if(recvfrom(sock, buf, sizeof buf, MSG_PEEK, &addr, &addrlen) <= 0) {
+				fprintf(stderr, "Could not read from socket: %s\n", strerror(errno));
+				return 1;
+			}
+
+			if(connect(sock, &addr, addrlen)) {
+				fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
+				return 1;
+			}
 		}
 
 		fprintf(stderr, "Connected\n");
