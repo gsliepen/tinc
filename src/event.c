@@ -245,6 +245,12 @@ bool event_loop(void) {
 	return true;
 }
 
+void event_flush_output(void) {
+	for splay_each(io_t, io, &io_tree)
+		if(FD_ISSET(io->fd, &writefds))
+			io->cb(io->data, IO_WRITE);
+}
+
 void event_exit(void) {
 	running = false;
 }

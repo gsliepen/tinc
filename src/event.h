@@ -65,6 +65,7 @@ extern void signal_add(signal_t *sig, signal_cb_t cb, void *data, int signum);
 extern void signal_del(signal_t *sig);
 
 extern bool event_loop(void);
+extern void event_flush_output(void);
 extern void event_exit(void);
 
 #endif

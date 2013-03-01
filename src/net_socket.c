@@ -349,6 +349,9 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 }
 
 static void handle_meta_write(connection_t *c) {
+	if(c->outbuf.len <= c->outbuf.offset)
+		return;
+
 	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
 	if(outlen <= 0) {
 		if(!errno || errno == EPIPE) {
