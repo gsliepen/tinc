@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -340,7 +340,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%zd)", packet->len, ether_size + ip_size + todo);
+		ifdebug(TRAFFIC) logger(LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
 		return;
 	}
 

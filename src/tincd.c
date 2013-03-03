@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -391,7 +391,7 @@ static void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
-	long len = sizeof(installdir);
+	DWORD len = sizeof(installdir);
 #endif
 
 	if(netname)
@@ -401,7 +401,7 @@ static void make_names(void) {
 
 #ifdef HAVE_MINGW
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
+		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			if(!logfilename)
 				xasprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
@@ -513,7 +513,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

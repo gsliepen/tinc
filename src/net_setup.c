@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -163,7 +163,6 @@ bool read_rsa_public_key(connection_t *c) {
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname, *key, *pubkey;
-	struct stat s;
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
@@ -199,6 +198,8 @@ static bool read_rsa_private_key(void) {
 	}
 
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+	struct stat s;
+
 	if(fstat(fileno(fp), &s)) {
 		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'",
 				fname, strerror(errno));

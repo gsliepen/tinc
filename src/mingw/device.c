@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ extern char *myport;
 
 static DWORD WINAPI tapreader(void *bla) {
 	int status;
-	long len;
+	DWORD len;
 	OVERLAPPED overlapped;
 	vpn_packet_t packet;
 
@@ -91,7 +91,7 @@ static bool setup_device(void) {
 	char adapterid[1024];
 	char adaptername[1024];
 	char tapname[1024];
-	long len;
+	DWORD len;
 	unsigned long status;
 
 	bool found = false;
@@ -122,7 +122,7 @@ static bool setup_device(void) {
 			continue;
 
 		len = sizeof(adaptername);
-		err = RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
+		err = RegQueryValueEx(key2, "Name", 0, 0, (LPBYTE)adaptername, &len);
 
 		RegCloseKey(key2);
 
@@ -222,7 +222,7 @@ static bool read_packet(vpn_packet_t *packet) {
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	long lenout;
+	DWORD lenout;
 	OVERLAPPED overlapped = {0};
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",

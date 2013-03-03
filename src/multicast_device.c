@@ -1,7 +1,7 @@
 /*
     device.c -- multicast socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -158,7 +158,7 @@ static void close_device(void) {
 static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
-	if((lenin = recv(device_fd, packet->data, MTU, 0)) <= 0) {
+	if((lenin = recv(device_fd, (void *)packet->data, MTU, 0)) <= 0) {
 		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
@@ -184,7 +184,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(sendto(device_fd, packet->data, packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
+	if(sendto(device_fd, (void *)packet->data, packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
 		logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			   strerror(errno));
 		return false;
