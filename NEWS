@@ -1,3 +1,24 @@
+Version 1.0.20               March 03 2013
+
+ * Use /dev/tap0 by default on FreeBSD and NetBSD when using switch mode.
+
+ * Minor improvements and clarifications in the documentation.
+
+ * Allow tinc to be cross-compiled with Android's NDK.
+
+ * The discovered PMTU is now also applied to VLAN tagged traffic.
+
+ * The LocalDiscovery option now makes use of all addresses tinc is bound to.
+
+ * Fixed support for tunemu on iOS devices.
+
+ * The PriorityInheritance option now also works with switch mode.
+
+ * Fixed tinc crashing when using a SOCKS5 proxy.
+
+Thanks to Mesar Hameed, Vilbrekin and Martin Schürrer for their contributions
+to this version of tinc.
+
 Version 1.0.19               June 25 2012
 
  * Allow :: notation in IPv6 Subnets.
@@ -8,6 +29,9 @@ Version 1.0.19               June 25 2012
 
  * Add basic support for SOCKS proxies, HTTP proxies, and proxying through an
    external command.
+
+Thanks to Anthony G. Basile and Michael Tokarev for their contributions to
+this version of tinc.
 
 Version 1.0.18               March 25 2012
 
@@ -34,6 +58,8 @@ Version 1.0.17               March 10 2012
 
  * Disabling old RSA keys when generating new ones now also works properly on
    Windows.
+
+Thanks to Nick Hibma for his contribution to this version of tinc.
 
 Version 1.0.16               July 23 2011
 

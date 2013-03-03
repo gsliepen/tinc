@@ -1,7 +1,7 @@
-This is the README file for tinc version 1.0.19. Installation
+This is the README file for tinc version 1.0.20. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2012 by:
+tinc is Copyright (C) 1998-2013 by:
 
 Ivo Timmermans,
 Guus Sliepen <guus@tinc-vpn.org>,
@@ -36,8 +36,8 @@ writeup describing various security issues in several VPN daemons. He showed
 that tinc lacks perfect forward security, the connection authentication could
 be done more properly, that the sequence number we use as an IV is not the best
 practice and that the default length of the HMAC for packets is too short in
-his opinion. We do not know of a way to exploit these weaknesses, but we will
-address these issues in tinc 2.0.
+his opinion. We do not know of a way to exploit these weaknesses, but these
+issues are being addressed in the tinc 1.1 branch.
 
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
@@ -55,7 +55,7 @@ should be changed into "Device", and "Device" should be changed into
 Compatibility
 -------------
 
-Version 1.0.19 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.0.20 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
 
