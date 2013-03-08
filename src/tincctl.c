@@ -1199,10 +1199,11 @@ static int rstrip(char *value) {
 	return len;
 }
 
-static char *get_my_name() {
+static char *get_my_name(bool verbose) {
 	FILE *f = fopen(tinc_conf, "r");
 	if(!f) {
-		fprintf(stderr, "Could not open %s: %s\n", tinc_conf, strerror(errno));
+		if(verbose)
+			fprintf(stderr, "Could not open %s: %s\n", tinc_conf, strerror(errno));
 		return NULL;
 	}
 
@@ -1228,7 +1229,8 @@ static char *get_my_name() {
 	}
 
 	fclose(f);
-	fprintf(stderr, "Could not find Name in %s.\n", tinc_conf);
+	if(verbose)
+		fprintf(stderr, "Could not find Name in %s.\n", tinc_conf);
 	return NULL;
 }
 
@@ -1402,7 +1404,7 @@ static int cmd_config(int argc, char *argv[]) {
 		/* Should this go into our own host config file? */
 
 		if(!node && !(variables[i].type & VAR_SERVER)) {
-			node = get_my_name();
+			node = get_my_name(true);
 			if(!node)
 				return 1;
 		}
@@ -1692,6 +1694,9 @@ static int cmd_generate_keys(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(!name)
+		name = get_my_name(false);
+
 	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true) && ecdsa_keygen(true));
 }
 
@@ -1701,6 +1706,9 @@ static int cmd_generate_rsa_keys(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(!name)
+		name = get_my_name(false);
+
 	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true);
 }
 
@@ -1709,6 +1717,9 @@ static int cmd_generate_ecdsa_keys(int argc, char *argv[]) {
 		fprintf(stderr, "Too many arguments!\n");
 		return 1;
 	}
+
+	if(!name)
+		name = get_my_name(false);
 
 	return !ecdsa_keygen(true);
 }
@@ -1831,7 +1842,7 @@ static int cmd_export(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char *name = get_my_name();
+	char *name = get_my_name(true);
 	if(!name)
 		return 1;
 
