@@ -698,7 +698,7 @@ First, create the initial configuration files and public/private keypairs using 
 @example
 tinc -n @var{NETNAME} init @var{NAME}
 @end example
-Second, use @samp{tinc -n @var{NETNAME} config ...} to further configure tinc.
+Second, use @samp{tinc -n @var{NETNAME} add ...} to further configure tinc.
 Finally, export your host configuration file using @samp{tinc -n @var{NETNAME} export} and send it to those
 people or computers you want tinc to connect to.
 They should send you their host configuration file back, which you can import using @samp{tinc -n @var{NETNAME} import}.
@@ -809,7 +809,7 @@ put host specific configuration options in the host configuration file, as this
 makes it easy to exchange with other nodes.
 
 You can edit the config file manually, but it is recommended that you use
-tinc to change configuration variables for you.
+the tinc command to change configuration variables for you.
 
 In the following two subsections all valid variables are listed in alphabetical order.
 The default value is given between parentheses,
@@ -1449,7 +1449,7 @@ and you yourself have a smaller portion of that range: 192.168.2.0/24.
 Then you should run the following command:
 
 @example
-tinc -n @var{netname} config add subnet 192.168.2.0/24
+tinc -n @var{netname} add subnet 192.168.2.0/24
 @end example
 
 This will add a Subnet statement to your host configuration file.
@@ -1465,18 +1465,18 @@ If you will use more than one address range, you can add more Subnets.
 For example, if you also use the IPv6 subnet fec0:0:0:2::/64, you can add it as well:
 
 @example
-tinc -n @var{netname} config add subnet fec0:0:0:2::/24
+tinc -n @var{netname} add subnet fec0:0:0:2::/24
 @end example
 
 This will add another line to the file @file{hosts/@var{name}}.
-If you make a mistake, you can undo it by simply using @samp{config del} instead of @samp{config add}.
+If you make a mistake, you can undo it by simply using @samp{del} instead of @samp{add}.
 
 If you want other tinc daemons to create meta-connections to your daemon,
 you should add your public IP address or hostname to your host configuration file.
 For example, if your hostname is foo.example.org, run:
 
 @example
-tinc -n @var{netname} config add address foo.example.org
+tinc -n @var{netname} add address foo.example.org
 @end example
 
 If you already know to which daemons your daemon should make meta-connections,
@@ -1484,7 +1484,7 @@ you should configure that now as well.
 Suppose you want to connect to a daemon named "bar", run:
 
 @example
-tinc -n @var{netname} config add connectto bar
+tinc -n @var{netname} add connectto bar
 @end example
 
 Note that you specify the Name of the other daemon here, not an IP address or hostname!
@@ -2172,20 +2172,20 @@ the value of this environment variable is used.
 Create initial configuration files and RSA and ECDSA keypairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
-@item config [get] @var{variable}
+@item get @var{variable}
 Print the current value of configuration variable @var{variable}.
 If more than one variable with the same name exists,
 the value of each of them will be printed on a separate line.
 
-@item config [set] @var{variable} @var{value}
+@item set @var{variable} @var{value}
 Set configuration variable @var{variable} to the given @var{value}.
 All previously existing configuration variables with the same name are removed.
 To set a variable for a specific host, use the notation @var{host}.@var{variable}.
 
-@item config add @var{variable} @var{value}
+@item add @var{variable} @var{value}
 As above, but without removing any previously existing configuration variables.
 
-@item config del @var{variable} [@var{value}]
+@item del @var{variable} [@var{value}]
 Remove configuration variables with the same name and @var{value}.
 If no @var{value} is given, all configuration variables with the same name will be removed.
 
@@ -2303,9 +2303,9 @@ Example of configuring tinc using the tinc command:
 
 @example
 tinc -n vpn init foo
-tinc -n vpn config Subnet 192.168.1.0/24
-tinc -n vpn config bar.Address bar.example.com
-tinc -n vpn config ConnectTo bar
+tinc -n vpn add Subnet 192.168.1.0/24
+tinc -n vpn add bar.Address bar.example.com
+tinc -n vpn add ConnectTo bar
 tinc -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@@example.com
 @end example
 
