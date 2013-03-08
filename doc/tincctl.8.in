@@ -51,12 +51,12 @@ Create initial configuration files and RSA and ECDSA keypairs with default lengt
 If no
 .Ar name
 for this node is given, it will be asked for.
-.It config Oo get Oc Ar variable
+.It get Ar variable
 Print the current value of configuration variable
 .Ar variable .
 If more than one variable with the same name exists,
 the value of each of them will be printed on a separate line.
-.It config Oo set Oc Ar variable Ar value
+.It set Ar variable Ar value
 Set configuration variable
 .Ar variable
 to the given
@@ -64,9 +64,9 @@ to the given
 All previously existing configuration variables with the same name are removed.
 To set a variable for a specific host, use the notation
 .Ar host Ns Li . Ns Ar variable .
-.It config add Ar variable Ar value
+.It add Ar variable Ar value
 As above, but without removing any previously existing configuration variables.
-.It config del Ar variable Op Ar value
+.It del Ar variable Op Ar value
 Remove configuration variables with the same name and
 .Ar value .
 If no
@@ -191,9 +191,9 @@ Example of configuring tinc using
 .Nm :
 .Bd -literal -offset indent
 tincctl -n vpn init foo
-tincctl -n vpn config Subnet 192.168.1.0/24
-tincctl -n vpn config bar.Address bar.example.com
-tincctl -n vpn config ConnectTo bar
+tincctl -n vpn add Subnet 192.168.1.0/24
+tincctl -n vpn add bar.Address bar.example.com
+tincctl -n vpn add ConnectTo bar
 tincctl -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@example.com
 .Ed
 .Sh TOP

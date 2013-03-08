@@ -112,11 +112,10 @@ static void usage(bool status) {
 				"\n"
 				"Valid commands are:\n"
 				"  init [name]                Create initial configuration files.\n"
-				"  config                     Change configuration:\n"
-				"    [get] VARIABLE           - print current value of VARIABLE\n"
-				"    [set] VARIABLE VALUE     - set VARIABLE to VALUE\n"
-				"    add VARIABLE VALUE       - add VARIABLE with the given VALUE\n"
-				"    del VARIABLE [VALUE]     - remove VARIABLE [only ones with watching VALUE]\n"
+				"  get VARIABLE               Print current value of VARIABLE\n"
+				"  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
+				"  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
+				"  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
 				"  start [tincd options]      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
@@ -1311,6 +1310,9 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(strcasecmp(argv[0], "config"))
+		argv--, argc++;
+
 	int action = -2;
 	if(!strcasecmp(argv[1], "get")) {
 		argv++, argc--;
@@ -1988,6 +1990,12 @@ static const struct {
 	{"log", cmd_log},
 	{"pid", cmd_pid},
 	{"config", cmd_config},
+	{"add", cmd_config},
+	{"del", cmd_config},
+	{"get", cmd_config},
+	{"set", cmd_config},
+	{"change", cmd_config},
+	{"replace", cmd_config},
 	{"init", cmd_init},
 	{"generate-keys", cmd_generate_keys},
 	{"generate-rsa-keys", cmd_generate_rsa_keys},
