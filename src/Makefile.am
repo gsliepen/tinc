@@ -1,6 +1,6 @@
 ## Produce this file with automake to get Makefile.in
 
-sbin_PROGRAMS = tincd tincctl sptps_test
+sbin_PROGRAMS = tincd tinc sptps_test
 
 EXTRA_DIST = linux bsd solaris cygwin mingw openssl gcrypt
 
@@ -22,11 +22,11 @@ endif
 nodist_tincd_SOURCES = \
 	device.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
 
-tincctl_SOURCES = \
+tinc_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
 	info.c list.c subnet_parse.c tincctl.c top.c names.c
 
-nodist_tincctl_SOURCES = \
+nodist_tinc_SOURCES = \
 	ecdsagen.c rsagen.c
 
 sptps_test_SOURCES = \
@@ -37,7 +37,7 @@ if TUNEMU
 tincd_SOURCES += bsd/tunemu.c
 endif
 
-tincctl_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
+tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 
 DEFAULT_INCLUDES =
 

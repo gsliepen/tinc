@@ -92,7 +92,7 @@ is omitted, the default is
 Store a cookie in
 .Ar FILENAME
 which allows
-.Xr tincctl 8
+.Xr tinc 8
 to authenticate.
 If
 .Ar FILE
@@ -186,7 +186,7 @@ If you find any bugs, report them to tinc@tinc-vpn.org.
 .Sh TODO
 A lot, especially security auditing.
 .Sh SEE ALSO
-.Xr tincctl 8 ,
+.Xr tinc 8 ,
 .Xr tinc.conf 5 ,
 .Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.cabal.org/ .

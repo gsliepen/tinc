@@ -3,7 +3,7 @@
 .\" Manual page created by:
 .\" Scott Lamb
 .Sh NAME
-.Nm tincctl
+.Nm tinc
 .Nd tinc VPN control
 .Sh SYNOPSIS
 .Nm
@@ -147,7 +147,7 @@ Sets debug level to
 .It log Op Ar N
 Capture log messages from a running tinc daemon.
 An optional debug level can be given that will be applied only for log messages sent to
-.Nm tincctl .
+.Nm tinc .
 .It retry
 Forces
 .Xr tincd 8
@@ -182,19 +182,19 @@ such as
 .Sh EXAMPLES
 Examples of some commands:
 .Bd -literal -offset indent
-tincctl -n vpn dump graph | circo -Txlib
-tincctl -n vpn pcap | tcpdump -r -
-tincctl -n vpn top
+tinc -n vpn dump graph | circo -Txlib
+tinc -n vpn pcap | tcpdump -r -
+tinc -n vpn top
 .Pp
 .Ed
 Example of configuring tinc using
 .Nm :
 .Bd -literal -offset indent
-tincctl -n vpn init foo
-tincctl -n vpn add Subnet 192.168.1.0/24
-tincctl -n vpn add bar.Address bar.example.com
-tincctl -n vpn add ConnectTo bar
-tincctl -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@example.com
+tinc -n vpn init foo
+tinc -n vpn add Subnet 192.168.1.0/24
+tinc -n vpn add bar.Address bar.example.com
+tinc -n vpn add ConnectTo bar
+tinc -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@example.com
 .Ed
 .Sh TOP
 The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.

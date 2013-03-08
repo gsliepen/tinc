@@ -1147,7 +1147,7 @@ static int cmd_top(int argc, char *argv[]) {
 	top(fd);
 	return 0;
 #else
-	fprintf(stderr, "This version of tincctl was compiled without support for the curses library.\n");
+	fprintf(stderr, "This version of tinc was compiled without support for the curses library.\n");
 	return 1;
 #endif
 }

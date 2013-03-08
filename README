@@ -22,7 +22,7 @@ Please note that this is NOT a stable release. Until version 1.1.0 is released,
 please use one of the 1.0.x versions if you need a stable version of tinc.
 
 Although tinc 1.1 will be protocol compatible with tinc 1.0.x, the
-functionality of the tincctl program may still change, and the control socket
+functionality of the tinc program may still change, and the control socket
 protocol is not fixed yet.
 
 
@@ -88,6 +88,6 @@ Windows environment this means tinc will intall itself as a service, which will
 restart after reboots.  To prevent tinc from detaching or running as a service,
 use the -D option.
 
-The status of the VPN can be queried using the "tincctl" tool, which connects
+The status of the VPN can be queried using the "tinc" command, which connects
 to a running tinc daemon via a control connection. The same tool also makes it
 easy to start and stop tinc, and to change its configuration.

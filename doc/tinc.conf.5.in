@@ -55,15 +55,15 @@ However, you are only allowed to use alphanumerical characters (a-z, A-Z, and 0-
 .Sh INITIAL CONFIGURATION
 If you have not configured tinc yet, you can easily create a basic configuration using the following command:
 .Bd -literal -offset indent
-.Nm tincctl Fl n Ar NETNAME Li init Ar NAME
+.Nm tinc Fl n Ar NETNAME Li init Ar NAME
 .Ed
 .Pp
 You can further change the configuration as needed either by manually editing the configuration files,
 or by using
-.Xr tincctl 8 .
+.Xr tinc 8 .
 .Sh PUBLIC/PRIVATE KEYS
 The
-.Nm tincctl Li init
+.Nm tinc Li init
 command will have generated both RSA and ECDSA public/private keypairs.
 The private keys should be stored in files named
 .Pa rsa_key.priv
@@ -77,7 +77,7 @@ The RSA keys are used for backwards compatibility with tinc version 1.0.
 If you are upgrading from version 1.0 to 1.1, you can keep the old configuration files,
 but you will need to create ECDSA keys using the following command:
 .Bd -literal -offset indent
-.Nm tincctl Fl n Ar NETNAME Li generate-ecdsa-keys
+.Nm tinc Fl n Ar NETNAME Li generate-ecdsa-keys
 .Ed
 .Sh SERVER CONFIGURATION
 The server configuration of the daemon is done in the file
@@ -102,7 +102,7 @@ it is recommended to put host specific configuration options in the host configu
 as this makes it easy to exchange with other nodes.
 .Pp
 You can edit the config file manually, but it is recommended that you use
-.Xr tincctl 8
+.Xr tinc 8
 to change configuration variables for you.
 .Pp
 Here are all valid variables, listed in alphabetical order.
@@ -279,7 +279,7 @@ When this option is enabled, experimental protocol enhancements will be used.
 Ephemeral ECDH will be used for key exchanges,
 and ECDSA will be used instead of RSA for authentication.
 When enabled, an ECDSA key must have been generated before with
-.Nm tincctl generate-ecdsa-keys .
+.Nm tinc generate-ecdsa-keys .
 The experimental protocol may change at any time,
 and there is no guarantee that tinc will run stable when it is used.
 .It Va Forwarding Li = off | internal | kernel Po internal Pc Bq experimental
@@ -653,7 +653,7 @@ its connection to the virtual network device.
 .El
 .Sh SEE ALSO
 .Xr tincd 8 ,
-.Xr tincctl 8 ,
+.Xr tinc 8 ,
 .Pa http://www.tinc-vpn.org/ ,
 .Pa http://www.tldp.org/LDP/nag2/ .
 .Pp
