@@ -229,7 +229,7 @@ static void learn_mac(mac_t *address) {
 
 		subnet = new_subnet();
 		subnet->type = SUBNET_MAC;
-		subnet->expires = time(NULL) + macexpire;
+		subnet->expires = now.tv_sec + macexpire;
 		subnet->net.mac.address = *address;
 		subnet->weight = 10;
 		subnet_add(myself, subnet);
@@ -244,7 +244,7 @@ static void learn_mac(mac_t *address) {
 		timeout_add(&age_subnets_timeout, age_subnets, NULL, &(struct timeval){10, rand() % 100000});
 	} else {
 		if(subnet->expires)
-			subnet->expires = time(NULL) + macexpire;
+			subnet->expires = now.tv_sec + macexpire;
 	}
 }
 

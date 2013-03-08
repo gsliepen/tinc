@@ -195,7 +195,7 @@ bool seen_request(const char *request) {
 	} else {
 		new = xmalloc(sizeof *new);
 		new->request = xstrdup(request);
-		new->firstseen = time(NULL);
+		new->firstseen = now.tv_sec;
 		splay_insert(past_request_tree, new);
 		timeout_add(&past_request_timeout, age_past_requests, NULL, &(struct timeval){10, rand() % 100000});
 		return false;

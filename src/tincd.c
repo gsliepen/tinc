@@ -346,7 +346,8 @@ int main(int argc, char **argv) {
 
 	/* Slllluuuuuuurrrrp! */
 
-	srand(time(NULL));
+	gettimeofday(&now, NULL);
+	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
 	if(!read_server_config())

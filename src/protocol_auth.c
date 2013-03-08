@@ -160,7 +160,7 @@ bool id_h(connection_t *c, const char *request) {
 	if(name[0] == '^' && !strcmp(name + 1, controlcookie)) {
 		c->status.control = true;
 		c->allow_request = CONTROL;
-		c->last_ping_time = time(NULL) + 3600;
+		c->last_ping_time = now.tv_sec + 3600;
 
 		free(c->name);
 		c->name = xstrdup("<control>");

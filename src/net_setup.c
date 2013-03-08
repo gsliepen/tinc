@@ -751,7 +751,7 @@ static bool setup_myself(void) {
 	myself->nexthop = myself;
 	myself->via = myself;
 	myself->status.reachable = true;
-	myself->last_state_change = time(NULL);
+	myself->last_state_change = now.tv_sec;
 	myself->status.sptps = experimental;
 	node_add(myself);
 
@@ -958,7 +958,7 @@ static bool setup_myself(void) {
 		return false;
 	}
 
-	last_config_check = time(NULL);
+	last_config_check = now.tv_sec;
 
 	return true;
 }

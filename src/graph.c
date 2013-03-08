@@ -204,7 +204,7 @@ static void check_reachability(void) {
 	for splay_each(node_t, n, node_tree) {
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
-			n->last_state_change = time(NULL);
+			n->last_state_change = now.tv_sec;
 
 			if(n->status.reachable) {
 				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became reachable",

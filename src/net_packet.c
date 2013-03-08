@@ -458,7 +458,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
 		if(!n->status.waitingforkey)
 			send_req_key(n);
-		else if(n->last_req_key + 10 < time(NULL)) {
+		else if(n->last_req_key + 10 < now.tv_sec) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
 			sptps_stop(&n->sptps);
 			n->status.waitingforkey = false;

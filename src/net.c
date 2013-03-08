@@ -406,7 +406,7 @@ int reload_configuration(void) {
 		free(fname);
 	}
 
-	last_config_check = time(NULL);
+	last_config_check = now.tv_sec;
 
 	return 0;
 }

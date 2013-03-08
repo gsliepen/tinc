@@ -111,7 +111,7 @@ bool send_req_key(node_t *to) {
 		sptps_stop(&to->sptps);
 		to->status.validkey = false;
 		to->status.waitingforkey = true;
-		to->last_req_key = time(NULL);
+		to->last_req_key = now.tv_sec;
 		to->incompression = myself->incompression;
 		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof label, send_initial_sptps_data, receive_sptps_record);
 	}
@@ -169,7 +169,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			sptps_stop(&from->sptps);
 			from->status.validkey = false;
 			from->status.waitingforkey = true;
-			from->last_req_key = time(NULL);
+			from->last_req_key = now.tv_sec;
 			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data, receive_sptps_record);
 			sptps_receive_data(&from->sptps, buf, len);
 			return true;
