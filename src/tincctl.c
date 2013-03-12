@@ -1974,6 +1974,7 @@ static int cmd_exchange_all(int argc, char *argv[]) {
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
+	bool hidden;
 } commands[] = {
 	{"start", cmd_start},
 	{"stop", cmd_stop},
@@ -1989,13 +1990,11 @@ static const struct {
 	{"pcap", cmd_pcap},
 	{"log", cmd_log},
 	{"pid", cmd_pid},
-	{"config", cmd_config},
+	{"config", cmd_config, true},
 	{"add", cmd_config},
 	{"del", cmd_config},
 	{"get", cmd_config},
 	{"set", cmd_config},
-	{"change", cmd_config},
-	{"replace", cmd_config},
 	{"init", cmd_init},
 	{"generate-keys", cmd_generate_keys},
 	{"generate-rsa-keys", cmd_generate_rsa_keys},
@@ -2022,7 +2021,7 @@ static char *complete_command(const char *text, int state) {
 		i++;
 
 	while(commands[i].command) {
-		if(!strncasecmp(commands[i].command, text, strlen(text)))
+		if(!commands[i].hidden && !strncasecmp(commands[i].command, text, strlen(text)))
 			return xstrdup(commands[i].command);
 		i++;
 	}
@@ -2049,42 +2048,24 @@ static char *complete_dump(const char *text, int state) {
 }
 
 static char *complete_config(const char *text, int state) {
-	const char *sub[] = {"get", "set", "add", "del"};
 	static int i;
-	if(!state) {
-		i = 0;
-		if(!strchr(rl_line_buffer + 7, ' '))
-			i = -4;
-		else {
-			bool found = false;
-			for(int i = 0; i < 4; i++) {
-				if(!strncasecmp(rl_line_buffer + 7, sub[i], strlen(sub[i])) && rl_line_buffer[7 + strlen(sub[i])] == ' ') {
-					found = true;
-					break;
-				}
-			}
-			if(!found)
-				return NULL;
-		}
-	} else {
-		i++;
-	}
 
-	while(i < 0 || variables[i].name) {
-		if(i < 0 && !strncasecmp(sub[i + 4], text, strlen(text)))
-			return xstrdup(sub[i + 4]);
-		if(i >= 0) {
-			char *dot = strchr(text, '.');
-			if(dot) {
-				if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
-					char *match;
-					xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
-					return match;
-				}
-			} else {
-				if(!strncasecmp(variables[i].name, text, strlen(text)))
-					return xstrdup(variables[i].name);
+	if(!state)
+		i = 0;
+	else
+		i++;
+
+	while(variables[i].name) {
+		char *dot = strchr(text, '.');
+		if(dot) {
+			if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
+				char *match;
+				xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
+				return match;
 			}
+		} else {
+			if(!strncasecmp(variables[i].name, text, strlen(text)))
+				return xstrdup(variables[i].name);
 		}
 		i++;
 	}
@@ -2137,7 +2118,13 @@ static char **completion (const char *text, int start, int end) {
 		matches = rl_completion_matches(text, complete_command);
 	else if(!strncasecmp(rl_line_buffer, "dump ", 5))
 		matches = rl_completion_matches(text, complete_dump);
-	else if(!strncasecmp(rl_line_buffer, "config ", 7))
+	else if(!strncasecmp(rl_line_buffer, "add ", 4))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "del ", 4))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "get ", 4))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "set ", 4))
 		matches = rl_completion_matches(text, complete_config);
 	else if(!strncasecmp(rl_line_buffer, "info ", 5))
 		matches = rl_completion_matches(text, complete_info);

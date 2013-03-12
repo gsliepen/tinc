@@ -5,7 +5,7 @@ _tinc() {
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
 	opts="-c -d -D -K -n -o -L -R -U --config --no-detach --debug --net --option --mlock --logfile --pidfile --chroot --user --help --version"
 	confvars="Address AddressFamily BindToAddress BindToInterface Broadcast Cipher ClampMSS Compression ConnectTo DecrementTTL Device DeviceType Digest DirectOnly ECDSAPrivateKeyFile ECDSAPublicKey ECDSAPublicKeyFile ExperimentalProtocol Forwarding GraphDumpFile Hostnames IffOneQueue IndirectData Interface KeyExpire LocalDiscovery MACExpire MACLength MaxOutputBufferSize MaxTimeout Mode Name PMTU PMTUDiscovery PingInterval PingTimeout Port PriorityInheritance PrivateKeyFile ProcessPriority Proxy PublicKeyFile ReplayWindow StrictSubnets Subnet TCPOnly TunnelServer UDPRcvBuf UDPSndBuf VDEGroup VDEPort Weight"
-	commands="config connect debug disconnect dump edit export export-all generate-ecdsa-keys generate-keys generate-rsa-keys help import info init log pcap pid purge reload restart retry start stop top version"
+	commands="add connect debug del disconnect dump edit export export-all generate-ecdsa-keys generate-keys generate-rsa-keys get help import info init log pcap pid purge reload restart retry set start stop top version"
 
 	case ${prev} in
 		-c|--config)
@@ -53,12 +53,9 @@ _tinc() {
 	fi
 	COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
 	case $prev in
-		config)
-		COMPREPLY=( $(compgen -W "get set add del ${confvars}" -- ${cur}) )
-		return 0
-		;;
 		get|set|add|del)
 		COMPREPLY=( $(compgen -W "${confvars}" -- ${cur}) )
+		return 0
 		;;
 		dump|reachable)
 		COMPREPLY=( $(compgen -W "reachable nodes edges subnets connections graph" -- ${cur}) )
@@ -80,4 +77,4 @@ _tincctl() {
 }
 
 complete -F _tincd tincd
-complete -F _tincctl tincctl
+complete -F _tincctl tinc
