@@ -482,6 +482,8 @@ Furthermore, specifying
 .Qq none
 will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
+This option has no effect for connections between nodes using
+.Va ExperimentalProtocol .
 .It Va ClampMSS Li = yes | no Pq yes
 This option specifies whether tinc should clamp the maximum segment size (MSS)
 of TCP packets to the path MTU. This helps in situations where ICMP
@@ -496,6 +498,8 @@ Any digest supported by OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet authentication.
+This option has no effect for connections between nodes using
+.Va ExperimentalProtocol .
 .It Va IndirectData Li = yes | no Pq no
 When set to yes, other nodes which do not already have a meta connection to you
 will not try to establish direct communication with you.
@@ -505,6 +509,8 @@ The length of the message authentication code used to authenticate UDP packets.
 Can be anything from
 .Qq 0
 up to the length of the digest produced by the digest algorithm.
+This option has no effect for connections between nodes using
+.Va ExperimentalProtocol .
 .It Va PMTU Li = Ar mtu Po 1514 Pc
 This option controls the initial path MTU to this node.
 .It Va PMTUDiscovery Li = yes | no Po yes Pc

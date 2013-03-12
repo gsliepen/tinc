@@ -30,6 +30,10 @@ permission notice identical to this one.
 
 @end ifinfo
 
+@afourpaper
+@paragraphindent none
+@finalout
+
 @titlepage
 @title tinc Manual
 @subtitle Setting up a Virtual Private Network with tinc
@@ -262,7 +266,7 @@ alias char-major-10-200 tun
 @subsection Configuration of FreeBSD kernels
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in the default kernel configuration.
-The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}. 
+The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}.
 
 
 @c ==================================================================
@@ -1217,10 +1221,11 @@ If no port is specified, the default Port is used.
 
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)
-The symmetric cipher algorithm used to encrypt UDP packets.
+The symmetric cipher algorithm used to encrypt UDP packets using the legacy protocol.
 Any cipher supported by OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
+This option has no effect for connections using the SPTPS protocol, which always use AES-256-CTR.
 
 @cindex ClampMSS
 @item ClampMSS = <yes|no> (yes)
@@ -1236,9 +1241,10 @@ Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 
 @cindex Digest
 @item Digest = <@var{digest}> (sha1)
-The digest algorithm used to authenticate UDP packets.
+The digest algorithm used to authenticate UDP packets using the legacy protocol.
 Any digest supported by OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet authentication.
+This option has no effect for connections using the SPTPS protocol, which always use HMAC-SHA-256.
 
 @cindex IndirectData
 @item IndirectData = <yes|no> (no)
@@ -1248,9 +1254,10 @@ It is best to leave this option out or set it to no.
 
 @cindex MACLength
 @item MACLength = <@var{bytes}> (4)
-The length of the message authentication code used to authenticate UDP packets.
+The length of the message authentication code used to authenticate UDP packets using the legacy protocol.
 Can be anything from 0
 up to the length of the digest produced by the digest algorithm.
+This option has no effect for connections using the SPTPS protocol, which never truncate MACs.
 
 @cindex PMTU
 @item PMTU = <@var{mtu}> (1514)
@@ -2059,7 +2066,7 @@ Note that you will only see this message if you specified a debug
 level of 5 or higher!
 @item Chances are that a @samp{Subnet = ...} line in the host configuration file of this tinc daemon is wrong.
 Change it to a subnet that is accepted locally by another interface,
-or if that is not the case, try changing the prefix length into /32. 
+or if that is not the case, try changing the prefix length into /32.
 @end itemize
 
 @item Node foo (1.2.3.4) is not reachable
@@ -2442,7 +2449,7 @@ If the virtual network device is a `tun' device (a point-to-point tunnel),
 there is no problem for the kernel to accept a packet.
 However, if it is a `tap' device (this is the only available type on FreeBSD),
 the destination MAC address must match that of the virtual network interface.
-If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC 
+If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC
 can not be known by the sending host.
 Tinc solves this by letting the receiving end detect the MAC address of its own virtual network interface
 and overwriting the destination MAC address of the received packet.
@@ -2504,7 +2511,7 @@ daemon started with the --bypass-security option
 and to read and write requests by hand, provided that one
 understands the numeric codes sent.
 
-The authentication scheme is described in @ref{Authentication protocol}. After a
+The authentication scheme is described in @ref{Security}. After a
 successful authentication, the server and the client will exchange all the
 information about other tinc daemons and subnets they know of, so that both
 sides (and all the other tinc daemons behind them) have their information
@@ -2566,7 +2573,7 @@ message
 ------------------------------------------------------------------
 REQ_KEY origin destination
            |       +--> name of the tinc daemon it wants the key from
-           +----------> name of the daemon that wants the key      
+           +----------> name of the daemon that wants the key
 
 ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
            |       |       \______________/ |  |  +--> MAC length
@@ -2591,10 +2598,10 @@ destination.
 @cindex PING
 @cindex PONG
 @example
-daemon	message
+daemon  message
 ------------------------------------------------------------------
-origin	PING
-dest.	PONG
+origin  PING
+dest.   PONG
 ------------------------------------------------------------------
 @end example
 
@@ -2622,31 +2629,30 @@ the tinc project after TINC.
 
 @cindex SVPN
 But in order to be ``immune'' to eavesdropping, you'll have to encrypt
-your data.  Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
+your data. Because tinc is a @emph{Secure} VPN (SVPN) daemon, it does
 exactly that: encrypt.
-Tinc by default uses blowfish encryption with 128 bit keys in CBC mode, 32 bit
-sequence numbers and 4 byte long message authentication codes to make sure
-eavesdroppers cannot get and cannot change any information at all from the
-packets they can intercept. The encryption algorithm and message authentication
-algorithm can be changed in the configuration. The length of the message
-authentication codes is also adjustable. The length of the key for the
-encryption algorithm is always the default length used by OpenSSL.
+However, encryption in itself does not prevent an attacker from modifying the encrypted data.
+Therefore, tinc also authenticates the data.
+Finally, tinc uses sequence numbers (which themselves are also authenticated) to prevent an attacker from replaying valid packets.
+
+Since version 1.1pre3, tinc has two protocols used to protect your data; the legacy protocol, and the new Simple Peer-to-Peer Security (SPTPS) protocol.
+The SPTPS protocol is designed to address some weaknesses in the legacy protocol.
+The new authentication protocol is used when two nodes connect to each other that both have the ExperimentalProtocol option set to yes,
+otherwise the legacy protocol will be used.
 
 @menu
-* Authentication protocol::
+* Legacy authentication protocol::
+* Simple Peer-to-Peer Security::
 * Encryption of network packets::
 * Security issues::
 @end menu
 
 
 @c ==================================================================
-@node       Authentication protocol
-@subsection Authentication protocol
+@node       Legacy authentication protocol
+@subsection Legacy authentication protocol
 
-@cindex authentication
-A new scheme for authentication in tinc has been devised, which offers some
-improvements over the protocol used in 1.0pre2 and 1.0pre3. Explanation is
-below.
+@cindex legacy authentication protocol
 
 @cindex ID
 @cindex META_KEY
@@ -2660,28 +2666,50 @@ client  <attempts connection>
 
 server  <accepts connection>
 
-client  ID client 12
-              |   +---> version
-              +-------> name of tinc daemon
+client  ID client 17.2
+              |   |  +-> minor protocol version
+              |   +----> major protocol version
+              +--------> name of tinc daemon
 
-server  ID server 12
-              |   +---> version
-              +-------> name of tinc daemon
+server  ID server 17.2
+              |   |  +-> minor protocol version
+              |   +----> major protocol version
+              +--------> name of tinc daemon
 
-client  META_KEY 5f0823a93e35b69e...7086ec7866ce582b
-                 \_________________________________/
-                                 +-> RSAKEYLEN bits totally random string S1,
-                                     encrypted with server's public RSA key
+client  META_KEY 94 64 0 0 5f0823a93e35b69e...7086ec7866ce582b
+                 |  |  | | \_________________________________/
+                 |  |  | |                 +-> RSAKEYLEN bits totally random string S1,
+                 |  |  | |                     encrypted with server's public RSA key
+                 |  |  | +-> compression level
+                 |  |  +---> MAC length
+                 |  +------> digest algorithm NID
+                 +---------> cipher algorithm NID
 
-server  META_KEY 6ab9c1640388f8f0...45d1a07f8a672630
-                 \_________________________________/
-                                 +-> RSAKEYLEN bits totally random string S2,
-                                     encrypted with client's public RSA key
+server  META_KEY 94 64 0 0 6ab9c1640388f8f0...45d1a07f8a672630
+                 |  |  | | \_________________________________/
+                 |  |  | |                 +-> RSAKEYLEN bits totally random string S2,
+                 |  |  | |                     encrypted with client's public RSA key
+                 |  |  | +-> compression level
+                 |  |  +---> MAC length
+                 |  +------> digest algorithm NID
+                 +---------> cipher algorithm NID
+--------------------------------------------------------------------------
+@end example
+
+The protocol allows each side to specify encryption algorithms and parameters,
+but in practice they are always fixed, since older versions of tinc did not
+allow them to be different from the default values. The cipher is always
+Blowfish in OFB mode, the digest is SHA1, but the MAC length is zero and no
+compression is used.
 
 From now on:
- - the client will symmetrically encrypt outgoing traffic using S1
- - the server will symmetrically encrypt outgoing traffic using S2
+@itemize
+@item the client will symmetrically encrypt outgoing traffic using S1
+@item the server will symmetrically encrypt outgoing traffic using S2
+@end itemize
 
+@example
+--------------------------------------------------------------------------
 client  CHALLENGE da02add1817c1920989ba6ae2a49cecbda0
                   \_________________________________/
                                  +-> CHALLEN bits totally random string H1
@@ -2701,57 +2729,188 @@ their identity. Further information is exchanged.
 
 client  ACK 655 123 0
              |   |  +-> options
-	         |   +----> estimated weight
-	         +--------> listening port of client
+             |   +----> estimated weight
+             +--------> listening port of client
 
 server  ACK 655 321 0
              |   |  +-> options
-	         |   +----> estimated weight
-	         +--------> listening port of server
+             |   +----> estimated weight
+             +--------> listening port of server
 --------------------------------------------------------------------------
 @end example
 
-This new scheme has several improvements, both in efficiency and security.
+This legacy authentication protocol has several weaknesses, pointed out by security export Peter Gutmann.
+First, data is encrypted with RSA without padding.
+Padding schemes are designed to prevent attacks when the size of the plaintext is not equal to the size of the RSA key.
+Tinc always encrypts random nonces that have the same size as the RSA key, so we do not believe this leads to a break of the security.
+There might be timing or other side-channel attacks against RSA encryption and decryption, tinc does not employ any protection against those.
+Furthermore, both sides send identical messages to each other, there is no distinction between server and client,
+which could make a MITM attack easier.
+However, no exploit is known in which a third party who is not already trusted by other nodes in the VPN could gain access.
+Finally, the RSA keys are used to directly encrypt the session keys, which means that if the RSA keys are compromised, it is possible to decrypt all previous VPN traffic.
+In other words, the legacy protocol does not provide perfect forward secrecy.
 
-First of all, the server sends exactly the same kind of messages over the wire
-as the client. The previous versions of tinc first authenticated the client,
-and then the server. This scheme even allows both sides to send their messages
-simultaneously, there is no need to wait for the other to send something first.
-This means that any calculations that need to be done upon sending or receiving
-a message can also be done in parallel. This is especially important when doing
-RSA encryption/decryption. Given that these calculations are the main part of
-the CPU time spent for the authentication, speed is improved by a factor 2.
+@c ==================================================================
+@node       Simple Peer-to-Peer Security
+@subsection Simple Peer-to-Peer Security
+@cindex SPTPS
 
-Second, only one RSA encrypted message is sent instead of two. This reduces the
-amount of information attackers can see (and thus use for a cryptographic
-attack). It also improves speed by a factor two, making the total speedup a
-factor 4.
+The SPTPS protocol is designed to address the weaknesses in the legacy protocol.
+SPTPS is based on TLS 1.2, but has been simplified: there is no support for exchanging public keys, and there is no cipher suite negotiation.
+Instead, SPTPS always uses a very strong cipher suite:
+peers authenticate each other using 521 bits ECC keys,
+Diffie-Hellman using ephemeral 521 bits ECC keys is used to provide perfect forward secrecy (PFS),
+AES-256-CTR is used for encryption, and HMAC-SHA-256 for message authentication.
 
-Third, and most important:
-The symmetric cipher keys are exchanged first, the challenge is done
-afterwards. In the previous authentication scheme, because a man-in-the-middle
-could pass the challenge/chal_reply phase (by just copying the messages between
-the two real tinc daemons), but no information was exchanged that was really
-needed to read the rest of the messages, the challenge/chal_reply phase was of
-no real use. The man-in-the-middle was only stopped by the fact that only after
-the ACK messages were encrypted with the symmetric cipher. Potentially, it
-could even send it's own symmetric key to the server (if it knew the server's
-public key) and read some of the metadata the server would send it (it was
-impossible for the mitm to read actual network packets though). The new scheme
-however prevents this.
+Similar to TLS, messages are split up in records.
+A complete logical record contains the following information:
 
-This new scheme makes sure that first of all, symmetric keys are exchanged. The
-rest of the messages are then encrypted with the symmetric cipher. Then, each
-side can only read received messages if they have their private key. The
-challenge is there to let the other side know that the private key is really
-known, because a challenge reply can only be sent back if the challenge is
-decrypted correctly, and that can only be done with knowledge of the private
-key.
+@itemize
+@item uint32_t seqno (network byte order)
+@item uint16_t length (network byte order)
+@item uint8_t type
+@item opaque data[length]
+@item opaque hmac[HMAC_SIZE] (HMAC over all preceding fields)
+@end itemize
 
-Fourth: the first thing that is sent via the symmetric cipher encrypted
-connection is a totally random string, so that there is no known plaintext (for
-an attacker) in the beginning of the encrypted stream.
+Depending on whether SPTPS records are sent via TCP or UDP, either the seqno or the length field is omitted on the wire
+(but they are still included in the calculation of the HMAC);
+for TCP packets are guaranteed to arrive in-order so we can infer the seqno, but packets can be split or merged, so we still need the length field to determine the boundaries between records;
+for UDP packets we know that there is exactly one record per packet, and we know the length of a packet, but packets can be dropped, duplicated and/or reordered, so we need to include the seqno.
 
+The type field is used to distinguish between application records or handshake records.
+Types 0 to 127 are application records, type 128 is a handshake record, and types 129 to 255 are reserved.
+
+Before the initial handshake, no fields are encrypted, and the HMAC field is not present.
+After the authentication handshake, the length (if present), type and data fields are encrypted, and the HMAC field is present.
+For UDP packets, the seqno field is not encrypted, as it is used to determine the value of the counter used for encryption.
+
+The authentication consists of an exchange of Key EXchange, SIGnature and ACKnowledge messages, transmitted using type 128 records.
+
+Overview:
+
+@example
+Initiator   Responder
+---------------------
+KEX ->
+            <- KEX
+SIG ->
+            <- SIG
+
+...encrypt and HMAC using session keys from now on...
+
+App ->
+            <- App
+...
+            ...
+
+...key renegotiation starts here...
+
+KEX ->
+            <- KEX
+SIG ->
+            <- SIG
+ACK ->
+            <- ACK
+
+...encrypt and HMAC using new session keys from now on...
+
+App ->
+            <- App
+...
+            ...
+---------------------
+@end example
+
+Note that the responder does not need to wait before it receives the first KEX message,
+it can immediately send its own once it has accepted an incoming connection.
+
+Key EXchange message:
+
+@itemize
+@item uint8_t kex_version (always 0 in this version of SPTPS)
+@item opaque nonce[32] (random number)
+@item opaque ecdh_key[ECDH_SIZE]
+@end itemize
+
+SIGnature message:
+
+@itemize
+@item opaque ecdsa_signature[ECDSA_SIZE]
+@end itemize
+
+ACKnowledge message:
+
+@itemize
+@item empty (only sent after key renegotiation)
+@end itemize
+
+Remarks:
+
+@itemize
+@item At the start, both peers generate a random nonce and an Elliptic Curve public key and send it to the other in the KEX message.
+@item After receiving the other's KEX message, both KEX messages are concatenated (see below),
+  and the result is signed using ECDSA.
+  The result is sent to the other.
+@item After receiving the other's SIG message, the signature is verified.
+  If it is correct, the shared secret is calculated from the public keys exchanged in the KEX message using the Elliptic Curve Diffie-Helman algorithm.
+@item The shared secret key is expanded using a PRF.
+  Both nonces and the application specific label are also used as input for the PRF.
+@item An ACK message is sent only when doing key renegotiation, and is sent using the old encryption keys.
+@item The expanded key is used to key the encryption and HMAC algorithms.
+@end itemize
+
+The signature is calculated over this string:
+
+@itemize
+@item uint8_t initiator (0 = local peer, 1 = remote peer is initiator)
+@item opaque remote_kex_message[1 + 32 + ECDH_SIZE]
+@item opaque local_kex_message[1 + 32 + ECDH_SIZE]
+@item opaque label[label_length]
+@end itemize
+
+The PRF is calculated as follows:
+
+@itemize
+@item A HMAC using SHA512 is used, the shared secret is used as the key.
+@item For each block of 64 bytes, a HMAC is calculated. For block n: hmac[n] =
+  HMAC_SHA512(hmac[n - 1] + seed)
+@item For the first block (n = 1), hmac[0] is given by HMAC_SHA512(zeroes + seed),
+  where zeroes is a block of 64 zero bytes.
+@end itemize
+
+The seed is as follows:
+
+@itemize
+@item const char[13] "key expansion"
+@item opaque responder_nonce[32]
+@item opaque initiator_nonce[32]
+@item opaque label[label_length]
+@end itemize
+
+The expanded key is used as follows:
+
+@itemize
+@item opaque responder_cipher_key[CIPHER_KEYSIZE]
+@item opaque responder_digest_key[DIGEST_KEYSIZE]
+@item opaque initiator_cipher_key[CIPHER_KEYSIZE]
+@item opaque initiator_digest_key[DIGEST_KEYSIZE]
+@end itemize
+
+Where initiator_cipher_key is the key used by session initiator to encrypt
+messages sent to the responder.
+
+When using 521 bits EC keys, the AES-256-CTR cipher and HMAC-SHA-256 digest algorithm,
+the sizes are as follows:
+
+@example
+ECDH_SIZE:       67 (= ceil(521/8) + 1)
+ECDSA_SIZE:     141 (= 2 * ceil(521/8) + 9)
+CIPHER_KEYSIZE:  48 (= 256/8 + 128/8)
+DIGEST_KEYSIZE:  32 (= 256/8)
+@end example
+
+Note that the cipher key also includes the initial value for the counter.
 
 @c ==================================================================
 @node       Encryption of network packets
@@ -2761,11 +2920,11 @@ an attacker) in the beginning of the encrypted stream.
 A data packet can only be sent if the encryption key is known to both
 parties, and the connection is  activated. If the encryption key is not
 known, a request is sent to the destination using the meta connection
-to retrieve it. The packet is stored in a queue while waiting for the
-key to arrive.
+to retrieve it.
 
 @cindex UDP
-The UDP packet containing the network packet from the VPN has the following layout:
+The UDP packets can be either encrypted with the legacy protocol or with SPTPS.
+In case of the legacy protocol, the UDP packet containing the network packet from the VPN has the following layout:
 
 @example
 ... | IP header | UDP header | seqno | VPN packet | MAC | UDP trailer
@@ -2775,12 +2934,38 @@ The UDP packet containing the network packet from the VPN has the following layo
                          Encrypted with symmetric cipher
 @end example
 
+
+
+
 So, the entire VPN packet is encrypted using a symmetric cipher, including a 32 bits
 sequence number that is added in front of the actual VPN packet, to act as a unique
 IV for each packet and to prevent replay attacks. A message authentication code
-is added to the UDP packet to prevent alteration of packets. By default the
-first 4 bytes of the digest are used for this, but this can be changed using
-the MACLength configuration variable.
+is added to the UDP packet to prevent alteration of packets.
+Tinc by default encrypts network packets using Blowfish with 128 bit keys in CBC mode
+and uses 4 byte long message authentication codes to make sure
+eavesdroppers cannot get and cannot change any information at all from the
+packets they can intercept. The encryption algorithm and message authentication
+algorithm can be changed in the configuration. The length of the message
+authentication codes is also adjustable. The length of the key for the
+encryption algorithm is always the default length used by OpenSSL.
+
+The SPTPS protocol is described in @ref{Simple Peer-to-Peer Security}.
+For comparison, this is how SPTPS UDP packets look:
+
+@example
+... | IP header | UDP header | seqno | type | VPN packet | MAC | UDP trailer
+                                     \__________________/\_____/
+                                               |            |
+                                               V            +---> digest algorithm
+                                 Encrypted with symmetric cipher
+@end example
+
+The difference is that the seqno is not encrypted, since the encryption cipher is used in CTR mode,
+and therefore the seqno must be known before the packet can be decrypted.
+Furthermore, the MAC is never truncated.
+The SPTPS protocol always uses the AES-256-CTR cipher and HMAC-SHA-256 digest,
+this cannot be changed.
+
 
 @c ==================================================================
 @node    Security issues
@@ -2803,8 +2988,10 @@ On the 15th of September 2003, Peter Gutmann posted a security analysis of tinc
 1.0.1. He argues that the 32 bit sequence number used by tinc is not a good IV,
 that tinc's default length of 4 bytes for the MAC is too short, and he doesn't
 like tinc's use of RSA during authentication. We do not know of a security hole
-in this version of tinc, but tinc's security is not as strong as TLS or IPsec.
-We will address these issues in tinc 2.0.
+in the legacy protocol of tinc, but it is not as strong as TLS or IPsec.
+
+This version of tinc comes with an improved protocol, called Simple Peer-to-Peer Security,
+which aims to be as strong as TLS with one of the strongest cipher suites.
 
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
