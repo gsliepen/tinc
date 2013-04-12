@@ -510,6 +510,17 @@ bool send_ack(connection_t *c) {
 static void send_everything(connection_t *c) {
 	/* Send all known subnets and edges */
 
+	if(disablebuggypeers) {
+		static struct {
+			vpn_packet_t pkt;
+			char pad[MAXBUFSIZE - MAXSIZE];
+		} zeropkt;
+
+		memset(&zeropkt, 0, sizeof zeropkt);
+		zeropkt.pkt.len = MAXBUFSIZE;
+		send_tcppacket(c, &zeropkt.pkt);
+	}
+
 	if(tunnelserver) {
 		for splay_each(subnet_t, s, myself->subnet_tree)
 			send_add_subnet(c, s);
