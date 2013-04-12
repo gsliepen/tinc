@@ -394,6 +394,9 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
 
+	if(len > sizeof outpkt.data)
+		return;
+
 	outpkt.len = len;
 	if(c->options & OPTION_TCPONLY)
 		outpkt.priority = 0;
