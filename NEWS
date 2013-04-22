@@ -1,3 +1,9 @@
+Version 1.0.21               April 22 2013
+
+ * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+
+Thanks to Martin Schobert for auditing tinc and reporting this vulnerability.
+
 Version 1.0.20               March 03 2013
 
  * Use /dev/tap0 by default on FreeBSD and NetBSD when using switch mode.
