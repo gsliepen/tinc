@@ -1,3 +1,17 @@
+Version 1.1pre7              April 22 2013
+
+ * Fixed large latencies on Windows.
+
+ * Renamed the tincctl tool to tinc.
+
+ * Simplified changing the configuration using the tinc tool.
+
+ * Added a full description of the ExperimentalProtocol to the manual.
+
+ * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+
+Thanks to Martin Schobert for auditing tinc and reporting the vulnerability.
+
 Version 1.1pre6              February 20 2013
 
  * Fixed tincd exitting immediately on Windows.
