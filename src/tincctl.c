@@ -1437,19 +1437,8 @@ static int cmd_config(int argc, char *argv[]) {
 
 	FILE *f = fopen(filename, "r");
 	if(!f) {
-		if(action < 0 || errno != ENOENT) {
-			fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
-			return 1;
-		}
-
-		// If it doesn't exist, create it.
-		f = fopen(filename, "a+");
-		if(!f) {
-			fprintf(stderr, "Could not create configuration file %s: %s\n", filename, strerror(errno));
-			return 1;
-		} else {
-			fprintf(stderr, "Created configuration file %s.\n", filename);
-		}
+		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
+		return 1;
 	}
 
 	char *tmpfile = NULL;
