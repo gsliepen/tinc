@@ -318,10 +318,10 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(n->status.sptps)
 		return sptps_verify_datagram(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
 
-	if(!digest_active(&n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest))
+	if(!digest_active(n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(n->indigest))
 		return false;
 
-	return digest_verify(&n->indigest, &inpkt->seqno, inpkt->len - n->indigest.maclength, (const char *)&inpkt->seqno + inpkt->len - n->indigest.maclength);
+	return digest_verify(n->indigest, &inpkt->seqno, inpkt->len - digest_length(n->indigest), (const char *)&inpkt->seqno + inpkt->len - digest_length(n->indigest));
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -336,7 +336,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		return;
 	}
 
-	if(!cipher_active(&n->incipher)) {
+	if(!cipher_active(n->incipher)) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet",
 					n->name, n->hostname);
 		return;
@@ -344,7 +344,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check packet length */
 
-	if(inpkt->len < sizeof inpkt->seqno + digest_length(&n->indigest)) {
+	if(inpkt->len < sizeof inpkt->seqno + digest_length(n->indigest)) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got too short packet from %s (%s)",
 					n->name, n->hostname);
 		return;
@@ -352,20 +352,20 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check the message authentication code */
 
-	if(digest_active(&n->indigest)) {
-		inpkt->len -= n->indigest.maclength;
-		if(!digest_verify(&n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
+	if(digest_active(n->indigest)) {
+		inpkt->len -= digest_length(n->indigest);
+		if(!digest_verify(n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
 			return;
 		}
 	}
 	/* Decrypt the packet */
 
-	if(cipher_active(&n->incipher)) {
+	if(cipher_active(n->incipher)) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_decrypt(&n->incipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_decrypt(n->incipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Error decrypting packet from %s (%s)", n->name, n->hostname);
 			return;
 		}
@@ -653,11 +653,11 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Encrypt the packet */
 
-	if(cipher_active(&n->outcipher)) {
+	if(cipher_active(n->outcipher)) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_encrypt(&n->outcipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_encrypt(n->outcipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -668,9 +668,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Add the message authentication code */
 
-	if(digest_active(&n->outdigest)) {
-		digest_create(&n->outdigest, &inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len);
-		inpkt->len += digest_length(&n->outdigest);
+	if(digest_active(n->outdigest)) {
+		digest_create(n->outdigest, &inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len);
+		inpkt->len += digest_length(n->outdigest);
 	}
 
 	/* Send the packet */

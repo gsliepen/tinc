@@ -1,6 +1,6 @@
 /*
     cipher.c -- Symmetric block cipher handling
-    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,56 +17,67 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
-#include "cipher.h"
-#include "logger.h"
-#include "xalloc.h"
+#include "../cipher.h"
+#include "../logger.h"
+#include "../xalloc.h"
+
+struct cipher {
+	EVP_CIPHER_CTX ctx;
+	const EVP_CIPHER *cipher;
+	struct cipher_counter *counter;
+};
 
 typedef struct cipher_counter {
-	unsigned char counter[EVP_MAX_IV_LENGTH];
-	unsigned char block[EVP_MAX_IV_LENGTH];
+	unsigned char counter[CIPHER_MAX_IV_SIZE];
+	unsigned char block[CIPHER_MAX_IV_SIZE];
 	int n;
 } cipher_counter_t;
 
-static bool cipher_open(cipher_t *cipher) {
+static cipher_t *cipher_open(const EVP_CIPHER *evp_cipher) {
+	cipher_t *cipher = xmalloc_and_zero(sizeof *cipher);
+	cipher->cipher = evp_cipher;
 	EVP_CIPHER_CTX_init(&cipher->ctx);
 
-	return true;
+	return cipher;
 }
 
-bool cipher_open_by_name(cipher_t *cipher, const char *name) {
-	cipher->cipher = EVP_get_cipherbyname(name);
+cipher_t *cipher_open_by_name(const char *name) {
+	const EVP_CIPHER *evp_cipher = EVP_get_cipherbyname(name);
+	if(!evp_cipher) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher name '%s'!", name);
+		return NULL;
+	}
 
-	if(cipher->cipher)
-		return cipher_open(cipher);
-
-	logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher name '%s'!", name);
-	return false;
+	return cipher_open(evp_cipher);
 }
 
-bool cipher_open_by_nid(cipher_t *cipher, int nid) {
-	cipher->cipher = EVP_get_cipherbynid(nid);
+cipher_t *cipher_open_by_nid(int nid) {
+	const EVP_CIPHER *evp_cipher = EVP_get_cipherbynid(nid);
+	if(!evp_cipher) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher nid %d!", nid);
+		return NULL;
+	}
 
-	if(cipher->cipher)
-		return cipher_open(cipher);
-
-	logger(DEBUG_ALWAYS, LOG_ERR, "Unknown cipher nid %d!", nid);
-	return false;
+	return cipher_open(evp_cipher);
 }
 
-bool cipher_open_blowfish_ofb(cipher_t *cipher) {
-	cipher->cipher = EVP_bf_ofb();
-	return cipher_open(cipher);
+cipher_t *cipher_open_blowfish_ofb(void) {
+	return cipher_open(EVP_bf_ofb());
 }
 
 void cipher_close(cipher_t *cipher) {
+	if(!cipher)
+		return;
+
 	EVP_CIPHER_CTX_cleanup(&cipher->ctx);
 	free(cipher->counter);
-	cipher->counter = NULL;
+	free(cipher);
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {
@@ -214,5 +225,5 @@ int cipher_get_nid(const cipher_t *cipher) {
 }
 
 bool cipher_active(const cipher_t *cipher) {
-	return cipher->cipher && cipher->cipher->nid != 0;
+	return cipher && cipher->cipher && cipher->cipher->nid != 0;
 }

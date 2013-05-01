@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -221,7 +221,7 @@ bool id_h(connection_t *c, const char *request) {
 				return false;
 		}
 	} else {
-		if(c->protocol_minor && !ecdsa_active(&c->ecdsa))
+		if(c->protocol_minor && !ecdsa_active(c->ecdsa))
 			c->protocol_minor = 1;
 	}
 
@@ -246,13 +246,13 @@ bool send_metakey(connection_t *c) {
 	if(!read_rsa_public_key(c))
 		return false;
 
-	if(!cipher_open_blowfish_ofb(&c->outcipher))
+	if(!(c->outcipher = cipher_open_blowfish_ofb()))
 		return false;
 
-	if(!digest_open_sha1(&c->outdigest, -1))
+	if(!(c->outdigest = digest_open_sha1(-1)))
 		return false;
 
-	size_t len = rsa_size(&c->rsa);
+	size_t len = rsa_size(c->rsa);
 	char key[len];
 	char enckey[len];
 	char hexkey[2 * len + 1];
@@ -273,7 +273,7 @@ bool send_metakey(connection_t *c) {
 
 	key[0] &= 0x7F;
 
-	cipher_set_key_from_rsa(&c->outcipher, key, len, true);
+	cipher_set_key_from_rsa(c->outcipher, key, len, true);
 
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
@@ -287,7 +287,7 @@ bool send_metakey(connection_t *c) {
 	   with a length equal to that of the modulus of the RSA key.
 	 */
 
-	if(!rsa_public_encrypt(&c->rsa, key, len, enckey)) {
+	if(!rsa_public_encrypt(c->rsa, key, len, enckey)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during encryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
@@ -299,8 +299,8 @@ bool send_metakey(connection_t *c) {
 	/* Send the meta key */
 
 	bool result = send_request(c, "%d %d %d %d %d %s", METAKEY,
-			 cipher_get_nid(&c->outcipher),
-			 digest_get_nid(&c->outdigest), c->outmaclength,
+			 cipher_get_nid(c->outcipher),
+			 digest_get_nid(c->outdigest), c->outmaclength,
 			 c->outcompression, hexkey);
 
 	c->status.encryptout = true;
@@ -310,7 +310,7 @@ bool send_metakey(connection_t *c) {
 bool metakey_h(connection_t *c, const char *request) {
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
-	size_t len = rsa_size(&myself->connection->rsa);
+	size_t len = rsa_size(myself->connection->rsa);
 	char enckey[len];
 	char key[len];
 
@@ -332,7 +332,7 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Decrypt the meta key */
 
-	if(!rsa_private_decrypt(&myself->connection->rsa, enckey, len, key)) {
+	if(!rsa_private_decrypt(myself->connection->rsa, enckey, len, key)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during decryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
@@ -344,12 +344,12 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!cipher_open_by_nid(&c->incipher, cipher) || !cipher_set_key_from_rsa(&c->incipher, key, len, false)) {
+	if(!(c->incipher = cipher_open_by_nid(cipher)) || !cipher_set_key_from_rsa(c->incipher, key, len, false)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
-	if(!digest_open_by_nid(&c->indigest, digest, -1)) {
+	if(!(c->indigest = digest_open_by_nid(digest, -1))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
 		return false;
 	}
@@ -362,7 +362,7 @@ bool metakey_h(connection_t *c, const char *request) {
 }
 
 bool send_challenge(connection_t *c) {
-	size_t len = rsa_size(&c->rsa);
+	size_t len = rsa_size(c->rsa);
 	char buffer[len * 2 + 1];
 
 	if(!c->hischallenge)
@@ -383,8 +383,8 @@ bool send_challenge(connection_t *c) {
 
 bool challenge_h(connection_t *c, const char *request) {
 	char buffer[MAX_STRING_SIZE];
-	size_t len = rsa_size(&myself->connection->rsa);
-	size_t digestlen = digest_length(&c->indigest);
+	size_t len = rsa_size(myself->connection->rsa);
+	size_t digestlen = digest_length(c->indigest);
 	char digest[digestlen];
 
 	if(sscanf(request, "%*d " MAX_STRING, buffer) != 1) {
@@ -407,7 +407,7 @@ bool challenge_h(connection_t *c, const char *request) {
 
 	/* Calculate the hash from the challenge we received */
 
-	digest_create(&c->indigest, buffer, len, digest);
+	digest_create(c->indigest, buffer, len, digest);
 
 	/* Convert the hash to a hexadecimal formatted string */
 
@@ -433,7 +433,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Check if the length of the hash is all right */
 
-	if(inlen != digest_length(&c->outdigest)) {
+	if(inlen != digest_length(c->outdigest)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
@@ -441,7 +441,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Verify the hash */
 
-	if(!digest_verify(&c->outdigest, c->hischallenge, rsa_size(&c->rsa), hishash)) {
+	if(!digest_verify(c->outdigest, c->hischallenge, rsa_size(c->rsa), hishash)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}
@@ -461,7 +461,7 @@ static bool send_upgrade(connection_t *c) {
 	/* Special case when protocol_minor is 1: the other end is ECDSA capable,
 	 * but doesn't know our key yet. So send it now. */
 
-	char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
+	char *pubkey = ecdsa_get_base64_public_key(myself->connection->ecdsa);
 
 	if(!pubkey)
 		return false;
@@ -545,7 +545,7 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	if(ecdsa_active(&c->ecdsa) || read_ecdsa_public_key(c)) {
+	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(c)) {
 		logger(DEBUG_ALWAYS, LOG_INFO, "Already have ECDSA public key from %s (%s), not upgrading.", c->name, c->hostname);
 		return false;
 	}

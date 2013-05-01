@@ -52,14 +52,14 @@ typedef struct node_t {
 	time_t last_state_change;
 	time_t last_req_key;
 
-	ecdsa_t ecdsa;                          /* His public ECDSA key */
+	ecdsa_t *ecdsa;                         /* His public ECDSA key */
 	sptps_t sptps;
 
-	cipher_t incipher;                      /* Cipher for UDP packets */
-	digest_t indigest;                      /* Digest for UDP packets */
+	cipher_t *incipher;                     /* Cipher for UDP packets */
+	digest_t *indigest;                     /* Digest for UDP packets */
 
-	cipher_t outcipher;                     /* Cipher for UDP packets */
-	digest_t outdigest;                     /* Digest for UDP packets */
+	cipher_t *outcipher;                    /* Cipher for UDP packets */
+	digest_t *outdigest;                    /* Digest for UDP packets */
 
 	int incompression;                      /* Compressionlevel, 0 = no compression */
 	int outcompression;                     /* Compressionlevel, 0 = no compression */

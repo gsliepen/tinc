@@ -53,8 +53,8 @@ typedef struct sptps {
 	uint16_t reclen;
 
 	bool instate;
-	cipher_t incipher;
-	digest_t indigest;
+	cipher_t *incipher;
+	digest_t *indigest;
 	uint32_t inseqno;
 	uint32_t received;
 	unsigned int replaywin;
@@ -62,13 +62,13 @@ typedef struct sptps {
 	char *late;
 
 	bool outstate;
-	cipher_t outcipher;
-	digest_t outdigest;
+	cipher_t *outcipher;
+	digest_t *outdigest;
 	uint32_t outseqno;
 
-	ecdsa_t mykey;
-	ecdsa_t hiskey;
-	ecdh_t ecdh;
+	ecdsa_t *mykey;
+	ecdsa_t *hiskey;
+	ecdh_t *ecdh;
 
 	char *mykex;
 	char *hiskex;
@@ -85,7 +85,7 @@ extern unsigned int sptps_replaywin;
 extern void sptps_log_quiet(sptps_t *s, int s_errno, const char *format, va_list ap);
 extern void sptps_log_stderr(sptps_t *s, int s_errno, const char *format, va_list ap);
 extern void (*sptps_log)(sptps_t *s, int s_errno, const char *format, va_list ap);
-extern bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
+extern bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t *mykey, ecdsa_t *hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record);
 extern bool sptps_stop(sptps_t *s);
 extern bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len);
 extern bool sptps_receive_data(sptps_t *s, const char *data, size_t len);

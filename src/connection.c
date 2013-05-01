@@ -1,6 +1,6 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2008      Max Rijevski <maksuf@gmail.com>
 
@@ -27,6 +27,7 @@
 #include "control_common.h"
 #include "list.h"
 #include "logger.h"
+#include "rsa.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -54,14 +55,14 @@ void free_connection(connection_t *c) {
 	if(!c)
 		return;
 
-	cipher_close(&c->incipher);
-	digest_close(&c->indigest);
-	cipher_close(&c->outcipher);
-	digest_close(&c->outdigest);
+	cipher_close(c->incipher);
+	digest_close(c->indigest);
+	cipher_close(c->outcipher);
+	digest_close(c->outdigest);
 
 	sptps_stop(&c->sptps);
-	ecdsa_free(&c->ecdsa);
-	rsa_free(&c->rsa);
+	ecdsa_free(c->ecdsa);
+	rsa_free(c->rsa);
 
 	free(c->hischallenge);
 

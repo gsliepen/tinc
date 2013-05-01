@@ -1,6 +1,6 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -70,12 +70,12 @@ void free_node(node_t *n) {
 
 	sockaddrfree(&n->address);
 
-	cipher_close(&n->incipher);
-	digest_close(&n->indigest);
-	cipher_close(&n->outcipher);
-	digest_close(&n->outdigest);
+	cipher_close(n->incipher);
+	digest_close(n->indigest);
+	cipher_close(n->outcipher);
+	digest_close(n->outdigest);
 
-	ecdsa_free(&n->ecdsa);
+	ecdsa_free(n->ecdsa);
 	sptps_stop(&n->sptps);
 
 	timeout_del(&n->mtutimeout);
@@ -145,8 +145,8 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 bool dump_nodes(connection_t *c) {
 	for splay_each(node_t, n, node_tree)
 		send_request(c, "%d %d %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
-			   n->name, n->hostname ?: "unknown port unknown", cipher_get_nid(&n->outcipher),
-			   digest_get_nid(&n->outdigest), (int)digest_length(&n->outdigest), n->outcompression,
+			   n->name, n->hostname ?: "unknown port unknown", cipher_get_nid(n->outcipher),
+			   digest_get_nid(n->outdigest), (int)digest_length(n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
 

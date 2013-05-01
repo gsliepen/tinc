@@ -1,6 +1,6 @@
 /*
     digest.c -- Digest handling
-    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,57 +17,55 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
-#include "utils.h"
-#include "xalloc.h"
+#include "../system.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
 #include <openssl/err.h>
 #include <openssl/hmac.h>
 
 #include "digest.h"
-#include "logger.h"
+#include "../digest.h"
+#include "../logger.h"
 
-static void set_maclength(digest_t *digest, int maclength) {
+static digest_t *digest_open(const EVP_MD *evp_md, int maclength) {
+	digest_t *digest = xmalloc_and_zero(sizeof *digest);
+	digest->digest = evp_md;
+
 	int digestlen = EVP_MD_size(digest->digest);
 
 	if(maclength > digestlen || maclength < 0)
 		digest->maclength = digestlen;
 	else
 		digest->maclength = maclength;
+
+	return digest;
 }
 
-bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
-	digest->digest = EVP_get_digestbyname(name);
-	digest->key = NULL;
+digest_t *digest_open_by_name(const char *name, int maclength) {
+	const EVP_MD *evp_md = EVP_get_digestbyname(name);
 
-	if(!digest->digest) {
+	if(!evp_md) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest name '%s'!", name);
 		return false;
 	}
 
-	set_maclength(digest, maclength);
-	return true;
+	return digest_open(evp_md, maclength);
 }
 
-bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
-	digest->digest = EVP_get_digestbynid(nid);
-	digest->key = NULL;
+digest_t *digest_open_by_nid(int nid, int maclength) {
+	const EVP_MD *evp_md = EVP_get_digestbynid(nid);
 
-	if(!digest->digest) {
+	if(!evp_md) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest nid %d!", nid);
 		return false;
 	}
 
-	set_maclength(digest, maclength);
-	return true;
+	return digest_open(evp_md, maclength);
 }
 
-bool digest_open_sha1(digest_t *digest, int maclength) {
-	digest->digest = EVP_sha1();
-	digest->key = NULL;
-
-	set_maclength(digest, maclength);
-	return true;
+digest_t *digest_open_sha1(int maclength) {
+	return digest_open(EVP_sha1(), maclength);
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {
@@ -78,8 +76,11 @@ bool digest_set_key(digest_t *digest, const void *key, size_t len) {
 }
 
 void digest_close(digest_t *digest) {
+	if(!digest)
+		return;
+
 	free(digest->key);
-	digest->key = NULL;
+	free(digest);
 }
 
 bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *outdata) {
@@ -123,5 +124,5 @@ size_t digest_length(const digest_t *digest) {
 }
 
 bool digest_active(const digest_t *digest) {
-	return digest->digest && digest->digest->type != 0;
+	return digest && digest->digest && digest->digest->type != 0;
 }

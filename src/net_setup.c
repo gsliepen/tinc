@@ -58,14 +58,13 @@ char *scriptinterpreter;
 char *scriptextension;
 
 bool node_read_ecdsa_public_key(node_t *n) {
-	if(ecdsa_active(&n->ecdsa))
+	if(ecdsa_active(n->ecdsa))
 		return true;
 
 	splay_tree_t *config_tree;
 	FILE *fp;
 	char *pubname = NULL, *hcfname = NULL;
 	char *p;
-	bool result = false;
 
 	xasprintf(&hcfname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
@@ -76,7 +75,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	/* First, check for simple ECDSAPublicKey statement */
 
 	if(get_config_string(lookup_config(config_tree, "ECDSAPublicKey"), &p)) {
-		result = ecdsa_set_base64_public_key(&n->ecdsa, p);
+		n->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
 		goto exit;
 	}
@@ -93,28 +92,30 @@ bool node_read_ecdsa_public_key(node_t *n) {
 		goto exit;
 	}
 
-	result = ecdsa_read_pem_public_key(&n->ecdsa, fp);
+	n->ecdsa = ecdsa_read_pem_public_key(fp);
 	fclose(fp);
 
 exit:
 	exit_configuration(&config_tree);
 	free(hcfname);
 	free(pubname);
-	return result;
+	return n->ecdsa;
 }
 
 bool read_ecdsa_public_key(connection_t *c) {
+	if(ecdsa_active(c->ecdsa))
+		return true;
+
 	FILE *fp;
 	char *fname;
 	char *p;
-	bool result;
 
 	/* First, check for simple ECDSAPublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "ECDSAPublicKey"), &p)) {
-		result = ecdsa_set_base64_public_key(&c->ecdsa, p);
+		c->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
-		return result;
+		return c->ecdsa;
 	}
 
 	/* Else, check for ECDSAPublicKeyFile statement and read it */
@@ -131,27 +132,29 @@ bool read_ecdsa_public_key(connection_t *c) {
 		return false;
 	}
 
-	result = ecdsa_read_pem_public_key(&c->ecdsa, fp);
+	c->ecdsa = ecdsa_read_pem_public_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!c->ecdsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing ECDSA public key file `%s' failed.", fname);
 	free(fname);
-	return result;
+	return c->ecdsa;
 }
 
 bool read_rsa_public_key(connection_t *c) {
+	if(ecdsa_active(c->ecdsa))
+		return true;
+
 	FILE *fp;
 	char *fname;
 	char *n;
-	bool result;
 
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &n)) {
-		result = rsa_set_hex_public_key(&c->rsa, n, "FFFF");
+		c->rsa = rsa_set_hex_public_key(n, "FFFF");
 		free(n);
-		return result;
+		return c->rsa;
 	}
 
 	/* Else, check for PublicKeyFile statement and read it */
@@ -167,19 +170,18 @@ bool read_rsa_public_key(connection_t *c) {
 		return false;
 	}
 
-	result = rsa_read_pem_public_key(&c->rsa, fp);
+	c->rsa = rsa_read_pem_public_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!c->rsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
-	return result;
+	return c->rsa;
 }
 
 static bool read_ecdsa_private_key(void) {
 	FILE *fp;
 	char *fname;
-	bool result;
 
 	/* Check for PrivateKeyFile statement and read it */
 
@@ -207,20 +209,19 @@ static bool read_ecdsa_private_key(void) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for ECDSA private key file `%s'!", fname);
 #endif
 
-	result = ecdsa_read_pem_private_key(&myself->connection->ecdsa, fp);
+	myself->connection->ecdsa = ecdsa_read_pem_private_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!myself->connection->ecdsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
-	return result;
+	return myself->connection->ecdsa;
 }
 
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname;
 	char *n, *d;
-	bool result;
 
 	/* First, check for simple PrivateKey statement */
 
@@ -230,10 +231,10 @@ static bool read_rsa_private_key(void) {
 			free(d);
 			return false;
 		}
-		result = rsa_set_hex_private_key(&myself->connection->rsa, n, "FFFF", d);
+		myself->connection->rsa = rsa_set_hex_private_key(n, "FFFF", d);
 		free(n);
 		free(d);
-		return result;
+		return myself->connection->rsa;
 	}
 
 	/* Else, check for PrivateKeyFile statement and read it */
@@ -263,13 +264,13 @@ static bool read_rsa_private_key(void) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
-	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
+	myself->connection->rsa = rsa_read_pem_private_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!myself->connection->rsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
-	return result;
+	return myself->connection->rsa;
 }
 
 static timeout_t keyexpire_timeout;
@@ -707,7 +708,7 @@ static bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
 		cipher = xstrdup("blowfish");
 
-	if(!cipher_open_by_name(&myself->incipher, cipher)) {
+	if(!(myself->incipher = cipher_open_by_name(cipher))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
 		return false;
 	}
@@ -730,7 +731,7 @@ static bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
 		digest = xstrdup("sha1");
 
-	if(!digest_open_by_name(&myself->indigest, digest, maclength)) {
+	if(!(myself->indigest = digest_open_by_name(digest, maclength))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
 		return false;
 	}

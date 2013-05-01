@@ -6,7 +6,7 @@ SUBDIRS =  m4 src doc gui
 
 ACLOCAL_AMFLAGS = -I m4 
 
-EXTRA_DIST = have.h system.h COPYING.README README.android
+EXTRA_DIST = COPYING.README README.android
 
 ChangeLog:
 	git log > ChangeLog

@@ -1,6 +1,6 @@
 /*
-    rsagen.h -- RSA key generation and export
-    Copyright (C) 2008 Guus Sliepen <guus@tinc-vpn.org>
+    ecdsagen.c -- ECDSA key generation and export
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,13 +17,25 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_RSAGEN_H__
-#define __TINC_RSAGEN_H__
+#include "../system.h"
 
-#include "rsa.h"
+#include "../ecdsagen.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
-extern bool rsa_generate(rsa_t *rsa, size_t bits, unsigned long exponent);
-extern bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp);
-extern bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp);
+// Generate ECDSA key
 
-#endif
+ecdsa_t *ecdsa_generate(void) {
+	logger(DEBUG_ALWAYS, LOG_ERR, "EC support using libgcrypt not implemented");
+	return NULL;
+}
+
+// Write PEM ECDSA keys
+
+bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
+	return false;
+}
+
+bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
+	return false;
+}

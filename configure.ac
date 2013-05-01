@@ -192,13 +192,15 @@ tinc_ZLIB
 tinc_LZO
 
 if test "$with_libgcrypt" = yes; then
+	gcrypt=true
 	AM_PATH_LIBGCRYPT([1.4.0], [], [])
-    	ln -sf gcrypt/cipher.c gcrypt/cipher.h gcrypt/crypto.c gcrypt/crypto.h gcrypt/digest.c gcrypt/digest.h gcrypt/ecdh.c gcrypt/ecdh.h gcrypt/ecdsa.c gcrypt/ecdsa.h gcrypt/ecdsagen.c gcrypt/ecdsagen.h gcrypt/prf.c gcrypt/prf.h gcrypt/rsa.c gcrypt/rsa.h gcrypt/rsagen.c gcrypt/rsagen.h src/
 else
+	openssl=true
 	tinc_OPENSSL
-    	ln -sf openssl/cipher.c openssl/cipher.h openssl/crypto.c openssl/crypto.h openssl/digest.c openssl/digest.h openssl/ecdh.c openssl/ecdh.h openssl/ecdsa.c openssl/ecdsa.h openssl/ecdsagen.c openssl/ecdsagen.h openssl/prf.c openssl/prf.h openssl/rsa.c openssl/rsa.h openssl/rsagen.c openssl/rsagen.h src/
 fi
 	
+AM_CONDITIONAL(OPENSSL, test "$openssl" = true)
+AM_CONDITIONAL(GCRYPT, test "$grypt" = true)
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,

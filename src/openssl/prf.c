@@ -1,6 +1,6 @@
 /*
     prf.c -- Pseudo-Random Function for key material generation
-    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,27 +17,30 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <openssl/obj_mac.h>
 
 #include "digest.h"
-#include "prf.h"
+#include "../digest.h"
+#include "../prf.h"
 
 /* Generate key material from a master secret and a seed, based on RFC 4346 section 5.
    We use SHA512 instead of MD5 and SHA1.
  */
 
 static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
-	digest_t digest;
+	digest_t *digest = digest_open_by_nid(nid, -1);
 
-	if(!digest_open_by_nid(&digest, nid, -1))
+	if(!digest)
 		return false;
 
-	if(!digest_set_key(&digest, secret, secretlen))
+	if(!digest_set_key(digest, secret, secretlen)) {
+		digest_close(digest);
 		return false;
+	}
 
-	size_t len = digest_length(&digest);
+	size_t len = digest_length(digest);
 
 	/* Data is what the "inner" HMAC function processes.
 	   It consists of the previous HMAC result plus the seed.
@@ -51,10 +54,10 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 
 	while(outlen > 0) {
 		/* Inner HMAC */
-		digest_create(&digest, data, len + seedlen, data);
+		digest_create(digest, data, len + seedlen, data);
 
 		/* Outer HMAC */
-		digest_create(&digest, data, len + seedlen, hash);
+		digest_create(digest, data, len + seedlen, hash);
 
 		/* XOR the results of the outer HMAC into the out buffer */
 		for(int i = 0; i < len && i < outlen; i++)
@@ -63,7 +66,7 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 		outlen -= len;
 	}
 
-	digest_close(&digest);
+	digest_close(digest);
 	return true;
 }
 

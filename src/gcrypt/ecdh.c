@@ -1,6 +1,6 @@
 /*
-    prf.h -- header file for prf.c
-    Copyright (C) 2011 Guus Sliepen <guus@tinc-vpn.org>
+    ecdh.c -- Diffie-Hellman key exchange handling
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,9 +17,21 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_PRF_H__
-#define __TINC_PRF_H__
+#include "../system.h"
 
-extern bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen);
+#include "../ecdh.h"
+#include "../logger.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
-#endif
+ecdh_t *ecdh_generate_public(void *pubkey) {
+	logger(DEBUG_ALWAYS, LOG_ERR, "EC support using libgcrypt not implemented");
+	return NULL;
+}
+
+bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
+	return false
+}
+
+void ecdh_free(ecdh_t *ecdh) {
+}

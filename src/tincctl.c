@@ -346,13 +346,13 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
   them in.
 */
 static bool ecdsa_keygen(bool ask) {
-	ecdsa_t key;
+	ecdsa_t *key;
 	FILE *f;
 	char *pubname, *privname;
 
 	fprintf(stderr, "Generating ECDSA keypair:\n");
 
-	if(!ecdsa_generate(&key)) {
+	if(!(key = ecdsa_generate())) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
@@ -370,7 +370,12 @@ static bool ecdsa_keygen(bool ask) {
 	fchmod(fileno(f), 0600);
 #endif
 
-	ecdsa_write_pem_private_key(&key, f);
+	if(!ecdsa_write_pem_private_key(key, f)) {
+		fprintf(stderr, "Error writing private key!\n");
+		ecdsa_free(key);
+		fclose(f);
+		return false;
+	}
 
 	fclose(f);
 
@@ -385,11 +390,12 @@ static bool ecdsa_keygen(bool ask) {
 	if(!f)
 		return false;
 
-	char *pubkey = ecdsa_get_base64_public_key(&key);
+	char *pubkey = ecdsa_get_base64_public_key(key);
 	fprintf(f, "ECDSAPublicKey = %s\n", pubkey);
 	free(pubkey);
 
 	fclose(f);
+	ecdsa_free(key);
 
 	return true;
 }
@@ -399,13 +405,13 @@ static bool ecdsa_keygen(bool ask) {
   them in.
 */
 static bool rsa_keygen(int bits, bool ask) {
-	rsa_t key;
+	rsa_t *key;
 	FILE *f;
 	char *pubname, *privname;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 
-	if(!rsa_generate(&key, bits, 0x10001)) {
+	if(!(key = rsa_generate(bits, 0x10001))) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
@@ -423,7 +429,12 @@ static bool rsa_keygen(int bits, bool ask) {
 	fchmod(fileno(f), 0600);
 #endif
 
-	rsa_write_pem_private_key(&key, f);
+	if(!rsa_write_pem_private_key(key, f)) {
+		fprintf(stderr, "Error writing private key!\n");
+		fclose(f);
+		rsa_free(key);
+		return false;
+	}
 
 	fclose(f);
 
@@ -438,9 +449,15 @@ static bool rsa_keygen(int bits, bool ask) {
 	if(!f)
 		return false;
 
-	rsa_write_pem_public_key(&key, f);
+	if(!rsa_write_pem_public_key(key, f)) {
+		fprintf(stderr, "Error writing public key!\n");
+		fclose(f);
+		rsa_free(key);
+		return false;
+	}
 
 	fclose(f);
+	rsa_free(key);
 
 	return true;
 }

@@ -1,6 +1,6 @@
 /*
-    crypto.h -- header for crypto.c
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    prf.c -- Pseudo-Random Function for key material generation
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,11 +17,13 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_CRYPTO_H__
-#define __TINC_CRYPTO_H__
+#include "../system.h"
 
-extern void crypto_init();
-extern void crypto_exit();
-extern void randomize(void *, size_t);
+#include "digest.h"
+#include "../digest.h"
+#include "../prf.h"
 
-#endif
+bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
+	logger(DEBUG_ALWAYS, LOG_ERR, "PRF support using libgcrypt not implemented");
+	return false;
+}

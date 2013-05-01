@@ -1,6 +1,6 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2006      Scott Lamb <slamb@slamb.org>
 
@@ -60,7 +60,7 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	if(c->status.encryptout) {
 		size_t outlen = length;
 
-		if(!cipher_encrypt(&c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
+		if(!cipher_encrypt(c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting metadata to %s (%s)",
 					c->name, c->hostname);
 			return false;
@@ -171,7 +171,7 @@ bool receive_meta(connection_t *c) {
 		} else {
 			size_t outlen = inlen;
 
-			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
+			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
 					   c->name, c->hostname);
 				return false;

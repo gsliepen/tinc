@@ -1,6 +1,6 @@
 /*
     connection.h -- header for connection.c
-    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -73,12 +73,12 @@ typedef struct connection_t {
 	struct node_t *node;            /* node associated with the other end */
 	struct edge_t *edge;            /* edge associated with this connection */
 
-	rsa_t rsa;                      /* his public RSA key */
-	ecdsa_t ecdsa;                  /* his public ECDSA key */
-	cipher_t incipher;              /* Cipher he will use to send data to us */
-	cipher_t outcipher;             /* Cipher we will use to send data to him */
-	digest_t indigest;
-	digest_t outdigest;
+	rsa_t *rsa;                     /* his public RSA key */
+	ecdsa_t *ecdsa;                 /* his public ECDSA key */
+	cipher_t *incipher;             /* Cipher he will use to send data to us */
+	cipher_t *outcipher;            /* Cipher we will use to send data to him */
+	digest_t *indigest;
+	digest_t *outdigest;
 	sptps_t sptps;
 
 	int inmaclength;

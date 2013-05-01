@@ -1,6 +1,6 @@
 /*
     sptps_test.c -- Simple Peer-to-Peer Security test program
-    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ bool send_meta(void *c, const char *msg , int len) { return false; }
 char *logfilename = NULL;
 struct timeval now;
 
-ecdsa_t mykey, hiskey;
+ecdsa_t *mykey, *hiskey;
 
 static bool send_data(void *handle, uint8_t type, const char *data, size_t len) {
 	char hex[len * 2 + 1];
@@ -143,12 +143,12 @@ int main(int argc, char *argv[]) {
 	crypto_init();
 
 	FILE *fp = fopen(argv[1], "r");
-	if(!ecdsa_read_pem_private_key(&mykey, fp))
+	if(!(mykey = ecdsa_read_pem_private_key(fp)))
 		return 1;
 	fclose(fp);
 
 	fp = fopen(argv[2], "r");
-	if(!ecdsa_read_pem_public_key(&hiskey, fp))
+	if(!(hiskey = ecdsa_read_pem_public_key(fp)))
 		return 1;
 	fclose(fp);
 

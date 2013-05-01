@@ -98,11 +98,11 @@ static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const char *data
 
 	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
-		cipher_set_counter(&s->outcipher, &seqno, sizeof seqno);
-		if(!cipher_counter_xor(&s->outcipher, buffer + 6, len + 1UL, buffer + 6))
+		cipher_set_counter(s->outcipher, &seqno, sizeof seqno);
+		if(!cipher_counter_xor(s->outcipher, buffer + 6, len + 1UL, buffer + 6))
 			return false;
 
-		if(!digest_create(&s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
+		if(!digest_create(s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
 			return false;
 
 		return s->send_data(s->handle, type, buffer + 2, len + 21UL);
@@ -131,10 +131,10 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 
 	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
-		if(!cipher_counter_xor(&s->outcipher, buffer + 4, len + 3UL, buffer + 4))
+		if(!cipher_counter_xor(s->outcipher, buffer + 4, len + 3UL, buffer + 4))
 			return false;
 
-		if(!digest_create(&s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
+		if(!digest_create(s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
 			return false;
 
 		return s->send_data(s->handle, type, buffer + 4, len + 19UL);
@@ -175,7 +175,7 @@ static bool send_kex(sptps_t *s) {
 	randomize(s->mykex + 1, 32);
 
 	// Create a new ECDH public key.
-	if(!ecdh_generate_public(&s->ecdh, s->mykex + 1 + 32))
+	if(!(s->ecdh = ecdh_generate_public(s->mykex + 1 + 32)))
 		return false;
 
 	return send_record_priv(s, SPTPS_HANDSHAKE, s->mykex, 1 + 32 + keylen);
@@ -184,7 +184,7 @@ static bool send_kex(sptps_t *s) {
 // Send a SIGnature record, containing an ECDSA signature over both KEX records.
 static bool send_sig(sptps_t *s) {
 	size_t keylen = ECDH_SIZE;
-	size_t siglen = ecdsa_size(&s->mykey);
+	size_t siglen = ecdsa_size(s->mykey);
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator, plus label
 	char msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
@@ -196,7 +196,7 @@ static bool send_sig(sptps_t *s) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Sign the result.
-	if(!ecdsa_sign(&s->mykey, msg, sizeof msg, sig))
+	if(!ecdsa_sign(s->mykey, msg, sizeof msg, sig))
 		return false;
 
 	// Send the SIG exchange record.
@@ -207,17 +207,16 @@ static bool send_sig(sptps_t *s) {
 static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	// Initialise cipher and digest structures if necessary
 	if(!s->outstate) {
-		bool result
-			=  cipher_open_by_name(&s->incipher, "aes-256-ecb")
-			&& cipher_open_by_name(&s->outcipher, "aes-256-ecb")
-			&& digest_open_by_name(&s->indigest, "sha256", 16)
-			&& digest_open_by_name(&s->outdigest, "sha256", 16);
-		if(!result)
+		s->incipher = cipher_open_by_name("aes-256-ecb");
+		s->outcipher = cipher_open_by_name("aes-256-ecb");
+		s->indigest = digest_open_by_name("sha256", 16);
+		s->outdigest = digest_open_by_name("sha256", 16);
+		if(!s->incipher || !s->outcipher || !s->indigest || !s->outdigest)
 			return false;
 	}
 
 	// Allocate memory for key material
-	size_t keylen = digest_keylength(&s->indigest) + digest_keylength(&s->outdigest) + cipher_keylength(&s->incipher) + cipher_keylength(&s->outcipher);
+	size_t keylen = digest_keylength(s->indigest) + digest_keylength(s->outdigest) + cipher_keylength(s->incipher) + cipher_keylength(s->outcipher);
 
 	s->key = realloc(s->key, keylen);
 	if(!s->key)
@@ -254,14 +253,14 @@ static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 
 	if(s->initiator) {
 		bool result
-			= cipher_set_counter_key(&s->incipher, s->key)
-			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->incipher), digest_keylength(&s->indigest));
+			= cipher_set_counter_key(s->incipher, s->key)
+			&& digest_set_key(s->indigest, s->key + cipher_keylength(s->incipher), digest_keylength(s->indigest));
 		if(!result)
 			return false;
 	} else {
 		bool result
-			= cipher_set_counter_key(&s->incipher, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest))
-			&& digest_set_key(&s->indigest, s->key + cipher_keylength(&s->outcipher) + digest_keylength(&s->outdigest) + cipher_keylength(&s->incipher), digest_keylength(&s->indigest));
+			= cipher_set_counter_key(s->incipher, s->key + cipher_keylength(s->outcipher) + digest_keylength(s->outdigest))
+			&& digest_set_key(s->indigest, s->key + cipher_keylength(s->outcipher) + digest_keylength(s->outdigest) + cipher_keylength(s->incipher), digest_keylength(s->indigest));
 		if(!result)
 			return false;
 	}
@@ -296,7 +295,7 @@ static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
 // Receive a SIGnature record, verify it, if it passed, compute the shared secret and calculate the session keys.
 static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	size_t keylen = ECDH_SIZE;
-	size_t siglen = ecdsa_size(&s->hiskey);
+	size_t siglen = ecdsa_size(s->hiskey);
 
 	// Verify length of KEX record.
 	if(len != siglen)
@@ -311,12 +310,12 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Verify signature.
-	if(!ecdsa_verify(&s->hiskey, msg, sizeof msg, data))
+	if(!ecdsa_verify(s->hiskey, msg, sizeof msg, data))
 		return false;
 
 	// Compute shared secret.
 	char shared[ECDH_SHARED_SIZE];
-	if(!ecdh_compute_shared(&s->ecdh, s->hiskex + 1 + 32, shared))
+	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared))
 		return false;
 
 	// Generate key material from shared secret.
@@ -336,14 +335,14 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	// TODO: only set new keys after ACK has been set/received
 	if(s->initiator) {
 		bool result
-			= cipher_set_counter_key(&s->outcipher, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest))
-			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->incipher) + digest_keylength(&s->indigest) + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest));
+			= cipher_set_counter_key(s->outcipher, s->key + cipher_keylength(s->incipher) + digest_keylength(s->indigest))
+			&& digest_set_key(s->outdigest, s->key + cipher_keylength(s->incipher) + digest_keylength(s->indigest) + cipher_keylength(s->outcipher), digest_keylength(s->outdigest));
 		if(!result)
 			return false;
 	} else {
 		bool result
-			=  cipher_set_counter_key(&s->outcipher, s->key)
-			&& digest_set_key(&s->outdigest, s->key + cipher_keylength(&s->outcipher), digest_keylength(&s->outdigest));
+			=  cipher_set_counter_key(s->outcipher, s->key)
+			&& digest_set_key(s->outdigest, s->key + cipher_keylength(s->outcipher), digest_keylength(s->outdigest));
 		if(!result)
 			return false;
 	}
@@ -413,7 +412,7 @@ bool sptps_verify_datagram(sptps_t *s, const char *data, size_t len) {
 	memcpy(buffer, &netlen, 2);
 	memcpy(buffer + 2, data, len);
 
-	return digest_verify(&s->indigest, buffer, len - 14, buffer + len - 14);
+	return digest_verify(s->indigest, buffer, len - 14, buffer + len - 14);
 }
 
 // Receive incoming data, datagram version.
@@ -447,7 +446,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	memcpy(buffer, &netlen, 2);
 	memcpy(buffer + 2, data, len);
 
-	if(!digest_verify(&s->indigest, buffer, len - 14, buffer + len - 14))
+	if(!digest_verify(s->indigest, buffer, len - 14, buffer + len - 14))
 		return error(s, EIO, "Invalid HMAC");
 
 	// Replay protection using a sliding window of configurable size.
@@ -491,8 +490,8 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 	// Decrypt.
 	memcpy(&seqno, buffer + 2, 4);
-	cipher_set_counter(&s->incipher, &seqno, sizeof seqno);
-	if(!cipher_counter_xor(&s->incipher, buffer + 6, len - 4, buffer + 6))
+	cipher_set_counter(s->incipher, &seqno, sizeof seqno);
+	if(!cipher_counter_xor(s->incipher, buffer + 6, len - 4, buffer + 6))
 		return false;
 
 	// Append a NULL byte for safety.
@@ -540,7 +539,7 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 			// Decrypt the length bytes
 
 			if(s->instate) {
-				if(!cipher_counter_xor(&s->incipher, s->inbuf + 4, 2, &s->reclen))
+				if(!cipher_counter_xor(s->incipher, s->inbuf + 4, 2, &s->reclen))
 					return false;
 			} else {
 				memcpy(&s->reclen, s->inbuf + 4, 2);
@@ -578,10 +577,10 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 
 		// Check HMAC and decrypt.
 		if(s->instate) {
-			if(!digest_verify(&s->indigest, s->inbuf, s->reclen + 7UL, s->inbuf + s->reclen + 7UL))
+			if(!digest_verify(s->indigest, s->inbuf, s->reclen + 7UL, s->inbuf + s->reclen + 7UL))
 				return error(s, EIO, "Invalid HMAC");
 
-			if(!cipher_counter_xor(&s->incipher, s->inbuf + 6UL, s->reclen + 1UL, s->inbuf + 6UL))
+			if(!cipher_counter_xor(s->incipher, s->inbuf + 6UL, s->reclen + 1UL, s->inbuf + 6UL))
 				return false;
 		}
 
@@ -609,7 +608,7 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 }
 
 // Start a SPTPS session.
-bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t mykey, ecdsa_t hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
+bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t *mykey, ecdsa_t *hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
 	// Initialise struct sptps
 	memset(s, 0, sizeof *s);
 
@@ -651,11 +650,11 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 // Stop a SPTPS session.
 bool sptps_stop(sptps_t *s) {
 	// Clean up any resources.
-	cipher_close(&s->incipher);
-	cipher_close(&s->outcipher);
-	digest_close(&s->indigest);
-	digest_close(&s->outdigest);
-	ecdh_free(&s->ecdh);
+	cipher_close(s->incipher);
+	cipher_close(s->outcipher);
+	digest_close(s->indigest);
+	digest_close(s->outdigest);
+	ecdh_free(s->ecdh);
 	free(s->inbuf);
 	free(s->mykex);
 	free(s->hiskex);

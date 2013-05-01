@@ -11,6 +11,13 @@ tincd_SOURCES = \
 	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c event.c tincd.c \
 	dummy_device.c raw_socket_device.c multicast_device.c names.c
 
+tinc_SOURCES = \
+	utils.c getopt.c getopt1.c dropin.c \
+	info.c list.c subnet_parse.c tincctl.c top.c names.c
+
+sptps_test_SOURCES = \
+	logger.c sptps.c sptps_test.c utils.c
+
 ## Conditionally compile device drivers
 	
 if LINUX
@@ -19,6 +26,9 @@ endif
 
 if BSD
 tincd_SOURCES += bsd/device.c
+if TUNEMU
+tincd_SOURCES += bsd/tunemu.c
+endif
 endif
 
 if SOLARIS
@@ -41,22 +51,50 @@ if VDE
 tincd_SOURCES += vde_device.c
 endif
 
-nodist_tincd_SOURCES = \
-	cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
+if OPENSSL
+tincd_SOURCES += \
+	openssl/cipher.c \
+	openssl/crypto.c \
+	openssl/ecdh.c \
+	openssl/ecdsa.c \
+	openssl/digest.c \
+	openssl/prf.c \
+	openssl/rsa.c
+tinc_SOURCES += \
+	openssl/ecdsa.c \
+	openssl/ecdsagen.c \
+	openssl/rsa.c \
+	openssl/rsagen.c
+sptps_test_SOURCES += \
+	openssl/cipher.c \
+	openssl/crypto.c \
+	openssl/ecdh.c \
+	openssl/ecdsa.c \
+	openssl/digest.c \
+	openssl/prf.c
+endif
 
-tinc_SOURCES = \
-	utils.c getopt.c getopt1.c dropin.c \
-	info.c list.c subnet_parse.c tincctl.c top.c names.c
-
-nodist_tinc_SOURCES = \
-	ecdsagen.c rsagen.c
-
-sptps_test_SOURCES = \
-	logger.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c \
-	sptps.c sptps_test.c utils.c
-
-if TUNEMU
-tincd_SOURCES += bsd/tunemu.c
+if GCRYPT
+tincd_SOURCES += \
+	gcrypt/cipher.c \
+	gcrypt/crypto.c \
+	gcrypt/ecdh.c \
+	gcrypt/ecdsa.c \
+	gcrypt/digest.c \
+	gcrypt/prf.c \
+	gcrypt/rsa.c
+tinc_SOURCES += \
+	gcrypt/ecdsa.c \
+	gcrypt/ecdsagen.c \
+	gcrypt/rsa.c \
+	gcrypt/rsagen.c
+sptps_test_SOURCES += \
+	gcrypt/cipher.c \
+	gcrypt/crypto.c \
+	gcrypt/ecdh.c \
+	gcrypt/ecdsa.c \
+	gcrypt/digest.c \
+	gcrypt/prf.c
 endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
@@ -68,10 +106,7 @@ INCLUDES = @INCLUDES@
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h info.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h subnet.h sptps.h tincctl.h top.h bsd/tunemu.h hash.h event.h names.h
-
-nodist_noinst_HEADERS = \
-	cipher.h crypto.h ecdh.h ecdsa.h digest.h prf.h rsa.h ecdsagen.h rsagen.h
+	protocol.h route.h subnet.h sptps.h tincctl.h top.h hash.h event.h names.h have.h system.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 
