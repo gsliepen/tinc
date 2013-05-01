@@ -21,7 +21,7 @@
 #ifndef __TINC_SYSTEM_H__
 #define __TINC_SYSTEM_H__
 
-#include "config.h"
+#include "../config.h"
 
 #include "have.h"
 
@@ -37,7 +37,7 @@ typedef int bool;
 
 /* Other functions */
 
-#include "src/dropin.h"
+#include "dropin.h"
 
 #ifndef HAVE_SOCKLEN_T
 typedef int socklen_t;

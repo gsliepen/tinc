@@ -44,7 +44,6 @@
 
 #include "system.h"
 
-#include "config.h"
 #include "connection.h"
 #include "device.h"
 #include "edge.h"

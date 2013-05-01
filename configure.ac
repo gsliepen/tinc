@@ -27,45 +27,45 @@ AC_CANONICAL_HOST
 
 case $host_os in
   *linux*)
+    linux=true
     AC_DEFINE(HAVE_LINUX, 1, [Linux])
-    [ rm -f src/device.c; ln -sf linux/device.c src/device.c ]
   ;;
   *freebsd*)
+    bsd=true
     AC_DEFINE(HAVE_FREEBSD, 1, [FreeBSD])
-    [ rm -f src/device.c; ln -sf bsd/device.c src/device.c ]
   ;;
   *darwin*)
+    bsd=true
     AC_DEFINE(HAVE_DARWIN, 1, [Darwin (MacOS/X)])
-    [ rm -f src/device.c; ln -sf bsd/device.c src/device.c ]
   ;;
   *solaris*)
+    solaris=true
     AC_DEFINE(HAVE_SOLARIS, 1, [Solaris/SunOS])
-    [ rm -f src/device.c; ln -sf solaris/device.c src/device.c ]
   ;;
   *openbsd*)
+    bsd=true
     AC_DEFINE(HAVE_OPENBSD, 1, [OpenBSD])
-    [ rm -f src/device.c; ln -sf bsd/device.c src/device.c ]
   ;;
   *netbsd*)
+    bsd=true
     AC_DEFINE(HAVE_NETBSD, 1, [NetBSD])
-    [ rm -f src/device.c; ln -sf bsd/device.c src/device.c ]
   ;;
   *dragonfly*)
+    bsd=true
     AC_DEFINE(HAVE_DRAGONFLY, 1, [DragonFly])
-    [ rm -f src/device.c; ln -sf bsd/device.c src/device.c ]
   ;;
   *bsd*)
+    bsd=true
     AC_MSG_WARN("Unknown BSD variant, tinc might not compile or work!")
     AC_DEFINE(HAVE_BSD, 1, [Unknown BSD variant])
-    [ rm -f src/device.c; ln -sf bsd/device.c src/device.c ]
   ;;
   *cygwin*)
+    cygwin=true
     AC_DEFINE(HAVE_CYGWIN, 1, [Cygwin])
-    [ rm -f src/device.c; ln -sf cygwin/device.c src/device.c ]
   ;;
   *mingw*)
+    mingw=true
     AC_DEFINE(HAVE_MINGW, 1, [MinGW])
-    [ rm -f src/device.c; cp -f src/mingw/device.c src/device.c ]
     LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32"
   ;;
   *)
@@ -114,6 +114,11 @@ AC_ARG_WITH(windows2000,
   ]
 )
 
+AM_CONDITIONAL(LINUX, test "$linux" = true)
+AM_CONDITIONAL(BSD, test "$bsd" = true)
+AM_CONDITIONAL(SOLARIS, test "$solaris" = true)
+AM_CONDITIONAL(MINGW, test "$mingw" = true)
+AM_CONDITIONAL(CYGWIN, test "$cygwin" = true)
 AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
@@ -133,13 +138,13 @@ dnl We do this in multiple stages, because unlike Linux all the other operating 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/uio.h sys/un.h sys/wait.h netdb.h arpa/inet.h dirent.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h time.h netpacket/packet.h],
-  [], [], [#include "have.h"]
+  [], [], [#include "src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
-  [], [], [#include "have.h"]
+  [], [], [#include "src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
-  [], [], [#include "have.h"]
+  [], [], [#include "src/have.h"]
 )
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -153,13 +158,13 @@ AC_STRUCT_TM
 tinc_ATTRIBUTE(__malloc__)
 
 AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
-  [#include "have.h"]
+  [#include "src/have.h"]
 )
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system time usleep unsetenv vsyslog writev],
-  [], [], [#include "have.h"]
+  [], [], [#include "src/have.h"]
 )
 
 dnl Support for SunOS
@@ -172,7 +177,7 @@ AC_CHECK_FUNC(gethostbyname, [], [
 ])
 
 AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
-  [], [], [#include "have.h"]
+  [], [], [#include "src/have.h"]
 )
 
 AC_CACHE_SAVE

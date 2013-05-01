@@ -19,19 +19,19 @@
 */
 
 
-#include "system.h"
+#include "../system.h"
 
 #include <sys/stropts.h>
 #include <sys/sockio.h>
 #include <net/if_tun.h>
 
-#include "conf.h"
-#include "device.h"
-#include "logger.h"
-#include "names.h"
-#include "net.h"
-#include "utils.h"
-#include "xalloc.h"
+#include "../conf.h"
+#include "../device.h"
+#include "../logger.h"
+#include "../names.h"
+#include "../net.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
 #define DEFAULT_DEVICE "/dev/tun"
 

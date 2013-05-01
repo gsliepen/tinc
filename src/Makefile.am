@@ -10,7 +10,29 @@ tincd_SOURCES = \
 	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
 	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c event.c tincd.c \
 	dummy_device.c raw_socket_device.c multicast_device.c names.c
+
+## Conditionally compile device drivers
 	
+if LINUX
+tincd_SOURCES += linux/device.c
+endif
+
+if BSD
+tincd_SOURCES += bsd/device.c
+endif
+
+if SOLARIS
+tincd_SOURCES += solaris/device.c
+endif
+
+if MINGW
+tincd_SOURCES += mingw/device.c
+endif
+
+if CYGWIN
+tincd_SOURCES += cygwin/device.c
+endif
+
 if UML
 tincd_SOURCES += uml_device.c
 endif
@@ -20,7 +42,7 @@ tincd_SOURCES += vde_device.c
 endif
 
 nodist_tincd_SOURCES = \
-	device.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
+	cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
 
 tinc_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
@@ -41,7 +63,7 @@ tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 
 DEFAULT_INCLUDES =
 
-INCLUDES = @INCLUDES@ -I$(top_builddir)
+INCLUDES = @INCLUDES@
 
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \

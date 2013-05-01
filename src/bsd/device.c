@@ -19,16 +19,16 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
-#include "conf.h"
-#include "device.h"
-#include "logger.h"
-#include "names.h"
-#include "net.h"
-#include "route.h"
-#include "utils.h"
-#include "xalloc.h"
+#include "../conf.h"
+#include "../device.h"
+#include "../logger.h"
+#include "../names.h"
+#include "../net.h"
+#include "../route.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
 #ifdef ENABLE_TUNEMU
 #include "bsd/tunemu.h"
