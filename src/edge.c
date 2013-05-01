@@ -70,7 +70,7 @@ void exit_edges(void) {
 /* Creation and deletion of connection elements */
 
 edge_t *new_edge(void) {
-	return xmalloc_and_zero(sizeof(edge_t));
+	return xzalloc(sizeof(edge_t));
 }
 
 void free_edge(edge_t *e) {

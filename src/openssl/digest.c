@@ -29,7 +29,7 @@
 #include "../logger.h"
 
 static digest_t *digest_open(const EVP_MD *evp_md, int maclength) {
-	digest_t *digest = xmalloc_and_zero(sizeof *digest);
+	digest_t *digest = xzalloc(sizeof *digest);
 	digest->digest = evp_md;
 
 	int digestlen = EVP_MD_size(digest->digest);

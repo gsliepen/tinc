@@ -792,7 +792,7 @@ static int cmd_start(int argc, char *argv[]) {
 		c = "tincd";
 
 	int nargc = 0;
-	char **nargv = xmalloc_and_zero((optind + argc) * sizeof *nargv);
+	char **nargv = xzalloc((optind + argc) * sizeof *nargv);
 
 	nargv[nargc++] = c;
 	for(int i = 1; i < optind; i++)

@@ -674,7 +674,7 @@ void try_outgoing_connections(void) {
 		}
 
 		if(!found) {
-			outgoing_t *outgoing = xmalloc_and_zero(sizeof *outgoing);
+			outgoing_t *outgoing = xzalloc(sizeof *outgoing);
 			outgoing->name = name;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing);

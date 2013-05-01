@@ -224,7 +224,7 @@ static void periodic_handler(void *data) {
 
 				if(!found) {
 					logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
-					outgoing_t *outgoing = xmalloc_and_zero(sizeof *outgoing);
+					outgoing_t *outgoing = xzalloc(sizeof *outgoing);
 					outgoing->name = xstrdup(n->name);
 					list_insert_tail(outgoing_list, outgoing);
 					setup_outgoing_connection(outgoing);

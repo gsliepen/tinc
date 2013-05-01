@@ -52,11 +52,11 @@ static uint32_t modulo(uint32_t hash, size_t n) {
 /* (De)allocation */
 
 hash_t *hash_alloc(size_t n, size_t size) {
-	hash_t *hash = xmalloc_and_zero(sizeof *hash);
+	hash_t *hash = xzalloc(sizeof *hash);
 	hash->n = n;
 	hash->size = size;
-	hash->keys = xmalloc_and_zero(hash->n * hash->size);
-	hash->values = xmalloc_and_zero(hash->n * sizeof *hash->values);
+	hash->keys = xzalloc(hash->n * hash->size);
+	hash->values = xzalloc(hash->n * sizeof *hash->values);
 	return hash;
 }
 

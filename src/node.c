@@ -50,9 +50,9 @@ void exit_nodes(void) {
 }
 
 node_t *new_node(void) {
-	node_t *n = xmalloc_and_zero(sizeof *n);
+	node_t *n = xzalloc(sizeof *n);
 
-	if(replaywin) n->late = xmalloc_and_zero(replaywin);
+	if(replaywin) n->late = xzalloc(replaywin);
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	n->mtu = MTU;

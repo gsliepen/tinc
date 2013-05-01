@@ -108,7 +108,7 @@ static void update(int fd) {
 				found = ns;
 				break;
 			} else {
-				found = xmalloc_and_zero(sizeof *found);
+				found = xzalloc(sizeof *found);
 				found->name = xstrdup(name);
 				list_insert_before(&node_list, node, found);
 				changed = true;
@@ -117,7 +117,7 @@ static void update(int fd) {
 		}
 
 		if(!found) {
-			found = xmalloc_and_zero(sizeof *found);
+			found = xzalloc(sizeof *found);
 			found->name = xstrdup(name);
 			list_insert_tail(&node_list, found);
 			changed = true;

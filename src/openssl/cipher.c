@@ -40,7 +40,7 @@ typedef struct cipher_counter {
 } cipher_counter_t;
 
 static cipher_t *cipher_open(const EVP_CIPHER *evp_cipher) {
-	cipher_t *cipher = xmalloc_and_zero(sizeof *cipher);
+	cipher_t *cipher = xzalloc(sizeof *cipher);
 	cipher->cipher = evp_cipher;
 	EVP_CIPHER_CTX_init(&cipher->ctx);
 
@@ -135,7 +135,7 @@ bool cipher_set_counter_key(cipher_t *cipher, void *key) {
 	}
 
 	if(!cipher->counter)
-		cipher->counter = xmalloc_and_zero(sizeof *cipher->counter);
+		cipher->counter = xzalloc(sizeof *cipher->counter);
 	else
 		cipher->counter->n = 0;
 

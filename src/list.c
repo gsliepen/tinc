@@ -26,7 +26,7 @@
 /* (De)constructors */
 
 list_t *list_alloc(list_action_t delete) {
-	list_t *list = xmalloc_and_zero(sizeof(list_t));
+	list_t *list = xzalloc(sizeof(list_t));
 	list->delete = delete;
 
 	return list;
@@ -37,7 +37,7 @@ void list_free(list_t *list) {
 }
 
 list_node_t *list_alloc_node(void) {
-	return xmalloc_and_zero(sizeof(list_node_t));
+	return xzalloc(sizeof(list_node_t));
 }
 
 void list_free_node(list_t *list, list_node_t *node) {

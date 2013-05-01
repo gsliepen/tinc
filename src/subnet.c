@@ -79,7 +79,7 @@ void free_subnet_tree(splay_tree_t *subnet_tree) {
 /* Allocating and freeing space for subnets */
 
 subnet_t *new_subnet(void) {
-	return xmalloc_and_zero(sizeof(subnet_t));
+	return xzalloc(sizeof(subnet_t));
 }
 
 void free_subnet(subnet_t *subnet) {

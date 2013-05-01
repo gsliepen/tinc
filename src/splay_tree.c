@@ -238,7 +238,7 @@ static void splay_bottom_up(splay_tree_t *tree, splay_node_t *node) {
 splay_tree_t *splay_alloc_tree(splay_compare_t compare, splay_action_t delete) {
 	splay_tree_t *tree;
 
-	tree = xmalloc_and_zero(sizeof(splay_tree_t));
+	tree = xzalloc(sizeof(splay_tree_t));
 	tree->compare = compare;
 	tree->delete = delete;
 
@@ -250,7 +250,7 @@ void splay_free_tree(splay_tree_t *tree) {
 }
 
 splay_node_t *splay_alloc_node(void) {
-	return xmalloc_and_zero(sizeof(splay_node_t));
+	return xzalloc(sizeof(splay_node_t));
 }
 
 void splay_free_node(splay_tree_t *tree, splay_node_t *node) {

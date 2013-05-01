@@ -48,7 +48,7 @@ void exit_connections(void) {
 }
 
 connection_t *new_connection(void) {
-	return xmalloc_and_zero(sizeof(connection_t));
+	return xzalloc(sizeof(connection_t));
 }
 
 void free_connection(connection_t *c) {

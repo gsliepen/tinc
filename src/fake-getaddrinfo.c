@@ -48,7 +48,7 @@ void freeaddrinfo(struct addrinfo *ai) {
 static struct addrinfo *malloc_ai(uint16_t port, uint32_t addr) {
 	struct addrinfo *ai;
 
-	ai = xmalloc_and_zero(sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
+	ai = xzalloc(sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
 
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
 	ai->ai_addrlen = sizeof(struct sockaddr_in);

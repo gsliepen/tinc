@@ -71,7 +71,7 @@ void exit_configuration(splay_tree_t ** config_tree) {
 }
 
 config_t *new_config(void) {
-	return xmalloc_and_zero(sizeof(config_t));
+	return xzalloc(sizeof(config_t));
 }
 
 void free_config(config_t *cfg) {
