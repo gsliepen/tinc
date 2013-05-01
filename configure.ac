@@ -1,10 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT
+AC_INIT([tinc], [1.1pre7])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE(tinc, 1.1pre7)
+AM_INIT_AUTOMAKE([check-news dist-bzip2 std-options subdir-objects])
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
