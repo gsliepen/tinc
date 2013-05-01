@@ -106,7 +106,8 @@ INCLUDES = @INCLUDES@
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h info.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h subnet.h sptps.h tincctl.h top.h hash.h event.h names.h have.h system.h
+	protocol.h route.h subnet.h sptps.h tincctl.h top.h hash.h event.h names.h have.h system.h \
+	cipher.h crypto.h digest.h ecdh.h ecdsa.h ecdsagen.h prf.h rsa.h rsagen.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 
