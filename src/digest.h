@@ -24,9 +24,9 @@
 
 typedef struct digest digest_t;
 
-extern digest_t *digest_open_by_name(const char *name, int maclength);
-extern digest_t *digest_open_by_nid(int nid, int maclength);
-extern digest_t *digest_open_sha1(int maclength);
+extern digest_t *digest_open_by_name(const char *name, int maclength) __attribute__ ((__malloc__));
+extern digest_t *digest_open_by_nid(int nid, int maclength) __attribute__ ((__malloc__));
+extern digest_t *digest_open_sha1(int maclength) __attribute__ ((__malloc__));
 extern void digest_close(digest_t *);
 extern bool digest_create(digest_t *, const void *indata, size_t inlen, void *outdata);
 extern bool digest_verify(digest_t *, const void *indata, size_t inlen, const void *digestdata);

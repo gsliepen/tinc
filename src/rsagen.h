@@ -22,7 +22,7 @@
 
 #include "rsa.h"
 
-extern rsa_t *rsa_generate(size_t bits, unsigned long exponent);
+extern rsa_t *rsa_generate(size_t bits, unsigned long exponent) __attribute__ ((__malloc__));
 extern bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp);
 extern bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp);
 

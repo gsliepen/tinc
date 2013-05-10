@@ -26,9 +26,9 @@
 
 typedef struct cipher cipher_t;
 
-extern cipher_t *cipher_open_by_name(const char *);
-extern cipher_t *cipher_open_by_nid(int);
-extern cipher_t *cipher_open_blowfish_ofb(void);
+extern cipher_t *cipher_open_by_name(const char *) __attribute__ ((__malloc__));
+extern cipher_t *cipher_open_by_nid(int) __attribute__ ((__malloc__));
+extern cipher_t *cipher_open_blowfish_ofb(void) __attribute__ ((__malloc__));
 extern void cipher_close(cipher_t *);
 extern size_t cipher_keylength(const cipher_t *);
 extern void cipher_get_key(const cipher_t *, void *);

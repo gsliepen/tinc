@@ -24,10 +24,10 @@
 typedef struct ecdsa ecdsa_t;
 #endif
 
-extern ecdsa_t *ecdsa_set_base64_public_key(const char *p);
+extern ecdsa_t *ecdsa_set_base64_public_key(const char *p) __attribute__ ((__malloc__));
 extern char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa);
-extern ecdsa_t *ecdsa_read_pem_public_key(FILE *fp);
-extern ecdsa_t *ecdsa_read_pem_private_key(FILE *fp);
+extern ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) __attribute__ ((__malloc__));
+extern ecdsa_t *ecdsa_read_pem_private_key(FILE *fp) __attribute__ ((__malloc__));
 extern size_t ecdsa_size(ecdsa_t *ecdsa);
 extern bool ecdsa_sign(ecdsa_t *ecdsa, const void *in, size_t inlen, void *out);
 extern bool ecdsa_verify(ecdsa_t *ecdsa, const void *in, size_t inlen, const void *out);
