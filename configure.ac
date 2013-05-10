@@ -156,6 +156,7 @@ AC_HEADER_TIME
 AC_STRUCT_TM
 
 tinc_ATTRIBUTE(__malloc__)
+tinc_ATTRIBUTE(__warn_unused_result__)
 
 AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
   [#include "src/have.h"]
