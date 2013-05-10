@@ -273,7 +273,8 @@ bool send_metakey(connection_t *c) {
 
 	key[0] &= 0x7F;
 
-	cipher_set_key_from_rsa(c->outcipher, key, len, true);
+	if(!cipher_set_key_from_rsa(c->outcipher, key, len, true))
+		return false;
 
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
@@ -403,17 +404,18 @@ bool challenge_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	c->allow_request = CHAL_REPLY;
-
 	/* Calculate the hash from the challenge we received */
 
-	digest_create(c->indigest, buffer, len, digest);
+	if(!digest_create(c->indigest, buffer, len, digest))
+		return false;
 
 	/* Convert the hash to a hexadecimal formatted string */
 
 	bin2hex(digest, buffer, digestlen);
 
 	/* Send the reply */
+
+	c->allow_request = CHAL_REPLY;
 
 	return send_request(c, "%d %s", CHAL_REPLY, buffer);
 }

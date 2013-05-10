@@ -273,8 +273,10 @@ bool send_ans_key(node_t *to) {
 		abort();
 
 	randomize(key, keylen);
-	cipher_set_key(to->incipher, key, false);
-	digest_set_key(to->indigest, key, keylen);
+	if(!cipher_set_key(to->incipher, key, false))
+		abort();
+	if(!digest_set_key(to->indigest, key, keylen))
+		abort();
 
 	bin2hex(key, key, keylen);
 
@@ -418,8 +420,10 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* Update our copy of the origin's packet key */
 
-	cipher_set_key(from->outcipher, key, true);
-	digest_set_key(from->outdigest, key, keylen);
+	if(!cipher_set_key(from->outcipher, key, true))
+		return false;
+	if(!digest_set_key(from->outdigest, key, keylen))
+		return false;
 
 	from->status.validkey = true;
 	from->sent_seqno = 0;

@@ -98,7 +98,9 @@ static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const char *data
 
 	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
-		cipher_set_counter(s->outcipher, &seqno, sizeof seqno);
+		if(!cipher_set_counter(s->outcipher, &seqno, sizeof seqno))
+			return false;
+
 		if(!cipher_counter_xor(s->outcipher, buffer + 6, len + 1UL, buffer + 6))
 			return false;
 
@@ -490,7 +492,8 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 	// Decrypt.
 	memcpy(&seqno, buffer + 2, 4);
-	cipher_set_counter(s->incipher, &seqno, sizeof seqno);
+	if(!cipher_set_counter(s->incipher, &seqno, sizeof seqno))
+		return false;
 	if(!cipher_counter_xor(s->incipher, buffer + 6, len - 4, buffer + 6))
 		return false;
 

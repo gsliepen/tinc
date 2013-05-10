@@ -669,7 +669,11 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add the message authentication code */
 
 	if(digest_active(n->outdigest)) {
-		digest_create(n->outdigest, &inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len);
+		if(!digest_create(n->outdigest, &inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len)) {
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
+			goto end;
+		}
+
 		inpkt->len += digest_length(n->outdigest);
 	}
 

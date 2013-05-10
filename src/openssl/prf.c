@@ -54,10 +54,16 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 
 	while(outlen > 0) {
 		/* Inner HMAC */
-		digest_create(digest, data, len + seedlen, data);
+		if(!digest_create(digest, data, len + seedlen, data)) {
+			digest_close(digest);
+			return false;
+		}
 
 		/* Outer HMAC */
-		digest_create(digest, data, len + seedlen, hash);
+		if(!digest_create(digest, data, len + seedlen, hash)) {
+			digest_close(digest);
+			return false;
+		}
 
 		/* XOR the results of the outer HMAC into the out buffer */
 		for(int i = 0; i < len && i < outlen; i++)
