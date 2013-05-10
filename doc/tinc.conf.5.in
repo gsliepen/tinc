@@ -274,14 +274,12 @@ The file in which the private ECDSA key of this tinc daemon resides.
 This is only used if
 .Va ExperimentalProtocol
 is enabled.
-.It Va ExperimentalProtocol Li = yes | no Po no Pc Bq experimental
-When this option is enabled, experimental protocol enhancements will be used.
+.It Va ExperimentalProtocol Li = yes | no Pq yes
+When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
 Ephemeral ECDH will be used for key exchanges,
 and ECDSA will be used instead of RSA for authentication.
 When enabled, an ECDSA key must have been generated before with
 .Nm tinc generate-ecdsa-keys .
-The experimental protocol may change at any time,
-and there is no guarantee that tinc will run stable when it is used.
 .It Va Forwarding Li = off | internal | kernel Po internal Pc Bq experimental
 This option selects the way indirect packets are forwarded.
 .Bl -tag -width indent
