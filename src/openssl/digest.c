@@ -88,7 +88,10 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 	unsigned char tmpdata[len];
 
 	if(digest->key) {
-		HMAC(digest->digest, digest->key, digest->keylength, indata, inlen, tmpdata, NULL);
+		if(!HMAC(digest->digest, digest->key, digest->keylength, indata, inlen, tmpdata, NULL)) {
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
+			return false;
+		}
 	} else {
 		EVP_MD_CTX ctx;
 

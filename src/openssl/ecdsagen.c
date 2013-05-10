@@ -51,16 +51,20 @@ ecdsa_t *ecdsa_generate(void) {
 
 bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
 	BIO *out = BIO_new(BIO_s_file());
+	if(!out)
+		return false;
 	BIO_set_fp(out, fp, BIO_NOCLOSE);
-	PEM_write_bio_EC_PUBKEY(out, ecdsa);
+	bool result = PEM_write_bio_EC_PUBKEY(out, ecdsa);
 	BIO_free(out);
-	return true;
+	return result;
 }
 
 bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
 	BIO *out = BIO_new(BIO_s_file());
+	if(!out)
+		return false;
 	BIO_set_fp(out, fp, BIO_NOCLOSE);
-	PEM_write_bio_ECPrivateKey(out, ecdsa, NULL, NULL, 0, NULL, NULL);
+	bool result = PEM_write_bio_ECPrivateKey(out, ecdsa, NULL, NULL, 0, NULL, NULL);
 	BIO_free(out);
-	return true;
+	return result;
 }

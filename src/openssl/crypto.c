@@ -31,7 +31,13 @@ void crypto_init(void) {
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
 
+	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
+
+	if(!RAND_status()) {
+		fprintf(stderr, "Not enough entropy for the PRNG!\n");
+		abort();
+	}
 }
 
 void crypto_exit(void) {
