@@ -319,6 +319,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	char shared[ECDH_SHARED_SIZE];
 	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared))
 		return false;
+	s->ecdh = NULL;
 
 	// Generate key material from shared secret.
 	if(!generate_key_material(s, shared, sizeof shared))
