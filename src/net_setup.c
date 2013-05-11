@@ -63,13 +63,11 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 	splay_tree_t *config_tree;
 	FILE *fp;
-	char *pubname = NULL, *hcfname = NULL;
+	char *pubname = NULL;
 	char *p;
 
-	xasprintf(&hcfname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
-
 	init_configuration(&config_tree);
-	if(!read_config_file(config_tree, hcfname))
+	if(!read_host_config(config_tree, n->name))
 		goto exit;
 
 	/* First, check for simple ECDSAPublicKey statement */
@@ -97,7 +95,6 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 exit:
 	exit_configuration(&config_tree);
-	free(hcfname);
 	free(pubname);
 	return n->ecdsa;
 }
@@ -319,14 +316,10 @@ void load_all_subnets(void) {
 		//	continue;
 		#endif
 
-		char *fname;
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
-
 		splay_tree_t *config_tree;
 		init_configuration(&config_tree);
 		read_config_options(config_tree, ent->d_name);
-		read_config_file(config_tree, fname);
-		free(fname);
+		read_host_config(config_tree, ent->d_name);
 
 		if(!n) {
 			n = new_node();
@@ -618,7 +611,6 @@ bool setup_myself_reloadable(void) {
 */
 static bool setup_myself(void) {
 	char *name, *hostname, *cipher, *digest, *type;
-	char *fname = NULL;
 	char *address = NULL;
 
 	if(!(name = get_name())) {
@@ -630,10 +622,7 @@ static bool setup_myself(void) {
 	myself->connection = new_connection();
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
-	read_config_options(config_tree, name);
-	read_config_file(config_tree, fname);
-	free(fname);
+	read_host_config(config_tree, name);
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
 		myport = xstrdup("655");

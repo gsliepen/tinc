@@ -306,7 +306,7 @@ static void sigalrm_handler(void *data) {
 #endif
 
 int reload_configuration(void) {
-	char *fname;
+	char *fname = NULL;
 
 	/* Reread our own configuration file */
 
