@@ -133,7 +133,7 @@ bool send_id(connection_t *c) {
 	int minor = 0;
 
 	if(experimental) {
-		if(c->config_tree && !read_ecdsa_public_key(c))
+		if(c->outgoing && !read_ecdsa_public_key(c))
 			minor = 1;
 		else
 			minor = myself->connection->protocol_minor;

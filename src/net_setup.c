@@ -110,6 +110,12 @@ bool read_ecdsa_public_key(connection_t *c) {
 	char *fname;
 	char *p;
 
+	if(!c->config_tree) {
+		init_configuration(&c->config_tree);
+		if(!read_host_config(c->config_tree, c->name))
+			return false;
+	}
+
 	/* First, check for simple ECDSAPublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "ECDSAPublicKey"), &p)) {
