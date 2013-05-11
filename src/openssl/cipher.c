@@ -81,6 +81,9 @@ void cipher_close(cipher_t *cipher) {
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {
+	if(!cipher || !cipher->cipher)
+		return 0;
+
 	return cipher->cipher->key_len + cipher->cipher->block_size;
 }
 
@@ -221,7 +224,10 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 }
 
 int cipher_get_nid(const cipher_t *cipher) {
-	return cipher->cipher ? cipher->cipher->nid : 0;
+	if(!cipher || !cipher->cipher)
+		return 0;
+
+	return cipher->cipher->nid;
 }
 
 bool cipher_active(const cipher_t *cipher) {

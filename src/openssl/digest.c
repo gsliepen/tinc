@@ -115,14 +115,23 @@ bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const voi
 }
 
 int digest_get_nid(const digest_t *digest) {
-	return digest->digest ? digest->digest->type : 0;
+	if(!digest || !digest->digest)
+		return 0;
+
+	return digest->digest->type;
 }
 
 size_t digest_keylength(const digest_t *digest) {
+	if(!digest || !digest->digest)
+		return 0;
+
 	return digest->digest->md_size;
 }
 
 size_t digest_length(const digest_t *digest) {
+	if(!digest)
+		return 0;
+
 	return digest->maclength;
 }
 
