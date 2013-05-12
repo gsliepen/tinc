@@ -35,10 +35,10 @@
 #define SPTPS_CLOSE 130       // Application closed the connection
 
 // Key exchange states
-#define SPTPS_KEX 0           // Waiting for the first Key EXchange record
-#define SPTPS_SECONDARY_KEX 1 // Ready to receive a secondary Key EXchange record
-#define SPTPS_SIG 2           // Waiting for a SIGnature record
-#define SPTPS_ACK 3           // Waiting for an ACKnowledgement record
+#define SPTPS_KEX 1           // Waiting for the first Key EXchange record
+#define SPTPS_SECONDARY_KEX 2 // Ready to receive a secondary Key EXchange record
+#define SPTPS_SIG 3           // Waiting for a SIGnature record
+#define SPTPS_ACK 4           // Waiting for an ACKnowledgement record
 
 typedef bool (*send_data_t)(void *handle, uint8_t type, const char *data, size_t len);
 typedef bool (*receive_record_t)(void *handle, uint8_t type, const char *data, uint16_t len);

@@ -520,6 +520,9 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
 bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
+	if(!s->state)
+		return error(s, EIO, "Invalid session state");
+
 	if(s->datagram)
 		return sptps_receive_data_datagram(s, data, len);
 
