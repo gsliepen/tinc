@@ -400,7 +400,7 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 			return true;
 		// TODO: split ACK into a VERify and ACK?
 		default:
-			return error(s, EIO, "Invalid session state");
+			return error(s, EIO, "Invalid session state %d", s->state);
 	}
 }
 
@@ -512,7 +512,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		if(!receive_handshake(s, buffer + 7, len - 21))
 			return false;
 	} else {
-		return error(s, EIO, "Invalid record type");
+		return error(s, EIO, "Invalid record type %d", type);
 	}
 
 	return true;
@@ -521,7 +521,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
 bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 	if(!s->state)
-		return error(s, EIO, "Invalid session state");
+		return error(s, EIO, "Invalid session state zero");
 
 	if(s->datagram)
 		return sptps_receive_data_datagram(s, data, len);
@@ -605,7 +605,7 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 			if(!receive_handshake(s, s->inbuf + 7, s->reclen))
 				return false;
 		} else {
-			return error(s, EIO, "Invalid record type");
+			return error(s, EIO, "Invalid record type %d", type);
 		}
 
 		s->buflen = 4;
