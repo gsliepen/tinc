@@ -99,10 +99,6 @@ endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 
-DEFAULT_INCLUDES =
-
-INCLUDES = @INCLUDES@
-
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h info.h logger.h meta.h net.h netutl.h node.h process.h \

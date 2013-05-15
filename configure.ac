@@ -4,7 +4,7 @@ AC_PREREQ(2.61)
 AC_INIT([tinc], [1.1pre7])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE([check-news dist-bzip2 std-options subdir-objects])
+AM_INIT_AUTOMAKE([check-news dist-xz no-dist-gzip std-options subdir-objects -Wall])
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
@@ -20,6 +20,8 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
+
+AM_PROG_CC_C_O
 
 dnl Check and set OS
 
@@ -210,8 +212,6 @@ AC_ARG_ENABLE(jumbograms,
       [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ])
   ]
 )
-
-AC_SUBST(INCLUDES)
 
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile gui/Makefile])
 
