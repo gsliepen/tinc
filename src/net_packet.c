@@ -332,13 +332,21 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	size_t outlen;
 
 	if(n->status.sptps) {
+		if(!n->sptps.state) {
+			if(!n->status.waitingforkey) {
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but we haven't exchanged keys yet", n->name, n->hostname);
+				send_req_key(n);
+			} else {
+				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
+			}
+			return;
+		}
 		sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
 		return;
 	}
 
 	if(!cipher_active(n->incipher)) {
-		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet",
-					n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
 		return;
 	}
 
