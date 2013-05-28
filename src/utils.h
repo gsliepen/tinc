@@ -25,6 +25,7 @@ extern int hex2bin(const char *src, char *dst, int length);
 extern int bin2hex(const char *src, char *dst, int length);
 
 extern int b64encode(const char *src, char *dst, int length);
+extern int b64encode_urlsafe(const char *src, char *dst, int length);
 extern int b64decode(const char *src, char *dst, int length);
 
 #ifdef HAVE_MINGW

@@ -24,26 +24,32 @@
 #include "utils.h"
 
 static const char hexadecimals[] = "0123456789ABCDEF";
-static const char base64imals[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char base64_original[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char base64_urlsafe[] =  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+static const char base64_decode[256] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, 62, -1, 63,
+	52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+	-1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+	15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, 63,
+	-1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
 
 static int charhex2bin(char c) {
 	if(isdigit(c))
 		return c - '0';
 	else
 		return toupper(c) - 'A' + 10;
-}
-
-static int charb64decode(char c) {
-	if(c >= 'a')
-		return c - 'a' + 26;
-	else if(c >= 'A')
-		return c - 'A';
-	else if(c >= '0')
-		return c - '0' + 52;
-	else if(c == '+')
-		return 62;
-	else
-		return 63;
 }
 
 int hex2bin(const char *src, char *dst, int length) {
@@ -68,8 +74,10 @@ int b64decode(const char *src, char *dst, int length) {
 	unsigned char *udst = (unsigned char *)dst;
 
 	for(i = 0; i < length / 3 * 4 && src[i]; i++) {
-		triplet |= charb64decode(src[i]) << (6 * (i & 3));
+		triplet |= base64_decode[src[i] & 0xff] << (6 * (i & 3));
 		if((i & 3) == 3) {
+			if(triplet & 0xff000000U)
+				return 0;
 			udst[0] = triplet & 0xff; triplet >>= 8;
 			udst[1] = triplet & 0xff; triplet >>= 8;
 			udst[2] = triplet;
@@ -77,6 +85,8 @@ int b64decode(const char *src, char *dst, int length) {
 			udst += 3;
 		}
 	}
+	if(triplet & 0xff000000U)
+		return 0;
 	if((i & 3) == 3) {
 		udst[0] = triplet & 0xff; triplet >>= 8;
 		udst[1] = triplet & 0xff;
@@ -89,7 +99,7 @@ int b64decode(const char *src, char *dst, int length) {
 	}
 }
 
-int b64encode(const char *src, char *dst, int length) {
+static int b64encode_internal(const char *src, char *dst, int length, const char *alphabet) {
 	uint32_t triplet;
 	const unsigned char *usrc = (unsigned char *)src;
 	int si = length / 3 * 3;
@@ -98,16 +108,16 @@ int b64encode(const char *src, char *dst, int length) {
 	switch(length % 3) {
 		case 2:
 			triplet = usrc[si] | usrc[si + 1] << 8;
-			dst[di] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[di + 1] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[di + 2] = base64imals[triplet];
+			dst[di] = alphabet[triplet & 63]; triplet >>= 6;
+			dst[di + 1] = alphabet[triplet & 63]; triplet >>= 6;
+			dst[di + 2] = alphabet[triplet];
 			dst[di + 3] = 0;
 			length = di + 2;
 			break;
 		case 1:
 			triplet = usrc[si];
-			dst[di] = base64imals[triplet & 63]; triplet >>= 6;
-			dst[di + 1] = base64imals[triplet];
+			dst[di] = alphabet[triplet & 63]; triplet >>= 6;
+			dst[di + 1] = alphabet[triplet];
 			dst[di + 2] = 0;
 			length = di + 1;
 			break;
@@ -121,13 +131,21 @@ int b64encode(const char *src, char *dst, int length) {
 		di -= 4;
 		si -= 3;
 		triplet = usrc[si] | usrc[si + 1] << 8 | usrc[si + 2] << 16;
-		dst[di] = base64imals[triplet & 63]; triplet >>= 6;
-		dst[di + 1] = base64imals[triplet & 63]; triplet >>= 6;
-		dst[di + 2] = base64imals[triplet & 63]; triplet >>= 6;
-		dst[di + 3] = base64imals[triplet];
+		dst[di] = alphabet[triplet & 63]; triplet >>= 6;
+		dst[di + 1] = alphabet[triplet & 63]; triplet >>= 6;
+		dst[di + 2] = alphabet[triplet & 63]; triplet >>= 6;
+		dst[di + 3] = alphabet[triplet];
 	}
 
 	return length;
+}
+
+int b64encode(const char *src, char *dst, int length) {
+	return b64encode_internal(src, dst, length, base64_original);
+}
+
+int b64encode_urlsafe(const char *src, char *dst, int length) {
+	return b64encode_internal(src, dst, length, base64_urlsafe);
 }
 
 #if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
