@@ -20,6 +20,7 @@
 #ifndef __TINC_XALLOC_H__
 #define __TINC_XALLOC_H__
 
+static inline void *xmalloc(size_t n) __attribute__ ((__malloc__));
 static inline void *xmalloc(size_t n) {
 	void *p = malloc(n);
 	if(!p)
@@ -27,6 +28,7 @@ static inline void *xmalloc(size_t n) {
 	return p;
 }
 
+static inline void *xzalloc(size_t n) __attribute__ ((__malloc__));
 static inline void *xzalloc(size_t n) {
 	void *p = calloc(1, n);
 	if(!p)
@@ -41,6 +43,7 @@ static inline void *xrealloc(void *p, size_t n) {
 	return p;
 }
 
+static inline char *xstrdup(const char *s) __attribute__ ((__malloc__));
 static inline char *xstrdup(const char *s) {
 	char *p = strdup(s);
 	if(!p)
@@ -55,6 +58,7 @@ static inline int xvasprintf(char **strp, const char *fmt, va_list ap) {
 	return result;
 }
 
+static inline int xasprintf(char **strp, const char *fmt, ...) __attribute__ ((__format__(printf, 2, 3)));
 static inline int xasprintf(char **strp, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
