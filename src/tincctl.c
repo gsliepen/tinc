@@ -29,8 +29,10 @@
 #include "xalloc.h"
 #include "protocol.h"
 #include "control_common.h"
+#include "crypto.h"
 #include "ecdsagen.h"
 #include "info.h"
+#include "invitation.h"
 #include "names.h"
 #include "rsagen.h"
 #include "utils.h"
@@ -39,6 +41,9 @@
 
 #ifdef HAVE_MINGW
 #define mkdir(a, b) mkdir(a)
+#define SCRIPTEXTENSION ".bat"
+#else
+#define SCRIPTEXTENSION ""
 #endif
 
 static char **orig_argv;
@@ -52,19 +57,21 @@ static bool show_version = false;
 
 static char *name = NULL;
 static char controlcookie[1025];
-static char *tinc_conf = NULL;
-static char *hosts_dir = NULL;
+char *tinc_conf = NULL;
+char *hosts_dir = NULL;
 struct timeval now;
 
 // Horrible global variables...
 static int pid = 0;
-static int fd = -1;
-static char line[4096];
+int fd = -1;
+char line[4096];
 static int code;
 static int req;
 static int result;
 static bool force = false;
-static bool tty = true;
+bool tty = true;
+bool confbasegiven = false;
+bool netnamegiven = false;
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
@@ -145,6 +152,8 @@ static void usage(bool status) {
 				"  import [--force]           Import host configuration file(s) from standard input\n"
 				"  exchange [--force]         Same as export followed by import\n"
 				"  exchange-all [--force]     Same as export-all followed by import\n"
+				"  invite NODE [...]          Generate an invitation for NODE\n"
+				"  join INVITATION            Join a VPN using an INVITIATION\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -161,6 +170,7 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'c': /* config file */
 				confbase = xstrdup(optarg);
+				confbasegiven = true;
 				break;
 
 			case 'n': /* net name given */
@@ -296,13 +306,11 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	/* Check stdin and stdout */
 	if(ask && tty) {
 		/* Ask for a file and/or directory name. */
-		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
-				what, filename);
+		fprintf(stdout, "Please enter a file to save %s to [%s]: ", what, filename);
 		fflush(stdout);
 
 		if(fgets(buf, sizeof buf, stdin) == NULL) {
-			fprintf(stderr, "Error while reading stdin: %s\n",
-					strerror(errno));
+			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 			return NULL;
 		}
 
@@ -462,12 +470,14 @@ static bool rsa_keygen(int bits, bool ask) {
 	return true;
 }
 
-static char buffer[4096];
-static size_t blen = 0;
+char buffer[4096];
+size_t blen = 0;
 
 bool recvline(int fd, char *line, size_t len) {
 	char *newline = NULL;
 
+	if(!fd)
+abort();
 	while(!(newline = memchr(buffer, '\n', blen))) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
 		if(result == -1 && errno == EINTR)
@@ -490,7 +500,10 @@ bool recvline(int fd, char *line, size_t len) {
 	return true;
 }
 
-static bool recvdata(int fd, char *data, size_t len) {
+bool recvdata(int fd, char *data, size_t len) {
+	if(len == -1)
+		len = blen;
+
 	while(blen < len) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
 		if(result == -1 && errno == EINTR)
@@ -640,7 +653,7 @@ static bool remove_service(void) {
 }
 #endif
 
-static bool connect_tincd(bool verbose) {
+bool connect_tincd(bool verbose) {
 	if(fd >= 0) {
 		fd_set r;
 		FD_ZERO(&r);
@@ -1208,14 +1221,14 @@ static int cmd_pid(int argc, char *argv[]) {
 	return 0;
 }
 
-static int rstrip(char *value) {
+int rstrip(char *value) {
 	int len = strlen(value);
 	while(len && strchr("\t\r\n ", value[len - 1]))
 		value[--len] = 0;
 	return len;
 }
 
-static char *get_my_name(bool verbose) {
+char *get_my_name(bool verbose) {
 	FILE *f = fopen(tinc_conf, "r");
 	if(!f) {
 		if(verbose)
@@ -1250,22 +1263,14 @@ static char *get_my_name(bool verbose) {
 	return NULL;
 }
 
-#define VAR_SERVER 1    /* Should be in tinc.conf */
-#define VAR_HOST 2      /* Can be in host config file */
-#define VAR_MULTIPLE 4  /* Multiple statements allowed */
-#define VAR_OBSOLETE 8  /* Should not be used anymore */
-
-static struct {
-	const char *name;
-	int type;
-} const variables[] = {
+const var_t variables[] = {
 	/* Server configuration */
 	{"AddressFamily", VAR_SERVER},
-	{"AutoConnect", VAR_SERVER},
+	{"AutoConnect", VAR_SERVER | VAR_SAFE},
 	{"BindToAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"BindToInterface", VAR_SERVER},
-	{"Broadcast", VAR_SERVER},
-	{"ConnectTo", VAR_SERVER | VAR_MULTIPLE},
+	{"Broadcast", VAR_SERVER | VAR_SAFE},
+	{"ConnectTo", VAR_SERVER | VAR_MULTIPLE | VAR_SAFE},
 	{"DecrementTTL", VAR_SERVER},
 	{"Device", VAR_SERVER},
 	{"DeviceType", VAR_SERVER},
@@ -1282,7 +1287,7 @@ static struct {
 	{"MACExpire", VAR_SERVER},
 	{"MaxOutputBufferSize", VAR_SERVER},
 	{"MaxTimeout", VAR_SERVER},
-	{"Mode", VAR_SERVER},
+	{"Mode", VAR_SERVER | VAR_SAFE},
 	{"Name", VAR_SERVER},
 	{"PingInterval", VAR_SERVER},
 	{"PingTimeout", VAR_SERVER},
@@ -1315,9 +1320,9 @@ static struct {
 	{"Port", VAR_HOST},
 	{"PublicKey", VAR_HOST | VAR_OBSOLETE},
 	{"PublicKeyFile", VAR_SERVER | VAR_HOST | VAR_OBSOLETE},
-	{"Subnet", VAR_HOST | VAR_MULTIPLE},
+	{"Subnet", VAR_HOST | VAR_MULTIPLE | VAR_SAFE},
 	{"TCPOnly", VAR_SERVER | VAR_HOST},
-	{"Weight", VAR_HOST},
+	{"Weight", VAR_HOST | VAR_SAFE},
 	{NULL, 0}
 };
 
@@ -2014,6 +2019,8 @@ static const struct {
 	{"import", cmd_import},
 	{"exchange", cmd_exchange},
 	{"exchange-all", cmd_exchange_all},
+	{"invite", cmd_invite},
+	{"join", cmd_join},
 	{NULL, NULL},
 };
 
@@ -2066,7 +2073,7 @@ static char *complete_config(const char *text, int state) {
 		if(dot) {
 			if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
 				char *match;
-				xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
+				xasprintf(&match, "%.*s.%s", (int)(dot - text), text, variables[i].name);
 				return match;
 			}
 		} else {
@@ -2261,6 +2268,8 @@ int main(int argc, char *argv[]) {
 		usage(false);
 		return 0;
 	}
+
+	crypto_init();
 
 	tty = isatty(0) && isatty(1);
 

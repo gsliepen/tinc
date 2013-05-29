@@ -21,6 +21,8 @@
 #ifndef __TINC_PROTOCOL_H__
 #define __TINC_PROTOCOL_H__
 
+#include "ecdsa.h"
+
 /* Protocol version. Different major versions are incompatible. */
 
 #define PROT_MAJOR 17
@@ -58,6 +60,8 @@ typedef struct past_request_t {
 extern bool tunnelserver;
 extern bool strictsubnets;
 extern bool experimental;
+
+extern ecdsa_t *invitation_key;
 
 /* Maximum size of strings in a request.
  * scanf terminates %2048s with a NUL character,

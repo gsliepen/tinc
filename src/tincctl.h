@@ -20,6 +20,31 @@
 #ifndef __TINC_TINCCTL_H__
 #define __TINC_TINCCTL_H__
 
+extern bool tty;
+extern char line[4096];
+extern int fd;
+extern char buffer[4096];
+extern size_t blen;
+extern bool confbasegiven;
+extern char *tinc_conf;
+extern char *hosts_dir;
+
+#define VAR_SERVER 1    /* Should be in tinc.conf */
+#define VAR_HOST 2      /* Can be in host config file */
+#define VAR_MULTIPLE 4  /* Multiple statements allowed */
+#define VAR_OBSOLETE 8  /* Should not be used anymore */
+#define VAR_SAFE 16     /* Variable is safe when accepting invitations */
+
+typedef struct {
+	const char *name;
+	int type;
+} var_t;
+
+extern const var_t variables[];
+
+extern int rstrip(char *value);
+extern char *get_my_name(bool verbose);
+extern bool connect_tincd(bool verbose);
 extern bool sendline(int fd, char *format, ...);
 extern bool recvline(int fd, char *line, size_t len);
 

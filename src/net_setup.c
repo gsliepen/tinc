@@ -223,6 +223,30 @@ static bool read_ecdsa_private_key(void) {
 	return myself->connection->ecdsa;
 }
 
+static bool read_invitation_key(void) {
+	FILE *fp;
+	char *fname;
+
+	if(invitation_key) {
+		ecdsa_free(invitation_key);
+		invitation_key = NULL;
+	}
+
+	xasprintf(&fname, "%s" SLASH "invitations" SLASH "ecdsa_key.priv", confbase);
+
+	fp = fopen(fname, "r");
+
+	if(fp) {
+		invitation_key = ecdsa_read_pem_private_key(fp);
+		fclose(fp);
+		if(!invitation_key)
+			logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
+	}
+
+	free(fname);
+	return invitation_key;
+}
+
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname;
@@ -602,6 +626,8 @@ bool setup_myself_reloadable(void) {
 	get_config_int(lookup_config(config_tree, "AutoConnect"), &autoconnect);
 
 	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
+
+	read_invitation_key();
 
 	return true;
 }

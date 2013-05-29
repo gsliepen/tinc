@@ -90,6 +90,15 @@ is used.
 The same as export followed by import.
 .It exchange-all Op Fl -force
 The same as export-all followed by import.
+.It invite Ar name
+Prepares an invitation for a new node with the given
+.Ar name ,
+and prints a short invitation URL that can be used with the join command.
+.It join Op Ar URL
+Join an existing VPN using an invitation URL created using the invite command.
+If no
+.Ar URL
+is given, it will be read from standard input.
 .It start Op tincd options
 Start
 .Xr tincd 8 ,

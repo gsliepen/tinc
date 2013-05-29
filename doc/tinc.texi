@@ -2214,6 +2214,14 @@ The same as export followed by import.
 @item exchange-all [--force]
 The same as export-all followed by import.
 
+@item invite @var{name}
+Prepares an invitation for a new node with the given @var{name},
+and prints a short invitation URL that can be used with the join command.
+
+@item join [@var{URL}]
+Join an existing VPN using an invitation URL created using the invite command.
+If no @var{URL} is given, it will be read from standard input.
+
 @item start [tincd options]
 Start @samp{tincd}, optionally with the given extra options.
 
@@ -2232,10 +2240,17 @@ in @file{tinc.conf} will be made.
 Shows the PID of the currently running @samp{tincd}.
 
 @item generate-keys [@var{bits}]
-Generate public/private keypair of @var{bits} length. If @var{bits} is not specified,
-1024 is the default. tinc will ask where you want to store the files,
-but will default to the configuration directory (you can use the -c or -n
-option).
+Generate both RSA and ECDSA keypairs (see below) and exit.
+tinc will ask where you want to store the files, but will default to the
+configuration directory (you can use the -c or -n option).
+
+@item generate-ecdsa-keys
+Generate public/private ECDSA keypair and exit.
+
+@item generate-rsa-keys [@var{bits}]
+Generate public/private RSA keypair and exit.  If @var{bits} is omitted, the
+default length will be 2048 bits.  When saving keys to existing files, tinc
+will not delete the old keys; you have to remove them manually.
 
 @item dump [reachable] nodes
 Dump a list of all known nodes in the VPN.

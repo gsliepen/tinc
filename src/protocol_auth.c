@@ -27,10 +27,12 @@
 #include "cipher.h"
 #include "crypto.h"
 #include "digest.h"
+#include "ecdsa.h"
 #include "edge.h"
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
@@ -40,6 +42,8 @@
 #include "sptps.h"
 #include "utils.h"
 #include "xalloc.h"
+
+ecdsa_t *invitation_key = NULL;
 
 static bool send_proxyrequest(connection_t *c) {
 	switch(proxytype) {
@@ -146,6 +150,107 @@ bool send_id(connection_t *c) {
 	return send_request(c, "%d %s %d.%d", ID, myself->connection->name, myself->connection->protocol_major, minor);
 }
 
+static bool finalize_invitation(connection_t *c, const char *data, uint16_t len) {
+	if(strchr(data, '\n')) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Received invalid key from invited node %s (%s)!\n", c->name, c->hostname);
+		return false;
+	}
+
+	// Create a new host config file
+	char filename[PATH_MAX];
+	snprintf(filename, sizeof filename, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+	if(!access(filename, F_OK)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Host config file for %s (%s) already exists!\n", c->name, c->hostname);
+		return false;
+	}
+
+	FILE *f = fopen(filename, "w");
+	if(!f) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to create %s: %s\n", filename, strerror(errno));
+		return false;
+	}
+
+	fprintf(f, "ECDSAPublicKey = %s\n", data);
+	fclose(f);
+
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
+	return true;
+}
+
+static bool receive_invitation_sptps(void *handle, uint8_t type, const char *data, uint16_t len) {
+	connection_t *c = handle;
+
+	if(type == 128)
+		return true;
+
+	if(type == 1 && c->status.invitation_used)
+		return finalize_invitation(c, data, len);
+
+	if(type != 0 || len != 18 || c->status.invitation_used)
+		return false;
+
+	char cookie[25];
+	b64encode_urlsafe(data, cookie, 18);
+
+	char filename[PATH_MAX], usedname[PATH_MAX];
+	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
+	snprintf(usedname, sizeof usedname, "%s" SLASH "invitations" SLASH "%s.used", confbase, cookie);
+
+	// Atomically rename the invitation file
+	if(rename(filename, usedname)) {
+		if(errno == ENOENT)
+			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s tried to use non-existing invitation %s\n", c->hostname, cookie);
+		else
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to rename invitation %s\n", cookie);
+		return false;
+	}
+
+	// Open the renamed file
+	FILE *f = fopen(usedname, "r");
+	if(!f) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to open invitation %s\n", cookie);
+		return false;
+	}
+
+	// Read the new node's Name from the file
+	char buf[1024];
+	fgets(buf, sizeof buf, f);
+	if(*buf)
+		buf[strlen(buf) - 1] = 0;
+
+	len = strcspn(buf, " \t=");
+	char *name = buf + len;
+	name += strspn(name, " \t");
+	if(*name == '=') {
+		name++;
+		name += strspn(name, " \t");
+	}
+	buf[len] = 0;
+
+	if(!*buf || !*name || strcasecmp(buf, "Name") || !check_id(name)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid invitation file %s\n", cookie);
+		fclose(f);
+		return false;
+	}
+
+	free(c->name);
+	c->name = xstrdup(name);
+
+	// Send the node the contents of the invitation file
+	rewind(f);
+	size_t result;
+	while((result = fread(buf, 1, sizeof buf, f)))
+		sptps_send_record(&c->sptps, 0, buf, result);
+	sptps_send_record(&c->sptps, 1, buf, 0);
+	fclose(f);
+	unlink(usedname);
+
+	c->status.invitation_used = true;
+
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Invitation %s succesfully sent to %s (%s)", cookie, c->name, c->hostname);
+	return true;
+}
+
 bool id_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 
@@ -166,6 +271,31 @@ bool id_h(connection_t *c, const char *request) {
 		c->name = xstrdup("<control>");
 
 		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
+	}
+
+	if(name[0] == '?') {
+		if(!invitation_key) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got invitation from %s but we don't have an invitation key", c->hostname);
+			return false;
+		}
+
+		c->ecdsa = ecdsa_set_base64_public_key(name + 1);
+		if(!c->ecdsa) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad invitation from %s", c->hostname);
+			return false;
+		}
+
+		c->status.invitation = true;
+		char *mykey = ecdsa_get_base64_public_key(invitation_key);
+		if(!mykey)
+			return false;
+		if(!send_request(c, "%d %s", ACK, mykey))
+			return false;
+		free(mykey);
+
+		c->protocol_minor = 2;
+
+		return sptps_start(&c->sptps, c, false, false, invitation_key, c->ecdsa, "tinc invitation", 15, send_meta_sptps, receive_invitation_sptps);
 	}
 
 	/* Check if identity is a valid name */

@@ -47,7 +47,9 @@ typedef struct connection_status_t {
 		unsigned int control:1;                 /* 1 if this is a control connection */
 		unsigned int pcap:1;                    /* 1 if this is a control connection requesting packet capture */
 		unsigned int log:1;                     /* 1 if this is a control connection requesting log dump */
-		unsigned int unused:20;
+		unsigned int invitation:1;              /* 1 if this is an invitation */
+		unsigned int invitation_used:1;         /* 1 if the invitation has been consumed */
+		unsigned int unused:19;
 } connection_status_t;
 
 #include "ecdsa.h"
