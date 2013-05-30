@@ -178,7 +178,9 @@ static bool parse_options(int argc, char **argv) {
 				break;
 #endif
 
-			case 'd':				/* inc debug level */
+			case 'd':				/* increase debug level */
+				if(!optarg && optind < argc && *argv[optind] != '-')
+					optarg = argv[optind++];
 				if(optarg)
 					debug_level = atoi(optarg);
 				else
@@ -187,6 +189,8 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'k':				/* kill old tincds */
 #ifndef HAVE_MINGW
+				if(!optarg && optind < argc && *argv[optind] != '-')
+					optarg = argv[optind++];
 				if(optarg) {
 					if(!strcasecmp(optarg, "HUP"))
 						kill_tincd = SIGHUP;
@@ -225,8 +229,7 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'n':				/* net name given */
 				/* netname "." is special: a "top-level name" */
-				netname = strcmp(optarg, ".") != 0 ?
-						xstrdup(optarg) : NULL;
+				netname = strcmp(optarg, ".") != 0 ? xstrdup(optarg) : NULL;
 				break;
 
 			case 'o':				/* option */
@@ -237,6 +240,8 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 'K':				/* generate public/private keypair */
+				if(!optarg && optind < argc && *argv[optind] != '-')
+					optarg = argv[optind++];
 				if(optarg) {
 					generate_keys = atoi(optarg);
 
@@ -274,6 +279,8 @@ static bool parse_options(int argc, char **argv) {
 
 			case 4:					/* write log entries to a file */
 				use_logfile = true;
+				if(!optarg && optind < argc && *argv[optind] != '-')
+					optarg = argv[optind++];
 				if(optarg)
 					logfilename = xstrdup(optarg);
 				break;
@@ -289,6 +296,12 @@ static bool parse_options(int argc, char **argv) {
 			default:
 				break;
 		}
+	}
+
+	if(optind < argc) {
+		fprintf(stderr, "%s: unrecognized argument '%s'\n", argv[0], argv[optind]);
+		usage(true);
+		return false;
 	}
 
 	return true;
