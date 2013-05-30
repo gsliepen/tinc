@@ -469,7 +469,8 @@ bool recvline(int fd, char *line, size_t len) {
 	char *newline = NULL;
 
 	if(!fd)
-abort();
+		abort();
+
 	while(!(newline = memchr(buffer, '\n', blen))) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
 		if(result == -1 && errno == EINTR)
@@ -1187,6 +1188,13 @@ static int cmd_pcap(int argc, char *argv[]) {
 	return 0;
 }
 
+#ifdef SIGINT
+static void sigint_handler(int sig) {
+	fprintf(stderr, "\n");
+	shutdown(fd, SHUT_RDWR);
+}
+#endif
+
 static int cmd_log(int argc, char *argv[]) {
 	if(argc > 2) {
 		fprintf(stderr, "Too many arguments!\n");
@@ -1196,7 +1204,18 @@ static int cmd_log(int argc, char *argv[]) {
 	if(!connect_tincd(true))
 		return 1;
 
+#ifdef SIGINT
+	signal(SIGINT, sigint_handler);
+#endif
+
 	logcontrol(fd, stdout, argc > 1 ? atoi(argv[1]) : -1);
+
+#ifdef SIGINT
+	signal(SIGINT, SIG_DFL);
+#endif
+
+	close(fd);
+	fd = -1;
 	return 0;
 }
 
