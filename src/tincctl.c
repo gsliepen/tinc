@@ -79,19 +79,11 @@ static struct WSAData wsa_state;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
-	{"debug", optional_argument, NULL, 0},
-	{"no-detach", no_argument, NULL, 0},
-	{"mlock", no_argument, NULL, 0},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
-	{"pidfile", required_argument, NULL, 5},
-	{"logfile", required_argument, NULL, 0},
-	{"bypass-security", no_argument, NULL, 0},
-	{"chroot", no_argument, NULL, 0},
-	{"user", required_argument, NULL, 0},
-	{"option", required_argument, NULL, 0},
-	{"force", no_argument, NULL, 6},
+	{"pidfile", required_argument, NULL, 3},
+	{"force", no_argument, NULL, 4},
 	{NULL, 0, NULL, 0}
 };
 
@@ -163,7 +155,7 @@ static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:n:Dd::Lo:RU:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "+c:n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -185,11 +177,11 @@ static bool parse_options(int argc, char **argv) {
 				show_version = true;
 				break;
 
-			case 5:   /* open control socket here */
+			case 3:   /* open control socket here */
 				pidfilename = xstrdup(optarg);
 				break;
 
-			case 6:   /* force */
+			case 4:   /* force */
 				force = true;
 				break;
 
