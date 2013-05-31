@@ -444,6 +444,7 @@ bool setup_myself_reloadable(void) {
 	char *fmode = NULL;
 	char *bmode = NULL;
 	char *afname = NULL;
+	char *address = NULL;
 	char *space;
 	bool choice;
 
@@ -533,6 +534,16 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
+
+	memset(&localdiscovery_address, 0, sizeof localdiscovery_address);
+	if(get_config_string(lookup_config(config_tree, "LocalDiscoveryAddress"), &address)) {
+		struct addrinfo *ai = str2addrinfo(address, myport, SOCK_DGRAM);
+		free(address);
+		if(!ai)
+			return false;
+		memcpy(&localdiscovery_address, ai->ai_addr, ai->ai_addrlen);
+	}
+
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
 		if(!strcasecmp(rmode, "router"))

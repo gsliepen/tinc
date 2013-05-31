@@ -1056,6 +1056,10 @@ which normally would prevent the peers from learning each other's LAN address.
 Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
 This feature may not work in all possible situations.
 
+@cindex LocalDiscoveryAddress
+@item LocalDiscoveryAddress <@var{address}>
+If this variable is specified, local discovery packets are sent to the given @var{address}.
+
 @cindex Mode
 @item Mode = <router|switch|hub> (router)
 This option selects the way packets are routed to other daemons.
