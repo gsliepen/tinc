@@ -938,8 +938,7 @@ static bool setup_myself(void) {
 			free(address);
 
 			if(err || !ai) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
-					   gai_strerror(err));
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo", err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
 				return false;
 			}
 

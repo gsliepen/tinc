@@ -42,8 +42,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Error looking up %s port %s: %s", address,
-				   service, gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Error looking up %s port %s: %s", address, service, err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 		return NULL;
 	}
 
@@ -92,8 +91,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof address, port, sizeof port, NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while translating addresses: %s",
-			   gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while translating addresses: %s", err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 		abort();
 	}
 
@@ -122,8 +120,7 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof address, port, sizeof port,
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while looking up hostname: %s",
-			   gai_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while looking up hostname: %s", err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 	}
 
 	xasprintf(&str, "%s port %s", address, port);
