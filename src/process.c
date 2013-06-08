@@ -254,7 +254,7 @@ static bool write_pidfile(void) {
 
 	/* if it's locked, write-protected, or whatever */
 	if(!write_pid(pidfilename)) {
-		fprintf(stderr, "Could write pid file %s: %s\n", pidfilename, strerror(errno));
+		fprintf(stderr, "Couldn't write pid file %s: %s\n", pidfilename, strerror(errno));
 		return false;
 	}
 
