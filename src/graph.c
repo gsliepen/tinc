@@ -156,7 +156,7 @@ static void sssp_bfs(void) {
 	bool indirect;
 	char *name;
 	char *address, *port;
-	char *envp[7];
+	char *envp[8] = {NULL};
 	int i;
 
 	todo_list = list_alloc(NULL);
@@ -269,7 +269,7 @@ static void sssp_bfs(void) {
 			sockaddr2str(&n->address, &address, &port);
 			xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
 			xasprintf(&envp[5], "REMOTEPORT=%s", port);
-			envp[6] = NULL;
+			xasprintf(&envp[6], "NAME=%s", myself->name);
 
 			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
 
@@ -282,7 +282,7 @@ static void sssp_bfs(void) {
 			free(address);
 			free(port);
 
-			for(i = 0; i < 6; i++)
+			for(i = 0; i < 7; i++)
 				free(envp[i]);
 
 			subnet_update(n, NULL, n->status.reachable);

@@ -523,7 +523,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	avl_node_t *node;
 	int i;
-	char *envp[9] = {NULL};
+	char *envp[10] = {NULL};
 	char netstr[MAXNETSTR];
 	char *name, *address, *port;
 	char empty[] = "";
@@ -543,6 +543,8 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		free(port);
 		free(address);
 	}
+
+	xasprintf(&envp[8], "NAME=%s", myself->name);
 
 	name = up ? "subnet-up" : "subnet-down";
 

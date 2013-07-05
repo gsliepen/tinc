@@ -334,7 +334,7 @@ static bool setup_myself(void) {
 	char *address = NULL;
 	char *proxy = NULL;
 	char *space;
-	char *envp[5];
+	char *envp[5] = {NULL};
 	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
 	int i, err;
@@ -692,11 +692,10 @@ static bool setup_myself(void) {
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	execute_script("tinc-up", envp);
 
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < 4; i++)
 		free(envp[i]);
 
 	/* Run subnet-up scripts for our own subnets */
@@ -862,7 +861,7 @@ bool setup_network(void) {
 void close_network_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
-	char *envp[5];
+	char *envp[5] = {NULL};
 	int i;
 
 	for(node = connection_tree->head; node; node = next) {
@@ -896,7 +895,6 @@ void close_network_connections(void) {
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	exit_requests();
 	exit_edges();
