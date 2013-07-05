@@ -235,7 +235,7 @@ static void check_reachability(void) {
 			char *name;
 			char *address;
 			char *port;
-			char *envp[7];
+			char *envp[8] = {NULL};
 
 			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 			xasprintf(&envp[1], "DEVICE=%s", device ? : "");
@@ -244,7 +244,7 @@ static void check_reachability(void) {
 			sockaddr2str(&n->address, &address, &port);
 			xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
 			xasprintf(&envp[5], "REMOTEPORT=%s", port);
-			envp[6] = NULL;
+			xasprintf(&envp[6], "NAME=%s", myself->name);
 
 			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
 
@@ -255,7 +255,7 @@ static void check_reachability(void) {
 			free(address);
 			free(port);
 
-			for(int i = 0; i < 6; i++)
+			for(int i = 0; i < 7; i++)
 				free(envp[i]);
 
 			subnet_update(n, NULL, n->status.reachable);

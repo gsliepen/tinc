@@ -204,7 +204,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 
 	// Prepare environment variables to be passed to the script
 
-	char *envp[9] = {NULL};
+	char *envp[10] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
@@ -218,6 +218,8 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		free(port);
 		free(address);
 	}
+
+	xasprintf(&envp[8], "NAME=%s", myself->name);
 
 	name = up ? "subnet-up" : "subnet-down";
 
@@ -260,7 +262,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		}
 	}
 
-	for(int i = 0; envp[i] && i < 8; i++)
+	for(int i = 0; envp[i] && i < 9; i++)
 		free(envp[i]);
 }
 

@@ -828,12 +828,11 @@ static bool setup_myself(void) {
 		io_add(&device_io, handle_device_data, NULL, device_fd, IO_READ);
 
 	/* Run tinc-up script to further initialize the tap interface */
-	char *envp[5];
+	char *envp[5] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	execute_script("tinc-up", envp);
 
@@ -1065,12 +1064,11 @@ void close_network_connections(void) {
 	close(unix_socket.fd);
 #endif
 
-	char *envp[5];
+	char *envp[5] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	exit_requests();
 	exit_edges();
