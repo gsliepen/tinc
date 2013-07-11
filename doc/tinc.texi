@@ -1101,6 +1101,13 @@ impossible to crack a single key.
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when Mode is set to "switch".
 
+@cindex MaxConnectionBurst
+@item MaxConnectionBurst = <@var{count}> (100)
+This option controls how many connections tinc accepts in quick succession.
+If there are more connections than the given number in a short time interval,
+tinc will reduce the number of accepted connections to only one per second,
+until the burst has passed.
+
 @cindex Name
 @item Name = <@var{name}> [required]
 This is a symbolic name for this connection.
@@ -1181,7 +1188,6 @@ the interaction of replay tracking with underlying real packet loss and/or
 reordering. Setting this to zero will disable replay tracking completely and
 pass all traffic, but leaves tinc vulnerable to replay-based attacks on your
 traffic.
-
 
 @cindex StrictSubnets
 @item StrictSubnets <yes|no> (no) [experimental]

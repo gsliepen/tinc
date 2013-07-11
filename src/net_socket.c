@@ -45,6 +45,7 @@ int maxtimeout = 900;
 int seconds_till_retry = 5;
 int udp_rcvbuf = 0;
 int udp_sndbuf = 0;
+int max_connection_burst = 100;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
@@ -560,6 +561,47 @@ void handle_new_meta_connection(void *data, int flags) {
 	}
 
 	sockaddrunmap(&sa);
+
+	// Check if we get many connections from the same host
+
+	static sockaddr_t prev_sa;
+	static time_t prev_time;
+	static int tarpit = -1;
+
+	if(tarpit >= 0) {
+		closesocket(tarpit);
+		tarpit = -1;
+	}
+
+	if(prev_time == now.tv_sec && !sockaddrcmp_noport(&sa, &prev_sa)) {
+		// if so, keep the connection open but ignore it completely.
+		tarpit = fd;
+		return;
+	}
+
+	memcpy(&prev_sa, &sa, sizeof sa);
+	prev_time = now.tv_sec;
+
+	// Check if we get many connections from different hosts
+
+	static int connection_burst;
+	static int connection_burst_time;
+
+	if(now.tv_sec - connection_burst_time > connection_burst)
+		connection_burst = 0;
+	else
+		connection_burst -= now.tv_sec - connection_burst_time;
+
+	connection_burst_time = now.tv_sec;
+	connection_burst++;
+
+	if(connection_burst >= max_connection_burst) {
+		connection_burst = max_connection_burst;
+		tarpit = fd;
+		return;
+	}
+
+	// Accept the new connection
 
 	c = new_connection();
 	c->name = xstrdup("<unknown>");

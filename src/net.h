@@ -133,6 +133,7 @@ extern io_t unix_socket;
 extern int keylifetime;
 extern int udp_rcvbuf;
 extern int udp_sndbuf;
+extern int max_connection_burst;
 extern bool do_prune;
 extern char *myport;
 extern int autoconnect;

@@ -711,7 +711,12 @@ static bool setup_myself(void) {
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
 	strictsubnets |= tunnelserver;
 
-
+	if(get_config_int(lookup_config(config_tree, "MaxConnectionBurst"), &max_connection_burst)) {
+		if(max_connection_burst <= 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "MaxConnectionBurst cannot be negative!");
+			return false;
+		}
+	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {

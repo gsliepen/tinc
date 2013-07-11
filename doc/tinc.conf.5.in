@@ -335,6 +335,11 @@ This only has effect when
 .Va Mode
 is set to
 .Qq switch .
+.It Va MaxConnectionBurst Li = Ar count Pq 100
+This option controls how many connections tinc accepts in quick succession.
+If there are more connections than the given number in a short time interval,
+tinc will reduce the number of accepted connections to only one per second,
+until the burst has passed.
 .It Va MaxTimeout Li = Ar seconds Pq 900
 This is the maximum delay before trying to reconnect to other tinc daemons.
 .It Va Mode Li = router | switch | hub Pq router
