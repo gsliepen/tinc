@@ -94,6 +94,8 @@ static bool setup_device(void) {
 		device_type = DEVICE_TYPE_TUN;
 		device_info = "Linux tun/tap device (tun mode)";
 	} else {
+		if (routing_mode == RMODE_ROUTER)
+			overwrite_mac = true;
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		device_type = DEVICE_TYPE_TAP;
 		device_info = "Linux tun/tap device (tap mode)";
