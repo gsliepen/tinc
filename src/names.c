@@ -42,6 +42,9 @@ void make_names(void) {
 	DWORD len = sizeof installdir;
 #endif
 
+	if(netname && confbase)
+		logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
+
 	if(netname)
 		xasprintf(&identname, "tinc.%s", netname);
 	else
@@ -84,13 +87,10 @@ void make_names(void) {
 			strcpy(unixsocketname + len, ".socket");
 	}
 
-	if(netname) {
-		if(!confbase)
+	if(!confbase) {
+		if(netname)
 			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
 		else
-			logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
-	} else {
-		if(!confbase)
 			xasprintf(&confbase, CONFDIR SLASH "tinc");
 	}
 }
