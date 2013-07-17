@@ -52,9 +52,17 @@ static inline char *xstrdup(const char *s) {
 }
 
 static inline int xvasprintf(char **strp, const char *fmt, va_list ap) {
+#ifdef HAVE_MINGW
+	char buf[1024];
+	int result = vsnprintf(buf, sizeof buf, fmt, ap);
+	if(result < 0)
+		abort();
+	*strp = xstrdup(buf);
+#else
 	int result = vasprintf(strp, fmt, ap);
 	if(result < 0)
 		abort();
+#endif
 	return result;
 }
 
