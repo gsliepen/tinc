@@ -4,6 +4,8 @@ sbin_PROGRAMS = tincd tinc sptps_test
 
 EXTRA_DIST = linux bsd solaris cygwin mingw openssl gcrypt
 
+DEFAULT_INCLUDES =
+
 tincd_SOURCES = \
 	buffer.c \
 	conf.c \
