@@ -40,7 +40,6 @@
 #include "top.h"
 
 #ifdef HAVE_MINGW
-#define mkdir(a, b) mkdir(a)
 #define SCRIPTEXTENSION ".bat"
 #else
 #define SCRIPTEXTENSION ""

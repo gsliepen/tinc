@@ -17,3 +17,7 @@
 #ifndef EAI_FAMILY
 #define EAI_FAMILY 3
 #endif
+
+#ifndef EAI_SYSTEM
+#define EAI_SYSTEM 4
+#endif

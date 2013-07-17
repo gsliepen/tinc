@@ -63,4 +63,11 @@ extern int usleep(long long usec);
 } while (0)
 #endif
 
+#ifdef HAVE_MINGW
+#define mkdir(a, b) mkdir(a)
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif
+#endif
+
 #endif /* __DROPIN_H__ */
