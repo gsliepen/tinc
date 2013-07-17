@@ -147,10 +147,18 @@ int xasprintf(char **strp, const char *fmt, ...) {
 }
 
 int xvasprintf(char **strp, const char *fmt, va_list ap) {
+#ifdef HAVE_MINGW
+	char buf[1024];
+	int result = vsnprintf(buf, sizeof buf, fmt, ap);
+	if(result < 0)
+		exit(xalloc_exit_failure);
+	*strp = xstrdup(buf);
+#else
 	int result = vasprintf(strp, fmt, ap);
 	if(result < 0) {
 		fprintf(stderr, "vasprintf() failed: %s\n", strerror(errno));
   		exit(xalloc_exit_failure);
 	}
+#endif
 	return result;
 }
