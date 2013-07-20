@@ -386,7 +386,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 				update_node_udp(from, &sa);
 			}
 
-			if(from->options & OPTION_PMTU_DISCOVERY)
+			if(from->options & OPTION_PMTU_DISCOVERY && !(from->options & OPTION_TCPONLY))
 				send_mtu_probe(from);
 		}
 
@@ -435,7 +435,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 		update_node_udp(from, &sa);
 	}
 
-	if(from->options & OPTION_PMTU_DISCOVERY)
+	if(from->options & OPTION_PMTU_DISCOVERY && !(from->options & OPTION_TCPONLY))
 		send_mtu_probe(from);
 
 	return true;
