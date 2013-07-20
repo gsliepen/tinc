@@ -368,6 +368,10 @@ bool id_h(connection_t *c, const char *request) {
 
 		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, sizeof label, send_meta_sptps, receive_meta_sptps);
 	} else {
+		if (ecdsa_active(c->ecdsa)) {
+			ecdsa_free(c->ecdsa);
+			c->ecdsa = NULL;
+		}
 		return send_metakey(c);
 	}
 }
