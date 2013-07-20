@@ -135,6 +135,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 				break;
 			}
 		}
+		// TODO: currently, the hash table implementation doesn't handle collisions.
 		hash_insert(node_udp_cache, sa, n);
 		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
