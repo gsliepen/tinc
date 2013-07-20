@@ -106,9 +106,10 @@ optionally with the given extra options.
 .It stop
 Stop
 .Xr tincd 8 .
-.It restart
+.It restart Op tincd options
 Restart
-.Xr tincd 8 .
+.Xr tincd 8 ,
+optionally with the given extra options.
 .It reload
 Partially rereads configuration files. Connections to hosts whose host
 config files are removed are closed. New outgoing connections specified

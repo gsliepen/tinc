@@ -2238,8 +2238,8 @@ Start @samp{tincd}, optionally with the given extra options.
 @item stop
 Stop @samp{tincd}.
 
-@item restart
-Restart @samp{tincd}.
+@item restart [tincd options]
+Restart @samp{tincd}, optionally with the given extra options.
 
 @item reload
 Partially rereads configuration files. Connections to hosts whose host

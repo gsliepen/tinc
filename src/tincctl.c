@@ -116,7 +116,7 @@ static void usage(bool status) {
 				"  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
 				"  start [tincd options]      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
-				"  restart                    Restart tincd.\n"
+				"  restart [tincd options]    Restart tincd.\n"
 				"  reload                     Partially reload configuration of running tincd.\n"
 				"  pid                        Show PID of currently running tincd.\n"
 				"  generate-keys [bits]       Generate new RSA and ECDSA public/private keypairs.\n"
@@ -871,7 +871,7 @@ static int cmd_stop(int argc, char *argv[]) {
 }
 
 static int cmd_restart(int argc, char *argv[]) {
-	cmd_stop(argc, argv);
+	cmd_stop(1, argv);
 	return cmd_start(argc, argv);
 }
 
