@@ -857,6 +857,14 @@ If no @var{port} is specified, the socket will be bound to the port specified by
 or to port 655 if neither is given.
 To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
 
+@cindex DataBindToAddress
+@item DataBindToAddress = <@var{address}> [<@var{port}>]
+Equivalent to BindToAddress but for incoming data packets. Defaults to BindToAddress if not specified.
+
+If no @var{port} is specified, the socket will be bound to the port specified by the DataPort option,
+or to the port specified by the Port option, or to port 655 if neither is given.
+To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
+
 @cindex BindToInterface
 @item BindToInterface = <@var{interface}> [experimental]
 If you have more than one network interface in your computer, tinc will
@@ -1278,7 +1286,12 @@ After the path MTU has been discovered, it will be enforced on the VPN.
 
 @cindex Port
 @item Port = <@var{port}> (655)
-This is the port this tinc daemon listens on.
+This is the port this tinc daemon listens on for metaconnections.
+You can use decimal portnumbers or symbolic names (as listed in @file{/etc/services}).
+
+@cindex DataPort
+@item DataPort = <@var{port}> (Port)
+This is the port this tinc daemon listens on for data packets.
 You can use decimal portnumbers or symbolic names (as listed in @file{/etc/services}).
 
 @cindex PublicKey

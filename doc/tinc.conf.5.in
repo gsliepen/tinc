@@ -126,7 +126,7 @@ When using this option, a good value is 3.
 .It Va BindToAddress Li = Ar address Op Ar port
 If your computer has more than one IPv4 or IPv6 address,
 .Nm tinc
-will by default listen on all of them for incoming connections.
+will by default listen on all of them for incoming metaconnections.
 Multiple
 .Va BindToAddress
 variables may be specified,
@@ -135,6 +135,24 @@ in which case listening sockets for each specified address are made.
 If no
 .Ar port
 is specified, the socket will be bound to the port specified by the
+.Va Port
+option, or to port 655 if neither is given.
+To only bind to a specific port but not to a specific address, use
+.Li *
+for the
+.Ar address .
+.It Va DataBindToAddress Li = Ar address Op Ar port
+Equivalent to
+.Va BindToAddress
+but for incoming data packets. Defaults to
+.Va BindToAddress
+if not specified.
+.Pp
+If no
+.Ar port
+is specified, the socket will be bound to the port specified by the
+.Va DataPort
+option, or to the port specified by the
 .Va Port
 option, or to port 655 if neither is given.
 To only bind to a specific port but not to a specific address, use
@@ -523,10 +541,12 @@ This option controls the initial path MTU to this node.
 When this option is enabled, tinc will try to discover the path MTU to this node.
 After the path MTU has been discovered, it will be enforced on the VPN.
 .It Va Port Li = Ar port Pq 655
-The port number on which this tinc daemon is listening for incoming connections,
+The port number on which this tinc daemon is listening for incoming metaconnections,
 which is used if no port number is specified in an
 .Va Address
 statement.
+.It Va DataPort Li = Ar port Pq Va Port
+The port number on which this tinc daemon is listening for incoming data packets.
 .It Va PublicKey Li = Ar key Bq obsolete
 The public RSA key of this tinc daemon.
 It will be used to cryptographically verify it's identity and to set up a secure connection.

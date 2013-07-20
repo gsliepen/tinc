@@ -42,7 +42,8 @@
 #include "utils.h"
 #include "xalloc.h"
 
-char *myport;
+char *mymetaport;
+char *mydataport;
 static io_t device_io;
 devops_t devops;
 
@@ -537,7 +538,7 @@ bool setup_myself_reloadable(void) {
 
 	memset(&localdiscovery_address, 0, sizeof localdiscovery_address);
 	if(get_config_string(lookup_config(config_tree, "LocalDiscoveryAddress"), &address)) {
-		struct addrinfo *ai = str2addrinfo(address, myport, SOCK_DGRAM);
+		struct addrinfo *ai = str2addrinfo(address, mydataport, SOCK_DGRAM);
 		free(address);
 		if(!ai)
 			return false;
@@ -711,6 +712,21 @@ static bool setup_sockets(listen_socket_t *sockets, int *socket_count, config_t 
 	return true;
 }
 
+static bool service2port(char** string)
+{
+	if(!atoi(*string)) {
+		struct addrinfo *ai = str2addrinfo("localhost", *string, SOCK_DGRAM);
+		sockaddr_t sa;
+		if(!ai || !ai->ai_addr)
+			return false;
+		free(*string);
+		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+		sockaddr2str(&sa, NULL, string);
+	}
+
+	return true;
+}
+
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
@@ -728,10 +744,17 @@ static bool setup_myself(void) {
 	myself->connection->name = xstrdup(name);
 	read_host_config(config_tree, name);
 
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
-		myport = xstrdup("655");
+	if(!get_config_string(lookup_config(config_tree, "Port"), &mymetaport))
+		mymetaport = xstrdup("655");
+	if(!get_config_string(lookup_config(config_tree, "DataPort"), &mydataport))
+		mydataport = xstrdup(mymetaport);
 
-	xasprintf(&myself->hostname, "MYSELF port %s", myport);
+	if (!service2port(&mymetaport))
+		return false;
+	if (!service2port(&mydataport))
+		return false;
+
+	xasprintf(&myself->hostname, "MYSELF port %s", mydataport);
 	myself->connection->hostname = xstrdup(myself->hostname);
 
 	myself->connection->options = 0;
@@ -747,16 +770,6 @@ static bool setup_myself(void) {
 
 	if(!read_rsa_private_key())
 		return false;
-
-	if(!atoi(myport)) {
-		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
-		sockaddr_t sa;
-		if(!ai || !ai->ai_addr)
-			return false;
-		free(myport);
-		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
-		sockaddr2str(&sa, NULL, &myport);
-	}
 
 	/* Read in all the subnets specified in the host configuration file */
 
@@ -990,10 +1003,14 @@ static bool setup_myself(void) {
 			memcpy(&data_listen_socket[i].sa, &sa, salen);
 		}
 	} else {
-		config_t *cfg = lookup_config(config_tree, "BindToAddress");
-		if (!setup_sockets(meta_listen_socket, &meta_listen_sockets, cfg, myport, IPPROTO_TCP, setup_listen_socket, handle_new_meta_connection))
+		config_t *meta_cfg = lookup_config(config_tree, "BindToAddress");
+		if (!setup_sockets(meta_listen_socket, &meta_listen_sockets, meta_cfg, mymetaport, IPPROTO_TCP, setup_listen_socket, handle_new_meta_connection))
 			return false;
-		if (!setup_sockets(data_listen_socket, &data_listen_sockets, cfg, myport, IPPROTO_UDP, setup_vpn_in_socket, handle_incoming_vpn_data))
+		
+		config_t *data_cfg = lookup_config(config_tree, "DataBindToAddress");
+		if (!data_cfg)
+			data_cfg = meta_cfg;
+		if (!setup_sockets(data_listen_socket, &data_listen_sockets, data_cfg, mydataport, IPPROTO_UDP, setup_vpn_in_socket, handle_incoming_vpn_data))
 			return false;
 	}
 
@@ -1091,7 +1108,8 @@ void close_network_connections(void) {
 
 	execute_script("tinc-down", envp);
 
-	if(myport) free(myport);
+	if(mymetaport) free(mymetaport);
+	if(mydataport) free(mydataport);
 
 	for(int i = 0; i < 4; i++)
 		free(envp[i]);

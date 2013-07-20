@@ -157,7 +157,7 @@ bool init_control(void) {
 	// Make sure we have a valid address, and map 0.0.0.0 and :: to 127.0.0.1 and ::1.
 
 	if(getsockname(meta_listen_socket[0].io.fd, (struct sockaddr *)&sa, &len)) {
-		xasprintf(&localhost, "127.0.0.1 port %s", myport);
+		xasprintf(&localhost, "127.0.0.1 port %s", mymetaport);
 	} else {
 		if(sa.sa.sa_family == AF_INET) {
 			if(sa.in.sin_addr.s_addr == 0)
