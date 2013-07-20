@@ -141,12 +141,18 @@ To only bind to a specific port but not to a specific address, use
 .Li *
 for the
 .Ar address .
+You can use the special value
+.Li !
+to not bind at all; in this case no inbound connections can take place,
+and the only way to control the daemon is through its UNIX socket file,
+assuming it is available on your system.
 .It Va DataBindToAddress Li = Ar address Op Ar port
 Equivalent to
 .Va BindToAddress
 but for incoming data packets. Defaults to
 .Va BindToAddress
-if not specified.
+if not specified, unless BindToAddress is
+.Li ! .
 .Pp
 If no
 .Ar port
@@ -159,6 +165,9 @@ To only bind to a specific port but not to a specific address, use
 .Li *
 for the
 .Ar address .
+You can use the special value
+.Li !
+to not bind at all; in this case no UDP communication can take place (implies TCPOnly).
 .It Va BindToInterface Li = Ar interface Bq experimental
 If your computer has more than one network interface,
 .Nm tinc

@@ -654,6 +654,14 @@ static bool setup_sockets(listen_socket_t *sockets, int *socket_count, config_t 
 		const char *port = myport;
 
 		if(address) {
+			if (!strcmp(address, "!")) {
+				if (*socket_count || cfg) {
+					logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address: when using '!' to prevent binding, it must be the only declaration");
+					return false;
+				}
+				return true;
+			}
+
 			char *space = strchr(address, ' ');
 			if(space) {
 				*space++ = 0;
@@ -1008,21 +1016,16 @@ static bool setup_myself(void) {
 			return false;
 		
 		config_t *data_cfg = lookup_config(config_tree, "DataBindToAddress");
-		if (!data_cfg)
+		if (!data_cfg && meta_listen_sockets)
 			data_cfg = meta_cfg;
 		if (!setup_sockets(data_listen_socket, &data_listen_sockets, data_cfg, mydataport, IPPROTO_UDP, setup_vpn_in_socket, handle_incoming_vpn_data))
 			return false;
+		if (!data_listen_sockets)
+			myself->options |= OPTION_TCPONLY;
 	}
 
-	if(meta_listen_sockets && data_listen_sockets)
-		logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
-	else {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create any listening socket!");
-		return false;
-	}
-
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
 	last_config_check = now.tv_sec;
-
 	return true;
 }
 

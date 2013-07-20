@@ -856,6 +856,8 @@ in which case listening sockets for each specified address are made.
 If no @var{port} is specified, the socket will be bound to the port specified by the Port option,
 or to port 655 if neither is given.
 To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
+You can use the special value "!" to not bind at all; in this case no inbound connections can take place,
+and the only way to control the daemon is through its UNIX socket file, assuming it is available on your system.
 
 @cindex DataBindToAddress
 @item DataBindToAddress = <@var{address}> [<@var{port}>]
@@ -864,6 +866,7 @@ Equivalent to BindToAddress but for incoming data packets. Defaults to BindToAdd
 If no @var{port} is specified, the socket will be bound to the port specified by the DataPort option,
 or to the port specified by the Port option, or to port 655 if neither is given.
 To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
+You can use the special value "!" to not bind at all; in this case no UDP communication can take place (implies TCPOnly).
 
 @cindex BindToInterface
 @item BindToInterface = <@var{interface}> [experimental]
