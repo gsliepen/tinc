@@ -547,13 +547,13 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock
 
 	if(candidate) {
 		*sa = &candidate->address;
-		*sock = rand() % listen_sockets;
+		*sock = rand() % data_listen_sockets;
 	}
 
 	/* Make sure we have a suitable socket for the chosen address */
-	if(listen_socket[*sock].sa.sa.sa_family != (*sa)->sa.sa_family) {
-		for(int i = 0; i < listen_sockets; i++) {
-			if(listen_socket[i].sa.sa.sa_family == (*sa)->sa.sa_family) {
+	if(data_listen_socket[*sock].sa.sa.sa_family != (*sa)->sa.sa_family) {
+		for(int i = 0; i < data_listen_sockets; i++) {
+			if(data_listen_socket[i].sa.sa.sa_family == (*sa)->sa.sa_family) {
 				*sock = i;
 				break;
 			}
@@ -578,15 +578,15 @@ static void choose_broadcast_address(const node_t *n, const sockaddr_t **sa, int
 		}
 	};
 
-	*sock = rand() % listen_sockets;
+	*sock = rand() % data_listen_sockets;
 
-	if(listen_socket[*sock].sa.sa.sa_family == AF_INET6) {
+	if(data_listen_socket[*sock].sa.sa.sa_family == AF_INET6) {
 		if(localdiscovery_address.sa.sa_family == AF_INET6) {
 			localdiscovery_address.in6.sin6_port = n->prevedge->address.in.sin_port;
 			*sa = &localdiscovery_address;
 		} else {
 			broadcast_ipv6.in6.sin6_port = n->prevedge->address.in.sin_port;
-			broadcast_ipv6.in6.sin6_scope_id = listen_socket[*sock].sa.in6.sin6_scope_id;
+			broadcast_ipv6.in6.sin6_scope_id = data_listen_socket[*sock].sa.in6.sin6_scope_id;
 			*sa = &broadcast_ipv6;
 		}
 	} else {
@@ -710,15 +710,15 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 #if defined(SOL_IP) && defined(IP_TOS)
 	if(priorityinheritance && origpriority != priority
-	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
+	   && data_listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[n->sock].udp.fd, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
+		if(setsockopt(data_listen_socket[n->sock].io.fd, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
 			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp.fd, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(data_listen_socket[sock].io.fd, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -755,7 +755,7 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 
 	choose_udp_address(to, &sa, &sock);
 
-	if(sendto(listen_socket[sock].udp.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(data_listen_socket[sock].io.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(to->maxmtu >= len)
 				to->maxmtu = len - 1;
@@ -972,7 +972,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	node_t *n;
 	int len;
 
-	len = recvfrom(ls->udp.fd, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(ls->io.fd, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1000,7 +1000,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 			return;
 	}
 
-	n->sock = ls - listen_socket;
+	n->sock = ls - data_listen_socket;
 
 	receive_udppacket(n, &pkt);
 }

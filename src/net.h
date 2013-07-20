@@ -100,8 +100,7 @@ typedef enum packet_type_t {
 } packet_type_t;
 
 typedef struct listen_socket_t {
-	io_t tcp;
-	io_t udp;
+	io_t io;
 	sockaddr_t sa;
 } listen_socket_t;
 
@@ -127,8 +126,10 @@ extern unsigned replaywin;
 extern bool localdiscovery;
 extern sockaddr_t localdiscovery_address;
 
-extern listen_socket_t listen_socket[MAXSOCKETS];
-extern int listen_sockets;
+extern listen_socket_t meta_listen_socket[MAXSOCKETS];
+extern int meta_listen_sockets;
+extern listen_socket_t data_listen_socket[MAXSOCKETS];
+extern int data_listen_sockets;
 extern io_t unix_socket;
 extern int keylifetime;
 extern int udp_rcvbuf;

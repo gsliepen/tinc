@@ -47,8 +47,10 @@ int udp_rcvbuf = 0;
 int udp_sndbuf = 0;
 int max_connection_burst = 100;
 
-listen_socket_t listen_socket[MAXSOCKETS];
-int listen_sockets;
+listen_socket_t meta_listen_socket[MAXSOCKETS];
+int meta_listen_sockets;
+listen_socket_t data_listen_socket[MAXSOCKETS];
+int data_listen_sockets;
 #ifndef HAVE_MINGW
 io_t unix_socket;
 #endif
@@ -553,7 +555,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	int fd;
 	socklen_t len = sizeof sa;
 
-	fd = accept(l->tcp.fd, &sa.sa, &len);
+	fd = accept(l->io.fd, &sa.sa, &len);
 
 	if(fd < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));

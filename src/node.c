@@ -129,8 +129,8 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	if(sa) {
 		n->address = *sa;
 		n->sock = 0;
-		for(int i = 0; i < listen_sockets; i++) {
-			if(listen_socket[i].sa.sa.sa_family == sa->sa.sa_family) {
+		for(int i = 0; i < data_listen_sockets; i++) {
+			if(data_listen_socket[i].sa.sa.sa_family == sa->sa.sa_family) {
 				n->sock = i;
 				break;
 			}
