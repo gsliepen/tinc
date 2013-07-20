@@ -944,6 +944,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 			continue;
 
 		if(sockaddrcmp_noport(from, &e->address)) {
+			// TODO: be smarter about this. This doesn't scale well.
 			if(last_hard_try == now.tv_sec)
 				continue;
 			hard = true;
