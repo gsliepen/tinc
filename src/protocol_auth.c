@@ -324,7 +324,7 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(c->protocol_major != myself->connection->protocol_major) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) uses incompatible version %d.%d",
-			   c->name, c->hostname, c->protocol_major, c->protocol_minor);
+			c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
 	}
 
@@ -346,13 +346,19 @@ bool id_h(connection_t *c, const char *request) {
 			return false;
 		}
 
-		if(experimental && c->protocol_minor >= 2) {
-			if(!read_ecdsa_public_key(c))
-				return false;
-		}
+		if(experimental)
+			read_ecdsa_public_key(c);
 	} else {
 		if(c->protocol_minor && !ecdsa_active(c->ecdsa))
 			c->protocol_minor = 1;
+	}
+
+	/* Forbid version rollback for nodes whose ECDSA key we know */
+
+	if(ecdsa_active(c->ecdsa) && c->protocol_minor < 2) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) tries to roll back protocol version to %d.%d",
+			c->name, c->hostname, c->protocol_major, c->protocol_minor);
+		return false;
 	}
 
 	c->allow_request = METAKEY;
