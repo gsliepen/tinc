@@ -324,7 +324,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 		filename = buf2;
 	}
 
-	umask(0077); /* Disallow everything for group and other */
+	umask(0022); /* Disallow writing for group and other */
 
 	disable_old_keys(filename, what);
 
