@@ -227,6 +227,16 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 	w = fopen(tmpfile, "w");
 
+#ifdef HAVE_FCHMOD
+	/* Let the temporary file have the same permissions as the original. */
+
+	if(w) {
+		struct stat st = {.st_mode = 0600};
+		fstat(fileno(r), &st);
+		fchmod(fileno(w), st.st_mode);
+	}
+#endif
+
 	while(fgets(buf, sizeof buf, r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
 			if((strstr(buf, " EC ") && strstr(what, "ECDSA")) || (strstr(buf, " RSA ") && strstr(what, "RSA"))) {
@@ -323,8 +333,6 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 		snprintf(buf2, sizeof buf2, "%s" SLASH "%s", directory, filename);
 		filename = buf2;
 	}
-
-	umask(0077); /* Disallow everything for group and other */
 
 	disable_old_keys(filename, what);
 
@@ -1702,7 +1710,9 @@ static int cmd_init(int argc, char *argv[]) {
 			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
 			return 1;
 		}
-		fchmod(fileno(f), 0755);
+		mode_t mask = umask(0);
+		umask(mask);
+		fchmod(fileno(f), 0755 & ~mask);
 		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
 		fclose(f);
 	}
