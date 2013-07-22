@@ -179,12 +179,25 @@ void send_mtu_probe(node_t *n) {
 }
 
 static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Got MTU probe length %d from %s (%s)", packet->len, n->name, n->hostname);
-
 	if(!packet->data[0]) {
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got MTU probe request %d from %s (%s)", packet->len, n->name, n->hostname);
+
 		/* It's a probe request, send back a reply */
 
-		packet->data[0] = 1;
+		/* Type 2 probe replies were introduced in protocol 17.3 */
+		if ((n->options >> 24) == 3) {
+			uint8_t* data = packet->data;
+			*data++ = 2;
+			uint16_t len16 = htons(len); memcpy(data, &len16, 2); data += 2;
+			struct timeval now;
+			gettimeofday(&now, NULL);
+			uint32_t sec = htonl(now.tv_sec); memcpy(data, &sec, 4); data += 4;
+			uint32_t usec = htonl(now.tv_usec); memcpy(data, &usec, 4); data += 4;
+			packet->len = data - packet->data;
+		} else {
+			/* Legacy protocol: n won't understand type 2 probe replies. */
+			packet->data[0] = 1;
+		}
 
 		/* Temporarily set udp_confirmed, so that the reply is sent
 		   back exactly the way it came in. */
@@ -194,6 +207,16 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		send_udppacket(n, packet);
 		n->status.udp_confirmed = udp_confirmed;
 	} else {
+		length_t probelen = len;
+		if (packet->data[0] == 2) {
+			if (len < 3)
+				logger(DEBUG_TRAFFIC, LOG_WARNING, "Received invalid (too short) MTU probe reply from %s (%s)", n->name, n->hostname);
+			else {
+				uint16_t probelen16; memcpy(&probelen16, packet->data + 1, 2); probelen = ntohs(probelen16);
+			}
+		}
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d MTU probe reply %d from %s (%s)", packet->data[0], probelen, n->name, n->hostname);
+
 		/* It's a valid reply: now we know bidirectional communication
 		   is possible using the address and socket that the reply
 		   packet used. */
@@ -203,7 +226,7 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		/* If we haven't established the PMTU yet, restart the discovery process. */
 
 		if(n->mtuprobes > 30) {
-			if (len == n->maxmtu + 8) {
+			if (probelen == n->maxmtu + 8) {
 				logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
 				n->maxmtu = MTU;
 				n->mtuprobes = 10;
@@ -218,27 +241,38 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 		/* If applicable, raise the minimum supported MTU */
 
-		if(len > n->maxmtu)
-			len = n->maxmtu;
-		if(n->minmtu < len)
-			n->minmtu = len;
+		if(probelen > n->maxmtu)
+			probelen = n->maxmtu;
+		if(n->minmtu < probelen)
+			n->minmtu = probelen;
 
 		/* Calculate RTT and bandwidth.
 		   The RTT is the time between the MTU probe burst was sent and the first
 		   reply is received. The bandwidth is measured using the time between the
-		   arrival of the first and third probe reply.
+		   arrival of the first and third probe reply (or type 2 probe requests).
 		 */
 
 		struct timeval now, diff;
 		gettimeofday(&now, NULL);
 		timersub(&now, &n->probe_time, &diff);
+
+		struct timeval probe_timestamp = now;
+		if (packet->data[0] == 2 && packet->len >= 11) {
+			uint32_t sec; memcpy(&sec, packet->data + 3, 4);
+			uint32_t usec; memcpy(&usec, packet->data + 7, 4);
+			probe_timestamp.tv_sec = ntohl(sec);
+			probe_timestamp.tv_usec = ntohl(usec);
+		}
+		
 		n->probe_counter++;
 
 		if(n->probe_counter == 1) {
 			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
-			n->probe_time = now;
+			n->probe_time = probe_timestamp;
 		} else if(n->probe_counter == 3) {
-			n->bandwidth = 2.0 * len / (diff.tv_sec + diff.tv_usec * 1e-6);
+			struct timeval probe_timestamp_diff;
+			timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
+			n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, burst bandwidth %.3f Mbit/s, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->bandwidth * 8e-6, n->packetloss * 1e2);
 		}
 	}
