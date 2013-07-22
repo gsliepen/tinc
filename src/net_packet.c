@@ -189,6 +189,11 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			uint8_t* data = packet->data;
 			*data++ = 2;
 			uint16_t len16 = htons(len); memcpy(data, &len16, 2); data += 2;
+			struct timeval now;
+			gettimeofday(&now, NULL);
+			uint32_t sec = htonl(now.tv_sec); memcpy(data, &sec, 4); data += 4;
+			uint32_t usec = htonl(now.tv_usec); memcpy(data, &usec, 4); data += 4;
+			packet->len = data - packet->data;
 		} else {
 			/* Legacy protocol: n won't understand type 2 probe replies. */
 			packet->data[0] = 1;
@@ -244,19 +249,30 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		/* Calculate RTT and bandwidth.
 		   The RTT is the time between the MTU probe burst was sent and the first
 		   reply is received. The bandwidth is measured using the time between the
-		   arrival of the first and third probe reply.
+		   arrival of the first and third probe reply (or type 2 probe requests).
 		 */
 
 		struct timeval now, diff;
 		gettimeofday(&now, NULL);
 		timersub(&now, &n->probe_time, &diff);
+
+		struct timeval probe_timestamp = now;
+		if (packet->data[0] == 2 && packet->len >= 11) {
+			uint32_t sec; memcpy(&sec, packet->data + 3, 4);
+			uint32_t usec; memcpy(&usec, packet->data + 7, 4);
+			probe_timestamp.tv_sec = ntohl(sec);
+			probe_timestamp.tv_usec = ntohl(usec);
+		}
+		
 		n->probe_counter++;
 
 		if(n->probe_counter == 1) {
 			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
-			n->probe_time = now;
+			n->probe_time = probe_timestamp;
 		} else if(n->probe_counter == 3) {
-			n->bandwidth = 2.0 * probelen / (diff.tv_sec + diff.tv_usec * 1e-6);
+			struct timeval probe_timestamp_diff;
+			timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
+			n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, burst bandwidth %.3f Mbit/s, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->bandwidth * 8e-6, n->packetloss * 1e2);
 		}
 	}
