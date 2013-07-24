@@ -776,10 +776,12 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 		b64encode(data, buf, len);
 		/* If no valid key is known yet, send the packets using ANS_KEY requests,
 		   to ensure we get to learn the reflexive UDP address. */
-		if(!to->status.validkey)
-			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, myself->name, to->name, buf, myself->incompression);
-		else
+		if(!to->status.validkey) {
+			to->incompression = myself->incompression;
+			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, myself->name, to->name, buf, to->incompression);
+		} else {
 			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_SPTPS, buf);
+		}
 	}
 
 	/* Otherwise, send the packet via UDP */
