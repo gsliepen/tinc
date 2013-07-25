@@ -830,8 +830,16 @@ static int cmd_start(int argc, char *argv[]) {
 
 	free(nargv);
 
-	int status = -1;
-	if(waitpid(pid, &status, 0) != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
+	int status = -1, result;
+#ifdef SIGINT
+	signal(SIGINT, SIG_IGN);
+#endif
+	result = waitpid(pid, &status, 0);
+#ifdef SIGINT
+	signal(SIGINT, SIG_DFL);
+#endif
+
+	if(result != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
 		fprintf(stderr, "Error starting %s\n", c);
 		return 1;
 	}
