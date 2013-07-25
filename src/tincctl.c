@@ -1414,6 +1414,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 	/* Some simple checks. */
 	bool found = false;
+	bool warnonremove = false;
 
 	for(int i = 0; variables[i].name; i++) {
 		if(strcasecmp(variables[i].name, variable))
@@ -1450,6 +1451,16 @@ static int cmd_config(int argc, char *argv[]) {
 			node = get_my_name(true);
 			if(!node)
 				return 1;
+		}
+
+		/* Change "add" into "set" for variables that do not allow multiple occurences.
+		   Turn on warnings when it seems variables might be removed unintentionally. */
+
+		if(action == 1 && !(variables[i].type & VAR_MULTIPLE)) {
+			warnonremove = true;
+			action = 0;
+		} else if(action == 0 && (variables[i].type & VAR_MULTIPLE)) {
+			warnonremove = true;
 		}
 
 		break;
@@ -1534,9 +1545,14 @@ static int cmd_config(int argc, char *argv[]) {
 				}
 			// Set
 			} else if(action == 0) {
+				// Warn if "set" was used for variables that can occur multiple times
+				if(warnonremove && strcasecmp(bvalue, value))
+					fprintf(stderr, "Warning: removing %s = %s\n", variable, bvalue);
+
 				// Already set? Delete the rest...
 				if(set)
 					continue;
+
 				// Otherwise, replace.
 				if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
 					fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
