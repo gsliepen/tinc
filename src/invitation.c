@@ -42,6 +42,8 @@ int addressfamily = AF_UNSPEC;
 
 char *get_my_hostname() {
 	char *hostname = NULL;
+	char *port = NULL;
+	char *hostport = NULL;
 	char *name = get_my_name(false);
 	char *filename = NULL;
 
@@ -61,20 +63,21 @@ char *get_my_hostname() {
 				if(*q == '=')
 					q += 1 + strspn(q + 1, "\t ");
 				*p = 0;
-				if(strcasecmp(line, "Address"))
-					continue;
 				p = q + strcspn(q, "\t ");
 				if(*p)
 					*p++ = 0;
 				p += strspn(p, "\t ");
 				p[strcspn(p, "\t ")] = 0;
+				if(!port && !strcasecmp(line, "Port")) {
+					port = xstrdup(q);
+					continue;
+				}
+				if(strcasecmp(line, "Address"))
+					continue;
+				hostname = xstrdup(q);
 				if(*p) {
-					if(strchr(q, ':'))
-						xasprintf(&hostname, "[%s]:%s", q, p);
-					else
-						xasprintf(&hostname, "%s:%s", q, p);
-				} else {
-					hostname = xstrdup(q);
+					free(port);
+					port = xstrdup(p);
 				}
 				break;
 			}
@@ -82,10 +85,8 @@ char *get_my_hostname() {
 		}
 	}
 
-	if(hostname) {
-		free(filename);
-		return hostname;
-	}
+	if(hostname)
+		goto done;
 
 	// If that doesn't work, guess externally visible hostname
 	fprintf(stderr, "Trying to discover externally visible hostname...\n");
@@ -142,7 +143,7 @@ again:
 
 	if(!rstrip(line)) {
 		if(hostname)
-			goto done;
+			goto save;
 		else
 			goto again;
 	}
@@ -157,7 +158,7 @@ again:
 	free(hostname);
 	hostname = xstrdup(line);
 
-done:
+save:
 	if(filename) {
 		FILE *f = fopen(filename, "a");
 		if(f) {
@@ -166,10 +167,23 @@ done:
 		} else {
 			fprintf(stderr, "Could not append Address to %s: %s\n", filename, strerror(errno));
 		}
-		free(filename);
 	}
 
-	return hostname;
+done:
+	if(port) {
+		if(strchr(hostname, ':'))
+			xasprintf(&hostport, "[%s]:%s", hostname, port);
+		else
+			xasprintf(&hostport, "%s:%s", hostname, port);
+	} else {
+		hostport = hostname;
+		hostname = NULL;
+	}
+
+	free(hostname);
+	free(port);
+	free(filename);
+	return hostport;
 }
 
 static bool fcopy(FILE *out, const char *filename) {
