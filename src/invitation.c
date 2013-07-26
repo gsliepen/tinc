@@ -490,6 +490,9 @@ static bool finalize_join(void) {
 	if(!netname)
 		netname = grep(data, "NetName");
 
+	bool ask_netname = false;
+	char temp_netname[32];
+
 make_names:
 	if(!confbasegiven) {
 		free(confbase);
@@ -508,17 +511,11 @@ make_names:
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
 		if(!tty || confbasegiven)
 			return false;
-ask_netname:
-		fprintf(stderr, "Enter a new netname: ");
-		if(!fgets(line, sizeof line, stdin)) {
-			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
-			return false;
-		}
-		if(!*line || *line == '\n')
-			goto ask_netname;
 
-		line[strlen(line) - 1] = 0;
-		netname = line;
+		// Generate a random netname, ask for a better one later.
+		ask_netname = true;
+		snprintf(temp_netname, sizeof temp_netname, "join_%x", rand());
+		netname = temp_netname;
 		goto make_names;
 	}	
 
@@ -700,6 +697,31 @@ ask_netname:
 	fprintf(stderr, "Invitation succesfully accepted.\n");
 	shutdown(sock, SHUT_RDWR);
 	success = true;
+
+ask_netname:
+	if(ask_netname) {
+		fprintf(stderr, "Enter a new netname: ");
+		if(!fgets(line, sizeof line, stdin)) {
+			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
+			return false;
+		}
+		if(!*line || *line == '\n')
+			goto ask_netname;
+
+		line[strlen(line) - 1] = 0;
+
+		char *newbase;
+		xasprintf(&newbase, CONFDIR SLASH "tinc" SLASH "%s", line);
+		if(rename(confbase, newbase)) {
+			fprintf(stderr, "Error trying to rename %s to %s: %s\n", confbase, newbase, strerror(errno));
+			free(newbase);
+			goto ask_netname;
+		}
+
+		free(newbase);
+		netname = line;
+		make_names();
+	}
 
 	return true;
 }

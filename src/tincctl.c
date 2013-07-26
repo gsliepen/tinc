@@ -1692,8 +1692,6 @@ int check_port(char *name) {
 
 	fprintf(stderr, "Warning: could not bind to port 655. ");
 
-	srand(time(NULL));
-
 	for(int i = 0; i < 100; i++) {
 		int port = 0x1000 + (rand() & 0x7fff);
 		if(try_bind(port)) {
@@ -2376,6 +2374,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
+	srand(time(NULL));
 	crypto_init();
 
 	tty = isatty(0) && isatty(1);
