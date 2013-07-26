@@ -749,9 +749,20 @@ int cmd_join(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// Make sure confdir exists.
-	if(mkdir(confdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
+	// Make sure confbase exists and is accessible.
+	if(mkdir(confbase, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
+		return 1;
+	}
+
+	if(access(confbase, R_OK | W_OK | X_OK)) {
+		fprintf(stderr, "No permission to write in directory %s: %s\n", confbase, strerror(errno));
+		return 1;
+	}
+
+	// If a netname or explicit configuration directory is specified, check for an existing tinc.conf.
+	if((netname || confbasegiven) && !access(tinc_conf, F_OK)) {
+		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
 		return 1;
 	}
 
