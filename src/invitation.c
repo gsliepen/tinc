@@ -695,6 +695,8 @@ ask_netname:
 	ecdsa_free(key);
 	rsa_free(rsa);
 
+	check_port(name);
+
 	fprintf(stderr, "Invitation succesfully accepted.\n");
 	shutdown(sock, SHUT_RDWR);
 	success = true;

@@ -47,6 +47,7 @@ extern char *get_my_name(bool verbose);
 extern bool connect_tincd(bool verbose);
 extern bool sendline(int fd, char *format, ...);
 extern bool recvline(int fd, char *line, size_t len);
+extern int check_port(char *name);
 
 #endif
 

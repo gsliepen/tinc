@@ -1686,6 +1686,37 @@ static bool try_bind(int port) {
 	return true;
 }
 
+int check_port(char *name) {
+	if(try_bind(655))
+		return 655;
+
+	fprintf(stderr, "Warning: could not bind to port 655. ");
+
+	srand(time(NULL));
+
+	for(int i = 0; i < 100; i++) {
+		int port = 0x1000 + (rand() & 0x7fff);
+		if(try_bind(port)) {
+			char *filename;
+			xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+			FILE *f = fopen(filename, "a");
+			free(filename);
+			if(!f) {
+				fprintf(stderr, "Please change tinc's Port manually.\n");
+				return 0;
+			}
+
+			fprintf(f, "Port = %d\n", port);
+			fclose(f);
+			fprintf(stderr, "Tinc will instead listen on port %d.\n", port);
+			return port;
+		}
+	}
+
+	fprintf(stderr, "Please change tinc's Port manually.\n");
+	return 0;
+}
+
 static int cmd_init(int argc, char *argv[]) {
 	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
@@ -1754,34 +1785,7 @@ static int cmd_init(int argc, char *argv[]) {
 	if(!rsa_keygen(2048, false) || !ecdsa_keygen(false))
 		return 1;
 
-
-	if(!try_bind(655)) {
-		srand(time(NULL));
-		int port = 0;
-		for(int i = 0; i < 100; i++) {
-			port = 0x1000 + (rand() & 0x7fff);
-			if(try_bind(port))
-				break;
-			port = 0;
-		}
-		if(port) {
-			char *filename;
-			xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
-			FILE *f = fopen(filename, "a");
-			free(filename);
-			if(!f) {
-				port = 0;
-			} else {
-				fprintf(f, "Port = %d\n", port);
-				fclose(f);
-			}
-		}
-
-		if(!port)
-			fprintf(stderr, "Warning: could not bind to port 655. Please change tinc's Port manually.\n");
-		else
-			fprintf(stderr, "Warning: could not bind to port 655. Tinc will instead listen on port %d.\n", port);
-	}
+	check_port(name);
 
 #ifndef HAVE_MINGW
 	char *filename;
