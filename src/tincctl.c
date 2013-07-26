@@ -1657,6 +1657,35 @@ bool check_id(const char *name) {
 	return true;
 }
 
+static bool try_bind(int port) {
+	struct addrinfo *ai = NULL;
+	struct addrinfo hint = {
+		.ai_flags = AI_PASSIVE,
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+	};
+
+	char portstr[16];
+	snprintf(portstr, sizeof portstr, "%d", port);
+
+	if(getaddrinfo(NULL, portstr, &hint, &ai) || !ai)
+		return false;
+
+	while(ai) {
+		int fd = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+		if(!fd)
+			return false;
+		int result = bind(fd, ai->ai_addr, ai->ai_addrlen);
+		closesocket(fd);
+		if(result)
+			return false;
+		ai = ai->ai_next;
+	}
+
+	return true;
+}
+
 static int cmd_init(int argc, char *argv[]) {
 	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
@@ -1724,6 +1753,35 @@ static int cmd_init(int argc, char *argv[]) {
 
 	if(!rsa_keygen(2048, false) || !ecdsa_keygen(false))
 		return 1;
+
+
+	if(!try_bind(655)) {
+		srand(time(NULL));
+		int port = 0;
+		for(int i = 0; i < 100; i++) {
+			port = 0x1000 + (rand() & 0x7fff);
+			if(try_bind(port))
+				break;
+			port = 0;
+		}
+		if(port) {
+			char *filename;
+			xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+			FILE *f = fopen(filename, "a");
+			free(filename);
+			if(!f) {
+				port = 0;
+			} else {
+				fprintf(f, "Port = %d\n", port);
+				fclose(f);
+			}
+		}
+
+		if(!port)
+			fprintf(stderr, "Warning: could not bind to port 655. Please change tinc's Port manually.\n");
+		else
+			fprintf(stderr, "Warning: could not bind to port 655. Tinc will instead listen on port %d.\n", port);
+	}
 
 #ifndef HAVE_MINGW
 	char *filename;
