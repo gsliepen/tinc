@@ -298,7 +298,8 @@ static void sigterm_handler(void *data) {
 static void sighup_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	reopenlogger();
-	reload_configuration();
+	if(reload_configuration())
+		exit(1);
 }
 
 static void sigalrm_handler(void *data) {
@@ -316,8 +317,7 @@ int reload_configuration(void) {
 	init_configuration(&config_tree);
 
 	if(!read_server_config()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file, exitting.");
-		event_exit();
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file.");
 		return EINVAL;
 	}
 

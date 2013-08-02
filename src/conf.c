@@ -373,9 +373,10 @@ bool read_server_config(void) {
 	read_config_options(config_tree, NULL);
 
 	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
+	errno = 0;
 	x = read_config_file(config_tree, fname);
 
-	if(!x)
+	if(!x && errno)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 
 	free(fname);
