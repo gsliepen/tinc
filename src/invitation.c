@@ -881,7 +881,7 @@ int cmd_join(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// Check if the hash of the key he have us matches the hash in the URL.
+	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;
 	digest_t *digest = digest_open_by_name("sha256", 18);
 	if(!digest)
