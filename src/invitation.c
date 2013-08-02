@@ -519,12 +519,12 @@ make_names:
 		goto make_names;
 	}	
 
-	if(mkdir(confbase, 0755) && errno != EEXIST) {
+	if(mkdir(confbase, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
 		return false;
 	}
 
-	if(mkdir(hosts_dir, 0755) && errno != EEXIST) {
+	if(mkdir(hosts_dir, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
 		return false;
 	}
@@ -652,12 +652,7 @@ make_names:
 		return false;
 
 	xasprintf(&filename, "%s" SLASH "ecdsa_key.priv", confbase);
-	f = fopen(filename, "w");
-
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
+	f = fopenmask(filename, "w", 0600);
 
 	if(!ecdsa_write_pem_private_key(key, f)) {
 		fprintf(stderr, "Error writing private key!\n");
@@ -676,12 +671,7 @@ make_names:
 
 	rsa_t *rsa = rsa_generate(2048, 0x1001);
 	xasprintf(&filename, "%s" SLASH "rsa_key.priv", confbase);
-	f = fopen(filename, "w");
-
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
+	f = fopenmask(filename, "w", 0600);
 
 	rsa_write_pem_private_key(rsa, f);
 	fclose(f);
@@ -772,7 +762,12 @@ int cmd_join(int argc, char *argv[]) {
 	}
 
 	// Make sure confbase exists and is accessible.
-	if(mkdir(confbase, 0755) && errno != EEXIST) {
+	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
+		return 1;
+	}
+
+	if(mkdir(confbase, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
 		return 1;
 	}

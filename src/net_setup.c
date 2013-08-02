@@ -868,7 +868,12 @@ static bool setup_myself(void) {
 
 	unlink(unixsocketname);
 
-	if(bind(unix_fd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+	mode_t mask = umask(0);
+	umask(mask | 077);
+	int result = bind(unix_fd, (struct sockaddr *)&sa, sizeof sa);
+	umask(mask);
+
+	if(result < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(errno));
 		return false;
 	}

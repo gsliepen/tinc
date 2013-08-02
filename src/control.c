@@ -137,17 +137,16 @@ bool init_control(void) {
 	randomize(controlcookie, sizeof controlcookie / 2);
 	bin2hex(controlcookie, controlcookie, sizeof controlcookie / 2);
 
+	mode_t mask = umask(0);
+	umask(mask | 077);
 	FILE *f = fopen(pidfilename, "w");
+	umask(mask);
+
 	if(!f) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
 		return false;
 	}
 
-#ifdef HAVE_FCHMOD
-	fchmod(fileno(f), 0600);
-#else
-	chmod(pidfilename, 0600);
-#endif
 	// Get the address and port of the first listening socket
 
 	char *localhost = NULL;

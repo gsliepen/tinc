@@ -211,6 +211,23 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
+/* Open a file with the desired permissions, minus the umask.
+   Also, if we want to create an executable file, we call fchmod()
+   to set the executable bits. */
+
+FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
+	mode_t mask = umask(0);
+	perms &= ~mask;
+	umask(~perms);
+	FILE *f = fopen(filename, mode);
+#ifdef HAVE_FCHMOD
+	if((perms & 0444) && f)
+		fchmod(fileno(f), perms);
+#endif
+	umask(mask);
+	return f;
+}
+
 static void disable_old_keys(const char *filename, const char *what) {
 	char tmpfile[PATH_MAX] = "";
 	char buf[1024];
@@ -225,17 +242,9 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 	snprintf(tmpfile, sizeof tmpfile, "%s.tmp", filename);
 
-	w = fopen(tmpfile, "w");
-
-#ifdef HAVE_FCHMOD
-	/* Let the temporary file have the same permissions as the original. */
-
-	if(w) {
-		struct stat st = {.st_mode = 0600};
-		fstat(fileno(r), &st);
-		fchmod(fileno(w), st.st_mode);
-	}
-#endif
+	struct stat st = {.st_mode = 0600};
+	fstat(fileno(r), &st);
+	w = fopenmask(tmpfile, "w", st.st_mode);
 
 	while(fgets(buf, sizeof buf, r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
@@ -298,7 +307,7 @@ static void disable_old_keys(const char *filename, const char *what) {
 	unlink(tmpfile);
 }
 
-static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask) {
+static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask, mode_t perms) {
 	FILE *r;
 	char *directory;
 	char buf[PATH_MAX];
@@ -338,7 +347,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 
 	/* Open it first to keep the inode busy */
 
-	r = fopen(filename, mode);
+	r = fopenmask(filename, mode, perms);
 
 	if(!r) {
 		fprintf(stderr, "Error opening file `%s': %s\n", filename, strerror(errno));
@@ -366,16 +375,11 @@ static bool ecdsa_keygen(bool ask) {
 		fprintf(stderr, "Done.\n");
 
 	xasprintf(&privname, "%s" SLASH "ecdsa_key.priv", confbase);
-	f = ask_and_open(privname, "private ECDSA key", "a", ask);
+	f = ask_and_open(privname, "private ECDSA key", "a", ask, 0600);
 	free(privname);
 
 	if(!f)
 		return false;
-
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
 
 	if(!ecdsa_write_pem_private_key(key, f)) {
 		fprintf(stderr, "Error writing private key!\n");
@@ -391,7 +395,7 @@ static bool ecdsa_keygen(bool ask) {
 	else
 		xasprintf(&pubname, "%s" SLASH "ecdsa_key.pub", confbase);
 
-	f = ask_and_open(pubname, "public ECDSA key", "a", ask);
+	f = ask_and_open(pubname, "public ECDSA key", "a", ask, 0666);
 	free(pubname);
 
 	if(!f)
@@ -425,16 +429,11 @@ static bool rsa_keygen(int bits, bool ask) {
 		fprintf(stderr, "Done.\n");
 
 	xasprintf(&privname, "%s" SLASH "rsa_key.priv", confbase);
-	f = ask_and_open(privname, "private RSA key", "a", ask);
+	f = ask_and_open(privname, "private RSA key", "a", ask, 0600);
 	free(privname);
 
 	if(!f)
 		return false;
-
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
 
 	if(!rsa_write_pem_private_key(key, f)) {
 		fprintf(stderr, "Error writing private key!\n");
@@ -450,7 +449,7 @@ static bool rsa_keygen(int bits, bool ask) {
 	else
 		xasprintf(&pubname, "%s" SLASH "rsa_key.pub", confbase);
 
-	f = ask_and_open(pubname, "public RSA key", "a", ask);
+	f = ask_and_open(pubname, "public RSA key", "a", ask, 0666);
 	free(pubname);
 
 	if(!f)
@@ -1756,17 +1755,17 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(mkdir(confdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
+	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
 		return 1;
 	}
 
-	if(mkdir(confbase, 0755) && errno != EEXIST) {
+	if(mkdir(confbase, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
 		return 1;
 	}
 
-	if(mkdir(hosts_dir, 0755) && errno != EEXIST) {
+	if(mkdir(hosts_dir, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
 		return 1;
 	}
@@ -1789,14 +1788,11 @@ static int cmd_init(int argc, char *argv[]) {
 	char *filename;
 	xasprintf(&filename, "%s" SLASH "tinc-up", confbase);
 	if(access(filename, F_OK)) {
-		FILE *f = fopen(filename, "w");
+		FILE *f = fopenmask(filename, "w", 0777);
 		if(!f) {
 			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
 			return 1;
 		}
-		mode_t mask = umask(0);
-		umask(mask);
-		fchmod(fileno(f), 0755 & ~mask);
 		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
 		fclose(f);
 	}

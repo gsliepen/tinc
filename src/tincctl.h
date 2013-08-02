@@ -48,6 +48,7 @@ extern bool connect_tincd(bool verbose);
 extern bool sendline(int fd, char *format, ...);
 extern bool recvline(int fd, char *line, size_t len);
 extern int check_port(char *name);
+extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms);
 
 #endif
 
