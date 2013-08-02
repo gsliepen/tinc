@@ -454,9 +454,10 @@ int main_loop(void) {
 
 #ifndef HAVE_MINGW
 	signal_del(&sighup);
-	signal_del(&sigalrm);
-	signal_del(&sigquit);
 	signal_del(&sigterm);
+	signal_del(&sigquit);
+	signal_del(&sigint);
+	signal_del(&sigalrm);
 #endif
 
 	timeout_del(&periodictimer);
