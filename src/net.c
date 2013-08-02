@@ -41,6 +41,8 @@ int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
 static int sleeptime = 10;
 time_t last_config_check = 0;
+static timeout_t pingtimer;
+static timeout_t periodictimer;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -412,24 +414,27 @@ int reload_configuration(void) {
 }
 
 void retry(void) {
-	for list_each(connection_t, c, connection_list) {
-		if(c->outgoing && !c->node) {
-			timeout_del(&c->outgoing->ev);
-			if(c->status.connecting)
-				close(c->socket);
-			c->outgoing->timeout = 0;
-			terminate_connection(c, c->status.active);
-		}
+	/* Reset the reconnection timers for all outgoing connections */
+	for list_each(outgoing_t, outgoing, outgoing_list) {
+		outgoing->timeout = 0;
+		if(outgoing->ev.cb)
+			timeout_set(&outgoing->ev, &(struct timeval){0, 0});
 	}
+
+	/* Check for outgoing connections that are in progress, and reset their ping timers */
+	for list_each(connection_t, c, connection_list) {
+		if(c->outgoing && !c->node)
+			c->last_ping_time = 0;
+	}
+
+	/* Kick the ping timeout handler */
+	timeout_set(&pingtimer, &(struct timeval){0, 0});
 }
 
 /*
   this is where it all happens...
 */
 int main_loop(void) {
-	timeout_t pingtimer = {{0}};
-	timeout_t periodictimer = {{0}};
-
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
 	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){pingtimeout, rand() % 100000});
 
