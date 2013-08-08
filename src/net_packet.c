@@ -961,7 +961,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 				break;
 
 			for splay_each(node_t, n, node_tree)
-				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
+				if(n->status.reachable && n != myself && ((n->via == myself && n->nexthop == n) || n->via == n))
 					send_packet(n, packet);
 			break;
 
