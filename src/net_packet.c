@@ -650,7 +650,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 			for(node = node_udp_tree->head; node; node = node->next) {
 				n = node->data;
 
-				if(n->status.reachable && ((n->via == myself && n->nexthop == n) || n->via == n))
+				if(n->status.reachable && n != myself && ((n->via == myself && n->nexthop == n) || n->via == n))
 					send_packet(n, packet);
 			}
 			break;
