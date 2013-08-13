@@ -4,7 +4,7 @@ AC_PREREQ(2.61)
 AC_INIT([tinc], [1.1pre7])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE([check-news dist-xz no-dist-gzip std-options subdir-objects -Wall])
+AM_INIT_AUTOMAKE([check-news std-options subdir-objects -Wall])
 AC_CONFIG_HEADERS([config.h])
 
 # Enable GNU extensions.
