@@ -7,67 +7,85 @@ EXTRA_DIST = linux bsd solaris cygwin mingw openssl gcrypt
 DEFAULT_INCLUDES =
 
 tincd_SOURCES = \
-	buffer.c \
-	conf.c \
-	connection.c \
-	control.c \
-	dropin.c \
+	buffer.c buffer.h \
+	cipher.h \
+	conf.c conf.h \
+	connection.c connection.h \
+	control.c control.h \
+	control_common.h \
+	crypto.h \
+	device.h \
+	digest.h \
+	dropin.c dropin.h \
 	dummy_device.c \
-	edge.c \
-	event.c \
-	fake-getaddrinfo.c \
-	fake-getnameinfo.c \
-	getopt.c \
+	ecdh.h \
+	ecdsa.h \
+	ecdsagen.h \
+	edge.c edge.h \
+	ethernet.h \
+	event.c event.h \
+	fake-gai-errnos.h \
+	fake-getaddrinfo.c fake-getaddrinfo.h \
+	fake-getnameinfo.c fake-getnameinfo.h \
+	getopt.c getopt.h \
 	getopt1.c \
-	graph.c \
-	hash.c \
-	list.c \
-	logger.c \
-	meta.c \
+	graph.c graph.h \
+	hash.c hash.h \
+	have.h \
+	ipv4.h \
+	ipv6.h \
+	list.c list.h \
+	logger.c logger.h \
+	meta.c meta.h \
 	multicast_device.c \
-	names.c \
-	net.c \
+	names.c names.h \
+	net.c net.h \
 	net_packet.c \
 	net_setup.c \
 	net_socket.c \
-	netutl.c \
-	node.c \
-	process.c \
-	protocol.c \
+	netutl.c netutl.h \
+	node.c node.h \
+	prf.h \
+	process.c process.h \
+	protocol.c protocol.h \
 	protocol_auth.c \
 	protocol_edge.c \
 	protocol_key.c \
 	protocol_misc.c \
 	protocol_subnet.c \
 	raw_socket_device.c \
-	route.c \
-	splay_tree.c \
-	sptps.c \
-	subnet.c \
+	route.c route.h \
+	rsa.h \
+	rsagen.h \
+	splay_tree.c splay_tree.h \
+	sptps.c sptps.h \
+	subnet.c subnet.h \
 	subnet_parse.c \
+	system.h \
 	tincd.c \
-	utils.c
+	utils.c utils.h \
+	xalloc.h
 
 tinc_SOURCES = \
-	dropin.c \
-	getopt.c \
+	dropin.c dropin.h \
+	getopt.c getopt.h \
 	getopt1.c \
-	info.c \
-	invitation.c \
-	list.c \
-	names.c \
-	netutl.c \
-	sptps.c \
-	subnet_parse.c \
-	tincctl.c \
-	top.c \
-	utils.c
+	info.c info.h \
+	invitation.c invitation.h \
+	list.c list.h \
+	names.c names.h \
+	netutl.c netutl.h \
+	sptps.c sptps.h \
+	subnet_parse.c subnet.h \
+	tincctl.c tincctl.h \
+	top.c top.h \
+	utils.c utils.h
 
 sptps_test_SOURCES = \
-	logger.c \
-	sptps.c \
+	logger.c logger.h \
+	sptps.c sptps.h \
 	sptps_test.c \
-	utils.c
+	utils.c utils.h
 
 ## Conditionally compile device drivers
 	
@@ -159,55 +177,6 @@ sptps_test_SOURCES += \
 endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
-
-noinst_HEADERS = \
-	buffer.h \
-	cipher.h \
-	conf.h \
-	connection.h \
-	control.h \
-	control_common.h \
-	crypto.h \
-	device.h \
-	digest.h \
-	dropin.h \
-	ecdh.h \
-	ecdsa.h \
-	ecdsagen.h \
-	edge.h \
-	ethernet.h \
-	event.h \
-	fake-gai-errnos.h \
-	fake-getaddrinfo.h \
-	fake-getnameinfo.h \
-	getopt.h \
-	graph.h \
-	hash.h \
-	have.h \
-	info.h \
-	ipv4.h \
-	ipv6.h \
-	list.h \
-	logger.h \
-	meta.h \
-	names.h \
-	net.h \
-	netutl.h \
-	node.h \
-	prf.h \
-	process.h \
-	protocol.h \
-	route.h \
-	rsa.h \
-	rsagen.h
-	splay_tree.h \
-	sptps.h \
-	subnet.h \
-	system.h \
-	tincctl.h \
-	top.h \
-	utils.h \
-	xalloc.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 
