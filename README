@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.1pre7. Installation
+This is the README file for tinc version 1.1pre8. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2013 by:
@@ -36,11 +36,12 @@ at your own risk.
 Compatibility
 -------------
 
-Version 1.1pre7 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.1pre8 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
-When the ExperimentalProtocol option is used, tinc is still compatible with
-1.0.X and 1.1pre7 itself, but not with any other 1.1preX version.
+When the ExperimentalProtocol option is used, which is the default since
+1.1pre8, tinc is still compatible with 1.0.X and 1.1pre8 itself, but not with
+any other 1.1preX version.
 
 
 Requirements
@@ -49,7 +50,8 @@ Requirements
 In order to compile tinc, you will need a GNU C compiler environment. Please
 ensure you have the latest stable versions of all the required libraries:
 
-- OpenSSL (http://www.openssl.org/) version 1.0.0 or later.
+- OpenSSL (http://www.openssl.org/) version 1.0.0 or later, with support for
+  elliptic curve cryptography (ECC) enabeld.
 
 The following libraries are used by default, but can be disabled if necessary:
 

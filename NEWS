@@ -1,3 +1,19 @@
+Version 1.1pre8              August 13 2013
+
+ * ExperimentalProtocol is now enabled by default.
+
+ * Added an invitation protocol that makes it easy to invite new nodes.
+
+ * Added the LocalDiscoveryAddress option to change the broadcast address used
+   to find local nodes.
+
+ * Limit the rate of incoming meta-connections.
+
+ * Many small bug fixes and code cleanups.
+
+Thanks to Etienne Dechamps and Sven-Haegar Koch for their contributions to this
+version of tinc.
+
 Version 1.1pre7              April 22 2013
 
  * Fixed large latencies on Windows.
@@ -104,6 +120,46 @@ Version 1.1pre1              June 25 2011
 
  Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
  version of tinc.
+
+Version 1.0.22               August 13 2013
+
+ * Fixed the combination of Mode = router and DeviceType = tap.
+
+ * The $NAME variable is now set in subnet-up/down scripts.
+
+ * Tinc now gives an error when unknown options are given on the command line.
+
+ * Tinc now correctly handles a space between a short command line option and
+   an optional argument.
+
+Thanks to Etienne Dechamps for his contribution to this version of tinc.
+
+Version 1.0.21               April 22 2013
+
+ * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+
+Thanks to Martin Schobert for auditing tinc and reporting this vulnerability.
+
+Version 1.0.20               March 03 2013
+
+ * Use /dev/tap0 by default on FreeBSD and NetBSD when using switch mode.
+
+ * Minor improvements and clarifications in the documentation.
+
+ * Allow tinc to be cross-compiled with Android's NDK.
+
+ * The discovered PMTU is now also applied to VLAN tagged traffic.
+
+ * The LocalDiscovery option now makes use of all addresses tinc is bound to.
+
+ * Fixed support for tunemu on iOS devices.
+
+ * The PriorityInheritance option now also works with switch mode.
+
+ * Fixed tinc crashing when using a SOCKS5 proxy.
+
+Thanks to Mesar Hameed, Vilbrekin and Martin Schürrer for their contributions
+to this version of tinc.
 
 Version 1.0.19               June 25 2012
 
