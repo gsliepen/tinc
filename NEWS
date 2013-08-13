@@ -1,3 +1,16 @@
+Version 1.0.22               August 13 2013
+
+ * Fixed the combination of Mode = router and DeviceType = tap.
+
+ * The $NAME variable is now set in subnet-up/down scripts.
+
+ * Tinc now gives an error when unknown options are given on the command line.
+
+ * Tinc now correctly handles a space between a short command line option and
+   an optional argument.
+
+Thanks to Etienne Dechamps for his contribution to this version of tinc.
+
 Version 1.0.21               April 22 2013
 
  * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
