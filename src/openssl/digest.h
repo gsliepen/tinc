@@ -22,11 +22,11 @@
 
 #include <openssl/evp.h>
 
-typedef struct digest {
+struct digest {
 	const EVP_MD *digest;
 	int maclength;
 	int keylength;
 	char *key;
-} digest_t;
+};
 
 #endif
