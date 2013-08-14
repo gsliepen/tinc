@@ -19,9 +19,6 @@ transform = s/ginstall/install/; @program_transform_name@
 sample-config.tar.gz: sample-config
 	GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz --exclude .svn sample-config
 
-texi2html: tinc.texi
-	texi2html -split=chapter tinc.texi
-
 tincd.8.html: tincd.8
 	w3mman2html $? > $@
 
