@@ -2,8 +2,6 @@
 
 sbin_PROGRAMS = tincd tinc sptps_test
 
-EXTRA_DIST = linux bsd solaris cygwin mingw openssl gcrypt
-
 DEFAULT_INCLUDES =
 
 tincd_SOURCES = \
@@ -96,7 +94,7 @@ endif
 if BSD
 tincd_SOURCES += bsd/device.c
 if TUNEMU
-tincd_SOURCES += bsd/tunemu.c
+tincd_SOURCES += bsd/tunemu.c bsd/tunemu.h
 endif
 endif
 
@@ -105,7 +103,7 @@ tincd_SOURCES += solaris/device.c
 endif
 
 if MINGW
-tincd_SOURCES += mingw/device.c
+tincd_SOURCES += mingw/device.c mingw/common.h
 endif
 
 if CYGWIN
@@ -124,7 +122,7 @@ if OPENSSL
 tincd_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
-	openssl/digest.c \
+	openssl/digest.c openssl/digest.h \
 	openssl/ecdh.c \
 	openssl/ecdsa.c \
 	openssl/prf.c \
@@ -132,7 +130,7 @@ tincd_SOURCES += \
 tinc_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
-	openssl/digest.c \
+	openssl/digest.c openssl/digest.h \
 	openssl/ecdh.c \
 	openssl/ecdsa.c \
 	openssl/ecdsagen.c \
@@ -142,7 +140,7 @@ tinc_SOURCES += \
 sptps_test_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
-	openssl/digest.c \
+	openssl/digest.c openssl/digest.h \
 	openssl/ecdh.c \
 	openssl/ecdsa.c \
 	openssl/prf.c
@@ -152,7 +150,7 @@ if GCRYPT
 tincd_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
-	gcrypt/digest.c \
+	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/ecdh.c \
 	gcrypt/ecdsa.c \
 	gcrypt/prf.c \
@@ -160,7 +158,7 @@ tincd_SOURCES += \
 tinc_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
-	gcrypt/digest.c \
+	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/ecdh.c \
 	gcrypt/ecdsa.c \
 	gcrypt/ecdsagen.c \
@@ -170,7 +168,7 @@ tinc_SOURCES += \
 sptps_test_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
-	gcrypt/digest.c \
+	gcrypt/digest.c gcrypt/digest.h \
 	gcrypt/ecdh.c \
 	gcrypt/ecdsa.c \
 	gcrypt/prf.c
@@ -185,6 +183,3 @@ LIBS += -lpcap
 endif
 
 AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\"
-
-dist-hook:
-	rm -f `find . -type l`
