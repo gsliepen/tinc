@@ -455,11 +455,7 @@ bool setup_myself_reloadable(void) {
 
 	free(scriptextension);
 	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension))
-#ifdef HAVE_MINGW
-		scriptextension = xstrdup(".bat");
-#else
 		scriptextension = xstrdup("");
-#endif
 
 	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
 	if(proxy) {

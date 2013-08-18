@@ -1346,7 +1346,7 @@ Setting this options also implicitly sets IndirectData.
 @cindex scripts
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
-Under Windows (not Cygwin), the scripts should have the extension .bat.
+Under Windows (not Cygwin), the scripts should have the extension @file{.bat} or @file{.cmd}.
 
 @table @file
 @cindex tinc-up
@@ -1386,7 +1386,7 @@ This script is started when a Subnet becomes unreachable.
 The scripts are started without command line arguments,
 but can make use of certain environment variables.
 Under UNIX like operating systems the names of environment variables must be preceded by a $ in scripts.
-Under Windows, in @file{.bat} files, they have to be put between % signs.
+Under Windows, in @file{.bat} or @file{.cmd} files, they have to be put between % signs.
 
 @table @env
 @cindex NETNAME

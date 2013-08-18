@@ -32,12 +32,6 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#ifdef HAVE_MINGW
-#define SCRIPTEXTENSION ".bat"
-#else
-#define SCRIPTEXTENSION ""
-#endif
-
 int addressfamily = AF_UNSPEC;
 
 char *get_my_hostname() {

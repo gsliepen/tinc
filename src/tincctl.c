@@ -39,12 +39,6 @@
 #include "tincctl.h"
 #include "top.h"
 
-#ifdef HAVE_MINGW
-#define SCRIPTEXTENSION ".bat"
-#else
-#define SCRIPTEXTENSION ""
-#endif
-
 static char **orig_argv;
 static int orig_argc;
 
