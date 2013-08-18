@@ -175,9 +175,49 @@ bool init_control(void) {
 	free(localhost);
 	fclose(f);
 
+#ifndef HAVE_MINGW
+	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if(unix_fd < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(errno));
+		return false;
+	}
+
+	struct sockaddr_un sun;
+	sun.sun_family = AF_UNIX;
+	strncpy(sun.sun_path, unixsocketname, sizeof sun.sun_path);
+
+	if(connect(unix_fd, (struct sockaddr *)&sun, sizeof sun) >= 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);
+		return false;
+	}
+
+	unlink(unixsocketname);
+
+	umask(mask | 077);
+	int result = bind(unix_fd, (struct sockaddr *)&sun, sizeof sun);
+	umask(mask);
+
+	if(result < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(errno));
+		return false;
+	}
+
+	if(listen(unix_fd, 3) < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on UNIX socket %s: %s", unixsocketname, sockstrerror(errno));
+		return false;
+	}
+
+	io_add(&unix_socket, handle_new_unix_connection, &unix_socket, unix_fd, IO_READ);
+#endif
+
 	return true;
 }
 
 void exit_control(void) {
+#ifndef HAVE_MINGW
+	io_del(&unix_socket);
+	close(unix_socket.fd);
+#endif
+
 	unlink(pidfilename);
 }

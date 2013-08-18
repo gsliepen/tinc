@@ -850,42 +850,6 @@ static bool setup_myself(void) {
 
 	/* Open sockets */
 
-#ifndef HAVE_MINGW
-	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if(unix_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(errno));
-		return false;
-	}
-
-	struct sockaddr_un sa;
-	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, unixsocketname, sizeof sa.sun_path);
-
-	if(connect(unix_fd, (struct sockaddr *)&sa, sizeof sa) >= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);
-		return false;
-	}
-
-	unlink(unixsocketname);
-
-	mode_t mask = umask(0);
-	umask(mask | 077);
-	int result = bind(unix_fd, (struct sockaddr *)&sa, sizeof sa);
-	umask(mask);
-
-	if(result < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(errno));
-		return false;
-	}
-
-	if(listen(unix_fd, 3) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on UNIX socket %s: %s", unixsocketname, sockstrerror(errno));
-		return false;
-	}
-
-	io_add(&unix_socket, handle_new_unix_connection, &unix_socket, unix_fd, IO_READ);
-#endif
-
 	if(!do_detach && getenv("LISTEN_FDS")) {
 		sockaddr_t sa;
 		socklen_t salen;
@@ -1068,11 +1032,6 @@ void close_network_connections(void) {
 		close(listen_socket[i].tcp.fd);
 		close(listen_socket[i].udp.fd);
 	}
-
-#ifndef HAVE_MINGW
-	io_del(&unix_socket);
-	close(unix_socket.fd);
-#endif
 
 	char *envp[5] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
