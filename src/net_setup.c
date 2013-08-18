@@ -828,22 +828,6 @@ static bool setup_myself(void) {
 	if(device_fd >= 0)
 		io_add(&device_io, handle_device_data, NULL, device_fd, IO_READ);
 
-	/* Run tinc-up script to further initialize the tap interface */
-	char *envp[5] = {NULL};
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[3], "NAME=%s", myself->name);
-
-	execute_script("tinc-up", envp);
-
-	for(int i = 0; i < 4; i++)
-		free(envp[i]);
-
-	/* Run subnet-up scripts for our own subnets */
-
-	subnet_update(myself, NULL, true);
-
 	/* Open sockets */
 
 	if(!do_detach && getenv("LISTEN_FDS")) {
@@ -957,9 +941,7 @@ static bool setup_myself(void) {
 		} while(cfg);
 	}
 
-	if(listen_sockets)
-		logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
-	else {
+	if(!listen_sockets) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
@@ -996,6 +978,26 @@ bool setup_network(void) {
 
 	if(!setup_myself())
 		return false;
+
+	if(!init_control())
+		return false;
+
+	/* Run tinc-up script to further initialize the tap interface */
+
+	char *envp[5] = {NULL};
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
+
+	execute_script("tinc-up", envp);
+
+	for(int i = 0; i < 4; i++)
+		free(envp[i]);
+
+	/* Run subnet-up scripts for our own subnets */
+
+	subnet_update(myself, NULL, true);
 
 	return true;
 }
@@ -1049,6 +1051,8 @@ void close_network_connections(void) {
 		free(envp[i]);
 
 	devops.close();
+
+	exit_control();
 
 	return;
 }

@@ -400,14 +400,7 @@ int main2(int argc, char **argv) {
 	/* Setup sockets and open device. */
 
 	if(!setup_network())
-		goto end_nonet;
-
-	if(!init_control())
-		goto end_nonet;
-
-	/* Initiate all outgoing connections. */
-
-	try_outgoing_connections();
+		goto end;
 
 	/* Change process priority */
 
@@ -439,6 +432,10 @@ int main2(int argc, char **argv) {
 
 	/* Start main loop. It only exits when tinc is killed. */
 
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
+
+	try_outgoing_connections();
+
 	status = main_loop();
 
 	/* Shutdown properly. */
@@ -446,12 +443,9 @@ int main2(int argc, char **argv) {
 	if(debug_level >= DEBUG_CONNECTIONS)
 		devops.dump_stats();
 
+end:
 	close_network_connections();
 
-end:
-	exit_control();
-
-end_nonet:
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Terminating");
 
 	free(priority);

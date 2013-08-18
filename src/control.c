@@ -215,6 +215,7 @@ bool init_control(void) {
 
 void exit_control(void) {
 #ifndef HAVE_MINGW
+	unlink(unixsocketname);
 	io_del(&unix_socket);
 	close(unix_socket.fd);
 #endif
