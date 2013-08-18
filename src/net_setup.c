@@ -750,7 +750,6 @@ static bool setup_myself(void) {
 
 	free(cipher);
 
-	send_key_changed();
 	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval){keylifetime, rand() % 100000});
 
 	/* Check if we want to use message authentication codes... */
