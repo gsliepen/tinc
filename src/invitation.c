@@ -368,7 +368,6 @@ int cmd_invite(int argc, char *argv[]) {
 		free(filename);
 		return 1;
 	}
-	free(filename);
 	f = fdopen(ifd, "w");
 	if(!f)
 		abort();
@@ -385,12 +384,31 @@ int cmd_invite(int argc, char *argv[]) {
 	fprintf(f, "#---------------------------------------------------------------#\n");
 	fprintf(f, "Name = %s\n", myname);
 
-	xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, myname);
-	fcopy(f, filename);
+	char *filename2;
+	xasprintf(&filename2, "%s" SLASH "hosts" SLASH "%s", confbase, myname);
+	fcopy(f, filename2);
 	fclose(f);
+	free(filename2);
 
 	// Create an URL from the local address, key hash and cookie
-	printf("%s/%s%s\n", address, hash, cookie);
+	char *url;
+	xasprintf(&url, "%s/%s%s", address, hash, cookie);
+
+	// Call the inviation-created script
+	setenv("NAME", myname, true);
+	setenv("NETNAME", netname, true);
+	setenv("NODE", argv[1], true);
+	setenv("INVITATION_FILE", filename, true);
+	setenv("INVITATION_URL", url, true);
+	char *scriptname;
+	xasprintf(&scriptname, "\"%s" SLASH "invitation-created\"", confbase);
+	system(scriptname);
+	free(scriptname);
+	unsetenv("NODE");
+	unsetenv("INVITATION");
+
+	puts(url);
+	free(url);
 	free(filename);
 	free(address);
 

@@ -580,7 +580,9 @@ UDP is possible or not.
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
 Under Windows (not Cygwin), the scripts should have the extension
-.Pa .bat .
+.Pa .bat
+or
+.Pa cmd .
 .Bl -tag -width indent
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 This is the most important script.
@@ -607,6 +609,10 @@ This script is started when a Subnet becomes reachable.
 The Subnet and the node it belongs to are passed in environment variables.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /subnet-down
 This script is started when a Subnet becomes unreachable.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /invitation-created
+This script is started when a new invitation has been created.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /invitation-accepted
+This script is started when an invitation has been used.
 .El
 .Pp
 The scripts are started without command line arguments, but can make use of certain environment variables.
@@ -615,6 +621,8 @@ Under UNIX like operating systems the names of environment variables must be pre
 in scripts.
 Under Windows, in
 .Pa .bat
+or
+.Pa .cmd
 files, they have to be put between
 .Li %
 signs.
@@ -640,6 +648,14 @@ When a host becomes (un)reachable, this is set to the port number it uses for co
 When a subnet becomes (un)reachable, this is set to the subnet.
 .It Ev WEIGHT
 When a subnet becomes (un)reachable, this is set to the subnet weight.
+.It Ev INVITATION_FILE
+When the
+.Pa invitation-created
+script is called, this is set to the file where the invitation details will be stored.
+.It Ev INVITATION_URL
+When the
+.Pa invitation-created
+script is called, this is set to the invitation URL that has been created.
 .El
 .Pp
 Do not forget that under UNIX operating systems, you have to make the scripts executable, using the command

@@ -26,6 +26,7 @@
 #include "control_common.h"
 #include "cipher.h"
 #include "crypto.h"
+#include "device.h"
 #include "digest.h"
 #include "ecdsa.h"
 #include "edge.h"
@@ -37,6 +38,7 @@
 #include "netutl.h"
 #include "node.h"
 #include "prf.h"
+#include "process.h"
 #include "protocol.h"
 #include "rsa.h"
 #include "sptps.h"
@@ -174,6 +176,24 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	fclose(f);
 
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
+
+	// Call invitation-accepted script
+	char *envp[7] = {NULL};
+	char *address, *port;
+
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+        xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+        xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+        xasprintf(&envp[3], "NODE=%s", c->name);
+	sockaddr2str(&c->address, &address, &port);
+	xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
+	xasprintf(&envp[5], "NAME=%s", myself->name);
+
+	execute_script("invitation-accepted", envp);
+
+	for(int i = 0; envp[i] && i < 7; i++)
+		free(envp[i]);
+
 	sptps_send_record(&c->sptps, 2, data, 0);
 	return true;
 }

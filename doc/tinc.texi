@@ -1380,6 +1380,13 @@ The Subnet and the node it belongs to are passed in environment variables.
 
 @item @value{sysconfdir}/tinc/@var{netname}/subnet-down
 This script is started when a Subnet becomes unreachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/invitation-created
+This script is started when a new invitation has been created.
+
+@item @value{sysconfdir}/tinc/@var{netname}/invitation-accepted
+This script is started when an invitation has been used.
+
 @end table
 
 @cindex environment variables
@@ -1424,7 +1431,23 @@ this is set to the port number it uses for communication with other tinc daemons
 @item SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
 
+@cindex WEIGHT
+@item WEIGHT
+When a subnet becomes (un)reachable, this is set to the subnet weight.
+
+@cindex INVITATION_FILE
+@item INVITATION_FILE
+When the @file{invitation-created} script is called,
+this is set to the file where the invitation details will be stored.
+
+@cindex INVITATION_URL
+@item INVITATION_URL
+When the @file{invitation-created} script is called,
+this is set to the invitation URL that has been created.
 @end table
+
+Do not forget that under UNIX operating systems,
+you have to make the scripts executable, using the command @samp{chmod a+x script}.
 
 
 @c ==================================================================
