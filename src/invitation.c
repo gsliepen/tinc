@@ -688,10 +688,6 @@ make_names:
 
 	check_port(name);
 
-	fprintf(stderr, "Invitation succesfully accepted.\n");
-	shutdown(sock, SHUT_RDWR);
-	success = true;
-
 ask_netname:
 	if(ask_netname) {
 		fprintf(stderr, "Enter a new netname: ");
@@ -720,6 +716,7 @@ ask_netname:
 	return true;
 }
 
+
 static bool invitation_send(void *handle, uint8_t type, const char *data, size_t len) {
 	while(len) {
 		int result = send(sock, data, len, 0);
@@ -747,6 +744,12 @@ static bool invitation_receive(void *handle, uint8_t type, const char *msg, uint
 
 		case 1:
 			return finalize_join();
+
+		case 2:
+			fprintf(stderr, "Invitation succesfully accepted.\n");
+			shutdown(sock, SHUT_RDWR);
+			success = true;
+			break;
 
 		default:
 			return false;

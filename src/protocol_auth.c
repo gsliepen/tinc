@@ -174,6 +174,7 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	fclose(f);
 
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
+	sptps_send_record(&c->sptps, 2, data, 0);
 	return true;
 }
 
