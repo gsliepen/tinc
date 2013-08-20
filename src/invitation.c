@@ -356,6 +356,9 @@ int cmd_invite(int argc, char *argv[]) {
 	if(!f)
 		abort();
 
+	// Get the local address
+	char *address = get_my_hostname();
+
 	// Fill in the details.
 	fprintf(f, "Name = %s\n", argv[1]);
 	if(netname)
@@ -370,7 +373,6 @@ int cmd_invite(int argc, char *argv[]) {
 	fclose(f);
 
 	// Create an URL from the local address, key hash and cookie
-	char *address = get_my_hostname();
 	printf("%s/%s%s\n", address, hash, cookie);
 	free(filename);
 	free(address);
