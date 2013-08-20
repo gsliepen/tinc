@@ -84,12 +84,14 @@ char *get_my_hostname() {
 
 	// If that doesn't work, guess externally visible hostname
 	fprintf(stderr, "Trying to discover externally visible hostname...\n");
-	struct addrinfo *ai = str2addrinfo("ifconfig.me", "80", SOCK_STREAM);
-	static const char request[] = "GET /host HTTP/1.0\r\n\r\n";
-	if(ai) {
-		int s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+	struct addrinfo *ai = str2addrinfo("tinc-vpn.org", "80", SOCK_STREAM);
+	struct addrinfo *aip = ai;
+	static const char request[] = "GET http://tinc-vpn.org/host.cgi HTTP/1.0\r\n\r\n";
+
+	while(aip) {
+		int s = socket(aip->ai_family, aip->ai_socktype, aip->ai_protocol);
 		if(s >= 0) {
-			if(connect(s, ai->ai_addr, ai->ai_addrlen)) {
+			if(connect(s, aip->ai_addr, aip->ai_addrlen)) {
 				closesocket(s);
 				s = -1;
 			}
@@ -106,14 +108,20 @@ char *get_my_hostname() {
 					hostname = xstrdup(p + 1);
 			}
 			closesocket(s);
+			if(hostname)
+				break;
 		}
-		freeaddrinfo(ai);
+		aip = aip->ai_next;
+		continue;
 	}
+
+	if(ai)
+		freeaddrinfo(ai);
 
 	// Check that the hostname is reasonable
 	if(hostname) {
 		for(char *p = hostname; *p; p++) {
-			if(isalnum(*p) || *p == '-' || *p == '.')
+			if(isalnum(*p) || *p == '-' || *p == '.' || *p == ':')
 				continue;
 			// If not, forget it.
 			free(hostname);
