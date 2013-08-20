@@ -190,8 +190,19 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const char *dat
 	if(type != 0 || len != 18 || c->status.invitation_used)
 		return false;
 
+	// Recover the filename from the cookie and the key
+	digest_t *digest = digest_open_by_name("sha256", 18);
+	if(!digest)
+		abort();
+	char *fingerprint = ecdsa_get_base64_public_key(invitation_key);
+	char hashbuf[18 + strlen(fingerprint)];
 	char cookie[25];
-	b64encode_urlsafe(data, cookie, 18);
+	memcpy(hashbuf, data, 18);
+	memcpy(hashbuf + 18, fingerprint, sizeof hashbuf - 18);
+	digest_create(digest, hashbuf, sizeof hashbuf, cookie);
+	b64encode_urlsafe(cookie, cookie, 18);
+	digest_close(digest);
+	free(fingerprint);
 
 	char filename[PATH_MAX], usedname[PATH_MAX];
 	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);

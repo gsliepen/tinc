@@ -349,10 +349,19 @@ int cmd_invite(int argc, char *argv[]) {
 	// Create a random cookie for this invitation.
 	char cookie[25];
 	randomize(cookie, 18);
+
+	// Create a filename that doesn't reveal the cookie itself
+	char buf[18 + strlen(fingerprint)];
+	char cookiehash[25];
+	memcpy(buf, cookie, 18);
+	memcpy(buf + 18, fingerprint, sizeof buf - 18);
+	digest_create(digest, buf, sizeof buf, cookiehash);
+	b64encode_urlsafe(cookiehash, cookiehash, 18);
+
 	b64encode_urlsafe(cookie, cookie, 18);
 
 	// Create a file containing the details of the invitation.
-	xasprintf(&filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
+	xasprintf(&filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookiehash);
 	int ifd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if(!ifd) {
 		fprintf(stderr, "Could not create invitation file %s: %s\n", filename, strerror(errno));
