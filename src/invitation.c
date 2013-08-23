@@ -381,7 +381,19 @@ int cmd_invite(int argc, char *argv[]) {
 	if(netname)
 		fprintf(f, "NetName = %s\n", netname);
 	fprintf(f, "ConnectTo = %s\n", myname);
-	// TODO: copy Broadcast and Mode
+
+	// Copy Broadcast and Mode
+	FILE *tc = fopen(tinc_conf, "r");
+	if(tc) {
+		char buf[1024];
+		while(fgets(buf, sizeof buf, tc)) {
+			if((!strncasecmp(buf, "Mode", 4) && strchr(" \t=", buf[4]))
+					|| (!strncasecmp(buf, "Broadcast", 9) && strchr(" \t=", buf[9])))
+				fputs(buf, f);
+		}
+		fclose(tc);
+	}
+
 	fprintf(f, "#---------------------------------------------------------------#\n");
 	fprintf(f, "Name = %s\n", myname);
 
