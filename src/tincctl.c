@@ -65,6 +65,8 @@ static bool force = false;
 bool tty = true;
 bool confbasegiven = false;
 bool netnamegiven = false;
+char *scriptinterpreter = NULL;
+char *scriptextension = "";
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;

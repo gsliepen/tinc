@@ -38,6 +38,7 @@
 #include "protocol.h"
 #include "route.h"
 #include "rsa.h"
+#include "script.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"

@@ -32,7 +32,6 @@
 #include "names.h"
 #include "net.h"
 #include "netutl.h"
-#include "process.h"
 #include "protocol.h"
 #include "subnet.h"
 #include "xalloc.h"

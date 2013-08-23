@@ -29,7 +29,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
-#include "process.h"
+#include "script.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"

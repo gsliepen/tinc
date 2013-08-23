@@ -27,6 +27,7 @@
 #include "names.h"
 #include "netutl.h"
 #include "rsagen.h"
+#include "script.h"
 #include "sptps.h"
 #include "tincctl.h"
 #include "utils.h"
@@ -395,17 +396,15 @@ int cmd_invite(int argc, char *argv[]) {
 	xasprintf(&url, "%s/%s%s", address, hash, cookie);
 
 	// Call the inviation-created script
-	setenv("NAME", myname, true);
-	setenv("NETNAME", netname, true);
-	setenv("NODE", argv[1], true);
-	setenv("INVITATION_FILE", filename, true);
-	setenv("INVITATION_URL", url, true);
-	char *scriptname;
-	xasprintf(&scriptname, "\"%s" SLASH "invitation-created\"", confbase);
-	system(scriptname);
-	free(scriptname);
-	unsetenv("NODE");
-	unsetenv("INVITATION");
+	char *envp[6] = {};
+	xasprintf(&envp[0], "NAME=%s", myname);
+	xasprintf(&envp[1], "NETNAME=%s", netname);
+	xasprintf(&envp[2], "NODE=%s", argv[1]);
+	xasprintf(&envp[3], "INVITATION_FILE=%s", filename);
+	xasprintf(&envp[4], "INVITATION_URL=%s", url);
+	execute_script("invitation-created", envp);
+	for(int i = 0; i < 6 && envp[i]; i++)
+		free(envp[i]);
 
 	puts(url);
 	free(url);

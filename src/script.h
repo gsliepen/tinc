@@ -1,5 +1,5 @@
 /*
-    process.h -- header file for process.c
+    script.h -- header file for script.c
     Copyright (C) 1999-2005 Ivo Timmermans,
                   2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
@@ -18,18 +18,9 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_PROCESS_H__
-#define __TINC_PROCESS_H__
+#ifndef __TINC_SCRIPT_H__
+#define __TINC_SCRIPT_H__
 
-extern bool do_detach;
-extern bool sigalrm;
+extern bool execute_script(const char *, char **);
 
-extern void setup_signals(void);
-extern bool detach(void);
-extern bool kill_other(int);
-
-#ifdef HAVE_MINGW
-extern bool init_service(void);
-#endif
-
-#endif /* __TINC_PROCESS_H__ */
+#endif /* __TINC_SCRIPT_H__ */
