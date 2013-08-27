@@ -68,10 +68,6 @@ bool netnamegiven = false;
 char *scriptinterpreter = NULL;
 char *scriptextension = "";
 
-#ifdef HAVE_MINGW
-static struct WSAData wsa_state;
-#endif
-
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
 	{"net", required_argument, NULL, 'n'},
@@ -681,14 +677,6 @@ bool connect_tincd(bool verbose) {
 	}
 
 	fclose(f);
-
-#ifdef HAVE_MINGW
-	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		if(verbose)
-			fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
-		return false;
-	}
-#endif
 
 #ifndef HAVE_MINGW
 	struct sockaddr_un sa;
@@ -2365,6 +2353,15 @@ int main(int argc, char *argv[]) {
 		usage(false);
 		return 0;
 	}
+
+#ifdef HAVE_MINGW
+	static struct WSAData wsa_state;
+
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
+		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		return false;
+	}
+#endif
 
 	srand(time(NULL));
 	crypto_init();
