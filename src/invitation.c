@@ -35,6 +35,48 @@
 
 int addressfamily = AF_UNSPEC;
 
+static void scan_for_hostname(const char *filename, char **hostname, char **port) {
+	if(!filename || (*hostname && *port))
+		return;
+
+	FILE *f = fopen(filename, "r");
+	if(!f)
+		return;
+
+	while(fgets(line, sizeof line, f)) {
+		if(!rstrip(line))
+			continue;
+		char *p = line, *q;
+		p += strcspn(p, "\t =");
+		if(!*p)
+			continue;
+		q = p + strspn(p, "\t ");
+		if(*q == '=')
+			q += 1 + strspn(q + 1, "\t ");
+		*p = 0;
+		p = q + strcspn(q, "\t ");
+		if(*p)
+			*p++ = 0;
+		p += strspn(p, "\t ");
+		p[strcspn(p, "\t ")] = 0;
+
+		if(!*port && !strcasecmp(line, "Port")) {
+			*port = xstrdup(q);
+		} else if(!*hostname && !strcasecmp(line, "Address")) {
+			*hostname = xstrdup(q);
+			if(*p) {
+				free(*port);
+				*port = xstrdup(p);
+			}
+		}
+
+		if(*hostname && *port)
+			break;
+	}
+
+	fclose(f);
+}
+
 char *get_my_hostname() {
 	char *hostname = NULL;
 	char *port = NULL;
@@ -45,39 +87,8 @@ char *get_my_hostname() {
 	// Use first Address statement in own host config file
 	if(check_id(name)) {
 		xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
-		FILE *f = fopen(filename, "r");
-		if(f) {
-			while(fgets(line, sizeof line, f)) {
-				if(!rstrip(line))
-					continue;
-				char *p = line, *q;
-				p += strcspn(p, "\t =");
-				if(!*p)
-					continue;
-				q = p + strspn(p, "\t ");
-				if(*q == '=')
-					q += 1 + strspn(q + 1, "\t ");
-				*p = 0;
-				p = q + strcspn(q, "\t ");
-				if(*p)
-					*p++ = 0;
-				p += strspn(p, "\t ");
-				p[strcspn(p, "\t ")] = 0;
-				if(!port && !strcasecmp(line, "Port")) {
-					port = xstrdup(q);
-					continue;
-				}
-				if(strcasecmp(line, "Address"))
-					continue;
-				hostname = xstrdup(q);
-				if(*p) {
-					free(port);
-					port = xstrdup(p);
-				}
-				break;
-			}
-			fclose(f);
-		}
+		scan_for_hostname(filename, &hostname, &port);
+		scan_for_hostname(tinc_conf, &hostname, &port);
 	}
 
 	if(hostname)
