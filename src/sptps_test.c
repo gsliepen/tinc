@@ -54,6 +54,7 @@ static bool receive_record(void *handle, uint8_t type, const char *data, uint16_
 static struct option const long_options[] = {
 	{"datagram", no_argument, NULL, 'd'},
 	{"packet-loss", required_argument, NULL, 'l'},
+	{"replay-window", required_argument, NULL, 'r'},
 	{"help", no_argument, NULL, 1},
 	{NULL, 0, NULL, 0}
 };
@@ -65,6 +66,7 @@ static void usage() {
 	fprintf(stderr, "Valid options are:\n"
 			"  -d, --datagram          Enable datagram mode.\n"
 			"  -l, --packet-loss RATE  Fake packet loss of RATE percent.\n"
+			"  -r, --replay-window N   Set replay window to N bytes.\n"
 			"\n");
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
 }
@@ -77,7 +79,7 @@ int main(int argc, char *argv[]) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "dl:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "dl:r:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -88,6 +90,10 @@ int main(int argc, char *argv[]) {
 
 			case 'l': /* packet loss rate */
 				packetloss = atoi(optarg);
+				break;
+
+			case 'r': /* replay window size */
+				sptps_replaywin = atoi(optarg);
 				break;
 
 			case '?': /* wrong options */
@@ -228,6 +234,8 @@ int main(int argc, char *argv[]) {
 			}
 			if(len == 0)
 				break;
+			if(buf[0] == '#')
+				s.outseqno = atoi(buf + 1);
 			if(buf[0] == '^')
 				sptps_send_record(&s, SPTPS_HANDSHAKE, NULL, 0);
 			else if(buf[0] == '$') {
@@ -256,7 +264,7 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Dropped.\n");
 				continue;
 			}
-			if(!sptps_receive_data(&s, buf, len))
+			if(!sptps_receive_data(&s, buf, len) && !datagram)
 				return 1;
 		}
 	}
