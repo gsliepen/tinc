@@ -466,7 +466,8 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 				// Unless we have seen lots of them, in which case we consider the others lost.
 				warning(s, "Lost %d packets\n", seqno - s->inseqno);
-				memset(s->late, 0, s->replaywin);
+				// Mark all packets in the replay window as being late.
+				memset(s->late, 255, s->replaywin);
 			} else if (seqno < s->inseqno) {
 				// If the sequence number is farther in the past than the bitmap goes, or if the packet was already received, drop it.
 				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8)))
@@ -483,7 +484,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		s->farfuture = 0;
 	}
 
-	if(seqno > s->inseqno)
+	if(seqno >= s->inseqno)
 		s->inseqno = seqno + 1;
 
 	if(!s->inseqno)
@@ -629,6 +630,7 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 		s->late = malloc(s->replaywin);
 		if(!s->late)
 			return error(s, errno, strerror(errno));
+		memset(s->late, 0, s->replaywin);
 	}
 
 	s->label = malloc(labellen);
