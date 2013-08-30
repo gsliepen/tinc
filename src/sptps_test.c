@@ -19,6 +19,8 @@
 
 #include "system.h"
 
+#include <getopt.h>
+
 #include "crypto.h"
 #include "ecdsa.h"
 #include "sptps.h"
@@ -49,23 +51,71 @@ static bool receive_record(void *handle, uint8_t type, const char *data, uint16_
 	return true;
 }
 
+static struct option const long_options[] = {
+	{"datagram", no_argument, NULL, 'd'},
+	{"packet-loss", required_argument, NULL, 'l'},
+	{"help", no_argument, NULL, 1},
+	{NULL, 0, NULL, 0}
+};
+
+const char *program_name;
+
+static void usage() {
+	fprintf(stderr, "Usage: %s [options] my_ecdsa_key_file his_ecdsa_key_file [host] port\n\n", program_name);
+	fprintf(stderr, "Valid options are:\n"
+			"  -d, --datagram          Enable datagram mode.\n"
+			"  -l, --packet-loss RATE  Fake packet loss of RATE percent.\n"
+			"\n");
+	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
+}
+
 int main(int argc, char *argv[]) {
+	program_name = argv[0];
 	bool initiator = false;
 	bool datagram = false;
+	int packetloss = 0;
+	int r;
+	int option_index = 0;
 
-	if(argc > 1 && !strcmp(argv[1], "-d")) {
-		datagram = true;
-		argc--;
-		argv++;
+	while((r = getopt_long(argc, argv, "dl:", long_options, &option_index)) != EOF) {
+		switch (r) {
+			case 0:   /* long option */
+				break;
+
+			case 'd': /* datagram mode */
+				datagram = true;
+				break;
+
+			case 'l': /* packet loss rate */
+				packetloss = atoi(optarg);
+				break;
+
+			case '?': /* wrong options */
+				usage();
+				return 1;
+
+			case 1: /* help */
+				usage();
+				return 0;
+
+			default:
+				break;
+		}
 	}
 
-	if(argc < 4) {
-		fprintf(stderr, "Usage: %s [-d] my_ecdsa_key_file his_ecdsa_key_file [host] port\n", argv[0]);
+	argc -= optind - 1;
+	argv += optind - 1;
+
+	if(argc < 4 || argc > 5) {
+		fprintf(stderr, "Wrong number of arguments.\n");
+		usage();
 		return 1;
 	}
 
 	if(argc > 4)
 		initiator = true;
+
+	srand(time(NULL));
 
 #ifdef HAVE_MINGW
 	static struct WSAData wsa_state;
@@ -202,6 +252,10 @@ int main(int argc, char *argv[]) {
 			char hex[len * 2 + 1];
 			bin2hex(buf, hex, len);
 			fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
+			if((rand() % 100) < packetloss) {
+				fprintf(stderr, "Dropped.\n");
+				continue;
+			}
 			if(!sptps_receive_data(&s, buf, len))
 				return 1;
 		}
