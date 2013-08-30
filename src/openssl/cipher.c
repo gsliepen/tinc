@@ -171,7 +171,7 @@ bool cipher_counter_xor(cipher_t *cipher, const void *indata, size_t inlen, void
 					break;
 		}
 
-		*out++ = *in++ ^ cipher->counter->counter[cipher->counter->n++];
+		*out++ = *in++ ^ cipher->counter->block[cipher->counter->n++];
 
 		if(cipher->counter->n >= cipher->cipher->block_size)
 			cipher->counter->n = 0;
