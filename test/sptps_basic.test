@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Generate keys
+
+mkdir -p $d1
+
+openssl ecparam -genkey -name secp521r1 -noout -out $d1/server.priv
+openssl ecparam -genkey -name secp521r1 -noout -out $d1/client.priv
+yes '' | openssl req -new -pubkey -key $d1/server.priv -noout -out $d1/server.pub
+echo
+yes '' | openssl req -new -pubkey -key $d1/client.priv -noout -out $d1/client.pub
+echo
+
+# Test transfer of a simple file.
+
+(sleep 2; cat ../README; sleep 1) | $sptps_test $d1/server.priv $d1/client.pub 32750 &
+sleep 1
+sleep 3 | $sptps_test $d1/client.priv $d1/server.pub localhost 32750 >$d1/out
+cmp $d1/out ../README

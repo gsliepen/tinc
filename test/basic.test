@@ -1,0 +1,22 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize and test one node
+
+rm -rf config1
+
+$tinc $c1 init foo
+$tinc $c1 set DeviceType dummy
+$tinc $c1 set Port 0
+
+# Test running in the foreground
+
+(sleep 1; $tinc $c1 stop) &
+$tinc $c1 start $r1 -D
+
+# Test running tinc in the background
+
+$tinc $c1 start $r1
+sleep 1
+$tinc $c1 stop

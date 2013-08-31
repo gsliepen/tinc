@@ -1,0 +1,8 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Just test whether the executables work
+$tincd --help
+$tinc --help
+$sptps_test --help
