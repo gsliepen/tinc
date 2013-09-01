@@ -1,7 +1,7 @@
 TESTS = \
-	executables.test \
 	basic.test \
-	sptps_basic.test
+	executables.test \
+	sptps-basic.test
 
 EXTRA_DIST = testlib.sh
 

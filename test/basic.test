@@ -4,8 +4,6 @@
 
 # Initialize and test one node
 
-rm -rf config1
-
 $tinc $c1 init foo
 $tinc $c1 set DeviceType dummy
 $tinc $c1 set Port 0
