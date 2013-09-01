@@ -602,10 +602,22 @@ void handle_new_meta_connection(void *data, int flags) {
 		tarpit = -1;
 	}
 
-	if(prev_time == now.tv_sec && !sockaddrcmp_noport(&sa, &prev_sa)) {
-		// if so, keep the connection open but ignore it completely.
-		tarpit = fd;
-		return;
+	if(!sockaddrcmp_noport(&sa, &prev_sa)) {
+		static int samehost_burst;
+		static int samehost_burst_time;
+
+		if(now.tv_sec - samehost_burst_time > samehost_burst)
+			samehost_burst = 0;
+		else
+			samehost_burst -= now.tv_sec - samehost_burst_time;
+
+		samehost_burst_time = now.tv_sec;
+		samehost_burst++;
+
+		if(samehost_burst > max_connection_burst) {
+			tarpit = fd;
+			return;
+		}
 	}
 
 	memcpy(&prev_sa, &sa, sizeof sa);
