@@ -6,17 +6,21 @@
 
 $tinc $c1 <<EOF
 init foo
-add Subnet 10.0.0.1
+set DeviceType dummy
+set Port 32752
+set Address localhost
 EOF
 
 $tinc $c2 <<EOF
 init bar
-add Subnet 10.0.0.2
+set DeviceType dummy
+set Port 0
 EOF
 
 $tinc $c3 <<EOF
 init baz
-add Subnet 10.0.0.3
+set DeviceType dummy
+set Port 0
 EOF
 
 # Test import, export and exchange commands
@@ -36,3 +40,25 @@ cmp $d1/hosts/bar $d2/hosts/bar
 cmp $d1/hosts/bar $d3/hosts/bar
 cmp $d1/hosts/baz $d2/hosts/baz
 cmp $d1/hosts/baz $d3/hosts/baz
+
+# Check whether the nodes can connect to each other
+
+$tinc $c1 start $r1
+
+$tinc $c2 add ConnectTo foo
+$tinc $c3 add ConnectTo foo
+
+sleep 1
+
+$tinc $c2 start $r2
+$tinc $c3 start $r3
+
+sleep 1
+
+test `$tinc $c1 dump reachable nodes | wc -l` = 3
+test `$tinc $c2 dump reachable nodes | wc -l` = 3
+test `$tinc $c3 dump reachable nodes | wc -l` = 3
+
+$tinc $c3 stop
+$tinc $c2 stop
+$tinc $c1 stop
