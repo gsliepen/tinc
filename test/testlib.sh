@@ -34,8 +34,8 @@ c3="--config=$d3 --pidfile=$d3/pid"
 # Arguments when running tincd
 
 r1="--logfile=$d1/log -d5"
-r2="--logfile=$d1/log -d5"
-r3="--logfile=$d1/log -d5"
+r2="--logfile=$d2/log -d5"
+r3="--logfile=$d3/log -d5"
 
 # Exit on errors, log all commands being executed
 
