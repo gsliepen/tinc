@@ -2,6 +2,7 @@ TESTS = \
 	basic.test \
 	executables.test \
 	import-export.test \
+	invite-join.test \
 	sptps-basic.test
 
 EXTRA_DIST = testlib.sh

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize one node
+
+$tinc $c1 <<EOF
+init foo
+set DeviceType dummy
+set Mode switch
+set Broadcast no
+del Port
+set Address localhost
+set Port 32751
+start $r1
+EOF
+
+# Generate an invitation and let another node join the VPN
+
+sleep 1
+
+$tinc $c1 invite bar | $tinc $c2 join
+
+# Test equivalence of host config files
+
+cmp $d1/hosts/foo $d2/hosts/foo
+test "`grep ^ECDSAPublicKey $d1/hosts/bar`" = "`grep ^ECDSAPublicKey $d2/hosts/bar`"
+
+# Test Mode, Broadcast and ConnectTo statements
+
+test `$tinc $c2 get Mode` = switch
+test `$tinc $c2 get Broadcast` = no
+test `$tinc $c2 get ConnectTo` = foo
+
+# Check whether the new node can join the VPN
+
+$tinc $c2 << EOF
+set DeviceType dummy
+set Port 0
+start $r2
+EOF
+
+sleep 1
+
+test `$tinc $c1 dump reachable nodes | wc -l` = 2
+test `$tinc $c2 dump reachable nodes | wc -l` = 2
+
+$tinc $c2 stop
+$tinc $c1 stop
