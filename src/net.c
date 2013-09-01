@@ -134,7 +134,7 @@ static int build_fdset(fd_set *readset, fd_set *writeset) {
 				purge();
 		} else {
 			FD_SET(c->socket, readset);
-			if(c->outbuflen > 0)
+			if(c->outbuflen > 0 || c->status.connecting)
 				FD_SET(c->socket, writeset);
 			if(c->socket > max)
 				max = c->socket;
@@ -308,7 +308,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 		if(c->status.remove)
 			continue;
 
-		if(FD_ISSET(c->socket, readset)) {
+		if(FD_ISSET(c->socket, writeset)) {
 			if(c->status.connecting) {
 				c->status.connecting = false;
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
@@ -325,14 +325,14 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 				}
 			}
 
-			if(!receive_meta(c)) {
+			if(!flush_meta(c)) {
 				terminate_connection(c, c->status.active);
 				continue;
 			}
 		}
 
-		if(FD_ISSET(c->socket, writeset)) {
-			if(!flush_meta(c)) {
+		if(FD_ISSET(c->socket, readset)) {
+			if(!receive_meta(c)) {
 				terminate_connection(c, c->status.active);
 				continue;
 			}
