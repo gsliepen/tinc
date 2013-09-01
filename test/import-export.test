@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize three nodes
+
+$tinc $c1 <<EOF
+init foo
+add Subnet 10.0.0.1
+EOF
+
+$tinc $c2 <<EOF
+init bar
+add Subnet 10.0.0.2
+EOF
+
+$tinc $c3 <<EOF
+init baz
+add Subnet 10.0.0.3
+EOF
+
+# Test import, export and exchange commands
+
+$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+
+# Test export-all and exchange-all
+
+$tinc $c1 export-all | $tinc $c3 exchange | $tinc $c1 import
+$tinc $c1 exchange-all </dev/null | $tinc $c2 import
+
+# Test equivalence of host config files
+
+cmp $d1/hosts/foo $d2/hosts/foo
+cmp $d1/hosts/foo $d3/hosts/foo
+cmp $d1/hosts/bar $d2/hosts/bar
+cmp $d1/hosts/bar $d3/hosts/bar
+cmp $d1/hosts/baz $d2/hosts/baz
+cmp $d1/hosts/baz $d3/hosts/baz
