@@ -201,8 +201,8 @@ else
 	tinc_OPENSSL
 fi
 	
-AM_CONDITIONAL(OPENSSL, test "$openssl" = true)
-AM_CONDITIONAL(GCRYPT, test "$grypt" = true)
+AM_CONDITIONAL(OPENSSL, test -n "$openssl")
+AM_CONDITIONAL(GCRYPT, test "$gcrypt" = true)
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
