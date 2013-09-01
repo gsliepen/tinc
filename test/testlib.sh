@@ -8,9 +8,18 @@ sptps_test=../src/sptps_test
 
 # Test directories
 
-d1=$PWD/$_.1
-d2=$PWD/$_.2
-d3=$PWD/$_.3
+case "$_" in
+	/*)
+		d1=$_.1
+		d2=$_.2
+		d3=$_.3
+	;;
+	*)
+		d1=$PWD/$_.1
+		d2=$PWD/$_.2
+		d3=$PWD/$_.3
+	;;
+esac
 
 # Remove test directories
 
