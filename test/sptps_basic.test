@@ -15,7 +15,18 @@ echo
 
 # Test transfer of a simple file.
 
-(sleep 2; cat ../README; sleep 1) | $sptps_test $d1/server.priv $d1/client.pub 32750 &
+(sleep 1; $sptps_test -q $d1/client.priv $d1/server.pub localhost 32750 <../README) &
+$sptps_test $d1/server.priv $d1/client.pub 32750 >$d1/out1
+cmp $d1/out1 ../README
+
+$sptps_test -q $d1/server.priv $d1/client.pub 32750 <../NEWS &
 sleep 1
-sleep 3 | $sptps_test $d1/client.priv $d1/server.pub localhost 32750 >$d1/out
-cmp $d1/out ../README
+$sptps_test $d1/client.priv $d1/server.pub localhost 32750 > $d1/out2
+cmp $d1/out2 ../NEWS
+
+# Datagram mode
+
+$sptps_test -dq $d1/server.priv $d1/client.pub 32750 <../COPYING &
+sleep 1
+sleep 1 | $sptps_test -dq $d1/client.priv $d1/server.pub localhost 32750 >$d1/out3
+cmp $d1/out3 ../COPYING
