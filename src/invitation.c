@@ -340,12 +340,17 @@ int cmd_invite(int argc, char *argv[]) {
 		}
 		chmod(filename, 0600);
 		ecdsa_write_pem_private_key(key, f);
+		fclose(f);
+
+		if(connect_tincd(false))
+			sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
 	} else {
 		key = ecdsa_read_pem_private_key(f);
+		fclose(f);
 		if(!key)
 			fprintf(stderr, "Could not read private key from %s\n", filename);
 	}
-	fclose(f);
+
 	free(filename);
 	if(!key)
 		return 1;
