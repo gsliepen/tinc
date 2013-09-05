@@ -136,8 +136,6 @@ static bool setup_device(void) {
 			goto error;
 	}
 
-	freeaddrinfo(ai);
-
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
