@@ -1,0 +1,58 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Skip this test if we aren't root
+
+test "`id -u`" = "0" || exit 77
+
+# Initialize two nodes
+
+$tinc $c1 <<EOF
+init foo
+set Mode switch
+set Interface ping.test
+set Port 32573
+set Address localhost
+EOF
+
+cat >$d1/tinc-up <<EOF
+#!/bin/sh
+ifconfig \$INTERFACE up
+EOF
+
+$tinc $c2 <<EOF
+init bar
+set Mode switch
+set DeviceType multicast
+set Device 233.252.0.1 32754
+add ConnectTo foo
+EOF
+
+# Exchange configuration files
+
+$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+
+# Ensure we have a working multicast route
+
+ip route replace 233.252.0.0/16 dev lo
+
+# Start pong program in background
+
+./pong 233.252.0.1 32754 10.6.5.5 &
+pong=$!
+
+# Start tinc and try to ping
+
+$tinc $c1 start $r1
+$tinc $c2 start $r2
+
+sleep 1
+
+ping -r -I ping.test -c3 10.6.5.5
+
+# Clean up
+
+kill $pong
+$tinc $c2 stop
+$tinc $c1 stop
