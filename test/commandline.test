@@ -1,0 +1,49 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize one node
+
+$tinc $c1 <<EOF
+init foo
+set DeviceType dummy
+set Port 0
+EOF
+
+cat >$d1/tinc-up <<EOF
+#!/bin/sh
+read pid rest <$d1/pid
+(sleep 0.1; kill \$pid) &
+EOF
+
+# Test tincd command line options that should work
+
+$tincd $c1 $r1 -D
+$tincd $c1 $r1 --no-detach
+$tincd $c1 $r1 -D -d
+$tincd $c1 $r1 -D -d2
+$tincd $c1 $r1 -D -d 2
+$tincd $c1 $r1 -D -n foo
+$tincd $c1 $r1 -D -nfoo
+$tincd $c1 $r1 -D --net=foo
+$tincd $c1 $r1 -D --net foo
+
+# Test tincd command line options that should not work
+
+$tincd $c1 $r1 foo && exit 1 || true
+$tincd $c1 $r1 --pidfile && exit 1 || true
+$tincd $c1 $r1 --foo && exit 1 || true
+
+# Test tinc command line options that should work
+
+$tinc $c1 get name
+$tinc $c1 -n foo get name
+$tinc $c1 -nfoo get name
+$tinc $c1 --net=foo get name
+$tinc $c1 --net foo get name
+
+# Test tinc command line options that should not work
+
+$tinc $c1 --net && exit 1 || true
+$tinc $c1 --net get name && exit 1 || true
+$tinc $c1 foo && exit 1 || true

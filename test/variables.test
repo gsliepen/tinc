@@ -1,0 +1,88 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize one node
+
+$tinc $c1 init foo
+test "`$tinc $c1 get Name`" = "foo"
+
+# Test case sensitivity
+
+$tinc $c1 set Mode switch
+test "`$tinc $c1 get Mode`" = "switch"
+test "`$tinc $c1 get mode`" = "switch"
+$tinc $c1 set mode router
+test "`$tinc $c1 get Mode`" = "router"
+test "`$tinc $c1 get mode`" = "router"
+$tinc $c1 set Mode Switch
+test "`$tinc $c1 get Mode`" = "Switch"
+
+# Test deletion
+
+$tinc $c1 del Mode hub && exit 1 || true
+$tinc $c1 del Mode switch
+test -z "`$tinc $c1 get Mode`"
+
+# There can only be one Mode variable
+
+$tinc $c1 add Mode switch
+$tinc $c1 add Mode hub
+test "`$tinc $c1 get Mode`" = "hub"
+
+# Test addition/deletion of multivalued variables
+
+$tinc $c1 add Subnet 1
+$tinc $c1 add Subnet 2
+$tinc $c1 add Subnet 2
+$tinc $c1 add Subnet 3
+test "`$tinc $c1 get Subnet`" = "1
+2
+2
+3"
+$tinc $c1 del Subnet 2
+test "`$tinc $c1 get Subnet`" = "1
+3"
+$tinc $c1 del Subnet
+test -z "`$tinc $c1 get Subnet`"
+
+# We should not be able to get/set server variables using node.variable syntax
+
+test -z "`$tinc $c1 get foo.Name`"
+$tinc $c1 set foo.Name bar && exit 1 || true
+
+# Test getting/setting host variables for other nodes
+
+touch $d1/hosts/bar
+
+$tinc $c1 add bar.PMTU 1
+$tinc $c1 add bar.PMTU 2
+test "`$tinc $c1 get bar.PMTU`" = "2"
+
+$tinc $c1 add bar.Subnet 1
+$tinc $c1 add bar.Subnet 2
+$tinc $c1 add bar.Subnet 2
+$tinc $c1 add bar.Subnet 3
+test "`$tinc $c1 get bar.Subnet`" = "1
+2
+2
+3"
+$tinc $c1 del bar.Subnet 2
+test "`$tinc $c1 get bar.Subnet`" = "1
+3"
+$tinc $c1 del bar.Subnet
+test -z "`$tinc $c1 get bar.Subnet`"
+
+# We should not be able to get/set for nodes with invalid names
+
+touch $d1/hosts/qu-ux
+
+$tinc $c1 set qu-ux.Subnet 1 && exit 1 || true
+
+# We should not be able to set obsolete variables unless forced
+
+$tinc $c1 set PrivateKey 12345 && exit 1 || true
+$tinc $c1 --force set PrivateKey 12345
+test "`$tinc $c1 get PrivateKey`" = "12345"
+$tinc $c1 del PrivateKey
+test -z "`$tinc $c1 get PrivateKey`"

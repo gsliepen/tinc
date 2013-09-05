@@ -1,9 +1,11 @@
 TESTS = \
 	basic.test \
+	commandline.test \
 	executables.test \
 	import-export.test \
 	invite-join.test \
-	sptps-basic.test
+	sptps-basic.test \
+	variables.test
 
 EXTRA_DIST = testlib.sh
 
