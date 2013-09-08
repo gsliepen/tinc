@@ -823,7 +823,7 @@ int cmd_join(int argc, char *argv[]) {
 	}
 
 	// Make sure confbase exists and is accessible.
-	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+	if(!confbase_given && mkdir(confdir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
 		return 1;
 	}

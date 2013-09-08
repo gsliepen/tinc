@@ -26,6 +26,7 @@
 char *netname = NULL;
 char *confdir = NULL;           /* base configuration directory */
 char *confbase = NULL;          /* base configuration directory for this instance of tinc */
+bool confbase_given;
 char *identname = NULL;         /* program name for syslog */
 char *unixsocketname = NULL;    /* UNIX socket location */
 char *logfilename = NULL;       /* log file location */
@@ -41,6 +42,7 @@ void make_names(void) {
 	char installdir[1024] = "";
 	DWORD len = sizeof installdir;
 #endif
+	confbase_given = confbase;
 
 	if(netname && confbase)
 		logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");

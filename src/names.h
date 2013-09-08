@@ -23,6 +23,7 @@
 
 extern char *confdir;
 extern char *confbase;
+extern bool confbase_given;
 extern char *netname;
 extern char *identname;
 extern char *unixsocketname;

@@ -1739,7 +1739,7 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+	if(!confbase_given && mkdir(confdir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
 		return 1;
 	}
