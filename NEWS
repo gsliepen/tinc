@@ -1,3 +1,31 @@
+Version 1.1pre9              August 13 2013
+
+ * The UNIX socket is now created before tinc-up is called.
+
+ * Windows users can now use any extension that is in %PATHEXT% for scripts,
+   not only .bat.
+
+ * Outgoing sockets are bound to the address of the listening sockets again,
+   when there is no ambiguity.
+
+ * Added invitation-created and invitation-accepted scripts.
+
+ * Invited nodes now learn of the Mode and Broadcast settings of the VPN.
+
+ * Joining a VPN with an invitation now also works on Windows.
+
+ * The port number tincd is listening on is now always included in the
+   invitation URL.
+
+ * A running tincd is now correctly informed when a new invitation has been
+   generated.
+
+ * Several bug fixes for the new protocol.
+
+ * Added a test suite.
+
+Thanks to Etienne Dechamps for his contribution to this version of tinc.
+
 Version 1.1pre8              August 13 2013
 
  * ExperimentalProtocol is now enabled by default.
