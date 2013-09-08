@@ -8,6 +8,8 @@ TESTS = \
 	sptps-basic.test \
 	variables.test
 
+dist_check_SCRIPTS = $(TESTS)
+
 EXTRA_DIST = testlib.sh
 
 check_PROGRAMS = pong
