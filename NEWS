@@ -1,4 +1,4 @@
-Version 1.1pre9              August 13 2013
+Version 1.1pre9              September 8 2013
 
  * The UNIX socket is now created before tinc-up is called.
 
