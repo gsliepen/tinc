@@ -84,8 +84,11 @@ int main(int argc, char *argv[]) {
 
 	fprintf(stderr, "Generating keys for 10 seconds: ");
 	for(clock_start(); clock_countto(10);)
-		key1 = ecdsa_generate();
+		ecdsa_free(ecdsa_generate());
 	fprintf(stderr, "%13.2lf op/s\n", rate);
+
+	key1 = ecdsa_generate();
+	key2 = ecdsa_generate();
 
 	// ECDSA signatures
 
@@ -109,8 +112,6 @@ int main(int argc, char *argv[]) {
 	ecdh_free(ecdh1);
 
 	// SPTPS authentication phase
-
-	key2 = ecdsa_generate();
 
 	int fd[2];
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
