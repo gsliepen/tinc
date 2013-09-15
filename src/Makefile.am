@@ -2,6 +2,10 @@
 
 sbin_PROGRAMS = tincd tinc sptps_test
 
+if LINUX
+sbin_PROGRAMS += sptps_speed
+endif
+
 DEFAULT_INCLUDES =
 
 tincd_SOURCES = \
@@ -87,6 +91,12 @@ sptps_test_SOURCES = \
 	sptps_test.c \
 	utils.c utils.h
 
+sptps_speed_SOURCES = \
+	logger.c logger.h \
+	sptps.c sptps.h \
+	sptps_speed.c \
+	utils.c utils.h
+
 ## Conditionally compile device drivers
 	
 if LINUX
@@ -145,6 +155,14 @@ sptps_test_SOURCES += \
 	openssl/digest.c openssl/digest.h \
 	openssl/ecdh.c \
 	openssl/ecdsa.c \
+	openssl/prf.c
+sptps_speed_SOURCES += \
+	openssl/cipher.c \
+	openssl/crypto.c \
+	openssl/digest.c openssl/digest.h \
+	openssl/ecdh.c \
+	openssl/ecdsa.c \
+	openssl/ecdsagen.c \
 	openssl/prf.c
 endif
 
