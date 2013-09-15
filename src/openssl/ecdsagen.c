@@ -30,18 +30,24 @@ typedef EC_KEY ecdsa_t;
 #include "../utils.h"
 #include "../xalloc.h"
 
+#include "brainpool.h"
+
 // Generate ECDSA key
 
 ecdsa_t *ecdsa_generate(void) {
-	ecdsa_t *ecdsa = EC_KEY_new_by_curve_name(NID_secp521r1);
-
-	if(!ecdsa || !EC_KEY_generate_key(ecdsa)) {
-		fprintf(stderr, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		ecdsa_free(ecdsa);
-		return false;
+	ecdsa_t *ecdsa = EC_KEY_new();
+	if(!ecdsa) {
+		fprintf(stderr, "Allocating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		return NULL;
 	}
 
-	EC_KEY_set_asn1_flag(ecdsa, OPENSSL_EC_NAMED_CURVE);
+	if(!EC_KEY_set_group(ecdsa, brainpoolp512r1) || !EC_KEY_generate_key(ecdsa)) {
+		fprintf(stderr, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		ecdsa_free(ecdsa);
+		return NULL;
+	}
+
+	EC_KEY_set_asn1_flag(ecdsa, 0);
 	EC_KEY_set_conv_form(ecdsa, POINT_CONVERSION_COMPRESSED);
 
 	return ecdsa;

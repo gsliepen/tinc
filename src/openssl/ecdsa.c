@@ -30,14 +30,18 @@ typedef EC_KEY ecdsa_t;
 #include "../utils.h"
 #include "../xalloc.h"
 
+#include "brainpool.h"
+
 // Get and set ECDSA keys
 //
 ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
-	ecdsa_t *ecdsa = EC_KEY_new_by_curve_name(NID_secp521r1);
+	ecdsa_t *ecdsa = EC_KEY_new();
 	if(!ecdsa) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "EC_KEY_new_by_curve_name failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Allocating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return NULL;
 	}
+
+	EC_KEY_set_group(ecdsa, brainpoolp512r1);
 
 	int len = strlen(p);
 	unsigned char pubkey[len / 4 * 3 + 3];

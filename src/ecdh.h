@@ -20,8 +20,8 @@
 #ifndef __TINC_ECDH_H__
 #define __TINC_ECDH_H__
 
-#define ECDH_SIZE 67
-#define ECDH_SHARED_SIZE 66
+#define ECDH_SIZE 65
+#define ECDH_SHARED_SIZE 64
 
 #ifndef __TINC_ECDH_INTERNAL__
 typedef struct ecdh ecdh_t;

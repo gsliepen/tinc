@@ -32,14 +32,16 @@ typedef EC_KEY ecdh_t;
 #include "../utils.h"
 #include "../xalloc.h"
 
+#include "brainpool.h"
+
 ecdh_t *ecdh_generate_public(void *pubkey) {
-	ecdh_t *ecdh = EC_KEY_new_by_curve_name(NID_secp521r1);
+	ecdh_t *ecdh = EC_KEY_new();
 	if(!ecdh) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Generating EC key_by_curve_name failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Allocating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
-	if(!EC_KEY_generate_key(ecdh)) {
+	if(!EC_KEY_set_group(ecdh, brainpoolp512r1) || !EC_KEY_generate_key(ecdh)) {
 		EC_KEY_free(ecdh);
 		logger(DEBUG_ALWAYS, LOG_ERR, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
 		return NULL;
