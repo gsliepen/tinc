@@ -490,7 +490,8 @@ int main_loop(void) {
 			expire_events();
 			for(node = connection_tree->head; node; node = node->next) {
 				connection_t *c = node->data;
-				send_ping(c);
+				if(c->status.active)
+					send_ping(c);
 			}
 			sigalrm = false;
 		}
