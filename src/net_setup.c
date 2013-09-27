@@ -295,17 +295,18 @@ char *get_name(void) {
 
 	if(*name == '$') {
 		char *envname = getenv(name + 1);
+		char hostname[32] = "";
 		if(!envname) {
 			if(strcmp(name + 1, "HOST")) {
 				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				return false;
 			}
-			char envname[32];
-			if(gethostname(envname, 32)) {
+			if(gethostname(hostname, sizeof hostname) || !*hostname) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
 				return false;
 			}
-			envname[31] = 0;
+			hostname[31] = 0;
+			envname = hostname;
 		}
 		free(name);
 		name = xstrdup(envname);
