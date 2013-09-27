@@ -1152,7 +1152,7 @@ When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
 @cindex Proxy
-@item Proxy = socks4 | socks4 | http | exec @var{...} [experimental]
+@item Proxy = socks4 | socks5 | http | exec @var{...} [experimental]
 Use a proxy when making outgoing connections.
 The following proxy types are currently supported:
 
@@ -1163,7 +1163,7 @@ Connects to the proxy using the SOCKS version 4 protocol.
 Optionally, a @var{username} can be supplied which will be passed on to the proxy server.
 
 @cindex socks5
-@item socks4 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
+@item socks5 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
 Connect to the proxy using the SOCKS version 5 protocol.
 If a @var{username} and @var{password} are given, basic username/password authentication will be used,
 otherwise no authentication will be used.
@@ -1190,7 +1190,7 @@ pass all traffic, but leaves tinc vulnerable to replay-based attacks on your
 traffic.
 
 @cindex StrictSubnets
-@item StrictSubnets <yes|no> (no) [experimental]
+@item StrictSubnets = <yes|no> (no) [experimental]
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
