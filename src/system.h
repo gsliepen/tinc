@@ -21,7 +21,7 @@
 #ifndef __TINC_SYSTEM_H__
 #define __TINC_SYSTEM_H__
 
-#include "config.h"
+#include "../config.h"
 
 #include "have.h"
 

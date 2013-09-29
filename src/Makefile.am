@@ -2,13 +2,75 @@
 
 sbin_PROGRAMS = tincd
 
-EXTRA_DIST = linux/device.c bsd/device.c solaris/device.c cygwin/device.c mingw/device.c mingw/common.h
+tincd_SOURCES = \
+	have.h \
+	system.h \
+	avl_tree.c avl_tree.h \
+	conf.c conf.h \
+	connection.c connection.h \
+	device.h \
+	dropin.c dropin.h \
+	dummy_device.c \
+	edge.c edge.h \
+	ethernet.h \
+	event.c event.h \
+	fake-gai-errnos.h \
+	fake-getaddrinfo.c fake-getaddrinfo.h \
+	fake-getnameinfo.c fake-getnameinfo.h \
+	getopt.c getopt.h \
+	getopt1.c \
+	graph.c graph.h \
+	ipv4.h \
+	ipv6.h \
+	list.c list.h \
+	logger.c logger.h \
+	meta.c meta.h \
+	multicast_device.c \
+	net.c net.h \
+	net_packet.c \
+	net_setup.c \
+	net_socket.c \
+	netutl.c netutl.h \
+	node.c node.h \
+	pidfile.c pidfile.h \
+	process.c process.h \
+	protocol.c protocol.h \
+	protocol_auth.c \
+	protocol_edge.c \
+	protocol_misc.c \
+	protocol_key.c \
+	protocol_subnet.c \
+	raw_socket_device.c \
+	route.c route.h \
+	subnet.c subnet.h \
+	tincd.c \
+	utils.c utils.h \
+	xalloc.h \
+	xmalloc.c
 
-tincd_SOURCES = conf.c connection.c edge.c event.c graph.c logger.c meta.c net.c net_packet.c net_setup.c	\
-	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c	\
-	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c \
-	dummy_device.c raw_socket_device.c multicast_device.c
-	
+if LINUX
+tincd_SOURCES += linux/device.c
+endif
+
+if BSD
+tincd_SOURCES += bsd/device.c
+if TUNEMU
+tincd_SOURCES += bsd/tunemu.c bsd/tunemu.h
+endif
+endif
+
+if SOLARIS
+tincd_SOURCES += solaris/device.c
+endif
+
+if MINGW
+tincd_SOURCES += mingw/device.c mingw/common.h
+endif
+
+if CYGWIN
+tincd_SOURCES += cygwin/device.c
+endif
+
 if UML
 tincd_SOURCES += uml_device.c
 endif
@@ -18,28 +80,7 @@ tincd_SOURCES += vde_device.c
 endif
 
 if TUNEMU
-tincd_SOURCES += bsd/tunemu.c
-endif
-
-nodist_tincd_SOURCES = device.c
-
-DEFAULT_INCLUDES =
-
-INCLUDES = @INCLUDES@ -I$(top_builddir) -I$(top_srcdir)/lib
-
-noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logger.h meta.h net.h netutl.h node.h process.h	\
-	protocol.h route.h subnet.h bsd/tunemu.h
-
-LIBS = @LIBS@
-
-if TUNEMU
 LIBS += -lpcap
 endif
 
-tincd_LDADD = \
-	$(top_builddir)/lib/libvpn.a
-
-AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
-
-dist-hook:
-	rm -f `find . -type l`
+AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"

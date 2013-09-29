@@ -45,7 +45,7 @@
 #include "system.h"
 
 #include "avl_tree.h"
-#include "config.h"
+#include "conf.h"
 #include "connection.h"
 #include "device.h"
 #include "edge.h"

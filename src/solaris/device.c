@@ -18,19 +18,18 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-
-#include "system.h"
+#include "../system.h"
 
 #include <sys/stropts.h>
 #include <sys/sockio.h>
 #include <net/if_tun.h>
 
-#include "conf.h"
-#include "device.h"
-#include "logger.h"
-#include "net.h"
-#include "utils.h"
-#include "xalloc.h"
+#include "../conf.h"
+#include "../device.h"
+#include "../logger.h"
+#include "../net.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
 #define DEFAULT_DEVICE "/dev/tun"
 

@@ -20,7 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "../config.h"
 #endif
 
 #include "getopt.h"

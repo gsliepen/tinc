@@ -6,7 +6,7 @@ man_MANS = tincd.8 tinc.conf.5
 
 EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config.tar.gz
 
-CLEANFILES = *.html tinc.info tincd.8 tinc.conf.5 tincinclude.texi
+CLEANFILES = *.html tincd.8 tinc.conf.5 tincinclude.texi
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'

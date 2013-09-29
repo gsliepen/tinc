@@ -18,7 +18,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #ifdef HAVE_LINUX_IF_TUN_H
 #include <linux/if_tun.h>
@@ -27,13 +27,13 @@
 #define DEFAULT_DEVICE "/dev/tap0"
 #endif
 
-#include "conf.h"
-#include "device.h"
-#include "logger.h"
-#include "net.h"
-#include "route.h"
-#include "utils.h"
-#include "xalloc.h"
+#include "../conf.h"
+#include "../device.h"
+#include "../logger.h"
+#include "../net.h"
+#include "../route.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
 typedef enum device_type_t {
 	DEVICE_TYPE_ETHERTAP,

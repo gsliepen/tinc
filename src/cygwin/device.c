@@ -18,20 +18,20 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <w32api/windows.h>
 #include <w32api/winioctl.h>
 
-#include "conf.h"
-#include "device.h"
-#include "logger.h"
-#include "net.h"
-#include "route.h"
-#include "utils.h"
-#include "xalloc.h"
+#include "../conf.h"
+#include "../device.h"
+#include "../logger.h"
+#include "../net.h"
+#include "../route.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
-#include "mingw/common.h"
+#include "../mingw/common.h"
 
 int device_fd = -1;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
