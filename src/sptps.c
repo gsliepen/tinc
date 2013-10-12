@@ -22,7 +22,6 @@
 
 #include "cipher.h"
 #include "crypto.h"
-#include "digest.h"
 #include "ecdh.h"
 #include "ecdsa.h"
 #include "logger.h"
@@ -83,34 +82,30 @@ static void warning(sptps_t *s, const char *format, ...) {
 
 // Send a record (datagram version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
-	char buffer[len + 23UL];
+	char buffer[len + 21UL];
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = htonl(s->outseqno++);
-	uint16_t netlen = htons(len);
 
-	memcpy(buffer, &netlen, 2);
-	memcpy(buffer + 2, &seqno, 4);
-	buffer[6] = type;
-
-	// Add plaintext (TODO: avoid unnecessary copy)
-	memcpy(buffer + 7, data, len);
+	memcpy(buffer, &seqno, 4);
+	buffer[4] = type;
 
 	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
 		if(!cipher_set_counter(s->outcipher, &seqno, sizeof seqno))
-			return false;
+			return error(s, EINVAL, "Failed to set counter");
 
-		if(!cipher_counter_xor(s->outcipher, buffer + 6, len + 1UL, buffer + 6))
-			return false;
+		if(!cipher_gcm_encrypt_start(s->outcipher, buffer + 4, 1, buffer + 4, NULL))
+			return error(s, EINVAL, "Error encrypting record");
 
-		if(!digest_create(s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
-			return false;
+		if(!cipher_gcm_encrypt_finish(s->outcipher, data, len, buffer + 5, NULL))
+			return error(s, EINVAL, "Error encrypting record");
 
-		return s->send_data(s->handle, type, buffer + 2, len + 21UL);
+		return s->send_data(s->handle, type, buffer, len + 21UL);
 	} else {
 		// Otherwise send as plaintext
-		return s->send_data(s->handle, type, buffer + 2, len + 5UL);
+		memcpy(buffer + 5, data, len);
+		return s->send_data(s->handle, type, buffer, len + 5UL);
 	}
 }
 // Send a record (private version, accepts all record types, handles encryption and authentication).
@@ -118,31 +113,31 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 	if(s->datagram)
 		return send_record_priv_datagram(s, type, data, len);
 
-	char buffer[len + 23UL];
+	char buffer[len + 19UL];
 
 	// Create header with sequence number, length and record type
 	uint32_t seqno = htonl(s->outseqno++);
 	uint16_t netlen = htons(len);
 
-	memcpy(buffer, &seqno, 4);
-	memcpy(buffer + 4, &netlen, 2);
-	buffer[6] = type;
-
-	// Add plaintext (TODO: avoid unnecessary copy)
-	memcpy(buffer + 7, data, len);
+	memcpy(buffer, &netlen, 2);
+	buffer[2] = type;
 
 	if(s->outstate) {
 		// If first handshake has finished, encrypt and HMAC
-		if(!cipher_counter_xor(s->outcipher, buffer + 4, len + 3UL, buffer + 4))
-			return false;
+		if(!cipher_set_counter(s->outcipher, &seqno, 4))
+			return error(s, EINVAL, "Failed to set counter");
 
-		if(!digest_create(s->outdigest, buffer, len + 7UL, buffer + 7UL + len))
-			return false;
+		if(!cipher_gcm_encrypt_start(s->outcipher, buffer, 3, buffer, NULL))
+			return error(s, EINVAL, "Error encrypting record");
 
-		return s->send_data(s->handle, type, buffer + 4, len + 19UL);
+		if(!cipher_gcm_encrypt_finish(s->outcipher, data, len, buffer + 3, NULL))
+			return error(s, EINVAL, "Error encrypting record");
+
+		return s->send_data(s->handle, type, buffer, len + 19UL);
 	} else {
 		// Otherwise send as plaintext
-		return s->send_data(s->handle, type, buffer + 4, len + 3UL);
+		memcpy(buffer + 3, data, len);
+		return s->send_data(s->handle, type, buffer, len + 3UL);
 	}
 }
 
@@ -165,7 +160,7 @@ static bool send_kex(sptps_t *s) {
 
 	// Make room for our KEX message, which we will keep around since send_sig() needs it.
 	if(s->mykex)
-		abort();
+		return false;
 	s->mykex = realloc(s->mykex, 1 + 32 + keylen);
 	if(!s->mykex)
 		return error(s, errno, strerror(errno));
@@ -178,7 +173,7 @@ static bool send_kex(sptps_t *s) {
 
 	// Create a new ECDH public key.
 	if(!(s->ecdh = ecdh_generate_public(s->mykex + 1 + 32)))
-		return false;
+		return error(s, EINVAL, "Failed to generate ECDH public key");
 
 	return send_record_priv(s, SPTPS_HANDSHAKE, s->mykex, 1 + 32 + keylen);
 }
@@ -199,7 +194,7 @@ static bool send_sig(sptps_t *s) {
 
 	// Sign the result.
 	if(!ecdsa_sign(s->mykey, msg, sizeof msg, sig))
-		return false;
+		return error(s, EINVAL, "Failed to sign SIG record");
 
 	// Send the SIG exchange record.
 	return send_record_priv(s, SPTPS_HANDSHAKE, sig, sizeof sig);
@@ -209,16 +204,14 @@ static bool send_sig(sptps_t *s) {
 static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	// Initialise cipher and digest structures if necessary
 	if(!s->outstate) {
-		s->incipher = cipher_open_by_name("aes-256-ecb");
-		s->outcipher = cipher_open_by_name("aes-256-ecb");
-		s->indigest = digest_open_by_name("sha256", 16);
-		s->outdigest = digest_open_by_name("sha256", 16);
-		if(!s->incipher || !s->outcipher || !s->indigest || !s->outdigest)
-			return false;
+		s->incipher = cipher_open_by_name("aes-256-gcm");
+		s->outcipher = cipher_open_by_name("aes-256-gcm");
+		if(!s->incipher || !s->outcipher)
+			return error(s, EINVAL, "Failed to open cipher");
 	}
 
 	// Allocate memory for key material
-	size_t keylen = digest_keylength(s->indigest) + digest_keylength(s->outdigest) + cipher_keylength(s->incipher) + cipher_keylength(s->outcipher);
+	size_t keylen = cipher_keylength(s->incipher) + cipher_keylength(s->outcipher);
 
 	s->key = realloc(s->key, keylen);
 	if(!s->key)
@@ -238,7 +231,7 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 
 	// Use PRF to generate the key material
 	if(!prf(shared, len, seed, s->labellen + 64 + 13, s->key, keylen))
-		return false;
+		return error(s, EINVAL, "Failed to generate key material");
 
 	return true;
 }
@@ -254,17 +247,11 @@ static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 		return error(s, EIO, "Invalid ACK record length");
 
 	if(s->initiator) {
-		bool result
-			= cipher_set_counter_key(s->incipher, s->key)
-			&& digest_set_key(s->indigest, s->key + cipher_keylength(s->incipher), digest_keylength(s->indigest));
-		if(!result)
-			return false;
+		if(!cipher_set_counter_key(s->incipher, s->key))
+			return error(s, EINVAL, "Failed to set counter");
 	} else {
-		bool result
-			= cipher_set_counter_key(s->incipher, s->key + cipher_keylength(s->outcipher) + digest_keylength(s->outdigest))
-			&& digest_set_key(s->indigest, s->key + cipher_keylength(s->outcipher) + digest_keylength(s->outdigest) + cipher_keylength(s->incipher), digest_keylength(s->indigest));
-		if(!result)
-			return false;
+		if(!cipher_set_counter_key(s->incipher, s->key + cipher_keylength(s->outcipher)))
+			return error(s, EINVAL, "Failed to set counter");
 	}
 
 	free(s->key);
@@ -284,7 +271,7 @@ static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
 
 	// Make a copy of the KEX message, send_sig() and receive_sig() need it
 	if(s->hiskex)
-		abort();
+		return error(s, EINVAL, "Received a second KEX message before first has been processed");
 	s->hiskex = realloc(s->hiskex, len);
 	if(!s->hiskex)
 		return error(s, errno, strerror(errno));
@@ -313,12 +300,12 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 
 	// Verify signature.
 	if(!ecdsa_verify(s->hiskey, msg, sizeof msg, data))
-		return false;
+		return error(s, EIO, "Failed to verify SIG record");
 
 	// Compute shared secret.
 	char shared[ECDH_SHARED_SIZE];
 	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared))
-		return false;
+		return error(s, EINVAL, "Failed to compute ECDH shared secret");
 	s->ecdh = NULL;
 
 	// Generate key material from shared secret.
@@ -337,17 +324,11 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 
 	// TODO: only set new keys after ACK has been set/received
 	if(s->initiator) {
-		bool result
-			= cipher_set_counter_key(s->outcipher, s->key + cipher_keylength(s->incipher) + digest_keylength(s->indigest))
-			&& digest_set_key(s->outdigest, s->key + cipher_keylength(s->incipher) + digest_keylength(s->indigest) + cipher_keylength(s->outcipher), digest_keylength(s->outdigest));
-		if(!result)
-			return false;
+		if(!cipher_set_counter_key(s->outcipher, s->key + cipher_keylength(s->incipher)))
+			return error(s, EINVAL, "Failed to set counter");
 	} else {
-		bool result
-			=  cipher_set_counter_key(s->outcipher, s->key)
-			&& digest_set_key(s->outdigest, s->key + cipher_keylength(s->outcipher), digest_keylength(s->outdigest));
-		if(!result)
-			return false;
+		if(!cipher_set_counter_key(s->outcipher, s->key))
+			return error(s, EINVAL, "Failed to set counter");
 	}
 
 	return true;
@@ -407,15 +388,11 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 // Check datagram for valid HMAC
 bool sptps_verify_datagram(sptps_t *s, const char *data, size_t len) {
 	if(!s->instate || len < 21)
-		return false;
+		return error(s, EIO, "Received short packet");
 
-	char buffer[len + 23];
-	uint16_t netlen = htons(len - 21);
+	// TODO: just decrypt without updating the replay window
 
-	memcpy(buffer, &netlen, 2);
-	memcpy(buffer + 2, data, len);
-
-	return digest_verify(s->indigest, buffer, len - 14, buffer + len - 14);
+	return true;
 }
 
 // Receive incoming data, datagram version.
@@ -441,16 +418,16 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		return receive_handshake(s, data + 5, len - 5);
 	}
 
-	// Check HMAC.
-	uint16_t netlen = htons(len - 21);
+	// Decrypt
 
-	char buffer[len + 23];
+	char buffer[len];
 
-	memcpy(buffer, &netlen, 2);
-	memcpy(buffer + 2, data, len);
+	if(!cipher_set_counter(s->incipher, data, sizeof seqno))
+		return error(s, EINVAL, "Failed to set counter");
+	size_t outlen;
 
-	if(!digest_verify(s->indigest, buffer, len - 14, buffer + len - 14))
-		return error(s, EIO, "Invalid HMAC");
+	if(!cipher_gcm_decrypt(s->incipher, data + 4, len - 4, buffer, &outlen))
+		return error(s, EIO, "Failed to decrypt and verify packet");
 
 	// Replay protection using a sliding window of configurable size.
 	// s->inseqno is expected sequence number
@@ -492,26 +469,19 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	else
 		s->received++;
 
-	// Decrypt.
-	memcpy(&seqno, buffer + 2, 4);
-	if(!cipher_set_counter(s->incipher, &seqno, sizeof seqno))
-		return false;
-	if(!cipher_counter_xor(s->incipher, buffer + 6, len - 4, buffer + 6))
-		return false;
-
 	// Append a NULL byte for safety.
-	buffer[len - 14] = 0;
+	buffer[len - 20] = 0;
 
-	uint8_t type = buffer[6];
+	uint8_t type = buffer[0];
 
 	if(type < SPTPS_HANDSHAKE) {
 		if(!s->instate)
 			return error(s, EIO, "Application record received before handshake finished");
-		if(!s->receive_record(s->handle, type, buffer + 7, len - 21))
-			return false;
+		if(!s->receive_record(s->handle, type, buffer + 1, len - 21))
+			abort();
 	} else if(type == SPTPS_HANDSHAKE) {
-		if(!receive_handshake(s, buffer + 7, len - 21))
-			return false;
+		if(!receive_handshake(s, buffer + 1, len - 21))
+			abort();
 	} else {
 		return error(s, EIO, "Invalid record type %d", type);
 	}
@@ -529,8 +499,8 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 
 	while(len) {
 		// First read the 2 length bytes.
-		if(s->buflen < 6) {
-			size_t toread = 6 - s->buflen;
+		if(s->buflen < 2) {
+			size_t toread = 2 - s->buflen;
 			if(toread > len)
 				toread = len;
 
@@ -541,28 +511,31 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 			data += toread;
 
 			// Exit early if we don't have the full length.
-			if(s->buflen < 6)
+			if(s->buflen < 2)
 				return true;
+
+			// Update sequence number.
+
+			uint32_t seqno = htonl(s->inseqno++);
 
 			// Decrypt the length bytes
 
 			if(s->instate) {
-				if(!cipher_counter_xor(s->incipher, s->inbuf + 4, 2, &s->reclen))
-					return false;
+				if(!cipher_set_counter(s->incipher, &seqno, 4))
+					return error(s, EINVAL, "Failed to set counter");
+
+				if(!cipher_gcm_decrypt_start(s->incipher, s->inbuf, 2, &s->reclen, NULL))
+					return error(s, EINVAL, "Failed to decrypt record");
 			} else {
-				memcpy(&s->reclen, s->inbuf + 4, 2);
+				memcpy(&s->reclen, s->inbuf, 2);
 			}
 
 			s->reclen = ntohs(s->reclen);
 
 			// If we have the length bytes, ensure our buffer can hold the whole request.
-			s->inbuf = realloc(s->inbuf, s->reclen + 23UL);
+			s->inbuf = realloc(s->inbuf, s->reclen + 19UL);
 			if(!s->inbuf)
 				return error(s, errno, strerror(errno));
-
-			// Add sequence number.
-			uint32_t seqno = htonl(s->inseqno++);
-			memcpy(s->inbuf, &seqno, 4);
 
 			// Exit early if we have no more data to process.
 			if(!len)
@@ -570,7 +543,7 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 		}
 
 		// Read up to the end of the record.
-		size_t toread = s->reclen + (s->instate ? 23UL : 7UL) - s->buflen;
+		size_t toread = s->reclen + (s->instate ? 19UL : 3UL) - s->buflen;
 		if(toread > len)
 			toread = len;
 
@@ -580,36 +553,33 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 		data += toread;
 
 		// If we don't have a whole record, exit.
-		if(s->buflen < s->reclen + (s->instate ? 23UL : 7UL))
+		if(s->buflen < s->reclen + (s->instate ? 19UL : 3UL))
 			return true;
 
 		// Check HMAC and decrypt.
 		if(s->instate) {
-			if(!digest_verify(s->indigest, s->inbuf, s->reclen + 7UL, s->inbuf + s->reclen + 7UL))
-				return error(s, EIO, "Invalid HMAC");
-
-			if(!cipher_counter_xor(s->incipher, s->inbuf + 6UL, s->reclen + 1UL, s->inbuf + 6UL))
-				return false;
+			if(!cipher_gcm_decrypt_finish(s->incipher, s->inbuf + 2UL, s->reclen + 17UL, s->inbuf + 2UL, NULL))
+				return error(s, EINVAL, "Failed to decrypt and verify record");
 		}
 
 		// Append a NULL byte for safety.
-		s->inbuf[s->reclen + 7UL] = 0;
+		s->inbuf[s->reclen + 3UL] = 0;
 
-		uint8_t type = s->inbuf[6];
+		uint8_t type = s->inbuf[2];
 
 		if(type < SPTPS_HANDSHAKE) {
 			if(!s->instate)
 				return error(s, EIO, "Application record received before handshake finished");
-			if(!s->receive_record(s->handle, type, s->inbuf + 7, s->reclen))
+			if(!s->receive_record(s->handle, type, s->inbuf + 3, s->reclen))
 				return false;
 		} else if(type == SPTPS_HANDSHAKE) {
-			if(!receive_handshake(s, s->inbuf + 7, s->reclen))
+			if(!receive_handshake(s, s->inbuf + 3, s->reclen))
 				return false;
 		} else {
 			return error(s, EIO, "Invalid record type %d", type);
 		}
 
-		s->buflen = 4;
+		s->buflen = 0;
 	}
 
 	return true;
@@ -641,8 +611,7 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 		s->inbuf = malloc(7);
 		if(!s->inbuf)
 			return error(s, errno, strerror(errno));
-		s->buflen = 4;
-		memset(s->inbuf, 0, 4);
+		s->buflen = 0;
 	}
 
 	memcpy(s->label, label, labellen);
