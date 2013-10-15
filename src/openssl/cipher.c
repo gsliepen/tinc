@@ -160,7 +160,7 @@ bool cipher_gcm_encrypt_start(cipher_t *cipher, const void *indata, size_t inlen
 
 bool cipher_gcm_encrypt_finish(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen) {
 	int len = 0, pad = 0;
-	if(!(inlen && EVP_EncryptUpdate(&cipher->ctx, (unsigned char *)outdata, &len, (unsigned char *)indata, inlen))
+	if((inlen && !EVP_EncryptUpdate(&cipher->ctx, (unsigned char *)outdata, &len, (unsigned char *)indata, inlen))
 			|| !EVP_EncryptFinal(&cipher->ctx, (unsigned char *)outdata + len, &pad)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", ERR_error_string(ERR_get_error(), NULL));
 		return false;
