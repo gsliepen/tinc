@@ -129,6 +129,12 @@ void terminate_connection(connection_t *c, bool report) {
 
 	if(outgoing)
 		do_outgoing_connection(outgoing);
+
+#ifndef HAVE_MINGW
+	/* Clean up dead proxy processes */
+
+	while(waitpid(-1, NULL, WNOHANG) > 0);
+#endif
 }
 
 /*
