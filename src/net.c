@@ -212,6 +212,12 @@ void terminate_connection(connection_t *c, bool report) {
 		c->status.remove = false;
 		do_outgoing_connection(c);	
 	}
+
+#ifndef HAVE_MINGW
+	/* Clean up dead proxy processes */
+
+	while(waitpid(-1, NULL, WNOHANG) > 0);
+#endif
 }
 
 /*
