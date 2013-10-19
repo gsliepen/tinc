@@ -1,3 +1,13 @@
+Version 1.0.23               October 19 2013
+
+ * Start authentication immediately on outgoing connections (useful for sslh).
+
+ * Fixed segfault when Name = $HOST but $HOST is not set.
+
+ * Updated the build system and the documentation.
+
+ * Clean up child processes left over from Proxy = exec.
+
 Version 1.0.22               August 13 2013
 
  * Fixed the combination of Mode = router and DeviceType = tap.
