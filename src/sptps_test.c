@@ -33,13 +33,15 @@ bool send_meta(void *c, const char *msg , int len) { return false; }
 char *logfilename = NULL;
 struct timeval now;
 
+static bool verbose;
 static bool readonly;
 static bool writeonly;
 
 static bool send_data(void *handle, uint8_t type, const char *data, size_t len) {
 	char hex[len * 2 + 1];
 	bin2hex(data, hex, len);
-	fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);
+	if(verbose)
+		fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);
 	const int *sock = handle;
 	if(send(*sock, data, len, 0) != len)
 		return false;
@@ -47,7 +49,8 @@ static bool send_data(void *handle, uint8_t type, const char *data, size_t len) 
 }
 
 static bool receive_record(void *handle, uint8_t type, const char *data, uint16_t len) {
-	fprintf(stderr, "Received type %d record of %hu bytes:\n", type, len);
+	if(verbose)
+		fprintf(stderr, "Received type %d record of %hu bytes:\n", type, len);
 	if(!writeonly)
 		fwrite(data, len, 1, stdout);
 	return true;
@@ -60,6 +63,7 @@ static struct option const long_options[] = {
 	{"writeonly", no_argument, NULL, 'w'},
 	{"packet-loss", required_argument, NULL, 'L'},
 	{"replay-window", required_argument, NULL, 'W'},
+	{"verbose", required_argument, NULL, 'v'},
 	{"help", no_argument, NULL, 1},
 	{NULL, 0, NULL, 0}
 };
@@ -75,6 +79,7 @@ static void usage() {
 			"  -w, --writeonly         Only send data from stdin to the socket.\n"
 			"  -L, --packet-loss RATE  Fake packet loss of RATE percent.\n"
 			"  -R, --replay-window N   Set replay window to N bytes.\n"
+			"  -v, --verbose           Display debug messages.\n"
 			"\n");
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
 }
@@ -89,7 +94,7 @@ int main(int argc, char *argv[]) {
 	ecdsa_t *mykey = NULL, *hiskey = NULL;
 	bool quit = false;
 
-	while((r = getopt_long(argc, argv, "dqrwL:W:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "dqrwL:W:v", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -116,6 +121,10 @@ int main(int argc, char *argv[]) {
 
 			case 'W': /* replay window size */
 				sptps_replaywin = atoi(optarg);
+				break;
+
+			case 'v': /* be verbose */
+				verbose = true;
 				break;
 
 			case '?': /* wrong options */
@@ -230,7 +239,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	fclose(fp);
 
-	fprintf(stderr, "Keys loaded\n");
+	if(verbose)
+		fprintf(stderr, "Keys loaded\n");
 
 	sptps_t s;
 	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record))
@@ -254,7 +264,6 @@ int main(int argc, char *argv[]) {
 
 		if(FD_ISSET(0, &fds)) {
 			ssize_t len = read(0, buf, sizeof buf);
-			fprintf(stderr, "%zd\n", len);
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
 				return 1;
@@ -288,11 +297,14 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Connection terminated by peer.\n");
 				break;
 			}
-			char hex[len * 2 + 1];
-			bin2hex(buf, hex, len);
-			fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
-			if((rand() % 100) < packetloss) {
-				fprintf(stderr, "Dropped.\n");
+			if(verbose) {
+				char hex[len * 2 + 1];
+				bin2hex(buf, hex, len);
+				fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
+			}
+			if(packetloss && (rand() % 100) < packetloss) {
+				if(verbose)
+					fprintf(stderr, "Dropped.\n");
 				continue;
 			}
 			if(!sptps_receive_data(&s, buf, len) && !datagram)
