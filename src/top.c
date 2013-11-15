@@ -213,7 +213,8 @@ static void redraw(void) {
 	for(int i = 0; i < n; i++)
 		sorted[i]->i = i;
 
-	qsort(sorted, n, sizeof *sorted, sortfunc);
+	if(sorted)
+		qsort(sorted, n, sizeof *sorted, sortfunc);
 
 	for(int i = 0, row = 3; i < n; i++, row++) {
 		nodestats_t *node = sorted[i];

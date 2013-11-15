@@ -633,6 +633,8 @@ bool setup_myself_reloadable(void) {
 		keylifetime = 3600;
 
 	get_config_int(lookup_config(config_tree, "AutoConnect"), &autoconnect);
+	if(autoconnect < 0)
+		autoconnect = 0;
 
 	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
 
