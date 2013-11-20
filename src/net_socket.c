@@ -594,7 +594,6 @@ void handle_new_meta_connection(void *data, int flags) {
 	// Check if we get many connections from the same host
 
 	static sockaddr_t prev_sa;
-	static time_t prev_time;
 	static int tarpit = -1;
 
 	if(tarpit >= 0) {
@@ -621,7 +620,6 @@ void handle_new_meta_connection(void *data, int flags) {
 	}
 
 	memcpy(&prev_sa, &sa, sizeof sa);
-	prev_time = now.tv_sec;
 
 	// Check if we get many connections from different hosts
 
