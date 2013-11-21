@@ -37,7 +37,8 @@ typedef struct node_status_t {
 	unsigned int indirect:1;                /* 1 if this node is not directly reachable by us */
 	unsigned int sptps:1;                   /* 1 if this node supports SPTPS */
 	unsigned int udp_confirmed:1;           /* 1 if the address is one that we received UDP traffic on */
-	unsigned int unused:24;
+	unsigned int broadcast:1;		/* 1 if the next UDP packet should be broadcast to the local network */
+	unsigned int unused:23;
 } node_status_t;
 
 typedef struct node_t {

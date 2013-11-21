@@ -143,16 +143,15 @@ static void send_mtu_probe_handler(void *data) {
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
-		if(i >= 4 && n->mtuprobes <= 10)
-			packet.priority = -1;
-		else
-			packet.priority = 0;
+		packet.priority = 0;
+		n->status.broadcast = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
 
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
 
 		send_udppacket(n, &packet);
 	}
 
+	n->status.broadcast = false;
 	n->probe_counter = 0;
 	gettimeofday(&n->probe_time, NULL);
 
@@ -734,9 +733,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	const sockaddr_t *sa;
 	int sock;
 
-	/* Overloaded use of priority field: -1 means local broadcast */
-
-	if(origpriority == -1 && n->prevedge)
+	if(n->status.broadcast)
 		choose_broadcast_address(n, &sa, &sock);
 	else
 		choose_udp_address(n, &sa, &sock);
@@ -788,7 +785,10 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 	const sockaddr_t *sa;
 	int sock;
 
-	choose_udp_address(to, &sa, &sock);
+	if(to->status.broadcast)
+		choose_broadcast_address(to, &sa, &sock);
+	else
+		choose_udp_address(to, &sa, &sock);
 
 	if(sendto(listen_socket[sock].udp.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
