@@ -747,7 +747,9 @@ static bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
 		cipher = xstrdup("blowfish");
 
-	if(!(myself->incipher = cipher_open_by_name(cipher))) {
+	if(!strcasecmp(cipher, "none")) {
+		myself->incipher = NULL;
+	} else if(!(myself->incipher = cipher_open_by_name(cipher))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
 		return false;
 	}
@@ -769,7 +771,9 @@ static bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
 		digest = xstrdup("sha1");
 
-	if(!(myself->indigest = digest_open_by_name(digest, maclength))) {
+	if(!strcasecmp(digest, "none")) {
+		myself->indigest = NULL;
+	} else if(!(myself->indigest = digest_open_by_name(digest, maclength))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
 		return false;
 	}

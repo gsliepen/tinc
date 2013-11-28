@@ -395,14 +395,22 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!(from->outcipher = cipher_open_by_nid(cipher))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
-		return false;
+	if(cipher) {
+		if(!(from->outcipher = cipher_open_by_nid(cipher))) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
+			return false;
+		}
+	} else {
+		from->outcipher = NULL;
 	}
 
-	if(!(from->outdigest = digest_open_by_nid(digest, maclength))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
-		return false;
+	if(digest) {
+		if(!(from->outdigest = digest_open_by_nid(digest, maclength))) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
+			return false;
+		}
+	} else {
+		from->outdigest = NULL;
 	}
 
 	if(maclength != digest_length(from->outdigest)) {
