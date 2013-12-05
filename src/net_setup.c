@@ -340,6 +340,7 @@ static bool setup_myself(void) {
 	bool choice;
 	int i, err;
 	int replaywin_int;
+	bool port_specified = false;
 
 	myself = new_node();
 	myself->connection = new_connection();
@@ -355,6 +356,8 @@ static bool setup_myself(void) {
 		return false;
 	}
 
+	/* Read tinc.conf and our own host config file */
+
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
 	xasprintf(&fname, "%s/hosts/%s", confbase, name);
@@ -367,6 +370,10 @@ static bool setup_myself(void) {
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
 		myport = xstrdup("655");
+	else
+		port_specified = true;
+
+	/* Ensure myport is numeric */
 
 	if(!atoi(myport)) {
 		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
@@ -812,13 +819,27 @@ static bool setup_myself(void) {
 		} while(cfg);
 	}
 
-	if(listen_sockets)
-		logger(LOG_NOTICE, "Ready");
-	else {
+	if(!listen_sockets) {
 		logger(LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
 
+	/* If no Port option was specified, set myport to the port used by the first listening socket. */
+
+	if(!port_specified) {
+		sockaddr_t sa;
+		socklen_t salen = sizeof sa;
+		if(!getsockname(listen_socket[0].udp, &sa.sa, &salen)) {
+			free(myport);
+			sockaddr2str(&sa, NULL, &myport);
+			if(!myport)
+				myport = xstrdup("655");
+		}
+	}
+
+	/* Done. */
+
+	logger(LOG_NOTICE, "Ready");
 	return true;
 }
 
