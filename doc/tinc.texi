@@ -1226,6 +1226,8 @@ This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 If no port is specified, the default Port is used.
+Multiple Address variables can be specified, in which case each address will be
+tried until a working connection has been established.
 
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)
