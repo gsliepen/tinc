@@ -649,6 +649,7 @@ bool setup_myself_reloadable(void) {
 static bool setup_myself(void) {
 	char *name, *hostname, *cipher, *digest, *type;
 	char *address = NULL;
+	bool port_specified = false;
 
 	if(!(name = get_name())) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Name for tinc daemon required!");
@@ -663,9 +664,8 @@ static bool setup_myself(void) {
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
 		myport = xstrdup("655");
-
-	xasprintf(&myself->hostname, "MYSELF port %s", myport);
-	myself->connection->hostname = xstrdup(myself->hostname);
+	else
+		port_specified = true;
 
 	myself->connection->options = 0;
 	myself->connection->protocol_major = PROT_MAJOR;
@@ -680,6 +680,8 @@ static bool setup_myself(void) {
 
 	if(!read_rsa_private_key())
 		return false;
+
+	/* Ensure myport is numeric */
 
 	if(!atoi(myport)) {
 		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
@@ -952,6 +954,24 @@ static bool setup_myself(void) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
+
+	/* If no Port option was specified, set myport to the port used by the first listening socket. */
+
+	if(!port_specified) {
+		sockaddr_t sa;
+		socklen_t salen = sizeof sa;
+		if(!getsockname(listen_socket[0].udp.fd, &sa.sa, &salen)) {
+			free(myport);
+			sockaddr2str(&sa, NULL, &myport);
+			if(!myport)
+				myport = xstrdup("655");
+		}
+	}
+
+	xasprintf(&myself->hostname, "MYSELF port %s", myport);
+	myself->connection->hostname = xstrdup(myself->hostname);
+
+	/* Done. */
 
 	last_config_check = now.tv_sec;
 
