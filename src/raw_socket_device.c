@@ -32,7 +32,7 @@
 #include "route.h"
 #include "xalloc.h"
 
-#if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET)
+#if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET) && defined(SIOCGIFINDEX)
 static char *device_info;
 
 static uint64_t device_total_in = 0;
