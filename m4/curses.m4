@@ -31,9 +31,12 @@ AC_DEFUN([tinc_CURSES],
       [AC_MSG_ERROR("curses header files not found."); break]
     )
 
-    AC_CHECK_LIB(curses, initscr,
-      [CURSES_LIBS="-lcurses"],
-      [AC_MSG_ERROR("curses libraries not found.")]
+    AC_CHECK_LIB(ncurses, initscr,
+      [CURSES_LIBS="-lncurses"],
+      [AC_CHECK_LIB(curses, initscr,
+        [CURSES_LIBS="-lcurses"],
+        [AC_MSG_ERROR("curses libraries not found.")]
+      )]
     )
   ])
 
