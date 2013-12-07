@@ -33,6 +33,11 @@
 #include "../utils.h"
 #include "../xalloc.h"
 
+#ifndef TUNNEWPPA
+#warning Missing net/if_tun.h, using hardcoded value for TUNNEWPPA
+#define TUNNEWPPA       (('T'<<16) | 0x0001)
+#endif
+
 #define DEFAULT_TUN_DEVICE "/dev/tun"
 #define DEFAULT_TAP_DEVICE "/dev/tap"
 
@@ -44,7 +49,6 @@ static enum {
 int device_fd = -1;
 static int if_fd = -1;
 static int ip_fd = -1;
-static int arp_fd = -1;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
