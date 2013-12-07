@@ -182,11 +182,11 @@ bool init_control(void) {
 		return false;
 	}
 
-	struct sockaddr_un sun;
-	sun.sun_family = AF_UNIX;
-	strncpy(sun.sun_path, unixsocketname, sizeof sun.sun_path);
+	struct sockaddr_un sa_un;
+	sa_un.sun_family = AF_UNIX;
+	strncpy(sa_un.sun_path, unixsocketname, sizeof sa_un.sun_path);
 
-	if(connect(unix_fd, (struct sockaddr *)&sun, sizeof sun) >= 0) {
+	if(connect(unix_fd, (struct sockaddr *)&sa_un, sizeof sa_un) >= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);
 		return false;
 	}
@@ -194,7 +194,7 @@ bool init_control(void) {
 	unlink(unixsocketname);
 
 	umask(mask | 077);
-	int result = bind(unix_fd, (struct sockaddr *)&sun, sizeof sun);
+	int result = bind(unix_fd, (struct sockaddr *)&sa_un, sizeof sa_un);
 	umask(mask);
 
 	if(result < 0) {
