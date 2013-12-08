@@ -1777,7 +1777,7 @@ static int cmd_init(int argc, char *argv[]) {
 			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
 			return 1;
 		}
-		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
+		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit '$0'!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
 		fclose(f);
 	}
 #endif
