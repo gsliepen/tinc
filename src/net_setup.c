@@ -86,10 +86,8 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 	fp = fopen(pubname, "r");
 
-	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA public key file `%s': %s", pubname, strerror(errno));
+	if(!fp)
 		goto exit;
-	}
 
 	n->ecdsa = ecdsa_read_pem_public_key(fp);
 	fclose(fp);
