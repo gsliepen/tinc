@@ -673,10 +673,13 @@ static bool setup_myself(void) {
 
 	myself->options |= PROT_MINOR << 24;
 
-	get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental);
-
-	if(experimental && !read_ecdsa_private_key())
-		return false;
+	if(!get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental)) {
+		experimental = read_ecdsa_private_key();
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Support for SPTPS disabled.");
+	} else {
+		if(experimental && !read_ecdsa_private_key())
+			return false;
+	}
 
 	if(!read_rsa_private_key())
 		return false;
