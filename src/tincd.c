@@ -440,9 +440,6 @@ int main2(int argc, char **argv) {
 
 	/* Shutdown properly. */
 
-	if(debug_level >= DEBUG_CONNECTIONS)
-		devops.dump_stats();
-
 end:
 	close_network_connections();
 

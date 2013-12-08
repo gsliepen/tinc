@@ -40,9 +40,6 @@ char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
-
 extern char *myport;
 
 static DWORD WINAPI tapreader(void *bla) {
@@ -235,15 +232,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
-	device_total_out += packet->len;
-
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t os_devops = {
@@ -251,5 +240,4 @@ const devops_t os_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };

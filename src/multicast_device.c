@@ -31,9 +31,6 @@
 
 static char *device_info;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
-
 static struct addrinfo *ai = NULL;
 static mac_t ignore_src = {{0}};
 
@@ -176,8 +173,6 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	packet->len = lenin;
 
-	device_total_in += packet->len;
-
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
@@ -194,17 +189,9 @@ static bool write_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
-	device_total_out += packet->len;
-
 	memcpy(&ignore_src, packet->data + 6, sizeof ignore_src);
 
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t multicast_devops = {
@@ -212,21 +199,4 @@ const devops_t multicast_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };
-
-#if 0
-
-static bool not_supported(void) {
-	logger(DEBUG_ALWAYS, LOG_ERR, "Raw socket device not supported on this platform");
-	return false;
-}
-
-const devops_t multicast_devops = {
-	.setup = not_supported,
-	.close = NULL,
-	.read = NULL,
-	.write = NULL,
-	.dump_stats = NULL,
-};
-#endif

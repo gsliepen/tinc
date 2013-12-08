@@ -54,8 +54,6 @@ int device_fd = -1;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
 #if defined(ENABLE_TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
 #elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
@@ -290,8 +288,6 @@ static bool read_packet(vpn_packet_t *packet) {
 			return false;
 	}
 
-	device_total_in += packet->len;
-
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s",
 			   packet->len, device_info);
 
@@ -362,15 +358,7 @@ static bool write_packet(vpn_packet_t *packet) {
 			return false;
 	}
 
-	device_total_out += packet->len;
-
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t os_devops = {
@@ -378,5 +366,4 @@ const devops_t os_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };
