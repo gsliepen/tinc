@@ -134,6 +134,7 @@ if test -d /sw/lib ; then
 fi
 
 dnl Compiler hardening flags
+dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
 
 AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
 AS_IF([test "x$enable_hardening" != "xno"],
@@ -144,10 +145,8 @@ AS_IF([test "x$enable_hardening" != "xno"],
      *mingw*)
        AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
        AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
-       # TODO: get -fstack-protector-all working with MinGW
        ;;
      *)
-       AX_CHECK_COMPILE_FLAG([-fstack-protector-all], [CPPFLAGS="$CPPFLAGS -fstack-protector-all"])
        AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
        AX_CHECK_LINK_FLAG([-pie], [LDFLAGS="$LDFLAGS -pie"])
        ;;
@@ -228,7 +227,7 @@ fi
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
 AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
 
-dnl Check if support for jumbograms is requested 
+dnl Check if support for jumbograms is requested
 AC_ARG_ENABLE(jumbograms,
   AS_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
   [ AS_IF([test "x$enable_jumbograms" = "xyes"],
