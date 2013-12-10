@@ -105,7 +105,7 @@ AC_ARG_ENABLE(tunemu,
 )
 
 AC_ARG_WITH(windows2000,
-  AS_HELP_STRING([--without-windows2000], [compile with support for Windows 2000. This disables support for tunneling over existing IPv6 networks.]),
+  AS_HELP_STRING([--with-windows2000], [compile with support for Windows 2000. This disables support for tunneling over existing IPv6 networks.]),
   [ AS_IF([test "x$with_windows2000" = "xyes"],
       [AC_DEFINE(WITH_WINDOWS2000, 1, [Compile with support for Windows 2000])])
   ]
@@ -128,6 +128,30 @@ fi
 if test -d /sw/lib ; then
   LIBS="$LIBS -L/sw/lib"
 fi
+
+dnl Compiler hardening flags
+
+AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
+AS_IF([test "x$enable_hardening" != "xno"],
+  [AX_CHECK_COMPILE_FLAG([-DFORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -DFORITFY_SOURCE=2"])
+   AX_CHECK_COMPILE_FLAG([-fno-strict-overflow], [CPPFLAGS="$CPPFLAGS -fno-strict-overflow"])
+   AX_CHECK_COMPILE_FLAG([-fwrapv], [CPPFLAGS="$CPPFLAGS -fwrapv"])
+   case $host_os in
+     *mingw*)
+       AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
+       AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
+       # TODO: get -fstack-protector-all working with MinGW
+       ;;
+     *)
+       AX_CHECK_COMPILE_FLAG([-fstack-protector-all], [CPPFLAGS="$CPPFLAGS -fstack-protector-all"])
+       AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
+       AX_CHECK_LINK_FLAG([-pie], [LDFLAGS="$LDFLAGS -pie"])
+       ;;
+   esac
+   AX_CHECK_LINK_FLAG([-Wl,-z,relro], [LDFLAGS="$LDFLAGS -Wl,-z,relro"])
+   AX_CHECK_LINK_FLAG([-Wl,-z,now], [LDFLAGS="$LDFLAGS -Wl,-z,now"])
+  ]
+);
 
 dnl Checks for libraries.
 
@@ -189,7 +213,7 @@ tinc_OPENSSL
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
-  AS_HELP_STRING([--disable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
+  AS_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
   [ AS_IF([test "x$enable_jumbograms" = "xyes"],
       [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ])
   ]
