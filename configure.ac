@@ -217,16 +217,16 @@ tinc_READLINE
 tinc_ZLIB
 tinc_LZO
 
-if test "$with_libgcrypt" = yes; then
+if test "x$with_libgcrypt" != "xno"; then
 	gcrypt=true
-	AM_PATH_LIBGCRYPT([1.4.0], [], [])
+	tinc_LIBGCRYPT
 else
 	openssl=true
 	tinc_OPENSSL
 fi
 	
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
-AM_CONDITIONAL(GCRYPT, test "$gcrypt" = true)
+AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
