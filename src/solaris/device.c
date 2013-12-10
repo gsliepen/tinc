@@ -316,7 +316,7 @@ static bool read_packet(vpn_packet_t *packet) {
 					packet->data[13] = 0xDD;
 					break;
 				default:
-					logger(DEBUG_TRAFFIC, LOG_ERR, "Unknown IP version %d while reading packet from %s %s", packet->data[14] >> 4, device_info, device);
+					ifdebug(TRAFFIC) logger(LOG_ERR, "Unknown IP version %d while reading packet from %s %s", packet->data[14] >> 4, device_info, device);
 					return false;
 			}
 
@@ -339,13 +339,13 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	device_total_in += packet->len;
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len, device_info);
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len, device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s", packet->len, device_info);
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s", packet->len, device_info);
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
