@@ -216,7 +216,7 @@ tinc_READLINE
 tinc_ZLIB
 tinc_LZO
 
-if test "x$with_libgcrypt" != "xno"; then
+if test -n "$with_libgcrypt"; then
 	gcrypt=true
 	tinc_LIBGCRYPT
 else
