@@ -631,6 +631,8 @@ The top directory for configuration files.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 The default name of the server configuration file for net
 .Ar NETNAME .
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /conf.d/
+Optional directory from which any *.conf file will be loaded
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 Host configuration files are kept in this directory.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
