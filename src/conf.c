@@ -378,6 +378,30 @@ bool read_server_config(void) {
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
+	// We will try to read the conf files in the "conf.d" dir
+	if (x) {
+		char * dname;
+		xasprintf(&dname, "%s/conf.d", confbase);
+		DIR *dir = opendir (dname);
+		// If we can find this dir
+		if (dir) { 
+			struct dirent *ep;
+			// We list all the files in it
+			while (x && (ep = readdir (dir))) {
+				size_t l = strlen(ep->d_name);
+				// And we try to read the ones that end with ".conf"
+				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
+					free(fname);
+					xasprintf(&fname, "%s/%s", dname, ep->d_name);
+					logger(LOG_DEBUG, "Reading conf file \"%s\"", fname);
+					x = read_config_file(config_tree, fname);
+				}
+			}
+			closedir (dir);
+		}
+		free(dname);
+	}
+
 	if(!x) {				/* System error: complain */
 		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
