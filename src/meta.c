@@ -180,7 +180,7 @@ bool receive_meta(connection_t *c) {
 				if(!c->node) {
 					if(c->outgoing && proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
 						if(c->buffer[0] == 0 && c->buffer[1] == 0x5a) {
-							logger(LOG_DEBUG, "Proxy request granted");
+							ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
 						} else {
 							logger(LOG_ERR, "Proxy request rejected");
 							return false;
@@ -199,9 +199,9 @@ bool receive_meta(connection_t *c) {
 							return false;
 						}
 						if(c->buffer[3] == 0) {
-							logger(LOG_DEBUG, "Proxy request granted");
+							ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
 						} else {
-							logger(LOG_DEBUG, "Proxy request rejected");
+							logger(LOG_ERR, "Proxy request rejected");
 							return false;
 						}
 					} else {

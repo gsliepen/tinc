@@ -311,7 +311,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	if(fork()) {
 		c->socket = fd[0];
 		close(fd[1]);
-		logger(LOG_DEBUG, "Using proxy %s", command);
+		ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Using proxy %s", command);
 		return;
 	}
 

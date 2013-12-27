@@ -393,7 +393,6 @@ bool read_server_config(void) {
 				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
 					free(fname);
 					xasprintf(&fname, "%s/%s", dname, ep->d_name);
-					logger(LOG_DEBUG, "Reading conf file \"%s\"", fname);
 					x = read_config_file(config_tree, fname);
 				}
 			}
