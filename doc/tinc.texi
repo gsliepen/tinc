@@ -793,6 +793,9 @@ The actual configuration of the daemon is done in the file
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf} and at least one other file in the directory
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/}.
 
+An optionnal directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
+any .conf file will be read.
+
 These file consists of comments (lines started with a #) or assignments
 in the form of
 

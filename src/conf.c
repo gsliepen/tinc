@@ -376,6 +376,29 @@ bool read_server_config(void) {
 	errno = 0;
 	x = read_config_file(config_tree, fname);
 
+	// We will try to read the conf files in the "conf.d" dir
+	if (x) {
+		char * dname;
+		xasprintf(&dname, "%s" SLASH "conf.d", confbase);
+		DIR *dir = opendir (dname);
+		// If we can find this dir
+		if (dir) { 
+			struct dirent *ep;
+			// We list all the files in it
+			while (x && (ep = readdir (dir))) {
+				size_t l = strlen(ep->d_name);
+				// And we try to read the ones that end with ".conf"
+				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
+					free(fname);
+					xasprintf(&fname, "%s" SLASH "%s", dname, ep->d_name);
+					x = read_config_file(config_tree, fname);
+				}
+			}
+			closedir (dir);
+		}
+		free(dname);
+	}
+
 	if(!x && errno)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 
