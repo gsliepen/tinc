@@ -446,7 +446,8 @@ traffic.
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
-directory.
+directory. Subnets learned via connections to other nodes and which are not
+present in the local host config files are ignored.
 .It Va TunnelServer Li = yes | no Po no Pc Bq experimental
 When this option is enabled tinc will no longer forward information between other tinc daemons,
 and will only allow connections with nodes for which host config files are present in the local
