@@ -1105,6 +1105,8 @@ traffic.
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+Subnets learned via connections to other nodes and which are not
+present in the local host config files are ignored.
 
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
