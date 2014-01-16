@@ -1,4 +1,4 @@
-.Dd 2013-01-15
+.Dd 2014-01-16
 .Dt TINCCTL 8
 .\" Manual page created by:
 .\" Scott Lamb
@@ -13,14 +13,36 @@
 .Op Fl -pidfile Ns = Ns Ar FILENAME
 .Op Fl -help
 .Op Fl -version
-.Ar COMMAND
+.Op Ar COMMAND
 .Sh DESCRIPTION
 This is the control program of tinc, a secure virtual private network (VPN)
 project.
 .Nm
-communicates with
-.Xr tincd 8
-to alter and inspect the running VPN's state.
+can start and stop
+.Xr tincd 8 ,
+and can to alter and inspect the state of a running VPN.
+It can also be used to change the configuration,
+or to import or export host configuration files from other nodes.
+
+If
+.Nm
+is started with a
+.Ar COMMAND ,
+this command is immediately executed, after which
+.Nm
+exits.
+If no
+.Ar COMMAND
+is given,
+.Nm
+will act as a shell;
+it will display a prompt, and commands can be entered on the prompt.
+If
+.Nm
+is compiled with libreadline, history and command completion are available on the prompt.
+One can also pipe a script containing commands through
+.Nm .
+In that case, lines starting with a # symbol will be ignored.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl n, -net Ns = Ns Ar NETNAME
@@ -197,7 +219,7 @@ tinc -n vpn pcap | tcpdump -r -
 tinc -n vpn top
 .Pp
 .Ed
-Example of configuring tinc using
+Examples of changing the configuration using
 .Nm :
 .Bd -literal -offset indent
 tinc -n vpn init foo

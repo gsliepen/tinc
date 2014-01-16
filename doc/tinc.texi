@@ -2153,12 +2153,18 @@ Be sure to include the following information in your bugreport:
 @node    Controlling tinc
 @chapter Controlling tinc
 
-You can control and inspect a running tincd through the tinc
+You can start, stop, control and inspect a running tincd through the tinc
 command. A quick example:
 
 @example
 tinc -n @var{netname} reload
 @end example
+
+If tinc is started without a command, it will act as a shell; it will display a
+prompt, and commands can be entered on the prompt. If tinc is compiled with
+libreadline, history and command completion are available on the prompt. One
+can also pipe a script containing commands through tinc. In that case, lines
+starting with a # symbol will be ignored.
 
 @menu
 * tinc runtime options::
@@ -2359,7 +2365,7 @@ tinc -n vpn pcap | tcpdump -r -
 tinc -n vpn top
 @end example
 
-Example of configuring tinc using the tinc command:
+Examples of changing the configuration using tinc:
 
 @example
 tinc -n vpn init foo
