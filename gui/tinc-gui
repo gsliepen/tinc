@@ -27,7 +27,7 @@ import time
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
-if platform.system == 'Windows':
+if platform.system() == 'Windows':
 	import _winreg
 
 # Classes to interface with a running tinc daemon
@@ -233,9 +233,9 @@ class VPN:
 		return int(resp[2])
 
 	def __init__(self, netname = None, pidfile = None):
-		if platform.system == 'Windows':
+		if platform.system() == 'Windows':
 			try:
-				reg = _winreg.ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+				reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
 				key = _winreg.OpenKey(reg, "SOFTWARE\\tinc")
 				VPN.confdir = _winreg.QueryValue(key, None)
 			except WindowsError:
@@ -252,7 +252,7 @@ class VPN:
 		if pidfile != None:
 			self.pidfile = pidfile
 		else:
-			if platform.system == 'Windows':
+			if platform.system() == 'Windows':
 				self.pidfile = os.path.join(self.confbase, 'pid')
 			else:
 				if netname:
