@@ -234,9 +234,15 @@ class VPN:
 
 	def __init__(self, netname = None, pidfile = None):
 		if platform.system() == 'Windows':
+			sam = _winreg.KEY_READ
+			if platform.machine().endswith('64'):
+				sam = sam | _winreg.KEY_WOW64_64KEY
 			try:
 				reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-				key = _winreg.OpenKey(reg, "SOFTWARE\\tinc")
+				try:
+					key = _winreg.OpenKey(reg, "SOFTWARE\\tinc", 0, sam)
+				except WindowsError:
+					key = _winreg.OpenKey(reg, "SOFTWARE\\Wow6432Node\\tinc", 0, sam)
 				VPN.confdir = _winreg.QueryValue(key, None)
 			except WindowsError:
 				pass
