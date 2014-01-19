@@ -130,7 +130,11 @@ class VPN:
 		else:
 			# otherwise connect via TCP
 			print(unixfile + " does not exist.");
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			if ':' in info[2]:
+				af = socket.AF_INET6
+			else:
+				af = socket.AF_INET
+			s = socket.socket(af, socket.SOCK_STREAM)
 			s.connect((info[2], int(info[4])))
 
 		self.sf = s.makefile()
