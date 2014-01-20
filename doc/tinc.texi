@@ -335,9 +335,10 @@ as explained in the rest of the documentation.
 
 @cindex requirements
 @cindex libraries
-Before you can configure or build tinc, you need to have the OpenSSL,
-zlib and lzo libraries installed on your system.  If you try to configure tinc without
-having them installed, configure will give you an error message, and stop.
+Before you can configure or build tinc, you need to have the OpenSSL, zlib,
+lzo, curses and readline libraries installed on your system.  If you try to
+configure tinc without having them installed, configure will give you an error
+message, and stop.
 
 @menu
 * OpenSSL::
