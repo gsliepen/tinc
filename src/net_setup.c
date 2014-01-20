@@ -642,6 +642,85 @@ bool setup_myself_reloadable(void) {
 }
 
 /*
+  Add listening sockets.
+*/
+static bool add_listen_address(char *address, bool bindto) {
+	char *port = myport;
+
+	if(address) {
+		char *space = strchr(address, ' ');
+		if(space) {
+			*space++ = 0;
+			port = space;
+		}
+
+		if(!strcmp(address, "*"))
+			*address = 0;
+	}
+
+	struct addrinfo *ai, hint = {0};
+	hint.ai_family = addressfamily;
+	hint.ai_socktype = SOCK_STREAM;
+	hint.ai_protocol = IPPROTO_TCP;
+	hint.ai_flags = AI_PASSIVE;
+
+	int err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
+	free(address);
+
+	if(err || !ai) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo", err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
+		return false;
+	}
+
+	for(struct addrinfo *aip = ai; aip; aip = aip->ai_next) {
+		// Ignore duplicate addresses
+		bool found = false;
+
+		for(int i = 0; i < listen_sockets; i++)
+			if(!memcmp(&listen_socket[i].sa, aip->ai_addr, aip->ai_addrlen)) {
+				found = true;
+				break;
+			}
+
+		if(found)
+			continue;
+
+		if(listen_sockets >= MAXSOCKETS) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
+			return false;
+		}
+
+		int tcp_fd = setup_listen_socket((sockaddr_t *) aip->ai_addr);
+
+		if(tcp_fd < 0)
+			continue;
+
+		int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+
+		if(tcp_fd < 0) {
+			close(tcp_fd);
+			continue;
+		}
+
+		io_add(&listen_socket[listen_sockets].tcp, handle_new_meta_connection, &listen_socket[listen_sockets], tcp_fd, IO_READ);
+		io_add(&listen_socket[listen_sockets].udp, handle_incoming_vpn_data, &listen_socket[listen_sockets], udp_fd, IO_READ);
+
+		if(debug_level >= DEBUG_CONNECTIONS) {
+			char *hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
+			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
+			free(hostname);
+		}
+
+		listen_socket[listen_sockets].bindto = bindto;
+		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
+		listen_sockets++;
+	}
+
+	freeaddrinfo(ai);
+	return true;
+}
+
+/*
   Configure node_t myself and set up the local sockets (listen only)
 */
 static bool setup_myself(void) {
@@ -883,73 +962,25 @@ static bool setup_myself(void) {
 		}
 	} else {
 		listen_sockets = 0;
-		config_t *cfg = lookup_config(config_tree, "BindToAddress");
+		int cfgs = 0;
 
-		do {
+		for(config_t *cfg = lookup_config(config_tree, "BindToAddress"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			cfgs++;
 			get_config_string(cfg, &address);
-			if(cfg)
-				cfg = lookup_config_next(config_tree, cfg);
-
-			char *port = myport;
-
-			if(address) {
-				char *space = strchr(address, ' ');
-				if(space) {
-					*space++ = 0;
-					port = space;
-				}
-
-				if(!strcmp(address, "*"))
-					*address = 0;
-			}
-
-			struct addrinfo *ai, hint = {0};
-			hint.ai_family = addressfamily;
-			hint.ai_socktype = SOCK_STREAM;
-			hint.ai_protocol = IPPROTO_TCP;
-			hint.ai_flags = AI_PASSIVE;
-
-			int err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
-			free(address);
-
-			if(err || !ai) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo", err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
+			if(!add_listen_address(address, true))
 				return false;
-			}
+		}
 
-			for(struct addrinfo *aip = ai; aip; aip = aip->ai_next) {
-				if(listen_sockets >= MAXSOCKETS) {
-					logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
-					return false;
-				}
+		for(config_t *cfg = lookup_config(config_tree, "ListenAddress"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			cfgs++;
+			get_config_string(cfg, &address);
+			if(!add_listen_address(address, false))
+				return false;
+		}
 
-				int tcp_fd = setup_listen_socket((sockaddr_t *) aip->ai_addr);
-
-				if(tcp_fd < 0)
-					continue;
-
-				int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
-
-				if(tcp_fd < 0) {
-					close(tcp_fd);
-					continue;
-				}
-
-				io_add(&listen_socket[listen_sockets].tcp, handle_new_meta_connection, &listen_socket[listen_sockets], tcp_fd, IO_READ);
-				io_add(&listen_socket[listen_sockets].udp, handle_incoming_vpn_data, &listen_socket[listen_sockets], udp_fd, IO_READ);
-
-				if(debug_level >= DEBUG_CONNECTIONS) {
-					hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-					logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Listening on %s", hostname);
-					free(hostname);
-				}
-
-				memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
-				listen_sockets++;
-			}
-
-			freeaddrinfo(ai);
-		} while(cfg);
+		if(!cfgs)
+			if(!add_listen_address(address, NULL))
+				return false;
 	}
 
 	if(!listen_sockets) {
@@ -1045,7 +1076,8 @@ void close_network_connections(void) {
 		terminate_connection(c, false);
 	}
 
-	list_delete_list(outgoing_list);
+	if(outgoing_list)
+		list_delete_list(outgoing_list);
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);

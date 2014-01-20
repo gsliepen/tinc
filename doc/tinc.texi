@@ -852,14 +852,10 @@ When using this option, a good value is 3.
 
 @cindex BindToAddress
 @item BindToAddress = <@var{address}> [<@var{port}>]
-If your computer has more than one IPv4 or IPv6 address, tinc
-will by default listen on all of them for incoming connections.
-Multiple BindToAddress variables may be specified,
-in which case listening sockets for each specified address are made.
-
-If no @var{port} is specified, the socket will be bound to the port specified by the Port option,
-or to port 655 if neither is given.
-To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
+This is the same as ListenAddress, however the address given with the BindToAddress option
+will also be used for outgoing connections.
+This is useful if your computer has more than one IPv4 or IPv6 address,
+and you want tinc to only use a specific one for outgoing packets.
 
 @cindex BindToInterface
 @item BindToInterface = <@var{interface}> [experimental]
@@ -1049,6 +1045,18 @@ Defines the name of the interface corresponding to the virtual network device.
 Depending on the operating system and the type of device this may or may not actually set the name of the interface.
 Under Windows, this variable is used to select which network interface will be used.
 If you specified a Device, this variable is almost always already correctly set.
+
+@cindex ListenAddress
+@item ListenAddress = <@var{address}> [<@var{port}>]
+If your computer has more than one IPv4 or IPv6 address, tinc
+will by default listen on all of them for incoming connections.
+This option can be used to restrict which addresses tinc listens on.
+Multiple ListenAddress variables may be specified,
+in which case listening sockets for each specified address are made.
+
+If no @var{port} is specified, the socket will listen on the port specified by the Port option,
+or to port 655 if neither is given.
+To only listen on a specific port but not to a specific address, use "*" for the @var{address}.
 
 @cindex LocalDiscovery
 @item LocalDiscovery = <yes | no> (no)

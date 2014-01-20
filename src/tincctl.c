@@ -1292,6 +1292,7 @@ const var_t variables[] = {
 	{"IffOneQueue", VAR_SERVER},
 	{"Interface", VAR_SERVER},
 	{"KeyExpire", VAR_SERVER},
+	{"ListenAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"LocalDiscovery", VAR_SERVER},
 	{"MACExpire", VAR_SERVER},
 	{"MaxConnectionBurst", VAR_SERVER},

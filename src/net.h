@@ -103,6 +103,7 @@ typedef struct listen_socket_t {
 	io_t tcp;
 	io_t udp;
 	sockaddr_t sa;
+	bool bindto;
 } listen_socket_t;
 
 #include "conf.h"

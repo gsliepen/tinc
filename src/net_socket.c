@@ -116,7 +116,7 @@ static bool bind_to_interface(int sd) {
 static bool bind_to_address(connection_t *c) {
 	int s = -1;
 
-	for(int i = 0; i < listen_sockets; i++) {
+	for(int i = 0; i < listen_sockets && listen_socket[i].bindto; i++) {
 		if(listen_socket[i].sa.sa.sa_family != c->address.sa.sa_family)
 			continue;
 		if(s >= 0)

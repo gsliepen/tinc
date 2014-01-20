@@ -4,7 +4,7 @@ _tinc() {
 	cur="${COMP_WORDS[COMP_CWORD]}"
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
 	opts="-c -d -D -K -n -o -L -R -U --config --no-detach --debug --net --option --mlock --logfile --pidfile --chroot --user --help --version"
-	confvars="Address AddressFamily BindToAddress BindToInterface Broadcast Cipher ClampMSS Compression ConnectTo DecrementTTL Device DeviceType Digest DirectOnly ECDSAPrivateKeyFile ECDSAPublicKey ECDSAPublicKeyFile ExperimentalProtocol Forwarding GraphDumpFile Hostnames IffOneQueue IndirectData Interface KeyExpire LocalDiscovery MACExpire MACLength MaxOutputBufferSize MaxTimeout Mode Name PMTU PMTUDiscovery PingInterval PingTimeout Port PriorityInheritance PrivateKeyFile ProcessPriority Proxy PublicKeyFile ReplayWindow StrictSubnets Subnet TCPOnly TunnelServer UDPRcvBuf UDPSndBuf VDEGroup VDEPort Weight"
+	confvars="Address AddressFamily BindToAddress BindToInterface Broadcast Cipher ClampMSS Compression ConnectTo DecrementTTL Device DeviceType Digest DirectOnly ECDSAPrivateKeyFile ECDSAPublicKey ECDSAPublicKeyFile ExperimentalProtocol Forwarding GraphDumpFile Hostnames IffOneQueue IndirectData Interface KeyExpire ListenAddress LocalDiscovery MACExpire MACLength MaxOutputBufferSize MaxTimeout Mode Name PMTU PMTUDiscovery PingInterval PingTimeout Port PriorityInheritance PrivateKeyFile ProcessPriority Proxy PublicKeyFile ReplayWindow StrictSubnets Subnet TCPOnly TunnelServer UDPRcvBuf UDPSndBuf VDEGroup VDEPort Weight"
 	commands="add connect debug del disconnect dump edit export export-all generate-ecdsa-keys generate-keys generate-rsa-keys get help import info init invite join log pcap pid purge reload restart retry set start stop top version"
 
 	case ${prev} in
