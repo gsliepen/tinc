@@ -73,8 +73,8 @@ be forwarded by intermediate nodes.
 
 By default, nodes authenticate each other using 2048 bit RSA (or 521 bit
 ECDSA*) keys. Traffic is encrypted using Blowfish in CBC mode (or AES-256 in
-CTR mode*), authenticated using HMAC-SHA1 (or HMAC-SHA-256*), and is protected
-against replay attacks.
+GCM mode*), authenticated using HMAC-SHA1 (or GCM*), and is protected against
+replay attacks.
 
 *) When using the ExperimentalProtocol option.
 
