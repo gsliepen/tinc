@@ -1,0 +1,70 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Skip this test if we aren't root or if "ip netns" does not exist
+
+test "`id -u`" = "0" || exit 77
+ip netns list || exit 77
+
+# Initialize two nodes
+
+$tinc $c1 <<EOF
+init foo
+set Mode switch
+set Interface ping.test1
+set Port 32573
+set Address localhost
+EOF
+
+cat >$d1/tinc-up <<EOF
+#!/bin/sh
+ip netns add ping.test1
+ip link set dev \$INTERFACE netns ping.test1
+ip netns exec ping.test1 ip addr add 192.168.1.1/24 dev \$INTERFACE
+ip netns exec ping.test1 ip link set \$INTERFACE up
+EOF
+
+$tinc $c2 <<EOF
+init bar
+set Mode switch
+set Interface ping.test2
+set Port 32574
+EOF
+
+cat >$d2/tinc-up <<EOF
+#!/bin/sh
+ip netns add ping.test2
+ip link set dev \$INTERFACE netns ping.test2
+ip netns exec ping.test2 ip addr add 192.168.1.2/24 dev \$INTERFACE
+ip netns exec ping.test2 ip link set \$INTERFACE up
+EOF
+
+# Exchange configuration files
+
+$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+
+# Start tinc
+
+$tinc $c1 start $r1
+$tinc $c2 start $r2
+
+sleep 1
+
+# The nodes should not be able to ping each other if there is no connection
+
+ip netns exec ping.test1 ping -W1 -c3 192.168.1.2 && exit 1
+
+# After connecting they should be
+
+$tinc $c2 add ConnectTo foo
+sleep 1
+
+ip netns exec ping.test1 ping -W1 -c3 192.168.1.2
+
+# Clean up
+
+$tinc $c2 stop
+$tinc $c1 stop
+ip netns del ping.test2
+ip netns del ping.test1
