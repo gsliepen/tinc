@@ -404,8 +404,12 @@ int cmd_invite(int argc, char *argv[]) {
 		char buf[1024];
 		while(fgets(buf, sizeof buf, tc)) {
 			if((!strncasecmp(buf, "Mode", 4) && strchr(" \t=", buf[4]))
-					|| (!strncasecmp(buf, "Broadcast", 9) && strchr(" \t=", buf[9])))
+					|| (!strncasecmp(buf, "Broadcast", 9) && strchr(" \t=", buf[9]))) {
 				fputs(buf, f);
+				// Make sure there is a newline character.
+				if(!strchr(buf, '\n'))
+					fputc('\n', f);
+			}
 		}
 		fclose(tc);
 	}
