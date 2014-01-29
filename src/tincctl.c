@@ -308,8 +308,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	/* Check stdin and stdout */
 	if(ask && tty) {
 		/* Ask for a file and/or directory name. */
-		fprintf(stdout, "Please enter a file to save %s to [%s]: ", what, filename);
-		fflush(stdout);
+		fprintf(stderr, "Please enter a file to save %s to [%s]: ", what, filename);
 
 		if(fgets(buf, sizeof buf, stdin) == NULL) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
@@ -1711,8 +1710,7 @@ static int cmd_init(int argc, char *argv[]) {
 	} else if(argc < 2) {
 		if(tty) {
 			char buf[1024];
-			fprintf(stdout, "Enter the Name you want your tinc node to have: ");
-			fflush(stdout);
+			fprintf(stderr, "Enter the Name you want your tinc node to have: ");
 			if(!fgets(buf, sizeof buf, stdin)) {
 				fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 				return 1;

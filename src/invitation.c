@@ -142,12 +142,19 @@ char *get_my_hostname() {
 		}
 	}
 
+	if(!tty) {
+		if(!hostname) {
+			fprintf(stderr, "Could not determine the external address or hostname. Please set Address manually.\n");
+			return NULL;
+		}
+		goto save;
+	}
+
 again:
-	printf("Please enter your host's external address or hostname");
+	fprintf(stderr, "Please enter your host's external address or hostname");
 	if(hostname)
-		printf(" [%s]", hostname);
-	printf(": ");
-	fflush(stdout);
+		fprintf(stderr, " [%s]", hostname);
+	fprintf(stderr, ": ");
 
 	if(!fgets(line, sizeof line, stdin)) {
 		fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
@@ -571,7 +578,7 @@ make_names:
 
 	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
-		if(!tty || confbasegiven)
+		if(confbasegiven)
 			return false;
 
 		// Generate a random netname, ask for a better one later.
@@ -747,7 +754,7 @@ make_names:
 	check_port(name);
 
 ask_netname:
-	if(ask_netname) {
+	if(ask_netname && tty) {
 		fprintf(stderr, "Enter a new netname: ");
 		if(!fgets(line, sizeof line, stdin)) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
@@ -770,6 +777,8 @@ ask_netname:
 		netname = line;
 		make_names();
 	}
+
+	fprintf(stderr, "Configuration stored in: %s\n", confbase);
 
 	return true;
 }
@@ -854,10 +863,8 @@ int cmd_join(int argc, char *argv[]) {
 	if(argc > 1) {
 		invitation = argv[1];
 	} else {
-		if(tty) {
-			printf("Enter invitation URL: ");
-			fflush(stdout);
-		}
+		if(tty)
+			fprintf(stderr, "Enter invitation URL: ");
 		errno = EPIPE;
 		if(!fgets(line, sizeof line, stdin)) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
