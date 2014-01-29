@@ -1352,6 +1352,12 @@ TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
 firewall, or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
+
+@cindex Weight
+@item Weight = <weight>
+If this variable is set, it overrides the weight given to connections made with
+another host. A higher weight means a lower priority is given to this
+connection when broadcasting or forwarding packets.
 @end table
 
 

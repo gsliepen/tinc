@@ -586,6 +586,12 @@ Setting this options also implicitly sets IndirectData.
 .Pp
 Since version 1.0.10, tinc will automatically detect whether communication via
 UDP is possible or not.
+.It Va Weight Li = Ar weight
+If this variable is set, it overrides the weight given to connections made with
+another host. A higher
+.Ar weight
+means a lower priority is given to this connection when broadcasting or
+forwarding packets.
 .El
 .Sh SCRIPTS
 Apart from reading the server and host configuration files,
