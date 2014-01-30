@@ -547,6 +547,39 @@ begin:
 	return true;
 }
 
+// Find edges pointing to this node, and use them to build a list of unique, known addresses.
+static struct addrinfo *get_known_addresses(node_t *n) {
+	struct addrinfo *ai = NULL;
+
+	for splay_each(edge_t, e, n->edge_tree) {
+		if(!e->reverse)
+			continue;
+
+		bool found = false;
+		for(struct addrinfo *aip = ai; aip; aip = aip->ai_next) {
+			if(!sockaddrcmp(&e->reverse->address, (sockaddr_t *)aip->ai_addr)) {
+				found = true;
+				break;
+			}
+		}
+		if(found)
+			continue;
+
+		struct addrinfo *nai = xzalloc(sizeof *nai);
+		if(ai)
+			ai->ai_next = nai;
+		ai = nai;
+		ai->ai_family = e->reverse->address.sa.sa_family;
+		ai->ai_socktype = SOCK_STREAM;
+		ai->ai_protocol = IPPROTO_TCP;
+		ai->ai_addrlen = SALEN(e->reverse->address.sa);
+		ai->ai_addr = xmalloc(ai->ai_addrlen);
+		memcpy(ai->ai_addr, &e->reverse->address, ai->ai_addrlen);
+	}
+
+	return ai;
+}
+
 void setup_outgoing_connection(outgoing_t *outgoing) {
 	timeout_del(&outgoing->ev);
 
@@ -564,8 +597,12 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	outgoing->cfg = lookup_config(outgoing->config_tree, "Address");
 
 	if(!outgoing->cfg) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "No address specified for %s", outgoing->name);
-		return;
+		if(n)
+			outgoing->aip = outgoing->ai = get_known_addresses(n);
+		if(!outgoing->ai) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "No address known for %s", outgoing->name);
+			return;
+		}
 	}
 
 	do_outgoing_connection(outgoing);
