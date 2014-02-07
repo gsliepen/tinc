@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,6 +40,9 @@ char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
 
+static uint64_t device_total_in = 0;
+static uint64_t device_total_out = 0;
+
 extern char *myport;
 
 static DWORD WINAPI tapreader(void *bla) {
@@ -47,7 +50,6 @@ static DWORD WINAPI tapreader(void *bla) {
 	DWORD len;
 	OVERLAPPED overlapped;
 	vpn_packet_t packet;
-	int errors;
 
 	logger(DEBUG_ALWAYS, LOG_DEBUG, "Tap reader running");
 
@@ -70,22 +72,13 @@ static DWORD WINAPI tapreader(void *bla) {
 			} else {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
-				errors++;
-				if(errors >= 10) {
-					EnterCriticalSection(&mutex);
-					running = false;
-					LeaveCriticalSection(&mutex);
-				}
-				usleep(1000000);
-				continue;
+				return -1;
 			}
 		}
 
-		errors = 0;
+		EnterCriticalSection(&mutex);
 		packet.len = len;
 		packet.priority = 0;
-
-		EnterCriticalSection(&mutex);
 		route(myself, &packet);
 		event_flush_output();
 		LeaveCriticalSection(&mutex);
@@ -242,7 +235,15 @@ static bool write_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
+	device_total_out += packet->len;
+
 	return true;
+}
+
+static void dump_device_stats(void) {
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t os_devops = {
@@ -250,4 +251,5 @@ const devops_t os_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
+	.dump_stats = dump_device_stats,
 };
