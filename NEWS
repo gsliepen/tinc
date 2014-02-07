@@ -27,6 +27,9 @@ Version 1.1pre10             February 7 2014
  * When creating meta-connections to a node for which no Address statement is
    specified, try to use addresses learned from other nodes.
 
+Thanks to Dennis Joachimsthaler and Florent Clairambault for their contribution
+to this version of tinc.
+
 Version 1.1pre9              September 8 2013
 
  * The UNIX socket is now created before tinc-up is called.
