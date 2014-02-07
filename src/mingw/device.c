@@ -47,6 +47,7 @@ static DWORD WINAPI tapreader(void *bla) {
 	DWORD len;
 	OVERLAPPED overlapped;
 	vpn_packet_t packet;
+	int errors;
 
 	logger(DEBUG_ALWAYS, LOG_DEBUG, "Tap reader running");
 
@@ -69,13 +70,22 @@ static DWORD WINAPI tapreader(void *bla) {
 			} else {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
-				return -1;
+				errors++;
+				if(errors >= 10) {
+					EnterCriticalSection(&mutex);
+					running = false;
+					LeaveCriticalSection(&mutex);
+				}
+				usleep(1000000);
+				continue;
 			}
 		}
 
-		EnterCriticalSection(&mutex);
+		errors = 0;
 		packet.len = len;
 		packet.priority = 0;
+
+		EnterCriticalSection(&mutex);
 		route(myself, &packet);
 		event_flush_output();
 		LeaveCriticalSection(&mutex);
