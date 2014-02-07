@@ -1,3 +1,32 @@
+Version 1.1pre10             February 7 2014
+
+ * Added a benchmark tool (sptps_speed) for the new protocol.
+
+ * Fixed a crash when using Name = $HOST while $HOST is not set.
+
+ * Use AES-256-GCM for the new protocol.
+
+ * Updated support for Solaris.
+
+ * Allow running tincd without a private ECDSA key present when
+   ExperimentalProtocol is not explicitly set.
+
+ * Enable various compiler hardening flags by default.
+
+ * Added support for a "conf.d" configuration directory.
+
+ * Fix tinc-gui on Windows, also allowing it to connect to a 32-bits tincd when
+   tinc-gui is run in a 64-bits Python environment.
+
+ * Added a "ListenAddress" option, which like BindToAddress adds more listening
+   address/ports, but doesn't bind to them for outgoing sockets.
+
+ * Make invitations work better when the "invite" and "join" commands are not
+   run interactively.
+
+ * When creating meta-connections to a node for which no Address statement is
+   specified, try to use addresses learned from other nodes.
+
 Version 1.1pre9              September 8 2013
 
  * The UNIX socket is now created before tinc-up is called.

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.1pre9])
+AC_INIT([tinc], [1.1pre10])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
 AM_INIT_AUTOMAKE([check-news std-options subdir-objects -Wall])
@@ -18,7 +18,6 @@ AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_PROG_RANLIB
 
 AM_PROG_CC_C_O
 
