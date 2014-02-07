@@ -1,10 +1,11 @@
 /*
     conf.c -- configuration code
-    Copyright (C) 1998 Robert van der Meulen
+    Copyright (C) 1998      Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000      Cris van Pelt
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-                  2000 Cris van Pelt
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2013      Florent Clairambault <florent@clairambault.fr>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

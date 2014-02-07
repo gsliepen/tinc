@@ -1,6 +1,6 @@
 /*
     invitation.c -- Create and accept invitations
-    Copyright (C) 2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2013-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

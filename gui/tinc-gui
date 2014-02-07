@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 # tinc-gui -- GUI for controlling a running tincd
-# Copyright (C) 2009-2012 Guus Sliepen <guus@tinc-vpn.org>
+# Copyright (C) 2009-2014 Guus Sliepen <guus@tinc-vpn.org>
+#                    2014 Dennis Joachimsthaler <dennis@efjot.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
