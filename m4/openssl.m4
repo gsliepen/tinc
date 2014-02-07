@@ -49,7 +49,7 @@ AC_DEFUN([tinc_OPENSSL],
     [AC_MSG_ERROR([Missing OpenSSL functionality, make sure you have installed the latest version.]); break],
   )
 
-  AC_CHECK_DECL([OpenSSL_add_all_algorithms], ,
+  AC_CHECK_DECLS([OpenSSL_add_all_algorithms, EVP_CTRL_GCM_GET_TAG], ,
     [AC_MSG_ERROR([Missing OpenSSL functionality, make sure you have installed the latest version.]); break],
     [#include <openssl/evp.h>]
   )
