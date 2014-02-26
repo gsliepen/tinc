@@ -2399,6 +2399,11 @@ Dump VPN traffic going through the local tinc node in pcap-savefile format to st
 from where it can be redirected to a file or piped through a program that can parse it directly,
 such as tcpdump.
 
+@cindex network [@var{netname}]
+@item network
+If @var{netname} is given, switch to that network.
+Otherwise, display a list of all networks for which configuration files exist.
+
 @end table
 
 @c ==================================================================

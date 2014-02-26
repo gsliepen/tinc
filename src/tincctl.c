@@ -67,6 +67,7 @@ bool confbasegiven = false;
 bool netnamegiven = false;
 char *scriptinterpreter = NULL;
 char *scriptextension = "";
+static char *prompt;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -137,6 +138,7 @@ static void usage(bool status) {
 				"  exchange-all [--force]     Same as export-all followed by import\n"
 				"  invite NODE [...]          Generate an invitation for NODE\n"
 				"  join INVITATION            Join a VPN using an INVITIATION\n"
+				"  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -2066,6 +2068,70 @@ static int cmd_exchange_all(int argc, char *argv[]) {
 	return cmd_export_all(argc, argv) ?: cmd_import(argc, argv);
 }
 
+static int switch_network(char *name) {
+	if(fd >= 0) {
+		close(fd);
+		fd = -1;
+	}
+
+	free(confbase);
+	confbase = NULL;
+	free(pidfilename);
+	pidfilename = NULL;
+	free(logfilename);
+	logfilename = NULL;
+	free(unixsocketname);
+	unixsocketname = NULL;
+	free(tinc_conf);
+	free(hosts_dir);
+	free(prompt);
+
+	free(netname);
+	netname = strcmp(name, ".") ? xstrdup(name) : NULL;
+
+	make_names();
+        xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
+        xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
+	xasprintf(&prompt, "%s> ", identname);
+
+	return 0;
+}
+
+static int cmd_network(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
+	if(argc == 2)
+		return switch_network(argv[1]);
+
+	DIR *dir = opendir(confdir);
+	if(!dir) {
+		fprintf(stderr, "Could not read directory %s: %s\n", confdir, strerror(errno));
+                return 1;
+        }
+
+	struct dirent *ent;
+	while((ent = readdir(dir))) {
+		if(*ent->d_name == '.')
+			continue;
+
+		if(!strcmp(ent->d_name, "tinc.conf")) {
+			printf(".\n");
+			continue;
+		}
+
+		char *fname;
+		xasprintf(&fname, "%s/%s/tinc.conf", confdir, ent->d_name);
+		if(!access(fname, R_OK))
+			printf("%s\n", ent->d_name);
+		free(fname);
+	}
+
+	return 0;
+}
+
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
@@ -2105,6 +2171,7 @@ static const struct {
 	{"exchange-all", cmd_exchange_all},
 	{"invite", cmd_invite},
 	{"join", cmd_join},
+	{"network", cmd_network},
 	{NULL, NULL},
 };
 
@@ -2231,7 +2298,6 @@ static char **completion (const char *text, int start, int end) {
 #endif
 
 static int cmd_shell(int argc, char *argv[]) {
-	char *prompt;
 	xasprintf(&prompt, "%s> ", identname);
 	int result = 0;
 	char buf[4096];

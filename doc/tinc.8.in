@@ -210,6 +210,11 @@ format to standard output,
 from where it can be redirected to a file or piped through a program that can parse it directly,
 such as
 .Xr tcpdump 8 .
+.It network Op Ar netname
+If
+.Ar netname
+is given, switch to that network.
+Otherwise, display a list of all networks for which configuration files exist.
 .El
 .Sh EXAMPLES
 Examples of some commands:
