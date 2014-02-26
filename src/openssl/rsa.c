@@ -61,8 +61,10 @@ rsa_t *rsa_set_hex_private_key(char *n, char *e, char *d) {
 rsa_t *rsa_read_pem_public_key(FILE *fp) {
 	rsa_t *rsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
 
-	if(!rsa)
+	if(!rsa) {
+		rewind(fp);
 		rsa = PEM_read_RSA_PUBKEY(fp, NULL, NULL, NULL);
+	}
 
 	if(!rsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA public key: %s", ERR_error_string(ERR_get_error(), NULL));
