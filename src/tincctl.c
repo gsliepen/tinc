@@ -39,6 +39,10 @@
 #include "tincctl.h"
 #include "top.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 static char **orig_argv;
 static int orig_argc;
 
@@ -529,7 +533,7 @@ bool sendline(int fd, char *format, ...) {
 	blen++;
 
 	while(blen) {
-		int result = send(fd, p, blen, 0);
+		int result = send(fd, p, blen, MSG_NOSIGNAL);
 		if(result == -1 && errno == EINTR)
 			continue;
 		else if(result <= 0)
@@ -739,6 +743,11 @@ bool connect_tincd(bool verbose) {
 	}
 
 	freeaddrinfo(res);
+#endif
+
+#ifdef SO_NOSIGPIPE
+	static const int one = 1;
+	setsockopt(c, SOL_SOCKET, SO_NOSIGPIPE, (void *)&one, sizeof one);
 #endif
 
 	char data[4096];
