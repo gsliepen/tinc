@@ -112,14 +112,14 @@ static int b64encode_internal(const char *src, char *dst, int length, const char
 			dst[di + 1] = alphabet[triplet & 63]; triplet >>= 6;
 			dst[di + 2] = alphabet[triplet];
 			dst[di + 3] = 0;
-			length = di + 2;
+			length = di + 3;
 			break;
 		case 1:
 			triplet = usrc[si];
 			dst[di] = alphabet[triplet & 63]; triplet >>= 6;
 			dst[di + 1] = alphabet[triplet];
 			dst[di + 2] = 0;
-			length = di + 1;
+			length = di + 2;
 			break;
 		default:
 			dst[di] = 0;
