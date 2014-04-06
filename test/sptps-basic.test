@@ -6,12 +6,8 @@
 
 mkdir -p $d1
 
-openssl ecparam -genkey -name secp521r1 -noout -out $d1/server.priv
-openssl ecparam -genkey -name secp521r1 -noout -out $d1/client.priv
-yes '' | openssl req -new -pubkey -key $d1/server.priv -noout -out $d1/server.pub
-echo
-yes '' | openssl req -new -pubkey -key $d1/client.priv -noout -out $d1/client.pub
-echo
+$sptps_keypair $d1/server.priv $d1/server.pub
+$sptps_keypair $d1/client.priv $d1/client.pub
 
 # Test transfer of a simple file.
 

@@ -1,12 +1,27 @@
 ## Produce this file with automake to get Makefile.in
 
-sbin_PROGRAMS = tincd tinc sptps_test
+sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 
 if LINUX
 sbin_PROGRAMS += sptps_speed
 endif
 
 DEFAULT_INCLUDES =
+
+ed25519_SOURCES = \
+	ed25519/add_scalar.c \
+	ed25519/ed25519.h \
+	ed25519/fe.c ed25519/fe.h \
+	ed25519/fixedint.h \
+	ed25519/ge.c ed25519/ge.h \
+	ed25519/key_exchange.c \
+	ed25519/keypair.c \
+	ed25519/precomp_data.h \
+	ed25519/sc.c ed25519/sc.h \
+	ed25519/seed.c \
+	ed25519/sha512.c ed25519/sha512.h \
+	ed25519/sign.c \
+	ed25519/verify.c
 
 tincd_SOURCES = \
 	buffer.c buffer.h \
@@ -67,7 +82,8 @@ tincd_SOURCES = \
 	system.h \
 	tincd.c \
 	utils.c utils.h \
-	xalloc.h
+	xalloc.h \
+	$(ed25519_SOURCES)
 
 tinc_SOURCES = \
 	dropin.c dropin.h \
@@ -83,19 +99,27 @@ tinc_SOURCES = \
 	subnet_parse.c subnet.h \
 	tincctl.c tincctl.h \
 	top.c top.h \
-	utils.c utils.h
+	utils.c utils.h \
+	$(ed25519_SOURCES)
 
 sptps_test_SOURCES = \
 	logger.c logger.h \
 	sptps.c sptps.h \
 	sptps_test.c \
-	utils.c utils.h
+	utils.c utils.h \
+	$(ed25519_SOURCES)
+
+sptps_keypair_SOURCES = \
+	sptps_keypair.c \
+	utils.c utils.h \
+	$(ed25519_SOURCES)
 
 sptps_speed_SOURCES = \
 	logger.c logger.h \
 	sptps.c sptps.h \
 	sptps_speed.c \
-	utils.c utils.h
+	utils.c utils.h \
+	$(ed25519_SOURCES)
 
 ## Conditionally compile device drivers
 	
@@ -135,17 +159,17 @@ tincd_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	openssl/ecdh.c \
-	openssl/ecdsa.c \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
 	openssl/prf.c \
 	openssl/rsa.c
 tinc_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	openssl/ecdh.c \
-	openssl/ecdsa.c \
-	openssl/ecdsagen.c \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
+	ed25519/ecdsagen.c \
 	openssl/prf.c \
 	openssl/rsa.c \
 	openssl/rsagen.c
@@ -153,16 +177,19 @@ sptps_test_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	openssl/ecdh.c \
-	openssl/ecdsa.c \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
 	openssl/prf.c
+sptps_keypair_SOURCES += \
+	openssl/crypto.c \
+	ed25519/ecdsagen.c
 sptps_speed_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	openssl/ecdh.c \
-	openssl/ecdsa.c \
-	openssl/ecdsagen.c \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
+	ed25519/ecdsagen.c \
 	openssl/prf.c
 endif
 

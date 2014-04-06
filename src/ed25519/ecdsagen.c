@@ -1,5 +1,5 @@
 /*
-    ecdh.h -- header file for ecdh.c
+    ecdsagen.c -- ECDSA key generation and export
     Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -17,18 +17,39 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_ECDH_H__
-#define __TINC_ECDH_H__
+#include "../system.h"
 
-#define ECDH_SIZE 32
-#define ECDH_SHARED_SIZE 32
+#include "ed25519.h"
 
-#ifndef __TINC_ECDH_INTERNAL__
-typedef struct ecdh ecdh_t;
-#endif
+#define __TINC_ECDSA_INTERNAL__
+typedef struct {
+	uint8_t private[64];
+	uint8_t public[32];
+} ecdsa_t;
 
-extern ecdh_t *ecdh_generate_public(void *pubkey) __attribute__ ((__malloc__));
-extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) __attribute__ ((__warn_unused_result__));
-extern void ecdh_free(ecdh_t *ecdh);
+#include "../crypto.h"
+#include "../ecdsagen.h"
+#include "../utils.h"
+#include "../xalloc.h"
 
-#endif
+// Generate ECDSA key
+
+ecdsa_t *ecdsa_generate(void) {
+	ecdsa_t *ecdsa = xzalloc(sizeof *ecdsa);
+
+	uint8_t seed[32];
+	randomize(seed, sizeof seed);
+	ed25519_create_keypair(ecdsa->public, ecdsa->private, seed);
+
+	return ecdsa;
+}
+
+// Write PEM ECDSA keys
+
+bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
+	return fwrite(ecdsa->public, sizeof ecdsa->public, 1, fp) == 1;
+}
+
+bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
+	return fwrite(ecdsa, sizeof *ecdsa, 1, fp) == 1;
+}

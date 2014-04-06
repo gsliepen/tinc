@@ -5,6 +5,7 @@
 tincd=../src/tincd
 tinc=../src/tinc
 sptps_test=../src/sptps_test
+sptps_keypair=../src/sptps_keypair
 
 # Test directories
 
