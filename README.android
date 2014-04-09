@@ -1,14 +1,14 @@
-Quick how-o cross compile tinc for android (done from $HOME/android/):
+Quick how-to cross compile tinc for android (done from $HOME/android/):
 
 - Download android NDK and setup local ARM toolchain:
-wget http://dl.google.com/android/ndk/android-ndk-r8b-linux-x86.tar.bz2
-tar xfj android-ndk-r8b-linux-x86.tar.bz2
-./android-ndk-r8b/build/tools/make-standalone-toolchain.sh --platform=android-5 --install-dir=/tmp/my-android-toolchain
+wget http://dl.google.com/android/ndk/android-ndk-r9d-linux-x86.tar.bz2
+tar xfj android-ndk-r9d-linux-x86.tar.bz2
+./android-ndk-r9d/build/tools/make-standalone-toolchain.sh --platform=android-5 --install-dir=/tmp/my-android-toolchain
 
 - Download and cross-compile openSSL for ARM:
-wget http://www.openssl.org/source/openssl-1.0.1c.tar.gz
-tar xfz openssl-1.0.1c.tar.gz
-cd openssl-1.0.1c
+wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz
+tar xfz openssl-1.0.1g.tar.gz
+cd openssl-1.0.1g
 ./Configure dist
 make CC=/tmp/my-android-toolchain/bin/arm-linux-androideabi-gcc AR="/tmp/my-android-toolchain/bin/arm-linux-androideabi-ar r" RANLIB=/tmp/my-android-toolchain/bin/arm-linux-androideabi-ranlib
 
@@ -16,5 +16,9 @@ make CC=/tmp/my-android-toolchain/bin/arm-linux-androideabi-gcc AR="/tmp/my-andr
 git clone git://tinc-vpn.org/tinc
 cd tinc
 autoreconf -fsi
-CC=/tmp/my-android-toolchain/bin/arm-linux-androideabi-gcc ./configure --host=arm-linux --disable-lzo --with-openssl-lib=$HOME/android/openssl-1.0.1c --with-openssl-include=$HOME/android/openssl-1.0.1c/include/
+CC=/tmp/my-android-toolchain/bin/arm-linux-androideabi-gcc ./configure --host=arm-linux --disable-lzo --with-openssl-lib=$HOME/android/openssl-1.0.1g --with-openssl-include=$HOME/android/openssl-1.0.1g/include/ --disable-hardening
 make -j5
+
+- Strip tincd binary to make it smaller
+/tmp/my-android-toolchain/bin/arm-linux-androideabi-strip src/tincd
+
