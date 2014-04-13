@@ -82,6 +82,10 @@ int main(int argc, char *argv[]) {
 
 	crypto_init();
 
+	randomize(buf1, sizeof buf1);
+	randomize(buf2, sizeof buf2);
+	randomize(buf3, sizeof buf3);
+
 	// Key generation
 
 	fprintf(stderr, "Generating keys for %lg seconds: ", duration);
