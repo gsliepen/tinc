@@ -22,8 +22,7 @@
 
 #include "system.h"
 
-#include "cipher.h"
-#include "digest.h"
+#include "chacha-poly1305/chacha-poly1305.h"
 #include "ecdh.h"
 #include "ecdsa.h"
 
@@ -53,8 +52,7 @@ typedef struct sptps {
 	uint16_t reclen;
 
 	bool instate;
-	cipher_t *incipher;
-	digest_t *indigest;
+	chacha_poly1305_ctx_t *incipher;
 	uint32_t inseqno;
 	uint32_t received;
 	unsigned int replaywin;
@@ -62,8 +60,7 @@ typedef struct sptps {
 	char *late;
 
 	bool outstate;
-	cipher_t *outcipher;
-	digest_t *outdigest;
+	chacha_poly1305_ctx_t *outcipher;
 	uint32_t outseqno;
 
 	ecdsa_t *mykey;

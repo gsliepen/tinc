@@ -23,6 +23,11 @@ ed25519_SOURCES = \
 	ed25519/sign.c \
 	ed25519/verify.c
 
+chacha_poly1305_SOURCES = \
+	chacha-poly1305/chacha.c chacha-poly1305/chacha.h \
+	chacha-poly1305/chacha-poly1305.c chacha-poly1305/chacha-poly1305.h \
+	chacha-poly1305/poly1305.c chacha-poly1305/poly1305.h
+
 tincd_SOURCES = \
 	buffer.c buffer.h \
 	cipher.h \
@@ -83,7 +88,8 @@ tincd_SOURCES = \
 	tincd.c \
 	utils.c utils.h \
 	xalloc.h \
-	$(ed25519_SOURCES)
+	$(ed25519_SOURCES) \
+	$(chacha_poly1305_SOURCES)
 
 tinc_SOURCES = \
 	dropin.c dropin.h \
@@ -100,14 +106,16 @@ tinc_SOURCES = \
 	tincctl.c tincctl.h \
 	top.c top.h \
 	utils.c utils.h \
-	$(ed25519_SOURCES)
+	$(ed25519_SOURCES) \
+	$(chacha_poly1305_SOURCES)
 
 sptps_test_SOURCES = \
 	logger.c logger.h \
 	sptps.c sptps.h \
 	sptps_test.c \
 	utils.c utils.h \
-	$(ed25519_SOURCES)
+	$(ed25519_SOURCES) \
+	$(chacha_poly1305_SOURCES)
 
 sptps_keypair_SOURCES = \
 	sptps_keypair.c \
@@ -119,7 +127,8 @@ sptps_speed_SOURCES = \
 	sptps.c sptps.h \
 	sptps_speed.c \
 	utils.c utils.h \
-	$(ed25519_SOURCES)
+	$(ed25519_SOURCES) \
+	$(chacha_poly1305_SOURCES)
 
 ## Conditionally compile device drivers
 	
@@ -174,7 +183,6 @@ tinc_SOURCES += \
 	openssl/rsa.c \
 	openssl/rsagen.c
 sptps_test_SOURCES += \
-	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	ed25519/ecdh.c \
@@ -184,7 +192,6 @@ sptps_keypair_SOURCES += \
 	openssl/crypto.c \
 	ed25519/ecdsagen.c
 sptps_speed_SOURCES += \
-	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	ed25519/ecdh.c \
