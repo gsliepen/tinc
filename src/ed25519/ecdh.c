@@ -1,5 +1,5 @@
 /*
-    ecdh.h -- header file for ecdh.c
+    ecdh.c -- Diffie-Hellman key exchange handling
     Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -17,18 +17,35 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_ECDH_H__
-#define __TINC_ECDH_H__
+#include "../system.h"
 
-#define ECDH_SIZE 32
-#define ECDH_SHARED_SIZE 32
+#include "ed25519.h"
 
-#ifndef __TINC_ECDH_INTERNAL__
-typedef struct ecdh ecdh_t;
-#endif
+#define __TINC_ECDH_INTERNAL__
+typedef struct ecdh_t {
+	uint8_t private[64];
+} ecdh_t;
 
-extern ecdh_t *ecdh_generate_public(void *pubkey) __attribute__ ((__malloc__));
-extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) __attribute__ ((__warn_unused_result__));
-extern void ecdh_free(ecdh_t *ecdh);
+#include "../crypto.h"
+#include "../ecdh.h"
+#include "../xalloc.h"
 
-#endif
+ecdh_t *ecdh_generate_public(void *pubkey) {
+	ecdh_t *ecdh = xzalloc(sizeof *ecdh);
+
+	uint8_t seed[32];
+	randomize(seed, sizeof seed);
+	ed25519_create_keypair(pubkey, ecdh->private, seed);
+
+	return ecdh;
+}
+
+bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
+	ed25519_key_exchange(shared, pubkey, ecdh->private);
+	free(ecdh);
+	return true;
+}
+
+void ecdh_free(ecdh_t *ecdh) {
+	free(ecdh);
+}
