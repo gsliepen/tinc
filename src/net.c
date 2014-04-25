@@ -40,6 +40,7 @@
 #include "route.h"
 #include "subnet.h"
 #include "xalloc.h"
+#include "resolv.h"
 
 bool do_purge = false;
 volatile bool running = false;
@@ -494,6 +495,7 @@ int main_loop(void) {
 			avl_node_t *node;
 			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
+			res_init();
 			for(node = connection_tree->head; node; node = node->next) {
 				connection_t *c = node->data;
 				if(c->status.active)
