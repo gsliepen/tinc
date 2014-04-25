@@ -36,6 +36,10 @@
 #include "subnet.h"
 #include "xalloc.h"
 
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
+
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
 static int sleeptime = 10;
@@ -309,6 +313,9 @@ static void sighup_handler(void *data) {
 
 static void sigalrm_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
+#ifdef HAVE_DECL_RES_INIT
+	res_init();
+#endif
 	retry();
 }
 #endif

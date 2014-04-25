@@ -163,7 +163,7 @@ AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h time.h netpacket/packet.h],
   [], [], [#include "src/have.h"]
 )
-AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
+AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h resolv.h],
   [], [], [#include "src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
@@ -203,6 +203,11 @@ AC_CHECK_FUNC(gethostbyname, [], [
 AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
   [], [], [#include "src/have.h"]
 )
+
+AC_CHECK_DECLS([res_init], [], [], [
+  #include <netinet/in.h>
+  #include <resolv.h>
+])
 
 AC_CACHE_SAVE
 
