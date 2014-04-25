@@ -158,7 +158,7 @@ dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h dirent.h])
+AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h dirent.h resolv.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
   [], [], [#include "src/have.h"]
 )
@@ -201,6 +201,11 @@ AC_CHECK_FUNC(gethostbyname, [], [
 AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
   [], [], [#include "src/have.h"]
 )
+
+AC_CHECK_DECLS([res_init], [], [], [
+  #include <netinet/in.h>
+  #include <resolv.h>
+])
 
 AC_CACHE_SAVE
 
