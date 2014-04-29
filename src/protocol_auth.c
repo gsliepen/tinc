@@ -215,7 +215,7 @@ bool send_metakey(connection_t *c) {
 
 	/* Copy random data to the buffer */
 
-	RAND_pseudo_bytes((unsigned char *)c->outkey, len);
+	RAND_bytes((unsigned char *)c->outkey, len);
 
 	/* The message we send must be smaller than the modulus of the RSA key.
 	   By definition, for a key of k bits, the following formula holds:
@@ -391,7 +391,7 @@ bool send_challenge(connection_t *c) {
 
 	/* Copy random data to the buffer */
 
-	RAND_pseudo_bytes((unsigned char *)c->hischallenge, len);
+	RAND_bytes((unsigned char *)c->hischallenge, len);
 
 	/* Convert to hex */
 

@@ -156,7 +156,7 @@ bool send_ans_key(node_t *to) {
 	to->inkey = xrealloc(to->inkey, to->inkeylength);
 
 	// Create a new key
-	RAND_pseudo_bytes((unsigned char *)to->inkey, to->inkeylength);
+	RAND_bytes((unsigned char *)to->inkey, to->inkeylength);
 	if(to->incipher)
 		EVP_DecryptInit_ex(&to->inctx, to->incipher, NULL, (unsigned char *)to->inkey, (unsigned char *)to->inkey + to->incipher->key_len);
 
