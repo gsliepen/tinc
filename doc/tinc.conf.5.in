@@ -416,7 +416,7 @@ and
 are available.
 .El
 .It Va ReplayWindow Li = Ar bytes Pq 16
-vhis is the size of the replay tracking window for each remote node, in bytes.
+This is the size of the replay tracking window for each remote node, in bytes.
 The window is a bitfield which tracks 1 packet per bit, so for example
 the default setting of 16 will track up to 128 packets in the window.  In high
 bandwidth scenarios, setting this to a higher value can reduce packet loss from
