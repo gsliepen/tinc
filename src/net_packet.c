@@ -269,7 +269,7 @@ static bool try_mac(const node_t *n, const vpn_packet_t *inpkt) {
 
 	HMAC(n->indigest, n->inkey, n->inkeylength, (unsigned char *) &inpkt->seqno, inpkt->len - n->inmaclength, (unsigned char *)hmac, NULL);
 
-	return !memcmp(hmac, (char *) &inpkt->seqno + inpkt->len - n->inmaclength, n->inmaclength);
+	return !memcmp_constant_time(hmac, (char *) &inpkt->seqno + inpkt->len - n->inmaclength, n->inmaclength);
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -302,7 +302,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		HMAC(n->indigest, n->inkey, n->inkeylength,
 			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
 
-		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, n->inmaclength)) {
+		if(memcmp_constant_time(hmac, (char *) &inpkt->seqno + inpkt->len, n->inmaclength)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got unauthenticated packet from %s (%s)",
 					   n->name, n->hostname);
 			return;

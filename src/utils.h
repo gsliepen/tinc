@@ -42,4 +42,6 @@ extern const char *winerror(int);
 
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
 
+int memcmp_constant_time (const void *a, const void *b, size_t size);
+
 #endif							/* __TINC_UTILS_H__ */
