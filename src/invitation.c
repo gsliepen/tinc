@@ -250,7 +250,7 @@ int cmd_invite(int argc, char *argv[]) {
 	}
 	free(filename);
 
-	// If a daemon is running, ensure no other nodes now about this name
+	// If a daemon is running, ensure no other nodes know about this name
 	bool found = false;
 	if(connect_tincd(false)) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
