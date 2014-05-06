@@ -404,6 +404,7 @@ static bool setup_myself(void) {
 			proxytype = PROXY_EXEC;
 		} else {
 			logger(LOG_ERR, "Unknown proxy type %s!", proxy);
+			free(proxy);
 			return false;
 		}
 
@@ -415,6 +416,7 @@ static bool setup_myself(void) {
 			case PROXY_EXEC:
 				if(!space || !*space) {
 					logger(LOG_ERR, "Argument expected for proxy type exec!");
+					free(proxy);
 					return false;
 				}
 				proxyhost =  xstrdup(space);
@@ -433,6 +435,7 @@ static bool setup_myself(void) {
 					*space++ = 0, proxypass = space;
 				if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
 					logger(LOG_ERR, "Host and port argument expected for proxy!");
+					free(proxy);
 					return false;
 				}
 				proxyhost = xstrdup(proxyhost);
@@ -486,6 +489,7 @@ static bool setup_myself(void) {
 			routing_mode = RMODE_HUB;
 		else {
 			logger(LOG_ERR, "Invalid routing mode!");
+			free(mode);
 			return false;
 		}
 		free(mode);
@@ -500,6 +504,7 @@ static bool setup_myself(void) {
 			forwarding_mode = FMODE_KERNEL;
 		else {
 			logger(LOG_ERR, "Invalid forwarding mode!");
+			free(mode);
 			return false;
 		}
 		free(mode);
@@ -526,6 +531,7 @@ static bool setup_myself(void) {
 			broadcast_mode = BMODE_DIRECT;
 		else {
 			logger(LOG_ERR, "Invalid broadcast mode!");
+			free(mode);
 			return false;
 		}
 		free(mode);

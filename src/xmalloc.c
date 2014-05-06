@@ -113,9 +113,12 @@ char *xstrdup(const char *s)
 {
   char *p;
   
+  if(!s)
+    return NULL;
+
   p = strdup(s);
   if(!p)
-    xalloc_fail (s ? (int)strlen(s) : 0);
+    xalloc_fail ((int)strlen(s));
   return p;
 }
 
