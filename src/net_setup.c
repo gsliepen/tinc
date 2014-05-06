@@ -52,7 +52,7 @@ char *proxyport;
 char *proxyuser;
 char *proxypass;
 proxytype_t proxytype;
-int autoconnect;
+bool autoconnect;
 bool disablebuggypeers;
 
 char *scriptinterpreter;
@@ -630,9 +630,15 @@ bool setup_myself_reloadable(void) {
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
-	get_config_int(lookup_config(config_tree, "AutoConnect"), &autoconnect);
-	if(autoconnect < 0)
-		autoconnect = 0;
+	config_t *cfg = lookup_config(config_tree, "AutoConnect");
+	if(cfg) {
+		if(!get_config_bool(cfg, &autoconnect)) {
+			// Some backwards compatibility with when this option was an int
+			int val = 0;
+			get_config_int(cfg, &val);
+			autoconnect = val;
+		}
+	}
 
 	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
 

@@ -137,7 +137,7 @@ extern int udp_sndbuf;
 extern int max_connection_burst;
 extern bool do_prune;
 extern char *myport;
-extern int autoconnect;
+extern bool autoconnect;
 extern bool disablebuggypeers;
 extern int contradicting_add_edge;
 extern int contradicting_del_edge;

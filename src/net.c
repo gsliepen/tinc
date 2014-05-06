@@ -204,7 +204,7 @@ static void periodic_handler(void *data) {
 				nc++;
 		}
 
-		if(nc < autoconnect) {
+		if(nc < 3) {
 			/* Not enough active connections, try to add one.
 			   Choose a random node, if we don't have a connection to it,
 			   and we are not already trying to make one, create an
@@ -238,7 +238,7 @@ static void periodic_handler(void *data) {
 				}
 				break;
 			}
-		} else if(nc > autoconnect) {
+		} else if(nc > 3) {
 			/* Too many active connections, try to remove one.
 			   Choose a random outgoing connection to a node
 			   that has at least one other connection.
@@ -264,7 +264,7 @@ static void periodic_handler(void *data) {
 			}
 		}
 
-		if(nc >= autoconnect) {
+		if(nc >= 3) {
 			/* If we have enough active connections,
 			   remove any pending outgoing connections.
 			*/

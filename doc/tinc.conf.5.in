@@ -114,15 +114,13 @@ If
 .Qq any
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
-.It Va AutoConnect Li = Ar count Po 0 Pc Bq experimental
-If set to a non-zero value,
+.It Va AutoConnect Li = yes | no Po no Pc Bq experimental
+If set to yes,
 .Nm
-will try to only have
-.Ar count
-meta connections to other nodes,
-by automatically making or breaking connections to known nodes.
-Higher values increase redundancy but also increase meta data overhead.
-When using this option, a good value is 3.
+will automatically set up meta connections to other nodes,
+without requiring
+.Va ConnectTo
+variables.
 .It Va BindToAddress Li = Ar address Op Ar port
 This is the same as
 .Va ListenAddress ,
@@ -169,7 +167,9 @@ The names should be known to this tinc daemon
 line).
 .Pp
 If you don't specify a host with
-.Va ConnectTo ,
+.Va ConnectTo
+and don't enable
+.Va AutoConnect ,
 .Nm tinc
 won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
