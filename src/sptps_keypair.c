@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 		ecdsa_write_pem_private_key(key, fp);
 		fclose(fp);
 	} else {
-		fprintf(stderr, "Could not open '%s' for writing: %s\n", strerror(errno));
+		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[1], strerror(errno));
 		return 1;
 	}
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 		ecdsa_write_pem_public_key(key, fp);
 		fclose(fp);
 	} else {
-		fprintf(stderr, "Could not open '%s' for writing: %s\n", strerror(errno));
+		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[2], strerror(errno));
 		return 1;
 	}
 

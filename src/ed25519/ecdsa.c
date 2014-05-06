@@ -38,7 +38,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 	int len = strlen(p);
 
 	if(len != 43) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %s for public key!", len);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid size %d for public key!", len);
 		return 0;
 	}
 
