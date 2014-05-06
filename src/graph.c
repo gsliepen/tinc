@@ -212,9 +212,13 @@ static void sssp_bfs(void) {
 			   && (!e->to->status.indirect || indirect))
 				continue;
 
+			// Only update nexthop the first time we visit this node.
+
+			if(!e->to->status.visited)
+				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+
 			e->to->status.visited = true;
 			e->to->status.indirect = indirect;
-			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
 			e->to->prevedge = e;
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
