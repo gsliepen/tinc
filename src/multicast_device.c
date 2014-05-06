@@ -56,6 +56,7 @@ static bool setup_device(void) {
 	space = strchr(host, ' ');
 	if(!space) {
 		logger(LOG_ERR, "Port number required for %s", device_info);
+		free(host);
 		return false;
 	}
 
@@ -75,6 +76,7 @@ static bool setup_device(void) {
 	device_fd = socket(ai->ai_family, SOCK_DGRAM, IPPROTO_UDP);
 	if(device_fd < 0) {
 		logger(LOG_ERR, "Creating socket failed: %s", sockstrerror(sockerrno));
+		free(host);
 		return false;
 	}
 
@@ -88,6 +90,7 @@ static bool setup_device(void) {
 	if(bind(device_fd, ai->ai_addr, ai->ai_addrlen)) {
 		closesocket(device_fd);
 		logger(LOG_ERR, "Can't bind to %s %s: %s", host, port, sockstrerror(sockerrno));
+		free(host);
 		return false;
 	}
 
@@ -102,6 +105,7 @@ static bool setup_device(void) {
 			if(setsockopt(device_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof mreq)) {
 				logger(LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
 				closesocket(device_fd);
+				free(host);
 				return false;
 			}
 #ifdef IP_MULTICAST_LOOP
@@ -123,6 +127,7 @@ static bool setup_device(void) {
 			if(setsockopt(device_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof mreq)) {
 				logger(LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
 				closesocket(device_fd);
+				free(host);
 				return false;
 			}
 #ifdef IPV6_MULTICAST_LOOP
@@ -137,9 +142,11 @@ static bool setup_device(void) {
 		default:
 			logger(LOG_ERR, "Multicast for address family %hx unsupported", ai->ai_family);
 			closesocket(device_fd);
+			free(host);
 			return false;
 	}
 
+	free(host);
 	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;

@@ -340,6 +340,7 @@ void dump_graph(void) {
 
 	if(!file) {
 		logger(LOG_ERR, "Unable to open graph dump file %s: %s", filename, strerror(errno));
+		free(filename);
 		free(tmpname);
 		return;
 	}
@@ -367,7 +368,10 @@ void dump_graph(void) {
 #ifdef HAVE_MINGW
 		unlink(filename);
 #endif
-		rename(tmpname, filename);
+		if(rename(tmpname, filename))
+			logger(LOG_ERR, "Could not rename %s to %s: %s\n", tmpname, filename, strerror(errno));
 		free(tmpname);
 	}
+
+	free(filename);
 }

@@ -165,23 +165,25 @@ static bool read_rsa_private_key(void) {
 	char *fname, *key, *pubkey;
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
-		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
-			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
-			return false;
-		}
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
 		if(BN_hex2bn(&myself->connection->rsa_key->d, key) != strlen(key)) {
 			logger(LOG_ERR, "Invalid PrivateKey for myself!");
+			free(key);
+			return false;
+		}
+		free(key);
+		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
+			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
 		if(BN_hex2bn(&myself->connection->rsa_key->n, pubkey) != strlen(pubkey)) {
 			logger(LOG_ERR, "Invalid PublicKey for myself!");
+			free(pubkey);
 			return false;
 		}
-		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
-		free(key);
 		free(pubkey);
+		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		return true;
 	}
 
@@ -200,15 +202,12 @@ static bool read_rsa_private_key(void) {
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 	struct stat s;
 
-	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'",
-				fname, strerror(errno));
-		free(fname);
-		return false;
+	if(!fstat(fileno(fp), &s)) {
+		if(s.st_mode & ~0100700)
+			logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
+	} else {
+		logger(LOG_WARNING, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
 	}
-
-	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
 	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
@@ -299,10 +298,12 @@ char *get_name(void) {
 		if(!envname) {
 			if(strcmp(name + 1, "HOST")) {
 				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
+				free(name);
 				return false;
 			}
 			if(gethostname(hostname, sizeof hostname) || !*hostname) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
+				free(name);
 				return false;
 			}
 			hostname[31] = 0;
@@ -385,8 +386,7 @@ static bool setup_myself(void) {
 		sockaddr2str(&sa, NULL, &myport);
 	}
 
-	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
-	if(proxy) {
+	if(get_config_string(lookup_config(config_tree, "Proxy"), &proxy)) {
 		if((space = strchr(proxy, ' ')))
 			*space++ = 0;
 
@@ -587,8 +587,7 @@ static bool setup_myself(void) {
 
 	/* Generate packet encryption key */
 
-	if(get_config_string
-	   (lookup_config(config_tree, "Cipher"), &cipher)) {
+	if(get_config_string(lookup_config(config_tree, "Cipher"), &cipher)) {
 		if(!strcasecmp(cipher, "none")) {
 			myself->incipher = NULL;
 		} else {
@@ -599,6 +598,7 @@ static bool setup_myself(void) {
 				return false;
 			}
 		}
+		free(cipher);
 	} else
 		myself->incipher = EVP_bf_cbc();
 
@@ -624,9 +624,12 @@ static bool setup_myself(void) {
 
 			if(!myself->indigest) {
 				logger(LOG_ERR, "Unrecognized digest type!");
+				free(digest);
 				return false;
 			}
 		}
+
+		free(digest);
 	} else
 		myself->indigest = EVP_sha1();
 
@@ -690,6 +693,7 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(type, "vde"))
 			devops = vde_devops;
 #endif
+		free(type);
 	}
 
 	if(!devops.setup())

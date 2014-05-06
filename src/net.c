@@ -186,6 +186,12 @@ void terminate_connection(connection_t *c, bool report) {
 		closesocket(c->socket);
 
 	if(c->edge) {
+		if(!c->node) {
+			logger(LOG_ERR, "Connection to %s (%s) has an edge but node is NULL!", c->name, c->hostname);
+			// And that should never happen.
+			abort();
+		}
+
 		if(report && !tunnelserver)
 			send_del_edge(everyone, c->edge);
 

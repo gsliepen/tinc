@@ -69,7 +69,7 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	memset(&sa, '0', sizeof(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.sll_family = AF_PACKET;
 	sa.sll_protocol = htons(ETH_P_ALL);
 	sa.sll_ifindex = ifr.ifr_ifindex;

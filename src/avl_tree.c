@@ -228,8 +228,7 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 						gchild->left->parent = gchild;
 					gchild->right = child;
 
-					if(gchild->right)
-						gchild->right->parent = gchild;
+					gchild->right->parent = gchild;
 
 					*superparent = gchild;
 					gchild->parent = parent;
@@ -600,6 +599,8 @@ void avl_unlink_node(avl_tree_t *tree, avl_node_t *node)
 		balnode = parent;
 	} else {
 		subst = node->prev;
+		if(!subst) // This only happens if node is not actually in a tree at all.
+			abort();
 
 		if(subst == left) {
 			balnode = subst;

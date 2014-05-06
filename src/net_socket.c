@@ -87,20 +87,22 @@ static bool bind_to_interface(int sd) {
 	int status;
 #endif /* defined(SOL_SOCKET) && defined(SO_BINDTODEVICE) */
 
-	if(!get_config_string (lookup_config (config_tree, "BindToInterface"), &iface))
+	if(!get_config_string(lookup_config (config_tree, "BindToInterface"), &iface))
 		return true;
 
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 	ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
+	free(iface);
 
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
 	if(status) {
-		logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
-				strerror(errno));
+		logger(LOG_ERR, "Can't bind to interface %s: %s", ifr.ifr_ifrn.ifrn_name, strerror(errno));
 		return false;
 	}
+
+	free(iface);
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
 	logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
@@ -135,20 +137,21 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
-	if(get_config_string
-	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
+	if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		struct ifreq ifr;
 
 		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+		ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
+		free(iface);
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr))) {
 			closesocket(nfd);
-			logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
-				   strerror(sockerrno));
+			logger(LOG_ERR, "Can't bind to interface %s: %s", ifr.ifr_ifrn.ifrn_name, strerror(sockerrno));
 			return -1;
 		}
+
 #else
 		logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
@@ -407,7 +410,6 @@ begin:
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-		configure_tcp(c);
 	} else if(proxytype == PROXY_EXEC) {
 		do_outgoing_pipe(c, proxyhost);
 	} else {
@@ -416,13 +418,15 @@ begin:
 			goto begin;
 		ifdebug(CONNECTIONS) logger(LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
-		configure_tcp(c);
 	}
 
 	if(c->socket == -1) {
 		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
 		goto begin;
 	}
+
+	if(proxytype != PROXY_EXEC)
+		configure_tcp(c);
 
 #ifdef FD_CLOEXEC
 	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
