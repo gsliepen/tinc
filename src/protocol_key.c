@@ -159,7 +159,7 @@ bool send_ans_key(node_t *to) {
 	// Create a new key
 	if (1 != RAND_bytes((unsigned char *)to->inkey, to->inkeylength)) {
 		int err = ERR_get_error();
-		logger(LOG_ERR, "Failed to generate random for key (%s)", "SEND_ANS_KEY", ERR_error_string(err, NULL));
+		logger(LOG_ERR, "Failed to generate random for key (%s)", ERR_error_string(err, NULL));
 		return false; // Do not send insecure keys, let connection attempt fail.
 	}
 

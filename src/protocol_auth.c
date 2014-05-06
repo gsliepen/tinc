@@ -217,7 +217,7 @@ bool send_metakey(connection_t *c) {
 
 	if (1 != RAND_bytes((unsigned char *)c->outkey, len)) {
 		int err = ERR_get_error();
-		logger(LOG_ERR, "Failed to generate meta key (%s)", "SEND_METAKEY", ERR_error_string(err, NULL));
+		logger(LOG_ERR, "Failed to generate meta key (%s)", ERR_error_string(err, NULL));
 		return false;
 	}
 
@@ -398,7 +398,7 @@ bool send_challenge(connection_t *c) {
 
 	if (1 != RAND_bytes((unsigned char *)c->hischallenge, len)) {
 		int err = ERR_get_error();
-		logger(LOG_ERR, "Failed to generate challenge (%s)", "SEND_CHALLENGE", ERR_error_string(err, NULL));
+		logger(LOG_ERR, "Failed to generate challenge (%s)", ERR_error_string(err, NULL));
 		return false; // Do not send predictable challenges, let connection attempt fail.
 	}
 
