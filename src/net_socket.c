@@ -102,7 +102,6 @@ static bool bind_to_interface(int sd) {
 		return false;
 	}
 
-	free(iface);
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
 	logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif

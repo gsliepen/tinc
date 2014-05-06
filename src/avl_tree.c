@@ -168,14 +168,12 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 						child->right->parent = child;
 					gchild->right = node;
 
-					if(gchild->right)
-						gchild->right->parent = gchild;
+					gchild->right->parent = gchild;
 					gchild->left = child;
 
-					if(gchild->left)
-						gchild->left->parent = gchild;
-					*superparent = gchild;
+					gchild->left->parent = gchild;
 
+					*superparent = gchild;
 					gchild->parent = parent;
 #ifdef AVL_COUNT
 					node->count = AVL_CALC_COUNT(node);
@@ -224,8 +222,7 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 						child->left->parent = child;
 					gchild->left = node;
 
-					if(gchild->left)
-						gchild->left->parent = gchild;
+					gchild->left->parent = gchild;
 					gchild->right = child;
 
 					gchild->right->parent = gchild;

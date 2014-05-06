@@ -62,10 +62,11 @@ static bool setup_device(void) {
 
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+	ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
+
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);
-		logger(LOG_ERR, "Can't find interface %s: %s", iface,
-			   strerror(errno));
+		logger(LOG_ERR, "Can't find interface %s: %s", ifr.ifr_ifrn.ifrn_name, strerror(errno));
 		return false;
 	}
 
@@ -75,7 +76,7 @@ static bool setup_device(void) {
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
 	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof(sa))) {
-		logger(LOG_ERR, "Could not bind %s to %s: %s", device, iface, strerror(errno));
+		logger(LOG_ERR, "Could not bind %s to %s: %s", device, ifr.ifr_ifrn.ifrn_name, strerror(errno));
 		return false;
 	}
 

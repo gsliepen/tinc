@@ -578,6 +578,7 @@ static bool setup_myself(void) {
 			addressfamily = AF_UNSPEC;
 		else {
 			logger(LOG_ERR, "Invalid address family!");
+			free(afname);
 			return false;
 		}
 		free(afname);
@@ -595,6 +596,7 @@ static bool setup_myself(void) {
 
 			if(!myself->incipher) {
 				logger(LOG_ERR, "Unrecognized cipher type!");
+				free(cipher);
 				return false;
 			}
 		}
