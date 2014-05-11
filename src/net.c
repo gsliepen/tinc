@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 		  2011      Loïc Grenié <loic.grenie@gmail.com>
 
@@ -40,6 +40,10 @@
 #include "route.h"
 #include "subnet.h"
 #include "xalloc.h"
+
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
 
 #ifdef HAVE_RESOLV_H
 #include <resolv.h>
@@ -504,7 +508,7 @@ int main_loop(void) {
 			avl_node_t *node;
 			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
-#ifdef HAVE_DECL_RES_INIT
+#if HAVE_DECL_RES_INIT
 			res_init();
 #endif
 			for(node = connection_tree->head; node; node = node->next) {
