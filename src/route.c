@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -197,7 +197,7 @@ static void learn_mac(mac_t *address) {
 	/* If we don't know this MAC address yet, store it */
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx",
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Learned new MAC address %x:%x:%x:%x:%x:%x",
 				   address->x[0], address->x[1], address->x[2], address->x[3],
 				   address->x[4], address->x[5]);
 

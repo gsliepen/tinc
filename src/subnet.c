@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2014 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -351,7 +351,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 
 	switch (subnet->type) {
 		case SUBNET_MAC:
-			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx#%d",
+			snprintf(netstr, len, "%x:%x:%x:%x:%x:%x#%d",
 					 subnet->net.mac.address.x[0],
 					 subnet->net.mac.address.x[1],
 					 subnet->net.mac.address.x[2],
@@ -362,7 +362,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 			break;
 
 		case SUBNET_IPV4:
-			snprintf(netstr, len, "%hu.%hu.%hu.%hu/%d#%d",
+			snprintf(netstr, len, "%u.%u.%u.%u/%d#%d",
 					 subnet->net.ipv4.address.x[0],
 					 subnet->net.ipv4.address.x[1],
 					 subnet->net.ipv4.address.x[2],
@@ -372,7 +372,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 			break;
 
 		case SUBNET_IPV6:
-			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d#%d",
+			snprintf(netstr, len, "%x:%x:%x:%x:%x:%x:%x:%x/%d#%d",
 					 ntohs(subnet->net.ipv6.address.x[0]),
 					 ntohs(subnet->net.ipv6.address.x[1]),
 					 ntohs(subnet->net.ipv6.address.x[2]),

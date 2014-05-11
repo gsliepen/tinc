@@ -1,7 +1,7 @@
 /*
     device.c -- multicast socket
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ static bool setup_device(void) {
 #endif
 	
 		default:
-			logger(LOG_ERR, "Multicast for address family %hx unsupported", ai->ai_family);
+			logger(LOG_ERR, "Multicast for address family %x unsupported", ai->ai_family);
 			closesocket(device_fd);
 			free(host);
 			return false;

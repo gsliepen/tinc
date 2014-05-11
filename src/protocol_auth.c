@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ static bool send_proxyrequest(connection_t *c) {
 				i += 2;
 				c->tcplen += 22;
 			} else {
-				logger(LOG_ERR, "Address family %hx not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
+				logger(LOG_ERR, "Address family %x not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
 				return false;
 			}
 			if(i > len)
