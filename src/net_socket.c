@@ -271,8 +271,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv4 fragmentation
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
@@ -285,8 +283,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv6 fragmentation
 #endif
 
 	if (!bind_to_interface(nfd)) {
