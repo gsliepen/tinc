@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ static DWORD WINAPI tapreader(void *bla) {
 	DWORD len;
 	OVERLAPPED overlapped;
 	vpn_packet_t packet;
-	int errors;
+	int errors = 0;
 
 	logger(LOG_DEBUG, "Tap reader running");
 
@@ -91,6 +91,8 @@ static DWORD WINAPI tapreader(void *bla) {
 		route(myself, &packet);
 		LeaveCriticalSection(&mutex);
 	}
+
+	return 0;
 }
 
 static bool setup_device(void) {
