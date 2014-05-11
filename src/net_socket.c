@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -240,8 +240,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv4 fragmentation
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
@@ -254,8 +252,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv6 fragmentation
 #endif
 
 	if (!bind_to_interface(nfd)) {
