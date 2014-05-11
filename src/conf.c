@@ -2,7 +2,7 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
 		  2000 Cris van Pelt
 

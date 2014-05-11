@@ -2,7 +2,7 @@
     device.c -- Interaction with Solaris tun device
     Copyright (C) 2001-2005 Ivo Timmermans,
                   2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
-                  2001-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,3 +1,26 @@
+Version 1.0.24               May 11 2013
+
+ * Various compiler hardening flags are enabled by default.
+
+ * Updated support for Solaris, allowing switch mode on Solaris 11.
+
+ * Configuration will now also be read from a conf.d directory.
+
+ * Various updates to the documentation.
+
+ * Tinc now forces glibc to reload /etc/resolv.conf after it receives SIGALRM.
+
+ * Fixed a potential routing loop when IndirectData or TCPOnly is used and
+   broadcast packets are being sent.
+
+ * Improved security with constant time memcmp and stricter use of OpenSSL's
+   RNG functions.
+
+ * Fixed all issues found by Coverity.
+
+Thanks to Florent Clairambault, Vilbrekin, luckyhacky, Armin Fisslthaler, Loïc
+Dachary and Steffan Karger for their contributions to this version of tinc.
+
 Version 1.0.23               October 19 2013
 
  * Start authentication immediately on outgoing connections (useful for sslh).
