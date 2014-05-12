@@ -21,12 +21,12 @@
 #ifndef __TINC_UTILS_H__
 #define __TINC_UTILS_H__
 
-extern int hex2bin(const char *src, char *dst, int length);
-extern int bin2hex(const char *src, char *dst, int length);
+extern int hex2bin(const char *src, void *dst, int length);
+extern int bin2hex(const void *src, char *dst, int length);
 
-extern int b64encode(const char *src, char *dst, int length);
-extern int b64encode_urlsafe(const char *src, char *dst, int length);
-extern int b64decode(const char *src, char *dst, int length);
+extern int b64encode(const void *src, char *dst, int length);
+extern int b64encode_urlsafe(const void *src, char *dst, int length);
+extern int b64decode(const char *src, void *dst, int length);
 
 #ifdef HAVE_MINGW
 extern const char *winerror(int);
