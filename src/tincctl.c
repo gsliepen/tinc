@@ -2138,6 +2138,8 @@ static int cmd_network(int argc, char *argv[]) {
 		free(fname);
 	}
 
+	closedir(dir);
+
 	return 0;
 }
 
