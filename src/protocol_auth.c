@@ -379,7 +379,8 @@ bool id_h(connection_t *c, const char *request) {
 		}
 
 		if(experimental)
-			read_ecdsa_public_key(c);
+			if(!read_ecdsa_public_key(c))
+				return false;
 	} else {
 		if(c->protocol_minor && !ecdsa_active(c->ecdsa))
 			c->protocol_minor = 1;
