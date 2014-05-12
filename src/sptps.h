@@ -39,6 +39,9 @@
 #define SPTPS_SIG 3           // Waiting for a SIGnature record
 #define SPTPS_ACK 4           // Waiting for an ACKnowledgement record
 
+// Overhead for datagrams
+#define SPTPS_DATAGRAM_OVERHEAD 21
+
 typedef bool (*send_data_t)(void *handle, uint8_t type, const char *data, size_t len);
 typedef bool (*receive_record_t)(void *handle, uint8_t type, const char *data, uint16_t len);
 

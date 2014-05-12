@@ -767,7 +767,7 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 
 	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, or this packet is larger than the MTU. */
 
-	if(type >= SPTPS_HANDSHAKE || ((myself->options | to->options) & OPTION_TCPONLY) || (type != PKT_PROBE && len > to->minmtu)) {
+	if(type >= SPTPS_HANDSHAKE || ((myself->options | to->options) & OPTION_TCPONLY) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > to->minmtu)) {
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
 		/* If no valid key is known yet, send the packets using ANS_KEY requests,
@@ -792,6 +792,8 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 
 	if(sendto(listen_socket[sock].udp.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
+			// Compensate for SPTPS overhead
+			len -= SPTPS_DATAGRAM_OVERHEAD;
 			if(to->maxmtu >= len)
 				to->maxmtu = len - 1;
 			if(to->mtu >= len)
