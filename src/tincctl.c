@@ -417,6 +417,15 @@ static bool rsa_keygen(int bits, bool ask) {
 	FILE *f;
 	char *pubname, *privname;
 
+	// Make sure the key size is a multiple of 8 bits.
+	bits &= ~0x7;
+
+	// Force them to be between 1024 and 8192 bits long.
+	if(bits < 1024)
+		bits = 1024;
+	if(bits > 8192)
+		bits = 8192;
+
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 
 	if(!(key = rsa_generate(bits, 0x10001))) {
