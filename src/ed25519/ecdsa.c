@@ -62,9 +62,52 @@ char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa) {
 
 // Read PEM ECDSA keys
 
+static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
+	char line[1024];
+	bool data = false;
+	size_t typelen = strlen(type);
+
+	while(fgets(line, sizeof line, fp)) {
+		if(!data) {
+			if(strncmp(line, "-----BEGIN ", 11))
+				continue;
+			if(strncmp(line + 11, type, typelen))
+				continue;
+			data = true;
+			continue;
+		}
+
+		if(!strncmp(line, "-----END ", 9))
+			break;
+
+		size_t linelen = strcspn(line, "\r\n");
+		size_t len = b64decode(line, line, linelen);
+		if(!len) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid base64 data in PEM file\n");
+			return false;
+		}
+
+		if(len > size) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Too much base64 data in PEM file\n");
+			return false;
+		}
+
+		memcpy(buf, line, len);
+		buf += len;
+		size -= len;
+	}
+
+	if(size) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Too little base64 data in PEM file\n");
+		return false;
+	}
+
+	return true;
+}
+
 ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) {
 	ecdsa_t *ecdsa = xzalloc(sizeof *ecdsa);
-	if(fread(ecdsa->public, sizeof ecdsa->public, 1, fp) == 1)
+	if(read_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof ecdsa->public))
 		return ecdsa;
 	free(ecdsa);
 	return 0;
@@ -72,7 +115,7 @@ ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) {
 
 ecdsa_t *ecdsa_read_pem_private_key(FILE *fp) {
 	ecdsa_t *ecdsa = xmalloc(sizeof *ecdsa);
-	if(fread(ecdsa, sizeof *ecdsa, 1, fp) == 1)
+	if(read_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof *ecdsa))
 		return ecdsa;
 	free(ecdsa);
 	return 0;

@@ -246,7 +246,7 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 	while(fgets(buf, sizeof buf, r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
-			if((strstr(buf, " RSA ") && strstr(what, "RSA"))) {
+			if((strstr(buf, " ED25519 ") && strstr(what, "Ed25519")) || (strstr(buf, " RSA ") && strstr(what, "RSA"))) {
 				disabled = true;
 				block = true;
 			}

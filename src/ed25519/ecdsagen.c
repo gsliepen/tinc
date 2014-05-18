@@ -46,10 +46,26 @@ ecdsa_t *ecdsa_generate(void) {
 
 // Write PEM ECDSA keys
 
+static bool write_pem(FILE *fp, const char *type, void *buf, size_t size) {
+	fprintf(fp, "-----BEGIN %s-----\n", type);
+
+	char base64[65];
+	while(size) {
+		size_t todo = size > 48 ? 48 : size;
+		b64encode(buf, base64, todo);
+		fprintf(fp, "%s\n", base64);
+		buf += todo;
+		size -= todo;
+	}
+
+	fprintf(fp, "-----END %s-----\n", type);
+	return !ferror(fp);
+}
+
 bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
-	return fwrite(ecdsa->public, sizeof ecdsa->public, 1, fp) == 1;
+	return write_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof ecdsa->public);
 }
 
 bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
-	return fwrite(ecdsa, sizeof *ecdsa, 1, fp) == 1;
+	return write_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof *ecdsa);
 }
