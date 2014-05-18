@@ -260,24 +260,31 @@ bool send_ans_key(node_t *to) {
 	if(to->status.sptps)
 		abort();
 
-	size_t keylen = cipher_keylength(myself->incipher);
+	size_t keylen = myself->incipher ? cipher_keylength(myself->incipher) : 1;
 	char key[keylen * 2 + 1];
+
+	randomize(key, keylen);
 
 	cipher_close(to->incipher);
 	digest_close(to->indigest);
 
-	to->incipher = cipher_open_by_nid(cipher_get_nid(myself->incipher));
-	to->indigest = digest_open_by_nid(digest_get_nid(myself->indigest), digest_length(myself->indigest));
+	if(myself->incipher) {
+		to->incipher = cipher_open_by_nid(cipher_get_nid(myself->incipher));
+		if(!to->incipher)
+			abort();
+		if(!cipher_set_key(to->incipher, key, false))
+			abort();
+	}
+
+	if(myself->indigest) {
+		to->indigest = digest_open_by_nid(digest_get_nid(myself->indigest), digest_length(myself->indigest));
+		if(!to->indigest)
+			abort();
+		if(!digest_set_key(to->indigest, key, keylen))
+			abort();
+	}
+
 	to->incompression = myself->incompression;
-
-	if(!to->incipher || !to->indigest)
-		abort();
-
-	randomize(key, keylen);
-	if(!cipher_set_key(to->incipher, key, false))
-		abort();
-	if(!digest_set_key(to->indigest, key, keylen))
-		abort();
 
 	bin2hex(key, key, keylen);
 
@@ -422,16 +429,16 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	keylen = hex2bin(key, key, sizeof key);
 
-	if(keylen != cipher_keylength(from->outcipher)) {
+	if(keylen != (from->outcipher ? cipher_keylength(from->outcipher) : 1)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
 		return true;
 	}
 
 	/* Update our copy of the origin's packet key */
 
-	if(!cipher_set_key(from->outcipher, key, true))
+	if(from->outcipher && !cipher_set_key(from->outcipher, key, true))
 		return false;
-	if(!digest_set_key(from->outdigest, key, keylen))
+	if(from->outdigest && !digest_set_key(from->outdigest, key, keylen))
 		return false;
 
 	from->status.validkey = true;

@@ -514,14 +514,22 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!(c->incipher = cipher_open_by_nid(cipher)) || !cipher_set_key_from_rsa(c->incipher, key, len, false)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
-		return false;
+	if(cipher) {
+		if(!(c->incipher = cipher_open_by_nid(cipher)) || !cipher_set_key_from_rsa(c->incipher, key, len, false)) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
+			return false;
+		}
+	} else {
+		c->incipher = NULL;
 	}
 
-	if(!(c->indigest = digest_open_by_nid(digest, -1))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
-		return false;
+	if(digest) {
+		if(!(c->indigest = digest_open_by_nid(digest, -1))) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
+			return false;
+		}
+	} else {
+		c->indigest = NULL;
 	}
 
 	c->status.decryptin = true;

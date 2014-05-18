@@ -378,7 +378,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		return;
 	}
 
-	if(!cipher_active(n->incipher)) {
+	if(!n->status.validkey) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
 		return;
 	}

@@ -1,0 +1,46 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize two nodes
+
+$tinc $c1 <<EOF
+init foo
+set DeviceType dummy
+set Port 32755
+set Address localhost
+set ExperimentalProtocol no
+EOF
+
+$tinc $c2 <<EOF
+init bar
+set DeviceType dummy
+set Port 0
+set ExperimentalProtocol no
+EOF
+
+# Exchange configuration
+
+$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+$tinc $c2 add ConnectTo foo
+$tinc $c1 start $r1
+
+# Test various ciphers and digests
+
+for digest in none md5 sha1 sha256 sha512; do
+	for cipher in none bf-cbc aes-128-cbc aes-256-cbc camellia-128-cbc camellia-256-cbc; do
+		echo Testing $cipher $digest
+		$tinc $c2 <<EOF
+set Digest $digest
+set Cipher $cipher
+EOF
+
+		$tinc $c2 start $r2
+		sleep 2;
+		$tinc $c1 info bar
+		$tinc $c1 info bar | grep -q 'directly with UDP'
+		$tinc $c2 stop
+	done
+done
+
+$tinc $c1 stop
