@@ -77,7 +77,7 @@ static struct option const long_options[] = {
 const char *program_name;
 
 static void usage() {
-	fprintf(stderr, "Usage: %s [options] my_ecdsa_key_file his_ecdsa_key_file [host] port\n\n", program_name);
+	fprintf(stderr, "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n\n", program_name);
 	fprintf(stderr, "Valid options are:\n"
 			"  -d, --datagram          Enable datagram mode.\n"
 			"  -q, --quit              Quit when EOF occurs on stdin.\n"

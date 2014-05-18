@@ -172,7 +172,7 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 		return false;
 	}
 
-	fprintf(f, "ECDSAPublicKey = %s\n", data);
+	fprintf(f, "Ed25519PublicKey = %s\n", data);
 	fclose(f);
 
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
@@ -386,7 +386,7 @@ bool id_h(connection_t *c, const char *request) {
 			c->protocol_minor = 1;
 	}
 
-	/* Forbid version rollback for nodes whose ECDSA key we know */
+	/* Forbid version rollback for nodes whose Ed25519 key we know */
 
 	if(ecdsa_active(c->ecdsa) && c->protocol_minor < 2) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) tries to roll back protocol version to %d.%d",
@@ -629,7 +629,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 }
 
 static bool send_upgrade(connection_t *c) {
-	/* Special case when protocol_minor is 1: the other end is ECDSA capable,
+	/* Special case when protocol_minor is 1: the other end is Ed25519 capable,
 	 * but doesn't know our key yet. So send it now. */
 
 	char *pubkey = ecdsa_get_base64_public_key(myself->connection->ecdsa);
@@ -718,12 +718,12 @@ static bool upgrade_h(connection_t *c, const char *request) {
 	}
 
 	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(c)) {
-		logger(DEBUG_ALWAYS, LOG_INFO, "Already have ECDSA public key from %s (%s), not upgrading.", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_INFO, "Already have Ed25519 public key from %s (%s), not upgrading.", c->name, c->hostname);
 		return false;
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "Got ECDSA public key from %s (%s), upgrading!", c->name, c->hostname);
-	append_config_file(c->name, "ECDSAPublicKey", pubkey);
+	logger(DEBUG_ALWAYS, LOG_INFO, "Got Ed25519 public key from %s (%s), upgrading!", c->name, c->hostname);
+	append_config_file(c->name, "Ed25519PublicKey", pubkey);
 	c->allow_request = TERMREQ;
 	return send_termreq(c);
 }

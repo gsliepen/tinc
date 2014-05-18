@@ -69,7 +69,7 @@ option, the value of this environment variable is used.
 .Sh COMMANDS
 .Bl -tag -width indent
 .It init Op Ar name
-Create initial configuration files and RSA and ECDSA keypairs with default length.
+Create initial configuration files and RSA and Ed25519 keypairs with default length.
 If no
 .Ar name
 for this node is given, it will be asked for.
@@ -142,9 +142,9 @@ will be made.
 Shows the PID of the currently running
 .Xr tincd 8 .
 .It generate-keys Op bits
-Generate both RSA and ECDSA keypairs (see below) and exit.
-.It generate-ecdsa-keys
-Generate public/private ECDSA keypair and exit.
+Generate both RSA and Ed25519 keypairs (see below) and exit.
+.It generate-ed25519-keys
+Generate public/private Ed25519 keypair and exit.
 .It generate-rsa-keys Op bits
 Generate public/private RSA keypair and exit.
 If

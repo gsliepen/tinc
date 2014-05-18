@@ -64,20 +64,20 @@ or by using
 .Sh PUBLIC/PRIVATE KEYS
 The
 .Nm tinc Li init
-command will have generated both RSA and ECDSA public/private keypairs.
+command will have generated both RSA and Ed25519 public/private keypairs.
 The private keys should be stored in files named
 .Pa rsa_key.priv
 and
-.Pa ecdsa_key.priv
+.Pa ed25519_key.priv
 in the directory
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /
 The public keys should be stored in the host configuration file
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Va NAME .
 The RSA keys are used for backwards compatibility with tinc version 1.0.
 If you are upgrading from version 1.0 to 1.1, you can keep the old configuration files,
-but you will need to create ECDSA keys using the following command:
+but you will need to create Ed25519 keys using the following command:
 .Bd -literal -offset indent
-.Nm tinc Fl n Ar NETNAME Li generate-ecdsa-keys
+.Nm tinc Fl n Ar NETNAME Li generate-ed25519-keys
 .Ed
 .Sh SERVER CONFIGURATION
 The server configuration of the daemon is done in the file
@@ -260,17 +260,17 @@ When this option is enabled, packets that cannot be sent directly to the destina
 but which would have to be forwarded by an intermediate node, are dropped instead.
 When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
-.It Va ECDSAPrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /ecdsa_key.priv Pc
-The file in which the private ECDSA key of this tinc daemon resides.
+.It Va Ed25519PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /ed25519_key.priv Pc
+The file in which the private Ed25519 key of this tinc daemon resides.
 This is only used if
 .Va ExperimentalProtocol
 is enabled.
 .It Va ExperimentalProtocol Li = yes | no Pq yes
 When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
 Ephemeral ECDH will be used for key exchanges,
-and ECDSA will be used instead of RSA for authentication.
-When enabled, an ECDSA key must have been generated before with
-.Nm tinc generate-ecdsa-keys .
+and Ed25519 will be used instead of RSA for authentication.
+When enabled, an Ed25519 key must have been generated before with
+.Nm tinc generate-ed25519-keys .
 .It Va Forwarding Li = off | internal | kernel Po internal Pc Bq experimental
 This option selects the way indirect packets are forwarded.
 .Bl -tag -width indent

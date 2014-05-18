@@ -993,18 +993,18 @@ but which would have to be forwarded by an intermediate node, are dropped instea
 When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
 
-@cindex ECDSAPrivateKeyFile
-@item ECDSAPrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/ecdsa_key.priv})
-The file in which the private ECDSA key of this tinc daemon resides.
+@cindex Ed25519PrivateKeyFile
+@item Ed25519PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/ed25519_key.priv})
+The file in which the private Ed25519 key of this tinc daemon resides.
 This is only used if ExperimentalProtocol is enabled.
 
 @cindex ExperimentalProtocol
 @item ExperimentalProtocol = <yes|no> (yes)
 When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
 Ephemeral ECDH will be used for key exchanges,
-and ECDSA will be used instead of RSA for authentication.
-When enabled, an ECDSA key must have been generated before with
-@samp{tinc generate-ecdsa-keys}.
+and Ed25519 will be used instead of RSA for authentication.
+When enabled, an Ed25519 key must have been generated before with
+@samp{tinc generate-ed25519-keys}.
 
 @cindex Forwarding
 @item Forwarding = <off|internal|kernel> (internal) [experimental]
@@ -1490,9 +1490,9 @@ In the configuration directory, it will create the file @file{tinc.conf} with th
 Name = @var{name}
 @end example
 
-It will also create private RSA and ECDSA keys, which will be stored in the files @file{rsa_key.priv} and @file{ecdsa_key.priv}.
+It will also create private RSA and Ed25519 keys, which will be stored in the files @file{rsa_key.priv} and @file{ed25519_key.priv}.
 It will also create a host configuration file @file{hosts/@var{name}},
-which will contain the corresponding public RSA and ECDSA keys.
+which will contain the corresponding public RSA and Ed25519 keys.
 
 Finally, on UNIX operating systems, it will create an executable script @file{tinc-up},
 which will initially not do anything except warning that you should edit it.
@@ -1511,7 +1511,7 @@ tinc -n @var{netname} add subnet 192.168.2.0/24
 
 This will add a Subnet statement to your host configuration file.
 Try opening the file @file{@value{sysconfdir}/tinc/@var{netname}/hosts/@var{name}} in an editor.
-You should now see a file containing the public RSA and ECDSA keys (which looks like a bunch of random characters),
+You should now see a file containing the public RSA and Ed25519 keys (which looks like a bunch of random characters),
 and the following line at the bottom:
 
 @example
@@ -1822,8 +1822,8 @@ Address = 4.5.6.7
 A, B, C and D all have their own public/private keypairs:
 
 The private RSA key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
-the private ECDSA key is stored in @file{@value{sysconfdir}/tinc/company/ecdsa_key.priv},
-and the public RSA and ECDSA keys are put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
+the private Ed25519 key is stored in @file{@value{sysconfdir}/tinc/company/ed25519_key.priv},
+and the public RSA and Ed25519 keys are put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
 
 @subsubheading Starting
 
@@ -2235,7 +2235,7 @@ the value of this environment variable is used.
 
 @cindex init
 @item init [@var{name}]
-Create initial configuration files and RSA and ECDSA keypairs with default length.
+Create initial configuration files and RSA and Ed25519 keypairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
 @cindex get
@@ -2319,13 +2319,13 @@ Shows the PID of the currently running @samp{tincd}.
 
 @cindex generate-keys
 @item generate-keys [@var{bits}]
-Generate both RSA and ECDSA keypairs (see below) and exit.
+Generate both RSA and Ed25519 keypairs (see below) and exit.
 tinc will ask where you want to store the files, but will default to the
 configuration directory (you can use the -c or -n option).
 
-@cindex generate-ecdsa-keys
-@item generate-ecdsa-keys
-Generate public/private ECDSA keypair and exit.
+@cindex generate-ed25519-keys
+@item generate-ed25519-keys
+Generate public/private Ed25519 keypair and exit.
 
 @cindex generate-rsa-keys
 @item generate-rsa-keys [@var{bits}]
@@ -3010,12 +3010,12 @@ The expanded key is used as follows:
 Where initiator_cipher_key is the key used by session initiator to encrypt
 messages sent to the responder.
 
-When using 521 bits EC keys, the AES-256-CTR cipher and HMAC-SHA-256 digest algorithm,
+When using 256 bits Ed25519 keys, the AES-256-CTR cipher and HMAC-SHA-256 digest algorithm,
 the sizes are as follows:
 
 @example
-ECDH_SIZE:       67 (= ceil(521/8) + 1)
-ECDSA_SIZE:     141 (= 2 * ceil(521/8) + 9)
+ECDH_SIZE:       32 (= 256/8)
+ECDSA_SIZE:      64 (= 2 * 256/8)
 CIPHER_KEYSIZE:  48 (= 256/8 + 128/8)
 DIGEST_KEYSIZE:  32 (= 256/8)
 @end example

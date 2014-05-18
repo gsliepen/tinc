@@ -39,7 +39,7 @@ unsigned int sptps_replaywin = 16;
 
    Sign all handshake messages up to ECDHE kex with long-term public keys. (done)
 
-   HMACed KEX finished message to prevent downgrade attacks and prove you have the right key material (done by virtue of ECDSA over the whole ECDHE exchange?)
+   HMACed KEX finished message to prevent downgrade attacks and prove you have the right key material (done by virtue of Ed25519 over the whole ECDHE exchange?)
 
    Explicit close message needs to be added.
 
@@ -163,7 +163,7 @@ static bool send_kex(sptps_t *s) {
 	return send_record_priv(s, SPTPS_HANDSHAKE, s->mykex, 1 + 32 + keylen);
 }
 
-// Send a SIGnature record, containing an ECDSA signature over both KEX records.
+// Send a SIGnature record, containing an Ed25519 signature over both KEX records.
 static bool send_sig(sptps_t *s) {
 	size_t keylen = ECDH_SIZE;
 	size_t siglen = ecdsa_size(s->mykey);

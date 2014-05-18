@@ -71,17 +71,17 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	if(!read_host_config(config_tree, n->name))
 		goto exit;
 
-	/* First, check for simple ECDSAPublicKey statement */
+	/* First, check for simple Ed25519PublicKey statement */
 
-	if(get_config_string(lookup_config(config_tree, "ECDSAPublicKey"), &p)) {
+	if(get_config_string(lookup_config(config_tree, "Ed25519PublicKey"), &p)) {
 		n->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
 		goto exit;
 	}
 
-	/* Else, check for ECDSAPublicKeyFile statement and read it */
+	/* Else, check for Ed25519PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(config_tree, "ECDSAPublicKeyFile"), &pubname))
+	if(!get_config_string(lookup_config(config_tree, "Ed25519PublicKeyFile"), &pubname))
 		xasprintf(&pubname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
 	fp = fopen(pubname, "r");
@@ -112,23 +112,23 @@ bool read_ecdsa_public_key(connection_t *c) {
 			return false;
 	}
 
-	/* First, check for simple ECDSAPublicKey statement */
+	/* First, check for simple Ed25519PublicKey statement */
 
-	if(get_config_string(lookup_config(c->config_tree, "ECDSAPublicKey"), &p)) {
+	if(get_config_string(lookup_config(c->config_tree, "Ed25519PublicKey"), &p)) {
 		c->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
 		return c->ecdsa;
 	}
 
-	/* Else, check for ECDSAPublicKeyFile statement and read it */
+	/* Else, check for Ed25519PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(c->config_tree, "ECDSAPublicKeyFile"), &fname))
+	if(!get_config_string(lookup_config(c->config_tree, "Ed25519PublicKeyFile"), &fname))
 		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA public key file `%s': %s",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 public key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -138,7 +138,7 @@ bool read_ecdsa_public_key(connection_t *c) {
 	fclose(fp);
 
 	if(!c->ecdsa)
-		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing ECDSA public key file `%s' failed.", fname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing Ed25519 public key file `%s' failed.", fname);
 	free(fname);
 	return c->ecdsa;
 }
@@ -187,15 +187,15 @@ static bool read_ecdsa_private_key(void) {
 
 	/* Check for PrivateKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(config_tree, "ECDSAPrivateKeyFile"), &fname))
-		xasprintf(&fname, "%s" SLASH "ecdsa_key.priv", confbase);
+	if(!get_config_string(lookup_config(config_tree, "Ed25519PrivateKeyFile"), &fname))
+		xasprintf(&fname, "%s" SLASH "ed25519_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA private key file `%s': %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 private key file `%s': %s", fname, strerror(errno));
 		if(errno == ENOENT)
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an ECDSA keypair with `tinc -n %s generate-ecdsa-keys'.", netname ?: ".");
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 keypair with `tinc -n %s generate-ed25519-keys'.", netname ?: ".");
 		free(fname);
 		return false;
 	}
@@ -204,20 +204,20 @@ static bool read_ecdsa_private_key(void) {
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat ECDSA private key file `%s': %s'", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat Ed25519 private key file `%s': %s'", fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700)
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for ECDSA private key file `%s'!", fname);
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for Ed25519 private key file `%s'!", fname);
 #endif
 
 	myself->connection->ecdsa = ecdsa_read_pem_private_key(fp);
 	fclose(fp);
 
 	if(!myself->connection->ecdsa)
-		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
 	free(fname);
 	return myself->connection->ecdsa;
 }
@@ -231,7 +231,7 @@ static bool read_invitation_key(void) {
 		invitation_key = NULL;
 	}
 
-	xasprintf(&fname, "%s" SLASH "invitations" SLASH "ecdsa_key.priv", confbase);
+	xasprintf(&fname, "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -239,7 +239,7 @@ static bool read_invitation_key(void) {
 		invitation_key = ecdsa_read_pem_private_key(fp);
 		fclose(fp);
 		if(!invitation_key)
-			logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
+			logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
 	}
 
 	free(fname);

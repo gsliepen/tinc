@@ -96,14 +96,14 @@ int main(int argc, char *argv[]) {
 	key1 = ecdsa_generate();
 	key2 = ecdsa_generate();
 
-	// ECDSA signatures
+	// Ed25519 signatures
 
-	fprintf(stderr, "ECDSA sign for %lg seconds: ", duration);
+	fprintf(stderr, "Ed25519 sign for %lg seconds: ", duration);
 	for(clock_start(); clock_countto(duration);)
 		ecdsa_sign(key1, buf1, 256, buf2);
 	fprintf(stderr, "%22.2lf op/s\n", rate);
 
-	fprintf(stderr, "ECDSA verify for %lg seconds: ", duration);
+	fprintf(stderr, "Ed25519 verify for %lg seconds: ", duration);
 	for(clock_start(); clock_countto(duration);)
 		ecdsa_verify(key1, buf1, 256, buf2);
 	fprintf(stderr, "%20.2lf op/s\n", rate);
