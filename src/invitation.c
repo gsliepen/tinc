@@ -906,7 +906,7 @@ int cmd_join(int argc, char *argv[]) {
 	if(!port || !*port)
 		port = "655";
 
-	if(!b64decode(slash, hash, 18) || !b64decode(slash + 24, cookie, 18))
+	if(!b64decode(slash, hash, 24) || !b64decode(slash + 24, cookie, 24))
 		goto invalid;
 
 	// Generate a throw-away key for the invitation.
