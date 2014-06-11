@@ -6,11 +6,12 @@ tar xfj android-ndk-r9d-linux-x86.tar.bz2
 ./android-ndk-r9d/build/tools/make-standalone-toolchain.sh --platform=android-5 --install-dir=/tmp/my-android-toolchain
 
 - Download and cross-compile openSSL for ARM:
-wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz
-tar xfz openssl-1.0.1g.tar.gz
-cd openssl-1.0.1g
+wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz
+tar xfz openssl-1.0.1h.tar.gz
+cd openssl-1.0.1h
 ./Configure dist
 make CC=/tmp/my-android-toolchain/bin/arm-linux-androideabi-gcc AR="/tmp/my-android-toolchain/bin/arm-linux-androideabi-ar r" RANLIB=/tmp/my-android-toolchain/bin/arm-linux-androideabi-ranlib
+cd -
 
 - Clone and cross-compile tinc:
 git clone git://tinc-vpn.org/tinc
