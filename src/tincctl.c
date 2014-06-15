@@ -1626,7 +1626,7 @@ static int cmd_config(int argc, char *argv[]) {
 	if(action < 0 && !removed) {
 		remove(tmpfile);
 		fprintf(stderr, "No configuration variables deleted.\n");
-		return *value != 0;
+		return 1;
 	}
 
 	// Replace the configuration file with the new one
