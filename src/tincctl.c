@@ -1613,7 +1613,7 @@ static int cmd_config(int argc, char *argv[]) {
 	if(action < -1) {
 		if(!found)
 			fprintf(stderr, "No matching configuration variables found.\n");
-		return 0;
+		return 1;
 	}
 
 	// Make sure we wrote everything...
