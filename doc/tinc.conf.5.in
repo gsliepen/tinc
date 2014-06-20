@@ -486,12 +486,9 @@ Furthermore, specifying
 .Qq none
 will turn off packet authentication.
 .It Va IndirectData Li = yes | no Pq no
-This option specifies whether other tinc daemons besides the one you specified with
-.Va ConnectTo
-can make a direct connection to you.
-This is especially useful if you are behind a firewall
-and it is impossible to make a connection from the outside to your tinc daemon.
-Otherwise, it is best to leave this option out or set it to no.
+When set to yes, only nodes which already have a meta connection to you
+will try to establish direct communication with you.
+It is best to leave this option out or set it to no.
 .It Va MACLength Li = Ar length Pq 4
 The length of the message authentication code used to authenticate UDP packets.
 Can be anything from
