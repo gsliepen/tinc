@@ -518,8 +518,8 @@ will turn off packet authentication.
 This option has no effect for connections between nodes using
 .Va ExperimentalProtocol .
 .It Va IndirectData Li = yes | no Pq no
-When set to yes, other nodes which do not already have a meta connection to you
-will not try to establish direct communication with you.
+When set to yes, only nodes which already have a meta connection to you
+will try to establish direct communication with you.
 It is best to leave this option out or set it to no.
 .It Va MACLength Li = Ar length Pq 4
 The length of the message authentication code used to authenticate UDP packets.
