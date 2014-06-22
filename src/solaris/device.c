@@ -287,11 +287,11 @@ static void close_device(void) {
 		}
 	}
 
-	close(ip_fd);
-	close(device_fd);
+	close(ip_fd); ip_fd = -1;
+	close(device_fd); device_fd = -1;
 
-	free(device);
-	free(iface);
+	free(device); device = NULL;
+	free(iface); iface = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {

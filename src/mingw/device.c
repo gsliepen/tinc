@@ -213,10 +213,11 @@ static bool setup_device(void) {
 }
 
 static void close_device(void) {
-	CloseHandle(device_handle);
+	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
 
-	free(device);
-	free(iface);
+	free(device); device = NULL;
+	free(iface); iface = NULL;
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {

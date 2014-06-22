@@ -82,15 +82,18 @@ static bool setup_device(void) {
 }
 
 static void close_device(void) {
-	if(conn)
-		plug.vde_close(conn);
+	if(conn) {
+		plug.vde_close(conn); conn = NULL;
+	}
 
 	if(plug.dl_handle)
 		libvdeplug_dynclose(plug);
 
-	free(device);
+	free(device); device = NULL;
 
-	free(iface);
+	free(iface); iface = NULL;
+
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {

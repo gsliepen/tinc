@@ -110,10 +110,12 @@ static bool setup_device(void) {
 
 static void close_device(void) {
 	close(device_fd);
+	device_fd = -1;
 
-	free(type);
-	free(device);
-	free(iface);
+	free(type); type = NULL;
+	free(device); device = NULL;
+	free(iface); iface = NULL;
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {

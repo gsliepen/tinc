@@ -156,22 +156,29 @@ static bool setup_device(void) {
 }
 
 void close_device(void) {
-	if(listen_fd >= 0)
-		close(listen_fd);
+	if(listen_fd >= 0) {
+		close(listen_fd); listen_fd = -1;
+	}
 
-	if(request_fd >= 0)
-		close(request_fd);
+	if(request_fd >= 0) {
+		close(request_fd); request_fd = -1;
+	}
 
-	if(data_fd >= 0)
-		close(data_fd);
+	if(data_fd >= 0) {
+		close(data_fd); data_fd = -1;
+	}
 
-	if(write_fd >= 0)
-		close(write_fd);
+	if(write_fd >= 0) {
+		close(write_fd); write_fd = -1;
+	}
 
 	unlink(device);
 
-	free(device);
-	if(iface) free(iface);
+	free(device); device = NULL;
+	if(iface) {
+		free(iface); iface = NULL;
+	}
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {

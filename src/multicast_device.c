@@ -148,13 +148,15 @@ error:
 }
 
 static void close_device(void) {
-	close(device_fd);
+	close(device_fd); device_fd = -1;
 
-	free(device);
-	free(iface);
+	free(device); device = NULL;
+	free(iface); iface = NULL;
 
-	if(ai)
-		freeaddrinfo(ai);
+	if(ai) {
+		freeaddrinfo(ai); ai = NULL;
+	}
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
