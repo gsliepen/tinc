@@ -1117,6 +1117,8 @@ void close_network_connections(void) {
 	for(int i = 0; i < 4; i++)
 		free(envp[i]);
 
+	if (device_fd >= 0)
+		io_del(&device_io);
 	devops.close();
 
 	exit_control();
