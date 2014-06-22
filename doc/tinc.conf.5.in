@@ -199,6 +199,7 @@ When disabled,
 calls tinc-up on startup, and tinc-down on shutdown. When enabled,
 .Nm tinc
 will only call tinc-up when at least one node is reachable, and will call tinc-down as soon as no nodes are reachable.
+On Windows, this also determines when the virtual network interface "cable" is "plugged".
 .It Va DeviceType Li = Ar type Pq platform dependent
 The type of the virtual network device.
 Tinc will normally automatically select the right type of tun/tap interface, and this option should not be used.

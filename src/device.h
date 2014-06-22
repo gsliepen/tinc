@@ -37,6 +37,8 @@ typedef struct devops_t {
 	void (*close)(void);
 	bool (*read)(struct vpn_packet_t *);
 	bool (*write)(struct vpn_packet_t *);
+	void (*enable)(void);   /* optional */
+	void (*disable)(void);  /* optional */
 } devops_t;
 
 extern const devops_t os_devops;

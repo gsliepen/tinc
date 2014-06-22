@@ -728,6 +728,9 @@ static bool add_listen_address(char *address, bool bindto) {
 }
 
 void device_enable(void) {
+	if (devops.enable)
+		devops.enable();
+
 	/* Run tinc-up script to further initialize the tap interface */
 
 	char *envp[5] = {NULL};
@@ -753,6 +756,9 @@ void device_disable(void) {
 
 	for(int i = 0; i < 4; i++)
 		free(envp[i]);
+
+	if (devops.disable)
+		devops.disable();
 }
 
 /*
