@@ -48,7 +48,6 @@ static enum {
 } device_type = DEVICE_TYPE_TUN;
 
 int device_fd = -1;
-static int if_fd = -1;
 static int ip_fd = -1;
 char *device = NULL;
 char *iface = NULL;
@@ -134,6 +133,7 @@ static bool setup_device(void) {
 		}
 	}
 
+	int if_fd;
 	if((if_fd = open(device, O_RDWR, 0)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", device, strerror(errno));
 		return false;
