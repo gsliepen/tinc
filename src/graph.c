@@ -204,6 +204,9 @@ static void sssp_bfs(void) {
 static void check_reachability(void) {
 	/* Check reachability status. */
 
+	int reachable_count = 0;
+	int became_reachable_count = 0;
+	int became_unreachable_count = 0;
 	for splay_each(node_t, n, node_tree) {
 		if(n->status.visited != n->status.reachable) {
 			n->status.reachable = !n->status.reachable;
@@ -212,9 +215,13 @@ static void check_reachability(void) {
 			if(n->status.reachable) {
 				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became reachable",
 					   n->name, n->hostname);
+				if (n != myself)
+					became_reachable_count++;
 			} else {
 				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Node %s (%s) became unreachable",
 					   n->name, n->hostname);
+				if (n != myself)
+					became_unreachable_count++;
 			}
 
 			if(experimental && OPTION_VERSION(n->options) >= 2)
@@ -277,6 +284,16 @@ static void check_reachability(void) {
 				}
 			}
 		}
+
+		if(n->status.reachable && n != myself)
+			reachable_count++;
+	}
+
+	if (device_standby) {
+		if (reachable_count == 0 && became_unreachable_count > 0)
+			device_disable();
+		else if (reachable_count == became_reachable_count)
+			device_enable();
 	}
 }
 

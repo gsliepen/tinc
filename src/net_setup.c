@@ -46,6 +46,7 @@
 char *myport;
 static io_t device_io;
 devops_t devops;
+bool device_standby = false;
 
 char *proxyhost;
 char *proxyport;
@@ -726,6 +727,34 @@ static bool add_listen_address(char *address, bool bindto) {
 	return true;
 }
 
+void device_enable(void) {
+	/* Run tinc-up script to further initialize the tap interface */
+
+	char *envp[5] = {NULL};
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
+
+	execute_script("tinc-up", envp);
+
+	for(int i = 0; i < 4; i++)
+		free(envp[i]);
+}
+
+void device_disable(void) {
+	char *envp[5] = {NULL};
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
+
+	execute_script("tinc-down", envp);
+
+	for(int i = 0; i < 4; i++)
+		free(envp[i]);
+}
+
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
@@ -918,6 +947,8 @@ static bool setup_myself(void) {
 #endif
 	}
 
+	get_config_bool(lookup_config(config_tree, "DeviceStandby"), &device_standby);
+
 	if(!devops.setup())
 		return false;
 
@@ -1048,18 +1079,8 @@ bool setup_network(void) {
 	if(!init_control())
 		return false;
 
-	/* Run tinc-up script to further initialize the tap interface */
-
-	char *envp[5] = {NULL};
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[3], "NAME=%s", myself->name);
-
-	execute_script("tinc-up", envp);
-
-	for(int i = 0; i < 4; i++)
-		free(envp[i]);
+	if (!device_standby)
+		device_enable();
 
 	/* Run subnet-up scripts for our own subnets */
 
@@ -1098,24 +1119,16 @@ void close_network_connections(void) {
 		close(listen_socket[i].udp.fd);
 	}
 
-	char *envp[5] = {NULL};
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[3], "NAME=%s", myself->name);
-
 	exit_requests();
 	exit_edges();
 	exit_subnets();
 	exit_nodes();
 	exit_connections();
 
-	execute_script("tinc-down", envp);
+	if (!device_standby)
+		device_disable();
 
 	if(myport) free(myport);
-
-	for(int i = 0; i < 4; i++)
-		free(envp[i]);
 
 	if (device_fd >= 0)
 		io_del(&device_io);

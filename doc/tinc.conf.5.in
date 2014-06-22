@@ -193,6 +193,12 @@ instead of
 .Va Device .
 The info pages of the tinc package contain more information
 about configuring the virtual network device.
+.It Va DeviceStandby Li = yes | no Po no Pc
+When disabled,
+.Nm tinc
+calls tinc-up on startup, and tinc-down on shutdown. When enabled,
+.Nm tinc
+will only call tinc-up when at least one node is reachable, and will call tinc-down as soon as no nodes are reachable.
 .It Va DeviceType Li = Ar type Pq platform dependent
 The type of the virtual network device.
 Tinc will normally automatically select the right type of tun/tap interface, and this option should not be used.
@@ -603,12 +609,16 @@ or
 .Bl -tag -width indent
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 This is the most important script.
-If it is present it will be executed right after the tinc daemon has been started and has connected to the virtual network device.
+If it is present it will be executed right after the tinc daemon has been started and has connected to the virtual network device (or when the first node becomes reachable if
+.Va DeviceStandby
+is used).
 It should be used to set up the corresponding network interface,
 but can also be used to start other things.
 Under Windows you can use the Network Connections control panel instead of creating this script.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
-This script is started right before the tinc daemon quits.
+This script is started right before the tinc daemon quits (or when the last node becomes unreachable if
+.Va DeviceStandby
+is used).
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/ Ns Ar HOST Ns Pa -up
 This script is started when the tinc daemon with name
 .Ar HOST
