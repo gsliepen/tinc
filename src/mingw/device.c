@@ -80,7 +80,7 @@ static DWORD WINAPI tapreader(void *bla) {
 		packet.len = len;
 		packet.priority = 0;
 		route(myself, &packet);
-		event_flush_output();
+		event_loop_interrupt();
 		LeaveCriticalSection(&mutex);
 	}
 }
