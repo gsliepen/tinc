@@ -144,14 +144,14 @@ static void send_mtu_probe_handler(void *data) {
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
 		packet.priority = 0;
-		n->status.broadcast = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
+		n->status.send_locally = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
 
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
 
 		send_udppacket(n, &packet);
 	}
 
-	n->status.broadcast = false;
+	n->status.send_locally = false;
 	n->probe_counter = 0;
 	gettimeofday(&n->probe_time, NULL);
 
@@ -544,6 +544,18 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	return;
 }
 
+static void adapt_socket(const sockaddr_t *sa, int *sock) {
+	/* Make sure we have a suitable socket for the chosen address */
+	if(listen_socket[*sock].sa.sa.sa_family != sa->sa.sa_family) {
+		for(int i = 0; i < listen_sockets; i++) {
+			if(listen_socket[i].sa.sa.sa_family == sa->sa.sa_family) {
+				*sock = i;
+				break;
+			}
+		}
+	}
+}
+
 static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock) {
 	/* Latest guess */
 	*sa = &n->address;
@@ -582,18 +594,32 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock
 		*sock = rand() % listen_sockets;
 	}
 
-	/* Make sure we have a suitable socket for the chosen address */
-	if(listen_socket[*sock].sa.sa.sa_family != (*sa)->sa.sa_family) {
-		for(int i = 0; i < listen_sockets; i++) {
-			if(listen_socket[i].sa.sa.sa_family == (*sa)->sa.sa_family) {
-				*sock = i;
-				break;
-			}
-		}
-	}
+	adapt_socket(*sa, sock);
 }
 
-static void choose_broadcast_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+	/* Pick one of the edges from this node at random, then use its local address. */
+
+	int i = 0;
+	int j = rand() % n->edge_tree->count;
+	edge_t *candidate = NULL;
+
+	for splay_each(edge_t, e, n->edge_tree) {
+		if(i++ == j) {
+			candidate = e;
+			break;
+		}
+	}
+
+	if (candidate && candidate->local_address.sa.sa_family) {
+		*sa = &candidate->local_address;
+		*sock = rand() % listen_sockets;
+		adapt_socket(*sa, sock);
+		return;
+	}
+
+	/* No candidate? Use broadcasts instead. */
+
 	static sockaddr_t broadcast_ipv4 = {
 		.in = {
 			.sin_family = AF_INET,
@@ -733,8 +759,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	const sockaddr_t *sa;
 	int sock;
 
-	if(n->status.broadcast)
-		choose_broadcast_address(n, &sa, &sock);
+	if(n->status.send_locally)
+		choose_local_address(n, &sa, &sock);
 	else
 		choose_udp_address(n, &sa, &sock);
 
@@ -785,8 +811,8 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 	const sockaddr_t *sa;
 	int sock;
 
-	if(to->status.broadcast)
-		choose_broadcast_address(to, &sa, &sock);
+	if(to->status.send_locally)
+		choose_local_address(to, &sa, &sock);
 	else
 		choose_udp_address(to, &sa, &sock);
 
