@@ -30,6 +30,7 @@ typedef struct edge_t {
 	struct node_t *from;
 	struct node_t *to;
 	sockaddr_t address;
+	sockaddr_t local_address;
 
 	uint32_t options;                       /* options turned on for this edge */
 	int weight;                             /* weight of this edge */

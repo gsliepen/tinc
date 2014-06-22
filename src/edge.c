@@ -110,11 +110,13 @@ bool dump_edges(connection_t *c) {
 	for splay_each(node_t, n, node_tree) {
 		for splay_each(edge_t, e, n->edge_tree) {
 			char *address = sockaddr2hostname(&e->address);
-			send_request(c, "%d %d %s %s %s %x %d",
+			char* local_address = sockaddr2hostname(&e->local_address);
+			send_request(c, "%d %d %s %s %s %s %x %d",
 					CONTROL, REQ_DUMP_EDGES,
 					e->from->name, e->to->name, address,
-					e->options, e->weight);
+					local_address, e->options, e->weight);
 			free(address);
+			free(local_address);
 		}
 	}
 
