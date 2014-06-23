@@ -349,15 +349,19 @@ bool detach(void) {
 
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
-	int status, len;
 	char *scriptname;
-	int i;
 	char *interpreter = NULL;
+	config_t *cfg_interpreter;
+	int status, len, i;
 
+	cfg_interpreter = lookup_config(config_tree, "ScriptsInterpreter");
 #ifndef HAVE_MINGW
 	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
 #else
-	len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
+	if(cfg_interpreter)
+		len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
+	else
+		len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
 #endif
 	if(len < 0)
 		return false;
@@ -365,14 +369,13 @@ bool execute_script(const char *name, char **envp) {
 	scriptname[len - 1] = '\0';
 
 	/* First check if there is a script */
-
 	if(access(scriptname + 1, F_OK)) {
 		free(scriptname);
 		return true;
 	}
 
 	// Custom scripts interpreter
-	if(get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &interpreter)) {
+	if(get_config_string(cfg_interpreter, &interpreter)) {
 		// Force custom scripts interpreter allowing execution of scripts on android without execution flag (such as on /sdcard)
 		free(scriptname);
 		len = xasprintf(&scriptname, "%s \"%s/%s\"", interpreter, confbase, name);
