@@ -225,7 +225,7 @@ bool event_loop(void) {
 #endif
 
 		if(n < 0) {
-			if(sockwouldblock(errno))
+			if(sockwouldblock(sockerrno))
 				continue;
 			else
 				return false;

@@ -164,7 +164,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	if((lenin = recv(device_fd, (void *)packet->data, MTU, 0)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-			   device, strerror(errno));
+			   device, sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -187,7 +187,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	if(sendto(device_fd, (void *)packet->data, packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-			   strerror(errno));
+			   sockstrerror(sockerrno));
 		return false;
 	}
 

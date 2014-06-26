@@ -178,7 +178,7 @@ bool init_control(void) {
 #ifndef HAVE_MINGW
 	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(unix_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -198,12 +198,12 @@ bool init_control(void) {
 	umask(mask);
 
 	if(result < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(sockerrno));
 		return false;
 	}
 
 	if(listen(unix_fd, 3) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on UNIX socket %s: %s", unixsocketname, sockstrerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on UNIX socket %s: %s", unixsocketname, sockstrerror(sockerrno));
 		return false;
 	}
 

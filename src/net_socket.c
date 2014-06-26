@@ -103,7 +103,7 @@ static bool bind_to_interface(int sd) {
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
 	if(status) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
-				strerror(errno));
+				sockstrerror(sockerrno));
 		return false;
 	}
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
@@ -134,7 +134,7 @@ static bool bind_to_address(connection_t *c) {
 		sa.in6.sin6_port = 0;
 
 	if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
-		logger(DEBUG_CONNECTIONS, LOG_WARNING, "Can't bind outgoing socket: %s", strerror(errno));
+		logger(DEBUG_CONNECTIONS, LOG_WARNING, "Can't bind outgoing socket: %s", sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -179,7 +179,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof ifr)) {
 			closesocket(nfd);
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
-				   strerror(sockerrno));
+				   sockstrerror(sockerrno));
 			return -1;
 		}
 #else
@@ -247,10 +247,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof option);
 
 	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf)))
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, sockstrerror(sockerrno));
 
 	if(udp_sndbuf && setsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf, sizeof(udp_sndbuf)))
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, sockstrerror(sockerrno));
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
@@ -330,7 +330,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	int fd[2];
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s", sockstrerror(sockerrno));
 		return;
 	}
 
@@ -379,13 +379,13 @@ static void handle_meta_write(connection_t *c) {
 
 	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
 	if(outlen <= 0) {
-		if(!errno || errno == EPIPE) {
+		if(!sockerrno || sockerrno == EPIPE) {
 			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)", c->name, c->hostname);
 		} else if(sockwouldblock(sockerrno)) {
 			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Sending %d bytes to %s (%s) would block", c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
 			return;
 		} else {
-			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, strerror(errno));
+			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, sockstrerror(sockerrno));
 		}
 
 		terminate_connection(c, c->status.active);

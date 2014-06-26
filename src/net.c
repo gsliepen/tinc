@@ -465,7 +465,7 @@ int main_loop(void) {
 #endif
 
 	if(!event_loop()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", sockstrerror(sockerrno));
 		return 1;
 	}
 

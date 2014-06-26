@@ -485,7 +485,7 @@ bool recvline(int fd, char *line, size_t len) {
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
-		if(result == -1 && errno == EINTR)
+		if(result == -1 && sockerrno == EINTR)
 			continue;
 		else if(result <= 0)
 			return false;
@@ -511,7 +511,7 @@ bool recvdata(int fd, char *data, size_t len) {
 
 	while(blen < len) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
-		if(result == -1 && errno == EINTR)
+		if(result == -1 && sockerrno == EINTR)
 			continue;
 		else if(result <= 0)
 			return false;
@@ -543,7 +543,7 @@ bool sendline(int fd, char *format, ...) {
 
 	while(blen) {
 		int result = send(fd, p, blen, MSG_NOSIGNAL);
-		if(result == -1 && errno == EINTR)
+		if(result == -1 && sockerrno == EINTR)
 			continue;
 		else if(result <= 0)
 			return false;
@@ -723,7 +723,7 @@ bool connect_tincd(bool verbose) {
 
 	if(getaddrinfo(host, port, &hints, &res) || !res) {
 		if(verbose)
-			fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, strerror(errno));
+			fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, sockstrerror(sockerrno));
 		return false;
 	}
 

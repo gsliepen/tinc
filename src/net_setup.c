@@ -417,7 +417,7 @@ char *get_name(void) {
 				return false;
 			}
 			if(gethostname(hostname, sizeof hostname) || !*hostname) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", strerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", sockstrerror(sockerrno));
 				return false;
 			}
 			hostname[31] = 0;
@@ -980,7 +980,7 @@ static bool setup_myself(void) {
 		for(int i = 0; i < listen_sockets; i++) {
 			salen = sizeof sa;
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(errno));
+				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(sockerrno));
 				return false;
 			}
 

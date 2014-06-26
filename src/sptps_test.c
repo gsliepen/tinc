@@ -210,13 +210,13 @@ int main(int argc, char *argv[]) {
 	hint.ai_flags = initiator ? 0 : AI_PASSIVE;
 
 	if(getaddrinfo(initiator ? argv[3] : NULL, initiator ? argv[4] : argv[3], &hint, &ai) || !ai) {
-		fprintf(stderr, "getaddrinfo() failed: %s\n", strerror(errno));
+		fprintf(stderr, "getaddrinfo() failed: %s\n", sockstrerror(sockerrno));
 		return 1;
 	}
 
 	int sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 	if(sock < 0) {
-		fprintf(stderr, "Could not create socket: %s\n", strerror(errno));
+		fprintf(stderr, "Could not create socket: %s\n", sockstrerror(sockerrno));
 		return 1;
 	}
 
@@ -225,26 +225,26 @@ int main(int argc, char *argv[]) {
 
 	if(initiator) {
 		if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
-			fprintf(stderr, "Could not connect to peer: %s\n", strerror(errno));
+			fprintf(stderr, "Could not connect to peer: %s\n", sockstrerror(sockerrno));
 			return 1;
 		}
 		fprintf(stderr, "Connected\n");
 	} else {
 		if(bind(sock, ai->ai_addr, ai->ai_addrlen)) {
-			fprintf(stderr, "Could not bind socket: %s\n", strerror(errno));
+			fprintf(stderr, "Could not bind socket: %s\n", sockstrerror(sockerrno));
 			return 1;
 		}
 
 		if(!datagram) {
 			if(listen(sock, 1)) {
-				fprintf(stderr, "Could not listen on socket: %s\n", strerror(errno));
+				fprintf(stderr, "Could not listen on socket: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 			fprintf(stderr, "Listening...\n");
 
 			sock = accept(sock, NULL, NULL);
 			if(sock < 0) {
-				fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
+				fprintf(stderr, "Could not accept connection: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 		} else {
@@ -255,12 +255,12 @@ int main(int argc, char *argv[]) {
 			socklen_t addrlen = sizeof addr;
 
 			if(recvfrom(sock, buf, sizeof buf, MSG_PEEK, &addr, &addrlen) <= 0) {
-				fprintf(stderr, "Could not read from socket: %s\n", strerror(errno));
+				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 
 			if(connect(sock, &addr, addrlen)) {
-				fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
+				fprintf(stderr, "Could not accept connection: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 		}
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
 		if(FD_ISSET(sock, &fds)) {
 			ssize_t len = recv(sock, buf, sizeof buf, 0);
 			if(len < 0) {
-				fprintf(stderr, "Could not read from socket: %s\n", strerror(errno));
+				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 			if(len == 0) {

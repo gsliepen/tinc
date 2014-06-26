@@ -142,7 +142,7 @@ bool receive_meta(connection_t *c) {
 	inlen = recv(c->socket, inbuf, sizeof inbuf - c->inbuf.len, 0);
 
 	if(inlen <= 0) {
-		if(!inlen || !errno) {
+		if(!inlen || !sockerrno) {
 			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)",
 					   c->name, c->hostname);
 		} else if(sockwouldblock(sockerrno))

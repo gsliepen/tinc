@@ -18,6 +18,7 @@
 */
 
 #include "system.h"
+#include "utils.h"
 
 #include <poll.h>
 
@@ -121,7 +122,7 @@ int main(int argc, char *argv[]) {
 
 	int fd[2];
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
-		fprintf(stderr, "Could not create a UNIX socket pair: %s\n", strerror(errno));
+		fprintf(stderr, "Could not create a UNIX socket pair: %s\n", sockstrerror(sockerrno));
 		return 1;
 	}
 
@@ -174,7 +175,7 @@ int main(int argc, char *argv[]) {
 	close(fd[1]);
 
 	if(socketpair(AF_UNIX, SOCK_DGRAM, 0, fd)) {
-		fprintf(stderr, "Could not create a UNIX socket pair: %s\n", strerror(errno));
+		fprintf(stderr, "Could not create a UNIX socket pair: %s\n", sockstrerror(sockerrno));
 		return 1;
 	}
 
