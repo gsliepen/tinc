@@ -261,7 +261,7 @@ alias char-major-10-200 tun
 @subsection Configuration of FreeBSD kernels
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in the default kernel configuration.
-The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}. 
+The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}.
 
 
 @c ==================================================================
@@ -349,7 +349,7 @@ having them installed, configure will give you an error message, and stop.
 For all cryptography-related functions, tinc uses the functions provided
 by the OpenSSL library.
 
-If this library is not installed, you wil get an error when configuring
+If this library is not installed, you will get an error when configuring
 tinc for build.  Support for running tinc with other cryptographic libraries
 installed @emph{may} be added in the future.
 
@@ -413,7 +413,7 @@ Markus F.X.J. Oberhumer
 For the optional compression of UDP packets, tinc uses the functions provided
 by the zlib library.
 
-If this library is not installed, you wil get an error when running the
+If this library is not installed, you will get an error when running the
 configure script.  You can either install the zlib library, or disable support
 for zlib compression by using the "--disable-zlib" option when running the
 configure script. Note that if you disable support for zlib, the resulting
@@ -437,7 +437,7 @@ default).
 @cindex lzo
 Another form of compression is offered using the LZO library.
 
-If this library is not installed, you wil get an error when running the
+If this library is not installed, you will get an error when running the
 configure script.  You can either install the LZO library, or disable support
 for LZO compression by using the "--disable-lzo" option when running the
 configure script. Note that if you disable support for LZO, the resulting
@@ -666,7 +666,7 @@ It is not required if you only run one tinc daemon,
 it doesn't even have to be the same on all the sites of your VPN,
 but it is recommended that you choose one anyway.
 
-We will asume you use a netname throughout this document.
+We will assume you use a netname throughout this document.
 This means that you call tincd with the -n argument,
 which will assign a netname to this daemon.
 
@@ -694,7 +694,7 @@ reads in the configuration file tinc.conf.
 If it sees one or more  `ConnectTo' values pointing to other tinc daemons in that file,
 it will try to connect to those other daemons.
 Whether this succeeds or not and whether `ConnectTo' is specified or not,
-tinc will listen for incoming connection from other deamons.
+tinc will listen for incoming connection from other daemons.
 If you did specify a `ConnectTo' value and the other side is not responding,
 tinc will keep retrying.
 This means that once started, tinc will stay running until you tell it to stop,
@@ -718,7 +718,7 @@ The actual configuration of the daemon is done in the file
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf} and at least one other file in the directory
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/}.
 
-An optionnal directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
+An optional directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
 any .conf file will be read.
 
 These file consists of comments (lines started with a #) or assignments
@@ -829,7 +829,6 @@ Do not use this option if you use switch mode and want to use IPv6.
 @item Device = <@var{device}> (@file{/dev/tap0}, @file{/dev/net/tun} or other depending on platform)
 The virtual network device to use.
 Tinc will automatically detect what kind of device it is.
-Note that you can only use one device per daemon.
 Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
@@ -947,7 +946,7 @@ that is executed, the graph is then sent to stdin.
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
 should be resolved.  Since DNS lookups are blocking, it might affect
-tinc's efficiency, even stopping the daemon for a few seconds everytime
+tinc's efficiency, even stopping the daemon for a few seconds every time
 it does a lookup if your DNS server is not responding.
 
 This does not affect resolving hostnames to IP addresses from the
@@ -1022,7 +1021,7 @@ while no routing table is managed.
 @cindex Name
 @item Name = <@var{name}> [required]
 This is a symbolic name for this connection.
-The name should consist only of alfanumeric and underscore characters (a-z, A-Z, 0-9 and _).
+The name should consist only of alphanumeric and underscore characters (a-z, A-Z, 0-9 and _).
 
 If Name starts with a $, then the contents of the environment variable that follows will be used.
 In that case, invalid characters will be converted to underscores.
@@ -1049,7 +1048,7 @@ will be inherited by the UDP packets that are sent out.
 @item PrivateKey = <@var{key}> [obsolete]
 This is the RSA private key for tinc. However, for safety reasons it is
 advised to store private keys of any kind in separate files. This prevents
-accidental eavesdropping if you are editting the configuration file.
+accidental eavesdropping if you are editing the configuration file.
 
 @cindex PrivateKeyFile
 @item PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/rsa_key.priv})
@@ -1216,7 +1215,7 @@ connection with that host.
 @cindex Subnet
 @item Subnet = <@var{address}[/@var{prefixlength}[#@var{weight}]]>
 The subnet which this tinc daemon will serve.
-Tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
+Tinc tries to look up which other daemon it should send a packet to by searching the appropriate subnet.
 If the packet matches a subnet,
 it will be sent to the daemon who has this subnet in his host configuration file.
 Multiple subnet lines can be specified for each daemon.
@@ -1293,11 +1292,11 @@ This script is started when any host becomes reachable.
 This script is started when any host becomes unreachable.
 
 @item @value{sysconfdir}/tinc/@var{netname}/subnet-up
-This script is started when a Subnet becomes reachable.
+This script is started when a subnet becomes reachable.
 The Subnet and the node it belongs to are passed in environment variables.
 
 @item @value{sysconfdir}/tinc/@var{netname}/subnet-down
-This script is started when a Subnet becomes unreachable.
+This script is started when a subnet becomes unreachable.
 @end table
 
 @cindex environment variables
@@ -1368,7 +1367,7 @@ add `ConnectTo' values.
 
 @subsubheading Step 2.  Creating your host configuration file
 
-If you added a line containing `Name = yourname' in the main configuarion file,
+If you added a line containing `Name = yourname' in the main configuration file,
 you will need to create a host configuration file @file{@value{sysconfdir}/tinc/@var{netname}/hosts/yourname}.
 Adapt the following example to create a host configuration file:
 
@@ -1938,7 +1937,7 @@ Note that you will only see this message if you specified a debug
 level of 5 or higher!
 @item Chances are that a @samp{Subnet = ...} line in the host configuration file of this tinc daemon is wrong.
 Change it to a subnet that is accepted locally by another interface,
-or if that is not the case, try changing the prefix length into /32. 
+or if that is not the case, try changing the prefix length into /32.
 @end itemize
 
 @item Node foo (1.2.3.4) is not reachable
@@ -2022,7 +2021,7 @@ There are two possible types of virtual network devices:
 and `tap' style, which are Ethernet devices and handle complete Ethernet frames.
 
 So when tinc reads an Ethernet frame from the device, it determines its
-type. When tinc is in it's default routing mode, it can handle IPv4 and IPv6
+type. When tinc is in its default routing mode, it can handle IPv4 and IPv6
 packets. Depending on the Subnet lines, it will send the packets off to their destination IP address.
 In the `switch' and `hub' mode, tinc will use broadcasts and MAC address discovery
 to deduce the destination of the packets.
@@ -2053,7 +2052,7 @@ If the virtual network device is a `tun' device (a point-to-point tunnel),
 there is no problem for the kernel to accept a packet.
 However, if it is a `tap' device (this is the only available type on FreeBSD),
 the destination MAC address must match that of the virtual network interface.
-If tinc is in it's default routing mode, ARP does not work, so the correct destination MAC 
+If tinc is in its default routing mode, ARP does not work, so the correct destination MAC
 can not be known by the sending host.
 Tinc solves this by letting the receiving end detect the MAC address of its own virtual network interface
 and overwriting the destination MAC address of the received packet.
@@ -2177,7 +2176,7 @@ message
 ------------------------------------------------------------------
 REQ_KEY origin destination
            |       +--> name of the tinc daemon it wants the key from
-           +----------> name of the daemon that wants the key      
+           +----------> name of the daemon that wants the key
 
 ANS_KEY origin destination 4ae0b0a82d6e0078 91 64 4
            |       |       \______________/ |  |  +--> MAC length
@@ -2312,13 +2311,13 @@ their identity. Further information is exchanged.
 
 client  ACK 655 123 0
              |   |  +-> options
-	         |   +----> estimated weight
-	         +--------> listening port of client
+                 |   +----> estimated weight
+                 +--------> listening port of client
 
 server  ACK 655 321 0
              |   |  +-> options
-	         |   +----> estimated weight
-	         +--------> listening port of server
+                 |   +----> estimated weight
+                 +--------> listening port of server
 --------------------------------------------------------------------------
 @end example
 
