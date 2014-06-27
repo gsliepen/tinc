@@ -32,6 +32,9 @@ typedef void (*signal_cb_t)(void *data);
 typedef struct io_t {
 	int fd;
 	int flags;
+#ifdef HAVE_MINGW
+	WSAEVENT event;
+#endif
 	io_cb_t cb;
 	void *data;
 	splay_node_t node;
