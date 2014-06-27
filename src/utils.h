@@ -37,6 +37,8 @@ extern const char *winerror(int);
 #define sockmsgsize(x) ((x) == WSAEMSGSIZE)
 #define sockinprogress(x) ((x) == WSAEINPROGRESS || (x) == WSAEWOULDBLOCK)
 #define sockinuse(x) ((x) == WSAEADDRINUSE)
+#define sockalready(x) ((x) == WSAEALREADY || (x) == WSAEINVAL || (x) == WSAEWOULDBLOCK) /* See MSDN for connect() */
+#define sockisconn(x) ((x) == WSAEISCONN)
 #else
 #define sockerrno errno
 #define sockstrerror(x) strerror(x)
@@ -44,6 +46,8 @@ extern const char *winerror(int);
 #define sockmsgsize(x) ((x) == EMSGSIZE)
 #define sockinprogress(x) ((x) == EINPROGRESS)
 #define sockinuse(x) ((x) == EADDRINUSE)
+#define sockalready(x) ((x) == EALREADY)
+#define sockisconn(x) ((x) == EISCONN)
 #endif
 
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);

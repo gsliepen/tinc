@@ -401,6 +401,17 @@ static void handle_meta_io(void *data, int flags) {
 	connection_t *c = data;
 
 	if(c->status.connecting) {
+		/* The event loop does not protect against spurious events. Verify that we are actually connected. */
+		if (connect(c->socket, &c->address.sa, sizeof(c->address)) == 0)
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): redundant connect() unexpectedly succeeded", c->name, c->hostname);
+		else if (!sockisconn(sockerrno)) {
+			if (!sockalready(sockerrno)) {
+				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while checking connection status for %s (%s): %s", c->name, c->hostname, sockstrerror(sockerrno));
+				terminate_connection(c, false);
+			}
+			return;
+		}
+
 		c->status.connecting = false;
 
 		int result;
