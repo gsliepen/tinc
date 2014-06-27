@@ -55,6 +55,33 @@ static int timeout_compare(const timeout_t *a, const timeout_t *b) {
 static splay_tree_t io_tree = {.compare = (splay_compare_t)io_compare};
 static splay_tree_t timeout_tree = {.compare = (splay_compare_t)timeout_compare};
 
+#ifdef HAVE_MINGW
+static WSAEVENT get_wsaevent() {
+	static WSAEVENT event = WSA_INVALID_EVENT;
+	if (event == WSA_INVALID_EVENT) {
+		event = WSACreateEvent();
+		if (event == WSA_INVALID_EVENT)
+			abort();
+	}
+	return event;
+}
+
+static void set_wsaevent(int fd, int flags) {
+	long events = 0;
+	if (flags & IO_READ)
+		events |= FD_READ | FD_ACCEPT | FD_CLOSE;
+	if (flags & IO_WRITE)
+		events |= FD_WRITE | FD_CONNECT;
+	if (WSAEventSelect(fd, get_wsaevent(), FD_READ | FD_ACCEPT) != 0)
+		abort();
+}
+
+void event_loop_interrupt(void) {
+	if (WSASetEvent(get_wsaevent()) == FALSE)
+		abort();
+}
+#endif
+
 void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 	if(io->cb)
 		return;
@@ -68,6 +95,10 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 
 	if(!splay_insert_node(&io_tree, &io->node))
 		abort();
+
+#ifdef HAVE_MINGW
+	set_wsaevent(fd, flags);
+#endif
 }
 
 void io_set(io_t *io, int flags) {
@@ -82,6 +113,10 @@ void io_set(io_t *io, int flags) {
 		FD_SET(io->fd, &writefds);
 	else
 		FD_CLR(io->fd, &writefds);
+
+#ifdef HAVE_MINGW
+	set_wsaevent(io->fd, flags);
+#endif
 }
 
 void io_del(io_t *io) {
@@ -217,11 +252,27 @@ bool event_loop(void) {
 		}
 
 #ifdef HAVE_MINGW
+		WSAEVENT wsaevent = get_wsaevent();
 		LeaveCriticalSection(&mutex);
+
+		DWORD timeout = WSA_INFINITE;
+		if (tv)
+			timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
+		if (WSAWaitForMultipleEvents(1, &wsaevent, TRUE, timeout, FALSE) == WSA_WAIT_FAILED)
+			abort();
+
+		struct timeval zerotv;
+		zerotv.tv_sec = 0;
+		zerotv.tv_usec = 0;
+		tv = &zerotv;
 #endif
+
 		int n = select(fds, &readable, &writable, NULL, tv);
+
 #ifdef HAVE_MINGW
 		EnterCriticalSection(&mutex);
+		if (WSAResetEvent(wsaevent) == FALSE)
+			abort();
 #endif
 
 		if(n < 0) {
@@ -243,12 +294,6 @@ bool event_loop(void) {
 	}
 
 	return true;
-}
-
-void event_flush_output(void) {
-	for splay_each(io_t, io, &io_tree)
-		if(FD_ISSET(io->fd, &writefds))
-			io->cb(io->data, IO_WRITE);
 }
 
 void event_exit(void) {
