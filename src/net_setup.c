@@ -713,6 +713,12 @@ static bool setup_myself(void) {
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
 
+#ifdef HAVE_MINGW
+	Sleep(1000);
+#endif
+#ifdef HAVE_CYGWIN
+	sleep(1);
+#endif
 	execute_script("tinc-up", envp);
 
 	for(i = 0; i < 4; i++)
