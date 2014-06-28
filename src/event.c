@@ -294,9 +294,7 @@ bool event_loop(void) {
 		DWORD timeout_ms = tv ? (tv->tv_sec * 1000 + tv->tv_usec / 1000 + 1) : WSA_INFINITE;
 
 		if (!event_count) {
-			LeaveCriticalSection(&mutex);
 			Sleep(timeout_ms);
-			EnterCriticalSection(&mutex);
 			continue;
 		}
 
@@ -328,9 +326,7 @@ bool event_loop(void) {
 			event_index++;
 		}
 
-		LeaveCriticalSection(&mutex);
 		DWORD result = WSAWaitForMultipleEvents(event_count, events, FALSE, timeout_ms, FALSE);
-		EnterCriticalSection(&mutex);
 
 		WSAEVENT event;
 		if (result >= WSA_WAIT_EVENT_0 && result < WSA_WAIT_EVENT_0 + event_count)
@@ -360,12 +356,6 @@ bool event_loop(void) {
 #endif
 
 	return true;
-}
-
-void event_flush_output(void) {
-	for splay_each(io_t, io, &io_tree)
-		if(io->flags & IO_WRITE)
-			io->cb(io->data, IO_WRITE);
 }
 
 void event_exit(void) {

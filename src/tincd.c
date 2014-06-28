@@ -106,7 +106,6 @@ static struct option const long_options[] = {
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
-CRITICAL_SECTION mutex;
 int main2(int argc, char **argv);
 #endif
 
@@ -378,8 +377,6 @@ int main(int argc, char **argv) {
 }
 
 int main2(int argc, char **argv) {
-	InitializeCriticalSection(&mutex);
-	EnterCriticalSection(&mutex);
 #endif
 	char *priority = NULL;
 

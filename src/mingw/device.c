@@ -36,6 +36,9 @@
 
 int device_fd = -1;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
+static io_t device_read_io;
+static OVERLAPPED device_read_overlapped;
+static vpn_packet_t device_read_packet;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
@@ -45,44 +48,32 @@ static uint64_t device_total_out = 0;
 
 extern char *myport;
 
-static DWORD WINAPI tapreader(void *bla) {
-	int status;
-	DWORD len;
-	OVERLAPPED overlapped;
-	vpn_packet_t packet;
+static void device_issue_read() {
+	device_read_overlapped.Offset = 0;
+	device_read_overlapped.OffsetHigh = 0;
 
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Tap reader running");
+	int status = ReadFile(device_handle, (void *)device_read_packet.data, MTU, NULL, &device_read_overlapped);
 
-	/* Read from tap device and send to parent */
-
-	overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	for(;;) {
-		overlapped.Offset = 0;
-		overlapped.OffsetHigh = 0;
-		ResetEvent(overlapped.hEvent);
-
-		status = ReadFile(device_handle, (void *)packet.data, MTU, &len, &overlapped);
-
-		if(!status) {
-			if(GetLastError() == ERROR_IO_PENDING) {
-				WaitForSingleObject(overlapped.hEvent, INFINITE);
-				if(!GetOverlappedResult(device_handle, &overlapped, &len, FALSE))
-					continue;
-			} else {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-					   device, strerror(errno));
-				return -1;
-			}
-		}
-
-		EnterCriticalSection(&mutex);
-		packet.len = len;
-		packet.priority = 0;
-		route(myself, &packet);
-		event_flush_output();
-		LeaveCriticalSection(&mutex);
+	if(!status && GetLastError() != ERROR_IO_PENDING) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+			   device, strerror(errno));
 	}
+}
+
+static void device_handle_read(void *data) {
+	ResetEvent(device_read_overlapped.hEvent);
+
+	DWORD len;
+	if (!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error getting read result from %s %s: %s", device_info,
+			   device, strerror(errno));
+		return;
+	}
+
+	device_read_packet.len = len;
+	device_read_packet.priority = 0;
+	route(myself, &device_read_packet);
+	device_issue_read();
 }
 
 static bool setup_device(void) {
@@ -192,12 +183,9 @@ static bool setup_device(void) {
 
 	/* Start the tap reader */
 
-	thread = CreateThread(NULL, 0, tapreader, NULL, 0, NULL);
-
-	if(!thread) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "CreateThread", winerror(GetLastError()));
-		return false;
-	}
+	io_add_event(&device_read_io, device_handle_read, NULL, CreateEvent(NULL, TRUE, FALSE, NULL));
+	device_read_overlapped.hEvent = device_read_io.event;
+	device_issue_read();
 
 	device_info = "Windows tap device";
 
@@ -221,6 +209,9 @@ static void disable_device(void) {
 }
 
 static void close_device(void) {
+	io_del(&device_read_io);
+	CancelIo(device_handle);
+	CloseHandle(device_read_overlapped.hEvent);
 	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
 
 	free(device); device = NULL;
