@@ -32,6 +32,9 @@ typedef void (*signal_cb_t)(void *data);
 typedef struct io_t {
 	int fd;
 	int flags;
+#ifdef HAVE_MINGW
+	WSAEVENT event;
+#endif
 	io_cb_t cb;
 	void *data;
 	splay_node_t node;
@@ -54,6 +57,9 @@ typedef struct signal_t {
 extern struct timeval now;
 
 extern void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags);
+#ifdef HAVE_MINGW
+extern void io_add_event(io_t *io, io_cb_t cb, void* data, WSAEVENT event);
+#endif
 extern void io_del(io_t *io);
 extern void io_set(io_t *io, int flags);
 
@@ -65,7 +71,6 @@ extern void signal_add(signal_t *sig, signal_cb_t cb, void *data, int signum);
 extern void signal_del(signal_t *sig);
 
 extern bool event_loop(void);
-extern void event_flush_output(void);
 extern void event_exit(void);
 
 #endif

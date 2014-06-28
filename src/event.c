@@ -23,15 +23,26 @@
 #include "event.h"
 #include "net.h"
 #include "utils.h"
+#include "xalloc.h"
 
 struct timeval now;
 
+#ifndef HAVE_MINGW
 static fd_set readfds;
 static fd_set writefds;
-static volatile bool running;
+#else
+static const long READ_EVENTS = FD_READ | FD_ACCEPT | FD_CLOSE;
+static const long WRITE_EVENTS = FD_WRITE | FD_CONNECT;
+static DWORD event_count = 0;
+#endif
+static bool running;
 
 static int io_compare(const io_t *a, const io_t *b) {
+#ifndef HAVE_MINGW
 	return a->fd - b->fd;
+#else
+	return a->event - b->event;
+#endif
 }
 
 static int timeout_compare(const timeout_t *a, const timeout_t *b) {
@@ -60,6 +71,14 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 		return;
 
 	io->fd = fd;
+#ifdef HAVE_MINGW
+	if (io->fd != -1) {
+		io->event = WSACreateEvent();
+		if (io->event == WSA_INVALID_EVENT)
+			abort();
+	}
+	event_count++;
+#endif
 	io->cb = cb;
 	io->data = data;
 	io->node.data = io;
@@ -70,9 +89,21 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 		abort();
 }
 
-void io_set(io_t *io, int flags) {
-	io->flags = flags;
+#ifdef HAVE_MINGW
+void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event) {
+	io_add(io, cb, data, -1, 0);
+	io->event = event;
+}
+#endif
 
+void io_set(io_t *io, int flags) {
+	if (flags == io->flags)
+		return;
+	io->flags = flags;
+	if (io->fd == -1)
+		return;
+
+#ifndef HAVE_MINGW
 	if(flags & IO_READ)
 		FD_SET(io->fd, &readfds);
 	else
@@ -82,6 +113,15 @@ void io_set(io_t *io, int flags) {
 		FD_SET(io->fd, &writefds);
 	else
 		FD_CLR(io->fd, &writefds);
+#else
+	long events = 0;
+	if (flags & IO_WRITE)
+		events |= WRITE_EVENTS;
+	if (flags & IO_READ)
+		events |= READ_EVENTS;
+	if (WSAEventSelect(io->fd, io->event, events) != 0)
+		abort();
+#endif
 }
 
 void io_del(io_t *io) {
@@ -89,6 +129,11 @@ void io_del(io_t *io) {
 		return;
 
 	io_set(io, 0);
+#ifdef HAVE_MINGW
+	if (io->fd != -1 && WSACloseEvent(io->event) == FALSE)
+		abort();
+	event_count--;
+#endif
 
 	splay_unlink_node(&io_tree, &io->node);
 	io->cb = NULL;
@@ -182,32 +227,39 @@ void signal_del(signal_t *sig) {
 }
 #endif
 
+static struct timeval * get_time_remaining(struct timeval *diff) {
+	gettimeofday(&now, NULL);
+	struct timeval *tv = NULL;
+
+	while(timeout_tree.head) {
+		timeout_t *timeout = timeout_tree.head->data;
+		timersub(&timeout->tv, &now, diff);
+
+		if(diff->tv_sec < 0) {
+			timeout->cb(timeout->data);
+			if(timercmp(&timeout->tv, &now, <))
+				timeout_del(timeout);
+		} else {
+			tv = diff;
+			break;
+		}
+	}
+
+	return tv;
+}
+
 bool event_loop(void) {
 	running = true;
 
+#ifndef HAVE_MINGW
 	fd_set readable;
 	fd_set writable;
 
 	while(running) {
-		gettimeofday(&now, NULL);
-		struct timeval diff, *tv = NULL;
-
-		while(timeout_tree.head) {
-			timeout_t *timeout = timeout_tree.head->data;
-			timersub(&timeout->tv, &now, &diff);
-
-			if(diff.tv_sec < 0) {
-				timeout->cb(timeout->data);
-				if(timercmp(&timeout->tv, &now, <))
-					timeout_del(timeout);
-			} else {
-				tv = &diff;
-				break;
-			}
-		}
-
 		memcpy(&readable, &readfds, sizeof readable);
 		memcpy(&writable, &writefds, sizeof writable);
+		struct timeval diff;
+		struct timeval *tv = get_time_remaining(&diff);
 
 		int fds = 0;
 
@@ -216,13 +268,7 @@ bool event_loop(void) {
 			fds = last->fd + 1;
 		}
 
-#ifdef HAVE_MINGW
-		LeaveCriticalSection(&mutex);
-#endif
 		int n = select(fds, &readable, &writable, NULL, tv);
-#ifdef HAVE_MINGW
-		EnterCriticalSection(&mutex);
-#endif
 
 		if(n < 0) {
 			if(sockwouldblock(sockerrno))
@@ -241,14 +287,75 @@ bool event_loop(void) {
 				io->cb(io->data, IO_READ);
 		}
 	}
+#else
+	while (running) {
+		struct timeval diff;
+		struct timeval *tv = get_time_remaining(&diff);
+		DWORD timeout_ms = tv ? (tv->tv_sec * 1000 + tv->tv_usec / 1000 + 1) : WSA_INFINITE;
+
+		if (!event_count) {
+			Sleep(timeout_ms);
+			continue;
+		}
+
+		/*
+		   For some reason, Microsoft decided to make the FD_WRITE event edge-triggered instead of level-triggered,
+		   which is the opposite of what select() does. In practice, that means that if a FD_WRITE event triggers,
+		   it will never trigger again until a send() returns EWOULDBLOCK. Since the semantics of this event loop
+		   is that write events are level-triggered (i.e. they continue firing until the socket is full), we need
+		   to emulate these semantics by making sure we fire each IO_WRITE that is still writeable.
+
+		   Note that technically FD_CLOSE has the same problem, but it's okay because user code does not rely on
+		   this event being fired again if ignored.
+		*/
+		io_t* writeable_io = NULL;
+		for splay_each(io_t, io, &io_tree)
+			if (io->flags & IO_WRITE && send(io->fd, NULL, 0, 0) == 0) {
+				writeable_io = io;
+				break;
+			}
+		if (writeable_io) {
+			writeable_io->cb(writeable_io->data, IO_WRITE);
+			continue;
+		}
+
+		WSAEVENT* events = xmalloc(event_count * sizeof(*events));
+		DWORD event_index = 0;
+		for splay_each(io_t, io, &io_tree) {
+			events[event_index] = io->event;
+			event_index++;
+		}
+
+		DWORD result = WSAWaitForMultipleEvents(event_count, events, FALSE, timeout_ms, FALSE);
+
+		WSAEVENT event;
+		if (result >= WSA_WAIT_EVENT_0 && result < WSA_WAIT_EVENT_0 + event_count)
+			event = events[result - WSA_WAIT_EVENT_0];
+		free(events);
+		if (result == WSA_WAIT_TIMEOUT)
+			continue;
+		if (result < WSA_WAIT_EVENT_0 || result >= WSA_WAIT_EVENT_0 + event_count)
+			return false;
+
+		io_t *io = splay_search(&io_tree, &((io_t){.event = event}));
+		if (!io)
+			abort();
+
+		if (io->fd == -1) {
+			io->cb(io->data, 0);
+		} else {
+			WSANETWORKEVENTS network_events;
+			if (WSAEnumNetworkEvents(io->fd, io->event, &network_events) != 0)
+				return false;
+			if (network_events.lNetworkEvents & WRITE_EVENTS)
+				io->cb(io->data, IO_WRITE);
+			if (network_events.lNetworkEvents & READ_EVENTS)
+				io->cb(io->data, IO_READ);
+		}
+	}
+#endif
 
 	return true;
-}
-
-void event_flush_output(void) {
-	for splay_each(io_t, io, &io_tree)
-		if(FD_ISSET(io->fd, &writefds))
-			io->cb(io->data, IO_WRITE);
 }
 
 void event_exit(void) {

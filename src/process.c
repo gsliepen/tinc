@@ -108,6 +108,8 @@ static bool install_service(void) {
 	return true;
 }
 
+static io_t stop_io;
+
 DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	switch(request) {
 		case SERVICE_CONTROL_INTERROGATE:
@@ -124,15 +126,24 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
-	event_exit();
-	status.dwWaitHint = 30000;
+	status.dwWaitHint = 1000;
 	status.dwCurrentState = SERVICE_STOP_PENDING;
 	SetServiceStatus(statushandle, &status);
+	if (WSASetEvent(stop_io.event) == FALSE)
+		abort();
 	return NO_ERROR;
+}
+
+static void stop_handler(void *data, int flags) {
+	event_exit();
 }
 
 VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 	extern int main2(int argc, char **argv);
+
+	io_add_event(&stop_io, stop_handler, NULL, WSACreateEvent());
+	if (stop_io.event == FALSE)
+		abort();
 
 	status.dwServiceType = SERVICE_WIN32;
 	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
@@ -160,6 +171,9 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 		SetServiceStatus(statushandle, &status);
 	}
 
+	if (WSACloseEvent(stop_io.event) == FALSE)
+		abort();
+	io_del(&stop_io);
 	return;
 }
 
