@@ -421,7 +421,7 @@ static void handle_meta_io(void *data, int flags) {
 			if (!socknotconn(sockerrno))
 				socket_error = sockerrno;
 			else {
-				int len = sizeof socket_error;
+				socklen_t len = sizeof socket_error;
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&socket_error, &len);
 			}
 			if (socket_error) {
