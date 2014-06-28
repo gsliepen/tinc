@@ -134,6 +134,9 @@ static bool setup_device(void) {
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 	}
 
+	if(overwrite_mac && !ioctl(device_fd, SIOCGIFHWADDR, &ifr))
+		memcpy(mymac.x, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+
 	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
