@@ -401,30 +401,38 @@ static void handle_meta_io(void *data, int flags) {
 	connection_t *c = data;
 
 	if(c->status.connecting) {
-		/* The event loop does not protect against spurious events. Verify that we are actually connected. */
-		if (connect(c->socket, &c->address.sa, sizeof(c->address)) == 0)
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): redundant connect() unexpectedly succeeded", c->name, c->hostname);
-		else if (!sockisconn(sockerrno)) {
-			if (!sockalready(sockerrno)) {
-				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while checking connection status for %s (%s): %s", c->name, c->hostname, sockstrerror(sockerrno));
+		/*
+		   The event loop does not protect against spurious events. Verify that we are actually connected
+		   by issuing an empty send() call.
+
+		   Note that the behavior of send() on potentially unconnected sockets differ between platforms:
+		   +------------+-----------+-------------+-----------+
+		   |   Event    |   POSIX   |    Linux    |  Windows  |
+		   +------------+-----------+-------------+-----------+
+		   | Spurious   | ENOTCONN  | EWOULDBLOCK | ENOTCONN  |
+		   | Failed     | ENOTCONN  | (cause)     | ENOTCONN  |
+		   | Successful | (success) | (success)   | (success) |
+		   +------------+-----------+-------------+-----------+
+		*/
+		if (send(c->socket, NULL, 0, 0) != 0) {
+			if (sockwouldblock(sockerrno))
+				return;
+			int socket_error;
+			if (!socknotconn(sockerrno))
+				socket_error = sockerrno;
+			else {
+				int len = sizeof socket_error;
+				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&socket_error, &len);
+			}
+			if (socket_error) {
+				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(socket_error));
 				terminate_connection(c, false);
 			}
 			return;
 		}
 
 		c->status.connecting = false;
-
-		int result;
-		socklen_t len = sizeof result;
-		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
-
-		if(!result)
-			finish_connecting(c);
-		else {
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
-			terminate_connection(c, false);
-			return;
-		}
+		finish_connecting(c);
 	}
 
 	if(flags & IO_WRITE)
