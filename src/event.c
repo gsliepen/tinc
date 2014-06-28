@@ -72,9 +72,11 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 
 	io->fd = fd;
 #ifdef HAVE_MINGW
-	io->event = WSACreateEvent();
-	if (io->event == WSA_INVALID_EVENT)
-		abort();
+	if (io->fd != -1) {
+		io->event = WSACreateEvent();
+		if (io->event == WSA_INVALID_EVENT)
+			abort();
+	}
 	event_count++;
 #endif
 	io->cb = cb;
@@ -87,10 +89,19 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 		abort();
 }
 
+#ifdef HAVE_MINGW
+void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event) {
+	io_add(io, cb, data, -1, 0);
+	io->event = event;
+}
+#endif
+
 void io_set(io_t *io, int flags) {
 	if (flags == io->flags)
 		return;
 	io->flags = flags;
+	if (io->fd == -1)
+		return;
 
 #ifndef HAVE_MINGW
 	if(flags & IO_READ)
@@ -119,7 +130,7 @@ void io_del(io_t *io) {
 
 	io_set(io, 0);
 #ifdef HAVE_MINGW
-	if (WSACloseEvent(io->event) == FALSE)
+	if (io->fd != -1 && WSACloseEvent(io->event) == FALSE)
 		abort();
 	event_count--;
 #endif
@@ -334,13 +345,17 @@ bool event_loop(void) {
 		if (!io)
 			abort();
 
-		WSANETWORKEVENTS network_events;
-		if (WSAEnumNetworkEvents(io->fd, io->event, &network_events) != 0)
-			return false;
-		if (network_events.lNetworkEvents & WRITE_EVENTS)
-			io->cb(io->data, IO_WRITE);
-		if (network_events.lNetworkEvents & READ_EVENTS)
-			io->cb(io->data, IO_READ);
+		if (io->fd == -1) {
+			io->cb(io->data, 0);
+		} else {
+			WSANETWORKEVENTS network_events;
+			if (WSAEnumNetworkEvents(io->fd, io->event, &network_events) != 0)
+				return false;
+			if (network_events.lNetworkEvents & WRITE_EVENTS)
+				io->cb(io->data, IO_WRITE);
+			if (network_events.lNetworkEvents & READ_EVENTS)
+				io->cb(io->data, IO_READ);
+		}
 	}
 #endif
 

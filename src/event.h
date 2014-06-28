@@ -57,6 +57,9 @@ typedef struct signal_t {
 extern struct timeval now;
 
 extern void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags);
+#ifdef HAVE_MINGW
+extern void io_add_event(io_t *io, io_cb_t cb, void* data, WSAEVENT event);
+#endif
 extern void io_del(io_t *io);
 extern void io_set(io_t *io, int flags);
 
