@@ -35,7 +35,7 @@ static const long READ_EVENTS = FD_READ | FD_ACCEPT | FD_CLOSE;
 static const long WRITE_EVENTS = FD_WRITE | FD_CONNECT;
 static DWORD event_count = 0;
 #endif
-static volatile bool running;
+static bool running;
 
 static int io_compare(const io_t *a, const io_t *b) {
 #ifndef HAVE_MINGW
