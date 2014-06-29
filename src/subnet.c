@@ -92,13 +92,15 @@ void subnet_add(node_t *n, subnet_t *subnet) {
 	subnet->owner = n;
 
 	splay_insert(subnet_tree, subnet);
-	splay_insert(n->subnet_tree, subnet);
+	if (n)
+		splay_insert(n->subnet_tree, subnet);
 
 	subnet_cache_flush();
 }
 
 void subnet_del(node_t *n, subnet_t *subnet) {
-	splay_delete(n->subnet_tree, subnet);
+	if (n)
+		splay_delete(n->subnet_tree, subnet);
 	splay_delete(subnet_tree, subnet);
 
 	subnet_cache_flush();
@@ -126,7 +128,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 		if(!memcmp(address, &p->net.mac.address, sizeof *address)) {
 			r = p;
-			if(p->owner->status.reachable)
+			if(!p->owner || p->owner->status.reachable)
 				break;
 		}
 	}
@@ -155,7 +157,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 		if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength)) {
 			r = p;
-			if(p->owner->status.reachable)
+			if(!p->owner || p->owner->status.reachable)
 				break;
 		}
 	}
@@ -184,7 +186,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 		if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength)) {
 			r = p;
-			if(p->owner->status.reachable)
+			if(!p->owner || p->owner->status.reachable)
 				break;
 		}
 	}

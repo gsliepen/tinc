@@ -155,6 +155,13 @@ Broadcast packets are sent directly to all nodes that can be reached directly.
 Broadcast packets received from other nodes are never forwarded.
 If the IndirectData option is also set, broadcast packets will only be sent to nodes which we have a meta connection to.
 .El
+.It Va BroadcastSubnet Li = Ar address Ns Op Li / Ns Ar prefixlength
+Declares a broadcast subnet. Any packet with a destination address falling into such a subnet will be routed as a broadcast (provided all nodes have it declared).
+This is most useful to declare subnet broadcast addresses (e.g. 10.42.255.255), otherwise
+.Nm tinc
+won't know what to do with them.
+.Pp
+Note that global broadcast addresses (MAC ff:ff:ff:ff:ff:ff, IPv4 255.255.255.255), as well as IPv6 multicast space (ff00::/8) are always considered broadcast addresses and don't need to be declared.
 .It Va ConnectTo Li = Ar name
 Specifies which other tinc daemon to connect to on startup.
 Multiple
