@@ -586,6 +586,20 @@ bool setup_myself_reloadable(void) {
 		free(bmode);
 	}
 
+	const char* const DEFAULT_BROADCAST_SUBNETS[] = { "ff:ff:ff:ff:ff:ff", "255.255.255.255", "ff00::/8" };
+	for (size_t i = 0; i < sizeof(DEFAULT_BROADCAST_SUBNETS) / sizeof(*DEFAULT_BROADCAST_SUBNETS); i++) {
+		subnet_t *s = new_subnet();
+		if (!str2net(s, DEFAULT_BROADCAST_SUBNETS[i]))
+			abort();
+		subnet_add(NULL, s);
+	}
+	for (config_t* cfg = lookup_config(config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+		subnet_t *s;
+		if (!get_config_subnet(cfg, &s))
+			continue;
+		subnet_add(NULL, s);
+	}
+
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
 		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");

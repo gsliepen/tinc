@@ -371,7 +371,10 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	}
 }
 
-static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
+static void route_ipv4(node_t *source, vpn_packet_t *packet) {
+	if(!checklength(source, packet, ether_size + ip_size))
+		return;
+
 	subnet_t *subnet;
 	node_t *via;
 	ipv4_t dest;
@@ -388,6 +391,11 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 				dest.x[3]);
 
 		route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN);
+		return;
+	}
+
+	if (!subnet->owner) {
+		broadcast_packet(source, packet);
 		return;
 	}
 
@@ -430,20 +438,6 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	clamp_mss(source, via, packet);
 
 	send_packet(subnet->owner, packet);
-}
-
-static void route_ipv4(node_t *source, vpn_packet_t *packet) {
-	if(!checklength(source, packet, ether_size + ip_size))
-		return;
-
-	if(broadcast_mode && (((packet->data[30] & 0xf0) == 0xe0) || (
-			packet->data[30] == 255 &&
-			packet->data[31] == 255 &&
-			packet->data[32] == 255 &&
-			packet->data[33] == 255)))
-		broadcast_packet(source, packet);
-	else
-		route_ipv4_unicast(source, packet);
 }
 
 /* RFC 2463 */
@@ -526,7 +520,17 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 	send_packet(source, packet);
 }
 
-static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
+static void route_neighborsol(node_t *source, vpn_packet_t *packet);
+
+static void route_ipv6(node_t *source, vpn_packet_t *packet) {
+	if(!checklength(source, packet, ether_size + ip6_size))
+		return;
+
+	if(packet->data[20] == IPPROTO_ICMPV6 && checklength(source, packet, ether_size + ip6_size + icmp6_size) && packet->data[54] == ND_NEIGHBOR_SOLICIT) {
+		route_neighborsol(source, packet);
+		return;
+	}
+
 	subnet_t *subnet;
 	node_t *via;
 	ipv6_t dest;
@@ -547,6 +551,11 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 				ntohs(dest.x[7]));
 
 		route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR);
+		return;
+	}
+
+	if (!subnet->owner) {
+		broadcast_packet(source, packet);
 		return;
 	}
 
@@ -724,21 +733,6 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	send_packet(source, packet);
 }
 
-static void route_ipv6(node_t *source, vpn_packet_t *packet) {
-	if(!checklength(source, packet, ether_size + ip6_size))
-		return;
-
-	if(packet->data[20] == IPPROTO_ICMPV6 && checklength(source, packet, ether_size + ip6_size + icmp6_size) && packet->data[54] == ND_NEIGHBOR_SOLICIT) {
-		route_neighborsol(source, packet);
-		return;
-	}
-
-	if(broadcast_mode && packet->data[38] == 255)
-		broadcast_packet(source, packet);
-	else
-		route_ipv6_unicast(source, packet);
-}
-
 /* RFC 826 */
 
 static void route_arp(node_t *source, vpn_packet_t *packet) {
@@ -822,7 +816,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	memcpy(&dest, &packet->data[0], sizeof dest);
 	subnet = lookup_subnet_mac(NULL, &dest);
 
-	if(!subnet) {
+	if(!subnet || !subnet->owner) {
 		broadcast_packet(source, packet);
 		return;
 	}

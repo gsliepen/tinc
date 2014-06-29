@@ -347,11 +347,14 @@ int reload_configuration(void) {
 
 	if(strictsubnets) {
 		for splay_each(subnet_t, subnet, subnet_tree)
-			subnet->expires = 1;
+			if (subnet->owner)
+				subnet->expires = 1;
 
 		load_all_subnets();
 
 		for splay_each(subnet_t, subnet, subnet_tree) {
+			if (!subnet->owner)
+				continue;
 			if(subnet->expires == 1) {
 				send_del_subnet(everyone, subnet);
 				if(subnet->owner->status.reachable)
