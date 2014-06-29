@@ -2,9 +2,12 @@
 
 sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 
-## Make sure version.c is always rebuilt
-.PHONY: version.c
-version.c:
+## Make sure version.c is always rebuilt with the latest git information
+.PHONY: version.c version_git.h
+version_git.h:
+	echo >$@
+	-GIT_DESCRIPTION="`cd $(@D) && git describe`" && echo "#define GIT_DESCRIPTION \"$$GIT_DESCRIPTION\"" >$@
+version.c: version_git.h
 
 if LINUX
 sbin_PROGRAMS += sptps_speed
@@ -91,7 +94,7 @@ tincd_SOURCES = \
 	tincd.c \
 	utils.c utils.h \
 	xalloc.h \
-	version.c version.h \
+	version.c version.h version_git.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \
@@ -113,7 +116,7 @@ tinc_SOURCES = \
 	tincctl.c tincctl.h \
 	top.c top.h \
 	utils.c utils.h \
-	version.c version.h \
+	version.c version.h version_git.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	ed25519/ecdsagen.c \
