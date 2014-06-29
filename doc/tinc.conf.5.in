@@ -333,7 +333,7 @@ To only listen on a specific port but not on a specific address, use
 .Li *
 for the
 .Ar address .
-.It Va LocalDiscovery Li = yes | no Pq no
+.It Va LocalDiscovery Li = yes | no Pq yes
 When enabled,
 .Nm tinc
 will try to detect peers that are on the same local network.

@@ -54,7 +54,7 @@ static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999
 static void send_udppacket(node_t *, vpn_packet_t *);
 
 unsigned replaywin = 16;
-bool localdiscovery = false;
+bool localdiscovery = true;
 
 #define MAX_SEQNO 1073741824
 
