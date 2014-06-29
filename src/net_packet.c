@@ -55,7 +55,6 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 
 unsigned replaywin = 16;
 bool localdiscovery = false;
-sockaddr_t localdiscovery_address;
 
 #define MAX_SEQNO 1073741824
 
@@ -598,6 +597,8 @@ static void choose_udp_address(const node_t *n, const sockaddr_t **sa, int *sock
 }
 
 static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *sock) {
+	*sa = NULL;
+
 	/* Pick one of the edges from this node at random, then use its local address. */
 
 	int i = 0;
@@ -615,46 +616,6 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *so
 		*sa = &candidate->local_address;
 		*sock = rand() % listen_sockets;
 		adapt_socket(*sa, sock);
-		return;
-	}
-
-	/* No candidate? Use broadcasts instead. */
-
-	static sockaddr_t broadcast_ipv4 = {
-		.in = {
-			.sin_family = AF_INET,
-			.sin_addr.s_addr = -1,
-		}
-	};
-
-	static sockaddr_t broadcast_ipv6 = {
-		.in6 = {
-			.sin6_family = AF_INET6,
-			.sin6_addr.s6_addr[0x0] = 0xff,
-			.sin6_addr.s6_addr[0x1] = 0x02,
-			.sin6_addr.s6_addr[0xf] = 0x01,
-		}
-	};
-
-	*sock = rand() % listen_sockets;
-
-	if(listen_socket[*sock].sa.sa.sa_family == AF_INET6) {
-		if(localdiscovery_address.sa.sa_family == AF_INET6) {
-			localdiscovery_address.in6.sin6_port = n->prevedge->address.in.sin_port;
-			*sa = &localdiscovery_address;
-		} else {
-			broadcast_ipv6.in6.sin6_port = n->prevedge->address.in.sin_port;
-			broadcast_ipv6.in6.sin6_scope_id = listen_socket[*sock].sa.in6.sin6_scope_id;
-			*sa = &broadcast_ipv6;
-		}
-	} else {
-		if(localdiscovery_address.sa.sa_family == AF_INET) {
-			localdiscovery_address.in.sin_port = n->prevedge->address.in.sin_port;
-			*sa = &localdiscovery_address;
-		} else {
-			broadcast_ipv4.in.sin_port = n->prevedge->address.in.sin_port;
-			*sa = &broadcast_ipv4;
-		}
 	}
 }
 
@@ -756,12 +717,12 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Send the packet */
 
-	const sockaddr_t *sa;
+	const sockaddr_t *sa = NULL;
 	int sock;
 
 	if(n->status.send_locally)
 		choose_local_address(n, &sa, &sock);
-	else
+	if(!sa)
 		choose_udp_address(n, &sa, &sock);
 
 #if defined(SOL_IP) && defined(IP_TOS)
