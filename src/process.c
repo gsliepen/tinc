@@ -34,6 +34,7 @@
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "version.h"
 
 /* If zero, don't detach from the terminal. */
 bool do_detach = true;
@@ -223,7 +224,7 @@ bool detach(void) {
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
-			   VERSION, __DATE__, __TIME__, debug_level);
+			   VERSION, BUILD_DATE, BUILD_TIME, debug_level);
 
 	return true;
 }
