@@ -224,7 +224,7 @@ bool detach(void) {
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
-			   VERSION, BUILD_DATE, BUILD_TIME, debug_level);
+			   BUILD_VERSION, BUILD_DATE, BUILD_TIME, debug_level);
 
 	return true;
 }
