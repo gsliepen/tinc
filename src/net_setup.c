@@ -596,7 +596,7 @@ bool setup_myself_reloadable(void) {
 		free(bmode);
 	}
 
-	const char* const DEFAULT_BROADCAST_SUBNETS[] = { "ff:ff:ff:ff:ff:ff", "255.255.255.255", "ff00::/8" };
+	const char* const DEFAULT_BROADCAST_SUBNETS[] = { "ff:ff:ff:ff:ff:ff", "255.255.255.255", "224.0.0.0/4", "ff00::/8" };
 	for (size_t i = 0; i < sizeof(DEFAULT_BROADCAST_SUBNETS) / sizeof(*DEFAULT_BROADCAST_SUBNETS); i++) {
 		subnet_t *s = new_subnet();
 		if (!str2net(s, DEFAULT_BROADCAST_SUBNETS[i]))
