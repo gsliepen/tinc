@@ -8,6 +8,14 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = COPYING.README README.android
 
+# If git describe works, force autoconf to run in order to make sure we have the
+# current version number from git in the resulting configure script.
+configure-version:
+	-git describe && autoconf --force
+
+# Triggering the README target means we are building a distribution (make dist).
+README: configure-version
+
 ChangeLog:
 	git log > ChangeLog
 

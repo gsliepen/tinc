@@ -1,10 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.1pre11])
+AC_INIT([tinc], m4_esyscmd([echo -n "`git describe || echo UNKNOWN | sed 's/release-//'`"]))
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE([check-news std-options subdir-objects -Wall])
+AM_INIT_AUTOMAKE([std-options subdir-objects -Wall])
 AC_CONFIG_HEADERS([config.h])
 
 # Enable GNU extensions.
