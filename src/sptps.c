@@ -431,13 +431,12 @@ bool sptps_verify_datagram(sptps_t *s, const char *data, size_t len) {
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
+	if (!sptps_check_seqno(s, seqno, false))
+		return false;
 
 	char buffer[len];
 	size_t outlen;
-	if(!chacha_poly1305_decrypt(s->incipher, seqno, data + 4, len - 4, buffer, &outlen))
-		return false;
-
-	return sptps_check_seqno(s, seqno, false);
+	return chacha_poly1305_decrypt(s->incipher, seqno, data + 4, len - 4, buffer, &outlen);
 }
 
 // Receive incoming data, datagram version.
