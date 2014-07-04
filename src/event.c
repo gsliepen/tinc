@@ -256,10 +256,10 @@ bool event_loop(void) {
 	fd_set writable;
 
 	while(running) {
-		memcpy(&readable, &readfds, sizeof readable);
-		memcpy(&writable, &writefds, sizeof writable);
 		struct timeval diff;
 		struct timeval *tv = get_time_remaining(&diff);
+		memcpy(&readable, &readfds, sizeof readable);
+		memcpy(&writable, &writefds, sizeof writable);
 
 		int fds = 0;
 
