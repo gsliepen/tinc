@@ -308,7 +308,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 
 	switch (subnet->type) {
 		case SUBNET_MAC:
-			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx#%d",
+			snprintf(netstr, len, "%02hx:%02hx:%02hx:%02hx:%02hx:%02hx#%d",
 					 subnet->net.mac.address.x[0],
 					 subnet->net.mac.address.x[1],
 					 subnet->net.mac.address.x[2],
