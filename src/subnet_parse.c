@@ -321,6 +321,8 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 					 subnet->net.mac.address.x[4],
 					 subnet->net.mac.address.x[5],
 					 subnet->weight);
+			netstr += result;
+			len -= result;
 			break;
 
 		case SUBNET_IPV4:
@@ -329,32 +331,68 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 					 subnet->net.ipv4.address.x[1],
 					 subnet->net.ipv4.address.x[2],
 					 subnet->net.ipv4.address.x[3]);
+			netstr += result;
+			len -= result;
 			prefixlength = subnet->net.ipv4.prefixlength;
 			if (prefixlength == 32)
 				prefixlength = -1;
 			break;
 
-		case SUBNET_IPV6:
-			result = snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
-					 ntohs(subnet->net.ipv6.address.x[0]),
-					 ntohs(subnet->net.ipv6.address.x[1]),
-					 ntohs(subnet->net.ipv6.address.x[2]),
-					 ntohs(subnet->net.ipv6.address.x[3]),
-					 ntohs(subnet->net.ipv6.address.x[4]),
-					 ntohs(subnet->net.ipv6.address.x[5]),
-					 ntohs(subnet->net.ipv6.address.x[6]),
-					 ntohs(subnet->net.ipv6.address.x[7]));
+		case SUBNET_IPV6: {
+			/* Find the longest sequence of consecutive zeroes */
+			int max_zero_length = 0;
+			int max_zero_length_index = 0;
+			int current_zero_length = 0;
+			int current_zero_length_index = 0;
+			for (int i = 0; i < 8; i++) {
+				if (subnet->net.ipv6.address.x[i] != 0)
+					current_zero_length = 0;
+				else {
+					if (current_zero_length == 0)
+						current_zero_length_index = i;
+					current_zero_length++;
+					if (current_zero_length > max_zero_length) {
+						max_zero_length = current_zero_length;
+						max_zero_length_index = current_zero_length_index;
+					}
+				}
+			}
+
+			/* Print the address */
+			for (int i = 0; i < 8;) {
+				if (max_zero_length > 1 && max_zero_length_index == i) {
+					/* Shorten the representation as per RFC 5952 */
+					const char* const FORMATS[] = { "%.1s", "%.2s", "%.3s" };
+					const char* const* format = &FORMATS[0];
+					if (i == 0)
+						format++;
+					if (i + max_zero_length == 8)
+						format++;
+					result = snprintf(netstr, len, *format, ":::");
+					i += max_zero_length;
+				} else {
+					result = snprintf(netstr, len, "%hx:", ntohs(subnet->net.ipv6.address.x[i]));
+					i++;
+				}
+				netstr += result;
+				len -= result;
+			}
+
+			/* Remove the trailing colon */
+			netstr--;
+			len++;
+			*netstr = 0;
+
 			prefixlength = subnet->net.ipv6.prefixlength;
 			if (prefixlength == 128)
 				prefixlength = -1;
 			break;
+		}
 
 		default:
 			logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with unknown subnet type %d, exiting!", subnet->type);
 			exit(1);
 	}
-	netstr += result;
-	len -= result;
 
 	if (prefixlength >= 0) {
 		result = snprintf(netstr, len, "/%d", prefixlength);
