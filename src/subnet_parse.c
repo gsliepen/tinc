@@ -27,6 +27,9 @@
 #include "utils.h"
 #include "xalloc.h"
 
+/* Changing this default will affect ADD_SUBNET messages - beware of inconsistencies between versions */
+static const int DEFAULT_WEIGHT = 10;
+
 /* Subnet mask handling */
 
 int maskcmp(const void *va, const void *vb, int masklen) {
@@ -185,7 +188,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 	strncpy(str, subnetstr, sizeof(str));
 	int consumed;
 
-	int weight = 10;
+	int weight = DEFAULT_WEIGHT;
 	char *weight_separator = strchr(str, '#');
 	if (weight_separator) {
 		char *weight_str = weight_separator + 1;
@@ -306,9 +309,11 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 		return false;
 	}
 
+	int result;
+	int prefixlength = -1;
 	switch (subnet->type) {
 		case SUBNET_MAC:
-			snprintf(netstr, len, "%02hx:%02hx:%02hx:%02hx:%02hx:%02hx#%d",
+			result = snprintf(netstr, len, "%02hx:%02hx:%02hx:%02hx:%02hx:%02hx",
 					 subnet->net.mac.address.x[0],
 					 subnet->net.mac.address.x[1],
 					 subnet->net.mac.address.x[2],
@@ -319,17 +324,18 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 			break;
 
 		case SUBNET_IPV4:
-			snprintf(netstr, len, "%hu.%hu.%hu.%hu/%d#%d",
+			result = snprintf(netstr, len, "%hu.%hu.%hu.%hu",
 					 subnet->net.ipv4.address.x[0],
 					 subnet->net.ipv4.address.x[1],
 					 subnet->net.ipv4.address.x[2],
-					 subnet->net.ipv4.address.x[3],
-					 subnet->net.ipv4.prefixlength,
-					 subnet->weight);
+					 subnet->net.ipv4.address.x[3]);
+			prefixlength = subnet->net.ipv4.prefixlength;
+			if (prefixlength == 32)
+				prefixlength = -1;
 			break;
 
 		case SUBNET_IPV6:
-			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d#%d",
+			result = snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
 					 ntohs(subnet->net.ipv6.address.x[0]),
 					 ntohs(subnet->net.ipv6.address.x[1]),
 					 ntohs(subnet->net.ipv6.address.x[2]),
@@ -337,14 +343,29 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 					 ntohs(subnet->net.ipv6.address.x[4]),
 					 ntohs(subnet->net.ipv6.address.x[5]),
 					 ntohs(subnet->net.ipv6.address.x[6]),
-					 ntohs(subnet->net.ipv6.address.x[7]),
-					 subnet->net.ipv6.prefixlength,
-					 subnet->weight);
+					 ntohs(subnet->net.ipv6.address.x[7]));
+			prefixlength = subnet->net.ipv6.prefixlength;
+			if (prefixlength == 128)
+				prefixlength = -1;
 			break;
 
 		default:
 			logger(DEBUG_ALWAYS, LOG_ERR, "net2str() was called with unknown subnet type %d, exiting!", subnet->type);
 			exit(1);
+	}
+	netstr += result;
+	len -= result;
+
+	if (prefixlength >= 0) {
+		result = snprintf(netstr, len, "/%d", prefixlength);
+		netstr += result;
+		len -= result;
+	}
+
+	if (subnet->weight != DEFAULT_WEIGHT) {
+		snprintf(netstr, len, "#%d", subnet->weight);
+		netstr += result;
+		len -= result;
 	}
 
 	return true;
