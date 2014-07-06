@@ -121,6 +121,8 @@ will automatically set up meta connections to other nodes,
 without requiring
 .Va ConnectTo
 variables.
+.Pp
+Note: it is not possible to connect to nodes using zero (system-assigned) ports in this way.
 .It Va BindToAddress Li = Ar address Op Ar port
 This is the same as
 .Va ListenAddress ,
@@ -340,6 +342,14 @@ To only listen on a specific port but not on a specific address, use
 .Li *
 for the
 .Ar address .
+.Pp
+If
+.Ar port
+is set to zero, it will be randomly assigned by the system. This is useful to randomize source ports of UDP packets, which can improve UDP hole punching reliability. In this case it is recommended to set
+.Va AddressFamily
+as well, otherwise
+.Nm tinc
+will assign different ports to different address families but other nodes can only know of one.
 .It Va LocalDiscovery Li = yes | no Pq yes
 When enabled,
 .Nm tinc
@@ -549,6 +559,14 @@ The port number on which this tinc daemon is listening for incoming connections,
 which is used if no port number is specified in an
 .Va Address
 statement.
+.Pp
+If this is set to zero, the port will be randomly assigned by the system. This is useful to randomize source ports of UDP packets, which can improve UDP hole punching reliability. When setting
+.Va Port
+to zero it is recommended to set
+.Va AddressFamily
+as well, otherwise
+.Nm tinc
+will assign different ports to different address families but other nodes can only know of one.
 .It Va PublicKey Li = Ar key Bq obsolete
 The public RSA key of this tinc daemon.
 It will be used to cryptographically verify it's identity and to set up a secure connection.
