@@ -91,8 +91,8 @@ void io_add(io_t *io, io_cb_t cb, void *data, int fd, int flags) {
 
 #ifdef HAVE_MINGW
 void io_add_event(io_t *io, io_cb_t cb, void *data, WSAEVENT event) {
-	io_add(io, cb, data, -1, 0);
 	io->event = event;
+	io_add(io, cb, data, -1, 0);
 }
 #endif
 
