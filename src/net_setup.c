@@ -1037,7 +1037,7 @@ static bool setup_myself(void) {
 
 	/* If no Port option was specified, set myport to the port used by the first listening socket. */
 
-	if(!port_specified) {
+	if(!port_specified || atoi(myport) == 0) {
 		sockaddr_t sa;
 		socklen_t salen = sizeof sa;
 		if(!getsockname(listen_socket[0].udp.fd, &sa.sa, &salen)) {
