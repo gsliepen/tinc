@@ -277,7 +277,7 @@ bool dump_subnets(connection_t *c) {
 
 		send_request(c, "%d %d %s %s",
 				CONTROL, REQ_DUMP_SUBNETS,
-				netstr, subnet->owner->name);
+				netstr, subnet->owner ? subnet->owner->name : "(broadcast)");
 	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
