@@ -262,10 +262,11 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 	if (double_colon) {
 		/* Figure out how many zero groups we need to expand */
 		int zero_group_count = 8;
-		for (const char* cur = str; *cur; *cur && cur++)
+		for (const char* cur = str; *cur; cur++)
 			if (*cur != ':') {
 				zero_group_count--;
-				for (; *cur && *cur != ':'; cur++);
+				while(cur[1] && cur[1] != ':')
+					cur++;
 			}
 		if (zero_group_count < 1)
 			return false;
@@ -319,8 +320,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 					 subnet->net.mac.address.x[2],
 					 subnet->net.mac.address.x[3],
 					 subnet->net.mac.address.x[4],
-					 subnet->net.mac.address.x[5],
-					 subnet->weight);
+					 subnet->net.mac.address.x[5]);
 			netstr += result;
 			len -= result;
 			break;

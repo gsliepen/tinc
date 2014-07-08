@@ -445,7 +445,6 @@ bool setup_myself_reloadable(void) {
 	char *fmode = NULL;
 	char *bmode = NULL;
 	char *afname = NULL;
-	char *address = NULL;
 	char *space;
 	bool choice;
 
