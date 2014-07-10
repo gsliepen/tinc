@@ -255,7 +255,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		for (int i = 0; i < 4; i++)
 			if (x[i] > 255)
 				return false;
-		sprintf(last_colon, ":%02hx%02hx:%02hx%02hx", x[0], x[1], x[2], x[3]);
+		sprintf(last_colon, ":%02x%02x:%02x%02x", x[0], x[1], x[2], x[3]);
 	}
 
 	char* double_colon = strstr(str, "::");
@@ -314,7 +314,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	int prefixlength = -1;
 	switch (subnet->type) {
 		case SUBNET_MAC:
-			result = snprintf(netstr, len, "%02hx:%02hx:%02hx:%02hx:%02hx:%02hx",
+			result = snprintf(netstr, len, "%02x:%02x:%02x:%02x:%02x:%02x",
 					 subnet->net.mac.address.x[0],
 					 subnet->net.mac.address.x[1],
 					 subnet->net.mac.address.x[2],
@@ -326,7 +326,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 			break;
 
 		case SUBNET_IPV4:
-			result = snprintf(netstr, len, "%hu.%hu.%hu.%hu",
+			result = snprintf(netstr, len, "%u.%u.%u.%u",
 					 subnet->net.ipv4.address.x[0],
 					 subnet->net.ipv4.address.x[1],
 					 subnet->net.ipv4.address.x[2],

@@ -129,7 +129,7 @@ static bool setup_device(void) {
 #endif
 
 		default:
-			logger(DEBUG_ALWAYS, LOG_ERR, "Multicast for address family %hx unsupported", ai->ai_family);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Multicast for address family %x unsupported", ai->ai_family);
 			goto error;
 	}
 
