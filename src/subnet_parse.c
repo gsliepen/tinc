@@ -314,7 +314,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	int prefixlength = -1;
 	switch (subnet->type) {
 		case SUBNET_MAC:
-			result = snprintf(netstr, len, "%02hx:%02hx:%02hx:%02hx:%02hx:%02hx",
+			result = snprintf(netstr, len, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
 					 subnet->net.mac.address.x[0],
 					 subnet->net.mac.address.x[1],
 					 subnet->net.mac.address.x[2],
@@ -326,7 +326,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 			break;
 
 		case SUBNET_IPV4:
-			result = snprintf(netstr, len, "%hu.%hu.%hu.%hu",
+			result = snprintf(netstr, len, "%hhu.%hhu.%hhu.%hhu",
 					 subnet->net.ipv4.address.x[0],
 					 subnet->net.ipv4.address.x[1],
 					 subnet->net.ipv4.address.x[2],
