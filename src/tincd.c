@@ -49,6 +49,7 @@
 #include "control.h"
 #include "crypto.h"
 #include "device.h"
+#include "event.h"
 #include "logger.h"
 #include "names.h"
 #include "net.h"
@@ -303,6 +304,17 @@ static bool drop_privs(void) {
 
 #ifdef HAVE_MINGW
 # define setpriority(level) !SetPriorityClass(GetCurrentProcess(), (level))
+
+static void stop_handler(void *data, int flags) {
+	event_exit();
+}
+
+static BOOL WINAPI console_ctrl_handler(DWORD type) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got console shutdown request");
+	if (WSASetEvent(stop_io.event) == FALSE)
+		abort();
+	return TRUE;
+}
 #else
 # define NORMAL_PRIORITY_CLASS 0
 # define BELOW_NORMAL_PRIORITY_CLASS 10
@@ -371,10 +383,21 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef HAVE_MINGW
-	if(!do_detach || !init_service())
-		return main2(argc, argv);
-	else
-		return 1;
+	io_add_event(&stop_io, stop_handler, NULL, WSACreateEvent());
+	if (stop_io.event == FALSE)
+		abort();
+
+	int result;
+	if(!do_detach || !init_service()) {
+		SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
+		result = main2(argc, argv);
+	} else
+		result = 1;
+
+	if (WSACloseEvent(stop_io.event) == FALSE)
+		abort();
+	io_del(&stop_io);
+	return result;
 }
 
 int main2(int argc, char **argv) {

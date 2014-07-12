@@ -109,7 +109,7 @@ static bool install_service(void) {
 	return true;
 }
 
-static io_t stop_io;
+io_t stop_io;
 
 DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	switch(request) {
@@ -135,16 +135,8 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	return NO_ERROR;
 }
 
-static void stop_handler(void *data, int flags) {
-	event_exit();
-}
-
 VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 	extern int main2(int argc, char **argv);
-
-	io_add_event(&stop_io, stop_handler, NULL, WSACreateEvent());
-	if (stop_io.event == FALSE)
-		abort();
 
 	status.dwServiceType = SERVICE_WIN32;
 	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
@@ -172,9 +164,6 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 		SetServiceStatus(statushandle, &status);
 	}
 
-	if (WSACloseEvent(stop_io.event) == FALSE)
-		abort();
-	io_del(&stop_io);
 	return;
 }
 
