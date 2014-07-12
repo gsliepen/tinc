@@ -49,7 +49,7 @@ bool execute_script(const char *name, char **envp) {
 			if(q) {
 				memcpy(ext, p, q - p);
 				ext[q - p] = 0;
-				*q++;
+				q++;
 			} else {
 				strcpy(ext, p);
 			}
