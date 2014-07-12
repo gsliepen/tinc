@@ -3,11 +3,11 @@
 sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 
 ## Make sure version.c is always rebuilt with the latest git information
-.PHONY: version.c version_git.h
+.PHONY: $(srcdir)/version.c version_git.h
 version_git.h:
 	echo >$@
-	-git describe && echo '#define GIT_DESCRIPTION "'`git describe | sed 's/release-//'`'"' >$@
-version.c: version_git.h
+	-(cd $(srcdir) && git describe) && echo '#define GIT_DESCRIPTION "'`(cd $(srcdir) && git describe) | sed 's/release-//'`'"' >$@
+$(srcdir)/version.c: version_git.h
 
 if LINUX
 sbin_PROGRAMS += sptps_speed
@@ -260,4 +260,4 @@ if TUNEMU
 LIBS += -lpcap
 endif
 
-AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\"
+AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\" -I.

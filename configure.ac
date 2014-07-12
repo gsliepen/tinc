@@ -4,7 +4,7 @@ AC_PREREQ(2.61)
 AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE([std-options subdir-objects -Wall])
+AM_INIT_AUTOMAKE([info-in-builddir std-options subdir-objects -Wall])
 AC_CONFIG_HEADERS([config.h])
 
 # Enable GNU extensions.
@@ -161,13 +161,13 @@ dnl We do this in multiple stages, because unlike Linux all the other operating 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/uio.h sys/un.h sys/wait.h netdb.h arpa/inet.h dirent.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h time.h netpacket/packet.h],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h resolv.h],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -182,13 +182,13 @@ tinc_ATTRIBUTE(__malloc__)
 tinc_ATTRIBUTE(__warn_unused_result__)
 
 AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
-  [#include "src/have.h"]
+  [#include "$srcdir/src/have.h"]
 )
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system time usleep unsetenv vsyslog writev],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 
 dnl Support for SunOS
@@ -201,7 +201,7 @@ AC_CHECK_FUNC(gethostbyname, [], [
 ])
 
 AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 
 AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [

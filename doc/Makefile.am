@@ -17,7 +17,7 @@ transform = s/ginstall/install/; @program_transform_name@
 # see GNUmakefile and Makefile.maint.
 
 sample-config.tar.gz: sample-config
-	GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz --exclude .svn sample-config
+	GZIP=$(GZIP_ENV) $(AMTAR) chozf $@ --exclude .svn $<
 
 tincd.8.html: tincd.8
 	w3mman2html $? > $@
