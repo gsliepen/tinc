@@ -388,7 +388,7 @@ static void handle_meta_write(connection_t *c) {
 			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, sockstrerror(sockerrno));
 		}
 
-		terminate_connection(c, c->status.active);
+		terminate_connection(c, c->edge);
 		return;
 	}
 
@@ -820,7 +820,7 @@ void try_outgoing_connections(void) {
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
-			terminate_connection(c, c->status.active);
+			terminate_connection(c, c->edge);
 		}
 	}
 

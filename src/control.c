@@ -106,7 +106,7 @@ bool control_h(connection_t *c, const char *request) {
 			for list_each(connection_t, other, connection_list) {
 				if(strcmp(other->name, name))
 					continue;
-				terminate_connection(other, other->status.active);
+				terminate_connection(other, other->edge);
 				found = true;
 			}
 
