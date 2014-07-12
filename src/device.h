@@ -27,11 +27,6 @@ extern int device_fd;
 extern char *device;
 extern char *iface;
 
-extern uint64_t device_in_packets;
-extern uint64_t device_in_bytes;
-extern uint64_t device_out_packets;
-extern uint64_t device_out_bytes;
-
 typedef struct devops_t {
 	bool (*setup)(void);
 	void (*close)(void);

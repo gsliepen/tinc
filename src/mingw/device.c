@@ -43,9 +43,6 @@ char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
-
 extern char *myport;
 
 static void device_issue_read() {
@@ -233,8 +230,6 @@ static bool write_packet(vpn_packet_t *packet) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}
-
-	device_total_out += packet->len;
 
 	return true;
 }
