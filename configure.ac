@@ -249,6 +249,6 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile gui/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile gui/Makefile test/Makefile])
 
 AC_OUTPUT
