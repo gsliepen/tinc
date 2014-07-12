@@ -810,16 +810,31 @@ static int cmd_start(int argc, char *argv[]) {
 	int nargc = 0;
 	char **nargv = xzalloc((optind + argc) * sizeof *nargv);
 
-	nargv[nargc++] = c;
+	char *arg0 = c;
+#ifdef HAVE_MINGW
+	/*
+	   Windows has no real concept of an "argv array". A command line is just one string.
+	   The CRT of the new process will decode the command line string to generate argv before calling main(), and (by convention)
+	   it uses quotes to handle spaces in arguments.
+	   Therefore we need to quote all arguments that might contain spaces. No, execvp() won't do that for us (see MSDN).
+	   If we don't do that, then execvp() will run fine but any spaces in the filename contained in arg0 will bleed
+	   into the next arguments when the spawned process' CRT parses its command line, resulting in chaos.
+	*/
+	xasprintf(&arg0, "\"%s\"", arg0);
+#endif
+	nargv[nargc++] = arg0;
 	for(int i = 1; i < optind; i++)
 		nargv[nargc++] = orig_argv[i];
 	for(int i = 1; i < argc; i++)
 		nargv[nargc++] = argv[i];
 
 #ifdef HAVE_MINGW
-	execvp(c, nargv);
-	fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
-	return 1;
+	int status = spawnvp(_P_WAIT, c, nargv);
+	if (status == -1) {
+		fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
+		return 1;
+	}
+	return status;
 #else
 	pid_t pid = fork();
 	if(pid == -1) {
