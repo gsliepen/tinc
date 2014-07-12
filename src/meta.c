@@ -76,7 +76,7 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	for list_each(connection_t, c, connection_list)
-		if(c != from && c->status.active)
+		if(c != from && c->edge)
 			send_meta(c, buffer, length);
 }
 

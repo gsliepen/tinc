@@ -41,7 +41,7 @@ void send_key_changed(void) {
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
 	for list_each(connection_t, c, connection_list)
-		if(c->status.active && c->node && c->node->status.reachable && !c->node->status.sptps)
+		if(c->edge && c->node && c->node->status.reachable && !c->node->status.sptps)
 			send_ans_key(c->node);
 
 	/* Force key exchange for connections using SPTPS */
