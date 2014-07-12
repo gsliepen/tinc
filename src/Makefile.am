@@ -2,11 +2,8 @@
 
 sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 
-## Make sure version.c is always rebuilt with the latest git information
-.PHONY: version.c version_git.h
-version_git.h:
-	echo "#define GIT_DESCRIPTION \"`cd $(@D) && git describe || echo UNKNOWN`\"" >$@
-version.c: version_git.h
+## Make sure version.c is always rebuilt
+.PHONY: version.c
 
 if LINUX
 sbin_PROGRAMS += sptps_speed
@@ -94,7 +91,7 @@ tincd_SOURCES = \
 	tincd.c \
 	utils.c utils.h \
 	xalloc.h \
-	version.c version.h version_git.h \
+	version.c version.h \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -113,7 +110,7 @@ tinc_SOURCES = \
 	tincctl.c tincctl.h \
 	top.c top.h \
 	utils.c utils.h \
-	version.c version.h version_git.h \
+	version.c version.h \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 

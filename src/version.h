@@ -22,6 +22,5 @@
 
 extern const char* const BUILD_DATE;
 extern const char* const BUILD_TIME;
-extern const char* const BUILD_VERSION;
 
 #endif /* __TINC_VERSION_H__ */

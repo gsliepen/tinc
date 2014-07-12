@@ -18,9 +18,7 @@
 */
 
 #include "version.h"
-#include "version_git.h"
 
 /* This file is always rebuilt (even if there are no changes) so that the following is updated */
 const char* const BUILD_DATE = __DATE__;
 const char* const BUILD_TIME = __TIME__;
-const char* const BUILD_VERSION = GIT_DESCRIPTION;

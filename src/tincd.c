@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
 
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
-			   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+			   VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
 		printf("Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
