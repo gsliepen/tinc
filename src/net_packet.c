@@ -360,7 +360,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
-	vpn_packet_t *outpkt = pkt[0];
 	size_t outlen;
 
 	if(n->status.sptps) {
@@ -402,7 +401,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	/* Decrypt the packet */
 
 	if(cipher_active(n->incipher)) {
-		outpkt = pkt[nextpkt++];
+		vpn_packet_t *outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
 		if(!cipher_decrypt(n->incipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
@@ -459,7 +458,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	length_t origlen = inpkt->len;
 
 	if(n->incompression) {
-		outpkt = pkt[nextpkt++];
+		vpn_packet_t *outpkt = pkt[nextpkt++];
 
 		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
