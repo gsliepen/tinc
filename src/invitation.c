@@ -613,6 +613,7 @@ make_names:
 	FILE *fh = fopen(filename, "w");
 	if(!fh) {
 		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
+		fclose(f);
 		return false;
 	}
 
