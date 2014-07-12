@@ -829,9 +829,12 @@ static int cmd_start(int argc, char *argv[]) {
 		nargv[nargc++] = argv[i];
 
 #ifdef HAVE_MINGW
-	execvp(c, nargv);
-	fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
-	return 1;
+	int status = spawnvp(_P_WAIT, c, nargv);
+	if (status == -1) {
+		fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
+		return 1;
+	}
+	return status;
 #else
 	pid_t pid = fork();
 	if(pid == -1) {
