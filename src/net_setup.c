@@ -1141,7 +1141,8 @@ void close_network_connections(void) {
 
 	if (device_fd >= 0)
 		io_del(&device_io);
-	devops.close();
+	if (devops.close)
+		devops.close();
 
 	exit_control();
 
