@@ -769,12 +769,12 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 
 	/* Otherwise, send the packet via UDP */
 
-	const sockaddr_t *sa;
+	const sockaddr_t *sa = NULL;
 	int sock;
 
 	if(to->status.send_locally)
 		choose_local_address(to, &sa, &sock);
-	else
+	if(!sa)
 		choose_udp_address(to, &sa, &sock);
 
 	if(sendto(listen_socket[sock].udp.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
