@@ -21,6 +21,7 @@
 
 #ifdef HAVE_CURSES
 
+#undef KEY_EVENT  /* There are conflicting declarations for KEY_EVENT in Windows wincon.h and curses.h. */
 #include <curses.h>
 
 #include "control_common.h"

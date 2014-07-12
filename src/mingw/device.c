@@ -43,9 +43,6 @@ char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
-
 extern char *myport;
 
 static void device_issue_read() {
@@ -60,7 +57,7 @@ static void device_issue_read() {
 	}
 }
 
-static void device_handle_read(void *data) {
+static void device_handle_read(void *data, int flags) {
 	ResetEvent(device_read_overlapped.hEvent);
 
 	DWORD len;
@@ -89,7 +86,6 @@ static bool setup_device(void) {
 	bool found = false;
 
 	int err;
-	HANDLE thread;
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
@@ -234,8 +230,6 @@ static bool write_packet(vpn_packet_t *packet) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}
-
-	device_total_out += packet->len;
 
 	return true;
 }
