@@ -89,7 +89,6 @@ static bool setup_device(void) {
 	bool found = false;
 
 	int err;
-	HANDLE thread;
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
