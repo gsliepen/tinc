@@ -60,7 +60,7 @@ static void device_issue_read() {
 	}
 }
 
-static void device_handle_read(void *data) {
+static void device_handle_read(void *data, int flags) {
 	ResetEvent(device_read_overlapped.hEvent);
 
 	DWORD len;
