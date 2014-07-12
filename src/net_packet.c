@@ -629,8 +629,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	size_t outlen;
 #if defined(SOL_IP) && defined(IP_TOS)
 	static int priority = 0;
-#endif
 	int origpriority = origpkt->priority;
+#endif
 
 	if(!n->status.reachable) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
