@@ -203,7 +203,7 @@ static void age_subnets(void *data) {
 			}
 
 			for list_each(connection_t, c, connection_list)
-				if(c->status.active)
+				if(c->edge)
 					send_del_subnet(c, s);
 
 			subnet_del(myself, s);
@@ -238,7 +238,7 @@ static void learn_mac(mac_t *address) {
 		/* And tell all other tinc daemons it's our MAC */
 
 		for list_each(connection_t, c, connection_list)
-			if(c->status.active)
+			if(c->edge)
 				send_add_subnet(c, subnet);
 
 		timeout_add(&age_subnets_timeout, age_subnets, NULL, &(struct timeval){10, rand() % 100000});

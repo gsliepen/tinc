@@ -937,7 +937,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 		// usually distributes the sending of broadcast packets over all nodes.
 		case BMODE_MST:
 			for list_each(connection_t, c, connection_list)
-				if(c->status.active && c->status.mst && c != from->nexthop->connection)
+				if(c->edge && c->status.mst && c != from->nexthop->connection)
 					send_packet(c->node, packet);
 			break;
 

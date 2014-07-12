@@ -805,7 +805,6 @@ bool ack_h(connection_t *c, const char *request) {
 	/* Activate this connection */
 
 	c->allow_request = ALL;
-	c->status.active = true;
 
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection with %s (%s) activated", c->name,
 			   c->hostname);
