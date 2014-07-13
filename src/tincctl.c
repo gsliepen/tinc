@@ -75,6 +75,7 @@ char *scriptextension = "";
 static char *prompt;
 
 static struct option const long_options[] = {
+	{"batch", no_argument, NULL, 'b'},
 	{"config", required_argument, NULL, 'c'},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
@@ -100,6 +101,7 @@ static void usage(bool status) {
 	} else {
 		printf("Usage: %s [options] command\n\n", program_name);
 		printf("Valid options are:\n"
+				"  -b, --batch             Don't ask for anything (non-interactive mode).\n"
 				"  -c, --config=DIR        Read configuration options from DIR.\n"
 				"  -n, --net=NETNAME       Connect to net NETNAME.\n"
 				"      --pidfile=FILENAME  Read control cookie from FILENAME.\n"
@@ -156,6 +158,10 @@ static bool parse_options(int argc, char **argv) {
 	while((r = getopt_long(argc, argv, "+c:n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
+				break;
+
+			case 'b':
+				tty = false;
 				break;
 
 			case 'c': /* config file */
@@ -2439,6 +2445,7 @@ int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	orig_argv = argv;
 	orig_argc = argc;
+	tty = isatty(0) && isatty(1);
 
 	if(!parse_options(argc, argv))
 		return 1;
@@ -2468,8 +2475,6 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 	crypto_init();
-
-	tty = isatty(0) && isatty(1);
 
 	if(optind >= argc)
 		return cmd_shell(argc, argv);
