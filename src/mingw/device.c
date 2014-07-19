@@ -177,12 +177,6 @@ static bool setup_device(void) {
 		overwrite_mac = 1;
 	}
 
-	/* Start the tap reader */
-
-	io_add_event(&device_read_io, device_handle_read, NULL, CreateEvent(NULL, TRUE, FALSE, NULL));
-	device_read_overlapped.hEvent = device_read_io.event;
-	device_issue_read();
-
 	device_info = "Windows tap device";
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
@@ -192,22 +186,29 @@ static bool setup_device(void) {
 
 static void enable_device(void) {
 	logger(DEBUG_ALWAYS, LOG_INFO, "Enabling %s", device_info);
+
 	ULONG status = 1;
 	DWORD len;
 	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
+
+	io_add_event(&device_read_io, device_handle_read, NULL, CreateEvent(NULL, TRUE, FALSE, NULL));
+	device_read_overlapped.hEvent = device_read_io.event;
+	device_issue_read();
 }
 
 static void disable_device(void) {
 	logger(DEBUG_ALWAYS, LOG_INFO, "Disabling %s", device_info);
+
+	io_del(&device_read_io);
+	CancelIo(device_handle);
+	CloseHandle(device_read_overlapped.hEvent);
+
 	ULONG status = 0;
 	DWORD len;
 	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
 }
 
 static void close_device(void) {
-	io_del(&device_read_io);
-	CancelIo(device_handle);
-	CloseHandle(device_read_overlapped.hEvent);
 	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
 
 	free(device); device = NULL;
