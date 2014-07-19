@@ -49,11 +49,20 @@ static void device_issue_read() {
 	device_read_overlapped.Offset = 0;
 	device_read_overlapped.OffsetHigh = 0;
 
-	int status = ReadFile(device_handle, (void *)device_read_packet.data, MTU, NULL, &device_read_overlapped);
+	int status;
+	for (;;) {
+		DWORD len;
+		status = ReadFile(device_handle, (void *)device_read_packet.data, MTU, &len, &device_read_overlapped);
+		if (!status) {
+			if (GetLastError() != ERROR_IO_PENDING)
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+					   device, strerror(errno));
+			break;
+		}
 
-	if(!status && GetLastError() != ERROR_IO_PENDING) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-			   device, strerror(errno));
+		device_read_packet.len = len;
+		device_read_packet.priority = 0;
+		route(myself, &device_read_packet);
 	}
 }
 
