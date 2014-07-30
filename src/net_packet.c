@@ -122,30 +122,37 @@ static void send_mtu_probe_handler(void *data) {
 		timeout = pingtimeout;
 	}
 
-	for(int i = 0; i < 4 + localdiscovery; i++) {
-		int len;
+	if (n->mtunextprobe <= now.tv_sec)
+	{
+		for(int i = 0; i < 4 + localdiscovery; i++) {
+			int len;
 
-		if(i == 0) {
-			if(n->mtuprobes < 30 || n->maxmtu + 8 >= MTU)
-				continue;
-			len = n->maxmtu + 8;
-		} else if(n->maxmtu <= n->minmtu) {
-			len = n->maxmtu;
-		} else {
-			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+			if(i == 0) {
+				if(n->mtuprobes < 30 || n->maxmtu + 8 >= MTU)
+					continue;
+				len = n->maxmtu + 8;
+			} else if(n->maxmtu <= n->minmtu) {
+				len = n->maxmtu;
+			} else {
+				len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+			}
+
+			vpn_packet_t packet;
+			create_mtu_probe(&packet, &len);
+			n->status.send_locally = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
+
+			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
+
+			send_udppacket(n, &packet);
 		}
-
-		if(len < 64)
-			len = 64;
-
+	}
+	else
+	{
 		vpn_packet_t packet;
-		memset(packet.data, 0, 14);
-		randomize(packet.data + 14, len - 14);
-		packet.len = len;
-		packet.priority = 0;
-		n->status.send_locally = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
+		int len = 64;
+		create_mtu_probe(&packet, &len);
 
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending keep alive packet to %s (%s)", n->name, n->hostname);
 
 		send_udppacket(n, &packet);
 	}
@@ -167,7 +174,17 @@ static void send_mtu_probe_handler(void *data) {
 	n->prev_received = n->received;
 
 end:
-	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
+	n->mtunextprobe = now.tv_sec + timeout;
+	timeout_set(&n->mtutimeout, &(struct timeval){1, rand() % 100000});
+}
+
+void create_mtu_probe(vpn_packet_t *packet, int *len) {
+	if (*len < 64)
+	  *len = 64;
+	memset(packet->data, 0, 14);
+	randomize(packet->data + 14, *len - 14);
+	packet->len = *len;
+	packet->priority = 0;
 }
 
 void send_mtu_probe(node_t *n) {
