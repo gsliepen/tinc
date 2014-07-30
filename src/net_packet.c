@@ -116,7 +116,7 @@ static void send_mtu_probe_handler(void *data) {
 	}
 
 	if(n->mtuprobes == 31) {
-		timeout = pinginterval;
+		n->mtunextprobe = now.tv_sec + pinginterval;
 		goto end;
 	} else if(n->mtuprobes == 32) {
 		timeout = pingtimeout;
@@ -124,6 +124,8 @@ static void send_mtu_probe_handler(void *data) {
 
 	if (n->mtunextprobe <= now.tv_sec)
 	{
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Next MTU probe (%d) to %s in %d seconds (%d)", n->mtuprobes, n->name, timeout, n->mtunextprobe);
+		
 		for(int i = 0; i < 4 + localdiscovery; i++) {
 			int len;
 
@@ -159,6 +161,7 @@ static void send_mtu_probe_handler(void *data) {
 
 	n->status.send_locally = false;
 	n->probe_counter = 0;
+	logger(DEBUG_TRAFFIC, LOG_INFO, "probe counter for %s (%s) set to 0", n->name, n->hostname);
 	gettimeofday(&n->probe_time, NULL);
 
 	/* Calculate the packet loss of incoming traffic by comparing the rate of
@@ -174,8 +177,9 @@ static void send_mtu_probe_handler(void *data) {
 	n->prev_received = n->received;
 
 end:
-	n->mtunextprobe = now.tv_sec + timeout;
-	timeout_set(&n->mtutimeout, &(struct timeval){1, rand() % 100000});
+	if (keepaliveinterval < timeout)
+		timeout = keepaliveinterval;
+	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
 }
 
 void create_mtu_probe(vpn_packet_t *packet, int *len) {
@@ -279,6 +283,7 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		}
 		
 		n->probe_counter++;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "probe counter for %s (%s) increased to %d", n->name, n->hostname, n->probe_counter);
 
 		if(n->probe_counter == 1) {
 			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
