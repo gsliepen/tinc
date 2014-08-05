@@ -1,0 +1,35 @@
+digraph finite_state_machine {
+
+	node [shape = doublecircle];
+	start [ label = "start" ];
+	
+	node [shape = circle];	
+	end [ label = "end" ];
+	probes [ label = "probing" ];
+	w_probes [ label = "waiting\nfor probes" ];
+
+	ping [ label = "pinging" ];
+	w_ping [ label = "waiting\nfor ping" ];
+	t_ping [ label = "ping\ntimer" ];
+	to_ping [ label = "ping\ntimeout" ];
+	
+	start -> probes [ label = "/counter++ && minmtu = 0" ];
+	probes -> w_probes [ label = "/send burst" ];
+	w_probes -> probes [ label = "1 second passes/counter++" ];
+	probes -> end [ label = "!reachable || !validkey/counter = 0" ];
+	w_probes -> w_probes [ label = "receive probe/set minmtu" ];
+
+	probes -> w_ping [ label = "counter < 30 && minmtu >= maxmtu || counter == 30/\nset mtu && log" ];
+	probes -> w_ping [ label = "counter >= 10 && !minmtu/\nlog" ];
+	w_ping -> ping [ label = "ping interval passes/" ];
+	ping -> end [ label = "!reachable || !validkey/counter = 0" ];
+	ping -> t_ping [ label = "/send burst" ];
+	t_ping -> to_ping [ label = "pingtimeout passes/" ];
+	to_ping -> w_ping [ label = "!minmtu/log" ];
+	to_ping -> probes [ label = "minmtu/\nlog && counter = 1" ];
+	to_ping -> end [ label = "!reachable || !validkey/counter = 0" ];
+	w_ping -> w_ping [ label = "receive probe/set minmtu" ];
+	t_ping -> w_ping [ label = "receive probe && minmtu/" ];
+	t_ping -> probes [ label = "receive probe && !minmtu/counter = 1" ];
+}
+
