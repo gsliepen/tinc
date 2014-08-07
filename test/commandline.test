@@ -44,6 +44,7 @@ $tinc $c1 --net foo get name
 
 # Test tinc command line options that should not work
 
+$tinc $c1 -n foo get somethingreallyunknown && exit 1 || true
 $tinc $c1 --net && exit 1 || true
 $tinc $c1 --net get name && exit 1 || true
 $tinc $c1 foo && exit 1 || true
