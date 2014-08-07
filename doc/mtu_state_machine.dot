@@ -8,7 +8,7 @@ digraph finite_state_machine {
 	w_probes [ label = "waiting\nfor probes" ];
 
 	ping [ label = "pinging" ];
-	w_ping [ label = "waiting\nfor ping" ];
+	w_ping [ label = "wait ping\ninterval" ];
 	to_ping [ label = "ping\ntimeout" ];
 	
     start -> probes [ label = "/counter = 0 && minmtu = 0" ];
@@ -18,11 +18,13 @@ digraph finite_state_machine {
     probes -> ping [ label = "counter >= 10\n&& !minmtu/" ];
     probes -> ping [ label = "counter < 30\n&& minmtu >= maxmtu\n|| counter == 30/set mtu" ];
     
-    ping -> w_ping [ label = "/send burst", weight = 3 ];
-    w_ping -> to_ping [ label = "ping interval passes/\nsend burst" ];
-    w_ping -> ping [ label = "receive ping\n&& ping interval passes/\nset minmtu" ];
-    to_ping -> ping [ label = "ping timeout passes\n&& !minmtu/" ];
-    to_ping -> start [ label = "ping timeout passes\n&& minmtu/" ];
-    to_ping -> to_ping [ label = "receive ping/set minmtu" ];
+    ping -> to_ping [ label = "/send burst" ];
+    w_ping -> ping [ label = "ping interval passes/" ];
+    to_ping -> w_ping [ label = "ping timeout passes\n&& !minmtu/" ];
+    to_ping -> start [ label = "ping timeout passes\n&& minmtu/", weight = 2 ];
+    to_ping -> w_ping [ label = "ping received/\nset minmtu" ];
+    to_ping -> probes [ label = "ping received\n&& ping mtu > maxmtu/\ncounter = 10\n&& maxmtu = MTU" ];
+    w_ping -> probes [ label = "ping received\n&& ping mtu > maxmtu/\ncounter = 10\n&& maxmtu = MTU" ];
+    w_ping -> w_ping [ label = "ping received/\nset minmtu" ];
 }
 

@@ -74,111 +74,151 @@ bool localdiscovery = true;
 
 */
 
-static void send_mtu_probe_handler(void *data) {
+static void send_mtu_probe_burst(node_t *n) {
+  logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to start MTU discovery to %s (%s)", n->name, n->hostname);
+  n->probe_counter = 0;
+  for(int i = 0; i < 4 + localdiscovery; i++) {
+    int len;
+
+    if(i == 0) {
+      if(n->mtu_probe_state == probing || n->maxmtu + 8 >= MTU)
+				continue;
+      len = n->maxmtu + 8;
+    } else if(n->maxmtu <= n->minmtu) {
+      len = n->maxmtu;
+    } else {
+      len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+    }
+
+    vpn_packet_t packet;
+    create_mtu_probe(&packet, &len);
+    n->status.send_locally = i >= 4 && n->mtu_probe_state == probing && n->mtuprobes <= 10 && n->prevedge;
+
+    logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
+
+    send_udppacket(n, &packet);
+  }
+  
+  n->status.send_locally = false;
+  n->probe_counter = 0;
+  gettimeofday(&n->probe_time, NULL);
+
+  /* Calculate the packet loss of incoming traffic by comparing the rate of
+     packets received to the rate with which the sequence number has increased.
+  */
+
+  if(n->received > n->prev_received)
+  {
+    n->packetloss = 1.0 - (n->received - n->prev_received) / (float)(n->received_seqno - n->prev_received_seqno);
+  }
+  else
+  {
+    n->packetloss = n->received_seqno <= n->prev_received_seqno;
+  }
+
+  n->prev_received_seqno = n->received_seqno;
+  n->prev_received = n->received;
+}
+
+static void send_mtu_probe_handler(void *data)
+{
 	node_t *n = data;
-	int timeout = 1;
+	int timeout = 0;
 
-	n->mtuprobes++;
-
-	if(!n->status.reachable || !n->status.validkey) {
+	if(!n->status.reachable || !n->status.validkey)
+	{
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
 		n->mtuprobes = 0;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: start rcv1;   %s (%s)", n->name, n->hostname);
+		n->mtu_probe_state = start;
 		return;
 	}
 
-	if(n->mtuprobes > 32) {
-		if(!n->minmtu) {
-			n->mtuprobes = 31;
-			timeout = pinginterval;
-			goto end;
-		}
-
-		logger(DEBUG_TRAFFIC, LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
-		n->status.udp_confirmed = false;
-		n->mtuprobes = 1;
-		n->minmtu = 0;
-		n->maxmtu = MTU;
-	}
-
-	if(n->mtuprobes >= 10 && n->mtuprobes < 32 && !n->minmtu) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
-		n->mtuprobes = 31;
-	}
-
-	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
-		if(n->minmtu > n->maxmtu)
-			n->minmtu = n->maxmtu;
-		else
-			n->maxmtu = n->minmtu;
-		n->mtu = n->minmtu;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
-		n->mtuprobes = 31;
-	}
-
-	if(n->mtuprobes == 31) {
-		n->mtunextprobe = now.tv_sec + pinginterval;
-		goto end;
-	} else if(n->mtuprobes == 32) {
-		timeout = pingtimeout;
-	}
-
-	if (n->mtunextprobe <= now.tv_sec)
+	switch(n->mtu_probe_state)
 	{
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Next MTU probe (%d) to %s in %d seconds (%d)", n->mtuprobes, n->name, timeout, n->mtunextprobe);
-		
-		for(int i = 0; i < 4 + localdiscovery; i++) {
-			int len;
+		case start:
+			n->mtuprobes = 0;
+			n->minmtu = 0;
+			n->maxmtu = MTU;
+			
+			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probing send; %s (%s)", n->name, n->hostname);
+			n->mtu_probe_state = probing;
+			break;
+			
+		case probing:
+			if (n->mtuprobes >= 10 && !n->minmtu)
+			{
+				logger(DEBUG_TRAFFIC, LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
 
-			if(i == 0) {
-				if(n->mtuprobes < 30 || n->maxmtu + 8 >= MTU)
-					continue;
-				len = n->maxmtu + 8;
-			} else if(n->maxmtu <= n->minmtu) {
-				len = n->maxmtu;
-			} else {
-				len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: pinging prob; %s (%s)", n->name, n->hostname);
+				n->mtu_probe_state = pinging;
 			}
+			else if (n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu))
+			{
+				if(n->minmtu > n->maxmtu)
+				{
+					n->minmtu = n->maxmtu;
+				}
+				else
+				{
+					n->maxmtu = n->minmtu;
+				}
+				n->mtu = n->minmtu;
+				logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
 
-			vpn_packet_t packet;
-			create_mtu_probe(&packet, &len);
-			n->status.send_locally = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
+				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: pinging snd2; %s (%s)", n->name, n->hostname);
+				n->mtu_probe_state = pinging;
+			}
+			else
+			{
+				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probe_wait;   %s (%s)", n->name, n->hostname);
+				n->mtu_probe_state = probe_wait;
 
-			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
+				n->mtuprobes++;
+				send_mtu_probe_burst(n);
+				
+				timeout = 1;
+			}
+			break;
+			
+		case probe_wait:
+			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probing recv; %s (%s)", n->name, n->hostname);
+			n->mtu_probe_state = probing;
+			break;
+			
+		case pinging:
+			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: ping_timeout; %s (%s)", n->name, n->hostname);
+			timeout = pingtimeout;
+			n->mtu_probe_state = ping_timeout;
 
-			send_udppacket(n, &packet);
-		}
+			send_mtu_probe_burst(n);
+			break;
+			
+		case ping_wait:
+			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: pinging;      %s (%s)", n->name, n->hostname);
+			n->mtu_probe_state = pinging;
+			break;
+
+		case ping_timeout:
+			if (!n->minmtu)
+			{
+				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: ping_wait;    %s (%s)", n->name, n->hostname);
+				timeout = pinginterval;
+				n->mtu_probe_state = ping_wait;
+			}
+			else
+			{
+				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: start send;   %s (%s)", n->name, n->hostname);
+				n->mtu_probe_state = start;
+				logger(DEBUG_TRAFFIC, LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
+			}
+			break;
+      
+    default:
+			logger(DEBUG_SCARY_THINGS, LOG_ERR, "Reached impossible state while sending packets to %s (%s)", n->name, n->hostname);
+			break;      
 	}
-	else
-	{
-		vpn_packet_t packet;
-		int len = 64;
-		create_mtu_probe(&packet, &len);
 
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending keep alive packet to %s (%s)", n->name, n->hostname);
-
-		send_udppacket(n, &packet);
-	}
-
-	n->status.send_locally = false;
-	n->probe_counter = 0;
-	logger(DEBUG_TRAFFIC, LOG_INFO, "probe counter for %s (%s) set to 0", n->name, n->hostname);
-	gettimeofday(&n->probe_time, NULL);
-
-	/* Calculate the packet loss of incoming traffic by comparing the rate of
-	   packets received to the rate with which the sequence number has increased.
-	 */
-
-	if(n->received > n->prev_received)
-		n->packetloss = 1.0 - (n->received - n->prev_received) / (float)(n->received_seqno - n->prev_received_seqno);
-	else
-		n->packetloss = n->received_seqno <= n->prev_received_seqno;
-
-	n->prev_received_seqno = n->received_seqno;
-	n->prev_received = n->received;
-
-end:
-	if (keepaliveinterval < timeout)
-		timeout = keepaliveinterval;
 	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
 }
 
@@ -192,8 +232,8 @@ void create_mtu_probe(vpn_packet_t *packet, int *len) {
 }
 
 void send_mtu_probe(node_t *n) {
-	timeout_add(&n->mtutimeout, send_mtu_probe_handler, n, &(struct timeval){1, 0});
-	send_mtu_probe_handler(n);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: new machine started for %s (%s)", n->name, n->hostname);
+	timeout_add(&n->mtutimeout, send_mtu_probe_handler, n, &(struct timeval){0, 0});
 }
 
 static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
@@ -241,58 +281,79 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 		n->status.udp_confirmed = true;
 
-		/* If we haven't established the PMTU yet, restart the discovery process. */
-
-		if(n->mtuprobes > 30) {
-			if (probelen == n->maxmtu + 8) {
-				logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
-				n->maxmtu = MTU;
-				n->mtuprobes = 10;
+		switch(n->mtu_probe_state)
+		{
+			case start:
+			case probing:
+			case pinging:
+				logger(DEBUG_TRAFFIC, LOG_WARNING, "Received MTU probe reply from %s (%s) when not expecting any", n->name, n->hostname);
 				return;
-			}
+				
+			case ping_timeout:
+				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: ping_wait;    %s (%s)", n->name, n->hostname);
+				timeout_set(&n->mtutimeout, &(struct timeval){pinginterval, rand() % 100000});
+				n->mtu_probe_state = ping_wait;
 
-			if(n->minmtu)
-				n->mtuprobes = 30;
-			else
-				n->mtuprobes = 1;
-		}
+				// no break here!
 
-		/* If applicable, raise the minimum supported MTU */
+			case ping_wait:
 
-		if(probelen > n->maxmtu)
-			probelen = n->maxmtu;
-		if(n->minmtu < probelen)
-			n->minmtu = probelen;
+				/* If we haven't established the PMTU yet, restart the discovery process. */
+				if (probelen == n->maxmtu + 8) {
+					logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+					
+					// Taking a shortcut: keeping 'minmtu' and starting at probe 10
+					n->maxmtu = MTU;
+					n->mtuprobes = 10;
+					
+					logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probing;      %s (%s)", n->name, n->hostname);
+					n->mtu_probe_state = probing;
+					return;
+				}
 
-		/* Calculate RTT and bandwidth.
-		   The RTT is the time between the MTU probe burst was sent and the first
-		   reply is received. The bandwidth is measured using the time between the
-		   arrival of the first and third probe reply (or type 2 probe requests).
-		 */
+				// no break here!
 
-		struct timeval now, diff;
-		gettimeofday(&now, NULL);
-		timersub(&now, &n->probe_time, &diff);
+			case probe_wait:
+				/* If applicable, raise the minimum supported MTU */
 
-		struct timeval probe_timestamp = now;
-		if (packet->data[0] == 2 && packet->len >= 11) {
-			uint32_t sec; memcpy(&sec, packet->data + 3, 4);
-			uint32_t usec; memcpy(&usec, packet->data + 7, 4);
-			probe_timestamp.tv_sec = ntohl(sec);
-			probe_timestamp.tv_usec = ntohl(usec);
-		}
-		
-		n->probe_counter++;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "probe counter for %s (%s) increased to %d", n->name, n->hostname, n->probe_counter);
+				if(probelen > n->maxmtu)
+					probelen = n->maxmtu;
+				if(n->minmtu < probelen)
+					n->minmtu = probelen;
 
-		if(n->probe_counter == 1) {
-			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
-			n->probe_time = probe_timestamp;
-		} else if(n->probe_counter == 3) {
-			struct timeval probe_timestamp_diff;
-			timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
-			n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, burst bandwidth %.3f Mbit/s, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->bandwidth * 8e-6, n->packetloss * 1e2);
+				/* Calculate RTT and bandwidth.
+					The RTT is the time between the MTU probe burst was sent and the first
+					reply is received. The bandwidth is measured using the time between the
+					arrival of the first and third probe reply (or type 2 probe requests).
+				*/
+
+				struct timeval now, diff;
+				gettimeofday(&now, NULL);
+				timersub(&now, &n->probe_time, &diff);
+
+				struct timeval probe_timestamp = now;
+				if (packet->data[0] == 2 && packet->len >= 11) {
+					uint32_t sec; memcpy(&sec, packet->data + 3, 4);
+					uint32_t usec; memcpy(&usec, packet->data + 7, 4);
+					probe_timestamp.tv_sec = ntohl(sec);
+					probe_timestamp.tv_usec = ntohl(usec);
+				}
+				
+				n->probe_counter++;
+
+				if(n->probe_counter == 1) {
+					n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
+					n->probe_time = probe_timestamp;
+				} else if(n->probe_counter == 3) {
+					struct timeval probe_timestamp_diff;
+					timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
+					n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
+					logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, burst bandwidth %.3f Mbit/s, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->bandwidth * 8e-6, n->packetloss * 1e2);
+				}
+				break;
+
+			default:
+				break;
 		}
 	}
 }
