@@ -129,7 +129,6 @@ static void send_mtu_probe_handler(void *data)
 	{
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
 		n->mtuprobes = 0;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: start rcv1;   %s (%s)", n->name, n->hostname);
 		n->mtu_probe_state = start;
 		return;
 	}
@@ -141,7 +140,6 @@ static void send_mtu_probe_handler(void *data)
 			n->minmtu = 0;
 			n->maxmtu = MTU;
 			
-			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probing send; %s (%s)", n->name, n->hostname);
 			n->mtu_probe_state = probing;
 			break;
 			
@@ -150,7 +148,6 @@ static void send_mtu_probe_handler(void *data)
 			{
 				logger(DEBUG_TRAFFIC, LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
 
-				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: pinging prob; %s (%s)", n->name, n->hostname);
 				n->mtu_probe_state = pinging;
 			}
 			else if (n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu))
@@ -166,12 +163,10 @@ static void send_mtu_probe_handler(void *data)
 				n->mtu = n->minmtu;
 				logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
 
-				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: pinging snd2; %s (%s)", n->name, n->hostname);
 				n->mtu_probe_state = pinging;
 			}
 			else
 			{
-				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probe_wait;   %s (%s)", n->name, n->hostname);
 				n->mtu_probe_state = probe_wait;
 
 				n->mtuprobes++;
@@ -182,12 +177,10 @@ static void send_mtu_probe_handler(void *data)
 			break;
 			
 		case probe_wait:
-			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probing recv; %s (%s)", n->name, n->hostname);
 			n->mtu_probe_state = probing;
 			break;
 			
 		case pinging:
-			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: ping_timeout; %s (%s)", n->name, n->hostname);
 			timeout = pingtimeout;
 			n->mtu_probe_state = ping_timeout;
 
@@ -195,20 +188,17 @@ static void send_mtu_probe_handler(void *data)
 			break;
 			
 		case ping_wait:
-			logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: pinging;      %s (%s)", n->name, n->hostname);
 			n->mtu_probe_state = pinging;
 			break;
 
 		case ping_timeout:
 			if (!n->minmtu)
 			{
-				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: ping_wait;    %s (%s)", n->name, n->hostname);
 				timeout = pinginterval;
 				n->mtu_probe_state = ping_wait;
 			}
 			else
 			{
-				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: start send;   %s (%s)", n->name, n->hostname);
 				n->mtu_probe_state = start;
 				logger(DEBUG_TRAFFIC, LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
 			}
@@ -232,7 +222,6 @@ void create_mtu_probe(vpn_packet_t *packet, int *len) {
 }
 
 void send_mtu_probe(node_t *n) {
-	logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: new machine started for %s (%s)", n->name, n->hostname);
 	timeout_add(&n->mtutimeout, send_mtu_probe_handler, n, &(struct timeval){0, 0});
 }
 
@@ -290,7 +279,6 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 				return;
 				
 			case ping_timeout:
-				logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: ping_wait;    %s (%s)", n->name, n->hostname);
 				timeout_set(&n->mtutimeout, &(struct timeval){pinginterval, rand() % 100000});
 				n->mtu_probe_state = ping_wait;
 
@@ -306,7 +294,6 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 					n->maxmtu = MTU;
 					n->mtuprobes = 10;
 					
-					logger(DEBUG_TRAFFIC, LOG_INFO, "state_machine: probing;      %s (%s)", n->name, n->hostname);
 					n->mtu_probe_state = probing;
 					return;
 				}
