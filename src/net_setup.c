@@ -402,41 +402,16 @@ void load_all_nodes(void) {
 
 char *get_name(void) {
 	char *name = NULL;
+	char *returned_name;
 
 	get_config_string(lookup_config(config_tree, "Name"), &name);
 
 	if(!name)
 		return NULL;
 
-	if(*name == '$') {
-		char *envname = getenv(name + 1);
-		char hostname[32] = "";
-		if(!envname) {
-			if(strcmp(name + 1, "HOST")) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Invalid Name: environment variable %s does not exist\n", name + 1);
-				return false;
-			}
-			if(gethostname(hostname, sizeof hostname) || !*hostname) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", sockstrerror(sockerrno));
-				return false;
-			}
-			hostname[31] = 0;
-			envname = hostname;
-		}
-		free(name);
-		name = xstrdup(envname);
-		for(char *c = name; *c; c++)
-			if(!isalnum(*c))
-				*c = '_';
-	}
-
-	if(!check_id(name)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid name for myself!");
-		free(name);
-		return false;
-	}
-
-	return name;
+	returned_name = replace_name(name);
+	free(name);
+	return returned_name;
 }
 
 bool setup_myself_reloadable(void) {
