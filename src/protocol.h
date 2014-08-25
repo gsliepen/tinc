@@ -81,7 +81,6 @@ extern ecdsa_t *invitation_key;
 extern bool send_request(struct connection_t *, const char *, ...) __attribute__ ((__format__(printf, 2, 3)));
 extern void forward_request(struct connection_t *, const char *);
 extern bool receive_request(struct connection_t *, const char *);
-extern bool check_id(const char *);
 
 extern void init_requests(void);
 extern void exit_requests(void);

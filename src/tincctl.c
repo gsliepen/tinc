@@ -1675,18 +1675,6 @@ static int cmd_config(int argc, char *argv[]) {
 	return 0;
 }
 
-bool check_id(const char *name) {
-	if(!name || !*name)
-		return false;
-
-	for(int i = 0; i < strlen(name); i++) {
-		if(!isalnum(name[i]) && name[i] != '_')
-			return false;
-	}
-
-	return true;
-}
-
 static bool try_bind(int port) {
 	struct addrinfo *ai = NULL;
 	struct addrinfo hint = {

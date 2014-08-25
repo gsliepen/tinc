@@ -24,6 +24,7 @@
 #include "subnet.h"
 #include "tincctl.h"
 #include "info.h"
+#include "utils.h"
 #include "xalloc.h"
 
 void logger(int level, int priority, const char *format, ...) {

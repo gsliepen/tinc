@@ -55,17 +55,6 @@ static char (*request_name[]) = {
 
 static splay_tree_t *past_request_tree;
 
-bool check_id(const char *id) {
-	if(!id || !*id)
-		return false;
-
-	for(; *id; id++)
-		if(!isalnum(*id) && *id != '_')
-			return false;
-
-	return true;
-}
-
 /* Generic request routines - takes care of logging and error
    detection as well */
 

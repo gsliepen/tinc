@@ -181,6 +181,17 @@ unsigned int bitfield_to_int(const void *bitfield, size_t size) {
 	return value;
 }
 
+bool check_id(const char *id) {
+	if(!id || !*id)
+		return false;
+
+	for(; *id; id++)
+		if(!isalnum(*id) && *id != '_')
+			return false;
+
+	return true;
+}
+
 char *replace_name(const char *name) {
 	char *ret_name;
 
