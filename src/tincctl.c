@@ -1305,7 +1305,7 @@ char *get_my_name(bool verbose) {
 			continue;
 		if(*value) {
 			fclose(f);
-			return strdup(value);
+			return replace_name(value);
 		}
 	}
 

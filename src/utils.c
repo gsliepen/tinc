@@ -18,11 +18,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "logger.h"
 #include "system.h"
-#include "xalloc.h"
-
-#include "../src/logger.h"
 #include "utils.h"
+#include "xalloc.h"
 
 static const char hexadecimals[] = "0123456789ABCDEF";
 static const char base64_original[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

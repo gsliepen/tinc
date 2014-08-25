@@ -27,6 +27,14 @@
 
 static char *program_name;
 
+void logger(int level, int priority, const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+	vfprintf(stderr, format, ap);
+	va_end(ap);
+	fputc('\n', stderr);
+}
+
 static void usage() {
 	fprintf(stderr, "Usage: %s [options] private_key_file public_key_file\n\n", program_name);
 	fprintf(stderr, "Valid options are:\n"

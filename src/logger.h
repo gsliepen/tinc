@@ -65,6 +65,8 @@ enum {
 #endif
 #endif
 
+#include <stdbool.h>
+
 extern debug_t debug_level;
 extern bool logcontrol;
 extern void openlogger(const char *, logmode_t);
