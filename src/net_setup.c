@@ -553,6 +553,18 @@ static bool setup_myself(void) {
 	} else
 		maxtimeout = 900;
 
+	if(get_config_int(lookup_config(config_tree, "MinTimeout"), &mintimeout)) {
+			if(mintimeout < 0) {
+				logger(LOG_ERR, "Bogus minimum timeout!");
+				return false;
+			}
+			if(mintimeout > maxtimeout) {
+				logger(LOG_WARNING, "Minimum timeout (%d s) cannot be larger than maximum timeout (%d s). Correcting !", mintimeout, maxtimeout );
+				mintimeout=maxtimeout;
+			}
+		} else
+			mintimeout = 0;
+
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {
 			logger(LOG_ERR, "UDPRcvBuf cannot be negative!");

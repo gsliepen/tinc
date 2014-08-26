@@ -38,6 +38,7 @@ extern avl_tree_t *config_tree;
 extern int pinginterval;
 extern int pingtimeout;
 extern int maxtimeout;
+extern int mintimeout;
 extern bool bypass_security;
 extern char *confbase;
 extern char *netname;

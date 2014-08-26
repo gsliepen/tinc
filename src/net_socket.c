@@ -40,6 +40,7 @@
 #endif
 
 int addressfamily = AF_UNSPEC;
+int mintimeout = 0;
 int maxtimeout = 900;
 int seconds_till_retry = 5;
 int udp_rcvbuf = 0;
@@ -272,6 +273,9 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 void retry_outgoing(outgoing_t *outgoing) {
 	outgoing->timeout += 5;
+
+	if(outgoing->timeout < mintimeout)
+		outgoing->timeout = mintimeout;
 
 	if(outgoing->timeout > maxtimeout)
 		outgoing->timeout = maxtimeout;
