@@ -191,6 +191,11 @@ bool check_id(const char *id) {
 	return true;
 }
 
+/* Windows doesn't define HOST_NAME_MAX. */
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
+
 char *replace_name(const char *name) {
 	char *ret_name;
 
