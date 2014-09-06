@@ -763,7 +763,7 @@ bool connect_tincd(bool verbose) {
 
 #ifdef SO_NOSIGPIPE
 	static const int one = 1;
-	setsockopt(c, SOL_SOCKET, SO_NOSIGPIPE, (void *)&one, sizeof one);
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&one, sizeof one);
 #endif
 
 	char data[4096];
