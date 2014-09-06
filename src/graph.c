@@ -292,7 +292,7 @@ static void check_reachability(void) {
 	if (device_standby) {
 		if (reachable_count == 0 && became_unreachable_count > 0)
 			device_disable();
-		else if (reachable_count == became_reachable_count)
+		else if (reachable_count > 0 && reachable_count == became_reachable_count)
 			device_enable();
 	}
 }
