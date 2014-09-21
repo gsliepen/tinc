@@ -140,6 +140,13 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		n->hostname = sockaddr2hostname(&n->address);
 		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	}
+
+	/* invalidate UDP information - note that this is a security feature as well to make sure
+	   we can't be tricked into flooding any random address with UDP packets */
+	n->status.udp_confirmed = false;
+	n->mtuprobes = 0;
+	n->minmtu = 0;
+	n->maxmtu = MTU;
 }
 
 bool dump_nodes(connection_t *c) {
