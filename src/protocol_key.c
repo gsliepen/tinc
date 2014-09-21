@@ -124,6 +124,11 @@ bool send_req_key(node_t *to) {
 static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, int reqno) {
 	switch(reqno) {
 		case REQ_PUBKEY: {
+			if(!node_read_ecdsa_public_key(from)) {
+				/* Request their key *before* we send our key back. Otherwise the first SPTPS packet from them will get dropped. */
+				logger(DEBUG_PROTOCOL, LOG_DEBUG, "Preemptively requesting Ed25519 key for %s (%s)", from->name, from->hostname);
+				send_request(from->nexthop->connection, "%d %s %s %d", REQ_KEY, myself->name, from->name, REQ_PUBKEY);
+			}
 			char *pubkey = ecdsa_get_base64_public_key(myself->connection->ecdsa);
 			send_request(from->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, from->name, ANS_PUBKEY, pubkey);
 			free(pubkey);
