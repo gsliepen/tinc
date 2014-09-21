@@ -63,27 +63,9 @@ static device_type_t device_type = DEVICE_TYPE_TUN;
 #endif
 
 static bool setup_device(void) {
+	get_config_string(lookup_config(config_tree, "Device"), &device);
+
 	char *type;
-
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
-		if(routing_mode == RMODE_ROUTER)
-			device = xstrdup(DEFAULT_TUN_DEVICE);
-		else
-			device = xstrdup(DEFAULT_TAP_DEVICE);
-	}
-
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = NULL;
-#ifndef TAPGIFNAME
-	if (iface) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Ignoring specified interface name '%s' as device rename is not supported on this platform", iface);
-		free(iface);
-		iface = NULL;
-	}
-#endif
-	if (!iface)
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
-
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
 			/* use default */;
@@ -102,9 +84,28 @@ static bool setup_device(void) {
 			return false;
 		}
 	} else {
-		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER)
+		if((device && strstr(device, "tap")) || routing_mode != RMODE_ROUTER)
 			device_type = DEVICE_TYPE_TAP;
 	}
+
+	if(!device) {
+		if(device_type == DEVICE_TYPE_TAP)
+			device = xstrdup(DEFAULT_TAP_DEVICE);
+		else
+			device = xstrdup(DEFAULT_TUN_DEVICE);
+	}
+
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = NULL;
+#ifndef TAPGIFNAME
+	if (iface) {
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Ignoring specified interface name '%s' as device rename is not supported on this platform", iface);
+		free(iface);
+		iface = NULL;
+	}
+#endif
+	if (!iface)
+		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 
 	switch(device_type) {
 #ifdef ENABLE_TUNEMU
