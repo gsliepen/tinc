@@ -1002,6 +1002,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			break;
 
 		char node[4096];
+		char id[4096];
 		char from[4096];
 		char to[4096];
 		char subnet[4096];
@@ -1019,8 +1020,8 @@ static int cmd_dump(int argc, char *argv[]) {
 
 		switch(req) {
 			case REQ_DUMP_NODES: {
-				int n = sscanf(line, "%*d %*d %s %s port %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", node, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
-				if(n != 16) {
+				int n = sscanf(line, "%*d %*d %s %s %s port %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
+				if(n != 17) {
 					fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
 					return 1;
 				}
@@ -1043,8 +1044,8 @@ static int cmd_dump(int argc, char *argv[]) {
 				} else {
 					if(only_reachable && !status.reachable)
 						continue;
-					printf("%s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)\n",
-							node, host, port, cipher, digest, maclength, compression, options, status_int, nexthop, via, distance, pmtu, minmtu, maxmtu);
+					printf("%s id %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)\n",
+							node, id, host, port, cipher, digest, maclength, compression, options, status_int, nexthop, via, distance, pmtu, minmtu, maxmtu);
 				}
 			} break;
 

@@ -43,6 +43,7 @@ typedef struct node_status_t {
 
 typedef struct node_t {
 	char *name;                             /* name of this node */
+	node_id_t id;                           /* unique node ID (name hash) */
 	uint32_t options;                       /* options turned on for this node */
 
 	int sock;                               /* Socket to use for outgoing UDP packets */
@@ -111,6 +112,7 @@ extern void free_node(node_t *);
 extern void node_add(node_t *);
 extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
+extern node_t *lookup_node_id(const node_id_t *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
 extern bool dump_nodes(struct connection_t *);
 extern bool dump_traffic(struct connection_t *);

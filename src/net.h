@@ -52,6 +52,10 @@ typedef struct ipv6_t {
 	uint16_t x[8];
 } ipv6_t;
 
+typedef struct node_id_t {
+	uint8_t x[6];
+} node_id_t;
+
 typedef short length_t;
 
 #define AF_UNKNOWN 255

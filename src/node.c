@@ -30,7 +30,10 @@
 #include "utils.h"
 #include "xalloc.h"
 
+static digest_t *sha256;
+
 splay_tree_t *node_tree;
+static splay_tree_t *node_id_tree;
 static hash_t *node_udp_cache;
 
 node_t *myself;
@@ -39,14 +42,24 @@ static int node_compare(const node_t *a, const node_t *b) {
 	return strcmp(a->name, b->name);
 }
 
+static int node_id_compare(const node_t *a, const node_t *b) {
+	return memcmp(&a->id, &b->id, sizeof(node_id_t));
+}
+
 void init_nodes(void) {
+	sha256 = digest_open_by_name("sha256", sizeof(node_id_t));
+
 	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
+	node_id_tree = splay_alloc_tree((splay_compare_t) node_id_compare, NULL);
 	node_udp_cache = hash_alloc(0x100, sizeof(sockaddr_t));
 }
 
 void exit_nodes(void) {
 	hash_free(node_udp_cache);
+	splay_delete_tree(node_id_tree);
 	splay_delete_tree(node_tree);
+
+	digest_close(sha256);
 }
 
 node_t *new_node(void) {
@@ -93,7 +106,10 @@ void free_node(node_t *n) {
 }
 
 void node_add(node_t *n) {
+	digest_create(sha256, n->name, strlen(n->name), &n->id);
+
 	splay_insert(node_tree, n);
+	splay_insert(node_id_tree, n);
 }
 
 void node_del(node_t *n) {
@@ -103,6 +119,7 @@ void node_del(node_t *n) {
 	for splay_each(edge_t, e, n->edge_tree)
 		edge_del(e);
 
+	splay_delete(node_id_tree, n);
 	splay_delete(node_tree, n);
 }
 
@@ -112,6 +129,14 @@ node_t *lookup_node(char *name) {
 	n.name = name;
 
 	return splay_search(node_tree, &n);
+}
+
+node_t *lookup_node_id(const node_id_t *id) {
+	node_t n = {NULL};
+
+	n.id = *id;
+
+	return splay_search(node_id_tree, &n);
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
@@ -150,12 +175,17 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 }
 
 bool dump_nodes(connection_t *c) {
-	for splay_each(node_t, n, node_tree)
-		send_request(c, "%d %d %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
-			   n->name, n->hostname ?: "unknown port unknown", cipher_get_nid(n->outcipher),
+	for splay_each(node_t, n, node_tree) {
+		char id[2 * sizeof n->id + 1];
+		for (size_t c = 0; c < sizeof n->id; ++c)
+			sprintf(id + 2 * c, "%02hhx", n->id.x[c]);
+		id[sizeof id - 1] = 0;
+		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
+			   n->name, id, n->hostname ?: "unknown port unknown", cipher_get_nid(n->outcipher),
 			   digest_get_nid(n->outdigest), (int)digest_length(n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
+	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_NODES);
 }
