@@ -73,6 +73,15 @@ static bool setup_device(void) {
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = NULL;
+#ifndef TAPGIFNAME
+	if (iface) {
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Ignoring specified interface name '%s' as device rename is not supported on this platform", iface);
+		free(iface);
+		iface = NULL;
+	}
+#endif
+	if (!iface)
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
