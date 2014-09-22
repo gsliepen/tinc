@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # tinc-gui -- GUI for controlling a running tincd
 # Copyright (C) 2009-2014 Guus Sliepen <guus@tinc-vpn.org>
