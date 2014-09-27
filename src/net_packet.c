@@ -356,7 +356,7 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	return digest_verify(n->indigest, &inpkt->seqno, inpkt->len - digest_length(n->indigest), (const char *)&inpkt->seqno + inpkt->len - digest_length(n->indigest));
 }
 
-static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
+static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
@@ -370,15 +370,14 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			} else {
 				logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
 			}
-			return;
+			return false;
 		}
-		sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
-		return;
+		return sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
 	}
 
 	if(!n->status.validkey) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
-		return;
+		return false;
 	}
 
 	/* Check packet length */
@@ -386,7 +385,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(inpkt->len < sizeof inpkt->seqno + digest_length(n->indigest)) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got too short packet from %s (%s)",
 					n->name, n->hostname);
-		return;
+		return false;
 	}
 
 	/* Check the message authentication code */
@@ -395,7 +394,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		inpkt->len -= digest_length(n->indigest);
 		if(!digest_verify(n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
-			return;
+			return false;
 		}
 	}
 	/* Decrypt the packet */
@@ -406,7 +405,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 		if(!cipher_decrypt(n->incipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Error decrypting packet from %s (%s)", n->name, n->hostname);
-			return;
+			return false;
 		}
 
 		outpkt->len = outlen;
@@ -426,7 +425,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 				if(n->farfuture++ < replaywin >> 2) {
 					logger(DEBUG_ALWAYS, LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
 						n->name, n->hostname, seqno - n->received_seqno - 1, n->farfuture);
-					return;
+					return false;
 				}
 				logger(DEBUG_ALWAYS, LOG_WARNING, "Lost %d packets from %s (%s)",
 						seqno - n->received_seqno - 1, n->name, n->hostname);
@@ -435,7 +434,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 				if((n->received_seqno >= replaywin * 8 && seqno <= n->received_seqno - replaywin * 8) || !(n->late[(seqno / 8) % replaywin] & (1 << seqno % 8))) {
 					logger(DEBUG_ALWAYS, LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
 						n->name, n->hostname, seqno, n->received_seqno);
-					return;
+					return false;
 				}
 			} else {
 				for(int i = n->received_seqno + 1; i < seqno; i++)
@@ -465,7 +464,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
 						 n->name, n->hostname);
-			return;
+			return false;
 		}
 
 		inpkt = outpkt;
@@ -479,6 +478,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		mtu_probe_h(n, inpkt, origlen);
 	else
 		receive_packet(n, inpkt);
+	return true;
 }
 
 void receive_tcppacket(connection_t *c, const char *buffer, int len) {
@@ -779,7 +779,17 @@ bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
 	if(!sa)
 		choose_udp_address(to, &sa, &sock);
 
-	if(sendto(listen_socket[sock].udp.fd, data, len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	bool add_srcid = (to->options >> 24) >= 4;
+	size_t overhead = 0;
+	if (add_srcid) overhead += sizeof myself->id;
+	char buf[len + overhead]; char* buf_ptr = buf;
+	if(add_srcid) {
+		memcpy(buf_ptr, &myself->id, sizeof myself->id); buf_ptr += sizeof myself->id;
+	}
+	/* TODO: if this copy turns out to be a performance concern, change sptps_send_record() to add some "pre-padding" to the buffer and use that instead */
+	memcpy(buf_ptr, data, len); buf_ptr += len;
+
+	if(sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			// Compensate for SPTPS overhead
 			len -= SPTPS_DATAGRAM_OVERHEAD;
@@ -995,10 +1005,10 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	char *hostname;
 	sockaddr_t from = {{0}};
 	socklen_t fromlen = sizeof from;
-	node_t *n;
+	node_t *n = NULL;
 	int len;
 
-	len = recvfrom(ls->udp.fd, pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(ls->udp.fd, &pkt.srcid, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1010,25 +1020,34 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	sockaddrunmap(&from); /* Some braindead IPv6 implementations do stupid things. */
 
-	n = lookup_node_udp(&from);
+	if(len >= sizeof pkt.srcid)
+		n = lookup_node_id(&pkt.srcid);
+	if(n)
+		pkt.len -= sizeof pkt.srcid;
+	else {
+		/* Most likely an old-style packet without a source ID. */
+		memmove(pkt.seqno, &pkt.srcid, sizeof pkt - offsetof(vpn_packet_t, seqno));
+		n = lookup_node_udp(&from);
+	}
+
+	if(!n)
+		n = try_harder(&from, &pkt);
 
 	if(!n) {
-		n = try_harder(&from, &pkt);
-		if(n)
-			update_node_udp(n, &from);
-		else if(debug_level >= DEBUG_PROTOCOL) {
+		if(debug_level >= DEBUG_PROTOCOL) {
 			hostname = sockaddr2hostname(&from);
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
 			free(hostname);
-			return;
 		}
-		else
-			return;
+		return;
 	}
 
-	n->sock = ls - listen_socket;
+	if(!receive_udppacket(n, &pkt))
+		return;
 
-	receive_udppacket(n, &pkt);
+	n->sock = ls - listen_socket;
+	if(sockaddrcmp(&from, &n->address))
+		update_node_udp(n, &from);
 }
 
 void handle_device_data(void *data, int flags) {
