@@ -182,7 +182,7 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		/* It's a probe request, send back a reply */
 
 		/* Type 2 probe replies were introduced in protocol 17.3 */
-		if ((n->options >> 24) == 3) {
+		if ((n->options >> 24) >= 3) {
 			uint8_t* data = packet->data;
 			*data++ = 2;
 			uint16_t len16 = htons(len); memcpy(data, &len16, 2); data += 2;
