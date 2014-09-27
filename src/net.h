@@ -87,7 +87,7 @@ typedef union sockaddr_t {
 typedef struct vpn_packet_t {
 	length_t len;           /* the actual number of bytes in the `data' field */
 	int priority;           /* priority or TOS */
-	uint32_t seqno;         /* 32 bits sequence number (network byte order of course) */
+	uint8_t seqno[4];       /* 32 bits sequence number (network byte order of course) */
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 

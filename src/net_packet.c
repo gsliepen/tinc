@@ -416,37 +416,39 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	/* Check the sequence number */
 
 	inpkt->len -= sizeof inpkt->seqno;
-	inpkt->seqno = ntohl(inpkt->seqno);
+	uint32_t seqno;
+	memcpy(&seqno, inpkt->seqno, sizeof seqno);
+	seqno = ntohl(seqno);
 
 	if(replaywin) {
-		if(inpkt->seqno != n->received_seqno + 1) {
-			if(inpkt->seqno >= n->received_seqno + replaywin * 8) {
+		if(seqno != n->received_seqno + 1) {
+			if(seqno >= n->received_seqno + replaywin * 8) {
 				if(n->farfuture++ < replaywin >> 2) {
 					logger(DEBUG_ALWAYS, LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
-						n->name, n->hostname, inpkt->seqno - n->received_seqno - 1, n->farfuture);
+						n->name, n->hostname, seqno - n->received_seqno - 1, n->farfuture);
 					return;
 				}
 				logger(DEBUG_ALWAYS, LOG_WARNING, "Lost %d packets from %s (%s)",
-						inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
+						seqno - n->received_seqno - 1, n->name, n->hostname);
 				memset(n->late, 0, replaywin);
-			} else if (inpkt->seqno <= n->received_seqno) {
-				if((n->received_seqno >= replaywin * 8 && inpkt->seqno <= n->received_seqno - replaywin * 8) || !(n->late[(inpkt->seqno / 8) % replaywin] & (1 << inpkt->seqno % 8))) {
+			} else if (seqno <= n->received_seqno) {
+				if((n->received_seqno >= replaywin * 8 && seqno <= n->received_seqno - replaywin * 8) || !(n->late[(seqno / 8) % replaywin] & (1 << seqno % 8))) {
 					logger(DEBUG_ALWAYS, LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
-						n->name, n->hostname, inpkt->seqno, n->received_seqno);
+						n->name, n->hostname, seqno, n->received_seqno);
 					return;
 				}
 			} else {
-				for(int i = n->received_seqno + 1; i < inpkt->seqno; i++)
+				for(int i = n->received_seqno + 1; i < seqno; i++)
 					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 			}
 		}
 
 		n->farfuture = 0;
-		n->late[(inpkt->seqno / 8) % replaywin] &= ~(1 << inpkt->seqno % 8);
+		n->late[(seqno / 8) % replaywin] &= ~(1 << seqno % 8);
 	}
 
-	if(inpkt->seqno > n->received_seqno)
-		n->received_seqno = inpkt->seqno;
+	if(seqno > n->received_seqno)
+		n->received_seqno = seqno;
 
 	n->received++;
 
@@ -685,7 +687,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Add sequence number */
 
-	inpkt->seqno = htonl(++(n->sent_seqno));
+	uint32_t seqno = htonl(++(n->sent_seqno));
+	memcpy(inpkt->seqno, &seqno, sizeof inpkt->seqno);
 	inpkt->len += sizeof inpkt->seqno;
 
 	/* Encrypt the packet */
@@ -694,7 +697,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_encrypt(n->outcipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_encrypt(n->outcipher, inpkt->seqno, inpkt->len, outpkt->seqno, &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -706,7 +709,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add the message authentication code */
 
 	if(digest_active(n->outdigest)) {
-		if(!digest_create(n->outdigest, &inpkt->seqno, inpkt->len, (char *)&inpkt->seqno + inpkt->len)) {
+		if(!digest_create(n->outdigest, inpkt->seqno, inpkt->len, inpkt->seqno + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -734,7 +737,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp.fd, (char *) &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -995,7 +998,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	node_t *n;
 	int len;
 
-	len = recvfrom(ls->udp.fd, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(ls->udp.fd, pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
