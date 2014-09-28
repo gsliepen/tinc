@@ -32,8 +32,8 @@
 #define MTU 1518        /* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #endif
 
-/* MAXSIZE is the maximum size of an encapsulated packet: MTU + seqno + srcid + padding + HMAC + compressor overhead */
-#define MAXSIZE (MTU + 4 + sizeof(node_id_t) + CIPHER_MAX_BLOCK_SIZE + DIGEST_MAX_SIZE + MTU/64 + 20)
+/* MAXSIZE is the maximum size of an encapsulated packet: MTU + seqno + srcid + dstid + padding + HMAC + compressor overhead */
+#define MAXSIZE (MTU + 4 + sizeof(node_id_t) + sizeof(node_id_t) + CIPHER_MAX_BLOCK_SIZE + DIGEST_MAX_SIZE + MTU/64 + 20)
 
 /* MAXBUFSIZE is the maximum size of a request: enough for a MAXSIZEd packet or a 8192 bits RSA key */
 #define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)
@@ -87,6 +87,7 @@ typedef union sockaddr_t {
 typedef struct vpn_packet_t {
 	length_t len;           /* the actual number of bytes in the `data' field */
 	int priority;           /* priority or TOS */
+	node_id_t dstid;        /* node ID of the final recipient */
 	node_id_t srcid;        /* node ID of the original sender */
 	uint8_t seqno[4];       /* 32 bits sequence number (network byte order of course) */
 	uint8_t data[MAXSIZE];

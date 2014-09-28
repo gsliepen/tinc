@@ -751,59 +751,71 @@ end:
 	origpkt->len = origlen;
 }
 
-bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
-	node_t *to = handle;
+static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const char *data, size_t len) {
+	node_t *relay = (to->via != myself && (type == PKT_PROBE || (len - SPTPS_DATAGRAM_OVERHEAD) <= to->via->minmtu)) ? to->via : to->nexthop;
+	bool direct = from == myself && to == relay;
+	bool relay_supported = (relay->options >> 24) >= 4;
 
-	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, or this packet is larger than the MTU. */
+	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, this is a relay packet that the other node cannot understand, or this packet is larger than the MTU.
+	   TODO: When relaying, the original sender does not know the end-to-end PMTU (it only knows the PMTU of the first hop).
+	         This can lead to scenarios where large packets are sent over UDP to relay, but then relay has no choice but fall back to TCP. */
 
-	if(type >= SPTPS_HANDSHAKE || ((myself->options | to->options) & OPTION_TCPONLY) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > to->minmtu)) {
+	if(type == SPTPS_HANDSHAKE || ((myself->options | relay->options) & OPTION_TCPONLY) || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
 		/* If no valid key is known yet, send the packets using ANS_KEY requests,
 		   to ensure we get to learn the reflexive UDP address. */
-		if(!to->status.validkey) {
+		if(from == myself && !to->status.validkey) {
 			to->incompression = myself->incompression;
-			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, myself->name, to->name, buf, to->incompression);
+			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, from->name, to->name, buf, to->incompression);
 		} else {
-			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_SPTPS, buf);
+			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, from->name, to->name, REQ_SPTPS, buf);
 		}
 	}
 
-	/* Otherwise, send the packet via UDP */
-
-	const sockaddr_t *sa = NULL;
-	int sock;
-
-	if(to->status.send_locally)
-		choose_local_address(to, &sa, &sock);
-	if(!sa)
-		choose_udp_address(to, &sa, &sock);
-
-	bool add_srcid = (to->options >> 24) >= 4;
 	size_t overhead = 0;
-	if (add_srcid) overhead += sizeof myself->id;
+	if(relay_supported) overhead += sizeof to->id + sizeof from->id;
 	char buf[len + overhead]; char* buf_ptr = buf;
-	if(add_srcid) {
-		memcpy(buf_ptr, &myself->id, sizeof myself->id); buf_ptr += sizeof myself->id;
+	if(relay_supported) {
+		if(direct) {
+			/* Inform the recipient that this packet was sent directly. */
+			node_id_t nullid = {0};
+			memcpy(buf_ptr, &nullid, sizeof nullid); buf_ptr += sizeof nullid;
+		} else {
+			memcpy(buf_ptr, &to->id, sizeof to->id); buf_ptr += sizeof to->id;
+		}
+		memcpy(buf_ptr, &from->id, sizeof from->id); buf_ptr += sizeof from->id;
+
 	}
 	/* TODO: if this copy turns out to be a performance concern, change sptps_send_record() to add some "pre-padding" to the buffer and use that instead */
 	memcpy(buf_ptr, data, len); buf_ptr += len;
 
+	const sockaddr_t *sa = NULL;
+	int sock;
+	if(relay->status.send_locally)
+		choose_local_address(relay, &sa, &sock);
+	if(!sa)
+		choose_udp_address(relay, &sa, &sock);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s)", from->name, from->hostname, to->name, to->hostname, relay->name, relay->hostname);
 	if(sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			// Compensate for SPTPS overhead
 			len -= SPTPS_DATAGRAM_OVERHEAD;
-			if(to->maxmtu >= len)
-				to->maxmtu = len - 1;
-			if(to->mtu >= len)
-				to->mtu = len - 1;
+			if(relay->maxmtu >= len)
+				relay->maxmtu = len - 1;
+			if(relay->mtu >= len)
+				relay->mtu = len - 1;
 		} else {
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", to->name, to->hostname, sockstrerror(sockerrno));
+			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", relay->name, relay->hostname, sockstrerror(sockerrno));
 			return false;
 		}
 	}
 
 	return true;
+}
+
+bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
+	return send_sptps_data_priv(handle, myself, type, data, len);
 }
 
 bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t len) {
@@ -1006,9 +1018,10 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	sockaddr_t from = {{0}};
 	socklen_t fromlen = sizeof from;
 	node_t *n = NULL;
+	node_t *to = myself;
 	int len;
 
-	len = recvfrom(ls->udp.fd, &pkt.srcid, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(ls->udp.fd, &pkt.dstid, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1020,13 +1033,42 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	sockaddrunmap(&from); /* Some braindead IPv6 implementations do stupid things. */
 
-	if(len >= sizeof pkt.srcid)
+	bool direct = false;
+	if(len >= sizeof pkt.dstid + sizeof pkt.srcid) {
 		n = lookup_node_id(&pkt.srcid);
-	if(n)
-		pkt.len -= sizeof pkt.srcid;
-	else {
-		/* Most likely an old-style packet without a source ID. */
-		memmove(pkt.seqno, &pkt.srcid, sizeof pkt - offsetof(vpn_packet_t, seqno));
+		if(n) {
+			node_id_t nullid = {0};
+			if(memcmp(&pkt.dstid, &nullid, sizeof nullid) == 0) {
+				/* A zero dstid is used to indicate a direct, non-relayed packet. */
+				direct = true;
+			} else {
+				to = lookup_node_id(&pkt.dstid);
+				if(!to) {
+					logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet presumably sent by %s (%s) but with unknown destination ID", n->name, n->hostname);
+					return;
+				}
+			}
+			pkt.len -= sizeof pkt.dstid + sizeof pkt.srcid;
+		}
+	}
+
+	if(to != myself) {
+		/* We are being asked to relay this packet. */
+
+		/* Don't allow random strangers to relay through us. Note that we check for *any* known address since we are not necessarily the first relay. */
+		if (!lookup_node_udp(&from)) {
+			logger(DEBUG_PROTOCOL, LOG_WARNING, "Refusing to relay packet from (presumably) %s (%s) to (presumably) %s (%s) because the packet comes from an unknown address", n->name, n->hostname, to->name, to->hostname);
+			return;
+		}
+
+		send_sptps_data_priv(to, n, 0, pkt.seqno, pkt.len);
+		return;
+	}
+
+	if(!n) {
+		/* Most likely an old-style packet without node IDs. */
+		direct = true;
+		memmove(pkt.seqno, &pkt.dstid, sizeof pkt - offsetof(vpn_packet_t, seqno));
 		n = lookup_node_udp(&from);
 	}
 
@@ -1046,7 +1088,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 		return;
 
 	n->sock = ls - listen_socket;
-	if(sockaddrcmp(&from, &n->address))
+	if(direct && sockaddrcmp(&from, &n->address))
 		update_node_udp(n, &from);
 }
 

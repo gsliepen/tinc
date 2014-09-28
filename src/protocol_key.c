@@ -255,6 +255,7 @@ bool req_key_h(connection_t *c, const char *request) {
 			return true;
 		}
 
+		/* TODO: forwarding SPTPS packets in this way is inefficient because we send them over TCP without checking for UDP connectivity */
 		send_request(to->nexthop->connection, "%s", request);
 	}
 
