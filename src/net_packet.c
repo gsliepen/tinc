@@ -497,19 +497,27 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	receive_packet(c->node, &outpkt);
 }
 
-static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
-	if(!n->status.validkey) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
-		if(!n->status.waitingforkey)
-			send_req_key(n);
-		else if(n->last_req_key + 10 < now.tv_sec) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
-			sptps_stop(&n->sptps);
-			n->status.waitingforkey = false;
-			send_req_key(n);
-		}
-		return;
+static bool try_sptps(node_t *n) {
+	if(n->status.validkey)
+		return true;
+
+	logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
+
+	if(!n->status.waitingforkey)
+		send_req_key(n);
+	else if(n->last_req_key + 10 < now.tv_sec) {
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
+		sptps_stop(&n->sptps);
+		n->status.waitingforkey = false;
+		send_req_key(n);
 	}
+
+	return false;
+}
+
+static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
+	if (!try_sptps(n))
+		return;
 
 	uint8_t type = 0;
 	int offset = 0;
@@ -755,12 +763,17 @@ static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const char 
 	node_t *relay = (to->via != myself && (type == PKT_PROBE || (len - SPTPS_DATAGRAM_OVERHEAD) <= to->via->minmtu)) ? to->via : to->nexthop;
 	bool direct = from == myself && to == relay;
 	bool relay_supported = (relay->options >> 24) >= 4;
+	bool tcponly = (myself->options | relay->options) & OPTION_TCPONLY;
+
+	/* We don't really need the relay's key, but we need to establish a UDP tunnel with it and discover its MTU. */
+	if (!direct && relay_supported && !tcponly)
+		try_sptps(relay);
 
 	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, this is a relay packet that the other node cannot understand, or this packet is larger than the MTU.
 	   TODO: When relaying, the original sender does not know the end-to-end PMTU (it only knows the PMTU of the first hop).
 	         This can lead to scenarios where large packets are sent over UDP to relay, but then relay has no choice but fall back to TCP. */
 
-	if(type == SPTPS_HANDSHAKE || ((myself->options | relay->options) & OPTION_TCPONLY) || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
+	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
 		/* If no valid key is known yet, send the packets using ANS_KEY requests,
