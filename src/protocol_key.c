@@ -399,7 +399,9 @@ bool ans_key_h(connection_t *c, const char *request) {
 				update_node_udp(from, &sa);
 			}
 
-			if(from->options & OPTION_PMTU_DISCOVERY && !(from->options & OPTION_TCPONLY))
+			/* Don't send probes if we can't send UDP packets directly to that node.
+			   TODO: the indirect (via) condition can change at any time as edges are added and removed, so this should probably be moved to graph.c. */
+			if((from->via == myself || from->via == from) && from->options & OPTION_PMTU_DISCOVERY && !(from->options & OPTION_TCPONLY))
 				send_mtu_probe(from);
 		}
 
