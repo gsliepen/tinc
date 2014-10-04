@@ -105,6 +105,14 @@ static bool setup_device(void) {
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
+	if(ifr.ifr_flags & IFF_TAP) {
+		struct ifreq ifr_mac;
+		if(!ioctl(device_fd, SIOCGIFHWADDR, &ifr_mac))
+			memcpy(mymac.x, ifr_mac.ifr_hwaddr.sa_data, ETH_ALEN);
+		else
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get MAC address of %s: %s", device, strerror(errno));
+	}
+
 	return true;
 }
 
