@@ -46,6 +46,10 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 int keylifetime = 0;
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
@@ -58,33 +62,35 @@ bool localdiscovery = true;
 
 #define MAX_SEQNO 1073741824
 
-/* mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
-   mtuprobes ==    31: sleep pinginterval seconds
-   mtuprobes ==    32: send 1 burst, sleep pingtimeout second
-   mtuprobes ==    33: no response from other side, restart PMTU discovery process
+static void send_mtu_probe_packet(node_t *n, int len) {
+	vpn_packet_t packet;
+	packet.offset = DEFAULT_PACKET_OFFSET;
+	memset(DATA(&packet), 0, 14);
+	randomize(DATA(&packet) + 14, len - 14);
+	packet.len = len;
+	packet.priority = 0;
 
-   Probes are sent in batches of at least three, with random sizes between the
-   lower and upper boundaries for the MTU thus far discovered.
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
 
-   After the initial discovery, a fourth packet is added to each batch with a
-   size larger than the currently known PMTU, to test if the PMTU has increased.
-
-   In case local discovery is enabled, another packet is added to each batch,
-   which will be broadcast to the local network.
-
-*/
+	send_udppacket(n, &packet);
+}
 
 static void send_mtu_probe_handler(void *data) {
 	node_t *n = data;
-	int timeout = 1;
-
-	n->mtuprobes++;
 
 	if(!n->status.reachable || !n->status.validkey) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
 		n->mtuprobes = 0;
 		return;
 	}
+
+	/* mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
+	   mtuprobes ==    31: sleep pinginterval seconds
+	   mtuprobes ==    32: send 1 burst, sleep pingtimeout second
+	   mtuprobes ==    33: no response from other side, restart PMTU discovery process */
+
+	n->mtuprobes++;
+	int timeout = 1;
 
 	if(n->mtuprobes > 32) {
 		if(!n->minmtu) {
@@ -122,36 +128,29 @@ static void send_mtu_probe_handler(void *data) {
 		timeout = pingtimeout;
 	}
 
-	for(int i = 0; i < 4 + localdiscovery; i++) {
-		int len;
+	/* After the initial discovery, a fourth packet is added to each batch with a
+	   size larger than the currently known PMTU, to test if the PMTU has increased. */
+	if (n->mtuprobes >= 30 && n->maxmtu + 8 < MTU)
+		send_mtu_probe_packet(n, n->maxmtu + 8);
 
-		if(i == 0) {
-			if(n->mtuprobes < 30 || n->maxmtu + 8 >= MTU)
-				continue;
-			len = n->maxmtu + 8;
-		} else if(n->maxmtu <= n->minmtu) {
-			len = n->maxmtu;
-		} else {
+	/* Probes are sent in batches of three, with random sizes between the
+	   lower and upper boundaries for the MTU thus far discovered. */
+	for (int i = 0; i < 3; i++) {
+		int len = n->maxmtu;
+		if(n->minmtu < n->maxmtu)
 			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
-		}
 
-		if(len < 64)
-			len = 64;
-
-		vpn_packet_t packet;
-		packet.offset = DEFAULT_PACKET_OFFSET;
-		memset(DATA(&packet), 0, 14);
-		randomize(DATA(&packet) + 14, len - 14);
-		packet.len = len;
-		packet.priority = 0;
-		n->status.send_locally = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
-
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
-
-		send_udppacket(n, &packet);
+		send_mtu_probe_packet(n, MAX(len, 64));
 	}
 
-	n->status.send_locally = false;
+	/* In case local discovery is enabled, another packet is added to each batch,
+	   which will be broadcast to the local network. */
+	if(localdiscovery && n->mtuprobes <= 10 && n->prevedge) {
+		n->status.send_locally = true;
+		send_mtu_probe_packet(n, 16);
+		n->status.send_locally = false;
+	}
+
 	n->probe_counter = 0;
 	gettimeofday(&n->probe_time, NULL);
 
