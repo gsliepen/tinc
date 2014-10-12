@@ -275,13 +275,6 @@ static void check_reachability(void) {
 				update_node_udp(n, NULL);
 				memset(&n->status, 0, sizeof n->status);
 				n->options = 0;
-			} else if(n->connection) {
-				if(n->status.sptps) {
-					if(n->connection->outgoing)
-						send_req_key(n);
-				} else {
-					send_ans_key(n);
-				}
 			}
 		}
 
