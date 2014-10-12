@@ -514,6 +514,11 @@ static bool try_sptps(node_t *n) {
 	if(n->status.validkey)
 		return true;
 
+	/* If n is a TCP-only neighbor, we'll only use "cleartext" PACKET
+	   messages anyway, so there's no need for SPTPS at all. */
+	if(n->connection && ((myself->options | n->options) & OPTION_TCPONLY))
+		return false;
+
 	logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
 
 	if(!n->status.waitingforkey)
@@ -529,7 +534,10 @@ static bool try_sptps(node_t *n) {
 }
 
 static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
-	if (!try_sptps(n))
+	/* Note: condition order is as intended - even if we have a direct
+	   metaconnection, we want to try SPTPS anyway as it's the only way to
+	   get UDP going */
+	if(!try_sptps(n) && !n->connection)
 		return;
 
 	uint8_t type = 0;
@@ -562,7 +570,14 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 		}
 	}
 
-	sptps_send_record(&n->sptps, type, DATA(origpkt) + offset, origpkt->len - offset);
+	/* If we have a direct metaconnection to n, and we can't use UDP, then
+	   don't bother with SPTPS and just use a "plaintext" PACKET message.
+	   We don't really care about end-to-end security since we're not
+	   sending the message through any intermediate nodes. */
+	if(n->connection && origpkt->len > n->minmtu)
+		send_tcppacket(n->connection, origpkt);
+	else
+		sptps_send_record(&n->sptps, type, DATA(origpkt) + offset, origpkt->len - offset);
 	return;
 }
 
