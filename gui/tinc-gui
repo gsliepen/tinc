@@ -78,8 +78,8 @@ class Edge:
 		self.to = args[1]
 		self.address = args[2]
 		self.port = args[4]
-		self.options = int(args[5], 16)
-		self.weight = int(args[6])
+		self.options = int(args[-2], 16)
+		self.weight = int(args[-1])
 
 class Subnet:
 	def parse(self, args):
@@ -192,6 +192,8 @@ class VPN:
 				subnet.parse(resp[2:])
 				subnet.visited = True
 				self.subnets[(resp[2], resp[3])] = subnet
+				if subnet.owner == "(broadcast)":
+					continue
 				self.nodes[subnet.owner].subnets[resp[2]] = subnet
 			elif resp[1] == '6':
 				if len(resp) < 9:
@@ -535,7 +537,7 @@ class SubnetsPage(wx.Panel):
 				self.list.InsertStringItem(i, subnet.address + '/' + subnet.prefixlen)
 			else:
 				self.list.SetStringItem(i, 0, subnet.address + '/' + subnet.prefixlen)
-			self.list.SetStringItem(i, 1, subnet.weight)
+			self.list.SetStringItem(i, 1, str(subnet.weight))
 			self.list.SetStringItem(i, 2, subnet.owner)
 			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
 			self.list.SetItemData(i, i)
