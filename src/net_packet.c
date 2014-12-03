@@ -759,7 +759,7 @@ end:
 	origpkt->len = origlen;
 }
 
-static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const char *data, size_t len) {
+static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const void *data, size_t len) {
 	node_t *relay = (to->via != myself && (type == PKT_PROBE || (len - SPTPS_DATAGRAM_OVERHEAD) <= to->via->minmtu)) ? to->via : to->nexthop;
 	bool direct = from == myself && to == relay;
 	bool relay_supported = (relay->options >> 24) >= 4;
@@ -792,7 +792,7 @@ static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const char 
 	if(relay_supported) {
 		if(direct) {
 			/* Inform the recipient that this packet was sent directly. */
-			node_id_t nullid = {0};
+			node_id_t nullid = {};
 			memcpy(buf_ptr, &nullid, sizeof nullid); buf_ptr += sizeof nullid;
 		} else {
 			memcpy(buf_ptr, &to->id, sizeof to->id); buf_ptr += sizeof to->id;
@@ -1050,7 +1050,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	if(len >= sizeof pkt.dstid + sizeof pkt.srcid) {
 		n = lookup_node_id(&pkt.srcid);
 		if(n) {
-			node_id_t nullid = {0};
+			node_id_t nullid = {};
 			if(memcmp(&pkt.dstid, &nullid, sizeof nullid) == 0) {
 				/* A zero dstid is used to indicate a direct, non-relayed packet. */
 				direct = true;
