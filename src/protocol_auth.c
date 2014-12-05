@@ -381,10 +381,10 @@ bool id_h(connection_t *c, const char *request) {
 		if(experimental)
 			read_ecdsa_public_key(c);
 			/* Ignore failures if no key known yet */
-	} else {
-		if(c->protocol_minor && !ecdsa_active(c->ecdsa))
-			c->protocol_minor = 1;
 	}
+
+	if(c->protocol_minor && !ecdsa_active(c->ecdsa))
+		c->protocol_minor = 1;
 
 	/* Forbid version rollback for nodes whose Ed25519 key we know */
 
