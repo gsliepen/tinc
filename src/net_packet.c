@@ -1030,13 +1030,13 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	vpn_packet_t pkt;
 	sptps_packet_t *spkt = (sptps_packet_t *)&pkt;
 	char *hostname;
-	sockaddr_t from = {{0}};
-	socklen_t fromlen = sizeof from;
-	node_t *n = NULL;
-	node_t *to = myself;
-	int len;
+	node_id_t nullid = {};
+	sockaddr_t addr = {};
+	socklen_t addrlen = sizeof addr;
+	node_t *from, *to;
+	bool direct = false;
 
-	len = recvfrom(ls->udp.fd, &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	int len = recvfrom(ls->udp.fd, &pkt.dstid, MAXSIZE, 0, &addr.sa, &addrlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1046,64 +1046,64 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	pkt.len = len;
 
-	sockaddrunmap(&from); /* Some braindead IPv6 implementations do stupid things. */
+	sockaddrunmap(&addr); /* Some braindead IPv6 implementations do stupid things. */
 
-	bool direct = false;
-	if(len >= sizeof spkt->dstid + sizeof spkt->srcid) {
-		n = lookup_node_id(&spkt->srcid);
-		if(n) {
-			node_id_t nullid = {};
-			if(memcmp(&spkt->dstid, &nullid, sizeof nullid) == 0) {
-				/* A zero dstid is used to indicate a direct, non-relayed packet. */
-				direct = true;
-			} else {
-				to = lookup_node_id(&spkt->dstid);
-				if(!to) {
-					logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet presumably sent by %s (%s) but with unknown destination ID", n->name, n->hostname);
-					return;
-				}
-			}
-			pkt.len -= sizeof spkt->dstid + sizeof spkt->srcid;
-		}
-	}
+	// Try to figure out who sent this packet.
 
-	if(to != myself) {
-		/* We are being asked to relay this packet. */
-
-		/* Don't allow random strangers to relay through us. Note that we check for *any* known address since we are not necessarily the first relay. */
-		if (!lookup_node_udp(&from)) {
-			logger(DEBUG_PROTOCOL, LOG_WARNING, "Refusing to relay packet from (presumably) %s (%s) to (presumably) %s (%s) because the packet comes from an unknown address", n->name, n->hostname, to->name, to->hostname);
-			return;
-		}
-
-		send_sptps_data_priv(to, n, 0, spkt->data, pkt.len);
-		return;
-	}
+	node_t *n = lookup_node_udp(&addr);
 
 	if(!n) {
-		/* Most likely an old-style packet without node IDs. */
-		direct = true;
-		n = lookup_node_udp(&from);
+		// It might be from a 1.1 node, which might have a source ID in the packet.
+		from = lookup_node_id(&pkt.srcid);
+		if(from && !memcmp(&pkt.dstid, &nullid, sizeof nullid) && from->status.sptps) {
+			if(sptps_verify_datagram(&n->sptps, pkt.data, pkt.len))
+				n = from;
+			else
+				goto skip_harder;
+		}
 	}
 
 	if(!n)
-		n = try_harder(&from, &pkt);
+		n = try_harder(&addr, &pkt);
 
+skip_harder:
 	if(!n) {
 		if(debug_level >= DEBUG_PROTOCOL) {
-			hostname = sockaddr2hostname(&from);
+			hostname = sockaddr2hostname(&addr);
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
 			free(hostname);
 		}
 		return;
 	}
 
-	if(!receive_udppacket(n, &pkt))
+	if(n->status.sptps) {
+		if(memcmp(&pkt.dstid, &nullid, sizeof nullid)) {
+			direct = true;
+			from = n;
+			to = myself;
+		} else {
+			from = lookup_node_id(&pkt.srcid);
+			to = lookup_node_id(&pkt.dstid);
+		}
+		if(!from || !to) {
+			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from %s (%s) with unknown source and/or destination ID", n->name, n->hostname);
+			return;
+		}
+		if(to != myself) {
+			send_sptps_data_priv(to, n, 0, pkt.data, pkt.len);
+			return;
+		}
+	} else {
+		direct = true;
+		from = n;
+	}
+
+	if(!receive_udppacket(from, &pkt))
 		return;
 
 	n->sock = ls - listen_socket;
-	if(direct && sockaddrcmp(&from, &n->address))
-		update_node_udp(n, &from);
+	if(direct && sockaddrcmp(&addr, &n->address))
+		update_node_udp(n, &addr);
 }
 
 void handle_device_data(void *data, int flags) {
