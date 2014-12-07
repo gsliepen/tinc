@@ -35,6 +35,7 @@ static digest_t *sha256;
 splay_tree_t *node_tree;
 static splay_tree_t *node_id_tree;
 static hash_t *node_udp_cache;
+static hash_t *node_id_cache;
 
 node_t *myself;
 
@@ -52,9 +53,11 @@ void init_nodes(void) {
 	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
 	node_id_tree = splay_alloc_tree((splay_compare_t) node_id_compare, NULL);
 	node_udp_cache = hash_alloc(0x100, sizeof(sockaddr_t));
+	node_id_cache = hash_alloc(0x100, sizeof(node_id_t));
 }
 
 void exit_nodes(void) {
+	hash_free(node_id_cache);
 	hash_free(node_udp_cache);
 	splay_delete_tree(node_id_tree);
 	splay_delete_tree(node_tree);
@@ -113,6 +116,9 @@ void node_add(node_t *n) {
 }
 
 void node_del(node_t *n) {
+	hash_delete(node_udp_cache, &n->address);
+	hash_delete(node_id_cache, &n->id);
+
 	for splay_each(subnet_t, s, n->subnet_tree)
 		subnet_del(n, s);
 
@@ -132,11 +138,15 @@ node_t *lookup_node(char *name) {
 }
 
 node_t *lookup_node_id(const node_id_t *id) {
-	node_t n = {NULL};
+	node_t *n = hash_search(node_id_cache, id);
+	if(!n) {
+		node_t tmp = {.id = *id};
+		n = splay_search(node_id_tree, &tmp);
+		if(n)
+			hash_insert(node_id_cache, id, n);
+	}
 
-	n.id = *id;
-
-	return splay_search(node_id_tree, &n);
+	return n;
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
@@ -149,7 +159,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		return;
 	}
 
-	hash_insert(node_udp_cache, &n->address, NULL);
+	hash_delete(node_udp_cache, &n->address);
 
 	if(sa) {
 		n->address = *sa;
