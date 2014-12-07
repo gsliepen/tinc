@@ -726,8 +726,16 @@ static bool upgrade_h(connection_t *c, const char *request) {
 	}
 
 	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(c)) {
-		logger(DEBUG_ALWAYS, LOG_INFO, "Already have Ed25519 public key from %s (%s), not upgrading.", c->name, c->hostname);
-		return false;
+		char *knownkey = ecdsa_get_base64_public_key(c->ecdsa);
+		bool different = strcmp(knownkey, pubkey);
+		free(knownkey);
+		if(different) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Already have an Ed25519 public key from %s (%s) which is different from the one presented now!", c->name, c->hostname);
+			return false;
+		}
+		logger(DEBUG_ALWAYS, LOG_INFO, "Already have Ed25519 public key from %s (%s), ignoring.", c->name, c->hostname);
+		c->allow_request = TERMREQ;
+		return send_termreq(c);
 	}
 
 	c->ecdsa = ecdsa_set_base64_public_key(pubkey);
