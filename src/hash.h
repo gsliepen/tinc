@@ -31,6 +31,7 @@ extern hash_t *hash_alloc(size_t n, size_t size) __attribute__ ((__malloc__));
 extern void hash_free(hash_t *);
 
 extern void hash_insert(hash_t *, const void *key, const void *value);
+extern void hash_delete(hash_t *, const void *key);
 
 extern void *hash_search(const hash_t *, const void *key);
 extern void *hash_search_or_insert(hash_t *, const void *key, const void *value);

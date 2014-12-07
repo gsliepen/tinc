@@ -91,6 +91,13 @@ void *hash_search_or_insert(hash_t *hash, const void *key, const void *value) {
 	return NULL;
 }
 
+/* Deleting */
+
+void hash_delete(hash_t *hash, const void *key) {
+	uint32_t i = modulo(hash_function(key, hash->size), hash->n);
+	hash->values[i] = NULL;
+}
+
 /* Utility functions */
 
 void hash_clear(hash_t *hash) {
