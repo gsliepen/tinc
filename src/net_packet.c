@@ -372,7 +372,11 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			}
 			return false;
 		}
-		return sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
+		if(!sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len)) {
+			logger(DEBUG_TRAFFIC, LOG_ERR, "Got bad packet from %s (%s)", n->name, n->hostname);
+			return false;
+		}
+		return true;
 	}
 
 	if(!n->status.validkey) {
