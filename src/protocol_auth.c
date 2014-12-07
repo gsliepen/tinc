@@ -730,6 +730,12 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		return false;
 	}
 
+	c->ecdsa = ecdsa_set_base64_public_key(pubkey);
+	if(!c->ecdsa) {
+		logger(DEBUG_ALWAYS, LOG_INFO, "Got bad Ed25519 public key from %s (%s), not upgrading.", c->name, c->hostname);
+		return false;
+	}
+
 	logger(DEBUG_ALWAYS, LOG_INFO, "Got Ed25519 public key from %s (%s), upgrading!", c->name, c->hostname);
 	append_config_file(c->name, "Ed25519PublicKey", pubkey);
 	c->allow_request = TERMREQ;
