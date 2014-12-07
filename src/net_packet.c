@@ -348,12 +348,12 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 
 static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(n->status.sptps)
-		return sptps_verify_datagram(&n->sptps, (char *)&inpkt->seqno, inpkt->len);
+		return sptps_verify_datagram(&n->sptps, ((sptps_packet_t *)inpkt)->data, inpkt->len);
 
 	if(!digest_active(n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(n->indigest))
 		return false;
 
-	return digest_verify(n->indigest, &inpkt->seqno, inpkt->len - digest_length(n->indigest), (const char *)&inpkt->seqno + inpkt->len - digest_length(n->indigest));
+	return digest_verify(n->indigest, (const char *)&inpkt->seqno, inpkt->len - digest_length(n->indigest), (const char *)&inpkt->seqno + inpkt->len - digest_length(n->indigest));
 }
 
 static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -372,7 +372,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			}
 			return false;
 		}
-		if(!sptps_receive_data(&n->sptps, (char *)&inpkt->seqno, inpkt->len)) {
+		if(!sptps_receive_data(&n->sptps, ((sptps_packet_t *)&inpkt)->data, inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Got bad packet from %s (%s)", n->name, n->hostname);
 			return false;
 		}
@@ -419,9 +419,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	/* Check the sequence number */
 
 	inpkt->len -= sizeof inpkt->seqno;
-	uint32_t seqno;
-	memcpy(&seqno, inpkt->seqno, sizeof seqno);
-	seqno = ntohl(seqno);
+	uint32_t seqno = ntohl(inpkt->seqno);
 
 	if(replaywin) {
 		if(seqno != n->received_seqno + 1) {
@@ -699,8 +697,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Add sequence number */
 
-	uint32_t seqno = htonl(++(n->sent_seqno));
-	memcpy(inpkt->seqno, &seqno, sizeof inpkt->seqno);
+	inpkt->seqno = htonl(++(n->sent_seqno));
 	inpkt->len += sizeof inpkt->seqno;
 
 	/* Encrypt the packet */
@@ -709,7 +706,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_encrypt(n->outcipher, inpkt->seqno, inpkt->len, outpkt->seqno, &outlen, true)) {
+		if(!cipher_encrypt(n->outcipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -721,7 +718,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add the message authentication code */
 
 	if(digest_active(n->outdigest)) {
-		if(!digest_create(n->outdigest, inpkt->seqno, inpkt->len, inpkt->seqno + inpkt->len)) {
+		if(!digest_create(n->outdigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -749,7 +746,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp.fd, inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -1031,6 +1028,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 void handle_incoming_vpn_data(void *data, int flags) {
 	listen_socket_t *ls = data;
 	vpn_packet_t pkt;
+	sptps_packet_t *spkt = (sptps_packet_t *)&pkt;
 	char *hostname;
 	sockaddr_t from = {{0}};
 	socklen_t fromlen = sizeof from;
@@ -1038,7 +1036,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	node_t *to = myself;
 	int len;
 
-	len = recvfrom(ls->udp.fd, &pkt.dstid, MAXSIZE, 0, &from.sa, &fromlen);
+	len = recvfrom(ls->udp.fd, &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1051,21 +1049,21 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	sockaddrunmap(&from); /* Some braindead IPv6 implementations do stupid things. */
 
 	bool direct = false;
-	if(len >= sizeof pkt.dstid + sizeof pkt.srcid) {
-		n = lookup_node_id(&pkt.srcid);
+	if(len >= sizeof spkt->dstid + sizeof spkt->srcid) {
+		n = lookup_node_id(&spkt->srcid);
 		if(n) {
 			node_id_t nullid = {};
-			if(memcmp(&pkt.dstid, &nullid, sizeof nullid) == 0) {
+			if(memcmp(&spkt->dstid, &nullid, sizeof nullid) == 0) {
 				/* A zero dstid is used to indicate a direct, non-relayed packet. */
 				direct = true;
 			} else {
-				to = lookup_node_id(&pkt.dstid);
+				to = lookup_node_id(&spkt->dstid);
 				if(!to) {
 					logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet presumably sent by %s (%s) but with unknown destination ID", n->name, n->hostname);
 					return;
 				}
 			}
-			pkt.len -= sizeof pkt.dstid + sizeof pkt.srcid;
+			pkt.len -= sizeof spkt->dstid + sizeof spkt->srcid;
 		}
 	}
 
@@ -1078,14 +1076,13 @@ void handle_incoming_vpn_data(void *data, int flags) {
 			return;
 		}
 
-		send_sptps_data_priv(to, n, 0, pkt.seqno, pkt.len);
+		send_sptps_data_priv(to, n, 0, spkt->data, pkt.len);
 		return;
 	}
 
 	if(!n) {
 		/* Most likely an old-style packet without node IDs. */
 		direct = true;
-		memmove(pkt.seqno, &pkt.dstid, sizeof pkt - offsetof(vpn_packet_t, seqno));
 		n = lookup_node_udp(&from);
 	}
 

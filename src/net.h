@@ -87,11 +87,17 @@ typedef union sockaddr_t {
 typedef struct vpn_packet_t {
 	length_t len;           /* the actual number of bytes in the `data' field */
 	int priority;           /* priority or TOS */
-	node_id_t dstid;        /* node ID of the final recipient */
-	node_id_t srcid;        /* node ID of the original sender */
-	uint8_t seqno[4];       /* 32 bits sequence number (network byte order of course) */
+	uint32_t seqno;	       /* 32 bits sequence number (network byte order of course) */
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
+
+typedef struct sptps_packet_t {
+	length_t len;           /* the actual number of bytes in the `data' field */
+	int priority;           /* priority or TOS */
+	node_id_t dstid;        /* node ID of the final recipient */
+	node_id_t srcid;        /* node ID of the original sender */
+	char data[MAXSIZE];
+} sptps_packet_t;
 
 /* Packet types when using SPTPS */
 
