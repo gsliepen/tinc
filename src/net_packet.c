@@ -1036,7 +1036,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	node_t *from, *to;
 	bool direct = false;
 
-	int len = recvfrom(ls->udp.fd, &pkt.dstid, MAXSIZE, 0, &addr.sa, &addrlen);
+	int len = recvfrom(ls->udp.fd, &pkt.seqno, MAXSIZE, 0, &addr.sa, &addrlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1054,9 +1054,9 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	if(!n) {
 		// It might be from a 1.1 node, which might have a source ID in the packet.
-		from = lookup_node_id(&pkt.srcid);
-		if(from && !memcmp(&pkt.dstid, &nullid, sizeof nullid) && from->status.sptps) {
-			if(sptps_verify_datagram(&n->sptps, pkt.data, pkt.len))
+		from = lookup_node_id(&spkt->srcid);
+		if(from && !memcmp(&spkt->dstid, &nullid, sizeof nullid) && from->status.sptps) {
+			if(sptps_verify_datagram(&n->sptps, spkt->data, spkt->len - sizeof(spkt->srcid) - sizeof(spkt->dstid)))
 				n = from;
 			else
 				goto skip_harder;
@@ -1077,20 +1077,22 @@ skip_harder:
 	}
 
 	if(n->status.sptps) {
-		if(memcmp(&pkt.dstid, &nullid, sizeof nullid)) {
+		if(memcmp(&spkt->dstid, &nullid, sizeof nullid)) {
 			direct = true;
 			from = n;
 			to = myself;
 		} else {
-			from = lookup_node_id(&pkt.srcid);
-			to = lookup_node_id(&pkt.dstid);
+			from = lookup_node_id(&spkt->srcid);
+			to = lookup_node_id(&spkt->dstid);
 		}
 		if(!from || !to) {
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from %s (%s) with unknown source and/or destination ID", n->name, n->hostname);
 			return;
 		}
+
+		spkt->len -= sizeof spkt->dstid + sizeof spkt->srcid;
 		if(to != myself) {
-			send_sptps_data_priv(to, n, 0, pkt.data, pkt.len);
+			send_sptps_data_priv(to, n, 0, spkt->data, spkt->len);
 			return;
 		}
 	} else {
