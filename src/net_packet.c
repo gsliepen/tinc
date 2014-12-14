@@ -1056,7 +1056,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 		// It might be from a 1.1 node, which might have a source ID in the packet.
 		from = lookup_node_id(&spkt->srcid);
 		if(from && !memcmp(&spkt->dstid, &nullid, sizeof nullid) && from->status.sptps) {
-			if(sptps_verify_datagram(&n->sptps, spkt->data, spkt->len - sizeof(spkt->srcid) - sizeof(spkt->dstid)))
+			if(sptps_verify_datagram(&from->sptps, spkt->data, spkt->len - sizeof(spkt->srcid) - sizeof(spkt->dstid)))
 				n = from;
 			else
 				goto skip_harder;
