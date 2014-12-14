@@ -372,7 +372,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			}
 			return false;
 		}
-		if(!sptps_receive_data(&n->sptps, ((sptps_packet_t *)&inpkt)->data, inpkt->len)) {
+		if(!sptps_receive_data(&n->sptps, ((sptps_packet_t *)inpkt)->data, inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Got bad packet from %s (%s)", n->name, n->hostname);
 			return false;
 		}
@@ -1077,7 +1077,7 @@ skip_harder:
 	}
 
 	if(n->status.sptps) {
-		if(memcmp(&spkt->dstid, &nullid, sizeof nullid)) {
+		if(!memcmp(&spkt->dstid, &nullid, sizeof nullid)) {
 			direct = true;
 			from = n;
 			to = myself;
