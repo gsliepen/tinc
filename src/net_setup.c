@@ -1054,6 +1054,15 @@ bool setup_network(void) {
 	if(pingtimeout < 1 || pingtimeout > pinginterval)
 		pingtimeout = pinginterval;
 
+	if(get_config_int(lookup_config(config_tree, "KeepaliveInterval"), &keepaliveinterval)) {
+		if (keepaliveinterval < 1) {
+			keepaliveinterval = 1;
+		} else if (keepaliveinterval > pinginterval) {
+			keepaliveinterval = pinginterval;
+		}
+	} else
+		keepaliveinterval = 1;
+	
 	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
 		maxoutbufsize = 10 * MTU;
 

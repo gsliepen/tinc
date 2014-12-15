@@ -37,6 +37,7 @@ extern splay_tree_t *config_tree;
 
 extern int pinginterval;
 extern int pingtimeout;
+extern int keepaliveinterval;
 extern int maxtimeout;
 extern bool bypass_security;
 extern list_t *cmdline_conf;

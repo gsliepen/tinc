@@ -39,6 +39,7 @@ splay_tree_t *config_tree;
 
 int pinginterval = 0;           /* seconds between pings */
 int pingtimeout = 0;            /* seconds to wait for response */
+int keepaliveinterval = 0;	/* seconds between keep alive packets */
 list_t *cmdline_conf = NULL;    /* global/host configuration values given at the command line */
 
 static int config_compare(const config_t *a, const config_t *b) {
