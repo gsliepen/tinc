@@ -539,7 +539,12 @@ static bool setup_myself(void) {
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
+		logger(LOG_WARNING, "%s not supported on this platform for IPv4 connection", "PriorityInheritance");
+#endif
+
+#if !defined(IPPROTO_IPV6) || !defined(IPV6_TCLASS)
+	if(priorityinheritance)
+		logger(LOG_WARNING, "%s not supported on this platform for IPv6 connection", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))

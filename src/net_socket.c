@@ -78,6 +78,11 @@ static void configure_tcp(connection_t *c) {
 	option = IPTOS_LOWDELAY;
 	setsockopt(c->socket, SOL_IP, IP_TOS, (void *)&option, sizeof(option));
 #endif
+
+#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS) && defined(IPTOS_LOWDELAY)
+	option = IPTOS_LOWDELAY;
+	setsockopt(c->socket, IPPROTO_IPV6, IPV6_TCLASS, (void *)&option, sizeof(option));
+#endif
 }
 
 static bool bind_to_interface(int sd) {

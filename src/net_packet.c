@@ -415,7 +415,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *outpkt;
 	int origlen;
 	int outlen, outpad;
-#if defined(SOL_IP) && defined(IP_TOS)
+#if (defined(SOL_IP) && defined(IP_TOS)) || (defined(IPPROTO_IPV6) && defined(IPV6_TCLASS))
 	static int priority = 0;
 #endif
 	int origpriority;
@@ -550,11 +550,19 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 
 #if defined(SOL_IP) && defined(IP_TOS)
-	if(priorityinheritance && origpriority != priority
-	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
+	if(priorityinheritance && origpriority != priority && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
 		priority = origpriority;
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", priority);
 		if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
+			logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
+	}
+#endif
+
+#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
+	if(priorityinheritance && origpriority != priority && listen_socket[n->sock].sa.sa.sa_family == AF_INET6) {
+		priority = origpriority;
+		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", priority);
+		if(setsockopt(listen_socket[n->sock].udp, IPPROTO_IPV6, IPV6_TCLASS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
 			logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 	}
 #endif
