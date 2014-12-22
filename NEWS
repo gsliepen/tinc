@@ -1,3 +1,18 @@
+Version 1.0.25               December 22 2014
+
+ * Documentation updates.
+
+ * Support linking against -lresolv on Mac OS X.
+
+ * Fix scripts on Windows when using the ScriptsInterpreter option.
+
+ * Allow a minimum reconnect timeout to be specified.
+
+ * Support PriorityInheritance on IPv6 sockets.
+
+Thanks to David Pflug, Baptiste Jonglez, Alexis Hildebrandt, Borg, Jochen Voss,
+Tomislav Čohar and VittGam for their contributions to this version of tinc.
+
 Version 1.0.24               May 11 2014
 
  * Various compiler hardening flags are enabled by default.
