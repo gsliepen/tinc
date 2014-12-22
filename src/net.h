@@ -87,6 +87,7 @@ typedef struct listen_socket_t {
 	int tcp;
 	int udp;
 	sockaddr_t sa;
+	int priority;
 } listen_socket_t;
 
 #include "conf.h"

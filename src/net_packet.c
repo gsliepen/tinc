@@ -415,9 +415,6 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *outpkt;
 	int origlen;
 	int outlen, outpad;
-#if (defined(SOL_IP) && defined(IP_TOS)) || (defined(IPPROTO_IPV6) && defined(IPV6_TCLASS))
-	static int priority = 0;
-#endif
 	int origpriority;
 
 	if(!n->status.reachable) {
@@ -549,23 +546,27 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		sock = n->sock;
 	}
 
+	if(priorityinheritance && origpriority != listen_socket[n->sock].priority) {
+		listen_socket[n->sock].priority = origpriority;
+		switch(listen_socket[n->sock].sa.sa.sa_family) {
 #if defined(SOL_IP) && defined(IP_TOS)
-	if(priorityinheritance && origpriority != priority && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
-		priority = origpriority;
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
-			logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
-	}
+		case AF_INET:
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
+			if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, &origpriority, sizeof(origpriority))) /* SO_PRIORITY doesn't seem to work */
+				logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
+			break;
 #endif
-
 #if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
-	if(priorityinheritance && origpriority != priority && listen_socket[n->sock].sa.sa.sa_family == AF_INET6) {
-		priority = origpriority;
-		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[n->sock].udp, IPPROTO_IPV6, IPV6_TCLASS, &priority, sizeof(priority)))	/* SO_PRIORITY doesn't seem to work */
-			logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
-	}
+		case AF_INET6:
+			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
+			if(setsockopt(listen_socket[n->sock].udp, IPPROTO_IPV6, IPV6_TCLASS, &origpriority, sizeof(origpriority)))
+				logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
+			break;
 #endif
+		default:
+			break;
+		}
+	}
 
 	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, sa, sl) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
