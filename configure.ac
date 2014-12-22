@@ -202,7 +202,7 @@ AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
   [], [], [#include "src/have.h"]
 )
 
-AC_CHECK_DECLS([res_init], [LIBS="$LIBS -lresolv"], [], [
+AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [
   #include <netinet/in.h>
   #include <resolv.h>
 ])
