@@ -176,7 +176,7 @@ available too.
 @section Supported platforms
 
 @cindex platforms
-Tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, MacOS/X (Darwin), Solaris, and Windows (both natively and in a Cygwin environment),
+Tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, Mac OS X (Darwin), Solaris, and Windows (both natively and in a Cygwin environment),
 with various hardware architectures.  These are some of the platforms
 that are supported by the universal tun/tap device driver or other virtual network device drivers.
 Without such a driver, tinc will most
@@ -224,7 +224,7 @@ support tinc.
 * Configuration of OpenBSD kernels::
 * Configuration of NetBSD kernels::
 * Configuration of Solaris kernels::
-* Configuration of Darwin (MacOS/X) kernels::
+* Configuration of Darwin (Mac OS X) kernels::
 * Configuration of Windows::
 @end menu
 
@@ -298,19 +298,12 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 
 
 @c ==================================================================
-@node       Configuration of Darwin (MacOS/X) kernels
-@subsection Configuration of Darwin (MacOS/X) kernels
+@node       Configuration of Darwin (Mac OS X) kernels
+@subsection Configuration of Darwin (Mac OS X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
 Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
-which supports both tun and tap style devices,
-and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
-The former driver is recommended.
-The tunnel driver must be loaded before starting tinc with the following command:
-
-@example
-kmodload tunnel
-@end example
+which supports both tun and tap style devices.
 
 
 @c ==================================================================
@@ -503,19 +496,19 @@ you can use the package management tools of that distribution to install tinc.
 The documentation that comes along with your distribution will tell you how to do that.
 
 @menu
-* Darwin (MacOS/X) build environment::
+* Darwin (Mac OS X) build environment::
 * Cygwin (Windows) build environment::
 * MinGW (Windows) build environment::
 @end menu
 
 
 @c ==================================================================
-@node       Darwin (MacOS/X) build environment
-@subsection Darwin (MacOS/X) build environment
+@node       Darwin (Mac OS X) build environment
+@subsection Darwin (Mac OS X) build environment
 
-In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
+In order to build tinc on Darwin, you need to install the Mac OS X Developer Tools
 from @uref{http://developer.apple.com/tools/macosxtools.html} and
-a recent version of Fink from @uref{http://www.finkproject.org/}.
+preferably a recent version of Fink from @uref{http://www.finkproject.org/}.
 
 After installation use fink to download and install the following packages:
 autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
@@ -2445,7 +2438,7 @@ netmask should be such that it encompasses the entire VPN.
 
 For IPv4 addresses:
 
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@multitable {Darwin (Mac OS X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
 @tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
 @item Linux iproute2
@@ -2458,7 +2451,7 @@ For IPv4 addresses:
 @tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
 @item Solaris
 @tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
-@item Darwin (MacOS/X)
+@item Darwin (Mac OS X)
 @tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
 @item Windows
 @tab @code{netsh interface ip set address} @var{interface} @code{static} @var{address} @var{netmask}
@@ -2466,7 +2459,7 @@ For IPv4 addresses:
 
 For IPv6 addresses:
 
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@multitable {Darwin (Mac OS X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
 @tab @code{ifconfig} @var{interface} @code{add} @var{address}@code{/}@var{prefixlength}
 @item FreeBSD
@@ -2479,7 +2472,7 @@ For IPv6 addresses:
 @tab @code{ifconfig} @var{interface} @code{inet6 plumb up}
 @item
 @tab @code{ifconfig} @var{interface} @code{inet6 addif} @var{address} @var{address}
-@item Darwin (MacOS/X)
+@item Darwin (Mac OS X)
 @tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
 @item Windows
 @tab @code{netsh interface ipv6 add address} @var{interface} @code{static} @var{address}/@var{prefixlength}
@@ -2487,7 +2480,7 @@ For IPv6 addresses:
 
 On some platforms, when running tinc in switch mode, the VPN interface must be set to tap mode with an ifconfig command:
 
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@multitable {Darwin (Mac OS X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item OpenBSD
 @tab @code{ifconfig} @var{interface} @code{link0}
 @end multitable
@@ -2497,7 +2490,7 @@ continue to exist even if tinc quit, although this is normally not required.
 It can be useful to set up a tun/tap interface owned by a non-root user, so
 tinc can be started without needing any root privileges at all.
 
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@multitable {Darwin (Mac OS X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
 @tab @code{ip tuntap add dev} @var{interface} @code{mode} @var{tun|tap} @code{user} @var{username}
 @end multitable
@@ -2515,7 +2508,7 @@ support this.
 
 Adding routes to IPv4 subnets:
 
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@multitable {Darwin (Mac OS X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
 @tab @code{route add -net} @var{network_address} @code{netmask} @var{netmask} @var{interface}
 @item Linux iproute2
@@ -2528,15 +2521,15 @@ Adding routes to IPv4 subnets:
 @tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
 @item Solaris
 @tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address} @code{-interface}
-@item Darwin (MacOS/X)
-@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@item Darwin (Mac OS X)
+@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @code{-interface} @var{interface}
 @item Windows
 @tab @code{netsh routing ip add persistentroute} @var{network_address} @var{netmask} @var{interface} @var{local_address}
 @end multitable
 
 Adding routes to IPv6 subnets:
 
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
+@multitable {Darwin (Mac OS X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
 @tab @code{route add -A inet6} @var{network_address}@code{/}@var{prefixlength} @var{interface}
 @item Linux iproute2
@@ -2549,8 +2542,8 @@ Adding routes to IPv6 subnets:
 @tab @code{route add -inet6} @var{network_address} @var{local_address} @code{-prefixlen} @var{prefixlength}
 @item Solaris
 @tab @code{route add -inet6} @var{network_address}@code{/}@var{prefixlength} @var{local_address} @code{-interface}
-@item Darwin (MacOS/X)
-@tab ?
+@item Darwin (Mac OS X)
+@tab @code{route add -inet6} @var{network_address}@code{/}@var{prefixlength} @code{-interface} @var{interface}
 @item Windows
 @tab @code{netsh interface ipv6 add route} @var{network address}/@var{prefixlength} @var{interface}
 @end multitable
