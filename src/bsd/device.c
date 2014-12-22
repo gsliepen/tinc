@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 #endif
 
 #define DEFAULT_TUN_DEVICE "/dev/tun0"
-#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD)
+#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD) || defined(HAVE_DARWIN)
 #define DEFAULT_TAP_DEVICE "/dev/tap0"
 #else
 #define DEFAULT_TAP_DEVICE "/dev/tun0"
