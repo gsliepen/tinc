@@ -1114,7 +1114,7 @@ void close_network_connections(void) {
 	if (!device_standby)
 		device_disable();
 
-	if(myport) free(myport);
+	free(myport);
 
 	if (device_fd >= 0)
 		io_del(&device_io);
@@ -1124,7 +1124,8 @@ void close_network_connections(void) {
 	exit_control();
 
 	free(myname);
-	myname = NULL;
+	free(scriptextension);
+	free(scriptinterpreter);
 
 	return;
 }

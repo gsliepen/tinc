@@ -99,5 +99,7 @@ void crypto_init(void) {
 
 void crypto_exit(void) {
 	EVP_cleanup();
+	ERR_free_strings();
+	ENGINE_cleanup();
 	random_exit();
 }
