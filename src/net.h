@@ -57,6 +57,7 @@ typedef struct node_id_t {
 } node_id_t;
 
 typedef short length_t;
+typedef uint32_t seqno_t;
 
 #define AF_UNKNOWN 255
 
@@ -84,20 +85,18 @@ typedef union sockaddr_t {
 #define SALEN(s) (s.sa_family==AF_INET?sizeof(struct sockaddr_in):sizeof(struct sockaddr_in6))
 #endif
 
+#define SEQNO(x) ((x)->data + (x)->offset - 4)
+#define SRCID(x) ((node_id_t *)((x)->data + (x)->offset - 6))
+#define DSTID(x) ((node_id_t *)((x)->data + (x)->offset - 12))
+#define DATA(x) ((x)->data + (x)->offset)
+#define DEFAULT_PACKET_OFFSET 12
+
 typedef struct vpn_packet_t {
-	length_t len;           /* the actual number of bytes in the `data' field */
+	length_t len;           /* The actual number of valid bytes in the `data' field (including seqno or dstid/srcid) */
+	length_t offset;        /* Offset in the buffer where the packet data starts (righter after seqno or dstid/srcid) */
 	int priority;           /* priority or TOS */
-	uint32_t seqno;	       /* 32 bits sequence number (network byte order of course) */
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
-
-typedef struct sptps_packet_t {
-	length_t len;           /* the actual number of bytes in the `data' field */
-	int priority;           /* priority or TOS */
-	node_id_t dstid;        /* node ID of the final recipient */
-	node_id_t srcid;        /* node ID of the original sender */
-	char data[MAXSIZE];
-} sptps_packet_t;
 
 /* Packet types when using SPTPS */
 

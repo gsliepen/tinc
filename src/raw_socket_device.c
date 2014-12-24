@@ -93,7 +93,7 @@ static void close_device(void) {
 static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
-	if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
+	if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
@@ -111,7 +111,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(write(device_fd, packet->data, packet->len) < 0) {
+	if(write(device_fd, DATA(packet), packet->len) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			   strerror(errno));
 		return false;

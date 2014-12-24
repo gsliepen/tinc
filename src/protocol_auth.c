@@ -421,7 +421,7 @@ bool send_metakey(connection_t *c) {
 	if(!(c->outdigest = digest_open_sha1(-1)))
 		return false;
 
-	size_t len = rsa_size(c->rsa);
+	const size_t len = rsa_size(c->rsa);
 	char key[len];
 	char enckey[len];
 	char hexkey[2 * len + 1];
@@ -480,7 +480,7 @@ bool send_metakey(connection_t *c) {
 bool metakey_h(connection_t *c, const char *request) {
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
-	size_t len = rsa_size(myself->connection->rsa);
+	const size_t len = rsa_size(myself->connection->rsa);
 	char enckey[len];
 	char key[len];
 
@@ -540,7 +540,7 @@ bool metakey_h(connection_t *c, const char *request) {
 }
 
 bool send_challenge(connection_t *c) {
-	size_t len = rsa_size(c->rsa);
+	const size_t len = rsa_size(c->rsa);
 	char buffer[len * 2 + 1];
 
 	if(!c->hischallenge)
@@ -561,7 +561,7 @@ bool send_challenge(connection_t *c) {
 
 bool challenge_h(connection_t *c, const char *request) {
 	char buffer[MAX_STRING_SIZE];
-	size_t len = rsa_size(myself->connection->rsa);
+	const size_t len = rsa_size(myself->connection->rsa);
 	size_t digestlen = digest_length(c->indigest);
 	char digest[digestlen];
 

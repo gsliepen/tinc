@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -222,10 +222,10 @@ static bool read_packet(vpn_packet_t *packet) {
 #ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
 			if(device_type == DEVICE_TYPE_TUNEMU)
-				inlen = tunemu_read(device_fd, packet->data + 14, MTU - 14);
+				inlen = tunemu_read(device_fd, DATA(packet) + 14, MTU - 14);
 			else
 #endif
-				inlen = read(device_fd, packet->data + 14, MTU - 14);
+				inlen = read(device_fd, DATA(packet) + 14, MTU - 14);
 
 			if(inlen <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
@@ -233,29 +233,29 @@ static bool read_packet(vpn_packet_t *packet) {
 				return false;
 			}
 
-			switch(packet->data[14] >> 4) {
+			switch(DATA(packet)[14] >> 4) {
 				case 4:
-					packet->data[12] = 0x08;
-					packet->data[13] = 0x00;
+					DATA(packet)[12] = 0x08;
+					DATA(packet)[13] = 0x00;
 					break;
 				case 6:
-					packet->data[12] = 0x86;
-					packet->data[13] = 0xDD;
+					DATA(packet)[12] = 0x86;
+					DATA(packet)[13] = 0xDD;
 					break;
 				default:
 					logger(DEBUG_TRAFFIC, LOG_ERR,
 							   "Unknown IP version %d while reading packet from %s %s",
-							   packet->data[14] >> 4, device_info, device);
+							   DATA(packet)[14] >> 4, device_info, device);
 					return false;
 			}
 
-			memset(packet->data, 0, 12);
+			memset(DATA(packet), 0, 12);
 			packet->len = inlen + 14;
 			break;
 
 		case DEVICE_TYPE_TUNIFHEAD: {
 			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof type}, {packet->data + 14, MTU - 14}};
+			struct iovec vector[2] = {{&type, sizeof type}, {DATA(packet) + 14, MTU - 14}};
 
 			if((inlen = readv(device_fd, vector, 2)) <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
@@ -265,13 +265,13 @@ static bool read_packet(vpn_packet_t *packet) {
 
 			switch (ntohl(type)) {
 				case AF_INET:
-					packet->data[12] = 0x08;
-					packet->data[13] = 0x00;
+					DATA(packet)[12] = 0x08;
+					DATA(packet)[13] = 0x00;
 					break;
 
 				case AF_INET6:
-					packet->data[12] = 0x86;
-					packet->data[13] = 0xDD;
+					DATA(packet)[12] = 0x86;
+					DATA(packet)[13] = 0xDD;
 					break;
 
 				default:
@@ -281,13 +281,13 @@ static bool read_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			memset(packet->data, 0, 12);
+			memset(DATA(packet), 0, 12);
 			packet->len = inlen + 10;
 			break;
 		}
 
 		case DEVICE_TYPE_TAP:
-			if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
+			if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
@@ -312,7 +312,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-			if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
+			if(write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
@@ -321,10 +321,10 @@ static bool write_packet(vpn_packet_t *packet) {
 
 		case DEVICE_TYPE_TUNIFHEAD: {
 			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof type}, {packet->data + 14, packet->len - 14}};
+			struct iovec vector[2] = {{&type, sizeof type}, {DATA(packet) + 14, packet->len - 14}};
 			int af;
 
-			af = (packet->data[12] << 8) + packet->data[13];
+			af = (DATA(packet)[12] << 8) + DATA(packet)[13];
 
 			switch (af) {
 				case 0x0800:
@@ -349,7 +349,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		}
 
 		case DEVICE_TYPE_TAP:
-			if(write(device_fd, packet->data, packet->len) < 0) {
+			if(write(device_fd, DATA(packet), packet->len) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
@@ -358,7 +358,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 #ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
-			if(tunemu_write(device_fd, packet->data + 14, packet->len - 14) < 0) {
+			if(tunemu_write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;

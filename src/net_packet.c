@@ -139,8 +139,9 @@ static void send_mtu_probe_handler(void *data) {
 			len = 64;
 
 		vpn_packet_t packet;
-		memset(packet.data, 0, 14);
-		randomize(packet.data + 14, len - 14);
+		packet.offset = DEFAULT_PACKET_OFFSET;
+		memset(DATA(&packet), 0, 14);
+		randomize(DATA(&packet) + 14, len - 14);
 		packet.len = len;
 		packet.priority = 0;
 		n->status.send_locally = i >= 4 && n->mtuprobes <= 10 && n->prevedge;
@@ -176,24 +177,24 @@ void send_mtu_probe(node_t *n) {
 }
 
 static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
-	if(!packet->data[0]) {
+	if(!DATA(packet)[0]) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Got MTU probe request %d from %s (%s)", packet->len, n->name, n->hostname);
 
 		/* It's a probe request, send back a reply */
 
 		/* Type 2 probe replies were introduced in protocol 17.3 */
 		if ((n->options >> 24) >= 3) {
-			uint8_t* data = packet->data;
+			uint8_t *data = DATA(packet);
 			*data++ = 2;
 			uint16_t len16 = htons(len); memcpy(data, &len16, 2); data += 2;
 			struct timeval now;
 			gettimeofday(&now, NULL);
 			uint32_t sec = htonl(now.tv_sec); memcpy(data, &sec, 4); data += 4;
 			uint32_t usec = htonl(now.tv_usec); memcpy(data, &usec, 4); data += 4;
-			packet->len = data - packet->data;
+			packet->len -= 10;
 		} else {
 			/* Legacy protocol: n won't understand type 2 probe replies. */
-			packet->data[0] = 1;
+			DATA(packet)[0] = 1;
 		}
 
 		/* Temporarily set udp_confirmed, so that the reply is sent
@@ -205,14 +206,14 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		n->status.udp_confirmed = udp_confirmed;
 	} else {
 		length_t probelen = len;
-		if (packet->data[0] == 2) {
+		if (DATA(packet)[0] == 2) {
 			if (len < 3)
 				logger(DEBUG_TRAFFIC, LOG_WARNING, "Received invalid (too short) MTU probe reply from %s (%s)", n->name, n->hostname);
 			else {
-				uint16_t probelen16; memcpy(&probelen16, packet->data + 1, 2); probelen = ntohs(probelen16);
+				uint16_t probelen16; memcpy(&probelen16, DATA(packet) + 1, 2); probelen = ntohs(probelen16);
 			}
 		}
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d MTU probe reply %d from %s (%s)", packet->data[0], probelen, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d MTU probe reply %d from %s (%s)", DATA(packet)[0], probelen, n->name, n->hostname);
 
 		/* It's a valid reply: now we know bidirectional communication
 		   is possible using the address and socket that the reply
@@ -254,9 +255,9 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		timersub(&now, &n->probe_time, &diff);
 
 		struct timeval probe_timestamp = now;
-		if (packet->data[0] == 2 && packet->len >= 11) {
-			uint32_t sec; memcpy(&sec, packet->data + 3, 4);
-			uint32_t usec; memcpy(&usec, packet->data + 7, 4);
+		if (DATA(packet)[0] == 2 && packet->len >= 11) {
+			uint32_t sec; memcpy(&sec, DATA(packet) + 3, 4);
+			uint32_t usec; memcpy(&usec, DATA(packet) + 7, 4);
 			probe_timestamp.tv_sec = ntohl(sec);
 			probe_timestamp.tv_usec = ntohl(usec);
 		}
@@ -348,12 +349,12 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 
 static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(n->status.sptps)
-		return sptps_verify_datagram(&n->sptps, ((sptps_packet_t *)inpkt)->data, inpkt->len);
+		return sptps_verify_datagram(&n->sptps, DATA(inpkt), inpkt->len);
 
-	if(!digest_active(n->indigest) || inpkt->len < sizeof inpkt->seqno + digest_length(n->indigest))
+	if(!digest_active(n->indigest) || inpkt->len < sizeof(seqno_t) + digest_length(n->indigest))
 		return false;
 
-	return digest_verify(n->indigest, (const char *)&inpkt->seqno, inpkt->len - digest_length(n->indigest), (const char *)&inpkt->seqno + inpkt->len - digest_length(n->indigest));
+	return digest_verify(n->indigest, SEQNO(inpkt), inpkt->len - digest_length(n->indigest), DATA(inpkt) + inpkt->len - digest_length(n->indigest));
 }
 
 static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -361,6 +362,8 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
 	size_t outlen;
+	pkt1.offset = DEFAULT_PACKET_OFFSET;
+	pkt2.offset = DEFAULT_PACKET_OFFSET;
 
 	if(n->status.sptps) {
 		if(!n->sptps.state) {
@@ -372,7 +375,8 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			}
 			return false;
 		}
-		if(!sptps_receive_data(&n->sptps, ((sptps_packet_t *)inpkt)->data, inpkt->len)) {
+		inpkt->offset += 2 * sizeof(node_id_t);
+		if(!sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len - 2 * sizeof(node_id_t))) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Got bad packet from %s (%s)", n->name, n->hostname);
 			return false;
 		}
@@ -386,17 +390,21 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check packet length */
 
-	if(inpkt->len < sizeof inpkt->seqno + digest_length(n->indigest)) {
+	if(inpkt->len < sizeof(seqno_t) + digest_length(n->indigest)) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got too short packet from %s (%s)",
 					n->name, n->hostname);
 		return false;
 	}
 
+	/* It's a legacy UDP packet, the data starts after the seqno */
+
+	inpkt->offset += sizeof(seqno_t);
+
 	/* Check the message authentication code */
 
 	if(digest_active(n->indigest)) {
 		inpkt->len -= digest_length(n->indigest);
-		if(!digest_verify(n->indigest, &inpkt->seqno, inpkt->len, (const char *)&inpkt->seqno + inpkt->len)) {
+		if(!digest_verify(n->indigest, SEQNO(inpkt), inpkt->len, SEQNO(inpkt) + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got unauthenticated packet from %s (%s)", n->name, n->hostname);
 			return false;
 		}
@@ -407,7 +415,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		vpn_packet_t *outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_decrypt(n->incipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_decrypt(n->incipher, SEQNO(inpkt), inpkt->len, SEQNO(outpkt), &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Error decrypting packet from %s (%s)", n->name, n->hostname);
 			return false;
 		}
@@ -418,8 +426,10 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check the sequence number */
 
-	inpkt->len -= sizeof inpkt->seqno;
-	uint32_t seqno = ntohl(inpkt->seqno);
+	seqno_t seqno;
+	memcpy(&seqno, SEQNO(inpkt), sizeof seqno);
+	seqno = ntohl(seqno);
+	inpkt->len -= sizeof seqno;
 
 	if(replaywin) {
 		if(seqno != n->received_seqno + 1) {
@@ -463,7 +473,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(n->incompression) {
 		vpn_packet_t *outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
+		if((outpkt->len = uncompress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->incompression)) < 0) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
 						 n->name, n->hostname);
 			return false;
@@ -476,7 +486,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	inpkt->priority = 0;
 
-	if(!inpkt->data[12] && !inpkt->data[13])
+	if(!DATA(inpkt)[12] && !DATA(inpkt)[13])
 		mtu_probe_h(n, inpkt, origlen);
 	else
 		receive_packet(n, inpkt);
@@ -485,8 +495,9 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
+	outpkt.offset = DEFAULT_PACKET_OFFSET;
 
-	if(len > sizeof outpkt.data)
+	if(len > sizeof outpkt.data - outpkt.offset)
 		return;
 
 	outpkt.len = len;
@@ -494,7 +505,7 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 		outpkt.priority = 0;
 	else
 		outpkt.priority = -1;
-	memcpy(outpkt.data, buffer, len);
+	memcpy(DATA(&outpkt), buffer, len);
 
 	receive_packet(c->node, &outpkt);
 }
@@ -524,8 +535,8 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	uint8_t type = 0;
 	int offset = 0;
 
-	if(!(origpkt->data[12] | origpkt->data[13])) {
-		sptps_send_record(&n->sptps, PKT_PROBE, (char *)origpkt->data, origpkt->len);
+	if(!(DATA(origpkt)[12] | DATA(origpkt)[13])) {
+		sptps_send_record(&n->sptps, PKT_PROBE, (char *)DATA(origpkt), origpkt->len);
 		return;
 	}
 
@@ -540,7 +551,8 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t outpkt;
 
 	if(n->outcompression) {
-		int len = compress_packet(outpkt.data + offset, origpkt->data + offset, origpkt->len - offset, n->outcompression);
+		outpkt.offset = 0;
+		int len = compress_packet(DATA(&outpkt) + offset, DATA(origpkt) + offset, origpkt->len - offset, n->outcompression);
 		if(len < 0) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)", n->name, n->hostname);
 		} else if(len < origpkt->len - offset) {
@@ -550,7 +562,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 		}
 	}
 
-	sptps_send_record(&n->sptps, type, (char *)origpkt->data + offset, origpkt->len - offset);
+	sptps_send_record(&n->sptps, type, DATA(origpkt) + offset, origpkt->len - offset);
 	return;
 }
 
@@ -643,6 +655,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	int origpriority = origpkt->priority;
 #endif
 
+	pkt1.offset = DEFAULT_PACKET_OFFSET;
+	pkt2.offset = DEFAULT_PACKET_OFFSET;
+
 	if(!n->status.reachable) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
 		return;
@@ -668,7 +683,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		return;
 	}
 
-	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
+	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (DATA(inpkt)[12] | DATA(inpkt)[13])) {
 		logger(DEBUG_TRAFFIC, LOG_INFO,
 				"Packet for %s (%s) larger than minimum MTU, forwarding via %s",
 				n->name, n->hostname, n != n->nexthop ? n->nexthop->name : "TCP");
@@ -686,7 +701,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(n->outcompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->outcompression)) < 0) {
+		if((outpkt->len = compress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->outcompression)) < 0) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)",
 				   n->name, n->hostname);
 			return;
@@ -697,8 +712,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	/* Add sequence number */
 
-	inpkt->seqno = htonl(++(n->sent_seqno));
-	inpkt->len += sizeof inpkt->seqno;
+	seqno_t seqno = htonl(++(n->sent_seqno));
+	memcpy(SEQNO(inpkt), &seqno, sizeof seqno);
+	inpkt->len += sizeof seqno;
 
 	/* Encrypt the packet */
 
@@ -706,7 +722,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		outpkt = pkt[nextpkt++];
 		outlen = MAXSIZE;
 
-		if(!cipher_encrypt(n->outcipher, &inpkt->seqno, inpkt->len, &outpkt->seqno, &outlen, true)) {
+		if(!cipher_encrypt(n->outcipher, SEQNO(inpkt), inpkt->len, SEQNO(outpkt), &outlen, true)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -718,7 +734,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add the message authentication code */
 
 	if(digest_active(n->outdigest)) {
-		if(!digest_create(n->outdigest, &inpkt->seqno, inpkt->len, &inpkt->seqno + inpkt->len)) {
+		if(!digest_create(n->outdigest, SEQNO(inpkt), inpkt->len, SEQNO(inpkt) + inpkt->len)) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while encrypting packet to %s (%s)", n->name, n->hostname);
 			goto end;
 		}
@@ -746,7 +762,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if(sendto(listen_socket[sock].udp.fd, &inpkt->seqno, inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -828,11 +844,11 @@ static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const void 
 	return true;
 }
 
-bool send_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
+bool send_sptps_data(void *handle, uint8_t type, const void *data, size_t len) {
 	return send_sptps_data_priv(handle, myself, type, data, len);
 }
 
-bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t len) {
+bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len) {
 	node_t *from = handle;
 
 	if(type == SPTPS_HANDSHAKE) {
@@ -850,10 +866,11 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 	}
 
 	vpn_packet_t inpkt;
+	inpkt.offset = DEFAULT_PACKET_OFFSET;
 
 	if(type == PKT_PROBE) {
 		inpkt.len = len;
-		memcpy(inpkt.data, data, len);
+		memcpy(DATA(&inpkt), data, len);
 		mtu_probe_h(from, &inpkt, len);
 		return true;
 	}
@@ -873,7 +890,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 
 	int offset = (type & PKT_MAC) ? 0 : 14;
 	if(type & PKT_COMPRESSED) {
-		length_t ulen = uncompress_packet(inpkt.data + offset, (const uint8_t *)data, len, from->incompression);
+		length_t ulen = uncompress_packet(DATA(&inpkt) + offset, (const uint8_t *)data, len, from->incompression);
 		if(ulen < 0) {
 			return false;
 		} else {
@@ -882,25 +899,25 @@ bool receive_sptps_record(void *handle, uint8_t type, const char *data, uint16_t
 		if(inpkt.len > MAXSIZE)
 			abort();
 	} else {
-		memcpy(inpkt.data + offset, data, len);
+		memcpy(DATA(&inpkt) + offset, data, len);
 		inpkt.len = len + offset;
 	}
 
 	/* Generate the Ethernet packet type if necessary */
 	if(offset) {
-		switch(inpkt.data[14] >> 4) {
+		switch(DATA(&inpkt)[14] >> 4) {
 			case 4:
-				inpkt.data[12] = 0x08;
-				inpkt.data[13] = 0x00;
+				DATA(&inpkt)[12] = 0x08;
+				DATA(&inpkt)[13] = 0x00;
 				break;
 			case 6:
-				inpkt.data[12] = 0x86;
-				inpkt.data[13] = 0xDD;
+				DATA(&inpkt)[12] = 0x86;
+				DATA(&inpkt)[13] = 0xDD;
 				break;
 			default:
 				logger(DEBUG_TRAFFIC, LOG_ERR,
 						   "Unknown IP version %d while reading packet from %s (%s)",
-						   inpkt.data[14] >> 4, from->name, from->hostname);
+						   DATA(&inpkt)[14] >> 4, from->name, from->hostname);
 				return false;
 		}
 	}
@@ -917,7 +934,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 
 	if(n == myself) {
 		if(overwrite_mac)
-			 memcpy(packet->data, mymac.x, ETH_ALEN);
+			 memcpy(DATA(packet), mymac.x, ETH_ALEN);
 		n->out_packets++;
 		n->out_bytes += packet->len;
 		devops.write(packet);
@@ -1028,7 +1045,6 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 void handle_incoming_vpn_data(void *data, int flags) {
 	listen_socket_t *ls = data;
 	vpn_packet_t pkt;
-	sptps_packet_t *spkt = (sptps_packet_t *)&pkt;
 	char *hostname;
 	node_id_t nullid = {};
 	sockaddr_t addr = {};
@@ -1036,7 +1052,8 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	node_t *from, *to;
 	bool direct = false;
 
-	int len = recvfrom(ls->udp.fd, &pkt.seqno, MAXSIZE, 0, &addr.sa, &addrlen);
+	pkt.offset = 0;
+	int len = recvfrom(ls->udp.fd, DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))
@@ -1054,17 +1071,20 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 	if(!n) {
 		// It might be from a 1.1 node, which might have a source ID in the packet.
-		from = lookup_node_id(&spkt->srcid);
-		if(from && !memcmp(&spkt->dstid, &nullid, sizeof nullid) && from->status.sptps) {
-			if(sptps_verify_datagram(&from->sptps, spkt->data, spkt->len - sizeof(spkt->srcid) - sizeof(spkt->dstid)))
+		pkt.offset = 2 * sizeof(node_id_t);
+		from = lookup_node_id(SRCID(&pkt));
+		if(from && !memcmp(DSTID(&pkt), &nullid, sizeof nullid) && from->status.sptps) {
+			if(sptps_verify_datagram(&from->sptps, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t)))
 				n = from;
 			else
 				goto skip_harder;
 		}
 	}
 
-	if(!n)
+	if(!n) {
+		pkt.offset = 0;
 		n = try_harder(&addr, &pkt);
+	}
 
 skip_harder:
 	if(!n) {
@@ -1077,22 +1097,23 @@ skip_harder:
 	}
 
 	if(n->status.sptps) {
-		if(!memcmp(&spkt->dstid, &nullid, sizeof nullid)) {
+		pkt.offset = 2 * sizeof(node_id_t);
+
+		if(!memcmp(DSTID(&pkt), &nullid, sizeof nullid)) {
 			direct = true;
 			from = n;
 			to = myself;
 		} else {
-			from = lookup_node_id(&spkt->srcid);
-			to = lookup_node_id(&spkt->dstid);
+			from = lookup_node_id(SRCID(&pkt));
+			to = lookup_node_id(DSTID(&pkt));
 		}
 		if(!from || !to) {
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from %s (%s) with unknown source and/or destination ID", n->name, n->hostname);
 			return;
 		}
 
-		spkt->len -= sizeof spkt->dstid + sizeof spkt->srcid;
 		if(to != myself) {
-			send_sptps_data_priv(to, n, 0, spkt->data, spkt->len);
+			send_sptps_data_priv(to, n, 0, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t));
 			return;
 		}
 	} else {
@@ -1100,6 +1121,7 @@ skip_harder:
 		from = n;
 	}
 
+	pkt.offset = 0;
 	if(!receive_udppacket(from, &pkt))
 		return;
 
@@ -1110,7 +1132,7 @@ skip_harder:
 
 void handle_device_data(void *data, int flags) {
 	vpn_packet_t packet;
-
+	packet.offset = DEFAULT_PACKET_OFFSET;
 	packet.priority = 0;
 
 	if(devops.read(&packet)) {
