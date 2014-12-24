@@ -44,6 +44,7 @@
 #include "xalloc.h"
 
 char *myport;
+static char *myname;
 static io_t device_io;
 devops_t devops;
 bool device_standby = false;
@@ -715,7 +716,7 @@ void device_enable(void) {
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[3], "NAME=%s", myname);
 
 	execute_script("tinc-up", envp);
 
@@ -728,7 +729,7 @@ void device_disable(void) {
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[3], "NAME=%s", myname);
 
 	execute_script("tinc-down", envp);
 
@@ -752,6 +753,7 @@ static bool setup_myself(void) {
 		return false;
 	}
 
+	myname = xstrdup(name);
 	myself = new_node();
 	myself->connection = new_connection();
 	myself->name = name;
@@ -1120,6 +1122,9 @@ void close_network_connections(void) {
 		devops.close();
 
 	exit_control();
+
+	free(myname);
+	myname = NULL;
 
 	return;
 }
