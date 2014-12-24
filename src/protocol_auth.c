@@ -198,7 +198,7 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	return true;
 }
 
-static bool receive_invitation_sptps(void *handle, uint8_t type, const char *data, uint16_t len) {
+static bool receive_invitation_sptps(void *handle, uint8_t type, const void *data, uint16_t len) {
 	connection_t *c = handle;
 
 	if(type == 128)

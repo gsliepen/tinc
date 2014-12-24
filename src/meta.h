@@ -1,6 +1,6 @@
 /*
     meta.h -- header for meta.c
-    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2014 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 #include "connection.h"
 
 extern bool send_meta(struct connection_t *, const char *, int);
-extern bool send_meta_sptps(void *, uint8_t, const char *, size_t);
-extern bool receive_meta_sptps(void *, uint8_t, const char *, uint16_t);
+extern bool send_meta_sptps(void *, uint8_t, const void *, size_t);
+extern bool receive_meta_sptps(void *, uint8_t, const void *, uint16_t);
 extern void broadcast_meta(struct connection_t *, const char *, int);
 extern bool receive_meta(struct connection_t *);
 

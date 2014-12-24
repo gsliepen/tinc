@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ bool key_changed_h(connection_t *c, const char *request) {
 	return true;
 }
 
-static bool send_initial_sptps_data(void *handle, uint8_t type, const char *data, size_t len) {
+static bool send_initial_sptps_data(void *handle, uint8_t type, const void *data, size_t len) {
 	node_t *to = handle;
 	to->sptps.send_data = send_sptps_data;
 	char buf[len * 4 / 3 + 5];

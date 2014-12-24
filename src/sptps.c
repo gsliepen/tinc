@@ -1,6 +1,6 @@
 /*
     sptps.c -- Simple Peer-to-Peer Security
-    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>,
                   2010      Brandon L. Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,7 @@ static void warning(sptps_t *s, const char *format, ...) {
 }
 
 // Send a record (datagram version, accepts all record types, handles encryption and authentication).
-static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
+static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
 	char buffer[len + 21UL];
 
 	// Create header with sequence number, length and record type
@@ -102,7 +102,7 @@ static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const char *data
 	}
 }
 // Send a record (private version, accepts all record types, handles encryption and authentication).
-static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
+static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
 	if(s->datagram)
 		return send_record_priv_datagram(s, type, data, len);
 
@@ -127,7 +127,7 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const char *data, uint16_
 }
 
 // Send an application record.
-bool sptps_send_record(sptps_t *s, uint8_t type, const char *data, uint16_t len) {
+bool sptps_send_record(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
 	// Sanity checks: application cannot send data before handshake is finished,
 	// and only record types 0..127 are allowed.
 	if(!s->outstate)
@@ -424,7 +424,7 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 }
 
 // Check datagram for valid HMAC
-bool sptps_verify_datagram(sptps_t *s, const char *data, size_t len) {
+bool sptps_verify_datagram(sptps_t *s, const void *data, size_t len) {
 	if(!s->instate || len < 21)
 		return error(s, EIO, "Received short packet");
 
@@ -495,7 +495,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 }
 
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
-bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
+bool sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 	if(!s->state)
 		return error(s, EIO, "Invalid session state zero");
 
@@ -582,7 +582,7 @@ bool sptps_receive_data(sptps_t *s, const char *data, size_t len) {
 }
 
 // Start a SPTPS session.
-bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t *mykey, ecdsa_t *hiskey, const char *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
+bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t *mykey, ecdsa_t *hiskey, const void *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
 	// Initialise struct sptps
 	memset(s, 0, sizeof *s);
 

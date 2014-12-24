@@ -1,6 +1,6 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2014 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2006      Scott Lamb <slamb@slamb.org>
 
@@ -30,7 +30,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-bool send_meta_sptps(void *handle, uint8_t type, const char *buffer, size_t length) {
+bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t length) {
 	connection_t *c = handle;
 
 	if(!c) {
@@ -80,7 +80,8 @@ void broadcast_meta(connection_t *from, const char *buffer, int length) {
 			send_meta(c, buffer, length);
 }
 
-bool receive_meta_sptps(void *handle, uint8_t type, const char *data, uint16_t length) {
+bool receive_meta_sptps(void *handle, uint8_t type, const void *vdata, uint16_t length) {
+	const char *data = vdata;
 	connection_t *c = handle;
 
 	if(!c) {

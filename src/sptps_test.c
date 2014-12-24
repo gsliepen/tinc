@@ -1,6 +1,6 @@
 /*
     sptps_test.c -- Simple Peer-to-Peer Security test program
-    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ static bool writeonly;
 static int in = 0;
 static int out = 1;
 
-static bool send_data(void *handle, uint8_t type, const char *data, size_t len) {
+static bool send_data(void *handle, uint8_t type, const void *data, size_t len) {
 	char hex[len * 2 + 1];
 	bin2hex(data, hex, len);
 	if(verbose)
@@ -54,7 +54,7 @@ static bool send_data(void *handle, uint8_t type, const char *data, size_t len) 
 	return true;
 }
 
-static bool receive_record(void *handle, uint8_t type, const char *data, uint16_t len) {
+static bool receive_record(void *handle, uint8_t type, const void *data, uint16_t len) {
 	if(verbose)
 		fprintf(stderr, "Received type %d record of %hu bytes:\n", type, len);
 	if(!writeonly)
