@@ -277,6 +277,8 @@ static bool read_rsa_private_key(void) {
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA private key file `%s': %s",
 			   fname, strerror(errno));
+		if(errno == ENOENT)
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA keypair with `tinc -n %s generate-rsa-keys'.", netname ?: ".");
 		free(fname);
 		return false;
 	}
@@ -780,8 +782,14 @@ static bool setup_myself(void) {
 			return false;
 	}
 
-	if(!read_rsa_private_key())
-		return false;
+	if(!read_rsa_private_key()) {
+		if(experimental) {
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for legacy protocol disabled.");
+		} else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "No private keys available, cannot start tinc!");
+			return false;
+		}
+	}
 
 	/* Ensure myport is numeric */
 

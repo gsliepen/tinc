@@ -412,6 +412,11 @@ bool id_h(connection_t *c, const char *request) {
 }
 
 bool send_metakey(connection_t *c) {
+	if(!myself->connection->rsa) {
+		logger(DEBUG_CONNECTIONS, LOG_ERR, "Peer %s (%s) uses legacy protocol which we don't support", c->name, c->hostname);
+		return false;
+	}
+
 	if(!read_rsa_public_key(c))
 		return false;
 
@@ -478,6 +483,9 @@ bool send_metakey(connection_t *c) {
 }
 
 bool metakey_h(connection_t *c, const char *request) {
+	if(!myself->connection->rsa)
+		return false;
+
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	const size_t len = rsa_size(myself->connection->rsa);
@@ -560,6 +568,9 @@ bool send_challenge(connection_t *c) {
 }
 
 bool challenge_h(connection_t *c, const char *request) {
+	if(!myself->connection->rsa)
+		return false;
+
 	char buffer[MAX_STRING_SIZE];
 	const size_t len = rsa_size(myself->connection->rsa);
 	size_t digestlen = digest_length(c->indigest);
