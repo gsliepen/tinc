@@ -3,7 +3,7 @@
 sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 
 ## Make sure version.c is always rebuilt
-.PHONY: version.c
+.PHONY: version.o
 
 if LINUX
 sbin_PROGRAMS += sptps_speed
