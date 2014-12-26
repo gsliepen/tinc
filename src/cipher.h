@@ -34,16 +34,8 @@ extern size_t cipher_keylength(const cipher_t *);
 extern void cipher_get_key(const cipher_t *, void *);
 extern bool cipher_set_key(cipher_t *, void *, bool) __attribute__ ((__warn_unused_result__));
 extern bool cipher_set_key_from_rsa(cipher_t *, void *, size_t, bool) __attribute__ ((__warn_unused_result__));
-extern bool cipher_set_counter(cipher_t *, const void *, size_t) __attribute__ ((__warn_unused_result__));
-extern bool cipher_set_counter_key(cipher_t *, void *) __attribute__ ((__warn_unused_result__));
 extern bool cipher_encrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) __attribute__ ((__warn_unused_result__));
 extern bool cipher_decrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) __attribute__ ((__warn_unused_result__));
-extern bool cipher_gcm_encrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen) __attribute__ ((__warn_unused_result__));
-extern bool cipher_gcm_encrypt_start(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen) __attribute__ ((__warn_unused_result__));
-extern bool cipher_gcm_encrypt_finish(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen) __attribute__ ((__warn_unused_result__));
-extern bool cipher_gcm_decrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen) __attribute__ ((__warn_unused_result__));
-extern bool cipher_gcm_decrypt_start(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen) __attribute__ ((__warn_unused_result__));
-extern bool cipher_gcm_decrypt_finish(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen) __attribute__ ((__warn_unused_result__));
 extern int cipher_get_nid(const cipher_t *);
 extern bool cipher_active(const cipher_t *);
 
