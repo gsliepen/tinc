@@ -1,3 +1,49 @@
+Version 1.1pre11             December 27 2014
+
+ * Added a "network" command to list or switch networks.
+
+ * Switched to Ed25519 keys and the ChaCha-Poly1305 cipher for the new protocol.
+
+ * AutoConnect is now a boolean option, when enabled tinc always tries to keep
+   at least three meta-connections open.
+
+ * The new protocol now uses UDP much more often.
+
+ * Tinc "del" and "get" commands now return a non-zero exit code when they
+   don't find the requested variable.
+
+ * Updated documentation.
+
+ * Added a "DeviceStandby" option to defer running tinc-up until a working
+   connection is made, and which on Windows will also change the network
+   interface link status accordingly.
+
+ * Tinc now tells the resolver to reload /etc/resolv.conf when it receives
+   SIGALRM.
+
+ * Improved error messages and event loop handling on Windows.
+
+ * LocalDiscovery now uses local address learned from other nodes, and is
+   enabled by default.
+
+ * Added a "BroadcastSubnet" option to change the behavior of broadcast packets
+   in router mode.
+
+ * Added support for dotted quad notation in IPv6 (e.g. ::1.2.3.4).
+
+ * Improved format of printed Subnets, MAC and IPv6 addresses.
+
+ * Added a "--batch" option to force the tinc CLI to run in non-interactive
+   mode.
+
+ * Improve default Device selection on *BSD and Mac OS X.
+
+ * Allow running tinc without RSA keys.
+
+Thanks to Etienne Dechamps, Sven-Haegar Koch, William A. Kennington III,
+Baptiste Jonglez, Alexis Hildebrandt, Armin Fisslthaler, Franz Pletz, Alexander
+Ried and Saverio Proto for their contributions to this version of tinc.
+
 Version 1.1pre10             February 7 2014
 
  * Added a benchmark tool (sptps_speed) for the new protocol.
