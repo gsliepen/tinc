@@ -64,8 +64,6 @@ void make_names(void) {
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
-			if(!pidfilename)
-				xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
 		}
 		RegCloseKey(key);
 	}
@@ -73,11 +71,26 @@ void make_names(void) {
 	if(!confdir)
 		confdir = xstrdup(CONFDIR SLASH "tinc");
 
+	if(!confbase) {
+		if(netname)
+			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
+		else
+			xasprintf(&confbase, CONFDIR SLASH "tinc");
+	}
+
+#ifdef HAVE_MINGW
+	if(!logfilename)
+		xasprintf(&logfilename, "%s" SLASH "log", confbase);
+
+	if(!pidfilename)
+		xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
+#else
 	if(!logfilename)
 		xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
 
 	if(!pidfilename)
 		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
+#endif
 
 	if(!unixsocketname) {
 		int len = strlen(pidfilename);
@@ -87,13 +100,6 @@ void make_names(void) {
 			strcpy(unixsocketname + len - 4, ".socket");
 		else
 			strcpy(unixsocketname + len, ".socket");
-	}
-
-	if(!confbase) {
-		if(netname)
-			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
-		else
-			xasprintf(&confbase, CONFDIR SLASH "tinc");
 	}
 }
 
