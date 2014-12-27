@@ -884,6 +884,18 @@ Broadcast packets received from other nodes are never forwarded.
 If the IndirectData option is also set, broadcast packets will only be sent to nodes which we have a meta connection to.
 @end table
 
+@cindex BroadcastSubnet
+@item BroadcastSubnet = @var{address}[/@var{prefixlength}]
+Declares a broadcast subnet.
+Any packet with a destination address falling into such a subnet will be routed as a broadcast
+(provided all nodes have it declared).
+This is most useful to declare subnet broadcast addresses (e.g. 10.42.255.255),
+otherwise tinc won't know what to do with them.
+
+Note that global broadcast addresses (MAC ff:ff:ff:ff:ff:ff, IPv4 255.255.255.255),
+as well as multicast space (IPv4 224.0.0.0/4, IPv6 ff00::/8)
+are always considered broadcast addresses and don't need to be declared.
+
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.
@@ -913,6 +925,13 @@ Note that you can only use one device per daemon.
 Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
+
+@cindex DeviceStandby
+@item DeviceStandby = <yes | no> (no)
+When disabled, tinc calls @file{tinc-up} on startup, and @file{tinc-down} on shutdown.
+When enabled, tinc will only call @file{tinc-up} when at least one node is reachable,
+and will call @file{tinc-down} as soon as no nodes are reachable.
+On Windows, this also determines when the virtual network interface "cable" is "plugged".
 
 @cindex DeviceType
 @item DeviceType = <@var{type}> (platform dependent)

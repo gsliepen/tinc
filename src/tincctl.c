@@ -88,7 +88,7 @@ static struct option const long_options[] = {
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		   VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-	printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
+	printf("Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen and others.\n"
 			"See the AUTHORS file for a complete list.\n\n"
 			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 			"and you are welcome to redistribute it under certain conditions;\n"
@@ -1323,9 +1323,11 @@ const var_t variables[] = {
 	{"BindToAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"BindToInterface", VAR_SERVER},
 	{"Broadcast", VAR_SERVER | VAR_SAFE},
+	{"BroadcastSubnet", VAR_SERVER | VAR_MULTIPLE | VAR_SAFE},
 	{"ConnectTo", VAR_SERVER | VAR_MULTIPLE | VAR_SAFE},
 	{"DecrementTTL", VAR_SERVER},
 	{"Device", VAR_SERVER},
+	{"DeviceStandby", VAR_SERVER},
 	{"DeviceType", VAR_SERVER},
 	{"DirectOnly", VAR_SERVER},
 	{"Ed25519PrivateKeyFile", VAR_SERVER},
