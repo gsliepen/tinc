@@ -517,26 +517,6 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	receive_packet(c->node, &outpkt);
 }
 
-// This function tries to get SPTPS keys, if they aren't already known.
-// This function makes no guarantees - it is up to the caller to check the node's state to figure out if the keys are available.
-static void try_sptps(node_t *n) {
-	if(n->status.validkey)
-		return;
-
-	logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
-
-	if(!n->status.waitingforkey)
-		send_req_key(n);
-	else if(n->last_req_key + 10 < now.tv_sec) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
-		sptps_stop(&n->sptps);
-		n->status.waitingforkey = false;
-		send_req_key(n);
-	}
-
-	return;
-}
-
 static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	if(!n->status.validkey && !n->connection)
 		return;
@@ -933,6 +913,26 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 
 	receive_packet(from, &inpkt);
 	return true;
+}
+
+// This function tries to get SPTPS keys, if they aren't already known.
+// This function makes no guarantees - it is up to the caller to check the node's state to figure out if the keys are available.
+static void try_sptps(node_t *n) {
+	if(n->status.validkey)
+		return;
+
+	logger(DEBUG_TRAFFIC, LOG_INFO, "No valid key known yet for %s (%s)", n->name, n->hostname);
+
+	if(!n->status.waitingforkey)
+		send_req_key(n);
+	else if(n->last_req_key + 10 < now.tv_sec) {
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "No key from %s after 10 seconds, restarting SPTPS", n->name);
+		sptps_stop(&n->sptps);
+		n->status.waitingforkey = false;
+		send_req_key(n);
+	}
+
+	return;
 }
 
 // This function tries to establish a tunnel to a node (or its relay) so that packets can be sent (e.g. get SPTPS keys).
