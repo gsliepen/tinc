@@ -65,96 +65,6 @@ int udp_discovery_timeout = 30;
 
 #define MAX_SEQNO 1073741824
 
-static void send_udp_probe_packet(node_t *n, int len) {
-	vpn_packet_t packet;
-	packet.offset = DEFAULT_PACKET_OFFSET;
-	memset(DATA(&packet), 0, 14);
-	randomize(DATA(&packet) + 14, len - 14);
-	packet.len = len;
-	packet.priority = 0;
-
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %d to %s (%s)", len, n->name, n->hostname);
-
-	send_udppacket(n, &packet);
-}
-
-// This function tries to determines the MTU of a node.
-// By calling this function repeatedly, n->minmtu will be progressively increased, and at some point, n->mtu will be fixed to n->minmtu.
-// If the MTU is already fixed, this function checks if it can be increased.
-static void try_mtu(node_t *n) {
-	if(!(n->options & OPTION_PMTU_DISCOVERY))
-		return;
-
-	if(udp_discovery && !n->status.udp_confirmed) {
-		n->mtuprobes = 0;
-		n->minmtu = 0;
-		n->maxmtu = MTU;
-		return;
-	}
-
-	/* mtuprobes == 0..29: initial discovery, send bursts with 1 second interval, mtuprobes++
-	   mtuprobes ==    30: fix MTU, and go to 31
-	   mtuprobes ==    31: send one >maxmtu probe every pingtimeout */
-
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	struct timeval elapsed;
-	timersub(&now, &n->probe_sent_time, &elapsed);
-	if(n->mtuprobes < 31) {
-		if(n->mtuprobes != 0 && elapsed.tv_sec < 1)
-			return;
-	} else {
-		if(elapsed.tv_sec < pingtimeout)
-			return;
-	}
-
-	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
-		if(n->minmtu > n->maxmtu)
-			n->minmtu = n->maxmtu;
-		else
-			n->maxmtu = n->minmtu;
-		n->mtu = n->minmtu;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
-		n->mtuprobes = 31;
-	}
-
-	int timeout;
-	if(n->mtuprobes == 31) {
-		/* After the initial discovery, we only send one >maxmtu probe
-		   to detect PMTU increases. */
-		if(n->maxmtu + 8 < MTU)
-			send_udp_probe_packet(n, n->maxmtu + 8);
-	} else {
-		/* Probes are sent in batches of three, with random sizes between the
-		   lower and upper boundaries for the MTU thus far discovered. */
-		for (int i = 0; i < 3; i++) {
-			int len = n->maxmtu;
-			if(n->minmtu < n->maxmtu)
-				len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
-
-			send_udp_probe_packet(n, MAX(len, 64));
-		}
-		n->mtuprobes++;
-	}
-
-	n->probe_counter = 0;
-	n->probe_sent_time = now;
-	n->probe_time = now;
-
-	/* Calculate the packet loss of incoming traffic by comparing the rate of
-	   packets received to the rate with which the sequence number has increased.
-	   TODO: this is unrelated to PMTU discovery - it should be moved elsewhere.
-	 */
-
-	if(n->received > n->prev_received)
-		n->packetloss = 1.0 - (n->received - n->prev_received) / (float)(n->received_seqno - n->prev_received_seqno);
-	else
-		n->packetloss = n->received_seqno <= n->prev_received_seqno;
-
-	n->prev_received_seqno = n->received_seqno;
-	n->prev_received = n->received;
-}
-
 static void udp_probe_timeout_handler(void *data) {
 	node_t *n = data;
 	if(!n->status.udp_confirmed)
@@ -923,6 +833,19 @@ static void try_sptps(node_t *n) {
 	return;
 }
 
+static void send_udp_probe_packet(node_t *n, int len) {
+	vpn_packet_t packet;
+	packet.offset = DEFAULT_PACKET_OFFSET;
+	memset(DATA(&packet), 0, 14);
+	randomize(DATA(&packet) + 14, len - 14);
+	packet.len = len;
+	packet.priority = 0;
+
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %d to %s (%s)", len, n->name, n->hostname);
+
+	send_udppacket(n, &packet);
+}
+
 // This function tries to establish a UDP tunnel to a node so that packets can be sent.
 // If a tunnel is already established, it makes sure it stays up.
 // This function makes no guarantees - it is up to the caller to check the node's state to figure out if UDP is usable.
@@ -945,6 +868,83 @@ static void try_udp(node_t* n) {
 			n->status.send_locally = false;
 		}
 	}
+}
+
+// This function tries to determines the MTU of a node.
+// By calling this function repeatedly, n->minmtu will be progressively increased, and at some point, n->mtu will be fixed to n->minmtu.
+// If the MTU is already fixed, this function checks if it can be increased.
+static void try_mtu(node_t *n) {
+	if(!(n->options & OPTION_PMTU_DISCOVERY))
+		return;
+
+	if(udp_discovery && !n->status.udp_confirmed) {
+		n->mtuprobes = 0;
+		n->minmtu = 0;
+		n->maxmtu = MTU;
+		return;
+	}
+
+	/* mtuprobes == 0..29: initial discovery, send bursts with 1 second interval, mtuprobes++
+	   mtuprobes ==    30: fix MTU, and go to 31
+	   mtuprobes ==    31: send one >maxmtu probe every pingtimeout */
+
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	struct timeval elapsed;
+	timersub(&now, &n->probe_sent_time, &elapsed);
+	if(n->mtuprobes < 31) {
+		if(n->mtuprobes != 0 && elapsed.tv_sec < 1)
+			return;
+	} else {
+		if(elapsed.tv_sec < pingtimeout)
+			return;
+	}
+
+	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
+		if(n->minmtu > n->maxmtu)
+			n->minmtu = n->maxmtu;
+		else
+			n->maxmtu = n->minmtu;
+		n->mtu = n->minmtu;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
+		n->mtuprobes = 31;
+	}
+
+	int timeout;
+	if(n->mtuprobes == 31) {
+		/* After the initial discovery, we only send one >maxmtu probe
+		   to detect PMTU increases. */
+		if(n->maxmtu + 8 < MTU)
+			send_udp_probe_packet(n, n->maxmtu + 8);
+	} else {
+		/* Probes are sent in batches of three, with random sizes between the
+		   lower and upper boundaries for the MTU thus far discovered. */
+		for (int i = 0; i < 3; i++) {
+			int len = n->maxmtu;
+			if(n->minmtu < n->maxmtu)
+				len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+
+			send_udp_probe_packet(n, MAX(len, 64));
+		}
+		n->mtuprobes++;
+	}
+
+	n->probe_counter = 0;
+	n->probe_sent_time = now;
+	n->probe_time = now;
+
+	/* Calculate the packet loss of incoming traffic by comparing the rate of
+	   packets received to the rate with which the sequence number has increased.
+	   TODO: this is unrelated to PMTU discovery - it should be moved elsewhere.
+	 */
+
+	if(n->received > n->prev_received)
+		n->packetloss = 1.0 - (n->received - n->prev_received) / (float)(n->received_seqno - n->prev_received_seqno);
+	else
+		n->packetloss = n->received_seqno <= n->prev_received_seqno;
+
+	n->prev_received_seqno = n->received_seqno;
+	n->prev_received = n->received;
 }
 
 // This function tries to establish a tunnel to a node (or its relay) so that packets can be sent (e.g. get SPTPS keys).
