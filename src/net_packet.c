@@ -87,32 +87,9 @@ static void send_mtu_probe_handler(void *data) {
 		return;
 	}
 
-	/* mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
-	   mtuprobes ==    31: sleep pinginterval seconds
-	   mtuprobes ==    32: send 1 burst, sleep pingtimeout second
-	   mtuprobes ==    33: no response from other side, restart PMTU discovery process */
-
-	n->mtuprobes++;
-	int timeout = 1;
-
-	if(n->mtuprobes > 32) {
-		if(!n->minmtu) {
-			n->mtuprobes = 31;
-			timeout = pinginterval;
-			goto end;
-		}
-
-		logger(DEBUG_TRAFFIC, LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
-		n->status.udp_confirmed = false;
-		n->mtuprobes = 1;
-		n->minmtu = 0;
-		n->maxmtu = MTU;
-	}
-
-	if(n->mtuprobes >= 10 && n->mtuprobes < 32 && !n->minmtu) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
-		n->mtuprobes = 31;
-	}
+	/* mtuprobes == 0..29: initial discovery, send bursts with 1 second interval, mtuprobes++
+	   mtuprobes ==    30: fix MTU, and go to 31
+	   mtuprobes ==    31: send one >maxmtu probe every pingtimeout */
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
 		if(n->minmtu > n->maxmtu)
@@ -124,26 +101,25 @@ static void send_mtu_probe_handler(void *data) {
 		n->mtuprobes = 31;
 	}
 
+	int timeout;
 	if(n->mtuprobes == 31) {
-		timeout = pinginterval;
-		goto end;
-	} else if(n->mtuprobes == 32) {
+		/* After the initial discovery, we only send one >maxmtu probe
+		   to detect PMTU increases. */
+		if(n->maxmtu + 8 < MTU)
+			send_udp_probe_packet(n, n->maxmtu + 8);
 		timeout = pingtimeout;
-	}
+	} else {
+		/* Probes are sent in batches of three, with random sizes between the
+		   lower and upper boundaries for the MTU thus far discovered. */
+		for (int i = 0; i < 3; i++) {
+			int len = n->maxmtu;
+			if(n->minmtu < n->maxmtu)
+				len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
 
-	/* After the initial discovery, a fourth packet is added to each batch with a
-	   size larger than the currently known PMTU, to test if the PMTU has increased. */
-	if (n->mtuprobes >= 30 && n->maxmtu + 8 < MTU)
-		send_udp_probe_packet(n, n->maxmtu + 8);
-
-	/* Probes are sent in batches of three, with random sizes between the
-	   lower and upper boundaries for the MTU thus far discovered. */
-	for (int i = 0; i < 3; i++) {
-		int len = n->maxmtu;
-		if(n->minmtu < n->maxmtu)
-			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
-
-		send_udp_probe_packet(n, MAX(len, 64));
+			send_udp_probe_packet(n, MAX(len, 64));
+		}
+		timeout = 1;
+		n->mtuprobes++;
 	}
 
 	n->probe_counter = 0;
@@ -151,6 +127,7 @@ static void send_mtu_probe_handler(void *data) {
 
 	/* Calculate the packet loss of incoming traffic by comparing the rate of
 	   packets received to the rate with which the sequence number has increased.
+	   TODO: this is unrelated to PMTU discovery - it should be moved elsewhere.
 	 */
 
 	if(n->received > n->prev_received)
@@ -161,7 +138,6 @@ static void send_mtu_probe_handler(void *data) {
 	n->prev_received_seqno = n->received_seqno;
 	n->prev_received = n->received;
 
-end:
 	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
 }
 
@@ -177,7 +153,7 @@ static void udp_probe_timeout_handler(void *data) {
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Too much time has elapsed since last UDP ping response from %s (%s), stopping UDP communication", n->name, n->hostname);
 	n->status.udp_confirmed = false;
-	n->mtuprobes = 1;
+	n->mtuprobes = 0;
 	n->minmtu = 0;
 	n->maxmtu = MTU;
 }
@@ -231,20 +207,11 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			timeout_add(&n->udp_ping_timeout, &udp_probe_timeout_handler, n, &(struct timeval){udp_discovery_timeout, 0});
 		}
 
-		/* If we haven't established the PMTU yet, restart the discovery process. */
-
-		if(n->mtuprobes > 30) {
-			if (probelen == n->maxmtu + 8) {
-				logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
-				n->maxmtu = MTU;
-				n->mtuprobes = 10;
-				return;
-			}
-
-			if(n->minmtu)
-				n->mtuprobes = 30;
-			else
-				n->mtuprobes = 1;
+		if(probelen >= n->maxmtu + 8) {
+			logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+			n->maxmtu = MTU;
+			n->mtuprobes = 10;
+			return;
 		}
 
 		/* If applicable, raise the minimum supported MTU */
@@ -278,6 +245,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
 			n->probe_time = probe_timestamp;
 		} else if(n->probe_counter == 3) {
+			/* TODO: this will never fire after initial MTU discovery. */
 			struct timeval probe_timestamp_diff;
 			timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
 			n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
