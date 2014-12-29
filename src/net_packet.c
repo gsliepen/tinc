@@ -78,18 +78,35 @@ static void send_udp_probe_packet(node_t *n, int len) {
 	send_udppacket(n, &packet);
 }
 
-static void send_mtu_probe_handler(void *data) {
-	node_t *n = data;
+// This function tries to determines the MTU of a node.
+// By calling this function repeatedly, n->minmtu will be progressively increased, and at some point, n->mtu will be fixed to n->minmtu.
+// If the MTU is already fixed, this function checks if it can be increased.
+static void try_mtu(node_t *n) {
+	if(!(n->options & OPTION_PMTU_DISCOVERY))
+		return;
 
-	if(!n->status.reachable || !n->status.validkey) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
+	if(udp_discovery && !n->status.udp_confirmed) {
 		n->mtuprobes = 0;
+		n->minmtu = 0;
+		n->maxmtu = MTU;
 		return;
 	}
 
 	/* mtuprobes == 0..29: initial discovery, send bursts with 1 second interval, mtuprobes++
 	   mtuprobes ==    30: fix MTU, and go to 31
 	   mtuprobes ==    31: send one >maxmtu probe every pingtimeout */
+
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	struct timeval elapsed;
+	timersub(&now, &n->probe_sent_time, &elapsed);
+	if(n->mtuprobes < 31) {
+		if(n->mtuprobes != 0 && elapsed.tv_sec < 1)
+			return;
+	} else {
+		if(elapsed.tv_sec < pingtimeout)
+			return;
+	}
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
 		if(n->minmtu > n->maxmtu)
@@ -107,7 +124,6 @@ static void send_mtu_probe_handler(void *data) {
 		   to detect PMTU increases. */
 		if(n->maxmtu + 8 < MTU)
 			send_udp_probe_packet(n, n->maxmtu + 8);
-		timeout = pingtimeout;
 	} else {
 		/* Probes are sent in batches of three, with random sizes between the
 		   lower and upper boundaries for the MTU thus far discovered. */
@@ -118,12 +134,12 @@ static void send_mtu_probe_handler(void *data) {
 
 			send_udp_probe_packet(n, MAX(len, 64));
 		}
-		timeout = 1;
 		n->mtuprobes++;
 	}
 
 	n->probe_counter = 0;
-	gettimeofday(&n->probe_time, NULL);
+	n->probe_sent_time = now;
+	n->probe_time = now;
 
 	/* Calculate the packet loss of incoming traffic by comparing the rate of
 	   packets received to the rate with which the sequence number has increased.
@@ -137,13 +153,6 @@ static void send_mtu_probe_handler(void *data) {
 
 	n->prev_received_seqno = n->received_seqno;
 	n->prev_received = n->received;
-
-	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
-}
-
-void send_mtu_probe(node_t *n) {
-	timeout_add(&n->mtutimeout, send_mtu_probe_handler, n, &(struct timeval){1, 0});
-	send_mtu_probe_handler(n);
 }
 
 static void udp_probe_timeout_handler(void *data) {
@@ -961,8 +970,10 @@ static void try_tx(node_t *n) {
 	if(!n->status.sptps && !via->status.validkey && via->last_req_key + 10 <= now.tv_sec) {
 		send_req_key(via);
 		via->last_req_key = now.tv_sec;
-	} else if(via == n || !n->status.sptps || (via->options >> 24) >= 4)
+	} else if(via == n || !n->status.sptps || (via->options >> 24) >= 4) {
 		try_udp(via);
+		try_mtu(via);
+	}
 
 	/* If we don't know how to reach "via" yet, then try to reach it through a relay. */
 	if(n->status.sptps && !via->status.udp_confirmed && via->nexthop != via && (via->nexthop->options >> 24) >= 4)

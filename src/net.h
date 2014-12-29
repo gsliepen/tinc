@@ -205,7 +205,6 @@ extern void terminate_connection(struct connection_t *, bool);
 extern bool node_read_ecdsa_public_key(struct node_t *);
 extern bool read_ecdsa_public_key(struct connection_t *);
 extern bool read_rsa_public_key(struct connection_t *);
-extern void send_mtu_probe(struct node_t *);
 extern void handle_device_data(void *, int);
 extern void handle_meta_connection_data(struct connection_t *);
 extern void regenerate_key(void);

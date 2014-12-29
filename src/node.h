@@ -94,7 +94,7 @@ typedef struct node_t {
 	length_t minmtu;                        /* Probed minimum MTU */
 	length_t maxmtu;                        /* Probed maximum MTU */
 	int mtuprobes;                          /* Number of probes */
-	timeout_t mtutimeout;                   /* Probe event */
+	struct timeval probe_sent_time;         /* Time the last probe was sent */
 	struct timeval probe_time;              /* Time the last probe was sent or received */
 	int probe_counter;                      /* Number of probes received since last burst was sent */
 	float rtt;                              /* Last measured round trip time */
