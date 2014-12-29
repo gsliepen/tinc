@@ -145,6 +145,7 @@ bool read_ecdsa_public_key(connection_t *c) {
 	return c->ecdsa;
 }
 
+#ifndef DISABLE_LEGACY
 bool read_rsa_public_key(connection_t *c) {
 	if(ecdsa_active(c->ecdsa))
 		return true;
@@ -182,6 +183,7 @@ bool read_rsa_public_key(connection_t *c) {
 	free(fname);
 	return c->rsa;
 }
+#endif
 
 static bool read_ecdsa_private_key(void) {
 	FILE *fp;
@@ -248,6 +250,7 @@ static bool read_invitation_key(void) {
 	return invitation_key;
 }
 
+#ifndef DISABLE_LEGACY
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname;
@@ -304,6 +307,7 @@ static bool read_rsa_private_key(void) {
 	free(fname);
 	return myself->connection->rsa;
 }
+#endif
 
 static timeout_t keyexpire_timeout;
 
@@ -773,6 +777,13 @@ static bool setup_myself(void) {
 
 	myself->options |= PROT_MINOR << 24;
 
+#ifdef DISABLE_LEGACY
+	experimental = read_ecdsa_private_key();
+	if(!experimental) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "No private key available, cannot start tinc!");
+		return false;
+	}
+#else
 	if(!get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental)) {
 		experimental = read_ecdsa_private_key();
 		if(!experimental)
@@ -790,6 +801,7 @@ static bool setup_myself(void) {
 			return false;
 		}
 	}
+#endif
 
 	/* Ensure myport is numeric */
 
@@ -854,6 +866,7 @@ static bool setup_myself(void) {
 		sptps_replaywin = replaywin;
 	}
 
+#ifndef DISABLE_LEGACY
 	/* Generate packet encryption key */
 
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
@@ -891,6 +904,7 @@ static bool setup_myself(void) {
 	}
 
 	free(digest);
+#endif
 
 	/* Compression */
 

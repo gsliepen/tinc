@@ -266,6 +266,9 @@ bool send_ans_key(node_t *to) {
 	if(to->status.sptps)
 		abort();
 
+#ifdef DISABLE_LEGACY
+	return false;
+#else
 	size_t keylen = myself->incipher ? cipher_keylength(myself->incipher) : 1;
 	char key[keylen * 2 + 1];
 
@@ -306,6 +309,7 @@ bool send_ans_key(node_t *to) {
 						digest_get_nid(to->indigest),
 						(int)digest_length(to->indigest),
 						to->incompression);
+#endif
 }
 
 bool ans_key_h(connection_t *c, const char *request) {
@@ -371,9 +375,11 @@ bool ans_key_h(connection_t *c, const char *request) {
 		return send_request(to->nexthop->connection, "%s", request);
 	}
 
+#ifndef DISABLE_LEGACY
 	/* Don't use key material until every check has passed. */
 	cipher_close(from->outcipher);
 	digest_close(from->outdigest);
+#endif
 	from->status.validkey = false;
 
 	if(compression < 0 || compression > 11) {
@@ -408,6 +414,10 @@ bool ans_key_h(connection_t *c, const char *request) {
 		return true;
 	}
 
+#ifdef DISABLE_LEGACY
+	logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%) uses legacy protocol!", from->name, from->hostname);
+	return false;
+#else
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
@@ -462,4 +472,5 @@ bool ans_key_h(connection_t *c, const char *request) {
 		send_mtu_probe(from);
 
 	return true;
+#endif
 }

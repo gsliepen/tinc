@@ -33,6 +33,8 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#include "ed25519/sha512.h"
+
 int addressfamily = AF_UNSPEC;
 
 static void scan_for_hostname(const char *filename, char **hostname, char **port) {
@@ -270,8 +272,6 @@ int cmd_invite(int argc, char *argv[]) {
 		}
 	}
 
-	char hash[25];
-
 	xasprintf(&filename, "%s" SLASH "invitations", confbase);
 	if(mkdir(filename, 0700) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", filename, strerror(errno));
@@ -365,11 +365,9 @@ int cmd_invite(int argc, char *argv[]) {
 		return 1;
 
 	// Create a hash of the key.
+	char hash[64];
 	char *fingerprint = ecdsa_get_base64_public_key(key);
-	digest_t *digest = digest_open_by_name("sha256", 18);
-	if(!digest)
-		abort();
-	digest_create(digest, fingerprint, strlen(fingerprint), hash);
+	sha512(fingerprint, strlen(fingerprint), hash);
 	b64encode_urlsafe(hash, hash, 18);
 
 	// Create a random cookie for this invitation.
@@ -378,10 +376,10 @@ int cmd_invite(int argc, char *argv[]) {
 
 	// Create a filename that doesn't reveal the cookie itself
 	char buf[18 + strlen(fingerprint)];
-	char cookiehash[25];
+	char cookiehash[64];
 	memcpy(buf, cookie, 18);
 	memcpy(buf + 18, fingerprint, sizeof buf - 18);
-	digest_create(digest, buf, sizeof buf, cookiehash);
+	sha512(buf, sizeof buf, cookiehash);
 	b64encode_urlsafe(cookiehash, cookiehash, 18);
 
 	b64encode_urlsafe(cookie, cookie, 18);
@@ -739,8 +737,9 @@ make_names:
 
 	sptps_send_record(&sptps, 1, b64key, strlen(b64key));
 	free(b64key);
+	ecdsa_free(key);
 
-
+#ifndef DISABLE_LEGACY
 	rsa_t *rsa = rsa_generate(2048, 0x1001);
 	xasprintf(&filename, "%s" SLASH "rsa_key.priv", confbase);
 	f = fopenmask(filename, "w", 0600);
@@ -751,8 +750,8 @@ make_names:
 	rsa_write_pem_public_key(rsa, fh);
 	fclose(fh);
 
-	ecdsa_free(key);
 	rsa_free(rsa);
+#endif
 
 	check_port(name);
 
@@ -958,11 +957,8 @@ int cmd_join(int argc, char *argv[]) {
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;
-	digest_t *digest = digest_open_by_name("sha256", 18);
-	if(!digest)
-		abort();
-	char hishash[18];
-	if(!digest_create(digest, fingerprint, strlen(fingerprint), hishash)) {
+	char hishash[64];
+	if(sha512(fingerprint, strlen(fingerprint), hishash)) {
 		fprintf(stderr, "Could not create digest\n%s\n", line + 2);
 		return 1;
 	}

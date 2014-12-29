@@ -58,6 +58,9 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
+#ifdef DISABLE_LEGACY
+		return false;
+#else
 		size_t outlen = length;
 
 		if(!cipher_encrypt(c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
@@ -65,6 +68,7 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 					c->name, c->hostname);
 			return false;
 		}
+#endif
 	} else {
 		buffer_add(&c->outbuf, buffer, length);
 	}
@@ -170,6 +174,9 @@ bool receive_meta(connection_t *c) {
 			inlen -= endp - bufp;
 			bufp = endp;
 		} else {
+#ifdef DISABLE_LEGACY
+			return false;
+#else
 			size_t outlen = inlen;
 
 			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
@@ -179,6 +186,7 @@ bool receive_meta(connection_t *c) {
 			}
 
 			inlen = 0;
+#endif
 		}
 
 		while(c->inbuf.len) {

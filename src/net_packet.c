@@ -351,10 +351,14 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(n->status.sptps)
 		return sptps_verify_datagram(&n->sptps, DATA(inpkt), inpkt->len);
 
+#ifdef DISABLE_LEGACY
+	return false;
+#else
 	if(!digest_active(n->indigest) || inpkt->len < sizeof(seqno_t) + digest_length(n->indigest))
 		return false;
 
 	return digest_verify(n->indigest, SEQNO(inpkt), inpkt->len - digest_length(n->indigest), DATA(inpkt) + inpkt->len - digest_length(n->indigest));
+#endif
 }
 
 static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -383,6 +387,9 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		return true;
 	}
 
+#ifdef DISABLE_LEGACY
+	return false;
+#else
 	if(!n->status.validkey) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
 		return false;
@@ -491,6 +498,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	else
 		receive_packet(n, inpkt);
 	return true;
+#endif
 }
 
 void receive_tcppacket(connection_t *c, const char *buffer, int len) {
@@ -681,6 +689,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(n->status.sptps)
 		return send_sptps_packet(n, origpkt);
 
+#ifdef DISABLE_LEGACY
+	return;
+#else
 	/* Make sure we have a valid key */
 
 	if(!n->status.validkey) {
@@ -789,6 +800,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 end:
 	origpkt->len = origlen;
+#endif
 }
 
 static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const void *data, size_t len) {

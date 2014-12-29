@@ -22,6 +22,8 @@
 
 #define DIGEST_MAX_SIZE 64
 
+#ifndef DISABLE_LEGACY
+
 typedef struct digest digest_t;
 
 extern digest_t *digest_open_by_name(const char *name, int maclength) __attribute__ ((__malloc__));
@@ -35,5 +37,7 @@ extern int digest_get_nid(const digest_t *);
 extern size_t digest_keylength(const digest_t *);
 extern size_t digest_length(const digest_t *);
 extern bool digest_active(const digest_t *);
+
+#endif
 
 #endif

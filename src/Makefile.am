@@ -92,6 +92,8 @@ tincd_SOURCES = \
 	utils.c utils.h \
 	xalloc.h \
 	version.c version.h \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -111,6 +113,9 @@ tinc_SOURCES = \
 	top.c top.h \
 	utils.c utils.h \
 	version.c version.h \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
+	ed25519/ecdsagen.c \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -119,12 +124,15 @@ sptps_test_SOURCES = \
 	sptps.c sptps.h \
 	sptps_test.c \
 	utils.c utils.h \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
 sptps_keypair_SOURCES = \
 	sptps_keypair.c \
 	utils.c utils.h \
+	ed25519/ecdsagen.c \
 	$(ed25519_SOURCES)
 
 sptps_speed_SOURCES = \
@@ -132,6 +140,9 @@ sptps_speed_SOURCES = \
 	sptps.c sptps.h \
 	sptps_speed.c \
 	utils.c utils.h \
+	ed25519/ecdh.c \
+	ed25519/ecdsa.c \
+	ed25519/ecdsagen.c \
 	$(ed25519_SOURCES) \
 	$(chacha_poly1305_SOURCES)
 
@@ -173,54 +184,36 @@ tincd_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	ed25519/ecdh.c \
-	ed25519/ecdsa.c \
 	openssl/prf.c \
 	openssl/rsa.c
 tinc_SOURCES += \
 	openssl/cipher.c \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	ed25519/ecdh.c \
-	ed25519/ecdsa.c \
-	ed25519/ecdsagen.c \
 	openssl/prf.c \
 	openssl/rsa.c \
 	openssl/rsagen.c
 sptps_test_SOURCES += \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	ed25519/ecdh.c \
-	ed25519/ecdsa.c \
 	openssl/prf.c
 sptps_keypair_SOURCES += \
-	openssl/crypto.c \
-	ed25519/ecdsagen.c
+	openssl/crypto.c
 sptps_speed_SOURCES += \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
-	ed25519/ecdh.c \
-	ed25519/ecdsa.c \
-	ed25519/ecdsagen.c \
 	openssl/prf.c
-endif
-
-if GCRYPT
+elif GCRYPT
 tincd_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
-	gcrypt/ecdh.c \
-	gcrypt/ecdsa.c \
 	gcrypt/prf.c \
 	gcrypt/rsa.c
 tinc_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
-	gcrypt/ecdh.c \
-	gcrypt/ecdsa.c \
-	gcrypt/ecdsagen.c \
 	gcrypt/prf.c \
 	gcrypt/rsa.c \
 	gcrypt/rsagen.c
@@ -228,9 +221,28 @@ sptps_test_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
 	gcrypt/digest.c gcrypt/digest.h \
-	gcrypt/ecdh.c \
-	gcrypt/ecdsa.c \
 	gcrypt/prf.c
+sptps_keypair_SOURCES += \
+	openssl/crypto.c
+sptps_speed_SOURCES += \
+	openssl/crypto.c \
+	openssl/digest.c openssl/digest.h \
+	openssl/prf.c
+else
+tincd_SOURCES += \
+	nolegacy/crypto.c \
+	nolegacy/prf.c
+tinc_SOURCES += \
+	nolegacy/crypto.c \
+	nolegacy/prf.c
+sptps_test_SOURCES += \
+	nolegacy/crypto.c \
+	nolegacy/prf.c
+sptps_keypair_SOURCES += \
+	nolegacy/crypto.c
+sptps_speed_SOURCES += \
+	nolegacy/crypto.c \
+	nolegacy/prf.c
 endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)

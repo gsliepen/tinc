@@ -55,14 +55,16 @@ void free_connection(connection_t *c) {
 	if(!c)
 		return;
 
+#ifndef DISABLE_LEGACY
 	cipher_close(c->incipher);
 	digest_close(c->indigest);
 	cipher_close(c->outcipher);
 	digest_close(c->outdigest);
+	rsa_free(c->rsa);
+#endif
 
 	sptps_stop(&c->sptps);
 	ecdsa_free(c->ecdsa);
-	rsa_free(c->rsa);
 
 	free(c->hischallenge);
 

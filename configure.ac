@@ -211,23 +211,33 @@ AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [
 
 AC_CACHE_SAVE
 
+AC_ARG_ENABLE(legacy-protocol,
+  AS_HELP_STRING([--disable-legacy-protocol], [disable support for the legacy (tinc 1.0) protocol]),
+  [ AS_IF([test "x$enable_legacy_protocol" = "xno"],
+    [ AC_DEFINE(DISABLE_LEGACY, 1, [Disable support for the legacy (tinc 1.0) protocol]) ])
+  ]
+)
+
 dnl These are defined in files in m4/
 
 dnl AC_ARG_WITH(libgcrypt, AC_HELP_STRING([--with-libgcrypt], [enable use of libgcrypt instead of OpenSSL])], [])
+dnl AC_ARG_WITH(openssl, AC_HELP_STRING([--without-openssl], [disable support for OpenSSL])], [])
 
 tinc_CURSES
 tinc_READLINE
 tinc_ZLIB
 tinc_LZO
 
-if test -n "$with_libgcrypt"; then
-	gcrypt=true
-	tinc_LIBGCRYPT
-else
-	openssl=true
-	tinc_OPENSSL
+if test "x$enable_legacy_protocol" != "xno"; then
+	if test -n "$with_libgcrypt"; then
+		gcrypt=true
+		tinc_LIBGCRYPT
+	else
+		openssl=true
+		tinc_OPENSSL
+	fi
 fi
-	
+
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
 AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
 

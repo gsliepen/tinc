@@ -24,6 +24,8 @@
 #define CIPHER_MAX_IV_SIZE 16
 #define CIPHER_MAX_KEY_SIZE 32
 
+#ifndef DISABLE_LEGACY
+
 typedef struct cipher cipher_t;
 
 extern cipher_t *cipher_open_by_name(const char *) __attribute__ ((__malloc__));
@@ -38,5 +40,7 @@ extern bool cipher_encrypt(cipher_t *, const void *indata, size_t inlen, void *o
 extern bool cipher_decrypt(cipher_t *, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) __attribute__ ((__warn_unused_result__));
 extern int cipher_get_nid(const cipher_t *);
 extern bool cipher_active(const cipher_t *);
+
+#endif
 
 #endif
