@@ -241,6 +241,7 @@ static void check_reachability(void) {
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
+			timeout_del(&n->udp_ping_timeout);
 			timeout_del(&n->mtutimeout);
 
 			char *name;

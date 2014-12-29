@@ -87,6 +87,9 @@ typedef struct node_t {
 	uint32_t farfuture;                     /* Packets in a row that have arrived from the far future */
 	unsigned char* late;                    /* Bitfield marking late packets */
 
+	struct timeval udp_ping_sent;           /* Last time a ping probe was sent */
+	timeout_t udp_ping_timeout;             /* Ping timeout event */
+
 	length_t mtu;                           /* Maximum size of packets to send to this node */
 	length_t minmtu;                        /* Probed minimum MTU */
 	length_t maxmtu;                        /* Probed maximum MTU */

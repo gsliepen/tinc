@@ -1232,6 +1232,22 @@ and will only allow connections with nodes for which host config files are prese
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
 Setting this options also implicitly sets StrictSubnets.
 
+@cindex UDPDiscovey
+@item UDPDiscovery = <yes|no> (yes)
+When this option is enabled tinc will try to establish UDP connectivity to nodes,
+using TCP while it determines if a node is reachable over UDP. If it is disabled,
+tinc always assumes a node is reachable over UDP.
+Note that tinc will never use UDP with nodes that have TCPOnly enabled.
+
+@cindex UDPDiscoveryInterval
+@item UDPDiscoveryInterval = <seconds> (9)
+The minimum amount of time between sending UDP ping datagrams to test UDP connectivity.
+
+@cindex UDPDiscoveryTimeout
+@item UDPDiscoveryTimeout = <seconds> (30)
+If tinc doesn't receive any UDP ping replies over the specified interval,
+it will assume UDP communication is broken and will fall back to TCP.
+
 @cindex UDPRcvBuf
 @item UDPRcvBuf = <bytes> (OS default)
 Sets the socket receive buffer size for the UDP socket, in bytes.

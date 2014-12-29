@@ -59,10 +59,13 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 
 unsigned replaywin = 16;
 bool localdiscovery = true;
+bool udp_discovery = true;
+int udp_discovery_interval = 9;
+int udp_discovery_timeout = 30;
 
 #define MAX_SEQNO 1073741824
 
-static void send_mtu_probe_packet(node_t *n, int len) {
+static void send_udp_probe_packet(node_t *n, int len) {
 	vpn_packet_t packet;
 	packet.offset = DEFAULT_PACKET_OFFSET;
 	memset(DATA(&packet), 0, 14);
@@ -70,7 +73,7 @@ static void send_mtu_probe_packet(node_t *n, int len) {
 	packet.len = len;
 	packet.priority = 0;
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending MTU probe length %d to %s (%s)", len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %d to %s (%s)", len, n->name, n->hostname);
 
 	send_udppacket(n, &packet);
 }
@@ -131,7 +134,7 @@ static void send_mtu_probe_handler(void *data) {
 	/* After the initial discovery, a fourth packet is added to each batch with a
 	   size larger than the currently known PMTU, to test if the PMTU has increased. */
 	if (n->mtuprobes >= 30 && n->maxmtu + 8 < MTU)
-		send_mtu_probe_packet(n, n->maxmtu + 8);
+		send_udp_probe_packet(n, n->maxmtu + 8);
 
 	/* Probes are sent in batches of three, with random sizes between the
 	   lower and upper boundaries for the MTU thus far discovered. */
@@ -140,14 +143,14 @@ static void send_mtu_probe_handler(void *data) {
 		if(n->minmtu < n->maxmtu)
 			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
 
-		send_mtu_probe_packet(n, MAX(len, 64));
+		send_udp_probe_packet(n, MAX(len, 64));
 	}
 
 	/* In case local discovery is enabled, another packet is added to each batch,
 	   which will be broadcast to the local network. */
 	if(localdiscovery && n->mtuprobes <= 10 && n->prevedge) {
 		n->status.send_locally = true;
-		send_mtu_probe_packet(n, 16);
+		send_udp_probe_packet(n, 16);
 		n->status.send_locally = false;
 	}
 
@@ -175,9 +178,21 @@ void send_mtu_probe(node_t *n) {
 	send_mtu_probe_handler(n);
 }
 
-static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
+static void udp_probe_timeout_handler(void *data) {
+	node_t *n = data;
+	if(!n->status.udp_confirmed)
+		return;
+
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Too much time has elapsed since last UDP ping response from %s (%s), stopping UDP communication", n->name, n->hostname);
+	n->status.udp_confirmed = false;
+	n->mtuprobes = 1;
+	n->minmtu = 0;
+	n->maxmtu = MTU;
+}
+
+static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!DATA(packet)[0]) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got MTU probe request %d from %s (%s)", packet->len, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
 
 		/* It's a probe request, send back a reply */
 
@@ -207,18 +222,22 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		length_t probelen = len;
 		if (DATA(packet)[0] == 2) {
 			if (len < 3)
-				logger(DEBUG_TRAFFIC, LOG_WARNING, "Received invalid (too short) MTU probe reply from %s (%s)", n->name, n->hostname);
+				logger(DEBUG_TRAFFIC, LOG_WARNING, "Received invalid (too short) UDP probe reply from %s (%s)", n->name, n->hostname);
 			else {
 				uint16_t probelen16; memcpy(&probelen16, DATA(packet) + 1, 2); probelen = ntohs(probelen16);
 			}
 		}
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d MTU probe reply %d from %s (%s)", DATA(packet)[0], probelen, n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], probelen, n->name, n->hostname);
 
 		/* It's a valid reply: now we know bidirectional communication
 		   is possible using the address and socket that the reply
 		   packet used. */
-
 		n->status.udp_confirmed = true;
+
+		if(udp_discovery) {
+			timeout_del(&n->udp_ping_timeout);
+			timeout_add(&n->udp_ping_timeout, &udp_probe_timeout_handler, n, &(struct timeval){udp_discovery_timeout, 0});
+		}
 
 		/* If we haven't established the PMTU yet, restart the discovery process. */
 
@@ -493,7 +512,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	inpkt->priority = 0;
 
 	if(!DATA(inpkt)[12] && !DATA(inpkt)[13])
-		mtu_probe_h(n, inpkt, origlen);
+		udp_probe_h(n, inpkt, origlen);
 	else
 		receive_packet(n, inpkt);
 	return true;
@@ -860,7 +879,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 	if(type == PKT_PROBE) {
 		inpkt.len = len;
 		memcpy(DATA(&inpkt), data, len);
-		mtu_probe_h(from, &inpkt, len);
+		udp_probe_h(from, &inpkt, len);
 		return true;
 	}
 
@@ -935,6 +954,24 @@ static void try_sptps(node_t *n) {
 	return;
 }
 
+// This function tries to establish a UDP tunnel to a node so that packets can be sent.
+// If a tunnel is already established, it makes sure it stays up.
+// This function makes no guarantees - it is up to the caller to check the node's state to figure out if UDP is usable.
+static void try_udp(node_t* n) {
+	if(!udp_discovery)
+		return;
+
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	struct timeval ping_tx_elapsed;
+	timersub(&now, &n->udp_ping_sent, &ping_tx_elapsed);
+
+	if(ping_tx_elapsed.tv_sec >= udp_discovery_interval) {
+		send_udp_probe_packet(n, MAX(n->minmtu, 16));
+		n->udp_ping_sent = now;
+	}
+}
+
 // This function tries to establish a tunnel to a node (or its relay) so that packets can be sent (e.g. get SPTPS keys).
 // If a tunnel is already established, it tries to improve it (e.g. by trying to establish a UDP tunnel instead of TCP).
 // This function makes no guarantees - it is up to the caller to check the node's state to figure out if TCP and/or UDP is usable.
@@ -958,7 +995,8 @@ static void try_tx(node_t *n) {
 	if(!n->status.sptps && !via->status.validkey && via->last_req_key + 10 <= now.tv_sec) {
 		send_req_key(via);
 		via->last_req_key = now.tv_sec;
-	}
+	} else if(via == n || !n->status.sptps || (via->options >> 24) >= 4)
+		try_udp(via);
 
 	/* If we don't know how to reach "via" yet, then try to reach it through a relay. */
 	if(n->status.sptps && !via->status.udp_confirmed && via->nexthop != via && (via->nexthop->options >> 24) >= 4)

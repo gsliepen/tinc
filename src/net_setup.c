@@ -510,6 +510,10 @@ bool setup_myself_reloadable(void) {
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
 
+	get_config_bool(lookup_config(config_tree, "UDPDiscovery"), &udp_discovery);
+	get_config_int(lookup_config(config_tree, "UDPDiscoveryInterval"), &udp_discovery_interval);
+	get_config_int(lookup_config(config_tree, "UDPDiscoveryTimeout"), &udp_discovery_timeout);
+
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
 

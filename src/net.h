@@ -138,6 +138,10 @@ extern int addressfamily;
 extern unsigned replaywin;
 extern bool localdiscovery;
 
+extern bool udp_discovery;
+extern int udp_discovery_interval;
+extern int udp_discovery_timeout;
+
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern io_t unix_socket;
