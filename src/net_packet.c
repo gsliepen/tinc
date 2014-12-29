@@ -146,14 +146,6 @@ static void send_mtu_probe_handler(void *data) {
 		send_udp_probe_packet(n, MAX(len, 64));
 	}
 
-	/* In case local discovery is enabled, another packet is added to each batch,
-	   which will be broadcast to the local network. */
-	if(localdiscovery && n->mtuprobes <= 10 && n->prevedge) {
-		n->status.send_locally = true;
-		send_udp_probe_packet(n, 16);
-		n->status.send_locally = false;
-	}
-
 	n->probe_counter = 0;
 	gettimeofday(&n->probe_time, NULL);
 
@@ -969,6 +961,12 @@ static void try_udp(node_t* n) {
 	if(ping_tx_elapsed.tv_sec >= udp_discovery_interval) {
 		send_udp_probe_packet(n, MAX(n->minmtu, 16));
 		n->udp_ping_sent = now;
+
+		if(localdiscovery && !n->status.udp_confirmed && n->prevedge) {
+			n->status.send_locally = true;
+			send_udp_probe_packet(n, 16);
+			n->status.send_locally = false;
+		}
 	}
 }
 

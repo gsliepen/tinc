@@ -1081,8 +1081,8 @@ This will allow direct communication using LAN addresses, even if both peers are
 and they only ConnectTo a third node outside the NAT,
 which normally would prevent the peers from learning each other's LAN address.
 
-Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
-This feature may not work in all possible situations.
+Currently, local discovery is implemented by sending some packets to the local address of the node during UDP discovery.
+This will not work with old nodes that don't transmit their local address.
 
 @cindex LocalDiscoveryAddress
 @item LocalDiscoveryAddress <@var{address}>
