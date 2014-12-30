@@ -157,10 +157,9 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			try_fix_mtu(n);
 		}
 
-		/* Calculate RTT and bandwidth.
+		/* Calculate RTT.
 		   The RTT is the time between the MTU probe burst was sent and the first
-		   reply is received. The bandwidth is measured using the time between the
-		   arrival of the first and third probe reply (or type 2 probe requests).
+		   reply is received.
 		 */
 
 		struct timeval now, diff;
@@ -180,12 +179,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		if(n->probe_counter == 1) {
 			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
 			n->probe_time = probe_timestamp;
-		} else if(n->probe_counter == 3) {
-			/* TODO: this will never fire - we're not sending batches of three anymore. */
-			struct timeval probe_timestamp_diff;
-			timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
-			n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, burst bandwidth %.3f Mbit/s, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->bandwidth * 8e-6, n->packetloss * 1e2);
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->packetloss * 1e2);
 		}
 	}
 }

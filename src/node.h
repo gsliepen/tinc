@@ -98,7 +98,6 @@ typedef struct node_t {
 	struct timeval probe_time;              /* Time the last probe was sent or received */
 	int probe_counter;                      /* Number of probes received since last burst was sent */
 	float rtt;                              /* Last measured round trip time */
-	float bandwidth;                        /* Last measured bandwidth */
 	float packetloss;                       /* Last measured packet loss rate */
 
 	uint64_t in_packets;
