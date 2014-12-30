@@ -40,6 +40,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <limits.h>
+#include <math.h>
 
 #ifdef HAVE_MINGW
 #include <w32api.h>

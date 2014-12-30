@@ -250,7 +250,7 @@ endif
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 sptps_speed_LDADD = -lrt
 
-LIBS = @LIBS@
+LIBS = @LIBS@ -lm
 
 if TUNEMU
 LIBS += -lpcap

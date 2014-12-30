@@ -922,13 +922,30 @@ static void try_mtu(node_t *n) {
 		if(n->maxmtu + 8 < MTU)
 			send_udp_probe_packet(n, n->maxmtu + 8);
 	} else {
-		/* Probes are sent with random sizes between the
-		   lower and upper boundaries for the MTU thus far discovered. */
-		int len = n->maxmtu;
-		if(n->minmtu < n->maxmtu)
-			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
-		send_udp_probe_packet(n, MAX(len, 64));
+		/* Decreasing the number of probes per cycle might make the algorithm react faster to lost packets,
+		   but it will typically increase convergence time in the no-loss case. */
+		const length_t probes_per_cycle = 8;
 
+		/* This magic value was determined using math simulations.
+		   It will result in a 1339-byte first probe, followed (if there was a reply) by a 1417-byte probe.
+		   Since 1417 is just below the range of tinc MTUs over typical networks,
+		   this fine-tuning allows tinc to cover a lot of ground very quickly. */
+		const float multiplier = 0.982;
+
+		const float cycle_position = probes_per_cycle - (n->mtuprobes % probes_per_cycle) - 1;
+		const length_t minmtu = MAX(n->minmtu, 64);
+		const float interval = n->maxmtu - minmtu;
+
+		/* The core of the discovery algorithm is this exponential.
+		   It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
+		   This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
+		   are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
+		   on the precise MTU as we are approaching it.
+		   The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
+		   reply per cycle so that we can make progress. */
+		const length_t offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+
+		send_udp_probe_packet(n, minmtu + offset);
 		if(n->mtuprobes >= 0)
 			n->mtuprobes++;
 	}
