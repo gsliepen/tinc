@@ -69,7 +69,7 @@ static void try_fix_mtu(node_t *n) {
 	if(n->mtuprobes < 0)
 		return;
 
-	if(n->mtuprobes == 30 || n->minmtu >= n->maxmtu) {
+	if(n->mtuprobes == 90 || n->minmtu >= n->maxmtu) {
 		if(n->minmtu > n->maxmtu)
 			n->minmtu = n->maxmtu;
 		else
@@ -144,7 +144,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		if(probelen >= n->maxmtu + 8) {
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
 			n->maxmtu = MTU;
-			n->mtuprobes = 10;
+			n->mtuprobes = 30;
 			return;
 		}
 
@@ -181,7 +181,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
 			n->probe_time = probe_timestamp;
 		} else if(n->probe_counter == 3) {
-			/* TODO: this will never fire after initial MTU discovery. */
+			/* TODO: this will never fire - we're not sending batches of three anymore. */
 			struct timeval probe_timestamp_diff;
 			timersub(&probe_timestamp, &n->probe_time, &probe_timestamp_diff);
 			n->bandwidth = 2.0 * probelen / (probe_timestamp_diff.tv_sec + probe_timestamp_diff.tv_usec * 1e-6);
@@ -903,8 +903,8 @@ static void try_mtu(node_t *n) {
 		return;
 	}
 
-	/* mtuprobes == 0..29: initial discovery, send bursts with 1 second interval, mtuprobes++
-	   mtuprobes ==    30: fix MTU, and go to -1
+	/* mtuprobes == 0..89: initial discovery, send bursts with 1 second interval, mtuprobes++
+	   mtuprobes ==    90: fix MTU, and go to -1
 	   mtuprobes ==    -1: send one >maxmtu probe every pingtimeout */
 
 	struct timeval now;
@@ -912,7 +912,7 @@ static void try_mtu(node_t *n) {
 	struct timeval elapsed;
 	timersub(&now, &n->probe_sent_time, &elapsed);
 	if(n->mtuprobes >= 0) {
-		if(n->mtuprobes != 0 && elapsed.tv_sec < 1)
+		if(n->mtuprobes != 0 && elapsed.tv_sec == 0 && elapsed.tv_usec < 333333)
 			return;
 	} else {
 		if(elapsed.tv_sec < pingtimeout)
@@ -928,15 +928,12 @@ static void try_mtu(node_t *n) {
 		if(n->maxmtu + 8 < MTU)
 			send_udp_probe_packet(n, n->maxmtu + 8);
 	} else {
-		/* Probes are sent in batches of three, with random sizes between the
+		/* Probes are sent with random sizes between the
 		   lower and upper boundaries for the MTU thus far discovered. */
-		for (int i = 0; i < 3; i++) {
-			int len = n->maxmtu;
-			if(n->minmtu < n->maxmtu)
-				len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
-
-			send_udp_probe_packet(n, MAX(len, 64));
-		}
+		int len = n->maxmtu;
+		if(n->minmtu < n->maxmtu)
+			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+		send_udp_probe_packet(n, MAX(len, 64));
 
 		if(n->mtuprobes >= 0)
 			n->mtuprobes++;
