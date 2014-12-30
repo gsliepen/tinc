@@ -69,7 +69,7 @@ static void try_fix_mtu(node_t *n) {
 	if(n->mtuprobes < 0)
 		return;
 
-	if(n->mtuprobes == 90 || n->minmtu >= n->maxmtu) {
+	if(n->mtuprobes == 20 || n->minmtu >= n->maxmtu) {
 		if(n->minmtu > n->maxmtu)
 			n->minmtu = n->maxmtu;
 		else
@@ -141,10 +141,10 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			timeout_add(&n->udp_ping_timeout, &udp_probe_timeout_handler, n, &(struct timeval){udp_discovery_timeout, 0});
 		}
 
-		if(probelen >= n->maxmtu + 8) {
+		if(probelen >= n->maxmtu + 1) {
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
 			n->maxmtu = MTU;
-			n->mtuprobes = 30;
+			n->mtuprobes = 0;
 			return;
 		}
 
@@ -897,8 +897,8 @@ static void try_mtu(node_t *n) {
 		return;
 	}
 
-	/* mtuprobes == 0..89: initial discovery, send bursts with 1 second interval, mtuprobes++
-	   mtuprobes ==    90: fix MTU, and go to -1
+	/* mtuprobes == 0..19: initial discovery, send bursts with 1 second interval, mtuprobes++
+	   mtuprobes ==    20: fix MTU, and go to -1
 	   mtuprobes ==    -1: send one >maxmtu probe every pingtimeout */
 
 	struct timeval now;
@@ -919,8 +919,8 @@ static void try_mtu(node_t *n) {
 	if(n->mtuprobes < 0) {
 		/* After the initial discovery, we only send one >maxmtu probe
 		   to detect PMTU increases. */
-		if(n->maxmtu + 8 < MTU)
-			send_udp_probe_packet(n, n->maxmtu + 8);
+		if(n->maxmtu + 1 < MTU)
+			send_udp_probe_packet(n, n->maxmtu + 1);
 	} else {
 		/* Decreasing the number of probes per cycle might make the algorithm react faster to lost packets,
 		   but it will typically increase convergence time in the no-loss case. */
