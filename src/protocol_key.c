@@ -412,7 +412,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	}
 
 #ifdef DISABLE_LEGACY
-	logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%) uses legacy protocol!", from->name, from->hostname);
+	logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses legacy protocol!", from->name, from->hostname);
 	return false;
 #else
 	/* Check and lookup cipher and digest algorithms */
