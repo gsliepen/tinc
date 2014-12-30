@@ -214,11 +214,11 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	// Recover the filename from the cookie and the key
 	char *fingerprint = ecdsa_get_base64_public_key(invitation_key);
-	char hashbuf[18 + strlen(fingerprint)];
+	unsigned char hashbuf[18 + strlen(fingerprint)];
 	char cookie[64];
 	memcpy(hashbuf, data, 18);
 	memcpy(hashbuf + 18, fingerprint, sizeof hashbuf - 18);
-	sha512(hashbuf, sizeof hashbuf, cookie);
+	sha512(hashbuf, sizeof hashbuf, (unsigned char*)cookie);
 	b64encode_urlsafe(cookie, cookie, 18);
 	free(fingerprint);
 

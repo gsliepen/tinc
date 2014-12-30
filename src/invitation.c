@@ -367,7 +367,7 @@ int cmd_invite(int argc, char *argv[]) {
 	// Create a hash of the key.
 	char hash[64];
 	char *fingerprint = ecdsa_get_base64_public_key(key);
-	sha512(fingerprint, strlen(fingerprint), hash);
+	sha512((unsigned char*)fingerprint, strlen(fingerprint), (unsigned char*)hash);
 	b64encode_urlsafe(hash, hash, 18);
 
 	// Create a random cookie for this invitation.
@@ -379,7 +379,7 @@ int cmd_invite(int argc, char *argv[]) {
 	char cookiehash[64];
 	memcpy(buf, cookie, 18);
 	memcpy(buf + 18, fingerprint, sizeof buf - 18);
-	sha512(buf, sizeof buf, cookiehash);
+	sha512((unsigned char*)buf, sizeof buf, (unsigned char*)cookiehash);
 	b64encode_urlsafe(cookiehash, cookiehash, 18);
 
 	b64encode_urlsafe(cookie, cookie, 18);
@@ -957,8 +957,8 @@ int cmd_join(int argc, char *argv[]) {
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;
-	char hishash[64];
-	if(sha512(fingerprint, strlen(fingerprint), hishash)) {
+	unsigned char hishash[64];
+	if(sha512((unsigned char*) fingerprint, strlen(fingerprint), hishash)) {
 		fprintf(stderr, "Could not create digest\n%s\n", line + 2);
 		return 1;
 	}
