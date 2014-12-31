@@ -37,6 +37,8 @@
 #include "digest.h"
 #include "device.h"
 #include "ethernet.h"
+#include "ipv4.h"
+#include "ipv6.h"
 #include "graph.h"
 #include "logger.h"
 #include "net.h"
@@ -144,7 +146,8 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		if(probelen >= n->maxmtu + 1) {
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
 			n->maxmtu = MTU;
-			n->mtuprobes = 0;
+			/* Set mtuprobes to 1 so that try_mtu() doesn't reset maxmtu */
+			n->mtuprobes = 1;
 			return;
 		}
 
@@ -883,6 +886,67 @@ static void try_udp(node_t* n) {
 	}
 }
 
+static length_t choose_initial_maxmtu(node_t *n) {
+#ifdef IP_MTU
+
+	int sock = -1;
+
+	const sockaddr_t *sa = NULL;
+	int sockindex;
+	choose_udp_address(n, &sa, &sockindex);
+	if(!sa)
+		return MTU;
+
+	sock = socket(sa->sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+	if(sock < 0) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Creating MTU assessment socket for %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
+		return MTU;
+	}
+
+	if(connect(sock, &sa->sa, SALEN(sa->sa))) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Connecting MTU assessment socket for %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
+		close(sock);
+		return MTU;
+	}
+
+	int ip_mtu;
+	socklen_t ip_mtu_len = sizeof ip_mtu;
+	if(getsockopt(sock, IPPROTO_IP, IP_MTU, &ip_mtu, &ip_mtu_len)) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
+		close(sock);
+		return MTU;
+	}
+
+	close(sock);
+
+	/* getsockopt(IP_MTU) returns the MTU of the physical interface.
+	   We need to remove various overheads to get to the tinc MTU. */
+	length_t mtu = ip_mtu;
+	mtu -= (sa->sa.sa_family == AF_INET6) ? sizeof(struct ip6_hdr) : sizeof(struct ip);
+	mtu -= 8; /* UDP */
+	if(n->status.sptps) {
+		mtu -= SPTPS_DATAGRAM_OVERHEAD;
+		if((n->options >> 24) >= 4)
+			mtu -= sizeof(node_id_t) + sizeof(node_id_t);
+	}
+
+	if (mtu < 512) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) returned absurdly small value: %d", n->name, n->hostname, ip_mtu);
+		return MTU;
+	}
+	if (mtu > MTU)
+		return MTU;
+
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Using system-provided maximum tinc MTU for %s (%s): %hd", n->name, n->hostname, mtu);
+	return mtu;
+
+#else
+
+	return MTU;
+
+#endif
+}
+
 // This function tries to determines the MTU of a node.
 // By calling this function repeatedly, n->minmtu will be progressively increased, and at some point, n->mtu will be fixed to n->minmtu.
 // If the MTU is already fixed, this function checks if it can be increased.
@@ -922,6 +986,11 @@ static void try_mtu(node_t *n) {
 		if(n->maxmtu + 1 < MTU)
 			send_udp_probe_packet(n, n->maxmtu + 1);
 	} else {
+		/* Before initial discovery begins, set maxmtu to the most likely value.
+		   If it's underestimated, we will correct it after initial discovery. */
+		if(n->mtuprobes == 0)
+			n->maxmtu = choose_initial_maxmtu(n);
+
 		/* Decreasing the number of probes per cycle might make the algorithm react faster to lost packets,
 		   but it will typically increase convergence time in the no-loss case. */
 		const length_t probes_per_cycle = 8;
