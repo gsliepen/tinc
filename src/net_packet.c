@@ -998,8 +998,11 @@ static void try_mtu(node_t *n) {
 		/* This magic value was determined using math simulations.
 		   It will result in a 1329-byte first probe, followed (if there was a reply) by a 1407-byte probe.
 		   Since 1407 is just below the range of tinc MTUs over typical networks,
-		   this fine-tuning allows tinc to cover a lot of ground very quickly. */
-		const float multiplier = 0.97;
+		   this fine-tuning allows tinc to cover a lot of ground very quickly.
+		   This fine-tuning is only valid for maxmtu = MTU; if maxmtu is smaller,
+		   then it's better to use a multiplier of 1. Indeed, this leads to an interesting scenario
+		   if choose_initial_maxmtu() returns the actual MTU value - it will get confirmed with one single probe. */
+		const float multiplier = (n->maxmtu == MTU) ? 0.97 : 1;
 
 		const float cycle_position = probes_per_cycle - (n->mtuprobes % probes_per_cycle) - 1;
 		const length_t minmtu = MAX(n->minmtu, 512);
