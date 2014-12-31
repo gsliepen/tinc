@@ -1848,7 +1848,7 @@ static int cmd_generate_keys(int argc, char *argv[]) {
 		name = get_my_name(false);
 
 #ifndef DISABLE_LEGACY
-	if(!rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true)
+	if(!rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true))
 		return 1;
 #endif
 

@@ -203,7 +203,8 @@ sptps_speed_SOURCES += \
 	openssl/crypto.c \
 	openssl/digest.c openssl/digest.h \
 	openssl/prf.c
-elif GCRYPT
+else
+if GCRYPT
 tincd_SOURCES += \
 	gcrypt/cipher.c \
 	gcrypt/crypto.c \
@@ -243,6 +244,7 @@ sptps_keypair_SOURCES += \
 sptps_speed_SOURCES += \
 	nolegacy/crypto.c \
 	nolegacy/prf.c
+endif
 endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
