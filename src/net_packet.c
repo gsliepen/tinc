@@ -927,13 +927,13 @@ static void try_mtu(node_t *n) {
 		const length_t probes_per_cycle = 8;
 
 		/* This magic value was determined using math simulations.
-		   It will result in a 1339-byte first probe, followed (if there was a reply) by a 1417-byte probe.
-		   Since 1417 is just below the range of tinc MTUs over typical networks,
+		   It will result in a 1329-byte first probe, followed (if there was a reply) by a 1407-byte probe.
+		   Since 1407 is just below the range of tinc MTUs over typical networks,
 		   this fine-tuning allows tinc to cover a lot of ground very quickly. */
-		const float multiplier = 0.982;
+		const float multiplier = 0.97;
 
 		const float cycle_position = probes_per_cycle - (n->mtuprobes % probes_per_cycle) - 1;
-		const length_t minmtu = MAX(n->minmtu, 64);
+		const length_t minmtu = MAX(n->minmtu, 512);
 		const float interval = n->maxmtu - minmtu;
 
 		/* The core of the discovery algorithm is this exponential.
