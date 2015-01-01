@@ -66,7 +66,7 @@ int udp_discovery_timeout = 30;
 #define MAX_SEQNO 1073741824
 
 static void try_fix_mtu(node_t *n) {
-	if(n->mtuprobes > 30)
+	if(n->mtuprobes < 0)
 		return;
 
 	if(n->mtuprobes == 30 || n->minmtu >= n->maxmtu) {
@@ -76,7 +76,7 @@ static void try_fix_mtu(node_t *n) {
 			n->maxmtu = n->minmtu;
 		n->mtu = n->minmtu;
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
-		n->mtuprobes = 31;
+		n->mtuprobes = -1;
 	}
 }
 
@@ -904,14 +904,14 @@ static void try_mtu(node_t *n) {
 	}
 
 	/* mtuprobes == 0..29: initial discovery, send bursts with 1 second interval, mtuprobes++
-	   mtuprobes ==    30: fix MTU, and go to 31
-	   mtuprobes ==    31: send one >maxmtu probe every pingtimeout */
+	   mtuprobes ==    30: fix MTU, and go to -1
+	   mtuprobes ==    -1: send one >maxmtu probe every pingtimeout */
 
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	struct timeval elapsed;
 	timersub(&now, &n->probe_sent_time, &elapsed);
-	if(n->mtuprobes < 31) {
+	if(n->mtuprobes >= 0) {
 		if(n->mtuprobes != 0 && elapsed.tv_sec < 1)
 			return;
 	} else {
@@ -922,7 +922,7 @@ static void try_mtu(node_t *n) {
 	try_fix_mtu(n);
 
 	int timeout;
-	if(n->mtuprobes == 31) {
+	if(n->mtuprobes < 0) {
 		/* After the initial discovery, we only send one >maxmtu probe
 		   to detect PMTU increases. */
 		if(n->maxmtu + 8 < MTU)
