@@ -65,6 +65,21 @@ int udp_discovery_timeout = 30;
 
 #define MAX_SEQNO 1073741824
 
+static void try_fix_mtu(node_t *n) {
+	if(n->mtuprobes > 30)
+		return;
+
+	if(n->mtuprobes == 30 || n->minmtu >= n->maxmtu) {
+		if(n->minmtu > n->maxmtu)
+			n->minmtu = n->maxmtu;
+		else
+			n->maxmtu = n->minmtu;
+		n->mtu = n->minmtu;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
+		n->mtuprobes = 31;
+	}
+}
+
 static void udp_probe_timeout_handler(void *data) {
 	node_t *n = data;
 	if(!n->status.udp_confirmed)
@@ -137,8 +152,10 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 		if(probelen > n->maxmtu)
 			probelen = n->maxmtu;
-		if(n->minmtu < probelen)
+		if(n->minmtu < probelen) {
 			n->minmtu = probelen;
+			try_fix_mtu(n);
+		}
 
 		/* Calculate RTT and bandwidth.
 		   The RTT is the time between the MTU probe burst was sent and the first
@@ -658,6 +675,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				n->maxmtu = origlen - 1;
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
+			try_fix_mtu(n);
 		} else
 			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
 	}
@@ -722,6 +740,7 @@ static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const void 
 				relay->maxmtu = len - 1;
 			if(relay->mtu >= len)
 				relay->mtu = len - 1;
+			try_fix_mtu(relay);
 		} else {
 			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", relay->name, relay->hostname, sockstrerror(sockerrno));
 			return false;
@@ -900,15 +919,7 @@ static void try_mtu(node_t *n) {
 			return;
 	}
 
-	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
-		if(n->minmtu > n->maxmtu)
-			n->minmtu = n->maxmtu;
-		else
-			n->maxmtu = n->minmtu;
-		n->mtu = n->minmtu;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
-		n->mtuprobes = 31;
-	}
+	try_fix_mtu(n);
 
 	int timeout;
 	if(n->mtuprobes == 31) {
@@ -926,7 +937,9 @@ static void try_mtu(node_t *n) {
 
 			send_udp_probe_packet(n, MAX(len, 64));
 		}
-		n->mtuprobes++;
+
+		if(n->mtuprobes >= 0)
+			n->mtuprobes++;
 	}
 
 	n->probe_counter = 0;
