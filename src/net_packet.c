@@ -991,33 +991,41 @@ static void try_mtu(node_t *n) {
 		if(n->mtuprobes == 0)
 			n->maxmtu = choose_initial_maxmtu(n);
 
-		/* Decreasing the number of probes per cycle might make the algorithm react faster to lost packets,
-		   but it will typically increase convergence time in the no-loss case. */
-		const length_t probes_per_cycle = 8;
+		for (;;) {
+			/* Decreasing the number of probes per cycle might make the algorithm react faster to lost packets,
+			   but it will typically increase convergence time in the no-loss case. */
+			const length_t probes_per_cycle = 8;
 
-		/* This magic value was determined using math simulations.
-		   It will result in a 1329-byte first probe, followed (if there was a reply) by a 1407-byte probe.
-		   Since 1407 is just below the range of tinc MTUs over typical networks,
-		   this fine-tuning allows tinc to cover a lot of ground very quickly.
-		   This fine-tuning is only valid for maxmtu = MTU; if maxmtu is smaller,
-		   then it's better to use a multiplier of 1. Indeed, this leads to an interesting scenario
-		   if choose_initial_maxmtu() returns the actual MTU value - it will get confirmed with one single probe. */
-		const float multiplier = (n->maxmtu == MTU) ? 0.97 : 1;
+			/* This magic value was determined using math simulations.
+			   It will result in a 1329-byte first probe, followed (if there was a reply) by a 1407-byte probe.
+			   Since 1407 is just below the range of tinc MTUs over typical networks,
+			   this fine-tuning allows tinc to cover a lot of ground very quickly.
+			   This fine-tuning is only valid for maxmtu = MTU; if maxmtu is smaller,
+			   then it's better to use a multiplier of 1. Indeed, this leads to an interesting scenario
+			   if choose_initial_maxmtu() returns the actual MTU value - it will get confirmed with one single probe. */
+			const float multiplier = (n->maxmtu == MTU) ? 0.97 : 1;
 
-		const float cycle_position = probes_per_cycle - (n->mtuprobes % probes_per_cycle) - 1;
-		const length_t minmtu = MAX(n->minmtu, 512);
-		const float interval = n->maxmtu - minmtu;
+			const float cycle_position = probes_per_cycle - (n->mtuprobes % probes_per_cycle) - 1;
+			const length_t minmtu = MAX(n->minmtu, 512);
+			const float interval = n->maxmtu - minmtu;
 
-		/* The core of the discovery algorithm is this exponential.
-		   It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
-		   This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
-		   are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
-		   on the precise MTU as we are approaching it.
-		   The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
-		   reply per cycle so that we can make progress. */
-		const length_t offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+			/* The core of the discovery algorithm is this exponential.
+			   It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
+			   This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
+			   are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
+			   on the precise MTU as we are approaching it.
+			   The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
+			   reply per cycle so that we can make progress. */
+			const length_t offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
 
-		send_udp_probe_packet(n, minmtu + offset);
+			length_t maxmtu = n->maxmtu;
+			send_udp_probe_packet(n, minmtu + offset);
+			/* If maxmtu changed, it means the probe was rejected by the system because it was too large.
+			   In that case, we recalculate with the new maxmtu and try again. */
+			if(n->mtuprobes < 0 || maxmtu == n->maxmtu)
+				break;
+		}
+
 		if(n->mtuprobes >= 0)
 			n->mtuprobes++;
 	}
