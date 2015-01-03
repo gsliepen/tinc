@@ -1394,6 +1394,17 @@ skip_harder:
 			return;
 		}
 
+		/* The packet is supposed to come from the originator or its static relay
+		   (i.e. with no dynamic relays in between).
+		   If it did not, "help" the static relay by sending it UDP info.
+		   Note that we only do this if we're the destination or the static relay;
+		   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
+
+		if(n != from->via && to->via == myself)
+			send_udp_info(myself, from);
+
+		/* If we're not the final recipient, relay the packet. */
+
 		if(to != myself) {
 			send_sptps_data_priv(to, n, 0, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t));
 			try_tx_sptps(n, true);

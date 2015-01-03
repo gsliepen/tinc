@@ -236,6 +236,13 @@ bool req_key_h(connection_t *c, const char *request) {
 		return true;
 	}
 
+	/* If this is a SPTPS packet, see if sending UDP info helps.
+	   Note that we only do this if we're the destination or the static relay;
+	   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
+
+	if(experimental && (reqno == REQ_KEY || reqno == REQ_SPTPS) && to->via == myself)
+		send_udp_info(myself, from);
+
 	/* Check if this key request is for us */
 
 	if(to == myself) {                      /* Yes */

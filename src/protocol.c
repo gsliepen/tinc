@@ -41,6 +41,8 @@ static bool (*request_handlers[])(connection_t *, const char *) = {
 		add_subnet_h, del_subnet_h,
 		add_edge_h, del_edge_h,
 		key_changed_h, req_key_h, ans_key_h, tcppacket_h, control_h,
+		NULL, NULL, NULL, /* Not "real" requests (yet) */
+		udp_info_h,
 };
 
 /* Request names */
@@ -51,6 +53,7 @@ static char (*request_name[]) = {
 		"PING", "PONG",
 		"ADD_SUBNET", "DEL_SUBNET",
 		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET", "CONTROL",
+		"REQ_PUBKEY", "ANS_PUBKEY", "REQ_SPTPS", "UDP_INFO",
 };
 
 static splay_tree_t *past_request_tree;
