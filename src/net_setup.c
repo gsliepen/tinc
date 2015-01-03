@@ -511,6 +511,7 @@ bool setup_myself_reloadable(void) {
 		myself->options |= OPTION_INDIRECT;
 
 	get_config_bool(lookup_config(config_tree, "UDPDiscovery"), &udp_discovery);
+	get_config_int(lookup_config(config_tree, "UDPDiscoveryKeepaliveInterval"), &udp_discovery_keepalive_interval);
 	get_config_int(lookup_config(config_tree, "UDPDiscoveryInterval"), &udp_discovery_interval);
 	get_config_int(lookup_config(config_tree, "UDPDiscoveryTimeout"), &udp_discovery_timeout);
 

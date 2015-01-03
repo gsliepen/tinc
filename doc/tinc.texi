@@ -1239,9 +1239,14 @@ using TCP while it determines if a node is reachable over UDP. If it is disabled
 tinc always assumes a node is reachable over UDP.
 Note that tinc will never use UDP with nodes that have TCPOnly enabled.
 
+@cindex UDPDiscoveryKeepaliveInterval
+@item UDPDiscoveryKeepaliveInterval = <seconds> (9)
+The minimum amount of time between sending UDP ping datagrams to check UDP connectivity once it has been established.
+Note that these pings are large, since they are used to verify link MTU as well.
+
 @cindex UDPDiscoveryInterval
-@item UDPDiscoveryInterval = <seconds> (9)
-The minimum amount of time between sending UDP ping datagrams to test UDP connectivity.
+@item UDPDiscoveryInterval = <seconds> (2)
+The minimum amount of time between sending UDP ping datagrams to try to establish UDP connectivity.
 
 @cindex UDPDiscoveryTimeout
 @item UDPDiscoveryTimeout = <seconds> (30)

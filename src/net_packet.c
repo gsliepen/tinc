@@ -62,7 +62,8 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 unsigned replaywin = 16;
 bool localdiscovery = true;
 bool udp_discovery = true;
-int udp_discovery_interval = 9;
+int udp_discovery_keepalive_interval = 9;
+int udp_discovery_interval = 2;
 int udp_discovery_timeout = 30;
 
 #define MAX_SEQNO 1073741824
@@ -874,7 +875,9 @@ static void try_udp(node_t* n) {
 	struct timeval ping_tx_elapsed;
 	timersub(&now, &n->udp_ping_sent, &ping_tx_elapsed);
 
-	if(ping_tx_elapsed.tv_sec >= udp_discovery_interval) {
+	int interval = n->status.udp_confirmed ? udp_discovery_keepalive_interval : udp_discovery_interval;
+
+	if(ping_tx_elapsed.tv_sec >= interval) {
 		send_udp_probe_packet(n, MAX(n->minmtu, 16));
 		n->udp_ping_sent = now;
 

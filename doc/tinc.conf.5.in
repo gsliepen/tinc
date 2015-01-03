@@ -492,8 +492,11 @@ tinc always assumes a node is reachable over UDP.
 Note that tinc will never use UDP with nodes that have
 .Va TCPOnly
 enabled.
-.It Va UDPDiscoveryInterval Li = Ar seconds Pq 9
-The minimum amount of time between sending UDP ping datagrams to test UDP connectivity.
+.It Va UDPDiscoveryKeepaliveInterval Li = Ar seconds Pq 9
+The minimum amount of time between sending UDP ping datagrams to check UDP connectivity once it has been established.
+Note that these pings are large, since they are used to verify link MTU as well.
+.It Va UDPDiscoveryInterval Li = Ar seconds Pq 2
+The minimum amount of time between sending UDP ping datagrams to try to establish UDP connectivity.
 .It Va UDPDiscoveryTimeout Li = Ar seconds Pq 30
 If tinc doesn't receive any UDP ping replies over the specified interval,
 it will assume UDP communication is broken and will fall back to TCP.

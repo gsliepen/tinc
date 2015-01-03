@@ -1365,6 +1365,7 @@ const var_t variables[] = {
 	{"StrictSubnets", VAR_SERVER},
 	{"TunnelServer", VAR_SERVER},
 	{"UDPDiscovery", VAR_SERVER},
+	{"UDPDiscoveryKeepaliveInterval", VAR_SERVER},
 	{"UDPDiscoveryInterval", VAR_SERVER},
 	{"UDPDiscoveryTimeout", VAR_SERVER},
 	{"UDPRcvBuf", VAR_SERVER},
