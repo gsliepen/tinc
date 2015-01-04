@@ -870,8 +870,6 @@ static void try_udp(node_t* n) {
 	if(!udp_discovery)
 		return;
 
-	struct timeval now;
-	gettimeofday(&now, NULL);
 	struct timeval ping_tx_elapsed;
 	timersub(&now, &n->udp_ping_sent, &ping_tx_elapsed);
 
@@ -968,8 +966,6 @@ static void try_mtu(node_t *n) {
 	   mtuprobes ==    20: fix MTU, and go to -1
 	   mtuprobes ==    -1: send one >maxmtu probe every pingtimeout */
 
-	struct timeval now;
-	gettimeofday(&now, NULL);
 	struct timeval elapsed;
 	timersub(&now, &n->probe_sent_time, &elapsed);
 	if(n->mtuprobes >= 0) {
@@ -982,7 +978,6 @@ static void try_mtu(node_t *n) {
 
 	try_fix_mtu(n);
 
-	int timeout;
 	if(n->mtuprobes < 0) {
 		/* After the initial discovery, we only send one >maxmtu probe
 		   to detect PMTU increases. */
