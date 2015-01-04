@@ -88,7 +88,7 @@ static const uint64_t K[80] = {
 #endif
 
 /* compress 1024-bits */
-static int sha512_compress(sha512_context *md, unsigned char *buf)
+static int sha512_compress(sha512_context *md, const unsigned char *buf)
 {
     uint64_t S[8], W[80], t0, t1;
     int i;
@@ -168,8 +168,9 @@ int sha512_init(sha512_context * md) {
    @param inlen  The length of the data (octets)
    @return 0 if successful
 */
-int sha512_update(sha512_context *md, const unsigned char *in, size_t inlen)
+int sha512_update(sha512_context *md, const void *vin, size_t inlen)
 {
+    const unsigned char *in = vin;
     size_t n;
     size_t i;
     int           err;
@@ -180,7 +181,7 @@ int sha512_update(sha512_context *md, const unsigned char *in, size_t inlen)
     }
     while (inlen > 0) {
         if (md->curlen == 0 && inlen >= 128) {
-           if ((err = sha512_compress (md, (unsigned char *)in)) != 0) {
+           if ((err = sha512_compress (md, in)) != 0) {
               return err;
            }
            md->length += 128 * 8;
@@ -215,9 +216,10 @@ int sha512_update(sha512_context *md, const unsigned char *in, size_t inlen)
    @param out [out] The destination of the hash (64 bytes)
    @return 0 if successful
 */
-int sha512_final(sha512_context * md, unsigned char *out)
+int sha512_final(sha512_context * md, void *vout)
 {
     int i;
+    unsigned char *out = vout;
 
     if (md == NULL) return 1;
     if (out == NULL) return 1;
@@ -264,7 +266,7 @@ int sha512_final(sha512_context * md, unsigned char *out)
    return 0;
 }
 
-int sha512(const unsigned char *message, size_t message_len, unsigned char *out)
+int sha512(const void *message, size_t message_len, void *out)
 {
     sha512_context ctx;
     int ret;
