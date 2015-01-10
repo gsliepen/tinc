@@ -1111,6 +1111,11 @@ static void try_tx_sptps(node_t *n) {
 }
 
 static void try_tx_legacy(node_t *n) {
+	/* Does he have our key? If not, send one. */
+
+	if(!n->status.validkey_in)
+		send_ans_key(n);
+
 	/* Check if we already have a key, or request one. */
 
 	if(!n->status.validkey) {
