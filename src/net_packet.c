@@ -948,9 +948,12 @@ static length_t choose_initial_maxmtu(node_t *n) {
 #endif
 }
 
-// This function tries to determines the MTU of a node.
-// By calling this function repeatedly, n->minmtu will be progressively increased, and at some point, n->mtu will be fixed to n->minmtu.
-// If the MTU is already fixed, this function checks if it can be increased.
+/* This function tries to determines the MTU of a node.
+   By calling this function repeatedly, n->minmtu will be progressively
+   increased, and at some point, n->mtu will be fixed to n->minmtu.  If the MTU
+   is already fixed, this function checks if it can be increased.
+*/
+
 static void try_mtu(node_t *n) {
 	if(!(n->options & OPTION_PMTU_DISCOVERY))
 		return;
@@ -1046,44 +1049,65 @@ static void try_mtu(node_t *n) {
 	n->prev_received = n->received;
 }
 
-// This function tries to establish a tunnel to a node (or its relay) so that packets can be sent (e.g. get SPTPS keys).
-// If a tunnel is already established, it tries to improve it (e.g. by trying to establish a UDP tunnel instead of TCP).
-// This function makes no guarantees - it is up to the caller to check the node's state to figure out if TCP and/or UDP is usable.
-// By calling this function repeatedly, the tunnel is gradually improved until we hit the wall imposed by the underlying network environment.
-// It is recommended to call this function every time a packet is sent (or intended to be sent) to a node,
-// so that the tunnel keeps improving as packets flow, and then gracefully downgrades itself as it goes idle.
-static void try_tx(node_t *n) {
-	/* If n is a TCP-only neighbor, we'll only use "cleartext" PACKET
-	   messages anyway, so there's no need for SPTPS at all. Otherwise, get the keys. */
-	if(n->status.sptps && !(n->connection && ((myself->options | n->options) & OPTION_TCPONLY))) {
-		try_sptps(n);
-		if (!n->status.validkey)
-			return;
-	}
+/* These functions try to establish a tunnel to a node (or its relay) so that
+   packets can be sent (e.g. exchange keys).
+   If a tunnel is already established, it tries to improve it (e.g. by trying
+   to establish a UDP tunnel instead of TCP).  This function makes no
+   guarantees - it is up to the caller to check the node's state to figure out
+   if TCP and/or UDP is usable.  By calling this function repeatedly, the
+   tunnel is gradually improved until we hit the wall imposed by the underlying
+   network environment.  It is recommended to call this function every time a
+   packet is sent (or intended to be sent) to a node, so that the tunnel keeps
+   improving as packets flow, and then gracefully downgrades itself as it goes
+   idle.
+*/
 
-	node_t *via = (n->via == myself) ? n->nexthop : n->via;
-	
-	if((myself->options | via->options) & OPTION_TCPONLY)
+static void try_tx_sptps(node_t *n) {
+	/* If n is a TCP-only neighbor, we'll only use "cleartext" PACKET
+	   messages anyway, so there's no need for SPTPS at all. */
+
+	if(n->connection && ((myself->options | n->options) & OPTION_TCPONLY))
 		return;
 
-	if(!n->status.sptps && !via->status.validkey && via->last_req_key + 10 <= now.tv_sec) {
-		send_req_key(via);
-		via->last_req_key = now.tv_sec;
-	} else if(via == n || !n->status.sptps || (via->options >> 24) >= 4) {
-		try_udp(via);
-		try_mtu(via);
-	}
+	/* Otherwise, try to do SPTPS authentication with n if necessary. */
 
-	/* If we don't know how to reach "via" yet, then try to reach it through a relay. */
-	if(n->status.sptps && !via->status.udp_confirmed && via->nexthop != via && (via->nexthop->options >> 24) >= 4)
-		try_tx(via->nexthop);
+	try_sptps(n);
+
+	/* Do we need to relay packets? */
+
+	node_t *via = (n->via == myself) ? n->nexthop : n->via;
+
+	/* If the relay doesn't support SPTPS, everything goes via TCP anyway. */
+
+	if((via->options >> 24) < 4)
+		return;
+
+	/* If we do have a relay, try everything with that one instead. */
+
+	if(via != n)
+		return try_tx_sptps(via);
+
+	try_udp(n);
+	try_mtu(n);
 }
 
-/*
-  send a packet to the given vpn ip.
-*/
+static void try_tx_legacy(node_t *n) {
+	/* Check if we already have a key, or request one. */
+
+	if(!n->status.validkey) {
+		if(n->last_req_key + 10 <= now.tv_sec) {
+			send_req_key(n);
+			n->last_req_key = now.tv_sec;
+		}
+		return;
+	}
+
+	try_udp(n);
+	try_mtu(n);
+}
+
 void send_packet(node_t *n, vpn_packet_t *packet) {
-	node_t *via;
+	// If it's for myself, write it to the tun/tap device.
 
 	if(n == myself) {
 		if(overwrite_mac)
@@ -1094,43 +1118,46 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 		return;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_ERR, "Sending packet of %d bytes to %s (%s)",
-			   packet->len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_ERR, "Sending packet of %d bytes to %s (%s)", packet->len, n->name, n->hostname);
+
+	// If the node is not reachable, drop it.
 
 	if(!n->status.reachable) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Node %s (%s) is not reachable",
-				   n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Node %s (%s) is not reachable", n->name, n->hostname);
 		return;
 	}
+
+	// Keep track of packet statistics.
 
 	n->out_packets++;
 	n->out_bytes += packet->len;
 
+	// Check if it should be sent as an SPTPS packet.
+
 	if(n->status.sptps) {
 		send_sptps_packet(n, packet);
-		goto end;
+		try_tx_sptps(n);
+		return;
 	}
 
-	via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
+	// Determine which node to actually send it to.
+
+	node_t *via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
 	if(via != n)
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet to %s via %s (%s)",
-			   n->name, via->name, n->via->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet to %s via %s (%s)", n->name, via->name, n->via->hostname);
+
+	// Try to send via UDP, unless TCP is forced.
 
 	if(packet->priority == -1 || ((myself->options | via->options) & OPTION_TCPONLY)) {
 		if(!send_tcppacket(via->connection, packet))
 			terminate_connection(via->connection, true);
-	} else
-		send_udppacket(via, packet);
+		return;
+	}
 
-end:
-	/* Try to improve the tunnel.
-	   Note that we do this *after* we send the packet because sending actual packets take priority
-	   with regard to the send buffer space and latency. */
-	try_tx(n);
+	send_udppacket(via, packet);
+	try_tx_legacy(via);
 }
-
-/* Broadcast a packet using the minimum spanning tree */
 
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	// Always give ourself a copy of the packet.
