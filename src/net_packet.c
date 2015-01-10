@@ -929,6 +929,25 @@ static length_t choose_initial_maxmtu(node_t *n) {
 		mtu -= SPTPS_DATAGRAM_OVERHEAD;
 		if((n->options >> 24) >= 4)
 			mtu -= sizeof(node_id_t) + sizeof(node_id_t);
+	} else {
+		mtu -= digest_length(n->outdigest);
+
+		/* Now it's tricky. We use CBC mode, so the length of the
+		   encrypted payload must be a multiple of the blocksize. The
+		   sequence number is also part of the encrypted payload, so we
+		   must account for it after correcting for the blocksize.
+		   Furthermore, the padding in the last block must be at least
+		   1 byte. */
+
+		length_t blocksize = cipher_blocksize(n->outcipher);
+
+		if(blocksize > 1) {
+			mtu /= blocksize;
+			mtu *= blocksize;
+			mtu--;
+		}
+
+		mtu -= 4; // seqno
 	}
 
 	if (mtu < 512) {

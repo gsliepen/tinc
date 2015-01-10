@@ -79,6 +79,13 @@ size_t cipher_keylength(const cipher_t *cipher) {
 	return cipher->cipher->key_len + cipher->cipher->iv_len;
 }
 
+size_t cipher_blocksize(const cipher_t *cipher) {
+	if(!cipher || !cipher->cipher)
+		return 1;
+
+	return cipher->cipher->block_size;
+}
+
 bool cipher_set_key(cipher_t *cipher, void *key, bool encrypt) {
 	bool result;
 
