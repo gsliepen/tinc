@@ -97,9 +97,15 @@ static void udp_probe_timeout_handler(void *data) {
 
 static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!DATA(packet)[0]) {
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
-
 		/* It's a probe request, send back a reply */
+
+		if(!n->status.sptps && !n->status.validkey) {
+			// But not if we don't have his key.
+			logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request from %s (%s) but we don't have his key yet", n->name, n->hostname);
+			return;
+		}
+
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
 
 		/* Type 2 probe replies were introduced in protocol 17.3 */
 		if ((n->options >> 24) >= 3) {
