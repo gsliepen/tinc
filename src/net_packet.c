@@ -110,7 +110,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			gettimeofday(&now, NULL);
 			uint32_t sec = htonl(now.tv_sec); memcpy(data, &sec, 4); data += 4;
 			uint32_t usec = htonl(now.tv_usec); memcpy(data, &usec, 4); data += 4;
-			packet->len -= 10;
+			packet->len = 14; // Minimum size for any probe packet.
 		} else {
 			/* Legacy protocol: n won't understand type 2 probe replies. */
 			DATA(packet)[0] = 1;
