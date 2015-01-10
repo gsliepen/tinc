@@ -302,7 +302,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
-	if(!n->status.validkey) {
+	if(!n->status.validkey_in) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
 		return false;
 	}

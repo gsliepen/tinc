@@ -303,6 +303,8 @@ bool send_ans_key(node_t *to) {
 	to->received = 0;
 	if(replaywin) memset(to->late, 0, replaywin);
 
+	to->status.validkey_in = true;
+
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 						myself->name, to->name, key,
 						cipher_get_nid(to->incipher),

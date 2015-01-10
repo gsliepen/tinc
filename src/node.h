@@ -38,7 +38,8 @@ typedef struct node_status_t {
 	unsigned int sptps:1;                   /* 1 if this node supports SPTPS */
 	unsigned int udp_confirmed:1;           /* 1 if the address is one that we received UDP traffic on */
 	unsigned int send_locally:1;		/* 1 if the next UDP packet should be sent on the local network */
-	unsigned int unused:23;
+	unsigned int validkey_in;		/* 1 if we have sent a valid key to him */
+	unsigned int unused:22;
 } node_status_t;
 
 typedef struct node_t {

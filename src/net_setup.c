@@ -319,6 +319,8 @@ static void keyexpire_handler(void *data) {
 void regenerate_key(void) {
 	logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
 	send_key_changed();
+	for splay_each(node_t, n, node_tree)
+		n->status.validkey_in = false;
 }
 
 /*
