@@ -88,18 +88,15 @@ typedef struct node_t {
 	uint32_t farfuture;                     /* Packets in a row that have arrived from the far future */
 	unsigned char* late;                    /* Bitfield marking late packets */
 
-	struct timeval udp_ping_sent;           /* Last time a ping probe was sent */
+	struct timeval udp_ping_sent;           /* Last time a UDP probe was sent */
 	timeout_t udp_ping_timeout;             /* Ping timeout event */
+
+	struct timeval mtu_ping_sent;           /* Last time a MTU probe was sent */
 
 	length_t mtu;                           /* Maximum size of packets to send to this node */
 	length_t minmtu;                        /* Probed minimum MTU */
 	length_t maxmtu;                        /* Probed maximum MTU */
 	int mtuprobes;                          /* Number of probes */
-	struct timeval probe_sent_time;         /* Time the last probe was sent */
-	struct timeval probe_time;              /* Time the last probe was sent or received */
-	int probe_counter;                      /* Number of probes received since last burst was sent */
-	float rtt;                              /* Last measured round trip time */
-	float packetloss;                       /* Last measured packet loss rate */
 
 	uint64_t in_packets;
 	uint64_t in_bytes;

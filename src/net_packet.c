@@ -117,10 +117,6 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			uint8_t *data = DATA(packet);
 			*data++ = 2;
 			uint16_t len16 = htons(len); memcpy(data, &len16, 2); data += 2;
-			struct timeval now;
-			gettimeofday(&now, NULL);
-			uint32_t sec = htonl(now.tv_sec); memcpy(data, &sec, 4); data += 4;
-			uint32_t usec = htonl(now.tv_usec); memcpy(data, &usec, 4); data += 4;
 			packet->len = MIN_PROBE_SIZE;
 		} else {
 			/* Legacy protocol: n won't understand type 2 probe replies. */
@@ -170,31 +166,6 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		if(n->minmtu < probelen) {
 			n->minmtu = probelen;
 			try_fix_mtu(n);
-		}
-
-		/* Calculate RTT.
-		   The RTT is the time between the MTU probe burst was sent and the first
-		   reply is received.
-		 */
-
-		struct timeval now, diff;
-		gettimeofday(&now, NULL);
-		timersub(&now, &n->probe_time, &diff);
-
-		struct timeval probe_timestamp = now;
-		if (DATA(packet)[0] == 2 && packet->len >= 11) {
-			uint32_t sec; memcpy(&sec, DATA(packet) + 3, 4);
-			uint32_t usec; memcpy(&usec, DATA(packet) + 7, 4);
-			probe_timestamp.tv_sec = ntohl(sec);
-			probe_timestamp.tv_usec = ntohl(usec);
-		}
-		
-		n->probe_counter++;
-
-		if(n->probe_counter == 1) {
-			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
-			n->probe_time = probe_timestamp;
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->packetloss * 1e2);
 		}
 	}
 }
@@ -1000,7 +971,7 @@ static void try_mtu(node_t *n) {
 	   mtuprobes ==    -1: send one >maxmtu probe every pingtimeout */
 
 	struct timeval elapsed;
-	timersub(&now, &n->probe_sent_time, &elapsed);
+	timersub(&now, &n->mtu_ping_sent, &elapsed);
 	if(n->mtuprobes >= 0) {
 		if(n->mtuprobes != 0 && elapsed.tv_sec == 0 && elapsed.tv_usec < 333333)
 			return;
@@ -1008,6 +979,8 @@ static void try_mtu(node_t *n) {
 		if(elapsed.tv_sec < pingtimeout)
 			return;
 	}
+
+	n->mtu_ping_sent = now;
 
 	try_fix_mtu(n);
 
@@ -1061,23 +1034,6 @@ static void try_mtu(node_t *n) {
 		if(n->mtuprobes >= 0)
 			n->mtuprobes++;
 	}
-
-	n->probe_counter = 0;
-	n->probe_sent_time = now;
-	n->probe_time = now;
-
-	/* Calculate the packet loss of incoming traffic by comparing the rate of
-	   packets received to the rate with which the sequence number has increased.
-	   TODO: this is unrelated to PMTU discovery - it should be moved elsewhere.
-	 */
-
-	if(n->received > n->prev_received)
-		n->packetloss = 1.0 - (n->received - n->prev_received) / (float)(n->received_seqno - n->prev_received_seqno);
-	else
-		n->packetloss = n->received_seqno <= n->prev_received_seqno;
-
-	n->prev_received_seqno = n->received_seqno;
-	n->prev_received = n->received;
 }
 
 /* These functions try to establish a tunnel to a node (or its relay) so that
