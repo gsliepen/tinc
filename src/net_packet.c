@@ -101,75 +101,79 @@ static void udp_probe_timeout_handler(void *data) {
 	n->maxmtu = MTU;
 }
 
+static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) {
+	if(!n->status.sptps && !n->status.validkey) {
+		// But not if we don't have his key.
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request from %s (%s) but we don't have his key yet", n->name, n->hostname);
+		return;
+	}
+
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
+
+	/* Type 2 probe replies were introduced in protocol 17.3 */
+	if ((n->options >> 24) >= 3) {
+		uint8_t *data = DATA(packet);
+		*data++ = 2;
+		uint16_t len16 = htons(len);
+		memcpy(data, &len16, 2);
+		packet->len = MIN_PROBE_SIZE;
+	} else {
+		/* Legacy protocol: n won't understand type 2 probe replies. */
+		DATA(packet)[0] = 1;
+	}
+
+	/* Temporarily set udp_confirmed, so that the reply is sent
+	   back exactly the way it came in. */
+
+	bool udp_confirmed = n->status.udp_confirmed;
+	n->status.udp_confirmed = true;
+	send_udppacket(n, packet);
+	n->status.udp_confirmed = udp_confirmed;
+}
+
 static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!DATA(packet)[0]) {
 		/* It's a probe request, send back a reply */
+		return send_udp_probe_reply(n, packet, len);
+	}
 
-		if(!n->status.sptps && !n->status.validkey) {
-			// But not if we don't have his key.
-			logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request from %s (%s) but we don't have his key yet", n->name, n->hostname);
-			return;
-		}
+	if (DATA(packet)[0] == 2) {
+		// It's a type 2 probe reply, use the length field inside the packet
+		uint16_t len16;
+		memcpy(&len16, DATA(packet) + 1, 2);
+		len = ntohs(len16);
+	}
 
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], len, n->name, n->hostname);
 
-		/* Type 2 probe replies were introduced in protocol 17.3 */
-		if ((n->options >> 24) >= 3) {
-			uint8_t *data = DATA(packet);
-			*data++ = 2;
-			uint16_t len16 = htons(len); memcpy(data, &len16, 2); data += 2;
-			packet->len = MIN_PROBE_SIZE;
-		} else {
-			/* Legacy protocol: n won't understand type 2 probe replies. */
-			DATA(packet)[0] = 1;
-		}
+	/* It's a valid reply: now we know bidirectional communication
+	   is possible using the address and socket that the reply
+	   packet used. */
+	n->status.udp_confirmed = true;
 
-		/* Temporarily set udp_confirmed, so that the reply is sent
-		   back exactly the way it came in. */
+	if(udp_discovery) {
+		timeout_del(&n->udp_ping_timeout);
+		timeout_add(&n->udp_ping_timeout, &udp_probe_timeout_handler, n, &(struct timeval){udp_discovery_timeout, 0});
+	}
 
-		bool udp_confirmed = n->status.udp_confirmed;
-		n->status.udp_confirmed = true;
-		send_udppacket(n, packet);
-		n->status.udp_confirmed = udp_confirmed;
-	} else {
-		length_t probelen = len;
-		if (DATA(packet)[0] == 2) {
-			if (len < 3)
-				logger(DEBUG_TRAFFIC, LOG_WARNING, "Received invalid (too short) UDP probe reply from %s (%s)", n->name, n->hostname);
-			else {
-				uint16_t probelen16; memcpy(&probelen16, DATA(packet) + 1, 2); probelen = ntohs(probelen16);
-			}
-		}
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], probelen, n->name, n->hostname);
+	if(len > n->maxmtu) {
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+		n->minmtu = len;
+		n->maxmtu = MTU;
+		/* Set mtuprobes to 1 so that try_mtu() doesn't reset maxmtu */
+		n->mtuprobes = 1;
+		return;
+	} else if(n->mtuprobes < 0 && len == n->maxmtu) {
+		/* We got a maxmtu sized packet, confirming the PMTU is still valid. */
+		n->mtuprobes = -1;
+		n->mtu_ping_sent = now;
+	}
 
-		/* It's a valid reply: now we know bidirectional communication
-		   is possible using the address and socket that the reply
-		   packet used. */
-		n->status.udp_confirmed = true;
+	/* If applicable, raise the minimum supported MTU */
 
-		if(udp_discovery) {
-			timeout_del(&n->udp_ping_timeout);
-			timeout_add(&n->udp_ping_timeout, &udp_probe_timeout_handler, n, &(struct timeval){udp_discovery_timeout, 0});
-		}
-
-		if(probelen > n->maxmtu) {
-			logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
-			n->minmtu = probelen;
-			n->maxmtu = MTU;
-			/* Set mtuprobes to 1 so that try_mtu() doesn't reset maxmtu */
-			n->mtuprobes = 1;
-			return;
-		} else if(n->mtuprobes < 0 && probelen == n->maxmtu) {
-			/* We got a maxmtu sized packet, confirming the PMTU is still valid. */
-			n->mtuprobes = -1;
-		}
-
-		/* If applicable, raise the minimum supported MTU */
-
-		if(n->minmtu < probelen) {
-			n->minmtu = probelen;
-			try_fix_mtu(n);
-		}
+	if(n->minmtu < len) {
+		n->minmtu = len;
+		try_fix_mtu(n);
 	}
 }
 
