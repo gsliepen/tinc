@@ -67,7 +67,7 @@ static void send_udppacket(node_t *, vpn_packet_t *);
 unsigned replaywin = 16;
 bool localdiscovery = true;
 bool udp_discovery = true;
-int udp_discovery_keepalive_interval = 9;
+int udp_discovery_keepalive_interval = 10;
 int udp_discovery_interval = 2;
 int udp_discovery_timeout = 30;
 
@@ -103,24 +103,22 @@ static void udp_probe_timeout_handler(void *data) {
 
 static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!n->status.sptps && !n->status.validkey) {
-		// But not if we don't have his key.
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request from %s (%s) but we don't have his key yet", n->name, n->hostname);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP probe reply to %s (%s) but we don't have his key yet", n->name, n->hostname);
 		return;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
-
 	/* Type 2 probe replies were introduced in protocol 17.3 */
 	if ((n->options >> 24) >= 3) {
-		uint8_t *data = DATA(packet);
-		*data++ = 2;
-		uint16_t len16 = htons(MAX(len, n->maxrecentlen));
-		n->maxrecentlen = 0;
-		memcpy(data, &len16, 2);
+		DATA(packet)[0] = 2;
+		uint16_t len16 = htons(len);
+		memcpy(DATA(packet) + 1, &len16, 2);
 		packet->len = MIN_PROBE_SIZE;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending type 2 probe reply length %u to %s (%s)", len, n->name, n->hostname);
+
 	} else {
 		/* Legacy protocol: n won't understand type 2 probe replies. */
 		DATA(packet)[0] = 1;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending type 1 probe reply length %u to %s (%s)", len, n->name, n->hostname);
 	}
 
 	/* Temporarily set udp_confirmed, so that the reply is sent
@@ -134,7 +132,7 @@ static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) 
 
 static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!DATA(packet)[0]) {
-		/* It's a probe request, send back a reply */
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
 		return send_udp_probe_reply(n, packet, len);
 	}
 
@@ -151,6 +149,9 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	   is possible using the address and socket that the reply
 	   packet used. */
 	n->status.udp_confirmed = true;
+
+	// Reset the UDP ping timer.
+	n->udp_ping_sent = now;
 
 	if(udp_discovery) {
 		timeout_del(&n->udp_ping_timeout);
@@ -282,7 +283,11 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			return false;
 		}
 		inpkt->offset += 2 * sizeof(node_id_t);
-		if(!sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len - 2 * sizeof(node_id_t))) {
+		n->status.udppacket = true;
+		bool result = sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len - 2 * sizeof(node_id_t));
+		n->status.udppacket = false;
+
+		if(!result) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Got bad packet from %s (%s)", n->name, n->hostname);
 			return false;
 		}
@@ -766,8 +771,14 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 	inpkt.offset = DEFAULT_PACKET_OFFSET;
 
 	if(type == PKT_PROBE) {
+		if(!from->status.udppacket) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got SPTPS PROBE packet from %s (%s) via TCP", from->name, from->hostname);
+			return false;
+		}
 		inpkt.len = len;
 		memcpy(DATA(&inpkt), data, len);
+		if(inpkt.len > from->maxrecentlen)
+			from->maxrecentlen = inpkt.len;
 		udp_probe_h(from, &inpkt, len);
 		return true;
 	}
@@ -819,6 +830,9 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 		}
 	}
 
+	if(from->status.udppacket && inpkt.len > from->maxrecentlen)
+		from->maxrecentlen = inpkt.len;
+
 	receive_packet(from, &inpkt);
 	return true;
 }
@@ -862,6 +876,28 @@ static void send_udp_probe_packet(node_t *n, int len) {
 static void try_udp(node_t* n) {
 	if(!udp_discovery)
 		return;
+
+	/* Send gratuitous probe replies to 1.1 nodes. */
+
+	if((n->options >> 24) >= 3 && n->status.udp_confirmed) {
+		struct timeval ping_tx_elapsed;
+		timersub(&now, &n->udp_reply_sent, &ping_tx_elapsed);
+
+		if(ping_tx_elapsed.tv_sec >= udp_discovery_keepalive_interval - 1) {
+			n->udp_reply_sent = now;
+			if(n->maxrecentlen) {
+				vpn_packet_t pkt;
+				pkt.len = n->maxrecentlen;
+				pkt.offset = DEFAULT_PACKET_OFFSET;
+				memset(DATA(&pkt), 0, 14);
+				randomize(DATA(&pkt) + 14, MIN_PROBE_SIZE - 14);
+				send_udp_probe_reply(n, &pkt, pkt.len);
+				n->maxrecentlen = 0;
+			}
+		}
+	}
+
+	/* Probe request */
 
 	struct timeval ping_tx_elapsed;
 	timersub(&now, &n->udp_ping_sent, &ping_tx_elapsed);

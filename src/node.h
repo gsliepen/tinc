@@ -38,6 +38,7 @@ typedef struct node_status_t {
 	unsigned int sptps:1;                   /* 1 if this node supports SPTPS */
 	unsigned int udp_confirmed:1;           /* 1 if the address is one that we received UDP traffic on */
 	unsigned int send_locally:1;		/* 1 if the next UDP packet should be sent on the local network */
+	unsigned int udppacket:1;		/* 1 if the most recently received packet was UDP */
 	unsigned int validkey_in;		/* 1 if we have sent a valid key to him */
 	unsigned int unused:22;
 } node_status_t;
@@ -88,6 +89,7 @@ typedef struct node_t {
 	uint32_t farfuture;                     /* Packets in a row that have arrived from the far future */
 	unsigned char* late;                    /* Bitfield marking late packets */
 
+	struct timeval udp_reply_sent;          /* Last time a (gratuitous) UDP probe reply was sent */
 	struct timeval udp_ping_sent;           /* Last time a UDP probe was sent */
 	timeout_t udp_ping_timeout;             /* Ping timeout event */
 

@@ -174,7 +174,7 @@ static void timeout_handler(void *data) {
 
 	}
 
-	timeout_set(data, &(struct timeval){pingtimeout, rand() % 100000});
+	timeout_set(data, &(struct timeval){1, rand() % 100000});
 }
 
 static void periodic_handler(void *data) {
