@@ -114,7 +114,8 @@ static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) 
 	if ((n->options >> 24) >= 3) {
 		uint8_t *data = DATA(packet);
 		*data++ = 2;
-		uint16_t len16 = htons(len);
+		uint16_t len16 = htons(MAX(len, n->maxrecentlen));
+		n->maxrecentlen = 0;
 		memcpy(data, &len16, 2);
 		packet->len = MIN_PROBE_SIZE;
 	} else {
