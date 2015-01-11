@@ -271,11 +271,19 @@ int main(int argc, char *argv[]) {
 	crypto_init();
 
 	FILE *fp = fopen(argv[1], "r");
+	if(!fp) {
+		fprintf(stderr, "Could not open %s: %s\n", argv[1], strerror(errno));
+		return 1;
+	}
 	if(!(mykey = ecdsa_read_pem_private_key(fp)))
 		return 1;
 	fclose(fp);
 
 	fp = fopen(argv[2], "r");
+	if(!fp) {
+		fprintf(stderr, "Could not open %s: %s\n", argv[2], strerror(errno));
+		return 1;
+	}
 	if(!(hiskey = ecdsa_read_pem_public_key(fp)))
 		return 1;
 	fclose(fp);
