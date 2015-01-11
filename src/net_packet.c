@@ -95,6 +95,7 @@ static void udp_probe_timeout_handler(void *data) {
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Too much time has elapsed since last UDP ping response from %s (%s), stopping UDP communication", n->name, n->hostname);
 	n->status.udp_confirmed = false;
+	n->maxrecentlen = 0;
 	n->mtuprobes = 0;
 	n->minmtu = 0;
 	n->maxmtu = MTU;
@@ -386,6 +387,9 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 		origlen -= MTU/64 + 20;
 	}
+
+	if(inpkt->len > n->maxrecentlen)
+		n->maxrecentlen = inpkt->len;
 
 	inpkt->priority = 0;
 
@@ -962,6 +966,7 @@ static void try_mtu(node_t *n) {
 		return;
 
 	if(udp_discovery && !n->status.udp_confirmed) {
+		n->maxrecentlen = 0;
 		n->mtuprobes = 0;
 		n->minmtu = 0;
 		n->maxmtu = MTU;

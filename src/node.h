@@ -93,6 +93,8 @@ typedef struct node_t {
 
 	struct timeval mtu_ping_sent;           /* Last time a MTU probe was sent */
 
+	length_t maxrecentlen;			/* Maximum size of recently received packets */
+
 	length_t mtu;                           /* Maximum size of packets to send to this node */
 	length_t minmtu;                        /* Probed minimum MTU */
 	length_t maxmtu;                        /* Probed maximum MTU */
