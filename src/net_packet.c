@@ -151,18 +151,20 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			timeout_add(&n->udp_ping_timeout, &udp_probe_timeout_handler, n, &(struct timeval){udp_discovery_timeout, 0});
 		}
 
-		if(probelen >= n->maxmtu + 1) {
+		if(probelen > n->maxmtu) {
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+			n->minmtu = probelen;
 			n->maxmtu = MTU;
 			/* Set mtuprobes to 1 so that try_mtu() doesn't reset maxmtu */
 			n->mtuprobes = 1;
 			return;
+		} else if(n->mtuprobes < 0 && probelen == n->maxmtu) {
+			/* We got a maxmtu sized packet, confirming the PMTU is still valid. */
+			n->mtuprobes = -1;
 		}
 
 		/* If applicable, raise the minimum supported MTU */
 
-		if(probelen > n->maxmtu)
-			probelen = n->maxmtu;
 		if(n->minmtu < probelen) {
 			n->minmtu = probelen;
 			try_fix_mtu(n);
@@ -968,7 +970,9 @@ static void try_mtu(node_t *n) {
 
 	/* mtuprobes == 0..19: initial discovery, send bursts with 1 second interval, mtuprobes++
 	   mtuprobes ==    20: fix MTU, and go to -1
-	   mtuprobes ==    -1: send one >maxmtu probe every pinginterval */
+	   mtuprobes ==    -1: send one maxmtu and one maxmtu+1 probe every pinginterval
+	   mtuprobes ==-2..-3: send one maxmtu probe every second
+	   mtuprobes ==    -4: maxmtu no longer valid, reset minmtu and maxmtu and go to 0 */
 
 	struct timeval elapsed;
 	timersub(&now, &n->mtu_ping_sent, &elapsed);
@@ -976,20 +980,33 @@ static void try_mtu(node_t *n) {
 		if(n->mtuprobes != 0 && elapsed.tv_sec == 0 && elapsed.tv_usec < 333333)
 			return;
 	} else {
-		if(elapsed.tv_sec < pinginterval)
-			return;
+		if(n->mtuprobes < -1) {
+			if(elapsed.tv_sec < 1)
+				return;
+		} else {
+			if(elapsed.tv_sec < pinginterval)
+				return;
+		}
 	}
 
 	n->mtu_ping_sent = now;
 
 	try_fix_mtu(n);
 
+	if(n->mtuprobes < -3) {
+		/* We lost three MTU probes, restart discovery */
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Decrease in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+		n->mtuprobes = 0;
+		n->minmtu = 0;
+	}
+
 	if(n->mtuprobes < 0) {
 		/* After the initial discovery, we only send one maxmtu and one
 		   maxmtu+1 probe to detect PMTU increases. */
 		send_udp_probe_packet(n, n->maxmtu);
-		if(n->maxmtu + 1 < MTU)
+		if(n->mtuprobes == -1 && n->maxmtu + 1 < MTU)
 			send_udp_probe_packet(n, n->maxmtu + 1);
+		n->mtuprobes--;
 	} else {
 		/* Before initial discovery begins, set maxmtu to the most likely value.
 		   If it's underestimated, we will correct it after initial discovery. */
