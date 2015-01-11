@@ -968,7 +968,7 @@ static void try_mtu(node_t *n) {
 
 	/* mtuprobes == 0..19: initial discovery, send bursts with 1 second interval, mtuprobes++
 	   mtuprobes ==    20: fix MTU, and go to -1
-	   mtuprobes ==    -1: send one >maxmtu probe every pingtimeout */
+	   mtuprobes ==    -1: send one >maxmtu probe every pinginterval */
 
 	struct timeval elapsed;
 	timersub(&now, &n->mtu_ping_sent, &elapsed);
@@ -976,7 +976,7 @@ static void try_mtu(node_t *n) {
 		if(n->mtuprobes != 0 && elapsed.tv_sec == 0 && elapsed.tv_usec < 333333)
 			return;
 	} else {
-		if(elapsed.tv_sec < pingtimeout)
+		if(elapsed.tv_sec < pinginterval)
 			return;
 	}
 
