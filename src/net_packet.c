@@ -52,6 +52,11 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+/* The minimum size of a probe is 14 bytes, but since we normally use CBC mode
+   encryption, we can add a few extra random bytes without increasing the
+   resulting packet size. */
+#define MIN_PROBE_SIZE 18
+
 int keylifetime = 0;
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
@@ -116,7 +121,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			gettimeofday(&now, NULL);
 			uint32_t sec = htonl(now.tv_sec); memcpy(data, &sec, 4); data += 4;
 			uint32_t usec = htonl(now.tv_usec); memcpy(data, &usec, 4); data += 4;
-			packet->len = 14; // Minimum size for any probe packet.
+			packet->len = MIN_PROBE_SIZE;
 		} else {
 			/* Legacy protocol: n won't understand type 2 probe replies. */
 			DATA(packet)[0] = 1;
@@ -882,12 +887,12 @@ static void try_udp(node_t* n) {
 	int interval = n->status.udp_confirmed ? udp_discovery_keepalive_interval : udp_discovery_interval;
 
 	if(ping_tx_elapsed.tv_sec >= interval) {
-		send_udp_probe_packet(n, MAX(n->minmtu, 16));
+		send_udp_probe_packet(n, MIN_PROBE_SIZE);
 		n->udp_ping_sent = now;
 
 		if(localdiscovery && !n->status.udp_confirmed && n->prevedge) {
 			n->status.send_locally = true;
-			send_udp_probe_packet(n, 16);
+			send_udp_probe_packet(n, MIN_PROBE_SIZE);
 			n->status.send_locally = false;
 		}
 	}
@@ -1007,8 +1012,9 @@ static void try_mtu(node_t *n) {
 	try_fix_mtu(n);
 
 	if(n->mtuprobes < 0) {
-		/* After the initial discovery, we only send one >maxmtu probe
-		   to detect PMTU increases. */
+		/* After the initial discovery, we only send one maxmtu and one
+		   maxmtu+1 probe to detect PMTU increases. */
+		send_udp_probe_packet(n, n->maxmtu);
 		if(n->maxmtu + 1 < MTU)
 			send_udp_probe_packet(n, n->maxmtu + 1);
 	} else {
