@@ -275,6 +275,10 @@ static void check_reachability(void) {
 				update_node_udp(n, NULL);
 				memset(&n->status, 0, sizeof n->status);
 				n->options = 0;
+			} else if(n->connection) {
+				// Speed up UDP probing by sending our key.
+				if(!n->status.sptps)
+					send_ans_key(n);
 			}
 		}
 
