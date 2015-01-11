@@ -1087,7 +1087,7 @@ static void try_mtu(node_t *n) {
    idle.
 */
 
-static void try_tx_sptps(node_t *n) {
+static void try_tx_sptps(node_t *n, bool mtu) {
 	/* If n is a TCP-only neighbor, we'll only use "cleartext" PACKET
 	   messages anyway, so there's no need for SPTPS at all. */
 
@@ -1110,13 +1110,14 @@ static void try_tx_sptps(node_t *n) {
 	/* If we do have a relay, try everything with that one instead. */
 
 	if(via != n)
-		return try_tx_sptps(via);
+		return try_tx_sptps(via, mtu);
 
 	try_udp(n);
-	try_mtu(n);
+	if(mtu)
+		try_mtu(n);
 }
 
-static void try_tx_legacy(node_t *n) {
+static void try_tx_legacy(node_t *n, bool mtu) {
 	/* Does he have our key? If not, send one. */
 
 	if(!n->status.validkey_in)
@@ -1133,7 +1134,15 @@ static void try_tx_legacy(node_t *n) {
 	}
 
 	try_udp(n);
-	try_mtu(n);
+	if(mtu)
+		try_mtu(n);
+}
+
+void try_tx(node_t *n, bool mtu) {
+	if(n->status.sptps)
+		try_tx_sptps(n, mtu);
+	else
+		try_tx_legacy(n, mtu);
 }
 
 void send_packet(node_t *n, vpn_packet_t *packet) {
@@ -1166,7 +1175,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 
 	if(n->status.sptps) {
 		send_sptps_packet(n, packet);
-		try_tx_sptps(n);
+		try_tx_sptps(n, true);
 		return;
 	}
 
@@ -1186,7 +1195,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 	}
 
 	send_udppacket(via, packet);
-	try_tx_legacy(via);
+	try_tx_legacy(via, true);
 }
 
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {

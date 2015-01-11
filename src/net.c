@@ -154,6 +154,7 @@ static void timeout_handler(void *data) {
 
 		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
 			if(c->edge) {
+				try_tx(c->node, false);
 				if(c->status.pinged) {
 					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
 				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
@@ -170,6 +171,7 @@ static void timeout_handler(void *data) {
 			}
 			terminate_connection(c, c->edge);
 		}
+
 	}
 
 	timeout_set(data, &(struct timeval){pingtimeout, rand() % 100000});
