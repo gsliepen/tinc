@@ -257,7 +257,7 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
-	if(!digest_active(n->indigest) || inpkt->len < sizeof(seqno_t) + digest_length(n->indigest))
+	if(!n->status.validkey_in || !digest_active(n->indigest) || inpkt->len < sizeof(seqno_t) + digest_length(n->indigest))
 		return false;
 
 	return digest_verify(n->indigest, SEQNO(inpkt), inpkt->len - digest_length(n->indigest), DATA(inpkt) + inpkt->len - digest_length(n->indigest));
@@ -1263,33 +1263,52 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	}
 }
 
+/* We got a packet from some IP address, but we don't know who sent it.  Try to
+   verify the message authentication code against all active session keys.
+   Since this is actually an expensive operation, we only do a full check once
+   a minute, the rest of the time we only check against nodes for which we know
+   an IP address that matches the one from the packet.  */
+
 static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
-	node_t *n = NULL;
+	node_t *match = NULL;
 	bool hard = false;
 	static time_t last_hard_try = 0;
 
-	for splay_each(edge_t, e, edge_weight_tree) {
-		if(!e->to->status.reachable || e->to == myself)
+	for splay_each(node_t, n, node_tree) {
+		if(!n->status.reachable || n == myself)
 			continue;
 
-		if(sockaddrcmp_noport(from, &e->address)) {
+		if((n->status.sptps && !n->sptps.instate) || !n->status.validkey_in)
+			continue;
+
+		bool soft = false;
+
+		for splay_each(edge_t, e, n->edge_tree) {
+			if(!e->reverse)
+				continue;
+			if(!sockaddrcmp_noport(from, &e->reverse->address)) {
+				soft = true;
+				break;
+			}
+		}
+
+		if(!soft) {
 			if(last_hard_try == now.tv_sec)
 				continue;
 			hard = true;
 		}
 
-		if(!try_mac(e->to, pkt))
+		if(!try_mac(n, pkt))
 			continue;
 
-		n = e->to;
+		match = n;
 		break;
 	}
 
 	if(hard)
 		last_hard_try = now.tv_sec;
 
-	last_hard_try = now.tv_sec;
-	return n;
+	return match;
 }
 
 void handle_incoming_vpn_data(void *data, int flags) {
@@ -1318,6 +1337,9 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	// Try to figure out who sent this packet.
 
 	node_t *n = lookup_node_udp(&addr);
+
+	if(n && !n->status.udp_confirmed)
+		n = NULL; // Don't believe it if we don't have confirmation yet.
 
 	if(!n) {
 		// It might be from a 1.1 node, which might have a source ID in the packet.
