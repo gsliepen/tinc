@@ -31,6 +31,7 @@
 #include "control_common.h"
 #include "crypto.h"
 #include "ecdsagen.h"
+#include "fsck.h"
 #include "info.h"
 #include "invitation.h"
 #include "names.h"
@@ -66,7 +67,7 @@ char line[4096];
 static int code;
 static int req;
 static int result;
-static bool force = false;
+bool force = false;
 bool tty = true;
 bool confbasegiven = false;
 bool netnamegiven = false;
@@ -150,6 +151,7 @@ static void usage(bool status) {
 				"  invite NODE [...]          Generate an invitation for NODE\n"
 				"  join INVITATION            Join a VPN using an INVITIATION\n"
 				"  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
+				"  fsck                       Check the configuration files for problems.\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -2154,7 +2156,6 @@ static int switch_network(char *name) {
 	free(netname);
 	netname = strcmp(name, ".") ? xstrdup(name) : NULL;
 
-	make_names();
         xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
         xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 	xasprintf(&prompt, "%s> ", identname);
@@ -2199,6 +2200,15 @@ static int cmd_network(int argc, char *argv[]) {
 	return 0;
 }
 
+static int cmd_fsck(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
+	return fsck(orig_argv[0]);
+}
+
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
@@ -2241,6 +2251,7 @@ static const struct {
 	{"invite", cmd_invite},
 	{"join", cmd_join},
 	{"network", cmd_network},
+	{"fsck", cmd_fsck},
 	{NULL, NULL},
 };
 

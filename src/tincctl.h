@@ -21,6 +21,7 @@
 #define __TINC_TINCCTL_H__
 
 extern bool tty;
+extern bool force;
 extern char line[4096];
 extern int fd;
 extern char buffer[4096];

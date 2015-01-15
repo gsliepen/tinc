@@ -2436,10 +2436,20 @@ Dump VPN traffic going through the local tinc node in pcap-savefile format to st
 from where it can be redirected to a file or piped through a program that can parse it directly,
 such as tcpdump.
 
-@cindex network [@var{netname}]
-@item network
+@cindex network
+@item network [@var{netname}]
 If @var{netname} is given, switch to that network.
 Otherwise, display a list of all networks for which configuration files exist.
+
+@cindex fsck
+@item fsck
+This will check the configuration files for possible problems,
+such as unsafe file permissions, missing executable bit on script,
+unknown and obsolete configuration variables, wrong public and/or private keys, and so on.
+
+When problems are found, this will be printed on a line with WARNING or ERROR in front of it.
+Most problems must be corrected by the user itself, however in some cases (like file permissions and missing public keys),
+tinc will ask if it should fix the problem.
 
 @end table
 
