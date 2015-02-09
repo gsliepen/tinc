@@ -2293,6 +2293,7 @@ To set a variable for a specific host, use the notation @var{host}.@var{variable
 @cindex add
 @item add @var{variable} @var{value}
 As above, but without removing any previously existing configuration variables.
+If the variable already exists with the given value, nothing happens.
 
 @cindex del
 @item del @var{variable} [@var{value}]

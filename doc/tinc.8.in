@@ -88,6 +88,7 @@ To set a variable for a specific host, use the notation
 .Ar host Ns Li . Ns Ar variable .
 .It add Ar variable Ar value
 As above, but without removing any previously existing configuration variables.
+If the variable already exists with the given value, nothing happens.
 .It del Ar variable Op Ar value
 Remove configuration variables with the same name and
 .Ar value .

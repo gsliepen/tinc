@@ -1610,6 +1610,11 @@ static int cmd_config(int argc, char *argv[]) {
 				}
 				set = true;
 				continue;
+			// Add
+			} else if(action > 0) {
+				// Check if we've already seen this variable with the same value
+				if(!strcasecmp(bvalue, value))
+					found = true;
 			}
 		}
 
@@ -1642,7 +1647,7 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Add new variable if necessary.
-	if(action > 0 || (action == 0 && !set)) {
+	if((action > 0 && !found)|| (action == 0 && !set)) {
 		if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
 			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 			return 1;
