@@ -196,4 +196,15 @@
 #include <netinet/if_ether.h>
 #endif
 
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#ifdef STATUS
+#undef STATUS
+#endif
+#endif
+
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
+
 #endif /* __TINC_SYSTEM_H__ */

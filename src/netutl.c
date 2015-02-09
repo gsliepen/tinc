@@ -39,6 +39,10 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	hint.ai_family = addressfamily;
 	hint.ai_socktype = socktype;
 
+#ifdef HAVE_DECL_RES_INIT
+	// ensure glibc reloads /etc/resolv.conf.
+	res_init();
+#endif
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
