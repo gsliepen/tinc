@@ -38,7 +38,6 @@ $tinc $c1 add Subnet 2
 $tinc $c1 add Subnet 3
 test "`$tinc $c1 get Subnet`" = "1
 2
-2
 3"
 $tinc $c1 del Subnet 2
 test "`$tinc $c1 get Subnet`" = "1
@@ -64,7 +63,6 @@ $tinc $c1 add bar.Subnet 2
 $tinc $c1 add bar.Subnet 2
 $tinc $c1 add bar.Subnet 3
 test "`$tinc $c1 get bar.Subnet`" = "1
-2
 2
 3"
 $tinc $c1 del bar.Subnet 2
