@@ -84,11 +84,13 @@ static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
 		size_t len = b64decode(line, line, linelen);
 		if(!len) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid base64 data in PEM file\n");
+			errno = EINVAL;
 			return false;
 		}
 
 		if(len > size) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Too much base64 data in PEM file\n");
+			errno = EINVAL;
 			return false;
 		}
 
@@ -98,7 +100,12 @@ static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
 	}
 
 	if(size) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Too little base64 data in PEM file\n");
+		if(data) {
+			errno = EINVAL;
+			logger(DEBUG_ALWAYS, LOG_ERR, "Too little base64 data in PEM file\n");
+		} else {
+			errno = ENOENT;
+		}
 		return false;
 	}
 

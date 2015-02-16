@@ -137,10 +137,11 @@ bool read_ecdsa_public_key(connection_t *c) {
 	}
 
 	c->ecdsa = ecdsa_read_pem_public_key(fp);
-	fclose(fp);
 
-	if(!c->ecdsa)
+	if(!c->ecdsa && errno != ENOENT)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing Ed25519 public key file `%s' failed.", fname);
+
+	fclose(fp);
 	free(fname);
 	return c->ecdsa;
 }
