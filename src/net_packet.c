@@ -958,6 +958,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 		mtu -= SPTPS_DATAGRAM_OVERHEAD;
 		if((n->options >> 24) >= 4)
 			mtu -= sizeof(node_id_t) + sizeof(node_id_t);
+#ifndef DISABLE_LEGACY
 	} else {
 		mtu -= digest_length(n->outdigest);
 
@@ -977,6 +978,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 		}
 
 		mtu -= 4; // seqno
+#endif
 	}
 
 	if (mtu < 512) {
