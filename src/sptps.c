@@ -483,10 +483,10 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		if(!s->instate)
 			return error(s, EIO, "Application record received before handshake finished");
 		if(!s->receive_record(s->handle, type, buffer + 1, len - 21))
-			abort();
+			return false;
 	} else if(type == SPTPS_HANDSHAKE) {
 		if(!receive_handshake(s, buffer + 1, len - 21))
-			abort();
+			return false;
 	} else {
 		return error(s, EIO, "Invalid record type %d", type);
 	}
