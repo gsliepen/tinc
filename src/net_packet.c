@@ -1396,6 +1396,7 @@ skip_harder:
 
 		if(to != myself) {
 			send_sptps_data_priv(to, n, 0, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t));
+			try_tx_sptps(n, true);
 			return;
 		}
 	} else {
