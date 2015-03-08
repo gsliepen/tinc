@@ -143,6 +143,7 @@ extern int udp_discovery_keepalive_interval;
 extern int udp_discovery_interval;
 extern int udp_discovery_timeout;
 
+extern int mtu_info_interval;
 extern int udp_info_interval;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];

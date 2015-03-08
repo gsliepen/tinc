@@ -1333,6 +1333,10 @@ This option controls the initial path MTU to this node.
 When this option is enabled, tinc will try to discover the path MTU to this node.
 After the path MTU has been discovered, it will be enforced on the VPN.
 
+@cindex MTUInfoInterval
+@item MTUInfoInterval = <seconds> (5)
+The minimum amount of time between sending periodic updates about relay path MTU. Useful for quickly determining MTU to indirect nodes.
+
 @cindex Port
 @item Port = <@var{port}> (655)
 This is the port this tinc daemon listens on.

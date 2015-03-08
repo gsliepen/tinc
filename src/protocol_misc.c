@@ -31,6 +31,7 @@
 #include "xalloc.h"
 
 int maxoutbufsize = 0;
+int mtu_info_interval = 5;
 int udp_info_interval = 5;
 
 /* Status and error notification routines */
@@ -261,8 +262,15 @@ bool send_mtu_info(node_t *from, node_t *to, int mtu) {
 	if(!to->status.reachable)
 		return true;
 
-	if(from == myself && to->connection)
-		return true;
+	if(from == myself) {
+		if(to->connection)
+			return true;
+
+		struct timeval elapsed;
+		timersub(&now, &to->mtu_info_sent, &elapsed);
+		if(elapsed.tv_sec < mtu_info_interval)
+			return true;
+	}
 
 	if((to->nexthop->options >> 24) < 6)
 		return true;
@@ -283,6 +291,9 @@ bool send_mtu_info(node_t *from, node_t *to, int mtu) {
 		/* Dynamic relay. Ensure packets will make it through the entire relay path. */
 		mtu = MIN(mtu, via->nexthop->minmtu);
 	}
+
+	if(from == myself)
+		to->mtu_info_sent = now;
 
 	/* If none of the conditions above match in the steady state, it means we're using TCP,
 	   so the MTU is irrelevant. That said, it is still important to honor the MTU that was passed in,

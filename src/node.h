@@ -95,6 +95,7 @@ typedef struct node_t {
 
 	struct timeval mtu_ping_sent;           /* Last time a MTU probe was sent */
 
+	struct timeval mtu_info_sent;           /* Last time a MTU_INFO message was sent */
 	struct timeval udp_info_sent;           /* Last time a UDP_INFO message was sent */
 
 	length_t maxrecentlen;			/* Maximum size of recently received packets */
