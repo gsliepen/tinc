@@ -1125,23 +1125,31 @@ static void try_tx_sptps(node_t *n, bool mtu) {
 
 	try_sptps(n);
 
-	/* Do we need to relay packets? */
+	/* Do we need to statically relay packets? */
 
 	node_t *via = (n->via == myself) ? n->nexthop : n->via;
 
-	/* If the relay doesn't support SPTPS, everything goes via TCP anyway. */
+	/* If the static relay doesn't support SPTPS, everything goes via TCP anyway. */
 
 	if((via->options >> 24) < 4)
 		return;
 
-	/* If we do have a relay, try everything with that one instead. */
+	/* If we do have a static relay, try everything with that one instead. */
 
 	if(via != n)
-		return try_tx_sptps(via, mtu);
+		try_tx_sptps(via, mtu);
+
+	/* Otherwise, try to establish UDP connectivity. */
 
 	try_udp(n);
 	if(mtu)
 		try_mtu(n);
+
+	/* If we don't have UDP connectivity (yet), we need to use a dynamic relay (nexthop)
+	   while we try to establish direct connectivity. */
+
+	if(!n->status.udp_confirmed && n != n->nexthop && (n->nexthop->options >> 24) >= 4)
+		try_tx_sptps(n->nexthop, mtu);
 }
 
 static void try_tx_legacy(node_t *n, bool mtu) {
