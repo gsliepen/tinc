@@ -26,7 +26,7 @@
 /* Protocol version. Different major versions are incompatible. */
 
 #define PROT_MAJOR 17
-#define PROT_MINOR 5 /* Should not exceed 255! */
+#define PROT_MINOR 6 /* Should not exceed 255! */
 
 /* Silly Windows */
 
@@ -49,7 +49,7 @@ typedef enum request_t {
 	CONTROL,
 	REQ_PUBKEY, ANS_PUBKEY,
 	REQ_SPTPS,
-	UDP_INFO,
+	UDP_INFO, MTU_INFO,
 	LAST                                            /* Guardian for the highest request number */
 } request_t;
 
@@ -109,6 +109,7 @@ extern bool send_req_key(struct node_t *);
 extern bool send_ans_key(struct node_t *);
 extern bool send_tcppacket(struct connection_t *, const struct vpn_packet_t *);
 extern bool send_udp_info(struct node_t *, struct node_t *);
+extern bool send_mtu_info(struct node_t *, struct node_t *, int);
 
 /* Request handlers  */
 
@@ -132,5 +133,6 @@ extern bool ans_key_h(struct connection_t *, const char *);
 extern bool tcppacket_h(struct connection_t *, const char *);
 extern bool control_h(struct connection_t *, const char *);
 extern bool udp_info_h(struct connection_t *, const char *);
+extern bool mtu_info_h(struct connection_t *, const char *);
 
 #endif /* __TINC_PROTOCOL_H__ */

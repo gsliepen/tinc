@@ -237,3 +237,92 @@ bool udp_info_h(connection_t *c, const char* request) {
 
 	return send_udp_info(from, to);
 }
+
+/* Transmitting MTU information */
+
+bool send_mtu_info(node_t *from, node_t *to, int mtu) {
+	/* Skip cases where sending MTU info messages doesn't make sense.
+	   This is done here in order to avoid repeating the same logic in multiple callsites. */
+
+	if(to == myself)
+		return true;
+
+	if(!to->status.reachable)
+		return true;
+
+	if(from == myself && to->connection)
+		return true;
+
+	if((to->nexthop->options >> 24) < 6)
+		return true;
+
+	/* We will send the passed-in MTU value, unless we believe ours is better. */
+
+	node_t *via = (from->via == myself) ? from->nexthop : from->via;
+	if(from->minmtu == from->maxmtu && from->via == myself) {
+		/* We have a direct measurement. Override the value entirely.
+		   Note that we only do that if we are sitting as a static relay in the path;
+		   otherwise, we can't guarantee packets will flow through us, and increasing
+		   MTU could therefore end up being too optimistic. */
+		mtu = from->minmtu;
+	} else if(via->minmtu == via->maxmtu) {
+		/* Static relay. Ensure packets will make it through the entire relay path. */
+		mtu = MIN(mtu, via->minmtu);
+	} else if(via->nexthop->minmtu == via->nexthop->maxmtu) {
+		/* Dynamic relay. Ensure packets will make it through the entire relay path. */
+		mtu = MIN(mtu, via->nexthop->minmtu);
+	}
+
+	/* If none of the conditions above match in the steady state, it means we're using TCP,
+	   so the MTU is irrelevant. That said, it is still important to honor the MTU that was passed in,
+	   because other parts of the relay path might be able to use UDP, which means they care about the MTU. */
+
+	return send_request(to->nexthop->connection, "%d %s %s %d", MTU_INFO, from->name, to->name, mtu);
+}
+
+bool mtu_info_h(connection_t *c, const char* request) {
+	char from_name[MAX_STRING_SIZE];
+	char to_name[MAX_STRING_SIZE];
+	int mtu;
+
+	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" %d", from_name, to_name, &mtu) != 3) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "MTU_INFO", c->name, c->hostname);
+		return false;
+	}
+
+	if(mtu < 512) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "MTU_INFO", c->name, c->hostname, "invalid MTU");
+		return false;
+	}
+
+	mtu = MIN(mtu, MTU);
+
+	if(!check_id(from_name) || !check_id(to_name)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "MTU_INFO", c->name, c->hostname, "invalid name");
+		return false;
+	}
+
+	node_t *from = lookup_node(from_name);
+	if(!from) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list", "MTU_INFO", c->name, c->hostname, from_name);
+		return true;
+	}
+
+	/* If we don't know the current MTU for that node, use the one we received.
+	   Even if we're about to make our own measurements, the value we got from downstream nodes should be pretty close
+	   so it's a good idea to use it in the mean time. */
+	if(from->mtu != mtu && from->minmtu != from->maxmtu) {
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Using provisional MTU %d for node %s (%s)", mtu, from->name, from->hostname);
+		from->mtu = mtu;
+	}
+
+	node_t *to = lookup_node(to_name);
+	if(!to) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list", "MTU_INFO", c->name, c->hostname, to_name);
+		return true;
+	}
+
+	/* Continue passing the MTU value (or a better one if we have it) up the chain. */
+
+	return send_mtu_info(from, to, mtu);
+}

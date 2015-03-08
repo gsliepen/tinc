@@ -178,6 +178,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			from->last_req_key = now.tv_sec;
 			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data, receive_sptps_record);
 			sptps_receive_data(&from->sptps, buf, len);
+			send_mtu_info(myself, from, MTU);
 			return true;
 		}
 
@@ -194,6 +195,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 				return true;
 			}
 			sptps_receive_data(&from->sptps, buf, len);
+			send_mtu_info(myself, from, MTU);
 			return true;
 		}
 
@@ -414,6 +416,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 				update_node_udp(from, &sa);
 			}
 		}
+
+		send_mtu_info(myself, from, MTU);
 
 		return true;
 	}
