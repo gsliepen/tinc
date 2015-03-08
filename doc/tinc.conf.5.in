@@ -500,6 +500,8 @@ The minimum amount of time between sending UDP ping datagrams to try to establis
 .It Va UDPDiscoveryTimeout Li = Ar seconds Pq 30
 If tinc doesn't receive any UDP ping replies over the specified interval,
 it will assume UDP communication is broken and will fall back to TCP.
+.It Va UDPInfoInterval Li = Ar seconds Pq 5
+The minimum amount of time between sending periodic updates about UDP addresses, which are mostly useful for UDP hole punching.
 .It Va UDPRcvBuf Li = Ar bytes Pq OS default
 Sets the socket receive buffer size for the UDP socket, in bytes.
 If unset, the default buffer size will be used by the operating system.

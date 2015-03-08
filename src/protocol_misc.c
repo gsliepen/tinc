@@ -31,6 +31,7 @@
 #include "xalloc.h"
 
 int maxoutbufsize = 0;
+int udp_info_interval = 5;
 
 /* Status and error notification routines */
 
@@ -167,8 +168,15 @@ bool send_udp_info(node_t *from, node_t *to) {
 	if(!to->status.reachable)
 		return true;
 
-	if(from == myself && to->connection)
-		return true;
+	if(from == myself) {
+		if(to->connection)
+			return true;
+
+		struct timeval elapsed;
+		timersub(&now, &to->udp_info_sent, &elapsed);
+		if(elapsed.tv_sec < udp_info_interval)
+			return true;
+	}
 
 	if((myself->options | from->options | to->options) & OPTION_TCPONLY)
 		return true;
@@ -187,6 +195,9 @@ bool send_udp_info(node_t *from, node_t *to) {
 
 	free(from_address);
 	free(from_port);
+
+	if(from == myself)
+		to->udp_info_sent = now;
 
 	return x;
 }

@@ -1371,6 +1371,7 @@ const var_t variables[] = {
 	{"UDPDiscoveryKeepaliveInterval", VAR_SERVER},
 	{"UDPDiscoveryInterval", VAR_SERVER},
 	{"UDPDiscoveryTimeout", VAR_SERVER},
+	{"UDPInfoInterval", VAR_SERVER},
 	{"UDPRcvBuf", VAR_SERVER},
 	{"UDPSndBuf", VAR_SERVER},
 	{"VDEGroup", VAR_SERVER},
