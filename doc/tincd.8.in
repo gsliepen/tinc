@@ -8,7 +8,7 @@
 .Nd tinc VPN daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdDKnoLRU
+.Op Fl cdDKnsoLRU
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -no-detach
 .Op Fl -debug Ns Op = Ns Ar LEVEL
@@ -16,6 +16,7 @@
 .Op Fl -option Ns = Ns Ar [HOST.]KEY=VALUE
 .Op Fl -mlock
 .Op Fl -logfile Ns Op = Ns Ar FILE
+.Op Fl -syslog
 .Op Fl -bypass-security
 .Op Fl -chroot
 .Op Fl -user Ns = Ns Ar USER
@@ -88,6 +89,8 @@ If
 .Ar FILE
 is omitted, the default is
 .Pa @localstatedir@/log/tinc. Ns Ar NETNAME Ns Pa .log.
+.It Fl s, -syslog
+When this option is is set, tinc uses syslog instead of stderr in --no-detach mode.
 .It Fl -pidfile Ns = Ns Ar FILENAME
 Store a cookie in
 .Ar FILENAME
