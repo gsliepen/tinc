@@ -42,6 +42,7 @@ bool sigalrm = false;
 
 extern char **g_argv;
 extern bool use_logfile;
+extern bool use_syslog;
 
 /* Some functions the less gifted operating systems might lack... */
 
@@ -189,6 +190,8 @@ bool init_service(void) {
   Detach from current terminal
 */
 bool detach(void) {
+	logmode_t logmode;
+
 #ifndef HAVE_MINGW
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
@@ -210,12 +213,13 @@ bool detach(void) {
 #endif
 	}
 
-	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
+	logmode = use_logfile?LOGMODE_FILE:LOGMODE_SYSLOG;
+	if(do_detach && !use_syslog)
+		logmode = LOGMODE_STDERR;
+	openlogger(identname, logmode);
 
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
 			   VERSION, BUILD_DATE, BUILD_TIME, debug_level);
 
 	return true;
 }
-
-

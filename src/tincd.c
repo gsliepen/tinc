@@ -85,6 +85,9 @@ static const char *switchuser = NULL;
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
+/* If nonzero, use syslog instead of stderr in no-detach mode. */
+bool use_syslog = false;
+
 char **g_argv;                  /* a copy of the cmdline arguments */
 
 static int status = 1;
@@ -101,6 +104,7 @@ static struct option const long_options[] = {
 	{"chroot", no_argument, NULL, 'R'},
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
+	{"syslog", no_argument, NULL, 's'},
 	{"pidfile", required_argument, NULL, 5},
 	{"option", required_argument, NULL, 'o'},
 	{NULL, 0, NULL, 0}
@@ -125,6 +129,7 @@ static void usage(bool status) {
 				"  -L, --mlock                   Lock tinc into main memory.\n"
 #endif
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
+				"  -s  --syslog                  Use syslog instead of stderr with --no-detach.\n"
 				"      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
@@ -146,7 +151,7 @@ static bool parse_options(int argc, char **argv) {
 
 	cmdline_conf = list_alloc((list_action_t)free_config);
 
-	while((r = getopt_long(argc, argv, "c:DLd::n:o:RU:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "c:DLd::n:so:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -179,6 +184,10 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'n': /* net name given */
 				netname = xstrdup(optarg);
+				break;
+
+			case 's': /* syslog */
+				use_syslog = true;
 				break;
 
 			case 'o': /* option */
