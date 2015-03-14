@@ -210,10 +210,18 @@ static void disable_device(void) {
 
 	io_del(&device_read_io);
 	CancelIo(device_handle);
+
+	/* According to MSDN, CancelIo() does not necessarily wait for the operation to complete.
+	   To prevent race conditions, make sure the operation is complete
+	   before we close the event it's referencing. */
+
+	DWORD len;
+	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED)
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s read to cancel: %s", device_info, device, winerror(GetLastError()));
+
 	CloseHandle(device_read_overlapped.hEvent);
 
 	ULONG status = 0;
-	DWORD len;
 	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
 }
 
