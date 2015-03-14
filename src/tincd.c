@@ -187,6 +187,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 's': /* syslog */
+				use_logfile = false;
 				use_syslog = true;
 				break;
 
@@ -225,6 +226,7 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 4:   /* write log entries to a file */
+				use_syslog = false;
 				use_logfile = true;
 				if(!optarg && optind < argc && *argv[optind] != '-')
 					optarg = argv[optind++];
