@@ -155,7 +155,11 @@ static void check_conffile(const char *fname, bool server) {
 }
 
 int fsck(const char *argv0) {
+#ifdef HAVE_MINGW
+	int uid = 0;
+#else
 	uid_t uid = getuid();
+#endif
 
 	// Check that tinc.conf is readable.
 
