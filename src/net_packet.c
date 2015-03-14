@@ -1137,7 +1137,7 @@ static void try_tx_sptps(node_t *n, bool mtu) {
 	/* If we do have a static relay, try everything with that one instead. */
 
 	if(via != n)
-		try_tx_sptps(via, mtu);
+		return try_tx_sptps(via, mtu);
 
 	/* Otherwise, try to establish UDP connectivity. */
 
