@@ -109,10 +109,6 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 	if(!source || !via || !(via->options & OPTION_CLAMP_MSS))
 		return;
 
-	uint16_t mtu = source->mtu;
-	if(via != myself && via->mtu < mtu)
-		mtu = via->mtu;
-
 	/* Find TCP header */
 	int start = ether_size;
 	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
@@ -163,7 +159,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 
 		/* Found it */
 		uint16_t oldmss = DATA(packet)[start + 22 + i] << 8 | DATA(packet)[start + 23 + i];
-		uint16_t newmss = mtu - start - 20;
+		uint16_t newmss = source->mtu - start - 20;
 		uint16_t csum = DATA(packet)[start + 16] << 8 | DATA(packet)[start + 17];
 
 		if(oldmss <= newmss)
