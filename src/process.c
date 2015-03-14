@@ -213,9 +213,13 @@ bool detach(void) {
 #endif
 	}
 
-	logmode = use_logfile?LOGMODE_FILE:LOGMODE_SYSLOG;
-	if(do_detach && !use_syslog)
+	if(use_logfile)
+		logmode = LOGMODE_FILE;
+	else if(use_syslog || do_detach)
+		logmode = LOGMODE_SYSLOG;
+	else
 		logmode = LOGMODE_STDERR;
+
 	openlogger(identname, logmode);
 
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
