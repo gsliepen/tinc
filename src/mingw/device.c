@@ -182,8 +182,16 @@ static bool setup_device(void) {
 		DWORD len;
 		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof info, &info, sizeof info, &len, NULL))
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
-		else
+		else {
 			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
+
+			/* Warn if using >=9.21. This is because starting from 9.21, TAP-Win32 seems to use a different, less efficient write path. */
+			if(info[0] == 9 && info[1] >= 21)
+				logger(DEBUG_ALWAYS, LOG_WARNING,
+					"You are using the newer (>= 9.0.0.21, NDIS6) series of TAP-Win32 drivers. "
+					"Using these drivers with tinc is not recommanded as it can result in poor performance. "
+					"You might want to revert back to 9.0.0.9 instead.");
+		}
 	}
 
 	/* Get MAC address from tap device */
