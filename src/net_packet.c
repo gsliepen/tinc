@@ -64,7 +64,7 @@ static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
-unsigned replaywin = 16;
+unsigned replaywin = 32;
 bool localdiscovery = true;
 bool udp_discovery = true;
 int udp_discovery_keepalive_interval = 10;
