@@ -175,6 +175,17 @@ static bool setup_device(void) {
 		return false;
 	}
 
+	/* Get version information from tap device */
+
+	{
+		ULONG info[3] = {0};
+		DWORD len;
+		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof info, &info, sizeof info, &len, NULL))
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
+		else
+			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
+	}
+
 	/* Get MAC address from tap device */
 
 	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof mymac.x, mymac.x, sizeof mymac.x, &len, 0)) {
