@@ -1254,14 +1254,16 @@ If tinc doesn't receive any UDP ping replies over the specified interval,
 it will assume UDP communication is broken and will fall back to TCP.
 
 @cindex UDPRcvBuf
-@item UDPRcvBuf = <bytes> (OS default)
+@item UDPRcvBuf = <bytes> (1048576)
 Sets the socket receive buffer size for the UDP socket, in bytes.
-If unset, the default buffer size will be used by the operating system.
+If set to zero, the default buffer size will be used by the operating system.
+Note: this setting can have a significant impact on performance, especially raw throughput.
 
 @cindex UDPSndBuf
-@item UDPSndBuf = <bytes> Pq OS default
+@item UDPSndBuf = <bytes> (1048576)
 Sets the socket send buffer size for the UDP socket, in bytes.
-If unset, the default buffer size will be used by the operating system.
+If set to zero, the default buffer size will be used by the operating system.
+Note: this setting can have a significant impact on performance, especially raw throughput.
 
 @end table
 

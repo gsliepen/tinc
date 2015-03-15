@@ -854,14 +854,14 @@ static bool setup_myself(void) {
 	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
-		if(udp_rcvbuf <= 0) {
+		if(udp_rcvbuf < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPRcvBuf cannot be negative!");
 			return false;
 		}
 	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPSndBuf"), &udp_sndbuf)) {
-		if(udp_sndbuf <= 0) {
+		if(udp_sndbuf < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPSndBuf cannot be negative!");
 			return false;
 		}
