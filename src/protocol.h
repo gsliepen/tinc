@@ -85,6 +85,7 @@ extern bool receive_request(struct connection_t *, const char *);
 extern void init_requests(void);
 extern void exit_requests(void);
 extern bool seen_request(const char *);
+extern void update_estimated_weight(connection_t *);
 
 /* Requests */
 
