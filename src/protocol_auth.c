@@ -136,9 +136,9 @@ static bool send_proxyrequest(connection_t *c) {
 }
 
 bool send_id(connection_t *c) {
-	gettimeofday(&c->start, NULL);
 
 	int minor = 0;
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 
 	if(experimental) {
 		if(c->outgoing && !read_ecdsa_public_key(c))
@@ -147,6 +147,7 @@ bool send_id(connection_t *c) {
 			minor = myself->connection->protocol_minor;
 	}
 
+	gettimeofday(&c->start, NULL);
 	if(proxytype && c->outgoing)
 		if(!send_proxyrequest(c))
 			return false;
@@ -284,6 +285,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 bool id_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	if(sscanf(request, "%*d " MAX_STRING " %d.%d", name, &c->protocol_major, &c->protocol_minor) < 2) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
 			   c->hostname);
@@ -295,13 +297,16 @@ bool id_h(connection_t *c, const char *request) {
 	if(name[0] == '^' && !strcmp(name + 1, controlcookie)) {
 		c->status.control = true;
 		c->allow_request = CONTROL;
-		c->last_ping_time = now.tv_sec + 3600;
+		c->last_ping_time = now;
+		c->last_ping_time.tv_sec += 3600;
 
 		free(c->name);
 		c->name = xstrdup("<control>");
 
 		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
 	}
+
+        update_estimated_weight(c);
 
 	if(name[0] == '?') {
 		if(!invitation_key) {
@@ -413,6 +418,7 @@ bool send_metakey(connection_t *c) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	if(!myself->connection->rsa) {
 		logger(DEBUG_CONNECTIONS, LOG_ERR, "Peer %s (%s) uses legacy protocol which we don't support", c->name, c->hostname);
 		return false;
@@ -488,8 +494,11 @@ bool metakey_h(connection_t *c, const char *request) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	if(!myself->connection->rsa)
 		return false;
+
+        update_estimated_weight(c);
 
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
@@ -557,6 +566,7 @@ bool send_challenge(connection_t *c) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	const size_t len = rsa_size(c->rsa);
 	char buffer[len * 2 + 1];
 
@@ -581,6 +591,7 @@ bool challenge_h(connection_t *c, const char *request) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	if(!myself->connection->rsa)
 		return false;
 
@@ -626,7 +637,10 @@ bool chal_reply_h(connection_t *c, const char *request) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	char hishash[MAX_STRING_SIZE];
+
+        update_estimated_weight(c);
 
 	if(sscanf(request, "%*d " MAX_STRING, hishash) != 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CHAL_REPLY", c->name,
@@ -683,22 +697,42 @@ static bool send_upgrade(connection_t *c) {
 #endif
 }
 
+void update_estimated_weight(connection_t *c) {
+        /* Estimate weight */
+        struct timeval now;
+        int temp_ew = 0;
+
+        if (c->status.control == true)
+          return;
+
+        gettimeofday(&now, NULL);
+
+        temp_ew = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
+        if (c->estimated_weight == 0) {
+          c->estimated_weight = temp_ew;
+        }
+        else {
+          c->estimated_weight = (c->estimated_weight + temp_ew)/2;
+        }
+
+        logger(DEBUG_ALWAYS, LOG_INFO, "%s: Estimated weight for %s (%d) (%d-%d) (%d-%d) (%d).", __func__, c->name, c->estimated_weight,
+               now.tv_sec,c->start.tv_sec,now.tv_usec,c->start.tv_usec, temp_ew);
+}
+
 bool send_ack(connection_t *c) {
+
 	if(c->protocol_minor == 1)
 		return send_upgrade(c);
+
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 
 	/* ACK message contains rest of the information the other end needs
 	   to create node_t and edge_t structures. */
 
-	struct timeval now;
 	bool choice;
-
-	/* Estimate weight */
-
-	gettimeofday(&now, NULL);
-	c->estimated_weight = (now.tv_sec - c->start.tv_sec) * 1000 + (now.tv_usec - c->start.tv_usec) / 1000;
-
 	/* Check some options */
+
+        update_estimated_weight(c);
 
 	if((get_config_bool(lookup_config(c->config_tree, "IndirectData"), &choice) && choice) || myself->options & OPTION_INDIRECT)
 		c->options |= OPTION_INDIRECT;
@@ -722,7 +756,7 @@ bool send_ack(connection_t *c) {
 
 static void send_everything(connection_t *c) {
 	/* Send all known subnets and edges */
-
+        logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "%s:%d:%s: peer: %s (%s)", __FILE__, __LINE__, __func__, c->name, c->hostname);
 	if(disablebuggypeers) {
 		static struct {
 			vpn_packet_t pkt;
