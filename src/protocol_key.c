@@ -263,7 +263,7 @@ bool req_key_h(connection_t *c, const char *request) {
 }
 
 bool send_ans_key(node_t *to) {
-	if(to->status.sptps)
+	if(to->status.sptps && to->status.validkey_in)
 		abort();
 
 #ifdef DISABLE_LEGACY
