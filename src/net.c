@@ -148,12 +148,12 @@ static void timeout_handler(void *data) {
 		if(c->status.control)
 			continue;
 
-		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
+		if(c->last_ping_time.tv_sec + pingtimeout <= now.tv_sec) {
 			if(c->edge) {
 				try_tx(c->node, false);
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
-				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time.tv_sec);
+				} else if(c->last_ping_time.tv_sec + pinginterval <= now.tv_sec) {
 					send_ping(c);
 					continue;
 				} else {
@@ -431,8 +431,10 @@ void retry(void) {
 
 	/* Check for outgoing connections that are in progress, and reset their ping timers */
 	for list_each(connection_t, c, connection_list) {
-		if(c->outgoing && !c->node)
-			c->last_ping_time = 0;
+		if(c->outgoing && !c->node) {
+			c->last_ping_time.tv_sec = 0;
+			c->last_ping_time.tv_usec = 0;
+		}
 	}
 
 	/* Kick the ping timeout handler */

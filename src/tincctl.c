@@ -1021,7 +1021,7 @@ static int cmd_dump(int argc, char *argv[]) {
 		char local_port[4096];
 		char via[4096];
 		char nexthop[4096];
-		int cipher, digest, maclength, compression, distance, socket, weight;
+		int cipher, digest, maclength, compression, distance, socket, weight, avg_rtt;
 		short int pmtu, minmtu, maxmtu;
 		unsigned int options, status_int;
 		node_status_t status;
@@ -1059,8 +1059,8 @@ static int cmd_dump(int argc, char *argv[]) {
 			} break;
 
 			case REQ_DUMP_EDGES: {
-				int n = sscanf(line, "%*d %*d %s %s %s port %s %s port %s %x %d", from, to, host, port, local_host, local_port, &options, &weight);
-				if(n != 8) {
+				int n = sscanf(line, "%*d %*d %s %s %s port %s %s port %s %x %d %d", from, to, host, port, local_host, local_port, &options, &weight, &avg_rtt);
+				if(n != 9) {
 					fprintf(stderr, "Unable to parse edge dump from tincd.\n");
 					return 1;
 				}
@@ -1072,7 +1072,7 @@ static int cmd_dump(int argc, char *argv[]) {
 					else if(do_graph == 2)
 						printf(" %s -> %s [w = %f, weight = %f];\n", node1, node2, w, w);
 				} else {
-					printf("%s to %s at %s port %s local %s port %s options %x weight %d\n", from, to, host, port, local_host, local_port, options, weight);
+					printf("%s to %s at %s port %s local %s port %s options %x weight %d avg_rtt %d\n", from, to, host, port, local_host, local_port, options, weight, avg_rtt);
 				}
 			} break;
 

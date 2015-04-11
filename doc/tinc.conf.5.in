@@ -18,7 +18,7 @@ option to assign a network name to each tinc daemon.
 .Pp
 The effect of this option is that the daemon will set its configuration root to
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa / ,
-where 
+where
 .Ar NETNAME
 is your argument to the
 .Fl n
@@ -35,7 +35,7 @@ In this case, the network name would just be empty, and
 .Nm tinc
 now looks for files in
 .Pa @sysconfdir@/tinc/ ,
-instead of 
+instead of
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa / ;
 the configuration file should be
 .Pa @sysconfdir@/tinc/tinc.conf ,
@@ -90,7 +90,7 @@ or assignments in the form of:
 .Pp
 The variable names are case insensitive, and any spaces, tabs,
 newlines and carriage returns are ignored.
-Note: it is not required that you put in the 
+Note: it is not required that you put in the
 .Li =
 sign, but doing so improves readability.
 If you leave it out, remember to replace it with at least one space character.
@@ -129,7 +129,7 @@ This is the same as
 however the address given with the
 .Va BindToAddress
 option will also be used for outgoing connections. This is useful if your
-computer has more than one IPv4 or IPv6 address, and you want 
+computer has more than one IPv4 or IPv6 address, and you want
 .Nm tinc
 to only use a specific one for outgoing packets.
 .It Va BindToInterface Li = Ar interface Bq experimental
@@ -231,7 +231,7 @@ Open a multicast UDP socket and bind it to the address and port (separated by sp
 Packets are read from and written to this multicast socket.
 This can be used to connect to UML, QEMU or KVM instances listening on the same multicast address.
 Do NOT connect multiple
-.Nm tinc 
+.Nm tinc
 daemons to the same multicast address, this will very likely cause routing loops.
 Also note that this can cause decrypted VPN packets to be sent out on a real network if misconfigured.
 .It uml Pq not compiled in by default
@@ -276,6 +276,12 @@ When this option is enabled, packets that cannot be sent directly to the destina
 but which would have to be forwarded by an intermediate node, are dropped instead.
 When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
+.It Va EdgeUpdateInterval Li = Ar seconds Pq 0
+The number of seconds between notification of edge changes.
+.Nm tinc
+will send updated edge informations to all active connections. When the value is 0
+.Nm tinc
+will not send any updates.
 .It Va Ed25519PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /ed25519_key.priv Pc
 The file in which the private Ed25519 key of this tinc daemon resides.
 This is only used if
@@ -399,7 +405,7 @@ This is the name which identifies this tinc daemon.
 It must be unique for the virtual private network this daemon will connect to.
 .Va Name
 may only consist of alphanumeric and underscore characters (a-z, A-Z, 0-9 and _), and is case sensitive.
-If 
+If
 .Va Name
 starts with a
 .Li $ ,
@@ -428,7 +434,7 @@ It will allow this tinc daemon to authenticate itself to other daemons.
 .It Va PrivateKeyFile Li = Ar filename Po Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /rsa_key.priv Pc
 The file in which the private RSA key of this tinc daemon resides.
 .It Va ProcessPriority Li = low | normal | high
-When this option is used the priority of the 
+When this option is used the priority of the
 .Nm tincd
 process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
@@ -682,7 +688,7 @@ This script is started when an invitation has been used.
 .Pp
 The scripts are started without command line arguments, but can make use of certain environment variables.
 Under UNIX like operating systems the names of environment variables must be preceded by a
-.Li $ 
+.Li $
 in scripts.
 Under Windows, in
 .Pa .bat

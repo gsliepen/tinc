@@ -58,6 +58,7 @@
 #define MIN_PROBE_SIZE 18
 
 int keylifetime = 0;
+int edgeupdateinterval = 0;
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
