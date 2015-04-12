@@ -667,7 +667,7 @@ static bool add_listen_address(char *address, bool bindto) {
 	hint.ai_protocol = IPPROTO_TCP;
 	hint.ai_flags = AI_PASSIVE;
 
-#ifdef HAVE_DECL_RES_INIT
+#if HAVE_DECL_RES_INIT
 	res_init();
 #endif
 	int err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
