@@ -464,10 +464,10 @@ and
 .Ev REMOTEPORT
 are available.
 .El
-.It Va ReplayWindow Li = Ar bytes Pq 16
+.It Va ReplayWindow Li = Ar bytes Pq 32
 This is the size of the replay tracking window for each remote node, in bytes.
 The window is a bitfield which tracks 1 packet per bit, so for example
-the default setting of 16 will track up to 128 packets in the window. In high
+the default setting of 32 will track up to 256 packets in the window. In high
 bandwidth scenarios, setting this to a higher value can reduce packet loss from
 the interaction of replay tracking with underlying real packet loss and/or
 reordering. Setting this to zero will disable replay tracking completely and
@@ -502,12 +502,14 @@ If tinc doesn't receive any UDP ping replies over the specified interval,
 it will assume UDP communication is broken and will fall back to TCP.
 .It Va UDPInfoInterval Li = Ar seconds Pq 5
 The minimum amount of time between sending periodic updates about UDP addresses, which are mostly useful for UDP hole punching.
-.It Va UDPRcvBuf Li = Ar bytes Pq OS default
+.It Va UDPRcvBuf Li = Ar bytes Pq 1048576
 Sets the socket receive buffer size for the UDP socket, in bytes.
-If unset, the default buffer size will be used by the operating system.
-.It Va UDPSndBuf Li = Ar bytes Pq OS default
+If set to zero, the default buffer size will be used by the operating system.
+Note: this setting can have a significant impact on performance, especially raw throughput.
+.It Va UDPSndBuf Li = Ar bytes Pq 1048576
 Sets the socket send buffer size for the UDP socket, in bytes.
-If unset, the default buffer size will be used by the operating system.
+If set to zero, the default buffer size will be used by the operating system.
+Note: this setting can have a significant impact on performance, especially raw throughput.
 .El
 .Sh HOST CONFIGURATION FILES
 The host configuration files contain all information needed
