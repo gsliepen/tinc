@@ -57,14 +57,14 @@ void make_names(bool daemon) {
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			confdir = xstrdup(installdir);
-			if(!logfilename)
-				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", installdir, identname);
 			if(!confbase) {
 				if(netname)
 					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
+			if(!logfilename)
+				xasprintf(&logfilename, "%s" SLASH "tinc.log", confbase);
 		}
 		RegCloseKey(key);
 	}
