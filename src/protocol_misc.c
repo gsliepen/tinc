@@ -98,9 +98,7 @@ bool ping_h(connection_t *c, const char *request) {
 	int tv_sec, tv_usec, ret;
 
 	ret = sscanf(request, "%*d %d %d", &tv_sec, &tv_usec);
-
 	if (ret == 2) {
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Got PING from %s (%s) %d", c->name, request, ret);
 		return send_pong_v2(c, tv_sec, tv_usec);
 	} else {
 		return send_pong(c);
