@@ -148,9 +148,6 @@ bool read_ecdsa_public_key(connection_t *c) {
 
 #ifndef DISABLE_LEGACY
 bool read_rsa_public_key(connection_t *c) {
-	if(ecdsa_active(c->ecdsa))
-		return true;
-
 	FILE *fp;
 	char *fname;
 	char *n;
