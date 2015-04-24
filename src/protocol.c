@@ -135,7 +135,8 @@ bool receive_request(connection_t *c, const char *request) {
 		if(!request_handlers[reqno](c, request)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", request_name[reqno], c->name, c->hostname);
+			if(request != TERMREQ)
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", request_name[reqno], c->name, c->hostname);
 			return false;
 		}
 	} else {
