@@ -386,7 +386,7 @@ bool id_h(connection_t *c, const char *request) {
 
 	/* Forbid version rollback for nodes whose Ed25519 key we know */
 
-	if(ecdsa_active(c->ecdsa) && c->protocol_minor < 2) {
+	if(ecdsa_active(c->ecdsa) && c->protocol_minor < 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) tries to roll back protocol version to %d.%d",
 			c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
@@ -780,6 +780,8 @@ static bool upgrade_h(connection_t *c, const char *request) {
 	logger(DEBUG_ALWAYS, LOG_INFO, "Got Ed25519 public key from %s (%s), upgrading!", c->name, c->hostname);
 	append_config_file(c->name, "Ed25519PublicKey", pubkey);
 	c->allow_request = TERMREQ;
+	if(c->outgoing)
+		c->outgoing->timeout = 0;
 	return send_termreq(c);
 }
 
