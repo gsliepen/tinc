@@ -26,6 +26,43 @@
 #include "script.h"
 #include "xalloc.h"
 
+#ifdef HAVE_PUTENV
+static void unputenv(const char *p) {
+	const char *e = strchr(p, '=');
+	if(!e)
+		return;
+	int len = e - p;
+#ifndef HAVE_UNSETENV
+#ifdef HAVE_MINGW
+	// Windows requires putenv("FOO=") to unset %FOO%
+	len++;
+#endif
+#endif
+	char var[len + 1];
+	strncpy(var, p, len);
+	var[len] = 0;
+#ifdef HAVE_UNSETENV
+	unsetenv(var);
+#else
+	// We must keep what we putenv() around in memory.
+	// To do this without memory leaks, keep things in a list and reuse if possible.
+	static list_t list = {};
+	for list_each(char, data, &list) {
+		if(!strcmp(data, var)) {
+			putenv(data);
+			return;
+		}
+	}
+	char *data = xstrdup(var);
+	list_insert_tail(&list, data);
+	putenv(data);
+#endif
+}
+#else
+static void putenv(const char *p) {}
+static void unputenv(const char *p) {}
+#endif
+
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
 	char scriptname[PATH_MAX];
@@ -67,12 +104,10 @@ bool execute_script(const char *name, char **envp) {
 
 	logger(DEBUG_STATUS, LOG_INFO, "Executing script %s", name);
 
-#ifdef HAVE_PUTENV
 	/* Set environment */
 
 	for(int i = 0; envp[i]; i++)
 		putenv(envp[i]);
-#endif
 
 	if(scriptinterpreter)
 		xasprintf(&command, "%s \"%s\"", scriptinterpreter, scriptname);
@@ -85,15 +120,8 @@ bool execute_script(const char *name, char **envp) {
 
 	/* Unset environment */
 
-	for(int i = 0; envp[i]; i++) {
-		char *e = strchr(envp[i], '=');
-		if(e) {
-			char p[e - envp[i] + 1];
-			strncpy(p, envp[i], e - envp[i]);
-			p[e - envp[i]] = '\0';
-			putenv(p);
-		}
-	}
+	for(int i = 0; envp[i]; i++)
+		unputenv(envp[i]);
 
 	if(status != -1) {
 #ifdef WEXITSTATUS
