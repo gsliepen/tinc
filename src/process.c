@@ -347,6 +347,43 @@ bool detach(void) {
 	return true;
 }
 
+#ifdef HAVE_PUTENV
+void unputenv(char *p) {
+	char *e = strchr(p, '=');
+	if(!e)
+		return;
+	int len = e - p;
+#ifndef HAVE_UNSETENV
+#ifdef HAVE_MINGW
+	// Windows requires putenv("FOO=") to unset %FOO%
+	len++;
+#endif
+#endif
+	char var[len];
+	strncpy(var, p, len);
+#ifdef HAVE_UNSETENV
+	unsetenv(var);
+#else
+	// We must keep what we putenv() around in memory.
+	// To do this without memory leaks, keep things in a list and reuse if possible.
+	static list_t list = {};
+	for(list_node_t *node = list->head; node; node++) {
+		char *data = node->data;
+		if(!strcmp(data, var)) {
+			putenv(data);
+			return;
+		}
+	}
+	char *data = strcmp(var);
+	list_insert_tail(list, data);
+	putenv(data);
+#endif
+}
+#else
+void putenv(const char *p) {}
+void unputenv(const char *p) {}
+#endif
+
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
 	char *scriptname;
@@ -386,12 +423,10 @@ bool execute_script(const char *name, char **envp) {
 
 	ifdebug(STATUS) logger(LOG_INFO, "Executing script %s", name);
 
-#ifdef HAVE_PUTENV
 	/* Set environment */
 	
 	for(i = 0; envp[i]; i++)
 		putenv(envp[i]);
-#endif
 
 	scriptname[len - 1] = '\"';
 	status = system(scriptname);
@@ -400,15 +435,8 @@ bool execute_script(const char *name, char **envp) {
 
 	/* Unset environment */
 
-	for(i = 0; envp[i]; i++) {
-		char *e = strchr(envp[i], '=');
-		if(e) {
-			char p[e - envp[i] + 1];
-			strncpy(p, envp[i], e - envp[i]);
-			p[e - envp[i]] = '\0';
-			putenv(p);
-		}
-	}
+	for(i = 0; envp[i]; i++)
+		unputenv(envp[i]);
 
 	if(status != -1) {
 #ifdef WEXITSTATUS
