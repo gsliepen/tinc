@@ -94,7 +94,7 @@ tincd_SOURCES = \
 	tincd.c \
 	utils.c utils.h \
 	xalloc.h \
-	version.c version.h version_git.h \
+	version.c version.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \
@@ -116,7 +116,7 @@ tinc_SOURCES = \
 	tincctl.c tincctl.h \
 	top.c top.h \
 	utils.c utils.h \
-	version.c version.h version_git.h \
+	version.c version.h \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	ed25519/ecdsagen.c \
