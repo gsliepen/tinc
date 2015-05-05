@@ -6,7 +6,7 @@ sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 .PHONY: version.c version_git.h
 version_git.h:
 	echo >$@
-	-GIT_DESCRIPTION="`cd $(@D) && git describe`" && echo "#define GIT_DESCRIPTION \"$$GIT_DESCRIPTION\"" >$@
+	-git describe && echo '#define GIT_DESCRIPTION "'`git describe | sed 's/release-//'`'"' >$@
 version.c: version_git.h
 
 if LINUX
