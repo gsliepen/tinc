@@ -150,7 +150,7 @@ static void usage(bool status) {
 				"  exchange                   Same as export followed by import\n"
 				"  exchange-all               Same as export-all followed by import\n"
 				"  invite NODE [...]          Generate an invitation for NODE\n"
-				"  join INVITATION            Join a VPN using an INVITIATION\n"
+				"  join INVITATION            Join a VPN using an INVITATION\n"
 				"  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
 				"  fsck                       Check the configuration files for problems.\n"
 				"\n");
