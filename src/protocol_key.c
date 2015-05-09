@@ -125,7 +125,47 @@ bool send_req_key(node_t *to) {
 
 /* REQ_KEY is overloaded to allow arbitrary requests to be routed between two nodes. */
 
-static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, int reqno) {
+static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, node_t *to, int reqno) {
+	/* If this is a SPTPS packet, see if sending UDP info helps.
+	   Note that we only do this if we're the destination or the static relay;
+	   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
+	if((reqno == REQ_KEY || reqno == REQ_SPTPS) && to->via == myself)
+		send_udp_info(myself, from);
+
+	if(reqno == REQ_SPTPS) {
+		/* This is a SPTPS data packet. */
+
+		char buf[MAX_STRING_SIZE];
+		int len;
+		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s) to %s (%s): %s", "REQ_SPTPS", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
+			return true;
+		}
+
+		if(to != myself) {
+			/* We don't just forward the request, because we want to use UDP if it's available. */
+			send_sptps_data(to, from, 0, buf, len);
+			try_tx(to, true);
+		} else {
+			/* The packet is for us */
+			if(!from->status.validkey) {
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Got REQ_SPTPS from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
+				return true;
+			}
+			sptps_receive_data(&from->sptps, buf, len);
+			send_mtu_info(myself, from, MTU);
+		}
+
+		return true;
+	}
+
+	/* Requests that are not SPTPS data packets are forwarded as-is. */
+
+	if (to != myself)
+		return send_request(to->nexthop->connection, "%s", request);
+
+	/* The request is for us */
+
 	switch(reqno) {
 		case REQ_PUBKEY: {
 			if(!node_read_ecdsa_public_key(from)) {
@@ -186,23 +226,6 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			return true;
 		}
 
-		case REQ_SPTPS: {
-			if(!from->status.validkey) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Got REQ_SPTPS from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
-				return true;
-			}
-
-			char buf[MAX_STRING_SIZE];
-			int len;
-			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS", from->name, from->hostname, "invalid SPTPS data");
-				return true;
-			}
-			sptps_receive_data(&from->sptps, buf, len);
-			send_mtu_info(myself, from, MTU);
-			return true;
-		}
-
 		default:
 			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown extended REQ_KEY request from %s (%s): %s", from->name, from->hostname, request);
 			return true;
@@ -242,19 +265,12 @@ bool req_key_h(connection_t *c, const char *request) {
 		return true;
 	}
 
-	/* If this is a SPTPS packet, see if sending UDP info helps.
-	   Note that we only do this if we're the destination or the static relay;
-	   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
-
-	if(experimental && (reqno == REQ_KEY || reqno == REQ_SPTPS) && to->via == myself)
-		send_udp_info(myself, from);
-
 	/* Check if this key request is for us */
 
 	if(to == myself) {                      /* Yes */
 		/* Is this an extended REQ_KEY message? */
 		if(experimental && reqno)
-			return req_key_ext_h(c, request, from, reqno);
+			return req_key_ext_h(c, request, from, to, reqno);
 
 		/* No, just send our key back */
 		send_ans_key(from);
@@ -268,7 +284,10 @@ bool req_key_h(connection_t *c, const char *request) {
 			return true;
 		}
 
-		/* TODO: forwarding SPTPS packets in this way is inefficient because we send them over TCP without checking for UDP connectivity */
+		/* Is this an extended REQ_KEY message? */
+		if(experimental && reqno)
+			return req_key_ext_h(c, request, from, to, reqno);
+
 		send_request(to->nexthop->connection, "%s", request);
 	}
 
