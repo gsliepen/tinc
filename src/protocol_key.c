@@ -87,9 +87,13 @@ bool key_changed_h(connection_t *c, const char *request) {
 	return true;
 }
 
+static bool send_sptps_data_myself(void *handle, uint8_t type, const void *data, size_t len) {
+	return send_sptps_data(handle, myself, type, data, len);
+}
+
 static bool send_initial_sptps_data(void *handle, uint8_t type, const void *data, size_t len) {
 	node_t *to = handle;
-	to->sptps.send_data = send_sptps_data;
+	to->sptps.send_data = send_sptps_data_myself;
 	char buf[len * 4 / 3 + 5];
 	b64encode(data, buf, len);
 	return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_KEY, buf);
@@ -176,7 +180,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			from->status.validkey = false;
 			from->status.waitingforkey = true;
 			from->last_req_key = now.tv_sec;
-			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data, receive_sptps_record);
+			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data_myself, receive_sptps_record);
 			sptps_receive_data(&from->sptps, buf, len);
 			send_mtu_info(myself, from, MTU);
 			return true;

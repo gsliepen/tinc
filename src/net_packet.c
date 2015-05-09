@@ -681,7 +681,7 @@ end:
 #endif
 }
 
-static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const void *data, size_t len) {
+bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_t len) {
 	node_t *relay = (to->via != myself && (type == PKT_PROBE || (len - SPTPS_DATAGRAM_OVERHEAD) <= to->via->minmtu)) ? to->via : to->nexthop;
 	bool direct = from == myself && to == relay;
 	bool relay_supported = (relay->options >> 24) >= 4;
@@ -742,10 +742,6 @@ static bool send_sptps_data_priv(node_t *to, node_t *from, int type, const void 
 	}
 
 	return true;
-}
-
-bool send_sptps_data(void *handle, uint8_t type, const void *data, size_t len) {
-	return send_sptps_data_priv(handle, myself, type, data, len);
 }
 
 bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len) {
@@ -1404,7 +1400,7 @@ skip_harder:
 		/* If we're not the final recipient, relay the packet. */
 
 		if(to != myself) {
-			send_sptps_data_priv(to, from, 0, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t));
+			send_sptps_data(to, from, 0, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t));
 			try_tx_sptps(to, true);
 			return;
 		}
