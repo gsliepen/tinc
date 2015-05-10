@@ -153,6 +153,36 @@ bool tcppacket_h(connection_t *c, const char *request) {
 	return true;
 }
 
+bool send_sptps_tcppacket(connection_t *c, const char* packet, int len) {
+	/* If there already is a lot of data in the outbuf buffer, discard this packet.
+	   We use a very simple Random Early Drop algorithm. */
+
+	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
+		return true;
+
+	if(!send_request(c, "%d %hd", SPTPS_PACKET, len))
+		return false;
+
+	send_meta_raw(c, packet, len);
+	return true;
+}
+
+bool sptps_tcppacket_h(connection_t *c, const char* request) {
+	short int len;
+
+	if(sscanf(request, "%*d %hd", &len) != 1) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "SPTPS_PACKET", c->name,
+			   c->hostname);
+		return false;
+	}
+
+	/* Set sptpslen to len, this will tell receive_meta() that a SPTPS packet is coming. */
+
+	c->sptpslen = len;
+
+	return true;
+}
+
 /* Transmitting UDP information */
 
 bool send_udp_info(node_t *from, node_t *to) {

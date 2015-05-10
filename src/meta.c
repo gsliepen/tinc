@@ -78,6 +78,20 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	return true;
 }
 
+void send_meta_raw(connection_t *c, const char *buffer, int length) {
+	if(!c) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
+		abort();
+	}
+
+	logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes of raw metadata to %s (%s)", length,
+			   c->name, c->hostname);
+
+	buffer_add(&c->outbuf, buffer, length);
+
+	io_set(&c->io, IO_READ | IO_WRITE);
+}
+
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	for list_each(connection_t, c, connection_list)
 		if(c != from && c->edge)
@@ -159,6 +173,25 @@ bool receive_meta(connection_t *c) {
 	}
 
 	do {
+		/* Are we receiving a SPTPS packet? */
+
+		if(c->sptpslen) {
+			int len = MIN(inlen, c->sptpslen - c->inbuf.len);
+			buffer_add(&c->inbuf, bufp, len);
+
+			char *sptpspacket = buffer_read(&c->inbuf, c->sptpslen);
+			if(!sptpspacket)
+				return true;
+
+			if(!receive_tcppacket_sptps(c, sptpspacket, c->sptpslen))
+				return false;
+			c->sptpslen = 0;
+
+			bufp += len;
+			inlen -= len;
+			continue;
+		}
+
 		if(c->protocol_minor >= 2) {
 			int len = sptps_receive_data(&c->sptps, bufp, inlen);
 			if(!len)

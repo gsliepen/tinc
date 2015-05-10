@@ -41,7 +41,8 @@ static bool (*request_handlers[])(connection_t *, const char *) = {
 		add_subnet_h, del_subnet_h,
 		add_edge_h, del_edge_h,
 		key_changed_h, req_key_h, ans_key_h, tcppacket_h, control_h,
-		NULL, NULL, NULL, /* Not "real" requests (yet) */
+		NULL, NULL, /* Not "real" requests (yet) */
+		sptps_tcppacket_h,
 		udp_info_h, mtu_info_h,
 };
 

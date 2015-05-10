@@ -195,6 +195,7 @@ extern bool send_sptps_data(node_t *to, node_t *from, int type, const void *data
 extern bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len);
 extern void send_packet(struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, const char *, int);
+extern bool receive_tcppacket_sptps(struct connection_t *, const char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern char *get_name(void);
 extern void device_enable(void);

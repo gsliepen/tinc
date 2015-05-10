@@ -26,7 +26,7 @@
 /* Protocol version. Different major versions are incompatible. */
 
 #define PROT_MAJOR 17
-#define PROT_MINOR 6 /* Should not exceed 255! */
+#define PROT_MINOR 7 /* Should not exceed 255! */
 
 /* Silly Windows */
 
@@ -108,6 +108,7 @@ extern void send_key_changed(void);
 extern bool send_req_key(struct node_t *);
 extern bool send_ans_key(struct node_t *);
 extern bool send_tcppacket(struct connection_t *, const struct vpn_packet_t *);
+extern bool send_sptps_tcppacket(struct connection_t *, const char*, int);
 extern bool send_udp_info(struct node_t *, struct node_t *);
 extern bool send_mtu_info(struct node_t *, struct node_t *, int);
 
@@ -131,6 +132,7 @@ extern bool key_changed_h(struct connection_t *, const char *);
 extern bool req_key_h(struct connection_t *, const char *);
 extern bool ans_key_h(struct connection_t *, const char *);
 extern bool tcppacket_h(struct connection_t *, const char *);
+extern bool sptps_tcppacket_h(struct connection_t *, const char *);
 extern bool control_h(struct connection_t *, const char *);
 extern bool udp_info_h(struct connection_t *, const char *);
 extern bool mtu_info_h(struct connection_t *, const char *);
