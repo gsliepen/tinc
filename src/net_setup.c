@@ -308,10 +308,16 @@ static bool read_rsa_private_key(void) {
 #endif
 
 static timeout_t keyexpire_timeout;
+static timeout_t edgeupdate_timeout;
 
 static void keyexpire_handler(void *data) {
 	regenerate_key();
 	timeout_set(data, &(struct timeval){keylifetime, rand() % 100000});
+}
+
+static void edgeupdate_handler(void *data) {
+	update_edge_weight();
+	timeout_set(data, &(struct timeval){edgeupdateinterval, rand() % 100000});
 }
 
 void regenerate_key(void) {
@@ -320,6 +326,29 @@ void regenerate_key(void) {
 	for splay_each(node_t, n, node_tree)
 		n->status.validkey_in = false;
 }
+
+void update_edge_weight(void) {
+	edge_t *t = NULL;
+	logger(DEBUG_STATUS, LOG_INFO, "Update edge weight");
+
+	for list_each(connection_t, c, connection_list) {
+			if (c->status.control || !c->edge)
+				continue;
+
+			if (c->edge->avg_rtt) {
+
+				t = clone_edge(c->edge);
+				send_del_edge(c, c->edge);
+				edge_del(c->edge);
+				/* avg_rtt is in ms */
+				t->weight = t->avg_rtt*10;
+				c->edge = t;
+				edge_add(t);
+				send_add_edge(c, t);
+			}
+		}
+}
+
 
 /*
   Read Subnets from all host config files
@@ -624,6 +653,9 @@ bool setup_myself_reloadable(void) {
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
+	if(!get_config_int(lookup_config(config_tree, "EdgeUpdateInterval"), &edgeupdateinterval))
+		edgeupdateinterval = 0;
+
 	config_t *cfg = lookup_config(config_tree, "AutoConnect");
 	if(cfg) {
 		if(!get_config_bool(cfg, &autoconnect)) {
@@ -893,6 +925,9 @@ static bool setup_myself(void) {
 	free(cipher);
 
 	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval){keylifetime, rand() % 100000});
+
+	if (edgeupdateinterval)
+		timeout_add(&edgeupdate_timeout, edgeupdate_handler, &edgeupdate_timeout, &(struct timeval){edgeupdateinterval, rand() % 100000});
 
 	/* Check if we want to use message authentication codes... */
 

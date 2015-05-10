@@ -100,6 +100,7 @@ extern bool send_error(struct connection_t *, int, const  char *);
 extern bool send_termreq(struct connection_t *);
 extern bool send_ping(struct connection_t *);
 extern bool send_pong(struct connection_t *);
+bool send_pong_v2(connection_t *c, int, int);
 extern bool send_add_subnet(struct connection_t *, const struct subnet_t *);
 extern bool send_del_subnet(struct connection_t *, const struct subnet_t *);
 extern bool send_add_edge(struct connection_t *, const struct edge_t *);

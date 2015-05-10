@@ -319,7 +319,7 @@ void retry_outgoing(outgoing_t *outgoing) {
 void finish_connecting(connection_t *c) {
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
-	c->last_ping_time = now.tv_sec;
+	c->last_ping_time = now;
 	c->status.connecting = false;
 
 	send_id(c);
@@ -555,7 +555,7 @@ begin:
 #endif
 	c->outmaclength = myself->connection->outmaclength;
 	c->outcompression = myself->connection->outcompression;
-	c->last_ping_time = now.tv_sec;
+	c->last_ping_time = now;
 
 	connection_add(c);
 
@@ -708,7 +708,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	c->address = sa;
 	c->hostname = sockaddr2hostname(&sa);
 	c->socket = fd;
-	c->last_ping_time = now.tv_sec;
+	c->last_ping_time = now;
 
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
 
@@ -747,7 +747,7 @@ void handle_new_unix_connection(void *data, int flags) {
 	c->address = sa;
 	c->hostname = xstrdup("localhost port unix");
 	c->socket = fd;
-	c->last_ping_time = now.tv_sec;
+	c->last_ping_time = now;
 
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
 

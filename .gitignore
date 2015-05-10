@@ -13,5 +13,6 @@ Makefile.in
 /missing
 INSTALL
 .deps
+.dir-locals.el
 stamp-h1
 /src/device.c

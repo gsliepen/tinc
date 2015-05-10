@@ -58,6 +58,7 @@
 #define MIN_PROBE_SIZE 18
 
 int keylifetime = 0;
+int edgeupdateinterval = 0;
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
@@ -260,7 +261,7 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	if(!n->status.validkey_in || !digest_active(n->indigest) || inpkt->len < sizeof(seqno_t) + digest_length(n->indigest))
 		return false;
 
-	return digest_verify(n->indigest, SEQNO(inpkt), inpkt->len - digest_length(n->indigest), DATA(inpkt) + inpkt->len - digest_length(n->indigest));
+	return digest_verify(n->indigest, (inpkt)->data + (inpkt)->offset, inpkt->len - digest_length(n->indigest), DATA(inpkt) + inpkt->len - digest_length(n->indigest));
 #endif
 }
 

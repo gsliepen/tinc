@@ -92,13 +92,24 @@ bool termreq_h(connection_t *c, const char *request) {
 
 bool send_ping(connection_t *c) {
 	c->status.pinged = true;
-	c->last_ping_time = now.tv_sec;
+	c->last_ping_time = now;
 
-	return send_request(c, "%d", PING);
+	return send_request(c, "%d %d %d", PING, c->last_ping_time.tv_sec, c->last_ping_time.tv_usec);
 }
 
 bool ping_h(connection_t *c, const char *request) {
-	return send_pong(c);
+	int tv_sec, tv_usec, ret;
+
+	ret = sscanf(request, "%*d %d %d", &tv_sec, &tv_usec);
+	if (ret == 2) {
+		return send_pong_v2(c, tv_sec, tv_usec);
+	} else {
+		return send_pong(c);
+	}
+}
+
+bool send_pong_v2(connection_t *c, int tv_sec, int tv_usec) {
+	return send_request(c, "%d %d %d", PONG, tv_sec, tv_usec);
 }
 
 bool send_pong(connection_t *c) {
@@ -106,7 +117,36 @@ bool send_pong(connection_t *c) {
 }
 
 bool pong_h(connection_t *c, const char *request) {
+	int current_rtt = 0;
+	int tv_sec, tv_usec, ret;
+	struct timeval _now;
 	c->status.pinged = false;
+
+	ret = sscanf(request, "%*d %d %d", &tv_sec, &tv_usec);
+	gettimeofday(&_now, NULL);
+
+	if (ret != 2) {
+		/* We got PONG from older node */
+		tv_sec = c->last_ping_time.tv_sec;
+		tv_usec = c->last_ping_time.tv_usec;
+	}
+
+	/* RTT should be in ms */
+	current_rtt = (_now.tv_sec - tv_sec)*1000;
+	/* Compute diff between usec */
+	current_rtt += _now.tv_usec >= tv_usec ? _now.tv_usec - tv_usec : tv_usec - _now.tv_usec;
+
+	current_rtt = current_rtt/1000;
+
+	if (c->edge->avg_rtt == 0)
+		c->edge->avg_rtt = current_rtt;
+	else
+		c->edge->avg_rtt = (current_rtt + c->edge->avg_rtt)/2;
+
+
+	if (c->edge->reverse) {
+		c->edge->reverse->avg_rtt = c->edge->avg_rtt;
+	}
 
 	/* Succesful connection, reset timeout if this is an outgoing connection. */
 
