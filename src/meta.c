@@ -159,8 +159,14 @@ bool receive_meta(connection_t *c) {
 	}
 
 	do {
-		if(c->protocol_minor >= 2)
-			return sptps_receive_data(&c->sptps, bufp, inlen);
+		if(c->protocol_minor >= 2) {
+			int len = sptps_receive_data(&c->sptps, bufp, inlen);
+			if(!len)
+				return false;
+			bufp += len;
+			inlen -= len;
+			continue;
+		}
 
 		if(!c->status.decryptin) {
 			endp = memchr(bufp, '\n', inlen);
