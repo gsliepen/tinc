@@ -698,7 +698,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 			to->incompression = myself->incompression;
 			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, from->name, to->name, buf, to->incompression);
 		} else {
-			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, from->name, to->name, REQ_SPTPS, buf);
+			return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, from->name, to->name, SPTPS_PACKET, buf);
 		}
 	}
 

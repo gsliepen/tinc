@@ -129,16 +129,16 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 	/* If this is a SPTPS packet, see if sending UDP info helps.
 	   Note that we only do this if we're the destination or the static relay;
 	   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
-	if((reqno == REQ_KEY || reqno == REQ_SPTPS) && to->via == myself)
+	if((reqno == REQ_KEY || reqno == SPTPS_PACKET) && to->via == myself)
 		send_udp_info(myself, from);
 
-	if(reqno == REQ_SPTPS) {
+	if(reqno == SPTPS_PACKET) {
 		/* This is a SPTPS data packet. */
 
 		char buf[MAX_STRING_SIZE];
 		int len;
 		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s) to %s (%s): %s", "REQ_SPTPS", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s) to %s (%s): %s", "SPTPS_PACKET", from->name, from->hostname, to->name, to->hostname, "invalid SPTPS data");
 			return true;
 		}
 
@@ -149,7 +149,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		} else {
 			/* The packet is for us */
 			if(!from->status.validkey) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Got REQ_SPTPS from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Got SPTPS_PACKET from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
 				return true;
 			}
 			sptps_receive_data(&from->sptps, buf, len);
