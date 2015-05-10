@@ -420,7 +420,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 #endif
 	from->status.validkey = false;
 
-	if(compression < 0 || compression > 11) {
+	if(compression < 0 || compression > 12) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
 		return true;
 	}

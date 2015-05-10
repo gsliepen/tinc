@@ -34,6 +34,12 @@ chacha_poly1305_SOURCES = \
 	chacha-poly1305/chacha-poly1305.c chacha-poly1305/chacha-poly1305.h \
 	chacha-poly1305/poly1305.c chacha-poly1305/poly1305.h
 
+if CONFIGURE_LZ4_BUILTIN
+lz4_SOURCES = lz4/lib/lz4.c lz4/lib/lz4.h
+else
+lz4_SOURCES =
+endif
+
 tincd_SOURCES = \
 	buffer.c buffer.h \
 	cipher.h \
@@ -98,7 +104,8 @@ tincd_SOURCES = \
 	ed25519/ecdh.c \
 	ed25519/ecdsa.c \
 	$(ed25519_SOURCES) \
-	$(chacha_poly1305_SOURCES)
+	$(chacha_poly1305_SOURCES) \
+	$(lz4_SOURCES)
 
 tinc_SOURCES = \
 	dropin.c dropin.h \

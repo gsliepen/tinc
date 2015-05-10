@@ -30,6 +30,14 @@
 #include LZO1X_H
 #endif
 
+#ifdef LZ4_H
+#include LZ4_H
+#endif
+
+#ifdef HAVE_LZ4_BUILTIN
+#include "lz4/lib/lz4.h"
+#endif
+
 #include "cipher.h"
 #include "conf.h"
 #include "connection.h"
@@ -58,8 +66,13 @@
 #define MIN_PROBE_SIZE 18
 
 int keylifetime = 0;
+
 #ifdef HAVE_LZO
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
+#endif
+
+#ifdef HAVE_LZ4_STATE
+static void *lz4_wrkmem = NULL;
 #endif
 
 static void send_udppacket(node_t *, vpn_packet_t *);
@@ -180,62 +193,100 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 }
 
 static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	if(level == 0) {
-		memcpy(dest, source, len);
-		return len;
-	} else if(level == 10) {
-#ifdef HAVE_LZO
-		lzo_uint lzolen = MAXSIZE;
-		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
-		return lzolen;
-#else
-		return -1;
-#endif
-	} else if(level < 10) {
-#ifdef HAVE_ZLIB
-		unsigned long destlen = MAXSIZE;
-		if(compress2(dest, &destlen, source, len, level) == Z_OK)
-			return destlen;
-		else
-#endif
-			return -1;
-	} else {
-#ifdef HAVE_LZO
-		lzo_uint lzolen = MAXSIZE;
-		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
-		return lzolen;
-#else
-		return -1;
-#endif
-	}
+	length_t result;
 
-	return -1;
+	switch(level) {
+#ifdef HAVE_LZ4
+		case 12:
+#ifdef HAVE_LZ4_STATE
+			// @FIXME: Should this be allocated as an object member?
+			// And where should it be freed? Future threading compatibility?
+			if(lz4_wrkmem == NULL)
+				lz4_wrkmem = malloc(LZ4_sizeofState());
+			if(lz4_wrkmem == NULL)
+				return -1;
+#endif
+			result = (length_t) LZ4_compress_shim(source, dest, len, MAXSIZE);
+			if(result)
+				return result;
+			else
+				return -1;
+#endif
+#ifdef HAVE_LZO
+		case 11:
+			result = MAXSIZE;
+			lzo1x_999_compress(source, len, dest, (lzo_uint *) &result, lzo_wrkmem);
+			return result;
+
+		case 10:
+			result = MAXSIZE;
+			lzo1x_1_compress(source, len, dest, (lzo_uint *) &result, lzo_wrkmem);
+			return result;
+#endif
+#ifdef HAVE_ZLIB
+		case 9:
+		case 8:
+		case 7:
+		case 6:
+		case 5:
+		case 4:
+		case 3:
+		case 2:
+		case 1:
+			result = MAXSIZE;
+			if(compress2(dest, (unsigned long *) &result, source, len, level) == Z_OK)
+				return result;
+#endif
+		case 0:
+			memcpy(dest, source, len);
+			return len;
+
+		default:
+			return -1;
+	}
 }
 
 static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
-	if(level == 0) {
-		memcpy(dest, source, len);
-		return len;
-	} else if(level > 9) {
-#ifdef HAVE_LZO
-		lzo_uint lzolen = MAXSIZE;
-		if(lzo1x_decompress_safe(source, len, dest, &lzolen, NULL) == LZO_E_OK)
-			return lzolen;
-		else
-#endif
-			return -1;
-	}
-#ifdef HAVE_ZLIB
-	else {
-		unsigned long destlen = MAXSIZE;
-		if(uncompress(dest, &destlen, source, len) == Z_OK)
-			return destlen;
-		else
-			return -1;
-	}
-#endif
+	length_t result;
 
-	return -1;
+	switch(level) {
+#ifdef HAVE_LZ4
+		case 12:
+			result = (length_t) LZ4_decompress_safe(source, dest, len, MAXSIZE);
+			return result;
+#endif
+#ifdef HAVE_LZO
+		case 11:
+		case 10:
+			result = MAXSIZE;
+			if(lzo1x_decompress_safe(source, len, dest, (lzo_uint *) &result, NULL) == LZO_E_OK)
+				return result;
+			else
+				return -1;
+#endif
+#ifdef HAVE_ZLIB
+		case 9:
+		case 8:
+		case 7:
+		case 6:
+		case 5:
+		case 4:
+		case 3:
+		case 2:
+		case 1:
+			result = MAXSIZE;
+			if(uncompress(dest, (unsigned long *) &result, source, len) == Z_OK)
+				return result;
+			else
+				return -1;
+#endif
+		case 0:
+			memcpy(dest, source, len);
+			return len;
+
+		default:
+			return -1;
+	}
 }
 
 /* VPN packet I/O */

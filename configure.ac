@@ -227,6 +227,7 @@ tinc_CURSES
 tinc_READLINE
 tinc_ZLIB
 tinc_LZO
+tinc_LZ4
 
 if test "x$enable_legacy_protocol" != "xno"; then
 	if test -n "$with_libgcrypt"; then

@@ -548,7 +548,7 @@ Fragmentation Needed or Packet too Big messages are dropped by firewalls.
 .It Va Compression Li = Ar level Pq 0
 This option sets the level of compression used for UDP packets.
 Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
-10 (fast lzo) and 11 (best lzo).
+10 (fast lzo), 11 (best lzo), and 12 (lz4).
 .It Va Digest Li = Ar digest Pq sha1
 The digest algorithm used to authenticate UDP packets.
 Any digest supported by OpenSSL is recognised.
