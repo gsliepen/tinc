@@ -24,7 +24,7 @@ $tinc $c1 invite bar | $tinc $c2 join
 # Test equivalence of host config files
 
 cmp $d1/hosts/foo $d2/hosts/foo
-test "`grep ^ECDSAPublicKey $d1/hosts/bar`" = "`grep ^ECDSAPublicKey $d2/hosts/bar`"
+test "`grep ^Ed25519PublicKey $d1/hosts/bar`" = "`grep ^Ed25519PublicKey $d2/hosts/bar`"
 
 # Test Mode, Broadcast and ConnectTo statements
 
