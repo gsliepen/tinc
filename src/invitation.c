@@ -988,8 +988,14 @@ int cmd_join(int argc, char *argv[]) {
 			return 1;
 		}
 
-		if(!sptps_receive_data(&sptps, line, len))
-			return 1;
+		char *p = line;
+		while(len) {
+			int done = sptps_receive_data(&sptps, p, len);
+			if(!done)
+				return 1;
+			len -= done;
+			p += done;
+		}
 	}
 	
 	sptps_stop(&sptps);
