@@ -71,9 +71,13 @@ int keylifetime = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
 
+#ifdef HAVE_LZ4_BUILTIN
+static LZ4_stream_t lz4_stream;
+#else
 #ifdef HAVE_LZ4_STATE
-static void *lz4_wrkmem = NULL;
-#endif
+static void *lz4_state = NULL;
+#endif /* HAVE_LZ4_STATE   */
+#endif /* HAVE_LZ4_BUILTIN */
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
@@ -198,20 +202,36 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 	switch(level) {
 #ifdef HAVE_LZ4
 		case 12:
-#ifdef HAVE_LZ4_STATE
-			// @FIXME: Should this be allocated as an object member?
-			// And where should it be freed? Future threading compatibility?
-			if(lz4_wrkmem == NULL)
-				lz4_wrkmem = malloc(LZ4_sizeofState());
-			if(lz4_wrkmem == NULL)
+#ifdef HAVE_LZ4_BUILTIN
+			result = (length_t) LZ4_compress_fast_extState(&lz4_stream, source, dest, len, MAXSIZE, 0);
+			if(result)
+				return result;
+			else
 				return -1;
-#endif
+#else
+#ifdef HAVE_LZ4_STATE
+			/* @FIXME: Put this in a better place, and free() it too. */
+			if(lz4_state == NULL)
+				lz4_state = malloc(LZ4_sizeofState());
+			if(lz4_state == NULL) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Failed to allocate lz4_state, error: %i", errno);
+				return -1;
+			}
+
+			result = (length_t) LZ4_compress_fast_extState(lz4_state, source, dest, len, MAXSIZE, 0);
+			if(result)
+				return result;
+			else
+				return -1;
+#else
 			result = (length_t) LZ4_compress_shim(source, dest, len, MAXSIZE);
 			if(result)
 				return result;
 			else
 				return -1;
-#endif
+#endif /* HAVE_LZ4_STATE   */
+#endif /* HAVE_LZ4_BUILTIN */
+#endif /* HAVE_LZ4         */
 #ifdef HAVE_LZO
 		case 11:
 			result = MAXSIZE;
