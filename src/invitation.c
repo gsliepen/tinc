@@ -921,16 +921,31 @@ int cmd_join(int argc, char *argv[]) {
 	if(!ai)
 		return 1;
 
-	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-	if(sock <= 0) {
-		fprintf(stderr, "Could not open socket: %s\n", strerror(errno));
-		return 1;
+	struct addrinfo *aip = NULL;
+
+next:
+	if(!aip)
+		aip = ai;
+	else {
+		aip = aip->ai_next;
+		if(!aip)
+			return 1;
 	}
 
-	if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
-		fprintf(stderr, "Could not connect to %s port %s: %s\n", address, port, strerror(errno));
+	sock = socket(aip->ai_family, aip->ai_socktype, aip->ai_protocol);
+	if(sock <= 0) {
+		fprintf(stderr, "Could not open socket: %s\n", strerror(errno));
+		goto next;
+	}
+
+	if(connect(sock, aip->ai_addr, aip->ai_addrlen)) {
+		char *addrstr, *portstr;
+		sockaddr2str((sockaddr_t *)aip->ai_addr, &addrstr, &portstr);
+		fprintf(stderr, "Could not connect to %s port %s: %s\n", addrstr, portstr, strerror(errno));
+		free(addrstr);
+		free(portstr);
 		closesocket(sock);
-		return 1;
+		goto next;
 	}
 
 	fprintf(stderr, "Connected to %s port %s...\n", address, port);
@@ -943,7 +958,7 @@ int cmd_join(int argc, char *argv[]) {
 	if(!sendline(sock, "0 ?%s %d.%d", b64key, PROT_MAJOR, 1)) {
 		fprintf(stderr, "Error sending request to %s port %s: %s\n", address, port, strerror(errno));
 		closesocket(sock);
-		return 1;
+		goto next;
 	}
 
 	char hisname[4096] = "";
@@ -952,7 +967,7 @@ int cmd_join(int argc, char *argv[]) {
 	if(!recvline(sock, line, sizeof line) || sscanf(line, "%d %s %d.%d", &code, hisname, &hismajor, &hisminor) < 3 || code != 0 || hismajor != PROT_MAJOR || !check_id(hisname) || !recvline(sock, line, sizeof line) || !rstrip(line) || sscanf(line, "%d ", &code) != 1 || code != ACK || strlen(line) < 3) {
 		fprintf(stderr, "Cannot read greeting from peer\n");
 		closesocket(sock);
-		return 1;
+		goto next;
 	}
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
