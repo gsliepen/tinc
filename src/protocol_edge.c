@@ -61,9 +61,9 @@ bool add_edge_h(connection_t *c, const char *request) {
 	char to_name[MAX_STRING_SIZE];
 	char to_address[MAX_STRING_SIZE];
 	char to_port[MAX_STRING_SIZE];
-	char address_local[MAX_STRING_SIZE] = "unknown";
-	char port_local[MAX_STRING_SIZE] = "unknown";
-	sockaddr_t address, local_address;
+	char address_local[MAX_STRING_SIZE];
+	char port_local[MAX_STRING_SIZE];
+	sockaddr_t address, local_address = {{0}};
 	uint32_t options;
 	int weight;
 
@@ -117,7 +117,8 @@ bool add_edge_h(connection_t *c, const char *request) {
 	/* Convert addresses */
 
 	address = str2sockaddr(to_address, to_port);
-	local_address = str2sockaddr(address_local, port_local);
+	if(parameter_count >= 8)
+		local_address = str2sockaddr(address_local, port_local);
 
 	/* Check if edge already exists */
 
