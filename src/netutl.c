@@ -83,7 +83,13 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	char *scopeid;
 	int err;
 
-	if(sa->sa.sa_family == AF_UNKNOWN) {
+	if(sa->sa.sa_family == AF_UNSPEC) {
+		if(addrstr)
+			*addrstr = xstrdup("unspec");
+		if(portstr)
+			*portstr = xstrdup("unspec");
+		return;
+	} else if(sa->sa.sa_family == AF_UNKNOWN) {
 		if(addrstr)
 			*addrstr = xstrdup(sa->unknown.address);
 		if(portstr)
