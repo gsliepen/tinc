@@ -36,6 +36,7 @@
 static bool mykeyused = false;
 
 void send_key_changed(void) {
+#ifndef DISABLE_LEGACY
 	send_request(everyone, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
@@ -43,6 +44,7 @@ void send_key_changed(void) {
 	for list_each(connection_t, c, connection_list)
 		if(c->edge && c->node && c->node->status.reachable && !c->node->status.sptps)
 			send_ans_key(c->node);
+#endif
 
 	/* Force key exchange for connections using SPTPS */
 
