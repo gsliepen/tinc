@@ -107,9 +107,6 @@ bool send_req_key(node_t *to) {
 			return true;
 		}
 
-		if(to->sptps.label)
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "send_req_key(%s) called while sptps->label != NULL!", to->name);
-
 		char label[25 + strlen(myself->name) + strlen(to->name)];
 		snprintf(label, sizeof label, "tinc UDP key expansion %s %s", myself->name, to->name);
 		sptps_stop(&to->sptps);
@@ -148,11 +145,16 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 			try_tx(to, true);
 		} else {
 			/* The packet is for us */
-			if(!from->status.validkey) {
-				logger(DEBUG_PROTOCOL, LOG_ERR, "Got SPTPS_PACKET from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
+			if(!sptps_receive_data(&from->sptps, buf, len)) {
+				/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
+				   so let's restart SPTPS in case that helps. But don't do that too often
+				   to prevent storms. */
+				if(from->last_req_key < now.tv_sec - 10) {
+					logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode TCP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+					send_req_key(from);
+				}
 				return true;
 			}
-			sptps_receive_data(&from->sptps, buf, len);
 			send_mtu_info(myself, from, MTU);
 		}
 
@@ -428,9 +430,18 @@ bool ans_key_h(connection_t *c, const char *request) {
 	if(from->status.sptps) {
 		char buf[strlen(key)];
 		int len = b64decode(key, buf, strlen(key));
-
-		if(!len || !sptps_receive_data(&from->sptps, buf, len))
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error processing SPTPS data from %s (%s)", from->name, from->hostname);
+		if(!len || !sptps_receive_data(&from->sptps, buf, len)) {
+			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
+			   so let's restart SPTPS in case that helps. But don't do that too often
+			   to prevent storms.
+			   Note that simply relying on handshake timeout is not enough, because
+			   that doesn't apply to key regeneration. */
+			if(from->last_req_key < now.tv_sec - 10) {
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode handshake TCP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+				send_req_key(from);
+			}
+			return true;
+		}
 
 		if(from->status.validkey) {
 			if(*address && *port) {

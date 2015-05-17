@@ -288,7 +288,14 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		n->status.udppacket = false;
 
 		if(!result) {
-			logger(DEBUG_TRAFFIC, LOG_ERR, "Got bad packet from %s (%s)", n->name, n->hostname);
+			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
+			   so let's restart SPTPS in case that helps. But don't do that too often
+			   to prevent storms, and because that would make life a little too easy
+			   for external attackers trying to DoS us. */
+			if(n->last_req_key < now.tv_sec - 10) {
+				logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode raw TCP packet from %s (%s), restarting SPTPS", n->name, n->hostname);
+				send_req_key(n);
+			}
 			return false;
 		}
 		return true;
@@ -464,11 +471,17 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, int len) {
 
 	/* The packet is for us */
 
-	if(!from->status.validkey) {
-		logger(DEBUG_PROTOCOL, LOG_ERR, "Got SPTPS packet from %s (%s) but we don't have a valid key yet", from->name, from->hostname);
+	if(!sptps_receive_data(&from->sptps, data, len)) {
+		/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
+		   so let's restart SPTPS in case that helps. But don't do that too often
+		   to prevent storms. */
+		if(from->last_req_key < now.tv_sec - 10) {
+			logger(DEBUG_PROTOCOL, LOG_ERR, "Failed to decode raw TCP packet from %s (%s), restarting SPTPS", from->name, from->hostname);
+			send_req_key(from);
+		}
 		return true;
 	}
-	sptps_receive_data(&from->sptps, data, len);
+
 	send_mtu_info(myself, from, MTU);
 	return true;
 }
