@@ -735,7 +735,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 	/* Send it via TCP if it is a handshake packet, TCPOnly is in use, this is a relay packet that the other node cannot understand, or this packet is larger than the MTU. */
 
 	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
-		if((from != myself || to->status.validkey) && (to->nexthop->connection->options >> 24) >= 7) {
+		if(type != SPTPS_HANDSHAKE && (to->nexthop->connection->options >> 24) >= 7) {
 			char buf[len + sizeof to->id + sizeof from->id]; char* buf_ptr = buf;
 			memcpy(buf_ptr, &to->id, sizeof to->id); buf_ptr += sizeof to->id;
 			memcpy(buf_ptr, &from->id, sizeof from->id); buf_ptr += sizeof from->id;
@@ -746,9 +746,10 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 		char buf[len * 4 / 3 + 5];
 		b64encode(data, buf, len);
-		/* If no valid key is known yet, send the packets using ANS_KEY requests,
-		   to ensure we get to learn the reflexive UDP address. */
-		if(from == myself && !to->status.validkey) {
+		/* If this is a handshake packet, use ANS_KEY instead of REQ_KEY, for two reasons:
+		    - We don't want intermediate nodes to switch to UDP to relay these packets;
+		    - ANS_KEY allows us to learn the reflexive UDP address. */
+		if(type == SPTPS_HANDSHAKE) {
 			to->incompression = myself->incompression;
 			return send_request(to->nexthop->connection, "%d %s %s %s -1 -1 -1 %d", ANS_KEY, from->name, to->name, buf, to->incompression);
 		} else {
