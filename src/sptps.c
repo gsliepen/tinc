@@ -447,6 +447,7 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
+	data += 4; len -= 4;
 
 	if(!s->instate) {
 		if(seqno != s->inseqno)
@@ -454,38 +455,39 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 		s->inseqno = seqno + 1;
 
-		uint8_t type = data[4];
+		uint8_t type = *(data++); len--;
 
 		if(type != SPTPS_HANDSHAKE)
 			return error(s, EIO, "Application record received before handshake finished");
 
-		return receive_handshake(s, data + 5, len - 5);
+		return receive_handshake(s, data, len);
 	}
 
 	// Decrypt
 
 	char buffer[len];
-
 	size_t outlen;
-
-	if(!chacha_poly1305_decrypt(s->incipher, seqno, data + 4, len - 4, buffer, &outlen))
+	if(!chacha_poly1305_decrypt(s->incipher, seqno, data, len, buffer, &outlen))
 		return error(s, EIO, "Failed to decrypt and verify packet");
 
 	if(!sptps_check_seqno(s, seqno, true))
 		return false;
 
 	// Append a NULL byte for safety.
-	buffer[len - 20] = 0;
+	buffer[outlen] = 0;
 
-	uint8_t type = buffer[0];
+	data = buffer;
+	len = outlen;
+
+	uint8_t type = *(data++); len--;
 
 	if(type < SPTPS_HANDSHAKE) {
 		if(!s->instate)
 			return error(s, EIO, "Application record received before handshake finished");
-		if(!s->receive_record(s->handle, type, buffer + 1, len - 21))
+		if(!s->receive_record(s->handle, type, data, len))
 			return false;
 	} else if(type == SPTPS_HANDSHAKE) {
-		if(!receive_handshake(s, buffer + 1, len - 21))
+		if(!receive_handshake(s, data, len))
 			return false;
 	} else {
 		return error(s, EIO, "Invalid record type %d", type);
