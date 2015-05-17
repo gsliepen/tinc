@@ -121,7 +121,10 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	char port[NI_MAXSERV] = "unknown";
 	int err;
 
-	if(sa->sa.sa_family == AF_UNKNOWN) {
+	if(sa->sa.sa_family == AF_UNSPEC) {
+		xasprintf(&str, "unspec port unspec");
+		return str;
+	} else if(sa->sa.sa_family == AF_UNKNOWN) {
 		xasprintf(&str, "%s port %s", sa->unknown.address, sa->unknown.port);
 		return str;
 	}
