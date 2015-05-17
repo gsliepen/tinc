@@ -37,19 +37,26 @@
 bool send_add_edge(connection_t *c, const edge_t *e) {
 	bool x;
 	char *address, *port;
-	char *local_address, *local_port;
 
 	sockaddr2str(&e->address, &address, &port);
-	sockaddr2str(&e->local_address, &local_address, &local_port);
 
-	x = send_request(c, "%d %x %s %s %s %s %x %d %s %s", ADD_EDGE, rand(),
-					 e->from->name, e->to->name, address, port,
-					 e->options, e->weight, local_address, local_port);
+	if(e->local_address.sa.sa_family) {
+		char *local_address, *local_port;
+		sockaddr2str(&e->local_address, &local_address, &local_port);
+
+		x = send_request(c, "%d %x %s %s %s %s %x %d %s %s", ADD_EDGE, rand(),
+						 e->from->name, e->to->name, address, port,
+						 e->options, e->weight, local_address, local_port);
+		free(local_address);
+		free(local_port);
+	} else {
+		x = send_request(c, "%d %x %s %s %s %s %x %d", ADD_EDGE, rand(),
+						 e->from->name, e->to->name, address, port,
+						 e->options, e->weight);
+	}
 
 	free(address);
 	free(port);
-	free(local_address);
-	free(local_port);
 
 	return x;
 }
