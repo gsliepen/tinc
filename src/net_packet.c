@@ -1350,7 +1350,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 		if(!n->status.reachable || n == myself)
 			continue;
 
-		if((n->status.sptps && !n->sptps.instate) || !n->status.validkey_in)
+		if(!n->status.validkey_in && !(n->status.sptps && n->sptps.instate))
 			continue;
 
 		bool soft = false;
