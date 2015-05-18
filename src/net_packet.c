@@ -282,9 +282,8 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 			}
 			return false;
 		}
-		inpkt->offset += 2 * sizeof(node_id_t);
 		n->status.udppacket = true;
-		bool result = sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len - 2 * sizeof(node_id_t));
+		bool result = sptps_receive_data(&n->sptps, DATA(inpkt), inpkt->len);
 		n->status.udppacket = false;
 
 		if(!result) {
@@ -1440,10 +1439,16 @@ skip_harder:
 		return;
 	}
 
-	if(n->status.sptps) {
-		pkt.offset = 2 * sizeof(node_id_t);
+	pkt.offset = 0;
 
-		if(!memcmp(DSTID(&pkt), &nullid, sizeof nullid)) {
+	if(n->status.sptps) {
+		bool relay_enabled = (n->options >> 24) >= 4;
+		if (relay_enabled) {
+			pkt.offset = 2 * sizeof(node_id_t);
+			pkt.len -= pkt.offset;
+		}
+
+		if(!memcmp(DSTID(&pkt), &nullid, sizeof nullid) || !relay_enabled) {
 			direct = true;
 			from = n;
 			to = myself;
@@ -1468,7 +1473,7 @@ skip_harder:
 		/* If we're not the final recipient, relay the packet. */
 
 		if(to != myself) {
-			send_sptps_data(to, from, 0, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t));
+			send_sptps_data(to, from, 0, DATA(&pkt), pkt.len);
 			try_tx_sptps(to, true);
 			return;
 		}
@@ -1477,7 +1482,6 @@ skip_harder:
 		from = n;
 	}
 
-	pkt.offset = 0;
 	if(!receive_udppacket(from, &pkt))
 		return;
 
