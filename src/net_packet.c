@@ -1190,15 +1190,13 @@ static void try_tx_sptps(node_t *n, bool mtu) {
 
 	node_t *via = (n->via == myself) ? n->nexthop : n->via;
 
-	/* If the static relay doesn't support SPTPS, everything goes via TCP anyway. */
+	/* If we do have a static relay, try everything with that one instead, if it supports relaying. */
 
-	if((via->options >> 24) < 4)
-		return;
-
-	/* If we do have a static relay, try everything with that one instead. */
-
-	if(via != n)
+	if(via != n) {
+		if((via->options >> 24) < 4)
+			return;
 		return try_tx_sptps(via, mtu);
+	}
 
 	/* Otherwise, try to establish UDP connectivity. */
 
