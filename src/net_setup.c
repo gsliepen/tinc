@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -226,14 +226,14 @@ static bool read_ecdsa_private_key(void) {
 
 static bool read_invitation_key(void) {
 	FILE *fp;
-	char *fname;
+	char fname[PATH_MAX];
 
 	if(invitation_key) {
 		ecdsa_free(invitation_key);
 		invitation_key = NULL;
 	}
 
-	xasprintf(&fname, "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
+	snprintf(fname, sizeof fname, "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -244,7 +244,6 @@ static bool read_invitation_key(void) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
 	}
 
-	free(fname);
 	return invitation_key;
 }
 
@@ -327,13 +326,12 @@ void regenerate_key(void) {
 void load_all_subnets(void) {
 	DIR *dir;
 	struct dirent *ent;
-	char *dname;
+	char dname[PATH_MAX];
 
-	xasprintf(&dname, "%s" SLASH "hosts", confbase);
+	snprintf(dname, sizeof dname, "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
 	if(!dir) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
-		free(dname);
 		return;
 	}
 
@@ -380,13 +378,12 @@ void load_all_subnets(void) {
 void load_all_nodes(void) {
 	DIR *dir;
 	struct dirent *ent;
-	char *dname;
+	char dname[PATH_MAX];
 
-	xasprintf(&dname, "%s" SLASH "hosts", confbase);
+	snprintf(dname, sizeof dname, "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
 	if(!dir) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
-		free(dname);
 		return;
 	}
 

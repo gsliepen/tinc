@@ -4,7 +4,7 @@
                   1998-2005 Ivo Timmermans
                   2000      Cris van Pelt
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2013      Florent Clairambault <florent@clairambault.fr>
 
     This program is free software; you can redistribute it and/or modify
@@ -368,19 +368,19 @@ void read_config_options(splay_tree_t *config_tree, const char *prefix) {
 }
 
 bool read_server_config(void) {
-	char *fname;
+	char fname[PATH_MAX];
 	bool x;
 
 	read_config_options(config_tree, NULL);
 
-	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
+	snprintf(fname, sizeof fname, "%s" SLASH "tinc.conf", confbase);
 	errno = 0;
 	x = read_config_file(config_tree, fname);
 
 	// We will try to read the conf files in the "conf.d" dir
 	if (x) {
-		char * dname;
-		xasprintf(&dname, "%s" SLASH "conf.d", confbase);
+		char dname[PATH_MAX];
+		snprintf(dname, sizeof dname, "%s" SLASH "conf.d", confbase);
 		DIR *dir = opendir (dname);
 		// If we can find this dir
 		if (dir) { 
@@ -390,51 +390,44 @@ bool read_server_config(void) {
 				size_t l = strlen(ep->d_name);
 				// And we try to read the ones that end with ".conf"
 				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					free(fname);
-					xasprintf(&fname, "%s" SLASH "%s", dname, ep->d_name);
+					snprintf(fname, sizeof fname, "%s" SLASH "%s", dname, ep->d_name);
 					x = read_config_file(config_tree, fname);
 				}
 			}
 			closedir (dir);
 		}
-		free(dname);
 	}
 
 	if(!x && errno)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 
-	free(fname);
-
 	return x;
 }
 
 bool read_host_config(splay_tree_t *config_tree, const char *name) {
-	char *fname;
+	char fname[PATH_MAX];
 	bool x;
 
 	read_config_options(config_tree, name);
 
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	x = read_config_file(config_tree, fname);
-	free(fname);
 
 	return x;
 }
 
 bool append_config_file(const char *name, const char *key, const char *value) {
-	char *fname;
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	char fname[PATH_MAX];
+	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 
 	FILE *fp = fopen(fname, "a");
 
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
-	} else {
-		fprintf(fp, "\n# The following line was automatically added by tinc\n%s = %s\n", key, value);
-		fclose(fp);
+		return false;
 	}
 
-	free(fname);
-
-	return fp != NULL;
+	fprintf(fp, "\n# The following line was automatically added by tinc\n%s = %s\n", key, value);
+	fclose(fp);
+	return true;
 }

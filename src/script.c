@@ -1,7 +1,7 @@
 /*
     script.c -- call an external script
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,10 +28,10 @@
 
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
-	char *scriptname;
+	char scriptname[PATH_MAX];
 	char *command;
 
-	xasprintf(&scriptname, "%s" SLASH "%s%s", confbase, name, scriptextension);
+	snprintf(scriptname, sizeof scriptname, "%s" SLASH "%s%s", confbase, name, scriptextension);
 
 	/* First check if there is a script */
 
@@ -57,17 +57,13 @@ bool execute_script(const char *name, char **envp) {
 				break;
 			p = q;
 		}
-		if(!found) {
-			free(scriptname);
+		if(!found)
 			return true;
-		}
 	} else
 #endif
 
-	if(access(scriptname, F_OK)) {
-		free(scriptname);
+	if(access(scriptname, F_OK))
 		return true;
-	}
 
 	logger(DEBUG_STATUS, LOG_INFO, "Executing script %s", name);
 
@@ -86,7 +82,6 @@ bool execute_script(const char *name, char **envp) {
 	int status = system(command);
 
 	free(command);
-	free(scriptname);
 
 	/* Unset environment */
 

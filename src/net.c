@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2011      Loïc Grenié <loic.grenie@gmail.com>
 
@@ -314,7 +314,7 @@ static void sigalrm_handler(void *data) {
 #endif
 
 int reload_configuration(void) {
-	char *fname = NULL;
+	char fname[PATH_MAX];
 
 	/* Reread our own configuration file */
 
@@ -328,9 +328,8 @@ int reload_configuration(void) {
 
 	read_config_options(config_tree, NULL);
 
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
+	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
 	read_config_file(config_tree, fname);
-	free(fname);
 
 	/* Parse some options that are allowed to be changed while tinc is running */
 
@@ -407,13 +406,12 @@ int reload_configuration(void) {
 		if(c->status.control)
 			continue;
 
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+		snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 		struct stat s;
 		if(stat(fname, &s) || s.st_mtime > last_config_check) {
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "Host config file of %s has been changed", c->name);
 			terminate_connection(c, c->edge);
 		}
-		free(fname);
 	}
 
 	last_config_check = now.tv_sec;
