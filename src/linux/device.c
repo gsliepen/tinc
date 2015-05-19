@@ -101,6 +101,9 @@ static bool setup_device(void) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
 		free(iface);
 		iface = xstrdup(ifrname);
+	} else {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create a tun/tap interface from %s: %s", device, strerror(errno));
+		return false;
 	}
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
