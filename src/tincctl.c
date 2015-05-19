@@ -2227,6 +2227,7 @@ static const struct {
 	{"restart", cmd_restart},
 	{"reload", cmd_reload},
 	{"dump", cmd_dump},
+	{"list", cmd_dump},
 	{"purge", cmd_purge},
 	{"debug", cmd_debug},
 	{"retry", cmd_retry},
