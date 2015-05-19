@@ -1,6 +1,6 @@
 /*
     sptps.c -- Simple Peer-to-Peer Security
-    Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2015 Guus Sliepen <guus@tinc-vpn.org>,
                   2010      Brandon L. Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -384,10 +384,11 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 				if (update_state)
 					s->farfuture++;
 				if(farfuture)
-					return error(s, EIO, "Packet is %d seqs in the future, dropped (%u)\n", seqno - s->inseqno, s->farfuture);
+					return update_state ? error(s, EIO, "Packet is %d seqs in the future, dropped (%u)\n", seqno - s->inseqno, s->farfuture) : false;
 
 				// Unless we have seen lots of them, in which case we consider the others lost.
-				warning(s, "Lost %d packets\n", seqno - s->inseqno);
+				if(update_state)
+					warning(s, "Lost %d packets\n", seqno - s->inseqno);
 				if (update_state) {
 					// Mark all packets in the replay window as being late.
 					memset(s->late, 255, s->replaywin);
@@ -395,7 +396,7 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 			} else if (seqno < s->inseqno) {
 				// If the sequence number is farther in the past than the bitmap goes, or if the packet was already received, drop it.
 				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8)))
-					return error(s, EIO, "Received late or replayed packet, seqno %d, last received %d\n", seqno, s->inseqno);
+					return update_state ? error(s, EIO, "Received late or replayed packet, seqno %d, last received %d\n", seqno, s->inseqno) : false;
 			} else if (update_state) {
 				// We missed some packets. Mark them in the bitmap as being late.
 				for(int i = s->inseqno; i < seqno; i++)
