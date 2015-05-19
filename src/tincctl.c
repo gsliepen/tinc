@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2014 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -134,6 +134,7 @@ static void usage(bool status) {
 				"    subnets                  - all known subnets in the VPN\n"
 				"    connections              - all meta connections with ourself\n"
 				"    [di]graph                - graph of the VPN in dotty format\n"
+				"    invitations              - outstanding invitations\n"
 				"  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
 				"  purge                      Purge unreachable nodes\n"
 				"  debug N                    Set debug level\n"
@@ -943,6 +944,65 @@ static int cmd_reload(int argc, char *argv[]) {
 
 }
 
+static int dump_invitations(void) {
+	char dname[PATH_MAX];
+	snprintf(dname, sizeof dname, "%s" SLASH "invitations", confbase);
+	DIR *dir = opendir(dname);
+	if(!dir) {
+		if(errno == ENOENT) {
+			fprintf(stderr, "No outstanding invitations.\n");
+			return 0;
+		}
+
+		fprintf(stderr, "Cannot not read directory %s: %s\n", dname, strerror(errno));
+		return 1;
+	}
+
+	struct dirent *ent;
+	bool found = false;
+
+	while((ent = readdir(dir))) {
+		char buf[MAX_STRING_SIZE];
+		if(b64decode(ent->d_name, buf, 24) != 18)
+			continue;
+
+		char fname[PATH_MAX];
+		snprintf(fname, sizeof fname, "%s" SLASH "%s", dname, ent->d_name);
+		FILE *f = fopen(fname, "r");
+		if(!f) {
+			fprintf(stderr, "Cannot open %s: %s\n", fname, strerror(errno));
+			fclose(f);
+			continue;
+		}
+
+		buf[0] = 0;
+		if(!fgets(buf, sizeof buf, f)) {
+			fprintf(stderr, "Invalid invitation file %s", fname);
+			fclose(f);
+			continue;
+		}
+		fclose(f);
+
+		char *eol = buf + strlen(buf);
+		while(strchr("\t \r\n", *--eol))
+			*eol = 0;
+		if(strncmp(buf, "Name = ", 7) || !check_id(buf + 7)) {
+			fprintf(stderr, "Invalid invitation file %s", fname);
+			continue;
+		}
+
+		found = true;
+		printf("%s %s\n", ent->d_name, buf + 7);
+	}
+
+	closedir(dir);
+
+	if(!found)
+		fprintf(stderr, "No outstanding invitations.\n");
+
+	return 0;
+}
+
 static int cmd_dump(int argc, char *argv[]) {
 	bool only_reachable = false;
 
@@ -962,6 +1022,9 @@ static int cmd_dump(int argc, char *argv[]) {
 		usage(true);
 		return 1;
 	}
+
+	if(!strcasecmp(argv[1], "invitations"))
+		return dump_invitations();
 
 	if(!connect_tincd(true))
 		return 1;

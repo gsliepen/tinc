@@ -58,7 +58,7 @@ _tinc() {
 		return 0
 		;;
 		dump|list|reachable)
-		COMPREPLY=( $(compgen -W "reachable nodes edges subnets connections graph" -- ${cur}) )
+		COMPREPLY=( $(compgen -W "reachable nodes edges subnets connections graph invitations" -- ${cur}) )
 		return 0
 		;;
 		network)

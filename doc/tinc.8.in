@@ -172,6 +172,9 @@ format.
 Nodes are colored according to their reachability:
 red nodes are unreachable, orange nodes are indirectly reachable, green nodes are directly reachable.
 Black nodes are either directly or indirectly reachable, but direct reachability has not been tried yet.
+.It dump invitations
+Dump a list of outstanding invitations.
+The filename of the invitation, as well as the name of the node that is being invited is shown for each invitation.
 .It info Ar node | subnet | address
 Show information about a particular node, subnet or address.
 If an address is given, any matching subnet will be shown.
