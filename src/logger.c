@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -114,9 +114,17 @@ void logger(int level, int priority, const char *format, ...) {
 
 static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
 	char message[1024] = "";
-	int len = vsnprintf(message, sizeof message, format, ap);
-	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
-		message[len - 1] = 0;
+	size_t msglen = sizeof message;
+
+	int len = vsnprintf(message, msglen, format, ap);
+	if(len > 0 && len < sizeof message) {
+		if(message[len - 1] == '\n')
+			message[--len] = 0;
+
+		connection_t *c = s->handle;
+		if(c)
+			snprintf(message + len, sizeof message - len, " from %s (%s)", c->name, c->hostname);
+	}
 
 	real_logger(DEBUG_ALWAYS, LOG_ERR, message);
 }
