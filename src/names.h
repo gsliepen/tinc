@@ -1,7 +1,7 @@
 /*
     names.h -- header for names.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ extern char *logfilename;
 extern char *pidfilename;
 extern char *program_name;
 
-extern void make_names(void);
+extern void make_names(bool daemon);
 extern void free_names(void);
 
 #endif /* __TINC_NAMES_H__ */

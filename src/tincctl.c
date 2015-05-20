@@ -2558,7 +2558,7 @@ int main(int argc, char *argv[]) {
 	if(!parse_options(argc, argv))
 		return 1;
 
-	make_names();
+	make_names(false);
 	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
 	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 

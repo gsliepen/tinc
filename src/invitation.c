@@ -551,7 +551,7 @@ make_names:
 		confbase = NULL;
 	}
 
-	make_names();
+	make_names(false);
 
 	free(tinc_conf);
 	free(hosts_dir);
@@ -756,7 +756,7 @@ ask_netname:
 		}
 
 		netname = line;
-		make_names();
+		make_names(false);
 	}
 
 	fprintf(stderr, "Configuration stored in: %s\n", confbase);
