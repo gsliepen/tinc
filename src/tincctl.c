@@ -854,8 +854,8 @@ static int cmd_start(int argc, char *argv[]) {
 	return status;
 #else
 	int pfd[2] = {-1, -1};
-	if(pipe(pfd)) {
-		fprintf(stderr, "Could not create umbilical pipe: %s\n", strerror(errno));
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, pfd)) {
+		fprintf(stderr, "Could not create umbilical socket: %s\n", strerror(errno));
 		free(nargv);
 		return 1;
 	}
