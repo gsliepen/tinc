@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "connection.h"
 #include "control_common.h"
+#include "process.h"
 #include "sptps.h"
 
 debug_t debug_level = DEBUG_NOTHING;
@@ -80,7 +81,7 @@ static void real_logger(int level, int priority, const char *message) {
 				break;
 		}
 
-		if(umbilical) {
+		if(umbilical && do_detach) {
 			write(umbilical, message, strlen(message));
 			write(umbilical, "\n", 1);
 		}
