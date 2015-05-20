@@ -363,6 +363,14 @@ int main(int argc, char **argv) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
+#else
+	// Check if we got an umbilical fd from the process that started us
+	char *umbstr = getenv("TINC_UMBILICAL");
+	if(umbstr) {
+		umbilical = atoi(umbstr);
+		if(fcntl(umbilical, F_GETFL) < 0)
+			umbilical = 0;
+	}
 #endif
 
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
@@ -465,6 +473,12 @@ int main2(int argc, char **argv) {
 	/* Start main loop. It only exits when tinc is killed. */
 
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
+
+	if(umbilical) { // snip!
+		write(umbilical, "", 1);
+		close(umbilical);
+		umbilical = 0;
+	}
 
 	try_outgoing_connections();
 
