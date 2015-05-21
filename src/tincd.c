@@ -370,6 +370,10 @@ int main(int argc, char **argv) {
 		umbilical = atoi(umbstr);
 		if(fcntl(umbilical, F_GETFL) < 0)
 			umbilical = 0;
+#ifdef FD_CLOEXEC
+		if(umbilical)
+			fcntl(umbilical, F_SETFD, FD_CLOEXEC);
+#endif
 	}
 #endif
 
