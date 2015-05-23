@@ -1195,7 +1195,7 @@ static void try_tx_sptps(node_t *n, bool mtu) {
 	if(via != n) {
 		if((via->options >> 24) < 4)
 			return;
-		return try_tx_sptps(via, mtu);
+		return try_tx(via, mtu);
 	}
 
 	/* Otherwise, try to establish UDP connectivity. */
@@ -1208,7 +1208,7 @@ static void try_tx_sptps(node_t *n, bool mtu) {
 	   while we try to establish direct connectivity. */
 
 	if(!n->status.udp_confirmed && n != n->nexthop && (n->nexthop->options >> 24) >= 4)
-		try_tx_sptps(n->nexthop, mtu);
+		try_tx(n->nexthop, mtu);
 }
 
 static void try_tx_legacy(node_t *n, bool mtu) {
@@ -1233,6 +1233,8 @@ static void try_tx_legacy(node_t *n, bool mtu) {
 }
 
 void try_tx(node_t *n, bool mtu) {
+	if(!n->status.reachable)
+		return;
 	if(n->status.sptps)
 		try_tx_sptps(n, mtu);
 	else
@@ -1269,7 +1271,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 
 	if(n->status.sptps) {
 		send_sptps_packet(n, packet);
-		try_tx_sptps(n, true);
+		try_tx(n, true);
 		return;
 	}
 
@@ -1289,7 +1291,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 	}
 
 	send_udppacket(via, packet);
-	try_tx_legacy(via, true);
+	try_tx(via, true);
 }
 
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
@@ -1472,7 +1474,7 @@ skip_harder:
 
 		if(to != myself) {
 			send_sptps_data(to, from, 0, DATA(&pkt), pkt.len);
-			try_tx_sptps(to, true);
+			try_tx(to, true);
 			return;
 		}
 	} else {
