@@ -800,6 +800,11 @@ void try_outgoing_connections(void) {
 			continue;
 		}
 
+		if(!strcmp(name, myself->name)) {
+			free(name);
+			continue;
+		}
+
 		bool found = false;
 
 		for list_each(outgoing_t, outgoing, outgoing_list) {
