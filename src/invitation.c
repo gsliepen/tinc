@@ -84,7 +84,7 @@ char *get_my_hostname() {
 	char *port = NULL;
 	char *hostport = NULL;
 	char *name = get_my_name(false);
-	char filename[PATH_MAX];
+	char filename[PATH_MAX] = {0};
 
 	// Use first Address statement in own host config file
 	if(check_id(name)) {
@@ -182,7 +182,7 @@ again:
 	hostname = xstrdup(line);
 
 save:
-	if(filename) {
+	if(*filename) {
 		FILE *f = fopen(filename, "a");
 		if(f) {
 			fprintf(f, "\nAddress = %s\n", hostname);
