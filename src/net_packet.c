@@ -458,7 +458,7 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, int len) {
 		/* This can happen in the form of a race condition
 		   if the node just became unreachable. */
 		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot relay TCP packet from %s (%s) because the destination, %s (%s), is unreachable", from->name, from->hostname, to->name, to->hostname);
-		return;
+		return true;
 	}
 
 	/* Help the sender reach us over UDP.
