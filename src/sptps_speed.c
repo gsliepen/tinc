@@ -102,19 +102,26 @@ int main(int argc, char *argv[]) {
 
 	fprintf(stderr, "Ed25519 sign for %lg seconds: ", duration);
 	for(clock_start(); clock_countto(duration);)
-		ecdsa_sign(key1, buf1, 256, buf2);
+		if(!ecdsa_sign(key1, buf1, 256, buf2))
+			return 1;
 	fprintf(stderr, "%22.2lf op/s\n", rate);
 
 	fprintf(stderr, "Ed25519 verify for %lg seconds: ", duration);
 	for(clock_start(); clock_countto(duration);)
-		ecdsa_verify(key1, buf1, 256, buf2);
+		if(!ecdsa_verify(key1, buf1, 256, buf2)) {
+			fprintf(stderr, "Signature verification failed\n");
+			return 1;
+		}
 	fprintf(stderr, "%20.2lf op/s\n", rate);
 
 	ecdh1 = ecdh_generate_public(buf1);
 	fprintf(stderr, "ECDH for %lg seconds: ", duration);
 	for(clock_start(); clock_countto(duration);) {
 		ecdh2 = ecdh_generate_public(buf2);
-		ecdh_compute_shared(ecdh2, buf1, buf3);
+		if(!ecdh2)
+			return 1;
+		if(!ecdh_compute_shared(ecdh2, buf1, buf3))
+			return 1;
 	}
 	fprintf(stderr, "%28.2lf op/s\n", rate);
 	ecdh_free(ecdh1);

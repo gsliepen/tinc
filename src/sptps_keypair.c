@@ -88,7 +88,10 @@ int main(int argc, char *argv[]) {
 	
 	FILE *fp = fopen(argv[1], "w");
 	if(fp) {
-		ecdsa_write_pem_private_key(key, fp);
+		if(!ecdsa_write_pem_private_key(key, fp)) {
+			fprintf(stderr, "Could not write ECDSA private key\n");
+			return 1;
+		}
 		fclose(fp);
 	} else {
 		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[1], strerror(errno));
@@ -97,7 +100,8 @@ int main(int argc, char *argv[]) {
 
 	fp = fopen(argv[2], "w");
 	if(fp) {
-		ecdsa_write_pem_public_key(key, fp);
+		if(!ecdsa_write_pem_public_key(key, fp))
+			fprintf(stderr, "Could not write ECDSA public key\n");
 		fclose(fp);
 	} else {
 		fprintf(stderr, "Could not open '%s' for writing: %s\n", argv[2], strerror(errno));

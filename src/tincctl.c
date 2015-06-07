@@ -233,6 +233,12 @@ FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 	perms &= ~mask;
 	umask(~perms);
 	FILE *f = fopen(filename, mode);
+
+	if(!f) {
+		fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
+		return NULL;
+	}
+
 #ifdef HAVE_FCHMOD
 	if((perms & 0444) && f)
 		fchmod(fileno(f), perms);
