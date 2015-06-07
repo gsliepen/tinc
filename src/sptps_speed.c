@@ -47,11 +47,16 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 }
 
 static void receive_data(sptps_t *sptps) {
-	char buf[4096];
+	char buf[4096], *bufp = buf;
 	int fd = *(int *)sptps->handle;
 	size_t len = recv(fd, buf, sizeof buf, 0);
-	if(!sptps_receive_data(sptps, buf, len))
-		abort();
+	while(len) {
+		size_t done = sptps_receive_data(sptps, bufp, len);
+		if(!done)
+			abort();
+		bufp += done;
+		len -= done;
+	}
 }
 
 struct timespec start;

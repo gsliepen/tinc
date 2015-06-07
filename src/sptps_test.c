@@ -357,8 +357,19 @@ int main(int argc, char *argv[]) {
 					fprintf(stderr, "Dropped.\n");
 				continue;
 			}
-			if(!sptps_receive_data(&s, buf, len) && !datagram)
-				return 1;
+			char *bufp = buf;
+			while(len) {
+				size_t done = sptps_receive_data(&s, bufp, len);
+				if(!done) {
+					if(!datagram)
+						return 1;
+				} else {
+					break;
+				}
+
+				bufp += done;
+				len -= done;
+			}
 		}
 	}
 
