@@ -59,9 +59,9 @@ typedef struct connection_status_t {
 
 typedef struct connection_t {
 	char *name;                     /* name he claims to have */
+	char *hostname;                 /* the hostname of its real ip */
 
 	union sockaddr_t address;       /* his real (internet) ip */
-	char *hostname;                 /* the hostname of its real ip */
 	int protocol_major;             /* used protocol */
 	int protocol_minor;             /* used protocol */
 

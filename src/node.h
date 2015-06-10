@@ -45,12 +45,12 @@ typedef struct node_status_t {
 
 typedef struct node_t {
 	char *name;                             /* name of this node */
+	char *hostname;                         /* the hostname of its real ip */
 	node_id_t id;                           /* unique node ID (name hash) */
 	uint32_t options;                       /* options turned on for this node */
 
 	int sock;                               /* Socket to use for outgoing UDP packets */
 	sockaddr_t address;                     /* his real (internet) ip to send UDP packets to */
-	char *hostname;                         /* the hostname of its real ip */
 
 	node_status_t status;
 	time_t last_state_change;
