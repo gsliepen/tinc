@@ -9,8 +9,8 @@ AC_DEFUN([tinc_ATTRIBUTE],
     CFLAGS="$CFLAGS -Wall -Werror"
     AC_COMPILE_IFELSE(
       [AC_LANG_SOURCE(
-        [void test(void) __attribute__ (($1));
-	 void test(void) { return; }
+        [void *test(void) __attribute__ (($1));
+	 void *test(void) { return (void *)0; }
 	],
        )],
        [tinc_cv_attribute_$1=yes],

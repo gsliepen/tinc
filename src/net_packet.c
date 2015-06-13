@@ -525,6 +525,13 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, int len) {
 		return true;
 	}
 
+	if(!to->status.reachable) {
+		/* This can happen in the form of a race condition
+		   if the node just became unreachable. */
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot relay TCP packet from %s (%s) because the destination, %s (%s), is unreachable", from->name, from->hostname, to->name, to->hostname);
+		return true;
+	}
+
 	/* Help the sender reach us over UDP.
 	   Note that we only do this if we're the destination or the static relay;
 	   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
@@ -1529,6 +1536,13 @@ skip_harder:
 		}
 		if(!from || !to) {
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from %s (%s) with unknown source and/or destination ID", n->name, n->hostname);
+			return;
+		}
+
+		if(!to->status.reachable) {
+			/* This can happen in the form of a race condition
+			   if the node just became unreachable. */
+			logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot relay packet from %s (%s) because the destination, %s (%s), is unreachable", from->name, from->hostname, to->name, to->hostname);
 			return;
 		}
 

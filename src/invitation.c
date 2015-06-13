@@ -335,7 +335,11 @@ int cmd_invite(int argc, char *argv[]) {
 			return 1;
 		}
 		chmod(filename, 0600);
-		ecdsa_write_pem_private_key(key, f);
+		if(!ecdsa_write_pem_private_key(key, f)) {
+			fprintf(stderr, "Could not write ECDSA private key\n");
+			fclose(f);
+			return 1;
+		}
 		fclose(f);
 
 		if(connect_tincd(false))
@@ -704,6 +708,8 @@ make_names:
 
 	snprintf(filename, sizeof filename, "%s" SLASH "ed25519_key.priv", confbase);
 	f = fopenmask(filename, "w", 0600);
+	if(!f)
+		return false;
 
 	if(!ecdsa_write_pem_private_key(key, f)) {
 		fprintf(stderr, "Error writing private key!\n");
@@ -725,10 +731,14 @@ make_names:
 	snprintf(filename, sizeof filename, "%s" SLASH "rsa_key.priv", confbase);
 	f = fopenmask(filename, "w", 0600);
 
-	rsa_write_pem_private_key(rsa, f);
+	if(!f || !rsa_write_pem_private_key(rsa, f)) {
+		fprintf(stderr, "Could not write private RSA key\n");
+	} else if(!rsa_write_pem_public_key(rsa, fh)) {
+		fprintf(stderr, "Could not write public RSA key\n");
+	}
+
 	fclose(f);
 
-	rsa_write_pem_public_key(rsa, fh);
 	fclose(fh);
 
 	rsa_free(rsa);
