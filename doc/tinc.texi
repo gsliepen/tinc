@@ -735,7 +735,7 @@ You will also notice that log messages it appears in syslog as coming from @file
 and on Linux, unless specified otherwise, the name of the virtual network interface will be the same as the network name.
 
 However, it is not strictly necessary that you call tinc with the -n
-option. If you don not use it, the network name will just be empty, and
+option. If you do not use it, the network name will just be empty, and
 tinc will look for files in @file{@value{sysconfdir}/tinc/} instead of
 @file{@value{sysconfdir}/tinc/@var{netname}/};
 the configuration file will then be @file{@value{sysconfdir}/tinc/tinc.conf},
