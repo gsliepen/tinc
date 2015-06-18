@@ -207,4 +207,8 @@
 #include <resolv.h>
 #endif
 
+#ifdef HAVE_LINUX_IF_TUN_H
+#include <linux/if_tun.h>
+#endif
+
 #endif /* __TINC_SYSTEM_H__ */
