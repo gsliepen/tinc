@@ -285,6 +285,16 @@ bool event_loop(void) {
 				io->cb(io->data, IO_WRITE);
 			else if(FD_ISSET(io->fd, &readable))
 				io->cb(io->data, IO_READ);
+			else
+				continue;
+
+			/*
+			   There are scenarios in which the callback will remove another io_t from the tree
+			   (e.g. closing a double connection). Since splay_each does not support that, we
+			   need to exit the loop now. That's okay, since any remaining events will get picked
+			   up by the next select() call.
+			 */
+			break;
 		}
 	}
 #else

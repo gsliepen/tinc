@@ -79,6 +79,12 @@ extern void list_delete_list(list_t *);
 extern void list_foreach(list_t *, list_action_t);
 extern void list_foreach_node(list_t *, list_action_node_t);
 
+/*
+   Iterates over a list.
+
+   CAUTION: while this construct supports deleting the current item,
+   it does *not* support deleting *other* nodes while iterating on the list.
+ */
 #define list_each(type, item, list) (type *item = (type *)1; item; item = NULL) for(list_node_t *node = (list)->head, *next; item = node ? node->data : NULL, next = node ? node->next : NULL, node; node = next)
 
 #endif /* __TINC_LIST_H__ */
