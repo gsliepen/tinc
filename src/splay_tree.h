@@ -106,6 +106,12 @@ extern splay_node_t *splay_search_closest_greater_node(splay_tree_t *, const voi
 extern void splay_foreach(const splay_tree_t *, splay_action_t);
 extern void splay_foreach_node(const splay_tree_t *, splay_action_t);
 
+/*
+   Iterates over a tree.
+
+   CAUTION: while this construct supports deleting the current item,
+   it does *not* support deleting *other* nodes while iterating on the tree.
+ */
 #define splay_each(type, item, tree) (type *item = (type *)1; item; item = NULL) for(splay_node_t *node = (tree)->head, *next; item = node ? node->data : NULL, next = node ? node->next : NULL, node; node = next)
 
 #endif
