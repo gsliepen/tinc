@@ -298,7 +298,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Cannot open config file %s: %s", fname, strerror(errno));
 		return false;
 	}
 
@@ -423,7 +423,7 @@ bool append_config_file(const char *name, const char *key, const char *value) {
 	FILE *fp = fopen(fname, "a");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Cannot open config file %s: %s", fname, strerror(errno));
 		return false;
 	}
 
