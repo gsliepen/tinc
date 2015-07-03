@@ -364,6 +364,7 @@ void load_all_subnets(void) {
 
 			if((s2 = lookup_subnet(n, s))) {
 				s2->expires = -1;
+				free(s);
 			} else {
 				subnet_add(n, s);
 			}
@@ -962,6 +963,8 @@ static bool setup_myself(void) {
 			devops = vde_devops;
 #endif
 	}
+	if (type)
+		free(type);
 
 	get_config_bool(lookup_config(config_tree, "DeviceStandby"), &device_standby);
 
