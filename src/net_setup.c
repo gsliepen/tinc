@@ -962,9 +962,8 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(type, "vde"))
 			devops = vde_devops;
 #endif
-	}
-	if (type)
 		free(type);
+	}
 
 	get_config_bool(lookup_config(config_tree, "DeviceStandby"), &device_standby);
 
