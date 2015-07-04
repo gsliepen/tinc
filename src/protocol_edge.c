@@ -137,6 +137,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 				logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not match existing entry",
 						   "ADD_EDGE", c->name, c->hostname);
 				send_add_edge(c, e);
+				sockaddrfree(&local_address);
 				return true;
 			} else {
 				logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) which does not match existing entry",
@@ -151,9 +152,11 @@ bool add_edge_h(connection_t *c, const char *request) {
 					logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not match existing entry",
 							   "ADD_EDGE", c->name, c->hostname);
 					send_add_edge(c, e);
+					sockaddrfree(&local_address);
 					return true;
 				}
 				// Otherwise, just ignore it.
+				sockaddrfree(&local_address);
 				return true;
 			} else if(local_address.sa.sa_family) {
 				// We learned a new local address for this edge.
@@ -166,8 +169,10 @@ bool add_edge_h(connection_t *c, const char *request) {
 
 				return true;
 			}
-		} else
+		} else {
+			sockaddrfree(&local_address);
 			return true;
+		}
 	} else if(from == myself) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not exist",
 				   "ADD_EDGE", c->name, c->hostname);
@@ -177,6 +182,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 		e->to = to;
 		send_del_edge(c, e);
 		free_edge(e);
+		sockaddrfree(&local_address);
 		return true;
 	}
 
