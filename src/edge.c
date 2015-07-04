@@ -64,12 +64,6 @@ void free_edge_tree(splay_tree_t *edge_tree) {
 }
 
 void exit_edges(void) {
-	// since edge_weight_tree does not have delete action defined
-	// we have to cleanup it on exit
-	for splay_each(edge_t, e, edge_weight_tree) {
-			sockaddrfree(&e->address);
-			sockaddrfree(&e->local_address);
-		}
 	splay_delete_tree(edge_weight_tree);
 }
 
@@ -81,6 +75,7 @@ edge_t *new_edge(void) {
 
 void free_edge(edge_t *e) {
 	sockaddrfree(&e->address);
+	sockaddrfree(&e->local_address);
 
 	free(e);
 }
