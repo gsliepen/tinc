@@ -813,7 +813,7 @@ static bool setup_myself(void) {
 			hint.ai_protocol = IPPROTO_TCP;
 			hint.ai_flags = AI_PASSIVE;
 
-#ifdef HAVE_DECL_RES_INIT
+#if HAVE_DECL_RES_INIT
 			// ensure glibc reloads /etc/resolv.conf.
 			res_init();
 #endif
