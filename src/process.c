@@ -359,23 +359,24 @@ void unputenv(char *p) {
 	len++;
 #endif
 #endif
-	char var[len];
-	strncpy(var, p, len);
+	char var[len + 1];
+	memcpy(var, p, len);
+	var[len] = 0;
 #ifdef HAVE_UNSETENV
 	unsetenv(var);
 #else
 	// We must keep what we putenv() around in memory.
 	// To do this without memory leaks, keep things in a list and reuse if possible.
 	static list_t list = {};
-	for(list_node_t *node = list->head; node; node++) {
+	for(list_node_t *node = list.head; node; node = node->next) {
 		char *data = node->data;
 		if(!strcmp(data, var)) {
 			putenv(data);
 			return;
 		}
 	}
-	char *data = strcmp(var);
-	list_insert_tail(list, data);
+	char *data = xstrdup(var);
+	list_insert_tail(&list, data);
 	putenv(data);
 #endif
 }
