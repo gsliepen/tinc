@@ -1,3 +1,13 @@
+Version 1.0.26               July 5 2015
+
+ * Tinc now forces glibc to reload /etc/resolv.conf for every hostname lookup.
+
+ * Fixed --logfile without a filename on Windows.
+
+ * Ensure tinc can be compiled when using musl libc.
+
+Thanks to Jo-Philipp Wich for his contribution to this version of tinc.
+
 Version 1.0.25               December 22 2014
 
  * Documentation updates.
