@@ -97,7 +97,7 @@ char *pidfilename = NULL;			/* pid file location */
 char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
 
-static int status;
+static int status = 1;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
