@@ -158,8 +158,11 @@ bool add_edge_h(connection_t *c, const char *request) {
 				// Otherwise, just ignore it.
 				sockaddrfree(&local_address);
 				return true;
-			} else if(local_address.sa.sa_family) {
+			} else if(local_address.sa.sa_family && local_address.sa.sa_family != AF_UNKNOWN) {
 				// We learned a new local address for this edge.
+				// local_address.sa.sa_family will be 0 if we got it from older tinc versions
+				// local_address.sa.sa_family will be 255 (AF_UNKNOWN) if we got it from newer versions
+				// but for edge which does not have local_address
 				sockaddrfree(&e->local_address);
 				e->local_address = local_address;
 
@@ -169,6 +172,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 
 				return true;
 			} else {
+				sockaddrfree(&local_address);
 				return true;
 			}
 		} else {
