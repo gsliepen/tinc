@@ -168,6 +168,10 @@ bool add_edge_h(connection_t *c, const char *request) {
 					forward_request(c, request);
 
 				return true;
+			} else {
+				logger(DEBUG_PROTOCOL, LOG_WARNING, "%s:%d %s -> %s - got edge we know from older version? (%d.%d)",
+							 __FUNCTION__, __LINE__, e->from->name, e->to->name, c->protocol_major, c->protocol_minor);
+				return true;
 			}
 		} else {
 			sockaddrfree(&local_address);
