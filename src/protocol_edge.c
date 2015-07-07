@@ -168,6 +168,8 @@ bool add_edge_h(connection_t *c, const char *request) {
 					forward_request(c, request);
 
 				return true;
+			} else {
+				return true;
 			}
 		} else {
 			sockaddrfree(&local_address);
