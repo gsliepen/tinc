@@ -28,36 +28,38 @@ static void memxor(char *buf, char c, size_t len) {
 }
 
 static const size_t mdlen = 64;
+static const size_t blklen = 128;
 
 static bool hmac_sha512(const char *key, size_t keylen, const char *msg, size_t msglen, char *out) {
-	char tmp[2 * mdlen];
+	char tmp[blklen + mdlen];
 	sha512_context md;
 
-	if(keylen <= mdlen) {
+	if(keylen <= blklen) {
 		memcpy(tmp, key, keylen);
-		memset(tmp + keylen, 0, mdlen - keylen);
+		memset(tmp + keylen, 0, blklen - keylen);
 	} else {
 		if(sha512(key, keylen, tmp) != 0)
 			return false;
+		memset(tmp + mdlen, 0, blklen - mdlen);
 	}
 
 	if(sha512_init(&md) != 0)
 		return false;
 
 	// ipad
-	memxor(tmp, 0x36, mdlen);
-	if(sha512_update(&md, tmp, mdlen) != 0)
+	memxor(tmp, 0x36, blklen);
+	if(sha512_update(&md, tmp, blklen) != 0)
 		return false;
 
 	// message
 	if(sha512_update(&md, msg, msglen) != 0)
 		return false;
 
-	if(sha512_final(&md, tmp + mdlen) != 0)
+	if(sha512_final(&md, tmp + blklen) != 0)
 		return false;
 
 	// opad
-	memxor(tmp, 0x36 ^ 0x5c, mdlen);
+	memxor(tmp, 0x36 ^ 0x5c, blklen);
 	if(sha512(tmp, sizeof tmp, out) != 0)
 		return false;
 
@@ -82,17 +84,17 @@ bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char 
 
 	while(outlen > 0) {
 		/* Inner HMAC */
-		if(!hmac_sha512(data, sizeof data, secret, secretlen, data))
+		if(!hmac_sha512(secret, secretlen, data, sizeof data, data))
 			return false;
 
 		/* Outer HMAC */
 		if(outlen >= mdlen) {
-			if(!hmac_sha512(data, sizeof data, secret, secretlen, out))
+			if(!hmac_sha512(secret, secretlen, data, sizeof data, out))
 				return false;
 			out += mdlen;
 			outlen -= mdlen;
 		} else {
-			if(!hmac_sha512(data, sizeof data, secret, secretlen, hash))
+			if(!hmac_sha512(secret, secretlen, data, sizeof data, hash))
 				return false;
 			memcpy(out, hash, outlen);
 			out += outlen;
