@@ -40,9 +40,9 @@ splay_tree_t *subnet_tree;
 
 /* Subnet lookup cache */
 
-hash_t *ipv4_cache;
-hash_t *ipv6_cache;
-hash_t *mac_cache;
+static hash_t *ipv4_cache;
+static hash_t *ipv6_cache;
+static hash_t *mac_cache;
 
 void subnet_cache_flush(void) {
 	hash_clear(ipv4_cache);
