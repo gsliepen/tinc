@@ -29,7 +29,7 @@ static uint32_t hash_function(const void *p, size_t len) {
 	uint32_t hash = 0;
 	while(true) {
 		for(int i = len > 4 ? 4 : len; --i;)
-			hash += q[len - i] << (8 * i);
+			hash += (uint32_t)q[len - i] << (8 * i);
 		hash *= 0x9e370001UL; // Golden ratio prime.
 		if(len <= 4)
 			break;
