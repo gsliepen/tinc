@@ -401,11 +401,8 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 		len -= result;
 	}
 
-	if (subnet->weight != DEFAULT_WEIGHT) {
+	if (subnet->weight != DEFAULT_WEIGHT)
 		snprintf(netstr, len, "#%d", subnet->weight);
-		netstr += result;
-		len -= result;
-	}
 
 	return true;
 }
