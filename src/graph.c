@@ -173,7 +173,7 @@ static void sssp_bfs(void) {
 
 			if(e->to->status.visited
 			   && (!e->to->status.indirect || indirect)
-			   && (e->to->distance != n->distance + 1 || e->weight >= e->to->prevedge->weight))
+			   && (e->to->prevedge && (e->to->distance != n->distance + 1 || e->weight >= e->to->prevedge->weight)))
 				continue;
 
 			// Only update nexthop if it doesn't increase the path length
