@@ -149,7 +149,7 @@ static void sssp_bfs(void) {
 			abort();
 
 		for splay_each(edge_t, e, n->edge_tree) {       /* "e" is the edge connected to "from" */
-			if(!e->reverse)
+			if(!e->reverse || e->to == myself)
 				continue;
 
 			/* Situation:
@@ -173,7 +173,7 @@ static void sssp_bfs(void) {
 
 			if(e->to->status.visited
 			   && (!e->to->status.indirect || indirect)
-			   && (e->to->prevedge && (e->to->distance != n->distance + 1 || e->weight >= e->to->prevedge->weight)))
+			   && (e->to->distance != n->distance + 1 || e->weight >= e->to->prevedge->weight))
 				continue;
 
 			// Only update nexthop if it doesn't increase the path length
