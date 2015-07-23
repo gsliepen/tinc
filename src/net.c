@@ -351,7 +351,7 @@ int reload_configuration(void) {
 			if (subnet->owner)
 				subnet->expires = 1;
 
-		load_all_subnets();
+		load_all_nodes();
 
 		for splay_each(subnet_t, subnet, subnet_tree) {
 			if (!subnet->owner)
