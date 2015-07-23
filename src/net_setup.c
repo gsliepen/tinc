@@ -371,8 +371,10 @@ void load_all_nodes(void) {
 			}
 		}
 
-		if (lookup_config(config_tree, "Address"))
+		if (lookup_config(config_tree, "Address")) {
 			n->status.has_known_address = true;
+			n->status.has_cfg_address = true;
+		}
 
 		exit_configuration(&config_tree);
 	}

@@ -216,7 +216,7 @@ static void periodic_handler(void *data) {
 
 			for splay_each(node_t, n, node_tree) {
 
-				if(!n->status.has_known_address || n->connection)
+				if ((!n->status.has_known_address && !n->status.has_cfg_address) || n->connection)
 					continue;
 
 				bool found = false;
@@ -231,20 +231,23 @@ static void periodic_handler(void *data) {
 					splay_insert(tmp_node_tree, n);
 				}
 
-			int r = rand() % tmp_node_tree->count;
-			int i = 0;
+			if (tmp_node_tree->count) {
+				int r = rand() % tmp_node_tree->count;
+				int i = 0;
 
-			for splay_each(node_t, n, tmp_node_tree) {
+				for splay_each(node_t, n, tmp_node_tree) {
 
-				if(i++ != r)
-					continue;
+						if(i++ != r)
+							continue;
 
-
-				logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
-				outgoing_t *outgoing = xzalloc(sizeof *outgoing);
-				outgoing->name = xstrdup(n->name);
-				list_insert_tail(outgoing_list, outgoing);
-				setup_outgoing_connection(outgoing);
+						logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
+						outgoing_t *outgoing = xzalloc(sizeof *outgoing);
+						outgoing->name = xstrdup(n->name);
+						list_insert_tail(outgoing_list, outgoing);
+						setup_outgoing_connection(outgoing);
+					}
+			} else {
+				logger(DEBUG_ALWAYS, LOG_INFO, "No more nodes available for autoconnect!");
 			}
 			splay_delete_tree(tmp_node_tree);
 		} else if(nc > 3) {
