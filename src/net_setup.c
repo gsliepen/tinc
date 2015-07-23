@@ -374,6 +374,9 @@ void load_all_subnets(void) {
 			}
 		}
 
+		if (lookup_config(config_tree, "Address"))
+			n->status.has_known_address = true;
+
 		exit_configuration(&config_tree);
 	}
 

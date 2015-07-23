@@ -210,15 +210,14 @@ static void periodic_handler(void *data) {
 			   and we are not already trying to make one, create an
 			   outgoing connection to this node.
 			*/
-			int r = rand() % node_tree->count;
-			int i = 0;
+			splay_tree_t *tmp_node_tree;
+
+			tmp_node_tree = splay_alloc_tree((splay_compare_t) node_compare, NULL);
 
 			for splay_each(node_t, n, node_tree) {
-				if(i++ != r)
-					continue;
 
-				if(n->connection)
-					break;
+				if(!n->status.has_known_address || n->connection)
+					continue;
 
 				bool found = false;
 
@@ -228,16 +227,26 @@ static void periodic_handler(void *data) {
 						break;
 					}
 				}
-
-				if(!found) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
-					outgoing_t *outgoing = xzalloc(sizeof *outgoing);
-					outgoing->name = xstrdup(n->name);
-					list_insert_tail(outgoing_list, outgoing);
-					setup_outgoing_connection(outgoing);
+				if (!found)
+					splay_insert(tmp_node_tree, n);
 				}
-				break;
+
+			int r = rand() % tmp_node_tree->count;
+			int i = 0;
+
+			for splay_each(node_t, n, tmp_node_tree) {
+
+				if(i++ != r)
+					continue;
+
+
+				logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
+				outgoing_t *outgoing = xzalloc(sizeof *outgoing);
+				outgoing->name = xstrdup(n->name);
+				list_insert_tail(outgoing_list, outgoing);
+				setup_outgoing_connection(outgoing);
 			}
+			splay_delete_tree(tmp_node_tree);
 		} else if(nc > 3) {
 			/* Too many active connections, try to remove one.
 			   Choose a random outgoing connection to a node
