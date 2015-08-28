@@ -534,17 +534,16 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NODE=%s", owner->name);
+	xasprintf(&envp[4], "NAME=%s", myself->name);
 
 	if(owner != myself) {
 		sockaddr2str(&owner->address, &address, &port);
-		// 4 and 5 are reserved for SUBNET and WEIGHT
-		xasprintf(&envp[6], "REMOTEADDRESS=%s", address);
-		xasprintf(&envp[7], "REMOTEPORT=%s", port);
+		// 5 and 6 are reserved for SUBNET and WEIGHT
+		xasprintf(&envp[7], "REMOTEADDRESS=%s", address);
+		xasprintf(&envp[8], "REMOTEPORT=%s", port);
 		free(port);
 		free(address);
 	}
-
-	xasprintf(&envp[8], "NAME=%s", myself->name);
 
 	name = up ? "subnet-up" : "subnet-down";
 
@@ -561,12 +560,12 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 				weight = empty;
 
 			// Prepare the SUBNET and WEIGHT variables
-			if(envp[4])
-				free(envp[4]);
 			if(envp[5])
 				free(envp[5]);
-			xasprintf(&envp[4], "SUBNET=%s", netstr);
-			xasprintf(&envp[5], "WEIGHT=%s", weight);
+			if(envp[6])
+				free(envp[6]);
+			xasprintf(&envp[5], "SUBNET=%s", netstr);
+			xasprintf(&envp[6], "WEIGHT=%s", weight);
 
 			execute_script(name, envp);
 		}
@@ -580,8 +579,8 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 				weight = empty;
 
 			// Prepare the SUBNET and WEIGHT variables
-			xasprintf(&envp[4], "SUBNET=%s", netstr);
-			xasprintf(&envp[5], "WEIGHT=%s", weight);
+			xasprintf(&envp[5], "SUBNET=%s", netstr);
+			xasprintf(&envp[6], "WEIGHT=%s", weight);
 
 			execute_script(name, envp);
 		}
