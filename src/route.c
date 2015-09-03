@@ -902,7 +902,7 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 			if(!checklength(source, packet, ethlen + ip_size))
 				return false;
 
-			if(DATA(packet)[ethlen + 8] < 1) {
+			if(DATA(packet)[ethlen + 8] <= 1) {
 				if(DATA(packet)[ethlen + 11] != IPPROTO_ICMP || DATA(packet)[ethlen + 32] != ICMP_TIME_EXCEEDED)
 					route_ipv4_unreachable(source, packet, ethlen, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
 				return false;
@@ -925,7 +925,7 @@ static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
 			if(!checklength(source, packet, ethlen + ip6_size))
 				return false;
 
-			if(DATA(packet)[ethlen + 7] < 1) {
+			if(DATA(packet)[ethlen + 7] <= 1) {
 				if(DATA(packet)[ethlen + 6] != IPPROTO_ICMPV6 || DATA(packet)[ethlen + 40] != ICMP6_TIME_EXCEEDED)
 					route_ipv6_unreachable(source, packet, ethlen, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
 				return false;
