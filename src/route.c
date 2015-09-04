@@ -259,7 +259,6 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	struct in_addr ip_src;
 	struct in_addr ip_dst;
 	uint32_t oldlen;
-	int sockfd;
 
 	if(ratelimit(3))
 		return;
@@ -279,21 +278,23 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Try to reply with an IP address assigned to the local machine */
 
-	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sockfd != -1) {
-		struct sockaddr_in addr;
-		memset(&addr, 0, sizeof(addr));
-		addr.sin_family = AF_INET;
-		addr.sin_addr = ip.ip_src;
-		if (!connect(sockfd, (const struct sockaddr*) &addr, sizeof(addr))) {
+	if (type == ICMP_TIME_EXCEEDED && code == ICMP_EXC_TTL) {
+		int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (sockfd != -1) {
+			struct sockaddr_in addr;
 			memset(&addr, 0, sizeof(addr));
 			addr.sin_family = AF_INET;
-			socklen_t addrlen = sizeof(addr);
-			if (!getsockname(sockfd, (struct sockaddr*) &addr, &addrlen) && addrlen <= sizeof(addr)) {
-				ip_dst = addr.sin_addr;
+			addr.sin_addr = ip.ip_src;
+			if (!connect(sockfd, (const struct sockaddr*) &addr, sizeof(addr))) {
+				memset(&addr, 0, sizeof(addr));
+				addr.sin_family = AF_INET;
+				socklen_t addrlen = sizeof(addr);
+				if (!getsockname(sockfd, (struct sockaddr*) &addr, &addrlen) && addrlen <= sizeof(addr)) {
+					ip_dst = addr.sin_addr;
+				}
 			}
+			close(sockfd);
 		}
-		close(sockfd);
 	}
 
 	oldlen = packet->len - ether_size;
@@ -469,7 +470,6 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 	struct ip6_hdr ip6;
 	struct icmp6_hdr icmp6 = {0};
 	uint16_t checksum;	
-	int sockfd;
 
 	struct {
 		struct in6_addr ip6_src;        /* source address */
@@ -496,21 +496,23 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Try to reply with an IP address assigned to the local machine */
 
-	sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
-	if (sockfd != -1) {
-		struct sockaddr_in6 addr;
-		memset(&addr, 0, sizeof(addr));
-		addr.sin6_family = AF_INET6;
-		addr.sin6_addr = ip6.ip6_src;
-		if (!connect(sockfd, (const struct sockaddr*) &addr, sizeof(addr))) {
+	if (type == ICMP6_TIME_EXCEEDED && code == ICMP6_TIME_EXCEED_TRANSIT) {
+		int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
+		if (sockfd != -1) {
+			struct sockaddr_in6 addr;
 			memset(&addr, 0, sizeof(addr));
 			addr.sin6_family = AF_INET6;
-			socklen_t addrlen = sizeof(addr);
-			if (!getsockname(sockfd, (struct sockaddr*) &addr, &addrlen) && addrlen <= sizeof(addr)) {
-				pseudo.ip6_src = addr.sin6_addr;
+			addr.sin6_addr = ip6.ip6_src;
+			if (!connect(sockfd, (const struct sockaddr*) &addr, sizeof(addr))) {
+				memset(&addr, 0, sizeof(addr));
+				addr.sin6_family = AF_INET6;
+				socklen_t addrlen = sizeof(addr);
+				if (!getsockname(sockfd, (struct sockaddr*) &addr, &addrlen) && addrlen <= sizeof(addr)) {
+					pseudo.ip6_src = addr.sin6_addr;
+				}
 			}
+			close(sockfd);
 		}
-		close(sockfd);
 	}
 
 	pseudo.length = packet->len - ether_size;
