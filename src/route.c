@@ -164,7 +164,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		/* Found it */
 		uint16_t oldmss = DATA(packet)[start + 22 + i] << 8 | DATA(packet)[start + 23 + i];
 		uint16_t newmss = mtu - start - 20;
-		uint16_t csum = DATA(packet)[start + 16] << 8 | DATA(packet)[start + 17];
+		uint32_t csum = DATA(packet)[start + 16] << 8 | DATA(packet)[start + 17];
 
 		if(oldmss <= newmss)
 			break;
@@ -175,11 +175,13 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		DATA(packet)[start + 22 + i] = newmss >> 8;
 		DATA(packet)[start + 23 + i] = newmss & 0xff;
 		csum ^= 0xffff;
-		csum -= oldmss;
+		csum += oldmss ^ 0xffff;
 		csum += newmss;
+		csum = (csum & 0xffff) + (csum >> 16);
+		csum += csum >> 16;
 		csum ^= 0xffff;
 		DATA(packet)[start + 16] = csum >> 8;
-		DATA(packet)[start + 17] = csum & 0xff;
+		DATA(packet)[start + 17] = csum;
 		break;
 	}
 }
