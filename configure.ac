@@ -138,12 +138,8 @@ AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
 
 AC_CACHE_SAVE
 
-if test -d /sw/include ; then
-  CPPFLAGS="$CPPFLAGS -I/sw/include"
-fi
-if test -d /sw/lib ; then
-  LIBS="$LIBS -L/sw/lib"
-fi
+AS_IF([test -d /sw/include], [CPPFLAGS="$CPPFLAGS -I/sw/include"])
+AS_IF([test -d /sw/lib], [LIBS="$LIBS -L/sw/lib"])
 
 dnl Compiler hardening flags
 dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
@@ -241,15 +237,12 @@ tinc_READLINE
 tinc_ZLIB
 tinc_LZO
 
-if test "x$enable_legacy_protocol" != "xno"; then
-	if test -n "$with_libgcrypt"; then
-		gcrypt=true
-		tinc_LIBGCRYPT
-	else
-		openssl=true
-		tinc_OPENSSL
-	fi
-fi
+AS_IF([test "x$enable_legacy_protocol" != "xno"],
+      [AS_IF([test -n "$with_libgcrypt"],
+	     [gcrypt=true; tinc_LIBGCRYPT],
+	     [openssl=true; tinc_OPENSSL])
+      ]
+)
 
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
 AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
