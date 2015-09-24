@@ -115,6 +115,17 @@ AC_ARG_WITH(windows2000,
   ]
 )
 
+AC_ARG_WITH(systemd,
+  AS_HELP_STRING([--with-systemd@<:@=DIR@:>@], [install systemd service files @<:@to DIR if specified@:>@]),
+  [ systemd=true; systemd_path="$with_systemd" ],
+  [ systemd=false ]
+)
+
+AS_IF([test "x$with_systemd" = "xyes"], [systemd_path="/lib/systemd/system"],
+      [AS_IF([test "x$with_systemd" = "xno"], [systemd=false])])
+
+AC_SUBST(systemd_path, $systemd_path)
+
 AM_CONDITIONAL(LINUX, test "$linux" = true)
 AM_CONDITIONAL(BSD, test "$bsd" = true)
 AM_CONDITIONAL(SOLARIS, test "$solaris" = true)
@@ -123,6 +134,7 @@ AM_CONDITIONAL(CYGWIN, test "$cygwin" = true)
 AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
+AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
 
 AC_CACHE_SAVE
 
@@ -250,6 +262,6 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile gui/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile gui/Makefile test/Makefile systemd/Makefile])
 
 AC_OUTPUT

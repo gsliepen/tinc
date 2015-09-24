@@ -1,0 +1,19 @@
+[Unit]
+Description=Tinc net %i
+Documentation=info:tinc
+Documentation=man:tinc(8) man:tinc.conf(5)
+Documentation=http://tinc-vpn.org/docs/
+PartOf=tinc.service
+ReloadPropagatedFrom=tinc.service
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/tinc/%i
+ExecStart=/usr/sbin/tincd -n %i -D
+ExecReload=/usr/sbin/tinc -n %i reload
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+
+[Install]
+WantedBy=tinc.service
