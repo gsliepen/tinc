@@ -4,6 +4,8 @@ AUTOMAKE_OPTIONS = gnu
 
 SUBDIRS =  src doc gui test
 
+ACLOCAL_AMFLAGS = -I m4
+
 EXTRA_DIST = COPYING.README README.android
 
 # If git describe works, force autoconf to run in order to make sure we have the
