@@ -53,6 +53,8 @@ static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
+static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet);
+
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
@@ -251,6 +253,14 @@ void age_subnets(void) {
 	}
 }
 
+static void broadcast_packet_helper(node_t *source, vpn_packet_t *packet) {
+	if(decrement_ttl && source != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
+	broadcast_packet(source, packet);
+}
+
 /* RFC 792 */
 
 static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_t ether_size, uint8_t type, uint8_t code) {
@@ -426,6 +436,10 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
+	if(decrement_ttl && source != myself && subnet->owner != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
 
@@ -465,7 +479,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 			packet->data[31] == 255 &&
 			packet->data[32] == 255 &&
 			packet->data[33] == 255)))
-		broadcast_packet(source, packet);
+		broadcast_packet_helper(source, packet);
 	else
 		route_ipv4_unicast(source, packet);
 }
@@ -606,6 +620,10 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
+	if(decrement_ttl && source != myself && subnet->owner != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
 	if(via == source) {
@@ -722,6 +740,10 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	if(subnet->owner == myself)
 		return;					/* silently ignore */
 
+	if(decrement_ttl)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
 	/* Create neighbor advertation reply */
 
 	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN);	/* copy destination address */
@@ -779,7 +801,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(broadcast_mode && packet->data[38] == 255)
-		broadcast_packet(source, packet);
+		broadcast_packet_helper(source, packet);
 	else
 		route_ipv6_unicast(source, packet);
 }
@@ -832,6 +854,10 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	if(subnet->owner == myself)
 		return;					/* silently ignore */
 
+	if(decrement_ttl)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
 	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN);	/* copy destination address */
 	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;	/* mangle source address so it looks like it's not from us */
 
@@ -868,7 +894,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet) {
-		broadcast_packet(source, packet);
+		broadcast_packet_helper(source, packet);
 		return;
 	}
 
@@ -879,6 +905,10 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return;
+
+	if(decrement_ttl && source != myself && subnet->owner != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
 
 	uint16_t type = packet->data[12] << 8 | packet->data[13];
 
@@ -982,10 +1012,6 @@ void route(node_t *source, vpn_packet_t *packet) {
 	if(!checklength(source, packet, ether_size))
 		return;
 
-	if(decrement_ttl && source != myself)
-		if(!do_decrement_ttl(source, packet))
-			return;
-
 	switch (routing_mode) {
 		case RMODE_ROUTER:
 			{
@@ -1016,7 +1042,7 @@ void route(node_t *source, vpn_packet_t *packet) {
 			break;
 
 		case RMODE_HUB:
-			broadcast_packet(source, packet);
+			broadcast_packet_helper(source, packet);
 			break;
 	}
 }
