@@ -53,8 +53,6 @@ static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
-static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet);
-
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
@@ -103,162 +101,11 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 		return true;
 }
 
-static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *packet) {
-	if(!source || !via || !(via->options & OPTION_CLAMP_MSS))
-		return;
-
-	uint16_t mtu = source->mtu;
-	if(via != myself && via->mtu < mtu)
-		mtu = via->mtu;
-
-	/* Find TCP header */
-	int start = ether_size;
-	uint16_t type = packet->data[12] << 8 | packet->data[13];
-
-	if(type == ETH_P_8021Q) {
-		start += 4;
-		type = packet->data[16] << 8 | packet->data[17];
-	}
-
-	if(type == ETH_P_IP && packet->data[start + 9] == 6)
-		start += (packet->data[start] & 0xf) * 4;
-	else if(type == ETH_P_IPV6 && packet->data[start + 6] == 6)
-		start += 40;
-	else
-		return;
-
-	if(packet->len <= start + 20)
-		return;
-
-	/* Use data offset field to calculate length of options field */
-	int len = ((packet->data[start + 12] >> 4) - 5) * 4;
-
-	if(packet->len < start + 20 + len)
-		return;
-
-	/* Search for MSS option header */
-	for(int i = 0; i < len;) {
-		if(packet->data[start + 20 + i] == 0)
-			break;
-
-		if(packet->data[start + 20 + i] == 1) {
-			i++;
-			continue;
-		}
-
-		if(i > len - 2 || i > len - packet->data[start + 21 + i])
-			break;
-
-		if(packet->data[start + 20 + i] != 2) {
-			if(packet->data[start + 21 + i] < 2)
-				break;
-			i += packet->data[start + 21 + i];
-			continue;
-		}
-
-		if(packet->data[start + 21] != 4)
-			break;
-
-		/* Found it */
-		uint16_t oldmss = packet->data[start + 22 + i] << 8 | packet->data[start + 23 + i];
-		uint16_t newmss = mtu - start - 20;
-		uint32_t csum = packet->data[start + 16] << 8 | packet->data[start + 17];
-
-		if(oldmss <= newmss)
-			break;
-		
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
-
-		/* Update the MSS value and the checksum */
-		packet->data[start + 22 + i] = newmss >> 8;
-		packet->data[start + 23 + i] = newmss & 0xff;
-		csum ^= 0xffff;
-		csum += oldmss ^ 0xffff;
-		csum += newmss;
-		csum = (csum & 0xffff) + (csum >> 16);
-		csum += csum >> 16;
-		csum ^= 0xffff;
-		packet->data[start + 16] = csum >> 8;
-		packet->data[start + 17] = csum;
-		break;
-	}
-}
-
 static void swap_mac_addresses(vpn_packet_t *packet) {
 	mac_t tmp;
 	memcpy(&tmp, &packet->data[0], sizeof tmp);
 	memcpy(&packet->data[0], &packet->data[6], sizeof tmp);
 	memcpy(&packet->data[6], &tmp, sizeof tmp);
-}
-	
-static void learn_mac(mac_t *address) {
-	subnet_t *subnet;
-	avl_node_t *node;
-	connection_t *c;
-
-	subnet = lookup_subnet_mac(myself, address);
-
-	/* If we don't know this MAC address yet, store it */
-
-	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Learned new MAC address %x:%x:%x:%x:%x:%x",
-				   address->x[0], address->x[1], address->x[2], address->x[3],
-				   address->x[4], address->x[5]);
-
-		subnet = new_subnet();
-		subnet->type = SUBNET_MAC;
-		subnet->expires = now + macexpire;
-		subnet->net.mac.address = *address;
-		subnet->weight = 10;
-		subnet_add(myself, subnet);
-		subnet_update(myself, subnet, true);
-
-		/* And tell all other tinc daemons it's our MAC */
-
-		for(node = connection_tree->head; node; node = node->next) {
-			c = node->data;
-			if(c->status.active)
-				send_add_subnet(c, subnet);
-		}
-	}
-
-	if(subnet->expires)
-		subnet->expires = now + macexpire;
-}
-
-void age_subnets(void) {
-	subnet_t *s;
-	connection_t *c;
-	avl_node_t *node, *next, *node2;
-
-	for(node = myself->subnet_tree->head; node; node = next) {
-		next = node->next;
-		s = node->data;
-		if(s->expires && s->expires <= now) {
-			ifdebug(TRAFFIC) {
-				char netstr[MAXNETSTR];
-				if(net2str(netstr, sizeof netstr, s))
-					logger(LOG_INFO, "Subnet %s expired", netstr);
-			}
-
-			for(node2 = connection_tree->head; node2; node2 = node2->next) {
-				c = node2->data;
-				if(c->status.active)
-					send_del_subnet(c, s);
-			}
-
-			subnet_update(myself, s, false);
-			subnet_del(myself, s);
-		}
-	}
-}
-
-static void route_broadcast(node_t *source, vpn_packet_t *packet) {
-	if(decrement_ttl && source != myself)
-		if(!do_decrement_ttl(source, packet))
-			return;
-
-	broadcast_packet(source, packet);
 }
 
 /* RFC 792 */
@@ -353,6 +200,310 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 	packet->len = ether_size + ip_size + icmp_size + oldlen;
 
 	send_packet(source, packet);
+}
+
+/* RFC 2463 */
+
+static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_t ether_size, uint8_t type, uint8_t code) {
+	struct ip6_hdr ip6;
+	struct icmp6_hdr icmp6 = {0};
+	uint16_t checksum;	
+
+	struct {
+		struct in6_addr ip6_src;	/* source address */
+		struct in6_addr ip6_dst;	/* destination address */
+		uint32_t length;
+		uint32_t next;
+	} pseudo;
+
+	if(ratelimit(3))
+		return;
+	
+	/* Swap Ethernet source and destination addresses */
+
+	swap_mac_addresses(packet);
+
+	/* Copy headers from packet to structs on the stack */
+
+	memcpy(&ip6, packet->data + ether_size, ip6_size);
+
+	/* Remember original source and destination */
+	
+	pseudo.ip6_src = ip6.ip6_dst;
+	pseudo.ip6_dst = ip6.ip6_src;
+
+	/* Try to reply with an IP address assigned to the local machine */
+
+	if (type == ICMP6_TIME_EXCEEDED && code == ICMP6_TIME_EXCEED_TRANSIT) {
+		int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
+		if (sockfd != -1) {
+			struct sockaddr_in6 addr;
+			memset(&addr, 0, sizeof(addr));
+			addr.sin6_family = AF_INET6;
+			addr.sin6_addr = ip6.ip6_src;
+			if (!connect(sockfd, (const struct sockaddr*) &addr, sizeof(addr))) {
+				memset(&addr, 0, sizeof(addr));
+				addr.sin6_family = AF_INET6;
+				socklen_t addrlen = sizeof(addr);
+				if (!getsockname(sockfd, (struct sockaddr*) &addr, &addrlen) && addrlen <= sizeof(addr)) {
+					pseudo.ip6_src = addr.sin6_addr;
+				}
+			}
+			close(sockfd);
+		}
+	}
+
+	pseudo.length = packet->len - ether_size;
+
+	if(type == ICMP6_PACKET_TOO_BIG)
+		icmp6.icmp6_mtu = htonl(pseudo.length);
+	
+	if(pseudo.length >= IP_MSS - ip6_size - icmp6_size)
+		pseudo.length = IP_MSS - ip6_size - icmp6_size;
+	
+	/* Copy first part of original contents to ICMP message */
+	
+	memmove(packet->data + ether_size + ip6_size + icmp6_size, packet->data + ether_size, pseudo.length);
+
+	/* Fill in IPv6 header */
+	
+	ip6.ip6_flow = htonl(0x60000000UL);
+	ip6.ip6_plen = htons(icmp6_size + pseudo.length);
+	ip6.ip6_nxt = IPPROTO_ICMPV6;
+	ip6.ip6_hlim = 255;
+	ip6.ip6_src = pseudo.ip6_src;
+	ip6.ip6_dst = pseudo.ip6_dst;
+
+	/* Fill in ICMP header */
+	
+	icmp6.icmp6_type = type;
+	icmp6.icmp6_code = code;
+	icmp6.icmp6_cksum = 0;
+
+	/* Create pseudo header */
+		
+	pseudo.length = htonl(icmp6_size + pseudo.length);
+	pseudo.next = htonl(IPPROTO_ICMPV6);
+
+	/* Generate checksum */
+	
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
+	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
+	checksum = inet_checksum(packet->data + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
+
+	icmp6.icmp6_cksum = checksum;
+
+	/* Copy structs on stack back to packet */
+
+	memcpy(packet->data + ether_size, &ip6, ip6_size);
+	memcpy(packet->data + ether_size + ip6_size, &icmp6, icmp6_size);
+	
+	packet->len = ether_size + ip6_size + ntohl(pseudo.length);
+	
+	send_packet(source, packet);
+}
+
+static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+	length_t ethlen = ether_size;
+
+	if(type == ETH_P_8021Q) {
+		type = packet->data[16] << 8 | packet->data[17];
+		ethlen += 4;
+	}
+
+	switch (type) {
+		case ETH_P_IP:
+			if(!checklength(source, packet, ethlen + ip_size))
+				return false;
+
+			if(packet->data[ethlen + 8] <= 1) {
+				if(packet->data[ethlen + 11] != IPPROTO_ICMP || packet->data[ethlen + 32] != ICMP_TIME_EXCEEDED)
+					route_ipv4_unreachable(source, packet, ethlen, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+				return false;
+			}
+
+			uint16_t old = packet->data[ethlen + 8] << 8 | packet->data[ethlen + 9];
+			packet->data[ethlen + 8]--;
+			uint16_t new = packet->data[ethlen + 8] << 8 | packet->data[ethlen + 9];
+
+			uint32_t checksum = packet->data[ethlen + 10] << 8 | packet->data[ethlen + 11];
+			checksum += old + (~new & 0xFFFF);
+			while(checksum >> 16)
+				checksum = (checksum & 0xFFFF) + (checksum >> 16);
+			packet->data[ethlen + 10] = checksum >> 8;
+			packet->data[ethlen + 11] = checksum & 0xff;
+
+			return true;
+
+		case ETH_P_IPV6:
+			if(!checklength(source, packet, ethlen + ip6_size))
+				return false;
+
+			if(packet->data[ethlen + 7] <= 1) {
+				if(packet->data[ethlen + 6] != IPPROTO_ICMPV6 || packet->data[ethlen + 40] != ICMP6_TIME_EXCEEDED)
+					route_ipv6_unreachable(source, packet, ethlen, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+				return false;
+			}
+
+			packet->data[ethlen + 7]--;
+
+			return true;
+
+		default:
+			return true;
+	}
+}
+
+static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *packet) {
+	if(!source || !via || !(via->options & OPTION_CLAMP_MSS))
+		return;
+
+	uint16_t mtu = source->mtu;
+	if(via != myself && via->mtu < mtu)
+		mtu = via->mtu;
+
+	/* Find TCP header */
+	int start = ether_size;
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	if(type == ETH_P_8021Q) {
+		start += 4;
+		type = packet->data[16] << 8 | packet->data[17];
+	}
+
+	if(type == ETH_P_IP && packet->data[start + 9] == 6)
+		start += (packet->data[start] & 0xf) * 4;
+	else if(type == ETH_P_IPV6 && packet->data[start + 6] == 6)
+		start += 40;
+	else
+		return;
+
+	if(packet->len <= start + 20)
+		return;
+
+	/* Use data offset field to calculate length of options field */
+	int len = ((packet->data[start + 12] >> 4) - 5) * 4;
+
+	if(packet->len < start + 20 + len)
+		return;
+
+	/* Search for MSS option header */
+	for(int i = 0; i < len;) {
+		if(packet->data[start + 20 + i] == 0)
+			break;
+
+		if(packet->data[start + 20 + i] == 1) {
+			i++;
+			continue;
+		}
+
+		if(i > len - 2 || i > len - packet->data[start + 21 + i])
+			break;
+
+		if(packet->data[start + 20 + i] != 2) {
+			if(packet->data[start + 21 + i] < 2)
+				break;
+			i += packet->data[start + 21 + i];
+			continue;
+		}
+
+		if(packet->data[start + 21] != 4)
+			break;
+
+		/* Found it */
+		uint16_t oldmss = packet->data[start + 22 + i] << 8 | packet->data[start + 23 + i];
+		uint16_t newmss = mtu - start - 20;
+		uint32_t csum = packet->data[start + 16] << 8 | packet->data[start + 17];
+
+		if(oldmss <= newmss)
+			break;
+		
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
+
+		/* Update the MSS value and the checksum */
+		packet->data[start + 22 + i] = newmss >> 8;
+		packet->data[start + 23 + i] = newmss & 0xff;
+		csum ^= 0xffff;
+		csum += oldmss ^ 0xffff;
+		csum += newmss;
+		csum = (csum & 0xffff) + (csum >> 16);
+		csum += csum >> 16;
+		csum ^= 0xffff;
+		packet->data[start + 16] = csum >> 8;
+		packet->data[start + 17] = csum;
+		break;
+	}
+}
+	
+static void learn_mac(mac_t *address) {
+	subnet_t *subnet;
+	avl_node_t *node;
+	connection_t *c;
+
+	subnet = lookup_subnet_mac(myself, address);
+
+	/* If we don't know this MAC address yet, store it */
+
+	if(!subnet) {
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Learned new MAC address %x:%x:%x:%x:%x:%x",
+				   address->x[0], address->x[1], address->x[2], address->x[3],
+				   address->x[4], address->x[5]);
+
+		subnet = new_subnet();
+		subnet->type = SUBNET_MAC;
+		subnet->expires = now + macexpire;
+		subnet->net.mac.address = *address;
+		subnet->weight = 10;
+		subnet_add(myself, subnet);
+		subnet_update(myself, subnet, true);
+
+		/* And tell all other tinc daemons it's our MAC */
+
+		for(node = connection_tree->head; node; node = node->next) {
+			c = node->data;
+			if(c->status.active)
+				send_add_subnet(c, subnet);
+		}
+	}
+
+	if(subnet->expires)
+		subnet->expires = now + macexpire;
+}
+
+void age_subnets(void) {
+	subnet_t *s;
+	connection_t *c;
+	avl_node_t *node, *next, *node2;
+
+	for(node = myself->subnet_tree->head; node; node = next) {
+		next = node->next;
+		s = node->data;
+		if(s->expires && s->expires <= now) {
+			ifdebug(TRAFFIC) {
+				char netstr[MAXNETSTR];
+				if(net2str(netstr, sizeof netstr, s))
+					logger(LOG_INFO, "Subnet %s expired", netstr);
+			}
+
+			for(node2 = connection_tree->head; node2; node2 = node2->next) {
+				c = node2->data;
+				if(c->status.active)
+					send_del_subnet(c, s);
+			}
+
+			subnet_update(myself, s, false);
+			subnet_del(myself, s);
+		}
+	}
+}
+
+static void route_broadcast(node_t *source, vpn_packet_t *packet) {
+	if(decrement_ttl && source != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
+	broadcast_packet(source, packet);
 }
 
 /* RFC 791 */
@@ -482,107 +633,6 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 		route_broadcast(source, packet);
 	else
 		route_ipv4_unicast(source, packet);
-}
-
-/* RFC 2463 */
-
-static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_t ether_size, uint8_t type, uint8_t code) {
-	struct ip6_hdr ip6;
-	struct icmp6_hdr icmp6 = {0};
-	uint16_t checksum;	
-
-	struct {
-		struct in6_addr ip6_src;	/* source address */
-		struct in6_addr ip6_dst;	/* destination address */
-		uint32_t length;
-		uint32_t next;
-	} pseudo;
-
-	if(ratelimit(3))
-		return;
-	
-	/* Swap Ethernet source and destination addresses */
-
-	swap_mac_addresses(packet);
-
-	/* Copy headers from packet to structs on the stack */
-
-	memcpy(&ip6, packet->data + ether_size, ip6_size);
-
-	/* Remember original source and destination */
-	
-	pseudo.ip6_src = ip6.ip6_dst;
-	pseudo.ip6_dst = ip6.ip6_src;
-
-	/* Try to reply with an IP address assigned to the local machine */
-
-	if (type == ICMP6_TIME_EXCEEDED && code == ICMP6_TIME_EXCEED_TRANSIT) {
-		int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
-		if (sockfd != -1) {
-			struct sockaddr_in6 addr;
-			memset(&addr, 0, sizeof(addr));
-			addr.sin6_family = AF_INET6;
-			addr.sin6_addr = ip6.ip6_src;
-			if (!connect(sockfd, (const struct sockaddr*) &addr, sizeof(addr))) {
-				memset(&addr, 0, sizeof(addr));
-				addr.sin6_family = AF_INET6;
-				socklen_t addrlen = sizeof(addr);
-				if (!getsockname(sockfd, (struct sockaddr*) &addr, &addrlen) && addrlen <= sizeof(addr)) {
-					pseudo.ip6_src = addr.sin6_addr;
-				}
-			}
-			close(sockfd);
-		}
-	}
-
-	pseudo.length = packet->len - ether_size;
-
-	if(type == ICMP6_PACKET_TOO_BIG)
-		icmp6.icmp6_mtu = htonl(pseudo.length);
-	
-	if(pseudo.length >= IP_MSS - ip6_size - icmp6_size)
-		pseudo.length = IP_MSS - ip6_size - icmp6_size;
-	
-	/* Copy first part of original contents to ICMP message */
-	
-	memmove(packet->data + ether_size + ip6_size + icmp6_size, packet->data + ether_size, pseudo.length);
-
-	/* Fill in IPv6 header */
-	
-	ip6.ip6_flow = htonl(0x60000000UL);
-	ip6.ip6_plen = htons(icmp6_size + pseudo.length);
-	ip6.ip6_nxt = IPPROTO_ICMPV6;
-	ip6.ip6_hlim = 255;
-	ip6.ip6_src = pseudo.ip6_src;
-	ip6.ip6_dst = pseudo.ip6_dst;
-
-	/* Fill in ICMP header */
-	
-	icmp6.icmp6_type = type;
-	icmp6.icmp6_code = code;
-	icmp6.icmp6_cksum = 0;
-
-	/* Create pseudo header */
-		
-	pseudo.length = htonl(icmp6_size + pseudo.length);
-	pseudo.next = htonl(IPPROTO_ICMPV6);
-
-	/* Generate checksum */
-	
-	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
-	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
-	checksum = inet_checksum(packet->data + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
-
-	icmp6.icmp6_cksum = checksum;
-
-	/* Copy structs on stack back to packet */
-
-	memcpy(packet->data + ether_size, &ip6, ip6_size);
-	memcpy(packet->data + ether_size + ip6_size, &icmp6, icmp6_size);
-	
-	packet->len = ether_size + ip6_size + ntohl(pseudo.length);
-	
-	send_packet(source, packet);
 }
 
 static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
@@ -949,58 +999,6 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	clamp_mss(source, via, packet);
  
 	send_packet(subnet->owner, packet);
-}
-
-static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
-	uint16_t type = packet->data[12] << 8 | packet->data[13];
-	length_t ethlen = ether_size;
-
-	if(type == ETH_P_8021Q) {
-		type = packet->data[16] << 8 | packet->data[17];
-		ethlen += 4;
-	}
-
-	switch (type) {
-		case ETH_P_IP:
-			if(!checklength(source, packet, ethlen + ip_size))
-				return false;
-
-			if(packet->data[ethlen + 8] <= 1) {
-				if(packet->data[ethlen + 11] != IPPROTO_ICMP || packet->data[ethlen + 32] != ICMP_TIME_EXCEEDED)
-					route_ipv4_unreachable(source, packet, ethlen, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
-				return false;
-			}
-
-			uint16_t old = packet->data[ethlen + 8] << 8 | packet->data[ethlen + 9];
-			packet->data[ethlen + 8]--;
-			uint16_t new = packet->data[ethlen + 8] << 8 | packet->data[ethlen + 9];
-
-			uint32_t checksum = packet->data[ethlen + 10] << 8 | packet->data[ethlen + 11];
-			checksum += old + (~new & 0xFFFF);
-			while(checksum >> 16)
-				checksum = (checksum & 0xFFFF) + (checksum >> 16);
-			packet->data[ethlen + 10] = checksum >> 8;
-			packet->data[ethlen + 11] = checksum & 0xff;
-
-			return true;
-
-		case ETH_P_IPV6:
-			if(!checklength(source, packet, ethlen + ip6_size))
-				return false;
-
-			if(packet->data[ethlen + 7] <= 1) {
-				if(packet->data[ethlen + 6] != IPPROTO_ICMPV6 || packet->data[ethlen + 40] != ICMP6_TIME_EXCEEDED)
-					route_ipv6_unreachable(source, packet, ethlen, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
-				return false;
-			}
-
-			packet->data[ethlen + 7]--;
-
-			return true;
-
-		default:
-			return true;
-	}
 }
 
 void route(node_t *source, vpn_packet_t *packet) {
