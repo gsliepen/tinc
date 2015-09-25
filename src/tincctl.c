@@ -417,6 +417,7 @@ static bool ed25519_keygen(bool ask) {
 
 	char *pubkey = ecdsa_get_base64_public_key(key);
 	fprintf(f, "Ed25519PublicKey = %s\n", pubkey);
+	free(pubkey);
 
 	fclose(f);
 	ecdsa_free(key);
@@ -1804,7 +1805,7 @@ static int cmd_config(int argc, char *argv[]) {
 }
 
 static bool try_bind(int port) {
-	struct addrinfo *ai = NULL;
+	struct addrinfo *ai = NULL, *aip;
 	struct addrinfo hint = {
 		.ai_flags = AI_PASSIVE,
 		.ai_family = AF_UNSPEC,
@@ -1812,24 +1813,30 @@ static bool try_bind(int port) {
 		.ai_protocol = IPPROTO_TCP,
 	};
 
+	bool success = true;
 	char portstr[16];
 	snprintf(portstr, sizeof portstr, "%d", port);
 
 	if(getaddrinfo(NULL, portstr, &hint, &ai) || !ai)
 		return false;
 
-	while(ai) {
+	for(aip = ai; aip; aip = aip->ai_next) {
 		int fd = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
-		if(!fd)
-			return false;
+		if(!fd) {
+			success = false;
+			break;
+		}
+
 		int result = bind(fd, ai->ai_addr, ai->ai_addrlen);
 		closesocket(fd);
-		if(result)
-			return false;
-		ai = ai->ai_next;
+		if(result) {
+			success = false;
+			break;
+		}
 	}
 
-	return true;
+	freeaddrinfo(ai);
+	return success;
 }
 
 int check_port(char *name) {
