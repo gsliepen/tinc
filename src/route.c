@@ -253,7 +253,7 @@ void age_subnets(void) {
 	}
 }
 
-static void broadcast_packet_helper(node_t *source, vpn_packet_t *packet) {
+static void route_broadcast(node_t *source, vpn_packet_t *packet) {
 	if(decrement_ttl && source != myself)
 		if(!do_decrement_ttl(source, packet))
 			return;
@@ -479,7 +479,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 			packet->data[31] == 255 &&
 			packet->data[32] == 255 &&
 			packet->data[33] == 255)))
-		broadcast_packet_helper(source, packet);
+		route_broadcast(source, packet);
 	else
 		route_ipv4_unicast(source, packet);
 }
@@ -801,7 +801,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(broadcast_mode && packet->data[38] == 255)
-		broadcast_packet_helper(source, packet);
+		route_broadcast(source, packet);
 	else
 		route_ipv6_unicast(source, packet);
 }
@@ -894,7 +894,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet) {
-		broadcast_packet_helper(source, packet);
+		route_broadcast(source, packet);
 		return;
 	}
 
@@ -1042,7 +1042,7 @@ void route(node_t *source, vpn_packet_t *packet) {
 			break;
 
 		case RMODE_HUB:
-			broadcast_packet_helper(source, packet);
+			route_broadcast(source, packet);
 			break;
 	}
 }
