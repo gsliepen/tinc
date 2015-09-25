@@ -55,6 +55,8 @@ static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
 
+static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet);
+
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
@@ -250,6 +252,14 @@ static void learn_mac(mac_t *address) {
 	}
 }
 
+static void broadcast_packet_helper(node_t *source, vpn_packet_t *packet) {
+	if(decrement_ttl && source != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
+	broadcast_packet(source, packet);
+}
+
 /* RFC 792 */
 
 static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_t ether_size, uint8_t type, uint8_t code) {
@@ -419,7 +429,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if (!subnet->owner) {
-		broadcast_packet(source, packet);
+		broadcast_packet_helper(source, packet);
 		return;
 	}
 
@@ -433,6 +443,10 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+
+	if(decrement_ttl && source != myself && subnet->owner != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
 
 	if(priorityinheritance)
 		packet->priority = DATA(packet)[15];
@@ -600,7 +614,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if (!subnet->owner) {
-		broadcast_packet(source, packet);
+		broadcast_packet_helper(source, packet);
 		return;
 	}
 
@@ -614,6 +628,10 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+
+	if(decrement_ttl && source != myself && subnet->owner != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 
@@ -731,6 +749,10 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	if(subnet->owner == myself)
 		return;                                          /* silently ignore */
 
+	if(decrement_ttl)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
 	/* Create neighbor advertation reply */
 
 	memcpy(DATA(packet), DATA(packet) + ETH_ALEN, ETH_ALEN); /* copy destination address */
@@ -826,6 +848,10 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	if(subnet->owner == myself)
 		return;                                          /* silently ignore */
 
+	if(decrement_ttl)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
 	memcpy(&addr, arp.arp_tpa, sizeof addr);                 /* save protocol addr */
 	memcpy(arp.arp_tpa, arp.arp_spa, sizeof addr);           /* swap destination and source protocol address */
 	memcpy(arp.arp_spa, &addr, sizeof addr);                 /* ... */
@@ -860,7 +886,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet || !subnet->owner) {
-		broadcast_packet(source, packet);
+		broadcast_packet_helper(source, packet);
 		return;
 	}
 
@@ -871,6 +897,10 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
 		return;
+
+	if(decrement_ttl && source != myself && subnet->owner != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
 
 	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
 
@@ -994,10 +1024,6 @@ void route(node_t *source, vpn_packet_t *packet) {
 	if(!checklength(source, packet, ether_size))
 		return;
 
-	if(decrement_ttl && source != myself)
-		if(!do_decrement_ttl(source, packet))
-			return;
-
 	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
 
 	switch (routing_mode) {
@@ -1026,7 +1052,7 @@ void route(node_t *source, vpn_packet_t *packet) {
 			break;
 
 		case RMODE_HUB:
-			broadcast_packet(source, packet);
+			broadcast_packet_helper(source, packet);
 			break;
 	}
 }
