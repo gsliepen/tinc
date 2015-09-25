@@ -252,7 +252,7 @@ static void learn_mac(mac_t *address) {
 	}
 }
 
-static void broadcast_packet_helper(node_t *source, vpn_packet_t *packet) {
+static void route_broadcast(node_t *source, vpn_packet_t *packet) {
 	if(decrement_ttl && source != myself)
 		if(!do_decrement_ttl(source, packet))
 			return;
@@ -429,7 +429,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if (!subnet->owner) {
-		broadcast_packet_helper(source, packet);
+		route_broadcast(source, packet);
 		return;
 	}
 
@@ -614,7 +614,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if (!subnet->owner) {
-		broadcast_packet_helper(source, packet);
+		route_broadcast(source, packet);
 		return;
 	}
 
@@ -886,7 +886,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet || !subnet->owner) {
-		broadcast_packet_helper(source, packet);
+		route_broadcast(source, packet);
 		return;
 	}
 
@@ -1052,7 +1052,7 @@ void route(node_t *source, vpn_packet_t *packet) {
 			break;
 
 		case RMODE_HUB:
-			broadcast_packet_helper(source, packet);
+			route_broadcast(source, packet);
 			break;
 	}
 }
