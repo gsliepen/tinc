@@ -334,7 +334,7 @@ class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
         ListCtrlAutoWidthMixin.__init__(self)
         ColumnSorterMixin.__init__(self, 16)
 
-    def get_list_ctrl(self):
+    def GetListCtrl(self):
         return self
 
 
@@ -603,16 +603,6 @@ class NetPage(wx.Notebook):
 
 
 class MainWindow(wx.Frame):
-    def on_quit(self, event):
-        app.ExitMainLoop()
-
-    def on_timer(self, event):
-        vpn.refresh()
-        self.np.nodes.refresh()
-        self.np.subnets.refresh()
-        self.np.edges.refresh()
-        self.np.connections.refresh()
-
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
 
@@ -633,6 +623,16 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_quit, id=1)
         self.SetMenuBar(menubar)
         self.Show()
+
+    def on_quit(self, event):
+        app.ExitMainLoop()
+
+    def on_timer(self, event):
+        vpn.refresh()
+        self.np.nodes.refresh()
+        self.np.subnets.refresh()
+        self.np.edges.refresh()
+        self.np.connections.refresh()
 
 
 app = wx.App()
