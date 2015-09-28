@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # tinc-gui -- GUI for controlling a running tincd
 # Copyright (C) 2009-2014 Guus Sliepen <guus@tinc-vpn.org>
@@ -25,6 +25,7 @@ import sys
 import os
 import platform
 import time
+from argparse import ArgumentParser
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
@@ -286,46 +287,7 @@ class VPN:
                     self.pidfile = os.path.join(VPN.piddir, 'tinc.pid')
 
 
-# GUI starts here
 
-argv0 = sys.argv[0]
-del sys.argv[0]
-netname = None
-pidfile = None
-
-
-def usage(exitcode=0):
-    print('Usage: ' + argv0 + ' [options]')
-    print('\nValid options are:')
-    print('  -n, --net=NETNAME       Connect to net NETNAME.')
-    print('      --pidfile=FILENAME  Read control cookie from FILENAME.')
-    print('      --help              Display this help and exit.')
-    print('\nReport bugs to tinc@tinc-vpn.org.')
-    sys.exit(exitcode)
-
-
-while sys.argv:
-    if sys.argv[0] in ('-n', '--net'):
-        del sys.argv[0]
-        netname = sys.argv[0]
-    elif sys.argv[0] in '--pidfile':
-        del sys.argv[0]
-        pidfile = sys.argv[0]
-    elif sys.argv[0] in '--help':
-        usage(0)
-    else:
-        print(argv0 + ': unrecognized option \'' + sys.argv[0] + '\'')
-        usage(1)
-
-    del sys.argv[0]
-
-if netname is None:
-    netname = os.getenv('NETNAME')
-elif netname == '.':
-    netname = None
-
-vpn = VPN(netname, pidfile)
-vpn.connect()
 
 
 class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
@@ -635,20 +597,40 @@ class MainWindow(wx.Frame):
         self.np.connections.refresh()
 
 
-app = wx.App()
-mw = MainWindow(None, -1, 'Tinc GUI')
+def main(netname, pidfile):
+    global vpn, app
 
-"""
-def OnTaskBarIcon(event):
-    mw.Raise()
-"""
+    if netname is None:
+        netname = os.getenv('NETNAME')
 
-"""
-icon = wx.Icon("tincgui.ico", wx.BITMAP_TYPE_PNG)
-taskbaricon = wx.TaskBarIcon()
-taskbaricon.SetIcon(icon, 'Tinc GUI')
-wx.EVT_TASKBAR_RIGHT_UP(taskbaricon, OnTaskBarIcon)
-"""
+    vpn = VPN(netname, pidfile)
+    vpn.connect()
 
-app.MainLoop()
-vpn.close()
+    app = wx.App()
+    mw = MainWindow(None, -1, 'Tinc GUI')
+
+    """
+    def OnTaskBarIcon(event):
+        mw.Raise()
+    """
+
+    """
+    icon = wx.Icon("tincgui.ico", wx.BITMAP_TYPE_PNG)
+    taskbaricon = wx.TaskBarIcon()
+    taskbaricon.SetIcon(icon, 'Tinc GUI')
+    wx.EVT_TASKBAR_RIGHT_UP(taskbaricon, OnTaskBarIcon)
+    """
+
+    app.MainLoop()
+    vpn.close()
+
+
+if __name__ == '__main__':
+    argparser = ArgumentParser(epilog='Report bugs to tinc@tinc-vpn.org.')
+
+    argparser.add_argument('-n', '--net', metavar='NETNAME', dest='netname', help='Connect to net NETNAME')
+    argparser.add_argument('-p', '--pidfile', help='Path to the pid file (containing the controlcookie)')
+
+    options = argparser.parse_args()
+
+    main(options.netname, options.pidfile)
