@@ -55,31 +55,39 @@ CONTROL = 18
 class Node(object):
     def __init__(self, args):
         self.name = args[0]
-        self.address = args[1]
-        self.port = args[3]
-        self.cipher = int(args[4])
-        self.digest = int(args[5])
-        self.maclength = int(args[6])
-        self.compression = int(args[7])
-        self.options = int(args[8], 0x10)
-        self.status = int(args[9], 0x10)
-        self.nexthop = args[10]
-        self.via = args[11]
-        self.distance = int(args[12])
-        self.pmtu = int(args[13])
-        self.minmtu = int(args[14])
-        self.maxmtu = int(args[15])
-        self.last_state_change = float(args[16])
+        self.id = args[1]
+
+        self.address = args[2]
+        self.port = args[4]
+
+        self.cipher = int(args[5])
+        self.digest = int(args[6])
+        self.maclength = int(args[7])
+
+        self.compression = int(args[8])
+        self.options = int(args[9], 0x10)
+        self.status = int(args[10], 0x10)
+
+        self.nexthop = args[11]
+        self.via = args[12]
+        self.distance = int(args[13])
+        self.pmtu = int(args[14])
+        self.minmtu = int(args[15])
+        self.maxmtu = int(args[16])
+
+        self.last_state_change = float(args[17])
 
         self.subnets = {}
 
 
 class Edge(object):
     def __init__(self, args):
-        self.fr = args[0]
-        self.to = args[1]
+        self.source = args[0]
+        self.sink = args[1]
+
         self.address = args[2]
         self.port = args[4]
+
         self.options = int(args[-2], 16)
         self.weight = int(args[-1])
 
@@ -87,13 +95,13 @@ class Edge(object):
 class Subnet(object):
     def __init__(self, args):
         if args[0].find('#') >= 0:
-            (address, self.weight) = args[0].split('#', 1)
+            address, self.weight = args[0].split('#', 1)
         else:
             self.weight = 10
             address = args[0]
 
         if address.find('/') >= 0:
-            (self.address, self.prefixlen) = address.split('/', 1)
+            self.address, self.prefixlen = address.split('/', 1)
         else:
             self.address = address
             self.prefixlen = '48'
@@ -104,11 +112,14 @@ class Subnet(object):
 class Connection(object):
     def __init__(self, args):
         self.name = args[0]
+
         self.address = args[1]
         self.port = args[3]
+
         self.options = int(args[4], 0x10)
         self.socket = int(args[5])
         self.status = int(args[6], 0x10)
+
         self.weight = 123
 
 
@@ -508,15 +519,15 @@ class EdgesPage(wx.Panel):
 
         for key, edge in vpn.edges.items():
             if self.list.GetItemCount() <= i:
-                self.list.InsertStringItem(i, edge.fr)
+                self.list.InsertStringItem(i, edge.source)
             else:
-                self.list.SetStringItem(i, 0, edge.fr)
-            self.list.SetStringItem(i, 1, edge.to)
+                self.list.SetStringItem(i, 0, edge.source)
+            self.list.SetStringItem(i, 1, edge.sink)
             self.list.SetStringItem(i, 2, edge.address)
             self.list.SetStringItem(i, 3, edge.port)
             self.list.SetStringItem(i, 4, format(edge.options, "x"))
             self.list.SetStringItem(i, 5, str(edge.weight))
-            self.list.itemDataMap[i] = (edge.fr, edge.to, edge.address, edge.port, edge.options, edge.weight)
+            self.list.itemDataMap[i] = (edge.source, edge.sink, edge.address, edge.port, edge.options, edge.weight)
             self.list.SetItemData(i, i)
             i += 1
 
