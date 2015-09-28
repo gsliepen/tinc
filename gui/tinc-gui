@@ -20,12 +20,12 @@
 
 import string
 import socket
-import wx
-import sys
 import os
 import platform
 import time
 from argparse import ArgumentParser
+
+import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
@@ -33,7 +33,6 @@ if platform.system() == 'Windows':
     import _winreg
 
 # Classes to interface with a running tinc daemon
-
 REQ_STOP = 0
 REQ_RELOAD = 1
 REQ_RESTART = 2
@@ -121,12 +120,51 @@ class Connection(object):
         self.socket = int(args[5])
         self.status = int(args[6], 0x10)
 
-        self.weight = 123
+        self.weight = 'n/a'
 
 
-class VPN:
-    confdir = '/etc/tinc'
-    piddir = '/var/run'
+class VPN(object):
+    def __init__(self, netname=None, pidfile=None, confdir='/etc/tinc', piddir='/run'):
+        if platform.system() == 'Windows':
+            sam = _winreg.KEY_READ
+            if platform.machine().endswith('64'):
+                sam = sam | _winreg.KEY_WOW64_64KEY
+            try:
+                reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+                try:
+                    key = _winreg.OpenKey(reg, "SOFTWARE\\tinc", 0, sam)
+                except WindowsError:
+                    key = _winreg.OpenKey(reg, "SOFTWARE\\Wow6432Node\\tinc", 0, sam)
+                confdir = _winreg.QueryValue(key, None)
+            except WindowsError:
+                pass
+
+        if netname:
+            self.netname = netname
+            self.confbase = os.path.join(confdir, netname)
+        else:
+            self.confbase = confdir
+
+        self.tincconf = os.path.join(self.confbase, 'tinc.conf')
+
+        if pidfile is not None:
+            self.pidfile = pidfile
+        else:
+            if platform.system() == 'Windows':
+                self.pidfile = os.path.join(self.confbase, 'pid')
+            else:
+                if netname:
+                    self.pidfile = os.path.join(piddir, 'tinc.' + netname + '.pid')
+                else:
+                    self.pidfile = os.path.join(piddir, 'tinc.pid')
+
+        self.sf = None
+        self.name = None
+        self.port = None
+        self.nodes = {}
+        self.edges = {}
+        self.subnets = {}
+        self.connections = {}
 
     def connect(self):
         # read the pidfile
@@ -163,14 +201,11 @@ class VPN:
         self.sf.flush()
         resp = string.split(self.sf.readline())
         self.port = info[4]
-        self.nodes = {}
-        self.edges = {}
-        self.subnets = {}
-        self.connections = {}
         self.refresh()
 
     def refresh(self):
-        self.sf.write('18 3\r\n18 4\r\n18 5\r\n18 6\r\n')
+        for request in (REQ_DUMP_NODES, REQ_DUMP_EDGES, REQ_DUMP_SUBNETS, REQ_DUMP_CONNECTIONS):
+            self.sf.write('{} {}\r\n'.format(CONTROL, request))
         self.sf.flush()
 
         for node in self.nodes.values():
@@ -251,43 +286,6 @@ class VPN:
         self.sf.flush()
         resp = string.split(self.sf.readline())
         return int(resp[2])
-
-    def __init__(self, netname=None, pidfile=None):
-        if platform.system() == 'Windows':
-            sam = _winreg.KEY_READ
-            if platform.machine().endswith('64'):
-                sam = sam | _winreg.KEY_WOW64_64KEY
-            try:
-                reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-                try:
-                    key = _winreg.OpenKey(reg, "SOFTWARE\\tinc", 0, sam)
-                except WindowsError:
-                    key = _winreg.OpenKey(reg, "SOFTWARE\\Wow6432Node\\tinc", 0, sam)
-                VPN.confdir = _winreg.QueryValue(key, None)
-            except WindowsError:
-                pass
-
-        if netname:
-            self.netname = netname
-            self.confbase = os.path.join(VPN.confdir, netname)
-        else:
-            self.confbase = VPN.confdir
-
-        self.tincconf = os.path.join(self.confbase, 'tinc.conf')
-
-        if pidfile is not None:
-            self.pidfile = pidfile
-        else:
-            if platform.system() == 'Windows':
-                self.pidfile = os.path.join(self.confbase, 'pid')
-            else:
-                if netname:
-                    self.pidfile = os.path.join(VPN.piddir, 'tinc.' + netname + '.pid')
-                else:
-                    self.pidfile = os.path.join(VPN.piddir, 'tinc.pid')
-
-
-
 
 
 class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
