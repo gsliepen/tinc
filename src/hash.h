@@ -20,11 +20,16 @@
 #ifndef __TINC_HASH_H__
 #define __TINC_HASH_H__
 
+typedef struct hash_node_t {
+	void *key;
+	const void *value;
+	struct hash_node_t *next;
+} hash_node_t;
+
 typedef struct hash_t {
 	size_t n;
 	size_t size;
-	char *keys;
-	const void **values;
+	hash_node_t **buckets;
 } hash_t;
 
 extern hash_t *hash_alloc(size_t n, size_t size) __attribute__ ((__malloc__));
@@ -37,6 +42,5 @@ extern void *hash_search(const hash_t *, const void *key);
 extern void *hash_search_or_insert(hash_t *, const void *key, const void *value);
 
 extern void hash_clear(hash_t *);
-extern void hash_resize(hash_t *, size_t n);
 
 #endif /* __TINC_HASH_H__ */
