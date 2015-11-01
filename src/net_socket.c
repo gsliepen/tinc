@@ -457,8 +457,11 @@ begin:
 		freeaddrinfo(proxyai);
 	}
 
+	now = time(NULL);
+
 	if(result == -1) {
 		if(sockinprogress(sockerrno)) {
+			c->last_ping_time = now;
 			c->status.connecting = true;
 			return;
 		}
