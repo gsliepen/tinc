@@ -552,6 +552,7 @@ begin:
 
 	/* Now that there is a working socket, fill in the rest and register this connection. */
 
+	c->last_ping_time = time(NULL);
 	c->status.connecting = true;
 	c->name = xstrdup(outgoing->name);
 #ifndef DISABLE_LEGACY
