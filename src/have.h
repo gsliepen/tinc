@@ -206,6 +206,10 @@
 #include <resolv.h>
 #endif
 
+#ifdef HAVE_LINUX_IF_TUN_H
+#include <linux/if_tun.h>
+#endif
+
 #ifdef STATUS
 #undef STATUS
 #endif

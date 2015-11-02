@@ -149,7 +149,7 @@ static void sssp_bfs(void) {
 			abort();
 
 		for splay_each(edge_t, e, n->edge_tree) {       /* "e" is the edge connected to "from" */
-			if(!e->reverse)
+			if(!e->reverse || e->to == myself)
 				continue;
 
 			/* Situation:

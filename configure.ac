@@ -6,6 +6,7 @@ AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
 AM_INIT_AUTOMAKE([std-options subdir-objects -Wall])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
@@ -114,6 +115,17 @@ AC_ARG_WITH(windows2000,
   ]
 )
 
+AC_ARG_WITH(systemd,
+  AS_HELP_STRING([--with-systemd@<:@=DIR@:>@], [install systemd service files @<:@to DIR if specified@:>@]),
+  [ systemd=true; systemd_path="$with_systemd" ],
+  [ systemd=false ]
+)
+
+AS_IF([test "x$with_systemd" = "xyes"], [systemd_path="/lib/systemd/system"],
+      [AS_IF([test "x$with_systemd" = "xno"], [systemd=false])])
+
+AC_SUBST(systemd_path, $systemd_path)
+
 AM_CONDITIONAL(LINUX, test "$linux" = true)
 AM_CONDITIONAL(BSD, test "$bsd" = true)
 AM_CONDITIONAL(SOLARIS, test "$solaris" = true)
@@ -122,15 +134,12 @@ AM_CONDITIONAL(CYGWIN, test "$cygwin" = true)
 AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
+AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
 
 AC_CACHE_SAVE
 
-if test -d /sw/include ; then
-  CPPFLAGS="$CPPFLAGS -I/sw/include"
-fi
-if test -d /sw/lib ; then
-  LIBS="$LIBS -L/sw/lib"
-fi
+AS_IF([test -d /sw/include], [CPPFLAGS="$CPPFLAGS -I/sw/include"])
+AS_IF([test -d /sw/lib], [LIBS="$LIBS -L/sw/lib"])
 
 dnl Compiler hardening flags
 dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
@@ -229,15 +238,12 @@ tinc_ZLIB
 tinc_LZO
 tinc_LZ4
 
-if test "x$enable_legacy_protocol" != "xno"; then
-	if test -n "$with_libgcrypt"; then
-		gcrypt=true
-		tinc_LIBGCRYPT
-	else
-		openssl=true
-		tinc_OPENSSL
-	fi
-fi
+AS_IF([test "x$enable_legacy_protocol" != "xno"],
+      [AS_IF([test -n "$with_libgcrypt"],
+	     [gcrypt=true; tinc_LIBGCRYPT],
+	     [openssl=true; tinc_OPENSSL])
+      ]
+)
 
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
 AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
@@ -250,6 +256,6 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile gui/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile gui/Makefile test/Makefile systemd/Makefile])
 
 AC_OUTPUT

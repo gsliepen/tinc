@@ -2,9 +2,9 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS =  src doc gui test
+SUBDIRS =  src doc gui test systemd
 
-ACLOCAL_AMFLAGS = -I m4 
+ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = COPYING.README README.android
 

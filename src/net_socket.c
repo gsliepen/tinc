@@ -617,7 +617,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 		if(n)
 			outgoing->aip = outgoing->ai = get_known_addresses(n);
 		if(!outgoing->ai) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "No address known for %s", outgoing->name);
+			logger(DEBUG_ALWAYS, LOG_DEBUG, "No address known for %s", outgoing->name);
 			return;
 		}
 	}

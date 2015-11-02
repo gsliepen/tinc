@@ -19,10 +19,6 @@
 
 #include "../system.h"
 
-#include <openssl/rand.h>
-#include <openssl/evp.h>
-#include <openssl/engine.h>
-
 #include "../crypto.h"
 
 #ifndef HAVE_MINGW

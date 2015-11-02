@@ -4,6 +4,9 @@
     Not a compatible replacement for <stdint.h>, do not blindly use it as such.
 */
 
+#ifndef __TINC_FIXEDINT_H__
+#define __TINC_FIXEDINT_H__
+
 #if ((defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L) || (defined(__WATCOMC__) && (defined(_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (defined(_STDINT_H) || defined(_STDINT_H_) || defined(__UINT_FAST64_TYPE__)) )) && !defined(FIXEDINT_H_INCLUDED)
     #include <stdint.h>
     #define FIXEDINT_H_INCLUDED
@@ -67,4 +70,22 @@
         #define UINT64_C(v) v ##UI64
         #define INT64_C(v) v ##I64
     #endif
+#endif
+
+static inline unsigned char shlu8(unsigned char a, uint32_t b) {
+	return a << b;
+}
+
+static inline int32_t shl32(uint32_t a, uint32_t b) {
+	return a << b;
+}
+
+static inline int64_t shl64(uint64_t a, uint32_t b) {
+	return a << b;
+}
+
+static inline uint64_t shlu64(uint64_t a, uint32_t b) {
+	return a << b;
+}
+
 #endif

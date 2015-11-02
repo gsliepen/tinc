@@ -21,6 +21,7 @@
 #include "system.h"
 
 #include "logger.h"
+#include "names.h"
 #include "xalloc.h"
 
 char *netname = NULL;

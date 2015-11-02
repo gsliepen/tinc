@@ -356,7 +356,7 @@ static void cmov(ge_precomp *t, ge_precomp *u, unsigned char b) {
 static void select(ge_precomp *t, int pos, signed char b) {
     ge_precomp minust;
     unsigned char bnegative = negative(b);
-    unsigned char babs = b - (((-bnegative) & b) << 1);
+    unsigned char babs = b - shlu8(((-bnegative) & b), 1);
     fe_1(t->yplusx);
     fe_1(t->yminusx);
     fe_0(t->xy2d);
@@ -404,7 +404,7 @@ void ge_scalarmult_base(ge_p3 *h, const unsigned char *a) {
         e[i] += carry;
         carry = e[i] + 8;
         carry >>= 4;
-        e[i] -= carry << 4;
+        e[i] -= shl32(carry, 4);
     }
 
     e[63] += carry;
