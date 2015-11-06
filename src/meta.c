@@ -30,6 +30,7 @@
 #include "meta.h"
 #include "net.h"
 #include "protocol.h"
+#include "proxy.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -160,6 +161,17 @@ bool receive_meta(connection_t *c) {
 	c->buflen += lenin;
 
 	while(lenin > 0) {
+		reqlen = 0;
+
+		/* Is it proxy metadata? */
+
+		if(c->allow_request == PROXY) {
+			reqlen = receive_proxy_meta(c, oldlen, lenin);
+			if(reqlen < 0)
+				return false;
+			goto consume;
+		}
+
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
@@ -177,74 +189,32 @@ bool receive_meta(connection_t *c) {
 
 		if(c->tcplen) {
 			if(c->tcplen <= c->buflen) {
-				if(!c->node) {
-					if(c->outgoing && proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
-						if(c->buffer[0] == 0 && c->buffer[1] == 0x5a) {
-							ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
-						} else {
-							logger(LOG_ERR, "Proxy request rejected");
-							return false;
-						}
-					} else if(c->outgoing && proxytype == PROXY_SOCKS5 && c->allow_request == ID) {
-						if(c->buffer[0] != 5) {
-							logger(LOG_ERR, "Invalid response from proxy server");
-							return false;
-						}
-						if(c->buffer[1] == (char)0xff) {
-							logger(LOG_ERR, "Proxy request rejected: unsuitable authentication method");
-							return false;
-						}
-						if(c->buffer[2] != 5) {
-							logger(LOG_ERR, "Invalid response from proxy server");
-							return false;
-						}
-						if(c->buffer[3] == 0) {
-							ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
-						} else {
-							logger(LOG_ERR, "Proxy request rejected");
-							return false;
-						}
-					} else {
-						logger(LOG_ERR, "c->tcplen set but c->node is NULL!");
-						abort();
-					}
-				} else {
-					if(c->allow_request == ALL) {
-						receive_tcppacket(c, c->buffer, c->tcplen);
-					} else {
-						logger(LOG_ERR, "Got unauthorized TCP packet from %s (%s)", c->name, c->hostname);
-						return false;
-					}
+				if(c->allow_request != ALL) {
+					logger(LOG_ERR, "Got unauthorized TCP packet from %s (%s)", c->name, c->hostname);
+					return false;
 				}
 
-				c->buflen -= c->tcplen;
-				lenin -= c->tcplen - oldlen;
-				memmove(c->buffer, c->buffer + c->tcplen, c->buflen);
-				oldlen = 0;
+				receive_tcppacket(c, c->buffer, c->tcplen);
+				reqlen = c->tcplen;
 				c->tcplen = 0;
-				continue;
-			} else {
-				break;
 			}
-		}
+		} else {
+			/* Otherwise we are waiting for a request */
 
-		/* Otherwise we are waiting for a request */
-
-		reqlen = 0;
-
-		for(i = oldlen; i < c->buflen; i++) {
-			if(c->buffer[i] == '\n') {
-				c->buffer[i] = '\0';	/* replace end-of-line by end-of-string so we can use sscanf */
-				reqlen = i + 1;
-				break;
+			for(i = oldlen; i < c->buflen; i++) {
+				if(c->buffer[i] == '\n') {
+					c->buffer[i] = '\0';	/* replace end-of-line by end-of-string so we can use sscanf */
+					c->reqlen = reqlen = i + 1;
+					break;
+				}
 			}
-		}
 
-		if(reqlen) {
-			c->reqlen = reqlen;
-			if(!receive_request(c))
+			if(reqlen && !receive_request(c))
 				return false;
+		}
 
+consume:
+		if(reqlen) {
 			c->buflen -= reqlen;
 			lenin -= reqlen - oldlen;
 			memmove(c->buffer, c->buffer + reqlen, c->buflen);

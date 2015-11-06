@@ -36,6 +36,7 @@
 /* Request numbers */
 
 typedef enum request_t {
+	PROXY = -2,
 	ALL = -1,					/* Guardian for allow_request */
 	ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
 	STATUS, ERROR, TERMREQ,

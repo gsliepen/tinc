@@ -31,6 +31,7 @@
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
+#include "proxy.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -354,8 +355,19 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 #endif
 }
 
+static bool is_valid_host_port(const char *host, const char *port) {
+	for(const char *p = host; *p; p++)
+		if(!isalnum(*p) && *p != '-' && *p != '.')
+			return false;
+
+	for(const char *p = port; *p; p++)
+		if(!isalnum(*p))
+			return false;
+
+	return true;
+}
+
 void do_outgoing_connection(connection_t *c) {
-	char *address, *port, *space;
 	struct addrinfo *proxyai = NULL;
 	int result;
 
@@ -375,6 +387,8 @@ begin:
 			return;
 		}
 
+		char *address, *port, *space;
+
 		get_config_string(c->outgoing->cfg, &address);
 
 		space = strchr(address, ' ');
@@ -387,11 +401,23 @@ begin:
 		}
 
 		c->outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
-		free(address);
-		free(port);
+
+		// If we cannot resolve the address, maybe we are using a proxy that can?
+		if(!c->outgoing->ai && proxytype != PROXY_NONE && is_valid_host_port(address, port)) {
+			memset(&c->address, 0, sizeof c->address);
+			c->address.sa.sa_family = AF_UNKNOWN;
+			c->address.unknown.address = address;
+			c->address.unknown.port = port;
+		} else {
+			free(address);
+			free(port);
+		}
 
 		c->outgoing->aip = c->outgoing->ai;
 		c->outgoing->cfg = lookup_config_next(c->config_tree, c->outgoing->cfg);
+
+		if(!c->outgoing->ai && proxytype != PROXY_NONE)
+			goto connect;
 	}
 
 	if(!c->outgoing->aip) {
@@ -404,6 +430,7 @@ begin:
 	memcpy(&c->address, c->outgoing->aip->ai_addr, c->outgoing->aip->ai_addrlen);
 	c->outgoing->aip = c->outgoing->aip->ai_next;
 
+connect:
 	if(c->hostname)
 		free(c->hostname);
 

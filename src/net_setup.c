@@ -39,6 +39,7 @@
 #include "netutl.h"
 #include "process.h"
 #include "protocol.h"
+#include "proxy.h"
 #include "route.h"
 #include "subnet.h"
 #include "utils.h"
@@ -46,12 +47,6 @@
 
 char *myport;
 devops_t devops;
-
-char *proxyhost;
-char *proxyport;
-char *proxyuser;
-char *proxypass;
-proxytype_t proxytype;
 
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;

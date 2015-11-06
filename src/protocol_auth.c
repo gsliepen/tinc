@@ -36,94 +36,9 @@
 #include "netutl.h"
 #include "node.h"
 #include "protocol.h"
+#include "proxy.h"
 #include "utils.h"
 #include "xalloc.h"
-
-static bool send_proxyrequest(connection_t *c) {
-	switch(proxytype) {
-		case PROXY_HTTP: {
-			char *host;
-			char *port;
-
-			sockaddr2str(&c->address, &host, &port);
-			send_request(c, "CONNECT %s:%s HTTP/1.1\r\n\r", host, port);
-			free(host);
-			free(port);
-			return true;
-		}
-		case PROXY_SOCKS4: {
-			if(c->address.sa.sa_family != AF_INET) {
-				logger(LOG_ERR, "Cannot connect to an IPv6 host through a SOCKS 4 proxy!");
-				return false;
-			}
-			char s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
-			s4req[0] = 4;
-			s4req[1] = 1;
-			memcpy(s4req + 2, &c->address.in.sin_port, 2);
-			memcpy(s4req + 4, &c->address.in.sin_addr, 4);
-			if(proxyuser)
-				strcpy(s4req + 8, proxyuser);
-			s4req[sizeof s4req - 1] = 0;
-			c->tcplen = 8;
-			return send_meta(c, s4req, sizeof s4req);
-		}
-		case PROXY_SOCKS5: {
-			int len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
-			c->tcplen = 2;
-			if(proxypass)
-				len += 3 + strlen(proxyuser) + strlen(proxypass);
-			char s5req[len];
-			int i = 0;
-			s5req[i++] = 5;
-			s5req[i++] = 1;
-			if(proxypass) {
-				s5req[i++] = 2;
-				s5req[i++] = 1;
-				s5req[i++] = strlen(proxyuser);
-				strcpy(s5req + i, proxyuser);
-				i += strlen(proxyuser);
-				s5req[i++] = strlen(proxypass);
-				strcpy(s5req + i, proxypass);
-				i += strlen(proxypass);
-				c->tcplen += 2;
-			} else {
-				s5req[i++] = 0;
-			}
-			s5req[i++] = 5;
-			s5req[i++] = 1;
-			s5req[i++] = 0;
-			if(c->address.sa.sa_family == AF_INET) {
-				s5req[i++] = 1;
-				memcpy(s5req + i, &c->address.in.sin_addr, 4);
-				i += 4;
-				memcpy(s5req + i, &c->address.in.sin_port, 2);
-				i += 2;
-				c->tcplen += 10;
-			} else if(c->address.sa.sa_family == AF_INET6) {
-				s5req[i++] = 3;
-				memcpy(s5req + i, &c->address.in6.sin6_addr, 16);
-				i += 16;
-				memcpy(s5req + i, &c->address.in6.sin6_port, 2);
-				i += 2;
-				c->tcplen += 22;
-			} else {
-				logger(LOG_ERR, "Address family %x not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
-				return false;
-			}
-			if(i > len)
-				abort();
-			return send_meta(c, s5req, sizeof s5req);
-		}
-		case PROXY_SOCKS4A:
-			logger(LOG_ERR, "Proxy type not implemented yet");
-			return false;
-		case PROXY_EXEC:
-			return true;
-		default:
-			logger(LOG_ERR, "Unknown proxy type");
-			return false;
-	}
-}
 
 bool send_id(connection_t *c) {
 	if(proxytype && c->outgoing)

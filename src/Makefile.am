@@ -40,6 +40,7 @@ tincd_SOURCES = \
 	protocol_misc.c \
 	protocol_key.c \
 	protocol_subnet.c \
+	proxy.c proxy.h \
 	raw_socket_device.c \
 	route.c route.h \
 	subnet.c subnet.h \
