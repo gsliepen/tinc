@@ -247,6 +247,9 @@ AS_IF([test "x$enable_legacy_protocol" != "xno"],
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
 AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
 
+tinc_MINIUPNPC
+AM_CONDITIONAL(MINIUPNPC, test "x$enable_miniupnpc" = "xyes")
+
 dnl Check if support for jumbograms is requested
 AC_ARG_ENABLE(jumbograms,
   AS_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
