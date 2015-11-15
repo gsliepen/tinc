@@ -67,7 +67,9 @@ case $host_os in
   *mingw*)
     mingw=true
     AC_DEFINE(HAVE_MINGW, 1, [MinGW])
-    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32"
+    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32 -liphlpapi"
+    LDFLAGS="$LDFLAGS -static"
+    CPPFLAGS="$CPPFLAGS -DMINIUPNP_STATICLIB"
   ;;
   *)
     AC_MSG_ERROR("Unknown operating system.")
