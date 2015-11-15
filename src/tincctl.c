@@ -1481,6 +1481,9 @@ const var_t variables[] = {
 	{"UDPInfoInterval", VAR_SERVER},
 	{"UDPRcvBuf", VAR_SERVER},
 	{"UDPSndBuf", VAR_SERVER},
+	{"UPnP", VAR_SERVER},
+	{"UPnPDiscoverWait", VAR_SERVER},
+	{"UPnPRefreshPeriod", VAR_SERVER},
 	{"VDEGroup", VAR_SERVER},
 	{"VDEPort", VAR_SERVER},
 	/* Host configuration */

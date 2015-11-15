@@ -510,6 +510,17 @@ Note: this setting can have a significant impact on performance, especially raw 
 Sets the socket send buffer size for the UDP socket, in bytes.
 If set to zero, the default buffer size will be used by the operating system.
 Note: this setting can have a significant impact on performance, especially raw throughput.
+.It Va UPnP Li = yes | udponly | no Po no Pc
+If this option is enabled then tinc will search for UPnP-IGD devices on the local network.
+It will then create and maintain port mappings for tinc's listening TCP and UDP ports.
+If set to "udponly", tinc will only create a mapping for its UDP (data) port, not for its TCP (metaconnection) port.
+Note that tinc must have been built with miniupnpc support for this feature to be available.
+Furthermore, be advised that enabling this can have security implications, because the miniupnpc library that
+tinc uses might not be well-hardened with regard to malicious UPnP replies.
+.It Va UPnPDiscoverWait Li = Ar seconds Pq 5
+The amount of time to wait for replies when probing the local network for UPnP devices.
+.It Va UPnPRefreshPeriod Li = Ar seconds Pq 60
+How often tinc will re-add the port mapping, in case it gets reset on the UPnP device. This also controls the duration of the port mapping itself, which will be set to twice that duration.
 .El
 .Sh HOST CONFIGURATION FILES
 The host configuration files contain all information needed
