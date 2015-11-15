@@ -37,6 +37,39 @@ static bool upnp_udp;
 static int upnp_discover_wait = 5;
 static int upnp_refresh_period = 60;
 
+// Unfortunately, libminiupnpc devs don't seem to care about API compatibility,
+// and there are slight changes to function signatures between library versions.
+// Well, at least they publish a "MINIUPNPC_API_VERSION" constant, so we got that going for us, which is nice.
+// Differences between API versions are documented in "apiversions.txt" in the libminiupnpc distribution.
+
+#ifndef MINIUPNPC_API_VERSION
+#define MINIUPNPC_API_VERSION 0
+#endif
+
+static struct UPNPDev *upnp_discover(int delay, int *error) {
+#if MINIUPNPC_API_VERSION <= 13
+
+#if MINIUPNPC_API_VERSION < 8
+#warning "The version of libminiupnpc you're building against seems to be too old. Expect trouble."
+#endif
+
+	return upnpDiscover(delay, NULL, NULL, false, false, error);
+
+#elif MINIUPNPC_API_VERSION <= 14
+
+	return upnpDiscover(delay, NULL NULL, false, false, 2, error);
+
+#else
+
+#if MINIUPNPC_API_VERSION > 15
+#warning "The version of libminiupnpc you're building against seems to be too recent. Expect trouble."
+#endif
+
+	return upnpDiscover(delay, NULL, NULL, UPNP_LOCAL_PORT_ANY, false, 2, error);
+
+#endif
+}
+
 static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const char *myaddr, int socket, const char *proto) {
 	// Extract the port from the listening socket.
 	// Note that we can't simply use listen_socket[].sa because this won't have the port
@@ -72,7 +105,7 @@ static void upnp_refresh() {
 	logger(DEBUG_PROTOCOL, LOG_INFO, "[upnp] Discovering IGD devices");
 
 	int error;
-	struct UPNPDev *devices = upnpDiscover(upnp_discover_wait * 1000, NULL, NULL, false, false, &error);
+	struct UPNPDev *devices = upnp_discover(upnp_discover_wait * 1000, &error);
 	if (!devices) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] Unable to find IGD devices: [%d] %s", error, strupnperror(error));
 		freeUPNPDevlist(devices);
