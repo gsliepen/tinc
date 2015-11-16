@@ -239,7 +239,8 @@ static bool parse_options(int argc, char **argv) {
 					usage(true);
 					return false;
 				}
-				netname = strcmp(optarg, ".") != 0 ? xstrdup(optarg) : NULL;
+				if(optarg && strcmp(optarg, "."))
+					netname = xstrdup(optarg);
 				break;
 
 			case 'o':				/* option */

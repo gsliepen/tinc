@@ -276,7 +276,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
 	int nextpkt = 0;
-	vpn_packet_t *outpkt = pkt[0];
+	vpn_packet_t *outpkt;
 	int outlen, outpad;
 	unsigned char hmac[EVP_MAX_MD_SIZE];
 	int i;
