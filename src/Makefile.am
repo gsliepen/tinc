@@ -252,7 +252,7 @@ endif
 endif
 
 if MINIUPNPC
-tincd_SOURCES += upnp.c
+tincd_SOURCES += upnp.h upnp.c
 tincd_LDADD = $(MINIUPNPC_LIBS)
 tincd_LDFLAGS = -pthread
 endif
