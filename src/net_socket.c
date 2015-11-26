@@ -630,7 +630,6 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 remove:
 	list_delete(outgoing_list, outgoing);
-	free(outgoing);
 }
 
 /*
