@@ -418,7 +418,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	cipher_close(from->outcipher);
 	digest_close(from->outdigest);
 #endif
-	from->status.validkey = false;
+	if (!from->status.sptps) from->status.validkey = false;
 
 	switch(compression) {
 		case 12:

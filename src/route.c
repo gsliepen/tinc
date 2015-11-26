@@ -784,15 +784,13 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	if(subnet->owner == myself)
 		return;                                          /* silently ignore */
 
-	memcpy(DATA(packet), DATA(packet) + ETH_ALEN, ETH_ALEN); /* copy destination address */
-	DATA(packet)[ETH_ALEN * 2 - 1] ^= 0xFF;                  /* mangle source address so it looks like it's not from us */
-
 	memcpy(&addr, arp.arp_tpa, sizeof addr);                 /* save protocol addr */
 	memcpy(arp.arp_tpa, arp.arp_spa, sizeof addr);           /* swap destination and source protocol address */
 	memcpy(arp.arp_spa, &addr, sizeof addr);                 /* ... */
 
 	memcpy(arp.arp_tha, arp.arp_sha, ETH_ALEN);              /* set target hard/proto addr */
-	memcpy(arp.arp_sha, DATA(packet) + ETH_ALEN, ETH_ALEN);  /* add fake source hard addr */
+	memcpy(arp.arp_sha, DATA(packet) + ETH_ALEN, ETH_ALEN);  /* set source hard/proto addr */
+	arp.arp_sha[ETH_ALEN - 1] ^= 0xFF;                       /* for consistency with route_packet() */
 	arp.arp_op = htons(ARPOP_REPLY);
 
 	/* Copy structs on stack back to packet */

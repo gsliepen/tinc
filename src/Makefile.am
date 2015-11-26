@@ -258,6 +258,12 @@ sptps_speed_SOURCES += \
 endif
 endif
 
+if MINIUPNPC
+tincd_SOURCES += upnp.h upnp.c
+tincd_LDADD = $(MINIUPNPC_LIBS)
+tincd_LDFLAGS = -pthread
+endif
+
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 sptps_speed_LDADD = -lrt
 

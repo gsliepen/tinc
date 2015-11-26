@@ -67,7 +67,9 @@ case $host_os in
   *mingw*)
     mingw=true
     AC_DEFINE(HAVE_MINGW, 1, [MinGW])
-    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32"
+    LIBS="$LIBS -lws2_32 -lgdi32 -lcrypt32 -liphlpapi"
+    LDFLAGS="$LDFLAGS -static"
+    CPPFLAGS="$CPPFLAGS -DMINIUPNP_STATICLIB"
   ;;
   *)
     AC_MSG_ERROR("Unknown operating system.")
@@ -247,6 +249,9 @@ AS_IF([test "x$enable_legacy_protocol" != "xno"],
 
 AM_CONDITIONAL(OPENSSL, test -n "$openssl")
 AM_CONDITIONAL(GCRYPT, test -n "$gcrypt")
+
+tinc_MINIUPNPC
+AM_CONDITIONAL(MINIUPNPC, test "x$enable_miniupnpc" = "xyes")
 
 dnl Check if support for jumbograms is requested
 AC_ARG_ENABLE(jumbograms,

@@ -604,9 +604,12 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	if(n && n->connection) {
 		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", outgoing->name);
-
-		n->connection->outgoing = outgoing;
-		return;
+		if(!n->connection->outgoing) {
+			n->connection->outgoing = outgoing;
+			return;
+		} else {
+			goto remove;
+		}
 	}
 
 	init_configuration(&outgoing->config_tree);
@@ -618,11 +621,15 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 			outgoing->aip = outgoing->ai = get_known_addresses(n);
 		if(!outgoing->ai) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "No address known for %s", outgoing->name);
-			return;
+			goto remove;
 		}
 	}
 
 	do_outgoing_connection(outgoing);
+	return;
+
+remove:
+	list_delete(outgoing_list, outgoing);
 }
 
 /*

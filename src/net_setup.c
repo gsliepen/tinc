@@ -43,6 +43,10 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#ifdef HAVE_MINIUPNPC
+#include "upnp.h"
+#endif
+
 char *myport;
 static char *myname;
 static io_t device_io;
@@ -1095,6 +1099,25 @@ static bool setup_myself(void) {
 
 	xasprintf(&myself->hostname, "MYSELF port %s", myport);
 	myself->connection->hostname = xstrdup(myself->hostname);
+
+	char *upnp = NULL;
+	get_config_string(lookup_config(config_tree, "UPnP"), &upnp);
+	bool upnp_tcp = false;
+	bool upnp_udp = false;
+	if (upnp) {
+		if (!strcasecmp(upnp, "yes"))
+			upnp_tcp = upnp_udp = true;
+		else if (!strcasecmp(upnp, "udponly"))
+			upnp_udp = true;
+		free(upnp);
+	}
+	if (upnp_tcp || upnp_udp) {
+#ifdef HAVE_MINIUPNPC
+		upnp_init(upnp_tcp, upnp_udp);
+#else
+		logger(DEBUG_ALWAYS, LOG_WARNING, "UPnP was requested, but tinc isn't built with miniupnpc support!");
+#endif
+	}
 
 	/* Done. */
 
