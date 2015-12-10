@@ -1504,12 +1504,13 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 #ifdef HAVE_RECVMMSG
 #define MAX_MSG 64
-	vpn_packet_t pkt[MAX_MSG];
-	sockaddr_t addr[MAX_MSG];
-	struct mmsghdr msg[MAX_MSG];
-	struct iovec iov[MAX_MSG];
+	static int num = MAX_MSG;
+	static vpn_packet_t pkt[MAX_MSG];
+	static sockaddr_t addr[MAX_MSG];
+	static struct mmsghdr msg[MAX_MSG];
+	static struct iovec iov[MAX_MSG];
 
-	for(int i = 0; i < MAX_MSG; i++) {
+	for(int i = 0; i < num; i++) {
 		pkt[i].offset = 0;
 
 		iov[i] = (struct iovec){
@@ -1525,7 +1526,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 		};
 	}
 
-	int num = recvmmsg(ls->udp.fd, msg, MAX_MSG, MSG_DONTWAIT, NULL);
+	num = recvmmsg(ls->udp.fd, msg, MAX_MSG, MSG_DONTWAIT, NULL);
 
 	if(num < 0) {
 		if(!sockwouldblock(sockerrno))
