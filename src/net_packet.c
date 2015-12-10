@@ -1393,42 +1393,27 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	return match;
 }
 
-void handle_incoming_vpn_data(void *data, int flags) {
-	listen_socket_t *ls = data;
-	vpn_packet_t pkt;
+static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, sockaddr_t *addr) {
 	char *hostname;
 	node_id_t nullid = {};
-	sockaddr_t addr = {};
-	socklen_t addrlen = sizeof addr;
 	node_t *from, *to;
 	bool direct = false;
 
-	pkt.offset = 0;
-	int len = recvfrom(ls->udp.fd, DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
-
-	if(len <= 0 || len > MAXSIZE) {
-		if(!sockwouldblock(sockerrno))
-			logger(DEBUG_ALWAYS, LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
-		return;
-	}
-
-	pkt.len = len;
-
-	sockaddrunmap(&addr); /* Some braindead IPv6 implementations do stupid things. */
+	sockaddrunmap(addr); /* Some braindead IPv6 implementations do stupid things. */
 
 	// Try to figure out who sent this packet.
 
-	node_t *n = lookup_node_udp(&addr);
+	node_t *n = lookup_node_udp(addr);
 
 	if(n && !n->status.udp_confirmed)
 		n = NULL; // Don't believe it if we don't have confirmation yet.
 
 	if(!n) {
 		// It might be from a 1.1 node, which might have a source ID in the packet.
-		pkt.offset = 2 * sizeof(node_id_t);
-		from = lookup_node_id(SRCID(&pkt));
-		if(from && !memcmp(DSTID(&pkt), &nullid, sizeof nullid) && from->status.sptps) {
-			if(sptps_verify_datagram(&from->sptps, DATA(&pkt), pkt.len - 2 * sizeof(node_id_t)))
+		pkt->offset = 2 * sizeof(node_id_t);
+		from = lookup_node_id(SRCID(pkt));
+		if(from && !memcmp(DSTID(pkt), &nullid, sizeof nullid) && from->status.sptps) {
+			if(sptps_verify_datagram(&from->sptps, DATA(pkt), pkt->len - 2 * sizeof(node_id_t)))
 				n = from;
 			else
 				goto skip_harder;
@@ -1436,36 +1421,36 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	}
 
 	if(!n) {
-		pkt.offset = 0;
-		n = try_harder(&addr, &pkt);
+		pkt->offset = 0;
+		n = try_harder(addr, pkt);
 	}
 
 skip_harder:
 	if(!n) {
 		if(debug_level >= DEBUG_PROTOCOL) {
-			hostname = sockaddr2hostname(&addr);
+			hostname = sockaddr2hostname(addr);
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from unknown source %s", hostname);
 			free(hostname);
 		}
 		return;
 	}
 
-	pkt.offset = 0;
+	pkt->offset = 0;
 
 	if(n->status.sptps) {
 		bool relay_enabled = (n->options >> 24) >= 4;
 		if (relay_enabled) {
-			pkt.offset = 2 * sizeof(node_id_t);
-			pkt.len -= pkt.offset;
+			pkt->offset = 2 * sizeof(node_id_t);
+			pkt->len -= pkt->offset;
 		}
 
-		if(!memcmp(DSTID(&pkt), &nullid, sizeof nullid) || !relay_enabled) {
+		if(!memcmp(DSTID(pkt), &nullid, sizeof nullid) || !relay_enabled) {
 			direct = true;
 			from = n;
 			to = myself;
 		} else {
-			from = lookup_node_id(SRCID(&pkt));
-			to = lookup_node_id(DSTID(&pkt));
+			from = lookup_node_id(SRCID(pkt));
+			to = lookup_node_id(DSTID(pkt));
 		}
 		if(!from || !to) {
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Received UDP packet from %s (%s) with unknown source and/or destination ID", n->name, n->hostname);
@@ -1491,7 +1476,7 @@ skip_harder:
 		/* If we're not the final recipient, relay the packet. */
 
 		if(to != myself) {
-			send_sptps_data(to, from, 0, DATA(&pkt), pkt.len);
+			send_sptps_data(to, from, 0, DATA(pkt), pkt->len);
 			try_tx(to, true);
 			return;
 		}
@@ -1500,18 +1485,78 @@ skip_harder:
 		from = n;
 	}
 
-	if(!receive_udppacket(from, &pkt))
+	if(!receive_udppacket(from, pkt))
 		return;
 
 	n->sock = ls - listen_socket;
-	if(direct && sockaddrcmp(&addr, &n->address))
-		update_node_udp(n, &addr);
+	if(direct && sockaddrcmp(addr, &n->address))
+		update_node_udp(n, addr);
 
 	/* If the packet went through a relay, help the sender find the appropriate MTU
 	   through the relay path. */
 
 	if(!direct)
 		send_mtu_info(myself, n, MTU);
+}
+
+void handle_incoming_vpn_data(void *data, int flags) {
+	listen_socket_t *ls = data;
+
+#ifdef HAVE_RECVMMSG
+#define MAX_MSG 64
+	vpn_packet_t pkt[MAX_MSG];
+	sockaddr_t addr[MAX_MSG];
+	struct mmsghdr msg[MAX_MSG];
+	struct iovec iov[MAX_MSG];
+
+	for(int i = 0; i < MAX_MSG; i++) {
+		pkt[i].offset = 0;
+
+		iov[i] = (struct iovec){
+			.iov_base = DATA(&pkt[i]),
+			.iov_len = MAXSIZE,
+		};
+
+		msg[i].msg_hdr = (struct msghdr){
+			.msg_name = &addr[i].sa,
+			.msg_namelen = sizeof addr[i],
+			.msg_iov = &iov[i],
+			.msg_iovlen = 1,
+		};
+	}
+
+	int num = recvmmsg(ls->udp.fd, msg, MAX_MSG, MSG_DONTWAIT, NULL);
+
+	if(num < 0) {
+		if(!sockwouldblock(sockerrno))
+			logger(DEBUG_ALWAYS, LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
+		return;
+	}
+
+	for(int i = 0; i < num; i++) {
+		pkt[i].len = msg[i].msg_len;
+		if(pkt[i].len <= 0 || pkt[i].len > MAXSIZE)
+			continue;
+		handle_incoming_vpn_packet(ls, &pkt[i], &addr[i]);
+	}
+#else
+	vpn_packet_t pkt;
+	sockaddr_t addr = {};
+	socklen_t addrlen = sizeof addr;
+
+	pkt.offset = 0;
+	int len = recvfrom(ls->udp.fd, DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
+
+	if(len <= 0 || len > MAXSIZE) {
+		if(!sockwouldblock(sockerrno))
+			logger(DEBUG_ALWAYS, LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
+		return;
+	}
+
+	pkt.len = len;
+
+	handle_incoming_vpn_packet(ls, &pkt, &addr);
+#endif
 }
 
 void handle_device_data(void *data, int flags) {
