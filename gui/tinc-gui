@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # tinc-gui -- GUI for controlling a running tincd
 # Copyright (C) 2009-2014 Guus Sliepen <guus@tinc-vpn.org>
@@ -20,19 +20,19 @@
 
 import string
 import socket
-import wx
-import sys
 import os
 import platform
 import time
+from argparse import ArgumentParser
+
+import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 if platform.system() == 'Windows':
-	import _winreg
+    import _winreg
 
 # Classes to interface with a running tinc daemon
-
 REQ_STOP = 0
 REQ_RELOAD = 1
 REQ_RESTART = 2
@@ -51,272 +51,247 @@ ID = 0
 ACK = 4
 CONTROL = 18
 
-class Node:
-	def parse(self, args):
-		self.name = args[0]
-		self.address = args[1]
-		self.port = args[3]
-		self.cipher = int(args[4])
-		self.digest = int(args[5])
-		self.maclength = int(args[6])
-		self.compression = int(args[7])
-		self.options = int(args[8], 0x10)
-		self.status = int(args[9], 0x10)
-		self.nexthop = args[10]
-		self.via = args[11]
-		self.distance = int(args[12])
-		self.pmtu = int(args[13])
-		self.minmtu = int(args[14])
-		self.maxmtu = int(args[15])
-		self.last_state_change = float(args[16])
 
-		self.subnets = {}
+class Node(object):
+    def __init__(self, args):
+        self.name = args[0]
+        self.id = args[1]
 
-class Edge:
-	def parse(self, args):
-		self.fr = args[0]
-		self.to = args[1]
-		self.address = args[2]
-		self.port = args[4]
-		self.options = int(args[-2], 16)
-		self.weight = int(args[-1])
+        self.address = args[2]
+        self.port = args[4]
 
-class Subnet:
-	def parse(self, args):
-		if args[0].find('#') >= 0:
-			(address, self.weight) = args[0].split('#', 1)
-		else:
-			self.weight = 10
-			address = args[0]
+        self.cipher = int(args[5])
+        self.digest = int(args[6])
+        self.maclength = int(args[7])
 
-		if address.find('/') >= 0:
-			(self.address, self.prefixlen) = address.split('/', 1)
-		else:
-			self.address = address
-			self.prefixlen = '48'
+        self.compression = int(args[8])
+        self.options = int(args[9], 0x10)
+        self.status = int(args[10], 0x10)
 
-		self.owner = args[1]	
+        self.nexthop = args[11]
+        self.via = args[12]
+        self.distance = int(args[13])
+        self.pmtu = int(args[14])
+        self.minmtu = int(args[15])
+        self.maxmtu = int(args[16])
 
-class Connection:
-	def parse(self, args):
-		self.name = args[0]
-		self.address = args[1]
-		self.port = args[3]
-		self.options = int(args[4], 0x10)
-		self.socket = int(args[5])
-		self.status = int(args[6], 0x10)
-		self.weight = 123
+        self.last_state_change = float(args[17])
 
-class VPN:
-	confdir = '/etc/tinc'
-	piddir = '/var/run/'
+        self.subnets = {}
 
-	def connect(self):
-		# read the pidfile
-		f = open(self.pidfile)
-		info = string.split(f.readline())
-		f.close()
 
-		# check if there is a UNIX socket as well
-		if self.pidfile.endswith(".pid"):
-			unixfile = self.pidfile.replace(".pid", ".socket");
-		else:
-			unixfile = self.pidfile + ".socket";
+class Edge(object):
+    def __init__(self, args):
+        self.source = args[0]
+        self.sink = args[1]
 
-		if os.path.exists(unixfile):
-			# use it if it exists
-			print(unixfile + " exists!");
-			s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-			s.connect(unixfile)
-		else:
-			# otherwise connect via TCP
-			print(unixfile + " does not exist.");
-			if ':' in info[2]:
-				af = socket.AF_INET6
-			else:
-				af = socket.AF_INET
-			s = socket.socket(af, socket.SOCK_STREAM)
-			s.connect((info[2], int(info[4])))
+        self.address = args[2]
+        self.port = args[4]
 
-		self.sf = s.makefile()
-		s.close()
-		hello = string.split(self.sf.readline())
-		self.name = hello[1]
-		self.sf.write('0 ^' + info[1] + ' 17\r\n')
-		self.sf.flush()
-		resp = string.split(self.sf.readline())
-		self.port = info[4]
-		self.nodes = {}
-		self.edges = {}
-		self.subnets = {}
-		self.connections = {}
-		self.refresh()
+        self.options = int(args[-2], 16)
+        self.weight = int(args[-1])
 
-	def refresh(self):
-		self.sf.write('18 3\r\n18 4\r\n18 5\r\n18 6\r\n')
-		self.sf.flush()
 
-		for node in self.nodes.values():
-			node.visited = False
-		for edge in self.edges.values():
-			edge.visited = False
-		for subnet in self.subnets.values():
-			subnet.visited = False
-		for connections in self.connections.values():
-			connections.visited = False
+class Subnet(object):
+    def __init__(self, args):
+        if args[0].find('#') >= 0:
+            address, self.weight = args[0].split('#', 1)
+        else:
+            self.weight = 10
+            address = args[0]
 
-		while True:
-			resp = string.split(self.sf.readline())
-			if len(resp) < 2:
-				break
-			if resp[0] != '18':
-				break
-			if resp[1] == '3':
-				if len(resp) < 19:
-					continue
-				node = self.nodes.get(resp[2]) or Node()
-				node.parse(resp[2:])
-				node.visited = True
-				self.nodes[resp[2]] = node
-			elif resp[1] == '4':
-				if len(resp) < 9:
-					continue
-				edge = self.nodes.get((resp[2], resp[3])) or Edge()
-				edge.parse(resp[2:])
-				edge.visited = True
-				self.edges[(resp[2], resp[3])] = edge
-			elif resp[1] == '5':
-				if len(resp) < 4:
-					continue
-				subnet = self.subnets.get((resp[2], resp[3])) or Subnet()
-				subnet.parse(resp[2:])
-				subnet.visited = True
-				self.subnets[(resp[2], resp[3])] = subnet
-				if subnet.owner == "(broadcast)":
-					continue
-				self.nodes[subnet.owner].subnets[resp[2]] = subnet
-			elif resp[1] == '6':
-				if len(resp) < 9:
-					break
-				connection = self.connections.get((resp[2], resp[3], resp[5])) or Connection()
-				connection.parse(resp[2:])
-				connection.visited = True
-				self.connections[(resp[2], resp[3], resp[5])] = connection
-			else:
-				break
+        if address.find('/') >= 0:
+            self.address, self.prefixlen = address.split('/', 1)
+        else:
+            self.address = address
+            self.prefixlen = '48'
 
-		for key, subnet in self.subnets.items():
-			if not subnet.visited:
-				del self.subnets[key]
+        self.owner = args[1]
 
-		for key, edge in self.edges.items():
-			if not edge.visited:
-				del self.edges[key]
 
-		for key, node in self.nodes.items():
-			if not node.visited:
-				del self.nodes[key]
-			else:
-				for key, subnet in node.subnets.items():
-					if not subnet.visited:
-						del node.subnets[key]
+class Connection(object):
+    def __init__(self, args):
+        self.name = args[0]
 
-		for key, connection in self.connections.items():
-			if not connection.visited:
-				del self.connections[key]
+        self.address = args[1]
+        self.port = args[3]
 
-	def close(self):
-		self.sf.close()
+        self.options = int(args[4], 0x10)
+        self.socket = int(args[5])
+        self.status = int(args[6], 0x10)
 
-	def disconnect(self, name):
-		self.sf.write('18 12 ' + name + '\r\n')
-		self.sf.flush()
-		resp = string.split(self.sf.readline())
+        self.weight = 'n/a'
 
-	def debug(self, level = -1):
-		self.sf.write('18 9 ' + str(level) + '\r\n')
-		self.sf.flush()
-		resp = string.split(self.sf.readline())
-		return int(resp[2])
 
-	def __init__(self, netname = None, pidfile = None):
-		if platform.system() == 'Windows':
-			sam = _winreg.KEY_READ
-			if platform.machine().endswith('64'):
-				sam = sam | _winreg.KEY_WOW64_64KEY
-			try:
-				reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-				try:
-					key = _winreg.OpenKey(reg, "SOFTWARE\\tinc", 0, sam)
-				except WindowsError:
-					key = _winreg.OpenKey(reg, "SOFTWARE\\Wow6432Node\\tinc", 0, sam)
-				VPN.confdir = _winreg.QueryValue(key, None)
-			except WindowsError:
-				pass
+class VPN(object):
+    def __init__(self, netname=None, pidfile=None, confdir='/etc/tinc', piddir='/run'):
+        if platform.system() == 'Windows':
+            sam = _winreg.KEY_READ
+            if platform.machine().endswith('64'):
+                sam = sam | _winreg.KEY_WOW64_64KEY
+            try:
+                reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+                try:
+                    key = _winreg.OpenKey(reg, "SOFTWARE\\tinc", 0, sam)
+                except WindowsError:
+                    key = _winreg.OpenKey(reg, "SOFTWARE\\Wow6432Node\\tinc", 0, sam)
+                confdir = _winreg.QueryValue(key, None)
+            except WindowsError:
+                pass
 
-		if netname:
-			self.netname = netname
-			self.confbase = os.path.join(VPN.confdir, netname)
-		else:
-			self.confbase = VPN.confdir
+        if netname:
+            self.netname = netname
+            self.confbase = os.path.join(confdir, netname)
+        else:
+            self.confbase = confdir
 
-		self.tincconf = os.path.join(self.confbase, 'tinc.conf')
+        self.tincconf = os.path.join(self.confbase, 'tinc.conf')
 
-		if pidfile != None:
-			self.pidfile = pidfile
-		else:
-			if platform.system() == 'Windows':
-				self.pidfile = os.path.join(self.confbase, 'pid')
-			else:
-				if netname:
-					self.pidfile = os.path.join(VPN.piddir, 'tinc.' + netname + '.pid')
-				else:
-					self.pidfile = os.path.join(VPN.piddir, 'tinc.pid')
+        if pidfile is not None:
+            self.pidfile = pidfile
+        else:
+            if platform.system() == 'Windows':
+                self.pidfile = os.path.join(self.confbase, 'pid')
+            else:
+                if netname:
+                    self.pidfile = os.path.join(piddir, 'tinc.' + netname + '.pid')
+                else:
+                    self.pidfile = os.path.join(piddir, 'tinc.pid')
 
-# GUI starts here
+        self.sf = None
+        self.name = None
+        self.port = None
+        self.nodes = {}
+        self.edges = {}
+        self.subnets = {}
+        self.connections = {}
 
-argv0 = sys.argv[0]
-del sys.argv[0]
-netname = None
-pidfile = None
+    def connect(self):
+        # read the pidfile
+        f = open(self.pidfile)
+        info = string.split(f.readline())
+        f.close()
 
-def usage(exitcode = 0):
-	print('Usage: ' + argv0 + ' [options]')
-	print('\nValid options are:')
-	print('  -n, --net=NETNAME       Connect to net NETNAME.')
-	print('      --pidfile=FILENAME  Read control cookie from FILENAME.')
-	print('      --help              Display this help and exit.')
-	print('\nReport bugs to tinc@tinc-vpn.org.')
-	sys.exit(exitcode)
+        # check if there is a UNIX socket as well
+        if self.pidfile.endswith('.pid'):
+            unixfile = self.pidfile.replace('.pid', '.socket');
+        else:
+            unixfile = self.pidfile + '.socket';
 
-while sys.argv:
-	if sys.argv[0] in ('-n', '--net'):
-		del sys.argv[0]
-		netname = sys.argv[0]
-	elif sys.argv[0] in ('--pidfile'):
-		del sys.argv[0]
-		pidfile = sys.argv[0]
-	elif sys.argv[0] in ('--help'):
-		usage(0)
-	else:
-		print(argv0 + ': unrecognized option \'' + sys.argv[0] + '\'')
-		usage(1)
+        if os.path.exists(unixfile):
+            # use it if it exists
+            print(unixfile + " exists!");
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.connect(unixfile)
+        else:
+            # otherwise connect via TCP
+            print(unixfile + " does not exist.");
+            if ':' in info[2]:
+                af = socket.AF_INET6
+            else:
+                af = socket.AF_INET
+            s = socket.socket(af, socket.SOCK_STREAM)
+            s.connect((info[2], int(info[4])))
 
-	del sys.argv[0]
+        self.sf = s.makefile()
+        s.close()
+        hello = string.split(self.sf.readline())
+        self.name = hello[1]
+        self.sf.write('0 ^' + info[1] + ' 17\r\n')
+        self.sf.flush()
+        resp = string.split(self.sf.readline())
+        self.port = info[4]
+        self.refresh()
 
-if netname == None:
-	netname = os.getenv("NETNAME")
+    def refresh(self):
+        for request in (REQ_DUMP_NODES, REQ_DUMP_EDGES, REQ_DUMP_SUBNETS, REQ_DUMP_CONNECTIONS):
+            self.sf.write('{} {}\r\n'.format(CONTROL, request))
+        self.sf.flush()
 
-if netname == ".":
-	netname = None
+        for node in self.nodes.values():
+            node.visited = False
+        for edge in self.edges.values():
+            edge.visited = False
+        for subnet in self.subnets.values():
+            subnet.visited = False
+        for connections in self.connections.values():
+            connections.visited = False
 
-vpn = VPN(netname, pidfile)
-vpn.connect()
+        while True:
+            resp = string.split(self.sf.readline())
+            if len(resp) < 2:
+                break
+            if resp[0] != '18':
+                break
+            if resp[1] == '3':
+                if len(resp) < 19:
+                    continue
+                node = self.nodes.get(resp[2]) or Node(resp[2:])
+                node.visited = True
+                self.nodes[resp[2]] = node
+            elif resp[1] == '4':
+                if len(resp) < 9:
+                    continue
+                edge = self.nodes.get((resp[2], resp[3])) or Edge(resp[2:])
+                edge.visited = True
+                self.edges[(resp[2], resp[3])] = edge
+            elif resp[1] == '5':
+                if len(resp) < 4:
+                    continue
+                subnet = self.subnets.get((resp[2], resp[3])) or Subnet(resp[2:])
+                subnet.visited = True
+                self.subnets[(resp[2], resp[3])] = subnet
+                if subnet.owner == "(broadcast)":
+                    continue
+                self.nodes[subnet.owner].subnets[resp[2]] = subnet
+            elif resp[1] == '6':
+                if len(resp) < 9:
+                    break
+                connection = self.connections.get((resp[2], resp[3], resp[5])) or Connection(resp[2:])
+                connection.visited = True
+                self.connections[(resp[2], resp[3], resp[5])] = connection
+            else:
+                break
+
+        for key, subnet in self.subnets.items():
+            if not subnet.visited:
+                del self.subnets[key]
+
+        for key, edge in self.edges.items():
+            if not edge.visited:
+                del self.edges[key]
+
+        for key, node in self.nodes.items():
+            if not node.visited:
+                del self.nodes[key]
+            else:
+                for key, subnet in node.subnets.items():
+                    if not subnet.visited:
+                        del node.subnets[key]
+
+        for key, connection in self.connections.items():
+            if not connection.visited:
+                del self.connections[key]
+
+    def close(self):
+        self.sf.close()
+
+    def disconnect(self, name):
+        self.sf.write('18 12 ' + name + '\r\n')
+        self.sf.flush()
+        resp = string.split(self.sf.readline())
+
+    def debug(self, level=-1):
+        self.sf.write('18 9 ' + str(level) + '\r\n')
+        self.sf.flush()
+        resp = string.split(self.sf.readline())
+        return int(resp[2])
+
 
 class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
     def __init__(self, parent, style):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
-	ListCtrlAutoWidthMixin.__init__(self)
+        ListCtrlAutoWidthMixin.__init__(self)
         ColumnSorterMixin.__init__(self, 16)
 
     def GetListCtrl(self):
@@ -324,299 +299,336 @@ class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
 
 
 class SettingsPage(wx.Panel):
-	def OnDebugLevel(self, event):
-		vpn.debug(self.debug.GetValue())
+    def on_debug_level(self, event):
+        vpn.debug(self.debug.GetValue())
 
-	def __init__(self, parent, id):
-		wx.Panel.__init__(self, parent, id)
-		grid = wx.FlexGridSizer(cols = 2)
-		grid.AddGrowableCol(1, 1)
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        grid = wx.FlexGridSizer(cols=2)
+        grid.AddGrowableCol(1, 1)
 
-		namelabel = wx.StaticText(self, -1, 'Name:')
-		self.name = wx.TextCtrl(self, -1, vpn.name)
-		grid.Add(namelabel)
-		grid.Add(self.name, 1, wx.EXPAND)
+        namelabel = wx.StaticText(self, -1, 'Name:')
+        self.name = wx.TextCtrl(self, -1, vpn.name)
+        grid.Add(namelabel)
+        grid.Add(self.name, 1, wx.EXPAND)
 
-		portlabel = wx.StaticText(self, -1, 'Port:')
-		self.port = wx.TextCtrl(self, -1, vpn.port)
-		grid.Add(portlabel)
-		grid.Add(self.port)
+        portlabel = wx.StaticText(self, -1, 'Port:')
+        self.port = wx.TextCtrl(self, -1, vpn.port)
+        grid.Add(portlabel)
+        grid.Add(self.port)
 
-		debuglabel = wx.StaticText(self, -1, 'Debug level:')
-		self.debug = wx.SpinCtrl(self, min = 0, max = 5, initial = vpn.debug())
-		self.debug.Bind(wx.EVT_SPINCTRL, self.OnDebugLevel)
-		grid.Add(debuglabel)
-		grid.Add(self.debug)
+        debuglabel = wx.StaticText(self, -1, 'Debug level:')
+        self.debug = wx.SpinCtrl(self, min=0, max=5, initial=vpn.debug())
+        self.debug.Bind(wx.EVT_SPINCTRL, self.on_debug_level)
+        grid.Add(debuglabel)
+        grid.Add(self.debug)
 
-		modelabel = wx.StaticText(self, -1, 'Mode:')
-		self.mode = wx.ComboBox(self, -1, style = wx.CB_READONLY, value = 'Router', choices = ['Router', 'Switch', 'Hub'])
-		grid.Add(modelabel)
-		grid.Add(self.mode)
+        modelabel = wx.StaticText(self, -1, 'Mode:')
+        self.mode = wx.ComboBox(self, -1, style=wx.CB_READONLY, value='Router', choices=['Router', 'Switch', 'Hub'])
+        grid.Add(modelabel)
+        grid.Add(self.mode)
 
-		self.SetSizer(grid)
+        self.SetSizer(grid)
+
 
 class ConnectionsPage(wx.Panel):
-	def __init__(self, parent, id):
-		wx.Panel.__init__(self, parent, id)
-		self.list = SuperListCtrl(self, id)
-		self.list.InsertColumn(0, 'Name')
-		self.list.InsertColumn(1, 'Address')
-		self.list.InsertColumn(2, 'Port')
-		self.list.InsertColumn(3, 'Options')
-		self.list.InsertColumn(4, 'Weight')
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        self.list = SuperListCtrl(self, id)
+        self.list.InsertColumn(0, 'Name')
+        self.list.InsertColumn(1, 'Address')
+        self.list.InsertColumn(2, 'Port')
+        self.list.InsertColumn(3, 'Options')
+        self.list.InsertColumn(4, 'Weight')
 
-		hbox = wx.BoxSizer(wx.HORIZONTAL)
-		hbox.Add(self.list, 1, wx.EXPAND)
-		self.SetSizer(hbox)
-		self.refresh()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(hbox)
+        self.refresh()
 
-	class ContextMenu(wx.Menu):
-		def __init__(self, item):
-			wx.Menu.__init__(self)
+    class ContextMenu(wx.Menu):
+        def __init__(self, item):
+            wx.Menu.__init__(self)
 
-			self.item = item
+            self.item = item
 
-			disconnect = wx.MenuItem(self, -1, 'Disconnect')
-			self.AppendItem(disconnect)
-			self.Bind(wx.EVT_MENU, self.OnDisconnect, id=disconnect.GetId())
+            disconnect = wx.MenuItem(self, -1, 'Disconnect')
+            self.AppendItem(disconnect)
+            self.Bind(wx.EVT_MENU, self.on_disconnect, id=disconnect.GetId())
 
-		def OnDisconnect(self, event):
-			vpn.disconnect(self.item[0])
+        def on_disconnect(self, event):
+            vpn.disconnect(self.item[0])
 
-	def OnContext(self, event):
-		i = event.GetIndex()
-		self.PopupMenu(self.ContextMenu(self.list.itemDataMap[event.GetIndex()]), event.GetPosition())
+    def on_context(self, event):
+        idx = event.GetIndex()
+        self.PopupMenu(self.ContextMenu(self.list.itemDataMap[event.GetIndex()]), event.GetPosition())
 
-	def refresh(self):
-		sortstate = self.list.GetSortState()
-		self.list.itemDataMap = {}
-		i = 0
+    def refresh(self):
+        sortstate = self.list.GetSortState()
+        self.list.itemDataMap = {}
+        i = 0
 
-		for key, connection in vpn.connections.items():
-			if self.list.GetItemCount() <= i:
-				self.list.InsertStringItem(i, connection.name)
-			else:
-				self.list.SetStringItem(i, 0, connection.name)
-			self.list.SetStringItem(i, 1, connection.address)
-			self.list.SetStringItem(i, 2, connection.port)
-			self.list.SetStringItem(i, 3, str(connection.options))
-			self.list.SetStringItem(i, 4, str(connection.weight))
-			self.list.itemDataMap[i] = (connection.name, connection.address, connection.port, connection.options, connection.weight)
-			self.list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnContext)
-			self.list.SetItemData(i, i)
-			i += 1
+        for key, connection in vpn.connections.items():
+            if self.list.GetItemCount() <= i:
+                self.list.InsertStringItem(i, connection.name)
+            else:
+                self.list.SetStringItem(i, 0, connection.name)
+            self.list.SetStringItem(i, 1, connection.address)
+            self.list.SetStringItem(i, 2, connection.port)
+            self.list.SetStringItem(i, 3, str(connection.options))
+            self.list.SetStringItem(i, 4, str(connection.weight))
+            self.list.itemDataMap[i] = (connection.name, connection.address, connection.port, connection.options,
+                                        connection.weight)
+            self.list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.on_context)
+            self.list.SetItemData(i, i)
+            i += 1
 
-		while self.list.GetItemCount() > i:
-			self.list.DeleteItem(self.list.GetItemCount() - 1)
+        while self.list.GetItemCount() > i:
+            self.list.DeleteItem(self.list.GetItemCount() - 1)
 
-		self.list.SortListItems(sortstate[0], sortstate[1])
+        self.list.SortListItems(sortstate[0], sortstate[1])
+
 
 class NodesPage(wx.Panel):
-	def __init__(self, parent, id):
-		wx.Panel.__init__(self, parent, id)
-		self.list = SuperListCtrl(self, id)
-		self.list.InsertColumn( 0, 'Name')
-		self.list.InsertColumn( 1, 'Address')
-		self.list.InsertColumn( 2, 'Port')
-		self.list.InsertColumn( 3, 'Cipher')
-		self.list.InsertColumn( 4, 'Digest')
-		self.list.InsertColumn( 5, 'MACLength')
-		self.list.InsertColumn( 6, 'Compression')
-		self.list.InsertColumn( 7, 'Options')
-		self.list.InsertColumn( 8, 'Status')
-		self.list.InsertColumn( 9, 'Nexthop')
-		self.list.InsertColumn(10, 'Via')
-		self.list.InsertColumn(11, 'Distance')
-		self.list.InsertColumn(12, 'PMTU')
-		self.list.InsertColumn(13, 'Min MTU')
-		self.list.InsertColumn(14, 'Max MTU')
-		self.list.InsertColumn(15, 'Since')
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        self.list = SuperListCtrl(self, id)
+        self.list.InsertColumn(0, 'Name')
+        self.list.InsertColumn(1, 'Address')
+        self.list.InsertColumn(2, 'Port')
+        self.list.InsertColumn(3, 'Cipher')
+        self.list.InsertColumn(4, 'Digest')
+        self.list.InsertColumn(5, 'MACLength')
+        self.list.InsertColumn(6, 'Compression')
+        self.list.InsertColumn(7, 'Options')
+        self.list.InsertColumn(8, 'Status')
+        self.list.InsertColumn(9, 'Nexthop')
+        self.list.InsertColumn(10, 'Via')
+        self.list.InsertColumn(11, 'Distance')
+        self.list.InsertColumn(12, 'PMTU')
+        self.list.InsertColumn(13, 'Min MTU')
+        self.list.InsertColumn(14, 'Max MTU')
+        self.list.InsertColumn(15, 'Since')
 
-		hbox = wx.BoxSizer(wx.HORIZONTAL)
-		hbox.Add(self.list, 1, wx.EXPAND)
-		self.SetSizer(hbox)
-		self.refresh()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(hbox)
+        self.refresh()
 
-	def refresh(self):
-		sortstate = self.list.GetSortState()
-		self.list.itemDataMap = {}
-		i = 0
+    def refresh(self):
+        sortstate = self.list.GetSortState()
+        self.list.itemDataMap = {}
+        i = 0
 
-		for key, node in vpn.nodes.items():
-			if self.list.GetItemCount() <= i:
-				self.list.InsertStringItem(i, node.name)
-			else:
-				self.list.SetStringItem(i,  0, node.name)
-			self.list.SetStringItem(i,  1, node.address)
-			self.list.SetStringItem(i,  2, node.port)
-			self.list.SetStringItem(i,  3, str(node.cipher))
-			self.list.SetStringItem(i,  4, str(node.digest))
-			self.list.SetStringItem(i,  5, str(node.maclength))
-			self.list.SetStringItem(i,  6, str(node.compression))
-			self.list.SetStringItem(i,  7, format(node.options, "x"))
-			self.list.SetStringItem(i,  8, format(node.status, "04x"))
-			self.list.SetStringItem(i,  9, node.nexthop)
-			self.list.SetStringItem(i, 10, node.via)
-			self.list.SetStringItem(i, 11, str(node.distance))
-			self.list.SetStringItem(i, 12, str(node.pmtu))
-			self.list.SetStringItem(i, 13, str(node.minmtu))
-			self.list.SetStringItem(i, 14, str(node.maxmtu))
-			if node.last_state_change:
-				since = time.strftime("%Y-%m-%d %H:%M", time.localtime(node.last_state_change))
-			else:
-				since = "never"
-			self.list.SetStringItem(i, 15, since)
-			self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength, node.compression, node.options, node.status, node.nexthop, node.via, node.distance, node.pmtu, node.minmtu, node.maxmtu, since)
-			self.list.SetItemData(i, i)
-			i += 1
+        for key, node in vpn.nodes.items():
+            if self.list.GetItemCount() <= i:
+                self.list.InsertStringItem(i, node.name)
+            else:
+                self.list.SetStringItem(i, 0, node.name)
+            self.list.SetStringItem(i, 1, node.address)
+            self.list.SetStringItem(i, 2, node.port)
+            self.list.SetStringItem(i, 3, str(node.cipher))
+            self.list.SetStringItem(i, 4, str(node.digest))
+            self.list.SetStringItem(i, 5, str(node.maclength))
+            self.list.SetStringItem(i, 6, str(node.compression))
+            self.list.SetStringItem(i, 7, format(node.options, "x"))
+            self.list.SetStringItem(i, 8, format(node.status, "04x"))
+            self.list.SetStringItem(i, 9, node.nexthop)
+            self.list.SetStringItem(i, 10, node.via)
+            self.list.SetStringItem(i, 11, str(node.distance))
+            self.list.SetStringItem(i, 12, str(node.pmtu))
+            self.list.SetStringItem(i, 13, str(node.minmtu))
+            self.list.SetStringItem(i, 14, str(node.maxmtu))
+            if node.last_state_change:
+                since = time.strftime("%Y-%m-%d %H:%M", time.localtime(node.last_state_change))
+            else:
+                since = "never"
+            self.list.SetStringItem(i, 15, since)
+            self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength,
+                                        node.compression, node.options, node.status, node.nexthop, node.via,
+                                        node.distance, node.pmtu, node.minmtu, node.maxmtu, since)
+            self.list.SetItemData(i, i)
+            i += 1
 
-		while self.list.GetItemCount() > i:
-			self.list.DeleteItem(self.list.GetItemCount() - 1)
+        while self.list.GetItemCount() > i:
+            self.list.DeleteItem(self.list.GetItemCount() - 1)
 
-		self.list.SortListItems(sortstate[0], sortstate[1])
+        self.list.SortListItems(sortstate[0], sortstate[1])
+
 
 class EdgesPage(wx.Panel):
-	def __init__(self, parent, id):
-		wx.Panel.__init__(self, parent, id)
-		self.list = SuperListCtrl(self, id)
-		self.list.InsertColumn(0, 'From')
-		self.list.InsertColumn(1, 'To')
-		self.list.InsertColumn(2, 'Address')
-		self.list.InsertColumn(3, 'Port')
-		self.list.InsertColumn(4, 'Options')
-		self.list.InsertColumn(5, 'Weight')
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        self.list = SuperListCtrl(self, id)
+        self.list.InsertColumn(0, 'From')
+        self.list.InsertColumn(1, 'To')
+        self.list.InsertColumn(2, 'Address')
+        self.list.InsertColumn(3, 'Port')
+        self.list.InsertColumn(4, 'Options')
+        self.list.InsertColumn(5, 'Weight')
 
-		hbox = wx.BoxSizer(wx.HORIZONTAL)
-		hbox.Add(self.list, 1, wx.EXPAND)
-		self.SetSizer(hbox)
-		self.refresh()
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(hbox)
+        self.refresh()
 
-	def refresh(self):
-		sortstate = self.list.GetSortState()
-		self.list.itemDataMap = {}
-		i = 0
+    def refresh(self):
+        sortstate = self.list.GetSortState()
+        self.list.itemDataMap = {}
+        i = 0
 
-		for key, edge in vpn.edges.items():
-			if self.list.GetItemCount() <= i:
-				self.list.InsertStringItem(i, edge.fr)
-			else:
-				self.list.SetStringItem(i, 0, edge.fr)
-			self.list.SetStringItem(i, 1, edge.to)
-			self.list.SetStringItem(i, 2, edge.address)
-			self.list.SetStringItem(i, 3, edge.port)
-			self.list.SetStringItem(i, 4, format(edge.options, "x"))
-			self.list.SetStringItem(i, 5, str(edge.weight))
-			self.list.itemDataMap[i] = (edge.fr, edge.to, edge.address, edge.port, edge.options, edge.weight)
-			self.list.SetItemData(i, i)
-			i += 1
+        for key, edge in vpn.edges.items():
+            if self.list.GetItemCount() <= i:
+                self.list.InsertStringItem(i, edge.source)
+            else:
+                self.list.SetStringItem(i, 0, edge.source)
+            self.list.SetStringItem(i, 1, edge.sink)
+            self.list.SetStringItem(i, 2, edge.address)
+            self.list.SetStringItem(i, 3, edge.port)
+            self.list.SetStringItem(i, 4, format(edge.options, "x"))
+            self.list.SetStringItem(i, 5, str(edge.weight))
+            self.list.itemDataMap[i] = (edge.source, edge.sink, edge.address, edge.port, edge.options, edge.weight)
+            self.list.SetItemData(i, i)
+            i += 1
 
-		while self.list.GetItemCount() > i:
-			self.list.DeleteItem(self.list.GetItemCount() - 1)
+        while self.list.GetItemCount() > i:
+            self.list.DeleteItem(self.list.GetItemCount() - 1)
 
-		self.list.SortListItems(sortstate[0], sortstate[1])
+        self.list.SortListItems(sortstate[0], sortstate[1])
+
 
 class SubnetsPage(wx.Panel):
-	def __init__(self, parent, id):
-		wx.Panel.__init__(self, parent, id)
-		self.list = SuperListCtrl(self, id)
-		self.list.InsertColumn(0, 'Subnet', wx.LIST_FORMAT_RIGHT)
-		self.list.InsertColumn(1, 'Weight', wx.LIST_FORMAT_RIGHT)
-		self.list.InsertColumn(2, 'Owner')
-		hbox = wx.BoxSizer(wx.HORIZONTAL)
-		hbox.Add(self.list, 1, wx.EXPAND)
-		self.SetSizer(hbox)
-		self.refresh()
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        self.list = SuperListCtrl(self, id)
+        self.list.InsertColumn(0, 'Subnet', wx.LIST_FORMAT_RIGHT)
+        self.list.InsertColumn(1, 'Weight', wx.LIST_FORMAT_RIGHT)
+        self.list.InsertColumn(2, 'Owner')
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(hbox)
+        self.refresh()
 
-	def refresh(self):
-		sortstate = self.list.GetSortState()
-		self.list.itemDataMap = {}
-		i = 0
+    def refresh(self):
+        sortstate = self.list.GetSortState()
+        self.list.itemDataMap = {}
+        i = 0
 
-		for key, subnet in vpn.subnets.items():
-			if self.list.GetItemCount() <= i:
-				self.list.InsertStringItem(i, subnet.address + '/' + subnet.prefixlen)
-			else:
-				self.list.SetStringItem(i, 0, subnet.address + '/' + subnet.prefixlen)
-			self.list.SetStringItem(i, 1, str(subnet.weight))
-			self.list.SetStringItem(i, 2, subnet.owner)
-			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
-			self.list.SetItemData(i, i)
-			i += 1
+        for key, subnet in vpn.subnets.items():
+            if self.list.GetItemCount() <= i:
+                self.list.InsertStringItem(i, subnet.address + '/' + subnet.prefixlen)
+            else:
+                self.list.SetStringItem(i, 0, subnet.address + '/' + subnet.prefixlen)
+            self.list.SetStringItem(i, 1, str(subnet.weight))
+            self.list.SetStringItem(i, 2, subnet.owner)
+            self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
+            self.list.SetItemData(i, i)
+            i += 1
 
-		while self.list.GetItemCount() > i:
-			self.list.DeleteItem(self.list.GetItemCount() - 1)
+        while self.list.GetItemCount() > i:
+            self.list.DeleteItem(self.list.GetItemCount() - 1)
 
-		self.list.SortListItems(sortstate[0], sortstate[1])
+        self.list.SortListItems(sortstate[0], sortstate[1])
+
 
 class StatusPage(wx.Panel):
-	def __init__(self, parent, id):
-		wx.Panel.__init__(self, parent, id)
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+
 
 class GraphPage(wx.Window):
-	def __init__(self, parent, id):
-		wx.Window.__init__(self, parent, id)
+    def __init__(self, parent, id):
+        wx.Window.__init__(self, parent, id)
+
 
 class NetPage(wx.Notebook):
-	def __init__(self, parent, id):
-		wx.Notebook.__init__(self, parent)
-		self.settings = SettingsPage(self, id)
-		self.connections = ConnectionsPage(self, id)
-		self.nodes = NodesPage(self, id)
-		self.edges = EdgesPage(self, id)
-		self.subnets = SubnetsPage(self, id)
-		self.graph = GraphPage(self, id)
-		self.status = StatusPage(self, id)
+    def __init__(self, parent, id):
+        wx.Notebook.__init__(self, parent)
+        self.settings = SettingsPage(self, id)
+        self.connections = ConnectionsPage(self, id)
+        self.nodes = NodesPage(self, id)
+        self.edges = EdgesPage(self, id)
+        self.subnets = SubnetsPage(self, id)
+        self.graph = GraphPage(self, id)
+        self.status = StatusPage(self, id)
 
-		self.AddPage(self.settings, 'Settings')
-		#self.AddPage(self.status, 'Status')
-		self.AddPage(self.connections, 'Connections')
-		self.AddPage(self.nodes, 'Nodes')
-		self.AddPage(self.edges, 'Edges')
-		self.AddPage(self.subnets, 'Subnets')
-		#self.AddPage(self.graph, 'Graph')
-		
+        self.AddPage(self.settings, 'Settings')
+        # self.AddPage(self.status, 'Status')
+        self.AddPage(self.connections, 'Connections')
+        self.AddPage(self.nodes, 'Nodes')
+        self.AddPage(self.edges, 'Edges')
+        self.AddPage(self.subnets, 'Subnets')
+
+        # self.AddPage(self.graph, 'Graph')
+
 
 class MainWindow(wx.Frame):
-	def OnQuit(self, event):
-		app.ExitMainLoop()
+    def __init__(self, parent, id, title):
+        wx.Frame.__init__(self, parent, id, title)
 
-	def OnTimer(self, event):
-		vpn.refresh()
-		self.np.nodes.refresh()
-		self.np.subnets.refresh()
-		self.np.edges.refresh()
-		self.np.connections.refresh()
+        menubar = wx.MenuBar()
 
-	def __init__(self, parent, id, title):
-		wx.Frame.__init__(self, parent, id, title)
+        menu = wx.Menu()
+        menu.Append(1, '&Quit\tCtrl-X', 'Quit tinc GUI')
+        menubar.Append(menu, '&File')
 
-		menubar = wx.MenuBar()
-		file = wx.Menu()
-		file.Append(1, '&Quit\tCtrl-X', 'Quit tinc GUI')
-		menubar.Append(file, '&File')
+        # nb = wx.Notebook(self, -1)
+        # nb.SetPadding((0, 0))
+        self.np = NetPage(self, -1)
+        # nb.AddPage(np, 'VPN')
 
-		#nb = wx.Notebook(self, -1)
-		#nb.SetPadding((0, 0))
-		self.np = NetPage(self, -1)
-		#nb.AddPage(np, 'VPN')
-		
-		self.timer = wx.Timer(self, -1)
-		self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
-		self.timer.Start(1000)
-		self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
-		self.SetMenuBar(menubar)
-		self.Show()
+        self.timer = wx.Timer(self, -1)
+        self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
+        self.timer.Start(1000)
+        self.Bind(wx.EVT_MENU, self.on_quit, id=1)
+        self.SetMenuBar(menubar)
+        self.Show()
 
-app = wx.App()
-mw = MainWindow(None, -1, 'Tinc GUI')
+    def on_quit(self, event):
+        app.ExitMainLoop()
 
-#def OnTaskBarIcon(event):
-#	mw.Raise()
-#
-#icon = wx.Icon("tincgui.ico", wx.BITMAP_TYPE_PNG)
-#taskbaricon = wx.TaskBarIcon()
-#taskbaricon.SetIcon(icon, 'Tinc GUI')
-#wx.EVT_TASKBAR_RIGHT_UP(taskbaricon, OnTaskBarIcon)
+    def on_timer(self, event):
+        vpn.refresh()
+        self.np.nodes.refresh()
+        self.np.subnets.refresh()
+        self.np.edges.refresh()
+        self.np.connections.refresh()
 
-app.MainLoop()
-vpn.close()
+
+def main(netname, pidfile):
+    global vpn, app
+
+    if netname is None:
+        netname = os.getenv('NETNAME')
+
+    vpn = VPN(netname, pidfile)
+    vpn.connect()
+
+    app = wx.App()
+    mw = MainWindow(None, -1, 'Tinc GUI')
+
+    """
+    def OnTaskBarIcon(event):
+        mw.Raise()
+    """
+
+    """
+    icon = wx.Icon("tincgui.ico", wx.BITMAP_TYPE_PNG)
+    taskbaricon = wx.TaskBarIcon()
+    taskbaricon.SetIcon(icon, 'Tinc GUI')
+    wx.EVT_TASKBAR_RIGHT_UP(taskbaricon, OnTaskBarIcon)
+    """
+
+    app.MainLoop()
+    vpn.close()
+
+
+if __name__ == '__main__':
+    argparser = ArgumentParser(epilog='Report bugs to tinc@tinc-vpn.org.')
+
+    argparser.add_argument('-n', '--net', metavar='NETNAME', dest='netname', help='Connect to net NETNAME')
+    argparser.add_argument('-p', '--pidfile', help='Path to the pid file (containing the controlcookie)')
+
+    options = argparser.parse_args()
+
+    main(options.netname, options.pidfile)
