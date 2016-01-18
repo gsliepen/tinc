@@ -43,11 +43,12 @@ static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
 extern char *myport;
+OVERLAPPED r_overlapped;
+OVERLAPPED w_overlapped;
 
 static DWORD WINAPI tapreader(void *bla) {
 	int status;
 	DWORD len;
-	OVERLAPPED overlapped;
 	vpn_packet_t packet;
 	int errors = 0;
 
@@ -55,19 +56,17 @@ static DWORD WINAPI tapreader(void *bla) {
 
 	/* Read from tap device and send to parent */
 
-	overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	r_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	for(;;) {
-		overlapped.Offset = 0;
-		overlapped.OffsetHigh = 0;
-		ResetEvent(overlapped.hEvent);
+		ResetEvent(r_overlapped.hEvent);
 
-		status = ReadFile(device_handle, packet.data, MTU, &len, &overlapped);
+		status = ReadFile(device_handle, packet.data, MTU, &len, &r_overlapped);
 
 		if(!status) {
 			if(GetLastError() == ERROR_IO_PENDING) {
-				WaitForSingleObject(overlapped.hEvent, INFINITE);
-				if(!GetOverlappedResult(device_handle, &overlapped, &len, FALSE))
+				WaitForSingleObject(r_overlapped.hEvent, INFINITE);
+				if(!GetOverlappedResult(device_handle, &r_overlapped, &len, FALSE))
 					continue;
 			} else {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
@@ -201,6 +200,11 @@ static bool setup_device(void) {
 		overwrite_mac = 1;
 	}
 
+	/* Create overlapped events for tap I/O */
+
+	r_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	w_overlapped.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+
 	/* Start the tap reader */
 
 	thread = CreateThread(NULL, 0, tapreader, NULL, 0, NULL);
@@ -235,14 +239,48 @@ static bool read_packet(vpn_packet_t *packet) {
 
 static bool write_packet(vpn_packet_t *packet) {
 	DWORD lenout;
-	OVERLAPPED overlapped = {0};
+	static vpn_packet_t queue;
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(!WriteFile(device_handle, packet->data, packet->len, &lenout, &overlapped)) {
-		logger(LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
-		return false;
+	/* Check if there is something in progress */
+
+	if(queue.len) {
+		DWORD size;
+		BOOL success = GetOverlappedResult(device_handle, &w_overlapped, &size, FALSE);
+		if(success) {
+			ResetEvent(&w_overlapped);
+			queue.len = 0;
+		} else {
+			int err = GetLastError();
+			if(err != ERROR_IO_INCOMPLETE) {
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Error completing previously queued write: %s", winerror(err));
+				ResetEvent(&w_overlapped);
+				queue.len = 0;
+			} else {
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Previous overlapped write still in progress");
+				// drop this packet
+				return true;
+			}
+		}
+	}
+
+	/* Otherwise, try to write. */
+
+	memcpy(queue.data, packet->data, packet->len);
+
+	if(!WriteFile(device_handle, queue.data, packet->len, &lenout, &w_overlapped)) {
+		int err = GetLastError();
+		if(err != ERROR_IO_PENDING) {
+			logger(LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(err));
+			return false;
+		}
+		// Write is being done asynchronously.
+		queue.len = packet->len;
+	} else {
+		// Write was completed immediately.
+		ResetEvent(&w_overlapped);
 	}
 
 	device_total_out += packet->len;
