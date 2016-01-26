@@ -2487,6 +2487,23 @@ When problems are found, this will be printed on a line with WARNING or ERROR in
 Most problems must be corrected by the user itself, however in some cases (like file permissions and missing public keys),
 tinc will ask if it should fix the problem.
 
+@cindex sign
+@item sign [@var{filename}]
+Sign a file with the local node's private key.
+If no @var{filename} is given, the file is read from standard input.
+The signed file is written to standard output.
+
+@cindex verify
+@item verify @var{name} [@var{filename}]
+
+Check the signature of a file against a node's public key.
+The @var{name} of the node must be given,
+or can be "." to check against the local node's public key,
+or "*" to allow a signature from any node whose public key is known.
+If no @var{filename} is given, the file is read from standard input.
+If the verification is succesful, a copy of the input with the signature removed is written to standard output, and the exit code will be zero.
+If the verification failed, nothing will be written to standard output, and the exit code will be non-zero.
+
 @end table
 
 @c ==================================================================

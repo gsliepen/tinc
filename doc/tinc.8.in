@@ -230,6 +230,30 @@ unknown and obsolete configuration variables, wrong public and/or private keys, 
 When problems are found, this will be printed on a line with WARNING or ERROR in front of it.
 Most problems must be corrected by the user itself, however in some cases (like file permissions and missing public keys),
 tinc will ask if it should fix the problem.
+.It sign Op Ar filename
+Sign a file with the local node's private key.
+If no
+.Ar filename
+is given, the file is read from standard input.
+The signed file is written to standard output.
+.It verify Ar name Op Ar filename
+Check the signature of a file against a node's public key.
+The
+.Ar name
+of the node must be given,
+or can be
+.Li .
+to check against the local node's public key, or
+.Li *
+to allow a signature from any node whose public key is known.
+If no
+.Ar filename
+is given, the file is read from standard input.
+If the verification is succesful,
+a copy of the input with the signature removed is written to standard output,
+and the exit code will be zero.
+If the verification failed,
+nothing will be written to standard output, and the exit code will be non-zero.
 .El
 .Sh EXAMPLES
 Examples of some commands:
