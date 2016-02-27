@@ -142,8 +142,19 @@ bool add_edge_h(connection_t *c, const char *request) {
 			} else {
 				logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) which does not match existing entry",
 						   "ADD_EDGE", c->name, c->hostname);
-				edge_del(e);
+				e->options = options;
+				if(sockaddrcmp(&e->address, &address)) {
+					sockaddrfree(&e->address);
+					e->address = address;
+				}
+				if(e->weight != weight) {
+					avl_node_t *node = avl_unlink(edge_weight_tree, e);
+					e->weight = weight;
+					avl_insert_node(edge_weight_tree, node);
+				}
+
 				graph();
+				return true;
 			}
 		} else if(sockaddrcmp(&e->local_address, &local_address)) {
 			if(from == myself) {
