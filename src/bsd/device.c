@@ -75,6 +75,8 @@ static bool setup_device(void) {
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
+	else if(strcmp(iface, strrchr(device, '/') ? strrchr(device, '/') + 1 : device))
+		logger(LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
