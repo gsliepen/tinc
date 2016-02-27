@@ -42,7 +42,7 @@ the configuration file should be
 and the host configuration files are now expected to be in
 .Pa @sysconfdir@/tinc/hosts/ .
 .Sh NAMES
-Each tinc daemon should have a name that is unique in the network which it will be part of.
+Each tinc daemon must have a name that is unique in the network which it will be part of.
 The name will be used by other tinc daemons for identification.
 The name has to be declared in the
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf

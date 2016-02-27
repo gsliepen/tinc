@@ -1139,7 +1139,7 @@ until the burst has passed.
 @cindex Name
 @item Name = <@var{name}> [required]
 This is a symbolic name for this connection.
-The name should consist only of alfanumeric and underscore characters (a-z, A-Z, 0-9 and _), and is case sensitive.
+The name must consist only of alfanumeric and underscore characters (a-z, A-Z, 0-9 and _), and is case sensitive.
 
 If Name starts with a $, then the contents of the environment variable that follows will be used.
 In that case, invalid characters will be converted to underscores.
