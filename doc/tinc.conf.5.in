@@ -657,10 +657,18 @@ forwarding packets.
 .Sh SCRIPTS
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
-Under Windows (not Cygwin), the scripts should have the extension
+Below is a list of filenames of scripts and a description of when they are run.
+A script is only run if it exists and if it is executable.
+.Pp
+Scripts are run synchronously;
+this means that tinc will temporarily stop processing packets until the called script finishes executing.
+This guarantees that scripts will execute in the exact same order as the events that trigger them.
+If you need to run commands asynchronously, you have to ensure yourself that they are being run in the background.
+.Pp
+Under Windows (not Cygwin), the scripts must have the extension
 .Pa .bat
 or
-.Pa cmd .
+.Pa .cmd .
 .Bl -tag -width indent
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
 This is the most important script.
@@ -669,6 +677,7 @@ If it is present it will be executed right after the tinc daemon has been starte
 is used).
 It should be used to set up the corresponding network interface,
 but can also be used to start other things.
+.Pp
 Under Windows you can use the Network Connections control panel instead of creating this script.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 This script is started right before the tinc daemon quits (or when the last node becomes unreachable if
