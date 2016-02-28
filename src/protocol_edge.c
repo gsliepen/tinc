@@ -136,8 +136,7 @@ bool add_edge_h(connection_t *c) {
 					avl_insert_node(edge_weight_tree, node);
 				}
 
-				graph();
-				return true;
+				goto done;
 			}
 		} else
 			return true;
@@ -161,6 +160,7 @@ bool add_edge_h(connection_t *c) {
 	e->weight = weight;
 	edge_add(e);
 
+done:
 	/* Tell the rest about the new edge */
 
 	if(!tunnelserver)
