@@ -13,8 +13,6 @@ if LINUX
 sbin_PROGRAMS += sptps_speed
 endif
 
-DEFAULT_INCLUDES =
-
 ed25519_SOURCES = \
 	ed25519/add_scalar.c \
 	ed25519/ed25519.h \
