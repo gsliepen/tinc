@@ -153,8 +153,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 					avl_insert_node(edge_weight_tree, node);
 				}
 
-				graph();
-				return true;
+				goto done;
 			}
 		} else if(sockaddrcmp(&e->local_address, &local_address)) {
 			if(from == myself) {
@@ -212,6 +211,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 	e->weight = weight;
 	edge_add(e);
 
+done:
 	/* Tell the rest about the new edge */
 
 	if(!tunnelserver)
