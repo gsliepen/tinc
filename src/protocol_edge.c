@@ -148,9 +148,9 @@ bool add_edge_h(connection_t *c, const char *request) {
 					e->address = address;
 				}
 				if(e->weight != weight) {
-					avl_node_t *node = avl_unlink(edge_weight_tree, e);
+					splay_node_t *node = splay_unlink(edge_weight_tree, e);
 					e->weight = weight;
-					avl_insert_node(edge_weight_tree, node);
+					splay_insert_node(edge_weight_tree, node);
 				}
 
 				goto done;
