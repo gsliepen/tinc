@@ -19,6 +19,7 @@
 */
 
 #include "../system.h"
+#include "../net.h"
 
 #include <w32api/windows.h>
 #include <w32api/winioctl.h>
@@ -26,7 +27,6 @@
 #include "../conf.h"
 #include "../device.h"
 #include "../logger.h"
-#include "../net.h"
 #include "../route.h"
 #include "../utils.h"
 #include "../xalloc.h"
