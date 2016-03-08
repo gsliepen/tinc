@@ -42,7 +42,7 @@ issues are being addressed in the tinc 1.1 branch.
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
 prove the security of any cryptographic product. If you wish to review
-tinc or give us feedback, you are stronly encouraged to do so.
+tinc or give us feedback, you are strongly encouraged to do so.
 
 
 Changes to configuration file format since 1.0pre5
@@ -106,14 +106,14 @@ Linux, FreeBSD and Windows.
 The algorithms used for encryption and generating message authentication codes
 can now be changed in the configuration files. All cipher and digest algorithms
 supported by OpenSSL can be used. Useful ciphers are "blowfish" (default),
-"bf-ofb", "des", "des3", etcetera. Useful digests are "sha1" (default), "md5",
-etcetera.
+"bf-ofb", "des", "des3", et cetera. Useful digests are "sha1" (default), "md5",
+et cetera.
 
 Support for routing IPv6 packets has been added. Just add Subnet lines with
 IPv6 addresses (without using :: abbreviations) and use ifconfig or ip (from
 the iproute package) to give the virtual network interface corresponding IPv6
-addresses. tinc does not provide autoconfiguration for IPv6 hosts, if you need
-it use radvd or zebra.
+addresses. tinc does not provide autoconfiguration for IPv6 hosts. Consider
+using radvd or zebra if you need it.
 
 It is also possible to make tunnels to other tinc daemons over IPv6 networks,
 if the operating system supports IPv6.  tinc will automatically use both IPv6
@@ -121,7 +121,7 @@ and IPv4 when available, but this can be changed by adding the option
 "AddressFamily = ipv4" or "AddressFamily = ipv6" to the tinc.conf file.
 
 Normally, when started tinc will detach and run in the background. In a native
-Windows environment this means tinc will intall itself as a service, which will
+Windows environment this means tinc will install itself as a service, which will
 restart after reboots.  To prevent tinc from detaching or running as a service,
 use the -D option.
 
