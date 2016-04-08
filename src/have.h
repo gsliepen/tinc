@@ -210,6 +210,12 @@
 #include <linux/if_tun.h>
 #endif
 
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#else
+#include "getopt.h"
+#endif
+
 #ifdef STATUS
 #undef STATUS
 #endif

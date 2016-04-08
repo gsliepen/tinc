@@ -53,8 +53,6 @@ tincd_SOURCES = \
 	fake-gai-errnos.h \
 	fake-getaddrinfo.c fake-getaddrinfo.h \
 	fake-getnameinfo.c fake-getnameinfo.h \
-	getopt.c getopt.h \
-	getopt1.c \
 	graph.c graph.h \
 	hash.c hash.h \
 	have.h \
@@ -149,7 +147,22 @@ sptps_speed_SOURCES = \
 	$(chacha_poly1305_SOURCES)
 
 ## Conditionally compile device drivers
-	
+
+if !GETOPT
+tincd_SOURCES += \
+	getopt.c getopt.h \
+	getopt1.c
+tinc_SOURCES += \
+	getopt.c getopt.h \
+	getopt1.cendif
+sptps_test_SOURCES += \
+	getopt.c getopt.h \
+	getopt1.c
+sptps_keypair_SOURCES += \
+	getopt.c getopt.h \
+	getopt1.c
+endif
+
 if LINUX
 tincd_SOURCES += linux/device.c
 endif

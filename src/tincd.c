@@ -43,8 +43,6 @@
 #include <time.h>
 #endif
 
-#include <getopt.h>
-
 #include "conf.h"
 #include "control.h"
 #include "crypto.h"
