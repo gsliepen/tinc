@@ -1,3 +1,4 @@
+.*.swp
 Makefile
 Makefile.in
 *.o
@@ -15,3 +16,12 @@ INSTALL
 .deps
 stamp-h1
 /src/device.c
+*.tar.gz*
+/doc/*.tex
+/doc/tincinclude.texi
+/doc/*.info
+/doc/*.5
+/doc/*.8
+/ChangeLog
+core*
+.dirstamp
