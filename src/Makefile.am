@@ -98,8 +98,6 @@ tincd_SOURCES = \
 
 tinc_SOURCES = \
 	dropin.c dropin.h \
-	getopt.c getopt.h \
-	getopt1.c \
 	fsck.c fsck.h \
 	info.c info.h \
 	invitation.c invitation.h \
