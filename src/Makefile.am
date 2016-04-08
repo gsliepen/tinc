@@ -17,8 +17,6 @@ tincd_SOURCES = \
 	fake-gai-errnos.h \
 	fake-getaddrinfo.c fake-getaddrinfo.h \
 	fake-getnameinfo.c fake-getnameinfo.h \
-	getopt.c getopt.h \
-	getopt1.c \
 	graph.c graph.h \
 	ipv4.h \
 	ipv6.h \
@@ -48,6 +46,12 @@ tincd_SOURCES = \
 	utils.c utils.h \
 	xalloc.h \
 	xmalloc.c
+
+if !GETOPT
+tincd_SOURCES += \
+	getopt.c getopt.h \
+	getopt1.c
+endif
 
 if LINUX
 tincd_SOURCES += linux/device.c

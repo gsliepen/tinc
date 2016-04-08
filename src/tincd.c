@@ -49,7 +49,12 @@
 #include <time.h>
 #endif
 
+#ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
+#else
+#include "getopt.h"
+#endif
+
 #include "pidfile.h"
 
 #include "conf.h"
