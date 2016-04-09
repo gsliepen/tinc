@@ -1,6 +1,6 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2014 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2015 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2006      Scott Lamb <slamb@slamb.org>
 

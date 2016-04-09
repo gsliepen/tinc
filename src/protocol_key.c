@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

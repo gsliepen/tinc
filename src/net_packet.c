@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
