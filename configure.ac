@@ -3,9 +3,10 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)
 AC_INIT([tinc], [1.0.26])
 AC_CONFIG_SRCDIR([src/tincd.c])
-AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc -Wall])
+AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
+AM_SILENT_RULES([yes])
 
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
