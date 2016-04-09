@@ -1,3 +1,24 @@
+Version 1.0.27               April 10 2016
+
+ * When using Proxy, let the proxy resolve hostnames if tinc can't.
+
+ * Fixes and improvements of the DecrementTTL option.
+
+ * Fixed the $NAME variable in subnet-up/down scripts for the local Subnets.
+
+ * Fixed potentially wrong checksum generation when clamping the MSS.
+
+ * Properly choose between the system's or our own copy of getopt.
+
+ * Fixed compiling tinc for Cygwin with MinGW installed.
+
+ * Added support for OS X utun interfaces.
+
+ * Documentation updates and minor fixes.
+
+Thanks to Vittorio Gambaletta, LunarShaddow, Florian Weik and Nathan Stratton
+Treadway for their contributions to this version of tinc.
+
 Version 1.0.26               July 5 2015
 
  * Tinc now forces glibc to reload /etc/resolv.conf for every hostname lookup.
