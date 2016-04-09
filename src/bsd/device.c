@@ -34,11 +34,7 @@
 #endif
 
 #define DEFAULT_TUN_DEVICE "/dev/tun0"
-#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD) || defined(HAVE_DARWIN)
 #define DEFAULT_TAP_DEVICE "/dev/tap0"
-#else
-#define DEFAULT_TAP_DEVICE "/dev/tun0"
-#endif
 
 typedef enum device_type {
 	DEVICE_TYPE_TUN,
