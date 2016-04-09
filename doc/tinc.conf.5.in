@@ -1,4 +1,4 @@
-.Dd 2016-02-27
+.Dd 2016-04-10
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -249,6 +249,10 @@ Set type to tun with an address family header.
 Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
+This mode should support both IPv4 and IPv6 packets.
+.It utun Pq OS X
+Set type to utun.
+This is only supported on OS X version 10.6.8 and higher, but doesn't require the tuntaposx module.
 This mode should support both IPv4 and IPv6 packets.
 .It tap Pq BSD and Linux
 Set type to tap.

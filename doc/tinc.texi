@@ -302,8 +302,14 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @subsection Configuration of Darwin (Mac OS X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
+OS X version 10.6.8 and later have a built-in tun driver called "utun".
+Tinc also supports the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices.
+
+By default, tinc expects the tuntaposx driver to be installed.
+To use the utun driver, set add @code{Device = utunX} to @file{tinc.conf},
+where X is the desired number for the utun interface.
+You can also omit the number, in which case the first free number will be chosen.
 
 
 @c ==================================================================
@@ -890,6 +896,12 @@ Set type to tun with an address family header.
 Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
+This mode should support both IPv4 and IPv6 packets.
+
+@cindex utun
+@item utun (OS X)
+Set type to utun.
+This is only supported on OS X version 10.6.8 and higher, but doesn't require the tuntaposx module.
 This mode should support both IPv4 and IPv6 packets.
 
 @item tap (BSD and Linux)

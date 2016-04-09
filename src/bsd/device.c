@@ -33,6 +33,12 @@
 #include "tunemu.h"
 #endif
 
+#ifdef HAVE_NET_IF_UTUN_H
+#include <sys/sys_domain.h>
+#include <sys/kern_control.h>
+#include <net/if_utun.h>
+#endif
+
 #define DEFAULT_TUN_DEVICE "/dev/tun0"
 #define DEFAULT_TAP_DEVICE "/dev/tap0"
 
@@ -42,6 +48,9 @@ typedef enum device_type {
 	DEVICE_TYPE_TAP,
 #ifdef ENABLE_TUNEMU
 	DEVICE_TYPE_TUNEMU,
+#endif
+#ifdef HAVE_NET_IF_UTUN_H
+	DEVICE_TYPE_UTUN,
 #endif
 } device_type_t;
 
@@ -57,6 +66,59 @@ static device_type_t device_type = DEVICE_TYPE_TUNEMU;
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
+#endif
+
+#ifdef HAVE_NET_IF_UTUN_H
+static bool setup_utun(void) {
+	device_fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
+	if(device_fd == -1) {
+		logger(LOG_ERR, "Could not open PF_SYSTEM socket: %s\n", strerror(errno));
+		return false;
+	}
+
+	struct ctl_info info = {};
+	strlcpy(info.ctl_name, UTUN_CONTROL_NAME, sizeof info.ctl_name);
+
+	if(ioctl(device_fd, CTLIOCGINFO, &info) == -1) {
+		logger(LOG_ERR, "ioctl(CTLIOCGINFO) failed: %s", strerror(errno));
+		return false;
+	}
+
+	int unit = -1;
+	char *p = strstr(device, "utun"), *e = NULL;
+	if(p) {
+		unit = strtol(p + 4, &e, 10);
+		if(!e)
+			unit = -1;
+	}
+
+	struct sockaddr_ctl sc = {
+		.sc_id = info.ctl_id,
+		.sc_len = sizeof sc,
+		.sc_family = AF_SYSTEM,
+		.ss_sysaddr = AF_SYS_CONTROL,
+		.sc_unit = unit + 1,
+	};
+
+	if(connect(device_fd, (struct sockaddr *)&sc, sizeof(sc)) == -1) {
+		logger(LOG_ERR, "Could not connect utun socket: %s\n", strerror(errno));
+		return false;
+	}
+
+	char name[64] = "";
+	socklen_t len = sizeof name;
+	if(getsockopt(device_fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, name, &len)) {
+		iface = xstrdup(device);
+	} else {
+		iface = xstrdup(name);
+	}
+
+	device_info = "OS X utun device";
+
+	logger(LOG_INFO, "%s is a %s", device, device_info);
+
+	return true;
+}
 #endif
 
 static bool setup_device(void) {
@@ -80,6 +142,10 @@ static bool setup_device(void) {
 		else if(!strcasecmp(type, "tunemu"))
 			device_type = DEVICE_TYPE_TUNEMU;
 #endif
+#ifdef HAVE_NET_IF_UTUN_H
+		else if(!strcasecmp(type, "utun"))
+			device_type = DEVICE_TYPE_UTUN;
+#endif
 		else if(!strcasecmp(type, "tunnohead"))
 			device_type = DEVICE_TYPE_TUN;
 		else if(!strcasecmp(type, "tunifhead"))
@@ -91,8 +157,18 @@ static bool setup_device(void) {
 			return false;
 		}
 	} else {
+#ifdef HAVE_NET_IF_UTUN_H
+		if(strncmp(device, "utun", 4) == 0 || strncmp(device, "/dev/utun", 9) == 0)
+			device_type = DEVICE_TYPE_UTUN;
+		else
+#endif
 		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER)
 			device_type = DEVICE_TYPE_TAP;
+	}
+
+	if(routing_mode == RMODE_SWITCH && device_type != DEVICE_TYPE_TAP) {
+		logger(LOG_ERR, "Only tap devices support switch mode!");
+		return false;
 	}
 
 	// Open the device
@@ -104,6 +180,10 @@ static bool setup_device(void) {
         		device_fd = tunemu_open(dynamic_name);
 		}
 			break;
+#endif
+#ifdef HAVE_NET_IF_UTUN_H
+		case DEVICE_TYPE_UTUN:
+			return setup_utun();
 #endif
 		default:
 			device_fd = open(device, O_RDWR | O_NONBLOCK);
@@ -267,31 +347,27 @@ static bool read_packet(vpn_packet_t *packet) {
 			packet->len = lenin + 14;
 			break;
 
+		case DEVICE_TYPE_UTUN:
 		case DEVICE_TYPE_TUNIFHEAD: {
-			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, MTU - 14}};
-
-			if((lenin = readv(device_fd, vector, 2)) <= 0) {
+			if((lenin = read(device_fd, packet->data + 10, MTU - 10)) <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
 
-			switch (ntohl(type)) {
-				case AF_INET:
+			switch(packet->data[14] >> 4) {
+				case 4:
 					packet->data[12] = 0x08;
 					packet->data[13] = 0x00;
 					break;
-
-				case AF_INET6:
+				case 6:
 					packet->data[12] = 0x86;
 					packet->data[13] = 0xDD;
 					break;
-
 				default:
 					ifdebug(TRAFFIC) logger(LOG_ERR,
-							   "Unknown address family %x while reading packet from %s %s",
-							   ntohl(type), device_info, device);
+							   "Unknown IP version %d while reading packet from %s %s",
+							   packet->data[14] >> 4, device_info, device);
 					return false;
 			}
 
@@ -335,12 +411,10 @@ static bool write_packet(vpn_packet_t *packet) {
 			}
 			break;
 
+		case DEVICE_TYPE_UTUN:
 		case DEVICE_TYPE_TUNIFHEAD: {
-			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, packet->len - 14}};
-			int af;
-			
-			af = (packet->data[12] << 8) + packet->data[13];
+			int af = (packet->data[12] << 8) + packet->data[13];
+			uint32_t type;
 
 			switch (af) {
 				case 0x0800:
@@ -356,7 +430,9 @@ static bool write_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			if(writev(device_fd, vector, 2) < 0) {
+			memcpy(packet->data + 10, &type, sizeof type);
+
+			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
