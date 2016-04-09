@@ -4,9 +4,10 @@ AC_PREREQ(2.61)
 AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
-AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc -Wall])
+AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+AM_SILENT_RULES([yes])
 
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
