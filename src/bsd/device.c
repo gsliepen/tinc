@@ -203,6 +203,11 @@ static bool setup_device(void) {
 #endif
 	}
 
+#ifdef SIOCGIFADDR
+	if(overwrite_mac)
+		ioctl(device_fd, SIOCGIFADDR, mymac.x);
+#endif
+
 	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
