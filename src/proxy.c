@@ -203,7 +203,7 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 	case PROXY_SOCKS5:
 		if(c->buflen < 2)
 			return 0;
-		if(c->buffer[0] != 0x05 || c->buffer[1] == 0xff) {
+		if(c->buffer[0] != 0x05 || c->buffer[1] == (char)0xff) {
 			logger(LOG_ERR, "Proxy authentication method rejected");
 			return -1;
 		}
