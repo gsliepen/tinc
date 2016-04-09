@@ -60,7 +60,7 @@ static device_type_t device_type = DEVICE_TYPE_TUN;
 #endif
 
 static bool setup_device(void) {
-	char *type;
+	// Find out which device file to open
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
 		if(routing_mode == RMODE_ROUTER)
@@ -69,10 +69,9 @@ static bool setup_device(void) {
 			device = xstrdup(DEFAULT_TAP_DEVICE);
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
-	else if(strcmp(iface, strrchr(device, '/') ? strrchr(device, '/') + 1 : device))
-		logger(LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
+	// Find out if it's supposed to be a tun or a tap device
+
+	char *type;
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
@@ -96,6 +95,8 @@ static bool setup_device(void) {
 			device_type = DEVICE_TYPE_TAP;
 	}
 
+	// Open the device
+
 	switch(device_type) {
 #ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU: {
@@ -116,6 +117,27 @@ static bool setup_device(void) {
 #ifdef FD_CLOEXEC
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
+
+	// Guess what the corresponding interface is called
+
+	char *realname;
+
+#if defined(HAVE_FDEVNAME)
+	realname = fdevname(device_fd) ? : device;
+#elif defined(HAVE_DEVNAME)
+	struct stat buf;
+	if(!fstat(device_fd, &buf))
+		realname = devname(buf.st_rdev, S_IFCHR) ? : device;
+#else
+	realname = device;
+#endif
+
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = xstrdup(strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname);
+	else if(strcmp(iface, strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname))
+		logger(LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
+
+	// Configure the device as best as we can
 
 	switch(device_type) {
 		default:
