@@ -22,6 +22,9 @@ stamp-h1
 /doc/*.info
 /doc/*.5
 /doc/*.8
+/doc/*.html
+/doc/*.pdf
+/doc/*.t2p
 /ChangeLog
 core*
 .dirstamp
