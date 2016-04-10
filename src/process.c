@@ -339,8 +339,8 @@ bool detach(void) {
 
 	openlogger(identname, use_logfile?LOGMODE_FILE:(do_detach?LOGMODE_SYSLOG:LOGMODE_STDERR));
 
-	logger(LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
-			   VERSION, __DATE__, __TIME__, debug_level);
+	logger(LOG_NOTICE, "tincd %s starting, debug level %d",
+			   VERSION, debug_level);
 
 	xalloc_fail_func = memory_full;
 
