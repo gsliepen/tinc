@@ -4,6 +4,7 @@
 *.orig
 *.swp
 .deps
+.libs
 /ChangeLog
 /INSTALL
 /aclocal.m4
@@ -13,8 +14,13 @@
 /configure
 /depcomp
 /doc/sample-config.tar.gz
-/doc/texinfo.tex
-/doc/tinc.info
+/doc/*.tex
+/doc/*.info
+/doc/*.5
+/doc/*.8
+/doc/*.html
+/doc/*.pdf
+/doc/*.t2p
 /install-sh
 /missing
 /src/device.c
@@ -24,5 +30,5 @@
 /test-driver
 Makefile
 Makefile.in
-core
-core.*
+core*
+*.tar.gz*
