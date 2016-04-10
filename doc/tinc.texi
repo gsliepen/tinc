@@ -334,13 +334,13 @@ as explained in the rest of the documentation.
 
 @cindex requirements
 @cindex libraries
-Before you can configure or build tinc, you need to have the OpenSSL, zlib,
+Before you can configure or build tinc, you need to have the LibreSSL or OpenSSL, zlib,
 lzo, curses and readline libraries installed on your system.  If you try to
 configure tinc without having them installed, configure will give you an error
 message, and stop.
 
 @menu
-* OpenSSL::
+* LibreSSL/OpenSSL::
 * zlib::
 * lzo::
 * libcurses::
@@ -349,12 +349,13 @@ message, and stop.
 
 
 @c ==================================================================
-@node       OpenSSL
-@subsection OpenSSL
+@node       LibreSSL/OpenSSL
+@subsection LibreSSL/OpenSSL
 
+@cindex LibreSSL
 @cindex OpenSSL
 For all cryptography-related functions, tinc uses the functions provided
-by the OpenSSL library.
+by the LibreSSL or the OpenSSL library.
 
 If this library is not installed, you wil get an error when configuring
 tinc for build.  Support for running tinc with other cryptographic libraries
@@ -364,21 +365,23 @@ You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
 of this package.
 
-If you have to install OpenSSL manually, you can get the source code
-from @url{http://www.openssl.org/}.  Instructions on how to configure,
-build and install this package are included within the package.  Please
-make sure you build development and runtime libraries (which is the
+If your operating system comes neither with LibreSSL or OpenSSL, you have to
+install one manually.  It is recommended that you get the latest version of
+LibreSSL from @url{http://www.libressl.org/}.  Instructions on how to
+configure, build and install this package are included within the package.
+Please make sure you build development and runtime libraries (which is the
 default).
 
-If you installed the OpenSSL libraries from source, it may be necessary
+If you installed the LibreSSL or OpenSSL libraries from source, it may be necessary
 to let configure know where they are, by passing configure one of the
---with-openssl-* parameters.
+--with-openssl-* parameters. Note that you even have to use --with-openssl-* if you
+are using LibreSSL.
 
 @example
---with-openssl=DIR      OpenSSL library and headers prefix
---with-openssl-include=DIR OpenSSL headers directory
+--with-openssl=DIR      LibreSSL/OpenSSL library and headers prefix
+--with-openssl-include=DIR LibreSSL/OpenSSL headers directory
                         (Default is OPENSSL_DIR/include)
---with-openssl-lib=DIR  OpenSSL library directory
+--with-openssl-lib=DIR  LibreSSL/OpenSSL library directory
                         (Default is OPENSSL_DIR/lib)
 @end example
 
@@ -1312,7 +1315,7 @@ tried until a working connection has been established.
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)
 The symmetric cipher algorithm used to encrypt UDP packets using the legacy protocol.
-Any cipher supported by OpenSSL is recognized.
+Any cipher supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
 This option has no effect for connections using the SPTPS protocol, which always use AES-256-CTR.
@@ -1332,7 +1335,7 @@ Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 @cindex Digest
 @item Digest = <@var{digest}> (sha1)
 The digest algorithm used to authenticate UDP packets using the legacy protocol.
-Any digest supported by OpenSSL is recognized.
+Any digest supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet authentication.
 This option has no effect for connections using the SPTPS protocol, which always use HMAC-SHA-256.
 
@@ -3174,7 +3177,7 @@ eavesdroppers cannot get and cannot change any information at all from the
 packets they can intercept. The encryption algorithm and message authentication
 algorithm can be changed in the configuration. The length of the message
 authentication codes is also adjustable. The length of the key for the
-encryption algorithm is always the default length used by OpenSSL.
+encryption algorithm is always the default length used by LibreSSL/OpenSSL.
 
 The SPTPS protocol is described in @ref{Simple Peer-to-Peer Security}.
 For comparison, this is how SPTPS UDP packets look:
@@ -3201,7 +3204,7 @@ this cannot be changed.
 In August 2000, we discovered the existence of a security hole in all versions
 of tinc up to and including 1.0pre2. This had to do with the way we exchanged
 keys. Since then, we have been working on a new authentication scheme to make
-tinc as secure as possible. The current version uses the OpenSSL library and
+tinc as secure as possible. The current version uses the LibreSSL or OpenSSL library and
 uses strong authentication with RSA keys.
 
 On the 29th of December 2001, Jerome Etienne posted a security analysis of tinc
