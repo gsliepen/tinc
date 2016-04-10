@@ -26,7 +26,7 @@
     the code. Mail me if you found a bug.
 
     Cleaned up and incorporated some of the ideas from the red-black tree
-    library for inclusion into tinc (http://www.tinc-vpn.org/) by
+    library for inclusion into tinc (https://www.tinc-vpn.org/) by
     Guus Sliepen <guus@tinc-vpn.org>.
 */
 

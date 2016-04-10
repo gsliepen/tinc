@@ -657,7 +657,7 @@ its connection to the virtual network device.
 .El
 .Sh SEE ALSO
 .Xr tincd 8 ,
-.Pa http://www.tinc-vpn.org/ ,
+.Pa https://www.tinc-vpn.org/ ,
 .Pa http://www.tldp.org/LDP/nag2/ .
 .Pp
 The full documentation for

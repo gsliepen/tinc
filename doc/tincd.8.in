@@ -207,7 +207,7 @@ If you find any bugs, report them to tinc@tinc-vpn.org.
 A lot, especially security auditing.
 .Sh SEE ALSO
 .Xr tinc.conf 5 ,
-.Pa http://www.tinc-vpn.org/ ,
+.Pa https://www.tinc-vpn.org/ ,
 .Pa http://www.cabal.org/ .
 .Pp
 The full documentation for tinc is maintained as a Texinfo manual.
