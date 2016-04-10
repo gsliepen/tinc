@@ -49,9 +49,7 @@ typedef enum device_type {
 #ifdef ENABLE_TUNEMU
 	DEVICE_TYPE_TUNEMU,
 #endif
-#ifdef HAVE_NET_IF_UTUN_H
 	DEVICE_TYPE_UTUN,
-#endif
 } device_type_t;
 
 int device_fd = -1;
