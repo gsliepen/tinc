@@ -1,3 +1,9 @@
+Version 1.0.28               April 10 2016
+
+ * Fix compilation on BSD platforms.
+
+ * Add systemd service files.
+
 Version 1.0.27               April 10 2016
 
  * When using Proxy, let the proxy resolve hostnames if tinc can't.
