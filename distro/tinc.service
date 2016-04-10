@@ -1,0 +1,16 @@
+# This is a mostly empty service, but allows commands like stop, start, reload
+# to propagate to all tinc@ service instances.
+
+[Unit]
+Description=Tinc VPN
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecReload=/bin/true
+WorkingDirectory=/etc/tinc
+
+[Install]
+WantedBy=multi-user.target
