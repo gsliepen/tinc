@@ -470,7 +470,7 @@ variables can be specified, in which case each address will be tried until a wor
 connection has been established.
 .It Va Cipher Li = Ar cipher Pq blowfish
 The symmetric cipher algorithm used to encrypt UDP packets.
-Any cipher supported by OpenSSL is recognised.
+Any cipher supported by LibreSSL or OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet encryption.
@@ -485,7 +485,7 @@ Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 10 (fast lzo) and 11 (best lzo).
 .It Va Digest Li = Ar digest Pq sha1
 The digest algorithm used to authenticate UDP packets.
-Any digest supported by OpenSSL is recognised.
+Any digest supported by LibreSSL or OpenSSL is recognised.
 Furthermore, specifying
 .Qq none
 will turn off packet authentication.
