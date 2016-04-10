@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -81,6 +81,11 @@ static void configure_tcp(connection_t *c) {
 #if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
 	setsockopt(c->socket, SOL_IP, IP_TOS, (void *)&option, sizeof option);
+#endif
+
+#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS) && defined(IPTOS_LOWDELAY)
+	option = IPTOS_LOWDELAY;
+	setsockopt(c->socket, IPPROTO_IPV6, IPV6_TCLASS, (void *)&option, sizeof option);
 #endif
 }
 
