@@ -191,7 +191,7 @@ packets.
 @cindex release
 For an up to date list of supported platforms, please check the list on
 our website:
-@uref{http://www.tinc-vpn.org/platforms/}.
+@uref{https://www.tinc-vpn.org/platforms/}.
 
 @c
 @c
@@ -273,12 +273,7 @@ The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_t
 @node       Configuration of OpenBSD kernels
 @subsection Configuration of OpenBSD kernels
 
-For OpenBSD version 2.9 and higher,
-the tun driver is included in the default kernel configuration.
-There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
-which adds a tap device to OpenBSD which should work with tinc,
-but with recent versions of OpenBSD,
-a tun device can act as a tap device by setting the link0 option with ifconfig.
+Recent versions of OpenBSD come with both tun and tap devices enabled in the default kernel configuration.
 
 
 @c ==================================================================
@@ -298,7 +293,7 @@ Tunneling IPv6 may not work on NetBSD's tun device.
 For Solaris 8 (SunOS 5.8) and higher,
 the tun driver may or may not be included in the default kernel configuration.
 If it isn't, the source can be downloaded from @uref{http://vtun.sourceforge.net/tun/}.
-For x86 and sparc64 architectures, precompiled versions can be found at @uref{http://www.monkey.org/~dugsong/fragroute/}.
+For x86 and sparc64 architectures, precompiled versions can be found at @uref{https://www.monkey.org/~dugsong/fragroute/}.
 If the @file{net/if_tun.h} header file is missing, install it from the source package.
 
 
@@ -322,7 +317,7 @@ You can also omit the number, in which case the first free number will be chosen
 @subsection Configuration of Windows
 
 You will need to install the latest TAP-Win32 driver from OpenVPN.
-You can download it from @uref{http://openvpn.sourceforge.net}.
+You can download it from @uref{https://openvpn.net/index.php/open-source/downloads.html}.
 Using the Network Connections control panel,
 configure the TAP-Win32 network interface in the same way as you would do from the tinc-up script,
 as explained in the rest of the documentation.
@@ -392,7 +387,7 @@ are using LibreSSL.
 The complete source code of tinc is covered by the GNU GPL version 2.
 Since the license under which OpenSSL is distributed is not directly
 compatible with the terms of the GNU GPL
-@uref{http://www.openssl.org/support/faq.html#LEGAL2}, we
+@uref{https://www.openssl.org/support/faq.html#LEGAL2}, we
 include an exemption to the GPL (see also the file COPYING.README) to allow
 everyone to create a statically or dynamically linked executable:
 
@@ -408,8 +403,8 @@ we also present the following exemption:
 
 @quotation
 Hereby I grant a special exception to the tinc VPN project
-(http://www.tinc-vpn.org/) to link the LZO library with the OpenSSL library
-(http://www.openssl.org).
+(https://www.tinc-vpn.org/) to link the LZO library with the OpenSSL library
+(https://www.openssl.org).
 
 Markus F.X.J. Oberhumer
 @end quotation
@@ -434,7 +429,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install zlib manually, you can get the source code
-from @url{http://www.gzip.org/zlib/}.  Instructions on how to configure,
+from @url{http://www.zlib.net/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
@@ -458,7 +453,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install lzo manually, you can get the source code
-from @url{http://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
+from @url{https://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
@@ -529,9 +524,7 @@ system startup scripts and sample configurations.
 If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
-@uref{http://www.tinc-vpn.org/download/, download page}, which has
-the checksums of these files listed; you may wish to check these with
-md5sum before continuing.
+@uref{https://www.tinc-vpn.org/download/, download page}.
 
 Tinc comes in a convenient autoconf/automake package, which you can just
 treat the same as any other package.  Which is just untar it, type
@@ -568,19 +561,18 @@ The documentation that comes along with your distribution will tell you how to d
 @node       Darwin (MacOS/X) build environment
 @subsection Darwin (MacOS/X) build environment
 
-In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
-from @uref{http://developer.apple.com/tools/macosxtools.html} and
-a recent version of Fink from @uref{http://www.finkproject.org/}.
+In order to build tinc on Darwin, you need to install Xcode from @uref{https://developer.apple.com/xcode/}.
+It might also help to install a recent version of Fink from @uref{http://www.finkproject.org/}.
 
-After installation use fink to download and install the following packages:
-autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
+You need to download and install LibreSSL (or OpenSSL) and LZO,
+either directly from their websites (see @ref{Libraries}) or using Fink.
 
 @c ==================================================================
 @node       Cygwin (Windows) build environment
 @subsection Cygwin (Windows) build environment
 
 If Cygwin hasn't already been installed, install it directly from
-@uref{http://www.cygwin.com/}.
+@uref{https://www.cygwin.com/}.
 
 When tinc is compiled in a Cygwin environment, it can only be run in this environment,
 but all programs, including those started outside the Cygwin environment, will be able to use the VPN.
@@ -591,6 +583,7 @@ It will also support all features.
 @subsection MinGW (Windows) build environment
 
 You will need to install the MinGW environment from @uref{http://www.mingw.org}.
+You also need to download and install LibreSSL (or OpenSSL) and LZO.
 
 When tinc is compiled using MinGW it runs natively under Windows,
 it is not necessary to keep MinGW installed.
@@ -1410,7 +1403,7 @@ MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 Prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
-@uref{http://www.ietf.org/rfc/rfc1519.txt, RFC1519}
+@uref{https://www.ietf.org/rfc/rfc1519.txt, RFC1519}
 
 A Subnet can be given a weight to indicate its priority over identical Subnets
 owned by different nodes. The default weight is 10. Lower values indicate
@@ -3379,14 +3372,14 @@ Adding routes to IPv6 subnets:
 @section Contact information
 
 @cindex website
-Tinc's website is at @url{http://www.tinc-vpn.org/},
+Tinc's website is at @url{https://www.tinc-vpn.org/},
 this server is located in the Netherlands.
 
 @cindex IRC
 We have an IRC channel on the FreeNode and OFTC IRC networks. Connect to
-@uref{http://www.freenode.net/, irc.freenode.net}
+@uref{https://freenode.net/, irc.freenode.net}
 or
-@uref{http://www.oftc.net/, irc.oftc.net}
+@uref{https://www.oftc.net/, irc.oftc.net}
 and join channel #tinc.
 
 
