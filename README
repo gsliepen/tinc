@@ -85,7 +85,7 @@ modes, "switch" and "hub", let the tinc daemons work together to form a virtual
 Ethernet network switch or hub.
 
 Normally, when started tinc will detach and run in the background. In a native
-Windows environment this means tinc will intall itself as a service, which will
+Windows environment this means tinc will install itself as a service, which will
 restart after reboots.  To prevent tinc from detaching or running as a service,
 use the -D option.
 
