@@ -103,10 +103,6 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
-
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
