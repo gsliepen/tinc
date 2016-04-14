@@ -152,7 +152,7 @@ tincd_SOURCES += \
 	getopt1.c
 tinc_SOURCES += \
 	getopt.c getopt.h \
-	getopt1.cendif
+	getopt1.c
 sptps_test_SOURCES += \
 	getopt.c getopt.h \
 	getopt1.c
