@@ -86,40 +86,6 @@ int daemon(int nochdir, int noclose) {
 }
 #endif
 
-#ifndef HAVE_GET_CURRENT_DIR_NAME
-/*
-  Replacement for the GNU get_current_dir_name function:
-
-  get_current_dir_name will malloc(3) an array big enough to hold the
-  current directory name.  If the environment variable PWD is set, and
-  its value is correct, then that value will be returned.
-*/
-char *get_current_dir_name(void) {
-	size_t size;
-	char *buf;
-	char *r;
-
-	/* Start with 100 bytes.  If this turns out to be insufficient to
-	   contain the working directory, double the size.  */
-	size = 100;
-	buf = xmalloc(size);
-
-	errno = 0;                                      /* Success */
-	r = getcwd(buf, size);
-
-	/* getcwd returns NULL and sets errno to ERANGE if the bufferspace
-	   is insufficient to contain the entire working directory.  */
-	while(r == NULL && errno == ERANGE) {
-		free(buf);
-		size <<= 1;                             /* double the size */
-		buf = xmalloc(size);
-		r = getcwd(buf, size);
-	}
-
-	return buf;
-}
-#endif
-
 #ifndef HAVE_ASPRINTF
 int asprintf(char **buf, const char *fmt, ...) {
 	int result;

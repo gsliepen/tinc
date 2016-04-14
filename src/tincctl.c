@@ -330,7 +330,7 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask, mode_t perms) {
 	FILE *r;
-	char *directory;
+	char directory[PATH_MAX] = ".";
 	char buf[PATH_MAX];
 	char buf2[PATH_MAX];
 
@@ -358,7 +358,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	if(filename[0] != '/') {
 #endif
 		/* The directory is a relative path or a filename. */
-		directory = get_current_dir_name();
+		getcwd(directory, sizeof directory);
 		snprintf(buf2, sizeof buf2, "%s" SLASH "%s", directory, filename);
 		filename = buf2;
 	}
