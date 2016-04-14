@@ -164,7 +164,7 @@ dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
 AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/un.h sys/wait.h netdb.h arpa/inet.h dirent.h getopt.h])
-AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_utun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
+AC_CHECK_HEADERS([net/if.h net/if_types.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
   [], [], [#include "$srcdir/src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h resolv.h],
@@ -184,23 +184,36 @@ AC_CHECK_TYPES([struct ether_header, struct arphdr, struct ether_arp, struct ip,
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork gettimeofday mlockall putenv random recvmmsg select strdup strsignal nanosleep unsetenv vsyslog devname fdevname],
+AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork gettimeofday mlockall putenv recvmmsg strsignal nanosleep unsetenv vsyslog devname fdevname],
   [], [], [#include "$srcdir/src/have.h"]
 )
 
 AC_CHECK_FUNC(getopt_long, [getopt=true; AC_DEFINE(HAVE_GETOPT_LONG, 1, [getopt_long()])], [getopt=false])
 AM_CONDITIONAL(GETOPT, test "$getopt" = true)
 
-dnl Support for SunOS
-
-AC_CHECK_FUNC(socket, [], [
-  AC_CHECK_LIB(socket, connect)
-])
-
 AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [
   #include <netinet/in.h>
   #include <resolv.h>
 ])
+
+dnl Operating system specific checks
+case $host_os in
+  *linux*)
+    AC_CHECK_HEADERS([linux/if_tun.h],
+      [], [AC_MSG_ERROR([Required header file missng])], [#include "$srcdir/src/have.h"]
+    )
+  ;;
+  *bsd*|*darwin*)
+    AC_CHECK_HEADERS([net/if_tun.h net/if_utun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h],
+      [], [], [#include "$srcdir/src/have.h"]
+    )
+  ;;
+  *solaris*)
+    AC_CHECK_FUNC(socket, [], [AC_CHECK_LIB(socket, connect)])
+  ;;
+  *)
+  ;;
+esac
 
 AC_CACHE_SAVE
 
