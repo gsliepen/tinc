@@ -199,7 +199,7 @@ AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp,
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random recvmmsg select strdup strsignal usleep unsetenv vsyslog devname fdevname],
+AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random recvmmsg select strdup strsignal nanosleep unsetenv vsyslog devname fdevname],
   [], [], [#include "$srcdir/src/have.h"]
 )
 

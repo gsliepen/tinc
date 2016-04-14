@@ -181,7 +181,7 @@ static void periodic_handler(void *data) {
 
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
-		usleep(sleeptime * 1000000LL);
+		nanosleep(&(struct timespec){sleeptime, 0}, NULL);
 		sleeptime *= 2;
 		if(sleeptime < 0)
 			sleeptime = 3600;

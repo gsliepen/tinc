@@ -41,8 +41,8 @@ extern int vasprintf(char **, const char *, va_list ap);
 extern int gettimeofday(struct timeval *, void *);
 #endif
 
-#ifndef HAVE_USLEEP
-extern int usleep(long long usec);
+#ifndef HAVE_NANOSLEEP
+extern int nanosleep(const struct timespec *req, struct timespec *rem);
 #endif
 
 #ifndef timeradd
