@@ -111,13 +111,6 @@ AC_ARG_ENABLE(tunemu,
   [tunemu=false]
 )
 
-AC_ARG_WITH(windows2000,
-  AS_HELP_STRING([--with-windows2000], [compile with support for Windows 2000. This disables support for tunneling over existing IPv6 networks.]),
-  [ AS_IF([test "x$with_windows2000" = "xyes"],
-      [AC_DEFINE(WITH_WINDOWS2000, 1, [Compile with support for Windows 2000])])
-  ]
-)
-
 AC_ARG_WITH(systemd,
   AS_HELP_STRING([--with-systemd@<:@=DIR@:>@], [install systemd service files @<:@to DIR if specified@:>@]),
   [ systemd=true; systemd_path="$with_systemd" ],
@@ -185,7 +178,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 tinc_ATTRIBUTE(__malloc__)
 tinc_ATTRIBUTE(__warn_unused_result__)
 
-AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
+AC_CHECK_TYPES([struct ether_header, struct arphdr, struct ether_arp, struct ip, struct icmp, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
   [#include "$srcdir/src/have.h"]
 )
 
@@ -203,13 +196,6 @@ dnl Support for SunOS
 AC_CHECK_FUNC(socket, [], [
   AC_CHECK_LIB(socket, connect)
 ])
-AC_CHECK_FUNC(gethostbyname, [], [
-  AC_CHECK_LIB(nsl, gethostbyname)
-])
-
-AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
-  [], [], [#include "$srcdir/src/have.h"]
-)
 
 AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [
   #include <netinet/in.h>

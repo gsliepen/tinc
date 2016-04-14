@@ -1,7 +1,7 @@
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2003-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2003-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,11 +22,7 @@
 #define __TINC_HAVE_H__
 
 #ifdef HAVE_MINGW
-#ifdef WITH_WINDOWS2000
-#define WINVER Windows2000
-#else
 #define WINVER WindowsXP
-#endif
 #define WIN32_LEAN_AND_MEAN
 #endif
 
