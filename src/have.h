@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
@@ -41,16 +42,13 @@
 #include <unistd.h>
 #include <limits.h>
 #include <math.h>
+#include <time.h>
 
 #ifdef HAVE_MINGW
 #include <w32api.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
-#endif
-
-#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
 #endif
 
 #ifdef HAVE_TERMIOS_H
@@ -71,9 +69,6 @@
 #include <sys/time.h>
 #endif
 
-#ifdef HAVE_TIME_H
-#include <time.h>
-#endif
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
