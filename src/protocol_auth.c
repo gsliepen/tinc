@@ -117,7 +117,7 @@ static bool send_proxyrequest(connection_t *c) {
 				i += 2;
 				c->tcplen += 22;
 			} else {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Address family %hx not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
+				logger(DEBUG_ALWAYS, LOG_ERR, "Address family %x not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
 				return false;
 			}
 			if(i > len)
