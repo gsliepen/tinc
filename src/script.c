@@ -64,7 +64,6 @@ static void unputenv(const char *p) {}
 #endif
 
 bool execute_script(const char *name, char **envp) {
-#ifdef HAVE_SYSTEM
 	char scriptname[PATH_MAX];
 	char *command;
 
@@ -146,6 +145,6 @@ bool execute_script(const char *name, char **envp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
 		return false;
 	}
-#endif
+
 	return true;
 }
