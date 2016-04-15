@@ -12,6 +12,11 @@ version_git.h: version-stamp
 	@-(cd $(srcdir) && git describe 2>/dev/null >/dev/null) && echo '#define GIT_DESCRIPTION "'`(cd $(srcdir) && git describe) | sed 's/release-//'`'"' >$@ ||:
 ${srcdir}/version.c: version_git.h
 
+## Now a hack to appease some versions of BSD make that don't understand that "./foo" is the same as "foo".
+if BSD
+version.c: ${srcdir}/version.c
+endif
+
 if LINUX
 sbin_PROGRAMS += sptps_speed
 endif
