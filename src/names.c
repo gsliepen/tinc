@@ -121,11 +121,11 @@ void make_names(bool daemon) {
 	if(!unixsocketname) {
 		int len = strlen(pidfilename);
 		unixsocketname = xmalloc(len + 8);
-		strcpy(unixsocketname, pidfilename);
+		memcpy(unixsocketname, pidfilename, len);
 		if(len > 4 && !strcmp(pidfilename + len - 4, ".pid"))
-			strcpy(unixsocketname + len - 4, ".socket");
+			strncpy(unixsocketname + len - 4, ".socket", 8);
 		else
-			strcpy(unixsocketname + len, ".socket");
+			strncpy(unixsocketname + len, ".socket", 8);
 	}
 }
 

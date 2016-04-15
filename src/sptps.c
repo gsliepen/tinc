@@ -204,7 +204,7 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 
 	// Create the HMAC seed, which is "key expansion" + session label + server nonce + client nonce
 	char seed[s->labellen + 64 + 13];
-	strcpy(seed, "key expansion");
+	memcpy(seed, "key expansion", 13);
 	if(s->initiator) {
 		memcpy(seed + 13, s->mykex + 1, 32);
 		memcpy(seed + 45, s->hiskex + 1, 32);

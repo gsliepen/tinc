@@ -75,9 +75,11 @@ bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_MINGW
 	if(!*scriptextension) {
 		const char *pathext = getenv("PATHEXT") ?: ".COM;.EXE;.BAT;.CMD";
-		char fullname[strlen(scriptname) + strlen(pathext)];
-		char *ext = fullname + strlen(scriptname);
-		strcpy(fullname, scriptname);
+		size_t pathlen = strlen(pathext);
+		size_t scriptlen = strlen(scriptname);
+		char fullname[scriptlen + pathlen + 1];
+		char *ext = fullname + scriptlen;
+		strncpy(fullname, scriptname, sizeof fullname);
 
 		const char *p = pathext;
 		bool found = false;
@@ -88,7 +90,7 @@ bool execute_script(const char *name, char **envp) {
 				ext[q - p] = 0;
 				q++;
 			} else {
-				strcpy(ext, p);
+				strncpy(ext, p, pathlen + 1);
 			}
 			if((found = !access(fullname, F_OK)))
 				break;
