@@ -147,7 +147,7 @@ static bool setup_device(void) {
 		}
 	} else {
 #ifdef HAVE_NET_IF_UTUN_H
-		if(strncmp(device, "utun", 4) == 0 || strncmp(device, "/dev/utun", 9) == 0)
+		if(device && (strncmp(device, "utun", 4) == 0 || strncmp(device, "/dev/utun", 9) == 0))
 			device_type = DEVICE_TYPE_UTUN;
 		else
 #endif
