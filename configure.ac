@@ -203,7 +203,7 @@ case $host_os in
       [], [AC_MSG_ERROR([Required header file missng])], [#include "$srcdir/src/have.h"]
     )
   ;;
-  *bsd*|*darwin*)
+  *bsd*|*dragonfly*|*darwin*)
     AC_CHECK_HEADERS([net/if_tun.h net/if_utun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h],
       [], [], [#include "$srcdir/src/have.h"]
     )
