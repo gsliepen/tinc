@@ -2,6 +2,8 @@
 
 sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
 
+CLEANFILES = version_git.h
+
 .PHONY: version-stamp
 version-stamp:
 
