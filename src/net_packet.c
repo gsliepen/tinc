@@ -729,7 +729,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 #if defined(IPPROTO_IPV6) & defined(IPV6_TCLASS)
 		case AF_INET6:
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
-			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IPV6, IPV6_TCLASS, &origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
+			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
 			break;
 #endif
@@ -738,7 +738,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		}
 	}
 
-	if(sendto(listen_socket[sock].udp.fd, SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -1555,7 +1555,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	socklen_t addrlen = sizeof addr;
 
 	pkt.offset = 0;
-	int len = recvfrom(ls->udp.fd, DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
+	int len = recvfrom(ls->udp.fd, (void *)DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))

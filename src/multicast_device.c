@@ -162,7 +162,7 @@ static void close_device(void) {
 static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
-	if((lenin = recv(device_fd, DATA(packet), MTU, 0)) <= 0) {
+	if((lenin = recv(device_fd, (void *)DATA(packet), MTU, 0)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, sockstrerror(sockerrno));
 		return false;
@@ -185,7 +185,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(sendto(device_fd, DATA(packet), packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
+	if(sendto(device_fd, (void *)DATA(packet), packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			   sockstrerror(sockerrno));
 		return false;
