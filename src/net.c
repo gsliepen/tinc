@@ -152,7 +152,7 @@ static void timeout_handler(void *data) {
 			if(c->edge) {
 				try_tx(c->node, false);
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)(now.tv_sec - c->last_ping_time));
 				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
 					send_ping(c);
 					continue;
