@@ -23,12 +23,14 @@
 #include "crypto.h"
 #include "ecdsa.h"
 #include "ecdsagen.h"
+#include "ifconfig.h"
 #include "invitation.h"
 #include "names.h"
 #include "netutl.h"
 #include "rsagen.h"
 #include "script.h"
 #include "sptps.h"
+#include "subnet.h"
 #include "tincctl.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -602,7 +604,20 @@ make_names:
 		return false;
 	}
 
+	snprintf(filename, sizeof filename, "%s" SLASH "tinc-up.invitation", confbase);
+	FILE *fup = fopen(filename, "w");
+	if(!fup) {
+		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
+		fclose(f);
+		fclose(fh);
+		return false;
+	}
+
+	fprintf(fup, "#!/bin/sh\n");
+	long fuppos = ftell(fup);
+
 	// Filter first chunk on approved keywords, split between tinc.conf and hosts/Name
+	// Generate a tinc-up script from Ifconfig and Route keywords.
 	// Other chunks go unfiltered to their respective host config files
 	const char *p = data;
 	char *l, *value;
@@ -641,6 +656,24 @@ make_names:
 			break;
 		}
 
+		// Handle Ifconfig and Route statements
+		if(!found) {
+			if(!strcasecmp(l, "Ifconfig")) {
+				if(!strcasecmp(value, "dhcp"))
+					ifconfig_dhcp(fup);
+				else if(!strcasecmp(value, "dhcp6"))
+					ifconfig_dhcp6(fup);
+				else if(!strcasecmp(value, "slaac"))
+					ifconfig_slaac(fup);
+				else
+					ifconfig_address(fup, value);
+				continue;
+			} else if(!strcasecmp(l, "Route")) {
+				ifconfig_route(fup, value);
+				continue;
+			}
+		}
+
 		// Ignore unknown and unsafe variables
 		if(!found) {
 			fprintf(stderr, "Ignoring unknown variable '%s' in invitation.\n", l);
@@ -655,6 +688,8 @@ make_names:
 	}
 
 	fclose(f);
+	bool valid_tinc_up = ifconfig_footer(fup);
+	fclose(fup);
 
 	while(l && !strcasecmp(l, "Name")) {
 		if(!check_id(value)) {
@@ -767,6 +802,60 @@ ask_netname:
 
 		netname = line;
 		make_names(false);
+	}
+
+	char filename2[PATH_MAX];
+	snprintf(filename, sizeof filename, "%s" SLASH "tinc-up.invitation", confbase);
+	snprintf(filename2, sizeof filename2, "%s" SLASH "tinc-up", confbase);
+
+	if(valid_tinc_up) {
+		if(tty) {
+			FILE *fup = fopen(filename, "r");
+			if(fup) {
+				fprintf(stderr, "\nPlease review the following tinc-up script:\n\n");
+
+				char buf[MAXSIZE];
+				while(fgets(buf, sizeof buf, fup))
+					fputs(buf, stderr);
+				fclose(fup);
+
+				int response = 0;
+				do {
+					fprintf(stderr, "\nDo you want to use this script [y]es/[n]o/[e]dit? ");
+					response = tolower(getchar());
+				} while(!strchr("yne", response));
+
+				fprintf(stderr, "\n");
+
+				if(response == 'e') {
+					char *command;
+#ifndef HAVE_MINGW
+					xasprintf(&command, "\"%s\" \"%s\"", getenv("VISUAL") ?: getenv("EDITOR") ?: "vi", filename);
+#else
+					xasprintf(&command, "edit \"%s\"", filename);
+#endif
+					if(system(command))
+						response = 'n';
+					else
+						response = 'y';
+					free(command);
+				}
+
+				if(response == 'y') {
+					rename(filename, filename2);
+					chmod(filename2, 0755);
+					fprintf(stderr, "tinc-up enabled.\n");
+				} else {
+					fprintf(stderr, "tinc-up has been left disabled.\n");
+				}
+			}
+		} else {
+			fprintf(stderr, "A tinc-up script was generated, but has been left disabled.\n");
+		}
+	} else {
+		// A placeholder was generated.
+		rename(filename, filename2);
+		chmod(filename2, 0755);
 	}
 
 	fprintf(stderr, "Configuration stored in: %s\n", confbase);

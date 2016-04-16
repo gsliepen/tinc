@@ -104,6 +104,7 @@ tincd_SOURCES = \
 tinc_SOURCES = \
 	dropin.c dropin.h \
 	fsck.c fsck.h \
+	ifconfig.c ifconfig.h \
 	info.c info.h \
 	invitation.c invitation.h \
 	list.c list.h \
