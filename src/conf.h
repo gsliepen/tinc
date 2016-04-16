@@ -21,8 +21,9 @@
 #ifndef __TINC_CONF_H__
 #define __TINC_CONF_H__
 
-#include "splay_tree.h"
 #include "list.h"
+#include "splay_tree.h"
+#include "subnet.h"
 
 typedef struct config_t {
 	char *variable;
@@ -31,7 +32,6 @@ typedef struct config_t {
 	int line;
 } config_t;
 
-#include "subnet.h"
 
 extern splay_tree_t *config_tree;
 

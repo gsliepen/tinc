@@ -22,6 +22,7 @@
 #define __TINC_SUBNET_H__
 
 #include "net.h"
+#include "node.h"
 
 typedef enum subnet_type_t {
 	SUBNET_MAC = 0,
@@ -43,8 +44,6 @@ typedef struct subnet_ipv6_t {
 	ipv6_t address;
 	int prefixlength;
 } subnet_ipv6_t;
-
-#include "node.h"
 
 typedef struct subnet_t {
 	struct node_t *owner;   /* the owner of this subnet */
