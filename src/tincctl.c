@@ -2284,25 +2284,28 @@ static int cmd_exchange_all(int argc, char *argv[]) {
 }
 
 static int switch_network(char *name) {
+	if(strcmp(name, ".")) {
+		if(!check_netname(name, false)) {
+			fprintf(stderr, "Invalid character in netname!\n");
+			return 1;
+		}
+
+		if(!check_netname(name, true))
+			fprintf(stderr, "Warning: unsafe character in netname!\n");
+	}
+
 	if(fd >= 0) {
 		close(fd);
 		fd = -1;
 	}
 
-	free(confbase);
-	confbase = NULL;
-	free(pidfilename);
-	pidfilename = NULL;
-	free(logfilename);
-	logfilename = NULL;
-	free(unixsocketname);
-	unixsocketname = NULL;
+	free_names();
+	netname = strcmp(name, ".") ? xstrdup(name) : NULL;
+	make_names(false);
+
 	free(tinc_conf);
 	free(hosts_dir);
 	free(prompt);
-
-	free(netname);
-	netname = strcmp(name, ".") ? xstrdup(name) : NULL;
 
         xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
         xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);

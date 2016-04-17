@@ -137,4 +137,12 @@ void free_names(void) {
 	free(logfilename);
 	free(confbase);
 	free(confdir);
+
+	identname = NULL;
+	netname = NULL;
+	unixsocketname = NULL;
+	pidfilename = NULL;
+	logfilename = NULL;
+	confbase = NULL;
+	confdir = NULL;
 }
