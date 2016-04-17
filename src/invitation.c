@@ -613,8 +613,7 @@ make_names:
 		return false;
 	}
 
-	fprintf(fup, "#!/bin/sh\n");
-	long fuppos = ftell(fup);
+	ifconfig_header(fup);
 
 	// Filter first chunk on approved keywords, split between tinc.conf and hosts/Name
 	// Generate a tinc-up script from Ifconfig and Route keywords.
