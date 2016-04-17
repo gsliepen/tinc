@@ -120,15 +120,16 @@ void ifconfig_address(FILE *out, const char *value) {
 void ifconfig_route(FILE *out, const char *value) {
 	subnet_t subnet = {}, gateway = {};
 	char subnet_str[MAXNETSTR] = "", gateway_str[MAXNETSTR] = "";
-	const char *sep = strchr(value, ' ');
+	char *sep = strchr(value, ' ');
+	if(sep)
+		*sep++ = 0;
 	if(!str2net(&subnet, value) || !net2str(subnet_str, sizeof subnet_str, &subnet) || subnet.type == SUBNET_MAC) {
-		fprintf(stderr, "Could not parse Ifconfig statement\n");
+		fprintf(stderr, "Could not parse subnet in Route statement\n");
 		return;
 	}
 	if(sep) {
-		sep++;
 		if(!str2net(&gateway, sep) || !net2str(gateway_str, sizeof gateway_str, &gateway) || gateway.type != subnet.type) {
-			fprintf(stderr, "Could not parse Ifconfig statement\n");
+			fprintf(stderr, "Could not parse gateway in Route statement\n");
 			return;
 		}
 		char *slash = strchr(gateway_str, '/'); if(slash) *slash = 0;
