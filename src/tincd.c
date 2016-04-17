@@ -261,10 +261,13 @@ static bool parse_options(int argc, char **argv) {
 		netname = NULL;
 	}
 
-	if(netname && (strpbrk(netname, "\\/") || *netname == '.')) {
+	if(netname && !check_netname(netname, false)) {
 		fprintf(stderr, "Invalid character in netname!\n");
 		return false;
 	}
+
+	if(netname && !check_netname(netname, true))
+		fprintf(stderr, "Warning: unsafe character in netname!\n");
 
 	return true;
 }

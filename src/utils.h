@@ -51,6 +51,7 @@ extern const char *winerror(int);
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
 
 extern bool check_id(const char *);
+extern bool check_netname(const char *, bool strict);
 char *replace_name(const char *name);
 
 #endif /* __TINC_UTILS_H__ */

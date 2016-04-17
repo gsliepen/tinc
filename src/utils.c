@@ -191,6 +191,22 @@ bool check_id(const char *id) {
 	return true;
 }
 
+bool check_netname(const char *netname, bool strict) {
+	if(!netname || !*netname || *netname == '.')
+		return false;
+
+	for(const char *c = netname; *c; c++) {
+		if(iscntrl(*c))
+			return false;
+		if(*c == '/' || *c == '\\')
+			return false;
+		if(strict && strchr(" $%<>:`\"|?*", *c))
+			return false;
+	}
+
+	return true;
+}
+
 /* Windows doesn't define HOST_NAME_MAX. */
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255

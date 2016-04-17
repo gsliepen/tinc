@@ -392,7 +392,7 @@ int cmd_invite(int argc, char *argv[]) {
 
 	// Fill in the details.
 	fprintf(f, "Name = %s\n", argv[1]);
-	if(netname)
+	if(check_netname(netname, true))
 		fprintf(f, "NetName = %s\n", netname);
 	fprintf(f, "ConnectTo = %s\n", myname);
 
@@ -541,12 +541,17 @@ static bool finalize_join(void) {
 	}
 
 	if(!check_id(name)) {
-		fprintf(stderr, "Invalid Name found in invitation: %s!\n", name);
+		fprintf(stderr, "Invalid Name found in invitation!\n");
 		return false;
 	}
 
-	if(!netname)
+	if(!netname) {
 		netname = grep(data, "NetName");
+		if(netname && !check_netname(netname, true)) {
+			fprintf(stderr, "Unsafe NetName found in invitation!\n");
+			return false;
+		}
+	}
 
 	bool ask_netname = false;
 	char temp_netname[32];
