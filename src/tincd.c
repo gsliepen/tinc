@@ -338,6 +338,7 @@ int main(int argc, char **argv) {
 		return 1;
 
 	make_names(true);
+	chdir(confbase);
 
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
