@@ -210,10 +210,13 @@ static void periodic_handler(void *data) {
 			   and we are not already trying to make one, create an
 			   outgoing connection to this node.
 			*/
-			int r = rand() % node_tree->count;
+			int r = rand() % (node_tree->count - 1);
 			int i = 0;
 
 			for splay_each(node_t, n, node_tree) {
+				if(n == myself)
+					continue;
+
 				if(i++ != r)
 					continue;
 
@@ -442,7 +445,7 @@ void retry(void) {
 */
 int main_loop(void) {
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
-	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){pingtimeout, rand() % 100000});
+	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){0, 0});
 
 #ifndef HAVE_MINGW
 	signal_t sighup = {0};
