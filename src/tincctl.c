@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2015 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ static struct option const long_options[] = {
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-	printf("Copyright (C) 1998-2015 Ivo Timmermans, Guus Sliepen and others.\n"
+	printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
 			"See the AUTHORS file for a complete list.\n\n"
 			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 			"and you are welcome to redistribute it under certain conditions;\n"
@@ -1433,7 +1433,7 @@ char *get_my_name(bool verbose) {
 	return NULL;
 }
 
-static ecdsa_t *get_pubkey(FILE *f) {
+ecdsa_t *get_pubkey(FILE *f) {
 	char buf[4096];
 	char *value;
 	while(fgets(buf, sizeof buf, f)) {
