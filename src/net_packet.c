@@ -722,7 +722,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 #if defined(IPPROTO_IP) && defined(IP_TOS)
 		case AF_INET:
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
-			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IP, IP_TOS, &origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
+			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IP, IP_TOS, (void *)&origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
 			break;
 #endif
