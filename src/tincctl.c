@@ -2517,6 +2517,7 @@ static int cmd_verify(int argc, char *argv[]) {
 	}
 
 	*newline++ = '\0';
+	size_t skip = newline - data;
 
 	char signer[MAX_STRING_SIZE] = "";
 	char sig[MAX_STRING_SIZE] = "";
@@ -2542,6 +2543,8 @@ static int cmd_verify(int argc, char *argv[]) {
 	data = xrealloc(data, len + trailer_len);
 	memcpy(data + len, trailer, trailer_len);
 	free(trailer);
+
+	newline = data + skip;
 
 	char fname[PATH_MAX];
 	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, node);
