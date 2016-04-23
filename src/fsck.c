@@ -216,6 +216,7 @@ int fsck(const char *argv0) {
 			return 1;
 		}
 
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 		if(st.st_mode & 077) {
 			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
 			if(st.st_uid != uid) {
@@ -227,6 +228,7 @@ int fsck(const char *argv0) {
 					fprintf(stderr, "Fixed permissions of %s.\n", fname);
 			}
 		}
+#endif
 	}
 #endif
 
@@ -255,6 +257,7 @@ int fsck(const char *argv0) {
 			return 1;
 		}
 
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 		if(st.st_mode & 077) {
 			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
 			if(st.st_uid != uid) {
@@ -266,6 +269,7 @@ int fsck(const char *argv0) {
 					fprintf(stderr, "Fixed permissions of %s.\n", fname);
 			}
 		}
+#endif
 	}
 
 #ifdef DISABLE_LEGACY
