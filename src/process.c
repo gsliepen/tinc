@@ -62,12 +62,9 @@ static bool install_service(void) {
 		return false;
 	}
 
-	if(!strchr(program_name, '\\')) {
-		GetCurrentDirectory(sizeof command - 1, command + 1);
-		strncat(command, "\\", sizeof command - strlen(command));
-	}
-
-	strncat(command, program_name, sizeof command - strlen(command));
+	HMODULE module = GetModuleHandle(NULL);
+	GetModuleFileName(module, command + 1, sizeof command - 1);
+	command[sizeof command - 1] = 0;
 
 	strncat(command, "\"", sizeof command - strlen(command));
 
