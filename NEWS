@@ -1,3 +1,31 @@
+# Version 1.1pre12             April 24 2016
+
+* Added a "--syslog" option to force logging to syslog even if running in the
+  foreground.
+* Fixes and improvements to the DecrementTTL function.
+* Improved PMTU discovery and UDP keepalive probes.
+* More efficient relaying of UDP packets through intermediate nodes.
+* Improved compatibility with newer TAP-Win32 drivers.
+* Added support for UPnP.
+* Allow tinc to be compiled without LibreSSL or OpenSSL (this drops
+  compatibility with nodes running 1.0.x).
+* Added a "fsck" command to check the configuration files for problems.
+* Tinc "start" now checks whether the daemon really started succesfully, and
+  displays error messages otherwise.
+* Added systemd service files.
+* Use the recvmmsg() function if available.
+* Support ToS/Diffserv on IPv6 connections.
+* Updated support for BSD tun/tap devices.
+* Added support for OS X utun interfaces.
+* Dropped support for Windows 2000.
+* Initial support for generating a tinc-up script from an invitation.
+* Many small fixes, documentation updates.
+
+Thanks to Etienne Dechamps, thorkill, Vittorio Gambaletta, Martin Weinelt,
+Sven-Haegar Koch, Florian Klink, LunnarShadow, Dato Simó, Jo-Philipp Wich,
+Jochen Voss, Nathan Stratton Treadway, Pierre Emeriaud, xentec, Samuel
+Thibault and Michael Tokarev for their contributions to this version of tinc.
+
 # Version 1.1pre11             December 27 2014
 
 * Added a "network" command to list or switch networks.
