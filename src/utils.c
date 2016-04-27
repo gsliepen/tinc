@@ -158,7 +158,7 @@ int b64encode_urlsafe(const void *src, char *dst, int length) {
 const char *winerror(int err) {
 	static char buf[1024], *ptr;
 
-	ptr = buf + sprintf(buf, "(%d) ", err);
+	ptr = buf + snprintf(buf, sizeof buf, "(%d) ", err);
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
@@ -187,6 +187,22 @@ bool check_id(const char *id) {
 	for(; *id; id++)
 		if(!isalnum(*id) && *id != '_')
 			return false;
+
+	return true;
+}
+
+bool check_netname(const char *netname, bool strict) {
+	if(!netname || !*netname || *netname == '.')
+		return false;
+
+	for(const char *c = netname; *c; c++) {
+		if(iscntrl(*c))
+			return false;
+		if(*c == '/' || *c == '\\')
+			return false;
+		if(strict && strchr(" $%<>:`\"|?*", *c))
+			return false;
+	}
 
 	return true;
 }

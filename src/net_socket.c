@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -34,11 +34,6 @@
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
-
-/* Needed on Mac OS/X */
-#ifndef SOL_TCP
-#define SOL_TCP IPPROTO_TCP
-#endif
 
 int addressfamily = AF_UNSPEC;
 int maxtimeout = 900;
@@ -73,14 +68,19 @@ static void configure_tcp(connection_t *c) {
 	}
 #endif
 
-#if defined(SOL_TCP) && defined(TCP_NODELAY)
+#if defined(IPPROTO_TCP) && defined(TCP_NODELAY)
 	option = 1;
-	setsockopt(c->socket, SOL_TCP, TCP_NODELAY, (void *)&option, sizeof option);
+	setsockopt(c->socket, IPPROTO_TCP, TCP_NODELAY, (void *)&option, sizeof option);
 #endif
 
-#if defined(SOL_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
+#if defined(IPPROTO_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, SOL_IP, IP_TOS, (void *)&option, sizeof option);
+	setsockopt(c->socket, IPPROTO_IP, IP_TOS, (void *)&option, sizeof option);
+#endif
+
+#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS) && defined(IPTOS_LOWDELAY)
+	option = IPTOS_LOWDELAY;
+	setsockopt(c->socket, IPPROTO_IPV6, IPV6_TCLASS, (void *)&option, sizeof option);
 #endif
 }
 
@@ -163,9 +163,9 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof option);
 
-#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
 	if(get_config_string
@@ -261,10 +261,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #define IP_DONTFRAGMENT IP_DONTFRAG
 #endif
 
-#if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
+#if defined(IPPROTO_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = IP_PMTUDISC_DO;
-		setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, (void *)&option, sizeof(option));
+		setsockopt(nfd, IPPROTO_IP, IP_MTU_DISCOVER, (void *)&option, sizeof(option));
 	}
 #elif defined(IPPROTO_IP) && defined(IP_DONTFRAGMENT)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
@@ -273,10 +273,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	}
 #endif
 
-#if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
+#if defined(IPPROTO_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = IPV6_PMTUDISC_DO;
-		setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, (void *)&option, sizeof(option));
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_MTU_DISCOVER, (void *)&option, sizeof(option));
 	}
 #elif defined(IPPROTO_IPV6) && defined(IPV6_DONTFRAG)
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
@@ -517,10 +517,10 @@ begin:
 #endif
 
 	if(proxytype != PROXY_EXEC) {
-#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 		int option = 1;
 		if(c->address.sa.sa_family == AF_INET6)
-			setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+			setsockopt(c->socket, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
 		bind_to_interface(c->socket);
@@ -547,6 +547,7 @@ begin:
 
 	/* Now that there is a working socket, fill in the rest and register this connection. */
 
+	c->last_ping_time = time(NULL);
 	c->status.connecting = true;
 	c->name = xstrdup(outgoing->name);
 #ifndef DISABLE_LEGACY

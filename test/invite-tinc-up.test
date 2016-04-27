@@ -1,0 +1,51 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize one node
+
+$tinc $c1 <<EOF
+init foo
+set DeviceType dummy
+set Address localhost
+set Port 32751
+start $r1
+EOF
+
+# Generate an invitation and let another node join the VPN
+
+sleep 1
+
+cat >$d1/invitation-created <<EOF
+#!/bin/sh
+echo Name = \$NODE >\$INVITATION_FILE
+echo Ifconfig = 93.184.216.34/24 >>\$INVITATION_FILE
+echo Route = 2606:2800:220:1::/64 2606:2800:220:1:248:1893:25c8:1946 >>\$INVITATION_FILE
+echo Route = 1.2.3.4 1234:: >>\$INVITATION_FILE
+$tinc $c1 export >>\$INVITATION_FILE
+EOF
+
+chmod u+x $d1/invitation-created
+
+$tinc $c1 invite bar | $tinc $c2 --batch join
+
+# Test equivalence of host config files
+
+cmp $d1/hosts/foo $d2/hosts/foo
+test "`grep ^Ed25519PublicKey $d1/hosts/bar`" = "`grep ^Ed25519PublicKey $d2/hosts/bar`"
+
+# Check if the tinc-up.invitation file is created and contains the right commands
+
+test -f $d2/tinc-up.invitation
+
+fgrep -q "93.184.216.34/24" $d2/tinc-up.invitation
+fgrep -q "2606:2800:220:1::/64" $d2/tinc-up.invitation
+fgrep -q "2606:2800:220:1:248:1893:25c8:1946" $d2/tinc-up.invitation
+fgrep -q "1234::" $d2/tinc-up.invitation && exit 1
+
+# Check that no tinc-up is created and that tinc-up.invitation is not executable
+
+test -x $d2/tinc-up.invitation && exit 1
+test -f $d2/tinc-up && exit 1
+
+$tinc $c1 stop

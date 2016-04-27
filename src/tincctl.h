@@ -1,6 +1,6 @@
 /*
     tincctl.h -- header for tincctl.c.
-    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2011-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@ extern bool sendline(int fd, char *format, ...);
 extern bool recvline(int fd, char *line, size_t len);
 extern int check_port(char *name);
 extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms);
+extern ecdsa_t *get_pubkey(FILE *f);
 
 #endif
 

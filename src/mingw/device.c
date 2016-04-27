@@ -101,8 +101,8 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
-	if(device && interface)
-		logger(LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");
+	if(device && iface)
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");
 
 	/* Open registry and look for network adapters */
 

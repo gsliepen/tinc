@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2015 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ static struct option const long_options[] = {
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-	printf("Copyright (C) 1998-2015 Ivo Timmermans, Guus Sliepen and others.\n"
+	printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
 			"See the AUTHORS file for a complete list.\n\n"
 			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 			"and you are welcome to redistribute it under certain conditions;\n"
@@ -330,7 +330,7 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask, mode_t perms) {
 	FILE *r;
-	char *directory;
+	char directory[PATH_MAX] = ".";
 	char buf[PATH_MAX];
 	char buf2[PATH_MAX];
 
@@ -358,7 +358,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	if(filename[0] != '/') {
 #endif
 		/* The directory is a relative path or a filename. */
-		directory = get_current_dir_name();
+		getcwd(directory, sizeof directory);
 		snprintf(buf2, sizeof buf2, "%s" SLASH "%s", directory, filename);
 		filename = buf2;
 	}
@@ -1433,7 +1433,7 @@ char *get_my_name(bool verbose) {
 	return NULL;
 }
 
-static ecdsa_t *get_pubkey(FILE *f) {
+ecdsa_t *get_pubkey(FILE *f) {
 	char buf[4096];
 	char *value;
 	while(fgets(buf, sizeof buf, f)) {
@@ -2284,25 +2284,28 @@ static int cmd_exchange_all(int argc, char *argv[]) {
 }
 
 static int switch_network(char *name) {
+	if(strcmp(name, ".")) {
+		if(!check_netname(name, false)) {
+			fprintf(stderr, "Invalid character in netname!\n");
+			return 1;
+		}
+
+		if(!check_netname(name, true))
+			fprintf(stderr, "Warning: unsafe character in netname!\n");
+	}
+
 	if(fd >= 0) {
 		close(fd);
 		fd = -1;
 	}
 
-	free(confbase);
-	confbase = NULL;
-	free(pidfilename);
-	pidfilename = NULL;
-	free(logfilename);
-	logfilename = NULL;
-	free(unixsocketname);
-	unixsocketname = NULL;
+	free_names();
+	netname = strcmp(name, ".") ? xstrdup(name) : NULL;
+	make_names(false);
+
 	free(tinc_conf);
 	free(hosts_dir);
 	free(prompt);
-
-	free(netname);
-	netname = strcmp(name, ".") ? xstrdup(name) : NULL;
 
         xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
         xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
@@ -2514,6 +2517,7 @@ static int cmd_verify(int argc, char *argv[]) {
 	}
 
 	*newline++ = '\0';
+	size_t skip = newline - data;
 
 	char signer[MAX_STRING_SIZE] = "";
 	char sig[MAX_STRING_SIZE] = "";
@@ -2539,6 +2543,8 @@ static int cmd_verify(int argc, char *argv[]) {
 	data = xrealloc(data, len + trailer_len);
 	memcpy(data + len, trailer, trailer_len);
 	free(trailer);
+
+	newline = data + skip;
 
 	char fname[PATH_MAX];
 	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, node);

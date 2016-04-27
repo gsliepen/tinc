@@ -57,14 +57,14 @@ void make_names(bool daemon) {
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			confdir = xstrdup(installdir);
-			if(!logfilename)
-				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", installdir, identname);
 			if(!confbase) {
 				if(netname)
 					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
+			if(!logfilename)
+				xasprintf(&logfilename, "%s" SLASH "tinc.log", confbase);
 		}
 		RegCloseKey(key);
 	}
@@ -121,11 +121,11 @@ void make_names(bool daemon) {
 	if(!unixsocketname) {
 		int len = strlen(pidfilename);
 		unixsocketname = xmalloc(len + 8);
-		strcpy(unixsocketname, pidfilename);
+		memcpy(unixsocketname, pidfilename, len);
 		if(len > 4 && !strcmp(pidfilename + len - 4, ".pid"))
-			strcpy(unixsocketname + len - 4, ".socket");
+			strncpy(unixsocketname + len - 4, ".socket", 8);
 		else
-			strcpy(unixsocketname + len, ".socket");
+			strncpy(unixsocketname + len, ".socket", 8);
 	}
 }
 
@@ -137,4 +137,12 @@ void free_names(void) {
 	free(logfilename);
 	free(confbase);
 	free(confdir);
+
+	identname = NULL;
+	netname = NULL;
+	unixsocketname = NULL;
+	pidfilename = NULL;
+	logfilename = NULL;
+	confbase = NULL;
+	confdir = NULL;
 }

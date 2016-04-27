@@ -6,7 +6,7 @@ man_MANS = tincd.8 tinc.8 tinc.conf.5 tinc-gui.8
 
 EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.8.in tinc.conf.5.in tinc-gui.8.in sample-config.tar.gz
 
-CLEANFILES = *.html tincd.8 tinc.8 tinc.conf.5 tinc-gui.8 tincinclude.texi
+CLEANFILES = *.html tincd.8 tinc.8 tinc.conf.5 tinc-gui.8 tincinclude.texi sample-config.tar.gz
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -17,19 +17,19 @@ transform = s/ginstall/install/; @program_transform_name@
 # see GNUmakefile and Makefile.maint.
 
 sample-config.tar.gz: sample-config
-	GZIP=$(GZIP_ENV) $(AMTAR) chozf $@ --exclude .svn $<
+	$(AM_V_GEN)GZIP=$(GZIP_ENV) $(AMTAR) chozf $@ --exclude .svn $<
 
 tincd.8.html: tincd.8
-	w3mman2html $? > $@
+	$(AM_V_GEN)w3mman2html $? > $@
 
 tinc.8.html: tinc.8
-	w3mman2html $? > $@
+	$(AM_V_GEN)w3mman2html $? > $@
 
 tinc-gui.8.html: tinc-gui.8
-	w3mman2html $? > $@
+	$(AM_V_GEN)w3mman2html $? > $@
 
 tinc.conf.5.html: tinc.conf.5
-	w3mman2html $? > $@
+	$(AM_V_GEN)w3mman2html $? > $@
 
 substitute = sed \
 	-e s,'@PACKAGE\@',"$(PACKAGE)",g \
@@ -38,18 +38,18 @@ substitute = sed \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 tincd.8: tincd.8.in
-	$(substitute) $? > $@
+	$(AM_V_GEN)$(substitute) $? > $@
 
 tinc.8: tinc.8.in
-	$(substitute) $? > $@
+	$(AM_V_GEN)$(substitute) $? > $@
 
 tinc-gui.8: tinc-gui.8.in
-	$(substitute) $? > $@
+	$(AM_V_GEN)$(substitute) $? > $@
 
 tinc.conf.5: tinc.conf.5.in
-	$(substitute) $? > $@
+	$(AM_V_GEN)$(substitute) $? > $@
 
 tincinclude.texi: tincinclude.texi.in
-	$(substitute) $? > $@
+	$(AM_V_GEN)$(substitute) $? > $@
 	
 tinc.texi: tincinclude.texi

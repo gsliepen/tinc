@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -621,10 +621,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *outpkt;
 	int origlen = origpkt->len;
 	size_t outlen;
-#if defined(SOL_IP) && defined(IP_TOS)
-	static int priority = 0;
 	int origpriority = origpkt->priority;
-#endif
 
 	pkt1.offset = DEFAULT_PACKET_OFFSET;
 	pkt2.offset = DEFAULT_PACKET_OFFSET;
@@ -719,17 +716,29 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(!sa)
 		choose_udp_address(n, &sa, &sock);
 
-#if defined(SOL_IP) && defined(IP_TOS)
-	if(priorityinheritance && origpriority != priority
-	   && listen_socket[n->sock].sa.sa.sa_family == AF_INET) {
-		priority = origpriority;
-		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting outgoing packet priority to %d", priority);
-		if(setsockopt(listen_socket[n->sock].udp.fd, SOL_IP, IP_TOS, &priority, sizeof(priority))) /* SO_PRIORITY doesn't seem to work */
-			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
-	}
+	if(priorityinheritance && origpriority != listen_socket[sock].priority) {
+		listen_socket[sock].priority = origpriority;
+		switch(sa->sa.sa_family) {
+#if defined(IPPROTO_IP) && defined(IP_TOS)
+		case AF_INET:
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
+			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IP, IP_TOS, (void *)&origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
+			break;
 #endif
+#if defined(IPPROTO_IPV6) & defined(IPV6_TCLASS)
+		case AF_INET6:
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
+			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
+			break;
+#endif
+		default:
+			break;
+		}
+	}
 
-	if(sendto(listen_socket[sock].udp.fd, SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
 		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
@@ -1546,7 +1555,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 	socklen_t addrlen = sizeof addr;
 
 	pkt.offset = 0;
-	int len = recvfrom(ls->udp.fd, DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
+	int len = recvfrom(ls->udp.fd, (void *)DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
 
 	if(len <= 0 || len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno))

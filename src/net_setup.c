@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -563,9 +563,14 @@ bool setup_myself_reloadable(void) {
 		subnet_add(NULL, s);
 	}
 
-#if !defined(SOL_IP) || !defined(IP_TOS)
+#if !defined(IPPROTO_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
+		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv4 connections", "PriorityInheritance");
+#endif
+
+#if !defined(IPPROTO_IPV6) || !defined(IPV6_TCLASS)
+	if(priorityinheritance)
+		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv6 connections", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -1119,8 +1124,7 @@ void close_network_connections(void) {
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
-		terminate_connection(myself->connection, false);
-		free_connection(myself->connection);
+		connection_del(myself->connection);
 	}
 
 	for(int i = 0; i < listen_sockets; i++) {

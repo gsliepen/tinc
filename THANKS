@@ -14,6 +14,7 @@ We would like to thank the following people for their contributions to tinc:
 * Cheng LI
 * Cris van Pelt
 * Darius Jahandarie
+* Dato Simó
 * David Pflug
 * Delf Eldkraft
 * Dennis Joachimsthaler
@@ -22,6 +23,8 @@ We would like to thank the following people for their contributions to tinc:
 * Erik Tews
 * Etienne Dechamps
 * Florent Clairambault
+* Florian Klink
+* Florian Weik
 * Flynn Marquardt
 * Franz Pletz
 * Gary Kessler and Claudia Gonzalez
@@ -45,6 +48,7 @@ We would like to thank the following people for their contributions to tinc:
 * Loïc Dachary
 * Loïc Grenié
 * Lubomír Bulej
+* LunarShaddow
 * Mads Kiilerich
 * Marc A. Lehmann
 * Mark Glines
@@ -53,17 +57,22 @@ We would like to thank the following people for their contributions to tinc:
 * Martin Kihlgren
 * Martin Schobert
 * Martin Schürrer
+* Martin Weinelt
 * Matias Carrasco
 * Max Rijevski
 * Menno Smits
 * Mesar Hameed
 * Michael Tokarev
 * Miles Nordin
+* Nathan Stratton Treadway
 * Murat Donmez
 * Nick Hibma
 * Nick Patavalis
 * Paul Littlefield
 * Philipp Babel
+* Pierre Emeriaud
+* Rafał Leśniak
+* Rhosyn Celyn
 * Robert van der Meulen
 * Rumko
 * Sam Bryan
@@ -75,20 +84,24 @@ We would like to thank the following people for their contributions to tinc:
 * Sven-Haegar Koch
 * Teemu Kiviniemi
 * Thomas Tsiakalakis
+* thorkill
 * Timothy Redaelli
 * Tomasz Fortuna
 * Tomislav Čohar
 * Tommy Arnkværn
 * Tonnerre Lombard
+* Ulrich Seifert
 * Vil Brekin
 * Vittorio Gambaletta
 * Wessel Dankers
 * William A. Kennington III
 * William McArthur
 * Wouter van Heyst
+* xentec
 * 戴 鸣
 
 And everyone we forgot (if we did, please let us know). Thank you!
 
-Ivo Timmermans
-Guus Sliepen
+---
+Ivo Timmermans,
+Guus Sliepen.

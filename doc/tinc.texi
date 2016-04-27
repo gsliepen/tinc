@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2015 Ivo Timmermans,
+Copyright @copyright{} 1998-2016 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -43,7 +43,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2015 Ivo Timmermans,
+Copyright @copyright{} 1998-2016 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -70,6 +70,7 @@ permission notice identical to this one.
 * Configuration::
 * Running tinc::
 * Controlling tinc::
+* Invitations::
 * Technical information::
 * Platform specific information::
 * About us::
@@ -191,7 +192,7 @@ packets.
 @cindex release
 For an up to date list of supported platforms, please check the list on
 our website:
-@uref{http://www.tinc-vpn.org/platforms/}.
+@uref{https://www.tinc-vpn.org/platforms/}.
 
 @c
 @c
@@ -273,12 +274,7 @@ The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_t
 @node       Configuration of OpenBSD kernels
 @subsection Configuration of OpenBSD kernels
 
-For OpenBSD version 2.9 and higher,
-the tun driver is included in the default kernel configuration.
-There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
-which adds a tap device to OpenBSD which should work with tinc,
-but with recent versions of OpenBSD,
-a tun device can act as a tap device by setting the link0 option with ifconfig.
+Recent versions of OpenBSD come with both tun and tap devices enabled in the default kernel configuration.
 
 
 @c ==================================================================
@@ -298,7 +294,7 @@ Tunneling IPv6 may not work on NetBSD's tun device.
 For Solaris 8 (SunOS 5.8) and higher,
 the tun driver may or may not be included in the default kernel configuration.
 If it isn't, the source can be downloaded from @uref{http://vtun.sourceforge.net/tun/}.
-For x86 and sparc64 architectures, precompiled versions can be found at @uref{http://www.monkey.org/~dugsong/fragroute/}.
+For x86 and sparc64 architectures, precompiled versions can be found at @uref{https://www.monkey.org/~dugsong/fragroute/}.
 If the @file{net/if_tun.h} header file is missing, install it from the source package.
 
 
@@ -307,15 +303,14 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @subsection Configuration of Darwin (MacOS/X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
+OS X version 10.6.8 and later have a built-in tun driver called "utun".
+Tinc also supports the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices,
-and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
-The former driver is recommended.
-The tunnel driver must be loaded before starting tinc with the following command:
 
-@example
-kmodload tunnel
-@end example
+By default, tinc expects the tuntaposx driver to be installed.
+To use the utun driver, set add @code{Device = utunX} to @file{tinc.conf},
+where X is the desired number for the utun interface.
+You can also omit the number, in which case the first free number will be chosen.
 
 
 @c ==================================================================
@@ -323,7 +318,7 @@ kmodload tunnel
 @subsection Configuration of Windows
 
 You will need to install the latest TAP-Win32 driver from OpenVPN.
-You can download it from @uref{http://openvpn.sourceforge.net}.
+You can download it from @uref{https://openvpn.net/index.php/open-source/downloads.html}.
 Using the Network Connections control panel,
 configure the TAP-Win32 network interface in the same way as you would do from the tinc-up script,
 as explained in the rest of the documentation.
@@ -335,13 +330,13 @@ as explained in the rest of the documentation.
 
 @cindex requirements
 @cindex libraries
-Before you can configure or build tinc, you need to have the OpenSSL, zlib,
+Before you can configure or build tinc, you need to have the LibreSSL or OpenSSL, zlib,
 lzo, curses and readline libraries installed on your system.  If you try to
 configure tinc without having them installed, configure will give you an error
 message, and stop.
 
 @menu
-* OpenSSL::
+* LibreSSL/OpenSSL::
 * zlib::
 * lzo::
 * libcurses::
@@ -350,12 +345,13 @@ message, and stop.
 
 
 @c ==================================================================
-@node       OpenSSL
-@subsection OpenSSL
+@node       LibreSSL/OpenSSL
+@subsection LibreSSL/OpenSSL
 
+@cindex LibreSSL
 @cindex OpenSSL
 For all cryptography-related functions, tinc uses the functions provided
-by the OpenSSL library.
+by the LibreSSL or the OpenSSL library.
 
 If this library is not installed, you wil get an error when configuring
 tinc for build.  Support for running tinc with other cryptographic libraries
@@ -365,21 +361,23 @@ You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
 of this package.
 
-If you have to install OpenSSL manually, you can get the source code
-from @url{http://www.openssl.org/}.  Instructions on how to configure,
-build and install this package are included within the package.  Please
-make sure you build development and runtime libraries (which is the
+If your operating system comes neither with LibreSSL or OpenSSL, you have to
+install one manually.  It is recommended that you get the latest version of
+LibreSSL from @url{http://www.libressl.org/}.  Instructions on how to
+configure, build and install this package are included within the package.
+Please make sure you build development and runtime libraries (which is the
 default).
 
-If you installed the OpenSSL libraries from source, it may be necessary
+If you installed the LibreSSL or OpenSSL libraries from source, it may be necessary
 to let configure know where they are, by passing configure one of the
---with-openssl-* parameters.
+--with-openssl-* parameters. Note that you even have to use --with-openssl-* if you
+are using LibreSSL.
 
 @example
---with-openssl=DIR      OpenSSL library and headers prefix
---with-openssl-include=DIR OpenSSL headers directory
+--with-openssl=DIR      LibreSSL/OpenSSL library and headers prefix
+--with-openssl-include=DIR LibreSSL/OpenSSL headers directory
                         (Default is OPENSSL_DIR/include)
---with-openssl-lib=DIR  OpenSSL library directory
+--with-openssl-lib=DIR  LibreSSL/OpenSSL library directory
                         (Default is OPENSSL_DIR/lib)
 @end example
 
@@ -390,7 +388,7 @@ to let configure know where they are, by passing configure one of the
 The complete source code of tinc is covered by the GNU GPL version 2.
 Since the license under which OpenSSL is distributed is not directly
 compatible with the terms of the GNU GPL
-@uref{http://www.openssl.org/support/faq.html#LEGAL2}, we
+@uref{https://www.openssl.org/support/faq.html#LEGAL2}, we
 include an exemption to the GPL (see also the file COPYING.README) to allow
 everyone to create a statically or dynamically linked executable:
 
@@ -406,8 +404,8 @@ we also present the following exemption:
 
 @quotation
 Hereby I grant a special exception to the tinc VPN project
-(http://www.tinc-vpn.org/) to link the LZO library with the OpenSSL library
-(http://www.openssl.org).
+(https://www.tinc-vpn.org/) to link the LZO library with the OpenSSL library
+(https://www.openssl.org).
 
 Markus F.X.J. Oberhumer
 @end quotation
@@ -432,7 +430,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install zlib manually, you can get the source code
-from @url{http://www.gzip.org/zlib/}.  Instructions on how to configure,
+from @url{http://www.zlib.net/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
@@ -456,7 +454,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install lzo manually, you can get the source code
-from @url{http://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
+from @url{https://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
@@ -527,9 +525,7 @@ system startup scripts and sample configurations.
 If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
-@uref{http://www.tinc-vpn.org/download/, download page}, which has
-the checksums of these files listed; you may wish to check these with
-md5sum before continuing.
+@uref{https://www.tinc-vpn.org/download/, download page}.
 
 Tinc comes in a convenient autoconf/automake package, which you can just
 treat the same as any other package.  Which is just untar it, type
@@ -566,19 +562,18 @@ The documentation that comes along with your distribution will tell you how to d
 @node       Darwin (MacOS/X) build environment
 @subsection Darwin (MacOS/X) build environment
 
-In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
-from @uref{http://developer.apple.com/tools/macosxtools.html} and
-a recent version of Fink from @uref{http://www.finkproject.org/}.
+In order to build tinc on Darwin, you need to install Xcode from @uref{https://developer.apple.com/xcode/}.
+It might also help to install a recent version of Fink from @uref{http://www.finkproject.org/}.
 
-After installation use fink to download and install the following packages:
-autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
+You need to download and install LibreSSL (or OpenSSL) and LZO,
+either directly from their websites (see @ref{Libraries}) or using Fink.
 
 @c ==================================================================
 @node       Cygwin (Windows) build environment
 @subsection Cygwin (Windows) build environment
 
 If Cygwin hasn't already been installed, install it directly from
-@uref{http://www.cygwin.com/}.
+@uref{https://www.cygwin.com/}.
 
 When tinc is compiled in a Cygwin environment, it can only be run in this environment,
 but all programs, including those started outside the Cygwin environment, will be able to use the VPN.
@@ -589,6 +584,7 @@ It will also support all features.
 @subsection MinGW (Windows) build environment
 
 You will need to install the MinGW environment from @uref{http://www.mingw.org}.
+You also need to download and install LibreSSL (or OpenSSL) and LZO.
 
 When tinc is compiled using MinGW it runs natively under Windows,
 it is not necessary to keep MinGW installed.
@@ -999,6 +995,12 @@ to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
 
+@cindex utun
+@item utun (OS X)
+Set type to utun.
+This is only supported on OS X version 10.6.8 and higher, but doesn't require the tuntaposx module.
+This mode should support both IPv4 and IPv6 packets.
+
 @item tap (BSD and Linux)
 Set type to tap.
 Tinc will expect packets read from the virtual network device
@@ -1307,7 +1309,7 @@ tried until a working connection has been established.
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)
 The symmetric cipher algorithm used to encrypt UDP packets using the legacy protocol.
-Any cipher supported by OpenSSL is recognized.
+Any cipher supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
 This option has no effect for connections using the SPTPS protocol, which always use AES-256-CTR.
@@ -1327,7 +1329,7 @@ Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 @cindex Digest
 @item Digest = <@var{digest}> (sha1)
 The digest algorithm used to authenticate UDP packets using the legacy protocol.
-Any digest supported by OpenSSL is recognized.
+Any digest supported by LibreSSL or OpenSSL is recognized.
 Furthermore, specifying "none" will turn off packet authentication.
 This option has no effect for connections using the SPTPS protocol, which always use HMAC-SHA-256.
 
@@ -1402,7 +1404,7 @@ MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 Prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
-@uref{http://www.ietf.org/rfc/rfc1519.txt, RFC1519}
+@uref{https://www.ietf.org/rfc/rfc1519.txt, RFC1519}
 
 A Subnet can be given a weight to indicate its priority over identical Subnets
 owned by different nodes. The default weight is 10. Lower values indicate
@@ -2600,6 +2602,159 @@ Quit.
 
 
 @c ==================================================================
+@node    Invitations
+@chapter Invitations
+
+Invitations are an easy way to add new nodes to an existing VPN.  Invitations
+can be created on an existing node using the @code{tinc invite} command, which
+generates a relatively short URL which can be given to someone else, who uses
+the @code{tinc join} command to automatically set up tinc so it can connect to
+the inviting node.  The next sections describe how invitations actually work,
+and how to further automate the invitations.
+
+@menu
+* How invitations work::
+* Invitation file format::
+* Writing an invitation-created script::
+@end menu
+
+
+@c ==================================================================
+@node    How invitations work
+@section How invitations work
+
+When an invitation is created on a node (which from now on we will call the
+server) using the @code{tinc invite} command, an invitation file is created
+that contains all the information necessary for the invitee (which we will call
+the client) to create its configuration files. The invitation file is stays on
+the server, but a URL is generated that has enough information for the client
+to contact the server and to retrieve the invitation file. The whole URL is
+around 80 characters long and looks like this:
+
+@example
+server.example.org:12345/cW1NhLHS-1WPFlcFio8ztYHvewTTKYZp8BjEKg3vbMtDz7w4
+@end example
+
+It is composed of four parts:
+
+@example
+hostname : port / keyhash cookie
+@end example
+
+The hostname and port tell the client how to reach the tinc daemon on the server.
+The part after the slash looks like one blob, but is composed of two parts.
+The keyhash is the hash of the public key of the server.
+The cookie is a shared secret that identifies the client to the server.
+
+When the client connects to the server in order to join the VPN, the client and
+server will exchange temporary public keys. The client verifies that the hash
+of the server's public key matches the keyhash from the invitation URL. If
+not, it will immediately exit with an error. Otherwise, an ECDH exchange will
+happen so the client and server can communicate privately with each other. The
+client will then present the cookie to the server. The server uses this to
+look up the corresponding invitation file it generated earlier. If it exists,
+it will send the invitation file to the client. The client will also create a
+permanent public key, and send it to the server. After the exchange is
+completed, the connection is broken. The server creates a host config file for
+the client containing the client's permanent public key, and the client creates
+tinc.conf, host config files and possibly a tinc-up script based on the
+information in the invitation file.
+
+It is important that the invitation URL is kept secret until it is used; if
+another person gets a copy of the invitation URL before the real client runs
+the @code{tinc join} command, then that other person can try to join the VPN.
+
+
+@c ==================================================================
+@node    Invitation file format
+@section Invitation file format
+
+The contents of an invitation file that is generated by the @code{tinc invite}
+command looks like this:
+
+@example
+Name = client
+Netname = vpn
+ConnectTo = server
+#-------------------------------------#
+Name = server
+Ed25519PublicKey = augbnwegoij123587...
+Address = server.example.com
+@end example
+
+The file is basically a concatenation of several host config blocks. Each host
+config block starts with @code{Name = ...}.  Lines that look like @code{#---#}
+are not important, it just makes it easier for humans to read the file.
+
+The first host config block is always the one representing the invitee. So the
+first Name statement determines the name that the invitee will get. From the
+first block, the @file{tinc.conf} and @file{hosts/client} files will be
+generated; the @code{tinc join} command on the client will automatically
+separate statements based on whether they should be in @file{tinc.conf} or in a
+host config file. Some statements are special and are treated differently:
+
+@table @asis
+@item Netname = <@var{netname}>
+This is a hint to the invitee which netname to use for the VPN.  It is used if
+the invitee did not already specify a netname, and if there is no pre-existing
+configuration with the same netname.
+
+@cindex Ifconfig
+@item Ifconfig = <@var{address}[/@var{netmask}] | dhcp | dhcp6 | slaac>
+This is a hint for generating a @file{tinc-up} script.
+If an address is specified, a command will be added to @file{tinc-up} so the VPN interface will be configured to have the given address.
+If it is the word "dhcp", a command will be added to start a DHCP client on the VPN interface.
+If it is the word dhcpv6, it will be a DHCPv6 client.
+If it is "slaac", then it will add commands to enable IPv6 stateless address autoconfiguration.
+It is also possible to specify a MAC address, in which case a command will be added to set the MAC address of the VPN interface.
+
+The exact commands added to the @file{tinc-up} script depends on the operating system the client is using.
+Multiple Ifconfig statements can be specified, however one should only use one Ifconfig statement per address family.
+
+@cindex Route
+@item Route = <@var{address}[/@var{netmask}]> [<@var{gateway}>]
+This is a hint for generating a @file{tinc-up} script.
+Route statements are similar to Ifconfig statements, but add routes instead of addresses.
+These only allow IPv4 and IPv6 routes.
+If no gateway address is specified, the route is directed to the VPN interface.
+In general, a gateway is only necessary when running tinc in switch mode.
+@end table
+
+Subsequent host config blocks are copied verbatim into their respective files
+in @file{hosts/}. The invitation file generated by @code{tinc invite} will
+normally only contain two blocks; one for the client and one for the server.
+
+
+@c ==================================================================
+@node    Writing an invitation-created script
+@section Writing an invitation-created script
+
+When an invitation is generated, the "invitation-created" script is called (if
+it exists) right after the invitation file is written, but before the URL has
+been written to stdout. This allows one to change the invitation file
+automatically before the invitation URL is passed to the invitee. Here is an
+example shell script that aproximately recreates the default invitation file:
+
+@example
+#!/bin/sh
+
+cat >$INVITATION_FILE <<EOF
+Name = $NODE
+Netname = $NETNAME
+ConnectTo = $NAME
+#----------------#
+EOF
+
+tinc export >>$INVITATION_FILE
+@end example
+
+You can add more ConnectTo statements, and change `tinc export` to `tinc
+export-all` for example. But you can also use the script to automatically hand
+out a Subnet to the invitee. Note that the script doesn't have to be a shell script,
+you can use any language, it just has to be executable.
+
+
+@c ==================================================================
 @node    Technical information
 @chapter Technical information
 
@@ -3169,7 +3324,7 @@ eavesdroppers cannot get and cannot change any information at all from the
 packets they can intercept. The encryption algorithm and message authentication
 algorithm can be changed in the configuration. The length of the message
 authentication codes is also adjustable. The length of the key for the
-encryption algorithm is always the default length used by OpenSSL.
+encryption algorithm is always the default length used by LibreSSL/OpenSSL.
 
 The SPTPS protocol is described in @ref{Simple Peer-to-Peer Security}.
 For comparison, this is how SPTPS UDP packets look:
@@ -3196,7 +3351,7 @@ this cannot be changed.
 In August 2000, we discovered the existence of a security hole in all versions
 of tinc up to and including 1.0pre2. This had to do with the way we exchanged
 keys. Since then, we have been working on a new authentication scheme to make
-tinc as secure as possible. The current version uses the OpenSSL library and
+tinc as secure as possible. The current version uses the LibreSSL or OpenSSL library and
 uses strong authentication with RSA keys.
 
 On the 29th of December 2001, Jerome Etienne posted a security analysis of tinc
@@ -3371,14 +3526,14 @@ Adding routes to IPv6 subnets:
 @section Contact information
 
 @cindex website
-Tinc's website is at @url{http://www.tinc-vpn.org/},
+Tinc's website is at @url{https://www.tinc-vpn.org/},
 this server is located in the Netherlands.
 
 @cindex IRC
 We have an IRC channel on the FreeNode and OFTC IRC networks. Connect to
-@uref{http://www.freenode.net/, irc.freenode.net}
+@uref{https://freenode.net/, irc.freenode.net}
 or
-@uref{http://www.oftc.net/, irc.oftc.net}
+@uref{https://www.oftc.net/, irc.oftc.net}
 and join channel #tinc.
 
 

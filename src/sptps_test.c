@@ -38,6 +38,7 @@ char *logfilename = NULL;
 bool do_detach = false;
 struct timeval now;
 
+static bool special;
 static bool verbose;
 static bool readonly;
 static bool writeonly;
@@ -70,6 +71,7 @@ static struct option const long_options[] = {
 	{"writeonly", no_argument, NULL, 'w'},
 	{"packet-loss", required_argument, NULL, 'L'},
 	{"replay-window", required_argument, NULL, 'W'},
+	{"special", no_argument, NULL, 's'},
 	{"verbose", required_argument, NULL, 'v'},
 	{"help", no_argument, NULL, 1},
 	{NULL, 0, NULL, 0}
@@ -89,6 +91,7 @@ static void usage() {
 			"  -w, --writeonly         Only send data from stdin to the socket.\n"
 			"  -L, --packet-loss RATE  Fake packet loss of RATE percent.\n"
 			"  -R, --replay-window N   Set replay window to N bytes.\n"
+			"  -s, --special           Enable special handling of lines starting with #, ^ and $.\n"
 			"  -v, --verbose           Display debug messages.\n"
 			"\n");
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
@@ -107,7 +110,7 @@ int main(int argc, char *argv[]) {
 	ecdsa_t *mykey = NULL, *hiskey = NULL;
 	bool quit = false;
 
-	while((r = getopt_long(argc, argv, "dqrtwL:W:v", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "dqrstwL:W:v", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -148,6 +151,10 @@ int main(int argc, char *argv[]) {
 
 			case 'v': /* be verbose */
 				verbose = true;
+				break;
+
+			case 's': /* special character handling */
+				special = true;
 				break;
 
 			case '?': /* wrong options */
@@ -324,11 +331,11 @@ int main(int argc, char *argv[]) {
 				readonly = true;
 				continue;
 			}
-			if(buf[0] == '#')
+			if(special && buf[0] == '#')
 				s.outseqno = atoi(buf + 1);
-			if(buf[0] == '^')
+			if(special && buf[0] == '^')
 				sptps_send_record(&s, SPTPS_HANDSHAKE, NULL, 0);
-			else if(buf[0] == '$') {
+			else if(special && buf[0] == '$') {
 				sptps_force_kex(&s);
 				if(len > 1)
 					sptps_send_record(&s, 0, buf, len);

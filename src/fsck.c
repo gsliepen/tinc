@@ -216,6 +216,7 @@ int fsck(const char *argv0) {
 			return 1;
 		}
 
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 		if(st.st_mode & 077) {
 			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
 			if(st.st_uid != uid) {
@@ -227,6 +228,7 @@ int fsck(const char *argv0) {
 					fprintf(stderr, "Fixed permissions of %s.\n", fname);
 			}
 		}
+#endif
 	}
 #endif
 
@@ -255,6 +257,7 @@ int fsck(const char *argv0) {
 			return 1;
 		}
 
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 		if(st.st_mode & 077) {
 			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
 			if(st.st_uid != uid) {
@@ -266,6 +269,7 @@ int fsck(const char *argv0) {
 					fprintf(stderr, "Fixed permissions of %s.\n", fname);
 			}
 		}
+#endif
 	}
 
 #ifdef DISABLE_LEGACY
@@ -281,7 +285,7 @@ int fsck(const char *argv0) {
 	}
 
 	// Check for public keys.
-	// TODO: use RSAPublicKeyFile and Ed25519PublicKeyFile variables if present.
+	// TODO: use RSAPublicKeyFile variable if present.
 
 	snprintf(fname, sizeof fname, "%s/hosts/%s", confbase, name);
 	if(access(fname, R_OK))
@@ -342,13 +346,17 @@ int fsck(const char *argv0) {
 			fprintf(stderr, "WARNING: A public RSA key was found but no private key is known.\n");
 	}
 #endif
-	//
-	// TODO: this should read the Ed25519PublicKey config variable instead.
+
 	ecdsa_t *ecdsa_pub = NULL;
 
 	f = fopen(fname, "r");
-	if(f)
-		ecdsa_pub = ecdsa_read_pem_public_key(f);
+	if(f) {
+		ecdsa_pub = get_pubkey(f);
+		if(!f) {
+			rewind(f);
+			ecdsa_pub = ecdsa_read_pem_public_key(f);
+		}
+	}
 	fclose(f);
 
 	if(ecdsa_priv) {

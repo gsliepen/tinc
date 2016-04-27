@@ -1,7 +1,7 @@
 /*
     dropin.c -- a set of drop-in replacements for libc functions
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -86,40 +86,6 @@ int daemon(int nochdir, int noclose) {
 }
 #endif
 
-#ifndef HAVE_GET_CURRENT_DIR_NAME
-/*
-  Replacement for the GNU get_current_dir_name function:
-
-  get_current_dir_name will malloc(3) an array big enough to hold the
-  current directory name.  If the environment variable PWD is set, and
-  its value is correct, then that value will be returned.
-*/
-char *get_current_dir_name(void) {
-	size_t size;
-	char *buf;
-	char *r;
-
-	/* Start with 100 bytes.  If this turns out to be insufficient to
-	   contain the working directory, double the size.  */
-	size = 100;
-	buf = xmalloc(size);
-
-	errno = 0;                                      /* Success */
-	r = getcwd(buf, size);
-
-	/* getcwd returns NULL and sets errno to ERANGE if the bufferspace
-	   is insufficient to contain the entire working directory.  */
-	while(r == NULL && errno == ERANGE) {
-		free(buf);
-		size <<= 1;                             /* double the size */
-		buf = xmalloc(size);
-		r = getcwd(buf, size);
-	}
-
-	return buf;
-}
-#endif
-
 #ifndef HAVE_ASPRINTF
 int asprintf(char **buf, const char *fmt, ...) {
 	int result;
@@ -174,10 +140,9 @@ int gettimeofday(struct timeval *tv, void *tz) {
 }
 #endif
 
-#ifndef HAVE_USLEEP
-int usleep(long long usec) {
-	struct timeval tv = {usec / 1000000, (usec / 1000) % 1000};
-	select(0, NULL, NULL, NULL, &tv);
-	return 0;
+#ifndef HAVE_NANOSLEEP
+int nanosleep(const struct timespec *req, struct timespec *rem) {
+	struct timeval tv = {req->tv_sec, req->tv_nsec / 1000};
+	return select(0, NULL, NULL, NULL, &tv);
 }
 #endif

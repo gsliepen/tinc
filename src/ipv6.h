@@ -1,7 +1,7 @@
 /*
     ipv6.h -- missing IPv6 related definitions
     Copyright (C) 2005 Ivo Timmermans
-                  2006-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2006-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,29 +27,6 @@
 
 #ifndef IPPROTO_ICMPV6
 #define IPPROTO_ICMPV6 58
-#endif
-
-#ifndef HAVE_STRUCT_IN6_ADDR
-struct in6_addr {
-	union {
-		uint8_t u6_addr8[16];
-		uint16_t u6_addr16[8];
-		uint32_t u6_addr32[4];
-	} in6_u;
-} __attribute__ ((__gcc_struct__, __packed__));
-#define s6_addr in6_u.u6_addr8
-#define s6_addr16 in6_u.u6_addr16
-#define s6_addr32 in6_u.u6_addr32
-#endif
-
-#ifndef HAVE_STRUCT_SOCKADDR_IN6
-struct sockaddr_in6 {
-	uint16_t sin6_family;
-	uint16_t sin6_port;
-	uint32_t sin6_flowinfo;
-	struct in6_addr sin6_addr;
-	uint32_t sin6_scope_id;
-} __attribute__ ((__gcc_struct__, __packed__));
 #endif
 
 #ifndef IN6_IS_ADDR_V4MAPPED

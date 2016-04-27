@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -34,12 +34,14 @@
 #include "bsd/tunemu.h"
 #endif
 
-#define DEFAULT_TUN_DEVICE "/dev/tun0"
-#if defined(HAVE_DARWIN) || defined(HAVE_FREEBSD) || defined(HAVE_NETBSD)
-#define DEFAULT_TAP_DEVICE "/dev/tap0"
-#else
-#define DEFAULT_TAP_DEVICE "/dev/tun0"
+#ifdef HAVE_NET_IF_UTUN_H
+#include <sys/sys_domain.h>
+#include <sys/kern_control.h>
+#include <net/if_utun.h>
 #endif
+
+#define DEFAULT_TUN_DEVICE "/dev/tun0"
+#define DEFAULT_TAP_DEVICE "/dev/tap0"
 
 typedef enum device_type {
 	DEVICE_TYPE_TUN,
@@ -48,6 +50,7 @@ typedef enum device_type {
 #ifdef ENABLE_TUNEMU
 	DEVICE_TYPE_TUNEMU,
 #endif
+	DEVICE_TYPE_UTUN,
 } device_type_t;
 
 int device_fd = -1;
@@ -62,8 +65,63 @@ static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 static device_type_t device_type = DEVICE_TYPE_TUN;
 #endif
 
+#ifdef HAVE_NET_IF_UTUN_H
+static bool setup_utun(void) {
+	device_fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
+	if(device_fd == -1) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open PF_SYSTEM socket: %s\n", strerror(errno));
+		return false;
+	}
+
+	struct ctl_info info = {};
+	strlcpy(info.ctl_name, UTUN_CONTROL_NAME, sizeof info.ctl_name);
+
+	if(ioctl(device_fd, CTLIOCGINFO, &info) == -1) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "ioctl(CTLIOCGINFO) failed: %s", strerror(errno));
+		return false;
+	}
+
+	int unit = -1;
+	char *p = strstr(device, "utun"), *e = NULL;
+	if(p) {
+		unit = strtol(p + 4, &e, 10);
+		if(!e)
+			unit = -1;
+	}
+
+	struct sockaddr_ctl sc = {
+		.sc_id = info.ctl_id,
+		.sc_len = sizeof sc,
+		.sc_family = AF_SYSTEM,
+		.ss_sysaddr = AF_SYS_CONTROL,
+		.sc_unit = unit + 1,
+	};
+
+	if(connect(device_fd, (struct sockaddr *)&sc, sizeof(sc)) == -1) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not connect utun socket: %s\n", strerror(errno));
+		return false;
+	}
+
+	char name[64] = "";
+	socklen_t len = sizeof name;
+	if(getsockopt(device_fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, name, &len)) {
+		iface = xstrdup(device);
+	} else {
+		iface = xstrdup(name);
+	}
+
+	device_info = "OS X utun device";
+
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+
+	return true;
+}
+#endif
+
 static bool setup_device(void) {
 	get_config_string(lookup_config(config_tree, "Device"), &device);
+
+	// Find out if it's supposed to be a tun or a tap device
 
 	char *type;
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
@@ -72,6 +130,10 @@ static bool setup_device(void) {
 #ifdef ENABLE_TUNEMU
 		else if(!strcasecmp(type, "tunemu"))
 			device_type = DEVICE_TYPE_TUNEMU;
+#endif
+#ifdef HAVE_NET_IF_UTUN_H
+		else if(!strcasecmp(type, "utun"))
+			device_type = DEVICE_TYPE_UTUN;
 #endif
 		else if(!strcasecmp(type, "tunnohead"))
 			device_type = DEVICE_TYPE_TUN;
@@ -84,9 +146,21 @@ static bool setup_device(void) {
 			return false;
 		}
 	} else {
+#ifdef HAVE_NET_IF_UTUN_H
+		if(device && (strncmp(device, "utun", 4) == 0 || strncmp(device, "/dev/utun", 9) == 0))
+			device_type = DEVICE_TYPE_UTUN;
+		else
+#endif
 		if((device && strstr(device, "tap")) || routing_mode != RMODE_ROUTER)
 			device_type = DEVICE_TYPE_TAP;
 	}
+
+	if(routing_mode == RMODE_SWITCH && device_type != DEVICE_TYPE_TAP) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Only tap devices support switch mode!");
+		return false;
+	}
+
+	// Find out which device file to open
 
 	if(!device) {
 		if(device_type == DEVICE_TYPE_TAP)
@@ -95,17 +169,7 @@ static bool setup_device(void) {
 			device = xstrdup(DEFAULT_TUN_DEVICE);
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = NULL;
-#ifndef TAPGIFNAME
-	if (iface) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Ignoring specified interface name '%s' as device rename is not supported on this platform", iface);
-		free(iface);
-		iface = NULL;
-	}
-#endif
-	if (!iface)
-		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
+	// Open the device
 
 	switch(device_type) {
 #ifdef ENABLE_TUNEMU
@@ -114,6 +178,10 @@ static bool setup_device(void) {
 			device_fd = tunemu_open(dynamic_name);
 		}
 			break;
+#endif
+#ifdef HAVE_NET_IF_UTUN_H
+		case DEVICE_TYPE_UTUN:
+			return setup_utun();
 #endif
 		default:
 			device_fd = open(device, O_RDWR | O_NONBLOCK);
@@ -127,6 +195,27 @@ static bool setup_device(void) {
 #ifdef FD_CLOEXEC
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
+
+	// Guess what the corresponding interface is called
+
+	char *realname;
+
+#if defined(HAVE_FDEVNAME)
+	realname = fdevname(device_fd) ? : device;
+#elif defined(HAVE_DEVNAME)
+	struct stat buf;
+	if(!fstat(device_fd, &buf))
+		realname = devname(buf.st_rdev, S_IFCHR) ? : device;
+#else
+	realname = device;
+#endif
+
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+		iface = xstrdup(strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname);
+	else if(strcmp(iface, strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname))
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
+
+	// Configure the device as best as we can
 
 	switch(device_type) {
 		default:
@@ -192,6 +281,11 @@ static bool setup_device(void) {
 #endif
 	}
 
+#ifdef SIOCGIFADDR
+	if(overwrite_mac)
+		ioctl(device_fd, SIOCGIFADDR, mymac.x);
+#endif
+
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
@@ -253,31 +347,29 @@ static bool read_packet(vpn_packet_t *packet) {
 			packet->len = inlen + 14;
 			break;
 
+		case DEVICE_TYPE_UTUN:
 		case DEVICE_TYPE_TUNIFHEAD: {
-			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof type}, {DATA(packet) + 14, MTU - 14}};
-
-			if((inlen = readv(device_fd, vector, 2)) <= 0) {
+			if((inlen = read(device_fd, packet->data + 10, MTU - 10)) <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
 
-			switch (ntohl(type)) {
-				case AF_INET:
+			switch (packet->data[14] >> 4) {
+				case 4:
 					DATA(packet)[12] = 0x08;
 					DATA(packet)[13] = 0x00;
 					break;
 
-				case AF_INET6:
+				case 6:
 					DATA(packet)[12] = 0x86;
 					DATA(packet)[13] = 0xDD;
 					break;
 
 				default:
 					logger(DEBUG_TRAFFIC, LOG_ERR,
-							   "Unknown address family %x while reading packet from %s %s",
-							   ntohl(type), device_info, device);
+							   "Unknown IP version %d while reading packet from %s %s",
+							   packet->data[14] >> 4, device_info, device);
 					return false;
 			}
 
@@ -319,12 +411,10 @@ static bool write_packet(vpn_packet_t *packet) {
 			}
 			break;
 
+		case DEVICE_TYPE_UTUN:
 		case DEVICE_TYPE_TUNIFHEAD: {
-			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof type}, {DATA(packet) + 14, packet->len - 14}};
-			int af;
-
-			af = (DATA(packet)[12] << 8) + DATA(packet)[13];
+			int af = (DATA(packet)[12] << 8) + DATA(packet)[13];
+			uint32_t type;
 
 			switch (af) {
 				case 0x0800:
@@ -340,7 +430,9 @@ static bool write_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			if(writev(device_fd, vector, 2) < 0) {
+			memcpy(packet->data + 10, &type, sizeof type);
+
+			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;

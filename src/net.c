@@ -153,7 +153,7 @@ static void timeout_handler(void *data) {
 			if(c->edge) {
 				try_tx(c->node, false);
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)(now.tv_sec - c->last_ping_time));
 				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
 					send_ping(c);
 					continue;
@@ -182,7 +182,7 @@ static void periodic_handler(void *data) {
 
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
-		usleep(sleeptime * 1000000LL);
+		nanosleep(&(struct timespec){sleeptime, 0}, NULL);
 		sleeptime *= 2;
 		if(sleeptime < 0)
 			sleeptime = 3600;
@@ -216,7 +216,6 @@ static void periodic_handler(void *data) {
 			tmp_node_tree = splay_alloc_tree((splay_compare_t) node_compare, NULL);
 
 			for splay_each(node_t, n, node_tree) {
-
 				if ((!n->status.has_known_address && !n->status.has_cfg_address) || n->connection)
 					continue;
 
@@ -455,7 +454,7 @@ void retry(void) {
 */
 int main_loop(void) {
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
-	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){pingtimeout, rand() % 100000});
+	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){0, 0});
 
 #ifndef HAVE_MINGW
 	signal_t sighup = {0};

@@ -1,11 +1,7 @@
-This is the README file for tinc version 1.1pre11. Installation
+This is the README file for tinc version 1.1pre12. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2014 by:
-
-Ivo Timmermans,
-Guus Sliepen <guus@tinc-vpn.org>,
-and others.
+tinc is Copyright © 1998-2016 Ivo Timmermans, Guus Sliepen <guus@tinc-vpn.org>, and others.
 
 For a complete list of authors see the AUTHORS file.
 
@@ -36,11 +32,12 @@ at your own risk.
 Compatibility
 -------------
 
-Version 1.1pre11 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.1pre12 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
 When the ExperimentalProtocol option is used, tinc is still compatible with
-1.0.X and 1.1pre11 itself, but not with any other 1.1preX version.
+1.0.X, 1.1pre11 and later, but not with any version between 1.1pre1 and
+1.1pre10.
 
 
 Requirements
@@ -49,15 +46,14 @@ Requirements
 In order to compile tinc, you will need a GNU C compiler environment. Please
 ensure you have the latest stable versions of all the required libraries:
 
-- OpenSSL (http://www.openssl.org/) version 1.0.0 or later, with support for
-  elliptic curve cryptography (ECC) and Galois counter mode (GCM) enabled.
+- LibreSSL (http://www.libressl.org/) or OpenSSL (https://openssl.org/) version 1.0.0 or later.
 
 The following libraries are used by default, but can be disabled if necessary:
 
-- zlib (http://www.gzip.org/zlib/)
-- lzo (http://www.oberhumer.com/opensource/lzo/)
+- zlib (http://www.zlib.net/)
+- LZO (https://www.oberhumer.com/opensource/lzo/)
 - ncurses (http://invisible-island.net/ncurses/)
-- readline (ftp://ftp.gnu.org/pub/gnu/readline/)
+- readline (https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html)
 
 
 Features
@@ -70,12 +66,12 @@ those nodes, tinc will learn about all other nodes on the VPN, and will make
 connections automatically. When direct connections are not possible, data will
 be forwarded by intermediate nodes.
 
-By default, nodes authenticate each other using 2048 bit RSA (or 521 bit
-ECDSA*) keys. Traffic is encrypted using Blowfish in CBC mode (or AES-256 in
-GCM mode*), authenticated using HMAC-SHA1 (or GCM*), and is protected against
-replay attacks.
-
-*) When using the ExperimentalProtocol option.
+Tinc 1.1 support two protocols. The first is a legacy protocol that provides
+backwards compatibility with tinc 1.0 nodes, and which by default uses 2048 bit
+RSA keys for authentication, and encrypts traffic using Blowfish in CBC mode
+and HMAC-SHA1. The second is a new protocol which uses Curve25519 keys for
+authentication, and encrypts traffic using Chacha20-Poly1305, and provides
+forward secrecy.
 
 Tinc fully supports IPv6.
 
@@ -85,7 +81,7 @@ modes, "switch" and "hub", let the tinc daemons work together to form a virtual
 Ethernet network switch or hub.
 
 Normally, when started tinc will detach and run in the background. In a native
-Windows environment this means tinc will intall itself as a service, which will
+Windows environment this means tinc will install itself as a service, which will
 restart after reboots.  To prevent tinc from detaching or running as a service,
 use the -D option.
 

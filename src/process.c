@@ -62,12 +62,9 @@ static bool install_service(void) {
 		return false;
 	}
 
-	if(!strchr(program_name, '\\')) {
-		GetCurrentDirectory(sizeof command - 1, command + 1);
-		strncat(command, "\\", sizeof command - strlen(command));
-	}
-
-	strncat(command, program_name, sizeof command - strlen(command));
+	HMODULE module = GetModuleHandle(NULL);
+	GetModuleFileName(module, command + 1, sizeof command - 1);
+	command[sizeof command - 1] = 0;
 
 	strncat(command, "\"", sizeof command - strlen(command));
 
@@ -203,7 +200,7 @@ bool detach(void) {
 
 	if(do_detach) {
 #ifndef HAVE_MINGW
-		if(daemon(0, 0)) {
+		if(daemon(1, 0)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Couldn't detach from terminal: %s", strerror(errno));
 			return false;
 		}

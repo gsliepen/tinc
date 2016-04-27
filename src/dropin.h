@@ -1,7 +1,7 @@
 /*
     dropin.h -- header file for dropin.c
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,15 +21,8 @@
 #ifndef __DROPIN_H__
 #define __DROPIN_H__
 
-#include "fake-getaddrinfo.h"
-#include "fake-getnameinfo.h"
-
 #ifndef HAVE_DAEMON
 extern int daemon(int, int);
-#endif
-
-#ifndef HAVE_GET_CURRENT_DIR_NAME
-extern char *get_current_dir_name(void);
 #endif
 
 #ifndef HAVE_ASPRINTF
@@ -41,8 +34,8 @@ extern int vasprintf(char **, const char *, va_list ap);
 extern int gettimeofday(struct timeval *, void *);
 #endif
 
-#ifndef HAVE_USLEEP
-extern int usleep(long long usec);
+#ifndef HAVE_NANOSLEEP
+extern int nanosleep(const struct timespec *req, struct timespec *rem);
 #endif
 
 #ifndef timeradd
@@ -68,6 +61,10 @@ extern int usleep(long long usec);
 #ifndef SHUT_RDWR
 #define SHUT_RDWR SD_BOTH
 #endif
+#endif
+
+#ifndef EAI_SYSTEM
+#define EAI_SYSTEM 0
 #endif
 
 #endif /* __DROPIN_H__ */

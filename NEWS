@@ -1,830 +1,667 @@
-Version 1.1pre11             December 27 2014
+# Version 1.1pre12             April 24 2016
 
- * Added a "network" command to list or switch networks.
+* Added a "--syslog" option to force logging to syslog even if running in the
+  foreground.
+* Fixes and improvements to the DecrementTTL function.
+* Improved PMTU discovery and UDP keepalive probes.
+* More efficient relaying of UDP packets through intermediate nodes.
+* Improved compatibility with newer TAP-Win32 drivers.
+* Added support for UPnP.
+* Allow tinc to be compiled without LibreSSL or OpenSSL (this drops
+  compatibility with nodes running 1.0.x).
+* Added a "fsck" command to check the configuration files for problems.
+* Tinc "start" now checks whether the daemon really started succesfully, and
+  displays error messages otherwise.
+* Added systemd service files.
+* Use the recvmmsg() function if available.
+* Support ToS/Diffserv on IPv6 connections.
+* Updated support for BSD tun/tap devices.
+* Added support for OS X utun interfaces.
+* Dropped support for Windows 2000.
+* Initial support for generating a tinc-up script from an invitation.
+* Many small fixes, documentation updates.
 
- * Switched to Ed25519 keys and the ChaCha-Poly1305 cipher for the new protocol.
+Thanks to Etienne Dechamps, thorkill, Vittorio Gambaletta, Martin Weinelt,
+Sven-Haegar Koch, Florian Klink, LunnarShadow, Dato Simó, Jo-Philipp Wich,
+Jochen Voss, Nathan Stratton Treadway, Pierre Emeriaud, xentec, Samuel
+Thibault and Michael Tokarev for their contributions to this version of tinc.
 
- * AutoConnect is now a boolean option, when enabled tinc always tries to keep
-   at least three meta-connections open.
+# Version 1.1pre11             December 27 2014
 
- * The new protocol now uses UDP much more often.
-
- * Tinc "del" and "get" commands now return a non-zero exit code when they
-   don't find the requested variable.
-
- * Updated documentation.
-
- * Added a "DeviceStandby" option to defer running tinc-up until a working
-   connection is made, and which on Windows will also change the network
-   interface link status accordingly.
-
- * Tinc now tells the resolver to reload /etc/resolv.conf when it receives
-   SIGALRM.
-
- * Improved error messages and event loop handling on Windows.
-
- * LocalDiscovery now uses local address learned from other nodes, and is
-   enabled by default.
-
- * Added a "BroadcastSubnet" option to change the behavior of broadcast packets
-   in router mode.
-
- * Added support for dotted quad notation in IPv6 (e.g. ::1.2.3.4).
-
- * Improved format of printed Subnets, MAC and IPv6 addresses.
-
- * Added a "--batch" option to force the tinc CLI to run in non-interactive
-   mode.
-
- * Improve default Device selection on *BSD and Mac OS X.
-
- * Allow running tinc without RSA keys.
+* Added a "network" command to list or switch networks.
+* Switched to Ed25519 keys and the ChaCha-Poly1305 cipher for the new protocol.
+* AutoConnect is now a boolean option, when enabled tinc always tries to keep
+  at least three meta-connections open.
+* The new protocol now uses UDP much more often.
+* Tinc "del" and "get" commands now return a non-zero exit code when they
+  don't find the requested variable.
+* Updated documentation.
+* Added a "DeviceStandby" option to defer running tinc-up until a working
+  connection is made, and which on Windows will also change the network
+  interface link status accordingly.
+* Tinc now tells the resolver to reload /etc/resolv.conf when it receives
+  SIGALRM.
+* Improved error messages and event loop handling on Windows.
+* LocalDiscovery now uses local address learned from other nodes, and is
+  enabled by default.
+* Added a "BroadcastSubnet" option to change the behavior of broadcast packets
+  in router mode.
+* Added support for dotted quad notation in IPv6 (e.g. ::1.2.3.4).
+* Improved format of printed Subnets, MAC and IPv6 addresses.
+* Added a "--batch" option to force the tinc CLI to run in non-interactive
+  mode.
+* Improve default Device selection on *BSD and Mac OS X.
+* Allow running tinc without RSA keys.
 
 Thanks to Etienne Dechamps, Sven-Haegar Koch, William A. Kennington III,
 Baptiste Jonglez, Alexis Hildebrandt, Armin Fisslthaler, Franz Pletz, Alexander
 Ried and Saverio Proto for their contributions to this version of tinc.
 
-Version 1.1pre10             February 7 2014
+# Version 1.1pre10             February 7 2014
 
- * Added a benchmark tool (sptps_speed) for the new protocol.
-
- * Fixed a crash when using Name = $HOST while $HOST is not set.
-
- * Use AES-256-GCM for the new protocol.
-
- * Updated support for Solaris.
-
- * Allow running tincd without a private ECDSA key present when
-   ExperimentalProtocol is not explicitly set.
-
- * Enable various compiler hardening flags by default.
-
- * Added support for a "conf.d" configuration directory.
-
- * Fix tinc-gui on Windows, also allowing it to connect to a 32-bits tincd when
-   tinc-gui is run in a 64-bits Python environment.
-
- * Added a "ListenAddress" option, which like BindToAddress adds more listening
-   address/ports, but doesn't bind to them for outgoing sockets.
-
- * Make invitations work better when the "invite" and "join" commands are not
-   run interactively.
-
- * When creating meta-connections to a node for which no Address statement is
-   specified, try to use addresses learned from other nodes.
+* Added a benchmark tool (sptps_speed) for the new protocol.
+* Fixed a crash when using Name = $HOST while $HOST is not set.
+* Use AES-256-GCM for the new protocol.
+* Updated support for Solaris.
+* Allow running tincd without a private ECDSA key present when
+  ExperimentalProtocol is not explicitly set.
+* Enable various compiler hardening flags by default.
+* Added support for a "conf.d" configuration directory.
+* Fix tinc-gui on Windows, also allowing it to connect to a 32-bits tincd when
+  tinc-gui is run in a 64-bits Python environment.
+* Added a "ListenAddress" option, which like BindToAddress adds more listening
+  address/ports, but doesn't bind to them for outgoing sockets.
+* Make invitations work better when the "invite" and "join" commands are not
+  run interactively.
+* When creating meta-connections to a node for which no Address statement is
+  specified, try to use addresses learned from other nodes.
 
 Thanks to Dennis Joachimsthaler and Florent Clairambault for their contribution
 to this version of tinc.
 
-Version 1.1pre9              September 8 2013
+# Version 1.1pre9              September 8 2013
 
- * The UNIX socket is now created before tinc-up is called.
-
- * Windows users can now use any extension that is in %PATHEXT% for scripts,
-   not only .bat.
-
- * Outgoing sockets are bound to the address of the listening sockets again,
-   when there is no ambiguity.
-
- * Added invitation-created and invitation-accepted scripts.
-
- * Invited nodes now learn of the Mode and Broadcast settings of the VPN.
-
- * Joining a VPN with an invitation now also works on Windows.
-
- * The port number tincd is listening on is now always included in the
-   invitation URL.
-
- * A running tincd is now correctly informed when a new invitation has been
-   generated.
-
- * Several bug fixes for the new protocol.
-
- * Added a test suite.
+* The UNIX socket is now created before tinc-up is called.
+* Windows users can now use any extension that is in %PATHEXT% for scripts,
+  not only .bat.
+* Outgoing sockets are bound to the address of the listening sockets again,
+  when there is no ambiguity.
+* Added invitation-created and invitation-accepted scripts.
+* Invited nodes now learn of the Mode and Broadcast settings of the VPN.
+* Joining a VPN with an invitation now also works on Windows.
+* The port number tincd is listening on is now always included in the
+  invitation URL.
+* A running tincd is now correctly informed when a new invitation has been
+  generated.
+* Several bug fixes for the new protocol.
+* Added a test suite.
 
 Thanks to Etienne Dechamps for his contribution to this version of tinc.
 
-Version 1.1pre8              August 13 2013
+# Version 1.1pre8              August 13 2013
 
- * ExperimentalProtocol is now enabled by default.
-
- * Added an invitation protocol that makes it easy to invite new nodes.
-
- * Added the LocalDiscoveryAddress option to change the broadcast address used
-   to find local nodes.
-
- * Limit the rate of incoming meta-connections.
-
- * Many small bug fixes and code cleanups.
+* ExperimentalProtocol is now enabled by default.
+* Added an invitation protocol that makes it easy to invite new nodes.
+* Added the LocalDiscoveryAddress option to change the broadcast address used
+  to find local nodes.
+* Limit the rate of incoming meta-connections.
+* Many small bug fixes and code cleanups.
 
 Thanks to Etienne Dechamps and Sven-Haegar Koch for their contributions to this
 version of tinc.
 
-Version 1.1pre7              April 22 2013
+# Version 1.1pre7              April 22 2013
 
- * Fixed large latencies on Windows.
-
- * Renamed the tincctl tool to tinc.
-
- * Simplified changing the configuration using the tinc tool.
-
- * Added a full description of the ExperimentalProtocol to the manual.
-
- * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+* Fixed large latencies on Windows.
+* Renamed the tincctl tool to tinc.
+* Simplified changing the configuration using the tinc tool.
+* Added a full description of the ExperimentalProtocol to the manual.
+* Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
 
 Thanks to Martin Schobert for auditing tinc and reporting the vulnerability.
 
-Version 1.1pre6              February 20 2013
+# Version 1.1pre6              February 20 2013
 
- * Fixed tincd exitting immediately on Windows.
+* Fixed tincd exitting immediately on Windows.
+* Detect PMTU increases.
+* Fixed crashes when using a SOCKS5 proxy.
+* Fixed control connection when using a proxy.
 
- * Detect PMTU increases.
+# Version 1.1pre5              January 20 2013
 
- * Fixed crashes when using a SOCKS5 proxy.
+* Fixed long delays and possible hangs on Windows.
+* Fixed support for the tunemu device on iOS, the UML and VDE devices.
+* Small improvements to the documentation and error messages.
+* Fixed broadcast packets not reaching the whole VPN.
+* Tincctl now connects via a UNIX socket to the tincd on platforms that
+  support this.
+* The PriorityInheritance option now also works in switch mode.
 
- * Fixed control connection when using a proxy.
+# Version 1.1pre4              December  5 2012
 
-Version 1.1pre5              January 20 2013
+* Added the "AutoConnect" option which will let tinc automatically select
+  which nodes to connect to.
+* Improved performance of VLAN-tagged IP traffic inside the VPN.
+* Ensured LocalDiscovery works with multiple BindToAddress statements and/or
+  IPv6-only LANs.
+* Dropped dependency on libevent.
+* Fixed Windows version not reading packets from the TAP adapter.
 
- * Fixed long delays and possible hangs on Windows.
+# Version 1.1pre3              October 14 2012
 
- * Fixed support for the tunemu device on iOS, the UML and VDE devices.
+* New experimental protocol:
+  * Uses 521 bit ECDSA keys for authentication.
+  * Uses AES-256-CTR and HMAC-SHA256.
+  * Always provides perfect forward secrecy.
+  * Used for both meta-connections and VPN packets.
+  * VPN packets are encrypted end-to-end.
+* Many improvements to tincctl:
+  * "config" command shows/adds/changes configuration variables.
+  * "export" and "import" commands help exchange configuration files.
+  * "init" command sets up initial configuration files.
+  * "info" command shows details about a node, subnet or address.
+  * "log" command shows live log messages.
+  * Without a command it acts as a shell, with history and TAB completion.
+  * Improved starting/stopping tincd.
+  * Improved graph output.
+* When trying to directly send UDP packets to a node for which multiple
+  addresses are known, all of them are tried.
+* Many small fixes, code cleanups and documentation updates.
 
- * Small improvements to the documentation and error messages.
+# Version 1.1pre2              July 17 2011
 
- * Fixed broadcast packets not reaching the whole VPN.
+* .cookie files are renamed to .pid files, which are compatible with 1.0.x.
+* Experimental protocol enhancements that can be enabled with the option
+  ExperimentalProtocol = yes:
 
- * Tincctl now connects via a UNIX socket to the tincd on platforms that
-   support this.
+  * Ephemeral ECDH key exchange will be used for both the meta protocol and
+    UDP session keys.
+  * Key exchanges are signed with ECDSA.
+  * ECDSA public keys are automatically exchanged after RSA authentication if
+    nodes do not know each other's ECDSA public key yet.
 
- * The PriorityInheritance option now also works in switch mode.
+# Version 1.1pre1              June 25 2011
 
-Version 1.1pre4              December  5 2012
+* Control interface allows control of a running tinc daemon. Used by:
+  * tincctl, a commandline utility
+  * tinc-gui, a preliminary GUI implemented in Python/wxWidgets
+* Code cleanups and reorganization.
+* Repleacable cryptography backend, currently supports OpenSSL and libgcrypt.
+* Use libevent to handle I/O events and timeouts.
+* Use splay trees instead of AVL trees to manage internal datastructures.
 
- * Added the "AutoConnect" option which will let tinc automatically select
-   which nodes to connect to.
+Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
+version of tinc.
 
- * Improved performance of VLAN-tagged IP traffic inside the VPN.
+# Version 1.0.22               August 13 2013
 
- * Ensured LocalDiscovery works with multiple BindToAddress statements and/or
-   IPv6-only LANs.
-
- * Dropped dependency on libevent.
-
- * Fixed Windows version not reading packets from the TAP adapter.
-
-Version 1.1pre3              October 14 2012
-
- * New experimental protocol:
-   * Uses 521 bit ECDSA keys for authentication.
-   * Uses AES-256-CTR and HMAC-SHA256.
-   * Always provides perfect forward secrecy.
-   * Used for both meta-connections and VPN packets.
-   * VPN packets are encrypted end-to-end.
-
- * Many improvements to tincctl:
-   * "config" command shows/adds/changes configuration variables.
-   * "export" and "import" commands help exchange configuration files.
-   * "init" command sets up initial configuration files.
-   * "info" command shows details about a node, subnet or address.
-   * "log" command shows live log messages.
-   * Without a command it acts as a shell, with history and TAB completion.
-   * Improved starting/stopping tincd.
-   * Improved graph output.
-
- * When trying to directly send UDP packets to a node for which multiple
-   addresses are known, all of them are tried.
-
- * Many small fixes, code cleanups and documentation updates.
-
-Version 1.1pre2              July 17 2011
-
- * .cookie files are renamed to .pid files, which are compatible with 1.0.x.
-
- * Experimental protocol enhancements that can be enabled with the option
-   ExperimentalProtocol = yes:
-
-   * Ephemeral ECDH key exchange will be used for both the meta protocol and
-     UDP session keys.
-   * Key exchanges are signed with ECDSA.
-   * ECDSA public keys are automatically exchanged after RSA authentication if
-     nodes do not know each other's ECDSA public key yet.
-
-Version 1.1pre1              June 25 2011
-
- * Control interface allows control of a running tinc daemon. Used by:
-   * tincctl, a commandline utility
-   * tinc-gui, a preliminary GUI implemented in Python/wxWidgets
-
- * Code cleanups and reorganization.
-
- * Repleacable cryptography backend, currently supports OpenSSL and libgcrypt.
-
- * Use libevent to handle I/O events and timeouts.
-
- * Use splay trees instead of AVL trees to manage internal datastructures.
-
- Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
- version of tinc.
-
-Version 1.0.22               August 13 2013
-
- * Fixed the combination of Mode = router and DeviceType = tap.
-
- * The $NAME variable is now set in subnet-up/down scripts.
-
- * Tinc now gives an error when unknown options are given on the command line.
-
- * Tinc now correctly handles a space between a short command line option and
-   an optional argument.
+* Fixed the combination of Mode = router and DeviceType = tap.
+* The $NAME variable is now set in subnet-up/down scripts.
+* Tinc now gives an error when unknown options are given on the command line.
+* Tinc now correctly handles a space between a short command line option and
+  an optional argument.
 
 Thanks to Etienne Dechamps for his contribution to this version of tinc.
 
-Version 1.0.21               April 22 2013
+# Version 1.0.21               April 22 2013
 
- * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+* Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
 
 Thanks to Martin Schobert for auditing tinc and reporting this vulnerability.
 
-Version 1.0.20               March 03 2013
+# Version 1.0.20               March 03 2013
 
- * Use /dev/tap0 by default on FreeBSD and NetBSD when using switch mode.
-
- * Minor improvements and clarifications in the documentation.
-
- * Allow tinc to be cross-compiled with Android's NDK.
-
- * The discovered PMTU is now also applied to VLAN tagged traffic.
-
- * The LocalDiscovery option now makes use of all addresses tinc is bound to.
-
- * Fixed support for tunemu on iOS devices.
-
- * The PriorityInheritance option now also works with switch mode.
-
- * Fixed tinc crashing when using a SOCKS5 proxy.
+* Use /dev/tap0 by default on FreeBSD and NetBSD when using switch mode.
+* Minor improvements and clarifications in the documentation.
+* Allow tinc to be cross-compiled with Android's NDK.
+* The discovered PMTU is now also applied to VLAN tagged traffic.
+* The LocalDiscovery option now makes use of all addresses tinc is bound to.
+* Fixed support for tunemu on iOS devices.
+* The PriorityInheritance option now also works with switch mode.
+* Fixed tinc crashing when using a SOCKS5 proxy.
 
 Thanks to Mesar Hameed, Vilbrekin and Martin Schürrer for their contributions
 to this version of tinc.
 
-Version 1.0.19               June 25 2012
+# Version 1.0.19               June 25 2012
+
+* Allow :: notation in IPv6 Subnets.
+* Add support for systemd style socket activation.
+* Allow environment variables to be used for the Name option.
+* Add basic support for SOCKS proxies, HTTP proxies, and proxying through an
+  external command.
+
+# Version 1.0.18               March 25 2012
+
+* Fixed IPv6 in switch mode by turning off DecrementTTL by default.
+* Allow a port number to be specified in BindToAddress, which also allows tinc
+  to listen on multiple ports.
+* Add support for multicast communication with UML/QEMU/KVM.
+
+# Version 1.0.17               March 10 2012
+
+* The DeviceType option can now be used to select dummy, raw socket, UML and
+  VDE devices without needing to recompile tinc.
+* Allow multiple BindToAddress statements.
+* Decrement TTL value of IPv4 and IPv6 packets.
+* Add LocalDiscovery option allowing tinc to detect peers that are behind the
+  same NAT.
+* Accept Subnets passed with the -o option when StrictSubnets = yes.
+* Disabling old RSA keys when generating new ones now also works properly on
+  Windows.
+
+# Version 1.0.16               July 23 2011
+
+* Fixed a performance issue with TCP communication under Windows.
+* Fixed code that, during network outages, would cause tinc to exit when it
+  thought two nodes with identical Names were on the VPN.
+
+# Version 1.0.15               June 24 2011
+
+* Improved logging to file.
+* Reduced amount of process wakeups on platforms which support pselect().
+* Fixed ProcessPriority option under Windows.
+
+ Thanks to Loïc Grenié for his contribution to this version of tinc.
+
+# Version 1.0.14               May  8 2011
+
+* Fixed reading configuration files that do not end with a newline. Again.
+* Allow arbitrary configuration options being specified on the command line.
+* Allow all options in both tinc.conf and the local host config file.
+* Configurable replay window, UDP send and receive buffers for performance tuning.
+* Try harder to get UDP communication back after falling back to TCP.
+* Initial support for attaching tinc to a VDE switch.
+* DragonFly BSD support.
+* Allow linking with OpenSSL 1.0.0.
+
+Thanks to Brandon Black, Julien Muchembled, Michael Tokarev, Rumko and Timothy
+Redaelli for their contributions to this version of tinc.
+
+# Version 1.0.13               Apr 11 2010
+
+* Allow building tinc without LZO and/or Zlib.
+* Clamp MSS of TCP packets in both directions.
+* Experimental StrictSubnets, Forwarding and DirectOnly options,
+  giving more control over information and packets received from/sent to other
+  nodes.
+* Ensure tinc never sends symbolic names for ports over the wire.
+
+# Version 1.0.12               Feb  3 2010
+
+* Really allow fast roaming of hosts to other nodes in a switched VPN.
+* Fixes missing or incorrect environment variables when calling host-up/down
+  and subnet-up/down scripts in some cases.
+* Allow port to be specified in Address statements.
+* Clamp MSS of TCP packets to the discovered path MTU.
+* Let two nodes behind NAT learn each others current UDP address and port via
+  a third node, potentially allowing direct communications in a similar way to
+  STUN.
+
+# Version 1.0.11               Nov  1 2009
+
+* Fixed potential crash when the HUP signal is sent.
+* Fixes handling of weighted Subnets in switch and hub modes, preventing
+  unnecessary broadcasts.
+* Works around a MinGW bug that caused packets to Windows nodes to always be
+  sent via TCP.
+* Improvements to the PMTU discovery code, especially on Windows.
+* Use UDP again in certain cases where 1.0.10 was too conservative and fell
+  back to TCP unnecessarily.
+* Allow fast roaming of hosts to other nodes in a switched VPN.
+
+# Version 1.0.10               Oct 18 2009
+
+* Fixed potential crashes during shutdown and (in rare conditions) when other
+  nodes disconnected from the VPN.
+* Improved NAT handling: tinc now copes with mangled port numbers, and will
+  automatically fall back to TCP if direct UDP connection between nodes is not
+  possible. The TCPOnly option should not have to be used anymore.
+* Allow configuration files with CRLF line endings to be read on UNIX.
+* Disable old RSA keys when generating new ones, and raise the default size of
+  new RSA keys to 2048 bits.
+* Many fixes in the path MTU discovery code, especially when Compression is
+  being used.
+* Tinc can now drop privileges and/or chroot itself.
+* The TunnelServer code now just ignores information from clients instead of
+  disconnecting them.
+* Improved performance on Windows by using the new ProcessPriority option and
+  by making the handling of packets received from the TAP-Win32 adapter more
+  efficient.
+* Code cleanups: tinc now follows the C99 standard, copyright headers have
+  been updated to include patch authors, checkpoint tracing and localisation
+  features have been removed.
+* Support for (jailbroken) iPhone and iPod Touch has been added.
+
+Thanks to Florian Forster, Grzegorz Dymarek and especially Michael Tokarev for
+their contributions to this version of tinc.
 
- * Allow :: notation in IPv6 Subnets.
-
- * Add support for systemd style socket activation.
-
- * Allow environment variables to be used for the Name option.
-
- * Add basic support for SOCKS proxies, HTTP proxies, and proxying through an
-   external command.
-
-Version 1.0.18               March 25 2012
-
- * Fixed IPv6 in switch mode by turning off DecrementTTL by default.
-
- * Allow a port number to be specified in BindToAddress, which also allows tinc
-   to listen on multiple ports.
-
- * Add support for multicast communication with UML/QEMU/KVM.
-
-Version 1.0.17               March 10 2012
-
- * The DeviceType option can now be used to select dummy, raw socket, UML and
-   VDE devices without needing to recompile tinc.
-
- * Allow multiple BindToAddress statements.
-
- * Decrement TTL value of IPv4 and IPv6 packets.
-
- * Add LocalDiscovery option allowing tinc to detect peers that are behind the
-   same NAT.
-
- * Accept Subnets passed with the -o option when StrictSubnets = yes.
-
- * Disabling old RSA keys when generating new ones now also works properly on
-   Windows.
-
-Version 1.0.16               July 23 2011
-
- * Fixed a performance issue with TCP communication under Windows.
-
- * Fixed code that, during network outages, would cause tinc to exit when it
-   thought two nodes with identical Names were on the VPN.
-
-Version 1.0.15               June 24 2011
-
- * Improved logging to file.
-
- * Reduced amount of process wakeups on platforms which support pselect().
-
- * Fixed ProcessPriority option under Windows.
-
-  Thanks to Loïc Grenié for his contribution to this version of tinc.
-
-Version 1.0.14               May  8 2011
-
- * Fixed reading configuration files that do not end with a newline. Again.
-
- * Allow arbitrary configuration options being specified on the command line.
-
- * Allow all options in both tinc.conf and the local host config file.
-
- * Configurable replay window, UDP send and receive buffers for performance tuning.
-
- * Try harder to get UDP communication back after falling back to TCP.
-
- * Initial support for attaching tinc to a VDE switch.
-
- * DragonFly BSD support.
-
- * Allow linking with OpenSSL 1.0.0.
-
- Thanks to Brandon Black, Julien Muchembled, Michael Tokarev, Rumko and Timothy
- Redaelli for their contributions to this version of tinc.
-
-Version 1.0.13               Apr 11 2010
-
- * Allow building tinc without LZO and/or Zlib.
-
- * Clamp MSS of TCP packets in both directions.
-
- * Experimental StrictSubnets, Forwarding and DirectOnly options,
-   giving more control over information and packets received from/sent to other
-   nodes.
-
- * Ensure tinc never sends symbolic names for ports over the wire.
-
-Version 1.0.12               Feb  3 2010
-
- * Really allow fast roaming of hosts to other nodes in a switched VPN.
-
- * Fixes missing or incorrect environment variables when calling host-up/down
-   and subnet-up/down scripts in some cases.
-
- * Allow port to be specified in Address statements.
-
- * Clamp MSS of TCP packets to the discovered path MTU.
-
- * Let two nodes behind NAT learn each others current UDP address and port via
-   a third node, potentially allowing direct communications in a similar way to
-   STUN.
-
-Version 1.0.11               Nov  1 2009
-
- * Fixed potential crash when the HUP signal is sent.
-
- * Fixes handling of weighted Subnets in switch and hub modes, preventing
-   unnecessary broadcasts.
-
- * Works around a MinGW bug that caused packets to Windows nodes to always be
-   sent via TCP.
-
- * Improvements to the PMTU discovery code, especially on Windows.
-
- * Use UDP again in certain cases where 1.0.10 was too conservative and fell
-   back to TCP unnecessarily.
-
- * Allow fast roaming of hosts to other nodes in a switched VPN.
-
-Version 1.0.10               Oct 18 2009
-
- * Fixed potential crashes during shutdown and (in rare conditions) when other
-   nodes disconnected from the VPN.
-
- * Improved NAT handling: tinc now copes with mangled port numbers, and will
-   automatically fall back to TCP if direct UDP connection between nodes is not
-   possible. The TCPOnly option should not have to be used anymore.
-
- * Allow configuration files with CRLF line endings to be read on UNIX.
-
- * Disable old RSA keys when generating new ones, and raise the default size of
-   new RSA keys to 2048 bits.
-
- * Many fixes in the path MTU discovery code, especially when Compression is
-   being used.
-
- * Tinc can now drop privileges and/or chroot itself.
-
- * The TunnelServer code now just ignores information from clients instead of
-   disconnecting them.
-
- * Improved performance on Windows by using the new ProcessPriority option and
-   by making the handling of packets received from the TAP-Win32 adapter more
-   efficient.
-
- * Code cleanups: tinc now follows the C99 standard, copyright headers have
-   been updated to include patch authors, checkpoint tracing and localisation
-   features have been removed.
-
- * Support for (jailbroken) iPhone and iPod Touch has been added.
-
- Thanks to Florian Forster, Grzegorz Dymarek and especially Michael Tokarev for
- their contributions to this version of tinc.
-
-Version 1.0.9                Dec 26 2008
-
- * Fixed tinc as a service under Windows 2003.
-
- * Fixed reading configuration files that do not end with a newline.
-
- * Fixed crashes in situations where hostnames could not be resolved or hosts
-   would disconnect at the same time as session keys were exchanged.
-
- * Improved default settings of tun and tap devices on BSD platforms.
-
- * Make IPv6 sockets bind only to IPv6 on Linux.
-
- * Enable path MTU discovery by default.
-
- * Fixed a memory leak that occured when connections were closed.
-
- Thanks to Max Rijevski for his contributions to this version of tinc.
-
-Version 1.0.8                May 16 2007
-
- * Fixed some memory and resource leaks.
-
- * Made network sockets non-blocking under Windows.
-
- Thanks to Scott Lamb and "dnk" for their contributions to this version of tinc.
-
-Version 1.0.7                Jan  5 2007
-
- * Fixed a bug that caused slow network speeds on Windows.
-
- * Fixed a bug that caused tinc unable to write packets to the tun device on
-   OpenBSD.
-
-Version 1.0.6                Dec 18 2006
-
- * More flexible detection of the LZO libraries when compiling.
-
- * Fixed a bug where broadcasts in switch and hub modes sometimes would not
-   work anymore when part of the VPN had become disconnected from the rest.
-
-Version 1.0.5                Nov 14 2006
-
- * Lots of small fixes.
-
- * Broadcast packets no longer grow in size with each hop. This should
-   fix switch mode (again).
-
- * Generic host-up and host-down scripts.
-
- * Optionally dump graph in graphviz format to a file or a script.
-
- * Support LZO 2.0 and later.
-
- Thanks to Scott Lamb for his contributions to this version of tinc.
-
-Version 1.0.4                May  4 2005
-
- * Fix switch and hub modes.
-
- * Optionally start scripts when a Subnet becomes (un)reachable.
-
-Version 1.0.3                Nov 11 2004
-
- * Show error message when failing to write a PID file.
-
- * Ignore spaces at end of lines in config files.
-
- * Fix handling of late packets.
-
- * Unify BSD tun/tap device handling. This allows IPv6 on tun devices and
-   anything on tap devices as long as the underlying OS supports it.
-
- * Handle IPv6 on Solaris tun devices.
-
- * Allow tinc to work properly under Windows XP SP2.
-
- * Allow VLAN tagged Ethernet frames in switch and hub mode.
-
- * Experimental PMTUDiscovery, TunnelServer and BlockingTCP options.
-
-Version 1.0.2                Nov  8 2003
-
- * Fix address and hostname resolving under Windows.
-
- * Remove warnings about non-existing scripts and unsupported address families.
-
- * Use the event logger under Windows.
-
- * Fix quoting of filenames and command line arguments under Windows.
-
- * Strict checks for length incoming network packets and return values of
-   cryptographic functions,
-
- * Fix a bug in metadata handling that made the tinc daemon abort.
-
-Version 1.0.1                Aug 14 2003
-
- * Allow empty lines in config files.
-
- * Fix handling of spaces and backslashes in filenames under native Windows.
-
- * Allow scripts to be executed under native Windows.
-
- * Update documentation, make it less Linux specific.
-
-Version 1.0                  Aug  4 2003
-
- * Lots of small bugfixes and code cleanups.
-
- * Throughput doubled and latency reduced.
-
- * Added support for LZO compression.
-
- * No need to set MAC address or disable ARP anymore.
-
- * Added support for Windows 2000 and XP, both natively and in a Cygwin
-   environment.
-
-Version 1.0pre8              Sep 16 2002
-
- * More fixes for subnets with prefixlength undivisible by 8.
-
- * Added support for NetBSD and MacOS/X.
-
- * Switched from undirected graphs to directed graphs to avoid certain race
-   conditions and improve scalability.
-
- * Generalized broadcasting and forwarding of protocol messages.
-
- * Cleanup of source code.
-
-Version 1.0pre7              Apr  7 2002
-
- * Don't do blocking read()s when getting a signal.
-
- * Remove RSA key checking code, since it sometimes thinks perfectly good RSA
-   keys are bad.
-
- * Fix handling of subnets when prefixlength isn't divisible by 8.
-
-Version 1.0pre6              Mar 27 2002
-
- * Improvement of redundant links:
-   * Non-blocking connects.
-   * Protocol broadcast messages can no longer go into an infinite loop.
-   * Graph algorithm updated to look harder for direct connections.
-
- * Good support for routing IPv6 packets over the VPN. Works on Linux,
-   FreeBSD, possibly OpenBSD but not on Solaris.
-
- * Support for tunnels over IPv6 networks. Works on all supported
-   operating systems.
-
- * Optional compression of UDP connections using zlib.
-
- * Optionally let UDP connections inherit TOS field of tunneled packets.
-
- * Optionally start scripts when certain hosts become (un)reachable.
-
-Version 1.0pre5              Feb  9 2002
-
- * Security enhancements:
-   * Added sequence number and optional message authentication code to
-     the packets.
-   * Configurable encryption cipher and digest algorithms.
-
- * More robust handling of dis- and reconnects.
-
- * Added a "switch" and a "hub" mode to allow bridging setups.
-
- * Preliminary support for routing of IPv6 packets.
-
- * Supports Linux, FreeBSD, OpenBSD and Solaris.
-
-Version 1.0pre4              Jan 17 2001
-
- * Updated documentation; the documentation now reflects the
-   configuration as it is.
-
- * Some internal changes to make tinc scale better for large
-   networks, such as using AVL trees instead of linked lists for the
-   connection list.
-
- * RSA keys can be stored in separate files if needed.  See the
-   documentation for more information.
-
- * Tinc has now been reported to run on Linux PowerPC and FreeBSD x86.
-
-Version 1.0pre3              Oct 31 2000
-
- * The protocol has been redesigned, and although some details are
-   still under discussion, this is secure.  Care has been taken to
-   resist most, if not all, attacks.
-
- * Unfortunately this protocol is not compatible with earlier versions,
-   nor are earlier versions compatible with this version.  Because the
-   older protocol has huge security flaws, we feel that not
-   implementing backwards compatibility is justified.
-
- * Some data about the protocol:
-   * It uses public/private RSA keys for authentication (this is the
-     actual fix for the security hole).
-   * All cryptographic functions have been taken out of tinc, instead
-     it uses the OpenSSL library functions.
-   * Offers support for multiple subnets per tinc daemon.
-
- * New is also the support for the universal tun/tap device.  This
-   means better portability to FreeBSD and Solaris.
-
- * Tinc is tested to compile on Solaris, Linux x86, Linux alpha.
-
- * Tinc now uses the OpenSSL library for cryptographic operations.
-   More information on getting and installing OpenSSL is in the manual.
-   This also means that the GMP library is no longer required.
-
- * Further, thanks to Enrique Zanardi, we have Spanish messages; Matias
-   Carrasco provided us with a Spanish translation of the manual.
-
-Version 1.0pre2              May 31 2000
-
- * This version has been internationalized; and a Dutch translation has
-   been included.
-
- * Two configuration variables have been added:
-   * VpnMask - the IP network mask for the entire VPN, not just our
-     subnet (as given by MyVirtualIP).  The Redhat and Debian packages
-     use this variable in their system startup scripts, but it is
-     ignored by tinc.
-   * Hostnames - if set to `yes', look up the names of IP addresses
-     trying to connect to us.  Default set to `no', to prevent lockups
-     during lookups.
-
- * The system startup scripts for Debian and Redhat use
-   /etc/tinc/nets.boot to find out which networks need to be started
-   during system boot.
-
- * Fixes to prevent denial of service attacks by sending random data
-   after connecting (and even when the connection has been established),
-   either random garbage or just nonsensical protocol fields.
-
- * Tinc will retry to connect upon startup, does not quit if it doesn't
-   work the first time.
-
- * Hosts that are disconnected implicitly if we lose a connection get
-   deleted from the internal list, to prevent hogging eachother with
-   add and delete requests when the connection is restored.
-
-Version 1.0pre1              May 12 2000
-
- * New meta-protocol
-
- * Various other bugfixes
-
- * Documentation updates
-
-Version 0.3.3                Feb  9 2000
-
- * Fixed bug that made tinc stop working with latest kernels
-
- * Updated the manual
-
-Version 0.3.2                Nov 12 1999
-
- * No more `Invalid filedescriptor' when working with multiple
-   connections.
-
- * Forward unknown packets to uplink.
-
-Version 0.3.1                Oct 20 1999
-
- * Fixed a bug where tinc would exit without a trace.
-
-Version 0.3                  Aug 20 1999
-
- * Pings now work immediately.
-
- * All packet sizes get transmitted correctly.
-
-Version 0.2.26               Aug 15 1999
-
- * Fixed some remaining bugs.
-
- * --sysconfdir works with configure.
-
- * Last version before 0.3.
-
-Version 0.2.25               Aug  8 1999
-
- * Improved stability, going towards 0.3 now.
-
-Version 0.2.24               Aug  7 1999
-
- * Added key aging, there's a new config variable, KeyExpire.
-
- * Updated man and info pages.
-
-Version 0.2.23               Aug  5 1999
-
- * All known bugs fixed, this is a candidate for 0.3.
-
-Version 0.2.22               Apr 11 1999
-
- * Multiconnection thing is now working nearly perfect :)
-
-Version 0.2.21               Apr 10 1999
-
- * You shouldn't notice a thing, but a lot has changed wrt key
+# Version 1.0.9                Dec 26 2008
+
+* Fixed tinc as a service under Windows 2003.
+* Fixed reading configuration files that do not end with a newline.
+* Fixed crashes in situations where hostnames could not be resolved or hosts
+  would disconnect at the same time as session keys were exchanged.
+* Improved default settings of tun and tap devices on BSD platforms.
+* Make IPv6 sockets bind only to IPv6 on Linux.
+* Enable path MTU discovery by default.
+* Fixed a memory leak that occured when connections were closed.
+
+Thanks to Max Rijevski for his contributions to this version of tinc.
+
+# Version 1.0.8                May 16 2007
+
+* Fixed some memory and resource leaks.
+* Made network sockets non-blocking under Windows.
+
+Thanks to Scott Lamb and "dnk" for their contributions to this version of tinc.
+
+# Version 1.0.7                Jan  5 2007
+
+* Fixed a bug that caused slow network speeds on Windows.
+* Fixed a bug that caused tinc unable to write packets to the tun device on
+  OpenBSD.
+
+# Version 1.0.6                Dec 18 2006
+
+* More flexible detection of the LZO libraries when compiling.
+* Fixed a bug where broadcasts in switch and hub modes sometimes would not
+  work anymore when part of the VPN had become disconnected from the rest.
+
+# Version 1.0.5                Nov 14 2006
+
+* Lots of small fixes.
+* Broadcast packets no longer grow in size with each hop. This should
+  fix switch mode (again).
+* Generic host-up and host-down scripts.
+* Optionally dump graph in graphviz format to a file or a script.
+* Support LZO 2.0 and later.
+
+Thanks to Scott Lamb for his contributions to this version of tinc.
+
+# Version 1.0.4                May  4 2005
+
+* Fix switch and hub modes.
+* Optionally start scripts when a Subnet becomes (un)reachable.
+
+# Version 1.0.3                Nov 11 2004
+
+* Show error message when failing to write a PID file.
+* Ignore spaces at end of lines in config files.
+* Fix handling of late packets.
+* Unify BSD tun/tap device handling. This allows IPv6 on tun devices and
+  anything on tap devices as long as the underlying OS supports it.
+* Handle IPv6 on Solaris tun devices.
+* Allow tinc to work properly under Windows XP SP2.
+* Allow VLAN tagged Ethernet frames in switch and hub mode.
+* Experimental PMTUDiscovery, TunnelServer and BlockingTCP options.
+
+# Version 1.0.2                Nov  8 2003
+
+* Fix address and hostname resolving under Windows.
+* Remove warnings about non-existing scripts and unsupported address families.
+* Use the event logger under Windows.
+* Fix quoting of filenames and command line arguments under Windows.
+* Strict checks for length incoming network packets and return values of
+  cryptographic functions,
+* Fix a bug in metadata handling that made the tinc daemon abort.
+
+# Version 1.0.1                Aug 14 2003
+
+* Allow empty lines in config files.
+* Fix handling of spaces and backslashes in filenames under native Windows.
+* Allow scripts to be executed under native Windows.
+* Update documentation, make it less Linux specific.
+
+# Version 1.0                  Aug  4 2003
+
+* Lots of small bugfixes and code cleanups.
+* Throughput doubled and latency reduced.
+* Added support for LZO compression.
+* No need to set MAC address or disable ARP anymore.
+* Added support for Windows 2000 and XP, both natively and in a Cygwin
+  environment.
+
+# Version 1.0pre8              Sep 16 2002
+
+* More fixes for subnets with prefixlength undivisible by 8.
+* Added support for NetBSD and MacOS/X.
+* Switched from undirected graphs to directed graphs to avoid certain race
+  conditions and improve scalability.
+* Generalized broadcasting and forwarding of protocol messages.
+* Cleanup of source code.
+
+# Version 1.0pre7              Apr  7 2002
+
+* Don't do blocking read()s when getting a signal.
+* Remove RSA key checking code, since it sometimes thinks perfectly good RSA
+  keys are bad.
+* Fix handling of subnets when prefixlength isn't divisible by 8.
+
+# Version 1.0pre6              Mar 27 2002
+
+* Improvement of redundant links:
+  * Non-blocking connects.
+  * Protocol broadcast messages can no longer go into an infinite loop.
+  * Graph algorithm updated to look harder for direct connections.
+* Good support for routing IPv6 packets over the VPN. Works on Linux,
+  FreeBSD, possibly OpenBSD but not on Solaris.
+* Support for tunnels over IPv6 networks. Works on all supported
+  operating systems.
+* Optional compression of UDP connections using zlib.
+* Optionally let UDP connections inherit TOS field of tunneled packets.
+* Optionally start scripts when certain hosts become (un)reachable.
+
+# Version 1.0pre5              Feb  9 2002
+
+* Security enhancements:
+  * Added sequence number and optional message authentication code to
+    the packets.
+  * Configurable encryption cipher and digest algorithms.
+* More robust handling of dis- and reconnects.
+* Added a "switch" and a "hub" mode to allow bridging setups.
+* Preliminary support for routing of IPv6 packets.
+* Supports Linux, FreeBSD, OpenBSD and Solaris.
+
+# Version 1.0pre4              Jan 17 2001
+
+* Updated documentation; the documentation now reflects the
+  configuration as it is.
+* Some internal changes to make tinc scale better for large
+  networks, such as using AVL trees instead of linked lists for the
+  connection list.
+* RSA keys can be stored in separate files if needed.  See the
+  documentation for more information.
+* Tinc has now been reported to run on Linux PowerPC and FreeBSD x86.
+
+# Version 1.0pre3              Oct 31 2000
+
+* The protocol has been redesigned, and although some details are
+  still under discussion, this is secure.  Care has been taken to
+  resist most, if not all, attacks.
+* Unfortunately this protocol is not compatible with earlier versions,
+  nor are earlier versions compatible with this version.  Because the
+  older protocol has huge security flaws, we feel that not
+  implementing backwards compatibility is justified.
+* Some data about the protocol:
+  * It uses public/private RSA keys for authentication (this is the
+    actual fix for the security hole).
+  * All cryptographic functions have been taken out of tinc, instead
+    it uses the OpenSSL library functions.
+  * Offers support for multiple subnets per tinc daemon.
+* New is also the support for the universal tun/tap device.  This
+  means better portability to FreeBSD and Solaris.
+* Tinc is tested to compile on Solaris, Linux x86, Linux alpha.
+* Tinc now uses the OpenSSL library for cryptographic operations.
+  More information on getting and installing OpenSSL is in the manual.
+  This also means that the GMP library is no longer required.
+* Further, thanks to Enrique Zanardi, we have Spanish messages; Matias
+  Carrasco provided us with a Spanish translation of the manual.
+
+# Version 1.0pre2              May 31 2000
+
+* This version has been internationalized; and a Dutch translation has
+  been included.
+* Two configuration variables have been added:
+  * VpnMask - the IP network mask for the entire VPN, not just our
+    subnet (as given by MyVirtualIP).  The Redhat and Debian packages
+    use this variable in their system startup scripts, but it is
+    ignored by tinc.
+  * Hostnames - if set to `yes', look up the names of IP addresses
+    trying to connect to us.  Default set to `no', to prevent lockups
+    during lookups.
+* The system startup scripts for Debian and Redhat use
+  /etc/tinc/nets.boot to find out which networks need to be started
+  during system boot.
+* Fixes to prevent denial of service attacks by sending random data
+  after connecting (and even when the connection has been established),
+  either random garbage or just nonsensical protocol fields.
+* Tinc will retry to connect upon startup, does not quit if it doesn't
+  work the first time.
+* Hosts that are disconnected implicitly if we lose a connection get
+  deleted from the internal list, to prevent hogging eachother with
+  add and delete requests when the connection is restored.
+
+# Version 1.0pre1              May 12 2000
+
+* New meta-protocol
+* Various other bugfixes
+* Documentation updates
+
+# Version 0.3.3                Feb  9 2000
+
+* Fixed bug that made tinc stop working with latest kernels
+* Updated the manual
+
+# Version 0.3.2                Nov 12 1999
+
+* No more `Invalid filedescriptor' when working with multiple
+  connections.
+* Forward unknown packets to uplink.
+
+# Version 0.3.1                Oct 20 1999
+
+* Fixed a bug where tinc would exit without a trace.
+
+# Version 0.3                  Aug 20 1999
+
+* Pings now work immediately.
+* All packet sizes get transmitted correctly.
+
+# Version 0.2.26               Aug 15 1999
+
+* Fixed some remaining bugs.
+* --sysconfdir works with configure.
+* Last version before 0.3.
+
+# Version 0.2.25               Aug  8 1999
+
+* Improved stability, going towards 0.3 now.
+
+# Version 0.2.24               Aug  7 1999
+
+* Added key aging, there's a new config variable, KeyExpire.
+* Updated man and info pages.
+
+# Version 0.2.23               Aug  5 1999
+
+* All known bugs fixed, this is a candidate for 0.3.
+
+# Version 0.2.22               Apr 11 1999
+
+* Multiconnection thing is now working nearly perfect :)
+
+# Version 0.2.21               Apr 10 1999
+
+* You shouldn't notice a thing, but a lot has changed wrt key
 management - except that it refuses to talk to versions < 0.2.20
 
-Version 0.2.19               Apr  3 1999
+# Version 0.2.19               Apr  3 1999
 
- * Don't install a libcipher.so.
+* Don't install a libcipher.so.
 
-Version 0.2.18               Apr  3 1999
+# Version 0.2.18               Apr  3 1999
 
- * Blowfish library dynamically loaded upon execution.
+* Blowfish library dynamically loaded upon execution.
+* Included Eric Young's IDEA library.
 
- * Included Eric Young's IDEA library.
+# Version 0.2.17               Apr  1 1999
 
-Version 0.2.17               Apr  1 1999
+* Tincd now re-executes itself in case of a segmentation fault.
 
- * Tincd now re-executes itself in case of a segmentation fault.
+# Version 0.2.16               Apr  1 1999
 
-Version 0.2.16               Apr  1 1999
+* Wrote tincd.conf(5) man page, which still needs a lot of work.
+* Config file now accepts and tolerates spaces, and any integer base
+  for integer variables, and better error reporting. See
+  doc/tincd.conf.sample for an example.
 
- * Wrote tincd.conf(5) man page, which still needs a lot of work.
+# Version 0.2.15               Mar 29 1999
 
- * Config file now accepts and tolerates spaces, and any integer base
-   for integer variables, and better error reporting. See
-   doc/tincd.conf.sample for an example.
+* Fixed bugs.
 
-Version 0.2.15               Mar 29 1999
+# Version 0.2.14               Feb 10 1999
 
- * Fixed bugs.
+* Added --timeout flag and PingTimeout configuration.
+* Did some first syslog cleanup work.
 
-Version 0.2.14               Feb 10 1999
+# Version 0.2.13               Jan 23 1999
 
- * Added --timeout flag and PingTimeout configuration.
- * Did some first syslog cleanup work.
+* Bugfixes.
 
-Version 0.2.13               Jan 23 1999
+# Version 0.2.12               Jan 23 1999
 
- * Bugfixes.
+* Fixed nauseating bug so that it would crash whenever a connection
+  got lost.
 
-Version 0.2.12               Jan 23 1999
+# Version 0.2.11               Jan 22 1999
 
- * Fixed nauseating bug so that it would crash whenever a connection
-   got lost.
+* Framework for multiple connections has been done.
+* Simple manpage for tincd.
 
-Version 0.2.11               Jan 22 1999
+# Version 0.2.10               Jan 18 1999
 
- * Framework for multiple connections has been done.
+* Passphrase support added.
 
- * Simple manpage for tincd.
+# Version 0.2.9                Jan 13 1999
 
-Version 0.2.10               Jan 18 1999
+* Bugs fixed.
 
- * Passphrase support added.
+# Version 0.2.8                Jan 11 1999
 
-Version 0.2.9                Jan 13 1999
+* A reworked protocol version.
+* A ping/pong system.
+* More reliable networking code.
+* Automatic reconnection.
+* Still does not work with more than one connection :)
+* Strips MAC addresses before sending, so there's less overhead, and
+  less redundancy.
 
- * Bugs fixed.
+# Version 0.2.7                Jan  3 1999
 
-Version 0.2.8                Jan 11 1999
+* Several updates to make extending more easy.
 
- * A reworked protocol version.
+# Version 0.2.6                Dec 20 1998
 
- * A ping/pong system.
+* Point-to-Point connections have been established, including
+  Blowfish encryption and a secret key-exchange.
 
- * More reliable networking code.
+# Version 0.2.5                Dec 16 1998
 
- * Automatic reconnection.
+* Project renamed to tinc, in honour of TINC.
 
- * Still does not work with more than one connection :)
+# Version 0.2.4                Dec 16 1998
 
- * Strips MAC addresses before sending, so there's less overhead, and
-   less redundancy.
+* Now it really does ;)
 
-Version 0.2.7                Jan  3 1999
+# Version 0.2.3                Nov 24 1998
 
- * Several updates to make extending more easy.
+* It sort of works now.
 
-Version 0.2.6                Dec 20 1998
+# Version 0.2.2                Nov 20 1998
 
- * Point-to-Point connections have been established, including
-   Blowfish encryption and a secret key-exchange.
+* Uses GNU gmp.
 
-Version 0.2.5                Dec 16 1998
+# Version 0.2.1                Nov 14 1998
 
- * Project renamed to tinc, in honour of TINC.
-
-Version 0.2.4                Dec 16 1998
-
- * Now it really does ;)
-
-Version 0.2.3                Nov 24 1998
-
- * It sort of works now.
-
-Version 0.2.2                Nov 20 1998
-
- * Uses GNU gmp.
-
-Version 0.2.1                Nov 14 1998
-
- * Bare version.
+* Bare version.
