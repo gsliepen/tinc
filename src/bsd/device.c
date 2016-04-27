@@ -349,13 +349,13 @@ static bool read_packet(vpn_packet_t *packet) {
 
 		case DEVICE_TYPE_UTUN:
 		case DEVICE_TYPE_TUNIFHEAD: {
-			if((inlen = read(device_fd, packet->data + 10, MTU - 10)) <= 0) {
+			if((inlen = read(device_fd, DATA(packet) + 10, MTU - 10)) <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				return false;
 			}
 
-			switch (packet->data[14] >> 4) {
+			switch (DATA(packet)[14] >> 4) {
 				case 4:
 					DATA(packet)[12] = 0x08;
 					DATA(packet)[13] = 0x00;
@@ -369,7 +369,7 @@ static bool read_packet(vpn_packet_t *packet) {
 				default:
 					logger(DEBUG_TRAFFIC, LOG_ERR,
 							   "Unknown IP version %d while reading packet from %s %s",
-							   packet->data[14] >> 4, device_info, device);
+							   DATA(packet)[14] >> 4, device_info, device);
 					return false;
 			}
 
@@ -430,9 +430,9 @@ static bool write_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			memcpy(packet->data + 10, &type, sizeof type);
+			memcpy(DATA(packet) + 10, &type, sizeof type);
 
-			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
+			if(write(device_fd, DATA(packet) + 10, packet->len - 10) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
