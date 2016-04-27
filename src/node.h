@@ -118,6 +118,7 @@ extern splay_tree_t *node_tree;
 
 extern void init_nodes(void);
 extern void exit_nodes(void);
+int node_compare(const node_t *, const node_t *);
 extern node_t *new_node(void) __attribute__ ((__malloc__));
 extern void free_node(node_t *);
 extern void node_add(node_t *);

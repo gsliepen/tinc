@@ -31,6 +31,7 @@
 #include "meta.h"
 #include "names.h"
 #include "net.h"
+#include "node.h"
 #include "netutl.h"
 #include "protocol.h"
 #include "subnet.h"
