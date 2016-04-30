@@ -217,7 +217,6 @@ extern void regenerate_key(void);
 extern void purge(void);
 extern void retry(void);
 extern int reload_configuration(void);
-extern void load_all_subnets(void);
 extern void load_all_nodes(void);
 extern void try_tx(struct node_t *n, bool);
 

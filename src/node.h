@@ -40,7 +40,8 @@ typedef struct node_status_t {
 	unsigned int send_locally:1;		/* 1 if the next UDP packet should be sent on the local network */
 	unsigned int udppacket:1;		/* 1 if the most recently received packet was UDP */
 	unsigned int validkey_in:1;		/* 1 if we have sent a valid key to him */
-	unsigned int unused:21;
+	unsigned int has_address:1;		/* 1 if we know an external address for this node */
+	unsigned int unused:20;
 } node_status_t;
 
 typedef struct node_t {

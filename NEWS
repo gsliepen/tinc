@@ -21,7 +21,7 @@
 * Initial support for generating a tinc-up script from an invitation.
 * Many small fixes, documentation updates.
 
-Thanks to Etienne Dechamps, thorkill, Vittorio Gambaletta, Martin Weinelt,
+Thanks to Etienne Dechamps, Rafał Leśniak, Vittorio Gambaletta, Martin Weinelt,
 Sven-Haegar Koch, Florian Klink, LunnarShadow, Dato Simó, Jo-Philipp Wich,
 Jochen Voss, Nathan Stratton Treadway, Pierre Emeriaud, xentec, Samuel
 Thibault and Michael Tokarev for their contributions to this version of tinc.

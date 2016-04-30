@@ -210,18 +210,24 @@ static void periodic_handler(void *data) {
 			   and we are not already trying to make one, create an
 			   outgoing connection to this node.
 			*/
-			int r = rand() % (node_tree->count - 1);
-			int i = 0;
+			int count = 0;
+			for splay_each(node_t, n, node_tree) {
+				if(n == myself || n->connection || !(n->status.has_address || n->status.reachable))
+					continue;
+				count++;
+			}
+
+			if(!count)
+				goto end;
+
+			int r = rand() % count;
 
 			for splay_each(node_t, n, node_tree) {
-				if(n == myself)
+				if(n == myself || n->connection || !(n->status.has_address || n->status.reachable))
 					continue;
 
-				if(i++ != r)
+				if(r--)
 					continue;
-
-				if(n->connection)
-					break;
 
 				bool found = false;
 
@@ -239,6 +245,7 @@ static void periodic_handler(void *data) {
 					list_insert_tail(outgoing_list, outgoing);
 					setup_outgoing_connection(outgoing);
 				}
+
 				break;
 			}
 		} else if(nc > 3) {
@@ -287,6 +294,7 @@ static void periodic_handler(void *data) {
 		}
 	}
 
+end:
 	timeout_set(data, &(struct timeval){5, rand() % 100000});
 }
 
@@ -344,9 +352,14 @@ int reload_configuration(void) {
 		for splay_each(subnet_t, subnet, subnet_tree)
 			if (subnet->owner)
 				subnet->expires = 1;
+	}
 
-		load_all_subnets();
+	for splay_each(node_t, n, node_tree)
+		n->status.has_address = false;
 
+	load_all_nodes();
+
+	if(strictsubnets) {
 		for splay_each(subnet_t, subnet, subnet_tree) {
 			if (!subnet->owner)
 				continue;
