@@ -1,3 +1,9 @@
+# Version 1.1pre13             April 30 2016
+
+* Fix BSD tun device support that was broken in 1.1pre12.
+* Speed up AutoConnect when there are many host config files present without
+  an Address.
+
 # Version 1.1pre12             April 24 2016
 
 * Added a "--syslog" option to force logging to syslog even if running in the
