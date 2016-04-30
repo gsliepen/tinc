@@ -327,59 +327,6 @@ void regenerate_key(void) {
 /*
   Read Subnets from all host config files
 */
-void load_all_subnets(void) {
-	DIR *dir;
-	struct dirent *ent;
-	char dname[PATH_MAX];
-
-	snprintf(dname, sizeof dname, "%s" SLASH "hosts", confbase);
-	dir = opendir(dname);
-	if(!dir) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
-		return;
-	}
-
-	while((ent = readdir(dir))) {
-		if(!check_id(ent->d_name))
-			continue;
-
-		node_t *n = lookup_node(ent->d_name);
-		#ifdef _DIRENT_HAVE_D_TYPE
-		//if(ent->d_type != DT_REG)
-		//	continue;
-		#endif
-
-		splay_tree_t *config_tree;
-		init_configuration(&config_tree);
-		read_config_options(config_tree, ent->d_name);
-		read_host_config(config_tree, ent->d_name);
-
-		if(!n) {
-			n = new_node();
-			n->name = xstrdup(ent->d_name);
-			node_add(n);
-		}
-
-		for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
-			subnet_t *s, *s2;
-
-			if(!get_config_subnet(cfg, &s))
-				continue;
-
-			if((s2 = lookup_subnet(n, s))) {
-				s2->expires = -1;
-				free(s);
-			} else {
-				subnet_add(n, s);
-			}
-		}
-
-		exit_configuration(&config_tree);
-	}
-
-	closedir(dir);
-}
-
 void load_all_nodes(void) {
 	DIR *dir;
 	struct dirent *ent;
@@ -397,17 +344,42 @@ void load_all_nodes(void) {
 			continue;
 
 		node_t *n = lookup_node(ent->d_name);
-		if(n)
-			continue;
+		if(!n) {
+			n = new_node();
+			n->name = xstrdup(ent->d_name);
+			node_add(n);
+		}
 
-		n = new_node();
-		n->name = xstrdup(ent->d_name);
-		node_add(n);
+		splay_tree_t *config_tree;
+		init_configuration(&config_tree);
+		read_config_options(config_tree, ent->d_name);
+		read_host_config(config_tree, ent->d_name);
+
+		if (strictsubnets) {
+			for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+				subnet_t *s, *s2;
+
+				if(!get_config_subnet(cfg, &s))
+					continue;
+
+				if((s2 = lookup_subnet(n, s))) {
+					s2->expires = -1;
+					free(s);
+				} else {
+					subnet_add(n, s);
+				}
+			}
+		}
+
+		if (lookup_config(config_tree, "Address")) {
+			n->status.has_known_address = true;
+			n->status.has_cfg_address = true;
+		}
+
+		exit_configuration(&config_tree);
 	}
-
 	closedir(dir);
 }
-
 
 char *get_name(void) {
 	char *name = NULL;
@@ -947,9 +919,7 @@ static bool setup_myself(void) {
 
 	graph();
 
-	if(strictsubnets)
-		load_all_subnets();
-	else if(autoconnect)
+	if(autoconnect)
 		load_all_nodes();
 
 	/* Open device */

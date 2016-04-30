@@ -37,10 +37,12 @@ typedef struct node_status_t {
 	unsigned int indirect:1;                /* 1 if this node is not directly reachable by us */
 	unsigned int sptps:1;                   /* 1 if this node supports SPTPS */
 	unsigned int udp_confirmed:1;           /* 1 if the address is one that we received UDP traffic on */
-	unsigned int send_locally:1;		/* 1 if the next UDP packet should be sent on the local network */
-	unsigned int udppacket:1;		/* 1 if the most recently received packet was UDP */
-	unsigned int validkey_in:1;		/* 1 if we have sent a valid key to him */
-	unsigned int unused:21;
+	unsigned int send_locally:1;            /* 1 if the next UDP packet should be sent on the local network */
+	unsigned int udppacket:1;               /* 1 if the most recently received packet was UDP */
+	unsigned int validkey_in;               /* 1 if we have sent a valid key to him */
+	unsigned int has_known_address;         /* 1 if this node has UDP Address */
+	unsigned int has_cfg_address;           /* 1 if this node has Address in node's config */
+	unsigned int unused:19;
 } node_status_t;
 
 typedef struct node_t {
@@ -116,6 +118,7 @@ extern splay_tree_t *node_tree;
 
 extern void init_nodes(void);
 extern void exit_nodes(void);
+int node_compare(const node_t *, const node_t *);
 extern node_t *new_node(void) __attribute__ ((__malloc__));
 extern void free_node(node_t *);
 extern void node_add(node_t *);
