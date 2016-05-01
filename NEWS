@@ -1,3 +1,7 @@
+# Version 1.1pre13             May 1 2016
+
+* Add tinc.service back.
+
 # Version 1.1pre13             April 30 2016
 
 * Fix BSD tun device support that was broken in 1.1pre12.
