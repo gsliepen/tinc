@@ -499,7 +499,7 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 	uint8_t type = 0;
 	int offset = 0;
 
-	if(!(DATA(origpkt)[12] | DATA(origpkt)[13])) {
+	if((!(DATA(origpkt)[12] | DATA(origpkt)[13])) && (n->sptps.outstate))  {
 		sptps_send_record(&n->sptps, PKT_PROBE, (char *)DATA(origpkt), origpkt->len);
 		return;
 	}
