@@ -129,9 +129,8 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_
 // Send an application record.
 bool sptps_send_record(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
 
-	if((!s->outstate) && (type != PKT_PROBE))
-		return error(s, EINVAL, "Handshake phase not finished yet (outstate:%x type: %d)",
-									s->outstate, type);
+	if(!s->outstate)
+		return error(s, EINVAL, "Handshake phase not finished yet");
 
 	// Sanity checks: application cannot send data before handshake is finished,
 	// and only record types 0..127 are allowed.
