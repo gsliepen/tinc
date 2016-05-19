@@ -42,6 +42,7 @@ static int sleeptime = 10;
 time_t last_config_check = 0;
 static timeout_t pingtimer;
 static timeout_t periodictimer;
+static struct timeval last_periodic_run_time;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -144,9 +145,46 @@ void terminate_connection(connection_t *c, bool report) {
   and close the connection.
 */
 static void timeout_handler(void *data) {
+
+	bool close_all_connections = false;
+
+	/*
+		 timeout_hanlder will start after 30 seconds from start of tincd
+		 hold information about the elapsed time since last time the handler
+		 has been run
+	*/
+	long sleep_time = now.tv_sec - last_periodic_run_time.tv_sec;
+	/*
+		 It seems that finding sane default value is harder than expected
+		 Since we send every second a UDP packet to make holepunching work
+		 And default UDP state expire on firewalls is between 15-30 seconds
+		 we drop all connections after 60 Seconds - UDPDiscoveryTimeout=30
+		 by default
+	*/
+	if (sleep_time > 2 * udp_discovery_timeout) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Awaking from dead after %ld seconds of sleep", sleep_time);
+		/*
+			Do not send any packets to tinc after we wake up.
+			The other node probably closed our connection but we still
+			are holding context information to them. This may happen on
+			laptops or any other hardware which can be suspended for some time.
+			Sending any data to node that wasn't expecting it will produce
+			annoying and misleading errors on the other side about failed signature
+			verification and or about missing sptps context
+		*/
+		close_all_connections = true;
+	}
+	last_periodic_run_time = now;
+
 	for list_each(connection_t, c, connection_list) {
 		if(c->status.control)
 			continue;
+
+		if(close_all_connections) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Forcing connection close after sleep time %s (%s)", c->name, c->hostname);
+			terminate_connection(c, c->edge);
+			continue;
+		}
 
 		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
 			if(c->edge) {
@@ -457,6 +495,7 @@ void retry(void) {
   this is where it all happens...
 */
 int main_loop(void) {
+	last_periodic_run_time = now;
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
 	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){0, 0});
 
