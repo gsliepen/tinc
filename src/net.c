@@ -149,7 +149,7 @@ static void timeout_handler(void *data) {
 	bool close_all_connections = false;
 
 	/*
-		 timeout_hanlder will start after 30 seconds from start of tincd
+		 timeout_handler will start after 30 seconds from start of tincd
 		 hold information about the elapsed time since last time the handler
 		 has been run
 	*/
@@ -177,6 +177,7 @@ static void timeout_handler(void *data) {
 	last_periodic_run_time = now;
 
 	for list_each(connection_t, c, connection_list) {
+		// control connections (eg. tinc ctl) do not have any timeout
 		if(c->status.control)
 			continue;
 
@@ -186,26 +187,34 @@ static void timeout_handler(void *data) {
 			continue;
 		}
 
-		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
-			if(c->edge) {
-				try_tx(c->node, false);
-				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)(now.tv_sec - c->last_ping_time));
-				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
-					send_ping(c);
-					continue;
-				} else {
-					continue;
-				}
-			} else {
-				if(c->status.connecting)
-					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
-				else
-					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
-			}
+		// Bail out early if we haven't reached the ping timeout for this node yet
+		if(c->last_ping_time + pingtimeout > now.tv_sec)
+			continue;
+
+		// timeout during connection establishing
+		if(!c->edge) {
+			if(c->status.connecting)
+				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
+			else
+				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
+
 			terminate_connection(c, c->edge);
+			continue;
 		}
 
+		// helps in UDP holepunching
+		try_tx(c->node, false);
+
+		// timeout during ping
+		if(c->status.pinged) {
+			logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
+			terminate_connection(c, c->edge);
+			continue;
+		}
+
+		// check whether we need to send a new ping
+		if(c->last_ping_time + pinginterval <= now.tv_sec)
+			send_ping(c);
 	}
 
 	timeout_set(data, &(struct timeval){1, rand() % 100000});
