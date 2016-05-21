@@ -1391,7 +1391,7 @@ static int cmd_pid(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true) && !pid)
+	if(!connect_tincd(true) || !pid)
 		return 1;
 
 	printf("%d\n", pid);
