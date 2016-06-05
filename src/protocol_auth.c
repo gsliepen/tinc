@@ -866,7 +866,8 @@ bool ack_h(connection_t *c, const char *request) {
 	c->edge = new_edge();
 	c->edge->from = myself;
 	c->edge->to = n;
-	sockaddr_setport(&c->address, hisport);
+	sockaddrcpy(&c->edge->address, &c->address);
+	sockaddr_setport(&c->edge->address, hisport);
 	sockaddr_t local_sa;
 	socklen_t local_salen = sizeof local_sa;
 	if (getsockname(c->socket, &local_sa.sa, &local_salen) < 0)
