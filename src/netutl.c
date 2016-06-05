@@ -234,3 +234,22 @@ void sockaddrunmap(sockaddr_t *sa) {
 		sa->in.sin_family = AF_INET;
 	}
 }
+
+void sockaddr_setport(sockaddr_t *sa, const char *port) {
+	uint16_t portnum = htons(atoi(port));
+	if(!portnum)
+		return;
+	switch(sa->sa.sa_family) {
+		case AF_INET:
+			sa->in.sin_port = portnum;
+			break;
+		case AF_INET6:
+			sa->in6.sin6_port = portnum;
+			break;
+		case AF_UNKNOWN:
+			free(sa->unknown.port);
+			sa->unknown.port = xstrdup(port);
+		default:
+			return;
+	}
+}

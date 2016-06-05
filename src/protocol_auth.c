@@ -790,7 +790,6 @@ bool ack_h(connection_t *c, const char *request) {
 		return upgrade_h(c, request);
 
 	char hisport[MAX_STRING_SIZE];
-	char *hisaddress;
 	int weight, mtu;
 	uint32_t options;
 	node_t *n;
@@ -867,19 +866,13 @@ bool ack_h(connection_t *c, const char *request) {
 	c->edge = new_edge();
 	c->edge->from = myself;
 	c->edge->to = n;
-	sockaddr2str(&c->address, &hisaddress, NULL);
-	c->edge->address = str2sockaddr(hisaddress, hisport);
-	free(hisaddress);
+	sockaddr_setport(&c->address, hisport);
 	sockaddr_t local_sa;
 	socklen_t local_salen = sizeof local_sa;
 	if (getsockname(c->socket, &local_sa.sa, &local_salen) < 0)
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get local socket address for connection with %s", c->name);
-	else {
-		char *local_address;
-		sockaddr2str(&local_sa, &local_address, NULL);
-		c->edge->local_address = str2sockaddr(local_address, myport);
-		free(local_address);
-	}
+	else
+		sockaddr_setport(&local_sa, myport);
 	c->edge->weight = (weight + c->estimated_weight) / 2;
 	c->edge->connection = c;
 	c->edge->options = c->options;
