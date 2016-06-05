@@ -34,6 +34,7 @@ extern int sockaddrcmp_noport(const sockaddr_t *, const sockaddr_t *);
 extern void sockaddrunmap(sockaddr_t *);
 extern void sockaddrfree(sockaddr_t *);
 extern void sockaddrcpy(sockaddr_t *, const sockaddr_t *);
+extern void sockaddr_setport(sockaddr_t *, const char *);
 extern int maskcmp(const void *, const void *, int);
 extern void maskcpy(void *, const void *, int, int);
 extern void mask(void *, int, int);
