@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -145,7 +145,7 @@ void send_mtu_probe(node_t *n) {
 			len = 64;
 		
 		memset(packet.data, 0, 14);
-		RAND_pseudo_bytes(packet.data + 14, len - 14);
+		RAND_bytes(packet.data + 14, len - 14);
 		packet.len = len;
 		if(i >= 4 && n->mtuprobes <= 10)
 			packet.priority = -1;
@@ -314,10 +314,10 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(n->incipher) {
 		outpkt = pkt[nextpkt++];
 
-		if(!EVP_DecryptInit_ex(&n->inctx, NULL, NULL, NULL, NULL)
-				|| !EVP_DecryptUpdate(&n->inctx, (unsigned char *) &outpkt->seqno, &outlen,
+		if(!EVP_DecryptInit_ex(n->inctx, NULL, NULL, NULL, NULL)
+				|| !EVP_DecryptUpdate(n->inctx, (unsigned char *) &outpkt->seqno, &outlen,
 					(unsigned char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_DecryptFinal_ex(&n->inctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_DecryptFinal_ex(n->inctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Error decrypting packet from %s (%s): %s",
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
@@ -479,10 +479,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(n->outcipher) {
 		outpkt = pkt[nextpkt++];
 
-		if(!EVP_EncryptInit_ex(&n->outctx, NULL, NULL, NULL, NULL)
-				|| !EVP_EncryptUpdate(&n->outctx, (unsigned char *) &outpkt->seqno, &outlen,
+		if(!EVP_EncryptInit_ex(n->outctx, NULL, NULL, NULL, NULL)
+				|| !EVP_EncryptUpdate(n->outctx, (unsigned char *) &outpkt->seqno, &outlen,
 					(unsigned char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_EncryptFinal_ex(&n->outctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_EncryptFinal_ex(n->outctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, "Error while encrypting packet to %s (%s): %s",
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			goto end;

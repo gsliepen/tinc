@@ -1,6 +1,6 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2011 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2016 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -57,8 +57,10 @@ node_t *new_node(void) {
 	if(replaywin) n->late = xmalloc_and_zero(replaywin);
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
-	EVP_CIPHER_CTX_init(&n->inctx);
-	EVP_CIPHER_CTX_init(&n->outctx);
+	n->inctx = EVP_CIPHER_CTX_new();
+	n->outctx = EVP_CIPHER_CTX_new();
+	if(!n->inctx || !n->outctx)
+		abort();
 	n->mtu = MTU;
 	n->maxmtu = MTU;
 
@@ -80,8 +82,8 @@ void free_node(node_t *n) {
 
 	sockaddrfree(&n->address);
 
-	EVP_CIPHER_CTX_cleanup(&n->inctx);
-	EVP_CIPHER_CTX_cleanup(&n->outctx);
+	EVP_CIPHER_CTX_free(n->outctx);
+	EVP_CIPHER_CTX_free(n->inctx);
 
 	if(n->mtuevent)
 		event_del(n->mtuevent);
@@ -172,8 +174,8 @@ void dump_nodes(void) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		logger(LOG_DEBUG, " %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s pmtu %d (min %d max %d)",
-			   n->name, n->hostname, n->outcipher ? n->outcipher->nid : 0,
-			   n->outdigest ? n->outdigest->type : 0, n->outmaclength, n->outcompression,
+			   n->name, n->hostname, n->outcipher ? EVP_CIPHER_nid(n->outcipher) : 0,
+			   n->outdigest ? EVP_MD_type(n->outdigest) : 0, n->outmaclength, n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}

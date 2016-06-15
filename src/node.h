@@ -50,12 +50,12 @@ typedef struct node_t {
 	const EVP_CIPHER *incipher;		/* Cipher type for UDP packets received from him */
 	char *inkey;				/* Cipher key and iv */
 	int inkeylength;			/* Cipher key and iv length */
-	EVP_CIPHER_CTX inctx;			/* Cipher context */
+	EVP_CIPHER_CTX *inctx;			/* Cipher context */
 	
 	const EVP_CIPHER *outcipher;		/* Cipher type for UDP packets sent to him*/
 	char *outkey;				/* Cipher key and iv */
 	int outkeylength;			/* Cipher key and iv length */
-	EVP_CIPHER_CTX outctx;			/* Cipher context */
+	EVP_CIPHER_CTX *outctx;			/* Cipher context */
 	
 	const EVP_MD *indigest;			/* Digest type for MAC of packets received from him */
 	int inmaclength;			/* Length of MAC */

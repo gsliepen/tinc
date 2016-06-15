@@ -164,7 +164,7 @@ bool send_ans_key(node_t *to) {
 	}
 
 	if(to->incipher)
-		EVP_DecryptInit_ex(&to->inctx, to->incipher, NULL, (unsigned char *)to->inkey, (unsigned char *)to->inkey + to->incipher->key_len);
+		EVP_DecryptInit_ex(to->inctx, to->incipher, NULL, (unsigned char *)to->inkey, (unsigned char *)to->inkey + EVP_CIPHER_key_length(to->incipher));
 
 	// Reset sequence number and late packet window
 	mykeyused = true;
@@ -178,8 +178,8 @@ bool send_ans_key(node_t *to) {
 
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 			myself->name, to->name, key,
-			to->incipher ? to->incipher->nid : 0,
-			to->indigest ? to->indigest->type : 0, to->inmaclength,
+			to->incipher ? EVP_CIPHER_nid(to->incipher) : 0,
+			to->indigest ? EVP_MD_type(to->indigest) : 0, to->inmaclength,
 			to->incompression);
 }
 
@@ -268,7 +268,7 @@ bool ans_key_h(connection_t *c) {
 			return true;
 		}
 
-		if(from->outkeylength != from->outcipher->key_len + from->outcipher->iv_len) {
+		if(from->outkeylength != EVP_CIPHER_key_length(from->outcipher) + EVP_CIPHER_iv_length(from->outcipher)) {
 			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name,
 				   from->hostname);
 			return true;
@@ -288,7 +288,7 @@ bool ans_key_h(connection_t *c) {
 			return true;
 		}
 
-		if(from->outmaclength > from->outdigest->md_size || from->outmaclength < 0) {
+		if(from->outmaclength > EVP_MD_size(from->outdigest) || from->outmaclength < 0) {
 			logger(LOG_ERR, "Node %s (%s) uses bogus MAC length!",
 				   from->name, from->hostname);
 			return true;
@@ -305,7 +305,7 @@ bool ans_key_h(connection_t *c) {
 	from->outcompression = compression;
 
 	if(from->outcipher)
-		if(!EVP_EncryptInit_ex(&from->outctx, from->outcipher, NULL, (unsigned char *)from->outkey, (unsigned char *)from->outkey + from->outcipher->key_len)) {
+		if(!EVP_EncryptInit_ex(from->outctx, from->outcipher, NULL, (unsigned char *)from->outkey, (unsigned char *)from->outkey + EVP_CIPHER_key_length(from->outcipher))) {
 			logger(LOG_ERR, "Error during initialisation of key from %s (%s): %s",
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return true;

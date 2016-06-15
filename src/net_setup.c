@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -48,11 +48,22 @@
 char *myport;
 devops_t devops;
 
+#ifndef HAVE_RSA_SET0_KEY
+int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+	BN_free(r->n); r->n = n;
+	BN_free(r->e); r->e = e;
+	BN_free(r->d); r->d = d;
+	return 1;
+}
+#endif
+
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *pubname;
 	char *hcfname;
 	char *key;
+	BIGNUM *n = NULL;
+	BIGNUM *e = NULL;
 
 	if(!c->rsa_key) {
 		c->rsa_key = RSA_new();
@@ -62,12 +73,19 @@ bool read_rsa_public_key(connection_t *c) {
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
-		if(BN_hex2bn(&c->rsa_key->n, key) != strlen(key)) {
+		if(BN_hex2bn(&n, key) != strlen(key)) {
+			free(key);
 			logger(LOG_ERR, "Invalid PublicKey for %s!", c->name);
 			return false;
 		}
-		BN_hex2bn(&c->rsa_key->e, "FFFF");
 		free(key);
+		BN_hex2bn(&e, "FFFF");
+		if(!n || !e || RSA_set0_key(c->rsa_key, n, e, NULL) != 1) {
+			BN_free(e);
+			BN_free(n);
+			logger(LOG_ERR, "RSA_set0_key() failed with PublicKey for %s!", c->name);
+			return false;
+		}
 		return true;
 	}
 
@@ -158,27 +176,39 @@ bool read_rsa_public_key(connection_t *c) {
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname, *key, *pubkey;
+	BIGNUM *n = NULL;
+	BIGNUM *e = NULL;
+	BIGNUM *d = NULL;
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
-		if(BN_hex2bn(&myself->connection->rsa_key->d, key) != strlen(key)) {
+		if(BN_hex2bn(&d, key) != strlen(key)) {
 			logger(LOG_ERR, "Invalid PrivateKey for myself!");
 			free(key);
 			return false;
 		}
 		free(key);
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
+			BN_free(d);
 			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
-		if(BN_hex2bn(&myself->connection->rsa_key->n, pubkey) != strlen(pubkey)) {
-			logger(LOG_ERR, "Invalid PublicKey for myself!");
+		if(BN_hex2bn(&n, pubkey) != strlen(pubkey)) {
 			free(pubkey);
+			BN_free(d);
+			logger(LOG_ERR, "Invalid PublicKey for myself!");
 			return false;
 		}
 		free(pubkey);
-		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
+		BN_hex2bn(&e, "FFFF");
+		if(!n || !e || !d || RSA_set0_key(myself->connection->rsa_key, n, e, d) != 1) {
+			BN_free(d);
+			BN_free(e);
+			BN_free(n);
+			logger(LOG_ERR, "RSA_set0_key() failed with PrivateKey for myself!");
+			return false;
+		}
 		return true;
 	}
 
@@ -623,7 +653,7 @@ static bool setup_myself(void) {
 		myself->incipher = EVP_bf_cbc();
 
 	if(myself->incipher)
-		myself->inkeylength = myself->incipher->key_len + myself->incipher->iv_len;
+		myself->inkeylength = EVP_CIPHER_key_length(myself->incipher) + EVP_CIPHER_iv_length(myself->incipher);
 	else
 		myself->inkeylength = 1;
 
@@ -657,7 +687,7 @@ static bool setup_myself(void) {
 
 	if(get_config_int(lookup_config(config_tree, "MACLength"), &myself->inmaclength)) {
 		if(myself->indigest) {
-			if(myself->inmaclength > myself->indigest->md_size) {
+			if(myself->inmaclength > EVP_MD_size(myself->indigest)) {
 				logger(LOG_ERR, "MAC length exceeds size of digest!");
 				return false;
 			} else if(myself->inmaclength < 0) {

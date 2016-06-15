@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -125,8 +125,11 @@ bool send_metakey(connection_t *c) {
 	
 	c->outkey = xrealloc(c->outkey, len);
 
-	if(!c->outctx)
-		c->outctx = xmalloc_and_zero(sizeof(*c->outctx));
+	if(!c->outctx) {
+		c->outctx = EVP_CIPHER_CTX_new();
+		if(!c->outctx)
+			abort();
+	}
 
 	/* Copy random data to the buffer */
 
@@ -177,17 +180,17 @@ bool send_metakey(connection_t *c) {
 	/* Send the meta key */
 
 	x = send_request(c, "%d %d %d %d %d %s", METAKEY,
-					 c->outcipher ? c->outcipher->nid : 0,
-					 c->outdigest ? c->outdigest->type : 0, c->outmaclength,
+					 c->outcipher ? EVP_CIPHER_nid(c->outcipher) : 0,
+					 c->outdigest ? EVP_MD_type(c->outdigest) : 0, c->outmaclength,
 					 c->outcompression, buffer);
 
 	/* Further outgoing requests are encrypted with the key we just generated */
 
 	if(c->outcipher) {
 		if(!EVP_EncryptInit(c->outctx, c->outcipher,
-					(unsigned char *)c->outkey + len - c->outcipher->key_len,
-					(unsigned char *)c->outkey + len - c->outcipher->key_len -
-					c->outcipher->iv_len)) {
+					(unsigned char *)c->outkey + len - EVP_CIPHER_key_length(c->outcipher),
+					(unsigned char *)c->outkey + len - EVP_CIPHER_key_length(c->outcipher) -
+					EVP_CIPHER_iv_length(c->outcipher))) {
 			logger(LOG_ERR, "Error during initialisation of cipher for %s (%s): %s",
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
@@ -223,8 +226,11 @@ bool metakey_h(connection_t *c) {
 
 	c->inkey = xrealloc(c->inkey, len);
 
-	if(!c->inctx)
-		c->inctx = xmalloc_and_zero(sizeof(*c->inctx));
+	if(!c->inctx) {
+		c->inctx = EVP_CIPHER_CTX_new();
+		if(!c->inctx)
+			abort();
+	}
 
 	/* Convert the challenge from hexadecimal back to binary */
 
@@ -260,9 +266,9 @@ bool metakey_h(connection_t *c) {
 		}
 
 		if(!EVP_DecryptInit(c->inctx, c->incipher,
-					(unsigned char *)c->inkey + len - c->incipher->key_len,
-					(unsigned char *)c->inkey + len - c->incipher->key_len -
-					c->incipher->iv_len)) {
+					(unsigned char *)c->inkey + len - EVP_CIPHER_key_length(c->incipher),
+					(unsigned char *)c->inkey + len - EVP_CIPHER_key_length(c->incipher) -
+					EVP_CIPHER_iv_length(c->incipher))) {
 			logger(LOG_ERR, "Error during initialisation of cipher from %s (%s): %s",
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
@@ -283,7 +289,7 @@ bool metakey_h(connection_t *c) {
 			return false;
 		}
 
-		if(c->inmaclength > c->indigest->md_size || c->inmaclength < 0) {
+		if(c->inmaclength > EVP_MD_size(c->indigest) || c->inmaclength < 0) {
 			logger(LOG_ERR, "%s (%s) uses bogus MAC length!", c->name, c->hostname);
 			return false;
 		}
@@ -367,22 +373,29 @@ bool challenge_h(connection_t *c) {
 
 bool send_chal_reply(connection_t *c) {
 	char hash[EVP_MAX_MD_SIZE * 2 + 1];
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 
 	/* Calculate the hash from the challenge we received */
 
-	if(!EVP_DigestInit(&ctx, c->indigest)
-			|| !EVP_DigestUpdate(&ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
-			|| !EVP_DigestFinal(&ctx, (unsigned char *)hash, NULL)) {
+	ctx = EVP_MD_CTX_create();
+	if(!ctx)
+		abort();
+
+	if(!EVP_DigestInit(ctx, c->indigest)
+			|| !EVP_DigestUpdate(ctx, c->mychallenge, RSA_size(myself->connection->rsa_key))
+			|| !EVP_DigestFinal(ctx, (unsigned char *)hash, NULL)) {
+		EVP_MD_CTX_destroy(ctx);
 		logger(LOG_ERR, "Error during calculation of response for %s (%s): %s",
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
+	EVP_MD_CTX_destroy(ctx);
+
 	/* Convert the hash to a hexadecimal formatted string */
 
-	bin2hex(hash, hash, c->indigest->md_size);
-	hash[c->indigest->md_size * 2] = '\0';
+	bin2hex(hash, hash, EVP_MD_size(c->indigest));
+	hash[EVP_MD_size(c->indigest) * 2] = '\0';
 
 	/* Send the reply */
 
@@ -392,7 +405,7 @@ bool send_chal_reply(connection_t *c) {
 bool chal_reply_h(connection_t *c) {
 	char hishash[MAX_STRING_SIZE];
 	char myhash[EVP_MAX_MD_SIZE];
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 
 	if(sscanf(c->buffer, "%*d " MAX_STRING, hishash) != 1) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "CHAL_REPLY", c->name,
@@ -402,7 +415,7 @@ bool chal_reply_h(connection_t *c) {
 
 	/* Check if the length of the hash is all right */
 
-	if(strlen(hishash) != c->outdigest->md_size * 2) {
+	if(strlen(hishash) != EVP_MD_size(c->outdigest) * 2) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name,
 			   c->hostname, "wrong challenge reply length");
 		return false;
@@ -410,24 +423,31 @@ bool chal_reply_h(connection_t *c) {
 
 	/* Convert the hash to binary format */
 
-	if(!hex2bin(hishash, hishash, c->outdigest->md_size)) {
+	if(!hex2bin(hishash, hishash, EVP_MD_size(c->outdigest))) {
 		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "CHAL_REPLY", c->name, c->hostname, "invalid hash");
 		return false;
 	}
 
 	/* Calculate the hash from the challenge we sent */
 
-	if(!EVP_DigestInit(&ctx, c->outdigest)
-			|| !EVP_DigestUpdate(&ctx, c->hischallenge, RSA_size(c->rsa_key))
-			|| !EVP_DigestFinal(&ctx, (unsigned char *)myhash, NULL)) {
+	ctx = EVP_MD_CTX_create();
+	if(!ctx)
+		abort();
+
+	if(!EVP_DigestInit(ctx, c->outdigest)
+			|| !EVP_DigestUpdate(ctx, c->hischallenge, RSA_size(c->rsa_key))
+			|| !EVP_DigestFinal(ctx, (unsigned char *)myhash, NULL)) {
+		EVP_MD_CTX_destroy(ctx);
 		logger(LOG_ERR, "Error during calculation of response from %s (%s): %s",
 			c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
+	EVP_MD_CTX_destroy(ctx);
+
 	/* Verify the incoming hash with the calculated hash */
 
-	if(memcmp(hishash, myhash, c->outdigest->md_size)) {
+	if(memcmp(hishash, myhash, EVP_MD_size(c->outdigest))) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name,
 			   c->hostname, "wrong challenge reply");
 

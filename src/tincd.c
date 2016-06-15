@@ -336,7 +336,7 @@ static bool parse_options(int argc, char **argv) {
 
 /* This function prettyprints the key generation process */
 
-static void indicator(int a, int b, void *p) {
+static int indicator(int a, int b, BN_GENCB *cb) {
 	switch (a) {
 		case 0:
 			fprintf(stderr, ".");
@@ -368,19 +368,48 @@ static void indicator(int a, int b, void *p) {
 		default:
 			fprintf(stderr, "?");
 	}
+
+	return 1;
 }
+
+#ifndef HAVE_BN_GENCB_NEW
+BN_GENCB *BN_GENCB_new(void) {
+	return xmalloc_and_zero(sizeof(BN_GENCB));
+}
+
+void BN_GENCB_free(BN_GENCB *cb) {
+	free(cb);
+}
+#endif
 
 /*
   Generate a public/private RSA keypair, and ask for a file to store
   them in.
 */
 static bool keygen(int bits) {
+	BIGNUM *e = NULL;
 	RSA *rsa_key;
 	FILE *f;
 	char *pubname, *privname;
+	BN_GENCB *cb;
+	int result;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
-	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
+
+	cb = BN_GENCB_new();
+	if(!cb)
+		abort();
+	BN_GENCB_set(cb, indicator, NULL);
+
+	rsa_key = RSA_new();
+	BN_hex2bn(&e, "10001");
+	if(!rsa_key || !e)
+		abort();
+
+	result = RSA_generate_key_ex(rsa_key, bits, e, cb);
+
+	BN_free(e);
+	BN_GENCB_free(cb);
 
 	if(!rsa_key) {
 		fprintf(stderr, "Error during key generation!\n");
@@ -702,7 +731,11 @@ end:
 	EVP_cleanup();
 	ENGINE_cleanup();
 	CRYPTO_cleanup_all_ex_data();
+#ifdef HAVE_ERR_REMOVE_STATE
+	// OpenSSL claims this function was deprecated in 1.0.0,
+	// but valgrind's leak detector shows you still need to call it to make sure OpenSSL cleans up properly.
 	ERR_remove_state(0);
+#endif
 	ERR_free_strings();
 
 	exit_configuration(&config_tree);
