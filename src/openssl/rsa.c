@@ -30,28 +30,51 @@ typedef RSA rsa_t;
 
 // Set RSA keys
 
+#ifndef HAVE_RSA_SET0_KEY
+int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+	BN_free(r->n); r->n = n;
+	BN_free(r->e); r->e = e;
+	BN_free(r->d); r->d = d;
+	return 1;
+}
+#endif
+
 rsa_t *rsa_set_hex_public_key(char *n, char *e) {
+	BIGNUM *bn_n = NULL;
+	BIGNUM *bn_e = NULL;
+
+	if(BN_hex2bn(&bn_n, n) != strlen(n) || BN_hex2bn(&bn_e, e) != strlen(e)) {
+		BN_free(bn_e);
+		BN_free(bn_n);
+		return false;
+	}
+
 	rsa_t *rsa = RSA_new();
 	if(!rsa)
 		return NULL;
-
-	if(BN_hex2bn(&rsa->n, n) != strlen(n) || BN_hex2bn(&rsa->e, e) != strlen(e)) {
-		RSA_free(rsa);
-		return false;
-	}
+	
+	RSA_set0_key(rsa, bn_n, bn_e, NULL);
 
 	return rsa;
 }
 
 rsa_t *rsa_set_hex_private_key(char *n, char *e, char *d) {
+	BIGNUM *bn_n = NULL;
+	BIGNUM *bn_e = NULL;
+	BIGNUM *bn_d = NULL;
+
+	if(BN_hex2bn(&bn_n, n) != strlen(n) || BN_hex2bn(&bn_e, e) != strlen(e) || BN_hex2bn(&bn_d, d) != strlen(d)) {
+		BN_free(bn_d);
+		BN_free(bn_e);
+		BN_free(bn_n);
+		return false;
+	}
+
 	rsa_t *rsa = RSA_new();
 	if(!rsa)
 		return NULL;
 
-	if(BN_hex2bn(&rsa->n, n) != strlen(n) || BN_hex2bn(&rsa->e, e) != strlen(e) || BN_hex2bn(&rsa->d, d) != strlen(d)) {
-		RSA_free(rsa);
-		return false;
-	}
+	RSA_set0_key(rsa, bn_n, bn_e, bn_d);
 
 	return rsa;
 }

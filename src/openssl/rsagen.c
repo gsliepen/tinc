@@ -30,7 +30,7 @@ typedef RSA rsa_t;
 
 /* This function prettyprints the key generation process */
 
-static void indicator(int a, int b, void *p) {
+static int indicator(int a, int b, BN_GENCB *cb) {
 	switch (a) {
 		case 0:
 			fprintf(stderr, ".");
@@ -62,12 +62,39 @@ static void indicator(int a, int b, void *p) {
 		default:
 			fprintf(stderr, "?");
 	}
+
+	return 1;
 }
 
 // Generate RSA key
 
+#ifndef HAVE_BN_GENCB_NEW
+BN_GENCB *BN_GENCB_new(void) {
+	return xzalloc(sizeof(BN_GENCB));
+}
+
+void BN_GENCB_free(BN_GENCB *cb) {
+	free(cb);
+}
+#endif
+
 rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
-	return RSA_generate_key(bits, exponent, indicator, NULL);
+	BIGNUM *bn_e = BN_new();
+	rsa_t *rsa = RSA_new();
+	BN_GENCB *cb = BN_GENCB_new();
+
+	if(!bn_e || !rsa || !cb)
+		abort();
+
+	BN_set_word(bn_e, exponent);
+	BN_GENCB_set(cb, indicator, NULL);
+
+	RSA_generate_key_ex(rsa, bits, bn_e, cb);
+
+	BN_GENCB_free(cb);
+	BN_free(bn_e);
+
+	return rsa;
 }
 
 // Write PEM RSA keys

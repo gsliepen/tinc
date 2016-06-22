@@ -93,14 +93,19 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 			return false;
 		}
 	} else {
-		EVP_MD_CTX ctx;
+		EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+		if(!ctx)
+			abort();
 
-		if(!EVP_DigestInit(&ctx, digest->digest)
-				|| !EVP_DigestUpdate(&ctx, indata, inlen)
-				|| !EVP_DigestFinal(&ctx, tmpdata, NULL)) {
+		if(!EVP_DigestInit(ctx, digest->digest)
+				|| !EVP_DigestUpdate(ctx, indata, inlen)
+				|| !EVP_DigestFinal(ctx, tmpdata, NULL)) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
+			EVP_MD_CTX_free(ctx);
 			return false;
 		}
+
+		EVP_MD_CTX_free(ctx);
 	}
 
 	memcpy(outdata, tmpdata, digest->maclength);
@@ -118,14 +123,14 @@ int digest_get_nid(const digest_t *digest) {
 	if(!digest || !digest->digest)
 		return 0;
 
-	return digest->digest->type;
+	return EVP_MD_type(digest->digest);
 }
 
 size_t digest_keylength(const digest_t *digest) {
 	if(!digest || !digest->digest)
 		return 0;
 
-	return digest->digest->md_size;
+	return EVP_MD_size(digest->digest);
 }
 
 size_t digest_length(const digest_t *digest) {
@@ -136,5 +141,5 @@ size_t digest_length(const digest_t *digest) {
 }
 
 bool digest_active(const digest_t *digest) {
-	return digest && digest->digest && digest->digest->type != 0;
+	return digest && digest->digest && EVP_MD_type(digest->digest) != 0;
 }

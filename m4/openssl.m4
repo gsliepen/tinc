@@ -45,7 +45,7 @@ AC_DEFUN([tinc_OPENSSL],
     [AC_MSG_ERROR([LibreSSL/OpenSSL libraries not found.])]
   )
 
-  AC_CHECK_FUNCS([RAND_status EVP_EncryptInit_ex], ,
+  AC_CHECK_FUNCS([RAND_bytes EVP_EncryptInit_ex EVP_CIPHER_CTX_new], ,
     [AC_MSG_ERROR([Missing LibreSSL/OpenSSL functionality, make sure you have installed the latest version.]); break],
   )
 
@@ -53,4 +53,6 @@ AC_DEFUN([tinc_OPENSSL],
     [AC_MSG_ERROR([Missing LibreSSL/OpenSSL functionality, make sure you have installed the latest version.]); break],
     [#include <openssl/evp.h>]
   )
+
+  AC_CHECK_FUNCS([BN_GENCB_new ERR_remove_state RSA_set0_key], , , [#include <openssl/rsa.h>])
 ])
