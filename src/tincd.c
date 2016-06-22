@@ -411,7 +411,7 @@ static bool keygen(int bits) {
 	BN_free(e);
 	BN_GENCB_free(cb);
 
-	if(!rsa_key) {
+	if(!result) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
