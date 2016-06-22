@@ -152,6 +152,8 @@ fi
 dnl Compiler hardening flags
 dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
 
+AX_CFLAGS_WARN_ALL(CFLAGS)
+
 AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
 AS_IF([test "x$enable_hardening" != "xno"],
   [AX_CHECK_COMPILE_FLAG([-DFORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -DFORTIFY_SOURCE=2"])
