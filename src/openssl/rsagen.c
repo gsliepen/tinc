@@ -89,10 +89,16 @@ rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 	BN_set_word(bn_e, exponent);
 	BN_GENCB_set(cb, indicator, NULL);
 
-	RSA_generate_key_ex(rsa, bits, bn_e, cb);
+	int result = RSA_generate_key_ex(rsa, bits, bn_e, cb);
 
 	BN_GENCB_free(cb);
 	BN_free(bn_e);
+
+	if(!result) {
+		fprintf(stderr, "Error during key generation!\n");
+		RSA_free(rsa);
+		return NULL;
+	}
 
 	return rsa;
 }
