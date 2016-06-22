@@ -101,11 +101,11 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 				|| !EVP_DigestUpdate(ctx, indata, inlen)
 				|| !EVP_DigestFinal(ctx, tmpdata, NULL)) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
-			EVP_MD_CTX_free(ctx);
+			EVP_MD_CTX_destroy(ctx);
 			return false;
 		}
 
-		EVP_MD_CTX_free(ctx);
+		EVP_MD_CTX_destroy(ctx);
 	}
 
 	memcpy(outdata, tmpdata, digest->maclength);
