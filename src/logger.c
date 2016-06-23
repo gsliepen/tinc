@@ -109,6 +109,7 @@ void logger(int priority, const char *format, ...) {
 				char message[4096];
 				const char *messages[] = {message};
 				vsnprintf(message, sizeof(message), format, ap);
+				message[sizeof message - 1] = 0;
 				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
 			}
 #else

@@ -155,6 +155,7 @@ int xvasprintf(char **strp, const char *fmt, va_list ap) {
 	int result = vsnprintf(buf, sizeof buf, fmt, ap);
 	if(result < 0)
 		exit(xalloc_exit_failure);
+	buf[sizeof buf - 1] = 0;
 	*strp = xstrdup(buf);
 #else
 	int result = vasprintf(strp, fmt, ap);
