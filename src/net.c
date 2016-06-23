@@ -94,29 +94,31 @@ void purge(void) {
 void terminate_connection(connection_t *c, bool report) {
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)", c->name, c->hostname);
 
-	if(c->node && c->node->connection == c)
-		c->node->connection = NULL;
+	if(c->node) {
+		if(c->node->connection == c)
+			c->node->connection = NULL;
 
-	if(c->edge) {
-		if(report && !tunnelserver)
-			send_del_edge(everyone, c->edge);
+		if(c->edge) {
+			if(report && !tunnelserver)
+				send_del_edge(everyone, c->edge);
 
-		edge_del(c->edge);
-		c->edge = NULL;
+			edge_del(c->edge);
+			c->edge = NULL;
 
-		/* Run MST and SSSP algorithms */
+			/* Run MST and SSSP algorithms */
 
-		graph();
+			graph();
 
-		/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
+			/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
 
-		if(report && !c->node->status.reachable) {
-			edge_t *e;
-			e = lookup_edge(c->node, myself);
-			if(e) {
-				if(!tunnelserver)
-					send_del_edge(everyone, e);
-				edge_del(e);
+			if(report && !c->node->status.reachable) {
+				edge_t *e;
+				e = lookup_edge(c->node, myself);
+				if(e) {
+					if(!tunnelserver)
+						send_del_edge(everyone, e);
+					edge_del(e);
+				}
 			}
 		}
 	}

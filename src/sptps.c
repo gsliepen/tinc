@@ -547,8 +547,6 @@ size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 	memcpy(s->inbuf + s->buflen, data, toread);
 	total_read += toread;
 	s->buflen += toread;
-	len -= toread;
-	data += toread;
 
 	// If we don't have a whole record, exit.
 	if(s->buflen < s->reclen + (s->instate ? 19UL : 3UL))

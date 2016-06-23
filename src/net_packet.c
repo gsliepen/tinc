@@ -767,7 +767,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 			char buf[len + sizeof to->id + sizeof from->id]; char* buf_ptr = buf;
 			memcpy(buf_ptr, &to->id, sizeof to->id); buf_ptr += sizeof to->id;
 			memcpy(buf_ptr, &from->id, sizeof from->id); buf_ptr += sizeof from->id;
-			memcpy(buf_ptr, data, len); buf_ptr += len;
+			memcpy(buf_ptr, data, len);
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)", from->name, from->hostname, to->name, to->hostname, to->nexthop->name, to->nexthop->hostname);
 			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof buf);
 		}

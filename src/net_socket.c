@@ -534,6 +534,8 @@ begin:
 	} else if(proxytype == PROXY_EXEC) {
 		result = 0;
 	} else {
+		if(!proxyai)
+			abort();
 		result = connect(c->socket, proxyai->ai_addr, proxyai->ai_addrlen);
 		freeaddrinfo(proxyai);
 	}
