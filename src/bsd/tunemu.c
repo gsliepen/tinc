@@ -87,7 +87,7 @@ static void tun_error(char *format, ...)
 {
 	va_list vl;
 	va_start(vl, format);
-	vsnprintf(tunemu_error, ERROR_BUFFER_SIZE, format, vl);
+	vsnprintf(tunemu_error, sizeof tunemu_error, format, vl);
 	va_end(vl);
 }
 

@@ -110,20 +110,22 @@ void logger(int level, int priority, const char *format, ...) {
 
 	va_start(ap, format);
 	int len = vsnprintf(message, sizeof message, format, ap);
+	message[sizeof message - 1] = 0;
 	va_end(ap);
 
-	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
+	if(len > 0 && len < sizeof message - 1 && message[len - 1] == '\n')
 		message[len - 1] = 0;
 
 	real_logger(level, priority, message);
 }
 
 static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
-	char message[1024] = "";
+	char message[1024];
 	size_t msglen = sizeof message;
 
 	int len = vsnprintf(message, msglen, format, ap);
-	if(len > 0 && len < sizeof message) {
+	message[sizeof message - 1] = 0;
+	if(len > 0 && len < sizeof message - 1) {
 		if(message[len - 1] == '\n')
 			message[--len] = 0;
 

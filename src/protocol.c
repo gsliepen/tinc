@@ -72,10 +72,11 @@ bool send_request(connection_t *c, const char *format, ...) {
 	   input buffer anyway */
 
 	va_start(args, format);
-	len = vsnprintf(request, MAXBUFSIZE, format, args);
+	len = vsnprintf(request, sizeof request, format, args);
+	request[sizeof request - 1] = 0;
 	va_end(args);
 
-	if(len < 0 || len > MAXBUFSIZE - 1) {
+	if(len < 0 || len > sizeof request - 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
 			   c->name, c->hostname);
 		return false;

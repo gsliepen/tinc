@@ -560,6 +560,7 @@ bool sendline(int fd, char *format, ...) {
 
 	va_start(ap, format);
 	blen = vsnprintf(buffer, sizeof buffer, format, ap);
+	buffer[sizeof buffer - 1] = 0;
 	va_end(ap);
 
 	if(blen < 1 || blen >= sizeof buffer)
@@ -885,7 +886,7 @@ static int cmd_start(int argc, char *argv[]) {
 
 	if(!pid) {
 		close(pfd[0]);
-		char buf[100] = "";
+		char buf[100];
 		snprintf(buf, sizeof buf, "%d", pfd[1]);
 		setenv("TINC_UMBILICAL", buf, true);
 		exit(execvp(c, nargv));

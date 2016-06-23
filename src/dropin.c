@@ -106,6 +106,7 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 
 	va_copy(aq, ap);
 	status = vsnprintf(*buf, len, fmt, aq);
+	buf[len - 1] = 0;
 	va_end(aq);
 
 	if(status >= 0)
