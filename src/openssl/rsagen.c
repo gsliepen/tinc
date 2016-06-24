@@ -27,6 +27,7 @@ typedef RSA rsa_t;
 
 #include "../logger.h"
 #include "../rsagen.h"
+#include "../xalloc.h"
 
 /* This function prettyprints the key generation process */
 
