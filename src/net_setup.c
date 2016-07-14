@@ -676,7 +676,7 @@ static bool add_listen_address(char *address, bool bindto) {
 
 		int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
 
-		if(tcp_fd < 0) {
+		if(udp_fd < 0) {
 			close(tcp_fd);
 			continue;
 		}
