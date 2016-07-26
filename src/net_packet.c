@@ -336,16 +336,16 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		if(inpkt->seqno != n->received_seqno + 1) {
 			if(inpkt->seqno >= n->received_seqno + replaywin * 8) {
 				if(n->farfuture++ < replaywin >> 2) {
-					logger(LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
+					ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
 						n->name, n->hostname, inpkt->seqno - n->received_seqno - 1, n->farfuture);
 					return;
 				}
-				logger(LOG_WARNING, "Lost %d packets from %s (%s)",
+				ifdebug(TRAFFIC) logger(LOG_WARNING, "Lost %d packets from %s (%s)",
 					   	inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
 				memset(n->late, 0, replaywin);
 			} else if (inpkt->seqno <= n->received_seqno) {
 				if((n->received_seqno >= replaywin * 8 && inpkt->seqno <= n->received_seqno - replaywin * 8) || !(n->late[(inpkt->seqno / 8) % replaywin] & (1 << inpkt->seqno % 8))) {
-					logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
+					ifdebug(TRAFFIC) logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
 					   	n->name, n->hostname, inpkt->seqno, n->received_seqno);
 					return;
 				}
