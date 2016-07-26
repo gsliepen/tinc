@@ -355,16 +355,16 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		if(seqno != n->received_seqno + 1) {
 			if(seqno >= n->received_seqno + replaywin * 8) {
 				if(n->farfuture++ < replaywin >> 2) {
-					logger(DEBUG_ALWAYS, LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
+					logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
 						n->name, n->hostname, seqno - n->received_seqno - 1, n->farfuture);
 					return false;
 				}
-				logger(DEBUG_ALWAYS, LOG_WARNING, "Lost %d packets from %s (%s)",
+				logger(DEBUG_TRAFFIC, LOG_WARNING, "Lost %d packets from %s (%s)",
 						seqno - n->received_seqno - 1, n->name, n->hostname);
 				memset(n->late, 0, replaywin);
 			} else if (seqno <= n->received_seqno) {
 				if((n->received_seqno >= replaywin * 8 && seqno <= n->received_seqno - replaywin * 8) || !(n->late[(seqno / 8) % replaywin] & (1 << seqno % 8))) {
-					logger(DEBUG_ALWAYS, LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
+					logger(DEBUG_TRAFFIC, LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
 						n->name, n->hostname, seqno, n->received_seqno);
 					return false;
 				}
@@ -436,7 +436,7 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 
 bool receive_tcppacket_sptps(connection_t *c, const char *data, int len) {
 	if (len < sizeof(node_id_t) + sizeof(node_id_t)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got too short TCP SPTPS packet from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_PROTOCOL, LOG_ERR, "Got too short TCP SPTPS packet from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
