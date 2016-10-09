@@ -198,17 +198,18 @@ static bool setup_device(void) {
 
 	// Guess what the corresponding interface is called
 
-	char *realname;
+	char *realname = NULL;
 
 #if defined(HAVE_FDEVNAME)
-	realname = fdevname(device_fd) ? : device;
+	realname = fdevname(device_fd);
 #elif defined(HAVE_DEVNAME)
 	struct stat buf;
 	if(!fstat(device_fd, &buf))
-		realname = devname(buf.st_rdev, S_IFCHR) ? : device;
-#else
-	realname = device;
+		realname = devname(buf.st_rdev, S_IFCHR);
 #endif
+
+	if(!realname)
+		realname = device;
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 		iface = xstrdup(strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname);
