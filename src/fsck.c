@@ -297,9 +297,10 @@ int fsck(const char *argv0) {
 	rsa_t *rsa_pub = NULL;
 
 	f = fopen(fname, "r");
-	if(f)
+	if(f) {
 		rsa_pub = rsa_read_pem_public_key(f);
-	fclose(f);
+		fclose(f);
+	}
 
 	if(rsa_priv) {
 		if(!rsa_pub) {
@@ -352,12 +353,12 @@ int fsck(const char *argv0) {
 	f = fopen(fname, "r");
 	if(f) {
 		ecdsa_pub = get_pubkey(f);
-		if(!f) {
+		if(!ecdsa_pub) {
 			rewind(f);
 			ecdsa_pub = ecdsa_read_pem_public_key(f);
 		}
+		fclose(f);
 	}
-	fclose(f);
 
 	if(ecdsa_priv) {
 		if(!ecdsa_pub) {
