@@ -683,6 +683,9 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 		if(!do_decrement_ttl(source, packet))
 			return;
 
+	if(priorityinheritance)
+		packet->priority = ((DATA(packet)[14] & 0x0f) << 4) | (DATA(packet)[15] >> 4);
+
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 
 	if(via == source) {
@@ -954,8 +957,12 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	uint16_t type = DATA(packet)[12] << 8 | DATA(packet)[13];
 
-	if(priorityinheritance && type == ETH_P_IP && packet->len >= ether_size + ip_size)
-		packet->priority = DATA(packet)[15];
+	if(priorityinheritance) {
+		if(type == ETH_P_IP && packet->len >= ether_size + ip_size)
+			packet->priority = DATA(packet)[15];
+		else if(type == ETH_P_IPV6 && packet->len >= ether_size + ip6_size)
+			packet->priority = ((DATA(packet)[14] & 0x0f) << 4) | (DATA(packet)[15] >> 4);
+	}
 
 	// Handle packets larger than PMTU
 
