@@ -256,7 +256,12 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 		char *p = memchr(c->buffer, '\n', c->buflen);
 		if(!p || p - c->buffer >= c->buflen)
 			return 0;
-		p = memchr(p + 1, '\n', c->buflen - (p + 1 - c->buffer));
+
+		while(p = memchr(p + 1, '\n', c->buflen - (p + 1 - c->buffer))) {
+			if(p[-1] == '\n')
+				break;
+		}
+
 		if(!p)
 			return 0;
 
