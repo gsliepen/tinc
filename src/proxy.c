@@ -257,8 +257,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 		if(!p || p - c->buffer >= c->buflen)
 			return 0;
 
-		while(p = memchr(p + 1, '\n', c->buflen - (p + 1 - c->buffer))) {
-			if(p[-1] == '\n')
+		while((p = memchr(p + 1, '\n', c->buflen - (p + 1 - c->buffer)))) {
+			if(p > c->buffer + 3 && !memcmp(p - 3, "\r\n\r\n", 4))
 				break;
 		}
 
