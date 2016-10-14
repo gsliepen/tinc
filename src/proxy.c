@@ -194,6 +194,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
 			c->allow_request = ID;
+			c->status.proxy_passed = true;
+			send_id(c);
 			return 8;
 		} else {
 			logger(LOG_ERR, "Proxy request rejected");
@@ -249,6 +251,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 		} else {
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
 			c->allow_request = ID;
+			c->status.proxy_passed = true;
+			send_id(c);
 			return replen;
 		}
 
@@ -275,6 +279,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 				logger(LOG_DEBUG, "Proxy request granted");
 				replen = p  + 1 - c->buffer;
 				c->allow_request = ID;
+				c->status.proxy_passed = true;
+				send_id(c);
 				return replen;
 			} else {
 				p = memchr(c->buffer, '\n', c->buflen);

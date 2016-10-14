@@ -41,7 +41,8 @@ typedef struct connection_status_t {
 	unsigned int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
 	unsigned int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
 	unsigned int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
-	unsigned int unused:23;
+	unsigned int proxy_passed:1;			/* 1 if we are connecting via a proxy and we have finished talking with it */
+	unsigned int unused:22;
 } connection_status_t;
 
 #include "edge.h"
