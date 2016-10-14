@@ -277,6 +277,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 				c->allow_request = ID;
 				return replen;
 			} else {
+				p = memchr(c->buffer, '\n', c->buflen);
+				p[-1] = 0;
 				logger(LOG_ERR, "Proxy request rejected: %s", c->buffer + 9);
 				return false;
 			}
