@@ -195,7 +195,7 @@ bool send_metakey(connection_t *c) {
 			return false;
 		}
 
-		c->outbudget = (uint64_t)4 << EVP_CIPHER_key_length(c->outcipher);
+		c->outbudget = (uint64_t)1 << EVP_CIPHER_key_length(c->outcipher) * 4;
 		c->status.encryptout = true;
 	}
 
@@ -274,7 +274,7 @@ bool metakey_h(connection_t *c) {
 			return false;
 		}
 
-		c->inbudget = (uint64_t)4 << EVP_CIPHER_key_length(c->incipher);
+		c->inbudget = (uint64_t)1 << EVP_CIPHER_key_length(c->incipher) * 4;
 		c->status.decryptin = true;
 	} else {
 		c->incipher = NULL;
