@@ -71,6 +71,8 @@ typedef struct connection_t {
 	const EVP_CIPHER *outcipher;	/* Cipher we will use to send data to him */
 	EVP_CIPHER_CTX *inctx;		/* Context of encrypted meta data that will come from him to us */
 	EVP_CIPHER_CTX *outctx;		/* Context of encrypted meta data that will be sent from us to him */
+	uint64_t inbudget;              /* Encrypted bytes send budget */
+	uint64_t outbudget;             /* Encrypted bytes receive budget */
 	char *inkey;				/* His symmetric meta key + iv */
 	char *outkey;				/* Our symmetric meta key + iv */
 	int inkeylength;			/* Length of his key + iv */

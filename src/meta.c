@@ -62,6 +62,14 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
+		/* Check encryption limits */
+		if(length > c->outbudget) {
+			ifdebug(META) logger(LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
+			return false;
+		} else {
+			c->outbudget -= length;
+		}
+
 		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)c->outbuf + c->outbufstart + c->outbuflen,
 				&outlen, (unsigned char *)buffer, length);
 		if(!result || outlen < length) {
@@ -175,6 +183,14 @@ bool receive_meta(connection_t *c) {
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
+			/* Check decryption limits */
+			if(lenin > c->inbudget) {
+				ifdebug(META) logger(LOG_ERR, "Byte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
+				return false;
+			} else {
+				c->inbudget -= lenin;
+			}
+
 			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &lenout, (unsigned char *)c->buffer + oldlen, lenin);
 			if(!result || lenout != lenin) {
 				logger(LOG_ERR, "Error while decrypting metadata from %s (%s): %s",

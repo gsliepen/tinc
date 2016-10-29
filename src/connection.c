@@ -91,6 +91,8 @@ void free_connection_partially(connection_t *c) {
 	c->outbufstart = 0;
 	c->last_ping_time = 0;
 	c->last_flushed_time = 0;
+	c->inbudget = 0;
+	c->outbudget = 0;
 
 	if(c->inctx) {
 		EVP_CIPHER_CTX_cleanup(c->inctx);
