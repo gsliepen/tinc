@@ -113,6 +113,21 @@ bool id_h(connection_t *c) {
 	return send_metakey(c);
 }
 
+static uint64_t byte_budget(const EVP_CIPHER *cipher) {
+	/* Hopefully some failsafe way to calculate the maximum amount of bytes to
+	   send/receive with a given cipher before we might run into birthday paradox
+	   attacks. Because we might use different modes, the block size of the mode
+	   might be 1 byte. In that case, use the IV length. Ensure the whole thing
+	   is limited to what can be represented with a 64 bits integer.
+	 */
+
+	int ivlen = EVP_CIPHER_iv_length(cipher);
+	int blklen = EVP_CIPHER_block_size(cipher);
+	int len = blklen > 1 ? blklen : ivlen > 1 ? ivlen : 8;
+	int bits = len * 4 - 1;
+	return bits < 64 ? UINT64_C(1) << bits : UINT64_MAX;
+}
+
 bool send_metakey(connection_t *c) {
 	bool x;
 
@@ -195,7 +210,7 @@ bool send_metakey(connection_t *c) {
 			return false;
 		}
 
-		c->outbudget = (uint64_t)1 << EVP_CIPHER_key_length(c->outcipher) * 4;
+		c->outbudget = byte_budget(c->outcipher);
 		c->status.encryptout = true;
 	}
 
@@ -274,7 +289,7 @@ bool metakey_h(connection_t *c) {
 			return false;
 		}
 
-		c->inbudget = (uint64_t)1 << EVP_CIPHER_key_length(c->incipher) * 4;
+		c->inbudget = byte_budget(c->incipher);
 		c->status.decryptin = true;
 	} else {
 		c->incipher = NULL;
