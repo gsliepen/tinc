@@ -650,14 +650,25 @@ static bool setup_myself(void) {
 		}
 		free(cipher);
 	} else
-		myself->incipher = EVP_bf_cbc();
+		myself->incipher = EVP_aes_256_cbc();
 
 	if(myself->incipher)
 		myself->inkeylength = EVP_CIPHER_key_length(myself->incipher) + EVP_CIPHER_iv_length(myself->incipher);
 	else
 		myself->inkeylength = 1;
 
-	myself->connection->outcipher = EVP_bf_ofb();
+	/* We need to use OFB mode for the meta protocol. Use AES for this,
+	   but try to match the key size with the one from the cipher selected
+	   by Cipher.
+	*/
+
+	int keylen = EVP_CIPHER_key_length(myself->incipher);
+	if(keylen <= 16)
+		myself->connection->outcipher = EVP_aes_128_ofb();
+	else if(keylen <= 24)
+		myself->connection->outcipher = EVP_aes_192_ofb();
+	else
+		myself->connection->outcipher = EVP_aes_256_ofb();
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
@@ -681,9 +692,9 @@ static bool setup_myself(void) {
 
 		free(digest);
 	} else
-		myself->indigest = EVP_sha1();
+		myself->indigest = EVP_sha256();
 
-	myself->connection->outdigest = EVP_sha1();
+	myself->connection->outdigest = EVP_sha256();
 
 	if(get_config_int(lookup_config(config_tree, "MACLength"), &myself->inmaclength)) {
 		if(myself->indigest) {
