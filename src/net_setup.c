@@ -664,11 +664,11 @@ static bool setup_myself(void) {
 
 	int keylen = EVP_CIPHER_key_length(myself->incipher);
 	if(keylen <= 16)
-		myself->connection->outcipher = EVP_aes_128_ofb();
+		myself->connection->outcipher = EVP_aes_128_ctr();
 	else if(keylen <= 24)
-		myself->connection->outcipher = EVP_aes_192_ofb();
+		myself->connection->outcipher = EVP_aes_192_ctr();
 	else
-		myself->connection->outcipher = EVP_aes_256_ofb();
+		myself->connection->outcipher = EVP_aes_256_ctr();
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
