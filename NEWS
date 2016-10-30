@@ -1,3 +1,11 @@
+Version 1.0.30               October 30 2016
+
+ * Fix troubles connecting to some HTTP proxies.
+
+ * Add mitigations for the Sweet32 attack when using a 64-bit block cipher.
+
+ * Use AES256 and SHA256 as the default encryption and digest algorithms.
+
 Version 1.0.29               October 9 2016
 
  * Fix UDP communication with peers with link-local IPv6 addresses.

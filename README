@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.0.29. Installation
+This is the README file for tinc version 1.0.30. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2016 by:
@@ -39,6 +39,8 @@ practice and that the default length of the HMAC for packets is too short in
 his opinion. We do not know of a way to exploit these weaknesses, but these
 issues are being addressed in the tinc 1.1 branch.
 
+The Sweet32 attack affects versions of tinc prior to 1.0.30.
+
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
 prove the security of any cryptographic product. If you wish to review
@@ -52,22 +54,25 @@ Some configuration variables have different names now. Most notably "TapDevice"
 should be changed into "Device", and "Device" should be changed into
 "BindToDevice".
 
+
 Compatibility
 -------------
 
-Version 1.0.29 is compatible with 1.0pre8, 1.0 and later, but not with older
-versions of tinc.
+Version 1.0.30 is compatible with 1.0pre8, 1.0 and later, but not with older
+versions of tinc. Note that since version 1.0.30, tinc requires all nodes in
+the VPN to be compiled with a version of LibreSSL or OpenSSL that supports the
+AES256 and SHA256 algorithms.
 
 
 Requirements
 ------------
 
-Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you
-need to install this library first; grab it from
-http://www.openssl.org/.  You will need version 0.9.7 or later.  If
-this library is not installed on you system, configure will fail.  The
-manual in doc/tinc.texi contains more detailed information on how to
-install this library.
+Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you need to
+install this library first; grab it from http://www.openssl.org/. You will
+need version 1.0.1 or later with support for AES256 and SHA256 enabled. If
+this library is not installed on you system, configure will fail. The manual
+in doc/tinc.texi contains more detailed information on how to install this
+library. Alternatively, you may also use LibreSSL.
 
 Since 1.0pre6, the zlib library is used for optional compression. You can
 find it at http://www.gzip.org/zlib/. Because of a possible exploit in
