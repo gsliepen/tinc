@@ -436,6 +436,8 @@ bool send_metakey(connection_t *c) {
 	if(!c)
 		return false;
 
+	c->outbudget = cipher_budget(c->outcipher);
+
 	if(!(c->outdigest = digest_open_by_name("sha256", -1)))
 		return false;
 
@@ -547,6 +549,8 @@ bool metakey_h(connection_t *c, const char *request) {
 	} else {
 		c->incipher = NULL;
 	}
+
+	c->inbudget = cipher_budget(c->incipher);
 
 	if(digest) {
 		if(!(c->indigest = digest_open_by_nid(digest, -1))) {

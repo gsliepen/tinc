@@ -77,6 +77,24 @@ size_t cipher_keylength(const cipher_t *cipher) {
 	return EVP_CIPHER_key_length(cipher->cipher) + EVP_CIPHER_iv_length(cipher->cipher);
 }
 
+uint64_t cipher_budget(const cipher_t *cipher) {
+	/* Hopefully some failsafe way to calculate the maximum amount of bytes to
+	   send/receive with a given cipher before we might run into birthday paradox
+	   attacks. Because we might use different modes, the block size of the mode
+	   might be 1 byte. In that case, use the IV length. Ensure the whole thing
+	   is limited to what can be represented with a 64 bits integer.
+	 */
+
+	if(!cipher || !cipher->cipher)
+		return UINT64_MAX; // NULL cipher
+
+	int ivlen = EVP_CIPHER_iv_length(cipher->cipher);
+	int blklen = EVP_CIPHER_block_size(cipher->cipher);
+	int len = blklen > 1 ? blklen : ivlen > 1 ? ivlen : 8;
+	int bits = len * 4 - 1;
+	return bits < 64 ? UINT64_C(1) << bits : UINT64_MAX;
+}
+
 size_t cipher_blocksize(const cipher_t *cipher) {
 	if(!cipher || !cipher->cipher)
 		return 1;

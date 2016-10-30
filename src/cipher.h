@@ -33,6 +33,7 @@ extern cipher_t *cipher_open_by_nid(int) __attribute__ ((__malloc__));
 extern void cipher_close(cipher_t *);
 extern size_t cipher_keylength(const cipher_t *);
 extern size_t cipher_blocksize(const cipher_t *);
+extern uint64_t cipher_budget(const cipher_t *);
 extern void cipher_get_key(const cipher_t *, void *);
 extern bool cipher_set_key(cipher_t *, void *, bool) __attribute__ ((__warn_unused_result__));
 extern bool cipher_set_key_from_rsa(cipher_t *, void *, size_t, bool) __attribute__ ((__warn_unused_result__));

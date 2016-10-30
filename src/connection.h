@@ -81,6 +81,8 @@ typedef struct connection_t {
 	cipher_t *outcipher;            /* Cipher we will use to send data to him */
 	digest_t *indigest;
 	digest_t *outdigest;
+	uint64_t inbudget;
+	uint64_t outbudget;
 #endif
 
 	ecdsa_t *ecdsa;                 /* his public ECDSA key */

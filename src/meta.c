@@ -65,6 +65,13 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 #ifdef DISABLE_LEGACY
 		return false;
 #else
+		if(length > c->outbudget) {
+			logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
+			return false;
+		} else {
+			c->outbudget -= length;
+		}
+
 		size_t outlen = length;
 
 		if(!cipher_encrypt(c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
@@ -220,6 +227,13 @@ bool receive_meta(connection_t *c) {
 #ifdef DISABLE_LEGACY
 			return false;
 #else
+			if(inlen > c->inbudget) {
+				logger(DEBUG_META, LOG_ERR, "yte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
+				return false;
+			} else {
+				c->inbudget -= inlen;
+			}
+
 			size_t outlen = inlen;
 
 			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
