@@ -657,18 +657,18 @@ static bool setup_myself(void) {
 	else
 		myself->inkeylength = 1;
 
-	/* We need to use OFB mode for the meta protocol. Use AES for this,
+	/* We need to use a stream mode for the meta protocol. Use AES for this,
 	   but try to match the key size with the one from the cipher selected
 	   by Cipher.
 	*/
 
 	int keylen = EVP_CIPHER_key_length(myself->incipher);
 	if(keylen <= 16)
-		myself->connection->outcipher = EVP_aes_128_ctr();
+		myself->connection->outcipher = EVP_aes_128_cfb();
 	else if(keylen <= 24)
-		myself->connection->outcipher = EVP_aes_192_ctr();
+		myself->connection->outcipher = EVP_aes_192_cfb();
 	else
-		myself->connection->outcipher = EVP_aes_256_ctr();
+		myself->connection->outcipher = EVP_aes_256_cfb();
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
