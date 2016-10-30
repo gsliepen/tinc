@@ -1,6 +1,6 @@
 /*
     digest.c -- Digest handling
-    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,10 +62,6 @@ digest_t *digest_open_by_nid(int nid, int maclength) {
 	}
 
 	return digest_open(evp_md, maclength);
-}
-
-digest_t *digest_open_sha1(int maclength) {
-	return digest_open(EVP_sha1(), maclength);
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {

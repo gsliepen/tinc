@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -421,10 +421,22 @@ bool send_metakey(connection_t *c) {
 	if(!read_rsa_public_key(c))
 		return false;
 
-	if(!(c->outcipher = cipher_open_blowfish_ofb()))
+	/* We need to use a stream mode for the meta protocol. Use AES for this,
+	   but try to match the key size with the one from the cipher selected
+	   by Cipher.
+	*/
+
+	int keylen = cipher_keylength(myself->incipher);
+	if(keylen <= 16)
+		c->outcipher = cipher_open_by_name("aes-128-cfb");
+	else if(keylen <= 24)
+		c->outcipher = cipher_open_by_name("aes-192-cfb");
+	else
+		c->outcipher = cipher_open_by_name("aes-256-cfb");
+	if(!c)
 		return false;
 
-	if(!(c->outdigest = digest_open_sha1(-1)))
+	if(!(c->outdigest = digest_open_by_name("sha256", -1)))
 		return false;
 
 	const size_t len = rsa_size(c->rsa);

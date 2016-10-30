@@ -1,6 +1,6 @@
 /*
     cipher.h -- header file cipher.c
-    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@ typedef struct cipher cipher_t;
 
 extern cipher_t *cipher_open_by_name(const char *) __attribute__ ((__malloc__));
 extern cipher_t *cipher_open_by_nid(int) __attribute__ ((__malloc__));
-extern cipher_t *cipher_open_blowfish_ofb(void) __attribute__ ((__malloc__));
 extern void cipher_close(cipher_t *);
 extern size_t cipher_keylength(const cipher_t *);
 extern size_t cipher_blocksize(const cipher_t *);

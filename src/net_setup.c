@@ -857,7 +857,7 @@ static bool setup_myself(void) {
 	/* Generate packet encryption key */
 
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
-		cipher = xstrdup("blowfish");
+		cipher = xstrdup("aes-256-cbc");
 
 	if(!strcasecmp(cipher, "none")) {
 		myself->incipher = NULL;
@@ -881,7 +881,7 @@ static bool setup_myself(void) {
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
-		digest = xstrdup("sha1");
+		digest = xstrdup("sha256");
 
 	if(!strcasecmp(digest, "none")) {
 		myself->indigest = NULL;
