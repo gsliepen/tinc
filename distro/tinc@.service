@@ -8,7 +8,6 @@ Type=simple
 WorkingDirectory=/etc/tinc/%i
 ExecStart=/usr/sbin/tincd -n %i -D
 ExecReload=/usr/sbin/tincd -n %i -kHUP
-ExecStop=/usr/sbin/tincd -n %i -k
 TimeoutStopSec=5
 Restart=always
 RestartSec=60
