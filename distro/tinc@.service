@@ -1,16 +1,15 @@
 [Unit]
 Description=Tinc net %i
-PartOf=tinc.service
-ReloadPropagatedFrom=tinc.service
- 
+After=network.target
+
 [Service]
 Type=simple
 WorkingDirectory=/etc/tinc/%i
-ExecStart=/usr/sbin/tincd -n %i -D
-ExecReload=/usr/sbin/tincd -n %i -kHUP
+ExecStart=/usr/sbin/tincd -d 2 -n %i -D
+ExecReload=/usr/sbin/tincd -d 2 -n %i -kHUP
 TimeoutStopSec=5
 Restart=always
 RestartSec=60
 
 [Install]
-WantedBy=tinc.service
+WantedBy=multi-user.target
