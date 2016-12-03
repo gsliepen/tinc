@@ -214,6 +214,9 @@ static bool setup_device(void) {
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 
+	device_read_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	device_write_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	return true;
 }
 
@@ -226,9 +229,6 @@ static void enable_device(void) {
 
 	/* We don't use the write event directly, but GetOverlappedResult() does, internally. */
 
-	device_read_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	device_write_overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
 	io_add_event(&device_read_io, device_handle_read, NULL, device_read_overlapped.hEvent);
 	device_issue_read();
 }
@@ -237,6 +237,19 @@ static void disable_device(void) {
 	logger(DEBUG_ALWAYS, LOG_INFO, "Disabling %s", device_info);
 
 	io_del(&device_read_io);
+
+	ULONG status = 0;
+	DWORD len;
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
+
+	/* Note that we don't try to cancel ongoing I/O here - we just stop listening.
+	   This is because some TAP-Win32 drivers don't seem to handle cancellation very well,
+	   especially when combined with other events such as the computer going to sleep - cases
+	   were observed where the GetOverlappedResult() would just block indefinitely and never
+	   return in that case. */
+}
+
+static void close_device(void) {
 	CancelIo(device_handle);
 
 	/* According to MSDN, CancelIo() does not necessarily wait for the operation to complete.
@@ -253,11 +266,6 @@ static void disable_device(void) {
 	CloseHandle(device_read_overlapped.hEvent);
 	CloseHandle(device_write_overlapped.hEvent);
 
-	ULONG status = 0;
-	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
-}
-
-static void close_device(void) {
 	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
 
 	free(device); device = NULL;
