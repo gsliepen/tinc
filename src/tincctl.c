@@ -721,6 +721,8 @@ bool connect_tincd(bool verbose) {
 	}
 
 	fclose(f);
+
+#ifndef HAVE_MINGW
 	if ((pid == 0) || (kill(pid, 0) && (errno == ESRCH))) {
 		fprintf(stderr, "Could not find tincd running at pid %d\n", pid);
 		/* clean up the stale socket and pid file */
@@ -729,7 +731,6 @@ bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-#ifndef HAVE_MINGW
 	struct sockaddr_un sa;
 	sa.sun_family = AF_UNIX;
 	strncpy(sa.sun_path, unixsocketname, sizeof sa.sun_path);
