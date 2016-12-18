@@ -888,8 +888,10 @@ bool ack_h(connection_t *c, const char *request) {
 	socklen_t local_salen = sizeof local_sa;
 	if (getsockname(c->socket, &local_sa.sa, &local_salen) < 0)
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get local socket address for connection with %s", c->name);
-	else
+	else {
 		sockaddr_setport(&local_sa, myport);
+		c->edge->local_address = local_sa;
+	}
 	c->edge->weight = (weight + c->estimated_weight) / 2;
 	c->edge->connection = c;
 	c->edge->options = c->options;
