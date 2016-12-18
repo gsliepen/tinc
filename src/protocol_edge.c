@@ -140,6 +140,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 			sockaddrcmp(&e->local_address, &local_address);
 
 		if(e->weight == weight && e->options == options && !new_address && !new_local_address) {
+			sockaddrfree(&address);
 			sockaddrfree(&local_address);
 			return true;
 		}
@@ -148,21 +149,30 @@ bool add_edge_h(connection_t *c, const char *request) {
 			logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not match existing entry",
 					   "ADD_EDGE", c->name, c->hostname);
 			send_add_edge(c, e);
+			sockaddrfree(&address);
 			sockaddrfree(&local_address);
 			return true;
 		}
 
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) which does not match existing entry",
 				   "ADD_EDGE", c->name, c->hostname);
+
 		e->options = options;
+
 		if(new_address) {
 			sockaddrfree(&e->address);
 			e->address = address;
+		} else {
+			sockaddrfree(&address);
 		}
+
 		if(new_local_address) {
 			sockaddrfree(&e->local_address);
 			e->local_address = local_address;
+		} else {
+			sockaddrfree(&local_address);
 		}
+
 		if(e->weight != weight) {
 			splay_node_t *node = splay_unlink(edge_weight_tree, e);
 			e->weight = weight;
@@ -177,6 +187,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 		e->to = to;
 		send_del_edge(c, e);
 		free_edge(e);
+		sockaddrfree(&address);
 		sockaddrfree(&local_address);
 		return true;
 	} else {
