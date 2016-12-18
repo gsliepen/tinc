@@ -132,42 +132,41 @@ bool add_edge_h(connection_t *c, const char *request) {
 	e = lookup_edge(from, to);
 
 	if(e) {
+		bool new_address = sockaddrcmp(&e->address, &address);
 		// local_address.sa.sa_family will be 0 if we got it from older tinc versions
 		// local_address.sa.sa_family will be 255 (AF_UNKNOWN) if we got it from newer versions
 		// but for edge which does not have local_address
 		bool new_local_address = local_address.sa.sa_family && local_address.sa.sa_family != AF_UNKNOWN &&
 			sockaddrcmp(&e->local_address, &local_address);
 
-		if(e->weight != weight || e->options != options || sockaddrcmp(&e->address, &address) || new_local_address) {
-			if(from == myself) {
-				logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not match existing entry",
-						   "ADD_EDGE", c->name, c->hostname);
-				send_add_edge(c, e);
-				sockaddrfree(&local_address);
-				return true;
-			} else {
-				logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) which does not match existing entry",
-						   "ADD_EDGE", c->name, c->hostname);
-				e->options = options;
-				if(sockaddrcmp(&e->address, &address)) {
-					sockaddrfree(&e->address);
-					e->address = address;
-				}
-				if(new_local_address) {
-					sockaddrfree(&e->local_address);
-					e->local_address = local_address;
-				}
-				if(e->weight != weight) {
-					splay_node_t *node = splay_unlink(edge_weight_tree, e);
-					e->weight = weight;
-					splay_insert_node(edge_weight_tree, node);
-				}
-
-				goto done;
-			}
-		} else {
+		if(e->weight == weight && e->options == options && !new_address && !new_local_address) {
 			sockaddrfree(&local_address);
 			return true;
+		}
+
+		if(from == myself) {
+			logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not match existing entry",
+					   "ADD_EDGE", c->name, c->hostname);
+			send_add_edge(c, e);
+			sockaddrfree(&local_address);
+			return true;
+		}
+
+		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) which does not match existing entry",
+				   "ADD_EDGE", c->name, c->hostname);
+		e->options = options;
+		if(new_address) {
+			sockaddrfree(&e->address);
+			e->address = address;
+		}
+		if(new_local_address) {
+			sockaddrfree(&e->local_address);
+			e->local_address = local_address;
+		}
+		if(e->weight != weight) {
+			splay_node_t *node = splay_unlink(edge_weight_tree, e);
+			e->weight = weight;
+			splay_insert_node(edge_weight_tree, node);
 		}
 	} else if(from == myself) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "Got %s from %s (%s) for ourself which does not exist",
@@ -180,18 +179,17 @@ bool add_edge_h(connection_t *c, const char *request) {
 		free_edge(e);
 		sockaddrfree(&local_address);
 		return true;
+	} else {
+		e = new_edge();
+		e->from = from;
+		e->to = to;
+		e->address = address;
+		e->local_address = local_address;
+		e->options = options;
+		e->weight = weight;
+		edge_add(e);
 	}
 
-	e = new_edge();
-	e->from = from;
-	e->to = to;
-	e->address = address;
-	e->local_address = local_address;
-	e->options = options;
-	e->weight = weight;
-	edge_add(e);
-
-done:
 	/* Tell the rest about the new edge */
 
 	if(!tunnelserver)
