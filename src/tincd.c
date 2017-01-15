@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -583,7 +583,7 @@ int main(int argc, char **argv) {
 
 	if(show_version) {
 		printf("%s version %s\n", PACKAGE, VERSION);
-		printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

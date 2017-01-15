@@ -1,3 +1,9 @@
+Version 1.0.31               January 15 2017
+
+ * Remove ExecStop in tinc@.service.
+
+Thanks to Élie Bouttier for his contribution to this version of tinc.
+
 Version 1.0.30               October 30 2016
 
  * Fix troubles connecting to some HTTP proxies.

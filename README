@@ -1,7 +1,7 @@
-This is the README file for tinc version 1.0.30. Installation
+This is the README file for tinc version 1.0.31. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2016 by:
+tinc is Copyright (C) 1998-2017 by:
 
 Ivo Timmermans,
 Guus Sliepen <guus@tinc-vpn.org>,
@@ -58,7 +58,7 @@ should be changed into "Device", and "Device" should be changed into
 Compatibility
 -------------
 
-Version 1.0.30 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.0.31 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc. Note that since version 1.0.30, tinc requires all nodes in
 the VPN to be compiled with a version of LibreSSL or OpenSSL that supports the
 AES256 and SHA256 algorithms.
