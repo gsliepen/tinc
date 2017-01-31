@@ -106,14 +106,13 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 
 	va_copy(aq, ap);
 	status = vsnprintf(*buf, len, fmt, aq);
-	buf[len - 1] = 0;
 	va_end(aq);
 
 	if(status >= 0)
 		*buf = xrealloc(*buf, status + 1);
 
 	if(status > len - 1) {
-		len = status;
+		len = status + 1;
 		va_copy(aq, ap);
 		status = vsnprintf(*buf, len, fmt, aq);
 		va_end(aq);
