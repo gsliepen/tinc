@@ -1,6 +1,7 @@
 ## Produce this file with automake to get Makefile.in
 
-sbin_PROGRAMS = tincd tinc sptps_test sptps_keypair
+sbin_PROGRAMS = tincd tinc
+EXTRA_PROGRAMS = sptps_test sptps_keypair
 
 CLEANFILES = version_git.h
 
@@ -18,7 +19,7 @@ version.c: ${srcdir}/version.c
 endif
 
 if LINUX
-sbin_PROGRAMS += sptps_speed
+EXTRA_PROGRAMS += sptps_speed
 endif
 
 ed25519_SOURCES = \
