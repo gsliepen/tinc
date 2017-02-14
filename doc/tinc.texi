@@ -1086,10 +1086,6 @@ which normally would prevent the peers from learning each other's LAN address.
 Currently, local discovery is implemented by sending some packets to the local address of the node during UDP discovery.
 This will not work with old nodes that don't transmit their local address.
 
-@cindex LocalDiscoveryAddress
-@item LocalDiscoveryAddress <@var{address}>
-If this variable is specified, local discovery packets are sent to the given @var{address}.
-
 @cindex Mode
 @item Mode = <router|switch|hub> (router)
 This option selects the way packets are routed to other daemons.
