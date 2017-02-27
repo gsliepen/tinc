@@ -59,6 +59,7 @@ tincd_SOURCES = \
 	edge.c edge.h \
 	ethernet.h \
 	event.c event.h \
+	fd_device.c \
 	graph.c graph.h \
 	hash.c hash.h \
 	have.h \

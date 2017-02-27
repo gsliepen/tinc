@@ -234,6 +234,10 @@ Do NOT connect multiple
 .Nm tinc 
 daemons to the same multicast address, this will very likely cause routing loops.
 Also note that this can cause decrypted VPN packets to be sent out on a real network if misconfigured.
+.It fd
+Use a file descriptor.
+All packets are read from this interface.
+Packets received for the local node are written to it.
 .It uml Pq not compiled in by default
 Create a UNIX socket with the filename specified by
 .Va Device ,

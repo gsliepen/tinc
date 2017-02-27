@@ -45,6 +45,10 @@
 #define ETH_P_8021Q 0x8100
 #endif
 
+#ifndef ETH_P_MAX
+#define ETH_P_MAX 0xFFFF
+#endif
+
 #ifndef HAVE_STRUCT_ETHER_HEADER
 struct ether_header {
 	uint8_t ether_dhost[ETH_ALEN];

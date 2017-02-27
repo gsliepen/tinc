@@ -958,6 +958,12 @@ This can be used to connect to UML, QEMU or KVM instances listening on the same 
 Do NOT connect multiple tinc daemons to the same multicast address, this will very likely cause routing loops.
 Also note that this can cause decrypted VPN packets to be sent out on a real network if misconfigured.
 
+@cindex fd
+@item fd
+Use a file descriptor.
+All packets are read from this interface.
+Packets received for the local node are written to it.
+
 @cindex UML
 @item uml (not compiled in by default)
 Create a UNIX socket with the filename specified by
