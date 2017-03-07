@@ -126,8 +126,9 @@ typedef struct outgoing_t {
 	int timeout;
 	splay_tree_t *config_tree;
 	struct config_t *cfg;
-	struct addrinfo *ai;
+	struct addrinfo *ai;  // addresses from config files
 	struct addrinfo *aip;
+	struct addrinfo *kai; // addresses known via other online nodes (use free_known_addresses())
 	timeout_t ev;
 } outgoing_t;
 

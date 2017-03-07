@@ -441,13 +441,20 @@ static void handle_meta_io(void *data, int flags) {
 		handle_meta_connection_data(c);
 }
 
+static void free_known_addresses(struct addrinfo *ai) {
+	for(struct addrinfo *aip = ai, *next; aip; aip = next) {
+		next = aip->ai_next;
+		free(aip);
+	}
+}
+
 bool do_outgoing_connection(outgoing_t *outgoing) {
 	char *address, *port, *space;
 	struct addrinfo *proxyai = NULL;
 	int result;
 
 begin:
-	if(!outgoing->ai) {
+	if(!outgoing->ai && !outgoing->kai) {
 		if(!outgoing->cfg) {
 			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->name);
 			retry_outgoing(outgoing);
@@ -477,6 +484,11 @@ begin:
 		if(outgoing->ai)
 			freeaddrinfo(outgoing->ai);
 		outgoing->ai = NULL;
+
+		if(outgoing->kai)
+			free_known_addresses(outgoing->kai);
+		outgoing->kai = NULL;
+
 		goto begin;
 	}
 
@@ -621,8 +633,8 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 
 	if(!outgoing->cfg) {
 		if(n)
-			outgoing->aip = outgoing->ai = get_known_addresses(n);
-		if(!outgoing->ai) {
+			outgoing->aip = outgoing->kai = get_known_addresses(n);
+		if(!outgoing->kai) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "No address known for %s", outgoing->name);
 			goto remove;
 		}
@@ -776,6 +788,9 @@ static void free_outgoing(outgoing_t *outgoing) {
 
 	if(outgoing->ai)
 		freeaddrinfo(outgoing->ai);
+
+	if(outgoing->kai)
+		free_known_addresses(outgoing->kai);
 
 	if(outgoing->config_tree)
 		exit_configuration(&outgoing->config_tree);
