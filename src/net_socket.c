@@ -570,6 +570,7 @@ begin:
 // Find edges pointing to this node, and use them to build a list of unique, known addresses.
 static struct addrinfo *get_known_addresses(node_t *n) {
 	struct addrinfo *ai = NULL;
+	struct addrinfo *oai = NULL;
 
 	for splay_each(edge_t, e, n->edge_tree) {
 		if(!e->reverse)
@@ -585,16 +586,15 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 		if(found)
 			continue;
 
-		struct addrinfo *nai = xzalloc(sizeof *nai);
-		if(ai)
-			ai->ai_next = nai;
-		ai = nai;
+		oai = ai;
+		ai = xzalloc(sizeof *ai);
 		ai->ai_family = e->reverse->address.sa.sa_family;
 		ai->ai_socktype = SOCK_STREAM;
 		ai->ai_protocol = IPPROTO_TCP;
 		ai->ai_addrlen = SALEN(e->reverse->address.sa);
 		ai->ai_addr = xmalloc(ai->ai_addrlen);
 		memcpy(ai->ai_addr, &e->reverse->address, ai->ai_addrlen);
+		ai->ai_next = oai;
 	}
 
 	return ai;
