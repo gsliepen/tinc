@@ -357,10 +357,13 @@ bool event_loop(void) {
 			WSANETWORKEVENTS network_events;
 			if (WSAEnumNetworkEvents(io->fd, io->event, &network_events) != 0)
 				return false;
-			if (network_events.lNetworkEvents & WRITE_EVENTS)
-				io->cb(io->data, IO_WRITE);
 			if (network_events.lNetworkEvents & READ_EVENTS)
 				io->cb(io->data, IO_READ);
+			/*
+			    The fd might be available for write too. However, if we already fired the read callback, that
+			    callback might have deleted the io (e.g. through terminate_connection()), so we can't fire the
+			    write callback here. Instead, we loop back and let the writable io loop above handle it.
+			 */
 		}
 	}
 #endif
