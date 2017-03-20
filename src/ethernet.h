@@ -25,6 +25,15 @@
 #define ETH_ALEN 6
 #endif
 
+#ifndef ETH_HLEN
+#define ETH_HLEN 14
+#endif
+
+#ifndef ETHER_TYPE_LEN
+#define ETHER_TYPE_LEN 2
+#endif
+
+
 #ifndef ARPHRD_ETHER
 #define ARPHRD_ETHER 1
 #endif
