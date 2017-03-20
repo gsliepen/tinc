@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -660,9 +660,12 @@ static bool setup_myself(void) {
 	/* We need to use a stream mode for the meta protocol. Use AES for this,
 	   but try to match the key size with the one from the cipher selected
 	   by Cipher.
+
+	   If Cipher is set to none, still use a low level of encryption for the
+	   meta protocol.
 	*/
 
-	int keylen = EVP_CIPHER_key_length(myself->incipher);
+	int keylen = myself->incipher ? EVP_CIPHER_key_length(myself->incipher) : 0;
 	if(keylen <= 16)
 		myself->connection->outcipher = EVP_aes_128_cfb();
 	else if(keylen <= 24)
