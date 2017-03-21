@@ -1,7 +1,7 @@
 /*
     script.c -- call an external script
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "system.h"
 
 #include "conf.h"
+#include "device.h"
 #include "logger.h"
 #include "names.h"
 #include "script.h"
@@ -63,7 +64,56 @@ static void putenv(const char *p) {}
 static void unputenv(const char *p) {}
 #endif
 
-bool execute_script(const char *name, char **envp) {
+static const int min_env_size;
+
+int environment_add(environment_t *env, const char *format, ...) {
+	if(env->n >= env->size) {
+		env->size = env->n ? env->n * 2 : min_env_size;
+		env->entries = xrealloc(env->entries, env->size * sizeof *env->entries);
+	}
+
+	if(format) {
+		va_list ap;
+		va_start(ap, format);
+		vasprintf(&env->entries[env->n], format, ap);
+		va_end(ap);
+	} else {
+		env->entries[env->n] = NULL;
+	}
+
+	return env->n++;
+}
+
+void environment_update(environment_t *env, int pos, const char *format, ...) {
+	free(env->entries[pos]);
+	va_list ap;
+	va_start(ap, format);
+	vasprintf(&env->entries[pos], format, ap);
+	va_end(ap);
+}
+
+void environment_init(environment_t *env) {
+	env->n = 0;
+	env->size = min_env_size;
+	env->entries = 0; //xzalloc(env->size * sizeof *env->entries);
+
+	if(netname)
+		environment_add(env, "NETNAME=%s", netname);
+	if(myname)
+		environment_add(env, "NAME=%s", myname);
+	if(device)
+		environment_add(env, "DEVICE=%s", device);
+	if(iface)
+		environment_add(env, "INTERFACE=%s", iface);
+}
+
+void environment_exit(environment_t *env) {
+	for(int i = 0; i < env->n; i++)
+		free(env->entries[i]);
+	free(env->entries);
+}
+
+bool execute_script(const char *name, environment_t *env) {
 	char scriptname[PATH_MAX];
 	char *command;
 
@@ -107,8 +157,8 @@ bool execute_script(const char *name, char **envp) {
 
 	/* Set environment */
 
-	for(int i = 0; envp[i]; i++)
-		putenv(envp[i]);
+	for(int i = 0; i < env->n; i++)
+		putenv(env->entries[i]);
 
 	if(scriptinterpreter)
 		xasprintf(&command, "%s \"%s\"", scriptinterpreter, scriptname);
@@ -121,8 +171,8 @@ bool execute_script(const char *name, char **envp) {
 
 	/* Unset environment */
 
-	for(int i = 0; envp[i]; i++)
-		unputenv(envp[i]);
+	for(int i = 0; i < env->n; i++)
+		unputenv(env->entries[i]);
 
 	if(status != -1) {
 #ifdef WEXITSTATUS

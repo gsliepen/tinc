@@ -1,6 +1,6 @@
 /*
     invitation.c -- Create and accept invitations
-    Copyright (C) 2013-2015 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2013-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -239,7 +239,7 @@ int cmd_invite(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char *myname = get_my_name(true);
+	myname = get_my_name(true);
 	if(!myname)
 		return 1;
 
@@ -425,15 +425,13 @@ int cmd_invite(int argc, char *argv[]) {
 	xasprintf(&url, "%s/%s%s", address, hash, cookie);
 
 	// Call the inviation-created script
-	char *envp[6] = {};
-	xasprintf(&envp[0], "NAME=%s", myname);
-	xasprintf(&envp[1], "NETNAME=%s", netname);
-	xasprintf(&envp[2], "NODE=%s", argv[1]);
-	xasprintf(&envp[3], "INVITATION_FILE=%s", filename);
-	xasprintf(&envp[4], "INVITATION_URL=%s", url);
-	execute_script("invitation-created", envp);
-	for(int i = 0; i < 6 && envp[i]; i++)
-		free(envp[i]);
+	environment_t env;
+	environment_init(&env);
+	environment_add(&env, "NODE=%s", argv[1]);
+	environment_add(&env, "INVITATION_FILE=%s", filename);
+	environment_add(&env, "INVITATION_URL=%s", url);
+	execute_script("invitation-created", &env);
+	environment_exit(&env);
 
 	puts(url);
 	free(url);

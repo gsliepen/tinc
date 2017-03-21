@@ -1,7 +1,7 @@
 /*
     names.h -- header for names.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ extern char *confdir;
 extern char *confbase;
 extern bool confbase_given;
 extern char *netname;
+extern char *myname;
 extern char *identname;
 extern char *unixsocketname;
 extern char *logfilename;

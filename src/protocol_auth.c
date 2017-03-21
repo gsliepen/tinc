@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -180,21 +180,18 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
 
 	// Call invitation-accepted script
-	char *envp[7] = {NULL};
+	environment_t env;
 	char *address, *port;
 
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-        xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-        xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-        xasprintf(&envp[3], "NODE=%s", c->name);
+	environment_init(&env);
+        environment_add(&env, "NODE=%s", c->name);
 	sockaddr2str(&c->address, &address, &port);
-	xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
-	xasprintf(&envp[5], "NAME=%s", myself->name);
+	environment_add(&env, "REMOTEADDRESS=%s", address);
+	environment_add(&env, "NAME=%s", myself->name);
 
-	execute_script("invitation-accepted", envp);
+	execute_script("invitation-accepted", &env);
 
-	for(int i = 0; envp[i] && i < 7; i++)
-		free(envp[i]);
+	environment_exit(&env);
 
 	sptps_send_record(&c->sptps, 2, data, 0);
 	return true;

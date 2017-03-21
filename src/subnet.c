@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2017 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -206,22 +206,20 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 
 	// Prepare environment variables to be passed to the script
 
-	char *envp[10] = {NULL};
-	int n = 0;
-	xasprintf(&envp[n++], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[n++], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[n++], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[n++], "NODE=%s", owner->name);
+	environment_t env;
+	environment_init(&env);
+	environment_add(&env, "NODE=%s", owner->name);
 
 	if(owner != myself) {
 		sockaddr2str(&owner->address, &address, &port);
-		xasprintf(&envp[n++], "REMOTEADDRESS=%s", address);
-		xasprintf(&envp[n++], "REMOTEPORT=%s", port);
+		environment_add(&env, "REMOTEADDRESS=%s", address);
+		environment_add(&env, "REMOTEPORT=%s", port);
 		free(port);
 		free(address);
 	}
 
-	xasprintf(&envp[n++], "NAME=%s", myself->name);
+	int env_subnet = environment_add(&env, NULL);
+	int env_weight = environment_add(&env, NULL);
 
 	name = up ? "subnet-up" : "subnet-down";
 
@@ -238,12 +236,10 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 				weight = empty;
 
 			// Prepare the SUBNET and WEIGHT variables
-			free(envp[n]);
-			free(envp[n + 1]);
-			xasprintf(&envp[n], "SUBNET=%s", netstr);
-			xasprintf(&envp[n + 1], "WEIGHT=%s", weight);
+			environment_update(&env, env_subnet, "SUBNET=%s", netstr);
+			environment_update(&env, env_weight, "WEIGHT=%s", weight);
 
-			execute_script(name, envp);
+			execute_script(name, &env);
 		}
 	} else {
 		if(net2str(netstr, sizeof netstr, subnet)) {
@@ -255,15 +251,14 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 				weight = empty;
 
 			// Prepare the SUBNET and WEIGHT variables
-			xasprintf(&envp[n], "SUBNET=%s", netstr);
-			xasprintf(&envp[n + 1], "WEIGHT=%s", weight);
+			environment_update(&env, env_subnet, "SUBNET=%s", netstr);
+			environment_update(&env, env_weight, "WEIGHT=%s", weight);
 
-			execute_script(name, envp);
+			execute_script(name, &env);
 		}
 	}
 
-	for(int i = 0; envp[i] && i < 9; i++)
-		free(envp[i]);
+	environment_exit(&env);
 }
 
 bool dump_subnets(connection_t *c) {

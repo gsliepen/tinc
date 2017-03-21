@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2015 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2017 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 #include "process.h"
 #include "sptps.h"
 
-debug_t debug_level = DEBUG_NOTHING;
+int debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
 static FILE *logfile = NULL;

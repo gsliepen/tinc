@@ -1,7 +1,7 @@
 /*
     names.c -- generate commonly used (file)names
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "xalloc.h"
 
 char *netname = NULL;
+char *myname = NULL;
 char *confdir = NULL;           /* base configuration directory */
 char *confbase = NULL;          /* base configuration directory for this instance of tinc */
 bool confbase_given;
@@ -137,6 +138,7 @@ void free_names(void) {
 	free(logfilename);
 	free(confbase);
 	free(confdir);
+	free(myname);
 
 	identname = NULL;
 	netname = NULL;
@@ -145,4 +147,5 @@ void free_names(void) {
 	logfilename = NULL;
 	confbase = NULL;
 	confdir = NULL;
+	myname = NULL;
 }

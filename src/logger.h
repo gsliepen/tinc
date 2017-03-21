@@ -1,7 +1,7 @@
 /*
     logger.h -- header file for logger.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ enum {
 
 #include <stdbool.h>
 
-extern debug_t debug_level;
+extern int debug_level;
 extern bool logcontrol;
 extern int umbilical;
 extern void openlogger(const char *, logmode_t);

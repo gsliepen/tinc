@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2017 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -247,28 +247,23 @@ static void check_reachability(void) {
 			char *name;
 			char *address;
 			char *port;
-			char *envp[8] = {NULL};
 
-			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-			xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-			xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-			xasprintf(&envp[3], "NODE=%s", n->name);
+			environment_t env;
+			environment_init(&env);
+			environment_add(&env, "NODE=%s", n->name);
 			sockaddr2str(&n->address, &address, &port);
-			xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
-			xasprintf(&envp[5], "REMOTEPORT=%s", port);
-			xasprintf(&envp[6], "NAME=%s", myself->name);
+			environment_add(&env, "REMOTEADDRESS=%s", address);
+			environment_add(&env, "REMOTEPORT=%s", port);
 
-			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
+			execute_script(n->status.reachable ? "host-up" : "host-down", &env);
 
 			xasprintf(&name, n->status.reachable ? "hosts/%s-up" : "hosts/%s-down", n->name);
-			execute_script(name, envp);
+			execute_script(name, &env);
 
 			free(name);
 			free(address);
 			free(port);
-
-			for(int i = 0; i < 7; i++)
-				free(envp[i]);
+			environment_exit(&env);
 
 			subnet_update(n, NULL, n->status.reachable);
 

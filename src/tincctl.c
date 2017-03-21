@@ -74,6 +74,9 @@ bool netnamegiven = false;
 char *scriptinterpreter = NULL;
 char *scriptextension = "";
 static char *prompt;
+char *device = NULL;
+char *iface = NULL;
+int debug_level = -1;
 
 static struct option const long_options[] = {
 	{"batch", no_argument, NULL, 'b'},
@@ -89,7 +92,7 @@ static struct option const long_options[] = {
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
-	printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
+	printf("Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen and others.\n"
 			"See the AUTHORS file for a complete list.\n\n"
 			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 			"and you are welcome to redistribute it under certain conditions;\n"
