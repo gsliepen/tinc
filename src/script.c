@@ -105,6 +105,8 @@ void environment_init(environment_t *env) {
 		environment_add(env, "DEVICE=%s", device);
 	if(iface)
 		environment_add(env, "INTERFACE=%s", iface);
+	if(debug_level >= 0)
+		environment_add(env, "DEBUG=%d", debug_level);
 }
 
 void environment_exit(environment_t *env) {
