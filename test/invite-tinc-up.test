@@ -8,7 +8,7 @@ $tinc $c1 <<EOF
 init foo
 set DeviceType dummy
 set Address localhost
-set Port 32751
+set Port 32756
 start $r1
 EOF
 

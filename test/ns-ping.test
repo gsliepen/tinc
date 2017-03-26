@@ -13,7 +13,7 @@ $tinc $c1 <<EOF
 init foo
 set Mode switch
 set Interface ping.test1
-set Port 32573
+set Port 32577
 set Address localhost
 EOF
 
