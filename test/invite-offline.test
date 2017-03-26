@@ -18,7 +18,7 @@ EOF
 
 invitation=`$tinc $c1 invite bar`
 
-$tinc $c1 start
+$tinc $c1 start $r1
 
 $tinc $c2 join $invitation
 
