@@ -1,0 +1,110 @@
+#!/bin/sh
+
+. ./testlib.sh
+
+# Initialize server node
+
+$tinc $c1 <<EOF
+init foo
+set DeviceType dummy
+set Port 32759
+set Address localhost
+add Subnet 10.0.0.1
+add Subnet fec0::/64
+EOF
+
+# Set up scripts
+
+OUT=$d1/scripts.out
+rm -f $OUT 
+
+for script in tinc-up tinc-down host-up host-down subnet-up subnet-down hosts/foo-up hosts/foo-down hosts/bar-up hosts/bar-down invitation-created invitation-accepted; do
+cat >$d1/$script << EOF
+#!/bin/sh
+echo $script \$NETNAME,\$NAME,\$DEVICE,\$IFACE,\$NODE,\$REMOTEADDRESS,\$REMOTEPORT,\$SUBNET,\$WEIGHT,\$INVITATION_FILE,\$INVITATION_URL,\$DEBUG >>$OUT
+EOF
+chmod u+x $d1/$script
+done
+
+# Start server node
+
+$tinc -n netname $c1 start $r1
+
+echo foo-started >>$OUT
+
+# Invite client node
+
+url=`$tinc -n netname2 $c1 invite bar`
+file=`cd $d1/invitations; ls | grep -v ed25519_key.priv`
+echo bar-invited >>$OUT
+$tinc -n netname3 $c2 join $url
+echo bar-joined >>$OUT
+
+# Start and stop client node
+
+$tinc $c2 << EOF
+set DeviceType dummy
+set Port 32760
+add Subnet 10.0.0.2
+add Subnet fec0::/64#5
+start $r2
+EOF
+
+sleep 1
+
+echo bar-started >>$OUT
+
+$tinc $c1 debug 4
+$tinc $c2 stop
+
+sleep 1
+
+echo bar-stopped >>$OUT
+
+$tinc $c1 debug 5
+$tinc $c2 start $r2
+
+sleep 1
+
+echo bar-started >>$OUT
+
+# Stop server node
+
+$tinc $c1 stop
+
+# Check if the script output is what is expected
+
+cat >$OUT.expected << EOF
+tinc-up netname,foo,dummy,,,,,,,,,5
+subnet-up netname,foo,dummy,,foo,,,10.0.0.1,,,,5
+subnet-up netname,foo,dummy,,foo,,,fec0::/64,,,,5
+foo-started
+invitation-created netname2,foo,,,bar,,,,,$d1/invitations/$file,$url,
+bar-invited
+invitation-accepted netname,foo,dummy,,bar,127.0.0.1,,,,,,5
+bar-joined
+host-up netname,foo,dummy,,bar,127.0.0.1,32760,,,,,5
+hosts/bar-up netname,foo,dummy,,bar,127.0.0.1,32760,,,,,5
+subnet-up netname,foo,dummy,,bar,127.0.0.1,32760,10.0.0.2,,,,5
+subnet-up netname,foo,dummy,,bar,127.0.0.1,32760,fec0::/64,5,,,5
+bar-started
+host-down netname,foo,dummy,,bar,127.0.0.1,32760,,,,,4
+hosts/bar-down netname,foo,dummy,,bar,127.0.0.1,32760,,,,,4
+subnet-down netname,foo,dummy,,bar,127.0.0.1,32760,10.0.0.2,,,,4
+subnet-down netname,foo,dummy,,bar,127.0.0.1,32760,fec0::/64,5,,,4
+bar-stopped
+host-up netname,foo,dummy,,bar,127.0.0.1,32760,,,,,5
+hosts/bar-up netname,foo,dummy,,bar,127.0.0.1,32760,,,,,5
+subnet-up netname,foo,dummy,,bar,127.0.0.1,32760,10.0.0.2,,,,5
+subnet-up netname,foo,dummy,,bar,127.0.0.1,32760,fec0::/64,5,,,5
+bar-started
+host-down netname,foo,dummy,,bar,127.0.0.1,32760,,,,,5
+hosts/bar-down netname,foo,dummy,,bar,127.0.0.1,32760,,,,,5
+subnet-down netname,foo,dummy,,bar,127.0.0.1,32760,10.0.0.2,,,,5
+subnet-down netname,foo,dummy,,bar,127.0.0.1,32760,fec0::/64,5,,,5
+subnet-down netname,foo,dummy,,foo,,,10.0.0.1,,,,5
+subnet-down netname,foo,dummy,,foo,,,fec0::/64,,,,5
+tinc-down netname,foo,dummy,,,,,,,,,5
+EOF
+
+cmp $OUT $OUT.expected

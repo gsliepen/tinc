@@ -8,6 +8,7 @@ TESTS = \
 	invite-tinc-up.test \
 	ns-ping.test \
 	ping.test \
+	scripts.test \
 	sptps-basic.test \
 	variables.test
 
