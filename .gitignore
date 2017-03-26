@@ -33,6 +33,9 @@
 /src/version_git.h
 /stamp-h1
 /test-driver
+/test/*.test.*
+/test/*.log
+/test/*.trs
 Makefile
 Makefile.in
 core*
