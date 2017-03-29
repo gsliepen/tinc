@@ -1,6 +1,7 @@
 ## Produce this file with automake to get Makefile.in
 
 sbin_PROGRAMS = tincd tinc
+check_PROGRAMS = sptps_test sptps_keypair
 EXTRA_PROGRAMS = sptps_test sptps_keypair
 
 CLEANFILES = version_git.h
