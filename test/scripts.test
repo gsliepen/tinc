@@ -8,7 +8,7 @@ $tinc $c1 <<EOF
 init foo
 set DeviceType dummy
 set Port 32759
-set Address localhost
+set Address 127.0.0.1
 add Subnet 10.0.0.1
 add Subnet fec0::/64
 EOF
