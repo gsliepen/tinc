@@ -41,6 +41,7 @@
 
 #define DEFAULT_TUN_DEVICE "/dev/tun"
 #define DEFAULT_TAP_DEVICE "/dev/tap"
+#define IP_DEVICE "/dev/udp"
 
 static enum {
 	DEVICE_TYPE_TUN,
@@ -84,8 +85,8 @@ static bool setup_device(void) {
 
 	/* The following is black magic copied from OpenVPN. */
 
-	if((ip_fd = open("/dev/ip", O_RDWR, 0)) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", "/dev/ip", strerror(errno));
+	if((ip_fd = open(IP_DEVICE, O_RDWR, 0)) < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s\n", IP_DEVICE, strerror(errno));
 		return false;
 	}
 
@@ -203,7 +204,7 @@ static bool setup_device(void) {
 
 		/* Push arp module to ip_fd */
 		if(ioctl(ip_fd, I_PUSH, "arp") < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Could not push ARP module onto %s!", "/dev/ip");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Could not push ARP module onto %s!", IP_DEVICE);
 			return false;
 		}
 
