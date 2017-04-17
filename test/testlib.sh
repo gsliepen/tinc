@@ -9,18 +9,10 @@ sptps_keypair=../src/sptps_keypair
 
 # Test directories
 
-case "$_" in
-	/*)
-		d1=$_.1
-		d2=$_.2
-		d3=$_.3
-	;;
-	*)
-		d1=$PWD/$_.1
-		d2=$PWD/$_.2
-		d3=$PWD/$_.3
-	;;
-esac
+scriptname=`basename $0`
+d1=$PWD/$scriptname.1
+d2=$PWD/$scriptname.2
+d3=$PWD/$scriptname.3
 
 # Default arguments for both tinc and tincd
 

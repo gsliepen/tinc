@@ -2,6 +2,10 @@
 
 . ./testlib.sh
 
+# Skip this test if we did not compile sptps_test
+
+test -e $sptps_test || exit 77
+
 # Generate keys
 
 mkdir -p $d1
