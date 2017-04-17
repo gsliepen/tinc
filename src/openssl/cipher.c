@@ -137,7 +137,7 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		int len, pad;
 		if(EVP_EncryptInit_ex(cipher->ctx, NULL, NULL, NULL, NULL)
 				&& EVP_EncryptUpdate(cipher->ctx, (unsigned char *)outdata, &len, indata, inlen)
-				&& EVP_EncryptFinal(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
+				&& EVP_EncryptFinal_ex(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
 			if(outlen) *outlen = len + pad;
 			return true;
 		}
@@ -158,7 +158,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		int len, pad;
 		if(EVP_DecryptInit_ex(cipher->ctx, NULL, NULL, NULL, NULL)
 				&& EVP_DecryptUpdate(cipher->ctx, (unsigned char *)outdata, &len, indata, inlen)
-				&& EVP_DecryptFinal(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
+				&& EVP_DecryptFinal_ex(cipher->ctx, (unsigned char *)outdata + len, &pad)) {
 			if(outlen) *outlen = len + pad;
 			return true;
 		}

@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 		default:
-			fprintf(stderr, "Multicast for address family %hx unsupported\n", ai->ai_family);
+			fprintf(stderr, "Multicast for address family %x unsupported\n", ai->ai_family);
 			return 1;
 	}
 
