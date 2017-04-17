@@ -71,6 +71,8 @@ echo bar-started >>$OUT
 # Stop server node
 
 $tinc $c1 stop
+sleep 1
+$tinc $c2 stop
 
 # Check if the script output is what is expected
 
