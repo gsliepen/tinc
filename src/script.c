@@ -64,7 +64,7 @@ static void putenv(const char *p) {}
 static void unputenv(const char *p) {}
 #endif
 
-static const int min_env_size;
+static const int min_env_size = 10;
 
 int environment_add(environment_t *env, const char *format, ...) {
 	if(env->n >= env->size) {
@@ -95,7 +95,7 @@ void environment_update(environment_t *env, int pos, const char *format, ...) {
 void environment_init(environment_t *env) {
 	env->n = 0;
 	env->size = min_env_size;
-	env->entries = 0; //xzalloc(env->size * sizeof *env->entries);
+	env->entries = xzalloc(env->size * sizeof *env->entries);
 
 	if(netname)
 		environment_add(env, "NETNAME=%s", netname);
