@@ -803,7 +803,7 @@ bool connect_tincd(bool verbose) {
 	char data[4096];
 	int version;
 
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %s %d", &code, data, &version) != 3 || code != 0) {
+	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %4095s %d", &code, data, &version) != 3 || code != 0) {
 		if(verbose)
 			fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
 		close(fd);
@@ -1119,7 +1119,7 @@ static int cmd_dump(int argc, char *argv[]) {
 
 	while(recvline(fd, line, sizeof line)) {
 		char node1[4096], node2[4096];
-		int n = sscanf(line, "%d %d %s %s", &code, &req, node1, node2);
+		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, node1, node2);
 		if(n == 2) {
 			if(do_graph && req == REQ_DUMP_NODES)
 				continue;
@@ -1151,7 +1151,7 @@ static int cmd_dump(int argc, char *argv[]) {
 
 		switch(req) {
 			case REQ_DUMP_NODES: {
-				int n = sscanf(line, "%*d %*d %s %s %s port %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
+				int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %d %d %d %d %x %x %4095s %4095s %d %hd %hd %hd %ld", node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 				if(n != 17) {
 					fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
 					return 1;
@@ -1181,7 +1181,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			} break;
 
 			case REQ_DUMP_EDGES: {
-				int n = sscanf(line, "%*d %*d %s %s %s port %s %s port %s %x %d", from, to, host, port, local_host, local_port, &options, &weight);
+				int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %4095s port %4095s %x %d", from, to, host, port, local_host, local_port, &options, &weight);
 				if(n != 8) {
 					fprintf(stderr, "Unable to parse edge dump from tincd.\n");
 					return 1;
@@ -1199,7 +1199,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			} break;
 
 			case REQ_DUMP_SUBNETS: {
-				int n = sscanf(line, "%*d %*d %s %s", subnet, node);
+				int n = sscanf(line, "%*d %*d %4095s %4095s", subnet, node);
 				if(n != 2) {
 					fprintf(stderr, "Unable to parse subnet dump from tincd.\n");
 					return 1;
@@ -1208,7 +1208,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			} break;
 
 			case REQ_DUMP_CONNECTIONS: {
-				int n = sscanf(line, "%*d %*d %s %s port %s %x %d %x", node, host, port, &options, &socket, &status_int);
+				int n = sscanf(line, "%*d %*d %4095s %4095s port %4095s %x %d %x", node, host, port, &options, &socket, &status_int);
 				if(n != 6) {
 					fprintf(stderr, "Unable to parse connection dump from tincd.\n");
 					return 1;
@@ -2233,7 +2233,7 @@ static int cmd_import(int argc, char *argv[]) {
 	bool firstline = true;
 
 	while(fgets(buf, sizeof buf, in)) {
-		if(sscanf(buf, "Name = %s", name) == 1) {
+		if(sscanf(buf, "Name = %4095s", name) == 1) {
 			firstline = false;
 
 			if(!check_id(name)) {
@@ -2725,7 +2725,7 @@ static char *complete_info(const char *text, int state) {
 
 	while(recvline(fd, line, sizeof line)) {
 		char item[4096];
-		int n = sscanf(line, "%d %d %s", &code, &req, item);
+		int n = sscanf(line, "%d %d %4095s", &code, &req, item);
 		if(n == 2) {
 			i++;
 			if(i >= 2)

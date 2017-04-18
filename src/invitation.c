@@ -259,7 +259,7 @@ int cmd_invite(int argc, char *argv[]) {
 		while(recvline(fd, line, sizeof line)) {
 			char node[4096];
 			int code, req;
-			if(sscanf(line, "%d %d %s", &code, &req, node) != 3)
+			if(sscanf(line, "%d %d %4095s", &code, &req, node) != 3)
 				break;
 			if(!strcmp(node, argv[1]))
 				found = true;
@@ -1044,7 +1044,7 @@ next:
 	char hisname[4096] = "";
 	int code, hismajor, hisminor = 0;
 
-	if(!recvline(sock, line, sizeof line) || sscanf(line, "%d %s %d.%d", &code, hisname, &hismajor, &hisminor) < 3 || code != 0 || hismajor != PROT_MAJOR || !check_id(hisname) || !recvline(sock, line, sizeof line) || !rstrip(line) || sscanf(line, "%d ", &code) != 1 || code != ACK || strlen(line) < 3) {
+	if(!recvline(sock, line, sizeof line) || sscanf(line, "%d %4095s %d.%d", &code, hisname, &hismajor, &hisminor) < 3 || code != 0 || hismajor != PROT_MAJOR || !check_id(hisname) || !recvline(sock, line, sizeof line) || !rstrip(line) || sscanf(line, "%d ", &code) != 1 || code != ACK || strlen(line) < 3) {
 		fprintf(stderr, "Cannot read greeting from peer\n");
 		closesocket(sock);
 		goto next;

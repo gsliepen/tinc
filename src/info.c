@@ -69,7 +69,7 @@ static int info_node(int fd, const char *item) {
 	long int last_state_change;
 
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s %s %s port %s %d %d %d %d %x %"PRIx32" %s %s %d %hd %hd %hd %ld", &code, &req, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_union.raw, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
+		int n = sscanf(line, "%d %d %4095s %4095s %4095s port %4095s %d %d %d %d %x %"PRIx32" %4095s %4095s %d %hd %hd %hd %ld", &code, &req, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_union.raw, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
 		if(n == 2)
 			break;
@@ -91,7 +91,7 @@ static int info_node(int fd, const char *item) {
 	}
 
 	while(recvline(fd, line, sizeof line)) {
-		if(sscanf(line, "%d %d %s", &code, &req, node) == 2)
+		if(sscanf(line, "%d %d %4095s", &code, &req, node) == 2)
 			break;
 	}
 
@@ -158,7 +158,7 @@ static int info_node(int fd, const char *item) {
 	printf("Edges:       ");
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_EDGES, item);
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s %s", &code, &req, from, to);
+		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, from, to);
 		if(n == 2)
 			break;
 		if(n != 4) {
@@ -174,7 +174,7 @@ static int info_node(int fd, const char *item) {
 	printf("Subnets:     ");
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s %s", &code, &req, subnet, from);
+		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, subnet, from);
 		if(n == 2)
 			break;
 		if(n != 4) {
@@ -209,7 +209,7 @@ static int info_subnet(int fd, const char *item) {
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s %s", &code, &req, netstr, owner);
+		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, netstr, owner);
 		if(n == 2)
 			break;
 

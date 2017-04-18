@@ -90,7 +90,7 @@ static bool update(int fd) {
 		ns->known = false;
 
 	while(recvline(fd, line, sizeof line)) {
-		int n = sscanf(line, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, &code, &req, name, &in_packets, &in_bytes, &out_packets, &out_bytes);
+		int n = sscanf(line, "%d %d %4095s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, &code, &req, name, &in_packets, &in_bytes, &out_packets, &out_bytes);
 
 		if(n == 2)
 			return true;
