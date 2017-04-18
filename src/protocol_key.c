@@ -356,7 +356,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 	char key[MAX_STRING_SIZE];
 	char address[MAX_STRING_SIZE] = "";
 	char port[MAX_STRING_SIZE] = "";
-	int cipher, digest, maclength, compression, keylen;
+	int cipher, digest, maclength, compression;
 	node_t *from, *to;
 
 	if(sscanf(request, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
@@ -489,7 +489,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* Process key */
 
-	keylen = hex2bin(key, key, sizeof key);
+	int keylen = hex2bin(key, key, sizeof key);
 
 	if(keylen != (from->outcipher ? cipher_keylength(from->outcipher) : 1)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);

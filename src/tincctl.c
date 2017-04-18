@@ -513,7 +513,7 @@ bool recvline(int fd, char *line, size_t len) {
 	char *newline = NULL;
 
 	if(!fd)
-		abort();
+		return false;
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
@@ -951,11 +951,11 @@ static int cmd_stop(int argc, char *argv[]) {
 	if(!connect_tincd(true)) {
 		if(pid) {
 			if(kill(pid, SIGTERM)) {
-				fprintf(stderr, "Could not send TERM signal to process with PID %u: %s\n", pid, strerror(errno));
+				fprintf(stderr, "Could not send TERM signal to process with PID %d: %s\n", pid, strerror(errno));
 				return 1;
 			}
 
-			fprintf(stderr, "Sent TERM signal to process with PID %u.\n", pid);
+			fprintf(stderr, "Sent TERM signal to process with PID %d.\n", pid);
 			waitpid(pid, NULL, 0);
 			return 0;
 		}
@@ -1030,7 +1030,6 @@ static int dump_invitations(void) {
 		FILE *f = fopen(fname, "r");
 		if(!f) {
 			fprintf(stderr, "Cannot open %s: %s\n", fname, strerror(errno));
-			fclose(f);
 			continue;
 		}
 
@@ -2826,8 +2825,6 @@ static int cmd_shell(int argc, char *argv[]) {
 
 		while(p && *p) {
 			if(nargc >= maxargs) {
-				fprintf(stderr, "next %p '%s', p %p '%s'\n", next, next, p, p);
-				abort();
 				maxargs *= 2;
 				nargv = xrealloc(nargv, maxargs * sizeof *nargv);
 			}

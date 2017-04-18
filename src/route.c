@@ -510,7 +510,7 @@ static void route_broadcast(node_t *source, vpn_packet_t *packet) {
 static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t ether_size) {
 	struct ip ip;
 	vpn_packet_t fragment;
-	int len, maxlen, todo;
+	int maxlen, todo;
 	uint8_t *offset;
 	uint16_t ip_off, origf;
 
@@ -537,7 +537,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	ip_off &= IP_OFFMASK;
 
 	while(todo) {
-		len = todo > maxlen ? maxlen : todo;
+		int len = todo > maxlen ? maxlen : todo;
 		memcpy(DATA(&fragment) + ether_size + ip_size, offset, len);
 		todo -= len;
 		offset += len;

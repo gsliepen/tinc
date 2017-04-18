@@ -252,8 +252,8 @@ int cmd_invite(int argc, char *argv[]) {
 	}
 
 	// If a daemon is running, ensure no other nodes know about this name
-	bool found = false;
 	if(connect_tincd(false)) {
+		bool found = false;
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
 
 		while(recvline(fd, line, sizeof line)) {
@@ -686,7 +686,7 @@ make_names:
 		}
 
 		// Copy the safe variable to the right config file
-		fprintf(variables[i].type & VAR_HOST ? fh : f, "%s = %s\n", l, value);
+		fprintf((variables[i].type & VAR_HOST) ? fh : f, "%s = %s\n", l, value);
 	}
 
 	fclose(f);
