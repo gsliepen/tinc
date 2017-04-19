@@ -87,6 +87,9 @@ static bool setup_device(void) {
 	else
 		device_info = "Solaris tap device";
 
+	if(device_type == DEVICE_TYPE_TAP && routing_mode == RMODE_ROUTER)
+		overwrite_mac = true;
+
 	/* The following is black magic copied from OpenVPN. */
 
 	if((ip_fd = open(IP_DEVICE, O_RDWR, 0)) < 0) {
