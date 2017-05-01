@@ -281,7 +281,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 bool id_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 
-	if(sscanf(request, "%*d " MAX_STRING " %d.%d", name, &c->protocol_major, &c->protocol_minor) < 2) {
+	if(sscanf(request, "%*d " MAX_STRING " %2d.%3d", name, &c->protocol_major, &c->protocol_minor) < 2) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
 			   c->hostname);
 		return false;
