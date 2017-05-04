@@ -194,6 +194,11 @@ bool send_udp_info(node_t *from, node_t *to) {
 	   farther than the static relay. */
 	to = (to->via == myself) ? to->nexthop : to->via;
 
+	if (to == NULL) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Something went wrong when selecting relay - possible fake UDP_INFO");
+		return false;
+	}
+
 	/* Skip cases where sending UDP info messages doesn't make sense.
 	   This is done here in order to avoid repeating the same logic in multiple callsites. */
 
