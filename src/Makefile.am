@@ -24,7 +24,6 @@ EXTRA_PROGRAMS += sptps_speed
 endif
 
 ed25519_SOURCES = \
-	ed25519/add_scalar.c \
 	ed25519/ed25519.h \
 	ed25519/fe.c ed25519/fe.h \
 	ed25519/fixedint.h \
