@@ -104,7 +104,7 @@ bool flush_meta(connection_t *c) {
 			} else if(errno == EINTR) {
 				continue;
 			} else if(sockwouldblock(sockerrno)) {
-				ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
+				ifdebug(META) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
 						c->outbuflen, c->name, c->hostname);
 				return true;
 			} else {
