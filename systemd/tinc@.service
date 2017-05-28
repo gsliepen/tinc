@@ -11,6 +11,7 @@ Type=simple
 WorkingDirectory=/etc/tinc/%i
 ExecStart=/usr/sbin/tincd -n %i -D
 ExecReload=/usr/sbin/tinc -n %i reload
+KillMode=mixed
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=5
