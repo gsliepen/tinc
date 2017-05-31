@@ -128,11 +128,12 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_
 
 // Send an application record.
 bool sptps_send_record(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
-	// Sanity checks: application cannot send data before handshake is finished,
-	// and only record types 0..127 are allowed.
+
 	if(!s->outstate)
 		return error(s, EINVAL, "Handshake phase not finished yet");
 
+	// Sanity checks: application cannot send data before handshake is finished,
+	// and only record types 0..127 are allowed.
 	if(type >= SPTPS_HANDSHAKE)
 		return error(s, EINVAL, "Invalid application record type");
 
