@@ -319,8 +319,10 @@ void graph(void) {
 
 void dump_graph(void) {
 	avl_node_t *node;
+	avl_node_t *subnet_node;
 	node_t *n;
 	edge_t *e;
+	char subnet_str[MAXNETSTR];
 	char *filename = NULL, *tmpname = NULL;
 	FILE *file, *pipe = NULL;
 	
@@ -350,7 +352,12 @@ void dump_graph(void) {
 	/* dump all nodes first */
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		fprintf(file, "	%s [label = \"%s\"];\n", n->name, n->name);
+		fprintf(file, "	%s [label = \"%s", n->name, n->name);
+		for(subnet_node = n->subnet_tree->head; subnet_node; subnet_node = subnet_node->next) {
+			net2str(subnet_str, MAXNETSTR, subnet_node->data);
+			fprintf(file, "\\n%s", subnet_str);
+		}
+		fprintf(file, "\"];\n");
 	}
 
 	/* now dump all edges */
