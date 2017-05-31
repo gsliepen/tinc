@@ -55,60 +55,76 @@ hash_t *hash_alloc(size_t n, size_t size) {
 	hash_t *hash = xzalloc(sizeof *hash);
 	hash->n = n;
 	hash->size = size;
-	hash->keys = xzalloc(hash->n * hash->size);
-	hash->values = xzalloc(hash->n * sizeof *hash->values);
+	hash->buckets = xzalloc(hash->n * sizeof *hash->buckets);
 	return hash;
 }
 
 void hash_free(hash_t *hash) {
-	free(hash->keys);
-	free(hash->values);
+	hash_clear(hash);
 	free(hash);
 }
 
 /* Searching and inserting */
 
+static hash_node_t **hash_bucket(const hash_t *hash, const void *key) {
+	return &hash->buckets[modulo(hash_function(key, hash->size), hash->n)];
+}
+
+static hash_node_t **hash_locate(const hash_t *hash, hash_node_t **node, const void *key) {
+	while (*node && memcmp((*node)->key, key, hash->size))
+		node = &(*node)->next;
+	return node;
+}
+
+static void hash_add(const hash_t *hash, hash_node_t **bucket, const void *key, const void *value) {
+	hash_node_t *node = xzalloc(sizeof *node);
+	node->key = xmalloc(hash->size);
+	memcpy(node->key, key, hash->size);
+	node->value = value;
+
+	node->next = *bucket;
+	*bucket = node;
+}
+
 void hash_insert(hash_t *hash, const void *key, const void *value) {
-	uint32_t i = modulo(hash_function(key, hash->size), hash->n);
-	memcpy(hash->keys + i * hash->size, key, hash->size);
-	hash->values[i] = value;
+	hash_add(hash, hash_bucket(hash, key), key, value);
 }
 
 void *hash_search(const hash_t *hash, const void *key) {
-	uint32_t i = modulo(hash_function(key, hash->size), hash->n);
-	if(hash->values[i] && !memcmp(key, hash->keys + i * hash->size, hash->size)) {
-		return (void *)hash->values[i];
-	}
-	return NULL;
+	hash_node_t *node = *hash_locate(hash, hash_bucket(hash, key), key);
+	return node ? ((void*)node->value) : NULL;
 }
 
 void *hash_search_or_insert(hash_t *hash, const void *key, const void *value) {
-	uint32_t i = modulo(hash_function(key, hash->size), hash->n);
-	if(hash->values[i] && !memcmp(key, hash->keys + i * hash->size, hash->size))
-		return (void *)hash->values[i];
-	memcpy(hash->keys + i * hash->size, key, hash->size);
-	hash->values[i] = value;
-	return NULL;
+	hash_node_t **bucket = hash_bucket(hash, key);
+	hash_node_t *node = *hash_locate(hash, bucket, key);
+	if (!node) {
+		hash_add(hash, bucket, key, value);
+		node = *bucket;
+	}
+	return (void *)node->value;
 }
 
 /* Deleting */
 
+static void hash_delete_node(hash_node_t **node) {
+	hash_node_t *next = (*node)->next;
+	free((*node)->key);
+	free(*node);
+	*node = next;
+}
+
 void hash_delete(hash_t *hash, const void *key) {
-	uint32_t i = modulo(hash_function(key, hash->size), hash->n);
-	hash->values[i] = NULL;
+	hash_node_t **node = hash_locate(hash, hash_bucket(hash, key), key);
+	if (*node) hash_delete_node(node);
 }
 
 /* Utility functions */
 
 void hash_clear(hash_t *hash) {
-	memset(hash->values, 0, hash->n * sizeof *hash->values);
-}
-
-void hash_resize(hash_t *hash, size_t n) {
-	hash->keys = xrealloc(hash->keys, n * hash->size);
-	hash->values = xrealloc(hash->values, n * sizeof *hash->values);
-	if(n > hash->n) {
-		memset(hash->keys + hash->n * hash->size, 0, (n - hash->n) * hash->size);
-		memset(hash->values + hash->n, 0, (n - hash->n) * sizeof *hash->values);
+	for (size_t i = 0; i < hash->n; ++i) {
+		hash_node_t **node = &hash->buckets[i];
+		while (*node) hash_delete_node(node);
 	}
 }
+
