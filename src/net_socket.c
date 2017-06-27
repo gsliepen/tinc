@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -556,13 +556,20 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	c->outcompression = myself->connection->outcompression;
 
 	init_configuration(&c->config_tree);
-	read_connection_config(c);
+	if(!read_connection_config(c)) {
+		free_connection(c);
+		outgoing->timeout = maxtimeout;
+		retry_outgoing(outgoing);
+		return;
+	}
 
 	outgoing->cfg = lookup_config(c->config_tree, "Address");
 
 	if(!outgoing->cfg) {
 		logger(LOG_ERR, "No address specified for %s", c->name);
 		free_connection(c);
+		outgoing->timeout = maxtimeout;
+		retry_outgoing(outgoing);
 		return;
 	}
 
