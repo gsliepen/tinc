@@ -781,6 +781,10 @@ It can be used to set up the corresponding network interface.
 If an executable file with this name exists,
 it will be executed right before the tinc daemon is going to close
 its connection to the virtual network device.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /invitations/
+This directory contains outstanding invitations.
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /invitation-data
+After a succesful join, this file contains a copy of the invitation data received.
 .El
 .Sh SEE ALSO
 .Xr tincd 8 ,

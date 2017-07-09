@@ -607,6 +607,15 @@ make_names:
 		return false;
 	}
 
+	snprintf(filename, sizeof filename, "%s" SLASH "invitation-data", confbase);
+	FILE *finv = fopen(filename, "w");
+	if(!finv || fwrite(data, datalen, 1, finv) != 1) {
+		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
+		fclose(finv);
+		return false;
+	}
+	fclose(finv);
+
 	snprintf(filename, sizeof filename, "%s" SLASH "tinc-up.invitation", confbase);
 	FILE *fup = fopen(filename, "w");
 	if(!fup) {
