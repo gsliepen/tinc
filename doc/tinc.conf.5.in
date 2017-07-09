@@ -327,6 +327,8 @@ Under Windows, this variable is used to select which network interface will be u
 If you specified a
 .Va Device ,
 this variable is almost always already correctly set.
+.It Va InvitationExpire Li = Ar seconds Pq 604800
+This option controls the period invitations are valid.
 .It Va KeyExpire Li = Ar seconds Pq 3600
 This option controls the period the encryption keys used to encrypt the data are valid.
 It is common practice to change keys at regular intervals to make it even harder for crackers,

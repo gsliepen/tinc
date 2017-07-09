@@ -1121,6 +1121,10 @@ every packet will be broadcast to the other daemons
 while no routing table is managed.
 @end table
 
+@cindex InvitationExpire
+@item InvitationExpire = <@var{seconds}> (604800)
+This option controls the time invitations are valid.
+
 @cindex KeyExpire
 @item KeyExpire = <@var{seconds}> (3600)
 This option controls the time the encryption keys used to encrypt the data

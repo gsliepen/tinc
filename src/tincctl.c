@@ -1490,6 +1490,7 @@ const var_t variables[] = {
 	{"Hostnames", VAR_SERVER},
 	{"IffOneQueue", VAR_SERVER},
 	{"Interface", VAR_SERVER},
+	{"InvitationExpire", VAR_SERVER},
 	{"KeyExpire", VAR_SERVER},
 	{"ListenAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"LocalDiscovery", VAR_SERVER},

@@ -611,6 +611,9 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
 
+	if(!get_config_int(lookup_config(config_tree, "InvitationExpire"), &invitation_lifetime))
+		invitation_lifetime = 604800; // 1 week
+
 	read_invitation_key();
 
 	return true;

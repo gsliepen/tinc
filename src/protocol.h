@@ -62,6 +62,7 @@ extern bool tunnelserver;
 extern bool strictsubnets;
 extern bool experimental;
 
+extern int invitation_lifetime;
 extern ecdsa_t *invitation_key;
 
 /* Maximum size of strings in a request.

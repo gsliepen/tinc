@@ -47,6 +47,7 @@
 
 #include "ed25519/sha512.h"
 
+int invitation_lifetime;
 ecdsa_t *invitation_key = NULL;
 
 static bool send_proxyrequest(connection_t *c) {
@@ -229,6 +230,18 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s tried to use non-existing invitation %s\n", c->hostname, cookie);
 		else
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to rename invitation %s\n", cookie);
+		return false;
+	}
+
+	// Check the timestamp of the invitation
+	struct stat st;
+	if(stat(usedname, &st)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not stat %s", usedname);
+		return false;
+	}
+
+	if(st.st_mtime + invitation_lifetime < now.tv_sec) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s tried to use expired invitation %s", c->hostname, cookie);
 		return false;
 	}
 
