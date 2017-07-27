@@ -1573,10 +1573,19 @@ void handle_device_data(void *data, int flags) {
 	vpn_packet_t packet;
 	packet.offset = DEFAULT_PACKET_OFFSET;
 	packet.priority = 0;
+	static int errors = 0;
 
 	if(devops.read(&packet)) {
+		errors = 0;
 		myself->in_packets++;
 		myself->in_bytes += packet.len;
 		route(myself, &packet);
+	} else {
+		usleep(errors * 50000);
+		errors++;
+		if(errors > 10) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Too many errors from %s, exiting!", device);
+			event_exit();
+		}
 	}
 }
