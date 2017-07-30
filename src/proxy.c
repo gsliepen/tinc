@@ -174,6 +174,8 @@ bool send_proxyrequest(connection_t *c) {
 	}
 
 	case PROXY_EXEC:
+		c->status.proxy_passed = true;
+		send_id(c);
 		return true;
 
 	default:

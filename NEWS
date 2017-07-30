@@ -1,6 +1,7 @@
 Version 1.0.32               not released yet
 
  * Fix segmentation fault when using Cipher = none.
+ * Fix Proxy = exec.
 
 Version 1.0.31               January 15 2017
 
