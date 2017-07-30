@@ -442,6 +442,7 @@ connect:
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 	} else if(proxytype == PROXY_EXEC) {
+		c->status.proxy_passed = true;
 		do_outgoing_pipe(c, proxyhost);
 	} else {
 		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
