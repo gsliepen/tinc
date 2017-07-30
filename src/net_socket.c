@@ -472,32 +472,32 @@ connect:
 #endif
 
 		bind_to_interface(c->socket);
-	}
 
-	int b = -1;
+		int b = -1;
 
-	for(int i = 0; i < listen_sockets; i++) {
-		if(listen_socket[i].sa.sa.sa_family == c->address.sa.sa_family) {
-			if(b == -1) {
-				b = i;
-			} else  {
-				b = -1;
-				break;
+		for(int i = 0; i < listen_sockets; i++) {
+			if(listen_socket[i].sa.sa.sa_family == c->address.sa.sa_family) {
+				if(b == -1) {
+					b = i;
+				} else  {
+					b = -1;
+					break;
+				}
 			}
 		}
-	}
 
-	if(b != -1) {
-		sockaddr_t sa = listen_socket[b].sa;
-		if(sa.sa.sa_family == AF_INET)
-			sa.in.sin_port = 0;
-		else if(sa.sa.sa_family == AF_INET6)
-			sa.in6.sin6_port = 0;
+		if(b != -1) {
+			sockaddr_t sa = listen_socket[b].sa;
+			if(sa.sa.sa_family == AF_INET)
+				sa.in.sin_port = 0;
+			else if(sa.sa.sa_family == AF_INET6)
+				sa.in6.sin6_port = 0;
 
-		if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
-			char *addrstr = sockaddr2hostname(&sa);
-			logger(LOG_ERR, "Can't bind to %s/tcp: %s", addrstr, sockstrerror(sockerrno));
-			free(addrstr);
+			if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
+				char *addrstr = sockaddr2hostname(&sa);
+				logger(LOG_ERR, "Can't bind to %s/tcp: %s", addrstr, sockstrerror(sockerrno));
+				free(addrstr);
+			}
 		}
 	}
 
