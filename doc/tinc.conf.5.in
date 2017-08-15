@@ -369,6 +369,8 @@ and they only ConnectTo a third node outside the NAT,
 which normally would prevent the peers from learning each other's LAN address.
 .Pp
 Currently, local discovery is implemented by sending some packets to the local address of the node during UDP discovery. This will not work with old nodes that don't transmit their local address.
+.It Va LogLevel Li = level Pq 0
+This option controls the verbosity of the logging. The higher the debug level, the more messages it will log.
 .It Va MACExpire Li = Ar seconds Pq 600
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when

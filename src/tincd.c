@@ -400,6 +400,9 @@ int main(int argc, char **argv) {
 	if(!read_server_config())
 		return 1;
 
+	if(!debug_level)
+		get_config_int(lookup_config(config_tree, "LogLevel"), &debug_level);
+
 #ifdef HAVE_LZO
 	if(lzo_init() != LZO_E_OK) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing LZO compressor!");

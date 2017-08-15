@@ -1494,6 +1494,7 @@ const var_t variables[] = {
 	{"KeyExpire", VAR_SERVER},
 	{"ListenAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"LocalDiscovery", VAR_SERVER},
+	{"LogLevel", VAR_SERVER},
 	{"MACExpire", VAR_SERVER},
 	{"MaxConnectionBurst", VAR_SERVER},
 	{"MaxOutputBufferSize", VAR_SERVER},
