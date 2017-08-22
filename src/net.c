@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "utils.h"
+#include "autoconnect.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -34,6 +34,7 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "subnet.h"
+#include "utils.h"
 #include "xalloc.h"
 
 int contradicting_add_edge = 0;
@@ -245,105 +246,9 @@ static void periodic_handler(void *data) {
 
 	/* If AutoConnect is set, check if we need to make or break connections. */
 
-	if(autoconnect && node_tree->count > 1) {
-		/* Count number of active connections */
-		int nc = 0;
-		for list_each(connection_t, c, connection_list) {
-			if(c->edge)
-				nc++;
-		}
+	if(autoconnect && node_tree->count > 1)
+		do_autoconnect();
 
-		if(nc < 3) {
-			/* Not enough active connections, try to add one.
-			   Choose a random node, if we don't have a connection to it,
-			   and we are not already trying to make one, create an
-			   outgoing connection to this node.
-			*/
-			int count = 0;
-			for splay_each(node_t, n, node_tree) {
-				if(n == myself || n->connection || !(n->status.has_address || n->status.reachable))
-					continue;
-				count++;
-			}
-
-			if(!count)
-				goto end;
-
-			int r = rand() % count;
-
-			for splay_each(node_t, n, node_tree) {
-				if(n == myself || n->connection || !(n->status.has_address || n->status.reachable))
-					continue;
-
-				if(r--)
-					continue;
-
-				bool found = false;
-
-				for list_each(outgoing_t, outgoing, outgoing_list) {
-					if(!strcmp(outgoing->name, n->name)) {
-						found = true;
-						break;
-					}
-				}
-
-				if(!found) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
-					outgoing_t *outgoing = xzalloc(sizeof *outgoing);
-					outgoing->name = xstrdup(n->name);
-					list_insert_tail(outgoing_list, outgoing);
-					setup_outgoing_connection(outgoing);
-				}
-
-				break;
-			}
-		} else if(nc > 3) {
-			/* Too many active connections, try to remove one.
-			   Choose a random outgoing connection to a node
-			   that has at least one other connection.
-			*/
-			int r = rand() % nc;
-			int i = 0;
-
-			for list_each(connection_t, c, connection_list) {
-				if(!c->edge)
-					continue;
-
-				if(i++ != r)
-					continue;
-
-				if(!c->outgoing || !c->node || c->node->edge_tree->count < 2)
-					break;
-
-				logger(DEBUG_CONNECTIONS, LOG_INFO, "Autodisconnecting from %s", c->name);
-				list_delete(outgoing_list, c->outgoing);
-				c->outgoing = NULL;
-				terminate_connection(c, c->edge);
-				break;
-			}
-		}
-
-		if(nc >= 3) {
-			/* If we have enough active connections,
-			   remove any pending outgoing connections.
-			*/
-			for list_each(outgoing_t, o, outgoing_list) {
-				bool found = false;
-				for list_each(connection_t, c, connection_list) {
-					if(c->outgoing == o) {
-						found = true;
-						break;
-					}
-				}
-				if(!found) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "Cancelled outgoing connection to %s", o->name);
-					list_delete_node(outgoing_list, node);
-				}
-			}
-		}
-	}
-
-end:
 	timeout_set(data, &(struct timeval){5, rand() % 100000});
 }
 
