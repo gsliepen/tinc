@@ -122,7 +122,7 @@ ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) {
 
 ecdsa_t *ecdsa_read_pem_private_key(FILE *fp) {
 	ecdsa_t *ecdsa = xmalloc(sizeof *ecdsa);
-	if(read_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof *ecdsa))
+	if(read_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof ecdsa->private))
 		return ecdsa;
 	free(ecdsa);
 	return 0;
