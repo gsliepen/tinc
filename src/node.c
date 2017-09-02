@@ -186,9 +186,9 @@ bool dump_nodes(connection_t *c) {
 	for splay_each(node_t, n, node_tree) {
 		char id[2 * sizeof n->id + 1];
 		for (size_t c = 0; c < sizeof n->id; ++c)
-			snprintf(id + 2 * c, 3, "%02hhx", n->id.x[c]);
+			snprintf(id + 2 * c, 3, "%02x", n->id.x[c]);
 		id[sizeof id - 1] = 0;
-		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
+		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %d %d %d %ld", CONTROL, REQ_DUMP_NODES,
 			   n->name, id, n->hostname ?: "unknown port unknown",
 #ifdef DISABLE_LEGACY
 			   0, 0, 0,

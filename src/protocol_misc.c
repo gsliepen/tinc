@@ -135,7 +135,7 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
 		return true;
 
-	if(!send_request(c, "%d %hd", PACKET, packet->len))
+	if(!send_request(c, "%d %d", PACKET, packet->len))
 		return false;
 
 	return send_meta(c, (char *)DATA(packet), packet->len);

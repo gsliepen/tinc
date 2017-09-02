@@ -1174,7 +1174,7 @@ static int cmd_dump(int argc, char *argv[]) {
 				} else {
 					if(only_reachable && !status.reachable)
 						continue;
-					printf("%s id %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)\n",
+					printf("%s id %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n",
 							node, id, host, port, cipher, digest, maclength, compression, options, status_int, nexthop, via, distance, pmtu, minmtu, maxmtu);
 				}
 			} break;

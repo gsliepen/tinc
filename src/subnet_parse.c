@@ -372,7 +372,7 @@ bool net2str(char *netstr, int len, const subnet_t *subnet) {
 					result = snprintf(netstr, len, *format, ":::");
 					i += max_zero_length;
 				} else {
-					result = snprintf(netstr, len, "%hx:", ntohs(subnet->net.ipv6.address.x[i]));
+					result = snprintf(netstr, len, "%x:", ntohs(subnet->net.ipv6.address.x[i]));
 					i++;
 				}
 				netstr += result;
