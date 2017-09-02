@@ -1,7 +1,12 @@
-Version 1.0.32               not released yet
+Version 1.0.32               September 2 2017
 
  * Fix segmentation fault when using Cipher = none.
  * Fix Proxy = exec.
+ * Support PriorityInheritance for IPv6 packets.
+ * Fixes for Solaris tun/tap support.
+ * Bind outgoing TCP sockets when ListenAddress is used.
+
+Thanks to Vittorio Gambaletta for his contribution to this version of tinc.
 
 Version 1.0.31               January 15 2017
 

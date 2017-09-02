@@ -1,8 +1,8 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
-		  2015      Vittorio Gambaletta
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+		  2015-2016 Vittorio Gambaletta
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
