@@ -44,6 +44,7 @@ static bool readonly;
 static bool writeonly;
 static int in = 0;
 static int out = 1;
+static int addressfamily = AF_UNSPEC;
 
 static bool send_data(void *handle, uint8_t type, const void *data, size_t len) {
 	char hex[len * 2 + 1];
@@ -93,6 +94,8 @@ static void usage() {
 			"  -R, --replay-window N   Set replay window to N bytes.\n"
 			"  -s, --special           Enable special handling of lines starting with #, ^ and $.\n"
 			"  -v, --verbose           Display debug messages.\n"
+			"  -4                      Use IPv4.\n"
+			"  -6                      Use IPv6.\n"
 			"\n");
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
 }
@@ -110,7 +113,7 @@ int main(int argc, char *argv[]) {
 	ecdsa_t *mykey = NULL, *hiskey = NULL;
 	bool quit = false;
 
-	while((r = getopt_long(argc, argv, "dqrstwL:W:v", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "dqrstwL:W:v46", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -160,6 +163,14 @@ int main(int argc, char *argv[]) {
 			case '?': /* wrong options */
 				usage();
 				return 1;
+
+			case '4': /* IPv4 */
+				addressfamily = AF_INET;
+				break;
+
+			case '6': /* IPv6 */
+				addressfamily = AF_INET6;
+				break;
 
 			case 1: /* help */
 				usage();
@@ -212,7 +223,7 @@ int main(int argc, char *argv[]) {
 	struct addrinfo *ai, hint;
 	memset(&hint, 0, sizeof hint);
 
-	hint.ai_family = AF_UNSPEC;
+	hint.ai_family = addressfamily;
 	hint.ai_socktype = datagram ? SOCK_DGRAM : SOCK_STREAM;
 	hint.ai_protocol = datagram ? IPPROTO_UDP : IPPROTO_TCP;
 	hint.ai_flags = initiator ? 0 : AI_PASSIVE;
