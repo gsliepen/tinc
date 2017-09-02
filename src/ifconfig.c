@@ -1,6 +1,6 @@
 /*
     ifconfig.c -- Generate platform specific interface configuration commands
-    Copyright (C) 2016 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2016-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

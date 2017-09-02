@@ -1,4 +1,27 @@
-# Version 1.1pre13             May 1 2016
+# Version 1.1pre15             September 2 2017
+
+* Detect when the machine is resuming from suspension or hibernation.
+* When an old PID file is found, check whether the old daemon is still alive.
+* Remember scope_id for IPv6 addresses when sending UDP packets to link-local
+  addresses.
+* Ensure compatibility with OpenSSL 1.1.
+* Only log about dropped packets with debug level 5.
+* Warn when trying to generate RSA keys less than 2048 bits.
+* Use AES256 and SHA256 as the default encryption and digest algorithms.
+* Add DeviceType = fd to support tinc on Android without requiring root.
+* Support PriorityInheritance for IPv6 packets.
+* Fixes for Solaris tun/tap support.
+* Add a configurable expiration time for invitations.
+* Store invitation data after a succesful join.
+* Exit gracefully when the tun/tap device is in a bad state.
+* Add the LogLevel option.
+* AutoConnect now actively tries to heal split networks.
+
+Thanks to Etienne Dechamps, Rafał Leśniak, Sean McVeigh, Vittorio Gambaletta,
+Dennis Lan, Pacien Tran-Girard, Roman Savelyev, lemoer and volth for their
+contributions to this version of tinc.
+
+# Version 1.1pre14             May 1 2016
 
 * Add tinc.service back.
 
