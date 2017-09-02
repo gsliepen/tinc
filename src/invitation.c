@@ -611,6 +611,8 @@ make_names:
 	FILE *finv = fopen(filename, "w");
 	if(!finv || fwrite(data, datalen, 1, finv) != 1) {
 		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
+		fclose(fh);
+		fclose(f);
 		fclose(finv);
 		return false;
 	}
