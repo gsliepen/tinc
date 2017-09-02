@@ -228,7 +228,7 @@ static bool read_packet(vpn_packet_t *packet) {
 				return false;
 			}
 
-			if(connect(write_fd, &request.sock, sizeof request.sock) < 0) {
+			if(connect(write_fd, (struct sockkadr *)&request.sock, sizeof request.sock) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
 				event_exit();
 				return false;
