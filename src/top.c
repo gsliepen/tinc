@@ -166,33 +166,40 @@ static int sortfunc(const void *a, const void *b) {
 				result = -cmpu64(na->in_packets, nb->in_packets);
 			else
 				result = -cmpfloat(na->in_packets_rate, nb->in_packets_rate);
+			break;
 		case 2:
 			if(cumulative)
 				result = -cmpu64(na->in_bytes, nb->in_bytes);
 			else
 				result = -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate);
+			break;
 		case 3:
 			if(cumulative)
 				result = -cmpu64(na->out_packets, nb->out_packets);
 			else
 				result = -cmpfloat(na->out_packets_rate, nb->out_packets_rate);
+			break;
 		case 4:
 			if(cumulative)
 				result = -cmpu64(na->out_bytes, nb->out_bytes);
 			else
 				result = -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate);
+			break;
 		case 5:
 			if(cumulative)
 				result = -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets);
 			else
 				result = -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate);
+			break;
 		case 6:
 			if(cumulative)
 				result = -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes);
 			else
 				result = -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate);
+			break;
 		default:
 			result = strcmp(na->name, nb->name);
+			break;
 	}
 
 	if(result)
