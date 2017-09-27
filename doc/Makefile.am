@@ -16,11 +16,11 @@ transform = s/ginstall/install/; @program_transform_name@
 # For additional rules usually of interest only to the maintainer,
 # see GNUmakefile and Makefile.maint.
 
-sample-config.tar.gz: sample-config
-	$(AM_V_GEN)GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz --exclude .svn sample-config
+sample-config.tar.gz: $(srcdir)/sample-config
+	$(AM_V_GEN)GZIP=$(GZIP_ENV) $(AMTAR) chozf $@ --exclude .svn $<
 
 texi2html: tinc.texi
-	$(AM_V_GEN)texi2html -split=chapter tinc.texi
+	$(AM_V_GEN)texi2html -split=chapter $<
 
 tincd.8.html: tincd.8
 	$(AM_V_GEN)w3mman2html $< > $@
@@ -34,13 +34,13 @@ substitute = sed \
 	-e s,'@sysconfdir\@',"$(sysconfdir)",g \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
-tincd.8: tincd.8.in
-	$(AM_V_GEN)$(substitute) tincd.8.in > tincd.8
+tincd.8: $(srcdir)/tincd.8.in
+	$(AM_V_GEN)$(substitute) $< > $@
 
-tinc.conf.5: tinc.conf.5.in
-	$(AM_V_GEN)$(substitute) tinc.conf.5.in > tinc.conf.5
+tinc.conf.5: $(srcdir)/tinc.conf.5.in
+	$(AM_V_GEN)$(substitute) $< > $@
 
-tincinclude.texi: tincinclude.texi.in
-	$(AM_V_GEN)$(substitute) tincinclude.texi.in > tincinclude.texi
-	
+tincinclude.texi: $(srcdir)/tincinclude.texi.in
+	$(AM_V_GEN)$(substitute) $< > $@
+
 tinc.texi: tincinclude.texi

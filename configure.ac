@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)
 AC_INIT([tinc], [1.0.32])
 AC_CONFIG_SRCDIR([src/tincd.c])
-AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
+AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall info-in-builddir])
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
@@ -179,6 +179,8 @@ dnl Checks for libraries.
 dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -I${srcdir}"
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h arpa/nameser.h dirent.h getopt.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_utun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
@@ -226,6 +228,8 @@ AC_CHECK_FUNC(gethostbyname, [], [
 AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
   [], [], [#include "src/have.h"]
 )
+
+CPPFLAGS="$save_CPPFLAGS"
 
 AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [
   #include <netinet/in.h>
