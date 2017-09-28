@@ -168,7 +168,7 @@ static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "+c:n:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "+bc:n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
