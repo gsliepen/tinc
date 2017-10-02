@@ -70,8 +70,10 @@ static bool setup_device(void) {
 	}
 
 	ai = str2addrinfo(host, port, SOCK_DGRAM);
-	if(!ai)
+	if(!ai) {
+		free(host);
 		return false;
+	}
 
 	device_fd = socket(ai->ai_family, SOCK_DGRAM, IPPROTO_UDP);
 	if(device_fd < 0) {
