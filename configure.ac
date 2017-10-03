@@ -5,6 +5,7 @@ AC_INIT([tinc], [1.0.32])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall info-in-builddir])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
 
@@ -252,6 +253,6 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile distro/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile distro/Makefile])
 
 AC_OUTPUT
