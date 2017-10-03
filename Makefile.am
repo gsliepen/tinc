@@ -33,3 +33,6 @@ release:
 	echo "Please edit the NEWS file now..."
 	/usr/bin/editor $(srcdir)/NEWS
 	$(MAKE) dist
+
+astyle:
+	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch] test/*.[ch]
