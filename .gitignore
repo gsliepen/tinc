@@ -1,4 +1,6 @@
-.*.swp
+.*
+!.gitignore
+!.astylerc
 Makefile
 Makefile.in
 *.o
@@ -13,7 +15,6 @@ Makefile.in
 /install-sh
 /missing
 INSTALL
-.deps
 stamp-h1
 /src/device.c
 *.tar.gz*
@@ -27,4 +28,3 @@ stamp-h1
 /doc/*.t2p
 /ChangeLog
 core*
-.dirstamp

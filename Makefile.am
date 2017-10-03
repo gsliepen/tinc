@@ -10,3 +10,6 @@ EXTRA_DIST = COPYING.README README.android
 
 ChangeLog:
 	git log > ChangeLog
+
+astyle:
+	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]
