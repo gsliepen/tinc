@@ -390,7 +390,7 @@ static bool keygen(int bits) {
 	BIGNUM *e = NULL;
 	RSA *rsa_key;
 	FILE *f;
-	char *pubname, *privname;
+	char filename[PATH_MAX];
 	BN_GENCB *cb;
 	int result;
 
@@ -417,9 +417,8 @@ static bool keygen(int bits) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&privname, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(privname, "private RSA key");
-	free(privname);
+	snprintf(filename, sizeof filename, "%s/rsa_key.priv", confbase);
+	f = ask_and_open(filename, "private RSA key");
 
 	if(!f)
 		return false;
@@ -436,14 +435,13 @@ static bool keygen(int bits) {
 	char *name = get_name();
 
 	if(name) {
-		xasprintf(&pubname, "%s/hosts/%s", confbase, name);
+		snprintf(filename, sizeof filename, "%s/hosts/%s", confbase, name);
 		free(name);
 	} else {
-		xasprintf(&pubname, "%s/rsa_key.pub", confbase);
+		snprintf(filename, sizeof filename, "%s/rsa_key.pub", confbase);
 	}
 
-	f = ask_and_open(pubname, "public RSA key");
-	free(pubname);
+	f = ask_and_open(filename, "public RSA key");
 
 	if(!f)
 		return false;

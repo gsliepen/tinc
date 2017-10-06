@@ -487,6 +487,7 @@ FILE *ask_and_open(const char *filename, const char *what) {
 	FILE *r;
 	char *directory;
 	char line[PATH_MAX];
+	char abspath[PATH_MAX];
 	const char *fn;
 
 	/* Check stdin and stdout */
@@ -520,12 +521,10 @@ FILE *ask_and_open(const char *filename, const char *what) {
 	if(fn[0] != '/') {
 #endif
 		/* The directory is a relative path or a filename. */
-		char *p;
-
 		directory = get_current_dir_name();
-		xasprintf(&p, "%s/%s", directory, fn);
+		snprintf(abspath, sizeof abspath, "%s/%s", directory, fn);
 		free(directory);
-		fn = p;
+		fn = abspath;
 	}
 
 	umask(0077);				/* Disallow everything for group and other */
