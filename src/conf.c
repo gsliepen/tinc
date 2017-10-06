@@ -339,49 +339,50 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 }
 
 void read_config_options(avl_tree_t *config_tree, const char *prefix) {
-	list_node_t *node, *next;
 	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
-	for(node = cmdline_conf->tail; node; node = next) {
-		config_t *orig_cfg, *cfg = (config_t *)node->data;
-		next = node->prev;
+	for(const list_node_t *node = cmdline_conf->tail; node; node = node->prev) {
+		const config_t *cfg = node->data;
 
 		if(!prefix) {
 			if(strchr(cfg->variable, '.'))
 				continue;
-			node->data = NULL;
-			list_unlink_node(cmdline_conf, node);
 		} else {
 			if(strncmp(prefix, cfg->variable, prefix_len) ||
 			   cfg->variable[prefix_len] != '.')
 				continue;
-			/* Because host configuration is parsed again when
-			   reconnecting, nodes must not be freed when a prefix
-			   is given. */
-			orig_cfg = cfg;
-			cfg = new_config();
-			cfg->variable = xstrdup(orig_cfg->variable + prefix_len + 1);
-			cfg->value = xstrdup(orig_cfg->value);
-			cfg->file = NULL;
-			cfg->line = orig_cfg->line;
 		}
-		config_add(config_tree, cfg);
+
+		config_t *new = new_config();
+
+		if(prefix) {
+			new->variable = xstrdup(cfg->variable + prefix_len + 1);
+		} else {
+			new->variable = xstrdup(cfg->variable);
+		}
+
+		new->value = xstrdup(cfg->value);
+		new->file = NULL;
+		new->line = cfg->line;
+
+		config_add(config_tree, new);
 	}
 }
 
 bool read_server_config(void) {
-	char *fname;
+	char fname[PATH_MAX];
 	bool x;
 
 	read_config_options(config_tree, NULL);
 
-	xasprintf(&fname, "%s/tinc.conf", confbase);
+	snprintf(fname, sizeof fname, "%s/tinc.conf", confbase);
+	errno = 0;
 	x = read_config_file(config_tree, fname);
 
 	// We will try to read the conf files in the "conf.d" dir
 	if (x) {
-		char * dname;
-		xasprintf(&dname, "%s/conf.d", confbase);
+		char dname[PATH_MAX];
+		snprintf(dname, sizeof dname, "%s/conf.d", confbase);
 		DIR *dir = opendir (dname);
 		// If we can find this dir
 		if (dir) { 
@@ -391,34 +392,29 @@ bool read_server_config(void) {
 				size_t l = strlen(ep->d_name);
 				// And we try to read the ones that end with ".conf"
 				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					free(fname);
-					xasprintf(&fname, "%s/%s", dname, ep->d_name);
+					snprintf(fname, sizeof fname, "%s/%s", dname, ep->d_name);
 					x = read_config_file(config_tree, fname);
 				}
 			}
 			closedir (dir);
 		}
-		free(dname);
 	}
 
-	if(!x) {				/* System error: complain */
+	if(!x && errno) {
 		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
-
-	free(fname);
 
 	return x;
 }
 
 bool read_connection_config(connection_t *c) {
-	char *fname;
+	char fname[PATH_MAX];
 	bool x;
 
 	read_config_options(c->config_tree, c->name);
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	snprintf(fname, sizeof fname, "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);
-	free(fname);
 
 	return x;
 }
