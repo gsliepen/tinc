@@ -413,6 +413,7 @@ static bool keygen(int bits) {
 
 	if(!result) {
 		fprintf(stderr, "Error during key generation!\n");
+		RSA_free(rsa_key);
 		return false;
 	} else
 		fprintf(stderr, "Done.\n");
@@ -420,8 +421,10 @@ static bool keygen(int bits) {
 	snprintf(filename, sizeof filename, "%s/rsa_key.priv", confbase);
 	f = ask_and_open(filename, "private RSA key");
 
-	if(!f)
+	if(!f) {
+		RSA_free(rsa_key);
 		return false;
+	}
 
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
@@ -443,12 +446,16 @@ static bool keygen(int bits) {
 
 	f = ask_and_open(filename, "public RSA key");
 
-	if(!f)
+	if(!f) {
+		RSA_free(rsa_key);
 		return false;
+	}
 
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
+
+	RSA_free(rsa_key);
 
 	return true;
 }
@@ -737,7 +744,7 @@ end:
 	ERR_free_strings();
 
 	exit_configuration(&config_tree);
-	list_free(cmdline_conf);
+	list_delete_list(cmdline_conf);
 	free_names();
 
 	return status;
