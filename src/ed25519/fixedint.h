@@ -1,11 +1,11 @@
+#ifndef TINC_FIXEDINT_H
+#define TINC_FIXEDINT_H
+
 /*
     Portable header to provide the 32 and 64 bits type.
 
     Not a compatible replacement for <stdint.h>, do not blindly use it as such.
 */
-
-#ifndef __TINC_FIXEDINT_H__
-#define __TINC_FIXEDINT_H__
 
 #if ((defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L) || (defined(__WATCOMC__) && (defined(_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (defined(_STDINT_H) || defined(_STDINT_H_) || defined(__UINT_FAST64_TYPE__)) )) && !defined(FIXEDINT_H_INCLUDED)
     #include <stdint.h>

@@ -1,3 +1,6 @@
+#ifndef TINC_NODE_H
+#define TINC_NODE_H
+
 /*
     node.h -- header for node.c
     Copyright (C) 2001-2013 Guus Sliepen <guus@tinc-vpn.org>,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_NODE_H__
-#define __TINC_NODE_H__
 
 #include "splay_tree.h"
 #include "cipher.h"
@@ -128,4 +128,4 @@ extern bool dump_nodes(struct connection_t *);
 extern bool dump_traffic(struct connection_t *);
 extern void update_node_udp(node_t *, const sockaddr_t *);
 
-#endif /* __TINC_NODE_H__ */
+#endif

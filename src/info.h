@@ -1,3 +1,6 @@
+#ifndef TINC_INFO_H
+#define TINC_INFO_H
+
 /*
     info.h -- header for info.c.
     Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
@@ -17,11 +20,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_INFO_H__
-#define __TINC_INFO_H__
-
 extern int info(int fd, const char *item);
 extern char *strip_weight(char *);
 
 #endif
-

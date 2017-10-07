@@ -1,5 +1,5 @@
-#ifndef __TINC_BUFFER_H__
-#define __TINC_BUFFER_H__
+#ifndef TINC_BUFFER_H
+#define TINC_BUFFER_H
 
 typedef struct buffer_t {
 	char *data;

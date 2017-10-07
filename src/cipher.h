@@ -1,3 +1,6 @@
+#ifndef TINC_CIPHER_H
+#define TINC_CIPHER_H
+
 /*
     cipher.h -- header file cipher.c
     Copyright (C) 2007-2016 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_CIPHER_H__
-#define __TINC_CIPHER_H__
 
 #define CIPHER_MAX_BLOCK_SIZE 32
 #define CIPHER_MAX_IV_SIZE 16

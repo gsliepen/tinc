@@ -1,3 +1,6 @@
+#ifndef TINC_SPTPS_H
+#define TINC_SPTPS_H
+
 /*
     sptps.h -- Simple Peer-to-Peer Security
     Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __SPTPS_H__
-#define __SPTPS_H__
 
 #include "system.h"
 

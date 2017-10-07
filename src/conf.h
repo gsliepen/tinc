@@ -1,3 +1,6 @@
+#ifndef TINC_CONF_H
+#define TINC_CONF_H
+
 /*
     conf.h -- header for conf.c
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_CONF_H__
-#define __TINC_CONF_H__
 
 #include "list.h"
 #include "splay_tree.h"
@@ -61,4 +61,4 @@ extern bool read_server_config(void);
 extern bool read_host_config(splay_tree_t *, const char *);
 extern bool append_config_file(const char *, const char *, const char *);
 
-#endif /* __TINC_CONF_H__ */
+#endif

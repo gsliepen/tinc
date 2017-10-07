@@ -1,3 +1,6 @@
+#ifndef TINC_ECDSA_H
+#define TINC_ECDSA_H
+
 /*
     ecdsa.h -- ECDSA key handling
     Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
@@ -17,10 +20,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_ECDSA_H__
-#define __TINC_ECDSA_H__
-
-#ifndef __TINC_ECDSA_INTERNAL__
+#ifndef TINC_ECDSA_INTERNAL
 typedef struct ecdsa ecdsa_t;
 #endif
 

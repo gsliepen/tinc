@@ -1,3 +1,6 @@
+#ifndef TINC_CONTROL_H
+#define TINC_CONTROL_H
+
 /*
     control.h -- header for control.c.
     Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_CONTROL_H__
-#define __TINC_CONTROL_H__
 
 extern bool init_control();
 extern void exit_control();

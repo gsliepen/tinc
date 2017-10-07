@@ -1,3 +1,6 @@
+#ifndef TINC_IPV4_H
+#define TINC_IPV4_H
+
 /*
     ipv4.h -- missing IPv4 related definitions
     Copyright (C) 2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_IPV4_H__
-#define __TINC_IPV4_H__
 
 #ifndef AF_INET
 #define AF_INET 2
@@ -146,4 +146,4 @@ struct icmp {
 } __attribute__ ((__gcc_struct__, __packed__));
 #endif
 
-#endif /* __TINC_IPV4_H__ */
+#endif

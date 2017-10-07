@@ -1,3 +1,6 @@
+#ifndef TINC_VERSION_H
+#define TINC_VERSION_H
+
 /*
     version.h -- header for version.c
     Copyright (C) 2014      Etienne Dechamps <etienne@edechamps.fr>
@@ -17,11 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_VERSION_H__
-#define __TINC_VERSION_H__
-
 extern const char* const BUILD_DATE;
 extern const char* const BUILD_TIME;
 extern const char* const BUILD_VERSION;
 
-#endif /* __TINC_VERSION_H__ */
+#endif

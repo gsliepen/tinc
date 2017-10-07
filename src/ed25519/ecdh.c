@@ -21,7 +21,7 @@
 
 #include "ed25519.h"
 
-#define __TINC_ECDH_INTERNAL__
+#define TINC_ECDH_INTERNAL
 typedef struct ecdh_t {
 	uint8_t private[64];
 } ecdh_t;

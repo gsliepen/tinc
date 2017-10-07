@@ -1,3 +1,6 @@
+#ifndef TINC_ECDSAGEN_H
+#define TINC_ECDSAGEN_H
+
 /*
     ecdsagen.h -- ECDSA key generation and export
     Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_ECDSAGEN_H__
-#define __TINC_ECDSAGEN_H__
 
 #include "ecdsa.h"
 

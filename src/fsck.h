@@ -1,3 +1,6 @@
+#ifndef TINC_FSCK_H
+#define TINC_FSCK_H
+
 /*
     fsck.h -- header for fsck.c.
     Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
@@ -17,10 +20,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_FSCK_H__
-#define __TINC_FSCK_H__
-
 extern int fsck(const char *argv0);
 
 #endif
-

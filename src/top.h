@@ -1,3 +1,6 @@
+#ifndef TINC_TOP_H
+#define TINC_TOP_H
+
 /*
     top.h -- header for top.c.
     Copyright (C) 2011 Guus Sliepen <guus@tinc-vpn.org>
@@ -17,10 +20,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_TOP_H__
-#define __TINC_TOP_H__
-
 extern void top(int fd);
 
 #endif
-

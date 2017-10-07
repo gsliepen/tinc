@@ -1,3 +1,6 @@
+#ifndef TINC_SYSTEM_H
+#define TINC_SYSTEM_H
+
 /*
     system.h -- system headers
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_SYSTEM_H__
-#define __TINC_SYSTEM_H__
-
 #include "../config.h"
 
 #include "have.h"
@@ -33,4 +33,4 @@
 
 #include "dropin.h"
 
-#endif /* __TINC_SYSTEM_H__ */
+#endif

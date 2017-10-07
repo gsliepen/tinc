@@ -1,3 +1,6 @@
+#ifndef TINC_UPNP_H
+#define TINC_UPNP_H
+
 /*
     upnp.h -- UPnP-IGD client
     Copyright (C) 2015 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __UPNP_H__
-#define __UPNP_H__
 
 #include "system.h"
 

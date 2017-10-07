@@ -1,3 +1,6 @@
+#ifndef TINC_AUTOCONNECT_H
+#define TINC_AUTOCONNECT_H
+
 /*
     autoconnect.h -- header for autoconnect.c
     Copyright (C) 2017 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_AUTOCONNECT_H__
-#define __TINC_AUTOCONNECT_H__
 
 extern void do_autoconnect(void);
 

@@ -1,3 +1,6 @@
+#ifndef TINC_IFCONFIG_H
+#define TINC_IFCONFIG_H
+
 /*
     ifconfig.h -- header for ifconfig.c.
     Copyright (C) 2016 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_IFCONFIG_H__
-#define __TINC_IFCONFIG_H__
 
 extern void ifconfig_dhcp(FILE *out);
 extern void ifconfig_dhcp6(FILE *out);

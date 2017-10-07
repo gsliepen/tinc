@@ -1,3 +1,6 @@
+#ifndef TINC_SCRIPT_H
+#define TINC_SCRIPT_H
+
 /*
     script.h -- header file for script.c
     Copyright (C) 1999-2005 Ivo Timmermans,
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_SCRIPT_H__
-#define __TINC_SCRIPT_H__
-
 typedef struct environment {
 	int n;
 	int size;
@@ -35,4 +35,4 @@ extern void environment_exit(environment_t *env);
 
 extern bool execute_script(const char *name, environment_t *env);
 
-#endif /* __TINC_SCRIPT_H__ */
+#endif

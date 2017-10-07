@@ -1,3 +1,6 @@
+#ifndef TINC_RSA_H
+#define TINC_RSA_H
+
 /*
     rsa.h -- RSA key handling
     Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
@@ -17,10 +20,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_RSA_H__
-#define __TINC_RSA_H__
-
-#ifndef __TINC_RSA_INTERNAL__
+#ifndef TINC_RSA_INTERNAL
 typedef struct rsa rsa_t;
 #endif
 

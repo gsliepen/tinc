@@ -1,3 +1,6 @@
+#ifndef TINC_HAVE_H
+#define TINC_HAVE_H
+
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_HAVE_H__
-#define __TINC_HAVE_H__
 
 #ifdef HAVE_MINGW
 #define WINVER WindowsXP
@@ -213,4 +213,4 @@
 #define SLASH "/"
 #endif
 
-#endif /* __TINC_SYSTEM_H__ */
+#endif

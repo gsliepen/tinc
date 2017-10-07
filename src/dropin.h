@@ -1,3 +1,6 @@
+#ifndef TINC_DROPIN_H
+#define TINC_DROPIN_H
+
 /*
     dropin.h -- header file for dropin.c
     Copyright (C) 2000-2005 Ivo Timmermans,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __DROPIN_H__
-#define __DROPIN_H__
 
 #ifndef HAVE_DAEMON
 extern int daemon(int, int);
@@ -67,4 +67,4 @@ extern int nanosleep(const struct timespec *req, struct timespec *rem);
 #define EAI_SYSTEM 0
 #endif
 
-#endif /* __DROPIN_H__ */
+#endif

@@ -1,3 +1,6 @@
+#ifndef TINC_NETUTL_H
+#define TINC_NETUTL_H
+
 /*
     netutl.h -- header file for netutl.c
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_NETUTL_H__
-#define __TINC_NETUTL_H__
-
 #include "net.h"
 
 extern bool hostnames;
@@ -36,4 +36,4 @@ extern void sockaddrfree(sockaddr_t *);
 extern void sockaddrcpy(sockaddr_t *, const sockaddr_t *);
 extern void sockaddr_setport(sockaddr_t *, const char *);
 
-#endif /* __TINC_NETUTL_H__ */
+#endif

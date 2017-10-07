@@ -1,3 +1,6 @@
+#ifndef TINC_ECDH_H
+#define TINC_ECDH_H
+
 /*
     ecdh.h -- header file for ecdh.c
     Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
@@ -17,13 +20,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_ECDH_H__
-#define __TINC_ECDH_H__
-
 #define ECDH_SIZE 32
 #define ECDH_SHARED_SIZE 32
 
-#ifndef __TINC_ECDH_INTERNAL__
+#ifndef TINC_ECDH_INTERNAL
 typedef struct ecdh ecdh_t;
 #endif
 

@@ -1,3 +1,6 @@
+#ifndef TINC_SPLAY_TREE_H
+#define TINC_SPLAY_TREE_H
+
 /*
     splay_tree.h -- header file for splay_tree.c
     Copyright (C) 2004-2013 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,10 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-
-#ifndef __SPLAY_TREE_H__
-#define __SPLAY_TREE_H__
 
 typedef struct splay_node_t {
 

@@ -1,3 +1,6 @@
+#ifndef TINC_PROCESS_H
+#define TINC_PROCESS_H
+
 /*
     process.h -- header file for process.c
     Copyright (C) 1999-2005 Ivo Timmermans,
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_PROCESS_H__
-#define __TINC_PROCESS_H__
-
 extern bool do_detach;
 extern bool sigalrm;
 
@@ -33,4 +33,4 @@ extern io_t stop_io;
 extern bool init_service(void);
 #endif
 
-#endif /* __TINC_PROCESS_H__ */
+#endif

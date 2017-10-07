@@ -1,3 +1,6 @@
+#ifndef TINC_CONTROL_COMMON_H
+#define TINC_CONTROL_COMMON_H
+
 /*
     control_protocol.h -- control socket protocol.
     Copyright (C) 2007      Scott Lamb <slamb@slamb.org>
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_CONTROL_PROTOCOL_H__
-#define __TINC_CONTROL_PROTOCOL_H__
 
 #include "protocol.h"
 

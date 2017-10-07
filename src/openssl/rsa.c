@@ -22,7 +22,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
-#define __TINC_RSA_INTERNAL__
+#define TINC_RSA_INTERNAL
 typedef RSA rsa_t;
 
 #include "../logger.h"

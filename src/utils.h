@@ -1,3 +1,6 @@
+#ifndef TINC_UTILS_H
+#define TINC_UTILS_H
+
 /*
     utils.h -- header file for utils.c
     Copyright (C) 1999-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_UTILS_H__
-#define __TINC_UTILS_H__
 
 extern int hex2bin(const char *src, void *dst, int length);
 extern int bin2hex(const void *src, char *dst, int length);
@@ -54,4 +54,4 @@ extern bool check_id(const char *);
 extern bool check_netname(const char *, bool strict);
 char *replace_name(const char *name);
 
-#endif /* __TINC_UTILS_H__ */
+#endif

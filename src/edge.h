@@ -1,3 +1,6 @@
+#ifndef TINC_EDGE_H
+#define TINC_EDGE_H
+
 /*
     edge.h -- header for edge.c
     Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_EDGE_H__
-#define __TINC_EDGE_H__
 
 #include "splay_tree.h"
 #include "connection.h"
@@ -52,4 +52,4 @@ extern void edge_del(edge_t *);
 extern edge_t *lookup_edge(struct node_t *, struct node_t *);
 extern bool dump_edges(struct connection_t *);
 
-#endif /* __TINC_EDGE_H__ */
+#endif

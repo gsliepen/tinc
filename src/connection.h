@@ -1,3 +1,6 @@
+#ifndef TINC_CONNECTION_H
+#define TINC_CONNECTION_H
+
 /*
     connection.h -- header for connection.c
     Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_CONNECTION_H__
-#define __TINC_CONNECTION_H__
 
 #include "buffer.h"
 #include "cipher.h"
@@ -118,4 +118,4 @@ extern void connection_add(connection_t *);
 extern void connection_del(connection_t *);
 extern bool dump_connections(struct connection_t *);
 
-#endif /* __TINC_CONNECTION_H__ */
+#endif

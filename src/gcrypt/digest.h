@@ -1,3 +1,6 @@
+#ifndef TINC_GCRYPT_DIGEST_H
+#define TINC_GCRYPT_DIGEST_H
+
 /*
     digest.h -- header file digest.c
     Copyright (C) 2007-2009 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_DIGEST_H__
-#define __TINC_DIGEST_H__
 
 #include <gcrypt.h>
 

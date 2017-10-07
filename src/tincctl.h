@@ -1,3 +1,6 @@
+#ifndef TINC_TINCCTL_H
+#define TINC_TINCCTL_H
+
 /*
     tincctl.h -- header for tincctl.c.
     Copyright (C) 2011-2016 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_TINCCTL_H__
-#define __TINC_TINCCTL_H__
 
 extern bool tty;
 extern bool force;
@@ -53,4 +53,3 @@ extern FILE *fopenmask(const char *filename, const char *mode, mode_t perms);
 extern ecdsa_t *get_pubkey(FILE *f);
 
 #endif
-

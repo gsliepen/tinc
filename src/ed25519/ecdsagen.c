@@ -21,7 +21,7 @@
 
 #include "ed25519.h"
 
-#define __TINC_ECDSA_INTERNAL__
+#define TINC_ECDSA_INTERNAL
 typedef struct {
 	uint8_t private[64];
 	uint8_t public[32];
