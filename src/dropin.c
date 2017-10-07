@@ -50,8 +50,9 @@ int daemon(int nochdir, int noclose) {
 	}
 
 	/* If we are the parent, terminate */
-	if(pid)
+	if(pid) {
 		exit(0);
+	}
 
 	/* Detach by becoming the new process group leader */
 	if(setsid() < 0) {
@@ -108,8 +109,9 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 	status = vsnprintf(*buf, len, fmt, aq);
 	va_end(aq);
 
-	if(status >= 0)
+	if(status >= 0) {
 		*buf = xrealloc(*buf, status + 1);
+	}
 
 	if(status > len - 1) {
 		len = status + 1;

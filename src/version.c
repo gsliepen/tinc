@@ -1,5 +1,5 @@
 /*
-    version.c -- version information 
+    version.c -- version information
     Copyright (C) 2014      Etienne Dechamps <etienne@edechamps.fr>
 
     This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,10 @@
 #include "../config.h"
 
 /* This file is always rebuilt (even if there are no changes) so that the following is updated */
-const char* const BUILD_DATE = __DATE__;
-const char* const BUILD_TIME = __TIME__;
+const char *const BUILD_DATE = __DATE__;
+const char *const BUILD_TIME = __TIME__;
 #ifdef GIT_DESCRIPTION
-const char* const BUILD_VERSION = GIT_DESCRIPTION;
+const char *const BUILD_VERSION = GIT_DESCRIPTION;
 #else
-const char* const BUILD_VERSION = VERSION;
+const char *const BUILD_VERSION = VERSION;
 #endif

@@ -41,10 +41,10 @@ static char *device_info;
 enum request_type { REQ_NEW_CONTROL };
 
 static struct request {
-  uint32_t magic;
-  uint32_t version;
-  enum request_type type;
-  struct sockaddr_un sock;
+	uint32_t magic;
+	uint32_t version;
+	enum request_type type;
+	struct sockaddr_un sock;
 } request;
 
 static struct sockaddr_un data_sun;
@@ -59,8 +59,9 @@ static bool setup_device(void) {
 	} name;
 	struct timeval tv;
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
 		xasprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
+	}
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
@@ -117,7 +118,7 @@ static bool setup_device(void) {
 
 	if((listen_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device_info,
-			   strerror(errno));
+		       strerror(errno));
 		return false;
 	}
 
@@ -134,6 +135,7 @@ static bool setup_device(void) {
 
 	listen_sun.sun_family = AF_UNIX;
 	strncpy(listen_sun.sun_path, device, sizeof(listen_sun.sun_path));
+
 	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof(listen_sun)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
 		return false;
@@ -149,35 +151,44 @@ static bool setup_device(void) {
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
-	if(routing_mode == RMODE_ROUTER)
+	if(routing_mode == RMODE_ROUTER) {
 		overwrite_mac = true;
+	}
 
 	return true;
 }
 
 void close_device(void) {
 	if(listen_fd >= 0) {
-		close(listen_fd); listen_fd = -1;
+		close(listen_fd);
+		listen_fd = -1;
 	}
 
 	if(request_fd >= 0) {
-		close(request_fd); request_fd = -1;
+		close(request_fd);
+		request_fd = -1;
 	}
 
 	if(data_fd >= 0) {
-		close(data_fd); data_fd = -1;
+		close(data_fd);
+		data_fd = -1;
 	}
 
 	if(write_fd >= 0) {
-		close(write_fd); write_fd = -1;
+		close(write_fd);
+		write_fd = -1;
 	}
 
 	unlink(device);
 
-	free(device); device = NULL;
+	free(device);
+	device = NULL;
+
 	if(iface) {
-		free(iface); iface = NULL;
+		free(iface);
+		iface = NULL;
 	}
+
 	device_info = NULL;
 }
 
@@ -185,95 +196,96 @@ static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
 	switch(state) {
-		case 0: {
-			struct sockaddr sa;
-			socklen_t salen = sizeof(sa);
+	case 0: {
+		struct sockaddr sa;
+		socklen_t salen = sizeof(sa);
 
-			request_fd = accept(listen_fd, &sa, &salen);
-			if(request_fd < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
-				return false;
-			}
+		request_fd = accept(listen_fd, &sa, &salen);
+
+		if(request_fd < 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Could not accept connection to %s %s: %s", device_info, device, strerror(errno));
+			return false;
+		}
 
 #ifdef FD_CLOEXEC
-			fcntl(request_fd, F_SETFD, FD_CLOEXEC);
+		fcntl(request_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-			if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
-				event_exit();
-				return false;
-			}
-
-			close(listen_fd);
-			listen_fd = -1;
-			device_fd = request_fd;
-			state = 1;
-
+		if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
+			event_exit();
 			return false;
 		}
 
-		case 1: {
-			if((inlen = read(request_fd, &request, sizeof(request))) != sizeof request) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
-					   device, strerror(errno));
-				event_exit();
-				return false;
-			}
+		close(listen_fd);
+		listen_fd = -1;
+		device_fd = request_fd;
+		state = 1;
 
-			if(request.magic != 0xfeedface || request.version != 3 || request.type != REQ_NEW_CONTROL) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Unknown magic %x, version %d, request type %d from %s %s",
-						request.magic, request.version, request.type, device_info, device);
-				event_exit();
-				return false;
-			}
+		return false;
+	}
 
-			if(connect(write_fd, (struct sockkadr *)&request.sock, sizeof(request.sock)) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
-				event_exit();
-				return false;
-			}
-
-			write(request_fd, &data_sun, sizeof(data_sun));
-			device_fd = data_fd;
-
-			logger(DEBUG_ALWAYS, LOG_INFO, "Connection with UML established");
-
-			state = 2;
+	case 1: {
+		if((inlen = read(request_fd, &request, sizeof(request))) != sizeof request) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
+			       device, strerror(errno));
+			event_exit();
 			return false;
 		}
 
-		case 2: {
-			if((inlen = read(data_fd, DATA(packet), MTU)) <= 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-					   device, strerror(errno));
-				event_exit();
-				return false;
-			}
-
-			packet->len = inlen;
-
-			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
-					   device_info);
-
-			return true;
+		if(request.magic != 0xfeedface || request.version != 3 || request.type != REQ_NEW_CONTROL) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown magic %x, version %d, request type %d from %s %s",
+			       request.magic, request.version, request.type, device_info, device);
+			event_exit();
+			return false;
 		}
 
-		default:
-			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid value for state variable in " __FILE__);
-			abort();
+		if(connect(write_fd, (struct sockkadr *)&request.sock, sizeof(request.sock)) < 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
+			event_exit();
+			return false;
+		}
+
+		write(request_fd, &data_sun, sizeof(data_sun));
+		device_fd = data_fd;
+
+		logger(DEBUG_ALWAYS, LOG_INFO, "Connection with UML established");
+
+		state = 2;
+		return false;
+	}
+
+	case 2: {
+		if((inlen = read(data_fd, DATA(packet), MTU)) <= 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+			       device, strerror(errno));
+			event_exit();
+			return false;
+		}
+
+		packet->len = inlen;
+
+		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+		       device_info);
+
+		return true;
+	}
+
+	default:
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid value for state variable in " __FILE__);
+		abort();
 	}
 }
 
 static bool write_packet(vpn_packet_t *packet) {
 	if(state != 2) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Dropping packet of %d bytes to %s: not connected to UML yet",
-				packet->len, device_info);
+		       packet->len, device_info);
 		return false;
 	}
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
-			   packet->len, device_info);
+	       packet->len, device_info);
 
 	if(write(write_fd, DATA(packet), packet->len) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {

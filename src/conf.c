@@ -46,27 +46,31 @@ static int config_compare(const config_t *a, const config_t *b) {
 
 	result = strcasecmp(a->variable, b->variable);
 
-	if(result)
+	if(result) {
 		return result;
+	}
 
 	/* give priority to command line options */
 	result = !b->file - !a->file;
-	if (result)
+
+	if(result) {
 		return result;
+	}
 
 	result = a->line - b->line;
 
-	if(result)
+	if(result) {
 		return result;
-	else
+	} else {
 		return a->file ? strcmp(a->file, b->file) : 0;
+	}
 }
 
-void init_configuration(splay_tree_t ** config_tree) {
+void init_configuration(splay_tree_t **config_tree) {
 	*config_tree = splay_alloc_tree((splay_compare_t) config_compare, (splay_action_t) free_config);
 }
 
-void exit_configuration(splay_tree_t ** config_tree) {
+void exit_configuration(splay_tree_t **config_tree) {
 	splay_delete_tree(*config_tree);
 	*config_tree = NULL;
 }
@@ -76,14 +80,17 @@ config_t *new_config(void) {
 }
 
 void free_config(config_t *cfg) {
-	if(cfg->variable)
+	if(cfg->variable) {
 		free(cfg->variable);
+	}
 
-	if(cfg->value)
+	if(cfg->value) {
 		free(cfg->value);
+	}
 
-	if(cfg->file)
+	if(cfg->file) {
 		free(cfg->file);
+	}
 
 	free(cfg);
 }
@@ -101,11 +108,13 @@ config_t *lookup_config(splay_tree_t *config_tree, char *variable) {
 
 	found = splay_search_closest_greater(config_tree, &cfg);
 
-	if(!found)
+	if(!found) {
 		return NULL;
+	}
 
-	if(strcasecmp(found->variable, variable))
+	if(strcasecmp(found->variable, variable)) {
 		return NULL;
+	}
 
 	return found;
 }
@@ -120,8 +129,9 @@ config_t *lookup_config_next(splay_tree_t *config_tree, const config_t *cfg) {
 		if(node->next) {
 			found = node->next->data;
 
-			if(!strcasecmp(found->variable, cfg->variable))
+			if(!strcasecmp(found->variable, cfg->variable)) {
 				return found;
+			}
 		}
 	}
 
@@ -129,8 +139,9 @@ config_t *lookup_config_next(splay_tree_t *config_tree, const config_t *cfg) {
 }
 
 bool get_config_bool(const config_t *cfg, bool *result) {
-	if(!cfg)
+	if(!cfg) {
 		return false;
+	}
 
 	if(!strcasecmp(cfg->value, "yes")) {
 		*result = true;
@@ -141,27 +152,30 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 	}
 
 	logger(DEBUG_ALWAYS, LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
-		   cfg->variable, cfg->file, cfg->line);
+	       cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
 bool get_config_int(const config_t *cfg, int *result) {
-	if(!cfg)
+	if(!cfg) {
 		return false;
+	}
 
-	if(sscanf(cfg->value, "%d", result) == 1)
+	if(sscanf(cfg->value, "%d", result) == 1) {
 		return true;
+	}
 
 	logger(DEBUG_ALWAYS, LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
-		   cfg->variable, cfg->file, cfg->line);
+	       cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
 bool get_config_string(const config_t *cfg, char **result) {
-	if(!cfg)
+	if(!cfg) {
 		return false;
+	}
 
 	*result = xstrdup(cfg->value);
 
@@ -171,8 +185,9 @@ bool get_config_string(const config_t *cfg, char **result) {
 bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	struct addrinfo *ai;
 
-	if(!cfg)
+	if(!cfg) {
 		return false;
+	}
 
 	ai = str2addrinfo(cfg->value, NULL, 0);
 
@@ -182,31 +197,32 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	}
 
 	logger(DEBUG_ALWAYS, LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
-		   cfg->variable, cfg->file, cfg->line);
+	       cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
-bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
+bool get_config_subnet(const config_t *cfg, subnet_t **result) {
 	subnet_t subnet = {NULL};
 
-	if(!cfg)
+	if(!cfg) {
 		return false;
+	}
 
 	if(!str2net(&subnet, cfg->value)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
-			   cfg->variable, cfg->file, cfg->line);
+		       cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
 
 	/* Teach newbies what subnets are... */
 
 	if(((subnet.type == SUBNET_IPV4)
-		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(subnet.net.ipv4.address)))
-		|| ((subnet.type == SUBNET_IPV6)
-		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(subnet.net.ipv6.address)))) {
+	                && !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(subnet.net.ipv4.address)))
+	                || ((subnet.type == SUBNET_IPV6)
+	                    && !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(subnet.net.ipv6.address)))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
-			   cfg->variable, cfg->file, cfg->line);
+		       cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
 
@@ -218,27 +234,32 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 /*
   Read exactly one line and strip the trailing newline if any.
 */
-static char *readline(FILE * fp, char *buf, size_t buflen) {
+static char *readline(FILE *fp, char *buf, size_t buflen) {
 	char *newline = NULL;
 	char *p;
 
-	if(feof(fp))
+	if(feof(fp)) {
 		return NULL;
+	}
 
 	p = fgets(buf, buflen, fp);
 
-	if(!p)
+	if(!p) {
 		return NULL;
+	}
 
 	newline = strchr(p, '\n');
 
-	if(!newline)
+	if(!newline) {
 		return buf;
+	}
 
 	/* kill newline and carriage return if necessary */
 	*newline = '\0';
-	if(newline > p && newline[-1] == '\r')
+
+	if(newline > p && newline[-1] == '\r') {
 		newline[-1] = '\0';
+	}
 
 	return buf;
 }
@@ -250,26 +271,32 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
 	variable = value = line;
 
 	eol = line + strlen(line);
-	while(strchr("\t ", *--eol))
+
+	while(strchr("\t ", *--eol)) {
 		*eol = '\0';
+	}
 
 	len = strcspn(value, "\t =");
 	value += len;
 	value += strspn(value, "\t ");
+
 	if(*value == '=') {
 		value++;
 		value += strspn(value, "\t ");
 	}
+
 	variable[len] = '\0';
 
 	if(!*value) {
 		const char err[] = "No value for variable";
-		if (fname)
+
+		if(fname)
 			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' on line %d while reading config file %s",
-				err, variable, lineno, fname);
+			       err, variable, lineno, fname);
 		else
 			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' in command line option %d",
-				err, variable, lineno);
+			       err, variable, lineno);
+
 		return NULL;
 	}
 
@@ -306,19 +333,24 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 		line = readline(fp, buffer, sizeof(buffer));
 
 		if(!line) {
-			if(feof(fp))
+			if(feof(fp)) {
 				result = true;
+			}
+
 			break;
 		}
 
 		lineno++;
 
-		if(!*line || *line == '#')
+		if(!*line || *line == '#') {
 			continue;
+		}
 
 		if(ignore) {
-			if(!strncmp(line, "-----END", 8))
+			if(!strncmp(line, "-----END", 8)) {
 				ignore = false;
+			}
+
 			continue;
 		}
 
@@ -328,8 +360,11 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 		}
 
 		cfg = parse_config_line(line, fname, lineno);
-		if (!cfg)
+
+		if(!cfg) {
 			break;
+		}
+
 		config_add(config_tree, cfg);
 	}
 
@@ -346,19 +381,24 @@ void read_config_options(splay_tree_t *config_tree, const char *prefix) {
 		config_t *new;
 
 		if(!prefix) {
-			if(strchr(cfg->variable, '.'))
+			if(strchr(cfg->variable, '.')) {
 				continue;
+			}
 		} else {
 			if(strncmp(prefix, cfg->variable, prefix_len) ||
-			   cfg->variable[prefix_len] != '.')
+			                cfg->variable[prefix_len] != '.') {
 				continue;
+			}
 		}
 
 		new = new_config();
-		if(prefix)
+
+		if(prefix) {
 			new->variable = xstrdup(cfg->variable + prefix_len + 1);
-		else
+		} else {
 			new->variable = xstrdup(cfg->variable);
+		}
+
 		new->value = xstrdup(cfg->value);
 		new->file = NULL;
 		new->line = cfg->line;
@@ -378,28 +418,33 @@ bool read_server_config(void) {
 	x = read_config_file(config_tree, fname);
 
 	// We will try to read the conf files in the "conf.d" dir
-	if (x) {
+	if(x) {
 		char dname[PATH_MAX];
 		snprintf(dname, sizeof(dname), "%s" SLASH "conf.d", confbase);
-		DIR *dir = opendir (dname);
+		DIR *dir = opendir(dname);
+
 		// If we can find this dir
-		if (dir) { 
+		if(dir) {
 			struct dirent *ep;
+
 			// We list all the files in it
-			while (x && (ep = readdir (dir))) {
+			while(x && (ep = readdir(dir))) {
 				size_t l = strlen(ep->d_name);
+
 				// And we try to read the ones that end with ".conf"
-				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
+				if(l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
 					snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ep->d_name);
 					x = read_config_file(config_tree, fname);
 				}
 			}
-			closedir (dir);
+
+			closedir(dir);
 		}
 	}
 
-	if(!x && errno)
+	if(!x && errno) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
+	}
 
 	return x;
 }

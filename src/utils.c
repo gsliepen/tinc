@@ -46,26 +46,32 @@ static const char base64_decode[256] = {
 };
 
 static int charhex2bin(char c) {
-	if(isdigit(c))
+	if(isdigit(c)) {
 		return c - '0';
-	else
+	} else {
 		return toupper(c) - 'A' + 10;
+	}
 }
 
 int hex2bin(const char *src, void *vdst, int length) {
 	char *dst = vdst;
 	int i;
-	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++)
+
+	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++) {
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
+	}
+
 	return i;
 }
 
 int bin2hex(const void *vsrc, char *dst, int length) {
 	const char *src = vsrc;
+
 	for(int i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
+
 	dst[length * 2] = 0;
 	return length * 2;
 }
@@ -77,20 +83,29 @@ int b64decode(const char *src, void *dst, int length) {
 
 	for(i = 0; i < length && src[i]; i++) {
 		triplet |= base64_decode[src[i] & 0xff] << (6 * (i & 3));
+
 		if((i & 3) == 3) {
-			if(triplet & 0xff000000U)
+			if(triplet & 0xff000000U) {
 				return 0;
-			udst[0] = triplet & 0xff; triplet >>= 8;
-			udst[1] = triplet & 0xff; triplet >>= 8;
+			}
+
+			udst[0] = triplet & 0xff;
+			triplet >>= 8;
+			udst[1] = triplet & 0xff;
+			triplet >>= 8;
 			udst[2] = triplet;
 			triplet = 0;
 			udst += 3;
 		}
 	}
-	if(triplet & 0xff000000U)
+
+	if(triplet & 0xff000000U) {
 		return 0;
+	}
+
 	if((i & 3) == 3) {
-		udst[0] = triplet & 0xff; triplet >>= 8;
+		udst[0] = triplet & 0xff;
+		triplet >>= 8;
 		udst[1] = triplet & 0xff;
 		return i / 4 * 3 + 2;
 	} else if((i & 3) == 2) {
@@ -108,34 +123,42 @@ static int b64encode_internal(const void *src, char *dst, int length, const char
 	int di = length / 3 * 4;
 
 	switch(length % 3) {
-		case 2:
-			triplet = usrc[si] | usrc[si + 1] << 8;
-			dst[di] = alphabet[triplet & 63]; triplet >>= 6;
-			dst[di + 1] = alphabet[triplet & 63]; triplet >>= 6;
-			dst[di + 2] = alphabet[triplet];
-			dst[di + 3] = 0;
-			length = di + 3;
-			break;
-		case 1:
-			triplet = usrc[si];
-			dst[di] = alphabet[triplet & 63]; triplet >>= 6;
-			dst[di + 1] = alphabet[triplet];
-			dst[di + 2] = 0;
-			length = di + 2;
-			break;
-		default:
-			dst[di] = 0;
-			length = di;
-			break;
+	case 2:
+		triplet = usrc[si] | usrc[si + 1] << 8;
+		dst[di] = alphabet[triplet & 63];
+		triplet >>= 6;
+		dst[di + 1] = alphabet[triplet & 63];
+		triplet >>= 6;
+		dst[di + 2] = alphabet[triplet];
+		dst[di + 3] = 0;
+		length = di + 3;
+		break;
+
+	case 1:
+		triplet = usrc[si];
+		dst[di] = alphabet[triplet & 63];
+		triplet >>= 6;
+		dst[di + 1] = alphabet[triplet];
+		dst[di + 2] = 0;
+		length = di + 2;
+		break;
+
+	default:
+		dst[di] = 0;
+		length = di;
+		break;
 	}
 
 	while(si > 0) {
 		di -= 4;
 		si -= 3;
 		triplet = usrc[si] | usrc[si + 1] << 8 | usrc[si + 2] << 16;
-		dst[di] = alphabet[triplet & 63]; triplet >>= 6;
-		dst[di + 1] = alphabet[triplet & 63]; triplet >>= 6;
-		dst[di + 2] = alphabet[triplet & 63]; triplet >>= 6;
+		dst[di] = alphabet[triplet & 63];
+		triplet >>= 6;
+		dst[di + 1] = alphabet[triplet & 63];
+		triplet >>= 6;
+		dst[di + 2] = alphabet[triplet & 63];
+		triplet >>= 6;
 		dst[di + 3] = alphabet[triplet];
 	}
 
@@ -160,13 +183,14 @@ const char *winerror(int err) {
 
 	ptr = buf + snprintf(buf, sizeof(buf), "(%d) ", err);
 
-	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
+	if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	                  NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
 		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
 	};
 
-	if((ptr = strchr(buf, '\r')))
+	if((ptr = strchr(buf, '\r'))) {
 		*ptr = '\0';
+	}
 
 	return buf;
 }
@@ -174,34 +198,45 @@ const char *winerror(int err) {
 
 unsigned int bitfield_to_int(const void *bitfield, size_t size) {
 	unsigned int value = 0;
-	if(size > sizeof(value))
+
+	if(size > sizeof(value)) {
 		size = sizeof(value);
+	}
+
 	memcpy(&value, bitfield, size);
 	return value;
 }
 
 bool check_id(const char *id) {
-	if(!id || !*id)
+	if(!id || !*id) {
 		return false;
+	}
 
 	for(; *id; id++)
-		if(!isalnum(*id) && *id != '_')
+		if(!isalnum(*id) && *id != '_') {
 			return false;
+		}
 
 	return true;
 }
 
 bool check_netname(const char *netname, bool strict) {
-	if(!netname || !*netname || *netname == '.')
+	if(!netname || !*netname || *netname == '.') {
 		return false;
+	}
 
 	for(const char *c = netname; *c; c++) {
-		if(iscntrl(*c))
+		if(iscntrl(*c)) {
 			return false;
-		if(*c == '/' || *c == '\\')
+		}
+
+		if(*c == '/' || *c == '\\') {
 			return false;
-		if(strict && strchr(" $%<>:`\"|?*", *c))
+		}
+
+		if(strict && strchr(" $%<>:`\"|?*", *c)) {
 			return false;
+		}
 	}
 
 	return true;
@@ -215,30 +250,36 @@ bool check_netname(const char *netname, bool strict) {
 char *replace_name(const char *name) {
 	char *ret_name;
 
-	if (name[0] == '$') {
+	if(name[0] == '$') {
 		char *envname = getenv(name + 1);
-		char hostname[HOST_NAME_MAX+1];
-		if (!envname) {
-			if (strcmp(name + 1, "HOST")) {
+		char hostname[HOST_NAME_MAX + 1];
+
+		if(!envname) {
+			if(strcmp(name + 1, "HOST")) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				return NULL;
 			}
-			if (gethostname(hostname, sizeof(hostname)) || !*hostname) {
+
+			if(gethostname(hostname, sizeof(hostname)) || !*hostname) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get hostname: %s\n", sockstrerror(sockerrno));
 				return NULL;
 			}
+
 			hostname[HOST_NAME_MAX] = 0;
 			envname = hostname;
 		}
+
 		ret_name = xstrdup(envname);
-		for (char *c = ret_name; *c; c++)
-			if (!isalnum(*c))
+
+		for(char *c = ret_name; *c; c++)
+			if(!isalnum(*c)) {
 				*c = '_';
+			}
 	} else {
 		ret_name = xstrdup(name);
 	}
 
-	if (!check_id(ret_name)) {
+	if(!check_id(ret_name)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid name for myself!");
 		free(ret_name);
 		return NULL;

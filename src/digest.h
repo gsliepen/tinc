@@ -26,12 +26,12 @@
 
 typedef struct digest digest_t;
 
-extern digest_t *digest_open_by_name(const char *name, int maclength) __attribute__ ((__malloc__));
-extern digest_t *digest_open_by_nid(int nid, int maclength) __attribute__ ((__malloc__));
+extern digest_t *digest_open_by_name(const char *name, int maclength) __attribute__((__malloc__));
+extern digest_t *digest_open_by_nid(int nid, int maclength) __attribute__((__malloc__));
 extern void digest_close(digest_t *);
-extern bool digest_create(digest_t *, const void *indata, size_t inlen, void *outdata) __attribute__ ((__warn_unused_result__));
-extern bool digest_verify(digest_t *, const void *indata, size_t inlen, const void *digestdata) __attribute__ ((__warn_unused_result__));
-extern bool digest_set_key(digest_t *, const void *key, size_t len) __attribute__ ((__warn_unused_result__));
+extern bool digest_create(digest_t *, const void *indata, size_t inlen, void *outdata) __attribute__((__warn_unused_result__));
+extern bool digest_verify(digest_t *, const void *indata, size_t inlen, const void *digestdata) __attribute__((__warn_unused_result__));
+extern bool digest_set_key(digest_t *, const void *key, size_t len) __attribute__((__warn_unused_result__));
 extern int digest_get_nid(const digest_t *);
 extern size_t digest_keylength(const digest_t *);
 extern size_t digest_length(const digest_t *);

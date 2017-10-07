@@ -59,8 +59,9 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
-	if(device && iface)
+	if(device && iface) {
 		logger(LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");
+	}
 
 	/* Open registry and look for network adapters */
 
@@ -69,44 +70,51 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	for (i = 0; ; i++) {
+	for(i = 0; ; i++) {
 		len = sizeof(adapterid);
-		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
+
+		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL)) {
 			break;
+		}
 
 		/* Find out more about this adapter */
 
 		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
-		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2)) {
 			continue;
+		}
 
 		len = sizeof(adaptername);
 		err = RegQueryValueEx(key2, "Name", 0, 0, adaptername, &len);
 
 		RegCloseKey(key2);
 
-		if(err)
+		if(err) {
 			continue;
+		}
 
 		if(device) {
 			if(!strcmp(device, adapterid)) {
 				found = true;
 				break;
-			} else
+			} else {
 				continue;
+			}
 		}
 
 		if(iface) {
 			if(!strcmp(iface, adaptername)) {
 				found = true;
 				break;
-			} else
+			} else {
 				continue;
+			}
 		}
 
 		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
+
 		if(device_handle != INVALID_HANDLE_VALUE) {
 			CloseHandle(device_handle);
 			found = true;
@@ -121,11 +129,13 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	if(!device)
+	if(!device) {
 		device = xstrdup(adapterid);
+	}
 
-	if(!iface)
+	if(!iface) {
 		iface = xstrdup(adaptername);
+	}
 
 	snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
 
@@ -140,7 +150,7 @@ static bool setup_device(void) {
 
 	/* The parent opens the tap device for writing. */
 
-	device_handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
+	device_handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
 
 	if(device_handle == INVALID_HANDLE_VALUE) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open Windows tap device %s (%s) for writing: %s", device, iface, winerror(GetLastError()));
@@ -203,6 +213,7 @@ static bool setup_device(void) {
 	}
 
 	read(device_fd, &gelukt, 1);
+
 	if(gelukt != 1) {
 		logger(DEBUG_ALWAYS, LOG_DEBUG, "Tap reader failed!");
 		return false;
@@ -218,12 +229,15 @@ static bool setup_device(void) {
 static void close_device(void) {
 	close(sp[0]);
 	close(sp[1]);
-	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
+	CloseHandle(device_handle);
+	device_handle = INVALID_HANDLE_VALUE;
 
 	kill(reader_pid, SIGKILL);
 
-	free(device); device = NULL;
-	free(iface); iface = NULL;
+	free(device);
+	device = NULL;
+	free(iface);
+	iface = NULL;
 	device_info = NULL;
 }
 
@@ -232,14 +246,14 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	if((inlen = read(sp[0], DATA(packet), MTU)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-			   device, strerror(errno));
+		       device, strerror(errno));
 		return false;
 	}
 
 	packet->len = inlen;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
-			   device_info);
+	       device_info);
 
 	return true;
 }
@@ -248,9 +262,9 @@ static bool write_packet(vpn_packet_t *packet) {
 	long outlen;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
-			   packet->len, device_info);
+	       packet->len, device_info);
 
-	if(!WriteFile (device_handle, DATA(packet), packet->len, &outlen, NULL)) {
+	if(!WriteFile(device_handle, DATA(packet), packet->len, &outlen, NULL)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}

@@ -47,12 +47,14 @@ static char ifrname[IFNAMSIZ];
 static char *device_info;
 
 static bool setup_device(void) {
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
 		device = xstrdup(DEFAULT_DEVICE);
+	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		if(netname)
+		if(netname) {
 			iface = xstrdup(netname);
+		}
 
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
@@ -79,8 +81,10 @@ static bool setup_device(void) {
 		device_type = DEVICE_TYPE_TUN;
 		device_info = "Linux tun/tap device (tun mode)";
 	} else {
-		if (routing_mode == RMODE_ROUTER)
+		if(routing_mode == RMODE_ROUTER) {
 			overwrite_mac = true;
+		}
+
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		device_type = DEVICE_TYPE_TAP;
 		device_info = "Linux tun/tap device (tap mode)";
@@ -90,12 +94,16 @@ static bool setup_device(void) {
 	/* Set IFF_ONE_QUEUE flag... */
 
 	bool t1q = false;
-	if(get_config_bool(lookup_config(config_tree, "IffOneQueue"), &t1q) && t1q)
+
+	if(get_config_bool(lookup_config(config_tree, "IffOneQueue"), &t1q) && t1q) {
 		ifr.ifr_flags |= IFF_ONE_QUEUE;
+	}
+
 #endif
 
-	if(iface)
+	if(iface) {
 		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
+	}
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
@@ -110,10 +118,12 @@ static bool setup_device(void) {
 
 	if(ifr.ifr_flags & IFF_TAP) {
 		struct ifreq ifr_mac = {};
-		if(!ioctl(device_fd, SIOCGIFHWADDR, &ifr_mac))
+
+		if(!ioctl(device_fd, SIOCGIFHWADDR, &ifr_mac)) {
 			memcpy(mymac.x, ifr_mac.ifr_hwaddr.sa_data, ETH_ALEN);
-		else
+		} else {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get MAC address of %s: %s", device, strerror(errno));
+		}
 	}
 
 	return true;
@@ -123,9 +133,12 @@ static void close_device(void) {
 	close(device_fd);
 	device_fd = -1;
 
-	free(type); type = NULL;
-	free(device); device = NULL;
-	free(iface); iface = NULL;
+	free(type);
+	type = NULL;
+	free(device);
+	device = NULL;
+	free(iface);
+	iface = NULL;
 	device_info = NULL;
 }
 
@@ -133,64 +146,73 @@ static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
 	switch(device_type) {
-		case DEVICE_TYPE_TUN:
-			inlen = read(device_fd, DATA(packet) + 10, MTU - 10);
+	case DEVICE_TYPE_TUN:
+		inlen = read(device_fd, DATA(packet) + 10, MTU - 10);
 
-			if(inlen <= 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
-					   device_info, device, strerror(errno));
-				if (errno == EBADFD) { /* File descriptor in bad state */
-					event_exit();
-				}
-				return false;
+		if(inlen <= 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
+			       device_info, device, strerror(errno));
+
+			if(errno == EBADFD) {  /* File descriptor in bad state */
+				event_exit();
 			}
 
-			memset(DATA(packet), 0, 12);
-			packet->len = inlen + 10;
-			break;
-		case DEVICE_TYPE_TAP:
-			inlen = read(device_fd, DATA(packet), MTU);
+			return false;
+		}
 
-			if(inlen <= 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
-					   device_info, device, strerror(errno));
-				return false;
-			}
+		memset(DATA(packet), 0, 12);
+		packet->len = inlen + 10;
+		break;
 
-			packet->len = inlen;
-			break;
-		default:
-			abort();
+	case DEVICE_TYPE_TAP:
+		inlen = read(device_fd, DATA(packet), MTU);
+
+		if(inlen <= 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s",
+			       device_info, device, strerror(errno));
+			return false;
+		}
+
+		packet->len = inlen;
+		break;
+
+	default:
+		abort();
 	}
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
-			   device_info);
+	       device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
-			   packet->len, device_info);
+	       packet->len, device_info);
 
 	switch(device_type) {
-		case DEVICE_TYPE_TUN:
-			DATA(packet)[10] = DATA(packet)[11] = 0;
-			if(write(device_fd, DATA(packet) + 10, packet->len - 10) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-					   strerror(errno));
-				return false;
-			}
-			break;
-		case DEVICE_TYPE_TAP:
-			if(write(device_fd, DATA(packet), packet->len) < 0) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-					   strerror(errno));
-				return false;
-			}
-			break;
-		default:
-			abort();
+	case DEVICE_TYPE_TUN:
+		DATA(packet)[10] = DATA(packet)[11] = 0;
+
+		if(write(device_fd, DATA(packet) + 10, packet->len - 10) < 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+			       strerror(errno));
+			return false;
+		}
+
+		break;
+
+	case DEVICE_TYPE_TAP:
+		if(write(device_fd, DATA(packet), packet->len) < 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+			       strerror(errno));
+			return false;
+		}
+
+		break;
+
+	default:
+		abort();
 	}
 
 	return true;

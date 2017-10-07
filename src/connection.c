@@ -52,8 +52,9 @@ connection_t *new_connection(void) {
 }
 
 void free_connection(connection_t *c) {
-	if(!c)
+	if(!c) {
 		return;
+	}
 
 #ifndef DISABLE_LEGACY
 	cipher_close(c->incipher);
@@ -73,14 +74,16 @@ void free_connection(connection_t *c) {
 
 	io_del(&c->io);
 
-	if(c->socket > 0)
+	if(c->socket > 0) {
 		closesocket(c->socket);
+	}
 
 	free(c->name);
 	free(c->hostname);
 
-	if(c->config_tree)
+	if(c->config_tree) {
 		exit_configuration(&c->config_tree);
+	}
 
 	free(c);
 }
@@ -96,9 +99,9 @@ void connection_del(connection_t *c) {
 bool dump_connections(connection_t *cdump) {
 	for list_each(connection_t, c, connection_list) {
 		send_request(cdump, "%d %d %s %s %x %d %x",
-				CONTROL, REQ_DUMP_CONNECTIONS,
-				c->name, c->hostname, c->options, c->socket,
-				bitfield_to_int(&c->status, sizeof(c->status)));
+		             CONTROL, REQ_DUMP_CONNECTIONS,
+		             c->name, c->hostname, c->options, c->socket,
+		             bitfield_to_int(&c->status, sizeof(c->status)));
 	}
 
 	return send_request(cdump, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);

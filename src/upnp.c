@@ -76,13 +76,16 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 	// if we're running with Port=0 (dynamically assigned port).
 	sockaddr_t sa;
 	socklen_t salen = sizeof(sa);
-	if (getsockname(socket, &sa.sa, &salen)) {
+
+	if(getsockname(socket, &sa.sa, &salen)) {
 		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Unable to get socket address: [%d] %s", sockerrno, sockstrerror(sockerrno));
 		return;
 	}
+
 	char *port;
 	sockaddr2str(&sa, NULL, &port);
-	if (!port) {
+
+	if(!port) {
 		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Unable to get socket port");
 		return;
 	}
@@ -92,7 +95,8 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 	snprintf(lease_duration, sizeof(lease_duration), "%d", upnp_refresh_period * 2);
 
 	int error = UPNP_AddPortMapping(urls->controlURL, data->first.servicetype, port, port, myaddr, identname, proto, NULL, lease_duration);
-	if (error == 0) {
+
+	if(error == 0) {
 		logger(DEBUG_PROTOCOL, LOG_INFO, "[upnp] Successfully set port mapping (%s:%s %s for %s seconds)", myaddr, port, proto, lease_duration);
 	} else {
 		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Failed to set port mapping (%s:%s %s for %s seconds): [%d] %s", myaddr, port, proto, lease_duration, error, strupnperror(error));
@@ -106,26 +110,37 @@ static void upnp_refresh() {
 
 	int error;
 	struct UPNPDev *devices = upnp_discover(upnp_discover_wait * 1000, &error);
-	if (!devices) {
+
+	if(!devices) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] Unable to find IGD devices: [%d] %s", error, strupnperror(error));
 		freeUPNPDevlist(devices);
 		return;
 	}
 
 	struct UPNPUrls urls;
+
 	struct IGDdatas data;
+
 	char myaddr[64];
+
 	int result = UPNP_GetValidIGD(devices, &urls, &data, myaddr, sizeof(myaddr));
-	if (result <= 0) {
+
+	if(result <= 0) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] No IGD found");
 		freeUPNPDevlist(devices);
 		return;
 	}
+
 	logger(DEBUG_PROTOCOL, LOG_INFO, "[upnp] IGD found: [%d] %s (local address: %s, service type: %s)", result, urls.controlURL, myaddr, data.first.servicetype);
 
-	for (int i = 0; i < listen_sockets; i++) {
-		if (upnp_tcp) upnp_add_mapping(&urls, &data, myaddr, listen_socket[i].tcp.fd, "TCP");
-		if (upnp_udp) upnp_add_mapping(&urls, &data, myaddr, listen_socket[i].udp.fd, "UDP");
+	for(int i = 0; i < listen_sockets; i++) {
+		if(upnp_tcp) {
+			upnp_add_mapping(&urls, &data, myaddr, listen_socket[i].tcp.fd, "TCP");
+		}
+
+		if(upnp_udp) {
+			upnp_add_mapping(&urls, &data, myaddr, listen_socket[i].udp.fd, "UDP");
+		}
 	}
 
 	FreeUPNPUrls(&urls);
@@ -133,14 +148,17 @@ static void upnp_refresh() {
 }
 
 static void *upnp_thread(void *data) {
-	while (true) {
+	while(true) {
 		time_t start = time(NULL);
 		upnp_refresh();
 
 		// Make sure we'll stick to the refresh period no matter how long upnp_refresh() takes.
 		time_t refresh_time = start + upnp_refresh_period;
 		time_t now = time(NULL);
-		if (now < refresh_time) sleep(refresh_time - now);
+
+		if(now < refresh_time) {
+			sleep(refresh_time - now);
+		}
 	}
 
 	// TODO: we don't have a clean thread shutdown procedure, so we can't remove the mapping.
@@ -158,7 +176,8 @@ void upnp_init(bool tcp, bool udp) {
 
 	pthread_t thread;
 	int error = pthread_create(&thread, NULL, upnp_thread, NULL);
-	if (error) {
+
+	if(error) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to start UPnP-IGD client thread: [%d] %s", error, strerror(error));
 	}
 }

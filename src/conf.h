@@ -43,7 +43,7 @@ extern list_t *cmdline_conf;
 
 extern void init_configuration(splay_tree_t **);
 extern void exit_configuration(splay_tree_t **);
-extern config_t *new_config(void) __attribute__ ((__malloc__));
+extern config_t *new_config(void) __attribute__((__malloc__));
 extern void free_config(config_t *);
 extern void config_add(splay_tree_t *, config_t *);
 extern config_t *lookup_config(splay_tree_t *, char *);

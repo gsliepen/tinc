@@ -19,36 +19,36 @@ Representations:
 */
 
 typedef struct {
-  fe X;
-  fe Y;
-  fe Z;
+	fe X;
+	fe Y;
+	fe Z;
 } ge_p2;
 
 typedef struct {
-  fe X;
-  fe Y;
-  fe Z;
-  fe T;
+	fe X;
+	fe Y;
+	fe Z;
+	fe T;
 } ge_p3;
 
 typedef struct {
-  fe X;
-  fe Y;
-  fe Z;
-  fe T;
+	fe X;
+	fe Y;
+	fe Z;
+	fe T;
 } ge_p1p1;
 
 typedef struct {
-  fe yplusx;
-  fe yminusx;
-  fe xy2d;
+	fe yplusx;
+	fe yminusx;
+	fe xy2d;
 } ge_precomp;
 
 typedef struct {
-  fe YplusX;
-  fe YminusX;
-  fe Z;
-  fe T2d;
+	fe YplusX;
+	fe YminusX;
+	fe Z;
+	fe T2d;
 } ge_cached;
 
 void ge_p3_tobytes(unsigned char *s, const ge_p3 *h);

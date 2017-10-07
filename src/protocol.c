@@ -35,26 +35,26 @@ bool experimental = true;
 /* Jumptable for the request handlers */
 
 static bool (*request_handlers[])(connection_t *, const char *) = {
-		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
-		status_h, error_h, termreq_h,
-		ping_h, pong_h,
-		add_subnet_h, del_subnet_h,
-		add_edge_h, del_edge_h,
-		key_changed_h, req_key_h, ans_key_h, tcppacket_h, control_h,
-		NULL, NULL, /* Not "real" requests (yet) */
-		sptps_tcppacket_h,
-		udp_info_h, mtu_info_h,
+	id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
+	status_h, error_h, termreq_h,
+	ping_h, pong_h,
+	add_subnet_h, del_subnet_h,
+	add_edge_h, del_edge_h,
+	key_changed_h, req_key_h, ans_key_h, tcppacket_h, control_h,
+	NULL, NULL, /* Not "real" requests (yet) */
+	sptps_tcppacket_h,
+	udp_info_h, mtu_info_h,
 };
 
 /* Request names */
 
 static char (*request_name[]) = {
-		"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
-		"STATUS", "ERROR", "TERMREQ",
-		"PING", "PONG",
-		"ADD_SUBNET", "DEL_SUBNET",
-		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET", "CONTROL",
-		"REQ_PUBKEY", "ANS_PUBKEY", "SPTPS_PACKET", "UDP_INFO", "MTU_INFO",
+	"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
+	"STATUS", "ERROR", "TERMREQ",
+	"PING", "PONG",
+	"ADD_SUBNET", "DEL_SUBNET",
+	"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET", "CONTROL",
+	"REQ_PUBKEY", "ANS_PUBKEY", "SPTPS_PACKET", "UDP_INFO", "MTU_INFO",
 };
 
 static splay_tree_t *past_request_tree;
@@ -78,7 +78,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 
 	if(len < 0 || len > sizeof(request) - 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
@@ -89,8 +89,9 @@ bool send_request(connection_t *c, const char *format, ...) {
 	if(c == everyone) {
 		broadcast_meta(NULL, request, len);
 		return true;
-	} else
+	} else {
 		return send_meta(c, request, len);
+	}
 }
 
 void forward_request(connection_t *from, const char *request) {
@@ -106,8 +107,10 @@ void forward_request(connection_t *from, const char *request) {
 
 bool receive_request(connection_t *c, const char *request) {
 	if(c->outgoing && proxytype == PROXY_HTTP && c->allow_request == ID) {
-		if(!request[0] || request[0] == '\r')
+		if(!request[0] || request[0] == '\r') {
 			return true;
+		}
+
 		if(!strncasecmp(request, "HTTP/1.1 ", 9)) {
 			if(!strncmp(request + 9, "200", 3)) {
 				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
@@ -137,8 +140,10 @@ bool receive_request(connection_t *c, const char *request) {
 		if(!request_handlers[reqno](c, request)) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
-			if(reqno != TERMREQ)
+			if(reqno != TERMREQ) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while processing %s from %s (%s)", request_name[reqno], c->name, c->hostname);
+			}
+
 			return false;
 		}
 	} else {
@@ -154,8 +159,9 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 }
 
 static void free_past_request(past_request_t *r) {
-	if(r->request)
+	if(r->request) {
 		free((char *)r->request);
+	}
 
 	free(r);
 }
@@ -166,17 +172,21 @@ static void age_past_requests(void *data) {
 	int left = 0, deleted = 0;
 
 	for splay_each(past_request_t, p, past_request_tree) {
-		if(p->firstseen + pinginterval <= now.tv_sec)
+		if(p->firstseen + pinginterval <= now.tv_sec) {
 			splay_delete_node(past_request_tree, node), deleted++;
-		else
+		} else {
 			left++;
+		}
 	}
 
-	if(left || deleted)
+	if(left || deleted) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Aging past requests: deleted %d, left %d", deleted, left);
+	}
 
 	if(left)
-		timeout_set(&past_request_timeout, &(struct timeval){10, rand() % 100000});
+		timeout_set(&past_request_timeout, &(struct timeval) {
+		10, rand() % 100000
+	});
 }
 
 bool seen_request(const char *request) {
@@ -192,7 +202,9 @@ bool seen_request(const char *request) {
 		new->request = xstrdup(request);
 		new->firstseen = now.tv_sec;
 		splay_insert(past_request_tree, new);
-		timeout_add(&past_request_timeout, age_past_requests, NULL, &(struct timeval){10, rand() % 100000});
+		timeout_add(&past_request_timeout, age_past_requests, NULL, &(struct timeval) {
+			10, rand() % 100000
+		});
 		return false;
 	}
 }

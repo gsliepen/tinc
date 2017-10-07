@@ -28,12 +28,14 @@ static ssize_t do_arp(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	memcpy(&arp, buf + 14, sizeof(arp));
 
 	// Is it a valid ARP request?
-	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP || arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof(in->sin_addr.s_addr) || ntohs(arp.arp_op) != ARPOP_REQUEST)
+	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP || arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof(in->sin_addr.s_addr) || ntohs(arp.arp_op) != ARPOP_REQUEST) {
 		return 0;
+	}
 
 	// Does it match our address?
-	if(memcmp(&in->sin_addr.s_addr, arp.arp_tpa, 4))
+	if(memcmp(&in->sin_addr.s_addr, arp.arp_tpa, 4)) {
 		return 0;
+	}
 
 	// Swap addresses
 	memcpy(buf, buf + 6, 6);
@@ -55,20 +57,26 @@ static ssize_t do_ipv4(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	struct icmp icmp;
 
 	// Does it match our address?
-	if(memcmp(buf, mymac, 6))
+	if(memcmp(buf, mymac, 6)) {
 		return 0;
+	}
 
 	memcpy(&ip, buf + 14, sizeof(ip));
-	if(memcmp(&ip.ip_dst, &in->sin_addr.s_addr, 4))
+
+	if(memcmp(&ip.ip_dst, &in->sin_addr.s_addr, 4)) {
 		return 0;
+	}
 
 	// Is it an ICMP echo request?
-	if(ip.ip_p != IPPROTO_ICMP)
+	if(ip.ip_p != IPPROTO_ICMP) {
 		return 0;
+	}
 
 	memcpy(&icmp, buf + 14 + sizeof(ip), sizeof icmp);
-	if(icmp.icmp_type != ICMP_ECHO)
+
+	if(icmp.icmp_type != ICMP_ECHO) {
 		return 0;
+	}
 
 	// Return an echo reply
 	memcpy(buf, buf + 6, 6);
@@ -100,6 +108,7 @@ int main(int argc, char *argv[]) {
 	hints.ai_flags = AI_ADDRCONFIG;
 
 	errno = ENOENT;
+
 	if(getaddrinfo(argv[1], argv[2], &hints, &ai) || !ai) {
 		fprintf(stderr, "Could not resolve %s port %s: %s\n", argv[1], argv[2], strerror(errno));
 		return 1;
@@ -107,6 +116,7 @@ int main(int argc, char *argv[]) {
 
 	int fd;
 	fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
 	if(!fd) {
 		fprintf(stderr, "Could not create socket: %s\n", strerror(errno));
 		return 1;
@@ -121,45 +131,53 @@ int main(int argc, char *argv[]) {
 	}
 
 	switch(ai->ai_family) {
-		case AF_INET: {
-			struct ip_mreq mreq;
-			struct sockaddr_in in;
-			memcpy(&in, ai->ai_addr, sizeof(in));
-			mreq.imr_multiaddr.s_addr = in.sin_addr.s_addr;
-			mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-			if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq))) {
-				fprintf(stderr, "Cannot join multicast group: %s\n", strerror(errno));
-				return 1;
-			}
+	case AF_INET: {
+		struct ip_mreq mreq;
+		struct sockaddr_in in;
+		memcpy(&in, ai->ai_addr, sizeof(in));
+		mreq.imr_multiaddr.s_addr = in.sin_addr.s_addr;
+		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+
+		if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq))) {
+			fprintf(stderr, "Cannot join multicast group: %s\n", strerror(errno));
+			return 1;
+		}
+
 #ifdef IP_MULTICAST_LOOP
-			setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const void *)&one, sizeof(one));
+		setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const void *)&one, sizeof(one));
 #endif
-		} break;
+	}
+	break;
 
 #ifdef IPV6_JOIN_GROUP
-		case AF_INET6: {
-			struct ipv6_mreq mreq;
-			struct sockaddr_in6 in6;
-			memcpy(&in6, ai->ai_addr, sizeof(in6));
-			memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof(mreq.ipv6mr_multiaddr));
-			mreq.ipv6mr_interface = in6.sin6_scope_id;
-			if(setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof(mreq))) {
-				fprintf(stderr, "Cannot join multicast group: %s\n", strerror(errno));
-				return 1;
-			}
+
+	case AF_INET6: {
+		struct ipv6_mreq mreq;
+		struct sockaddr_in6 in6;
+		memcpy(&in6, ai->ai_addr, sizeof(in6));
+		memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof(mreq.ipv6mr_multiaddr));
+		mreq.ipv6mr_interface = in6.sin6_scope_id;
+
+		if(setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof(mreq))) {
+			fprintf(stderr, "Cannot join multicast group: %s\n", strerror(errno));
+			return 1;
+		}
+
 #ifdef IPV6_MULTICAST_LOOP
-			setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const void *)&one, sizeof(one));
+		setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const void *)&one, sizeof(one));
 #endif
-		} break;
+	}
+	break;
 #endif
 
-		default:
-			fprintf(stderr, "Multicast for address family %x unsupported\n", ai->ai_family);
-			return 1;
+	default:
+		fprintf(stderr, "Multicast for address family %x unsupported\n", ai->ai_family);
+		return 1;
 	}
 
 	errno = ENOENT;
 	struct addrinfo *ai2 = NULL;
+
 	if(getaddrinfo(argv[3], NULL, &hints, &ai2) || !ai2) {
 		fprintf(stderr, "Could not resolve %s: %s\n", argv[3], strerror(errno));
 		return 1;
@@ -170,26 +188,31 @@ int main(int argc, char *argv[]) {
 		struct sockaddr src;
 		socklen_t srclen;
 		ssize_t len = recvfrom(fd, buf, sizeof(buf), 0, &src, &srclen);
-		if(len <= 0)
+
+		if(len <= 0) {
 			break;
+		}
 
 		// Ignore short packets.
-		if(len < 14)
+		if(len < 14) {
 			continue;
+		}
 
 		uint16_t type = buf[12] << 8 | buf[13];
 
-		if(ai2->ai_family == AF_INET && type == ETH_P_IP)
+		if(ai2->ai_family == AF_INET && type == ETH_P_IP) {
 			len = do_ipv4(buf, len, (struct sockaddr_in *)ai2->ai_addr);
-		else if(ai2->ai_family == AF_INET && type == ETH_P_ARP)
+		} else if(ai2->ai_family == AF_INET && type == ETH_P_ARP) {
 			len = do_arp(buf, len, (struct sockaddr_in *)ai2->ai_addr);
-		else if(ai2->ai_family == AF_INET6 && type == ETH_P_IPV6)
+		} else if(ai2->ai_family == AF_INET6 && type == ETH_P_IPV6) {
 			len = do_ipv6(buf, len, (struct sockaddr_in6 *)ai2->ai_addr);
-		else
+		} else {
 			continue;
+		}
 
-		if(len > 0)
+		if(len > 0) {
 			sendto(fd, buf, len, 0, ai->ai_addr, ai->ai_addrlen);
+		}
 	}
 
 	return 0;

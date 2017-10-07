@@ -48,8 +48,11 @@ static int node_id_compare(const node_t *a, const node_t *b) {
 
 static int node_udp_compare(const node_t *a, const node_t *b) {
 	int result = sockaddrcmp(&a->address, &b->address);
-	if (result)
+
+	if(result) {
 		return result;
+	}
+
 	return (a->name && b->name) ? strcmp(a->name, b->name) : 0;
 }
 
@@ -68,7 +71,10 @@ void exit_nodes(void) {
 node_t *new_node(void) {
 	node_t *n = xzalloc(sizeof(*n));
 
-	if(replaywin) n->late = xzalloc(replaywin);
+	if(replaywin) {
+		n->late = xzalloc(replaywin);
+	}
+
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	n->mtu = MTU;
@@ -78,11 +84,13 @@ node_t *new_node(void) {
 }
 
 void free_node(node_t *n) {
-	if(n->subnet_tree)
+	if(n->subnet_tree) {
 		free_subnet_tree(n->subnet_tree);
+	}
 
-	if(n->edge_tree)
+	if(n->edge_tree) {
 		free_edge_tree(n->edge_tree);
+	}
 
 	sockaddrfree(&n->address);
 
@@ -98,21 +106,24 @@ void free_node(node_t *n) {
 
 	timeout_del(&n->udp_ping_timeout);
 
-	if(n->hostname)
+	if(n->hostname) {
 		free(n->hostname);
+	}
 
-	if(n->name)
+	if(n->name) {
 		free(n->name);
+	}
 
-	if(n->late)
+	if(n->late) {
 		free(n->late);
+	}
 
 	free(n);
 }
 
 void node_add(node_t *n) {
 	unsigned char buf[64];
-	sha512(n->name, strlen(n->name),buf);
+	sha512(n->name, strlen(n->name), buf);
 	memcpy(&n->id, buf, sizeof(n->id));
 
 	splay_insert(node_tree, n);
@@ -122,11 +133,13 @@ void node_add(node_t *n) {
 void node_del(node_t *n) {
 	splay_delete(node_udp_tree, n);
 
-	for splay_each(subnet_t, s, n->subnet_tree)
+	for splay_each(subnet_t, s, n->subnet_tree) {
 		subnet_del(n, s);
+	}
 
-	for splay_each(edge_t, e, n->edge_tree)
+	for splay_each(edge_t, e, n->edge_tree) {
 		edge_del(e);
+	}
 
 	splay_delete(node_id_tree, n);
 	splay_delete(node_tree, n);
@@ -161,12 +174,14 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	if(sa) {
 		n->address = *sa;
 		n->sock = 0;
+
 		for(int i = 0; i < listen_sockets; i++) {
 			if(listen_socket[i].sa.sa.sa_family == sa->sa.sa_family) {
 				n->sock = i;
 				break;
 			}
 		}
+
 		splay_insert(node_udp_tree, n);
 		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
@@ -185,19 +200,22 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 bool dump_nodes(connection_t *c) {
 	for splay_each(node_t, n, node_tree) {
 		char id[2 * sizeof(n->id) + 1];
-		for (size_t c = 0; c < sizeof(n->id); ++c)
+
+		for(size_t c = 0; c < sizeof(n->id); ++c) {
 			snprintf(id + 2 * c, 3, "%02x", n->id.x[c]);
+		}
+
 		id[sizeof(id) - 1] = 0;
 		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %d %d %d %ld", CONTROL, REQ_DUMP_NODES,
-			   n->name, id, n->hostname ?: "unknown port unknown",
+		             n->name, id, n->hostname ? : "unknown port unknown",
 #ifdef DISABLE_LEGACY
-			   0, 0, 0,
+		             0, 0, 0,
 #else
-			   cipher_get_nid(n->outcipher), digest_get_nid(n->outdigest), (int)digest_length(n->outdigest),
+		             cipher_get_nid(n->outcipher), digest_get_nid(n->outdigest), (int)digest_length(n->outdigest),
 #endif
-			   n->outcompression, n->options, bitfield_to_int(&n->status, sizeof(n->status)),
-			   n->nexthop ? n->nexthop->name : "-", n->via ? n->via->name ?: "-" : "-", n->distance,
-			   n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
+		             n->outcompression, n->options, bitfield_to_int(&n->status, sizeof(n->status)),
+		             n->nexthop ? n->nexthop->name : "-", n->via ? n->via->name ? : "-" : "-", n->distance,
+		             n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
 	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_NODES);
@@ -206,7 +224,7 @@ bool dump_nodes(connection_t *c) {
 bool dump_traffic(connection_t *c) {
 	for splay_each(node_t, n, node_tree)
 		send_request(c, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_TRAFFIC,
-			   n->name, n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
+		             n->name, n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
 }

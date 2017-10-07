@@ -55,16 +55,18 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	}
 
 	logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
-			   c->name, c->hostname);
+	       c->name, c->hostname);
 
-	if(c->protocol_minor >= 2)
+	if(c->protocol_minor >= 2) {
 		return sptps_send_record(&c->sptps, 0, buffer, length);
+	}
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
 #ifdef DISABLE_LEGACY
 		return false;
 #else
+
 		if(length > c->outbudget) {
 			logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
 			return false;
@@ -76,9 +78,10 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 
 		if(!cipher_encrypt(c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting metadata to %s (%s)",
-					c->name, c->hostname);
+			       c->name, c->hostname);
 			return false;
 		}
+
 #endif
 	} else {
 		buffer_add(&c->outbuf, buffer, length);
@@ -96,7 +99,7 @@ void send_meta_raw(connection_t *c, const char *buffer, int length) {
 	}
 
 	logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes of raw metadata to %s (%s)", length,
-			   c->name, c->hostname);
+	       c->name, c->hostname);
 
 	buffer_add(&c->outbuf, buffer, length);
 
@@ -105,8 +108,9 @@ void send_meta_raw(connection_t *c, const char *buffer, int length) {
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
 	for list_each(connection_t, c, connection_list)
-		if(c != from && c->edge)
+		if(c != from && c->edge) {
 			send_meta(c, buffer, length);
+		}
 }
 
 bool receive_meta_sptps(void *handle, uint8_t type, const void *vdata, uint16_t length) {
@@ -119,20 +123,24 @@ bool receive_meta_sptps(void *handle, uint8_t type, const void *vdata, uint16_t 
 	}
 
 	if(type == SPTPS_HANDSHAKE) {
-		if(c->allow_request == ACK)
+		if(c->allow_request == ACK) {
 			return send_ack(c);
-		else
+		} else {
 			return true;
+		}
 	}
 
-	if(!data)
+	if(!data) {
 		return true;
+	}
 
 	/* Are we receiving a TCPpacket? */
 
 	if(c->tcplen) {
-		if(length != c->tcplen)
+		if(length != c->tcplen) {
 			return false;
+		}
+
 		receive_tcppacket(c, data, length);
 		c->tcplen = 0;
 		return true;
@@ -140,8 +148,9 @@ bool receive_meta_sptps(void *handle, uint8_t type, const void *vdata, uint16_t 
 
 	/* Change newline to null byte, just like non-SPTPS requests */
 
-	if(data[length - 1] == '\n')
+	if(data[length - 1] == '\n') {
 		((char *)data)[length - 1] = 0;
+	}
 
 	/* Otherwise we are waiting for a request */
 
@@ -174,12 +183,13 @@ bool receive_meta(connection_t *c) {
 	if(inlen <= 0) {
 		if(!inlen || !sockerrno) {
 			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)",
-					   c->name, c->hostname);
-		} else if(sockwouldblock(sockerrno))
+			       c->name, c->hostname);
+		} else if(sockwouldblock(sockerrno)) {
 			return true;
-		else
+		} else
 			logger(DEBUG_ALWAYS, LOG_ERR, "Metadata socket read error for %s (%s): %s",
-				   c->name, c->hostname, sockstrerror(sockerrno));
+			       c->name, c->hostname, sockstrerror(sockerrno));
+
 		return false;
 	}
 
@@ -191,11 +201,15 @@ bool receive_meta(connection_t *c) {
 			buffer_add(&c->inbuf, bufp, len);
 
 			char *sptpspacket = buffer_read(&c->inbuf, c->sptpslen);
-			if(!sptpspacket)
-				return true;
 
-			if(!receive_tcppacket_sptps(c, sptpspacket, c->sptpslen))
+			if(!sptpspacket) {
+				return true;
+			}
+
+			if(!receive_tcppacket_sptps(c, sptpspacket, c->sptpslen)) {
 				return false;
+			}
+
 			c->sptpslen = 0;
 
 			bufp += len;
@@ -205,8 +219,11 @@ bool receive_meta(connection_t *c) {
 
 		if(c->protocol_minor >= 2) {
 			int len = sptps_receive_data(&c->sptps, bufp, inlen);
-			if(!len)
+
+			if(!len) {
 				return false;
+			}
+
 			bufp += len;
 			inlen -= len;
 			continue;
@@ -214,10 +231,12 @@ bool receive_meta(connection_t *c) {
 
 		if(!c->status.decryptin) {
 			endp = memchr(bufp, '\n', inlen);
-			if(endp)
+
+			if(endp) {
 				endp++;
-			else
+			} else {
 				endp = bufp + inlen;
+			}
 
 			buffer_add(&c->inbuf, bufp, endp - bufp);
 
@@ -227,6 +246,7 @@ bool receive_meta(connection_t *c) {
 #ifdef DISABLE_LEGACY
 			return false;
 #else
+
 			if(inlen > c->inbudget) {
 				logger(DEBUG_META, LOG_ERR, "yte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
 				return false;
@@ -238,7 +258,7 @@ bool receive_meta(connection_t *c) {
 
 			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
-					   c->name, c->hostname);
+				       c->name, c->hostname);
 				return false;
 			}
 
@@ -251,8 +271,10 @@ bool receive_meta(connection_t *c) {
 
 			if(c->tcplen) {
 				char *tcpbuffer = buffer_read(&c->inbuf, c->tcplen);
-				if(!tcpbuffer)
+
+				if(!tcpbuffer) {
 					break;
+				}
 
 				if(!c->node) {
 					if(c->outgoing && proxytype == PROXY_SOCKS4 && c->allow_request == ID) {
@@ -267,14 +289,17 @@ bool receive_meta(connection_t *c) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
 							return false;
 						}
+
 						if(tcpbuffer[1] == (char)0xff) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Proxy request rejected: unsuitable authentication method");
 							return false;
 						}
+
 						if(tcpbuffer[2] != 5) {
 							logger(DEBUG_CONNECTIONS, LOG_ERR, "Invalid response from proxy server");
 							return false;
 						}
+
 						if(tcpbuffer[3] == 0) {
 							logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Proxy request granted");
 						} else {
@@ -300,10 +325,14 @@ bool receive_meta(connection_t *c) {
 			/* Otherwise we are waiting for a request */
 
 			char *request = buffer_readline(&c->inbuf);
+
 			if(request) {
 				bool result = receive_request(c, request);
-				if(!result)
+
+				if(!result) {
 					return false;
+				}
+
 				continue;
 			} else {
 				break;

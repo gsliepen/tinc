@@ -44,6 +44,7 @@ ecdsa_t *ecdsa_set_base64_public_key(const char *p) {
 
 	ecdsa_t *ecdsa = xzalloc(sizeof(*ecdsa));
 	len = b64decode(p, ecdsa->public, len);
+
 	if(len != 32) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid format of public key! len = %d", len);
 		free(ecdsa);
@@ -69,19 +70,25 @@ static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
 
 	while(fgets(line, sizeof(line), fp)) {
 		if(!data) {
-			if(strncmp(line, "-----BEGIN ", 11))
+			if(strncmp(line, "-----BEGIN ", 11)) {
 				continue;
-			if(strncmp(line + 11, type, typelen))
+			}
+
+			if(strncmp(line + 11, type, typelen)) {
 				continue;
+			}
+
 			data = true;
 			continue;
 		}
 
-		if(!strncmp(line, "-----END ", 9))
+		if(!strncmp(line, "-----END ", 9)) {
 			break;
+		}
 
 		size_t linelen = strcspn(line, "\r\n");
 		size_t len = b64decode(line, line, linelen);
+
 		if(!len) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid base64 data in PEM file\n");
 			errno = EINVAL;
@@ -106,6 +113,7 @@ static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
 		} else {
 			errno = ENOENT;
 		}
+
 		return false;
 	}
 
@@ -114,16 +122,22 @@ static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
 
 ecdsa_t *ecdsa_read_pem_public_key(FILE *fp) {
 	ecdsa_t *ecdsa = xzalloc(sizeof(*ecdsa));
-	if(read_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof(ecdsa->public)))
+
+	if(read_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof(ecdsa->public))) {
 		return ecdsa;
+	}
+
 	free(ecdsa);
 	return 0;
 }
 
 ecdsa_t *ecdsa_read_pem_private_key(FILE *fp) {
 	ecdsa_t *ecdsa = xmalloc(sizeof(*ecdsa));
-	if(read_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof(*ecdsa)))
+
+	if(read_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof(*ecdsa))) {
 		return ecdsa;
+	}
+
 	free(ecdsa);
 	return 0;
 }

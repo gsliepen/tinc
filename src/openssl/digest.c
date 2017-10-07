@@ -34,10 +34,11 @@ static digest_t *digest_open(const EVP_MD *evp_md, int maclength) {
 
 	int digestlen = EVP_MD_size(digest->digest);
 
-	if(maclength > digestlen || maclength < 0)
+	if(maclength > digestlen || maclength < 0) {
 		digest->maclength = digestlen;
-	else
+	} else {
 		digest->maclength = maclength;
+	}
 
 	return digest;
 }
@@ -72,8 +73,9 @@ bool digest_set_key(digest_t *digest, const void *key, size_t len) {
 }
 
 void digest_close(digest_t *digest) {
-	if(!digest)
+	if(!digest) {
 		return;
+	}
 
 	free(digest->key);
 	free(digest);
@@ -90,12 +92,14 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 		}
 	} else {
 		EVP_MD_CTX *ctx = EVP_MD_CTX_create();
-		if(!ctx)
+
+		if(!ctx) {
 			abort();
+		}
 
 		if(!EVP_DigestInit(ctx, digest->digest)
-				|| !EVP_DigestUpdate(ctx, indata, inlen)
-				|| !EVP_DigestFinal(ctx, tmpdata, NULL)) {
+		                || !EVP_DigestUpdate(ctx, indata, inlen)
+		                || !EVP_DigestFinal(ctx, tmpdata, NULL)) {
 			logger(DEBUG_ALWAYS, LOG_DEBUG, "Error creating digest: %s", ERR_error_string(ERR_get_error(), NULL));
 			EVP_MD_CTX_destroy(ctx);
 			return false;
@@ -116,22 +120,25 @@ bool digest_verify(digest_t *digest, const void *indata, size_t inlen, const voi
 }
 
 int digest_get_nid(const digest_t *digest) {
-	if(!digest || !digest->digest)
+	if(!digest || !digest->digest) {
 		return 0;
+	}
 
 	return EVP_MD_type(digest->digest);
 }
 
 size_t digest_keylength(const digest_t *digest) {
-	if(!digest || !digest->digest)
+	if(!digest || !digest->digest) {
 		return 0;
+	}
 
 	return EVP_MD_size(digest->digest);
 }
 
 size_t digest_length(const digest_t *digest) {
-	if(!digest)
+	if(!digest) {
 		return 0;
+	}
 
 	return digest->maclength;
 }

@@ -22,8 +22,8 @@
 
 #include "ecdsa.h"
 
-extern ecdsa_t *ecdsa_generate(void) __attribute__ ((__malloc__));
-extern bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) __attribute__ ((__warn_unused_result__));
-extern bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) __attribute__ ((__warn_unused_result__));
+extern ecdsa_t *ecdsa_generate(void) __attribute__((__malloc__));
+extern bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) __attribute__((__warn_unused_result__));
+extern bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) __attribute__((__warn_unused_result__));
 
 #endif

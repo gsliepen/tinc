@@ -32,8 +32,9 @@
 static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
 	digest_t *digest = digest_open_by_nid(nid, -1);
 
-	if(!digest)
+	if(!digest) {
 		return false;
+	}
 
 	if(!digest_set_key(digest, secret, secretlen)) {
 		digest_close(digest);
@@ -66,8 +67,9 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 		}
 
 		/* XOR the results of the outer HMAC into the out buffer */
-		for(int i = 0; i < len && i < outlen; i++)
+		for(int i = 0; i < len && i < outlen; i++) {
 			*out++ ^= hash[i];
+		}
 
 		outlen -= len;
 	}

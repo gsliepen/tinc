@@ -1,4 +1,4 @@
-/* 
+/*
  * Public Domain poly1305 from Andrew Moon
  * poly1305-donna-unrolled.c from https://github.com/floodyberry/poly1305-donna
  */
@@ -24,8 +24,7 @@
 	} while (0)
 
 void
-poly1305_auth(unsigned char out[POLY1305_TAGLEN], const unsigned char *m, size_t inlen, const unsigned char key[POLY1305_KEYLEN])
-{
+poly1305_auth(unsigned char out[POLY1305_TAGLEN], const unsigned char *m, size_t inlen, const unsigned char key[POLY1305_KEYLEN]) {
 	uint32_t t0, t1, t2, t3;
 	uint32_t h0, h1, h2, h3, h4;
 	uint32_t r0, r1, r2, r3, r4;
@@ -71,10 +70,11 @@ poly1305_auth(unsigned char out[POLY1305_TAGLEN], const unsigned char *m, size_t
 	h4 = 0;
 
 	/* full blocks */
-	if (inlen < 16)
+	if(inlen < 16) {
 		goto poly1305_donna_atmost15bytes;
+	}
 
- poly1305_donna_16bytes:
+poly1305_donna_16bytes:
 	m += 16;
 	inlen -= 16;
 
@@ -89,7 +89,7 @@ poly1305_auth(unsigned char out[POLY1305_TAGLEN], const unsigned char *m, size_t
 	h3 += ((((uint64_t) t3 << 32) | t2) >> 14) & 0x3ffffff;
 	h4 += (t3 >> 8) | (1 << 24);
 
- poly1305_donna_mul:
+poly1305_donna_mul:
 	t[0] = mul32x32_64(h0, r0) + mul32x32_64(h1, s4) + mul32x32_64(h2, s3) + mul32x32_64(h3, s2) + mul32x32_64(h4, s1);
 	t[1] = mul32x32_64(h0, r1) + mul32x32_64(h1, r0) + mul32x32_64(h2, s4) + mul32x32_64(h3, s3) + mul32x32_64(h4, s2);
 	t[2] = mul32x32_64(h0, r2) + mul32x32_64(h1, r1) + mul32x32_64(h2, r0) + mul32x32_64(h3, s4) + mul32x32_64(h4, s3);
@@ -100,31 +100,39 @@ poly1305_auth(unsigned char out[POLY1305_TAGLEN], const unsigned char *m, size_t
 	c = (t[0] >> 26);
 	t[1] += c;
 	h1 = (uint32_t) t[1] & 0x3ffffff;
-	b = (uint32_t) (t[1] >> 26);
+	b = (uint32_t)(t[1] >> 26);
 	t[2] += b;
 	h2 = (uint32_t) t[2] & 0x3ffffff;
-	b = (uint32_t) (t[2] >> 26);
+	b = (uint32_t)(t[2] >> 26);
 	t[3] += b;
 	h3 = (uint32_t) t[3] & 0x3ffffff;
-	b = (uint32_t) (t[3] >> 26);
+	b = (uint32_t)(t[3] >> 26);
 	t[4] += b;
 	h4 = (uint32_t) t[4] & 0x3ffffff;
-	b = (uint32_t) (t[4] >> 26);
+	b = (uint32_t)(t[4] >> 26);
 	h0 += b * 5;
 
-	if (inlen >= 16)
+	if(inlen >= 16) {
 		goto poly1305_donna_16bytes;
+	}
 
 	/* final bytes */
- poly1305_donna_atmost15bytes:
-	if (!inlen)
-		goto poly1305_donna_finish;
+poly1305_donna_atmost15bytes:
 
-	for (j = 0; j < inlen; j++)
+	if(!inlen) {
+		goto poly1305_donna_finish;
+	}
+
+	for(j = 0; j < inlen; j++) {
 		mp[j] = m[j];
+	}
+
 	mp[j++] = 1;
-	for (; j < 16; j++)
+
+	for(; j < 16; j++) {
 		mp[j] = 0;
+	}
+
 	inlen = 0;
 
 	t0 = U8TO32_LE(mp + 0);
@@ -140,7 +148,7 @@ poly1305_auth(unsigned char out[POLY1305_TAGLEN], const unsigned char *m, size_t
 
 	goto poly1305_donna_mul;
 
- poly1305_donna_finish:
+poly1305_donna_finish:
 	b = h0 >> 26;
 	h0 = h0 & 0x3ffffff;
 	h1 += b;

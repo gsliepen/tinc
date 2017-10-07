@@ -20,6 +20,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-extern bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) __attribute__ ((__warn_unused_result__));
+extern bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) __attribute__((__warn_unused_result__));
 
 #endif

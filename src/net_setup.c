@@ -64,8 +64,9 @@ char *scriptinterpreter;
 char *scriptextension;
 
 bool node_read_ecdsa_public_key(node_t *n) {
-	if(ecdsa_active(n->ecdsa))
+	if(ecdsa_active(n->ecdsa)) {
 		return true;
+	}
 
 	splay_tree_t *config_tree;
 	FILE *fp;
@@ -73,8 +74,10 @@ bool node_read_ecdsa_public_key(node_t *n) {
 	char *p;
 
 	init_configuration(&config_tree);
-	if(!read_host_config(config_tree, n->name))
+
+	if(!read_host_config(config_tree, n->name)) {
 		goto exit;
+	}
 
 	/* First, check for simple Ed25519PublicKey statement */
 
@@ -86,13 +89,15 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 	/* Else, check for Ed25519PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(config_tree, "Ed25519PublicKeyFile"), &pubname))
+	if(!get_config_string(lookup_config(config_tree, "Ed25519PublicKeyFile"), &pubname)) {
 		xasprintf(&pubname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
+	}
 
 	fp = fopen(pubname, "r");
 
-	if(!fp)
+	if(!fp) {
 		goto exit;
+	}
 
 	n->ecdsa = ecdsa_read_pem_public_key(fp);
 	fclose(fp);
@@ -104,8 +109,9 @@ exit:
 }
 
 bool read_ecdsa_public_key(connection_t *c) {
-	if(ecdsa_active(c->ecdsa))
+	if(ecdsa_active(c->ecdsa)) {
 		return true;
+	}
 
 	FILE *fp;
 	char *fname;
@@ -113,8 +119,10 @@ bool read_ecdsa_public_key(connection_t *c) {
 
 	if(!c->config_tree) {
 		init_configuration(&c->config_tree);
-		if(!read_host_config(c->config_tree, c->name))
+
+		if(!read_host_config(c->config_tree, c->name)) {
 			return false;
+		}
 	}
 
 	/* First, check for simple Ed25519PublicKey statement */
@@ -127,22 +135,24 @@ bool read_ecdsa_public_key(connection_t *c) {
 
 	/* Else, check for Ed25519PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(c->config_tree, "Ed25519PublicKeyFile"), &fname))
+	if(!get_config_string(lookup_config(c->config_tree, "Ed25519PublicKeyFile"), &fname)) {
 		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+	}
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 public key file `%s': %s",
-			   fname, strerror(errno));
+		       fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	c->ecdsa = ecdsa_read_pem_public_key(fp);
 
-	if(!c->ecdsa && errno != ENOENT)
+	if(!c->ecdsa && errno != ENOENT) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing Ed25519 public key file `%s' failed.", fname);
+	}
 
 	fclose(fp);
 	free(fname);
@@ -165,8 +175,9 @@ bool read_rsa_public_key(connection_t *c) {
 
 	/* Else, check for PublicKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname))
+	if(!get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname)) {
 		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+	}
 
 	fp = fopen(fname, "r");
 
@@ -179,8 +190,10 @@ bool read_rsa_public_key(connection_t *c) {
 	c->rsa = rsa_read_pem_public_key(fp);
 	fclose(fp);
 
-	if(!c->rsa)
+	if(!c->rsa) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
+	}
+
 	free(fname);
 	return c->rsa;
 }
@@ -192,15 +205,19 @@ static bool read_ecdsa_private_key(void) {
 
 	/* Check for PrivateKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(config_tree, "Ed25519PrivateKeyFile"), &fname))
+	if(!get_config_string(lookup_config(config_tree, "Ed25519PrivateKeyFile"), &fname)) {
 		xasprintf(&fname, "%s" SLASH "ed25519_key.priv", confbase);
+	}
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 private key file `%s': %s", fname, strerror(errno));
-		if(errno == ENOENT)
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 keypair with `tinc -n %s generate-ed25519-keys'.", netname ?: ".");
+
+		if(errno == ENOENT) {
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 keypair with `tinc -n %s generate-ed25519-keys'.", netname ? : ".");
+		}
+
 		free(fname);
 		return false;
 	}
@@ -214,15 +231,19 @@ static bool read_ecdsa_private_key(void) {
 		return false;
 	}
 
-	if(s.st_mode & ~0100700)
+	if(s.st_mode & ~0100700) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for Ed25519 private key file `%s'!", fname);
+	}
+
 #endif
 
 	myself->connection->ecdsa = ecdsa_read_pem_private_key(fp);
 	fclose(fp);
 
-	if(!myself->connection->ecdsa)
+	if(!myself->connection->ecdsa) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
+	}
+
 	free(fname);
 	return myself->connection->ecdsa;
 }
@@ -243,8 +264,10 @@ static bool read_invitation_key(void) {
 	if(fp) {
 		invitation_key = ecdsa_read_pem_private_key(fp);
 		fclose(fp);
-		if(!invitation_key)
+
+		if(!invitation_key) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Reading Ed25519 private key file `%s' failed", fname);
+		}
 	}
 
 	return invitation_key;
@@ -264,6 +287,7 @@ static bool read_rsa_private_key(void) {
 			free(d);
 			return false;
 		}
+
 		myself->connection->rsa = rsa_set_hex_private_key(n, "FFFF", d);
 		free(n);
 		free(d);
@@ -272,16 +296,20 @@ static bool read_rsa_private_key(void) {
 
 	/* Else, check for PrivateKeyFile statement and read it */
 
-	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
+	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname)) {
 		xasprintf(&fname, "%s" SLASH "rsa_key.priv", confbase);
+	}
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading RSA private key file `%s': %s",
-			   fname, strerror(errno));
-		if(errno == ENOENT)
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA keypair with `tinc -n %s generate-rsa-keys'.", netname ?: ".");
+		       fname, strerror(errno));
+
+		if(errno == ENOENT) {
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA keypair with `tinc -n %s generate-rsa-keys'.", netname ? : ".");
+		}
+
 		free(fname);
 		return false;
 	}
@@ -295,15 +323,19 @@ static bool read_rsa_private_key(void) {
 		return false;
 	}
 
-	if(s.st_mode & ~0100700)
+	if(s.st_mode & ~0100700) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
+	}
+
 #endif
 
 	myself->connection->rsa = rsa_read_pem_private_key(fp);
 	fclose(fp);
 
-	if(!myself->connection->rsa)
+	if(!myself->connection->rsa) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
+	}
+
 	free(fname);
 	return myself->connection->rsa;
 }
@@ -313,14 +345,18 @@ static timeout_t keyexpire_timeout;
 
 static void keyexpire_handler(void *data) {
 	regenerate_key();
-	timeout_set(data, &(struct timeval){keylifetime, rand() % 100000});
+	timeout_set(data, &(struct timeval) {
+		keylifetime, rand() % 100000
+	});
 }
 
 void regenerate_key(void) {
 	logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
 	send_key_changed();
-	for splay_each(node_t, n, node_tree)
+
+	for splay_each(node_t, n, node_tree) {
 		n->status.validkey_in = false;
+	}
 }
 
 void load_all_nodes(void) {
@@ -330,14 +366,16 @@ void load_all_nodes(void) {
 
 	snprintf(dname, sizeof(dname), "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
+
 	if(!dir) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
 		return;
 	}
 
 	while((ent = readdir(dir))) {
-		if(!check_id(ent->d_name))
+		if(!check_id(ent->d_name)) {
 			continue;
+		}
 
 		node_t *n = lookup_node(ent->d_name);
 
@@ -356,8 +394,9 @@ void load_all_nodes(void) {
 			for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 				subnet_t *s, *s2;
 
-				if(!get_config_subnet(cfg, &s))
+				if(!get_config_subnet(cfg, &s)) {
 					continue;
+				}
 
 				if((s2 = lookup_subnet(n, s))) {
 					s2->expires = -1;
@@ -368,8 +407,9 @@ void load_all_nodes(void) {
 			}
 		}
 
-		if(lookup_config(config_tree, "Address"))
+		if(lookup_config(config_tree, "Address")) {
 			n->status.has_address = true;
+		}
 
 		exit_configuration(&config_tree);
 	}
@@ -383,8 +423,9 @@ char *get_name(void) {
 
 	get_config_string(lookup_config(config_tree, "Name"), &name);
 
-	if(!name)
+	if(!name) {
 		return NULL;
+	}
 
 	returned_name = replace_name(name);
 	free(name);
@@ -406,13 +447,17 @@ bool setup_myself_reloadable(void) {
 
 
 	free(scriptextension);
-	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension))
+
+	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension)) {
 		scriptextension = xstrdup("");
+	}
 
 	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
+
 	if(proxy) {
-		if((space = strchr(proxy, ' ')))
+		if((space = strchr(proxy, ' '))) {
 			*space++ = 0;
+		}
 
 		if(!strcasecmp(proxy, "none")) {
 			proxytype = PROXY_NONE;
@@ -432,53 +477,70 @@ bool setup_myself_reloadable(void) {
 		}
 
 		switch(proxytype) {
-			case PROXY_NONE:
-			default:
-				break;
+		case PROXY_NONE:
+		default:
+			break;
 
-			case PROXY_EXEC:
-				if(!space || !*space) {
-					logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
-					return false;
-				}
-				proxyhost =  xstrdup(space);
-				break;
+		case PROXY_EXEC:
+			if(!space || !*space) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Argument expected for proxy type exec!");
+				return false;
+			}
 
-			case PROXY_SOCKS4:
-			case PROXY_SOCKS4A:
-			case PROXY_SOCKS5:
-			case PROXY_HTTP:
-				proxyhost = space;
-				if(space && (space = strchr(space, ' ')))
-					*space++ = 0, proxyport = space;
-				if(space && (space = strchr(space, ' ')))
-					*space++ = 0, proxyuser = space;
-				if(space && (space = strchr(space, ' ')))
-					*space++ = 0, proxypass = space;
-				if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
-					logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
-					return false;
-				}
-				proxyhost = xstrdup(proxyhost);
-				proxyport = xstrdup(proxyport);
-				if(proxyuser && *proxyuser)
-					proxyuser = xstrdup(proxyuser);
-				if(proxypass && *proxypass)
-					proxypass = xstrdup(proxypass);
-				break;
+			proxyhost =  xstrdup(space);
+			break;
+
+		case PROXY_SOCKS4:
+		case PROXY_SOCKS4A:
+		case PROXY_SOCKS5:
+		case PROXY_HTTP:
+			proxyhost = space;
+
+			if(space && (space = strchr(space, ' '))) {
+				*space++ = 0, proxyport = space;
+			}
+
+			if(space && (space = strchr(space, ' '))) {
+				*space++ = 0, proxyuser = space;
+			}
+
+			if(space && (space = strchr(space, ' '))) {
+				*space++ = 0, proxypass = space;
+			}
+
+			if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Host and port argument expected for proxy!");
+				return false;
+			}
+
+			proxyhost = xstrdup(proxyhost);
+			proxyport = xstrdup(proxyport);
+
+			if(proxyuser && *proxyuser) {
+				proxyuser = xstrdup(proxyuser);
+			}
+
+			if(proxypass && *proxypass) {
+				proxypass = xstrdup(proxypass);
+			}
+
+			break;
 		}
 
 		free(proxy);
 	}
 
-	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice)
+	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice) {
 		myself->options |= OPTION_INDIRECT;
+	}
 
-	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice)
+	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice) {
 		myself->options |= OPTION_TCPONLY;
+	}
 
-	if(myself->options & OPTION_TCPONLY)
+	if(myself->options & OPTION_TCPONLY) {
 		myself->options |= OPTION_INDIRECT;
+	}
 
 	get_config_bool(lookup_config(config_tree, "UDPDiscovery"), &udp_discovery);
 	get_config_int(lookup_config(config_tree, "UDPDiscoveryKeepaliveInterval"), &udp_discovery_keepalive_interval);
@@ -492,114 +554,141 @@ bool setup_myself_reloadable(void) {
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
-		if(!strcasecmp(rmode, "router"))
+		if(!strcasecmp(rmode, "router")) {
 			routing_mode = RMODE_ROUTER;
-		else if(!strcasecmp(rmode, "switch"))
+		} else if(!strcasecmp(rmode, "switch")) {
 			routing_mode = RMODE_SWITCH;
-		else if(!strcasecmp(rmode, "hub"))
+		} else if(!strcasecmp(rmode, "hub")) {
 			routing_mode = RMODE_HUB;
-		else {
+		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid routing mode!");
 			return false;
 		}
+
 		free(rmode);
 	}
 
 	if(get_config_string(lookup_config(config_tree, "Forwarding"), &fmode)) {
-		if(!strcasecmp(fmode, "off"))
+		if(!strcasecmp(fmode, "off")) {
 			forwarding_mode = FMODE_OFF;
-		else if(!strcasecmp(fmode, "internal"))
+		} else if(!strcasecmp(fmode, "internal")) {
 			forwarding_mode = FMODE_INTERNAL;
-		else if(!strcasecmp(fmode, "kernel"))
+		} else if(!strcasecmp(fmode, "kernel")) {
 			forwarding_mode = FMODE_KERNEL;
-		else {
+		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid forwarding mode!");
 			return false;
 		}
+
 		free(fmode);
 	}
 
 	choice = true;
 	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
-	if(choice)
+
+	if(choice) {
 		myself->options |= OPTION_PMTU_DISCOVERY;
+	}
 
 	choice = true;
 	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
-	if(choice)
+
+	if(choice) {
 		myself->options |= OPTION_CLAMP_MSS;
+	}
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+
 	if(get_config_string(lookup_config(config_tree, "Broadcast"), &bmode)) {
-		if(!strcasecmp(bmode, "no"))
+		if(!strcasecmp(bmode, "no")) {
 			broadcast_mode = BMODE_NONE;
-		else if(!strcasecmp(bmode, "yes") || !strcasecmp(bmode, "mst"))
+		} else if(!strcasecmp(bmode, "yes") || !strcasecmp(bmode, "mst")) {
 			broadcast_mode = BMODE_MST;
-		else if(!strcasecmp(bmode, "direct"))
+		} else if(!strcasecmp(bmode, "direct")) {
 			broadcast_mode = BMODE_DIRECT;
-		else {
+		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid broadcast mode!");
 			return false;
 		}
+
 		free(bmode);
 	}
 
-	const char* const DEFAULT_BROADCAST_SUBNETS[] = { "ff:ff:ff:ff:ff:ff", "255.255.255.255", "224.0.0.0/4", "ff00::/8" };
-	for (size_t i = 0; i < sizeof(DEFAULT_BROADCAST_SUBNETS) / sizeof(*DEFAULT_BROADCAST_SUBNETS); i++) {
+	const char *const DEFAULT_BROADCAST_SUBNETS[] = { "ff:ff:ff:ff:ff:ff", "255.255.255.255", "224.0.0.0/4", "ff00::/8" };
+
+	for(size_t i = 0; i < sizeof(DEFAULT_BROADCAST_SUBNETS) / sizeof(*DEFAULT_BROADCAST_SUBNETS); i++) {
 		subnet_t *s = new_subnet();
-		if (!str2net(s, DEFAULT_BROADCAST_SUBNETS[i]))
+
+		if(!str2net(s, DEFAULT_BROADCAST_SUBNETS[i])) {
 			abort();
+		}
+
 		subnet_add(NULL, s);
 	}
-	for (config_t* cfg = lookup_config(config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+
+	for(config_t *cfg = lookup_config(config_tree, "BroadcastSubnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 		subnet_t *s;
-		if (!get_config_subnet(cfg, &s))
+
+		if(!get_config_subnet(cfg, &s)) {
 			continue;
+		}
+
 		subnet_add(NULL, s);
 	}
 
 #if !defined(IPPROTO_IP) || !defined(IP_TOS)
-	if(priorityinheritance)
+
+	if(priorityinheritance) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv4 connections", "PriorityInheritance");
+	}
+
 #endif
 
 #if !defined(IPPROTO_IPV6) || !defined(IPV6_TCLASS)
-	if(priorityinheritance)
+
+	if(priorityinheritance) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv6 connections", "PriorityInheritance");
+	}
+
 #endif
 
-	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
+	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire)) {
 		macexpire = 600;
+	}
 
 	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus maximum timeout!");
 			return false;
 		}
-	} else
+	} else {
 		maxtimeout = 900;
+	}
 
 	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
-		if(!strcasecmp(afname, "IPv4"))
+		if(!strcasecmp(afname, "IPv4")) {
 			addressfamily = AF_INET;
-		else if(!strcasecmp(afname, "IPv6"))
+		} else if(!strcasecmp(afname, "IPv6")) {
 			addressfamily = AF_INET6;
-		else if(!strcasecmp(afname, "any"))
+		} else if(!strcasecmp(afname, "any")) {
 			addressfamily = AF_UNSPEC;
-		else {
+		} else {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid address family!");
 			return false;
 		}
+
 		free(afname);
 	}
 
 	get_config_bool(lookup_config(config_tree, "Hostnames"), &hostnames);
 
-	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
+	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime)) {
 		keylifetime = 3600;
+	}
 
 	config_t *cfg = lookup_config(config_tree, "AutoConnect");
+
 	if(cfg) {
 		if(!get_config_bool(cfg, &autoconnect)) {
 			// Some backwards compatibility with when this option was an int
@@ -611,8 +700,9 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
 
-	if(!get_config_int(lookup_config(config_tree, "InvitationExpire"), &invitation_lifetime))
-		invitation_lifetime = 604800; // 1 week
+	if(!get_config_int(lookup_config(config_tree, "InvitationExpire"), &invitation_lifetime)) {
+		invitation_lifetime = 604800;        // 1 week
+	}
 
 	read_invitation_key();
 
@@ -627,25 +717,33 @@ static bool add_listen_address(char *address, bool bindto) {
 
 	if(address) {
 		char *space = strchr(address, ' ');
+
 		if(space) {
 			*space++ = 0;
 			port = space;
 		}
 
-		if(!strcmp(address, "*"))
+		if(!strcmp(address, "*")) {
 			*address = 0;
+		}
 	}
 
 	struct addrinfo *ai, hint = {0};
+
 	hint.ai_family = addressfamily;
+
 	hint.ai_socktype = SOCK_STREAM;
+
 	hint.ai_protocol = IPPROTO_TCP;
+
 	hint.ai_flags = AI_PASSIVE;
 
 #if HAVE_DECL_RES_INIT
 	res_init();
+
 #endif
 	int err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
+
 	free(address);
 
 	if(err || !ai) {
@@ -663,8 +761,9 @@ static bool add_listen_address(char *address, bool bindto) {
 				break;
 			}
 
-		if(found)
+		if(found) {
 			continue;
+		}
 
 		if(listen_sockets >= MAXSOCKETS) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Too many listening sockets");
@@ -673,8 +772,9 @@ static bool add_listen_address(char *address, bool bindto) {
 
 		int tcp_fd = setup_listen_socket((sockaddr_t *) aip->ai_addr);
 
-		if(tcp_fd < 0)
+		if(tcp_fd < 0) {
 			continue;
+		}
 
 		int udp_fd = setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
 
@@ -702,8 +802,9 @@ static bool add_listen_address(char *address, bool bindto) {
 }
 
 void device_enable(void) {
-	if (devops.enable)
+	if(devops.enable) {
 		devops.enable();
+	}
 
 	/* Run tinc-up script to further initialize the tap interface */
 
@@ -719,8 +820,9 @@ void device_disable(void) {
 	execute_script("tinc-down", &env);
 	environment_exit(&env);
 
-	if (devops.disable)
+	if(devops.disable) {
 		devops.disable();
+	}
 }
 
 /*
@@ -743,10 +845,11 @@ static bool setup_myself(void) {
 	myself->connection->name = xstrdup(name);
 	read_host_config(config_tree, name);
 
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)) {
 		myport = xstrdup("655");
-	else
+	} else {
 		port_specified = true;
+	}
 
 	myself->connection->options = 0;
 	myself->connection->protocol_major = PROT_MAJOR;
@@ -756,18 +859,24 @@ static bool setup_myself(void) {
 
 #ifdef DISABLE_LEGACY
 	experimental = read_ecdsa_private_key();
+
 	if(!experimental) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "No private key available, cannot start tinc!");
 		return false;
 	}
+
 #else
+
 	if(!get_config_bool(lookup_config(config_tree, "ExperimentalProtocol"), &experimental)) {
 		experimental = read_ecdsa_private_key();
-		if(!experimental)
+
+		if(!experimental) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Support for SPTPS disabled.");
+		}
 	} else {
-		if(experimental && !read_ecdsa_private_key())
+		if(experimental && !read_ecdsa_private_key()) {
 			return false;
+		}
 	}
 
 	if(!read_rsa_private_key()) {
@@ -778,6 +887,7 @@ static bool setup_myself(void) {
 			return false;
 		}
 	}
+
 #endif
 
 	/* Ensure myport is numeric */
@@ -785,8 +895,11 @@ static bool setup_myself(void) {
 	if(!atoi(myport)) {
 		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
 		sockaddr_t sa;
-		if(!ai || !ai->ai_addr)
+
+		if(!ai || !ai->ai_addr) {
 			return false;
+		}
+
 		free(myport);
 		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
 		sockaddr2str(&sa, NULL, &myport);
@@ -797,16 +910,18 @@ static bool setup_myself(void) {
 	for(config_t *cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 		subnet_t *subnet;
 
-		if(!get_config_subnet(cfg, &subnet))
+		if(!get_config_subnet(cfg, &subnet)) {
 			return false;
+		}
 
 		subnet_add(myself, subnet);
 	}
 
 	/* Check some options */
 
-	if(!setup_myself_reloadable())
+	if(!setup_myself_reloadable()) {
 		return false;
+	}
 
 	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
@@ -834,11 +949,13 @@ static bool setup_myself(void) {
 	}
 
 	int replaywin_int;
+
 	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {
 		if(replaywin_int < 0) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "ReplayWindow cannot be negative!");
 			return false;
 		}
+
 		replaywin = (unsigned)replaywin_int;
 		sptps_replaywin = replaywin;
 	}
@@ -846,8 +963,9 @@ static bool setup_myself(void) {
 #ifndef DISABLE_LEGACY
 	/* Generate packet encryption key */
 
-	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
+	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher)) {
 		cipher = xstrdup("aes-256-cbc");
+	}
 
 	if(!strcasecmp(cipher, "none")) {
 		myself->incipher = NULL;
@@ -858,7 +976,9 @@ static bool setup_myself(void) {
 
 	free(cipher);
 
-	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval){keylifetime, rand() % 100000});
+	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval) {
+		keylifetime, rand() % 100000
+	});
 
 	/* Check if we want to use message authentication codes... */
 
@@ -870,8 +990,9 @@ static bool setup_myself(void) {
 		return false;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
+	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest)) {
 		digest = xstrdup("sha256");
+	}
 
 	if(!strcasecmp(digest, "none")) {
 		myself->indigest = NULL;
@@ -890,8 +1011,9 @@ static bool setup_myself(void) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
 			return false;
 		}
-	} else
+	} else {
 		myself->incompression = 0;
+	}
 
 	myself->connection->outcompression = 0;
 
@@ -913,32 +1035,40 @@ static bool setup_myself(void) {
 	devops = os_devops;
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
-		if(!strcasecmp(type, "dummy"))
+		if(!strcasecmp(type, "dummy")) {
 			devops = dummy_devops;
-		else if(!strcasecmp(type, "raw_socket"))
+		} else if(!strcasecmp(type, "raw_socket")) {
 			devops = raw_socket_devops;
-		else if(!strcasecmp(type, "multicast"))
+		} else if(!strcasecmp(type, "multicast")) {
 			devops = multicast_devops;
-		else if(!strcasecmp(type, "fd"))
+		} else if(!strcasecmp(type, "fd")) {
 			devops = fd_devops;
+		}
+
 #ifdef ENABLE_UML
-		else if(!strcasecmp(type, "uml"))
+		else if(!strcasecmp(type, "uml")) {
 			devops = uml_devops;
+		}
+
 #endif
 #ifdef ENABLE_VDE
-		else if(!strcasecmp(type, "vde"))
+		else if(!strcasecmp(type, "vde")) {
 			devops = vde_devops;
+		}
+
 #endif
 		free(type);
 	}
 
 	get_config_bool(lookup_config(config_tree, "DeviceStandby"), &device_standby);
 
-	if(!devops.setup())
+	if(!devops.setup()) {
 		return false;
+	}
 
-	if(device_fd >= 0)
+	if(device_fd >= 0) {
 		io_add(&device_io, handle_device_data, NULL, device_fd, IO_READ);
+	}
 
 	/* Open sockets */
 
@@ -958,6 +1088,7 @@ static bool setup_myself(void) {
 
 		for(int i = 0; i < listen_sockets; i++) {
 			salen = sizeof(sa);
+
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(sockerrno));
 				return false;
@@ -968,8 +1099,10 @@ static bool setup_myself(void) {
 #endif
 
 			int udp_fd = setup_vpn_in_socket(&sa);
-			if(udp_fd < 0)
+
+			if(udp_fd < 0) {
 				return false;
+			}
 
 			io_add(&listen_socket[i].tcp, (io_cb_t)handle_new_meta_connection, &listen_socket[i], i + 3, IO_READ);
 			io_add(&listen_socket[i].udp, (io_cb_t)handle_incoming_vpn_data, &listen_socket[i], udp_fd, IO_READ);
@@ -989,20 +1122,25 @@ static bool setup_myself(void) {
 		for(config_t *cfg = lookup_config(config_tree, "BindToAddress"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 			cfgs++;
 			get_config_string(cfg, &address);
-			if(!add_listen_address(address, true))
+
+			if(!add_listen_address(address, true)) {
 				return false;
+			}
 		}
 
 		for(config_t *cfg = lookup_config(config_tree, "ListenAddress"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 			cfgs++;
 			get_config_string(cfg, &address);
-			if(!add_listen_address(address, false))
+
+			if(!add_listen_address(address, false)) {
 				return false;
+			}
 		}
 
 		if(!cfgs)
-			if(!add_listen_address(address, NULL))
+			if(!add_listen_address(address, NULL)) {
 				return false;
+			}
 	}
 
 	if(!listen_sockets) {
@@ -1015,11 +1153,14 @@ static bool setup_myself(void) {
 	if(!port_specified || atoi(myport) == 0) {
 		sockaddr_t sa;
 		socklen_t salen = sizeof(sa);
+
 		if(!getsockname(listen_socket[0].udp.fd, &sa.sa, &salen)) {
 			free(myport);
 			sockaddr2str(&sa, NULL, &myport);
-			if(!myport)
+
+			if(!myport) {
 				myport = xstrdup("655");
+			}
 		}
 	}
 
@@ -1030,14 +1171,18 @@ static bool setup_myself(void) {
 	get_config_string(lookup_config(config_tree, "UPnP"), &upnp);
 	bool upnp_tcp = false;
 	bool upnp_udp = false;
-	if (upnp) {
-		if (!strcasecmp(upnp, "yes"))
+
+	if(upnp) {
+		if(!strcasecmp(upnp, "yes")) {
 			upnp_tcp = upnp_udp = true;
-		else if (!strcasecmp(upnp, "udponly"))
+		} else if(!strcasecmp(upnp, "udponly")) {
 			upnp_udp = true;
+		}
+
 		free(upnp);
 	}
-	if (upnp_tcp || upnp_udp) {
+
+	if(upnp_tcp || upnp_udp) {
 #ifdef HAVE_MINIUPNPC
 		upnp_init(upnp_tcp, upnp_udp);
 #else
@@ -1066,25 +1211,33 @@ bool setup_network(void) {
 		if(pinginterval < 1) {
 			pinginterval = 86400;
 		}
-	} else
+	} else {
 		pinginterval = 60;
+	}
 
-	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout))
+	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout)) {
 		pingtimeout = 5;
-	if(pingtimeout < 1 || pingtimeout > pinginterval)
+	}
+
+	if(pingtimeout < 1 || pingtimeout > pinginterval) {
 		pingtimeout = pinginterval;
+	}
 
-	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
+	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize)) {
 		maxoutbufsize = 10 * MTU;
+	}
 
-	if(!setup_myself())
+	if(!setup_myself()) {
 		return false;
+	}
 
-	if(!init_control())
+	if(!init_control()) {
 		return false;
+	}
 
-	if (!device_standby)
+	if(!device_standby) {
 		device_enable();
+	}
 
 	/* Run subnet-up scripts for our own subnets */
 
@@ -1100,15 +1253,19 @@ void close_network_connections(void) {
 	for(list_node_t *node = connection_list->head, *next; node; node = next) {
 		next = node->next;
 		connection_t *c = node->data;
+
 		/* Keep control connections open until the end, so they know when we really terminated */
-		if(c->status.control)
+		if(c->status.control) {
 			c->socket = -1;
+		}
+
 		c->outgoing = NULL;
 		terminate_connection(c, false);
 	}
 
-	if(outgoing_list)
+	if(outgoing_list) {
 		list_delete_list(outgoing_list);
+	}
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
@@ -1128,15 +1285,19 @@ void close_network_connections(void) {
 	exit_nodes();
 	exit_connections();
 
-	if (!device_standby)
+	if(!device_standby) {
 		device_disable();
+	}
 
 	free(myport);
 
-	if (device_fd >= 0)
+	if(device_fd >= 0) {
 		io_del(&device_io);
-	if (devops.close)
+	}
+
+	if(devops.close) {
 		devops.close();
+	}
 
 	exit_control();
 

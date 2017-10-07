@@ -52,13 +52,16 @@ static void device_issue_read() {
 	device_read_overlapped.OffsetHigh = 0;
 
 	int status;
-	for (;;) {
+
+	for(;;) {
 		DWORD len;
 		status = ReadFile(device_handle, (void *)device_read_packet.data, MTU, &len, &device_read_overlapped);
-		if (!status) {
-			if (GetLastError() != ERROR_IO_PENDING)
+
+		if(!status) {
+			if(GetLastError() != ERROR_IO_PENDING)
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-					   device, strerror(errno));
+				       device, strerror(errno));
+
 			break;
 		}
 
@@ -72,9 +75,10 @@ static void device_handle_read(void *data, int flags) {
 	ResetEvent(device_read_overlapped.hEvent);
 
 	DWORD len;
-	if (!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
+
+	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error getting read result from %s %s: %s", device_info,
-			   device, strerror(errno));
+		       device, strerror(errno));
 		return;
 	}
 
@@ -101,8 +105,9 @@ static bool setup_device(void) {
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
-	if(device && iface)
+	if(device && iface) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");
+	}
 
 	/* Open registry and look for network adapters */
 
@@ -111,44 +116,51 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	for (i = 0; ; i++) {
+	for(i = 0; ; i++) {
 		len = sizeof(adapterid);
-		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
+
+		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL)) {
 			break;
+		}
 
 		/* Find out more about this adapter */
 
 		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
-		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2)) {
 			continue;
+		}
 
 		len = sizeof(adaptername);
 		err = RegQueryValueEx(key2, "Name", 0, 0, (LPBYTE)adaptername, &len);
 
 		RegCloseKey(key2);
 
-		if(err)
+		if(err) {
 			continue;
+		}
 
 		if(device) {
 			if(!strcmp(device, adapterid)) {
 				found = true;
 				break;
-			} else
+			} else {
 				continue;
+			}
 		}
 
 		if(iface) {
 			if(!strcmp(iface, adaptername)) {
 				found = true;
 				break;
-			} else
+			} else {
 				continue;
+			}
 		}
 
 		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
+
 		if(device_handle != INVALID_HANDLE_VALUE) {
 			found = true;
 			break;
@@ -162,11 +174,13 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	if(!device)
+	if(!device) {
 		device = xstrdup(adapterid);
+	}
 
-	if(!iface)
+	if(!iface) {
 		iface = xstrdup(adaptername);
+	}
 
 	/* Try to open the corresponding tap device */
 
@@ -185,17 +199,18 @@ static bool setup_device(void) {
 	{
 		ULONG info[3] = {0};
 		DWORD len;
-		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof(info), &info, sizeof info, &len, NULL))
+
+		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof(info), &info, sizeof info, &len, NULL)) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
-		else {
+		} else {
 			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
 
 			/* Warn if using >=9.21. This is because starting from 9.21, TAP-Win32 seems to use a different, less efficient write path. */
 			if(info[0] == 9 && info[1] >= 21)
 				logger(DEBUG_ALWAYS, LOG_WARNING,
-					"You are using the newer (>= 9.0.0.21, NDIS6) series of TAP-Win32 drivers. "
-					"Using these drivers with tinc is not recommanded as it can result in poor performance. "
-					"You might want to revert back to 9.0.0.9 instead.");
+				       "You are using the newer (>= 9.0.0.21, NDIS6) series of TAP-Win32 drivers. "
+				       "Using these drivers with tinc is not recommanded as it can result in poor performance. "
+				       "You might want to revert back to 9.0.0.9 instead.");
 		}
 	}
 
@@ -257,19 +272,27 @@ static void close_device(void) {
 	   before we close the event it's referencing. */
 
 	DWORD len;
-	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED)
+
+	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s read to cancel: %s", device_info, device, winerror(GetLastError()));
-	if(device_write_packet.len > 0 && !GetOverlappedResult(device_handle, &device_write_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED)
+	}
+
+	if(device_write_packet.len > 0 && !GetOverlappedResult(device_handle, &device_write_overlapped, &len, TRUE) && GetLastError() != ERROR_OPERATION_ABORTED) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not wait for %s %s write to cancel: %s", device_info, device, winerror(GetLastError()));
+	}
+
 	device_write_packet.len = 0;
 
 	CloseHandle(device_read_overlapped.hEvent);
 	CloseHandle(device_write_overlapped.hEvent);
 
-	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
+	CloseHandle(device_handle);
+	device_handle = INVALID_HANDLE_VALUE;
 
-	free(device); device = NULL;
-	free(iface); iface = NULL;
+	free(device);
+	device = NULL;
+	free(iface);
+	iface = NULL;
 	device_info = NULL;
 }
 
@@ -281,7 +304,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	DWORD outlen;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
-			   packet->len, device_info);
+	       packet->len, device_info);
 
 	if(device_write_packet.len > 0) {
 		/* Make sure the previous write operation is finished before we start the next one;
@@ -299,9 +322,9 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	memcpy(&device_write_packet, packet, sizeof(*packet));
 
-	if(WriteFile(device_handle, DATA(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped))
+	if(WriteFile(device_handle, DATA(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped)) {
 		device_write_packet.len = 0;
-	else if (GetLastError() != ERROR_IO_PENDING) {
+	} else if(GetLastError() != ERROR_IO_PENDING) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}

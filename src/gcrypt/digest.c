@@ -37,7 +37,7 @@ static struct {
 static bool nametodigest(const char *name, int *algo) {
 	int i;
 
-	for(i = 0; i < sizeof(digesttable) / sizeof *digesttable; i++) {
+	for(i = 0; i < sizeof(digesttable) / sizeof * digesttable; i++) {
 		if(digesttable[i].name && !strcasecmp(name, digesttable[i].name)) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -50,7 +50,7 @@ static bool nametodigest(const char *name, int *algo) {
 static bool nidtodigest(int nid, int *algo) {
 	int i;
 
-	for(i = 0; i < sizeof(digesttable) / sizeof *digesttable; i++) {
+	for(i = 0; i < sizeof(digesttable) / sizeof * digesttable; i++) {
 		if(nid == digesttable[i].nid) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -63,7 +63,7 @@ static bool nidtodigest(int nid, int *algo) {
 static bool digesttonid(int algo, int *nid) {
 	int i;
 
-	for(i = 0; i < sizeof(digesttable) / sizeof *digesttable; i++) {
+	for(i = 0; i < sizeof(digesttable) / sizeof * digesttable; i++) {
 		if(algo == digesttable[i].algo) {
 			*nid = digesttable[i].nid;
 			return true;
@@ -81,10 +81,11 @@ static bool digest_open(digest_t *digest, int algo, int maclength) {
 
 	unsigned int len = gcry_md_get_algo_dlen(algo);
 
-	if(maclength > len || maclength < 0)
+	if(maclength > len || maclength < 0) {
 		digest->maclength = len;
-	else
+	} else {
 		digest->maclength = maclength;
+	}
 
 	digest->algo = algo;
 	digest->hmac = NULL;
@@ -119,16 +120,21 @@ bool digest_open_sha1(digest_t *digest, int maclength) {
 }
 
 void digest_close(digest_t *digest) {
-	if(digest->hmac)
+	if(digest->hmac) {
 		gcry_md_close(digest->hmac);
+	}
+
 	digest->hmac = NULL;
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {
-	if(!digest->hmac)
+	if(!digest->hmac) {
 		gcry_md_open(&digest->hmac, digest->algo, GCRY_MD_FLAG_HMAC);
-	if(!digest->hmac)
+	}
+
+	if(!digest->hmac) {
 		return false;
+	}
 
 	return !gcry_md_setkey(digest->hmac, key, len);
 }
@@ -141,8 +147,11 @@ bool digest_create(digest_t *digest, const void *indata, size_t inlen, void *out
 		gcry_md_reset(digest->hmac);
 		gcry_md_write(digest->hmac, indata, inlen);
 		tmpdata = gcry_md_read(digest->hmac, digest->algo);
-		if(!tmpdata)
+
+		if(!tmpdata) {
 			return false;
+		}
+
 		memcpy(outdata, tmpdata, digest->maclength);
 	} else {
 		char tmpdata[len];

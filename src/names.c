@@ -46,87 +46,116 @@ void make_names(bool daemon) {
 #endif
 	confbase_given = confbase;
 
-	if(netname && confbase)
+	if(netname && confbase) {
 		logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
+	}
 
-	if(netname)
+	if(netname) {
 		xasprintf(&identname, "tinc.%s", netname);
-	else
+	} else {
 		identname = xstrdup("tinc");
+	}
 
 #ifdef HAVE_MINGW
+
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			confdir = xstrdup(installdir);
+
 			if(!confbase) {
-				if(netname)
+				if(netname) {
 					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
-				else
+				} else {
 					xasprintf(&confbase, "%s", installdir);
+				}
 			}
-			if(!logfilename)
+
+			if(!logfilename) {
 				xasprintf(&logfilename, "%s" SLASH "tinc.log", confbase);
+			}
 		}
+
 		RegCloseKey(key);
 	}
+
 #endif
-	if(!confdir)
+
+	if(!confdir) {
 		confdir = xstrdup(CONFDIR SLASH "tinc");
+	}
 
 	if(!confbase) {
-		if(netname)
+		if(netname) {
 			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
-		else
+		} else {
 			xasprintf(&confbase, CONFDIR SLASH "tinc");
+		}
 	}
 
 #ifdef HAVE_MINGW
-	if(!logfilename)
-		xasprintf(&logfilename, "%s" SLASH "log", confbase);
 
-	if(!pidfilename)
+	if(!logfilename) {
+		xasprintf(&logfilename, "%s" SLASH "log", confbase);
+	}
+
+	if(!pidfilename) {
 		xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
+	}
+
 #else
 	bool fallback = false;
+
 	if(daemon) {
-		if(access(LOCALSTATEDIR, R_OK | W_OK | X_OK))
+		if(access(LOCALSTATEDIR, R_OK | W_OK | X_OK)) {
 			fallback = true;
+		}
 	} else {
 		char fname[PATH_MAX];
 		snprintf(fname, sizeof(fname), LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
+
 		if(access(fname, R_OK)) {
 			snprintf(fname, sizeof(fname), "%s" SLASH "pid", confbase);
-			if(!access(fname, R_OK))
+
+			if(!access(fname, R_OK)) {
 				fallback = true;
+			}
 		}
 	}
 
 	if(!fallback) {
-		if(!logfilename)
+		if(!logfilename) {
 			xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
-
-		if(!pidfilename)
-			xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
-	} else {
-		if(!logfilename)
-			xasprintf(&logfilename, "%s" SLASH "log", confbase);
+		}
 
 		if(!pidfilename) {
-			if(daemon)
+			xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
+		}
+	} else {
+		if(!logfilename) {
+			xasprintf(&logfilename, "%s" SLASH "log", confbase);
+		}
+
+		if(!pidfilename) {
+			if(daemon) {
 				logger(DEBUG_ALWAYS, LOG_WARNING, "Could not access " LOCALSTATEDIR SLASH " (%s), storing pid and socket files in %s" SLASH, strerror(errno), confbase);
+			}
+
 			xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
 		}
 	}
+
 #endif
 
 	if(!unixsocketname) {
 		int len = strlen(pidfilename);
 		unixsocketname = xmalloc(len + 8);
 		memcpy(unixsocketname, pidfilename, len);
-		if(len > 4 && !strcmp(pidfilename + len - 4, ".pid"))
+
+		if(len > 4 && !strcmp(pidfilename + len - 4, ".pid")) {
 			strncpy(unixsocketname + len - 4, ".socket", 8);
-		else
+		} else {
 			strncpy(unixsocketname + len, ".socket", 8);
+		}
 	}
 }
 

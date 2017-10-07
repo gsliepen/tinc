@@ -103,8 +103,9 @@ static bool send_record_priv_datagram(sptps_t *s, uint8_t type, const void *data
 }
 // Send a record (private version, accepts all record types, handles encryption and authentication).
 static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
-	if(s->datagram)
+	if(s->datagram) {
 		return send_record_priv_datagram(s, type, data, len);
+	}
 
 	char buffer[len + 19UL];
 
@@ -130,11 +131,13 @@ static bool send_record_priv(sptps_t *s, uint8_t type, const void *data, uint16_
 bool sptps_send_record(sptps_t *s, uint8_t type, const void *data, uint16_t len) {
 	// Sanity checks: application cannot send data before handshake is finished,
 	// and only record types 0..127 are allowed.
-	if(!s->outstate)
+	if(!s->outstate) {
 		return error(s, EINVAL, "Handshake phase not finished yet");
+	}
 
-	if(type >= SPTPS_HANDSHAKE)
+	if(type >= SPTPS_HANDSHAKE) {
 		return error(s, EINVAL, "Invalid application record type");
+	}
 
 	return send_record_priv(s, type, data, len);
 }
@@ -144,11 +147,15 @@ static bool send_kex(sptps_t *s) {
 	size_t keylen = ECDH_SIZE;
 
 	// Make room for our KEX message, which we will keep around since send_sig() needs it.
-	if(s->mykex)
+	if(s->mykex) {
 		return false;
+	}
+
 	s->mykex = realloc(s->mykex, 1 + 32 + keylen);
-	if(!s->mykex)
+
+	if(!s->mykex) {
 		return error(s, errno, strerror(errno));
+	}
 
 	// Set version byte to zero.
 	s->mykex[0] = SPTPS_VERSION;
@@ -157,8 +164,9 @@ static bool send_kex(sptps_t *s) {
 	randomize(s->mykex + 1, 32);
 
 	// Create a new ECDH public key.
-	if(!(s->ecdh = ecdh_generate_public(s->mykex + 1 + 32)))
+	if(!(s->ecdh = ecdh_generate_public(s->mykex + 1 + 32))) {
 		return error(s, EINVAL, "Failed to generate ECDH public key");
+	}
 
 	return send_record_priv(s, SPTPS_HANDSHAKE, s->mykex, 1 + 32 + keylen);
 }
@@ -178,8 +186,9 @@ static bool send_sig(sptps_t *s) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Sign the result.
-	if(!ecdsa_sign(s->mykey, msg, sizeof(msg), sig))
+	if(!ecdsa_sign(s->mykey, msg, sizeof(msg), sig)) {
 		return error(s, EINVAL, "Failed to sign SIG record");
+	}
 
 	// Send the SIG exchange record.
 	return send_record_priv(s, SPTPS_HANDSHAKE, sig, sizeof(sig));
@@ -191,20 +200,25 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 	if(!s->outstate) {
 		s->incipher = chacha_poly1305_init();
 		s->outcipher = chacha_poly1305_init();
-		if(!s->incipher || !s->outcipher)
+
+		if(!s->incipher || !s->outcipher) {
 			return error(s, EINVAL, "Failed to open cipher");
+		}
 	}
 
 	// Allocate memory for key material
 	size_t keylen = 2 * CHACHA_POLY1305_KEYLEN;
 
 	s->key = realloc(s->key, keylen);
-	if(!s->key)
+
+	if(!s->key) {
 		return error(s, errno, strerror(errno));
+	}
 
 	// Create the HMAC seed, which is "key expansion" + session label + server nonce + client nonce
 	char seed[s->labellen + 64 + 13];
 	memcpy(seed, "key expansion", 13);
+
 	if(s->initiator) {
 		memcpy(seed + 13, s->mykex + 1, 32);
 		memcpy(seed + 45, s->hiskex + 1, 32);
@@ -212,11 +226,13 @@ static bool generate_key_material(sptps_t *s, const char *shared, size_t len) {
 		memcpy(seed + 13, s->hiskex + 1, 32);
 		memcpy(seed + 45, s->mykex + 1, 32);
 	}
+
 	memcpy(seed + 77, s->label, s->labellen);
 
 	// Use PRF to generate the key material
-	if(!prf(shared, len, seed, s->labellen + 64 + 13, s->key, keylen))
+	if(!prf(shared, len, seed, s->labellen + 64 + 13, s->key, keylen)) {
 		return error(s, EINVAL, "Failed to generate key material");
+	}
 
 	return true;
 }
@@ -228,15 +244,18 @@ static bool send_ack(sptps_t *s) {
 
 // Receive an ACKnowledgement record.
 static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
-	if(len)
+	if(len) {
 		return error(s, EIO, "Invalid ACK record length");
+	}
 
 	if(s->initiator) {
-		if(!chacha_poly1305_set_key(s->incipher, s->key))
+		if(!chacha_poly1305_set_key(s->incipher, s->key)) {
 			return error(s, EINVAL, "Failed to set counter");
+		}
 	} else {
-		if(!chacha_poly1305_set_key(s->incipher, s->key + CHACHA_POLY1305_KEYLEN))
+		if(!chacha_poly1305_set_key(s->incipher, s->key + CHACHA_POLY1305_KEYLEN)) {
 			return error(s, EINVAL, "Failed to set counter");
+		}
 	}
 
 	free(s->key);
@@ -249,17 +268,22 @@ static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
 // Receive a Key EXchange record, respond by sending a SIG record.
 static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
 	// Verify length of the HELLO record
-	if(len != 1 + 32 + ECDH_SIZE)
+	if(len != 1 + 32 + ECDH_SIZE) {
 		return error(s, EIO, "Invalid KEX record length");
+	}
 
 	// Ignore version number for now.
 
 	// Make a copy of the KEX message, send_sig() and receive_sig() need it
-	if(s->hiskex)
+	if(s->hiskex) {
 		return error(s, EINVAL, "Received a second KEX message before first has been processed");
+	}
+
 	s->hiskex = realloc(s->hiskex, len);
-	if(!s->hiskex)
+
+	if(!s->hiskex) {
 		return error(s, errno, strerror(errno));
+	}
 
 	memcpy(s->hiskex, data, len);
 
@@ -272,8 +296,9 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	size_t siglen = ecdsa_size(s->hiskey);
 
 	// Verify length of KEX record.
-	if(len != siglen)
+	if(len != siglen) {
 		return error(s, EIO, "Invalid KEX record length");
+	}
 
 	// Concatenate both KEX messages, plus tag indicating if it is from the connection originator
 	char msg[(1 + 32 + keylen) * 2 + 1 + s->labellen];
@@ -284,18 +309,23 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Verify signature.
-	if(!ecdsa_verify(s->hiskey, msg, sizeof(msg), data))
+	if(!ecdsa_verify(s->hiskey, msg, sizeof(msg), data)) {
 		return error(s, EIO, "Failed to verify SIG record");
+	}
 
 	// Compute shared secret.
 	char shared[ECDH_SHARED_SIZE];
-	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared))
+
+	if(!ecdh_compute_shared(s->ecdh, s->hiskex + 1 + 32, shared)) {
 		return error(s, EINVAL, "Failed to compute ECDH shared secret");
+	}
+
 	s->ecdh = NULL;
 
 	// Generate key material from shared secret.
-	if(!generate_key_material(s, shared, sizeof(shared)))
+	if(!generate_key_material(s, shared, sizeof(shared))) {
 		return false;
+	}
 
 	free(s->mykex);
 	free(s->hiskex);
@@ -304,16 +334,19 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	s->hiskex = NULL;
 
 	// Send cipher change record
-	if(s->outstate && !send_ack(s))
+	if(s->outstate && !send_ack(s)) {
 		return false;
+	}
 
 	// TODO: only set new keys after ACK has been set/received
 	if(s->initiator) {
-		if(!chacha_poly1305_set_key(s->outcipher, s->key + CHACHA_POLY1305_KEYLEN))
+		if(!chacha_poly1305_set_key(s->outcipher, s->key + CHACHA_POLY1305_KEYLEN)) {
 			return error(s, EINVAL, "Failed to set key");
+		}
 	} else {
-		if(!chacha_poly1305_set_key(s->outcipher, s->key))
+		if(!chacha_poly1305_set_key(s->outcipher, s->key)) {
 			return error(s, EINVAL, "Failed to set key");
+		}
 	}
 
 	return true;
@@ -321,8 +354,9 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 
 // Force another Key EXchange (for testing purposes).
 bool sptps_force_kex(sptps_t *s) {
-	if(!s->outstate || s->state != SPTPS_SECONDARY_KEX)
+	if(!s->outstate || s->state != SPTPS_SECONDARY_KEX) {
 		return error(s, EINVAL, "Cannot force KEX in current state");
+	}
 
 	s->state = SPTPS_KEX;
 	return send_kex(s);
@@ -332,41 +366,59 @@ bool sptps_force_kex(sptps_t *s) {
 static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 	// Only a few states to deal with handshaking.
 	switch(s->state) {
-		case SPTPS_SECONDARY_KEX:
-			// We receive a secondary KEX request, first respond by sending our own.
-			if(!send_kex(s))
+	case SPTPS_SECONDARY_KEX:
+
+		// We receive a secondary KEX request, first respond by sending our own.
+		if(!send_kex(s)) {
+			return false;
+		}
+
+	case SPTPS_KEX:
+
+		// We have sent our KEX request, we expect our peer to sent one as well.
+		if(!receive_kex(s, data, len)) {
+			return false;
+		}
+
+		s->state = SPTPS_SIG;
+		return true;
+
+	case SPTPS_SIG:
+
+		// If we already sent our secondary public ECDH key, we expect the peer to send his.
+		if(!receive_sig(s, data, len)) {
+			return false;
+		}
+
+		if(s->outstate) {
+			s->state = SPTPS_ACK;
+		} else {
+			s->outstate = true;
+
+			if(!receive_ack(s, NULL, 0)) {
 				return false;
-		case SPTPS_KEX:
-			// We have sent our KEX request, we expect our peer to sent one as well.
-			if(!receive_kex(s, data, len))
-				return false;
-			s->state = SPTPS_SIG;
-			return true;
-		case SPTPS_SIG:
-			// If we already sent our secondary public ECDH key, we expect the peer to send his.
-			if(!receive_sig(s, data, len))
-				return false;
-			if(s->outstate)
-				s->state = SPTPS_ACK;
-			else {
-				s->outstate = true;
-				if(!receive_ack(s, NULL, 0))
-					return false;
-				s->receive_record(s->handle, SPTPS_HANDSHAKE, NULL, 0);
-				s->state = SPTPS_SECONDARY_KEX;
 			}
 
-			return true;
-		case SPTPS_ACK:
-			// We expect a handshake message to indicate transition to the new keys.
-			if(!receive_ack(s, data, len))
-				return false;
 			s->receive_record(s->handle, SPTPS_HANDSHAKE, NULL, 0);
 			s->state = SPTPS_SECONDARY_KEX;
-			return true;
-		// TODO: split ACK into a VERify and ACK?
-		default:
-			return error(s, EIO, "Invalid session state %d", s->state);
+		}
+
+		return true;
+
+	case SPTPS_ACK:
+
+		// We expect a handshake message to indicate transition to the new keys.
+		if(!receive_ack(s, data, len)) {
+			return false;
+		}
+
+		s->receive_record(s->handle, SPTPS_HANDSHAKE, NULL, 0);
+		s->state = SPTPS_SECONDARY_KEX;
+		return true;
+
+	// TODO: split ACK into a VERify and ACK?
+	default:
+		return error(s, EIO, "Invalid session state %d", s->state);
 	}
 }
 
@@ -381,44 +433,54 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 			if(seqno >= s->inseqno + s->replaywin * 8) {
 				// Prevent packets that jump far ahead of the queue from causing many others to be dropped.
 				bool farfuture = s->farfuture < s->replaywin >> 2;
-				if (update_state)
+
+				if(update_state) {
 					s->farfuture++;
-				if(farfuture)
+				}
+
+				if(farfuture) {
 					return update_state ? error(s, EIO, "Packet is %d seqs in the future, dropped (%u)\n", seqno - s->inseqno, s->farfuture) : false;
+				}
 
 				// Unless we have seen lots of them, in which case we consider the others lost.
-				if(update_state)
+				if(update_state) {
 					warning(s, "Lost %d packets\n", seqno - s->inseqno);
-				if (update_state) {
+				}
+
+				if(update_state) {
 					// Mark all packets in the replay window as being late.
 					memset(s->late, 255, s->replaywin);
 				}
-			} else if (seqno < s->inseqno) {
+			} else if(seqno < s->inseqno) {
 				// If the sequence number is farther in the past than the bitmap goes, or if the packet was already received, drop it.
-				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8)))
+				if((s->inseqno >= s->replaywin * 8 && seqno < s->inseqno - s->replaywin * 8) || !(s->late[(seqno / 8) % s->replaywin] & (1 << seqno % 8))) {
 					return update_state ? error(s, EIO, "Received late or replayed packet, seqno %d, last received %d\n", seqno, s->inseqno) : false;
-			} else if (update_state) {
+				}
+			} else if(update_state) {
 				// We missed some packets. Mark them in the bitmap as being late.
-				for(int i = s->inseqno; i < seqno; i++)
+				for(int i = s->inseqno; i < seqno; i++) {
 					s->late[(i / 8) % s->replaywin] |= 1 << i % 8;
+				}
 			}
 		}
 
-		if (update_state) {
+		if(update_state) {
 			// Mark the current packet as not being late.
 			s->late[(seqno / 8) % s->replaywin] &= ~(1 << seqno % 8);
 			s->farfuture = 0;
 		}
 	}
 
-	if (update_state) {
-		if(seqno >= s->inseqno)
+	if(update_state) {
+		if(seqno >= s->inseqno) {
 			s->inseqno = seqno + 1;
+		}
 
-		if(!s->inseqno)
+		if(!s->inseqno) {
 			s->received = 0;
-		else
+		} else {
 			s->received++;
+		}
 	}
 
 	return true;
@@ -426,14 +488,17 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 
 // Check datagram for valid HMAC
 bool sptps_verify_datagram(sptps_t *s, const void *data, size_t len) {
-	if(!s->instate || len < 21)
+	if(!s->instate || len < 21) {
 		return error(s, EIO, "Received short packet");
+	}
 
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
-	if (!sptps_check_seqno(s, seqno, false))
+
+	if(!sptps_check_seqno(s, seqno, false)) {
 		return false;
+	}
 
 	char buffer[len];
 	size_t outlen;
@@ -442,24 +507,29 @@ bool sptps_verify_datagram(sptps_t *s, const void *data, size_t len) {
 
 // Receive incoming data, datagram version.
 static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len) {
-	if(len < (s->instate ? 21 : 5))
+	if(len < (s->instate ? 21 : 5)) {
 		return error(s, EIO, "Received short packet");
+	}
 
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
-	data += 4; len -= 4;
+	data += 4;
+	len -= 4;
 
 	if(!s->instate) {
-		if(seqno != s->inseqno)
+		if(seqno != s->inseqno) {
 			return error(s, EIO, "Invalid packet seqno: %d != %d", seqno, s->inseqno);
+		}
 
 		s->inseqno = seqno + 1;
 
-		uint8_t type = *(data++); len--;
+		uint8_t type = *(data++);
+		len--;
 
-		if(type != SPTPS_HANDSHAKE)
+		if(type != SPTPS_HANDSHAKE) {
 			return error(s, EIO, "Application record received before handshake finished");
+		}
 
 		return receive_handshake(s, data, len);
 	}
@@ -468,11 +538,14 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 
 	char buffer[len];
 	size_t outlen;
-	if(!chacha_poly1305_decrypt(s->incipher, seqno, data, len, buffer, &outlen))
-		return error(s, EIO, "Failed to decrypt and verify packet");
 
-	if(!sptps_check_seqno(s, seqno, true))
+	if(!chacha_poly1305_decrypt(s->incipher, seqno, data, len, buffer, &outlen)) {
+		return error(s, EIO, "Failed to decrypt and verify packet");
+	}
+
+	if(!sptps_check_seqno(s, seqno, true)) {
 		return false;
+	}
 
 	// Append a NULL byte for safety.
 	buffer[outlen] = 0;
@@ -480,16 +553,21 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	data = buffer;
 	len = outlen;
 
-	uint8_t type = *(data++); len--;
+	uint8_t type = *(data++);
+	len--;
 
 	if(type < SPTPS_HANDSHAKE) {
-		if(!s->instate)
+		if(!s->instate) {
 			return error(s, EIO, "Application record received before handshake finished");
-		if(!s->receive_record(s->handle, type, data, len))
+		}
+
+		if(!s->receive_record(s->handle, type, data, len)) {
 			return false;
+		}
 	} else if(type == SPTPS_HANDSHAKE) {
-		if(!receive_handshake(s, data, len))
+		if(!receive_handshake(s, data, len)) {
 			return false;
+		}
 	} else {
 		return error(s, EIO, "Invalid record type %d", type);
 	}
@@ -501,17 +579,21 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 	size_t total_read = 0;
 
-	if(!s->state)
+	if(!s->state) {
 		return error(s, EIO, "Invalid session state zero");
+	}
 
-	if(s->datagram)
+	if(s->datagram) {
 		return sptps_receive_data_datagram(s, data, len) ? len : false;
+	}
 
 	// First read the 2 length bytes.
 	if(s->buflen < 2) {
 		size_t toread = 2 - s->buflen;
-		if(toread > len)
+
+		if(toread > len) {
 			toread = len;
+		}
 
 		memcpy(s->inbuf + s->buflen, data, toread);
 
@@ -521,8 +603,9 @@ size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 		data += toread;
 
 		// Exit early if we don't have the full length.
-		if(s->buflen < 2)
+		if(s->buflen < 2) {
 			return total_read;
+		}
 
 		// Get the length bytes
 
@@ -531,26 +614,32 @@ size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 
 		// If we have the length bytes, ensure our buffer can hold the whole request.
 		s->inbuf = realloc(s->inbuf, s->reclen + 19UL);
-		if(!s->inbuf)
+
+		if(!s->inbuf) {
 			return error(s, errno, strerror(errno));
+		}
 
 		// Exit early if we have no more data to process.
-		if(!len)
+		if(!len) {
 			return total_read;
+		}
 	}
 
 	// Read up to the end of the record.
 	size_t toread = s->reclen + (s->instate ? 19UL : 3UL) - s->buflen;
-	if(toread > len)
+
+	if(toread > len) {
 		toread = len;
+	}
 
 	memcpy(s->inbuf + s->buflen, data, toread);
 	total_read += toread;
 	s->buflen += toread;
 
 	// If we don't have a whole record, exit.
-	if(s->buflen < s->reclen + (s->instate ? 19UL : 3UL))
+	if(s->buflen < s->reclen + (s->instate ? 19UL : 3UL)) {
 		return total_read;
+	}
 
 	// Update sequence number.
 
@@ -558,8 +647,9 @@ size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 
 	// Check HMAC and decrypt.
 	if(s->instate) {
-		if(!chacha_poly1305_decrypt(s->incipher, seqno, s->inbuf + 2UL, s->reclen + 17UL, s->inbuf + 2UL, NULL))
+		if(!chacha_poly1305_decrypt(s->incipher, seqno, s->inbuf + 2UL, s->reclen + 17UL, s->inbuf + 2UL, NULL)) {
 			return error(s, EINVAL, "Failed to decrypt and verify record");
+		}
 	}
 
 	// Append a NULL byte for safety.
@@ -568,13 +658,17 @@ size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 	uint8_t type = s->inbuf[2];
 
 	if(type < SPTPS_HANDSHAKE) {
-		if(!s->instate)
+		if(!s->instate) {
 			return error(s, EIO, "Application record received before handshake finished");
-		if(!s->receive_record(s->handle, type, s->inbuf + 3, s->reclen))
+		}
+
+		if(!s->receive_record(s->handle, type, s->inbuf + 3, s->reclen)) {
 			return false;
+		}
 	} else if(type == SPTPS_HANDSHAKE) {
-		if(!receive_handshake(s, s->inbuf + 3, s->reclen))
+		if(!receive_handshake(s, s->inbuf + 3, s->reclen)) {
 			return false;
+		}
 	} else {
 		return error(s, EIO, "Invalid record type %d", type);
 	}
@@ -595,21 +689,30 @@ bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_
 	s->mykey = mykey;
 	s->hiskey = hiskey;
 	s->replaywin = sptps_replaywin;
+
 	if(s->replaywin) {
 		s->late = malloc(s->replaywin);
-		if(!s->late)
+
+		if(!s->late) {
 			return error(s, errno, strerror(errno));
+		}
+
 		memset(s->late, 0, s->replaywin);
 	}
 
 	s->label = malloc(labellen);
-	if(!s->label)
+
+	if(!s->label) {
 		return error(s, errno, strerror(errno));
+	}
 
 	if(!datagram) {
 		s->inbuf = malloc(7);
-		if(!s->inbuf)
+
+		if(!s->inbuf) {
 			return error(s, errno, strerror(errno));
+		}
+
 		s->buflen = 0;
 	}
 

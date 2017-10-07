@@ -32,36 +32,37 @@ typedef RSA rsa_t;
 /* This function prettyprints the key generation process */
 
 static int indicator(int a, int b, BN_GENCB *cb) {
-	switch (a) {
+	switch(a) {
+	case 0:
+		fprintf(stderr, ".");
+		break;
+
+	case 1:
+		fprintf(stderr, "+");
+		break;
+
+	case 2:
+		fprintf(stderr, "-");
+		break;
+
+	case 3:
+		switch(b) {
 		case 0:
-			fprintf(stderr, ".");
+			fprintf(stderr, " p\n");
 			break;
 
 		case 1:
-			fprintf(stderr, "+");
-			break;
-
-		case 2:
-			fprintf(stderr, "-");
-			break;
-
-		case 3:
-			switch (b) {
-				case 0:
-					fprintf(stderr, " p\n");
-					break;
-
-				case 1:
-					fprintf(stderr, " q\n");
-					break;
-
-				default:
-					fprintf(stderr, "?");
-			}
+			fprintf(stderr, " q\n");
 			break;
 
 		default:
 			fprintf(stderr, "?");
+		}
+
+		break;
+
+	default:
+		fprintf(stderr, "?");
 	}
 
 	return 1;
@@ -84,8 +85,9 @@ rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 	rsa_t *rsa = RSA_new();
 	BN_GENCB *cb = BN_GENCB_new();
 
-	if(!bn_e || !rsa || !cb)
+	if(!bn_e || !rsa || !cb) {
 		abort();
+	}
 
 	BN_set_word(bn_e, exponent);
 	BN_GENCB_set(cb, indicator, NULL);

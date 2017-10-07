@@ -27,8 +27,8 @@
 typedef struct ecdh ecdh_t;
 #endif
 
-extern ecdh_t *ecdh_generate_public(void *pubkey) __attribute__ ((__malloc__));
-extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) __attribute__ ((__warn_unused_result__));
+extern ecdh_t *ecdh_generate_public(void *pubkey) __attribute__((__malloc__));
+extern bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) __attribute__((__warn_unused_result__));
 extern void ecdh_free(ecdh_t *ecdh);
 
 #endif

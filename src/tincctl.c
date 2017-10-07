@@ -91,12 +91,12 @@ static struct option const long_options[] = {
 
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
-		   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+	       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
 	printf("Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen and others.\n"
-			"See the AUTHORS file for a complete list.\n\n"
-			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-			"and you are welcome to redistribute it under certain conditions;\n"
-			"see the file COPYING for details.\n");
+	       "See the AUTHORS file for a complete list.\n\n"
+	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+	       "and you are welcome to redistribute it under certain conditions;\n"
+	       "see the file COPYING for details.\n");
 }
 
 static void usage(bool status) {
@@ -105,61 +105,61 @@ static void usage(bool status) {
 	} else {
 		printf("Usage: %s [options] command\n\n", program_name);
 		printf("Valid options are:\n"
-				"  -b, --batch             Don't ask for anything (non-interactive mode).\n"
-				"  -c, --config=DIR        Read configuration options from DIR.\n"
-				"  -n, --net=NETNAME       Connect to net NETNAME.\n"
-				"      --pidfile=FILENAME  Read control cookie from FILENAME.\n"
-				"      --force             Force some commands to work despite warnings.\n"
-				"      --help              Display this help and exit.\n"
-				"      --version           Output version information and exit.\n"
-				"\n"
-				"Valid commands are:\n"
-				"  init [name]                Create initial configuration files.\n"
-				"  get VARIABLE               Print current value of VARIABLE\n"
-				"  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
-				"  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
-				"  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
-				"  start [tincd options]      Start tincd.\n"
-				"  stop                       Stop tincd.\n"
-				"  restart [tincd options]    Restart tincd.\n"
-				"  reload                     Partially reload configuration of running tincd.\n"
-				"  pid                        Show PID of currently running tincd.\n"
+		       "  -b, --batch             Don't ask for anything (non-interactive mode).\n"
+		       "  -c, --config=DIR        Read configuration options from DIR.\n"
+		       "  -n, --net=NETNAME       Connect to net NETNAME.\n"
+		       "      --pidfile=FILENAME  Read control cookie from FILENAME.\n"
+		       "      --force             Force some commands to work despite warnings.\n"
+		       "      --help              Display this help and exit.\n"
+		       "      --version           Output version information and exit.\n"
+		       "\n"
+		       "Valid commands are:\n"
+		       "  init [name]                Create initial configuration files.\n"
+		       "  get VARIABLE               Print current value of VARIABLE\n"
+		       "  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
+		       "  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
+		       "  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
+		       "  start [tincd options]      Start tincd.\n"
+		       "  stop                       Stop tincd.\n"
+		       "  restart [tincd options]    Restart tincd.\n"
+		       "  reload                     Partially reload configuration of running tincd.\n"
+		       "  pid                        Show PID of currently running tincd.\n"
 #ifdef DISABLE_LEGACY
-				"  generate-keys              Generate a new Ed25519 public/private keypair.\n"
+		       "  generate-keys              Generate a new Ed25519 public/private keypair.\n"
 #else
-				"  generate-keys [bits]       Generate new RSA and Ed25519 public/private keypairs.\n"
-				"  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
+		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private keypairs.\n"
+		       "  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
 #endif
-				"  generate-ed25519-keys      Generate a new Ed25519 public/private keypair.\n"
-				"  dump                       Dump a list of one of the following things:\n"
-				"    [reachable] nodes        - all known nodes in the VPN\n"
-				"    edges                    - all known connections in the VPN\n"
-				"    subnets                  - all known subnets in the VPN\n"
-				"    connections              - all meta connections with ourself\n"
-				"    [di]graph                - graph of the VPN in dotty format\n"
-				"    invitations              - outstanding invitations\n"
-				"  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
-				"  purge                      Purge unreachable nodes\n"
-				"  debug N                    Set debug level\n"
-				"  retry                      Retry all outgoing connections\n"
-				"  disconnect NODE            Close meta connection with NODE\n"
+		       "  generate-ed25519-keys      Generate a new Ed25519 public/private keypair.\n"
+		       "  dump                       Dump a list of one of the following things:\n"
+		       "    [reachable] nodes        - all known nodes in the VPN\n"
+		       "    edges                    - all known connections in the VPN\n"
+		       "    subnets                  - all known subnets in the VPN\n"
+		       "    connections              - all meta connections with ourself\n"
+		       "    [di]graph                - graph of the VPN in dotty format\n"
+		       "    invitations              - outstanding invitations\n"
+		       "  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
+		       "  purge                      Purge unreachable nodes\n"
+		       "  debug N                    Set debug level\n"
+		       "  retry                      Retry all outgoing connections\n"
+		       "  disconnect NODE            Close meta connection with NODE\n"
 #ifdef HAVE_CURSES
-				"  top                        Show real-time statistics\n"
+		       "  top                        Show real-time statistics\n"
 #endif
-				"  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
-				"  log [level]                Dump log output [up to the specified level]\n"
-				"  export                     Export host configuration of local node to standard output\n"
-				"  export-all                 Export all host configuration files to standard output\n"
-				"  import                     Import host configuration file(s) from standard input\n"
-				"  exchange                   Same as export followed by import\n"
-				"  exchange-all               Same as export-all followed by import\n"
-				"  invite NODE [...]          Generate an invitation for NODE\n"
-				"  join INVITATION            Join a VPN using an INVITATION\n"
-				"  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
-				"  fsck                       Check the configuration files for problems.\n"
-				"  sign [FILE]                Generate a signed version of a file.\n"
-				"  verify NODE [FILE]         Verify that a file was signed by the given NODE.\n"
-				"\n");
+		       "  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
+		       "  log [level]                Dump log output [up to the specified level]\n"
+		       "  export                     Export host configuration of local node to standard output\n"
+		       "  export-all                 Export all host configuration files to standard output\n"
+		       "  import                     Import host configuration file(s) from standard input\n"
+		       "  exchange                   Same as export followed by import\n"
+		       "  exchange-all               Same as export-all followed by import\n"
+		       "  invite NODE [...]          Generate an invitation for NODE\n"
+		       "  join INVITATION            Join a VPN using an INVITATION\n"
+		       "  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
+		       "  fsck                       Check the configuration files for problems.\n"
+		       "  sign [FILE]                Generate a signed version of a file.\n"
+		       "  verify NODE [FILE]         Verify that a file was signed by the given NODE.\n"
+		       "\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
@@ -169,50 +169,51 @@ static bool parse_options(int argc, char **argv) {
 	int option_index = 0;
 
 	while((r = getopt_long(argc, argv, "+bc:n:", long_options, &option_index)) != EOF) {
-		switch (r) {
-			case 0:   /* long option */
-				break;
+		switch(r) {
+		case 0:   /* long option */
+			break;
 
-			case 'b':
-				tty = false;
-				break;
+		case 'b':
+			tty = false;
+			break;
 
-			case 'c': /* config file */
-				confbase = xstrdup(optarg);
-				confbasegiven = true;
-				break;
+		case 'c': /* config file */
+			confbase = xstrdup(optarg);
+			confbasegiven = true;
+			break;
 
-			case 'n': /* net name given */
-				netname = xstrdup(optarg);
-				break;
+		case 'n': /* net name given */
+			netname = xstrdup(optarg);
+			break;
 
-			case 1:   /* show help */
-				show_help = true;
-				break;
+		case 1:   /* show help */
+			show_help = true;
+			break;
 
-			case 2:   /* show version */
-				show_version = true;
-				break;
+		case 2:   /* show version */
+			show_version = true;
+			break;
 
-			case 3:   /* open control socket here */
-				pidfilename = xstrdup(optarg);
-				break;
+		case 3:   /* open control socket here */
+			pidfilename = xstrdup(optarg);
+			break;
 
-			case 4:   /* force */
-				force = true;
-				break;
+		case 4:   /* force */
+			force = true;
+			break;
 
-			case '?': /* wrong options */
-				usage(true);
-				return false;
+		case '?': /* wrong options */
+			usage(true);
+			return false;
 
-			default:
-				break;
+		default:
+			break;
 		}
 	}
 
-	if(!netname && (netname = getenv("NETNAME")))
+	if(!netname && (netname = getenv("NETNAME"))) {
 		netname = xstrdup(netname);
+	}
 
 	/* netname "." is special: a "top-level name" */
 
@@ -245,8 +246,11 @@ FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 	}
 
 #ifdef HAVE_FCHMOD
-	if((perms & 0444) && f)
+
+	if((perms & 0444) && f) {
 		fchmod(fileno(f), perms);
+	}
+
 #endif
 	umask(mask);
 	return f;
@@ -261,8 +265,10 @@ static void disable_old_keys(const char *filename, const char *what) {
 	FILE *r, *w;
 
 	r = fopen(filename, "r");
-	if(!r)
+
+	if(!r) {
 		return;
+	}
 
 	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
@@ -280,33 +286,43 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 		bool ed25519pubkey = !strncasecmp(buf, "Ed25519PublicKey", 16) && strchr(" \t=", buf[16]) && strstr(what, "Ed25519");
 
-		if(ed25519pubkey)
+		if(ed25519pubkey) {
 			disabled = true;
+		}
 
 		if(w) {
-			if(block || ed25519pubkey)
+			if(block || ed25519pubkey) {
 				fputc('#', w);
+			}
+
 			if(fputs(buf, w) < 0) {
 				error = true;
 				break;
 			}
 		}
 
-		if(block && !strncmp(buf, "-----END ", 9))
+		if(block && !strncmp(buf, "-----END ", 9)) {
 			block = false;
+		}
 	}
 
 	if(w)
-		if(fclose(w) < 0)
+		if(fclose(w) < 0) {
 			error = true;
-	if(ferror(r) || fclose(r) < 0)
+		}
+
+	if(ferror(r) || fclose(r) < 0) {
 		error = true;
+	}
 
 	if(disabled) {
 		if(!w || error) {
 			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
-			if(w)
+
+			if(w) {
 				unlink(tmpfile);
+			}
+
 			return;
 		}
 
@@ -314,9 +330,11 @@ static void disable_old_keys(const char *filename, const char *what) {
 		// We cannot atomically replace files on Windows.
 		char bakfile[PATH_MAX] = "";
 		snprintf(bakfile, sizeof(bakfile), "%s.bak", filename);
+
 		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
 			rename(bakfile, filename);
 #else
+
 		if(rename(tmpfile, filename)) {
 #endif
 			fprintf(stderr, "Warning: old key(s) found, remove them by hand!\n");
@@ -348,16 +366,21 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 		}
 
 		size_t len = strlen(buf);
-		if(len)
-			buf[--len] = 0;
 
-		if(len)
+		if(len) {
+			buf[--len] = 0;
+		}
+
+		if(len) {
 			filename = buf;
+		}
 	}
 
 #ifdef HAVE_MINGW
+
 	if(filename[0] != '\\' && filename[0] != '/' && !strchr(filename, ':')) {
 #else
+
 	if(filename[0] != '/') {
 #endif
 		/* The directory is a relative path or a filename. */
@@ -394,14 +417,16 @@ static bool ed25519_keygen(bool ask) {
 	if(!(key = ecdsa_generate())) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
-	} else
+	} else {
 		fprintf(stderr, "Done.\n");
+	}
 
 	snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.priv", confbase);
 	f = ask_and_open(fname, "private Ed25519 key", "a", ask, 0600);
 
-	if(!f)
+	if(!f) {
 		goto error;
+	}
 
 	if(!ecdsa_write_pem_private_key(key, f)) {
 		fprintf(stderr, "Error writing private key!\n");
@@ -410,15 +435,17 @@ static bool ed25519_keygen(bool ask) {
 
 	fclose(f);
 
-	if(name)
+	if(name) {
 		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
-	else
+	} else {
 		snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.pub", confbase);
+	}
 
 	f = ask_and_open(fname, "public Ed25519 key", "a", ask, 0666);
 
-	if(!f)
+	if(!f) {
 		return false;
+	}
 
 	char *pubkey = ecdsa_get_base64_public_key(key);
 	fprintf(f, "Ed25519PublicKey = %s\n", pubkey);
@@ -430,8 +457,11 @@ static bool ed25519_keygen(bool ask) {
 	return true;
 
 error:
-	if(f)
+
+	if(f) {
 		fclose(f);
+	}
+
 	ecdsa_free(key);
 	return false;
 }
@@ -462,14 +492,16 @@ static bool rsa_keygen(int bits, bool ask) {
 	if(!(key = rsa_generate(bits, 0x10001))) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
-	} else
+	} else {
 		fprintf(stderr, "Done.\n");
+	}
 
 	snprintf(fname, sizeof(fname), "%s" SLASH "rsa_key.priv", confbase);
 	f = ask_and_open(fname, "private RSA key", "a", ask, 0600);
 
-	if(!f)
+	if(!f) {
 		goto error;
+	}
 
 	if(!rsa_write_pem_private_key(key, f)) {
 		fprintf(stderr, "Error writing private key!\n");
@@ -478,15 +510,17 @@ static bool rsa_keygen(int bits, bool ask) {
 
 	fclose(f);
 
-	if(name)
+	if(name) {
 		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
-	else
+	} else {
 		snprintf(fname, sizeof(fname), "%s" SLASH "rsa_key.pub", confbase);
+	}
 
 	f = ask_and_open(fname, "public RSA key", "a", ask, 0666);
 
-	if(!f)
+	if(!f) {
 		goto error;
+	}
 
 	if(!rsa_write_pem_public_key(key, f)) {
 		fprintf(stderr, "Error writing public key!\n");
@@ -499,8 +533,11 @@ static bool rsa_keygen(int bits, bool ask) {
 	return true;
 
 error:
-	if(f)
+
+	if(f) {
 		fclose(f);
+	}
+
 	rsa_free(key);
 	return false;
 }
@@ -512,20 +549,25 @@ size_t blen = 0;
 bool recvline(int fd, char *line, size_t len) {
 	char *newline = NULL;
 
-	if(!fd)
+	if(!fd) {
 		return false;
+	}
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
 		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
-		if(result == -1 && sockerrno == EINTR)
+
+		if(result == -1 && sockerrno == EINTR) {
 			continue;
-		else if(result <= 0)
+		} else if(result <= 0) {
 			return false;
+		}
+
 		blen += result;
 	}
 
-	if(newline - buffer >= len)
+	if(newline - buffer >= len) {
 		return false;
+	}
 
 	len = newline - buffer;
 
@@ -538,15 +580,19 @@ bool recvline(int fd, char *line, size_t len) {
 }
 
 bool recvdata(int fd, char *data, size_t len) {
-	if(len == -1)
+	if(len == -1) {
 		len = blen;
+	}
 
 	while(blen < len) {
 		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
-		if(result == -1 && sockerrno == EINTR)
+
+		if(result == -1 && sockerrno == EINTR) {
 			continue;
-		else if(result <= 0)
+		} else if(result <= 0) {
 			return false;
+		}
+
 		blen += result;
 	}
 
@@ -568,18 +614,22 @@ bool sendline(int fd, char *format, ...) {
 	buffer[sizeof(buffer) - 1] = 0;
 	va_end(ap);
 
-	if(blen < 1 || blen >= sizeof(buffer))
+	if(blen < 1 || blen >= sizeof(buffer)) {
 		return false;
+	}
 
 	buffer[blen] = '\n';
 	blen++;
 
 	while(blen) {
 		int result = send(fd, p, blen, MSG_NOSIGNAL);
-		if(result == -1 && sockerrno == EINTR)
+
+		if(result == -1 && sockerrno == EINTR) {
 			continue;
-		else if(result <= 0)
+		} else if(result <= 0) {
 			return false;
+		}
+
 		p += result;
 		blen -= result;
 	}
@@ -603,7 +653,7 @@ static void pcap(int fd, FILE *out, int snaplen) {
 		0xa1b2c3d4,
 		2, 4,
 		0, 0,
-		snaplen ?: sizeof(data),
+		snaplen ? : sizeof(data),
 		1,
 	};
 
@@ -620,14 +670,20 @@ static void pcap(int fd, FILE *out, int snaplen) {
 	fflush(out);
 
 	char line[32];
+
 	while(recvline(fd, line, sizeof(line))) {
 		int code, req, len;
 		int n = sscanf(line, "%d %d %d", &code, &req, &len);
 		gettimeofday(&tv, NULL);
-		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || len > sizeof(data))
+
+		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || len > sizeof(data)) {
 			break;
-		if(!recvdata(fd, data, len))
+		}
+
+		if(!recvdata(fd, data, len)) {
 			break;
+		}
+
 		packet.tv_sec = tv.tv_sec;
 		packet.tv_usec = tv.tv_usec;
 		packet.len = len;
@@ -646,10 +702,15 @@ static void logcontrol(int fd, FILE *out, int level) {
 	while(recvline(fd, line, sizeof(line))) {
 		int code, req, len;
 		int n = sscanf(line, "%d %d %d", &code, &req, &len);
-		if(n != 3 || code != CONTROL || req != REQ_LOG || len < 0 || len > sizeof(data))
+
+		if(n != 3 || code != CONTROL || req != REQ_LOG || len < 0 || len > sizeof(data)) {
 			break;
-		if(!recvdata(fd, data, len))
+		}
+
+		if(!recvdata(fd, data, len)) {
 			break;
+		}
+
 		fwrite(data, len, 1, out);
 		fputc('\n', out);
 		fflush(out);
@@ -663,6 +724,7 @@ static bool remove_service(void) {
 	SERVICE_STATUS status = {0};
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+
 	if(!manager) {
 		fprintf(stderr, "Could not open service manager: %s\n", winerror(GetLastError()));
 		return false;
@@ -675,10 +737,11 @@ static bool remove_service(void) {
 		return false;
 	}
 
-	if(!ControlService(service, SERVICE_CONTROL_STOP, &status))
+	if(!ControlService(service, SERVICE_CONTROL_STOP, &status)) {
 		fprintf(stderr, "Could not stop %s service: %s\n", identname, winerror(GetLastError()));
-	else
+	} else {
 		fprintf(stderr, "%s service stopped\n", identname);
+	}
 
 	if(!DeleteService(service)) {
 		fprintf(stderr, "Could not remove %s service: %s\n", identname, winerror(GetLastError()));
@@ -697,6 +760,7 @@ bool connect_tincd(bool verbose) {
 		FD_ZERO(&r);
 		FD_SET(fd, &r);
 		struct timeval tv = {0, 0};
+
 		if(select(fd + 1, &r, NULL, NULL, &tv)) {
 			fprintf(stderr, "Previous connection to tincd lost, reconnecting.\n");
 			close(fd);
@@ -707,9 +771,12 @@ bool connect_tincd(bool verbose) {
 	}
 
 	FILE *f = fopen(pidfilename, "r");
+
 	if(!f) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Could not open pid file %s: %s\n", pidfilename, strerror(errno));
+		}
+
 		return false;
 	}
 
@@ -717,8 +784,10 @@ bool connect_tincd(bool verbose) {
 	char port[129];
 
 	if(fscanf(f, "%20d %1024s %128s port %128s", &pid, controlcookie, host, port) != 4) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Could not parse pid file %s\n", pidfilename);
+		}
+
 		fclose(f);
 		return false;
 	}
@@ -726,7 +795,8 @@ bool connect_tincd(bool verbose) {
 	fclose(f);
 
 #ifndef HAVE_MINGW
-	if ((pid == 0) || (kill(pid, 0) && (errno == ESRCH))) {
+
+	if((pid == 0) || (kill(pid, 0) && (errno == ESRCH))) {
 		fprintf(stderr, "Could not find tincd running at pid %d\n", pid);
 		/* clean up the stale socket and pid file */
 		unlink(pidfilename);
@@ -735,23 +805,31 @@ bool connect_tincd(bool verbose) {
 	}
 
 	struct sockaddr_un sa;
+
 	sa.sun_family = AF_UNIX;
+
 	strncpy(sa.sun_path, unixsocketname, sizeof(sa.sun_path));
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+
 	if(fd < 0) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Cannot create UNIX socket: %s\n", sockstrerror(sockerrno));
+		}
+
 		return false;
 	}
 
 	if(connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Cannot connect to UNIX socket %s: %s\n", unixsocketname, sockstrerror(sockerrno));
+		}
+
 		close(fd);
 		fd = -1;
 		return false;
 	}
+
 #else
 	struct addrinfo hints = {
 		.ai_family = AF_UNSPEC,
@@ -763,15 +841,20 @@ bool connect_tincd(bool verbose) {
 	struct addrinfo *res = NULL;
 
 	if(getaddrinfo(host, port, &hints, &res) || !res) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, sockstrerror(sockerrno));
+		}
+
 		return false;
 	}
 
 	fd = socket(res->ai_family, SOCK_STREAM, IPPROTO_TCP);
+
 	if(fd < 0) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Cannot create TCP socket: %s\n", sockstrerror(sockerrno));
+		}
+
 		return false;
 	}
 
@@ -779,14 +862,18 @@ bool connect_tincd(bool verbose) {
 	unsigned long arg = 0;
 
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
+		}
 	}
+
 #endif
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Cannot connect to %s port %s: %s\n", host, port, sockstrerror(sockerrno));
+		}
+
 		close(fd);
 		fd = -1;
 		return false;
@@ -804,8 +891,10 @@ bool connect_tincd(bool verbose) {
 	int version;
 
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %4095s %d", &code, data, &version) != 3 || code != 0) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
+		}
+
 		close(fd);
 		fd = -1;
 		return false;
@@ -814,8 +903,10 @@ bool connect_tincd(bool verbose) {
 	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
 
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Could not fully establish control socket connection\n");
+		}
+
 		close(fd);
 		fd = -1;
 		return false;
@@ -827,10 +918,12 @@ bool connect_tincd(bool verbose) {
 
 static int cmd_start(int argc, char *argv[]) {
 	if(connect_tincd(false)) {
-		if(netname)
+		if(netname) {
 			fprintf(stderr, "A tincd is already running for net `%s' with pid %d.\n", netname, pid);
-		else
+		} else {
 			fprintf(stderr, "A tincd is already running with pid %d.\n", pid);
+		}
+
 		return 0;
 	}
 
@@ -838,14 +931,18 @@ static int cmd_start(int argc, char *argv[]) {
 	char *slash = strrchr(program_name, '/');
 
 #ifdef HAVE_MINGW
-	if ((c = strrchr(program_name, '\\')) > slash)
+
+	if((c = strrchr(program_name, '\\')) > slash) {
 		slash = c;
+	}
+
 #endif
 
-	if (slash++)
+	if(slash++) {
 		xasprintf(&c, "%.*stincd", (int)(slash - program_name), program_name);
-	else
+	} else {
 		c = "tincd";
+	}
 
 	int nargc = 0;
 	char **nargv = xzalloc((optind + argc) * sizeof(*nargv));
@@ -863,20 +960,27 @@ static int cmd_start(int argc, char *argv[]) {
 	xasprintf(&arg0, "\"%s\"", arg0);
 #endif
 	nargv[nargc++] = arg0;
-	for(int i = 1; i < optind; i++)
+
+	for(int i = 1; i < optind; i++) {
 		nargv[nargc++] = orig_argv[i];
-	for(int i = 1; i < argc; i++)
+	}
+
+	for(int i = 1; i < argc; i++) {
 		nargv[nargc++] = argv[i];
+	}
 
 #ifdef HAVE_MINGW
 	int status = spawnvp(_P_WAIT, c, nargv);
-	if (status == -1) {
+
+	if(status == -1) {
 		fprintf(stderr, "Error starting %s: %s\n", c, strerror(errno));
 		return 1;
 	}
+
 	return status;
 #else
 	int pfd[2] = {-1, -1};
+
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, pfd)) {
 		fprintf(stderr, "Could not create umbilical socket: %s\n", strerror(errno));
 		free(nargv);
@@ -884,6 +988,7 @@ static int cmd_start(int argc, char *argv[]) {
 	}
 
 	pid_t pid = fork();
+
 	if(pid == -1) {
 		fprintf(stderr, "Could not fork: %s\n", strerror(errno));
 		free(nargv);
@@ -915,13 +1020,17 @@ static int cmd_start(int argc, char *argv[]) {
 
 	while((len = read(pfd[0], buf, sizeof(buf))) > 0) {
 		failure = buf[len - 1];
-		if(!failure)
+
+		if(!failure) {
 			len--;
+		}
+
 		write(2, buf, len);
 	}
 
-	if(len)
+	if(len) {
 		failure = true;
+	}
 
 	close(pfd[0]);
 
@@ -948,6 +1057,7 @@ static int cmd_stop(int argc, char *argv[]) {
 	}
 
 #ifndef HAVE_MINGW
+
 	if(!connect_tincd(true)) {
 		if(pid) {
 			if(kill(pid, SIGTERM)) {
@@ -968,9 +1078,13 @@ static int cmd_stop(int argc, char *argv[]) {
 	while(recvline(fd, line, sizeof(line))) {
 		// Wait for tincd to close the connection...
 	}
+
 #else
-	if(!remove_service())
+
+	if(!remove_service()) {
 		return 1;
+	}
+
 #endif
 	close(fd);
 	pid = 0;
@@ -990,10 +1104,12 @@ static int cmd_reload(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RELOAD || result) {
 		fprintf(stderr, "Could not reload configuration.\n");
 		return 1;
@@ -1007,6 +1123,7 @@ static int dump_invitations(void) {
 	char dname[PATH_MAX];
 	snprintf(dname, sizeof(dname), "%s" SLASH "invitations", confbase);
 	DIR *dir = opendir(dname);
+
 	if(!dir) {
 		if(errno == ENOENT) {
 			fprintf(stderr, "No outstanding invitations.\n");
@@ -1018,32 +1135,41 @@ static int dump_invitations(void) {
 	}
 
 	struct dirent *ent;
+
 	bool found = false;
 
 	while((ent = readdir(dir))) {
 		char buf[MAX_STRING_SIZE];
-		if(b64decode(ent->d_name, buf, 24) != 18)
+
+		if(b64decode(ent->d_name, buf, 24) != 18) {
 			continue;
+		}
 
 		char fname[PATH_MAX];
 		snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ent->d_name);
 		FILE *f = fopen(fname, "r");
+
 		if(!f) {
 			fprintf(stderr, "Cannot open %s: %s\n", fname, strerror(errno));
 			continue;
 		}
 
 		buf[0] = 0;
+
 		if(!fgets(buf, sizeof(buf), f)) {
 			fprintf(stderr, "Invalid invitation file %s", fname);
 			fclose(f);
 			continue;
 		}
+
 		fclose(f);
 
 		char *eol = buf + strlen(buf);
-		while(strchr("\t \r\n", *--eol))
+
+		while(strchr("\t \r\n", *--eol)) {
 			*eol = 0;
+		}
+
 		if(strncmp(buf, "Name = ", 7) || !check_id(buf + 7)) {
 			fprintf(stderr, "Invalid invitation file %s", fname);
 			continue;
@@ -1055,8 +1181,9 @@ static int dump_invitations(void) {
 
 	closedir(dir);
 
-	if(!found)
+	if(!found) {
 		fprintf(stderr, "No outstanding invitations.\n");
+	}
 
 	return 0;
 }
@@ -1070,6 +1197,7 @@ static int cmd_dump(int argc, char *argv[]) {
 			usage(true);
 			return 1;
 		}
+
 		only_reachable = true;
 		argv++;
 		argc--;
@@ -1081,23 +1209,25 @@ static int cmd_dump(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!strcasecmp(argv[1], "invitations"))
+	if(!strcasecmp(argv[1], "invitations")) {
 		return dump_invitations();
+	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	int do_graph = 0;
 
-	if(!strcasecmp(argv[1], "nodes"))
+	if(!strcasecmp(argv[1], "nodes")) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
-	else if(!strcasecmp(argv[1], "edges"))
+	} else if(!strcasecmp(argv[1], "edges")) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
-	else if(!strcasecmp(argv[1], "subnets"))
+	} else if(!strcasecmp(argv[1], "subnets")) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
-	else if(!strcasecmp(argv[1], "connections"))
+	} else if(!strcasecmp(argv[1], "connections")) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);
-	else if(!strcasecmp(argv[1], "graph")) {
+	} else if(!strcasecmp(argv[1], "graph")) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_EDGES);
 		do_graph = 1;
@@ -1111,25 +1241,31 @@ static int cmd_dump(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(do_graph == 1)
+	if(do_graph == 1) {
 		printf("graph {\n");
-	else if(do_graph == 2)
+	} else if(do_graph == 2) {
 		printf("digraph {\n");
+	}
 
 	while(recvline(fd, line, sizeof(line))) {
 		char node1[4096], node2[4096];
 		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, node1, node2);
+
 		if(n == 2) {
-			if(do_graph && req == REQ_DUMP_NODES)
+			if(do_graph && req == REQ_DUMP_NODES) {
 				continue;
-			else {
-				if(do_graph)
+			} else {
+				if(do_graph) {
 					printf("}\n");
+				}
+
 				return 0;
 			}
 		}
-		if(n < 2)
+
+		if(n < 2) {
 			break;
+		}
 
 		char node[4096];
 		char id[4096];
@@ -1149,75 +1285,92 @@ static int cmd_dump(int argc, char *argv[]) {
 		long int last_state_change;
 
 		switch(req) {
-			case REQ_DUMP_NODES: {
-				int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %d %d %d %d %x %x %4095s %4095s %d %hd %hd %hd %ld", node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
-				if(n != 17) {
-					fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
-					return 1;
-				}
+		case REQ_DUMP_NODES: {
+			int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %d %d %d %d %x %x %4095s %4095s %d %hd %hd %hd %ld", node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_int, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
-				memcpy(&status, &status_int, sizeof(status));
-
-				if(do_graph) {
-					const char *color = "black";
-					if(!strcmp(host, "MYSELF"))
-						color = "green";
-					else if(!status.reachable)
-						color = "red";
-					else if(strcmp(via, node))
-						color = "orange";
-					else if(!status.validkey)
-						color = "black";
-					else if(minmtu > 0)
-						color = "green";
-					printf(" %s [label = \"%s\", color = \"%s\"%s];\n", node, node, color, strcmp(host, "MYSELF") ? "" : ", style = \"filled\"");
-				} else {
-					if(only_reachable && !status.reachable)
-						continue;
-					printf("%s id %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n",
-							node, id, host, port, cipher, digest, maclength, compression, options, status_int, nexthop, via, distance, pmtu, minmtu, maxmtu);
-				}
-			} break;
-
-			case REQ_DUMP_EDGES: {
-				int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %4095s port %4095s %x %d", from, to, host, port, local_host, local_port, &options, &weight);
-				if(n != 8) {
-					fprintf(stderr, "Unable to parse edge dump from tincd.\n");
-					return 1;
-				}
-
-				if(do_graph) {
-					float w = 1 + 65536.0 / weight;
-					if(do_graph == 1 && strcmp(node1, node2) > 0)
-						printf(" %s -- %s [w = %f, weight = %f];\n", node1, node2, w, w);
-					else if(do_graph == 2)
-						printf(" %s -> %s [w = %f, weight = %f];\n", node1, node2, w, w);
-				} else {
-					printf("%s to %s at %s port %s local %s port %s options %x weight %d\n", from, to, host, port, local_host, local_port, options, weight);
-				}
-			} break;
-
-			case REQ_DUMP_SUBNETS: {
-				int n = sscanf(line, "%*d %*d %4095s %4095s", subnet, node);
-				if(n != 2) {
-					fprintf(stderr, "Unable to parse subnet dump from tincd.\n");
-					return 1;
-				}
-				printf("%s owner %s\n", strip_weight(subnet), node);
-			} break;
-
-			case REQ_DUMP_CONNECTIONS: {
-				int n = sscanf(line, "%*d %*d %4095s %4095s port %4095s %x %d %x", node, host, port, &options, &socket, &status_int);
-				if(n != 6) {
-					fprintf(stderr, "Unable to parse connection dump from tincd.\n");
-					return 1;
-				}
-				printf("%s at %s port %s options %x socket %d status %x\n", node, host, port, options, socket, status_int);
-			} break;
-
-			default:
-				fprintf(stderr, "Unable to parse dump from tincd.\n");
+			if(n != 17) {
+				fprintf(stderr, "Unable to parse node dump from tincd: %s\n", line);
 				return 1;
+			}
+
+			memcpy(&status, &status_int, sizeof(status));
+
+			if(do_graph) {
+				const char *color = "black";
+
+				if(!strcmp(host, "MYSELF")) {
+					color = "green";
+				} else if(!status.reachable) {
+					color = "red";
+				} else if(strcmp(via, node)) {
+					color = "orange";
+				} else if(!status.validkey) {
+					color = "black";
+				} else if(minmtu > 0) {
+					color = "green";
+				}
+
+				printf(" %s [label = \"%s\", color = \"%s\"%s];\n", node, node, color, strcmp(host, "MYSELF") ? "" : ", style = \"filled\"");
+			} else {
+				if(only_reachable && !status.reachable) {
+					continue;
+				}
+
+				printf("%s id %s at %s port %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %d (min %d max %d)\n",
+				       node, id, host, port, cipher, digest, maclength, compression, options, status_int, nexthop, via, distance, pmtu, minmtu, maxmtu);
+			}
+		}
+		break;
+
+		case REQ_DUMP_EDGES: {
+			int n = sscanf(line, "%*d %*d %4095s %4095s %4095s port %4095s %4095s port %4095s %x %d", from, to, host, port, local_host, local_port, &options, &weight);
+
+			if(n != 8) {
+				fprintf(stderr, "Unable to parse edge dump from tincd.\n");
+				return 1;
+			}
+
+			if(do_graph) {
+				float w = 1 + 65536.0 / weight;
+
+				if(do_graph == 1 && strcmp(node1, node2) > 0) {
+					printf(" %s -- %s [w = %f, weight = %f];\n", node1, node2, w, w);
+				} else if(do_graph == 2) {
+					printf(" %s -> %s [w = %f, weight = %f];\n", node1, node2, w, w);
+				}
+			} else {
+				printf("%s to %s at %s port %s local %s port %s options %x weight %d\n", from, to, host, port, local_host, local_port, options, weight);
+			}
+		}
+		break;
+
+		case REQ_DUMP_SUBNETS: {
+			int n = sscanf(line, "%*d %*d %4095s %4095s", subnet, node);
+
+			if(n != 2) {
+				fprintf(stderr, "Unable to parse subnet dump from tincd.\n");
+				return 1;
+			}
+
+			printf("%s owner %s\n", strip_weight(subnet), node);
+		}
+		break;
+
+		case REQ_DUMP_CONNECTIONS: {
+			int n = sscanf(line, "%*d %*d %4095s %4095s port %4095s %x %d %x", node, host, port, &options, &socket, &status_int);
+
+			if(n != 6) {
+				fprintf(stderr, "Unable to parse connection dump from tincd.\n");
+				return 1;
+			}
+
+			printf("%s at %s port %s options %x socket %d status %x\n", node, host, port, options, socket, status_int);
+		}
+		break;
+
+		default:
+			fprintf(stderr, "Unable to parse dump from tincd.\n");
+			return 1;
 		}
 	}
 
@@ -1231,10 +1384,12 @@ static int cmd_purge(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	sendline(fd, "%d %d", CONTROL, REQ_PURGE);
+
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_PURGE || result) {
 		fprintf(stderr, "Could not purge old information.\n");
 		return 1;
@@ -1249,13 +1404,15 @@ static int cmd_debug(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	int debuglevel = atoi(argv[1]);
 	int origlevel;
 
 	sendline(fd, "%d %d %d", CONTROL, REQ_SET_DEBUG, debuglevel);
+
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &origlevel) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
 		fprintf(stderr, "Could not set debug level.\n");
 		return 1;
@@ -1271,10 +1428,12 @@ static int cmd_retry(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	sendline(fd, "%d %d", CONTROL, REQ_RETRY);
+
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RETRY || result) {
 		fprintf(stderr, "Could not retry outgoing connections.\n");
 		return 1;
@@ -1294,10 +1453,12 @@ static int cmd_connect(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_CONNECT, argv[1]);
+
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_CONNECT || result) {
 		fprintf(stderr, "Could not connect to %s.\n", argv[1]);
 		return 1;
@@ -1317,10 +1478,12 @@ static int cmd_disconnect(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_DISCONNECT, argv[1]);
+
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_DISCONNECT || result) {
 		fprintf(stderr, "Could not disconnect %s.\n", argv[1]);
 		return 1;
@@ -1336,8 +1499,10 @@ static int cmd_top(int argc, char *argv[]) {
 	}
 
 #ifdef HAVE_CURSES
-	if(!connect_tincd(true))
+
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	top(fd);
 	return 0;
@@ -1353,8 +1518,9 @@ static int cmd_pcap(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	pcap(fd, stdout, argc > 1 ? atoi(argv[1]) : 0);
 	return 0;
@@ -1373,8 +1539,9 @@ static int cmd_log(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 #ifdef SIGINT
 	signal(SIGINT, sigint_handler);
@@ -1397,8 +1564,9 @@ static int cmd_pid(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true) || !pid)
+	if(!connect_tincd(true) || !pid) {
 		return 1;
+	}
 
 	printf("%d\n", pid);
 	return 0;
@@ -1406,34 +1574,48 @@ static int cmd_pid(int argc, char *argv[]) {
 
 int rstrip(char *value) {
 	int len = strlen(value);
-	while(len && strchr("\t\r\n ", value[len - 1]))
+
+	while(len && strchr("\t\r\n ", value[len - 1])) {
 		value[--len] = 0;
+	}
+
 	return len;
 }
 
 char *get_my_name(bool verbose) {
 	FILE *f = fopen(tinc_conf, "r");
+
 	if(!f) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "Could not open %s: %s\n", tinc_conf, strerror(errno));
+		}
+
 		return NULL;
 	}
 
 	char buf[4096];
 	char *value;
+
 	while(fgets(buf, sizeof(buf), f)) {
 		int len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
+
 		if(*value == '=') {
 			value++;
 			value += strspn(value, "\t ");
 		}
-		if(!rstrip(value))
+
+		if(!rstrip(value)) {
 			continue;
+		}
+
 		buf[len] = 0;
-		if(strcasecmp(buf, "Name"))
+
+		if(strcasecmp(buf, "Name")) {
 			continue;
+		}
+
 		if(*value) {
 			fclose(f);
 			return replace_name(value);
@@ -1441,29 +1623,41 @@ char *get_my_name(bool verbose) {
 	}
 
 	fclose(f);
-	if(verbose)
+
+	if(verbose) {
 		fprintf(stderr, "Could not find Name in %s.\n", tinc_conf);
+	}
+
 	return NULL;
 }
 
 ecdsa_t *get_pubkey(FILE *f) {
 	char buf[4096];
 	char *value;
+
 	while(fgets(buf, sizeof(buf), f)) {
 		int len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
+
 		if(*value == '=') {
 			value++;
 			value += strspn(value, "\t ");
 		}
-		if(!rstrip(value))
+
+		if(!rstrip(value)) {
 			continue;
+		}
+
 		buf[len] = 0;
-		if(strcasecmp(buf, "Ed25519PublicKey"))
+
+		if(strcasecmp(buf, "Ed25519PublicKey")) {
 			continue;
-		if(*value)
+		}
+
+		if(*value) {
 			return ecdsa_set_base64_public_key(value);
+		}
 	}
 
 	return NULL;
@@ -1553,10 +1747,12 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(strcasecmp(argv[0], "config"))
+	if(strcasecmp(argv[0], "config")) {
 		argv--, argc++;
+	}
 
 	int action = -2;
+
 	if(!strcasecmp(argv[1], "get")) {
 		argv++, argc--;
 	} else if(!strcasecmp(argv[1], "add")) {
@@ -1574,6 +1770,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 	// Concatenate the rest of the command line
 	strncpy(line, argv[1], sizeof(line) - 1);
+
 	for(int i = 2; i < argc; i++) {
 		strncat(line, " ", sizeof(line) - 1 - strlen(line));
 		strncat(line, argv[i], sizeof(line) - 1 - strlen(line));
@@ -1588,12 +1785,15 @@ static int cmd_config(int argc, char *argv[]) {
 	len = strcspn(line, "\t =");
 	value = line + len;
 	value += strspn(value, "\t ");
+
 	if(*value == '=') {
 		value++;
 		value += strspn(value, "\t ");
 	}
+
 	line[len] = '\0';
 	variable = strchr(line, '.');
+
 	if(variable) {
 		node = line;
 		*variable++ = 0;
@@ -1611,16 +1811,18 @@ static int cmd_config(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(action < -1 && *value)
+	if(action < -1 && *value) {
 		action = 0;
+	}
 
 	/* Some simple checks. */
 	bool found = false;
 	bool warnonremove = false;
 
 	for(int i = 0; variables[i].name; i++) {
-		if(strcasecmp(variables[i].name, variable))
+		if(strcasecmp(variables[i].name, variable)) {
 			continue;
+		}
 
 		found = true;
 		variable = (char *)variables[i].name;
@@ -1651,8 +1853,10 @@ static int cmd_config(int argc, char *argv[]) {
 
 		if(!node && !(variables[i].type & VAR_SERVER)) {
 			node = get_my_name(true);
-			if(!node)
+
+			if(!node) {
 				return 1;
+			}
 		}
 
 		/* Change "add" into "set" for variables that do not allow multiple occurences.
@@ -1684,12 +1888,15 @@ static int cmd_config(int argc, char *argv[]) {
 
 	// Open the right configuration file.
 	char filename[PATH_MAX];
-	if(node)
+
+	if(node) {
 		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node);
-	else
+	} else {
 		snprintf(filename, sizeof(filename), "%s", tinc_conf);
+	}
 
 	FILE *f = fopen(filename, "r");
+
 	if(!f) {
 		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
 		return 1;
@@ -1701,6 +1908,7 @@ static int cmd_config(int argc, char *argv[]) {
 	if(action >= -1) {
 		snprintf(tmpfile, sizeof(tmpfile), "%s.config.tmp", filename);
 		tf = fopen(tmpfile, "w");
+
 		if(!tf) {
 			fprintf(stderr, "Could not open temporary file %s: %s\n", tmpfile, strerror(errno));
 			fclose(f);
@@ -1726,10 +1934,12 @@ static int cmd_config(int argc, char *argv[]) {
 		len = strcspn(buf2, "\t =");
 		bvalue = buf2 + len;
 		bvalue += strspn(bvalue, "\t ");
+
 		if(*bvalue == '=') {
 			bvalue++;
 			bvalue += strspn(bvalue, "\t ");
 		}
+
 		rstrip(bvalue);
 		buf2[len] = '\0';
 
@@ -1739,34 +1949,39 @@ static int cmd_config(int argc, char *argv[]) {
 			if(action < -1) {
 				found = true;
 				printf("%s\n", bvalue);
-			// Del
+				// Del
 			} else if(action == -1) {
 				if(!*value || !strcasecmp(bvalue, value)) {
 					removed = true;
 					continue;
 				}
-			// Set
+
+				// Set
 			} else if(action == 0) {
 				// Warn if "set" was used for variables that can occur multiple times
-				if(warnonremove && strcasecmp(bvalue, value))
+				if(warnonremove && strcasecmp(bvalue, value)) {
 					fprintf(stderr, "Warning: removing %s = %s\n", variable, bvalue);
+				}
 
 				// Already set? Delete the rest...
-				if(set)
+				if(set) {
 					continue;
+				}
 
 				// Otherwise, replace.
 				if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
 					fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 					return 1;
 				}
+
 				set = true;
 				continue;
-			// Add
+				// Add
 			} else if(action > 0) {
 				// Check if we've already seen this variable with the same value
-				if(!strcasecmp(bvalue, value))
+				if(!strcasecmp(bvalue, value)) {
 					found = true;
+				}
 			}
 		}
 
@@ -1799,7 +2014,7 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Add new variable if necessary.
-	if((action > 0 && !found)|| (action == 0 && !set)) {
+	if((action > 0 && !found) || (action == 0 && !set)) {
 		if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
 			fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
 			return 1;
@@ -1830,19 +2045,23 @@ static int cmd_config(int argc, char *argv[]) {
 
 	// Replace the configuration file with the new one
 #ifdef HAVE_MINGW
+
 	if(remove(filename)) {
 		fprintf(stderr, "Error replacing file %s: %s\n", filename, strerror(errno));
 		return 1;
 	}
+
 #endif
+
 	if(rename(tmpfile, filename)) {
 		fprintf(stderr, "Error renaming temporary file %s to configuration file %s: %s\n", tmpfile, filename, strerror(errno));
 		return 1;
 	}
 
 	// Silently try notifying a running tincd of changes.
-	if(connect_tincd(false))
+	if(connect_tincd(false)) {
 		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+	}
 
 	return 0;
 }
@@ -1860,11 +2079,13 @@ static bool try_bind(int port) {
 	char portstr[16];
 	snprintf(portstr, sizeof(portstr), "%d", port);
 
-	if(getaddrinfo(NULL, portstr, &hint, &ai) || !ai)
+	if(getaddrinfo(NULL, portstr, &hint, &ai) || !ai) {
 		return false;
+	}
 
 	for(aip = ai; aip; aip = aip->ai_next) {
 		int fd = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+
 		if(!fd) {
 			success = false;
 			break;
@@ -1872,6 +2093,7 @@ static bool try_bind(int port) {
 
 		int result = bind(fd, ai->ai_addr, ai->ai_addrlen);
 		closesocket(fd);
+
 		if(result) {
 			success = false;
 			break;
@@ -1883,17 +2105,20 @@ static bool try_bind(int port) {
 }
 
 int check_port(char *name) {
-	if(try_bind(655))
+	if(try_bind(655)) {
 		return 655;
+	}
 
 	fprintf(stderr, "Warning: could not bind to port 655. ");
 
 	for(int i = 0; i < 100; i++) {
 		int port = 0x1000 + (rand() & 0x7fff);
+
 		if(try_bind(port)) {
 			char filename[PATH_MAX];
 			snprintf(filename, sizeof(filename), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 			FILE *f = fopen(filename, "a");
+
 			if(!f) {
 				fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
 				fprintf(stderr, "Please change tinc's Port manually.\n");
@@ -1924,15 +2149,19 @@ static int cmd_init(int argc, char *argv[]) {
 		if(tty) {
 			char buf[1024];
 			fprintf(stderr, "Enter the Name you want your tinc node to have: ");
+
 			if(!fgets(buf, sizeof(buf), stdin)) {
 				fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 				return 1;
 			}
+
 			int len = rstrip(buf);
+
 			if(!len) {
 				fprintf(stderr, "No name given!\n");
 				return 1;
 			}
+
 			name = strdup(buf);
 		} else {
 			fprintf(stderr, "No Name given!\n");
@@ -1940,6 +2169,7 @@ static int cmd_init(int argc, char *argv[]) {
 		}
 	} else {
 		name = strdup(argv[1]);
+
 		if(!*name) {
 			fprintf(stderr, "No Name given!\n");
 			return 1;
@@ -1967,6 +2197,7 @@ static int cmd_init(int argc, char *argv[]) {
 	}
 
 	FILE *f = fopen(tinc_conf, "w");
+
 	if(!f) {
 		fprintf(stderr, "Could not create file %s: %s\n", tinc_conf, strerror(errno));
 		return 1;
@@ -1976,27 +2207,35 @@ static int cmd_init(int argc, char *argv[]) {
 	fclose(f);
 
 #ifndef DISABLE_LEGACY
-	if(!rsa_keygen(2048, false))
+
+	if(!rsa_keygen(2048, false)) {
 		return 1;
+	}
+
 #endif
 
-	if(!ed25519_keygen(false))
+	if(!ed25519_keygen(false)) {
 		return 1;
+	}
 
 	check_port(name);
 
 #ifndef HAVE_MINGW
 	char filename[PATH_MAX];
 	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up", confbase);
+
 	if(access(filename, F_OK)) {
 		FILE *f = fopenmask(filename, "w", 0777);
+
 		if(!f) {
 			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
 			return 1;
 		}
+
 		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit '$0'!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
 		fclose(f);
 	}
+
 #endif
 
 	return 0;
@@ -2005,24 +2244,31 @@ static int cmd_init(int argc, char *argv[]) {
 
 static int cmd_generate_keys(int argc, char *argv[]) {
 #ifdef DISABLE_LEGACY
+
 	if(argc > 1) {
 #else
+
 	if(argc > 2) {
 #endif
 		fprintf(stderr, "Too many arguments!\n");
 		return 1;
 	}
 
-	if(!name)
+	if(!name) {
 		name = get_my_name(false);
+	}
 
 #ifndef DISABLE_LEGACY
-	if(!rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true))
+
+	if(!rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true)) {
 		return 1;
+	}
+
 #endif
 
-	if(!ed25519_keygen(true))
+	if(!ed25519_keygen(true)) {
 		return 1;
+	}
 
 	return 0;
 }
@@ -2034,8 +2280,9 @@ static int cmd_generate_rsa_keys(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!name)
+	if(!name) {
 		name = get_my_name(false);
+	}
 
 	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true);
 }
@@ -2047,8 +2294,9 @@ static int cmd_generate_ed25519_keys(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!name)
+	if(!name) {
 		name = get_my_name(false);
+	}
 
 	return !ed25519_keygen(true);
 }
@@ -2074,8 +2322,9 @@ static int cmd_info(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true))
+	if(!connect_tincd(true)) {
 		return 1;
+	}
 
 	return info(fd, argv[1]);
 }
@@ -2113,8 +2362,10 @@ static int cmd_edit(int argc, char *argv[]) {
 	if(!*filename) {
 		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, argv[1]);
 		char *dash = strchr(argv[1], '-');
+
 		if(dash) {
 			*dash++ = 0;
+
 			if((strcmp(dash, "up") && strcmp(dash, "down")) || !check_id(argv[1])) {
 				fprintf(stderr, "Invalid configuration filename.\n");
 				return 1;
@@ -2124,18 +2375,21 @@ static int cmd_edit(int argc, char *argv[]) {
 
 	char *command;
 #ifndef HAVE_MINGW
-	xasprintf(&command, "\"%s\" \"%s\"", getenv("VISUAL") ?: getenv("EDITOR") ?: "vi", filename);
+	xasprintf(&command, "\"%s\" \"%s\"", getenv("VISUAL") ? : getenv("EDITOR") ? : "vi", filename);
 #else
 	xasprintf(&command, "edit \"%s\"", filename);
 #endif
 	int result = system(command);
 	free(command);
-	if(result)
+
+	if(result) {
 		return result;
+	}
 
 	// Silently try notifying a running tincd of changes.
-	if(connect_tincd(false))
+	if(connect_tincd(false)) {
 		sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+	}
 
 	return 0;
 }
@@ -2144,6 +2398,7 @@ static int export(const char *name, FILE *out) {
 	char filename[PATH_MAX];
 	snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name);
 	FILE *in = fopen(filename, "r");
+
 	if(!in) {
 		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
 		return 1;
@@ -2151,9 +2406,11 @@ static int export(const char *name, FILE *out) {
 
 	fprintf(out, "Name = %s\n", name);
 	char buf[4096];
+
 	while(fgets(buf, sizeof(buf), in)) {
-		if(strcspn(buf, "\t =") != 4 || strncasecmp(buf, "Name", 4))
+		if(strcspn(buf, "\t =") != 4 || strncasecmp(buf, "Name", 4)) {
 			fputs(buf, out);
+		}
 	}
 
 	if(ferror(in)) {
@@ -2173,12 +2430,16 @@ static int cmd_export(int argc, char *argv[]) {
 	}
 
 	char *name = get_my_name(true);
-	if(!name)
+
+	if(!name) {
 		return 1;
+	}
 
 	int result = export(name, stdout);
-	if(!tty)
+
+	if(!tty) {
 		fclose(stdout);
+	}
 
 	free(name);
 	return result;
@@ -2191,6 +2452,7 @@ static int cmd_export_all(int argc, char *argv[]) {
 	}
 
 	DIR *dir = opendir(hosts_dir);
+
 	if(!dir) {
 		fprintf(stderr, "Could not open host configuration directory %s: %s\n", hosts_dir, strerror(errno));
 		return 1;
@@ -2201,20 +2463,25 @@ static int cmd_export_all(int argc, char *argv[]) {
 	struct dirent *ent;
 
 	while((ent = readdir(dir))) {
-		if(!check_id(ent->d_name))
+		if(!check_id(ent->d_name)) {
 			continue;
+		}
 
-		if(first)
+		if(first) {
 			first = false;
-		else
+		} else {
 			printf("#---------------------------------------------------------------#\n");
+		}
 
 		result |= export(ent->d_name, stdout);
 	}
 
 	closedir(dir);
-	if(!tty)
+
+	if(!tty) {
 		fclose(stdout);
+	}
+
 	return result;
 }
 
@@ -2242,8 +2509,9 @@ static int cmd_import(int argc, char *argv[]) {
 				return 1;
 			}
 
-			if(out)
+			if(out) {
 				fclose(out);
+			}
 
 			snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name);
 
@@ -2254,6 +2522,7 @@ static int cmd_import(int argc, char *argv[]) {
 			}
 
 			out = fopen(filename, "w");
+
 			if(!out) {
 				fprintf(stderr, "Error creating configuration file %s: %s\n", filename, strerror(errno));
 				return 1;
@@ -2267,8 +2536,9 @@ static int cmd_import(int argc, char *argv[]) {
 		}
 
 
-		if(!strcmp(buf, "#---------------------------------------------------------------#\n"))
+		if(!strcmp(buf, "#---------------------------------------------------------------#\n")) {
 			continue;
+		}
 
 		if(out) {
 			if(fputs(buf, out) < 0) {
@@ -2278,8 +2548,9 @@ static int cmd_import(int argc, char *argv[]) {
 		}
 	}
 
-	if(out)
+	if(out) {
 		fclose(out);
+	}
 
 	if(count) {
 		fprintf(stderr, "Imported %d host configuration files.\n", count);
@@ -2291,11 +2562,11 @@ static int cmd_import(int argc, char *argv[]) {
 }
 
 static int cmd_exchange(int argc, char *argv[]) {
-	return cmd_export(argc, argv) ?: cmd_import(argc, argv);
+	return cmd_export(argc, argv) ? : cmd_import(argc, argv);
 }
 
 static int cmd_exchange_all(int argc, char *argv[]) {
-	return cmd_export_all(argc, argv) ?: cmd_import(argc, argv);
+	return cmd_export_all(argc, argv) ? : cmd_import(argc, argv);
 }
 
 static int switch_network(char *name) {
@@ -2305,8 +2576,9 @@ static int switch_network(char *name) {
 			return 1;
 		}
 
-		if(!check_netname(name, true))
+		if(!check_netname(name, true)) {
 			fprintf(stderr, "Warning: unsafe character in netname!\n");
+		}
 	}
 
 	if(fd >= 0) {
@@ -2322,8 +2594,8 @@ static int switch_network(char *name) {
 	free(hosts_dir);
 	free(prompt);
 
-        xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
-        xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
+	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
+	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 	xasprintf(&prompt, "%s> ", identname);
 
 	return 0;
@@ -2335,19 +2607,23 @@ static int cmd_network(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(argc == 2)
+	if(argc == 2) {
 		return switch_network(argv[1]);
+	}
 
 	DIR *dir = opendir(confdir);
+
 	if(!dir) {
 		fprintf(stderr, "Could not read directory %s: %s\n", confdir, strerror(errno));
-                return 1;
-        }
+		return 1;
+	}
 
 	struct dirent *ent;
+
 	while((ent = readdir(dir))) {
-		if(*ent->d_name == '.')
+		if(*ent->d_name == '.') {
 			continue;
+		}
 
 		if(!strcmp(ent->d_name, "tinc.conf")) {
 			printf(".\n");
@@ -2356,8 +2632,10 @@ static int cmd_network(int argc, char *argv[]) {
 
 		char fname[PATH_MAX];
 		snprintf(fname, sizeof(fname), "%s/%s/tinc.conf", confdir, ent->d_name);
-		if(!access(fname, R_OK))
+
+		if(!access(fname, R_OK)) {
 			printf("%s\n", ent->d_name);
+		}
 	}
 
 	closedir(dir);
@@ -2381,17 +2659,22 @@ static void *readfile(FILE *in, size_t *len) {
 
 	while(!feof(in)) {
 		size_t read = fread(buf + count, 1, alloced - count, in);
-		if(!read)
+
+		if(!read) {
 			break;
+		}
+
 		count += read;
+
 		if(count >= alloced) {
 			alloced *= 2;
 			buf = xrealloc(buf, alloced);
 		}
 	}
 
-	if(len)
+	if(len) {
 		*len = count;
+	}
 
 	return buf;
 }
@@ -2404,13 +2687,16 @@ static int cmd_sign(int argc, char *argv[]) {
 
 	if(!name) {
 		name = get_my_name(true);
-		if(!name)
+
+		if(!name) {
 			return 1;
+		}
 	}
 
 	char fname[PATH_MAX];
 	snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.priv", confbase);
 	FILE *fp = fopen(fname, "r");
+
 	if(!fp) {
 		fprintf(stderr, "Could not open %s: %s\n", fname, strerror(errno));
 		return 1;
@@ -2430,6 +2716,7 @@ static int cmd_sign(int argc, char *argv[]) {
 
 	if(argc == 2) {
 		in = fopen(argv[1], "rb");
+
 		if(!in) {
 			fprintf(stderr, "Could not open %s: %s\n", argv[1], strerror(errno));
 			ecdsa_free(key);
@@ -2441,8 +2728,11 @@ static int cmd_sign(int argc, char *argv[]) {
 
 	size_t len;
 	char *data = readfile(in, &len);
-	if(in != stdin)
+
+	if(in != stdin) {
 		fclose(in);
+	}
+
 	if(!data) {
 		fprintf(stderr, "Error reading %s: %s\n", argv[1], strerror(errno));
 		ecdsa_free(key);
@@ -2460,12 +2750,14 @@ static int cmd_sign(int argc, char *argv[]) {
 	free(trailer);
 
 	char sig[87];
+
 	if(!ecdsa_sign(key, data, len + trailer_len, sig)) {
 		fprintf(stderr, "Error generating signature\n");
 		free(data);
 		ecdsa_free(key);
 		return 1;
 	}
+
 	b64encode(sig, sig, 64);
 	ecdsa_free(key);
 
@@ -2488,12 +2780,16 @@ static int cmd_verify(int argc, char *argv[]) {
 	}
 
 	char *node = argv[1];
+
 	if(!strcmp(node, ".")) {
 		if(!name) {
 			name = get_my_name(true);
-			if(!name)
+
+			if(!name) {
 				return 1;
+			}
 		}
+
 		node = name;
 	} else if(!strcmp(node, "*")) {
 		node = NULL;
@@ -2508,6 +2804,7 @@ static int cmd_verify(int argc, char *argv[]) {
 
 	if(argc == 3) {
 		in = fopen(argv[2], "rb");
+
 		if(!in) {
 			fprintf(stderr, "Could not open %s: %s\n", argv[2], strerror(errno));
 			return 1;
@@ -2518,14 +2815,18 @@ static int cmd_verify(int argc, char *argv[]) {
 
 	size_t len;
 	char *data = readfile(in, &len);
-	if(in != stdin)
+
+	if(in != stdin) {
 		fclose(in);
+	}
+
 	if(!data) {
 		fprintf(stderr, "Error reading %s: %s\n", argv[1], strerror(errno));
 		return 1;
 	}
 
 	char *newline = memchr(data, '\n', len);
+
 	if(!newline || (newline - data > MAX_STRING_SIZE - 1)) {
 		fprintf(stderr, "Invalid input\n");
 		free(data);
@@ -2551,8 +2852,9 @@ static int cmd_verify(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!node)
+	if(!node) {
 		node = signer;
+	}
 
 	char *trailer;
 	xasprintf(&trailer, " %s %ld", signer, t);
@@ -2567,6 +2869,7 @@ static int cmd_verify(int argc, char *argv[]) {
 	char fname[PATH_MAX];
 	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, node);
 	FILE *fp = fopen(fname, "r");
+
 	if(!fp) {
 		fprintf(stderr, "Could not open %s: %s\n", fname, strerror(errno));
 		free(data);
@@ -2574,10 +2877,12 @@ static int cmd_verify(int argc, char *argv[]) {
 	}
 
 	ecdsa_t *key = get_pubkey(fp);
+
 	if(!key) {
 		rewind(fp);
 		key = ecdsa_read_pem_public_key(fp);
 	}
+
 	if(!key) {
 		fprintf(stderr, "Could not read public key from %s\n", fname);
 		fclose(fp);
@@ -2655,14 +2960,17 @@ static const struct {
 static char *complete_command(const char *text, int state) {
 	static int i;
 
-	if(!state)
+	if(!state) {
 		i = 0;
-	else
+	} else {
 		i++;
+	}
 
 	while(commands[i].command) {
-		if(!commands[i].hidden && !strncasecmp(commands[i].command, text, strlen(text)))
+		if(!commands[i].hidden && !strncasecmp(commands[i].command, text, strlen(text))) {
 			return xstrdup(commands[i].command);
+		}
+
 		i++;
 	}
 
@@ -2673,14 +2981,17 @@ static char *complete_dump(const char *text, int state) {
 	const char *matches[] = {"reachable", "nodes", "edges", "subnets", "connections", "graph", NULL};
 	static int i;
 
-	if(!state)
+	if(!state) {
 		i = 0;
-	else
+	} else {
 		i++;
+	}
 
 	while(matches[i]) {
-		if(!strncasecmp(matches[i], text, strlen(text)))
+		if(!strncasecmp(matches[i], text, strlen(text))) {
 			return xstrdup(matches[i]);
+		}
+
 		i++;
 	}
 
@@ -2690,13 +3001,15 @@ static char *complete_dump(const char *text, int state) {
 static char *complete_config(const char *text, int state) {
 	static int i;
 
-	if(!state)
+	if(!state) {
 		i = 0;
-	else
+	} else {
 		i++;
+	}
 
 	while(variables[i].name) {
 		char *dot = strchr(text, '.');
+
 		if(dot) {
 			if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
 				char *match;
@@ -2704,9 +3017,11 @@ static char *complete_config(const char *text, int state) {
 				return match;
 			}
 		} else {
-			if(!strncasecmp(variables[i].name, text, strlen(text)))
+			if(!strncasecmp(variables[i].name, text, strlen(text))) {
 				return xstrdup(variables[i].name);
+			}
 		}
+
 		i++;
 	}
 
@@ -2715,10 +3030,14 @@ static char *complete_config(const char *text, int state) {
 
 static char *complete_info(const char *text, int state) {
 	static int i;
+
 	if(!state) {
 		i = 0;
-		if(!connect_tincd(false))
+
+		if(!connect_tincd(false)) {
 			return NULL;
+		}
+
 		// Check the list of nodes
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
@@ -2727,12 +3046,15 @@ static char *complete_info(const char *text, int state) {
 	while(recvline(fd, line, sizeof(line))) {
 		char item[4096];
 		int n = sscanf(line, "%d %d %4095s", &code, &req, item);
+
 		if(n == 2) {
 			i++;
-			if(i >= 2)
+
+			if(i >= 2) {
 				break;
-			else
+			} else {
 				continue;
+			}
 		}
 
 		if(n != 3) {
@@ -2740,8 +3062,9 @@ static char *complete_info(const char *text, int state) {
 			break;
 		}
 
-		if(!strncmp(item, text, strlen(text)))
+		if(!strncmp(item, text, strlen(text))) {
 			return xstrdup(strip_weight(item));
+		}
 	}
 
 	return NULL;
@@ -2751,23 +3074,24 @@ static char *complete_nothing(const char *text, int state) {
 	return NULL;
 }
 
-static char **completion (const char *text, int start, int end) {
+static char **completion(const char *text, int start, int end) {
 	char **matches = NULL;
 
-	if(!start)
+	if(!start) {
 		matches = rl_completion_matches(text, complete_command);
-	else if(!strncasecmp(rl_line_buffer, "dump ", 5))
+	} else if(!strncasecmp(rl_line_buffer, "dump ", 5)) {
 		matches = rl_completion_matches(text, complete_dump);
-	else if(!strncasecmp(rl_line_buffer, "add ", 4))
+	} else if(!strncasecmp(rl_line_buffer, "add ", 4)) {
 		matches = rl_completion_matches(text, complete_config);
-	else if(!strncasecmp(rl_line_buffer, "del ", 4))
+	} else if(!strncasecmp(rl_line_buffer, "del ", 4)) {
 		matches = rl_completion_matches(text, complete_config);
-	else if(!strncasecmp(rl_line_buffer, "get ", 4))
+	} else if(!strncasecmp(rl_line_buffer, "get ", 4)) {
 		matches = rl_completion_matches(text, complete_config);
-	else if(!strncasecmp(rl_line_buffer, "set ", 4))
+	} else if(!strncasecmp(rl_line_buffer, "set ", 4)) {
 		matches = rl_completion_matches(text, complete_config);
-	else if(!strncasecmp(rl_line_buffer, "info ", 5))
+	} else if(!strncasecmp(rl_line_buffer, "info ", 5)) {
 		matches = rl_completion_matches(text, complete_info);
+	}
 
 	return matches;
 }
@@ -2781,8 +3105,9 @@ static int cmd_shell(int argc, char *argv[]) {
 	int maxargs = argc + 16;
 	char **nargv = xmalloc(maxargs * sizeof(*nargv));
 
-	for(int i = 0; i < argc; i++)
+	for(int i = 0; i < argc; i++) {
 		nargv[i] = argv[i];
+	}
 
 #ifdef HAVE_READLINE
 	rl_readline_name = "tinc";
@@ -2794,30 +3119,38 @@ static int cmd_shell(int argc, char *argv[]) {
 
 	while(true) {
 #ifdef HAVE_READLINE
+
 		if(tty) {
 			free(copy);
 			free(line);
 			rl_basic_word_break_characters = "\t\n ";
 			line = readline(prompt);
-			if(line)
+
+			if(line) {
 				copy = xstrdup(line);
+			}
 		} else {
 			line = fgets(buf, sizeof(buf), stdin);
 		}
+
 #else
-		if(tty)
+
+		if(tty) {
 			fputs(prompt, stdout);
+		}
 
 		line = fgets(buf, sizeof(buf), stdin);
 #endif
 
-		if(!line)
+		if(!line) {
 			break;
+		}
 
 		/* Ignore comments */
 
-		if(*line == '#')
+		if(*line == '#') {
 			continue;
+		}
 
 		/* Split */
 
@@ -2836,8 +3169,9 @@ static int cmd_shell(int argc, char *argv[]) {
 			next = strtok(NULL, " \t\n");
 		}
 
-		if(nargc == argc)
+		if(nargc == argc) {
 			continue;
+		}
 
 		if(!strcasecmp(nargv[argc], "exit") || !strcasecmp(nargv[argc], "quit")) {
 			free(nargv);
@@ -2855,8 +3189,11 @@ static int cmd_shell(int argc, char *argv[]) {
 		}
 
 #ifdef HAVE_READLINE
-		if(tty && found)
+
+		if(tty && found) {
 			add_history(copy);
+		}
+
 #endif
 
 		if(!found) {
@@ -2867,8 +3204,10 @@ static int cmd_shell(int argc, char *argv[]) {
 
 	free(nargv);
 
-	if(tty)
+	if(tty) {
 		printf("\n");
+	}
+
 	return result;
 }
 
@@ -2879,8 +3218,9 @@ int main(int argc, char *argv[]) {
 	orig_argc = argc;
 	tty = isatty(0) && isatty(1);
 
-	if(!parse_options(argc, argv))
+	if(!parse_options(argc, argv)) {
 		return 1;
+	}
 
 	make_names(false);
 	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
@@ -2903,17 +3243,20 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return false;
 	}
+
 #endif
 
 	srand(time(NULL));
 	crypto_init();
 
-	if(optind >= argc)
+	if(optind >= argc) {
 		return cmd_shell(argc, argv);
+	}
 
 	for(int i = 0; commands[i].command; i++) {
-		if(!strcasecmp(argv[optind], commands[i].command))
+		if(!strcasecmp(argv[optind], commands[i].command)) {
 			return commands[i].function(argc - optind, argv + optind);
+		}
 	}
 
 	fprintf(stderr, "Unknown command `%s'.\n", argv[optind]);

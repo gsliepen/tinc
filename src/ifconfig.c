@@ -88,36 +88,82 @@ static subnet_t ipv4, ipv6;
 void ifconfig_address(FILE *out, const char *value) {
 	subnet_t address = {};
 	char address_str[MAXNETSTR];
+
 	if(!str2net(&address, value) || !net2str(address_str, sizeof(address_str), &address)) {
 		fprintf(stderr, "Could not parse address in Ifconfig statement\n");
 		return;
 	}
+
 	switch(address.type) {
-		case SUBNET_IPV4: ipv4 = address; break;
-		case SUBNET_IPV6: ipv6 = address; break;
-		default: return;
+	case SUBNET_IPV4:
+		ipv4 = address;
+		break;
+
+	case SUBNET_IPV6:
+		ipv6 = address;
+		break;
+
+	default:
+		return;
 	}
+
 #if defined(HAVE_LINUX)
+
 	switch(address.type) {
-		case SUBNET_MAC:  fprintf(out, "ip link set \"$INTERFACE\" address %s\n", address_str); break;
-		case SUBNET_IPV4: fprintf(out, "ip addr replace %s dev \"$INTERFACE\"\n", address_str); break;
-		case SUBNET_IPV6: fprintf(out, "ip addr replace %s dev \"$INTERFACE\"\n", address_str); break;
-		default: return;
+	case SUBNET_MAC:
+		fprintf(out, "ip link set \"$INTERFACE\" address %s\n", address_str);
+		break;
+
+	case SUBNET_IPV4:
+		fprintf(out, "ip addr replace %s dev \"$INTERFACE\"\n", address_str);
+		break;
+
+	case SUBNET_IPV6:
+		fprintf(out, "ip addr replace %s dev \"$INTERFACE\"\n", address_str);
+		break;
+
+	default:
+		return;
 	}
+
 #elif defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
+
 	switch(address.type) {
-		case SUBNET_MAC:  fprintf(out, "ip link set \"$INTERFACE\" address %s\n", address_str); break;
-		case SUBNET_IPV4: fprintf(out, "netsh inetface ipv4 set address \"$INTERFACE\" static %s\n", address_str); break;
-		case SUBNET_IPV6: fprintf(out, "netsh inetface ipv6 set address \"$INTERFACE\" static %s\n", address_str); break;
-		default: return;
+	case SUBNET_MAC:
+		fprintf(out, "ip link set \"$INTERFACE\" address %s\n", address_str);
+		break;
+
+	case SUBNET_IPV4:
+		fprintf(out, "netsh inetface ipv4 set address \"$INTERFACE\" static %s\n", address_str);
+		break;
+
+	case SUBNET_IPV6:
+		fprintf(out, "netsh inetface ipv6 set address \"$INTERFACE\" static %s\n", address_str);
+		break;
+
+	default:
+		return;
 	}
+
 #else // assume BSD
+
 	switch(address.type) {
-		case SUBNET_MAC:  fprintf(out, "ifconfig \"$INTERFACE\" link %s\n", address_str); break;
-		case SUBNET_IPV4: fprintf(out, "ifconfig \"$INTERFACE\" %s\n", address_str); break;
-		case SUBNET_IPV6: fprintf(out, "ifconfig \"$INTERFACE\" inet6 %s\n", address_str); break;
-		default: return;
+	case SUBNET_MAC:
+		fprintf(out, "ifconfig \"$INTERFACE\" link %s\n", address_str);
+		break;
+
+	case SUBNET_IPV4:
+		fprintf(out, "ifconfig \"$INTERFACE\" %s\n", address_str);
+		break;
+
+	case SUBNET_IPV6:
+		fprintf(out, "ifconfig \"$INTERFACE\" inet6 %s\n", address_str);
+		break;
+
+	default:
+		return;
 	}
+
 #endif
 }
 
@@ -125,73 +171,134 @@ void ifconfig_route(FILE *out, const char *value) {
 	subnet_t subnet = {}, gateway = {};
 	char subnet_str[MAXNETSTR] = "", gateway_str[MAXNETSTR] = "";
 	char *sep = strchr(value, ' ');
-	if(sep)
+
+	if(sep) {
 		*sep++ = 0;
+	}
+
 	if(!str2net(&subnet, value) || !net2str(subnet_str, sizeof(subnet_str), &subnet) || subnet.type == SUBNET_MAC) {
 		fprintf(stderr, "Could not parse subnet in Route statement\n");
 		return;
 	}
+
 	if(sep) {
 		if(!str2net(&gateway, sep) || !net2str(gateway_str, sizeof(gateway_str), &gateway) || gateway.type != subnet.type) {
 			fprintf(stderr, "Could not parse gateway in Route statement\n");
 			return;
 		}
-		char *slash = strchr(gateway_str, '/'); if(slash) *slash = 0;
+
+		char *slash = strchr(gateway_str, '/');
+
+		if(slash) {
+			*slash = 0;
+		}
 	}
+
 #if defined(HAVE_LINUX)
+
 	if(*gateway_str) {
 		switch(subnet.type) {
-			case SUBNET_IPV4: fprintf(out, "ip route add %s via %s dev \"$INTERFACE\"\n", subnet_str, gateway_str); break;
-			case SUBNET_IPV6: fprintf(out, "ip route add %s via %s dev \"$INTERFACE\"\n", subnet_str, gateway_str); break;
-			default: return;
+		case SUBNET_IPV4:
+			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\"\n", subnet_str, gateway_str);
+			break;
+
+		case SUBNET_IPV6:
+			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\"\n", subnet_str, gateway_str);
+			break;
+
+		default:
+			return;
 		}
 	} else {
 		switch(subnet.type) {
-			case SUBNET_IPV4: fprintf(out, "ip route add %s dev \"$INTERFACE\"\n", subnet_str); break;
-			case SUBNET_IPV6: fprintf(out, "ip route add %s dev \"$INTERFACE\"\n", subnet_str); break;
-			default: return;
+		case SUBNET_IPV4:
+			fprintf(out, "ip route add %s dev \"$INTERFACE\"\n", subnet_str);
+			break;
+
+		case SUBNET_IPV6:
+			fprintf(out, "ip route add %s dev \"$INTERFACE\"\n", subnet_str);
+			break;
+
+		default:
+			return;
 		}
 	}
+
 #elif defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
+
 	if(*gateway_str) {
 		switch(subnet.type) {
-			case SUBNET_IPV4: fprintf(out, "netsh inetface ipv4 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str); break;
-			case SUBNET_IPV6: fprintf(out, "netsh inetface ipv6 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str); break;
-			default: return;
+		case SUBNET_IPV4:
+			fprintf(out, "netsh inetface ipv4 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
+			break;
+
+		case SUBNET_IPV6:
+			fprintf(out, "netsh inetface ipv6 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
+			break;
+
+		default:
+			return;
 		}
 	} else {
 		switch(subnet.type) {
-			case SUBNET_IPV4: fprintf(out, "netsh inetface ipv4 add route %s \"%%INTERFACE%%\"\n", subnet_str); break;
-			case SUBNET_IPV6: fprintf(out, "netsh inetface ipv6 add route %s \"%%INTERFACE%%\"\n", subnet_str); break;
-			default: return;
+		case SUBNET_IPV4:
+			fprintf(out, "netsh inetface ipv4 add route %s \"%%INTERFACE%%\"\n", subnet_str);
+			break;
+
+		case SUBNET_IPV6:
+			fprintf(out, "netsh inetface ipv6 add route %s \"%%INTERFACE%%\"\n", subnet_str);
+			break;
+
+		default:
+			return;
 		}
 	}
+
 #else // assume BSD
+
 	if(!*gateway_str) {
 		switch(subnet.type) {
-			case SUBNET_IPV4:
-				if(!ipv4.type) {
-					fprintf(stderr, "Route requested but no Ifconfig\n");
-					return;
-				}
-				net2str(gateway_str, sizeof(gateway_str), &ipv4);
-				break;
-			case SUBNET_IPV6:
-				if(!ipv6.type) {
-					fprintf(stderr, "Route requested but no Ifconfig\n");
-					return;
-				}
-				net2str(gateway_str, sizeof(gateway_str), &ipv6);
-				break;
-			default: return;
+		case SUBNET_IPV4:
+			if(!ipv4.type) {
+				fprintf(stderr, "Route requested but no Ifconfig\n");
+				return;
+			}
+
+			net2str(gateway_str, sizeof(gateway_str), &ipv4);
+			break;
+
+		case SUBNET_IPV6:
+			if(!ipv6.type) {
+				fprintf(stderr, "Route requested but no Ifconfig\n");
+				return;
+			}
+
+			net2str(gateway_str, sizeof(gateway_str), &ipv6);
+			break;
+
+		default:
+			return;
 		}
-		char *slash = strchr(gateway_str, '/'); if(slash) *slash = 0;
+
+		char *slash = strchr(gateway_str, '/');
+
+		if(slash) {
+			*slash = 0;
+		}
 	}
 
 	switch(subnet.type) {
-		case SUBNET_IPV4: fprintf(out, "route add %s %s\n", subnet_str, gateway_str); break;
-		case SUBNET_IPV6: fprintf(out, "route add -inet6 %s %s\n", subnet_str, gateway_str); break;
-		default: return;
+	case SUBNET_IPV4:
+		fprintf(out, "route add %s %s\n", subnet_str, gateway_str);
+		break;
+
+	case SUBNET_IPV6:
+		fprintf(out, "route add -inet6 %s %s\n", subnet_str, gateway_str);
+		break;
+
+	default:
+		return;
 	}
+
 #endif
 }

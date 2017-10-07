@@ -44,8 +44,9 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
 		xasprintf(&device, LOCALSTATEDIR "/run/vde.ctl");
+	}
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 
@@ -62,6 +63,7 @@ static bool setup_device(void) {
 	};
 
 	conn = plug.vde_open(device, identname, &args);
+
 	if(!conn) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open VDE socket %s", device);
 		return false;
@@ -75,29 +77,35 @@ static bool setup_device(void) {
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
-	if(routing_mode == RMODE_ROUTER)
+	if(routing_mode == RMODE_ROUTER) {
 		overwrite_mac = true;
+	}
 
 	return true;
 }
 
 static void close_device(void) {
 	if(conn) {
-		plug.vde_close(conn); conn = NULL;
+		plug.vde_close(conn);
+		conn = NULL;
 	}
 
-	if(plug.dl_handle)
+	if(plug.dl_handle) {
 		libvdeplug_dynclose(plug);
+	}
 
-	free(device); device = NULL;
+	free(device);
+	device = NULL;
 
-	free(iface); iface = NULL;
+	free(iface);
+	iface = NULL;
 
 	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
 	int lenin = (ssize_t)plug.vde_recv(conn, DATA(packet), MTU, 0);
+
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 		event_exit();

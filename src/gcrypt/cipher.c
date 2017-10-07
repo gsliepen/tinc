@@ -55,7 +55,7 @@ static struct {
 static bool nametocipher(const char *name, int *algo, int *mode) {
 	size_t i;
 
-	for(i = 0; i < sizeof(ciphertable) / sizeof *ciphertable; i++) {
+	for(i = 0; i < sizeof(ciphertable) / sizeof * ciphertable; i++) {
 		if(ciphertable[i].name && !strcasecmp(name, ciphertable[i].name)) {
 			*algo = ciphertable[i].algo;
 			*mode = ciphertable[i].mode;
@@ -69,7 +69,7 @@ static bool nametocipher(const char *name, int *algo, int *mode) {
 static bool nidtocipher(int nid, int *algo, int *mode) {
 	size_t i;
 
-	for(i = 0; i < sizeof(ciphertable) / sizeof *ciphertable; i++) {
+	for(i = 0; i < sizeof(ciphertable) / sizeof * ciphertable; i++) {
 		if(nid == ciphertable[i].nid) {
 			*algo = ciphertable[i].algo;
 			*mode = ciphertable[i].mode;
@@ -83,7 +83,7 @@ static bool nidtocipher(int nid, int *algo, int *mode) {
 static bool ciphertonid(int algo, int mode, int *nid) {
 	size_t i;
 
-	for(i = 0; i < sizeof(ciphertable) / sizeof *ciphertable; i++) {
+	for(i = 0; i < sizeof(ciphertable) / sizeof * ciphertable; i++) {
 		if(algo == ciphertable[i].algo && mode == ciphertable[i].mode) {
 			*nid = ciphertable[i].nid;
 			return true;
@@ -193,8 +193,9 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	uint8_t pad[cipher->blklen];
 
 	if(cipher->padding) {
-		if(!oneshot)
+		if(!oneshot) {
 			return false;
+		}
 
 		size_t reqlen = ((inlen + cipher->blklen) / cipher->blklen) * cipher->blklen;
 
@@ -207,14 +208,16 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 		inlen = reqlen - cipher->blklen;
 
 		for(int i = 0; i < cipher->blklen; i++)
-			if(i < cipher->blklen - padbyte)
+			if(i < cipher->blklen - padbyte) {
 				pad[i] = ((uint8_t *)indata)[inlen + i];
-			else
+			} else {
 				pad[i] = padbyte;
+			}
 	}
 
-	if(oneshot)
+	if(oneshot) {
 		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
+	}
 
 	if((err = gcry_cipher_encrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encrypting: %s", gcry_strerror(err));
@@ -237,8 +240,9 @@ bool cipher_encrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *outdata, size_t *outlen, bool oneshot) {
 	gcry_error_t err;
 
-	if(oneshot)
+	if(oneshot) {
 		gcry_cipher_setiv(cipher->handle, cipher->key + cipher->keylen, cipher->blklen);
+	}
 
 	if((err = gcry_cipher_decrypt(cipher->handle, outdata, *outlen, indata, inlen))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting: %s", gcry_strerror(err));
@@ -246,8 +250,9 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	}
 
 	if(cipher->padding) {
-		if(!oneshot)
+		if(!oneshot) {
 			return false;
+		}
 
 		uint8_t padbyte = ((uint8_t *)outdata)[inlen - 1];
 
@@ -265,8 +270,9 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 			}
 
 		*outlen = origlen;
-	} else
+	} else {
 		*outlen = inlen;
+	}
 
 	return true;
 }

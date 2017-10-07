@@ -27,7 +27,7 @@ typedef struct hash_t {
 	const void **values;
 } hash_t;
 
-extern hash_t *hash_alloc(size_t n, size_t size) __attribute__ ((__malloc__));
+extern hash_t *hash_alloc(size_t n, size_t size) __attribute__((__malloc__));
 extern void hash_free(hash_t *);
 
 extern void hash_insert(hash_t *, const void *key, const void *value);

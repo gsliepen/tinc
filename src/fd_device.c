@@ -64,7 +64,7 @@ static void close_device(void) {
 }
 
 static inline uint16_t get_ip_ethertype(vpn_packet_t *packet) {
-	switch (DATA(packet)[ETH_HLEN] >> 4) {
+	switch(DATA(packet)[ETH_HLEN] >> 4) {
 	case 4:
 		return ETH_P_IP;
 
@@ -85,12 +85,14 @@ static inline void set_etherheader(vpn_packet_t *packet, uint16_t ethertype) {
 
 static bool read_packet(vpn_packet_t *packet) {
 	int lenin = read(device_fd, DATA(packet) + ETH_HLEN, MTU - ETH_HLEN);
+
 	if(lenin <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from fd/%d: %s!", device_fd, strerror(errno));
 		return false;
 	}
 
 	uint16_t ethertype = get_ip_ethertype(packet);
+
 	if(ethertype == ETH_P_MAX) {
 		logger(DEBUG_TRAFFIC, LOG_ERR, "Unknown IP version while reading packet from fd/%d!", device_fd);
 		return false;

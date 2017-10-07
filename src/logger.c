@@ -45,40 +45,48 @@ static void real_logger(int level, int priority, const char *message) {
 	static bool suppress = false;
 
 	// Bail out early if there is nothing to do.
-	if(suppress)
+	if(suppress) {
 		return;
+	}
 
-	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL))
+	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL)) {
 		return;
+	}
 
 	if(level <= debug_level) {
 		switch(logmode) {
-			case LOGMODE_STDERR:
-				fprintf(stderr, "%s\n", message);
-				fflush(stderr);
-				break;
-			case LOGMODE_FILE:
-				if(!now.tv_sec)
-					gettimeofday(&now, NULL);
-				time_t now_sec = now.tv_sec;
-				strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now_sec));
-				fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
-				fflush(logfile);
-				break;
-			case LOGMODE_SYSLOG:
+		case LOGMODE_STDERR:
+			fprintf(stderr, "%s\n", message);
+			fflush(stderr);
+			break;
+
+		case LOGMODE_FILE:
+			if(!now.tv_sec) {
+				gettimeofday(&now, NULL);
+			}
+
+			time_t now_sec = now.tv_sec;
+			strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now_sec));
+			fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
+			fflush(logfile);
+			break;
+
+		case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-				{
-					const char *messages[] = {message};
-					ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
-				}
+			{
+				const char *messages[] = {message};
+				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
+			}
+
 #else
 #ifdef HAVE_SYSLOG_H
-				syslog(priority, "%s", message);
+			syslog(priority, "%s", message);
 #endif
 #endif
-				break;
-			case LOGMODE_NULL:
-				break;
+			break;
+
+		case LOGMODE_NULL:
+			break;
 		}
 
 		if(umbilical && do_detach) {
@@ -90,16 +98,25 @@ static void real_logger(int level, int priority, const char *message) {
 	if(logcontrol) {
 		suppress = true;
 		logcontrol = false;
+
 		for list_each(connection_t, c, connection_list) {
-			if(!c->status.log)
+			if(!c->status.log) {
 				continue;
+			}
+
 			logcontrol = true;
-			if(level > (c->outcompression >= 0 ? c->outcompression : debug_level))
+
+			if(level > (c->outcompression >= 0 ? c->outcompression : debug_level)) {
 				continue;
+			}
+
 			int len = strlen(message);
-			if(send_request(c, "%d %d %d", CONTROL, REQ_LOG, len))
+
+			if(send_request(c, "%d %d %d", CONTROL, REQ_LOG, len)) {
 				send_meta(c, message, len);
+			}
 		}
+
 		suppress = false;
 	}
 }
@@ -113,8 +130,9 @@ void logger(int level, int priority, const char *format, ...) {
 	message[sizeof(message) - 1] = 0;
 	va_end(ap);
 
-	if(len > 0 && len < sizeof(message) - 1 && message[len - 1] == '\n')
+	if(len > 0 && len < sizeof(message) - 1 && message[len - 1] == '\n') {
 		message[len - 1] = 0;
+	}
 
 	real_logger(level, priority, message);
 }
@@ -125,15 +143,19 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 
 	int len = vsnprintf(message, msglen, format, ap);
 	message[sizeof(message) - 1] = 0;
+
 	if(len > 0 && len < sizeof(message) - 1) {
-		if(message[len - 1] == '\n')
+		if(message[len - 1] == '\n') {
 			message[--len] = 0;
+		}
 
 		// WARNING: s->handle can point to a connection_t or a node_t,
 		// but both types have the name and hostname fields at the same offsets.
 		connection_t *c = s->handle;
-		if(c)
+
+		if(c) {
 			snprintf(message + len, sizeof(message) - len, " from %s (%s)", c->name, c->hostname);
+		}
 	}
 
 	real_logger(DEBUG_ALWAYS, LOG_ERR, message);
@@ -144,51 +166,62 @@ void openlogger(const char *ident, logmode_t mode) {
 	logmode = mode;
 
 	switch(mode) {
-		case LOGMODE_STDERR:
-			logpid = getpid();
-			break;
-		case LOGMODE_FILE:
-			logpid = getpid();
-			logfile = fopen(logfilename, "a");
-			if(!logfile) {
-				fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
-				logmode = LOGMODE_NULL;
-			}
-			break;
-		case LOGMODE_SYSLOG:
+	case LOGMODE_STDERR:
+		logpid = getpid();
+		break;
+
+	case LOGMODE_FILE:
+		logpid = getpid();
+		logfile = fopen(logfilename, "a");
+
+		if(!logfile) {
+			fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
+			logmode = LOGMODE_NULL;
+		}
+
+		break;
+
+	case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			loghandle = RegisterEventSource(NULL, logident);
-			if(!loghandle) {
-				fprintf(stderr, "Could not open log handle!");
-				logmode = LOGMODE_NULL;
-			}
-			break;
+		loghandle = RegisterEventSource(NULL, logident);
+
+		if(!loghandle) {
+			fprintf(stderr, "Could not open log handle!");
+			logmode = LOGMODE_NULL;
+		}
+
+		break;
 #else
 #ifdef HAVE_SYSLOG_H
-			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
-			break;
+		openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
+		break;
 #endif
 #endif
-		case LOGMODE_NULL:
-			break;
+
+	case LOGMODE_NULL:
+		break;
 	}
 
-	if(logmode != LOGMODE_NULL)
+	if(logmode != LOGMODE_NULL) {
 		sptps_log = sptps_logger;
-	else
+	} else {
 		sptps_log = sptps_log_quiet;
+	}
 }
 
 void reopenlogger() {
-	if(logmode != LOGMODE_FILE)
+	if(logmode != LOGMODE_FILE) {
 		return;
+	}
 
 	fflush(logfile);
 	FILE *newfile = fopen(logfilename, "a");
+
 	if(!newfile) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
 		return;
 	}
+
 	fclose(logfile);
 	logfile = newfile;
 }
@@ -196,21 +229,23 @@ void reopenlogger() {
 
 void closelogger(void) {
 	switch(logmode) {
-		case LOGMODE_FILE:
-			fclose(logfile);
-			break;
-		case LOGMODE_SYSLOG:
+	case LOGMODE_FILE:
+		fclose(logfile);
+		break;
+
+	case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			DeregisterEventSource(loghandle);
-			break;
+		DeregisterEventSource(loghandle);
+		break;
 #else
 #ifdef HAVE_SYSLOG_H
-			closelog();
-			break;
+		closelog();
+		break;
 #endif
 #endif
-		case LOGMODE_NULL:
-		case LOGMODE_STDERR:
-			break;
+
+	case LOGMODE_NULL:
+	case LOGMODE_STDERR:
+		break;
 	}
 }

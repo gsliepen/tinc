@@ -82,8 +82,9 @@ static char *buffer_consume(buffer_t *buffer, int size) {
 char *buffer_readline(buffer_t *buffer) {
 	char *newline = memchr(buffer->data + buffer->offset, '\n', buffer->len - buffer->offset);
 
-	if(!newline)
+	if(!newline) {
 		return NULL;
+	}
 
 	int len = newline + 1 - (buffer->data + buffer->offset);
 	*newline = 0;
@@ -93,8 +94,9 @@ char *buffer_readline(buffer_t *buffer) {
 // Check if we have enough bytes in the buffer, and if so, return a pointer to the start of them.
 
 char *buffer_read(buffer_t *buffer, int size) {
-	if(buffer->len - buffer->offset < size)
+	if(buffer->len - buffer->offset < size) {
 		return NULL;
+	}
 
 	return buffer_consume(buffer, size);
 }

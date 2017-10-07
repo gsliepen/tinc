@@ -31,8 +31,10 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 	int c;
 
 	if(!root) {
-		if(result)
+		if(result) {
 			*result = 0;
+		}
+
 		return NULL;
 	}
 
@@ -45,8 +47,9 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				child->parent = rightbottom;
 				rightbottom = child;
 
-				if((root->left = child->right))
+				if((root->left = child->right)) {
 					child->right->parent = root;
+				}
 
 				child->right = root;
 				root->parent = child;
@@ -55,7 +58,7 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				grandchild->parent = NULL;
 
 				root = grandchild;
-			} else if (c > 0 && (grandchild = child->right)) {
+			} else if(c > 0 && (grandchild = child->right)) {
 				leftbottom->right = child;
 				child->parent = leftbottom;
 				leftbottom = child;
@@ -89,8 +92,9 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				child->parent = leftbottom;
 				leftbottom = child;
 
-				if((root->right = child->left))
+				if((root->right = child->left)) {
 					child->left->parent = root;
+				}
 
 				child->left = root;
 				root->parent = child;
@@ -99,7 +103,7 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 				grandchild->parent = NULL;
 
 				root = grandchild;
-			} else if (c < 0 && (grandchild = child->left)) {
+			} else if(c < 0 && (grandchild = child->left)) {
 				rightbottom->left = child;
 				child->parent = rightbottom;
 				rightbottom = child;
@@ -137,6 +141,7 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 			leftbottom->right = root->left;
 			root->left->parent = leftbottom;
 		}
+
 		root->left = left.right;
 		left.right->parent = root;
 	}
@@ -146,6 +151,7 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 			rightbottom->left = root->right;
 			root->right->parent = rightbottom;
 		}
+
 		root->right = right.left;
 		right.left->parent = root;
 	}
@@ -153,8 +159,10 @@ static splay_node_t *splay_top_down(splay_tree_t *tree, const void *data, int *r
 	/* Return result */
 
 	tree->root = root;
-	if(result)
+
+	if(result) {
 		*result = c;
+	}
 
 	return tree->root;
 }
@@ -165,12 +173,16 @@ static void splay_bottom_up(splay_tree_t *tree, splay_node_t *node) {
 	while((parent = node->parent)) {
 		if(!(grandparent = parent->parent)) { /* zig */
 			if(node == parent->left) {
-				if((parent->left = node->right))
+				if((parent->left = node->right)) {
 					parent->left->parent = parent;
+				}
+
 				node->right = parent;
 			} else {
-				if((parent->right = node->left))
+				if((parent->right = node->left)) {
 					parent->right->parent = parent;
+				}
+
 				node->left = parent;
 			}
 
@@ -180,52 +192,69 @@ static void splay_bottom_up(splay_tree_t *tree, splay_node_t *node) {
 			greatgrandparent = grandparent->parent;
 
 			if(node == parent->left && parent == grandparent->left) { /* left zig-zig */
-				if((grandparent->left = parent->right))
+				if((grandparent->left = parent->right)) {
 					grandparent->left->parent = grandparent;
+				}
+
 				parent->right = grandparent;
 				grandparent->parent = parent;
 
-				if((parent->left = node->right))
+				if((parent->left = node->right)) {
 					parent->left->parent = parent;
+				}
+
 				node->right = parent;
 				parent->parent = node;
 			} else if(node == parent->right && parent == grandparent->right) { /* right zig-zig */
-				if((grandparent->right = parent->left))
+				if((grandparent->right = parent->left)) {
 					grandparent->right->parent = grandparent;
+				}
+
 				parent->left = grandparent;
 				grandparent->parent = parent;
 
-				if((parent->right = node->left))
+				if((parent->right = node->left)) {
 					parent->right->parent = parent;
+				}
+
 				node->left = parent;
 				parent->parent = node;
 			} else if(node == parent->right && parent == grandparent->left) { /* left-right zig-zag */
-				if((parent->right = node->left))
+				if((parent->right = node->left)) {
 					parent->right->parent = parent;
+				}
+
 				node->left = parent;
 				parent->parent = node;
 
-				if((grandparent->left = node->right))
+				if((grandparent->left = node->right)) {
 					grandparent->left->parent = grandparent;
+				}
+
 				node->right = grandparent;
 				grandparent->parent = node;
 			} else { /* right-left zig-zag */
-				if((parent->left = node->right))
+				if((parent->left = node->right)) {
 					parent->left->parent = parent;
+				}
+
 				node->right = parent;
 				parent->parent = node;
 
-				if((grandparent->right = node->left))
+				if((grandparent->right = node->left)) {
 					grandparent->right->parent = grandparent;
+				}
+
 				node->left = grandparent;
 				grandparent->parent = node;
 			}
 
 			if((node->parent = greatgrandparent)) {
-				if(grandparent == greatgrandparent->left)
+				if(grandparent == greatgrandparent->left) {
 					greatgrandparent->left = node;
-				else
+				} else {
 					greatgrandparent->right = node;
+				}
 			}
 		}
 	}
@@ -254,8 +283,9 @@ splay_node_t *splay_alloc_node(void) {
 }
 
 void splay_free_node(splay_tree_t *tree, splay_node_t *node) {
-	if(node->data && tree->delete)
+	if(node->data && tree->delete) {
 		tree->delete(node->data);
+	}
 
 	free(node);
 }
@@ -310,8 +340,10 @@ splay_node_t *splay_search_closest_node_nosplay(const splay_tree_t *tree, const 
 	node = tree->root;
 
 	if(!node) {
-		if(result)
+		if(result) {
 			*result = 0;
+		}
+
 		return NULL;
 	}
 
@@ -319,22 +351,26 @@ splay_node_t *splay_search_closest_node_nosplay(const splay_tree_t *tree, const 
 		c = tree->compare(data, node->data);
 
 		if(c < 0) {
-			if(node->left)
+			if(node->left) {
 				node = node->left;
-			else
+			} else {
 				break;
+			}
 		} else if(c > 0) {
-			if(node->right)
+			if(node->right) {
 				node = node->right;
-			else
+			} else {
 				break;
+			}
 		} else {
 			break;
 		}
 	}
 
-	if(result)
+	if(result) {
 		*result = c;
+	}
+
 	return node;
 }
 
@@ -348,8 +384,9 @@ splay_node_t *splay_search_closest_smaller_node(splay_tree_t *tree, const void *
 
 	node = splay_search_closest_node(tree, data, &result);
 
-	if(result < 0)
+	if(result < 0) {
 		node = node->prev;
+	}
 
 	return node;
 }
@@ -360,8 +397,9 @@ splay_node_t *splay_search_closest_greater_node(splay_tree_t *tree, const void *
 
 	node = splay_search_closest_node(tree, data, &result);
 
-	if(result > 0)
+	if(result > 0) {
 		node = node->next;
+	}
 
 	return node;
 }
@@ -379,16 +417,18 @@ splay_node_t *splay_insert(splay_tree_t *tree, void *data) {
 	} else {
 		closest = splay_search_closest_node(tree, data, &result);
 
-		if(!result)
+		if(!result) {
 			return NULL;
+		}
 
 		new = splay_alloc_node();
 		new->data = data;
 
-		if(result < 0)
+		if(result < 0) {
 			splay_insert_before(tree, closest, new);
-		else
+		} else {
 			splay_insert_after(tree, closest, new);
+		}
 	}
 
 	return new;
@@ -400,18 +440,20 @@ splay_node_t *splay_insert_node(splay_tree_t *tree, splay_node_t *node) {
 
 	node->left = node->right = node->parent = node->next = node->prev = NULL;
 
-	if(!tree->root)
+	if(!tree->root) {
 		splay_insert_top(tree, node);
-	else {
+	} else {
 		closest = splay_search_closest_node(tree, node->data, &result);
 
-		if(!result)
+		if(!result) {
 			return NULL;
+		}
 
-		if(result < 0)
+		if(result < 0) {
 			splay_insert_before(tree, closest, node);
-		else
+		} else {
 			splay_insert_after(tree, closest, node);
+		}
 	}
 
 	return node;
@@ -425,26 +467,34 @@ void splay_insert_top(splay_tree_t *tree, splay_node_t *node) {
 
 void splay_insert_before(splay_tree_t *tree, splay_node_t *before, splay_node_t *node) {
 	if(!before) {
-		if(tree->tail)
+		if(tree->tail) {
 			splay_insert_after(tree, tree->tail, node);
-		else
+		} else {
 			splay_insert_top(tree, node);
+		}
+
 		return;
 	}
 
 	node->next = before;
-	if((node->prev = before->prev))
+
+	if((node->prev = before->prev)) {
 		before->prev->next = node;
-	else
+	} else {
 		tree->head = node;
+	}
+
 	before->prev = node;
 
 	splay_bottom_up(tree, before);
 
 	node->right = before;
 	before->parent = node;
-	if((node->left = before->left))
+
+	if((node->left = before->left)) {
 		before->left->parent = node;
+	}
+
 	before->left = NULL;
 
 	node->parent = NULL;
@@ -454,26 +504,34 @@ void splay_insert_before(splay_tree_t *tree, splay_node_t *before, splay_node_t 
 
 void splay_insert_after(splay_tree_t *tree, splay_node_t *after, splay_node_t *node) {
 	if(!after) {
-		if(tree->head)
+		if(tree->head) {
 			splay_insert_before(tree, tree->head, node);
-		else
+		} else {
 			splay_insert_top(tree, node);
+		}
+
 		return;
 	}
 
 	node->prev = after;
-	if((node->next = after->next))
+
+	if((node->next = after->next)) {
 		after->next->prev = node;
-	else
+	} else {
 		tree->tail = node;
+	}
+
 	after->next = node;
 
 	splay_bottom_up(tree, after);
 
 	node->left = after;
 	after->parent = node;
-	if((node->right = after->right))
+
+	if((node->right = after->right)) {
 		after->right->parent = node;
+	}
+
 	after->right = NULL;
 
 	node->parent = NULL;
@@ -486,30 +544,35 @@ splay_node_t *splay_unlink(splay_tree_t *tree, void *data) {
 
 	node = splay_search_node(tree, data);
 
-	if(node)
+	if(node) {
 		splay_unlink_node(tree, node);
+	}
 
 	return node;
 }
 
 void splay_unlink_node(splay_tree_t *tree, splay_node_t *node) {
-	if(node->prev)
+	if(node->prev) {
 		node->prev->next = node->next;
-	else
+	} else {
 		tree->head = node->next;
+	}
 
-	if(node->next)
+	if(node->next) {
 		node->next->prev = node->prev;
-	else
+	} else {
 		tree->tail = node->prev;
+	}
 
 	splay_bottom_up(tree, node);
 
 	if(node->prev) {
 		node->left->parent = NULL;
 		tree->root = node->left;
-		if((node->prev->right = node->right))
+
+		if((node->prev->right = node->right)) {
 			node->right->parent = node->prev;
+		}
 	} else if(node->next) {
 		tree->root = node->right;
 		node->right->parent = NULL;
@@ -530,8 +593,9 @@ void splay_delete(splay_tree_t *tree, void *data) {
 
 	node = splay_search_node(tree, data);
 
-	if(node)
+	if(node) {
 		splay_delete_node(tree, node);
+	}
 }
 
 /* Fast tree cleanup */

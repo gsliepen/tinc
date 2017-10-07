@@ -80,7 +80,7 @@ extern ecdsa_t *invitation_key;
 
 /* Basic functions */
 
-extern bool send_request(struct connection_t *, const char *, ...) __attribute__ ((__format__(printf, 2, 3)));
+extern bool send_request(struct connection_t *, const char *, ...) __attribute__((__format__(printf, 2, 3)));
 extern void forward_request(struct connection_t *, const char *);
 extern bool receive_request(struct connection_t *, const char *);
 
@@ -109,7 +109,7 @@ extern void send_key_changed(void);
 extern bool send_req_key(struct node_t *);
 extern bool send_ans_key(struct node_t *);
 extern bool send_tcppacket(struct connection_t *, const struct vpn_packet_t *);
-extern bool send_sptps_tcppacket(struct connection_t *, const char*, int);
+extern bool send_sptps_tcppacket(struct connection_t *, const char *, int);
 extern bool send_udp_info(struct node_t *, struct node_t *);
 extern bool send_mtu_info(struct node_t *, struct node_t *, int);
 

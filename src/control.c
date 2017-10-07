@@ -56,80 +56,89 @@ bool control_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	switch (type) {
-		case REQ_STOP:
-			event_exit();
-			return control_ok(c, REQ_STOP);
+	switch(type) {
+	case REQ_STOP:
+		event_exit();
+		return control_ok(c, REQ_STOP);
 
-		case REQ_DUMP_NODES:
-			return dump_nodes(c);
+	case REQ_DUMP_NODES:
+		return dump_nodes(c);
 
-		case REQ_DUMP_EDGES:
-			return dump_edges(c);
+	case REQ_DUMP_EDGES:
+		return dump_edges(c);
 
-		case REQ_DUMP_SUBNETS:
-			return dump_subnets(c);
+	case REQ_DUMP_SUBNETS:
+		return dump_subnets(c);
 
-		case REQ_DUMP_CONNECTIONS:
-			return dump_connections(c);
+	case REQ_DUMP_CONNECTIONS:
+		return dump_connections(c);
 
-		case REQ_PURGE:
-			purge();
-			return control_ok(c, REQ_PURGE);
+	case REQ_PURGE:
+		purge();
+		return control_ok(c, REQ_PURGE);
 
-		case REQ_SET_DEBUG: {
-			int new_level;
-			if(sscanf(request, "%*d %*d %d", &new_level) != 1)
-				return false;
-			send_request(c, "%d %d %d", CONTROL, REQ_SET_DEBUG, debug_level);
-			if(new_level >= 0)
-				debug_level = new_level;
-			return true;
+	case REQ_SET_DEBUG: {
+		int new_level;
+
+		if(sscanf(request, "%*d %*d %d", &new_level) != 1) {
+			return false;
 		}
 
-		case REQ_RETRY:
-			retry();
-			return control_ok(c, REQ_RETRY);
+		send_request(c, "%d %d %d", CONTROL, REQ_SET_DEBUG, debug_level);
 
-		case REQ_RELOAD:
-			logger(DEBUG_ALWAYS, LOG_NOTICE, "Got '%s' command", "reload");
-			int result = reload_configuration();
-			return control_return(c, REQ_RELOAD, result);
+		if(new_level >= 0) {
+			debug_level = new_level;
+		}
 
-		case REQ_DISCONNECT: {
-			char name[MAX_STRING_SIZE];
-			bool found = false;
+		return true;
+	}
 
-			if(sscanf(request, "%*d %*d " MAX_STRING, name) != 1)
-				return control_return(c, REQ_DISCONNECT, -1);
+	case REQ_RETRY:
+		retry();
+		return control_ok(c, REQ_RETRY);
 
-			for list_each(connection_t, other, connection_list) {
-				if(strcmp(other->name, name))
-					continue;
-				terminate_connection(other, other->edge);
-				found = true;
+	case REQ_RELOAD:
+		logger(DEBUG_ALWAYS, LOG_NOTICE, "Got '%s' command", "reload");
+		int result = reload_configuration();
+		return control_return(c, REQ_RELOAD, result);
+
+	case REQ_DISCONNECT: {
+		char name[MAX_STRING_SIZE];
+		bool found = false;
+
+		if(sscanf(request, "%*d %*d " MAX_STRING, name) != 1) {
+			return control_return(c, REQ_DISCONNECT, -1);
+		}
+
+		for list_each(connection_t, other, connection_list) {
+			if(strcmp(other->name, name)) {
+				continue;
 			}
 
-			return control_return(c, REQ_DISCONNECT, found ? 0 : -2);
+			terminate_connection(other, other->edge);
+			found = true;
 		}
 
-		case REQ_DUMP_TRAFFIC:
-			return dump_traffic(c);
+		return control_return(c, REQ_DISCONNECT, found ? 0 : -2);
+	}
 
-		case REQ_PCAP:
-			sscanf(request, "%*d %*d %d", &c->outmaclength);
-			c->status.pcap = true;
-			pcap = true;
-			return true;
+	case REQ_DUMP_TRAFFIC:
+		return dump_traffic(c);
 
-		case REQ_LOG:
-			sscanf(request, "%*d %*d %d", &c->outcompression);
-			c->status.log = true;
-			logcontrol = true;
-			return true;
+	case REQ_PCAP:
+		sscanf(request, "%*d %*d %d", &c->outmaclength);
+		c->status.pcap = true;
+		pcap = true;
+		return true;
 
-		default:
-			return send_request(c, "%d %d", CONTROL, REQ_INVALID);
+	case REQ_LOG:
+		sscanf(request, "%*d %*d %d", &c->outcompression);
+		c->status.log = true;
+		logcontrol = true;
+		return true;
+
+	default:
+		return send_request(c, "%d %d", CONTROL, REQ_INVALID);
 	}
 }
 
@@ -159,12 +168,15 @@ bool init_control(void) {
 		xasprintf(&localhost, "127.0.0.1 port %s", myport);
 	} else {
 		if(sa.sa.sa_family == AF_INET) {
-			if(sa.in.sin_addr.s_addr == 0)
+			if(sa.in.sin_addr.s_addr == 0) {
 				sa.in.sin_addr.s_addr = htonl(0x7f000001);
+			}
 		} else if(sa.sa.sa_family == AF_INET6) {
 			static const uint8_t zero[16] = {0};
-			if(!memcmp(sa.in6.sin6_addr.s6_addr, zero, sizeof(zero)))
+
+			if(!memcmp(sa.in6.sin6_addr.s6_addr, zero, sizeof(zero))) {
 				sa.in6.sin6_addr.s6_addr[15] = 1;
+			}
 		}
 
 		localhost = sockaddr2hostname(&sa);
@@ -177,13 +189,16 @@ bool init_control(void) {
 
 #ifndef HAVE_MINGW
 	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+
 	if(unix_fd < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(sockerrno));
 		return false;
 	}
 
 	struct sockaddr_un sa_un;
+
 	sa_un.sun_family = AF_UNIX;
+
 	strncpy(sa_un.sun_path, unixsocketname, sizeof(sa_un.sun_path));
 
 	if(connect(unix_fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) >= 0) {

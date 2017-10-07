@@ -66,11 +66,11 @@ typedef struct subnet_t {
 extern splay_tree_t *subnet_tree;
 
 extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
-extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
+extern subnet_t *new_subnet(void) __attribute__((__malloc__));
 extern void free_subnet(subnet_t *);
 extern void init_subnets(void);
 extern void exit_subnets(void);
-extern splay_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
+extern splay_tree_t *new_subnet_tree(void) __attribute__((__malloc__));
 extern void free_subnet_tree(splay_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);

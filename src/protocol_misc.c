@@ -41,8 +41,9 @@ int udp_info_interval = 5;
 /* Status and error notification routines */
 
 bool send_status(connection_t *c, int statusno, const char *statusstring) {
-	if(!statusstring)
+	if(!statusstring) {
 		statusstring = "Status";
+	}
 
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
@@ -53,19 +54,20 @@ bool status_h(connection_t *c, const char *request) {
 
 	if(sscanf(request, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
 	logger(DEBUG_STATUS, LOG_NOTICE, "Status message from %s (%s): %d: %s",
-			   c->name, c->hostname, statusno, statusstring);
+	       c->name, c->hostname, statusno, statusstring);
 
 	return true;
 }
 
 bool send_error(connection_t *c, int err, const char *errstring) {
-	if(!errstring)
+	if(!errstring) {
 		errstring = "Error";
+	}
 
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
@@ -76,12 +78,12 @@ bool error_h(connection_t *c, const char *request) {
 
 	if(sscanf(request, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
 	logger(DEBUG_ERROR, LOG_NOTICE, "Error message from %s (%s): %d: %s",
-			   c->name, c->hostname, err, errorstring);
+	       c->name, c->hostname, err, errorstring);
 
 	return false;
 }
@@ -117,8 +119,11 @@ bool pong_h(connection_t *c, const char *request) {
 	if(c->outgoing) {
 		c->outgoing->timeout = 0;
 		c->outgoing->cfg = NULL;
-		if(c->outgoing->ai)
+
+		if(c->outgoing->ai) {
 			freeaddrinfo(c->outgoing->ai);
+		}
+
 		c->outgoing->ai = NULL;
 		c->outgoing->aip = NULL;
 	}
@@ -132,11 +137,13 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
 	   We use a very simple Random Early Drop algorithm. */
 
-	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
+	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand() / (float)RAND_MAX) {
 		return true;
+	}
 
-	if(!send_request(c, "%d %d", PACKET, packet->len))
+	if(!send_request(c, "%d %d", PACKET, packet->len)) {
 		return false;
+	}
 
 	return send_meta(c, (char *)DATA(packet), packet->len);
 }
@@ -146,7 +153,7 @@ bool tcppacket_h(connection_t *c, const char *request) {
 
 	if(sscanf(request, "%*d %hd", &len) != 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
-			   c->hostname);
+		       c->hostname);
 		return false;
 	}
 
@@ -157,26 +164,28 @@ bool tcppacket_h(connection_t *c, const char *request) {
 	return true;
 }
 
-bool send_sptps_tcppacket(connection_t *c, const char* packet, int len) {
+bool send_sptps_tcppacket(connection_t *c, const char *packet, int len) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
 	   We use a very simple Random Early Drop algorithm. */
 
-	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
+	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand() / (float)RAND_MAX) {
 		return true;
+	}
 
-	if(!send_request(c, "%d %d", SPTPS_PACKET, len))
+	if(!send_request(c, "%d %d", SPTPS_PACKET, len)) {
 		return false;
+	}
 
 	send_meta_raw(c, packet, len);
 	return true;
 }
 
-bool sptps_tcppacket_h(connection_t *c, const char* request) {
+bool sptps_tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
 	if(sscanf(request, "%*d %hd", &len) != 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "SPTPS_PACKET", c->name,
-			   c->hostname);
+		       c->hostname);
 		return false;
 	}
 
@@ -194,7 +203,7 @@ bool send_udp_info(node_t *from, node_t *to) {
 	   farther than the static relay. */
 	to = (to->via == myself) ? to->nexthop : to->via;
 
-	if (to == NULL) {
+	if(to == NULL) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Something went wrong when selecting relay - possible fake UDP_INFO");
 		return false;
 	}
@@ -202,27 +211,35 @@ bool send_udp_info(node_t *from, node_t *to) {
 	/* Skip cases where sending UDP info messages doesn't make sense.
 	   This is done here in order to avoid repeating the same logic in multiple callsites. */
 
-	if(to == myself)
+	if(to == myself) {
 		return true;
-
-	if(!to->status.reachable)
-		return true;
-
-	if(from == myself) {
-		if(to->connection)
-			return true;
-
-		struct timeval elapsed;
-		timersub(&now, &to->udp_info_sent, &elapsed);
-		if(elapsed.tv_sec < udp_info_interval)
-			return true;
 	}
 
-	if((myself->options | from->options | to->options) & OPTION_TCPONLY)
+	if(!to->status.reachable) {
 		return true;
+	}
 
-	if((to->nexthop->options >> 24) < 5)
+	if(from == myself) {
+		if(to->connection) {
+			return true;
+		}
+
+		struct timeval elapsed;
+
+		timersub(&now, &to->udp_info_sent, &elapsed);
+
+		if(elapsed.tv_sec < udp_info_interval) {
+			return true;
+		}
+	}
+
+	if((myself->options | from->options | to->options) & OPTION_TCPONLY) {
 		return true;
+	}
+
+	if((to->nexthop->options >> 24) < 5) {
+		return true;
+	}
 
 	char *from_address, *from_port;
 	/* If we're the originator, the address we use is irrelevant
@@ -236,13 +253,14 @@ bool send_udp_info(node_t *from, node_t *to) {
 	free(from_address);
 	free(from_port);
 
-	if(from == myself)
+	if(from == myself) {
 		to->udp_info_sent = now;
+	}
 
 	return x;
 }
 
-bool udp_info_h(connection_t *c, const char* request) {
+bool udp_info_h(connection_t *c, const char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char from_address[MAX_STRING_SIZE];
@@ -259,6 +277,7 @@ bool udp_info_h(connection_t *c, const char* request) {
 	}
 
 	node_t *from = lookup_node(from_name);
+
 	if(!from) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list", "UDP_INFO", c->name, c->hostname, from_name);
 		return true;
@@ -274,11 +293,14 @@ bool udp_info_h(connection_t *c, const char* request) {
 	   to guess its address than it is itself. */
 	if(!from->connection && !from->status.udp_confirmed) {
 		sockaddr_t from_addr = str2sockaddr(from_address, from_port);
-		if(sockaddrcmp(&from_addr, &from->address))
+
+		if(sockaddrcmp(&from_addr, &from->address)) {
 			update_node_udp(from, &from_addr);
+		}
 	}
 
 	node_t *to = lookup_node(to_name);
+
 	if(!to) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list", "UDP_INFO", c->name, c->hostname, to_name);
 		return true;
@@ -295,28 +317,36 @@ bool send_mtu_info(node_t *from, node_t *to, int mtu) {
 	/* Skip cases where sending MTU info messages doesn't make sense.
 	   This is done here in order to avoid repeating the same logic in multiple callsites. */
 
-	if(to == myself)
+	if(to == myself) {
 		return true;
-
-	if(!to->status.reachable)
-		return true;
-
-	if(from == myself) {
-		if(to->connection)
-			return true;
-
-		struct timeval elapsed;
-		timersub(&now, &to->mtu_info_sent, &elapsed);
-		if(elapsed.tv_sec < mtu_info_interval)
-			return true;
 	}
 
-	if((to->nexthop->options >> 24) < 6)
+	if(!to->status.reachable) {
 		return true;
+	}
+
+	if(from == myself) {
+		if(to->connection) {
+			return true;
+		}
+
+		struct timeval elapsed;
+
+		timersub(&now, &to->mtu_info_sent, &elapsed);
+
+		if(elapsed.tv_sec < mtu_info_interval) {
+			return true;
+		}
+	}
+
+	if((to->nexthop->options >> 24) < 6) {
+		return true;
+	}
 
 	/* We will send the passed-in MTU value, unless we believe ours is better. */
 
 	node_t *via = (from->via == myself) ? from->nexthop : from->via;
+
 	if(from->minmtu == from->maxmtu && from->via == myself) {
 		/* We have a direct measurement. Override the value entirely.
 		   Note that we only do that if we are sitting as a static relay in the path;
@@ -331,8 +361,9 @@ bool send_mtu_info(node_t *from, node_t *to, int mtu) {
 		mtu = MIN(mtu, via->nexthop->minmtu);
 	}
 
-	if(from == myself)
+	if(from == myself) {
 		to->mtu_info_sent = now;
+	}
 
 	/* If none of the conditions above match in the steady state, it means we're using TCP,
 	   so the MTU is irrelevant. That said, it is still important to honor the MTU that was passed in,
@@ -341,7 +372,7 @@ bool send_mtu_info(node_t *from, node_t *to, int mtu) {
 	return send_request(to->nexthop->connection, "%d %s %s %d", MTU_INFO, from->name, to->name, mtu);
 }
 
-bool mtu_info_h(connection_t *c, const char* request) {
+bool mtu_info_h(connection_t *c, const char *request) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	int mtu;
@@ -364,6 +395,7 @@ bool mtu_info_h(connection_t *c, const char* request) {
 	}
 
 	node_t *from = lookup_node(from_name);
+
 	if(!from) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list", "MTU_INFO", c->name, c->hostname, from_name);
 		return true;
@@ -378,6 +410,7 @@ bool mtu_info_h(connection_t *c, const char* request) {
 	}
 
 	node_t *to = lookup_node(to_name);
+
 	if(!to) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list", "MTU_INFO", c->name, c->hostname, to_name);
 		return true;

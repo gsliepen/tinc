@@ -47,20 +47,21 @@ typedef struct chacha_ctx chacha_ctx;
 static const char sigma[16] = "expand 32-byte k";
 static const char tau[16] = "expand 16-byte k";
 
-void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits)
-{
+void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits) {
 	const char *constants;
 
 	x->input[4] = U8TO32_LITTLE(k + 0);
 	x->input[5] = U8TO32_LITTLE(k + 4);
 	x->input[6] = U8TO32_LITTLE(k + 8);
 	x->input[7] = U8TO32_LITTLE(k + 12);
-	if (kbits == 256) {	/* recommended */
+
+	if(kbits == 256) {      /* recommended */
 		k += 16;
 		constants = sigma;
-	} else {		/* kbits == 128 */
+	} else {                /* kbits == 128 */
 		constants = tau;
 	}
+
 	x->input[8] = U8TO32_LITTLE(k + 0);
 	x->input[9] = U8TO32_LITTLE(k + 4);
 	x->input[10] = U8TO32_LITTLE(k + 8);
@@ -71,8 +72,7 @@ void chacha_keysetup(chacha_ctx *x, const uint8_t *k, uint32_t kbits)
 	x->input[3] = U8TO32_LITTLE(constants + 12);
 }
 
-void chacha_ivsetup(chacha_ctx *x, const uint8_t *iv, const uint8_t *counter)
-{
+void chacha_ivsetup(chacha_ctx *x, const uint8_t *iv, const uint8_t *counter) {
 	x->input[12] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 0);
 	x->input[13] = counter == NULL ? 0 : U8TO32_LITTLE(counter + 4);
 	x->input[14] = U8TO32_LITTLE(iv + 0);
@@ -80,16 +80,16 @@ void chacha_ivsetup(chacha_ctx *x, const uint8_t *iv, const uint8_t *counter)
 }
 
 void
-chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes)
-{
+chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes) {
 	uint32_t x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
 	uint32_t j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
 	uint8_t *ctarget = NULL;
 	uint8_t tmp[64];
 	uint32_t i;
 
-	if (!bytes)
+	if(!bytes) {
 		return;
+	}
 
 	j0 = x->input[0];
 	j1 = x->input[1];
@@ -108,14 +108,17 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 	j14 = x->input[14];
 	j15 = x->input[15];
 
-	for (;;) {
-		if (bytes < 64) {
-			for (i = 0; i < bytes; ++i)
+	for(;;) {
+		if(bytes < 64) {
+			for(i = 0; i < bytes; ++i) {
 				tmp[i] = m[i];
+			}
+
 			m = tmp;
 			ctarget = c;
 			c = tmp;
 		}
+
 		x0 = j0;
 		x1 = j1;
 		x2 = j2;
@@ -132,7 +135,8 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 		x13 = j13;
 		x14 = j14;
 		x15 = j15;
-		for (i = 20; i > 0; i -= 2) {
+
+		for(i = 20; i > 0; i -= 2) {
 			QUARTERROUND(x0, x4, x8, x12)
 			QUARTERROUND(x1, x5, x9, x13)
 			QUARTERROUND(x2, x6, x10, x14)
@@ -142,6 +146,7 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 			QUARTERROUND(x2, x7, x8, x13)
 			QUARTERROUND(x3, x4, x9, x14)
 		}
+
 		x0 = PLUS(x0, j0);
 		x1 = PLUS(x1, j1);
 		x2 = PLUS(x2, j2);
@@ -177,7 +182,8 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 		x15 = XOR(x15, U8TO32_LITTLE(m + 60));
 
 		j12 = PLUSONE(j12);
-		if (!j12) {
+
+		if(!j12) {
 			j13 = PLUSONE(j13);
 			/* stopping at 2^70 bytes per nonce is user's responsibility */
 		}
@@ -199,15 +205,18 @@ chacha_encrypt_bytes(chacha_ctx *x, const uint8_t *m, uint8_t *c, uint32_t bytes
 		U32TO8_LITTLE(c + 56, x14);
 		U32TO8_LITTLE(c + 60, x15);
 
-		if (bytes <= 64) {
-			if (bytes < 64) {
-				for (i = 0; i < bytes; ++i)
+		if(bytes <= 64) {
+			if(bytes < 64) {
+				for(i = 0; i < bytes; ++i) {
 					ctarget[i] = c[i];
+				}
 			}
+
 			x->input[12] = j12;
 			x->input[13] = j13;
 			return;
 		}
+
 		bytes -= 64;
 		c += 64;
 		m += 64;

@@ -44,14 +44,16 @@ static bool pem_encode(FILE *fp, const char *header, uint8_t *buf, size_t size) 
 			word = buf[i] << 16 | buf[i + 1] << 8 | buf[i + 2];
 		} else {
 			word = buf[i] << 16;
-			if(i == size - 2)
+
+			if(i == size - 2) {
 				word |= buf[i + 1] << 8;
+			}
 		}
 
 		line[j++] = b64e[(word >> 18)       ];
 		line[j++] = b64e[(word >> 12) & 0x3f];
 		line[j++] = b64e[(word >>  6) & 0x3f];
-		line[j++] = b64e[(word      ) & 0x3f];
+		line[j++] = b64e[(word) & 0x3f];
 
 		if(j >= 64) {
 			line[j++] = '\n';
@@ -62,8 +64,10 @@ static bool pem_encode(FILE *fp, const char *header, uint8_t *buf, size_t size) 
 	}
 
 	if(size % 3 > 0) {
-		if(size % 3 > 1)
+		if(size % 3 > 1) {
 			line[j++] = '=';
+		}
+
 		line[j++] = '=';
 	}
 
@@ -82,19 +86,24 @@ static bool pem_encode(FILE *fp, const char *header, uint8_t *buf, size_t size) 
 // BER encoding functions
 
 static bool ber_write_id(uint8_t **p, size_t *buflen, int id) {
-	if(*buflen <= 0)
+	if(*buflen <= 0) {
 		return false;
+	}
 
 	if(id >= 0x1f) {
 		while(id) {
-			if(*buflen <= 0)
+			if(*buflen <= 0) {
 				return false;
+			}
 
 			(*buflen)--;
 			**p = id & 0x7f;
 			id >>= 7;
-			if(id)
+
+			if(id) {
 				**p |= 0x80;
+			}
+
 			(*p)++;
 		}
 	} else {
@@ -107,14 +116,18 @@ static bool ber_write_id(uint8_t **p, size_t *buflen, int id) {
 
 static bool ber_write_len(uint8_t **p, size_t *buflen, size_t len) {
 	do {
-		if(*buflen <= 0)
+		if(*buflen <= 0) {
 			return false;
+		}
 
 		(*buflen)--;
 		**p = len & 0x7f;
 		len >>= 7;
-		if(len)
+
+		if(len) {
 			**p |= 0x80;
+		}
+
 		(*p)++;
 	} while(len);
 
@@ -122,8 +135,9 @@ static bool ber_write_len(uint8_t **p, size_t *buflen, size_t len) {
 }
 
 static bool ber_write_sequence(uint8_t **p, size_t *buflen, uint8_t *seqbuf, size_t seqlen) {
-	if(!ber_write_id(p, buflen, 0x10) || !ber_write_len(p, buflen, seqlen) || *buflen < seqlen)
+	if(!ber_write_id(p, buflen, 0x10) || !ber_write_len(p, buflen, seqlen) || *buflen < seqlen) {
 		return false;
+	}
 
 	memcpy(*p, seqbuf, seqlen);
 	*p += seqlen;
@@ -138,11 +152,14 @@ static bool ber_write_mpi(uint8_t **p, size_t *buflen, gcry_mpi_t mpi) {
 	gcry_error_t err;
 
 	err = gcry_mpi_aprint(GCRYMPI_FMT_USG, &tmpbuf, &tmplen, mpi);
-	if(err)
-		return false;
 
-	if(!ber_write_id(p, buflen, 0x02) || !ber_write_len(p, buflen, tmplen) || *buflen < tmplen)
+	if(err) {
 		return false;
+	}
+
+	if(!ber_write_id(p, buflen, 0x02) || !ber_write_len(p, buflen, tmplen) || *buflen < tmplen) {
+		return false;
+	}
 
 	memcpy(*p, tmpbuf, tmplen);
 	*p += tmplen;
@@ -162,8 +179,8 @@ bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp) {
 	size_t derlen2 = sizeof(derbuf2);
 
 	if(!ber_write_mpi(&derp1, &derlen1, &rsa->n)
-			|| !ber_write_mpi(&derp1, &derlen1, &rsa->e)
-			|| !ber_write_sequence(&derp2, &derlen2, derbuf1, derlen1)) {
+	                || !ber_write_mpi(&derp1, &derlen1, &rsa->e)
+	                || !ber_write_sequence(&derp2, &derlen2, derbuf1, derlen1)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encoding RSA public key");
 		return false;
 	}
@@ -185,24 +202,26 @@ bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
 	size_t derlen2 = sizeof(derbuf2);
 
 	if(!ber_write_mpi(&derp1, &derlen1, &bits)
-			|| ber_write_mpi(&derp1, &derlen1, &rsa->n) // modulus
-			|| ber_write_mpi(&derp1, &derlen1, &rsa->e) // public exponent
-			|| ber_write_mpi(&derp1, &derlen1, &rsa->d) // private exponent
-			|| ber_write_mpi(&derp1, &derlen1, &p)
-			|| ber_write_mpi(&derp1, &derlen1, &q)
-			|| ber_write_mpi(&derp1, &derlen1, &exp1)
-			|| ber_write_mpi(&derp1, &derlen1, &exp2)
-			|| ber_write_mpi(&derp1, &derlen1, &coeff))
+	                || ber_write_mpi(&derp1, &derlen1, &rsa->n) // modulus
+	                || ber_write_mpi(&derp1, &derlen1, &rsa->e) // public exponent
+	                || ber_write_mpi(&derp1, &derlen1, &rsa->d) // private exponent
+	                || ber_write_mpi(&derp1, &derlen1, &p)
+	                || ber_write_mpi(&derp1, &derlen1, &q)
+	                || ber_write_mpi(&derp1, &derlen1, &exp1)
+	                || ber_write_mpi(&derp1, &derlen1, &exp2)
+	                || ber_write_mpi(&derp1, &derlen1, &coeff)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while encoding RSA private key");
-		return false;
 	}
 
-	if(!pem_encode(fp, "RSA PRIVATE KEY", derbuf2, derlen2)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write RSA private key: %s", strerror(errno));
-		return false;
-	}
+	return false;
+}
 
-	return true;
+if(!pem_encode(fp, "RSA PRIVATE KEY", derbuf2, derlen2)) {
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to write RSA private key: %s", strerror(errno));
+	return false;
+}
+
+return true;
 }
 #endif
 

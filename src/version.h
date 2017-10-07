@@ -20,8 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-extern const char* const BUILD_DATE;
-extern const char* const BUILD_TIME;
-extern const char* const BUILD_VERSION;
+extern const char *const BUILD_DATE;
+extern const char *const BUILD_TIME;
+extern const char *const BUILD_VERSION;
 
 #endif
