@@ -418,7 +418,7 @@ static bool keygen(int bits) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	snprintf(filename, sizeof filename, "%s/rsa_key.priv", confbase);
+	snprintf(filename, sizeof(filename), "%s/rsa_key.priv", confbase);
 	f = ask_and_open(filename, "private RSA key");
 
 	if(!f) {
@@ -438,10 +438,10 @@ static bool keygen(int bits) {
 	char *name = get_name();
 
 	if(name) {
-		snprintf(filename, sizeof filename, "%s/hosts/%s", confbase, name);
+		snprintf(filename, sizeof(filename), "%s/hosts/%s", confbase, name);
 		free(name);
 	} else {
-		snprintf(filename, sizeof filename, "%s/rsa_key.pub", confbase);
+		snprintf(filename, sizeof(filename), "%s/rsa_key.pub", confbase);
 	}
 
 	f = ask_and_open(filename, "public RSA key");

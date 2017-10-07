@@ -140,7 +140,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
 #endif
 
 	if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
@@ -230,7 +230,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
 #endif
 
 #if defined(IP_DONTFRAG) && !defined(IP_DONTFRAGMENT)
@@ -404,7 +404,7 @@ begin:
 
 		// If we cannot resolve the address, maybe we are using a proxy that can?
 		if(!c->outgoing->ai && proxytype != PROXY_NONE && is_valid_host_port(address, port)) {
-			memset(&c->address, 0, sizeof c->address);
+			memset(&c->address, 0, sizeof(c->address));
 			c->address.sa.sa_family = AF_UNKNOWN;
 			c->address.unknown.address = address;
 			c->address.unknown.port = port;
@@ -468,7 +468,7 @@ connect:
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
 		int option = 1;
 		if(c->address.sa.sa_family == AF_INET6)
-			setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+			setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
 #endif
 
 		bind_to_interface(c->socket);

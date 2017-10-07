@@ -326,7 +326,7 @@ char *get_name(void) {
 				free(name);
 				return false;
 			}
-			if(gethostname(hostname, sizeof hostname) || !*hostname) {
+			if(gethostname(hostname, sizeof(hostname)) || !*hostname) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
 				free(name);
 				return false;
@@ -801,7 +801,7 @@ static bool setup_myself(void) {
 		}
 
 		for(i = 0; i < listen_sockets; i++) {
-			salen = sizeof sa;
+			salen = sizeof(sa);
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
 				logger(LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(errno));
 				return false;
@@ -906,7 +906,7 @@ static bool setup_myself(void) {
 
 	if(!port_specified) {
 		sockaddr_t sa;
-		socklen_t salen = sizeof sa;
+		socklen_t salen = sizeof(sa);
 		if(!getsockname(listen_socket[0].udp, &sa.sa, &salen)) {
 			free(myport);
 			sockaddr2str(&sa, NULL, &myport);

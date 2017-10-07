@@ -73,8 +73,8 @@ const char *winerror(int err) {
 
 unsigned int bitfield_to_int(const void *bitfield, size_t size) {
 	unsigned int value = 0;
-	if(size > sizeof value)
-		size = sizeof value;
+	if(size > sizeof(value))
+		size = sizeof(value);
 	memcpy(&value, bitfield, size);
 	return value;
 }

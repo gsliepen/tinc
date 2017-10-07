@@ -159,7 +159,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		avl_insert(node_udp_tree, n);
 		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
-		memset(&n->address, 0, sizeof n->address);
+		memset(&n->address, 0, sizeof(n->address));
 		n->hostname = NULL;
 		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
 	}
@@ -176,7 +176,7 @@ void dump_nodes(void) {
 		logger(LOG_DEBUG, " %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s pmtu %d (min %d max %d)",
 			   n->name, n->hostname, n->outcipher ? EVP_CIPHER_nid(n->outcipher) : 0,
 			   n->outdigest ? EVP_MD_type(n->outdigest) : 0, n->outmaclength, n->outcompression,
-			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
+			   n->options, bitfield_to_int(&n->status, sizeof(n->status)), n->nexthop ? n->nexthop->name : "-",
 			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}
 

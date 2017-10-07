@@ -75,7 +75,7 @@ static bool setup_utun(void) {
 	}
 
 	struct ctl_info info = {};
-	strlcpy(info.ctl_name, UTUN_CONTROL_NAME, sizeof info.ctl_name);
+	strlcpy(info.ctl_name, UTUN_CONTROL_NAME, sizeof(info.ctl_name));
 
 	if(ioctl(device_fd, CTLIOCGINFO, &info) == -1) {
 		logger(LOG_ERR, "ioctl(CTLIOCGINFO) failed: %s", strerror(errno));
@@ -92,7 +92,7 @@ static bool setup_utun(void) {
 
 	struct sockaddr_ctl sc = {
 		.sc_id = info.ctl_id,
-		.sc_len = sizeof sc,
+		.sc_len = sizeof(sc),
 		.sc_family = AF_SYSTEM,
 		.ss_sysaddr = AF_SYS_CONTROL,
 		.sc_unit = unit + 1,
@@ -104,7 +104,7 @@ static bool setup_utun(void) {
 	}
 
 	char name[64] = "";
-	socklen_t len = sizeof name;
+	socklen_t len = sizeof(name);
 	if(getsockopt(device_fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, name, &len)) {
 		iface = xstrdup(device);
 	} else {
@@ -225,7 +225,7 @@ static bool setup_device(void) {
 #ifdef TUNSIFHEAD
 		{	
 			const int zero = 0;
-			if(ioctl(device_fd, TUNSIFHEAD, &zero, sizeof zero) == -1) {
+			if(ioctl(device_fd, TUNSIFHEAD, &zero, sizeof(zero)) == -1) {
 				logger(LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
 				return false;
 			}
@@ -234,7 +234,7 @@ static bool setup_device(void) {
 #if defined(TUNSIFMODE) && defined(IFF_BROADCAST) && defined(IFF_MULTICAST)
 		{
 			const int mode = IFF_BROADCAST | IFF_MULTICAST;
-			ioctl(device_fd, TUNSIFMODE, &mode, sizeof mode);
+			ioctl(device_fd, TUNSIFMODE, &mode, sizeof(mode));
 		}
 #endif
 
@@ -244,7 +244,7 @@ static bool setup_device(void) {
 #ifdef TUNSIFHEAD
 		{
 			const int one = 1;
-			if(ioctl(device_fd, TUNSIFHEAD, &one, sizeof one) == -1) {
+			if(ioctl(device_fd, TUNSIFHEAD, &one, sizeof(one)) == -1) {
 				logger(LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
 				return false;
 			}
@@ -253,7 +253,7 @@ static bool setup_device(void) {
 #if defined(TUNSIFMODE) && defined(IFF_BROADCAST) && defined(IFF_MULTICAST)
 		{
 				const int mode = IFF_BROADCAST | IFF_MULTICAST;
-				ioctl(device_fd, TUNSIFMODE, &mode, sizeof mode);
+				ioctl(device_fd, TUNSIFMODE, &mode, sizeof(mode));
 		}
 #endif
 
@@ -429,7 +429,7 @@ static bool write_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
-			memcpy(packet->data + 10, &type, sizeof type);
+			memcpy(packet->data + 10, &type, sizeof(type));
 
 			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,

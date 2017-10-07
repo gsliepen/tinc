@@ -97,7 +97,7 @@ void logger(int priority, const char *format, ...) {
 			break;
 		case LOGMODE_FILE:
 			now = time(NULL);
-			strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
+			strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now));
 			fprintf(logfile, "%s %s[%ld]: ", timestr, logident, (long)logpid);
 			vfprintf(logfile, format, ap);
 			fprintf(logfile, "\n");
@@ -109,7 +109,7 @@ void logger(int priority, const char *format, ...) {
 				char message[4096];
 				const char *messages[] = {message};
 				vsnprintf(message, sizeof(message), format, ap);
-				message[sizeof message - 1] = 0;
+				message[sizeof(message) - 1] = 0;
 				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
 			}
 #else

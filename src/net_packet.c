@@ -264,7 +264,7 @@ static void receive_packet(node_t *n, vpn_packet_t *packet) {
 static bool try_mac(const node_t *n, const vpn_packet_t *inpkt) {
 	unsigned char hmac[EVP_MAX_MD_SIZE];
 
-	if(!n->indigest || !n->inmaclength || !n->inkey || inpkt->len < sizeof inpkt->seqno + n->inmaclength)
+	if(!n->indigest || !n->inmaclength || !n->inkey || inpkt->len < sizeof(inpkt->seqno) + n->inmaclength)
 		return false;
 
 	HMAC(n->indigest, n->inkey, n->inkeylength, (unsigned char *) &inpkt->seqno, inpkt->len - n->inmaclength, (unsigned char *)hmac, NULL);
@@ -394,7 +394,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
 
-	if(len > sizeof outpkt.data)
+	if(len > sizeof(outpkt.data))
 		return;
 
 	outpkt.len = len;
@@ -522,7 +522,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(origpriority == -1 && n->prevedge) {
 		sock = rand() % listen_sockets;
-		memset(&broadcast, 0, sizeof broadcast);
+		memset(&broadcast, 0, sizeof(broadcast));
 		if(listen_socket[sock].sa.sa.sa_family == AF_INET6) {
 			broadcast.in6.sin6_family = AF_INET6;
 			broadcast.in6.sin6_addr.s6_addr[0x0] = 0xff;

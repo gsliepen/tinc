@@ -104,9 +104,9 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 
 static void swap_mac_addresses(vpn_packet_t *packet) {
 	mac_t tmp;
-	memcpy(&tmp, &packet->data[0], sizeof tmp);
-	memcpy(&packet->data[0], &packet->data[6], sizeof tmp);
-	memcpy(&packet->data[6], &tmp, sizeof tmp);
+	memcpy(&tmp, &packet->data[0], sizeof(tmp));
+	memcpy(&packet->data[0], &packet->data[6], sizeof(tmp));
+	memcpy(&packet->data[6], &tmp, sizeof(tmp));
 }
 
 /* RFC 792 */
@@ -483,7 +483,7 @@ void age_subnets(void) {
 		if(s->expires && s->expires <= now) {
 			ifdebug(TRAFFIC) {
 				char netstr[MAXNETSTR];
-				if(net2str(netstr, sizeof netstr, s))
+				if(net2str(netstr, sizeof(netstr), s))
 					logger(LOG_INFO, "Subnet %s expired", netstr);
 			}
 
@@ -562,7 +562,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv4_t dest;
 
-	memcpy(&dest, &packet->data[30], sizeof dest);
+	memcpy(&dest, &packet->data[30], sizeof(dest));
 	subnet = lookup_subnet_ipv4(&dest);
 
 	if(!subnet) {
@@ -641,7 +641,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv6_t dest;
 
-	memcpy(&dest, &packet->data[38], sizeof dest);
+	memcpy(&dest, &packet->data[38], sizeof(dest));
 	subnet = lookup_subnet_ipv6(&dest);
 
 	if(!subnet) {
@@ -938,13 +938,13 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(source == myself) {
 		mac_t src;
-		memcpy(&src, &packet->data[6], sizeof src);
+		memcpy(&src, &packet->data[6], sizeof(src));
 		learn_mac(&src);
 	}
 
 	/* Lookup destination address */
 
-	memcpy(&dest, &packet->data[0], sizeof dest);
+	memcpy(&dest, &packet->data[0], sizeof(dest));
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet) {

@@ -35,7 +35,7 @@ char *proxypass;
 
 static void update_address_ipv4(connection_t *c, void *address, void *port) {
 	sockaddrfree(&c->address);
-	memset(&c->address, 0, sizeof c->address);
+	memset(&c->address, 0, sizeof(c->address));
 	c->address.sa.sa_family = AF_INET;
 	if(address)
 		memcpy(&c->address.in.sin_addr, address, sizeof(ipv4_t));
@@ -48,7 +48,7 @@ static void update_address_ipv4(connection_t *c, void *address, void *port) {
 
 static void update_address_ipv6(connection_t *c, void *address, void *port) {
 	sockaddrfree(&c->address);
-	memset(&c->address, 0, sizeof c->address);
+	memset(&c->address, 0, sizeof(c->address));
 	c->address.sa.sa_family = AF_INET6;
 	if(address)
 		memcpy(&c->address.in6.sin6_addr, address, sizeof(ipv6_t));
@@ -92,9 +92,9 @@ bool send_proxyrequest(connection_t *c) {
 			strcpy(s4req + 8, proxyuser);
 		else
 			s4req[8] = 0;
-		s4req[sizeof s4req - 1] = 0;
+		s4req[sizeof(s4req) - 1] = 0;
 		c->allow_request = PROXY;
-		return send_meta(c, s4req, sizeof s4req);
+		return send_meta(c, s4req, sizeof(s4req));
 	}
 
 	case PROXY_SOCKS5: {
@@ -158,7 +158,7 @@ bool send_proxyrequest(connection_t *c) {
 		if(i > len)
 			abort();
 		c->allow_request = PROXY;
-		return send_meta(c, s5req, sizeof s5req);
+		return send_meta(c, s5req, sizeof(s5req));
 	}
 
 	case PROXY_HTTP: {

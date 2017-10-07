@@ -303,7 +303,7 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 	}
 
 	for(;;) {
-		line = readline(fp, buffer, sizeof buffer);
+		line = readline(fp, buffer, sizeof(buffer));
 
 		if(!line) {
 			if(feof(fp))
@@ -375,14 +375,14 @@ bool read_server_config(void) {
 
 	read_config_options(config_tree, NULL);
 
-	snprintf(fname, sizeof fname, "%s/tinc.conf", confbase);
+	snprintf(fname, sizeof(fname), "%s/tinc.conf", confbase);
 	errno = 0;
 	x = read_config_file(config_tree, fname);
 
 	// We will try to read the conf files in the "conf.d" dir
 	if (x) {
 		char dname[PATH_MAX];
-		snprintf(dname, sizeof dname, "%s/conf.d", confbase);
+		snprintf(dname, sizeof(dname), "%s/conf.d", confbase);
 		DIR *dir = opendir (dname);
 		// If we can find this dir
 		if (dir) { 
@@ -392,7 +392,7 @@ bool read_server_config(void) {
 				size_t l = strlen(ep->d_name);
 				// And we try to read the ones that end with ".conf"
 				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					snprintf(fname, sizeof fname, "%s/%s", dname, ep->d_name);
+					snprintf(fname, sizeof(fname), "%s/%s", dname, ep->d_name);
 					x = read_config_file(config_tree, fname);
 				}
 			}
@@ -413,7 +413,7 @@ bool read_connection_config(connection_t *c) {
 
 	read_config_options(c->config_tree, c->name);
 
-	snprintf(fname, sizeof fname, "%s/hosts/%s", confbase, c->name);
+	snprintf(fname, sizeof(fname), "%s/hosts/%s", confbase, c->name);
 	x = read_config_file(c->config_tree, fname);
 
 	return x;
@@ -429,11 +429,11 @@ static void disable_old_keys(const char *filename) {
 	if(!r)
 		return;
 
-	snprintf(tmpfile, sizeof tmpfile, "%s.tmp", filename);
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
 	w = fopen(tmpfile, "w");
 
-	while(fgets(buf, sizeof buf, r)) {
+	while(fgets(buf, sizeof(buf), r)) {
 		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
 			buf[11] = 'O';
 			buf[12] = 'L';
@@ -465,7 +465,7 @@ static void disable_old_keys(const char *filename) {
 #ifdef HAVE_MINGW
 		// We cannot atomically replace files on Windows.
 		char bakfile[PATH_MAX] = "";
-		snprintf(bakfile, sizeof bakfile, "%s.bak", filename);
+		snprintf(bakfile, sizeof(bakfile), "%s.bak", filename);
 		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
 			rename(bakfile, filename);
 #else
@@ -502,7 +502,7 @@ FILE *ask_and_open(const char *filename, const char *what) {
 				what, filename);
 		fflush(stdout);
 
-		fn = readline(stdin, line, sizeof line);
+		fn = readline(stdin, line, sizeof(line));
 
 		if(!fn) {
 			fprintf(stderr, "Error while reading stdin: %s\n",
@@ -521,8 +521,8 @@ FILE *ask_and_open(const char *filename, const char *what) {
 	if(fn[0] != '/') {
 #endif
 		/* The directory is a relative path or a filename. */
-		getcwd(directory, sizeof directory);
-		snprintf(abspath, sizeof abspath, "%s/%s", directory, fn);
+		getcwd(directory, sizeof(directory));
+		snprintf(abspath, sizeof(abspath), "%s/%s", directory, fn);
 		fn = abspath;
 	}
 

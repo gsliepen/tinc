@@ -141,7 +141,7 @@ void dump_connections(void) {
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		logger(LOG_DEBUG, " %s at %s options %x socket %d status %04x outbuf %d/%d/%d",
-			   c->name, c->hostname, c->options, c->socket, bitfield_to_int(&c->status, sizeof c->status),
+			   c->name, c->hostname, c->options, c->socket, bitfield_to_int(&c->status, sizeof(c->status)),
 			   c->outbufsize, c->outbufstart, c->outbuflen);
 	}
 

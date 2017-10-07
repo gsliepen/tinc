@@ -255,7 +255,7 @@ static void check_dead_connections(void) {
 			} else {
 				if(c->status.remove) {
 					logger(LOG_WARNING, "Old connection_t for %s (%s) status %04x still lingering, deleting...",
-						   c->name, c->hostname, bitfield_to_int(&c->status, sizeof c->status));
+						   c->name, c->hostname, bitfield_to_int(&c->status, sizeof(c->status)));
 					connection_del(c);
 					continue;
 				}

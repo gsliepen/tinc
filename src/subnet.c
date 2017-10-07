@@ -413,7 +413,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 			continue;
 		if(owner && cache_mac_subnet[i] && cache_mac_subnet[i]->owner != owner)
 			continue;
-		if(!memcmp(address, &cache_mac_address[i], sizeof *address))
+		if(!memcmp(address, &cache_mac_address[i], sizeof(*address)))
 			return cache_mac_subnet[i];
 	}
 
@@ -425,7 +425,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 		if(!p || p->type != SUBNET_MAC)
 			continue;
 
-		if(!memcmp(address, &p->net.mac.address, sizeof *address)) {
+		if(!memcmp(address, &p->net.mac.address, sizeof(*address))) {
 			r = p;
 			if(p->owner->status.reachable)
 				break;
@@ -435,7 +435,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 	// Cache the result
 
 	cache_mac_slot = !cache_mac_slot;
-	memcpy(&cache_mac_address[cache_mac_slot], address, sizeof *address);
+	memcpy(&cache_mac_address[cache_mac_slot], address, sizeof(*address));
 	cache_mac_subnet[cache_mac_slot] = r;
 	cache_mac_valid[cache_mac_slot] = true;
 
@@ -452,7 +452,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	for(i = 0; i < 2; i++) {
 		if(!cache_ipv4_valid[i])
 			continue;
-		if(!memcmp(address, &cache_ipv4_address[i], sizeof *address))
+		if(!memcmp(address, &cache_ipv4_address[i], sizeof(*address)))
 			return cache_ipv4_subnet[i];
 	}
 
@@ -474,7 +474,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	// Cache the result
 
 	cache_ipv4_slot = !cache_ipv4_slot;
-	memcpy(&cache_ipv4_address[cache_ipv4_slot], address, sizeof *address);
+	memcpy(&cache_ipv4_address[cache_ipv4_slot], address, sizeof(*address));
 	cache_ipv4_subnet[cache_ipv4_slot] = r;
 	cache_ipv4_valid[cache_ipv4_slot] = true;
 
@@ -491,7 +491,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	for(i = 0; i < 2; i++) {
 		if(!cache_ipv6_valid[i])
 			continue;
-		if(!memcmp(address, &cache_ipv6_address[i], sizeof *address))
+		if(!memcmp(address, &cache_ipv6_address[i], sizeof(*address)))
 			return cache_ipv6_subnet[i];
 	}
 
@@ -513,7 +513,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	// Cache the result
 
 	cache_ipv6_slot = !cache_ipv6_slot;
-	memcpy(&cache_ipv6_address[cache_ipv6_slot], address, sizeof *address);
+	memcpy(&cache_ipv6_address[cache_ipv6_slot], address, sizeof(*address));
 	cache_ipv6_subnet[cache_ipv6_slot] = r;
 	cache_ipv6_valid[cache_ipv6_slot] = true;
 
@@ -550,7 +550,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	if(!subnet) {
 		for(node = owner->subnet_tree->head; node; node = node->next) {
 			subnet = node->data;
-			if(!net2str(netstr, sizeof netstr, subnet))
+			if(!net2str(netstr, sizeof(netstr), subnet))
 				continue;
 			// Strip the weight from the subnet, and put it in its own environment variable
 			char *weight = strchr(netstr, '#');
@@ -570,7 +570,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 			execute_script(name, envp);
 		}
 	} else {
-		if(net2str(netstr, sizeof netstr, subnet)) {
+		if(net2str(netstr, sizeof(netstr), subnet)) {
 			// Strip the weight from the subnet, and put it in its own environment variable
 			char *weight = strchr(netstr, '#');
 			if(weight)
@@ -599,7 +599,7 @@ void dump_subnets(void) {
 
 	for(node = subnet_tree->head; node; node = node->next) {
 		subnet = node->data;
-		if(!net2str(netstr, sizeof netstr, subnet))
+		if(!net2str(netstr, sizeof(netstr), subnet))
 			continue;
 		logger(LOG_DEBUG, " %s owner %s", netstr, subnet->owner->name);
 	}
