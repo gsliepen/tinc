@@ -3,7 +3,6 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)
 AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
 AC_CONFIG_SRCDIR([src/tincd.c])
-AC_GNU_SOURCE
 AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -19,7 +18,6 @@ dnl Checks for programs.
 AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
-AC_PROG_LN_S
 
 AM_PROG_CC_C_O
 
@@ -186,7 +184,7 @@ AC_CHECK_TYPES([struct ether_header, struct arphdr, struct ether_arp, struct ip,
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork gettimeofday mlockall putenv recvmmsg strsignal nanosleep unsetenv vsyslog devname fdevname],
+AC_CHECK_FUNCS([asprintf daemon fchmod flock fork gettimeofday mlockall putenv recvmmsg strsignal nanosleep unsetenv vsyslog devname fdevname],
   [], [], [#include "$srcdir/src/have.h"]
 )
 
