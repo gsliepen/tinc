@@ -37,7 +37,7 @@
 
 typedef enum request_t {
 	PROXY = -2,
-	ALL = -1,					/* Guardian for allow_request */
+	ALL = -1,                                       /* Guardian for allow_request */
 	ID = 0, METAKEY, CHALLENGE, CHAL_REPLY, ACK,
 	STATUS, ERROR, TERMREQ,
 	PING, PONG,
@@ -45,7 +45,7 @@ typedef enum request_t {
 	ADD_EDGE, DEL_EDGE,
 	KEY_CHANGED, REQ_KEY, ANS_KEY,
 	PACKET,
-	LAST						/* Guardian for the highest request number */
+	LAST                                            /* Guardian for the highest request number */
 } request_t;
 
 typedef struct past_request_t {
@@ -71,7 +71,7 @@ extern bool strictsubnets;
 
 /* Basic functions */
 
-extern bool send_request(struct connection_t *, const char *, ...) __attribute__ ((__format__(printf, 2, 3)));
+extern bool send_request(struct connection_t *, const char *, ...) __attribute__((__format__(printf, 2, 3)));
 extern void forward_request(struct connection_t *);
 extern bool receive_request(struct connection_t *);
 extern bool check_id(const char *);
@@ -89,7 +89,7 @@ extern bool send_challenge(struct connection_t *);
 extern bool send_chal_reply(struct connection_t *);
 extern bool send_ack(struct connection_t *);
 extern bool send_status(struct connection_t *, int, const char *);
-extern bool send_error(struct connection_t *, int,const  char *);
+extern bool send_error(struct connection_t *, int, const  char *);
 extern bool send_termreq(struct connection_t *);
 extern bool send_ping(struct connection_t *);
 extern bool send_pong(struct connection_t *);

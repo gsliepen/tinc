@@ -31,11 +31,13 @@ extern time_t now;
 static int id;
 
 static int event_compare(const event_t *a, const event_t *b) {
-	if(a->time > b->time)
+	if(a->time > b->time) {
 		return 1;
+	}
 
-	if(a->time < b->time)
+	if(a->time < b->time) {
 		return -1;
+	}
 
 	return a->id - b->id;
 }
@@ -55,18 +57,21 @@ void expire_events(void) {
 
 	/*
 	 * Make all events appear expired by substracting the difference between
-         * the expiration time of the last event and the current time.
+	 * the expiration time of the last event and the current time.
 	 */
 
-	if(!event_tree->tail)
+	if(!event_tree->tail) {
 		return;
+	}
 
 	event = event_tree->tail->data;
-	if(event->time <= now)
+
+	if(event->time <= now) {
 		return;
+	}
 
 	diff = event->time - now;
-	
+
 	for(node = event_tree->head; node; node = node->next) {
 		event = node->data;
 		event->time -= diff;
@@ -108,7 +113,9 @@ event_t *get_expired_event(void) {
 }
 
 event_t *peek_next_event(void) {
-	if (event_tree->head)
+	if(event_tree->head) {
 		return event_tree->head->data;
+	}
+
 	return NULL;
 }

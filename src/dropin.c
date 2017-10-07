@@ -25,7 +25,7 @@
 #ifndef HAVE_DAEMON
 /*
   Replacement for the daemon() function.
-  
+
   The daemon() function is for programs wishing to detach themselves
   from the controlling terminal and run in the background as system
   daemons.
@@ -50,8 +50,9 @@ int daemon(int nochdir, int noclose) {
 	}
 
 	/* If we are the parent, terminate */
-	if(pid)
+	if(pid) {
 		exit(0);
+	}
 
 	/* Detach by becoming the new process group leader */
 	if(setsid() < 0) {
@@ -109,8 +110,9 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 	buf[len - 1] = 0;
 	va_end(aq);
 
-	if(status >= 0)
+	if(status >= 0) {
 		*buf = xrealloc(*buf, status + 1);
+	}
 
 	if(status > len - 1) {
 		len = status;

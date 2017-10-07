@@ -31,20 +31,20 @@ typedef struct edge_t {
 	struct node_t *to;
 	sockaddr_t address;
 
-	uint32_t options;			/* options turned on for this edge */
-	int weight;					/* weight of this edge */
+	uint32_t options;                       /* options turned on for this edge */
+	int weight;                                     /* weight of this edge */
 
-	struct connection_t *connection;	/* connection associated with this edge, if available */
-	struct edge_t *reverse;		/* edge in the opposite direction, if available */
+	struct connection_t *connection;        /* connection associated with this edge, if available */
+	struct edge_t *reverse;         /* edge in the opposite direction, if available */
 } edge_t;
 
-extern avl_tree_t *edge_weight_tree;	/* Tree with all known edges sorted on weight */
+extern avl_tree_t *edge_weight_tree;    /* Tree with all known edges sorted on weight */
 
 extern void init_edges(void);
 extern void exit_edges(void);
-extern edge_t *new_edge(void) __attribute__ ((__malloc__));
+extern edge_t *new_edge(void) __attribute__((__malloc__));
 extern void free_edge(edge_t *);
-extern avl_tree_t *new_edge_tree(void) __attribute__ ((__malloc__));
+extern avl_tree_t *new_edge_tree(void) __attribute__((__malloc__));
 extern void free_edge_tree(avl_tree_t *);
 extern void edge_add(edge_t *);
 extern void edge_del(edge_t *);

@@ -43,8 +43,9 @@ list_node_t *list_alloc_node(void) {
 }
 
 void list_free_node(list_t *list, list_node_t *node) {
-	if(node->data && list->delete)
+	if(node->data && list->delete) {
 		list->delete(node->data);
+	}
 
 	free(node);
 }
@@ -61,10 +62,11 @@ list_node_t *list_insert_head(list_t *list, void *data) {
 	node->next = list->head;
 	list->head = node;
 
-	if(node->next)
+	if(node->next) {
 		node->next->prev = node;
-	else
+	} else {
 		list->tail = node;
+	}
 
 	list->count++;
 
@@ -81,10 +83,11 @@ list_node_t *list_insert_tail(list_t *list, void *data) {
 	node->prev = list->tail;
 	list->tail = node;
 
-	if(node->prev)
+	if(node->prev) {
 		node->prev->next = node;
-	else
+	} else {
 		list->head = node;
+	}
 
 	list->count++;
 
@@ -92,15 +95,17 @@ list_node_t *list_insert_tail(list_t *list, void *data) {
 }
 
 void list_unlink_node(list_t *list, list_node_t *node) {
-	if(node->prev)
+	if(node->prev) {
 		node->prev->next = node->next;
-	else
+	} else {
 		list->head = node->next;
+	}
 
-	if(node->next)
+	if(node->next) {
 		node->next->prev = node->prev;
-	else
+	} else {
 		list->tail = node->prev;
+	}
 
 	list->count--;
 }
@@ -121,17 +126,19 @@ void list_delete_tail(list_t *list) {
 /* Head/tail lookup */
 
 void *list_get_head(list_t *list) {
-	if(list->head)
+	if(list->head) {
 		return list->head->data;
-	else
+	} else {
 		return NULL;
+	}
 }
 
 void *list_get_tail(list_t *list) {
-	if(list->tail)
+	if(list->tail) {
 		return list->tail->data;
-	else
+	} else {
 		return NULL;
+	}
 }
 
 /* Fast list deletion */
@@ -163,7 +170,9 @@ void list_foreach(list_t *list, list_action_t action) {
 
 	for(node = list->head; node; node = next) {
 		next = node->next;
-		if(node->data)
+
+		if(node->data) {
 			action(node->data);
+		}
 	}
 }

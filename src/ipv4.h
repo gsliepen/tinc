@@ -64,15 +64,15 @@
 #ifndef HAVE_STRUCT_IP
 struct ip {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	unsigned int ip_hl:4;
-	unsigned int ip_v:4;
+	unsigned int ip_hl: 4;
+	unsigned int ip_v: 4;
 #else
-	unsigned int ip_v:4;
-	unsigned int ip_hl:4;
+	unsigned int ip_v: 4;
+	unsigned int ip_hl: 4;
 #endif
 	uint8_t ip_tos;
 	uint16_t ip_len;
-	uint16_t ip_id; 
+	uint16_t ip_id;
 	uint16_t ip_off;
 #define IP_RF 0x8000
 #define IP_DF 0x4000
@@ -81,7 +81,7 @@ struct ip {
 	uint8_t ip_p;
 	uint16_t ip_sum;
 	struct in_addr ip_src, ip_dst;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
 #ifndef IP_OFFMASK
@@ -143,7 +143,7 @@ struct icmp {
 #define icmp_radv icmp_dun.id_radv
 #define icmp_mask icmp_dun.id_mask
 #define icmp_data icmp_dun.id_data
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
 #endif

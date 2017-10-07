@@ -62,12 +62,14 @@ static void configure_tcp(connection_t *c) {
 	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
 		logger(LOG_ERR, "fcntl for %s: %s", c->hostname, strerror(errno));
 	}
+
 #elif defined(WIN32)
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
 		logger(LOG_ERR, "ioctlsocket for %s: %s", c->hostname, sockstrerror(sockerrno));
 	}
+
 #endif
 
 #if defined(SOL_TCP) && defined(TCP_NODELAY)
@@ -94,8 +96,9 @@ static bool bind_to_interface(int sd) {
 	int status;
 #endif /* defined(SOL_SOCKET) && defined(SO_BINDTODEVICE) */
 
-	if(!get_config_string(lookup_config (config_tree, "BindToInterface"), &iface))
+	if(!get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
 		return true;
+	}
 
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 	memset(&ifr, 0, sizeof(ifr));
@@ -104,6 +107,7 @@ static bool bind_to_interface(int sd) {
 	free(iface);
 
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
+
 	if(status) {
 		logger(LOG_ERR, "Can't bind to interface %s: %s", ifr.ifr_ifrn.ifrn_name, strerror(errno));
 		return false;
@@ -139,8 +143,11 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
 
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
-	if(sa->sa.sa_family == AF_INET6)
+
+	if(sa->sa.sa_family == AF_INET6) {
 		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
+	}
+
 #endif
 
 	if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
@@ -203,13 +210,14 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		if(fcntl(nfd, F_SETFL, flags | O_NONBLOCK) < 0) {
 			closesocket(nfd);
 			logger(LOG_ERR, "System call `%s' failed: %s", "fcntl",
-				   strerror(errno));
+			       strerror(errno));
 			return -1;
 		}
 	}
 #elif defined(WIN32)
 	{
 		unsigned long arg = 1;
+
 		if(ioctlsocket(nfd, FIONBIO, &arg) != 0) {
 			closesocket(nfd);
 			logger(LOG_ERR, "Call to `%s' failed: %s", "ioctlsocket", sockstrerror(sockerrno));
@@ -222,15 +230,20 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
 	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof(option));
 
-	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf)))
+	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf))) {
 		logger(LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, strerror(errno));
+	}
 
-	if(udp_sndbuf && setsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf, sizeof(udp_sndbuf)))
+	if(udp_sndbuf && setsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf, sizeof(udp_sndbuf))) {
 		logger(LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, strerror(errno));
+	}
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
-	if(sa->sa.sa_family == AF_INET6)
+
+	if(sa->sa.sa_family == AF_INET6) {
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
+	}
+
 #endif
 
 #if defined(IP_DONTFRAG) && !defined(IP_DONTFRAGMENT)
@@ -238,30 +251,38 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #endif
 
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
+
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = IP_PMTUDISC_DO;
 		setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, (void *)&option, sizeof(option));
 	}
+
 #elif defined(IPPROTO_IP) && defined(IP_DONTFRAGMENT)
+
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, (void *)&option, sizeof(option));
 	}
+
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
+
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = IPV6_PMTUDISC_DO;
 		setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, (void *)&option, sizeof(option));
 	}
+
 #elif defined(IPPROTO_IPV6) && defined(IPV6_DONTFRAG)
+
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
 	}
+
 #endif
 
-	if (!bind_to_interface(nfd)) {
+	if(!bind_to_interface(nfd)) {
 		closesocket(nfd);
 		return -1;
 	}
@@ -280,14 +301,18 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 void retry_outgoing(outgoing_t *outgoing) {
 	outgoing->timeout += 5;
 
-	if(outgoing->timeout < mintimeout)
+	if(outgoing->timeout < mintimeout) {
 		outgoing->timeout = mintimeout;
+	}
 
-	if(outgoing->timeout > maxtimeout)
+	if(outgoing->timeout > maxtimeout) {
 		outgoing->timeout = maxtimeout;
+	}
 
-	if(outgoing->event)
+	if(outgoing->event) {
 		event_del(outgoing->event);
+	}
+
 	outgoing->event = new_event();
 	outgoing->event->handler = (event_handler_t) setup_outgoing_connection;
 	outgoing->event->time = now + outgoing->timeout;
@@ -295,8 +320,8 @@ void retry_outgoing(outgoing_t *outgoing) {
 	event_add(outgoing->event);
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE,
-			   "Trying to re-establish outgoing connection in %d seconds",
-			   outgoing->timeout);
+	                            "Trying to re-establish outgoing connection in %d seconds",
+	                            outgoing->timeout);
 }
 
 void finish_connecting(connection_t *c) {
@@ -340,14 +365,19 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	setenv("REMOTEPORT", port, true);
 	setenv("NODE", c->name, true);
 	setenv("NAME", myself->name, true);
-	if(netname)
+
+	if(netname) {
 		setenv("NETNAME", netname, true);
+	}
 
 	int result = system(command);
-	if(result < 0)
+
+	if(result < 0) {
 		logger(LOG_ERR, "Could not execute %s: %s\n", command, strerror(errno));
-	else if(result)
+	} else if(result) {
 		logger(LOG_ERR, "%s exited with non-zero status %d", command, result);
+	}
+
 	exit(result);
 #else
 	logger(LOG_ERR, "Proxy type exec not supported on this platform!");
@@ -357,12 +387,14 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 
 static bool is_valid_host_port(const char *host, const char *port) {
 	for(const char *p = host; *p; p++)
-		if(!isalnum(*p) && *p != '-' && *p != '.')
+		if(!isalnum(*p) && *p != '-' && *p != '.') {
 			return false;
+		}
 
 	for(const char *p = port; *p; p++)
-		if(!isalnum(*p))
+		if(!isalnum(*p)) {
 			return false;
+		}
 
 	return true;
 }
@@ -377,10 +409,11 @@ void do_outgoing_connection(connection_t *c) {
 	}
 
 begin:
+
 	if(!c->outgoing->ai) {
 		if(!c->outgoing->cfg) {
 			ifdebug(CONNECTIONS) logger(LOG_ERR, "Could not set up a meta connection to %s",
-					   c->name);
+			                            c->name);
 			c->status.remove = true;
 			retry_outgoing(c->outgoing);
 			c->outgoing = NULL;
@@ -392,12 +425,14 @@ begin:
 		get_config_string(c->outgoing->cfg, &address);
 
 		space = strchr(address, ' ');
+
 		if(space) {
 			port = xstrdup(space + 1);
 			*space = 0;
 		} else {
-			if(!get_config_string(lookup_config(c->config_tree, "Port"), &port))
+			if(!get_config_string(lookup_config(c->config_tree, "Port"), &port)) {
 				port = xstrdup("655");
+			}
 		}
 
 		c->outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
@@ -416,13 +451,16 @@ begin:
 		c->outgoing->aip = c->outgoing->ai;
 		c->outgoing->cfg = lookup_config_next(c->config_tree, c->outgoing->cfg);
 
-		if(!c->outgoing->ai && proxytype != PROXY_NONE)
+		if(!c->outgoing->ai && proxytype != PROXY_NONE) {
 			goto connect;
+		}
 	}
 
 	if(!c->outgoing->aip) {
-		if(c->outgoing->ai)
+		if(c->outgoing->ai) {
 			freeaddrinfo(c->outgoing->ai);
+		}
+
 		c->outgoing->ai = NULL;
 		goto begin;
 	}
@@ -431,13 +469,15 @@ begin:
 	c->outgoing->aip = c->outgoing->aip->ai_next;
 
 connect:
-	if(c->hostname)
+
+	if(c->hostname) {
 		free(c->hostname);
+	}
 
 	c->hostname = sockaddr2hostname(&c->address);
 
 	ifdebug(CONNECTIONS) logger(LOG_INFO, "Trying to connect to %s (%s)", c->name,
-			   c->hostname);
+	                            c->hostname);
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
@@ -446,8 +486,11 @@ connect:
 		do_outgoing_pipe(c, proxyhost);
 	} else {
 		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
-		if(!proxyai)
+
+		if(!proxyai) {
 			goto begin;
+		}
+
 		ifdebug(CONNECTIONS) logger(LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 	}
@@ -457,8 +500,9 @@ connect:
 		goto begin;
 	}
 
-	if(proxytype != PROXY_EXEC)
+	if(proxytype != PROXY_EXEC) {
 		configure_tcp(c);
+	}
 
 #ifdef FD_CLOEXEC
 	fcntl(c->socket, F_SETFD, FD_CLOEXEC);
@@ -467,8 +511,11 @@ connect:
 	if(proxytype != PROXY_EXEC) {
 #if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
 		int option = 1;
-		if(c->address.sa.sa_family == AF_INET6)
+
+		if(c->address.sa.sa_family == AF_INET6) {
 			setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
+		}
+
 #endif
 
 		bind_to_interface(c->socket);
@@ -488,10 +535,12 @@ connect:
 
 		if(b != -1) {
 			sockaddr_t sa = listen_socket[b].sa;
-			if(sa.sa.sa_family == AF_INET)
+
+			if(sa.sa.sa_family == AF_INET) {
 				sa.in.sin_port = 0;
-			else if(sa.sa.sa_family == AF_INET6)
+			} else if(sa.sa.sa_family == AF_INET6) {
 				sa.in6.sin6_port = 0;
+			}
 
 			if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
 				char *addrstr = sockaddr2hostname(&sa);
@@ -557,6 +606,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	c->outcompression = myself->connection->outcompression;
 
 	init_configuration(&c->config_tree);
+
 	if(!read_connection_config(c)) {
 		free_connection(c);
 		outgoing->timeout = maxtimeout;
@@ -626,11 +676,13 @@ bool handle_new_meta_connection(int sock) {
 }
 
 static void free_outgoing(outgoing_t *outgoing) {
-	if(outgoing->ai)
+	if(outgoing->ai) {
 		freeaddrinfo(outgoing->ai);
+	}
 
-	if(outgoing->name)
+	if(outgoing->name) {
 		free(outgoing->name);
+	}
 
 	free(outgoing);
 }
@@ -639,16 +691,16 @@ void try_outgoing_connections(void) {
 	static config_t *cfg = NULL;
 	char *name;
 	outgoing_t *outgoing;
-	
+
 	outgoing_list = list_alloc((list_action_t)free_outgoing);
-			
+
 	for(cfg = lookup_config(config_tree, "ConnectTo"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
 		get_config_string(cfg, &name);
 
 		if(!check_id(name)) {
 			logger(LOG_ERR,
-				   "Invalid name for outgoing connection in %s line %d",
-				   cfg->file, cfg->line);
+			       "Invalid name for outgoing connection in %s line %d",
+			       cfg->file, cfg->line);
 			free(name);
 			continue;
 		}

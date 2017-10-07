@@ -34,8 +34,9 @@ int maxoutbufsize = 0;
 /* Status and error notification routines */
 
 bool send_status(connection_t *c, int statusno, const char *statusstring) {
-	if(!statusstring)
+	if(!statusstring) {
 		statusstring = "Status";
+	}
 
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
@@ -46,19 +47,20 @@ bool status_h(connection_t *c) {
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
 	ifdebug(STATUS) logger(LOG_NOTICE, "Status message from %s (%s): %d: %s",
-			   c->name, c->hostname, statusno, statusstring);
+	                       c->name, c->hostname, statusno, statusstring);
 
 	return true;
 }
 
 bool send_error(connection_t *c, int err, const char *errstring) {
-	if(!errstring)
+	if(!errstring) {
 		errstring = "Error";
+	}
 
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
@@ -69,12 +71,12 @@ bool error_h(connection_t *c) {
 
 	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
 	ifdebug(ERROR) logger(LOG_NOTICE, "Error message from %s (%s): %d: %s",
-			   c->name, c->hostname, err, errorstring);
+	                      c->name, c->hostname, err, errorstring);
 
 	terminate_connection(c, c->status.active);
 
@@ -114,8 +116,11 @@ bool pong_h(connection_t *c) {
 	if(c->outgoing) {
 		c->outgoing->timeout = 0;
 		c->outgoing->cfg = NULL;
-		if(c->outgoing->ai)
+
+		if(c->outgoing->ai) {
 			freeaddrinfo(c->outgoing->ai);
+		}
+
 		c->outgoing->ai = NULL;
 		c->outgoing->aip = NULL;
 	}
@@ -127,13 +132,15 @@ bool pong_h(connection_t *c) {
 
 bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
-           We use a very simple Random Early Drop algorithm. */
+	   We use a very simple Random Early Drop algorithm. */
 
-	if(2.0 * c->outbuflen / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
+	if(2.0 * c->outbuflen / (float)maxoutbufsize - 1 > (float)rand() / (float)RAND_MAX) {
 		return true;
+	}
 
-	if(!send_request(c, "%d %hd", PACKET, packet->len))
+	if(!send_request(c, "%d %hd", PACKET, packet->len)) {
 		return false;
+	}
 
 	return send_meta(c, (char *)packet->data, packet->len) && flush_meta(c);
 }
@@ -143,7 +150,7 @@ bool tcppacket_h(connection_t *c) {
 
 	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
-			   c->hostname);
+		       c->hostname);
 		return false;
 	}
 

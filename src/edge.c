@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-avl_tree_t *edge_weight_tree;	/* Tree with all edges, sorted on weight */
+avl_tree_t *edge_weight_tree;   /* Tree with all edges, sorted on weight */
 
 static int edge_compare(const edge_t *a, const edge_t *b) {
 	return strcmp(a->to->name, b->to->name);
@@ -39,13 +39,15 @@ static int edge_weight_compare(const edge_t *a, const edge_t *b) {
 
 	result = a->weight - b->weight;
 
-	if(result)
+	if(result) {
 		return result;
+	}
 
 	result = strcmp(a->from->name, b->from->name);
 
-	if(result)
+	if(result) {
 		return result;
+	}
 
 	return strcmp(a->to->name, b->to->name);
 }
@@ -84,13 +86,15 @@ void edge_add(edge_t *e) {
 
 	e->reverse = lookup_edge(e->to, e->from);
 
-	if(e->reverse)
+	if(e->reverse) {
 		e->reverse->reverse = e;
+	}
 }
 
 void edge_del(edge_t *e) {
-	if(e->reverse)
+	if(e->reverse) {
 		e->reverse->reverse = NULL;
+	}
 
 	avl_delete(edge_weight_tree, e);
 	avl_delete(e->from->edge_tree, e);
@@ -98,7 +102,7 @@ void edge_del(edge_t *e) {
 
 edge_t *lookup_edge(node_t *from, node_t *to) {
 	edge_t v;
-	
+
 	v.from = from;
 	v.to = to;
 
@@ -115,11 +119,12 @@ void dump_edges(void) {
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
+
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
 			logger(LOG_DEBUG, " %s to %s at %s options %x weight %d",
-				   e->from->name, e->to->name, address, e->options, e->weight);
+			       e->from->name, e->to->name, address, e->options, e->weight);
 			free(address);
 		}
 	}
