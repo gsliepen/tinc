@@ -54,5 +54,5 @@ AC_DEFUN([tinc_OPENSSL],
     [#include <openssl/evp.h>]
   )
 
-  AC_CHECK_FUNCS([BN_GENCB_new ERR_remove_state RSA_set0_key], , , [#include <openssl/rsa.h>])
+  AC_CHECK_FUNCS([BN_GENCB_new RSA_set0_key], , , [#include <openssl/rsa.h>])
 ])

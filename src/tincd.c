@@ -821,14 +821,8 @@ end:
 	free(priority);
 
 	EVP_cleanup();
-	ENGINE_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-#ifdef HAVE_ERR_REMOVE_STATE
-	// OpenSSL claims this function was deprecated in 1.0.0,
-	// but valgrind's leak detector shows you still need to call it to make sure OpenSSL cleans up properly.
-	ERR_remove_state(0);
-#endif
 	ERR_free_strings();
+	ENGINE_cleanup();
 
 	exit_configuration(&config_tree);
 	list_delete_list(cmdline_conf);
