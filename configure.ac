@@ -6,7 +6,6 @@ AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall info-in-builddir])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
 
 # Enable GNU extensions.
@@ -181,7 +180,7 @@ dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h arpa/nameser.h dirent.h getopt.h])
+AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h arpa/nameser.h dirent.h getopt.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_utun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
   [], [], [#include "$srcdir/src/have.h"]
 )
@@ -208,7 +207,7 @@ AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp,
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall pselect putenv random select strdup strerror strsignal strtol system unsetenv usleep vsyslog writev devname fdevname],
+AC_CHECK_FUNCS([asprintf daemon fchmod flock fork get_current_dir_name gettimeofday mlockall pselect putenv strsignal system unsetenv usleep vsyslog devname fdevname],
   [], [], [#include "$srcdir/src/have.h"]
 )
 
