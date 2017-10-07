@@ -13,7 +13,7 @@ struct chacha_poly1305_ctx {
 
 chacha_poly1305_ctx_t *chacha_poly1305_init(void)
 {
-	chacha_poly1305_ctx_t *ctx = xzalloc(sizeof *ctx);
+	chacha_poly1305_ctx_t *ctx = xzalloc(sizeof(*ctx));
 	return ctx;
 }
 

@@ -61,7 +61,7 @@ static void real_logger(int level, int priority, const char *message) {
 				if(!now.tv_sec)
 					gettimeofday(&now, NULL);
 				time_t now_sec = now.tv_sec;
-				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now_sec));
+				strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now_sec));
 				fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
 				fflush(logfile);
 				break;
@@ -109,11 +109,11 @@ void logger(int level, int priority, const char *format, ...) {
 	char message[1024] = "";
 
 	va_start(ap, format);
-	int len = vsnprintf(message, sizeof message, format, ap);
-	message[sizeof message - 1] = 0;
+	int len = vsnprintf(message, sizeof(message), format, ap);
+	message[sizeof(message) - 1] = 0;
 	va_end(ap);
 
-	if(len > 0 && len < sizeof message - 1 && message[len - 1] == '\n')
+	if(len > 0 && len < sizeof(message) - 1 && message[len - 1] == '\n')
 		message[len - 1] = 0;
 
 	real_logger(level, priority, message);
@@ -121,11 +121,11 @@ void logger(int level, int priority, const char *format, ...) {
 
 static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
 	char message[1024];
-	size_t msglen = sizeof message;
+	size_t msglen = sizeof(message);
 
 	int len = vsnprintf(message, msglen, format, ap);
-	message[sizeof message - 1] = 0;
-	if(len > 0 && len < sizeof message - 1) {
+	message[sizeof(message) - 1] = 0;
+	if(len > 0 && len < sizeof(message) - 1) {
 		if(message[len - 1] == '\n')
 			message[--len] = 0;
 
@@ -133,7 +133,7 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 		// but both types have the name and hostname fields at the same offsets.
 		connection_t *c = s->handle;
 		if(c)
-			snprintf(message + len, sizeof message - len, " from %s (%s)", c->name, c->hostname);
+			snprintf(message + len, sizeof(message) - len, " from %s (%s)", c->name, c->hostname);
 	}
 
 	real_logger(DEBUG_ALWAYS, LOG_ERR, message);

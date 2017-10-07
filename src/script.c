@@ -69,7 +69,7 @@ static const int min_env_size = 10;
 int environment_add(environment_t *env, const char *format, ...) {
 	if(env->n >= env->size) {
 		env->size = env->n ? env->n * 2 : min_env_size;
-		env->entries = xrealloc(env->entries, env->size * sizeof *env->entries);
+		env->entries = xrealloc(env->entries, env->size * sizeof(*env->entries));
 	}
 
 	if(format) {
@@ -95,7 +95,7 @@ void environment_update(environment_t *env, int pos, const char *format, ...) {
 void environment_init(environment_t *env) {
 	env->n = 0;
 	env->size = min_env_size;
-	env->entries = xzalloc(env->size * sizeof *env->entries);
+	env->entries = xzalloc(env->size * sizeof(*env->entries));
 
 	if(netname)
 		environment_add(env, "NETNAME=%s", netname);
@@ -119,7 +119,7 @@ bool execute_script(const char *name, environment_t *env) {
 	char scriptname[PATH_MAX];
 	char *command;
 
-	snprintf(scriptname, sizeof scriptname, "%s" SLASH "%s%s", confbase, name, scriptextension);
+	snprintf(scriptname, sizeof(scriptname), "%s" SLASH "%s%s", confbase, name, scriptextension);
 
 	/* First check if there is a script */
 
@@ -130,7 +130,7 @@ bool execute_script(const char *name, environment_t *env) {
 		size_t scriptlen = strlen(scriptname);
 		char fullname[scriptlen + pathlen + 1];
 		char *ext = fullname + scriptlen;
-		strncpy(fullname, scriptname, sizeof fullname);
+		strncpy(fullname, scriptname, sizeof(fullname));
 
 		const char *p = pathext;
 		bool found = false;

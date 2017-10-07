@@ -110,13 +110,13 @@ bool send_req_key(node_t *to) {
 		}
 
 		char label[25 + strlen(myself->name) + strlen(to->name)];
-		snprintf(label, sizeof label, "tinc UDP key expansion %s %s", myself->name, to->name);
+		snprintf(label, sizeof(label), "tinc UDP key expansion %s %s", myself->name, to->name);
 		sptps_stop(&to->sptps);
 		to->status.validkey = false;
 		to->status.waitingforkey = true;
 		to->last_req_key = now.tv_sec;
 		to->incompression = myself->incompression;
-		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof label, send_initial_sptps_data, receive_sptps_record);
+		return sptps_start(&to->sptps, to, true, true, myself->connection->ecdsa, to->ecdsa, label, sizeof(label), send_initial_sptps_data, receive_sptps_record);
 	}
 
 	return send_request(to->nexthop->connection, "%d %s %s", REQ_KEY, myself->name, to->name);
@@ -219,12 +219,12 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 			}
 
 			char label[25 + strlen(from->name) + strlen(myself->name)];
-			snprintf(label, sizeof label, "tinc UDP key expansion %s %s", from->name, myself->name);
+			snprintf(label, sizeof(label), "tinc UDP key expansion %s %s", from->name, myself->name);
 			sptps_stop(&from->sptps);
 			from->status.validkey = false;
 			from->status.waitingforkey = true;
 			from->last_req_key = now.tv_sec;
-			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof label, send_sptps_data_myself, receive_sptps_record);
+			sptps_start(&from->sptps, from, false, true, myself->connection->ecdsa, from->ecdsa, label, sizeof(label), send_sptps_data_myself, receive_sptps_record);
 			sptps_receive_data(&from->sptps, buf, len);
 			send_mtu_info(myself, from, MTU);
 			return true;
@@ -489,7 +489,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* Process key */
 
-	int keylen = hex2bin(key, key, sizeof key);
+	int keylen = hex2bin(key, key, sizeof(key));
 
 	if(keylen != (from->outcipher ? cipher_keylength(from->outcipher) : 1)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);

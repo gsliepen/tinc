@@ -25,10 +25,10 @@ uint8_t mymac[6] = {6, 5, 5, 6, 5, 5};
 
 static ssize_t do_arp(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	struct ether_arp arp;
-	memcpy(&arp, buf + 14, sizeof arp);
+	memcpy(&arp, buf + 14, sizeof(arp));
 
 	// Is it a valid ARP request?
-	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP || arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof in->sin_addr.s_addr || ntohs(arp.arp_op) != ARPOP_REQUEST)
+	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP || arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof(in->sin_addr.s_addr) || ntohs(arp.arp_op) != ARPOP_REQUEST)
 		return 0;
 
 	// Does it match our address?
@@ -40,12 +40,12 @@ static ssize_t do_arp(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	memcpy(buf + 6, mymac, 6);
 
 	arp.arp_op = htons(ARPOP_REPLY);
-	memcpy(arp.arp_tpa, arp.arp_spa, sizeof arp.arp_tpa);
-	memcpy(arp.arp_tha, arp.arp_sha, sizeof arp.arp_tha);
-	memcpy(arp.arp_spa, &in->sin_addr.s_addr, sizeof in->sin_addr.s_addr);
+	memcpy(arp.arp_tpa, arp.arp_spa, sizeof(arp.arp_tpa));
+	memcpy(arp.arp_tha, arp.arp_sha, sizeof(arp.arp_tha));
+	memcpy(arp.arp_spa, &in->sin_addr.s_addr, sizeof(in->sin_addr.s_addr));
 	memcpy(arp.arp_sha, mymac, 6);
 
-	memcpy(buf + 14, &arp, sizeof arp);
+	memcpy(buf + 14, &arp, sizeof(arp));
 
 	return len;
 }
@@ -58,7 +58,7 @@ static ssize_t do_ipv4(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	if(memcmp(buf, mymac, 6))
 		return 0;
 
-	memcpy(&ip, buf + 14, sizeof ip);
+	memcpy(&ip, buf + 14, sizeof(ip));
 	if(memcmp(&ip.ip_dst, &in->sin_addr.s_addr, 4))
 		return 0;
 
@@ -66,7 +66,7 @@ static ssize_t do_ipv4(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	if(ip.ip_p != IPPROTO_ICMP)
 		return 0;
 
-	memcpy(&icmp, buf + 14 + sizeof ip, sizeof icmp);
+	memcpy(&icmp, buf + 14 + sizeof(ip), sizeof icmp);
 	if(icmp.icmp_type != ICMP_ECHO)
 		return 0;
 
@@ -79,8 +79,8 @@ static ssize_t do_ipv4(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 
 	icmp.icmp_type = ICMP_ECHOREPLY;
 
-	memcpy(buf + 14, &ip, sizeof ip);
-	memcpy(buf + 14 + sizeof ip, &icmp, sizeof icmp);
+	memcpy(buf + 14, &ip, sizeof(ip));
+	memcpy(buf + 14 + sizeof(ip), &icmp, sizeof icmp);
 
 	return len;
 }
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	static const int one = 1;
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof one);
+	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
 
 	if(bind(fd, ai->ai_addr, ai->ai_addrlen)) {
 		fprintf(stderr, "Could not bind socket: %s\n", strerror(errno));
@@ -124,15 +124,15 @@ int main(int argc, char *argv[]) {
 		case AF_INET: {
 			struct ip_mreq mreq;
 			struct sockaddr_in in;
-			memcpy(&in, ai->ai_addr, sizeof in);
+			memcpy(&in, ai->ai_addr, sizeof(in));
 			mreq.imr_multiaddr.s_addr = in.sin_addr.s_addr;
 			mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-			if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof mreq)) {
+			if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq))) {
 				fprintf(stderr, "Cannot join multicast group: %s\n", strerror(errno));
 				return 1;
 			}
 #ifdef IP_MULTICAST_LOOP
-			setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const void *)&one, sizeof one);
+			setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const void *)&one, sizeof(one));
 #endif
 		} break;
 
@@ -140,15 +140,15 @@ int main(int argc, char *argv[]) {
 		case AF_INET6: {
 			struct ipv6_mreq mreq;
 			struct sockaddr_in6 in6;
-			memcpy(&in6, ai->ai_addr, sizeof in6);
-			memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof mreq.ipv6mr_multiaddr);
+			memcpy(&in6, ai->ai_addr, sizeof(in6));
+			memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof(mreq.ipv6mr_multiaddr));
 			mreq.ipv6mr_interface = in6.sin6_scope_id;
-			if(setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof mreq)) {
+			if(setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof(mreq))) {
 				fprintf(stderr, "Cannot join multicast group: %s\n", strerror(errno));
 				return 1;
 			}
 #ifdef IPV6_MULTICAST_LOOP
-			setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const void *)&one, sizeof one);
+			setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const void *)&one, sizeof(one));
 #endif
 		} break;
 #endif
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 		uint8_t buf[10000];
 		struct sockaddr src;
 		socklen_t srclen;
-		ssize_t len = recvfrom(fd, buf, sizeof buf, 0, &src, &srclen);
+		ssize_t len = recvfrom(fd, buf, sizeof(buf), 0, &src, &srclen);
 		if(len <= 0)
 			break;
 

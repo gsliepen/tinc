@@ -134,7 +134,7 @@ static bool ber_write_sequence(uint8_t **p, size_t *buflen, uint8_t *seqbuf, siz
 
 static bool ber_write_mpi(uint8_t **p, size_t *buflen, gcry_mpi_t mpi) {
 	uint8_t tmpbuf[1024];
-	size_t tmplen = sizeof tmpbuf;
+	size_t tmplen = sizeof(tmpbuf);
 	gcry_error_t err;
 
 	err = gcry_mpi_aprint(GCRYMPI_FMT_USG, &tmpbuf, &tmplen, mpi);
@@ -158,8 +158,8 @@ bool rsa_write_pem_public_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf2[8096];
 	uint8_t *derp1 = derbuf1;
 	uint8_t *derp2 = derbuf2;
-	size_t derlen1 = sizeof derbuf1;
-	size_t derlen2 = sizeof derbuf2;
+	size_t derlen1 = sizeof(derbuf1);
+	size_t derlen2 = sizeof(derbuf2);
 
 	if(!ber_write_mpi(&derp1, &derlen1, &rsa->n)
 			|| !ber_write_mpi(&derp1, &derlen1, &rsa->e)
@@ -181,8 +181,8 @@ bool rsa_write_pem_private_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf2[8096];
 	uint8_t *derp1 = derbuf1;
 	uint8_t *derp2 = derbuf2;
-	size_t derlen1 = sizeof derbuf1;
-	size_t derlen2 = sizeof derbuf2;
+	size_t derlen1 = sizeof(derbuf1);
+	size_t derlen2 = sizeof(derbuf2);
 
 	if(!ber_write_mpi(&derp1, &derlen1, &bits)
 			|| ber_write_mpi(&derp1, &derlen1, &rsa->n) // modulus

@@ -264,13 +264,13 @@ static void disable_old_keys(const char *filename, const char *what) {
 	if(!r)
 		return;
 
-	snprintf(tmpfile, sizeof tmpfile, "%s.tmp", filename);
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
 	struct stat st = {.st_mode = 0600};
 	fstat(fileno(r), &st);
 	w = fopenmask(tmpfile, "w", st.st_mode);
 
-	while(fgets(buf, sizeof buf, r)) {
+	while(fgets(buf, sizeof(buf), r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
 			if((strstr(buf, " ED25519 ") && strstr(what, "Ed25519")) || (strstr(buf, " RSA ") && strstr(what, "RSA"))) {
 				disabled = true;
@@ -313,7 +313,7 @@ static void disable_old_keys(const char *filename, const char *what) {
 #ifdef HAVE_MINGW
 		// We cannot atomically replace files on Windows.
 		char bakfile[PATH_MAX] = "";
-		snprintf(bakfile, sizeof bakfile, "%s.bak", filename);
+		snprintf(bakfile, sizeof(bakfile), "%s.bak", filename);
 		if(rename(filename, bakfile) || rename(tmpfile, filename)) {
 			rename(bakfile, filename);
 #else
@@ -342,7 +342,7 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 		/* Ask for a file and/or directory name. */
 		fprintf(stderr, "Please enter a file to save %s to [%s]: ", what, filename);
 
-		if(fgets(buf, sizeof buf, stdin) == NULL) {
+		if(fgets(buf, sizeof(buf), stdin) == NULL) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 			return NULL;
 		}
@@ -361,8 +361,8 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	if(filename[0] != '/') {
 #endif
 		/* The directory is a relative path or a filename. */
-		getcwd(directory, sizeof directory);
-		snprintf(buf2, sizeof buf2, "%s" SLASH "%s", directory, filename);
+		getcwd(directory, sizeof(directory));
+		snprintf(buf2, sizeof(buf2), "%s" SLASH "%s", directory, filename);
 		filename = buf2;
 	}
 
@@ -397,7 +397,7 @@ static bool ed25519_keygen(bool ask) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	snprintf(fname, sizeof fname, "%s" SLASH "ed25519_key.priv", confbase);
+	snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.priv", confbase);
 	f = ask_and_open(fname, "private Ed25519 key", "a", ask, 0600);
 
 	if(!f)
@@ -411,9 +411,9 @@ static bool ed25519_keygen(bool ask) {
 	fclose(f);
 
 	if(name)
-		snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	else
-		snprintf(fname, sizeof fname, "%s" SLASH "ed25519_key.pub", confbase);
+		snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.pub", confbase);
 
 	f = ask_and_open(fname, "public Ed25519 key", "a", ask, 0666);
 
@@ -465,7 +465,7 @@ static bool rsa_keygen(int bits, bool ask) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	snprintf(fname, sizeof fname, "%s" SLASH "rsa_key.priv", confbase);
+	snprintf(fname, sizeof(fname), "%s" SLASH "rsa_key.priv", confbase);
 	f = ask_and_open(fname, "private RSA key", "a", ask, 0600);
 
 	if(!f)
@@ -479,9 +479,9 @@ static bool rsa_keygen(int bits, bool ask) {
 	fclose(f);
 
 	if(name)
-		snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	else
-		snprintf(fname, sizeof fname, "%s" SLASH "rsa_key.pub", confbase);
+		snprintf(fname, sizeof(fname), "%s" SLASH "rsa_key.pub", confbase);
 
 	f = ask_and_open(fname, "public RSA key", "a", ask, 0666);
 
@@ -516,7 +516,7 @@ bool recvline(int fd, char *line, size_t len) {
 		return false;
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
-		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
+		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 		if(result == -1 && sockerrno == EINTR)
 			continue;
 		else if(result <= 0)
@@ -542,7 +542,7 @@ bool recvdata(int fd, char *data, size_t len) {
 		len = blen;
 
 	while(blen < len) {
-		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
+		int result = recv(fd, buffer + blen, sizeof(buffer) - blen, 0);
 		if(result == -1 && sockerrno == EINTR)
 			continue;
 		else if(result <= 0)
@@ -564,11 +564,11 @@ bool sendline(int fd, char *format, ...) {
 	va_list ap;
 
 	va_start(ap, format);
-	blen = vsnprintf(buffer, sizeof buffer, format, ap);
-	buffer[sizeof buffer - 1] = 0;
+	blen = vsnprintf(buffer, sizeof(buffer), format, ap);
+	buffer[sizeof(buffer) - 1] = 0;
 	va_end(ap);
 
-	if(blen < 1 || blen >= sizeof buffer)
+	if(blen < 1 || blen >= sizeof(buffer))
 		return false;
 
 	buffer[blen] = '\n';
@@ -603,7 +603,7 @@ static void pcap(int fd, FILE *out, int snaplen) {
 		0xa1b2c3d4,
 		2, 4,
 		0, 0,
-		snaplen ?: sizeof data,
+		snaplen ?: sizeof(data),
 		1,
 	};
 
@@ -616,15 +616,15 @@ static void pcap(int fd, FILE *out, int snaplen) {
 
 	struct timeval tv;
 
-	fwrite(&header, sizeof header, 1, out);
+	fwrite(&header, sizeof(header), 1, out);
 	fflush(out);
 
 	char line[32];
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int code, req, len;
 		int n = sscanf(line, "%d %d %d", &code, &req, &len);
 		gettimeofday(&tv, NULL);
-		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || len > sizeof data)
+		if(n != 3 || code != CONTROL || req != REQ_PCAP || len < 0 || len > sizeof(data))
 			break;
 		if(!recvdata(fd, data, len))
 			break;
@@ -632,7 +632,7 @@ static void pcap(int fd, FILE *out, int snaplen) {
 		packet.tv_usec = tv.tv_usec;
 		packet.len = len;
 		packet.origlen = len;
-		fwrite(&packet, sizeof packet, 1, out);
+		fwrite(&packet, sizeof(packet), 1, out);
 		fwrite(data, len, 1, out);
 		fflush(out);
 	}
@@ -643,10 +643,10 @@ static void logcontrol(int fd, FILE *out, int level) {
 	char data[1024];
 	char line[32];
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int code, req, len;
 		int n = sscanf(line, "%d %d %d", &code, &req, &len);
-		if(n != 3 || code != CONTROL || req != REQ_LOG || len < 0 || len > sizeof data)
+		if(n != 3 || code != CONTROL || req != REQ_LOG || len < 0 || len > sizeof(data))
 			break;
 		if(!recvdata(fd, data, len))
 			break;
@@ -736,7 +736,7 @@ bool connect_tincd(bool verbose) {
 
 	struct sockaddr_un sa;
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, unixsocketname, sizeof sa.sun_path);
+	strncpy(sa.sun_path, unixsocketname, sizeof(sa.sun_path));
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(fd < 0) {
@@ -745,7 +745,7 @@ bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-	if(connect(fd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+	if(connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
 		if(verbose)
 			fprintf(stderr, "Cannot connect to UNIX socket %s: %s\n", unixsocketname, sockstrerror(sockerrno));
 		close(fd);
@@ -797,13 +797,13 @@ bool connect_tincd(bool verbose) {
 
 #ifdef SO_NOSIGPIPE
 	static const int one = 1;
-	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&one, sizeof one);
+	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&one, sizeof(one));
 #endif
 
 	char data[4096];
 	int version;
 
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %4095s %d", &code, data, &version) != 3 || code != 0) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %4095s %d", &code, data, &version) != 3 || code != 0) {
 		if(verbose)
 			fprintf(stderr, "Cannot read greeting from control socket: %s\n", sockstrerror(sockerrno));
 		close(fd);
@@ -813,7 +813,7 @@ bool connect_tincd(bool verbose) {
 
 	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
 
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
 		if(verbose)
 			fprintf(stderr, "Could not fully establish control socket connection\n");
 		close(fd);
@@ -848,7 +848,7 @@ static int cmd_start(int argc, char *argv[]) {
 		c = "tincd";
 
 	int nargc = 0;
-	char **nargv = xzalloc((optind + argc) * sizeof *nargv);
+	char **nargv = xzalloc((optind + argc) * sizeof(*nargv));
 
 	char *arg0 = c;
 #ifdef HAVE_MINGW
@@ -893,7 +893,7 @@ static int cmd_start(int argc, char *argv[]) {
 	if(!pid) {
 		close(pfd[0]);
 		char buf[100];
-		snprintf(buf, sizeof buf, "%d", pfd[1]);
+		snprintf(buf, sizeof(buf), "%d", pfd[1]);
 		setenv("TINC_UMBILICAL", buf, true);
 		exit(execvp(c, nargv));
 	} else {
@@ -913,7 +913,7 @@ static int cmd_start(int argc, char *argv[]) {
 	char buf[1024];
 	ssize_t len;
 
-	while((len = read(pfd[0], buf, sizeof buf)) > 0) {
+	while((len = read(pfd[0], buf, sizeof(buf))) > 0) {
 		failure = buf[len - 1];
 		if(!failure)
 			len--;
@@ -965,7 +965,7 @@ static int cmd_stop(int argc, char *argv[]) {
 
 	sendline(fd, "%d %d", CONTROL, REQ_STOP);
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		// Wait for tincd to close the connection...
 	}
 #else
@@ -994,7 +994,7 @@ static int cmd_reload(int argc, char *argv[]) {
 		return 1;
 
 	sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RELOAD || result) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RELOAD || result) {
 		fprintf(stderr, "Could not reload configuration.\n");
 		return 1;
 	}
@@ -1005,7 +1005,7 @@ static int cmd_reload(int argc, char *argv[]) {
 
 static int dump_invitations(void) {
 	char dname[PATH_MAX];
-	snprintf(dname, sizeof dname, "%s" SLASH "invitations", confbase);
+	snprintf(dname, sizeof(dname), "%s" SLASH "invitations", confbase);
 	DIR *dir = opendir(dname);
 	if(!dir) {
 		if(errno == ENOENT) {
@@ -1026,7 +1026,7 @@ static int dump_invitations(void) {
 			continue;
 
 		char fname[PATH_MAX];
-		snprintf(fname, sizeof fname, "%s" SLASH "%s", dname, ent->d_name);
+		snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ent->d_name);
 		FILE *f = fopen(fname, "r");
 		if(!f) {
 			fprintf(stderr, "Cannot open %s: %s\n", fname, strerror(errno));
@@ -1034,7 +1034,7 @@ static int dump_invitations(void) {
 		}
 
 		buf[0] = 0;
-		if(!fgets(buf, sizeof buf, f)) {
+		if(!fgets(buf, sizeof(buf), f)) {
 			fprintf(stderr, "Invalid invitation file %s", fname);
 			fclose(f);
 			continue;
@@ -1116,7 +1116,7 @@ static int cmd_dump(int argc, char *argv[]) {
 	else if(do_graph == 2)
 		printf("digraph {\n");
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		char node1[4096], node2[4096];
 		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, node1, node2);
 		if(n == 2) {
@@ -1156,7 +1156,7 @@ static int cmd_dump(int argc, char *argv[]) {
 					return 1;
 				}
 
-				memcpy(&status, &status_int, sizeof status);
+				memcpy(&status, &status_int, sizeof(status));
 
 				if(do_graph) {
 					const char *color = "black";
@@ -1235,7 +1235,7 @@ static int cmd_purge(int argc, char *argv[]) {
 		return 1;
 
 	sendline(fd, "%d %d", CONTROL, REQ_PURGE);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_PURGE || result) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_PURGE || result) {
 		fprintf(stderr, "Could not purge old information.\n");
 		return 1;
 	}
@@ -1256,7 +1256,7 @@ static int cmd_debug(int argc, char *argv[]) {
 	int origlevel;
 
 	sendline(fd, "%d %d %d", CONTROL, REQ_SET_DEBUG, debuglevel);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &origlevel) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &origlevel) != 3 || code != CONTROL || req != REQ_SET_DEBUG) {
 		fprintf(stderr, "Could not set debug level.\n");
 		return 1;
 	}
@@ -1275,7 +1275,7 @@ static int cmd_retry(int argc, char *argv[]) {
 		return 1;
 
 	sendline(fd, "%d %d", CONTROL, REQ_RETRY);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RETRY || result) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_RETRY || result) {
 		fprintf(stderr, "Could not retry outgoing connections.\n");
 		return 1;
 	}
@@ -1298,7 +1298,7 @@ static int cmd_connect(int argc, char *argv[]) {
 		return 1;
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_CONNECT, argv[1]);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_CONNECT || result) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_CONNECT || result) {
 		fprintf(stderr, "Could not connect to %s.\n", argv[1]);
 		return 1;
 	}
@@ -1321,7 +1321,7 @@ static int cmd_disconnect(int argc, char *argv[]) {
 		return 1;
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_DISCONNECT, argv[1]);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_DISCONNECT || result) {
+	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_DISCONNECT || result) {
 		fprintf(stderr, "Could not disconnect %s.\n", argv[1]);
 		return 1;
 	}
@@ -1421,7 +1421,7 @@ char *get_my_name(bool verbose) {
 
 	char buf[4096];
 	char *value;
-	while(fgets(buf, sizeof buf, f)) {
+	while(fgets(buf, sizeof(buf), f)) {
 		int len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
@@ -1449,7 +1449,7 @@ char *get_my_name(bool verbose) {
 ecdsa_t *get_pubkey(FILE *f) {
 	char buf[4096];
 	char *value;
-	while(fgets(buf, sizeof buf, f)) {
+	while(fgets(buf, sizeof(buf), f)) {
 		int len = strcspn(buf, "\t =");
 		value = buf + len;
 		value += strspn(value, "\t ");
@@ -1573,10 +1573,10 @@ static int cmd_config(int argc, char *argv[]) {
 	}
 
 	// Concatenate the rest of the command line
-	strncpy(line, argv[1], sizeof line - 1);
+	strncpy(line, argv[1], sizeof(line) - 1);
 	for(int i = 2; i < argc; i++) {
-		strncat(line, " ", sizeof line - 1 - strlen(line));
-		strncat(line, argv[i], sizeof line - 1 - strlen(line));
+		strncat(line, " ", sizeof(line) - 1 - strlen(line));
+		strncat(line, argv[i], sizeof(line) - 1 - strlen(line));
 	}
 
 	// Liberal parsing into node name, variable name and value.
@@ -1685,9 +1685,9 @@ static int cmd_config(int argc, char *argv[]) {
 	// Open the right configuration file.
 	char filename[PATH_MAX];
 	if(node)
-		snprintf(filename, sizeof filename, "%s" SLASH "%s", hosts_dir, node);
+		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, node);
 	else
-		snprintf(filename, sizeof filename, "%s", tinc_conf);
+		snprintf(filename, sizeof(filename), "%s", tinc_conf);
 
 	FILE *f = fopen(filename, "r");
 	if(!f) {
@@ -1699,7 +1699,7 @@ static int cmd_config(int argc, char *argv[]) {
 	FILE *tf = NULL;
 
 	if(action >= -1) {
-		snprintf(tmpfile, sizeof tmpfile, "%s.config.tmp", filename);
+		snprintf(tmpfile, sizeof(tmpfile), "%s.config.tmp", filename);
 		tf = fopen(tmpfile, "w");
 		if(!tf) {
 			fprintf(stderr, "Could not open temporary file %s: %s\n", tmpfile, strerror(errno));
@@ -1715,9 +1715,9 @@ static int cmd_config(int argc, char *argv[]) {
 	bool removed = false;
 	found = false;
 
-	while(fgets(buf1, sizeof buf1, f)) {
-		buf1[sizeof buf1 - 1] = 0;
-		strncpy(buf2, buf1, sizeof buf2);
+	while(fgets(buf1, sizeof(buf1), f)) {
+		buf1[sizeof(buf1) - 1] = 0;
+		strncpy(buf2, buf1, sizeof(buf2));
 
 		// Parse line in a simple way
 		char *bvalue;
@@ -1858,7 +1858,7 @@ static bool try_bind(int port) {
 
 	bool success = true;
 	char portstr[16];
-	snprintf(portstr, sizeof portstr, "%d", port);
+	snprintf(portstr, sizeof(portstr), "%d", port);
 
 	if(getaddrinfo(NULL, portstr, &hint, &ai) || !ai)
 		return false;
@@ -1892,7 +1892,7 @@ int check_port(char *name) {
 		int port = 0x1000 + (rand() & 0x7fff);
 		if(try_bind(port)) {
 			char filename[PATH_MAX];
-			snprintf(filename, sizeof filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+			snprintf(filename, sizeof(filename), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 			FILE *f = fopen(filename, "a");
 			if(!f) {
 				fprintf(stderr, "Could not open %s: %s\n", filename, strerror(errno));
@@ -1924,7 +1924,7 @@ static int cmd_init(int argc, char *argv[]) {
 		if(tty) {
 			char buf[1024];
 			fprintf(stderr, "Enter the Name you want your tinc node to have: ");
-			if(!fgets(buf, sizeof buf, stdin)) {
+			if(!fgets(buf, sizeof(buf), stdin)) {
 				fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 				return 1;
 			}
@@ -1987,7 +1987,7 @@ static int cmd_init(int argc, char *argv[]) {
 
 #ifndef HAVE_MINGW
 	char filename[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "tinc-up", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up", confbase);
 	if(access(filename, F_OK)) {
 		FILE *f = fopenmask(filename, "w", 0777);
 		if(!f) {
@@ -2102,7 +2102,7 @@ static int cmd_edit(int argc, char *argv[]) {
 	if(strncmp(argv[1], "hosts" SLASH, 6)) {
 		for(int i = 0; conffiles[i]; i++) {
 			if(!strcmp(argv[1], conffiles[i])) {
-				snprintf(filename, sizeof filename, "%s" SLASH "%s", confbase, argv[1]);
+				snprintf(filename, sizeof(filename), "%s" SLASH "%s", confbase, argv[1]);
 				break;
 			}
 		}
@@ -2111,7 +2111,7 @@ static int cmd_edit(int argc, char *argv[]) {
 	}
 
 	if(!*filename) {
-		snprintf(filename, sizeof filename, "%s" SLASH "%s", hosts_dir, argv[1]);
+		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, argv[1]);
 		char *dash = strchr(argv[1], '-');
 		if(dash) {
 			*dash++ = 0;
@@ -2142,7 +2142,7 @@ static int cmd_edit(int argc, char *argv[]) {
 
 static int export(const char *name, FILE *out) {
 	char filename[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "%s", hosts_dir, name);
+	snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name);
 	FILE *in = fopen(filename, "r");
 	if(!in) {
 		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
@@ -2151,7 +2151,7 @@ static int export(const char *name, FILE *out) {
 
 	fprintf(out, "Name = %s\n", name);
 	char buf[4096];
-	while(fgets(buf, sizeof buf, in)) {
+	while(fgets(buf, sizeof(buf), in)) {
 		if(strcspn(buf, "\t =") != 4 || strncasecmp(buf, "Name", 4))
 			fputs(buf, out);
 	}
@@ -2233,7 +2233,7 @@ static int cmd_import(int argc, char *argv[]) {
 	int count = 0;
 	bool firstline = true;
 
-	while(fgets(buf, sizeof buf, in)) {
+	while(fgets(buf, sizeof(buf), in)) {
 		if(sscanf(buf, "Name = %4095s", name) == 1) {
 			firstline = false;
 
@@ -2245,7 +2245,7 @@ static int cmd_import(int argc, char *argv[]) {
 			if(out)
 				fclose(out);
 
-			snprintf(filename, sizeof filename, "%s" SLASH "%s", hosts_dir, name);
+			snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name);
 
 			if(!force && !access(filename, F_OK)) {
 				fprintf(stderr, "Host configuration file %s already exists, skipping.\n", filename);
@@ -2355,7 +2355,7 @@ static int cmd_network(int argc, char *argv[]) {
 		}
 
 		char fname[PATH_MAX];
-		snprintf(fname, sizeof fname, "%s/%s/tinc.conf", confdir, ent->d_name);
+		snprintf(fname, sizeof(fname), "%s/%s/tinc.conf", confdir, ent->d_name);
 		if(!access(fname, R_OK))
 			printf("%s\n", ent->d_name);
 	}
@@ -2409,7 +2409,7 @@ static int cmd_sign(int argc, char *argv[]) {
 	}
 
 	char fname[PATH_MAX];
-	snprintf(fname, sizeof fname, "%s" SLASH "ed25519_key.priv", confbase);
+	snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.priv", confbase);
 	FILE *fp = fopen(fname, "r");
 	if(!fp) {
 		fprintf(stderr, "Could not open %s: %s\n", fname, strerror(errno));
@@ -2565,7 +2565,7 @@ static int cmd_verify(int argc, char *argv[]) {
 	newline = data + skip;
 
 	char fname[PATH_MAX];
-	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, node);
+	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, node);
 	FILE *fp = fopen(fname, "r");
 	if(!fp) {
 		fprintf(stderr, "Could not open %s: %s\n", fname, strerror(errno));
@@ -2724,7 +2724,7 @@ static char *complete_info(const char *text, int state) {
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_SUBNETS);
 	}
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		char item[4096];
 		int n = sscanf(line, "%d %d %4095s", &code, &req, item);
 		if(n == 2) {
@@ -2779,7 +2779,7 @@ static int cmd_shell(int argc, char *argv[]) {
 	char buf[4096];
 	char *line = NULL;
 	int maxargs = argc + 16;
-	char **nargv = xmalloc(maxargs * sizeof *nargv);
+	char **nargv = xmalloc(maxargs * sizeof(*nargv));
 
 	for(int i = 0; i < argc; i++)
 		nargv[i] = argv[i];
@@ -2802,13 +2802,13 @@ static int cmd_shell(int argc, char *argv[]) {
 			if(line)
 				copy = xstrdup(line);
 		} else {
-			line = fgets(buf, sizeof buf, stdin);
+			line = fgets(buf, sizeof(buf), stdin);
 		}
 #else
 		if(tty)
 			fputs(prompt, stdout);
 
-		line = fgets(buf, sizeof buf, stdin);
+		line = fgets(buf, sizeof(buf), stdin);
 #endif
 
 		if(!line)
@@ -2828,7 +2828,7 @@ static int cmd_shell(int argc, char *argv[]) {
 		while(p && *p) {
 			if(nargc >= maxargs) {
 				maxargs *= 2;
-				nargv = xrealloc(nargv, maxargs * sizeof *nargv);
+				nargv = xrealloc(nargv, maxargs * sizeof(*nargv));
 			}
 
 			nargv[nargc++] = p;

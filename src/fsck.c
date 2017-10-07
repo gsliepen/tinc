@@ -39,7 +39,7 @@ static bool ask_fix(void) {
 again:
 	fprintf(stderr, "Fix y/n? ");
 	char buf[1024];
-	if(!fgets(buf, sizeof buf, stdin)) {
+	if(!fgets(buf, sizeof(buf), stdin)) {
 		tty = false;
 		return false;
 	}
@@ -84,9 +84,9 @@ static void check_conffile(const char *fname, bool server) {
 	bool skip = false;
 	const int maxvariables = 50;
 	int count[maxvariables];
-	memset(count, 0, sizeof count);
+	memset(count, 0, sizeof(count));
 
-	while(fgets(line, sizeof line, f)) {
+	while(fgets(line, sizeof(line), f)) {
 		if(skip) {
 			if(!strncmp(line, "-----END", 8))
 				skip = false;
@@ -192,7 +192,7 @@ int fsck(const char *argv0) {
 
 #ifndef DISABLE_LEGACY
 	rsa_t *rsa_priv = NULL;
-	snprintf(fname, sizeof fname, "%s/rsa_key.priv", confbase);
+	snprintf(fname, sizeof(fname), "%s/rsa_key.priv", confbase);
 
 	if(stat(fname, &st)) {
 		if(errno != ENOENT) {
@@ -233,7 +233,7 @@ int fsck(const char *argv0) {
 #endif
 
 	ecdsa_t *ecdsa_priv = NULL;
-	snprintf(fname, sizeof fname, "%s/ed25519_key.priv", confbase);
+	snprintf(fname, sizeof(fname), "%s/ed25519_key.priv", confbase);
 
 	if(stat(fname, &st)) {
 		if(errno != ENOENT) {
@@ -287,7 +287,7 @@ int fsck(const char *argv0) {
 	// Check for public keys.
 	// TODO: use RSAPublicKeyFile variable if present.
 
-	snprintf(fname, sizeof fname, "%s/hosts/%s", confbase, name);
+	snprintf(fname, sizeof(fname), "%s/hosts/%s", confbase, name);
 	if(access(fname, R_OK))
 		fprintf(stderr, "WARNING: cannot read %s\n", fname);
 
@@ -325,19 +325,19 @@ int fsck(const char *argv0) {
 				return 1;
 			}
 			char buf1[len], buf2[len], buf3[len];
-			randomize(buf1, sizeof buf1);
+			randomize(buf1, sizeof(buf1));
 			buf1[0] &= 0x7f;
-			memset(buf2, 0, sizeof buf2);
-			memset(buf3, 0, sizeof buf2);
-			if(!rsa_public_encrypt(rsa_pub, buf1, sizeof buf1, buf2)) {
+			memset(buf2, 0, sizeof(buf2));
+			memset(buf3, 0, sizeof(buf2));
+			if(!rsa_public_encrypt(rsa_pub, buf1, sizeof(buf1), buf2)) {
 				fprintf(stderr, "ERROR: public RSA key does not work.\n");
 				return 1;
 			}
-			if(!rsa_private_decrypt(rsa_priv, buf2, sizeof buf2, buf3)) {
+			if(!rsa_private_decrypt(rsa_priv, buf2, sizeof(buf2), buf3)) {
 				fprintf(stderr, "ERROR: private RSA key does not work.\n");
 				return 1;
 			}
-			if(memcmp(buf1, buf3, sizeof buf1)) {
+			if(memcmp(buf1, buf3, sizeof(buf1))) {
 				fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
 				return 1;
 			}
@@ -414,7 +414,7 @@ int fsck(const char *argv0) {
 		if(strtailcmp(ent->d_name, "-up") && strtailcmp(ent->d_name, "-down"))
 			continue;
 
-		strncpy(fname, ent->d_name, sizeof fname);
+		strncpy(fname, ent->d_name, sizeof(fname));
 		char *dash = strrchr(fname, '-');
 		if(!dash)
 			continue;
@@ -431,7 +431,7 @@ int fsck(const char *argv0) {
 			continue;
 		}
 
-		snprintf(fname, sizeof fname, "%s" SLASH "%s", confbase, ent->d_name);
+		snprintf(fname, sizeof(fname), "%s" SLASH "%s", confbase, ent->d_name);
 		if(access(fname, R_OK | X_OK)) {
 			if(errno != EACCES) {
 				fprintf(stderr, "ERROR: cannot access %s: %s\n", fname, strerror(errno));
@@ -446,7 +446,7 @@ int fsck(const char *argv0) {
 	}
 	closedir(dir);
 
-	snprintf(dname, sizeof dname, "%s" SLASH "hosts", confbase);
+	snprintf(dname, sizeof(dname), "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
 	if(!dir) {
 		fprintf(stderr, "ERROR: cannot read directory %s: %s\n", dname, strerror(errno));
@@ -457,13 +457,13 @@ int fsck(const char *argv0) {
 		if(strtailcmp(ent->d_name, "-up") && strtailcmp(ent->d_name, "-down"))
 			continue;
 
-		strncpy(fname, ent->d_name, sizeof fname);
+		strncpy(fname, ent->d_name, sizeof(fname));
 		char *dash = strrchr(fname, '-');
 		if(!dash)
 			continue;
 		*dash = 0;
 
-		snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
+		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
 		if(access(fname, R_OK | X_OK)) {
 			if(errno != EACCES) {
 				fprintf(stderr, "ERROR: cannot access %s: %s\n", fname, strerror(errno));
@@ -488,7 +488,7 @@ int fsck(const char *argv0) {
 			if(!check_id(ent->d_name))
 				continue;
 
-			snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
+			snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
 			check_conffile(fname, false);
 		}
 		closedir(dir);

@@ -63,22 +63,22 @@ static bool install_service(void) {
 	}
 
 	HMODULE module = GetModuleHandle(NULL);
-	GetModuleFileName(module, command + 1, sizeof command - 1);
-	command[sizeof command - 1] = 0;
+	GetModuleFileName(module, command + 1, sizeof(command) - 1);
+	command[sizeof(command) - 1] = 0;
 
-	strncat(command, "\"", sizeof command - strlen(command));
+	strncat(command, "\"", sizeof(command) - strlen(command));
 
 	for(char **argp = g_argv + 1; *argp; argp++) {
 		char *space = strchr(*argp, ' ');
-		strncat(command, " ", sizeof command - strlen(command));
+		strncat(command, " ", sizeof(command) - strlen(command));
 
 		if(space)
-			strncat(command, "\"", sizeof command - strlen(command));
+			strncat(command, "\"", sizeof(command) - strlen(command));
 
-		strncat(command, *argp, sizeof command - strlen(command));
+		strncat(command, *argp, sizeof(command) - strlen(command));
 
 		if(space)
-			strncat(command, "\"", sizeof command - strlen(command));
+			strncat(command, "\"", sizeof(command) - strlen(command));
 	}
 
 	service = CreateService(manager, identname, identname,

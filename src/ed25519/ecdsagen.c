@@ -35,10 +35,10 @@ typedef struct {
 // Generate ECDSA key
 
 ecdsa_t *ecdsa_generate(void) {
-	ecdsa_t *ecdsa = xzalloc(sizeof *ecdsa);
+	ecdsa_t *ecdsa = xzalloc(sizeof(*ecdsa));
 
 	uint8_t seed[32];
-	randomize(seed, sizeof seed);
+	randomize(seed, sizeof(seed));
 	ed25519_create_keypair(ecdsa->public, ecdsa->private, seed);
 
 	return ecdsa;
@@ -63,9 +63,9 @@ static bool write_pem(FILE *fp, const char *type, void *buf, size_t size) {
 }
 
 bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
-	return write_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof ecdsa->public);
+	return write_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof(ecdsa->public));
 }
 
 bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
-	return write_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof *ecdsa);
+	return write_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof(*ecdsa));
 }

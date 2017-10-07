@@ -134,8 +134,8 @@ bool control_h(connection_t *c, const char *request) {
 }
 
 bool init_control(void) {
-	randomize(controlcookie, sizeof controlcookie / 2);
-	bin2hex(controlcookie, controlcookie, sizeof controlcookie / 2);
+	randomize(controlcookie, sizeof(controlcookie) / 2);
+	bin2hex(controlcookie, controlcookie, sizeof(controlcookie) / 2);
 
 	mode_t mask = umask(0);
 	umask(mask | 077);
@@ -151,7 +151,7 @@ bool init_control(void) {
 
 	char *localhost = NULL;
 	sockaddr_t sa;
-	socklen_t len = sizeof sa;
+	socklen_t len = sizeof(sa);
 
 	// Make sure we have a valid address, and map 0.0.0.0 and :: to 127.0.0.1 and ::1.
 
@@ -163,7 +163,7 @@ bool init_control(void) {
 				sa.in.sin_addr.s_addr = htonl(0x7f000001);
 		} else if(sa.sa.sa_family == AF_INET6) {
 			static const uint8_t zero[16] = {0};
-			if(!memcmp(sa.in6.sin6_addr.s6_addr, zero, sizeof zero))
+			if(!memcmp(sa.in6.sin6_addr.s6_addr, zero, sizeof(zero)))
 				sa.in6.sin6_addr.s6_addr[15] = 1;
 		}
 
@@ -184,9 +184,9 @@ bool init_control(void) {
 
 	struct sockaddr_un sa_un;
 	sa_un.sun_family = AF_UNIX;
-	strncpy(sa_un.sun_path, unixsocketname, sizeof sa_un.sun_path);
+	strncpy(sa_un.sun_path, unixsocketname, sizeof(sa_un.sun_path));
 
-	if(connect(unix_fd, (struct sockaddr *)&sa_un, sizeof sa_un) >= 0) {
+	if(connect(unix_fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) >= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);
 		return false;
 	}
@@ -194,7 +194,7 @@ bool init_control(void) {
 	unlink(unixsocketname);
 
 	umask(mask | 077);
-	int result = bind(unix_fd, (struct sockaddr *)&sa_un, sizeof sa_un);
+	int result = bind(unix_fd, (struct sockaddr *)&sa_un, sizeof(sa_un));
 	umask(mask);
 
 	if(result < 0) {

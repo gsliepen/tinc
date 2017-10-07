@@ -258,8 +258,8 @@ bool event_loop(void) {
 	while(running) {
 		struct timeval diff;
 		struct timeval *tv = get_time_remaining(&diff);
-		memcpy(&readable, &readfds, sizeof readable);
-		memcpy(&writable, &writefds, sizeof writable);
+		memcpy(&readable, &readfds, sizeof(readable));
+		memcpy(&writable, &writefds, sizeof(writable));
 
 		int fds = 0;
 

@@ -347,9 +347,9 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	/* Check the sequence number */
 
 	seqno_t seqno;
-	memcpy(&seqno, SEQNO(inpkt), sizeof seqno);
+	memcpy(&seqno, SEQNO(inpkt), sizeof(seqno));
 	seqno = ntohl(seqno);
-	inpkt->len -= sizeof seqno;
+	inpkt->len -= sizeof(seqno);
 
 	if(replaywin) {
 		if(seqno != n->received_seqno + 1) {
@@ -421,7 +421,7 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
 	outpkt.offset = DEFAULT_PACKET_OFFSET;
 
-	if(len > sizeof outpkt.data - outpkt.offset)
+	if(len > sizeof(outpkt.data) - outpkt.offset)
 		return;
 
 	outpkt.len = len;
@@ -677,8 +677,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	/* Add sequence number */
 
 	seqno_t seqno = htonl(++(n->sent_seqno));
-	memcpy(SEQNO(inpkt), &seqno, sizeof seqno);
-	inpkt->len += sizeof seqno;
+	memcpy(SEQNO(inpkt), &seqno, sizeof(seqno));
+	inpkt->len += sizeof(seqno);
 
 	/* Encrypt the packet */
 
@@ -722,14 +722,14 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 #if defined(IPPROTO_IP) && defined(IP_TOS)
 		case AF_INET:
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
-			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IP, IP_TOS, (void *)&origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
+			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IP, IP_TOS, (void *)&origpriority, sizeof(origpriority))) /* SO_PRIORITY doesn't seem to work */
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
 			break;
 #endif
 #if defined(IPPROTO_IPV6) & defined(IPV6_TCLASS)
 		case AF_INET6:
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
-			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&origpriority, sizeof origpriority)) /* SO_PRIORITY doesn't seem to work */
+			if(setsockopt(listen_socket[sock].udp.fd, IPPROTO_IPV6, IPV6_TCLASS, (void *)&origpriority, sizeof(origpriority))) /* SO_PRIORITY doesn't seem to work */
 				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setsockopt", sockstrerror(sockerrno));
 			break;
 #endif
@@ -764,12 +764,12 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
 		if(type != SPTPS_HANDSHAKE && (to->nexthop->connection->options >> 24) >= 7) {
-			char buf[len + sizeof to->id + sizeof from->id]; char* buf_ptr = buf;
-			memcpy(buf_ptr, &to->id, sizeof to->id); buf_ptr += sizeof to->id;
-			memcpy(buf_ptr, &from->id, sizeof from->id); buf_ptr += sizeof from->id;
+			char buf[len + sizeof(to->id) + sizeof from->id]; char* buf_ptr = buf;
+			memcpy(buf_ptr, &to->id, sizeof(to->id)); buf_ptr += sizeof to->id;
+			memcpy(buf_ptr, &from->id, sizeof(from->id)); buf_ptr += sizeof from->id;
 			memcpy(buf_ptr, data, len);
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)", from->name, from->hostname, to->name, to->hostname, to->nexthop->name, to->nexthop->hostname);
-			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof buf);
+			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof(buf));
 		}
 
 		char buf[len * 4 / 3 + 5];
@@ -786,17 +786,17 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 	}
 
 	size_t overhead = 0;
-	if(relay_supported) overhead += sizeof to->id + sizeof from->id;
+	if(relay_supported) overhead += sizeof(to->id) + sizeof from->id;
 	char buf[len + overhead]; char* buf_ptr = buf;
 	if(relay_supported) {
 		if(direct) {
 			/* Inform the recipient that this packet was sent directly. */
 			node_id_t nullid = {};
-			memcpy(buf_ptr, &nullid, sizeof nullid); buf_ptr += sizeof nullid;
+			memcpy(buf_ptr, &nullid, sizeof(nullid)); buf_ptr += sizeof nullid;
 		} else {
-			memcpy(buf_ptr, &to->id, sizeof to->id); buf_ptr += sizeof to->id;
+			memcpy(buf_ptr, &to->id, sizeof(to->id)); buf_ptr += sizeof to->id;
 		}
-		memcpy(buf_ptr, &from->id, sizeof from->id); buf_ptr += sizeof from->id;
+		memcpy(buf_ptr, &from->id, sizeof(from->id)); buf_ptr += sizeof from->id;
 
 	}
 	/* TODO: if this copy turns out to be a performance concern, change sptps_send_record() to add some "pre-padding" to the buffer and use that instead */
@@ -1018,7 +1018,7 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	}
 
 	int ip_mtu;
-	socklen_t ip_mtu_len = sizeof ip_mtu;
+	socklen_t ip_mtu_len = sizeof(ip_mtu);
 	if(getsockopt(sock, IPPROTO_IP, IP_MTU, &ip_mtu, &ip_mtu_len)) {
 		logger(DEBUG_TRAFFIC, LOG_ERR, "getsockopt(IP_MTU) on %s (%s) failed: %s", n->name, n->hostname, sockstrerror(sockerrno));
 		close(sock);
@@ -1422,7 +1422,7 @@ static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, s
 		// It might be from a 1.1 node, which might have a source ID in the packet.
 		pkt->offset = 2 * sizeof(node_id_t);
 		from = lookup_node_id(SRCID(pkt));
-		if(from && !memcmp(DSTID(pkt), &nullid, sizeof nullid) && from->status.sptps) {
+		if(from && !memcmp(DSTID(pkt), &nullid, sizeof(nullid)) && from->status.sptps) {
 			if(sptps_verify_datagram(&from->sptps, DATA(pkt), pkt->len - 2 * sizeof(node_id_t)))
 				n = from;
 			else
@@ -1454,7 +1454,7 @@ skip_harder:
 			pkt->len -= pkt->offset;
 		}
 
-		if(!memcmp(DSTID(pkt), &nullid, sizeof nullid) || !relay_enabled) {
+		if(!memcmp(DSTID(pkt), &nullid, sizeof(nullid)) || !relay_enabled) {
 			direct = true;
 			from = n;
 			to = myself;
@@ -1530,7 +1530,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 		msg[i].msg_hdr = (struct msghdr){
 			.msg_name = &addr[i].sa,
-			.msg_namelen = sizeof addr[i],
+			.msg_namelen = sizeof(addr)[i],
 			.msg_iov = &iov[i],
 			.msg_iovlen = 1,
 		};
@@ -1553,7 +1553,7 @@ void handle_incoming_vpn_data(void *data, int flags) {
 #else
 	vpn_packet_t pkt;
 	sockaddr_t addr = {};
-	socklen_t addrlen = sizeof addr;
+	socklen_t addrlen = sizeof(addr);
 
 	pkt.offset = 0;
 	int len = recvfrom(ls->udp.fd, (void *)DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);

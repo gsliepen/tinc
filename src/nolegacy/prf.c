@@ -60,7 +60,7 @@ static bool hmac_sha512(const char *key, size_t keylen, const char *msg, size_t 
 
 	// opad
 	memxor(tmp, 0x36 ^ 0x5c, blklen);
-	if(sha512(tmp, sizeof tmp, out) != 0)
+	if(sha512(tmp, sizeof(tmp), out) != 0)
 		return false;
 
 	return true;
@@ -84,17 +84,17 @@ bool prf(const char *secret, size_t secretlen, char *seed, size_t seedlen, char 
 
 	while(outlen > 0) {
 		/* Inner HMAC */
-		if(!hmac_sha512(secret, secretlen, data, sizeof data, data))
+		if(!hmac_sha512(secret, secretlen, data, sizeof(data), data))
 			return false;
 
 		/* Outer HMAC */
 		if(outlen >= mdlen) {
-			if(!hmac_sha512(secret, secretlen, data, sizeof data, out))
+			if(!hmac_sha512(secret, secretlen, data, sizeof(data), out))
 				return false;
 			out += mdlen;
 			outlen -= mdlen;
 		} else {
-			if(!hmac_sha512(secret, secretlen, data, sizeof data, hash))
+			if(!hmac_sha512(secret, secretlen, data, sizeof(data), hash))
 				return false;
 			memcpy(out, hash, outlen);
 			out += outlen;

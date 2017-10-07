@@ -293,7 +293,7 @@ int reload_configuration(void) {
 
 	read_config_options(config_tree, NULL);
 
-	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
+	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
 	read_config_file(config_tree, fname);
 
 	/* Parse some options that are allowed to be changed while tinc is running */
@@ -376,7 +376,7 @@ int reload_configuration(void) {
 		if(c->status.control)
 			continue;
 
-		snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+		snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 		struct stat s;
 		if(stat(fname, &s) || s.st_mtime > last_config_check) {
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "Host config file of %s has been changed", c->name);

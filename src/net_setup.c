@@ -236,7 +236,7 @@ static bool read_invitation_key(void) {
 		invitation_key = NULL;
 	}
 
-	snprintf(fname, sizeof fname, "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
+	snprintf(fname, sizeof(fname), "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
@@ -328,7 +328,7 @@ void load_all_nodes(void) {
 	struct dirent *ent;
 	char dname[PATH_MAX];
 
-	snprintf(dname, sizeof dname, "%s" SLASH "hosts", confbase);
+	snprintf(dname, sizeof(dname), "%s" SLASH "hosts", confbase);
 	dir = opendir(dname);
 	if(!dir) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
@@ -957,7 +957,7 @@ static bool setup_myself(void) {
 		}
 
 		for(int i = 0; i < listen_sockets; i++) {
-			salen = sizeof sa;
+			salen = sizeof(sa);
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(sockerrno));
 				return false;
@@ -1014,7 +1014,7 @@ static bool setup_myself(void) {
 
 	if(!port_specified || atoi(myport) == 0) {
 		sockaddr_t sa;
-		socklen_t salen = sizeof sa;
+		socklen_t salen = sizeof(sa);
 		if(!getsockname(listen_socket[0].udp.fd, &sa.sa, &salen)) {
 			free(myport);
 			sockaddr2str(&sa, NULL, &myport);

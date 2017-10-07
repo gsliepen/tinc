@@ -107,9 +107,9 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 
 static void swap_mac_addresses(vpn_packet_t *packet) {
 	mac_t tmp;
-	memcpy(&tmp, &DATA(packet)[0], sizeof tmp);
-	memcpy(&DATA(packet)[0], &DATA(packet)[6], sizeof tmp);
-	memcpy(&DATA(packet)[6], &tmp, sizeof tmp);
+	memcpy(&tmp, &DATA(packet)[0], sizeof(tmp));
+	memcpy(&DATA(packet)[0], &DATA(packet)[6], sizeof(tmp));
+	memcpy(&DATA(packet)[6], &tmp, sizeof(tmp));
 }
 
 /* RFC 792 */
@@ -291,7 +291,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
 	checksum = inet_checksum(DATA(packet) + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
 
@@ -447,7 +447,7 @@ static void age_subnets(void *data) {
 		if(s->expires && s->expires < now.tv_sec) {
 			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
-				if(net2str(netstr, sizeof netstr, s))
+				if(net2str(netstr, sizeof(netstr), s))
 					logger(DEBUG_TRAFFIC, LOG_INFO, "Subnet %s expired", netstr);
 			}
 
@@ -564,7 +564,7 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv4_t dest;
 
-	memcpy(&dest, &DATA(packet)[30], sizeof dest);
+	memcpy(&dest, &DATA(packet)[30], sizeof(dest));
 	subnet = lookup_subnet_ipv4(&dest);
 
 	if(!subnet) {
@@ -644,7 +644,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	node_t *via;
 	ipv6_t dest;
 
-	memcpy(&dest, &DATA(packet)[38], sizeof dest);
+	memcpy(&dest, &DATA(packet)[38], sizeof(dest));
 	subnet = lookup_subnet_ipv6(&dest);
 
 	if(!subnet) {
@@ -767,7 +767,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 	if(has_opt) {
 		checksum = inet_checksum(&opt, opt_size, checksum);
@@ -834,7 +834,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	/* Generate checksum */
 
-	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
+	checksum = inet_checksum(&pseudo, sizeof(pseudo), ~0);
 	checksum = inet_checksum(&ns, ns_size, checksum);
 	if(has_opt) {
 		checksum = inet_checksum(&opt, opt_size, checksum);
@@ -880,7 +880,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	/* Check if this is a valid ARP request */
 
 	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP ||
-	   arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof addr || ntohs(arp.arp_op) != ARPOP_REQUEST) {
+	   arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof(addr) || ntohs(arp.arp_op) != ARPOP_REQUEST) {
 		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: received unknown type ARP request");
 		return;
 	}
@@ -905,9 +905,9 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 		if(!do_decrement_ttl(source, packet))
 			return;
 
-	memcpy(&addr, arp.arp_tpa, sizeof addr);                 /* save protocol addr */
-	memcpy(arp.arp_tpa, arp.arp_spa, sizeof addr);           /* swap destination and source protocol address */
-	memcpy(arp.arp_spa, &addr, sizeof addr);                 /* ... */
+	memcpy(&addr, arp.arp_tpa, sizeof(addr));                 /* save protocol addr */
+	memcpy(arp.arp_tpa, arp.arp_spa, sizeof(addr));           /* swap destination and source protocol address */
+	memcpy(arp.arp_spa, &addr, sizeof(addr));                 /* ... */
 
 	memcpy(arp.arp_tha, arp.arp_sha, ETH_ALEN);              /* set target hard/proto addr */
 	memcpy(arp.arp_sha, DATA(packet) + ETH_ALEN, ETH_ALEN);  /* set source hard/proto addr */
@@ -929,13 +929,13 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(source == myself) {
 		mac_t src;
-		memcpy(&src, &DATA(packet)[6], sizeof src);
+		memcpy(&src, &DATA(packet)[6], sizeof(src));
 		learn_mac(&src);
 	}
 
 	/* Lookup destination address */
 
-	memcpy(&dest, &DATA(packet)[0], sizeof dest);
+	memcpy(&dest, &DATA(packet)[0], sizeof(dest));
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet || !subnet->owner) {

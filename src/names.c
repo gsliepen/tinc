@@ -42,7 +42,7 @@ void make_names(bool daemon) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
-	DWORD len = sizeof installdir;
+	DWORD len = sizeof(installdir);
 #endif
 	confbase_given = confbase;
 
@@ -93,9 +93,9 @@ void make_names(bool daemon) {
 			fallback = true;
 	} else {
 		char fname[PATH_MAX];
-		snprintf(fname, sizeof fname, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
+		snprintf(fname, sizeof(fname), LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
 		if(access(fname, R_OK)) {
-			snprintf(fname, sizeof fname, "%s" SLASH "pid", confbase);
+			snprintf(fname, sizeof(fname), "%s" SLASH "pid", confbase);
 			if(!access(fname, R_OK))
 				fallback = true;
 		}

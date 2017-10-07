@@ -202,9 +202,9 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 	/* Teach newbies what subnets are... */
 
 	if(((subnet.type == SUBNET_IPV4)
-		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof subnet.net.ipv4.address))
+		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(subnet.net.ipv4.address)))
 		|| ((subnet.type == SUBNET_IPV6)
-		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof subnet.net.ipv6.address))) {
+		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(subnet.net.ipv6.address)))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
@@ -303,7 +303,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 	}
 
 	for(;;) {
-		line = readline(fp, buffer, sizeof buffer);
+		line = readline(fp, buffer, sizeof(buffer));
 
 		if(!line) {
 			if(feof(fp))
@@ -373,14 +373,14 @@ bool read_server_config(void) {
 
 	read_config_options(config_tree, NULL);
 
-	snprintf(fname, sizeof fname, "%s" SLASH "tinc.conf", confbase);
+	snprintf(fname, sizeof(fname), "%s" SLASH "tinc.conf", confbase);
 	errno = 0;
 	x = read_config_file(config_tree, fname);
 
 	// We will try to read the conf files in the "conf.d" dir
 	if (x) {
 		char dname[PATH_MAX];
-		snprintf(dname, sizeof dname, "%s" SLASH "conf.d", confbase);
+		snprintf(dname, sizeof(dname), "%s" SLASH "conf.d", confbase);
 		DIR *dir = opendir (dname);
 		// If we can find this dir
 		if (dir) { 
@@ -390,7 +390,7 @@ bool read_server_config(void) {
 				size_t l = strlen(ep->d_name);
 				// And we try to read the ones that end with ".conf"
 				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					snprintf(fname, sizeof fname, "%s" SLASH "%s", dname, ep->d_name);
+					snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ep->d_name);
 					x = read_config_file(config_tree, fname);
 				}
 			}
@@ -410,7 +410,7 @@ bool read_host_config(splay_tree_t *config_tree, const char *name) {
 
 	read_config_options(config_tree, name);
 
-	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 	x = read_config_file(config_tree, fname);
 
 	return x;
@@ -418,7 +418,7 @@ bool read_host_config(splay_tree_t *config_tree, const char *name) {
 
 bool append_config_file(const char *name, const char *key, const char *value) {
 	char fname[PATH_MAX];
-	snprintf(fname, sizeof fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 
 	FILE *fp = fopen(fname, "a");
 

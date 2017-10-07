@@ -103,7 +103,7 @@ bool maskcheck(const void *va, int masklen, int len) {
 static int subnet_compare_mac(const subnet_t *a, const subnet_t *b) {
 	int result;
 
-	result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof a->net.mac.address);
+	result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof(a->net.mac.address));
 
 	if(result)
 		return result;
@@ -186,7 +186,7 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 bool str2net(subnet_t *subnet, const char *subnetstr) {
 	char str[1024];
 	strncpy(str, subnetstr, sizeof(str));
-	str[sizeof str - 1] = 0;
+	str[sizeof(str) - 1] = 0;
 	int consumed;
 
 	int weight = DEFAULT_WEIGHT;
@@ -256,7 +256,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 		for (int i = 0; i < 4; i++)
 			if (x[i] > 255)
 				return false;
-		snprintf(last_colon, sizeof str - (last_colon - str), ":%02x%02x:%02x%02x", x[0], x[1], x[2], x[3]);
+		snprintf(last_colon, sizeof(str) - (last_colon - str), ":%02x%02x:%02x%02x", x[0], x[1], x[2], x[3]);
 	}
 
 	char* double_colon = strstr(str, "::");

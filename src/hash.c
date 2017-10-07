@@ -52,11 +52,11 @@ static uint32_t modulo(uint32_t hash, size_t n) {
 /* (De)allocation */
 
 hash_t *hash_alloc(size_t n, size_t size) {
-	hash_t *hash = xzalloc(sizeof *hash);
+	hash_t *hash = xzalloc(sizeof(*hash));
 	hash->n = n;
 	hash->size = size;
 	hash->keys = xzalloc(hash->n * hash->size);
-	hash->values = xzalloc(hash->n * sizeof *hash->values);
+	hash->values = xzalloc(hash->n * sizeof(*hash->values));
 	return hash;
 }
 
@@ -101,14 +101,14 @@ void hash_delete(hash_t *hash, const void *key) {
 /* Utility functions */
 
 void hash_clear(hash_t *hash) {
-	memset(hash->values, 0, hash->n * sizeof *hash->values);
+	memset(hash->values, 0, hash->n * sizeof(*hash->values));
 }
 
 void hash_resize(hash_t *hash, size_t n) {
 	hash->keys = xrealloc(hash->keys, n * hash->size);
-	hash->values = xrealloc(hash->values, n * sizeof *hash->values);
+	hash->values = xrealloc(hash->values, n * sizeof(*hash->values));
 	if(n > hash->n) {
 		memset(hash->keys + hash->n * hash->size, 0, (n - hash->n) * hash->size);
-		memset(hash->values + hash->n, 0, (n - hash->n) * sizeof *hash->values);
+		memset(hash->values + hash->n, 0, (n - hash->n) * sizeof(*hash->values));
 	}
 }

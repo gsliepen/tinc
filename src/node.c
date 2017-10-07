@@ -66,7 +66,7 @@ void exit_nodes(void) {
 }
 
 node_t *new_node(void) {
-	node_t *n = xzalloc(sizeof *n);
+	node_t *n = xzalloc(sizeof(*n));
 
 	if(replaywin) n->late = xzalloc(replaywin);
 	n->subnet_tree = new_subnet_tree();
@@ -113,7 +113,7 @@ void free_node(node_t *n) {
 void node_add(node_t *n) {
 	unsigned char buf[64];
 	sha512(n->name, strlen(n->name),buf);
-	memcpy(&n->id, buf, sizeof n->id);
+	memcpy(&n->id, buf, sizeof(n->id));
 
 	splay_insert(node_tree, n);
 	splay_insert(node_id_tree, n);
@@ -184,10 +184,10 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 
 bool dump_nodes(connection_t *c) {
 	for splay_each(node_t, n, node_tree) {
-		char id[2 * sizeof n->id + 1];
-		for (size_t c = 0; c < sizeof n->id; ++c)
+		char id[2 * sizeof(n->id) + 1];
+		for (size_t c = 0; c < sizeof(n->id); ++c)
 			snprintf(id + 2 * c, 3, "%02x", n->id.x[c]);
-		id[sizeof id - 1] = 0;
+		id[sizeof(id) - 1] = 0;
 		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %d %d %d %ld", CONTROL, REQ_DUMP_NODES,
 			   n->name, id, n->hostname ?: "unknown port unknown",
 #ifdef DISABLE_LEGACY
@@ -195,7 +195,7 @@ bool dump_nodes(connection_t *c) {
 #else
 			   cipher_get_nid(n->outcipher), digest_get_nid(n->outdigest), (int)digest_length(n->outdigest),
 #endif
-			   n->outcompression, n->options, bitfield_to_int(&n->status, sizeof n->status),
+			   n->outcompression, n->options, bitfield_to_int(&n->status, sizeof(n->status)),
 			   n->nexthop ? n->nexthop->name : "-", n->via ? n->via->name ?: "-" : "-", n->distance,
 			   n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
 	}

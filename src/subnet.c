@@ -126,7 +126,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 		if(!p || p->type != SUBNET_MAC)
 			continue;
 
-		if(!memcmp(address, &p->net.mac.address, sizeof *address)) {
+		if(!memcmp(address, &p->net.mac.address, sizeof(*address))) {
 			r = p;
 			if(!p->owner || p->owner->status.reachable)
 				break;
@@ -225,7 +225,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 
 	if(!subnet) {
 		for splay_each(subnet_t, subnet, owner->subnet_tree) {
-			if(!net2str(netstr, sizeof netstr, subnet))
+			if(!net2str(netstr, sizeof(netstr), subnet))
 				continue;
 
 			// Strip the weight from the subnet, and put it in its own environment variable
@@ -242,7 +242,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 			execute_script(name, &env);
 		}
 	} else {
-		if(net2str(netstr, sizeof netstr, subnet)) {
+		if(net2str(netstr, sizeof(netstr), subnet)) {
 			// Strip the weight from the subnet, and put it in its own environment variable
 			char *weight = strchr(netstr, '#');
 			if(weight)
@@ -265,7 +265,7 @@ bool dump_subnets(connection_t *c) {
 	for splay_each(subnet_t, subnet, subnet_tree) {
 		char netstr[MAXNETSTR];
 
-		if(!net2str(netstr, sizeof netstr, subnet))
+		if(!net2str(netstr, sizeof(netstr), subnet))
 			continue;
 
 		send_request(c, "%d %d %s %s",

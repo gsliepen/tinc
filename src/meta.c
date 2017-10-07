@@ -164,12 +164,12 @@ bool receive_meta(connection_t *c) {
 
 	buffer_compact(&c->inbuf, MAXBUFSIZE);
 
-	if(sizeof inbuf <= c->inbuf.len) {
+	if(sizeof(inbuf) <= c->inbuf.len) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Input buffer full for %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
-	inlen = recv(c->socket, inbuf, sizeof inbuf - c->inbuf.len, 0);
+	inlen = recv(c->socket, inbuf, sizeof(inbuf) - c->inbuf.len, 0);
 
 	if(inlen <= 0) {
 		if(!inlen || !sockerrno) {

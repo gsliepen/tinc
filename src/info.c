@@ -68,7 +68,7 @@ static int info_node(int fd, const char *item) {
 	node_status_t status;
 	long int last_state_change;
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int n = sscanf(line, "%d %d %4095s %4095s %4095s port %4095s %d %d %d %d %x %"PRIx32" %4095s %4095s %d %hd %hd %hd %ld", &code, &req, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_union.raw, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change);
 
 		if(n == 2)
@@ -90,7 +90,7 @@ static int info_node(int fd, const char *item) {
 		return 1;
 	}
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		if(sscanf(line, "%d %d %4095s", &code, &req, node) == 2)
 			break;
 	}
@@ -103,7 +103,7 @@ static int info_node(int fd, const char *item) {
 	time_t lsc_time = last_state_change;
 
 	if(last_state_change)
-		strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&lsc_time));
+		strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&lsc_time));
 
 	status = status_union.bits;
 
@@ -157,7 +157,7 @@ static int info_node(int fd, const char *item) {
 	// List edges
 	printf("Edges:       ");
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_EDGES, item);
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, from, to);
 		if(n == 2)
 			break;
@@ -173,7 +173,7 @@ static int info_node(int fd, const char *item) {
 	// List subnets
 	printf("Subnets:     ");
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, subnet, from);
 		if(n == 2)
 			break;
@@ -208,7 +208,7 @@ static int info_subnet(int fd, const char *item) {
 	int code, req;
 
 	sendline(fd, "%d %d %s", CONTROL, REQ_DUMP_SUBNETS, item);
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int n = sscanf(line, "%d %d %4095s %4095s", &code, &req, netstr, owner);
 		if(n == 2)
 			break;
@@ -233,7 +233,7 @@ static int info_subnet(int fd, const char *item) {
 			} else {
 				if(find.net.ipv4.prefixlength != subnet.net.ipv4.prefixlength)
 					continue;
-				if(memcmp(&find.net.ipv4.address, &subnet.net.ipv4.address, sizeof subnet.net.ipv4))
+				if(memcmp(&find.net.ipv4.address, &subnet.net.ipv4.address, sizeof(subnet.net.ipv4)))
 					continue;
 			}
 		} else if(find.type == SUBNET_IPV6) {
@@ -243,11 +243,11 @@ static int info_subnet(int fd, const char *item) {
 			} else {
 				if(find.net.ipv6.prefixlength != subnet.net.ipv6.prefixlength)
 					continue;
-				if(memcmp(&find.net.ipv6.address, &subnet.net.ipv6.address, sizeof subnet.net.ipv6))
+				if(memcmp(&find.net.ipv6.address, &subnet.net.ipv6.address, sizeof(subnet.net.ipv6)))
 					continue;
 			}
 		} if(find.type == SUBNET_MAC) {
-			if(memcmp(&find.net.mac.address, &subnet.net.mac.address, sizeof subnet.net.mac))
+			if(memcmp(&find.net.mac.address, &subnet.net.mac.address, sizeof(subnet.net.mac)))
 				continue;
 		}
 

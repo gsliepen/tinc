@@ -53,7 +53,7 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	memset(&ifr, 0, sizeof ifr);
+	memset(&ifr, 0, sizeof(ifr));
 
 #ifdef FD_CLOEXEC
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
@@ -67,12 +67,12 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	memset(&sa, '0', sizeof sa);
+	memset(&sa, '0', sizeof(sa));
 	sa.sll_family = AF_PACKET;
 	sa.sll_protocol = htons(ETH_P_ALL);
 	sa.sll_ifindex = ifr.ifr_ifindex;
 
-	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof sa)) {
+	if(bind(device_fd, (struct sockaddr *) &sa, (socklen_t) sizeof(sa))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device, iface, strerror(errno));
 		return false;
 	}

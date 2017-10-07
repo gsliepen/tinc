@@ -72,11 +72,11 @@ bool send_request(connection_t *c, const char *format, ...) {
 	   input buffer anyway */
 
 	va_start(args, format);
-	len = vsnprintf(request, sizeof request, format, args);
-	request[sizeof request - 1] = 0;
+	len = vsnprintf(request, sizeof(request), format, args);
+	request[sizeof(request) - 1] = 0;
 	va_end(args);
 
-	if(len < 0 || len > sizeof request - 1) {
+	if(len < 0 || len > sizeof(request) - 1) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
 			   c->name, c->hostname);
 		return false;
@@ -101,7 +101,7 @@ void forward_request(connection_t *from, const char *request) {
 	char tmp[len + 1];
 	memcpy(tmp, request, len);
 	tmp[len] = '\n';
-	broadcast_meta(from, tmp, sizeof tmp);
+	broadcast_meta(from, tmp, sizeof(tmp));
 }
 
 bool receive_request(connection_t *c, const char *request) {
@@ -188,7 +188,7 @@ bool seen_request(const char *request) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Already seen request");
 		return true;
 	} else {
-		new = xmalloc(sizeof *new);
+		new = xmalloc(sizeof(*new));
 		new->request = xstrdup(request);
 		new->firstseen = now.tv_sec;
 		splay_insert(past_request_tree, new);

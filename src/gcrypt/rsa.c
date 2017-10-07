@@ -61,7 +61,7 @@ static bool pem_decode(FILE *fp, const char *header, uint8_t *buf, size_t size, 
 	size_t i, j = 0;
 
 	while(!feof(fp)) {
-		if(!fgets(line, sizeof line, fp))
+		if(!fgets(line, sizeof(line), fp))
 			return false;
 
 		if(!decode && !strncmp(line, "-----BEGIN ", 11)) {
@@ -215,7 +215,7 @@ bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf[8096], *derp = derbuf;
 	size_t derlen;
 
-	if(!pem_decode(fp, "RSA PUBLIC KEY", derbuf, sizeof derbuf, &derlen)) {
+	if(!pem_decode(fp, "RSA PUBLIC KEY", derbuf, sizeof(derbuf), &derlen)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA public key: %s", strerror(errno));
 		return NULL;
 	}
@@ -235,7 +235,7 @@ bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp) {
 	uint8_t derbuf[8096], *derp = derbuf;
 	size_t derlen;
 
-	if(!pem_decode(fp, "RSA PRIVATE KEY", derbuf, sizeof derbuf, &derlen)) {
+	if(!pem_decode(fp, "RSA PRIVATE KEY", derbuf, sizeof(derbuf), &derlen)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA private key: %s", strerror(errno));
 		return NULL;
 	}

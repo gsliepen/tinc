@@ -47,7 +47,7 @@ static void scan_for_hostname(const char *filename, char **hostname, char **port
 	if(!f)
 		return;
 
-	while(fgets(line, sizeof line, f)) {
+	while(fgets(line, sizeof(line), f)) {
 		if(!rstrip(line))
 			continue;
 		char *p = line, *q;
@@ -90,7 +90,7 @@ char *get_my_hostname() {
 
 	// Use first Address statement in own host config file
 	if(check_id(name)) {
-		snprintf(filename, sizeof filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+		snprintf(filename, sizeof(filename), "%s" SLASH "hosts" SLASH "%s", confbase, name);
 		scan_for_hostname(filename, &hostname, &port);
 		scan_for_hostname(tinc_conf, &hostname, &port);
 	}
@@ -113,8 +113,8 @@ char *get_my_hostname() {
 			}
 		}
 		if(s >= 0) {
-			send(s, request, sizeof request - 1, 0);
-			int len = recv(s, line, sizeof line - 1, MSG_WAITALL);
+			send(s, request, sizeof(request) - 1, 0);
+			int len = recv(s, line, sizeof(line) - 1, MSG_WAITALL);
 			if(len > 0) {
 				line[len] = 0;
 				if(line[len - 1] == '\n')
@@ -160,7 +160,7 @@ again:
 		fprintf(stderr, " [%s]", hostname);
 	fprintf(stderr, ": ");
 
-	if(!fgets(line, sizeof line, stdin)) {
+	if(!fgets(line, sizeof(line), stdin)) {
 		fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 		free(hostname);
 		return NULL;
@@ -221,7 +221,7 @@ static bool fcopy(FILE *out, const char *filename) {
 
 	char buf[1024];
 	size_t len;
-	while((len = fread(buf, 1, sizeof buf, in)))
+	while((len = fread(buf, 1, sizeof(buf), in)))
 		fwrite(buf, len, 1, out);
 	fclose(in);
 	return true;
@@ -245,7 +245,7 @@ int cmd_invite(int argc, char *argv[]) {
 
 	// Ensure no host configuration file with that name exists
 	char filename[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "hosts" SLASH "%s", confbase, argv[1]);
+	snprintf(filename, sizeof(filename), "%s" SLASH "hosts" SLASH "%s", confbase, argv[1]);
 	if(!access(filename, F_OK)) {
 		fprintf(stderr, "A host config file for %s already exists!\n", argv[1]);
 		return 1;
@@ -256,7 +256,7 @@ int cmd_invite(int argc, char *argv[]) {
 		bool found = false;
 		sendline(fd, "%d %d", CONTROL, REQ_DUMP_NODES);
 
-		while(recvline(fd, line, sizeof line)) {
+		while(recvline(fd, line, sizeof(line))) {
 			char node[4096];
 			int code, req;
 			if(sscanf(line, "%d %d %4095s", &code, &req, node) != 3)
@@ -271,7 +271,7 @@ int cmd_invite(int argc, char *argv[]) {
 		}
 	}
 
-	snprintf(filename, sizeof filename, "%s" SLASH "invitations", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "invitations", confbase);
 	if(mkdir(filename, 0700) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", filename, strerror(errno));
 		return 1;
@@ -294,7 +294,7 @@ int cmd_invite(int argc, char *argv[]) {
 			continue;
 		char invname[PATH_MAX];
 		struct stat st;
-		snprintf(invname, sizeof invname, "%s" SLASH "%s", filename, ent->d_name);
+		snprintf(invname, sizeof(invname), "%s" SLASH "%s", filename, ent->d_name);
 		if(!stat(invname, &st)) {
 			if(deadline < st.st_mtime)
 				count++;
@@ -314,7 +314,7 @@ int cmd_invite(int argc, char *argv[]) {
 	}
 		
 	ecdsa_t *key;
-	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "invitations" SLASH "ed25519_key.priv", confbase);
 
 	// Remove the key if there are no outstanding invitations.
 	if(!count)
@@ -370,14 +370,14 @@ int cmd_invite(int argc, char *argv[]) {
 	char buf[18 + strlen(fingerprint)];
 	char cookiehash[64];
 	memcpy(buf, cookie, 18);
-	memcpy(buf + 18, fingerprint, sizeof buf - 18);
-	sha512(buf, sizeof buf, cookiehash);
+	memcpy(buf + 18, fingerprint, sizeof(buf) - 18);
+	sha512(buf, sizeof(buf), cookiehash);
 	b64encode_urlsafe(cookiehash, cookiehash, 18);
 
 	b64encode_urlsafe(cookie, cookie, 18);
 
 	// Create a file containing the details of the invitation.
-	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookiehash);
+	snprintf(filename, sizeof(filename), "%s" SLASH "invitations" SLASH "%s", confbase, cookiehash);
 	int ifd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if(!ifd) {
 		fprintf(stderr, "Could not create invitation file %s: %s\n", filename, strerror(errno));
@@ -400,7 +400,7 @@ int cmd_invite(int argc, char *argv[]) {
 	FILE *tc = fopen(tinc_conf, "r");
 	if(tc) {
 		char buf[1024];
-		while(fgets(buf, sizeof buf, tc)) {
+		while(fgets(buf, sizeof(buf), tc)) {
 			if((!strncasecmp(buf, "Mode", 4) && strchr(" \t=", buf[4]))
 					|| (!strncasecmp(buf, "Broadcast", 9) && strchr(" \t=", buf[9]))) {
 				fputs(buf, f);
@@ -416,7 +416,7 @@ int cmd_invite(int argc, char *argv[]) {
 	fprintf(f, "Name = %s\n", myname);
 
 	char filename2[PATH_MAX];
-	snprintf(filename2, sizeof filename2, "%s" SLASH "hosts" SLASH "%s", confbase, myname);
+	snprintf(filename2, sizeof(filename2), "%s" SLASH "hosts" SLASH "%s", confbase, myname);
 	fcopy(f, filename2);
 	fclose(f);
 
@@ -461,7 +461,7 @@ static char *get_line(const char **data) {
 	static char line[1024];
 	const char *end = strchr(*data, '\n');
 	size_t len = end ? end - *data : strlen(*data);
-	if(len >= sizeof line) {
+	if(len >= sizeof(line)) {
 		fprintf(stderr, "Maximum line length exceeded!\n");
 		return NULL;
 	}
@@ -521,7 +521,7 @@ static char *grep(const char *data, const char *var) {
 	if(!e)
 		return xstrdup(p);
 
-	if(e - p >= sizeof value) {
+	if(e - p >= sizeof(value)) {
 		fprintf(stderr, "Maximum line length exceeded!\n");
 		return NULL;
 	}
@@ -575,7 +575,7 @@ make_names:
 
 		// Generate a random netname, ask for a better one later.
 		ask_netname = true;
-		snprintf(temp_netname, sizeof temp_netname, "join_%x", rand());
+		snprintf(temp_netname, sizeof(temp_netname), "join_%x", rand());
 		netname = temp_netname;
 		goto make_names;
 	}	
@@ -599,7 +599,7 @@ make_names:
 	fprintf(f, "Name = %s\n", name);
 
 	char filename[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "%s", hosts_dir, name);
+	snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name);
 	FILE *fh = fopen(filename, "w");
 	if(!fh) {
 		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
@@ -607,7 +607,7 @@ make_names:
 		return false;
 	}
 
-	snprintf(filename, sizeof filename, "%s" SLASH "invitation-data", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "invitation-data", confbase);
 	FILE *finv = fopen(filename, "w");
 	if(!finv || fwrite(data, datalen, 1, finv) != 1) {
 		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
@@ -618,7 +618,7 @@ make_names:
 	}
 	fclose(finv);
 
-	snprintf(filename, sizeof filename, "%s" SLASH "tinc-up.invitation", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up.invitation", confbase);
 	FILE *fup = fopen(filename, "w");
 	if(!fup) {
 		fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
@@ -715,7 +715,7 @@ make_names:
 			return false;
 		}
 
-		snprintf(filename, sizeof filename, "%s" SLASH "%s", hosts_dir, value);
+		snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, value);
 		f = fopen(filename, "w");
 
 		if(!f) {
@@ -754,7 +754,7 @@ make_names:
 	if(!b64key)
 		return false;
 
-	snprintf(filename, sizeof filename, "%s" SLASH "ed25519_key.priv", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "ed25519_key.priv", confbase);
 	f = fopenmask(filename, "w", 0600);
 	if(!f)
 		return false;
@@ -776,7 +776,7 @@ make_names:
 
 #ifndef DISABLE_LEGACY
 	rsa_t *rsa = rsa_generate(2048, 0x1001);
-	snprintf(filename, sizeof filename, "%s" SLASH "rsa_key.priv", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "rsa_key.priv", confbase);
 	f = fopenmask(filename, "w", 0600);
 
 	if(!f || !rsa_write_pem_private_key(rsa, f)) {
@@ -797,7 +797,7 @@ make_names:
 ask_netname:
 	if(ask_netname && tty) {
 		fprintf(stderr, "Enter a new netname: ");
-		if(!fgets(line, sizeof line, stdin)) {
+		if(!fgets(line, sizeof(line), stdin)) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 			return false;
 		}
@@ -807,7 +807,7 @@ ask_netname:
 		line[strlen(line) - 1] = 0;
 
 		char newbase[PATH_MAX];
-		snprintf(newbase, sizeof newbase, CONFDIR SLASH "tinc" SLASH "%s", line);
+		snprintf(newbase, sizeof(newbase), CONFDIR SLASH "tinc" SLASH "%s", line);
 		if(rename(confbase, newbase)) {
 			fprintf(stderr, "Error trying to rename %s to %s: %s\n", confbase, newbase, strerror(errno));
 			goto ask_netname;
@@ -818,8 +818,8 @@ ask_netname:
 	}
 
 	char filename2[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "tinc-up.invitation", confbase);
-	snprintf(filename2, sizeof filename2, "%s" SLASH "tinc-up", confbase);
+	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up.invitation", confbase);
+	snprintf(filename2, sizeof(filename2), "%s" SLASH "tinc-up", confbase);
 
 	if(valid_tinc_up) {
 		if(tty) {
@@ -828,7 +828,7 @@ ask_netname:
 				fprintf(stderr, "\nPlease review the following tinc-up script:\n\n");
 
 				char buf[MAXSIZE];
-				while(fgets(buf, sizeof buf, fup))
+				while(fgets(buf, sizeof(buf), fup))
 					fputs(buf, stderr);
 				fclose(fup);
 
@@ -893,7 +893,7 @@ static bool invitation_send(void *handle, uint8_t type, const void *data, size_t
 static bool invitation_receive(void *handle, uint8_t type, const void *msg, uint16_t len) {
 	switch(type) {
 		case SPTPS_HANDSHAKE:
-			return sptps_send_record(&sptps, 0, cookie, sizeof cookie);
+			return sptps_send_record(&sptps, 0, cookie, sizeof(cookie));
 
 		case 0:
 			data = xrealloc(data, datalen + len + 1);
@@ -959,7 +959,7 @@ int cmd_join(int argc, char *argv[]) {
 		if(tty)
 			fprintf(stderr, "Enter invitation URL: ");
 		errno = EPIPE;
-		if(!fgets(line, sizeof line, stdin)) {
+		if(!fgets(line, sizeof(line), stdin)) {
 			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 			return false;
 		}
@@ -1042,8 +1042,8 @@ next:
 	fprintf(stderr, "Connected to %s port %s...\n", address, port);
 
 	// Tell him we have an invitation, and give him our throw-away key.
-	int len = snprintf(line, sizeof line, "0 ?%s %d.%d\n", b64key, PROT_MAJOR, PROT_MINOR);
-	if(len <= 0 || len >= sizeof line)
+	int len = snprintf(line, sizeof(line), "0 ?%s %d.%d\n", b64key, PROT_MAJOR, PROT_MINOR);
+	if(len <= 0 || len >= sizeof(line))
 		abort();
 
 	if(!sendline(sock, "0 ?%s %d.%d", b64key, PROT_MAJOR, 1)) {
@@ -1055,7 +1055,7 @@ next:
 	char hisname[4096] = "";
 	int code, hismajor, hisminor = 0;
 
-	if(!recvline(sock, line, sizeof line) || sscanf(line, "%d %4095s %d.%d", &code, hisname, &hismajor, &hisminor) < 3 || code != 0 || hismajor != PROT_MAJOR || !check_id(hisname) || !recvline(sock, line, sizeof line) || !rstrip(line) || sscanf(line, "%d ", &code) != 1 || code != ACK || strlen(line) < 3) {
+	if(!recvline(sock, line, sizeof(line)) || sscanf(line, "%d %4095s %d.%d", &code, hisname, &hismajor, &hisminor) < 3 || code != 0 || hismajor != PROT_MAJOR || !check_id(hisname) || !recvline(sock, line, sizeof line) || !rstrip(line) || sscanf(line, "%d ", &code) != 1 || code != ACK || strlen(line) < 3) {
 		fprintf(stderr, "Cannot read greeting from peer\n");
 		closesocket(sock);
 		goto next;
@@ -1086,7 +1086,7 @@ next:
 	if(!sptps_receive_data(&sptps, buffer, blen))
 		return 1;
 
-	while((len = recv(sock, line, sizeof line, 0))) {
+	while((len = recv(sock, line, sizeof(line), 0))) {
 		if(len < 0) {
 			if(errno == EINTR)
 				continue;

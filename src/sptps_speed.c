@@ -49,7 +49,7 @@ static bool receive_record(void *handle, uint8_t type, const void *data, uint16_
 static void receive_data(sptps_t *sptps) {
 	char buf[4096], *bufp = buf;
 	int fd = *(int *)sptps->handle;
-	size_t len = recv(fd, buf, sizeof buf, 0);
+	size_t len = recv(fd, buf, sizeof(buf), 0);
 	while(len) {
 		size_t done = sptps_receive_data(sptps, bufp, len);
 		if(!done)
@@ -89,9 +89,9 @@ int main(int argc, char *argv[]) {
 
 	crypto_init();
 
-	randomize(buf1, sizeof buf1);
-	randomize(buf2, sizeof buf2);
-	randomize(buf3, sizeof buf3);
+	randomize(buf1, sizeof(buf1));
+	randomize(buf2, sizeof(buf2));
+	randomize(buf3, sizeof(buf3));
 
 	// Key generation
 

@@ -88,7 +88,7 @@ static subnet_t ipv4, ipv6;
 void ifconfig_address(FILE *out, const char *value) {
 	subnet_t address = {};
 	char address_str[MAXNETSTR];
-	if(!str2net(&address, value) || !net2str(address_str, sizeof address_str, &address)) {
+	if(!str2net(&address, value) || !net2str(address_str, sizeof(address_str), &address)) {
 		fprintf(stderr, "Could not parse address in Ifconfig statement\n");
 		return;
 	}
@@ -127,12 +127,12 @@ void ifconfig_route(FILE *out, const char *value) {
 	char *sep = strchr(value, ' ');
 	if(sep)
 		*sep++ = 0;
-	if(!str2net(&subnet, value) || !net2str(subnet_str, sizeof subnet_str, &subnet) || subnet.type == SUBNET_MAC) {
+	if(!str2net(&subnet, value) || !net2str(subnet_str, sizeof(subnet_str), &subnet) || subnet.type == SUBNET_MAC) {
 		fprintf(stderr, "Could not parse subnet in Route statement\n");
 		return;
 	}
 	if(sep) {
-		if(!str2net(&gateway, sep) || !net2str(gateway_str, sizeof gateway_str, &gateway) || gateway.type != subnet.type) {
+		if(!str2net(&gateway, sep) || !net2str(gateway_str, sizeof(gateway_str), &gateway) || gateway.type != subnet.type) {
 			fprintf(stderr, "Could not parse gateway in Route statement\n");
 			return;
 		}
@@ -174,14 +174,14 @@ void ifconfig_route(FILE *out, const char *value) {
 					fprintf(stderr, "Route requested but no Ifconfig\n");
 					return;
 				}
-				net2str(gateway_str, sizeof gateway_str, &ipv4);
+				net2str(gateway_str, sizeof(gateway_str), &ipv4);
 				break;
 			case SUBNET_IPV6:
 				if(!ipv6.type) {
 					fprintf(stderr, "Route requested but no Ifconfig\n");
 					return;
 				}
-				net2str(gateway_str, sizeof gateway_str, &ipv6);
+				net2str(gateway_str, sizeof(gateway_str), &ipv6);
 				break;
 			default: return;
 		}

@@ -33,7 +33,7 @@ struct cipher {
 };
 
 static cipher_t *cipher_open(const EVP_CIPHER *evp_cipher) {
-	cipher_t *cipher = xzalloc(sizeof *cipher);
+	cipher_t *cipher = xzalloc(sizeof(*cipher));
 	cipher->cipher = evp_cipher;
 	cipher->ctx = EVP_CIPHER_CTX_new();
 	if(!cipher->ctx)

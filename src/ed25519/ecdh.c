@@ -31,10 +31,10 @@ typedef struct ecdh_t {
 #include "../xalloc.h"
 
 ecdh_t *ecdh_generate_public(void *pubkey) {
-	ecdh_t *ecdh = xzalloc(sizeof *ecdh);
+	ecdh_t *ecdh = xzalloc(sizeof(*ecdh));
 
 	uint8_t seed[32];
-	randomize(seed, sizeof seed);
+	randomize(seed, sizeof(seed));
 	ed25519_create_keypair(pubkey, ecdh->private, seed);
 
 	return ecdh;

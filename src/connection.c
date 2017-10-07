@@ -98,7 +98,7 @@ bool dump_connections(connection_t *cdump) {
 		send_request(cdump, "%d %d %s %s %x %d %x",
 				CONTROL, REQ_DUMP_CONNECTIONS,
 				c->name, c->hostname, c->options, c->socket,
-				bitfield_to_int(&c->status, sizeof c->status));
+				bitfield_to_int(&c->status, sizeof(c->status)));
 	}
 
 	return send_request(cdump, "%d %d", CONTROL, REQ_DUMP_CONNECTIONS);

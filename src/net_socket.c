@@ -70,17 +70,17 @@ static void configure_tcp(connection_t *c) {
 
 #if defined(IPPROTO_TCP) && defined(TCP_NODELAY)
 	option = 1;
-	setsockopt(c->socket, IPPROTO_TCP, TCP_NODELAY, (void *)&option, sizeof option);
+	setsockopt(c->socket, IPPROTO_TCP, TCP_NODELAY, (void *)&option, sizeof(option));
 #endif
 
 #if defined(IPPROTO_IP) && defined(IP_TOS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, IPPROTO_IP, IP_TOS, (void *)&option, sizeof option);
+	setsockopt(c->socket, IPPROTO_IP, IP_TOS, (void *)&option, sizeof(option));
 #endif
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
-	setsockopt(c->socket, IPPROTO_IPV6, IPV6_TCLASS, (void *)&option, sizeof option);
+	setsockopt(c->socket, IPPROTO_IPV6, IPV6_TCLASS, (void *)&option, sizeof(option));
 #endif
 }
 
@@ -161,11 +161,11 @@ int setup_listen_socket(const sockaddr_t *sa) {
 	/* Optimize TCP settings */
 
 	option = 1;
-	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof option);
+	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
 #endif
 
 	if(get_config_string
@@ -173,10 +173,10 @@ int setup_listen_socket(const sockaddr_t *sa) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		struct ifreq ifr;
 
-		memset(&ifr, 0, sizeof ifr);
+		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 
-		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof ifr)) {
+		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr))) {
 			closesocket(nfd);
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
 				   sockstrerror(sockerrno));
@@ -243,8 +243,8 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 #endif
 
 	option = 1;
-	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof option);
-	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof option);
+	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
+	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof(option));
 
 	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf)))
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, sockstrerror(sockerrno));
@@ -254,7 +254,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
-		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+		setsockopt(nfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
 #endif
 
 #if defined(IP_DONTFRAG) && !defined(IP_DONTFRAGMENT)
@@ -421,7 +421,7 @@ static void handle_meta_io(void *data, int flags) {
 			if (!socknotconn(sockerrno))
 				socket_error = sockerrno;
 			else {
-				socklen_t len = sizeof socket_error;
+				socklen_t len = sizeof(socket_error);
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&socket_error, &len);
 			}
 			if (socket_error) {
@@ -532,7 +532,7 @@ begin:
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 		int option = 1;
 		if(c->address.sa.sa_family == AF_INET6)
-			setsockopt(c->socket, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
+			setsockopt(c->socket, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&option, sizeof(option));
 #endif
 
 		bind_to_interface(c->socket);
@@ -599,7 +599,7 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 			continue;
 
 		oai = ai;
-		ai = xzalloc(sizeof *ai);
+		ai = xzalloc(sizeof(*ai));
 		ai->ai_family = e->reverse->address.sa.sa_family;
 		ai->ai_socktype = SOCK_STREAM;
 		ai->ai_protocol = IPPROTO_TCP;
@@ -656,7 +656,7 @@ void handle_new_meta_connection(void *data, int flags) {
 	connection_t *c;
 	sockaddr_t sa;
 	int fd;
-	socklen_t len = sizeof sa;
+	socklen_t len = sizeof(sa);
 
 	fd = accept(l->tcp.fd, &sa.sa, &len);
 
@@ -695,7 +695,7 @@ void handle_new_meta_connection(void *data, int flags) {
 		}
 	}
 
-	memcpy(&prev_sa, &sa, sizeof sa);
+	memcpy(&prev_sa, &sa, sizeof(sa));
 
 	// Check if we get many connections from different hosts
 
@@ -753,7 +753,7 @@ void handle_new_unix_connection(void *data, int flags) {
 	connection_t *c;
 	sockaddr_t sa;
 	int fd;
-	socklen_t len = sizeof sa;
+	socklen_t len = sizeof(sa);
 
 	fd = accept(io->fd, &sa.sa, &len);
 
@@ -841,7 +841,7 @@ void try_outgoing_connections(void) {
 		}
 
 		if(!found) {
-			outgoing_t *outgoing = xzalloc(sizeof *outgoing);
+			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 			outgoing->name = name;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing);

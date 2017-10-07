@@ -74,9 +74,9 @@ static bool send_proxyrequest(connection_t *c) {
 			memcpy(s4req + 4, &c->address.in.sin_addr, 4);
 			if(proxyuser)
 				memcpy(s4req + 8, proxyuser, strlen(proxyuser));
-			s4req[sizeof s4req - 1] = 0;
+			s4req[sizeof(s4req) - 1] = 0;
 			c->tcplen = 8;
-			return send_meta(c, s4req, sizeof s4req);
+			return send_meta(c, s4req, sizeof(s4req));
 		}
 		case PROXY_SOCKS5: {
 			int len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
@@ -123,7 +123,7 @@ static bool send_proxyrequest(connection_t *c) {
 			}
 			if(i > len)
 				abort();
-			return send_meta(c, s5req, sizeof s5req);
+			return send_meta(c, s5req, sizeof(s5req));
 		}
 		case PROXY_SOCKS4A:
 			logger(DEBUG_ALWAYS, LOG_ERR, "Proxy type not implemented yet");
@@ -163,7 +163,7 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 
 	// Create a new host config file
 	char filename[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+	snprintf(filename, sizeof(filename), "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
 	if(!access(filename, F_OK)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Host config file for %s (%s) already exists!\n", c->name, c->hostname);
 		return false;
@@ -215,14 +215,14 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	char hashbuf[18 + strlen(fingerprint)];
 	char cookie[64];
 	memcpy(hashbuf, data, 18);
-	memcpy(hashbuf + 18, fingerprint, sizeof hashbuf - 18);
-	sha512(hashbuf, sizeof hashbuf, cookie);
+	memcpy(hashbuf + 18, fingerprint, sizeof(hashbuf) - 18);
+	sha512(hashbuf, sizeof(hashbuf), cookie);
 	b64encode_urlsafe(cookie, cookie, 18);
 	free(fingerprint);
 
 	char filename[PATH_MAX], usedname[PATH_MAX];
-	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
-	snprintf(usedname, sizeof usedname, "%s" SLASH "invitations" SLASH "%s.used", confbase, cookie);
+	snprintf(filename, sizeof(filename), "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
+	snprintf(usedname, sizeof(usedname), "%s" SLASH "invitations" SLASH "%s.used", confbase, cookie);
 
 	// Atomically rename the invitation file
 	if(rename(filename, usedname)) {
@@ -254,7 +254,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	// Read the new node's Name from the file
 	char buf[1024];
-	fgets(buf, sizeof buf, f);
+	fgets(buf, sizeof(buf), f);
 	if(*buf)
 		buf[strlen(buf) - 1] = 0;
 
@@ -279,7 +279,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	// Send the node the contents of the invitation file
 	rewind(f);
 	size_t result;
-	while((result = fread(buf, 1, sizeof buf, f)))
+	while((result = fread(buf, 1, sizeof(buf), f)))
 		sptps_send_record(&c->sptps, 0, buf, result);
 	sptps_send_record(&c->sptps, 1, buf, 0);
 	fclose(f);
@@ -409,11 +409,11 @@ bool id_h(connection_t *c, const char *request) {
 		char label[25 + strlen(myself->name) + strlen(c->name)];
 
 		if(c->outgoing)
-			snprintf(label, sizeof label, "tinc TCP key expansion %s %s", myself->name, c->name);
+			snprintf(label, sizeof(label), "tinc TCP key expansion %s %s", myself->name, c->name);
 		else
-			snprintf(label, sizeof label, "tinc TCP key expansion %s %s", c->name, myself->name);
+			snprintf(label, sizeof(label), "tinc TCP key expansion %s %s", c->name, myself->name);
 
-		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, sizeof label, send_meta_sptps, receive_meta_sptps);
+		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, sizeof(label), send_meta_sptps, receive_meta_sptps);
 	} else {
 		return send_metakey(c);
 	}
@@ -528,7 +528,7 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	int inlen = hex2bin(hexkey, enckey, sizeof enckey);
+	int inlen = hex2bin(hexkey, enckey, sizeof(enckey));
 
 	/* Check if the length of the meta key is all right */
 
@@ -622,7 +622,7 @@ bool challenge_h(connection_t *c, const char *request) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	int inlen = hex2bin(buffer, buffer, sizeof buffer);
+	int inlen = hex2bin(buffer, buffer, sizeof(buffer));
 
 	/* Check if the length of the challenge is all right */
 
@@ -662,7 +662,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Convert the hash to binary format */
 
-	int inlen = hex2bin(hishash, hishash, sizeof hishash);
+	int inlen = hex2bin(hishash, hishash, sizeof(hishash));
 
 	/* Check if the length of the hash is all right */
 
@@ -755,7 +755,7 @@ static void send_everything(connection_t *c) {
 			char pad[MAXBUFSIZE - MAXSIZE];
 		} zeropkt;
 
-		memset(&zeropkt, 0, sizeof zeropkt);
+		memset(&zeropkt, 0, sizeof(zeropkt));
 		zeropkt.pkt.len = MAXBUFSIZE;
 		send_tcppacket(c, &zeropkt.pkt);
 	}
@@ -895,7 +895,7 @@ bool ack_h(connection_t *c, const char *request) {
 	sockaddrcpy(&c->edge->address, &c->address);
 	sockaddr_setport(&c->edge->address, hisport);
 	sockaddr_t local_sa;
-	socklen_t local_salen = sizeof local_sa;
+	socklen_t local_salen = sizeof(local_sa);
 	if (getsockname(c->socket, &local_sa.sa, &local_salen) < 0)
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get local socket address for connection with %s", c->name);
 	else {

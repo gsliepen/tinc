@@ -80,7 +80,7 @@ static bool setup_device(void) {
 #endif
 
 	static const int one = 1;
-	setsockopt(device_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof one);
+	setsockopt(device_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
 
 	if(bind(device_fd, ai->ai_addr, ai->ai_addrlen)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to %s %s: %s", host, port, sockstrerror(sockerrno));
@@ -92,18 +92,18 @@ static bool setup_device(void) {
 		case AF_INET: {
 			struct ip_mreq mreq;
 			struct sockaddr_in in;
-			memcpy(&in, ai->ai_addr, sizeof in);
+			memcpy(&in, ai->ai_addr, sizeof(in));
 			mreq.imr_multiaddr.s_addr = in.sin_addr.s_addr;
 			mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-			if(setsockopt(device_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof mreq)) {
+			if(setsockopt(device_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq))) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
 				goto error;
 			}
 #ifdef IP_MULTICAST_LOOP
-			setsockopt(device_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const void *)&one, sizeof one);
+			setsockopt(device_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const void *)&one, sizeof(one));
 #endif
 #ifdef IP_MULTICAST_TTL
-			setsockopt(device_fd, IPPROTO_IP, IP_MULTICAST_TTL, (void *)&ttl, sizeof ttl);
+			setsockopt(device_fd, IPPROTO_IP, IP_MULTICAST_TTL, (void *)&ttl, sizeof(ttl));
 #endif
 		} break;
 #endif
@@ -112,18 +112,18 @@ static bool setup_device(void) {
 		case AF_INET6: {
 			struct ipv6_mreq mreq;
 			struct sockaddr_in6 in6;
-			memcpy(&in6, ai->ai_addr, sizeof in6);
-			memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof mreq.ipv6mr_multiaddr);
+			memcpy(&in6, ai->ai_addr, sizeof(in6));
+			memcpy(&mreq.ipv6mr_multiaddr, &in6.sin6_addr, sizeof(mreq.ipv6mr_multiaddr));
 			mreq.ipv6mr_interface = in6.sin6_scope_id;
-			if(setsockopt(device_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof mreq)) {
+			if(setsockopt(device_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (void *)&mreq, sizeof(mreq))) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Cannot join multicast group %s %s: %s", host, port, sockstrerror(sockerrno));
 				goto error;
 			}
 #ifdef IPV6_MULTICAST_LOOP
-			setsockopt(device_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const void *)&one, sizeof one);
+			setsockopt(device_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const void *)&one, sizeof(one));
 #endif
 #ifdef IPV6_MULTICAST_HOPS
-			setsockopt(device_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, (void *)&ttl, sizeof ttl);
+			setsockopt(device_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, (void *)&ttl, sizeof(ttl));
 #endif
 		} break;
 #endif
@@ -168,7 +168,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
-	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof ignore_src)) {
+	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof(ignore_src))) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %d bytes from %s", lenin, device_info);
 		return false;
 	}
@@ -191,7 +191,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
-	memcpy(&ignore_src, DATA(packet) + 6, sizeof ignore_src);
+	memcpy(&ignore_src, DATA(packet) + 6, sizeof(ignore_src));
 
 	return true;
 }

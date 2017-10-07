@@ -75,7 +75,7 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 	// Note that we can't simply use listen_socket[].sa because this won't have the port
 	// if we're running with Port=0 (dynamically assigned port).
 	sockaddr_t sa;
-	socklen_t salen = sizeof sa;
+	socklen_t salen = sizeof(sa);
 	if (getsockname(socket, &sa.sa, &salen)) {
 		logger(DEBUG_PROTOCOL, LOG_ERR, "[upnp] Unable to get socket address: [%d] %s", sockerrno, sockstrerror(sockerrno));
 		return;
@@ -89,7 +89,7 @@ static void upnp_add_mapping(struct UPNPUrls *urls, struct IGDdatas *data, const
 
 	// Use a lease twice as long as the refresh period so that the mapping won't expire before we refresh.
 	char lease_duration[16];
-	snprintf(lease_duration, sizeof lease_duration, "%d", upnp_refresh_period * 2);
+	snprintf(lease_duration, sizeof(lease_duration), "%d", upnp_refresh_period * 2);
 
 	int error = UPNP_AddPortMapping(urls->controlURL, data->first.servicetype, port, port, myaddr, identname, proto, NULL, lease_duration);
 	if (error == 0) {
@@ -115,7 +115,7 @@ static void upnp_refresh() {
 	struct UPNPUrls urls;
 	struct IGDdatas data;
 	char myaddr[64];
-	int result = UPNP_GetValidIGD(devices, &urls, &data, myaddr, sizeof myaddr);
+	int result = UPNP_GetValidIGD(devices, &urls, &data, myaddr, sizeof(myaddr));
 	if (result <= 0) {
 		logger(DEBUG_PROTOCOL, LOG_WARNING, "[upnp] No IGD found");
 		freeUPNPDevlist(devices);

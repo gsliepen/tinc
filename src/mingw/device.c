@@ -112,18 +112,18 @@ static bool setup_device(void) {
 	}
 
 	for (i = 0; ; i++) {
-		len = sizeof adapterid;
+		len = sizeof(adapterid);
 		if(RegEnumKeyEx(key, i, adapterid, &len, 0, 0, 0, NULL))
 			break;
 
 		/* Find out more about this adapter */
 
-		snprintf(regpath, sizeof regpath, "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
+		snprintf(regpath, sizeof(regpath), "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
 		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
 			continue;
 
-		len = sizeof adaptername;
+		len = sizeof(adaptername);
 		err = RegQueryValueEx(key2, "Name", 0, 0, (LPBYTE)adaptername, &len);
 
 		RegCloseKey(key2);
@@ -147,7 +147,7 @@ static bool setup_device(void) {
 				continue;
 		}
 
-		snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
+		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, adapterid);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
 		if(device_handle != INVALID_HANDLE_VALUE) {
 			found = true;
@@ -171,7 +171,7 @@ static bool setup_device(void) {
 	/* Try to open the corresponding tap device */
 
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
+		snprintf(tapname, sizeof(tapname), USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
 		device_handle = CreateFile(tapname, GENERIC_WRITE | GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, 0);
 	}
 
@@ -185,7 +185,7 @@ static bool setup_device(void) {
 	{
 		ULONG info[3] = {0};
 		DWORD len;
-		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof info, &info, sizeof info, &len, NULL))
+		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof(info), &info, sizeof info, &len, NULL))
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		else {
 			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
@@ -201,7 +201,7 @@ static bool setup_device(void) {
 
 	/* Get MAC address from tap device */
 
-	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof mymac.x, mymac.x, sizeof mymac.x, &len, 0)) {
+	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof mymac.x, &len, 0)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not get MAC address from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		return false;
 	}
@@ -225,7 +225,7 @@ static void enable_device(void) {
 
 	ULONG status = 1;
 	DWORD len;
-	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof status, &len, NULL);
 
 	/* We don't use the write event directly, but GetOverlappedResult() does, internally. */
 
@@ -240,7 +240,7 @@ static void disable_device(void) {
 
 	ULONG status = 0;
 	DWORD len;
-	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof status, &status, sizeof status, &len, NULL);
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof status, &len, NULL);
 
 	/* Note that we don't try to cancel ongoing I/O here - we just stop listening.
 	   This is because some TAP-Win32 drivers don't seem to handle cancellation very well,
@@ -297,7 +297,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	/* Copy the packet, since the write operation might still be ongoing after we return. */
 
-	memcpy(&device_write_packet, packet, sizeof *packet);
+	memcpy(&device_write_packet, packet, sizeof(*packet));
 
 	if(WriteFile(device_handle, DATA(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped))
 		device_write_packet.len = 0;

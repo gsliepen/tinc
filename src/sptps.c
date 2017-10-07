@@ -178,11 +178,11 @@ static bool send_sig(sptps_t *s) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Sign the result.
-	if(!ecdsa_sign(s->mykey, msg, sizeof msg, sig))
+	if(!ecdsa_sign(s->mykey, msg, sizeof(msg), sig))
 		return error(s, EINVAL, "Failed to sign SIG record");
 
 	// Send the SIG exchange record.
-	return send_record_priv(s, SPTPS_HANDSHAKE, sig, sizeof sig);
+	return send_record_priv(s, SPTPS_HANDSHAKE, sig, sizeof(sig));
 }
 
 // Generate key material from the shared secret created from the ECDHE key exchange.
@@ -284,7 +284,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	memcpy(msg + 1 + 2 * (33 + keylen), s->label, s->labellen);
 
 	// Verify signature.
-	if(!ecdsa_verify(s->hiskey, msg, sizeof msg, data))
+	if(!ecdsa_verify(s->hiskey, msg, sizeof(msg), data))
 		return error(s, EIO, "Failed to verify SIG record");
 
 	// Compute shared secret.
@@ -294,7 +294,7 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 	s->ecdh = NULL;
 
 	// Generate key material from shared secret.
-	if(!generate_key_material(s, shared, sizeof shared))
+	if(!generate_key_material(s, shared, sizeof(shared)))
 		return false;
 
 	free(s->mykex);
@@ -587,7 +587,7 @@ size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
 // Start a SPTPS session.
 bool sptps_start(sptps_t *s, void *handle, bool initiator, bool datagram, ecdsa_t *mykey, ecdsa_t *hiskey, const void *label, size_t labellen, send_data_t send_data, receive_record_t receive_record) {
 	// Initialise struct sptps
-	memset(s, 0, sizeof *s);
+	memset(s, 0, sizeof(*s));
 
 	s->handle = handle;
 	s->initiator = initiator;
@@ -636,6 +636,6 @@ bool sptps_stop(sptps_t *s) {
 	free(s->key);
 	free(s->label);
 	free(s->late);
-	memset(s, 0, sizeof *s);
+	memset(s, 0, sizeof(*s));
 	return true;
 }

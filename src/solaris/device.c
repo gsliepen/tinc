@@ -109,7 +109,7 @@ static bool setup_device(void) {
 
 	struct strioctl strioc_ppa = {
 		.ic_cmd = TUNNEWPPA,
-		.ic_len = sizeof ppa,
+		.ic_len = sizeof(ppa),
 		.ic_dp = (char *)&ppa,
 	};
 
@@ -151,7 +151,7 @@ static bool setup_device(void) {
 	{
 		/* Remove muxes just in case they are left over from a crashed tincd */
 		struct lifreq ifr = {};
-		strncpy(ifr.lifr_name, iface, sizeof ifr.lifr_name);
+		strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
 		if(ioctl(ip_fd, SIOCGLIFMUXID, &ifr) >= 0) {
 			int muxid = ifr.lifr_arp_muxid;
 			ioctl(ip_fd, I_PUNLINK, muxid);
@@ -224,7 +224,7 @@ static bool setup_device(void) {
 		/* Set ifname to arp */
 		struct strioctl strioc_if = {
 			.ic_cmd = SIOCSLIFNAME,
-			.ic_len = sizeof ifr,
+			.ic_len = sizeof(ifr),
 			.ic_dp = (char *)&ifr,
 		};
 
@@ -280,7 +280,7 @@ static bool setup_device(void) {
 static void close_device(void) {
 	if(iface) {
 		struct lifreq ifr = {};
-		strncpy(ifr.lifr_name, iface, sizeof ifr.lifr_name);
+		strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
 		if(ioctl(ip_fd, SIOCGLIFMUXID, &ifr) >= 0) {
 			int muxid = ifr.lifr_arp_muxid;
 			ioctl(ip_fd, I_PUNLINK, muxid);

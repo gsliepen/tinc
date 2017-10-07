@@ -89,7 +89,7 @@ static bool update(int fd) {
 	for list_each(nodestats_t, ns, &node_list)
 		ns->known = false;
 
-	while(recvline(fd, line, sizeof line)) {
+	while(recvline(fd, line, sizeof(line))) {
 		int n = sscanf(line, "%d %d %4095s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, &code, &req, name, &in_packets, &in_bytes, &out_packets, &out_bytes);
 
 		if(n == 2)
@@ -108,7 +108,7 @@ static bool update(int fd) {
 				found = ns;
 				break;
 			} else {
-				found = xzalloc(sizeof *found);
+				found = xzalloc(sizeof(*found));
 				found->name = xstrdup(name);
 				list_insert_before(&node_list, node, found);
 				changed = true;
@@ -117,7 +117,7 @@ static bool update(int fd) {
 		}
 
 		if(!found) {
-			found = xzalloc(sizeof *found);
+			found = xzalloc(sizeof(*found));
 			found->name = xstrdup(name);
 			list_insert_tail(&node_list, found);
 			changed = true;
@@ -220,7 +220,7 @@ static void redraw(void) {
 	static int n = 0;
 	if(changed) {
 		n = 0;
-		sorted = xrealloc(sorted, node_list.count * sizeof *sorted);
+		sorted = xrealloc(sorted, node_list.count * sizeof(*sorted));
 		for list_each(nodestats_t, ns, &node_list)
 			sorted[n++] = ns;
 		changed = false;
@@ -230,7 +230,7 @@ static void redraw(void) {
 		sorted[i]->i = i;
 
 	if(sorted)
-		qsort(sorted, n, sizeof *sorted, sortfunc);
+		qsort(sorted, n, sizeof(*sorted), sortfunc);
 
 	for(int i = 0, row = 3; i < n; i++, row++) {
 		nodestats_t *node = sorted[i];

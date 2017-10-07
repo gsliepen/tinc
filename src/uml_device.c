@@ -76,7 +76,7 @@ static bool setup_device(void) {
 	fcntl(write_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	setsockopt(write_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+	setsockopt(write_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
 	if(fcntl(write_fd, F_SETFL, O_NONBLOCK) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
@@ -94,7 +94,7 @@ static bool setup_device(void) {
 	fcntl(data_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	setsockopt(data_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+	setsockopt(data_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
 	if(fcntl(data_fd, F_SETFL, O_NONBLOCK) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
@@ -107,9 +107,9 @@ static bool setup_device(void) {
 	gettimeofday(&tv, NULL);
 	name.usecs = tv.tv_usec;
 	data_sun.sun_family = AF_UNIX;
-	memcpy(&data_sun.sun_path, &name, sizeof name);
+	memcpy(&data_sun.sun_path, &name, sizeof(name));
 
-	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof data_sun) < 0) {
+	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof(data_sun)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind data %s: %s", device_info, strerror(errno));
 		event_exit();
 		return false;
@@ -125,7 +125,7 @@ static bool setup_device(void) {
 	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
 	if(fcntl(listen_fd, F_SETFL, O_NONBLOCK) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "fcntl", strerror(errno));
@@ -133,8 +133,8 @@ static bool setup_device(void) {
 	}
 
 	listen_sun.sun_family = AF_UNIX;
-	strncpy(listen_sun.sun_path, device, sizeof listen_sun.sun_path);
-	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof listen_sun) < 0) {
+	strncpy(listen_sun.sun_path, device, sizeof(listen_sun.sun_path));
+	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof(listen_sun)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
 		return false;
 	}
@@ -187,7 +187,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	switch(state) {
 		case 0: {
 			struct sockaddr sa;
-			socklen_t salen = sizeof sa;
+			socklen_t salen = sizeof(sa);
 
 			request_fd = accept(listen_fd, &sa, &salen);
 			if(request_fd < 0) {
@@ -214,7 +214,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		}
 
 		case 1: {
-			if((inlen = read(request_fd, &request, sizeof request)) != sizeof request) {
+			if((inlen = read(request_fd, &request, sizeof(request))) != sizeof request) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
 					   device, strerror(errno));
 				event_exit();
@@ -228,13 +228,13 @@ static bool read_packet(vpn_packet_t *packet) {
 				return false;
 			}
 
-			if(connect(write_fd, (struct sockkadr *)&request.sock, sizeof request.sock) < 0) {
+			if(connect(write_fd, (struct sockkadr *)&request.sock, sizeof(request.sock)) < 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
 				event_exit();
 				return false;
 			}
 
-			write(request_fd, &data_sun, sizeof data_sun);
+			write(request_fd, &data_sun, sizeof(data_sun));
 			device_fd = data_fd;
 
 			logger(DEBUG_ALWAYS, LOG_INFO, "Connection with UML established");
