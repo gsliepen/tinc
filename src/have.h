@@ -30,15 +30,19 @@
 #endif
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
+#include <limits.h>
+
 #include <fcntl.h>
 #include <unistd.h>
-#include <limits.h>
+#include <signal.h>
 
 #ifdef HAVE_MINGW
 #include <w32api.h>
@@ -53,10 +57,6 @@
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
-#endif
-
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
 #endif
 
 #ifdef HAVE_ALLOCA_H
