@@ -1,3 +1,6 @@
+#ifndef TINC_NET_H
+#define TINC_NET_H
+
 /*
     net.h -- header for net.c
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_NET_H__
-#define __TINC_NET_H__
 
 #include <openssl/evp.h>
 
@@ -157,4 +157,4 @@ extern void load_all_subnets(void);
 extern CRITICAL_SECTION mutex;
 #endif
 
-#endif							/* __TINC_NET_H__ */
+#endif

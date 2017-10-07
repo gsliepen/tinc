@@ -1,3 +1,6 @@
+#ifndef TINC_PROTOCOL_H
+#define TINC_PROTOCOL_H
+
 /*
     protocol.h -- header for protocol.c
     Copyright (C) 1999-2005 Ivo Timmermans,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_PROTOCOL_H__
-#define __TINC_PROTOCOL_H__
 
 /* Protocol version. Different versions are incompatible,
    incompatible version have different protocols.
@@ -123,4 +123,4 @@ extern bool req_key_h(struct connection_t *);
 extern bool ans_key_h(struct connection_t *);
 extern bool tcppacket_h(struct connection_t *);
 
-#endif							/* __TINC_PROTOCOL_H__ */
+#endif

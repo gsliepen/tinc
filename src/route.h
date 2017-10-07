@@ -1,3 +1,6 @@
+#ifndef TINC_ROUTE_H
+#define TINC_ROUTE_H
+
 /*
     route.h -- header file for route.c
     Copyright (C) 2000-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_ROUTE_H__
-#define __TINC_ROUTE_H__
 
 #include "net.h"
 #include "node.h"
@@ -56,4 +56,4 @@ extern mac_t mymac;
 extern void age_subnets(void);
 extern void route(struct node_t *, struct vpn_packet_t *);
 
-#endif							/* __TINC_ROUTE_H__ */
+#endif

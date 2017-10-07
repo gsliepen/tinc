@@ -1,3 +1,6 @@
+#ifndef TINC_EVENT_H
+#define TINC_EVENT_H
+
 /*
     event.h -- header for event.c
     Copyright (C) 2002-2009 Guus Sliepen <guus@tinc-vpn.org>,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_EVENT_H__
-#define __TINC_EVENT_H__
 
 #include "avl_tree.h"
 
@@ -44,4 +44,4 @@ extern void event_del(event_t *);
 extern event_t *get_expired_event(void);
 extern event_t *peek_next_event(void);
 
-#endif							/* __TINC_EVENT_H__ */
+#endif

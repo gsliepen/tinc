@@ -1,3 +1,6 @@
+#ifndef TINC_XALLOC_H
+#define TINC_XALLOC_H
+
 /*
    xalloc.h -- malloc and related fuctions with out of memory checking
    Copyright (C) 1990, 91, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.
@@ -15,10 +18,8 @@
 
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation, Inc., Foundation,
-   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.  */
-
-#ifndef __TINC_XALLOC_H__
-#define __TINC_XALLOC_H__
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
 
 static inline void *xmalloc(size_t n) __attribute__ ((__malloc__));
 static inline void *xmalloc(size_t n) {

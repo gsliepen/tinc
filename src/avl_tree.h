@@ -1,3 +1,6 @@
+#ifndef TINC_AVL_TREE_H
+#define TINC_AVL_TREE_H
+
 /*
     avl_tree.h -- header file for avl_tree.c
     Copyright (C) 1998 Michael H. Buselli
@@ -29,10 +32,6 @@
     library for inclusion into tinc (https://www.tinc-vpn.org/) by
     Guus Sliepen <guus@tinc-vpn.org>.
 */
-
-
-#ifndef __AVL_TREE_H__
-#define __AVL_TREE_H__
 
 #ifndef AVL_DEPTH
 #ifndef AVL_COUNT
@@ -140,4 +139,4 @@ extern unsigned int avl_index(const avl_node_t *);
 extern unsigned int avl_depth(const avl_tree_t *);
 #endif
 
-#endif							/* __AVL_TREE_H__ */
+#endif

@@ -543,7 +543,7 @@ static bool drop_privs() {
 			       "initgroups", strerror(errno));
 			return false;
 		}
-#ifndef __ANDROID__
+#ifndef ANDROID
 // Not supported in android NDK
 		endgrent();
 		endpwent();

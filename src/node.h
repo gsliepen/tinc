@@ -1,3 +1,6 @@
+#ifndef TINC_NODE_H
+#define TINC_NODE_H
+
 /*
     node.h -- header for node.c
     Copyright (C) 2001-2016 Guus Sliepen <guus@tinc-vpn.org>,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_NODE_H__
-#define __TINC_NODE_H__
 
 #include "avl_tree.h"
 #include "connection.h"
@@ -103,4 +103,4 @@ extern node_t *lookup_node_udp(const sockaddr_t *);
 extern void update_node_udp(node_t *, const sockaddr_t *);
 extern void dump_nodes(void);
 
-#endif							/* __TINC_NODE_H__ */
+#endif

@@ -34,7 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "../config.h"
 #endif
 
-#if !defined (__STDC__) || !__STDC__
+#if !defined (STDC) || !STDC
 /* This is a separate conditional since some stdc systems
    reject `defined (const)'.  */
 #ifndef const
@@ -57,7 +57,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
    it is simpler to just do this in the source for each such file.  */
 
 #define GETOPT_INTERFACE_VERSION 2
-#if !defined (_LIBC) && defined (__GLIBC__) && __GLIBC__ >= 2
+#if !defined (_LIBC) && defined (GLIBC) && GLIBC >= 2
 #include <gnu-versions.h>
 #if _GNU_GETOPT_INTERFACE_VERSION == GETOPT_INTERFACE_VERSION
 #define ELIDE_CODE
@@ -68,8 +68,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 /* This needs to come after some library #include
-   to get __GNU_LIBRARY__ defined.  */
-#ifdef	__GNU_LIBRARY__
+   to get GNU_LIBRARY defined.  */
+#ifdef	GNU_LIBRARY
 /* Don't include stdlib.h for non-GNU C libraries because some of them
    contain conflicting prototypes for getopt.  */
 #include <stdlib.h>
@@ -83,7 +83,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 #endif
 
-#if defined (WIN32) && !defined (__CYGWIN32__)
+#if defined (WIN32) && !defined (CYGWIN32)
 /* It's not Unix, really.  See?  Capital letters.  */
 #include <windows.h>
 #define getpid() GetCurrentProcessId()
@@ -132,7 +132,7 @@ int optind = 1;
    causes problems with re-calling getopt as programs generally don't
    know that. */
 
-int __getopt_initialized = 0;
+int getopt_initialized = 0;
 
 /* The next char to be scanned in the option-element
    in which the last option character we returned was found.
@@ -191,7 +191,7 @@ static enum
 /* Value of POSIXLY_CORRECT environment variable.  */
 static char *posixly_correct;
 
-#ifdef	__GNU_LIBRARY__
+#ifdef	GNU_LIBRARY
 /* We want to avoid inclusion of string.h with non-GNU libraries
    because there are many ways it can cause trouble.
    On some systems, it contains special magic macros that don't work
@@ -221,17 +221,17 @@ my_index (str, chr)
 
 /* If using GCC, we can safely declare strlen this way.
    If not using GCC, it is ok not to declare it.  */
-#ifdef __GNUC__
+#ifdef GNUC
 /* Note that Motorola Delta 68k R3V7 comes with GCC but not stddef.h.
    That was relevant to code that was here before.  */
-#if !defined (__STDC__) || !__STDC__
+#if !defined (STDC) || !STDC
 /* gcc with -traditional declares the built-in strlen to return int,
    and has done so at least since version 2.4.5. -- rms.  */
 extern int strlen (const char *);
-#endif /* not __STDC__ */
-#endif /* __GNUC__ */
+#endif /* not STDC */
+#endif /* GNUC */
 
-#endif /* not __GNU_LIBRARY__ */
+#endif /* not GNU_LIBRARY */
 
 /* Handle permutation of arguments.  */
 
@@ -247,7 +247,7 @@ static int last_nonopt;
    indicating ARGV elements that should not be considered arguments.  */
 
 /* Defined in getopt_init.c  */
-extern char *__getopt_nonoption_flags;
+extern char *getopt_nonoption_flags;
 
 static int nonoption_flags_max_len;
 static int nonoption_flags_len;
@@ -255,7 +255,7 @@ static int nonoption_flags_len;
 static int original_argc;
 static char *const *original_argv;
 
-extern pid_t __libc_pid;
+extern pid_t libc_pid;
 
 /* Make sure the environment variable bash 2.0 puts in the environment
    is valid for the getopt call we must make sure that the ARGV passed
@@ -269,14 +269,14 @@ store_args_and_env (int argc, char *const *argv)
   original_argc = argc;
   original_argv = argv;
 }
-text_set_element (__libc_subinit, store_args_and_env);
+text_set_element (libc_subinit, store_args_and_env);
 
 # define SWAP_FLAGS(ch1, ch2) \
   if (nonoption_flags_len > 0)						      \
     {									      \
-      char __tmp = __getopt_nonoption_flags[ch1];			      \
-      __getopt_nonoption_flags[ch1] = __getopt_nonoption_flags[ch2];	      \
-      __getopt_nonoption_flags[ch2] = __tmp;				      \
+      char tmp = getopt_nonoption_flags[ch1];			      \
+      getopt_nonoption_flags[ch1] = getopt_nonoption_flags[ch2];	      \
+      getopt_nonoption_flags[ch2] = tmp;				      \
     }
 #else	/* !_LIBC */
 # define SWAP_FLAGS(ch1, ch2)
@@ -291,7 +291,7 @@ text_set_element (__libc_subinit, store_args_and_env);
    `first_nonopt' and `last_nonopt' are relocated so that they describe
    the new indices of the non-options in ARGV after they are moved.  */
 
-#if defined (__STDC__) && __STDC__
+#if defined (STDC) && STDC
 static void exchange (char **);
 #endif
 
@@ -310,7 +310,7 @@ exchange (argv)
      but it consists of two parts that need to be swapped next.  */
 
 #ifdef _LIBC
-  /* First make sure the handling of the `__getopt_nonoption_flags'
+  /* First make sure the handling of the `getopt_nonoption_flags'
      string can work normally.  Our top argument must be in the range
      of the string.  */
   if (nonoption_flags_len > 0 && top >= nonoption_flags_max_len)
@@ -322,11 +322,11 @@ exchange (argv)
 	nonoption_flags_len = nonoption_flags_max_len = 0;
       else
 	{
-	  memcpy (new_str, __getopt_nonoption_flags, nonoption_flags_max_len);
+	  memcpy (new_str, getopt_nonoption_flags, nonoption_flags_max_len);
 	  memset (&new_str[nonoption_flags_max_len], '\0',
 		  top + 1 - nonoption_flags_max_len);
 	  nonoption_flags_max_len = top + 1;
-	  __getopt_nonoption_flags = new_str;
+	  getopt_nonoption_flags = new_str;
 	}
     }
 #endif
@@ -377,7 +377,7 @@ exchange (argv)
 
 /* Initialize the internal data when the first call is made.  */
 
-#if defined (__STDC__) && __STDC__
+#if defined (STDC) && STDC
 static const char *_getopt_initialize (int, char *const *, const char *);
 #endif
 static const char *
@@ -419,23 +419,23 @@ _getopt_initialize (argc, argv, optstring)
     {
       if (nonoption_flags_max_len == 0)
 	{
-	  if (__getopt_nonoption_flags == NULL
-	      || __getopt_nonoption_flags[0] == '\0')
+	  if (getopt_nonoption_flags == NULL
+	      || getopt_nonoption_flags[0] == '\0')
 	    nonoption_flags_max_len = -1;
 	  else
 	    {
-	      const char *orig_str = __getopt_nonoption_flags;
+	      const char *orig_str = getopt_nonoption_flags;
 	      int len = nonoption_flags_max_len = strlen (orig_str);
 	      if (nonoption_flags_max_len < argc)
 		nonoption_flags_max_len = argc;
-	      __getopt_nonoption_flags =
+	      getopt_nonoption_flags =
 		(char *) malloc (nonoption_flags_max_len);
-	      if (__getopt_nonoption_flags == NULL)
+	      if (getopt_nonoption_flags == NULL)
 		nonoption_flags_max_len = -1;
 	      else
 		{
-		  memcpy (__getopt_nonoption_flags, orig_str, len);
-		  memset (&__getopt_nonoption_flags[len], '\0',
+		  memcpy (getopt_nonoption_flags, orig_str, len);
+		  memset (&getopt_nonoption_flags[len], '\0',
 			  nonoption_flags_max_len - len);
 		}
 	    }
@@ -516,12 +516,12 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 {
   optarg = NULL;
 
-  if (optind == 0 || !__getopt_initialized)
+  if (optind == 0 || !getopt_initialized)
     {
       if (optind == 0)
 	optind = 1;	/* Don't scan ARGV[0], the program name.  */
       optstring = _getopt_initialize (argc, argv, optstring);
-      __getopt_initialized = 1;
+      getopt_initialized = 1;
     }
 
   /* Test whether ARGV[optind] points to a non-option argument.
@@ -531,7 +531,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 #ifdef _LIBC
 #define NONOPTION_P (argv[optind][0] != '-' || argv[optind][1] == '\0'	      \
 		     || (optind < nonoption_flags_len			      \
-			 && __getopt_nonoption_flags[optind] == '1'))
+			 && getopt_nonoption_flags[optind] == '1'))
 #else
 #define NONOPTION_P (argv[optind][0] != '-' || argv[optind][1] == '\0')
 #endif

@@ -1,3 +1,6 @@
+#ifndef TINC_CONF_H
+#define TINC_CONF_H
+
 /*
     conf.h -- header for conf.c
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_CONF_H__
-#define __TINC_CONF_H__
 
 #include "avl_tree.h"
 #include "list.h"
@@ -65,4 +65,4 @@ extern bool read_connection_config(struct connection_t *);
 extern FILE *ask_and_open(const char *, const char *);
 extern bool is_safe_path(const char *);
 
-#endif							/* __TINC_CONF_H__ */
+#endif

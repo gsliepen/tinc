@@ -1,3 +1,6 @@
+#ifndef TINC_SUBNET_H
+#define TINC_SUBNET_H
+
 /*
     subnet.h -- header for subnet.c
     Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_SUBNET_H__
-#define __TINC_SUBNET_H__
 
 #include "net.h"
 
@@ -85,4 +85,4 @@ extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern void dump_subnets(void);
 extern void subnet_cache_flush(void);
 
-#endif							/* __TINC_SUBNET_H__ */
+#endif

@@ -1,7 +1,17 @@
-#ifndef _FAKE_GETADDRINFO_H
-#define _FAKE_GETADDRINFO_H
+#ifndef TINC_FAKE_GETADDRINFO_H
+#define TINC_FAKE_GETADDRINFO_H
 
-#include "fake-gai-errnos.h"
+#ifndef EAI_NODATA
+#define EAI_NODATA	1
+#endif
+
+#ifndef EAI_MEMORY
+#define EAI_MEMORY	2
+#endif
+
+#ifndef EAI_FAMILY
+#define EAI_FAMILY	3
+#endif
 
 #ifndef AI_PASSIVE
 # define AI_PASSIVE        1
@@ -44,4 +54,4 @@ char *gai_strerror(int ecode);
 void freeaddrinfo(struct addrinfo *ai);
 #endif /* !HAVE_FREEADDRINFO */
 
-#endif /* _FAKE_GETADDRINFO_H */
+#endif

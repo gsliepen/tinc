@@ -1,3 +1,6 @@
+#ifndef TINC_PIDFILE_H
+#define TINC_PIDFILE_H
+
 /*
     pidfile.h - interact with pidfiles
     Copyright (c) 1995  Martin Schulze <Martin.Schulze@Linux.DE>
@@ -49,4 +52,6 @@ extern pid_t write_pid (const char *pidfile);
  * is returned
  */
 extern int remove_pid (const char *pidfile);
+#endif
+
 #endif

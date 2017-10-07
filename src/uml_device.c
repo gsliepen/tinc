@@ -260,7 +260,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		}
 
 		default:
-			logger(LOG_ERR, "Invalid value for state variable in " __FILE__);
+			logger(LOG_ERR, "Invalid value for state variable in " FILE);
 			abort();
 	}
 }

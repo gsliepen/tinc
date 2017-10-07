@@ -1,3 +1,6 @@
+#ifndef TINC_LIST_H
+#define TINC_LIST_H
+
 /*
     list.h -- header file for list.c
     Copyright (C) 2000-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_LIST_H__
-#define __TINC_LIST_H__
 
 typedef struct list_node_t {
 	struct list_node_t *prev;
@@ -75,4 +75,4 @@ extern void list_delete_list(list_t *);
 extern void list_foreach(list_t *, list_action_t);
 extern void list_foreach_node(list_t *, list_action_node_t);
 
-#endif							/* __TINC_LIST_H__ */
+#endif

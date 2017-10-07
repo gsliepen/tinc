@@ -1,3 +1,6 @@
+#ifndef TINC_PROXY_H
+#define TINC_PROXY_H
+
 /*
     proxy.h -- header for proxy.c
     Copyright (C) 2015 Guus Sliepen <guus@tinc-vpn.org>
@@ -16,9 +19,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_PROXY_H__
-#define __TINC_PROXY_H__
 
 #include "connection.h"
 

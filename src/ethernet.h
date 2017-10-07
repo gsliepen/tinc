@@ -1,3 +1,6 @@
+#ifndef TINC_ETHERNET_H
+#define TINC_ETHERNET_H
+
 /*
     ethernet.h -- missing Ethernet related definitions
     Copyright (C) 2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_ETHERNET_H__
-#define __TINC_ETHERNET_H__
 
 #ifndef ETH_ALEN
 #define ETH_ALEN 6
@@ -86,4 +86,4 @@ struct  ether_arp {
 #define arp_op ea_hdr.ar_op
 #endif
 
-#endif /* __TINC_ETHERNET_H__ */
+#endif
