@@ -47,11 +47,6 @@ extern bool use_logfile;
 static sigset_t emptysigset;
 #endif
 
-static void memory_full(int size) {
-	logger(LOG_ERR, "Memory exhausted (couldn't allocate %d bytes), exitting.", size);
-	exit(1);
-}
-
 /* Some functions the less gifted operating systems might lack... */
 
 #ifdef HAVE_MINGW
@@ -341,8 +336,6 @@ bool detach(void) {
 
 	logger(LOG_NOTICE, "tincd %s starting, debug level %d",
 			   VERSION, debug_level);
-
-	xalloc_fail_func = memory_full;
 
 	return true;
 }

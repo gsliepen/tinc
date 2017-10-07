@@ -44,8 +44,7 @@ tincd_SOURCES = \
 	subnet.c subnet.h \
 	tincd.c \
 	utils.c utils.h \
-	xalloc.h \
-	xmalloc.c
+	xalloc.h
 
 if !GETOPT
 tincd_SOURCES += \
