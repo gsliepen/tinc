@@ -4,20 +4,9 @@ info_TEXINFOS = tinc.texi
 
 man_MANS = tincd.8 tinc.conf.5
 
-EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config.tar.gz
+EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config
 
 CLEANFILES = *.html tincd.8 tinc.conf.5 tincinclude.texi
-
-# Use `ginstall' in the definition of man_MANS to avoid
-# confusion with the `install' target.  The install rule transforms `ginstall'
-# to install before applying any user-specified name transformations.
-transform = s/ginstall/install/; @program_transform_name@
-
-# For additional rules usually of interest only to the maintainer,
-# see GNUmakefile and Makefile.maint.
-
-sample-config.tar.gz: $(srcdir)/sample-config
-	$(AM_V_GEN)GZIP=$(GZIP_ENV) $(AMTAR) chozf $@ --exclude .svn $<
 
 texi2html: tinc.texi
 	$(AM_V_GEN)texi2html -split=chapter $<

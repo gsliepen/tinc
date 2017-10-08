@@ -658,8 +658,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	make_names();
-
 	if(show_version) {
 		printf("%s version %s\n", PACKAGE, VERSION);
 		printf("Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen and others.\n"
@@ -675,6 +673,8 @@ int main(int argc, char **argv) {
 		usage(false);
 		return 0;
 	}
+
+	make_names();
 
 	if(kill_tincd) {
 		return !kill_other(kill_tincd);
