@@ -20,6 +20,8 @@ check_PROGRAMS = pong
 
 pong_SOURCES = pong.c
 
+AM_CFLAGS = -iquote.
+
 clean-local:
 	-for pid in *.test.?/pid; do ../src/tinc --pidfile="$$pid" stop; done
 	-killall ../src/sptps_test

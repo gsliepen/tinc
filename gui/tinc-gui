@@ -23,6 +23,7 @@ import socket
 import os
 import platform
 import time
+import sys
 from argparse import ArgumentParser
 
 import wx
@@ -628,7 +629,12 @@ if __name__ == '__main__':
 
     argparser.add_argument('-n', '--net', metavar='NETNAME', dest='netname', help='Connect to net NETNAME')
     argparser.add_argument('-p', '--pidfile', help='Path to the pid file (containing the controlcookie)')
+    argparser.add_argument('--version', action='store_true', help='Show version number')
 
     options = argparser.parse_args()
+
+    if options.version:
+        print('tinc-gui 1.1pre?')
+        sys.exit(0)
 
     main(options.netname, options.pidfile)

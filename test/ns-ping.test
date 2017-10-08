@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. ./testlib.sh
+. "${0%/*}/testlib.sh"
 
 # Skip this test if we aren't root or if "ip netns" does not exist
 

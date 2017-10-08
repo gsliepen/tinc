@@ -370,9 +370,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	make_names(true);
-	chdir(confbase);
-
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
@@ -389,6 +386,9 @@ int main(int argc, char **argv) {
 		usage(false);
 		return 0;
 	}
+
+	make_names(true);
+	chdir(confbase);
 
 #ifdef HAVE_MINGW
 
