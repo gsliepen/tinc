@@ -1743,10 +1743,14 @@ located (@file{@value{sysconfdir}/tinc/@var{netname}/} as determined by
 The chroot is performed after all the initialization is done, after
 writing pid files and opening network sockets.
 
-Note that this option alone does not do any good without -U/--user, below.
+This option is best used in combination with the -U/--user option described below.
 
-Note also that tinc can't run scripts anymore (such as tinc-down or host-up),
-unless it's setup to be runnable inside chroot environment.
+You will need to ensure the chroot environment contains all the files necessary
+for tinc to run correctly.
+Most importantly, for tinc to be able to resolve hostnames inside the chroot environment,
+you must copy @file{/etc/resolv.conf} into the chroot directory.
+If you want to be able to run scripts other than @file{tinc-up} in the chroot,
+you must ensure the appropriate shell is also installed in the chroot, along with all its dependencies.
 
 @item -U, --user=@var{user}
 Switch to the given @var{user} after initialization, at the same time as
