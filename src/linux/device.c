@@ -125,6 +125,9 @@ static bool setup_device(void) {
 		ifrname[IFNAMSIZ - 1] = 0;
 		free(iface);
 		iface = xstrdup(ifrname);
+	} else if(errno == EPERM || errno == EBUSY) {
+		logger(LOG_ERR, "Error while trying to configure %s: %s", device, strerror(errno));
+		return false;
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
 		logger(LOG_WARNING, "Old ioctl() request was needed for %s", device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
