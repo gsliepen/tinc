@@ -520,7 +520,7 @@ bool send_ack(connection_t *c) {
 		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 	}
 
-	if(myself->options & OPTION_PMTU_DISCOVERY) {
+	if(myself->options & OPTION_PMTU_DISCOVERY && !(c->options & OPTION_TCPONLY)) {
 		c->options |= OPTION_PMTU_DISCOVERY;
 	}
 

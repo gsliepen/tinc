@@ -588,7 +588,7 @@ static bool setup_myself(void) {
 		free(mode);
 	}
 
-	choice = true;
+	choice = !(myself->options & OPTION_TCPONLY);
 	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
 
 	if(choice) {
