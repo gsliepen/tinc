@@ -583,7 +583,7 @@ bool setup_myself_reloadable(void) {
 		free(fmode);
 	}
 
-	choice = true;
+	choice = !(myself->options & OPTION_TCPONLY);
 	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
 
 	if(choice) {
