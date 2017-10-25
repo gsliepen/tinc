@@ -29,6 +29,7 @@
 #include "node.h"
 #include "prf.h"
 #include "protocol.h"
+#include "route.h"
 #include "sptps.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -150,8 +151,10 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 
 		if(to != myself) {
 			/* We don't just forward the request, because we want to use UDP if it's available. */
-			send_sptps_data(to, from, 0, buf, len);
-			try_tx(to, true);
+			if(forwarding_mode == FMODE_INTERNAL) {
+				send_sptps_data(to, from, 0, buf, len);
+				try_tx(to, true);
+			}
 		} else {
 			/* The packet is for us */
 			if(!sptps_receive_data(&from->sptps, buf, len)) {

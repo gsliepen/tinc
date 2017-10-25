@@ -306,9 +306,11 @@ Incoming packets that are meant for another node are forwarded by tinc internall
 .Pp
 This is the default mode, and unless you really know you need another forwarding mode, don't change it.
 .It kernel
-Incoming packets are always sent to the TUN/TAP device, even if the packets are not for the local node.
+Incoming packets using the legacy protocol are always sent to the TUN/TAP device,
+even if the packets are not for the local node.
 This is less efficient, but allows the kernel to apply its routing and firewall rules on them,
 and can also help debugging.
+Incoming packets using the SPTPS protocol are dropped, since they are end-to-end encrypted.
 .El
 .It Va Hostnames Li = yes | no Pq no
 This option selects whether IP addresses (both real and on the VPN) should
