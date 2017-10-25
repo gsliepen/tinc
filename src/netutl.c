@@ -105,7 +105,7 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 		return;
 	}
 
-	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof port, NI_NUMERICHOST | NI_NUMERICSERV);
+	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while translating addresses: %s", err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
@@ -141,7 +141,7 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 		return str;
 	}
 
-	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof port,
+	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
 	                  hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 
 	if(err) {

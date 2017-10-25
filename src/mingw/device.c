@@ -200,7 +200,7 @@ static bool setup_device(void) {
 		ULONG info[3] = {0};
 		DWORD len;
 
-		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof(info), &info, sizeof info, &len, NULL)) {
+		if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_VERSION, &info, sizeof(info), &info, sizeof(info), &len, NULL)) {
 			logger(DEBUG_ALWAYS, LOG_WARNING, "Could not get version information from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		} else {
 			logger(DEBUG_ALWAYS, LOG_INFO, "TAP-Windows driver version: %lu.%lu%s", info[0], info[1], info[2] ? " (DEBUG)" : "");
@@ -216,7 +216,7 @@ static bool setup_device(void) {
 
 	/* Get MAC address from tap device */
 
-	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof mymac.x, &len, 0)) {
+	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof(mymac.x), mymac.x, sizeof(mymac.x), &len, 0)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not get MAC address from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		return false;
 	}
@@ -240,7 +240,7 @@ static void enable_device(void) {
 
 	ULONG status = 1;
 	DWORD len;
-	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof status, &len, NULL);
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof(status), &len, NULL);
 
 	/* We don't use the write event directly, but GetOverlappedResult() does, internally. */
 
@@ -255,7 +255,7 @@ static void disable_device(void) {
 
 	ULONG status = 0;
 	DWORD len;
-	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof status, &len, NULL);
+	DeviceIoControl(device_handle, TAP_IOCTL_SET_MEDIA_STATUS, &status, sizeof(status), &status, sizeof(status), &len, NULL);
 
 	/* Note that we don't try to cancel ongoing I/O here - we just stop listening.
 	   This is because some TAP-Win32 drivers don't seem to handle cancellation very well,

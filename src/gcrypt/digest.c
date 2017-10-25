@@ -37,7 +37,7 @@ static struct {
 static bool nametodigest(const char *name, int *algo) {
 	int i;
 
-	for(i = 0; i < sizeof(digesttable) / sizeof * digesttable; i++) {
+	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(digesttable[i].name && !strcasecmp(name, digesttable[i].name)) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -50,7 +50,7 @@ static bool nametodigest(const char *name, int *algo) {
 static bool nidtodigest(int nid, int *algo) {
 	int i;
 
-	for(i = 0; i < sizeof(digesttable) / sizeof * digesttable; i++) {
+	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(nid == digesttable[i].nid) {
 			*algo = digesttable[i].algo;
 			return true;
@@ -63,7 +63,7 @@ static bool nidtodigest(int nid, int *algo) {
 static bool digesttonid(int algo, int *nid) {
 	int i;
 
-	for(i = 0; i < sizeof(digesttable) / sizeof * digesttable; i++) {
+	for(i = 0; i < sizeof(digesttable) / sizeof(*digesttable); i++) {
 		if(algo == digesttable[i].algo) {
 			*nid = digesttable[i].nid;
 			return true;

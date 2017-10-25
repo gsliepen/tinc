@@ -226,7 +226,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	}
 
 	case 1: {
-		if((inlen = read(request_fd, &request, sizeof(request))) != sizeof request) {
+		if((inlen = read(request_fd, &request, sizeof(request))) != sizeof(request)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading request from %s %s: %s", device_info,
 			       device, strerror(errno));
 			event_exit();

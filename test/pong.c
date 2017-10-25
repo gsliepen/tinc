@@ -72,7 +72,7 @@ static ssize_t do_ipv4(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 		return 0;
 	}
 
-	memcpy(&icmp, buf + 14 + sizeof(ip), sizeof icmp);
+	memcpy(&icmp, buf + 14 + sizeof(ip), sizeof(icmp));
 
 	if(icmp.icmp_type != ICMP_ECHO) {
 		return 0;
@@ -88,7 +88,7 @@ static ssize_t do_ipv4(uint8_t *buf, ssize_t len, struct sockaddr_in *in) {
 	icmp.icmp_type = ICMP_ECHOREPLY;
 
 	memcpy(buf + 14, &ip, sizeof(ip));
-	memcpy(buf + 14 + sizeof(ip), &icmp, sizeof icmp);
+	memcpy(buf + 14 + sizeof(ip), &icmp, sizeof(icmp));
 
 	return len;
 }

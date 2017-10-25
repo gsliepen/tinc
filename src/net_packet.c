@@ -832,12 +832,12 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	if(type == SPTPS_HANDSHAKE || tcponly || (!direct && !relay_supported) || (type != PKT_PROBE && (len - SPTPS_DATAGRAM_OVERHEAD) > relay->minmtu)) {
 		if(type != SPTPS_HANDSHAKE && (to->nexthop->connection->options >> 24) >= 7) {
-			char buf[len + sizeof(to->id) + sizeof from->id];
+			char buf[len + sizeof(to->id) + sizeof(from->id)];
 			char *buf_ptr = buf;
 			memcpy(buf_ptr, &to->id, sizeof(to->id));
-			buf_ptr += sizeof to->id;
+			buf_ptr += sizeof(to->id);
 			memcpy(buf_ptr, &from->id, sizeof(from->id));
-			buf_ptr += sizeof from->id;
+			buf_ptr += sizeof(from->id);
 			memcpy(buf_ptr, data, len);
 			logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (TCP)", from->name, from->hostname, to->name, to->hostname, to->nexthop->name, to->nexthop->hostname);
 			return send_sptps_tcppacket(to->nexthop->connection, buf, sizeof(buf));
@@ -860,7 +860,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 	size_t overhead = 0;
 
 	if(relay_supported) {
-		overhead += sizeof(to->id) + sizeof from->id;
+		overhead += sizeof(to->id) + sizeof(from->id);
 	}
 
 	char buf[len + overhead];
@@ -871,14 +871,14 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 			/* Inform the recipient that this packet was sent directly. */
 			node_id_t nullid = {};
 			memcpy(buf_ptr, &nullid, sizeof(nullid));
-			buf_ptr += sizeof nullid;
+			buf_ptr += sizeof(nullid);
 		} else {
 			memcpy(buf_ptr, &to->id, sizeof(to->id));
-			buf_ptr += sizeof to->id;
+			buf_ptr += sizeof(to->id);
 		}
 
 		memcpy(buf_ptr, &from->id, sizeof(from->id));
-		buf_ptr += sizeof from->id;
+		buf_ptr += sizeof(from->id);
 
 	}
 
