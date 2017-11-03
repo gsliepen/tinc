@@ -80,7 +80,7 @@ bool send_request(connection_t *c, const char *format, ...) {
 	buffer[sizeof(buffer) - 1] = 0;
 	va_end(args);
 
-	if(len < 0 || len > sizeof(buffer) - 1) {
+	if(len < 0 || (size_t)len > sizeof(buffer) - 1) {
 		logger(LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
 		       c->name, c->hostname);
 		return false;
@@ -193,7 +193,7 @@ void exit_requests(void) {
 }
 
 bool seen_request(char *request) {
-	past_request_t *new, p = {NULL};
+	past_request_t *new, p = {};
 
 	p.request = request;
 

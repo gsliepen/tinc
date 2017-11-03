@@ -38,6 +38,6 @@ extern char *proxyuser;
 extern char *proxypass;
 
 extern bool send_proxyrequest(struct connection_t *c);
-extern int receive_proxy_meta(struct connection_t *c, int start, int lenin);
+extern int receive_proxy_meta(struct connection_t *c);
 
 #endif

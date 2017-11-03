@@ -363,6 +363,8 @@ static bool parse_options(int argc, char **argv) {
 /* This function prettyprints the key generation process */
 
 static int indicator(int a, int b, BN_GENCB *cb) {
+	(void)cb;
+
 	switch(a) {
 	case 0:
 		fprintf(stderr, ".");

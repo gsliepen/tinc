@@ -39,6 +39,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
+	(void)packet;
 	return false;
 }
 

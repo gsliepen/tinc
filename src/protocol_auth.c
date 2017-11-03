@@ -239,7 +239,7 @@ bool metakey_h(connection_t *c) {
 
 	/* Check if the length of the meta key is all right */
 
-	if(strlen(buffer) != len * 2) {
+	if(strlen(buffer) != (size_t)len * 2) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
 		return false;
 	}
@@ -372,7 +372,7 @@ bool challenge_h(connection_t *c) {
 
 	/* Check if the length of the challenge is all right */
 
-	if(strlen(buffer) != len * 2) {
+	if(strlen(buffer) != (size_t)len * 2) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name,
 		       c->hostname, "wrong challenge length");
 		return false;
@@ -442,7 +442,7 @@ bool chal_reply_h(connection_t *c) {
 
 	/* Check if the length of the hash is all right */
 
-	if(strlen(hishash) != EVP_MD_size(c->outdigest) * 2) {
+	if(strlen(hishash) != (size_t)EVP_MD_size(c->outdigest) * 2) {
 		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name,
 		       c->hostname, "wrong challenge reply length");
 		return false;

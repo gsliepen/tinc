@@ -214,7 +214,7 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 #else
-		return -1;
+		return 0;
 #endif
 	} else if(level < 10) {
 #ifdef HAVE_ZLIB
@@ -224,18 +224,18 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 			return destlen;
 		} else
 #endif
-			return -1;
+			return 0;
 	} else {
 #ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 #else
-		return -1;
+		return 0;
 #endif
 	}
 
-	return -1;
+	return 0;
 }
 
 static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
@@ -250,7 +250,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 			return lzolen;
 		} else
 #endif
-			return -1;
+			return 0;
 	}
 
 #ifdef HAVE_ZLIB
@@ -260,7 +260,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 		if(uncompress(dest, &destlen, source, len) == Z_OK) {
 			return destlen;
 		} else {
-			return -1;
+			return 0;
 		}
 	}
 
@@ -297,7 +297,6 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	vpn_packet_t *outpkt;
 	int outlen, outpad;
 	unsigned char hmac[EVP_MAX_MD_SIZE];
-	int i;
 
 	if(!n->inkey) {
 		ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet",
@@ -369,7 +368,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 					return;
 				}
 			} else {
-				for(i = n->received_seqno + 1; i < inpkt->seqno; i++) {
+				for(uint32_t i = n->received_seqno + 1; i < inpkt->seqno; i++) {
 					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 				}
 			}
@@ -394,7 +393,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(n->incompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression)) < 0) {
+		if(!(outpkt->len = uncompress_packet(outpkt->data, inpkt->data, inpkt->len, n->incompression))) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, "Error while uncompressing packet from %s (%s)",
 			                        n->name, n->hostname);
 			return;
@@ -414,7 +413,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	}
 }
 
-void receive_tcppacket(connection_t *c, const char *buffer, int len) {
+void receive_tcppacket(connection_t *c, const char *buffer, length_t len) {
 	vpn_packet_t outpkt;
 
 	if(len > sizeof(outpkt.data)) {
@@ -488,7 +487,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(n->outcompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->outcompression)) < 0) {
+		if(!(outpkt->len = compress_packet(outpkt->data, inpkt->data, inpkt->len, n->outcompression))) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, "Error while compressing packet to %s (%s)",
 			                        n->name, n->hostname);
 			return;
@@ -761,16 +760,19 @@ void handle_incoming_vpn_data(int sock) {
 	socklen_t fromlen = sizeof(from);
 	node_t *n;
 
-	pkt.len = recvfrom(listen_socket[sock].udp, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
+	ssize_t len = recvfrom(listen_socket[sock].udp, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
-	if(pkt.len < 0) {
-		if(!sockwouldblock(sockerrno)) {
+	if(len <= 0 || len > UINT16_MAX) {
+		if(len >= 0) {
+			logger(LOG_ERR, "Receiving packet with invalid size");
+		} else if(!sockwouldblock(sockerrno)) {
 			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
 		}
 
 		return;
 	}
 
+	pkt.len = len;
 	sockaddrunmap(&from);           /* Some braindead IPv6 implementations do stupid things. */
 
 	n = lookup_node_udp(&from);

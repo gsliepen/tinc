@@ -146,9 +146,9 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 }
 
 bool tcppacket_h(connection_t *c) {
-	short int len;
+	length_t len;
 
-	if(sscanf(c->buffer, "%*d %hd", &len) != 1) {
+	if(sscanf(c->buffer, "%*d %hu", &len) != 1) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
 		       c->hostname);
 		return false;

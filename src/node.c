@@ -140,7 +140,7 @@ void node_del(node_t *n) {
 }
 
 node_t *lookup_node(char *name) {
-	node_t n = {NULL};
+	node_t n = {};
 
 	n.name = name;
 
@@ -148,7 +148,7 @@ node_t *lookup_node(char *name) {
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
-	node_t n = {NULL};
+	node_t n = {};
 
 	n.address = *sa;
 	n.name = NULL;

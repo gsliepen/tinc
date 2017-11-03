@@ -505,6 +505,7 @@ bool execute_script(const char *name, char **envp) {
 
 #ifndef HAVE_MINGW
 static RETSIGTYPE sigterm_handler(int a) {
+	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "TERM");
 
 	if(running) {
@@ -515,6 +516,7 @@ static RETSIGTYPE sigterm_handler(int a) {
 }
 
 static RETSIGTYPE sigquit_handler(int a) {
+	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "QUIT");
 
 	if(running) {
@@ -553,11 +555,13 @@ static RETSIGTYPE fatal_signal_handler(int a) {
 }
 
 static RETSIGTYPE sighup_handler(int a) {
+	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "HUP");
 	sighup = true;
 }
 
 static RETSIGTYPE sigint_handler(int a) {
+	(void)a;
 	static int saved_debug_level = -1;
 
 	logger(LOG_NOTICE, "Got %s signal", "INT");
@@ -577,15 +581,18 @@ static RETSIGTYPE sigint_handler(int a) {
 }
 
 static RETSIGTYPE sigalrm_handler(int a) {
+	(void)a;
 	logger(LOG_NOTICE, "Got %s signal", "ALRM");
 	sigalrm = true;
 }
 
 static RETSIGTYPE sigusr1_handler(int a) {
+	(void)a;
 	dump_connections();
 }
 
 static RETSIGTYPE sigusr2_handler(int a) {
+	(void)a;
 	devops.dump_stats();
 	dump_nodes();
 	dump_edges();
@@ -593,14 +600,17 @@ static RETSIGTYPE sigusr2_handler(int a) {
 }
 
 static RETSIGTYPE sigwinch_handler(int a) {
+	(void)a;
 	do_purge = true;
 }
 
 static RETSIGTYPE unexpected_signal_handler(int a) {
+	(void)a;
 	logger(LOG_WARNING, "Got unexpected signal %d (%s)", a, strsignal(a));
 }
 
 static RETSIGTYPE ignore_signal_handler(int a) {
+	(void)a;
 	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Ignored signal %d (%s)", a, strsignal(a));
 }
 

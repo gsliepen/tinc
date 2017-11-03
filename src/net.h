@@ -48,7 +48,7 @@ typedef struct ipv6_t {
 	uint16_t x[8];
 } ipv6_t;
 
-typedef short length_t;
+typedef uint16_t length_t;
 
 #define AF_UNKNOWN 255
 
@@ -137,7 +137,7 @@ extern bool handle_new_meta_connection(int);
 extern int setup_listen_socket(const sockaddr_t *);
 extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(const struct node_t *, vpn_packet_t *);
-extern void receive_tcppacket(struct connection_t *, const char *, int);
+extern void receive_tcppacket(struct connection_t *, const char *, length_t);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
 extern char *get_name(void);
 extern bool setup_network(void);

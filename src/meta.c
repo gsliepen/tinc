@@ -59,7 +59,7 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
 		/* Check encryption limits */
-		if(length > c->outbudget) {
+		if((uint64_t)length > c->outbudget) {
 			ifdebug(META) logger(LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
 			return false;
 		} else {
@@ -174,7 +174,7 @@ bool receive_meta(connection_t *c) {
 		/* Is it proxy metadata? */
 
 		if(c->allow_request == PROXY) {
-			reqlen = receive_proxy_meta(c, oldlen, lenin);
+			reqlen = receive_proxy_meta(c);
 
 			if(reqlen < 0) {
 				return false;
@@ -187,7 +187,7 @@ bool receive_meta(connection_t *c) {
 
 		if(c->status.decryptin && !decrypted) {
 			/* Check decryption limits */
-			if(lenin > c->inbudget) {
+			if((uint64_t)lenin > c->inbudget) {
 				ifdebug(META) logger(LOG_ERR, "Byte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
 				return false;
 			} else {

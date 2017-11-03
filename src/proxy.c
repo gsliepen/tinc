@@ -79,6 +79,7 @@ bool send_proxyrequest(connection_t *c) {
 			return false;
 		}
 
+	// fallthrough
 	case PROXY_SOCKS4A: {
 		if(c->address.sa.sa_family != AF_INET && c->address.sa.sa_family != AF_UNKNOWN) {
 			logger(LOG_ERR, "Can only connect to IPv4 addresses or hostnames through a SOCKS 4a proxy!");
@@ -215,7 +216,7 @@ bool send_proxyrequest(connection_t *c) {
 	}
 }
 
-int receive_proxy_meta(connection_t *c, int start, int lenin) {
+int receive_proxy_meta(connection_t *c) {
 	switch(proxytype) {
 	case PROXY_SOCKS4:
 	case PROXY_SOCKS4A:
