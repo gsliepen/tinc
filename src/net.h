@@ -26,15 +26,15 @@
 #include "ipv6.h"
 
 #ifdef ENABLE_JUMBOGRAMS
-#define MTU 9018                                /* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
+#define MTU 9018        /* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #else
-#define MTU 1518                                /* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
+#define MTU 1518        /* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #endif
 
-#define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)        /* MTU + seqno + padding + HMAC + compressor overhead */
-#define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)    /* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
+#define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)  /* MTU + seqno + padding + HMAC + compressor overhead */
+#define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)                     /* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
-#define MAXSOCKETS 128                  /* Overkill... */
+#define MAXSOCKETS 128  /* Overkill... */
 
 typedef struct mac_t {
 	uint8_t x[6];
@@ -77,9 +77,9 @@ typedef union sockaddr_t {
 #endif
 
 typedef struct vpn_packet_t {
-	length_t len;                           /* the actual number of bytes in the `data' field */
-	int priority;                           /* priority or TOS */
-	uint32_t seqno;                         /* 32 bits sequence number (network byte order of course) */
+	length_t len;           /* the actual number of bytes in the `data' field */
+	int priority;           /* priority or TOS */
+	uint32_t seqno;         /* 32 bits sequence number (network byte order of course) */
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
