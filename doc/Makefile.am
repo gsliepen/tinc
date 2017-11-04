@@ -6,7 +6,7 @@ man_MANS = tincd.8 tinc.conf.5
 
 EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config
 
-CLEANFILES = *.html tincd.8 tinc.conf.5 tincinclude.texi
+CLEANFILES = *.html tincd.8 tinc.conf.5 tincinclude.texi tinc.info
 
 texi2html: tinc.texi
 	$(AM_V_GEN)texi2html -split=chapter $<
@@ -25,12 +25,12 @@ substitute = sed \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 tincd.8: $(srcdir)/tincd.8.in
-	$(AM_V_GEN)$(substitute) $< > $@
+	$(AM_V_GEN)$(substitute) $(srcdir)/tincd.8.in > $@
 
 tinc.conf.5: $(srcdir)/tinc.conf.5.in
-	$(AM_V_GEN)$(substitute) $< > $@
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc.conf.5.in > $@
 
 tincinclude.texi: $(srcdir)/tincinclude.texi.in
-	$(AM_V_GEN)$(substitute) $< > $@
+	$(AM_V_GEN)$(substitute) $(srcdir)/tincinclude.texi.in > $@
 
 tinc.texi: tincinclude.texi
