@@ -109,10 +109,10 @@ extern connection_t *everyone;
 extern void init_connections(void);
 extern void exit_connections(void);
 extern connection_t *new_connection(void) __attribute__((__malloc__));
-extern void free_connection(connection_t *);
-extern void free_connection_partially(connection_t *);
-extern void connection_add(connection_t *);
-extern void connection_del(connection_t *);
+extern void free_connection(connection_t *c);
+extern void free_connection_partially(connection_t *c);
+extern void connection_add(connection_t *c);
+extern void connection_del(connection_t *c);
 extern void dump_connections(void);
 
 #endif

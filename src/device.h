@@ -31,8 +31,8 @@ extern char *iface;
 typedef struct devops_t {
 	bool (*setup)(void);
 	void (*close)(void);
-	bool (*read)(struct vpn_packet_t *);
-	bool (*write)(struct vpn_packet_t *);
+	bool (*read)(struct vpn_packet_t *packet);
+	bool (*write)(struct vpn_packet_t *packet);
 	void (*dump_stats)(void);
 } devops_t;
 

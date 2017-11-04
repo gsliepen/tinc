@@ -38,9 +38,9 @@ extern void init_events(void);
 extern void exit_events(void);
 extern void expire_events(void);
 extern event_t *new_event(void) __attribute__((__malloc__));
-extern void free_event(event_t *);
-extern void event_add(event_t *);
-extern void event_del(event_t *);
+extern void free_event(event_t *event);
+extern void event_add(event_t *event);
+extern void event_del(event_t *event);
 extern event_t *get_expired_event(void);
 extern event_t *peek_next_event(void);
 

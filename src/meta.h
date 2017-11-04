@@ -23,9 +23,9 @@
 
 #include "connection.h"
 
-extern bool send_meta(struct connection_t *, const char *, int);
-extern void broadcast_meta(struct connection_t *, const char *, int);
-extern bool flush_meta(struct connection_t *);
-extern bool receive_meta(struct connection_t *);
+extern bool send_meta(struct connection_t *c, const char *buffer, int length);
+extern void broadcast_meta(struct connection_t *c, const char *buffer, int length);
+extern bool flush_meta(struct connection_t *c);
+extern bool receive_meta(struct connection_t *c);
 
 #endif

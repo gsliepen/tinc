@@ -129,26 +129,26 @@ extern volatile bool running;
 #include "connection.h"
 #include "node.h"
 
-extern void retry_outgoing(outgoing_t *);
-extern void handle_incoming_vpn_data(int);
-extern void finish_connecting(struct connection_t *);
-extern void do_outgoing_connection(struct connection_t *);
-extern bool handle_new_meta_connection(int);
-extern int setup_listen_socket(const sockaddr_t *);
-extern int setup_vpn_in_socket(const sockaddr_t *);
-extern void send_packet(const struct node_t *, vpn_packet_t *);
-extern void receive_tcppacket(struct connection_t *, const char *, length_t);
-extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
+extern void retry_outgoing(outgoing_t *outgoing);
+extern void handle_incoming_vpn_data(int sock);
+extern void finish_connecting(struct connection_t *c);
+extern void do_outgoing_connection(struct connection_t *c);
+extern bool handle_new_meta_connection(int sock);
+extern int setup_listen_socket(const sockaddr_t *sa);
+extern int setup_vpn_in_socket(const sockaddr_t *sa);
+extern void send_packet(const struct node_t *n, vpn_packet_t *packet);
+extern void receive_tcppacket(struct connection_t *c, const char *buffer, length_t len);
+extern void broadcast_packet(const struct node_t *, vpn_packet_t *packet);
 extern char *get_name(void);
 extern bool setup_network(void);
-extern void setup_outgoing_connection(struct outgoing_t *);
+extern void setup_outgoing_connection(struct outgoing_t *outgoing);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
 extern int main_loop(void);
-extern void terminate_connection(struct connection_t *, bool);
-extern void flush_queue(struct node_t *);
-extern bool read_rsa_public_key(struct connection_t *);
-extern void send_mtu_probe(struct node_t *);
+extern void terminate_connection(struct connection_t *c, bool report);
+extern void flush_queue(struct node_t *n);
+extern bool read_rsa_public_key(struct connection_t *c);
+extern void send_mtu_probe(struct node_t *n);
 extern void load_all_subnets(void);
 
 #ifndef HAVE_MINGW

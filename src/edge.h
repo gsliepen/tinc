@@ -43,12 +43,12 @@ extern avl_tree_t *edge_weight_tree;     /* Tree with all known edges sorted on 
 extern void init_edges(void);
 extern void exit_edges(void);
 extern edge_t *new_edge(void) __attribute__((__malloc__));
-extern void free_edge(edge_t *);
+extern void free_edge(edge_t *e);
 extern avl_tree_t *new_edge_tree(void) __attribute__((__malloc__));
-extern void free_edge_tree(avl_tree_t *);
-extern void edge_add(edge_t *);
-extern void edge_del(edge_t *);
-extern edge_t *lookup_edge(struct node_t *, struct node_t *);
+extern void free_edge_tree(avl_tree_t *edge_tree);
+extern void edge_add(edge_t *e);
+extern void edge_del(edge_t *e);
+extern edge_t *lookup_edge(struct node_t *from, struct node_t *to);
 extern void dump_edges(void);
 
 #endif

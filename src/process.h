@@ -26,9 +26,9 @@ extern bool sighup;
 extern bool sigalrm;
 
 extern void setup_signals(void);
-extern bool execute_script(const char *, char **);
+extern bool execute_script(const char *name, char **envp);
 extern bool detach(void);
-extern bool kill_other(int);
+extern bool kill_other(int signal);
 
 #ifdef HAVE_MINGW
 extern bool init_service(void);

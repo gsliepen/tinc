@@ -44,25 +44,24 @@ extern char *confbase;
 extern char *netname;
 extern list_t *cmdline_conf;
 
-extern void init_configuration(avl_tree_t **);
-extern void exit_configuration(avl_tree_t **);
+extern void init_configuration(avl_tree_t **config_tree);
+extern void exit_configuration(avl_tree_t **config_tree);
 extern config_t *new_config(void) __attribute__((__malloc__));
-extern void free_config(config_t *);
-extern void config_add(avl_tree_t *, config_t *);
-extern config_t *lookup_config(const avl_tree_t *, char *);
-extern config_t *lookup_config_next(const avl_tree_t *, const config_t *);
-extern bool get_config_bool(const config_t *, bool *);
-extern bool get_config_int(const config_t *, int *);
-extern bool get_config_string(const config_t *, char **);
-extern bool get_config_address(const config_t *, struct addrinfo **);
-extern bool get_config_subnet(const config_t *, struct subnet_t **);
+extern void free_config(config_t *cfg);
+extern void config_add(avl_tree_t *config_tree, config_t *cfg);
+extern config_t *lookup_config(const avl_tree_t *config_tree, char *variable);
+extern config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg);
+extern bool get_config_bool(const config_t *cfg, bool *result);
+extern bool get_config_int(const config_t *cfg, int *result);
+extern bool get_config_string(const config_t *cfg, char **result);
+extern bool get_config_address(const config_t *cfg, struct addrinfo **result);
+extern bool get_config_subnet(const config_t *cfg, struct subnet_t **result);
 
-extern config_t *parse_config_line(char *, const char *, int);
-extern bool read_config_file(avl_tree_t *, const char *);
-extern void read_config_options(avl_tree_t *, const char *);
+extern config_t *parse_config_line(char *line, const char *fname, int lineno);
+extern bool read_config_file(avl_tree_t *config_tree, const char *fname);
+extern void read_config_options(avl_tree_t *config_tree, const char *prefix);
 extern bool read_server_config(void);
-extern bool read_connection_config(struct connection_t *);
-extern FILE *ask_and_open(const char *, const char *);
-extern bool is_safe_path(const char *);
+extern bool read_connection_config(struct connection_t *c);
+extern FILE *ask_and_open(const char *fname, const char *what);
 
 #endif
