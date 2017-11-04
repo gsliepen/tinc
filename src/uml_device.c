@@ -235,7 +235,7 @@ static bool read_packet(vpn_packet_t *packet) {
 			return false;
 		}
 
-		if(connect(write_fd, &request.sock, sizeof(request.sock)) < 0) {
+		if(connect(write_fd, (struct sockaddr *)&request.sock, sizeof(request.sock)) < 0) {
 			logger(LOG_ERR, "Could not bind write %s: %s", device_info, strerror(errno));
 			running = false;
 			return false;
@@ -269,7 +269,7 @@ static bool read_packet(vpn_packet_t *packet) {
 	}
 
 	default:
-		logger(LOG_ERR, "Invalid value for state variable in " FILE);
+		logger(LOG_ERR, "Invalid value for state variable in " __FILE__);
 		abort();
 	}
 }
