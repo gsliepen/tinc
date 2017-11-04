@@ -31,68 +31,6 @@
 
 int maxoutbufsize = 0;
 
-/* Status and error notification routines */
-
-bool send_status(connection_t *c, int statusno, const char *statusstring) {
-	if(!statusstring) {
-		statusstring = "Status";
-	}
-
-	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
-}
-
-bool status_h(connection_t *c) {
-	int statusno;
-	char statusstring[MAX_STRING_SIZE];
-
-	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
-		       c->name, c->hostname);
-		return false;
-	}
-
-	ifdebug(STATUS) logger(LOG_NOTICE, "Status message from %s (%s): %d: %s",
-	                       c->name, c->hostname, statusno, statusstring);
-
-	return true;
-}
-
-bool send_error(connection_t *c, int err, const char *errstring) {
-	if(!errstring) {
-		errstring = "Error";
-	}
-
-	return send_request(c, "%d %d %s", ERROR, err, errstring);
-}
-
-bool error_h(connection_t *c) {
-	int err;
-	char errorstring[MAX_STRING_SIZE];
-
-	if(sscanf(c->buffer, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
-		       c->name, c->hostname);
-		return false;
-	}
-
-	ifdebug(ERROR) logger(LOG_NOTICE, "Error message from %s (%s): %d: %s",
-	                      c->name, c->hostname, err, errorstring);
-
-	terminate_connection(c, c->status.active);
-
-	return true;
-}
-
-bool send_termreq(connection_t *c) {
-	return send_request(c, "%d", TERMREQ);
-}
-
-bool termreq_h(connection_t *c) {
-	terminate_connection(c, c->status.active);
-
-	return true;
-}
-
 bool send_ping(connection_t *c) {
 	c->status.pinged = true;
 	c->last_ping_time = now;
