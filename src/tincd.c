@@ -538,7 +538,7 @@ static void make_names(void) {
 #endif
 
 	if(!pidfilename) {
-		xasprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+		xasprintf(&pidfilename, RUNSTATEDIR "/%s.pid", identname);
 	}
 
 	if(!logfilename) {

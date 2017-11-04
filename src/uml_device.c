@@ -65,7 +65,7 @@ static bool setup_device(void) {
 	struct timeval tv;
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
-		xasprintf(&device, LOCALSTATEDIR "/run/%s.umlsocket", identname);
+		xasprintf(&device, RUNSTATEDIR "/%s.umlsocket", identname);
 	}
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);

@@ -222,7 +222,7 @@ Also note that this can cause decrypted VPN packets to be sent out on a real net
 Create a UNIX socket with the filename specified by
 .Va Device ,
 or
-.Pa @localstatedir@/run/ Ns Ar NETNAME Ns Pa .umlsocket
+.Pa @runstatedir@/ Ns Ar NETNAME Ns Pa .umlsocket
 if not specified.
 .Nm tinc
 will wait for a User Mode Linux instance to connect to this socket.
@@ -231,7 +231,7 @@ Uses the libvdeplug library to connect to a Virtual Distributed Ethernet switch,
 using the UNIX socket specified by
 .Va Device ,
 or
-.Pa @localstatedir@/run/vde.ctl
+.Pa @runstatedir@/vde.ctl
 if not specified.
 .El
 Also, in case tinc does not seem to correctly interpret packets received from the virtual network device,

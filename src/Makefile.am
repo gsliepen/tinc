@@ -86,4 +86,4 @@ if TUNEMU
 LIBS += -lpcap
 endif
 
-AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -I $(abs_top_builddir)/
+AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -I $(abs_top_builddir)/

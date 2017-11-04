@@ -860,7 +860,7 @@ Also note that this can cause decrypted VPN packets to be sent out on a real net
 @cindex UML
 @item uml (not compiled in by default)
 Create a UNIX socket with the filename specified by
-@var{Device}, or @file{@value{localstatedir}/run/@var{netname}.umlsocket}
+@var{Device}, or @file{@value{runstatedir}/@var{netname}.umlsocket}
 if not specified.
 Tinc will wait for a User Mode Linux instance to connect to this socket.
 
@@ -868,7 +868,7 @@ Tinc will wait for a User Mode Linux instance to connect to this socket.
 @item vde (not compiled in by default)
 Uses the libvdeplug library to connect to a Virtual Distributed Ethernet switch,
 using the UNIX socket specified by
-@var{Device}, or @file{@value{localstatedir}/run/vde.ctl}
+@var{Device}, or @file{@value{runstatedir}/vde.ctl}
 if not specified.
 @end table
 
@@ -1730,7 +1730,7 @@ Write log entries to a file instead of to the system logging facility.
 If @var{file} is omitted, the default is @file{@value{localstatedir}/log/tinc.@var{netname}.log}.
 
 @item --pidfile=@var{file}
-Write PID to @var{file} instead of @file{@value{localstatedir}/run/tinc.@var{netname}.pid}.
+Write PID to @var{file} instead of @file{@value{runstatedir}/tinc.@var{netname}.pid}.
 
 @item --bypass-security
 Disables encryption and authentication.
