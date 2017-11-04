@@ -37,7 +37,7 @@ int device_fd = -1;
 static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
-static char *device_info = NULL;
+static const char *device_info = "Windows tap device";
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
@@ -220,8 +220,6 @@ static bool setup_device(void) {
 		logger(LOG_DEBUG, "Tap reader failed!");
 		return false;
 	}
-
-	device_info = "Windows tap device";
 
 	logger(LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 

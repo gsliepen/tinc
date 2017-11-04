@@ -47,7 +47,7 @@ char *device = NULL;
 char *iface = NULL;
 static char *type = NULL;
 static char ifrname[IFNAMSIZ];
-static char *device_info;
+static const char *device_info;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;

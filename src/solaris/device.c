@@ -53,7 +53,7 @@ static int if_fd = -1;
 static int ip_fd = -1;
 char *device = NULL;
 char *iface = NULL;
-static char *device_info = NULL;
+static const char *device_info = NULL;
 
 uint64_t device_total_in = 0;
 uint64_t device_total_out = 0;

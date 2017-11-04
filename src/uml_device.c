@@ -35,7 +35,7 @@ static int request_fd = -1;
 static int data_fd = -1;
 static int write_fd = -1;
 static int state = 0;
-static char *device_info;
+static const char *device_info = "UML network socket";
 
 extern char *identname;
 extern volatile bool running;
@@ -69,8 +69,6 @@ static bool setup_device(void) {
 	}
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
-
-	device_info = "UML network socket";
 
 	if((write_fd = socket(PF_UNIX, SOCK_DGRAM, 0)) < 0) {
 		logger(LOG_ERR, "Could not open write %s: %s", device_info, strerror(errno));
