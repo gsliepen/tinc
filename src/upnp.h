@@ -22,6 +22,6 @@
 
 #include "system.h"
 
-extern void upnp_init(bool, bool);
+extern void upnp_init(bool tcp, bool udp);
 
 #endif

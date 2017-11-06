@@ -39,9 +39,9 @@ typedef struct splay_node_t {
 
 } splay_node_t;
 
-typedef int (*splay_compare_t)(const void *, const void *);
-typedef void (*splay_action_t)(const void *);
-typedef void (*splay_action_node_t)(const splay_node_t *);
+typedef int (*splay_compare_t)(const void *data1, const void *data2);
+typedef void (*splay_action_t)(const void *data);
+typedef void (*splay_action_node_t)(const splay_node_t *node);
 
 typedef struct splay_tree_t {
 
@@ -63,47 +63,47 @@ typedef struct splay_tree_t {
 
 /* (De)constructors */
 
-extern splay_tree_t *splay_alloc_tree(splay_compare_t, splay_action_t) __attribute__((__malloc__));
-extern void splay_free_tree(splay_tree_t *);
+extern splay_tree_t *splay_alloc_tree(splay_compare_t compare, splay_action_t delete) __attribute__((__malloc__));
+extern void splay_free_tree(splay_tree_t *tree);
 
 extern splay_node_t *splay_alloc_node(void) __attribute__((__malloc__));
-extern void splay_free_node(splay_tree_t *tree, splay_node_t *);
+extern void splay_free_node(splay_tree_t *tree, splay_node_t *node);
 
 /* Insertion and deletion */
 
-extern splay_node_t *splay_insert(splay_tree_t *, void *);
-extern splay_node_t *splay_insert_node(splay_tree_t *, splay_node_t *);
+extern splay_node_t *splay_insert(splay_tree_t *tree, void *data);
+extern splay_node_t *splay_insert_node(splay_tree_t *tree, splay_node_t *node);
 
-extern void splay_insert_top(splay_tree_t *, splay_node_t *);
-extern void splay_insert_before(splay_tree_t *, splay_node_t *, splay_node_t *);
-extern void splay_insert_after(splay_tree_t *, splay_node_t *, splay_node_t *);
+extern void splay_insert_top(splay_tree_t *tree, splay_node_t *node);
+extern void splay_insert_before(splay_tree_t *tree, splay_node_t *before, splay_node_t *node);
+extern void splay_insert_after(splay_tree_t *tree, splay_node_t *after, splay_node_t *node);
 
-extern splay_node_t *splay_unlink(splay_tree_t *, void *);
-extern void splay_unlink_node(splay_tree_t *tree, splay_node_t *);
-extern void splay_delete(splay_tree_t *, void *);
-extern void splay_delete_node(splay_tree_t *, splay_node_t *);
+extern splay_node_t *splay_unlink(splay_tree_t *tree, void *data);
+extern void splay_unlink_node(splay_tree_t *tree, splay_node_t *node);
+extern void splay_delete(splay_tree_t *tree, void *data);
+extern void splay_delete_node(splay_tree_t *tree, splay_node_t *node);
 
 /* Fast tree cleanup */
 
-extern void splay_delete_tree(splay_tree_t *);
+extern void splay_delete_tree(splay_tree_t *tree);
 
 /* Searching */
 
-extern void *splay_search(splay_tree_t *, const void *);
-extern void *splay_search_closest(splay_tree_t *, const void *, int *);
-extern void *splay_search_closest_smaller(splay_tree_t *, const void *);
-extern void *splay_search_closest_greater(splay_tree_t *, const void *);
+extern void *splay_search(splay_tree_t *tree, const void *data);
+extern void *splay_search_closest(splay_tree_t *tree, const void *data, int *result);
+extern void *splay_search_closest_smaller(splay_tree_t *tree, const void *data);
+extern void *splay_search_closest_greater(splay_tree_t *tree, const void *data);
 
-extern splay_node_t *splay_search_node(splay_tree_t *, const void *);
-extern splay_node_t *splay_search_closest_node(splay_tree_t *, const void *, int *);
-extern splay_node_t *splay_search_closest_node_nosplay(const splay_tree_t *, const void *, int *);
-extern splay_node_t *splay_search_closest_smaller_node(splay_tree_t *, const void *);
-extern splay_node_t *splay_search_closest_greater_node(splay_tree_t *, const void *);
+extern splay_node_t *splay_search_node(splay_tree_t *tree, const void *data);
+extern splay_node_t *splay_search_closest_node(splay_tree_t *tree, const void *data, int *result);
+extern splay_node_t *splay_search_closest_node_nosplay(const splay_tree_t *tree, const void *data, int *result);
+extern splay_node_t *splay_search_closest_smaller_node(splay_tree_t *tree, const void *data);
+extern splay_node_t *splay_search_closest_greater_node(splay_tree_t *tree, const void *data);
 
 /* Tree walking */
 
-extern void splay_foreach(const splay_tree_t *, splay_action_t);
-extern void splay_foreach_node(const splay_tree_t *, splay_action_t);
+extern void splay_foreach(const splay_tree_t *tree, splay_action_t action);
+extern void splay_foreach_node(const splay_tree_t *tree, splay_action_t action);
 
 /*
    Iterates over a tree.

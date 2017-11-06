@@ -20,8 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-extern void crypto_init();
-extern void crypto_exit();
-extern void randomize(void *, size_t);
+extern void crypto_init(void);
+extern void crypto_exit(void);
+extern void randomize(void *buf, size_t buflen);
 
 #endif

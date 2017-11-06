@@ -23,11 +23,11 @@
 
 #include "connection.h"
 
-extern bool send_meta(struct connection_t *, const char *, int);
-extern void send_meta_raw(struct connection_t *, const char *, int);
-extern bool send_meta_sptps(void *, uint8_t, const void *, size_t);
-extern bool receive_meta_sptps(void *, uint8_t, const void *, uint16_t);
-extern void broadcast_meta(struct connection_t *, const char *, int);
-extern bool receive_meta(struct connection_t *);
+extern bool send_meta(struct connection_t *c, const char *buffer, int length);
+extern void send_meta_raw(struct connection_t *c, const char *buffer, int length);
+extern bool send_meta_sptps(void *handle, uint8_t type, const void *data, size_t length);
+extern bool receive_meta_sptps(void *handle, uint8_t type, const void *data, uint16_t length);
+extern void broadcast_meta(struct connection_t *from, const char *buffer, int length);
+extern bool receive_meta(struct connection_t *c);
 
 #endif

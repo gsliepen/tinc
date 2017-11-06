@@ -65,27 +65,27 @@ typedef struct subnet_t {
 
 extern splay_tree_t *subnet_tree;
 
-extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
+extern int subnet_compare(const struct subnet_t *a, const struct subnet_t *b);
 extern subnet_t *new_subnet(void) __attribute__((__malloc__));
-extern void free_subnet(subnet_t *);
+extern void free_subnet(subnet_t *subnet);
 extern void init_subnets(void);
 extern void exit_subnets(void);
 extern splay_tree_t *new_subnet_tree(void) __attribute__((__malloc__));
 extern void free_subnet_tree(splay_tree_t *);
-extern void subnet_add(struct node_t *, subnet_t *);
-extern void subnet_del(struct node_t *, subnet_t *);
-extern void subnet_update(struct node_t *, subnet_t *, bool);
-extern int maskcmp(const void *, const void *, int);
-extern void maskcpy(void *, const void *, int, int);
-extern void mask(void *, int, int);
-extern bool maskcheck(const void *, int, int);
-extern bool net2str(char *, int, const subnet_t *);
-extern bool str2net(subnet_t *, const char *);
-extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
-extern subnet_t *lookup_subnet_mac(const struct node_t *, const mac_t *);
-extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
-extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
-extern bool dump_subnets(struct connection_t *);
+extern void subnet_add(struct node_t *owner, subnet_t *subnet);
+extern void subnet_del(struct node_t *owner, subnet_t *subnet);
+extern void subnet_update(struct node_t *owner, subnet_t *subnet, bool up);
+extern int maskcmp(const void *a, const void *b, int masklen);
+extern void maskcpy(void *dest, const void *src, int masklen, int len);
+extern void mask(void *mask, int masklen, int len);
+extern bool maskcheck(const void *mask, int masklen, int len);
+extern bool net2str(char *netstr, int len, const subnet_t *subnet);
+extern bool str2net(subnet_t *subnet, const char *netstr);
+extern subnet_t *lookup_subnet(const struct node_t *owner, const subnet_t *subnet);
+extern subnet_t *lookup_subnet_mac(const struct node_t *owner, const mac_t *address);
+extern subnet_t *lookup_subnet_ipv4(const ipv4_t *address);
+extern subnet_t *lookup_subnet_ipv6(const ipv6_t *address);
+extern bool dump_subnets(struct connection_t *c);
 extern void subnet_cache_flush(void);
 
 #endif

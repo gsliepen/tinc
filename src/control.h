@@ -20,8 +20,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-extern bool init_control();
-extern void exit_control();
+extern bool init_control(void);
+extern void exit_control(void);
 extern char controlcookie[];
 
 #endif

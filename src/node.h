@@ -118,14 +118,14 @@ extern splay_tree_t *node_tree;
 extern void init_nodes(void);
 extern void exit_nodes(void);
 extern node_t *new_node(void) __attribute__((__malloc__));
-extern void free_node(node_t *);
-extern void node_add(node_t *);
-extern void node_del(node_t *);
-extern node_t *lookup_node(char *);
-extern node_t *lookup_node_id(const node_id_t *);
-extern node_t *lookup_node_udp(const sockaddr_t *);
-extern bool dump_nodes(struct connection_t *);
-extern bool dump_traffic(struct connection_t *);
-extern void update_node_udp(node_t *, const sockaddr_t *);
+extern void free_node(node_t *n);
+extern void node_add(node_t *n);
+extern void node_del(node_t *n);
+extern node_t *lookup_node(char *name);
+extern node_t *lookup_node_id(const node_id_t *id);
+extern node_t *lookup_node_udp(const sockaddr_t *sa);
+extern bool dump_nodes(struct connection_t *c);
+extern bool dump_traffic(struct connection_t *c);
+extern void update_node_udp(node_t *n, const sockaddr_t *sa);
 
 #endif
