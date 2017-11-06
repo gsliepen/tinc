@@ -313,7 +313,7 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-bool read_config_file(splay_tree_t *config_tree, const char *fname) {
+bool read_config_file(splay_tree_t *config_tree, const char *fname, bool verbose) {
 	FILE *fp;
 	char buffer[MAX_STRING_SIZE];
 	char *line;
@@ -325,7 +325,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(verbose ? DEBUG_ALWAYS : DEBUG_CONNECTIONS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
 		return false;
 	}
 
@@ -415,7 +415,7 @@ bool read_server_config(void) {
 
 	snprintf(fname, sizeof(fname), "%s" SLASH "tinc.conf", confbase);
 	errno = 0;
-	x = read_config_file(config_tree, fname);
+	x = read_config_file(config_tree, fname, true);
 
 	// We will try to read the conf files in the "conf.d" dir
 	if(x) {
@@ -434,7 +434,7 @@ bool read_server_config(void) {
 				// And we try to read the ones that end with ".conf"
 				if(l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
 					snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ep->d_name);
-					x = read_config_file(config_tree, fname);
+					x = read_config_file(config_tree, fname, true);
 				}
 			}
 
@@ -449,16 +449,12 @@ bool read_server_config(void) {
 	return x;
 }
 
-bool read_host_config(splay_tree_t *config_tree, const char *name) {
-	char fname[PATH_MAX];
-	bool x;
-
+bool read_host_config(splay_tree_t *config_tree, const char *name, bool verbose) {
 	read_config_options(config_tree, name);
 
+	char fname[PATH_MAX];
 	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, name);
-	x = read_config_file(config_tree, fname);
-
-	return x;
+	return read_config_file(config_tree, fname, verbose);
 }
 
 bool append_config_file(const char *name, const char *key, const char *value) {

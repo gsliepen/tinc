@@ -75,7 +75,7 @@ bool node_read_ecdsa_public_key(node_t *n) {
 
 	init_configuration(&config_tree);
 
-	if(!read_host_config(config_tree, n->name)) {
+	if(!read_host_config(config_tree, n->name, true)) {
 		goto exit;
 	}
 
@@ -120,7 +120,7 @@ bool read_ecdsa_public_key(connection_t *c) {
 	if(!c->config_tree) {
 		init_configuration(&c->config_tree);
 
-		if(!read_host_config(c->config_tree, c->name)) {
+		if(!read_host_config(c->config_tree, c->name, true)) {
 			return false;
 		}
 	}
@@ -382,7 +382,7 @@ void load_all_nodes(void) {
 		splay_tree_t *config_tree;
 		init_configuration(&config_tree);
 		read_config_options(config_tree, ent->d_name);
-		read_host_config(config_tree, ent->d_name);
+		read_host_config(config_tree, ent->d_name, true);
 
 		if(!n) {
 			n = new_node();
@@ -843,7 +843,7 @@ static bool setup_myself(void) {
 	myself->connection = new_connection();
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
-	read_host_config(config_tree, name);
+	read_host_config(config_tree, name, true);
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)) {
 		myport = xstrdup("655");

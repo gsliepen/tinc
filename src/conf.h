@@ -55,10 +55,10 @@ extern bool get_config_address(const config_t *, struct addrinfo **);
 extern bool get_config_subnet(const config_t *, struct subnet_t **);
 
 extern config_t *parse_config_line(char *, const char *, int);
-extern bool read_config_file(splay_tree_t *, const char *);
+extern bool read_config_file(splay_tree_t *, const char *, bool verbose);
 extern void read_config_options(splay_tree_t *, const char *);
 extern bool read_server_config(void);
-extern bool read_host_config(splay_tree_t *, const char *);
+extern bool read_host_config(splay_tree_t *, const char *, bool verbose);
 extern bool append_config_file(const char *, const char *, const char *);
 
 #endif

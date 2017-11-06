@@ -332,7 +332,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 } /* int setup_vpn_in_socket */
 
 static void retry_outgoing_handler(void *data) {
-	setup_outgoing_connection(data);
+	setup_outgoing_connection(data, true);
 }
 
 void retry_outgoing(outgoing_t *outgoing) {
@@ -678,7 +678,7 @@ static struct addrinfo *get_known_addresses(node_t *n) {
 	return ai;
 }
 
-void setup_outgoing_connection(outgoing_t *outgoing) {
+void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 	timeout_del(&outgoing->ev);
 
 	node_t *n = lookup_node(outgoing->name);
@@ -695,7 +695,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	}
 
 	init_configuration(&outgoing->config_tree);
-	read_host_config(outgoing->config_tree, outgoing->name);
+	read_host_config(outgoing->config_tree, outgoing->name, verbose);
 	outgoing->cfg = lookup_config(outgoing->config_tree, "Address");
 
 	if(!outgoing->cfg) {
@@ -704,7 +704,7 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 		}
 
 		if(!outgoing->kai) {
-			logger(DEBUG_ALWAYS, LOG_DEBUG, "No address known for %s", outgoing->name);
+			logger(verbose ? DEBUG_ALWAYS : DEBUG_CONNECTIONS, LOG_DEBUG, "No address known for %s", outgoing->name);
 			goto remove;
 		}
 	}
@@ -920,7 +920,7 @@ void try_outgoing_connections(void) {
 			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 			outgoing->name = name;
 			list_insert_tail(outgoing_list, outgoing);
-			setup_outgoing_connection(outgoing);
+			setup_outgoing_connection(outgoing, true);
 		}
 	}
 

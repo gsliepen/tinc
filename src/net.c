@@ -327,7 +327,7 @@ int reload_configuration(void) {
 	read_config_options(config_tree, NULL);
 
 	snprintf(fname, sizeof(fname), "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
-	read_config_file(config_tree, fname);
+	read_config_file(config_tree, fname, true);
 
 	/* Parse some options that are allowed to be changed while tinc is running */
 

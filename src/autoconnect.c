@@ -65,7 +65,7 @@ static void make_new_connection() {
 			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 			outgoing->name = xstrdup(n->name);
 			list_insert_tail(outgoing_list, outgoing);
-			setup_outgoing_connection(outgoing);
+			setup_outgoing_connection(outgoing, false);
 		}
 
 		break;
@@ -102,7 +102,7 @@ static void connect_to_unreachable() {
 		outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 		outgoing->name = xstrdup(n->name);
 		list_insert_tail(outgoing_list, outgoing);
-		setup_outgoing_connection(outgoing);
+		setup_outgoing_connection(outgoing, false);
 
 		return;
 	}

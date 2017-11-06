@@ -204,7 +204,7 @@ extern void device_enable(void);
 extern void device_disable(void);
 extern bool setup_myself_reloadable(void);
 extern bool setup_network(void);
-extern void setup_outgoing_connection(struct outgoing_t *);
+extern void setup_outgoing_connection(struct outgoing_t *, bool verbose);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
 extern int main_loop(void);
