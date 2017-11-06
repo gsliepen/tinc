@@ -29,7 +29,7 @@
 #include "route.h"
 #include "xalloc.h"
 
-static char *device_info;
+static const char *device_info = "multicast socket";
 
 static struct addrinfo *ai = NULL;
 static mac_t ignore_src = {{0}};
@@ -39,8 +39,6 @@ static bool setup_device(void) {
 	char *port;
 	char *space;
 	int ttl = 1;
-
-	device_info = "multicast socket";
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
 

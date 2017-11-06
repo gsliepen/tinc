@@ -34,7 +34,7 @@ static struct vdepluglib plug;
 static struct vdeconn *conn = NULL;
 static int port = 0;
 static char *group = NULL;
-static char *device_info;
+static const char *device_info = "VDE socket";
 
 static bool setup_device(void) {
 	libvdeplug_dynopen(plug);
@@ -53,8 +53,6 @@ static bool setup_device(void) {
 	get_config_int(lookup_config(config_tree, "VDEPort"), &port);
 
 	get_config_string(lookup_config(config_tree, "VDEGroup"), &group);
-
-	device_info = "VDE socket";
 
 	struct vde_open_args args = {
 		.port = port,

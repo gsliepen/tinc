@@ -44,7 +44,7 @@ char *device = NULL;
 char *iface = NULL;
 static char *type = NULL;
 static char ifrname[IFNAMSIZ];
-static char *device_info;
+static const char *device_info;
 
 static bool setup_device(void) {
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {

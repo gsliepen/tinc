@@ -56,7 +56,7 @@ typedef enum device_type {
 int device_fd = -1;
 char *device = NULL;
 char *iface = NULL;
-static char *device_info = NULL;
+static const char *device_info = "OS X utun device";
 #if defined(ENABLE_TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
 #elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
@@ -115,8 +115,6 @@ static bool setup_utun(void) {
 	} else {
 		iface = xstrdup(name);
 	}
-
-	device_info = "OS X utun device";
 
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 

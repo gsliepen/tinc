@@ -33,7 +33,7 @@
 #include "xalloc.h"
 
 #if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET) && defined(SIOCGIFINDEX)
-static char *device_info;
+static const char *device_info = "raw_socket";
 
 static bool setup_device(void) {
 	struct ifreq ifr;
@@ -46,8 +46,6 @@ static bool setup_device(void) {
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
 		device = xstrdup(iface);
 	}
-
-	device_info = "raw socket";
 
 	if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device_info,

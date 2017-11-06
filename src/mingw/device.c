@@ -43,7 +43,7 @@ static vpn_packet_t device_read_packet;
 static vpn_packet_t device_write_packet;
 char *device = NULL;
 char *iface = NULL;
-static char *device_info = NULL;
+static const char *device_info = "Windows tap device";
 
 extern char *myport;
 
