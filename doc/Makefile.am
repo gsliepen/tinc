@@ -6,7 +6,7 @@ man_MANS = tincd.8 tinc.8 tinc.conf.5 tinc-gui.8
 
 EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.8.in tinc.conf.5.in tinc-gui.8.in sample-config
 
-CLEANFILES = *.html tincd.8 tinc.8 tinc.conf.5 tinc-gui.8 tincinclude.texi
+CLEANFILES = *.html tincd.8 tinc.8 tinc.conf.5 tinc-gui.8 tincinclude.texi tinc.info
 
 tincd.8.html: tincd.8
 	$(AM_V_GEN)w3mman2html $? > $@
@@ -27,19 +27,19 @@ substitute = sed \
 	-e s,'@runstatedir\@',"$(runstatedir)",g \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
-tincd.8: tincd.8.in
-	$(AM_V_GEN)$(substitute) $? > $@
+tincd.8: $(srcdir)/tincd.8.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tincd.8.in > $@
 
-tinc.8: tinc.8.in
-	$(AM_V_GEN)$(substitute) $? > $@
+tinc.8: $(srcdir)/tinc.8.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc.8.in > $@
 
-tinc-gui.8: tinc-gui.8.in
-	$(AM_V_GEN)$(substitute) $? > $@
+tinc-gui.8: $(srcdir)/tinc-gui.8.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc-gui.8.in > $@
 
-tinc.conf.5: tinc.conf.5.in
-	$(AM_V_GEN)$(substitute) $? > $@
+tinc.conf.5: $(srcdir)/tinc.conf.5.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc.conf.5.in > $@
 
-tincinclude.texi: tincinclude.texi.in
-	$(AM_V_GEN)$(substitute) $? > $@
+tincinclude.texi: $(srcdir)/tincinclude.texi.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tincinclude.texi.in > $@
 	
 tinc.texi: tincinclude.texi
