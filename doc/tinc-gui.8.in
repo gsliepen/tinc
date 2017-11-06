@@ -30,7 +30,7 @@ Use the cookie from
 .Ar FILENAME
 to authenticate with a running tinc daemon.
 If unspecified, the default is
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
+.Pa @runstatedir@/tinc. Ns Ar NETNAME Ns Pa .pid.
 .It Fl -help
 Display short list of options.
 .El

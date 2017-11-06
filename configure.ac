@@ -255,6 +255,11 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
+dnl Ensure runstatedir is set if we are using a version of autoconf that does not suppport it
+if test "x$runstatedir" = "x"; then
+  AC_SUBST([runstatedir], ['${localstatedir}/run'])
+fi
+
 AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile gui/Makefile test/Makefile systemd/Makefile])
 
 AC_OUTPUT

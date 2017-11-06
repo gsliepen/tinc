@@ -24,6 +24,7 @@ substitute = sed \
 	-e s,'@PACKAGE\@',"$(PACKAGE)",g \
 	-e s,'@VERSION\@',"$(VERSION)",g \
 	-e s,'@sysconfdir\@',"$(sysconfdir)",g \
+	-e s,'@runstatedir\@',"$(runstatedir)",g \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 tincd.8: tincd.8.in

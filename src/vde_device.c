@@ -45,7 +45,7 @@ static bool setup_device(void) {
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
-		xasprintf(&device, LOCALSTATEDIR "/run/vde.ctl");
+		xasprintf(&device, RUNSTATEDIR "/vde.ctl");
 	}
 
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
