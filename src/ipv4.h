@@ -63,7 +63,7 @@
 
 #ifndef HAVE_STRUCT_IP
 struct ip {
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 	unsigned int ip_hl: 4;
 	unsigned int ip_v: 4;
 #else

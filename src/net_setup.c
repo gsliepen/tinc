@@ -239,7 +239,7 @@ static bool read_rsa_private_key(void) {
 		return false;
 	}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+#if !defined(HAVE_MINGW) && !defined(HAVE___CYGWIN32__)
 	struct stat s;
 
 	if(!fstat(fileno(fp), &s)) {
@@ -860,7 +860,7 @@ static bool setup_myself(void) {
 #ifdef HAVE_MINGW
 	Sleep(1000);
 #endif
-#ifdef HAVE_CYGWIN
+#ifdef HAVE___CYGWIN32__
 	sleep(1);
 #endif
 	execute_script("tinc-up", envp);

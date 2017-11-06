@@ -34,7 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "../config.h"
 #endif
 
-#if !defined (STDC) || !STDC
+#if !defined (__STDC__) || !__STDC__
 /* This is a separate conditional since some stdc systems
    reject `defined (const)'.  */
 #ifndef const
@@ -57,7 +57,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
    it is simpler to just do this in the source for each such file.  */
 
 #define GETOPT_INTERFACE_VERSION 2
-#if !defined (_LIBC) && defined (GLIBC) && GLIBC >= 2
+#if !defined (_LIBC) && defined (__GLIBC__) && __GLIBC__ >= 2
 #include <gnu-versions.h>
 #if _GNU_GETOPT_INTERFACE_VERSION == GETOPT_INTERFACE_VERSION
 #define ELIDE_CODE
@@ -68,8 +68,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 /* This needs to come after some library #include
-   to get GNU_LIBRARY defined.  */
-#ifdef  GNU_LIBRARY
+   to get __GNU_LIBRARY__ defined.  */
+#ifdef  __GNU_LIBRARY__
 /* Don't include stdlib.h for non-GNU C libraries because some of them
    contain conflicting prototypes for getopt.  */
 #include <stdlib.h>
@@ -83,7 +83,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 #endif
 
-#if defined (WIN32) && !defined (CYGWIN32)
+#if defined (WIN32) && !defined (__CYGWIN32__32)
 /* It's not Unix, really.  See?  Capital letters.  */
 #include <windows.h>
 #define getpid() GetCurrentProcessId()
@@ -190,7 +190,7 @@ static enum {
 /* Value of POSIXLY_CORRECT environment variable.  */
 static char *posixly_correct;
 
-#ifdef  GNU_LIBRARY
+#ifdef  __GNU_LIBRARY__
 /* We want to avoid inclusion of string.h with non-GNU libraries
    because there are many ways it can cause trouble.
    On some systems, it contains special magic macros that don't work
@@ -222,17 +222,17 @@ int chr;
 
 /* If using GCC, we can safely declare strlen this way.
    If not using GCC, it is ok not to declare it.  */
-#ifdef GNUC
+#ifdef __GNUC__
 /* Note that Motorola Delta 68k R3V7 comes with GCC but not stddef.h.
    That was relevant to code that was here before.  */
-#if !defined (STDC) || !STDC
+#if !defined (__STDC__) || !__STDC__
 /* gcc with -traditional declares the built-in strlen to return int,
    and has done so at least since version 2.4.5. -- rms.  */
 extern int strlen(const char *);
-#endif /* not STDC */
-#endif /* GNUC */
+#endif /* not __STDC__ */
+#endif /* __GNUC__ */
 
-#endif /* not GNU_LIBRARY */
+#endif /* not __GNU_LIBRARY__ */
 
 /* Handle permutation of arguments.  */
 
@@ -291,7 +291,7 @@ text_set_element(libc_subinit, store_args_and_env);
    `first_nonopt' and `last_nonopt' are relocated so that they describe
    the new indices of the non-options in ARGV after they are moved.  */
 
-#if defined (STDC) && STDC
+#if defined (__STDC__) && __STDC__
 static void exchange(char **);
 #endif
 
@@ -374,7 +374,7 @@ char **argv;
 
 /* Initialize the internal data when the first call is made.  */
 
-#if defined (STDC) && STDC
+#if defined (__STDC__) && __STDC__
 static const char *_getopt_initialize(int, char *const *, const char *);
 #endif
 static const char *

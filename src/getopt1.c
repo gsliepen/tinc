@@ -25,7 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "getopt.h"
 
-#if !defined (STDC) || !STDC
+#if !defined (__STDC__) || !__STDC__
 /* This is a separate conditional since some stdc systems
    reject `defined (const)'.  */
 #ifndef const
@@ -44,7 +44,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
    it is simpler to just do this in the source for each such file.  */
 
 #define GETOPT_INTERFACE_VERSION 2
-#if !defined (_LIBC) && defined (GLIBC) && GLIBC >= 2
+#if !defined (_LIBC) && defined (__GLIBC__) && __GLIBC__ >= 2
 #include <gnu-versions.h>
 #if _GNU_GETOPT_INTERFACE_VERSION == GETOPT_INTERFACE_VERSION
 #define ELIDE_CODE
@@ -55,8 +55,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 /* This needs to come after some library #include
-   to get GNU_LIBRARY defined.  */
-#ifdef GNU_LIBRARY
+   to get __GNU_LIBRARY__ defined.  */
+#ifdef __GNU_LIBRARY__
 #include <stdlib.h>
 #endif
 

@@ -79,7 +79,7 @@ extern "C" {
 	   returns the contents of the `val' field.  */
 
 	struct option {
-#if defined (STDC) && STDC
+#if defined (__STDC__) && __STDC__
 		const char *name;
 #else
 		char *name;
@@ -97,15 +97,15 @@ extern "C" {
 #define required_argument       1
 #define optional_argument       2
 
-#if defined (STDC) && STDC
-#ifdef GNU_LIBRARY
+#if defined (__STDC__) && __STDC__
+#ifdef __GNU_LIBRARY__
 	/* Many other libraries have conflicting prototypes for getopt, with
 	   differences in the consts, in stdlib.h.  To avoid compilation
 	   errors, only prototype getopt for the GNU C library.  */
 	extern int getopt(int argc, char *const *argv, const char *shortopts);
-#else /* not GNU_LIBRARY */
+#else /* not __GNU_LIBRARY__ */
 	extern int getopt();
-#endif /* GNU_LIBRARY */
+#endif /* __GNU_LIBRARY__ */
 	extern int getopt_long(int argc, char *const *argv, const char *shortopts,
 	                       const struct option *longopts, int *longind);
 	extern int getopt_long_only(int argc, char *const *argv,
@@ -117,13 +117,13 @@ extern "C" {
 	                            const char *shortopts,
 	                            const struct option *longopts, int *longind,
 	                            int long_only);
-#else /* not STDC */
+#else /* not __STDC__ */
 	extern int getopt();
 	extern int getopt_long();
 	extern int getopt_long_only();
 
 	extern int _getopt_internal();
-#endif /* STDC */
+#endif /* __STDC__ */
 
 #ifdef  cplusplus
 }

@@ -54,8 +54,8 @@ void bin2hex(char *src, char *dst, int length) {
 	}
 }
 
-#if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
-#ifdef HAVE_CYGWIN
+#if defined(HAVE_MINGW) || defined(HAVE___CYGWIN32__)
+#ifdef HAVE___CYGWIN32__
 #include <w32api/windows.h>
 #endif
 
