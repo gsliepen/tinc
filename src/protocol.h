@@ -96,8 +96,6 @@ extern bool send_metakey_ec(struct connection_t *);
 extern bool send_challenge(struct connection_t *);
 extern bool send_chal_reply(struct connection_t *);
 extern bool send_ack(struct connection_t *);
-extern bool send_status(struct connection_t *, int, const char *);
-extern bool send_error(struct connection_t *, int, const  char *);
 extern bool send_termreq(struct connection_t *);
 extern bool send_ping(struct connection_t *);
 extern bool send_pong(struct connection_t *);

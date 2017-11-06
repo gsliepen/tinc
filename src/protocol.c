@@ -36,7 +36,7 @@ bool experimental = true;
 
 static bool (*request_handlers[])(connection_t *, const char *) = {
 	id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
-	status_h, error_h, termreq_h,
+	NULL, NULL, termreq_h,
 	ping_h, pong_h,
 	add_subnet_h, del_subnet_h,
 	add_edge_h, del_edge_h,

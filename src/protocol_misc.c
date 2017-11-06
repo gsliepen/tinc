@@ -38,56 +38,6 @@ int maxoutbufsize = 0;
 int mtu_info_interval = 5;
 int udp_info_interval = 5;
 
-/* Status and error notification routines */
-
-bool send_status(connection_t *c, int statusno, const char *statusstring) {
-	if(!statusstring) {
-		statusstring = "Status";
-	}
-
-	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
-}
-
-bool status_h(connection_t *c, const char *request) {
-	int statusno;
-	char statusstring[MAX_STRING_SIZE];
-
-	if(sscanf(request, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
-		       c->name, c->hostname);
-		return false;
-	}
-
-	logger(DEBUG_STATUS, LOG_NOTICE, "Status message from %s (%s): %d: %s",
-	       c->name, c->hostname, statusno, statusstring);
-
-	return true;
-}
-
-bool send_error(connection_t *c, int err, const char *errstring) {
-	if(!errstring) {
-		errstring = "Error";
-	}
-
-	return send_request(c, "%d %d %s", ERROR, err, errstring);
-}
-
-bool error_h(connection_t *c, const char *request) {
-	int err;
-	char errorstring[MAX_STRING_SIZE];
-
-	if(sscanf(request, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
-		       c->name, c->hostname);
-		return false;
-	}
-
-	logger(DEBUG_ERROR, LOG_NOTICE, "Error message from %s (%s): %d: %s",
-	       c->name, c->hostname, err, errorstring);
-
-	return false;
-}
-
 bool send_termreq(connection_t *c) {
 	return send_request(c, "%d", TERMREQ);
 }
