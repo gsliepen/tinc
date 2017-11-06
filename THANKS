@@ -8,6 +8,7 @@ We would like to thank the following people for their contributions to tinc:
 * Anthony G. Basile
 * Armijn Hemel
 * Armin Fisslthaler
+* Aron Cowan
 * Ashish Bajaj
 * Baptiste Jonglez
 * Borg
@@ -25,6 +26,7 @@ We would like to thank the following people for their contributions to tinc:
 * Erik Tews
 * Etienne Dechamps
 * Florent Clairambault
+* Florian Forster
 * Florian Klink
 * Florian Weik
 * Flynn Marquardt
@@ -34,8 +36,8 @@ We would like to thank the following people for their contributions to tinc:
 * Gusariev Oleksandr
 * Hans Bayle
 * Harvest
-* Ivo van Dong
 * Ivo Smits
+* Ivo van Dong
 * James Cook
 * James MacLean
 * Jamie Briggs
@@ -45,13 +47,14 @@ We would like to thank the following people for their contributions to tinc:
 * Jeroen Domburg
 * Jeroen Ubbink
 * Jerome Etienne
-* Jo-Philipp Wich
 * Jochen Voss
+* Jo-Philipp Wich
 * Julien Muchembled
 * Lavrans Laading
 * Loïc Dachary
 * Loïc Grenié
 * Lubomír Bulej
+* luckyhacky
 * LunarShaddow
 * Mads Kiilerich
 * Marc A. Lehmann
@@ -68,13 +71,15 @@ We would like to thank the following people for their contributions to tinc:
 * Mesar Hameed
 * Michael Tokarev
 * Miles Nordin
-* Nathan Stratton Treadway
 * Murat Donmez
+* Nathan Stratton Treadway
 * Nick Hibma
 * Nick Patavalis
 * Paul Littlefield
 * Philipp Babel
 * Pierre Emeriaud
+* Pierre-Olivier Mercier
+* Rafael Sadowski
 * Rafał Leśniak
 * Rhosyn Celyn
 * Robert van der Meulen
