@@ -637,7 +637,7 @@ bool setup_myself_reloadable(void) {
 		subnet_add(NULL, s);
 	}
 
-#if !defined(IPPROTO_IP) || !defined(IP_TOS)
+#if !defined(IP_TOS)
 
 	if(priorityinheritance) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv4 connections", "PriorityInheritance");
@@ -645,7 +645,7 @@ bool setup_myself_reloadable(void) {
 
 #endif
 
-#if !defined(IPPROTO_IPV6) || !defined(IPV6_TCLASS)
+#if !defined(IPV6_TCLASS)
 
 	if(priorityinheritance) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "%s not supported on this platform for IPv6 connections", "PriorityInheritance");

@@ -773,7 +773,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		listen_socket[sock].priority = origpriority;
 
 		switch(sa->sa.sa_family) {
-#if defined(IPPROTO_IP) && defined(IP_TOS)
+#if defined(IP_TOS)
 
 		case AF_INET:
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
@@ -784,7 +784,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 			break;
 #endif
-#if defined(IPPROTO_IPV6) & defined(IPV6_TCLASS)
+#if defined(IPV6_TCLASS)
 
 		case AF_INET6:
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
