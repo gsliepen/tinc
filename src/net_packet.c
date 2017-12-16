@@ -580,18 +580,18 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		listen_socket[n->sock].priority = origpriority;
 
 		switch(listen_socket[n->sock].sa.sa.sa_family) {
-#if defined(SOL_IP) && defined(IP_TOS)
+#if defined(IP_TOS)
 
 		case AF_INET:
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv4 outgoing packet priority to %d", origpriority);
 
-			if(setsockopt(listen_socket[n->sock].udp, SOL_IP, IP_TOS, (void *)&origpriority, sizeof(origpriority))) { /* SO_PRIORITY doesn't seem to work */
+			if(setsockopt(listen_socket[n->sock].udp, IPPROTO_IP, IP_TOS, (void *)&origpriority, sizeof(origpriority))) { /* SO_PRIORITY doesn't seem to work */
 				logger(LOG_ERR, "System call `%s' failed: %s", "setsockopt", strerror(errno));
 			}
 
 			break;
 #endif
-#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
+#if defined(IPV6_TCLASS)
 
 		case AF_INET6:
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Setting IPv6 outgoing packet priority to %d", origpriority);
