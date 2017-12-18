@@ -2306,6 +2306,10 @@ Use the cookie from @var{filename} to authenticate with a running tinc daemon.
 If unspecified, the default is
 @file{@value{runstatedir}/tinc.@var{netname}.pid}.
 
+@cindex batch
+@item -b, --batch
+Don't ask for anything (non-interactive mode).
+
 @item --force
 Force some commands to work despite warnings.
 

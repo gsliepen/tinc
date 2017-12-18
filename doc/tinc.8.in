@@ -7,10 +7,11 @@
 .Nd tinc VPN control
 .Sh SYNOPSIS
 .Nm
-.Op Fl cn
+.Op Fl bcn
 .Op Fl -config Ns = Ns Ar DIR
 .Op Fl -net Ns = Ns Ar NETNAME
 .Op Fl -pidfile Ns = Ns Ar FILENAME
+.Op Fl -batch
 .Op Fl -force
 .Op Fl -help
 .Op Fl -version
@@ -55,6 +56,8 @@ Use the cookie from
 to authenticate with a running tinc daemon.
 If unspecified, the default is
 .Pa @runstatedir@/tinc. Ns Ar NETNAME Ns Pa .pid.
+.It Fl b, -batch
+Don't ask for anything (non-interactive mode).
 .It Fl -force
 Force some commands to work despite warnings.
 .It Fl -help
