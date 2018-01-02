@@ -406,6 +406,15 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 		type = DATA(packet)[16] << 8 | DATA(packet)[17];
 	}
 
+	/* IP in IP (RFC 2003) packet */
+	if(type == ETH_P_IP && DATA(packet)[start + 9] == 4) {
+		start += 20;
+	}
+
+	if(packet->len <= start + 20) {
+		return;
+	}
+
 	if(type == ETH_P_IP && DATA(packet)[start + 9] == 6) {
 		start += (DATA(packet)[start] & 0xf) * 4;
 	} else if(type == ETH_P_IPV6 && DATA(packet)[start + 6] == 6) {
