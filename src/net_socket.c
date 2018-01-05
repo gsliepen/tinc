@@ -22,6 +22,7 @@
 
 #include "system.h"
 
+#include "address_cache.h"
 #include "conf.h"
 #include "connection.h"
 #include "control_common.h"
@@ -491,73 +492,26 @@ static void handle_meta_io(void *data, int flags) {
 	}
 }
 
-static void free_known_addresses(struct addrinfo *ai) {
-	for(struct addrinfo *aip = ai, *next; aip; aip = next) {
-		next = aip->ai_next;
-		free(aip);
-	}
-}
-
 bool do_outgoing_connection(outgoing_t *outgoing) {
-	char *address, *port, *space;
+	const sockaddr_t *sa;
 	struct addrinfo *proxyai = NULL;
 	int result;
 
 begin:
+	sa = get_recent_address(outgoing->address_cache);
 
-	if(!outgoing->ai && !outgoing->kai) {
-		if(!outgoing->cfg) {
-			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->name);
-			retry_outgoing(outgoing);
-			return false;
-		}
-
-		get_config_string(outgoing->cfg, &address);
-
-		space = strchr(address, ' ');
-
-		if(space) {
-			port = xstrdup(space + 1);
-			*space = 0;
-		} else {
-			if(!get_config_string(lookup_config(outgoing->config_tree, "Port"), &port)) {
-				port = xstrdup("655");
-			}
-		}
-
-		outgoing->ai = str2addrinfo(address, port, SOCK_STREAM);
-		free(address);
-		free(port);
-
-		outgoing->aip = outgoing->ai;
-		outgoing->cfg = lookup_config_next(outgoing->config_tree, outgoing->cfg);
-	}
-
-	if(!outgoing->aip) {
-		if(outgoing->ai) {
-			freeaddrinfo(outgoing->ai);
-		}
-
-		outgoing->ai = NULL;
-
-		if(outgoing->kai) {
-			free_known_addresses(outgoing->kai);
-		}
-
-		outgoing->kai = NULL;
-
-		goto begin;
+	if(!sa) {
+		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not set up a meta connection to %s", outgoing->node->name);
+		retry_outgoing(outgoing);
+		return false;
 	}
 
 	connection_t *c = new_connection();
 	c->outgoing = outgoing;
-
-	memcpy(&c->address, outgoing->aip->ai_addr, outgoing->aip->ai_addrlen);
-	outgoing->aip = outgoing->aip->ai_next;
-
+	c->address = *sa;
 	c->hostname = sockaddr2hostname(&c->address);
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", outgoing->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", outgoing->node->name, c->hostname);
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
@@ -617,7 +571,7 @@ begin:
 	}
 
 	if(result == -1 && !sockinprogress(sockerrno)) {
-		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not connect to %s (%s): %s", outgoing->name, c->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not connect to %s (%s): %s", outgoing->node->name, c->hostname, sockstrerror(sockerrno));
 		free_connection(c);
 
 		goto begin;
@@ -627,7 +581,7 @@ begin:
 
 	c->last_ping_time = time(NULL);
 	c->status.connecting = true;
-	c->name = xstrdup(outgoing->name);
+	c->name = xstrdup(outgoing->node->name);
 #ifndef DISABLE_LEGACY
 	c->outcipher = myself->connection->outcipher;
 	c->outdigest = myself->connection->outdigest;
@@ -643,50 +597,13 @@ begin:
 	return true;
 }
 
-// Find edges pointing to this node, and use them to build a list of unique, known addresses.
-static struct addrinfo *get_known_addresses(node_t *n) {
-	struct addrinfo *ai = NULL;
-	struct addrinfo *oai = NULL;
-
-	for splay_each(edge_t, e, n->edge_tree) {
-		if(!e->reverse) {
-			continue;
-		}
-
-		bool found = false;
-
-		for(struct addrinfo *aip = ai; aip; aip = aip->ai_next) {
-			if(!sockaddrcmp(&e->reverse->address, (sockaddr_t *)aip->ai_addr)) {
-				found = true;
-				break;
-			}
-		}
-
-		if(found) {
-			continue;
-		}
-
-		oai = ai;
-		ai = xzalloc(sizeof(*ai));
-		ai->ai_family = e->reverse->address.sa.sa_family;
-		ai->ai_socktype = SOCK_STREAM;
-		ai->ai_protocol = IPPROTO_TCP;
-		ai->ai_addrlen = SALEN(e->reverse->address.sa);
-		ai->ai_addr = xmalloc(ai->ai_addrlen);
-		memcpy(ai->ai_addr, &e->reverse->address, ai->ai_addrlen);
-		ai->ai_next = oai;
-	}
-
-	return ai;
-}
-
 void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 	timeout_del(&outgoing->ev);
 
-	node_t *n = lookup_node(outgoing->name);
+	node_t *n = outgoing->node;
 
-	if(n && n->connection) {
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", outgoing->name);
+	if(n->connection) {
+		logger(DEBUG_CONNECTIONS, LOG_INFO, "Already connected to %s", n->name);
 
 		if(!n->connection->outgoing) {
 			n->connection->outgoing = outgoing;
@@ -696,19 +613,8 @@ void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
 		}
 	}
 
-	init_configuration(&outgoing->config_tree);
-	read_host_config(outgoing->config_tree, outgoing->name, verbose);
-	outgoing->cfg = lookup_config(outgoing->config_tree, "Address");
-
-	if(!outgoing->cfg) {
-		if(n) {
-			outgoing->aip = outgoing->kai = get_known_addresses(n);
-		}
-
-		if(!outgoing->kai) {
-			logger(verbose ? DEBUG_ALWAYS : DEBUG_CONNECTIONS, LOG_DEBUG, "No address known for %s", outgoing->name);
-			goto remove;
-		}
+	if(!outgoing->address_cache) {
+		outgoing->address_cache = open_address_cache(n);
 	}
 
 	do_outgoing_connection(outgoing);
@@ -859,20 +765,8 @@ void handle_new_unix_connection(void *data, int flags) {
 static void free_outgoing(outgoing_t *outgoing) {
 	timeout_del(&outgoing->ev);
 
-	if(outgoing->ai) {
-		freeaddrinfo(outgoing->ai);
-	}
-
-	if(outgoing->kai) {
-		free_known_addresses(outgoing->kai);
-	}
-
-	if(outgoing->config_tree) {
-		exit_configuration(&outgoing->config_tree);
-	}
-
-	if(outgoing->name) {
-		free(outgoing->name);
+	if(outgoing->address_cache) {
+		close_address_cache(outgoing->address_cache);
 	}
 
 	free(outgoing);
@@ -911,7 +805,7 @@ void try_outgoing_connections(void) {
 		bool found = false;
 
 		for list_each(outgoing_t, outgoing, outgoing_list) {
-			if(!strcmp(outgoing->name, name)) {
+			if(!strcmp(outgoing->node->name, name)) {
 				found = true;
 				outgoing->timeout = 0;
 				break;
@@ -920,7 +814,13 @@ void try_outgoing_connections(void) {
 
 		if(!found) {
 			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
-			outgoing->name = name;
+			node_t *n = lookup_node(name);
+			if(!n) {
+				n = new_node();
+				n->name = xstrdup(name);
+				node_add(n);
+			}
+			outgoing->node = n;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing, true);
 		}

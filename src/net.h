@@ -122,13 +122,9 @@ typedef struct listen_socket_t {
 #include "list.h"
 
 typedef struct outgoing_t {
-	char *name;
+	struct node_t *node;
 	int timeout;
-	splay_tree_t *config_tree;
-	struct config_t *cfg;
-	struct addrinfo *ai;  // addresses from config files
-	struct addrinfo *aip;
-	struct addrinfo *kai; // addresses known via other online nodes (use free_known_addresses())
+	struct address_cache_t *address_cache;
 	timeout_t ev;
 } outgoing_t;
 

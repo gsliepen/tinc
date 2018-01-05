@@ -20,6 +20,7 @@
 
 #include "system.h"
 
+#include "address_cache.h"
 #include "control_common.h"
 #include "hash.h"
 #include "logger.h"
@@ -116,6 +117,10 @@ void free_node(node_t *n) {
 
 	if(n->late) {
 		free(n->late);
+	}
+
+	if(n->address_cache) {
+		close_address_cache(n->address_cache);
 	}
 
 	free(n);

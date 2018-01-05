@@ -54,7 +54,7 @@ static void make_new_connection() {
 		bool found = false;
 
 		for list_each(outgoing_t, outgoing, outgoing_list) {
-			if(!strcmp(outgoing->name, n->name)) {
+			if(outgoing->node == n) {
 				found = true;
 				break;
 			}
@@ -63,7 +63,7 @@ static void make_new_connection() {
 		if(!found) {
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
 			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
-			outgoing->name = xstrdup(n->name);
+			outgoing->node = n;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing, false);
 		}
@@ -92,15 +92,16 @@ static void connect_to_unreachable() {
 			return;
 		}
 
-		/* Are we already trying to make an outgoing connection to it? If not, return. */
-		for list_each(outgoing_t, outgoing, outgoing_list)
-			if(!strcmp(outgoing->name, n->name)) {
+		/* Are we already trying to make an outgoing connection to it? If so, return. */
+		for list_each(outgoing_t, outgoing, outgoing_list) {
+			if(outgoing->node == n) {
 				return;
 			}
+		}
 
 		logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
 		outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
-		outgoing->name = xstrdup(n->name);
+		outgoing->node = n;
 		list_insert_tail(outgoing_list, outgoing);
 		setup_outgoing_connection(outgoing, false);
 
@@ -159,7 +160,7 @@ static void drop_superfluous_pending_connections() {
 			continue;
 		}
 
-		logger(DEBUG_CONNECTIONS, LOG_INFO, "Cancelled outgoing connection to %s", o->name);
+		logger(DEBUG_CONNECTIONS, LOG_INFO, "Cancelled outgoing connection to %s", o->node->name);
 		list_delete_node(outgoing_list, node);
 	}
 }

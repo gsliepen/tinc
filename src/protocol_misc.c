@@ -20,6 +20,7 @@
 
 #include "system.h"
 
+#include "address_cache.h"
 #include "conf.h"
 #include "connection.h"
 #include "logger.h"
@@ -68,14 +69,7 @@ bool pong_h(connection_t *c, const char *request) {
 
 	if(c->outgoing) {
 		c->outgoing->timeout = 0;
-		c->outgoing->cfg = NULL;
-
-		if(c->outgoing->ai) {
-			freeaddrinfo(c->outgoing->ai);
-		}
-
-		c->outgoing->ai = NULL;
-		c->outgoing->aip = NULL;
+		reset_address_cache(c->outgoing->address_cache, &c->address);
 	}
 
 	return true;

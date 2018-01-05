@@ -110,6 +110,8 @@ typedef struct node_t {
 	uint64_t in_bytes;
 	uint64_t out_packets;
 	uint64_t out_bytes;
+
+	struct address_cache_t *address_cache;
 } node_t;
 
 extern struct node_t *myself;

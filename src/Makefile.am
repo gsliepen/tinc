@@ -42,6 +42,7 @@ chacha_poly1305_SOURCES = \
 	chacha-poly1305/poly1305.c chacha-poly1305/poly1305.h
 
 tincd_SOURCES = \
+	address_cache.c address_cache.h \
 	autoconnect.c autoconnect.h \
 	buffer.c buffer.h \
 	cipher.h \
