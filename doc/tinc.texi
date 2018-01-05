@@ -2709,6 +2709,8 @@ Address = server.example.com
 The file is basically a concatenation of several host config blocks. Each host
 config block starts with @code{Name = ...}.  Lines that look like @code{#---#}
 are not important, it just makes it easier for humans to read the file.
+However, the first line of an invitation file @emph{must} always start with
+@code{Name = ...}.
 
 The first host config block is always the one representing the invitee. So the
 first Name statement determines the name that the invitee will get. From the
