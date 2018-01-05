@@ -842,7 +842,7 @@ bool connect_tincd(bool verbose) {
 
 	if(getaddrinfo(host, port, &hints, &res) || !res) {
 		if(verbose) {
-			fprintf(stderr, "Cannot resolve %s port %s: %s", host, port, sockstrerror(sockerrno));
+			fprintf(stderr, "Cannot resolve %s port %s: %s\n", host, port, sockstrerror(sockerrno));
 		}
 
 		return false;
@@ -863,7 +863,7 @@ bool connect_tincd(bool verbose) {
 
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
 		if(verbose) {
-			fprintf(stderr, "ioctlsocket failed: %s", sockstrerror(sockerrno));
+			fprintf(stderr, "System call `%s' failed: %s\n", "ioctlsocket", sockstrerror(sockerrno));
 		}
 	}
 
@@ -1157,7 +1157,7 @@ static int dump_invitations(void) {
 		buf[0] = 0;
 
 		if(!fgets(buf, sizeof(buf), f)) {
-			fprintf(stderr, "Invalid invitation file %s", fname);
+			fprintf(stderr, "Invalid invitation file %s\n", fname);
 			fclose(f);
 			continue;
 		}
@@ -1171,7 +1171,7 @@ static int dump_invitations(void) {
 		}
 
 		if(strncmp(buf, "Name = ", 7) || !check_id(buf + 7)) {
-			fprintf(stderr, "Invalid invitation file %s", fname);
+			fprintf(stderr, "Invalid invitation file %s\n", fname);
 			continue;
 		}
 
