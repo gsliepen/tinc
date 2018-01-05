@@ -769,13 +769,19 @@ make_names:
 
 		l[len] = 0;
 
+		// Ignore lines with empty variable names
+		if(!*l) {
+			continue;
+		}
+
 		// Is it a Name?
-		if(!strcasecmp(l, "Name"))
+		if(!strcasecmp(l, "Name")) {
 			if(strcmp(value, name)) {
 				break;
 			} else {
 				continue;
-			} else if(!strcasecmp(l, "NetName")) {
+			}
+		} else if(!strcasecmp(l, "NetName")) {
 			continue;
 		}
 
