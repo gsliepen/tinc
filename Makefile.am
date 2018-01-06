@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS = src doc distro
+SUBDIRS = src doc systemd
 
 ACLOCAL_AMFLAGS = -I m4 
 

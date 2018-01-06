@@ -26,5 +26,6 @@ stamp-h1
 /doc/*.html
 /doc/*.pdf
 /doc/*.t2p
+/systemd/*.service
 /ChangeLog
 core*
