@@ -21,8 +21,6 @@ AC_PROG_INSTALL
 
 AM_PROG_CC_C_O
 
-PKG_PROG_PKG_CONFIG
-
 dnl Check and set OS
 
 AC_CANONICAL_HOST
@@ -116,20 +114,16 @@ AC_ARG_WITH(windows2000,
   ]
 )
 
-AC_ARG_WITH([systemdsystemunitdir],
-     [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files])],,
-     [with_systemdsystemunitdir=auto])
-AS_IF([test "x$with_systemdsystemunitdir" = "xyes" -o "x$with_systemdsystemunitdir" = "xauto"], [
-     def_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+AC_ARG_WITH(systemd,
+  AS_HELP_STRING([--with-systemd@<:@=DIR@:>@], [install systemd service files @<:@to DIR if specified@:>@]),
+  [ systemd=true; systemd_path="$with_systemd" ],
+  [ systemd=false ]
+)
 
-     AS_IF([test "x$def_systemdsystemunitdir" = "x"],
-   [AS_IF([test "x$with_systemdsystemunitdir" = "xyes"],
-    [AC_MSG_ERROR([systemd support requested but pkg-config unable to query systemd package])])
-    with_systemdsystemunitdir=no],
-   [with_systemdsystemunitdir="$def_systemdsystemunitdir"])])
-AS_IF([test "x$with_systemdsystemunitdir" != "xno"],
-      [AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])])
-AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemdsystemunitdir" != "xno"])
+AS_IF([test "x$with_systemd" = "xyes"], [systemd_path="\${libdir}/systemd/system"],
+      [AS_IF([test "x$with_systemd" = "xno"], [systemd=false])])
+
+AC_SUBST(systemd_path, $systemd_path)
 
 AM_CONDITIONAL(LINUX, test "$linux" = true)
 AM_CONDITIONAL(BSD, test "$bsd" = true)
@@ -139,6 +133,7 @@ AM_CONDITIONAL(CYGWIN, test "$cygwin" = true)
 AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
+AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
 
 AC_CACHE_SAVE
 

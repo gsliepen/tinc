@@ -3,14 +3,18 @@
 
 [Unit]
 Description=Tinc VPN
+Documentation=info:tinc
+Documentation=man:tinc(8) man:tinc.conf(5)
+Documentation=http://tinc-vpn.org/docs/
 After=network.target
+Wants=network.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/true
 ExecReload=/bin/true
-WorkingDirectory=/etc/tinc
+WorkingDirectory=@sysconfdir@/tinc
 
 [Install]
 WantedBy=multi-user.target
