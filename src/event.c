@@ -56,7 +56,7 @@ void expire_events(void) {
 	time_t diff;
 
 	/*
-	 * Make all events appear expired by substracting the difference between
+	 * Make all events appear expired by subtracting the difference between
 	 * the expiration time of the last event and the current time.
 	 */
 

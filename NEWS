@@ -341,7 +341,7 @@ Version 1.0.9                Dec 26 2008
 
  * Enable path MTU discovery by default.
 
- * Fixed a memory leak that occured when connections were closed.
+ * Fixed a memory leak that occurred when connections were closed.
 
  Thanks to Max Rijevski for his contributions to this version of tinc.
 
