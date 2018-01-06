@@ -1013,7 +1013,7 @@ static int cmd_start(int argc, char *argv[]) {
 #endif
 
 	// Pass all log messages from the umbilical to stderr.
-	// A nul-byte right before closure means tincd started succesfully.
+	// A nul-byte right before closure means tincd started successfully.
 	bool failure = true;
 	char buf[1024];
 	ssize_t len;
@@ -1859,7 +1859,7 @@ static int cmd_config(int argc, char *argv[]) {
 			}
 		}
 
-		/* Change "add" into "set" for variables that do not allow multiple occurences.
+		/* Change "add" into "set" for variables that do not allow multiple occurrences.
 		   Turn on warnings when it seems variables might be removed unintentionally. */
 
 		if(action == 1 && !(variables[i].type & VAR_MULTIPLE)) {

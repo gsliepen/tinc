@@ -64,7 +64,7 @@ bool send_pong(connection_t *c) {
 bool pong_h(connection_t *c, const char *request) {
 	c->status.pinged = false;
 
-	/* Succesful connection, reset timeout if this is an outgoing connection. */
+	/* Successful connection, reset timeout if this is an outgoing connection. */
 
 	if(c->outgoing) {
 		c->outgoing->timeout = 0;

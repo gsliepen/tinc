@@ -929,7 +929,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 		if(!from->status.validkey) {
 			from->status.validkey = true;
 			from->status.waitingforkey = false;
-			logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) succesful", from->name, from->hostname);
+			logger(DEBUG_META, LOG_INFO, "SPTPS key exchange with %s (%s) successful", from->name, from->hostname);
 		}
 
 		return true;

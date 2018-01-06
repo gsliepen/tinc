@@ -721,7 +721,7 @@ It is not required if you only run one tinc daemon,
 it doesn't even have to be the same on all the nodes of your VPN,
 but it is recommended that you choose one anyway.
 
-We will asume you use a netname throughout this document.
+We will assume you use a netname throughout this document.
 This means that you call tinc with the -n argument,
 which will specify the netname.
 
@@ -1059,7 +1059,7 @@ Incoming packets using the SPTPS protocol are dropped, since they are end-to-end
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
 should be resolved.  Since DNS lookups are blocking, it might affect
-tinc's efficiency, even stopping the daemon for a few seconds everytime
+tinc's efficiency, even stopping the daemon for a few seconds every time
 it does a lookup if your DNS server is not responding.
 
 This does not affect resolving hostnames to IP addresses from the
@@ -1398,7 +1398,7 @@ connection with that host.
 @cindex Subnet
 @item Subnet = <@var{address}[/@var{prefixlength}[#@var{weight}]]>
 The subnet which this tinc daemon will serve.
-Tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
+Tinc tries to look up which other daemon it should send a packet to by searching the appropriate subnet.
 If the packet matches a subnet,
 it will be sent to the daemon who has this subnet in his host configuration file.
 Multiple subnet lines can be specified for each daemon.
@@ -2536,7 +2536,7 @@ The @var{name} of the node must be given,
 or can be "." to check against the local node's public key,
 or "*" to allow a signature from any node whose public key is known.
 If no @var{filename} is given, the file is read from standard input.
-If the verification is succesful, a copy of the input with the signature removed is written to standard output, and the exit code will be zero.
+If the verification is successful, a copy of the input with the signature removed is written to standard output, and the exit code will be zero.
 If the verification failed, nothing will be written to standard output, and the exit code will be non-zero.
 
 @end table
@@ -2759,7 +2759,7 @@ When an invitation is generated, the "invitation-created" script is called (if
 it exists) right after the invitation file is written, but before the URL has
 been written to stdout. This allows one to change the invitation file
 automatically before the invitation URL is passed to the invitee. Here is an
-example shell script that aproximately recreates the default invitation file:
+example shell script that approximately recreates the default invitation file:
 
 @example
 #!/bin/sh

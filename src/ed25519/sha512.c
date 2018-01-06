@@ -263,7 +263,7 @@ int sha512_final(sha512_context *md, void *vout) {
 		md->curlen = 0;
 	}
 
-	/* pad upto 120 bytes of zeroes
+	/* pad up to 120 bytes of zeroes
 	 * note: that from 112 to 120 is the 64 MSB of the length.  We assume that you won't hash
 	 * > 2^64 bits of data... :-)
 	 */

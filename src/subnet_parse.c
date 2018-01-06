@@ -252,7 +252,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 	if(sscanf(str, "%hx:%hx:%hx:%hx:%hx:%hx%n", &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &consumed) >= 6 && !str[consumed]) {
 		/*
 		   Normally we should check that each part has two digits to prevent ambiguities.
-		   However, in old tinc versions net2str() will agressively return MAC addresses with one-digit parts,
+		   However, in old tinc versions net2str() will aggressively return MAC addresses with one-digit parts,
 		   so we have to accept them otherwise we would be unable to parse ADD_SUBNET messages.
 		*/
 		if(prefixlength >= 0) {

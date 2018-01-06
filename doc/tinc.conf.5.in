@@ -788,7 +788,7 @@ its connection to the virtual network device.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /invitations/
 This directory contains outstanding invitations.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /invitation-data
-After a succesful join, this file contains a copy of the invitation data received.
+After a successful join, this file contains a copy of the invitation data received.
 .El
 .Sh SEE ALSO
 .Xr tincd 8 ,

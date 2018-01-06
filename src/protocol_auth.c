@@ -200,7 +200,7 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	fprintf(f, "Ed25519PublicKey = %s\n", data);
 	fclose(f);
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key successfully received from %s (%s)", c->name, c->hostname);
 
 	// Call invitation-accepted script
 	environment_t env;
@@ -323,7 +323,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	c->status.invitation_used = true;
 
-	logger(DEBUG_CONNECTIONS, LOG_INFO, "Invitation %s succesfully sent to %s (%s)", cookie, c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Invitation %s successfully sent to %s (%s)", cookie, c->name, c->hostname);
 	return true;
 }
 

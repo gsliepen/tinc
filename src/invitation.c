@@ -1065,7 +1065,7 @@ static bool invitation_receive(void *handle, uint8_t type, const void *msg, uint
 		return finalize_join();
 
 	case 2:
-		fprintf(stderr, "Invitation succesfully accepted.\n");
+		fprintf(stderr, "Invitation successfully accepted.\n");
 		shutdown(sock, SHUT_RDWR);
 		success = true;
 		break;

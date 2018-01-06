@@ -12,7 +12,7 @@
 * Support PriorityInheritance for IPv6 packets.
 * Fixes for Solaris tun/tap support.
 * Add a configurable expiration time for invitations.
-* Store invitation data after a succesful join.
+* Store invitation data after a successful join.
 * Exit gracefully when the tun/tap device is in a bad state.
 * Add the LogLevel option.
 * AutoConnect now actively tries to heal split networks.
@@ -43,7 +43,7 @@ contributions to this version of tinc.
 * Allow tinc to be compiled without LibreSSL or OpenSSL (this drops
   compatibility with nodes running 1.0.x).
 * Added a "fsck" command to check the configuration files for problems.
-* Tinc "start" now checks whether the daemon really started succesfully, and
+* Tinc "start" now checks whether the daemon really started successfully, and
   displays error messages otherwise.
 * Added systemd service files.
 * Use the recvmmsg() function if available.
@@ -378,7 +378,7 @@ their contributions to this version of tinc.
 * Improved default settings of tun and tap devices on BSD platforms.
 * Make IPv6 sockets bind only to IPv6 on Linux.
 * Enable path MTU discovery by default.
-* Fixed a memory leak that occured when connections were closed.
+* Fixed a memory leak that occurred when connections were closed.
 
 Thanks to Max Rijevski for his contributions to this version of tinc.
 

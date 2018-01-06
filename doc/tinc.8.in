@@ -252,7 +252,7 @@ to allow a signature from any node whose public key is known.
 If no
 .Ar filename
 is given, the file is read from standard input.
-If the verification is succesful,
+If the verification is successful,
 a copy of the input with the signature removed is written to standard output,
 and the exit code will be zero.
 If the verification failed,
