@@ -33,6 +33,7 @@
 /src/sptps_test
 /src/version_git.h
 /stamp-h1
+/systemd/*.service
 /test-driver
 /test/*.test.*
 /test/*.log
