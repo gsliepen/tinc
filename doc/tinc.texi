@@ -2443,6 +2443,7 @@ tinc or give us feedback, you are stronly encouraged to do so.
 @menu
 * Interface configuration::
 * Routes::
+* Automatically starting tinc::
 @end menu
 
 @c ==================================================================
@@ -2569,6 +2570,66 @@ Adding routes to IPv6 subnets:
 @tab @code{netsh interface ipv6 add route} @var{network address}/@var{prefixlength} @var{interface}
 @end multitable
 
+@c ==================================================================
+@node    Automatically starting tinc
+@section Automatically starting tinc
+
+@menu
+* Linux::
+* Windows::
+* Other platforms::
+@end menu
+
+@c ==================================================================
+@node       Linux
+@subsection Linux
+
+@cindex systemd
+There are many Linux distributions, and historically, many of them had their
+own way of starting programs at boot time. Today, a number of major Linux
+distributions have chosen to use systemd as their init system. Tinc ships with
+systemd service files that allow you to start and stop tinc using systemd.
+There are two service files: @code{tinc.service} is used to globally enable or
+disable all tinc daemons managed by systemd, and
+@code{tinc@@@var{netname}.service} is used to enable or disable specific tinc
+daemons. So if one has created a tinc network with netname @code{foo}, then
+you have to run the following two commands to ensure it is started at boot
+time:
+
+@example
+systemctl enable tinc
+systemctl enable tinc@@foo
+@end example
+
+To start the tinc daemon immediately if it wasn't already running, use the
+following command:
+
+@example
+systemctl start tinc@@foo
+@end example
+
+You can also use @samp{systemctl start tinc}, this will start all tinc daemons
+that are enabled. You can stop and disable tinc networks in the same way.
+
+If your system is not using systemd, then you have to look up your
+distribution's way of starting tinc at boot time.
+
+@c ==================================================================
+@node       Windows
+@subsection Windows
+
+On Windows, if tinc is started without the @code{-D} or @code{--no-detach}
+option, it will automatically register itself as a service that is started at
+boot time. When tinc is stopped using the @code{-k} or @code{--kill}, it will
+also automatically unregister itself. Once tinc is registered as a service, it
+is also possible to stop and start tinc using the Windows Services Manager.
+
+@c ==================================================================
+@node       Other platforms
+@subsection Other platforms
+
+On platforms other than the ones mentioned in the earlier sections, you have to
+look up your platform's way of starting programs at boot time.
 
 @c ==================================================================
 @node    About us
