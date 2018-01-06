@@ -115,7 +115,7 @@ AC_ARG_WITH(systemd,
   [ systemd=false ]
 )
 
-AS_IF([test "x$with_systemd" = "xyes"], [systemd_path="/lib/systemd/system"],
+AS_IF([test "x$with_systemd" = "xyes"], [systemd_path="\${libdir}/systemd/system"],
       [AS_IF([test "x$with_systemd" = "xno"], [systemd=false])])
 
 AC_SUBST(systemd_path, $systemd_path)
