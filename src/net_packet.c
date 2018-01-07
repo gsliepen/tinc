@@ -48,6 +48,7 @@
 #include "route.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "async_send.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -810,21 +811,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		}
 	}
 
-	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
-		if(sockmsgsize(sockerrno)) {
-			if(n->maxmtu >= origlen) {
-				n->maxmtu = origlen - 1;
-			}
 
-			if(n->mtu >= origlen) {
-				n->mtu = origlen - 1;
-			}
-
-			try_fix_mtu(n);
-		} else {
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
-		}
-	}
+	async_sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, sa);
 
 end:
 	origpkt->len = origlen;
@@ -908,25 +896,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet from %s (%s) to %s (%s) via %s (%s) (UDP)", from->name, from->hostname, to->name, to->hostname, relay->name, relay->hostname);
 
-	if(sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
-		if(sockmsgsize(sockerrno)) {
-			// Compensate for SPTPS overhead
-			len -= SPTPS_DATAGRAM_OVERHEAD;
-
-			if(relay->maxmtu >= len) {
-				relay->maxmtu = len - 1;
-			}
-
-			if(relay->mtu >= len) {
-				relay->mtu = len - 1;
-			}
-
-			try_fix_mtu(relay);
-		} else {
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending UDP SPTPS packet to %s (%s): %s", relay->name, relay->hostname, sockstrerror(sockerrno));
-			return false;
-		}
-	}
+	async_sendto(listen_socket[sock].udp.fd, buf, buf_ptr - buf, 0, sa);
 
 	return true;
 }
