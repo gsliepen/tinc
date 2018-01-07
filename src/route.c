@@ -651,11 +651,13 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable) {
-		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+		route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+		return;
 	}
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself) {
-		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+		route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+		return;
 	}
 
 	if(decrement_ttl && source != myself && subnet->owner != myself)
@@ -675,7 +677,8 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(directonly && subnet->owner != via) {
-		return route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+		route_ipv4_unreachable(source, packet, ether_size, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+		return;
 	}
 
 	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
@@ -742,11 +745,13 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable) {
-		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+		route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+		return;
 	}
 
 	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself) {
-		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+		route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+		return;
 	}
 
 	if(decrement_ttl && source != myself && subnet->owner != myself)
@@ -766,7 +771,8 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(directonly && subnet->owner != via) {
-		return route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+		route_ipv6_unreachable(source, packet, ether_size, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+		return;
 	}
 
 	if(via && packet->len > MAX(via->mtu, 1294) && via != myself) {

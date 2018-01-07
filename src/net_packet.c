@@ -139,7 +139,8 @@ static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) 
 static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!DATA(packet)[0]) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Got UDP probe request %d from %s (%s)", packet->len, n->name, n->hostname);
-		return send_udp_probe_reply(n, packet, len);
+		send_udp_probe_reply(n, packet, len);
+		return;
 	}
 
 	if(DATA(packet)[0] == 2) {
@@ -687,7 +688,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 
 	if(n->status.sptps) {
-		return send_sptps_packet(n, origpkt);
+		send_sptps_packet(n, origpkt);
+		return;
 	}
 
 #ifdef DISABLE_LEGACY
@@ -1354,7 +1356,8 @@ static void try_tx_sptps(node_t *n, bool mtu) {
 			return;
 		}
 
-		return try_tx(via, mtu);
+		try_tx(via, mtu);
+		return;
 	}
 
 	/* Otherwise, try to establish UDP connectivity. */
