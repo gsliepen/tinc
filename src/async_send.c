@@ -38,11 +38,16 @@ typedef struct async_send_request {
 	sockaddr_t dest_addr;
 } async_send_request_t;
 
+
 bool async_send_enabled = false;
 static thrd_t async_send_thrd;
 static mtx_t async_send_mtx;
 static cnd_t async_send_cnd;
-static async_send_request_t* async_send_request = NULL;
+
+#define ASYNC_SEND_QUEUE_LENGTH 128
+async_send_request_t async_send_queue[ASYNC_SEND_QUEUE_LENGTH];
+size_t async_send_queue_index = 0;
+size_t async_send_queue_length = 0;
 
 static void async_send_sendrequest(const async_send_request_t* request) {
 	assert(request);
@@ -57,21 +62,26 @@ static void async_send_sendrequest(const async_send_request_t* request) {
 static int async_send_thread(void* data) {
 	assert(mtx_lock(&async_send_mtx) == thrd_success);
 	while (true) {
-		while (async_send_enabled && !async_send_request) {
+		while (async_send_enabled && async_send_queue_length == 0) {
 			assert(cnd_wait(&async_send_cnd, &async_send_mtx) == thrd_success);
 		}
 
-		if (async_send_request) {
+		if (async_send_queue_length > 0) {
+			async_send_request_t* request = &async_send_queue[async_send_queue_index];
 			assert(mtx_unlock(&async_send_mtx) == thrd_success);
 
-			async_send_sendrequest(async_send_request);
-			free(async_send_request->buf);
-			sockaddrfree(&async_send_request->dest_addr);
-			free(async_send_request);
+			async_send_sendrequest(request);
+			free(request->buf);
+			sockaddrfree(&request->dest_addr);
 
 			assert(mtx_lock(&async_send_mtx) == thrd_success);
-			async_send_request = NULL;
+			async_send_queue_index++;
+			async_send_queue_index %= ASYNC_SEND_QUEUE_LENGTH;
+			async_send_queue_length--;
+
+			continue;
 		}
+
 		if (!async_send_enabled) break;
 	}
 	assert(mtx_unlock(&async_send_mtx) == thrd_success);
@@ -83,16 +93,21 @@ void async_sendto(int fd, const void* buf, size_t len, int flags, const sockaddr
 
 	assert(mtx_lock(&async_send_mtx) == thrd_success);
 
-	if (!async_send_request) {
-		async_send_request = xzalloc(sizeof(*async_send_request));
-		async_send_request->fd = fd;
-		async_send_request->buf = xmalloc(len);
-		memcpy(async_send_request->buf, buf, len);
-		async_send_request->len = len;
-		async_send_request->flags = flags;
-		sockaddrcpy(&async_send_request->dest_addr, dest_addr);
+	if (async_send_queue_length < ASYNC_SEND_QUEUE_LENGTH) {
+		async_send_request_t* request = &async_send_queue[(async_send_queue_index + async_send_queue_length) % ASYNC_SEND_QUEUE_LENGTH];
 
-		assert(cnd_signal(&async_send_cnd) == thrd_success);
+		request->fd = fd;
+		request->buf = xmalloc(len);
+		memcpy(request->buf, buf, len);
+		request->len = len;
+		request->flags = flags;
+		sockaddrcpy(&request->dest_addr, dest_addr);
+
+		if (async_send_queue_length == 0) {
+			assert(cnd_signal(&async_send_cnd) == thrd_success);
+		}
+
+		async_send_queue_length++;
 	}
 
 	assert(mtx_unlock(&async_send_mtx) == thrd_success);
