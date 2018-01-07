@@ -878,7 +878,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 	if(relay_supported) {
 		if(direct) {
 			/* Inform the recipient that this packet was sent directly. */
-			node_id_t nullid = {};
+			node_id_t nullid = {{0}};
 			memcpy(buf_ptr, &nullid, sizeof(nullid));
 			buf_ptr += sizeof(nullid);
 		} else {
@@ -1579,7 +1579,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 
 static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, sockaddr_t *addr) {
 	char *hostname;
-	node_id_t nullid = {};
+	node_id_t nullid = {{0}};
 	node_t *from, *to;
 	bool direct = false;
 

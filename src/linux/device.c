@@ -117,7 +117,7 @@ static bool setup_device(void) {
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	if(ifr.ifr_flags & IFF_TAP) {
-		struct ifreq ifr_mac = {};
+		struct ifreq ifr_mac = {{{0}}};
 
 		if(!ioctl(device_fd, SIOCGIFHWADDR, &ifr_mac)) {
 			memcpy(mymac.x, ifr_mac.ifr_hwaddr.sa_data, ETH_ALEN);
