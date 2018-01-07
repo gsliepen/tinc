@@ -97,6 +97,8 @@ tincd_SOURCES = \
 	subnet_parse.c \
 	system.h \
 	tincd.c \
+	tinycthread.h \
+	tinycthread.c \
 	utils.c utils.h \
 	xalloc.h \
 	version.c version.h \
@@ -273,8 +275,8 @@ endif
 if MINIUPNPC
 tincd_SOURCES += upnp.h upnp.c
 tincd_LDADD = $(MINIUPNPC_LIBS)
-tincd_LDFLAGS = -pthread
 endif
+tincd_LDFLAGS = -pthread
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 sptps_speed_LDADD = -lrt
