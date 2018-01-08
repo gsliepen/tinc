@@ -44,6 +44,7 @@ chacha_poly1305_SOURCES = \
 tincd_SOURCES = \
 	address_cache.c address_cache.h \
 	async_device.c async_device.h \
+	async_pool.c async_pool.h \
 	async_send.c async_send.h \
 	autoconnect.c autoconnect.h \
 	buffer.c buffer.h \

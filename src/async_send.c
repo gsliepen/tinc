@@ -24,6 +24,7 @@
 
 #include <assert.h>
 
+#include "async_pool.h"
 #include "logger.h"
 #include "tinycthread.h"
 #include "utils.h"
@@ -32,25 +33,17 @@
 
 typedef struct async_send_request {
 	int fd;
-	void* buf;
 	size_t len;
 	int flags;
 	sockaddr_t dest_addr;
+	uint8_t buf[MAXSIZE];
 } async_send_request_t;
 
-
-bool async_send_enabled = false;
-static thrd_t async_send_thrd;
-static mtx_t async_send_mtx;
-static cnd_t async_send_cnd;
-
 #define ASYNC_SEND_QUEUE_LENGTH 128
-async_send_request_t async_send_queue[ASYNC_SEND_QUEUE_LENGTH];
-size_t async_send_queue_index = 0;
-size_t async_send_queue_length = 0;
+async_pool_t *send_pool;
 
-static void async_send_sendrequest(const async_send_request_t* request) {
-	assert(request);
+static void async_send_sendrequest(void *arg) {
+	async_send_request_t *request = arg;
 
 	if (sendto(request->fd, request->buf, request->len, request->flags, &request->dest_addr.sa, SALEN(request->dest_addr.sa)) < 0 && !sockwouldblock(sockerrno)) {
 		char* hostname = sockaddr2hostname(&request->dest_addr);
@@ -59,91 +52,22 @@ static void async_send_sendrequest(const async_send_request_t* request) {
 	}
 }
 
-static int async_send_thread(void* data) {
-	assert(mtx_lock(&async_send_mtx) == thrd_success);
-	while (true) {
-		while (async_send_enabled && async_send_queue_length == 0) {
-			assert(cnd_wait(&async_send_cnd, &async_send_mtx) == thrd_success);
-		}
-
-		if (async_send_queue_length > 0) {
-			async_send_request_t* request = &async_send_queue[async_send_queue_index];
-			assert(mtx_unlock(&async_send_mtx) == thrd_success);
-
-			async_send_sendrequest(request);
-			free(request->buf);
-			sockaddrfree(&request->dest_addr);
-
-			assert(mtx_lock(&async_send_mtx) == thrd_success);
-			async_send_queue_index++;
-			async_send_queue_index %= ASYNC_SEND_QUEUE_LENGTH;
-			async_send_queue_length--;
-
-			continue;
-		}
-
-		if (!async_send_enabled) break;
-	}
-	assert(mtx_unlock(&async_send_mtx) == thrd_success);
-	return 0;
-}
-
 void async_sendto(int fd, const void* buf, size_t len, int flags, const sockaddr_t *dest_addr) {
-	assert(async_send_enabled);
+	async_send_request_t* request = async_pool_get(send_pool);
 
-	assert(mtx_lock(&async_send_mtx) == thrd_success);
+	request->fd = fd;
+	memcpy(request->buf, buf, len);
+	request->len = len;
+	request->flags = flags;
+	sockaddrcpy(&request->dest_addr, dest_addr);
 
-	if (async_send_queue_length < ASYNC_SEND_QUEUE_LENGTH) {
-		async_send_request_t* request = &async_send_queue[(async_send_queue_index + async_send_queue_length) % ASYNC_SEND_QUEUE_LENGTH];
-
-		request->fd = fd;
-		request->buf = xmalloc(len);
-		memcpy(request->buf, buf, len);
-		request->len = len;
-		request->flags = flags;
-		sockaddrcpy(&request->dest_addr, dest_addr);
-
-		if (async_send_queue_length == 0) {
-			assert(cnd_signal(&async_send_cnd) == thrd_success);
-		}
-
-		async_send_queue_length++;
-	}
-
-	assert(mtx_unlock(&async_send_mtx) == thrd_success);
+	async_pool_put(send_pool, request);
 }
 
 void async_send_init() {
-	if (mtx_init(&async_send_mtx, mtx_plain) != thrd_success) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Unable to initialize async send mutex, falling back to synchronous mode");
-		return;
-	}
-	if (cnd_init(&async_send_cnd) != thrd_success) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Unable to initialize async send condition variable, falling back to synchronous mode");
-		mtx_destroy(&async_send_mtx);
-		return;
-	}
-
-	async_send_enabled = true;
-
-	if (thrd_create(&async_send_thrd, async_send_thread, NULL) != thrd_success) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Unable to initialize async send thread, falling back to synchronous mode");
-		async_send_enabled = 0;
-		cnd_destroy(&async_send_cnd);
-		mtx_destroy(&async_send_mtx);
-		return;
-	}
+	send_pool = async_pool_alloc(ASYNC_SEND_QUEUE_LENGTH, sizeof(async_send_request_t), async_send_sendrequest);
 }
 
 void async_send_exit() {
-	assert(mtx_lock(&async_send_mtx) == thrd_success);
-	async_send_enabled = false;
-	assert(cnd_broadcast(&async_send_cnd) == thrd_success);
-	assert(mtx_unlock(&async_send_mtx) == thrd_success);
-
-	int result = -1;
-	assert(thrd_join(async_send_thrd, &result));
-	assert(result == 0);
-
-	mtx_destroy(&async_send_mtx);
+	async_pool_free(send_pool);
 }
