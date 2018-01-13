@@ -30,6 +30,7 @@ typedef struct async_pool_t {
 	volatile bool active;
 	size_t head;
 	size_t tail;
+	size_t ctail;
 	void (*consume)(void *);
 	void *bufs[0];
 } async_pool_t;

@@ -24,12 +24,26 @@
 #include "async_pool.h"
 #include "xalloc.h"
 
+// 1 2 3 4 5 6 7 8 9
+//     |   |   |
+//     |   |   \-> head
+//     |   \-> tail
+//     \-> ctail (consume tail)
+
+static bool no_free_buffers(async_pool_t *pool) {
+	return (pool->head + 1) % pool->nmemb == pool->ctail;
+}
+
+static bool nothing_to_consume(async_pool_t *pool) {
+	return pool->ctail == pool->tail;
+}
+
 static int async_pool_thread(void *arg) {
 	async_pool_t *pool = arg;
 	assert(mtx_lock(&pool->mtx) == thrd_success);
 
 	while(true) {
-		while(pool->active && (pool->tail == pool->head || !pool->bufs[pool->tail])) {
+		while(pool->active && nothing_to_consume(pool)) {
 			cnd_wait(&pool->cnd, &pool->mtx);
 		}
 
@@ -37,12 +51,9 @@ static int async_pool_thread(void *arg) {
 			break;
 		}
 
-		if(pool->tail == pool->head) {
-			continue;
-		}
-
-		pool->consume(pool->bufs[pool->tail++]);
-		pool->tail %= pool->nmemb;
+		assert(pool->bufs[pool->ctail]);
+		pool->consume(pool->bufs[pool->ctail++]);
+		pool->ctail %= pool->nmemb;
 		cnd_signal(&pool->cnd);
 	}
 
@@ -73,7 +84,7 @@ void async_pool_free(async_pool_t *pool) {
 
 	assert(mtx_lock(&pool->mtx) == thrd_success);
 	pool->active = false;
-	cnd_broadcast(&pool->cnd);
+	cnd_signal(&pool->cnd);
 	cnd_wait(&pool->cnd, &pool->mtx);
 
 	for(size_t i = 0; i < pool->nmemb; i++) {
@@ -86,13 +97,13 @@ void async_pool_free(async_pool_t *pool) {
 }
 
 void *async_pool_get(async_pool_t *pool) {
-	void *buf;
 	assert(mtx_lock(&pool->mtx) == thrd_success);
 
-	while(!(buf = pool->bufs[pool->head])) {
+	while(no_free_buffers(pool)) {
 		cnd_wait(&pool->cnd, &pool->mtx);
 	}
 
+	void *buf = pool->bufs[pool->head];
 	pool->bufs[pool->head++] = NULL;
 	pool->head %= pool->nmemb;
 
@@ -101,10 +112,12 @@ void *async_pool_get(async_pool_t *pool) {
 }
 
 void async_pool_put(async_pool_t *pool, void *buf) {
+	assert(buf);
 	assert(mtx_lock(&pool->mtx) == thrd_success);
 
-	assert(pool->bufs[pool->tail] == NULL);
-	pool->bufs[pool->tail] = buf;
+	assert(!pool->bufs[pool->tail]);
+	pool->bufs[pool->tail++] = buf;
+	pool->tail %= pool->nmemb;
 	cnd_signal(&pool->cnd);
 
 	assert(mtx_unlock(&pool->mtx) == thrd_success);
