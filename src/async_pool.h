@@ -39,5 +39,7 @@ async_pool_t *async_pool_alloc(size_t nmemb, size_t size, void (*consume)(void *
 void async_pool_free(async_pool_t *pool);
 void *async_pool_get(async_pool_t *pool);
 void async_pool_put(async_pool_t *pool, void *buf);
+void *async_pool_ctail(async_pool_t *pool);
+void async_pool_consume(async_pool_t *pool, void *buf);
 
 #endif

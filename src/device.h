@@ -21,11 +21,13 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "async_pool.h"
 #include "net.h"
 
 extern int device_fd;
 extern char *device;
 extern char *iface;
+extern async_pool_t *device_read_pool;
 
 typedef struct devops_t {
 	bool (*setup)(void);

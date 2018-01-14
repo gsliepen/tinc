@@ -22,6 +22,8 @@
 
 #include "system.h"
 
+#include <assert.h>
+
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif
@@ -160,8 +162,11 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!n->status.udp_confirmed) {
 		n->status.udp_confirmed = true;
 		fprintf(stderr, "Updating address cache...\n");
-		if (!n->address_cache)
+
+		if(!n->address_cache) {
 			n->address_cache = open_address_cache(n);
+		}
+
 		reset_address_cache(n->address_cache, &n->address);
 	}
 
@@ -1741,7 +1746,17 @@ void handle_device_data(void *data, int flags) {
 	packet.priority = 0;
 	static int errors = 0;
 
-	if(devops.read(&packet)) {
+	if(!devops.read) {
+		uint64_t count;
+		assert(read(device_fd, &count, sizeof(count)) == sizeof(count));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Got %lu packets", (unsigned long)count);
+		while (count--) {
+			vpn_packet_t *packet = async_pool_ctail(device_read_pool);
+			assert(packet);
+			route(myself, packet);
+			async_pool_consume(device_read_pool, packet);
+		}
+	} else if(devops.read(&packet)) {
 		errors = 0;
 		myself->in_packets++;
 		myself->in_bytes += packet.len;
