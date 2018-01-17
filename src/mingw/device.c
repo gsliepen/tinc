@@ -54,6 +54,8 @@ static void device_issue_read() {
 	int status;
 
 	for(;;) {
+		ResetEvent(device_read_overlapped.hEvent);
+
 		DWORD len;
 		status = ReadFile(device_handle, (void *)device_read_packet.data, MTU, &len, &device_read_overlapped);
 
@@ -72,10 +74,7 @@ static void device_issue_read() {
 }
 
 static void device_handle_read(void *data, int flags) {
-	ResetEvent(device_read_overlapped.hEvent);
-
 	DWORD len;
-
 	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error getting read result from %s %s: %s", device_info,
 		       device, strerror(errno));
