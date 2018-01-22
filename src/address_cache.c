@@ -178,8 +178,8 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 		cache->aip = cache->aip->ai_next;
 
 		if(!cache->aip) {
-			freeaddrinfo(cache->aip);
-			cache->aip = NULL;
+			freeaddrinfo(cache->ai);
+			cache->ai = cache->aip = NULL;
 		}
 
 		return sa;
