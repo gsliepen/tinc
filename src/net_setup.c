@@ -902,6 +902,7 @@ static bool setup_myself(void) {
 
 		free(myport);
 		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+		freeaddrinfo(ai);
 		sockaddr2str(&sa, NULL, &myport);
 	}
 

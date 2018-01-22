@@ -1201,6 +1201,7 @@ next:
 		aip = aip->ai_next;
 
 		if(!aip) {
+			freeaddrinfo(ai);
 			return 1;
 		}
 	}
@@ -1245,6 +1246,8 @@ next:
 		closesocket(sock);
 		goto next;
 	}
+
+	freeaddrinfo(ai);
 
 	// Check if the hash of the key he gave us matches the hash in the URL.
 	char *fingerprint = line + 2;
