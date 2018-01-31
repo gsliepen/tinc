@@ -48,9 +48,6 @@ static const char *device_info = "Windows tap device";
 extern char *myport;
 
 static void device_issue_read() {
-	device_read_overlapped.Offset = 0;
-	device_read_overlapped.OffsetHigh = 0;
-
 	int status;
 
 	for(;;) {
@@ -311,9 +308,13 @@ static bool write_packet(vpn_packet_t *packet) {
 		   which according to MSDN is a no-no. */
 
 		if(!GetOverlappedResult(device_handle, &device_write_overlapped, &outlen, FALSE)) {
-			int log_level = (GetLastError() == ERROR_IO_INCOMPLETE) ? DEBUG_TRAFFIC : DEBUG_ALWAYS;
-			logger(log_level, LOG_ERR, "Error while checking previous write to %s %s: %s", device_info, device, winerror(GetLastError()));
-			return false;
+			if(GetLastError() != ERROR_IO_INCOMPLETE) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Error completing previously queued write to %s %s: %s", device_info, device, winerror(GetLastError()));
+			} else {
+				logger(DEBUG_TRAFFIC, LOG_ERR, "Previous overlapped write to %s %s still in progress", device_info, device);
+				// drop this packet
+				return true;
+			}
 		}
 	}
 
@@ -321,10 +322,14 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	memcpy(&device_write_packet, packet, sizeof(*packet));
 
+	ResetEvent(device_write_overlapped.hEvent);
+
 	if(WriteFile(device_handle, DATA(&device_write_packet), device_write_packet.len, &outlen, &device_write_overlapped)) {
+		// Write was completed immediately.
 		device_write_packet.len = 0;
 	} else if(GetLastError() != ERROR_IO_PENDING) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
+		device_write_packet.len = 0;
 		return false;
 	}
 
