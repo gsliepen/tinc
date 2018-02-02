@@ -225,8 +225,9 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 		struct in6_addr ip6_src;        /* source address */
 		struct in6_addr ip6_dst;        /* destination address */
 		uint32_t length;
-		uint32_t next;
-	} pseudo;
+		uint32_t zero: 24,
+			next: 8;
+	} pseudo = { .zero = 0 };
 
 	if(ratelimit(3)) {
 		return;
@@ -302,7 +303,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 	/* Create pseudo header */
 
 	pseudo.length = htonl(icmp6_size + pseudo.length);
-	pseudo.next = htonl(IPPROTO_ICMPV6);
+	pseudo.next = IPPROTO_ICMPV6;
 
 	/* Generate checksum */
 
