@@ -74,9 +74,6 @@ typedef union sockaddr_t {
 	struct sockaddr_in in;
 	struct sockaddr_in6 in6;
 	struct sockaddr_unknown unknown;
-#ifdef HAVE_STRUCT_SOCKADDR_STORAGE
-	struct sockaddr_storage storage;
-#endif
 } sockaddr_t;
 
 #ifdef SA_LEN

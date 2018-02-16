@@ -126,7 +126,7 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 
 		if(cache->ai) {
 			if(cache->aip) {
-				sockaddr_t *sa = (sockaddr_t *)cache->aip;
+				sockaddr_t *sa = (sockaddr_t *)cache->aip->ai_addr;
 
 				if(find_cached(cache, sa) != NOT_CACHED) {
 					continue;
@@ -173,16 +173,16 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 		cache->cfg = lookup_config_next(cache->config_tree, cache->cfg);
 	}
 
-	if(cache->aip) {
-		sockaddr_t *sa = (sockaddr_t *)cache->aip->ai_addr;
-		cache->aip = cache->aip->ai_next;
+	if(cache->ai) {
+		if(cache->aip) {
+			sockaddr_t *sa = (sockaddr_t *)cache->aip->ai_addr;
 
-		if(!cache->aip) {
+			cache->aip = cache->aip->ai_next;
+			return sa;
+		} else {
 			freeaddrinfo(cache->ai);
-			cache->ai = cache->aip = NULL;
+			cache->ai = NULL;
 		}
-
-		return sa;
 	}
 
 	// We're all out of addresses.

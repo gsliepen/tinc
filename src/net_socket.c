@@ -59,14 +59,14 @@ static void configure_tcp(connection_t *c) {
 	int flags = fcntl(c->socket, F_GETFL);
 
 	if(fcntl(c->socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "fcntl for %s: %s", c->hostname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "fcntl for %s fd %d: %s", c->hostname, c->socket, strerror(errno));
 	}
 
 #elif defined(WIN32)
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "ioctlsocket for %s: %s", c->hostname, sockstrerror(sockerrno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "ioctlsocket for %s fd %d: %s", c->hostname, c->socket, sockstrerror(sockerrno));
 	}
 
 #endif
@@ -508,7 +508,7 @@ begin:
 
 	connection_t *c = new_connection();
 	c->outgoing = outgoing;
-	c->address = *sa;
+	memcpy(&c->address, sa, SALEN(sa->sa));
 	c->hostname = sockaddr2hostname(&c->address);
 
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Trying to connect to %s (%s)", outgoing->node->name, c->hostname);
