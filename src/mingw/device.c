@@ -72,6 +72,7 @@ static void device_issue_read() {
 
 static void device_handle_read(void *data, int flags) {
 	DWORD len;
+
 	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error getting read result from %s %s: %s", device_info,
 		       device, strerror(errno));

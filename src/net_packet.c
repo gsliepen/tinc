@@ -158,8 +158,11 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 	if(!n->status.udp_confirmed) {
 		n->status.udp_confirmed = true;
 		fprintf(stderr, "Updating address cache...\n");
-		if (!n->address_cache)
+
+		if(!n->address_cache) {
 			n->address_cache = open_address_cache(n);
+		}
+
 		reset_address_cache(n->address_cache, &n->address);
 	}
 

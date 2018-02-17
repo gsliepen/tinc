@@ -85,14 +85,16 @@ void add_recent_address(address_cache_t *cache, const sockaddr_t *sa) {
 	unsigned int pos = find_cached(cache, sa);
 
 	// It's in the first spot, so nothing to do
-	if (pos == 0) {
+	if(pos == 0) {
 		return;
 	}
 
 	// Shift everything, move/add the address to the first slot
 	if(pos == NOT_CACHED) {
-		if(cache->data.used < MAX_CACHED_ADDRESSES)
+		if(cache->data.used < MAX_CACHED_ADDRESSES) {
 			cache->data.used++;
+		}
+
 		pos = cache->data.used - 1;
 	}
 

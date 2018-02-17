@@ -41,12 +41,15 @@ static int io_compare(const io_t *a, const io_t *b) {
 #ifndef HAVE_MINGW
 	return a->fd - b->fd;
 #else
+
 	if(a->event < b->event) {
 		return -1;
 	}
+
 	if(a->event > b->event) {
 		return 1;
 	}
+
 	return 0;
 #endif
 }

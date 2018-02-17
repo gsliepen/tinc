@@ -815,11 +815,13 @@ void try_outgoing_connections(void) {
 		if(!found) {
 			outgoing_t *outgoing = xzalloc(sizeof(*outgoing));
 			node_t *n = lookup_node(name);
+
 			if(!n) {
 				n = new_node();
 				n->name = xstrdup(name);
 				node_add(n);
 			}
+
 			outgoing->node = n;
 			list_insert_tail(outgoing_list, outgoing);
 			setup_outgoing_connection(outgoing, true);
