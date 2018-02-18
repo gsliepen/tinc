@@ -1,5 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
+origcflags="$CFLAGS"
+
 AC_PREREQ(2.61)
 AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
 AC_CONFIG_SRCDIR([src/tincd.c])
@@ -18,8 +20,11 @@ dnl Checks for programs.
 AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
-
 AM_PROG_CC_C_O
+
+dnl Check whether to enable code coverage testing, and if so, clear the default CFLAGS.
+AX_CODE_COVERAGE
+AS_IF([test "x$enable_code_coverage" = "xyes" -a "x$origcflags" = "x"], [CFLAGS=""])
 
 dnl Check and set OS
 

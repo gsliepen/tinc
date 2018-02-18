@@ -279,10 +279,11 @@ endif
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 sptps_speed_LDADD = -lrt
 
-LIBS = @LIBS@ -lm
+LIBS = @LIBS@ -lm $(CODE_COVERAGE_LIBS)
 
 if TUNEMU
 LIBS += -lpcap
 endif
 
-AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\" -iquote.
+AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\" -iquote. $(CODE_COVERAGE_CFLAGS)
+AM_CPPFLAGS = $(CODE_COVERAGE_CPPFLAGS)

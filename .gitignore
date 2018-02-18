@@ -6,6 +6,9 @@
 *.o
 *.orig
 *.swp
+*.gcno
+*.gcda
+*-coverage*
 /ChangeLog
 /INSTALL
 /aclocal.m4
@@ -38,7 +41,9 @@
 /test/*.test.*
 /test/*.log
 /test/*.trs
+/test/pong
 Makefile
 Makefile.in
 core*
+heaptrack.*
 *.tar.gz*
