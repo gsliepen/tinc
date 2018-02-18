@@ -23,6 +23,7 @@
 #include "system.h"
 
 #ifdef HAVE_ZLIB
+#define ZLIB_CONST
 #include <zlib.h>
 #endif
 
@@ -249,9 +250,22 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 #ifdef HAVE_ZLIB
 	else {
 		unsigned long destlen = MAXSIZE;
+		static z_stream stream;
 
-		if(uncompress(dest, &destlen, source, len) == Z_OK) {
-			return destlen;
+		if(stream.next_in) {
+			inflateReset(&stream);
+		} else {
+			inflateInit(&stream);
+		}
+
+		stream.next_in = source;
+		stream.avail_in = len;
+		stream.next_out = dest;
+		stream.avail_out = destlen;
+		stream.total_out = 0;
+
+		if(inflate(&stream, Z_FINISH) == Z_STREAM_END) {
+			return stream.total_out;
 		} else {
 			return -1;
 		}
