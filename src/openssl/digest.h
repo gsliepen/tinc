@@ -24,9 +24,9 @@
 
 struct digest {
 	const EVP_MD *digest;
+	HMAC_CTX *hmac_ctx;
+	EVP_MD_CTX *md_ctx;
 	int maclength;
-	int keylength;
-	char *key;
 };
 
 #endif
