@@ -1,0 +1,146 @@
+Control protocol
+----------------
+
+A running tinc daemon is listening on a UNIX socket. Other programs can connect
+to this socket and send commands to control or query the running daemon. The
+messages sent over the socket are simple lines of text.
+
+The daemon creates a PID file and a socket in `/var/run` normally (if
+`./configure` has been run with `--localstatedir=/var`).  They are called:
+
+    /var/run/tinc.<netname>.pid
+    /var/run/tinc.<netname>.socket
+
+These are only readable by the same user that started the tinc daemon. If the
+`--user` option was used, but tinc was started by root, then these files will
+still only be readable by root.
+
+Note, the control protocol is not stable yet, and may change at any point until
+version 1.1.0 is released.
+
+Authentication
+--------------
+
+When connecting to the UNIX socket, the first line sent by the tinc daemon
+looks like:
+
+    0 <name> 17.0
+
+The third word, 17.0, is the major.minor version of the protocol used by tinc.
+
+The first sent to the tinc daemon must be of this form:
+
+    0 ^<cookie> 0
+
+Where <cookie> must be replaced by the cookie value found in the PID file
+created by the tinc daemon.  This is the second word of the first line in
+`/var/run/tinc.netname.pid`. Note, the `^` must still be put in front of the
+actual cookie value.
+
+If the cookie is accepted, the tinc daemon will respond with a line that looks
+like:
+
+    4 0 <pid>
+
+Message format
+--------------
+
+Subsequent messages are always in this format:
+
+    18 <type> <parameters...>
+
+Where <type> is a numeric code that identifies the type of request, and
+<parameters> is a space-separated list of parameters. The available request
+types can be found in the `enum request_type` in `control_common.h`.
+
+The tinc daemon will normally respond with:
+
+    18 <type> <result code>
+
+Where <type> is the same as sent in the request, and <result code> is a numeric
+result, where 0 normally indicates success, and non-zero values indicate an
+error. However, some requests will have other results, see below.
+
+Requests
+--------
+
+- `REQ_STOP`: stop the running tinc daemon.
+- `REQ_DUMP_NODES`: dump information about all known nodes. See below for the result format.
+- `REQ_DUMP_EDGES`: dump information about all known edges. See below for the result format.
+- `REQ_DUMP_SUBNET`: dump information about all known subnets. See below for the result format.
+- `REQ_DUMP_CONNECTIONS`: dump information about all meta-connections this tinc daemon has. See below for the result format.
+- `REQ_PURGE`: purge information about unreachable nodes.
+- `REQ_SET_DEBUG <level>`: set the debug level for the default log output to <level>.
+- `REQ_RETRY`: retry any pending outgoing connections immediately.
+- `REQ_RELOAD`: instructs the running tinc daemon to reload its configuration files.
+- `REQ_DISCONNECT <name>`: close any meta-connection with node <name>. Returns 0 if success, -1 for invalid requests, and -2 if there was no meta-connection to this node.
+- `REQ_DUMP_TRAFFIC`: dump network traffic statistics. See below for the result format.
+- `REQ_PCAP <snaplen>`: start sending a packet capture stream to the control socket, with up to <snaplen> bytes per packet.
+- `REQ_LOG <level>`: start sending log output at level <level> to the control socket.
+
+Dump formats
+------------
+
+Dumps result in multiple lines, that all start with:
+
+    18 <type> <parameters...>
+
+The last line does not contain any parameters, and indicates the end of the dump.
+The following sections list the parameters provided for each dump type:
+
+## REQ_DUMP_NODES
+
+1. node name
+2. node ID (in hexadecimal format)
+3. currently active address
+4. the word "port"
+5. currently active port
+6. cipher ID (OpenSSL NID)
+7. digest ID (OpenSSL NID)
+8. digest length (in bytes)
+9. compression level
+10. bitfield of enabled options (hexadecimal, see OPTION_* in connection.h)
+11. bitfield of current status (hexadecimal, see node_status_t in node.h)
+12. nexthop
+13. via
+14. distance (in hops)
+15. current path MTU
+16. minimum discovered MTU
+17. upper bound for MTU
+18. time of last state change (in seconds since 1970-01-01 00:00 UT)
+
+## REQ_DUMP_EDGES
+
+1. node name from
+2. node name to
+3. address of the "to" node
+4. the word "port"
+5. port of the "to" node
+6. local address of the "from" node
+7. the word "port"
+8: local port of the "from" node
+9: bitfield of enabled options (hexadecimal, see OPTION_* in connection.h)
+10: edge weight
+
+## REQ_DUMP_SUBNETS
+
+1. subnet
+2. owner name, or `(broadcast)` for broadcast subnets.
+
+## REQ_DUMP_CONNECTIONS
+
+1. node name, or `<control>` for control connections, or `<unknown>` if no name is known yet
+2. address of the node
+3. the word "port"
+4. port of the node
+5. bitfield of enabled options (hexadecimal, see OPTION_* in connection.h)
+6. socket fd
+7. bitfield of current status (hexadecimal, see connection_status_t in connection.h)
+
+## REQ_DUMP_TRAFFIC
+
+1. node name
+2. number of packets received from node
+3. number of bytes received from node
+4. number of packets sent to node
+5. number of bytes sent to node
