@@ -3,7 +3,8 @@ Control protocol
 
 A running tinc daemon is listening on a UNIX socket. Other programs can connect
 to this socket and send commands to control or query the running daemon. The
-messages sent over the socket are simple lines of text.
+messages sent over the socket are simple lines of ASCII text, each line ending
+with a linefeed character (`\n`).
 
 The daemon creates a PID file and a socket in `/var/run` normally (if
 `./configure` has been run with `--localstatedir=/var`).  They are called:
@@ -26,21 +27,27 @@ looks like:
 
     0 <name> 17.0
 
+Here, <name> is replaced with the Name of the tinc daemon.
 The third word, 17.0, is the major.minor version of the protocol used by tinc.
 
-The first sent to the tinc daemon must be of this form:
+The first line sent to the tinc daemon MUST be of this form:
 
     0 ^<cookie> 0
 
 Where <cookie> must be replaced by the cookie value found in the PID file
 created by the tinc daemon.  This is the second word of the first line in
 `/var/run/tinc.netname.pid`. Note, the `^` must still be put in front of the
-actual cookie value.
+actual cookie value. The cookie MUST be sent within 5 seconds, or the tinc
+daemon will close the connection.
 
 If the cookie is accepted, the tinc daemon will respond with a line that looks
 like:
 
     4 0 <pid>
+
+Where <pid> is the PID of the tinc daemon itself. If the cookie is not
+accepted, the tinc daemon will immediately close the connection. No error
+message is sent prior to closing the connection.
 
 Message format
 --------------
@@ -50,8 +57,10 @@ Subsequent messages are always in this format:
     18 <type> <parameters...>
 
 Where <type> is a numeric code that identifies the type of request, and
-<parameters> is a space-separated list of parameters. The available request
-types can be found in the `enum request_type` in `control_common.h`.
+<parameters> is a space-separated list of parameters. Individual parameters
+never contain spaces of their own. Consequently, no escaping is done. The
+available request types can be found in the `enum request_type` in
+`control_common.h`.
 
 The tinc daemon will normally respond with:
 
