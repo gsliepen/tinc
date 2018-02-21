@@ -169,6 +169,27 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 		}
 
 		cache->aip = cache->ai = str2addrinfo(address, port, SOCK_STREAM);
+
+		if(cache->ai) {
+			struct addrinfo *ai = NULL;
+
+			for(; cache->aip; cache->aip = cache->aip->ai_next) {
+				struct addrinfo *oai = ai;
+
+				ai = xzalloc(sizeof(*ai));
+				ai->ai_family = cache->aip->ai_family;
+				ai->ai_socktype = cache->aip->ai_socktype;
+				ai->ai_protocol = cache->aip->ai_protocol;
+				ai->ai_addrlen = cache->aip->ai_addrlen;
+				ai->ai_addr = xmalloc(ai->ai_addrlen);
+				memcpy(ai->ai_addr, cache->aip->ai_addr, ai->ai_addrlen);
+				ai->ai_next = oai;
+			}
+
+			freeaddrinfo(cache->ai);
+			cache->aip = cache->ai = ai;
+		}
+
 		free(address);
 		free(port);
 
@@ -182,7 +203,7 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 			cache->aip = cache->aip->ai_next;
 			return sa;
 		} else {
-			freeaddrinfo(cache->ai);
+			free_known_addresses(cache->ai);
 			cache->ai = NULL;
 		}
 	}
@@ -234,11 +255,7 @@ void reset_address_cache(address_cache_t *cache, const sockaddr_t *sa) {
 	}
 
 	if(cache->ai) {
-		if(cache->tried == cache->data.used) {
-			free_known_addresses(cache->ai);
-		} else {
-			freeaddrinfo(cache->ai);
-		}
+		free_known_addresses(cache->ai);
 	}
 
 	cache->config_tree = NULL;
@@ -254,11 +271,7 @@ void close_address_cache(address_cache_t *cache) {
 	}
 
 	if(cache->ai) {
-		if(cache->tried == cache->data.used) {
-			free_known_addresses(cache->ai);
-		} else {
-			freeaddrinfo(cache->ai);
-		}
+		free_known_addresses(cache->ai);
 	}
 
 	free(cache);
