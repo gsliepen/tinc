@@ -76,6 +76,12 @@ static void device_handle_read(void *data, int flags) {
 	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error getting read result from %s %s: %s", device_info,
 		       device, strerror(errno));
+
+		if(GetLastError() != ERROR_IO_INCOMPLETE) {
+			/* Must reset event or it will keep firing. */
+			ResetEvent(device_read_overlapped.hEvent);
+		}
+
 		return;
 	}
 
