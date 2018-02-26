@@ -401,11 +401,16 @@ bool event_loop(void) {
 		}
 
 		WSAEVENT *events = xmalloc(event_count * sizeof(*events));
-		DWORD event_index = 0;
+		DWORD event_index = event_count;
 
+		/*
+		 * Fill events[] in reverse order.  This helps guarantee the
+		 * events will be processed in round robin order even when one
+		 * event is busier than the others.  Otherwise we may starve
+		 * events other than the TAP, which is usually at the head.
+		 */
 		for splay_each(io_t, io, &io_tree) {
-			events[event_index] = io->event;
-			event_index++;
+			events[--event_index] = io->event;
 		}
 
 		DWORD result = WSAWaitForMultipleEvents(event_count, events, FALSE, timeout_ms, FALSE);
