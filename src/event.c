@@ -389,71 +389,87 @@ bool event_loop(void) {
 		   Note that technically FD_CLOSE has the same problem, but it's okay because user code does not rely on
 		   this event being fired again if ignored.
 		*/
-		io_t *writeable_io = NULL;
+		unsigned int curgen = io_tree.generation;
 
-		for splay_each(io_t, io, &io_tree)
+		for splay_each(io_t, io, &io_tree) {
 			if(io->flags & IO_WRITE && send(io->fd, NULL, 0, 0) == 0) {
-				writeable_io = io;
-				break;
-			}
+				io->cb(io->data, IO_WRITE);
 
-		if(writeable_io) {
-			writeable_io->cb(writeable_io->data, IO_WRITE);
-			continue;
+				if(curgen != io_tree.generation) {
+					break;
+				}
+			}
 		}
 
-		WSAEVENT *events = xmalloc(event_count * sizeof(*events));
+		if(event_count > WSA_MAXIMUM_WAIT_EVENTS) {
+			WSASetLastError(WSA_INVALID_PARAMETER);
+			return(false);
+		}
+
+		WSAEVENT events[WSA_MAXIMUM_WAIT_EVENTS];
+		io_t *io_map[WSA_MAXIMUM_WAIT_EVENTS];
 		DWORD event_index = 0;
 
 		for splay_each(io_t, io, &io_tree) {
 			events[event_index] = io->event;
+			io_map[event_index] = io;
 			event_index++;
 		}
 
-		DWORD result = WSAWaitForMultipleEvents(event_count, events, FALSE, timeout_ms, FALSE);
+		/*
+		 * If the generation number changes due to event addition
+		 * or removal by a callback we restart the loop.
+		 */
+		curgen = io_tree.generation;
 
-		WSAEVENT event;
+		for(DWORD event_offset = 0; event_offset < event_count;) {
+			DWORD result = WSAWaitForMultipleEvents(event_count - event_offset, &events[event_offset], FALSE, timeout_ms, FALSE);
 
-		if(result >= WSA_WAIT_EVENT_0 && result < WSA_WAIT_EVENT_0 + event_count) {
-			event = events[result - WSA_WAIT_EVENT_0];
-		}
-
-		free(events);
-
-		if(result == WSA_WAIT_TIMEOUT) {
-			continue;
-		}
-
-		if(result < WSA_WAIT_EVENT_0 || result >= WSA_WAIT_EVENT_0 + event_count) {
-			return false;
-		}
-
-		io_t *io = splay_search(&io_tree, &((io_t) {
-			.event = event
-		}));
-
-		if(!io) {
-			abort();
-		}
-
-		if(io->fd == -1) {
-			io->cb(io->data, 0);
-		} else {
-			WSANETWORKEVENTS network_events;
-
-			if(WSAEnumNetworkEvents(io->fd, io->event, &network_events) != 0) {
-				return false;
+			if(result == WSA_WAIT_TIMEOUT) {
+				break;
 			}
 
-			if(network_events.lNetworkEvents & READ_EVENTS) {
-				io->cb(io->data, IO_READ);
+			if(result < WSA_WAIT_EVENT_0 || result >= WSA_WAIT_EVENT_0 + event_count - event_offset) {
+				return(false);
 			}
 
-			/*
-			    The fd might be available for write too. However, if we already fired the read callback, that
-			    callback might have deleted the io (e.g. through terminate_connection()), so we can't fire the
-			    write callback here. Instead, we loop back and let the writable io loop above handle it.
-			 */
+			/* Look up io in the map by index. */
+			event_index = result - WSA_WAIT_EVENT_0 + event_offset;
+			io_t *io = io_map[event_index];
+
+			if(io->fd == -1) {
+				io->cb(io->data, 0);
+
+				if(curgen != io_tree.generation) {
+					break;
+				}
+			} else {
+				WSANETWORKEVENTS network_events;
+
+				if(WSAEnumNetworkEvents(io->fd, io->event, &network_events) != 0) {
+					return(false);
+				}
+
+				if(network_events.lNetworkEvents & READ_EVENTS) {
+					io->cb(io->data, IO_READ);
+
+					if(curgen != io_tree.generation) {
+						break;
+					}
+				}
+
+				/*
+				    The fd might be available for write too. However, if we already fired the read callback, that
+				    callback might have deleted the io (e.g. through terminate_connection()), so we can't fire the
+				    write callback here. Instead, we loop back and let the writable io loop above handle it.
+				 */
+			}
+
+			/* Continue checking the rest of the events. */
+			event_offset = event_index + 1;
+
+			/* Just poll the next time through. */
+			timeout_ms = 0;
 		}
 	}
 
