@@ -59,6 +59,7 @@ static const size_t opt_size = sizeof(struct nd_opt_hdr);
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+volatile int dummy;
 static timeout_t age_subnets_timeout;
 
 /* RFC 1071 */
@@ -78,6 +79,11 @@ static uint16_t inet_checksum(void *data, int len, uint16_t prevsum) {
 
 	while(checksum >> 16) {
 		checksum = (checksum & 0xFFFF) + (checksum >> 16);
+	}
+
+	// Work around a compiler optimization bug.
+	if(checksum) {
+		dummy = 1;
 	}
 
 	return ~checksum;
