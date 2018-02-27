@@ -300,9 +300,11 @@ static struct timeval *get_time_remaining(struct timeval *diff) {
 		timersub(&timeout->tv, &now, diff);
 
 		if(diff->tv_sec < 0) {
-			timeout_cb_t cb = timeout->cb;
-			timeout_del(timeout);
-			cb(timeout->data);
+			timeout->cb(timeout->data);
+
+			if(timercmp(&timeout->tv, &now, <)) {
+				timeout_del(timeout);
+			}
 		} else {
 			tv = diff;
 			break;
