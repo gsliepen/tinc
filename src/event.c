@@ -348,6 +348,8 @@ bool event_loop(void) {
 			continue;
 		}
 
+		unsigned int curgen = io_tree.generation;
+
 		for splay_each(io_t, io, &io_tree) {
 			if(FD_ISSET(io->fd, &writable)) {
 				io->cb(io->data, IO_WRITE);
@@ -360,10 +362,12 @@ bool event_loop(void) {
 			/*
 			   There are scenarios in which the callback will remove another io_t from the tree
 			   (e.g. closing a double connection). Since splay_each does not support that, we
-			   need to exit the loop now. That's okay, since any remaining events will get picked
-			   up by the next select() call.
+			   need to exit the loop if that happens. That's okay, since any remaining events will
+			   get picked up by the next select() call.
 			 */
-			break;
+			if(curgen != io_tree.generation) {
+				break;
+			}
 		}
 	}
 
