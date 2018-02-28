@@ -21,6 +21,7 @@
 */
 
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 
 struct digest {
 	const EVP_MD *digest;
