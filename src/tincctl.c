@@ -722,19 +722,20 @@ static bool remove_service(void) {
 	SC_HANDLE manager = NULL;
 	SC_HANDLE service = NULL;
 	SERVICE_STATUS status = {0};
+	bool success = false;
 
 	manager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 
 	if(!manager) {
 		fprintf(stderr, "Could not open service manager: %s\n", winerror(GetLastError()));
-		return false;
+		goto exit;
 	}
 
 	service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
 
 	if(!service) {
 		fprintf(stderr, "Could not open %s service: %s\n", identname, winerror(GetLastError()));
-		return false;
+		goto exit;
 	}
 
 	if(!ControlService(service, SERVICE_CONTROL_STOP, &status)) {
@@ -745,8 +746,12 @@ static bool remove_service(void) {
 
 	if(!DeleteService(service)) {
 		fprintf(stderr, "Could not remove %s service: %s\n", identname, winerror(GetLastError()));
-		return false;
+		goto exit;
 	}
+
+	success = true;
+
+exit:
 
 	if(service) {
 		CloseServiceHandle(service);
@@ -756,9 +761,11 @@ static bool remove_service(void) {
 		CloseServiceHandle(manager);
 	}
 
-	fprintf(stderr, "%s service removed\n", identname);
+	if(success) {
+		fprintf(stderr, "%s service removed\n", identname);
+	}
 
-	return true;
+	return success;
 }
 #endif
 
