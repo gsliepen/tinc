@@ -747,7 +747,10 @@ static bool remove_service(void) {
 		fprintf(stderr, "Could not remove %s service: %s\n", identname, winerror(GetLastError()));
 		return false;
 	}
-
+    if(service)
+        CloseServiceHandle(service);
+    if(manager)
+        CloseServiceHandle(manager);
 	fprintf(stderr, "%s service removed\n", identname);
 
 	return true;
