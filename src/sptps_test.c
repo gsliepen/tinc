@@ -445,8 +445,6 @@ int main(int argc, char *argv[]) {
 					if(!datagram) {
 						return 1;
 					}
-				} else {
-					break;
 				}
 
 				bufp += done;
