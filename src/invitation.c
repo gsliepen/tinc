@@ -414,8 +414,10 @@ int cmd_invite(int argc, char *argv[]) {
 
 		fclose(f);
 
-		if(connect_tincd(false)) {
+		if(connect_tincd(true)) {
 			sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
+		} else {
+			fprintf(stderr, "Could not signal the tinc daemon. Please restart or reload it manually.\n");
 		}
 	} else {
 		key = ecdsa_read_pem_private_key(f);
