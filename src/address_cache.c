@@ -129,12 +129,12 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 		if(cache->ai) {
 			if(cache->aip) {
 				sockaddr_t *sa = (sockaddr_t *)cache->aip->ai_addr;
+				cache->aip = cache->aip->ai_next;
 
 				if(find_cached(cache, sa) != NOT_CACHED) {
 					continue;
 				}
 
-				cache->aip = cache->aip->ai_next;
 				return sa;
 			} else {
 				free_known_addresses(cache->ai);
