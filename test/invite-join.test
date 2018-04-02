@@ -9,7 +9,6 @@ init foo
 set DeviceType dummy
 set Mode switch
 set Broadcast no
-del Port
 set Address localhost
 set Port 32751
 start $r1
