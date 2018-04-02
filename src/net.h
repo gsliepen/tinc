@@ -148,6 +148,7 @@ extern int keylifetime;
 extern int udp_rcvbuf;
 extern int udp_sndbuf;
 extern int max_connection_burst;
+extern int fwmark;
 extern bool do_prune;
 extern char *myport;
 extern bool device_standby;

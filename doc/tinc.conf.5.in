@@ -312,6 +312,10 @@ This is less efficient, but allows the kernel to apply its routing and firewall 
 and can also help debugging.
 Incoming packets using the SPTPS protocol are dropped, since they are end-to-end encrypted.
 .El
+.It Va FWMark Li = Ar value Po 0 Pc Bq experimental
+When set to a non-zero value, all TCP and UDP sockets created by tinc will use the given value as the firewall mark.
+This can be used for mark-based routing or for packet filtering.
+This option is currently only supported on Linux.
 .It Va Hostnames Li = yes | no Pq no
 This option selects whether IP addresses (both real and on the VPN) should
 be resolved. Since DNS lookups are blocking, it might affect tinc's

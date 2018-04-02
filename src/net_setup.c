@@ -949,6 +949,16 @@ static bool setup_myself(void) {
 		}
 	}
 
+	get_config_int(lookup_config(config_tree, "FWMark"), &fwmark);
+#ifndef SO_MARK
+
+	if(fwmark) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "FWMark not supported on this platform!");
+		return false;
+	}
+
+#endif
+
 	int replaywin_int;
 
 	if(get_config_int(lookup_config(config_tree, "ReplayWindow"), &replaywin_int)) {

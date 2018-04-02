@@ -1055,6 +1055,12 @@ and can also help debugging.
 Incoming packets using the SPTPS protocol are dropped, since they are end-to-end encrypted.
 @end table
 
+@cindex FWMark
+@item FWMark = <@var{value}> (0) [experimental]
+When set to a non-zero value, all TCP and UDP sockets created by tinc will use the given value as the firewall mark.
+This can be used for mark-based routing or for packet filtering.
+This option is currently only supported on Linux.
+
 @cindex Hostnames
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)

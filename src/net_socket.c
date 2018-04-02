@@ -42,6 +42,7 @@ int seconds_till_retry = 5;
 int udp_rcvbuf = 1024 * 1024;
 int udp_sndbuf = 1024 * 1024;
 int max_connection_burst = 100;
+int fwmark;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
@@ -84,6 +85,14 @@ static void configure_tcp(connection_t *c) {
 #if defined(IPV6_TCLASS) && defined(IPTOS_LOWDELAY)
 	option = IPTOS_LOWDELAY;
 	setsockopt(c->socket, IPPROTO_IPV6, IPV6_TCLASS, (void *)&option, sizeof(option));
+#endif
+
+#if defined(SO_MARK)
+
+	if(fwmark) {
+		setsockopt(c->socket, SOL_SOCKET, SO_MARK, (void *)&fwmark, sizeof(fwmark));
+	}
+
 #endif
 }
 
@@ -184,6 +193,14 @@ int setup_listen_socket(const sockaddr_t *sa) {
 
 #else
 #warning IPV6_V6ONLY not defined
+#endif
+
+#if defined(SO_MARK)
+
+	if(fwmark) {
+		setsockopt(nfd, SOL_SOCKET, SO_MARK, (void *)&fwmark, sizeof(fwmark));
+	}
+
 #endif
 
 	if(get_config_string
@@ -314,6 +331,14 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	if(myself->options & OPTION_PMTU_DISCOVERY) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
+	}
+
+#endif
+
+#if defined(SO_MARK)
+
+	if(fwmark) {
+		setsockopt(nfd, SOL_SOCKET, SO_MARK, (void *)&fwmark, sizeof(fwmark));
 	}
 
 #endif

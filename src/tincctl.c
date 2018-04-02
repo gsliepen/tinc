@@ -1695,6 +1695,7 @@ const var_t variables[] = {
 	{"Ed25519PrivateKeyFile", VAR_SERVER},
 	{"ExperimentalProtocol", VAR_SERVER},
 	{"Forwarding", VAR_SERVER},
+	{"FWMark", VAR_SERVER},
 	{"GraphDumpFile", VAR_SERVER | VAR_OBSOLETE},
 	{"Hostnames", VAR_SERVER},
 	{"IffOneQueue", VAR_SERVER},
