@@ -1728,14 +1728,14 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 		iov[i] = (struct iovec) {
 			.iov_base = DATA(&pkt[i]),
-			 .iov_len = MAXSIZE,
+			.iov_len = MAXSIZE,
 		};
 
 		msg[i].msg_hdr = (struct msghdr) {
 			.msg_name = &addr[i].sa,
-			 .msg_namelen = sizeof(addr)[i],
-			  .msg_iov = &iov[i],
-			   .msg_iovlen = 1,
+			.msg_namelen = sizeof(addr)[i],
+			.msg_iov = &iov[i],
+			.msg_iovlen = 1,
 		};
 	}
 
