@@ -167,6 +167,5 @@ void closelogger(void) {
 	case LOGMODE_NULL:
 	case LOGMODE_STDERR:
 		break;
-		break;
 	}
 }
