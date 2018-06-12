@@ -102,6 +102,7 @@ static void udp_probe_timeout_handler(void *data) {
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Too much time has elapsed since last UDP ping response from %s (%s), stopping UDP communication", n->name, n->hostname);
 	n->status.udp_confirmed = false;
+	n->udp_ping_rtt = -1;
 	n->maxrecentlen = 0;
 	n->mtuprobes = 0;
 	n->minmtu = 0;
@@ -151,7 +152,15 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		len = ntohs(len16);
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], len, n->name, n->hostname);
+	if (n->udp_ping_sent.tv_sec != 0) { // a probe in flight
+		gettimeofday(&now, NULL);
+		struct timeval rtt;
+		timersub(&now, &n->udp_ping_sent, &rtt);
+		n->udp_ping_rtt = rtt.tv_sec*1000000L + rtt.tv_usec;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s) rtt=%ld.%03ld", DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt/1000, n->udp_ping_rtt%1000);
+	} else {
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], len, n->name, n->hostname);
+	}
 
 	/* It's a valid reply: now we know bidirectional communication
 	   is possible using the address and socket that the reply
@@ -167,8 +176,8 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		reset_address_cache(n->address_cache, &n->address);
 	}
 
-	// Reset the UDP ping timer.
-	n->udp_ping_sent = now;
+	// Reset the UDP ping timer. (no probe in flight)
+	n->udp_ping_sent.tv_sec = 0;
 
 	if(udp_discovery) {
 		timeout_del(&n->udp_ping_timeout);
@@ -1119,8 +1128,9 @@ static void try_udp(node_t *n) {
 	int interval = n->status.udp_confirmed ? udp_discovery_keepalive_interval : udp_discovery_interval;
 
 	if(ping_tx_elapsed.tv_sec >= interval) {
+		gettimeofday(&now, NULL);
+		n->udp_ping_sent = now; // a probe in flight
 		send_udp_probe_packet(n, MIN_PROBE_SIZE);
-		n->udp_ping_sent = now;
 
 		if(localdiscovery && !n->status.udp_confirmed && n->prevedge) {
 			n->status.send_locally = true;
