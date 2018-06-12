@@ -11,6 +11,11 @@
 * Fixed linking with libncurses on some distributions.
 * Automatically disable PMTUDiscovery when TCPOnly is enabled.
 * Fixed removing the tinc service on Windows in some situations.
+* Fixed the TAP-Win32 device locking up after waking up from suspend.
+
+Thanks to Todd C. Miller, Etienne Dechamps, Daniel Lublin,
+Gjergji Ramku, Mike Sullivan and Oliver Freyermuth for their
+contributions to this version of tinc.
 
 # Version 1.1pre15             September 2 2017
 
