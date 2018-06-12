@@ -1,3 +1,17 @@
+# Version 1.1pre16             June 12 2018
+
+* Fixed building with support for UML sockets.
+* Documentation updates and spelling fixes.
+* Support for MSS clamping of IP-in-IP packets.
+* Fixed parsing of the -b flag.
+* Added the ability to set a firemall mark on sockets on Linux.
+* Minor improvements to the build system.
+* Added a cache of recently seen addresses of peers.
+* Add support for --runstatedir to the configure script.
+* Fixed linking with libncurses on some distributions.
+* Automatically disable PMTUDiscovery when TCPOnly is enabled.
+* Fixed removing the tinc service on Windows in some situations.
+
 # Version 1.1pre15             September 2 2017
 
 * Detect when the machine is resuming from suspension or hibernation.
