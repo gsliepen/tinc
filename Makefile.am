@@ -37,4 +37,4 @@ release:
 	$(MAKE) dist
 
 astyle:
-	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch] test/*.[ch]
+	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]
