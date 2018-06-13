@@ -212,7 +212,7 @@ bool dump_nodes(connection_t *c) {
 		}
 
 		id[sizeof(id) - 1] = 0;
-		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %d %d %d %ld %ld %lu %lu %lu %lu", CONTROL, REQ_DUMP_NODES,
+		send_request(c, "%d %d %s %s %s %d %d %d %d %x %x %s %s %d %d %d %d %ld %d %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_NODES,
 		             n->name, id, n->hostname ? : "unknown port unknown",
 #ifdef DISABLE_LEGACY
 		             0, 0, 0,
@@ -221,7 +221,7 @@ bool dump_nodes(connection_t *c) {
 #endif
 		             n->outcompression, n->options, bitfield_to_int(&n->status, sizeof(n->status)),
 		             n->nexthop ? n->nexthop->name : "-", n->via ? n->via->name ? : "-" : "-", n->distance,
-		             n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change, (long)n->udp_ping_rtt,
+		             n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change, n->udp_ping_rtt,
 		             n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
 	}
 

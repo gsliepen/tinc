@@ -70,11 +70,11 @@ static int info_node(int fd, const char *item) {
 	} status_union;
 	node_status_t status;
 	long int last_state_change;
-	long int udp_ping_rtt;
+	int udp_ping_rtt;
 	uint64_t in_packets, in_bytes, out_packets, out_bytes;
 
 	while(recvline(fd, line, sizeof(line))) {
-		int n = sscanf(line, "%d %d %4095s %4095s %4095s port %4095s %d %d %d %d %x %"PRIx32" %4095s %4095s %d %hd %hd %hd %ld %ld %lu %lu %lu %lu", &code, &req, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_union.raw, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change, &udp_ping_rtt, &in_packets, &in_bytes, &out_packets, &out_bytes);
+		int n = sscanf(line, "%d %d %4095s %4095s %4095s port %4095s %d %d %d %d %x %"PRIx32" %4095s %4095s %d %hd %hd %hd %ld %d %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, &code, &req, node, id, host, port, &cipher, &digest, &maclength, &compression, &options, &status_union.raw, nexthop, via, &distance, &pmtu, &minmtu, &maxmtu, &last_state_change, &udp_ping_rtt, &in_packets, &in_bytes, &out_packets, &out_bytes);
 
 		if(n == 2) {
 			break;
@@ -146,7 +146,7 @@ static int info_node(int fd, const char *item) {
 	if(status.udp_confirmed) {
 		printf(" udp_confirmed");
 		if(udp_ping_rtt != -1)
-			printf(" (rtt %ld.%03ld)", udp_ping_rtt/1000, udp_ping_rtt%1000);
+			printf(" (rtt %ld.%03ld)", udp_ping_rtt / 1000, udp_ping_rtt % 1000);
 	}
 
 	printf("\n");
@@ -189,8 +189,8 @@ static int info_node(int fd, const char *item) {
 		printf("none, forwarded via %s\n", nexthop);
 	}
 
-	printf("RX:          %lu packets  %lu bytes\n", in_packets, in_bytes);
-	printf("TX:          %lu packets  %lu bytes\n", out_packets, out_bytes);
+	printf("RX:           %"PRIu64" packets  %"PRIu64" bytes\n", in_packets, in_bytes);
+	printf("TX:           %"PRIu64" packets  %"PRIu64" bytes\n", out_packets, out_bytes);
 
 	// List edges
 	printf("Edges:       ");

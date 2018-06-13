@@ -156,8 +156,8 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		gettimeofday(&now, NULL);
 		struct timeval rtt;
 		timersub(&now, &n->udp_ping_sent, &rtt);
-		n->udp_ping_rtt = rtt.tv_sec*1000000L + rtt.tv_usec;
-		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s) rtt=%ld.%03ld", DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt/1000, n->udp_ping_rtt%1000);
+		n->udp_ping_rtt = rtt.tv_sec*1000000 + rtt.tv_usec;
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s) rtt=%d.%03d", DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt / 1000, n->udp_ping_rtt % 1000);
 	} else {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], len, n->name, n->hostname);
 	}
