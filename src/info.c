@@ -145,10 +145,6 @@ static int info_node(int fd, const char *item) {
 
 	if(status.udp_confirmed) {
 		printf(" udp_confirmed");
-
-		if(udp_ping_rtt != -1) {
-			printf(" (rtt %d.%03d)", udp_ping_rtt / 1000, udp_ping_rtt % 1000);
-		}
 	}
 
 	printf("\n");
@@ -185,6 +181,10 @@ static int info_node(int fd, const char *item) {
 		printf("unknown\n");
 	} else if(minmtu > 0) {
 		printf("directly with UDP\nPMTU:         %d\n", pmtu);
+
+		if(udp_ping_rtt != -1) {
+			printf("RTT:          %d.%03d\n", udp_ping_rtt / 1000, udp_ping_rtt % 1000);
+		}
 	} else if(!strcmp(nexthop, item)) {
 		printf("directly with TCP\n");
 	} else {
