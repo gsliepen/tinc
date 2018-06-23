@@ -462,7 +462,10 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 		inpkt = outpkt;
 
-		origlen -= MTU / 64 + 20;
+		if (origlen > MTU / 64 + 20)
+			origlen -= MTU / 64 + 20;
+		else
+			origlen = 0;
 	}
 
 	if(inpkt->len > n->maxrecentlen) {
