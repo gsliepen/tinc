@@ -108,7 +108,6 @@ void add_recent_address(address_cache_t *cache, const sockaddr_t *sa) {
 	FILE *fp = fopen(fname, "wb");
 
 	if(fp) {
-		fprintf(stderr, "Writing cache to %s\n", fname);
 		fwrite(&cache->data, sizeof(cache->data), 1, fp);
 		fclose(fp);
 	}
