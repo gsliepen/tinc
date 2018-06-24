@@ -744,22 +744,15 @@ and the host configuration files are expected to be in @file{@value{sysconfdir}/
 
 When tinc starts up, it parses the command-line options and then
 reads in the configuration file tinc.conf.
-If it sees one or more  `ConnectTo' values pointing to other tinc daemons in that file,
-it will try to connect to those other daemons.
-Whether this succeeds or not and whether `ConnectTo' is specified or not,
-tinc will listen for incoming connection from other deamons.
-If you did specify a `ConnectTo' value and the other side is not responding,
-tinc will keep retrying.
-This means that once started, tinc will stay running until you tell it to stop,
-and failures to connect to other tinc daemons will not stop your tinc daemon
-for trying again later.
-This means you don't have to intervene if there are temporary network problems.
+It will then start listening for incoming connection from other deamons,
+and will by default also automatically try to connect to known peers.
+By default, tinc will try to keep at least 3 working meta-connections alive at all times.
 
 @cindex client
 @cindex server
 There is no real distinction between a server and a client in tinc.
-If you wish, you can view a tinc daemon without a `ConnectTo' value as a server,
-and one which does specify such a value as a client.
+If you wish, you can view a tinc daemon without a `ConnectTo' statement in tinc.conf and `AutoConnect = no' as a server,
+and one which does have one or more `ConnectTo' statements or `Autoconnect = yes' (which is the defualt) as a client.
 It does not matter if two tinc daemons have a `ConnectTo' value pointing to each other however.
 
 Connections specified using `ConnectTo' are so-called meta-connections.
@@ -839,7 +832,7 @@ If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
 @cindex AutoConnect
-@item AutoConnect = <yes|no> (no) [experimental]
+@item AutoConnect = <yes|no> (yes)
 If set to yes, tinc will automatically set up meta connections to other nodes,
 without requiring @var{ConnectTo} variables.
 
@@ -900,7 +893,7 @@ in which case outgoing connections to each specified tinc daemon are made.
 The names should be known to this tinc daemon
 (i.e., there should be a host configuration file for the name on the ConnectTo line).
 
-If you don't specify a host with ConnectTo and don't enable AutoConnect,
+If you don't specify a host with ConnectTo and have disabled AutoConnect,
 tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
@@ -1634,23 +1627,11 @@ For example, if your hostname is foo.example.org, run:
 tinc -n @var{netname} add address foo.example.org
 @end example
 
-If you already know to which daemons your daemon should make meta-connections,
-you should configure that now as well.
-Suppose you want to connect to a daemon named "bar", run:
-
-@example
-tinc -n @var{netname} add connectto bar
-@end example
-
-Note that you specify the Name of the other daemon here, not an IP address or hostname!
-When you start tinc, and it tries to make a connection to "bar",
-it will look for a host configuration file named @file{hosts/bar},
-and will read Address statements and public keys from that file.
-
 @subsubheading Step 2.  Exchanging configuration files.
 
-If your daemon has a ConnectTo = bar statement in its @file{tinc.conf} file,
-or if bar has a ConnectTo your daemon, then you both need each other's host configuration files.
+In order for two tinc daemons to be able to connect to each other,
+they each need the other's host configuration files.
+So if you want foo to be able to connect with bar,
 You should send @file{hosts/@var{name}} to bar, and bar should send you his file which you should move to @file{hosts/bar}.
 If you are on a UNIX platform, you can easily send an email containing the necessary information using the following command
 (assuming the owner of bar has the email address bar@@example.org):
@@ -1676,10 +1657,9 @@ tinc -n @var{netname} export \
     | tinc -n @var{netname} import
 @end example
 
-You should repeat this for all nodes you ConnectTo, or which ConnectTo you.
-However, remember that you do not need to ConnectTo all nodes in the VPN;
-it is only necessary to create one or a few meta-connections,
-after the connections are made tinc will learn about all the other nodes in the VPN,
+You can repeat this for a few other nodes as well.
+It is not necessary to manually exchange host config files between all nodes;
+after the initial connections are made tinc will learn about all the other nodes in the VPN,
 and will automatically make other connections as necessary.
 
 
@@ -1825,12 +1805,10 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchB
-ConnectTo = BranchA
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
-same as on the VPN interface.  Also, ConnectTo is given so that this node will
-always try to connect to BranchA.
+same as on the VPN interface.
 
 On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchB}:
 
@@ -1861,7 +1839,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchC
-ConnectTo = BranchA
 @end example
 
 C already has another daemon that runs on port 655, so they have to
@@ -1898,7 +1875,6 @@ and in @file{@value{sysconfdir}/tinc/company/tinc.conf}:
 
 @example
 Name = BranchD
-ConnectTo = BranchC
 @end example
 
 D will be connecting to C, which has a tincd running for this network on
@@ -2565,7 +2541,7 @@ Examples of changing the configuration using tinc:
 tinc -n vpn init foo
 tinc -n vpn add Subnet 192.168.1.0/24
 tinc -n vpn add bar.Address bar.example.com
-tinc -n vpn add ConnectTo bar
+tinc -n vpn set Mode switch
 tinc -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@@example.com
 @end example
 

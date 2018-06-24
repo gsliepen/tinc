@@ -114,7 +114,7 @@ If
 .Qq any
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
-.It Va AutoConnect Li = yes | no Po no Pc Bq experimental
+.It Va AutoConnect Li = yes | no Po yes
 If set to yes,
 .Nm tinc
 will automatically set up meta connections to other nodes,
@@ -177,7 +177,7 @@ line).
 .Pp
 If you don't specify a host with
 .Va ConnectTo
-and don't enable
+and have disabled
 .Va AutoConnect ,
 .Nm tinc
 won't try to connect to other daemons at all,
