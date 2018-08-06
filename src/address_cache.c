@@ -152,48 +152,47 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 		cache->cfg = lookup_config(cache->config_tree, "Address");
 	}
 
-	while(cache->cfg && !cache->ai) {
-		char *address, *port;
+	if(!cache->ai) {
+		while(cache->cfg) {
+			char *address, *port;
 
-		get_config_string(cache->cfg, &address);
+			get_config_string(cache->cfg, &address);
 
-		char *space = strchr(address, ' ');
+			char *space = strchr(address, ' ');
 
-		if(space) {
-			port = xstrdup(space + 1);
-			*space = 0;
-		} else {
-			if(!get_config_string(lookup_config(cache->config_tree, "Port"), &port)) {
-				port = xstrdup("655");
-			}
-		}
-
-		cache->aip = cache->ai = str2addrinfo(address, port, SOCK_STREAM);
-
-		if(cache->ai) {
-			struct addrinfo *ai = NULL;
-
-			for(; cache->aip; cache->aip = cache->aip->ai_next) {
-				struct addrinfo *oai = ai;
-
-				ai = xzalloc(sizeof(*ai));
-				ai->ai_family = cache->aip->ai_family;
-				ai->ai_socktype = cache->aip->ai_socktype;
-				ai->ai_protocol = cache->aip->ai_protocol;
-				ai->ai_addrlen = cache->aip->ai_addrlen;
-				ai->ai_addr = xmalloc(ai->ai_addrlen);
-				memcpy(ai->ai_addr, cache->aip->ai_addr, ai->ai_addrlen);
-				ai->ai_next = oai;
+			if(space) {
+				port = xstrdup(space + 1);
+				*space = 0;
+			} else {
+				if(!get_config_string(lookup_config(cache->config_tree, "Port"), &port)) {
+					port = xstrdup("655");
+				}
 			}
 
-			freeaddrinfo(cache->ai);
-			cache->aip = cache->ai = ai;
+			struct addrinfo *aitmp = str2addrinfo(address, port, SOCK_STREAM);
+			struct addrinfo *ai = xzalloc(sizeof(*ai));
+			ai->ai_family = aitmp->ai_family;
+			ai->ai_socktype = aitmp->ai_socktype;
+			ai->ai_protocol = aitmp->ai_protocol;
+			ai->ai_addrlen = aitmp->ai_addrlen;
+			ai->ai_addr = xmalloc(aitmp->ai_addrlen);
+			memcpy(ai->ai_addr, aitmp->ai_addr, aitmp->ai_addrlen);
+			ai->ai_next = NULL;
+
+			if(!cache->ai) {
+				cache->aip = cache->ai = ai;
+			} else {
+				struct addrinfo *ailast = cache->ai;
+				while(ailast->ai_next != NULL)
+					ailast = ailast->ai_next;
+				ailast->ai_next = ai;
+			}
+
+			free(address);
+			free(port);
+
+			cache->cfg = lookup_config_next(cache->config_tree, cache->cfg);
 		}
-
-		free(address);
-		free(port);
-
-		cache->cfg = lookup_config_next(cache->config_tree, cache->cfg);
 	}
 
 	if(cache->ai) {
