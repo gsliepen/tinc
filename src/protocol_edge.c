@@ -70,7 +70,7 @@ bool add_edge_h(connection_t *c) {
 
 	/* Check if names are valid */
 
-	if(!check_id(from_name) || !check_id(to_name)) {
+	if(!check_id(from_name) || !check_id(to_name) || !strcmp(from_name, to_name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ADD_EDGE", c->name,
 		       c->hostname, "invalid name");
 		return false;
@@ -197,7 +197,7 @@ bool del_edge_h(connection_t *c) {
 
 	/* Check if names are valid */
 
-	if(!check_id(from_name) || !check_id(to_name)) {
+	if(!check_id(from_name) || !check_id(to_name) || !strcmp(from_name, to_name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "DEL_EDGE", c->name,
 		       c->hostname, "invalid name");
 		return false;

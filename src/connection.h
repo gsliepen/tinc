@@ -42,7 +42,8 @@ typedef struct connection_status_t {
 	unsigned int decryptin: 1;      /* 1 if we have to decrypt incoming traffic */
 	unsigned int mst: 1;            /* 1 if this connection is part of a minimum spanning tree */
 	unsigned int proxy_passed: 1;   /* 1 if we are connecting via a proxy and we have finished talking with it */
-	unsigned int unused: 22;
+	unsigned int tarpit: 1;         /* 1 if the connection should be added to the tarpit */
+	unsigned int unused: 21;
 } connection_status_t;
 
 #include "edge.h"

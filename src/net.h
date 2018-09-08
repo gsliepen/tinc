@@ -150,6 +150,7 @@ extern void flush_queue(struct node_t *n);
 extern bool read_rsa_public_key(struct connection_t *c);
 extern void send_mtu_probe(struct node_t *n);
 extern void load_all_subnets(void);
+extern void tarpit(int fd);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)

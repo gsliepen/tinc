@@ -60,7 +60,7 @@ bool id_h(connection_t *c) {
 
 	/* Check if identity is a valid name */
 
-	if(!check_id(name)) {
+	if(!check_id(name) || !strcmp(name, myself->name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ID", c->name,
 		       c->hostname, "invalid name");
 		return false;
@@ -96,6 +96,11 @@ bool id_h(connection_t *c) {
 		}
 
 		c->allow_request = ACK;
+
+		if(!c->outgoing) {
+			send_id(c);
+		}
+
 		return send_ack(c);
 	}
 
@@ -114,6 +119,10 @@ bool id_h(connection_t *c) {
 	}
 
 	c->allow_request = METAKEY;
+
+	if(!c->outgoing) {
+		send_id(c);
+	}
 
 	return send_metakey(c);
 }
@@ -301,7 +310,8 @@ bool metakey_h(connection_t *c) {
 		c->inbudget = byte_budget(c->incipher);
 		c->status.decryptin = true;
 	} else {
-		c->incipher = NULL;
+		logger(LOG_ERR, "%s (%s) uses null cipher!", c->name, c->hostname);
+		return false;
 	}
 
 	c->inmaclength = maclength;
@@ -319,7 +329,8 @@ bool metakey_h(connection_t *c) {
 			return false;
 		}
 	} else {
-		c->indigest = NULL;
+		logger(LOG_ERR, "%s (%s) uses null digest!", c->name, c->hostname);
+		return false;
 	}
 
 	c->incompression = compression;
@@ -393,7 +404,11 @@ bool challenge_h(connection_t *c) {
 
 	/* Rest is done by send_chal_reply() */
 
-	return send_chal_reply(c);
+	if(c->outgoing) {
+		return send_chal_reply(c);
+	} else {
+		return true;
+	}
 }
 
 bool send_chal_reply(connection_t *c) {
@@ -494,6 +509,10 @@ bool chal_reply_h(connection_t *c) {
 	 */
 
 	c->allow_request = ACK;
+
+	if(!c->outgoing) {
+		send_chal_reply(c);
+	}
 
 	return send_ack(c);
 }

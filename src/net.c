@@ -180,6 +180,22 @@ static int build_fdset(fd_set *readset, fd_set *writeset) {
 	return max;
 }
 
+/* Put a misbehaving connection in the tarpit */
+void tarpit(int fd) {
+	static int pits[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+	static int next_pit = 0;
+
+	if(pits[next_pit] != -1) {
+		closesocket(pits[next_pit]);
+	}
+
+	pits[next_pit++] = fd;
+
+	if(next_pit >= sizeof pits / sizeof pits[0]) {
+		next_pit = 0;
+	}
+}
+
 /*
   Terminate a connection:
   - Close the socket
@@ -203,7 +219,11 @@ void terminate_connection(connection_t *c, bool report) {
 	}
 
 	if(c->socket) {
-		closesocket(c->socket);
+		if(c->status.tarpit) {
+			tarpit(c->socket);
+		} else {
+			closesocket(c->socket);
+		}
 	}
 
 	if(c->edge) {
@@ -299,6 +319,7 @@ static void check_dead_connections(void) {
 					closesocket(c->socket);
 					do_outgoing_connection(c);
 				} else {
+					c->status.tarpit = true;
 					terminate_connection(c, false);
 				}
 			}
@@ -380,6 +401,7 @@ static void check_network_activity(fd_set *readset, fd_set *writeset) {
 
 		if(FD_ISSET(c->socket, readset)) {
 			if(!receive_meta(c)) {
+				c->status.tarpit = true;
 				terminate_connection(c, c->status.active);
 				continue;
 			}
