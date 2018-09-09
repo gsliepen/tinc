@@ -286,6 +286,11 @@ bool ans_key_h(connection_t *c) {
 			return true;
 		}
 	} else {
+		if(from->outkeylength != 1) {
+			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
+			return true;
+		}
+
 		from->outcipher = NULL;
 	}
 
