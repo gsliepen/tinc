@@ -49,7 +49,8 @@ typedef struct connection_status_t {
 	unsigned int log: 1;                    /* 1 if this is a control connection requesting log dump */
 	unsigned int invitation: 1;             /* 1 if this is an invitation */
 	unsigned int invitation_used: 1;        /* 1 if the invitation has been consumed */
-	unsigned int unused: 18;
+	unsigned int tarpit: 1;                 /* 1 if the connection should be added to the tarpit */
+	unsigned int unused: 17;
 } connection_status_t;
 
 #include "ecdsa.h"
@@ -94,6 +95,7 @@ typedef struct connection_t {
 	int outcompression;
 
 	char *hischallenge;             /* The challenge we sent to him */
+	char *mychallenge;              /* The challenge we received */
 
 	struct buffer_t inbuf;
 	struct buffer_t outbuf;

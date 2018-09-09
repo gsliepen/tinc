@@ -27,6 +27,7 @@
 #include "control_common.h"
 #include "list.h"
 #include "logger.h"
+#include "net.h"
 #include "rsa.h"
 #include "subnet.h"
 #include "utils.h"
@@ -68,6 +69,7 @@ void free_connection(connection_t *c) {
 	ecdsa_free(c->ecdsa);
 
 	free(c->hischallenge);
+	free(c->mychallenge);
 
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
@@ -75,7 +77,11 @@ void free_connection(connection_t *c) {
 	io_del(&c->io);
 
 	if(c->socket > 0) {
-		closesocket(c->socket);
+		if(c->status.tarpit) {
+			tarpit(c->socket);
+		} else {
+			closesocket(c->socket);
+		}
 	}
 
 	free(c->name);

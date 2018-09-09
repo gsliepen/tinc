@@ -92,6 +92,22 @@ void purge(void) {
 	}
 }
 
+/* Put a misbehaving connection in the tarpit */
+void tarpit(int fd) {
+	static int pits[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+	static int next_pit = 0;
+
+	if(pits[next_pit] != -1) {
+		closesocket(pits[next_pit]);
+	}
+
+	pits[next_pit++] = fd;
+
+	if(next_pit >= sizeof pits / sizeof pits[0]) {
+		next_pit = 0;
+	}
+}
+
 /*
   Terminate a connection:
   - Mark it as inactive
@@ -218,6 +234,7 @@ static void timeout_handler(void *data) {
 				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
 			} else {
 				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
+				c->status.tarpit = true;
 			}
 
 			terminate_connection(c, c->edge);
@@ -285,6 +302,10 @@ static void periodic_handler(void *data) {
 
 void handle_meta_connection_data(connection_t *c) {
 	if(!receive_meta(c)) {
+		if(!c->status.control) {
+			c->status.tarpit = true;
+		}
+
 		terminate_connection(c, c->edge);
 		return;
 	}

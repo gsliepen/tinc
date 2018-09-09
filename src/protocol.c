@@ -82,7 +82,8 @@ bool send_request(connection_t *c, const char *format, ...) {
 		return false;
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %s to %s (%s): %s", request_name[atoi(request)], c->name, c->hostname, request);
+	int id = atoi(request);
+	logger(DEBUG_META, LOG_DEBUG, "Sending %s to %s (%s): %s", request_name[id], c->name, c->hostname, request);
 
 	request[len++] = '\n';
 
@@ -90,7 +91,12 @@ bool send_request(connection_t *c, const char *format, ...) {
 		broadcast_meta(NULL, request, len);
 		return true;
 	} else {
-		return send_meta(c, request, len);
+		if(id) {
+			return send_meta(c, request, len);
+		} else {
+			send_meta_raw(c, request, len);
+			return true;
+		}
 	}
 }
 

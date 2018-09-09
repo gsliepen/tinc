@@ -687,7 +687,7 @@ bool setup_myself_reloadable(void) {
 		keylifetime = 3600;
 	}
 
-	if (!get_config_bool(lookup_config(config_tree, "AutoConnect"), &autoconnect)) {
+	if(!get_config_bool(lookup_config(config_tree, "AutoConnect"), &autoconnect)) {
 		autoconnect = true;
 	}
 

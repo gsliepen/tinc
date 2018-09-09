@@ -902,6 +902,8 @@ bool connect_tincd(bool verbose) {
 	setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&one, sizeof(one));
 #endif
 
+	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
+
 	char data[4096];
 	int version;
 
@@ -914,8 +916,6 @@ bool connect_tincd(bool verbose) {
 		fd = -1;
 		return false;
 	}
-
-	sendline(fd, "%d ^%s %d", ID, controlcookie, TINC_CTL_VERSION_CURRENT);
 
 	if(!recvline(fd, line, sizeof(line)) || sscanf(line, "%d %d %d", &code, &version, &pid) != 3 || code != 4 || version != TINC_CTL_VERSION_CURRENT) {
 		if(verbose) {

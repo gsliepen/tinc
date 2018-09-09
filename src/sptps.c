@@ -287,7 +287,11 @@ static bool receive_kex(sptps_t *s, const char *data, uint16_t len) {
 
 	memcpy(s->hiskex, data, len);
 
-	return send_sig(s);
+	if(s->initiator) {
+		return send_sig(s);
+	} else {
+		return true;
+	}
 }
 
 // Receive a SIGnature record, verify it, if it passed, compute the shared secret and calculate the session keys.
@@ -324,6 +328,10 @@ static bool receive_sig(sptps_t *s, const char *data, uint16_t len) {
 
 	// Generate key material from shared secret.
 	if(!generate_key_material(s, shared, sizeof(shared))) {
+		return false;
+	}
+
+	if(!s->initiator && !send_sig(s)) {
 		return false;
 	}
 
