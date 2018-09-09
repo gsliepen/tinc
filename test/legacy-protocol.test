@@ -1,0 +1,79 @@
+#!/bin/sh
+
+. "${0%/*}/testlib.sh"
+
+# Initialize two nodes
+
+$tinc $c1 <<EOF
+init foo
+set DeviceType dummy
+set Port 32753
+set Address localhost
+set PingTimeout 1
+EOF
+
+$tinc $c2 <<EOF
+init bar
+set DeviceType dummy
+set Port 0
+set PingTimeout 1
+set MaxTimeout 1
+EOF
+
+# Exchange host config files
+
+$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+$tinc $c2 add ConnectTo foo
+
+# Foo 1.1, bar 1.0
+
+$tinc $c2 set ExperimentalProtocol no
+$tinc $c1 del bar.Ed25519PublicKey
+$tinc $c2 del foo.Ed25519PublicKey
+
+$tinc $c1 start $r1
+$tinc $c2 start $r2
+
+sleep 1
+
+test `$tinc $c1 dump reachable nodes | wc -l` = 2
+test `$tinc $c2 dump reachable nodes | wc -l` = 2
+
+$tinc $c2 stop
+$tinc $c1 stop
+
+test -z "`$tinc $c1 get bar.Ed25519PublicKey`"
+test -z "`$tinc $c2 get foo.Ed25519PublicKey`"
+
+# Foo 1.1, bar upgrades to 1.1
+
+$tinc $c2 del ExperimentalProtocol
+
+$tinc $c1 start $r1
+$tinc $c2 start $r2
+
+sleep 5
+
+test `$tinc $c1 dump reachable nodes | wc -l` = 2
+test `$tinc $c2 dump reachable nodes | wc -l` = 2
+
+$tinc $c2 stop
+$tinc $c1 stop
+
+test -n "`$tinc $c1 get bar.Ed25519PublicKey`"
+test -n "`$tinc $c2 get foo.Ed25519PublicKey`"
+
+# Bar downgrades, must no longer be allowed to connect
+
+$tinc $c2 set ExperimentalProtocol no
+
+$tinc $c1 start $r1
+$tinc $c2 start $r2
+
+sleep 1
+
+test `$tinc $c1 dump reachable nodes | wc -l` = 1
+test `$tinc $c2 dump reachable nodes | wc -l` = 1
+
+$tinc $c2 stop
+$tinc $c1 stop

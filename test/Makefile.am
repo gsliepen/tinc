@@ -6,6 +6,7 @@ TESTS = \
 	invite-join.test \
 	invite-offline.test \
 	invite-tinc-up.test \
+	legacy-protocol.test \
 	ns-ping.test \
 	scripts.test \
 	security.test \
