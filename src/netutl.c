@@ -33,7 +33,7 @@ bool hostnames = false;
   Return NULL on failure.
 */
 struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype) {
-	struct addrinfo *ai = NULL, hint = {};
+	struct addrinfo *ai = NULL, hint = {0};
 	int err;
 
 	hint.ai_family = addressfamily;
@@ -55,7 +55,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 }
 
 sockaddr_t str2sockaddr(const char *address, const char *port) {
-	struct addrinfo *ai = NULL, hint = {};
+	struct addrinfo *ai = NULL, hint = {0};
 	sockaddr_t result;
 	int err;
 

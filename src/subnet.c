@@ -387,7 +387,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 
 bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
-		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", netstr, subnet);
+		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", (void *)netstr, (void *)subnet);
 		return false;
 	}
 
@@ -592,9 +592,9 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 
 	// Prepare environment variables to be passed to the script
 
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[0], "NETNAME=%s", netname ? netname : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? device : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? iface : "");
 	xasprintf(&envp[3], "NODE=%s", owner->name);
 	xasprintf(&envp[4], "NAME=%s", myself->name);
 

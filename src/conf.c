@@ -204,7 +204,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 }
 
 bool get_config_subnet(const config_t *cfg, subnet_t **result) {
-	subnet_t subnet = {};
+	subnet_t subnet = {0};
 
 	if(!cfg) {
 		return false;
@@ -432,7 +432,7 @@ bool read_server_config(void) {
 
 				// And we try to read the ones that end with ".conf"
 				if(l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					if(snprintf(fname, sizeof(fname), "%s/%s", dname, ep->d_name) >= sizeof(fname)) {
+					if((size_t)snprintf(fname, sizeof(fname), "%s/%s", dname, ep->d_name) >= sizeof(fname)) {
 						logger(LOG_ERR, "Pathname too long: %s/%s", dname, ep->d_name);
 						return false;
 					}
@@ -578,7 +578,7 @@ FILE *ask_and_open(const char *filename, const char *what) {
 		/* The directory is a relative path or a filename. */
 		getcwd(directory, sizeof(directory));
 
-		if(snprintf(abspath, sizeof(abspath), "%s/%s", directory, fn) >= sizeof(abspath)) {
+		if((size_t)snprintf(abspath, sizeof(abspath), "%s/%s", directory, fn) >= sizeof(abspath)) {
 			fprintf(stderr, "Pathname too long: %s/%s\n", directory, fn);
 			return NULL;
 		}

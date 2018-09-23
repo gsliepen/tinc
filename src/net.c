@@ -191,7 +191,7 @@ void tarpit(int fd) {
 
 	pits[next_pit++] = fd;
 
-	if(next_pit >= sizeof pits / sizeof pits[0]) {
+	if(next_pit >= (int)(sizeof pits / sizeof pits[0])) {
 		next_pit = 0;
 	}
 }

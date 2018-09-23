@@ -193,7 +193,7 @@ void exit_requests(void) {
 }
 
 bool seen_request(char *request) {
-	past_request_t *new, p = {};
+	past_request_t *new, p = {0};
 
 	p.request = request;
 
