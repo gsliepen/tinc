@@ -562,25 +562,11 @@ static void make_names(void) {
 }
 
 static void free_names() {
-	if(identname) {
-		free(identname);
-	}
-
-	if(netname) {
-		free(netname);
-	}
-
-	if(pidfilename) {
-		free(pidfilename);
-	}
-
-	if(logfilename) {
-		free(logfilename);
-	}
-
-	if(confbase) {
-		free(confbase);
-	}
+	free(identname);
+	free(netname);
+	free(pidfilename);
+	free(logfilename);
+	free(confbase);
 }
 
 static bool drop_privs() {

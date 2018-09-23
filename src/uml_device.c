@@ -181,10 +181,7 @@ void close_device(void) {
 	unlink(device);
 
 	free(device);
-
-	if(iface) {
-		free(iface);
-	}
+	free(iface);
 }
 
 static bool read_packet(vpn_packet_t *packet) {

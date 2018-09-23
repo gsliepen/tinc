@@ -627,13 +627,8 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 			}
 
 			// Prepare the SUBNET and WEIGHT variables
-			if(envp[5]) {
-				free(envp[5]);
-			}
-
-			if(envp[6]) {
-				free(envp[6]);
-			}
+			free(envp[5]);
+			free(envp[6]);
 
 			xasprintf(&envp[5], "SUBNET=%s", netstr);
 			xasprintf(&envp[6], "WEIGHT=%s", weight);

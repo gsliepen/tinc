@@ -81,18 +81,9 @@ config_t *new_config(void) {
 }
 
 void free_config(config_t *cfg) {
-	if(cfg->variable) {
-		free(cfg->variable);
-	}
-
-	if(cfg->value) {
-		free(cfg->value);
-	}
-
-	if(cfg->file) {
-		free(cfg->file);
-	}
-
+	free(cfg->variable);
+	free(cfg->value);
+	free(cfg->file);
 	free(cfg);
 }
 
