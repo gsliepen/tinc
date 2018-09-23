@@ -2,10 +2,10 @@
  * fake library for ssh
  *
  * This file includes getaddrinfo(), freeaddrinfo() and gai_strerror().
- * These funtions are defined in rfc2133.
+ * These functions are defined in rfc2133.
  *
  * But these functions are not implemented correctly. The minimum subset
- * is implemented for ssh use only. For exapmle, this routine assumes
+ * is implemented for ssh use only. For example, this routine assumes
  * that ai_family is AF_INET. Don't use it for another purpose.
  */
 
