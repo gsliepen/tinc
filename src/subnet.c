@@ -659,7 +659,7 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		}
 	}
 
-	for(i = 0; envp[i] && i < 9; i++) {
+	for(i = 0; i < 9; i++) {
 		free(envp[i]);
 	}
 }
