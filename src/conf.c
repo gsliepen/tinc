@@ -432,7 +432,11 @@ bool read_server_config(void) {
 
 				// And we try to read the ones that end with ".conf"
 				if(l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					snprintf(fname, sizeof(fname), "%s/%s", dname, ep->d_name);
+					if(snprintf(fname, sizeof(fname), "%s/%s", dname, ep->d_name) >= sizeof(fname)) {
+						logger(LOG_ERR, "Pathname too long: %s/%s", dname, ep->d_name);
+						return false;
+					}
+
 					x = read_config_file(config_tree, fname);
 				}
 			}
@@ -573,7 +577,12 @@ FILE *ask_and_open(const char *filename, const char *what) {
 #endif
 		/* The directory is a relative path or a filename. */
 		getcwd(directory, sizeof(directory));
-		snprintf(abspath, sizeof(abspath), "%s/%s", directory, fn);
+
+		if(snprintf(abspath, sizeof(abspath), "%s/%s", directory, fn) >= sizeof(abspath)) {
+			fprintf(stderr, "Pathname too long: %s/%s\n", directory, fn);
+			return NULL;
+		}
+
 		fn = abspath;
 	}
 
