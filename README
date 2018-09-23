@@ -47,14 +47,6 @@ prove the security of any cryptographic product. If you wish to review
 tinc or give us feedback, you are strongly encouraged to do so.
 
 
-Changes to configuration file format since 1.0pre5
---------------------------------------------------
-
-Some configuration variables have different names now. Most notably "TapDevice"
-should be changed into "Device", and "Device" should be changed into
-"BindToDevice".
-
-
 Compatibility
 -------------
 
@@ -67,21 +59,21 @@ AES256 and SHA256 algorithms.
 Requirements
 ------------
 
-Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you need to
-install this library first; grab it from http://www.openssl.org/. You will
-need version 1.0.1 or later with support for AES256 and SHA256 enabled. If
-this library is not installed on your system, configure will fail. The manual
-in doc/tinc.texi contains more detailed information on how to install this
-library. Alternatively, you may also use LibreSSL.
+The OpenSSL library is used for all cryptographic functions. You can find it at
+https://www.openssl.org/. You will need version 1.0.1 or later with support for
+AES256 and SHA256 enabled. If this library is not installed on your system, the
+configure script will fail.  The manual in doc/tinc.texi contains more detailed
+information on how to install this library. Alternatively, you may also use the
+LibreSSL library.
 
-Since 1.0pre6, the zlib library is used for optional compression. You can
-find it at http://www.gzip.org/zlib/. Because of a possible exploit in
+The zlib library is used for optional compression. You can
+find it at https://zlib.net/. Because of a possible exploit in
 earlier versions we recommend that you download version 1.1.4 or later.
 
-Since 1.0, the lzo library is also used for optional compression. You can
-find it at http://www.oberhumer.com/opensource/lzo/.
+The LZO library is also used for optional compression. You can
+find it at https://www.oberhumer.com/opensource/lzo/.
 
-In order to compile tinc, you will need a GNU C compiler environment.
+In order to compile tinc, you will need a C99 compliant compiler.
 
 
 Features

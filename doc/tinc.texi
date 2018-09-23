@@ -421,7 +421,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install zlib manually, you can get the source code
-from @url{http://www.zlib.net/}.  Instructions on how to configure,
+from @url{https://zlib.net/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
