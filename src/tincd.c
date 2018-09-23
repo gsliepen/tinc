@@ -434,7 +434,10 @@ static bool keygen(int bits) {
 	BN_GENCB_set(cb, indicator, NULL);
 
 	rsa_key = RSA_new();
-	BN_hex2bn(&e, "10001");
+
+	if(BN_hex2bn(&e, "10001") == 0) {
+		abort();
+	}
 
 	if(!rsa_key || !e) {
 		abort();
@@ -698,7 +701,10 @@ int main(int argc, char **argv) {
 
 	/* Slllluuuuuuurrrrp! */
 
-	RAND_load_file("/dev/urandom", 1024);
+	if(RAND_load_file("/dev/urandom", 1024) != 1024) {
+		logger(LOG_ERR, "Error initializing RNG!");
+		return 1;
+	}
 
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
