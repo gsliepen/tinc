@@ -24,8 +24,11 @@
 extern bool hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
 
-#ifdef HAVE_MINGW
+#if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
 extern const char *winerror(int);
+#endif
+
+#ifdef HAVE_MINGW
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
 #define sockerrno WSAGetLastError()
 #define sockstrerror(x) winerror(x)
