@@ -2843,7 +2843,7 @@ In switch or hub modes ARP does work so the sender already knows the correct des
 In those modes every interface should have a unique MAC address, so make sure they are not the same.
 Because switch and hub modes rely on MAC addresses to function correctly,
 these modes cannot be used on the following operating systems which don't have a `tap' style virtual network device:
-OpenBSD, NetBSD, Darwin and Solaris.
+NetBSD, Darwin and Solaris.
 
 
 @c ==================================================================
@@ -3446,13 +3446,6 @@ For IPv6 addresses:
 @tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
 @item Windows
 @tab @code{netsh interface ipv6 add address} @var{interface} @code{static} @var{address}/@var{prefixlength}
-@end multitable
-
-On some platforms, when running tinc in switch mode, the VPN interface must be set to tap mode with an ifconfig command:
-
-@multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
-@item OpenBSD
-@tab @code{ifconfig} @var{interface} @code{link0}
 @end multitable
 
 On Linux, it is possible to create a persistent tun/tap interface which will
