@@ -1,3 +1,6 @@
+#ifndef TINC_GRAPH_H
+#define TINC_GRAPH_H
+
 /*
     graph.h -- header for graph.c
     Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
@@ -18,10 +21,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_GRAPH_H__
-#define __TINC_GRAPH_H__
-
 extern void graph(void);
 extern void dump_graph(void);
 
-#endif /* __TINC_GRAPH_H__ */
+#endif

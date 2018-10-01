@@ -3,7 +3,7 @@
     Copyright (C) 1998-2005 Ivo Timmermans,
                   2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
-		  2011      Loïc Grenié <loic.grenie@gmail.com>
+                  2011      Loïc Grenié <loic.grenie@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,21 +70,26 @@ static void purge(void) {
 
 		if(!n->status.reachable) {
 			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Purging node %s (%s)", n->name,
-					   n->hostname);
+			                             n->hostname);
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
 				send_del_subnet(everyone, s);
-				if(!strictsubnets)
+
+				if(!strictsubnets) {
 					subnet_del(n, s);
+				}
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
 				enext = enode->next;
 				e = enode->data;
-				if(!tunnelserver)
+
+				if(!tunnelserver) {
 					send_del_edge(everyone, e);
+				}
+
 				edge_del(e);
 			}
 		}
@@ -101,13 +106,16 @@ static void purge(void) {
 				enext = enode->next;
 				e = enode->data;
 
-				if(e->to == n)
+				if(e->to == n) {
 					break;
+				}
 			}
 
 			if(!enode && (!strictsubnets || !n->subnet_tree->head))
 				/* in strictsubnets mode do not delete nodes with subnets */
+			{
 				node_del(n);
+			}
 		}
 	}
 }
@@ -130,31 +138,45 @@ static int build_fdset(fd_set *readset, fd_set *writeset) {
 
 		if(c->status.remove) {
 			connection_del(c);
-			if(!connection_tree->head)
+
+			if(!connection_tree->head) {
 				purge();
+			}
 		} else {
 			FD_SET(c->socket, readset);
-			if(c->outbuflen > 0 || c->status.connecting)
+
+			if(c->outbuflen > 0 || c->status.connecting) {
 				FD_SET(c->socket, writeset);
-			if(c->socket > max)
+			}
+
+			if(c->socket > max) {
 				max = c->socket;
+			}
 		}
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
 		FD_SET(listen_socket[i].tcp, readset);
-		if(listen_socket[i].tcp > max)
+
+		if(listen_socket[i].tcp > max) {
 			max = listen_socket[i].tcp;
+		}
+
 		FD_SET(listen_socket[i].udp, readset);
-		if(listen_socket[i].udp > max)
+
+		if(listen_socket[i].udp > max) {
 			max = listen_socket[i].udp;
+		}
 	}
 
-	if(device_fd >= 0)
+	if(device_fd >= 0) {
 		FD_SET(device_fd, readset);
-	if(device_fd > max)
+	}
+
+	if(device_fd > max) {
 		max = device_fd;
-	
+	}
+
 	return max;
 }
 
@@ -166,20 +188,23 @@ static int build_fdset(fd_set *readset, fd_set *writeset) {
   - Deactivate the host
 */
 void terminate_connection(connection_t *c, bool report) {
-	if(c->status.remove)
+	if(c->status.remove) {
 		return;
+	}
 
 	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Closing connection with %s (%s)",
-			   c->name, c->hostname);
+	                            c->name, c->hostname);
 
 	c->status.remove = true;
 	c->status.active = false;
 
-	if(c->node)
+	if(c->node) {
 		c->node->connection = NULL;
+	}
 
-	if(c->socket)
+	if(c->socket) {
 		closesocket(c->socket);
+	}
 
 	if(c->edge) {
 		if(!c->node) {
@@ -188,10 +213,12 @@ void terminate_connection(connection_t *c, bool report) {
 			abort();
 		}
 
-		if(report && !tunnelserver)
+		if(report && !tunnelserver) {
 			send_del_edge(everyone, c->edge);
+		}
 
 		edge_del(c->edge);
+		c->edge = NULL;
 
 		/* Run MST and SSSP algorithms */
 
@@ -202,9 +229,12 @@ void terminate_connection(connection_t *c, bool report) {
 		if(report && !c->node->status.reachable) {
 			edge_t *e;
 			e = lookup_edge(c->node, myself);
+
 			if(e) {
-				if(!tunnelserver)
+				if(!tunnelserver) {
 					send_del_edge(everyone, e);
+				}
+
 				edge_del(e);
 			}
 		}
@@ -216,13 +246,14 @@ void terminate_connection(connection_t *c, bool report) {
 
 	if(c->outgoing) {
 		c->status.remove = false;
-		do_outgoing_connection(c);	
+		do_outgoing_connection(c);
 	}
 
 #ifndef HAVE_MINGW
 	/* Clean up dead proxy processes */
 
 	while(waitpid(-1, NULL, WNOHANG) > 0);
+
 #endif
 }
 
@@ -246,7 +277,7 @@ static void check_dead_connections(void) {
 			if(c->status.active) {
 				if(c->status.pinged) {
 					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
-							   c->name, c->hostname, (long)(now - c->last_ping_time));
+					                            c->name, c->hostname, (long)(now - c->last_ping_time));
 					c->status.timeout = true;
 					terminate_connection(c, true);
 				} else if(c->last_ping_time + pinginterval <= now) {
@@ -255,12 +286,14 @@ static void check_dead_connections(void) {
 			} else {
 				if(c->status.remove) {
 					logger(LOG_WARNING, "Old connection_t for %s (%s) status %04x still lingering, deleting...",
-						   c->name, c->hostname, bitfield_to_int(&c->status, sizeof c->status));
+					       c->name, c->hostname, bitfield_to_int(&c->status, sizeof(c->status)));
 					connection_del(c);
 					continue;
 				}
+
 				ifdebug(CONNECTIONS) logger(LOG_WARNING, "Timeout from %s (%s) during authentication",
-						   c->name, c->hostname);
+				                            c->name, c->hostname);
+
 				if(c->status.connecting) {
 					c->status.connecting = false;
 					closesocket(c->socket);
@@ -274,8 +307,8 @@ static void check_dead_connections(void) {
 		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout <= now) {
 			if(c->status.active) {
 				ifdebug(CONNECTIONS) logger(LOG_INFO,
-						"%s (%s) could not flush for %ld seconds (%d bytes remaining)",
-						c->name, c->hostname, (long)(now - c->last_flushed_time), c->outbuflen);
+				                            "%s (%s) could not flush for %ld seconds (%d bytes remaining)",
+				                            c->name, c->hostname, (long)(now - c->last_flushed_time), c->outbuflen);
 				c->status.timeout = true;
 				terminate_connection(c, true);
 			}
@@ -287,7 +320,7 @@ static void check_dead_connections(void) {
   check all connections to see if anything
   happened on their sockets
 */
-static void check_network_activity(fd_set * readset, fd_set * writeset) {
+static void check_network_activity(fd_set *readset, fd_set *writeset) {
 	connection_t *c;
 	avl_node_t *node;
 	int result, i;
@@ -306,6 +339,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 		} else {
 			usleep(errors * 50000);
 			errors++;
+
 			if(errors > 10) {
 				logger(LOG_ERR, "Too many errors from %s, exiting!", device);
 				running = false;
@@ -317,20 +351,21 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
-		if(c->status.remove)
+		if(c->status.remove) {
 			continue;
+		}
 
 		if(FD_ISSET(c->socket, writeset)) {
 			if(c->status.connecting) {
 				c->status.connecting = false;
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
 
-				if(!result)
+				if(!result) {
 					finish_connecting(c);
-				else {
+				} else {
 					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-							   "Error while connecting to %s (%s): %s",
-							   c->name, c->hostname, sockstrerror(result));
+					                            "Error while connecting to %s (%s): %s",
+					                            c->name, c->hostname, sockstrerror(result));
 					closesocket(c->socket);
 					do_outgoing_connection(c);
 					continue;
@@ -352,11 +387,13 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
-		if(FD_ISSET(listen_socket[i].udp, readset))
+		if(FD_ISSET(listen_socket[i].udp, readset)) {
 			handle_incoming_vpn_data(i);
+		}
 
-		if(FD_ISSET(listen_socket[i].tcp, readset))
+		if(FD_ISSET(listen_socket[i].tcp, readset)) {
 			handle_new_meta_connection(listen_socket[i].tcp);
+		}
 	}
 }
 
@@ -379,12 +416,15 @@ int main_loop(void) {
 	last_ping_check = now;
 	last_config_check = now;
 	last_graph_dump = now;
-	
+
 	srand(now);
 
 #ifdef HAVE_PSELECT
-	if(lookup_config(config_tree, "GraphDumpFile"))
+
+	if(lookup_config(config_tree, "GraphDumpFile")) {
 		graph_dump = true;
+	}
+
 	/* Block SIGHUP & SIGALRM */
 	sigemptyset(&block_mask);
 	sigaddset(&block_mask, SIGHUP);
@@ -397,16 +437,21 @@ int main_loop(void) {
 	while(running) {
 #ifdef HAVE_PSELECT
 		next_event = last_ping_check + pingtimeout;
-		if(graph_dump && next_event > last_graph_dump + 60)
+
+		if(graph_dump && next_event > last_graph_dump + 60) {
 			next_event = last_graph_dump + 60;
+		}
 
-		if((event = peek_next_event()) && next_event > event->time)
+		if((event = peek_next_event()) && next_event > event->time) {
 			next_event = event->time;
+		}
 
-		if(next_event <= now)
+		if(next_event <= now) {
 			tv.tv_sec = 0;
-		else
+		} else {
 			tv.tv_sec = next_event - now;
+		}
+
 		tv.tv_nsec = 0;
 #else
 		tv.tv_sec = 1;
@@ -436,8 +481,9 @@ int main_loop(void) {
 			}
 		}
 
-		if(r > 0)
+		if(r > 0) {
 			check_network_activity(&readset, &writeset);
+		}
 
 		if(do_purge) {
 			purge();
@@ -450,8 +496,9 @@ int main_loop(void) {
 			check_dead_connections();
 			last_ping_check = now;
 
-			if(routing_mode == RMODE_SWITCH)
+			if(routing_mode == RMODE_SWITCH) {
 				age_subnets();
+			}
 
 			age_past_requests();
 
@@ -465,6 +512,7 @@ int main_loop(void) {
 
 				for(node = node_tree->head; node; node = node->next) {
 					n = node->data;
+
 					if(n->inkey) {
 						free(n->inkey);
 						n->inkey = NULL;
@@ -484,12 +532,16 @@ int main_loop(void) {
 				logger(LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
 				usleep(sleeptime * 1000000LL);
 				sleeptime *= 2;
-				if(sleeptime < 0)
+
+				if(sleeptime < 0) {
 					sleeptime = 3600;
+				}
 			} else {
 				sleeptime /= 2;
-				if(sleeptime < 10)
+
+				if(sleeptime < 10) {
 					sleeptime = 10;
+				}
 			}
 
 			contradicting_add_edge = 0;
@@ -500,11 +552,15 @@ int main_loop(void) {
 			avl_node_t *node;
 			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
+
 			for(node = connection_tree->head; node; node = node->next) {
 				connection_t *c = node->data;
-				if(c->status.active)
+
+				if(c->status.active) {
 					send_ping(c);
+				}
 			}
+
 			sigalrm = false;
 		}
 
@@ -518,11 +574,11 @@ int main_loop(void) {
 			avl_node_t *node, *next;
 			char *fname;
 			struct stat s;
-			
+
 			sighup = false;
 
 			reopenlogger();
-			
+
 			/* Reread our own configuration file */
 
 			exit_configuration(&config_tree);
@@ -552,20 +608,24 @@ int main_loop(void) {
 			for(list_node_t *node = outgoing_list->head; node; node = node->next) {
 				outgoing_t *outgoing = node->data;
 
-				if(outgoing->event)
+				if(outgoing->event) {
 					event_del(outgoing->event);
+				}
 			}
 
 			list_delete_list(outgoing_list);
 
 			/* Close connections to hosts that have a changed or deleted host config file */
-			
+
 			for(node = connection_tree->head; node; node = node->next) {
 				c = node->data;
-				
+
 				xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-				if(stat(fname, &s) || s.st_mtime > last_config_check)
+
+				if(stat(fname, &s) || s.st_mtime > last_config_check) {
 					terminate_connection(c, c->status.active);
+				}
+
 				free(fname);
 			}
 
@@ -586,26 +646,32 @@ int main_loop(void) {
 				for(node = subnet_tree->head; node; node = next) {
 					next = node->next;
 					subnet = node->data;
+
 					if(subnet->expires == 1) {
 						send_del_subnet(everyone, subnet);
-						if(subnet->owner->status.reachable)
+
+						if(subnet->owner->status.reachable) {
 							subnet_update(subnet->owner, subnet, false);
+						}
+
 						subnet_del(subnet->owner, subnet);
 					} else if(subnet->expires == -1) {
 						subnet->expires = 0;
 					} else {
 						send_add_subnet(everyone, subnet);
-						if(subnet->owner->status.reachable)
+
+						if(subnet->owner->status.reachable) {
 							subnet_update(subnet->owner, subnet, true);
+						}
 					}
 				}
 			}
 
 			/* Try to make outgoing connections */
-			
+
 			try_outgoing_connections();
 		}
-		
+
 		/* Dump graph if wanted every 60 seconds*/
 
 		if(last_graph_dump + 60 <= now) {

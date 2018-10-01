@@ -1,3 +1,6 @@
+#ifndef TINC_PROCESS_H
+#define TINC_PROCESS_H
+
 /*
     process.h -- header file for process.c
     Copyright (C) 1999-2005 Ivo Timmermans,
@@ -18,20 +21,17 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_PROCESS_H__
-#define __TINC_PROCESS_H__
-
 extern bool do_detach;
 extern bool sighup;
 extern bool sigalrm;
 
 extern void setup_signals(void);
-extern bool execute_script(const char *, char **);
+extern bool execute_script(const char *name, char **envp);
 extern bool detach(void);
-extern bool kill_other(int);
+extern bool kill_other(int signal);
 
 #ifdef HAVE_MINGW
 extern bool init_service(void);
 #endif
 
-#endif							/* __TINC_PROCESS_H__ */
+#endif

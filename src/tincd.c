@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -97,10 +97,10 @@ static const char *switchuser = NULL;
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
-char *identname = NULL;				/* program name for syslog */
-char *pidfilename = NULL;			/* pid file location */
-char *logfilename = NULL;			/* log file location */
-char **g_argv;					/* a copy of the cmdline arguments */
+char *identname = NULL;                         /* program name for syslog */
+char *pidfilename = NULL;                       /* pid file location */
+char *logfilename = NULL;                       /* log file location */
+char **g_argv;                                  /* a copy of the cmdline arguments */
 
 static int status = 1;
 
@@ -132,23 +132,23 @@ int main2(int argc, char **argv);
 static void usage(bool status) {
 	if(status)
 		fprintf(stderr, "Try `%s --help\' for more information.\n",
-				program_name);
+		        program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
 		printf("  -c, --config=DIR               Read configuration options from DIR.\n"
-				"  -D, --no-detach                Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]            Increase debug level or set it to LEVEL.\n"
-				"  -k, --kill[=SIGNAL]            Attempt to kill a running tincd and exit.\n"
-				"  -n, --net=NETNAME              Connect to net NETNAME.\n"
-				"  -K, --generate-keys[=BITS]     Generate public/private RSA keypair.\n"
-				"  -L, --mlock                    Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]       Write log entries to a logfile.\n"
-				"      --pidfile=FILENAME         Write PID to FILENAME.\n"
-				"  -o, --option=[HOST.]KEY=VALUE  Set global/host configuration value.\n"
-				"  -R, --chroot                   chroot to NET dir at startup.\n"
-				"  -U, --user=USER                setuid to given USER at startup.\n"
-				"      --help                     Display this help and exit.\n"
-				"      --version                  Output version information and exit.\n\n");
+		       "  -D, --no-detach                Don't fork and detach.\n"
+		       "  -d, --debug[=LEVEL]            Increase debug level or set it to LEVEL.\n"
+		       "  -k, --kill[=SIGNAL]            Attempt to kill a running tincd and exit.\n"
+		       "  -n, --net=NETNAME              Connect to net NETNAME.\n"
+		       "  -K, --generate-keys[=BITS]     Generate public/private RSA keypair.\n"
+		       "  -L, --mlock                    Lock tinc into main memory.\n"
+		       "      --logfile[=FILENAME]       Write log entries to a logfile.\n"
+		       "      --pidfile=FILENAME         Write PID to FILENAME.\n"
+		       "  -o, --option=[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+		       "  -R, --chroot                   chroot to NET dir at startup.\n"
+		       "  -U, --user=USER                setuid to given USER at startup.\n"
+		       "      --help                     Display this help and exit.\n"
+		       "      --version                  Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
@@ -162,166 +162,192 @@ static bool parse_options(int argc, char **argv) {
 	cmdline_conf = list_alloc((list_action_t)free_config);
 
 	while((r = getopt_long(argc, argv, "c:DLd::k::n:o:K::RU:", long_options, &option_index)) != EOF) {
-		switch (r) {
-			case 0:				/* long option */
-				break;
+		switch(r) {
+		case 0:                         /* long option */
+			break;
 
-			case 'c':				/* config file */
-				if(confbase) {
-					fprintf(stderr, "Only one configuration directory can be given.\n");
-					usage(true);
-					return false;
-				}
-				confbase = xstrdup(optarg);
-				break;
-
-			case 'D':				/* no detach */
-				do_detach = false;
-				break;
-
-			case 'L':				/* no detach */
-#ifndef HAVE_MLOCKALL
-				logger(LOG_ERR, "%s not supported on this platform", "mlockall()");
-				return false;
-#else
-				do_mlock = true;
-				break;
-#endif
-
-			case 'd':				/* increase debug level */
-				if(!optarg && optind < argc && *argv[optind] != '-')
-					optarg = argv[optind++];
-				if(optarg)
-					debug_level = atoi(optarg);
-				else
-					debug_level++;
-				break;
-
-			case 'k':				/* kill old tincds */
-#ifndef HAVE_MINGW
-				if(!optarg && optind < argc && *argv[optind] != '-')
-					optarg = argv[optind++];
-				if(optarg) {
-					if(!strcasecmp(optarg, "HUP"))
-						kill_tincd = SIGHUP;
-					else if(!strcasecmp(optarg, "TERM"))
-						kill_tincd = SIGTERM;
-					else if(!strcasecmp(optarg, "KILL"))
-						kill_tincd = SIGKILL;
-					else if(!strcasecmp(optarg, "USR1"))
-						kill_tincd = SIGUSR1;
-					else if(!strcasecmp(optarg, "USR2"))
-						kill_tincd = SIGUSR2;
-					else if(!strcasecmp(optarg, "WINCH"))
-						kill_tincd = SIGWINCH;
-					else if(!strcasecmp(optarg, "INT"))
-						kill_tincd = SIGINT;
-					else if(!strcasecmp(optarg, "ALRM"))
-						kill_tincd = SIGALRM;
-					else if(!strcasecmp(optarg, "ABRT"))
-						kill_tincd = SIGABRT;
-					else {
-						kill_tincd = atoi(optarg);
-
-						if(!kill_tincd) {
-							fprintf(stderr, "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n",
-									optarg);
-							usage(true);
-							return false;
-						}
-					}
-				} else
-					kill_tincd = SIGTERM;
-#else
-					kill_tincd = 1;
-#endif
-				break;
-
-			case 'n':				/* net name given */
-				/* netname "." is special: a "top-level name" */
-				if(netname) {
-					fprintf(stderr, "Only one netname can be given.\n");
-					usage(true);
-					return false;
-				}
-				if(optarg && strcmp(optarg, "."))
-					netname = xstrdup(optarg);
-				break;
-
-			case 'o':				/* option */
-				cfg = parse_config_line(optarg, NULL, ++lineno);
-				if (!cfg)
-					return false;
-				list_insert_tail(cmdline_conf, cfg);
-				break;
-
-			case 'K':				/* generate public/private keypair */
-				if(!optarg && optind < argc && *argv[optind] != '-')
-					optarg = argv[optind++];
-				if(optarg) {
-					generate_keys = atoi(optarg);
-
-					if(generate_keys < 512) {
-						fprintf(stderr, "Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n",
-								optarg);
-						usage(true);
-						return false;
-					}
-
-					generate_keys &= ~7;	/* Round it to bytes */
-				} else
-					generate_keys = 2048;
-				break;
-
-			case 'R':				/* chroot to NETNAME dir */
-				do_chroot = true;
-				break;
-
-			case 'U':				/* setuid to USER */
-				switchuser = optarg;
-				break;
-
-			case 1:					/* show help */
-				show_help = true;
-				break;
-
-			case 2:					/* show version */
-				show_version = true;
-				break;
-
-			case 3:					/* bypass security */
-				bypass_security = true;
-				break;
-
-			case 4:					/* write log entries to a file */
-				use_logfile = true;
-				if(!optarg && optind < argc && *argv[optind] != '-')
-					optarg = argv[optind++];
-				if(optarg) {
-					if(logfilename) {
-						fprintf(stderr, "Only one logfile can be given.\n");
-						usage(true);
-						return false;
-					}
-					logfilename = xstrdup(optarg);
-				}
-				break;
-
-			case 5:					/* write PID to a file */
-				if(pidfilename) {
-					fprintf(stderr, "Only one pidfile can be given.\n");
-					usage(true);
-					return false;
-				}
-				pidfilename = xstrdup(optarg);
-				break;
-
-			case '?':
+		case 'c':                               /* config file */
+			if(confbase) {
+				fprintf(stderr, "Only one configuration directory can be given.\n");
 				usage(true);
 				return false;
+			}
 
-			default:
-				break;
+			confbase = xstrdup(optarg);
+			break;
+
+		case 'D':                               /* no detach */
+			do_detach = false;
+			break;
+
+		case 'L':                               /* no detach */
+#ifndef HAVE_MLOCKALL
+			logger(LOG_ERR, "%s not supported on this platform", "mlockall()");
+			return false;
+#else
+			do_mlock = true;
+			break;
+#endif
+
+		case 'd':                               /* increase debug level */
+			if(!optarg && optind < argc && *argv[optind] != '-') {
+				optarg = argv[optind++];
+			}
+
+			if(optarg) {
+				debug_level = atoi(optarg);
+			} else {
+				debug_level++;
+			}
+
+			break;
+
+		case 'k':                               /* kill old tincds */
+#ifndef HAVE_MINGW
+			if(!optarg && optind < argc && *argv[optind] != '-') {
+				optarg = argv[optind++];
+			}
+
+			if(optarg) {
+				if(!strcasecmp(optarg, "HUP")) {
+					kill_tincd = SIGHUP;
+				} else if(!strcasecmp(optarg, "TERM")) {
+					kill_tincd = SIGTERM;
+				} else if(!strcasecmp(optarg, "KILL")) {
+					kill_tincd = SIGKILL;
+				} else if(!strcasecmp(optarg, "USR1")) {
+					kill_tincd = SIGUSR1;
+				} else if(!strcasecmp(optarg, "USR2")) {
+					kill_tincd = SIGUSR2;
+				} else if(!strcasecmp(optarg, "WINCH")) {
+					kill_tincd = SIGWINCH;
+				} else if(!strcasecmp(optarg, "INT")) {
+					kill_tincd = SIGINT;
+				} else if(!strcasecmp(optarg, "ALRM")) {
+					kill_tincd = SIGALRM;
+				} else if(!strcasecmp(optarg, "ABRT")) {
+					kill_tincd = SIGABRT;
+				} else {
+					kill_tincd = atoi(optarg);
+
+					if(!kill_tincd) {
+						fprintf(stderr, "Invalid argument `%s'; SIGNAL must be a number or one of HUP, TERM, KILL, USR1, USR2, WINCH, INT or ALRM.\n",
+						        optarg);
+						usage(true);
+						return false;
+					}
+				}
+			} else {
+				kill_tincd = SIGTERM;
+			}
+
+#else
+			kill_tincd = 1;
+#endif
+			break;
+
+		case 'n':                               /* net name given */
+
+			/* netname "." is special: a "top-level name" */
+			if(netname) {
+				fprintf(stderr, "Only one netname can be given.\n");
+				usage(true);
+				return false;
+			}
+
+			if(optarg && strcmp(optarg, ".")) {
+				netname = xstrdup(optarg);
+			}
+
+			break;
+
+		case 'o':                               /* option */
+			cfg = parse_config_line(optarg, NULL, ++lineno);
+
+			if(!cfg) {
+				return false;
+			}
+
+			list_insert_tail(cmdline_conf, cfg);
+			break;
+
+		case 'K':                               /* generate public/private keypair */
+			if(!optarg && optind < argc && *argv[optind] != '-') {
+				optarg = argv[optind++];
+			}
+
+			if(optarg) {
+				generate_keys = atoi(optarg);
+
+				if(generate_keys < 512) {
+					fprintf(stderr, "Invalid argument `%s'; BITS must be a number equal to or greater than 512.\n",
+					        optarg);
+					usage(true);
+					return false;
+				}
+
+				generate_keys &= ~7;    /* Round it to bytes */
+			} else {
+				generate_keys = 2048;
+			}
+
+			break;
+
+		case 'R':                               /* chroot to NETNAME dir */
+			do_chroot = true;
+			break;
+
+		case 'U':                               /* setuid to USER */
+			switchuser = optarg;
+			break;
+
+		case 1:                                 /* show help */
+			show_help = true;
+			break;
+
+		case 2:                                 /* show version */
+			show_version = true;
+			break;
+
+		case 3:                                 /* bypass security */
+			bypass_security = true;
+			break;
+
+		case 4:                                 /* write log entries to a file */
+			use_logfile = true;
+
+			if(!optarg && optind < argc && *argv[optind] != '-') {
+				optarg = argv[optind++];
+			}
+
+			if(optarg) {
+				if(logfilename) {
+					fprintf(stderr, "Only one logfile can be given.\n");
+					usage(true);
+					return false;
+				}
+
+				logfilename = xstrdup(optarg);
+			}
+
+			break;
+
+		case 5:                                 /* write PID to a file */
+			if(pidfilename) {
+				fprintf(stderr, "Only one pidfile can be given.\n");
+				usage(true);
+				return false;
+			}
+
+			pidfilename = xstrdup(optarg);
+			break;
+
+		case '?':
+			usage(true);
+			return false;
+
+		default:
+			break;
 		}
 	}
 
@@ -337,36 +363,39 @@ static bool parse_options(int argc, char **argv) {
 /* This function prettyprints the key generation process */
 
 static int indicator(int a, int b, BN_GENCB *cb) {
-	switch (a) {
+	(void)cb;
+
+	switch(a) {
+	case 0:
+		fprintf(stderr, ".");
+		break;
+
+	case 1:
+		fprintf(stderr, "+");
+		break;
+
+	case 2:
+		fprintf(stderr, "-");
+		break;
+
+	case 3:
+		switch(b) {
 		case 0:
-			fprintf(stderr, ".");
+			fprintf(stderr, " p\n");
 			break;
 
 		case 1:
-			fprintf(stderr, "+");
-			break;
-
-		case 2:
-			fprintf(stderr, "-");
-			break;
-
-		case 3:
-			switch (b) {
-				case 0:
-					fprintf(stderr, " p\n");
-					break;
-
-				case 1:
-					fprintf(stderr, " q\n");
-					break;
-
-				default:
-					fprintf(stderr, "?");
-			}
+			fprintf(stderr, " q\n");
 			break;
 
 		default:
 			fprintf(stderr, "?");
+		}
+
+		break;
+
+	default:
+		fprintf(stderr, "?");
 	}
 
 	return 1;
@@ -390,21 +419,26 @@ static bool keygen(int bits) {
 	BIGNUM *e = NULL;
 	RSA *rsa_key;
 	FILE *f;
-	char *pubname, *privname;
+	char filename[PATH_MAX];
 	BN_GENCB *cb;
 	int result;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 
 	cb = BN_GENCB_new();
-	if(!cb)
+
+	if(!cb) {
 		abort();
+	}
+
 	BN_GENCB_set(cb, indicator, NULL);
 
 	rsa_key = RSA_new();
 	BN_hex2bn(&e, "10001");
-	if(!rsa_key || !e)
+
+	if(!rsa_key || !e) {
 		abort();
+	}
 
 	result = RSA_generate_key_ex(rsa_key, bits, e, cb);
 
@@ -413,22 +447,25 @@ static bool keygen(int bits) {
 
 	if(!result) {
 		fprintf(stderr, "Error during key generation!\n");
+		RSA_free(rsa_key);
 		return false;
-	} else
+	} else {
 		fprintf(stderr, "Done.\n");
+	}
 
-	xasprintf(&privname, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(privname, "private RSA key");
-	free(privname);
+	snprintf(filename, sizeof(filename), "%s/rsa_key.priv", confbase);
+	f = ask_and_open(filename, "private RSA key");
 
-	if(!f)
+	if(!f) {
+		RSA_free(rsa_key);
 		return false;
+	}
 
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
 	fchmod(fileno(f), 0600);
 #endif
-		
+
 	fputc('\n', f);
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
@@ -436,21 +473,24 @@ static bool keygen(int bits) {
 	char *name = get_name();
 
 	if(name) {
-		xasprintf(&pubname, "%s/hosts/%s", confbase, name);
+		snprintf(filename, sizeof(filename), "%s/hosts/%s", confbase, name);
 		free(name);
 	} else {
-		xasprintf(&pubname, "%s/rsa_key.pub", confbase);
+		snprintf(filename, sizeof(filename), "%s/rsa_key.pub", confbase);
 	}
 
-	f = ask_and_open(pubname, "public RSA key");
-	free(pubname);
+	f = ask_and_open(filename, "public RSA key");
 
-	if(!f)
+	if(!f) {
+		RSA_free(rsa_key);
 		return false;
+	}
 
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
+
+	RSA_free(rsa_key);
 
 	return true;
 }
@@ -465,101 +505,141 @@ static void make_names(void) {
 	DWORD len = sizeof(installdir);
 #endif
 
-	if(netname)
+	if(netname) {
 		xasprintf(&identname, "tinc.%s", netname);
-	else
+	} else {
 		identname = xstrdup("tinc");
+	}
 
 #ifdef HAVE_MINGW
+
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			if(!confbase) {
-				if(netname)
+				if(netname) {
 					xasprintf(&confbase, "%s/%s", installdir, netname);
-				else
+				} else {
 					xasprintf(&confbase, "%s", installdir);
+				}
 			}
-			if(!logfilename)
+
+			if(!logfilename) {
 				xasprintf(&logfilename, "%s/tinc.log", confbase);
+			}
 		}
+
 		RegCloseKey(key);
-		if(*installdir)
+
+		if(*installdir) {
 			return;
+		}
 	}
+
 #endif
 
-	if(!pidfilename)
-		xasprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+	if(!pidfilename) {
+		xasprintf(&pidfilename, RUNSTATEDIR "/%s.pid", identname);
+	}
 
-	if(!logfilename)
+	if(!logfilename) {
 		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+	}
 
 	if(netname) {
-		if(!confbase)
+		if(!confbase) {
 			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
-		else
+		} else {
 			logger(LOG_INFO, "Both netname and configuration directory given, using the latter...");
+		}
 	} else {
-		if(!confbase)
+		if(!confbase) {
 			xasprintf(&confbase, CONFDIR "/tinc");
+		}
 	}
 }
 
 static void free_names() {
-	if (identname) free(identname);
-	if (netname) free(netname);
-	if (pidfilename) free(pidfilename);
-	if (logfilename) free(logfilename);
-	if (confbase) free(confbase);
+	if(identname) {
+		free(identname);
+	}
+
+	if(netname) {
+		free(netname);
+	}
+
+	if(pidfilename) {
+		free(pidfilename);
+	}
+
+	if(logfilename) {
+		free(logfilename);
+	}
+
+	if(confbase) {
+		free(confbase);
+	}
 }
 
 static bool drop_privs() {
 #ifdef HAVE_MINGW
-	if (switchuser) {
+
+	if(switchuser) {
 		logger(LOG_ERR, "%s not supported on this platform", "-U");
 		return false;
 	}
-	if (do_chroot) {
+
+	if(do_chroot) {
 		logger(LOG_ERR, "%s not supported on this platform", "-R");
 		return false;
 	}
+
 #else
 	uid_t uid = 0;
-	if (switchuser) {
+
+	if(switchuser) {
 		struct passwd *pw = getpwnam(switchuser);
-		if (!pw) {
+
+		if(!pw) {
 			logger(LOG_ERR, "unknown user `%s'", switchuser);
 			return false;
 		}
+
 		uid = pw->pw_uid;
-		if (initgroups(switchuser, pw->pw_gid) != 0 ||
-		    setgid(pw->pw_gid) != 0) {
+
+		if(initgroups(switchuser, pw->pw_gid) != 0 ||
+		                setgid(pw->pw_gid) != 0) {
 			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
 			return false;
 		}
-#ifndef __ANDROID__
+
+#ifndef ANDROID
 // Not supported in android NDK
 		endgrent();
 		endpwent();
 #endif
 	}
-	if (do_chroot) {
-		tzset();	/* for proper timestamps in logs */
-		if (chroot(confbase) != 0 || chdir("/") != 0) {
+
+	if(do_chroot) {
+		tzset();        /* for proper timestamps in logs */
+
+		if(chroot(confbase) != 0 || chdir("/") != 0) {
 			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "chroot", strerror(errno));
 			return false;
 		}
+
 		free(confbase);
 		confbase = xstrdup("");
 	}
-	if (switchuser)
-		if (setuid(uid) != 0) {
+
+	if(switchuser)
+		if(setuid(uid) != 0) {
 			logger(LOG_ERR, "System call `%s' failed: %s",
 			       "setuid", strerror(errno));
 			return false;
 		}
+
 #endif
 	return true;
 }
@@ -576,18 +656,17 @@ static bool drop_privs() {
 int main(int argc, char **argv) {
 	program_name = argv[0];
 
-	if(!parse_options(argc, argv))
+	if(!parse_options(argc, argv)) {
 		return 1;
-	
-	make_names();
+	}
 
 	if(show_version) {
 		printf("%s version %s\n", PACKAGE, VERSION);
-		printf("Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen and others.\n"
-				"See the AUTHORS file for a complete list.\n\n"
-				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
-				"and you are welcome to redistribute it under certain conditions;\n"
-				"see the file COPYING for details.\n");
+		printf("Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
+		       "See the AUTHORS file for a complete list.\n\n"
+		       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+		       "and you are welcome to redistribute it under certain conditions;\n"
+		       "see the file COPYING for details.\n");
 
 		return 0;
 	}
@@ -597,15 +676,20 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	if(kill_tincd)
-		return !kill_other(kill_tincd);
+	make_names();
 
-	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
+	if(kill_tincd) {
+		return !kill_other(kill_tincd);
+	}
+
+	openlogger("tinc", use_logfile ? LOGMODE_FILE : LOGMODE_STDERR);
 
 	g_argv = argv;
 
-	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid())
+	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid()) {
 		do_detach = false;
+	}
+
 #ifdef HAVE_UNSETENV
 	unsetenv("LISTEN_PID");
 #endif
@@ -626,52 +710,61 @@ int main(int argc, char **argv) {
 		return !keygen(generate_keys);
 	}
 
-	if(!read_server_config())
+	if(!read_server_config()) {
 		return 1;
+	}
 
 #ifdef HAVE_LZO
+
 	if(lzo_init() != LZO_E_OK) {
 		logger(LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
+
 #endif
 
 #ifdef HAVE_MINGW
+
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
 		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
 
-	if(!do_detach || !init_service())
+	if(!do_detach || !init_service()) {
 		return main2(argc, argv);
-	else
+	} else {
 		return 1;
+	}
 }
 
 int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
-        char *priority = NULL;
+	char *priority = NULL;
 
-	if(!detach())
+	if(!detach()) {
 		return 1;
+	}
 
 #ifdef HAVE_MLOCKALL
+
 	/* Lock all pages into memory if requested.
 	 * This has to be done after daemon()/fork() so it works for child.
 	 * No need to do that in parent as it's very short-lived. */
 	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
 		logger(LOG_ERR, "System call `%s' failed: %s", "mlockall",
-		   strerror(errno));
+		       strerror(errno));
 		return 1;
 	}
+
 #endif
 
 	/* Setup sockets and open device. */
 
-	if(!setup_network())
+	if(!setup_network()) {
 		goto end;
+	}
 
 	/* Initiate all outgoing connections. */
 
@@ -679,34 +772,35 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-        if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal")) {
-                        if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
-                                logger(LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else if(!strcasecmp(priority, "Low")) {
-                        if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
-                                       logger(LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else if(!strcasecmp(priority, "High")) {
-                        if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
-                                logger(LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else {
-                        logger(LOG_ERR, "Invalid priority `%s`!", priority);
-                        goto end;
-                }
-        }
+	if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+		if(!strcasecmp(priority, "Normal")) {
+			if(setpriority(NORMAL_PRIORITY_CLASS) != 0) {
+				logger(LOG_ERR, "System call `%s' failed: %s",
+				       "setpriority", strerror(errno));
+				goto end;
+			}
+		} else if(!strcasecmp(priority, "Low")) {
+			if(setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
+				logger(LOG_ERR, "System call `%s' failed: %s",
+				       "setpriority", strerror(errno));
+				goto end;
+			}
+		} else if(!strcasecmp(priority, "High")) {
+			if(setpriority(HIGH_PRIORITY_CLASS) != 0) {
+				logger(LOG_ERR, "System call `%s' failed: %s",
+				       "setpriority", strerror(errno));
+				goto end;
+			}
+		} else {
+			logger(LOG_ERR, "Invalid priority `%s`!", priority);
+			goto end;
+		}
+	}
 
 	/* drop privileges */
-	if (!drop_privs())
+	if(!drop_privs()) {
 		goto end;
+	}
 
 	/* Start main loop. It only exits when tinc is killed. */
 
@@ -715,7 +809,7 @@ int main2(int argc, char **argv) {
 	/* Shutdown properly. */
 
 	ifdebug(CONNECTIONS)
-		devops.dump_stats();
+	devops.dump_stats();
 
 	close_network_connections();
 
@@ -729,17 +823,11 @@ end:
 	free(priority);
 
 	EVP_cleanup();
-	ENGINE_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-#ifdef HAVE_ERR_REMOVE_STATE
-	// OpenSSL claims this function was deprecated in 1.0.0,
-	// but valgrind's leak detector shows you still need to call it to make sure OpenSSL cleans up properly.
-	ERR_remove_state(0);
-#endif
 	ERR_free_strings();
+	ENGINE_cleanup();
 
 	exit_configuration(&config_tree);
-	list_free(cmdline_conf);
+	list_delete_list(cmdline_conf);
 	free_names();
 
 	return status;

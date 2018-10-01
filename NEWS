@@ -1,3 +1,26 @@
+Version 1.0.34               June 12 2018
+
+ * Fix a potential segmentation fault when connecting to an IPv6 peer via a
+   proxy.
+ * Minor improvements to the build system.
+ * Make the systemd service file identical to the one from the 1.1 branch.
+ * Fix a potential problem causing IPv4 sockets to not work on macOS.
+
+Thanks to Maximilian Stein and Wang Liu Shuai for their contributions to this
+version of tinc.
+
+Version 1.0.33               November 4 2017
+
+ * Allow compilation from a build directory.
+ * Source code cleanups.
+ * Fix some options specified on the command line not surviving a HUP signal.
+ * Handle tun/tap device returning EPERM or EBUSY.
+ * Disable PMTUDiscovery when TCPOnly is used.
+ * Support the --runstatedir option of the autoconf 2.70.
+
+Thanks to Rafael Sadowski and Pierre-Olivier Mercier for their contributions to
+this version of tinc.
+
 Version 1.0.32               September 2 2017
 
  * Fix segmentation fault when using Cipher = none.
@@ -329,7 +352,7 @@ Version 1.0.9                Dec 26 2008
 
  * Enable path MTU discovery by default.
 
- * Fixed a memory leak that occured when connections were closed.
+ * Fixed a memory leak that occurred when connections were closed.
 
  Thanks to Max Rijevski for his contributions to this version of tinc.
 

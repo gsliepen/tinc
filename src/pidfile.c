@@ -22,7 +22,7 @@
 /* left unaltered for tinc -- Ivo Timmermans */
 /*
  * Sat Aug 19 13:24:33 MET DST 1995: Martin Schulze
- *	First version (v0.2) released
+ *      First version (v0.2) released
  */
 
 #include "system.h"
@@ -36,17 +36,20 @@
  * 0 is returned if either there's no pidfile, it's empty
  * or no pid can be read.
  */
-pid_t read_pid (const char *pidfile)
-{
-  FILE *f;
-  long pid;
+pid_t read_pid(const char *pidfile) {
+	FILE *f;
+	long pid;
 
-  if (!(f=fopen(pidfile,"r")))
-    return 0;
-  if(fscanf(f,"%20ld", &pid) != 1)
-    pid = 0;
-  fclose(f);
-  return (pid_t)pid;
+	if(!(f = fopen(pidfile, "r"))) {
+		return 0;
+	}
+
+	if(fscanf(f, "%20ld", &pid) != 1) {
+		pid = 0;
+	}
+
+	fclose(f);
+	return (pid_t)pid;
 }
 
 /* check_pid
@@ -55,25 +58,27 @@ pid_t read_pid (const char *pidfile)
  * table (using /proc) to determine if the process already exists. If
  * so the pid is returned, otherwise 0.
  */
-pid_t check_pid (const char *pidfile)
-{
-  pid_t pid = read_pid(pidfile);
+pid_t check_pid(const char *pidfile) {
+	pid_t pid = read_pid(pidfile);
 
-  /* Amazing ! _I_ am already holding the pid file... */
-  if ((!pid) || (pid == getpid ()))
-    return 0;
+	/* Amazing ! _I_ am already holding the pid file... */
+	if((!pid) || (pid == getpid())) {
+		return 0;
+	}
 
-  /*
-   * The 'standard' method of doing this is to try and do a 'fake' kill
-   * of the process.  If an ESRCH error is returned the process cannot
-   * be found -- GW
-   */
-  /* But... errno is usually changed only on error.. */
-  errno = 0;
-  if (kill(pid, 0) && errno == ESRCH)
-	  return 0;
+	/*
+	 * The 'standard' method of doing this is to try and do a 'fake' kill
+	 * of the process.  If an ESRCH error is returned the process cannot
+	 * be found -- GW
+	 */
+	/* But... errno is usually changed only on error.. */
+	errno = 0;
 
-  return pid;
+	if(kill(pid, 0) && errno == ESRCH) {
+		return 0;
+	}
+
+	return pid;
 }
 
 /* write_pid
@@ -81,44 +86,49 @@ pid_t check_pid (const char *pidfile)
  * Writes the pid to the specified file. If that fails 0 is
  * returned, otherwise the pid.
  */
-pid_t write_pid (const char *pidfile)
-{
-  FILE *f;
-  int fd;
-  pid_t pid;
+pid_t write_pid(const char *pidfile) {
+	FILE *f;
+	int fd;
+	pid_t pid;
 
-  if ((fd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1) {
-      return 0;
-  }
+	if((fd = open(pidfile, O_RDWR | O_CREAT, 0644)) == -1) {
+		return 0;
+	}
 
-  if ((f = fdopen(fd, "r+")) == NULL) {
-      close(fd);
-      return 0;
-  }
-  
-#ifdef HAVE_FLOCK
-  if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-      fclose(f);
-      return 0;
-  }
-#endif
-
-  pid = getpid();
-  if (!fprintf(f,"%ld\n", (long)pid)) {
-      fclose(f);
-      return 0;
-  }
-  fflush(f);
+	if((f = fdopen(fd, "r+")) == NULL) {
+		close(fd);
+		return 0;
+	}
 
 #ifdef HAVE_FLOCK
-  if (flock(fd, LOCK_UN) == -1) {
-      fclose(f);
-      return 0;
-  }
-#endif
-  fclose(f);
 
-  return pid;
+	if(flock(fd, LOCK_EX | LOCK_NB) == -1) {
+		fclose(f);
+		return 0;
+	}
+
+#endif
+
+	pid = getpid();
+
+	if(!fprintf(f, "%ld\n", (long)pid)) {
+		fclose(f);
+		return 0;
+	}
+
+	fflush(f);
+
+#ifdef HAVE_FLOCK
+
+	if(flock(fd, LOCK_UN) == -1) {
+		fclose(f);
+		return 0;
+	}
+
+#endif
+	fclose(f);
+
+	return pid;
 }
 
 /* remove_pid
@@ -126,8 +136,7 @@ pid_t write_pid (const char *pidfile)
  * Remove the the specified file. The result from unlink(2)
  * is returned
  */
-int remove_pid (const char *pidfile)
-{
-  return unlink (pidfile);
+int remove_pid(const char *pidfile) {
+	return unlink(pidfile);
 }
 #endif

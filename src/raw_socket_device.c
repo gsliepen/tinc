@@ -33,7 +33,7 @@
 #include "xalloc.h"
 
 #if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET) && defined(SIOCGIFINDEX)
-static char *device_info;
+static const char *device_info = "raw_socket";
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
@@ -42,17 +42,17 @@ static bool setup_device(void) {
 	struct ifreq ifr;
 	struct sockaddr_ll sa;
 
-	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
+	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface)) {
 		iface = xstrdup("eth0");
+	}
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
 		device = xstrdup(iface);
-
-	device_info = "raw socket";
+	}
 
 	if((device_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
 		logger(LOG_ERR, "Could not open %s: %s", device_info,
-			   strerror(errno));
+		       strerror(errno));
 		return false;
 	}
 
@@ -97,7 +97,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
 		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
-			   device, strerror(errno));
+		       device, strerror(errno));
 		return false;
 	}
 
@@ -106,18 +106,18 @@ static bool read_packet(vpn_packet_t *packet) {
 	device_total_in += packet->len;
 
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
-			   device_info);
+	                        device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
-			   packet->len, device_info);
+	                        packet->len, device_info);
 
 	if(write(device_fd, packet->data, packet->len) < 0) {
 		logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-			   strerror(errno));
+		       strerror(errno));
 		return false;
 	}
 

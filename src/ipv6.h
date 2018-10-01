@@ -1,3 +1,6 @@
+#ifndef TINC_IPV6_H
+#define TINC_IPV6_H
+
 /*
     ipv6.h -- missing IPv6 related definitions
     Copyright (C) 2005 Ivo Timmermans
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_IPV6_H__
-#define __TINC_IPV6_H__
-
 #ifndef AF_INET6
 #define AF_INET6 10
 #endif
@@ -36,7 +36,7 @@ struct in6_addr {
 		uint16_t u6_addr16[8];
 		uint32_t u6_addr32[4];
 	} in6_u;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #define s6_addr in6_u.u6_addr8
 #define s6_addr16 in6_u.u6_addr16
 #define s6_addr32 in6_u.u6_addr32
@@ -49,14 +49,14 @@ struct sockaddr_in6 {
 	uint32_t sin6_flowinfo;
 	struct in6_addr sin6_addr;
 	uint32_t sin6_scope_id;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
 #ifndef IN6_IS_ADDR_V4MAPPED
 #define IN6_IS_ADDR_V4MAPPED(a) \
-        ((((__const uint32_t *) (a))[0] == 0) \
-        && (((__const uint32_t *) (a))[1] == 0) \
-        && (((__const uint32_t *) (a))[2] == htonl (0xffff)))
+	((((const uint32_t *) (a))[0] == 0) \
+	 && (((const uint32_t *) (a))[1] == 0) \
+	 && (((const uint32_t *) (a))[2] == htonl (0xffff)))
 #endif
 
 #ifndef HAVE_STRUCT_IP6_HDR
@@ -72,7 +72,7 @@ struct ip6_hdr {
 	} ip6_ctlun;
 	struct in6_addr ip6_src;
 	struct in6_addr ip6_dst;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #define ip6_vfc ip6_ctlun.ip6_un2_vfc
 #define ip6_flow ip6_ctlun.ip6_un1.ip6_un1_flow
 #define ip6_plen ip6_ctlun.ip6_un1.ip6_un1_plen
@@ -91,7 +91,7 @@ struct icmp6_hdr {
 		uint16_t icmp6_un_data16[2];
 		uint8_t icmp6_un_data8[4];
 	} icmp6_dataun;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #define ICMP6_DST_UNREACH_NOROUTE 0
 #define ICMP6_DST_UNREACH 1
 #define ICMP6_PACKET_TOO_BIG 2
@@ -111,7 +111,7 @@ struct icmp6_hdr {
 struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
 	struct in6_addr nd_ns_target;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #define ND_OPT_SOURCE_LINKADDR 1
 #define ND_OPT_TARGET_LINKADDR 2
 #define nd_ns_type nd_ns_hdr.icmp6_type
@@ -124,7 +124,7 @@ struct nd_neighbor_solicit {
 struct nd_opt_hdr {
 	uint8_t nd_opt_type;
 	uint8_t nd_opt_len;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
-#endif /* __TINC_IPV6_H__ */
+#endif

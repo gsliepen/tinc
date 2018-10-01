@@ -1,3 +1,6 @@
+#ifndef TINC_NETUTL_H
+#define TINC_NETUTL_H
+
 /*
     netutl.h -- header file for netutl.c
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -18,26 +21,23 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_NETUTL_H__
-#define __TINC_NETUTL_H__
-
 #include "net.h"
 
 extern bool hostnames;
 
-extern struct addrinfo *str2addrinfo(const char *, const char *, int);
-extern sockaddr_t str2sockaddr(const char *, const char *);
-extern void sockaddr2str(const sockaddr_t *, char **, char **);
-extern char *sockaddr2hostname(const sockaddr_t *);
-extern int sockaddrcmp(const sockaddr_t *, const sockaddr_t *);
-extern int sockaddrcmp_noport(const sockaddr_t *, const sockaddr_t *);
-extern void sockaddrunmap(sockaddr_t *);
-extern void sockaddrfree(sockaddr_t *);
-extern void sockaddrcpy(sockaddr_t *, const sockaddr_t *);
-extern void sockaddr_setport(sockaddr_t *, const char *);
-extern int maskcmp(const void *, const void *, int);
-extern void maskcpy(void *, const void *, int, int);
-extern void mask(void *, int, int);
-extern bool maskcheck(const void *, int, int);
+extern struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype);
+extern sockaddr_t str2sockaddr(const char *address, const char *port);
+extern void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr);
+extern char *sockaddr2hostname(const sockaddr_t *sa);
+extern int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b);
+extern int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b);
+extern void sockaddrunmap(sockaddr_t *sa);
+extern void sockaddrfree(sockaddr_t *sa);
+extern void sockaddrcpy(sockaddr_t *dest, const sockaddr_t *src);
+extern void sockaddr_setport(sockaddr_t *sa, const char *port);
+extern int maskcmp(const void *a, const void *b, int masklen);
+extern void maskcpy(void *dest, const void *src, int masklen, int len);
+extern void mask(void *mask, int masklen, int len);
+extern bool maskcheck(const void *mask, int masklen, int len);
 
-#endif							/* __TINC_NETUTL_H__ */
+#endif

@@ -1,3 +1,6 @@
+#ifndef TINC_HAVE_H
+#define TINC_HAVE_H
+
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_HAVE_H__
-#define __TINC_HAVE_H__
-
 #ifdef HAVE_MINGW
 #ifdef WITH_WINDOWS2000
 #define WINVER Windows2000
@@ -30,15 +30,19 @@
 #endif
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
+#include <limits.h>
+
 #include <fcntl.h>
 #include <unistd.h>
-#include <limits.h>
+#include <signal.h>
 
 #ifdef HAVE_MINGW
 #include <w32api.h>
@@ -53,10 +57,6 @@
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
-#endif
-
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
 #endif
 
 #ifdef HAVE_ALLOCA_H
@@ -211,4 +211,4 @@
 #include <linux/if_tun.h>
 #endif
 
-#endif /* __TINC_SYSTEM_H__ */
+#endif

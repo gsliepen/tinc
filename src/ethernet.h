@@ -1,3 +1,6 @@
+#ifndef TINC_ETHERNET_H
+#define TINC_ETHERNET_H
+
 /*
     ethernet.h -- missing Ethernet related definitions
     Copyright (C) 2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_ETHERNET_H__
-#define __TINC_ETHERNET_H__
 
 #ifndef ETH_ALEN
 #define ETH_ALEN 6
@@ -50,7 +50,7 @@ struct ether_header {
 	uint8_t ether_dhost[ETH_ALEN];
 	uint8_t ether_shost[ETH_ALEN];
 	uint16_t ether_type;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
 #ifndef HAVE_STRUCT_ARPHDR
@@ -58,17 +58,17 @@ struct arphdr {
 	uint16_t ar_hrd;
 	uint16_t ar_pro;
 	uint8_t ar_hln;
-	uint8_t ar_pln; 
-	uint16_t ar_op; 
-} __attribute__ ((__packed__));
+	uint8_t ar_pln;
+	uint16_t ar_op;
+} __attribute__((__packed__));
 
-#define ARPOP_REQUEST 1 
-#define ARPOP_REPLY 2 
-#define ARPOP_RREQUEST 3 
-#define ARPOP_RREPLY 4 
-#define ARPOP_InREQUEST 8 
-#define ARPOP_InREPLY 9 
-#define ARPOP_NAK 10 
+#define ARPOP_REQUEST 1
+#define ARPOP_REPLY 2
+#define ARPOP_RREQUEST 3
+#define ARPOP_RREPLY 4
+#define ARPOP_InREQUEST 8
+#define ARPOP_InREPLY 9
+#define ARPOP_NAK 10
 #endif
 
 #ifndef HAVE_STRUCT_ETHER_ARP
@@ -78,7 +78,7 @@ struct  ether_arp {
 	uint8_t arp_spa[4];
 	uint8_t arp_tha[ETH_ALEN];
 	uint8_t arp_tpa[4];
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #define arp_hrd ea_hdr.ar_hrd
 #define arp_pro ea_hdr.ar_pro
 #define arp_hln ea_hdr.ar_hln
@@ -86,4 +86,4 @@ struct  ether_arp {
 #define arp_op ea_hdr.ar_op
 #endif
 
-#endif /* __TINC_ETHERNET_H__ */
+#endif

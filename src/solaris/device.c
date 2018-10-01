@@ -53,7 +53,7 @@ static int if_fd = -1;
 static int ip_fd = -1;
 char *device = NULL;
 char *iface = NULL;
-static char *device_info = NULL;
+static const char *device_info = NULL;
 
 uint64_t device_total_in = 0;
 uint64_t device_total_out = 0;
@@ -62,33 +62,37 @@ static bool setup_device(void) {
 	char *type;
 
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
-		if(routing_mode == RMODE_ROUTER)
+		if(routing_mode == RMODE_ROUTER) {
 			device = xstrdup(DEFAULT_TUN_DEVICE);
-		else
+		} else {
 			device = xstrdup(DEFAULT_TAP_DEVICE);
+		}
 	}
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
 			/* use default */;
-		else if(!strcasecmp(type, "tap"))
+		else if(!strcasecmp(type, "tap")) {
 			device_type = DEVICE_TYPE_TAP;
-		else {
+		} else {
 			logger(LOG_ERR, "Unknown device type %s!", type);
 			return false;
 		}
 	} else {
-		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER)
+		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER) {
 			device_type = DEVICE_TYPE_TAP;
+		}
 	}
 
-	if(device_type == DEVICE_TYPE_TUN)
+	if(device_type == DEVICE_TYPE_TUN) {
 		device_info = "Solaris tun device";
-	else
+	} else {
 		device_info = "Solaris tap device";
+	}
 
-	if(device_type == DEVICE_TYPE_TAP && routing_mode == RMODE_ROUTER)
+	if(device_type == DEVICE_TYPE_TAP && routing_mode == RMODE_ROUTER) {
 		overwrite_mac = true;
+	}
 
 	/* The following is black magic copied from OpenVPN. */
 
@@ -107,29 +111,35 @@ static bool setup_device(void) {
 	char *ptr = device;
 	get_config_string(lookup_config(config_tree, "Interface"), &ptr);
 
-	while(*ptr && !isdigit(*ptr))
+	while(*ptr && !isdigit(*ptr)) {
 		ptr++;
+	}
+
 	int ppa = atoi(ptr);
 
 	/* Assign a new PPA and get its unit number. */
 
 	struct strioctl strioc_ppa = {
 		.ic_cmd = TUNNEWPPA,
-		.ic_len = sizeof ppa,
-		.ic_dp = (char *)&ppa,
+		.ic_len = sizeof(ppa),
+		.ic_dp = (char *) &ppa,
 	};
 
 	if(!*ptr) { /* no number given, try dynamic */
 		bool found = false;
+
 		while(!found && ppa < 64) {
 			int new_ppa = ioctl(device_fd, I_STR, &strioc_ppa);
+
 			if(new_ppa >= 0) {
 				ppa = new_ppa;
 				found = true;
 				break;
 			}
+
 			ppa++;
 		}
+
 		if(!found) {
 			logger(LOG_ERR, "Could not find free PPA for %s %s!", device_info, device);
 			return false;
@@ -156,7 +166,8 @@ static bool setup_device(void) {
 	{
 		/* Remove muxes just in case they are left over from a crashed tincd */
 		struct lifreq ifr = {};
-		strncpy(ifr.lifr_name, iface, sizeof ifr.lifr_name);
+		strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
+
 		if(ioctl(ip_fd, SIOCGLIFMUXID, &ifr) >= 0) {
 			int muxid = ifr.lifr_arp_muxid;
 			ioctl(ip_fd, I_PUNLINK, muxid);
@@ -191,6 +202,7 @@ static bool setup_device(void) {
 			logger(LOG_ERR, "Could not set PPA %d on %s %s!", ppa, device_info, device);
 			return false;
 		}
+
 		if(ioctl(if_fd, SIOCGLIFFLAGS, &ifr) < 0) {
 			logger(LOG_ERR, "Could not set flags on %s %s!", device_info, device);
 			return false;
@@ -204,8 +216,9 @@ static bool setup_device(void) {
 
 		/* Pop any modules on the stream */
 		while(true) {
-			if(ioctl(ip_fd, I_POP, NULL) < 0)
+			if(ioctl(ip_fd, I_POP, NULL) < 0) {
 				break;
+			}
 		}
 
 		/* Push arp module to ip_fd */
@@ -229,8 +242,8 @@ static bool setup_device(void) {
 		/* Set ifname to arp */
 		struct strioctl strioc_if = {
 			.ic_cmd = SIOCSLIFNAME,
-			.ic_len = sizeof ifr,
-			.ic_dp = (char *)&ifr,
+			.ic_len = sizeof(ifr),
+			.ic_dp = (char *) &ifr,
 		};
 
 		if(ioctl(arp_fd, I_STR, &strioc_if) < 0) {
@@ -251,12 +264,16 @@ static bool setup_device(void) {
 			logger(LOG_ERR, "Could not link %s %s to ARP", device_info, device);
 			return false;
 		}
+
 		close(arp_fd);
 	}
 
 	struct lifreq ifr = {};
+
 	strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
+
 	ifr.lifr_ip_muxid = ip_muxid;
+
 	if(device_type == DEVICE_TYPE_TAP) {
 		ifr.lifr_arp_muxid = arp_muxid;
 	}
@@ -265,6 +282,7 @@ static bool setup_device(void) {
 		if(device_type == DEVICE_TYPE_TAP) {
 			ioctl(ip_fd, I_PUNLINK, arp_muxid);
 		}
+
 		ioctl(ip_fd, I_PUNLINK, ip_muxid);
 		logger(LOG_ERR, "Could not set multiplexor id for %s %s", device_info, device);
 		return false;
@@ -285,7 +303,8 @@ static bool setup_device(void) {
 static void close_device(void) {
 	if(iface) {
 		struct lifreq ifr = {};
-		strncpy(ifr.lifr_name, iface, sizeof ifr.lifr_name);
+		strncpy(ifr.lifr_name, iface, sizeof(ifr.lifr_name));
+
 		if(ioctl(ip_fd, SIOCGLIFMUXID, &ifr) >= 0) {
 			int muxid = ifr.lifr_arp_muxid;
 			ioctl(ip_fd, I_PUNLINK, muxid);
@@ -307,47 +326,49 @@ static bool read_packet(vpn_packet_t *packet) {
 	int f = 0;
 
 	switch(device_type) {
-		case DEVICE_TYPE_TUN:
-			sbuf.maxlen = MTU - 14;
-			sbuf.buf = (char *)packet->data + 14;
+	case DEVICE_TYPE_TUN:
+		sbuf.maxlen = MTU - 14;
+		sbuf.buf = (char *)packet->data + 14;
 
-			if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
-				return false;
-			}
+		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
+			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+			return false;
+		}
 
-			switch(packet->data[14] >> 4) {
-				case 4:
-					packet->data[12] = 0x08;
-					packet->data[13] = 0x00;
-					break;
-				case 6:
-					packet->data[12] = 0x86;
-					packet->data[13] = 0xDD;
-					break;
-				default:
-					ifdebug(TRAFFIC) logger(LOG_ERR, "Unknown IP version %d while reading packet from %s %s", packet->data[14] >> 4, device_info, device);
-					return false;
-			}
-
-			memset(packet->data, 0, 12);
-			packet->len = sbuf.len + 14;
+		switch(packet->data[14] >> 4) {
+		case 4:
+			packet->data[12] = 0x08;
+			packet->data[13] = 0x00;
 			break;
 
-		case DEVICE_TYPE_TAP:
-			sbuf.maxlen = MTU;
-			sbuf.buf = (char *)packet->data;
-
-			if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
-				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
-				return false;
-			}
-
-			packet->len = sbuf.len;
+		case 6:
+			packet->data[12] = 0x86;
+			packet->data[13] = 0xDD;
 			break;
 
 		default:
-			abort();
+			ifdebug(TRAFFIC) logger(LOG_ERR, "Unknown IP version %d while reading packet from %s %s", packet->data[14] >> 4, device_info, device);
+			return false;
+		}
+
+		memset(packet->data, 0, 12);
+		packet->len = sbuf.len + 14;
+		break;
+
+	case DEVICE_TYPE_TAP:
+		sbuf.maxlen = MTU;
+		sbuf.buf = (char *)packet->data;
+
+		if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
+			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
+			return false;
+		}
+
+		packet->len = sbuf.len;
+		break;
+
+	default:
+		abort();
 	}
 
 	device_total_in += packet->len;
@@ -363,28 +384,30 @@ static bool write_packet(vpn_packet_t *packet) {
 	struct strbuf sbuf;
 
 	switch(device_type) {
-		case DEVICE_TYPE_TUN:
-			sbuf.len = packet->len - 14;
-			sbuf.buf = (char *)packet->data + 14;
+	case DEVICE_TYPE_TUN:
+		sbuf.len = packet->len - 14;
+		sbuf.buf = (char *)packet->data + 14;
 
-			if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
-				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
-				return false;
-			}
-			break;
+		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
+			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			return false;
+		}
 
-		case DEVICE_TYPE_TAP:
-			sbuf.len = packet->len;
-			sbuf.buf = (char *)packet->data;
+		break;
 
-			if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
-				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
-				return false;
-			}
-			break;
+	case DEVICE_TYPE_TAP:
+		sbuf.len = packet->len;
+		sbuf.buf = (char *)packet->data;
 
-		default:
-			abort();
+		if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
+			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
+			return false;
+		}
+
+		break;
+
+	default:
+		abort();
 	}
 
 	device_total_out += packet->len;

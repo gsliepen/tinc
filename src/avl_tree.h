@@ -1,3 +1,6 @@
+#ifndef TINC_AVL_TREE_H
+#define TINC_AVL_TREE_H
+
 /*
     avl_tree.h -- header file for avl_tree.c
     Copyright (C) 1998 Michael H. Buselli
@@ -29,10 +32,6 @@
     library for inclusion into tinc (https://www.tinc-vpn.org/) by
     Guus Sliepen <guus@tinc-vpn.org>.
 */
-
-
-#ifndef __AVL_TREE_H__
-#define __AVL_TREE_H__
 
 #ifndef AVL_DEPTH
 #ifndef AVL_COUNT
@@ -66,9 +65,9 @@ typedef struct avl_node_t {
 
 } avl_node_t;
 
-typedef int (*avl_compare_t)(const void *, const void *);
-typedef void (*avl_action_t)(const void *);
-typedef void (*avl_action_node_t)(const avl_node_t *);
+typedef int (*avl_compare_t)(const void *data1, const void *data2);
+typedef void (*avl_action_t)(const void *data);
+typedef void (*avl_action_node_t)(const avl_node_t *node);
 
 typedef struct avl_tree_t {
 
@@ -88,56 +87,56 @@ typedef struct avl_tree_t {
 
 /* (De)constructors */
 
-extern avl_tree_t *avl_alloc_tree(avl_compare_t, avl_action_t);
-extern void avl_free_tree(avl_tree_t *);
+extern avl_tree_t *avl_alloc_tree(avl_compare_t compare, avl_action_t delete);
+extern void avl_free_tree(avl_tree_t *tree);
 
 extern avl_node_t *avl_alloc_node(void);
-extern void avl_free_node(avl_tree_t *tree, avl_node_t *);
+extern void avl_free_node(avl_tree_t *tree, avl_node_t *node);
 
 /* Insertion and deletion */
 
-extern avl_node_t *avl_insert(avl_tree_t *, void *);
-extern avl_node_t *avl_insert_node(avl_tree_t *, avl_node_t *);
+extern avl_node_t *avl_insert(avl_tree_t *tree, void *data);
+extern avl_node_t *avl_insert_node(avl_tree_t *tree, avl_node_t *node);
 
-extern void avl_insert_top(avl_tree_t *, avl_node_t *);
-extern void avl_insert_before(avl_tree_t *, avl_node_t *, avl_node_t *);
-extern void avl_insert_after(avl_tree_t *, avl_node_t *, avl_node_t *);
+extern void avl_insert_top(avl_tree_t *tree, avl_node_t *node);
+extern void avl_insert_before(avl_tree_t *tree, avl_node_t *before, avl_node_t *node);
+extern void avl_insert_after(avl_tree_t *tree, avl_node_t *after, avl_node_t *node);
 
-extern avl_node_t *avl_unlink(avl_tree_t *, void *);
-extern void avl_unlink_node(avl_tree_t *tree, avl_node_t *);
-extern void avl_delete(avl_tree_t *, void *);
-extern void avl_delete_node(avl_tree_t *, avl_node_t *);
+extern avl_node_t *avl_unlink(avl_tree_t *tree, void *data);
+extern void avl_unlink_node(avl_tree_t *tree, avl_node_t *node);
+extern void avl_delete(avl_tree_t *tree, void *data);
+extern void avl_delete_node(avl_tree_t *tree, avl_node_t *node);
 
 /* Fast tree cleanup */
 
-extern void avl_delete_tree(avl_tree_t *);
+extern void avl_delete_tree(avl_tree_t *tree);
 
 /* Searching */
 
-extern void *avl_search(const avl_tree_t *, const void *);
-extern void *avl_search_closest(const avl_tree_t *, const void *, int *);
-extern void *avl_search_closest_smaller(const avl_tree_t *, const void *);
-extern void *avl_search_closest_greater(const avl_tree_t *, const void *);
+extern void *avl_search(const avl_tree_t *tree, const void *data);
+extern void *avl_search_closest(const avl_tree_t *tree, const void *data, int *result);
+extern void *avl_search_closest_smaller(const avl_tree_t *tree, const void *data);
+extern void *avl_search_closest_greater(const avl_tree_t *tree, const void *data);
 
-extern avl_node_t *avl_search_node(const avl_tree_t *, const void *);
-extern avl_node_t *avl_search_closest_node(const avl_tree_t *, const void *, int *);
-extern avl_node_t *avl_search_closest_smaller_node(const avl_tree_t *, const void *);
-extern avl_node_t *avl_search_closest_greater_node(const avl_tree_t *, const void *);
+extern avl_node_t *avl_search_node(const avl_tree_t *tree, const void *data);
+extern avl_node_t *avl_search_closest_node(const avl_tree_t *tree, const void *data, int *result);
+extern avl_node_t *avl_search_closest_smaller_node(const avl_tree_t *tree, const void *data);
+extern avl_node_t *avl_search_closest_greater_node(const avl_tree_t *tree, const void *data);
 
 /* Tree walking */
 
-extern void avl_foreach(const avl_tree_t *, avl_action_t);
-extern void avl_foreach_node(const avl_tree_t *, avl_action_t);
+extern void avl_foreach(const avl_tree_t *tree, avl_action_t action);
+extern void avl_foreach_node(const avl_tree_t *tree, avl_action_t action);
 
 /* Indexing */
 
 #ifdef AVL_COUNT
-extern unsigned int avl_count(const avl_tree_t *);
-extern avl_node_t *avl_get_node(const avl_tree_t *, unsigned int);
-extern unsigned int avl_index(const avl_node_t *);
+extern unsigned int avl_count(const avl_tree_t *tree);
+extern avl_node_t *avl_get_node(const avl_tree_t *tree, unsigned int index);
+extern unsigned int avl_index(const avl_node_t *node);
 #endif
 #ifdef AVL_DEPTH
-extern unsigned int avl_depth(const avl_tree_t *);
+extern unsigned int avl_depth(const avl_tree_t *tree);
 #endif
 
-#endif							/* __AVL_TREE_H__ */
+#endif

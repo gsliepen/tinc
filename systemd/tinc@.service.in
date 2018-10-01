@@ -1,0 +1,20 @@
+[Unit]
+Description=Tinc net %i
+Documentation=info:tinc
+Documentation=man:tinc(8) man:tinc.conf(5)
+Documentation=http://tinc-vpn.org/docs/
+PartOf=tinc.service
+ReloadPropagatedFrom=tinc.service
+
+[Service]
+Type=simple
+WorkingDirectory=@sysconfdir@/tinc/%i
+ExecStart=@sbindir@/tincd -n %i -D
+ExecReload=@sbindir@/tincd -n %i -kHUP
+KillMode=mixed
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+
+[Install]
+WantedBy=tinc.service

@@ -2,3 +2,4 @@
 @set PACKAGE @PACKAGE@
 @set sysconfdir @sysconfdir@
 @set localstatedir @localstatedir@
+@set runstatedir @runstatedir@

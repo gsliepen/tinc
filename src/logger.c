@@ -36,48 +36,58 @@ static const char *logident = NULL;
 void openlogger(const char *ident, logmode_t mode) {
 	logident = ident;
 	logmode = mode;
-	
+
 	switch(mode) {
-		case LOGMODE_STDERR:
-			logpid = getpid();
-			break;
-		case LOGMODE_FILE:
-			logpid = getpid();
-			logfile = fopen(logfilename, "a");
-			if(!logfile) {
-				fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
-				logmode = LOGMODE_NULL;
-			}
-			break;
-		case LOGMODE_SYSLOG:
+	case LOGMODE_STDERR:
+		logpid = getpid();
+		break;
+
+	case LOGMODE_FILE:
+		logpid = getpid();
+		logfile = fopen(logfilename, "a");
+
+		if(!logfile) {
+			fprintf(stderr, "Could not open log file %s: %s\n", logfilename, strerror(errno));
+			logmode = LOGMODE_NULL;
+		}
+
+		break;
+
+	case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			loghandle = RegisterEventSource(NULL, logident);
-			if(!loghandle) {
-				fprintf(stderr, "Could not open log handle!");
-				logmode = LOGMODE_NULL;
-			}
-			break;
+		loghandle = RegisterEventSource(NULL, logident);
+
+		if(!loghandle) {
+			fprintf(stderr, "Could not open log handle!");
+			logmode = LOGMODE_NULL;
+		}
+
+		break;
 #else
 #ifdef HAVE_SYSLOG_H
-			openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
-			break;
+		openlog(logident, LOG_CONS | LOG_PID, LOG_DAEMON);
+		break;
 #endif
 #endif
-		case LOGMODE_NULL:
-			break;
+
+	case LOGMODE_NULL:
+		break;
 	}
 }
 
 void reopenlogger() {
-	if(logmode != LOGMODE_FILE)
+	if(logmode != LOGMODE_FILE) {
 		return;
+	}
 
 	fflush(logfile);
 	FILE *newfile = fopen(logfilename, "a");
+
 	if(!newfile) {
 		logger(LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
 		return;
 	}
+
 	fclose(logfile);
 	logfile = newfile;
 }
@@ -90,44 +100,48 @@ void logger(int priority, const char *format, ...) {
 	va_start(ap, format);
 
 	switch(logmode) {
-		case LOGMODE_STDERR:
-			vfprintf(stderr, format, ap);
-			fprintf(stderr, "\n");
-			fflush(stderr);
-			break;
-		case LOGMODE_FILE:
-			now = time(NULL);
-			strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
-			fprintf(logfile, "%s %s[%ld]: ", timestr, logident, (long)logpid);
-			vfprintf(logfile, format, ap);
-			fprintf(logfile, "\n");
-			fflush(logfile);
-			break;
-		case LOGMODE_SYSLOG:
+	case LOGMODE_STDERR:
+		vfprintf(stderr, format, ap);
+		fprintf(stderr, "\n");
+		fflush(stderr);
+		break;
+
+	case LOGMODE_FILE:
+		now = time(NULL);
+		strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now));
+		fprintf(logfile, "%s %s[%ld]: ", timestr, logident, (long)logpid);
+		vfprintf(logfile, format, ap);
+		fprintf(logfile, "\n");
+		fflush(logfile);
+		break;
+
+	case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			{
-				char message[4096];
-				const char *messages[] = {message};
-				vsnprintf(message, sizeof(message), format, ap);
-				message[sizeof message - 1] = 0;
-				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
-			}
+		{
+			char message[4096];
+			const char *messages[] = {message};
+			vsnprintf(message, sizeof(message), format, ap);
+			message[sizeof(message) - 1] = 0;
+			ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
+		}
+
 #else
 #ifdef HAVE_SYSLOG_H
 #ifdef HAVE_VSYSLOG
-			vsyslog(priority, format, ap);
+		vsyslog(priority, format, ap);
 #else
-			{
-				char message[4096];
-				vsnprintf(message, sizeof(message), format, ap);
-				syslog(priority, "%s", message);
-			}
+		{
+			char message[4096];
+			vsnprintf(message, sizeof(message), format, ap);
+			syslog(priority, "%s", message);
+		}
 #endif
-			break;
+		break;
 #endif
 #endif
-		case LOGMODE_NULL:
-			break;
+
+	case LOGMODE_NULL:
+		break;
 	}
 
 	va_end(ap);
@@ -135,22 +149,23 @@ void logger(int priority, const char *format, ...) {
 
 void closelogger(void) {
 	switch(logmode) {
-		case LOGMODE_FILE:
-			fclose(logfile);
-			break;
-		case LOGMODE_SYSLOG:
+	case LOGMODE_FILE:
+		fclose(logfile);
+		break;
+
+	case LOGMODE_SYSLOG:
 #ifdef HAVE_MINGW
-			DeregisterEventSource(loghandle);
-			break;
+		DeregisterEventSource(loghandle);
+		break;
 #else
 #ifdef HAVE_SYSLOG_H
-			closelog();
-			break;
+		closelog();
+		break;
 #endif
 #endif
-		case LOGMODE_NULL:
-		case LOGMODE_STDERR:
-			break;
-			break;
+
+	case LOGMODE_NULL:
+	case LOGMODE_STDERR:
+		break;
 	}
 }

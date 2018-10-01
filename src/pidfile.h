@@ -1,3 +1,6 @@
+#ifndef TINC_PIDFILE_H
+#define TINC_PIDFILE_H
+
 /*
     pidfile.h - interact with pidfiles
     Copyright (c) 1995  Martin Schulze <Martin.Schulze@Linux.DE>
@@ -26,7 +29,7 @@
  * 0 is returned if either there's no pidfile, it's empty
  * or no pid can be read.
  */
-extern pid_t read_pid (const char *pidfile);
+extern pid_t read_pid(const char *pidfile);
 
 /* check_pid
  *
@@ -34,19 +37,21 @@ extern pid_t read_pid (const char *pidfile);
  * table (using /proc) to determine if the process already exists. If
  * so 1 is returned, otherwise 0.
  */
-extern pid_t check_pid (const char *pidfile);
+extern pid_t check_pid(const char *pidfile);
 
 /* write_pid
  *
  * Writes the pid to the specified file. If that fails 0 is
  * returned, otherwise the pid.
  */
-extern pid_t write_pid (const char *pidfile);
+extern pid_t write_pid(const char *pidfile);
 
 /* remove_pid
  *
  * Remove the the specified file. The result from unlink(2)
  * is returned
  */
-extern int remove_pid (const char *pidfile);
+extern int remove_pid(const char *pidfile);
+#endif
+
 #endif

@@ -1,3 +1,6 @@
+#ifndef TINC_NET_H
+#define TINC_NET_H
+
 /*
     net.h -- header for net.c
     Copyright (C) 1998-2005 Ivo Timmermans
@@ -18,23 +21,20 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_NET_H__
-#define __TINC_NET_H__
-
 #include <openssl/evp.h>
 
 #include "ipv6.h"
 
 #ifdef ENABLE_JUMBOGRAMS
-#define MTU 9018				/* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
+#define MTU 9018        /* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #else
-#define MTU 1518				/* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
+#define MTU 1518        /* 1500 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #endif
 
-#define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)	/* MTU + seqno + padding + HMAC + compressor overhead */
-#define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
+#define MAXSIZE (MTU + 4 + EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + MTU/64 + 20)  /* MTU + seqno + padding + HMAC + compressor overhead */
+#define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)                     /* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
-#define MAXSOCKETS 128			/* Overkill... */
+#define MAXSOCKETS 128  /* Overkill... */
 
 typedef struct mac_t {
 	uint8_t x[6];
@@ -48,7 +48,7 @@ typedef struct ipv6_t {
 	uint16_t x[8];
 } ipv6_t;
 
-typedef short length_t;
+typedef uint16_t length_t;
 
 #define AF_UNKNOWN 255
 
@@ -77,9 +77,9 @@ typedef union sockaddr_t {
 #endif
 
 typedef struct vpn_packet_t {
-	length_t len;				/* the actual number of bytes in the `data' field */
-	int priority;				/* priority or TOS */
-	uint32_t seqno;				/* 32 bits sequence number (network byte order of course) */
+	length_t len;           /* the actual number of bytes in the `data' field */
+	int priority;           /* priority or TOS */
+	uint32_t seqno;         /* 32 bits sequence number (network byte order of course) */
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
@@ -129,26 +129,26 @@ extern volatile bool running;
 #include "connection.h"
 #include "node.h"
 
-extern void retry_outgoing(outgoing_t *);
-extern void handle_incoming_vpn_data(int);
-extern void finish_connecting(struct connection_t *);
-extern void do_outgoing_connection(struct connection_t *);
-extern bool handle_new_meta_connection(int);
-extern int setup_listen_socket(const sockaddr_t *);
-extern int setup_vpn_in_socket(const sockaddr_t *);
-extern void send_packet(const struct node_t *, vpn_packet_t *);
-extern void receive_tcppacket(struct connection_t *, const char *, int);
-extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
+extern void retry_outgoing(outgoing_t *outgoing);
+extern void handle_incoming_vpn_data(int sock);
+extern void finish_connecting(struct connection_t *c);
+extern void do_outgoing_connection(struct connection_t *c);
+extern bool handle_new_meta_connection(int sock);
+extern int setup_listen_socket(const sockaddr_t *sa);
+extern int setup_vpn_in_socket(const sockaddr_t *sa);
+extern void send_packet(const struct node_t *n, vpn_packet_t *packet);
+extern void receive_tcppacket(struct connection_t *c, const char *buffer, length_t len);
+extern void broadcast_packet(const struct node_t *, vpn_packet_t *packet);
 extern char *get_name(void);
 extern bool setup_network(void);
-extern void setup_outgoing_connection(struct outgoing_t *);
+extern void setup_outgoing_connection(struct outgoing_t *outgoing);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
 extern int main_loop(void);
-extern void terminate_connection(struct connection_t *, bool);
-extern void flush_queue(struct node_t *);
-extern bool read_rsa_public_key(struct connection_t *);
-extern void send_mtu_probe(struct node_t *);
+extern void terminate_connection(struct connection_t *c, bool report);
+extern void flush_queue(struct node_t *n);
+extern bool read_rsa_public_key(struct connection_t *c);
+extern void send_mtu_probe(struct node_t *n);
 extern void load_all_subnets(void);
 
 #ifndef HAVE_MINGW
@@ -157,4 +157,4 @@ extern void load_all_subnets(void);
 extern CRITICAL_SECTION mutex;
 #endif
 
-#endif							/* __TINC_NET_H__ */
+#endif

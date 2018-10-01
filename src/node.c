@@ -28,8 +28,8 @@
 #include "utils.h"
 #include "xalloc.h"
 
-avl_tree_t *node_tree;			/* Known nodes, sorted by name */
-avl_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
+avl_tree_t *node_tree;                  /* Known nodes, sorted by name */
+avl_tree_t *node_udp_tree;              /* Known nodes, sorted by address and port */
 
 node_t *myself;
 
@@ -38,7 +38,7 @@ static int node_compare(const node_t *a, const node_t *b) {
 }
 
 static int node_udp_compare(const node_t *a, const node_t *b) {
-       return sockaddrcmp(&a->address, &b->address);
+	return sockaddrcmp(&a->address, &b->address);
 }
 
 void init_nodes(void) {
@@ -54,13 +54,19 @@ void exit_nodes(void) {
 node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof(*n));
 
-	if(replaywin) n->late = xmalloc_and_zero(replaywin);
+	if(replaywin) {
+		n->late = xmalloc_and_zero(replaywin);
+	}
+
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	n->inctx = EVP_CIPHER_CTX_new();
 	n->outctx = EVP_CIPHER_CTX_new();
-	if(!n->inctx || !n->outctx)
+
+	if(!n->inctx || !n->outctx) {
 		abort();
+	}
+
 	n->mtu = MTU;
 	n->maxmtu = MTU;
 
@@ -68,34 +74,42 @@ node_t *new_node(void) {
 }
 
 void free_node(node_t *n) {
-	if(n->inkey)
+	if(n->inkey) {
 		free(n->inkey);
+	}
 
-	if(n->outkey)
+	if(n->outkey) {
 		free(n->outkey);
+	}
 
-	if(n->subnet_tree)
+	if(n->subnet_tree) {
 		free_subnet_tree(n->subnet_tree);
+	}
 
-	if(n->edge_tree)
+	if(n->edge_tree) {
 		free_edge_tree(n->edge_tree);
+	}
 
 	sockaddrfree(&n->address);
 
 	EVP_CIPHER_CTX_free(n->outctx);
 	EVP_CIPHER_CTX_free(n->inctx);
 
-	if(n->mtuevent)
+	if(n->mtuevent) {
 		event_del(n->mtuevent);
-	
-	if(n->hostname)
+	}
+
+	if(n->hostname) {
 		free(n->hostname);
+	}
 
-	if(n->name)
+	if(n->name) {
 		free(n->name);
+	}
 
-	if(n->late)
+	if(n->late) {
 		free(n->late);
+	}
 
 	free(n);
 }
@@ -126,7 +140,7 @@ void node_del(node_t *n) {
 }
 
 node_t *lookup_node(char *name) {
-	node_t n = {NULL};
+	node_t n = {};
 
 	n.name = name;
 
@@ -134,7 +148,7 @@ node_t *lookup_node(char *name) {
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
-	node_t n = {NULL};
+	node_t n = {};
 
 	n.address = *sa;
 	n.name = NULL;
@@ -150,8 +164,9 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 
 	avl_delete(node_udp_tree, n);
 
-	if(n->hostname)
+	if(n->hostname) {
 		free(n->hostname);
+	}
 
 	if(sa) {
 		n->address = *sa;
@@ -159,7 +174,7 @@ void update_node_udp(node_t *n, const sockaddr_t *sa) {
 		avl_insert(node_udp_tree, n);
 		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	} else {
-		memset(&n->address, 0, sizeof n->address);
+		memset(&n->address, 0, sizeof(n->address));
 		n->hostname = NULL;
 		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
 	}
@@ -174,10 +189,10 @@ void dump_nodes(void) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		logger(LOG_DEBUG, " %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s pmtu %d (min %d max %d)",
-			   n->name, n->hostname, n->outcipher ? EVP_CIPHER_nid(n->outcipher) : 0,
-			   n->outdigest ? EVP_MD_type(n->outdigest) : 0, n->outmaclength, n->outcompression,
-			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
+		       n->name, n->hostname, n->outcipher ? EVP_CIPHER_nid(n->outcipher) : 0,
+		       n->outdigest ? EVP_MD_type(n->outdigest) : 0, n->outmaclength, n->outcompression,
+		       n->options, bitfield_to_int(&n->status, sizeof(n->status)), n->nexthop ? n->nexthop->name : "-",
+		       n->via ? n->via->name : "-", n->mtu, n->minmtu, n->maxmtu);
 	}
 
 	logger(LOG_DEBUG, "End of nodes.");

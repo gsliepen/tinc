@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS = m4 src doc distro
+SUBDIRS = src doc systemd
 
 ACLOCAL_AMFLAGS = -I m4 
 
@@ -10,3 +10,6 @@ EXTRA_DIST = COPYING.README README.android
 
 ChangeLog:
 	git log > ChangeLog
+
+astyle:
+	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]

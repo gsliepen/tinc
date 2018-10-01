@@ -1,11 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.0.32])
+AC_INIT([tinc], [1.0.34])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
-AM_MAINTAINER_MODE
+AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
 
 # Enable GNU extensions.
@@ -20,8 +20,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 
 AM_PROG_CC_C_O
-
-PKG_PROG_PKG_CONFIG
 
 dnl Check and set OS
 
@@ -116,20 +114,16 @@ AC_ARG_WITH(windows2000,
   ]
 )
 
-AC_ARG_WITH([systemdsystemunitdir],
-     [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files])],,
-     [with_systemdsystemunitdir=auto])
-AS_IF([test "x$with_systemdsystemunitdir" = "xyes" -o "x$with_systemdsystemunitdir" = "xauto"], [
-     def_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+AC_ARG_WITH(systemd,
+  AS_HELP_STRING([--with-systemd@<:@=DIR@:>@], [install systemd service files @<:@to DIR if specified@:>@]),
+  [ systemd=true; systemd_path="$with_systemd" ],
+  [ systemd=false ]
+)
 
-     AS_IF([test "x$def_systemdsystemunitdir" = "x"],
-   [AS_IF([test "x$with_systemdsystemunitdir" = "xyes"],
-    [AC_MSG_ERROR([systemd support requested but pkg-config unable to query systemd package])])
-    with_systemdsystemunitdir=no],
-   [with_systemdsystemunitdir="$def_systemdsystemunitdir"])])
-AS_IF([test "x$with_systemdsystemunitdir" != "xno"],
-      [AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])])
-AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemdsystemunitdir" != "xno"])
+AS_IF([test "x$with_systemd" = "xyes"], [systemd_path="\${libdir}/systemd/system"],
+      [AS_IF([test "x$with_systemd" = "xno"], [systemd=false])])
+
+AC_SUBST(systemd_path, $systemd_path)
 
 AM_CONDITIONAL(LINUX, test "$linux" = true)
 AM_CONDITIONAL(BSD, test "$bsd" = true)
@@ -139,6 +133,7 @@ AM_CONDITIONAL(CYGWIN, test "$cygwin" = true)
 AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
+AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
 
 AC_CACHE_SAVE
 
@@ -179,36 +174,30 @@ dnl Checks for libraries.
 dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
-AC_HEADER_STDC
-AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h arpa/nameser.h dirent.h getopt.h])
+AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h arpa/nameser.h dirent.h getopt.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_utun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h resolv.h],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 
 dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_VOLATILE
 AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_STRUCT_TM
 
 tinc_ATTRIBUTE(__malloc__)
 
 AC_CHECK_TYPES([socklen_t, struct ether_header, struct arphdr, struct ether_arp, struct in_addr, struct addrinfo, struct ip, struct icmp, struct in6_addr, struct sockaddr_in6, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
-  [#include "src/have.h"]
+  [#include "$srcdir/src/have.h"]
 )
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall pselect putenv random select strdup strerror strsignal strtol system unsetenv usleep vsyslog writev devname fdevname],
-  [], [], [#include "src/have.h"]
+AC_CHECK_FUNCS([asprintf daemon fchmod flock fork gettimeofday mlockall pselect putenv strsignal system unsetenv usleep vsyslog devname fdevname],
+  [], [], [#include "$srcdir/src/have.h"]
 )
 
 AC_CHECK_FUNC(getopt_long, [getopt=true; AC_DEFINE(HAVE_GETOPT_LONG, 1, [getopt_long()])], [getopt=false])
@@ -224,7 +213,7 @@ AC_CHECK_FUNC(gethostbyname, [], [
 ])
 
 AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
-  [], [], [#include "src/have.h"]
+  [], [], [#include "$srcdir/src/have.h"]
 )
 
 AC_CHECK_DECLS([res_init], [AC_CHECK_LIB(resolv, res_init)], [], [
@@ -248,6 +237,11 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile distro/Makefile])
+dnl Ensure runstatedir is set if we are using a version of autoconf that does not suppport it
+if test "x$runstatedir" = "x"; then
+  AC_SUBST([runstatedir], ['${localstatedir}/run'])
+fi
+
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile systemd/Makefile])
 
 AC_OUTPUT

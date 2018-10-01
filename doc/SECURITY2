@@ -61,7 +61,7 @@ client  CHAL_REPLY 816a86
 server  CHAL_REPLY 928ffe
                       +-> 160 bits SHA1 of H1
 
-After the correct challenge replies are recieved, both ends have proved
+After the correct challenge replies are received, both ends have proved
 their identity. Further information is exchanged.
 
 client  ACK 655 123 0

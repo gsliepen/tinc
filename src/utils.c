@@ -26,31 +26,36 @@
 static const char hexadecimals[] = "0123456789ABCDEF";
 
 static int charhex2bin(char c) {
-	if(isdigit(c))
+	if(isdigit(c)) {
 		return c - '0';
-	else
+	} else {
 		return toupper(c) - 'A' + 10;
+	}
 }
 
 bool hex2bin(char *src, char *dst, int length) {
 	for(int i = 0; i < length; i++) {
-		if(!isxdigit(src[i * 2]) || !isxdigit(src[i * 2 + 1]))
+		if(!isxdigit(src[i * 2]) || !isxdigit(src[i * 2 + 1])) {
 			return false;
+		}
+
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 	}
+
 	return true;
 }
 
 void bin2hex(char *src, char *dst, int length) {
 	int i;
+
 	for(i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
 }
 
-#if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
-#ifdef HAVE_CYGWIN
+#if defined(HAVE_MINGW) || defined(HAVE___CYGWIN32__)
+#ifdef HAVE___CYGWIN32__
 #include <w32api/windows.h>
 #endif
 
@@ -59,13 +64,14 @@ const char *winerror(int err) {
 
 	ptr = buf + sprintf(buf, "(%d) ", err);
 
-	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), ptr, sizeof(buf) - (ptr - buf), NULL)) {
+	if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	                  NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), ptr, sizeof(buf) - (ptr - buf), NULL)) {
 		strcpy(ptr, "(unable to format errormessage)");
 	};
 
-	if((ptr = strchr(buf, '\r')))
+	if((ptr = strchr(buf, '\r'))) {
 		*ptr = '\0';
+	}
 
 	return buf;
 }
@@ -73,8 +79,11 @@ const char *winerror(int err) {
 
 unsigned int bitfield_to_int(const void *bitfield, size_t size) {
 	unsigned int value = 0;
-	if(size > sizeof value)
-		size = sizeof value;
+
+	if(size > sizeof(value)) {
+		size = sizeof(value);
+	}
+
 	memcpy(&value, bitfield, size);
 	return value;
 }
@@ -83,13 +92,14 @@ unsigned int bitfield_to_int(const void *bitfield, size_t size) {
  * As memcmp(), but constant-time.
  * Returns 0 when data is equal, non-zero otherwise.
  */
-int memcmp_constant_time (const void *a, const void *b, size_t size) {
-  const uint8_t *a1 = a, *b1 = b;
-  int ret = 0;
-  size_t i;
+int memcmp_constant_time(const void *a, const void *b, size_t size) {
+	const uint8_t *a1 = a, *b1 = b;
+	int ret = 0;
+	size_t i;
 
-  for (i = 0; i < size; i++)
-      ret |= *a1++ ^ *b1++;
+	for(i = 0; i < size; i++) {
+		ret |= *a1++ ^ *b1++;
+	}
 
-  return ret;
+	return ret;
 }

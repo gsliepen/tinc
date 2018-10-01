@@ -1,3 +1,6 @@
+#ifndef TINC_UTILS_H
+#define TINC_UTILS_H
+
 /*
     utils.h -- header file for utils.c
     Copyright (C) 1999-2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_UTILS_H__
-#define __TINC_UTILS_H__
 
 extern bool hex2bin(char *src, char *dst, int length);
 extern void bin2hex(char *src, char *dst, int length);
@@ -42,6 +42,6 @@ extern const char *winerror(int);
 
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
 
-int memcmp_constant_time (const void *a, const void *b, size_t size);
+int memcmp_constant_time(const void *a, const void *b, size_t size);
 
-#endif							/* __TINC_UTILS_H__ */
+#endif

@@ -33,7 +33,7 @@ bool hostnames = false;
   Return NULL on failure.
 */
 struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype) {
-	struct addrinfo *ai = NULL, hint = {0};
+	struct addrinfo *ai = NULL, hint = {};
 	int err;
 
 	hint.ai_family = addressfamily;
@@ -47,7 +47,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 
 	if(err) {
 		logger(LOG_WARNING, "Error looking up %s port %s: %s", address,
-				   service, gai_strerror(err));
+		       service, gai_strerror(err));
 		return NULL;
 	}
 
@@ -55,7 +55,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 }
 
 sockaddr_t str2sockaddr(const char *address, const char *port) {
-	struct addrinfo *ai = NULL, hint = {0};
+	struct addrinfo *ai = NULL, hint = {};
 	sockaddr_t result;
 	int err;
 
@@ -67,7 +67,7 @@ sockaddr_t str2sockaddr(const char *address, const char *port) {
 
 	if(err || !ai) {
 		ifdebug(SCARY_THINGS)
-			logger(LOG_DEBUG, "Unknown type address %s port %s", address, port);
+		logger(LOG_DEBUG, "Unknown type address %s port %s", address, port);
 		result.sa.sa_family = AF_UNKNOWN;
 		result.unknown.address = xstrdup(address);
 		result.unknown.port = xstrdup(port);
@@ -87,10 +87,14 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	int err;
 
 	if(sa->sa.sa_family == AF_UNKNOWN) {
-		if(addrstr)
+		if(addrstr) {
 			*addrstr = xstrdup(sa->unknown.address);
-		if(portstr)
+		}
+
+		if(portstr) {
 			*portstr = xstrdup(sa->unknown.port);
+		}
+
 		return;
 	}
 
@@ -98,19 +102,23 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 
 	if(err) {
 		logger(LOG_ERR, "Error while translating addresses: %s",
-			   gai_strerror(err));
+		       gai_strerror(err));
 		abort();
 	}
 
 	scopeid = strchr(address, '%');
 
-	if(scopeid)
-		*scopeid = '\0';		/* Descope. */
+	if(scopeid) {
+		*scopeid = '\0';        /* Descope. */
+	}
 
-	if(addrstr)
+	if(addrstr) {
 		*addrstr = xstrdup(address);
-	if(portstr)
+	}
+
+	if(portstr) {
 		*portstr = xstrdup(port);
+	}
 }
 
 char *sockaddr2hostname(const sockaddr_t *sa) {
@@ -125,10 +133,11 @@ char *sockaddr2hostname(const sockaddr_t *sa) {
 	}
 
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
-					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
+	                  hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
+
 	if(err) {
 		logger(LOG_ERR, "Error while looking up hostname: %s",
-			   gai_strerror(err));
+		       gai_strerror(err));
 	}
 
 	xasprintf(&str, "%s port %s", address, port);
@@ -141,26 +150,27 @@ int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 
 	result = a->sa.sa_family - b->sa.sa_family;
 
-	if(result)
+	if(result) {
 		return result;
+	}
 
-	switch (a->sa.sa_family) {
-		case AF_UNSPEC:
-			return 0;
+	switch(a->sa.sa_family) {
+	case AF_UNSPEC:
+		return 0;
 
-		case AF_UNKNOWN:
-			return strcmp(a->unknown.address, b->unknown.address);
+	case AF_UNKNOWN:
+		return strcmp(a->unknown.address, b->unknown.address);
 
-		case AF_INET:
-			return memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+	case AF_INET:
+		return memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
 
-		case AF_INET6:
-			return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+	case AF_INET6:
+		return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
 
-		default:
-			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
-				   a->sa.sa_family);
-			abort();
+	default:
+		logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+		       a->sa.sa_family);
+		abort();
 	}
 }
 
@@ -169,41 +179,45 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
 
 	result = a->sa.sa_family - b->sa.sa_family;
 
-	if(result)
+	if(result) {
 		return result;
+	}
 
-	switch (a->sa.sa_family) {
-		case AF_UNSPEC:
-			return 0;
+	switch(a->sa.sa_family) {
+	case AF_UNSPEC:
+		return 0;
 
-		case AF_UNKNOWN:
-			result = strcmp(a->unknown.address, b->unknown.address);
+	case AF_UNKNOWN:
+		result = strcmp(a->unknown.address, b->unknown.address);
 
-			if(result)
-				return result;
+		if(result) {
+			return result;
+		}
 
-			return strcmp(a->unknown.port, b->unknown.port);
+		return strcmp(a->unknown.port, b->unknown.port);
 
-		case AF_INET:
-			result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+	case AF_INET:
+		result = memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
 
-			if(result)
-				return result;
+		if(result) {
+			return result;
+		}
 
-			return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof(a->in.sin_port));
+		return memcmp(&a->in.sin_port, &b->in.sin_port, sizeof(a->in.sin_port));
 
-		case AF_INET6:
-			result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+	case AF_INET6:
+		result = memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
 
-			if(result)
-				return result;
+		if(result) {
+			return result;
+		}
 
-			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
+		return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
 
-		default:
-			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
-				   a->sa.sa_family);
-			abort();
+	default:
+		logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+		       a->sa.sa_family);
+		abort();
 	}
 }
 
@@ -223,7 +237,7 @@ void sockaddrfree(sockaddr_t *a) {
 		free(a->unknown.port);
 	}
 }
-	
+
 void sockaddrunmap(sockaddr_t *sa) {
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
@@ -233,20 +247,26 @@ void sockaddrunmap(sockaddr_t *sa) {
 
 void sockaddr_setport(sockaddr_t *sa, const char *port) {
 	uint16_t portnum = htons(atoi(port));
-	if(!portnum)
+
+	if(!portnum) {
 		return;
+	}
+
 	switch(sa->sa.sa_family) {
-		case AF_INET:
-			sa->in.sin_port = portnum;
-			break;
-		case AF_INET6:
-			sa->in6.sin6_port = portnum;
-			break;
-		case AF_UNKNOWN:
-			free(sa->unknown.port);
-			sa->unknown.port = xstrdup(port);
-		default:
-			return;
+	case AF_INET:
+		sa->in.sin_port = portnum;
+		break;
+
+	case AF_INET6:
+		sa->in6.sin6_port = portnum;
+		break;
+
+	case AF_UNKNOWN:
+		free(sa->unknown.port);
+		sa->unknown.port = xstrdup(port);
+
+	default:
+		return;
 	}
 }
 
@@ -259,13 +279,15 @@ int maskcmp(const void *va, const void *vb, int masklen) {
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
 		result = a[i] - b[i];
-		if(result)
+
+		if(result) {
 			return result;
+		}
 	}
 
 	if(m)
 		return (a[i] & (0x100 - (1 << (8 - m)))) -
-			(b[i] & (0x100 - (1 << (8 - m))));
+		       (b[i] & (0x100 - (1 << (8 - m))));
 
 	return 0;
 }
@@ -277,11 +299,13 @@ void mask(void *va, int masklen, int len) {
 	i = masklen / 8;
 	masklen %= 8;
 
-	if(masklen)
+	if(masklen) {
 		a[i++] &= (0x100 - (1 << (8 - masklen)));
+	}
 
-	for(; i < len; i++)
+	for(; i < len; i++) {
 		a[i] = 0;
+	}
 }
 
 void maskcpy(void *va, const void *vb, int masklen, int len) {
@@ -289,16 +313,18 @@ void maskcpy(void *va, const void *vb, int masklen, int len) {
 	char *a = va;
 	const char *b = vb;
 
-	for(m = masklen, i = 0; m >= 8; m -= 8, i++)
+	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
 		a[i] = b[i];
+	}
 
 	if(m) {
 		a[i] = b[i] & (0x100 - (1 << (8 - m)));
 		i++;
 	}
 
-	for(; i < len; i++)
+	for(; i < len; i++) {
 		a[i] = 0;
+	}
 }
 
 bool maskcheck(const void *va, int masklen, int len) {
@@ -308,12 +334,14 @@ bool maskcheck(const void *va, int masklen, int len) {
 	i = masklen / 8;
 	masklen %= 8;
 
-	if(masklen && a[i++] & (0xff >> masklen))
+	if(masklen && a[i++] & (0xff >> masklen)) {
 		return false;
+	}
 
 	for(; i < len; i++)
-		if(a[i] != 0)
+		if(a[i] != 0) {
 			return false;
+		}
 
 	return true;
 }

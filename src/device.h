@@ -1,3 +1,6 @@
+#ifndef TINC_DEVICE_H
+#define TINC_DEVICE_H
+
 /*
     device.h -- generic header for device.c
     Copyright (C) 2001-2005 Ivo Timmermans
@@ -18,9 +21,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_DEVICE_H__
-#define __TINC_DEVICE_H__
-
 #include "net.h"
 
 extern int device_fd;
@@ -31,8 +31,8 @@ extern char *iface;
 typedef struct devops_t {
 	bool (*setup)(void);
 	void (*close)(void);
-	bool (*read)(struct vpn_packet_t *);
-	bool (*write)(struct vpn_packet_t *);
+	bool (*read)(struct vpn_packet_t *packet);
+	bool (*write)(struct vpn_packet_t *packet);
 	void (*dump_stats)(void);
 } devops_t;
 
@@ -44,4 +44,4 @@ extern const devops_t uml_devops;
 extern const devops_t vde_devops;
 extern devops_t devops;
 
-#endif							/* __TINC_DEVICE_H__ */
+#endif

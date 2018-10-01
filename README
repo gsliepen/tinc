@@ -1,7 +1,7 @@
-This is the README file for tinc version 1.0.32. Installation
+This is the README file for tinc version 1.0.34. Installation
 instructions may be found in the INSTALL file.
 
-tinc is Copyright (C) 1998-2017 by:
+tinc is Copyright (C) 1998-2018 by:
 
 Ivo Timmermans,
 Guus Sliepen <guus@tinc-vpn.org>,
@@ -70,7 +70,7 @@ Requirements
 Since 1.0pre3, we use OpenSSL for all cryptographic functions.  So you need to
 install this library first; grab it from http://www.openssl.org/. You will
 need version 1.0.1 or later with support for AES256 and SHA256 enabled. If
-this library is not installed on you system, configure will fail. The manual
+this library is not installed on your system, configure will fail. The manual
 in doc/tinc.texi contains more detailed information on how to install this
 library. Alternatively, you may also use LibreSSL.
 

@@ -1,3 +1,6 @@
+#ifndef TINC_SUBNET_H
+#define TINC_SUBNET_H
+
 /*
     subnet.h -- header for subnet.c
     Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
@@ -18,16 +21,13 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __TINC_SUBNET_H__
-#define __TINC_SUBNET_H__
-
 #include "net.h"
 
 typedef enum subnet_type_t {
 	SUBNET_MAC = 0,
 	SUBNET_IPV4,
 	SUBNET_IPV6,
-	SUBNET_TYPES				/* Guardian */
+	SUBNET_TYPES,          /* Guardian */
 } subnet_type_t;
 
 typedef struct subnet_mac_t {
@@ -47,11 +47,11 @@ typedef struct subnet_ipv6_t {
 #include "node.h"
 
 typedef struct subnet_t {
-	struct node_t *owner;		/* the owner of this subnet */
+	struct node_t *owner;  /* the owner of this subnet */
 
-	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
-	time_t expires;			/* expiry time */
-	int weight;			/* weight (higher value is higher priority) */
+	subnet_type_t type;    /* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+	time_t expires;        /* expiry time */
+	int weight;            /* weight (higher value is higher priority) */
 
 	/* And now for the actual subnet: */
 
@@ -66,23 +66,22 @@ typedef struct subnet_t {
 
 extern avl_tree_t *subnet_tree;
 
-extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
-extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
-extern void free_subnet(subnet_t *);
+extern subnet_t *new_subnet(void) __attribute__((__malloc__));
+extern void free_subnet(subnet_t *subnet);
 extern void init_subnets(void);
 extern void exit_subnets(void);
-extern avl_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
-extern void free_subnet_tree(avl_tree_t *);
-extern void subnet_add(struct node_t *, subnet_t *);
-extern void subnet_del(struct node_t *, subnet_t *);
-extern void subnet_update(struct node_t *, subnet_t *, bool);
-extern bool net2str(char *, int, const subnet_t *);
-extern bool str2net(subnet_t *, const char *);
-extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
-extern subnet_t *lookup_subnet_mac(const struct node_t *, const mac_t *);
-extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
-extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
+extern avl_tree_t *new_subnet_tree(void) __attribute__((__malloc__));
+extern void free_subnet_tree(avl_tree_t *subnet_tree);
+extern void subnet_add(struct node_t *owner, subnet_t *subnet);
+extern void subnet_del(struct node_t *owner, subnet_t *subnet);
+extern void subnet_update(struct node_t *owner, subnet_t *subnet, bool up);
+extern bool net2str(char *netstr, int len, const subnet_t *subnet);
+extern bool str2net(subnet_t *subnet, const char *netstr);
+extern subnet_t *lookup_subnet(const struct node_t *owner, const subnet_t *subnet);
+extern subnet_t *lookup_subnet_mac(const struct node_t *owner, const mac_t *address);
+extern subnet_t *lookup_subnet_ipv4(const ipv4_t *address);
+extern subnet_t *lookup_subnet_ipv6(const ipv6_t *address);
 extern void dump_subnets(void);
 extern void subnet_cache_flush(void);
 
-#endif							/* __TINC_SUBNET_H__ */
+#endif

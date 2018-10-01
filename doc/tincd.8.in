@@ -109,7 +109,7 @@ is omitted, the default is
 Write PID to
 .Ar FILE
 instead of
-.Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid.
+.Pa @runstatedir@/tinc. Ns Ar NETNAME Ns Pa .pid.
 Under Windows this option will be ignored.
 .It Fl -bypass-security
 Disables encryption and authentication of the meta protocol.
@@ -190,7 +190,7 @@ This will log all network traffic over the virtual private network.
 Directory containing the configuration files tinc uses.
 For more information, see
 .Xr tinc.conf 5 .
-.It Pa @localstatedir@/run/tinc. Ns Ar NETNAME Ns Pa .pid
+.It Pa @runstatedir@/tinc. Ns Ar NETNAME Ns Pa .pid
 The PID of the currently running
 .Nm
 is stored in this file.

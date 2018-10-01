@@ -34,30 +34,31 @@ bool strictsubnets = false;
 /* Jumptable for the request handlers */
 
 static bool (*request_handlers[])(connection_t *) = {
-		id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
-		status_h, error_h, termreq_h,
-		ping_h, pong_h,
-		add_subnet_h, del_subnet_h,
-		add_edge_h, del_edge_h,
-		key_changed_h, req_key_h, ans_key_h, tcppacket_h,
+	id_h, metakey_h, challenge_h, chal_reply_h, ack_h,
+	NULL, NULL, NULL,
+	ping_h, pong_h,
+	add_subnet_h, del_subnet_h,
+	add_edge_h, del_edge_h,
+	key_changed_h, req_key_h, ans_key_h, tcppacket_h,
 };
 
 /* Request names */
 
 static char (*request_name[]) = {
-		"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
-		"STATUS", "ERROR", "TERMREQ",
-		"PING", "PONG",
-		"ADD_SUBNET", "DEL_SUBNET",
-		"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
+	"ID", "METAKEY", "CHALLENGE", "CHAL_REPLY", "ACK",
+	"STATUS", "ERROR", "TERMREQ",
+	"PING", "PONG",
+	"ADD_SUBNET", "DEL_SUBNET",
+	"ADD_EDGE", "DEL_EDGE", "KEY_CHANGED", "REQ_KEY", "ANS_KEY", "PACKET",
 };
 
 static avl_tree_t *past_request_tree;
 
 bool check_id(const char *id) {
 	for(; *id; id++)
-		if(!isalnum(*id) && *id != '_')
+		if(!isalnum(*id) && *id != '_') {
 			return false;
+		}
 
 	return true;
 }
@@ -75,24 +76,24 @@ bool send_request(connection_t *c, const char *format, ...) {
 	   input buffer anyway */
 
 	va_start(args, format);
-	len = vsnprintf(buffer, sizeof buffer, format, args);
-	buffer[sizeof buffer - 1] = 0;
+	len = vsnprintf(buffer, sizeof(buffer), format, args);
+	buffer[sizeof(buffer) - 1] = 0;
 	va_end(args);
 
-	if(len < 0 || len > sizeof buffer - 1) {
+	if(len < 0 || (size_t)len > sizeof(buffer) - 1) {
 		logger(LOG_ERR, "Output buffer overflow while sending request to %s (%s)",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
 	ifdebug(PROTOCOL) {
 		sscanf(buffer, "%d", &request);
 		ifdebug(META)
-			logger(LOG_DEBUG, "Sending %s to %s (%s): %s",
-				   request_name[request], c->name, c->hostname, buffer);
+		logger(LOG_DEBUG, "Sending %s to %s (%s): %s",
+		       request_name[request], c->name, c->hostname, buffer);
 		else
 			logger(LOG_DEBUG, "Sending %s to %s (%s)", request_name[request],
-				   c->name, c->hostname);
+			       c->name, c->hostname);
 	}
 
 	buffer[len++] = '\n';
@@ -100,8 +101,9 @@ bool send_request(connection_t *c, const char *format, ...) {
 	if(c == everyone) {
 		broadcast_meta(NULL, buffer, len);
 		return true;
-	} else
+	} else {
 		return send_meta(c, buffer, len);
+	}
 }
 
 void forward_request(connection_t *from) {
@@ -110,12 +112,12 @@ void forward_request(connection_t *from) {
 	ifdebug(PROTOCOL) {
 		sscanf(from->buffer, "%d", &request);
 		ifdebug(META)
-			logger(LOG_DEBUG, "Forwarding %s from %s (%s): %s",
-				   request_name[request], from->name, from->hostname,
-				   from->buffer);
+		logger(LOG_DEBUG, "Forwarding %s from %s (%s): %s",
+		       request_name[request], from->name, from->hostname,
+		       from->buffer);
 		else
 			logger(LOG_DEBUG, "Forwarding %s from %s (%s)",
-				   request_name[request], from->name, from->hostname);
+			       request_name[request], from->name, from->hostname);
 	}
 
 	from->buffer[from->reqlen - 1] = '\n';
@@ -129,28 +131,28 @@ bool receive_request(connection_t *c) {
 	if(sscanf(c->buffer, "%d", &request) == 1) {
 		if((request < 0) || (request >= LAST) || !request_handlers[request]) {
 			ifdebug(META)
-				logger(LOG_DEBUG, "Unknown request from %s (%s): %s",
-					   c->name, c->hostname, c->buffer);
+			logger(LOG_DEBUG, "Unknown request from %s (%s): %s",
+			       c->name, c->hostname, c->buffer);
 			else
 				logger(LOG_ERR, "Unknown request from %s (%s)",
-					   c->name, c->hostname);
+				       c->name, c->hostname);
 
 			return false;
 		} else {
 			ifdebug(PROTOCOL) {
 				ifdebug(META)
-					logger(LOG_DEBUG, "Got %s from %s (%s): %s",
-						   request_name[request], c->name, c->hostname,
-						   c->buffer);
+				logger(LOG_DEBUG, "Got %s from %s (%s): %s",
+				       request_name[request], c->name, c->hostname,
+				       c->buffer);
 				else
 					logger(LOG_DEBUG, "Got %s from %s (%s)",
-						   request_name[request], c->name, c->hostname);
+					       request_name[request], c->name, c->hostname);
 			}
 		}
 
 		if((c->allow_request != ALL) && (c->allow_request != request)) {
 			logger(LOG_ERR, "Unauthorized request from %s (%s)", c->name,
-				   c->hostname);
+			       c->hostname);
 			return false;
 		}
 
@@ -158,12 +160,12 @@ bool receive_request(connection_t *c) {
 			/* Something went wrong. Probably scriptkiddies. Terminate. */
 
 			logger(LOG_ERR, "Error while processing %s from %s (%s)",
-				   request_name[request], c->name, c->hostname);
+			       request_name[request], c->name, c->hostname);
 			return false;
 		}
 	} else {
 		logger(LOG_ERR, "Bogus data received from %s (%s)",
-			   c->name, c->hostname);
+		       c->name, c->hostname);
 		return false;
 	}
 
@@ -175,8 +177,9 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 }
 
 static void free_past_request(past_request_t *r) {
-	if(r->request)
+	if(r->request) {
 		free(r->request);
+	}
 
 	free(r);
 }
@@ -190,7 +193,7 @@ void exit_requests(void) {
 }
 
 bool seen_request(char *request) {
-	past_request_t *new, p = {NULL};
+	past_request_t *new, p = {};
 
 	p.request = request;
 
@@ -215,13 +218,14 @@ void age_past_requests(void) {
 		next = node->next;
 		p = node->data;
 
-		if(p->firstseen + pinginterval <= now)
+		if(p->firstseen + pinginterval <= now) {
 			avl_delete_node(past_request_tree, node), deleted++;
-		else
+		} else {
 			left++;
+		}
 	}
 
 	if(left || deleted)
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Aging past requests: deleted %d, left %d",
-			   deleted, left);
+		                             deleted, left);
 }

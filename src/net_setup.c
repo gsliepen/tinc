@@ -50,9 +50,12 @@ devops_t devops;
 
 #ifndef HAVE_RSA_SET0_KEY
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-	BN_free(r->n); r->n = n;
-	BN_free(r->e); r->e = e;
-	BN_free(r->d); r->d = d;
+	BN_free(r->n);
+	r->n = n;
+	BN_free(r->e);
+	r->e = e;
+	BN_free(r->d);
+	r->d = d;
 	return 1;
 }
 #endif
@@ -73,19 +76,22 @@ bool read_rsa_public_key(connection_t *c) {
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
-		if(BN_hex2bn(&n, key) != strlen(key)) {
+		if((size_t)BN_hex2bn(&n, key) != strlen(key)) {
 			free(key);
 			logger(LOG_ERR, "Invalid PublicKey for %s!", c->name);
 			return false;
 		}
+
 		free(key);
 		BN_hex2bn(&e, "FFFF");
+
 		if(!n || !e || RSA_set0_key(c->rsa_key, n, e, NULL) != 1) {
 			BN_free(e);
 			BN_free(n);
 			logger(LOG_ERR, "RSA_set0_key() failed with PublicKey for %s!", c->name);
 			return false;
 		}
+
 		return true;
 	}
 
@@ -105,7 +111,7 @@ bool read_rsa_public_key(connection_t *c) {
 
 		if(c->rsa_key) {
 			free(pubname);
-			return true;		/* Woohoo. */
+			return true;            /* Woohoo. */
 		}
 
 		/* If it fails, try PEM_read_RSA_PUBKEY. */
@@ -165,8 +171,9 @@ bool read_rsa_public_key(connection_t *c) {
 //	RSA_blinding_on(c->rsa_key, NULL);
 	fclose(fp);
 
-	if(c->rsa_key)
+	if(c->rsa_key) {
 		return true;
+	}
 
 	logger(LOG_ERR, "No public key for %s specified!", c->name);
 
@@ -182,26 +189,32 @@ static bool read_rsa_private_key(void) {
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		myself->connection->rsa_key = RSA_new();
+
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
-		if(BN_hex2bn(&d, key) != strlen(key)) {
+		if((size_t)BN_hex2bn(&d, key) != strlen(key)) {
 			logger(LOG_ERR, "Invalid PrivateKey for myself!");
 			free(key);
 			return false;
 		}
+
 		free(key);
+
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
 			BN_free(d);
 			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
-		if(BN_hex2bn(&n, pubkey) != strlen(pubkey)) {
+
+		if((size_t)BN_hex2bn(&n, pubkey) != strlen(pubkey)) {
 			free(pubkey);
 			BN_free(d);
 			logger(LOG_ERR, "Invalid PublicKey for myself!");
 			return false;
 		}
+
 		free(pubkey);
 		BN_hex2bn(&e, "FFFF");
+
 		if(!n || !e || !d || RSA_set0_key(myself->connection->rsa_key, n, e, d) != 1) {
 			BN_free(d);
 			BN_free(e);
@@ -209,30 +222,34 @@ static bool read_rsa_private_key(void) {
 			logger(LOG_ERR, "RSA_set0_key() failed with PrivateKey for myself!");
 			return false;
 		}
+
 		return true;
 	}
 
-	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
+	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname)) {
 		xasprintf(&fname, "%s/rsa_key.priv", confbase);
+	}
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
 		logger(LOG_ERR, "Error reading RSA private key file `%s': %s",
-			   fname, strerror(errno));
+		       fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+#if !defined(HAVE_MINGW) && !defined(HAVE___CYGWIN32__)
 	struct stat s;
 
 	if(!fstat(fileno(fp), &s)) {
-		if(s.st_mode & ~0100700)
+		if(s.st_mode & ~0100700) {
 			logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
+		}
 	} else {
 		logger(LOG_WARNING, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
 	}
+
 #endif
 
 	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
@@ -240,7 +257,7 @@ static bool read_rsa_private_key(void) {
 
 	if(!myself->connection->rsa_key) {
 		logger(LOG_ERR, "Reading RSA private key file `%s' failed: %s",
-			   fname, strerror(errno));
+		       fname, strerror(errno));
 		free(fname);
 		return false;
 	}
@@ -264,6 +281,7 @@ void load_all_subnets(void) {
 
 	xasprintf(&dname, "%s/hosts", confbase);
 	dir = opendir(dname);
+
 	if(!dir) {
 		logger(LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
 		free(dname);
@@ -271,14 +289,15 @@ void load_all_subnets(void) {
 	}
 
 	while((ent = readdir(dir))) {
-		if(!check_id(ent->d_name))
+		if(!check_id(ent->d_name)) {
 			continue;
+		}
 
 		n = lookup_node(ent->d_name);
-		#ifdef _DIRENT_HAVE_D_TYPE
+#ifdef _DIRENT_HAVE_D_TYPE
 		//if(ent->d_type != DT_REG)
-		//	continue;
-		#endif
+		//      continue;
+#endif
 
 		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
 		init_configuration(&config_tree);
@@ -293,8 +312,9 @@ void load_all_subnets(void) {
 		}
 
 		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
-			if(!get_config_subnet(cfg, &s))
+			if(!get_config_subnet(cfg, &s)) {
 				continue;
+			}
 
 			if((s2 = lookup_subnet(n, s))) {
 				s2->expires = -1;
@@ -314,31 +334,38 @@ char *get_name(void) {
 
 	get_config_string(lookup_config(config_tree, "Name"), &name);
 
-	if(!name)
+	if(!name) {
 		return NULL;
+	}
 
 	if(*name == '$') {
 		char *envname = getenv(name + 1);
 		char hostname[32] = "";
+
 		if(!envname) {
 			if(strcmp(name + 1, "HOST")) {
 				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				free(name);
 				return false;
 			}
-			if(gethostname(hostname, sizeof hostname) || !*hostname) {
+
+			if(gethostname(hostname, sizeof(hostname)) || !*hostname) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
 				free(name);
 				return false;
 			}
+
 			hostname[31] = 0;
 			envname = hostname;
 		}
+
 		free(name);
 		name = xstrdup(envname);
+
 		for(char *c = name; *c; c++)
-			if(!isalnum(*c))
+			if(!isalnum(*c)) {
 				*c = '_';
+			}
 	}
 
 	if(!check_id(name)) {
@@ -361,8 +388,8 @@ static bool setup_myself(void) {
 	char *address = NULL;
 	char *proxy = NULL;
 	char *space;
-	char *envp[5] = {NULL};
-	struct addrinfo *ai, *aip, hint = {0};
+	char *envp[5] = {};
+	struct addrinfo *ai, *aip, hint = {};
 	bool choice;
 	int i, err;
 	int replaywin_int;
@@ -391,29 +418,35 @@ static bool setup_myself(void) {
 	read_config_file(config_tree, fname);
 	free(fname);
 
-	if(!read_rsa_private_key())
+	if(!read_rsa_private_key()) {
 		return false;
+	}
 
-	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)) {
 		myport = xstrdup("655");
-	else
+	} else {
 		port_specified = true;
+	}
 
 	/* Ensure myport is numeric */
 
 	if(!atoi(myport)) {
 		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
 		sockaddr_t sa;
-		if(!ai || !ai->ai_addr)
+
+		if(!ai || !ai->ai_addr) {
 			return false;
+		}
+
 		free(myport);
 		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
 		sockaddr2str(&sa, NULL, &myport);
 	}
 
 	if(get_config_string(lookup_config(config_tree, "Proxy"), &proxy)) {
-		if((space = strchr(proxy, ' ')))
+		if((space = strchr(proxy, ' '))) {
 			*space++ = 0;
+		}
 
 		if(!strcasecmp(proxy, "none")) {
 			proxytype = PROXY_NONE;
@@ -434,42 +467,56 @@ static bool setup_myself(void) {
 		}
 
 		switch(proxytype) {
-			case PROXY_NONE:
-			default:
-				break;
+		case PROXY_NONE:
+		default:
+			break;
 
-			case PROXY_EXEC:
-				if(!space || !*space) {
-					logger(LOG_ERR, "Argument expected for proxy type exec!");
-					free(proxy);
-					return false;
-				}
-				proxyhost =  xstrdup(space);
-				break;
+		case PROXY_EXEC:
+			if(!space || !*space) {
+				logger(LOG_ERR, "Argument expected for proxy type exec!");
+				free(proxy);
+				return false;
+			}
 
-			case PROXY_SOCKS4:
-			case PROXY_SOCKS4A:
-			case PROXY_SOCKS5:
-			case PROXY_HTTP:
-				proxyhost = space;
-				if(space && (space = strchr(space, ' ')))
-					*space++ = 0, proxyport = space;
-				if(space && (space = strchr(space, ' ')))
-					*space++ = 0, proxyuser = space;
-				if(space && (space = strchr(space, ' ')))
-					*space++ = 0, proxypass = space;
-				if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
-					logger(LOG_ERR, "Host and port argument expected for proxy!");
-					free(proxy);
-					return false;
-				}
-				proxyhost = xstrdup(proxyhost);
-				proxyport = xstrdup(proxyport);
-				if(proxyuser && *proxyuser)
-					proxyuser = xstrdup(proxyuser);
-				if(proxypass && *proxypass)
-					proxypass = xstrdup(proxypass);
-				break;
+			proxyhost =  xstrdup(space);
+			break;
+
+		case PROXY_SOCKS4:
+		case PROXY_SOCKS4A:
+		case PROXY_SOCKS5:
+		case PROXY_HTTP:
+			proxyhost = space;
+
+			if(space && (space = strchr(space, ' '))) {
+				*space++ = 0, proxyport = space;
+			}
+
+			if(space && (space = strchr(space, ' '))) {
+				*space++ = 0, proxyuser = space;
+			}
+
+			if(space && (space = strchr(space, ' '))) {
+				*space++ = 0, proxypass = space;
+			}
+
+			if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
+				logger(LOG_ERR, "Host and port argument expected for proxy!");
+				free(proxy);
+				return false;
+			}
+
+			proxyhost = xstrdup(proxyhost);
+			proxyport = xstrdup(proxyport);
+
+			if(proxyuser && *proxyuser) {
+				proxyuser = xstrdup(proxyuser);
+			}
+
+			if(proxypass && *proxypass) {
+				proxypass = xstrdup(proxypass);
+			}
+
+			break;
 		}
 
 		free(proxy);
@@ -480,8 +527,9 @@ static bool setup_myself(void) {
 	cfg = lookup_config(config_tree, "Subnet");
 
 	while(cfg) {
-		if(!get_config_subnet(cfg, &subnet))
+		if(!get_config_subnet(cfg, &subnet)) {
 			return false;
+		}
 
 		subnet_add(myself, subnet);
 
@@ -490,14 +538,17 @@ static bool setup_myself(void) {
 
 	/* Check some options */
 
-	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice)
+	if(get_config_bool(lookup_config(config_tree, "IndirectData"), &choice) && choice) {
 		myself->options |= OPTION_INDIRECT;
+	}
 
-	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice)
+	if(get_config_bool(lookup_config(config_tree, "TCPOnly"), &choice) && choice) {
 		myself->options |= OPTION_TCPONLY;
+	}
 
-	if(myself->options & OPTION_TCPONLY)
+	if(myself->options & OPTION_TCPONLY) {
 		myself->options |= OPTION_INDIRECT;
+	}
 
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
@@ -506,94 +557,112 @@ static bool setup_myself(void) {
 	strictsubnets |= tunnelserver;
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
-		if(!strcasecmp(mode, "router"))
+		if(!strcasecmp(mode, "router")) {
 			routing_mode = RMODE_ROUTER;
-		else if(!strcasecmp(mode, "switch"))
+		} else if(!strcasecmp(mode, "switch")) {
 			routing_mode = RMODE_SWITCH;
-		else if(!strcasecmp(mode, "hub"))
+		} else if(!strcasecmp(mode, "hub")) {
 			routing_mode = RMODE_HUB;
-		else {
+		} else {
 			logger(LOG_ERR, "Invalid routing mode!");
 			free(mode);
 			return false;
 		}
+
 		free(mode);
 	}
 
 	if(get_config_string(lookup_config(config_tree, "Forwarding"), &mode)) {
-		if(!strcasecmp(mode, "off"))
+		if(!strcasecmp(mode, "off")) {
 			forwarding_mode = FMODE_OFF;
-		else if(!strcasecmp(mode, "internal"))
+		} else if(!strcasecmp(mode, "internal")) {
 			forwarding_mode = FMODE_INTERNAL;
-		else if(!strcasecmp(mode, "kernel"))
+		} else if(!strcasecmp(mode, "kernel")) {
 			forwarding_mode = FMODE_KERNEL;
-		else {
+		} else {
 			logger(LOG_ERR, "Invalid forwarding mode!");
 			free(mode);
 			return false;
 		}
+
 		free(mode);
 	}
 
-	choice = true;
+	choice = !(myself->options & OPTION_TCPONLY);
 	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
-	if(choice)
+
+	if(choice) {
 		myself->options |= OPTION_PMTU_DISCOVERY;
+	}
 
 	choice = true;
 	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
-	if(choice)
+
+	if(choice) {
 		myself->options |= OPTION_CLAMP_MSS;
+	}
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+
 	if(get_config_string(lookup_config(config_tree, "Broadcast"), &mode)) {
-		if(!strcasecmp(mode, "no"))
+		if(!strcasecmp(mode, "no")) {
 			broadcast_mode = BMODE_NONE;
-		else if(!strcasecmp(mode, "yes") || !strcasecmp(mode, "mst"))
+		} else if(!strcasecmp(mode, "yes") || !strcasecmp(mode, "mst")) {
 			broadcast_mode = BMODE_MST;
-		else if(!strcasecmp(mode, "direct"))
+		} else if(!strcasecmp(mode, "direct")) {
 			broadcast_mode = BMODE_DIRECT;
-		else {
+		} else {
 			logger(LOG_ERR, "Invalid broadcast mode!");
 			free(mode);
 			return false;
 		}
+
 		free(mode);
 	}
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
-	if(priorityinheritance)
+
+	if(priorityinheritance) {
 		logger(LOG_WARNING, "%s not supported on this platform for IPv4 connection", "PriorityInheritance");
+	}
+
 #endif
 
 #if !defined(IPPROTO_IPV6) || !defined(IPV6_TCLASS)
-	if(priorityinheritance)
+
+	if(priorityinheritance) {
 		logger(LOG_WARNING, "%s not supported on this platform for IPv6 connection", "PriorityInheritance");
+	}
+
 #endif
 
-	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
+	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire)) {
 		macexpire = 600;
+	}
 
 	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
 			logger(LOG_ERR, "Bogus maximum timeout!");
 			return false;
 		}
-	} else
+	} else {
 		maxtimeout = 900;
+	}
 
 	if(get_config_int(lookup_config(config_tree, "MinTimeout"), &mintimeout)) {
-			if(mintimeout < 0) {
-				logger(LOG_ERR, "Bogus minimum timeout!");
-				return false;
-			}
-			if(mintimeout > maxtimeout) {
-				logger(LOG_WARNING, "Minimum timeout (%d s) cannot be larger than maximum timeout (%d s). Correcting !", mintimeout, maxtimeout );
-				mintimeout=maxtimeout;
-			}
-		} else
-			mintimeout = 0;
+		if(mintimeout < 0) {
+			logger(LOG_ERR, "Bogus minimum timeout!");
+			return false;
+		}
+
+		if(mintimeout > maxtimeout) {
+			logger(LOG_WARNING, "Minimum timeout (%d s) cannot be larger than maximum timeout (%d s). Correcting !", mintimeout, maxtimeout);
+			mintimeout = maxtimeout;
+		}
+	} else {
+		mintimeout = 0;
+	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {
@@ -614,21 +683,23 @@ static bool setup_myself(void) {
 			logger(LOG_ERR, "ReplayWindow cannot be negative!");
 			return false;
 		}
+
 		replaywin = (unsigned)replaywin_int;
 	}
 
 	if(get_config_string(lookup_config(config_tree, "AddressFamily"), &afname)) {
-		if(!strcasecmp(afname, "IPv4"))
+		if(!strcasecmp(afname, "IPv4")) {
 			addressfamily = AF_INET;
-		else if(!strcasecmp(afname, "IPv6"))
+		} else if(!strcasecmp(afname, "IPv6")) {
 			addressfamily = AF_INET6;
-		else if(!strcasecmp(afname, "any"))
+		} else if(!strcasecmp(afname, "any")) {
 			addressfamily = AF_UNSPEC;
-		else {
+		} else {
 			logger(LOG_ERR, "Invalid address family!");
 			free(afname);
 			return false;
 		}
+
 		free(afname);
 	}
 
@@ -648,14 +719,17 @@ static bool setup_myself(void) {
 				return false;
 			}
 		}
-		free(cipher);
-	} else
-		myself->incipher = EVP_aes_256_cbc();
 
-	if(myself->incipher)
+		free(cipher);
+	} else {
+		myself->incipher = EVP_aes_256_cbc();
+	}
+
+	if(myself->incipher) {
 		myself->inkeylength = EVP_CIPHER_key_length(myself->incipher) + EVP_CIPHER_iv_length(myself->incipher);
-	else
+	} else {
 		myself->inkeylength = 1;
+	}
 
 	/* We need to use a stream mode for the meta protocol. Use AES for this,
 	   but try to match the key size with the one from the cipher selected
@@ -666,18 +740,21 @@ static bool setup_myself(void) {
 	*/
 
 	int keylen = myself->incipher ? EVP_CIPHER_key_length(myself->incipher) : 0;
-	if(keylen <= 16)
-		myself->connection->outcipher = EVP_aes_128_cfb();
-	else if(keylen <= 24)
-		myself->connection->outcipher = EVP_aes_192_cfb();
-	else
-		myself->connection->outcipher = EVP_aes_256_cfb();
 
-	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
+	if(keylen <= 16) {
+		myself->connection->outcipher = EVP_aes_128_cfb();
+	} else if(keylen <= 24) {
+		myself->connection->outcipher = EVP_aes_192_cfb();
+	} else {
+		myself->connection->outcipher = EVP_aes_256_cfb();
+	}
+
+	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime)) {
 		keylifetime = 3600;
+	}
 
 	keyexpires = now + keylifetime;
-	
+
 	/* Check if we want to use message authentication codes... */
 
 	if(get_config_string(lookup_config(config_tree, "Digest"), &digest)) {
@@ -694,8 +771,9 @@ static bool setup_myself(void) {
 		}
 
 		free(digest);
-	} else
+	} else {
 		myself->indigest = EVP_sha256();
+	}
 
 	myself->connection->outdigest = EVP_sha256();
 
@@ -709,8 +787,9 @@ static bool setup_myself(void) {
 				return false;
 			}
 		}
-	} else
+	} else {
 		myself->inmaclength = 4;
+	}
 
 	myself->connection->outmaclength = 0;
 
@@ -721,8 +800,9 @@ static bool setup_myself(void) {
 			logger(LOG_ERR, "Bogus compression level!");
 			return false;
 		}
-	} else
+	} else {
 		myself->incompression = 0;
+	}
 
 	myself->connection->outcompression = 0;
 
@@ -735,33 +815,41 @@ static bool setup_myself(void) {
 
 	graph();
 
-	if(strictsubnets)
+	if(strictsubnets) {
 		load_all_subnets();
+	}
 
 	/* Open device */
 
 	devops = os_devops;
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
-		if(!strcasecmp(type, "dummy"))
+		if(!strcasecmp(type, "dummy")) {
 			devops = dummy_devops;
-		else if(!strcasecmp(type, "raw_socket"))
+		} else if(!strcasecmp(type, "raw_socket")) {
 			devops = raw_socket_devops;
-		else if(!strcasecmp(type, "multicast"))
+		} else if(!strcasecmp(type, "multicast")) {
 			devops = multicast_devops;
+		}
+
 #ifdef ENABLE_UML
-		else if(!strcasecmp(type, "uml"))
+		else if(!strcasecmp(type, "uml")) {
 			devops = uml_devops;
+		}
+
 #endif
 #ifdef ENABLE_VDE
-		else if(!strcasecmp(type, "vde"))
+		else if(!strcasecmp(type, "vde")) {
 			devops = vde_devops;
+		}
+
 #endif
 		free(type);
 	}
 
-	if(!devops.setup())
+	if(!devops.setup()) {
 		return false;
+	}
 
 	/* Run tinc-up script to further initialize the tap interface */
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
@@ -772,13 +860,14 @@ static bool setup_myself(void) {
 #ifdef HAVE_MINGW
 	Sleep(1000);
 #endif
-#ifdef HAVE_CYGWIN
+#ifdef HAVE___CYGWIN32__
 	sleep(1);
 #endif
 	execute_script("tinc-up", envp);
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 4; i++) {
 		free(envp[i]);
+	}
 
 	/* Run subnet-up scripts for our own subnets */
 
@@ -801,7 +890,8 @@ static bool setup_myself(void) {
 		}
 
 		for(i = 0; i < listen_sockets; i++) {
-			salen = sizeof sa;
+			salen = sizeof(sa);
+
 			if(getsockname(i + 3, &sa.sa, &salen) < 0) {
 				logger(LOG_ERR, "Could not get address of listen fd %d: %s", i + 3, sockstrerror(errno));
 				return false;
@@ -810,12 +900,14 @@ static bool setup_myself(void) {
 			listen_socket[i].tcp = i + 3;
 
 #ifdef FD_CLOEXEC
-		        fcntl(i + 3, F_SETFD, FD_CLOEXEC);
+			fcntl(i + 3, F_SETFD, FD_CLOEXEC);
 #endif
 
 			listen_socket[i].udp = setup_vpn_in_socket(&sa);
-			if(listen_socket[i].udp < 0)
+
+			if(listen_socket[i].udp < 0) {
 				return false;
+			}
 
 			ifdebug(CONNECTIONS) {
 				hostname = sockaddr2hostname(&sa);
@@ -831,20 +923,24 @@ static bool setup_myself(void) {
 
 		do {
 			get_config_string(cfg, &address);
-			if(cfg)
+
+			if(cfg) {
 				cfg = lookup_config_next(config_tree, cfg);
+			}
 
 			char *port = myport;
 
 			if(address) {
 				char *space = strchr(address, ' ');
+
 				if(space) {
 					*space++ = 0;
 					port = space;
 				}
 
-				if(!strcmp(address, "*"))
+				if(!strcmp(address, "*")) {
 					*address = 0;
+				}
 			}
 
 			hint.ai_family = addressfamily;
@@ -861,7 +957,7 @@ static bool setup_myself(void) {
 
 			if(err || !ai) {
 				logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
-					   gai_strerror(err));
+				       gai_strerror(err));
 				return false;
 			}
 
@@ -872,16 +968,18 @@ static bool setup_myself(void) {
 				}
 
 				listen_socket[listen_sockets].tcp =
-					setup_listen_socket((sockaddr_t *) aip->ai_addr);
+				        setup_listen_socket((sockaddr_t *) aip->ai_addr);
 
-				if(listen_socket[listen_sockets].tcp < 0)
+				if(listen_socket[listen_sockets].tcp < 0) {
 					continue;
+				}
 
 				listen_socket[listen_sockets].udp =
-					setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+				        setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
 
-				if(listen_socket[listen_sockets].udp < 0)
+				if(listen_socket[listen_sockets].udp < 0) {
 					continue;
+				}
 
 				ifdebug(CONNECTIONS) {
 					hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
@@ -906,12 +1004,15 @@ static bool setup_myself(void) {
 
 	if(!port_specified) {
 		sockaddr_t sa;
-		socklen_t salen = sizeof sa;
+		socklen_t salen = sizeof(sa);
+
 		if(!getsockname(listen_socket[0].udp, &sa.sa, &salen)) {
 			free(myport);
 			sockaddr2str(&sa, NULL, &myport);
-			if(!myport)
+
+			if(!myport) {
 				myport = xstrdup("655");
+			}
 		}
 	}
 
@@ -938,19 +1039,25 @@ bool setup_network(void) {
 		if(pinginterval < 1) {
 			pinginterval = 86400;
 		}
-	} else
+	} else {
 		pinginterval = 60;
+	}
 
-	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout))
+	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout)) {
 		pingtimeout = 5;
-	if(pingtimeout < 1 || pingtimeout > pinginterval)
+	}
+
+	if(pingtimeout < 1 || pingtimeout > pinginterval) {
 		pingtimeout = pinginterval;
+	}
 
-	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
+	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize)) {
 		maxoutbufsize = 10 * MTU;
+	}
 
-	if(!setup_myself())
+	if(!setup_myself()) {
 		return false;
+	}
 
 	return true;
 }
@@ -961,7 +1068,7 @@ bool setup_network(void) {
 void close_network_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
-	char *envp[5] = {NULL};
+	char *envp[5] = {};
 	int i;
 
 	for(node = connection_tree->head; node; node = next) {
@@ -974,8 +1081,9 @@ void close_network_connections(void) {
 	for(list_node_t *node = outgoing_list->head; node; node = node->next) {
 		outgoing_t *outgoing = node->data;
 
-		if(outgoing->event)
+		if(outgoing->event) {
 			event_del(outgoing->event);
+		}
 	}
 
 	list_delete_list(outgoing_list);
@@ -1005,10 +1113,13 @@ void close_network_connections(void) {
 
 	execute_script("tinc-down", envp);
 
-	if(myport) free(myport);
+	if(myport) {
+		free(myport);
+	}
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 4; i++) {
 		free(envp[i]);
+	}
 
 	devops.close();
 

@@ -14,7 +14,6 @@ tincd_SOURCES = \
 	edge.c edge.h \
 	ethernet.h \
 	event.c event.h \
-	fake-gai-errnos.h \
 	fake-getaddrinfo.c fake-getaddrinfo.h \
 	fake-getnameinfo.c fake-getnameinfo.h \
 	graph.c graph.h \
@@ -44,8 +43,7 @@ tincd_SOURCES = \
 	subnet.c subnet.h \
 	tincd.c \
 	utils.c utils.h \
-	xalloc.h \
-	xmalloc.c
+	xalloc.h
 
 if !GETOPT
 tincd_SOURCES += \
@@ -88,4 +86,4 @@ if TUNEMU
 LIBS += -lpcap
 endif
 
-AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -I $(abs_top_builddir)/

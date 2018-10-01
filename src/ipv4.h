@@ -1,3 +1,6 @@
+#ifndef TINC_IPV4_H
+#define TINC_IPV4_H
+
 /*
     ipv4.h -- missing IPv4 related definitions
     Copyright (C) 2005 Ivo Timmermans
@@ -17,9 +20,6 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef __TINC_IPV4_H__
-#define __TINC_IPV4_H__
 
 #ifndef AF_INET
 #define AF_INET 2
@@ -64,15 +64,15 @@
 #ifndef HAVE_STRUCT_IP
 struct ip {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-	unsigned int ip_hl:4;
-	unsigned int ip_v:4;
+	unsigned int ip_hl: 4;
+	unsigned int ip_v: 4;
 #else
-	unsigned int ip_v:4;
-	unsigned int ip_hl:4;
+	unsigned int ip_v: 4;
+	unsigned int ip_hl: 4;
 #endif
 	uint8_t ip_tos;
 	uint16_t ip_len;
-	uint16_t ip_id; 
+	uint16_t ip_id;
 	uint16_t ip_off;
 #define IP_RF 0x8000
 #define IP_DF 0x4000
@@ -81,7 +81,7 @@ struct ip {
 	uint8_t ip_p;
 	uint16_t ip_sum;
 	struct in_addr ip_src, ip_dst;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
 #ifndef IP_OFFMASK
@@ -143,7 +143,7 @@ struct icmp {
 #define icmp_radv icmp_dun.id_radv
 #define icmp_mask icmp_dun.id_mask
 #define icmp_data icmp_dun.id_data
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 #endif
 
-#endif /* __TINC_IPV4_H__ */
+#endif

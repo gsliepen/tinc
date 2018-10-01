@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-avl_tree_t *connection_tree;	/* Meta connections */
+avl_tree_t *connection_tree;    /* Meta connections */
 connection_t *everyone;
 
 static int connection_compare(const connection_t *a, const connection_t *b) {
@@ -52,8 +52,9 @@ connection_t *new_connection(void) {
 
 	c = xmalloc_and_zero(sizeof(connection_t));
 
-	if(!c)
+	if(!c) {
 		return NULL;
+	}
 
 	gettimeofday(&c->start, NULL);
 
@@ -118,8 +119,9 @@ void free_connection(connection_t *c) {
 	free(c->name);
 	free(c->hostname);
 
-	if(c->config_tree)
+	if(c->config_tree) {
 		exit_configuration(&c->config_tree);
+	}
 
 	free(c);
 }
@@ -141,8 +143,8 @@ void dump_connections(void) {
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		logger(LOG_DEBUG, " %s at %s options %x socket %d status %04x outbuf %d/%d/%d",
-			   c->name, c->hostname, c->options, c->socket, bitfield_to_int(&c->status, sizeof c->status),
-			   c->outbufsize, c->outbufstart, c->outbuflen);
+		       c->name, c->hostname, c->options, c->socket, bitfield_to_int(&c->status, sizeof(c->status)),
+		       c->outbufsize, c->outbufstart, c->outbuflen);
 	}
 
 	logger(LOG_DEBUG, "End of connections.");
