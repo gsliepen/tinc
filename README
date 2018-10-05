@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.0.34. Installation
+This is the README file for tinc version 1.0.35. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright (C) 1998-2018 by:
@@ -41,6 +41,15 @@ issues are being addressed in the tinc 1.1 branch.
 
 The Sweet32 attack affects versions of tinc prior to 1.0.30.
 
+On September 6th, 2018, Michael Yonly contacted us and provided
+proof-of-concept code that allowed a remote attacker to create an
+authenticated, one-way connection with a node, and also that there was a
+possibility for a man-in-the-middle to force UDP packets from a node to be sent
+in plaintext. The first issue was trivial to exploit on tinc versions prior to
+1.0.30, but the changes in 1.0.30 to mitigate the Sweet32 attack made this
+weakness much harder to exploit. These issues have been fixed in tinc 1.0.35.
+The new protocol in the tinc 1.1 branch is not susceptible to these issues.
+
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
 prove the security of any cryptographic product. If you wish to review
@@ -50,7 +59,7 @@ tinc or give us feedback, you are strongly encouraged to do so.
 Compatibility
 -------------
 
-Version 1.0.31 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.0.35 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc. Note that since version 1.0.30, tinc requires all nodes in
 the VPN to be compiled with a version of LibreSSL or OpenSSL that supports the
 AES256 and SHA256 algorithms.

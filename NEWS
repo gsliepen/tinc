@@ -1,3 +1,8 @@
+Version 1.0.35               October 5 2018
+
+ * Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738).
+ * Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758).
+
 Version 1.0.34               June 12 2018
 
  * Fix a potential segmentation fault when connecting to an IPv6 peer via a
