@@ -53,9 +53,9 @@ static int charhex2bin(char c) {
 	}
 }
 
-int hex2bin(const char *src, void *vdst, int length) {
+size_t hex2bin(const char *src, void *vdst, size_t length) {
 	char *dst = vdst;
-	int i;
+	size_t i;
 
 	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++) {
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
@@ -64,10 +64,10 @@ int hex2bin(const char *src, void *vdst, int length) {
 	return i;
 }
 
-int bin2hex(const void *vsrc, char *dst, int length) {
+size_t bin2hex(const void *vsrc, char *dst, size_t length) {
 	const char *src = vsrc;
 
-	for(int i = length - 1; i >= 0; i--) {
+	for(size_t i = length; i-- > 0;) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
@@ -76,8 +76,8 @@ int bin2hex(const void *vsrc, char *dst, int length) {
 	return length * 2;
 }
 
-int b64decode(const char *src, void *dst, int length) {
-	int i;
+size_t b64decode(const char *src, void *dst, size_t length) {
+	size_t i;
 	uint32_t triplet = 0;
 	unsigned char *udst = (unsigned char *)dst;
 
@@ -116,11 +116,11 @@ int b64decode(const char *src, void *dst, int length) {
 	}
 }
 
-static int b64encode_internal(const void *src, char *dst, int length, const char *alphabet) {
+static size_t b64encode_internal(const void *src, char *dst, size_t length, const char *alphabet) {
 	uint32_t triplet;
 	const unsigned char *usrc = (unsigned char *)src;
-	int si = length / 3 * 3;
-	int di = length / 3 * 4;
+	size_t si = length / 3 * 3;
+	size_t di = length / 3 * 4;
 
 	switch(length % 3) {
 	case 2:
@@ -165,11 +165,11 @@ static int b64encode_internal(const void *src, char *dst, int length, const char
 	return length;
 }
 
-int b64encode(const void *src, char *dst, int length) {
+size_t b64encode(const void *src, char *dst, size_t length) {
 	return b64encode_internal(src, dst, length, base64_original);
 }
 
-int b64encode_urlsafe(const void *src, char *dst, int length) {
+size_t b64encode_urlsafe(const void *src, char *dst, size_t length) {
 	return b64encode_internal(src, dst, length, base64_urlsafe);
 }
 

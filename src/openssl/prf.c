@@ -29,7 +29,7 @@
    We use SHA512 instead of MD5 and SHA1.
  */
 
-static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, ssize_t outlen) {
+static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, size_t seedlen, char *out, size_t outlen) {
 	digest_t *digest = digest_open_by_nid(nid, -1);
 
 	if(!digest) {
@@ -67,7 +67,7 @@ static bool prf_xor(int nid, const char *secret, size_t secretlen, char *seed, s
 		}
 
 		/* XOR the results of the outer HMAC into the out buffer */
-		for(int i = 0; i < len && i < outlen; i++) {
+		for(size_t i = 0; i < len && i < outlen; i++) {
 			*out++ ^= hash[i];
 		}
 

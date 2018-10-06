@@ -46,9 +46,10 @@ ecdsa_t *ecdsa_generate(void) {
 
 // Write PEM ECDSA keys
 
-static bool write_pem(FILE *fp, const char *type, void *buf, size_t size) {
+static bool write_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 	fprintf(fp, "-----BEGIN %s-----\n", type);
 
+	char *buf = vbuf;
 	char base64[65];
 
 	while(size) {

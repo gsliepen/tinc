@@ -237,6 +237,8 @@ static void signal_handler(int signum) {
 }
 
 static void signalio_handler(void *data, int flags) {
+	(void)data;
+	(void)flags;
 	unsigned char signum;
 
 	if(read(pipefd[0], &signum, 1) != 1) {

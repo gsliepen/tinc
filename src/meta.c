@@ -35,6 +35,7 @@
 #endif
 
 bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t length) {
+	(void)type;
 	connection_t *c = handle;
 
 	if(!c) {
@@ -48,13 +49,13 @@ bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t leng
 	return true;
 }
 
-bool send_meta(connection_t *c, const char *buffer, int length) {
+bool send_meta(connection_t *c, const char *buffer, size_t length) {
 	if(!c) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
+	logger(DEBUG_META, LOG_DEBUG, "Sending %lu bytes of metadata to %s (%s)", (unsigned long)length,
 	       c->name, c->hostname);
 
 	if(c->protocol_minor >= 2) {
@@ -92,13 +93,13 @@ bool send_meta(connection_t *c, const char *buffer, int length) {
 	return true;
 }
 
-void send_meta_raw(connection_t *c, const char *buffer, int length) {
+void send_meta_raw(connection_t *c, const char *buffer, size_t length) {
 	if(!c) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "send_meta() called with NULL pointer!");
 		abort();
 	}
 
-	logger(DEBUG_META, LOG_DEBUG, "Sending %d bytes of raw metadata to %s (%s)", length,
+	logger(DEBUG_META, LOG_DEBUG, "Sending %lu bytes of raw metadata to %s (%s)", (unsigned long)length,
 	       c->name, c->hostname);
 
 	buffer_add(&c->outbuf, buffer, length);
@@ -106,7 +107,7 @@ void send_meta_raw(connection_t *c, const char *buffer, int length) {
 	io_set(&c->io, IO_READ | IO_WRITE);
 }
 
-void broadcast_meta(connection_t *from, const char *buffer, int length) {
+void broadcast_meta(connection_t *from, const char *buffer, size_t length) {
 	for list_each(connection_t, c, connection_list)
 		if(c != from && c->edge) {
 			send_meta(c, buffer, length);
@@ -158,7 +159,7 @@ bool receive_meta_sptps(void *handle, uint8_t type, const void *vdata, uint16_t 
 }
 
 bool receive_meta(connection_t *c) {
-	int inlen;
+	ssize_t inlen;
 	char inbuf[MAXBUFSIZE];
 	char *bufp = inbuf, *endp;
 
@@ -197,7 +198,7 @@ bool receive_meta(connection_t *c) {
 		/* Are we receiving a SPTPS packet? */
 
 		if(c->sptpslen) {
-			int len = MIN(inlen, c->sptpslen - c->inbuf.len);
+			ssize_t len = MIN(inlen, c->sptpslen - c->inbuf.len);
 			buffer_add(&c->inbuf, bufp, len);
 
 			char *sptpspacket = buffer_read(&c->inbuf, c->sptpslen);
@@ -218,7 +219,7 @@ bool receive_meta(connection_t *c) {
 		}
 
 		if(c->protocol_minor >= 2) {
-			int len = sptps_receive_data(&c->sptps, bufp, inlen);
+			size_t len = sptps_receive_data(&c->sptps, bufp, inlen);
 
 			if(!len) {
 				return false;
@@ -247,8 +248,8 @@ bool receive_meta(connection_t *c) {
 			return false;
 #else
 
-			if(inlen > c->inbudget) {
-				logger(DEBUG_META, LOG_ERR, "yte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
+			if((size_t)inlen > c->inbudget) {
+				logger(DEBUG_META, LOG_ERR, "Byte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
 				return false;
 			} else {
 				c->inbudget -= inlen;
@@ -256,7 +257,7 @@ bool receive_meta(connection_t *c) {
 
 			size_t outlen = inlen;
 
-			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
+			if(!cipher_decrypt(c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || (size_t)inlen != outlen) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while decrypting metadata from %s (%s)",
 				       c->name, c->hostname);
 				return false;

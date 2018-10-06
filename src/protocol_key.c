@@ -100,10 +100,13 @@ static bool send_sptps_data_myself(void *handle, uint8_t type, const void *data,
 }
 
 static bool send_initial_sptps_data(void *handle, uint8_t type, const void *data, size_t len) {
+	(void)type;
 	node_t *to = handle;
 	to->sptps.send_data = send_sptps_data_myself;
 	char buf[len * 4 / 3 + 5];
+
 	b64encode(data, buf, len);
+
 	return send_request(to->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, to->name, REQ_KEY, buf);
 }
 
@@ -131,6 +134,8 @@ bool send_req_key(node_t *to) {
 /* REQ_KEY is overloaded to allow arbitrary requests to be routed between two nodes. */
 
 static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, node_t *to, int reqno) {
+	(void)c;
+
 	/* If this is a SPTPS packet, see if sending UDP info helps.
 	   Note that we only do this if we're the destination or the static relay;
 	   otherwise every hop would initiate its own UDP info message, resulting in elevated chatter. */
@@ -227,7 +232,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, no
 		}
 
 		char buf[MAX_STRING_SIZE];
-		int len;
+		size_t len;
 
 		if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS_START", from->name, from->hostname, "invalid SPTPS data");
@@ -466,7 +471,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	if(from->status.sptps) {
 		char buf[strlen(key)];
-		int len = b64decode(key, buf, strlen(key));
+		size_t len = b64decode(key, buf, strlen(key));
 
 		if(!len || !sptps_receive_data(&from->sptps, buf, len)) {
 			/* Uh-oh. It might be that the tunnel is stuck in some corrupted state,
@@ -519,14 +524,14 @@ bool ans_key_h(connection_t *c, const char *request) {
 		from->outdigest = NULL;
 	}
 
-	if(maclength != digest_length(from->outdigest)) {
+	if((size_t)maclength != digest_length(from->outdigest)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
 		return false;
 	}
 
 	/* Process key */
 
-	int keylen = hex2bin(key, key, sizeof(key));
+	size_t keylen = hex2bin(key, key, sizeof(key));
 
 	if(keylen != (from->outcipher ? cipher_keylength(from->outcipher) : 1)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);

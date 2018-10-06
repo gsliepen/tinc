@@ -130,7 +130,7 @@ void logger(int level, int priority, const char *format, ...) {
 	message[sizeof(message) - 1] = 0;
 	va_end(ap);
 
-	if(len > 0 && len < sizeof(message) - 1 && message[len - 1] == '\n') {
+	if(len > 0 && (size_t)len < sizeof(message) - 1 && message[len - 1] == '\n') {
 		message[len - 1] = 0;
 	}
 
@@ -138,13 +138,14 @@ void logger(int level, int priority, const char *format, ...) {
 }
 
 static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
+	(void)s_errno;
 	char message[1024];
 	size_t msglen = sizeof(message);
 
 	int len = vsnprintf(message, msglen, format, ap);
 	message[sizeof(message) - 1] = 0;
 
-	if(len > 0 && len < sizeof(message) - 1) {
+	if(len > 0 && (size_t)len < sizeof(message) - 1) {
 		if(message[len - 1] == '\n') {
 			message[--len] = 0;
 		}

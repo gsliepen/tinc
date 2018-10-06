@@ -51,9 +51,16 @@ unsigned int sptps_replaywin = 16;
 */
 
 void sptps_log_quiet(sptps_t *s, int s_errno, const char *format, va_list ap) {
+	(void)s;
+	(void)s_errno;
+	(void)format;
+	(void)ap;
 }
 
 void sptps_log_stderr(sptps_t *s, int s_errno, const char *format, va_list ap) {
+	(void)s;
+	(void)s_errno;
+
 	vfprintf(stderr, format, ap);
 	fputc('\n', stderr);
 }
@@ -62,6 +69,9 @@ void (*sptps_log)(sptps_t *s, int s_errno, const char *format, va_list ap) = spt
 
 // Log an error message.
 static bool error(sptps_t *s, int s_errno, const char *format, ...) {
+	(void)s;
+	(void)s_errno;
+
 	if(format) {
 		va_list ap;
 		va_start(ap, format);
@@ -244,6 +254,8 @@ static bool send_ack(sptps_t *s) {
 
 // Receive an ACKnowledgement record.
 static bool receive_ack(sptps_t *s, const char *data, uint16_t len) {
+	(void)data;
+
 	if(len) {
 		return error(s, EIO, "Invalid ACK record length");
 	}
@@ -381,6 +393,7 @@ static bool receive_handshake(sptps_t *s, const char *data, uint16_t len) {
 			return false;
 		}
 
+	// Fall through
 	case SPTPS_KEX:
 
 		// We have sent our KEX request, we expect our peer to sent one as well.
@@ -466,7 +479,7 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 				}
 			} else if(update_state) {
 				// We missed some packets. Mark them in the bitmap as being late.
-				for(int i = s->inseqno; i < seqno; i++) {
+				for(uint32_t i = s->inseqno; i < seqno; i++) {
 					s->late[(i / 8) % s->replaywin] |= 1 << i % 8;
 				}
 			}
@@ -495,11 +508,12 @@ static bool sptps_check_seqno(sptps_t *s, uint32_t seqno, bool update_state) {
 }
 
 // Check datagram for valid HMAC
-bool sptps_verify_datagram(sptps_t *s, const void *data, size_t len) {
+bool sptps_verify_datagram(sptps_t *s, const void *vdata, size_t len) {
 	if(!s->instate || len < 21) {
 		return error(s, EIO, "Received short packet");
 	}
 
+	const char *data = vdata;
 	uint32_t seqno;
 	memcpy(&seqno, data, 4);
 	seqno = ntohl(seqno);
@@ -584,7 +598,8 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 }
 
 // Receive incoming data. Check if it contains a complete record, if so, handle it.
-size_t sptps_receive_data(sptps_t *s, const void *data, size_t len) {
+size_t sptps_receive_data(sptps_t *s, const void *vdata, size_t len) {
+	const char *data = vdata;
 	size_t total_read = 0;
 
 	if(!s->state) {

@@ -46,7 +46,7 @@ rsa_t *rsa_set_hex_public_key(char *n, char *e) {
 	BIGNUM *bn_n = NULL;
 	BIGNUM *bn_e = NULL;
 
-	if(BN_hex2bn(&bn_n, n) != strlen(n) || BN_hex2bn(&bn_e, e) != strlen(e)) {
+	if((size_t)BN_hex2bn(&bn_n, n) != strlen(n) || (size_t)BN_hex2bn(&bn_e, e) != strlen(e)) {
 		BN_free(bn_e);
 		BN_free(bn_n);
 		return false;
@@ -68,7 +68,7 @@ rsa_t *rsa_set_hex_private_key(char *n, char *e, char *d) {
 	BIGNUM *bn_e = NULL;
 	BIGNUM *bn_d = NULL;
 
-	if(BN_hex2bn(&bn_n, n) != strlen(n) || BN_hex2bn(&bn_e, e) != strlen(e) || BN_hex2bn(&bn_d, d) != strlen(d)) {
+	if((size_t)BN_hex2bn(&bn_n, n) != strlen(n) || (size_t)BN_hex2bn(&bn_e, e) != strlen(e) || (size_t)BN_hex2bn(&bn_d, d) != strlen(d)) {
 		BN_free(bn_d);
 		BN_free(bn_e);
 		BN_free(bn_n);
@@ -118,7 +118,7 @@ size_t rsa_size(rsa_t *rsa) {
 }
 
 bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
-	if(RSA_public_encrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
+	if((size_t)RSA_public_encrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
 
@@ -127,7 +127,7 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 }
 
 bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
-	if(RSA_private_decrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
+	if((size_t)RSA_private_decrypt(len, in, out, rsa, RSA_NO_PADDING) == len) {
 		return true;
 	}
 

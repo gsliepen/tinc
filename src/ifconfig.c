@@ -86,7 +86,7 @@ bool ifconfig_footer(FILE *out) {
 static subnet_t ipv4, ipv6;
 
 void ifconfig_address(FILE *out, const char *value) {
-	subnet_t address = {NULL};
+	subnet_t address = {0};
 	char address_str[MAXNETSTR];
 
 	if(!str2net(&address, value) || !net2str(address_str, sizeof(address_str), &address)) {
@@ -168,7 +168,7 @@ void ifconfig_address(FILE *out, const char *value) {
 }
 
 void ifconfig_route(FILE *out, const char *value) {
-	subnet_t subnet = {NULL}, gateway = {NULL};
+	subnet_t subnet = {0}, gateway = {0};
 	char subnet_str[MAXNETSTR] = "", gateway_str[MAXNETSTR] = "";
 	char *sep = strchr(value, ' ');
 

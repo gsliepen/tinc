@@ -20,7 +20,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-bool recvdata(int fd, char *data, size_t len);
 int cmd_invite(int argc, char *argv[]);
 int cmd_join(int argc, char *argv[]);
 

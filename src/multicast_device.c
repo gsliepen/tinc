@@ -32,7 +32,7 @@
 static const char *device_info = "multicast socket";
 
 static struct addrinfo *ai = NULL;
-static mac_t ignore_src = {{0}};
+static mac_t ignore_src = {0};
 
 static bool setup_device(void) {
 	char *host = NULL;

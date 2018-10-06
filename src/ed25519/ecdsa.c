@@ -63,10 +63,11 @@ char *ecdsa_get_base64_public_key(ecdsa_t *ecdsa) {
 
 // Read PEM ECDSA keys
 
-static bool read_pem(FILE *fp, const char *type, void *buf, size_t size) {
+static bool read_pem(FILE *fp, const char *type, void *vbuf, size_t size) {
 	char line[1024];
 	bool data = false;
 	size_t typelen = strlen(type);
+	char *buf = vbuf;
 
 	while(fgets(line, sizeof(line), fp)) {
 		if(!data) {
@@ -143,6 +144,7 @@ ecdsa_t *ecdsa_read_pem_private_key(FILE *fp) {
 }
 
 size_t ecdsa_size(ecdsa_t *ecdsa) {
+	(void)ecdsa;
 	return 64;
 }
 

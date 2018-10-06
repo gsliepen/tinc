@@ -176,6 +176,8 @@ bool send_id(connection_t *c) {
 }
 
 static bool finalize_invitation(connection_t *c, const char *data, uint16_t len) {
+	(void)len;
+
 	if(strchr(data, '\n')) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Received invalid key from invited node %s (%s)!\n", c->name, c->hostname);
 		return false;
@@ -606,7 +608,7 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	int inlen = hex2bin(hexkey, enckey, sizeof(enckey));
+	size_t inlen = hex2bin(hexkey, enckey, sizeof(enckey));
 
 	/* Check if the length of the meta key is all right */
 
@@ -762,7 +764,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Convert the hash to binary format */
 
-	int inlen = hex2bin(hishash, hishash, sizeof(hishash));
+	size_t inlen = hex2bin(hishash, hishash, sizeof(hishash));
 
 	/* Check if the length of the hash is all right */
 

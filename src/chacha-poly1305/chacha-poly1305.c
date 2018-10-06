@@ -20,7 +20,8 @@ void chacha_poly1305_exit(chacha_poly1305_ctx_t *ctx) {
 	free(ctx);
 }
 
-bool chacha_poly1305_set_key(chacha_poly1305_ctx_t *ctx, const void *key) {
+bool chacha_poly1305_set_key(chacha_poly1305_ctx_t *ctx, const void *vkey) {
+	const uint8_t *key = vkey;
 	chacha_keysetup(&ctx->main_ctx, key, 256);
 	chacha_keysetup(&ctx->header_ctx, key + 32, 256);
 	return true;
@@ -39,10 +40,11 @@ static void put_u64(void *vp, uint64_t v) {
 	p[7] = (uint8_t) v & 0xff;
 }
 
-bool chacha_poly1305_encrypt(chacha_poly1305_ctx_t *ctx, uint64_t seqnr, const void *indata, size_t inlen, void *outdata, size_t *outlen) {
+bool chacha_poly1305_encrypt(chacha_poly1305_ctx_t *ctx, uint64_t seqnr, const void *indata, size_t inlen, void *voutdata, size_t *outlen) {
 	uint8_t seqbuf[8];
 	const uint8_t one[8] = { 1, 0, 0, 0, 0, 0, 0, 0 };      /* NB little-endian */
 	uint8_t poly_key[POLY1305_KEYLEN];
+	uint8_t *outdata = voutdata;
 
 	/*
 	 * Run ChaCha20 once to generate the Poly1305 key. The IV is the
@@ -66,10 +68,11 @@ bool chacha_poly1305_encrypt(chacha_poly1305_ctx_t *ctx, uint64_t seqnr, const v
 	return true;
 }
 
-bool chacha_poly1305_decrypt(chacha_poly1305_ctx_t *ctx, uint64_t seqnr, const void *indata, size_t inlen, void *outdata, size_t *outlen) {
+bool chacha_poly1305_decrypt(chacha_poly1305_ctx_t *ctx, uint64_t seqnr, const void *vindata, size_t inlen, void *outdata, size_t *outlen) {
 	uint8_t seqbuf[8];
 	const uint8_t one[8] = { 1, 0, 0, 0, 0, 0, 0, 0 };      /* NB little-endian */
 	uint8_t expected_tag[POLY1305_TAGLEN], poly_key[POLY1305_KEYLEN];
+	const uint8_t *indata = vindata;
 
 	/*
 	 * Run ChaCha20 once to generate the Poly1305 key. The IV is the

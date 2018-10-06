@@ -70,7 +70,7 @@ bool add_edge_h(connection_t *c, const char *request) {
 	char to_port[MAX_STRING_SIZE];
 	char address_local[MAX_STRING_SIZE];
 	char port_local[MAX_STRING_SIZE];
-	sockaddr_t address, local_address = {{0}};
+	sockaddr_t address, local_address = {0};
 	uint32_t options;
 	int weight;
 

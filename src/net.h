@@ -56,7 +56,7 @@ typedef struct node_id_t {
 	uint8_t x[6];
 } node_id_t;
 
-typedef short length_t;
+typedef uint16_t length_t;
 typedef uint32_t seqno_t;
 
 #define AF_UNKNOWN 255
@@ -190,8 +190,8 @@ extern int setup_vpn_in_socket(const sockaddr_t *sa);
 extern bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_t len);
 extern bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len);
 extern void send_packet(struct node_t *n, vpn_packet_t *packet);
-extern void receive_tcppacket(struct connection_t *c, const char *buffer, int length);
-extern bool receive_tcppacket_sptps(struct connection_t *c, const char *buffer, int length);
+extern void receive_tcppacket(struct connection_t *c, const char *buffer, size_t length);
+extern bool receive_tcppacket_sptps(struct connection_t *c, const char *buffer, size_t length);
 extern void broadcast_packet(const struct node_t *n, vpn_packet_t *packet);
 extern char *get_name(void);
 extern void device_enable(void);

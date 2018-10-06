@@ -44,6 +44,8 @@ bool send_termreq(connection_t *c) {
 }
 
 bool termreq_h(connection_t *c, const char *request) {
+	(void)c;
+	(void)request;
 	return false;
 }
 
@@ -55,6 +57,7 @@ bool send_ping(connection_t *c) {
 }
 
 bool ping_h(connection_t *c, const char *request) {
+	(void)request;
 	return send_pong(c);
 }
 
@@ -63,6 +66,7 @@ bool send_pong(connection_t *c) {
 }
 
 bool pong_h(connection_t *c, const char *request) {
+	(void)request;
 	c->status.pinged = false;
 
 	/* Successful connection, reset timeout if this is an outgoing connection. */

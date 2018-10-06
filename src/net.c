@@ -95,7 +95,7 @@ void purge(void) {
 /* Put a misbehaving connection in the tarpit */
 void tarpit(int fd) {
 	static int pits[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-	static int next_pit = 0;
+	static unsigned int next_pit = 0;
 
 	if(pits[next_pit] != -1) {
 		closesocket(pits[next_pit]);

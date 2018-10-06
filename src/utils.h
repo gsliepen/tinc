@@ -21,12 +21,12 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-extern int hex2bin(const char *src, void *dst, int length);
-extern int bin2hex(const void *src, char *dst, int length);
+extern size_t hex2bin(const char *src, void *dst, size_t length);
+extern size_t bin2hex(const void *src, char *dst, size_t length);
 
-extern int b64encode(const void *src, char *dst, int length);
-extern int b64encode_urlsafe(const void *src, char *dst, int length);
-extern int b64decode(const char *src, void *dst, int length);
+extern size_t b64encode(const void *src, char *dst, size_t length);
+extern size_t b64encode_urlsafe(const void *src, char *dst, size_t length);
+extern size_t b64decode(const char *src, void *dst, size_t length);
 
 #ifdef HAVE_MINGW
 extern const char *winerror(int);

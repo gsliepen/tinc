@@ -216,7 +216,7 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 		lzo1x_1_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 #else
-		return -1;
+		return 0;
 #endif
 	} else if(level < 10) {
 #ifdef HAVE_ZLIB
@@ -226,18 +226,18 @@ static length_t compress_packet(uint8_t *dest, const uint8_t *source, length_t l
 			return destlen;
 		} else
 #endif
-			return -1;
+			return 0;
 	} else {
 #ifdef HAVE_LZO
 		lzo_uint lzolen = MAXSIZE;
 		lzo1x_999_compress(source, len, dest, &lzolen, lzo_wrkmem);
 		return lzolen;
 #else
-		return -1;
+		return 0;
 #endif
 	}
 
-	return -1;
+	return 0;
 }
 
 static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t len, int level) {
@@ -252,7 +252,7 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 			return lzolen;
 		} else
 #endif
-			return -1;
+			return 0;
 	}
 
 #ifdef HAVE_ZLIB
@@ -275,13 +275,13 @@ static length_t uncompress_packet(uint8_t *dest, const uint8_t *source, length_t
 		if(inflate(&stream, Z_FINISH) == Z_STREAM_END) {
 			return stream.total_out;
 		} else {
-			return -1;
+			return 0;
 		}
 	}
 
 #endif
 
-	return -1;
+	return 0;
 }
 
 /* VPN packet I/O */
@@ -305,7 +305,7 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 	return false;
 #else
 
-	if(!n->status.validkey_in || !digest_active(n->indigest) || inpkt->len < sizeof(seqno_t) + digest_length(n->indigest)) {
+	if(!n->status.validkey_in || !digest_active(n->indigest) || (size_t)inpkt->len < sizeof(seqno_t) + digest_length(n->indigest)) {
 		return false;
 	}
 
@@ -364,7 +364,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	/* Check packet length */
 
-	if(inpkt->len < sizeof(seqno_t) + digest_length(n->indigest)) {
+	if((size_t)inpkt->len < sizeof(seqno_t) + digest_length(n->indigest)) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got too short packet from %s (%s)",
 		       n->name, n->hostname);
 		return false;
@@ -426,7 +426,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 					return false;
 				}
 			} else {
-				for(int i = n->received_seqno + 1; i < seqno; i++) {
+				for(seqno_t i = n->received_seqno + 1; i < seqno; i++) {
 					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 				}
 			}
@@ -453,7 +453,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	if(n->incompression) {
 		vpn_packet_t *outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = uncompress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->incompression)) < 0) {
+		if(!(outpkt->len = uncompress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->incompression))) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while uncompressing packet from %s (%s)",
 			       n->name, n->hostname);
 			return false;
@@ -484,7 +484,7 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 #endif
 }
 
-void receive_tcppacket(connection_t *c, const char *buffer, int len) {
+void receive_tcppacket(connection_t *c, const char *buffer, size_t len) {
 	vpn_packet_t outpkt;
 	outpkt.offset = DEFAULT_PACKET_OFFSET;
 
@@ -505,7 +505,7 @@ void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	receive_packet(c->node, &outpkt);
 }
 
-bool receive_tcppacket_sptps(connection_t *c, const char *data, int len) {
+bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	if(len < sizeof(node_id_t) + sizeof(node_id_t)) {
 		logger(DEBUG_PROTOCOL, LOG_ERR, "Got too short TCP SPTPS packet from %s (%s)", c->name, c->hostname);
 		return false;
@@ -596,9 +596,9 @@ static void send_sptps_packet(node_t *n, vpn_packet_t *origpkt) {
 
 	if(n->outcompression) {
 		outpkt.offset = 0;
-		int len = compress_packet(DATA(&outpkt) + offset, DATA(origpkt) + offset, origpkt->len - offset, n->outcompression);
+		length_t len = compress_packet(DATA(&outpkt) + offset, DATA(origpkt) + offset, origpkt->len - offset, n->outcompression);
 
-		if(len < 0) {
+		if(!len) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)", n->name, n->hostname);
 		} else if(len < origpkt->len - offset) {
 			outpkt.len = len + offset;
@@ -753,7 +753,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	if(n->outcompression) {
 		outpkt = pkt[nextpkt++];
 
-		if((outpkt->len = compress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->outcompression)) < 0) {
+		if(!(outpkt->len = compress_packet(DATA(outpkt), DATA(inpkt), inpkt->len, n->outcompression))) {
 			logger(DEBUG_TRAFFIC, LOG_ERR, "Error while compressing packet to %s (%s)",
 			       n->name, n->hostname);
 			return;
@@ -907,7 +907,7 @@ bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_
 	if(relay_supported) {
 		if(direct) {
 			/* Inform the recipient that this packet was sent directly. */
-			node_id_t nullid = {{0}};
+			node_id_t nullid = {0};
 			memcpy(buf_ptr, &nullid, sizeof(nullid));
 			buf_ptr += sizeof(nullid);
 		} else {
@@ -1017,7 +1017,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 	if(type & PKT_COMPRESSED) {
 		length_t ulen = uncompress_packet(DATA(&inpkt) + offset, (const uint8_t *)data, len, from->incompression);
 
-		if(ulen < 0) {
+		if(!ulen) {
 			return false;
 		} else {
 			inpkt.len = ulen + offset;
@@ -1609,7 +1609,7 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 
 static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, sockaddr_t *addr) {
 	char *hostname;
-	node_id_t nullid = {{0}};
+	node_id_t nullid = {0};
 	node_t *from, *to;
 	bool direct = false;
 
@@ -1726,6 +1726,8 @@ skip_harder:
 }
 
 void handle_incoming_vpn_data(void *data, int flags) {
+	(void)data;
+	(void)flags;
 	listen_socket_t *ls = data;
 
 #ifdef HAVE_RECVMMSG
@@ -1795,6 +1797,8 @@ void handle_incoming_vpn_data(void *data, int flags) {
 }
 
 void handle_device_data(void *data, int flags) {
+	(void)data;
+	(void)flags;
 	vpn_packet_t packet;
 	packet.offset = DEFAULT_PACKET_OFFSET;
 	packet.priority = 0;

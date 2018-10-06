@@ -88,6 +88,8 @@ static int strtailcmp(const char *str, const char *tail) {
 }
 
 static void check_conffile(const char *fname, bool server) {
+	(void)server;
+
 	FILE *f = fopen(fname, "r");
 
 	if(!f) {

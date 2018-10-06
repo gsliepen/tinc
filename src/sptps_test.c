@@ -32,12 +32,20 @@
 
 // Symbols necessary to link with logger.o
 bool send_request(void *c, const char *msg, ...) {
+	(void)c;
+	(void)msg;
 	return false;
 }
+
 struct list_t *connection_list = NULL;
+
 bool send_meta(void *c, const char *msg, int len) {
+	(void)c;
+	(void)msg;
+	(void)len;
 	return false;
 }
+
 char *logfilename = NULL;
 bool do_detach = false;
 struct timeval now;
@@ -51,6 +59,7 @@ static int out = 1;
 static int addressfamily = AF_UNSPEC;
 
 static bool send_data(void *handle, uint8_t type, const void *data, size_t len) {
+	(void)type;
 	char hex[len * 2 + 1];
 	bin2hex(data, hex, len);
 
@@ -60,7 +69,7 @@ static bool send_data(void *handle, uint8_t type, const void *data, size_t len) 
 
 	const int *sock = handle;
 
-	if(send(*sock, data, len, 0) != len) {
+	if((size_t)send(*sock, data, len, 0) != len) {
 		return false;
 	}
 
@@ -68,6 +77,7 @@ static bool send_data(void *handle, uint8_t type, const void *data, size_t len) 
 }
 
 static bool receive_record(void *handle, uint8_t type, const void *data, uint16_t len) {
+	(void)handle;
 	if(verbose) {
 		fprintf(stderr, "Received type %d record of %u bytes:\n", type, len);
 	}
@@ -404,7 +414,7 @@ int main(int argc, char *argv[]) {
 				if(len > 1) {
 					sptps_send_record(&s, 0, buf, len);
 				}
-			} else if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, (len == 1 && buf[0] == '\n') ? 0 : buf[0] == '*' ? sizeof(buf) : len)) {
+			} else if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, (len == 1 && buf[0] == '\n') ? 0 : buf[0] == '*' ? sizeof(buf) : (size_t)len)) {
 				return 1;
 			}
 		}

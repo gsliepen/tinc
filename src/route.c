@@ -495,6 +495,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 }
 
 static void age_subnets(void *data) {
+	(void)data;
 	bool left = false;
 
 	for splay_each(subnet_t, s, myself->subnet_tree) {

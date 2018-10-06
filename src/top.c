@@ -239,7 +239,7 @@ static int sortfunc(const void *a, const void *b) {
 static void redraw(void) {
 	erase();
 
-	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s", netname ? : "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
+	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s", netname ? netname : "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
 	attrset(A_REVERSE);
 	mvprintw(2, 0, "Node                IN %s   IN %s   OUT %s  OUT %s", punit, bunit, punit, bunit);
 	chgat(-1, A_REVERSE, 0, NULL);

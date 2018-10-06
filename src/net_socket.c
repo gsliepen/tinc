@@ -624,6 +624,7 @@ begin:
 }
 
 void setup_outgoing_connection(outgoing_t *outgoing, bool verbose) {
+	(void)verbose;
 	timeout_del(&outgoing->ev);
 
 	node_t *n = outgoing->node;
@@ -655,6 +656,7 @@ remove:
   new connection
 */
 void handle_new_meta_connection(void *data, int flags) {
+	(void)flags;
 	listen_socket_t *l = data;
 	connection_t *c;
 	sockaddr_t sa;
@@ -747,6 +749,7 @@ void handle_new_meta_connection(void *data, int flags) {
   accept a new UNIX socket connection
 */
 void handle_new_unix_connection(void *data, int flags) {
+	(void)flags;
 	io_t *io = data;
 	connection_t *c;
 	sockaddr_t sa;

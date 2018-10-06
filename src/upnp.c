@@ -148,6 +148,8 @@ static void upnp_refresh() {
 }
 
 static void *upnp_thread(void *data) {
+	(void)data;
+
 	while(true) {
 		time_t start = time(NULL);
 		upnp_refresh();

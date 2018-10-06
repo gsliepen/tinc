@@ -28,10 +28,14 @@
 static char *program_name;
 
 void logger(int level, int priority, const char *format, ...) {
+	(void)level;
+	(void)priority;
 	va_list ap;
+
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
+
 	fputc('\n', stderr);
 }
 
