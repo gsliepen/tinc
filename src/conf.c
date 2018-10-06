@@ -433,7 +433,11 @@ bool read_server_config(void) {
 
 				// And we try to read the ones that end with ".conf"
 				if(l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
-					snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ep->d_name);
+					if(snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ep->d_name) >= sizeof(fname)) {
+						logger(DEBUG_ALWAYS, LOG_ERR, "Pathname too long: %s/%s", dname, ep->d_name);
+						return false;
+					}
+
 					x = read_config_file(config_tree, fname, true);
 				}
 			}

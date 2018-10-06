@@ -61,7 +61,7 @@ static struct UPNPDev *upnp_discover(int delay, int *error) {
 
 #else
 
-#if MINIUPNPC_API_VERSION > 15
+#if MINIUPNPC_API_VERSION > 17
 #warning "The version of libminiupnpc you're building against seems to be too recent. Expect trouble."
 #endif
 

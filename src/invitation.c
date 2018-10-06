@@ -353,7 +353,11 @@ int cmd_invite(int argc, char *argv[]) {
 
 		char invname[PATH_MAX];
 		struct stat st;
-		snprintf(invname, sizeof(invname), "%s" SLASH "%s", filename, ent->d_name);
+
+		if(snprintf(invname, sizeof(invname), "%s" SLASH "%s", filename, ent->d_name) >= sizeof(invname)) {
+			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", filename, ent->d_name);
+			continue;
+		}
 
 		if(!stat(invname, &st)) {
 			if(deadline < st.st_mtime) {
@@ -955,7 +959,11 @@ ask_netname:
 		line[strlen(line) - 1] = 0;
 
 		char newbase[PATH_MAX];
-		snprintf(newbase, sizeof(newbase), CONFDIR SLASH "tinc" SLASH "%s", line);
+
+		if(snprintf(newbase, sizeof(newbase), CONFDIR SLASH "tinc" SLASH "%s", line) >= sizeof(newbase)) {
+			fprintf(stderr, "Filename too long: " CONFDIR SLASH "tinc" SLASH "%s\n", line);
+			goto ask_netname;
+		}
 
 		if(rename(confbase, newbase)) {
 			fprintf(stderr, "Error trying to rename %s to %s: %s\n", confbase, newbase, strerror(errno));

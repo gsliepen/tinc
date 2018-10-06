@@ -133,6 +133,7 @@ static bool setup_device(void) {
 
 	listen_sun.sun_family = AF_UNIX;
 	strncpy(listen_sun.sun_path, device, sizeof(listen_sun.sun_path));
+	listen_sun.sun_path[sizeof(listen_sun.sun_path) - 1] = 0;
 
 	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof(listen_sun)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));

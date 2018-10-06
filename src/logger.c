@@ -186,7 +186,7 @@ void openlogger(const char *ident, logmode_t mode) {
 		loghandle = RegisterEventSource(NULL, logident);
 
 		if(!loghandle) {
-			fprintf(stderr, "Could not open log handle!");
+			fprintf(stderr, "Could not open log handle!\n");
 			logmode = LOGMODE_NULL;
 		}
 

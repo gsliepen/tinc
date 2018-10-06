@@ -355,6 +355,8 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	char buf[PATH_MAX];
 	char buf2[PATH_MAX];
 
+ask_filename:
+
 	/* Check stdin and stdout */
 	if(ask && tty) {
 		/* Ask for a file and/or directory name. */
@@ -385,7 +387,17 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 #endif
 		/* The directory is a relative path or a filename. */
 		getcwd(directory, sizeof(directory));
-		snprintf(buf2, sizeof(buf2), "%s" SLASH "%s", directory, filename);
+
+		if(snprintf(buf2, sizeof(buf2), "%s" SLASH "%s", directory, filename) >= sizeof(buf2)) {
+			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", directory, filename);
+
+			if(ask && tty) {
+				goto ask_filename;
+			} else {
+				return NULL;
+			}
+		}
+
 		filename = buf2;
 	}
 
@@ -825,6 +837,8 @@ bool connect_tincd(bool verbose) {
 
 	strncpy(sa.sun_path, unixsocketname, sizeof(sa.sun_path));
 
+	sa.sun_path[sizeof(sa.sun_path) - 1] = 0;
+
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if(fd < 0) {
@@ -1161,7 +1175,12 @@ static int dump_invitations(void) {
 		}
 
 		char fname[PATH_MAX];
-		snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ent->d_name);
+
+		if(snprintf(fname, sizeof(fname), "%s" SLASH "%s", dname, ent->d_name) >= sizeof(fname)) {
+			fprintf(stderr, "Filename too long: %s" SLASH "%s\n", dname, ent->d_name);
+			continue;
+		}
+
 		FILE *f = fopen(fname, "r");
 
 		if(!f) {
@@ -1930,7 +1949,11 @@ static int cmd_config(int argc, char *argv[]) {
 	FILE *tf = NULL;
 
 	if(action >= -1) {
-		snprintf(tmpfile, sizeof(tmpfile), "%s.config.tmp", filename);
+		if(snprintf(tmpfile, sizeof(tmpfile), "%s.config.tmp", filename) >= sizeof(tmpfile)) {
+			fprintf(stderr, "Filename too long: %s.config.tmp\n", filename);
+			return 1;
+		}
+
 		tf = fopen(tmpfile, "w");
 
 		if(!tf) {
@@ -2537,7 +2560,10 @@ static int cmd_import(int argc, char *argv[]) {
 				fclose(out);
 			}
 
-			snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name);
+			if(snprintf(filename, sizeof(filename), "%s" SLASH "%s", hosts_dir, name) >= sizeof(filename)) {
+				fprintf(stderr, "Filename too long: %s" SLASH "%s\n", hosts_dir, name);
+				return 1;
+			}
 
 			if(!force && !access(filename, F_OK)) {
 				fprintf(stderr, "Host configuration file %s already exists, skipping.\n", filename);
@@ -3264,7 +3290,7 @@ int main(int argc, char *argv[]) {
 	static struct WSAData wsa_state;
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		fprintf(stderr, "System call `%s' failed: %s\n", "WSAStartup", winerror(GetLastError()));
 		return false;
 	}
 

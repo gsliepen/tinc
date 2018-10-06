@@ -60,6 +60,7 @@ static bool setup_device(void) {
 #endif
 
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+	ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
 
 	if(ioctl(device_fd, SIOCGIFINDEX, &ifr)) {
 		close(device_fd);

@@ -103,10 +103,12 @@ static bool setup_device(void) {
 
 	if(iface) {
 		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
+		ifr.ifr_name[IFNAMSIZ - 1] = 0;
 	}
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
+		ifrname[IFNAMSIZ - 1] = 0;
 		free(iface);
 		iface = xstrdup(ifrname);
 	} else {
