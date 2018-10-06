@@ -181,6 +181,7 @@ char *get_my_hostname() {
 	if(!tty) {
 		if(!hostname) {
 			fprintf(stderr, "Could not determine the external address or hostname. Please set Address manually.\n");
+			free(port);
 			return NULL;
 		}
 
@@ -199,6 +200,7 @@ again:
 	if(!fgets(line, sizeof(line), stdin)) {
 		fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 		free(hostname);
+		free(port);
 		return NULL;
 	}
 
@@ -644,7 +646,7 @@ static char *grep(const char *data, const char *var) {
 }
 
 static bool finalize_join(void) {
-	char *name = xstrdup(get_value(data, "Name"));
+	const char *name = get_value(data, "Name");
 
 	if(!name) {
 		fprintf(stderr, "No Name found in invitation!\n");

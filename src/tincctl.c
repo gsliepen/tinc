@@ -2151,7 +2151,7 @@ static bool try_bind(int port) {
 	return success;
 }
 
-int check_port(char *name) {
+int check_port(const char *name) {
 	if(try_bind(655)) {
 		return 655;
 	}
@@ -3175,10 +3175,7 @@ static int cmd_shell(int argc, char *argv[]) {
 			free(line);
 			rl_basic_word_break_characters = "\t\n ";
 			line = readline(prompt);
-
-			if(line) {
-				copy = xstrdup(line);
-			}
+			copy = line ? xstrdup(line) : NULL;
 		} else {
 			line = fgets(buf, sizeof(buf), stdin);
 		}
@@ -3224,6 +3221,9 @@ static int cmd_shell(int argc, char *argv[]) {
 		}
 
 		if(!strcasecmp(nargv[argc], "exit") || !strcasecmp(nargv[argc], "quit")) {
+#ifdef HAVE_READLINE
+			free(copy);
+#endif
 			free(nargv);
 			return result;
 		}
@@ -3252,6 +3252,9 @@ static int cmd_shell(int argc, char *argv[]) {
 		}
 	}
 
+#ifdef HAVE_READLINE
+	free(copy);
+#endif
 	free(nargv);
 
 	if(tty) {

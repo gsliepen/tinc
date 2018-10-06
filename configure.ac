@@ -181,6 +181,7 @@ AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 tinc_ATTRIBUTE(__malloc__)
+tinc_ATTRIBUTE(__nonnull__)
 tinc_ATTRIBUTE(__warn_unused_result__)
 
 AC_CHECK_TYPES([struct ether_header, struct arphdr, struct ether_arp, struct ip, struct icmp, struct ip6_hdr, struct icmp6_hdr, struct nd_neighbor_solicit, struct nd_opt_hdr], , ,
