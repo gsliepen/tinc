@@ -212,7 +212,7 @@ static bool setup_device(void) {
 			if(info[0] == 9 && info[1] >= 21)
 				logger(DEBUG_ALWAYS, LOG_WARNING,
 				       "You are using the newer (>= 9.0.0.21, NDIS6) series of TAP-Win32 drivers. "
-				       "Using these drivers with tinc is not recommanded as it can result in poor performance. "
+				       "Using these drivers with tinc is not recommended as it can result in poor performance. "
 				       "You might want to revert back to 9.0.0.9 instead.");
 		}
 	}

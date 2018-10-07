@@ -1,4 +1,4 @@
-This document describes how nodes in a VPN find and connect to eachother and
+This document describes how nodes in a VPN find and connect to each other and
 maintain a stable network.
 
    Copyright 2001-2006 Guus Sliepen <guus@tinc-vpn.org>

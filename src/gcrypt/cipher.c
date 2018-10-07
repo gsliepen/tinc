@@ -102,7 +102,7 @@ static bool cipher_open(cipher_t *cipher, int algo, int mode) {
 	}
 
 	if((err = gcry_cipher_open(&cipher->handle, algo, mode, 0))) {
-		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unable to intialise cipher %d mode %d: %s", algo, mode, gcry_strerror(err));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unable to initialise cipher %d mode %d: %s", algo, mode, gcry_strerror(err));
 		return false;
 	}
 

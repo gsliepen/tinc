@@ -161,7 +161,7 @@ professional package.
 
 @cindex traditional VPNs
 @cindex scalability
-Tinc also allows more than two sites to connect to eachother and form a single VPN.
+Tinc also allows more than two sites to connect to each other and form a single VPN.
 Traditionally VPNs are created by making tunnels, which only have two endpoints.
 Larger VPNs with more sites are created by adding more tunnels.
 Tinc takes another approach: only endpoints are specified,
@@ -353,7 +353,7 @@ message, and stop.
 For all cryptography-related functions, tinc uses the functions provided
 by the LibreSSL or the OpenSSL library.
 
-If this library is not installed, you wil get an error when configuring
+If this library is not installed, you will get an error when configuring
 tinc for build.  Support for running tinc with other cryptographic libraries
 installed @emph{may} be added in the future.
 
@@ -419,7 +419,7 @@ Markus F.X.J. Oberhumer
 For the optional compression of UDP packets, tinc uses the functions provided
 by the zlib library.
 
-If this library is not installed, you wil get an error when running the
+If this library is not installed, you will get an error when running the
 configure script.  You can either install the zlib library, or disable support
 for zlib compression by using the "--disable-zlib" option when running the
 configure script. Note that if you disable support for zlib, the resulting
@@ -443,7 +443,7 @@ default).
 @cindex lzo
 Another form of compression is offered using the LZO library.
 
-If this library is not installed, you wil get an error when running the
+If this library is not installed, you will get an error when running the
 configure script.  You can either install the LZO library, or disable support
 for LZO compression by using the "--disable-lzo" option when running the
 configure script. Note that if you disable support for LZO, the resulting
@@ -467,7 +467,7 @@ default).
 @cindex libcurses
 For the "tinc top" command, tinc requires a curses library.
 
-If this library is not installed, you wil get an error when running the
+If this library is not installed, you will get an error when running the
 configure script.  You can either install a suitable curses library, or disable
 all functionality that depends on a curses library by using the
 "--disable-curses" option when running the configure script.
@@ -490,7 +490,7 @@ of this package.
 @cindex libreadline
 For the "tinc" command's shell functionality, tinc uses the readline library.
 
-If this library is not installed, you wil get an error when running the
+If this library is not installed, you will get an error when running the
 configure script.  You can either install a suitable readline library, or
 disable all functionality that depends on a readline library by using the
 "--disable-readline" option when running the configure script.
@@ -744,7 +744,7 @@ and the host configuration files are expected to be in @file{@value{sysconfdir}/
 
 When tinc starts up, it parses the command-line options and then
 reads in the configuration file tinc.conf.
-It will then start listening for incoming connection from other deamons,
+It will then start listening for incoming connection from other daemons,
 and will by default also automatically try to connect to known peers.
 By default, tinc will try to keep at least 3 working meta-connections alive at all times.
 
@@ -752,7 +752,7 @@ By default, tinc will try to keep at least 3 working meta-connections alive at a
 @cindex server
 There is no real distinction between a server and a client in tinc.
 If you wish, you can view a tinc daemon without a `ConnectTo' statement in tinc.conf and `AutoConnect = no' as a server,
-and one which does have one or more `ConnectTo' statements or `Autoconnect = yes' (which is the defualt) as a client.
+and one which does have one or more `ConnectTo' statements or `Autoconnect = yes' (which is the default) as a client.
 It does not matter if two tinc daemons have a `ConnectTo' value pointing to each other however.
 
 Connections specified using `ConnectTo' are so-called meta-connections.
@@ -783,7 +783,7 @@ The actual configuration of the daemon is done in the file
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf} and at least one other file in the directory
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/}.
 
-An optionnal directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
+An optional directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
 any .conf file will be read.
 
 These file consists of comments (lines started with a #) or assignments
@@ -1180,7 +1180,7 @@ will be inherited by the UDP packets that are sent out.
 @item PrivateKey = <@var{key}> [obsolete]
 This is the RSA private key for tinc. However, for safety reasons it is
 advised to store private keys of any kind in separate files. This prevents
-accidental eavesdropping if you are editting the configuration file.
+accidental eavesdropping if you are editing the configuration file.
 
 @cindex PrivateKeyFile
 @item PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/rsa_key.priv})
@@ -2566,7 +2566,7 @@ Intervals lower than 0.1 seconds are not allowed.
 
 @item c
 Toggle between displaying current traffic rates (in packets and bytes per second)
-and cummulative traffic (total packets and bytes since the tinc daemon started).
+and cumulative traffic (total packets and bytes since the tinc daemon started).
 
 @item n
 Sort the list of nodes by name.
@@ -3381,7 +3381,7 @@ which aims to be as strong as TLS with one of the strongest cipher suites.
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
 prove the security of any cryptographic product. If you wish to review
-tinc or give us feedback, you are stronly encouraged to do so.
+tinc or give us feedback, you are strongly encouraged to do so.
 
 
 @c ==================================================================

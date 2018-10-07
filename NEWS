@@ -571,7 +571,7 @@ Thanks to Scott Lamb for his contributions to this version of tinc.
 * Tinc will retry to connect upon startup, does not quit if it doesn't
   work the first time.
 * Hosts that are disconnected implicitly if we lose a connection get
-  deleted from the internal list, to prevent hogging eachother with
+  deleted from the internal list, to prevent hogging each other with
   add and delete requests when the connection is restored.
 
 # Version 1.0pre1              May 12 2000

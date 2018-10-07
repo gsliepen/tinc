@@ -261,7 +261,7 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-dnl Ensure runstatedir is set if we are using a version of autoconf that does not suppport it
+dnl Ensure runstatedir is set if we are using a version of autoconf that does not support it
 if test "x$runstatedir" = "x"; then
   AC_SUBST([runstatedir], ['${localstatedir}/run'])
 fi

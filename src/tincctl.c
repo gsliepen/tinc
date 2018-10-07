@@ -2735,11 +2735,11 @@ static int cmd_fsck(int argc, char *argv[]) {
 
 static void *readfile(FILE *in, size_t *len) {
 	size_t count = 0;
-	size_t alloced = 4096;
-	char *buf = xmalloc(alloced);
+	size_t bufsize = 4096;
+	char *buf = xmalloc(bufsize);
 
 	while(!feof(in)) {
-		size_t read = fread(buf + count, 1, alloced - count, in);
+		size_t read = fread(buf + count, 1, bufsize - count, in);
 
 		if(!read) {
 			break;
@@ -2747,9 +2747,9 @@ static void *readfile(FILE *in, size_t *len) {
 
 		count += read;
 
-		if(count >= alloced) {
-			alloced *= 2;
-			buf = xrealloc(buf, alloced);
+		if(count >= bufsize) {
+			bufsize *= 2;
+			buf = xrealloc(buf, bufsize);
 		}
 	}
 

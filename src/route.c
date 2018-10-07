@@ -907,7 +907,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	memcpy(DATA(packet), DATA(packet) + ETH_ALEN, ETH_ALEN); /* copy destination address */
 	DATA(packet)[ETH_ALEN * 2 - 1] ^= 0xFF;                  /* mangle source address so it looks like it's not from us */
 
-	ip6.ip6_dst = ip6.ip6_src;                               /* swap destination and source protocoll address */
+	ip6.ip6_dst = ip6.ip6_src;                               /* swap destination and source protocol address */
 	ip6.ip6_src = ns.nd_ns_target;
 
 	if(has_opt) {
