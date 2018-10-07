@@ -331,14 +331,14 @@ as explained in the rest of the documentation.
 @cindex requirements
 @cindex libraries
 Before you can configure or build tinc, you need to have the LibreSSL or OpenSSL, zlib,
-lzo, curses and readline libraries installed on your system.  If you try to
+LZO, curses and readline libraries installed on your system.  If you try to
 configure tinc without having them installed, configure will give you an error
 message, and stop.
 
 @menu
 * LibreSSL/OpenSSL::
 * zlib::
-* lzo::
+* LZO::
 * libcurses::
 * libreadline::
 @end menu
@@ -363,7 +363,7 @@ of this package.
 
 If your operating system comes neither with LibreSSL or OpenSSL, you have to
 install one manually.  It is recommended that you get the latest version of
-LibreSSL from @url{http://www.libressl.org/}.  Instructions on how to
+LibreSSL from @url{https://www.libressl.org/}.  Instructions on how to
 configure, build and install this package are included within the package.
 Please make sure you build development and runtime libraries (which is the
 default).
@@ -430,17 +430,17 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install zlib manually, you can get the source code
-from @url{http://www.zlib.net/}.  Instructions on how to configure,
+from @url{https://zlib.net/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
 default).
 
 
 @c ==================================================================
-@node       lzo
-@subsection lzo
+@node       LZO
+@subsection LZO
 
-@cindex lzo
+@cindex LZO
 Another form of compression is offered using the LZO library.
 
 If this library is not installed, you will get an error when running the
@@ -453,7 +453,7 @@ You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
 of this package.
 
-If you have to install lzo manually, you can get the source code
+If you have to install LZO manually, you can get the source code
 from @url{https://www.oberhumer.com/opensource/lzo/}.  Instructions on how to configure,
 build and install this package are included within the package.  Please
 make sure you build development and runtime libraries (which is the
@@ -473,9 +473,9 @@ all functionality that depends on a curses library by using the
 "--disable-curses" option when running the configure script.
 
 There are several curses libraries. It is recommended that you install
-"ncurses" (@url{http://invisible-island.net/ncurses/}),
+"ncurses" (@url{https://invisible-island.net/ncurses/}),
 however other curses libraries should also work.
-In particular, "PDCurses" (@url{http://pdcurses.sourceforge.net/})
+In particular, "PDCurses" (@url{https://pdcurses.sourceforge.io/})
 is recommended if you want to compile tinc for Windows.
 
 You can use your operating system's package manager to install this if
@@ -500,7 +500,7 @@ available.  Make sure you install the development AND runtime versions
 of this package.
 
 If you have to install libreadline manually, you can get the source code from
-@url{http://www.gnu.org/software/readline/}. Instructions on how to configure,
+@url{https://www.gnu.org/software/readline/}. Instructions on how to configure,
 build and install this package are included within the package.  Please make
 sure you build development and runtime libraries (which is the default).
 
@@ -691,7 +691,7 @@ you will not find the answers in this documentation.
 Make sure you have an adequate understanding of networks in general.
 @cindex Network Administrators Guide
 A good resource on networking is the
-@uref{http://www.tldp.org/LDP/nag2/, Linux Network Administrators Guide}.
+@uref{https://www.tldp.org/LDP/nag2/, Linux Network Administrators Guide}.
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
@@ -1336,7 +1336,7 @@ Fragmentation Needed or Packet too Big messages are dropped by firewalls.
 @item Compression = <@var{level}> (0)
 This option sets the level of compression used for UDP packets.
 Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
-10 (fast lzo) and 11 (best lzo).
+10 (fast LZO) and 11 (best LZO).
 
 @cindex Digest
 @item Digest = <@var{digest}> (sha1)

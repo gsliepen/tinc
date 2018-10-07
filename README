@@ -50,9 +50,9 @@ ensure you have the latest stable versions of all the required libraries:
 
 The following libraries are used by default, but can be disabled if necessary:
 
-- zlib (http://www.zlib.net/)
+- zlib (https://zlib.net/)
 - LZO (https://www.oberhumer.com/opensource/lzo/)
-- ncurses (http://invisible-island.net/ncurses/)
+- ncurses (https://invisible-island.net/ncurses/)
 - readline (https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html)
 
 
@@ -68,8 +68,8 @@ be forwarded by intermediate nodes.
 
 Tinc 1.1 support two protocols. The first is a legacy protocol that provides
 backwards compatibility with tinc 1.0 nodes, and which by default uses 2048 bit
-RSA keys for authentication, and encrypts traffic using Blowfish in CBC mode
-and HMAC-SHA1. The second is a new protocol which uses Curve25519 keys for
+RSA keys for authentication, and encrypts traffic using AES256 in CBC mode
+and HMAC-SHA256. The second is a new protocol which uses Curve25519 keys for
 authentication, and encrypts traffic using Chacha20-Poly1305, and provides
 forward secrecy.
 
