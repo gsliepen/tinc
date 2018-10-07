@@ -298,10 +298,7 @@ static bool setup_device(void) {
 			struct ifreq ifr;
 
 			if(ioctl(device_fd, TAPGIFNAME, (void *)&ifr) == 0) {
-				if(iface) {
-					free(iface);
-				}
-
+				free(iface);
 				iface = xstrdup(ifr.ifr_name);
 			}
 		}

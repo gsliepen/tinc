@@ -108,17 +108,9 @@ void free_node(node_t *n) {
 
 	timeout_del(&n->udp_ping_timeout);
 
-	if(n->hostname) {
-		free(n->hostname);
-	}
-
-	if(n->name) {
-		free(n->name);
-	}
-
-	if(n->late) {
-		free(n->late);
-	}
+	free(n->hostname);
+	free(n->name);
+	free(n->late);
 
 	if(n->address_cache) {
 		close_address_cache(n->address_cache);

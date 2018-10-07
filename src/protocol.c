@@ -165,10 +165,7 @@ static int past_request_compare(const past_request_t *a, const past_request_t *b
 }
 
 static void free_past_request(past_request_t *r) {
-	if(r->request) {
-		free((char *)r->request);
-	}
-
+	free((char *)r->request);
 	free(r);
 }
 

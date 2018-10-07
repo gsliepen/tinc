@@ -183,10 +183,8 @@ void close_device(void) {
 	free(device);
 	device = NULL;
 
-	if(iface) {
-		free(iface);
-		iface = NULL;
-	}
+	free(iface);
+	iface = NULL;
 
 	device_info = NULL;
 }

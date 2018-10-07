@@ -146,10 +146,8 @@ void cipher_close(cipher_t *cipher) {
 		cipher->handle = NULL;
 	}
 
-	if(cipher->key) {
-		free(cipher->key);
-		cipher->key = NULL;
-	}
+	free(cipher->key);
+	cipher->key = NULL;
 }
 
 size_t cipher_keylength(const cipher_t *cipher) {

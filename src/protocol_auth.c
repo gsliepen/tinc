@@ -407,10 +407,7 @@ bool id_h(connection_t *c, const char *request) {
 			return false;
 		}
 	} else {
-		if(c->name) {
-			free(c->name);
-		}
-
+		free(c->name);
 		c->name = xstrdup(name);
 	}
 
