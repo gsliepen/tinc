@@ -1,3 +1,16 @@
+# Version 1.1pre17             October 8 2018
+
+* Prevent oracle attacks in the legacy protocol (CVE-2018-16737,
+  CVE-2018-16738).
+* Prevent a MITM from forcing a NULL cipher for UDP in the legacy protocol
+  (CVE-2018-16758).
+* AutoConnect is now enabled by default.
+* Per-node network traffic statistics are now shown in the output of "info" and
+  "dump nodes" commands.
+
+Thanks to volth and Rafael Sadowski for their contributions to this version of
+tinc.
+
 # Version 1.1pre16             June 12 2018
 
 * Fixed building with support for UML sockets.

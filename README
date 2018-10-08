@@ -1,4 +1,4 @@
-This is the README file for tinc version 1.1pre16. Installation
+This is the README file for tinc version 1.1pre17. Installation
 instructions may be found in the INSTALL file.
 
 tinc is Copyright © 1998-2018 Ivo Timmermans, Guus Sliepen <guus@tinc-vpn.org>, and others.
@@ -28,11 +28,25 @@ Security statement
 This version uses an experimental and unfinished cryptographic protocol. Use it
 at your own risk.
 
+When connecting to nodes that use the legacy protocol used in tinc 1.0, be
+aware that any security issues in tinc 1.0 will apply to tinc 1.1 as well. On
+September 6th, 2018, Michael Yonly contacted us and provided proof-of-concept
+code that allowed a remote attacker to create an authenticated, one-way
+connection with a node using the legacy protocol, and also that there was a
+possibility for a man-in-the-middle to force UDP packets from a node to be sent
+in plaintext. The first issue was trivial to exploit on tinc versions prior to
+1.0.30, but the changes in 1.0.30 to mitigate the Sweet32 attack made this
+weakness much harder to exploit. These issues have been fixed in tinc 1.0.35
+and tinc 1.1pre17. The new protocol in the tinc 1.1 branch is not susceptible
+to these issues. However, be aware that SPTPS is only used between nodes
+running tinc 1.1pre* or later, and in a VPN with nodes running different
+versions, the security might only be as good as that of the oldest version.
+
 
 Compatibility
 -------------
 
-Version 1.1pre16 is compatible with 1.0pre8, 1.0 and later, but not with older
+Version 1.1pre17 is compatible with 1.0pre8, 1.0 and later, but not with older
 versions of tinc.
 
 When the ExperimentalProtocol option is used, tinc is still compatible with
@@ -82,7 +96,7 @@ Ethernet network switch or hub.
 
 Normally, when started tinc will detach and run in the background. In a native
 Windows environment this means tinc will install itself as a service, which will
-restart after reboots.  To prevent tinc from detaching or running as a service,
+restart after reboots. To prevent tinc from detaching or running as a service,
 use the -D option.
 
 The status of the VPN can be queried using the "tinc" command, which connects

@@ -3375,8 +3375,22 @@ that tinc's default length of 4 bytes for the MAC is too short, and he doesn't
 like tinc's use of RSA during authentication. We do not know of a security hole
 in the legacy protocol of tinc, but it is not as strong as TLS or IPsec.
 
-This version of tinc comes with an improved protocol, called Simple Peer-to-Peer Security,
-which aims to be as strong as TLS with one of the strongest cipher suites.
+The Sweet32 attack affects versions of tinc prior to 1.0.30.
+
+On September 6th, 2018, Michael Yonly contacted us and provided
+proof-of-concept code that allowed a remote attacker to create an
+authenticated, one-way connection with a node, and also that there was a
+possibility for a man-in-the-middle to force UDP packets from a node to be sent
+in plaintext. The first issue was trivial to exploit on tinc versions prior to
+1.0.30, but the changes in 1.0.30 to mitigate the Sweet32 attack made this
+weakness much harder to exploit. These issues have been fixed in tinc 1.0.35.
+
+This version of tinc comes with an improved protocol, called Simple
+Peer-to-Peer Security (SPTPS), which aims to be as strong as TLS with one of
+the strongest cipher suites.  None of the above security issues affected SPTPS.
+However, be aware that SPTPS is only used between nodes running tinc 1.1pre* or
+later, and in a VPN with nodes running different versions, the security might
+only be as good as that of the oldest version.
 
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
