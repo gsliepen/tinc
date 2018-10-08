@@ -266,6 +266,6 @@ if test "x$runstatedir" = "x"; then
   AC_SUBST([runstatedir], ['${localstatedir}/run'])
 fi
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile test/Makefile systemd/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile test/Makefile systemd/Makefile bash_completion.d/Makefile])
 
 AC_OUTPUT

@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS =  src doc test systemd
+SUBDIRS =  src doc test systemd bash_completion.d
 
 ACLOCAL_AMFLAGS = -I m4
 
