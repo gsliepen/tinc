@@ -49,7 +49,7 @@ struct ip6_hdr {
 	} ip6_ctlun;
 	struct in6_addr ip6_src;
 	struct in6_addr ip6_dst;
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__gcc_struct__)) __attribute((__packed__));
 #define ip6_vfc ip6_ctlun.ip6_un2_vfc
 #define ip6_flow ip6_ctlun.ip6_un1.ip6_un1_flow
 #define ip6_plen ip6_ctlun.ip6_un1.ip6_un1_plen
@@ -68,7 +68,7 @@ struct icmp6_hdr {
 		uint16_t icmp6_un_data16[2];
 		uint8_t icmp6_un_data8[4];
 	} icmp6_dataun;
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__gcc_struct__)) __attribute((__packed__));
 #define ICMP6_DST_UNREACH_NOROUTE 0
 #define ICMP6_DST_UNREACH 1
 #define ICMP6_PACKET_TOO_BIG 2
@@ -88,7 +88,7 @@ struct icmp6_hdr {
 struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
 	struct in6_addr nd_ns_target;
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__gcc_struct__)) __attribute((__packed__));
 #define ND_OPT_SOURCE_LINKADDR 1
 #define ND_OPT_TARGET_LINKADDR 2
 #define nd_ns_type nd_ns_hdr.icmp6_type
@@ -101,7 +101,7 @@ struct nd_neighbor_solicit {
 struct nd_opt_hdr {
 	uint8_t nd_opt_type;
 	uint8_t nd_opt_len;
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__gcc_struct__)) __attribute((__packed__));
 #endif
 
 #endif

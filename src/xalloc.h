@@ -53,7 +53,7 @@ static inline void *xrealloc(void *p, size_t n) {
 	return p;
 }
 
-static inline char *xstrdup(const char *s) __attribute__((__malloc__, __nonnull__));
+static inline char *xstrdup(const char *s) __attribute__((__malloc__)) __attribute((__nonnull__));
 static inline char *xstrdup(const char *s) {
 	char *p = strdup(s);
 
