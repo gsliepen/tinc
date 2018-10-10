@@ -598,7 +598,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet, length_t et
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Fragmenting packet of %d bytes to %s (%s)", packet->len, dest->name, dest->hostname);
 
 	offset = DATA(packet) + ether_size + ip_size;
-	maxlen = (dest->mtu - ether_size - ip_size) & ~0x7;
+	maxlen = (MAX(dest->mtu, 590) - ether_size - ip_size) & ~0x7;
 	ip_off = ntohs(ip.ip_off);
 	origf = ip_off & ~IP_OFFMASK;
 	ip_off &= IP_OFFMASK;
