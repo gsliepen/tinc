@@ -114,7 +114,7 @@ If
 .Qq any
 is selected, then depending on the operating system both IPv4 and IPv6 or just
 IPv6 listening sockets will be created.
-.It Va AutoConnect Li = yes | no Po yes
+.It Va AutoConnect Li = yes | no Pq yes
 If set to yes,
 .Nm tinc
 will automatically set up meta connections to other nodes,
