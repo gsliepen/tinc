@@ -685,13 +685,6 @@ int main(int argc, char **argv) {
 
 	init_configuration(&config_tree);
 
-	/* Slllluuuuuuurrrrp! */
-
-	if(RAND_load_file("/dev/urandom", 1024) != 1024) {
-		logger(LOG_ERR, "Error initializing RNG!");
-		return 1;
-	}
-
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
 
