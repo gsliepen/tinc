@@ -134,11 +134,11 @@ void ifconfig_address(FILE *out, const char *value) {
 		break;
 
 	case SUBNET_IPV4:
-		fprintf(out, "netsh inetface ipv4 set address \"$INTERFACE\" static %s\n", address_str);
+		fprintf(out, "netsh inetface ipv4 set address \"%%INTERFACE%%\" static %s\n", address_str);
 		break;
 
 	case SUBNET_IPV6:
-		fprintf(out, "netsh inetface ipv6 set address \"$INTERFACE\" static %s\n", address_str);
+		fprintf(out, "netsh inetface ipv6 set address \"%%INTERFACE%%\" %s\n", address_str);
 		break;
 
 	default:
@@ -229,11 +229,11 @@ void ifconfig_route(FILE *out, const char *value) {
 	if(*gateway_str) {
 		switch(subnet.type) {
 		case SUBNET_IPV4:
-			fprintf(out, "netsh inetface ipv4 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
+			fprintf(out, "netsh interface ipv4 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
 			break;
 
 		case SUBNET_IPV6:
-			fprintf(out, "netsh inetface ipv6 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
+			fprintf(out, "netsh interface ipv6 add route %s \"%%INTERFACE%%\" %s\n", subnet_str, gateway_str);
 			break;
 
 		default:
@@ -242,11 +242,11 @@ void ifconfig_route(FILE *out, const char *value) {
 	} else {
 		switch(subnet.type) {
 		case SUBNET_IPV4:
-			fprintf(out, "netsh inetface ipv4 add route %s \"%%INTERFACE%%\"\n", subnet_str);
+			fprintf(out, "netsh interface ipv4 add route %s \"%%INTERFACE%%\"\n", subnet_str);
 			break;
 
 		case SUBNET_IPV6:
-			fprintf(out, "netsh inetface ipv6 add route %s \"%%INTERFACE%%\"\n", subnet_str);
+			fprintf(out, "netsh interface ipv6 add route %s \"%%INTERFACE%%\"\n", subnet_str);
 			break;
 
 		default:
