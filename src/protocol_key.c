@@ -34,7 +34,9 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#ifndef DISABLE_LEGACY
 static bool mykeyused = false;
+#endif
 
 void send_key_changed(void) {
 #ifndef DISABLE_LEGACY

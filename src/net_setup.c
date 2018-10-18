@@ -341,6 +341,7 @@ static bool read_rsa_private_key(void) {
 }
 #endif
 
+#ifndef DISABLE_LEGACY
 static timeout_t keyexpire_timeout;
 
 static void keyexpire_handler(void *data) {
@@ -349,6 +350,7 @@ static void keyexpire_handler(void *data) {
 		keylifetime, rand() % 100000
 	});
 }
+#endif
 
 void regenerate_key(void) {
 	logger(DEBUG_STATUS, LOG_INFO, "Expiring symmetric keys");
@@ -822,7 +824,7 @@ void device_disable(void) {
   Configure node_t myself and set up the local sockets (listen only)
 */
 static bool setup_myself(void) {
-	char *name, *hostname, *cipher, *digest, *type;
+	char *name, *hostname, *type;
 	char *address = NULL;
 	bool port_specified = false;
 
@@ -967,6 +969,8 @@ static bool setup_myself(void) {
 #ifndef DISABLE_LEGACY
 	/* Generate packet encryption key */
 
+	char *cipher;
+
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher)) {
 		cipher = xstrdup("aes-256-cbc");
 	}
@@ -994,6 +998,8 @@ static bool setup_myself(void) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Bogus MAC length!");
 		return false;
 	}
+
+	char *digest;
 
 	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest)) {
 		digest = xstrdup("sha256");

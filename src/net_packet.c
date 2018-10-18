@@ -314,13 +314,6 @@ static bool try_mac(node_t *n, const vpn_packet_t *inpkt) {
 }
 
 static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
-	vpn_packet_t pkt1, pkt2;
-	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
-	int nextpkt = 0;
-	size_t outlen;
-	pkt1.offset = DEFAULT_PACKET_OFFSET;
-	pkt2.offset = DEFAULT_PACKET_OFFSET;
-
 	if(n->status.sptps) {
 		if(!n->sptps.state) {
 			if(!n->status.waitingforkey) {
@@ -356,6 +349,12 @@ static bool receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 #ifdef DISABLE_LEGACY
 	return false;
 #else
+	vpn_packet_t pkt1, pkt2;
+	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
+	int nextpkt = 0;
+	size_t outlen;
+	pkt1.offset = DEFAULT_PACKET_OFFSET;
+	pkt2.offset = DEFAULT_PACKET_OFFSET;
 
 	if(!n->status.validkey_in) {
 		logger(DEBUG_TRAFFIC, LOG_DEBUG, "Got packet from %s (%s) but he hasn't got our key yet", n->name, n->hostname);
@@ -699,18 +698,6 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *so
 }
 
 static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
-	vpn_packet_t pkt1, pkt2;
-	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
-	vpn_packet_t *inpkt = origpkt;
-	int nextpkt = 0;
-	vpn_packet_t *outpkt;
-	int origlen = origpkt->len;
-	size_t outlen;
-	int origpriority = origpkt->priority;
-
-	pkt1.offset = DEFAULT_PACKET_OFFSET;
-	pkt2.offset = DEFAULT_PACKET_OFFSET;
-
 	if(!n->status.reachable) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
 		return;
@@ -724,6 +711,18 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 #ifdef DISABLE_LEGACY
 	return;
 #else
+	vpn_packet_t pkt1, pkt2;
+	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
+	vpn_packet_t *inpkt = origpkt;
+	int nextpkt = 0;
+	vpn_packet_t *outpkt;
+	int origlen = origpkt->len;
+	size_t outlen;
+	int origpriority = origpkt->priority;
+
+	pkt1.offset = DEFAULT_PACKET_OFFSET;
+	pkt2.offset = DEFAULT_PACKET_OFFSET;
+
 	/* Make sure we have a valid key */
 
 	if(!n->status.validkey) {

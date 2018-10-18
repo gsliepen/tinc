@@ -95,6 +95,7 @@ AC_ARG_ENABLE(vde,
   AS_HELP_STRING([--enable-vde], [enable support for Virtual Distributed Ethernet]),
   [ AS_IF([test "x$enable_vde" = "xyes"],
       [ AC_CHECK_HEADERS(libvdeplug_dyn.h, [], [AC_MSG_ERROR([VDE plug header files not found.]); break])
+        AC_CHECK_LIB(dl, dlopen, [LIBS="$LIBS -ldl"], [AC_MSG_ERROR([VDE plug depends on libdl.]); break])
         AC_DEFINE(ENABLE_VDE, 1, [Support for VDE])
         vde=true
       ],

@@ -486,11 +486,8 @@ bool id_h(connection_t *c, const char *request) {
 	}
 }
 
+#ifndef DISABLE_LEGACY
 bool send_metakey(connection_t *c) {
-#ifdef DISABLE_LEGACY
-	return false;
-#else
-
 	if(!myself->connection->rsa) {
 		logger(DEBUG_CONNECTIONS, LOG_ERR, "Peer %s (%s) uses legacy protocol which we don't support", c->name, c->hostname);
 		return false;
@@ -580,14 +577,9 @@ bool send_metakey(connection_t *c) {
 
 	c->status.encryptout = true;
 	return result;
-#endif
 }
 
 bool metakey_h(connection_t *c, const char *request) {
-#ifdef DISABLE_LEGACY
-	return false;
-#else
-
 	if(!myself->connection->rsa) {
 		return false;
 	}
@@ -655,13 +647,9 @@ bool metakey_h(connection_t *c, const char *request) {
 	c->allow_request = CHALLENGE;
 
 	return send_challenge(c);
-#endif
 }
 
 bool send_challenge(connection_t *c) {
-#ifdef DISABLE_LEGACY
-	return false;
-#else
 	const size_t len = rsa_size(c->rsa);
 	char buffer[len * 2 + 1];
 
@@ -678,14 +666,9 @@ bool send_challenge(connection_t *c) {
 	/* Send the challenge */
 
 	return send_request(c, "%d %s", CHALLENGE, buffer);
-#endif
 }
 
 bool challenge_h(connection_t *c, const char *request) {
-#ifdef DISABLE_LEGACY
-	return false;
-#else
-
 	if(!myself->connection->rsa) {
 		return false;
 	}
@@ -720,8 +703,6 @@ bool challenge_h(connection_t *c, const char *request) {
 	} else {
 		return true;
 	}
-
-#endif
 }
 
 bool send_chal_reply(connection_t *c) {
@@ -748,9 +729,6 @@ bool send_chal_reply(connection_t *c) {
 }
 
 bool chal_reply_h(connection_t *c, const char *request) {
-#ifdef DISABLE_LEGACY
-	return false;
-#else
 	char hishash[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, hishash) != 1) {
@@ -791,13 +769,9 @@ bool chal_reply_h(connection_t *c, const char *request) {
 	}
 
 	return send_ack(c);
-#endif
 }
 
 static bool send_upgrade(connection_t *c) {
-#ifdef DISABLE_LEGACY
-	return false;
-#else
 	/* Special case when protocol_minor is 1: the other end is Ed25519 capable,
 	 * but doesn't know our key yet. So send it now. */
 
@@ -810,8 +784,46 @@ static bool send_upgrade(connection_t *c) {
 	bool result = send_request(c, "%d %s", ACK, pubkey);
 	free(pubkey);
 	return result;
-#endif
 }
+#else
+bool send_metakey(connection_t *c) {
+	(void)c;
+	return false;
+}
+
+bool metakey_h(connection_t *c, const char *request) {
+	(void)c;
+	(void)request;
+	return false;
+}
+
+bool send_challenge(connection_t *c) {
+	(void)c;
+	return false;
+}
+
+bool challenge_h(connection_t *c, const char *request) {
+	(void)c;
+	(void)request;
+	return false;
+}
+
+bool send_chal_reply(connection_t *c) {
+	(void)c;
+	return false;
+}
+
+bool chal_reply_h(connection_t *c, const char *request) {
+	(void)c;
+	(void)request;
+	return false;
+}
+
+static bool send_upgrade(connection_t *c) {
+	(void)c;
+	return false;
+}
+#endif
 
 bool send_ack(connection_t *c) {
 	if(c->protocol_minor == 1) {

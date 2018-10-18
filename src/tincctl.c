@@ -2301,6 +2301,7 @@ static int cmd_init(int argc, char *argv[]) {
 
 static int cmd_generate_keys(int argc, char *argv[]) {
 #ifdef DISABLE_LEGACY
+	(void)argv;
 
 	if(argc > 1) {
 #else
