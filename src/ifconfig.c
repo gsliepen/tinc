@@ -199,11 +199,11 @@ void ifconfig_route(FILE *out, const char *value) {
 	if(*gateway_str) {
 		switch(subnet.type) {
 		case SUBNET_IPV4:
-			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\"\n", subnet_str, gateway_str);
+			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\" onlink\n", subnet_str, gateway_str);
 			break;
 
 		case SUBNET_IPV6:
-			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\"\n", subnet_str, gateway_str);
+			fprintf(out, "ip route add %s via %s dev \"$INTERFACE\" onlink\n", subnet_str, gateway_str);
 			break;
 
 		default:
