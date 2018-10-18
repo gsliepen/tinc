@@ -151,7 +151,7 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 		cache->cfg = lookup_config(cache->config_tree, "Address");
 	}
 
-	while(cache->cfg && !cache->ai) {
+	while(cache->cfg && !cache->aip) {
 		char *address, *port;
 
 		get_config_string(cache->cfg, &address);
@@ -165,6 +165,10 @@ const sockaddr_t *get_recent_address(address_cache_t *cache) {
 			if(!get_config_string(lookup_config(cache->config_tree, "Port"), &port)) {
 				port = xstrdup("655");
 			}
+		}
+
+		if(cache->ai) {
+			free_known_addresses(cache->ai);
 		}
 
 		cache->aip = cache->ai = str2addrinfo(address, port, SOCK_STREAM);
