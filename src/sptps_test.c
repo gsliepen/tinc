@@ -78,6 +78,7 @@ static bool send_data(void *handle, uint8_t type, const void *data, size_t len) 
 
 static bool receive_record(void *handle, uint8_t type, const void *data, uint16_t len) {
 	(void)handle;
+
 	if(verbose) {
 		fprintf(stderr, "Received type %d record of %u bytes:\n", type, len);
 	}

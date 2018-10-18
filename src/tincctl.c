@@ -2440,10 +2440,14 @@ static int cmd_edit(int argc, char *argv[]) {
 	char *command;
 #ifndef HAVE_MINGW
 	const char *editor = getenv("VISUAL");
-	if (!editor)
+
+	if(!editor) {
 		editor = getenv("EDITOR");
-	if (!editor)
+	}
+
+	if(!editor) {
 		editor = "vi";
+	}
 
 	xasprintf(&command, "\"%s\" \"%s\"", editor, filename);
 #else
