@@ -836,8 +836,12 @@ make_names:
 			fprintf(stderr, "Ignoring unknown variable '%s' in invitation.\n", l);
 			continue;
 		} else if(!(variables[i].type & VAR_SAFE)) {
-			fprintf(stderr, "Ignoring unsafe variable '%s' in invitation.\n", l);
-			continue;
+			if(force) {
+				fprintf(stderr, "Warning: unsafe variable '%s' in invitation.\n", l);
+			} else {
+				fprintf(stderr, "Ignoring unsafe variable '%s' in invitation.\n", l);
+				continue;
+			}
 		}
 
 		// Copy the safe variable to the right config file
