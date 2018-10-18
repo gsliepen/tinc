@@ -28,6 +28,9 @@ static long start;
 #ifndef HAVE_MINGW
 void ifconfig_header(FILE *out) {
 	fprintf(out, "#!/bin/sh\n");
+#ifdef HAVE_LINUX
+	fprintf(out, "ip link set \"$INTERFACE\" up\n");
+#endif
 	start = ftell(out);
 }
 
@@ -53,9 +56,7 @@ bool ifconfig_footer(FILE *out) {
 		fprintf(out, "echo 'Unconfigured tinc-up script, please edit '$0'!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
 		return false;
 	} else {
-#ifdef HAVE_LINUX
-		fprintf(out, "ip link set \"$INTERFACE\" up\n");
-#else
+#ifndef HAVE_LINUX
 		fprintf(out, "ifconfig \"$INTERFACE\" up\n");
 #endif
 		return true;
