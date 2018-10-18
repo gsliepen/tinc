@@ -41,7 +41,7 @@
 /test/*.test.*
 /test/*.log
 /test/*.trs
-/test/pong
+/test/splice
 Makefile
 Makefile.in
 core*

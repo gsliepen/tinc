@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Skip this test if the legacy protocol is disabled
+if grep -q "define DISABLE_LEGACY 1" "${0%/*}/../config.h"; then
+	exit 77
+fi
+
 . "${0%/*}/testlib.sh"
 
 # Initialize two nodes
