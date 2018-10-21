@@ -17,16 +17,26 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+#include "../src/system.h"
 
 #ifdef HAVE_MINGW
-extern const char *winerror(int);
+static const char *winerror(int err) {
+        static char buf[1024], *ptr;
+
+        ptr = buf + snprintf(buf, sizeof(buf), "(%d) ", err);
+
+        if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                          NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
+                strncpy(buf, "(unable to format errormessage)", sizeof(buf));
+        };
+
+        if((ptr = strchr(buf, '\r'))) {
+                *ptr = '\0';
+        }
+
+        return buf;
+}
+
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
 #define sockerrno WSAGetLastError()
 #define sockstrerror(x) winerror(x)
