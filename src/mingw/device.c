@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2018 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -71,6 +71,9 @@ static void device_issue_read() {
 }
 
 static void device_handle_read(void *data, int flags) {
+	(void)data;
+	(void)flags;
+
 	DWORD len;
 
 	if(!GetOverlappedResult(device_handle, &device_read_overlapped, &len, FALSE)) {
@@ -300,6 +303,7 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
+	(void)packet;
 	return false;
 }
 

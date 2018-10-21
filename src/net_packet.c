@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -1228,9 +1228,8 @@ static length_t choose_initial_maxmtu(node_t *n) {
 	return mtu;
 
 #else
-
+	(void)n;
 	return MTU;
-
 #endif
 }
 
@@ -1775,13 +1774,13 @@ void handle_incoming_vpn_data(void *data, int flags) {
 
 #else
 	vpn_packet_t pkt;
-	sockaddr_t addr = {};
+	sockaddr_t addr = {0};
 	socklen_t addrlen = sizeof(addr);
 
 	pkt.offset = 0;
 	int len = recvfrom(ls->udp.fd, (void *)DATA(&pkt), MAXSIZE, 0, &addr.sa, &addrlen);
 
-	if(len <= 0 || len > MAXSIZE) {
+	if(len <= 0 || (size_t)len > MAXSIZE) {
 		if(!sockwouldblock(sockerrno)) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
 		}

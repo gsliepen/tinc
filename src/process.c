@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -115,7 +115,11 @@ static bool install_service(void) {
 
 io_t stop_io;
 
-DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
+DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID data, LPVOID context) {
+	(void)type;
+	(void)data;
+	(void)context;
+
 	switch(request) {
 	case SERVICE_CONTROL_INTERROGATE:
 		SetServiceStatus(statushandle, &status);

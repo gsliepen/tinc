@@ -1,7 +1,7 @@
 /*
     names.c -- generate commonly used (file)names
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -93,6 +93,7 @@ void make_names(bool daemon) {
 	}
 
 #ifdef HAVE_MINGW
+	(void)daemon;
 
 	if(!logfilename) {
 		xasprintf(&logfilename, "%s" SLASH "log", confbase);

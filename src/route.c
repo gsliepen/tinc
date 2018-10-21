@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -165,7 +165,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, length_
 				addr.sin_family = AF_INET;
 				socklen_t addrlen = sizeof(addr);
 
-				if(!getsockname(sockfd, (struct sockaddr *) &addr, &addrlen) && addrlen <= sizeof(addr)) {
+				if(!getsockname(sockfd, (struct sockaddr *) &addr, &addrlen) && (size_t)addrlen <= sizeof(addr)) {
 					ip_dst = addr.sin_addr;
 				}
 			}
@@ -270,7 +270,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, length_
 				addr.sin6_family = AF_INET6;
 				socklen_t addrlen = sizeof(addr);
 
-				if(!getsockname(sockfd, (struct sockaddr *) &addr, &addrlen) && addrlen <= sizeof(addr)) {
+				if(!getsockname(sockfd, (struct sockaddr *) &addr, &addrlen) && (size_t)addrlen <= sizeof(addr)) {
 					pseudo.ip6_src = addr.sin6_addr;
 				}
 			}

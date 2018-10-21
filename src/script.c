@@ -1,7 +1,7 @@
 /*
     script.c -- call an external script
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ static void unputenv(const char *p) {
 #else
 	// We must keep what we putenv() around in memory.
 	// To do this without memory leaks, keep things in a list and reuse if possible.
-	static list_t list = {};
+	static list_t list = {0};
 
 	for list_each(char, data, &list) {
 		if(!strcmp(data, var)) {
@@ -142,7 +142,12 @@ bool execute_script(const char *name, environment_t *env) {
 #ifdef HAVE_MINGW
 
 	if(!*scriptextension) {
-		const char *pathext = getenv("PATHEXT") ? : ".COM;.EXE;.BAT;.CMD";
+		const char *pathext = getenv("PATHEXT");
+
+		if(!pathext) {
+			pathext = ".COM;.EXE;.BAT;.CMD";
+		}
+
 		size_t pathlen = strlen(pathext);
 		size_t scriptlen = strlen(scriptname);
 		char fullname[scriptlen + pathlen + 1];

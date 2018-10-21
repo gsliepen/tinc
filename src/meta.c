@@ -1,6 +1,6 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2014 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2018 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2006      Scott Lamb <slamb@slamb.org>
 
@@ -31,7 +31,9 @@
 #include "xalloc.h"
 
 #ifndef MIN
-#define MIN(x, y) (((x)<(y))?(x):(y))
+static ssize_t MIN(ssize_t x, ssize_t y) {
+	return x < y ? x : y;
+}
 #endif
 
 bool send_meta_sptps(void *handle, uint8_t type, const void *buffer, size_t length) {

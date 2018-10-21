@@ -344,10 +344,15 @@ static bool drop_privs(void) {
 # define setpriority(level) !SetPriorityClass(GetCurrentProcess(), (level))
 
 static void stop_handler(void *data, int flags) {
+	(void)data;
+	(void)flags;
+
 	event_exit();
 }
 
 static BOOL WINAPI console_ctrl_handler(DWORD type) {
+	(void)type;
+
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got console shutdown request");
 
 	if(WSASetEvent(stop_io.event) == FALSE) {
@@ -481,6 +486,8 @@ int main(int argc, char **argv) {
 }
 
 int main2(int argc, char **argv) {
+	(void)argc;
+	(void)argv;
 #endif
 	char *priority = NULL;
 
