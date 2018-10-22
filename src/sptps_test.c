@@ -370,6 +370,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		char buf[65535] = "";
+		size_t readsize = datagram ? 1460u : sizeof(buf);
 
 		fd_set fds;
 		FD_ZERO(&fds);
@@ -387,7 +388,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if(FD_ISSET(in, &fds)) {
-			ssize_t len = read(in, buf, sizeof(buf));
+			ssize_t len = read(in, buf, readsize);
 
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
