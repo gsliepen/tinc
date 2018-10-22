@@ -284,13 +284,16 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 	}
 
 	// Read the new node's Name from the file
-	char buf[1024];
+	char buf[1024] = "";
 	fgets(buf, sizeof(buf), f);
+	size_t buflen = strlen(buf);
 
-	if(*buf) {
-		buf[strlen(buf) - 1] = 0;
+	// Strip whitespace at the end
+	while(buflen && strchr(" \t\r\n", buf[buflen - 1])) {
+		buf[--buflen] = 0;
 	}
 
+	// Split the first line into variable and value
 	len = strcspn(buf, " \t=");
 	char *name = buf + len;
 	name += strspn(name, " \t");
@@ -302,6 +305,7 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const void *dat
 
 	buf[len] = 0;
 
+	// Check that it is a valid Name
 	if(!*buf || !*name || strcasecmp(buf, "Name") || !check_id(name) || !strcmp(name, myself->name)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid invitation file %s\n", cookie);
 		fclose(f);
