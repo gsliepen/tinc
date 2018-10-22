@@ -35,7 +35,7 @@ If that succeeds,
 it will detach from the controlling terminal and continue in the background,
 accepting and setting up connections to other tinc daemons
 that are part of the virtual private network.
-Under Windows (not Cygwin) tinc will install itself as a service,
+Under Windows tinc will install itself as a service,
 which will be restarted automatically after reboots.
 .Sh OPTIONS
 .Bl -tag -width indent

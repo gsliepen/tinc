@@ -190,10 +190,6 @@ if MINGW
 tincd_SOURCES += mingw/device.c mingw/common.h
 endif
 
-if CYGWIN
-tincd_SOURCES += cygwin/device.c
-endif
-
 if UML
 tincd_SOURCES += uml_device.c
 endif

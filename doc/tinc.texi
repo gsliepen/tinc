@@ -182,7 +182,7 @@ available too.
 @section Supported platforms
 
 @cindex platforms
-Tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, MacOS/X (Darwin), Solaris, and Windows (both natively and in a Cygwin environment),
+Tinc has been verified to work under Linux, FreeBSD, OpenBSD, NetBSD, MacOS/X (Darwin), Solaris, and Windows,
 with various hardware architectures.  These are some of the platforms
 that are supported by the universal tun/tap device driver or other virtual network device drivers.
 Without such a driver, tinc will most
@@ -553,7 +553,6 @@ The documentation that comes along with your distribution will tell you how to d
 
 @menu
 * Darwin (MacOS/X) build environment::
-* Cygwin (Windows) build environment::
 * MinGW (Windows) build environment::
 @end menu
 
@@ -567,17 +566,6 @@ It might also help to install a recent version of Fink from @uref{http://www.fin
 
 You need to download and install LibreSSL (or OpenSSL) and LZO,
 either directly from their websites (see @ref{Libraries}) or using Fink.
-
-@c ==================================================================
-@node       Cygwin (Windows) build environment
-@subsection Cygwin (Windows) build environment
-
-If Cygwin hasn't already been installed, install it directly from
-@uref{https://www.cygwin.com/}.
-
-When tinc is compiled in a Cygwin environment, it can only be run in this environment,
-but all programs, including those started outside the Cygwin environment, will be able to use the VPN.
-It will also support all features.
 
 @c ==================================================================
 @node       MinGW (Windows) build environment
@@ -1455,7 +1443,7 @@ this means that tinc will temporarily stop processing packets until the called s
 This guarantees that scripts will execute in the exact same order as the events that trigger them.
 If you need to run commands asynchronously, you have to ensure yourself that they are being run in the background.
 
-Under Windows (not Cygwin), the scripts should have the extension @file{.bat} or @file{.cmd}.
+Under Windows, the scripts should have the extension @file{.bat} or @file{.cmd}.
 
 @table @file
 @cindex tinc-up

@@ -254,7 +254,7 @@ int fsck(const char *argv0) {
 			return 1;
 		}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+#ifndef HAVE_MINGW
 
 		if(st.st_mode & 077) {
 			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);
@@ -303,7 +303,7 @@ int fsck(const char *argv0) {
 			return 1;
 		}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+#ifndef HAVE_MINGW
 
 		if(st.st_mode & 077) {
 			fprintf(stderr, "WARNING: unsafe file permissions on %s.\n", fname);

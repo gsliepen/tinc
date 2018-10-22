@@ -128,7 +128,7 @@ void ifconfig_address(FILE *out, const char *value) {
 		return;
 	}
 
-#elif defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
+#elif defined(HAVE_MINGW)
 
 	switch(address.type) {
 	case SUBNET_MAC:
@@ -226,7 +226,7 @@ void ifconfig_route(FILE *out, const char *value) {
 		}
 	}
 
-#elif defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
+#elif defined(HAVE_MINGW)
 
 	if(*gateway_str) {
 		switch(subnet.type) {

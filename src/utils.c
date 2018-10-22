@@ -173,11 +173,7 @@ size_t b64encode_urlsafe(const void *src, char *dst, size_t length) {
 	return b64encode_internal(src, dst, length, base64_urlsafe);
 }
 
-#if defined(HAVE_MINGW) || defined(HAVE_CYGWIN)
-#ifdef HAVE_CYGWIN
-#include <w32api/windows.h>
-#endif
-
+#ifdef HAVE_MINGW
 const char *winerror(int err) {
 	static char buf[1024], *ptr;
 

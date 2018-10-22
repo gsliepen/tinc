@@ -683,7 +683,7 @@ this means that tinc will temporarily stop processing packets until the called s
 This guarantees that scripts will execute in the exact same order as the events that trigger them.
 If you need to run commands asynchronously, you have to ensure yourself that they are being run in the background.
 .Pp
-Under Windows (not Cygwin), the scripts must have the extension
+Under Windows, the scripts must have the extension
 .Pa .bat
 or
 .Pa .cmd .

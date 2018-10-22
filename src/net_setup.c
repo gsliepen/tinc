@@ -222,7 +222,7 @@ static bool read_ecdsa_private_key(void) {
 		return false;
 	}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+#ifndef HAVE_MINGW
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {
@@ -314,7 +314,7 @@ static bool read_rsa_private_key(void) {
 		return false;
 	}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+#ifndef HAVE_MINGW
 	struct stat s;
 
 	if(fstat(fileno(fp), &s)) {

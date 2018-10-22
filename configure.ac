@@ -65,8 +65,7 @@ case $host_os in
     AC_DEFINE(HAVE_BSD, 1, [Unknown BSD variant])
   ;;
   *cygwin*)
-    cygwin=true
-    AC_DEFINE(HAVE_CYGWIN, 1, [Cygwin])
+    AC_MSG_ERROR("Cygwin is no longer supported. Use MinGW to build native Windows binaries.")
   ;;
   *mingw*)
     mingw=true
@@ -267,6 +266,6 @@ if test "x$runstatedir" = "x"; then
   AC_SUBST([runstatedir], ['${localstatedir}/run'])
 fi
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile test/Makefile systemd/Makefile bash_completion.d/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile test/Makefile test/testlib.sh systemd/Makefile bash_completion.d/Makefile])
 
 AC_OUTPUT
