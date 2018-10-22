@@ -2,6 +2,8 @@
 
 . "${0%/*}/testlib.sh"
 
+echo Initializing node...
+
 # Initialize server node
 
 $tinc $c1 <<EOF
@@ -15,6 +17,8 @@ EOF
 
 # Set up scripts
 
+echo Setting up scripts...
+
 OUT=$d1/scripts.out
 rm -f $OUT 
 
@@ -24,9 +28,15 @@ cat >$d1/$script << EOF
 echo $script \$NETNAME,\$NAME,\$DEVICE,\$IFACE,\$NODE,\$REMOTEADDRESS,\$REMOTEPORT,\$SUBNET,\$WEIGHT,\$INVITATION_FILE,\$INVITATION_URL,\$DEBUG >>$OUT
 EOF
 chmod u+x $d1/$script
+
+cat >$d1/$script.cmd << EOF
+echo $script %NETNAME%,%NAME%,%DEVICE%,%IFACE%,%NODE%,%REMOTEADDRESS%,%REMOTEPORT%,%SUBNET%,%WEIGHT%,%INVITATION_FILE%,%INVITATION_URL%,%DEBUG% >>$OUT
+EOF
 done
 
 # Start server node
+
+echo Starting server node...
 
 $tinc -n netname $c1 start $r1
 
@@ -34,13 +44,20 @@ echo foo-started >>$OUT
 
 # Invite client node
 
-url=`$tinc -n netname2 $c1 invite bar`
+echo Inviting client node...
+
+url=`$tinc -n netname2 $c1 invite bar | sed 's/\r//'`
 file=`cd $d1/invitations; ls | grep -v ed25519_key.priv`
 echo bar-invited >>$OUT
+
+echo Joining client node...
+
 $tinc -n netname3 $c2 join $url
 echo bar-joined >>$OUT
 
 # Start and stop client node
+
+echo Starting client node...
 
 $tinc $c2 << EOF
 set DeviceType dummy
@@ -109,4 +126,5 @@ subnet-down netname,foo,dummy,,foo,,,fec0::/64,,,,5
 tinc-down netname,foo,dummy,,,,,,,,,5
 EOF
 
+sed -i 's/\r//' $OUT
 cmp $OUT $OUT.expected

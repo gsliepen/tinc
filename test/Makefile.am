@@ -15,8 +15,6 @@ TESTS = \
 
 dist_check_SCRIPTS = $(TESTS)
 
-EXTRA_DIST = testlib.sh
-
 AM_CFLAGS = -iquote.
 
 check_PROGRAMS = \

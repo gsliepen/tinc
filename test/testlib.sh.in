@@ -2,23 +2,28 @@
 
 # Paths to executables
 
-tincd=../src/tincd
-tinc=../src/tinc
-sptps_test=../src/sptps_test
-sptps_keypair=../src/sptps_keypair
+tincd=../src/tincd@EXEEXT@
+tinc=../src/tinc@EXEEXT@
+sptps_test=../src/sptps_test@EXEEXT@
+sptps_keypair=../src/sptps_keypair@EXEEXT@
 
 # Test directories
 
 scriptname=`basename $0`
-d1=$PWD/$scriptname.1
-d2=$PWD/$scriptname.2
-d3=$PWD/$scriptname.3
+
+n1=$scriptname.1
+n2=$scriptname.2
+n3=$scriptname.3
+
+d1=$PWD/$n1
+d2=$PWD/$n2
+d3=$PWD/$n3
 
 # Default arguments for both tinc and tincd
 
-c1="--config=$d1 --pidfile=$d1/pid"
-c2="--config=$d2 --pidfile=$d2/pid"
-c3="--config=$d3 --pidfile=$d3/pid"
+c1="-n $n1 --config=$d1 --pidfile=$d1/pid"
+c2="-n $n2 --config=$d2 --pidfile=$d2/pid"
+c3="-n $n3 --config=$d3 --pidfile=$d3/pid"
 
 # Arguments when running tincd
 

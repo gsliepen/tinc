@@ -15,7 +15,7 @@ EOF
 
 # Generate an invitation offline and let another node join the VPN
 
-invitation=`$tinc $c1 invite bar`
+invitation=`$tinc $c1 invite bar | sed 's/\r//'`
 
 $tinc $c1 start $r1
 
