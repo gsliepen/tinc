@@ -725,6 +725,24 @@ static void logcontrol(int fd, FILE *out, int level) {
 	}
 }
 
+static bool stop_tincd(void) {
+	if(!connect_tincd(true)) {
+		return false;
+	}
+
+	sendline(fd, "%d %d", CONTROL, REQ_STOP);
+
+	while(recvline(fd, line, sizeof(line))) {
+		// wait for tincd to close the connection...
+	}
+
+	close(fd);
+	pid = 0;
+	fd = -1;
+
+	return true;
+}
+
 #ifdef HAVE_MINGW
 static bool remove_service(void) {
 	SC_HANDLE manager = NULL;
@@ -742,7 +760,12 @@ static bool remove_service(void) {
 	service = OpenService(manager, identname, SERVICE_ALL_ACCESS);
 
 	if(!service) {
-		fprintf(stderr, "Could not open %s service: %s\n", identname, winerror(GetLastError()));
+		if(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST) {
+			success = stop_tincd();
+		} else {
+			fprintf(stderr, "Could not open %s service: %s\n", identname, winerror(GetLastError()));
+		}
+
 		goto exit;
 	}
 
@@ -883,7 +906,6 @@ bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-#ifdef HAVE_MINGW
 	unsigned long arg = 0;
 
 	if(ioctlsocket(fd, FIONBIO, &arg) != 0) {
@@ -891,8 +913,6 @@ bool connect_tincd(bool verbose) {
 			fprintf(stderr, "System call `%s' failed: %s\n", "ioctlsocket", sockstrerror(sockerrno));
 		}
 	}
-
-#endif
 
 	if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
 		if(verbose) {
@@ -1083,9 +1103,11 @@ static int cmd_stop(int argc, char *argv[]) {
 		return 1;
 	}
 
-#ifndef HAVE_MINGW
+#ifdef HAVE_MINGW
+	return remove_service();
+#else
 
-	if(!connect_tincd(true)) {
+	if(!stop_tincd()) {
 		if(pid) {
 			if(kill(pid, SIGTERM)) {
 				fprintf(stderr, "Could not send TERM signal to process with PID %d: %s\n", pid, strerror(errno));
@@ -1100,24 +1122,8 @@ static int cmd_stop(int argc, char *argv[]) {
 		return 1;
 	}
 
-	sendline(fd, "%d %d", CONTROL, REQ_STOP);
-
-	while(recvline(fd, line, sizeof(line))) {
-		// Wait for tincd to close the connection...
-	}
-
-#else
-
-	if(!remove_service()) {
-		return 1;
-	}
-
-#endif
-	close(fd);
-	pid = 0;
-	fd = -1;
-
 	return 0;
+#endif
 }
 
 static int cmd_restart(int argc, char *argv[]) {
