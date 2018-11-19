@@ -987,7 +987,12 @@ ask_netname:
 
 	char filename2[PATH_MAX];
 	snprintf(filename, sizeof(filename), "%s" SLASH "tinc-up.invitation", confbase);
+
+#ifdef HAVE_MINGW
+	snprintf(filename2, sizeof(filename2), "%s" SLASH "tinc-up.bat", confbase);
+#else
 	snprintf(filename2, sizeof(filename2), "%s" SLASH "tinc-up", confbase);
+#endif
 
 	if(valid_tinc_up) {
 		if(tty) {
