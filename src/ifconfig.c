@@ -136,11 +136,11 @@ void ifconfig_address(FILE *out, const char *value) {
 		break;
 
 	case SUBNET_IPV4:
-		fprintf(out, "netsh inetface ipv4 set address \"%%INTERFACE%%\" static %s\n", address_str);
+		fprintf(out, "netsh interface ipv4 set address \"%%INTERFACE%%\" static %s\n", address_str);
 		break;
 
 	case SUBNET_IPV6:
-		fprintf(out, "netsh inetface ipv6 set address \"%%INTERFACE%%\" %s\n", address_str);
+		fprintf(out, "netsh interface ipv6 set address \"%%INTERFACE%%\" %s\n", address_str);
 		break;
 
 	default:
