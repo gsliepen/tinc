@@ -360,13 +360,13 @@ void dump_graph(void) {
 	/* dump all nodes first */
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
-		fprintf(file, "	%s [label = \"%s\"];\n", n->name, n->name);
+		fprintf(file, "	\"%s\" [label = \"%s\"];\n", n->name, n->name);
 	}
 
 	/* now dump all edges */
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
-		fprintf(file, "	%s -> %s;\n", e->from->name, e->to->name);
+		fprintf(file, "	\"%s\" -> \"%s\";\n", e->from->name, e->to->name);
 	}
 
 	fprintf(file, "}\n");
