@@ -38,7 +38,7 @@ done
 
 echo Starting server node...
 
-$tinc -n netname $c1 start $r1
+$tinc $c1 -n netname start $r1
 
 echo foo-started >>$OUT
 
@@ -46,13 +46,13 @@ echo foo-started >>$OUT
 
 echo Inviting client node...
 
-url=`$tinc -n netname2 $c1 invite bar | sed 's/\r//'`
+url=`$tinc $c1 -n netname2 invite bar | sed 's/\r//'`
 file=`cd $d1/invitations; ls | grep -v ed25519_key.priv`
 echo bar-invited >>$OUT
 
 echo Joining client node...
 
-$tinc -n netname3 $c2 join $url
+$tinc $c2 -n netname3 join $url
 echo bar-joined >>$OUT
 
 # Start and stop client node
