@@ -1352,7 +1352,7 @@ static int cmd_dump(int argc, char *argv[]) {
 					color = "green";
 				}
 
-				printf(" %s [label = \"%s\", color = \"%s\"%s];\n", node, node, color, strcmp(host, "MYSELF") ? "" : ", style = \"filled\"");
+				printf(" \"%s\" [label = \"%s\", color = \"%s\"%s];\n", node, node, color, strcmp(host, "MYSELF") ? "" : ", style = \"filled\"");
 			} else {
 				if(only_reachable && !status.reachable) {
 					continue;
@@ -1382,9 +1382,9 @@ static int cmd_dump(int argc, char *argv[]) {
 				float w = 1 + 65536.0 / weight;
 
 				if(do_graph == 1 && strcmp(node1, node2) > 0) {
-					printf(" %s -- %s [w = %f, weight = %f];\n", node1, node2, w, w);
+					printf(" \"%s\" -- \"%s\" [w = %f, weight = %f];\n", node1, node2, w, w);
 				} else if(do_graph == 2) {
-					printf(" %s -> %s [w = %f, weight = %f];\n", node1, node2, w, w);
+					printf(" \"%s\" -> \"%s\" [w = %f, weight = %f];\n", node1, node2, w, w);
 				}
 			} else {
 				printf("%s to %s at %s port %s local %s port %s options %x weight %d\n", from, to, host, port, local_host, local_port, options, weight);
