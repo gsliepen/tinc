@@ -37,7 +37,9 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 #ifdef HAVE_LZO
 #include LZO1X_H
@@ -685,8 +687,10 @@ int main(int argc, char **argv) {
 
 	init_configuration(&config_tree);
 
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
+#endif
 
 	OpenSSL_add_all_algorithms();
 
@@ -809,7 +813,9 @@ end:
 
 	EVP_cleanup();
 	ERR_free_strings();
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
+#endif
 
 	exit_configuration(&config_tree);
 	list_delete_list(cmdline_conf);
