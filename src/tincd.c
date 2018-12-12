@@ -40,6 +40,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/bn.h>
 
 #ifdef HAVE_LZO
 #include LZO1X_H
@@ -692,7 +693,9 @@ int main(int argc, char **argv) {
 	ENGINE_register_all_complete();
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	OpenSSL_add_all_algorithms();
+#endif
 
 	if(generate_keys) {
 		read_server_config();
@@ -811,10 +814,12 @@ end:
 
 	free(priority);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	EVP_cleanup();
 	ERR_free_strings();
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
+#endif
 #endif
 
 	exit_configuration(&config_tree);

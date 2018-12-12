@@ -27,6 +27,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/bn.h>
 
 #include "avl_tree.h"
 #include "conf.h"
