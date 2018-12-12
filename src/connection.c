@@ -96,13 +96,13 @@ void free_connection_partially(connection_t *c) {
 	c->outbudget = 0;
 
 	if(c->inctx) {
-		EVP_CIPHER_CTX_cleanup(c->inctx);
+		EVP_CIPHER_CTX_reset(c->inctx);
 		free(c->inctx);
 		c->inctx = NULL;
 	}
 
 	if(c->outctx) {
-		EVP_CIPHER_CTX_cleanup(c->outctx);
+		EVP_CIPHER_CTX_reset(c->outctx);
 		free(c->outctx);
 		c->outctx = NULL;
 	}
