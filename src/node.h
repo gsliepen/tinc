@@ -41,7 +41,8 @@ typedef struct node_status_t {
 	unsigned int udppacket: 1;              /* 1 if the most recently received packet was UDP */
 	unsigned int validkey_in: 1;            /* 1 if we have sent a valid key to him */
 	unsigned int has_address: 1;            /* 1 if we know an external address for this node */
-	unsigned int unused: 20;
+	unsigned int ping_sent: 1;              /* 1 if we sent a UDP probe but haven't received the reply yet */
+	unsigned int unused: 19;
 } node_status_t;
 
 typedef struct node_t {

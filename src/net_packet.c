@@ -152,11 +152,12 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		len = ntohs(len16);
 	}
 
-	if(n->udp_ping_sent.tv_sec != 0) {  // a probe in flight
+	if(n->status.ping_sent) {  // a probe in flight
 		gettimeofday(&now, NULL);
 		struct timeval rtt;
 		timersub(&now, &n->udp_ping_sent, &rtt);
 		n->udp_ping_rtt = rtt.tv_sec * 1000000 + rtt.tv_usec;
+		n->status.ping_sent = false;
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s) rtt=%d.%03d", DATA(packet)[0], len, n->name, n->hostname, n->udp_ping_rtt / 1000, n->udp_ping_rtt % 1000);
 	} else {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Got type %d UDP probe reply %d from %s (%s)", DATA(packet)[0], len, n->name, n->hostname);
@@ -175,8 +176,7 @@ static void udp_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		reset_address_cache(n->address_cache, &n->address);
 	}
 
-	// Reset the UDP ping timer. (no probe in flight)
-	n->udp_ping_sent.tv_sec = 0;
+	// Reset the UDP ping timer.
 
 	if(udp_discovery) {
 		timeout_del(&n->udp_ping_timeout);
@@ -1132,6 +1132,7 @@ static void try_udp(node_t *n) {
 	if(ping_tx_elapsed.tv_sec >= interval) {
 		gettimeofday(&now, NULL);
 		n->udp_ping_sent = now; // a probe in flight
+		n->status.ping_sent = true;
 		send_udp_probe_packet(n, MIN_PROBE_SIZE);
 
 		if(localdiscovery && !n->status.udp_confirmed && n->prevedge) {
