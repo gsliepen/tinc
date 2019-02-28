@@ -189,7 +189,7 @@ bool cipher_decrypt(cipher_t *cipher, const void *indata, size_t inlen, void *ou
 	} else {
 		int len;
 
-		if(EVP_EncryptUpdate(cipher->ctx, outdata, &len, indata, inlen)) {
+		if(EVP_DecryptUpdate(cipher->ctx, outdata, &len, indata, inlen)) {
 			if(outlen) {
 				*outlen = len;
 			}
