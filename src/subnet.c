@@ -205,177 +205,162 @@ void subnet_del(node_t *n, subnet_t *subnet) {
 /* Ascii representation of subnets */
 
 bool str2net(subnet_t *subnet, const char *subnetstr) {
-	int i, l;
-	uint16_t x[8];
+	char str[1024];
+	strncpy(str, subnetstr, sizeof(str));
+	str[sizeof(str) - 1] = 0;
+	int consumed;
+
 	int weight = 10;
+	char *weight_separator = strchr(str, '#');
 
-	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d#%d",
-	                &x[0], &x[1], &x[2], &x[3], &l, &weight) >= 5) {
-		if(l < 0 || l > 32) {
+	if(weight_separator) {
+		char *weight_str = weight_separator + 1;
+
+		if(sscanf(weight_str, "%d%n", &weight, &consumed) < 1) {
 			return false;
 		}
 
-		subnet->type = SUBNET_IPV4;
-		subnet->net.ipv4.prefixlength = l;
-		subnet->weight = weight;
-
-		for(i = 0; i < 4; i++) {
-			if(x[i] > 255) {
-				return false;
-			}
-
-			subnet->net.ipv4.address.x[i] = x[i];
-		}
-
-		return true;
-	}
-
-	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d#%d",
-	                &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7],
-	                &l, &weight) >= 9) {
-		if(l < 0 || l > 128) {
+		if(weight_str[consumed]) {
 			return false;
 		}
 
-		subnet->type = SUBNET_IPV6;
-		subnet->net.ipv6.prefixlength = l;
-		subnet->weight = weight;
-
-		for(i = 0; i < 8; i++) {
-			subnet->net.ipv6.address.x[i] = htons(x[i]);
-		}
-
-		return true;
+		*weight_separator = 0;
 	}
 
-	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu#%d", &x[0], &x[1], &x[2], &x[3], &weight) >= 4) {
-		subnet->type = SUBNET_IPV4;
-		subnet->net.ipv4.prefixlength = 32;
-		subnet->weight = weight;
+	int prefixlength = -1;
+	char *prefixlength_separator = strchr(str, '/');
 
-		for(i = 0; i < 4; i++) {
-			if(x[i] > 255) {
-				return false;
-			}
+	if(prefixlength_separator) {
+		char *prefixlength_str = prefixlength_separator + 1;
 
-			subnet->net.ipv4.address.x[i] = x[i];
+		if(sscanf(prefixlength_str, "%d%n", &prefixlength, &consumed) < 1) {
+			return false;
 		}
 
-		return true;
-	}
-
-	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx#%d",
-	                &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7], &weight) >= 8) {
-		subnet->type = SUBNET_IPV6;
-		subnet->net.ipv6.prefixlength = 128;
-		subnet->weight = weight;
-
-		for(i = 0; i < 8; i++) {
-			subnet->net.ipv6.address.x[i] = htons(x[i]);
+		if(prefixlength_str[consumed]) {
+			return false;
 		}
 
-		return true;
+		*prefixlength_separator = 0;
+
+		if(prefixlength < 0) {
+			return false;
+		}
 	}
 
-	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx#%d",
-	                &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &weight) >= 6) {
+	uint16_t x[8];
+
+	if(sscanf(str, "%hx:%hx:%hx:%hx:%hx:%hx%n", &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &consumed) >= 6 && !str[consumed]) {
+		/*
+		   Normally we should check that each part has two digits to prevent ambiguities.
+		   However, in old tinc versions net2str() will aggressively return MAC addresses with one-digit parts,
+		   so we have to accept them otherwise we would be unable to parse ADD_SUBNET messages.
+		*/
+		if(prefixlength >= 0) {
+			return false;
+		}
+
 		subnet->type = SUBNET_MAC;
 		subnet->weight = weight;
 
-		for(i = 0; i < 6; i++) {
+		for(int i = 0; i < 6; i++) {
 			subnet->net.mac.address.x[i] = x[i];
 		}
 
 		return true;
 	}
 
-	// IPv6 short form
-	if(strstr(subnetstr, "::")) {
-		const char *p;
-		char *q;
-		int colons = 0;
+	if(sscanf(str, "%hu.%hu.%hu.%hu%n", &x[0], &x[1], &x[2], &x[3], &consumed) >= 4 && !str[consumed]) {
+		if(prefixlength == -1) {
+			prefixlength = 32;
+		}
 
-		// Count number of colons
-		for(p = subnetstr; *p; p++)
-			if(*p == ':') {
-				colons++;
-			}
-
-		if(colons > 7) {
+		if(prefixlength > 32) {
 			return false;
 		}
 
-		// Scan numbers before the double colon
-		p = subnetstr;
+		subnet->type = SUBNET_IPV4;
+		subnet->net.ipv4.prefixlength = prefixlength;
+		subnet->weight = weight;
 
-		for(i = 0; i < colons; i++) {
-			if(*p == ':') {
-				break;
-			}
-
-			x[i] = strtoul(p, &q, 0x10);
-
-			if(!q || p == q || *q != ':') {
+		for(int i = 0; i < 4; i++) {
+			if(x[i] > 255) {
 				return false;
 			}
 
-			p = ++q;
+			subnet->net.ipv4.address.x[i] = x[i];
 		}
 
-		p++;
-		colons -= i;
+		return true;
+	}
 
-		if(!i) {
-			p++;
-			colons--;
-		}
+	/* IPv6 */
 
-		if(!*p || *p == '/' || *p == '#') {
-			colons--;
-		}
+	char *last_colon = strrchr(str, ':');
 
-		// Fill in the blanks
-		for(; i < 8 - colons; i++) {
-			x[i] = 0;
-		}
-
-		// Scan the remaining numbers
-		for(; i < 8; i++) {
-			x[i] = strtoul(p, &q, 0x10);
-
-			if(!q || p == q) {
+	if(last_colon && sscanf(last_colon, ":%hu.%hu.%hu.%hu%n", &x[0], &x[1], &x[2], &x[3], &consumed) >= 4 && !last_colon[consumed]) {
+		/* Dotted quad suffix notation, convert to standard IPv6 notation */
+		for(int i = 0; i < 4; i++)
+			if(x[i] > 255) {
 				return false;
 			}
 
-			if(i == 7) {
-				p = q;
-				break;
+		snprintf(last_colon, sizeof(str) - (last_colon - str), ":%02x%02x:%02x%02x", x[0], x[1], x[2], x[3]);
+	}
+
+	char *double_colon = strstr(str, "::");
+
+	if(double_colon) {
+		/* Figure out how many zero groups we need to expand */
+		int zero_group_count = 8;
+
+		for(const char *cur = str; *cur; cur++)
+			if(*cur != ':') {
+				zero_group_count--;
+
+				while(cur[1] && cur[1] != ':') {
+					cur++;
+				}
 			}
 
-			if(*q != ':') {
-				return false;
-			}
-
-			p = ++q;
+		if(zero_group_count < 1) {
+			return false;
 		}
 
-		l = 128;
+		/* Split the double colon in the middle to make room for zero groups */
+		double_colon++;
+		memmove(double_colon + (zero_group_count * 2 - 1), double_colon, strlen(double_colon) + 1);
 
-		if(*p == '/') {
-			sscanf(p, "/%d#%d", &l, &weight);
-		} else if(*p == '#') {
-			sscanf(p, "#%d", &weight);
+		/* Write zero groups in the resulting gap, overwriting the second colon */
+		for(int i = 0; i < zero_group_count; i++) {
+			memcpy(&double_colon[i * 2], "0:", 2);
 		}
 
-		if(l < 0 || l > 128) {
+		/* Remove any leading or trailing colons */
+		if(str[0] == ':') {
+			memmove(&str[0], &str[1], strlen(&str[1]) + 1);
+		}
+
+		if(str[strlen(str) - 1] == ':') {
+			str[strlen(str) - 1] = 0;
+		}
+	}
+
+	if(sscanf(str, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx%n",
+	                &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7], &consumed) >= 8 && !str[consumed]) {
+		if(prefixlength == -1) {
+			prefixlength = 128;
+		}
+
+		if(prefixlength > 128) {
 			return false;
 		}
 
 		subnet->type = SUBNET_IPV6;
-		subnet->net.ipv6.prefixlength = l;
+		subnet->net.ipv6.prefixlength = prefixlength;
 		subnet->weight = weight;
 
-		for(i = 0; i < 8; i++) {
+		for(int i = 0; i < 8; i++) {
 			subnet->net.ipv6.address.x[i] = htons(x[i]);
 		}
 
