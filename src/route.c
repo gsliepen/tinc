@@ -64,16 +64,18 @@ static timeout_t age_subnets_timeout;
 /* RFC 1071 */
 
 static uint16_t inet_checksum(void *data, int len, uint16_t prevsum) {
-	uint16_t *p = data;
+	uint16_t word;
 	uint32_t checksum = prevsum ^ 0xFFFF;
 
 	while(len >= 2) {
-		checksum += *p++;
+		memcpy(&word, data, sizeof(word));
+		checksum += word;
+		data += 2;
 		len -= 2;
 	}
 
 	if(len) {
-		checksum += *(uint8_t *)p;
+		checksum += *(uint8_t *)data;
 	}
 
 	while(checksum >> 16) {
