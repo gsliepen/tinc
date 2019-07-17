@@ -11,10 +11,11 @@ ip netns list || exit 77
 
 $tinc $c1 <<EOF
 init foo
-set Mode switch
+set Subnet 192.168.1.1
 set Interface ping.test1
 set Port 32577
 set Address localhost
+set AutoConnect no
 EOF
 
 cat >$d1/tinc-up <<EOF
@@ -27,9 +28,10 @@ EOF
 
 $tinc $c2 <<EOF
 init bar
-set Mode switch
+set Subnet 192.168.1.2
 set Interface ping.test2
 set Port 32574
+set AutoConnect no
 EOF
 
 cat >$d2/tinc-up <<EOF
