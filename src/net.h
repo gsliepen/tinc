@@ -121,7 +121,6 @@ typedef struct listen_socket_t {
 typedef struct outgoing_t {
 	struct node_t *node;
 	int timeout;
-	struct address_cache_t *address_cache;
 	timeout_t ev;
 } outgoing_t;
 

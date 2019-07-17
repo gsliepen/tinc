@@ -71,9 +71,9 @@ bool pong_h(connection_t *c, const char *request) {
 
 	/* Successful connection, reset timeout if this is an outgoing connection. */
 
-	if(c->outgoing) {
+	if(c->outgoing && c->outgoing->timeout) {
 		c->outgoing->timeout = 0;
-		reset_address_cache(c->outgoing->address_cache, &c->address);
+		reset_address_cache(c->outgoing->node->address_cache, &c->address);
 	}
 
 	return true;
