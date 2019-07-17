@@ -186,10 +186,9 @@ void do_autoconnect() {
 		drop_superfluous_outgoing_connection();
 	}
 
+	/* Drop pending outgoing connections from the outgoing list. */
+	drop_superfluous_pending_connections();
 
 	/* Check if there are unreachable nodes that we should try to connect to. */
 	connect_to_unreachable();
-
-	/* Drop pending outgoing connections from the outgoing list. */
-	drop_superfluous_pending_connections();
 }
