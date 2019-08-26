@@ -467,9 +467,14 @@ static void disable_old_keys(const char *filename) {
 		return;
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
+	int len = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
-	w = fopen(tmpfile, "w");
+	if(len < 0 || len >= PATH_MAX) {
+		fprintf(stderr, "Pathname too long: %s.tmp\n", filename);
+		w = NULL;
+	} else {
+		w = fopen(tmpfile, "w");
+	}
 
 	while(fgets(buf, sizeof(buf), r)) {
 		if(!strncmp(buf, "-----BEGIN RSA", 14)) {
