@@ -1,7 +1,21 @@
+Version 1.0.36               August 26 2019
+
+ * Fix compiling tinc with certain versions of the OpenSSL library.
+ * Fix parsing some IPv6 addresses with :: in them.
+ * Fix GraphDumpFile output to handle node names starting with a digit.
+ * Fix a potential segmentation fault when fragmenting packets.
+
+Thanks to Rosen Penev, Quentin Rameau and Werner Schreiber for their
+contributions to this version of tinc.
+
 Version 1.0.35               October 5 2018
 
  * Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738).
  * Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758).
+ * Minor fixes in the documentation.
+
+Thanks to Amine Amri and Rafael Sadowski for their contributions to this
+version of tinc.
 
 Version 1.0.34               June 12 2018
 

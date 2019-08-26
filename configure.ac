@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.0.35])
+AC_INIT([tinc], [1.0.36])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
@@ -237,7 +237,7 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-dnl Ensure runstatedir is set if we are using a version of autoconf that does not suppport it
+dnl Ensure runstatedir is set if we are using a version of autoconf that does not support it
 if test "x$runstatedir" = "x"; then
   AC_SUBST([runstatedir], ['${localstatedir}/run'])
 fi
