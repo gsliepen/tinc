@@ -155,7 +155,7 @@ professional package.
 
 @cindex traditional VPNs
 @cindex scalability
-Tinc also allows more than two sites to connect to eachother and form a single VPN.
+Tinc also allows more than two sites to connect to each other and form a single VPN.
 Traditionally VPNs are created by making tunnels, which only have two endpoints.
 Larger VPNs with more sites are created by adding more tunnels.
 Tinc takes another approach: only endpoints are specified,
@@ -2433,7 +2433,7 @@ We will address these issues in tinc 2.0.
 Cryptography is a hard thing to get right. We cannot make any
 guarantees. Time, review and feedback are the only things that can
 prove the security of any cryptographic product. If you wish to review
-tinc or give us feedback, you are stronly encouraged to do so.
+tinc or give us feedback, you are strongly encouraged to do so.
 
 
 @c ==================================================================
