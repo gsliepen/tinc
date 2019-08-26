@@ -25,7 +25,7 @@
 #include <openssl/evp.h>
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define EVP_CIPHER_CTX_reset(c)	EVP_CIPHER_CTX_cleanup(c)
+#define EVP_CIPHER_CTX_reset(c) EVP_CIPHER_CTX_cleanup(c)
 #endif
 
 #include "avl_tree.h"
