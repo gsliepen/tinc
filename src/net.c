@@ -404,21 +404,18 @@ int reload_configuration(void) {
 		while(cfg) {
 			subnet_t *subnet, *s2;
 
-			if(!get_config_subnet(cfg, &subnet)) {
-				cfg = lookup_config_next(config_tree, cfg);
-				continue;
-			}
+			if(get_config_subnet(cfg, &subnet)) {
+				if((s2 = lookup_subnet(myself, subnet))) {
+					if(s2->expires == 1) {
+						s2->expires = 0;
+					}
 
-			if((s2 = lookup_subnet(myself, subnet))) {
-				if(s2->expires == 1) {
-					s2->expires = 0;
+					free_subnet(subnet);
+				} else {
+					subnet_add(myself, subnet);
+					send_add_subnet(everyone, subnet);
+					subnet_update(myself, subnet, true);
 				}
-
-				free_subnet(subnet);
-			} else {
-				subnet_add(myself, subnet);
-				send_add_subnet(everyone, subnet);
-				subnet_update(myself, subnet, true);
 			}
 
 			cfg = lookup_config_next(config_tree, cfg);

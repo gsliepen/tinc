@@ -40,6 +40,7 @@
 #include "tincctl.h"
 #include "top.h"
 #include "version.h"
+#include "subnet.h"
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -1885,6 +1886,19 @@ static int cmd_config(int argc, char *argv[]) {
 
 		found = true;
 		variable = (char *)variables[i].name;
+
+		if (!strcasecmp(variable, "Subnet")) {
+			subnet_t s = {0};
+
+			if(!str2net(&s, value)) {
+				fprintf(stderr, "Malformed subnet definition %s\n", value);
+			}
+
+			if(!subnetcheck(s)) {
+				fprintf(stderr, "Network address and prefix length do not match: %s\n", value);
+				return 1;
+			}
+		}
 
 		/* Discourage use of obsolete variables. */
 

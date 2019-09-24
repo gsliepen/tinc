@@ -206,20 +206,14 @@ bool get_config_subnet(const config_t *cfg, subnet_t **result) {
 		return false;
 	}
 
-	/* Teach newbies what subnets are... */
-
-	if(((subnet.type == SUBNET_IPV4)
-	                && !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(subnet.net.ipv4.address)))
-	                || ((subnet.type == SUBNET_IPV6)
-	                    && !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(subnet.net.ipv6.address)))) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
-		       cfg->variable, cfg->file, cfg->line);
-		return false;
+	if (subnetcheck(subnet)) {
+		*(*result = new_subnet()) = subnet;
+		return true;
 	}
 
-	*(*result = new_subnet()) = subnet;
-
-	return true;
+	logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
+	       cfg->variable, cfg->file, cfg->line);
+	return false;
 }
 
 /*

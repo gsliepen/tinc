@@ -87,6 +87,17 @@ void maskcpy(void *va, const void *vb, int masklen, int len) {
 	}
 }
 
+bool subnetcheck(const subnet_t subnet) {
+	if(((subnet.type == SUBNET_IPV4)
+	                && !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(subnet.net.ipv4.address)))
+	                || ((subnet.type == SUBNET_IPV6)
+	                    && !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(subnet.net.ipv6.address)))) {
+		return false;
+	}
+
+	return true;
+}
+
 bool maskcheck(const void *va, int masklen, int len) {
 	int i;
 	const char *a = va;
