@@ -405,6 +405,7 @@ int reload_configuration(void) {
 			subnet_t *subnet, *s2;
 
 			if(!get_config_subnet(cfg, &subnet)) {
+				cfg = lookup_config_next(config_tree, cfg);
 				continue;
 			}
 
