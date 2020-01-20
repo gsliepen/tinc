@@ -941,7 +941,8 @@ Also note that this can cause decrypted VPN packets to be sent out on a real net
 
 @cindex fd
 @item fd
-Use a file descriptor.
+Use a file descriptor, given directly as an integer or passed through a unix domain socket.
+On Linux, an abstract socket address can be specified by using "@" as a prefix.
 All packets are read from this interface.
 Packets received for the local node are written to it.
 
