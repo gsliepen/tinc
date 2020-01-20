@@ -57,6 +57,10 @@
 
 /* Include system specific headers */
 
+#ifdef HAVE_STDDEF_H
+#include <stddef.h>
+#endif
+
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif

@@ -168,7 +168,7 @@ AS_IF([test "x$enable_hardening" != "xno"],
 dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
-AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/un.h sys/wait.h netdb.h arpa/inet.h dirent.h getopt.h])
+AC_CHECK_HEADERS([syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/un.h sys/wait.h netdb.h arpa/inet.h dirent.h getopt.h stddef.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
   [], [], [#include "$srcdir/src/have.h"]
 )
