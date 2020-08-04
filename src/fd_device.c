@@ -20,8 +20,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <sys/un.h>
-
 #include "system.h"
 #include "conf.h"
 #include "device.h"
@@ -30,6 +28,23 @@
 #include "net.h"
 #include "route.h"
 #include "utils.h"
+
+#if defined (WIN32) && !defined (__CYGWIN32__)
+static inline bool check_config(void) {
+	if(routing_mode == RMODE_SWITCH) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Switch mode not supported (requires unsupported TAP device)!");
+		return false;
+	}
+
+	if(!get_config_int(lookup_config(config_tree, "Device"), &device_fd)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read fd from configuration!");
+		return false;
+	}
+
+	return true;
+}
+#else
+#include <sys/un.h>
 
 struct unix_socket_addr {
 	size_t size;
@@ -133,8 +148,14 @@ static struct unix_socket_addr parse_socket_addr(const char *path) {
 		.addr = socket_addr
 	};
 }
+#endif
 
 static bool setup_device(void) {
+#if defined (WIN32) && !defined (__CYGWIN32__)
+	if(!check_config()) {
+		return false;
+	}
+#else
 	if(routing_mode == RMODE_SWITCH) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Switch mode not supported (requires unsupported TAP device)!");
 		return false;
@@ -150,7 +171,7 @@ static bool setup_device(void) {
 		logger(DEBUG_ALWAYS, LOG_INFO, "Receiving fd from Unix socket at %s.", device);
 		device_fd = receive_fd(parse_socket_addr(device));
 	}
-
+#endif
 	if(device_fd < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s!", device, strerror(errno));
 		return false;
