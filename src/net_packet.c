@@ -545,8 +545,11 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	/* If we're not the final recipient, relay the packet. */
 
 	if(to != myself) {
-		send_sptps_data(to, from, 0, data, len);
-		try_tx(to, true);
+		if (!to->status.waitingforkey) {
+			send_sptps_data(to, from, 0, data, len);
+			try_tx(to, true);
+		} else
+			logger(DEBUG_ALWAYS, LOG_INFO, "Cannot forward TCP packet from %s (%s) to %s (%s) because we are still wating for key", from->name, from->hostname, to->name, to->hostname);
 		return true;
 	}
 
