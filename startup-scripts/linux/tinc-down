@@ -1,0 +1,5 @@
+#!/bin/sh
+echo $INTERFACE DOWN!
+sudo ip route del 192.168.235.0/24 dev $INTERFACE
+sudo ip addr del 192.168.235.xxx/32 dev $INTERFACE
+sudo ip link set $INTERFACE down
