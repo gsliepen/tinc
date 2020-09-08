@@ -238,7 +238,7 @@ static bool parse_options(int argc, char **argv) {
 FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 	mode_t mask = umask(0);
 	perms &= ~mask;
-	umask(~perms);
+	umask(~perms & 0777);
 	FILE *f = fopen(filename, mode);
 
 	if(!f) {
