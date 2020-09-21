@@ -46,10 +46,10 @@ void randomize(void *vout, size_t outlen) {
 	char *out = vout;
 
 	while(outlen) {
-		size_t len = read(random_fd, out, outlen);
+		ssize_t len = read(random_fd, out, outlen);
 
 		if(len <= 0) {
-			if(errno == EAGAIN || errno == EINTR) {
+			if(len == -1 && (errno == EAGAIN || errno == EINTR)) {
 				continue;
 			}
 
