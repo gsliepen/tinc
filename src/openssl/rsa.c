@@ -21,6 +21,7 @@
 
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
 
 #define TINC_RSA_INTERNAL
 typedef RSA rsa_t;
