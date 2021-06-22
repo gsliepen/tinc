@@ -385,26 +385,38 @@ int fsck(const char *argv0) {
 				return 1;
 			}
 
-			char buf1[len], buf2[len], buf3[len];
-			randomize(buf1, sizeof(buf1));
+			char *buf1 = malloc(len);
+			char *buf2 = malloc(len);
+			char *buf3 = malloc(len);
+
+			randomize(buf1, len);
 			buf1[0] &= 0x7f;
-			memset(buf2, 0, sizeof(buf2));
-			memset(buf3, 0, sizeof(buf2));
+			memset(buf2, 0, len);
+			memset(buf3, 0, len);
+			bool result = false;
 
-			if(!rsa_public_encrypt(rsa_pub, buf1, sizeof(buf1), buf2)) {
+			if(rsa_public_encrypt(rsa_pub, buf1, len, buf2)) {
+				if(rsa_private_decrypt(rsa_priv, buf2, len, buf3)) {
+					if(memcmp(buf1, buf3, len)) {
+						result = true;
+					} else {
+						fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
+					}
+				} else {
+					fprintf(stderr, "ERROR: private RSA key does not work.\n");
+				}
+			} else {
 				fprintf(stderr, "ERROR: public RSA key does not work.\n");
+			}
+
+			free(buf3);
+			free(buf2);
+			free(buf1);
+
+			if(!result) {
 				return 1;
 			}
 
-			if(!rsa_private_decrypt(rsa_priv, buf2, sizeof(buf2), buf3)) {
-				fprintf(stderr, "ERROR: private RSA key does not work.\n");
-				return 1;
-			}
-
-			if(memcmp(buf1, buf3, sizeof(buf1))) {
-				fprintf(stderr, "ERROR: public and private RSA keys do not match.\n");
-				return 1;
-			}
 		}
 	} else {
 		if(rsa_pub) {
