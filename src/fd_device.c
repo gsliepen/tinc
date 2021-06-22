@@ -55,9 +55,12 @@ static int read_fd(int socket) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not read from unix socket (error %d)!", ret);
 		return -1;
 	}
+
 #ifdef IP_RECVERR
+
 	if(msg.msg_flags & (MSG_CTRUNC | MSG_OOB | MSG_ERRQUEUE)) {
 #else
+
 	if(msg.msg_flags & (MSG_CTRUNC | MSG_OOB)) {
 #endif
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while receiving message (flags %d)!", msg.msg_flags);
@@ -65,19 +68,22 @@ static int read_fd(int socket) {
 	}
 
 	cmsgptr = CMSG_FIRSTHDR(&msg);
+
 	if(cmsgptr->cmsg_level != SOL_SOCKET) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG level: %d, expected %d!",
-			cmsgptr->cmsg_level, SOL_SOCKET);
+		       cmsgptr->cmsg_level, SOL_SOCKET);
 		return -1;
 	}
+
 	if(cmsgptr->cmsg_type != SCM_RIGHTS) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG type: %d, expected %d!",
-			cmsgptr->cmsg_type, SCM_RIGHTS);
+		       cmsgptr->cmsg_type, SCM_RIGHTS);
 		return -1;
 	}
+
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %lu, expected %lu!",
-			(unsigned long)cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
+		       (unsigned long)cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
 
@@ -113,7 +119,9 @@ static struct unix_socket_addr parse_socket_addr(const char *path) {
 
 	if(strlen(path) >= sizeof(socket_addr.sun_path)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unix socket path too long!");
-		return (struct unix_socket_addr) {0};
+		return (struct unix_socket_addr) {
+			0
+		};
 	}
 
 	socket_addr.sun_family = AF_UNIX;

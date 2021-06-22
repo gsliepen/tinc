@@ -206,7 +206,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t **result) {
 		return false;
 	}
 
-	if (subnetcheck(subnet)) {
+	if(subnetcheck(subnet)) {
 		*(*result = new_subnet()) = subnet;
 		return true;
 	}
