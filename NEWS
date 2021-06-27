@@ -1,3 +1,23 @@
+# Version 1.1pre18             June 27 2021
+
+* Check all Address statements when making outgoing connections.
+* Make more variables safe for use in invitations.
+* Allow "tinc --force join" to accept all variables sent in an invitation.
+* Make sure the stop command works on Windows if tincd is running in the
+  foreground.
+* Handle DOS line endings in invitation files.
+* Double-quote node names in dump graph output.
+* Prevent large amounts of UDP probes being sent consecutively.
+* Try harder to reconnect with unreachable nodes.
+* Generate tinc-up.bat on Windows.
+* Fix a possible infinite loop when adding Subnets to a running tincd.
+* Allow a tun/tap filedescriptor to be passed through a UNIX socket.
+* Use auto-clone tun/tap devices as default on FreeBSD and DragonFlyBSD.
+
+Thanks to Fabian Maurer, Ilia Pavlikhin, Maciej S. Szmigiero, Pacien
+Tran-Girard, Aaron Li, Andreas Rammhold, Rosen Penev, Shengjing Zhu, Werner
+Schreiber, iczero and leptonyu for their contributions to this version of tinc.
+
 # Version 1.1pre17             October 8 2018
 
 * Prevent oracle attacks in the legacy protocol (CVE-2018-16737,
