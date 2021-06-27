@@ -1,6 +1,6 @@
 /*
     fsck.c -- Check the configuration files for problems
-    Copyright (C) 2014 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2014-2021 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

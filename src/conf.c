@@ -4,7 +4,7 @@
                   1998-2005 Ivo Timmermans
                   2000      Cris van Pelt
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2021 Guus Sliepen <guus@tinc-vpn.org>
                   2013      Florent Clairambault <florent@clairambault.fr>
 
     This program is free software; you can redistribute it and/or modify

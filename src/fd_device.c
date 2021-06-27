@@ -1,7 +1,7 @@
 /*
     fd_device.c -- Interaction with Android tun fd
     Copyright (C)   2001-2005   Ivo Timmermans,
-                    2001-2016   Guus Sliepen <guus@tinc-vpn.org>
+                    2001-2021   Guus Sliepen <guus@tinc-vpn.org>
                     2009        Grzegorz Dymarek <gregd72002@googlemail.com>
                     2016-2020   Pacien TRAN-GIRARD <pacien@pacien.net>
 
