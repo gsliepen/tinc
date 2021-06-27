@@ -83,7 +83,7 @@ static int read_fd(int socket) {
 
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %lu, expected %lu!",
-		       (unsigned long)cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
+		       (unsigned long)cmsgptr->cmsg_len, (unsigned long)CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
 

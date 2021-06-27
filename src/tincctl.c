@@ -263,19 +263,21 @@ static void disable_old_keys(const char *filename, const char *what) {
 	bool disabled = false;
 	bool block = false;
 	bool error = false;
-	FILE *r, *w;
 
-	r = fopen(filename, "r");
+	FILE *r = fopen(filename, "r");
+	FILE *w = NULL;
 
 	if(!r) {
 		return;
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
+	int result = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
-	struct stat st = {.st_mode = 0600};
-	fstat(fileno(r), &st);
-	w = fopenmask(tmpfile, "w", st.st_mode);
+	if(result < sizeof(tmpfile)) {
+		struct stat st = {.st_mode = 0600};
+		fstat(fileno(r), &st);
+		w = fopenmask(tmpfile, "w", st.st_mode);
+	}
 
 	while(fgets(buf, sizeof(buf), r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
