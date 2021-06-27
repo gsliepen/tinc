@@ -20,10 +20,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 
-#include "system.h"
 #include "conf.h"
 #include "device.h"
 #include "ethernet.h"
