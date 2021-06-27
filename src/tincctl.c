@@ -126,12 +126,12 @@ static void usage(bool status) {
 		       "  reload                     Partially reload configuration of running tincd.\n"
 		       "  pid                        Show PID of currently running tincd.\n"
 #ifdef DISABLE_LEGACY
-		       "  generate-keys              Generate a new Ed25519 public/private keypair.\n"
+		       "  generate-keys              Generate a new Ed25519 public/private key pair.\n"
 #else
-		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private keypairs.\n"
-		       "  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
+		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private key pairs.\n"
+		       "  generate-rsa-keys [bits]   Generate a new RSA public/private key pair.\n"
 #endif
-		       "  generate-ed25519-keys      Generate a new Ed25519 public/private keypair.\n"
+		       "  generate-ed25519-keys      Generate a new Ed25519 public/private key pair.\n"
 		       "  dump                       Dump a list of one of the following things:\n"
 		       "    [reachable] nodes        - all known nodes in the VPN\n"
 		       "    edges                    - all known connections in the VPN\n"
@@ -419,7 +419,7 @@ ask_filename:
 }
 
 /*
-  Generate a public/private Ed25519 keypair, and ask for a file to store
+  Generate a public/private Ed25519 key pair, and ask for a file to store
   them in.
 */
 static bool ed25519_keygen(bool ask) {
@@ -427,7 +427,7 @@ static bool ed25519_keygen(bool ask) {
 	FILE *f;
 	char fname[PATH_MAX];
 
-	fprintf(stderr, "Generating Ed25519 keypair:\n");
+	fprintf(stderr, "Generating Ed25519 key pair:\n");
 
 	if(!(key = ecdsa_generate())) {
 		fprintf(stderr, "Error during key generation!\n");
@@ -483,7 +483,7 @@ error:
 
 #ifndef DISABLE_LEGACY
 /*
-  Generate a public/private RSA keypair, and ask for a file to store
+  Generate a public/private RSA key pair, and ask for a file to store
   them in.
 */
 static bool rsa_keygen(int bits, bool ask) {

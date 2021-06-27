@@ -683,7 +683,7 @@ A good resource on networking is the
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
-First, create the initial configuration files and public/private keypairs using the following command:
+First, create the initial configuration files and public/private key pairs using the following command:
 @example
 tinc -n @var{NETNAME} init @var{NAME}
 @end example
@@ -1555,7 +1555,7 @@ you have to make the scripts executable, using the command @samp{chmod a+x scrip
 
 @subsubheading Step 1.  Creating initial configuration files.
 
-The initial directory structure, configuration files and public/private keypairs are created using the following command:
+The initial directory structure, configuration files and public/private key pairs are created using the following command:
 
 @example
 tinc -n @var{netname} init @var{name}
@@ -1882,7 +1882,7 @@ Address = 4.5.6.7
 
 @subsubheading Key files
 
-A, B, C and D all have their own public/private keypairs:
+A, B, C and D all have their own public/private key pairs:
 
 The private RSA key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
 the private Ed25519 key is stored in @file{@value{sysconfdir}/tinc/company/ed25519_key.priv},
@@ -2138,7 +2138,7 @@ Some of them will only be visible if the debug level is high enough.
 @item Error reading RSA key file `rsa_key.priv': No such file or directory
 
 @itemize
-@item You forgot to create a public/private keypair.
+@item You forgot to create a public/private key pair.
 @item Specify the complete pathname to the private key file with the @samp{PrivateKeyFile} option.
 @end itemize
 
@@ -2206,8 +2206,8 @@ You can add @samp{TCPOnly = yes} to host configuration files to force all VPN tr
 @item Got bad/bogus/unauthorized REQUEST from foo (1.2.3.4 port 12345)
 
 @itemize
-@item Node foo does not have the right public/private keypair.
-Generate new keypairs and distribute them again.
+@item Node foo does not have the right public/private key pair.
+Generate new key pairs and distribute them again.
 @item An attacker tries to gain access to your VPN.
 @item A network error caused corruption of metadata sent from foo.
 @end itemize
@@ -2312,7 +2312,7 @@ the value of this environment variable is used.
 
 @cindex init
 @item init [@var{name}]
-Create initial configuration files and RSA and Ed25519 keypairs with default length.
+Create initial configuration files and RSA and Ed25519 key pairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
 @cindex get
@@ -2397,17 +2397,17 @@ Shows the PID of the currently running @samp{tincd}.
 
 @cindex generate-keys
 @item generate-keys [@var{bits}]
-Generate both RSA and Ed25519 keypairs (see below) and exit.
+Generate both RSA and Ed25519 key pairs (see below) and exit.
 tinc will ask where you want to store the files, but will default to the
 configuration directory (you can use the -c or -n option).
 
 @cindex generate-ed25519-keys
 @item generate-ed25519-keys
-Generate public/private Ed25519 keypair and exit.
+Generate public/private Ed25519 key pair and exit.
 
 @cindex generate-rsa-keys
 @item generate-rsa-keys [@var{bits}]
-Generate public/private RSA keypair and exit.  If @var{bits} is omitted, the
+Generate public/private RSA key pair and exit.  If @var{bits} is omitted, the
 default length will be 2048 bits.  When saving keys to existing files, tinc
 will not delete the old keys; you have to remove them manually.
 

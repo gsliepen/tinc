@@ -64,7 +64,7 @@ or by using
 .Sh PUBLIC/PRIVATE KEYS
 The
 .Nm tinc Li init
-command will have generated both RSA and Ed25519 public/private keypairs.
+command will have generated both RSA and Ed25519 public/private key pairs.
 The private keys should be stored in files named
 .Pa rsa_key.priv
 and
