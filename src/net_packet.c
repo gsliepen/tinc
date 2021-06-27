@@ -545,7 +545,10 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	/* If we're not the final recipient, relay the packet. */
 
 	if(to != myself) {
-		send_sptps_data(to, from, 0, data, len);
+		if(to->status.validkey) {
+			send_sptps_data(to, from, 0, data, len);
+		}
+
 		try_tx(to, true);
 		return true;
 	}
