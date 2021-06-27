@@ -20,6 +20,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 
 #include "system.h"
@@ -234,3 +235,4 @@ const devops_t fd_devops = {
 	.read = read_packet,
 	.write = write_packet,
 };
+#endif

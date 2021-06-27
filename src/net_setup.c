@@ -1053,10 +1053,14 @@ static bool setup_myself(void) {
 			devops = raw_socket_devops;
 		} else if(!strcasecmp(type, "multicast")) {
 			devops = multicast_devops;
-		} else if(!strcasecmp(type, "fd")) {
+		}
+
+#ifdef HAVE_SYS_UN_H
+		else if(!strcasecmp(type, "fd")) {
 			devops = fd_devops;
 		}
 
+#endif
 #ifdef ENABLE_UML
 		else if(!strcasecmp(type, "uml")) {
 			devops = uml_devops;
