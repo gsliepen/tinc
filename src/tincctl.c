@@ -115,51 +115,52 @@ static void usage(bool status) {
 		       "      --version           Output version information and exit.\n"
 		       "\n"
 		       "Valid commands are:\n"
-		       "  init [name]                Create initial configuration files.\n"
-		       "  get VARIABLE               Print current value of VARIABLE\n"
-		       "  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
-		       "  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
-		       "  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
-		       "  start [tincd options]      Start tincd.\n"
-		       "  stop                       Stop tincd.\n"
-		       "  restart [tincd options]    Restart tincd.\n"
-		       "  reload                     Partially reload configuration of running tincd.\n"
-		       "  pid                        Show PID of currently running tincd.\n"
+		       "  init [name]                        Create initial configuration files.\n"
+		       "  get VARIABLE                       Print current value of VARIABLE\n"
+		       "  set VARIABLE VALUE                 Set VARIABLE to VALUE\n"
+		       "  add VARIABLE VALUE                 Add VARIABLE with the given VALUE\n"
+		       "  del VARIABLE [VALUE]               Remove VARIABLE [only ones with watching VALUE]\n"
+		       "  start [tincd options]              Start tincd.\n"
+		       "  stop                               Stop tincd.\n"
+		       "  restart [tincd options]            Restart tincd.\n"
+		       "  reload                             Partially reload configuration of running tincd.\n"
+		       "  pid                                Show PID of currently running tincd.\n"
 #ifdef DISABLE_LEGACY
-		       "  generate-keys              Generate a new Ed25519 public/private keypair.\n"
+		       "  generate-keys                      Generate a new Ed25519 public/private keypair.\n"
 #else
-		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private keypairs.\n"
-		       "  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
+		       "  generate-keys [bits]               Generate new RSA and Ed25519 public/private keypairs.\n"
+		       "  generate-rsa-keys [bits]           Generate a new RSA public/private keypair.\n"
 #endif
-		       "  generate-ed25519-keys      Generate a new Ed25519 public/private keypair.\n"
-		       "  dump                       Dump a list of one of the following things:\n"
-		       "    [reachable] nodes        - all known nodes in the VPN\n"
-		       "    edges                    - all known connections in the VPN\n"
-		       "    subnets                  - all known subnets in the VPN\n"
-		       "    connections              - all meta connections with ourself\n"
-		       "    [di]graph                - graph of the VPN in dotty format\n"
-		       "    invitations              - outstanding invitations\n"
-		       "  info NODE|SUBNET|ADDRESS   Give information about a particular NODE, SUBNET or ADDRESS.\n"
-		       "  purge                      Purge unreachable nodes\n"
-		       "  debug N                    Set debug level\n"
-		       "  retry                      Retry all outgoing connections\n"
-		       "  disconnect NODE            Close meta connection with NODE\n"
+		       "  generate-ed25519-keys              Generate a new Ed25519 public/private keypair.\n"
+		       "  dump                               Dump a list of one of the following things:\n"
+		       "    [reachable] nodes                - all known nodes in the VPN\n"
+		       "    edges                            - all known connections in the VPN\n"
+		       "    subnets                          - all known subnets in the VPN\n"
+		       "    connections                      - all meta connections with ourself\n"
+		       "    [di]graph                        - graph of the VPN in dotty format\n"
+		       "    invitations                      - outstanding invitations\n"
+		       "  info NODE|SUBNET|ADDRESS           Give information about a particular NODE, SUBNET or ADDRESS.\n"
+		       "  purge                              Purge unreachable nodes\n"
+		       "  debug N                            Set debug level\n"
+		       "  retry                              Retry all outgoing connections\n"
+		       "  disconnect NODE                    Close meta connection with NODE\n"
 #ifdef HAVE_CURSES
-		       "  top                        Show real-time statistics\n"
+		       "  top                                Show real-time statistics\n"
 #endif
-		       "  pcap [snaplen]             Dump traffic in pcap format [up to snaplen bytes per packet]\n"
-		       "  log [level]                Dump log output [up to the specified level]\n"
-		       "  export                     Export host configuration of local node to standard output\n"
-		       "  export-all                 Export all host configuration files to standard output\n"
-		       "  import                     Import host configuration file(s) from standard input\n"
-		       "  exchange                   Same as export followed by import\n"
-		       "  exchange-all               Same as export-all followed by import\n"
-		       "  invite NODE [...]          Generate an invitation for NODE\n"
-		       "  join INVITATION            Join a VPN using an INVITATION\n"
-		       "  network [NETNAME]          List all known networks, or switch to the one named NETNAME.\n"
-		       "  fsck                       Check the configuration files for problems.\n"
-		       "  sign [FILE]                Generate a signed version of a file.\n"
-		       "  verify NODE [FILE]         Verify that a file was signed by the given NODE.\n"
+		       "  pcap [snaplen]                     Dump traffic in pcap format [up to snaplen bytes per packet]\n"
+		       "  log [level]                        Dump log output [up to the specified level]\n"
+		       "  export                             Export host configuration of local node to standard output\n"
+		       "  export-all                         Export all host configuration files to standard output\n"
+		       "  export-ed25519-public-key [FILE]   Export ED25519 public key from private\n"
+		       "  import                             Import host configuration file(s) from standard input\n"
+		       "  exchange                           Same as export followed by import\n"
+		       "  exchange-all                       Same as export-all followed by import\n"
+		       "  invite NODE [...]                  Generate an invitation for NODE\n"
+		       "  join INVITATION                    Join a VPN using an INVITATION\n"
+		       "  network [NETNAME]                  List all known networks, or switch to the one named NETNAME.\n"
+		       "  fsck                               Check the configuration files for problems.\n"
+		       "  sign [FILE]                        Generate a signed version of a file.\n"
+		       "  verify NODE [FILE]                 Verify that a file was signed by the given NODE.\n"
 		       "\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -3015,6 +3016,48 @@ static int cmd_verify(int argc, char *argv[]) {
 	return 0;
 }
 
+static int export_ed25519_public_key(int argc, char *argv[]) {
+	if (argc > 2) {
+		fprintf(stderr, "Too many arguments\n");
+		return 1;
+	}
+
+	if (argc == 2 && strlen(argv[1]) < 1) {
+		fprintf(stderr, "Filename is too short\n");
+		return 1;
+	}
+
+	char fname[PATH_MAX];
+	if (argc == 1) {
+		snprintf(fname, sizeof(fname), "%s" SLASH "ed25519_key.priv", confbase);
+	}
+	else {
+		sprintf(fname, "%s", argv[1]);
+	}
+
+	FILE * fp = fopen(fname, "r");
+
+	if(!fp) {
+		fprintf(stderr, "Cannot open %s: %s\n", fname, strerror(errno));
+		return 1;
+	}
+
+	ecdsa_t * key = ecdsa_read_pem_private_key(fp);
+
+	fclose(fp);
+
+	if (!key) {
+		fprintf(stderr, "Private key not found in file or corrupted\n");
+		return 1;
+	}
+
+	printf("%s\n", ecdsa_get_base64_public_key(key));
+
+	free(key);
+
+	return 0;
+}
+
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
@@ -3052,6 +3095,7 @@ static const struct {
 	{"edit", cmd_edit, false},
 	{"export", cmd_export, false},
 	{"export-all", cmd_export_all, false},
+	{"export-ed25519-public-key", export_ed25519_public_key, false},
 	{"import", cmd_import, false},
 	{"exchange", cmd_exchange, false},
 	{"exchange-all", cmd_exchange_all, false},
