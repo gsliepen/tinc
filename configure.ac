@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 origcflags="$CFLAGS"
 
-AC_PREREQ(2.61)
+AC_PREREQ(2.69)
 AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc silent-rules -Wall])
@@ -10,14 +10,11 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
 
-# Enable GNU extensions.
-# Define this here, not in acconfig's @TOP@ section, since definitions
-# in the latter don't make it into the configure-time tests.
-AC_GNU_SOURCE
-AC_DEFINE([__USE_BSD], 1, [Enable BSD extensions])
+AC_USE_SYSTEM_EXTENSIONS
 
 dnl Checks for programs.
-AC_PROG_CC_C99
+AC_PROG_CC
+AC_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
@@ -189,7 +186,6 @@ AC_CHECK_TYPES([struct ether_header, struct arphdr, struct ether_arp, struct ip,
 )
 
 dnl Checks for library functions.
-AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([asprintf daemon fchmod flock fork gettimeofday mlockall putenv recvmmsg strsignal nanosleep unsetenv vsyslog devname fdevname],
   [], [], [#include "$srcdir/src/have.h"]
 )
