@@ -1328,14 +1328,19 @@ static void try_mtu(node_t *n) {
 			const length_t minmtu = MAX(n->minmtu, 512);
 			const float interval = n->maxmtu - minmtu;
 
-			/* The core of the discovery algorithm is this exponential.
-			   It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
-			   This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
-			   are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
-			   on the precise MTU as we are approaching it.
-			   The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
-			   reply per cycle so that we can make progress. */
-			const length_t offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+			length_t offset = 0;
+
+			/* powf can be underflowed if n->maxmtu is less than 512 due to the minmtu MAX bound */			
+			if(interval > 0){
+				/* The core of the discovery algorithm is this exponential.
+					It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
+					This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
+					are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
+					on the precise MTU as we are approaching it.
+					The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
+					reply per cycle so that we can make progress. */
+				offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+			}
 
 			length_t maxmtu = n->maxmtu;
 			send_udp_probe_packet(n, minmtu + offset);
