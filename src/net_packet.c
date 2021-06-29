@@ -1085,14 +1085,14 @@ static void try_sptps(node_t *n) {
 
 static void send_udp_probe_packet(node_t *n, int len) {
 	vpn_packet_t packet;
-	packet.offset = DEFAULT_PACKET_OFFSET;
-	memset(DATA(&packet), 0, 14);
 
 	if(len > sizeof(packet.data)) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %d to %s (%s)", len, n->name, n->hostname);
 		len = sizeof(packet.data);
 	}
 
+	packet.offset = DEFAULT_PACKET_OFFSET;
+	memset(DATA(&packet), 0, 14);
 	randomize(DATA(&packet) + 14, len - 14);
 	packet.len = len;
 	packet.priority = 0;
