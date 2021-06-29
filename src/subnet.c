@@ -44,6 +44,10 @@ static hash_t *ipv4_cache;
 static hash_t *ipv6_cache;
 static hash_t *mac_cache;
 
+hash_alloc_define(ipv4_t)
+hash_alloc_define(ipv6_t)
+hash_alloc_define(mac_t)
+
 void subnet_cache_flush(void) {
 	hash_clear(ipv4_cache);
 	hash_clear(ipv6_cache);
@@ -55,9 +59,9 @@ void subnet_cache_flush(void) {
 void init_subnets(void) {
 	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
 
-	ipv4_cache = hash_alloc(0x100, sizeof(ipv4_t));
-	ipv6_cache = hash_alloc(0x100, sizeof(ipv6_t));
-	mac_cache = hash_alloc(0x100, sizeof(mac_t));
+	ipv4_cache = hash_alloc(0x100, ipv4_t);
+	ipv6_cache = hash_alloc(0x100, ipv6_t);
+	mac_cache = hash_alloc(0x100, mac_t);
 }
 
 void exit_subnets(void) {
@@ -121,7 +125,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Check if this address is cached
 
-	if((r = hash_search(mac_cache, address))) {
+	if((r = hash_search(mac_t, mac_cache, address))) {
 		return r;
 	}
 
@@ -144,7 +148,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 	// Cache the result
 
 	if(r) {
-		hash_insert(mac_cache, address, r);
+		hash_insert(mac_t, mac_cache, address, r);
 	}
 
 	return r;
@@ -155,7 +159,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Check if this address is cached
 
-	if((r = hash_search(ipv4_cache, address))) {
+	if((r = hash_search(ipv4_t, ipv4_cache, address))) {
 		return r;
 	}
 
@@ -178,7 +182,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	// Cache the result
 
 	if(r) {
-		hash_insert(ipv4_cache, address, r);
+		hash_insert(ipv4_t, ipv4_cache, address, r);
 	}
 
 	return r;
@@ -189,7 +193,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Check if this address is cached
 
-	if((r = hash_search(ipv6_cache, address))) {
+	if((r = hash_search(ipv6_t, ipv6_cache, address))) {
 		return r;
 	}
 
@@ -212,7 +216,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	// Cache the result
 
 	if(r) {
-		hash_insert(ipv6_cache, address, r);
+		hash_insert(ipv6_t, ipv6_cache, address, r);
 	}
 
 	return r;
