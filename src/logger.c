@@ -37,19 +37,18 @@ static FILE *logfile = NULL;
 static HANDLE loghandle = NULL;
 #endif
 static const char *logident = NULL;
-bool logcontrol = false;
+bool logcontrol = false; // controlled by REQ_LOG <level>
 int umbilical = 0;
+
+static bool should_log(int level) {
+	return (level <= debug_level && logmode != LOGMODE_NULL) || logcontrol;
+}
 
 static void real_logger(int level, int priority, const char *message) {
 	char timestr[32] = "";
 	static bool suppress = false;
 
-	// Bail out early if there is nothing to do.
 	if(suppress) {
-		return;
-	}
-
-	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL)) {
 		return;
 	}
 
@@ -125,6 +124,10 @@ void logger(int level, int priority, const char *format, ...) {
 	va_list ap;
 	char message[1024] = "";
 
+	if(!should_log(level)) {
+		return;
+	}
+
 	va_start(ap, format);
 	int len = vsnprintf(message, sizeof(message), format, ap);
 	message[sizeof(message) - 1] = 0;
@@ -141,6 +144,10 @@ static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap
 	(void)s_errno;
 	char message[1024];
 	size_t msglen = sizeof(message);
+
+	if(!should_log(DEBUG_ALWAYS)) {
+		return;
+	}
 
 	int len = vsnprintf(message, msglen, format, ap);
 	message[sizeof(message) - 1] = 0;
