@@ -27,8 +27,7 @@
 typedef enum subnet_type_t {
 	SUBNET_MAC = 0,
 	SUBNET_IPV4,
-	SUBNET_IPV6,
-	SUBNET_TYPES            /* Guardian */
+	SUBNET_IPV6
 } subnet_type_t;
 
 typedef struct subnet_mac_t {
@@ -36,13 +35,13 @@ typedef struct subnet_mac_t {
 } subnet_mac_t;
 
 typedef struct subnet_ipv4_t {
-	ipv4_t address;
 	int prefixlength;
+	ipv4_t address;
 } subnet_ipv4_t;
 
 typedef struct subnet_ipv6_t {
-	ipv6_t address;
 	int prefixlength;
+	ipv6_t address;
 } subnet_ipv6_t;
 
 typedef struct subnet_t {
@@ -86,6 +85,7 @@ extern subnet_t *lookup_subnet_mac(const struct node_t *owner, const mac_t *addr
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *address);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *address);
 extern bool dump_subnets(struct connection_t *c);
-extern void subnet_cache_flush(void);
+extern void subnet_cache_flush_tables(void);
+extern void subnet_cache_flush_table(subnet_type_t ipver);
 
 #endif

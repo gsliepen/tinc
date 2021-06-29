@@ -29,6 +29,12 @@
 # define strsignal(p) ""
 #endif
 
+#if _____LP64_____
+#define SUBNET_HASH_SIZE 0x10000
+#else
+#define SUBNET_HASH_SIZE 0x1000
+#endif
+
 /* Other functions */
 
 #include "dropin.h"

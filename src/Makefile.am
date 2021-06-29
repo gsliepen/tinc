@@ -74,7 +74,7 @@ tincd_SOURCES = \
 	event.c event.h \
 	fd_device.c \
 	graph.c graph.h \
-	hash.c hash.h \
+	hash.h \
 	keys.c keys.h \
 	have.h \
 	ipv4.h \
