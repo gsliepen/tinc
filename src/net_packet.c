@@ -1630,7 +1630,7 @@ static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, s
 		pkt->offset = 2 * sizeof(node_id_t);
 		from = lookup_node_id(SRCID(pkt));
 
-		if(from && !memcmp(DSTID(pkt), &nullid, sizeof(nullid)) && from->status.sptps) {
+		if(from && from->status.sptps && !memcmp(DSTID(pkt), &nullid, sizeof(nullid))) {
 			if(sptps_verify_datagram(&from->sptps, DATA(pkt), pkt->len - 2 * sizeof(node_id_t))) {
 				n = from;
 			} else {
@@ -1666,7 +1666,7 @@ skip_harder:
 			pkt->len -= pkt->offset;
 		}
 
-		if(!memcmp(DSTID(pkt), &nullid, sizeof(nullid)) || !relay_enabled) {
+		if(!relay_enabled || !memcmp(DSTID(pkt), &nullid, sizeof(nullid))) {
 			direct = true;
 			from = n;
 			to = myself;
