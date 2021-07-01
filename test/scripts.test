@@ -46,7 +46,7 @@ echo foo-started >>$OUT
 
 echo Inviting client node...
 
-url=`$tinc $c1 -n netname2 invite bar | sed 's/\r//'`
+url=`$tinc $c1 -n netname2 invite bar | tr -d '\r'`
 file=`cd $d1/invitations; ls | grep -v ed25519_key.priv`
 echo bar-invited >>$OUT
 
@@ -126,5 +126,6 @@ subnet-down netname,foo,dummy,,foo,,,fec0::/64,,,,5
 tinc-down netname,foo,dummy,,,,,,,,,5
 EOF
 
-sed -i 's/\r//' $OUT
-cmp $OUT $OUT.expected
+tr -d '\r' <$OUT >$OUT.actual
+
+cmp $OUT.actual $OUT.expected
