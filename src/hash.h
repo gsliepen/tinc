@@ -36,6 +36,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 #define hash_delete(t, ...) hash_delete_ ## t (__VA_ARGS__)
 #define hash_search(t, ...) hash_search_ ## t (__VA_ARGS__)
 #define hash_search_or_insert(t, ...) hash_search_or_insert_ ## t (__VA_ARGS__)
+#define hash_alloc(t, n) hash_alloc_ ## t ((n))
 
 /* Generic hash functions */
 extern void hash_free(hash_t *);
@@ -91,9 +92,5 @@ extern void hash_resize(hash_t *, size_t n);
 		hash->values[i] = NULL; \
 	}
 
-
-
-
-#define hash_alloc(n, t) hash_alloc_ ## t ((n))
 
 #endif

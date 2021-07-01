@@ -59,9 +59,9 @@ void subnet_cache_flush(void) {
 void init_subnets(void) {
 	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
 
-	ipv4_cache = hash_alloc(0x100, ipv4_t);
-	ipv6_cache = hash_alloc(0x100, ipv6_t);
-	mac_cache = hash_alloc(0x100, mac_t);
+	ipv4_cache = hash_alloc(ipv4_t, 0x100);
+	ipv6_cache = hash_alloc(ipv6_t, 0x100);
+	mac_cache = hash_alloc(mac_t, 0x100);
 }
 
 void exit_subnets(void) {
