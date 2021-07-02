@@ -41,13 +41,13 @@ static uint32_t hash_seed;
 
 /* Subnet lookup cache */
 
-static uint32_t hash_function_ipv4_t(const ipv4_t* p) {
+static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 	/*
 	This basic hash works because
 	a) Most IPv4 networks routed via tinc are not /0
 	b) Most IPv4 networks have more unique low order bits
 	*/
-	uint16_t *halfwidth = (uint16_t*)p;
+	uint16_t *halfwidth = (uint16_t *)p;
 	// 10.0.x.x/16 part
 	uint32_t hash = hash_seed;
 	hash += halfwidth[1] * 0x9e370001UL;
@@ -56,23 +56,27 @@ static uint32_t hash_function_ipv4_t(const ipv4_t* p) {
 }
 
 
-static uint32_t hash_function_ipv6_t(const ipv6_t* p) {
-	uint32_t *fullwidth = (uint32_t*)p;
+static uint32_t hash_function_ipv6_t(const ipv6_t *p) {
+	uint32_t *fullwidth = (uint32_t *)p;
 	uint32_t hash = hash_seed;
-	for(int i=0;i<4;i++){
+
+	for(int i = 0; i < 4; i++) {
 		hash += fullwidth[i];
 		hash *= 0x9e370001UL;
 	}
+
 	return hash;
 }
 
-static uint32_t hash_function_mac_t(const mac_t* p) {
-	uint16_t *halfwidth = (uint16_t*)p;
+static uint32_t hash_function_mac_t(const mac_t *p) {
+	uint16_t *halfwidth = (uint16_t *)p;
 	uint32_t hash = hash_seed;
-	for(int i=0;i<3;i++){
+
+	for(int i = 0; i < 3; i++) {
 		hash += halfwidth[i];
 		hash *= 0x9e370001UL;
 	}
+
 	return hash;
 }
 
