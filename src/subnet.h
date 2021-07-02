@@ -87,6 +87,6 @@ extern subnet_t *lookup_subnet_mac(const struct node_t *owner, const mac_t *addr
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *address);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *address);
 extern bool dump_subnets(struct connection_t *c);
-extern void subnet_cache_flush(void);
+extern void subnet_cache_flush_table(subnet_type_t ipver);
 
 #endif
