@@ -25,6 +25,8 @@
 
 uint32_t modulo(uint32_t hash, size_t n);
 
+#define HASH_SEARCH_ITERATIONS 4
+
 #define hash_insert(t, ...) hash_insert_ ## t (__VA_ARGS__)
 #define hash_delete(t, ...) hash_delete_ ## t (__VA_ARGS__)
 #define hash_search(t, ...) hash_search_ ## t (__VA_ARGS__)
@@ -51,19 +53,37 @@ uint32_t modulo(uint32_t hash, size_t n);
 	} \
 	void hash_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
+		for(uint8_t f=0; f< (HASH_SEARCH_ITERATIONS - 1); f++){ \
+			if(hash->values[i] == NULL || !memcmp(key, &hash->keys[i], sizeof(#t))) { \
+				memcpy(&hash->keys[i], key, sizeof(#t)); \
+				hash->values[i] = value; \
+				return; \
+			} \
+			if(++i == n) i = 0; \
+		} \
+		/* We always pick the last slot. It's unfair. But thats life */ \
 		memcpy(&hash->keys[i], key, sizeof(#t)); \
 		hash->values[i] = value; \
 	} \
 	void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
-		if(!memcmp(key, &hash->keys[i], sizeof(#t))) { \
-			return (void *)hash->values[i]; \
+		for(uint8_t f=0; f<HASH_SEARCH_ITERATIONS; f++){ \
+			if(!memcmp(key, &hash->keys[i], sizeof(#t))) { \
+				return (void *)hash->values[i]; \
+			} \
+			if(++i == n) i = 0; \
 		} \
 		return NULL; \
 	} \
 	void hash_delete_ ## t (hash_ ##t *hash, const t *key) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
-		hash->values[i] = NULL; \
+		for(uint8_t f=0; f<HASH_SEARCH_ITERATIONS; f++){ \
+			if(!memcmp(key, &hash->keys[i], sizeof(#t))) { \
+				hash->values[i] = NULL; \
+				return; \
+			} \
+			if(++i == n) i = 0; \
+		} \
 	} \
 	void hash_clear_ ## t(hash_ ##t *hash) { \
 		memset(hash->values, 0, n * sizeof(*hash->values)); \
