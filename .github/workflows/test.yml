@@ -1,0 +1,203 @@
+name: Build and test
+
+on:
+  push:
+    branches:
+      - master
+      - "1.1"
+    tags:
+      - "release-*"
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  test-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+        compiler: [clang, gcc]
+        legacy_protocol: ["", --disable-legacy-protocol]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: ${{ matrix.compiler }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Artistic Style and build deps
+        run: >
+          sudo apt-get install -y --no-install-{recommends,suggests}
+          zlib1g-dev
+          liblzo2-dev
+          libncurses-dev
+          libreadline-dev
+          libminiupnpc-dev
+          libvdeplug-dev
+          astyle
+          socket
+
+      - name: Install OpenSSL
+        run: sudo apt-get install -y libssl-dev
+        if: ${{ matrix.legacy_protocol == '' }}
+
+      - name: Run autoreconf
+        run: autoreconf -fsi
+
+      - name: Run ./configure
+        run: >
+          ./configure 
+          --enable-{miniupnpc,uml,vde}
+          ${{ matrix.legacy_protocol }}
+
+      - name: Check code formatting
+        run: make check-style
+
+      - name: Compile project
+        run: make -j$(nproc)
+
+      - name: Run tests
+        # root is required for some tests
+        run: sudo make check-recursive
+        timeout-minutes: 20
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests_${{ matrix.os }}_${{ matrix.compiler }}
+          path: test/test-suite.log
+        if: failure()
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          # https://packages.msys2.org/package/
+          install: >-
+            base-devel
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-lzo2
+            mingw-w64-x86_64-ncurses
+            mingw-w64-x86_64-miniupnpc
+            git
+
+      - name: Build the project
+        shell: msys2 {0}
+        run: |
+          autoreconf -fsi
+          ./configure --with-curses-include=/mingw64/include/ncurses --disable-readline
+          make -j$(nproc)
+
+      - name: Check that tinc can be started
+        shell: msys2 {0}
+        run: ./src/tinc --version
+
+      - name: Check that tincd can be started
+        shell: msys2 {0}
+        run: ./src/tincd --version
+
+  release-deb:
+    if: startsWith(github.ref, 'refs/tags/release-')
+    needs: test-linux
+
+    strategy:
+      matrix:
+        os: ["ubuntu-18.04", ubuntu-20.04]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install build deps
+        run: >
+          sudo apt-get install -y --no-install-{recommends,suggests}
+          dh-make
+          texinfo
+          libssl-dev
+          zlib1g-dev
+          liblzo2-dev
+          libncurses-dev
+          libreadline-dev
+
+      - name: Run autoreconf
+        run: autoreconf -fsi
+
+      - name: Run ./configure
+        run: >
+          ./configure 
+          --prefix=/usr
+          --sbindir=/usr/sbin
+          --sysconfdir=/etc
+          --localstatedir=/var
+          --with-systemd=/usr/lib/systemd/system
+
+      - name: Prepare debian directory
+        run: >
+          dh_make
+          --yes
+          --single
+          --createorig
+          --copyright gpl2
+          --packagename "tinc_$(git describe --tags --always | sed 's/release-//')-${{ matrix.os }}"
+        env:
+          DEBFULLNAME: Automated Builds
+
+      - name: Build deb package
+        run: dpkg-buildpackage -d -us -uc
+
+      - name: Publish deb package
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ../*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-macos:
+    runs-on: macos-10.15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: brew install coreutils netcat automake lzo miniupnpc
+
+      - name: Run autoreconf
+        run: autoreconf -fsi
+
+      - name: Run ./configure
+        run: >
+          ./configure
+          --with-openssl=/usr/local/opt/openssl@1.1
+          --enable-{tunemu,miniupnpc}
+
+      - name: Compile application
+        run: make -j$(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        run: make check-recursive
+        timeout-minutes: 20
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests_${{ runner.os }}
+          path: test/test-suite.log
+        if: failure()
