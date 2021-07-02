@@ -40,9 +40,9 @@ splay_tree_t *subnet_tree;
 
 /* Subnet lookup cache */
 
-hash_define(ipv4_t, 0x100)
-hash_define(ipv6_t, 0x100)
-hash_define(mac_t, 0x100)
+hash_define(ipv4_t, SUBNET_HASH_SIZE)
+hash_define(ipv6_t, SUBNET_HASH_SIZE)
+hash_define(mac_t, SUBNET_HASH_SIZE)
 
 hash_new(ipv4_t, ipv4_cache);
 hash_new(ipv6_t, ipv6_cache);
