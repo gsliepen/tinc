@@ -26,6 +26,8 @@
 #include "digest.h"
 #include "event.h"
 
+#define EPOL_MAX_EVENTS_PER_LOOP 64
+
 #ifdef ENABLE_JUMBOGRAMS
 #define MTU 9018        /* 9000 bytes payload + 14 bytes ethernet header + 4 bytes VLAN tag */
 #else
@@ -112,6 +114,9 @@ typedef struct listen_socket_t {
 	io_t udp;
 	sockaddr_t sa;
 	bool bindto;
+	vpn_packet_t **packet_buffer;
+	int packet_buffer_size;
+	int packet_buffer_items;
 	int priority;
 } listen_socket_t;
 
@@ -188,7 +193,7 @@ extern int setup_listen_socket(const sockaddr_t *sa);
 extern int setup_vpn_in_socket(const sockaddr_t *sa);
 extern bool send_sptps_data(node_t *to, node_t *from, int type, const void *data, size_t len);
 extern bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t len);
-extern void send_packet(struct node_t *n, vpn_packet_t *packet);
+extern void send_packet(struct node_t *n, vpn_packet_t *packet, bool immediate);
 extern void receive_tcppacket(struct connection_t *c, const char *buffer, size_t length);
 extern bool receive_tcppacket_sptps(struct connection_t *c, const char *buffer, size_t length);
 extern void broadcast_packet(const struct node_t *n, vpn_packet_t *packet);

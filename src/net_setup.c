@@ -43,6 +43,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
+#define PACKETS_TO_BUFFER 128
 #ifdef HAVE_MINIUPNPC
 #include "upnp.h"
 #endif
@@ -62,6 +63,13 @@ bool disablebuggypeers;
 
 char *scriptinterpreter;
 char *scriptextension;
+
+static void setup_packet_buffer(listen_socket_t *socket) {
+	socket->packet_buffer = xmalloc(sizeof(vpn_packet_t *) * PACKETS_TO_BUFFER);
+	memset(socket->packet_buffer, 0, PACKETS_TO_BUFFER);
+	socket->packet_buffer_size = PACKETS_TO_BUFFER;
+	socket->packet_buffer_items = 0;
+}
 
 bool node_read_ecdsa_public_key(node_t *n) {
 	if(ecdsa_active(n->ecdsa)) {
@@ -778,6 +786,8 @@ static bool add_listen_address(char *address, bool bindto) {
 			continue;
 		}
 
+		setup_packet_buffer(&listen_socket[listen_sockets]);
+
 		io_add(&listen_socket[listen_sockets].tcp, handle_new_meta_connection, &listen_socket[listen_sockets], tcp_fd, IO_READ);
 		io_add(&listen_socket[listen_sockets].udp, handle_incoming_vpn_data, &listen_socket[listen_sockets], udp_fd, IO_READ);
 
@@ -1120,6 +1130,8 @@ static bool setup_myself(void) {
 				return false;
 			}
 
+			setup_packet_buffer(&listen_socket[i]);
+
 			io_add(&listen_socket[i].tcp, (io_cb_t)handle_new_meta_connection, &listen_socket[i], i + 3, IO_READ);
 			io_add(&listen_socket[i].udp, (io_cb_t)handle_incoming_vpn_data, &listen_socket[i], udp_fd, IO_READ);
 
@@ -1293,6 +1305,8 @@ void close_network_connections(void) {
 		io_del(&listen_socket[i].udp);
 		close(listen_socket[i].tcp.fd);
 		close(listen_socket[i].udp.fd);
+
+		free(listen_socket[i].packet_buffer);
 	}
 
 	exit_requests();

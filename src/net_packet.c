@@ -49,6 +49,15 @@
 #include "route.h"
 #include "utils.h"
 #include "xalloc.h"
+#include <sys/socket.h>
+#include <sys/uio.h>
+
+typedef struct packet_thread_info_t {
+	listen_socket_t listen_socket;
+	node_t *n;
+	int origlen;
+	const sockaddr_t *sa;
+} packet_thread_info_t;
 
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -64,7 +73,7 @@ int keylifetime = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
 #endif
 
-static void send_udppacket(node_t *, vpn_packet_t *);
+static void send_udppacket(node_t *, vpn_packet_t *, bool);
 
 unsigned replaywin = 32;
 bool localdiscovery = true;
@@ -72,6 +81,8 @@ bool udp_discovery = true;
 int udp_discovery_keepalive_interval = 10;
 int udp_discovery_interval = 2;
 int udp_discovery_timeout = 30;
+
+int packets_exchanged = 0;
 
 #define MAX_SEQNO 1073741824
 
@@ -134,7 +145,7 @@ static void send_udp_probe_reply(node_t *n, vpn_packet_t *packet, length_t len) 
 
 	bool udp_confirmed = n->status.udp_confirmed;
 	n->status.udp_confirmed = true;
-	send_udppacket(n, packet);
+	send_udppacket(n, packet, true);
 	n->status.udp_confirmed = udp_confirmed;
 }
 
@@ -700,7 +711,53 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *so
 	}
 }
 
-static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
+static void send_buffered_packets(packet_thread_info_t *packet_thread_info) {
+	listen_socket_t listen_socket = packet_thread_info->listen_socket;
+	node_t *n = packet_thread_info->n;
+	int origlen = packet_thread_info->origlen;
+	const sockaddr_t *sa = packet_thread_info->sa;
+	int i;
+
+	struct mmsghdr *msghdrs = xmalloc(sizeof(struct mmsghdr) * listen_socket.packet_buffer_items);
+	struct iovec *iovecs = xmalloc(sizeof(struct iovec) * listen_socket.packet_buffer_items);
+
+	for(i = 0; i < listen_socket.packet_buffer_items; i++) {
+		iovecs[i].iov_base = (char *) SEQNO(listen_socket.packet_buffer[i]);
+		iovecs[i].iov_len = listen_socket.packet_buffer[i]->len;
+
+		msghdrs[i].msg_hdr.msg_name = &sa->sa;
+		msghdrs[i].msg_hdr.msg_namelen = SALEN(sa->sa);
+		msghdrs[i].msg_hdr.msg_iov = iovecs + i;
+		msghdrs[i].msg_hdr.msg_iovlen = 1;
+		msghdrs[i].msg_hdr.msg_control = NULL;
+		msghdrs[i].msg_hdr.msg_controllen = 0;
+		msghdrs[i].msg_hdr.msg_flags = 0;
+	}
+
+	if(sendmmsg(listen_socket.udp.fd, msghdrs, listen_socket.packet_buffer_items, 0) < 0 && !sockwouldblock(sockerrno)) {
+		if(sockmsgsize(sockerrno)) {
+			if(n->maxmtu >= origlen) {
+				n->maxmtu = origlen - 1;
+			}
+
+			if(n->mtu >= origlen) {
+				n->mtu = origlen - 1;
+			}
+		} else {
+			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
+		}
+	}
+
+	for(i = 0; i < listen_socket.packet_buffer_items; i++) {
+		free(listen_socket.packet_buffer[i]);
+		listen_socket.packet_buffer[i] = NULL;
+	}
+
+	free(msghdrs);
+	free(iovecs);
+}
+
+static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 	if(!n->status.reachable) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Trying to send UDP packet to unreachable node %s (%s)", n->name, n->hostname);
 		return;
@@ -742,7 +799,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		       n->name, n->hostname, n != n->nexthop ? n->nexthop->name : "TCP");
 
 		if(n != n->nexthop) {
-			send_packet(n->nexthop, origpkt);
+			send_packet(n->nexthop, origpkt, immediate);
 		} else {
 			send_tcppacket(n->nexthop->connection, origpkt);
 		}
@@ -797,9 +854,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 
 	/* Send the packet */
-
 	const sockaddr_t *sa = NULL;
 	int sock;
+	packet_thread_info_t packet_thread_info;
 
 	if(n->status.send_locally) {
 		choose_local_address(n, &sa, &sock);
@@ -841,20 +898,18 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 		}
 	}
 
-	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
-		if(sockmsgsize(sockerrno)) {
-			if(n->maxmtu >= origlen) {
-				n->maxmtu = origlen - 1;
-			}
+	listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items] = xmalloc(sizeof(vpn_packet_t));
+	memcpy(listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items], inpkt, sizeof(vpn_packet_t));
+	listen_socket[sock].packet_buffer_items++;
 
-			if(n->mtu >= origlen) {
-				n->mtu = origlen - 1;
-			}
-
-			try_fix_mtu(n);
-		} else {
-			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
-		}
+	if(listen_socket[sock].packet_buffer_items == listen_socket[sock].packet_buffer_size || packets_exchanged < 2000 || immediate == true) {
+		packet_thread_info.listen_socket = listen_socket[sock];
+		packet_thread_info.n = n;
+		packet_thread_info.origlen = origlen;
+		packet_thread_info.sa = sa;
+		send_buffered_packets(&packet_thread_info);
+		listen_socket[sock].packet_buffer_items = 0;
+		packets_exchanged = packets_exchanged + 1;
 	}
 
 end:
@@ -1099,7 +1154,7 @@ static void send_udp_probe_packet(node_t *n, int len) {
 
 	logger(DEBUG_TRAFFIC, LOG_INFO, "Sending UDP probe length %d to %s (%s)", len, n->name, n->hostname);
 
-	send_udppacket(n, &packet);
+	send_udppacket(n, &packet, true);
 }
 
 // This function tries to establish a UDP tunnel to a node so that packets can be sent.
@@ -1456,7 +1511,8 @@ void try_tx(node_t *n, bool mtu) {
 	}
 }
 
-void send_packet(node_t *n, vpn_packet_t *packet) {
+void send_packet(struct node_t *n, vpn_packet_t *packet, bool immediate) {
+	node_t *via;
 	// If it's for myself, write it to the tun/tap device.
 
 	if(n == myself) {
@@ -1497,7 +1553,7 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 
 	// Determine which node to actually send it to.
 
-	node_t *via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
+	via = (packet->priority == -1 || n->via == myself) ? n->nexthop : n->via;
 
 	if(via != n) {
 		logger(DEBUG_TRAFFIC, LOG_INFO, "Sending packet to %s via %s (%s)", n->name, via->name, n->via->hostname);
@@ -1508,19 +1564,21 @@ void send_packet(node_t *n, vpn_packet_t *packet) {
 	if(packet->priority == -1 || ((myself->options | via->options) & OPTION_TCPONLY)) {
 		if(!send_tcppacket(via->connection, packet)) {
 			terminate_connection(via->connection, true);
+		} else {
+			send_udppacket(via, packet, immediate);
 		}
 
 		return;
 	}
 
-	send_udppacket(via, packet);
+	send_udppacket(via, packet, true);
 	try_tx(via, true);
 }
 
 void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	// Always give ourself a copy of the packet.
 	if(from != myself) {
-		send_packet(myself, packet);
+		send_packet(myself, packet, true);
 	}
 
 	// In TunnelServer mode, do not forward broadcast packets.
@@ -1539,7 +1597,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 	case BMODE_MST:
 		for list_each(connection_t, c, connection_list)
 			if(c->edge && c->status.mst && c != from->nexthop->connection) {
-				send_packet(c->node, packet);
+				send_packet(c->node, packet, true);
 			}
 
 		break;
@@ -1554,7 +1612,7 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet) {
 
 		for splay_each(node_t, n, node_tree)
 			if(n->status.reachable && n != myself && ((n->via == myself && n->nexthop == n) || n->via == n)) {
-				send_packet(n, packet);
+				send_packet(n, packet, true);
 			}
 
 		break;
