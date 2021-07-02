@@ -52,7 +52,13 @@ static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 	uint32_t hash = hash_seed;
 	hash += halfwidth[1] * 0x9e370001UL;
 	// x.x.0.[0-255] part
+
+#if _____LP64_____
 	return hash ^ halfwidth[0];
+#else
+	// ensure that we have a /24 with no collisions on 32bit
+	return hash ^ ntohs(halfwidth[0]);
+#endif
 }
 
 
