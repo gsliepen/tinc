@@ -52,22 +52,22 @@ uint32_t modulo(uint32_t hash, size_t n);
 	} \
 	void hash_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
-		memcpy(hash->keys + i * sizeof(#t), key, sizeof(#t)); \
+		memcpy(&hash->keys[i], key, sizeof(#t)); \
 		hash->values[i] = value; \
 	} \
 	void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
-		if(hash->values[i] && !memcmp(key, hash->keys + i * sizeof(#t), sizeof(#t))) { \
+		if(!memcmp(key, &hash->keys[i], sizeof(#t))) { \
 			return (void *)hash->values[i]; \
 		} \
 		return NULL; \
 	} \
 	void *hash_search_or_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
-		if(hash->values[i] && !memcmp(key, hash->keys + i * sizeof(#t), sizeof(#t))) { \
+		if(!memcmp(key, &hash->keys[i], sizeof(#t))) { \
 			return (void *)hash->values[i]; \
 		} \
-		memcpy(hash->keys + i * sizeof(#t), key, sizeof(#t)); \
+		memcpy(&hash->keys[i], key, sizeof(#t)); \
 		hash->values[i] = value; \
 		return NULL; \
 	} \
