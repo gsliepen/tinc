@@ -40,20 +40,6 @@ uint32_t modulo(uint32_t hash, size_t n);
 	static uint32_t inline hash_modulo_ ## t(uint32_t hash) { \
 		return hash & (n - 1); \
 	} \
-	static uint32_t hash_function_ ## t(const void *p) { \
-		const uint8_t *q = p; \
-		uint32_t hash = 0; \
-		size_t len = sizeof(#t); \
-		while(true) { \
-			for(int i = len > 4 ? 4 : len; --i;) { \
-				hash += (uint32_t)q[len - i] << (8 * i); \
-			} \
-			hash *= 0x9e370001UL; \
-			if(len <= 4) break; \
-			len -= 4; \
-		} \
-		return hash; \
-	} \
 	void hash_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = hash_modulo_ ## t(hash_function_ ## t(key)); \
 		for(uint8_t f=0; f< (HASH_SEARCH_ITERATIONS - 1); f++){ \
