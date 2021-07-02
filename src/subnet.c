@@ -51,10 +51,11 @@ hash_new(mac_t, mac_cache);
 
 void subnet_cache_flush_table(subnet_type_t stype) {
 	// a subnet type of mac/0 means to clear all
-	if(stype != SUBNET_IPV6){ // ipv4
+	if(stype != SUBNET_IPV6) { // ipv4
 		hash_clear(ipv4_t, &ipv4_cache);
 	}
-	if(stype != SUBNET_IPV4){ // ipv6
+
+	if(stype != SUBNET_IPV4) { // ipv6
 		hash_clear(ipv6_t, &ipv6_cache);
 	}
 
@@ -89,20 +90,23 @@ void free_subnet(subnet_t *subnet) {
 	free(subnet);
 }
 
-void subnet_cache_flush(subnet_t *subnet){
-	switch(subnet->type){
-		case SUBNET_IPV4:
-			if(subnet->net.ipv4.prefixlength == 32){
-				hash_delete(ipv4_t, &ipv4_cache, &subnet->net.ipv4);
-				return;
-			}
-			break;
-		case SUBNET_IPV6:
-			if(subnet->net.ipv4.prefixlength == 128){
-				hash_delete(ipv6_t, &ipv6_cache, &subnet->net.ipv6);
-				return;
-			}
-			break;
+void subnet_cache_flush(subnet_t *subnet) {
+	switch(subnet->type) {
+	case SUBNET_IPV4:
+		if(subnet->net.ipv4.prefixlength == 32) {
+			hash_delete(ipv4_t, &ipv4_cache, &subnet->net.ipv4);
+			return;
+		}
+
+		break;
+
+	case SUBNET_IPV6:
+		if(subnet->net.ipv4.prefixlength == 128) {
+			hash_delete(ipv6_t, &ipv6_cache, &subnet->net.ipv6);
+			return;
+		}
+
+		break;
 	}
 
 	subnet_cache_flush_table(subnet->type);
