@@ -18,9 +18,7 @@
 */
 
 #include "system.h"
-
 #include "hash.h"
-#include "xalloc.h"
 
 uint32_t modulo(uint32_t hash, size_t n) {
 	if(n == 0x100) {
