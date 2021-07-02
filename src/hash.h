@@ -20,13 +20,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-typedef struct hash_t {
-	size_t n;
-	size_t size;
-	char *keys;
-	const void **values;
-} hash_t;
-
 
 /* Map 32 bits int onto 0..n-1, without throwing away too many bits if n is 2^8 or 2^16 */
 
@@ -36,14 +29,13 @@ uint32_t modulo(uint32_t hash, size_t n);
 #define hash_delete(t, ...) hash_delete_ ## t (__VA_ARGS__)
 #define hash_search(t, ...) hash_search_ ## t (__VA_ARGS__)
 #define hash_search_or_insert(t, ...) hash_search_or_insert_ ## t (__VA_ARGS__)
-#define hash_alloc(t, n) hash_alloc_ ## t ((n))
+#define hash_clear(t, n) hash_clear_ ## t ((n))
 
-/* Generic hash functions */
-extern void hash_free(hash_t *);
-extern void hash_clear(hash_t *);
-extern void hash_resize(hash_t *, size_t n);
-
-#define hash_alloc_define(t) \
+#define hash_define(t, n) \
+    typedef struct hash_ ## t { \
+        t keys[n]; \
+        const void *values[n]; \
+    } hash_ ## t; \
 	static uint32_t hash_function_ ## t(const void *p) { \
 		const uint8_t *q = p; \
 		uint32_t hash = 0; \
@@ -58,28 +50,20 @@ extern void hash_resize(hash_t *, size_t n);
 		} \
 		return hash; \
 	} \
-	hash_t* hash_alloc_ ## t (size_t n) { \
-		hash_t *hash = xzalloc(sizeof(*hash)); \
-		hash->n = n; \
-		hash->size = sizeof(#t); \
-		hash->keys = xzalloc(hash->n * sizeof(#t)); \
-		hash->values = xzalloc(hash->n * sizeof(*hash->values)); \
-		return hash; \
-	} \
-	void hash_insert_ ## t (hash_t *hash, const void *key, const void *value) { \
-		uint32_t i = modulo(hash_function_ ## t(key), hash->n); \
+	void hash_insert_ ## t (hash_ ##t *hash, const void *key, const void *value) { \
+		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		memcpy(hash->keys + i * sizeof(#t), key, sizeof(#t)); \
 		hash->values[i] = value; \
 	} \
-	void *hash_search_ ## t (const hash_t *hash, const void *key) { \
-		uint32_t i = modulo(hash_function_ ## t(key), hash->n); \
+	void *hash_search_ ## t (const hash_ ##t *hash, const void *key) { \
+		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		if(hash->values[i] && !memcmp(key, hash->keys + i * sizeof(#t), sizeof(#t))) { \
 			return (void *)hash->values[i]; \
 		} \
 		return NULL; \
 	} \
-	void *hash_search_or_insert_ ## t (hash_t *hash, const void *key, const void *value) { \
-		uint32_t i = modulo(hash_function_ ## t(key), hash->n); \
+	void *hash_search_or_insert_ ## t (hash_ ##t *hash, const void *key, const void *value) { \
+		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		if(hash->values[i] && !memcmp(key, hash->keys + i * sizeof(#t), sizeof(#t))) { \
 			return (void *)hash->values[i]; \
 		} \
@@ -87,10 +71,15 @@ extern void hash_resize(hash_t *, size_t n);
 		hash->values[i] = value; \
 		return NULL; \
 	} \
-	void hash_delete_ ## t (hash_t *hash, const void *key) { \
-		uint32_t i = modulo(hash_function_ ## t(key), hash->n); \
+	void hash_delete_ ## t (hash_ ##t *hash, const void *key) { \
+		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		hash->values[i] = NULL; \
-	}
+	} \
+    void hash_clear_ ## t(hash_ ##t *hash) { \
+	    memset(hash->values, 0, n * sizeof(*hash->values)); \
+    }
 
+
+#define hash_new(t, name) static hash_ ## t name
 
 #endif

@@ -31,27 +31,3 @@ uint32_t modulo(uint32_t hash, size_t n) {
 		return hash % n;
 	}
 }
-
-/* (De)allocation */
-
-void hash_free(hash_t *hash) {
-	free(hash->keys);
-	free(hash->values);
-	free(hash);
-}
-
-/* Utility functions */
-
-void hash_clear(hash_t *hash) {
-	memset(hash->values, 0, hash->n * sizeof(*hash->values));
-}
-
-void hash_resize(hash_t *hash, size_t n) {
-	hash->keys = xrealloc(hash->keys, n * hash->size);
-	hash->values = xrealloc(hash->values, n * sizeof(*hash->values));
-
-	if(n > hash->n) {
-		memset(hash->keys + hash->n * hash->size, 0, (n - hash->n) * hash->size);
-		memset(hash->values + hash->n, 0, (n - hash->n) * sizeof(*hash->values));
-	}
-}

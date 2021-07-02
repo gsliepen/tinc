@@ -40,36 +40,29 @@ splay_tree_t *subnet_tree;
 
 /* Subnet lookup cache */
 
-static hash_t *ipv4_cache;
-static hash_t *ipv6_cache;
-static hash_t *mac_cache;
+hash_define(ipv4_t, 0x100)
+hash_define(ipv6_t, 0x100)
+hash_define(mac_t, 0x100)
 
-hash_alloc_define(ipv4_t)
-hash_alloc_define(ipv6_t)
-hash_alloc_define(mac_t)
+hash_new(ipv4_t, ipv4_cache);
+hash_new(ipv6_t, ipv6_cache);
+hash_new(mac_t, mac_cache);
+
 
 void subnet_cache_flush(void) {
-	hash_clear(ipv4_cache);
-	hash_clear(ipv6_cache);
-	hash_clear(mac_cache);
+	hash_clear(ipv4_t, &ipv4_cache);
+	hash_clear(ipv6_t, &ipv6_cache);
+	hash_clear(mac_t, &mac_cache);
 }
 
 /* Initialising trees */
 
 void init_subnets(void) {
 	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
-
-	ipv4_cache = hash_alloc(ipv4_t, 0x100);
-	ipv6_cache = hash_alloc(ipv6_t, 0x100);
-	mac_cache = hash_alloc(mac_t, 0x100);
 }
 
 void exit_subnets(void) {
 	splay_delete_tree(subnet_tree);
-
-	hash_free(ipv4_cache);
-	hash_free(ipv6_cache);
-	hash_free(mac_cache);
 }
 
 splay_tree_t *new_subnet_tree(void) {
@@ -125,7 +118,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Check if this address is cached
 
-	if((r = hash_search(mac_t, mac_cache, address))) {
+	if((r = hash_search(mac_t, &mac_cache, address))) {
 		return r;
 	}
 
@@ -148,7 +141,7 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 	// Cache the result
 
 	if(r) {
-		hash_insert(mac_t, mac_cache, address, r);
+		hash_insert(mac_t, &mac_cache, address, r);
 	}
 
 	return r;
@@ -159,7 +152,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Check if this address is cached
 
-	if((r = hash_search(ipv4_t, ipv4_cache, address))) {
+	if((r = hash_search(ipv4_t, &ipv4_cache, address))) {
 		return r;
 	}
 
@@ -182,7 +175,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 	// Cache the result
 
 	if(r) {
-		hash_insert(ipv4_t, ipv4_cache, address, r);
+		hash_insert(ipv4_t, &ipv4_cache, address, r);
 	}
 
 	return r;
@@ -193,7 +186,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Check if this address is cached
 
-	if((r = hash_search(ipv6_t, ipv6_cache, address))) {
+	if((r = hash_search(ipv6_t, &ipv6_cache, address))) {
 		return r;
 	}
 
@@ -216,7 +209,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 	// Cache the result
 
 	if(r) {
-		hash_insert(ipv6_t, ipv6_cache, address, r);
+		hash_insert(ipv6_t, &ipv6_cache, address, r);
 	}
 
 	return r;
