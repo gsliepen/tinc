@@ -6,7 +6,7 @@ SUBDIRS =  src doc test systemd bash_completion.d
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = COPYING.README README.android
+EXTRA_DIST = COPYING.README README.android SECURITY.md
 
 @CODE_COVERAGE_RULES@
 
