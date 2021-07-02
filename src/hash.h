@@ -50,19 +50,19 @@ uint32_t modulo(uint32_t hash, size_t n);
 		} \
 		return hash; \
 	} \
-	void hash_insert_ ## t (hash_ ##t *hash, const void *key, const void *value) { \
+	void hash_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		memcpy(hash->keys + i * sizeof(#t), key, sizeof(#t)); \
 		hash->values[i] = value; \
 	} \
-	void *hash_search_ ## t (const hash_ ##t *hash, const void *key) { \
+	void *hash_search_ ## t (const hash_ ##t *hash, const t *key) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		if(hash->values[i] && !memcmp(key, hash->keys + i * sizeof(#t), sizeof(#t))) { \
 			return (void *)hash->values[i]; \
 		} \
 		return NULL; \
 	} \
-	void *hash_search_or_insert_ ## t (hash_ ##t *hash, const void *key, const void *value) { \
+	void *hash_search_or_insert_ ## t (hash_ ##t *hash, const t *key, const void *value) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		if(hash->values[i] && !memcmp(key, hash->keys + i * sizeof(#t), sizeof(#t))) { \
 			return (void *)hash->values[i]; \
@@ -71,7 +71,7 @@ uint32_t modulo(uint32_t hash, size_t n);
 		hash->values[i] = value; \
 		return NULL; \
 	} \
-	void hash_delete_ ## t (hash_ ##t *hash, const void *key) { \
+	void hash_delete_ ## t (hash_ ##t *hash, const t *key) { \
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		hash->values[i] = NULL; \
 	} \
