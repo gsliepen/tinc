@@ -32,10 +32,10 @@ uint32_t modulo(uint32_t hash, size_t n);
 #define hash_clear(t, n) hash_clear_ ## t ((n))
 
 #define hash_define(t, n) \
-    typedef struct hash_ ## t { \
-        t keys[n]; \
-        const void *values[n]; \
-    } hash_ ## t; \
+	typedef struct hash_ ## t { \
+		t keys[n]; \
+		const void *values[n]; \
+	} hash_ ## t; \
 	static uint32_t hash_function_ ## t(const void *p) { \
 		const uint8_t *q = p; \
 		uint32_t hash = 0; \
@@ -75,9 +75,9 @@ uint32_t modulo(uint32_t hash, size_t n);
 		uint32_t i = modulo(hash_function_ ## t(key), n); \
 		hash->values[i] = NULL; \
 	} \
-    void hash_clear_ ## t(hash_ ##t *hash) { \
-	    memset(hash->values, 0, n * sizeof(*hash->values)); \
-    }
+	void hash_clear_ ## t(hash_ ##t *hash) { \
+		memset(hash->values, 0, n * sizeof(*hash->values)); \
+	}
 
 
 #define hash_new(t, name) static hash_ ## t name
