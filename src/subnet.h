@@ -36,13 +36,13 @@ typedef struct subnet_mac_t {
 } subnet_mac_t;
 
 typedef struct subnet_ipv4_t {
-	ipv4_t address;
 	int prefixlength;
+	ipv4_t address;
 } subnet_ipv4_t;
 
 typedef struct subnet_ipv6_t {
-	ipv6_t address;
 	int prefixlength;
+	ipv6_t address;
 } subnet_ipv6_t;
 
 typedef struct subnet_t {
