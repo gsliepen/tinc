@@ -21,20 +21,20 @@
 
 #ifdef HAVE_MINGW
 static const char *winerror(int err) {
-        static char buf[1024], *ptr;
+	static char buf[1024], *ptr;
 
-        ptr = buf + snprintf(buf, sizeof(buf), "(%d) ", err);
+	ptr = buf + snprintf(buf, sizeof(buf), "(%d) ", err);
 
-        if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                          NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
-                strncpy(buf, "(unable to format errormessage)", sizeof(buf));
-        };
+	if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	                  NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
+		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
+	};
 
-        if((ptr = strchr(buf, '\r'))) {
-                *ptr = '\0';
-        }
+	if((ptr = strchr(buf, '\r'))) {
+		*ptr = '\0';
+	}
 
-        return buf;
+	return buf;
 }
 
 #define strerror(x) ((x)>0?strerror(x):winerror(GetLastError()))
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 	hint.ai_protocol = IPPROTO_TCP;
 	hint.ai_flags = 0;
 
-	for (int i = 0; i < 2; i++) {
+	for(int i = 0; i < 2; i++) {
 		if(getaddrinfo(argv[2 + 3 * i], argv[3 + 3 * i], &hint, &ai) || !ai) {
 			fprintf(stderr, "getaddrinfo() failed: %s\n", sockstrerror(sockerrno));
 			return 1;
@@ -100,14 +100,15 @@ int main(int argc, char *argv[]) {
 
 		/* Pretend to be the other one */
 		int len = snprintf(buf, sizeof buf, "0 %s %s\n", argv[4 - 3 * i], protocol);
-		if (send(sock[i], buf, len, 0) != len) {
+
+		if(send(sock[i], buf, len, 0) != len) {
 			fprintf(stderr, "Error sending data to %s: %s\n", argv[1 + 3 * i], sockstrerror(sockerrno));
 			return 1;
 		}
 
 		/* Ignore the response */
 		do {
-			if (recv(sock[i], buf, 1, 0) != 1) {
+			if(recv(sock[i], buf, 1, 0) != 1) {
 				fprintf(stderr, "Error reading data from %s: %s\n", argv[1 + 3 * i], sockstrerror(sockerrno));
 				return 1;
 			}
@@ -128,7 +129,7 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 
-		for(int i = 0; i < 2; i++ ) {
+		for(int i = 0; i < 2; i++) {
 			if(FD_ISSET(sock[i], &fds)) {
 				ssize_t len = recv(sock[i], buf, sizeof buf, 0);
 
