@@ -1076,7 +1076,7 @@ static bool invitation_send(void *handle, uint8_t type, const void *vdata, size_
 	while(len) {
 		int result = send(sock, data, len, 0);
 
-		if(result == -1 && errno == EINTR) {
+		if(result == -1 && sockwouldblock(sockerrno)) {
 			continue;
 		} else if(result <= 0) {
 			return false;
@@ -1324,11 +1324,21 @@ next:
 
 	while((len = recv(sock, line, sizeof(line), 0))) {
 		if(len < 0) {
-			if(errno == EINTR) {
+			if(sockwouldblock(sockerrno)) {
 				continue;
 			}
 
-			fprintf(stderr, "Error reading data from %s port %s: %s\n", address, port, strerror(errno));
+#if HAVE_MINGW
+
+			// If socket has been shut down, recv() on Windows returns -1 and sets sockerrno
+			// to WSAESHUTDOWN, while on UNIX-like operating systems recv() returns 0, so we
+			// have to do an explicit check here.
+			if(sockshutdown(sockerrno)) {
+				break;
+			}
+
+#endif
+			fprintf(stderr, "Error reading data from %s port %s: %s\n", address, port, sockstrerror(sockerrno));
 			return 1;
 		}
 

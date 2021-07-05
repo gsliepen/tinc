@@ -38,6 +38,7 @@ extern const char *winerror(int);
 #define sockinprogress(x) ((x) == WSAEINPROGRESS || (x) == WSAEWOULDBLOCK)
 #define sockinuse(x) ((x) == WSAEADDRINUSE)
 #define socknotconn(x) ((x) == WSAENOTCONN)
+#define sockshutdown(x) ((x) == WSAESHUTDOWN)
 #else
 #define sockerrno errno
 #define sockstrerror(x) strerror(x)
