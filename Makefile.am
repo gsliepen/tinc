@@ -6,7 +6,7 @@ SUBDIRS =  src doc test systemd bash_completion.d
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = COPYING.README README.android
+EXTRA_DIST = COPYING.README README.android SECURITY.md
 
 @CODE_COVERAGE_RULES@
 
@@ -35,6 +35,9 @@ release:
 	echo "Please edit the NEWS file now..."
 	/usr/bin/editor $(srcdir)/NEWS
 	$(MAKE) dist
+
+check-style:
+	astyle --options=.astylerc --dry-run -nQ src/*.[ch] src/*/*.[ch]
 
 astyle:
 	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]

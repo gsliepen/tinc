@@ -75,7 +75,7 @@ $tinc $c2 set ExperimentalProtocol no
 $tinc $c1 start $r1
 $tinc $c2 start $r2
 
-sleep 1
+sleep 5
 
 test `$tinc $c1 dump reachable nodes | wc -l` = 1
 test `$tinc $c2 dump reachable nodes | wc -l` = 1
