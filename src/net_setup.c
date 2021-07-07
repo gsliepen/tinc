@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2021 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -215,7 +215,7 @@ static bool read_ecdsa_private_key(void) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading Ed25519 private key file `%s': %s", fname, strerror(errno));
 
 		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 keypair with `tinc -n %s generate-ed25519-keys'.", netname ? netname : ".");
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an Ed25519 key pair with `tinc -n %s generate-ed25519-keys'.", netname ? netname : ".");
 		}
 
 		free(fname);
@@ -307,7 +307,7 @@ static bool read_rsa_private_key(void) {
 		       fname, strerror(errno));
 
 		if(errno == ENOENT) {
-			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA keypair with `tinc -n %s generate-rsa-keys'.", netname ? netname : ".");
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an RSA key pair with `tinc -n %s generate-rsa-keys'.", netname ? netname : ".");
 		}
 
 		free(fname);
@@ -1053,10 +1053,14 @@ static bool setup_myself(void) {
 			devops = raw_socket_devops;
 		} else if(!strcasecmp(type, "multicast")) {
 			devops = multicast_devops;
-		} else if(!strcasecmp(type, "fd")) {
+		}
+
+#ifdef HAVE_SYS_UN_H
+		else if(!strcasecmp(type, "fd")) {
 			devops = fd_devops;
 		}
 
+#endif
 #ifdef ENABLE_UML
 		else if(!strcasecmp(type, "uml")) {
 			devops = uml_devops;

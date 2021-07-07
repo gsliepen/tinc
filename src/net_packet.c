@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2021 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -545,7 +545,10 @@ bool receive_tcppacket_sptps(connection_t *c, const char *data, size_t len) {
 	/* If we're not the final recipient, relay the packet. */
 
 	if(to != myself) {
-		send_sptps_data(to, from, 0, data, len);
+		if(to->status.validkey) {
+			send_sptps_data(to, from, 0, data, len);
+		}
+
 		try_tx(to, true);
 		return true;
 	}
@@ -1082,6 +1085,12 @@ static void try_sptps(node_t *n) {
 
 static void send_udp_probe_packet(node_t *n, int len) {
 	vpn_packet_t packet;
+
+	if(len > sizeof(packet.data)) {
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Truncating probe length %d to %s (%s)", len, n->name, n->hostname);
+		len = sizeof(packet.data);
+	}
+
 	packet.offset = DEFAULT_PACKET_OFFSET;
 	memset(DATA(&packet), 0, 14);
 	randomize(DATA(&packet) + 14, len - 14);
@@ -1324,14 +1333,19 @@ static void try_mtu(node_t *n) {
 			const length_t minmtu = MAX(n->minmtu, 512);
 			const float interval = n->maxmtu - minmtu;
 
-			/* The core of the discovery algorithm is this exponential.
-			   It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
-			   This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
-			   are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
-			   on the precise MTU as we are approaching it.
-			   The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
-			   reply per cycle so that we can make progress. */
-			const length_t offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+			length_t offset = 0;
+
+			/* powf can be underflowed if n->maxmtu is less than 512 due to the minmtu MAX bound */
+			if(interval > 0) {
+				/* The core of the discovery algorithm is this exponential.
+				        It produces very large probes early in the cycle, and then it very quickly decreases the probe size.
+				        This reflects the fact that in the most difficult cases, we don't get any feedback for probes that
+				        are too large, and therefore we need to concentrate on small offsets so that we can quickly converge
+				        on the precise MTU as we are approaching it.
+				        The last probe of the cycle is always 1 byte in size - this is to make sure we'll get at least one
+				        reply per cycle so that we can make progress. */
+				offset = powf(interval, multiplier * cycle_position / (probes_per_cycle - 1));
+			}
 
 			length_t maxmtu = n->maxmtu;
 			send_udp_probe_packet(n, minmtu + offset);
@@ -1627,7 +1641,7 @@ static void handle_incoming_vpn_packet(listen_socket_t *ls, vpn_packet_t *pkt, s
 		pkt->offset = 2 * sizeof(node_id_t);
 		from = lookup_node_id(SRCID(pkt));
 
-		if(from && !memcmp(DSTID(pkt), &nullid, sizeof(nullid)) && from->status.sptps) {
+		if(from && from->status.sptps && !memcmp(DSTID(pkt), &nullid, sizeof(nullid))) {
 			if(sptps_verify_datagram(&from->sptps, DATA(pkt), pkt->len - 2 * sizeof(node_id_t))) {
 				n = from;
 			} else {
@@ -1663,7 +1677,7 @@ skip_harder:
 			pkt->len -= pkt->offset;
 		}
 
-		if(!memcmp(DSTID(pkt), &nullid, sizeof(nullid)) || !relay_enabled) {
+		if(!relay_enabled || !memcmp(DSTID(pkt), &nullid, sizeof(nullid))) {
 			direct = true;
 			from = n;
 			to = myself;

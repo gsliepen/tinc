@@ -1,6 +1,6 @@
 /*
     event.c -- I/O, timeout and signal event handling
-    Copyright (C) 2012-2018 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012-2021 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -435,12 +435,12 @@ bool event_loop(void) {
 				break;
 			}
 
-			if(result >= event_count - event_offset) {
-				return(false);
+			if(result < WSA_WAIT_EVENT_0 || result >= WSA_WAIT_EVENT_0 + event_count - event_offset) {
+				return false;
 			}
 
 			/* Look up io in the map by index. */
-			event_index = result - event_offset;
+			event_index = result - WSA_WAIT_EVENT_0 + event_offset;
 			io_t *io = io_map[event_index];
 
 			if(io->fd == -1) {

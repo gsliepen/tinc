@@ -1,7 +1,7 @@
 /*
     fd_device.c -- Interaction with Android tun fd
     Copyright (C)   2001-2005   Ivo Timmermans,
-                    2001-2016   Guus Sliepen <guus@tinc-vpn.org>
+                    2001-2021   Guus Sliepen <guus@tinc-vpn.org>
                     2009        Grzegorz Dymarek <gregd72002@googlemail.com>
                     2016-2020   Pacien TRAN-GIRARD <pacien@pacien.net>
 
@@ -20,9 +20,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include "system.h"
+
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 
-#include "system.h"
 #include "conf.h"
 #include "device.h"
 #include "ethernet.h"
@@ -83,7 +85,7 @@ static int read_fd(int socket) {
 
 	if(cmsgptr->cmsg_len != CMSG_LEN(sizeof(device_fd))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Wrong CMSG data length: %lu, expected %lu!",
-		       (unsigned long)cmsgptr->cmsg_len, CMSG_LEN(sizeof(device_fd)));
+		       (unsigned long)cmsgptr->cmsg_len, (unsigned long)CMSG_LEN(sizeof(device_fd)));
 		return -1;
 	}
 
@@ -234,3 +236,4 @@ const devops_t fd_devops = {
 	.read = read_packet,
 	.write = write_packet,
 };
+#endif

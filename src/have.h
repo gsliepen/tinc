@@ -4,7 +4,7 @@
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2003-2016 Guus Sliepen <guus@tinc-vpn.org>
+                  2003-2021 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2018 Ivo Timmermans,
+Copyright @copyright{} 1998-2021 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -43,7 +43,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2018 Ivo Timmermans,
+Copyright @copyright{} 1998-2021 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -267,7 +267,7 @@ alias char-major-10-200 tun
 @subsection Configuration of FreeBSD kernels
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in the default kernel configuration.
-The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}.
+The tap driver can be loaded with @command{kldload if_tap}, or by adding @samp{if_tap_load="YES"} to @file{/boot/loader.conf}.
 
 
 @c ==================================================================
@@ -308,7 +308,7 @@ Tinc also supports the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices,
 
 By default, tinc expects the tuntaposx driver to be installed.
-To use the utun driver, set add @code{Device = utunX} to @file{tinc.conf},
+To use the utun driver, set add @samp{Device = utunX} to @file{tinc.conf},
 where X is the desired number for the utun interface.
 You can also omit the number, in which case the first free number will be chosen.
 
@@ -421,7 +421,7 @@ by the zlib library.
 
 If this library is not installed, you will get an error when running the
 configure script.  You can either install the zlib library, or disable support
-for zlib compression by using the "--disable-zlib" option when running the
+for zlib compression by using the @option{--disable-zlib} option when running the
 configure script. Note that if you disable support for zlib, the resulting
 binary will not work correctly on VPNs where zlib compression is used.
 
@@ -445,7 +445,7 @@ Another form of compression is offered using the LZO library.
 
 If this library is not installed, you will get an error when running the
 configure script.  You can either install the LZO library, or disable support
-for LZO compression by using the "--disable-lzo" option when running the
+for LZO compression by using the @option{--disable-lzo} option when running the
 configure script. Note that if you disable support for LZO, the resulting
 binary will not work correctly on VPNs where LZO compression is used.
 
@@ -465,12 +465,12 @@ default).
 @subsection libcurses
 
 @cindex libcurses
-For the "tinc top" command, tinc requires a curses library.
+For the @command{tinc top} command, tinc requires a curses library.
 
 If this library is not installed, you will get an error when running the
 configure script.  You can either install a suitable curses library, or disable
 all functionality that depends on a curses library by using the
-"--disable-curses" option when running the configure script.
+@option{--disable-curses} option when running the configure script.
 
 There are several curses libraries. It is recommended that you install
 "ncurses" (@url{https://invisible-island.net/ncurses/}),
@@ -488,12 +488,12 @@ of this package.
 @subsection libreadline
 
 @cindex libreadline
-For the "tinc" command's shell functionality, tinc uses the readline library.
+For the @command{tinc} command's shell functionality, tinc uses the readline library.
 
 If this library is not installed, you will get an error when running the
 configure script.  You can either install a suitable readline library, or
 disable all functionality that depends on a readline library by using the
-"--disable-readline" option when running the configure script.
+@option{--disable-readline} option when running the configure script.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
@@ -627,7 +627,7 @@ myvpn 10.0.0.0
 
 @cindex port numbers
 You may add this line to @file{/etc/services}.  The effect is that you
-may supply a @samp{tinc} as a valid port number to some programs.  The
+may supply @samp{tinc} as a valid port number to some programs.  The
 number 655 is registered with the IANA.
 
 @example
@@ -683,14 +683,14 @@ A good resource on networking is the
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
-First, create the initial configuration files and public/private keypairs using the following command:
+First, create the initial configuration files and public/private key pairs using the following command:
 @example
 tinc -n @var{NETNAME} init @var{NAME}
 @end example
-Second, use @samp{tinc -n @var{NETNAME} add ...} to further configure tinc.
-Finally, export your host configuration file using @samp{tinc -n @var{NETNAME} export} and send it to those
+Second, use @command{tinc -n @var{NETNAME} add ...} to further configure tinc.
+Finally, export your host configuration file using @command{tinc -n @var{NETNAME} export} and send it to those
 people or computers you want tinc to connect to.
-They should send you their host configuration file back, which you can import using @samp{tinc -n @var{NETNAME} import}.
+They should send you their host configuration file back, which you can import using @command{tinc -n @var{NETNAME} import}.
 
 These steps are described in the subsections below.
 
@@ -942,7 +942,7 @@ Also note that this can cause decrypted VPN packets to be sent out on a real net
 @cindex fd
 @item fd
 Use a file descriptor, given directly as an integer or passed through a unix domain socket.
-On Linux, an abstract socket address can be specified by using "@" as a prefix.
+On Linux, an abstract socket address can be specified by using @samp{@@} as a prefix.
 All packets are read from this interface.
 Packets received for the local node are written to it.
 
@@ -1013,7 +1013,7 @@ When this option is enabled, the SPTPS protocol will be used when connecting to 
 Ephemeral ECDH will be used for key exchanges,
 and Ed25519 will be used instead of RSA for authentication.
 When enabled, an Ed25519 key must have been generated before with
-@samp{tinc generate-ed25519-keys}.
+@command{tinc generate-ed25519-keys}.
 
 @cindex Forwarding
 @item Forwarding = <off|internal|kernel> (internal) [experimental]
@@ -1070,7 +1070,7 @@ in which case listening sockets for each specified address are made.
 
 If no @var{port} is specified, the socket will listen on the port specified by the Port option,
 or to port 655 if neither is given.
-To only listen on a specific port but not to a specific address, use "*" for the @var{address}.
+To only listen on a specific port but not to a specific address, use @samp{*} for the @var{address}.
 
 @cindex LocalDiscovery
 @item LocalDiscovery = <yes | no> (no)
@@ -1130,7 +1130,7 @@ impossible to crack a single key.
 @cindex MACExpire
 @item MACExpire = <@var{seconds}> (600)
 This option controls the amount of time MAC addresses are kept before they are removed.
-This only has effect when Mode is set to "switch".
+This only has effect when Mode is set to @samp{switch}.
 
 @cindex MaxConnectionBurst
 @item MaxConnectionBurst = <@var{count}> (100)
@@ -1174,7 +1174,7 @@ accidental eavesdropping if you are editing the configuration file.
 @cindex PrivateKeyFile
 @item PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/rsa_key.priv})
 This is the full path name of the RSA private key file that was
-generated by @samp{tinc generate-keys}.  It must be a full path, not a
+generated by @command{tinc generate-keys}.  It must be a full path, not a
 relative directory.
 
 @cindex ProcessPriority
@@ -1276,7 +1276,7 @@ Note: this setting can have a significant impact on performance, especially raw 
 @item UPnP = <yes|udponly|no> (no)
 If this option is enabled then tinc will search for UPnP-IGD devices on the local network.
 It will then create and maintain port mappings for tinc's listening TCP and UDP ports.
-If set to "udponly", tinc will only create a mapping for its UDP (data) port, not for its TCP (metaconnection) port.
+If set to @samp{udponly}, tinc will only create a mapping for its UDP (data) port, not for its TCP (metaconnection) port.
 Note that tinc must have been built with miniupnpc support for this feature to be available.
 Furthermore, be advised that enabling this can have security implications, because the miniupnpc library that
 tinc uses might not be well-hardened with regard to malicious UPnP replies.
@@ -1311,7 +1311,7 @@ tried until a working connection has been established.
 @item Cipher = <@var{cipher}> (blowfish)
 The symmetric cipher algorithm used to encrypt UDP packets using the legacy protocol.
 Any cipher supported by LibreSSL or OpenSSL is recognized.
-Furthermore, specifying "none" will turn off packet encryption.
+Furthermore, specifying @samp{none} will turn off packet encryption.
 It is best to use only those ciphers which support CBC mode.
 This option has no effect for connections using the SPTPS protocol, which always use AES-256-CTR.
 
@@ -1331,7 +1331,7 @@ Possible values are 0 (off), 1 (fast zlib) and any integer up to 9 (best zlib),
 @item Digest = <@var{digest}> (sha1)
 The digest algorithm used to authenticate UDP packets using the legacy protocol.
 Any digest supported by LibreSSL or OpenSSL is recognized.
-Furthermore, specifying "none" will turn off packet authentication.
+Furthermore, specifying @samp{none} will turn off packet authentication.
 This option has no effect for connections using the SPTPS protocol, which always use HMAC-SHA-256.
 
 @cindex IndirectData
@@ -1372,7 +1372,7 @@ This is the RSA public key for this host.
 @cindex PublicKeyFile
 @item PublicKeyFile = <@var{path}> [obsolete]
 This is the full path name of the RSA public key file that was generated
-by @samp{tinc generate-keys}.  It must be a full path, not a relative
+by @command{tinc generate-keys}.  It must be a full path, not a relative
 directory.
 
 @cindex PEM format
@@ -1546,7 +1546,7 @@ this is set to the invitation URL that has been created.
 @end table
 
 Do not forget that under UNIX operating systems,
-you have to make the scripts executable, using the command @samp{chmod a+x script}.
+you have to make the scripts executable, using the command @command{chmod a+x script}.
 
 
 @c ==================================================================
@@ -1555,13 +1555,13 @@ you have to make the scripts executable, using the command @samp{chmod a+x scrip
 
 @subsubheading Step 1.  Creating initial configuration files.
 
-The initial directory structure, configuration files and public/private keypairs are created using the following command:
+The initial directory structure, configuration files and public/private key pairs are created using the following command:
 
 @example
 tinc -n @var{netname} init @var{name}
 @end example
 
-(You will need to run this as root, or use "sudo".)
+(You will need to run this as root, or use @command{sudo}.)
 This will create the configuration directory @file{@value{sysconfdir}/tinc/@var{netname}.},
 and inside it will create another directory named @file{hosts/}.
 In the configuration directory, it will create the file @file{tinc.conf} with the following contents:
@@ -1695,8 +1695,8 @@ The netmask is the mask of the @emph{entire} VPN network, not just your
 own subnet.
 The second command gives the interface an IPv6 address and netmask,
 which will also automatically add an IPv6 route.
-If you only want to use "ip addr" commands on Linux, don't forget that it doesn't bring the interface up, unlike ifconfig,
-so you need to add @samp{ip link set $INTERFACE up} in that case.
+If you only want to use @command{ip addr} commands on Linux, don't forget that it doesn't bring the interface up, unlike ifconfig,
+so you need to add @command{ip link set $INTERFACE up} in that case.
 
 The exact syntax of the ifconfig and route commands differs from platform to platform.
 You can look up the commands for setting addresses and adding routes in @ref{Platform specific information},
@@ -1736,7 +1736,7 @@ the real interface is also shown as a comment, to give you an idea of
 how these example host is set up. All branches use the netname `company'
 for this particular VPN.
 
-Each branch is set up using the @samp{tinc init} and @samp{tinc config} commands,
+Each branch is set up using the @command{tinc init} and @command{tinc config} commands,
 here we just show the end results:
 
 @subsubheading For Branch A
@@ -1882,7 +1882,7 @@ Address = 4.5.6.7
 
 @subsubheading Key files
 
-A, B, C and D all have their own public/private keypairs:
+A, B, C and D all have their own public/private key pairs:
 
 The private RSA key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
 the private Ed25519 key is stored in @file{@value{sysconfdir}/tinc/company/ed25519_key.priv},
@@ -2138,7 +2138,7 @@ Some of them will only be visible if the debug level is high enough.
 @item Error reading RSA key file `rsa_key.priv': No such file or directory
 
 @itemize
-@item You forgot to create a public/private keypair.
+@item You forgot to create a public/private key pair.
 @item Specify the complete pathname to the private key file with the @samp{PrivateKeyFile} option.
 @end itemize
 
@@ -2206,8 +2206,8 @@ You can add @samp{TCPOnly = yes} to host configuration files to force all VPN tr
 @item Got bad/bogus/unauthorized REQUEST from foo (1.2.3.4 port 12345)
 
 @itemize
-@item Node foo does not have the right public/private keypair.
-Generate new keypairs and distribute them again.
+@item Node foo does not have the right public/private key pair.
+Generate new key pairs and distribute them again.
 @item An attacker tries to gain access to your VPN.
 @item A network error caused corruption of metadata sent from foo.
 @end itemize
@@ -2227,7 +2227,7 @@ Be sure to include the following information in your bugreport:
 @item What platform (operating system, version, hardware architecture) and which version of tinc you use.
 @item If compiling tinc fails, a copy of @file{config.log} and the error messages you get.
 @item Otherwise, a copy of @file{tinc.conf}, @file{tinc-up} and all files in the @file{hosts/} directory.
-@item The output of the commands @samp{ifconfig -a} and @samp{route -n} (or @samp{netstat -rn} if that doesn't work).
+@item The output of the commands @command{ifconfig -a} and @command{route -n} (or @command{netstat -rn} if that doesn't work).
 @item The output of any command that fails to work as it should (like ping or traceroute).
 @end itemize
 
@@ -2308,11 +2308,11 @@ the value of this environment variable is used.
 @section tinc commands
 
 @c from the manpage
-@table @code
+@table @samp
 
 @cindex init
 @item init [@var{name}]
-Create initial configuration files and RSA and Ed25519 keypairs with default length.
+Create initial configuration files and RSA and Ed25519 key pairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
 @cindex get
@@ -2375,15 +2375,15 @@ If no @var{URL} is given, it will be read from standard input.
 
 @cindex start
 @item start [tincd options]
-Start @samp{tincd}, optionally with the given extra options.
+Start @command{tincd}, optionally with the given extra options.
 
 @cindex stop
 @item stop
-Stop @samp{tincd}.
+Stop @command{tincd}.
 
 @cindex restart
 @item restart [tincd options]
-Restart @samp{tincd}, optionally with the given extra options.
+Restart @command{tincd}, optionally with the given extra options.
 
 @cindex reload
 @item reload
@@ -2393,21 +2393,21 @@ in @file{tinc.conf} will be made.
 
 @cindex pid
 @item pid
-Shows the PID of the currently running @samp{tincd}.
+Shows the PID of the currently running @command{tincd}.
 
 @cindex generate-keys
 @item generate-keys [@var{bits}]
-Generate both RSA and Ed25519 keypairs (see below) and exit.
+Generate both RSA and Ed25519 key pairs (see below) and exit.
 tinc will ask where you want to store the files, but will default to the
 configuration directory (you can use the -c or -n option).
 
 @cindex generate-ed25519-keys
 @item generate-ed25519-keys
-Generate public/private Ed25519 keypair and exit.
+Generate public/private Ed25519 key pair and exit.
 
 @cindex generate-rsa-keys
 @item generate-rsa-keys [@var{bits}]
-Generate public/private RSA keypair and exit.  If @var{bits} is omitted, the
+Generate public/private RSA key pair and exit.  If @var{bits} is omitted, the
 default length will be 2048 bits.  When saving keys to existing files, tinc
 will not delete the old keys; you have to remove them manually.
 
@@ -2504,8 +2504,8 @@ The signed file is written to standard output.
 
 Check the signature of a file against a node's public key.
 The @var{name} of the node must be given,
-or can be "." to check against the local node's public key,
-or "*" to allow a signature from any node whose public key is known.
+or can be @samp{.} to check against the local node's public key,
+or @samp{*} to allow a signature from any node whose public key is known.
 If no @var{filename} is given, the file is read from standard input.
 If the verification is successful, a copy of the input with the signature removed is written to standard output, and the exit code will be zero.
 If the verification failed, nothing will be written to standard output, and the exit code will be non-zero.
@@ -2601,9 +2601,9 @@ Quit.
 @chapter Invitations
 
 Invitations are an easy way to add new nodes to an existing VPN.  Invitations
-can be created on an existing node using the @code{tinc invite} command, which
+can be created on an existing node using the @command{tinc invite} command, which
 generates a relatively short URL which can be given to someone else, who uses
-the @code{tinc join} command to automatically set up tinc so it can connect to
+the @command{tinc join} command to automatically set up tinc so it can connect to
 the inviting node.  The next sections describe how invitations actually work,
 and how to further automate the invitations.
 
@@ -2619,7 +2619,7 @@ and how to further automate the invitations.
 @section How invitations work
 
 When an invitation is created on a node (which from now on we will call the
-server) using the @code{tinc invite} command, an invitation file is created
+server) using the @command{tinc invite} command, an invitation file is created
 that contains all the information necessary for the invitee (which we will call
 the client) to create its configuration files. The invitation file is stays on
 the server, but a URL is generated that has enough information for the client
@@ -2657,14 +2657,14 @@ information in the invitation file.
 
 It is important that the invitation URL is kept secret until it is used; if
 another person gets a copy of the invitation URL before the real client runs
-the @code{tinc join} command, then that other person can try to join the VPN.
+the @command{tinc join} command, then that other person can try to join the VPN.
 
 
 @c ==================================================================
 @node    Invitation file format
 @section Invitation file format
 
-The contents of an invitation file that is generated by the @code{tinc invite}
+The contents of an invitation file that is generated by the @command{tinc invite}
 command looks like this:
 
 @example
@@ -2678,15 +2678,15 @@ Address = server.example.com
 @end example
 
 The file is basically a concatenation of several host config blocks. Each host
-config block starts with @code{Name = ...}.  Lines that look like @code{#---#}
+config block starts with @samp{Name = ...}.  Lines that look like @samp{#---#}
 are not important, it just makes it easier for humans to read the file.
 However, the first line of an invitation file @emph{must} always start with
-@code{Name = ...}.
+@samp{Name = ...}.
 
 The first host config block is always the one representing the invitee. So the
 first Name statement determines the name that the invitee will get. From the
 first block, the @file{tinc.conf} and @file{hosts/client} files will be
-generated; the @code{tinc join} command on the client will automatically
+generated; the @command{tinc join} command on the client will automatically
 separate statements based on whether they should be in @file{tinc.conf} or in a
 host config file. Some statements are special and are treated differently:
 
@@ -2700,9 +2700,9 @@ configuration with the same netname.
 @item Ifconfig = <@var{address}[/@var{netmask}] | dhcp | dhcp6 | slaac>
 This is a hint for generating a @file{tinc-up} script.
 If an address is specified, a command will be added to @file{tinc-up} so the VPN interface will be configured to have the given address.
-If it is the word "dhcp", a command will be added to start a DHCP client on the VPN interface.
-If it is the word dhcpv6, it will be a DHCPv6 client.
-If it is "slaac", then it will add commands to enable IPv6 stateless address autoconfiguration.
+If it is the word @samp{dhcp}, a command will be added to start a DHCP client on the VPN interface.
+If it is the word @samp{dhcpv6}, it will be a DHCPv6 client.
+If it is @samp{slaac}, then it will add commands to enable IPv6 stateless address autoconfiguration.
 It is also possible to specify a MAC address, in which case a command will be added to set the MAC address of the VPN interface.
 
 The exact commands added to the @file{tinc-up} script depends on the operating system the client is using.
@@ -2718,7 +2718,7 @@ In general, a gateway is only necessary when running tinc in switch mode.
 @end table
 
 Subsequent host config blocks are copied verbatim into their respective files
-in @file{hosts/}. The invitation file generated by @code{tinc invite} will
+in @file{hosts/}. The invitation file generated by @command{tinc invite} will
 normally only contain two blocks; one for the client and one for the server.
 
 
@@ -2726,7 +2726,7 @@ normally only contain two blocks; one for the client and one for the server.
 @node    Writing an invitation-created script
 @section Writing an invitation-created script
 
-When an invitation is generated, the "invitation-created" script is called (if
+When an invitation is generated, the @file{invitation-created} script is called (if
 it exists) right after the invitation file is written, but before the URL has
 been written to stdout. This allows one to change the invitation file
 automatically before the invitation URL is passed to the invitee. Here is an
@@ -3413,42 +3413,42 @@ For IPv4 addresses:
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
-@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@tab @command{ifconfig} @var{interface} @var{address} @samp{netmask} @var{netmask}
 @item Linux iproute2
-@tab @code{ip addr add} @var{address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@tab @command{ip addr add} @var{address}@samp{/}@var{prefixlength} @samp{dev} @var{interface}
 @item FreeBSD
-@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@tab @command{ifconfig} @var{interface} @var{address} @samp{netmask} @var{netmask}
 @item OpenBSD
-@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@tab @command{ifconfig} @var{interface} @var{address} @samp{netmask} @var{netmask}
 @item NetBSD
-@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@tab @command{ifconfig} @var{interface} @var{address} @samp{netmask} @var{netmask}
 @item Solaris
-@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@tab @command{ifconfig} @var{interface} @var{address} @samp{netmask} @var{netmask}
 @item Darwin (MacOS/X)
-@tab @code{ifconfig} @var{interface} @var{address} @code{netmask} @var{netmask}
+@tab @command{ifconfig} @var{interface} @var{address} @samp{netmask} @var{netmask}
 @item Windows
-@tab @code{netsh interface ip set address} @var{interface} @code{static} @var{address} @var{netmask}
+@tab @command{netsh interface ip set address} @var{interface} @samp{static} @var{address} @var{netmask}
 @end multitable
 
 For IPv6 addresses:
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
-@tab @code{ifconfig} @var{interface} @code{add} @var{address}@code{/}@var{prefixlength}
+@tab @command{ifconfig} @var{interface} @samp{add} @var{address}@samp{/}@var{prefixlength}
 @item FreeBSD
-@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@tab @command{ifconfig} @var{interface} @samp{inet6} @var{address} @samp{prefixlen} @var{prefixlength}
 @item OpenBSD
-@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@tab @command{ifconfig} @var{interface} @samp{inet6} @var{address} @samp{prefixlen} @var{prefixlength}
 @item NetBSD
-@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@tab @command{ifconfig} @var{interface} @samp{inet6} @var{address} @samp{prefixlen} @var{prefixlength}
 @item Solaris
-@tab @code{ifconfig} @var{interface} @code{inet6 plumb up}
+@tab @command{ifconfig} @var{interface} @samp{inet6 plumb up}
 @item
-@tab @code{ifconfig} @var{interface} @code{inet6 addif} @var{address} @var{address}
+@tab @command{ifconfig} @var{interface} @samp{inet6 addif} @var{address} @var{address}
 @item Darwin (MacOS/X)
-@tab @code{ifconfig} @var{interface} @code{inet6} @var{address} @code{prefixlen} @var{prefixlength}
+@tab @command{ifconfig} @var{interface} @samp{inet6} @var{address} @samp{prefixlen} @var{prefixlength}
 @item Windows
-@tab @code{netsh interface ipv6 add address} @var{interface} @code{static} @var{address}/@var{prefixlength}
+@tab @command{netsh interface ipv6 add address} @var{interface} @samp{static} @var{address}/@var{prefixlength}
 @end multitable
 
 On Linux, it is possible to create a persistent tun/tap interface which will
@@ -3458,7 +3458,7 @@ tinc can be started without needing any root privileges at all.
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
-@tab @code{ip tuntap add dev} @var{interface} @code{mode} @var{tun|tap} @code{user} @var{username}
+@tab @command{ip tuntap add dev} @var{interface} @samp{mode} @var{tun|tap} @samp{user} @var{username}
 @end multitable
 
 @c ==================================================================
@@ -3476,42 +3476,42 @@ Adding routes to IPv4 subnets:
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
-@tab @code{route add -net} @var{network_address} @code{netmask} @var{netmask} @var{interface}
+@tab @command{route add -net} @var{network_address} @samp{netmask} @var{netmask} @var{interface}
 @item Linux iproute2
-@tab @code{ip route add} @var{network_address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@tab @command{ip route add} @var{network_address}@samp{/}@var{prefixlength} @samp{dev} @var{interface}
 @item FreeBSD
-@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@tab @command{route add} @var{network_address}@samp{/}@var{prefixlength} @var{local_address}
 @item OpenBSD
-@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@tab @command{route add} @var{network_address}@samp{/}@var{prefixlength} @var{local_address}
 @item NetBSD
-@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@tab @command{route add} @var{network_address}@samp{/}@var{prefixlength} @var{local_address}
 @item Solaris
-@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address} @code{-interface}
+@tab @command{route add} @var{network_address}@samp{/}@var{prefixlength} @var{local_address} @samp{-interface}
 @item Darwin (MacOS/X)
-@tab @code{route add} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@tab @command{route add} @var{network_address}@samp{/}@var{prefixlength} @var{local_address}
 @item Windows
-@tab @code{netsh routing ip add persistentroute} @var{network_address} @var{netmask} @var{interface} @var{local_address}
+@tab @command{netsh routing ip add persistentroute} @var{network_address} @var{netmask} @var{interface} @var{local_address}
 @end multitable
 
 Adding routes to IPv6 subnets:
 
 @multitable {Darwin (MacOS/X)} {ifconfig route add -bla network address netmask netmask prefixlength interface}
 @item Linux
-@tab @code{route add -A inet6} @var{network_address}@code{/}@var{prefixlength} @var{interface}
+@tab @command{route add -A inet6} @var{network_address}@samp{/}@var{prefixlength} @var{interface}
 @item Linux iproute2
-@tab @code{ip route add} @var{network_address}@code{/}@var{prefixlength} @code{dev} @var{interface}
+@tab @command{ip route add} @var{network_address}@samp{/}@var{prefixlength} @samp{dev} @var{interface}
 @item FreeBSD
-@tab @code{route add -inet6} @var{network_address}@code{/}@var{prefixlength} @var{local_address}
+@tab @command{route add -inet6} @var{network_address}@samp{/}@var{prefixlength} @var{local_address}
 @item OpenBSD
-@tab @code{route add -inet6} @var{network_address} @var{local_address} @code{-prefixlen} @var{prefixlength}
+@tab @command{route add -inet6} @var{network_address} @var{local_address} @samp{-prefixlen} @var{prefixlength}
 @item NetBSD
-@tab @code{route add -inet6} @var{network_address} @var{local_address} @code{-prefixlen} @var{prefixlength}
+@tab @command{route add -inet6} @var{network_address} @var{local_address} @samp{-prefixlen} @var{prefixlength}
 @item Solaris
-@tab @code{route add -inet6} @var{network_address}@code{/}@var{prefixlength} @var{local_address} @code{-interface}
+@tab @command{route add -inet6} @var{network_address}@samp{/}@var{prefixlength} @var{local_address} @samp{-interface}
 @item Darwin (MacOS/X)
 @tab ?
 @item Windows
-@tab @code{netsh interface ipv6 add route} @var{network address}/@var{prefixlength} @var{interface}
+@tab @command{netsh interface ipv6 add route} @var{network address}/@var{prefixlength} @var{interface}
 @end multitable
 
 @c ==================================================================
@@ -3533,10 +3533,10 @@ There are many Linux distributions, and historically, many of them had their
 own way of starting programs at boot time. Today, a number of major Linux
 distributions have chosen to use systemd as their init system. Tinc ships with
 systemd service files that allow you to start and stop tinc using systemd.
-There are two service files: @code{tinc.service} is used to globally enable or
+There are two service files: @samp{tinc.service} is used to globally enable or
 disable all tinc daemons managed by systemd, and
-@code{tinc@@@var{netname}.service} is used to enable or disable specific tinc
-daemons. So if one has created a tinc network with netname @code{foo}, then
+@samp{tinc@@@var{netname}.service} is used to enable or disable specific tinc
+daemons. So if one has created a tinc network with netname @samp{foo}, then
 you have to run the following two commands to ensure it is started at boot
 time:
 
@@ -3552,7 +3552,7 @@ following command:
 systemctl start tinc@@foo
 @end example
 
-You can also use @samp{systemctl start tinc}, this will start all tinc daemons
+You can also use @command{systemctl start tinc}, this will start all tinc daemons
 that are enabled. You can stop and disable tinc networks in the same way.
 
 If your system is not using systemd, then you have to look up your
@@ -3562,10 +3562,10 @@ distribution's way of starting tinc at boot time.
 @node       Windows
 @subsection Windows
 
-On Windows, if tinc is started with the @code{tinc start} command without using
-the @code{-D} or @code{--no-detach} option, it will automatically register
+On Windows, if tinc is started with the @command{tinc start} command without using
+the @option{-D} or @option{--no-detach} option, it will automatically register
 itself as a service that is started at boot time. When tinc is stopped using
-the @code{tinc stop} command, it will also automatically unregister itself.
+the @command{tinc stop} command, it will also automatically unregister itself.
 Once tinc is registered as a service, it is also possible to stop and start
 tinc using the Windows Services Manager.
 

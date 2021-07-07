@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2018 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2021 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -126,12 +126,12 @@ static void usage(bool status) {
 		       "  reload                     Partially reload configuration of running tincd.\n"
 		       "  pid                        Show PID of currently running tincd.\n"
 #ifdef DISABLE_LEGACY
-		       "  generate-keys              Generate a new Ed25519 public/private keypair.\n"
+		       "  generate-keys              Generate a new Ed25519 public/private key pair.\n"
 #else
-		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private keypairs.\n"
-		       "  generate-rsa-keys [bits]   Generate a new RSA public/private keypair.\n"
+		       "  generate-keys [bits]       Generate new RSA and Ed25519 public/private key pairs.\n"
+		       "  generate-rsa-keys [bits]   Generate a new RSA public/private key pair.\n"
 #endif
-		       "  generate-ed25519-keys      Generate a new Ed25519 public/private keypair.\n"
+		       "  generate-ed25519-keys      Generate a new Ed25519 public/private key pair.\n"
 		       "  dump                       Dump a list of one of the following things:\n"
 		       "    [reachable] nodes        - all known nodes in the VPN\n"
 		       "    edges                    - all known connections in the VPN\n"
@@ -238,7 +238,7 @@ static bool parse_options(int argc, char **argv) {
 FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
 	mode_t mask = umask(0);
 	perms &= ~mask;
-	umask(~perms);
+	umask(~perms & 0777);
 	FILE *f = fopen(filename, mode);
 
 	if(!f) {
@@ -263,19 +263,21 @@ static void disable_old_keys(const char *filename, const char *what) {
 	bool disabled = false;
 	bool block = false;
 	bool error = false;
-	FILE *r, *w;
 
-	r = fopen(filename, "r");
+	FILE *r = fopen(filename, "r");
+	FILE *w = NULL;
 
 	if(!r) {
 		return;
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
+	int result = snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", filename);
 
-	struct stat st = {.st_mode = 0600};
-	fstat(fileno(r), &st);
-	w = fopenmask(tmpfile, "w", st.st_mode);
+	if(result < sizeof(tmpfile)) {
+		struct stat st = {.st_mode = 0600};
+		fstat(fileno(r), &st);
+		w = fopenmask(tmpfile, "w", st.st_mode);
+	}
 
 	while(fgets(buf, sizeof(buf), r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
@@ -417,7 +419,7 @@ ask_filename:
 }
 
 /*
-  Generate a public/private Ed25519 keypair, and ask for a file to store
+  Generate a public/private Ed25519 key pair, and ask for a file to store
   them in.
 */
 static bool ed25519_keygen(bool ask) {
@@ -425,7 +427,7 @@ static bool ed25519_keygen(bool ask) {
 	FILE *f;
 	char fname[PATH_MAX];
 
-	fprintf(stderr, "Generating Ed25519 keypair:\n");
+	fprintf(stderr, "Generating Ed25519 key pair:\n");
 
 	if(!(key = ecdsa_generate())) {
 		fprintf(stderr, "Error during key generation!\n");
@@ -481,7 +483,7 @@ error:
 
 #ifndef DISABLE_LEGACY
 /*
-  Generate a public/private RSA keypair, and ask for a file to store
+  Generate a public/private RSA key pair, and ask for a file to store
   them in.
 */
 static bool rsa_keygen(int bits, bool ask) {

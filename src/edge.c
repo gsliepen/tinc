@@ -1,6 +1,6 @@
 /*
     edge.c -- edge tree management
-    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2021 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -83,13 +83,25 @@ void free_edge(edge_t *e) {
 }
 
 void edge_add(edge_t *e) {
-	splay_insert(edge_weight_tree, e);
-	splay_insert(e->from->edge_tree, e);
+	splay_node_t *node = splay_insert(e->from->edge_tree, e);
+
+	if(!node) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Edge from %s to %s already exists in edge_tree\n", e->from->name, e->to->name);
+		return;
+	}
+
 
 	e->reverse = lookup_edge(e->to, e->from);
 
 	if(e->reverse) {
 		e->reverse->reverse = e;
+	}
+
+	node = splay_insert(edge_weight_tree, e);
+
+	if(!node) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Edge from %s to %s already exists in edge_weight_tree\n", e->from->name, e->to->name);
+		return;
 	}
 }
 

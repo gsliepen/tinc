@@ -289,8 +289,42 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, sockstrerror(sockerrno));
 	}
 
+	{
+		// The system may cap the requested buffer size.
+		// Read back the value and check if it is now as requested.
+		int udp_rcvbuf_actual = -1;
+		socklen_t optlen = sizeof(udp_rcvbuf_actual);
+
+		if(getsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf_actual, &optlen)) {
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_RCVBUF: %s", sockstrerror(sockerrno));
+		} else if(optlen != sizeof(udp_rcvbuf_actual)) {
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_RCVBUF: Unexpected returned optlen %jd", (intmax_t) optlen);
+		} else {
+			if(udp_rcvbuf_actual != udp_rcvbuf) {
+				logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i, the system set it to %i instead", udp_rcvbuf, udp_rcvbuf_actual);
+			}
+		}
+	}
+
 	if(udp_sndbuf && setsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf, sizeof(udp_sndbuf))) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, sockstrerror(sockerrno));
+	}
+
+	{
+		// The system may cap the requested buffer size.
+		// Read back the value and check if it is now as requested.
+		int udp_sndbuf_actual = -1;
+		socklen_t optlen = sizeof(udp_sndbuf_actual);
+
+		if(getsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf_actual, &optlen)) {
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_SNDBUF: %s", sockstrerror(sockerrno));
+		} else if(optlen != sizeof(udp_sndbuf_actual)) {
+			logger(DEBUG_ALWAYS, LOG_WARNING, "Can't read back UDP SO_SNDBUF: Unexpected returned optlen %jd", (intmax_t) optlen);
+		} else {
+			if(udp_sndbuf_actual != udp_sndbuf) {
+				logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i, the system set it to %i instead", udp_sndbuf, udp_sndbuf_actual);
+			}
+		}
 	}
 
 #if defined(IPV6_V6ONLY)
