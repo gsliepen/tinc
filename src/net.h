@@ -114,9 +114,11 @@ typedef struct listen_socket_t {
 	io_t udp;
 	sockaddr_t sa;
 	bool bindto;
+#ifdef HAVE_SENDMMSG
 	vpn_packet_t **packet_buffer;
 	int packet_buffer_size;
 	int packet_buffer_items;
+#endif
 	int priority;
 } listen_socket_t;
 

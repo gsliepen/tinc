@@ -49,6 +49,9 @@
 #include "route.h"
 #include "utils.h"
 #include "xalloc.h"
+
+
+#ifdef HAVE_SENDMMSG
 #include <sys/socket.h>
 #include <sys/uio.h>
 
@@ -58,6 +61,7 @@ typedef struct packet_thread_info_t {
 	int origlen;
 	const sockaddr_t *sa;
 } packet_thread_info_t;
+#endif
 
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -711,6 +715,7 @@ static void choose_local_address(const node_t *n, const sockaddr_t **sa, int *so
 	}
 }
 
+#ifdef HAVE_SENDMMSG
 static void send_buffered_packets(packet_thread_info_t *packet_thread_info) {
 	listen_socket_t listen_socket = packet_thread_info->listen_socket;
 	node_t *n = packet_thread_info->n;
@@ -756,6 +761,7 @@ static void send_buffered_packets(packet_thread_info_t *packet_thread_info) {
 	free(msghdrs);
 	free(iovecs);
 }
+#endif
 
 static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 	if(!n->status.reachable) {
@@ -856,7 +862,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 	/* Send the packet */
 	const sockaddr_t *sa = NULL;
 	int sock;
+	#ifdef HAVE_SENDMMSG
 	packet_thread_info_t packet_thread_info;
+	#endif
 
 	if(n->status.send_locally) {
 		choose_local_address(n, &sa, &sock);
@@ -897,7 +905,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 			break;
 		}
 	}
-
+#ifdef HAVE_SENDMMSG
 	listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items] = xmalloc(sizeof(vpn_packet_t));
 	memcpy(listen_socket[sock].packet_buffer[listen_socket[sock].packet_buffer_items], inpkt, sizeof(vpn_packet_t));
 	listen_socket[sock].packet_buffer_items++;
@@ -911,6 +919,23 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt, bool immediate) {
 		listen_socket[sock].packet_buffer_items = 0;
 		packets_exchanged = packets_exchanged + 1;
 	}
+#else
+	if(sendto(listen_socket[sock].udp.fd, (void *)SEQNO(inpkt), inpkt->len, 0, &sa->sa, SALEN(sa->sa)) < 0 && !sockwouldblock(sockerrno)) {
+		if(sockmsgsize(sockerrno)) {
+			if(n->maxmtu >= origlen) {
+				n->maxmtu = origlen - 1;
+			}
+
+			if(n->mtu >= origlen) {
+				n->mtu = origlen - 1;
+			}
+
+			try_fix_mtu(n);
+		} else {
+			logger(DEBUG_TRAFFIC, LOG_WARNING, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
+		}
+	}
+#endif
 
 end:
 	origpkt->len = origlen;
