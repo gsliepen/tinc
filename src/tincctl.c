@@ -1107,7 +1107,7 @@ static int cmd_stop(int argc, char *argv[]) {
 	}
 
 #ifdef HAVE_MINGW
-	return remove_service();
+	return remove_service() ? EXIT_SUCCESS : EXIT_FAILURE;
 #else
 
 	if(!stop_tincd()) {
