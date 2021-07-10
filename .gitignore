@@ -1,5 +1,6 @@
 .*
 !.github/
+!.builds/
 !.gitignore
 !.astylerc
 *.a

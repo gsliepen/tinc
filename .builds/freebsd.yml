@@ -1,0 +1,31 @@
+image: freebsd/13.x
+
+packages:
+  - gmake
+  - autotools
+  - openssl
+  - lzo2
+  - ncurses
+  - miniupnpc
+  - readline
+  - texinfo
+
+environment:
+  CFLAGS: -I/usr/local/include -L/usr/local/lib
+
+sources:
+  - https://github.com/gsliepen/tinc
+
+tasks:
+  - configure: |
+      cd tinc
+      autoreconf -fsi
+      ./configure --with-miniupnpc
+
+  - build: |
+      cd tinc
+      gmake -j$(sysctl -n hw.ncpu)
+
+  - test: |
+      cd tinc
+      gmake check-recursive VERBOSE=1
