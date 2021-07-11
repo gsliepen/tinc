@@ -48,17 +48,26 @@ static uint32_t hash_function_ipv4_t(const ipv4_t *p) {
 	b) Most IPv4 networks have more unique low order bits
 	*/
 	uint16_t *halfwidth = (uint16_t *)p;
-	// 10.0.x.x/16 part
 	uint32_t hash = hash_seed;
-	hash += halfwidth[1] * 0x9e370001UL;
-	// x.x.0.[0-255] part
 
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	// 10.0.x.x/16 part
+	hash += halfwidth[1] * 0x9e370001UL;
+
+	// x.x.0.[0-255] part
 #if _____LP64_____
 	return hash ^ halfwidth[0];
 #else
 	// ensure that we have a /24 with no collisions on 32bit
 	return hash ^ ntohs(halfwidth[0]);
-#endif
+#endif // _____LP64_____
+#else
+	// 10.0.x.x/16 part
+	hash += halfwidth[0] * 0x9e370001UL;
+
+	// x.x.0.[0-255] part (ntohs is nop on big endian)
+	return hash ^ halfwidth[1];
+#endif // __BYTE_ORDER == __LITTLE_ENDIAN
 }
 
 
