@@ -96,7 +96,8 @@ hash_new(mac_t, mac_cache);
 
 
 void subnet_cache_flush_table(subnet_type_t stype) {
-	// a subnet type of mac/0 means to clear all
+	// NOTE: a subnet type of SUBNET_TYPES can be used to clear all hash tables
+
 	if(stype != SUBNET_IPV6) { // ipv4
 		hash_clear(ipv4_t, &ipv4_cache);
 	}

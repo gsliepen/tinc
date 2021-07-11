@@ -311,7 +311,7 @@ static void check_reachability(void) {
 }
 
 void graph(void) {
-	subnet_cache_flush_table(SUBNET_MAC);
+	subnet_cache_flush_table(SUBNET_TYPES);
 	sssp_bfs();
 	check_reachability();
 	mst_kruskal();
