@@ -154,6 +154,10 @@ void subnet_cache_flush(subnet_t *subnet) {
 		}
 
 		break;
+
+	case SUBNET_MAC:
+		hash_delete(mac_t, &mac_cache, &subnet->net.mac);
+		return;
 	}
 
 	subnet_cache_flush_table(subnet->type);
