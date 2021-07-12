@@ -2,12 +2,6 @@ name: Build and test
 
 on:
   push:
-    branches:
-      - master
-      - "1.1"
-    tags:
-      - "release-*"
-
   pull_request:
     types:
       - opened
