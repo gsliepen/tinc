@@ -161,17 +161,39 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Search all subnets for a matching one
 
+	int last_rtt = INT_MAX; // current smallest rtt seen
+
 	for splay_each(subnet_t, p, subnet_tree) {
 		if(!p || p->type != SUBNET_IPV4) {
 			continue;
 		}
 
 		if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength)) {
-			r = p;
-
-			if(!p->owner || p->owner->status.reachable) {
+			if(!p->owner) {
+				// this is a broadcast subnet
+				r = p;
 				break;
 			}
+
+			if(p->owner->status.reachable) {
+				int rtt = INT_MAX - 1; // use INT_MAX - 1 as rtt for nodes not directly reachable
+
+				if(p->owner->udp_ping_rtt != -1) {
+					rtt = p->owner->udp_ping_rtt;
+				} else if(p->owner == myself) {
+					// we have this subnet, don't route it somewhere else
+					r = p;
+					break;
+				}
+
+				if(rtt < last_rtt) {
+					r = p;
+					last_rtt = rtt;
+				}
+			}
+		} else if(r) {
+			// no more matching subnets
+			break;
 		}
 	}
 
@@ -195,17 +217,39 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Search all subnets for a matching one
 
+	int last_rtt = INT_MAX; // current smallest rtt seen
+
 	for splay_each(subnet_t, p, subnet_tree) {
 		if(!p || p->type != SUBNET_IPV6) {
 			continue;
 		}
 
 		if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength)) {
-			r = p;
-
-			if(!p->owner || p->owner->status.reachable) {
+			if(!p->owner) {
+				// this is a broadcast subnet
+				r = p;
 				break;
 			}
+
+			if(p->owner->status.reachable) {
+				int rtt = INT_MAX - 1; // use INT_MAX - 1 as rtt for nodes not directly reachable
+
+				if(p->owner->udp_ping_rtt != -1) {
+					rtt = p->owner->udp_ping_rtt;
+				} else if(p->owner == myself) {
+					// we have this subnet, don't route it somewhere else
+					r = p;
+					break;
+				}
+
+				if(rtt < last_rtt) {
+					r = p;
+					last_rtt = rtt;
+				}
+			}
+		} else if(r) {
+			// no more matching subnets
+			break;
 		}
 	}
 
