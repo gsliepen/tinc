@@ -1,0 +1,7 @@
+# Extra options to be passed to tincd.
+# EXTRA="-d"
+
+# Limits to be configured for the tincd process. Please read your shell
+# (pointed by /bin/sh) documentation for ulimit. You probably want to raise the
+# max locked memory value if using both --mlock and --user flags.
+# LIMITS="-l 1024"

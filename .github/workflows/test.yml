@@ -1,4 +1,4 @@
-name: Build and test
+name: Test
 
 on:
   push:
@@ -8,7 +8,27 @@ on:
       - synchronize
 
 jobs:
-  test-linux:
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install code formatting tools
+        run: |
+          sudo apt-get install -y astyle shellcheck
+          curl -o ~/shfmt -L 'https://github.com/mvdan/sh/releases/download/v3.3.0/shfmt_v3.3.0_linux_amd64'
+          chmod 755 ~/shfmt
+
+      - name: Check code formatting
+        run: |
+          shopt -s globstar
+          ! astyle --options=.astylerc --dry-run --formatted ./**/*.[ch] | grep '^Formatted'
+
+      - name: Check test scripts formatting
+        run: ~/shfmt -d -i 2 -s test/testlib.sh.in test/*.test
+
+  linux:
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
@@ -23,8 +43,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: Install Artistic Style and build deps
+      - name: Install build deps
         run: >
           sudo apt-get install -y --no-install-{recommends,suggests}
           zlib1g-dev
@@ -33,46 +55,175 @@ jobs:
           libreadline-dev
           libminiupnpc-dev
           libvdeplug-dev
-          astyle
-          socket
+          texinfo
+          netcat
+          procps
 
       - name: Install OpenSSL
         run: sudo apt-get install -y libssl-dev
         if: ${{ matrix.legacy_protocol == '' }}
 
-      - name: Run autoreconf
-        run: autoreconf -fsi
-
-      - name: Run ./configure
-        run: >
-          ./configure 
-          --enable-{miniupnpc,uml,vde}
-          ${{ matrix.legacy_protocol }}
-
-      - name: Check code formatting
-        run: make check-style
+      - name: Configure project
+        run: |
+          autoreconf -fsi
+          ./configure --enable-{miniupnpc,uml,vde} ${{ matrix.legacy_protocol }}
 
       - name: Compile project
         run: make -j$(nproc)
 
       - name: Run tests
         # root is required for some tests
-        run: sudo make check-recursive
-        timeout-minutes: 20
+        run: sudo make check-recursive VERBOSE=1
+
+      - name: Archive test results
+        run: sudo tar -c -z -f test-results.tar.gz test/
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_${{ matrix.os }}_${{ matrix.compiler }}
-          path: test/test-suite.log
-        if: failure()
+          name: tests_${{ runner.os }}_${{ matrix.os }}_${{ matrix.compiler }}_${{ matrix.legacy_protocol }}
+          path: test-results.tar.gz
+        if: always()
 
-  build-windows:
-    runs-on: windows-latest
+  deb-build:
+    if: startsWith(github.ref, 'refs/tags/release-')
+    needs: linux
+
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install build deps
+        run: >
+          sudo apt-get install -y --no-install-{recommends,suggests}
+          devscripts
+          git-buildpackage
+          dh-make
+          texinfo
+          libssl-dev
+          zlib1g-dev
+          liblzo2-dev
+          libncurses-dev
+          libreadline-dev
+          libminiupnpc-dev
+
+      - name: Configure project
+        run: autoreconf -fsi
+
+      - name: Prepare debian directory
+        run: bash .github/workflows/deb/prepare
+        env:
+          JOB_DISTRIBUTION: ${{ matrix.os }}
+
+      - name: Build deb package
+        run: |
+          dpkg-buildpackage -d -us -uc
+          mv ../*.deb .
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-${{ matrix.os }}
+          path: "*.deb"
+
+  deb-publish:
+    needs: deb-build
+
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Download built packages
+        uses: actions/download-artifact@v2
+        with:
+          name: deb-${{ matrix.os }}
+
+      - name: Install package
+        run: sudo apt-get install -y ./*.deb
+
+      - name: Prepare tinc configs
+        run: |
+          set -eu
+          sudo mkdir -p /etc/tinc/test/hosts
+          sudo tinc -b -n test generate-ed25519-keys
+          echo "Name test" | sudo tee /etc/tinc/test/tinc.conf
+
+      - name: Enable and start tincd
+        run: |
+          sudo systemctl start tinc@test
+          sudo tinc -n test dump reachable nodes
+
+      - name: Publish deb package
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.deb"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  macos:
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        legacy_protocol: ["", --disable-legacy-protocol]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install build deps
+        run: brew install coreutils netcat automake lzo miniupnpc
+
+      - name: Configure project
+        run: |
+          autoreconf -fsi
+          ./configure --with-openssl=/usr/local/opt/openssl@1.1 --enable-{tunemu,miniupnpc} ${{ matrix.legacy_protocol }}
+
+      - name: Compile project
+        run: make -j$(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        run: make check-recursive VERBOSE=1
+
+      - name: Archive test results
+        run: sudo tar -c -z -f test-results.tar.gz test/
+        if: always()
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests_${{ runner.os }}_${{ matrix.legacy_protocol }}
+          path: test-results.tar.gz
+        if: always()
+
+  windows:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        legacy_protocol: ["", --disable-legacy-protocol]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Install msys2
         uses: msys2/setup-msys2@v2
@@ -88,110 +239,31 @@ jobs:
             mingw-w64-x86_64-ncurses
             mingw-w64-x86_64-miniupnpc
             git
+            netcat
+            procps
 
-      - name: Build the project
+      - name: Configure project
         shell: msys2 {0}
         run: |
           autoreconf -fsi
-          ./configure --with-curses-include=/mingw64/include/ncurses --disable-readline
-          make -j$(nproc)
+          ./configure --enable-miniupnpc --disable-readline --with-curses-include=/mingw64/include/ncurses ${{ matrix.legacy_protocol }}
 
-      - name: Check that tinc can be started
+      - name: Compile project
         shell: msys2 {0}
-        run: ./src/tinc --version
-
-      - name: Check that tincd can be started
-        shell: msys2 {0}
-        run: ./src/tincd --version
-
-  release-deb:
-    if: startsWith(github.ref, 'refs/tags/release-')
-    needs: test-linux
-
-    strategy:
-      matrix:
-        os: ["ubuntu-18.04", ubuntu-20.04]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install build deps
-        run: >
-          sudo apt-get install -y --no-install-{recommends,suggests}
-          dh-make
-          texinfo
-          libssl-dev
-          zlib1g-dev
-          liblzo2-dev
-          libncurses-dev
-          libreadline-dev
-
-      - name: Run autoreconf
-        run: autoreconf -fsi
-
-      - name: Run ./configure
-        run: >
-          ./configure 
-          --prefix=/usr
-          --sbindir=/usr/sbin
-          --sysconfdir=/etc
-          --localstatedir=/var
-          --with-systemd=/usr/lib/systemd/system
-
-      - name: Prepare debian directory
-        run: >
-          dh_make
-          --yes
-          --single
-          --createorig
-          --copyright gpl2
-          --packagename "tinc_$(git describe --tags --always | sed 's/release-//')-${{ matrix.os }}"
-        env:
-          DEBFULLNAME: Automated Builds
-
-      - name: Build deb package
-        run: dpkg-buildpackage -d -us -uc
-
-      - name: Publish deb package
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ../*.deb
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  test-macos:
-    runs-on: macos-10.15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install dependencies
-        run: brew install coreutils netcat automake lzo miniupnpc
-
-      - name: Run autoreconf
-        run: autoreconf -fsi
-
-      - name: Run ./configure
-        run: >
-          ./configure
-          --with-openssl=/usr/local/opt/openssl@1.1
-          --enable-{tunemu,miniupnpc}
-
-      - name: Compile application
-        run: make -j$(sysctl -n hw.ncpu)
+        run: make -j$(nproc)
 
       - name: Run tests
-        run: make check-recursive
-        timeout-minutes: 20
+        shell: msys2 {0}
+        run: make check-recursive VERBOSE=1
+
+      - name: Archive test results
+        shell: msys2 {0}
+        run: tar -c -z -f test-results.tar.gz test/
+        if: always()
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: tests_${{ runner.os }}
-          path: test/test-suite.log
-        if: failure()
+          name: tests_${{ runner.os }}_${{ matrix.legacy_protocol }}
+          path: test-results.tar.gz
+        if: always()

@@ -1,0 +1,34 @@
+This package was debianized by Ivo Timmermans <ivo@debian.org> on
+Fri, 21 Apr 2000 17:07:50 +0200.
+
+It was downloaded from http://www.tinc-vpn.org/
+
+Upstream Authors:
+ Guus Sliepen <guus@tinc-vpn.org>
+ Ivo Timmermans <ivo@tinc-vpn.org>
+
+Copyright (C) 1998-2005 Ivo Timmermans
+              1998-2008 Guus Sliepen <guus@tinc-vpn.org>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+On Debian GNU/Linux systems, the complete text of the GNU General Public
+License version 2 can be found in /usr/share/common-licenses/GPL-2.
+
+The following applies to tinc:
+
+This program is released under the GPL with the additional exemption
+that compiling, linking, and/or using OpenSSL is allowed.  You may
+provide binary packages linked to the OpenSSL libraries, provided that
+all other requirements of the GPL are met.
+
+The following applies to the LZO library:
+
+Hereby I grant a special exception to the tinc VPN project
+(http://tinc.nl.linux.org/) to link the LZO library with the OpenSSL library
+(http://www.openssl.org).
+
+Markus F.X.J. Oberhumer
