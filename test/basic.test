@@ -1,20 +1,26 @@
 #!/bin/sh
 
+# shellcheck source=testlib.sh
 . "${0%/*}/testlib.sh"
 
-# Initialize and test one node
+echo [STEP] Initialize and test one node
 
-$tinc $c1 init foo
-$tinc $c1 set DeviceType dummy
-$tinc $c1 set Port 0
+tinc foo <<EOF
+init foo
+set DeviceType dummy
+set Port 0
+EOF
 
-# Test running in the foreground
+echo [STEP] Test running in the foreground
 
-(sleep 1; $tinc $c1 stop) &
-$tinc $c1 start $r1 -D
+create_script foo tinc-up '
+  tinc foo stop &
+'
+start_tinc foo -D
 
-# Test running tinc in the background
+echo [STEP] Test running tinc in the background
 
-$tinc $c1 start $r1
-sleep 1
-$tinc $c1 stop
+create_script foo tinc-up '
+  tinc foo stop &
+'
+start_tinc foo
