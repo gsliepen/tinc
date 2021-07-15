@@ -1,10 +1,14 @@
 #!/bin/sh
 
+# shellcheck source=testlib.sh
 . "${0%/*}/testlib.sh"
 
-# Just test whether the executables work
-$tincd --help
-$tinc --help
-if [ -e $sptps_test ]; then
-	$sptps_test --help
+echo [STEP] Just test whether the executables work
+
+tinc foo --help
+
+tincd foo --help
+
+if [ -e "$SPTPS_TEST" ]; then
+  $SPTPS_TEST --help
 fi
