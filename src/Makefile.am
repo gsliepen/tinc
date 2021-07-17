@@ -272,6 +272,10 @@ tincd_LDADD = $(MINIUPNPC_LIBS)
 tincd_LDFLAGS = -pthread
 endif
 
+if MINGW
+sptps_test_LDFLAGS = -pthread
+endif
+
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 sptps_speed_LDADD = -lrt
 
