@@ -1,5 +1,7 @@
 --indent=tab=8
 --convert-tabs
+--exclude=src/lib
+-i
 -j
 -f
 -A2
