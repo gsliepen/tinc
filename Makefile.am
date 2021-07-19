@@ -36,8 +36,5 @@ release:
 	/usr/bin/editor $(srcdir)/NEWS
 	$(MAKE) dist
 
-check-style:
-	astyle --options=.astylerc --dry-run -nQ src/*.[ch] src/*/*.[ch]
-
 astyle:
 	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]

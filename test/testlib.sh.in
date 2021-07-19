@@ -19,10 +19,13 @@ realdir() {
 tincd_path=$(realdir "../src/tincd@EXEEXT@")
 tinc_path=$(realdir "../src/tinc@EXEEXT@")
 
+# shellcheck disable=SC2034
 SPTPS_TEST=$(realdir "../src/sptps_test@EXEEXT@")
+# shellcheck disable=SC2034
 SPTPS_KEYPAIR=$(realdir "../src/sptps_keypair@EXEEXT@")
 
 # Exit status list
+# shellcheck disable=SC2034
 EXIT_SKIP_TEST=77
 
 # The list of the environment variables that tinc injects into the scripts it calls.
@@ -60,8 +63,10 @@ is_busybox() {
 
 # busybox timeout returns 128 + signal number (which is TERM by default)
 if is_busybox; then
+  # shellcheck disable=SC2034
   EXIT_TIMEOUT=$((128 + 15))
 else
+  # shellcheck disable=SC2034
   EXIT_TIMEOUT=124
 fi
 

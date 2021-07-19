@@ -5,8 +5,8 @@
 
 echo [STEP] Skip this test if tools are missing
 
-which nc >/dev/null || exit $EXIT_SKIP_TEST
-which timeout >/dev/null || exit $EXIT_SKIP_TEST
+command -v nc >/dev/null || exit $EXIT_SKIP_TEST
+command -v timeout >/dev/null || exit $EXIT_SKIP_TEST
 
 foo_port=30050
 bar_port=30051

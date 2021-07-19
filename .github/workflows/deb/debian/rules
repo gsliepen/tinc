@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- --enable-uml --enable-miniupnpc \
+		--with-systemd=/lib/systemd/system/
+	$(MAKE) clean
+
+override_dh_auto_install:
+	dh_auto_install -- install-html
+	# Remove info dir file
+	rm -f debian/tinc/usr/share/info/dir
+
+override_dh_auto_test:
+	# Don't run the tests, it involves starting tinc daemons and making network connections.
+	# I don't think the autobuilders will like this.
+
+override_dh_installinit:
+	dh_installinit -r
