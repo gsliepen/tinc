@@ -1,103 +1,129 @@
 #!/bin/sh
 
+# shellcheck source=testlib.sh
 . "${0%/*}/testlib.sh"
 
-# Skip this test if tools are missing
+echo [STEP] Skip this test if tools are missing
 
-which nc >/dev/null || exit 77
+which nc >/dev/null || exit $EXIT_SKIP_TEST
+which timeout >/dev/null || exit $EXIT_SKIP_TEST
 
-if [ "$(uname)" = "Darwin" ]; then
-    alias timeout=gtimeout
-fi
+foo_port=30050
+bar_port=30051
 
-which timeout >/dev/null || exit 77
+# usage: splice protocol_version
+splice() {
+  ./splice foo localhost $foo_port bar localhost $bar_port "$1" &
+  sleep 10
+}
 
-# Initialize two nodes
+# usage: send_with_timeout "data to send" "data expected to receive"
+send_with_timeout() {
+  data=$1
+  expected=$3
 
-$tinc $c1 <<EOF
+  result=$(
+    (
+      sleep 6
+      printf "%s\n" "$data"
+    ) | timeout 10 nc localhost $foo_port
+  ) && exit 1
+
+  test $? = $EXIT_TIMEOUT
+
+  if [ -z "$expected" ]; then
+    test -z "$result"
+  else
+    echo "$result" | grep -q "^$expected"
+  fi
+}
+
+echo [STEP] Initialize two nodes
+
+tinc foo <<EOF
 init foo
 set DeviceType dummy
-set Port 32754
+set Port $foo_port
 set Address localhost
-set PingTimeout 1
+set PingTimeout 3
 set AutoConnect no
+set Subnet 10.96.96.1
 EOF
 
-$tinc $c2 <<EOF
+tinc bar <<EOF
 init bar
 set DeviceType dummy
-set Port 32755
-set PingTimeout 1
-set MaxTimeout 1
+set Port $bar_port
+set PingTimeout 3
+set MaxTimeout 3
 set ExperimentalProtocol no
 set AutoConnect no
+set Subnet 10.96.96.2
 EOF
 
-# Exchange host config files
+echo [STEP] Exchange host config files
 
-$tinc $c1 export | $tinc $c2 exchange | $tinc $c1 import
+tinc foo export | tinc bar exchange | tinc foo import
 
-$tinc $c1 start $r1
-$tinc $c2 start $r2
+create_script foo subnet-up
+start_tinc foo
+wait_script foo subnet-up
 
-# No ID sent by responding node if we don't send an ID first, before the timeout
+create_script bar subnet-up
+start_tinc bar
+wait_script bar subnet-up
 
-result=`(sleep 2; echo "0 bar 17.7") | timeout 3 nc localhost 32754` && exit 1
-test $? = 124
-test -z "$result"
+echo "[STEP] No ID sent by responding node if we don't send an ID first, before the timeout"
+send_with_timeout "0 bar 17.7" ""
 
-# ID sent if initiator sends first, but still tarpitted
+echo [STEP] ID sent if initiator sends first, but still tarpitted
+send_with_timeout "0 bar 17.7" "0 foo 17.7"
 
-result=`echo "0 bar 17.7" | timeout 3 nc localhost 32754` && exit 1
-test $? = 124
-test "`echo "$result" | head -c 10`" = "0 foo 17.7"
+echo [STEP] No invalid IDs allowed
+send_with_timeout "0 foo 17.7" ""
+send_with_timeout "0 baz 17.7" ""
 
-# No invalid IDs allowed
+echo [STEP] No NULL METAKEYs allowed
+data="0 foo 17.0\n1 0 672 0 0 834188619F4D943FD0F4B1336F428BD4AC06171FEABA66BD2356BC9593F0ECD643F0E4B748C670D7750DFDE75DC9F1D8F65AB1026F5ED2A176466FBA4167CC567A2085ABD070C1545B180BDA86020E275EA9335F509C57786F4ED2378EFFF331869B856DDE1C05C461E4EECAF0E2FB97AF77B7BC2AD1B34C12992E45F5D1254BBF0C3FB224ABB3E8859594A83B6CA393ED81ECAC9221CE6BC71A727BCAD87DD80FC0834B87BADB5CB8FD3F08BEF90115A8DF1923D7CD9529729F27E1B8ABD83C4CF8818AE10257162E0057A658E265610B71F9BA4B365A20C70578FAC65B51B91100392171BA12A440A5E93C4AA62E0C9B6FC9B68F953514AAA7831B4B2C31C4\n"
+send_with_timeout "$data" "" # Not even the ID should be sent when the first packet contains illegal data
 
-result=`echo "0 foo 17.7" | timeout 1 nc localhost 32754` && exit 1
-test $? = 124
-test -z "$result"
+echo [STEP] No splicing allowed
 
-result=`echo "0 baz 17.7" | timeout 1 nc localhost 32754` && exit 1
-test $? = 124
-test -z "$result"
+tinc bar stop
+tinc bar del ExperimentalProtocol
 
-# No NULL METAKEYs allowed
+create_script bar subnet-up
+start_tinc bar
+wait_script bar subnet-up
 
-result=`printf "0 foo 17.0\n1 0 672 0 0 834188619F4D943FD0F4B1336F428BD4AC06171FEABA66BD2356BC9593F0ECD643F0E4B748C670D7750DFDE75DC9F1D8F65AB1026F5ED2A176466FBA4167CC567A2085ABD070C1545B180BDA86020E275EA9335F509C57786F4ED2378EFFF331869B856DDE1C05C461E4EECAF0E2FB97AF77B7BC2AD1B34C12992E45F5D1254BBF0C3FB224ABB3E8859594A83B6CA393ED81ECAC9221CE6BC71A727BCAD87DD80FC0834B87BADB5CB8FD3F08BEF90115A8DF1923D7CD9529729F27E1B8ABD83C4CF8818AE10257162E0057A658E265610B71F9BA4B365A20C70578FAC65B51B91100392171BA12A440A5E93C4AA62E0C9B6FC9B68F953514AAA7831B4B2C31C4\n" | timeout 3 nc localhost 32755` && exit 1
-test $? = 124
-test -z "$result" # Not even the ID should be sent when the first packet contains illegal data
+splice 17.7
+pid=$!
 
-# No splicing allowed
+require_nodes foo 1
+require_nodes bar 1
 
-$tinc $c2 stop
-$tinc $c2 del ExperimentalProtocol
-$tinc $c2 start $r2
+kill $pid
 
-./splice foo localhost 32754 bar localhost 32755 17.7 &
-sleep 3
-test `$tinc $c1 dump reachable nodes | wc -l` = 1
-test `$tinc $c2 dump reachable nodes | wc -l` = 1
-kill $!
+tinc bar stop
+tinc foo stop
 
-$tinc $c2 stop
-$tinc $c1 stop
+echo [STEP] Test splicing again with legacy protocol
 
-# Test splicing again with legacy protocol
+tinc foo set ExperimentalProtocol no
+tinc bar set ExperimentalProtocol no
 
-$tinc $c1 set ExperimentalProtocol no
-$tinc $c2 set ExperimentalProtocol no
+create_script foo subnet-up
+start_tinc foo
+wait_script foo subnet-up
 
-$tinc $c1 start $r1
-$tinc $c2 start $r2
+create_script bar subnet-up
+start_tinc bar
+wait_script bar subnet-up
 
-./splice foo localhost 32754 bar localhost 32755 17.0 &
-sleep 3
-test `$tinc $c1 dump reachable nodes | wc -l` = 1
-test `$tinc $c2 dump reachable nodes | wc -l` = 1
-kill $!
+splice 17.0
+pid=$!
 
-# Clean up
+require_nodes foo 1
+require_nodes bar 1
 
-$tinc $c2 stop
-$tinc $c1 stop
+kill $pid

@@ -1,54 +1,49 @@
 #!/bin/sh
 
+# shellcheck source=testlib.sh
 . "${0%/*}/testlib.sh"
 
-# Initialize one node
+echo [STEP] Initialize one node
 
-$tinc $c1 <<EOF
+tinc foo <<EOF
 init foo
 set DeviceType dummy
 set Port 0
 EOF
 
-cat >$d1/tinc-up <<EOF
-#!/bin/sh
-read pid rest <$d1/pid
-(sleep 0.1; kill \$pid) &
-EOF
+create_script foo tinc-up '
+  tinc foo stop &
+'
 
-cat >$d1/tinc-up.cmd <<EOF
-start /min ../$tinc $c1 stop
-EOF
+echo [STEP] Test tincd command line options that should work
 
-# Test tincd command line options that should work
+tincd foo -D
+tincd foo --no-detach
+tincd foo -D -d
+tincd foo -D -d2
+tincd foo -D -d 2
+tincd foo -D -n foo
+tincd foo -D -nfoo
+tincd foo -D --net=foo
+tincd foo -D --net foo
 
-$tincd $c1 $r1 -D
-$tincd $c1 $r1 --no-detach
-$tincd $c1 $r1 -D -d
-$tincd $c1 $r1 -D -d2
-$tincd $c1 $r1 -D -d 2
-$tincd $c1 $r1 -D -n foo
-$tincd $c1 $r1 -D -nfoo
-$tincd $c1 $r1 -D --net=foo
-$tincd $c1 $r1 -D --net foo
+echo [STEP] Test tincd command line options that should not work
 
-# Test tincd command line options that should not work
+must_fail tincd foo foo
+must_fail tincd foo --pidfile
+must_fail tincd foo --foo
 
-$tincd $c1 $r1 foo && exit 1 || true
-$tincd $c1 $r1 --pidfile && exit 1 || true
-$tincd $c1 $r1 --foo && exit 1 || true
+echo [STEP] Test tinc command line options that should work
 
-# Test tinc command line options that should work
+tinc foo get name
+tinc foo -n foo get name
+tinc foo -nfoo get name
+tinc foo --net=foo get name
+tinc foo --net foo get name
 
-$tinc $c1 get name
-$tinc $c1 -n foo get name
-$tinc $c1 -nfoo get name
-$tinc $c1 --net=foo get name
-$tinc $c1 --net foo get name
+echo [STEP] Test tinc command line options that should not work
 
-# Test tinc command line options that should not work
-
-$tinc $c1 -n foo get somethingreallyunknown && exit 1 || true
-$tinc $c1 --net && exit 1 || true
-$tinc $c1 --net get name && exit 1 || true
-$tinc $c1 foo && exit 1 || true
+must_fail tinc foo -n foo get somethingreallyunknown
+must_fail tinc foo --net
+must_fail tinc foo --net get name
+must_fail tinc foo foo

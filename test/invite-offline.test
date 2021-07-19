@@ -1,49 +1,51 @@
 #!/bin/sh
 
+# shellcheck source=testlib.sh
 . "${0%/*}/testlib.sh"
 
-# Initialize one node
+echo [STEP] Initialize one node
 
-$tinc $c1 <<EOF
+tinc foo <<EOF
 init foo
 set DeviceType dummy
 set Mode switch
 set Broadcast no
 set Address localhost
-set Port 32758
+set Port 30020
 EOF
 
-# Generate an invitation offline and let another node join the VPN
+echo [STEP] Generate an invitation offline and let another node join the VPN
 
-invitation=`$tinc $c1 invite bar | tr -d '\r'`
+invitation=$(tinc foo invite bar)
 
-$tinc $c1 start $r1
+start_tinc foo
+tinc bar join "$invitation"
 
-$tinc $c2 join $invitation
+echo [STEP] Test equivalence of host config files
 
-# Test equivalence of host config files
+diff -w "$DIR_FOO/hosts/foo" "$DIR_BAR/hosts/foo"
+test "$(grep ^Ed25519PublicKey "$DIR_FOO/hosts/bar")" = "$(grep ^Ed25519PublicKey "$DIR_BAR/hosts/bar")"
 
-cmp $d1/hosts/foo $d2/hosts/foo
-test "`grep ^Ed25519PublicKey $d1/hosts/bar`" = "`grep ^Ed25519PublicKey $d2/hosts/bar`"
+echo [STEP] Test Mode, Broadcast and ConnectTo statements
 
-# Test Mode, Broadcast and ConnectTo statements
+test "$(tinc bar get Mode)" = switch
+test "$(tinc bar get Broadcast)" = no
+test "$(tinc bar get ConnectTo)" = foo
 
-test `$tinc $c2 get Mode` = switch
-test `$tinc $c2 get Broadcast` = no
-test `$tinc $c2 get ConnectTo` = foo
+echo [STEP] Check whether the new node can join the VPN
 
-# Check whether the new node can join the VPN
-
-$tinc $c2 << EOF
+tinc bar <<EOF
 set DeviceType dummy
 set Port 0
-start $r2
 EOF
 
-sleep 1
+create_script foo hosts/bar-up
+create_script bar hosts/foo-up
 
-test `$tinc $c1 dump reachable nodes | wc -l` = 2
-test `$tinc $c2 dump reachable nodes | wc -l` = 2
+start_tinc bar
 
-$tinc $c2 stop
-$tinc $c1 stop
+wait_script foo hosts/bar-up
+wait_script bar hosts/foo-up
+
+require_nodes foo 2
+require_nodes bar 2

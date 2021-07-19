@@ -131,6 +131,7 @@ AM_CONDITIONAL(UML, test "$uml" = true)
 AM_CONDITIONAL(VDE, test "$vde" = true)
 AM_CONDITIONAL(TUNEMU, test "$tunemu" = true)
 AM_CONDITIONAL(WITH_SYSTEMD, test "$systemd" = true)
+AM_CONDITIONAL(WITH_LEGACY_PROTOCOL, test "x$enable_legacy_protocol" != "xno")
 
 AC_CACHE_SAVE
 

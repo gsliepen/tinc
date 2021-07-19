@@ -1,32 +1,45 @@
 #!/bin/sh
 
+# shellcheck source=testlib.sh
 . "${0%/*}/testlib.sh"
 
-# Skip this test if we did not compile sptps_test
+echo [STEP] Skip this test if we did not compile sptps_test
 
-test -e $sptps_test -a -e $sptps_keypair || exit 77
+test -e "$SPTPS_TEST" -a -e "$SPTPS_KEYPAIR" || exit $EXIT_SKIP_TEST
 
-# Generate keys
+port=30080
 
-mkdir -p $d1
+server_priv="$DIR_FOO/server.priv"
+client_priv="$DIR_FOO/client.priv"
+server_pub="$DIR_FOO/server.pub"
+client_pub="$DIR_FOO/client.pub"
 
-$sptps_keypair $d1/server.priv $d1/server.pub
-$sptps_keypair $d1/client.priv $d1/client.pub
+echo [STEP] Generate keys
 
-# Test transfer of a simple file.
+mkdir -p "$DIR_FOO"
+$SPTPS_KEYPAIR "$server_priv" "$server_pub"
+$SPTPS_KEYPAIR "$client_priv" "$client_pub"
 
-(sleep 1; $sptps_test -4 -q $d1/client.priv $d1/server.pub localhost 32750 <Makefile) &
-$sptps_test -4 $d1/server.priv $d1/client.pub 32750 >$d1/out1
-cmp $d1/out1 Makefile
+echo [STEP] Test transfer of a simple file
 
-$sptps_test -4 -q $d1/server.priv $d1/client.pub 32750 <Makefile &
-sleep 1
-$sptps_test -4 $d1/client.priv $d1/server.pub localhost 32750 > $d1/out2
-cmp $d1/out2 Makefile
+reference=sptps-basic.test
 
-# Datagram mode
+(
+  sleep 3
+  $SPTPS_TEST -4 -q "$client_priv" "$server_pub" localhost $port <"$reference"
+) &
 
-$sptps_test -4 -dq $d1/server.priv $d1/client.pub 32750 <Makefile &
-sleep 1
-sleep 1 | $sptps_test -4 -dq $d1/client.priv $d1/server.pub localhost 32750 >$d1/out3
-cmp $d1/out3 Makefile
+$SPTPS_TEST -4 "$server_priv" "$client_pub" $port >"$DIR_FOO/out1"
+diff -w "$DIR_FOO/out1" "$reference"
+
+$SPTPS_TEST -4 -q "$server_priv" "$client_pub" $port <"$reference" &
+sleep 3
+$SPTPS_TEST -4 "$client_priv" "$server_pub" localhost $port >"$DIR_FOO/out2"
+diff -w "$DIR_FOO/out2" "$reference"
+
+echo [STEP] Datagram mode
+
+$SPTPS_TEST -4 -dq "$server_priv" "$client_pub" $port <"$reference" &
+sleep 3
+sleep 3 | $SPTPS_TEST -4 -dq "$client_priv" "$server_pub" localhost $port >"$DIR_FOO/out3"
+diff -w "$DIR_FOO/out3" "$reference"
