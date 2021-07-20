@@ -6,6 +6,7 @@ packages:
   - autoconf
   - openssl
   - lzo
+  - lz4
   - miniupnpc
   - readline
   - gtexinfo

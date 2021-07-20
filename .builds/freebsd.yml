@@ -5,6 +5,7 @@ packages:
   - autotools
   - openssl
   - lzo2
+  - liblz4
   - ncurses
   - miniupnpc
   - readline

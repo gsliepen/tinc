@@ -6,6 +6,7 @@ packages:
   - autoconf-2.71
   - openssl-1.1.1k
   - lzo2
+  - lz4
   - miniupnpc
   - readline
   - texinfo
