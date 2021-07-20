@@ -93,6 +93,17 @@ static struct option const long_options[] = {
 static void version(void) {
 	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 	       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+	printf("Features:"
+#ifdef HAVE_READLINE
+	       " readline"
+#endif
+#ifdef HAVE_CURSES
+	       " curses"
+#endif
+#ifndef DISABLE_LEGACY
+	       " legacy_protocol"
+#endif
+	       "\n\n");
 	printf("Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
 	       "See the AUTHORS file for a complete list.\n\n"
 	       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"

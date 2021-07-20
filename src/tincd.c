@@ -382,6 +382,41 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 		       BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+		printf("Features:"
+#ifdef HAVE_OPENSSL
+		       " openssl"
+#endif
+#ifdef HAVE_LIBGCRYPT
+		       " libgcrypt"
+#endif
+#ifdef HAVE_LZO
+		       " comp_lzo"
+#endif
+#ifdef HAVE_ZLIB
+		       " comp_zlib"
+#endif
+#ifdef HAVE_LZ4
+		       " comp_lz4"
+#endif
+#ifndef DISABLE_LEGACY
+		       " legacy_protocol"
+#endif
+#ifdef ENABLE_JUMBOGRAMS
+		       " jumbograms"
+#endif
+#ifdef ENABLE_TUNEMU
+		       " tunemu"
+#endif
+#ifdef HAVE_MINIUPNPC
+		       " miniupnpc"
+#endif
+#ifdef ENABLE_UML
+		       " uml"
+#endif
+#ifdef ENABLE_VDE
+		       " vde"
+#endif
+		       "\n\n");
 		printf("Copyright (C) 1998-2021 Ivo Timmermans, Guus Sliepen and others.\n"
 		       "See the AUTHORS file for a complete list.\n\n"
 		       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"

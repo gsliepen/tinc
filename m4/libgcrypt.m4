@@ -30,4 +30,6 @@ AC_DEFUN([tinc_LIBGCRYPT],
     [LIBS="-lgcrypt $LIBS"],
     [AC_MSG_ERROR([libgcrypt libraries not found.])]
   )
+
+  AC_DEFINE(HAVE_LIBGCRYPT, 1, [enable libgcrypt support])
 ])
