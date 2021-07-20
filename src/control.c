@@ -195,13 +195,16 @@ bool init_control(void) {
 		return false;
 	}
 
-	struct sockaddr_un sa_un;
+	struct sockaddr_un sa_un = {
+		.sun_family = AF_UNIX,
+	};
 
-	sa_un.sun_family = AF_UNIX;
+	if(strlen(unixsocketname) >= sizeof(sa_un.sun_path)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket filename %s is too long!", unixsocketname);
+		return false;
+	}
 
 	strncpy(sa_un.sun_path, unixsocketname, sizeof(sa_un.sun_path));
-
-	sa_un.sun_path[sizeof(sa_un.sun_path) - 1] = 0;
 
 	if(connect(unix_fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) >= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);

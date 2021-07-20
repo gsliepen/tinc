@@ -116,7 +116,9 @@ end:
 }
 
 static struct unix_socket_addr parse_socket_addr(const char *path) {
-	struct sockaddr_un socket_addr;
+	struct sockaddr_un socket_addr = {
+		.sun_family = AF_UNIX,
+	};
 	size_t path_length;
 
 	if(strlen(path) >= sizeof(socket_addr.sun_path)) {
@@ -126,7 +128,6 @@ static struct unix_socket_addr parse_socket_addr(const char *path) {
 		};
 	}
 
-	socket_addr.sun_family = AF_UNIX;
 	strncpy(socket_addr.sun_path, path, sizeof(socket_addr.sun_path));
 
 	if(path[0] == '@') {

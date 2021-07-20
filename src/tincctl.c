@@ -853,13 +853,16 @@ bool connect_tincd(bool verbose) {
 		return false;
 	}
 
-	struct sockaddr_un sa;
+	struct sockaddr_un sa = {
+		.sun_family = AF_UNIX,
+	};
 
-	sa.sun_family = AF_UNIX;
+	if(strlen(unixsocketname) >= sizeof(sa.sun_path)) {
+		fprintf(stderr, "UNIX socket filename %s is too long!", unixsocketname);
+		return false;
+	}
 
 	strncpy(sa.sun_path, unixsocketname, sizeof(sa.sun_path));
-
-	sa.sun_path[sizeof(sa.sun_path) - 1] = 0;
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 

@@ -47,10 +47,14 @@ static struct request {
 	struct sockaddr_un sock;
 } request;
 
-static struct sockaddr_un data_sun;
+static struct sockaddr_un data_sun = {
+	.sun_family = AF_UNIX,
+};
 
 static bool setup_device(void) {
-	struct sockaddr_un listen_sun;
+	struct sockaddr_un listen_sun = {
+		.sun_family = AF_UNIX,
+	};
 	static const int one = 1;
 	struct {
 		char zero;
@@ -105,7 +109,6 @@ static bool setup_device(void) {
 	name.pid = getpid();
 	gettimeofday(&tv, NULL);
 	name.usecs = tv.tv_usec;
-	data_sun.sun_family = AF_UNIX;
 	memcpy(&data_sun.sun_path, &name, sizeof(name));
 
 	if(bind(data_fd, (struct sockaddr *)&data_sun, sizeof(data_sun)) < 0) {
@@ -131,9 +134,12 @@ static bool setup_device(void) {
 		return false;
 	}
 
-	listen_sun.sun_family = AF_UNIX;
+	if(strlen(device) >= sizeof(listen_sun.sun_path)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "UML socket filename %s is too long!", device);
+		return false;
+	}
+
 	strncpy(listen_sun.sun_path, device, sizeof(listen_sun.sun_path));
-	listen_sun.sun_path[sizeof(listen_sun.sun_path) - 1] = 0;
 
 	if(bind(listen_fd, (struct sockaddr *)&listen_sun, sizeof(listen_sun)) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind %s to %s: %s", device_info, device, strerror(errno));
