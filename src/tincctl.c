@@ -3374,7 +3374,8 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-	srand(time(NULL));
+	gettimeofday(&now, NULL);
+	srand(now.tv_sec + now.tv_usec);
 	crypto_init();
 
 	if(optind >= argc) {
