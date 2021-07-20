@@ -332,6 +332,11 @@ cleanup() {
   (
     set +ex
 
+    if command -v cleanup_hook 2>/dev/null; then
+      echo >&2 "Cleanup hook found, calling..."
+      cleanup_hook
+    fi
+
     stop_all_tincs
 
     # Ask nicely, then kill anything that's left.

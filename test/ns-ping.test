@@ -13,6 +13,16 @@ ip_foo=192.168.1.1
 ip_bar=192.168.1.2
 mask=24
 
+echo [STEP] Create network namespaces
+
+ip netns add ping.test1
+ip netns add ping.test2
+
+cleanup_hook() {
+  ip netns del ping.test1
+  ip netns del ping.test2
+}
+
 echo [STEP] Initialize two nodes
 
 tinc foo <<EOF
@@ -26,7 +36,6 @@ EOF
 
 # shellcheck disable=SC2016
 create_script foo tinc-up "
-  ip netns add ping.test1
   ip link set dev \$INTERFACE netns ping.test1
   ip netns exec ping.test1 ip addr add $ip_foo/$mask dev \$INTERFACE
   ip netns exec ping.test1 ip link set \$INTERFACE up
@@ -42,7 +51,6 @@ EOF
 
 # shellcheck disable=SC2016
 create_script bar tinc-up "
-  ip netns add ping.test2
   ip link set dev \$INTERFACE netns ping.test2
   ip netns exec ping.test2 ip addr add $ip_bar/$mask dev \$INTERFACE
   ip netns exec ping.test2 ip link set \$INTERFACE up
@@ -72,8 +80,3 @@ tinc bar add ConnectTo foo
 wait_script bar hosts/foo-up
 
 ip netns exec ping.test1 ping -W1 -c3 $ip_bar
-
-echo [STEP] Clean up
-
-ip netns del ping.test2
-ip netns del ping.test1
