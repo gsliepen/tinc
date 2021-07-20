@@ -462,8 +462,49 @@ bool ans_key_h(connection_t *c, const char *request) {
 		from->status.validkey = false;
 	}
 
-	if(compression < 0 || compression > 11) {
+	switch(compression) {
+	case 12:
+#ifdef HAVE_LZ4
+		break;
+#else
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "LZ4 compression is unavailable on this node.");
+		return true;
+#endif
+
+	case 11:
+	case 10:
+#ifdef HAVE_LZO
+		break;
+#else
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "LZO compression is unavailable on this node.");
+		return true;
+#endif
+
+	case 9:
+	case 8:
+	case 7:
+	case 6:
+	case 5:
+	case 4:
+	case 3:
+	case 2:
+	case 1:
+#ifdef HAVE_ZLIB
+		break;
+#else
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "ZLIB compression is unavailable on this node.");
+		return true;
+#endif
+
+	case 0:
+		break;
+
+	default:
+		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Compression level %i is unrecognized by this node.", compression);
 		return true;
 	}
 

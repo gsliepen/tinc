@@ -37,6 +37,10 @@
 #include LZO1X_H
 #endif
 
+#ifdef LZ4_H
+#include LZ4_H
+#endif
+
 #ifndef HAVE_MINGW
 #include <pwd.h>
 #include <grp.h>
