@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # shellcheck source=testlib.sh
-. "${0%/*}/testlib.sh"
+. ./testlib.sh
 
 echo [STEP] Skip this test if we did not compile sptps_test
 
@@ -22,7 +22,7 @@ $SPTPS_KEYPAIR "$client_priv" "$client_pub"
 
 echo [STEP] Test transfer of a simple file
 
-reference=sptps-basic.test
+reference=testlib.sh
 
 (
   sleep 3
