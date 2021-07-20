@@ -28,6 +28,15 @@ run_tests() {
 
   header "Running test flavor $flavor"
 
+  # CentOS 7 has OpenSSL 1.1 installed in a non-default location.
+  if test -d /usr/include/openssl11; then
+    set -- "$@" --with-openssl-include=/usr/include/openssl11
+  fi
+
+  if test -d /usr/lib64/openssl11; then
+    set -- "$@" --with-openssl-lib=/usr/lib64/openssl11
+  fi
+
   autoreconf -fsi
   ./configure "$@"
   make -j"$(nproc)"
