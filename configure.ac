@@ -236,6 +236,7 @@ tinc_CURSES
 tinc_READLINE
 tinc_ZLIB
 tinc_LZO
+tinc_LZ4
 
 AS_IF([test "x$enable_legacy_protocol" != "xno"],
       [AS_IF([test -n "$with_libgcrypt"],

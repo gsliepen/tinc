@@ -1019,8 +1019,49 @@ static bool setup_myself(void) {
 	/* Compression */
 
 	if(get_config_int(lookup_config(config_tree, "Compression"), &myself->incompression)) {
-		if(myself->incompression < 0 || myself->incompression > 11) {
+		switch(myself->incompression) {
+		case 12:
+#ifdef HAVE_LZ4
+			break;
+#else
 			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "LZ4 compression is unavailable on this node.");
+			return false;
+#endif
+
+		case 11:
+		case 10:
+#ifdef HAVE_LZO
+			break;
+#else
+			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "LZO compression is unavailable on this node.");
+			return false;
+#endif
+
+		case 9:
+		case 8:
+		case 7:
+		case 6:
+		case 5:
+		case 4:
+		case 3:
+		case 2:
+		case 1:
+#ifdef HAVE_ZLIB
+			break;
+#else
+			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "ZLIB compression is unavailable on this node.");
+			return false;
+#endif
+
+		case 0:
+			break;
+
+		default:
+			logger(DEBUG_ALWAYS, LOG_ERR, "Bogus compression level!");
+			logger(DEBUG_ALWAYS, LOG_ERR, "Compression level %i is unrecognized by this node.", myself->incompression);
 			return false;
 		}
 	} else {
