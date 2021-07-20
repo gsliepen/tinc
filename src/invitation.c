@@ -1054,7 +1054,13 @@ ask_netname:
 				}
 			}
 		} else {
-			fprintf(stderr, "A tinc-up script was generated, but has been left disabled.\n");
+			if(force) {
+				rename(filename, filename2);
+				chmod(filename2, 0755);
+				fprintf(stderr, "tinc-up enabled.\n");
+			} else {
+				fprintf(stderr, "A tinc-up script was generated, but has been left disabled.\n");
+			}
 		}
 	} else {
 		// A placeholder was generated.
