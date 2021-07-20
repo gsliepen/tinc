@@ -94,12 +94,8 @@ void randomize(void *out, size_t outlen) {
 void crypto_init(void) {
 	random_init();
 
-	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
-#if OPENSSL_API_COMPAT < 0x10100000L
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_algorithms();
-#endif
+	uint64_t opts = OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_ENGINE_ALL_BUILTIN;
+	OPENSSL_init_crypto(opts, NULL);
 
 	if(!RAND_status()) {
 		fprintf(stderr, "Not enough entropy for the PRNG!\n");
@@ -108,10 +104,6 @@ void crypto_init(void) {
 }
 
 void crypto_exit(void) {
-#if OPENSSL_API_COMPAT < 0x10100000L
-	EVP_cleanup();
-	ERR_free_strings();
-	ENGINE_cleanup();
-#endif
+	OPENSSL_cleanup();
 	random_exit();
 }

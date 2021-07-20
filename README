@@ -60,7 +60,7 @@ Requirements
 In order to compile tinc, you will need a GNU C compiler environment. Please
 ensure you have the latest stable versions of all the required libraries:
 
-- LibreSSL (http://www.libressl.org/) or OpenSSL (https://openssl.org/) version 1.0.0 or later.
+- LibreSSL (http://www.libressl.org/) or OpenSSL (https://openssl.org/) version 1.1.0 or later.
 
 The following libraries are used by default, but can be disabled if necessary:
 

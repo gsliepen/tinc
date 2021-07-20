@@ -31,18 +31,6 @@ typedef RSA rsa_t;
 
 // Set RSA keys
 
-#ifndef HAVE_RSA_SET0_KEY
-int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-	BN_free(r->n);
-	r->n = n;
-	BN_free(r->e);
-	r->e = e;
-	BN_free(r->d);
-	r->d = d;
-	return 1;
-}
-#endif
-
 rsa_t *rsa_set_hex_public_key(char *n, char *e) {
 	BIGNUM *bn_n = NULL;
 	BIGNUM *bn_e = NULL;

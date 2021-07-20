@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: none <none@notsupported>
 Standards-Version: 4.2.1
-Build-Depends: libssl-dev (>>1.0.0), debhelper (>= 11), texinfo, zlib1g-dev, liblzo2-dev, libncurses5-dev, libreadline-dev, libminiupnpc-dev
+Build-Depends: libssl-dev (>>1.1.0), debhelper (>= 11), texinfo, zlib1g-dev, liblzo2-dev, libncurses5-dev, libreadline-dev, libminiupnpc-dev
 Homepage: https://www.tinc-vpn.org/
 Vcs-Browser: https://github.com/gsliepen/tinc
 Vcs-Git: https://github.com/gsliepen/tinc.git

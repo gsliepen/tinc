@@ -66,13 +66,8 @@ digest_t *digest_open_by_nid(int nid, int maclength) {
 }
 
 bool digest_set_key(digest_t *digest, const void *key, size_t len) {
-#ifdef HAVE_HMAC_CTX_NEW
 	digest->hmac_ctx = HMAC_CTX_new();
 	HMAC_Init_ex(digest->hmac_ctx, key, len, digest->digest, NULL);
-#else
-	digest->hmac_ctx = xzalloc(sizeof(*digest->hmac_ctx));
-	HMAC_Init(digest->hmac_ctx, key, len, digest->digest);
-#endif
 
 	if(!digest->hmac_ctx) {
 		abort();
@@ -90,15 +85,9 @@ void digest_close(digest_t *digest) {
 		EVP_MD_CTX_destroy(digest->md_ctx);
 	}
 
-#ifdef HAVE_HMAC_CTX_NEW
-
 	if(digest->hmac_ctx) {
 		HMAC_CTX_free(digest->hmac_ctx);
 	}
-
-#else
-	free(digest->hmac_ctx);
-#endif
 
 	free(digest);
 }

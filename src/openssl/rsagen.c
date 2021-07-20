@@ -72,16 +72,6 @@ static int indicator(int a, int b, BN_GENCB *cb) {
 
 // Generate RSA key
 
-#ifndef HAVE_BN_GENCB_NEW
-BN_GENCB *BN_GENCB_new(void) {
-	return xzalloc(sizeof(BN_GENCB));
-}
-
-void BN_GENCB_free(BN_GENCB *cb) {
-	free(cb);
-}
-#endif
-
 rsa_t *rsa_generate(size_t bits, unsigned long exponent) {
 	BIGNUM *bn_e = BN_new();
 	rsa_t *rsa = RSA_new();
