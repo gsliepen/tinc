@@ -468,13 +468,18 @@ default).
 @cindex LZ4
 Another form of compression is offered using the LZ4 library.
 
-The LZ4 codec is bundled with Tinc and built-in by default as
-compression level 12.  Tinc can be linked to an external liblz4
-library by using the "--disable-lz4-builtin" configure switch.
+Tinc has support for the LZ4 compression algorithm as compression level 12.
 
-If LZ4 support is entirely disabled by passing "--disable-lz4" to the
-configure script, then the resulting binary will not work correctly
-on VPNs where LZ4 compression is used.
+By default, tinc will try to link to an external LZ4 library. If it is not
+found on your system or its version is older than r129, then tinc falls back to
+the built-in copy of the library.
+
+You can force the use of the built-in copy by passing `--enable-lz4-builtin`,
+or disable it completely with `--disable-lz4-builtin`.
+
+LZ4 support can be completely disabled with `--disable-lz4`. Note that the
+resulting binary will not work correctly on VPNs where LZ4 compression is used
+by other peers.
 
 
 @c ==================================================================
