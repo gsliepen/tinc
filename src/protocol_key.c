@@ -44,20 +44,22 @@ void send_key_changed(void) {
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
-	for list_each(connection_t, c, connection_list)
+	for list_each(connection_t, c, connection_list) {
 		if(c->edge && c->node && c->node->status.reachable && !c->node->status.sptps) {
 			send_ans_key(c->node);
 		}
+	}
 
 #endif
 
 	/* Force key exchange for connections using SPTPS */
 
 	if(experimental) {
-		for splay_each(node_t, n, node_tree)
+		for splay_each(node_t, n, node_tree) {
 			if(n->status.reachable && n->status.validkey && n->status.sptps) {
 				sptps_force_kex(&n->sptps);
 			}
+		}
 	}
 }
 
@@ -295,6 +297,11 @@ bool req_key_h(connection_t *c, const char *request) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {                      /* Yes */
+		if(!from->status.reachable) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got %s from %s (%s) origin %s which is not reachable",
+			       "REQ_KEY", c->name, c->hostname, from_name);
+		}
+
 		/* Is this an extended REQ_KEY message? */
 		if(experimental && reqno) {
 			return req_key_ext_h(c, request, from, to, reqno);
