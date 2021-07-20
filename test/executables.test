@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# shellcheck source=testlib.sh
 . ./testlib.sh
 
 echo [STEP] Just test whether the executables work

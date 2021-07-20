@@ -2,6 +2,7 @@ TESTS = \
 	basic.test \
 	executables.test \
 	commandline.test \
+	compression.test \
 	import-export.test \
 	invite-join.test \
 	invite-offline.test \
