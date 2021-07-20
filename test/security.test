@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# shellcheck source=testlib.sh
 . ./testlib.sh
 
 echo [STEP] Skip this test if tools are missing

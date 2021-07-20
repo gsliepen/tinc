@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# shellcheck source=testlib.sh
 . ./testlib.sh
 
 echo [STEP] Initialize and test one node
