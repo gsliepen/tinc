@@ -132,7 +132,7 @@ jobs:
           yum install -y epel-release
           yum install -y git binutils make autoconf automake gcc diffutils \
             texinfo netcat procps socat {lzo,zlib,lz4,ncurses,readline}-devel
-          yum install openssl11-devel || yum install openssl-devel
+          yum install -y openssl11-devel || yum install -y openssl-devel
         if: startsWith(matrix.os, 'centos') || startsWith(matrix.os, 'alma')
 
       - name: Install deps (SUSE)
