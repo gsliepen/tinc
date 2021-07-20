@@ -94,8 +94,7 @@ void randomize(void *out, size_t outlen) {
 void crypto_init(void) {
 	random_init();
 
-	uint64_t opts = OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_ENGINE_ALL_BUILTIN;
-	OPENSSL_init_crypto(opts, NULL);
+	ENGINE_load_builtin_engines();
 
 	if(!RAND_status()) {
 		fprintf(stderr, "Not enough entropy for the PRNG!\n");
