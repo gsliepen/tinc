@@ -20,7 +20,6 @@
 #include "../system.h"
 
 #include <openssl/rand.h>
-#include <openssl/evp.h>
 #include <openssl/engine.h>
 
 #include "../crypto.h"
@@ -103,6 +102,5 @@ void crypto_init(void) {
 }
 
 void crypto_exit(void) {
-	OPENSSL_cleanup();
 	random_exit();
 }
