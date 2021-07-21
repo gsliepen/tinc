@@ -175,6 +175,10 @@ static bool setup_device(void) {
 static void close_device(void) {
 	close(device_fd);
 	device_fd = -1;
+	free(iface);
+	iface = NULL;
+	free(device);
+	device = NULL;
 }
 
 static inline uint16_t get_ip_ethertype(vpn_packet_t *packet) {

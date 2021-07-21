@@ -1330,7 +1330,7 @@ void close_network_connections(void) {
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
-		connection_del(myself->connection);
+		free_connection(myself->connection);
 	}
 
 	for(int i = 0; i < listen_sockets; i++) {

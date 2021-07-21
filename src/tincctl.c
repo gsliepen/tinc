@@ -3339,6 +3339,11 @@ static int cmd_shell(int argc, char *argv[]) {
 	return result;
 }
 
+static void cleanup() {
+	free(tinc_conf);
+	free(hosts_dir);
+	free_names();
+}
 
 int main(int argc, char *argv[]) {
 	program_name = argv[0];
@@ -3353,6 +3358,7 @@ int main(int argc, char *argv[]) {
 	make_names(false);
 	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
 	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
+	atexit(cleanup);
 
 	if(show_version) {
 		version();

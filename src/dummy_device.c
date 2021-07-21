@@ -34,6 +34,10 @@ static bool setup_device(void) {
 }
 
 static void close_device(void) {
+	free(iface);
+	iface = NULL;
+	free(device);
+	device = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
