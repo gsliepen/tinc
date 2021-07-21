@@ -146,6 +146,8 @@ extern io_t unix_socket;
 extern int keylifetime;
 extern int udp_rcvbuf;
 extern int udp_sndbuf;
+extern bool udp_rcvbuf_warnings;
+extern bool udp_sndbuf_warnings;
 extern int max_connection_burst;
 extern int fwmark;
 extern bool do_prune;

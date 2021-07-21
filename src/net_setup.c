@@ -935,6 +935,8 @@ static bool setup_myself(void) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPRcvBuf cannot be negative!");
 			return false;
 		}
+
+		udp_rcvbuf_warnings = true;
 	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPSndBuf"), &udp_sndbuf)) {
@@ -942,6 +944,8 @@ static bool setup_myself(void) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "UDPSndBuf cannot be negative!");
 			return false;
 		}
+
+		udp_sndbuf_warnings = true;
 	}
 
 	get_config_int(lookup_config(config_tree, "FWMark"), &fwmark);
